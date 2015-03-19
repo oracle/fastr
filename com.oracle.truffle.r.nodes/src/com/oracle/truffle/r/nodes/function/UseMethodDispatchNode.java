@@ -17,6 +17,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
+import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.variables.*;
 import com.oracle.truffle.r.nodes.function.ArgumentMatcher.MatchPermutation;
 import com.oracle.truffle.r.nodes.function.DispatchedCallNode.NoGenericMethodException;
@@ -149,13 +150,19 @@ final class UseMethodDispatchCachedNode extends S3DispatchCachedNode {
 
         Object[] preparedArguments = prepareSuppliedArgument(cached.preparePermutation, arguments);
 
-        EvaluatedArguments reorderedArgs = ArgumentMatcher.matchArgumentsEvaluated(cached.permutation, cached.function, preparedArguments);
+        RRootNode rootNode = (RRootNode) cached.function.getTarget().getRootNode();
+        FormalArguments formals = rootNode.getFormalArguments();
+        ArgumentsSignature formalSignature = formals.getSignature();
+
+        Object[] reorderedArgs = ArgumentMatcher.matchArgumentsEvaluated(cached.permutation, cached.function, preparedArguments, formals);
+
+        CompilerAsserts.partialEvaluationConstant(reorderedArgs.length);
 
         if (cached.function.isBuiltin()) {
             ArgumentMatcher.evaluatePromises(frame, promiseHelper, reorderedArgs);
         }
 
-        Object[] argObject = prepareArguments(callerFrame, genericDefFrame, reorderedArgs, cached.function, cached.clazz, cached.functionName);
+        Object[] argObject = prepareArguments(callerFrame, genericDefFrame, reorderedArgs, formalSignature, cached.function, cached.clazz, cached.functionName);
 
         return call.call(frame, argObject);
     }
@@ -199,6 +206,7 @@ final class UseMethodDispatchCachedNode extends S3DispatchCachedNode {
         int argCount = arguments.length;
         int argListSize = argCount;
 
+        // extract vararg signatures from the arguments
         ArgumentsSignature[] varArgSignatures = null;
         for (int i = 0; i < arguments.length; i++) {
             Object arg = arguments[i];
@@ -210,27 +218,12 @@ final class UseMethodDispatchCachedNode extends S3DispatchCachedNode {
                 argListSize += ((RArgsValuesAndNames) arg).length() - 1;
             }
         }
+
         long[] preparePermutation;
         ArgumentsSignature resultSignature;
         if (varArgSignatures != null) {
-            preparePermutation = new long[argListSize];
-            String[] argNames = new String[argListSize];
-            int index = 0;
-            for (int fi = 0; fi < argCount; ++fi) {
-                Object arg = arguments[fi];
-                if (arg instanceof RArgsValuesAndNames) {
-                    RArgsValuesAndNames varArgs = (RArgsValuesAndNames) arg;
-                    ArgumentsSignature varArgSignature = varArgs.getSignature();
-                    for (int i = 0; i < varArgs.length(); i++) {
-                        argNames[index] = varArgSignature.getName(i);
-                        preparePermutation[index++] = -((((long) fi) << 32) + i);
-                    }
-                } else {
-                    argNames[index] = signature.getName(fi);
-                    preparePermutation[index++] = fi;
-                }
-            }
-            resultSignature = ArgumentsSignature.get(argNames);
+            resultSignature = ArgumentsSignature.flattenNames(signature, varArgSignatures, argListSize);
+            preparePermutation = ArgumentsSignature.flattenIndexes(varArgSignatures, argListSize);
         } else {
             preparePermutation = new long[argCount];
             for (int i = 0; i < argCount; i++) {
@@ -239,7 +232,7 @@ final class UseMethodDispatchCachedNode extends S3DispatchCachedNode {
             resultSignature = signature;
         }
 
-        assert signature != null;
+        assert resultSignature != null;
         MatchPermutation permutation = ArgumentMatcher.matchArguments(result.targetFunction, resultSignature, getEncapsulatingSourceSection(), false);
 
         CheckReadsNode newCheckedReads = new CheckReadsNode(unsuccessfulReadsCaller, unsuccessfulReadsDef, result.successfulRead, result.targetFunction, result.clazz, result.targetFunctionName,
@@ -269,9 +262,9 @@ final class UseMethodDispatchCachedNode extends S3DispatchCachedNode {
         }
         EvaluatedArguments reorderedArgs = reorderArguments(arguments, cached.function, suppliedSignature, getEncapsulatingSourceSection());
         if (cached.function.isBuiltin()) {
-            ArgumentMatcher.evaluatePromises(frame, promiseHelper, reorderedArgs);
+            ArgumentMatcher.evaluatePromises(frame, promiseHelper, reorderedArgs.getEvaluatedArgs());
         }
-        Object[] argObject = prepareArguments(frame.materialize(), null, reorderedArgs, cached.function, cached.clazz, cached.functionName);
+        Object[] argObject = prepareArguments(frame.materialize(), null, reorderedArgs.arguments, reorderedArgs.signature, cached.function, cached.clazz, cached.functionName);
         return call.call(frame, argObject);
     }
 
@@ -327,7 +320,7 @@ final class UseMethodDispatchGenericNode extends S3DispatchGenericNode {
         RFunction function = lookupResult.targetFunction;
         EvaluatedArguments reorderedArgs = reorderArguments(args, function, paramSignature, errorSourceSection);
         if (function.isBuiltin()) {
-            ArgumentMatcher.evaluatePromises(frame, promiseHelper, reorderedArgs);
+            ArgumentMatcher.evaluatePromises(frame, promiseHelper, reorderedArgs.getEvaluatedArgs());
         }
         return prepareArguments(callerFrame, genericDefFrame, lookupResult, function, reorderedArgs);
     }
@@ -340,7 +333,7 @@ final class UseMethodDispatchGenericNode extends S3DispatchGenericNode {
 
     @TruffleBoundary
     private Object[] prepareArguments(MaterializedFrame callerFrame, MaterializedFrame genericDefFrame, TargetLookupResult lookupResult, RFunction function, EvaluatedArguments reorderedArgs) {
-        return super.prepareArguments(callerFrame, genericDefFrame, reorderedArgs, function, lookupResult.clazz, lookupResult.targetFunctionName);
+        return super.prepareArguments(callerFrame, genericDefFrame, reorderedArgs.arguments, reorderedArgs.signature, function, lookupResult.clazz, lookupResult.targetFunctionName);
     }
 
     @TruffleBoundary

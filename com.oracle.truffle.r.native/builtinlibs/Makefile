@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -63,7 +63,7 @@ LIB_RDUMMY := $(OBJ)/libR.$(SHARED_EXT)
 libr: $(LIB_RDUMMY)
 $(LIB_RDUMMY): $(OBJ)/rdummy.o
 	mkdir -p $(LIBDIR)
-	$(CC) $(LDFLAGS) -o $(LIB_RDUMMY) -current_version 3.1.1 -compatibility_version 3.1.1 $(OBJ)/rdummy.o
+	$(CC) $(LDFLAGS) -o $(LIB_RDUMMY) -current_version 3.1.3 -compatibility_version 3.1.3 $(OBJ)/rdummy.o
 
 cleanlibr:
 	rm -f $(LIB_RDUMMY)

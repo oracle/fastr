@@ -35,21 +35,21 @@ public abstract class CopyDFAttr extends RInvisibleBuiltinNode {
 
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
-    @Specialization(guards = "!isInDataFrame")
+    @Specialization(guards = "!isInDataFrame(in)")
     protected RAttributable copy(RAbstractContainer in, RAbstractVector out) {
         RVector res = out.materialize();
         res.resetAllAttributes(false);
         return res.copyAttributesFrom(attrProfiles, in);
     }
 
-    @Specialization(guards = "!isInDataFrame")
+    @Specialization(guards = "!isInDataFrame(in)")
     protected RAttributable copy(RAbstractContainer in, RFactor out) {
         RVector res = out.getVector();
         res.resetAllAttributes(false);
         return res.copyAttributesFrom(attrProfiles, in);
     }
 
-    @Specialization(guards = "!isInDataFrame")
+    @Specialization(guards = "!isInDataFrame(in)")
     protected RAttributable copy(RAbstractContainer in, RDataFrame out) {
         RVector res = out.getVector();
         res.resetAllAttributes(false);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,8 +27,6 @@ import java.util.*;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.instrument.debug.*;
 import com.oracle.truffle.r.runtime.*;
@@ -55,8 +53,8 @@ public class BrowserFunctions {
     public abstract static class BrowserNode extends RInvisibleBuiltinNode {
 
         @Override
-        public RNode[] getParameterValues() {
-            return new RNode[]{ConstantNode.create(""), ConstantNode.create(RNull.instance), ConstantNode.create(RRuntime.LOGICAL_TRUE), ConstantNode.create(0)};
+        public Object[] getDefaultParameterValues() {
+            return new Object[]{"", RNull.instance, RRuntime.LOGICAL_TRUE, 0};
         }
 
         @SuppressWarnings("unused")
@@ -81,8 +79,8 @@ public class BrowserFunctions {
     private abstract static class RetrieveAdapter extends RBuiltinNode {
 
         @Override
-        public RNode[] getParameterValues() {
-            return new RNode[]{ConstantNode.create(1)};
+        public Object[] getDefaultParameterValues() {
+            return new Object[]{1};
         }
 
         /**

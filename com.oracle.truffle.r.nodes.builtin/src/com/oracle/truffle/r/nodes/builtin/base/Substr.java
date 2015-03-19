@@ -22,46 +22,40 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.nodes.ExplodeLoop;
-import com.oracle.truffle.api.utilities.BranchProfile;
-import com.oracle.truffle.api.utilities.ConditionProfile;
-import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
-import com.oracle.truffle.r.runtime.ops.na.NACheck;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
-import static com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.utilities.*;
+import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.ops.na.*;
 
 @RBuiltin(name = "substr", kind = INTERNAL, parameterNames = {"x", "start", "stop"})
 public abstract class Substr extends RBuiltinNode {
-    protected final NACheck na = NACheck.create();
+    private final NACheck na = NACheck.create();
     private final BranchProfile everSeenIllegalRange = BranchProfile.create();
     private final ConditionProfile naIndexesProfile = ConditionProfile.createBinaryProfile();
 
     @SuppressWarnings("unused")
-    @Specialization(guards = "emptyArg")
+    @Specialization(guards = "emptyArg(arg)")
     protected RStringVector substrEmptyArg(VirtualFrame frame, RAbstractStringVector arg, RAbstractIntVector start, RAbstractIntVector stop) {
         controlVisibility();
         return RDataFactory.createEmptyStringVector();
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"!emptyArg", "wrongParams"})
+    @Specialization(guards = {"!emptyArg(arg)", "wrongParams(start, stop)"})
     @TruffleBoundary
     protected RNull substrWrongParams(RAbstractStringVector arg, RAbstractIntVector start, RAbstractIntVector stop) {
         RInternalError.shouldNotReachHere();
         return RNull.instance; // dummy
     }
 
-    @Specialization(guards = {"!emptyArg", "!wrongParams"})
-    @ExplodeLoop
+    @Specialization(guards = {"!emptyArg(arg)", "!wrongParams(start, stop)"})
     protected RStringVector substr(RAbstractStringVector arg, RAbstractIntVector start, RAbstractIntVector stop) {
         controlVisibility();
         String[] res = new String[arg.getLength()];
@@ -78,7 +72,7 @@ public abstract class Substr extends RBuiltinNode {
         return RDataFactory.createStringVector(res, na.neverSeenNA());
     }
 
-    protected String substr0(String x, int start, int stop) {
+    private String substr0(String x, int start, int stop) {
         if (naIndexesProfile.profile(na.check(x) || na.check(start) || na.check(stop))) {
             return RRuntime.STRING_NA;
         } else {
@@ -132,12 +126,11 @@ public abstract class Substr extends RBuiltinNode {
     // return x.substring(actualStart - 1, actualStop);
     // }
 
-    @SuppressWarnings("unused")
-    protected boolean emptyArg(RAbstractStringVector arg, RAbstractIntVector start, RAbstractIntVector stop) {
+    protected boolean emptyArg(RAbstractStringVector arg) {
         return arg.getLength() == 0;
     }
 
-    protected boolean wrongParams(@SuppressWarnings("unused") RAbstractStringVector arg, RAbstractIntVector start, RAbstractIntVector stop) {
+    protected boolean wrongParams(RAbstractIntVector start, RAbstractIntVector stop) {
         if (start.getLength() == 0 || stop.getLength() == 0) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENTS_NO_QUOTE, "substring");
         }

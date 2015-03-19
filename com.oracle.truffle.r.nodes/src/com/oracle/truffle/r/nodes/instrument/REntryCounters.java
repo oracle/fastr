@@ -24,10 +24,8 @@ package com.oracle.truffle.r.nodes.instrument;
 
 import java.util.*;
 
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.instrument.*;
 import com.oracle.truffle.api.instrument.impl.*;
-import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 
@@ -40,7 +38,7 @@ import com.oracle.truffle.r.runtime.*;
  */
 public class REntryCounters {
 
-    private static WeakHashMap<Object, Basic> counterMap = new WeakHashMap<>();
+    private static HashMap<Object, Basic> counterMap = new HashMap<>();
 
     public static class Basic {
 
@@ -49,15 +47,15 @@ public class REntryCounters {
         public final Instrument instrument;
 
         public Basic(Object tag) {
-            instrument = Instrument.create(new SimpleEventReceiver() {
+            instrument = Instrument.create(new SimpleInstrumentListener() {
 
                 @Override
-                public void enter(Node node, VirtualFrame frame) {
+                public void enter(Probe probe) {
                     enterCount++;
                 }
 
                 @Override
-                public void returnAny(Node node, VirtualFrame frame) {
+                public void returnAny(Probe probe) {
                     exitCount++;
                 }
             }, "R node entry counter");
@@ -80,10 +78,10 @@ public class REntryCounters {
     public static class Function extends Basic {
 
         static {
-            RPerfAnalysis.register(new PerfHandler());
+            RPerfStats.register(new PerfHandler());
         }
 
-        private static class PerfHandler implements RPerfAnalysis.Handler {
+        private static class PerfHandler implements RPerfStats.Handler {
             private static class FunctionCount implements Comparable<FunctionCount> {
                 int count;
                 String name;
@@ -106,7 +104,7 @@ public class REntryCounters {
 
             static final String NAME = "functioncounts";
 
-            public void initialize() {
+            public void initialize(String optionText) {
             }
 
             public String getName() {
@@ -118,23 +116,15 @@ public class REntryCounters {
              * locate a function name in the global/package environments.
              */
             public void report() {
-                System.out.println("R Function Entry Counts");
+                RPerfStats.out().println("R Function Entry Counts");
                 ArrayList<FunctionCount> results = new ArrayList<>();
                 for (Map.Entry<Object, Basic> entry : counterMap.entrySet()) {
                     if (entry.getValue() instanceof Function) {
                         FunctionUID uid = (FunctionUID) entry.getKey();
-                        String functionName = RInstrument.findFunctionName(uid);
-                        if (functionName == null) {
-                            FunctionDefinitionNode fdn = RInstrument.getFunctionDefinitionNode(uid);
-                            if (fdn != null) {
-                                functionName = fdn.toString();
-                            }
-                        }
-                        if (functionName != null) {
-                            int count = entry.getValue().getEnterCount();
-                            if (count > 0) {
-                                results.add(new FunctionCount(count, functionName));
-                            }
+                        RInstrument.FunctionIdentification fdi = RInstrument.getFunctionIdentification(uid);
+                        int count = entry.getValue().getEnterCount();
+                        if (count > 0) {
+                            results.add(new FunctionCount(count, fdi.name));
                         }
                     }
                 }
@@ -142,7 +132,7 @@ public class REntryCounters {
                 results.toArray(sortedCounts);
                 Arrays.sort(sortedCounts);
                 for (FunctionCount functionCount : sortedCounts) {
-                    System.out.printf("%6d: %s%n", functionCount.count, functionCount.name);
+                    RPerfStats.out().printf("%6d: %s%n", functionCount.count, functionCount.name);
                 }
             }
         }
@@ -152,7 +142,7 @@ public class REntryCounters {
         }
 
         public static boolean enabled() {
-            return RPerfAnalysis.enabled(PerfHandler.NAME);
+            return RPerfStats.enabled(PerfHandler.NAME);
         }
 
     }

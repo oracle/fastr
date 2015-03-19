@@ -27,6 +27,7 @@ import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.conn.*;
@@ -37,149 +38,48 @@ import com.oracle.truffle.r.runtime.env.*;
 @SuppressWarnings("unused")
 public abstract class TypeofNode extends UnaryNode {
 
-    public abstract RType execute(VirtualFrame frame, Object x);
+    protected static final int NUMBER_OF_CACHED_CLASSES = 5;
+
+    public abstract RType execute(Object x);
 
     @Specialization
-    protected RType typeof(RNull vector) {
-        return RType.Null;
-    }
-
-    @Specialization
-    protected RType typeof(byte x) {
+    protected static RType doLogical(byte x) {
         return RType.Logical;
     }
 
     @Specialization
-    protected RType typeof(int s) {
+    protected static RType doInt(int s) {
         return RType.Integer;
     }
 
     @Specialization
-    protected RType typeof(double x) {
+    protected static RType doDouble(double x) {
         return RType.Double;
     }
 
     @Specialization
-    protected RType typeof(RComplex x) {
-        return RType.Complex;
-    }
-
-    @Specialization
-    protected RType typeof(RRaw x) {
-        return RType.Raw;
-    }
-
-    @Specialization
-    protected RType typeof(String x) {
+    protected static RType doString(String x) {
         return RType.Character;
     }
 
-    @Specialization
-    protected RType typeof(RIntSequence vector) {
-        return RType.Integer;
+    @Specialization(guards = {"operand.getClass() == cachedClass"}, limit = "NUMBER_OF_CACHED_CLASSES")
+    protected static RType doCachedTyped(Object operand, //
+                    @Cached("getTypedValueClass(operand)") Class<? extends RTypedValue> cachedClass) {
+        return cachedClass.cast(operand).getRType();
     }
 
-    @Specialization
-    protected RType typeof(RLogicalVector vector) {
-        return RType.Logical;
+    protected static Class<? extends RTypedValue> getTypedValueClass(Object operand) {
+        CompilerAsserts.neverPartOfCompilation();
+        if (operand instanceof RTypedValue) {
+            return ((RTypedValue) operand).getClass();
+        } else {
+            throw new AssertionError("Invalid untyped value " + operand.getClass() + ".");
+        }
     }
 
-    @Specialization
-    protected RType typeof(RAbstractIntVector vector) {
-        return RType.Integer;
+    @Specialization(contains = {"doCachedTyped"})
+    protected static RType doGenericTyped(RTypedValue operand) {
+        return operand.getRType();
     }
 
-    @Specialization
-    protected RType typeof(RAbstractDoubleVector vector) {
-        return RType.Double;
-    }
-
-    @Specialization
-    protected RType typeof(RStringVector vector) {
-        return RType.Character;
-    }
-
-    @Specialization
-    protected RType typeof(RComplexVector vector) {
-        return RType.Complex;
-    }
-
-    @Specialization
-    protected RType typeof(RRawVector vector) {
-        return RType.Raw;
-    }
-
-    @Specialization
-    protected RType typeof(RList list) {
-        return RType.List;
-    }
-
-    @Specialization
-    protected RType typeof(REnvironment env) {
-        return RType.Environment;
-    }
-
-    @Specialization
-    protected RType typeof(RSymbol symbol) {
-        return RType.Symbol;
-    }
-
-    @Specialization
-    protected RType typeof(RExternalPtr symbol) {
-        return RType.ExternalPtr;
-    }
-
-    @Specialization
-    protected RType typeof(RLanguage language) {
-        return RType.Language;
-    }
-
-    @Specialization
-    protected RType typeof(RPromise promise) {
-        return RType.Promise;
-    }
-
-    @Specialization
-    protected RType typeof(RExpression symbol) {
-        return RType.Expression;
-    }
-
-    @Specialization
-    protected RType typeof(RPairList pairlist) {
-        return RType.PairList;
-    }
-
-    @Specialization(guards = "isFunctionBuiltin")
-    protected RType typeofBuiltin(RFunction obj) {
-        return RType.Builtin;
-    }
-
-    @Specialization(guards = "!isFunctionBuiltin")
-    protected RType typeofClosure(RFunction obj) {
-        return RType.Closure;
-    }
-
-    @Specialization
-    protected RType typeofFormula(RFormula f) {
-        return RType.Language;
-    }
-
-    @Specialization
-    protected RType typeof(RConnection conn) {
-        return RType.Integer;
-    }
-
-    @Specialization
-    protected RType typeof(RDataFrame frame) {
-        return RType.List;
-    }
-
-    @Specialization
-    protected RType typeof(RFactor factor) {
-        return RType.Integer;
-    }
-
-    public static boolean isFunctionBuiltin(RFunction fun) {
-        return fun.isBuiltin();
-    }
 }

@@ -31,6 +31,7 @@ import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.RPromise.VarargPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.*;
 
 /**
@@ -114,6 +115,8 @@ public class PromiseHelperNode extends Node {
     @Child private PromiseHelperNode nextNode = null;
 
     private final ValueProfile promiseFrameProfile = ValueProfile.createClassProfile();
+    private final BranchProfile varArgProfile = BranchProfile.create();
+    private final BranchProfile multiVarArgProfile = BranchProfile.create();
 
     /**
      * Guarded by {@link #isInOriginFrame(VirtualFrame,RPromise)}.
@@ -135,31 +138,31 @@ public class PromiseHelperNode extends Node {
      * {@link RPromise#isEvaluated()}, propagation of CallSrc and dependency cycles. Actual
      * evaluation is delegated to {@link #generateValue(VirtualFrame, RPromise, SourceSection)}.
      *
-     * @param frame
-     * @param promise
-     * @param callSrc
      * @return The value the given Promise evaluates to
      */
     private Object doEvaluate(VirtualFrame frame, RPromise promise, SourceSection callSrc) {
-        if (isEvaluated(promise)) {
-            return promise.getValue();
+        RPromise current = promise;
+        if (current.getOptType() == OptType.VARARG) {
+            varArgProfile.enter();
+            current = ((VarargPromise) current).getVararg();
+            while (current.getOptType() == OptType.VARARG) {
+                multiVarArgProfile.enter();
+                current = ((VarargPromise) current).getVararg();
+            }
+        }
+        if (isEvaluated(current)) {
+            return current.getValue();
         }
 
         // Check for dependency cycle
-        if (isUnderEvaluation(promise)) {
+        if (isUnderEvaluation(current)) {
             throw RError.error(RError.Message.PROMISE_CYCLE);
         }
 
         // Evaluate guarded by underEvaluation
-        try {
-            promise.setUnderEvaluation(true);
-
-            Object obj = generateValue(frame, promise, callSrc);
-            setValue(obj, promise);
-            return obj;
-        } finally {
-            promise.setUnderEvaluation(false);
-        }
+        Object obj = generateValue(frame, current, callSrc);
+        setValue(obj, current);
+        return obj;
     }
 
     /**
@@ -170,40 +173,43 @@ public class PromiseHelperNode extends Node {
      * @return The value this Promise represents
      */
     private Object generateValue(VirtualFrame frame, RPromise promise, SourceSection callSrc) {
-        OptType profiledOptType = optTypeProfile.profile(promise.getOptType());
-        if (profiledOptType == OptType.DEFAULT) {
+        if (isOptDefaultProfile.profile(promise.getOptType() == OptType.DEFAULT)) {
             return generateValueDefault(frame, promise, callSrc);
-        } else if (profiledOptType == OptType.PROMISED || profiledOptType == OptType.EAGER) {
+        } else {
+            assert promise.getOptType() == OptType.EAGER || promise.getOptType() == OptType.PROMISED;
             return generateValueEager(frame, (EagerPromise) promise, callSrc);
-        } else if (profiledOptType == OptType.VARARG) {
-            return generateValueVararg((VarargPromise) promise, callSrc);
         }
-        throw RInternalError.shouldNotReachHere();
     }
 
     private Object generateValueDefault(VirtualFrame frame, RPromise promise, SourceSection callSrc) {
-        if (isInOriginFrame(frame, promise)) {
-            if (expressionInlineCache == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                expressionInlineCache = insert(InlineCacheNode.createExpression(3));
-            }
-            return expressionInlineCache.execute(frame, (RNode) promise.getRep());
-        } else {
-            Frame promiseFrame = promiseFrameProfile.profile(promise.getFrame());
-            assert promiseFrame != null;
-            SourceSection oldCallSource = RArguments.getCallSourceSection(promiseFrame);
-            try {
-                RArguments.setCallSourceSection(promiseFrame, callSrc);
+        try {
+            promise.setUnderEvaluation(true);
 
-                if (promiseClosureCache == null) {
+            if (isInOriginFrame(frame, promise)) {
+                if (expressionInlineCache == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    promiseClosureCache = insert(InlineCacheNode.createPromise(3));
+                    expressionInlineCache = insert(InlineCacheNode.createExpression(3));
                 }
+                return expressionInlineCache.execute(frame, (RNode) promise.getRep());
+            } else {
+                Frame promiseFrame = promiseFrameProfile.profile(promise.getFrame());
+                assert promiseFrame != null;
+                SourceSection oldCallSource = RArguments.getCallSourceSection(promiseFrame);
+                try {
+                    RArguments.setCallSourceSection(promiseFrame, callSrc);
 
-                return promiseClosureCache.execute(promiseFrame, promise.getClosure());
-            } finally {
-                RArguments.setCallSourceSection(promiseFrame, oldCallSource);
+                    if (promiseClosureCache == null) {
+                        CompilerDirectives.transferToInterpreterAndInvalidate();
+                        promiseClosureCache = insert(InlineCacheNode.createPromise(3));
+                    }
+
+                    return promiseClosureCache.execute(promiseFrame, promise.getClosure());
+                } finally {
+                    RArguments.setCallSourceSection(promiseFrame, oldCallSource);
+                }
             }
+        } finally {
+            promise.setUnderEvaluation(false);
         }
     }
 
@@ -213,9 +219,12 @@ public class PromiseHelperNode extends Node {
             // plain'n'simple RPromise
             return generateValueDefault(frame, promise, callSrc);
         } else if (promise.isValid()) {
-// promise.notifySuccess();
-
-            return getEagerValue(promise, callSrc);
+            if (isOptEagerProfile.profile(promise.getOptType() == OptType.EAGER)) {
+                return getEagerValue(promise);
+            } else {
+                assert promise.getOptType() == OptType.PROMISED;
+                return getPromisedEagerValue(frame, promise, callSrc);
+            }
         } else {
             fallbackProfile.enter();
             promise.notifyFailure();
@@ -228,28 +237,9 @@ public class PromiseHelperNode extends Node {
         }
     }
 
-    @TruffleBoundary
-    private Object generateValueVararg(VarargPromise promise, SourceSection callSrc) {
-        RPromise nextPromise = promise.getVararg();
-        // TODO TruffleBoundary really needed? Null frame ok?
-        return checkNextNode().doEvaluate((VirtualFrame) null, nextPromise, callSrc);
-    }
-
-    private Object getEagerValue(EagerPromise promise, SourceSection callSrc) {
-        OptType profiledOptType = optTypeProfile.profile(promise.getOptType());
-        if (profiledOptType == OptType.EAGER) {
-            return getEagerValue(promise);
-        } else if (profiledOptType == OptType.PROMISED) {
-            return getPromisedEagerValue(promise, callSrc);
-        }
-        throw RInternalError.shouldNotReachHere();
-    }
-
-    @TruffleBoundary
-    private Object getPromisedEagerValue(EagerPromise promise, SourceSection callSrc) {
+    private Object getPromisedEagerValue(VirtualFrame frame, EagerPromise promise, SourceSection callSrc) {
         RPromise nextPromise = (RPromise) promise.getEagerValue();
-        // TODO TruffleBoundary really needed? Null frame ok?
-        return checkNextNode().doEvaluate((VirtualFrame) null, nextPromise, callSrc);
+        return checkNextNode().doEvaluate(frame, nextPromise, callSrc);
     }
 
     public static Object evaluateSlowPath(VirtualFrame frame, RPromise promise) {
@@ -283,19 +273,13 @@ public class PromiseHelperNode extends Node {
     /**
      * Materializes the promises' frame. After execution, it is guaranteed to be !=
      * <code>null</code>
-     *
-     * @return Whether it was materialized before
-     * @see RPromise#getFrame()
      */
-    public boolean materialize(RPromise promise) {
-        OptType profiledOptType = optTypeProfile.profile(promise.getOptType());
-        if (profiledOptType == OptType.EAGER || profiledOptType == OptType.PROMISED) {
+    public void materialize(RPromise promise) {
+        if (isOptEagerProfile.profile(promise.getOptType() == OptType.EAGER) || isOptPromisedProfile.profile(promise.getOptType() == OptType.PROMISED)) {
             EagerPromise eager = (EagerPromise) promise;
-            return eager.materialize();
-        } else {
-            // Nothing to do here; already the generic and slow RPromise
-            return true;
+            eager.materialize();
         }
+        // otherwise: already the generic and slow RPromise
     }
 
     private PromiseHelperNode checkNextNode() {
@@ -336,10 +320,12 @@ public class PromiseHelperNode extends Node {
     private final ValueProfile valueProfile = ValueProfile.createClassProfile();
 
     // Eager
-    private final ValueProfile optTypeProfile = ValueProfile.createIdentityProfile();
+    private final ConditionProfile isOptDefaultProfile = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile isOptEagerProfile = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile isOptPromisedProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile isDeoptimizedProfile = ConditionProfile.createBinaryProfile();
     private final BranchProfile fallbackProfile = BranchProfile.create();
-    private final ValueProfile eagerValueProfile = ValueProfile.createPrimitiveProfile();
+    private final ValueProfile eagerValueProfile = ValueProfile.createClassProfile();
 
     public boolean isInlined(RPromise promise) {
         return isInlinedProfile.profile(promise.isInlined());

@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -18,7 +18,7 @@ public class While extends Loop {
 
     private final ASTNode condition;
 
-    public While(SourceSection source, ASTNode condition, ASTNode expression) {
+    While(SourceSection source, ASTNode condition, ASTNode expression) {
         super(source, expression);
         this.condition = condition;
     }

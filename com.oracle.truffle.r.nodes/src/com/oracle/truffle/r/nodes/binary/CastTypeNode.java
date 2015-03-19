@@ -4,14 +4,14 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
 
 package com.oracle.truffle.r.nodes.binary;
 
-import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.unary.*;
@@ -19,191 +19,70 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
+@SuppressWarnings("unused")
 public abstract class CastTypeNode extends BinaryNode {
 
-    @Child private CastStringNode castStringNode;
-    @Child private CastComplexNode castComplexNode;
-    @Child private CastDoubleNode castDoubleNode;
-    @Child private CastIntegerNode castIntegerNode;
-    @Child private CastLogicalNode castLogicalNode;
-    @Child private CastRawNode castRawNode;
-    @Child private CastListNode castListNode;
-    @Child private CastToVectorNode castToVectorNode;
-    @Child private TypeofNode typeof;
+    protected static final int NUMBER_OF_TYPES = RType.values().length;
 
-    @Child private CastTypeNode castRecursive;
+    @Child protected TypeofNode typeof = TypeofNodeGen.create(null);
 
     public abstract Object execute(VirtualFrame frame, Object value, RType type);
 
-    @SuppressWarnings("unused")
-    @Specialization(guards = "isSameType")
-    protected RAbstractVector doCast(VirtualFrame frame, RAbstractVector value, RType type) {
+    @Specialization(guards = "typeof.execute(value) == type")
+    protected static RAbstractVector doPass(RAbstractVector value, RType type) {
         return value;
     }
 
-    @SuppressWarnings("unused")
-    @Specialization(guards = {"!isSameType", "isString"})
-    protected Object doCastString(VirtualFrame frame, RAbstractVector value, RType type) {
-        initCastString();
-        return castStringNode.executeString(frame, value);
-    }
-
-    @SuppressWarnings("unused")
-    @Specialization(guards = {"!isSameType", "isComplex"})
-    protected Object doCastComplex(VirtualFrame frame, RAbstractVector value, RType type) {
-        initCastComplex();
-        return castComplexNode.executeComplex(frame, value);
-    }
-
-    @SuppressWarnings("unused")
-    @Specialization(guards = {"!isSameType", "isDouble"})
-    protected Object doCastDouble(VirtualFrame frame, RAbstractVector value, RType type) {
-        initCastDouble();
-        return castDoubleNode.executeDouble(frame, value);
-    }
-
-    @SuppressWarnings("unused")
-    @Specialization(guards = {"!isSameType", "isInteger"})
-    protected Object doCastInteger(VirtualFrame frame, RAbstractVector value, RType type) {
-        initCastInteger();
-        return castIntegerNode.executeInt(frame, value);
-    }
-
-    @SuppressWarnings("unused")
-    @Specialization(guards = {"!isSameType", "isLogical"})
-    protected Object doCastLogical(VirtualFrame frame, RAbstractVector value, RType type) {
-        initCastLogical();
-        return castLogicalNode.executeLogical(frame, value);
-    }
-
-    @SuppressWarnings("unused")
-    @Specialization(guards = {"!isSameType", "isRaw"})
-    protected Object doCastRaw(VirtualFrame frame, RAbstractVector value, RType type) {
-        initCastRaw();
-        return castRawNode.executeRaw(frame, value);
-    }
-
-    @SuppressWarnings("unused")
-    @Specialization(guards = {"!isSameType", "isList"})
-    protected RList doCastList(VirtualFrame frame, RAbstractVector value, RType type) {
-        initCastList();
-        return castListNode.executeList(frame, value);
-    }
-
-    @SuppressWarnings("unused")
-    @Specialization
-    protected Object doCastUnknown(RAbstractVector value, RType type) {
-        return null;
+    @Specialization(guards = {"typeof.execute(value) != type", "type == cachedType", "!isNull(cast)"}, limit = "NUMBER_OF_TYPES")
+    protected static Object doCast(VirtualFrame frame, RAbstractVector value, RType type, //
+                    @Cached("type") RType cachedType, //
+                    @Cached("createCast(cachedType)") CastNode cast) {
+        return cast.executeCast(frame, value);
     }
 
     @Specialization
-    protected Object doCastDataFrame(VirtualFrame frame, RDataFrame value, RType type) {
-        initCastRecursive();
+    protected static Object doCastDataFrame(VirtualFrame frame, RDataFrame value, RType type, //
+                    @Cached("create()") CastTypeNode castRecursive) {
         return castRecursive.execute(frame, value.getVector(), type);
     }
 
-    @SuppressWarnings("unused")
-    protected static boolean isString(RAbstractVector value, RType type) {
-        return type == RType.Character;
+    @Specialization(guards = "isNull(createCast(type))")
+    @TruffleBoundary
+    protected static Object doCastUnknown(RAbstractVector value, RType type) {
+        // FIXME should we really return null here?
+        return null;
     }
 
-    @SuppressWarnings("unused")
-    protected static boolean isComplex(RAbstractVector value, RType type) {
-        return type == RType.Complex;
-    }
+    @TruffleBoundary
+    protected static CastNode createCast(RType type) {
+        switch (type) {
+            case Character:
+                return CastStringNodeGen.create(null, false, false, false, false);
+            case Complex:
+                return CastComplexNodeGen.create(null, false, false, false);
+            case Double:
+            case Numeric:
+                return CastDoubleNodeGen.create(null, false, false, false);
+            case Integer:
+                return CastIntegerNodeGen.create(null, false, false, false);
+            case Logical:
+                return CastLogicalNodeGen.create(null, false, false, false);
+            case Raw:
+                return CastRawNodeGen.create(null, false, false, false);
+            case List:
+                return CastListNodeGen.create(null, false, false, false);
+            default:
+                return null;
 
-    @SuppressWarnings("unused")
-    protected static boolean isDouble(final RAbstractVector value, RType type) {
-        return type == RType.Double || type == RType.Numeric;
-    }
-
-    @SuppressWarnings("unused")
-    protected static boolean isInteger(RAbstractVector value, RType type) {
-        return type == RType.Integer;
-    }
-
-    @SuppressWarnings("unused")
-    protected static boolean isLogical(RAbstractVector value, RType type) {
-        return type == RType.Logical;
-    }
-
-    @SuppressWarnings("unused")
-    protected static boolean isRaw(RAbstractVector value, RType type) {
-        return type == RType.Raw;
-    }
-
-    @SuppressWarnings("unused")
-    protected static boolean isList(RAbstractVector value, RType type) {
-        return type == RType.List;
-    }
-
-    protected boolean isSameType(VirtualFrame frame, RAbstractVector value, RType type) {
-        initTypeof();
-        RType givenType = typeof.execute(frame, value);
-        return givenType.getName().equals(type);
-    }
-
-    private void initTypeof() {
-        if (typeof == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            typeof = insert(TypeofNodeGen.create(null));
         }
     }
 
-    private void initCastString() {
-        if (castStringNode == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            castStringNode = insert(CastStringNodeGen.create(null, false, false, false, false));
-        }
+    protected static boolean isNull(Object value) {
+        return value == null;
     }
 
-    private void initCastComplex() {
-        if (castComplexNode == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            castComplexNode = insert(CastComplexNodeGen.create(null, false, false, false));
-        }
-    }
-
-    private void initCastDouble() {
-        if (castDoubleNode == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            castDoubleNode = insert(CastDoubleNodeGen.create(null, false, false, false));
-        }
-    }
-
-    private void initCastInteger() {
-        if (castIntegerNode == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            castIntegerNode = insert(CastIntegerNodeGen.create(null, false, false, false));
-        }
-    }
-
-    private void initCastLogical() {
-        if (castLogicalNode == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            castLogicalNode = insert(CastLogicalNodeGen.create(null, false, false, false));
-        }
-    }
-
-    private void initCastRaw() {
-        if (castRawNode == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            castRawNode = insert(CastRawNodeGen.create(null, false, false, false));
-        }
-    }
-
-    private void initCastList() {
-        if (castListNode == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            castListNode = insert(CastListNodeGen.create(null, false, false, false));
-        }
-    }
-
-    private void initCastRecursive() {
-        if (castRecursive == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            castRecursive = insert(CastTypeNodeGen.create(null, null));
-        }
+    public static CastTypeNode create() {
+        return CastTypeNodeGen.create(null, null);
     }
 
 }

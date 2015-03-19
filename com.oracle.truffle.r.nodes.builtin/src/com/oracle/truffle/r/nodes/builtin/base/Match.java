@@ -31,7 +31,6 @@ import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
@@ -57,9 +56,9 @@ public abstract class Match extends RBuiltinNode {
     private final ConditionProfile bigTableProfile = ConditionProfile.createBinaryProfile();
 
     @Override
-    public RNode[] getParameterValues() {
+    public Object[] getDefaultParameterValues() {
         // x, table, nomatch = NA_integer_, incomparables = NULL
-        return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RRuntime.INT_NA), ConstantNode.create(RNull.instance)};
+        return new Object[]{RMissing.instance, RMissing.instance, RRuntime.INT_NA, RNull.instance};
     }
 
     private String castString(VirtualFrame frame, Object operand) {
@@ -102,7 +101,8 @@ public abstract class Match extends RBuiltinNode {
 
     @Specialization
     protected RIntVector match(VirtualFrame frame, RFactor x, RFactor table, Object nomatchObj, Object incomparables) {
-        naCheck.enable(!x.getVector().isComplete() || table.getVector().isComplete());
+        naCheck.enable(x.getVector());
+        naCheck.enable(table.getVector());
         return matchRecursive(frame, RClosures.createFactorToVector(x, naCheck), RClosures.createFactorToVector(table, naCheck), nomatchObj, incomparables);
     }
 
@@ -375,7 +375,7 @@ public abstract class Match extends RBuiltinNode {
         return RDataFactory.createIntVector(result, setCompleteState(matchAll, nomatch));
     }
 
-    @Specialization(guards = "!isStringVectorTable")
+    @Specialization(guards = "!isStringVectorTable(table)")
     @SuppressWarnings("unused")
     protected RIntVector match(VirtualFrame frame, RAbstractStringVector x, RAbstractVector table, Object nomatchObj, Object incomparables) {
         controlVisibility();
@@ -448,7 +448,7 @@ public abstract class Match extends RBuiltinNode {
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.MATCH_VECTOR_ARGS);
     }
 
-    protected boolean isStringVectorTable(@SuppressWarnings("unused") RAbstractStringVector x, RAbstractVector table) {
+    protected boolean isStringVectorTable(RAbstractVector table) {
         return table.getElementClass() == String.class;
     }
 

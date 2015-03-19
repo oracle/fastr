@@ -39,7 +39,7 @@ public abstract class UpdateClass extends RBuiltinNode {
 
     public abstract Object execute(VirtualFrame frame, RAbstractContainer vector, Object o);
 
-    @Specialization(guards = "!isStringVector")
+    @Specialization(guards = "!isStringVector(className)")
     protected Object setClass(VirtualFrame frame, RAbstractContainer arg, RAbstractVector className) {
         controlVisibility();
         if (className.getLength() == 0) {
@@ -70,7 +70,7 @@ public abstract class UpdateClass extends RBuiltinNode {
         controlVisibility();
         initTypeof();
         if (!arg.isObject(attrProfiles)) {
-            RType argType = this.typeof.execute(frame, arg);
+            RType argType = this.typeof.execute(arg);
             if (argType.equals(className) || (RType.Numeric.getName().equals(className) && (argType == RType.Integer || argType == RType.Double))) {
                 // "explicit" attribute might have been set (e.g. by oldClass<-)
                 return setClass(arg, RNull.instance);
@@ -185,7 +185,7 @@ public abstract class UpdateClass extends RBuiltinNode {
         }
     }
 
-    protected boolean isStringVector(@SuppressWarnings("unused") RAbstractContainer arg, RAbstractVector className) {
+    protected boolean isStringVector(RAbstractVector className) {
         return className.getElementClass() == RString.class;
     }
 }

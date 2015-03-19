@@ -33,8 +33,8 @@ public abstract class PositionsArrayConversionNodeAdapter extends RNode {
     @Children protected final ArrayPositionCast[] positionCasts;
     @Children protected final OperatorConverterNode[] operatorConverters;
 
-    protected final boolean isSubset;
-    protected final int length;
+    private final boolean isSubset;
+    private final int length;
 
     public Object executeArg(VirtualFrame frame, Object container, Object operand, int i) {
         return positionCasts[i].executeArg(frame, container, operand);

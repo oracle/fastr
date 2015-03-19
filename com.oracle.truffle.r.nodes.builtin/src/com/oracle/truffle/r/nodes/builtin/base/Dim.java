@@ -44,7 +44,7 @@ public abstract class Dim extends RBuiltinNode {
 
     private static final String NAME = "dim";
 
-    @Child ShortRowNames shortRowNames;
+    @Child private ShortRowNames shortRowNames;
     @Child private DispatchedCallNode dcn;
 
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
@@ -81,19 +81,19 @@ public abstract class Dim extends RBuiltinNode {
         return RNull.instance;
     }
 
-    @Specialization(guards = {"!isObject", "!hasDimensions"})
-    protected RNull dim(RAbstractContainer container) {
+    @Specialization(guards = {"!isObject(frame, container)", "!hasDimensions(container)"})
+    protected RNull dim(VirtualFrame frame, RAbstractContainer container) {
         controlVisibility();
         return RNull.instance;
     }
 
-    @Specialization(guards = {"!isObject", "hasDimensions"})
-    protected Object dimWithDimensions(RAbstractContainer container) {
+    @Specialization(guards = {"!isObject(frame, container)", "hasDimensions(container)"})
+    protected Object dimWithDimensions(VirtualFrame frame, RAbstractContainer container) {
         controlVisibility();
         return RDataFactory.createIntVector(container.getDimensions(), RDataFactory.COMPLETE_VECTOR);
     }
 
-    @Specialization(guards = "isObject")
+    @Specialization(guards = "isObject(frame, container)")
     protected Object dimObject(VirtualFrame frame, RAbstractContainer container) {
         controlVisibility();
         if (dcn == null) {
@@ -103,7 +103,7 @@ public abstract class Dim extends RBuiltinNode {
         try {
             return dcn.executeInternal(frame, container.getClassHierarchy(), new Object[]{container});
         } catch (NoGenericMethodException e) {
-            return hasDimensions(container) ? dimWithDimensions(container) : RNull.instance;
+            return hasDimensions(container) ? dimWithDimensions(frame, container) : RNull.instance;
         }
 
     }

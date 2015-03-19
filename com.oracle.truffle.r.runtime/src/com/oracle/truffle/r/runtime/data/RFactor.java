@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
+import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
 public final class RFactor implements RShareable, RAbstractContainer {
@@ -33,6 +34,10 @@ public final class RFactor implements RShareable, RAbstractContainer {
     public RFactor(RIntVector vector, boolean ordered) {
         this.vector = vector;
         this.ordered = ordered;
+    }
+
+    public RType getRType() {
+        return RType.Integer;
     }
 
     public RIntVector getVector() {
@@ -146,14 +151,6 @@ public final class RFactor implements RShareable, RAbstractContainer {
         return this;
     }
 
-    public int getElementIndexByName(RAttributeProfiles attrProfiles, String name) {
-        return vector.getElementIndexByName(attrProfiles, name);
-    }
-
-    public int getElementIndexByNameInexact(RAttributeProfiles attrProfiles, String name) {
-        return vector.getElementIndexByNameInexact(attrProfiles, name);
-    }
-
     public void setLevels(Object newLevels) {
         vector.setLevels(newLevels);
     }
@@ -171,5 +168,4 @@ public final class RFactor implements RShareable, RAbstractContainer {
         RVector levels = vector.getLevels();
         return levels == null ? 0 : levels.getLength();
     }
-
 }

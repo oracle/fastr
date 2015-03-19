@@ -30,8 +30,11 @@ import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
+import edu.umd.cs.findbugs.internalAnnotations.*;
+
 @SuppressWarnings("unused")
 @NodeChild(value = "recursive", type = RNode.class)
+@ImportStatic(RRuntime.class)
 public abstract class PrecedenceNode extends UnaryNode {
 
     public static final int NO_PRECEDENCE = -1;
@@ -43,6 +46,8 @@ public abstract class PrecedenceNode extends UnaryNode {
     public static final int STRING_PRECEDENCE = 5;
     public static final int LIST_PRECEDENCE = 6;
     public static final int EXPRESSION_PRECEDENCE = 7;
+
+    public static final int NUMBER_OF_PRECEDENCES = 9;
 
     @Override
     public final Object execute(VirtualFrame frame) {
@@ -144,7 +149,7 @@ public abstract class PrecedenceNode extends UnaryNode {
         return LIST_PRECEDENCE;
     }
 
-    @Specialization(guards = "isRecursive")
+    @Specialization(guards = "recursive == LOGICAL_TRUE")
     protected int doListRecursive(VirtualFrame frame, RList val, byte recursive) {
         int precedence = -1;
         for (int i = 0; i < val.getLength(); ++i) {
@@ -154,13 +159,13 @@ public abstract class PrecedenceNode extends UnaryNode {
         return precedence;
     }
 
-    @Specialization(guards = "!isRecursive")
+    @Specialization(guards = "recursive != LOGICAL_TRUE")
     protected int doList(RList val, byte recursive) {
         return LIST_PRECEDENCE;
     }
 
     @Specialization
-    protected int doDataFrame(VirtualFrame frame, RDataFrame val, byte recursive) {
+    protected int doDataFrame(RDataFrame val, byte recursive) {
         return LIST_PRECEDENCE;
     }
 
@@ -174,7 +179,4 @@ public abstract class PrecedenceNode extends UnaryNode {
         return INT_PRECEDENCE;
     }
 
-    protected boolean isRecursive(RList val, byte recursive) {
-        return recursive == RRuntime.LOGICAL_TRUE;
-    }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,29 +20,16 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.control;
+package com.oracle.truffle.r.nodes.builtin.base;
 
-import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.nodes.*;
-import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.runtime.*;
 
-public abstract class LoopNode extends RNode {
-
-    protected final void reportLoopCount(int count) {
-        reportLoopCount(this, count);
-    }
-
-    public static void reportLoopCount(RNode loopNode, int count) {
-        CompilerAsserts.neverPartOfCompilation();
-        Node current = loopNode.getParent();
-        while (current != null && !(current instanceof RootNode)) {
-            current = current.getParent();
-        }
-        if (current != null) {
-            RootNode root = (RootNode) current;
-            if (root.getCallTarget() instanceof LoopCountReceiver) {
-                ((LoopCountReceiver) root.getCallTarget()).reportLoopCount(count);
-            }
-        }
+@RBuiltin(name = "trunc", kind = RBuiltinKind.PRIMITIVE, parameterNames = {})
+public abstract class Trunc extends RBuiltinNode {
+    @Specialization
+    protected Object trunc(@SuppressWarnings("unused") Object x) {
+        throw RError.nyi(getEncapsulatingSourceSection(), " trunc");
     }
 }

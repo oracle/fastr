@@ -40,10 +40,6 @@ public class REnvTruffleFrameAccess extends REnvFrameAccessBindingsAdapter {
 
     private final MaterializedFrame frame;
 
-    public REnvTruffleFrameAccess(VirtualFrame frame) {
-        this.frame = frame.materialize();
-    }
-
     public REnvTruffleFrameAccess(MaterializedFrame frame) {
         this.frame = frame;
     }

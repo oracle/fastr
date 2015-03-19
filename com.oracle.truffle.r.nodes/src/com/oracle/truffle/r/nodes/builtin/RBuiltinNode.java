@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.nodes.builtin;
 
-import java.lang.reflect.*;
 import java.util.*;
 
 import com.oracle.truffle.api.*;
@@ -73,7 +72,7 @@ public abstract class RBuiltinNode extends LeafCallNode implements VisibilityCon
     /**
      * Accessor to the Truffle-generated 'arguments' field, used by binary operators and such.<br/>
      * <strong>ATTENTION:</strong> For implementing default values, use
-     * {@link #getParameterValues()}!!!
+     * {@link #getDefaultParameterValues()}!!!
      *
      * @return The arguments this builtin has received
      */
@@ -109,10 +108,10 @@ public abstract class RBuiltinNode extends LeafCallNode implements VisibilityCon
     }
 
     /**
-     * Return the default values of the builin's formal arguments. TODO rename to include "Default"
+     * Return the default values of the builin's formal arguments.
      */
-    public RNode[] getParameterValues() {
-        return RNode.EMTPY_RNODE_ARRAY;
+    public Object[] getDefaultParameterValues() {
+        return EMPTY_OBJECT_ARRAY;
     }
 
     @Override
@@ -128,41 +127,6 @@ public abstract class RBuiltinNode extends LeafCallNode implements VisibilityCon
     @Override
     public final double executeDouble(VirtualFrame frame, RFunction function) throws UnexpectedResultException {
         return executeDouble(frame);
-    }
-
-    /**
-     * WORKAROUND for recursive sharing bug. A shallow copy is insufficient because is can cause
-     * shared state in the {@code arguments} field to be overwritten during a re-specialization.
-     * This is an ugly fix that uses reflection to update the hidden {@code arguments} field, and
-     * should go away with an upcoming Truffle fix.
-     */
-    @Override
-    public Node copy() {
-        RBuiltinNode copy = (RBuiltinNode) super.copy();
-        RNode[] args = getArguments();
-        RNode[] copyArgs = Arrays.copyOf(args, args.length);
-        try {
-            Field field = getArgumentsField(getClass());
-            field.setAccessible(true);
-            field.set(copy, copyArgs);
-        } catch (IllegalAccessException | NoSuchFieldException ex) {
-            Utils.fatalError("failed to update RBuiltinNode.arguments");
-        }
-        return copy;
-    }
-
-    /**
-     * WORKAROUND support method.
-     */
-    private Field getArgumentsField(Class<?> klass) throws NoSuchFieldException {
-        if (klass == RBuiltinNode.class) {
-            throw new NoSuchFieldException();
-        }
-        try {
-            return klass.getDeclaredField("arguments");
-        } catch (NoSuchFieldException ex) {
-            return getArgumentsField(klass.getSuperclass());
-        }
     }
 
     private static RNode[] createAccessArgumentsNodes(RBuiltinFactory builtin) {
@@ -181,7 +145,14 @@ public abstract class RBuiltinNode extends LeafCallNode implements VisibilityCon
         RNode[] argAccessNodes = createAccessArgumentsNodes(builtin);
         RBuiltinNode node = createNode(builtin, argAccessNodes.clone(), ArgumentsSignature.empty(argAccessNodes.length));
 
-        FormalArguments formals = FormalArguments.create(node.getParameterValues(), node.getParameterSignature());
+        RNode[] constantDefaultParameters = new RNode[node.getDefaultParameterValues().length];
+        for (int i = 0; i < node.getDefaultParameterValues().length; i++) {
+            Object value = node.getDefaultParameterValues()[i];
+            assert !(value instanceof Node);
+            constantDefaultParameters[i] = value == null ? null : ConstantNode.create(value);
+        }
+
+        FormalArguments formals = FormalArguments.create(constantDefaultParameters, node.getParameterSignature());
         for (RNode access : argAccessNodes) {
             ((AccessArgumentNode) access).setFormals(formals);
         }
@@ -189,7 +160,7 @@ public abstract class RBuiltinNode extends LeafCallNode implements VisibilityCon
         // Setup
         FrameDescriptor frameDescriptor = new FrameDescriptor();
         RBuiltinRootNode root = new RBuiltinRootNode(node, formals, frameDescriptor);
-        FrameSlotChangeMonitor.initializeFrameDescriptor(frameDescriptor, false);
+        FrameSlotChangeMonitor.initializeFunctionFrameDescriptor(frameDescriptor);
         return Truffle.getRuntime().createCallTarget(root);
     }
 
@@ -279,7 +250,7 @@ public abstract class RBuiltinNode extends LeafCallNode implements VisibilityCon
      */
     public abstract static class RWrapperBuiltinNode extends RCustomBuiltinNode {
 
-        @Child private RNode delegate = createDelegate();
+        @Child private RNode delegate;
 
         public RWrapperBuiltinNode(RBuiltinNode prev) {
             super(prev);
@@ -287,49 +258,57 @@ public abstract class RBuiltinNode extends LeafCallNode implements VisibilityCon
 
         protected abstract RNode createDelegate();
 
+        private RNode getDelegate() {
+            if (delegate == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                delegate = insert(createDelegate());
+            }
+            return delegate;
+        }
+
         @Override
         public Object execute(VirtualFrame frame) {
-            return delegate.execute(frame);
+            return getDelegate().execute(frame);
         }
 
         @Override
         public Object[] executeArray(VirtualFrame frame) throws UnexpectedResultException {
-            return delegate.executeArray(frame);
+            return getDelegate().executeArray(frame);
         }
 
         @Override
         public byte executeByte(VirtualFrame frame) throws UnexpectedResultException {
-            return delegate.executeByte(frame);
+            return getDelegate().executeByte(frame);
         }
 
         @Override
         public double executeDouble(VirtualFrame frame) throws UnexpectedResultException {
-            return delegate.executeDouble(frame);
+            return getDelegate().executeDouble(frame);
         }
 
         @Override
         public RFunction executeFunction(VirtualFrame frame) throws UnexpectedResultException {
-            return delegate.executeFunction(frame);
+            return getDelegate().executeFunction(frame);
         }
 
         @Override
         public int executeInteger(VirtualFrame frame) throws UnexpectedResultException {
-            return delegate.executeInteger(frame);
+            return getDelegate().executeInteger(frame);
         }
 
         @Override
         public RNull executeNull(VirtualFrame frame) throws UnexpectedResultException {
-            return delegate.executeNull(frame);
+            return getDelegate().executeNull(frame);
         }
 
         @Override
         public RDoubleVector executeRDoubleVector(VirtualFrame frame) throws UnexpectedResultException {
-            return delegate.executeRDoubleVector(frame);
+            return getDelegate().executeRDoubleVector(frame);
         }
 
         @Override
         public RIntVector executeRIntVector(VirtualFrame frame) throws UnexpectedResultException {
-            return delegate.executeRIntVector(frame);
+            return getDelegate().executeRIntVector(frame);
         }
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,34 +22,21 @@
  */
 package com.oracle.truffle.r.nodes.instrument.debug;
 
-import com.oracle.truffle.api.Assumption;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.frame.MaterializedFrame;
-import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.instrument.Instrument;
-import com.oracle.truffle.api.instrument.Probe;
-import com.oracle.truffle.api.instrument.ProbeNode;
-import com.oracle.truffle.api.instrument.ProbeNode.WrapperNode;
-import com.oracle.truffle.api.instrument.StandardSyntaxTag;
-import com.oracle.truffle.api.instrument.SyntaxTag;
-import com.oracle.truffle.api.instrument.SyntaxTagTrap;
-import com.oracle.truffle.api.instrument.TruffleEventReceiver;
-import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.control.LoopNode;
-import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.api.nodes.NodeVisitor;
-import com.oracle.truffle.api.nodes.RootNode;
-import com.oracle.truffle.api.utilities.CyclicAssumption;
-import com.oracle.truffle.r.nodes.function.FunctionBodyNode;
-import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
-import com.oracle.truffle.r.nodes.function.FunctionStatementsNode;
-import com.oracle.truffle.r.nodes.function.FunctionUID;
-import com.oracle.truffle.r.nodes.instrument.RInstrument;
-import com.oracle.truffle.r.nodes.instrument.RSyntaxTag;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.RFunction;
-
 import java.util.*;
+
+import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.instrument.*;
+import com.oracle.truffle.api.instrument.ProbeNode.WrapperNode;
+import com.oracle.truffle.api.nodes.*;
+import com.oracle.truffle.api.utilities.*;
+import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.nodes.control.*;
+import com.oracle.truffle.r.nodes.function.*;
+import com.oracle.truffle.r.nodes.instrument.*;
+import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.data.*;
 
 /**
  * The implementation of the R debug functions.
@@ -64,8 +51,8 @@ import java.util.*;
  * handles the special behavior on entry/exit</li>
  * <li>{@link StatementEventReceiver}: attaches to all {@link StandardSyntaxTag#STATEMENT} nodes and
  * handles "n" and "s" browser commands</li>
- * <li>{@link LoopStatementEventReceiver}: attaches to {@link LoopNode} instances and handles
- * special "f" command behavior.
+ * <li>{@link LoopStatementEventReceiver}: attaches to {@link AbstractLoopNode} instances and
+ * handles special "f" command behavior.
  * </ul>
  * <p>
  * Step Into is slightly tricky because, at the point the command is issued, we do not know what
@@ -81,8 +68,8 @@ import java.util.*;
  * <p>
  * When invoked from within a loop The "f" command continues the loop body without entry and the
  * re-enables entry. This is handled by creating a {@link LoopStatementEventReceiver} per
- * {@link LoopNode}. On a "f" every receiver <b>except</b> the one associated with that loop is
- * disabled. On return from the loop, everything is re-enabled.
+ * {@link AbstractLoopNode}. On a "f" every receiver <b>except</b> the one associated with that loop
+ * is disabled. On return from the loop, everything is re-enabled.
  * <p>
  * Currently, {@code debugonce} and {@code undebug} are handled by disabling the receiver behavior.
  * Any change in enabled state is managed by an {@link Assumption} which will invalidate the code of
@@ -160,7 +147,7 @@ public class DebugHandling {
                     Probe probe = wrapper.getProbe();
                     if (probe.isTaggedAs(StandardSyntaxTag.STATEMENT)) {
                         Node child = wrapper.getChild();
-                        if (child instanceof LoopNode) {
+                        if (child instanceof AbstractLoopNode) {
                             probe.attach(functionStatementsEventReceiver.getLoopStatementInstrument(wrapper));
                         } else {
                             probe.attach(functionStatementsEventReceiver.getStatementInstrument());
@@ -172,7 +159,7 @@ public class DebugHandling {
         });
     }
 
-    private abstract static class DebugEventReceiver implements TruffleEventReceiver {
+    private abstract static class DebugEventReceiver implements ASTInstrumentListener {
 
         protected final Object text;
         protected final Object condition;
@@ -191,14 +178,14 @@ public class DebugHandling {
         }
 
         @Override
-        public void returnVoid(Node node, VirtualFrame frame) {
+        public void returnVoid(Probe probe, Node node, VirtualFrame frame) {
             if (!disabled()) {
                 throw RInternalError.shouldNotReachHere();
             }
         }
 
         @Override
-        public void returnExceptional(Node node, VirtualFrame frame, Exception exception) {
+        public void returnExceptional(Probe probe, Node node, VirtualFrame frame, Exception exception) {
         }
 
         boolean disabled() {
@@ -237,7 +224,7 @@ public class DebugHandling {
                     break;
                 case FINISH:
                     // If in loop, continue to loop end, else act like CONTINUE
-                    LoopNode loopNode = inLoop(node);
+                    AbstractLoopNode loopNode = inLoop(node);
                     if (loopNode != null) {
                         // Have to disable just the body of the loop
                         FunctionStatementsEventReceiver fser = receiverMap.get(functionDefinitionNode.getUID());
@@ -275,7 +262,7 @@ public class DebugHandling {
         FunctionStatementsEventReceiver(FunctionDefinitionNode functionDefinitionNode, Object text, Object condition, boolean once) {
             super(functionDefinitionNode, text, condition);
             receiverMap.put(functionDefinitionNode.getUID(), this);
-            instruments.add(Instrument.create(this));
+            instruments.add(Instrument.create(this, "debug"));
             statementReceiver = new StatementEventReceiver(functionDefinitionNode, text, condition);
             this.once = once;
         }
@@ -285,7 +272,7 @@ public class DebugHandling {
         }
 
         Instrument getStatementInstrument() {
-            Instrument instrument = Instrument.create(statementReceiver);
+            Instrument instrument = Instrument.create(statementReceiver, "debug");
             instruments.add(instrument);
             return instrument;
         }
@@ -293,7 +280,7 @@ public class DebugHandling {
         Instrument getLoopStatementInstrument(WrapperNode loopNodeWrapper) {
             LoopStatementEventReceiver lser = new LoopStatementEventReceiver(functionDefinitionNode, text, condition, loopNodeWrapper, this);
             loopStatementReceivers.add(lser);
-            Instrument instrument = Instrument.create(lser);
+            Instrument instrument = Instrument.create(lser, "debug");
             instruments.add(instrument);
             return instrument;
         }
@@ -324,7 +311,7 @@ public class DebugHandling {
             }
         }
 
-        void setFinishing(LoopNode loopNode) {
+        void setFinishing(AbstractLoopNode loopNode) {
             // Disable every statement receiver except that for loopNode
             WrapperNode loopNodeWrapper = (WrapperNode) loopNode.getParent();
             for (LoopStatementEventReceiver lser : loopStatementReceivers) {
@@ -345,7 +332,7 @@ public class DebugHandling {
         }
 
         @Override
-        public void enter(Node node, VirtualFrame frame) {
+        public void enter(Probe probe, Node node, VirtualFrame frame) {
             if (!disabled()) {
                 RContext.getInstance().getConsoleHandler().print("debugging in: ");
                 printCall(frame);
@@ -359,14 +346,14 @@ public class DebugHandling {
         }
 
         @Override
-        public void returnValue(Node node, VirtualFrame frame, Object result) {
+        public void returnValue(Probe probe, Node node, VirtualFrame frame, Object result) {
             if (!disabled()) {
                 returnCleanup(frame);
             }
         }
 
         @Override
-        public void returnExceptional(Node node, VirtualFrame frame, Exception exception) {
+        public void returnExceptional(Probe probe, Node node, VirtualFrame frame, Exception exception) {
             if (!disabled()) {
                 returnCleanup(frame);
             }
@@ -414,7 +401,7 @@ public class DebugHandling {
         }
 
         @Override
-        public void enter(Node node, VirtualFrame frame) {
+        public void enter(Probe probe, Node node, VirtualFrame frame) {
             if (!disabled()) {
                 // in case we did a step into that never called a function
                 StepIntoTagTrap.clearTrap();
@@ -424,7 +411,7 @@ public class DebugHandling {
         }
 
         @Override
-        public void returnValue(Node node, VirtualFrame frame, Object result) {
+        public void returnValue(Probe probe, Node node, VirtualFrame frame, Object result) {
         }
 
     }
@@ -446,9 +433,9 @@ public class DebugHandling {
         }
 
         @Override
-        public void enter(Node node, VirtualFrame frame) {
+        public void enter(Probe probe, Node node, VirtualFrame frame) {
             if (!disabled()) {
-                super.enter(node, frame);
+                super.enter(probe, node, frame);
             }
         }
 
@@ -461,14 +448,14 @@ public class DebugHandling {
         }
 
         @Override
-        public void returnExceptional(Node node, VirtualFrame frame, Exception exception) {
+        public void returnExceptional(Probe probe, Node node, VirtualFrame frame, Exception exception) {
             if (!disabled()) {
                 returnCleanup();
             }
         }
 
         @Override
-        public void returnValue(Node node, VirtualFrame frame, Object result) {
+        public void returnValue(Probe probe, Node node, VirtualFrame frame, Object result) {
             if (!disabled()) {
                 returnCleanup();
             }
@@ -483,12 +470,12 @@ public class DebugHandling {
 
     }
 
-    private static LoopNode inLoop(final Node nodeArg) {
+    private static AbstractLoopNode inLoop(final Node nodeArg) {
         Node node = nodeArg;
         while (!(node instanceof RootNode)) {
             node = node.getParent();
-            if (node instanceof LoopNode) {
-                return (LoopNode) node;
+            if (node instanceof AbstractLoopNode) {
+                return (AbstractLoopNode) node;
             }
         }
         return null;
@@ -523,7 +510,7 @@ public class DebugHandling {
 
         static void clearTrap() {
             if (set) {
-                Probe.clearTagTrap();
+                Probe.setTagTrap(null);
                 set = false;
             }
         }

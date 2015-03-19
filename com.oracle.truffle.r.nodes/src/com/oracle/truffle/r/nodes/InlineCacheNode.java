@@ -29,6 +29,8 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
+import com.oracle.truffle.api.utilities.*;
+import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RContext.Engine;
 import com.oracle.truffle.r.runtime.data.*;
@@ -113,6 +115,7 @@ public abstract class InlineCacheNode<F extends Frame, T> extends Node {
 
         private final class DirectInlineCacheNode extends InlineCacheNode<F, T> {
 
+            private final ConditionProfile isVirtualFrameProfile = ConditionProfile.createBinaryProfile();
             private final T originalValue;
             @Child private RNode reified;
             @Child private InlineCacheNode<F, T> next;
@@ -130,7 +133,8 @@ public abstract class InlineCacheNode<F extends Frame, T> extends Node {
 
             @Override
             public Object execute(F frame, T value) {
-                return value == originalValue ? reified.execute((VirtualFrame) frame) : next.execute(frame, value);
+                VirtualFrame vf = isVirtualFrameProfile.profile(frame instanceof VirtualFrame) ? (VirtualFrame) frame : new SubstituteVirtualFrame(frame.materialize());
+                return value == originalValue ? reified.execute(vf) : next.execute(frame, value);
             }
         }
 

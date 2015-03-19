@@ -15,6 +15,7 @@ import java.io.*;
 import java.util.*;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.options.*;
 import com.oracle.truffle.r.runtime.conn.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -130,6 +131,7 @@ public class RSerialize {
         }
 
         protected Object addReadRef(Object item) {
+            assert item != null;
             if (refTableIndex >= refTable.length) {
                 Object[] newRefTable = new Object[2 * refTable.length];
                 System.arraycopy(refTable, 0, newRefTable, 0, refTable.length);
@@ -140,6 +142,7 @@ public class RSerialize {
         }
 
         protected Object getReadRef(int index) {
+            assert index > 0 && index <= refTableIndex;
             return refTable[index - 1];
         }
 
@@ -175,23 +178,31 @@ public class RSerialize {
      * This variant exists for the {@code lazyLoadDBFetch} function. In certain cases, when
      * {@link Input#persistentRestore} is called, an R function needs to be evaluated with an
      * argument read from the serialized stream. This is handled with a callback object.
+     *
+     * @param packageName the name of the package that the lozyLoad is from
      */
     @TruffleBoundary
-    public static Object unserialize(byte[] data, CallHook hook, int depth) throws IOException {
+    public static Object unserialize(byte[] data, CallHook hook, int depth, String packageName) throws IOException {
         InputStream is = new PByteArrayInputStream(data);
-        Input instance = trace() ? new TracingInput(is, hook, depth) : new Input(is, hook, depth);
+        Input instance = trace() ? new TracingInput(is, hook, depth, packageName) : new Input(is, hook, depth, packageName);
         return instance.unserialize();
     }
 
     private static class Input extends Common {
         protected final PInputStream stream;
+        /**
+         * Only set when called from lazyLoadDBFetch. Helps to identify the package of the deparsed
+         * closure.
+         */
+        protected final String packageName;
 
         private Input(RConnection conn, int depth) throws IOException {
-            this(conn.getInputStream(), null, depth);
+            this(conn.getInputStream(), null, depth, null);
         }
 
-        private Input(InputStream is, CallHook hook, int depth) throws IOException {
+        private Input(InputStream is, CallHook hook, int depth, String packageName) throws IOException {
             super(hook, depth);
+            this.packageName = packageName;
             byte[] buf = new byte[2];
             is.read(buf);
             switch (buf[0]) {
@@ -258,18 +269,20 @@ public class RSerialize {
                     return REnvironment.baseNamespaceEnv();
 
                 case REFSXP: {
-                    return getReadRef(inRefIndex(flags));
+                    int index = inRefIndex(flags);
+                    Object r = getReadRef(index);
+                    return checkResult(r);
                 }
 
                 case NAMESPACESXP: {
                     RStringVector s = inStringVec(false);
-                    return addReadRef(RContext.getRASTHelper().findNamespace(s, depth));
+                    return checkResult(addReadRef(RContext.getRASTHelper().findNamespace(s, depth)));
                 }
 
                 case PERSISTSXP: {
                     RStringVector sv = inStringVec(false);
                     result = persistentRestore(sv);
-                    return addReadRef(result);
+                    return checkResult(addReadRef(result));
                 }
 
                 case ENVSXP: {
@@ -308,7 +321,7 @@ public class RSerialize {
                     if (attr != RNull.instance) {
                         setAttributes(env, attr);
                     }
-                    return env;
+                    return checkResult(env);
                 }
 
                 case PACKAGESXP: {
@@ -321,7 +334,8 @@ public class RSerialize {
                     if (pkgEnv == null) {
                         pkgEnv = REnvironment.globalEnv();
                     }
-                    return pkgEnv;
+
+                    return checkResult(addReadRef(pkgEnv));
                 }
 
                 case LISTSXP:
@@ -358,7 +372,9 @@ public class RSerialize {
                              * there (and overwrite the promise), so we fix the enclosing frame up
                              * on return.
                              */
-                            RExpression expr = RContext.getEngine().parse(deparse);
+                            String packageId = "<package:" + packageName + " deparse>";
+                            Source source = Source.asPseudoFile(deparse, packageId);
+                            RExpression expr = RContext.getEngine().parse(source);
                             RFunction func = (RFunction) RContext.getEngine().eval(expr, RDataFactory.createNewEnv(REnvironment.emptyEnv(), 0), depth + 1);
                             func.setEnclosingFrame(((REnvironment) rpl.getTag()).getFrame());
                             result = func;
@@ -367,7 +383,7 @@ public class RSerialize {
                             Utils.fail("internal deparse error");
                         }
                     }
-                    return result;
+                    return checkResult(result);
                 }
 
                 /*
@@ -462,6 +478,17 @@ public class RSerialize {
                     break;
                 }
 
+                case SPECIALSXP:
+                case BUILTINSXP: {
+                    int len = stream.readInt();
+                    String s = stream.readString(len);
+                    result = RContext.getEngine().lookupBuiltin(s);
+                    if (result == null) {
+                        throw RInternalError.shouldNotReachHere("lookup failed in unserialize for builtin: " + s);
+                    }
+                    break;
+                }
+
                 case CHARSXP: {
                     int len = stream.readInt();
                     if (len == -1) {
@@ -481,6 +508,21 @@ public class RSerialize {
 
                 case BCODESXP: {
                     result = readBC();
+                    break;
+                }
+
+                case S4SXP: {
+                    result = RDataFactory.createS4Object();
+                    break;
+                }
+
+                case EXTPTRSXP: {
+                    Object value = readItem();
+                    long addr = value == RNull.instance ? 0 : (long) value;
+                    Object tagObj = readItem();
+                    String tag = tagObj == RNull.instance ? null : (String) tagObj;
+                    result = RDataFactory.createExternalPtr(addr, tag);
+                    addReadRef(result);
                     break;
                 }
 
@@ -505,6 +547,11 @@ public class RSerialize {
                 }
             }
 
+            return checkResult(result);
+        }
+
+        private static Object checkResult(Object result) {
+            assert result != null;
             return result;
         }
 
@@ -757,11 +804,11 @@ public class RSerialize {
         private int nesting;
 
         private TracingInput(RConnection conn, int depth) throws IOException {
-            this(conn.getInputStream(), null, depth);
+            this(conn.getInputStream(), null, depth, null);
         }
 
-        private TracingInput(InputStream is, CallHook hook, int depth) throws IOException {
-            super(is, hook, depth);
+        private TracingInput(InputStream is, CallHook hook, int depth, String packageName) throws IOException {
+            super(is, hook, depth, packageName);
         }
 
         @Override
@@ -905,10 +952,58 @@ public class RSerialize {
             stream.flush();
         }
 
+        private static SEXPTYPE saveSpecialHook(Object item) {
+            if (item == RNull.instance)
+                return SEXPTYPE.NILVALUE_SXP;
+            if (item == REnvironment.emptyEnv())
+                return SEXPTYPE.EMPTYENV_SXP;
+            if (item == REnvironment.baseEnv())
+                return SEXPTYPE.BASEENV_SXP;
+            if (item == REnvironment.globalEnv())
+                return SEXPTYPE.GLOBALENV_SXP;
+// if (item == R_UnboundValue) return UNBOUNDVALUE_SXP;
+            if (item == RMissing.instance)
+                return SEXPTYPE.MISSINGARG_SXP;
+            if (item == REnvironment.baseNamespaceEnv())
+                return SEXPTYPE.BASENAMESPACE_SXP;
+            return null;
+        }
+
+        private static SEXPTYPE checkType(SEXPTYPE type, Object obj) {
+            switch (type) {
+                case FUNSXP: {
+                    RFunction func = (RFunction) obj;
+                    if (func.isBuiltin()) {
+                        return SEXPTYPE.BUILTINSXP;
+                    } else {
+                        return type;
+                    }
+                }
+
+                case FASTR_INT:
+                    return SEXPTYPE.INTSXP;
+                case FASTR_DOUBLE:
+                    return SEXPTYPE.REALSXP;
+                case FASTR_STRING:
+                    return SEXPTYPE.STRSXP;
+                case FASTR_BYTE:
+                    return SEXPTYPE.LGLSXP;
+                case FASTR_DATAFRAME:
+                    return SEXPTYPE.VECSXP;
+
+                default:
+                    return type;
+            }
+        }
+
         private void writeItem(Object obj) throws IOException {
             SEXPTYPE type = SEXPTYPE.typeForClass(obj.getClass());
+            SEXPTYPE outType = checkType(type, obj);
+            SEXPTYPE specialType;
             int refIndex;
-            if ((refIndex = getRefIndex(obj)) != -1) {
+            if ((specialType = saveSpecialHook(obj)) != null) {
+                stream.writeInt(specialType.code);
+            } else if ((refIndex = getRefIndex(obj)) != -1) {
                 outRefIndex(refIndex);
             } else if (type == SEXPTYPE.SYMSXP) {
                 addReadRef(obj);
@@ -916,6 +1011,14 @@ public class RSerialize {
                 writeItem(((RSymbol) obj).getName());
             } else if (type == SEXPTYPE.ENVSXP) {
                 throw RInternalError.unimplemented();
+            } else if (type == SEXPTYPE.FASTR_DATAFRAME) {
+                RDataFrame dataFrame = (RDataFrame) obj;
+                writeItem(dataFrame.getVector());
+                return;
+            } else if (type == SEXPTYPE.FASTR_FACTOR) {
+                RFactor factor = (RFactor) obj;
+                writeItem(factor.getVector());
+                return;
             } else {
                 // flags
                 RAttributes attributes = null;
@@ -926,7 +1029,7 @@ public class RSerialize {
                         attributes = null;
                     }
                 }
-                int flags = Flags.packFlags(type, 0, false, attributes != null, false);
+                int flags = Flags.packFlags(outType, 0, false, attributes != null, false);
                 stream.writeInt(flags);
                 switch (type) {
                     case STRSXP: {
@@ -952,8 +1055,42 @@ public class RSerialize {
                         RIntVector vec = (RIntVector) obj;
                         stream.writeInt(vec.getLength());
                         for (int i = 0; i < vec.getLength(); i++) {
-                            // TODO NA
                             stream.writeInt(vec.getDataAt(i));
+                        }
+                        break;
+                    }
+
+                    case REALSXP: {
+                        RDoubleVector vec = (RDoubleVector) obj;
+                        stream.writeInt(vec.getLength());
+                        for (int i = 0; i < vec.getLength(); i++) {
+                            stream.writeDouble(vec.getDataAt(i));
+                        }
+                        break;
+                    }
+
+                    case LGLSXP: {
+                        // Output as ints
+                        RLogicalVector vec = (RLogicalVector) obj;
+                        stream.writeInt(vec.getLength());
+                        for (int i = 0; i < vec.getLength(); i++) {
+                            byte val = vec.getDataAt(i);
+                            if (RRuntime.isNA(val)) {
+                                stream.writeInt(RRuntime.INT_NA);
+                            } else {
+                                stream.writeInt(vec.getDataAt(i));
+                            }
+                        }
+                        break;
+                    }
+
+                    case CPLXSXP: {
+                        RComplexVector vec = (RComplexVector) obj;
+                        stream.writeInt(vec.getLength());
+                        for (int i = 0; i < vec.getLength(); i++) {
+                            RComplex val = vec.getDataAt(i);
+                            stream.writeDouble(val.getRealPart());
+                            stream.writeDouble(val.getImaginaryPart());
                         }
                         break;
                     }
@@ -968,9 +1105,61 @@ public class RSerialize {
                         break;
                     }
 
+                    case FUNSXP: {
+                        RFunction fun = (RFunction) obj;
+                        if (fun.isBuiltin()) {
+                            String name = fun.getRBuiltin().name();
+                            stream.writeString(name);
+                        } else {
+                            throw RInternalError.unimplemented();
+                        }
+                        break;
+                    }
+
+                    /*
+                     * FastR scalar, (length 1) "vectors"
+                     */
+
+                    case FASTR_INT: {
+                        Integer value = (Integer) obj;
+                        stream.writeInt(1);
+                        stream.writeInt(value);
+                        break;
+                    }
+
+                    case FASTR_DOUBLE: {
+                        Double value = (Double) obj;
+                        stream.writeInt(1);
+                        stream.writeDouble(value);
+                        break;
+                    }
+
+                    case FASTR_BYTE: {
+                        Byte value = (Byte) obj;
+                        stream.writeInt(1);
+                        if (RRuntime.isNA(value)) {
+                            stream.writeInt(RRuntime.INT_NA);
+                        } else {
+                            stream.writeInt(value);
+                        }
+                        break;
+                    }
+
+                    case FASTR_STRING: {
+                        String value = (String) obj;
+                        stream.writeInt(1);
+                        if (value == RRuntime.STRING_NA) {
+                            stream.writeInt(-1);
+                        } else {
+                            stream.writeString(value);
+                        }
+                        break;
+                    }
+
                     default:
                         throw RInternalError.unimplemented();
                 }
+
                 if (attributes != null) {
                     // have to convert to GnuR pairlist
                     Iterator<RAttribute> iter = attributes.iterator();
@@ -1000,7 +1189,7 @@ public class RSerialize {
     }
 
     @TruffleBoundary
-    public static void serialize(RConnection conn, Object obj, boolean ascii, int version, Object refhook, int depth) throws IOException {
+    public static void serialize(RConnection conn, Object obj, boolean ascii, @SuppressWarnings("unused") boolean xdr, int version, Object refhook, int depth) throws IOException {
         Output output = new Output(conn, ascii ? 'A' : 'X', version, (CallHook) refhook, depth);
         output.serialize(obj);
     }

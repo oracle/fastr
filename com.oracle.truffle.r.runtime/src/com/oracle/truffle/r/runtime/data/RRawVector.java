@@ -110,16 +110,6 @@ public final class RRawVector extends RVector implements RAbstractRawVector {
         return RDataFactory.createRawVector(data, newDimensions);
     }
 
-    public RRawVector removeLast() {
-        assert getLength() > 0;
-        return RDataFactory.createRawVector(Arrays.copyOf(data, getLength() - 1));
-    }
-
-    public RRawVector removeFirst() {
-        assert getLength() > 0;
-        return RDataFactory.createRawVector(Arrays.copyOfRange(data, 1, getLength()));
-    }
-
     @Override
     protected String getDataAtAsString(int index) {
         return getDataAt(index).toString();

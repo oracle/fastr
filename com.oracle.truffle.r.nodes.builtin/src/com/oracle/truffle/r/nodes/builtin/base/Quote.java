@@ -24,7 +24,6 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
@@ -37,8 +36,8 @@ import com.oracle.truffle.r.runtime.data.*;
 @GenerateNodeFactory
 public abstract class Quote extends RBuiltinNode {
     @Override
-    public RNode[] getParameterValues() {
-        return new RNode[]{ConstantNode.create(RMissing.instance)};
+    public Object[] getDefaultParameterValues() {
+        return new Object[]{RMissing.instance};
     }
 
     public abstract Object execute(VirtualFrame frame, RPromise expr);
@@ -57,9 +56,8 @@ public abstract class Quote extends RBuiltinNode {
         // GnuR creates symbols for simple variables and actual values for constants
         RNode node = (RNode) expr.getRep();
         RNode unode = (RNode) RASTUtils.unwrap(node);
-        SourceSection ss = node.getSourceSection();
         if (rvn.profile(unode instanceof ReadVariableNode)) {
-            return RDataFactory.createSymbol(ss.toString());
+            return RASTUtils.createRSymbol(unode);
         } else if (cn.profile(unode instanceof ConstantNode)) {
             ConstantNode cnode = (ConstantNode) unode;
             return cnode.getValue();

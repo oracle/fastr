@@ -29,12 +29,12 @@ import com.oracle.truffle.api.impl.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.parser.ast.*;
 import com.oracle.truffle.r.parser.ast.Call.*;
-import com.oracle.truffle.r.parser.ast.UnaryOperation.*;
 import com.oracle.truffle.r.parser.ast.BinaryOperation.*;
+import com.oracle.truffle.r.parser.ast.Operation.*;
+import com.oracle.truffle.r.parser.ast.UnaryOperation.*;
 }
 
 @lexer::header {
-//Checkstyle: stop
 //@formatter:off
 package com.oracle.truffle.r.parser;
 }
@@ -360,7 +360,7 @@ and_expr returns [ASTNode v]
     ;
 
 not_expr returns [ASTNode v]
-    : t=NOT n_ l=not_expr { $v = UnaryOperation.create(sourceSection("not_expr", $t, $l.stop), UnaryOperator.NOT, $l.v); }
+    : t=NOT n_ l=not_expr { $v = UnaryOperation.create(sourceSection("not_expr", $t, $l.stop), Operator.UNARY_NOT, $l.v); }
     | b=comp_expr         { $v = $b.v; }
     ;
 
@@ -421,7 +421,7 @@ colon_expr returns [ASTNode v] // FIXME
         }
     }
     : l=unary_expression { $v = $l.v; }
-      ( ((COLON)=>op=COLON n_ r=unary_expression { hasColon = true; $v = BinaryOperation.create(sourceSection("colon_expr/binop", $op, $r.stop), BinaryOperator.COLON, $colon_expr.v, $r.v); }) )*
+      ( ((COLON)=>op=COLON n_ r=unary_expression { hasColon = true; $v = BinaryOperation.create(sourceSection("colon_expr/binop", $op, $r.stop), Operator.COLON, $colon_expr.v, $r.v); }) )*
     ;
 
 unary_expression returns [ASTNode v]
@@ -434,11 +434,11 @@ unary_expression returns [ASTNode v]
     }
     : p=PLUS n_ { plusOrMinus = true; }
       ( (number) => num=number { $v = num; }
-      | l=unary_expression     { $v = UnaryOperation.create(sourceSection("unary_expression/PLUS", $p, $l.stop), UnaryOperator.PLUS, $l.v); }
+      | l=unary_expression     { $v = UnaryOperation.create(sourceSection("unary_expression/PLUS", $p, $l.stop), Operator.UNARY_PLUS, $l.v); }
       )
     | m=MINUS n_ { plusOrMinus = true; }
       ( (number) => num=number { ((Constant) num).addNegativeSign(); $v = num; }
-      | l=unary_expression     { $v = UnaryOperation.create(sourceSection("unary_expression/MINUS", $m, $l.stop), UnaryOperator.MINUS, $l.v); }
+      | l=unary_expression     { $v = UnaryOperation.create(sourceSection("unary_expression/MINUS", $m, $l.stop), Operator.UNARY_MINUS, $l.v); }
       )
     | b=power_expr             { $v = $b.v; }
     ;
@@ -537,38 +537,38 @@ bool returns [ASTNode v]
     | t=NA    { $v = Constant.createBoolConstant(sourceSection("bool/NA", t), RRuntime.LOGICAL_NA); }
     ;
 
-or_operator returns [BinaryOperator v]
-    : OR            { $v = BinaryOperator.OR; }
-    | ELEMENTWISEOR { $v = BinaryOperator.ELEMENTWISEOR; }
+or_operator returns [Operator v]
+    : OR            { $v = Operator.OR; }
+    | ELEMENTWISEOR { $v = Operator.ELEMENTWISEOR; }
     ;
 
-and_operator returns [BinaryOperator v]
-    : AND            { $v = BinaryOperator.AND; }
-    | ELEMENTWISEAND { $v = BinaryOperator.ELEMENTWISEAND; }
+and_operator returns [Operator v]
+    : AND            { $v = Operator.AND; }
+    | ELEMENTWISEAND { $v = Operator.ELEMENTWISEAND; }
     ;
 
-comp_operator returns [BinaryOperator v]
-    : GT { $v = BinaryOperator.GT; }
-    | GE { $v = BinaryOperator.GE; }
-    | LT { $v = BinaryOperator.LT; }
-    | LE { $v = BinaryOperator.LE; }
-    | EQ { $v = BinaryOperator.EQ; }
-    | NE { $v = BinaryOperator.NE; }
+comp_operator returns [Operator v]
+    : GT { $v = Operator.GT; }
+    | GE { $v = Operator.GE; }
+    | LT { $v = Operator.LT; }
+    | LE { $v = Operator.LE; }
+    | EQ { $v = Operator.EQ; }
+    | NE { $v = Operator.NE; }
     ;
 
-add_operator returns [BinaryOperator v]
-    : PLUS  { $v = BinaryOperator.ADD; }
-    | MINUS { $v = BinaryOperator.SUB; }
+add_operator returns [Operator v]
+    : PLUS  { $v = Operator.ADD; }
+    | MINUS { $v = Operator.SUB; }
     ;
 
-mult_operator returns [BinaryOperator v]
-    : MULT { $v = BinaryOperator.MULT; }
-    | DIV  { $v = BinaryOperator.DIV; }
-    | MOD  { $v = BinaryOperator.MOD; }
+mult_operator returns [Operator v]
+    : MULT { $v = Operator.MULT; }
+    | DIV  { $v = Operator.DIV; }
+    | MOD  { $v = Operator.MOD; }
     ;
 
-power_operator returns [BinaryOperator v]
-    : CARET { $v = BinaryOperator.POW; }
+power_operator returns [Operator v]
+    : CARET { $v = Operator.POW; }
     ;
 
 args returns [List<ArgNode> v]

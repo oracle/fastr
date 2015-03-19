@@ -33,6 +33,10 @@ public final class RDataFrame implements RShareable, RAbstractContainer {
         this.vector = vector;
     }
 
+    public RType getRType() {
+        return RType.List;
+    }
+
     public RVector getVector() {
         return vector;
     }

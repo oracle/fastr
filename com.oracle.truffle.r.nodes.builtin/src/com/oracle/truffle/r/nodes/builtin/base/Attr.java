@@ -94,7 +94,7 @@ public abstract class Attr extends RBuiltinNode {
         }
     }
 
-    @Specialization(guards = "!isRowNamesAttr")
+    @Specialization(guards = "!isRowNamesAttr(container, name)")
     protected Object attr(RAbstractContainer container, String name) {
         controlVisibility();
         return attrRA(container, intern(name));
@@ -110,7 +110,7 @@ public abstract class Attr extends RBuiltinNode {
         }
     }
 
-    @Specialization(guards = "isRowNamesAttr")
+    @Specialization(guards = "isRowNamesAttr(container,  name)")
     protected Object attrRowNames(RAbstractContainer container, @SuppressWarnings("unused") String name) {
         controlVisibility();
         RAttributes attributes = container.getAttributes();
@@ -121,18 +121,18 @@ public abstract class Attr extends RBuiltinNode {
         }
     }
 
-    @Specialization(guards = {"!emptyName", "isRowNamesAttr"})
+    @Specialization(guards = {"!emptyName(name)", "isRowNamesAttr(container, name)"})
     protected Object attrRowNames(RAbstractContainer container, RStringVector name) {
         return attrRowNames(container, name.getDataAt(0));
     }
 
-    @Specialization(guards = {"!emptyName", "!isRowNamesAttr"})
+    @Specialization(guards = {"!emptyName(name)", "!isRowNamesAttr(container, name)"})
     protected Object attr(RAbstractContainer container, RStringVector name) {
         return attr(container, name.getDataAt(0));
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = "emptyName")
+    @Specialization(guards = "emptyName(name)")
     protected Object attrEmtpyName(RAbstractContainer container, RStringVector name) {
         controlVisibility();
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.EXACTLY_ONE_WHICH);
@@ -164,7 +164,7 @@ public abstract class Attr extends RBuiltinNode {
         return isRowNamesAttr(container, name.getDataAt(0));
     }
 
-    protected boolean emptyName(@SuppressWarnings("unused") RAbstractContainer container, RStringVector name) {
+    protected boolean emptyName(RStringVector name) {
         return name.getLength() == 0;
     }
 }

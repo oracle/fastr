@@ -81,17 +81,17 @@ public abstract class CastStringNode extends CastNode {
         return toString(frame, value);
     }
 
-    @Specialization(guards = "isZeroLength")
+    @Specialization(guards = "vector.getLength() == 0")
     protected Object doEmptyVector(@SuppressWarnings("unused") RAbstractVector vector) {
         return isEmptyVectorConvertedToNull() ? RNull.instance : RDataFactory.createStringVector(0);
     }
 
-    @Specialization(guards = "!isZeroLength")
+    @Specialization(guards = "vector.getLength() != 0")
     protected RStringVector doStringVector(RStringVector vector) {
         return vector;
     }
 
-    @Specialization(guards = "!isZeroLength")
+    @Specialization(guards = "operand.getLength() != 0")
     protected RAbstractContainer doIntVector(VirtualFrame frame, RAbstractContainer operand) {
         String[] sdata = new String[operand.getLength()];
         // conversions to character will not introduce new NAs
@@ -111,7 +111,8 @@ public abstract class CastStringNode extends CastNode {
         return s.getName();
     }
 
-    protected boolean isZeroLength(RAbstractContainer vector) {
-        return vector.getLength() == 0;
+    public static CastStringNode create() {
+        return CastStringNodeGen.create(null, false, true, true, true);
     }
+
 }

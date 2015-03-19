@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -14,7 +14,6 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
@@ -25,18 +24,18 @@ import com.oracle.truffle.r.runtime.data.model.*;
 public abstract class CharMatch extends RBuiltinNode {
 
     @Override
-    public RNode[] getParameterValues() {
-        return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RRuntime.INT_NA)};
+    public Object[] getDefaultParameterValues() {
+        return new Object[]{RMissing.instance, RMissing.instance, RRuntime.INT_NA};
     }
 
     @CreateCast("arguments")
-    public RNode[] castArguments(RNode[] arguments) {
+    protected RNode[] castArguments(RNode[] arguments) {
         arguments[2] = CastIntegerNodeGen.create(arguments[2], true, false, false);
         return arguments;
     }
 
     @Specialization
-    public RIntVector doCharMatch(RAbstractStringVector x, RAbstractStringVector table, RAbstractIntVector noMatch) {
+    protected RIntVector doCharMatch(RAbstractStringVector x, RAbstractStringVector table, RAbstractIntVector noMatch) {
         int noMatchValue = noMatch.getDataAt(0);
         int[] ans = new int[x.getLength()];
         for (int i = 0; i < x.getLength(); ++i) {

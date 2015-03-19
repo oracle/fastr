@@ -26,14 +26,20 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import java.io.*;
 
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.nodes.*;
+import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RContext.Engine.ParseException;
 import com.oracle.truffle.r.runtime.conn.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.env.*;
 
 /**
  * Internal component of the {@code parse} base package function.
@@ -43,55 +49,111 @@ import com.oracle.truffle.r.runtime.data.model.*;
  * </pre>
  *
  * TODO handle case when {@code srcFile != NULL};
+ *
+ * There are two main modalities in the arguments:
+ * <ul>
+ * <li>Input is taken from "conn" or "text" (in which case conn==stdin(), but ignored).</li>
+ * <li>Parse the entire input or just "n" "expressions". The FastR parser cannot handle the latter
+ * case properly. It will parse the entire stream whereas GnuR stops after "n" expressions. So,
+ * e.g., if there is a syntax error after the "n'th" expression, GnuR does not see it, whereas FastR
+ * does and throws an error. However, if there is no error FastR can truncate the expressions vector
+ * to length "n"</li>
+ * </ul>
+ * Despite the modality there is no value in multiple specializations for what is an inherently
+ * slow-path builtin.
+ * <p>
+ * The inputs do not lend themselves to the correct creation of {@link Source} attributes for the
+ * FastR AST. In particular the {@code source} builtin reads the input internally and calls us the
+ * "text" variant. However useful information regarding the origin of the input can be found either
+ * in the connection info or in the "srcfile" argument which, if not {@code RNull#instance} is an
+ * {@link REnvironment} with relevant data. So we can fix up the {@link Source} attributes on the
+ * AST after the parse. It's relevant to do this for the Truffle instrumentation framework.
+ * <p>
+ * On the R side, GnuR adds similar R attributes to the result, which is important for R tooling.
  */
 @RBuiltin(name = "parse", kind = INTERNAL, parameterNames = {"conn", "n", "text", "prompt", "srcfile", "encoding"})
 public abstract class Parse extends RBuiltinNode {
+    @Child private CastIntegerNode castIntNode;
+    @Child private CastStringNode castStringNode;
+    @Child private CastToVectorNode castVectorNode;
 
-    @SuppressWarnings("unused")
-    @Specialization
-    protected Object parse(RConnection conn, RNull n, RNull text, String prompt, Object srcFile, String encoding) {
-        controlVisibility();
-        try {
-            String[] lines = conn.readLines(0);
-            return doParse(coalesce(lines));
-        } catch (IOException | ParseException ex) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.PARSE_ERROR);
+    private int castInt(VirtualFrame frame, Object n) {
+        if (castIntNode == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            castIntNode = insert(CastIntegerNodeGen.create(null, false, false, false));
         }
+        int result = (int) castIntNode.executeInt(frame, n);
+        if (RRuntime.isNA(result)) {
+            result = -1;
+        }
+        return result;
     }
 
-    @SuppressWarnings("unused")
-    @Specialization
-    protected Object parse(RConnection conn, double n, RNull text, String prompt, Object srcFile, String encoding) {
-        controlVisibility();
-        try {
-            String[] lines = conn.readLines((int) n);
-            return doParse(coalesce(lines));
-        } catch (IOException | ParseException ex) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.PARSE_ERROR);
+    private RStringVector castString(VirtualFrame frame, Object s) {
+        if (castStringNode == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            castVectorNode = insert(CastToVectorNodeGen.create(null, false, false, false, false));
+            castStringNode = insert(CastStringNodeGen.create(null, false, false, false, false));
         }
+        return (RStringVector) castStringNode.executeString(frame, castVectorNode.executeObject(frame, s));
     }
 
-    @SuppressWarnings("unused")
-    @Specialization(guards = "parseEntire")
-    protected Object parse(RConnection conn, Object n, RAbstractStringVector textVec, String prompt, Object srcFile, String encoding) {
+    @Specialization
+    protected Object parse(VirtualFrame frame, RConnection conn, Object n, Object text, RAbstractStringVector prompt, Object srcFile, RAbstractStringVector encoding) {
         controlVisibility();
-        String text = coalesce(((RStringVector) textVec).getDataWithoutCopying());
-        if (text.length() == 0) {
+        int nAsInt;
+        if (n != RNull.instance) {
+            nAsInt = castInt(frame, n);
+        } else {
+            nAsInt = -1;
+        }
+        Object textVec = text;
+        if (textVec != RNull.instance) {
+            textVec = castString(frame, textVec);
+        }
+        return doParse(conn, nAsInt, textVec, prompt, srcFile, encoding);
+    }
+
+    @TruffleBoundary
+    @SuppressWarnings("unused")
+    private Object doParse(RConnection conn, int n, Object textVec, RAbstractStringVector prompt, Object srcFile, RAbstractStringVector encoding) {
+        String[] lines;
+        if (textVec == RNull.instance) {
+            if (conn == StdConnections.getStdin()) {
+                throw RError.nyi(getEncapsulatingSourceSection(), " parse from stdin not implemented");
+            }
+            try (RConnection openConn = conn.forceOpen("r")) {
+                lines = openConn.readLines(0);
+            } catch (IOException ex) {
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.PARSE_ERROR);
+            }
+        } else {
+            lines = ((RStringVector) textVec).getDataWithoutCopying();
+        }
+        String coalescedLines = coalesce(lines);
+        if (coalescedLines.length() == 0 || n == 0) {
             return RDataFactory.createExpression(RDataFactory.createList());
         }
         try {
-            return doParse(text);
+            Source source = srcFile != RNull.instance ? createSource(srcFile, coalescedLines) : createSource(conn, coalescedLines);
+            RExpression exprs = RContext.getEngine().parse(source);
+            if (n > 0 && n > exprs.getLength()) {
+                RList list = exprs.getList();
+                Object[] listData = list.getDataCopy();
+                Object[] subListData = new Object[n];
+                System.arraycopy(listData, 0, subListData, 0, n);
+                exprs = RDataFactory.createExpression(RDataFactory.createList(subListData));
+            }
+            // Handle the required R attributes
+            if (srcFile instanceof REnvironment) {
+                addAttributes(exprs, source, (REnvironment) srcFile);
+            }
+            return exprs;
         } catch (ParseException ex) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.PARSE_ERROR);
         }
     }
 
-    @TruffleBoundary
-    private static RExpression doParse(String script) throws ParseException {
-        return RContext.getEngine().parse(script);
-    }
-
-    @TruffleBoundary
     private static String coalesce(String[] lines) {
         StringBuffer sb = new StringBuffer();
         for (String line : lines) {
@@ -101,16 +163,88 @@ public abstract class Parse extends RBuiltinNode {
         return sb.toString();
     }
 
-    public static boolean parseEntire(@SuppressWarnings("unused") Object conn, Object n) {
-        if (n == RNull.instance) {
-            return true;
-        } else if (n instanceof Double && (((Double) n == -1 || ((Double) n) == RRuntime.DOUBLE_NA))) {
-            return true;
-        } else if (n instanceof Integer && (((Integer) n == -1 || ((Integer) n) == RRuntime.INT_NA))) {
-            return true;
+    /**
+     * Creates a {@link Source} object by gleaning information from {@code srcFile}.
+     */
+    private static Source createSource(Object srcFile, String coalescedLines) {
+        if (srcFile instanceof REnvironment) {
+            REnvironment srcFileEnv = (REnvironment) srcFile;
+            boolean isFile = RRuntime.fromLogical((byte) srcFileEnv.get("isFile"));
+            if (isFile) {
+                // Might be a URL
+                String urlFileName = RRuntime.asString(srcFileEnv.get("filename"));
+                assert urlFileName != null;
+                String fileName = ConnectionSupport.removeFileURLPrefix(urlFileName);
+                File fnf = new File(fileName);
+                String path = null;
+                if (!fnf.isAbsolute()) {
+                    String wd = RRuntime.asString(srcFileEnv.get("wd"));
+                    path = String.join(File.separator, wd, fileName);
+                } else {
+                    path = fileName;
+                }
+                return createFileSource(path, coalescedLines);
+            } else {
+                return Source.asPseudoFile(coalescedLines, "<parse>");
+            }
         } else {
-            return false;
+            String srcFileText = RRuntime.asString(srcFile);
+            if (srcFileText.equals("<text>")) {
+                return Source.asPseudoFile(coalescedLines, "<parse>");
+            } else {
+                return createFileSource(ConnectionSupport.removeFileURLPrefix(srcFileText), coalescedLines);
+            }
         }
+
+    }
+
+    private static Source createSource(RConnection conn, String coalescedLines) {
+        // TODO check if file
+        String path = ConnectionSupport.getBaseConnection(conn).getSummaryDescription();
+        return createFileSource(path, coalescedLines);
+    }
+
+    private static Source createFileSource(String path, CharSequence chars) {
+        try {
+            return Source.fromFileName(chars, path);
+        } catch (IOException ex) {
+            throw RInternalError.shouldNotReachHere();
+        }
+    }
+
+    private static void addAttributes(RExpression exprs, Source source, REnvironment srcFile) {
+        Object[] srcrefData = new Object[exprs.getLength()];
+        for (int i = 0; i < srcrefData.length; i++) {
+            Node node = (Node) ((RLanguage) exprs.getDataAt(i)).getRep();
+            SourceSection ss = node.getSourceSection();
+            int[] llocData = new int[8];
+            int startLine = ss.getStartLine();
+            int startColumn = ss.getStartColumn();
+            int lastLine = ss.getEndLine();
+            int lastColumn = ss.getEndColumn();
+            // no multi-byte support, so byte==line
+            llocData[0] = startLine;
+            llocData[1] = startColumn;
+            llocData[2] = lastLine;
+            llocData[3] = lastColumn;
+            llocData[4] = startColumn;
+            llocData[5] = lastColumn;
+            llocData[6] = startLine;
+            llocData[7] = lastLine;
+            RIntVector lloc = RDataFactory.createIntVector(llocData, RDataFactory.COMPLETE_VECTOR);
+            srcrefData[i] = lloc;
+        }
+        exprs.setAttr("srcref", RDataFactory.createList(srcrefData));
+        int[] wholeSrcrefData = new int[8];
+        int endOffset = source.getCode().length() - 1;
+        wholeSrcrefData[0] = source.getLineNumber(0);
+        wholeSrcrefData[3] = source.getLineNumber(endOffset);
+        source.getColumnNumber(0);
+        wholeSrcrefData[6] = wholeSrcrefData[0];
+        wholeSrcrefData[6] = wholeSrcrefData[3];
+
+        exprs.setAttr("wholeSrcref", RDataFactory.createIntVector(wholeSrcrefData, RDataFactory.COMPLETE_VECTOR));
+        exprs.setAttr("srcfile", srcFile);
     }
 
 }

@@ -26,6 +26,7 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
@@ -49,7 +50,7 @@ public abstract class DoCall extends RBuiltinNode {
 
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
-    @Specialization(guards = "lengthOne")
+    @Specialization(guards = "fname.getLength() == 1")
     protected Object doDoCall(VirtualFrame frame, RAbstractStringVector fname, RList argsAsList, REnvironment env) {
         if (getNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -68,7 +69,49 @@ public abstract class DoCall extends RBuiltinNode {
         EvaluatedArguments evaledArgs = EvaluatedArguments.create(argValues, signature);
         EvaluatedArguments reorderedArgs = ArgumentMatcher.matchArgumentsEvaluated(func, evaledArgs, getEncapsulatingSourceSection(), false);
         if (func.isBuiltin()) {
-            ArgumentMatcher.evaluatePromises(frame, promiseHelper, reorderedArgs);
+            RBuiltinRootNode builtinNode = (RBuiltinRootNode) func.getRootNode();
+            Object[] argArray = reorderedArgs.getEvaluatedArgs();
+            for (int i = 0; i < argArray.length; i++) {
+                Object arg = argArray[i];
+                if (builtinNode.evaluatesArg(i)) {
+                    if (arg instanceof RPromise) {
+                        argArray[i] = promiseHelper.evaluate(frame, (RPromise) arg);
+                    } else if (arg instanceof RLanguage) {
+                        /*
+                         * This is necessary for, e.g., do.call("+", list(quote(a), 2)). But is it
+                         * always ok to unconditionally evaluate an RLanguage arg? Are there any
+                         * builtins that takes RLanguage values? Also not clear what env to evaluate
+                         * in. Can't be frame as, e.g., do.call closure itself defines "quote" as a
+                         * logical!
+                         */
+                        argArray[i] = promiseHelper.evaluate(frame, createArgPromise(REnvironment.globalEnv().getFrame(), arg));
+                    }
+                } else {
+                    if (!(arg instanceof RPromise) && arg != RMissing.instance) {
+                        // TODO there are some builtins that take unevaluated ..., e.g. switch
+                        if (!(arg instanceof RArgsValuesAndNames)) {
+                            argArray[i] = createArgPromise(frame.materialize(), arg);
+                        }
+                    }
+                }
+            }
+        } else {
+            /*
+             * Create promises for all arguments. This is very simplistic, it creates a promise for
+             * everything, even constants. Why is this important? E.g. "do.call(f, list(quote(y)))".
+             * The "quote(y)" has been evaluated with result RSymbol, but if "f" accesses the
+             * argument, it must try to resolve "y" and not just return the RSymbol value.
+             */
+            Object[] argArray = reorderedArgs.getEvaluatedArgs();
+            for (int i = 0; i < argArray.length; i++) {
+                Object arg = argArray[i];
+                if (!(arg instanceof RPromise) && arg != RMissing.instance) {
+                    // TODO RArgsValuesAndNames
+                    if (!(arg instanceof RArgsValuesAndNames)) {
+                        argArray[i] = createArgPromise(frame.materialize(), arg);
+                    }
+                }
+            }
         }
         if (!needsCallerFrame && func.containsDispatch()) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -80,7 +123,9 @@ public abstract class DoCall extends RBuiltinNode {
         return callCache.execute(frame, func.getTarget(), callArgs);
     }
 
-    public static boolean lengthOne(RAbstractStringVector vec) {
-        return vec.getLength() == 1;
+    @TruffleBoundary
+    private static RPromise createArgPromise(MaterializedFrame frame, Object arg) {
+        return RDataFactory.createPromise(RPromise.EvalPolicy.PROMISED, RPromise.PromiseType.ARG_SUPPLIED, frame, RPromise.Closure.create(RASTUtils.createNodeForValue(arg)));
     }
+
 }

@@ -22,8 +22,8 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
-import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.runtime.*;
@@ -47,15 +47,22 @@ public final class RFunction extends RScalar implements RAttributable {
     private final RBuiltin builtin;
     private final boolean containsDispatch;
 
-    @CompilationFinal private StableValue<MaterializedFrame> enclosingFrame;
-    protected RAttributes attributes;
+    private MaterializedFrame enclosingFrame;
+    @CompilationFinal private StableValue<MaterializedFrame> enclosingFrameAssumption;
+    private RAttributes attributes;
 
     RFunction(String name, RootCallTarget target, RBuiltin builtin, MaterializedFrame enclosingFrame, boolean containsDispatch) {
         this.name = name;
         this.target = target;
         this.builtin = builtin;
         this.containsDispatch = containsDispatch;
-        this.enclosingFrame = new StableValue<>(enclosingFrame, "RFunction enclosing frame");
+        this.enclosingFrame = enclosingFrame;
+        this.enclosingFrameAssumption = new StableValue<>(enclosingFrame, "RFunction enclosing frame");
+    }
+
+    @Override
+    public RType getRType() {
+        return isBuiltin() ? RType.Builtin : RType.Closure;
     }
 
     public boolean isBuiltin() {
@@ -83,27 +90,29 @@ public final class RFunction extends RScalar implements RAttributable {
     }
 
     public MaterializedFrame getEnclosingFrame() {
-        while (true) {
-            StableValue<MaterializedFrame> value = enclosingFrame;
-            try {
-                value.getAssumption().check();
-            } catch (InvalidAssumptionException e) {
-                // in this case execution fell back to the interpreter
-                continue;
-            }
-            return value.getValue();
+        return enclosingFrame;
+    }
+
+    public MaterializedFrame getEnclosingFrameWithAssumption() {
+        StableValue<MaterializedFrame> value = enclosingFrameAssumption;
+        try {
+            value.getAssumption().check();
+        } catch (InvalidAssumptionException e) {
+            return getEnclosingFrame();
         }
+        return value.getValue();
     }
 
     public void setEnclosingFrame(MaterializedFrame frame) {
-        if (enclosingFrame.getValue() != frame) {
-            enclosingFrame.getAssumption().invalidate();
-            enclosingFrame = new StableValue<>(frame, "RFunction enclosing frame");
+        if (enclosingFrame != frame) {
+            enclosingFrameAssumption.getAssumption().invalidate();
+            enclosingFrameAssumption = new StableValue<>(frame, "RFunction enclosing frame");
+            enclosingFrame = frame;
         }
     }
 
     public RFunction copy() {
-        return new RFunction(name, target, builtin, enclosingFrame.getValue(), containsDispatch);
+        return new RFunction(name, target, builtin, enclosingFrame, containsDispatch);
     }
 
     public RAttributes initAttributes() {
@@ -127,6 +136,11 @@ public final class RFunction extends RScalar implements RAttributable {
         } else {
             return v;
         }
+    }
+
+    @Override
+    public String toString() {
+        return target.toString();
     }
 
 }

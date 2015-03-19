@@ -22,25 +22,25 @@
  */
 package com.oracle.truffle.r.nodes.access;
 
+import static com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor.*;
+
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.r.nodes.access.WriteVariableNodeFactory.ResolvedWriteLocalVariableNodeGen;
-import com.oracle.truffle.r.nodes.access.WriteVariableNodeFactory.UnresolvedWriteLocalVariableNodeGen;
-import com.oracle.truffle.r.nodes.access.WriteVariableNodeFactory.WriteSuperVariableNodeGen;
-import com.oracle.truffle.r.nodes.instrument.CreateWrapper;
-import com.oracle.truffle.api.instrument.ProbeNode;
+import com.oracle.truffle.api.instrument.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.nodes.access.WriteVariableNodeFactory.ResolvedWriteLocalVariableNodeGen;
+import com.oracle.truffle.r.nodes.access.WriteVariableNodeFactory.UnresolvedWriteLocalVariableNodeGen;
+import com.oracle.truffle.r.nodes.access.WriteVariableNodeFactory.WriteSuperVariableNodeGen;
+import com.oracle.truffle.r.nodes.instrument.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.env.frame.*;
-
-import static com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor.findOrAddFrameSlot;
 
 @NodeChild(value = "rhs", type = RNode.class)
 @NodeFields({@NodeField(name = "argWrite", type = boolean.class), @NodeField(name = "name", type = String.class)})
@@ -241,21 +241,21 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
             return ResolvedWriteLocalVariableNodeGen.create(rhs, isArgWrite, name, frameSlot, mode);
         }
 
-        @Specialization(guards = "isFrameLogicalKind")
+        @Specialization(guards = "isLogicalKind(frame, frameSlot)")
         protected byte doLogical(VirtualFrame frame, FrameSlot frameSlot, byte value) {
             controlVisibility();
             FrameSlotChangeMonitor.setByteAndInvalidate(frame, frameSlot, value, false, invalidateProfile);
             return value;
         }
 
-        @Specialization(guards = "isFrameIntegerKind")
+        @Specialization(guards = "isIntegerKind(frame, frameSlot)")
         protected int doInteger(VirtualFrame frame, FrameSlot frameSlot, int value) {
             controlVisibility();
             FrameSlotChangeMonitor.setIntAndInvalidate(frame, frameSlot, value, false, invalidateProfile);
             return value;
         }
 
-        @Specialization(guards = "isFrameDoubleKind")
+        @Specialization(guards = "isDoubleKind(frame, frameSlot)")
         protected double doDouble(VirtualFrame frame, FrameSlot frameSlot, double value) {
             controlVisibility();
             FrameSlotChangeMonitor.setDoubleAndInvalidate(frame, frameSlot, value, false, invalidateProfile);
@@ -268,18 +268,6 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
             Object newValue = shareObjectValue(frame, frameSlot, storedObjectProfile.profile(value), getMode(), false);
             FrameSlotChangeMonitor.setObjectAndInvalidate(frame, frameSlot, newValue, false, invalidateProfile);
             return value;
-        }
-
-        protected boolean isFrameLogicalKind(FrameSlot frameSlot, @SuppressWarnings("unused") byte value) {
-            return isLogicalKind(frameSlot);
-        }
-
-        protected boolean isFrameIntegerKind(FrameSlot frameSlot, @SuppressWarnings("unused") int value) {
-            return isIntegerKind(frameSlot);
-        }
-
-        protected boolean isFrameDoubleKind(FrameSlot frameSlot, @SuppressWarnings("unused") double value) {
-            return isDoubleKind(frameSlot);
         }
 
         @Override
@@ -430,21 +418,21 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
 
         public abstract Mode getMode();
 
-        @Specialization(guards = "isFrameLogicalKind")
+        @Specialization(guards = "isLogicalKind(frame, frameSlot)")
         protected byte doLogical(VirtualFrame frame, byte value, MaterializedFrame enclosingFrame, FrameSlot frameSlot) {
             controlVisibility();
             FrameSlotChangeMonitor.setByteAndInvalidate(enclosingFrameProfile.profile(enclosingFrame), frameSlot, value, true, invalidateProfile);
             return value;
         }
 
-        @Specialization(guards = "isFrameIntegerKind")
+        @Specialization(guards = "isIntegerKind(frame, frameSlot)")
         protected int doInteger(VirtualFrame frame, int value, MaterializedFrame enclosingFrame, FrameSlot frameSlot) {
             controlVisibility();
             FrameSlotChangeMonitor.setIntAndInvalidate(enclosingFrameProfile.profile(enclosingFrame), frameSlot, value, true, invalidateProfile);
             return value;
         }
 
-        @Specialization(guards = "isFrameDoubleKind")
+        @Specialization(guards = "isDoubleKind(frame, frameSlot)")
         protected double doDouble(VirtualFrame frame, double value, MaterializedFrame enclosingFrame, FrameSlot frameSlot) {
             controlVisibility();
             FrameSlotChangeMonitor.setDoubleAndInvalidate(enclosingFrameProfile.profile(enclosingFrame), frameSlot, value, true, invalidateProfile);
@@ -460,28 +448,20 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
             return value;
         }
 
-        protected boolean isFrameLogicalKind(byte arg0, MaterializedFrame arg1, FrameSlot frameSlot) {
-            return isLogicalKind(frameSlot);
-        }
-
-        protected boolean isFrameIntegerKind(int arg0, MaterializedFrame arg1, FrameSlot frameSlot) {
-            return isIntegerKind(frameSlot);
-        }
-
-        protected boolean isFrameDoubleKind(double arg0, MaterializedFrame arg1, FrameSlot frameSlot) {
-            return isDoubleKind(frameSlot);
-        }
     }
 
-    protected boolean isLogicalKind(FrameSlot frameSlot) {
+    @SuppressWarnings("unused")
+    protected boolean isLogicalKind(VirtualFrame frame, FrameSlot frameSlot) {
         return isKind(frameSlot, FrameSlotKind.Boolean);
     }
 
-    protected boolean isIntegerKind(FrameSlot frameSlot) {
+    @SuppressWarnings("unused")
+    protected boolean isIntegerKind(VirtualFrame frame, FrameSlot frameSlot) {
         return isKind(frameSlot, FrameSlotKind.Int);
     }
 
-    protected boolean isDoubleKind(FrameSlot frameSlot) {
+    @SuppressWarnings("unused")
+    protected boolean isDoubleKind(VirtualFrame frame, FrameSlot frameSlot) {
         return isKind(frameSlot, FrameSlotKind.Double);
     }
 

@@ -306,10 +306,10 @@ public class FileFunctions {
             // @formatter:off
             switch(column) {
                 case size: ((double[]) data[slot])[index] = (double) value; complete[slot] = (double) value != RRuntime.DOUBLE_NA; return;
-                case isdir: ((byte[]) data[slot])[index] = (byte) value; complete[slot] = (byte) value == RRuntime.LOGICAL_NA; return;
+                case isdir: ((byte[]) data[slot])[index] = (byte) value; complete[slot] = (byte) value != RRuntime.LOGICAL_NA; return;
                 case mode: case mtime: case ctime: case atime:
-                case uid: case gid: ((int[]) data[slot])[index] = (int) value; complete[slot] = (int) value == RRuntime.INT_NA; return;
-                case uname: case grname: ((String[]) data[slot])[index] = (String) value; complete[slot] = (String) value == RRuntime.STRING_NA; return;
+                case uid: case gid: ((int[]) data[slot])[index] = (int) value; complete[slot] = (int) value != RRuntime.INT_NA; return;
+                case uname: case grname: ((String[]) data[slot])[index] = (String) value; complete[slot] = (String) value != RRuntime.STRING_NA; return;
                 default: throw RInternalError.shouldNotReachHere();
             }
             // @formatter:on
@@ -593,13 +593,13 @@ public class FileFunctions {
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = "lengthZero")
+        @Specialization(guards = "lengthZero(vec)")
         @TruffleBoundary
         protected RStringVector doFilePathZero(RList vec, RAbstractStringVector fsep) {
             return RDataFactory.createEmptyStringVector();
         }
 
-        @Specialization(guards = "!lengthZero")
+        @Specialization(guards = "!lengthZero(args)")
         protected RStringVector doFilePath(VirtualFrame frame, RList args, RAbstractStringVector fsepVec) {
             Object[] argValues = args.getDataWithoutCopying();
             int resultLength = 0;
@@ -648,7 +648,7 @@ public class FileFunctions {
             return RDataFactory.createStringVector(result, RDataFactory.COMPLETE_VECTOR);
         }
 
-        public static boolean lengthZero(RList list, @SuppressWarnings("unused") RAbstractStringVector fsep) {
+        public static boolean lengthZero(RList list) {
             if (list.getLength() == 0) {
                 return true;
             }

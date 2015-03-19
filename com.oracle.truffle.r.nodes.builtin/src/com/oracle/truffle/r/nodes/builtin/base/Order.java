@@ -60,12 +60,12 @@ public abstract class Order extends RPrecedenceBuiltinNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = "noVec")
+    @Specialization(guards = "noVec(args)")
     Object orderEmpty(VirtualFrame frame, RAbstractLogicalVector naLastVec, RAbstractLogicalVector decVec, RArgsValuesAndNames args) {
         return RNull.instance;
     }
 
-    @Specialization(guards = {"oneVec", "isIntegerPrecedence"})
+    @Specialization(guards = {"oneVec(args)", "isFirstIntegerPrecedence(frame, args)"})
     Object orderInt(VirtualFrame frame, RAbstractLogicalVector naLastVec, RAbstractLogicalVector decVec, RArgsValuesAndNames args) {
         Object[] vectors = args.getValues();
         RAbstractIntVector v = (RAbstractIntVector) castVector(frame, vectors[0]);
@@ -93,7 +93,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
         return RDataFactory.createIntVector(indx, RDataFactory.COMPLETE_VECTOR);
     }
 
-    @Specialization(guards = {"oneVec", "isDoublePrecedence"})
+    @Specialization(guards = {"oneVec(args)", "isFirstDoublePrecedence(frame, args)"})
     Object orderDouble(VirtualFrame frame, RAbstractLogicalVector naLastVec, RAbstractLogicalVector decVec, RArgsValuesAndNames args) {
         Object[] vectors = args.getValues();
         RAbstractDoubleVector v = (RAbstractDoubleVector) castVector(frame, vectors[0]);
@@ -121,14 +121,14 @@ public abstract class Order extends RPrecedenceBuiltinNode {
         return RDataFactory.createIntVector(indx, RDataFactory.COMPLETE_VECTOR);
     }
 
-    @Specialization(guards = {"oneVec", "isLogicalPrecedence"})
+    @Specialization(guards = {"oneVec(args)", "isFirstLogicalPrecedence(frame, args)"})
     Object orderLogical(VirtualFrame frame, RAbstractLogicalVector naLastVec, RAbstractLogicalVector decVec, RArgsValuesAndNames args) {
         Object[] vectors = args.getValues();
         vectors[0] = RClosures.createLogicalToIntVector((RAbstractLogicalVector) castVector(frame, vectors[0]), naCheck);
         return orderInt(frame, naLastVec, decVec, args);
     }
 
-    @Specialization(guards = {"oneVec", "isStringPrecedence"})
+    @Specialization(guards = {"oneVec(args)", "isFirstStringPrecedence(frame, args)"})
     Object orderString(VirtualFrame frame, RAbstractLogicalVector naLastVec, RAbstractLogicalVector decVec, RArgsValuesAndNames args) {
         Object[] vectors = args.getValues();
         RAbstractStringVector v = (RAbstractStringVector) castVector(frame, vectors[0]);
@@ -156,7 +156,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
         return RDataFactory.createIntVector(indx, RDataFactory.COMPLETE_VECTOR);
     }
 
-    @Specialization(guards = {"oneVec", "isComplexPrecedence"})
+    @Specialization(guards = {"oneVec(args)", "isFirstComplexPrecedence(frame, args)"})
     Object orderComplex(VirtualFrame frame, RAbstractLogicalVector naLastVec, RAbstractLogicalVector decVec, RArgsValuesAndNames args) {
         Object[] vectors = args.getValues();
         RAbstractComplexVector v = (RAbstractComplexVector) castVector(frame, vectors[0]);
@@ -200,7 +200,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
         return n;
     }
 
-    @Specialization(guards = {"!oneVec", "!noVec"})
+    @Specialization(guards = {"!oneVec(args)", "!noVec(args)"})
     Object orderMulti(VirtualFrame frame, RAbstractLogicalVector naLastVec, RAbstractLogicalVector decVec, RArgsValuesAndNames args) {
         int n = preprocessVectors(frame, args);
 
@@ -545,38 +545,31 @@ public abstract class Order extends RPrecedenceBuiltinNode {
         }
     }
 
-    @SuppressWarnings("unused")
-    protected boolean isIntegerPrecedence(VirtualFrame frame, RAbstractLogicalVector naLastVec, RAbstractLogicalVector decVec, RArgsValuesAndNames args) {
+    protected boolean isFirstIntegerPrecedence(VirtualFrame frame, RArgsValuesAndNames args) {
         return isIntegerPrecedence(frame, args.getValues()[0]);
     }
 
-    @SuppressWarnings("unused")
-    protected boolean isDoublePrecedence(VirtualFrame frame, RAbstractLogicalVector naLastVec, RAbstractLogicalVector decVec, RArgsValuesAndNames args) {
+    protected boolean isFirstDoublePrecedence(VirtualFrame frame, RArgsValuesAndNames args) {
         return isDoublePrecedence(frame, args.getValues()[0]);
     }
 
-    @SuppressWarnings("unused")
-    protected boolean isLogicalPrecedence(VirtualFrame frame, RAbstractLogicalVector naLastVec, RAbstractLogicalVector decVec, RArgsValuesAndNames args) {
+    protected boolean isFirstLogicalPrecedence(VirtualFrame frame, RArgsValuesAndNames args) {
         return isLogicalPrecedence(frame, args.getValues()[0]);
     }
 
-    @SuppressWarnings("unused")
-    protected boolean isStringPrecedence(VirtualFrame frame, RAbstractLogicalVector naLastVec, RAbstractLogicalVector decVec, RArgsValuesAndNames args) {
+    protected boolean isFirstStringPrecedence(VirtualFrame frame, RArgsValuesAndNames args) {
         return isStringPrecedence(frame, args.getValues()[0]);
     }
 
-    @SuppressWarnings("unused")
-    protected boolean isComplexPrecedence(VirtualFrame frame, RAbstractLogicalVector naLastVec, RAbstractLogicalVector decVec, RArgsValuesAndNames args) {
+    protected boolean isFirstComplexPrecedence(VirtualFrame frame, RArgsValuesAndNames args) {
         return isComplexPrecedence(frame, args.getValues()[0]);
     }
 
-    @SuppressWarnings("unused")
-    protected boolean noVec(RAbstractLogicalVector naLastVec, RAbstractLogicalVector decVec, RArgsValuesAndNames args) {
+    protected boolean noVec(RArgsValuesAndNames args) {
         return args.length() == 0;
     }
 
-    @SuppressWarnings("unused")
-    protected boolean oneVec(RAbstractLogicalVector naLastVec, RAbstractLogicalVector decVec, RArgsValuesAndNames args) {
+    protected boolean oneVec(RArgsValuesAndNames args) {
         return args.length() == 1;
     }
 

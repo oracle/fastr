@@ -22,16 +22,22 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
+import com.oracle.truffle.r.runtime.*;
+
 /**
  * The rarely seen {@code externalptr} type.
  */
-public class RExternalPtr extends RAttributeStorage implements RAttributable {
+public class RExternalPtr extends RAttributeStorage implements RAttributable, RTypedValue {
     public final long value;
     public final String tag;
 
-    public RExternalPtr(long value, String tag) {
+    RExternalPtr(long value, String tag) {
         this.value = value;
         this.tag = tag;
+    }
+
+    public RType getRType() {
+        return RType.ExternalPtr;
     }
 
 }

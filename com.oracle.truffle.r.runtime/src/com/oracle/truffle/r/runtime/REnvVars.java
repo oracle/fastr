@@ -56,6 +56,7 @@ public class REnvVars {
         getEnvVars();
         // set the standard vars defined by R
         String rHome = rHome();
+        envVars.put("R_HOME", rHome);
         FileSystem fileSystem = FileSystems.getDefault();
         envVars.put("R_DOC_DIR", fileSystem.getPath(rHome, "doc").toString());
         envVars.put("R_INCLUDE_DIR", fileSystem.getPath(rHome, "include").toString());
@@ -123,15 +124,18 @@ public class REnvVars {
     public static String rHome() {
         // This can be called before initialize, "R RHOME"
         if (rHomePath == null) {
-            rHomePath = getEnvVars().get("R_HOME");
-            if (rHomePath == null) {
-                // Should only happen in a unit test run, but can differ whether
-                // run from within IDE or from command line.
-                File file = new File(System.getProperty("user.dir"));
-                if (file.getName().endsWith("r.test")) {
-                    file = file.getParentFile();
+            File file = new File(System.getProperty("user.dir"));
+            if (file.getName().endsWith("r.test")) {
+                file = file.getParentFile();
+            }
+            rHomePath = file.getAbsolutePath();
+            // Check any external setting is consistent
+            String envRHomePath = getEnvVars().get("R_HOME");
+            if (envRHomePath != null) {
+                new File(envRHomePath).getAbsolutePath();
+                if (!envRHomePath.equals(rHomePath)) {
+                    Utils.fail("R_HOME set to unexpected value in the environment");
                 }
-                rHomePath = file.getAbsolutePath();
             }
         }
         return rHomePath;

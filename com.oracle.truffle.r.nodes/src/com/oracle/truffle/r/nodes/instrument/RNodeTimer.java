@@ -24,11 +24,14 @@ package com.oracle.truffle.r.nodes.instrument;
 
 import java.util.*;
 
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.instrument.*;
 import com.oracle.truffle.api.instrument.impl.*;
-import com.oracle.truffle.api.nodes.*;
+import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.nodes.function.*;
+import com.oracle.truffle.r.nodes.instrument.RInstrument.FunctionIdentification;
+import com.oracle.truffle.r.nodes.instrument.RInstrument.NodeId;
+import com.oracle.truffle.r.options.*;
 import com.oracle.truffle.r.runtime.*;
 
 /**
@@ -37,10 +40,13 @@ import com.oracle.truffle.r.runtime.*;
  *
  * The {@link Basic#instrument} field is used to attach the timer to a {@link Probe}.
  *
+ * The instrument records the cumulative time spent executing this node during the process execution
+ * using {@link System#nanoTime()}.
+ *
  */
 
 public class RNodeTimer {
-    private static WeakHashMap<Object, Basic> timerMap = new WeakHashMap<>();
+    private static HashMap<Object, Basic> timerMap = new HashMap<>();
 
     public static class Basic {
 
@@ -48,16 +54,16 @@ public class RNodeTimer {
         protected long cumulativeTime;
         public final Instrument instrument;
 
-        public Basic(Object tag) {
-            instrument = Instrument.create(new SimpleEventReceiver() {
+        public Basic(RInstrument.NodeId tag) {
+            instrument = Instrument.create(new SimpleInstrumentListener() {
 
                 @Override
-                public void enter(Node node, VirtualFrame frame) {
+                public void enter(Probe probe) {
                     enterTime = System.nanoTime();
                 }
 
                 @Override
-                public void returnAny(Node node, VirtualFrame frame) {
+                public void returnAny(Probe probe) {
                     cumulativeTime += System.nanoTime() - enterTime;
                 }
             }, "R node timer");
@@ -72,27 +78,27 @@ public class RNodeTimer {
     }
 
     public static class Statement extends Basic {
-        /**
-         * Tag is the {@link RNode}.
-         */
-        public Statement(Object tag) {
+        public Statement(RInstrument.NodeId tag) {
             super(tag);
         }
 
         static {
-            RPerfAnalysis.register(new PerfHandler());
+            RPerfStats.register(new PerfHandler());
         }
 
-        private static class StatementData implements Comparable<StatementData> {
+        private static class TimingData implements Comparable<TimingData> {
             long time;
-            RNode node;
+            FunctionUID functionUID;
 
-            StatementData(long time, RNode node) {
-                this.time = time;
-                this.node = node;
+            TimingData(FunctionUID functionUID) {
+                this.functionUID = functionUID;
             }
 
-            public int compareTo(StatementData o) {
+            void addTime(long t) {
+                this.time += t;
+            }
+
+            public int compareTo(TimingData o) {
                 if (time < o.time) {
                     return 1;
                 } else if (time > o.time) {
@@ -103,39 +109,134 @@ public class RNodeTimer {
             }
         }
 
-        private static class PerfHandler implements RPerfAnalysis.Handler {
+        private static class PerfHandler implements RPerfStats.Handler {
             static final String NAME = "timing";
+            private boolean expand;
+            private int threshold;
 
-            public void initialize() {
+            public void initialize(String optionText) {
+                if (optionText.length() > 0) {
+                    String[] subOptions = optionText.split(":");
+                    for (String subOption : subOptions) {
+                        if (subOption.equals("expand")) {
+                            expand = true;
+                        } else if (subOption.startsWith("threshold")) {
+                            threshold = Integer.parseInt(subOption.substring(subOption.indexOf('=') + 1)) * 1000;
+                        }
+                    }
+                }
             }
 
             public String getName() {
                 return NAME;
             }
 
-            private static final long THRESHOLD = 0; // 1000000000L;
-
+            /**
+             * Report the statement timing information at the end of the run. The report is per
+             * function {@link FunctionUID}, which uniquely defines a function in the face of call
+             * target splitting. Functions that consumed less time than requested threshold (default
+             * 0) are not included in the report. The report is sorted by cumulative time.
+             */
             public void report() {
-                ArrayList<StatementData> data = new ArrayList<>();
+                Map<FunctionUID, TimingData> functionMap = new TreeMap<>();
+
                 for (Map.Entry<Object, Basic> entry : timerMap.entrySet()) {
                     if (entry.getValue() instanceof Statement) {
-                        if (entry.getValue().cumulativeTime > THRESHOLD) {
-                            data.add(new StatementData(entry.getValue().cumulativeTime, (RNode) entry.getKey()));
+                        NodeId nodeId = (NodeId) entry.getKey();
+                        TimingData timingData = functionMap.get(nodeId.uid);
+                        if (timingData == null) {
+                            timingData = new TimingData(nodeId.uid);
+                            functionMap.put(nodeId.uid, timingData);
+                        }
+                        timingData.addTime(millis(entry.getValue().cumulativeTime));
+                    }
+                }
+
+                Collection<TimingData> values = functionMap.values();
+                TimingData[] sortedData = new TimingData[values.size()];
+                values.toArray(sortedData);
+                Arrays.sort(sortedData);
+
+                for (TimingData t : sortedData) {
+                    if (t.time > 0) {
+                        if (t.time > threshold) {
+                            FunctionIdentification fdi = RInstrument.getFunctionIdentification(t.functionUID);
+                            RPerfStats.out().println("==========");
+                            RPerfStats.out().printf("%d ms: %s, %s%n", t.time, fdi.name, fdi.origin);
+                            if (expand) {
+                                SourceSection ss = fdi.node.getSourceSection();
+                                if (ss == null) {
+                                    RPerfStats.out().println("no source available");
+                                } else {
+                                    long[] time = createLineTimes(fdi);
+                                    int startLine = ss.getStartLine();
+                                    int lastLine = ss.getEndLine();
+                                    for (int i = startLine; i <= lastLine; i++) {
+                                        RPerfStats.out().printf("%8dms: %s%n", time[i], fdi.source.getCode(i));
+                                    }
+
+                                }
+                            }
                         }
                     }
                 }
-                StatementData[] sortedData = new StatementData[data.size()];
-                data.toArray(sortedData);
-                Arrays.sort(sortedData);
-                for (StatementData sd : sortedData) {
-                    System.out.printf("%10d: %s%n", sd.time, sd.node.getSourceSection().getCode());
-                }
+            }
+        }
+
+        private static class LineTimesNodeVisitor extends RASTProber.SyntaxNodeVisitor {
+            private final long[] time;
+
+            LineTimesNodeVisitor(FunctionUID uid, long[] time) {
+                super(uid);
+                this.time = time;
             }
 
+            @Override
+            protected boolean callback(RNode node) {
+                SourceSection ss = node.getSourceSection();
+                if (ss != null) {
+                    NodeId nodeId = new NodeId(uid, node);
+                    Statement stmt = (Statement) timerMap.get(nodeId);
+                    if (stmt != null) {
+                        time[ss.getStartLine()] += millis(stmt.cumulativeTime);
+                    } else {
+                        /*
+                         * This happens because default arguments are not visited during the AST
+                         * probe walk.
+                         */
+                        if (FastROptions.debugMatches("nodetimer")) {
+                            System.out.printf("Failed to find map entry: %s%n", nodeId);
+                            System.out.printf("Map entries for function: %s%n", uid);
+                            for (Map.Entry<Object, Basic> entry : timerMap.entrySet()) {
+                                NodeId nid = (NodeId) entry.getKey();
+                                if (nid.uid.equals(uid)) {
+                                    System.out.printf("%d%n", nid.charIndex);
+                                }
+                            }
+                        }
+                    }
+                }
+                return true;
+            }
+        }
+
+        private static long millis(long nanos) {
+            return nanos / 1000;
+        }
+
+        private static long[] createLineTimes(FunctionIdentification fdi) {
+            /*
+             * Although only those lines occupied by the function will actually have entries in the
+             * array, addressing is easier if we allocate an array that is as long as the entire
+             * source.
+             */
+            final long[] time = new long[fdi.source.getLineCount() + 1];
+            fdi.node.getBody().accept(new LineTimesNodeVisitor(fdi.node.getUID(), time));
+            return time;
         }
 
         public static boolean enabled() {
-            return RPerfAnalysis.enabled(PerfHandler.NAME);
+            return RPerfStats.enabled(PerfHandler.NAME);
         }
 
         /**

@@ -50,22 +50,12 @@ public abstract class UpdateDiag extends RInvisibleBuiltinNode {
         return vector.hasDimensions() && vector.getDimensions().length == 2;
     }
 
-    // FIXME The following two are workarounds for a Truffle-DSL bug.
-
-    protected static boolean isMatrix(RAbstractIntVector vector) {
-        return isMatrix((RAbstractVector) vector);
-    }
-
-    protected static boolean isMatrix(RAbstractDoubleVector vector) {
-        return isMatrix((RAbstractVector) vector);
-    }
-
     protected static boolean correctReplacementLength(RAbstractVector matrix, RAbstractVector replacement) {
         return replacement.getLength() == 1 || Math.min(matrix.getDimensions()[0], matrix.getDimensions()[1]) == replacement.getLength();
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = "!isMatrix")
+    @Specialization(guards = "!isMatrix(vector)")
     protected RIntVector updateDiagNoMatrix(RAbstractVector vector, RAbstractVector valueVector) {
         controlVisibility();
         CompilerDirectives.transferToInterpreter();
@@ -73,14 +63,14 @@ public abstract class UpdateDiag extends RInvisibleBuiltinNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"isMatrix", "!correctReplacementLength"})
+    @Specialization(guards = {"isMatrix(vector)", "!correctReplacementLength(vector, valueVector)"})
     protected RIntVector updateDiagReplacementDiagonalLength(RAbstractVector vector, RAbstractVector valueVector) {
         controlVisibility();
         CompilerDirectives.transferToInterpreter();
         throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.REPLACEMENT_DIAGONAL_LENGTH);
     }
 
-    @Specialization(guards = {"isMatrix", "correctReplacementLength"})
+    @Specialization(guards = {"isMatrix(vector)", "correctReplacementLength(vector, valueVector)"})
     @TruffleBoundary
     protected RAbstractIntVector updateDiag(RIntVector vector, RAbstractIntVector valueVector) {
         controlVisibility();
@@ -100,7 +90,7 @@ public abstract class UpdateDiag extends RInvisibleBuiltinNode {
         return resultVector;
     }
 
-    @Specialization(guards = {"isMatrix", "correctReplacementLength"})
+    @Specialization(guards = {"isMatrix(vector)", "correctReplacementLength(vector, valueVector)"})
     @TruffleBoundary
     protected RAbstractDoubleVector updateDiag(RDoubleVector vector, RAbstractDoubleVector valueVector) {
         controlVisibility();
@@ -120,7 +110,7 @@ public abstract class UpdateDiag extends RInvisibleBuiltinNode {
         return resultVector;
     }
 
-    @Specialization(guards = {"isMatrix", "correctReplacementLength"})
+    @Specialization(guards = {"isMatrix(vector)", "correctReplacementLength(vector, valueVector)"})
     protected RAbstractDoubleVector updateDiag(VirtualFrame frame, RIntVector vector, RAbstractDoubleVector valueVector) {
         controlVisibility();
         initCastDoubleNode();

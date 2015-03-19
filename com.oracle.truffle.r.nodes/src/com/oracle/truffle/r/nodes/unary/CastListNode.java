@@ -32,7 +32,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 
 public abstract class CastListNode extends CastNode {
 
-    @Child CastListNode castListRecursive;
+    @Child private CastListNode castListRecursive;
 
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
@@ -126,5 +126,9 @@ public abstract class CastListNode extends CastNode {
     @Specialization
     protected RList doFunction(RFunction func) {
         return RDataFactory.createList(new Object[]{func});
+    }
+
+    public static CastListNode create() {
+        return CastListNodeGen.create(null, true, true, true);
     }
 }

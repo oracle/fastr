@@ -51,7 +51,7 @@ public abstract class UpdateLength extends RInvisibleBuiltinNode {
         return arguments;
     }
 
-    @Specialization(guards = {"isLengthOne", "isObject"})
+    @Specialization(guards = {"isLengthOne(lengthVector)", "isObject(frame, container)"})
     protected Object updateLengthObject(VirtualFrame frame, RAbstractContainer container, RAbstractIntVector lengthVector) {
         if (dcn == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -60,13 +60,13 @@ public abstract class UpdateLength extends RInvisibleBuiltinNode {
         try {
             return dcn.executeInternal(frame, container.getClassHierarchy(), new Object[]{container, lengthVector});
         } catch (NoGenericMethodException e) {
-            return updateLength(container, lengthVector);
+            return updateLength(frame, container, lengthVector);
         }
 
     }
 
-    @Specialization(guards = {"isLengthOne", "!isObject"})
-    protected RAbstractContainer updateLength(RAbstractContainer container, RAbstractIntVector lengthVector) {
+    @Specialization(guards = {"isLengthOne(lengthVector)", "!isObject(frame, container)"})
+    protected RAbstractContainer updateLength(@SuppressWarnings("unused") VirtualFrame frame, RAbstractContainer container, RAbstractIntVector lengthVector) {
         controlVisibility();
         int length = lengthVector.getDataAt(0);
         // TODO: we can potentially avoid making a copy during materialization and then during
@@ -76,7 +76,7 @@ public abstract class UpdateLength extends RInvisibleBuiltinNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = "!isLengthOne")
+    @Specialization(guards = "!isLengthOne(lengthVector)")
     protected RAbstractContainer updateLengthError(RAbstractContainer container, RAbstractIntVector lengthVector) {
         controlVisibility();
         CompilerDirectives.transferToInterpreter();
@@ -91,7 +91,7 @@ public abstract class UpdateLength extends RInvisibleBuiltinNode {
         throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.INVALID_UNNAMED_VALUE);
     }
 
-    protected static boolean isLengthOne(@SuppressWarnings("unused") RAbstractContainer vector, RAbstractIntVector length) {
+    protected static boolean isLengthOne(RAbstractIntVector length) {
         return length.getLength() == 1;
     }
 

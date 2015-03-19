@@ -24,7 +24,6 @@ package com.oracle.truffle.r.runtime;
 
 import java.io.*;
 import java.net.*;
-import java.nio.charset.*;
 import java.util.*;
 
 import com.oracle.truffle.api.*;
@@ -185,7 +184,7 @@ public final class Utils {
      * All terminations should go through this method.
      */
     public static RuntimeException exit(int status) {
-        RPerfAnalysis.report();
+        RPerfStats.report();
         if (RCmdOptions.DEBUGGER.getValue() != null) {
             throw new DebugExitException();
         } else {
@@ -222,15 +221,6 @@ public final class Utils {
         } else {
             return path;
         }
-    }
-
-    private static volatile Charset UTF8;
-
-    public static Charset getUTF8() {
-        if (UTF8 == null) {
-            UTF8 = Charset.forName("UTF-8");
-        }
-        return UTF8;
     }
 
     /**
@@ -281,16 +271,16 @@ public final class Utils {
      * {@code FunctionDefinitionNode.substituteFrame}.
      */
     @TruffleBoundary
-    public static VirtualFrame getActualCurrentFrame() {
+    public static Frame getActualCurrentFrame() {
         FrameInstance frameInstance = Truffle.getRuntime().getCurrentFrame();
         if (frameInstance == null) {
             // Might be the case during initialization, when envs are prepared before the actual
             // Truffle/R system has started
             return null;
         }
-        VirtualFrame frame = (VirtualFrame) frameInstance.getFrame(FrameAccess.MATERIALIZE, true);
+        Frame frame = frameInstance.getFrame(FrameAccess.MATERIALIZE, true);
         if (isSubstitutedFrame(frame)) {
-            frame = (VirtualFrame) frame.getArguments()[0];
+            frame = (Frame) frame.getArguments()[0];
         }
         return frame;
     }

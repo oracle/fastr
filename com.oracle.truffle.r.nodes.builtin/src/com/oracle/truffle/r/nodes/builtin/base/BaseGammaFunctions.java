@@ -30,6 +30,23 @@ import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
 public class BaseGammaFunctions {
+
+    @RBuiltin(name = "gamma", kind = PRIMITIVE, parameterNames = {"x"})
+    public abstract static class Gamma extends RBuiltinNode {
+        @Specialization
+        protected RDoubleVector lgamma(@SuppressWarnings("unused") RAbstractDoubleVector x) {
+            throw RError.nyi(getEncapsulatingSourceSection(), " gamma");
+        }
+    }
+
+    @RBuiltin(name = "trigamma", kind = PRIMITIVE, parameterNames = {"x"})
+    public abstract static class TriGamma extends RBuiltinNode {
+        @Specialization
+        protected RDoubleVector trigamma(@SuppressWarnings("unused") RAbstractDoubleVector x) {
+            throw RError.nyi(getEncapsulatingSourceSection(), " trigamma");
+        }
+    }
+
     @RBuiltin(name = "lgamma", kind = PRIMITIVE, parameterNames = {"x"})
     public abstract static class Lgamma extends RBuiltinNode {
 
@@ -74,7 +91,7 @@ public class BaseGammaFunctions {
     @RBuiltin(name = "digamma", kind = PRIMITIVE, parameterNames = {"x"})
     public abstract static class DiGamma extends RBuiltinNode {
 
-        @Child DpsiFnCalc dpsiFnCalc;
+        @Child private DpsiFnCalc dpsiFnCalc;
 
         private final NACheck naClosureCheck = NACheck.create();
         private final NACheck naValCheck = NACheck.create();
@@ -142,7 +159,7 @@ public class BaseGammaFunctions {
 
         public abstract double executeDouble(VirtualFrame frame, double x, int n, int kode, double ans);
 
-        @Child DpsiFnCalc dpsiFnCalc;
+        @Child private DpsiFnCalc dpsiFnCalc;
 
         @CompilationFinal private static final double[] bvalues = new double[]{1.00000000000000000e+00, -5.00000000000000000e-01, 1.66666666666666667e-01, -3.33333333333333333e-02,
                         2.38095238095238095e-02, -3.33333333333333333e-02, 7.57575757575757576e-02, -2.53113553113553114e-01, 1.16666666666666667e+00, -7.09215686274509804e+00,

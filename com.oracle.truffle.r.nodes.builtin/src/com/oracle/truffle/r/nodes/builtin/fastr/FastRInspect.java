@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,13 +20,13 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.builtin;
+package com.oracle.truffle.r.nodes.builtin.fastr;
 
-import java.lang.annotation.*;
-
-@Retention(RetentionPolicy.RUNTIME)
-public @interface RBuiltinComment {
-
-    String value();
-
+/**
+ * Just a convenient way to inspect values in the Java debugger from the R shell.
+ */
+class FastRInspect {
+    static Object inspect(Object[] object) {
+        return object;
+    }
 }

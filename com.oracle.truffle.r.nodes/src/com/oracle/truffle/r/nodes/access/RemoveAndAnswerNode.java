@@ -49,7 +49,7 @@ public abstract class RemoveAndAnswerNode extends RNoDeparseNode {
         /**
          * The name of the variable that is to be removed and whose value is to be returned.
          */
-        protected final String name;
+        private final String name;
 
         protected RemoveAndAnswerUninitializedNode(String name) {
             this.name = name;
@@ -108,7 +108,7 @@ public abstract class RemoveAndAnswerNode extends RNoDeparseNode {
             return frame.isByte(slot);
         }
 
-        @Specialization(guards = "isObject")
+        @Specialization(guards = "isObject(frame)")
         public Object doObject(VirtualFrame frame) {
             controlVisibility();
             Object result;
@@ -123,7 +123,7 @@ public abstract class RemoveAndAnswerNode extends RNoDeparseNode {
             return result;
         }
 
-        @Specialization(guards = "isInt")
+        @Specialization(guards = "isInt(frame)")
         public int doInt(VirtualFrame frame) {
             controlVisibility();
             int result;
@@ -138,7 +138,7 @@ public abstract class RemoveAndAnswerNode extends RNoDeparseNode {
             return result;
         }
 
-        @Specialization(guards = "isDouble")
+        @Specialization(guards = "isDouble(frame)")
         public double doDouble(VirtualFrame frame) {
             controlVisibility();
             double result;
@@ -153,7 +153,7 @@ public abstract class RemoveAndAnswerNode extends RNoDeparseNode {
             return result;
         }
 
-        @Specialization(guards = "isByte")
+        @Specialization(guards = "isByte(frame)")
         public byte doByte(VirtualFrame frame) {
             controlVisibility();
             byte result;

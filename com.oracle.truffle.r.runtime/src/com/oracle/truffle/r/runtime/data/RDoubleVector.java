@@ -75,16 +75,6 @@ public final class RDoubleVector extends RVector implements RAbstractDoubleVecto
         return Arrays.toString(Arrays.stream(data).mapToObj(v -> RRuntime.doubleToString(v)).toArray(String[]::new));
     }
 
-    public RIntVector trimToIntVector() {
-        // TODO: Correct trim
-        double[] doubleData = this.data;
-        int[] intData = new int[doubleData.length];
-        for (int i = 0; i < doubleData.length; ++i) {
-            intData[i] = (int) doubleData[i];
-        }
-        return RDataFactory.createIntVector(intData, RDataFactory.INCOMPLETE_VECTOR, this.dimensions);
-    }
-
     @Override
     protected boolean internalVerify() {
         if (isComplete()) {
@@ -140,16 +130,6 @@ public final class RDoubleVector extends RVector implements RAbstractDoubleVecto
         return RDataFactory.createDoubleVector(data, isComplete(), newDimensions);
     }
 
-    public RDoubleVector removeLast() {
-        assert getLength() > 0;
-        return RDataFactory.createDoubleVector(Arrays.copyOf(data, getLength() - 1), isComplete());
-    }
-
-    public RDoubleVector removeFirst() {
-        assert getLength() > 0;
-        return RDataFactory.createDoubleVector(Arrays.copyOfRange(data, 1, getLength()), isComplete());
-    }
-
     @Override
     protected String getDataAtAsString(int index) {
         return RRuntime.doubleToString(data[index]);
@@ -170,7 +150,7 @@ public final class RDoubleVector extends RVector implements RAbstractDoubleVecto
 
     }
 
-    public static double[] resizeData(double[] newData, double[] oldData, int oldDataLength, boolean fillNA) {
+    static double[] resizeData(double[] newData, double[] oldData, int oldDataLength, boolean fillNA) {
         if (newData.length > oldDataLength) {
             if (fillNA) {
                 for (int i = oldDataLength; i < newData.length; ++i) {

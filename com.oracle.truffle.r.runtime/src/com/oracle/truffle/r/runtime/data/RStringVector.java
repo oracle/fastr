@@ -161,7 +161,7 @@ public final class RStringVector extends RVector implements RAbstractStringVecto
         this.data = createResizedData(size, RRuntime.STRING_NA);
     }
 
-    public void resizeWithEmpty(int size) {
+    void resizeWithEmpty(int size) {
         this.data = createResizedData(size, RRuntime.NAMES_ATTR_EMPTY_VALUE);
     }
 

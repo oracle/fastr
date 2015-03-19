@@ -18,7 +18,6 @@ import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseCheckHelperNode;
 import com.oracle.truffle.r.nodes.function.*;
@@ -49,11 +48,11 @@ public abstract class Switch extends RBuiltinNode {
     private final BranchProfile notIntType = BranchProfile.create();
 
     @Override
-    public RNode[] getParameterValues() {
-        return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance)};
+    public Object[] getDefaultParameterValues() {
+        return new Object[]{RMissing.instance, RMissing.instance};
     }
 
-    @Specialization(guards = "isLengthOne")
+    @Specialization(guards = "isLengthOne(x)")
     protected Object doSwitch(VirtualFrame frame, RAbstractStringVector x, RArgsValuesAndNames optionalArgs) {
         controlVisibility();
         return prepareResult(doSwitchString(frame, x, optionalArgs));

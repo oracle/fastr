@@ -3185,6 +3185,12 @@ public class TestSimpleBuiltins extends TestBase {
     @Test
     public void testDoCall() {
         assertEval("{ x<-list(c(1,2)); do.call(\"as.matrix\", x) }");
+        assertEval("{ do.call(quote, list(quote(1)))}");
+        assertEval("{ do.call(quote, list(quote(x)))}");
+        assertEval("{ do.call(quote, list(quote(x+1)))}");
+        assertEvalError("{ f <- function(x) x; do.call(f, list(quote(y)))}");
+        assertEvalError("{ f <- function(x) x; do.call(f, list(quote(y + 1)))}");
+        assertEval("{ do.call(\"+\", list(quote(1), 2))}");
     }
 
     @Test

@@ -39,7 +39,7 @@ public final class ArgumentsSignature implements Iterable<String> {
     public static final int NO_VARARG = -1;
 
     @CompilationFinal private static final ArgumentsSignature[] EMPTY_SIGNATURES = new ArgumentsSignature[32];
-    public static final ArgumentsSignature VARARG_SIGNATURE = get(new String[]{VARARG_NAME});
+    public static final ArgumentsSignature VARARG_SIGNATURE = get(VARARG_NAME);
 
     static {
         for (int i = 0; i < EMPTY_SIGNATURES.length; i++) {
@@ -48,7 +48,7 @@ public final class ArgumentsSignature implements Iterable<String> {
     }
 
     @TruffleBoundary
-    public static ArgumentsSignature get(String[] names) {
+    public static ArgumentsSignature get(String... names) {
         assert names != null;
         ArgumentsSignature newSignature = new ArgumentsSignature(names);
         ArgumentsSignature oldSignature = signatures.putIfAbsent(newSignature, newSignature);
@@ -110,14 +110,6 @@ public final class ArgumentsSignature implements Iterable<String> {
         return nonNullCount;
     }
 
-    public boolean isVarArg(int index) {
-        return isVarArg[index];
-    }
-
-    public boolean isVarArgGetter(int index) {
-        return isVarArgGetter[index];
-    }
-
     public int getVarArgIndex() {
         assert varArgIndexes.length <= 1 : "cannot ask for _the_ vararg index if there are multiple varargs";
         return varArgIndexes.length == 0 ? NO_VARARG : varArgIndexes[0];
@@ -172,5 +164,41 @@ public final class ArgumentsSignature implements Iterable<String> {
     @Override
     public String toString() {
         return "Signature " + Arrays.toString(names);
+    }
+
+    /*
+     * Utility functions
+     */
+
+    public static long[] flattenIndexes(ArgumentsSignature[] varArgSignatures, int argListSize) {
+        long[] preparePermutation = new long[argListSize];
+        int index = 0;
+        for (int i = 0; i < varArgSignatures.length; i++) {
+            ArgumentsSignature varArgSignature = varArgSignatures[i];
+            if (varArgSignature != null) {
+                for (int j = 0; j < varArgSignature.getLength(); j++) {
+                    preparePermutation[index++] = -((((long) i) << 32) + j);
+                }
+            } else {
+                preparePermutation[index++] = i;
+            }
+        }
+        return preparePermutation;
+    }
+
+    public static ArgumentsSignature flattenNames(ArgumentsSignature signature, ArgumentsSignature[] varArgSignatures, int argListSize) {
+        String[] argNames = new String[argListSize];
+        int index = 0;
+        for (int i = 0; i < varArgSignatures.length; i++) {
+            ArgumentsSignature varArgSignature = varArgSignatures[i];
+            if (varArgSignature != null) {
+                for (int j = 0; j < varArgSignature.getLength(); j++) {
+                    argNames[index++] = varArgSignature.getName(j);
+                }
+            } else {
+                argNames[index++] = signature.getName(i);
+            }
+        }
+        return ArgumentsSignature.get(argNames);
     }
 }

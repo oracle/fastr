@@ -96,8 +96,9 @@ public abstract class ConnectionFunctions {
             if (!RRuntime.fromLogical(blocking)) {
                 throw RError.nyi(getEncapsulatingSourceSection(), " non-blocking mode not supported");
             }
+            String path = removeFileURLPrefix(description.getDataAt(0));
             try {
-                return new FileRConnection(description.getDataAt(0), open.getDataAt(0));
+                return new FileRConnection(path, open.getDataAt(0));
             } catch (IOException ex) {
                 RError.warning(RError.Message.CANNOT_OPEN_FILE, description.getDataAt(0), ex.getMessage());
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.CANNOT_OPEN_CONNECTION);
@@ -256,7 +257,7 @@ public abstract class ConnectionFunctions {
                     RContext.getInstance().setEvalWarning(RError.Message.ALREADY_OPEN_CONNECTION.message);
                     return RNull.instance;
                 }
-                baseConn.forceOpen(open.getDataAt(0));
+                baseConn.open(open.getDataAt(0));
             } catch (IOException ex) {
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, ex.getMessage());
             }
@@ -439,7 +440,7 @@ public abstract class ConnectionFunctions {
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = "!newLineIsLogical")
+        @Specialization(guards = "!newLineIsLogical(newLine)")
         protected Object pushBack(RAbstractStringVector data, RConnection connection, RAbstractVector newLine, RAbstractIntVector type) {
             controlVisibility();
             throw RError.error(RError.Message.INVALID_ARGUMENT, "newLine");
@@ -452,8 +453,7 @@ public abstract class ConnectionFunctions {
             throw RError.error(RError.Message.INVALID_CONNECTION);
         }
 
-        @SuppressWarnings("unused")
-        protected boolean newLineIsLogical(RAbstractStringVector data, RConnection connection, RAbstractVector newLine) {
+        protected boolean newLineIsLogical(RAbstractVector newLine) {
             return newLine.getElementClass() == RLogical.class;
         }
 
@@ -498,20 +498,20 @@ public abstract class ConnectionFunctions {
     public abstract static class ReadChar extends InternalCloseHelper {
 
         @SuppressWarnings("unused")
-        @Specialization(guards = "ncharsEmpty")
+        @Specialization(guards = "ncharsEmpty(nchars)")
         protected RStringVector readCharNcharsEmpty(RConnection con, RAbstractIntVector nchars, RAbstractLogicalVector useBytes) {
             controlVisibility();
             return RDataFactory.createEmptyStringVector();
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = "useBytesEmpty")
+        @Specialization(guards = "useBytesEmpty(useBytes)")
         protected RStringVector readCharUseBytesEmpty(RConnection con, RAbstractIntVector nchars, RAbstractLogicalVector useBytes) {
             controlVisibility();
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "useBytes");
         }
 
-        @Specialization(guards = {"!ncharsEmpty", "!useBytesEmpty"})
+        @Specialization(guards = {"!ncharsEmpty(nchars)", "!useBytesEmpty(useBytes)"})
         @TruffleBoundary
         protected RStringVector readChar(RConnection con, RAbstractIntVector nchars, RAbstractLogicalVector useBytes) {
             controlVisibility();
@@ -526,12 +526,11 @@ public abstract class ConnectionFunctions {
             }
         }
 
-        boolean ncharsEmpty(@SuppressWarnings("unused") RConnection con, RAbstractIntVector nchars) {
+        boolean ncharsEmpty(RAbstractIntVector nchars) {
             return nchars.getLength() == 0;
         }
 
-        @SuppressWarnings("unused")
-        boolean useBytesEmpty(RConnection con, RAbstractIntVector nchars, RAbstractLogicalVector useBytes) {
+        boolean useBytesEmpty(RAbstractLogicalVector useBytes) {
             return useBytes.getLength() == 0;
         }
 

@@ -39,10 +39,17 @@ public final class RError extends RuntimeException {
         private final RError.Message msg;
         @CompilationFinal private final Object[] args;
 
+        @TruffleBoundary
         protected RErrorException(RError.Message msg, Object[] args) {
-            super(RError.formatMessage(msg, args));
+            super(RError.formatMessage(msg, args), null);
             this.msg = msg;
             this.args = args;
+        }
+
+        @SuppressWarnings("sync-override")
+        @Override
+        public Throwable fillInStackTrace() {
+            return null;
         }
     }
 
@@ -82,7 +89,7 @@ public final class RError extends RuntimeException {
     }
 
     private static RError error0(final SourceSection srcCandidate, Message msg, Object... args) {
-        VirtualFrame frame = null;
+        Frame frame = null;
         SourceSection src = srcCandidate;
         if (src == null) {
             frame = Utils.getActualCurrentFrame();

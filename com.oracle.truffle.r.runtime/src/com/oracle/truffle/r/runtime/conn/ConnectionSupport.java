@@ -66,7 +66,7 @@ public class ConnectionSupport {
      * open argument.
      */
     enum AbstractOpenMode {
-        Lazy(new String[]{""}, false, true, true),
+        Lazy(new String[]{""}, true, true, true),
         Read(new String[]{"r", "rt"}, true, true, false),
         Write(new String[]{"w", "wt"}, true, false, true),
         Append(new String[]{"a", "at"}, true, false, true),
@@ -169,7 +169,7 @@ public class ConnectionSupport {
         Terminal("terminal"),
         File("file"),
         GZFile("gzfile"),
-        Socket("socketconn"),
+        Socket("sockconn"),
         Text("textConnection"),
         URL("url");
 
@@ -179,6 +179,16 @@ public class ConnectionSupport {
             this.printName = printName;
         }
 
+    }
+
+    public static final String FILE_URL_PREFIX = "file://";
+
+    public static String removeFileURLPrefix(String path) {
+        if (path.startsWith(FILE_URL_PREFIX)) {
+            return path.replace(FILE_URL_PREFIX, "");
+        } else {
+            return path;
+        }
     }
 
     // TODO implement all open modes
@@ -347,6 +357,17 @@ public class ConnectionSupport {
             return this;
         }
 
+        /**
+         * This is used exclusively by the {@code open} builtin.
+         */
+        public void open(String modeString) throws IOException {
+            if (openMode.abstractOpenMode == AbstractOpenMode.Lazy) {
+                // modeString may override the default
+                openMode = new OpenMode(modeString == null ? openMode.modeString : modeString);
+            }
+            createDelegateConnection();
+        }
+
         protected void checkOpen() {
             assert !closed && opened;
         }
@@ -464,12 +485,10 @@ public class ConnectionSupport {
         public abstract String getSummaryDescription();
 
         /**
-         * Return the value that is used in the "text" field by {@code summary.connection}. TODO
-         * determine what this really means, e.g., In GnuR {gzfile} on a binary file still reports
-         * "text".
+         * Return the value that is used in the "text" field by {@code summary.connection}.
          */
         public String getSummaryText() {
-            return "text";
+            return isTextMode() ? "text" : "binary";
         }
 
         @Override

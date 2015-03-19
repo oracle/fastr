@@ -51,7 +51,7 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
     private int matrixDimension;
     protected int[] dimensions;
     protected RStringVector names;
-    protected RList dimNames;
+    private RList dimNames;
     private RAttributes attributes;
     private boolean shared;
     private boolean temporary = true;
@@ -85,10 +85,6 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
             }
             this.dimNames = null;
         }
-    }
-
-    protected RVector(boolean complete, int length, int[] dimensions) {
-        this(complete, length, dimensions, null);
     }
 
     public void setComplete(boolean complete) {
@@ -133,8 +129,8 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
     }
 
     /*
-     * Version without profiles is used by RDeparse and for internal attribute coopying (both are
-     * not performance-critical)
+     * Version without profiles is used by RDeparse and for internal attribute copying (both are not
+     * performance-critical)
      */
     public final RStringVector getNames() {
         if (names == null) {
@@ -630,21 +626,6 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
             values[i] = this.getDataAtAsString(i);
         }
         return RDataFactory.createStringVector(values, this.isComplete());
-    }
-
-    public final boolean isInBounds(int firstPosition, int secondPosition) {
-        assert isMatrix();
-        return firstPosition >= 1 && firstPosition <= matrixDimension && (convertToIndex(secondPosition) * matrixDimension + firstPosition) <= getLength();
-    }
-
-    public static int convertToIndex(int position) {
-        return position - 1;
-    }
-
-    public final int convertToIndex(int firstPosition, int secondPosition) {
-        assert isMatrix();
-        assert isInBounds(firstPosition, secondPosition);
-        return convertToIndex(firstPosition) + convertToIndex(secondPosition) * matrixDimension;
     }
 
     public final RAttributable copyAttributesFrom(RAttributeProfiles attrProfiles, RAbstractContainer vector) {

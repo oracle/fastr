@@ -26,10 +26,10 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.builtin.base.Lapply.*;
+import com.oracle.truffle.r.nodes.builtin.base.Lapply.LapplyInternalNode;
+import com.oracle.truffle.r.nodes.builtin.base.LapplyFactory.LapplyInternalNodeGen;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -45,7 +45,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
  *
  * TODO Set dimnames on result if necessary.
  */
-@RBuiltin(name = "vapply", kind = INTERNAL, parameterNames = {"X", "FUN", "FUN.VALUE", "USE.NAMES"})
+@RBuiltin(name = "vapply", kind = INTERNAL, parameterNames = {"X", "FUN", "FUN.VALUE", "USE.NAMES"}, splitCaller = true)
 public abstract class VApply extends RCastingBuiltinNode {
 
     private final ValueProfile funValueProfile = ValueProfile.createClassProfile();
@@ -54,7 +54,7 @@ public abstract class VApply extends RCastingBuiltinNode {
     private final BranchProfile errorProfile = BranchProfile.create();
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
-    @Child private GeneralLApplyNode doApply = new GeneralLApplyNode();
+    @Child private LapplyInternalNode doApply = LapplyInternalNodeGen.create(null, null, null);
 
     @Specialization
     protected Object vapply(VirtualFrame frame, RAbstractVector vec, RFunction fun, Object funValue, byte useNames) {
@@ -126,7 +126,6 @@ public abstract class VApply extends RCastingBuiltinNode {
         return result;
     }
 
-    @ExplodeLoop
     private double[] convertDoubleVector(VirtualFrame frame, Object[] values, int len) {
         double[] newArray = new double[values.length * len];
         int ind = 0;
@@ -139,7 +138,6 @@ public abstract class VApply extends RCastingBuiltinNode {
         return newArray;
     }
 
-    @ExplodeLoop
     private int[] convertIntVector(VirtualFrame frame, Object[] values, int len) {
         int[] newArray = new int[values.length * len];
         int ind = 0;
@@ -152,7 +150,6 @@ public abstract class VApply extends RCastingBuiltinNode {
         return newArray;
     }
 
-    @ExplodeLoop
     private byte[] convertLogicalVector(VirtualFrame frame, Object[] values, int len) {
         byte[] newArray = new byte[values.length * len];
         int ind = 0;
@@ -165,7 +162,6 @@ public abstract class VApply extends RCastingBuiltinNode {
         return newArray;
     }
 
-    @ExplodeLoop
     private String[] convertStringVector(VirtualFrame frame, Object[] values, int len) {
         String[] newArray = new String[values.length * len];
         int ind = 0;
@@ -178,7 +174,6 @@ public abstract class VApply extends RCastingBuiltinNode {
         return newArray;
     }
 
-    @ExplodeLoop
     private double[] convertComplexVector(VirtualFrame frame, Object[] values, int len) {
         double[] newArray = new double[values.length * len * 2];
         int ind = 0;
@@ -192,5 +187,4 @@ public abstract class VApply extends RCastingBuiltinNode {
         }
         return newArray;
     }
-
 }

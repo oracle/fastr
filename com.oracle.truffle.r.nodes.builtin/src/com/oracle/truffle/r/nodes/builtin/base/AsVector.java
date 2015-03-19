@@ -126,61 +126,61 @@ public abstract class AsVector extends RBuiltinNode {
         return x;
     }
 
-    @Specialization(guards = "castToInt")
+    @Specialization(guards = "castToInt(x, mode)")
     protected RAbstractVector asVectorInt(VirtualFrame frame, RAbstractContainer x, @SuppressWarnings("unused") String mode) {
         controlVisibility();
         return castInteger(frame, x);
     }
 
-    @Specialization(guards = "castToDouble")
+    @Specialization(guards = "castToDouble(x, mode)")
     protected RAbstractVector asVectorDouble(VirtualFrame frame, RAbstractContainer x, @SuppressWarnings("unused") String mode) {
         controlVisibility();
         return castDouble(frame, x);
     }
 
-    @Specialization(guards = "castToComplex")
+    @Specialization(guards = "castToComplex(x, mode)")
     protected RAbstractVector asVectorComplex(VirtualFrame frame, RAbstractContainer x, @SuppressWarnings("unused") String mode) {
         controlVisibility();
         return castComplex(frame, x);
     }
 
-    @Specialization(guards = "castToLogical")
+    @Specialization(guards = "castToLogical(x, mode)")
     protected RAbstractVector asVectorLogical(VirtualFrame frame, RAbstractContainer x, @SuppressWarnings("unused") String mode) {
         controlVisibility();
         return castLogical(frame, x);
     }
 
-    @Specialization(guards = "castToString")
+    @Specialization(guards = "castToString(x, mode)")
     protected RAbstractVector asVectorString(VirtualFrame frame, RAbstractContainer x, @SuppressWarnings("unused") String mode) {
         controlVisibility();
         return castString(frame, x);
     }
 
-    @Specialization(guards = "castToRaw")
+    @Specialization(guards = "castToRaw(x, mode)")
     protected RAbstractVector asVectorRaw(VirtualFrame frame, RAbstractContainer x, @SuppressWarnings("unused") String mode) {
         controlVisibility();
         return castRaw(frame, x);
     }
 
-    @Specialization(guards = "castToList")
+    @Specialization(guards = "castToList(x, mode)")
     protected RAbstractVector asVectorList(VirtualFrame frame, RAbstractContainer x, @SuppressWarnings("unused") String mode) {
         controlVisibility();
         return castList(frame, x);
     }
 
-    @Specialization(guards = "castToList")
+    @Specialization(guards = "castToList(x, mode)")
     protected RAbstractVector asVectorList(@SuppressWarnings("unused") RNull x, @SuppressWarnings("unused") String mode) {
         controlVisibility();
         return RDataFactory.createList();
     }
 
-    @Specialization(guards = "castToSymbol")
+    @Specialization(guards = "castToSymbol(x, mode)")
     protected RSymbol asVectorSymbol(VirtualFrame frame, RAbstractContainer x, @SuppressWarnings("unused") String mode) {
         controlVisibility();
         return castSymbol(frame, x);
     }
 
-    @Specialization(guards = "isSymbol")
+    @Specialization(guards = "isSymbol(x, mode)")
     protected RSymbol asVectorSymbol(RSymbol x, @SuppressWarnings("unused") String mode) {
         controlVisibility();
         return RDataFactory.createSymbol(x.getName());
@@ -190,7 +190,7 @@ public abstract class AsVector extends RBuiltinNode {
         return RType.Symbol.getName().equals(mode);
     }
 
-    @Specialization(guards = "modeIsAny")
+    @Specialization(guards = "modeIsAny(mode)")
     protected RAbstractVector asVector(RList x, @SuppressWarnings("unused") String mode) {
         controlVisibility();
         RList result = x.copyWithNewDimensions(null);
@@ -198,7 +198,7 @@ public abstract class AsVector extends RBuiltinNode {
         return result;
     }
 
-    @Specialization(guards = "modeIsAny")
+    @Specialization(guards = "modeIsAny(mode)")
     protected RAbstractVector asVector(RFactor x, @SuppressWarnings("unused") String mode) {
         RVector levels = x.getLevels();
         RVector result = levels.createEmptySameType(x.getLength(), RDataFactory.COMPLETE_VECTOR);
@@ -209,13 +209,13 @@ public abstract class AsVector extends RBuiltinNode {
         return result;
     }
 
-    @Specialization(guards = "modeIsAny")
+    @Specialization(guards = "modeIsAny(mode)")
     protected RNull asVector(RNull x, @SuppressWarnings("unused") String mode) {
         controlVisibility();
         return x;
     }
 
-    @Specialization(guards = "modeIsPairList")
+    @Specialization(guards = "modeIsPairList(mode)")
     protected Object asVectorPairList(RList x, @SuppressWarnings("unused") String mode) {
         controlVisibility();
         // TODO implement non-empty element list conversion; this is a placeholder for type test
@@ -226,13 +226,13 @@ public abstract class AsVector extends RBuiltinNode {
         }
     }
 
-    @Specialization(guards = "castToExpression")
+    @Specialization(guards = "castToExpression(x, mode)")
     protected RExpression asVectorExpression(VirtualFrame frame, Object x, @SuppressWarnings("unused") String mode) {
         controlVisibility();
         return castExpression(frame, x);
     }
 
-    @Specialization(guards = "modeIsAnyOrMatches")
+    @Specialization(guards = "modeIsAnyOrMatches(x, mode)")
     protected RAbstractVector asVector(RAbstractVector x, @SuppressWarnings("unused") String mode) {
         controlVisibility();
         return x.copyWithNewDimensions(null);
@@ -282,15 +282,11 @@ public abstract class AsVector extends RBuiltinNode {
         return RType.Any.getName().equals(mode) || RRuntime.classToString(x.getElementClass()).equals(mode) || x.getElementClass() == RDouble.class && RType.Double.getName().equals(mode);
     }
 
-    protected boolean modeIsAny(@SuppressWarnings("unused") RAbstractContainer x, String mode) {
+    protected boolean modeIsAny(String mode) {
         return RType.Any.getName().equals(mode);
     }
 
-    protected boolean modeIsAny(@SuppressWarnings("unused") RNull x, String mode) {
-        return RType.Any.getName().equals(mode);
-    }
-
-    protected boolean modeIsPairList(@SuppressWarnings("unused") RAbstractVector x, String mode) {
+    protected boolean modeIsPairList(String mode) {
         return RType.PairList.getName().equals(mode);
     }
 

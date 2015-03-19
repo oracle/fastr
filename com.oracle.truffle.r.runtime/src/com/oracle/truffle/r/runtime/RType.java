@@ -11,7 +11,7 @@
  */
 package com.oracle.truffle.r.runtime;
 
-import com.oracle.truffle.api.CompilerDirectives.*;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
 public enum RType {
     Any("any"),
@@ -41,7 +41,8 @@ public enum RType {
     Expression("expression"),
     DefunctReal("real"),
     DefunctSingle("single"),
-    ExternalPtr("externalptr");
+    ExternalPtr("externalptr"),
+    S4Object("s4object");
 
     private final String name;
 
@@ -72,4 +73,5 @@ public enum RType {
         }
         return null;
     }
+
 }

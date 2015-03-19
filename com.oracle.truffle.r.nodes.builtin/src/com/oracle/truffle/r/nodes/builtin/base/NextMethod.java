@@ -17,8 +17,6 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.utilities.*;
-import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.access.variables.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.function.*;
@@ -41,8 +39,8 @@ public abstract class NextMethod extends RBuiltinNode {
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
     @Override
-    public RNode[] getParameterValues() {
-        return new RNode[]{ConstantNode.create(RNull.instance), ConstantNode.create(RNull.instance), ConstantNode.create(RMissing.instance)};
+    public Object[] getDefaultParameterValues() {
+        return new Object[]{RNull.instance, RNull.instance, RMissing.instance};
     }
 
     protected Object nextMethod(VirtualFrame frame, String generic, @SuppressWarnings("unused") Object obj, Object[] args, ArgumentsSignature signature) {

@@ -27,8 +27,13 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode.RWrapperBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.base.RecallFactory.RecallFunctionNodeGen;
+import com.oracle.truffle.r.nodes.function.*;
+import com.oracle.truffle.r.nodes.function.PromiseNode.InlineVarArgsPromiseNode;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
@@ -36,21 +41,37 @@ import com.oracle.truffle.r.runtime.data.*;
  * The {@code Recall} {@code .Internal}.
  */
 @RBuiltin(name = "Recall", kind = INTERNAL, parameterNames = {"..."})
-public abstract class Recall extends RBuiltinNode {
-    @Child private CallInlineCacheNode callCache = CallInlineCacheNode.create(3);
+public final class Recall extends RWrapperBuiltinNode {
 
-    @Specialization
-    public Object execute(VirtualFrame frame, RArgsValuesAndNames args) {
-        controlVisibility();
-        Frame cframe = Utils.getCallerFrame(frame, FrameAccess.READ_ONLY);
-        RFunction function = RArguments.getFunction(cframe);
-        if (function == null) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.RECALL_CALLED_OUTSIDE_CLOSURE);
+    public Recall(RBuiltinNode prev) {
+        super(prev);
+    }
+
+    @Override
+    protected RNode createDelegate() {
+        /*
+         * TODO (chumer) ideally this node would just create an RCallNode and calls execute with
+         * evaluated arguments on it. Until this is possible we use this rather hacky solution.
+         */
+        InlineVarArgsPromiseNode inlineVarArgs = (InlineVarArgsPromiseNode) getArguments()[0];
+        return RCallNode.createCall(getSourceSection(), RecallFunctionNodeGen.create(),
+                        CallArgumentsNode.create(false, false, new RNode[]{((WrapArgumentNode) inlineVarArgs.getVarargs()[0]).getOperand()}, inlineVarArgs.getSignature()), null);
+    }
+
+    protected abstract static class RecallFunctionNode extends RNode {
+
+        private final BranchProfile errorProfile = BranchProfile.create();
+
+        @Specialization
+        protected RFunction findFunction(VirtualFrame frame) {
+            Frame cframe = Utils.getCallerFrame(frame, FrameAccess.READ_ONLY);
+            RFunction function = RArguments.getFunction(cframe);
+            if (function == null) {
+                errorProfile.enter();
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.RECALL_CALLED_OUTSIDE_CLOSURE);
+            }
+            return function;
         }
-
-        // Use arguments in "..." as arguments for RECALL call
-        Object[] argsObject = RArguments.create(function, callCache.getSourceSection(), null, RArguments.getDepth(frame) + 1, args.getValues());
-        return callCache.execute(frame, function.getTarget(), argsObject);
     }
 
 }

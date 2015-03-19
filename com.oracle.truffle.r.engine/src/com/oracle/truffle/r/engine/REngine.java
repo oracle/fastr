@@ -34,7 +34,6 @@ import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
-import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.library.graphics.*;
 import com.oracle.truffle.r.nodes.*;
@@ -107,7 +106,7 @@ public final class REngine implements RContext.Engine {
         MaterializedFrame globalFrame = RRuntime.createNonFunctionFrame().materialize();
         if (!initialized) {
             RInstrument.initialize();
-            RPerfAnalysis.initialize();
+            RPerfStats.initialize();
             Locale.setDefault(Locale.ROOT);
             RAccuracyInfo.initialize();
             ROptions.initialize();
@@ -153,7 +152,7 @@ public final class REngine implements RContext.Engine {
         return globalFrame;
     }
 
-    public static void checkAndRunStartupFunction(String name) {
+    private static void checkAndRunStartupFunction(String name) {
         Object func = REnvironment.globalEnv().findFunction(name);
         if (func != null) {
             /*
@@ -202,26 +201,9 @@ public final class REngine implements RContext.Engine {
         return parseAndEvalImpl(new ANTLRStringStream(rscript), Source.fromText(rscript, "<test_input>"), REnvironment.globalEnv().getFrame(), printResult, false);
     }
 
-    public class ParseException extends Exception {
-        private static final long serialVersionUID = 1L;
-
-        public ParseException(String msg) {
-            super(msg);
-        }
-    }
-
-    public Node parseSingle(String singleExpression) {
+    public RExpression parse(Source source) throws RContext.Engine.ParseException {
         try {
-            Sequence seq = (Sequence) ParseUtil.parseAST(new ANTLRStringStream(singleExpression), Source.asPseudoFile(singleExpression, "<parse_input>"));
-            return transform(seq.getExpressions()[0]);
-        } catch (RecognitionException ex) {
-            throw Utils.fatalError("parseSingle failed");
-        }
-    }
-
-    public RExpression parse(String rscript) throws RContext.Engine.ParseException {
-        try {
-            Sequence seq = (Sequence) ParseUtil.parseAST(new ANTLRStringStream(rscript), Source.asPseudoFile(rscript, "<parse_input>"));
+            Sequence seq = (Sequence) ParseUtil.parseAST(new ANTLRStringStream(source.getCode()), source);
             ASTNode[] exprs = seq.getExpressions();
             Object[] data = new Object[exprs.length];
             for (int i = 0; i < exprs.length; i++) {
@@ -395,7 +377,7 @@ public final class REngine implements RContext.Engine {
     private static RootCallTarget doMakeCallTarget(RNode body, String funName) {
         FunctionBodyNode fbn = new FunctionBodyNode(SaveArgumentsNode.NO_ARGS, new FunctionStatementsNode(body));
         FrameDescriptor descriptor = new FrameDescriptor();
-        FrameSlotChangeMonitor.initializeFrameDescriptor(descriptor, false);
+        FrameSlotChangeMonitor.initializeFunctionFrameDescriptor(descriptor);
         FunctionDefinitionNode rootNode = new FunctionDefinitionNode(null, descriptor, fbn, FormalArguments.NO_ARGS, funName, true, true);
         RootCallTarget callTarget = Truffle.getRuntime().createCallTarget(rootNode);
         return callTarget;
@@ -447,6 +429,9 @@ public final class REngine implements RContext.Engine {
         return true;
     }
 
+    private static final ArgumentsSignature PRINT_SIGNATURE = ArgumentsSignature.get("x", "...");
+    private static final ArgumentsSignature PRINT_INTERNAL_SIGNATURE = ArgumentsSignature.get("x");
+
     @TruffleBoundary
     private static void printResult(Object result) {
         if (RContext.isVisible()) {
@@ -454,16 +439,16 @@ public final class REngine implements RContext.Engine {
             if (loadBase) {
                 Object printMethod = REnvironment.globalEnv().findFunction("print");
                 RFunction function = (RFunction) (printMethod instanceof RPromise ? PromiseHelperNode.evaluateSlowPath(null, (RPromise) printMethod) : printMethod);
-                function.getTarget().call(RArguments.create(function, null, REnvironment.baseEnv().getFrame(), 1, new Object[]{resultValue, RMissing.instance}));
+                function.getTarget().call(RArguments.create(function, null, REnvironment.baseEnv().getFrame(), 1, new Object[]{resultValue, RMissing.instance}, PRINT_SIGNATURE));
             } else {
                 // we only have the .Internal print.default method available
-                getPrintInternal().getTarget().call(RArguments.create(printInternal, null, REnvironment.baseEnv().getFrame(), 1, new Object[]{resultValue}));
+                getPrintInternal().getTarget().call(RArguments.create(printInternal, null, REnvironment.baseEnv().getFrame(), 1, new Object[]{resultValue}, PRINT_INTERNAL_SIGNATURE));
             }
         }
     }
 
     // Only relevant when running without base package loaded
-    private static final String INTERNAL_PRINT = ".print.internal <- function(x) { .Internal(print.default(x, NULL, TRUE, NULL, NULL, FALSE, NULL, TRUE))" + "}";
+    private static final Source INTERNAL_PRINT = Source.asPseudoFile(".print.internal <- function(x) { .Internal(print.default(x, NULL, TRUE, NULL, NULL, FALSE, NULL, TRUE))}", "<internal_print>");
     @CompilationFinal private static RFunction printInternal;
 
     private static RFunction getPrintInternal() {

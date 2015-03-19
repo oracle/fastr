@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.function;
 import static com.oracle.truffle.r.nodes.function.opt.EagerEvalHelper.*;
 
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
@@ -42,6 +43,7 @@ import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 import com.oracle.truffle.r.runtime.data.RPromise.EvalPolicy;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseType;
 import com.oracle.truffle.r.runtime.data.RPromise.RPromiseFactory;
+import com.oracle.truffle.r.runtime.env.*;
 
 /**
  * This {@link RNode} implementations are used as a factory-nodes for {@link RPromise}s OR direct
@@ -96,13 +98,14 @@ public abstract class PromiseNode extends RNode {
                 }
 
                 if (factory.getType() == PromiseType.ARG_SUPPLIED) {
-                    if (!noOpt && isOptimizableVariable(expr)) {
-                        pn = new OptVariableSuppliedPromiseNode(factory, (ReadVariableNode) expr);
-                        break;
-                    }
 
                     if (isVararg(expr)) {
                         pn = new VarargPromiseNode(factory, (VarArgNode) expr);
+                        break;
+                    }
+
+                    if (!noOpt && isOptimizableVariable(expr)) {
+                        pn = new OptVariableSuppliedPromiseNode(factory, (ReadVariableNode) expr);
                         break;
                     }
 
@@ -134,13 +137,10 @@ public abstract class PromiseNode extends RNode {
     }
 
     /**
-     * @param promise
-     * @return Creates a {@link VarArgNode} for the given {@link RPromise}
+     * @return Creates a {@link VarArgNode} for the given
      */
-    public static VarArgNode createVarArg(RPromise promise) {
-        VarArgNode result = new VarArgNode(promise);
-        result.assignSourceSection(((RNode) promise.getRep()).getSourceSection());
-        return result;
+    public static VarArgNode createVarArg(int varArgIndex) {
+        return new VarArgNode(varArgIndex);
     }
 
     /**
@@ -148,15 +148,13 @@ public abstract class PromiseNode extends RNode {
      */
     private static final class PromisedNode extends PromiseNode {
 
-        private final ConditionProfile isSuppliedArgProfile = ConditionProfile.createBinaryProfile();
-
         private PromisedNode(RPromiseFactory factory) {
             super(factory);
         }
 
         @Override
         public Object execute(VirtualFrame frame) {
-            MaterializedFrame execFrame = isSuppliedArgProfile.profile(factory.getType() == PromiseType.ARG_SUPPLIED) ? frame.materialize() : null;
+            MaterializedFrame execFrame = factory.getType() == PromiseType.ARG_SUPPLIED ? frame.materialize() : null;
             return factory.createPromise(execFrame);
         }
     }
@@ -203,7 +201,11 @@ public abstract class PromiseNode extends RNode {
             // At this point we simply circumvent VarArgNode (by directly passing the contained
             // Promise); BUT we have to respect the RPromise! Thus we use a RPromise class which
             // knows that it contains a RPromise..
-            return factory.createVarargPromise(varargNode.getPromise());
+            return factory.createVarargPromise(varargNode.executeNonEvaluated(frame));
+        }
+
+        public RNode substitute(REnvironment env) {
+            return varargNode.substitute(env);
         }
 
         public VarArgNode getVarArgNode() {
@@ -321,43 +323,56 @@ public abstract class PromiseNode extends RNode {
      * In a certain sense this is the class corresponding class for GNU R's PROMSXP (AST equivalent
      * of RPromise, only needed for varargs in FastR TODO Move to separate package together with
      * other varargs classes)
-     *
-     * FIXME This class effectively captures frame-specific state since the {@link RPromise} value
-     * refers to a specific frame through the {@code execFrame} field. So subsequent calls to a
-     * function containing one of these nodes will return a stale value when the promise is
-     * evaluated. We need to find a better way. The current workaround is to call
-     * {@link #setPromise} to update the state.
      */
     public static final class VarArgNode extends RNode {
-        private RPromise promise;
-        private boolean isEvaluated = false;
 
-        private VarArgNode(RPromise promise) {
-            this.promise = promise;
+        @Child private FrameSlotNode varArgsSlotNode;
+        @Child private PromiseHelperNode promiseHelper;
+
+        private final int index;
+
+        private VarArgNode(int index) {
+            this.index = index;
+        }
+
+        public RArgsValuesAndNames getVarargsAndNames(VirtualFrame frame) {
+            if (varArgsSlotNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                varArgsSlotNode = insert(FrameSlotNode.create(ArgumentsSignature.VARARG_NAME));
+            }
+            RArgsValuesAndNames varArgsAndNames;
+            try {
+                varArgsAndNames = (RArgsValuesAndNames) frame.getObject(varArgsSlotNode.executeFrameSlot(frame));
+            } catch (FrameSlotTypeException | ClassCastException e) {
+                throw RInternalError.shouldNotReachHere("'...' should always be represented by RArgsValuesAndNames");
+            }
+            return varArgsAndNames;
         }
 
         @Override
         public Object execute(VirtualFrame frame) {
-            // ExpressionExecutorNode would be overkill, as this is only executed once, and not in
-            // the correct frame anyway
-            if (!isEvaluated) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                Object result = PromiseHelperNode.evaluateSlowPath(frame, promise);
-                isEvaluated = promise.isEvaluated();
-                return result;
+            RPromise promise = executeNonEvaluated(frame);
+            if (promise.isEvaluated()) {
+                return promise.getValue();
             }
-
-            // Should easily compile to constant
-            return promise.getValue();
+            if (promiseHelper == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                promiseHelper = insert(new PromiseHelperNode());
+            }
+            return promiseHelper.evaluate(frame, promise);
         }
 
-        public RPromise getPromise() {
-            return promise;
+        public RPromise executeNonEvaluated(VirtualFrame frame) {
+            return (RPromise) getVarargsAndNames(frame).getValues()[index];
         }
 
-        public void setPromise(RPromise promise) {
-            isEvaluated = false;
-            this.promise = promise;
+        public RNode substitute(REnvironment env) {
+            Object obj = ((RArgsValuesAndNames) env.get("...")).getValues()[index];
+            return obj instanceof RPromise ? (RNode) ((RPromise) obj).getRep() : ConstantNode.create(obj);
+        }
+
+        public int getIndex() {
+            return index;
         }
     }
 
@@ -394,12 +409,15 @@ public abstract class PromiseNode extends RNode {
      * This class is used for wrapping arguments into "..." ({@link RArgsValuesAndNames}).
      */
     public static final class VarArgsPromiseNode extends RNode {
-        @Children protected final RNode[] nodes;
+        @CompilationFinal private final Closure[] closures;
         private final ArgumentsSignature signature;
         protected final ClosureCache closureCache;
 
         public VarArgsPromiseNode(RNode[] nodes, ArgumentsSignature signature, ClosureCache closureCache) {
-            this.nodes = nodes;
+            this.closures = new Closure[nodes.length];
+            for (int i = 0; i < nodes.length; i++) {
+                this.closures[i] = closureCache.getOrCreateClosure(nodes[i]);
+            }
             this.signature = signature;
             this.closureCache = closureCache;
         }
@@ -407,10 +425,9 @@ public abstract class PromiseNode extends RNode {
         @Override
         @ExplodeLoop
         public Object execute(VirtualFrame frame) {
-            Object[] promises = new Object[nodes.length];
-            for (int i = 0; i < nodes.length; i++) {
-                Closure closure = closureCache.getOrCreateClosure(nodes[i]);
-                promises[i] = RDataFactory.createPromise(EvalPolicy.PROMISED, PromiseType.ARG_SUPPLIED, frame.materialize(), closure);
+            Object[] promises = new Object[closures.length];
+            for (int i = 0; i < closures.length; i++) {
+                promises[i] = RDataFactory.createPromise(EvalPolicy.PROMISED, PromiseType.ARG_SUPPLIED, frame.materialize(), closures[i]);
             }
             return new RArgsValuesAndNames(promises, signature);
         }
@@ -420,22 +437,26 @@ public abstract class PromiseNode extends RNode {
             // In support of match.call(expand.dots=FALSE)
             // GnuR represents this with a pairlist and deparses it as "list(a,b,..)"
             state.append("list(");
-            for (int i = 0; i < nodes.length; i++) {
+            for (int i = 0; i < closures.length; i++) {
                 String name = signature.getName(i);
                 if (name != null) {
                     state.append(name);
                     state.append(" = ");
                 }
-                nodes[i].deparse(state);
-                if (i < nodes.length - 1) {
+                ((RNode) closures[i].getExpr()).deparse(state);
+                if (i < closures.length - 1) {
                     state.append(", ");
                 }
             }
             state.append(')');
         }
 
-        public RNode[] getNodes() {
-            return nodes;
+        public RNode substitute(REnvironment env) {
+            return RASTUtils.substituteName("...", env);
+        }
+
+        public Closure[] getClosures() {
+            return closures;
         }
 
         public ArgumentsSignature getSignature() {
@@ -461,8 +482,12 @@ public abstract class PromiseNode extends RNode {
             assert varargs.length == signature.getLength();
         }
 
-        public RNode[] getVarArgs() {
+        public RNode[] getVarargs() {
             return varargs;
+        }
+
+        public ArgumentsSignature getSignature() {
+            return signature;
         }
 
         @Override
@@ -479,10 +504,7 @@ public abstract class PromiseNode extends RNode {
                 Object argValue = varargs[i].execute(frame);
                 if (argsValueAndNamesProfile.profile(argValue instanceof RArgsValuesAndNames)) {
                     if (evaluatedNames == null) {
-                        evaluatedNames = new String[i];
-                        for (int j = 0; j < i; j++) {
-                            evaluatedNames[j] = signature.getName(j);
-                        }
+                        evaluatedNames = initializeNames(i);
                     }
                     // this can happen if ... is simply passed around (in particular when the call
                     // chain contains two functions with just the ... argument)
@@ -497,11 +519,7 @@ public abstract class PromiseNode extends RNode {
                     evaluatedArgs = Utils.resizeArray(evaluatedArgs, newLength);
                     evaluatedNames = Utils.resizeArray(evaluatedNames, newLength);
                     Object[] varargValues = argsValuesAndNames.getValues();
-                    for (int j = 0; j < argsValuesAndNames.length(); j++) {
-                        evaluatedArgs[index] = promiseCheckHelper.checkEvaluate(frame, varargValues[j]);
-                        evaluatedNames[index] = argsValuesAndNames.getSignature().getName(j);
-                        index++;
-                    }
+                    index = copyVarArgs(frame, evaluatedArgs, evaluatedNames, index, argsValuesAndNames, varargValues);
                 } else {
                     if (evaluatedNames != null) {
                         evaluatedNames[index] = signature.getName(i);
@@ -511,6 +529,36 @@ public abstract class PromiseNode extends RNode {
             }
             ArgumentsSignature actualSignature = argsValueAndNamesProfile.profile(evaluatedNames != null) ? ArgumentsSignature.get(evaluatedNames) : signature;
             return new RArgsValuesAndNames(evaluatedArgs, actualSignature);
+        }
+
+        private String[] initializeNames(int i) {
+            String[] evaluatedNames;
+            evaluatedNames = new String[i];
+            for (int j = 0; j < i; j++) {
+                evaluatedNames[j] = signature.getName(j);
+            }
+            return evaluatedNames;
+        }
+
+        private int copyVarArgs(VirtualFrame frame, Object[] evaluatedArgs, String[] evaluatedNames, int startIndex, RArgsValuesAndNames argsValuesAndNames, Object[] varargValues) {
+            int index = startIndex;
+            for (int j = 0; j < argsValuesAndNames.length(); j++) {
+                evaluatedArgs[index] = promiseCheckHelper.checkEvaluate(frame, varargValues[j]);
+                evaluatedNames[index] = argsValuesAndNames.getSignature().getName(j);
+                index++;
+            }
+            return index;
+        }
+
+        @Override
+        public void deparse(State state) {
+            for (int i = 0; i < varargs.length; i++) {
+                RNode argValue = varargs[i];
+                argValue.deparse(state);
+                if (i != varargs.length - 1) {
+                    state.append(", ");
+                }
+            }
         }
     }
 }

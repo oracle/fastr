@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -40,7 +40,7 @@ public interface RSyntaxNode {
      * implementation convenience.
      */
     default void deparse(@SuppressWarnings("unused") State state) {
-        throw RInternalError.unimplemented();
+        throw RInternalError.unimplemented("deparse not implemented in " + getClass());
     }
 
     /**
@@ -50,7 +50,7 @@ public interface RSyntaxNode {
      * that no changes were made.
      */
     default RNode substitute(@SuppressWarnings("unused") REnvironment env) {
-        throw RInternalError.unimplemented();
+        throw RInternalError.unimplemented("substitute not implemented in " + getClass());
     }
 
     /**

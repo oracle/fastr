@@ -122,7 +122,7 @@ public class RASTHelperImpl implements RASTHelper {
         } else if (node instanceof AccessFieldNode) {
             return 3;
         } else if (node instanceof VarArgsPromiseNode) {
-            return ((VarArgsPromiseNode) node).getNodes().length;
+            return ((VarArgsPromiseNode) node).getClosures().length;
         } else {
             // TODO fill out
             assert false : node;
@@ -256,6 +256,7 @@ public class RASTHelperImpl implements RASTHelper {
         RASTDeparse.deparse(state, f);
     }
 
+    private static final Source GET_NAMESPACE_SOURCE = Source.asPseudoFile("..getNamespace(name)", "<..getNamespace>");
     private static RCallNode getNamespaceCall;
 
     /**
@@ -265,7 +266,7 @@ public class RASTHelperImpl implements RASTHelper {
     public REnvironment findNamespace(RStringVector name, int depth) {
         if (getNamespaceCall == null) {
             try {
-                getNamespaceCall = (RCallNode) ((RLanguage) RContext.getEngine().parse("..getNamespace(name)").getDataAt(0)).getRep();
+                getNamespaceCall = (RCallNode) ((RLanguage) RContext.getEngine().parse(GET_NAMESPACE_SOURCE).getDataAt(0)).getRep();
             } catch (ParseException ex) {
                 // most unexpected
                 Utils.fail("findNameSpace");

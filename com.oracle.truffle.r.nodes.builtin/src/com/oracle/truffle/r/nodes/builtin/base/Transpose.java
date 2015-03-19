@@ -35,8 +35,8 @@ public abstract class Transpose extends RBuiltinNode {
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
     @Override
-    public RNode[] getParameterValues() {
-        return new RNode[]{ConstantNode.create(RMissing.instance)};
+    public Object[] getDefaultParameterValues() {
+        return new Object[]{RMissing.instance};
     }
 
     private final NACheck check = NACheck.create();
@@ -71,7 +71,7 @@ public abstract class Transpose extends RBuiltinNode {
         return value;
     }
 
-    @Specialization(guards = "isEmpty2D")
+    @Specialization(guards = "isEmpty2D(vector)")
     @TruffleBoundary
     protected RAbstractVector transpose(RAbstractVector vector) {
         controlVisibility();
@@ -79,7 +79,7 @@ public abstract class Transpose extends RBuiltinNode {
         return vector.copyWithNewDimensions(new int[]{dim[1], dim[0]});
     }
 
-    @Specialization(guards = "!isEmpty2D")
+    @Specialization(guards = "!isEmpty2D(vector)")
     @TruffleBoundary
     protected RIntVector transpose(RAbstractIntVector vector) {
         controlVisibility();
@@ -104,7 +104,7 @@ public abstract class Transpose extends RBuiltinNode {
         return r;
     }
 
-    @Specialization(guards = "!isEmpty2D")
+    @Specialization(guards = "!isEmpty2D(vector)")
     @TruffleBoundary
     protected RDoubleVector transpose(RAbstractDoubleVector vector) {
         controlVisibility();
@@ -129,7 +129,7 @@ public abstract class Transpose extends RBuiltinNode {
         return r;
     }
 
-    @Specialization(guards = "!isEmpty2D")
+    @Specialization(guards = "!isEmpty2D(vector)")
     @TruffleBoundary
     protected RStringVector transpose(RAbstractStringVector vector) {
         controlVisibility();

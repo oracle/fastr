@@ -27,7 +27,6 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
@@ -41,16 +40,16 @@ import com.oracle.truffle.r.runtime.data.model.*;
 public abstract class Call extends RBuiltinNode {
 
     @Override
-    public RNode[] getParameterValues() {
-        return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance)};
+    public Object[] getDefaultParameterValues() {
+        return new Object[]{RMissing.instance, RMissing.instance};
     }
 
-    @Specialization(guards = "!isEmptyName")
+    @Specialization(guards = "!isEmptyName(name)")
     protected RLanguage call(RAbstractStringVector name, @SuppressWarnings("unused") RMissing args) {
         return makeCall(name.getDataAt(0), null);
     }
 
-    @Specialization(guards = "!isEmptyName")
+    @Specialization(guards = "!isEmptyName(name)")
     protected RLanguage call(RAbstractStringVector name, RArgsValuesAndNames args) {
         return makeCall(name.getDataAt(0), args);
     }

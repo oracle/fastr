@@ -127,11 +127,6 @@ public final class RComplexVector extends RVector implements RAbstractComplexVec
         return RDataFactory.createComplexVector(data, isComplete(), newDimensions);
     }
 
-    public RComplexVector removeLast() {
-        assert getLength() > 0;
-        return RDataFactory.createComplexVector(Arrays.copyOf(data, getLength() - 1), isComplete());
-    }
-
     @Override
     protected String getDataAtAsString(int index) {
         return getDataAt(index).toString();

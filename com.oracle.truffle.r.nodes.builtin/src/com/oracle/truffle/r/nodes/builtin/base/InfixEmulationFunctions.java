@@ -30,7 +30,6 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.access.array.read.*;
 import com.oracle.truffle.r.nodes.access.array.write.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -70,7 +69,7 @@ public class InfixEmulationFunctions {
 
         @ExplodeLoop
         public Object execute(VirtualFrame frame, Object vector, Object[] pos, byte exact, Object[] newPositions) {
-            for (int i = 0; i < length; i++) {
+            for (int i = 0; i < getLength(); i++) {
                 newPositions[i] = executeArg(frame, vector, executeConvert(frame, vector, pos[i], exact, i), i);
                 if (multiDimOperatorConverters != null) {
                     newPositions[i] = executeMultiConvert(frame, vector, newPositions[i], i);
@@ -97,7 +96,7 @@ public class InfixEmulationFunctions {
 
         @ExplodeLoop
         public Object execute(VirtualFrame frame, Object vector, Object[] pos, Object[] newPositions, Object value) {
-            for (int i = 0; i < length; i++) {
+            for (int i = 0; i < getLength(); i++) {
                 newPositions[i] = executeArg(frame, vector, executeConvert(frame, vector, pos[i], true, i), i);
                 if (multiDimOperatorConverters != null) {
                     newPositions[i] = executeMultiConvert(frame, vector, value, newPositions[i], i);
@@ -143,7 +142,7 @@ public class InfixEmulationFunctions {
         }
 
         @ExplodeLoop
-        @Specialization(guards = "!argsEmpty")
+        @Specialization(guards = "!argsEmpty(args)")
         protected RArgsValuesAndNames eval(VirtualFrame frame, RArgsValuesAndNames args) {
             Object[] values = args.getValues();
             for (int i = 0; i < values.length; i++) {
@@ -152,7 +151,7 @@ public class InfixEmulationFunctions {
             return args;
         }
 
-        @Specialization(guards = "argsEmpty")
+        @Specialization(guards = "argsEmpty(args)")
         protected RArgsValuesAndNames evalEmpty(RArgsValuesAndNames args) {
             return args;
         }
@@ -195,7 +194,7 @@ public class InfixEmulationFunctions {
             return accessNode.executeAccess(frame, vector, exact, 0, positions.execute(frame, vector, pos, exact, pos), dropDim);
         }
 
-        protected boolean noInd(@SuppressWarnings("unused") RAbstractContainer x, RArgsValuesAndNames inds) {
+        protected boolean noInd(RArgsValuesAndNames inds) {
             return inds.length() == 0;
         }
 
@@ -222,7 +221,7 @@ public class InfixEmulationFunctions {
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = "noInd")
+        @Specialization(guards = "noInd(inds)")
         protected Object getNoInd(RAbstractContainer x, RArgsValuesAndNames inds, Object dropVec) {
             return x;
         }
@@ -238,18 +237,18 @@ public class InfixEmulationFunctions {
     @RBuiltin(name = "[", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x", "...", "drop"})
     public abstract static class AccessArraySubsetBuiltin extends AccessArraySubsetBuiltinBase {
 
-        private static final ArgumentsSignature SIGNATURE = ArgumentsSignature.get(new String[]{"", "", "drop"});
+        private static final ArgumentsSignature SIGNATURE = ArgumentsSignature.get("", "", "drop");
 
         private static final String NAME = "[";
 
         @Child private DispatchedCallNode dcn;
 
         @Override
-        public RNode[] getParameterValues() {
-            return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance)};
+        public Object[] getDefaultParameterValues() {
+            return new Object[]{RMissing.instance, RMissing.instance, RMissing.instance};
         }
 
-        @Specialization(guards = {"!noInd", "isObject"})
+        @Specialization(guards = {"!noInd(inds)", "isObject(frame, x)"})
         protected Object getObj(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames inds, RAbstractLogicalVector dropVec) {
             if (dcn == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -263,12 +262,12 @@ public class InfixEmulationFunctions {
         }
 
         @Override
-        @Specialization(guards = {"!noInd", "!isObject"})
+        @Specialization(guards = {"!noInd(inds)", "!isObject(frame, x)"})
         protected Object get(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames inds, RAbstractLogicalVector dropVec) {
             return super.get(frame, x, inds, dropVec);
         }
 
-        @Specialization(guards = {"!noInd", "isObject"})
+        @Specialization(guards = {"!noInd(inds)", "isObject(frame, x)"})
         protected Object getObj(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames inds, @SuppressWarnings("unused") RMissing dropVec) {
             byte drop;
             if (multiIndexProfile.profile(inds.length() > 1)) {
@@ -289,7 +288,7 @@ public class InfixEmulationFunctions {
         }
 
         @Override
-        @Specialization(guards = {"!noInd", "!isObject"})
+        @Specialization(guards = {"!noInd(inds)", "!isObject(frame, x)"})
         protected Object get(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames inds, RMissing dropVec) {
             return super.get(frame, x, inds, dropVec);
         }
@@ -305,18 +304,18 @@ public class InfixEmulationFunctions {
     public abstract static class AccessArraySubsetDefaultBuiltin extends AccessArraySubsetBuiltinBase {
 
         @Override
-        public RNode[] getParameterValues() {
-            return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance)};
+        public Object[] getDefaultParameterValues() {
+            return new Object[]{RMissing.instance, RMissing.instance, RMissing.instance};
         }
 
         @Override
-        @Specialization(guards = "!noInd")
+        @Specialization(guards = "!noInd(inds)")
         protected Object get(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames inds, RAbstractLogicalVector dropVec) {
             return super.get(frame, x, inds, dropVec);
         }
 
         @Override
-        @Specialization(guards = "!noInd")
+        @Specialization(guards = "!noInd(inds)")
         protected Object get(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames inds, RMissing dropVec) {
             return super.get(frame, x, inds, dropVec);
         }
@@ -339,7 +338,7 @@ public class InfixEmulationFunctions {
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = "noInd")
+        @Specialization(guards = "noInd(inds)")
         protected Object getNoInd(RAbstractContainer x, RArgsValuesAndNames inds, RAbstractLogicalVector exactVec) {
             throw RError.error(RError.Message.NO_INDEX);
         }
@@ -354,18 +353,18 @@ public class InfixEmulationFunctions {
     @RBuiltin(name = "[[", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", "...", "exact"})
     public abstract static class AccessArraySubscriptBuiltin extends AccessArraySubscriptBuiltinBase {
 
-        private static final ArgumentsSignature SIGNATURE = ArgumentsSignature.get(new String[]{"", "", "exact"});
+        private static final ArgumentsSignature SIGNATURE = ArgumentsSignature.get("", "", "exact");
 
         private static final String NAME = "[[";
 
         @Child private DispatchedCallNode dcn;
 
         @Override
-        public RNode[] getParameterValues() {
-            return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RRuntime.LOGICAL_TRUE)};
+        public Object[] getDefaultParameterValues() {
+            return new Object[]{RMissing.instance, RMissing.instance, RRuntime.LOGICAL_TRUE};
         }
 
-        @Specialization(guards = {"!noInd", "isObject"})
+        @Specialization(guards = {"!noInd(inds)", "isObject(frame, x)"})
         protected Object getObj(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames inds, RAbstractLogicalVector exactVec) {
             byte exact;
             if (emptyExactProfile.profile(exactVec.getLength() == 0)) {
@@ -385,7 +384,7 @@ public class InfixEmulationFunctions {
         }
 
         @Override
-        @Specialization(guards = {"!noInd", "!isObject"})
+        @Specialization(guards = {"!noInd(inds)", "!isObject(frame, x)"})
         protected Object get(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames inds, RAbstractLogicalVector exactVec) {
             return super.get(frame, x, inds, exactVec);
         }
@@ -401,12 +400,12 @@ public class InfixEmulationFunctions {
     public abstract static class AccessArraySubscriptDefaultBuiltin extends AccessArraySubscriptBuiltinBase {
 
         @Override
-        public RNode[] getParameterValues() {
-            return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RRuntime.LOGICAL_TRUE)};
+        public Object[] getDefaultParameterValues() {
+            return new Object[]{RMissing.instance, RMissing.instance, RRuntime.LOGICAL_TRUE};
         }
 
         @Override
-        @Specialization(guards = "!noInd")
+        @Specialization(guards = "!noInd(inds)")
         protected Object get(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames inds, RAbstractLogicalVector exactVec) {
             return super.get(frame, x, inds, exactVec);
         }
@@ -451,12 +450,12 @@ public class InfixEmulationFunctions {
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = "noInd")
+        @Specialization(guards = "noInd(args)")
         protected Object getNoInd(RAbstractContainer x, RArgsValuesAndNames args) {
             throw RError.error(RError.Message.INVALID_ARG_NUMBER, "SubAssignArgs");
         }
 
-        protected boolean noInd(@SuppressWarnings("unused") RAbstractContainer x, RArgsValuesAndNames args) {
+        protected boolean noInd(RArgsValuesAndNames args) {
             return args.length() == 0;
         }
 
@@ -465,7 +464,7 @@ public class InfixEmulationFunctions {
     @RBuiltin(name = "[<-", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", "..."})
     public abstract static class UpdateArraySubsetBuiltin extends UpdateArrayBuiltin {
 
-        private static final ArgumentsSignature SIGNATURE = ArgumentsSignature.get(new String[]{"", ""});
+        private static final ArgumentsSignature SIGNATURE = ArgumentsSignature.get("", "");
 
         private static final String NAME = "[<-";
         private static final boolean IS_SUBSET = true;
@@ -473,11 +472,11 @@ public class InfixEmulationFunctions {
         @Child private DispatchedCallNode dcn;
 
         @Override
-        public RNode[] getParameterValues() {
-            return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance)};
+        public Object[] getDefaultParameterValues() {
+            return new Object[]{RMissing.instance, RMissing.instance, RMissing.instance};
         }
 
-        @Specialization(guards = {"!noInd", "isObject"})
+        @Specialization(guards = {"!noInd(args)", "isObject(frame, x)"})
         protected Object updateObj(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames args) {
             if (dcn == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -491,7 +490,7 @@ public class InfixEmulationFunctions {
             }
         }
 
-        @Specialization(guards = {"!noInd", "!isObject"})
+        @Specialization(guards = {"!noInd(args)", "!isObject(frame, x)"})
         protected Object update(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames args) {
             Object value = args.getValues()[args.length() - 1];
             return update(frame, x, args, value, IS_SUBSET);
@@ -512,11 +511,11 @@ public class InfixEmulationFunctions {
         @Child private DispatchedCallNode dcn;
 
         @Override
-        public RNode[] getParameterValues() {
-            return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance)};
+        public Object[] getDefaultParameterValues() {
+            return new Object[]{RMissing.instance, RMissing.instance, RMissing.instance};
         }
 
-        @Specialization(guards = {"!noInd", "isObject"})
+        @Specialization(guards = {"!noInd(args)", "isObject(frame, x)"})
         protected Object updateObj(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames args) {
             if (dcn == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -530,7 +529,7 @@ public class InfixEmulationFunctions {
             }
         }
 
-        @Specialization(guards = {"!noInd", "!isObject"})
+        @Specialization(guards = {"!noInd(args)", "!isObject(frame, x)"})
         protected Object update(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames args) {
             Object value = args.getValues()[args.length() - 1];
             return update(frame, x, args, value, IS_SUBSET);

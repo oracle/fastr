@@ -17,20 +17,14 @@ import com.oracle.truffle.r.parser.ast.*;
 
 public class PrettyPrinter extends BasicVisitor<Void> {
 
-    public static final boolean PARENTHESIS = false;
+    private static final boolean PARENTHESIS = false;
 
     private int level = 0;
     private final PrintStream out;
     private final StringBuilder buff = new StringBuilder();
-    private static final PrettyPrinter pp = getStringPrettyPrinter();
 
     public PrettyPrinter(PrintStream stream) {
         out = stream;
-    }
-
-    public static String prettyPrint(ASTNode n) {
-        pp.print(n);
-        return pp.toString();
     }
 
     public void print(ASTNode n) {
@@ -41,19 +35,6 @@ public class PrettyPrinter extends BasicVisitor<Void> {
     public void println(ASTNode n) {
         n.accept(this);
         println("");
-    }
-
-    private static PrettyPrinter getStringPrettyPrinter() {
-        final ByteArrayOutputStream os = new ByteArrayOutputStream();
-        return new PrettyPrinter(new PrintStream(os)) {
-
-            @Override
-            public String toString() {
-                String str = os.toString();
-                os.reset();
-                return str;
-            }
-        };
     }
 
     private void inc() {
@@ -167,7 +148,7 @@ public class PrettyPrinter extends BasicVisitor<Void> {
             left.accept(this);
         }
         print(" ");
-        print(op.getPrettyOperator());
+        print(op.getOperator().getName());
         print(" ");
         if (right.getPrecedence() < precedence && !PARENTHESIS) { // FIXME should be <= if left
             // associative
@@ -188,7 +169,7 @@ public class PrettyPrinter extends BasicVisitor<Void> {
         if (PARENTHESIS) {
             print("(");
         }
-        print(op.getPrettyOperator());
+        print(op.getOperator().getName());
         op.getLHS().accept(this);
         if (PARENTHESIS) {
             print(")");

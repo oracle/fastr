@@ -45,8 +45,8 @@ public class IsTypeFunctions {
         protected final BranchProfile errorProfile = BranchProfile.create();
 
         @Override
-        public RNode[] getParameterValues() {
-            return new RNode[]{ConstantNode.create(RMissing.instance)};
+        public Object[] getDefaultParameterValues() {
+            return new Object[]{RMissing.instance};
         }
 
         protected RError missingError() throws RError {
@@ -96,7 +96,7 @@ public class IsTypeFunctions {
             return RRuntime.LOGICAL_FALSE;
         }
 
-        @Specialization(guards = "!isListVector")
+        @Specialization(guards = "!isListVector(arg)")
         protected byte isRecursive(RAbstractVector arg) {
             controlVisibility();
             return RRuntime.LOGICAL_FALSE;
@@ -134,7 +134,7 @@ public class IsTypeFunctions {
             return RRuntime.LOGICAL_TRUE;
         }
 
-        @Specialization(guards = "!isListVector")
+        @Specialization(guards = "!isListVector(arg)")
         protected byte isAtomic(RAbstractVector arg) {
             controlVisibility();
             return RRuntime.LOGICAL_TRUE;
@@ -471,9 +471,9 @@ public class IsTypeFunctions {
         private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
         @Override
-        public RNode[] getParameterValues() {
+        public Object[] getDefaultParameterValues() {
             // x, mode = "any"
-            return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RType.Any.getName())};
+            return new Object[]{RMissing.instance, RType.Any.getName()};
         }
 
         @Specialization

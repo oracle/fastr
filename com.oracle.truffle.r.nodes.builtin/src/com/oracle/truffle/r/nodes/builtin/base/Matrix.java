@@ -35,7 +35,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin(name = "matrix", kind = INTERNAL, parameterNames = {"data", "nrow", "ncol", "byrow", "dimnames", "missingNrow", "missingNcol"})
+@RBuiltin(name = "matrix", kind = INTERNAL, parameterNames = {"data", "nrow", "ncol", "isTrue(byrow)", "dimnames", "missingNrow", "missingNcol"})
 public abstract class Matrix extends RBuiltinNode {
 
     @Child private Transpose transpose;
@@ -64,7 +64,7 @@ public abstract class Matrix extends RBuiltinNode {
         return args;
     }
 
-    @Specialization(guards = "!byRow")
+    @Specialization(guards = "!isTrue(byrow)")
     @SuppressWarnings("unused")
     protected RAbstractVector matrixbc(RAbstractVector data, int nrow, int ncol, byte byrow, RNull dimnames, byte missingNr, byte missingNc) {
         controlVisibility();
@@ -72,7 +72,7 @@ public abstract class Matrix extends RBuiltinNode {
         return data.copyResizedWithDimensions(dim);
     }
 
-    @Specialization(guards = "!byRow")
+    @Specialization(guards = "!isTrue(byrow)")
     @SuppressWarnings("unused")
     protected RAbstractVector matrixbc(VirtualFrame frame, RAbstractVector data, int nrow, int ncol, byte byrow, RList dimnames, byte missingNr, byte missingNc) {
         int[] dim = computeDimByCol(data.getLength(), nrow, ncol, missingNr, missingNc);
@@ -82,7 +82,7 @@ public abstract class Matrix extends RBuiltinNode {
         return res;
     }
 
-    @Specialization(guards = "byRow")
+    @Specialization(guards = "isTrue(byrow)")
     @SuppressWarnings("unused")
     protected RAbstractVector matrixbr(VirtualFrame frame, RAbstractVector data, int nrow, int ncol, byte byrow, RNull dimnames, byte missingNr, byte missingNc) {
         controlVisibility();
@@ -94,7 +94,7 @@ public abstract class Matrix extends RBuiltinNode {
         return (RAbstractVector) transpose.execute(frame, data.copyResizedWithDimensions(dim));
     }
 
-    @Specialization(guards = "byRow")
+    @Specialization(guards = "isTrue(byrow)")
     @SuppressWarnings("unused")
     protected RAbstractVector matrixbr(VirtualFrame frame, RAbstractVector data, int nrow, int ncol, byte byrow, RList dimnames, byte missingNr, byte missingNc) {
         int[] dim = computeDimByRow(data.getLength(), nrow, ncol, missingNr, missingNc);
@@ -158,9 +158,8 @@ public abstract class Matrix extends RBuiltinNode {
     // Guards.
     //
 
-    @SuppressWarnings("unused")
-    protected static boolean byRow(RAbstractVector data, int nrow, int ncol, byte byrow) {
-        return byrow == RRuntime.LOGICAL_TRUE;
+    protected static boolean isTrue(byte byrow) {
+        return RRuntime.fromLogical(byrow);
     }
 
 }

@@ -64,9 +64,9 @@ public abstract class GetText extends RBuiltinNode {
     }
 
     @Override
-    public RNode[] getParameterValues() {
+    public Object[] getDefaultParameterValues() {
         // ..., domain = NULL
-        return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RNull.instance)};
+        return new Object[]{RMissing.instance, RNull.instance};
     }
 
     @Specialization

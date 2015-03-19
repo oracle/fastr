@@ -24,7 +24,7 @@ package com.oracle.truffle.r.runtime.data.model;
 
 import com.oracle.truffle.r.runtime.data.*;
 
-public interface RAbstractContainer extends RAttributable, RClassHierarchy {
+public interface RAbstractContainer extends RAttributable, RClassHierarchy, RTypedValue {
 
     boolean isComplete();
 

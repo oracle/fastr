@@ -25,7 +25,7 @@ package com.oracle.truffle.r.runtime;
 import java.util.*;
 
 import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.*;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
@@ -85,16 +85,16 @@ public final class RArguments {
     @CompilationFinal public static final Object[] EMPTY_OBJECT_ARRAY = new Object[0];
     @CompilationFinal public static final String[] EMPTY_STRING_ARRAY = new String[0];
 
-    private static final int INDEX_ENVIRONMENT = 0;
-    private static final int INDEX_FUNCTION = 1;
-    private static final int INDEX_CALL_SRC = 2;
-    private static final int INDEX_CALLER_FRAME = 3;
-    private static final int INDEX_ENCLOSING_FRAME = 4;
-    private static final int INDEX_N_ARGS = 5;
-    private static final int INDEX_DEPTH = 6;
-    private static final int INDEX_IS_IRREGULAR = 7;
-    private static final int INDEX_SIGNATURE = 8;
-    private static final int INDEX_ARGUMENTS = 9;
+    public static final int INDEX_ENVIRONMENT = 0;
+    public static final int INDEX_FUNCTION = 1;
+    public static final int INDEX_CALL_SRC = 2;
+    public static final int INDEX_CALLER_FRAME = 3;
+    public static final int INDEX_ENCLOSING_FRAME = 4;
+    public static final int INDEX_N_ARGS = 5;
+    public static final int INDEX_DEPTH = 6;
+    public static final int INDEX_IS_IRREGULAR = 7;
+    public static final int INDEX_SIGNATURE = 8;
+    public static final int INDEX_ARGUMENTS = 9;
     /*
      * These indices are relative to INDEX_ARGUMENTS + nArgs+ nNames
      */
@@ -131,6 +131,21 @@ public final class RArguments {
         }
     }
 
+    /**
+     * Get the {@code arguments} checking for an "eval" frame. An eval can create a pseudo-call
+     * where {@code arguments.length == 1} and the real {@code arguments} are at
+     * {@code arguments[0]}. See {@code REngine}.
+     */
+    public static Object[] getArgumentsWithEvalCheck(Frame frame, ConditionProfile profile) {
+        CompilerAsserts.compilationConstant(profile);
+        Object[] arguments = frame.getArguments();
+        if (profile.profile(arguments.length == 1)) {
+            return materializedFrameProfile.profile((Frame) arguments[0]).getArguments();
+        } else {
+            return arguments;
+        }
+    }
+
     private static int getNArgs(Frame frame) {
         return (int) getArgumentsWithEvalCheck(frame)[INDEX_N_ARGS];
     }
@@ -139,10 +154,15 @@ public final class RArguments {
         return INDEX_ARGUMENTS + (int) args[INDEX_N_ARGS];
     }
 
+    private static ArgumentsSignature getSignature(RFunction function) {
+        return ((HasSignature) function.getRootNode()).getSignature();
+    }
+
     private static void createHelper(Object[] a, REnvironment env, RFunction functionObj, SourceSection callSrc, MaterializedFrame callerFrame, int depth, MaterializedFrame enclosingFrame,
                     Object[] evaluatedArgs, ArgumentsSignature signature) {
         assert evaluatedArgs != null && signature != null : evaluatedArgs + " " + signature;
         assert evaluatedArgs.length == signature.getLength() : Arrays.toString(evaluatedArgs) + " " + signature;
+        assert signature == getSignature(functionObj) : signature + " vs. " + getSignature(functionObj);
         a[INDEX_ENVIRONMENT] = env;
         a[INDEX_FUNCTION] = functionObj;
         a[INDEX_CALL_SRC] = callSrc;
@@ -188,19 +208,15 @@ public final class RArguments {
         return a;
     }
 
-    public static Object[] create(RFunction functionObj, SourceSection callSrc, MaterializedFrame callerFrame, int depth) {
-        return create(functionObj, callSrc, callerFrame, depth, EMPTY_OBJECT_ARRAY);
-    }
-
     public static Object[] create(RFunction functionObj, SourceSection callSrc, MaterializedFrame callerFrame, int depth, Object[] evaluatedArgs) {
         if (functionObj != null) {
-            return create(null, functionObj, callSrc, callerFrame, depth, functionObj.getEnclosingFrame(), evaluatedArgs, ArgumentsSignature.empty(evaluatedArgs.length));
+            return create(null, functionObj, callSrc, callerFrame, depth, functionObj.getEnclosingFrameWithAssumption(), evaluatedArgs, ArgumentsSignature.empty(evaluatedArgs.length));
         }
         return create(null, functionObj, callSrc, callerFrame, depth, null, evaluatedArgs, ArgumentsSignature.empty(evaluatedArgs.length));
     }
 
     public static Object[] create(RFunction functionObj, SourceSection callSrc, MaterializedFrame callerFrame, int depth, Object[] evaluatedArgs, ArgumentsSignature signature) {
-        return create(null, functionObj, callSrc, callerFrame, depth, functionObj.getEnclosingFrame(), evaluatedArgs, signature);
+        return create(null, functionObj, callSrc, callerFrame, depth, functionObj.getEnclosingFrameWithAssumption(), evaluatedArgs, signature);
     }
 
     public static Object[] create(REnvironment env, RFunction functionObj, SourceSection callSrc, MaterializedFrame callerFrame, int depth, MaterializedFrame enclosingFrame, Object[] evaluatedArgs,
@@ -212,7 +228,7 @@ public final class RArguments {
 
     public static Object[] createS3Args(RFunction functionObj, SourceSection callSrc, MaterializedFrame callerFrame, int depth, Object[] evaluatedArgs, ArgumentsSignature signature) {
         Object[] a = new Object[MINIMAL_ARRAY_LENGTH + evaluatedArgs.length + S3_VAR_COUNT];
-        createHelper(a, null, functionObj, callSrc, callerFrame, depth, functionObj.getEnclosingFrame(), evaluatedArgs, signature);
+        createHelper(a, null, functionObj, callSrc, callerFrame, depth, functionObj.getEnclosingFrameWithAssumption(), evaluatedArgs, signature);
         return a;
     }
 

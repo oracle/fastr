@@ -166,21 +166,28 @@ public class HiddenInternalFunctions {
             return lazyLoadDBFetchInternal(frame.materialize(), key, datafile, (int) compressed.getDataAt(0), envhook);
         }
 
+        private static final ArgumentsSignature SIGNATURE = ArgumentsSignature.get("n");
+
         @TruffleBoundary
         public Object lazyLoadDBFetchInternal(MaterializedFrame frame, RIntVector key, RStringVector datafile, int compression, RFunction envhook) {
             String dbPath = datafile.getDataAt(0);
+            File dbPathFile = new File(dbPath);
             byte[] dbData = dbCache.get(dbPath);
             if (dbData == null) {
-                File file = new File(dbPath);
-                assert file.exists();
-                dbData = new byte[(int) file.length()];
-                try (BufferedInputStream bs = new BufferedInputStream(new FileInputStream(file))) {
+                assert dbPathFile.exists();
+                dbData = new byte[(int) dbPathFile.length()];
+                try (BufferedInputStream bs = new BufferedInputStream(new FileInputStream(dbPathFile))) {
                     bs.read(dbData);
                 } catch (IOException ex) {
                     // unexpected
                     throw RError.error(Message.GENERIC, ex.getMessage());
                 }
                 dbCache.put(dbPath, dbData);
+            }
+            String packageName = dbPathFile.getName();
+            int dotIndex;
+            if ((dotIndex = packageName.lastIndexOf('.')) > 0) {
+                packageName = packageName.substring(0, dotIndex);
             }
             int offset = key.getDataAt(0);
             int length = key.getDataAt(1);
@@ -202,13 +209,13 @@ public class HiddenInternalFunctions {
                     RSerialize.CallHook callHook = new RSerialize.CallHook() {
 
                         public Object eval(Object arg) {
-                            Object[] callArgs = RArguments.create(envhook, callCache.getSourceSection(), null, RArguments.getDepth(frame) + 1, new Object[]{arg}, ArgumentsSignature.empty(1));
+                            Object[] callArgs = RArguments.create(envhook, callCache.getSourceSection(), null, RArguments.getDepth(frame) + 1, new Object[]{arg}, SIGNATURE);
                             // TODO this cast is problematic
-                            return callCache.execute((VirtualFrame) frame, envhook.getTarget(), callArgs);
+                            return callCache.execute(new SubstituteVirtualFrame(frame), envhook.getTarget(), callArgs);
                         }
 
                     };
-                    Object result = RSerialize.unserialize(udata, callHook, RArguments.getDepth(frame));
+                    Object result = RSerialize.unserialize(udata, callHook, RArguments.getDepth(frame), packageName);
                     return result;
                 } catch (IOException ex) {
                     // unexpected
@@ -236,7 +243,7 @@ public class HiddenInternalFunctions {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.NULL_DLLINFO);
         }
 
-        @Specialization(guards = "isDLLInfo")
+        @Specialization(guards = "isDLLInfo(externalPtr)")
         @TruffleBoundary
         protected RList getRegisteredRoutines(RExternalPtr externalPtr) {
             Object[] data = new Object[NAMES.getLength()];

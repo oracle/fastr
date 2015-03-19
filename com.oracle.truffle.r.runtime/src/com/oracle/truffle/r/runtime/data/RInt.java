@@ -30,12 +30,17 @@ public final class RInt extends RScalar {
 
     private final int value;
 
-    RInt(byte value) {
+    private RInt(byte value) {
         this.value = value;
     }
 
     public int getValue() {
         return value;
+    }
+
+    @Override
+    public RType getRType() {
+        return RType.Integer;
     }
 
     @Override

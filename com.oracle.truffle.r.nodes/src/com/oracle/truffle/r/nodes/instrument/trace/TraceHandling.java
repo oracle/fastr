@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,24 +22,17 @@
  */
 package com.oracle.truffle.r.nodes.instrument.trace;
 
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.instrument.Instrument;
-import com.oracle.truffle.api.instrument.Probe;
-import com.oracle.truffle.api.instrument.StandardSyntaxTag;
-import com.oracle.truffle.api.instrument.TruffleEventReceiver;
-import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.api.utilities.CyclicAssumption;
-import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
-import com.oracle.truffle.r.nodes.function.FunctionStatementsNode;
-import com.oracle.truffle.r.nodes.function.FunctionUID;
-import com.oracle.truffle.r.nodes.instrument.RInstrument;
-import com.oracle.truffle.r.runtime.RArguments;
-import com.oracle.truffle.r.runtime.RContext;
-import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.data.RFunction;
+import java.util.*;
 
-import java.util.WeakHashMap;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.instrument.*;
+import com.oracle.truffle.api.nodes.*;
+import com.oracle.truffle.api.utilities.*;
+import com.oracle.truffle.r.nodes.function.*;
+import com.oracle.truffle.r.nodes.instrument.*;
+import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.data.*;
 
 public class TraceHandling {
 
@@ -71,7 +64,7 @@ public class TraceHandling {
         return probe;
     }
 
-    private abstract static class TraceEventReceiver implements TruffleEventReceiver {
+    private abstract static class TraceEventReceiver implements ASTInstrumentListener {
 
         @CompilationFinal private boolean disabled;
         CyclicAssumption disabledUnchangedAssumption = new CyclicAssumption("trace event disabled state unchanged");
@@ -80,7 +73,7 @@ public class TraceHandling {
         }
 
         @Override
-        public void returnVoid(Node node, VirtualFrame frame) {
+        public void returnVoid(Probe probe, Node node, VirtualFrame frame) {
             if (!disabled()) {
                 throw RInternalError.shouldNotReachHere();
             }
@@ -115,7 +108,7 @@ public class TraceHandling {
         Instrument instrument;
 
         TraceFunctionEventReceiver() {
-            instrument = Instrument.create(this);
+            instrument = Instrument.create(this, "trace");
         }
 
         Instrument getInstrument() {
@@ -123,7 +116,7 @@ public class TraceHandling {
         }
 
         @Override
-        public void enter(Node node, VirtualFrame frame) {
+        public void enter(Probe probe, Node node, VirtualFrame frame) {
             if (!disabled()) {
                 @SuppressWarnings("unused")
                 FunctionStatementsNode fsn = (FunctionStatementsNode) node;
@@ -136,14 +129,14 @@ public class TraceHandling {
         }
 
         @Override
-        public void returnExceptional(Node node, VirtualFrame frame, Exception exception) {
+        public void returnExceptional(Probe probe, Node node, VirtualFrame frame, Exception exception) {
             if (!disabled()) {
                 indent -= INDENT;
             }
         }
 
         @Override
-        public void returnValue(Node node, VirtualFrame frame, Object result) {
+        public void returnValue(Probe probe, Node node, VirtualFrame frame, Object result) {
             if (!disabled()) {
                 indent -= INDENT;
             }

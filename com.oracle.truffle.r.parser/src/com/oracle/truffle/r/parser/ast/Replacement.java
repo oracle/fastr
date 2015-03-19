@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,7 +28,7 @@ public class Replacement extends AssignVariable {
 
     private final FunctionCall replacementFunctionCall;
 
-    public Replacement(SourceSection src, boolean isSuper, FunctionCall replacementFunctionCall, ASTNode rhs) {
+    Replacement(SourceSection src, boolean isSuper, FunctionCall replacementFunctionCall, ASTNode rhs) {
         super(src, isSuper, rhs);
         this.replacementFunctionCall = replacementFunctionCall;
     }

@@ -22,18 +22,15 @@
  */
 package com.oracle.truffle.r.nodes.wrapper.processor;
 
-import java.io.BufferedWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
+import java.io.*;
 import java.util.*;
 
 import javax.annotation.processing.*;
 import javax.lang.model.*;
+import javax.lang.model.element.*;
 import javax.lang.model.type.*;
 import javax.lang.model.util.*;
-import javax.lang.model.element.*;
-import javax.tools.Diagnostic;
-import javax.tools.JavaFileObject;
+import javax.tools.*;
 
 /**
  * Analyzes classes tagged with {@code CreateWrapper} and generates a custom wrapper subclass.
@@ -58,6 +55,8 @@ public class WrapperProcessor extends AbstractProcessor {
             if (roundEnv.processingOver()) {
                 return true;
             }
+            System.setProperty("line.separator", "\n");
+
             note("CreateWrapperProcessor: analyzing classes");
             createWrapperElement = processingEnv.getElementUtils().getTypeElement("com.oracle.truffle.r.nodes.instrument.CreateWrapper");
             for (Element element : roundEnv.getElementsAnnotatedWith(createWrapperElement)) {
@@ -108,16 +107,18 @@ public class WrapperProcessor extends AbstractProcessor {
         PrintWriter wr = new PrintWriter(new BufferedWriter(srcLocator.openWriter()));
         try {
             wr.println("// DO NOT EDIT, generated automatically");
+            wr.println("// Checkstyle: stop");
             wr.printf("package %s;%n", packageName);
             wr.println();
             wr.printf("import com.oracle.truffle.api.instrument.Probe;%n");
             wr.printf("import com.oracle.truffle.api.instrument.ProbeNode;%n");
             wr.printf("import com.oracle.truffle.api.instrument.ProbeNode.WrapperNode;%n");
-            wr.printf("import com.oracle.truffle.api.nodes.Node;%n");
+            wr.printf("import com.oracle.truffle.api.nodes.*;%n");
             wr.printf("import com.oracle.truffle.r.nodes.RNode;%n");
             wr.printf("import com.oracle.truffle.r.runtime.RDeparse;%n");
             wr.printf("import com.oracle.truffle.r.runtime.env.REnvironment;%n");
             wr.println();
+            wr.printf("@NodeInfo(cost = NodeCost.NONE)%n");
             wr.printf("public final class %s  extends %s implements WrapperNode {%n", wrapperClassName, qualClassName);
             wr.printf("%s@Child %s child;%n", INDENT4, qualClassName);
             wr.printf("%s@Child private ProbeNode probeNode;%n", INDENT4);

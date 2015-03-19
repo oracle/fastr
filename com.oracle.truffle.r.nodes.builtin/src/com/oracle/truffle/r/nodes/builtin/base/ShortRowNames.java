@@ -60,7 +60,7 @@ public abstract class ShortRowNames extends RBuiltinNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = "invalidType")
+    @Specialization(guards = "invalidType(type)")
     protected RNull getNamesInvalidType(RAbstractContainer operand, RAbstractIntVector type) {
         controlVisibility();
         CompilerDirectives.transferToInterpreter();
@@ -68,13 +68,13 @@ public abstract class ShortRowNames extends RBuiltinNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"!invalidType", "!returnScalar"})
+    @Specialization(guards = {"!invalidType(type)", "!returnScalar(type)"})
     protected Object getNamesNull(RAbstractContainer operand, RAbstractIntVector type) {
         controlVisibility();
         return operand.getRowNames(attrProfiles);
     }
 
-    @Specialization(guards = {"!invalidType", "returnScalar"})
+    @Specialization(guards = {"!invalidType(type)", "returnScalar(type)"})
     protected int getNames(RAbstractContainer operand, RAbstractIntVector type) {
         controlVisibility();
         int t = type.getDataAt(0);
@@ -103,11 +103,11 @@ public abstract class ShortRowNames extends RBuiltinNode {
         return rowNames.getLength();
     }
 
-    protected boolean invalidType(@SuppressWarnings("unused") RAbstractContainer operand, RAbstractIntVector type) {
+    protected boolean invalidType(RAbstractIntVector type) {
         return type.getLength() == 0 || type.getDataAt(0) < 0 || type.getDataAt(0) > 2;
     }
 
-    protected boolean returnScalar(@SuppressWarnings("unused") RAbstractContainer operand, RAbstractIntVector type) {
+    protected boolean returnScalar(RAbstractIntVector type) {
         return type.getDataAt(0) >= 1;
     }
 

@@ -98,8 +98,7 @@ public class DuplicatedFunctions {
             return ds;
         }
 
-        @SuppressWarnings("unused")
-        protected boolean isIncomparable(RAbstractContainer x, byte incomparables, byte fromLast) {
+        protected boolean isIncomparable(byte incomparables) {
             return incomparables == RRuntime.LOGICAL_TRUE;
         }
 
@@ -120,7 +119,7 @@ public class DuplicatedFunctions {
     @RBuiltin(name = "duplicated", kind = RBuiltinKind.INTERNAL, parameterNames = {"x", "imcomparables", "fromLast", "nmax"})
     public abstract static class Duplicated extends Adapter {
         @CreateCast("arguments")
-        public RNode[] castArguments(RNode[] arguments) {
+        protected RNode[] castArguments(RNode[] arguments) {
             arguments[2] = CastLogicalNodeGen.create(arguments[2], false, false, false);
             arguments[3] = CastIntegerNodeGen.create(arguments[3], false, false, false);
             return arguments;
@@ -132,28 +131,28 @@ public class DuplicatedFunctions {
             return RDataFactory.createLogicalVector(ds.dupVec, RDataFactory.COMPLETE_VECTOR);
         }
 
-        @Specialization(guards = {"!isIncomparable", "!empty"})
+        @Specialization(guards = {"!isIncomparable(incomparables)", "!empty(x)"})
         protected RLogicalVector duplicatedFalseIncomparables(RAbstractVector x, @SuppressWarnings("unused") byte incomparables, byte fromLast, @SuppressWarnings("unused") int nmax) {
             return analyzeAndCreateResult(x, null, fromLast);
         }
 
-        @Specialization(guards = {"isIncomparable", "!empty"})
+        @Specialization(guards = {"isIncomparable(incomparables)", "!empty(x)"})
         protected RLogicalVector duplicatedTrueIncomparables(VirtualFrame frame, RAbstractVector x, byte incomparables, byte fromLast, @SuppressWarnings("unused") int nmax) {
             initChildren();
-            RType xType = typeof.execute(frame, x);
+            RType xType = typeof.execute(x);
             RAbstractVector vector = (RAbstractVector) (castTypeNode.execute(frame, incomparables, xType));
             return analyzeAndCreateResult(x, vector, fromLast);
         }
 
-        @Specialization(guards = {"!empty"})
+        @Specialization(guards = {"!empty(x)"})
         protected RLogicalVector duplicated(VirtualFrame frame, RAbstractContainer x, RAbstractContainer incomparables, byte fromLast, @SuppressWarnings("unused") int nmax) {
             initChildren();
-            RType xType = typeof.execute(frame, x);
+            RType xType = typeof.execute(x);
             return analyzeAndCreateResult(x, (RAbstractContainer) (castTypeNode.execute(frame, incomparables, xType)), fromLast);
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = "empty")
+        @Specialization(guards = "empty(x)")
         protected RLogicalVector duplicatedEmpty(RAbstractContainer x, RAbstractContainer incomparables, byte fromLast, int nmax) {
             return RDataFactory.createLogicalVector(0);
         }
@@ -170,28 +169,28 @@ public class DuplicatedFunctions {
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"!isIncomparable", "!empty"})
+        @Specialization(guards = {"!isIncomparable(incomparables)", "!empty(x)"})
         protected int anyDuplicatedFalseIncomparables(RAbstractVector x, byte incomparables, byte fromLast) {
             return analyze(x, null, true, RRuntime.fromLogical(fromLast)).index;
         }
 
-        @Specialization(guards = {"isIncomparable", "!empty"})
+        @Specialization(guards = {"isIncomparable(incomparables)", "!empty(x)"})
         protected int anyDuplicatedTrueIncomparables(VirtualFrame frame, RAbstractVector x, byte incomparables, byte fromLast) {
             initChildren();
-            RType xType = typeof.execute(frame, x);
+            RType xType = typeof.execute(x);
             RAbstractVector vector = (RAbstractVector) (castTypeNode.execute(frame, incomparables, xType));
             return analyze(x, vector, true, RRuntime.fromLogical(fromLast)).index;
         }
 
-        @Specialization(guards = {"!empty"})
+        @Specialization(guards = {"!empty(x)"})
         protected int anyDuplicated(VirtualFrame frame, RAbstractContainer x, RAbstractContainer incomparables, byte fromLast) {
             initChildren();
-            RType xType = typeof.execute(frame, x);
+            RType xType = typeof.execute(x);
             return analyze(x, (RAbstractContainer) (castTypeNode.execute(frame, incomparables, xType)), true, RRuntime.fromLogical(fromLast)).index;
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = "empty")
+        @Specialization(guards = "empty(x)")
         protected int anyDuplicatedEmpty(RAbstractContainer x, RAbstractContainer incomparables, byte fromLast) {
             return 0;
         }

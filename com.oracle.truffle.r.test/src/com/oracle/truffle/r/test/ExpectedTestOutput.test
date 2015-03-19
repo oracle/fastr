@@ -8660,6 +8660,30 @@ attr(,"foo")
 [1] 1
 
 ##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testDoCall
+#{ do.call("+", list(quote(1), 2))}
+[1] 3
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testDoCall
+#{ do.call(quote, list(quote(1)))}
+[1] 1
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testDoCall
+#{ do.call(quote, list(quote(x)))}
+x
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testDoCall
+#{ do.call(quote, list(quote(x+1)))}
+x + 1
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testDoCall
+#{ f <- function(x) x; do.call(f, list(quote(y + 1)))}
+Error in (function (x)  : object 'y' not found
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testDoCall
+#{ f <- function(x) x; do.call(f, list(quote(y)))}
+Error in (function (x)  : object 'y' not found
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testDoCall
 #{ x<-list(c(1,2)); do.call("as.matrix", x) }
      [,1]
 [1,]    1
@@ -52916,11 +52940,6 @@ Error in `[<-`(`*tmp*`, 1 + (0+1i), 1, value = 7) :
   invalid subscript type 'complex'
 
 ##com.oracle.truffle.r.test.library.base.TestSimpleVectors.testComplexIndex
-#{ x<-c(1,2,3,4); dim(x)<-c(2,2); x[1+1i, 1]<-NULL }
-Error in `[<-`(`*tmp*`, 1 + (0+1i), 1, value = NULL) :
-  invalid subscript type 'complex'
-
-##com.oracle.truffle.r.test.library.base.TestSimpleVectors.testComplexIndex
 #{ x<-c(1,2,3,4); dim(x)<-c(2,2); x[1+1i, 1]<-c(7,42) }
 Error in `[<-`(`*tmp*`, 1 + (0+1i), 1, value = c(7, 42)) :
   invalid subscript type 'complex'
@@ -52934,11 +52953,6 @@ Error in `[<-`(`*tmp*`, 1 + (0+1i), 1, value = integer(0)) :
 #{ x<-c(1,2,3,4); dim(x)<-c(2,2); x[[1+1i, 1]]<-7 }
 Error in `[[<-`(`*tmp*`, 1 + (0+1i), 1, value = 7) :
   invalid subscript type 'complex'
-
-##com.oracle.truffle.r.test.library.base.TestSimpleVectors.testComplexIndex
-#{ x<-c(1,2,3,4); dim(x)<-c(2,2); x[[1+1i, 1]]<-NULL }
-Error in x[[1 + (0+1i), 1]] <- NULL :
-  more elements supplied than there are to replace
 
 ##com.oracle.truffle.r.test.library.base.TestSimpleVectors.testComplexIndex
 #{ x<-c(1,2,3,4); dim(x)<-c(2,2); x[[1+1i, 1]]<-c(7,42) }
@@ -54144,11 +54158,6 @@ Error in z[[list(1)]] : invalid subscript type 'list'
 Error in z[[list(1)]] <- 42 : invalid subscript type 'list'
 
 ##com.oracle.truffle.r.test.library.base.TestSimpleVectors.testListIndex
-#{ z<-1:4; z[[list(1)]]<-NULL }
-Error in z[[list(1)]] <- NULL :
-  more elements supplied than there are to replace
-
-##com.oracle.truffle.r.test.library.base.TestSimpleVectors.testListIndex
 #{ z<-1:4; z[[list(1)]]<-integer() }
 Error in z[[list(1)]] <- integer() : replacement has length zero
 
@@ -54267,10 +54276,6 @@ Error in z[[list(1)]] : invalid subscript type 'list'
 ##com.oracle.truffle.r.test.library.base.TestSimpleVectors.testListIndex
 #{ z<-list(1,2,3,4); z[[list(1)]]<-42 }
 Error in z[[list(1)]] <- 42 : invalid subscript type 'list'
-
-##com.oracle.truffle.r.test.library.base.TestSimpleVectors.testListIndex
-#{ z<-list(1,2,3,4); z[[list(1)]]<-NULL }
-Error in z[[list(1)]] <- NULL : invalid subscript type 'list'
 
 ##com.oracle.truffle.r.test.library.base.TestSimpleVectors.testListIndex
 #{ z<-list(1,2,3,4); z[[list(1)]]<-integer() }
@@ -57420,6 +57425,16 @@ Error: unexpected ',' in "{ x<-list(aa=1, ba=2); x[[exact=TRUE],"
 NULL
 
 ##com.oracle.truffle.r.test.library.base.TestSimpleVectors.testMoreVectorsOther
+#{ x<-list(data=list(matrix(1:4, ncol=2))); x$data[[1]][2,2]<-42; x }
+$data
+$data[[1]]
+     [,1] [,2]
+[1,]    1    3
+[2,]    2   42
+
+
+
+##com.oracle.truffle.r.test.library.base.TestSimpleVectors.testMoreVectorsOther
 #{ x<-list(list(1,42)); x[[c(1, 2)]] }
 [1] 42
 
@@ -59063,12 +59078,6 @@ a
 [1,]
 
 ##com.oracle.truffle.r.test.library.base.TestSimpleVectors.testPrint
-#{ x<-integer(0); dim(x)<-c(1, 0, 0); x }
-
-##com.oracle.truffle.r.test.library.base.TestSimpleVectors.testPrint
-#{ x<-integer(0); dim(x)<-c(1, 0, 0, 2); x }
-
-##com.oracle.truffle.r.test.library.base.TestSimpleVectors.testPrint
 #{ x<-integer(0); dim(x)<-c(1, 0, 2); x }
 , , 1
 
@@ -59080,9 +59089,6 @@ a
 
 [1,]
 
-
-##com.oracle.truffle.r.test.library.base.TestSimpleVectors.testPrint
-#{ x<-integer(0); dim(x)<-c(1, 0, 2, 0, 2); x }
 
 ##com.oracle.truffle.r.test.library.base.TestSimpleVectors.testPrint
 #{ x<-integer(0); dim(x)<-c(1, 0, 2, 2, 2); dimnames(x)<-list("a", NULL, c("b", "c"), c("d", "e"), c("f", "g")); x }
@@ -59220,11 +59226,6 @@ Error in `[<-`(`*tmp*`, as.raw(1), 1, value = c(7, 42)) :
 #{ x<-c(1,2,3,4); dim(x)<-c(2,2); x[as.raw(1), 1]<-integer() }
 Error in `[<-`(`*tmp*`, as.raw(1), 1, value = integer(0)) :
   invalid subscript type 'raw'
-
-##com.oracle.truffle.r.test.library.base.TestSimpleVectors.testRawIndex
-#{ x<-c(1,2,3,4); x[[as.raw(1)]]<-NULL }
-Error in x[[as.raw(1)]] <- NULL :
-  more elements supplied than there are to replace
 
 ##com.oracle.truffle.r.test.library.base.TestSimpleVectors.testRawIndex
 #{ x<-c(1,2,3,4); x[[as.raw(1)]]<-c(1) }
@@ -69091,7 +69092,7 @@ description       class        mode        text      opened    can read
 ##com.oracle.truffle.r.test.testrgen.TestrGenBuiltingetNamespaceVersion.testgetNamespaceVersion1
 #argv <- structure(list(ns = 'stats'), .Names = 'ns');do.call('getNamespaceVersion', argv)
 version
-"3.1.1"
+"3.1.3"
 
 ##com.oracle.truffle.r.test.testrgen.TestrGenBuiltingetSymbolInfo.testgetSymbolInfo1
 #argv <- list('FALSE', '', FALSE); .Internal(getSymbolInfo(argv[[1]], argv[[2]], argv[[3]]))
@@ -71975,10 +71976,6 @@ character(0)
 
 ##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinlistfiles.testlistfiles2
 #argv <- list('./myTst/data', NULL, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE); .Internal(list.files(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]]))
-character(0)
-
-##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinlistfiles.testlistfiles3
-#argv <- list('.', '^CITATION.*', FALSE, FALSE, TRUE, FALSE, FALSE, FALSE); .Internal(list.files(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]]))
 character(0)
 
 ##com.oracle.truffle.r.test.testrgen.TestrGenBuiltinlistfiles.testlistfiles4

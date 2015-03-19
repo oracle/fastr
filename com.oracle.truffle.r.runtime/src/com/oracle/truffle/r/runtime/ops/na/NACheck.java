@@ -40,8 +40,8 @@ public final class NACheck {
 
     private final BranchProfile conversionOverflowReached = BranchProfile.create();
 
-    @CompilationFinal int state;
-    @CompilationFinal boolean seenNaN;
+    @CompilationFinal private int state;
+    @CompilationFinal private boolean seenNaN;
 
     public static NACheck create() {
         return new NACheck();

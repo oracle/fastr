@@ -37,32 +37,28 @@ import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.env.REnvironment.*;
 
-@NodeChildren({@NodeChild(value = "object", type = RNode.class), @NodeChild(value = "value", type = RNode.class)})
-@NodeField(name = "field", type = String.class)
-public abstract class UpdateFieldNode extends RNode {
-
-    public abstract RNode getObject();
+@NodeChild(value = "value", type = RNode.class)
+public abstract class UpdateFieldNode extends AccessFieldBaseNode {
 
     public abstract RNode getValue();
 
-    public abstract String getField();
-
-    private final BranchProfile inexactMatch = BranchProfile.create();
     private final BranchProfile noRemoval = BranchProfile.create();
     private final ConditionProfile nullValueProfile = ConditionProfile.createBinaryProfile();
-    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
     @Child private CastListNode castList;
 
-    @Specialization(guards = "!isNullValue")
+    @Specialization(guards = "!isNull(value)")
     protected Object updateField(RList object, Object value) {
+        RStringVector names = object.getNames(attrProfiles);
+        int index = -1;
         String field = getField();
-        int index = object.getElementIndexByName(attrProfiles, field);
-        if (index == -1) {
-            inexactMatch.enter();
-            index = object.getElementIndexByNameInexact(attrProfiles, field);
+        if (hasNamesProfile.profile(names != null)) {
+            index = getElementIndexByName(names, field);
+            if (index == -1) {
+                inexactMatch.enter();
+                index = object.getElementIndexByNameInexact(attrProfiles, field);
+            }
         }
-
         int newLength = object.getLength() + (index == -1 ? 1 : 0);
         if (index == -1) {
             index = newLength - 1;
@@ -76,7 +72,6 @@ public abstract class UpdateFieldNode extends RNode {
         if (object.getNames(attrProfiles) == null) {
             Arrays.fill(resultNames, "");
         } else {
-            RStringVector names = object.getNames(attrProfiles);
             System.arraycopy(names.getDataWithoutCopying(), 0, resultNames, 0, names.getLength());
             namesComplete = names.isComplete();
         }
@@ -91,13 +86,17 @@ public abstract class UpdateFieldNode extends RNode {
         return result;
     }
 
-    @Specialization(guards = "isNullValue")
+    @Specialization(guards = "isNull(value)")
     protected Object updateFieldNullValue(RList object, @SuppressWarnings("unused") Object value) {
+        RStringVector names = object.getNames(attrProfiles);
+        int index = -1;
         String field = getField();
-        int index = object.getElementIndexByName(attrProfiles, field);
-        if (index == -1) {
-            inexactMatch.enter();
-            index = object.getElementIndexByNameInexact(attrProfiles, field);
+        if (hasNamesProfile.profile(names != null)) {
+            index = getElementIndexByName(names, field);
+            if (index == -1) {
+                inexactMatch.enter();
+                index = object.getElementIndexByNameInexact(attrProfiles, field);
+            }
         }
 
         if (index == -1) {
@@ -120,7 +119,6 @@ public abstract class UpdateFieldNode extends RNode {
         if (object.getNames(attrProfiles) == null) {
             Arrays.fill(resultNames, "");
         } else {
-            RStringVector names = object.getNames(attrProfiles);
             ind = 0;
             for (int i = 0; i < names.getLength(); i++) {
                 if (i != index) {
@@ -162,7 +160,7 @@ public abstract class UpdateFieldNode extends RNode {
         }
     }
 
-    protected boolean isNullValue(@SuppressWarnings("unused") RAbstractVector object, Object value) {
+    protected static boolean isNull(Object value) {
         return value == RNull.instance;
     }
 

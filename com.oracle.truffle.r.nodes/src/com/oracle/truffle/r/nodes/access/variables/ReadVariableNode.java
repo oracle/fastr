@@ -33,6 +33,7 @@ import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.function.*;
+import com.oracle.truffle.r.options.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.data.*;
@@ -105,11 +106,11 @@ public class ReadVariableNode extends RNode implements VisibilityController {
     @CompilationFinal private FrameLevel read;
     @CompilationFinal private boolean needsCopying;
 
-    private final ConditionProfile isNullProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile isPromiseProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile copyProfile = ConditionProfile.createBinaryProfile();
     private final BranchProfile unexpectedMissingProfile = BranchProfile.create();
     private final ValueProfile superEnclosingFrameProfile = ValueProfile.createClassProfile();
+    private final ConditionProfile isNullValueProfile = ConditionProfile.createBinaryProfile();
     private final ValueProfile valueProfile = ValueProfile.createClassProfile();
 
     private final String identifier;
@@ -118,7 +119,7 @@ public class ReadVariableNode extends RNode implements VisibilityController {
 
     @CompilationFinal private final boolean[] seenValueKinds = new boolean[FrameSlotKind.values().length];
 
-    public ReadVariableNode(String identifier, RType mode, ReadKind kind) {
+    private ReadVariableNode(String identifier, RType mode, ReadKind kind) {
         this.identifier = identifier;
         this.mode = mode;
         this.kind = kind;
@@ -142,7 +143,7 @@ public class ReadVariableNode extends RNode implements VisibilityController {
         return kind;
     }
 
-    public boolean seenValueKind(FrameSlotKind slotKind) {
+    private boolean seenValueKind(FrameSlotKind slotKind) {
         return seenValueKinds[slotKind.ordinal()];
     }
 
@@ -201,7 +202,7 @@ public class ReadVariableNode extends RNode implements VisibilityController {
         return result;
     }
 
-    public static final class LayoutChangedException extends SlowPathException {
+    private static final class LayoutChangedException extends SlowPathException {
         private static final long serialVersionUID = 3380913774357492013L;
     }
 
@@ -225,6 +226,7 @@ public class ReadVariableNode extends RNode implements VisibilityController {
 
         private final FrameLevel next;
         private final FrameSlot slot;
+        private final ConditionProfile isNullProfile = ConditionProfile.createBinaryProfile();
 
         public Mismatch(FrameLevel next, FrameSlot slot) {
             this.next = next;
@@ -237,7 +239,8 @@ public class ReadVariableNode extends RNode implements VisibilityController {
             if (kind == ReadKind.SilentLocal && value == RMissing.instance) {
                 return null;
             }
-            if (checkType(frame, value)) {
+            if (checkType(frame, value, isNullProfile)) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
                 throw new LayoutChangedException();
             }
             return next.execute(frame, variableFrame);
@@ -272,6 +275,7 @@ public class ReadVariableNode extends RNode implements VisibilityController {
     private final class Match extends FrameLevel {
 
         private final FrameSlot slot;
+        private final ConditionProfile isNullProfile = ConditionProfile.createBinaryProfile();
 
         public Match(FrameSlot slot) {
             this.slot = slot;
@@ -283,7 +287,7 @@ public class ReadVariableNode extends RNode implements VisibilityController {
             if (kind == ReadKind.SilentLocal && value == RMissing.instance) {
                 return null;
             }
-            if (!checkType(frame, value)) {
+            if (!checkType(frame, value, isNullProfile)) {
                 throw new LayoutChangedException();
             }
             return value;
@@ -295,7 +299,7 @@ public class ReadVariableNode extends RNode implements VisibilityController {
         }
     }
 
-    public final class Unknown extends DescriptorLevel {
+    private final class Unknown extends DescriptorLevel {
 
         @Override
         public Object execute(VirtualFrame frame) {
@@ -312,7 +316,7 @@ public class ReadVariableNode extends RNode implements VisibilityController {
         }
     }
 
-    public static final class NextFrameFromDescriptorLevel extends DescriptorLevel {
+    private static final class NextFrameFromDescriptorLevel extends DescriptorLevel {
 
         private final FrameLevel next;
         private final StableValue<MaterializedFrame> enclosingFrameAssumption;
@@ -334,11 +338,13 @@ public class ReadVariableNode extends RNode implements VisibilityController {
         }
     }
 
-    public static final class NextFrameLevel extends FrameLevel {
+    private static final class NextFrameLevel extends FrameLevel {
 
         private final FrameLevel next;
         private final FrameDescriptor nextDescriptor;
         private final ValueProfile frameProfile = ValueProfile.createClassProfile();
+        private final ConditionProfile isEvalFrame = ConditionProfile.createBinaryProfile();
+        private final ConditionProfile isFunctionFrame = ConditionProfile.createBinaryProfile();
 
         public NextFrameLevel(FrameLevel next, FrameDescriptor nextDescriptor) {
             this.next = next;
@@ -347,7 +353,15 @@ public class ReadVariableNode extends RNode implements VisibilityController {
 
         @Override
         public Object execute(VirtualFrame frame, Frame variableFrame) throws InvalidAssumptionException, LayoutChangedException, FrameSlotTypeException {
-            MaterializedFrame nextFrame = RArguments.getEnclosingFrame(variableFrame);
+            Object[] arguments = RArguments.getArgumentsWithEvalCheck(variableFrame, isEvalFrame);
+            MaterializedFrame nextFrame;
+            Object function = arguments[RArguments.INDEX_FUNCTION];
+            if (isFunctionFrame.profile(function != null)) {
+                nextFrame = ((RFunction) function).getEnclosingFrame();
+            } else {
+                nextFrame = (MaterializedFrame) frameProfile.profile(arguments[RArguments.INDEX_ENCLOSING_FRAME]);
+            }
+            nextFrame = RArguments.getEnclosingFrame(variableFrame);
             if (nextDescriptor == null) {
                 if (nextFrame != null) {
                     throw new LayoutChangedException();
@@ -357,11 +371,10 @@ public class ReadVariableNode extends RNode implements VisibilityController {
                 if (nextFrame == null) {
                     throw new LayoutChangedException();
                 }
-                MaterializedFrame profiledFrame = frameProfile.profile(nextFrame);
-                if (profiledFrame.getFrameDescriptor() != nextDescriptor) {
+                if (nextFrame.getFrameDescriptor() != nextDescriptor) {
                     throw new LayoutChangedException();
                 }
-                return next.execute(frame, profiledFrame);
+                return next.execute(frame, nextFrame);
             }
         }
 
@@ -371,7 +384,7 @@ public class ReadVariableNode extends RNode implements VisibilityController {
         }
     }
 
-    public static final class MultiAssumptionLevel extends FrameLevel {
+    private static final class MultiAssumptionLevel extends FrameLevel {
 
         private final FrameLevel next;
         @CompilationFinal private final Assumption[] assumptions;
@@ -441,15 +454,15 @@ public class ReadVariableNode extends RNode implements VisibilityController {
                 if (kind == ReadKind.SilentLocal && value == RMissing.instance) {
                     match = false;
                 } else {
-                    match = checkType(frame, value);
+                    match = checkType(frame, value, null);
                 }
             }
 
             // figure out how to get to the next frame or descriptor
             MaterializedFrame next = RArguments.getEnclosingFrame(current);
             FrameDescriptor nextDescriptor = next == null ? null : next.getFrameDescriptor();
-            StableValue<MaterializedFrame> enclosingFrameAssumption = FrameSlotChangeMonitor.getOrInitializeEnclosingFrameAssumption(currentDescriptor, null, next);
-            StableValue<FrameDescriptor> enclosingDescriptorAssumption = FrameSlotChangeMonitor.getOrInitializeEnclosingFrameDescriptorAssumption(currentDescriptor, null, nextDescriptor);
+            StableValue<MaterializedFrame> enclosingFrameAssumption = FrameSlotChangeMonitor.getOrInitializeEnclosingFrameAssumption(current, currentDescriptor, null, next);
+            StableValue<FrameDescriptor> enclosingDescriptorAssumption = FrameSlotChangeMonitor.getOrInitializeEnclosingFrameDescriptorAssumption(current, currentDescriptor, null, nextDescriptor);
 
             levels.add(new ReadVariableLevel(currentDescriptor, frameSlot, valueAssumption, enclosingDescriptorAssumption, enclosingFrameAssumption, next));
 
@@ -459,12 +472,14 @@ public class ReadVariableNode extends RNode implements VisibilityController {
 
         FrameLevel lastLevel = null;
 
+        boolean complex = false;
         ListIterator<ReadVariableLevel> iter = levels.listIterator(levels.size());
         if (match) {
             ReadVariableLevel level = levels.get(levels.size() - 1);
             if (level.valueAssumption != null) {
                 lastLevel = new DescriptorStableMatch(level.valueAssumption);
             } else {
+                complex = true;
                 lastLevel = new Match(level.slot);
             }
             iter.previous();
@@ -479,12 +494,14 @@ public class ReadVariableNode extends RNode implements VisibilityController {
                 if (level.enclosingDescriptorAssumption != null) {
                     assumptions.add(level.enclosingDescriptorAssumption.getAssumption());
                 } else {
+                    complex = true;
                     lastLevel = new NextFrameLevel(lastLevel, level.nextDescriptor());
                 }
             } else {
                 if (level.enclosingFrameAssumption != null) {
                     lastLevel = new NextFrameFromDescriptorLevel(lastLevel, level.enclosingFrameAssumption);
                 } else {
+                    complex = true;
                     lastLevel = new NextFrameLevel(lastLevel, level.nextDescriptor());
                 }
             }
@@ -499,12 +516,17 @@ public class ReadVariableNode extends RNode implements VisibilityController {
                 if (level.valueAssumption != null && lastLevel instanceof DescriptorLevel) {
                     assumptions.add(level.valueAssumption.getAssumption());
                 } else {
+                    complex = true;
                     lastLevel = new Mismatch(lastLevel, level.slot);
                 }
             }
         }
         if (!assumptions.isEmpty()) {
             lastLevel = new MultiAssumptionLevel(lastLevel, assumptions.toArray(new Assumption[assumptions.size()]));
+        }
+
+        if (FastROptions.PrintComplexLookups.getValue() && levels.size() > 1 && complex) {
+            System.out.println(identifier + " " + lastLevel);
         }
 
         return lastLevel;
@@ -557,19 +579,18 @@ public class ReadVariableNode extends RNode implements VisibilityController {
     }
 
     private Object profiledGetValue(Frame variableFrame, FrameSlot frameSlot) throws FrameSlotTypeException {
-        Object result;
         if (seenValueKind(FrameSlotKind.Object) && variableFrame.isObject(frameSlot)) {
-            result = variableFrame.getObject(frameSlot);
+            Object result = variableFrame.getObject(frameSlot);
+            return isNullValueProfile.profile(result == null) ? null : valueProfile.profile(result);
         } else if (seenValueKind(FrameSlotKind.Byte) && variableFrame.isByte(frameSlot)) {
-            result = variableFrame.getByte(frameSlot);
+            return variableFrame.getByte(frameSlot);
         } else if (seenValueKind(FrameSlotKind.Int) && variableFrame.isInt(frameSlot)) {
-            result = variableFrame.getInt(frameSlot);
+            return variableFrame.getInt(frameSlot);
         } else if (seenValueKind(FrameSlotKind.Double) && variableFrame.isDouble(frameSlot)) {
-            result = variableFrame.getDouble(frameSlot);
+            return variableFrame.getDouble(frameSlot);
         } else {
             throw new FrameSlotTypeException();
         }
-        return valueProfile.profile(result);
     }
 
     /**
@@ -590,9 +611,9 @@ public class ReadVariableNode extends RNode implements VisibilityController {
      * @param objArg The object to check for proper type
      * @return see above
      */
-    public boolean checkType(VirtualFrame frame, Object objArg) {
+    protected boolean checkType(VirtualFrame frame, Object objArg, ConditionProfile isNullProfile) {
         Object obj = objArg;
-        if (isNullProfile.profile(obj == null)) {
+        if ((isNullProfile == null && obj == null) || (isNullProfile != null && isNullProfile.profile(obj == null))) {
             return false;
         }
         if (obj == RMissing.instance) {

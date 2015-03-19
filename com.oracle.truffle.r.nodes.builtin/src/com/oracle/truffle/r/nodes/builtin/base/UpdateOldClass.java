@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -46,7 +46,7 @@ public abstract class UpdateOldClass extends RInvisibleBuiltinNode {
 
     public abstract Object execute(VirtualFrame frame, RAbstractContainer vector, Object o);
 
-    @Specialization(guards = "!isStringVector")
+    @Specialization(guards = "!isStringVector(className)")
     protected Object setOldClass(VirtualFrame frame, RAbstractContainer arg, RAbstractVector className) {
         controlVisibility();
         if (className.getLength() == 0) {
@@ -86,14 +86,7 @@ public abstract class UpdateOldClass extends RInvisibleBuiltinNode {
         return RVector.setVectorClassAttr(resultVector, null, arg.getElementClass() == RDataFrame.class ? arg : null, arg.getElementClass() == RFactor.class ? arg : null);
     }
 
-    @TruffleBoundary
-    public Object setOldClass(RFunction arg, @SuppressWarnings("unused") Object className) {
-        controlVisibility();
-        return arg;
-    }
-
-    protected boolean isStringVector(@SuppressWarnings("unused") RAbstractContainer arg, RAbstractVector className) {
+    protected boolean isStringVector(RAbstractVector className) {
         return className.getElementClass() == RString.class;
     }
-
 }

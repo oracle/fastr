@@ -25,13 +25,11 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import java.util.*;
-import java.util.function.*;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -70,15 +68,15 @@ public abstract class Bind extends RPrecedenceBuiltinNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = "isNullPrecedence")
+    @Specialization(guards = "isNullPrecedence(frame, args)")
     protected RNull allNull(VirtualFrame frame, Object deparseLevelObj, RArgsValuesAndNames args) {
         controlVisibility();
         return RNull.instance;
     }
 
-    private static final ArgumentsSignature SIGNATURE = ArgumentsSignature.get(new String[]{"deparse.level", "..."});
+    private static final ArgumentsSignature SIGNATURE = ArgumentsSignature.get("deparse.level", "...");
 
-    @Specialization(guards = {"!oneElement", "isDataFrame"})
+    @Specialization(guards = {"!oneElement(args)", "isDataFrame(args)"})
     protected Object allDataFrame(VirtualFrame frame, Object deparseLevel, RArgsValuesAndNames args) {
         if (dcn == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -91,7 +89,7 @@ public abstract class Bind extends RPrecedenceBuiltinNode {
         }
     }
 
-    private Object bindInternal(VirtualFrame frame, Object deparseLevel, RArgsValuesAndNames args, BiFunction<VirtualFrame, Object, RAbstractVector> castFunction) {
+    private Object bindInternal(VirtualFrame frame, Object deparseLevel, RArgsValuesAndNames args, CastNode castNode, boolean needsVectorCast) {
         controlVisibility();
         Object[] array = args.getValues();
         ArgumentsSignature signature = args.getSignature();
@@ -106,7 +104,13 @@ public abstract class Bind extends RPrecedenceBuiltinNode {
                 vecNames[ind] = signature.getName(i);
                 naCheck.check(vecNames[ind]);
             }
-            RAbstractVector vector = castFunction.apply(frame, array[i]);
+            Object result = castNode.executeCast(frame, array[i]);
+            RAbstractVector vector;
+            if (needsVectorCast) {
+                vector = castVector(frame, result);
+            } else {
+                vector = (RAbstractVector) result;
+            }
             if (emptyVectorProfile.profile(vector.getLength() == 0)) {
                 // nothing to do
             } else {
@@ -125,34 +129,29 @@ public abstract class Bind extends RPrecedenceBuiltinNode {
         return genericBind(frame, vectors, complete, vecNames, naCheck.neverSeenNA(), deparseLevel);
     }
 
-    @Specialization(guards = {"isIntegerPrecedence", "!oneElement", "!isDataFrame"})
-    @ExplodeLoop
-    protected Object allInt(VirtualFrame frame, Object deparseLevel, RArgsValuesAndNames args) {
-        return bindInternal(frame, deparseLevel, args, (f, e) -> castVector(f, castInteger(f, e, true)));
+    @Specialization(guards = {"isIntegerPrecedence(frame, args)", "!oneElement(args)", "!isDataFrame(args)"})
+    protected Object allInt(VirtualFrame frame, Object deparseLevel, RArgsValuesAndNames args, @Cached("create()") CastIntegerNode cast) {
+        return bindInternal(frame, deparseLevel, args, cast, true);
     }
 
-    @Specialization(guards = {"isDoublePrecedence", "!oneElement", "!isDataFrame"})
-    @ExplodeLoop
-    protected Object allDouble(VirtualFrame frame, Object deparseLevel, RArgsValuesAndNames args) {
-        return bindInternal(frame, deparseLevel, args, (f, e) -> castVector(f, castDouble(f, e, true)));
+    @Specialization(guards = {"isDoublePrecedence(frame, args)", "!oneElement(args)", "!isDataFrame(args)"})
+    protected Object allDouble(VirtualFrame frame, Object deparseLevel, RArgsValuesAndNames args, @Cached("create()") CastDoubleNode cast) {
+        return bindInternal(frame, deparseLevel, args, cast, true);
     }
 
-    @Specialization(guards = {"isStringPrecedence", "!oneElement", "!isDataFrame"})
-    @ExplodeLoop
-    protected Object allString(VirtualFrame frame, Object deparseLevel, RArgsValuesAndNames args) {
-        return bindInternal(frame, deparseLevel, args, (f, e) -> castVector(f, castString(f, e, true)));
+    @Specialization(guards = {"isStringPrecedence(frame, args)", "!oneElement(args)", "!isDataFrame(args)"})
+    protected Object allString(VirtualFrame frame, Object deparseLevel, RArgsValuesAndNames args, @Cached("create()") CastStringNode cast) {
+        return bindInternal(frame, deparseLevel, args, cast, true);
     }
 
-    @Specialization(guards = {"isComplexPrecedence", "!oneElement", "!isDataFrame"})
-    @ExplodeLoop
-    protected Object allComplex(VirtualFrame frame, Object deparseLevel, RArgsValuesAndNames args) {
-        return bindInternal(frame, deparseLevel, args, (f, e) -> castVector(f, castComplex(f, e, true)));
+    @Specialization(guards = {"isComplexPrecedence(frame, args)", "!oneElement(args)", "!isDataFrame(args)"})
+    protected Object allComplex(VirtualFrame frame, Object deparseLevel, RArgsValuesAndNames args, @Cached("create()") CastComplexNode cast) {
+        return bindInternal(frame, deparseLevel, args, cast, true);
     }
 
-    @Specialization(guards = {"isListPrecedence", "!oneElement", "!isDataFrame"})
-    @ExplodeLoop
-    protected Object allList(VirtualFrame frame, Object deparseLevel, RArgsValuesAndNames args) {
-        return bindInternal(frame, deparseLevel, args, (f, e) -> castList(f, e, true));
+    @Specialization(guards = {"isListPrecedence(frame, args)", "!oneElement(args)", "!isDataFrame(args)"})
+    protected Object allList(VirtualFrame frame, Object deparseLevel, RArgsValuesAndNames args, @Cached("create()") CastListNode cast) {
+        return bindInternal(frame, deparseLevel, args, cast, false);
     }
 
     protected Object allOneElem(VirtualFrame frame, Object deparseLevelObj, RArgsValuesAndNames args, boolean cbind) {
@@ -360,35 +359,11 @@ public abstract class Bind extends RPrecedenceBuiltinNode {
 
     }
 
-    protected boolean oneElement(@SuppressWarnings("unused") Object deparseLevelObj, RArgsValuesAndNames args) {
+    protected boolean oneElement(RArgsValuesAndNames args) {
         return args.length() == 1;
     }
 
-    protected boolean isNullPrecedence(VirtualFrame frame, @SuppressWarnings("unused") Object deparseLevelObj, RArgsValuesAndNames args) {
-        return isNullPrecedence(frame, args);
-    }
-
-    protected boolean isIntegerPrecedence(VirtualFrame frame, @SuppressWarnings("unused") Object deparseLevelObj, RArgsValuesAndNames args) {
-        return isIntegerPrecedence(frame, args);
-    }
-
-    protected boolean isDoublePrecedence(VirtualFrame frame, @SuppressWarnings("unused") Object deparseLevelObj, RArgsValuesAndNames args) {
-        return isDoublePrecedence(frame, args);
-    }
-
-    protected boolean isStringPrecedence(VirtualFrame frame, @SuppressWarnings("unused") Object deparseLevelObj, RArgsValuesAndNames args) {
-        return isStringPrecedence(frame, args);
-    }
-
-    protected boolean isComplexPrecedence(VirtualFrame frame, @SuppressWarnings("unused") Object deparseLevelObj, RArgsValuesAndNames args) {
-        return isComplexPrecedence(frame, args);
-    }
-
-    protected boolean isListPrecedence(VirtualFrame frame, @SuppressWarnings("unused") Object deparseLevelObj, RArgsValuesAndNames args) {
-        return isListPrecedence(frame, args);
-    }
-
-    protected boolean isDataFrame(@SuppressWarnings("unused") Object deparseLevelObj, RArgsValuesAndNames args) {
+    protected boolean isDataFrame(RArgsValuesAndNames args) {
         return args.getValues()[0] instanceof RDataFrame;
     }
 
@@ -401,7 +376,7 @@ public abstract class Bind extends RPrecedenceBuiltinNode {
             return "cbind";
         }
 
-        @Specialization(guards = {"!isNullPrecedence", "oneElement"})
+        @Specialization(guards = {"!isNullPrecedence(frame, args)", "oneElement(args)"})
         protected Object allOneElem(VirtualFrame frame, Object deparseLevelObj, RArgsValuesAndNames args) {
             controlVisibility();
             return allOneElem(frame, deparseLevelObj, args, true);
@@ -474,7 +449,7 @@ public abstract class Bind extends RPrecedenceBuiltinNode {
             return "rbind";
         }
 
-        @Specialization(guards = {"!isNullPrecedence", "oneElement"})
+        @Specialization(guards = {"!isNullPrecedence(frame, args)", "oneElement(args)"})
         protected Object allOneElem(VirtualFrame frame, Object deparseLevelObj, RArgsValuesAndNames args) {
             controlVisibility();
             return allOneElem(frame, deparseLevelObj, args, false);

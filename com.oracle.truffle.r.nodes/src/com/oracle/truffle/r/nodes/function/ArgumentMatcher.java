@@ -34,6 +34,7 @@ import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.function.PromiseNode.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
@@ -153,14 +154,11 @@ public class ArgumentMatcher {
         return match;
     }
 
-    public static EvaluatedArguments matchArgumentsEvaluated(MatchPermutation match, RFunction function, Object[] evaluatedArgs) {
-        RRootNode rootNode = (RRootNode) function.getTarget().getRootNode();
-        FormalArguments formals = rootNode.getFormalArguments();
+    public static Object[] matchArgumentsEvaluated(MatchPermutation match, RFunction function, Object[] evaluatedArgs, FormalArguments formals) {
         Object[] evaledArgs = new Object[match.resultPermutation.length];
-
         permuteArguments(match, evaluatedArgs, evaledArgs);
         replaceMissingWithDefault(function, formals, evaledArgs, formals.getDefaultArgs());
-        return new EvaluatedArguments(evaledArgs, formals.getSignature());
+        return evaledArgs;
     }
 
     @ExplodeLoop
@@ -301,13 +299,30 @@ public class ArgumentMatcher {
         return new EvaluatedArguments(evaledArgs, formals.getSignature());
     }
 
-    public static void evaluatePromises(VirtualFrame frame, PromiseHelperNode promiseHelper, EvaluatedArguments args) {
-        Object[] argArray = args.arguments;
-        for (int i = 0; i < argArray.length; i++) {
-            Object arg = argArray[i];
+    public static void evaluatePromises(VirtualFrame frame, PromiseHelperNode promiseHelper, Object[] args) {
+        for (int i = 0; i < args.length; i++) {
+            Object arg = args[i];
             if (arg instanceof RPromise) {
-                argArray[i] = promiseHelper.evaluate(frame, (RPromise) arg);
+                args[i] = promiseHelper.evaluate(frame, (RPromise) arg);
             }
+        }
+    }
+
+    private static String getErrorForArgument(RNode[] suppliedArgs, int index) {
+        RNode node = suppliedArgs[index];
+        if (node instanceof VarArgNode) {
+            CompilerAsserts.neverPartOfCompilation();
+            Frame frame = Utils.getActualCurrentFrame();
+            try {
+                // TODO: this error handling code takes many assumptions about the argument types
+                RArgsValuesAndNames varArg = (RArgsValuesAndNames) frame.getObject(frame.getFrameDescriptor().findFrameSlot("..."));
+                RPromise promise = (RPromise) varArg.getValues()[((VarArgNode) node).getIndex()];
+                return ((Node) promise.getRep()).getSourceSection().getCode();
+            } catch (FrameSlotTypeException | ClassCastException e) {
+                throw RInternalError.shouldNotReachHere();
+            }
+        } else {
+            return node.getSourceSection().getCode();
         }
     }
 
@@ -336,7 +351,7 @@ public class ArgumentMatcher {
 
         // Rearrange arguments
         MatchPermutation match = permuteArguments(suppliedSignature, formals, callSrc, argsSrc, false, index -> ArgumentsSignature.VARARG_NAME.equals(RMissingHelper.unwrapName(suppliedArgs[index])),
-                        index -> suppliedArgs[index].getSourceSection().getCode());
+                        index -> getErrorForArgument(suppliedArgs, index));
 
         RNode[] defaultArgs = formals.getDefaultArgs();
         RNode[] resArgs = new RNode[match.resultPermutation.length];
@@ -439,7 +454,7 @@ public class ArgumentMatcher {
      * @return An array of type <T> with the supplied arguments in the correct order
      */
     @TruffleBoundary
-    public static MatchPermutation permuteArguments(ArgumentsSignature signature, FormalArguments formals, SourceSection callSrc, SourceSection argsSrc, boolean forNextMethod,
+    private static MatchPermutation permuteArguments(ArgumentsSignature signature, FormalArguments formals, SourceSection callSrc, SourceSection argsSrc, boolean forNextMethod,
                     IntPredicate isVarSuppliedVarargs, IntFunction<String> errorString) {
         // assert Arrays.stream(suppliedNames).allMatch(name -> name == null || !name.isEmpty());
 
@@ -613,7 +628,7 @@ public class ArgumentMatcher {
      * @return A single suppliedArg and its corresponding defaultValue wrapped up into a
      *         {@link PromiseNode}
      */
-    public static EvalPolicy getEvalPolicy(RBuiltinRootNode builtinRootNode, int formalIndex) {
+    private static EvalPolicy getEvalPolicy(RBuiltinRootNode builtinRootNode, int formalIndex) {
         // This is for actual function calls. However, if the arguments are meant for a
         // builtin, we have to consider whether they should be forced or not!
         return builtinRootNode != null && builtinRootNode.evaluatesArg(formalIndex) ? EvalPolicy.INLINED : EvalPolicy.PROMISED;
@@ -633,7 +648,7 @@ public class ArgumentMatcher {
      *         {@link RMissing} in case neither is present!
      */
     @TruffleBoundary
-    public static RNode wrap(FormalArguments formals, RBuiltinRootNode builtinRootNode, ClosureCache closureCache, RNode suppliedArg, RNode defaultValue, int formalIndex, boolean isBuiltin,
+    private static RNode wrap(FormalArguments formals, RBuiltinRootNode builtinRootNode, ClosureCache closureCache, RNode suppliedArg, RNode defaultValue, int formalIndex, boolean isBuiltin,
                     boolean noOpt) {
         // Determine whether to choose supplied argument or default value
         RNode expr = null;

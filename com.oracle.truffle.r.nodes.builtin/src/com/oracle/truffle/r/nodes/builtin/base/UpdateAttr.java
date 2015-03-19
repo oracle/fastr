@@ -120,7 +120,7 @@ public abstract class UpdateAttr extends RInvisibleBuiltinNode {
         return name.intern();
     }
 
-    @Specialization(guards = "nullValue")
+    @Specialization
     protected RAbstractContainer updateAttr(VirtualFrame frame, RAbstractContainer container, String name, RNull value) {
         controlVisibility();
         String internedName = intern(name);
@@ -158,7 +158,7 @@ public abstract class UpdateAttr extends RInvisibleBuiltinNode {
         throw RError.error(sourceSection, RError.Message.SET_INVALID_CLASS_ATTR);
     }
 
-    @Specialization(guards = "!nullValue")
+    @Specialization(guards = "!nullValue(value)")
     protected RAbstractContainer updateAttr(VirtualFrame frame, RAbstractContainer container, String name, Object value) {
         controlVisibility();
         String internedName = intern(name);
@@ -189,7 +189,7 @@ public abstract class UpdateAttr extends RInvisibleBuiltinNode {
         return container.getElementClass() == RDataFrame.class || container.getElementClass() == RFactor.class ? container : resultVector;
     }
 
-    @Specialization(guards = "!nullValue")
+    @Specialization(guards = "!nullValue(value)")
     protected RAbstractContainer updateAttr(VirtualFrame frame, RAbstractVector vector, RStringVector name, Object value) {
         controlVisibility();
         return updateAttr(frame, vector, name.getDataAt(0), value);
@@ -197,7 +197,7 @@ public abstract class UpdateAttr extends RInvisibleBuiltinNode {
 
     // the guard is necessary as RNull and Object cannot be distinguished in case of multiple
     // specializations, such as in: x<-1; attr(x, "dim")<-1; attr(x, "dim")<-NULL
-    public boolean nullValue(RAbstractContainer container, Object name, Object value) {
+    protected boolean nullValue(Object value) {
         return value == RNull.instance;
     }
 
@@ -225,9 +225,5 @@ public abstract class UpdateAttr extends RInvisibleBuiltinNode {
             errorProfile.enter();
             throw RError.nyi(getEncapsulatingSourceSection(), ": object cannot be attributed");
         }
-    }
-
-    public boolean nullValueforEnv(REnvironment env, String name, Object value) {
-        return value == RNull.instance;
     }
 }

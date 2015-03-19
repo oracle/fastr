@@ -26,13 +26,13 @@ public abstract class GetClass extends RBuiltinNode {
 
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
-    @Specialization(guards = {"isObject", "!isLanguage", "!isExpression"})
+    @Specialization(guards = {"isObject(arg)", "!isLanguage(arg)", "!isExpression(arg)"})
     protected Object getClassForObject(RAbstractContainer arg) {
         controlVisibility();
         return arg.getClassHierarchy();
     }
 
-    @Specialization(guards = {"!isObject", "!isLanguage", "!isExpression"})
+    @Specialization(guards = {"!isObject(arg)", "!isLanguage(arg)", "!isExpression(arg)"})
     protected Object getClass(RAbstractContainer arg) {
         controlVisibility();
         final String klass = arg.getClassHierarchy().getDataAt(0);

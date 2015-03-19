@@ -27,7 +27,6 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor.FrameSlotInfo;
@@ -39,7 +38,7 @@ import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor.FrameSlotIn
  * which is used for manual method dispatch.
  */
 @ValueType
-public class RPromise extends RLanguageRep {
+public class RPromise extends RLanguageRep implements RTypedValue {
 
     /**
      * The policy used to evaluate a promise.
@@ -105,14 +104,14 @@ public class RPromise extends RLanguageRep {
     /**
      * @see EvalPolicy
      */
-    protected final EvalPolicy evalPolicy;
+    private final EvalPolicy evalPolicy;
 
     /**
      * @see PromiseType
      */
-    protected final PromiseType type;
+    private final PromiseType type;
 
-    protected final OptType optType;
+    private final OptType optType;
 
     /**
      * @see #getFrame()
@@ -128,12 +127,12 @@ public class RPromise extends RLanguageRep {
     /**
      * When {@code null} the promise has not been evaluated.
      */
-    protected Object value = null;
+    private Object value = null;
 
     /**
      * A flag to indicate the promise has been evaluated.
      */
-    protected boolean isEvaluated = false;
+    private boolean isEvaluated = false;
 
     /**
      * A flag which is necessary to avoid cyclic evaluation. Manipulated by
@@ -201,6 +200,10 @@ public class RPromise extends RLanguageRep {
         this.closure = null;
     }
 
+    public RType getRType() {
+        return RType.Promise;
+    }
+
     public final boolean isInlined() {
         return evalPolicy == EvalPolicy.INLINED;
     }
@@ -233,17 +236,6 @@ public class RPromise extends RLanguageRep {
         if (newValue instanceof RShareable) {
             ((RShareable) newValue).makeShared();
         }
-    }
-
-    @TruffleBoundary
-    protected final Object doEvalArgument(SourceSection callSrc) {
-        assert execFrame != null;
-        return RContext.getEngine().evalPromise(this, callSrc);
-    }
-
-    @TruffleBoundary
-    protected final Object doEvalArgument(MaterializedFrame frame) {
-        return RContext.getEngine().evalPromise(this, frame);
     }
 
     /**
@@ -385,15 +377,11 @@ public class RPromise extends RLanguageRep {
             return true;
         }
 
-        /**
-         * @return Whether the promise has been materialized before
-         */
-        public boolean materialize() {
+        @TruffleBoundary
+        public void materialize() {
             if (execFrame == null) {
-                this.execFrame = (MaterializedFrame) Utils.getStackFrame(FrameAccess.MATERIALIZE, frameId);
-                return false;
+                this.execFrame = Utils.getStackFrame(FrameAccess.MATERIALIZE, frameId).materialize();
             }
-            return true;
         }
 
         public Object getEagerValue() {

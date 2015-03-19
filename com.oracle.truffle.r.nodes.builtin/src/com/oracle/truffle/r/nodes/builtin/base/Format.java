@@ -89,13 +89,6 @@ public abstract class Format extends RBuiltinNode {
         return newChildren;
     }
 
-    @SuppressWarnings("unused")
-    @Specialization(guards = "wrongArgsObject")
-    protected String formatWrongArgs(Object value, RLogicalVector trimVec, RIntVector digitsVec, RIntVector nsmallVec, RIntVector widthVec, RIntVector justifyVec, RLogicalVector naEncodeVec,
-                    RLogicalVector sciVec) {
-        return null;
-    }
-
     // TODO: handling of logical values has been derived from GNU R, with handling of other
     // types following suit at some point for compliance
 
@@ -110,10 +103,10 @@ public abstract class Format extends RBuiltinNode {
         return RDataFactory.createStringVector(data, RDataFactory.COMPLETE_VECTOR);
     }
 
-    @SuppressWarnings("unused")
-    @Specialization(guards = "!wrongArgs")
-    protected RStringVector format(VirtualFrame frame, RAbstractLogicalVector value, RLogicalVector trimVec, RIntVector digitsVec, RIntVector nsmallVec, RIntVector widthVec, RIntVector justifyVec,
+    @Specialization
+    protected RStringVector format(RAbstractLogicalVector value, RLogicalVector trimVec, RIntVector digitsVec, RIntVector nsmallVec, RIntVector widthVec, RIntVector justifyVec,
                     RLogicalVector naEncodeVec, RAbstractVector sciVec) {
+        checkArgs(trimVec, digitsVec, nsmallVec, widthVec, justifyVec, naEncodeVec, sciVec);
         if (value.getLength() == 0) {
             return RDataFactory.createEmptyStringVector();
         } else {
@@ -166,10 +159,10 @@ public abstract class Format extends RBuiltinNode {
         return RDataFactory.createStringVector(data, RDataFactory.COMPLETE_VECTOR);
     }
 
-    @SuppressWarnings("unused")
-    @Specialization(guards = "!wrongArgs")
+    @Specialization
     protected RStringVector format(RAbstractIntVector value, RLogicalVector trimVec, RIntVector digitsVec, RIntVector nsmallVec, RIntVector widthVec, RIntVector justifyVec,
                     RLogicalVector naEncodeVec, RAbstractVector sciVec) {
+        checkArgs(trimVec, digitsVec, nsmallVec, widthVec, justifyVec, naEncodeVec, sciVec);
         if (value.getLength() == 0) {
             return RDataFactory.createEmptyStringVector();
         } else {
@@ -228,18 +221,10 @@ public abstract class Format extends RBuiltinNode {
         return RDataFactory.createStringVector(data, RDataFactory.COMPLETE_VECTOR);
     }
 
-    @SuppressWarnings("unused")
-    @Specialization(guards = "!wrongArgs")
-    protected RStringVector format(VirtualFrame frame, RAbstractDoubleVector value, RLogicalVector trimVec, RIntVector digitsVec, RIntVector nsmallVec, RIntVector widthVec, RIntVector justifyVec,
+    @Specialization
+    protected RStringVector format(RAbstractDoubleVector value, RLogicalVector trimVec, RIntVector digitsVec, RIntVector nsmallVec, RIntVector widthVec, RIntVector justifyVec,
                     RLogicalVector naEncodeVec, RAbstractVector sciVec) {
-        byte trim = trimVec.getLength() > 0 ? trimVec.getDataAt(0) : RRuntime.LOGICAL_NA;
-        int digits = digitsVec.getLength() > 0 ? digitsVec.getDataAt(0) : RRuntime.INT_NA;
-        getConfig().digits = digits;
-        int nsmall = nsmallVec.getLength() > 0 ? nsmallVec.getDataAt(0) : RRuntime.INT_NA;
-        int width = widthVec.getLength() > 0 ? widthVec.getDataAt(0) : 0;
-        int justify = justifyVec.getLength() > 0 ? justifyVec.getDataAt(0) : RRuntime.INT_NA;
-        byte naEncode = naEncodeVec.getLength() > 0 ? naEncodeVec.getDataAt(0) : RRuntime.LOGICAL_NA;
-        int sci = computeSciArg(frame, sciVec);
+        checkArgs(trimVec, digitsVec, nsmallVec, widthVec, justifyVec, naEncodeVec, sciVec);
         if (value.getLength() == 0) {
             return RDataFactory.createEmptyStringVector();
         } else {
@@ -248,22 +233,34 @@ public abstract class Format extends RBuiltinNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = "!wrongArgs")
+    private void processArguments(VirtualFrame frame, RLogicalVector trimVec, RIntVector digitsVec, RIntVector nsmallVec, RIntVector widthVec, RIntVector justifyVec, RLogicalVector naEncodeVec,
+                    RAbstractVector sciVec) {
+        byte trim = trimVec.getLength() > 0 ? trimVec.getDataAt(0) : RRuntime.LOGICAL_NA;
+        int digits = digitsVec.getLength() > 0 ? digitsVec.getDataAt(0) : RRuntime.INT_NA;
+        getConfig().digits = digits;
+        int nsmall = nsmallVec.getLength() > 0 ? nsmallVec.getDataAt(0) : RRuntime.INT_NA;
+        int width = widthVec.getLength() > 0 ? widthVec.getDataAt(0) : 0;
+        int justify = justifyVec.getLength() > 0 ? justifyVec.getDataAt(0) : RRuntime.INT_NA;
+        byte naEncode = naEncodeVec.getLength() > 0 ? naEncodeVec.getDataAt(0) : RRuntime.LOGICAL_NA;
+        int sci = computeSciArg(frame, sciVec);
+    }
+
+    @Specialization
     protected RStringVector format(RStringVector value, RLogicalVector trimVec, RIntVector digitsVec, RIntVector nsmallVec, RIntVector widthVec, RIntVector justifyVec, RLogicalVector naEncodeVec,
                     RAbstractVector sciVec) {
+        checkArgs(trimVec, digitsVec, nsmallVec, widthVec, justifyVec, naEncodeVec, sciVec);
         // TODO: implement full semantics
         return value;
     }
 
-    @Specialization(guards = "!wrongArgs")
+    @Specialization
     protected RStringVector format(RFactor value, RLogicalVector trimVec, RIntVector digitsVec, RIntVector nsmallVec, RIntVector widthVec, RIntVector justifyVec, RLogicalVector naEncodeVec,
                     RAbstractVector sciVec) {
         return format(value.getVector(), trimVec, digitsVec, nsmallVec, widthVec, justifyVec, naEncodeVec, sciVec);
     }
 
     // TruffleDSL bug - should not need multiple guards here
-    protected boolean wrongArgsObject(@SuppressWarnings("unused") Object value, RLogicalVector trimVec, RIntVector digitsVec, RIntVector nsmallVec, RIntVector widthVec, RIntVector justifyVec,
-                    RLogicalVector naEncodeVec, RAbstractVector sciVec) {
+    protected void checkArgs(RLogicalVector trimVec, RIntVector digitsVec, RIntVector nsmallVec, RIntVector widthVec, RIntVector justifyVec, RLogicalVector naEncodeVec, RAbstractVector sciVec) {
         if (trimVec.getLength() > 0 && RRuntime.isNA(trimVec.getDataAt(0))) {
             errorProfile.enter();
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "trim");
@@ -292,12 +289,6 @@ public abstract class Format extends RBuiltinNode {
             errorProfile.enter();
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "scientific");
         }
-        return false;
-    }
-
-    protected boolean wrongArgs(RAbstractContainer value, RLogicalVector trimVec, RIntVector digitsVec, RIntVector nsmallVec, RIntVector widthVec, RIntVector justifyVec, RLogicalVector naEncodeVec,
-                    RAbstractVector sciVec) {
-        return wrongArgsObject(value, trimVec, digitsVec, nsmallVec, widthVec, justifyVec, naEncodeVec, sciVec);
     }
 
     public static class Config {

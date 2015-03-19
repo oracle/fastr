@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -42,7 +42,7 @@ public abstract class ColonNode extends RNode implements VisibilityController {
     public abstract RNode getRight();
 
     @CreateCast({"left", "right"})
-    public RNode createCast(RNode child) {
+    protected RNode createCast(RNode child) {
         ColonCastNode ccn = ColonCastNodeGen.create(child);
         ccn.assignSourceSection(getSourceSection());
         return ccn;
@@ -55,56 +55,56 @@ public abstract class ColonNode extends RNode implements VisibilityController {
         }
     }
 
-    @Specialization(guards = "isSmaller")
+    @Specialization(guards = "left <= right")
     protected RIntSequence colonAscending(int left, int right) {
         controlVisibility();
         naCheck(RRuntime.isNA(left) || RRuntime.isNA(right));
         return RDataFactory.createAscendingRange(left, right);
     }
 
-    @Specialization(guards = "!isSmaller")
+    @Specialization(guards = "left > right")
     protected RIntSequence colonDescending(int left, int right) {
         controlVisibility();
         naCheck(RRuntime.isNA(left) || RRuntime.isNA(right));
         return RDataFactory.createDescendingRange(left, right);
     }
 
-    @Specialization(guards = "isSmaller")
+    @Specialization(guards = "asDouble(left) <= right")
     protected RIntSequence colonAscending(int left, double right) {
         controlVisibility();
         naCheck(RRuntime.isNA(left) || RRuntime.isNAorNaN(right));
         return RDataFactory.createAscendingRange(left, (int) right);
     }
 
-    @Specialization(guards = "!isSmaller")
+    @Specialization(guards = "asDouble(left) > right")
     protected RIntSequence colonDescending(int left, double right) {
         controlVisibility();
         naCheck(RRuntime.isNA(left) || RRuntime.isNAorNaN(right));
         return RDataFactory.createDescendingRange(left, (int) right);
     }
 
-    @Specialization(guards = "isSmaller")
+    @Specialization(guards = "left <= asDouble(right)")
     protected RDoubleSequence colonAscending(double left, int right) {
         controlVisibility();
         naCheck(RRuntime.isNAorNaN(left) || RRuntime.isNA(right));
         return RDataFactory.createAscendingRange(left, right);
     }
 
-    @Specialization(guards = "!isSmaller")
+    @Specialization(guards = "left > asDouble(right)")
     protected RDoubleSequence colonDescending(double left, int right) {
         controlVisibility();
         naCheck(RRuntime.isNAorNaN(left) || RRuntime.isNA(right));
         return RDataFactory.createDescendingRange(left, right);
     }
 
-    @Specialization(guards = "isSmaller")
+    @Specialization(guards = "left <= right")
     protected RDoubleSequence colonAscending(double left, double right) {
         controlVisibility();
         naCheck(RRuntime.isNAorNaN(left) || RRuntime.isNAorNaN(right));
         return RDataFactory.createAscendingRange(left, right);
     }
 
-    @Specialization(guards = "!isSmaller")
+    @Specialization(guards = "left > right")
     protected RDoubleSequence colonDescending(double left, double right) {
         controlVisibility();
         naCheck(RRuntime.isNAorNaN(left) || RRuntime.isNAorNaN(right));
@@ -134,20 +134,8 @@ public abstract class ColonNode extends RNode implements VisibilityController {
         return create(null, getLeft().substitute(env), getRight().substitute(env));
     }
 
-    public static boolean isSmaller(double left, double right) {
-        return left <= right;
-    }
-
-    public static boolean isSmaller(double left, int right) {
-        return left <= right;
-    }
-
-    public static boolean isSmaller(int left, double right) {
-        return left <= right;
-    }
-
-    public static boolean isSmaller(int left, int right) {
-        return left <= right;
+    protected static double asDouble(int intValue) {
+        return intValue;
     }
 
     @NodeChild("operand")
@@ -157,12 +145,12 @@ public abstract class ColonNode extends RNode implements VisibilityController {
 
         public abstract RNode getOperand();
 
-        @Specialization(guards = "isIntValue")
+        @Specialization(guards = "isIntValue(operand)")
         protected int doDoubleToInt(double operand) {
             return (int) operand;
         }
 
-        @Specialization(guards = "!isIntValue")
+        @Specialization(guards = "!isIntValue(operand)")
         protected double doDouble(double operand) {
             return operand;
         }
@@ -183,7 +171,7 @@ public abstract class ColonNode extends RNode implements VisibilityController {
             return vector.getDataAt(0);
         }
 
-        @Specialization(guards = "isFirstIntValue")
+        @Specialization(guards = "isFirstIntValue(vector)")
         protected int doDoubleVectorFirstIntValue(RDoubleVector vector) {
             if (lengthGreaterOne.profile(vector.getLength() > 1)) {
                 RError.warning(getEncapsulatingSourceSection(), RError.Message.ONLY_FIRST_USED, vector.getLength());
@@ -191,7 +179,7 @@ public abstract class ColonNode extends RNode implements VisibilityController {
             return (int) vector.getDataAt(0);
         }
 
-        @Specialization(guards = "!isFirstIntValue")
+        @Specialization(guards = "!isFirstIntValue(vector)")
         protected double doDoubleVector(RDoubleVector vector) {
             if (lengthGreaterOne.profile(vector.getLength() > 1)) {
                 RError.warning(getEncapsulatingSourceSection(), RError.Message.ONLY_FIRST_USED, vector.getLength());
@@ -209,11 +197,11 @@ public abstract class ColonNode extends RNode implements VisibilityController {
             return RRuntime.logical2int(operand);
         }
 
-        public static boolean isIntValue(double d) {
+        protected static boolean isIntValue(double d) {
             return (((int) d)) == d;
         }
 
-        public static boolean isFirstIntValue(RDoubleVector d) {
+        protected static boolean isFirstIntValue(RDoubleVector d) {
             return (((int) d.getDataAt(0))) == d.getDataAt(0);
         }
 

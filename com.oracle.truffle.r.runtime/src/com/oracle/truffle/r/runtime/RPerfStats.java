@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.runtime;
 
+import java.io.*;
 import java.util.*;
 
 import com.oracle.truffle.r.options.*;
@@ -30,14 +31,20 @@ import com.oracle.truffle.r.options.*;
  * Manage the creation/activation of handlers or performance analysis. Enabled by the
  * {@link FastROptions#PerfStats} option.
  *
- * The handlers are all registered statically from the class wanting to participate. The handles are
- * enabled selectively at runtime based on the command line option. An enabled handler gets a call
- * to its {@link Handler#initialize()} method so that it can enable its perf-mode behavior.
+ * The handlers are all registered statically from the class wanting to participate. The handlers
+ * are enabled selectively at runtime based on the command line option. An enabled handler gets a
+ * call to its {@link Handler#initialize(String)} method so that it can enable its perf-mode
+ * behavior.
  */
-public class RPerfAnalysis {
+public class RPerfStats {
 
     public interface Handler {
-        void initialize();
+        /**
+         * Called on startup if enabled to initialize any necessary state.
+         *
+         * @param optionText any text after the handler name on the command line
+         */
+        void initialize(String optionText);
 
         String getName();
 
@@ -101,36 +108,42 @@ public class RPerfAnalysis {
             String fieldWidthString = Integer.toString(fieldWidth);
             String sFormat = "%-" + fieldWidthString + "s";
             String dFormat = "%-" + fieldWidthString + "d";
-            System.out.printf(sFormat, "Size");
+            out().printf(sFormat, "Size");
             for (int i = 0; i < hist.length - 1; i++) {
-                System.out.printf(dFormat, i);
+                out().printf(dFormat, i);
             }
-            System.out.printf(sFormat, "> " + (hist.length - 1));
-            System.out.println();
-            System.out.printf(sFormat, "Count");
+            out().printf(sFormat, "> " + (hist.length - 1));
+            out().println();
+            out().printf(sFormat, "Count");
             for (int i = 0; i < hist.length - 1; i++) {
-                System.out.printf(dFormat, hist[i]);
+                out().printf(dFormat, hist[i]);
             }
-            System.out.printf(dFormat, hist[hist.length - 1]);
-            System.out.println();
+            out().printf(dFormat, hist[hist.length - 1]);
+            out().println();
         }
 
     }
 
     private static final ArrayList<Handler> handlers = new ArrayList<>();
     private static boolean initialized;
+    private static PrintStream out = System.out;
+
+    public static PrintStream out() {
+        return out;
+    }
 
     /**
      * Register a {@link Handler}. This should be done in a {@code static} block so that, in an AOT
      * VM, all handlers are included in the image. N.B. Owing to dynamic class loading in a standard
-     * VM, this may be called after {@link RPerfAnalysis#initialize}, so we may have to invoke
+     * VM, this may be called after {@link RPerfStats#initialize}, so we may have to invoke
      * {@code handler.initialize} from here.
      */
     public static void register(Handler handler) {
         handlers.add(handler);
         if (initialized) {
-            if (enabled(handler.getName())) {
-                handler.initialize();
+            String optionText = getOptionText(handler.getName());
+            if (optionText != null) {
+                handler.initialize(optionText);
             }
         }
     }
@@ -140,15 +153,30 @@ public class RPerfAnalysis {
      */
     public static void initialize() {
         for (Handler handler : handlers) {
-            if (enabled(handler.getName())) {
-                handler.initialize();
+            String optionText = getOptionText(handler.getName());
+            if (optionText != null) {
+                handler.initialize(optionText);
             }
         }
         initialized = true;
     }
 
-    public static boolean enabled(String name) {
+    private static String getOptionText(String name) {
+        String optionValue = getPerfStatsOption(name);
+        if (optionValue != null) {
+            if (optionValue.length() > 0) {
+                optionValue = optionValue.substring(name.length());
+            }
+        }
+        return optionValue;
+    }
+
+    private static String getPerfStatsOption(String name) {
         return FastROptions.matchesElement(name, FastROptions.PerfStats);
+    }
+
+    public static boolean enabled(String name) {
+        return getPerfStatsOption(name) != null;
     }
 
     private static boolean reporting;
@@ -162,11 +190,19 @@ public class RPerfAnalysis {
             return;
         }
         reporting = true;
+        String file = FastROptions.PerfStatsFile.getValue();
+        if (file != null) {
+            try {
+                out = new PrintStream(new FileOutputStream(file));
+            } catch (IOException ex) {
+                System.err.print("PerfStats: can't open " + file + " for output, using stdout");
+            }
+        }
         boolean headerOutput = false;
         for (Handler handler : handlers) {
             if (enabled(handler.getName())) {
                 if (!headerOutput) {
-                    System.out.println("RPerfAnalysis Reports");
+                    out().println("RPerfStats Reports");
                     headerOutput = true;
                 }
                 handler.report();

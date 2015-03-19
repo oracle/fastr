@@ -43,20 +43,20 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
 
     @Child private BinaryArithmetic arithmetic;
 
-    private final ReduceSemantics semantics;
+    protected final ReduceSemantics semantics;
 
     private final NACheck na = NACheck.create();
 
     private final ConditionProfile naRmProfile = ConditionProfile.createBinaryProfile();
     private final BranchProfile warningProfile = BranchProfile.create();
 
-    public UnaryArithmeticReduceNode(ReduceSemantics semantics, BinaryArithmeticFactory factory) {
+    protected UnaryArithmeticReduceNode(ReduceSemantics semantics, BinaryArithmeticFactory factory) {
         this.factory = factory;
         this.semantics = semantics;
         this.arithmetic = factory.create();
     }
 
-    public UnaryArithmeticReduceNode(UnaryArithmeticReduceNode op) {
+    protected UnaryArithmeticReduceNode(UnaryArithmeticReduceNode op) {
         // we recreate the arithmetic each time this specialization specializes
         // it also makes sense for polymorphic variations of this node
         this(op.semantics, op.factory);
@@ -70,10 +70,6 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
         return stringHandler.executeString(frame, operand, naRm, offset);
     }
 
-    protected boolean isNullInt() {
-        return semantics.isNullInt();
-    }
-
     private void emptyWarning() {
         if (semantics.getEmptyWarning() != null) {
             warningProfile.enter();
@@ -82,14 +78,14 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = "isNullInt")
+    @Specialization(guards = "semantics.isNullInt()")
     protected int doInt(RNull operand, byte naRm) {
         emptyWarning();
         return semantics.getIntStart();
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = "!isNullInt")
+    @Specialization(guards = "!semantics.isNullInt()")
     protected double doDouble(RNull operand, byte naRm) {
         emptyWarning();
         return semantics.getDoubleStart();
@@ -325,7 +321,7 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
     // "largest" String for the implementation of max function
 
     @SuppressWarnings("unused")
-    protected static String doStringVectorEmptyInternal(RStringVector operand, byte naRm, ReduceSemantics semantics, SourceSection sourceSection) {
+    private static String doStringVectorEmptyInternal(RStringVector operand, byte naRm, ReduceSemantics semantics, SourceSection sourceSection) {
         if (semantics.supportString) {
             if (semantics.getEmptyWarning() != null) {
                 RError.warning(semantics.emptyWarning);
@@ -336,12 +332,12 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
         }
     }
 
-    @Specialization(guards = "empty")
+    @Specialization(guards = "operand.getLength() == 0")
     protected String doStringVectorEmpty(RStringVector operand, byte naRm) {
         return doStringVectorEmptyInternal(operand, naRm, semantics, getEncapsulatingSourceSection());
     }
 
-    @Specialization(guards = "lengthOne")
+    @Specialization(guards = "operand.getLength() == 1")
     protected String doStringVectorOneElem(RStringVector operand, byte naRm) {
         if (semantics.supportString) {
             boolean profiledNaRm = naRmProfile.profile(naRm == RRuntime.LOGICAL_TRUE);
@@ -358,7 +354,7 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
         }
     }
 
-    @Specialization(guards = "longerThanOne")
+    @Specialization(guards = "operand.getLength() > 1")
     protected String doStringVector(VirtualFrame frame, RStringVector operand, byte naRm) {
         if (semantics.supportString) {
             return handleString(frame, operand, naRm, 0);
@@ -371,18 +367,6 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
     @Specialization
     protected RRaw doString(RRawVector operand, byte naRm) {
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_TYPE_ARGUMENT, "raw");
-    }
-
-    protected boolean empty(RStringVector vector) {
-        return vector.getLength() == 0;
-    }
-
-    protected boolean lengthOne(RStringVector vector) {
-        return vector.getLength() == 1;
-    }
-
-    protected boolean longerThanOne(RStringVector vector) {
-        return vector.getLength() > 1;
     }
 
     public static final class ReduceSemantics {
@@ -423,15 +407,6 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
         public RError.Message getEmptyWarning() {
             return emptyWarning;
         }
-
-        public boolean supportsComplex() {
-            return supportComplex;
-        }
-
-        public boolean supportsString() {
-            return supportString;
-        }
-
     }
 
     @NodeChildren({@NodeChild("operand"), @NodeChild("naRm"), @NodeChild("offset")})

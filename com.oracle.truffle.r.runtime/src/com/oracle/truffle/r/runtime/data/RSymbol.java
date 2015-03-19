@@ -23,13 +23,14 @@
 package com.oracle.truffle.r.runtime.data;
 
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
+import com.oracle.truffle.r.runtime.*;
 
 /**
  * Denotes an R "symbol" or "name". Its rep is a {@code String} but it's a different type in the
  * Truffle sense.
  */
 @ValueType
-public class RSymbol extends RAttributeStorage implements RAttributable {
+public class RSymbol extends RAttributeStorage implements RAttributable, RTypedValue {
 
     public static final RSymbol MISSING = RDataFactory.createSymbol("");
 
@@ -37,6 +38,10 @@ public class RSymbol extends RAttributeStorage implements RAttributable {
 
     public RSymbol(String name) {
         this.name = name;
+    }
+
+    public RType getRType() {
+        return RType.Symbol;
     }
 
     public String getName() {

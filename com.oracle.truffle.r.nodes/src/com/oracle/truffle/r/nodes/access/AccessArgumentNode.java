@@ -29,6 +29,7 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.variables.*;
 import com.oracle.truffle.r.nodes.function.*;
@@ -50,6 +51,10 @@ public abstract class AccessArgumentNode extends RNode {
 
     @Child private PromiseHelperNode promiseHelper;
 
+    private final ConditionProfile topLevelInlinedPromiseProfile = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile varArgInlinedPromiseProfile = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile varArgIsPromiseProfile = ConditionProfile.createBinaryProfile();
+
     /**
      * The formal index of this argument.
      */
@@ -66,13 +71,13 @@ public abstract class AccessArgumentNode extends RNode {
     @CompilationFinal private boolean isVarArgIndex;
     @CompilationFinal private RPromiseFactory factory;
     @CompilationFinal private boolean deoptimized;
-    @CompilationFinal private boolean defaultArgCanBeOptimized = EagerEvalHelper.optConsts() || EagerEvalHelper.optVars() || EagerEvalHelper.optExprs();
+    @CompilationFinal private boolean defaultArgCanBeOptimized = EagerEvalHelper.optConsts() || EagerEvalHelper.optDefault() || EagerEvalHelper.optExprs();
 
-    public AccessArgumentNode(int index) {
+    protected AccessArgumentNode(int index) {
         this.index = index;
     }
 
-    public AccessArgumentNode(AccessArgumentNode prev) {
+    protected AccessArgumentNode(AccessArgumentNode prev) {
         this.index = prev.index;
         formals = prev.formals;
         hasDefaultArg = prev.hasDefaultArg;
@@ -104,27 +109,44 @@ public abstract class AccessArgumentNode extends RNode {
     }
 
     @Specialization
-    public Object doArgument(VirtualFrame frame, RPromise promise) {
-        return handlePromise(frame, promise);
+    protected Object doArgument(VirtualFrame frame, RPromise promise) {
+        return handlePromise(frame, promise, topLevelInlinedPromiseProfile);
     }
 
-    @Specialization
-    public Object doArgument(VirtualFrame frame, RArgsValuesAndNames varArgsContainer) {
+    private void handleVarArgPromise(VirtualFrame frame, Object[] varArgs, int i) {
+        // DON'T use exprExecNode here, as caching would fail here: Every argument wrapped into
+        // "..." is a different expression
+
+        if (varArgIsPromiseProfile.profile(varArgs[i] instanceof RPromise)) {
+            varArgs[i] = handlePromise(frame, (RPromise) varArgs[i], varArgInlinedPromiseProfile);
+        }
+    }
+
+    @Specialization(limit = "1", guards = "cachedVarArgLength == varArgsContainer.length()")
+    @ExplodeLoop
+    protected Object doArgumentCached(VirtualFrame frame, RArgsValuesAndNames varArgsContainer, @Cached("varArgsContainer.length()") int cachedVarArgLength) {
         Object[] varArgs = varArgsContainer.getValues();
-        for (int i = 0; i < varArgsContainer.length(); i++) {
-            // DON'T use exprExecNode here, as caching would fail here: Every argument wrapped into
-            // "..." is a different expression
-            varArgs[i] = varArgs[i] instanceof RPromise ? handlePromise(frame, (RPromise) varArgs[i]) : varArgs[i];
+        for (int i = 0; i < cachedVarArgLength; i++) {
+            handleVarArgPromise(frame, varArgs, i);
         }
         return varArgsContainer;
     }
 
-    private Object handlePromise(VirtualFrame frame, RPromise promise) {
+    @Specialization(contains = "doArgumentCached")
+    protected Object doArgument(VirtualFrame frame, RArgsValuesAndNames varArgsContainer) {
+        Object[] varArgs = varArgsContainer.getValues();
+        for (int i = 0; i < varArgsContainer.length(); i++) {
+            handleVarArgPromise(frame, varArgs, i);
+        }
+        return varArgsContainer;
+    }
+
+    private Object handlePromise(VirtualFrame frame, RPromise promise, ConditionProfile inlinedPromiseProfile) {
         assert !promise.isNonArgument();
 
         // Now force evaluation for INLINED (might be the case for arguments by S3MethodDispatch)
 
-        if (promise.isInlined()) {
+        if (inlinedPromiseProfile.profile(promise.isInlined())) {
             if (promiseHelper == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 promiseHelper = insert(new PromiseHelperNode());
@@ -134,15 +156,15 @@ public abstract class AccessArgumentNode extends RNode {
         return promise;
     }
 
-    @Specialization(guards = {"!hasDefaultArg", "!isVarArgIndex"})
-    public Object doArgumentNoDefaultArg(RMissing argMissing) {
+    @Specialization(guards = {"!hasDefaultArg()", "!isVarArgIndex()"})
+    protected Object doArgumentNoDefaultArg(RMissing argMissing) {
         // Simply return missing if there's no default arg OR it represents an empty "..."
         // (Empty "..." defaults to missing anyway, this way we don't have to rely on )
         return argMissing;
     }
 
-    @Specialization(guards = {"hasDefaultArg"})
-    public Object doArgumentDefaultArg(VirtualFrame frame, @SuppressWarnings("unused") RMissing argMissing) {
+    @Specialization(guards = {"hasDefaultArg()"})
+    protected Object doArgumentDefaultArg(VirtualFrame frame, @SuppressWarnings("unused") RMissing argMissing) {
         Object result;
         if (canBeOptimized()) {
             // Insert default value
@@ -174,7 +196,7 @@ public abstract class AccessArgumentNode extends RNode {
         return isVarArgIndex;
     }
 
-    protected boolean canBeOptimized() {
+    private boolean canBeOptimized() {
         return !deoptimized && defaultArgCanBeOptimized;
     }
 
@@ -193,7 +215,7 @@ public abstract class AccessArgumentNode extends RNode {
             RNode arg = EagerEvalHelper.unfold(defaultArg);
 
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            if (isOptimizableVariable(arg) && isVariableArgument(arg)) {
+            if (isOptimizableDefault(arg) && isVariableArgument(arg)) {
                 optDefaultArgNode = new OptVariableDefaultPromiseNode(factory, (ReadVariableNode) NodeUtil.cloneNode(arg));
             } else if (isOptimizableConstant(arg) && isConstantArgument(arg)) {
                 optDefaultArgNode = new OptConstantPromiseNode(factory);
@@ -211,7 +233,7 @@ public abstract class AccessArgumentNode extends RNode {
     }
 
     @Fallback
-    public Object doArgument(Object obj) {
+    protected Object doArgument(Object obj) {
         return obj;
     }
 
