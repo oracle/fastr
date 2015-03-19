@@ -122,7 +122,7 @@ public class FrameFunctions {
                         for (int i = 0; i < listArgs.length; i++) {
                             listArgs[i] = RASTUtils.createNodeForValue(temp.getValues()[i]);
                         }
-                        RNode varArgs = PromiseNode.createVarArgs(null, EvalPolicy.PROMISED, listArgs, temp.getSignature(), this, null);
+                        RNode varArgs = PromiseNode.createVarArgs(listArgs, temp.getSignature(), this);
                         CallArgumentsNode callArgsNode = CallArgumentsNode.create(false, false, new RNode[]{varArgs}, signature);
                         values = new Object[]{RASTUtils.createCall("list", callArgsNode)};
                         call = RDataFactory.createLanguage(RASTUtils.createCall(functionName, callArgsNode));

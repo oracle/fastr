@@ -65,60 +65,49 @@ public abstract class PromiseNode extends RNode {
         this.factory = factory;
     }
 
+    public static RNode createInlined(SourceSection src, RNode expression, Object defaultValue) {
+        CompilerAsserts.neverPartOfCompilation();
+        RNode clonedExpression = NodeUtil.cloneNode(expression);
+        RNode pn = clonedExpression instanceof ConstantNode ? clonedExpression : new InlinedSuppliedPromiseNode(clonedExpression, defaultValue);
+        pn.assignSourceSection(src);
+        return pn;
+    }
+
     /**
      * @param src The {@link SourceSection} of the argument for debugging purposes
      * @param factory {@link #factory}
-     * @return Depending on {@link RPromiseFactory#getEvalPolicy()} and
-     *         {@link RPromiseFactory#getType()} the proper {@link PromiseNode} implementation
+     * @return Depending on {@link RPromiseFactory#getType()}, the proper {@link PromiseNode}
+     *         implementation
      */
     @TruffleBoundary
     public static RNode create(SourceSection src, RPromiseFactory factory, boolean noOpt) {
         assert factory.getType() != PromiseType.NO_ARG;
 
         RNode pn = null;
-        switch (factory.getEvalPolicy()) {
-            case INLINED:
-                if (factory.getType() == PromiseType.ARG_SUPPLIED) {
-                    // TODO Correct??
-                    pn = factory.getExpr() instanceof ConstantNode ? (RNode) factory.getExpr() : new InlinedSuppliedPromiseNode((RNode) factory.getExpr(), (RNode) factory.getDefaultExpr());
-                } else {
-                    // TODO Correct??
-                    pn = factory.getDefaultExpr() instanceof ConstantNode ? (RNode) factory.getDefaultExpr() : new InlinedPromiseNode(factory);
-                }
-                break;
+        // For ARG_DEFAULT, expr == defaultExpr!
+        RNode expr = unfold(factory.getExpr());
+        if (isOptimizableConstant(expr)) {
+            // As Constants don't care where they are evaluated, we don't need to
+            // distinguish between ARG_DEFAULT and ARG_SUPPLIED
+            pn = new OptConstantPromiseNode(factory);
+        } else
 
-            case PROMISED:
-                // For ARG_DEFAULT, expr == defaultExpr!
-                RNode expr = unfold(factory.getExpr());
-                if (isOptimizableConstant(expr)) {
-                    // As Constants don't care where they are evaluated, we don't need to
-                    // distinguish between ARG_DEFAULT and ARG_SUPPLIED
-                    pn = new OptConstantPromiseNode(factory);
-                    break;
-                }
+        if (factory.getType() == PromiseType.ARG_SUPPLIED) {
+            if (isVararg(expr)) {
+                pn = new VarargPromiseNode(factory, (VarArgNode) expr);
+            } else
 
-                if (factory.getType() == PromiseType.ARG_SUPPLIED) {
-
-                    if (isVararg(expr)) {
-                        pn = new VarargPromiseNode(factory, (VarArgNode) expr);
-                        break;
-                    }
-
-                    if (!noOpt && isOptimizableVariable(expr)) {
-                        pn = new OptVariableSuppliedPromiseNode(factory, (ReadVariableNode) expr);
-                        break;
-                    }
+            if (!noOpt && isOptimizableVariable(expr)) {
+                pn = new OptVariableSuppliedPromiseNode(factory, (ReadVariableNode) expr);
+            }
 
 // if (isOptimizableExpression(expr)) {
 // System.err.println(" >>> SUP " + src.getCode());
 // }
-                }
+        }
 
-                pn = new PromisedNode(factory);
-                break;
-
-            default:
-                throw new AssertionError();
+        if (pn == null) {
+            pn = new PromisedNode(factory);
         }
 
         pn.assignSourceSection(src);
@@ -222,16 +211,16 @@ public abstract class PromiseNode extends RNode {
     private static final class InlinedSuppliedPromiseNode extends RNode {
         @Child private RNode expression;
         @Child private RNode defaultExpressionCache;
-        private final RNode defaultExpression;
+        private final Object defaultValue;
 
         @Child private PromiseHelperNode promiseHelper;
 
         private final BranchProfile isVarArgProfile = BranchProfile.create();
         private final ConditionProfile isPromiseProfile = ConditionProfile.createBinaryProfile();
 
-        public InlinedSuppliedPromiseNode(RNode expression, RNode defaultExpression) {
+        public InlinedSuppliedPromiseNode(RNode expression, Object defaultValue) {
             this.expression = expression;
-            this.defaultExpression = defaultExpression;
+            this.defaultValue = defaultValue;
         }
 
         @Override
@@ -243,11 +232,7 @@ public abstract class PromiseNode extends RNode {
             if (obj == RMissing.instance) {
                 if (defaultExpressionCache == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    if (defaultExpression == null) {
-                        defaultExpressionCache = insert(ConstantNode.create(RMissing.instance));
-                    } else {
-                        defaultExpressionCache = insert(NodeUtil.cloneNode(defaultExpression));
-                    }
+                    defaultExpressionCache = insert(ConstantNode.create(defaultValue));
                 }
                 return defaultExpressionCache.execute(frame);
             } else if (obj instanceof RArgsValuesAndNames) {
@@ -286,34 +271,6 @@ public abstract class PromiseNode extends RNode {
         @Override
         public void deparse(State state) {
             expression.deparse(state);
-        }
-    }
-
-    /**
-     * This class is meant for default arguments which have to be evaluated in the callee frame -
-     * usually. But as this is for {@link EvalPolicy#INLINED}, arguments are simply evaluated inside
-     * the caller frame: This means we can simply evaluate it here, and as it's
-     * {@link EvalPolicy#INLINED}, return its value and not the {@link RPromise} itself!
-     */
-    private static final class InlinedPromiseNode extends PromiseNode {
-        @Child private RNode defaultExpr;
-
-        public InlinedPromiseNode(RPromiseFactory factory) {
-            super(factory);
-            // defaultExpr and expr are identical here!
-            this.defaultExpr = (RNode) factory.getDefaultExpr();
-        }
-
-        @Override
-        public Object execute(VirtualFrame frame) {
-            // builtin.inline: We do re-evaluation every execute inside the caller frame, based on
-            // the assumption that the evaluation of default values should have no side effects
-            return defaultExpr.execute(frame);
-        }
-
-        @Override
-        public void deparse(State state) {
-            defaultExpr.deparse(state);
         }
     }
 
@@ -376,33 +333,14 @@ public abstract class PromiseNode extends RNode {
         }
     }
 
-    /**
-     * @param src
-     * @param evalPolicy {@link EvalPolicy}
-     * @param nodes The argument {@link RNode}s that got wrapped into this "..."
-     * @param signature The argument's names
-     * @param callSrc The {@link SourceSection} of the call this "..." belongs to
-     * @return Creates either a {@link InlineVarArgsPromiseNode} or a {@link VarArgsPromiseNode},
-     *         depending on the {@link EvalPolicy}
-     */
     @TruffleBoundary
-    public static RNode createVarArgs(SourceSection src, EvalPolicy evalPolicy, RNode[] nodes, ArgumentsSignature signature, ClosureCache closureCache, SourceSection callSrc) {
-        RNode node;
-        switch (evalPolicy) {
-            case INLINED:
-                node = new InlineVarArgsPromiseNode(nodes, signature);
-                break;
+    public static RNode createVarArgsInlined(RNode[] nodes, ArgumentsSignature signature) {
+        return new InlineVarArgsPromiseNode(nodes, signature);
+    }
 
-            case PROMISED:
-                node = new VarArgsPromiseNode(nodes, signature, closureCache);
-                break;
-
-            default:
-                throw new AssertionError();
-        }
-
-        node.assignSourceSection(src);
-        return node;
+    @TruffleBoundary
+    public static RNode createVarArgs(RNode[] nodes, ArgumentsSignature signature, ClosureCache closureCache) {
+        return new VarArgsPromiseNode(nodes, signature, closureCache);
     }
 
     /**
@@ -427,7 +365,7 @@ public abstract class PromiseNode extends RNode {
         public Object execute(VirtualFrame frame) {
             Object[] promises = new Object[closures.length];
             for (int i = 0; i < closures.length; i++) {
-                promises[i] = RDataFactory.createPromise(EvalPolicy.PROMISED, PromiseType.ARG_SUPPLIED, frame.materialize(), closures[i]);
+                promises[i] = RDataFactory.createPromise(PromiseType.ARG_SUPPLIED, frame.materialize(), closures[i]);
             }
             return new RArgsValuesAndNames(promises, signature);
         }

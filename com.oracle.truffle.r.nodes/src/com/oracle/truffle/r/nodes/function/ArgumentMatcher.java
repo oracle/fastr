@@ -121,7 +121,7 @@ public class ArgumentMatcher {
      *         wrapped in {@link PromiseNode}s
      */
     public static MatchedArguments matchArguments(RFunction function, UnmatchedArguments suppliedArgs, SourceSection callSrc, SourceSection argsSrc, boolean noOpt) {
-        RNode[] wrappedArgs = matchNodes(function, suppliedArgs.getArguments(), suppliedArgs.getSignature(), callSrc, argsSrc, false, suppliedArgs, noOpt);
+        RNode[] wrappedArgs = matchNodes(function, suppliedArgs.getArguments(), suppliedArgs.getSignature(), callSrc, argsSrc, suppliedArgs, noOpt);
         FormalArguments formals = ((RRootNode) function.getTarget().getRootNode()).getFormalArguments();
         return MatchedArguments.create(wrappedArgs, formals.getSignature());
     }
@@ -140,7 +140,7 @@ public class ArgumentMatcher {
      *         wrapped in special {@link PromiseNode}s
      */
     public static InlinedArguments matchArgumentsInlined(RFunction function, UnmatchedArguments suppliedArgs, SourceSection callSrc, SourceSection argsSrc) {
-        RNode[] wrappedArgs = matchNodes(function, suppliedArgs.getArguments(), suppliedArgs.getSignature(), callSrc, argsSrc, true, suppliedArgs, false);
+        RNode[] wrappedArgs = matchNodes(function, suppliedArgs.getArguments(), suppliedArgs.getSignature(), callSrc, argsSrc, suppliedArgs, false);
         return new InlinedArguments(wrappedArgs, suppliedArgs.getSignature());
     }
 
@@ -154,42 +154,14 @@ public class ArgumentMatcher {
         return match;
     }
 
-    public static Object[] matchArgumentsEvaluated(MatchPermutation match, RFunction function, Object[] evaluatedArgs, FormalArguments formals) {
+    public static Object[] matchArgumentsEvaluated(MatchPermutation match, Object[] evaluatedArgs, FormalArguments formals) {
         Object[] evaledArgs = new Object[match.resultPermutation.length];
-        permuteArguments(match, evaluatedArgs, evaledArgs);
-        replaceMissingWithDefault(function, formals, evaledArgs, formals.getDefaultArgs());
+        permuteArguments(formals, match, evaluatedArgs, evaledArgs);
         return evaledArgs;
     }
 
     @ExplodeLoop
-    private static void replaceMissingWithDefault(RFunction function, FormalArguments formals, Object[] evaledArgs, RNode[] defaultArgs) {
-        for (int fi = 0; fi < defaultArgs.length; fi++) {
-            Object evaledArg = evaledArgs[fi];
-            if (evaledArg == null) {
-                // This is the case whenever there is a new parameter introduced in front of a
-                // vararg in the specific version of a generic
-                RNode defaultArg = formals.getDefaultArg(fi);
-                if (defaultArg == null) {
-                    // If neither supplied nor default argument
-
-                    if (formals.getSignature().getVarArgIndex() == fi) {
-                        // "...", but empty
-                        evaledArgs[fi] = RArgsValuesAndNames.EMPTY;
-                    } else {
-                        evaledArgs[fi] = RMissing.instance;
-                    }
-                } else {
-                    // <null> for environment leads to it being fitted with the REnvironment on the
-                    // callee side
-                    Closure defaultClosure = formals.getOrCreateClosure(defaultArg);
-                    evaledArgs[fi] = RDataFactory.createPromise(function.isBuiltin() ? EvalPolicy.INLINED : EvalPolicy.PROMISED, PromiseType.ARG_DEFAULT, null, defaultClosure);
-                }
-            }
-        }
-    }
-
-    @ExplodeLoop
-    private static void permuteArguments(MatchPermutation match, Object[] evaluatedArgs, Object[] evaledArgs) {
+    private static void permuteArguments(FormalArguments formals, MatchPermutation match, Object[] evaluatedArgs, Object[] evaledArgs) {
         for (int formalIndex = 0; formalIndex < match.resultPermutation.length; formalIndex++) {
             int suppliedIndex = match.resultPermutation[formalIndex];
 
@@ -203,7 +175,7 @@ public class ArgumentMatcher {
                     evaledArgs[formalIndex] = RArgsValuesAndNames.EMPTY;
                 }
             } else if (suppliedIndex == MatchPermutation.UNMATCHED) {
-                // nothing to do... (resArgs[formalIndex] == null)
+                evaledArgs[formalIndex] = formals.getInternalDefaultArgumentAt(formalIndex);
             } else {
                 evaledArgs[formalIndex] = evaluatedArgs[suppliedIndex];
             }
@@ -219,6 +191,12 @@ public class ArgumentMatcher {
         }
         return nonNull;
     }
+
+    public @interface TestAnnotation {
+        String[] value();
+    }
+
+    @TestAnnotation(value = {""}) private int i;
 
     /**
      * Used for the implementation of the 'UseMethod' builtin. Reorders the arguments passed into
@@ -259,41 +237,10 @@ public class ArgumentMatcher {
                 } else {
                     evaledArgs[formalIndex] = RArgsValuesAndNames.EMPTY;
                 }
-            } else if (suppliedIndex == MatchPermutation.UNMATCHED) {
-                // nothing to do... (resArgs[formalIndex] == null)
+            } else if (suppliedIndex == MatchPermutation.UNMATCHED || evaluatedArgs.arguments[suppliedIndex] == null) {
+                evaledArgs[formalIndex] = formals.getInternalDefaultArgumentAt(formalIndex);
             } else {
                 evaledArgs[formalIndex] = evaluatedArgs.arguments[suppliedIndex];
-            }
-        }
-
-        // Replace RMissing with default value!
-        RNode[] defaultArgs = formals.getDefaultArgs();
-        for (int fi = 0; fi < defaultArgs.length; fi++) {
-            Object evaledArg = evaledArgs[fi];
-            if (evaledArg == null) {
-                // This is the case whenever there is a new parameter introduced in front of a
-                // vararg in the specific version of a generic
-                RNode defaultArg = formals.getDefaultArg(fi);
-                if (defaultArg == null) {
-                    // If neither supplied nor default argument
-
-                    if (formals.getSignature().getVarArgIndex() == fi) {
-                        // "...", but empty
-                        evaledArgs[fi] = RArgsValuesAndNames.EMPTY;
-                    } else {
-                        evaledArgs[fi] = RMissing.instance;
-                    }
-                } else {
-                    // <null> for environment leads to it being fitted with the REnvironment on the
-                    // callee side
-                    Closure defaultClosure = formals.getOrCreateClosure(defaultArg);
-                    evaledArgs[fi] = RDataFactory.createPromise(function.isBuiltin() ? EvalPolicy.INLINED : EvalPolicy.PROMISED, PromiseType.ARG_DEFAULT, null, defaultClosure);
-                }
-            }
-        }
-        for (int i = 0; i < evaledArgs.length; ++i) {
-            if (evaledArgs[i] == null) {
-                evaledArgs[i] = RMissing.instance;
             }
         }
         return new EvaluatedArguments(evaledArgs, formals.getSignature());
@@ -336,15 +283,13 @@ public class ArgumentMatcher {
      * @param suppliedSignature The names for the arguments supplied to the call
      * @param callSrc The source of the function call currently executed
      * @param argsSrc The source code encapsulating the arguments, for debugging purposes
-     * @param isForInlinedBuiltin Whether the arguments are passed into an inlined builtin and need
-     *            special treatment
      * @param closureCache The {@link ClosureCache} for the supplied arguments
      *
      * @return A list of {@link RNode}s which consist of the given arguments in the correct order
      *         and wrapped into the proper {@link PromiseNode}s
      */
-    private static RNode[] matchNodes(RFunction function, RNode[] suppliedArgs, ArgumentsSignature suppliedSignature, SourceSection callSrc, SourceSection argsSrc, boolean isForInlinedBuiltin,
-                    ClosureCache closureCache, boolean noOpt) {
+    private static RNode[] matchNodes(RFunction function, RNode[] suppliedArgs, ArgumentsSignature suppliedSignature, SourceSection callSrc, SourceSection argsSrc, ClosureCache closureCache,
+                    boolean noOpt) {
         assert suppliedArgs.length == suppliedSignature.getLength();
 
         FormalArguments formals = ((RRootNode) function.getTarget().getRootNode()).getFormalArguments();
@@ -353,7 +298,6 @@ public class ArgumentMatcher {
         MatchPermutation match = permuteArguments(suppliedSignature, formals, callSrc, argsSrc, false, index -> ArgumentsSignature.VARARG_NAME.equals(RMissingHelper.unwrapName(suppliedArgs[index])),
                         index -> getErrorForArgument(suppliedArgs, index));
 
-        RNode[] defaultArgs = formals.getDefaultArgs();
         RNode[] resArgs = new RNode[match.resultPermutation.length];
 
         /**
@@ -406,7 +350,13 @@ public class ArgumentMatcher {
                 if (newLength == 0) {
                     // Corner case: "f <- function(...) g(...); g <- function(...)"
                     // Insert correct "missing"!
-                    resArgs[formalIndex] = wrap(formals, builtinRootNode, closureCache, null, null, formalIndex, isForInlinedBuiltin, noOpt);
+                    if (formals.getSignature().getVarArgIndex() == formalIndex) {
+                        // "...", but empty
+                        resArgs[formalIndex] = ConstantNode.create(RArgsValuesAndNames.EMPTY);
+                    } else {
+                        // In this case, we simply return RMissing (like R)
+                        resArgs[formalIndex] = ConstantNode.create(RMissing.instance);
+                    }
                     continue;
                 }
                 if (newNames.length > newLength) {
@@ -414,16 +364,53 @@ public class ArgumentMatcher {
                     newVarArgs = Arrays.copyOf(newVarArgs, newLength);
                 }
 
-                EvalPolicy evalPolicy = getEvalPolicy(builtinRootNode, formalIndex);
                 ArgumentsSignature signature = ArgumentsSignature.get(newNames);
-                resArgs[formalIndex] = PromiseNode.createVarArgs(null, evalPolicy, newVarArgs, signature, closureCache, callSrc);
+                if (shouldInlineArgument(builtinRootNode, formalIndex)) {
+                    resArgs[formalIndex] = PromiseNode.createVarArgsInlined(newVarArgs, signature);
+                } else {
+                    resArgs[formalIndex] = PromiseNode.createVarArgs(newVarArgs, signature, closureCache);
+                }
+            } else if (suppliedIndex == MatchPermutation.UNMATCHED || suppliedArgs[suppliedIndex] == null) {
+                resArgs[formalIndex] = wrapUnmatched(formals, builtinRootNode, formalIndex, noOpt);
             } else {
-                RNode defaultArg = formalIndex < defaultArgs.length ? defaultArgs[formalIndex] : null;
-                RNode suppliedArg = suppliedIndex == MatchPermutation.UNMATCHED ? null : suppliedArgs[suppliedIndex];
-                resArgs[formalIndex] = wrap(formals, builtinRootNode, closureCache, suppliedArg, defaultArg, formalIndex, isForInlinedBuiltin, noOpt);
+                resArgs[formalIndex] = wrapMatched(formals, builtinRootNode, closureCache, suppliedArgs[suppliedIndex], formalIndex, noOpt);
             }
         }
         return resArgs;
+    }
+
+    /**
+     * @param builtinRootNode The {@link RBuiltinRootNode} of the function
+     * @param formalIndex The formalIndex of this argument
+     * @return A single suppliedArg and its corresponding defaultValue wrapped up into a
+     *         {@link PromiseNode}
+     */
+    private static boolean shouldInlineArgument(RBuiltinRootNode builtinRootNode, int formalIndex) {
+        // This is for actual function calls. However, if the arguments are meant for a
+        // builtin, we have to consider whether they should be forced or not!
+        return builtinRootNode != null && builtinRootNode.evaluatesArg(formalIndex);
+    }
+
+    @TruffleBoundary
+    private static RNode wrapUnmatched(FormalArguments formals, RBuiltinRootNode builtinRootNode, int formalIndex, boolean noOpt) {
+        if (builtinRootNode != null && !builtinRootNode.evaluatesArg(formalIndex)) {
+            // this is a non-evaluated builtin argument, create a proper promise
+            RNode defaultArg = formals.getDefaultArgumentAt(formalIndex);
+            Closure defaultClosure = formals.getOrCreateClosure(defaultArg);
+            return PromiseNode.create(defaultArg.getSourceSection(), RPromiseFactory.create(PromiseType.ARG_DEFAULT, defaultClosure), noOpt);
+        }
+        return ConstantNode.create(formals.getInternalDefaultArgumentAt(formalIndex));
+    }
+
+    @TruffleBoundary
+    private static RNode wrapMatched(FormalArguments formals, RBuiltinRootNode builtinRootNode, ClosureCache closureCache, RNode suppliedArg, int formalIndex, boolean noOpt) {
+        // Create promise
+        if (shouldInlineArgument(builtinRootNode, formalIndex)) {
+            return PromiseNode.createInlined(suppliedArg.getSourceSection(), suppliedArg, formals.getInternalDefaultArgumentAt(formalIndex));
+        } else {
+            Closure closure = closureCache.getOrCreateClosure(suppliedArg);
+            return PromiseNode.create(suppliedArg.getSourceSection(), RPromiseFactory.create(PromiseType.ARG_SUPPLIED, closure), noOpt);
+        }
     }
 
     public static final class MatchPermutation {
@@ -620,63 +607,5 @@ public class ArgumentMatcher {
             return found;
         }
         throw RError.error(callSrc, RError.Message.UNUSED_ARGUMENT, errorString.apply(suppliedIndex));
-    }
-
-    /**
-     * @param builtinRootNode The {@link RBuiltinRootNode} of the function
-     * @param formalIndex The formalIndex of this argument
-     * @return A single suppliedArg and its corresponding defaultValue wrapped up into a
-     *         {@link PromiseNode}
-     */
-    private static EvalPolicy getEvalPolicy(RBuiltinRootNode builtinRootNode, int formalIndex) {
-        // This is for actual function calls. However, if the arguments are meant for a
-        // builtin, we have to consider whether they should be forced or not!
-        return builtinRootNode != null && builtinRootNode.evaluatesArg(formalIndex) ? EvalPolicy.INLINED : EvalPolicy.PROMISED;
-    }
-
-    /**
-     * @param formals {@link FormalArguments} as {@link ClosureCache}
-     * @param builtinRootNode The {@link RBuiltinRootNode} of the function
-     * @param closureCache {@link ClosureCache}
-     * @param suppliedArg The argument supplied for this parameter
-     * @param defaultValue The default value for this argument
-     * @param formalIndex The logicalIndex of this argument, also counting individual arguments in
-     *            varargs
-     * @param isBuiltin
-     * @param noOpt
-     * @return Either suppliedArg or its defaultValue wrapped up into a {@link PromiseNode} (or
-     *         {@link RMissing} in case neither is present!
-     */
-    @TruffleBoundary
-    private static RNode wrap(FormalArguments formals, RBuiltinRootNode builtinRootNode, ClosureCache closureCache, RNode suppliedArg, RNode defaultValue, int formalIndex, boolean isBuiltin,
-                    boolean noOpt) {
-        // Determine whether to choose supplied argument or default value
-        RNode expr = null;
-        PromiseType promiseType = null;
-        if (suppliedArg != null) {
-            // Supplied arg
-            expr = suppliedArg;
-            promiseType = PromiseType.ARG_SUPPLIED;
-        } else {
-            // Default value
-            if (isBuiltin && defaultValue != null) {
-                expr = defaultValue;
-                promiseType = PromiseType.ARG_DEFAULT;
-            } else {
-                if (formals.getSignature().getVarArgIndex() == formalIndex) {
-                    // "...", but empty
-                    return ConstantNode.create(RArgsValuesAndNames.EMPTY);
-                } else {
-                    // In this case, we simply return RMissing (like R)
-                    return ConstantNode.create(RMissing.instance);
-                }
-            }
-        }
-
-        // Create promise
-        EvalPolicy evalPolicy = getEvalPolicy(builtinRootNode, formalIndex);
-        Closure closure = closureCache.getOrCreateClosure(expr);
-        Closure defaultClosure = formals.getOrCreateClosure(defaultValue);
-        return PromiseNode.create(expr.getSourceSection(), RPromiseFactory.create(evalPolicy, promiseType, closure, defaultClosure), noOpt);
     }
 }

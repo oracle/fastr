@@ -24,17 +24,22 @@ package com.oracle.truffle.r.nodes.function;
 
 import java.util.*;
 
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.access.ConstantNode.ConstantMissingNode;
+import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 
 /**
  * This class denotes a list of formal arguments which consist of the tuple
  * <ul>
  * <li>argument name (part of the signature)</li>
- * <li>expression ({@link RNode}, {@link #getDefaultArgs()})</li>
+ * <li>expression ({@link RNode}, {@link #getDefaultArguments()})</li>
  * </ul>
  * The order is always the one defined by the function definition.
  * <p>
@@ -44,22 +49,48 @@ import com.oracle.truffle.r.runtime.data.RPromise.Closure;
  */
 public final class FormalArguments extends Arguments<RNode> implements ClosureCache {
 
-    public static final FormalArguments NO_ARGS = new FormalArguments(new RNode[0], ArgumentsSignature.empty(0));
+    public static final FormalArguments NO_ARGS = new FormalArguments(new RNode[0], new Object[0], ArgumentsSignature.empty(0));
 
     private final IdentityHashMap<RNode, Closure> closureCache = new IdentityHashMap<>();
 
-    private FormalArguments(RNode[] defaultArguments, ArgumentsSignature signature) {
+    @CompilationFinal private final Object[] internalDefaultArguments;
+
+    private FormalArguments(RNode[] defaultArguments, Object[] internalDefaultArguments, ArgumentsSignature signature) {
         super(defaultArguments, signature);
+        this.internalDefaultArguments = internalDefaultArguments;
     }
 
-    public static FormalArguments create(RNode[] defaultArguments, ArgumentsSignature signature) {
+    public static FormalArguments createForFunction(RNode[] defaultArguments, ArgumentsSignature signature) {
         assert signature != null;
-        RNode[] newDefaults = new RNode[defaultArguments.length];
+        assert signature.getVarArgCount() <= 1;
+        RNode[] newDefaults = Arrays.copyOf(defaultArguments, signature.getLength());
         for (int i = 0; i < newDefaults.length; i++) {
-            RNode defArg = defaultArguments[i];
+            RNode defArg = newDefaults[i];
             newDefaults[i] = defArg instanceof ConstantMissingNode ? null : defArg;
         }
-        return new FormalArguments(newDefaults, signature);
+        Object[] internalDefaultArguments = new Object[signature.getLength()];
+        for (int i = 0; i < internalDefaultArguments.length; i++) {
+            internalDefaultArguments[i] = i == signature.getVarArgIndex() ? RArgsValuesAndNames.EMPTY : RMissing.instance;
+        }
+        return new FormalArguments(newDefaults, internalDefaultArguments, signature);
+    }
+
+    public static FormalArguments createForBuiltin(Object[] defaultArguments, ArgumentsSignature signature) {
+        assert signature != null;
+
+        Object[] internalDefaultArguments = Arrays.copyOf(defaultArguments, signature.getLength());
+        for (int i = 0; i < internalDefaultArguments.length; i++) {
+            if (internalDefaultArguments[i] == null) {
+                internalDefaultArguments[i] = i == signature.getVarArgIndex() ? RArgsValuesAndNames.EMPTY : RMissing.instance;
+            }
+        }
+        RNode[] constantDefaultParameters = new RNode[signature.getLength()];
+        for (int i = 0; i < constantDefaultParameters.length; i++) {
+            Object value = internalDefaultArguments[i];
+            assert !(value instanceof Node) && !(value instanceof Boolean) : "unexpected default value " + value;
+            constantDefaultParameters[i] = (value == RMissing.instance || value == RArgsValuesAndNames.EMPTY) ? null : ConstantNode.create(value);
+        }
+        return new FormalArguments(constantDefaultParameters, internalDefaultArguments, signature);
     }
 
     @Override
@@ -71,39 +102,30 @@ public final class FormalArguments extends Arguments<RNode> implements ClosureCa
      * @return The list of default arguments a function body specifies. 'No default value' is
      *         denoted by <code>null</code>
      */
-    public RNode[] getDefaultArgs() {
+    public RNode[] getDefaultArguments() {
         return arguments;
     }
 
+    public boolean hasDefaultArgumentAt(int index) {
+        return arguments[index] != null;
+    }
+
     /**
-     * This works as a direct accessor to one of the {@link #getDefaultArgs()}.
+     * The internal default value is the one to be used at the caller in case no argument is
+     * supplied - this represents missing for normal functions, but may be overridden for builtin
+     * functions using {@link RBuiltinNode#getDefaultParameterValues()}.
+     */
+    public Object getInternalDefaultArgumentAt(int index) {
+        return internalDefaultArguments[index];
+    }
+
+    /**
+     * This works as a direct accessor to one of the {@link #getDefaultArguments()}.
      *
      * @param index
      * @return The default argument for the given index.
      */
-    public RNode getDefaultArg(int index) {
-        assert index >= 0;
-        return index < arguments.length ? arguments[index] : null;
-    }
-
-    /**
-     * Retrieve one of the {@link #getDefaultArgs()}. If it does not exist, return {@code null}.
-     *
-     * @param index
-     * @return The default argument for the given index, or <code>null</code> if there is none.
-     */
-    public RNode getDefaultArgOrNull(int index) {
-        if (index < 0 || index >= arguments.length) {
-            return null;
-        } else {
-            return arguments[index];
-        }
-    }
-
-    /**
-     * @return The length of the argument array
-     */
-    public int getArgsCount() {
-        return arguments.length;
+    public RNode getDefaultArgumentAt(int index) {
+        return arguments[index];
     }
 }

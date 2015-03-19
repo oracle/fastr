@@ -91,7 +91,7 @@ public abstract class AccessArgumentNode extends RNode {
         CompilerAsserts.neverPartOfCompilation();
         assert this.formals == null;
         this.formals = formals;
-        hasDefaultArg = formals.getDefaultArg(getIndex()) != null;
+        hasDefaultArg = formals.hasDefaultArgumentAt(getIndex());
         isVarArgIndex = formals.getSignature().getVarArgIndex() == getIndex();
     }
 
@@ -143,16 +143,6 @@ public abstract class AccessArgumentNode extends RNode {
 
     private Object handlePromise(VirtualFrame frame, RPromise promise, ConditionProfile inlinedPromiseProfile) {
         assert !promise.isNonArgument();
-
-        // Now force evaluation for INLINED (might be the case for arguments by S3MethodDispatch)
-
-        if (inlinedPromiseProfile.profile(promise.isInlined())) {
-            if (promiseHelper == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                promiseHelper = insert(new PromiseHelperNode());
-            }
-            return promiseHelper.evaluate(frame, promise);
-        }
         return promise;
     }
 
@@ -203,15 +193,14 @@ public abstract class AccessArgumentNode extends RNode {
     private void checkPromiseFactory() {
         if (factory == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            Closure defaultClosure = formals.getOrCreateClosure(formals.getDefaultArg(getIndex()));
-
-            factory = RPromiseFactory.create(PromiseType.ARG_DEFAULT, defaultClosure, defaultClosure);
+            Closure defaultClosure = formals.getOrCreateClosure(formals.getDefaultArgumentAt(getIndex()));
+            factory = RPromiseFactory.create(PromiseType.ARG_DEFAULT, defaultClosure);
         }
     }
 
     private boolean checkInsertOptDefaultArg() {
         if (optDefaultArgNode == null) {
-            RNode defaultArg = formals.getDefaultArg(getIndex());
+            RNode defaultArg = formals.getDefaultArgumentAt(getIndex());
             RNode arg = EagerEvalHelper.unfold(defaultArg);
 
             CompilerDirectives.transferToInterpreterAndInvalidate();

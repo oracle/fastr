@@ -28,7 +28,6 @@ import com.oracle.truffle.api.CompilerDirectives.ValueType;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor.FrameSlotInfo;
 
 /**
@@ -102,11 +101,6 @@ public class RPromise extends RLanguageRep implements RTypedValue {
     public static final String CLOSURE_WRAPPER_NAME = new String("<promise>");
 
     /**
-     * @see EvalPolicy
-     */
-    private final EvalPolicy evalPolicy;
-
-    /**
      * @see PromiseType
      */
     private final PromiseType type;
@@ -144,15 +138,14 @@ public class RPromise extends RLanguageRep implements RTypedValue {
      * This creates a new tuple (isEvaluated=false, expr, env, closure, value=null), which may later
      * be evaluated.
      *
-     * @param evalPolicy {@link EvalPolicy}
      * @param type {@link #type}
      * @param optType {@link #optType}
      * @param execFrame {@link #execFrame}
      * @param closure {@link #getClosure()}
      */
-    RPromise(EvalPolicy evalPolicy, PromiseType type, OptType optType, MaterializedFrame execFrame, Closure closure) {
+    RPromise(PromiseType type, OptType optType, MaterializedFrame execFrame, Closure closure) {
         super(closure.getExpr());
-        this.evalPolicy = evalPolicy;
+        assert type != PromiseType.ARG_DEFAULT || execFrame != null;
         this.type = type;
         this.optType = optType;
         this.execFrame = execFrame;
@@ -164,15 +157,13 @@ public class RPromise extends RLanguageRep implements RTypedValue {
      * evaluated. Meant to be called via {@link RPromiseFactory#createArgEvaluated(Object)} only!
      *
      *
-     * @param evalPolicy {@link EvalPolicy}
      * @param type {@link #type}
      * @param optType {@link #optType}
      * @param expr {@link #getRep()}
      * @param value {@link #value}
      */
-    RPromise(EvalPolicy evalPolicy, PromiseType type, OptType optType, Object expr, Object value) {
+    RPromise(PromiseType type, OptType optType, Object expr, Object value) {
         super(expr);
-        this.evalPolicy = evalPolicy;
         this.type = type;
         this.optType = optType;
         this.value = value;
@@ -186,13 +177,11 @@ public class RPromise extends RLanguageRep implements RTypedValue {
      * This creates a new tuple (isEvaluated=false, expr, null, null, value=null). Meant to be
      * called via {@link VarargPromise#VarargPromise(PromiseType, RPromise, Closure)} only!
      *
-     * @param evalPolicy {@link EvalPolicy}
      * @param type {@link #type}
      * @param expr {@link #getRep()}
      */
-    private RPromise(EvalPolicy evalPolicy, PromiseType type, OptType optType, Object expr) {
+    private RPromise(PromiseType type, OptType optType, Object expr) {
         super(expr);
-        this.evalPolicy = evalPolicy;
         this.type = type;
         this.optType = optType;
         // Not needed as already evaluated:
@@ -202,10 +191,6 @@ public class RPromise extends RLanguageRep implements RTypedValue {
 
     public RType getRType() {
         return RType.Promise;
-    }
-
-    public final boolean isInlined() {
-        return evalPolicy == EvalPolicy.INLINED;
     }
 
     /**
@@ -244,10 +229,6 @@ public class RPromise extends RLanguageRep implements RTypedValue {
      *         directly inside the AST.
      */
     public final boolean isInOriginFrame(VirtualFrame frame) {
-        if (isInlined()) {
-            return true;
-        }
-
         if (isDefault() && isNullFrame()) {
             return true;
         }
@@ -324,7 +305,7 @@ public class RPromise extends RLanguageRep implements RTypedValue {
     @Override
     public String toString() {
         CompilerAsserts.neverPartOfCompilation();
-        return "[" + evalPolicy + ", " + type + ", " + optType + ", " + execFrame + ", expr=" + getRep() + ", " + value + ", " + isEvaluated + "]";
+        return "[" + type + ", " + optType + ", " + execFrame + ", expr=" + getRep() + ", " + value + ", " + isEvaluated + "]";
     }
 
     /**
@@ -356,7 +337,7 @@ public class RPromise extends RLanguageRep implements RTypedValue {
         private boolean deoptimized = false;
 
         EagerPromise(PromiseType type, OptType optType, Closure closure, Object eagerValue, FrameSlotInfo notChangedNonLocally, int nFrameId, EagerFeedback feedback) {
-            super(EvalPolicy.PROMISED, type, optType, (MaterializedFrame) null, closure);
+            super(type, optType, (MaterializedFrame) null, closure);
             assert type != PromiseType.NO_ARG;
             this.eagerValue = eagerValue;
             this.notChangedNonLocally = notChangedNonLocally;
@@ -413,7 +394,7 @@ public class RPromise extends RLanguageRep implements RTypedValue {
         private final RPromise vararg;
 
         VarargPromise(PromiseType type, RPromise vararg, Closure exprClosure) {
-            super(EvalPolicy.PROMISED, type, OptType.VARARG, exprClosure.getExpr());
+            super(type, OptType.VARARG, exprClosure.getExpr());
             this.vararg = vararg;
         }
 
@@ -444,54 +425,30 @@ public class RPromise extends RLanguageRep implements RTypedValue {
 
     /**
      * A factory which produces instances of {@link RPromise}.
-     *
-     * @see RPromiseFactory#createPromise(MaterializedFrame)
-     * @see RPromiseFactory#createPromiseDefault()
-     * @see RPromiseFactory#createArgEvaluated(Object)
      */
     public static final class RPromiseFactory {
         private final Closure exprClosure;
-        private final Closure defaultClosure;
-        private final EvalPolicy evalPolicy;
         private final PromiseType type;
-
-        public static RPromiseFactory create(PromiseType type, Closure rep, Closure defaultExpr) {
-            return new RPromiseFactory(EvalPolicy.PROMISED, type, rep, defaultExpr);
-        }
 
         /**
          * Create the promise with a representation that allows evaluation later in the "current"
          * frame. The frame may need to be set if the promise is passed as an argument to another
          * function.
          */
-        public static RPromiseFactory create(EvalPolicy evalPolicy, PromiseType type, Closure suppliedClosure, Closure defaultClosure) {
-            return new RPromiseFactory(evalPolicy, type, suppliedClosure, defaultClosure);
+        public static RPromiseFactory create(PromiseType type, Closure suppliedClosure) {
+            return new RPromiseFactory(type, suppliedClosure);
         }
 
-        private RPromiseFactory(EvalPolicy evalPolicy, PromiseType type, Closure suppliedClosure, Closure defaultClosure) {
-            this.evalPolicy = evalPolicy;
+        private RPromiseFactory(PromiseType type, Closure suppliedClosure) {
             this.type = type;
             this.exprClosure = suppliedClosure;
-            this.defaultClosure = defaultClosure;
         }
 
         /**
          * @return A {@link RPromise} from the given parameters
          */
         public RPromise createPromise(MaterializedFrame frame) {
-            return RDataFactory.createPromise(evalPolicy, type, frame, exprClosure);
-        }
-
-        /**
-         * Uses this {@link RPromiseFactory} to not create a {@link RPromise} of type
-         * {@link PromiseType#ARG_SUPPLIED}, but one of type {@link PromiseType#ARG_DEFAULT}
-         * instead!
-         *
-         * @return A {@link RPromise} with {@link PromiseType#ARG_DEFAULT} and no
-         *         {@link REnvironment} set!
-         */
-        public RPromise createPromiseDefault() {
-            return RDataFactory.createPromise(evalPolicy, PromiseType.ARG_DEFAULT, null, defaultClosure);
+            return RDataFactory.createPromise(type, frame, exprClosure);
         }
 
         /**
@@ -501,7 +458,7 @@ public class RPromise extends RLanguageRep implements RTypedValue {
          * @return A {@link RPromise} whose argument has already been evaluated
          */
         public RPromise createArgEvaluated(Object argumentValue) {
-            return RDataFactory.createPromise(evalPolicy, type, OptType.DEFAULT, exprClosure.getExpr(), argumentValue);
+            return RDataFactory.createPromise(type, OptType.DEFAULT, exprClosure.getExpr(), argumentValue);
         }
 
         /**
@@ -519,17 +476,6 @@ public class RPromise extends RLanguageRep implements RTypedValue {
             return RDataFactory.createEagerPromise(type, OptType.PROMISED, exprClosure, promisedPromise, notChangedNonLocally, nFrameId, feedback);
         }
 
-        /**
-         * @param eagerValue The eagerly evaluated value
-         * @param notChangedNonLocally The {@link Assumption} that eagerValue is still valid
-         * @param feedback The {@link EagerFeedback} to notify whether the {@link Assumption} hold
-         *            until evaluation
-         * @return An {@link EagerPromise}
-         */
-        public RPromise createEagerDefaultPromise(Object eagerValue, FrameSlotInfo notChangedNonLocally, int nFrameId, EagerFeedback feedback) {
-            return RDataFactory.createEagerPromise(type, OptType.EAGER, defaultClosure, eagerValue, notChangedNonLocally, nFrameId, feedback);
-        }
-
         public RPromise createVarargPromise(RPromise promisedVararg) {
             return RDataFactory.createVarargPromise(type, promisedVararg, exprClosure);
         }
@@ -539,17 +485,6 @@ public class RPromise extends RLanguageRep implements RTypedValue {
                 return null;
             }
             return exprClosure.getExpr();
-        }
-
-        public Object getDefaultExpr() {
-            if (defaultClosure == null) {
-                return null;
-            }
-            return defaultClosure.getExpr();
-        }
-
-        public EvalPolicy getEvalPolicy() {
-            return evalPolicy;
         }
 
         public PromiseType getType() {

@@ -181,7 +181,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
             if (astBody != null && statements.getSourceSection() == null) {
                 statements.assignSourceSection(astBody.getSource());
             }
-            FormalArguments formals = FormalArguments.create(defaultValues, ArgumentsSignature.get(argumentNames));
+            FormalArguments formals = FormalArguments.createForFunction(defaultValues, ArgumentsSignature.get(argumentNames));
             for (AccessArgumentNode access : argAccessNodes) {
                 access.setFormals(formals);
             }

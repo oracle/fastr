@@ -145,14 +145,7 @@ public abstract class RBuiltinNode extends LeafCallNode implements VisibilityCon
         RNode[] argAccessNodes = createAccessArgumentsNodes(builtin);
         RBuiltinNode node = createNode(builtin, argAccessNodes.clone(), ArgumentsSignature.empty(argAccessNodes.length));
 
-        RNode[] constantDefaultParameters = new RNode[node.getDefaultParameterValues().length];
-        for (int i = 0; i < node.getDefaultParameterValues().length; i++) {
-            Object value = node.getDefaultParameterValues()[i];
-            assert !(value instanceof Node) && !(value instanceof Boolean) : "unexpected default value " + value + " in " + node;
-            constantDefaultParameters[i] = value == null ? null : ConstantNode.create(value);
-        }
-
-        FormalArguments formals = FormalArguments.create(constantDefaultParameters, node.getParameterSignature());
+        FormalArguments formals = FormalArguments.createForBuiltin(node.getDefaultParameterValues(), node.getParameterSignature());
         for (RNode access : argAccessNodes) {
             ((AccessArgumentNode) access).setFormals(formals);
         }

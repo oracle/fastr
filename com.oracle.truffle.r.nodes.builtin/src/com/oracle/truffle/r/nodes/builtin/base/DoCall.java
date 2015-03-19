@@ -125,7 +125,7 @@ public abstract class DoCall extends RBuiltinNode {
 
     @TruffleBoundary
     private static RPromise createArgPromise(MaterializedFrame frame, Object arg) {
-        return RDataFactory.createPromise(RPromise.EvalPolicy.PROMISED, RPromise.PromiseType.ARG_SUPPLIED, frame, RPromise.Closure.create(RASTUtils.createNodeForValue(arg)));
+        return RDataFactory.createPromise(RPromise.PromiseType.ARG_SUPPLIED, frame, RPromise.Closure.create(RASTUtils.createNodeForValue(arg)));
     }
 
 }

@@ -154,7 +154,7 @@ final class UseMethodDispatchCachedNode extends S3DispatchCachedNode {
         FormalArguments formals = rootNode.getFormalArguments();
         ArgumentsSignature formalSignature = formals.getSignature();
 
-        Object[] reorderedArgs = ArgumentMatcher.matchArgumentsEvaluated(cached.permutation, cached.function, preparedArguments, formals);
+        Object[] reorderedArgs = ArgumentMatcher.matchArgumentsEvaluated(cached.permutation, preparedArguments, formals);
 
         CompilerAsserts.partialEvaluationConstant(reorderedArgs.length);
 

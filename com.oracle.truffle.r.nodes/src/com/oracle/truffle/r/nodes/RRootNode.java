@@ -101,7 +101,7 @@ public abstract class RRootNode extends RootNode implements HasSignature {
      * @return The number of parameters this functions expects
      */
     public int getParameterCount() {
-        return formalArguments.getArgsCount();
+        return formalArguments.getSignature().getLength();
     }
 
     /**

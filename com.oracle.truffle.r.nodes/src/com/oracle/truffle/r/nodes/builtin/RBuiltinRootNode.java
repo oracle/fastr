@@ -22,6 +22,9 @@
  */
 package com.oracle.truffle.r.nodes.builtin;
 
+import java.util.*;
+
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.function.*;
@@ -30,10 +33,21 @@ import com.oracle.truffle.r.runtime.*;
 public final class RBuiltinRootNode extends RRootNode {
 
     @Child private RBuiltinNode builtin;
+    @CompilationFinal private final boolean[] evaluatesArgument;
 
     public RBuiltinRootNode(RBuiltinNode builtin, FormalArguments formalArguments, FrameDescriptor frameDescriptor) {
         super(builtin.getSourceSection(), formalArguments, frameDescriptor);
         this.builtin = builtin;
+
+        evaluatesArgument = new boolean[formalArguments.getSignature().getLength()];
+        Arrays.fill(evaluatesArgument, true);
+        RBuiltin rBuiltin = builtin.getRBuiltin();
+        if (rBuiltin != null) {
+            for (int index : rBuiltin.nonEvalArgs()) {
+                assert evaluatesArgument[index] : "duplicate nonEvalArgs entry " + index + " in " + this;
+                evaluatesArgument[index] = false;
+            }
+        }
     }
 
     @Override
@@ -51,26 +65,13 @@ public final class RBuiltinRootNode extends RRootNode {
         return builtin.inline(args);
     }
 
-    public boolean evaluatesArgs() {
-        RBuiltin rBuiltin = builtin.getRBuiltin();
-        return rBuiltin == null || rBuiltin.nonEvalArgs().length == 0;
+    public boolean evaluatesArg(int index) {
+        return evaluatesArgument[index];
     }
 
-    public boolean evaluatesArg(int index) {
-        RBuiltin rBuiltin = builtin.getRBuiltin();
-        if (rBuiltin == null) {
-            return true;
-        } else {
-            int[] nonEvalArgs = rBuiltin.nonEvalArgs();
-            for (int i = 0; i < nonEvalArgs.length; i++) {
-                int ix = nonEvalArgs[i];
-                if (ix < 0 || ix == index) {
-                    return false;
-                }
-            }
-            return true;
-        }
-
+    public Object getDefaultParameterValue(int index) {
+        Object[] values = builtin.getDefaultParameterValues();
+        return index < values.length ? values[index] : null;
     }
 
     @Override

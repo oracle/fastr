@@ -60,6 +60,8 @@ public abstract class GroupDispatchCallNode extends RNode {
         for (int i = 0; i < unevaledArgs.length; ++i) {
             if (unevaledArgs[i] != null) {
                 evaledArgs[i] = unevaledArgs[i].execute(frame);
+            } else {
+                evaledArgs[i] = RMissing.instance;
             }
         }
         // Delay assignment to allow recursion

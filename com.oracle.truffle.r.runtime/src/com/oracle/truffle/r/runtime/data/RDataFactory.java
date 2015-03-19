@@ -345,21 +345,21 @@ public final class RDataFactory {
         return traceDataCreated(new RLanguage(rep));
     }
 
-    public static RPromise createPromise(EvalPolicy evalPolicy, PromiseType type, MaterializedFrame execFrame, Closure closure) {
+    public static RPromise createPromise(PromiseType type, MaterializedFrame execFrame, Closure closure) {
         assert closure != null;
         assert closure.getExpr() != null;
-        return traceDataCreated(new RPromise(evalPolicy, type, OptType.DEFAULT, execFrame, closure));
+        return traceDataCreated(new RPromise(type, OptType.DEFAULT, execFrame, closure));
     }
 
     @TruffleBoundary
     public static RPromise createPromise(Object rep, REnvironment env) {
         // TODO Cache closures? Maybe in the callers of this function?
         Closure closure = Closure.create(rep);
-        return traceDataCreated(new RPromise(EvalPolicy.PROMISED, PromiseType.NO_ARG, OptType.DEFAULT, env.getFrame(), closure));
+        return traceDataCreated(new RPromise(PromiseType.NO_ARG, OptType.DEFAULT, env.getFrame(), closure));
     }
 
-    public static RPromise createPromise(EvalPolicy evalPolicy, PromiseType type, OptType opt, Object expr, Object argumentValue) {
-        return traceDataCreated(new RPromise(evalPolicy, type, opt, expr, argumentValue));
+    public static RPromise createPromise(PromiseType type, OptType opt, Object expr, Object argumentValue) {
+        return traceDataCreated(new RPromise(type, opt, expr, argumentValue));
     }
 
     public static RPromise createEagerPromise(PromiseType type, OptType eager, Closure exprClosure, Object eagerValue, FrameSlotInfo notChangedNonLocally, int nFrameId, EagerFeedback feedback) {

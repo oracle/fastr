@@ -313,7 +313,6 @@ public class PromiseHelperNode extends Node {
     private final ConditionProfile underEvaluationProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile isNullFrameProfile = ConditionProfile.createBinaryProfile();
 
-    private final ConditionProfile isInlinedProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile isDefaultProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile isFrameForEnvProfile = ConditionProfile.createBinaryProfile();
 
@@ -326,10 +325,6 @@ public class PromiseHelperNode extends Node {
     private final ConditionProfile isDeoptimizedProfile = ConditionProfile.createBinaryProfile();
     private final BranchProfile fallbackProfile = BranchProfile.create();
     private final ValueProfile eagerValueProfile = ValueProfile.createClassProfile();
-
-    public boolean isInlined(RPromise promise) {
-        return isInlinedProfile.profile(promise.isInlined());
-    }
 
     /**
      * @return The state of the {@link RPromise#isUnderEvaluation()} flag.
@@ -360,10 +355,6 @@ public class PromiseHelperNode extends Node {
      *         directly inside the AST.
      */
     public boolean isInOriginFrame(VirtualFrame frame, RPromise promise) {
-        if (isInlined(promise)) {
-            return true;
-        }
-
         if (isDefault(promise) && isNullFrame(promise)) {
             return true;
         }
