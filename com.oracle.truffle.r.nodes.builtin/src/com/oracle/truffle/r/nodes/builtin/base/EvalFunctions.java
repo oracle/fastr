@@ -90,7 +90,7 @@ public class EvalFunctions {
         }
     }
 
-    @RBuiltin(name = "withVisible", kind = RBuiltinKind.PRIMITIVE, parameterNames = "x", nonEvalArgs = -1)
+    @RBuiltin(name = "withVisible", kind = RBuiltinKind.PRIMITIVE, parameterNames = "x", nonEvalArgs = 0)
     public abstract static class WithVisible extends EvalAdapter {
         private static final RStringVector LISTNAMES = RDataFactory.createStringVector(new String[]{"value", "visible"}, RDataFactory.COMPLETE_VECTOR);
 

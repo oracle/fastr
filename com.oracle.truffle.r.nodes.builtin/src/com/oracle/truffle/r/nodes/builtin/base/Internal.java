@@ -49,7 +49,7 @@ import com.oracle.truffle.r.runtime.data.*;
  * parent of the the {@code .Internal}, which will be an {@link RNodeWrapper}, will remain so any
  * instrumentation at that level will remain in place.
  */
-@RBuiltin(name = ".Internal", kind = PRIMITIVE, parameterNames = {"call"}, nonEvalArgs = {0})
+@RBuiltin(name = ".Internal", kind = PRIMITIVE, parameterNames = {"call"}, nonEvalArgs = 0)
 public abstract class Internal extends RBuiltinNode {
 
     protected final BranchProfile errorProfile = BranchProfile.create();

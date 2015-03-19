@@ -35,7 +35,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
  * {@link PromiseCheckHelperNode}.
  *
  */
-@RBuiltin(name = "switch", kind = PRIMITIVE, parameterNames = {"EXPR", "..."}, nonEvalArgs = {1})
+@RBuiltin(name = "switch", kind = PRIMITIVE, parameterNames = {"EXPR", "..."}, nonEvalArgs = 1)
 public abstract class Switch extends RBuiltinNode {
     @Child private CastIntegerNode castIntNode;
     @Child private PromiseCheckHelperNode promiseHelper = new PromiseCheckHelperNode();

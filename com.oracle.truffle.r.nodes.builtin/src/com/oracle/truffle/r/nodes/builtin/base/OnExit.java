@@ -41,7 +41,7 @@ import com.oracle.truffle.r.runtime.ops.na.*;
  * evaluated, but {@code add} is. TODO arrange for the {@code expr} be stored with the currently
  * evaluating function using a new slot in {@link RArguments} and run it on function exit.
  */
-@RBuiltin(name = "on.exit", kind = PRIMITIVE, parameterNames = {"expr", "add"}, nonEvalArgs = {0})
+@RBuiltin(name = "on.exit", kind = PRIMITIVE, parameterNames = {"expr", "add"}, nonEvalArgs = 0)
 public abstract class OnExit extends RInvisibleBuiltinNode {
 
     @Child private FrameSlotNode onExitSlot = FrameSlotNode.create(RFrameSlot.OnExit, true);

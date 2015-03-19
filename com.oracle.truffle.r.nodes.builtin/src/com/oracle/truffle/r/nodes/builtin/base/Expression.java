@@ -32,7 +32,7 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-@RBuiltin(name = "expression", kind = PRIMITIVE, parameterNames = {"..."}, nonEvalArgs = {-1})
+@RBuiltin(name = "expression", kind = PRIMITIVE, parameterNames = {"..."}, nonEvalArgs = 0)
 public abstract class Expression extends RBuiltinNode {
     /*
      * Owing to the nonEvalArgs, all arguments are RPromise, but an expression may contain
