@@ -55,7 +55,7 @@ public abstract class OnExit extends RInvisibleBuiltinNode {
 
     @Override
     public Object[] getDefaultParameterValues() {
-        return new Object[]{RNull.instance, false};
+        return new Object[]{RNull.instance, RRuntime.LOGICAL_FALSE};
     }
 
     @Specialization

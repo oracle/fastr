@@ -148,7 +148,7 @@ public abstract class RBuiltinNode extends LeafCallNode implements VisibilityCon
         RNode[] constantDefaultParameters = new RNode[node.getDefaultParameterValues().length];
         for (int i = 0; i < node.getDefaultParameterValues().length; i++) {
             Object value = node.getDefaultParameterValues()[i];
-            assert !(value instanceof Node);
+            assert !(value instanceof Node) && !(value instanceof Boolean) : "unexpected default value " + value + " in " + node;
             constantDefaultParameters[i] = value == null ? null : ConstantNode.create(value);
         }
 

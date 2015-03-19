@@ -38,7 +38,7 @@ public abstract class AnyNA extends RBuiltinNode {
 
     @Override
     public Object[] getDefaultParameterValues() {
-        return new Object[]{RMissing.instance, false};
+        return new Object[]{RMissing.instance, RRuntime.LOGICAL_FALSE};
     }
 
     @Specialization
