@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,17 +20,37 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.runtime.data;
+package com.oracle.truffle.r.runtime;
 
-/**
- * This corresponds to the "general purpose" bits in a GnuR SEXP. It is now rarely used within GnuR
- * and many of those uses do not apply to FastR; however, condition handling is one important use.
- * We define it as an interface so that only specific types need implement it, {@link RList} in the
- * case of condition handling.
- *
- */
-public interface RGPBits {
-    int getGPBits();
+import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.nodes.*;
 
-    void setGPBits(int value);
+@SuppressWarnings("serial")
+public final class ReturnException extends ControlFlowException {
+
+    private final Object result;
+    private final MaterializedFrame returnFrame;
+
+    /**
+     * Support for the "return" builtin.
+     *
+     * @param result the value to return
+     * @param returnFrame if not {@code null}, the frame of the function that the return should go
+     *            to, skipping intermediate frames.
+     */
+    public ReturnException(Object result, MaterializedFrame returnFrame) {
+        this.result = result;
+        this.returnFrame = returnFrame;
+    }
+
+    /**
+     * @return the unexpected result
+     */
+    public Object getResult() {
+        return result;
+    }
+
+    public MaterializedFrame getReturnFrame() {
+        return returnFrame;
+    }
 }

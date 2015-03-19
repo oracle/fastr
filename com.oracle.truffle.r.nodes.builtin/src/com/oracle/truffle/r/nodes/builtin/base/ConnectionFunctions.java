@@ -254,7 +254,7 @@ public abstract class ConnectionFunctions {
                     throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_CONNECTION);
                 }
                 if (baseConn.isOpen()) {
-                    RContext.getInstance().setEvalWarning(RError.Message.ALREADY_OPEN_CONNECTION.message);
+                    RError.warning(getEncapsulatingSourceSection(), RError.Message.ALREADY_OPEN_CONNECTION);
                     return RNull.instance;
                 }
                 baseConn.open(open.getDataAt(0));
@@ -549,7 +549,7 @@ public abstract class ConnectionFunctions {
                     int nc = nchars.getDataAt(i % length);
                     int pad = nc - s.length();
                     if (pad > 0) {
-                        RContext.getInstance().setEvalWarning(RError.Message.MORE_CHARACTERS.message);
+                        RError.warning(getEncapsulatingSourceSection(), RError.Message.MORE_CHARACTERS);
                     }
                     openConn.writeChar(s, pad, eos.getDataAt(i % length), RRuntime.fromLogical(useBytes));
                 }

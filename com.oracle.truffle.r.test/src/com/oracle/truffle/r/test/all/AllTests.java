@@ -10,6 +10,31 @@ import com.oracle.truffle.r.test.*;
 public class AllTests extends TestBase {
 
     @Test
+    public void TestConditionHandling_testTryCatch_c6ada3c2333cde33ffd9a81ab22739cb() {
+        assertEval("{ tryCatch(1, finally = print(\"Hello\")) }");
+    }
+
+    @Test
+    public void TestConditionHandling_testTryCatch_34282cab4656a7fede263ca709a95755() {
+        assertEval("{ e <- simpleError(\"test error\"); tryCatch(stop(e), error = function(e) e, finally = print(\"Hello\"))}");
+    }
+
+    @Test
+    public void TestConditionHandling_testTryCatch_dbe56f8f0db9e80715a24d20429dea5f() {
+        assertEvalError("{ e <- simpleError(\"test error\"); tryCatch(stop(e), finally = print(\"Hello\")) }");
+    }
+
+    @Test
+    public void TestConditionHandling_testTryCatch_b993af7f20ddb1043b3f88670977096b() {
+        assertEvalError("{ tryCatch(stop(\"fred\"), finally = print(\"Hello\")) }");
+    }
+
+    @Test
+    public void TestConditionHandling_testTryCatchIgnore_3c18046369b050572700b0bd138cdeb0() {
+        assertEval("{ tryCatch(stop(\"fred\"), error = function(e) e, finally = print(\"Hello\"))}");
+    }
+
+    @Test
     public void TestConnections_testPushBackTextConnection_57eb33ce24132c578875659c3672161c() {
         assertEval("{ con<-textConnection(c(\"a\",\"b\",\"c\",\"d\")); pushBackLength(con) }");
     }

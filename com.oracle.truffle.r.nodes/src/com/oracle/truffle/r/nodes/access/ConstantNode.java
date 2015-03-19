@@ -95,6 +95,8 @@ public abstract class ConstantNode extends RNode implements VisibilityController
             return new ConstantREnvironmentNode((REnvironment) value);
         } else if (value instanceof RArgsValuesAndNames) {
             return new ConstantRArgsValuesAndNamesNode((RArgsValuesAndNames) value);
+        } else if (value instanceof RPairList) {
+            return new ConstantRPairListNode((RPairList) value);
         }
         throw new UnsupportedOperationException(value.getClass().getName());
     }
@@ -425,6 +427,21 @@ public abstract class ConstantNode extends RNode implements VisibilityController
         private final REnvironment envValue;
 
         public ConstantREnvironmentNode(REnvironment envValue) {
+            this.envValue = envValue;
+        }
+
+        @Override
+        public Object execute(VirtualFrame frame) {
+            controlVisibility();
+            return envValue;
+        }
+    }
+
+    private static final class ConstantRPairListNode extends ConstantNode {
+
+        private final RPairList envValue;
+
+        public ConstantRPairListNode(RPairList envValue) {
             this.envValue = envValue;
         }
 

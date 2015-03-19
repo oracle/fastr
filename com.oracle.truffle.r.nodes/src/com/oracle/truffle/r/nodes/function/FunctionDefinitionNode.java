@@ -36,7 +36,6 @@ import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.access.variables.*;
-import com.oracle.truffle.r.nodes.control.*;
 import com.oracle.truffle.r.nodes.instrument.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RDeparse.State;
@@ -162,11 +161,11 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
     public Object execute(VirtualFrame frame) {
         VirtualFrame vf = substituteFrame ? new SubstituteVirtualFrame((MaterializedFrame) frame.getArguments()[0]) : frame;
         /*
-         * It should be possible to be clever and only record this iff a handler is installed, by
-         * using the RArguments array.
+         * It might be possibel to only record this iff a handler is installed, by using the
+         * RArguments array.
          */
-        Object handlerStack = ConditionsSupport.getHandlerStack();
-        Object restartStack = ConditionsSupport.getRestartStack();
+        Object handlerStack = RErrorHandling.getHandlerStack();
+        Object restartStack = RErrorHandling.getRestartStack();
         try {
             verifyEnclosingAssumptions(vf);
             if (s3SlotsProfile.profile(RArguments.hasS3Args(vf))) {
@@ -182,24 +181,26 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
                 return ex.getResult();
             }
         } finally {
-            // Precise relationship between condition handling and on.exit TBD
-            ConditionsSupport.restoreStacks(handlerStack, restartStack);
+            RErrorHandling.restoreStacks(handlerStack, restartStack);
             if (onExitSlot != null && onExitProfile.profile(onExitSlot.hasValue(vf))) {
                 if (onExitExpressionCache == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
                     onExitExpressionCache = insert(InlineCacheNode.createExpression(3));
                 }
+                ArrayList<Object> current = getCurrentOnExitList(vf, onExitSlot.executeFrameSlot(vf));
                 // Must preserve the visibility state as it may be changed by the on.exit expression
                 boolean isVisible = RContext.isVisible();
-                ArrayList<Object> current = getCurrentOnExitList(vf, onExitSlot.executeFrameSlot(vf));
-                for (Object expr : current) {
-                    if (!(expr instanceof RNode)) {
-                        RInternalError.shouldNotReachHere("unexpected type for on.exit entry");
+                try {
+                    for (Object expr : current) {
+                        if (!(expr instanceof RNode)) {
+                            RInternalError.shouldNotReachHere("unexpected type for on.exit entry");
+                        }
+                        RNode node = (RNode) expr;
+                        onExitExpressionCache.execute(vf, node);
                     }
-                    RNode node = (RNode) expr;
-                    onExitExpressionCache.execute(vf, node);
+                } finally {
+                    RContext.setVisible(isVisible);
                 }
-                RContext.setVisible(isVisible);
             }
         }
     }

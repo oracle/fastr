@@ -241,11 +241,11 @@ public final class RList extends RVector implements RAbstractVector, RGPBits {
         return true;
     }
 
-    public int getValue() {
+    public int getGPBits() {
         return gpbits;
     }
 
-    public void setValue(int value) {
+    public void setGPBits(int value) {
         gpbits = value;
     }
 }

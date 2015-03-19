@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,37 +20,27 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.control;
+package com.oracle.truffle.r.test.library.base;
 
-import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.nodes.*;
+import org.junit.*;
 
-@SuppressWarnings("serial")
-public final class ReturnException extends ControlFlowException {
+import com.oracle.truffle.r.test.*;
 
-    private final Object result;
-    private final MaterializedFrame returnFrame;
+public class TestConditionHandling extends TestBase {
 
-    /**
-     * Support for the "return" builtin.
-     *
-     * @param result the value to return
-     * @param returnFrame if not {@code null}, the frame of the function that the return should go
-     *            to, skipping intermediate frames.
-     */
-    public ReturnException(Object result, MaterializedFrame returnFrame) {
-        this.result = result;
-        this.returnFrame = returnFrame;
+    @Test
+    public void testTryCatch() {
+        assertEval("{ tryCatch(1, finally = print(\"Hello\")) }");
+        assertEvalError("{ e <- simpleError(\"test error\"); tryCatch(stop(e), finally = print(\"Hello\")) }");
+        assertEvalError("{ tryCatch(stop(\"fred\"), finally = print(\"Hello\")) }");
+        assertEval("{ e <- simpleError(\"test error\"); tryCatch(stop(e), error = function(e) e, finally = print(\"Hello\"))}");
     }
 
-    /**
-     * @return the unexpected result
-     */
-    public Object getResult() {
-        return result;
+    @Test
+    @Ignore
+    public void testTryCatchIgnore() {
+        // Don't get the call source correct
+        assertEval("{ tryCatch(stop(\"fred\"), error = function(e) e, finally = print(\"Hello\"))}");
     }
 
-    public MaterializedFrame getReturnFrame() {
-        return returnFrame;
-    }
 }

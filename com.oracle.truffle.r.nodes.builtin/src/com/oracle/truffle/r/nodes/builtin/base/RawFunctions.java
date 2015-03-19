@@ -38,7 +38,7 @@ public class RawFunctions {
         @Specialization
         protected RRawVector charToRaw(RAbstractStringVector x) {
             if (x.getLength() > 1) {
-                RContext.getInstance().setEvalWarning("argument should be a character vector of length 1\nall but the first element will be ignored");
+                RError.warning(getEncapsulatingSourceSection(), RError.Message.ARG_SHOULD_BE_CHARACTER_VECTOR_LENGTH_ONE);
             }
             String s = x.getDataAt(0);
             byte[] data = new byte[s.length()];

@@ -81,12 +81,6 @@ public final class REngine implements RContext.Engine {
      */
     private static boolean loadBase;
 
-    /**
-     * A temporary mechanism for suppressing warnings while evaluating the system profile, until the
-     * proper mechanism is understood.
-     */
-    private static boolean reportWarnings;
-
     private REngine() {
     }
 
@@ -131,7 +125,6 @@ public final class REngine implements RContext.Engine {
                 singleton.parseAndEval(RProfile.systemProfile(), baseFrame, REnvironment.baseEnv(), false, false);
                 checkAndRunStartupFunction(".OptRequireMethods");
 
-                reportWarnings = true;
                 Source siteProfile = RProfile.siteProfile();
                 if (siteProfile != null) {
                     singleton.parseAndEval(siteProfile, baseFrame, REnvironment.baseEnv(), false, false);
@@ -311,7 +304,6 @@ public final class REngine implements RContext.Engine {
             writeStderr(source.getLineCount() == 1 ? message : (message + " (line " + e.line + ")"), true);
             return null;
         } catch (RError e) {
-            writeStderr(e.getMessage(), true);
             return null;
         } catch (UnsupportedSpecializationException use) {
             writeStderr("Unsupported specialization in node " + use.getNode().getClass().getSimpleName() + " - supplied values: " +
@@ -390,6 +382,10 @@ public final class REngine implements RContext.Engine {
      * {@code callTarget}. When execution reaches {@link FunctionDefinitionNode#execute},
      * {@code frame} will be accessible via {@code newFrame.getArguments()[0]}, and the execution
      * will continue using {@code frame}.
+     *
+     * TODO This method is too generic for the different cases it handles, e.g. promise evaluation,
+     * so the exception handling in particular is overly complex.. It should be refactored into
+     * separate methods to reflect the usages more precisely.
      */
     private static Object runCall(RootCallTarget callTarget, MaterializedFrame frame, boolean printResult, boolean topLevel) {
         Object result = null;
@@ -397,6 +393,9 @@ public final class REngine implements RContext.Engine {
             try {
                 // FIXME: callTargets should only be called via Direct/IndirectCallNode
                 result = callTarget.call(frame);
+            } catch (ReturnException ex) {
+                // condition handling can cause a "return" that needs to skip over this call
+                throw ex;
             } catch (ControlFlowException cfe) {
                 throw RError.error(RError.Message.NO_LOOP_FOR_BREAK_NEXT);
             }
@@ -404,13 +403,13 @@ public final class REngine implements RContext.Engine {
             if (printResult) {
                 printResult(result);
             }
-            reportWarnings(false);
-        } catch (RError e) {
             if (topLevel) {
-                singleton.printRError(e);
-            } else {
-                throw e;
+                RErrorHandling.printWarnings();
             }
+        } catch (RError e) {
+            throw e;
+        } catch (ReturnException ex) {
+            throw ex;
         } catch (UnsupportedSpecializationException use) {
             throw use;
         } catch (DebugExitException | BrowserQuitException e) {
@@ -465,16 +464,6 @@ public final class REngine implements RContext.Engine {
     }
 
     @TruffleBoundary
-    public void printRError(RError e) {
-        String es = e.toString();
-        if (!es.isEmpty()) {
-            writeStderr(e.toString(), true);
-
-        }
-        reportWarnings(true);
-    }
-
-    @TruffleBoundary
     private static void reportImplementationError(Throwable e) {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         e.printStackTrace(new PrintStream(out));
@@ -484,29 +473,6 @@ public final class REngine implements RContext.Engine {
         // We also don't call quit as the system is broken.
         if (singleton.crashOnFatalError) {
             Utils.exit(2);
-        }
-    }
-
-    @TruffleBoundary
-    private static void reportWarnings(boolean inAddition) {
-        List<String> evalWarnings = singleton.context.extractEvalWarnings();
-        if (!reportWarnings) {
-            return;
-        }
-        if (evalWarnings != null && evalWarnings.size() > 0) {
-            if (inAddition) {
-                writeStderr("In addition: ", false);
-            }
-            if (evalWarnings.size() == 1) {
-                writeStderr("Warning message:", true);
-                writeStderr(evalWarnings.get(0), true);
-            } else {
-                writeStderr("Warning messages:", true);
-                for (int i = 0; i < evalWarnings.size(); i++) {
-                    writeStderr((i + 1) + ":", true);
-                    writeStderr("  " + evalWarnings.get(i), true);
-                }
-            }
         }
     }
 

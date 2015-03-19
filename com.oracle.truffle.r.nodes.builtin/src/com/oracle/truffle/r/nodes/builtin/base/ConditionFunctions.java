@@ -11,7 +11,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.ConditionsSupport.*;
+import static com.oracle.truffle.r.runtime.RErrorHandling.*;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
@@ -29,15 +29,6 @@ import com.oracle.truffle.r.runtime.env.*;
 public class ConditionFunctions {
     public abstract static class Adapter extends RInvisibleBuiltinNode {
         protected final BranchProfile errorProfile = BranchProfile.create();
-
-        protected enum NAMES {
-            name,
-            exit,
-            handler,
-            description,
-            test,
-            interactive;
-        }
 
     }
 
@@ -71,7 +62,7 @@ public class ConditionFunctions {
                 errorProfile.enter();
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.BAD_HANDLER_DATA);
             } else {
-                return ConditionsSupport.createHandlers((RStringVector) classesObj, (RList) handlersObj, parentEnv, target, calling);
+                return RErrorHandling.createHandlers((RStringVector) classesObj, (RList) handlersObj, parentEnv, target, calling);
             }
         }
 
@@ -83,6 +74,7 @@ public class ConditionFunctions {
         @Specialization
         protected RNull resetCondHands(Object stack) {
             controlVisibility();
+            // TODO
             throw RInternalError.unimplemented();
         }
     }
@@ -92,7 +84,7 @@ public class ConditionFunctions {
         @Specialization
         protected Object addRestart(RList restart) {
             controlVisibility();
-            addRestart(restart);
+            RErrorHandling.addRestart(restart);
             return RNull.instance;
         }
     }
@@ -103,6 +95,7 @@ public class ConditionFunctions {
         @Specialization
         protected int getRestart(Object index) {
             controlVisibility();
+            // TODO
             throw RInternalError.unimplemented();
         }
     }
@@ -113,46 +106,57 @@ public class ConditionFunctions {
         @Specialization
         protected Object getRestart(Object restart, Object args) {
             controlVisibility();
+            // TODO
             throw RInternalError.unimplemented();
         }
     }
 
     @RBuiltin(name = ".signalCondition", kind = RBuiltinKind.INTERNAL, parameterNames = {"condition", "msg", "call"})
     public abstract static class SignalCondition extends Adapter {
-        @SuppressWarnings("unused")
         @Specialization
-        protected Object signalCondition(Object condition, Object msg, Object call) {
+        protected RNull signalCondition(RList condition, RAbstractStringVector msg, Object call) {
             controlVisibility();
-            throw RInternalError.unimplemented();
+            RErrorHandling.signalCondition(condition, msg.getDataAt(0), call);
+            return RNull.instance;
         }
     }
 
     @RBuiltin(name = "geterrmessage", kind = RBuiltinKind.INTERNAL, parameterNames = {})
     public abstract static class Geterrmessage extends Adapter {
         @Specialization
-        protected Object geterrmessage() {
+        protected String geterrmessage() {
             controlVisibility();
-            throw RInternalError.unimplemented();
+            return RErrorHandling.geterrmessage();
         }
     }
 
     @RBuiltin(name = "seterrmessage", kind = RBuiltinKind.INTERNAL, parameterNames = {})
     public abstract static class Seterrmessage extends Adapter {
-        @SuppressWarnings("unused")
         @Specialization
-        protected Object seterrmessage(RAbstractStringVector msg) {
+        protected RNull seterrmessage(RAbstractStringVector msg) {
             controlVisibility();
-            throw RInternalError.unimplemented();
+            RErrorHandling.seterrmessage(msg.getDataAt(0));
+            return RNull.instance;
         }
     }
 
     @RBuiltin(name = ".dfltWarn", kind = RBuiltinKind.INTERNAL, parameterNames = {"message", "call"})
     public abstract static class DfltWarn extends Adapter {
-        @SuppressWarnings("unused")
         @Specialization
-        protected Object signalCondition(Object message, Object call) {
+        protected RNull dfltWarn(RAbstractStringVector msg, Object call) {
             controlVisibility();
-            throw RInternalError.unimplemented();
+            RErrorHandling.dfltWarn(msg.getDataAt(0), call);
+            return RNull.instance;
+        }
+    }
+
+    @RBuiltin(name = ".dfltStop", kind = RBuiltinKind.INTERNAL, parameterNames = {"message", "call"})
+    public abstract static class DfltStop extends Adapter {
+        @Specialization
+        protected Object dfltStop(RAbstractStringVector message, Object call) {
+            controlVisibility();
+            RErrorHandling.dfltStop(message.getDataAt(0), call);
+            return RNull.instance;
         }
     }
 }

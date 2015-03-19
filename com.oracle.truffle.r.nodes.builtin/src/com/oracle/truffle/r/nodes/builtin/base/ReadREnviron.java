@@ -44,7 +44,7 @@ public abstract class ReadREnviron extends RInvisibleBuiltinNode {
         try {
             REnvVars.readEnvironFile(path);
         } catch (FileNotFoundException ex) {
-            RContext.getInstance().setEvalWarning(ex.getMessage());
+            RError.warning(getEncapsulatingSourceSection(), RError.Message.GENERIC, ex.getMessage());
             result = RRuntime.LOGICAL_FALSE;
         } catch (IOException ex) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, ex.getMessage());

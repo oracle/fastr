@@ -71,7 +71,7 @@ public abstract class NormalizePath extends RBuiltinNode {
                         throw RError.error(getEncapsulatingSourceSection(), msg, errorArgs);
                     } else {
                         // NA means warning
-                        RContext.getInstance().setEvalWarning(RError.formatMessage(msg, errorArgs));
+                        RError.warning(getEncapsulatingSourceSection(), msg, errorArgs);
                     }
                 }
             }

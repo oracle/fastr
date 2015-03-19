@@ -55,7 +55,6 @@ public class BaseGammaFunctions {
 
         @Specialization
         protected RDoubleVector lgamma(RAbstractDoubleVector x) {
-            controlVisibility();
             naValCheck.enable(true);
             double[] result = new double[x.getLength()];
             for (int i = 0; i < x.getLength(); ++i) {
@@ -63,6 +62,7 @@ public class BaseGammaFunctions {
                 result[i] = GammaFunctions.lgammafn(xv);
                 naValCheck.check(result[i]);
             }
+            controlVisibility();
             return RDataFactory.createDoubleVector(result, naValCheck.neverSeenNA());
         }
 

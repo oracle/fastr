@@ -14,6 +14,7 @@ package com.oracle.truffle.r.runtime.gnur;
 import java.util.*;
 
 import com.oracle.truffle.api.CompilerDirectives.*;
+import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
@@ -74,7 +75,8 @@ public enum SEXPTYPE {
     FASTR_BYTE(302, Byte.class),
     FASTR_STRING(303, FastRString.class),
     FASTR_DATAFRAME(304, RDataFrame.class),
-    FASTR_FACTOR(305, RFactor.class);
+    FASTR_FACTOR(305, RFactor.class),
+    FASTR_SOURCESECTION(306, SourceSection.class);
 
     public final int code;
     public final Class<?> fastRClass;

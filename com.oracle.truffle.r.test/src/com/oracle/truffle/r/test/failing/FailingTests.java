@@ -28,6 +28,12 @@ public class FailingTests extends TestBase {
     }
 
     @Test
+    public void TestConditionHandling_testTryCatchIgnore_3c18046369b050572700b0bd138cdeb0() {
+        assertEval("{ tryCatch(stop(\"fred\"), error = function(e) e, finally = print(\"Hello\"))}");
+        check("TestConditionHandling_testTryCatchIgnore_3c18046369b050572700b0bd138cdeb0");
+    }
+
+    @Test
     public void TestConnections_testWriteTextReadConnection_a7a7cde7deb5eff04d965a6084a4b5a3() {
         assertEvalError("{ writeChar(\"x\", textConnection(\"abc\")) }");
         check("TestConnections_testWriteTextReadConnection_a7a7cde7deb5eff04d965a6084a4b5a3");

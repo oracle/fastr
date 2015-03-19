@@ -3,7 +3,7 @@
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
- * Copyright (c) 1995-2012, The R Core Team
+ * Copyright (c) 1995-2015, The R Core Team
  * Copyright (c) 2003, The R Foundation
  * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
@@ -13,19 +13,22 @@ package com.oracle.truffle.r.runtime;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.options.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
 
 /**
- * The error messages have been copied from GNU R.
+ * A facade for handling errors. This class extends {@link RuntimeException} so that it can be
+ * thrown, and various static methods that should be used to actually effect the throw. It also
+ * declares the {@link Message} enum that provides an abstract way to declare a particular message.
+ *
+ * The error messages in {@link Message} have been copied from GNU R source code.
+ *
+ * The details of the error handling, which is complicated by support for condition handling and the
+ * ability to invoke arbitrary code, typically {@code browser}, is in {@link RErrorHandling}.
  */
+@SuppressWarnings("serial")
 public final class RError extends RuntimeException {
-
-    private static final long serialVersionUID = 1L;
 
     /**
      * This exception should be subclassed by subsystems that need to throw subsystem-specific
@@ -41,7 +44,7 @@ public final class RError extends RuntimeException {
 
         @TruffleBoundary
         protected RErrorException(RError.Message msg, Object[] args) {
-            super(RError.formatMessage(msg, args), null);
+            super(RErrorHandling.formatMessage(msg, args), null);
             this.msg = msg;
             this.args = args;
         }
@@ -53,7 +56,10 @@ public final class RError extends RuntimeException {
         }
     }
 
-    private RError(String msg) {
+    /**
+     * TODO the string is not really needed as all output is performed prior to the throw.
+     */
+    RError(String msg) {
         super(msg);
     }
 
@@ -62,22 +68,6 @@ public final class RError extends RuntimeException {
         return getMessage();
     }
 
-    /**
-     * Handles an R error with the most general argument signature. All other variants delegate to
-     * this method. R allows an error to be caught and an arbitrary expression evaluated, often a
-     * call to the {@code browser} function for interactive inspection of the environment where the
-     * error occurred.
-     *
-     * Note that the method never actually returns a result, but the throws the error directly.
-     * However, the signature has a return type of {@link RError} to allow callers to use the idiom
-     * {@code throw error(...)} to indicate the control transfer.
-     *
-     * @param src source of the code throwing the error, or {@code null} if not available. If src is
-     *            {@code null} an attempt is made to identify the call context from the currently
-     *            active frame
-     * @param msg a {@link Message} instance specifying the error
-     * @param args arguments for format specifiers in the message string
-     */
     @TruffleBoundary
     public static RError error(SourceSection src, Message msg, Object... args) {
         throw error0(src, msg, args);
@@ -88,65 +78,30 @@ public final class RError extends RuntimeException {
         throw error0(src, msg, (Object[]) null);
     }
 
+    /**
+     * Handles an R error with the most general argument signature. All other facade variants
+     * delegate to this method.
+     *
+     * Note that the method never actually returns a result, but the throws the error directly.
+     * However, the signature has a return type of {@link RError} to allow callers to use the idiom
+     * {@code throw error(...)} to indicate the control transfer. It is entirely possible that, due
+     * to condition handlers, the error will not actually be thrown.
+     *
+     *
+     * @param srcCandidate source of the code throwing the error, or {@code null} if not available.
+     *            If {@code null} an attempt will be made to identify the call context from the
+     *            currently active frame
+     * @param msg a {@link Message} instance specifying the error
+     * @param args arguments for format specifiers in the message string
+     */
     private static RError error0(final SourceSection srcCandidate, Message msg, Object... args) {
-        Frame frame = null;
-        SourceSection src = srcCandidate;
-        if (src == null) {
-            frame = Utils.getActualCurrentFrame();
-            if (frame != null) {
-                src = RArguments.getCallSourceSection(frame);
-            }
-        }
-        String preamble = "Error";
-        String formattedMsg = formatMessage(msg, args);
-        String errorMsg = null;
-        if (src == null) {
-            // generally means top-level of shell or similar
-            preamble += ": ";
-            errorMsg = preamble + formattedMsg;
-        } else {
-            preamble += " in " + src.getCode() + " :";
-            errorMsg = wrapMessage(preamble, formattedMsg);
-        }
-        // Check if there is a condition handler for the error
-        ConditionsSupport.signalError(safeGetFrame(frame), errorMsg);
-
-        RError rError = new RError(errorMsg);
-        RInternalError.reportError(rError, src);
-
-        Object errorExpr = ROptions.getValue("error");
-        if (errorExpr != RNull.instance) {
-            // Errors and warnings are output before the expression is evaluated
-            RContext.getEngine().printRError(rError);
-            // errorExpr can be anything, but not everything makes sense
-            if (errorExpr instanceof RArgsValuesAndNames) {
-                // TODO: worry about other potential ... values?
-                errorExpr = ((RArgsValuesAndNames) errorExpr).getValues()[0];
-            }
-            if (errorExpr instanceof RLanguage || errorExpr instanceof RExpression) {
-                MaterializedFrame materializedFrame = safeGetFrame(frame);
-                if (errorExpr instanceof RLanguage) {
-                    RContext.getEngine().eval((RLanguage) errorExpr, materializedFrame);
-                } else if (errorExpr instanceof RExpression) {
-                    RContext.getEngine().eval((RExpression) errorExpr, materializedFrame);
-                }
-            } else {
-                // GnuR checks this earlier when the option is set
-                throw new RError(Message.INVALID_ERROR.message);
-            }
-            // Control, transfer to top level, but suppress print
-            throw new RError("");
-        } else {
-            throw rError;
-        }
-    }
-
-    private static MaterializedFrame safeGetFrame(Frame frame2) {
-        Frame frame = frame2;
-        if (frame == null) {
-            frame = Utils.getActualCurrentFrame();
-        }
-        return frame == null ? REnvironment.globalEnv().getFrame() : frame.materialize();
+        /*
+         * First we call RErrorHandling.signalError to check for handlers and if that returns, then
+         * call RErrorHandling.errorcallDflt. This follows GnuR, which also has a "hook" mechanism
+         * between the two calls.
+         */
+        RErrorHandling.signalError(srcCandidate, msg, args);
+        return RErrorHandling.errorcallDflt(srcCandidate, msg, args);
     }
 
     /**
@@ -202,34 +157,18 @@ public final class RError extends RuntimeException {
 
     @TruffleBoundary
     public static void warning(Message msg, Object... args) {
-        RContext.getInstance().setEvalWarning(formatMessage(msg, args));
+        warning(null, msg, args);
     }
 
     @TruffleBoundary
     public static void warning(SourceSection src, Message msg, Object... args) {
-        RContext.getInstance().setEvalWarning(wrapMessage("In " + src.getCode() + " :", formatMessage(msg, args)));
+        RErrorHandling.warningcall(src, msg, args);
     }
 
     @TruffleBoundary
     public static void performanceWarning(String string) {
         if (FastROptions.PerformanceWarnings.getValue()) {
             warning(Message.PERFORMANCE, string);
-        }
-    }
-
-    @TruffleBoundary
-    public static String formatMessage(Message msg, Object... args) {
-        return msg.hasArgs ? String.format(msg.message, args) : msg.message;
-    }
-
-    private static String wrapMessage(String preamble, String message) {
-        // TODO find out about R's line-wrap policy
-        // (is 74 a given percentage of console width?)
-        if (preamble.length() + 1 + message.length() >= 74) {
-            // +1 is for the extra space following the colon
-            return preamble + "\n  " + message;
-        } else {
-            return preamble + " " + message;
         }
     }
 
@@ -374,6 +313,7 @@ public final class RError extends RuntimeException {
         CANNOT_CHANGE_DIRECTORY("cannot change working directory"),
         FIRST_ARG_MUST_BE_STRING("first argument must be a character string"),
         ARG_MUST_BE_CHARACTER_VECTOR_LENGTH_ONE("argument must be a character vector of length 1"),
+        ARG_SHOULD_BE_CHARACTER_VECTOR_LENGTH_ONE("argument should be a character vector of length 1\nall but the first element will be ignored"),
         ZERO_LENGTH_VARIABLE("attempt to use zero-length variable name"),
         ARGUMENT_NOT_INTERPRETABLE_LOGICAL("argument is not interpretable as logical"),
         OPERATIONS_NUMERIC_LOGICAL_COMPLEX("operations are possible only for numeric, logical or complex types"),
@@ -599,10 +539,17 @@ public final class RError extends RuntimeException {
         NO_INDEX("no index specified"),
         INVALID_ARG_NUMBER("%s: invalid number of arguments"),
         BAD_HANDLER_DATA("bad handler data"),
+        DEPARSE_INVALID_CUTOFF("invalid 'cutoff' value for 'deparse', using default"),
+        FILE_CANNOT_CREATE("cannot create file '%s'"),
+        FILE_CANNOT_LINK("  cannot link '%s' to '%s', reason %s"),
+        FILE_CANNOT_COPY("  cannot link '%s' to '%s', reason %s"),
+        FILE_CANNOT_REMOVE("  cannot remove file '%s'"),
+        FILE_CANNOT_RENAME("  cannot rename file '%s' to '%s'"),
+        DIR_CANNOT_CREATE("cannot create dir '%s'"),
         PERFORMANCE("performance problem: %s");
 
         public final String message;
-        private final boolean hasArgs;
+        final boolean hasArgs;
 
         private Message(String message) {
             this.message = message;

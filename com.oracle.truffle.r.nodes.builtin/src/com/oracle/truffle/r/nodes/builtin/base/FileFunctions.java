@@ -121,7 +121,7 @@ public class FileFunctions {
                             try {
                                 out.write(buf);
                             } catch (IOException ex) {
-                                RContext.getInstance().setEvalWarning(RError.Message.FILE_APPEND_WRITE.message);
+                                RError.warning(getEncapsulatingSourceSection(), RError.Message.FILE_APPEND_WRITE);
                                 status[0] = RRuntime.LOGICAL_FALSE;
                             }
                         }
@@ -155,7 +155,7 @@ public class FileFunctions {
                     } catch (IOException ex) {
                         ok = false;
                         if (showWarnings == RRuntime.LOGICAL_TRUE) {
-                            RContext.getInstance().setEvalWarning("cannot create file '" + path + "'");
+                            RError.warning(getEncapsulatingSourceSection(), RError.Message.FILE_CANNOT_CREATE, path);
                         }
                     }
                     status[i] = RRuntime.asLogical(ok);
@@ -374,7 +374,7 @@ public class FileFunctions {
                         }
                     } catch (UnsupportedOperationException | IOException ex) {
                         status[i] = RRuntime.LOGICAL_FALSE;
-                        RContext.getInstance().setEvalWarning("  cannot link '" + from + "' to '" + to + "', reason " + ex.getMessage());
+                        RError.warning(getEncapsulatingSourceSection(), RError.Message.FILE_CANNOT_LINK, from, to, ex.getMessage());
                     }
                 }
             }
@@ -433,7 +433,7 @@ public class FileFunctions {
                     boolean ok = f.delete();
                     status[i] = RRuntime.asLogical(ok);
                     if (!ok) {
-                        RContext.getInstance().setEvalWarning("  cannot remove file '" + path + "'");
+                        RError.warning(getEncapsulatingSourceSection(), RError.Message.FILE_CANNOT_REMOVE, path);
                     }
                 }
             }
@@ -470,7 +470,7 @@ public class FileFunctions {
                     boolean ok = new File(Utils.tildeExpand(from)).renameTo(new File(Utils.tildeExpand(to)));
                     status[i] = RRuntime.asLogical(ok);
                     if (!ok) {
-                        RContext.getInstance().setEvalWarning("  cannot rename file '" + from + "' to '" + to + "'");
+                        RError.warning(getEncapsulatingSourceSection(), RError.Message.FILE_CANNOT_RENAME, from, to);
                     }
                 }
             }
@@ -722,7 +722,7 @@ public class FileFunctions {
                         }
                     } catch (UnsupportedOperationException | IOException ex) {
                         status[i] = RRuntime.LOGICAL_FALSE;
-                        RContext.getInstance().setEvalWarning("  cannot link '" + from + "' to '" + to + "', reason " + ex.getMessage());
+                        RError.warning(getEncapsulatingSourceSection(), RError.Message.FILE_CANNOT_COPY, from, to, ex.getMessage());
                     }
                 }
             }
@@ -851,7 +851,7 @@ public class FileFunctions {
                 return true;
             } catch (IOException ex) {
                 if (RRuntime.fromLogical(showWarnings)) {
-                    RContext.getInstance().setEvalWarning("cannot create dir '" + path + "'");
+                    RError.warning(getEncapsulatingSourceSection(), RError.Message.DIR_CANNOT_CREATE, path);
                 }
                 return false;
             }

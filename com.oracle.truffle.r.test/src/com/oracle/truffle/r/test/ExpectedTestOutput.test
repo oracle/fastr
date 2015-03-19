@@ -1,3 +1,23 @@
+##com.oracle.truffle.r.test.library.base.TestConditionHandling.testTryCatch
+#{ e <- simpleError("test error"); tryCatch(stop(e), error = function(e) e, finally = print("Hello"))}
+[1] "Hello"
+<simpleError: test error>
+
+##com.oracle.truffle.r.test.library.base.TestConditionHandling.testTryCatch
+#{ e <- simpleError("test error"); tryCatch(stop(e), finally = print("Hello")) }
+Error: test error
+[1] "Hello"
+
+##com.oracle.truffle.r.test.library.base.TestConditionHandling.testTryCatch
+#{ tryCatch(1, finally = print("Hello")) }
+[1] "Hello"
+[1] 1
+
+##com.oracle.truffle.r.test.library.base.TestConditionHandling.testTryCatch
+#{ tryCatch(stop("fred"), finally = print("Hello")) }
+Error in tryCatchList(expr, classes, parentenv, handlers) : fred
+[1] "Hello"
+
 ##com.oracle.truffle.r.test.library.base.TestConnections.testFileWriteReadBin
 #{ readBin(file("com.oracle.truffle.r.test/library.base.conn/wb1", "rb"), 3) }
 numeric(0)

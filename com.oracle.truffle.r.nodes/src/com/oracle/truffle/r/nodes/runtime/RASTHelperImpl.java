@@ -256,6 +256,10 @@ public class RASTHelperImpl implements RASTHelper {
         RASTDeparse.deparse(state, f);
     }
 
+    /*
+     * Support for calling out to R functions from within FastR when not in a Truffle context.
+     */
+
     private static RCallNode getCallNode(Source source) {
         try {
             return (RCallNode) ((RLanguage) RContext.getEngine().parse(source).getDataAt(0)).getRep();
@@ -281,7 +285,7 @@ public class RASTHelperImpl implements RASTHelper {
         try {
             return (REnvironment) RContext.getEngine().eval(RDataFactory.createLanguage(call), REnvironment.globalEnv(), depth + 1);
         } catch (PutException ex) {
-            throw RError.error((SourceSection) null, ex);
+            throw RInternalError.shouldNotReachHere("findNamespace");
         }
     }
 
@@ -297,8 +301,24 @@ public class RASTHelperImpl implements RASTHelper {
         try {
             RContext.getEngine().eval(RDataFactory.createLanguage(callNode), REnvironment.globalEnv(), depth + 1);
         } catch (PutException ex) {
-            throw RError.error((SourceSection) null, ex);
+            throw RInternalError.shouldNotReachHere("handleSimpleError");
         }
+    }
+
+    private static final Source SIGNAL_SIMPLE_WARNING_SOURCE = Source.asPseudoFile(".signalSimpleWarning(call, msg)", "<.signalSimpleWarning>");
+    private static RCallNode signalSimpleWarningCall;
+
+    public void signalSimpleWarning(RStringVector msg, Object call, int depth) {
+        if (signalSimpleWarningCall == null) {
+            signalSimpleWarningCall = getCallNode(SIGNAL_SIMPLE_WARNING_SOURCE);
+        }
+        RCallNode callNode = RCallNode.createCloneReplacingArgs(signalSimpleWarningCall, ConstantNode.create(msg), ConstantNode.create(call));
+        try {
+            RContext.getEngine().eval(RDataFactory.createLanguage(callNode), REnvironment.globalEnv(), depth + 1);
+        } catch (PutException ex) {
+            throw RInternalError.shouldNotReachHere("signalSimpleWarning");
+        }
+
     }
 
 }

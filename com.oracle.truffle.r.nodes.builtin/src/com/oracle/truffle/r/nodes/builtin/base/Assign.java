@@ -61,7 +61,7 @@ public abstract class Assign extends RInvisibleBuiltinNode {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_FIRST_ARGUMENT);
         } else {
             warningProfile.enter();
-            RContext.getInstance().setEvalWarning("only the first element is used as variable name");
+            RError.warning(getEncapsulatingSourceSection(), RError.Message.ONLY_FIRST_VARIABLE_NAME);
             return xVec.getDataAt(0);
         }
     }

@@ -252,13 +252,6 @@ public final class RContext extends ExecutionContext {
          */
         RootCallTarget makeCallTarget(Object body, String funName);
 
-        /**
-         * Print 'e' and any associated warnings.
-         *
-         * @param e
-         */
-        void printRError(RError e);
-
     }
 
     private final HashMap<Object, RFunction> cachedFunctions = new HashMap<>();
@@ -354,14 +347,6 @@ public final class RContext extends ExecutionContext {
         List<String> l = evalWarnings;
         evalWarnings = null;
         return l;
-    }
-
-    @TruffleBoundary
-    public void setEvalWarning(String s) {
-        if (evalWarnings == null) {
-            evalWarnings = new LinkedList<>();
-        }
-        evalWarnings.add(s);
     }
 
     @Override

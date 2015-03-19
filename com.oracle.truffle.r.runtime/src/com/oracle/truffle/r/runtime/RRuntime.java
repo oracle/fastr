@@ -694,13 +694,28 @@ public class RRuntime {
     }
 
     /**
-     * Checks and converts an object into a String.
+     * Checks and converts an object into a String. TODO rename as checkString
      */
     public static String asString(Object obj) {
         if (obj instanceof String) {
             return (String) obj;
         } else if (obj instanceof RStringVector) {
             return ((RStringVector) obj).getDataAt(0);
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * Java equivalent of R as.integer (almost).
+     */
+    public static Integer asInteger(Object obj) {
+        if (obj instanceof Integer) {
+            return (Integer) obj;
+        } else if (obj instanceof Double) {
+            return (int) ((double) obj);
+        } else if (obj instanceof Byte) {
+            return (int) ((byte) obj);
         } else {
             return null;
         }

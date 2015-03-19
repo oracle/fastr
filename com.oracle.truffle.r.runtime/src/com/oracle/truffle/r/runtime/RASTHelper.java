@@ -58,9 +58,17 @@ public interface RASTHelper {
     void deparse(RDeparse.State state, RFunction f);
 
     /**
-     * Finds a namespace during unserialization.
+     * Call out to R to find a namespace during unserialization.
      */
     REnvironment findNamespace(RStringVector name, int depth);
 
+    /**
+     * Call out to R to .handleSimpleError.
+     */
     void handleSimpleError(RFunction f, RStringVector msg, Object call, int depth);
+
+    /**
+     * Call out to T to .signalSimpleWarning.
+     */
+    void signalSimpleWarning(RStringVector msg, Object call, int depth);
 }
