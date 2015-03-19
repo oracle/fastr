@@ -57,48 +57,48 @@ suite = {
     },
 
     "JNR_POSIX" : {
-      "path" : "lib/jnr-posix-3.0.1.jar",
+      "path" : "lib/jnr-posix-3.0.10.jar",
       "urls" : [
-        "http://lafo.ssw.uni-linz.ac.at/graal-external-deps/jnr-posix-3.0.1.jar",
-        "https://search.maven.org/remotecontent?filepath=com/github/jnr/jnr-posix/3.0.1/jnr-posix-3.0.1.jar",
+        "http://lafo.ssw.uni-linz.ac.at/graal-external-deps/jnr-posix-3.0.10.jar",
+        "https://search.maven.org/remotecontent?filepath=com/github/jnr/jnr-posix/3.0.10/jnr-posix-3.0.10.jar",
       ],
-      "sha1" : "5ac18caed12108123c959c8acedef76ca4f28cb3",
+      "sha1" : "3354732f2922db2b33342345b059381161b8d85f",
     },
 
     "JNR_CONSTANTS" : {
-      "path" : "lib/jnr-constants-0.8.5.jar",
+      "path" : "lib/jnr-constants-0.8.6.jar",
       "urls" : [
-        "http://lafo.ssw.uni-linz.ac.at/graal-external-deps/jnr-constants-0.8.5.jar",
-        "https://search.maven.org/remotecontent?filepath=com/github/jnr/jnr-constants/0.8.5/jnr-constants-0.8.5.jar",
+        "http://lafo.ssw.uni-linz.ac.at/graal-external-deps/jnr-constants-0.8.6.jar",
+        "https://search.maven.org/remotecontent?filepath=com/github/jnr/jnr-constants/0.8.6/jnr-constants-0.8.6.jar",
       ],
-      "sha1" : "f84cca9e21f1f763a9eaf33de3d6a66a20ed7af0",
+      "sha1" : "692b0031a2854988431f57581e4058bf5cee7c8b",
     },
 
     "JNR_FFI" : {
-      "path" : "lib/jnr-ffi-1.0.10.jar",
+      "path" : "lib/jnr-ffi-2.0.2.jar",
       "urls" : [
-        "http://lafo.ssw.uni-linz.ac.at/graal-external-deps/jnr-ffi-1.0.10.jar",
-        "https://search.maven.org/remotecontent?filepath=com/github/jnr/jnr-ffi/1.0.10/jnr-ffi-1.0.10.jar",
+        "http://lafo.ssw.uni-linz.ac.at/graal-external-deps/jnr-ffi-2.0.2.jar",
+        "https://search.maven.org/remotecontent?filepath=com/github/jnr/jnr-ffi/2.0.2/jnr-ffi-2.0.2.jar",
       ],
-      "sha1" : "646428e83a0e2ab4743091781ea98e3164c6d707",
+      "sha1" : "9161bdb3007cdff94d7b2843bdb5d0e8fb209bf1",
     },
 
     "JFFI" : {
-      "path" : "lib/jffi-1.2.7.jar",
+      "path" : "lib/jffi-1.2.8.jar",
       "urls" : [
-        "http://lafo.ssw.uni-linz.ac.at/graal-external-deps/jffi-1.2.7.jar",
-        "https://search.maven.org/remotecontent?filepath=com/github/jnr/jffi/1.2.7/jffi-1.2.7.jar",
+        "http://lafo.ssw.uni-linz.ac.at/graal-external-deps/jffi-1.2.8.jar",
+        "https://search.maven.org/remotecontent?filepath=com/github/jnr/jffi/1.2.8/jffi-1.2.8.jar",
       ],
-      "sha1" : "acda5c46140404e08b3526f39db1504874b34b4c",
+      "sha1" : "bb04c5cf07c114dfdb96a807a92e209edc884822",
     },
 
     "JFFI_NATIVE" : {
-      "path" : "lib/jffi-1.2.7-native.jar",
+      "path" : "lib/jffi-1.2.8-native.jar",
       "urls" : [
-        "http://lafo.ssw.uni-linz.ac.at/graal-external-deps/jffi-1.2.7-native.jar",
-        "https://search.maven.org/remotecontent?filepath=com/github/jnr/jffi/1.2.7/jffi-1.2.7-native.jar",
+        "http://lafo.ssw.uni-linz.ac.at/graal-external-deps/jffi-1.2.8-native.jar",
+        "https://search.maven.org/remotecontent?filepath=com/github/jnr/jffi/1.2.8/jffi-1.2.8-native.jar",
       ],
-      "sha1" : "4e8c876383acb37da4347902a0a775aefd51de09",
+      "sha1" : "043462be96ce1dd3105b928c0271b056dbe4d75d",
     },
 
     "ASM" : {
