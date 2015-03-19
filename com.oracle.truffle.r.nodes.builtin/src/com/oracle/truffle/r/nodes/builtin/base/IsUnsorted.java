@@ -26,7 +26,6 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.binary.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
@@ -39,8 +38,8 @@ import com.oracle.truffle.r.runtime.ops.*;
 public abstract class IsUnsorted extends RBuiltinNode {
 
     @Override
-    public RNode[] getParameterValues() {
-        return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RRuntime.LOGICAL_FALSE)};
+    public Object[] getDefaultParameterValues() {
+        return new Object[]{RMissing.instance, RRuntime.LOGICAL_FALSE};
     }
 
     @Child private BinaryBooleanNode ge = BinaryBooleanNodeFactory.create(BinaryCompare.GREATER_EQUAL, new RNode[1], getBuiltin(), getSuppliedSignature());

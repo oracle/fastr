@@ -25,13 +25,9 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.control.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -39,7 +35,6 @@ import com.oracle.truffle.r.runtime.data.*;
 @RBuiltin(name = "return", kind = PRIMITIVE, parameterNames = {"value"}, nonEvalArgs = {0})
 public abstract class Return extends RBuiltinNode {
 
-    @CompilationFinal private static final RNode[] PARAMETER_VALUES = new RNode[]{ConstantNode.create(RNull.instance)};
     @Child private PromiseHelperNode promiseHelper;
 
     protected PromiseHelperNode initPromiseHelper() {
@@ -51,8 +46,8 @@ public abstract class Return extends RBuiltinNode {
     }
 
     @Override
-    public RNode[] getParameterValues() {
-        return PARAMETER_VALUES;
+    public Object[] getDefaultParameterValues() {
+        return new Object[]{RNull.instance};
     }
 
     @Specialization

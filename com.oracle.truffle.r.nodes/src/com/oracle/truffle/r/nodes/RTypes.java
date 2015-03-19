@@ -32,9 +32,8 @@ import com.oracle.truffle.r.runtime.env.*;
 
 /**
  * Whenever you add a type {@code T} to the list below, make sure a corresponding {@code executeT()}
- * method is added to {@link RNode}, {@code wrap} and {@code proxy} methods are added to
- * {@link RProxyNode}, a {@code typeof} method is added to {@code TypeoNode} and a {@code print}
- * method added to {code PrettyPrinterNode}.
+ * method is added to {@link RNode}, a {@code typeof} method is added to {@code TypeoNode} and a
+ * {@code print} method added to {code PrettyPrinterNode}.
  *
  * @see RNode
  */

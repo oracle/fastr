@@ -31,7 +31,6 @@ import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
@@ -57,9 +56,9 @@ public abstract class Match extends RBuiltinNode {
     private final ConditionProfile bigTableProfile = ConditionProfile.createBinaryProfile();
 
     @Override
-    public RNode[] getParameterValues() {
+    public Object[] getDefaultParameterValues() {
         // x, table, nomatch = NA_integer_, incomparables = NULL
-        return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RRuntime.INT_NA), ConstantNode.create(RNull.instance)};
+        return new Object[]{RMissing.instance, RMissing.instance, RRuntime.INT_NA, RNull.instance};
     }
 
     private String castString(VirtualFrame frame, Object operand) {

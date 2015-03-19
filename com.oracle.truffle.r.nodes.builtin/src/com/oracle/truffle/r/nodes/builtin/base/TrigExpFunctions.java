@@ -27,7 +27,6 @@ import com.oracle.truffle.api.dsl.CreateCast;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.utilities.BranchProfile;
 import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.access.ConstantNode.ConstantMissingNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.CastDoubleNodeGen;
@@ -49,8 +48,8 @@ public class TrigExpFunctions {
         private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
         @Override
-        public RNode[] getParameterValues() {
-            return new RNode[]{ConstantNode.create(RMissing.instance)};
+        public Object[] getDefaultParameterValues() {
+            return new Object[]{RMissing.instance};
         }
 
         @Specialization

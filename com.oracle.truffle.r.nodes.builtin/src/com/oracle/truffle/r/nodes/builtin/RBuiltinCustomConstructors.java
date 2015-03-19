@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -43,6 +43,8 @@ public class RBuiltinCustomConstructors {
                 return new com.oracle.truffle.r.nodes.builtin.base.Ceiling(node);
             case "com.oracle.truffle.r.nodes.builtin.base.Sum":
                 return new com.oracle.truffle.r.nodes.builtin.base.Sum(node);
+            case "com.oracle.truffle.r.nodes.builtin.base.Recall":
+                return new com.oracle.truffle.r.nodes.builtin.base.Recall(node);
             default:
                 throw Utils.fail("unimplemented RCustomBuiltinNode: " + nodeClassName);
         }

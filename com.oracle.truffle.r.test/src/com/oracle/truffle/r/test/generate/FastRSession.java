@@ -32,7 +32,7 @@ import com.oracle.truffle.r.runtime.ffi.*;
 
 public final class FastRSession implements RSession {
 
-    private static final int TIMEOUT = 10000; // 10 seconds until tests are killed
+    private static final int TIMEOUT = System.getProperty("DisableTestTimeout") != null ? Integer.MAX_VALUE : 10000;
 
     /**
      * A (virtual) console handler that collects the output in a {@link StringBuilder} for

@@ -30,7 +30,6 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.access.array.read.*;
 import com.oracle.truffle.r.nodes.access.array.write.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -245,8 +244,8 @@ public class InfixEmulationFunctions {
         @Child private DispatchedCallNode dcn;
 
         @Override
-        public RNode[] getParameterValues() {
-            return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance)};
+        public Object[] getDefaultParameterValues() {
+            return new Object[]{RMissing.instance, RMissing.instance, RMissing.instance};
         }
 
         @Specialization(guards = {"!noInd(inds)", "isObject(frame, x)"})
@@ -305,8 +304,8 @@ public class InfixEmulationFunctions {
     public abstract static class AccessArraySubsetDefaultBuiltin extends AccessArraySubsetBuiltinBase {
 
         @Override
-        public RNode[] getParameterValues() {
-            return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance)};
+        public Object[] getDefaultParameterValues() {
+            return new Object[]{RMissing.instance, RMissing.instance, RMissing.instance};
         }
 
         @Override
@@ -361,8 +360,8 @@ public class InfixEmulationFunctions {
         @Child private DispatchedCallNode dcn;
 
         @Override
-        public RNode[] getParameterValues() {
-            return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RRuntime.LOGICAL_TRUE)};
+        public Object[] getDefaultParameterValues() {
+            return new Object[]{RMissing.instance, RMissing.instance, RRuntime.LOGICAL_TRUE};
         }
 
         @Specialization(guards = {"!noInd(inds)", "isObject(frame, x)"})
@@ -401,8 +400,8 @@ public class InfixEmulationFunctions {
     public abstract static class AccessArraySubscriptDefaultBuiltin extends AccessArraySubscriptBuiltinBase {
 
         @Override
-        public RNode[] getParameterValues() {
-            return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RRuntime.LOGICAL_TRUE)};
+        public Object[] getDefaultParameterValues() {
+            return new Object[]{RMissing.instance, RMissing.instance, RRuntime.LOGICAL_TRUE};
         }
 
         @Override
@@ -473,8 +472,8 @@ public class InfixEmulationFunctions {
         @Child private DispatchedCallNode dcn;
 
         @Override
-        public RNode[] getParameterValues() {
-            return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance)};
+        public Object[] getDefaultParameterValues() {
+            return new Object[]{RMissing.instance, RMissing.instance, RMissing.instance};
         }
 
         @Specialization(guards = {"!noInd(args)", "isObject(frame, x)"})
@@ -512,8 +511,8 @@ public class InfixEmulationFunctions {
         @Child private DispatchedCallNode dcn;
 
         @Override
-        public RNode[] getParameterValues() {
-            return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance)};
+        public Object[] getDefaultParameterValues() {
+            return new Object[]{RMissing.instance, RMissing.instance, RMissing.instance};
         }
 
         @Specialization(guards = {"!noInd(args)", "isObject(frame, x)"})

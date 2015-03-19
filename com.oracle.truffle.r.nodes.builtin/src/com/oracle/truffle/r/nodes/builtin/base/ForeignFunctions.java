@@ -22,8 +22,6 @@ import com.oracle.truffle.r.library.graphics.*;
 import com.oracle.truffle.r.library.methods.*;
 import com.oracle.truffle.r.library.stats.*;
 import com.oracle.truffle.r.library.utils.*;
-import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
@@ -50,9 +48,8 @@ public class ForeignFunctions {
         protected final BranchProfile errorProfile = BranchProfile.create();
 
         @Override
-        public RNode[] getParameterValues() {
-            return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(EMPTY_OBJECT_ARRAY), ConstantNode.create(RRuntime.LOGICAL_FALSE),
-                            ConstantNode.create(RRuntime.LOGICAL_FALSE), ConstantNode.create(RMissing.instance), ConstantNode.create(RMissing.instance)};
+        public Object[] getDefaultParameterValues() {
+            return new Object[]{RMissing.instance, EMPTY_OBJECT_ARRAY, RRuntime.LOGICAL_FALSE, RRuntime.LOGICAL_FALSE, RMissing.instance, RMissing.instance};
         }
 
         protected int[] checkNAs(int argIndex, int[] data) {
@@ -298,8 +295,8 @@ public class ForeignFunctions {
         private final ConditionProfile noDims = ConditionProfile.createBinaryProfile();
 
         @Override
-        public RNode[] getParameterValues() {
-            return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(EMPTY_OBJECT_ARRAY), ConstantNode.create(RMissing.instance)};
+        public Object[] getDefaultParameterValues() {
+            return new Object[]{RMissing.instance, EMPTY_OBJECT_ARRAY, RMissing.instance};
         }
 
         // TODO: handle more argument types (this is sufficient to run the b25 benchmarks)

@@ -160,15 +160,9 @@ public class PromiseHelperNode extends Node {
         }
 
         // Evaluate guarded by underEvaluation
-        try {
-            current.setUnderEvaluation(true);
-
-            Object obj = generateValue(frame, current, callSrc);
-            setValue(obj, current);
-            return obj;
-        } finally {
-            current.setUnderEvaluation(false);
-        }
+        Object obj = generateValue(frame, current, callSrc);
+        setValue(obj, current);
+        return obj;
     }
 
     /**
@@ -188,28 +182,34 @@ public class PromiseHelperNode extends Node {
     }
 
     private Object generateValueDefault(VirtualFrame frame, RPromise promise, SourceSection callSrc) {
-        if (isInOriginFrame(frame, promise)) {
-            if (expressionInlineCache == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                expressionInlineCache = insert(InlineCacheNode.createExpression(3));
-            }
-            return expressionInlineCache.execute(frame, (RNode) promise.getRep());
-        } else {
-            Frame promiseFrame = promiseFrameProfile.profile(promise.getFrame());
-            assert promiseFrame != null;
-            SourceSection oldCallSource = RArguments.getCallSourceSection(promiseFrame);
-            try {
-                RArguments.setCallSourceSection(promiseFrame, callSrc);
+        try {
+            promise.setUnderEvaluation(true);
 
-                if (promiseClosureCache == null) {
+            if (isInOriginFrame(frame, promise)) {
+                if (expressionInlineCache == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    promiseClosureCache = insert(InlineCacheNode.createPromise(3));
+                    expressionInlineCache = insert(InlineCacheNode.createExpression(3));
                 }
+                return expressionInlineCache.execute(frame, (RNode) promise.getRep());
+            } else {
+                Frame promiseFrame = promiseFrameProfile.profile(promise.getFrame());
+                assert promiseFrame != null;
+                SourceSection oldCallSource = RArguments.getCallSourceSection(promiseFrame);
+                try {
+                    RArguments.setCallSourceSection(promiseFrame, callSrc);
 
-                return promiseClosureCache.execute(promiseFrame, promise.getClosure());
-            } finally {
-                RArguments.setCallSourceSection(promiseFrame, oldCallSource);
+                    if (promiseClosureCache == null) {
+                        CompilerDirectives.transferToInterpreterAndInvalidate();
+                        promiseClosureCache = insert(InlineCacheNode.createPromise(3));
+                    }
+
+                    return promiseClosureCache.execute(promiseFrame, promise.getClosure());
+                } finally {
+                    RArguments.setCallSourceSection(promiseFrame, oldCallSource);
+                }
             }
+        } finally {
+            promise.setUnderEvaluation(false);
         }
     }
 
@@ -325,7 +325,7 @@ public class PromiseHelperNode extends Node {
     private final ConditionProfile isOptPromisedProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile isDeoptimizedProfile = ConditionProfile.createBinaryProfile();
     private final BranchProfile fallbackProfile = BranchProfile.create();
-    private final ValueProfile eagerValueProfile = ValueProfile.createPrimitiveProfile();
+    private final ValueProfile eagerValueProfile = ValueProfile.createClassProfile();
 
     public boolean isInlined(RPromise promise) {
         return isInlinedProfile.profile(promise.isInlined());

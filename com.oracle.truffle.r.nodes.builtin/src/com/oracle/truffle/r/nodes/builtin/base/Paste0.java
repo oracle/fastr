@@ -28,7 +28,6 @@ import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -43,9 +42,9 @@ public abstract class Paste0 extends RBuiltinNode {
     @Child private Paste pasteNode;
 
     @Override
-    public RNode[] getParameterValues() {
+    public Object[] getDefaultParameterValues() {
         // ..., collapse = NULL
-        return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(RNull.instance)};
+        return new Object[]{RMissing.instance, RNull.instance};
     }
 
     private Object paste(VirtualFrame frame, RList values, Object collapse) {

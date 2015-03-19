@@ -29,7 +29,6 @@ import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
@@ -79,8 +78,8 @@ public abstract class Repeat extends RBuiltinNode {
     }
 
     @Override
-    public RNode[] getParameterValues() {
-        return new RNode[]{ConstantNode.create(RMissing.instance), ConstantNode.create(1), ConstantNode.create(RRuntime.INT_NA), ConstantNode.create(1)};
+    public Object[] getDefaultParameterValues() {
+        return new Object[]{RMissing.instance, 1, RRuntime.INT_NA, 1};
     }
 
     @CreateCast("arguments")
