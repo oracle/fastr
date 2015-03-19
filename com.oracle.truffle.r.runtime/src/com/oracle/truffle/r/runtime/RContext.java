@@ -256,7 +256,6 @@ public final class RContext extends ExecutionContext {
 
     private final HashMap<Object, RFunction> cachedFunctions = new HashMap<>();
     private final GlobalAssumptions globalAssumptions = new GlobalAssumptions();
-    private LinkedList<String> evalWarnings;
 
     /**
      * Denote whether the result of an expression should be printed in the shell or not.
@@ -341,12 +340,6 @@ public final class RContext extends ExecutionContext {
             throw Utils.fail("no command args set");
         }
         return commandArgs;
-    }
-
-    public List<String> extractEvalWarnings() {
-        List<String> l = evalWarnings;
-        evalWarnings = null;
-        return l;
     }
 
     @Override
