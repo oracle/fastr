@@ -103,7 +103,7 @@ public class TestRPackages extends TestBase {
 
     private static final PackagePaths packagePaths = new PackagePaths();
 
-    private static final String[] TEST_PACKAGES = new String[]{"vanilla"/* , "testrffi" */};
+    private static final String[] TEST_PACKAGES = new String[]{"vanilla", "testrffi"};
 
     @BeforeClass
     public static void setupInstallTestPackages() {
@@ -127,7 +127,6 @@ public class TestRPackages extends TestBase {
     }
 
     @Test
-    @Ignore
     // FIXME MacOS GnuR install fails since Yosemite
     public void testLoadTestRFFI() {
         assertTemplateEval(TestBase.template(
