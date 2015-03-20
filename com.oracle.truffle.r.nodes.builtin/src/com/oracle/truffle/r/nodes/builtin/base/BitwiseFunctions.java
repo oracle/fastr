@@ -11,9 +11,9 @@
 
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.binary.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
@@ -25,21 +25,32 @@ public class BitwiseFunctions {
 
     public abstract static class BasicBitwise extends RBuiltinNode {
 
-        @Child protected CastTypeNode castTypeNodeA;
-        @Child protected CastTypeNode castTypeNodeB;
-        @Child protected TypeofNode typeof;
+        private final BranchProfile errorProfile = BranchProfile.create();
+
+        @Child protected CastTypeNode castTypeA = CastTypeNodeGen.create(null, null);
+        @Child protected CastTypeNode castTypeB = CastTypeNodeGen.create(null, null);
+        @Child protected TypeofNode typeofA = TypeofNodeGen.create(null);
+        @Child protected TypeofNode typeofB = TypeofNodeGen.create(null);
 
         protected enum Operation {
-            AND,
-            OR,
-            XOR,
-            SHIFTR,
-            SHIFTL
+            AND("bitwAnd"),
+            OR("bitwOr"),
+            XOR("bitwXor"),
+            NOT("bitNot"),
+            SHIFTR("bitShiftR"),
+            SHIFTL("bitShiftL");
+
+            private final String name;
+
+            private Operation(String name) {
+                this.name = name;
+            }
         }
 
         protected Object basicBit(VirtualFrame frame, RAbstractVector a, RAbstractVector b, Operation op) {
-            RAbstractIntVector aVec = (RAbstractIntVector) castTypeNodeA.execute(frame, a, RType.Integer);
-            RAbstractIntVector bVec = (RAbstractIntVector) castTypeNodeB.execute(frame, b, RType.Integer);
+            checkBasicBit(a, b, op);
+            RAbstractIntVector aVec = (RAbstractIntVector) castTypeA.execute(frame, a, RType.Integer);
+            RAbstractIntVector bVec = (RAbstractIntVector) castTypeB.execute(frame, b, RType.Integer);
             int aLen = aVec.getLength();
             int bLen = bVec.getLength();
             int ansSize = (aLen != 0 && bLen != 0) ? Math.max(aLen, bLen) : 0;
@@ -87,7 +98,7 @@ public class BitwiseFunctions {
         }
 
         protected Object bitNot(VirtualFrame frame, RAbstractVector a) {
-            RAbstractIntVector aVec = (RAbstractIntVector) castTypeNodeA.execute(frame, a, RType.Integer);
+            RAbstractIntVector aVec = (RAbstractIntVector) castTypeA.execute(frame, a, RType.Integer);
             int[] ans = new int[aVec.getLength()];
             for (int i = 0; i < aVec.getLength(); i++) {
                 ans[i] = ~aVec.getDataAt(i);
@@ -103,48 +114,38 @@ public class BitwiseFunctions {
             return RDataFactory.createIntVector(na, RDataFactory.INCOMPLETE_VECTOR);
         }
 
-        protected void checkBasicBit(RAbstractVector a, RAbstractVector b, String op) {
-            initChildren();
+        protected void checkBasicBit(RAbstractVector a, RAbstractVector b, Operation op) {
             hasSameTypes(a, b);
             hasSupportedType(a, op);
         }
 
-        protected void checkShiftOrNot(RAbstractVector a, String op) {
-            initChildren();
+        protected void checkShiftOrNot(RAbstractVector a, Operation op) {
             hasSupportedType(a, op);
         }
 
         protected void hasSameTypes(RAbstractVector a, RAbstractVector b) {
-            RType aType = typeof.execute(a);
-            RType bType = typeof.execute(b);
+            RType aType = typeofA.execute(a);
+            RType bType = typeofB.execute(b);
             boolean aCorrectType = (aType == RType.Integer || aType == RType.Double) ? true : false;
             boolean bCorrectType = (bType == RType.Integer || bType == RType.Double) ? true : false;
             if ((aCorrectType && bCorrectType) || aType == bType) {
                 return;
             } else {
+                errorProfile.enter();
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.SAME_TYPE, "a", "b");
             }
         }
 
-        protected void hasSupportedType(RAbstractVector a, String op) {
+        protected void hasSupportedType(RAbstractVector a, Operation op) {
             if (!(a instanceof RAbstractIntVector) && !(a instanceof RAbstractDoubleVector)) {
-                String type = typeof.execute(a).getName();
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.UNIMPLEMENTED_TYPE_IN_FUNCTION, type, op);
+                errorProfile.enter();
+                String type = typeofA.execute(a).getName();
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.UNIMPLEMENTED_TYPE_IN_FUNCTION, type, op.name);
             }
         }
 
         protected boolean shiftByCharacter(RAbstractVector n) {
-            initChildren();
-            return typeof.execute(n) == RType.Character;
-        }
-
-        protected void initChildren() {
-            if (typeof == null) {
-                typeof = insert(TypeofNodeGen.create(null));
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                castTypeNodeA = insert(CastTypeNodeGen.create(null, null));
-                castTypeNodeB = insert(CastTypeNodeGen.create(null, null));
-            }
+            return typeofB.execute(n) == RType.Character;
         }
 
     }
@@ -155,7 +156,6 @@ public class BitwiseFunctions {
         @Specialization
         protected Object bitwAnd(VirtualFrame frame, RAbstractVector a, RAbstractVector b) {
             controlVisibility();
-            checkBasicBit(a, b, "bitwAnd");
             return basicBit(frame, a, b, Operation.AND);
         }
 
@@ -167,7 +167,6 @@ public class BitwiseFunctions {
         @Specialization
         protected Object bitwOr(VirtualFrame frame, RAbstractVector a, RAbstractVector b) {
             controlVisibility();
-            checkBasicBit(a, b, "bitwOr");
             return basicBit(frame, a, b, Operation.OR);
         }
 
@@ -179,7 +178,6 @@ public class BitwiseFunctions {
         @Specialization
         protected Object bitwXor(VirtualFrame frame, RAbstractVector a, RAbstractVector b) {
             controlVisibility();
-            checkBasicBit(a, b, "bitwXor");
             return basicBit(frame, a, b, Operation.XOR);
         }
 
@@ -191,7 +189,6 @@ public class BitwiseFunctions {
         @Specialization(guards = {"!shiftByCharacter(n)"})
         protected Object bitwShiftR(VirtualFrame frame, RAbstractVector a, RAbstractVector n) {
             controlVisibility();
-            checkShiftOrNot(a, "bitShiftR");
             return basicBit(frame, a, n, Operation.SHIFTR);
         }
 
@@ -199,7 +196,7 @@ public class BitwiseFunctions {
         @SuppressWarnings("unused")
         protected Object bitwShiftRChar(VirtualFrame frame, RAbstractVector a, RAbstractVector n) {
             controlVisibility();
-            checkShiftOrNot(a, "bitShiftR");
+            checkShiftOrNot(a, Operation.SHIFTR);
             return makeNA(a.getLength());
         }
 
@@ -211,7 +208,6 @@ public class BitwiseFunctions {
         @Specialization(guards = {"!shiftByCharacter(n)"})
         protected Object bitwShiftR(VirtualFrame frame, RAbstractVector a, RAbstractVector n) {
             controlVisibility();
-            checkShiftOrNot(a, "bitShiftL");
             return basicBit(frame, a, n, Operation.SHIFTL);
         }
 
@@ -219,7 +215,7 @@ public class BitwiseFunctions {
         @SuppressWarnings("unused")
         protected Object bitwShiftRChar(VirtualFrame frame, RAbstractVector a, RAbstractVector n) {
             controlVisibility();
-            checkShiftOrNot(a, "bitShiftL");
+            checkShiftOrNot(a, Operation.SHIFTL);
             return makeNA(a.getLength());
         }
 
@@ -231,7 +227,7 @@ public class BitwiseFunctions {
         @Specialization
         protected Object bitwNot(VirtualFrame frame, RAbstractVector a) {
             controlVisibility();
-            checkShiftOrNot(a, "bitNot");
+            checkShiftOrNot(a, Operation.NOT);
             return bitNot(frame, a);
         }
 
