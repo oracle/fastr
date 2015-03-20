@@ -24,12 +24,16 @@ package com.oracle.truffle.r.runtime.conn;
 
 import java.io.*;
 import java.nio.*;
+import java.util.*;
 
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.conn.ConnectionSupport.BaseRConnection;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.*;
+import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
+import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
 
 public class TextConnections {
     public static class TextRConnection extends BaseRConnection {
@@ -57,14 +61,25 @@ public class TextConnections {
                 case Read:
                     delegate = new TextReadRConnection(this);
                     break;
+                case Write:
+                    delegate = new TextWriteRConnection(this);
+                    break;
                 default:
-                    throw RError.nyi((SourceSection) null, "unimplemented open mode: " + getOpenMode());
+                    throw RError.nyi((SourceSection) null, "unimplemented open mode: " + getOpenMode().modeString);
             }
             setDelegate(delegate);
         }
+
+        public String[] getValue() {
+            return ((GetConnectionValue) theConnection).getValue();
+        }
     }
 
-    private static class TextReadRConnection extends DelegateReadRConnection {
+    private interface GetConnectionValue {
+        String[] getValue();
+    }
+
+    private static class TextReadRConnection extends DelegateReadRConnection implements GetConnectionValue {
         private String[] lines;
         private int index;
 
@@ -126,6 +141,107 @@ public class TextConnections {
         @Override
         public String readChar(int nchars, boolean useBytes) throws IOException {
             throw RError.nyi(null, " readChar on text connection");
+        }
+
+        public String[] getValue() {
+            throw RError.nyi(null, " textConnectionValue");
+        }
+
+    }
+
+    private static class TextWriteRConnection extends DelegateWriteRConnection implements GetConnectionValue {
+        String incompleteLine;
+        final RStringVector textVec;
+
+        protected TextWriteRConnection(BaseRConnection base) {
+            super(base);
+            TextRConnection textBase = (TextRConnection) base;
+            try {
+                textVec = RDataFactory.createStringVector(0);
+                textBase.env.put(textBase.nm, textVec);
+            } catch (PutException ex) {
+                throw RError.error((SourceSection) null, ex);
+            }
+            // lock the binding until close
+            textBase.env.lockBinding(textBase.nm);
+        }
+
+        @Override
+        public OutputStream getOutputStream() throws IOException {
+            throw RInternalError.shouldNotReachHere();
+        }
+
+        @Override
+        public void closeAndDestroy() throws IOException {
+            base.closed = true;
+            TextRConnection textBase = (TextRConnection) base;
+            textBase.env.unlockBinding(textBase.nm);
+        }
+
+        @Override
+        public void close() throws IOException {
+        }
+
+        @Override
+        public void writeLines(RAbstractStringVector lines, String sep) throws IOException {
+            StringBuffer sb = new StringBuffer();
+            if (incompleteLine != null) {
+                sb.append(incompleteLine);
+                incompleteLine = null;
+            }
+            for (int i = 0; i < lines.getLength(); i++) {
+                sb.append(lines.getDataAt(i));
+                sb.append(sep);
+            }
+            String result = sb.toString();
+            int nlIndex;
+            int px = 0;
+            ArrayList<String> appendedLines = new ArrayList<>();
+            while ((nlIndex = result.indexOf('\n', px)) >= 0) {
+                appendedLines.add(result.substring(px, nlIndex));
+                nlIndex++;
+                px = nlIndex;
+            }
+            if (px < result.length()) {
+                incompleteLine = result.substring(px);
+            }
+            if (appendedLines.size() > 0) {
+                // update the vector data
+                String[] appendedData = new String[appendedLines.size()];
+                appendedLines.toArray(appendedData);
+                String[] existingData = textVec.getDataWithoutCopying();
+                String[] updateData = appendedData;
+                if (existingData.length > 0) {
+                    updateData = new String[existingData.length + appendedData.length];
+                    System.arraycopy(existingData, 0, updateData, 0, existingData.length);
+                    System.arraycopy(appendedData, 0, updateData, existingData.length, appendedData.length);
+                }
+                textVec.setDataInternal(updateData);
+            }
+        }
+
+        @Override
+        public void flush() throws IOException {
+        }
+
+        @Override
+        public void writeString(String s, boolean nl) throws IOException {
+            // TODO Auto-generated method stub
+
+        }
+
+        @Override
+        public void writeChar(String s, int pad, String eos, boolean useBytes) throws IOException {
+            throw RError.nyi(null, " writeChar on text connection");
+        }
+
+        @Override
+        public void writeBin(ByteBuffer buffer) throws IOException {
+            throw RError.nyi(null, " writeBin on text connection");
+        }
+
+        public String[] getValue() {
+            throw RError.nyi(null, " textConnectionValue");
         }
 
     }

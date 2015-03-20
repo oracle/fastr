@@ -138,6 +138,18 @@ numeric(0)
 #{ con <- textConnection(c("1", "2", "3","4")); readLines(con, 2); readLines(con, 2); readLines(con, 2) }
 character(0)
 
+##com.oracle.truffle.r.test.library.base.TestConnections.testWriteConnection
+#{ con <- textConnection("tcval", open="w"); writeLines("a", con); tcval; close(con) }
+
+##com.oracle.truffle.r.test.library.base.TestConnections.testWriteConnection
+#{ con <- textConnection("tcval", open="w"); writeLines("a", con); writeLines(c("a", "b"), con, sep="."); tcval; close(con) }
+
+##com.oracle.truffle.r.test.library.base.TestConnections.testWriteConnection
+#{ con <- textConnection("tcval", open="w"); writeLines("a", con); writeLines(c("a", "b"), con, sep="."); writeLines("", con); tcval; close(con) }
+
+##com.oracle.truffle.r.test.library.base.TestConnections.testWriteConnection
+#{ con <- textConnection("tcval", open="w"); writeLines("a\nb", con); tcval; close(con) }
+
 ##com.oracle.truffle.r.test.library.base.TestPromiseOptimizations.testDeoptimization
 #{ f <- function(x) { assign('e', function() {x}, parent.frame()) } ; a <- 1 ; f( a ) ; a <- 10 ; e() }
 [1] 10

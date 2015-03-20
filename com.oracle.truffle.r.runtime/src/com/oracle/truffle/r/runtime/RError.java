@@ -152,7 +152,7 @@ public final class RError extends RuntimeException {
      */
     @TruffleBoundary
     public static RError nyi(SourceSection src, String msg) {
-        throw new RError("NYI: " + (src != null ? src.getCode() : "") + msg);
+        throw error(src, RError.Message.NYI, msg);
     }
 
     @TruffleBoundary
@@ -173,6 +173,10 @@ public final class RError extends RuntimeException {
     }
 
     public static enum Message {
+        /**
+         * Eventually this will go away, used only by {@link RError#nyi}.
+         */
+        NYI("%s"),
         /**
          * {@code GENERIC} should only be used in the rare case where a known error is not
          * available.
@@ -251,6 +255,7 @@ public final class RError extends RuntimeException {
         CANNOT_WRITE_CONNECTION("cannot write to this connection"),
         ONLY_READ_BINARY_CONNECTION("can only read from a binary connection"),
         ONLY_WRITE_BINARY_CONNECTION("can only write to a binary connection"),
+        NOT_A_TEXT_CONNECTION("'con' is not a textConnection"),
         MORE_CHARACTERS("more characters requested than are in the string - will zero-pad"),
         TOO_FEW_LINES_READ_LINES("too few lines read in readLineWRITE_ONs"),
         INVALID_CONNECTION("invalid connection"),

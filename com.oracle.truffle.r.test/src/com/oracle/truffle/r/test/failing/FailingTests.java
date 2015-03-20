@@ -700,6 +700,12 @@ public class FailingTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testEnvironmentAssignLockedIgnore_77472658756397dff124f6c0a5008c4c() {
+        assertEvalError("{ x <- 1; lockBinding(\"x\", globalenv()); x <- 1 }");
+        check("TestSimpleBuiltins_testEnvironmentAssignLockedIgnore_77472658756397dff124f6c0a5008c4c");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testEnvironmentIgnore_14d25c1c38347070f388d2f433245dab() {
         assertEvalError("{ as.environment(as.environment) }");
         check("TestSimpleBuiltins_testEnvironmentIgnore_14d25c1c38347070f388d2f433245dab");

@@ -2124,6 +2124,12 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
+    @Ignore
+    public void testEnvironmentAssignLockedIgnore() {
+        assertEvalError("{ x <- 1; lockBinding(\"x\", globalenv()); x <- 1 }");
+    }
+
+    @Test
     public void testFrames() {
         assertEval("{ t1 <- function() {  aa <- 1; t2 <- function() { cat(\"current frame is\", sys.nframe(), \"; \"); cat(\"parents are frame numbers\", sys.parents(), \"; \"); print(ls(envir = sys.frame(-1))) };  t2() }; t1() }");
     }

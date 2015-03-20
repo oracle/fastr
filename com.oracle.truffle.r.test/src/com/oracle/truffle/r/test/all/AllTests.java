@@ -150,6 +150,26 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestConnections_testWriteConnection_c321fbe9533e9250b611c015a9666412() {
+        assertEval("{ con <- textConnection(\"tcval\", open=\"w\"); writeLines(\"a\", con); tcval; close(con) }");
+    }
+
+    @Test
+    public void TestConnections_testWriteConnection_b9fc75ba200bdfba1aa5b54a2c984301() {
+        assertEval("{ con <- textConnection(\"tcval\", open=\"w\"); writeLines(\"a\", con); writeLines(c(\"a\", \"b\"), con, sep=\".\"); tcval; close(con) }");
+    }
+
+    @Test
+    public void TestConnections_testWriteConnection_03511c479a7b62e46e9a5a3893a9b371() {
+        assertEval("{ con <- textConnection(\"tcval\", open=\"w\"); writeLines(\"a\", con); writeLines(c(\"a\", \"b\"), con, sep=\".\"); writeLines(\"\", con); tcval; close(con) }");
+    }
+
+    @Test
+    public void TestConnections_testWriteConnection_9003661471cd33329a1e24310383e427() {
+        assertEval("{ con <- textConnection(\"tcval\", open=\"w\"); writeLines(\"a\\nb\", con); tcval; close(con) }");
+    }
+
+    @Test
     public void TestConnections_testWriteTextReadConnection_a7a7cde7deb5eff04d965a6084a4b5a3() {
         assertEvalError("{ writeChar(\"x\", textConnection(\"abc\")) }");
     }
@@ -8477,6 +8497,11 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testEnvironment_60bf41382750ac0f4de965f761a2fcf7() {
         assertEvalError("{ ph <- new.env() ; h <- new.env(parent=ph) ; assign(\"x\", 2, h) ; assign(\"x\", 10, h, inherits=TRUE) ; get(\"x\", ph)}");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testEnvironmentAssignLockedIgnore_77472658756397dff124f6c0a5008c4c() {
+        assertEvalError("{ x <- 1; lockBinding(\"x\", globalenv()); x <- 1 }");
     }
 
     @Test

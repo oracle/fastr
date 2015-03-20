@@ -71,6 +71,14 @@ public final class RStringVector extends RVector implements RAbstractStringVecto
     }
 
     /**
+     * Specifically for use by a writable {@code TextConnection}, which updates the data but cannot
+     * update the enclosing vector because the binding is locked.
+     */
+    public void setDataInternal(String[] data) {
+        this.data = data;
+    }
+
+    /**
      * Return vector data (copying if necessary) that's guaranteed not to be shared with any other
      * vector instance (but maybe non-temporary in terms of vector's sharing mode).
      *

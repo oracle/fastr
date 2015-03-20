@@ -159,6 +159,20 @@ public abstract class ConnectionFunctions {
         }
     }
 
+    @RBuiltin(name = "textConnectionValue", kind = INTERNAL, parameterNames = {"con"})
+    public abstract static class TextConnectionValue extends RBuiltinNode {
+        @Specialization
+        @TruffleBoundary
+        protected Object textConnection(RConnection conn) {
+            controlVisibility();
+            if (conn instanceof TextRConnection) {
+                return RDataFactory.createStringVector(((TextRConnection) conn).getValue(), RDataFactory.COMPLETE_VECTOR);
+            } else {
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.NOT_A_TEXT_CONNECTION);
+            }
+        }
+    }
+
     @RBuiltin(name = "socketConnection", kind = INTERNAL, parameterNames = {"host", "port", "server", "blocking", "open", "encoding", "timeout"})
     public abstract static class SocketConnection extends RBuiltinNode {
         @CreateCast("arguments")
