@@ -21,7 +21,6 @@ import com.oracle.truffle.r.runtime.conn.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
 import com.oracle.truffle.r.runtime.env.*;
-import com.oracle.truffle.r.runtime.env.REnvironment.*;
 import com.oracle.truffle.r.runtime.gnur.*;
 
 // Code loosely transcribed from GnuR serialize.c.
@@ -293,7 +292,7 @@ public class RSerialize {
                     int locked = stream.readInt();
                     Object enclos = readItem();
                     REnvironment env = RDataFactory.createNewEnv(enclos == RNull.instance ? REnvironment.baseEnv() : (REnvironment) enclos, 0);
-                    addReadRef(result);
+                    addReadRef(env);
                     Object frame = readItem();
                     Object hashtab = readItem();
                     if (frame == RNull.instance) {
@@ -378,7 +377,7 @@ public class RSerialize {
                             RFunction func = (RFunction) RContext.getEngine().eval(expr, RDataFactory.createNewEnv(REnvironment.emptyEnv(), 0), depth + 1);
                             func.setEnclosingFrame(((REnvironment) rpl.getTag()).getFrame());
                             result = func;
-                        } catch (RContext.Engine.ParseException | PutException ex) {
+                        } catch (Throwable ex) {
                             // denotes a deparse/eval error, which is an unrecoverable bug
                             Utils.fail("internal deparse error");
                         }
