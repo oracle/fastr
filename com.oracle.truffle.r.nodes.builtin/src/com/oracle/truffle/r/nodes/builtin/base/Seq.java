@@ -56,11 +56,6 @@ public abstract class Seq extends RBuiltinNode {
 
     protected abstract Object execute(VirtualFrame frame, Object start, Object to, Object stride, Object lengthOut, Object alongWith);
 
-    @Override
-    public Object[] getDefaultParameterValues() {
-        return new Object[]{RMissing.instance, RMissing.instance, RMissing.instance, RMissing.instance, RMissing.instance};
-    }
-
     private Object seqRecursive(VirtualFrame frame, Object start, Object to, Object stride, Object lengthOut, Object alongWith) {
         if (seqRecursive == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();

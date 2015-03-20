@@ -34,11 +34,6 @@ public abstract class Inherits extends RBuiltinNode {
 
     @Child private InheritsNode inheritsNode;
 
-    @Override
-    public Object[] getDefaultParameterValues() {
-        return new Object[]{RMissing.instance, RMissing.instance, RRuntime.LOGICAL_FALSE};
-    }
-
     private InheritsNode initInheritsNode() {
         if (inheritsNode == null) {
             inheritsNode = insert(InheritsNodeGen.create(null, null));

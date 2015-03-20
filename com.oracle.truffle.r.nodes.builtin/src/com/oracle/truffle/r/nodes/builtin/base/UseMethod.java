@@ -41,11 +41,6 @@ public abstract class UseMethod extends RBuiltinNode {
     private final ConditionProfile argMissingProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile argsValueAndNamesProfile = ConditionProfile.createBinaryProfile();
 
-    @Override
-    public Object[] getDefaultParameterValues() {
-        return new Object[]{RMissing.instance, RMissing.instance};
-    }
-
     @Specialization
     protected Object execute(VirtualFrame frame, String generic, Object arg) {
         controlVisibility();

@@ -49,11 +49,6 @@ public class WhichFunctions {
         private final NACheck naCheck = NACheck.create();
         private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
-        @Override
-        public Object[] getDefaultParameterValues() {
-            return new Object[]{RMissing.instance};
-        }
-
         @Specialization(guards = "!hasNames(x)")
         @TruffleBoundary
         protected RIntVector which(RAbstractLogicalVector x) {

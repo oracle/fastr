@@ -45,13 +45,6 @@ import com.oracle.truffle.r.runtime.data.model.*;
 @RBuiltin(name = "array", kind = INTERNAL, parameterNames = {"data", "dim", "dimnames"})
 public abstract class Array extends RBuiltinNode {
 
-    @Override
-    public Object[] getDefaultParameterValues() {
-        // TODO What is the correct NA value for "data"???
-        // is inserted as cast, see below in "createCastDimensions"
-        return new Object[]{RRuntime.NA_HEADER, null, RNull.instance};
-    }
-
     @CreateCast({"arguments"})
     protected RNode[] createCastDimensions(RNode[] children) {
         RNode dimsVector = CastToVectorNodeGen.create(children[1], false, false, false, false);

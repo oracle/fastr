@@ -40,7 +40,7 @@ public abstract class NextMethod extends RBuiltinNode {
 
     @Override
     public Object[] getDefaultParameterValues() {
-        return new Object[]{RNull.instance, RNull.instance, RMissing.instance};
+        return new Object[]{RNull.instance, RNull.instance, RArgsValuesAndNames.EMPTY};
     }
 
     protected Object nextMethod(VirtualFrame frame, String generic, @SuppressWarnings("unused") Object obj, Object[] args, ArgumentsSignature signature) {

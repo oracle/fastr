@@ -5555,6 +5555,16 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testBitwiseFunctions_c78c5053f25765aa467bb0424a0aa25e() {
+        assertEval("{ bitwAnd(c(10L,20L,30L,40L), c(3,5,7)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testBitwiseFunctions_c886b75e738d9c15c0b18f8be2b34436() {
+        assertEval("{ bitwAnd(c(10.5,11.6,17.8), c(5L,7L,8L)) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testBitwiseFunctions_bf473ea24ea7db152dd0941c1bd757d6() {
         assertEval("{ bitwOr(c(10,11,12,13,14,15), c(1,1,1,1,1,1)) }");
     }
@@ -5572,6 +5582,11 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testBitwiseFunctions_038119c3c5d02c00ff03d72f0d3a648c() {
         assertEval("{ bitwXor(c(25,57,66), c(10,20,30,40,50,60)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testBitwiseFunctions_f221c1727c84745492cd5ec37cf18fa7() {
+        assertEval("{ bitwXor(20,30) }");
     }
 
     @Test
@@ -5612,6 +5627,66 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testBitwiseFunctions_164981c84d1ed77ffa5db23569270804() {
         assertEval("{ bitwNot(c(0,100,200,50,70,20)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testBitwiseFunctionsIgnore_1975127fbc46f471d83816158b34c611() {
+        assertEval("{ bitwAnd(NULL, NULL) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testBitwiseFunctionsIgnore_d40647807379cde53e448c491a1d0bf0() {
+        assertEval("{ bitwAnd(c(), c(1,2,3)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testBitwiseFunctionsIgnore_fbd58e779abb92f0f0e7dc7f1f3ac161() {
+        assertEval("{ bitwAnd(c(1,2,3,4), c(TRUE)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testBitwiseFunctionsIgnore_30ee8f46ccf8b34aa91bbe1e29c407e5() {
+        assertEval("{ bitwOr(c(1,2,3,4), c(3+3i)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testBitwiseFunctionsIgnore_77fd7494a5f504e62839295d63c13f4f() {
+        assertEval("{ bitwXor(c(\"r\"), c(16,17)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testBitwiseFunctionsIgnore_d65db5660457e627214c497cafd0c1b0() {
+        assertEval("{ bitwShiftL(TRUE, c(TRUE, FALSE)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testBitwiseFunctionsIgnore_f4289c4ee7f1a164c44b8c56edfd77ab() {
+        assertEval("{ bitwShiftL(c(3+3i), c(3,2,4)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testBitwiseFunctionsIgnore_d9edb5db305ed10cdd3acb02a2f07081() {
+        assertEval("{ bitwNot(TRUE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testBitwiseFunctionsIgnore_19aac5c5c3dbf668d66901ae22af0126() {
+        assertEval("{ bitwShiftR(c(3,2,4), c(3+3i)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testBitwiseFunctionsIgnore_fb157f2c292c323d979c59230882fd9c() {
+        assertEval("{ bitwShiftL(c(3,2,4), c(3+3i)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testBitwiseFunctionsIgnore_392409bd3ccf9fcdc010a05df1a88a43() {
+        assertEval("{ bitwShiftR(c(1,2,3,4), c(\"Hello\")) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testBitwiseFunctionsIgnore_047620b9df74d36f818f9f65ea468386() {
+        assertEval("{ bitwShiftL(c(1,2,3,4), c(\"a\")) }");
     }
 
     @Test

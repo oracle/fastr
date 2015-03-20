@@ -78,11 +78,6 @@ public class BrowserFunctions {
 
     private abstract static class RetrieveAdapter extends RBuiltinNode {
 
-        @Override
-        public Object[] getDefaultParameterValues() {
-            return new Object[]{1};
-        }
-
         /**
          * GnuR objects to indices <= 0 but allows positive indices that are out of range.
          */

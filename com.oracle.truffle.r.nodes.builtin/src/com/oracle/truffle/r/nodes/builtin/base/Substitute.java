@@ -45,11 +45,6 @@ public abstract class Substitute extends RBuiltinNode {
 
     protected abstract Object executeObject(VirtualFrame frame, RPromise promise, Object env);
 
-    @Override
-    public Object[] getDefaultParameterValues() {
-        return new Object[]{RMissing.instance, RMissing.instance};
-    }
-
     private Quote checkQuote() {
         if (quote == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();

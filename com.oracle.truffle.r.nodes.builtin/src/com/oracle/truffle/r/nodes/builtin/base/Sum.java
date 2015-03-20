@@ -42,7 +42,7 @@ public final class Sum extends RWrapperBuiltinNode {
 
     @Override
     public Object[] getDefaultParameterValues() {
-        return new Object[]{RMissing.instance, RRuntime.LOGICAL_FALSE};
+        return new Object[]{RArgsValuesAndNames.EMPTY, RRuntime.LOGICAL_FALSE};
     }
 
     public Sum(RBuiltinNode prev) {

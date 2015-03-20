@@ -55,12 +55,6 @@ public abstract class Match extends RBuiltinNode {
     private final NACheck naCheck = new NACheck();
     private final ConditionProfile bigTableProfile = ConditionProfile.createBinaryProfile();
 
-    @Override
-    public Object[] getDefaultParameterValues() {
-        // x, table, nomatch = NA_integer_, incomparables = NULL
-        return new Object[]{RMissing.instance, RMissing.instance, RRuntime.INT_NA, RNull.instance};
-    }
-
     private String castString(VirtualFrame frame, Object operand) {
         if (castString == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();

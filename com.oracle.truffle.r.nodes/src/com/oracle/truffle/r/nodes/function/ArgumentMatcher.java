@@ -191,12 +191,6 @@ public class ArgumentMatcher {
         return nonNull;
     }
 
-    public @interface TestAnnotation {
-        String[] value();
-    }
-
-    @TestAnnotation(value = {""}) private int i;
-
     /**
      * Used for the implementation of the 'UseMethod' builtin. Reorders the arguments passed into
      * the called, generic function and prepares them to be passed into the specific function

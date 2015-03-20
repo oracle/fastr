@@ -38,11 +38,6 @@ public abstract class PMatch extends RBuiltinNode {
 
     private final ConditionProfile nomatchNA = ConditionProfile.createBinaryProfile();
 
-    @Override
-    public Object[] getDefaultParameterValues() {
-        return new Object[]{RMissing.instance, RMissing.instance, RRuntime.INT_NA, RRuntime.LOGICAL_FALSE};
-    }
-
     @CreateCast("arguments")
     public RNode[] castArguments(RNode[] arguments) {
         arguments[2] = CastIntegerNodeGen.create(arguments[2], false, false, false);

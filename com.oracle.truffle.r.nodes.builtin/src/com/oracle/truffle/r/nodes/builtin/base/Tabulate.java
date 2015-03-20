@@ -24,11 +24,6 @@ import static com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 @RBuiltin(name = "tabulate", kind = RBuiltinKind.INTERNAL, parameterNames = {"bin", "nbins"})
 public abstract class Tabulate extends RBuiltinNode {
 
-    @Override
-    public Object[] getDefaultParameterValues() {
-        return new Object[]{RMissing.instance, RMissing.instance};
-    }
-
     @CreateCast("arguments")
     public RNode[] castArguments(RNode[] arguments) {
         arguments[1] = CastIntegerNodeGen.create(arguments[1], true, false, false);

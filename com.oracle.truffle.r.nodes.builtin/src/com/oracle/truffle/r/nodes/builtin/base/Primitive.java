@@ -34,11 +34,6 @@ import com.oracle.truffle.r.runtime.data.*;
 public abstract class Primitive extends RBuiltinNode {
     private final BranchProfile errorProfile = BranchProfile.create();
 
-    @Override
-    public Object[] getDefaultParameterValues() {
-        return new Object[]{RMissing.instance};
-    }
-
     @Specialization
     protected RFunction primitive(String name) {
         RFunction function = RContext.getEngine().lookupBuiltin(name);

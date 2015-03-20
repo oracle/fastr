@@ -41,12 +41,6 @@ public abstract class Paste0 extends RBuiltinNode {
 
     @Child private Paste pasteNode;
 
-    @Override
-    public Object[] getDefaultParameterValues() {
-        // ..., collapse = NULL
-        return new Object[]{RMissing.instance, RNull.instance};
-    }
-
     private Object paste(VirtualFrame frame, RList values, Object collapse) {
         if (pasteNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();

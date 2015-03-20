@@ -43,11 +43,6 @@ public abstract class Identical extends RBuiltinNode {
 
     private final ConditionProfile vecLengthProfile = ConditionProfile.createBinaryProfile();
 
-    @Override
-    public Object[] getDefaultParameterValues() {
-        return new Object[]{RMissing.instance, RMissing.instance, RRuntime.LOGICAL_TRUE, RRuntime.LOGICAL_TRUE, RRuntime.LOGICAL_TRUE, RRuntime.LOGICAL_TRUE, RRuntime.LOGICAL_FALSE};
-    }
-
     @Specialization
     protected byte doInternalIdentical(Object x, @SuppressWarnings("unused") RNull y,
                     // @formatter:off

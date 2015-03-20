@@ -47,11 +47,6 @@ public class TrigExpFunctions {
         private static final BranchProfile notCompleteDoubleValueMet = BranchProfile.create();
         private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
-        @Override
-        public Object[] getDefaultParameterValues() {
-            return new Object[]{RMissing.instance};
-        }
-
         @Specialization
         protected byte isType(@SuppressWarnings("unused") RMissing value) {
             controlVisibility();

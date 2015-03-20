@@ -32,11 +32,6 @@ public abstract class APerm extends RBuiltinNode {
 
     private final NACheck na = new NACheck();
 
-    @Override
-    public Object[] getDefaultParameterValues() {
-        return new Object[]{RMissing.instance, RMissing.instance, RMissing.instance};
-    }
-
     private void checkErrorConditions(RAbstractVector vector, byte resize) {
         if (!vector.isArray()) {
             errorProfile.enter();
