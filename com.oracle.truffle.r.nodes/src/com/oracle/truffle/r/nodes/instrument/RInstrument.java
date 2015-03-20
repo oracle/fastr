@@ -271,6 +271,9 @@ public class RInstrument {
      * found.
      */
     public static Probe findSingleProbe(FunctionUID uid, SyntaxTag tag) {
+        if (!instrumentingEnabled) {
+            return null;
+        }
         ArrayList<Probe> list = functionMap.get(uid).probes;
         if (list != null) {
             for (Probe probe : list) {
