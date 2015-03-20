@@ -302,6 +302,13 @@ public class EnvFunctions {
             return RNull.instance;
         }
 
+        @Specialization
+        protected Object lockBinding(RAbstractStringVector name, REnvironment env) {
+            controlVisibility();
+            env.lockBinding(name.getDataAt(0));
+            return RNull.instance;
+        }
+
         @Fallback
         protected Object lockBinding(Object sym, Object env) {
             check(getEncapsulatingSourceSection(), sym, env);
@@ -315,6 +322,13 @@ public class EnvFunctions {
         protected Object unlockBinding(RSymbol sym, REnvironment env) {
             controlVisibility();
             env.unlockBinding(sym.getName());
+            return RNull.instance;
+        }
+
+        @Specialization
+        protected Object unlockBinding(RAbstractStringVector name, REnvironment env) {
+            controlVisibility();
+            env.unlockBinding(name.getDataAt(0));
             return RNull.instance;
         }
 
@@ -333,6 +347,12 @@ public class EnvFunctions {
             return RDataFactory.createLogicalVectorFromScalar(env.bindingIsLocked(sym.getName()));
         }
 
+        @Specialization
+        protected Object bindingIsLocked(RAbstractStringVector name, REnvironment env) {
+            controlVisibility();
+            return RDataFactory.createLogicalVectorFromScalar(env.bindingIsLocked(name.getDataAt(0)));
+        }
+
         @Fallback
         protected Object bindingIsLocked(Object sym, Object env) {
             check(getEncapsulatingSourceSection(), sym, env);
@@ -347,7 +367,7 @@ public class EnvFunctions {
         protected Object makeActiveBinding(Object sym, Object fun, Object env) {
             // TODO implement
             controlVisibility();
-            throw RError.nyi(getEncapsulatingSourceSection(), "makeActiveBinding not implemented");
+            throw RError.nyi(getEncapsulatingSourceSection(), "makeActiveBinding");
         }
     }
 
@@ -358,7 +378,7 @@ public class EnvFunctions {
         protected Object bindingIsActive(Object sym, Object fun, Object env) {
             // TODO implement
             controlVisibility();
-            return RDataFactory.createLogicalVectorFromScalar(false);
+            throw RError.nyi(getEncapsulatingSourceSection(), "bindingIsActive");
         }
     }
 
