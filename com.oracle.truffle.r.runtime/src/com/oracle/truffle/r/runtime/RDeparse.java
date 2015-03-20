@@ -51,8 +51,8 @@ public class RDeparse {
     public static final int MIN_Cutoff = 20;
     public static final int MAX_Cutoff = 500;
     public static final int DEFAULT_Cutoff = 60;
-    private static final String BACKTICK = "`";
-    private static final String DQUOTE = "\"";
+    public static final char BACKTICK = '`';
+    public static final char DQUOTE = '"';
 
     public static enum PP {
         FUNCALL,
@@ -1034,11 +1034,21 @@ public class RDeparse {
         }
     }
 
-    public static String quotify(String name, String qc) {
+    public static String quotify(String name, char qc) {
         if (isValidName(name) || name.length() == 0) {
             return name;
         } else {
-            return qc + name + qc;
+            StringBuffer sb = new StringBuffer();
+            sb.append(qc);
+            for (int i = 0; i < name.length(); i++) {
+                char ch = name.charAt(i);
+                if (ch == '\\') {
+                    sb.append(ch);
+                }
+                sb.append(ch);
+            }
+            sb.append(qc);
+            return sb.toString();
         }
     }
 

@@ -269,7 +269,7 @@ public class RASTUtils {
     }
 
     private static String escapeName(String name) {
-        return RDeparse.quotify(name, "`");
+        return RDeparse.quotify(name, RDeparse.BACKTICK);
     }
 
     /**
