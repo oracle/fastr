@@ -37,10 +37,6 @@ import com.oracle.truffle.r.runtime.rng.RRNG.RNGException;
 public class RNGFunctions {
     @RBuiltin(name = "set.seed", kind = INTERNAL, parameterNames = {"seed", "kind", "normal.kind"})
     public abstract static class SetSeed extends RInvisibleBuiltinNode {
-        @Override
-        public Object[] getDefaultParameterValues() {
-            return new Object[]{RMissing.instance, RNull.instance, RNull.instance};
-        }
 
         @SuppressWarnings("unused")
         @Specialization

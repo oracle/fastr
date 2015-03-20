@@ -54,11 +54,6 @@ public abstract class Internal extends RBuiltinNode {
 
     protected final BranchProfile errorProfile = BranchProfile.create();
 
-    @Override
-    public Object[] getDefaultParameterValues() {
-        return new Object[]{RMissing.instance};
-    }
-
     @Specialization
     protected Object doInternal(@SuppressWarnings("unused") RMissing x) {
         errorProfile.enter();

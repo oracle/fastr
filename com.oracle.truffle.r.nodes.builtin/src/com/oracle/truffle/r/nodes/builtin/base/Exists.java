@@ -28,7 +28,6 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
 
@@ -36,11 +35,6 @@ import com.oracle.truffle.r.runtime.env.*;
 // TODO interpret mode parameter
 // TODO Is it worth optimizing this via ReadVariableNode?
 public abstract class Exists extends RBuiltinNode {
-
-    @Override
-    public Object[] getDefaultParameterValues() {
-        return new Object[]{RMissing.instance, RMissing.instance, RType.Any.getName(), RRuntime.LOGICAL_TRUE};
-    }
 
     @Specialization
     @TruffleBoundary

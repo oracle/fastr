@@ -54,11 +54,6 @@ public abstract class PMinMax extends RBuiltinNode {
     private final ConditionProfile lengthProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile naRmProfile = ConditionProfile.createBinaryProfile();
 
-    @Override
-    public Object[] getDefaultParameterValues() {
-        return new Object[]{RMissing.instance, RMissing.instance};
-    }
-
     public PMinMax(ReduceSemantics semantics, BinaryArithmeticFactory factory) {
         this.semantics = semantics;
         this.factory = factory;

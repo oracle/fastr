@@ -34,12 +34,6 @@ import static com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 public abstract class Sample extends RBuiltinNode {
     private final ConditionProfile sampleSizeProfile = ConditionProfile.createBinaryProfile();
 
-    @Override
-    public Object[] getDefaultParameterValues() {
-        // x, size, replace = FALSE, prob = NULL
-        return new Object[]{RMissing.instance, RMissing.instance, RRuntime.LOGICAL_FALSE, RNull.instance};
-    }
-
     @CreateCast("arguments")
     public RNode[] castArguments(RNode[] arguments) {
         arguments[0] = CastIntegerNodeGen.create(arguments[0], true, false, false);

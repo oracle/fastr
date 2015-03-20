@@ -28,12 +28,6 @@ import static com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 @RBuiltin(name = "rowMeans", kind = RBuiltinKind.INTERNAL, parameterNames = {"X", "m", "n", "na.rm"})
 public abstract class RowMeans extends RBuiltinNode {
 
-    @Override
-    public Object[] getDefaultParameterValues() {
-        // X, m, n, na.rm = FALSE
-        return new Object[]{RMissing.instance, RMissing.instance, RMissing.instance, RRuntime.LOGICAL_FALSE};
-    }
-
     @Child private BinaryArithmetic add = BinaryArithmetic.ADD.create();
     private final NACheck na = NACheck.create();
 

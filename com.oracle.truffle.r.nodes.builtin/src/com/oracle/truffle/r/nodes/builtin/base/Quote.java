@@ -35,10 +35,6 @@ import com.oracle.truffle.r.runtime.data.*;
 @RBuiltin(name = "quote", nonEvalArgs = 0, kind = RBuiltinKind.PRIMITIVE, parameterNames = {"expr"})
 @GenerateNodeFactory
 public abstract class Quote extends RBuiltinNode {
-    @Override
-    public Object[] getDefaultParameterValues() {
-        return new Object[]{RMissing.instance};
-    }
 
     public abstract Object execute(VirtualFrame frame, RPromise expr);
 

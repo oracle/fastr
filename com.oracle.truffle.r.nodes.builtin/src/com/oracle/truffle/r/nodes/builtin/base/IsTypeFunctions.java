@@ -44,11 +44,6 @@ public class IsTypeFunctions {
     protected abstract static class ErrorAdapter extends RBuiltinNode {
         protected final BranchProfile errorProfile = BranchProfile.create();
 
-        @Override
-        public Object[] getDefaultParameterValues() {
-            return new Object[]{RMissing.instance};
-        }
-
         protected RError missingError() throws RError {
             errorProfile.enter();
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.ARGUMENT_MISSING, "x");
@@ -472,8 +467,8 @@ public class IsTypeFunctions {
 
         @Override
         public Object[] getDefaultParameterValues() {
-            // x, mode = "any"
-            return new Object[]{RMissing.instance, RType.Any.getName()};
+            // INTERNAL does not need default parameters
+            return EMPTY_OBJECT_ARRAY;
         }
 
         @Specialization

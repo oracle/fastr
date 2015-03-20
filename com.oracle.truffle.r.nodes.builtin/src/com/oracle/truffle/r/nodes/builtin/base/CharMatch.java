@@ -23,11 +23,6 @@ import com.oracle.truffle.r.runtime.data.model.*;
 @RBuiltin(name = "charmatch", kind = INTERNAL, parameterNames = {"x", "table", "noMatch"})
 public abstract class CharMatch extends RBuiltinNode {
 
-    @Override
-    public Object[] getDefaultParameterValues() {
-        return new Object[]{RMissing.instance, RMissing.instance, RRuntime.INT_NA};
-    }
-
     @CreateCast("arguments")
     protected RNode[] castArguments(RNode[] arguments) {
         arguments[2] = CastIntegerNodeGen.create(arguments[2], true, false, false);

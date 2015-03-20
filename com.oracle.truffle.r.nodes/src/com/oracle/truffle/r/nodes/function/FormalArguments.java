@@ -26,7 +26,6 @@ import java.util.*;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.access.ConstantNode.ConstantMissingNode;
@@ -53,6 +52,12 @@ public final class FormalArguments extends Arguments<RNode> implements ClosureCa
 
     private final IdentityHashMap<RNode, Closure> closureCache = new IdentityHashMap<>();
 
+    /**
+     * These argument constants define what will be passed along in case there is no supplied
+     * argument for the given argument slot. In the case of normal functions (as opposed to
+     * builtins), {@link RMissing#instance} and {@link RArgsValuesAndNames#EMPTY} will be replaced
+     * with the actual default values on the callee side.
+     */
     @CompilationFinal private final Object[] internalDefaultArguments;
 
     private FormalArguments(RNode[] defaultArguments, Object[] internalDefaultArguments, ArgumentsSignature signature) {
@@ -77,20 +82,35 @@ public final class FormalArguments extends Arguments<RNode> implements ClosureCa
 
     public static FormalArguments createForBuiltin(Object[] defaultArguments, ArgumentsSignature signature) {
         assert signature != null;
+        assert defaultArguments.length <= signature.getLength();
 
-        Object[] internalDefaultArguments = Arrays.copyOf(defaultArguments, signature.getLength());
+        Object[] internalDefaultArguments = new Object[signature.getLength()];
         for (int i = 0; i < internalDefaultArguments.length; i++) {
-            if (internalDefaultArguments[i] == null) {
-                internalDefaultArguments[i] = i == signature.getVarArgIndex() ? RArgsValuesAndNames.EMPTY : RMissing.instance;
+            Object value;
+            if (i < defaultArguments.length) {
+                value = defaultArguments[i];
+            } else {
+                value = (i == signature.getVarArgIndex()) ? RArgsValuesAndNames.EMPTY : RMissing.instance;
             }
+            internalDefaultArguments[i] = value;
+
+            assert value != null : "null is not allowed as default value (RMissing.instance?)";
+            assert value != RArgsValuesAndNames.EMPTY || i == signature.getVarArgIndex() : "RArgsValuesAndNames.EMPTY only allowed for vararg parameter";
+            assert value == RArgsValuesAndNames.EMPTY || i != signature.getVarArgIndex() : "only RArgsValuesAndNames.EMPTY is allowed for vararg parameter";
+            assert value != RMissing.instance || i != signature.getVarArgIndex() : "RMissing.instance not allowed for vararg parameter";
+            assert isValidInternalDefaultArgument(value) : "unexpected default value " + value;
         }
         RNode[] constantDefaultParameters = new RNode[signature.getLength()];
         for (int i = 0; i < constantDefaultParameters.length; i++) {
             Object value = internalDefaultArguments[i];
-            assert !(value instanceof Node) && !(value instanceof Boolean) : "unexpected default value " + value;
             constantDefaultParameters[i] = (value == RMissing.instance || value == RArgsValuesAndNames.EMPTY) ? null : ConstantNode.create(value);
         }
         return new FormalArguments(constantDefaultParameters, internalDefaultArguments, signature);
+    }
+
+    private static boolean isValidInternalDefaultArgument(Object value) {
+        return value instanceof String || value instanceof Integer || value instanceof Double || value instanceof Byte || value == RNull.instance || value == RMissing.instance ||
+                        value == RArgsValuesAndNames.EMPTY;
     }
 
     @Override

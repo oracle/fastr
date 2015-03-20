@@ -39,11 +39,6 @@ import com.oracle.truffle.r.runtime.data.model.*;
 @RBuiltin(name = "call", kind = PRIMITIVE, parameterNames = {"name", "..."})
 public abstract class Call extends RBuiltinNode {
 
-    @Override
-    public Object[] getDefaultParameterValues() {
-        return new Object[]{RMissing.instance, RMissing.instance};
-    }
-
     @Specialization(guards = "!isEmptyName(name)")
     protected RLanguage call(RAbstractStringVector name, @SuppressWarnings("unused") RMissing args) {
         return makeCall(name.getDataAt(0), null);

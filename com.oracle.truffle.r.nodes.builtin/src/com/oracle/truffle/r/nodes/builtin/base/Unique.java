@@ -51,12 +51,6 @@ public abstract class Unique extends RBuiltinNode {
 
     private final ConditionProfile bigProfile = ConditionProfile.createBinaryProfile();
 
-    @Override
-    public Object[] getDefaultParameterValues() {
-        // x, incomparables = FALSE, fromLast = FALSE, nmax = NA, ...
-        return new Object[]{RMissing.instance, RRuntime.LOGICAL_FALSE, RRuntime.LOGICAL_FALSE, RRuntime.INT_NA, RMissing.instance};
-    }
-
     protected RVector uniqueRecursive(VirtualFrame frame, RVector vec, byte incomparables, byte fromLast, Object nmax, RArgsValuesAndNames vararg) {
         if (uniqueRecursive == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();

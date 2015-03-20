@@ -41,12 +41,6 @@ public abstract class Vector extends RBuiltinNode {
     private final ValueProfile modeProfile = ValueProfile.createIdentityProfile();
     private final BranchProfile errorProfile = BranchProfile.create();
 
-    @Override
-    public Object[] getDefaultParameterValues() {
-        // mode = "logical", length = 0
-        return new Object[]{RType.Logical.getName(), 0};
-    }
-
     @CreateCast("arguments")
     protected RNode[] castLength(RNode[] arguments) {
         // length is at index 1

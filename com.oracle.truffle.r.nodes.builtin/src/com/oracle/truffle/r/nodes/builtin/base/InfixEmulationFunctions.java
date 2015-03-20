@@ -243,11 +243,6 @@ public class InfixEmulationFunctions {
 
         @Child private DispatchedCallNode dcn;
 
-        @Override
-        public Object[] getDefaultParameterValues() {
-            return new Object[]{RMissing.instance, RMissing.instance, RMissing.instance};
-        }
-
         @Specialization(guards = {"!noInd(inds)", "isObject(frame, x)"})
         protected Object getObj(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames inds, RAbstractLogicalVector dropVec) {
             if (dcn == null) {
@@ -304,11 +299,6 @@ public class InfixEmulationFunctions {
     public abstract static class AccessArraySubsetDefaultBuiltin extends AccessArraySubsetBuiltinBase {
 
         @Override
-        public Object[] getDefaultParameterValues() {
-            return new Object[]{RMissing.instance, RMissing.instance, RMissing.instance};
-        }
-
-        @Override
         @Specialization(guards = "!noInd(inds)")
         protected Object get(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames inds, RAbstractLogicalVector dropVec) {
             return super.get(frame, x, inds, dropVec);
@@ -361,7 +351,7 @@ public class InfixEmulationFunctions {
 
         @Override
         public Object[] getDefaultParameterValues() {
-            return new Object[]{RMissing.instance, RMissing.instance, RRuntime.LOGICAL_TRUE};
+            return new Object[]{RMissing.instance, RArgsValuesAndNames.EMPTY, RRuntime.LOGICAL_TRUE};
         }
 
         @Specialization(guards = {"!noInd(inds)", "isObject(frame, x)"})
@@ -401,7 +391,7 @@ public class InfixEmulationFunctions {
 
         @Override
         public Object[] getDefaultParameterValues() {
-            return new Object[]{RMissing.instance, RMissing.instance, RRuntime.LOGICAL_TRUE};
+            return new Object[]{RMissing.instance, RArgsValuesAndNames.EMPTY, RRuntime.LOGICAL_TRUE};
         }
 
         @Override
@@ -471,11 +461,6 @@ public class InfixEmulationFunctions {
 
         @Child private DispatchedCallNode dcn;
 
-        @Override
-        public Object[] getDefaultParameterValues() {
-            return new Object[]{RMissing.instance, RMissing.instance, RMissing.instance};
-        }
-
         @Specialization(guards = {"!noInd(args)", "isObject(frame, x)"})
         protected Object updateObj(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames args) {
             if (dcn == null) {
@@ -509,11 +494,6 @@ public class InfixEmulationFunctions {
         private static final boolean IS_SUBSET = false;
 
         @Child private DispatchedCallNode dcn;
-
-        @Override
-        public Object[] getDefaultParameterValues() {
-            return new Object[]{RMissing.instance, RMissing.instance, RMissing.instance};
-        }
 
         @Specialization(guards = {"!noInd(args)", "isObject(frame, x)"})
         protected Object updateObj(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames args) {

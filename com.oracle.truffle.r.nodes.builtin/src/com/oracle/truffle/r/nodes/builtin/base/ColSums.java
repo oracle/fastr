@@ -36,12 +36,6 @@ import com.oracle.truffle.r.runtime.ops.na.*;
 @RBuiltin(name = "colSums", kind = RBuiltinKind.INTERNAL, parameterNames = {"X", "m", "n", "na.rm"})
 public abstract class ColSums extends RBuiltinNode {
 
-    @Override
-    public Object[] getDefaultParameterValues() {
-        // X, m, n, na.rm = FALSE
-        return new Object[]{RMissing.instance, RMissing.instance, RMissing.instance, RRuntime.LOGICAL_FALSE};
-    }
-
     @Child private BinaryArithmetic add = BinaryArithmetic.ADD.create();
 
     private final NACheck na = NACheck.create();

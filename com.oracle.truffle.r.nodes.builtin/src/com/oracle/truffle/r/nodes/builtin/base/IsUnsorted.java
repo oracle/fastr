@@ -37,11 +37,6 @@ import com.oracle.truffle.r.runtime.ops.*;
 // TODO support lists
 public abstract class IsUnsorted extends RBuiltinNode {
 
-    @Override
-    public Object[] getDefaultParameterValues() {
-        return new Object[]{RMissing.instance, RRuntime.LOGICAL_FALSE};
-    }
-
     @Child private BinaryBooleanNode ge = BinaryBooleanNodeFactory.create(BinaryCompare.GREATER_EQUAL, new RNode[1], getBuiltin(), getSuppliedSignature());
 
     @Specialization

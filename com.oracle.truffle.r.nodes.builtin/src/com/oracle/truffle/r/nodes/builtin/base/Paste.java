@@ -54,11 +54,6 @@ public abstract class Paste extends RBuiltinNode {
     private final ConditionProfile noCollapse = ConditionProfile.createBinaryProfile();
     private final ConditionProfile reusedResultProfile = ConditionProfile.createBinaryProfile();
 
-    @Override
-    public Object[] getDefaultParameterValues() {
-        return new Object[]{RMissing.instance, RMissing.instance, RMissing.instance};
-    }
-
     private RStringVector castCharacter(VirtualFrame frame, Object o) {
         if (asCharacterNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();

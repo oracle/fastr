@@ -60,11 +60,6 @@ public class SysFunctions {
     public abstract static class SysGetenv extends RBuiltinNode {
         private final ConditionProfile zeroLengthProfile = ConditionProfile.createBinaryProfile();
 
-        @Override
-        public Object[] getDefaultParameterValues() {
-            return new Object[]{RNull.instance, "", RRuntime.LOGICAL_NA};
-        }
-
         @Specialization
         @TruffleBoundary
         protected Object sysGetEnv(RAbstractStringVector x, String unset) {

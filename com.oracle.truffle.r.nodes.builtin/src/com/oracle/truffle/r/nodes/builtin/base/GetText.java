@@ -63,12 +63,6 @@ public abstract class GetText extends RBuiltinNode {
         return castVector.executeObject(frame, value);
     }
 
-    @Override
-    public Object[] getDefaultParameterValues() {
-        // ..., domain = NULL
-        return new Object[]{RMissing.instance, RNull.instance};
-    }
-
     @Specialization
     protected RStringVector getText(VirtualFrame frame, Object args, Object domain) {
         // no translation done at this point

@@ -26,7 +26,7 @@ public abstract class Prod extends RBuiltinNode {
 
     @Override
     public Object[] getDefaultParameterValues() {
-        return new Object[]{RMissing.instance, RRuntime.LOGICAL_FALSE};
+        return new Object[]{RArgsValuesAndNames.EMPTY, RRuntime.LOGICAL_FALSE};
     }
 
     @Child private Prod prodRecursive;

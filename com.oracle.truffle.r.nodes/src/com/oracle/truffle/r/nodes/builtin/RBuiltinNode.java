@@ -108,7 +108,10 @@ public abstract class RBuiltinNode extends LeafCallNode implements VisibilityCon
     }
 
     /**
-     * Return the default values of the builin's formal arguments.
+     * Return the default values of the builtin's formal arguments. This is only valid for builtins
+     * of {@link RBuiltinKind kind} PRIMITIVE or SUBSTITUTE. Only simple scalar constants and
+     * {@link RMissing#instance}, {@link RNull#instance} and {@link RArgsValuesAndNames#EMPTY} are
+     * allowed.
      */
     public Object[] getDefaultParameterValues() {
         return EMPTY_OBJECT_ARRAY;
@@ -145,6 +148,7 @@ public abstract class RBuiltinNode extends LeafCallNode implements VisibilityCon
         RNode[] argAccessNodes = createAccessArgumentsNodes(builtin);
         RBuiltinNode node = createNode(builtin, argAccessNodes.clone(), ArgumentsSignature.empty(argAccessNodes.length));
 
+        assert builtin.getRBuiltin() == null || builtin.getRBuiltin().kind() != RBuiltinKind.INTERNAL || node.getDefaultParameterValues().length == 0 : "INTERNAL builtins do not need default values";
         FormalArguments formals = FormalArguments.createForBuiltin(node.getDefaultParameterValues(), node.getParameterSignature());
         for (RNode access : argAccessNodes) {
             ((AccessArgumentNode) access).setFormals(formals);

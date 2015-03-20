@@ -39,7 +39,7 @@ public final class Max extends RWrapperBuiltinNode {
 
     @Override
     public Object[] getDefaultParameterValues() {
-        return new Object[]{RMissing.instance, RRuntime.LOGICAL_FALSE};
+        return new Object[]{RArgsValuesAndNames.EMPTY, RRuntime.LOGICAL_FALSE};
     }
 
     public Max(RBuiltinNode prev) {

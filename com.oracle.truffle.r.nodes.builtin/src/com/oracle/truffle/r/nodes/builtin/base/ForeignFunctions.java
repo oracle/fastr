@@ -49,7 +49,7 @@ public class ForeignFunctions {
 
         @Override
         public Object[] getDefaultParameterValues() {
-            return new Object[]{RMissing.instance, EMPTY_OBJECT_ARRAY, RRuntime.LOGICAL_FALSE, RRuntime.LOGICAL_FALSE, RMissing.instance, RMissing.instance};
+            return new Object[]{RMissing.instance, RArgsValuesAndNames.EMPTY, RRuntime.LOGICAL_FALSE, RRuntime.LOGICAL_FALSE, RMissing.instance, RMissing.instance};
         }
 
         protected int[] checkNAs(int argIndex, int[] data) {
@@ -296,7 +296,7 @@ public class ForeignFunctions {
 
         @Override
         public Object[] getDefaultParameterValues() {
-            return new Object[]{RMissing.instance, EMPTY_OBJECT_ARRAY, RMissing.instance};
+            return new Object[]{RMissing.instance, RArgsValuesAndNames.EMPTY, RMissing.instance};
         }
 
         // TODO: handle more argument types (this is sufficient to run the b25 benchmarks)

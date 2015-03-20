@@ -34,11 +34,6 @@ public abstract class EncodeString extends RBuiltinNode {
     private final NACheck na = NACheck.create();
     private final BranchProfile everSeenNA = BranchProfile.create();
 
-    @Override
-    public Object[] getDefaultParameterValues() {
-        return new Object[]{RMissing.instance, 0, "", "left", RRuntime.LOGICAL_TRUE};
-    }
-
     @CreateCast("arguments")
     public RNode[] castArguments(RNode[] arguments) {
         arguments[1] = CastIntegerNodeGen.create(arguments[1], true, false, false);

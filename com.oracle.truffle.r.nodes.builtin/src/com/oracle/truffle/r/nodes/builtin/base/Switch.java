@@ -47,11 +47,6 @@ public abstract class Switch extends RBuiltinNode {
     private final ConditionProfile returnValueProfile = ConditionProfile.createBinaryProfile();
     private final BranchProfile notIntType = BranchProfile.create();
 
-    @Override
-    public Object[] getDefaultParameterValues() {
-        return new Object[]{RMissing.instance, RMissing.instance};
-    }
-
     @Specialization(guards = "isLengthOne(x)")
     protected Object doSwitch(VirtualFrame frame, RAbstractStringVector x, RArgsValuesAndNames optionalArgs) {
         controlVisibility();
