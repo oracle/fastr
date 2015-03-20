@@ -130,7 +130,12 @@ public abstract class AsCharacter extends RBuiltinNode {
     @SuppressWarnings("unused")
     protected RStringVector doList(VirtualFrame frame, RList list) {
         controlVisibility();
-        throw new UnsupportedOperationException("list type not supported for as.character - requires deparsing");
+        // partial implementation for simple special case
+        if (list.getLength() == 1 && list.getDataAt(0) instanceof RStringVector && ((RStringVector) list.getDataAt(0)).getLength() == 1) {
+            return (RStringVector) ((RStringVector) list.getDataAt(0)).copyDropAttributes();
+        } else {
+            throw RInternalError.unimplemented("list type not supported for as.character - requires deparsing");
+        }
     }
 
     @Specialization(guards = "!isObject(frame, container)")
