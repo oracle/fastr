@@ -127,7 +127,6 @@ public class TestRPackages extends TestBase {
     }
 
     @Test
-    // FIXME MacOS GnuR install fails since Yosemite
     public void testLoadTestRFFI() {
         assertTemplateEval(TestBase.template(
                         "{ library(\"testrffi\", lib.loc = \"%0\"); r1 <- add_int(2L, 3L); r2 <- add_double(2, 3); v <- createIntVector(2); v[1] <- 1; v[2] <- 2; detach(\"package:testrffi\"); list(r1, r2, v) }",
