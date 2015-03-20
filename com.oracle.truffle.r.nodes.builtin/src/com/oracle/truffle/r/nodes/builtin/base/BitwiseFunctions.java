@@ -115,7 +115,13 @@ public class BitwiseFunctions {
         }
 
         protected void hasSameTypes(RAbstractVector a, RAbstractVector b) {
-            if (typeof.execute(a) != typeof.execute(b)) {
+            RType aType = typeof.execute(a);
+            RType bType = typeof.execute(b);
+            boolean aCorrectType = (aType == RType.Integer || aType == RType.Double) ? true : false;
+            boolean bCorrectType = (bType == RType.Integer || bType == RType.Double) ? true : false;
+            if ((aCorrectType && bCorrectType) || aType == bType) {
+                return;
+            } else {
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.SAME_TYPE, "a", "b");
             }
         }
