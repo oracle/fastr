@@ -5520,6 +5520,16 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testAttributes_b24d4c79ef60d6a0807c78f5aedfdcce() {
+        assertEval("{ e <- new.env(); attributes(e) <- list(a=1); attributes(e) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testAttributes_65e3bc3db9a7da0e0f3581c7fb2e6f04() {
+        assertEval("{ e <- new.env(); attributes(e) <- list(class=\"srcfile\"); attributes(e) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testAttributes_6389f590bfe766984916afeca9781c4a() {
         assertEvalError("{ x <- c(hello=1) ; attributes(x) <- list(hi = 1, 2) ; x }");
     }

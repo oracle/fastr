@@ -82,6 +82,13 @@ public interface RAttributable {
         }
     }
 
+    default void removeAllAttributes() {
+        RAttributes attributes = getAttributes();
+        if (attributes != null) {
+            attributes.clear();
+        }
+    }
+
     default RAttributable setClassAttr(RStringVector classAttr) {
         setAttr(RRuntime.CLASS_ATTR_KEY, classAttr);
         return this;

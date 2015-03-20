@@ -197,10 +197,46 @@ public abstract class UpdateAttributes extends RInvisibleBuiltinNode {
         return res;
     }
 
+    /**
+     * All other, non-performance centric, {@link RAttributable} types, or error case.
+     */
     @Fallback
-    public RList doOther(Object vector, Object operand) {
+    @TruffleBoundary
+    public Object doOther(Object obj, Object operand) {
         controlVisibility();
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.ATTRIBUTES_LIST_OR_NULL);
+        if (obj instanceof RAttributable) {
+            RAttributable attrObj = (RAttributable) obj;
+            attrObj.removeAllAttributes();
+            if (operand == RNull.instance) {
+                attrObj.setClassAttr(null);
+            } else if (operand instanceof RList) {
+                RList list = (RList) operand;
+                RStringVector listNames = list.getNames(attrProfiles);
+                if (listNames == null) {
+                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.ATTRIBUTES_NAMED);
+                }
+                for (int i = 0; i < list.getLength(); i++) {
+                    String attrName = listNames.getDataAt(i);
+                    if (attrName == null) {
+                        throw RError.error(getEncapsulatingSourceSection(), RError.Message.ATTRIBUTES_NAMED);
+                    }
+                    if (attrName.equals(RRuntime.CLASS_ATTR_KEY)) {
+                        Object attrValue = RRuntime.asString(list.getDataAt(i));
+                        if (attrValue == null) {
+                            throw RError.error(getEncapsulatingSourceSection(), RError.Message.SET_INVALID_CLASS_ATTR);
+                        }
+                        attrObj.setClassAttr(RDataFactory.createStringVectorFromScalar((String) attrValue));
+                    } else {
+                        attrObj.setAttr(attrName, list.getDataAt(i));
+                    }
+                }
+            } else {
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.ATTRIBUTES_LIST_OR_NULL);
+            }
+        } else {
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
+        }
+        return obj;
     }
 
 }

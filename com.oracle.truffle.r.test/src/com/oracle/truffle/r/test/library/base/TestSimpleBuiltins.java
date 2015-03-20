@@ -2269,6 +2269,9 @@ public class TestSimpleBuiltins extends TestBase {
         // dimensions are set first even though they are set to NULL (names are preserved even
         // though they are second on the list)
         assertEval("{ x<-1; attributes(x)<-list(names=\"c\", dim=NULL); attributes(x) }");
+
+        assertEval("{ e <- new.env(); attributes(e) <- list(a=1); attributes(e) }");
+        assertEval("{ e <- new.env(); attributes(e) <- list(class=\"srcfile\"); attributes(e) }");
     }
 
     @Test

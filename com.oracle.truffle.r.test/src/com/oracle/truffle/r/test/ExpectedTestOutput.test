@@ -5315,6 +5315,18 @@ Error: object 'x' not found
 [1] 1
 
 ##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testAttributes
+#{ e <- new.env(); attributes(e) <- list(a=1); attributes(e) }
+$a
+[1] 1
+
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testAttributes
+#{ e <- new.env(); attributes(e) <- list(class="srcfile"); attributes(e) }
+$class
+[1] "srcfile"
+
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testAttributes
 #{ x <- 1 ; attributes(x) <- list(hi=3, hello=2) ; x }
 [1] 1
 attr(,"hi")
