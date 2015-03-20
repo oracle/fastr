@@ -84,6 +84,12 @@ public class DebugHandling {
     private static final WeakHashMap<FunctionUID, FunctionStatementsEventReceiver> receiverMap = new WeakHashMap<>();
 
     /**
+     * This flag is used to (temporarily) disable all debugging across calls that are used
+     * internally in the implementation.
+     */
+    private static boolean globalDisable;
+
+    /**
      * Attach the DebugHandling instrument to the FunctionStatementsNode and all syntactic nodes.
      */
     public static boolean enableDebug(RFunction func, Object text, Object condition, boolean once) {
@@ -111,6 +117,19 @@ public class DebugHandling {
     public static boolean isDebugged(RFunction func) {
         FunctionStatementsEventReceiver fser = receiverMap.get(((FunctionDefinitionNode) func.getRootNode()).getUID());
         return fser != null && !fser.disabled();
+    }
+
+    /**
+     * Disables/enables debugging globally. Intended to be used for short period, typically while
+     * executing functions used internally by the implementation.
+     *
+     * @param disable {@code true} to disable, {@code false} to enable.
+     * @return the current value (default {@code false}.
+     */
+    public static boolean globalDisable(boolean disable) {
+        boolean current = globalDisable;
+        globalDisable = disable;
+        return current;
     }
 
     private static Probe findStartMethodProbe(FunctionDefinitionNode fdn) {
@@ -189,7 +208,7 @@ public class DebugHandling {
         }
 
         boolean disabled() {
-            return disabled;
+            return disabled || globalDisable;
         }
 
         void disable() {
@@ -496,11 +515,13 @@ public class DebugHandling {
 
         @Override
         public void tagTrappedAt(Node node, MaterializedFrame frame) {
-            FunctionBodyNode functionBodyNode = (FunctionBodyNode) node;
-            FunctionDefinitionNode fdn = (FunctionDefinitionNode) functionBodyNode.getRootNode();
-            ensureSingleStep(fdn);
-            clearTrap();
-            // next stop will be the START_METHOD node
+            if (!globalDisable) {
+                FunctionBodyNode functionBodyNode = (FunctionBodyNode) node;
+                FunctionDefinitionNode fdn = (FunctionDefinitionNode) functionBodyNode.getRootNode();
+                ensureSingleStep(fdn);
+                clearTrap();
+                // next stop will be the START_METHOD node
+            }
         }
 
         static void setTrap() {

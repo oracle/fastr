@@ -32,6 +32,7 @@ import com.oracle.truffle.r.nodes.access.variables.*;
 import com.oracle.truffle.r.nodes.control.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.nodes.function.PromiseNode.VarArgsPromiseNode;
+import com.oracle.truffle.r.nodes.instrument.debug.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RContext.Engine.*;
 import com.oracle.truffle.r.runtime.RDeparse.State;
@@ -267,26 +268,40 @@ public class RASTHelperImpl implements RASTHelper {
             // most unexpected
             throw RInternalError.shouldNotReachHere();
         }
+    }
 
+    /**
+     * TODO replace with more efficient implementation.
+     */
+    private static Object callOut(RCallNode callNode, int depth, Object... args) {
+        RNode[] argNodes = new RNode[args.length];
+        for (int i = 0; i < args.length; i++) {
+            argNodes[i] = ConstantNode.create(args[i]);
+        }
+        RCallNode call = RCallNode.createCloneReplacingArgs(callNode, argNodes);
+        /*
+         * It's important to disable/enable debugging across this call as it isn't really part of
+         * the user execution.
+         */
+        boolean gd = DebugHandling.globalDisable(true);
+        try {
+            return RContext.getEngine().eval(RDataFactory.createLanguage(call), REnvironment.globalEnv(), depth + 1);
+        } catch (PutException ex) {
+            throw RInternalError.shouldNotReachHere("callOut");
+        } finally {
+            DebugHandling.globalDisable(gd);
+        }
     }
 
     private static final Source GET_NAMESPACE_SOURCE = Source.asPseudoFile("..getNamespace(name)", "<..getNamespace>");
     private static RCallNode getNamespaceCall;
 
-    /**
-     * A rather obscure piece of code used in package loading for lazy loading.
-     */
     @Override
     public REnvironment findNamespace(RStringVector name, int depth) {
         if (getNamespaceCall == null) {
             getNamespaceCall = getCallNode(GET_NAMESPACE_SOURCE);
         }
-        RCallNode call = RCallNode.createCloneReplacingArgs(getNamespaceCall, ConstantNode.create(name));
-        try {
-            return (REnvironment) RContext.getEngine().eval(RDataFactory.createLanguage(call), REnvironment.globalEnv(), depth + 1);
-        } catch (PutException ex) {
-            throw RInternalError.shouldNotReachHere("findNamespace");
-        }
+        return (REnvironment) callOut(getNamespaceCall, depth, name);
     }
 
     private static final Source HANDLE_SIMPLE_ERROR_SOURCE = Source.asPseudoFile(".handleSimpleError(h, msg, call)", "<.handleSimpleError>");
@@ -297,12 +312,7 @@ public class RASTHelperImpl implements RASTHelper {
         if (handleSimpleErrorCall == null) {
             handleSimpleErrorCall = getCallNode(HANDLE_SIMPLE_ERROR_SOURCE);
         }
-        RCallNode callNode = RCallNode.createCloneReplacingArgs(handleSimpleErrorCall, ConstantNode.create(f), ConstantNode.create(msg), ConstantNode.create(call));
-        try {
-            RContext.getEngine().eval(RDataFactory.createLanguage(callNode), REnvironment.globalEnv(), depth + 1);
-        } catch (PutException ex) {
-            throw RInternalError.shouldNotReachHere("handleSimpleError");
-        }
+        callOut(handleSimpleErrorCall, depth, f, msg, call);
     }
 
     private static final Source SIGNAL_SIMPLE_WARNING_SOURCE = Source.asPseudoFile(".signalSimpleWarning(call, msg)", "<.signalSimpleWarning>");
@@ -312,13 +322,7 @@ public class RASTHelperImpl implements RASTHelper {
         if (signalSimpleWarningCall == null) {
             signalSimpleWarningCall = getCallNode(SIGNAL_SIMPLE_WARNING_SOURCE);
         }
-        RCallNode callNode = RCallNode.createCloneReplacingArgs(signalSimpleWarningCall, ConstantNode.create(msg), ConstantNode.create(call));
-        try {
-            RContext.getEngine().eval(RDataFactory.createLanguage(callNode), REnvironment.globalEnv(), depth + 1);
-        } catch (PutException ex) {
-            throw RInternalError.shouldNotReachHere("signalSimpleWarning");
-        }
-
+        callOut(signalSimpleWarningCall, depth, msg, call);
     }
 
 }

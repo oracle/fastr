@@ -68,7 +68,7 @@ public interface RASTHelper {
     void handleSimpleError(RFunction f, RStringVector msg, Object call, int depth);
 
     /**
-     * Call out to T to .signalSimpleWarning.
+     * Call out to R to .signalSimpleWarning.
      */
     void signalSimpleWarning(RStringVector msg, Object call, int depth);
 }
