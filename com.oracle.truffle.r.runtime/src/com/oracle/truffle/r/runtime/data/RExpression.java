@@ -69,6 +69,11 @@ public class RExpression implements RShareable, RAbstractContainer {
         return data.getDimensions();
     }
 
+    @Override
+    public void setDimensions(int[] newDimensions) {
+        data.setDimensions(newDimensions);
+    }
+
     public Class<?> getElementClass() {
         return RExpression.class;
     }
@@ -81,17 +86,34 @@ public class RExpression implements RShareable, RAbstractContainer {
         return data.getDataAtAsObject(index);
     }
 
+    @Override
     public RStringVector getNames(RAttributeProfiles attrProfiles) {
         return data.getNames(attrProfiles);
     }
 
+    @Override
+    public void setNames(RStringVector newNames) {
+        data.setNames(newNames);
+    }
+
+    @Override
     public RList getDimNames() {
         return data.getDimNames();
     }
 
     @Override
+    public void setDimNames(RList newDimNames) {
+        data.setDimNames(newDimNames);
+    }
+
+    @Override
     public Object getRowNames(RAttributeProfiles attrProfiles) {
         return data.getRowNames(attrProfiles);
+    }
+
+    @Override
+    public void setRowNames(RAbstractVector rowNames) {
+        data.setRowNames(rowNames);
     }
 
     public RStringVector getClassHierarchy() {

@@ -50,6 +50,12 @@ public abstract class RSequence extends RBounded implements RAbstractVector {
         return null;
     }
 
+    @Override
+    public void setDimensions(int[] newDimensions) {
+        // should only be used on materialized sequence
+        throw RInternalError.shouldNotReachHere();
+    }
+
     public final RVector createVector() {
         return internalCreateVector();
     }
@@ -77,8 +83,20 @@ public abstract class RSequence extends RBounded implements RAbstractVector {
     }
 
     @Override
+    public void setNames(RStringVector newNames) {
+        // should only be used on materialized sequence
+        throw RInternalError.shouldNotReachHere();
+    }
+
+    @Override
     public final RList getDimNames() {
         return null;
+    }
+
+    @Override
+    public void setDimNames(RList newDimNames) {
+        // should only be used on materialized sequence
+        throw RInternalError.shouldNotReachHere();
     }
 
     @Override
@@ -87,10 +105,14 @@ public abstract class RSequence extends RBounded implements RAbstractVector {
     }
 
     @Override
+    public void setRowNames(RAbstractVector rowNames) {
+        // should only be used on materialized sequence
+        throw RInternalError.shouldNotReachHere();
+    }
+
+    @Override
     public final RAttributes initAttributes() {
-        // TODO implement
-        assert false;
-        return null;
+        throw RInternalError.shouldNotReachHere();
     }
 
     @Override

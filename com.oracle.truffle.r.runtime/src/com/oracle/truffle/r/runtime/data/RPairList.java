@@ -129,6 +129,11 @@ public class RPairList extends RAttributeStorage implements RAttributable, RAbst
         return new int[]{1};
     }
 
+    @Override
+    public void setDimensions(int[] newDimensions) {
+        throw RInternalError.shouldNotReachHere();
+    }
+
     public Class<?> getElementClass() {
         return null;
     }
@@ -153,6 +158,7 @@ public class RPairList extends RAttributeStorage implements RAttributable, RAbst
         return pl.car;
     }
 
+    @Override
     public RStringVector getNames(RAttributeProfiles attrProfiles) {
         int l = getLength();
         String[] data = new String[l];
@@ -173,12 +179,29 @@ public class RPairList extends RAttributeStorage implements RAttributable, RAbst
         return RDataFactory.createStringVector(data, complete);
     }
 
-    public RList getDimNames() {
-        return null;
+    @Override
+    public void setNames(RStringVector newNames) {
+        throw RInternalError.shouldNotReachHere();
     }
 
+    @Override
+    public RList getDimNames() {
+        throw RInternalError.shouldNotReachHere();
+    }
+
+    @Override
+    public void setDimNames(RList newDimNames) {
+        throw RInternalError.shouldNotReachHere();
+    }
+
+    @Override
     public Object getRowNames(RAttributeProfiles attrProfiles) {
-        return null;
+        throw RInternalError.shouldNotReachHere();
+    }
+
+    @Override
+    public void setRowNames(RAbstractVector rowNames) {
+        throw RInternalError.shouldNotReachHere();
     }
 
     public RStringVector getClassHierarchy() {

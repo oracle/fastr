@@ -72,8 +72,7 @@ public class RLanguage extends RLanguageRep implements RAbstractContainer, RAttr
     }
 
     public boolean isComplete() {
-        assert false;
-        return false;
+        throw RInternalError.shouldNotReachHere();
     }
 
     public int getLength() {
@@ -93,18 +92,21 @@ public class RLanguage extends RLanguageRep implements RAbstractContainer, RAttr
         return null;
     }
 
+    @Override
+    public void setDimensions(int[] newDimensions) {
+        throw RInternalError.unimplemented();
+    }
+
     public Class<?> getElementClass() {
         return RLanguage.class;
     }
 
     public RVector materializeNonSharedVector() {
-        assert false;
-        return null;
+        throw RInternalError.shouldNotReachHere();
     }
 
     public RShareable materializeToShareable() {
-        assert false;
-        return null;
+        throw RInternalError.shouldNotReachHere();
     }
 
     public Object getDataAtAsObject(int index) {
@@ -117,13 +119,28 @@ public class RLanguage extends RLanguageRep implements RAbstractContainer, RAttr
     }
 
     @Override
+    public void setNames(RStringVector newNames) {
+        setAttr(RRuntime.NAMES_ATTR_KEY, newNames);
+    }
+
+    @Override
     public RList getDimNames() {
         return (RList) getAttr(localAttrProfiles, RRuntime.DIMNAMES_ATTR_KEY);
     }
 
     @Override
+    public void setDimNames(RList newDimNames) {
+        setAttr(RRuntime.DIMNAMES_ATTR_KEY, newDimNames);
+    }
+
+    @Override
     public Object getRowNames(RAttributeProfiles attrProfiles) {
         return getAttr(attrProfiles, RRuntime.ROWNAMES_ATTR_KEY);
+    }
+
+    @Override
+    public void setRowNames(RAbstractVector rowNames) {
+        setAttr(RRuntime.ROWNAMES_ATTR_KEY, rowNames);
     }
 
     public RStringVector getClassHierarchy() {

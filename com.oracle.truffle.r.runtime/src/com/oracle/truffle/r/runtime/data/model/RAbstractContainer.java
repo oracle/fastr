@@ -34,6 +34,8 @@ public interface RAbstractContainer extends RAttributable, RClassHierarchy, RTyp
 
     int[] getDimensions();
 
+    void setDimensions(int[] newDimensions);
+
     Class<?> getElementClass();
 
     RVector materializeNonSharedVector();
@@ -44,9 +46,15 @@ public interface RAbstractContainer extends RAttributable, RClassHierarchy, RTyp
 
     RStringVector getNames(RAttributeProfiles attrProfiles);
 
+    void setNames(RStringVector newNames);
+
     RList getDimNames();
 
+    void setDimNames(RList newDimNames);
+
     Object getRowNames(RAttributeProfiles attrProfiles);
+
+    void setRowNames(RAbstractVector rowNames);
 
     /**
      * Returns {@code true} if and only if the value has a {@code class} attribute added explicitly.

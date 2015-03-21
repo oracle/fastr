@@ -99,6 +99,11 @@ public final class RFactor implements RShareable, RAbstractContainer {
     }
 
     @Override
+    public void setDimensions(int[] newDimensions) {
+        vector.setDimensions(newDimensions);
+    }
+
+    @Override
     public Class<?> getElementClass() {
         return RFactor.class;
     }
@@ -123,13 +128,28 @@ public final class RFactor implements RShareable, RAbstractContainer {
     }
 
     @Override
+    public void setNames(RStringVector newNames) {
+        vector.setNames(newNames);
+    }
+
+    @Override
     public RList getDimNames() {
         return vector.getDimNames();
     }
 
     @Override
+    public void setDimNames(RList newDimNames) {
+        vector.setDimNames(newDimNames);
+    }
+
+    @Override
     public Object getRowNames(RAttributeProfiles attrProfiles) {
         return vector.getRowNames(attrProfiles);
+    }
+
+    @Override
+    public void setRowNames(RAbstractVector rowNames) {
+        vector.setRowNames(rowNames);
     }
 
     @Override

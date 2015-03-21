@@ -98,6 +98,11 @@ public final class RDataFrame implements RShareable, RAbstractContainer {
     }
 
     @Override
+    public void setDimensions(int[] newDimensions) {
+        Utils.nyi("data frame's dimensions need to be set using builtins");
+    }
+
+    @Override
     public Class<?> getElementClass() {
         return RDataFrame.class;
     }
@@ -122,14 +127,29 @@ public final class RDataFrame implements RShareable, RAbstractContainer {
     }
 
     @Override
+    public void setNames(RStringVector newNames) {
+        vector.setNames(newNames);
+    }
+
+    @Override
     public RList getDimNames() {
         Utils.nyi("data frame's dimnames needs to be obtained using builtins");
         return null;
     }
 
     @Override
+    public void setDimNames(RList newDimNames) {
+        vector.setDimNames(newDimNames);
+    }
+
+    @Override
     public Object getRowNames(RAttributeProfiles attrProfiles) {
         return vector.getRowNames(attrProfiles);
+    }
+
+    @Override
+    public void setRowNames(RAbstractVector rowNames) {
+        vector.setRowNames(rowNames);
     }
 
     @Override
