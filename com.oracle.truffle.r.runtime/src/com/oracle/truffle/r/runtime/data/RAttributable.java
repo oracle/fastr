@@ -89,7 +89,13 @@ public interface RAttributable {
         }
     }
 
-    default RAttributable setClassAttr(RStringVector classAttr) {
+    default RAttributes resetAllAttributes(@SuppressWarnings("unused") boolean nullify) {
+        RAttributes attributes = getAttributes();
+        attributes.clear();
+        return attributes;
+    }
+
+    default RAttributable setClassAttr(RStringVector classAttr, @SuppressWarnings("unused") boolean convertToInt) {
         setAttr(RRuntime.CLASS_ATTR_KEY, classAttr);
         return this;
     }

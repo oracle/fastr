@@ -67,7 +67,7 @@ public abstract class UpdateDimNames extends RInvisibleBuiltinNode {
         }
     }
 
-    public abstract RAbstractVector executeList(VirtualFrame frame, RAbstractVector vector, Object o);
+    public abstract RAbstractContainer executeList(VirtualFrame frame, RAbstractContainer container, Object o);
 
     public RList convertToListOfStrings(VirtualFrame frame, RList oldList) {
         RList list = oldList;
@@ -86,46 +86,46 @@ public abstract class UpdateDimNames extends RInvisibleBuiltinNode {
 
     @Specialization
     @TruffleBoundary
-    protected RAbstractVector updateDimnames(RAbstractVector vector, RNull list) {
-        RVector v = vector.materialize();
-        v.setDimNames(null, getEncapsulatingSourceSection());
+    protected RAbstractContainer updateDimnames(RAbstractContainer container, RNull list) {
+        RAbstractContainer result = container.materializeNonShared();
+        container.setDimNames(null);
         controlVisibility();
-        return v;
+        return container;
     }
 
     @Specialization(guards = "isZeroLength(list)")
     @TruffleBoundary
-    protected RAbstractVector updateDimnamesEmpty(RAbstractVector vector, RList list) {
-        RVector v = vector.materialize();
-        v.setDimNames(null, getEncapsulatingSourceSection());
+    protected RAbstractContainer updateDimnamesEmpty(RAbstractContainer container, RList list) {
+        RAbstractContainer result = container.materializeNonShared();
+        container.setDimNames(null);
         controlVisibility();
-        return v;
+        return container;
     }
 
     @Specialization(guards = "!isZeroLength(list)")
-    protected RAbstractVector updateDimnames(VirtualFrame frame, RAbstractVector vector, RList list) {
-        RVector v = vector.materialize();
-        v.setDimNames(convertToListOfStrings(frame, list), getEncapsulatingSourceSection());
+    protected RAbstractContainer updateDimnames(VirtualFrame frame, RAbstractContainer container, RList list) {
+        RAbstractContainer result = container.materializeNonShared();
+        container.setDimNames(convertToListOfStrings(frame, list));
         controlVisibility();
-        return v;
+        return container;
     }
 
-    @Specialization(guards = "!isVectorList(v)")
-    protected RAbstractVector updateDimnamesError(RAbstractVector vector, RAbstractVector v) {
+    @Specialization(guards = "!isContainerList(c)")
+    protected RAbstractContainer updateDimnamesError(RAbstractContainer container, RAbstractContainer c) {
         controlVisibility();
         CompilerDirectives.transferToInterpreter();
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.DIMNAMES_LIST);
     }
 
     @Specialization
-    protected RAbstractVector updateDimnamesError(RAbstractVector vector, RFunction v) {
+    protected RAbstractContainer updateDimnamesError(RAbstractContainer container, RFunction v) {
         controlVisibility();
         CompilerDirectives.transferToInterpreter();
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.DIMNAMES_LIST);
     }
 
-    protected boolean isVectorList(RAbstractVector v) {
-        return v instanceof RList;
+    protected boolean isContainerList(RAbstractContainer c) {
+        return c instanceof RList;
     }
 
     protected boolean isZeroLength(RList list) {

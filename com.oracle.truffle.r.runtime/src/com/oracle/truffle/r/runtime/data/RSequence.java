@@ -38,6 +38,11 @@ public abstract class RSequence extends RBounded implements RAbstractVector {
         return length;
     }
 
+    @Override
+    public RAbstractContainer resize(int size) {
+        return materialize().resize(size);
+    }
+
     public final boolean isComplete() {
         return true;
     }
@@ -134,7 +139,7 @@ public abstract class RSequence extends RBounded implements RAbstractVector {
     }
 
     @Override
-    public final RVector materializeNonSharedVector() {
+    public final RVector materializeNonShared() {
         RVector resultVector = this.materialize();
         assert !resultVector.isShared();
         return resultVector;

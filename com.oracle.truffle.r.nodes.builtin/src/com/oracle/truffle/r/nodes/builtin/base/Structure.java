@@ -86,9 +86,9 @@ public abstract class Structure extends RBuiltinNode {
             String attrName = fixupAttrName(signature.getName(i + 1));
             if (attrName.equals(RRuntime.CLASS_ATTR_KEY)) {
                 if (value == RNull.instance) {
-                    res = (RAbstractContainer) res.setClassAttr(null);
+                    res = (RAbstractContainer) res.setClassAttr(null, true);
                 } else {
-                    res = (RAbstractContainer) res.setClassAttr((RStringVector) value);
+                    res = (RAbstractContainer) res.setClassAttr((RStringVector) value, true);
                 }
             } else {
                 if (value == RNull.instance) {

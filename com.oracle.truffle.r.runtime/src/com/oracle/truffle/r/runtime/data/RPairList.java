@@ -109,6 +109,7 @@ public class RPairList extends RAttributeStorage implements RAttributable, RAbst
         return false;
     }
 
+    @Override
     public int getLength() {
         int result = 1;
         Object tcdr = cdr;
@@ -119,6 +120,11 @@ public class RPairList extends RAttributeStorage implements RAttributable, RAbst
             result++;
         }
         return result;
+    }
+
+    @Override
+    public RAbstractContainer resize(int size) {
+        throw RInternalError.shouldNotReachHere();
     }
 
     public boolean hasDimensions() {
@@ -138,7 +144,8 @@ public class RPairList extends RAttributeStorage implements RAttributable, RAbst
         return null;
     }
 
-    public RVector materializeNonSharedVector() {
+    @Override
+    public RVector materializeNonShared() {
         RInternalError.shouldNotReachHere();
         return null;
     }

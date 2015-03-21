@@ -75,11 +75,17 @@ public class RLanguage extends RLanguageRep implements RAbstractContainer, RAttr
         throw RInternalError.shouldNotReachHere();
     }
 
+    @Override
     public int getLength() {
         if (length < 0) {
             length = RContext.getRASTHelper().getLength(this);
         }
         return length;
+    }
+
+    @Override
+    public RAbstractContainer resize(int size) {
+        throw RInternalError.shouldNotReachHere();
     }
 
     public boolean hasDimensions() {
@@ -101,7 +107,7 @@ public class RLanguage extends RLanguageRep implements RAbstractContainer, RAttr
         return RLanguage.class;
     }
 
-    public RVector materializeNonSharedVector() {
+    public RVector materializeNonShared() {
         throw RInternalError.shouldNotReachHere();
     }
 

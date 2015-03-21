@@ -64,7 +64,7 @@ public abstract class ProcTime extends RBuiltinNode {
             RNAMES = RDataFactory.createStringVector(NAMES, RDataFactory.COMPLETE_VECTOR);
         }
         RDoubleVector result = RDataFactory.createDoubleVector(data, complete, RNAMES);
-        result.setClassAttr(PROC_TIME_CLASS);
+        result.setClassAttr(PROC_TIME_CLASS, false);
         return result;
     }
 

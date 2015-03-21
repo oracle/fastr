@@ -39,6 +39,11 @@ public abstract class RToVectorClosure implements RAbstractVector {
         return vector.getLength();
     }
 
+    @Override
+    public RAbstractContainer resize(int size) {
+        return vector.resize(size);
+    }
+
     public boolean isComplete() {
         return vector.isComplete();
     }
@@ -144,8 +149,8 @@ public abstract class RToVectorClosure implements RAbstractVector {
     }
 
     @Override
-    public RVector materializeNonSharedVector() {
-        return vector.materializeNonSharedVector();
+    public RAbstractVector materializeNonShared() {
+        return (RAbstractVector) vector.materializeNonShared();
     }
 
     @Override

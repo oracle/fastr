@@ -473,8 +473,8 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
     }
 
     @Override
-    public RAbstractContainer setClassAttr(RStringVector classAttr) {
-        return setClassAttrInternal(this, classAttr, null, null, true);
+    public RAbstractContainer setClassAttr(RStringVector classAttr, boolean convertToInt) {
+        return setClassAttrInternal(this, classAttr, null, null, convertToInt);
     }
 
     public static RAbstractContainer setVectorClassAttr(RVector vector, RStringVector classAttr, RAbstractContainer enclosingDataFrame, RAbstractContainer enclosingFactor) {
@@ -630,7 +630,7 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
         RAttributes vecAttributes = vector.getAttributes();
         if (vecAttributes != null) {
             this.attributes = vecAttributes.copy();
-            return this.setClassAttr((RStringVector) vecAttributes.get(RRuntime.CLASS_ATTR_KEY));
+            return this.setClassAttr((RStringVector) vecAttributes.get(RRuntime.CLASS_ATTR_KEY), false);
         } else {
             return this;
         }
@@ -650,7 +650,7 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
         RAttributes vecAttributes = vector.getAttributes();
         if (vecAttributes != null) {
             this.attributes = vecAttributes.copy();
-            return this.setClassAttr((RStringVector) vecAttributes.get(RRuntime.CLASS_ATTR_KEY));
+            return this.setClassAttr((RStringVector) vecAttributes.get(RRuntime.CLASS_ATTR_KEY), false);
         } else {
             return this;
         }
@@ -708,7 +708,11 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
         return this;
     }
 
-    public final RShareable resize(int size, boolean resetAll) {
+    public final RVector resize(int size) {
+        return resize(size, true);
+    }
+
+    public final RVector resize(int size, boolean resetAll) {
         this.complete &= getLength() >= size;
         RVector res = this;
         if (this.isShared()) {
@@ -757,6 +761,7 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
         }
     }
 
+    @Override
     public final RAttributes resetAllAttributes(boolean nullify) {
         this.dimensions = null;
         this.matrixDimension = 0;
@@ -764,15 +769,12 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
         this.dimNames = null;
         if (nullify) {
             this.attributes = null;
-            return null;
         } else {
             if (this.attributes != null) {
                 this.attributes.clear();
-                return this.attributes;
-            } else {
-                return null;
             }
         }
+        return this.attributes;
     }
 
     @Override
@@ -805,7 +807,7 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
     }
 
     @Override
-    public final RVector materializeNonSharedVector() {
+    public final RVector materializeNonShared() {
         if (this.isShared()) {
             RVector res = this.copy();
             res.markNonTemporary();

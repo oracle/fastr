@@ -45,20 +45,33 @@ public class RExpression implements RShareable, RAbstractContainer {
         return data.getDataAt(index);
     }
 
+    @Override
     public RAttributes initAttributes() {
         return data.initAttributes();
     }
 
+    @Override
     public RAttributes getAttributes() {
         return data.getAttributes();
+    }
+
+    @Override
+    public final RAttributes resetAllAttributes(boolean nullify) {
+        return data.resetAllAttributes(nullify);
     }
 
     public boolean isComplete() {
         return data.isComplete();
     }
 
+    @Override
     public int getLength() {
         return data.getLength();
+    }
+
+    @Override
+    public RAbstractContainer resize(int size) {
+        return data.resize(size);
     }
 
     public boolean hasDimensions() {
@@ -78,8 +91,9 @@ public class RExpression implements RShareable, RAbstractContainer {
         return RExpression.class;
     }
 
-    public RVector materializeNonSharedVector() {
-        return data.materializeNonSharedVector();
+    public RExpression materializeNonShared() {
+        RVector d = data.materializeNonShared();
+        return data != d ? RDataFactory.createExpression((RList) d) : this;
     }
 
     public Object getDataAtAsObject(int index) {
@@ -153,4 +167,10 @@ public class RExpression implements RShareable, RAbstractContainer {
     public RShareable materializeToShareable() {
         return this;
     }
+
+    @Override
+    public RAbstractContainer setClassAttr(RStringVector classAttr, boolean convertToInt) {
+        return data.setClassAttr(classAttr, convertToInt);
+    }
+
 }

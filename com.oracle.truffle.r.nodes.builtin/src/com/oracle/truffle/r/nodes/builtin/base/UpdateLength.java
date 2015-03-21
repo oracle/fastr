@@ -69,10 +69,7 @@ public abstract class UpdateLength extends RInvisibleBuiltinNode {
     protected RAbstractContainer updateLength(@SuppressWarnings("unused") VirtualFrame frame, RAbstractContainer container, RAbstractIntVector lengthVector) {
         controlVisibility();
         int length = lengthVector.getDataAt(0);
-        // TODO: we can potentially avoid making a copy during materialization and then during
-        // resizing but is it worth it for that case?
-        RVector vector = container.materializeNonSharedVector();
-        return (RAbstractContainer) vector.resize(length, true);
+        return container.resize(length);
     }
 
     @SuppressWarnings("unused")

@@ -50,7 +50,7 @@ public abstract class Matrix extends RBuiltinNode {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             updateDimNames = insert(UpdateDimNamesFactory.create(new RNode[2], getBuiltin(), getSuppliedSignature()));
         }
-        return updateDimNames.executeList(frame, vector, o);
+        return (RAbstractVector) updateDimNames.executeList(frame, vector, o);
     }
 
     @CreateCast("arguments")

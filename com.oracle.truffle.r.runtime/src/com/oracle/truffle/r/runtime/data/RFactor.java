@@ -59,6 +59,11 @@ public final class RFactor implements RShareable, RAbstractContainer {
     }
 
     @Override
+    public RAbstractContainer resize(int size) {
+        return vector.resize(size);
+    }
+
+    @Override
     public void markNonTemporary() {
         vector.markNonTemporary();
     }
@@ -109,12 +114,9 @@ public final class RFactor implements RShareable, RAbstractContainer {
     }
 
     @Override
-    public RVector materializeNonSharedVector() {
-        if (isShared()) {
-            vector = (RIntVector) vector.copy();
-            vector.markNonTemporary();
-        }
-        return vector;
+    public RFactor materializeNonShared() {
+        RVector v = vector.materializeNonShared();
+        return vector != v ? RDataFactory.createFactor((RIntVector) v, ordered) : this;
     }
 
     @Override
@@ -162,8 +164,14 @@ public final class RFactor implements RShareable, RAbstractContainer {
         return true;
     }
 
+    @Override
     public RAttributes initAttributes() {
         return vector.initAttributes();
+    }
+
+    @Override
+    public final RAttributes resetAllAttributes(boolean nullify) {
+        return vector.resetAllAttributes(nullify);
     }
 
     @Override
@@ -176,8 +184,8 @@ public final class RFactor implements RShareable, RAbstractContainer {
     }
 
     @Override
-    public RAbstractContainer setClassAttr(RStringVector classAttr) {
-        return RVector.setVectorClassAttr(vector, classAttr, null, this);
+    public RAbstractContainer setClassAttr(RStringVector classAttr, boolean convertToInt) {
+        return vector.setClassAttr(classAttr, convertToInt);
     }
 
     public RVector getLevels(RAttributeProfiles attrProfiles) {

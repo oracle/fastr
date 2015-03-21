@@ -30,6 +30,8 @@ public interface RAbstractContainer extends RAttributable, RClassHierarchy, RTyp
 
     int getLength();
 
+    RAbstractContainer resize(int size);
+
     boolean hasDimensions();
 
     int[] getDimensions();
@@ -38,7 +40,7 @@ public interface RAbstractContainer extends RAttributable, RClassHierarchy, RTyp
 
     Class<?> getElementClass();
 
-    RVector materializeNonSharedVector();
+    RAbstractContainer materializeNonShared();
 
     RShareable materializeToShareable();
 

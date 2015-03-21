@@ -56,6 +56,21 @@ public final class RDataFrame implements RShareable, RAbstractContainer {
     }
 
     @Override
+    public RAbstractContainer resize(int size) {
+        if (vector instanceof RList || size == 0) {
+            return vector.resize(size);
+        } else {
+            RVector v = RDataFactory.createList();
+            v.resize(size);
+            v.setNames(vector.getNames());
+            if (vector.getLength() == 0) {
+                v.updateDataAtAsObject(0, vector, null);
+            }
+            return v;
+        }
+    }
+
+    @Override
     public void markNonTemporary() {
         vector.markNonTemporary();
     }
@@ -99,7 +114,9 @@ public final class RDataFrame implements RShareable, RAbstractContainer {
 
     @Override
     public void setDimensions(int[] newDimensions) {
-        Utils.nyi("data frame's dimensions need to be set using builtins");
+        // this may be strange, considering that getDimensions() must be obtained using builtins,
+        // but this sets the explicit attribute that is listed with other data frame attributes
+        vector.setDimensions(newDimensions);
     }
 
     @Override
@@ -108,12 +125,9 @@ public final class RDataFrame implements RShareable, RAbstractContainer {
     }
 
     @Override
-    public RVector materializeNonSharedVector() {
-        if (isShared()) {
-            vector = vector.copy();
-            vector.markNonTemporary();
-        }
-        return vector;
+    public RDataFrame materializeNonShared() {
+        RVector v = vector.materializeNonShared();
+        return vector != v ? RDataFactory.createDataFrame(v) : this;
     }
 
     @Override
@@ -162,8 +176,14 @@ public final class RDataFrame implements RShareable, RAbstractContainer {
         return true;
     }
 
+    @Override
     public RAttributes initAttributes() {
         return vector.initAttributes();
+    }
+
+    @Override
+    public final RAttributes resetAllAttributes(boolean nullify) {
+        return vector.resetAllAttributes(nullify);
     }
 
     @Override
@@ -180,8 +200,8 @@ public final class RDataFrame implements RShareable, RAbstractContainer {
     }
 
     @Override
-    public RAbstractContainer setClassAttr(RStringVector classAttr) {
-        return RVector.setVectorClassAttr(vector, classAttr, this, null);
+    public RAbstractContainer setClassAttr(RStringVector classAttr, boolean convertToInt) {
+        return vector.setClassAttr(classAttr, convertToInt);
     }
 
 }
