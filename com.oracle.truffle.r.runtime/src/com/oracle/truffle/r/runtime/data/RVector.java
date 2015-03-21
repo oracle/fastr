@@ -715,6 +715,7 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
     public final RVector resize(int size, boolean resetAll) {
         this.complete &= getLength() >= size;
         RVector res = this;
+        RStringVector oldNames = res.names;
         if (this.isShared()) {
             res = copyResized(size, true);
             res.markNonTemporary();
@@ -722,20 +723,16 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
             resizeInternal(size);
         }
         if (resetAll) {
-            RStringVector oldNames = res.names;
             resetAllAttributes(oldNames == null);
-            if (oldNames != null) {
-                oldNames.resizeWithEmpty(size);
-                res.putAttribute(RRuntime.NAMES_ATTR_KEY, oldNames);
-                res.names = oldNames;
-            }
         } else {
             res.setDimensionsNoCheck(null);
             res.matrixDimension = 0;
             res.setDimNamesNoCheck(null);
-            if (res.names != null) {
-                res.names.resizeWithEmpty(size);
-            }
+        }
+        if (oldNames != null) {
+            oldNames.resizeWithEmpty(size);
+            res.putAttribute(RRuntime.NAMES_ATTR_KEY, oldNames);
+            res.names = oldNames;
         }
         return res;
     }
@@ -812,9 +809,14 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
             RVector res = this.copy();
             res.markNonTemporary();
             return res;
-        } else {
-            return this;
         }
+        if (this.isTemporary()) {
+            // this is needed for primitive values coerced to vector - they need to be marked as
+            // non-temp, otherwise the following code will not work:
+            // x<-1; attributes(x) <- list(my = 1); y<-x; attributes(y)<-list(his = 2); x
+            this.markNonTemporary();
+        }
+        return this;
     }
 
     @Override

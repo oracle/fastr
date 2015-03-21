@@ -204,7 +204,7 @@ public abstract class UpdateAttributes extends RInvisibleBuiltinNode {
             RAttributable attrObj = (RAttributable) obj;
             attrObj.removeAllAttributes();
             if (operand == RNull.instance) {
-                attrObj.setClassAttr(null);
+                attrObj.setClassAttr(null, false);
             } else if (operand instanceof RList) {
                 RList list = (RList) operand;
                 RStringVector listNames = list.getNames(attrProfiles);
@@ -221,7 +221,7 @@ public abstract class UpdateAttributes extends RInvisibleBuiltinNode {
                         if (attrValue == null) {
                             throw RError.error(getEncapsulatingSourceSection(), RError.Message.SET_INVALID_CLASS_ATTR);
                         }
-                        attrObj.setClassAttr(RDataFactory.createStringVectorFromScalar((String) attrValue));
+                        attrObj.setClassAttr(RDataFactory.createStringVectorFromScalar((String) attrValue), false);
                     } else {
                         attrObj.setAttr(attrName, list.getDataAt(i));
                     }

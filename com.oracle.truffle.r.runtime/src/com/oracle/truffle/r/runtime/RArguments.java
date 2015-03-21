@@ -27,7 +27,6 @@ import java.util.*;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -183,7 +182,6 @@ public final class RArguments {
      * change at any point in time. Therefore, even though source is known at compile time, Graal
      * would have to be conservative and keep the array copy.
      */
-    @ExplodeLoop
     private static void copyArguments(Object[] source, Object[] destination, int position) {
         for (int i = 0; i < source.length; i++) {
             destination[position + i] = source[i];

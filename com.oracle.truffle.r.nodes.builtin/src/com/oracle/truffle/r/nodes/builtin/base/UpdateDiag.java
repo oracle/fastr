@@ -74,11 +74,7 @@ public abstract class UpdateDiag extends RInvisibleBuiltinNode {
     @TruffleBoundary
     protected RAbstractIntVector updateDiag(RIntVector vector, RAbstractIntVector valueVector) {
         controlVisibility();
-        RIntVector resultVector = vector;
-        if (vector.isShared()) {
-            resultVector = (RIntVector) vector.copy();
-            resultVector.markNonTemporary();
-        }
+        RIntVector resultVector = (RIntVector) vector.materializeNonShared();
         int nrow = resultVector.getDimensions()[0];
         int size = Math.min(nrow, resultVector.getDimensions()[1]);
         int pos = 0;
@@ -94,11 +90,7 @@ public abstract class UpdateDiag extends RInvisibleBuiltinNode {
     @TruffleBoundary
     protected RAbstractDoubleVector updateDiag(RDoubleVector vector, RAbstractDoubleVector valueVector) {
         controlVisibility();
-        RDoubleVector resultVector = vector;
-        if (vector.isShared()) {
-            resultVector = (RDoubleVector) vector.copy();
-            resultVector.markNonTemporary();
-        }
+        RDoubleVector resultVector = (RDoubleVector) vector.materializeNonShared();
         int size = Math.min(resultVector.getDimensions()[0], resultVector.getDimensions()[1]);
         int nrow = resultVector.getDimensions()[0];
         int pos = 0;

@@ -55,10 +55,9 @@ public abstract class UpdateDim extends RInvisibleBuiltinNode {
     }
 
     @Specialization
-    @TruffleBoundary
     protected RAbstractVector updateDim(RAbstractVector vector, RNull dimensions) {
         controlVisibility();
-        RVector result = vector.materialize();
+        RVector result = (RVector) vector.materializeNonShared();
         result.resetDimensions(null);
         return result;
     }
@@ -72,7 +71,7 @@ public abstract class UpdateDim extends RInvisibleBuiltinNode {
         }
         int[] dimsData = castInteger(frame, dimensions).materialize().getDataCopy();
         vector.verifyDimensions(dimsData, getEncapsulatingSourceSection());
-        RVector result = vector.materialize();
+        RVector result = (RVector) vector.materializeNonShared();
         result.resetDimensions(dimsData);
         return result;
     }

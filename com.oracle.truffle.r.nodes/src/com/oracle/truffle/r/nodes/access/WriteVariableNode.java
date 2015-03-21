@@ -51,8 +51,7 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
 
         REGULAR,
         COPY,
-        INVISIBLE,
-        TEMP
+        INVISIBLE
     }
 
     public abstract boolean isArgWrite();
@@ -94,8 +93,14 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
     protected final Object shareObjectValue(Frame frame, FrameSlot frameSlot, Object value, Mode mode, boolean isSuper) {
         Object newValue = value;
         if (!isArgWrite()) {
-            // for the meaning of INVISIBLE mode see the comment preceding the current method
-            if (mode != Mode.INVISIBLE && !isCurrentProfile.profile(isCurrentValue(frame, frameSlot, value))) {
+            // for the meaning of INVISIBLE mode see the comment preceding the current method;
+            // also change state when assigning to the enclosing frame as there must
+            // be a distinction between variables with the same name defined in
+            // different scopes, for example to correctly support:
+            // x<-1:3; f<-function() { x[2]<-10; x[2]<<-100; x[2]<-1000 }; f()
+            // or
+            // x<-c(1); f<-function() { x[[1]]<<-x[[1]] + 1; x }; a<-f(); b<-f(); c(a,b)
+            if ((mode != Mode.INVISIBLE || isSuper) && !isCurrentProfile.profile(isCurrentValue(frame, frameSlot, value))) {
                 if (isShareableProfile.profile(value instanceof RShareable)) {
                     RShareable rShareable = (RShareable) value;
                     if (isTemporaryProfile.profile(rShareable.isTemporary())) {
@@ -115,12 +120,7 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
                         if (mode == Mode.COPY) {
                             RShareable shareableCopy = rShareable.copy();
                             newValue = shareableCopy;
-                        } else if (mode != Mode.TEMP || isSuper) {
-                            // mark shared when assigning to the enclosing frame as there must
-                            // be a distinction between variables with the same name defined in
-                            // different scopes, for example to correctly support:
-                            // x<-1:3; f<-function() { x[2]<-10; x[2]<<-100; x[2]<-1000 } ; f()
-
+                        } else {
                             rShareable.makeShared();
                         }
                     }
