@@ -1094,17 +1094,17 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
 
     @Specialization(guards = "meaningfulOp(left, right)")
     protected Object doFactorOp(VirtualFrame frame, RFactor left, RFactor right) {
-        return recursiveOp(frame, RClosures.createFactorToVector(left, leftNACheck), RClosures.createFactorToVector(right, rightNACheck));
+        return recursiveOp(frame, RClosures.createFactorToVector(left, leftNACheck, attrProfiles), RClosures.createFactorToVector(right, rightNACheck, attrProfiles));
     }
 
     @Specialization(guards = {"meaningfulOp(left)", "!isFactor(right)"})
     protected Object doFactorOp(VirtualFrame frame, RFactor left, RAbstractContainer right) {
-        return recursiveOp(frame, RClosures.createFactorToVector(left, leftNACheck), right);
+        return recursiveOp(frame, RClosures.createFactorToVector(left, leftNACheck, attrProfiles), right);
     }
 
     @Specialization(guards = {"meaningfulOp(right)", "!isFactor(right)"})
     protected Object doFactorOp(VirtualFrame frame, RAbstractContainer left, RFactor right) {
-        return recursiveOp(frame, left, RClosures.createFactorToVector(right, rightNACheck));
+        return recursiveOp(frame, left, RClosures.createFactorToVector(right, rightNACheck, attrProfiles));
     }
 
     @Specialization(guards = "!meaningfulOp(left, right)")

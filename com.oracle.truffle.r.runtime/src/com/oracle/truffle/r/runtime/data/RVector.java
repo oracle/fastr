@@ -256,21 +256,6 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
         }
     }
 
-    @TruffleBoundary
-    public final void setLevels(Object newLevels) {
-        if (attributes != null && newLevels == null) {
-            // whether it's one dimensional array or not, assigning null always removes the "Levels"
-            // attribute
-            removeAttributeMapping(RRuntime.LEVELS_ATTR_KEY);
-        } else if (newLevels != null && newLevels != RNull.instance) {
-            putAttribute(RRuntime.LEVELS_ATTR_KEY, newLevels);
-        }
-    }
-
-    public final RVector getLevels() {
-        return (RVector) attributes.get(RRuntime.LEVELS_ATTR_KEY);
-    }
-
     /**
      * Sets names attribute without doing any error checking - to be used sparingly.
      *

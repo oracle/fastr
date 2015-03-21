@@ -27,6 +27,8 @@ public abstract class UpdateLevels extends RInvisibleBuiltinNode {
     @Child private CastToVectorNode castVector;
     @Child private CastStringNode castString;
 
+    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+
     private RAbstractVector castVector(VirtualFrame frame, Object value) {
         if (castVector == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -47,29 +49,33 @@ public abstract class UpdateLevels extends RInvisibleBuiltinNode {
     protected RAbstractVector updateLevels(RAbstractVector vector, @SuppressWarnings("unused") RNull levels) {
         controlVisibility();
         RVector v = vector.materialize();
-        v.setLevels(null);
+        v.removeAttr(attrProfiles, RRuntime.LEVELS_ATTR_KEY);
         return v;
     }
 
-    @Specialization
+    @Specialization(guards = "levelsNotNull(levels)")
     protected RAbstractVector updateLevels(VirtualFrame frame, RAbstractVector vector, Object levels) {
         controlVisibility();
         RVector v = vector.materialize();
-        v.setLevels(castVector(frame, levels));
+        v.setAttr(RRuntime.LEVELS_ATTR_KEY, castVector(frame, levels));
         return v;
     }
 
     @Specialization
     protected RFactor updateLevels(RFactor factor, @SuppressWarnings("unused") RNull levels) {
         controlVisibility();
-        factor.getVector().setLevels(null);
+        factor.getVector().removeAttr(attrProfiles, RRuntime.LEVELS_ATTR_KEY);
         return factor;
     }
 
-    @Specialization
+    @Specialization(guards = "levelsNotNull(levels)")
     protected RFactor updateLevels(VirtualFrame frame, RFactor factor, Object levels) {
         controlVisibility();
-        factor.getVector().setLevels(castString(frame, castVector(frame, levels)));
+        factor.getVector().setAttr(RRuntime.LEVELS_ATTR_KEY, castString(frame, castVector(frame, levels)));
         return factor;
+    }
+
+    protected boolean levelsNotNull(Object levels) {
+        return levels != RNull.instance;
     }
 }

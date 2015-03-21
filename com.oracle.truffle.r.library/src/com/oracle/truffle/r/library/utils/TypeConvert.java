@@ -152,7 +152,7 @@ public class TypeConvert {
                 }
             }
             RIntVector res = RDataFactory.createIntVector(data, complete);
-            res.setLevels(RDataFactory.createStringVector(levelsArray, RDataFactory.COMPLETE_VECTOR));
+            res.setAttr(RRuntime.LEVELS_ATTR_KEY, RDataFactory.createStringVector(levelsArray, RDataFactory.COMPLETE_VECTOR));
             return RVector.setVectorClassAttr(res, RDataFactory.createStringVector("factor"), null, null);
         }
     }

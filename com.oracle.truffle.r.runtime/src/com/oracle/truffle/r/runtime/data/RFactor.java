@@ -152,7 +152,7 @@ public final class RFactor implements RShareable, RAbstractContainer {
     }
 
     public void setLevels(Object newLevels) {
-        vector.setLevels(newLevels);
+        vector.setAttr(RRuntime.LEVELS_ATTR_KEY, newLevels);
     }
 
     @Override
@@ -160,12 +160,12 @@ public final class RFactor implements RShareable, RAbstractContainer {
         return RVector.setVectorClassAttr(vector, classAttr, null, this);
     }
 
-    public RVector getLevels() {
-        return vector.getLevels();
+    public RVector getLevels(RAttributeProfiles attrProfiles) {
+        return (RVector) vector.getAttr(attrProfiles, RRuntime.LEVELS_ATTR_KEY);
     }
 
-    public int getNLevels() {
-        RVector levels = vector.getLevels();
+    public int getNLevels(RAttributeProfiles attrProfiles) {
+        RVector levels = getLevels(attrProfiles);
         return levels == null ? 0 : levels.getLength();
     }
 }
