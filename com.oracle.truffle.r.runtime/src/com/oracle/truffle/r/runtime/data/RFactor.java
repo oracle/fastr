@@ -170,7 +170,7 @@ public final class RFactor implements RShareable, RAbstractContainer {
     }
 
     @Override
-    public final RAttributes resetAllAttributes(boolean nullify) {
+    public RAttributes resetAllAttributes(boolean nullify) {
         return vector.resetAllAttributes(nullify);
     }
 

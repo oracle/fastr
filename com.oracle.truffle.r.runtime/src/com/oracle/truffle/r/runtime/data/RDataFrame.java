@@ -182,7 +182,7 @@ public final class RDataFrame implements RShareable, RAbstractContainer {
     }
 
     @Override
-    public final RAttributes resetAllAttributes(boolean nullify) {
+    public RAttributes resetAllAttributes(boolean nullify) {
         return vector.resetAllAttributes(nullify);
     }
 
