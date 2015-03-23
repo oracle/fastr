@@ -448,7 +448,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
 
             CoerceVector coerceVector = CoerceVectorNodeGen.create(null, null, null);
             RNode updateOp = createPositions(a.getArguments(), argLength, a.isSubset(), null, tmpVarAccess, rhsAccess, coerceVector, true);
-            RNode assignFromTemp = WriteVariableNode.create(vSymbol, updateOp, false, isSuper);
+            RNode assignFromTemp = WriteVariableNode.create(vSymbol, updateOp, false, isSuper, WriteVariableNode.Mode.INVISIBLE);
             return constructReplacementSuffix(seq, assignFromTemp, tmpSymbol, rhsSymbol, source);
         } else if (a.getVector() instanceof AccessVector) {
             // assign value to the outermost dimension and then the result (recursively) to
