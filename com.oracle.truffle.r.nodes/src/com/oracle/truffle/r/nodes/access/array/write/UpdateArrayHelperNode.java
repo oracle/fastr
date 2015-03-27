@@ -118,8 +118,8 @@ public abstract class UpdateArrayHelperNode extends RNode {
         if (resultVector.isShared()) {
             vectorShared.enter();
             resultVector = (RIntVector) vector.copy();
-            resultVector.markNonTemporary();
         }
+        resultVector.markNonTemporary();
         int[] srcDimensions = resultVector.getDimensions();
         int numSrcDimensions = srcDimensions.length;
         int srcDimSize = srcDimensions[numSrcDimensions - 1];
@@ -1102,8 +1102,8 @@ public abstract class UpdateArrayHelperNode extends RNode {
         } else if (resultVector.isShared()) {
             vectorShared.enter();
             resultVector = (RIntVector) vector.copy();
-            resultVector.markNonTemporary();
         }
+        resultVector.markNonTemporary();
         return resultVector;
     }
 
@@ -1242,8 +1242,8 @@ public abstract class UpdateArrayHelperNode extends RNode {
         if (resultVector.isShared()) {
             vectorShared.enter();
             resultVector = (RDoubleVector) vector.copy();
-            resultVector.markNonTemporary();
         }
+        resultVector.markNonTemporary();
         int[] srcDimensions = resultVector.getDimensions();
         int numSrcDimensions = srcDimensions.length;
         int srcDimSize = srcDimensions[numSrcDimensions - 1];
@@ -1273,8 +1273,8 @@ public abstract class UpdateArrayHelperNode extends RNode {
         } else if (resultVector.isShared()) {
             vectorShared.enter();
             resultVector = (RDoubleVector) vector.copy();
-            resultVector.markNonTemporary();
         }
+        resultVector.markNonTemporary();
         return resultVector;
     }
 
