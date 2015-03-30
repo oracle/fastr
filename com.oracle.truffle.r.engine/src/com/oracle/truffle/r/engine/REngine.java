@@ -33,11 +33,11 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.library.graphics.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.control.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.nodes.instrument.*;
 import com.oracle.truffle.r.nodes.runtime.*;
@@ -404,7 +404,7 @@ public final class REngine implements RContext.Engine {
             } catch (ReturnException ex) {
                 // condition handling can cause a "return" that needs to skip over this call
                 throw ex;
-            } catch (ControlFlowException cfe) {
+            } catch (BreakException | NextException cfe) {
                 throw RError.error(RError.Message.NO_LOOP_FOR_BREAK_NEXT);
             }
             assert checkResult(result);
