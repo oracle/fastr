@@ -25,19 +25,21 @@ package com.oracle.truffle.r.nodes.function;
 import java.util.*;
 
 import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.*;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.r.nodes.instrument.CreateWrapper;
-import com.oracle.truffle.api.instrument.ProbeNode;
+import com.oracle.truffle.api.instrument.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.access.variables.*;
+import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseCheckHelperNode;
+import com.oracle.truffle.r.nodes.instrument.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
-import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.env.*;
 
 /**
  * This class denotes a list of {@link #getArguments()} together with their names given to a
@@ -52,6 +54,7 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
 public class CallArgumentsNode extends ArgumentsNode implements UnmatchedArguments {
 
     @Child private FrameSlotNode varArgsSlotNode;
+    @Child private PromiseCheckHelperNode promiseHelper;
 
     /**
      * If a supplied argument is a {@link ReadVariableNode} whose name is "...", this field contains
@@ -280,6 +283,54 @@ public class CallArgumentsNode extends ArgumentsNode implements UnmatchedArgumen
             ArgumentsSignature newSignature = ArgumentsSignature.get(newNames);
             return UnrolledVariadicArguments.create(values, newSignature, this);
         }
+    }
+
+    @ExplodeLoop
+    public RArgsValuesAndNames evaluateFlatten(VirtualFrame frame) {
+        int size = arguments.length;
+        RArgsValuesAndNames varArgInfo = null;
+        ArgumentsSignature resultSignature = null;
+        String[] names = null;
+        if (containsVarArgsSymbol()) {
+            varArgInfo = getVarargsAndNames(frame);
+            size += (varArgInfo.length() - 1) * varArgsSymbolIndices.length;
+            names = new String[size];
+        } else {
+            resultSignature = signature;
+        }
+        Object[] values = new Object[size];
+        int vargsSymbolsIndex = 0;
+        int index = 0;
+        for (int i = 0; i < arguments.length; i++) {
+            if (vargsSymbolsIndex < varArgsSymbolIndices.length && varArgsSymbolIndices[vargsSymbolsIndex] == i) {
+                index = flattenVarArgs(frame, varArgInfo, names, values, index);
+                vargsSymbolsIndex++;
+            } else {
+                values[index] = arguments[i] == null ? RMissing.instance : arguments[i].execute(frame);
+                if (names != null) {
+                    names[index] = signature.getName(i);
+                }
+                index++;
+            }
+        }
+        if (resultSignature == null) {
+            resultSignature = ArgumentsSignature.get(names);
+        }
+        return new RArgsValuesAndNames(values, resultSignature);
+    }
+
+    private int flattenVarArgs(VirtualFrame frame, RArgsValuesAndNames varArgInfo, String[] names, Object[] values, int startIndex) {
+        int index = startIndex;
+        for (int j = 0; j < varArgInfo.length(); j++) {
+            if (promiseHelper == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                promiseHelper = insert(new PromiseCheckHelperNode());
+            }
+            values[index] = promiseHelper.checkEvaluate(frame, varArgInfo.getValues()[j]);
+            names[index] = varArgInfo.getSignature().getName(j);
+            index++;
+        }
+        return index;
     }
 
     @TruffleBoundary

@@ -67,21 +67,6 @@ public final class GroupDispatchNode extends RNode {
         return getSourceSection();
     }
 
-    protected RArgsValuesAndNames evalArgs(VirtualFrame frame) {
-        UnrolledVariadicArguments unrolledArgs = callArgsNode.executeFlatten(frame);
-        RNode[] unevaledArgs = unrolledArgs.getArguments();
-        Object[] evaledArgs = new Object[unevaledArgs.length];
-        for (int i = 0; i < unevaledArgs.length; ++i) {
-            if (unevaledArgs[i] != null) {
-                evaledArgs[i] = unevaledArgs[i].execute(frame);
-            } else {
-                evaledArgs[i] = RMissing.instance;
-            }
-        }
-        // Delay assignment to allow recursion
-        return new RArgsValuesAndNames(evaledArgs, unrolledArgs.getSignature());
-    }
-
     @Override
     public boolean isSyntax() {
         return true;
@@ -115,7 +100,7 @@ public final class GroupDispatchNode extends RNode {
 
     @Override
     public Object execute(VirtualFrame frame) {
-        RArgsValuesAndNames argAndNames = evalArgs(frame);
+        RArgsValuesAndNames argAndNames = callArgsNode.evaluateFlatten(frame);
         Object[] evaluatedArgs = argAndNames.getValues();
 
         RStringVector typeL = evaluatedArgs.length == 0 ? null : getArgClass(evaluatedArgs[0]);
