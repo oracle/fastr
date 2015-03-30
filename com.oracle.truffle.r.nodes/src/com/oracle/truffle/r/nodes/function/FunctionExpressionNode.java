@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.function;
 
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.nodes.NodeUtil.NodeCountFilter;
@@ -31,9 +32,11 @@ import com.oracle.truffle.r.nodes.access.variables.*;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode.*;
 import com.oracle.truffle.r.nodes.function.opt.*;
 import com.oracle.truffle.r.nodes.instrument.*;
+import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
+import com.oracle.truffle.r.runtime.env.frame.*;
 
 public final class FunctionExpressionNode extends RNode {
 
@@ -44,6 +47,9 @@ public final class FunctionExpressionNode extends RNode {
     private final RootCallTarget callTarget;
     private final PromiseDeoptimizeFrameNode deoptFrameNode;
     private final boolean containsDispatch;
+
+    @CompilationFinal private StableValue<MaterializedFrame> enclosingFrameAssumption;
+    @CompilationFinal private StableValue<FrameDescriptor> enclosingFrameDescriptorAssumption;
 
     public FunctionExpressionNode(RootCallTarget callTarget) {
         this.callTarget = callTarget;
@@ -57,11 +63,45 @@ public final class FunctionExpressionNode extends RNode {
             return false;
         };
         this.containsDispatch = NodeUtil.countNodes(callTarget.getRootNode(), dispatchingMethodsFilter) > 0;
+
+        this.enclosingFrameAssumption = FrameSlotChangeMonitor.getEnclosingFrameAssumption(callTarget.getRootNode().getFrameDescriptor());
+        this.enclosingFrameDescriptorAssumption = FrameSlotChangeMonitor.getEnclosingFrameDescriptorAssumption(callTarget.getRootNode().getFrameDescriptor());
     }
 
     @Override
     public RFunction execute(VirtualFrame frame) {
         return executeFunction(frame);
+    }
+
+    protected void verifyEnclosingAssumptions(VirtualFrame enclosingFrame, FrameDescriptor descriptor) {
+        if (enclosingFrameAssumption != null) {
+            try {
+                enclosingFrameAssumption.getAssumption().check();
+            } catch (InvalidAssumptionException e) {
+                enclosingFrameAssumption = FrameSlotChangeMonitor.getEnclosingFrameAssumption(descriptor);
+            }
+            if (enclosingFrameAssumption != null) {
+                if (enclosingFrameAssumption.getValue() != enclosingFrame) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    enclosingFrameAssumption = FrameSlotChangeMonitor.getOrInitializeEnclosingFrameAssumption(null, descriptor, enclosingFrameAssumption, enclosingFrame.materialize());
+                }
+            }
+        }
+        if (enclosingFrameDescriptorAssumption != null) {
+            try {
+                enclosingFrameDescriptorAssumption.getAssumption().check();
+            } catch (InvalidAssumptionException e) {
+                enclosingFrameDescriptorAssumption = FrameSlotChangeMonitor.getEnclosingFrameDescriptorAssumption(descriptor);
+            }
+            if (enclosingFrameDescriptorAssumption != null) {
+                FrameDescriptor enclosingFrameDescriptor = enclosingFrame.getFrameDescriptor();
+                if (enclosingFrameDescriptorAssumption.getValue() != enclosingFrameDescriptor) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    enclosingFrameDescriptorAssumption = FrameSlotChangeMonitor.getOrInitializeEnclosingFrameDescriptorAssumption(null, descriptor, enclosingFrameDescriptorAssumption,
+                                    enclosingFrameDescriptor);
+                }
+            }
+        }
     }
 
     @Override
@@ -71,6 +111,7 @@ public final class FunctionExpressionNode extends RNode {
             // Deoptimize every promise which is now in this frame, as it might leave it's stack
             deoptFrameNode.deoptimizeFrame(matFrame);
         }
+        verifyEnclosingAssumptions(frame, callTarget.getRootNode().getFrameDescriptor());
         RFunction func = RDataFactory.createFunction("", callTarget, matFrame, containsDispatch);
         if (RInstrument.instrumentingEnabled()) {
             RInstrument.checkDebugRequested(callTarget.toString(), func);
