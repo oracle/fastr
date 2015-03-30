@@ -93,7 +93,7 @@ public final class RArguments {
         public final String group;
 
         public S3Args(String generic, Object clazz, Object method, MaterializedFrame callEnv, MaterializedFrame defEnv, String group) {
-            assert generic != null && clazz != null && method != null && callEnv != null : generic + " " + clazz + " " + method + " " + callEnv;
+            assert generic != null && callEnv != null : generic + " " + callEnv;
             this.generic = generic;
             this.clazz = clazz;
             this.method = method;
@@ -286,6 +286,11 @@ public final class RArguments {
     public static Object getArgument(Frame frame, int argIndex) {
         assert (argIndex >= 0 && argIndex < getNArgs(frame));
         return getArgumentsWithEvalCheck(frame)[INDEX_ARGUMENTS + argIndex];
+    }
+
+    public static Object[] getArguments(Frame frame) {
+        Object[] args = getArgumentsWithEvalCheck(frame);
+        return Arrays.copyOfRange(args, INDEX_ARGUMENTS, INDEX_ARGUMENTS + ((ArgumentsSignature) args[INDEX_SIGNATURE]).getLength());
     }
 
     /**
