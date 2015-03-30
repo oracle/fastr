@@ -79,7 +79,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
     @Child private OperatorConverterNode operatorConverter;
     @Child private SetMultiDimDataNode setMultiDimData;
 
-    @Child private DispatchedCallNode dcn;
+    @Child private UseMethodInternalNode dcn;
 
     private final BranchProfile error = BranchProfile.create();
     private final BranchProfile warning = BranchProfile.create();
@@ -252,12 +252,12 @@ public abstract class UpdateArrayHelperNode extends RNode {
     protected Object updateObjectSubset(VirtualFrame frame, Object v, Object value, int recLevel, Object positions, RAbstractContainer container) {
         if (dcn == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            dcn = insert(DispatchedCallNode.create("[<-", DispatchType.UseMethod, VALUE_SIGNATURE));
+            dcn = insert(new UseMethodInternalNode("[<-", VALUE_SIGNATURE));
         }
         try {
             Object inds = positions instanceof Object[] ? new RArgsValuesAndNames((Object[]) positions, ArgumentsSignature.empty(((Object[]) positions).length)) : positions;
-            return dcn.executeInternal(frame, container.getClassHierarchy(), new Object[]{container, inds, value});
-        } catch (NoGenericMethodException e) {
+            return dcn.execute(frame, container.getClassHierarchy(), new Object[]{container, inds, value});
+        } catch (S3FunctionLookupNode.NoGenericMethodException e) {
             return updateRecursive(frame, v, value, container, positions, recLevel);
         }
     }
@@ -266,12 +266,12 @@ public abstract class UpdateArrayHelperNode extends RNode {
     protected Object updateObject(VirtualFrame frame, Object v, Object value, int recLevel, Object positions, RAbstractContainer container) {
         if (dcn == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            dcn = insert(DispatchedCallNode.create("[[<-", DispatchType.UseMethod, VALUE_SIGNATURE));
+            dcn = insert(new UseMethodInternalNode("[[<-", VALUE_SIGNATURE));
         }
         try {
             Object inds = positions instanceof Object[] ? new RArgsValuesAndNames((Object[]) positions, ArgumentsSignature.empty(((Object[]) positions).length)) : positions;
-            return dcn.executeInternal(frame, container.getClassHierarchy(), new Object[]{container, inds, value});
-        } catch (NoGenericMethodException e) {
+            return dcn.execute(frame, container.getClassHierarchy(), new Object[]{container, inds, value});
+        } catch (S3FunctionLookupNode.NoGenericMethodException e) {
             return updateRecursive(frame, v, value, container, positions, recLevel);
         }
     }

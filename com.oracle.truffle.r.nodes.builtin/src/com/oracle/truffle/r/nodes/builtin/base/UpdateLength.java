@@ -30,7 +30,6 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.function.*;
-import com.oracle.truffle.r.nodes.function.DispatchedCallNode.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -40,7 +39,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 // 2nd parameter is "value", but should not be matched against, so ""
 public abstract class UpdateLength extends RInvisibleBuiltinNode {
 
-    @Child private DispatchedCallNode dcn;
+    @Child private UseMethodInternalNode dcn;
 
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
@@ -55,11 +54,11 @@ public abstract class UpdateLength extends RInvisibleBuiltinNode {
     protected Object updateLengthObject(VirtualFrame frame, RAbstractContainer container, RAbstractIntVector lengthVector) {
         if (dcn == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            dcn = insert(DispatchedCallNode.create("length<-", DispatchType.UseMethod, getSuppliedSignature()));
+            dcn = insert(new UseMethodInternalNode("length<-", getSuppliedSignature()));
         }
         try {
-            return dcn.executeInternal(frame, container.getClassHierarchy(), new Object[]{container, lengthVector});
-        } catch (NoGenericMethodException e) {
+            return dcn.execute(frame, container.getClassHierarchy(), new Object[]{container, lengthVector});
+        } catch (S3FunctionLookupNode.NoGenericMethodException e) {
             return updateLength(frame, container, lengthVector);
         }
 

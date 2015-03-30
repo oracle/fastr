@@ -34,8 +34,6 @@ import com.oracle.truffle.r.nodes.access.array.*;
 import com.oracle.truffle.r.nodes.access.array.ArrayPositionCast.OperatorConverterNode;
 import com.oracle.truffle.r.nodes.access.array.ArrayPositionCastNodeGen.OperatorConverterNodeGen;
 import com.oracle.truffle.r.nodes.function.*;
-import com.oracle.truffle.r.nodes.function.DispatchedCallNode.DispatchType;
-import com.oracle.truffle.r.nodes.function.DispatchedCallNode.NoGenericMethodException;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RDeparse.State;
@@ -78,8 +76,8 @@ public abstract class AccessArrayNode extends RNode {
     @Child private GetNamesNode getNamesNode;
     @Child private GetDimNamesNode getDimNamesNode;
 
-    @Child private DispatchedCallNode dcn;
-    @Child private DispatchedCallNode dcnDrop;
+    @Child private UseMethodInternalNode dcn;
+    @Child private UseMethodInternalNode dcnDrop;
 
     public abstract RNode getVector();
 
@@ -253,17 +251,17 @@ public abstract class AccessArrayNode extends RNode {
             if (dropDim != RMissing.instance) {
                 if (dcnDrop == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    dcnDrop = insert(DispatchedCallNode.create("[", DispatchType.UseMethod, DROP_SIGNATURE));
+                    dcnDrop = insert(new UseMethodInternalNode("[", DROP_SIGNATURE));
                 }
-                return dcnDrop.executeInternal(frame, container.getClassHierarchy(), new Object[]{container, inds, dropDim});
+                return dcnDrop.execute(frame, container.getClassHierarchy(), new Object[]{container, inds, dropDim});
             } else {
                 if (dcn == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    dcn = insert(DispatchedCallNode.create("[", DispatchType.UseMethod, SIGNATURE));
+                    dcn = insert(new UseMethodInternalNode("[", SIGNATURE));
                 }
-                return dcn.executeInternal(frame, container.getClassHierarchy(), new Object[]{container, inds});
+                return dcn.execute(frame, container.getClassHierarchy(), new Object[]{container, inds});
             }
-        } catch (NoGenericMethodException e) {
+        } catch (S3FunctionLookupNode.NoGenericMethodException e) {
             return accessRecursive(frame, container, exact, position, recLevel, dropDim);
         }
     }
@@ -272,12 +270,12 @@ public abstract class AccessArrayNode extends RNode {
     protected Object accessObject(VirtualFrame frame, RAbstractContainer container, Object exact, int recLevel, Object position, Object dropDim) {
         if (dcn == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            dcn = insert(DispatchedCallNode.create("[[", DispatchType.UseMethod, EXACT_SIGNATURE));
+            dcn = insert(new UseMethodInternalNode("[[", EXACT_SIGNATURE));
         }
         try {
             Object inds = position instanceof Object[] ? new RArgsValuesAndNames((Object[]) position, ArgumentsSignature.empty(((Object[]) position).length)) : position;
-            return dcn.executeInternal(frame, container.getClassHierarchy(), new Object[]{container, inds, exact});
-        } catch (NoGenericMethodException e) {
+            return dcn.execute(frame, container.getClassHierarchy(), new Object[]{container, inds, exact});
+        } catch (S3FunctionLookupNode.NoGenericMethodException e) {
             return accessRecursive(frame, container, exact, position, recLevel, dropDim);
         }
     }

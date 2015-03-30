@@ -29,7 +29,6 @@ import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.function.*;
-import com.oracle.truffle.r.nodes.function.DispatchedCallNode.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -41,7 +40,7 @@ public abstract class DimNames extends RBuiltinNode {
 
     private static final String NAME = "dimnames";
 
-    @Child private DispatchedCallNode dcn;
+    @Child private UseMethodInternalNode dcn;
 
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
@@ -69,11 +68,11 @@ public abstract class DimNames extends RBuiltinNode {
         controlVisibility();
         if (dcn == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            dcn = insert(DispatchedCallNode.create(NAME, DispatchType.UseMethod, getSuppliedSignature()));
+            dcn = insert(new UseMethodInternalNode(NAME, getSuppliedSignature()));
         }
         try {
-            return dcn.executeInternal(frame, container.getClassHierarchy(), new Object[]{container});
-        } catch (NoGenericMethodException e) {
+            return dcn.execute(frame, container.getClassHierarchy(), new Object[]{container});
+        } catch (S3FunctionLookupNode.NoGenericMethodException e) {
             return isNull(container) ? RNull.instance : container.getDimNames();
         }
     }

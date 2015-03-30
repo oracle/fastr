@@ -26,8 +26,7 @@ import com.oracle.truffle.r.runtime.*;
 
 /**
  * Simple container class for holding arguments ({@link #getEvaluatedArgs()}) which are ready to be
- * pushed into {@link RArguments} (or are taken from there!). This is used by
- * {@link UseMethodDispatchNode}, e.g.
+ * pushed into {@link RArguments} (or are taken from there!).
  */
 public class EvaluatedArguments extends Arguments<Object> {
 
