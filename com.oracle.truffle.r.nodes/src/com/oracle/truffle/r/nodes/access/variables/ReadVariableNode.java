@@ -174,20 +174,23 @@ public class ReadVariableNode extends RNode implements VisibilityController {
         controlVisibility();
 
         Object result;
-        while (true) {
-            if (read == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                read = initialize(frame, variableFrame);
-                needsCopying = kind == ReadKind.Copying && !(read instanceof Match || read instanceof DescriptorStableMatch);
-            }
+        if (read == null) {
+            initializeRead(frame, variableFrame);
+        }
+        try {
+            result = read.execute(frame, variableFrame);
+        } catch (InvalidAssumptionException | LayoutChangedException | FrameSlotTypeException e) {
+            initializeRead(frame, variableFrame);
             try {
                 result = read.execute(frame, variableFrame);
-            } catch (InvalidAssumptionException | LayoutChangedException | FrameSlotTypeException e) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                read = null;
-                continue;
+            } catch (InvalidAssumptionException | LayoutChangedException | FrameSlotTypeException e2) {
+                /*
+                 * This could be written a bit simpler using a loop, but partial evaluation will not
+                 * see that it never actually loops in compiled code, and thus create suboptimal
+                 * code.
+                 */
+                throw RInternalError.shouldNotReachHere("read initialization problem");
             }
-            break;
         }
         if (needsCopying && copyProfile.profile(result instanceof RAbstractVector)) {
             result = ((RAbstractVector) result).copy();
@@ -200,6 +203,12 @@ public class ReadVariableNode extends RNode implements VisibilityController {
             result = promiseHelper.evaluate(frame, (RPromise) result);
         }
         return result;
+    }
+
+    private void initializeRead(VirtualFrame frame, Frame variableFrame) {
+        CompilerDirectives.transferToInterpreterAndInvalidate();
+        read = initialize(frame, variableFrame);
+        needsCopying = kind == ReadKind.Copying && !(read instanceof Match || read instanceof DescriptorStableMatch);
     }
 
     private static final class LayoutChangedException extends SlowPathException {
