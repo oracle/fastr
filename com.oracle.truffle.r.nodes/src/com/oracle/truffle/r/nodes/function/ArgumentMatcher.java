@@ -143,14 +143,17 @@ public class ArgumentMatcher {
         return new InlinedArguments(wrappedArgs, suppliedArgs.getSignature());
     }
 
-    public static MatchPermutation matchArguments(RFunction function, ArgumentsSignature suppliedSignature, SourceSection callSrc, boolean forNextMethod) {
+    public static MatchPermutation matchArguments(ArgumentsSignature suppliedSignature, ArgumentsSignature formalSignature, SourceSection callSrc, boolean forNextMethod) {
         CompilerAsserts.neverPartOfCompilation();
-        RRootNode rootNode = (RRootNode) function.getTarget().getRootNode();
-        FormalArguments formals = rootNode.getFormalArguments();
-        MatchPermutation match = permuteArguments(suppliedSignature, formals, callSrc, null, forNextMethod, index -> {
+        MatchPermutation match = permuteArguments(suppliedSignature, formalSignature, callSrc, null, forNextMethod, index -> {
             throw Utils.nyi("S3Dispatch should not have arg length mismatch");
         }, index -> suppliedSignature.getName(index));
         return match;
+    }
+
+    public static ArgumentsSignature getFunctionSignature(RFunction function) {
+        RRootNode rootNode = (RRootNode) function.getTarget().getRootNode();
+        return rootNode.getFormalArguments().getSignature();
     }
 
     public static Object[] matchArgumentsEvaluated(MatchPermutation match, Object[] evaluatedArgs, FormalArguments formals) {
@@ -183,6 +186,7 @@ public class ArgumentMatcher {
 
     @ExplodeLoop
     private static boolean permuteVarArgs(MatchPermutation match, Object[] evaluatedArgs, int varArgsLen, Object[] newVarArgs) {
+        CompilerAsserts.compilationConstant(varArgsLen);
         boolean nonNull = false;
         for (int i = 0; i < varArgsLen; i++) {
             newVarArgs[i] = evaluatedArgs[match.varargsPermutation[i]];
@@ -207,7 +211,7 @@ public class ArgumentMatcher {
     public static EvaluatedArguments matchArgumentsEvaluated(RFunction function, EvaluatedArguments evaluatedArgs, SourceSection callSrc, boolean forNextMethod) {
         RRootNode rootNode = (RRootNode) function.getTarget().getRootNode();
         FormalArguments formals = rootNode.getFormalArguments();
-        MatchPermutation match = permuteArguments(evaluatedArgs.getSignature(), formals, callSrc, null, forNextMethod, index -> {
+        MatchPermutation match = permuteArguments(evaluatedArgs.getSignature(), formals.getSignature(), callSrc, null, forNextMethod, index -> {
             throw Utils.nyi("S3Dispatch should not have arg length mismatch");
         }, index -> evaluatedArgs.getSignature().getName(index));
 
@@ -288,8 +292,8 @@ public class ArgumentMatcher {
         FormalArguments formals = ((RRootNode) function.getTarget().getRootNode()).getFormalArguments();
 
         // Rearrange arguments
-        MatchPermutation match = permuteArguments(suppliedSignature, formals, callSrc, argsSrc, false, index -> ArgumentsSignature.VARARG_NAME.equals(RMissingHelper.unwrapName(suppliedArgs[index])),
-                        index -> getErrorForArgument(suppliedArgs, index));
+        MatchPermutation match = permuteArguments(suppliedSignature, formals.getSignature(), callSrc, argsSrc, false,
+                        index -> ArgumentsSignature.VARARG_NAME.equals(RMissingHelper.unwrapName(suppliedArgs[index])), index -> getErrorForArgument(suppliedArgs, index));
 
         RNode[] resArgs = new RNode[match.resultPermutation.length];
 
@@ -426,7 +430,7 @@ public class ArgumentMatcher {
      * also handling varargs.
      *
      * @param signature The signature (==names) of the supplied arguments
-     * @param formals The {@link FormalArguments} this function has
+     * @param formalSignature The signature (==names) of the formal arguments
      * @param callSrc The source of the function call currently executed
      * @param argsSrc The source code encapsulating the arguments, for debugging purposes
      * @param forNextMethod matching when evaluating NextMethod
@@ -434,16 +438,16 @@ public class ArgumentMatcher {
      * @return An array of type <T> with the supplied arguments in the correct order
      */
     @TruffleBoundary
-    private static MatchPermutation permuteArguments(ArgumentsSignature signature, FormalArguments formals, SourceSection callSrc, SourceSection argsSrc, boolean forNextMethod,
+    private static MatchPermutation permuteArguments(ArgumentsSignature signature, ArgumentsSignature formalSignature, SourceSection callSrc, SourceSection argsSrc, boolean forNextMethod,
                     IntPredicate isVarSuppliedVarargs, IntFunction<String> errorString) {
         // assert Arrays.stream(suppliedNames).allMatch(name -> name == null || !name.isEmpty());
 
         // Preparations
-        int varArgIndex = formals.getSignature().getVarArgIndex();
+        int varArgIndex = formalSignature.getVarArgIndex();
         boolean hasVarArgs = varArgIndex != ArgumentsSignature.NO_VARARG;
 
         // MATCH by exact name
-        int[] resultPermutation = new int[formals.getSignature().getLength()];
+        int[] resultPermutation = new int[formalSignature.getLength()];
         Arrays.fill(resultPermutation, MatchPermutation.UNMATCHED);
 
         boolean[] matchedSuppliedArgs = new boolean[signature.getLength()];
@@ -453,8 +457,8 @@ public class ArgumentMatcher {
             }
 
             // Search for argument name inside formal arguments
-            int formalIndex = findParameterPosition(formals.getSignature(), signature.getName(suppliedIndex), resultPermutation, suppliedIndex, hasVarArgs, callSrc, argsSrc, varArgIndex,
-                            forNextMethod, errorString);
+            int formalIndex = findParameterPosition(formalSignature, signature.getName(suppliedIndex), resultPermutation, suppliedIndex, hasVarArgs, callSrc, argsSrc, varArgIndex, forNextMethod,
+                            errorString);
             if (formalIndex != MatchPermutation.UNMATCHED) {
                 resultPermutation[formalIndex] = suppliedIndex;
                 matchedSuppliedArgs[suppliedIndex] = true;
@@ -465,7 +469,7 @@ public class ArgumentMatcher {
 
         // MATCH by position
         int suppliedIndex = -1;
-        int regularArgumentCount = hasVarArgs ? varArgIndex : formals.getSignature().getLength();
+        int regularArgumentCount = hasVarArgs ? varArgIndex : formalSignature.getLength();
         outer: for (int formalIndex = 0; formalIndex < regularArgumentCount; formalIndex++) {
             // Unmatched?
             if (resultPermutation[formalIndex] == MatchPermutation.UNMATCHED) {

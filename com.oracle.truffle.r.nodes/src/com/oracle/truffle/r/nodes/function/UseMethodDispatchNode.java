@@ -233,7 +233,8 @@ final class UseMethodDispatchCachedNode extends S3DispatchCachedNode {
         }
 
         assert resultSignature != null;
-        MatchPermutation permutation = ArgumentMatcher.matchArguments(result.targetFunction, resultSignature, getEncapsulatingSourceSection(), false);
+        ArgumentsSignature formalSignature = ArgumentMatcher.getFunctionSignature(result.targetFunction);
+        MatchPermutation permutation = ArgumentMatcher.matchArguments(resultSignature, formalSignature, getEncapsulatingSourceSection(), false);
 
         CheckReadsNode newCheckedReads = new CheckReadsNode(unsuccessfulReadsCaller, unsuccessfulReadsDef, result.successfulRead, result.targetFunction, result.clazz, result.targetFunctionName,
                         signature, varArgSignatures, preparePermutation, permutation);
