@@ -1155,11 +1155,6 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ outer(1:3,1:2, function(x,y,z) { x*y*z }, 10) }");
         assertEval("{ outer(1:2, 1:3, \"<\") }");
         assertEval("{ outer(1:2, 1:3, '<') }");
-    }
-
-    @Test
-    @Ignore
-    public void testOuterIgnore() {
         assertEval("{ foo <- function (x,y) { x + y * 1i } ; outer(3,3,\"foo\") }");
     }
 

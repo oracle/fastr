@@ -912,7 +912,6 @@ public class TestrGenBuiltinoperators extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testoperators169() {
         assertEval("argv <- list(structure(1:3, .Label = c(\'1\', \'2\', NA), class = \'factor\'), structure(1:3, .Label = c(\'1\', \'2\', NA), class = \'factor\'));`!=`(argv[[1]],argv[[2]]);");
     }
@@ -1667,7 +1666,6 @@ public class TestrGenBuiltinoperators extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testoperators314() {
         assertEval("argv <- list(structure(120L, class = \'octmode\'), \'644\');`|`(argv[[1]],argv[[2]]);");
     }
@@ -1828,7 +1826,6 @@ public class TestrGenBuiltinoperators extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testoperators343() {
         assertEval("argv <- list(structure(508L, class = \'octmode\'), \'755\');`&`(argv[[1]],argv[[2]]);");
     }
