@@ -119,6 +119,7 @@ com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/StatsUtil.ja
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/utils/CountFields.java,gnu_r.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/utils/Menu.java,gnu_r.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/utils/WriteTable.java,gnu_r.copyright
+com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/tools/Text.java,gnu_r.copyright
 com.oracle.truffle.r.parser/src/com/oracle/truffle/r/parser/ParseException.java,purdue.copyright
 com.oracle.truffle.r.parser/src/com/oracle/truffle/r/parser/ParseUtil.java,purdue.copyright
 com.oracle.truffle.r.parser/src/com/oracle/truffle/r/parser/R.g,purdue.copyright

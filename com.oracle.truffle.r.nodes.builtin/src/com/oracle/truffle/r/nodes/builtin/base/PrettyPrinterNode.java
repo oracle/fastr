@@ -1146,6 +1146,12 @@ public abstract class PrettyPrinterNode extends RNode {
             return prettyPrintSingleElement(operand, listElementName, quote, right);
         }
 
+        @TruffleBoundary
+        @Specialization
+        protected String prettyPrintListElement(RExternalPtr operand, Object listElementName, byte quote, byte right) {
+            return prettyPrintSingleElement(operand, listElementName, quote, right);
+        }
+
         // TODO: this should be handled by an S3 function
         @Specialization
         protected String prettyPrintListElement(VirtualFrame frame, RFactor operand, Object listElementName, byte quote, byte right) {

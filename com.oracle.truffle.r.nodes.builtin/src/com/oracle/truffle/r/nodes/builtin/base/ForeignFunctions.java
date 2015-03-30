@@ -21,6 +21,7 @@ import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.library.graphics.*;
 import com.oracle.truffle.r.library.methods.*;
 import com.oracle.truffle.r.library.stats.*;
+import com.oracle.truffle.r.library.tools.*;
 import com.oracle.truffle.r.library.utils.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
@@ -595,6 +596,18 @@ public class ForeignFunctions {
 
         public boolean isSplineEval(RList f) {
             return matchName(f, "SplineEval");
+        }
+
+        @Specialization(guards = "isDoTabExpand(f)")
+        protected RStringVector tabExpand(VirtualFrame frame, @SuppressWarnings("unused") RList f, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName) {
+            Object[] argValues = args.getValues();
+            RStringVector strings = (RStringVector) castVector(frame, argValues[0]);
+            RIntVector starts = (RIntVector) castVector(frame, argValues[1]);
+            return Text.doTabExpand(strings, starts);
+        }
+
+        public boolean isDoTabExpand(RList f) {
+            return matchName(f, "doTabExpand");
         }
 
         @SuppressWarnings("unused")

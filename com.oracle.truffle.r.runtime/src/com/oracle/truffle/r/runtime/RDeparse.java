@@ -984,6 +984,15 @@ public class RDeparse {
                         case '"':
                             state.append("\\\"");
                             break;
+                        case 0x7:
+                            state.append("\\a");
+                            break;
+                        case 0x8:
+                            state.append("\\b");
+                            break;
+                        case 0xB:
+                            state.append("\\v");
+                            break;
                         default:
                             if (Character.isISOControl(ch)) {
                                 state.append("\\x" + Integer.toHexString(charInt));

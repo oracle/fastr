@@ -72,4 +72,19 @@ public class LocaleFunctions {
             return RNull.instance;
         }
     }
+
+    @RBuiltin(name = "l10n_info", kind = RBuiltinKind.INTERNAL, parameterNames = {})
+    public abstract static class L10nInfo extends RBuiltinNode {
+        private static final RStringVector NAMES = RDataFactory.createStringVector(new String[]{"MBCS", "UTF-8", "LATIN-1"}, RDataFactory.COMPLETE_VECTOR);
+
+        @Specialization
+        protected RList l10nInfo() {
+            Object[] data = new Object[NAMES.getLength()];
+            // TODO check locale properly
+            data[0] = RRuntime.LOGICAL_FALSE;
+            data[1] = RRuntime.LOGICAL_FALSE;
+            data[2] = RRuntime.LOGICAL_FALSE;
+            return RDataFactory.createList(data, NAMES);
+        }
+    }
 }

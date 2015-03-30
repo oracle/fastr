@@ -379,7 +379,10 @@ public class RSerialize {
                             result = func;
                         } catch (Throwable ex) {
                             // denotes a deparse/eval error, which is an unrecoverable bug
-                            Utils.fail("internal deparse error");
+                            try (FileWriter wr = new FileWriter(new File(new File(REnvVars.rHome()), "DEPARSE_ERROR"))) {
+                                wr.write(deparse);
+                            }
+                            Utils.fail("internal deparse error - see file DEPARSE_ERROR");
                         }
                     }
                     return checkResult(result);
