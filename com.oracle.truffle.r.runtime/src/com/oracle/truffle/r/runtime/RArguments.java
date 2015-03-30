@@ -163,21 +163,23 @@ public final class RArguments {
         return ((HasSignature) function.getRootNode()).getSignature();
     }
 
-    private static void createHelper(Object[] a, REnvironment env, RFunction functionObj, SourceSection callSrc, MaterializedFrame callerFrame, int depth, MaterializedFrame enclosingFrame,
-                    Object[] evaluatedArgs, ArgumentsSignature signature) {
+    public static Object[] create(RFunction functionObj, SourceSection callSrc, MaterializedFrame callerFrame, int depth, Object[] evaluatedArgs, ArgumentsSignature signature) {
         assert evaluatedArgs != null && signature != null : evaluatedArgs + " " + signature;
         assert evaluatedArgs.length == signature.getLength() : Arrays.toString(evaluatedArgs) + " " + signature;
         assert signature == getSignature(functionObj) : signature + " vs. " + getSignature(functionObj);
-        a[INDEX_ENVIRONMENT] = env;
+
+        Object[] a = new Object[MINIMAL_ARRAY_LENGTH + evaluatedArgs.length];
+        a[INDEX_ENVIRONMENT] = null;
         a[INDEX_FUNCTION] = functionObj;
         a[INDEX_CALL_SRC] = callSrc;
         a[INDEX_CALLER_FRAME] = callerFrame;
-        a[INDEX_ENCLOSING_FRAME] = enclosingFrame;
+        a[INDEX_ENCLOSING_FRAME] = functionObj.getEnclosingFrameWithAssumption();
         a[INDEX_DEPTH] = depth;
         a[INDEX_IS_IRREGULAR] = false;
         a[INDEX_SIGNATURE] = signature;
         copyArguments(evaluatedArgs, a, INDEX_ARGUMENTS);
         // assert envFunctionInvariant(a);
+        return a;
     }
 
     /**
@@ -207,24 +209,6 @@ public final class RArguments {
         a[INDEX_DEPTH] = 0;
         a[INDEX_SIGNATURE] = ArgumentsSignature.empty(0);
         a[INDEX_IS_IRREGULAR] = false;
-        return a;
-    }
-
-    public static Object[] create(RFunction functionObj, SourceSection callSrc, MaterializedFrame callerFrame, int depth, Object[] evaluatedArgs) {
-        if (functionObj != null) {
-            return create(null, functionObj, callSrc, callerFrame, depth, functionObj.getEnclosingFrameWithAssumption(), evaluatedArgs, ArgumentsSignature.empty(evaluatedArgs.length));
-        }
-        return create(null, functionObj, callSrc, callerFrame, depth, null, evaluatedArgs, ArgumentsSignature.empty(evaluatedArgs.length));
-    }
-
-    public static Object[] create(RFunction functionObj, SourceSection callSrc, MaterializedFrame callerFrame, int depth, Object[] evaluatedArgs, ArgumentsSignature signature) {
-        return create(null, functionObj, callSrc, callerFrame, depth, functionObj.getEnclosingFrameWithAssumption(), evaluatedArgs, signature);
-    }
-
-    public static Object[] create(REnvironment env, RFunction functionObj, SourceSection callSrc, MaterializedFrame callerFrame, int depth, MaterializedFrame enclosingFrame, Object[] evaluatedArgs,
-                    ArgumentsSignature signature) {
-        Object[] a = new Object[MINIMAL_ARRAY_LENGTH + evaluatedArgs.length];
-        createHelper(a, env, functionObj, callSrc, callerFrame, depth, enclosingFrame, evaluatedArgs, signature);
         return a;
     }
 
