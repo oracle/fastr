@@ -197,8 +197,10 @@ public final class REngine implements RContext.Engine {
 
     public Object parseAndEvalTest(String rscript, boolean printResult) {
         // We first remove all the definitions from the previous test
-        String rm = "rm(list = ls())";
-        parseAndEvalImpl(new ANTLRStringStream(rm), Source.fromText(rm, "<test_reset>"), REnvironment.globalEnv().getFrame(), printResult, false);
+        MaterializedFrame globalFrame = REnvironment.globalEnv().getFrame();
+        for (FrameSlot slot : globalFrame.getFrameDescriptor().getSlots()) {
+            FrameSlotChangeMonitor.setObjectAndInvalidate(globalFrame, slot, null, true, null);
+        }
         return parseAndEvalImpl(new ANTLRStringStream(rscript), Source.fromText(rscript, "<test_input>"), REnvironment.globalEnv().getFrame(), printResult, false);
     }
 
