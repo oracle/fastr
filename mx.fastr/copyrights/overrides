@@ -46,17 +46,10 @@ com.oracle.truffle.r.native/library/utils/src/utils.h,no.copyright
 com.oracle.truffle.r.native/library/utils/src/init.c,no.copyright
 com.oracle.truffle.r.native/run/R.sh,gnu_r.copyright
 com.oracle.truffle.r.native/run/Rscript.sh,gnu_r.copyright
-com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/function/BinaryOpsGroupDispatchNode.java,purdue.copyright
-com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/function/DispatchNode.java,purdue.copyright
-com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/function/DispatchedCallNode.java,purdue.copyright
+com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/function/CallMatcherNode.java,purdue.copyright
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/function/GroupDispatchNode.java,purdue.copyright
-com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/function/GroupDispatchCallNode.java,purdue.copyright
-com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/function/NextMethodDispatchNode.java,purdue.copyright
-com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/function/OpsGroupDispatchNode.java,purdue.copyright
-com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/function/S3DispatchNode.java,purdue.copyright
-com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/function/S3MethodDispatch.java,purdue.copyright
-com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/function/UnaryOpsGroupDispatchNode.java,purdue.copyright
-com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/function/UseMethodDispatchNode.java,purdue.copyright
+com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/function/S3FunctionLookupNode.java,purdue.copyright
+com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/function/UseMethodInternalNode.java,purdue.copyright
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/binary/CastTypeNode.java,purdue.copyright
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/runtime/RASTDeparse.java,gnu_r.copyright
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/unary/IsFactorNode.java,purdue.copyright
@@ -80,7 +73,6 @@ com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/E
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/FileFunctions.java,gnu_r.copyright
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/ForeignFunctions.java,gnu_r.copyright
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/GetClass.java,purdue.copyright
-com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/NextMethod.java,purdue.copyright
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/Inherits.java,purdue.copyright
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/IsArray.java,purdue.copyright
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/LoadFunctions.java,gnu_r_gentleman_ihaka.copyright
@@ -92,6 +84,7 @@ com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/P
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/RepeatLength.java,purdue.copyright
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/RowMeans.java,purdue.copyright
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/RowSums.java,purdue.copyright
+com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/S3DispatchFunctions.java,purdue.copyright
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/Sample.java,gnu_r_sample.copyright
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/Scan.java,gnu_r_scan.copyright
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/Tabulate.java,purdue.copyright
@@ -101,7 +94,6 @@ com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/U
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/UpdateClass.java,purdue.copyright
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/UpdateLevels.java,purdue.copyright
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/UpdateStorageMode.java,purdue.copyright
-com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/UseMethod.java,purdue.copyright
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/Lapply.java,purdue.copyright
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/Switch.java,purdue.copyright
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/Format.java,gnu_r.copyright
