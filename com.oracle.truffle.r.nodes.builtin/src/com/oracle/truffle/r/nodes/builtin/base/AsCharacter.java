@@ -160,6 +160,6 @@ public abstract class AsCharacter extends RBuiltinNode {
 
     @SuppressFBWarnings(value = "ES_COMPARING_STRINGS_WITH_EQ", justification = "generic name is interned in the interpreted code for faster comparison")
     protected boolean isObject(VirtualFrame frame, RAbstractContainer container) {
-        return container.isObject(attrProfiles) && !(RArguments.hasS3Args(frame) && RArguments.getS3Generic(frame) == NAME);
+        return container.isObject(attrProfiles) && !(RArguments.getS3Args(frame) != null && RArguments.getS3Args(frame).generic == NAME);
     }
 }

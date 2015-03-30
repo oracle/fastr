@@ -17,15 +17,17 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.access.variables.*;
+import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode.ReadKind;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.RArguments.S3Args;
 import com.oracle.truffle.r.runtime.data.*;
 
 public final class NextMethodDispatchNode extends S3DispatchLegacyNode {
 
-    @Child private ReadVariableNode rvnDefEnv;
-    @Child private ReadVariableNode rvnCallEnv;
-    @Child private ReadVariableNode rvnGroup;
-    @Child private ReadVariableNode rvnMethod;
+    @Child private ReadVariableNode rvnDefEnv = ReadVariableNode.create(RRuntime.RDotGenericDefEnv, RType.Any, ReadKind.SilentLocal);
+    @Child private ReadVariableNode rvnCallEnv = ReadVariableNode.create(RRuntime.RDotGenericCallEnv, RType.Any, ReadKind.SilentLocal);
+    @Child private ReadVariableNode rvnGroup = ReadVariableNode.create(RRuntime.RDotGroup, RType.Any, ReadKind.SilentLocal);
+    @Child private ReadVariableNode rvnMethod = ReadVariableNode.create(RRuntime.RDotMethod, RType.Any, ReadKind.SilentLocal);
     @Child private WriteVariableNode wvnGroup;
     private String group;
     private String lastGroup;
@@ -65,13 +67,11 @@ public final class NextMethodDispatchNode extends S3DispatchLegacyNode {
     private EvaluatedArguments processArgs(VirtualFrame frame) {
         int argsLength = args == null ? 0 : args.length;
         // Extract arguments from current frame...
-        int funArgsLength = RArguments.getArgumentsLength(frame);
         ArgumentsSignature signature = RArguments.getSignature(frame);
-        assert signature.getLength() == funArgsLength;
-        Object[] funArgValues = new Object[funArgsLength + argsLength];
-        String[] funArgNames = new String[funArgsLength + argsLength];
+        Object[] funArgValues = new Object[signature.getLength() + argsLength];
+        String[] funArgNames = new String[signature.getLength() + argsLength];
         int index = 0;
-        for (int fi = 0; fi < funArgsLength; fi++) {
+        for (int fi = 0; fi < signature.getLength(); fi++) {
             Object argVal = RArguments.getArgument(frame, fi);
             if (argVal instanceof RArgsValuesAndNames) {
                 RArgsValuesAndNames varArgs = (RArgsValuesAndNames) argVal;
@@ -115,16 +115,8 @@ public final class NextMethodDispatchNode extends S3DispatchLegacyNode {
 
     private Object executeHelper(VirtualFrame frame) {
         EvaluatedArguments evaledArgs = processArgs(frame);
-        Object[] argObject = RArguments.createS3Args(targetFunction, getSourceSection(), null, RArguments.getDepth(frame) + 1, evaledArgs.getEvaluatedArgs(), evaledArgs.getSignature());
-        defineVarsAsArguments(argObject, genericName, klass, genCallEnv, genDefEnv);
-        if (storedFunctionName != null) {
-            RArguments.setS3Method(argObject, storedFunctionName);
-        } else {
-            RArguments.setS3Method(argObject, targetFunctionName);
-        }
-        if (hasGroup) {
-            RArguments.setS3Group(argObject, this.group);
-        }
+        Object[] argObject = RArguments.create(targetFunction, getSourceSection(), null, RArguments.getDepth(frame) + 1, evaledArgs.getEvaluatedArgs(), evaledArgs.getSignature());
+        RArguments.setS3Args(argObject, new S3Args(genericName, klass, storedFunctionName != null ? storedFunctionName : targetFunctionName, genCallEnv, genDefEnv, group));
         return indirectCallNode.call(frame, targetFunction.getTarget(), argObject);
     }
 
@@ -186,22 +178,23 @@ public final class NextMethodDispatchNode extends S3DispatchLegacyNode {
     }
 
     private void readGenericVars(VirtualFrame frame) {
-        genDefEnv = RArguments.getS3DefEnv(frame);
+        S3Args s3Args = RArguments.getS3Args(frame);
+        genDefEnv = s3Args == null ? null : s3Args.defEnv;
         if (genDefEnv == null) {
             genDefEnv = RArguments.getEnclosingFrame(frame);
         }
-        genCallEnv = RArguments.getS3CallEnv(frame);
+        genCallEnv = s3Args == null ? null : s3Args.callEnv;
         if (genCallEnv == null) {
             genCallEnv = frame.materialize();
         }
-        group = RArguments.getS3Group(frame);
+        group = s3Args == null ? null : s3Args.group;
         if (group == null || group.isEmpty()) {
             handleMissingGroup();
         } else {
             handlePresentGroup();
         }
 
-        Object method = RArguments.getS3Method(frame);
+        Object method = s3Args == null ? null : s3Args.method;
         String functionName;
         if (method == null) {
             functionName = null;

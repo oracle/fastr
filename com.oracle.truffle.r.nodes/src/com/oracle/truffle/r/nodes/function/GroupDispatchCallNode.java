@@ -22,6 +22,7 @@ import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.access.variables.*;
 import com.oracle.truffle.r.nodes.runtime.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.RArguments.S3Args;
 import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -361,13 +362,9 @@ class GroupDispatchNode extends S3DispatchLegacyNode {
 
     protected Object executeHelper(VirtualFrame frame, Object[] evaluatedArgs, ArgumentsSignature argumentsSignature) {
         EvaluatedArguments reorderedArgs = reorderArgs(frame, targetFunction, evaluatedArgs, argumentsSignature, this.hasVararg, this.callSrc);
-        Object[] argObject = RArguments.createS3Args(targetFunction, this.callSrc, null, RArguments.getDepth(frame) + 1, reorderedArgs.getEvaluatedArgs(), reorderedArgs.getSignature());
+        Object[] argObject = RArguments.create(targetFunction, this.callSrc, null, RArguments.getDepth(frame) + 1, reorderedArgs.getEvaluatedArgs(), reorderedArgs.getSignature());
         genCallEnv = frame.materialize();
-        defineVarsAsArguments(argObject, genericName, klass, genCallEnv, genDefEnv);
-        RArguments.setS3Method(argObject, dotMethod);
-        if (writeGroup) {
-            RArguments.setS3Group(argObject, groupName);
-        }
+        RArguments.setS3Args(argObject, new S3Args(genericName, klass, dotMethod, genCallEnv, genDefEnv, writeGroup ? groupName : null));
         indirectCallNode.assignSourceSection(this.callSrc);
         /*
          * Create a new frame s3VarDefFrame and define s3 generic variables such as .Generic,

@@ -84,32 +84,41 @@ public final class RArguments {
     @CompilationFinal public static final Object[] EMPTY_OBJECT_ARRAY = new Object[0];
     @CompilationFinal public static final String[] EMPTY_STRING_ARRAY = new String[0];
 
+    public static final class S3Args {
+        public final String generic;
+        public final Object clazz;
+        public final Object method;
+        public final MaterializedFrame callEnv;
+        public final MaterializedFrame defEnv;
+        public final String group;
+
+        public S3Args(String generic, Object clazz, Object method, MaterializedFrame callEnv, MaterializedFrame defEnv, String group) {
+            assert generic != null && clazz != null && method != null && callEnv != null : generic + " " + clazz + " " + method + " " + callEnv;
+            this.generic = generic;
+            this.clazz = clazz;
+            this.method = method;
+            this.callEnv = callEnv;
+            this.defEnv = defEnv;
+            this.group = group;
+        }
+    }
+
     public static final int INDEX_ENVIRONMENT = 0;
     public static final int INDEX_FUNCTION = 1;
     public static final int INDEX_CALL_SRC = 2;
     public static final int INDEX_CALLER_FRAME = 3;
     public static final int INDEX_ENCLOSING_FRAME = 4;
-    public static final int INDEX_N_ARGS = 5;
+    public static final int INDEX_S3_ARGS = 5;
     public static final int INDEX_DEPTH = 6;
     public static final int INDEX_IS_IRREGULAR = 7;
     public static final int INDEX_SIGNATURE = 8;
     public static final int INDEX_ARGUMENTS = 9;
-    /*
-     * These indices are relative to INDEX_ARGUMENTS + nArgs+ nNames
-     */
-    private static final int S3_INDEX_GENERIC = 0;
-    private static final int S3_INDEX_CLASS = 1;
-    private static final int S3_INDEX_METHOD = 2;
-    private static final int S3_INDEX_CALL_ENV = 3;
-    private static final int S3_INDEX_DEF_ENV = 4;
-    private static final int S3_INDEX_GROUP = 5;
-    private static final int S3_VAR_COUNT = 6;
 
     /**
      * At the least, the array contains the function, enclosing frame, and numbers of arguments and
      * names.
      */
-    public static final int MINIMAL_ARRAY_LENGTH = INDEX_SIGNATURE + 1;
+    public static final int MINIMAL_ARRAY_LENGTH = INDEX_ARGUMENTS;
 
     private static final ValueProfile materializedFrameProfile = ValueProfile.createClassProfile();
 
@@ -146,11 +155,7 @@ public final class RArguments {
     }
 
     private static int getNArgs(Frame frame) {
-        return (int) getArgumentsWithEvalCheck(frame)[INDEX_N_ARGS];
-    }
-
-    private static int getS3StartIndex(Object[] args) {
-        return INDEX_ARGUMENTS + (int) args[INDEX_N_ARGS];
+        return getSignature(frame).getLength();
     }
 
     private static ArgumentsSignature getSignature(RFunction function) {
@@ -169,7 +174,6 @@ public final class RArguments {
         a[INDEX_ENCLOSING_FRAME] = enclosingFrame;
         a[INDEX_DEPTH] = depth;
         a[INDEX_IS_IRREGULAR] = false;
-        a[INDEX_N_ARGS] = evaluatedArgs.length;
         a[INDEX_SIGNATURE] = signature;
         copyArguments(evaluatedArgs, a, INDEX_ARGUMENTS);
         // assert envFunctionInvariant(a);
@@ -200,7 +204,6 @@ public final class RArguments {
     public static Object[] createUnitialized() {
         Object[] a = new Object[MINIMAL_ARRAY_LENGTH];
         a[INDEX_DEPTH] = 0;
-        a[INDEX_N_ARGS] = 0;
         a[INDEX_SIGNATURE] = ArgumentsSignature.empty(0);
         a[INDEX_IS_IRREGULAR] = false;
         return a;
@@ -224,118 +227,17 @@ public final class RArguments {
         return a;
     }
 
-    public static Object[] createS3Args(RFunction functionObj, SourceSection callSrc, MaterializedFrame callerFrame, int depth, Object[] evaluatedArgs, ArgumentsSignature signature) {
-        Object[] a = new Object[MINIMAL_ARRAY_LENGTH + evaluatedArgs.length + S3_VAR_COUNT];
-        createHelper(a, null, functionObj, callSrc, callerFrame, depth, functionObj.getEnclosingFrameWithAssumption(), evaluatedArgs, signature);
-        return a;
-    }
-
-    public static boolean hasS3Args(Frame frame) {
-        Object[] args = getArgumentsWithEvalCheck(frame);
-        if (args[INDEX_N_ARGS] == null) {
-            return false;
-        } else {
-            int s3StartIndex = getS3StartIndex(args);
-            return args.length > s3StartIndex;
-        }
-    }
-
-    public static String getS3Generic(Frame frame) {
-        Object[] args = getArgumentsWithEvalCheck(frame);
-        int s3StartIndex = getS3StartIndex(args);
-        assert (args.length > s3StartIndex);
-        return (String) args[s3StartIndex + S3_INDEX_GENERIC];
-    }
-
-    public static void setS3Generic(Object[] args, String generic) {
-        int s3StartIndex = getS3StartIndex(args);
-        assert (args.length > s3StartIndex);
-        args[s3StartIndex + S3_INDEX_GENERIC] = generic;
-    }
-
     public static MaterializedFrame getCallerFrame(Frame frame) {
         Object[] args = getArgumentsWithEvalCheck(frame);
         return (MaterializedFrame) args[INDEX_CALLER_FRAME];
     }
 
-    public static RStringVector getS3Class(Frame frame) {
-        Object[] args = getArgumentsWithEvalCheck(frame);
-        int s3StartIndex = getS3StartIndex(args);
-        if (args.length <= s3StartIndex) {
-            return null;
-        } else {
-            return (RStringVector) args[s3StartIndex + S3_INDEX_CLASS];
-        }
+    public static S3Args getS3Args(Frame frame) {
+        return (S3Args) getArgumentsWithEvalCheck(frame)[INDEX_S3_ARGS];
     }
 
-    public static void setS3Class(Object[] args, RStringVector klass) {
-        int s3StartIndex = getS3StartIndex(args);
-        assert (args.length > s3StartIndex);
-        args[s3StartIndex + S3_INDEX_CLASS] = klass;
-    }
-
-    public static Object getS3Method(Frame frame) {
-        Object[] args = getArgumentsWithEvalCheck(frame);
-        int s3StartIndex = getS3StartIndex(args);
-        if (args.length <= s3StartIndex) {
-            return null;
-        } else {
-            return args[s3StartIndex + S3_INDEX_METHOD];
-        }
-    }
-
-    public static void setS3Method(Object[] args, Object method) {
-        int s3StartIndex = getS3StartIndex(args);
-        assert (args.length > s3StartIndex);
-        args[s3StartIndex + S3_INDEX_METHOD] = method;
-    }
-
-    public static MaterializedFrame getS3DefEnv(Frame frame) {
-        Object[] args = getArgumentsWithEvalCheck(frame);
-        int s3StartIndex = getS3StartIndex(args);
-        if (args.length <= s3StartIndex) {
-            return null;
-        } else {
-            return (MaterializedFrame) args[s3StartIndex + S3_INDEX_DEF_ENV];
-        }
-    }
-
-    public static void setS3DefEnv(Object[] args, MaterializedFrame defEnv) {
-        int s3StartIndex = getS3StartIndex(args);
-        assert (args.length > s3StartIndex);
-        args[s3StartIndex + S3_INDEX_DEF_ENV] = defEnv;
-    }
-
-    public static MaterializedFrame getS3CallEnv(Frame frame) {
-        Object[] args = getArgumentsWithEvalCheck(frame);
-        int s3StartIndex = getS3StartIndex(args);
-        if (args.length <= s3StartIndex) {
-            return null;
-        } else {
-            return (MaterializedFrame) args[s3StartIndex + S3_INDEX_CALL_ENV];
-        }
-    }
-
-    public static void setS3CallEnv(Object[] args, MaterializedFrame callEnv) {
-        int s3StartIndex = getS3StartIndex(args);
-        assert (args.length > s3StartIndex);
-        args[s3StartIndex + S3_INDEX_CALL_ENV] = callEnv;
-    }
-
-    public static String getS3Group(Frame frame) {
-        Object[] args = getArgumentsWithEvalCheck(frame);
-        int s3StartIndex = getS3StartIndex(args);
-        if (args.length <= s3StartIndex) {
-            return null;
-        } else {
-            return (String) args[s3StartIndex + S3_INDEX_GROUP];
-        }
-    }
-
-    public static void setS3Group(Object[] args, String group) {
-        int s3StartIndex = getS3StartIndex(args);
-        assert (args.length > s3StartIndex);
-        args[s3StartIndex + S3_INDEX_GROUP] = group;
+    public static void setS3Args(Object[] args, S3Args s3Args) {
+        args[INDEX_S3_ARGS] = s3Args;
     }
 
     public static REnvironment getEnvironment(Frame frame) {

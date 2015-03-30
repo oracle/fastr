@@ -33,6 +33,7 @@ public abstract class NextMethod extends RBuiltinNode {
     @Child private ReadVariableNode rvnClass;
     @Child private ReadVariableNode rvnGeneric;
     @Child private PromiseHelperNode promiseHelper = new PromiseHelperNode();
+
     @CompilationFinal private String cachedGeneric;
 
     private final BranchProfile errorProfile = BranchProfile.create();
@@ -52,7 +53,7 @@ public abstract class NextMethod extends RBuiltinNode {
             cachedGeneric = generic;
             RFunction enclosingFunction = RArguments.getFunction(frame);
             String enclosingFunctionName = null;
-            if (!RArguments.hasS3Args(frame)) {
+            if (RArguments.getS3Args(frame) == null) {
                 enclosingFunctionName = enclosingFunction.getRootNode().toString();
             }
             DispatchedCallNode newDispatched = DispatchedCallNode.create(generic.intern(), enclosingFunctionName, DispatchType.NextMethod, args, signature);
@@ -73,7 +74,7 @@ public abstract class NextMethod extends RBuiltinNode {
     @Specialization
     protected Object nextMethod(VirtualFrame frame, @SuppressWarnings("unused") RNull generic, Object obj, RArgsValuesAndNames args) {
         controlVisibility();
-        String genericName = RArguments.getS3Generic(frame);
+        String genericName = RArguments.getS3Args(frame) == null ? null : RArguments.getS3Args(frame).generic;
         if (genericName == null || genericName.isEmpty()) {
             errorProfile.enter();
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.GEN_FUNCTION_NOT_SPECIFIED);
@@ -106,7 +107,7 @@ public abstract class NextMethod extends RBuiltinNode {
     }
 
     private RStringVector readType(VirtualFrame frame) {
-        final RStringVector storedClass = RArguments.getS3Class(frame);
+        final RStringVector storedClass = RArguments.getS3Args(frame) == null ? null : (RStringVector) RArguments.getS3Args(frame).clazz;
         if (storedClass == null) {
             return getAlternateClassHr(frame);
         }

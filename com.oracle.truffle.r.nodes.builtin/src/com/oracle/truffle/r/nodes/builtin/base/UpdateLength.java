@@ -94,7 +94,7 @@ public abstract class UpdateLength extends RInvisibleBuiltinNode {
 
     protected boolean isObject(VirtualFrame frame, RAbstractContainer container) {
         // if execution got here via S3 dispatch, treat objects as non-objects
-        return container.isObject(attrProfiles) && !RArguments.hasS3Args(frame);
+        return container.isObject(attrProfiles) && RArguments.getS3Args(frame) == null;
     }
 
 }

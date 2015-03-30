@@ -23,6 +23,7 @@ import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.access.variables.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.RArguments.S3Args;
 import com.oracle.truffle.r.runtime.data.*;
 
 public abstract class S3DispatchNode extends DispatchNode {
@@ -135,9 +136,8 @@ public abstract class S3DispatchNode extends DispatchNode {
         CompilerAsserts.partialEvaluationConstant(evaluatedArguments.length);
 
         MaterializedFrame profiledCallerFrame = callerFrameProfile.profile(callerFrame);
-        Object[] argObject = RArguments.createS3Args(function, getSourceSection(), null, RArguments.getDepth(profiledCallerFrame) + 1, evaluatedArguments, evaluatedSignature);
-        defineVarsAsArguments(argObject, genericName, clazz, profiledCallerFrame.materialize(), genericDefFrame);
-        RArguments.setS3Method(argObject, functionName);
+        Object[] argObject = RArguments.create(function, getSourceSection(), null, RArguments.getDepth(profiledCallerFrame) + 1, evaluatedArguments, evaluatedSignature);
+        RArguments.setS3Args(argObject, new S3Args(genericName, clazz, functionName, profiledCallerFrame.materialize(), genericDefFrame, null));
         return argObject;
     }
 
@@ -148,13 +148,6 @@ public abstract class S3DispatchNode extends DispatchNode {
     @TruffleBoundary
     protected static String functionName(String generic, String className) {
         return new StringBuilder(generic).append(RRuntime.RDOT).append(className).toString();
-    }
-
-    protected static void defineVarsAsArguments(Object[] args, String genericName, RStringVector klass, MaterializedFrame genCallEnv, MaterializedFrame genDefEnv) {
-        RArguments.setS3Generic(args, genericName);
-        RArguments.setS3Class(args, klass);
-        RArguments.setS3CallEnv(args, genCallEnv);
-        RArguments.setS3DefEnv(args, genDefEnv);
     }
 
     protected static final class TargetLookupResult {
