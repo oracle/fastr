@@ -118,7 +118,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
         if (callName != null) {
             String functionName = callName;
             if (!FastROptions.DisableGroupGenerics.getValue() && RGroupGenerics.isGroupGeneric(functionName)) {
-                return GroupDispatchCallNode.create(functionName, RGroupGenerics.getGroup(functionName), aCallArgNode, callSource);
+                return GroupDispatchNode.create(functionName, RGroupGenerics.getGroup(functionName), aCallArgNode, callSource);
             }
             return RCallNode.createCall(callSource, ReadVariableNode.createForced(functionName, RType.Function), aCallArgNode, callParam);
         } else {
@@ -212,7 +212,8 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
         String functionName = op.getOperator().getName();
         CallArgumentsNode aCallArgNode = CallArgumentsNode.createUnnamed(false, true, operand);
         if (!FastROptions.DisableGroupGenerics.getValue() && RGroupGenerics.isGroupGeneric(functionName)) {
-            return GroupDispatchCallNode.create(functionName, RGroupGenerics.GROUP_OPS, aCallArgNode, op.getSource());
+            assert RGroupGenerics.getGroup(functionName) == RGroupGenerics.Ops;
+            return GroupDispatchNode.create(functionName, RGroupGenerics.Ops, aCallArgNode, op.getSource());
         }
         return RCallNode.createStaticCall(op.getSource(), functionName, aCallArgNode, op);
     }
@@ -227,7 +228,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
             String functionName = op.getOperator().getName();
             CallArgumentsNode aCallArgNode = CallArgumentsNode.createUnnamed(false, true, left, right);
             if (!FastROptions.DisableGroupGenerics.getValue() && RGroupGenerics.isGroupGeneric(functionName)) {
-                return GroupDispatchCallNode.create(functionName, RGroupGenerics.getGroup(functionName), aCallArgNode, op.getSource());
+                return GroupDispatchNode.create(functionName, RGroupGenerics.getGroup(functionName), aCallArgNode, op.getSource());
             }
             return RCallNode.createStaticCall(op.getSource(), functionName, aCallArgNode, op);
         }

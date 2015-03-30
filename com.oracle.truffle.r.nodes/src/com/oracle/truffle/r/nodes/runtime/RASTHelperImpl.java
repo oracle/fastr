@@ -87,7 +87,7 @@ public class RASTHelperImpl implements RASTHelper {
     @TruffleBoundary
     private static int computeLength(Node node) {
         int result = 1;
-        if (node instanceof RCallNode || node instanceof DispatchedCallNode || node instanceof GroupDispatchCallNode) {
+        if (node instanceof RCallNode || node instanceof GroupDispatchNode) {
             // 1 + number of args
             CallArgumentsNode args = RASTUtils.findCallArgumentsNode(node);
             result += args.getArguments().length;
@@ -137,7 +137,7 @@ public class RASTHelperImpl implements RASTHelper {
         // index has already been range checked based on computeLength
         Node node = RASTUtils.unwrap(rl.getRep());
         int index = indexArg;
-        if (node instanceof RCallNode || node instanceof DispatchedCallNode || node instanceof GroupDispatchCallNode) {
+        if (node instanceof RCallNode || node instanceof GroupDispatchNode) {
             if (index == 0) {
                 return RASTUtils.findFunctionName(node, true);
             } else {

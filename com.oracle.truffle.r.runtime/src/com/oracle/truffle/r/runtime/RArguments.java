@@ -94,6 +94,7 @@ public final class RArguments {
 
         public S3Args(String generic, Object clazz, Object method, MaterializedFrame callEnv, MaterializedFrame defEnv, String group) {
             assert generic != null && callEnv != null : generic + " " + callEnv;
+            assert generic.intern() == generic;
             this.generic = generic;
             this.clazz = clazz;
             this.method = method;

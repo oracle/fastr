@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -52,7 +52,7 @@ public class RASTDeparse {
     }
 
     private static Func isInfixOperatorNode(Node node) {
-        if (node instanceof RCallNode || node instanceof GroupDispatchCallNode) {
+        if (node instanceof RCallNode || node instanceof GroupDispatchNode) {
             Object fname = RASTUtils.findFunctionName(node, false);
             return isInfixOperator(fname);
         } else {
