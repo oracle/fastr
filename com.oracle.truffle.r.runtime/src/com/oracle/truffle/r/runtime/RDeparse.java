@@ -1008,6 +1008,7 @@ public class RDeparse {
             case INTSXP:
                 int i = (int) element;
                 state.append(Integer.toString(i));
+                state.append('L');
                 break;
             case CPLXSXP:
                 RComplex c = (RComplex) element;
