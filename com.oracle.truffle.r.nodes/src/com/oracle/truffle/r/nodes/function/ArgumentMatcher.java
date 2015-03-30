@@ -243,15 +243,6 @@ public class ArgumentMatcher {
         return new EvaluatedArguments(evaledArgs, formals.getSignature());
     }
 
-    public static void evaluatePromises(VirtualFrame frame, PromiseHelperNode promiseHelper, Object[] args) {
-        for (int i = 0; i < args.length; i++) {
-            Object arg = args[i];
-            if (arg instanceof RPromise) {
-                args[i] = promiseHelper.evaluate(frame, (RPromise) arg);
-            }
-        }
-    }
-
     private static String getErrorForArgument(RNode[] suppliedArgs, int index) {
         RNode node = suppliedArgs[index];
         if (node instanceof VarArgNode) {
