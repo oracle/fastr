@@ -41,6 +41,7 @@ public abstract class RRootNode extends RootNode implements HasSignature {
 
     @CompilationFinal protected boolean checkSingletonFrame = true;
     private final ValueProfile functionProfile = ValueProfile.createIdentityProfile();
+    private final ValueProfile irregularFrameProfile = ValueProfile.createPrimitiveProfile();
 
     /**
      * The formal arguments this function is supposed to take.
@@ -54,6 +55,7 @@ public abstract class RRootNode extends RootNode implements HasSignature {
 
     protected void verifyEnclosingAssumptions(VirtualFrame vf) {
         RArguments.setFunction(vf, functionProfile.profile(RArguments.getFunction(vf)));
+        RArguments.setIsIrregular(vf, irregularFrameProfile.profile(RArguments.getIsIrregular(vf)));
 
         if (checkSingletonFrame) {
             checkSingletonFrame = FrameSlotChangeMonitor.checkSingletonFrame(vf);
