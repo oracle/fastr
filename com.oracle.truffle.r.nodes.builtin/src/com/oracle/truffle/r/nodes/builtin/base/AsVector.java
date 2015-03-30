@@ -200,7 +200,7 @@ public abstract class AsVector extends RBuiltinNode {
 
     @Specialization(guards = "modeIsAny(mode)")
     protected RAbstractVector asVector(RFactor x, @SuppressWarnings("unused") String mode) {
-        RVector levels = x.getLevels();
+        RVector levels = x.getLevels(attrProfiles);
         RVector result = levels.createEmptySameType(x.getLength(), RDataFactory.COMPLETE_VECTOR);
         RIntVector factorData = x.getVector();
         for (int i = 0; i < result.getLength(); i++) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -104,8 +104,8 @@ public class RClosures {
 
     // Factor to vector
 
-    public static RAbstractVector createFactorToVector(RFactor factor, NACheck check) {
-        RAbstractVector levels = factor.getLevels();
+    public static RAbstractVector createFactorToVector(RFactor factor, NACheck check, RAttributeProfiles attrProfiles) {
+        RAbstractVector levels = factor.getLevels(attrProfiles);
         if (levels == null) {
             return new RFactorToStringVectorClosure(factor, null, check);
         } else {

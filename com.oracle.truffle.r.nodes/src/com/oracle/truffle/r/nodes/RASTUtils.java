@@ -191,9 +191,9 @@ public class RASTUtils {
             return RCallNode.createCall(null, RASTUtils.createReadVariableNode(((String) fn)), callArgsNode, null);
         } else if (fn instanceof ReadVariableNode) {
             return RCallNode.createCall(null, (ReadVariableNode) fn, callArgsNode, null);
-        } else if (fn instanceof GroupDispatchCallNode) {
-            GroupDispatchCallNode gdcn = (GroupDispatchCallNode) fn;
-            return GroupDispatchCallNode.create(gdcn.getGenericName(), gdcn.getGroupName(), callArgsNode, gdcn.getCallSrc());
+        } else if (fn instanceof GroupDispatchNode) {
+            GroupDispatchNode gdcn = (GroupDispatchNode) fn;
+            return GroupDispatchNode.create(gdcn.getGenericName(), gdcn.getGroup(), callArgsNode, gdcn.getCallSrc());
         } else {
             RFunction rfn = (RFunction) fn;
             return RCallNode.createCall(null, ConstantNode.create(rfn), callArgsNode, null);
@@ -201,7 +201,7 @@ public class RASTUtils {
     }
 
     /**
-     * Really should not be necessary, but things like '+' ({@link DispatchedCallNode}) have a
+     * Really should not be necessary, but things like '+' ({@link GroupDispatchNode}) have a
      * different AST structure from normal calls.
      */
     private static class CallArgsNodeFinder implements NodeVisitor {
@@ -234,7 +234,7 @@ public class RASTUtils {
 
     /**
      * Returns the name (as an {@link RSymbol} or the function associated with an {@link RCallNode}
-     * or {@link DispatchedCallNode}.
+     * or {@link GroupDispatchNode}.
      *
      * @param escape Add escape characters to non-standard names
      */
@@ -248,8 +248,8 @@ public class RASTUtils {
                 name = escapeName(name);
             }
             return RDataFactory.createSymbol(name);
-        } else if (child instanceof GroupDispatchCallNode) {
-            GroupDispatchCallNode groupDispatchNode = (GroupDispatchCallNode) child;
+        } else if (child instanceof GroupDispatchNode) {
+            GroupDispatchNode groupDispatchNode = (GroupDispatchNode) child;
             String gname = groupDispatchNode.getGenericName();
             if (escape) {
                 gname = escapeName(gname);
@@ -274,12 +274,12 @@ public class RASTUtils {
 
     /**
      * Returns the {@link ReadVariableNode} associated with a {@link RCallNode} or the
-     * {@link GroupDispatchCallNode} .
+     * {@link GroupDispatchNode} .
      */
     public static RNode findFunctionNode(Node node) {
         if (node instanceof RCallNode) {
             return ((RCallNode) node).getFunctionNode();
-        } else if (node instanceof GroupDispatchCallNode) {
+        } else if (node instanceof GroupDispatchNode) {
             return (RNode) node;
         }
         assert false;

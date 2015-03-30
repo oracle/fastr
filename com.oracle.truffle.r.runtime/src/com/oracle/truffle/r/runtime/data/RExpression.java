@@ -45,20 +45,33 @@ public class RExpression implements RShareable, RAbstractContainer {
         return data.getDataAt(index);
     }
 
+    @Override
     public RAttributes initAttributes() {
         return data.initAttributes();
     }
 
+    @Override
     public RAttributes getAttributes() {
         return data.getAttributes();
+    }
+
+    @Override
+    public final RAttributes resetAllAttributes(boolean nullify) {
+        return data.resetAllAttributes(nullify);
     }
 
     public boolean isComplete() {
         return data.isComplete();
     }
 
+    @Override
     public int getLength() {
         return data.getLength();
+    }
+
+    @Override
+    public RAbstractContainer resize(int size) {
+        return data.resize(size);
     }
 
     public boolean hasDimensions() {
@@ -69,29 +82,52 @@ public class RExpression implements RShareable, RAbstractContainer {
         return data.getDimensions();
     }
 
+    @Override
+    public void setDimensions(int[] newDimensions) {
+        data.setDimensions(newDimensions);
+    }
+
     public Class<?> getElementClass() {
         return RExpression.class;
     }
 
-    public RVector materializeNonSharedVector() {
-        return data.materializeNonSharedVector();
+    public RExpression materializeNonShared() {
+        RVector d = data.materializeNonShared();
+        return data != d ? RDataFactory.createExpression((RList) d) : this;
     }
 
     public Object getDataAtAsObject(int index) {
         return data.getDataAtAsObject(index);
     }
 
+    @Override
     public RStringVector getNames(RAttributeProfiles attrProfiles) {
         return data.getNames(attrProfiles);
     }
 
+    @Override
+    public void setNames(RStringVector newNames) {
+        data.setNames(newNames);
+    }
+
+    @Override
     public RList getDimNames() {
         return data.getDimNames();
     }
 
     @Override
+    public void setDimNames(RList newDimNames) {
+        data.setDimNames(newDimNames);
+    }
+
+    @Override
     public Object getRowNames(RAttributeProfiles attrProfiles) {
         return data.getRowNames(attrProfiles);
+    }
+
+    @Override
+    public void setRowNames(RAbstractVector rowNames) {
+        data.setRowNames(rowNames);
     }
 
     public RStringVector getClassHierarchy() {
@@ -131,4 +167,10 @@ public class RExpression implements RShareable, RAbstractContainer {
     public RShareable materializeToShareable() {
         return this;
     }
+
+    @Override
+    public RAbstractContainer setClassAttr(RStringVector classAttr, boolean convertToInt) {
+        return data.setClassAttr(classAttr, convertToInt);
+    }
+
 }

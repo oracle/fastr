@@ -194,7 +194,7 @@ public class FileFunctions {
              * the information. The R closure that called the .Internal turns the result into a
              * dataframe and sets the row.names attributes to the paths in vec. It also updates the
              * mtime, ctime, atime fields using .POSIXct.
-             * 
+             *
              * We try to use the JDK classes, even though they provide a more abstract interface
              * than R. In particular there seems to be no way to get the uid/gid values. We might be
              * better off justing using a native call.
@@ -334,7 +334,7 @@ public class FileFunctions {
             switch(column) {
                 case size: return RDataFactory.createDoubleVector((double[]) data, complete);
                 case isdir: return RDataFactory.createLogicalVector((byte[]) data, complete);
-                case mode: RIntVector res = RDataFactory.createIntVector((int[]) data, complete); res.setClassAttr(OCTMODE); return res;
+                case mode: RIntVector res = RDataFactory.createIntVector((int[]) data, complete); res.setClassAttr(OCTMODE, false); return res;
                 case mtime: case ctime: case atime:
                 case uid: case gid: return RDataFactory.createIntVector((int[]) data, complete);
                 case uname: case grname: return RDataFactory.createStringVector((String[]) data, complete);

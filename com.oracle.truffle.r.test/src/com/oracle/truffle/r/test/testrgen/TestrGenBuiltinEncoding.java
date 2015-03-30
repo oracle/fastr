@@ -2,9 +2,9 @@
  * This material is distributed under the GNU General Public License
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
- * 
+ *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -18,7 +18,6 @@ import com.oracle.truffle.r.test.*;
 public class TestrGenBuiltinEncoding extends TestBase {
 
     @Test
-    @Ignore
     public void testEncoding1() {
         assertEval("argv <- list(\'Byte Code Compiler\'); .Internal(Encoding(argv[[1]]))");
     }
@@ -59,12 +58,9 @@ public class TestrGenBuiltinEncoding extends TestBase {
         assertEval("argv <- list(c(\'* Edit the help file skeletons in 'man', possibly combining help files for multiple functions.\', \'* Edit the exports in 'NAMESPACE', and add necessary imports.\', \'* Put any C/C++/Fortran code in 'src'.\', \'* If you have compiled code, add a useDynLib() directive to 'NAMESPACE'.\', \'* Run R CMD build to build the package tarball.\', \'* Run R CMD check to check the package tarball.\', \'\', \'Read \\\'Writing R Extensions\\\' for more information.\')); .Internal(Encoding(argv[[1]]))");
     }
 
-	@Test
-    @Ignore
-	public void testEncoding9() {
-		assertEval("argv <- structure(list(x = \'abc\'), .Names = \'x\');"+
-			"do.call(\'Encoding\', argv)");
-	}
+    @Test
+    public void testEncoding9() {
+        assertEval("argv <- structure(list(x = \'abc\'), .Names = \'x\');" + "do.call(\'Encoding\', argv)");
+    }
 
 }
-

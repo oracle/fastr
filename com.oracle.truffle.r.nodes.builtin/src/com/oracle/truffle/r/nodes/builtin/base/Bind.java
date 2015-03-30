@@ -34,8 +34,6 @@ import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.function.*;
-import com.oracle.truffle.r.nodes.function.DispatchedCallNode.DispatchType;
-import com.oracle.truffle.r.nodes.function.DispatchedCallNode.NoGenericMethodException;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -45,7 +43,7 @@ import com.oracle.truffle.r.runtime.ops.na.*;
 public abstract class Bind extends RPrecedenceBuiltinNode {
 
     @Child private CastToVectorNode castVector;
-    @Child private DispatchedCallNode dcn;
+    @Child private UseMethodInternalNode dcn;
 
     private final ConditionProfile nullNamesProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile emptyVectorProfile = ConditionProfile.createBinaryProfile();
@@ -80,11 +78,11 @@ public abstract class Bind extends RPrecedenceBuiltinNode {
     protected Object allDataFrame(VirtualFrame frame, Object deparseLevel, RArgsValuesAndNames args) {
         if (dcn == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            dcn = insert(DispatchedCallNode.create(getBindType(), DispatchType.UseMethod, SIGNATURE));
+            dcn = insert(new UseMethodInternalNode(getBindType(), SIGNATURE));
         }
         try {
-            return dcn.executeInternal(frame, ((RDataFrame) args.getValues()[0]).getClassHierarchy(), new Object[]{deparseLevel, args});
-        } catch (NoGenericMethodException e) {
+            return dcn.execute(frame, ((RDataFrame) args.getValues()[0]).getClassHierarchy(), new Object[]{deparseLevel, args});
+        } catch (S3FunctionLookupNode.NoGenericMethodException e) {
             throw RInternalError.shouldNotReachHere();
         }
     }

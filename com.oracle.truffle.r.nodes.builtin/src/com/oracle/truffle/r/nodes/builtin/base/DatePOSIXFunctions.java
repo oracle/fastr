@@ -107,7 +107,7 @@ public class DatePOSIXFunctions {
                 }
             }
             RList result = RDataFactory.createList(data, LT_NAMES_VEC);
-            result.setClassAttr(CLASS_ATTR);
+            result.setClassAttr(CLASS_ATTR, false);
             result.setAttr("tzone", "UTC");
             RStringVector xNames = x.getNames(attrProfiles);
             if (xNames != null) {

@@ -48,6 +48,7 @@ public abstract class Split extends RBuiltinNode {
     @Child private CastStringNode castString;
 
     private final ConditionProfile noStringLevels = ConditionProfile.createBinaryProfile();
+    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
     private static final int INITIAL_SIZE = 5;
     private static final int SCALE_FACTOR = 2;
@@ -55,7 +56,7 @@ public abstract class Split extends RBuiltinNode {
     @Specialization
     protected RList split(VirtualFrame frame, RAbstractIntVector x, RFactor f) {
         int[] factor = f.getVector().getDataWithoutCopying();
-        final int nLevels = f.getNLevels();
+        final int nLevels = f.getNLevels(attrProfiles);
 
         // initialise result arrays
         int[][] collectResults = new int[nLevels][];
@@ -87,7 +88,7 @@ public abstract class Split extends RBuiltinNode {
     @Specialization
     protected RList split(VirtualFrame frame, RAbstractDoubleVector x, RFactor f) {
         int[] factor = f.getVector().getDataWithoutCopying();
-        final int nLevels = f.getNLevels();
+        final int nLevels = f.getNLevels(attrProfiles);
 
         // initialise result arrays
         double[][] collectResults = new double[nLevels][];
@@ -119,7 +120,7 @@ public abstract class Split extends RBuiltinNode {
     @Specialization
     protected RList split(VirtualFrame frame, RAbstractStringVector x, RFactor f) {
         int[] factor = f.getVector().getDataWithoutCopying();
-        final int nLevels = f.getNLevels();
+        final int nLevels = f.getNLevels(attrProfiles);
 
         // initialise result arrays
         String[][] collectResults = new String[nLevels][];
@@ -151,7 +152,7 @@ public abstract class Split extends RBuiltinNode {
     @Specialization
     protected RList split(VirtualFrame frame, RAbstractLogicalVector x, RFactor f) {
         int[] factor = f.getVector().getDataWithoutCopying();
-        final int nLevels = f.getNLevels();
+        final int nLevels = f.getNLevels(attrProfiles);
 
         // initialise result arrays
         byte[][] collectResults = new byte[nLevels][];
@@ -181,13 +182,13 @@ public abstract class Split extends RBuiltinNode {
     }
 
     private RStringVector makeNames(VirtualFrame frame, RFactor f) {
-        RVector levels = f.getLevels();
+        RVector levels = f.getLevels(attrProfiles);
         if (noStringLevels.profile(!(levels instanceof RStringVector))) {
             if (castString == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 castString = insert(CastStringNodeGen.create(null, false, false, false, false));
             }
-            RStringVector slevels = (RStringVector) castString.executeString(frame, f.getLevels());
+            RStringVector slevels = (RStringVector) castString.executeString(frame, f.getLevels(attrProfiles));
             return RDataFactory.createStringVector(slevels.getDataWithoutCopying(), RDataFactory.COMPLETE_VECTOR);
         } else {
             return RDataFactory.createStringVector(((RStringVector) levels).getDataCopy(), RDataFactory.COMPLETE_VECTOR);

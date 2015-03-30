@@ -38,6 +38,11 @@ public abstract class RSequence extends RBounded implements RAbstractVector {
         return length;
     }
 
+    @Override
+    public RAbstractContainer resize(int size) {
+        return materialize().resize(size);
+    }
+
     public final boolean isComplete() {
         return true;
     }
@@ -48,6 +53,12 @@ public abstract class RSequence extends RBounded implements RAbstractVector {
 
     public final int[] getDimensions() {
         return null;
+    }
+
+    @Override
+    public void setDimensions(int[] newDimensions) {
+        // should only be used on materialized sequence
+        throw RInternalError.shouldNotReachHere();
     }
 
     public final RVector createVector() {
@@ -77,8 +88,20 @@ public abstract class RSequence extends RBounded implements RAbstractVector {
     }
 
     @Override
+    public void setNames(RStringVector newNames) {
+        // should only be used on materialized sequence
+        throw RInternalError.shouldNotReachHere();
+    }
+
+    @Override
     public final RList getDimNames() {
         return null;
+    }
+
+    @Override
+    public void setDimNames(RList newDimNames) {
+        // should only be used on materialized sequence
+        throw RInternalError.shouldNotReachHere();
     }
 
     @Override
@@ -87,10 +110,14 @@ public abstract class RSequence extends RBounded implements RAbstractVector {
     }
 
     @Override
+    public void setRowNames(RAbstractVector rowNames) {
+        // should only be used on materialized sequence
+        throw RInternalError.shouldNotReachHere();
+    }
+
+    @Override
     public final RAttributes initAttributes() {
-        // TODO implement
-        assert false;
-        return null;
+        throw RInternalError.shouldNotReachHere();
     }
 
     @Override
@@ -112,9 +139,13 @@ public abstract class RSequence extends RBounded implements RAbstractVector {
     }
 
     @Override
-    public final RVector materializeNonSharedVector() {
+    public final RVector materializeNonShared() {
         RVector resultVector = this.materialize();
         assert !resultVector.isShared();
+        // marking non-temp must be consistent with what RVector does, otherwise the following code
+        // will not work:
+        // x<-1:3 ; attr(x, "myatt")<-2:4 ; y <- x; attr(x, "myatt1")<-"hello" ; attributes(y)
+        resultVector.markNonTemporary();
         return resultVector;
     }
 

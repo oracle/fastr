@@ -35,7 +35,6 @@ import com.oracle.truffle.r.nodes.access.array.write.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.builtin.base.InfixEmulationFunctionsFactory.PromiseEvaluatorNodeGen;
 import com.oracle.truffle.r.nodes.function.*;
-import com.oracle.truffle.r.nodes.function.DispatchedCallNode.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -241,17 +240,17 @@ public class InfixEmulationFunctions {
 
         private static final String NAME = "[";
 
-        @Child private DispatchedCallNode dcn;
+        @Child private UseMethodInternalNode dcn;
 
         @Specialization(guards = {"!noInd(inds)", "isObject(frame, x)"})
         protected Object getObj(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames inds, RAbstractLogicalVector dropVec) {
             if (dcn == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                dcn = insert(DispatchedCallNode.create(NAME, DispatchType.UseMethod, SIGNATURE));
+                dcn = insert(new UseMethodInternalNode(NAME, SIGNATURE));
             }
             try {
-                return dcn.executeInternal(frame, x.getClassHierarchy(), new Object[]{x, inds, dropVec});
-            } catch (NoGenericMethodException e) {
+                return dcn.execute(frame, x.getClassHierarchy(), new Object[]{x, inds, dropVec});
+            } catch (S3FunctionLookupNode.NoGenericMethodException e) {
                 return access(frame, x, RRuntime.LOGICAL_FALSE, inds, dropVec, IS_SUBSET);
             }
         }
@@ -273,11 +272,11 @@ public class InfixEmulationFunctions {
 
             if (dcn == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                dcn = insert(DispatchedCallNode.create(NAME, DispatchType.UseMethod, SIGNATURE));
+                dcn = insert(new UseMethodInternalNode(NAME, SIGNATURE));
             }
             try {
-                return dcn.executeInternal(frame, x.getClassHierarchy(), new Object[]{x, inds, drop});
-            } catch (NoGenericMethodException e) {
+                return dcn.execute(frame, x.getClassHierarchy(), new Object[]{x, inds, drop});
+            } catch (S3FunctionLookupNode.NoGenericMethodException e) {
                 return access(frame, x, RRuntime.LOGICAL_FALSE, inds, drop, IS_SUBSET);
             }
         }
@@ -290,7 +289,7 @@ public class InfixEmulationFunctions {
 
         @SuppressFBWarnings(value = "ES_COMPARING_STRINGS_WITH_EQ", justification = "generic name is interned in the interpreted code for faster comparison")
         protected boolean isObject(VirtualFrame frame, RAbstractContainer x) {
-            return x.isObject(attrProfiles) && !(RArguments.hasS3Args(frame) && RArguments.getS3Generic(frame) == NAME);
+            return x.isObject(attrProfiles) && !(RArguments.getS3Args(frame) != null && RArguments.getS3Args(frame).generic == NAME);
         }
 
     }
@@ -347,7 +346,7 @@ public class InfixEmulationFunctions {
 
         private static final String NAME = "[[";
 
-        @Child private DispatchedCallNode dcn;
+        @Child private UseMethodInternalNode dcn;
 
         @Override
         public Object[] getDefaultParameterValues() {
@@ -364,11 +363,11 @@ public class InfixEmulationFunctions {
             }
             if (dcn == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                dcn = insert(DispatchedCallNode.create(NAME, DispatchType.UseMethod, SIGNATURE));
+                dcn = insert(new UseMethodInternalNode(NAME, SIGNATURE));
             }
             try {
-                return dcn.executeInternal(frame, x.getClassHierarchy(), new Object[]{x, inds, exactVec});
-            } catch (NoGenericMethodException e) {
+                return dcn.execute(frame, x.getClassHierarchy(), new Object[]{x, inds, exactVec});
+            } catch (S3FunctionLookupNode.NoGenericMethodException e) {
                 return access(frame, x, exact, inds, RRuntime.LOGICAL_TRUE, IS_SUBSET);
             }
         }
@@ -381,7 +380,7 @@ public class InfixEmulationFunctions {
 
         @SuppressFBWarnings(value = "ES_COMPARING_STRINGS_WITH_EQ", justification = "generic name is interned in the interpreted code for faster comparison")
         protected boolean isObject(VirtualFrame frame, RAbstractContainer x) {
-            return x.isObject(attrProfiles) && !(RArguments.hasS3Args(frame) && RArguments.getS3Generic(frame) == NAME);
+            return x.isObject(attrProfiles) && !(RArguments.getS3Args(frame) != null && RArguments.getS3Args(frame).generic == NAME);
         }
 
     }
@@ -459,17 +458,17 @@ public class InfixEmulationFunctions {
         private static final String NAME = "[<-";
         private static final boolean IS_SUBSET = true;
 
-        @Child private DispatchedCallNode dcn;
+        @Child private UseMethodInternalNode dcn;
 
         @Specialization(guards = {"!noInd(args)", "isObject(frame, x)"})
         protected Object updateObj(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames args) {
             if (dcn == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                dcn = insert(DispatchedCallNode.create(NAME, DispatchType.UseMethod, SIGNATURE));
+                dcn = insert(new UseMethodInternalNode(NAME, SIGNATURE));
             }
             try {
-                return dcn.executeInternal(frame, x.getClassHierarchy(), new Object[]{x, args});
-            } catch (NoGenericMethodException e) {
+                return dcn.execute(frame, x.getClassHierarchy(), new Object[]{x, args});
+            } catch (S3FunctionLookupNode.NoGenericMethodException e) {
                 Object value = args.getValues()[args.length() - 1];
                 return update(frame, x, args, value, IS_SUBSET);
             }
@@ -483,7 +482,7 @@ public class InfixEmulationFunctions {
 
         @SuppressFBWarnings(value = "ES_COMPARING_STRINGS_WITH_EQ", justification = "generic name is interned in the interpreted code for faster comparison")
         protected boolean isObject(VirtualFrame frame, RAbstractContainer x) {
-            return x.isObject(attrProfiles) && !(RArguments.hasS3Args(frame) && RArguments.getS3Generic(frame) == NAME);
+            return x.isObject(attrProfiles) && !(RArguments.getS3Args(frame) != null && RArguments.getS3Args(frame).generic == NAME);
         }
     }
 
@@ -493,17 +492,17 @@ public class InfixEmulationFunctions {
         private static final String NAME = "[[<-";
         private static final boolean IS_SUBSET = false;
 
-        @Child private DispatchedCallNode dcn;
+        @Child private UseMethodInternalNode dcn;
 
         @Specialization(guards = {"!noInd(args)", "isObject(frame, x)"})
         protected Object updateObj(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames args) {
             if (dcn == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                dcn = insert(DispatchedCallNode.create(NAME, DispatchType.UseMethod, ArgumentsSignature.empty(2)));
+                dcn = insert(new UseMethodInternalNode(NAME, ArgumentsSignature.empty(2)));
             }
             try {
-                return dcn.executeInternal(frame, x.getClassHierarchy(), new Object[]{x, args});
-            } catch (NoGenericMethodException e) {
+                return dcn.execute(frame, x.getClassHierarchy(), new Object[]{x, args});
+            } catch (S3FunctionLookupNode.NoGenericMethodException e) {
                 Object value = args.getValues()[args.length() - 1];
                 return update(frame, x, args, value, IS_SUBSET);
             }
@@ -517,7 +516,7 @@ public class InfixEmulationFunctions {
 
         @SuppressFBWarnings(value = "ES_COMPARING_STRINGS_WITH_EQ", justification = "generic name is interned in the interpreted code for faster comparison")
         protected boolean isObject(VirtualFrame frame, RAbstractContainer x) {
-            return x.isObject(attrProfiles) && !(RArguments.hasS3Args(frame) && RArguments.getS3Generic(frame) == NAME);
+            return x.isObject(attrProfiles) && !(RArguments.getS3Args(frame) != null && RArguments.getS3Args(frame).generic == NAME);
         }
 
     }

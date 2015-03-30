@@ -23,6 +23,7 @@ import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
+import com.oracle.truffle.r.runtime.data.model.*;
 
 @RBuiltin(name = "storage.mode<-", kind = PRIMITIVE, parameterNames = {"x", ""})
 // 2nd parameter is "value", but should not be matched against, so ""
@@ -57,24 +58,25 @@ public abstract class UpdateStorageMode extends RBuiltinNode {
         if (mode != null) {
             Object result = castTypeNode.execute(frame, x, mode);
             if (result != null) {
-                if (x instanceof RAttributable && result instanceof RAttributable) {
+                if (x instanceof RAttributable && result instanceof RAbstractContainer) {
                     RAttributable rx = (RAttributable) x;
                     RAttributes attrs = rx.getAttributes();
                     if (attrs != null) {
-                        RAttributable rresult = (RAttributable) result;
+                        RAbstractContainer rresult = (RAbstractContainer) result;
                         for (RAttribute attr : attrs) {
                             String attrName = attr.getName();
                             Object v = attr.getValue();
                             if (attrName.equals(RRuntime.CLASS_ATTR_KEY)) {
                                 if (v == RNull.instance) {
-                                    rresult = rresult.setClassAttr(null);
+                                    rresult = (RAbstractContainer) rresult.setClassAttr(null, false);
                                 } else {
-                                    rresult = rresult.setClassAttr((RStringVector) v);
+                                    rresult = (RAbstractContainer) rresult.setClassAttr((RStringVector) v, false);
                                 }
                             } else {
                                 rresult.setAttr(attrName.intern(), v);
                             }
                         }
+                        return rresult;
                     }
                 }
                 return result;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -51,68 +51,51 @@ public abstract class UpdateNames extends RInvisibleBuiltinNode {
         return castStringNode.executeString(frame, o);
     }
 
-    public abstract Object executeStringVector(VirtualFrame frame, RAbstractVector vector, Object o);
+    public abstract Object executeStringVector(VirtualFrame frame, RAbstractContainer container, Object o);
 
     @Specialization
     @TruffleBoundary
-    protected RAbstractVector updateNames(RAbstractVector vector, @SuppressWarnings("unused") RNull names) {
+    protected RAbstractContainer updateNames(RAbstractContainer container, @SuppressWarnings("unused") RNull names) {
         controlVisibility();
-        RVector v = vector.materialize();
-        v.setNames(null, getEncapsulatingSourceSection());
-        return v;
+        RAbstractContainer result = container.materializeNonShared();
+        result.setNames(null);
+        return result;
     }
 
     @Specialization
     @TruffleBoundary
-    protected RAbstractVector updateNames(RAbstractVector vector, RStringVector names) {
+    protected RAbstractContainer updateNames(RAbstractContainer container, RStringVector names) {
         controlVisibility();
-        RVector v = vector.materialize();
+        RAbstractContainer result = container.materializeNonShared();
         RStringVector namesVector = names;
-        if (names.getLength() < v.getLength()) {
-            namesVector = names.copyResized(v.getLength(), true);
+        if (names.getLength() < result.getLength()) {
+            namesVector = names.copyResized(result.getLength(), true);
         }
-        v.setNames(namesVector, getEncapsulatingSourceSection());
-        return v;
+        result.setNames(namesVector);
+        return result;
     }
 
     @Specialization
     @TruffleBoundary
-    protected RAbstractVector updateNames(RAbstractVector vector, String name) {
+    protected RAbstractContainer updateNames(RAbstractContainer container, String name) {
         controlVisibility();
-        RVector v = vector.materialize();
-        String[] names = new String[v.getLength()];
+        RAbstractContainer result = container.materializeNonShared();
+        String[] names = new String[result.getLength()];
         Arrays.fill(names, RRuntime.STRING_NA);
         names[0] = name;
         RStringVector namesVector = RDataFactory.createStringVector(names, names.length <= 1);
-        v.setNames(namesVector, getEncapsulatingSourceSection());
-        return v;
+        result.setNames(namesVector);
+        return result;
     }
 
     @Specialization
-    protected RAbstractVector updateNames(VirtualFrame frame, RAbstractVector vector, Object names) {
+    protected RAbstractContainer updateNames(VirtualFrame frame, RAbstractContainer container, Object names) {
         controlVisibility();
         if (names instanceof RAbstractVector) {
-            return updateNames(vector, (RStringVector) castString(frame, names));
+            return updateNames(container, (RStringVector) castString(frame, names));
         } else {
-            return updateNames(vector, (String) castString(frame, names));
+            return updateNames(container, (String) castString(frame, names));
         }
-    }
-
-    @Specialization
-    @TruffleBoundary
-    protected RAbstractVector updateNames(RDataFrame dataFrame, RStringVector names) {
-        return updateNames(dataFrame.getVector(), names);
-    }
-
-    @Specialization
-    @TruffleBoundary
-    protected RAbstractVector updateNames(RDataFrame dataFrame, String names) {
-        return updateNames(dataFrame.getVector(), names);
-    }
-
-    @Specialization
-    protected RAbstractVector updateNames(VirtualFrame frame, RDataFrame dataFrame, Object names) {
-        return updateNames(frame, dataFrame.getVector(), names);
     }
 
 }

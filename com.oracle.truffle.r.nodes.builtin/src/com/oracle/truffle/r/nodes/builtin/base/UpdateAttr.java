@@ -58,20 +58,20 @@ public abstract class UpdateAttr extends RInvisibleBuiltinNode {
     @CompilationFinal private String cachedName = "";
     @CompilationFinal private String cachedInternedName = "";
 
-    private RAbstractVector updateNames(VirtualFrame frame, RAbstractVector vector, Object o) {
+    private RAbstractContainer updateNames(VirtualFrame frame, RAbstractContainer container, Object o) {
         if (updateNames == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             updateNames = insert(UpdateNamesFactory.create(new RNode[2], getBuiltin(), getSuppliedSignature()));
         }
-        return (RAbstractVector) updateNames.executeStringVector(frame, vector, o);
+        return (RAbstractContainer) updateNames.executeStringVector(frame, container, o);
     }
 
-    private RAbstractVector updateDimNames(VirtualFrame frame, RAbstractVector vector, Object o) {
+    private RAbstractContainer updateDimNames(VirtualFrame frame, RAbstractContainer container, Object o) {
         if (updateDimNames == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             updateDimNames = insert(UpdateDimNamesFactory.create(new RNode[2], getBuiltin(), getSuppliedSignature()));
         }
-        return updateDimNames.executeList(frame, vector, o);
+        return updateDimNames.executeList(frame, container, o);
     }
 
     private RAbstractIntVector castInteger(VirtualFrame frame, RAbstractVector vector) {
@@ -124,45 +124,40 @@ public abstract class UpdateAttr extends RInvisibleBuiltinNode {
     protected RAbstractContainer updateAttr(VirtualFrame frame, RAbstractContainer container, String name, RNull value) {
         controlVisibility();
         String internedName = intern(name);
-        RVector resultVector = container.materializeNonSharedVector();
+        RAbstractContainer result = container.materializeNonShared();
         // the name is interned, so identity comparison is sufficient
         if (internedName == RRuntime.DIM_ATTR_KEY) {
-            resultVector.setDimensions(null, getEncapsulatingSourceSection());
+            result.setDimensions(null);
         } else if (internedName == RRuntime.NAMES_ATTR_KEY) {
-            return updateNames(frame, resultVector, value);
+            return updateNames(frame, result, value);
         } else if (internedName == RRuntime.DIMNAMES_ATTR_KEY) {
-            return updateDimNames(frame, resultVector, value);
+            return updateDimNames(frame, result, value);
         } else if (internedName == RRuntime.CLASS_ATTR_KEY) {
-            return RVector.setVectorClassAttr(resultVector, null, container.getElementClass() == RDataFrame.class ? container : null, container.getElementClass() == RFactor.class ? container : null);
+            return (RAbstractContainer) result.setClassAttr(null, false);
         } else if (internedName == RRuntime.ROWNAMES_ATTR_KEY) {
-            resultVector.setRowNames(null);
-        } else if (internedName == RRuntime.LEVELS_ATTR_KEY) {
-            resultVector.setLevels(null);
-        } else if (resultVector.getAttributes() != null) {
-            resultVector.getAttributes().remove(internedName);
+            result.setRowNames(null);
+        } else if (result.getAttributes() != null) {
+            result.removeAttr(attrProfiles, internedName);
         }
-        // return frame or factor if it's one, otherwise return the vector
-        return container.getElementClass() == RDataFrame.class || container.getElementClass() == RFactor.class ? container : resultVector;
+        return result;
     }
 
     @TruffleBoundary
-    public static RAbstractContainer setClassAttrFromObject(RVector resultVector, RAbstractContainer container, Object value, SourceSection sourceSection) {
+    public static RStringVector convertClassAttrFromObject(Object value) {
         if (value instanceof RStringVector) {
-            return RVector.setVectorClassAttr(resultVector, (RStringVector) value, container.getElementClass() == RDataFrame.class ? container : null,
-                            container.getElementClass() == RFactor.class ? container : null);
+            return (RStringVector) value;
+        } else if (value instanceof String) {
+            return RDataFactory.createStringVector((String) value);
+        } else {
+            throw RError.error(RError.Message.SET_INVALID_CLASS_ATTR);
         }
-        if (value instanceof String) {
-            return RVector.setVectorClassAttr(resultVector, RDataFactory.createStringVector((String) value), container.getElementClass() == RDataFrame.class ? container : null,
-                            container.getElementClass() == RFactor.class ? container : null);
-        }
-        throw RError.error(sourceSection, RError.Message.SET_INVALID_CLASS_ATTR);
     }
 
     @Specialization(guards = "!nullValue(value)")
     protected RAbstractContainer updateAttr(VirtualFrame frame, RAbstractContainer container, String name, Object value) {
         controlVisibility();
         String internedName = intern(name);
-        RVector resultVector = container.materializeNonSharedVector();
+        RAbstractContainer result = container.materializeNonShared();
         // the name is interned, so identity comparison is sufficient
         if (internedName == RRuntime.DIM_ATTR_KEY) {
             RAbstractIntVector dimsVector = castInteger(frame, castVector(frame, value));
@@ -170,23 +165,21 @@ public abstract class UpdateAttr extends RInvisibleBuiltinNode {
                 errorProfile.enter();
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.LENGTH_ZERO_DIM_INVALID);
             }
-            resultVector.setDimensions(dimsVector.materialize().getDataCopy(), getEncapsulatingSourceSection());
+            result.setDimensions(dimsVector.materialize().getDataCopy());
         } else if (internedName == RRuntime.NAMES_ATTR_KEY) {
-            return updateNames(frame, resultVector, value);
+            return updateNames(frame, result, value);
         } else if (internedName == RRuntime.DIMNAMES_ATTR_KEY) {
-            return updateDimNames(frame, resultVector, value);
+            return updateDimNames(frame, result, value);
         } else if (internedName == RRuntime.CLASS_ATTR_KEY) {
-            return setClassAttrFromObject(resultVector, container, value, getEncapsulatingSourceSection());
+            return (RAbstractContainer) result.setClassAttr(convertClassAttrFromObject(value), false);
         } else if (internedName == RRuntime.ROWNAMES_ATTR_KEY) {
-            resultVector.setRowNames(castVector(frame, value));
-        } else if (internedName == RRuntime.LEVELS_ATTR_KEY) {
-            resultVector.setLevels(castVector(frame, value));
+            result.setRowNames(castVector(frame, value));
         } else {
             // generic attribute
-            resultVector.setAttr(internedName, value);
+            result.setAttr(internedName, value);
         }
-        // return frame or factor if it's one, otherwise return the vector
-        return container.getElementClass() == RDataFrame.class || container.getElementClass() == RFactor.class ? container : resultVector;
+
+        return result;
     }
 
     @Specialization(guards = "!nullValue(value)")

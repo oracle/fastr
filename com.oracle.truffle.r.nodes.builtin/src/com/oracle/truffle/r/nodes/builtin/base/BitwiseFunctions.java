@@ -79,7 +79,7 @@ public class BitwiseFunctions {
                                 ans[i] = RRuntime.INT_NA;
                                 completeVector = false;
                             } else {
-                                ans[i] = aVal >> bVal;
+                                ans[i] = aVal >>> bVal;
                             }
                             break;
                         case SHIFTL:

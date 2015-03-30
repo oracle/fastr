@@ -30,8 +30,7 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.function.*;
-import com.oracle.truffle.r.nodes.function.DispatchedCallNode.DispatchType;
-import com.oracle.truffle.r.nodes.function.DispatchedCallNode.NoGenericMethodException;
+import com.oracle.truffle.r.nodes.function.S3FunctionLookupNode.NoGenericMethodException;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -45,7 +44,7 @@ public abstract class Dim extends RBuiltinNode {
     private static final String NAME = "dim";
 
     @Child private ShortRowNames shortRowNames;
-    @Child private DispatchedCallNode dcn;
+    @Child private UseMethodInternalNode dcn;
 
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
@@ -98,11 +97,11 @@ public abstract class Dim extends RBuiltinNode {
         controlVisibility();
         if (dcn == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            dcn = insert(DispatchedCallNode.create(NAME, DispatchType.UseMethod, getSuppliedSignature()));
+            dcn = insert(new UseMethodInternalNode(NAME, getSuppliedSignature()));
         }
         try {
-            return dcn.executeInternal(frame, container.getClassHierarchy(), new Object[]{container});
-        } catch (NoGenericMethodException e) {
+            return dcn.execute(frame, container.getClassHierarchy(), new Object[]{container});
+        } catch (S3FunctionLookupNode.NoGenericMethodException e) {
             return hasDimensions(container) ? dimWithDimensions(frame, container) : RNull.instance;
         }
 
@@ -114,7 +113,7 @@ public abstract class Dim extends RBuiltinNode {
 
     @SuppressFBWarnings(value = "ES_COMPARING_STRINGS_WITH_EQ", justification = "generic name is interned in the interpreted code for faster comparison")
     protected boolean isObject(VirtualFrame frame, RAbstractContainer container) {
-        return container.isObject(attrProfiles) && !(RArguments.hasS3Args(frame) && RArguments.getS3Generic(frame) == NAME);
+        return container.isObject(attrProfiles) && !(RArguments.getS3Args(frame) != null && RArguments.getS3Args(frame).generic == NAME);
     }
 
 }

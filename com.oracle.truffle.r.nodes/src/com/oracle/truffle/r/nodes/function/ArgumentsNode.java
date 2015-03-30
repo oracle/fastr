@@ -47,6 +47,7 @@ public abstract class ArgumentsNode extends RNode implements ArgumentsTrait {
         assert signature != null && signature.getLength() == arguments.length : Arrays.toString(arguments) + " " + signature;
         this.arguments = arguments;
         this.signature = signature;
+        assert signature != null;
     }
 
     @CreateWrapper

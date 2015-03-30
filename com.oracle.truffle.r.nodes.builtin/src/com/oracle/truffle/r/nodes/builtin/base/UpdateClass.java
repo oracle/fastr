@@ -61,8 +61,9 @@ public abstract class UpdateClass extends RBuiltinNode {
     @TruffleBoundary
     protected Object setClass(RAbstractContainer arg, @SuppressWarnings("unused") RNull className) {
         controlVisibility();
-        RVector resultVector = arg.materializeNonSharedVector();
-        return RVector.setVectorClassAttr(resultVector, null, arg.getElementClass() == RDataFrame.class ? arg : null, arg.getElementClass() == RFactor.class ? arg : null);
+
+        RAbstractContainer result = arg.materializeNonShared();
+        return result.setClassAttr(null, false);
     }
 
     @Specialization
@@ -84,90 +85,92 @@ public abstract class UpdateClass extends RBuiltinNode {
                 return setClass((RAbstractVector) result, RNull.instance);
             }
         }
-        RVector resultVector = arg.materializeNonSharedVector();
-        if (RType.Matrix.getName().equals(className)) {
-            if (resultVector.isMatrix()) {
-                return setClass(resultVector, RNull.instance);
+        RAbstractContainer result = arg.materializeNonShared();
+        if (result instanceof RAbstractVector) {
+            RAbstractVector resultVector = (RAbstractVector) result;
+            if (RType.Matrix.getName().equals(className)) {
+                if (resultVector.isMatrix()) {
+                    return setClass(resultVector, RNull.instance);
+                }
+                final int[] dimensions = resultVector.getDimensions();
+                int dimLength = 0;
+                if (dimensions != null) {
+                    dimLength = dimensions.length;
+                }
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.NOT_A_MATRIX_UPDATE_CLASS, dimLength);
             }
-            final int[] dimensions = resultVector.getDimensions();
-            int dimLength = 0;
-            if (dimensions != null) {
-                dimLength = dimensions.length;
+            if (RType.Array.getName().equals(className)) {
+                if (resultVector.isArray()) {
+                    return setClass(resultVector, RNull.instance);
+                }
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.NOT_ARRAY_UPDATE_CLASS);
             }
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.NOT_A_MATRIX_UPDATE_CLASS, dimLength);
-        }
-        if (RType.Array.getName().equals(className)) {
-            if (resultVector.isArray()) {
-                return setClass(resultVector, RNull.instance);
-            }
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.NOT_ARRAY_UPDATE_CLASS);
         }
 
-        return RVector.setVectorClassAttr(resultVector, RDataFactory.createStringVector(className), arg.getElementClass() == RDataFrame.class ? arg : null,
-                        arg.getElementClass() == RFactor.class ? arg : null);
+        return result.setClassAttr(RDataFactory.createStringVector(className), false);
     }
 
     @Specialization
     @TruffleBoundary
     protected Object setClass(RAbstractContainer arg, RStringVector className) {
         controlVisibility();
-        RVector resultVector = arg.materializeNonSharedVector();
-        return RVector.setVectorClassAttr(resultVector, className, arg.getElementClass() == RDataFrame.class ? arg : null, arg.getElementClass() == RFactor.class ? arg : null);
+        RAbstractContainer result = arg.materializeNonShared();
+        return result.setClassAttr(className, false);
     }
 
     @Specialization
     public Object setClass(RFunction arg, RAbstractStringVector className) {
         controlVisibility();
-        arg.setClassAttr(className.materialize());
+        arg.setClassAttr(className.materialize(), false);
         return arg;
     }
 
     @Specialization
     public Object setClass(RFunction arg, @SuppressWarnings("unused") RNull className) {
         controlVisibility();
-        arg.setClassAttr(null);
+        arg.setClassAttr(null, false);
         return arg;
     }
 
     @Specialization
     public Object setClass(REnvironment arg, RAbstractStringVector className) {
         controlVisibility();
-        arg.setClassAttr(className.materialize());
+        arg.setClassAttr(className.materialize(), false);
         return arg;
     }
 
     @Specialization
     public Object setClass(REnvironment arg, @SuppressWarnings("unused") RNull className) {
         controlVisibility();
-        arg.setClassAttr(null);
+        arg.setClassAttr(null, false);
         return arg;
     }
 
     @Specialization
     public Object setClass(RSymbol arg, RAbstractStringVector className) {
         controlVisibility();
-        arg.setClassAttr(className.materialize());
+        arg.setClassAttr(className.materialize(), false);
         return arg;
     }
 
     @Specialization
     public Object setClass(RSymbol arg, @SuppressWarnings("unused") RNull className) {
         controlVisibility();
-        arg.setClassAttr(null);
+        arg.setClassAttr(null, false);
         return arg;
     }
 
     @Specialization
     public Object setClass(RExternalPtr arg, RAbstractStringVector className) {
         controlVisibility();
-        arg.setClassAttr(className.materialize());
+        arg.setClassAttr(className.materialize(), false);
         return arg;
     }
 
     @Specialization
     public Object setClass(RExternalPtr arg, @SuppressWarnings("unused") RNull className) {
         controlVisibility();
-        arg.setClassAttr(null);
+        arg.setClassAttr(null, false);
         return arg;
     }
 

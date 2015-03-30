@@ -449,6 +449,7 @@ public final class RError extends RuntimeException {
         INVALID_TYPE_LENGTH("invalid type/length (%s/%d) in vector allocation"),
         SUBASSIGN_TYPE_FIX("incompatible types (from %s to %s) in subassignment type fix"),
         SUBSCRIPT_TYPES("incompatible types (from %s to %s) in [[ assignment"),
+        INCOMPATIBLE_METHODS("incompatible methods (\"%s\", \"%s\") for \"%s\""),
         RECURSIVE_INDEXING_FAILED("recursive indexing failed at level %d"),
         ARGUMENTS_PASSED("%d arguments passed to '%s' which requires %d"),
         ARGUMENTS_PASSED_0_1("0 arguments passed to '%s' which requires 1"),

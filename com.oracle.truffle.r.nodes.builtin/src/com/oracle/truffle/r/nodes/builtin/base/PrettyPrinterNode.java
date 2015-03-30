@@ -1030,6 +1030,8 @@ public abstract class PrettyPrinterNode extends RNode {
         @Child private PrettyPrinterNode prettyPrinter;
         @Child private CastStringNode castStringNode;
 
+        private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+
         private final NACheck naCheck = NACheck.create();
 
         private void initCast(Object listElementName) {
@@ -1155,7 +1157,7 @@ public abstract class PrettyPrinterNode extends RNode {
         // TODO: this should be handled by an S3 function
         @Specialization
         protected String prettyPrintListElement(VirtualFrame frame, RFactor operand, Object listElementName, byte quote, byte right) {
-            RVector vec = operand.getLevels();
+            RVector vec = operand.getLevels(attrProfiles);
             String[] strings;
             if (vec == null) {
                 strings = new String[0];
@@ -1171,7 +1173,7 @@ public abstract class PrettyPrinterNode extends RNode {
 
         @TruffleBoundary
         private String formatLevelStrings(RFactor operand, Object listElementName, byte right, RVector vec, String[] strings) {
-            StringBuilder sb = new StringBuilder(prettyPrintSingleElement(RClosures.createFactorToVector(operand, naCheck), listElementName, RRuntime.LOGICAL_FALSE, right));
+            StringBuilder sb = new StringBuilder(prettyPrintSingleElement(RClosures.createFactorToVector(operand, naCheck, attrProfiles), listElementName, RRuntime.LOGICAL_FALSE, right));
             sb.append("\nLevels:");
             if (vec != null) {
                 for (int i = 0; i < vec.getLength(); i++) {

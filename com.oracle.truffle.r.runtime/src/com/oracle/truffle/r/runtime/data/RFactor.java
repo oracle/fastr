@@ -59,6 +59,11 @@ public final class RFactor implements RShareable, RAbstractContainer {
     }
 
     @Override
+    public RAbstractContainer resize(int size) {
+        return vector.resize(size);
+    }
+
+    @Override
     public void markNonTemporary() {
         vector.markNonTemporary();
     }
@@ -99,17 +104,19 @@ public final class RFactor implements RShareable, RAbstractContainer {
     }
 
     @Override
+    public void setDimensions(int[] newDimensions) {
+        vector.setDimensions(newDimensions);
+    }
+
+    @Override
     public Class<?> getElementClass() {
         return RFactor.class;
     }
 
     @Override
-    public RVector materializeNonSharedVector() {
-        if (isShared()) {
-            vector = (RIntVector) vector.copy();
-            vector.markNonTemporary();
-        }
-        return vector;
+    public RFactor materializeNonShared() {
+        RVector v = vector.materializeNonShared();
+        return vector != v ? RDataFactory.createFactor((RIntVector) v, ordered) : this;
     }
 
     @Override
@@ -123,13 +130,28 @@ public final class RFactor implements RShareable, RAbstractContainer {
     }
 
     @Override
+    public void setNames(RStringVector newNames) {
+        vector.setNames(newNames);
+    }
+
+    @Override
     public RList getDimNames() {
         return vector.getDimNames();
     }
 
     @Override
+    public void setDimNames(RList newDimNames) {
+        vector.setDimNames(newDimNames);
+    }
+
+    @Override
     public Object getRowNames(RAttributeProfiles attrProfiles) {
         return vector.getRowNames(attrProfiles);
+    }
+
+    @Override
+    public void setRowNames(RAbstractVector rowNames) {
+        vector.setRowNames(rowNames);
     }
 
     @Override
@@ -142,8 +164,14 @@ public final class RFactor implements RShareable, RAbstractContainer {
         return true;
     }
 
+    @Override
     public RAttributes initAttributes() {
         return vector.initAttributes();
+    }
+
+    @Override
+    public RAttributes resetAllAttributes(boolean nullify) {
+        return vector.resetAllAttributes(nullify);
     }
 
     @Override
@@ -152,20 +180,20 @@ public final class RFactor implements RShareable, RAbstractContainer {
     }
 
     public void setLevels(Object newLevels) {
-        vector.setLevels(newLevels);
+        vector.setAttr(RRuntime.LEVELS_ATTR_KEY, newLevels);
     }
 
     @Override
-    public RAbstractContainer setClassAttr(RStringVector classAttr) {
-        return RVector.setVectorClassAttr(vector, classAttr, null, this);
+    public RAbstractContainer setClassAttr(RStringVector classAttr, boolean convertToInt) {
+        return vector.setClassAttr(classAttr, convertToInt);
     }
 
-    public RVector getLevels() {
-        return vector.getLevels();
+    public RVector getLevels(RAttributeProfiles attrProfiles) {
+        return (RVector) vector.getAttr(attrProfiles, RRuntime.LEVELS_ATTR_KEY);
     }
 
-    public int getNLevels() {
-        RVector levels = vector.getLevels();
+    public int getNLevels(RAttributeProfiles attrProfiles) {
+        RVector levels = getLevels(attrProfiles);
         return levels == null ? 0 : levels.getLength();
     }
 }

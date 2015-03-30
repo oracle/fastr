@@ -28,10 +28,6 @@ import com.oracle.truffle.r.runtime.data.*;
 
 public interface RAbstractVector extends RAbstractContainer {
 
-    boolean hasDimensions();
-
-    int[] getDimensions();
-
     /**
      * Creates a copy of the vector. This copies all of the contained data as well. If the data in
      * the vector is to be updated upon copying, the corresponding {@code copyResetData()} method
@@ -57,8 +53,6 @@ public interface RAbstractVector extends RAbstractContainer {
     void verifyDimensions(int[] newDimensions, SourceSection sourceSection);
 
     RVector materialize();
-
-    RList getDimNames();
 
     boolean isMatrix();
 

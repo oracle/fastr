@@ -54,6 +54,7 @@ public abstract class Match extends RBuiltinNode {
 
     private final NACheck naCheck = new NACheck();
     private final ConditionProfile bigTableProfile = ConditionProfile.createBinaryProfile();
+    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
     private String castString(VirtualFrame frame, Object operand) {
         if (castString == null) {
@@ -97,7 +98,7 @@ public abstract class Match extends RBuiltinNode {
     protected RIntVector match(VirtualFrame frame, RFactor x, RFactor table, Object nomatchObj, Object incomparables) {
         naCheck.enable(x.getVector());
         naCheck.enable(table.getVector());
-        return matchRecursive(frame, RClosures.createFactorToVector(x, naCheck), RClosures.createFactorToVector(table, naCheck), nomatchObj, incomparables);
+        return matchRecursive(frame, RClosures.createFactorToVector(x, naCheck, attrProfiles), RClosures.createFactorToVector(table, naCheck, attrProfiles), nomatchObj, incomparables);
     }
 
     @Specialization

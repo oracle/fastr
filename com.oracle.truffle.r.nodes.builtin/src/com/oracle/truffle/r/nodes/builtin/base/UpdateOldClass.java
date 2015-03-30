@@ -74,16 +74,16 @@ public abstract class UpdateOldClass extends RInvisibleBuiltinNode {
     @TruffleBoundary
     protected Object setOldClass(RAbstractContainer arg, RStringVector className) {
         controlVisibility();
-        RVector resultVector = arg.materializeNonSharedVector();
-        return RVector.setVectorClassAttr(resultVector, className, arg.getElementClass() == RDataFrame.class ? arg : null, arg.getElementClass() == RFactor.class ? arg : null);
+        RAbstractContainer result = arg.materializeNonShared();
+        return result.setClassAttr(className, false);
     }
 
     @Specialization
     @TruffleBoundary
     protected Object setOldClass(RAbstractContainer arg, @SuppressWarnings("unused") RNull className) {
         controlVisibility();
-        RVector resultVector = arg.materializeNonSharedVector();
-        return RVector.setVectorClassAttr(resultVector, null, arg.getElementClass() == RDataFrame.class ? arg : null, arg.getElementClass() == RFactor.class ? arg : null);
+        RAbstractContainer result = arg.materializeNonShared();
+        return result.setClassAttr(null, false);
     }
 
     protected boolean isStringVector(RAbstractVector className) {

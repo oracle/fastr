@@ -29,7 +29,6 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.nodes.Node.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
@@ -38,7 +37,6 @@ import com.oracle.truffle.r.nodes.access.array.ArrayPositionCast.OperatorConvert
 import com.oracle.truffle.r.nodes.access.array.ArrayPositionCastNodeGen.OperatorConverterNodeGen;
 import com.oracle.truffle.r.nodes.access.array.read.*;
 import com.oracle.truffle.r.nodes.function.*;
-import com.oracle.truffle.r.nodes.function.DispatchedCallNode.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RDeparse.State;
@@ -79,7 +77,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
     @Child private OperatorConverterNode operatorConverter;
     @Child private SetMultiDimDataNode setMultiDimData;
 
-    @Child private DispatchedCallNode dcn;
+    @Child private UseMethodInternalNode dcn;
 
     private final BranchProfile error = BranchProfile.create();
     private final BranchProfile warning = BranchProfile.create();
@@ -118,8 +116,8 @@ public abstract class UpdateArrayHelperNode extends RNode {
         if (resultVector.isShared()) {
             vectorShared.enter();
             resultVector = (RIntVector) vector.copy();
-            resultVector.markNonTemporary();
         }
+        resultVector.markNonTemporary();
         int[] srcDimensions = resultVector.getDimensions();
         int numSrcDimensions = srcDimensions.length;
         int srcDimSize = srcDimensions[numSrcDimensions - 1];
@@ -252,12 +250,12 @@ public abstract class UpdateArrayHelperNode extends RNode {
     protected Object updateObjectSubset(VirtualFrame frame, Object v, Object value, int recLevel, Object positions, RAbstractContainer container) {
         if (dcn == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            dcn = insert(DispatchedCallNode.create("[<-", DispatchType.UseMethod, VALUE_SIGNATURE));
+            dcn = insert(new UseMethodInternalNode("[<-", VALUE_SIGNATURE));
         }
         try {
             Object inds = positions instanceof Object[] ? new RArgsValuesAndNames((Object[]) positions, ArgumentsSignature.empty(((Object[]) positions).length)) : positions;
-            return dcn.executeInternal(frame, container.getClassHierarchy(), new Object[]{container, inds, value});
-        } catch (NoGenericMethodException e) {
+            return dcn.execute(frame, container.getClassHierarchy(), new Object[]{container, inds, value});
+        } catch (S3FunctionLookupNode.NoGenericMethodException e) {
             return updateRecursive(frame, v, value, container, positions, recLevel);
         }
     }
@@ -266,12 +264,12 @@ public abstract class UpdateArrayHelperNode extends RNode {
     protected Object updateObject(VirtualFrame frame, Object v, Object value, int recLevel, Object positions, RAbstractContainer container) {
         if (dcn == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            dcn = insert(DispatchedCallNode.create("[[<-", DispatchType.UseMethod, VALUE_SIGNATURE));
+            dcn = insert(new UseMethodInternalNode("[[<-", VALUE_SIGNATURE));
         }
         try {
             Object inds = positions instanceof Object[] ? new RArgsValuesAndNames((Object[]) positions, ArgumentsSignature.empty(((Object[]) positions).length)) : positions;
-            return dcn.executeInternal(frame, container.getClassHierarchy(), new Object[]{container, inds, value});
-        } catch (NoGenericMethodException e) {
+            return dcn.execute(frame, container.getClassHierarchy(), new Object[]{container, inds, value});
+        } catch (S3FunctionLookupNode.NoGenericMethodException e) {
             return updateRecursive(frame, v, value, container, positions, recLevel);
         }
     }
@@ -1102,8 +1100,8 @@ public abstract class UpdateArrayHelperNode extends RNode {
         } else if (resultVector.isShared()) {
             vectorShared.enter();
             resultVector = (RIntVector) vector.copy();
-            resultVector.markNonTemporary();
         }
+        resultVector.markNonTemporary();
         return resultVector;
     }
 
@@ -1242,8 +1240,8 @@ public abstract class UpdateArrayHelperNode extends RNode {
         if (resultVector.isShared()) {
             vectorShared.enter();
             resultVector = (RDoubleVector) vector.copy();
-            resultVector.markNonTemporary();
         }
+        resultVector.markNonTemporary();
         int[] srcDimensions = resultVector.getDimensions();
         int numSrcDimensions = srcDimensions.length;
         int srcDimSize = srcDimensions[numSrcDimensions - 1];
@@ -1273,8 +1271,8 @@ public abstract class UpdateArrayHelperNode extends RNode {
         } else if (resultVector.isShared()) {
             vectorShared.enter();
             resultVector = (RDoubleVector) vector.copy();
-            resultVector.markNonTemporary();
         }
+        resultVector.markNonTemporary();
         return resultVector;
     }
 

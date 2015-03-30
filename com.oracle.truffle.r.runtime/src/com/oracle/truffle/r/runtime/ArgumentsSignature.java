@@ -102,6 +102,10 @@ public final class ArgumentsSignature implements Iterable<String> {
         }
     }
 
+    public boolean isEmpty() {
+        return names.length == 0;
+    }
+
     public int getLength() {
         return names.length;
     }

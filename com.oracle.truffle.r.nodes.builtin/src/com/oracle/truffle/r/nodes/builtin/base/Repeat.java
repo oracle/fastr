@@ -160,7 +160,7 @@ public abstract class Repeat extends RBuiltinNode {
     @Specialization
     public RAbstractContainer rep(VirtualFrame frame, RFactor x, RAbstractIntVector times, int lengthOut, int each) {
         RVector vec = (RVector) repeatRecursive(frame, x.getVector(), times, lengthOut, each);
-        vec.setLevels(x.getLevels());
+        vec.setAttr(RRuntime.LEVELS_ATTR_KEY, x.getLevels(attrProfiles));
         return RVector.setVectorClassAttr(vec, x.getClassAttr(attrProfiles), null, null);
     }
 

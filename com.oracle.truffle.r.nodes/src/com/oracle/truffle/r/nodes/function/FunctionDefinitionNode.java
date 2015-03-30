@@ -38,6 +38,7 @@ import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.access.variables.*;
 import com.oracle.truffle.r.nodes.instrument.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.RArguments.S3Args;
 import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
@@ -54,7 +55,6 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
     @Child private InlineCacheNode<VirtualFrame, RNode> onExitExpressionCache;
     private final ConditionProfile onExitProfile = ConditionProfile.createBinaryProfile();
 
-    private final ConditionProfile s3SlotsProfile = ConditionProfile.createBinaryProfile();
     @CompilationFinal private BranchProfile invalidateFrameSlotProfile;
     @Child private FrameSlotNode dotGenericSlot;
     @Child private FrameSlotNode dotMethodSlot;
@@ -168,9 +168,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         Object restartStack = RErrorHandling.getRestartStack();
         try {
             verifyEnclosingAssumptions(vf);
-            if (s3SlotsProfile.profile(RArguments.hasS3Args(vf))) {
-                setupS3Slots(vf);
-            }
+            setupS3Slots(vf);
             return body.execute(vf);
         } catch (ReturnException ex) {
             returnProfile.enter();
@@ -206,6 +204,10 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
     }
 
     private void setupS3Slots(VirtualFrame frame) {
+        S3Args args = RArguments.getS3Args(frame);
+        if (args == null) {
+            return;
+        }
         if (dotGenericSlot == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             assert invalidateFrameSlotProfile == null && dotMethodSlot == null && dotClassSlot == null && dotGenericCallEnvSlot == null && dotGenericCallDefSlot == null && dotGroupSlot == null;
@@ -217,12 +219,12 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
             dotGenericCallDefSlot = insert(FrameSlotNode.create(RRuntime.RDotGenericDefEnv, true));
             dotGroupSlot = insert(FrameSlotNode.create(RRuntime.RDotGroup, true));
         }
-        FrameSlotChangeMonitor.setObjectAndInvalidate(frame, dotGenericSlot.executeFrameSlot(frame), RArguments.getS3Generic(frame), false, invalidateFrameSlotProfile);
-        FrameSlotChangeMonitor.setObjectAndInvalidate(frame, dotMethodSlot.executeFrameSlot(frame), RArguments.getS3Method(frame), false, invalidateFrameSlotProfile);
-        FrameSlotChangeMonitor.setObjectAndInvalidate(frame, dotClassSlot.executeFrameSlot(frame), RArguments.getS3Class(frame), false, invalidateFrameSlotProfile);
-        FrameSlotChangeMonitor.setObjectAndInvalidate(frame, dotGenericCallEnvSlot.executeFrameSlot(frame), RArguments.getS3CallEnv(frame), false, invalidateFrameSlotProfile);
-        FrameSlotChangeMonitor.setObjectAndInvalidate(frame, dotGenericCallDefSlot.executeFrameSlot(frame), RArguments.getS3DefEnv(frame), false, invalidateFrameSlotProfile);
-        FrameSlotChangeMonitor.setObjectAndInvalidate(frame, dotGroupSlot.executeFrameSlot(frame), RArguments.getS3Group(frame), false, invalidateFrameSlotProfile);
+        FrameSlotChangeMonitor.setObjectAndInvalidate(frame, dotGenericSlot.executeFrameSlot(frame), args.generic, false, invalidateFrameSlotProfile);
+        FrameSlotChangeMonitor.setObjectAndInvalidate(frame, dotMethodSlot.executeFrameSlot(frame), args.method, false, invalidateFrameSlotProfile);
+        FrameSlotChangeMonitor.setObjectAndInvalidate(frame, dotClassSlot.executeFrameSlot(frame), args.clazz, false, invalidateFrameSlotProfile);
+        FrameSlotChangeMonitor.setObjectAndInvalidate(frame, dotGenericCallEnvSlot.executeFrameSlot(frame), args.callEnv, false, invalidateFrameSlotProfile);
+        FrameSlotChangeMonitor.setObjectAndInvalidate(frame, dotGenericCallDefSlot.executeFrameSlot(frame), args.defEnv, false, invalidateFrameSlotProfile);
+        FrameSlotChangeMonitor.setObjectAndInvalidate(frame, dotGroupSlot.executeFrameSlot(frame), args.group, false, invalidateFrameSlotProfile);
     }
 
     @SuppressWarnings("unchecked")
