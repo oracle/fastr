@@ -37,6 +37,7 @@ public abstract class Sqrt extends RBuiltinNode {
     private final NACheck na = NACheck.create();
     private final ConditionProfile naConditionProfile = ConditionProfile.createBinaryProfile();
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+    private final NullProfile dimensionsProfile = NullProfile.create();
 
     @Specialization
     public double sqrt(double x) {
@@ -82,7 +83,7 @@ public abstract class Sqrt extends RBuiltinNode {
             res[i] = sqrt;
             current += xs.getStride();
         }
-        RDoubleVector result = RDataFactory.createDoubleVector(res, na.neverSeenNA(), xs.getDimensions(), xs.getNames(attrProfiles));
+        RDoubleVector result = RDataFactory.createDoubleVector(res, na.neverSeenNA(), dimensionsProfile.profile(xs.getDimensions()), xs.getNames(attrProfiles));
         result.copyRegAttributesFrom(xs);
         return result;
     }
@@ -99,7 +100,7 @@ public abstract class Sqrt extends RBuiltinNode {
                 res[i] = Math.sqrt(xs.getDataAt(i));
             }
         }
-        RDoubleVector result = RDataFactory.createDoubleVector(res, na.neverSeenNA(), xs.getDimensions(), xs.getNames(attrProfiles));
+        RDoubleVector result = RDataFactory.createDoubleVector(res, na.neverSeenNA(), dimensionsProfile.profile(xs.getDimensions()), xs.getNames(attrProfiles));
         result.copyRegAttributesFrom(xs);
         return result;
     }
