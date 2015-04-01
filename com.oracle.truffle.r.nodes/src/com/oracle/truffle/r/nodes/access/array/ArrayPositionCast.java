@@ -56,11 +56,11 @@ abstract class ArrayPositionsCastBase extends RNode {
     private final BranchProfile errorProfile = BranchProfile.create();
 
     private final ConditionProfile nameConditionProfile = ConditionProfile.createBinaryProfile();
-    private final BranchProfile naValueMet = BranchProfile.create();
-    private final BranchProfile intVectorMet = BranchProfile.create();
 
     private final ConditionProfile dataFrameProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile dimNullProfile = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile intVecProfile = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile compressedProfile = ConditionProfile.createBinaryProfile();
     protected final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
     protected int[] getDimensions(RAbstractContainer container) {
@@ -78,15 +78,16 @@ abstract class ArrayPositionsCastBase extends RNode {
     }
 
     private int calculateN(RAbstractVector rowNames) {
-        if (rowNames.getElementClass() == RInt.class && rowNames.getLength() == 2) {
+        if (intVecProfile.profile(rowNames.getElementClass() == RInt.class && rowNames.getLength() == 2)) {
             RAbstractIntVector rowNamesIntVector = (RAbstractIntVector) rowNames;
-            intVectorMet.enter();
-            if (RRuntime.isNA(rowNamesIntVector.getDataAt(0))) {
-                naValueMet.enter();
+            if (compressedProfile.profile(RRuntime.isNA(rowNamesIntVector.getDataAt(0)))) {
                 return rowNamesIntVector.getDataAt(1);
+            } else {
+                return rowNames.getLength();
             }
+        } else {
+            return rowNames.getLength();
         }
-        return rowNames.getLength();
     }
 
     private void dimensionsError() {
@@ -471,7 +472,7 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
                     if (dimSizeOneProfile.profile(dimSize == 1)) {
                         /*
                          * e.g. c(7)[-2] vs c(7)[[-2]]
-                         *
+                         * 
                          * only one element to be picked or ultimately an error caused by operand
                          */
                         return isSubset ? 1 : operand;
