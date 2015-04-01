@@ -48,10 +48,10 @@ public final class RDataFrame implements RShareable, RAbstractContainer {
 
     @Override
     public int getLength() {
-        if (vector instanceof RList || vector.getLength() == 0) {
+        if (vector instanceof RList) {
             return vector.getLength();
         } else {
-            return 1;
+            return vector.getLength() == 0 ? 0 : 1;
         }
     }
 
