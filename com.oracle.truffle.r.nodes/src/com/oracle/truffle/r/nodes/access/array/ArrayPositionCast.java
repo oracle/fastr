@@ -66,7 +66,7 @@ abstract class ArrayPositionsCastBase extends RNode {
     protected int[] getDimensions(RAbstractContainer container) {
         if (dataFrameProfile.profile(container.getElementClass() == RDataFrame.class)) {
             // this largely reproduces code from ShortRowNames
-            Object rowNames = container.getRowNames(attrProfiles);
+            Object rowNames = container.getRowNames();
             if (nameConditionProfile.profile(rowNames == RNull.instance)) {
                 return new int[]{0, container.getLength()};
             } else {
@@ -472,7 +472,7 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
                     if (dimSizeOneProfile.profile(dimSize == 1)) {
                         /*
                          * e.g. c(7)[-2] vs c(7)[[-2]]
-                         * 
+                         *
                          * only one element to be picked or ultimately an error caused by operand
                          */
                         return isSubset ? 1 : operand;

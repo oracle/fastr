@@ -145,8 +145,8 @@ public final class RFactor implements RShareable, RAbstractContainer {
     }
 
     @Override
-    public Object getRowNames(RAttributeProfiles attrProfiles) {
-        return vector.getRowNames(attrProfiles);
+    public Object getRowNames() {
+        return vector.getRowNames();
     }
 
     @Override

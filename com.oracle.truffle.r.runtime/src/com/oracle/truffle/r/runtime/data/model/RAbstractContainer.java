@@ -54,7 +54,7 @@ public interface RAbstractContainer extends RAttributable, RClassHierarchy, RTyp
 
     void setDimNames(RList newDimNames);
 
-    Object getRowNames(RAttributeProfiles attrProfiles);
+    Object getRowNames();
 
     void setRowNames(RAbstractVector rowNames);
 

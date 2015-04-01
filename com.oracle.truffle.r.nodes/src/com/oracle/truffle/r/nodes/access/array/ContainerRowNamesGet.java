@@ -36,7 +36,6 @@ import com.oracle.truffle.r.runtime.data.model.*;
 public abstract class ContainerRowNamesGet extends RNode {
 
     private final ConditionProfile nameConditionProfile = ConditionProfile.createBinaryProfile();
-    protected final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
     public abstract Object execute(VirtualFrame frame, RAbstractContainer container);
 
@@ -53,12 +52,12 @@ public abstract class ContainerRowNamesGet extends RNode {
 
     @Specialization(guards = "!isDataFrame(container)")
     Object getRowNames(RAbstractContainer container) {
-        return container.getRowNames(attrProfiles);
+        return container.getRowNames();
     }
 
     @Specialization
     Object getRowNamesDataFrame(RDataFrame container) {
-        return getFullRowNames(container.getRowNames(attrProfiles));
+        return getFullRowNames(container.getRowNames());
     }
 
     protected boolean isDataFrame(RAbstractContainer container) {

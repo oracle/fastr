@@ -140,8 +140,8 @@ public class RLanguage extends RLanguageRep implements RAbstractContainer, RAttr
     }
 
     @Override
-    public Object getRowNames(RAttributeProfiles attrProfiles) {
-        return getAttr(attrProfiles, RRuntime.ROWNAMES_ATTR_KEY);
+    public Object getRowNames() {
+        return getAttr(localAttrProfiles, RRuntime.ROWNAMES_ATTR_KEY);
     }
 
     @Override

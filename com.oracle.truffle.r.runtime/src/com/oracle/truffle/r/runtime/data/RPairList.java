@@ -202,7 +202,7 @@ public class RPairList extends RAttributeStorage implements RAttributable, RAbst
     }
 
     @Override
-    public Object getRowNames(RAttributeProfiles attrProfiles) {
+    public Object getRowNames() {
         throw RInternalError.shouldNotReachHere();
     }
 

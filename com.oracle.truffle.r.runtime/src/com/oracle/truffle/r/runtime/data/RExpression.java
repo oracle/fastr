@@ -131,8 +131,8 @@ public class RExpression implements RShareable, RAbstractContainer {
     }
 
     @Override
-    public Object getRowNames(RAttributeProfiles attrProfiles) {
-        return data.getRowNames(attrProfiles);
+    public Object getRowNames() {
+        return data.getRowNames();
     }
 
     @Override

@@ -105,7 +105,7 @@ public abstract class RSequence extends RBounded implements RAbstractVector {
     }
 
     @Override
-    public final Object getRowNames(RAttributeProfiles attrProfiles) {
+    public final Object getRowNames() {
         return RNull.instance;
     }
 

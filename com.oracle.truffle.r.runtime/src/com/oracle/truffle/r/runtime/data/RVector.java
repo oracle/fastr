@@ -52,6 +52,8 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
     protected int[] dimensions;
     protected RStringVector names;
     private RList dimNames;
+    // cache rownames for data frames as they are accessed at every data frame access
+    private Object rowNames;
     private RAttributes attributes;
     private boolean shared;
     private boolean temporary = true;
@@ -61,6 +63,7 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
         this.dimensions = dimensions;
         setMatrixDimensions(dimensions, length);
         this.names = names;
+        this.rowNames = RNull.instance;
         if (names != null) {
             // since this constructor is for internal use only, the assertion shouldn't fail
             assert names.getLength() == length : "size mismatch: " + names.getLength() + " vs. " + length;
@@ -367,20 +370,17 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
     }
 
     @Override
-    public final Object getRowNames(RAttributeProfiles attrProfiles) {
-        if (attrProfiles.attrNullProfile(attributes == null)) {
-            return RNull.instance;
-        } else {
-            Object result = attributes.get(RRuntime.ROWNAMES_ATTR_KEY);
-            return result == null ? RNull.instance : result;
-        }
+    public final Object getRowNames() {
+        return rowNames;
     }
 
-    public final void setRowNames(RAbstractVector rowNames) {
-        if (attributes != null && rowNames == null) {
+    public final void setRowNames(RAbstractVector newRowNames) {
+        if (newRowNames == null) {
             removeAttributeMapping(RRuntime.ROWNAMES_ATTR_KEY);
-        } else if (rowNames != null) {
-            putAttribute(RRuntime.ROWNAMES_ATTR_KEY, rowNames);
+            this.rowNames = RNull.instance;
+        } else {
+            putAttribute(RRuntime.ROWNAMES_ATTR_KEY, newRowNames);
+            this.rowNames = newRowNames;
         }
     }
 
@@ -543,6 +543,7 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
     protected final void setAttributes(RVector result) {
         result.names = this.names;
         result.dimNames = this.dimNames;
+        result.rowNames = this.rowNames;
         result.dimensions = this.dimensions;
         result.setMatrixDimensions(result.dimensions, result.getLength());
         if (this.attributes != null) {
@@ -617,6 +618,7 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
         // it's meant to be used on a "fresh" vector with only dimensions potentially set
         assert (this.names == null);
         assert (this.dimNames == null);
+        assert (this.rowNames == RNull.instance);
         assert (this.dimensions == null);
         assert (this.attributes == null || this.attributes.size() == 0) : this.attributes.size();
         if (vector.getDimensions() == null || vector.getDimensions().length != 1) {
@@ -625,6 +627,7 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
             this.names = vector.getNames(attrProfiles);
         }
         this.dimNames = vector.getDimNames();
+        this.rowNames = vector.getRowNames();
         this.dimensions = vector.getDimensions();
         this.setMatrixDimensions(this.dimensions, this.getLength());
         RAttributes vecAttributes = vector.getAttributes();
@@ -645,6 +648,7 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
             this.names = vector.getNames();
         }
         this.dimNames = vector.getDimNames();
+        this.rowNames = vector.getRowNames();
         this.dimensions = vector.getDimensions();
         this.setMatrixDimensions(this.dimensions, this.getLength());
         RAttributes vecAttributes = vector.getAttributes();
@@ -704,6 +708,7 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
                     putAttribute(name, e.getValue());
                 }
             }
+            this.rowNames = vector.getRowNames();
         }
         return this;
     }
@@ -764,6 +769,7 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
         this.matrixDimension = 0;
         this.names = null;
         this.dimNames = null;
+        this.rowNames = RNull.instance;
         if (nullify) {
             this.attributes = null;
         } else {

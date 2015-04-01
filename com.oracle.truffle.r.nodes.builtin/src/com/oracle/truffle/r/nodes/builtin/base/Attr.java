@@ -117,7 +117,7 @@ public abstract class Attr extends RBuiltinNode {
         if (attributes == null) {
             return RNull.instance;
         } else {
-            return getFullRowNames(container.getRowNames(attrProfiles));
+            return getFullRowNames(container.getRowNames());
         }
     }
 
