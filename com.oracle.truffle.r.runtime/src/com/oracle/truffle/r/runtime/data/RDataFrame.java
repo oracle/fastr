@@ -28,9 +28,12 @@ import com.oracle.truffle.r.runtime.data.model.*;
 public final class RDataFrame implements RShareable, RAbstractContainer {
 
     private final RVector vector;
+    private final int length;
 
     public RDataFrame(RVector vector) {
         this.vector = vector;
+        int vecLength = vector.getLength();
+        this.length = vector instanceof RList ? vecLength : (vecLength == 0 ? 0 : 1);
     }
 
     public RType getRType() {
@@ -48,11 +51,7 @@ public final class RDataFrame implements RShareable, RAbstractContainer {
 
     @Override
     public int getLength() {
-        if (vector instanceof RList) {
-            return vector.getLength();
-        } else {
-            return vector.getLength() == 0 ? 0 : 1;
-        }
+        return length;
     }
 
     @Override
@@ -63,7 +62,7 @@ public final class RDataFrame implements RShareable, RAbstractContainer {
             RVector v = RDataFactory.createList();
             v.resize(size);
             v.setNames(vector.getNames());
-            if (vector.getLength() == 0) {
+            if (length == 0) {
                 v.updateDataAtAsObject(0, vector, null);
             }
             return v;
