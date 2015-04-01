@@ -125,9 +125,14 @@ public class REnvVars {
         // This can be called before initialize, "R RHOME"
         if (rHomePath == null) {
             File file = new File(System.getProperty("user.dir"));
-            if (file.getName().endsWith("r.test")) {
-                file = file.getParentFile();
-            }
+            do {
+                File binR = new File(new File(file, "bin"), "R");
+                if (binR.exists()) {
+                    break;
+                } else {
+                    file = file.getParentFile();
+                }
+            } while (file != null);
             rHomePath = file.getAbsolutePath();
             // Check any external setting is consistent
             String envRHomePath = getEnvVars().get("R_HOME");
