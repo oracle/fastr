@@ -51,6 +51,16 @@ public class RExpression implements RShareable, RAbstractContainer {
     }
 
     @Override
+    public final void setAttr(String name, Object value) {
+        data.setAttr(name, value);
+    }
+
+    @Override
+    public Object getAttr(RAttributeProfiles attrProfiles, String name) {
+        return data.getAttr(attrProfiles, name);
+    }
+
+    @Override
     public RAttributes getAttributes() {
         return data.getAttributes();
     }

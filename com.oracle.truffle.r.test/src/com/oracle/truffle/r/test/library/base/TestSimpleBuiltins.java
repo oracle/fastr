@@ -4172,6 +4172,8 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ x <- factor(c(\"a\", \"b\", \"a\")); attr(x, \"levels\")<-c(as.raw(7), as.raw(42)); is.raw(levels(x)) }");
 
         assertEval("{ z=factor(c(\"a\", \"b\", \"a\")); z[1] = \"b\"; z }");
+
+        assertEval("{ x<-structure(c(1,2,1), .Label=c(\"a\", \"b\"), class = c('factor'), .Names=c(\"111\",\"112\",\"113\")); names(x) }");
     }
 
     @Test

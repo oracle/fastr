@@ -182,6 +182,16 @@ public final class RDataFrame implements RShareable, RAbstractContainer {
     }
 
     @Override
+    public final void setAttr(String name, Object value) {
+        vector.setAttr(name, value);
+    }
+
+    @Override
+    public Object getAttr(RAttributeProfiles attrProfiles, String name) {
+        return vector.getAttr(attrProfiles, name);
+    }
+
+    @Override
     public RAttributes resetAllAttributes(boolean nullify) {
         return vector.resetAllAttributes(nullify);
     }
