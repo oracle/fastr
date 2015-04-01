@@ -316,6 +316,7 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
     public final void setDimNames(RList newDimNames, SourceSection sourceSection) {
         if (attributes != null && newDimNames == null) {
             removeAttributeMapping(RRuntime.DIMNAMES_ATTR_KEY);
+            this.dimNames = newDimNames;
         } else if (newDimNames != null) {
             if (dimensions == null) {
                 throw RError.error(sourceSection, RError.Message.DIMNAMES_NONARRAY);
@@ -342,17 +343,19 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
                 }
             }
 
+            RList resDimNames = newDimNames;
             if (newDimNamesLength < dimensions.length) {
                 // resize the array and fill the missing entries with NULL-s
-                newDimNames.resizeInternal(dimensions.length);
+                resDimNames = resDimNames.copyResized(dimensions.length, true);
+                resDimNames.setAttributes(newDimNames);
                 for (int i = newDimNamesLength; i < dimensions.length; i++) {
-                    newDimNames.updateDataAt(i, RNull.instance, null);
+                    resDimNames.updateDataAt(i, RNull.instance, null);
                 }
             }
-            putAttribute(RRuntime.DIMNAMES_ATTR_KEY, newDimNames);
-            newDimNames.elementNamePrefix = RRuntime.DIMNAMES_LIST_ELEMENT_NAME_PREFIX;
+            putAttribute(RRuntime.DIMNAMES_ATTR_KEY, resDimNames);
+            resDimNames.elementNamePrefix = RRuntime.DIMNAMES_LIST_ELEMENT_NAME_PREFIX;
+            this.dimNames = resDimNames;
         }
-        this.dimNames = newDimNames;
     }
 
     @Override
@@ -570,8 +573,6 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
         return internalVerify();
     }
 
-    protected abstract void resizeInternal(int size);
-
     protected abstract String getDataAtAsString(int index);
 
     protected abstract RVector internalCopy();
@@ -702,20 +703,19 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
         this.complete &= getLength() >= size;
         RVector res = this;
         RStringVector oldNames = res.names;
+        res = copyResized(size, true);
         if (this.isShared()) {
-            res = copyResized(size, true);
             res.markNonTemporary();
-        } else {
-            resizeInternal(size);
         }
         if (resetAll) {
             resetAllAttributes(oldNames == null);
         } else {
+            res.copyAttributesFrom(this);
             res.setDimensionsNoCheck(null);
             res.setDimNamesNoCheck(null);
         }
         if (oldNames != null) {
-            oldNames.resizeWithEmpty(size);
+            oldNames = oldNames.resizeWithEmpty(size);
             res.putAttribute(RRuntime.NAMES_ATTR_KEY, oldNames);
             res.names = oldNames;
         }

@@ -25,7 +25,6 @@ package com.oracle.truffle.r.runtime.data;
 import java.util.*;
 
 import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
@@ -36,7 +35,7 @@ public final class RStringVector extends RVector implements RAbstractStringVecto
     private static final RStringVector implicitClassHeaderArray = RDataFactory.createStringVector(new String[]{RType.Array.getName(), RType.Character.getName()}, true);
     private static final RStringVector implicitClassHeaderMatrix = RDataFactory.createStringVector(new String[]{RType.Matrix.getName(), RType.Character.getName()}, true);
 
-    @CompilationFinal private String[] data;
+    private final String[] data;
 
     RStringVector(String[] data, boolean complete, int[] dims, RStringVector names) {
         super(complete, data.length, dims, names);
@@ -69,14 +68,6 @@ public final class RStringVector extends RVector implements RAbstractStringVecto
      */
     public String[] getDataWithoutCopying() {
         return data;
-    }
-
-    /**
-     * Specifically for use by a writable {@code TextConnection}, which updates the data but cannot
-     * update the enclosing vector because the binding is locked.
-     */
-    public void setDataInternal(String[] data) {
-        this.data = data;
     }
 
     /**
@@ -165,16 +156,8 @@ public final class RStringVector extends RVector implements RAbstractStringVecto
         return RDataFactory.createStringVector(copyResizedData(size, fillNA ? RRuntime.STRING_NA : null), isComplete);
     }
 
-    @Override
-    protected void resizeInternal(int size) {
-        // speculating that this happens mostly before code gets compiled, whereas length is
-        // accessed all over the place and this way can be constant folded
-        CompilerDirectives.transferToInterpreterAndInvalidate();
-        this.data = createResizedData(size, RRuntime.STRING_NA);
-    }
-
-    void resizeWithEmpty(int size) {
-        this.data = createResizedData(size, RRuntime.NAMES_ATTR_EMPTY_VALUE);
+    RStringVector resizeWithEmpty(int size) {
+        return RDataFactory.createStringVector(createResizedData(size, RRuntime.NAMES_ATTR_EMPTY_VALUE), isComplete());
     }
 
     @Override
