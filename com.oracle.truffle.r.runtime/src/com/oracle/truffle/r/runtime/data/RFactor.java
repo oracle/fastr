@@ -27,7 +27,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 
 public final class RFactor implements RShareable, RAbstractContainer {
 
-    private RIntVector vector;
+    private final RIntVector vector;
 
     private final boolean ordered;
 

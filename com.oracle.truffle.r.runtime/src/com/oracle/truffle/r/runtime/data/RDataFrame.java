@@ -27,7 +27,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 
 public final class RDataFrame implements RShareable, RAbstractContainer {
 
-    private RVector vector;
+    private final RVector vector;
 
     public RDataFrame(RVector vector) {
         this.vector = vector;
