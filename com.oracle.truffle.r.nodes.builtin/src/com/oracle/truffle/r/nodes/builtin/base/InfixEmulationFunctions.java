@@ -140,7 +140,6 @@ public class InfixEmulationFunctions {
             return op;
         }
 
-        @ExplodeLoop
         @Specialization(guards = "!argsEmpty(args)")
         protected RArgsValuesAndNames eval(VirtualFrame frame, RArgsValuesAndNames args) {
             Object[] values = args.getValues();
