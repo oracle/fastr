@@ -8875,6 +8875,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testFactor_52d0ff98e89e8c41c90bc7c514f8d0d5() {
+        assertEval("{ x<-structure(c(1,2,1), .Label=c(\"a\", \"b\"), class = c('factor'), .Names=c(\"111\",\"112\",\"113\")); names(x) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testFactor_2ef7de52def309425a9b70965111f004() {
         assertEvalError("{ x<-c(1,2,3); class(x)<-\"factor\"; x }");
     }
@@ -17547,6 +17552,11 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleComparison_testAttributes_290da18d0f64bf5efc43d773015bf354() {
         assertEval("{ x<-1:4; names(x)<-101:104; y<-21:28; attributes(x > y) }");
+    }
+
+    @Test
+    public void TestSimpleComparison_testAttributes_c48fb0231781aff244fe161a40932d1a() {
+        assertEval("{ x<-factor(c(a=1)); y<-factor(c(b=1)); x==y }");
     }
 
     @Test

@@ -9423,6 +9423,10 @@ Levels: a b c
 
 
 ##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testFactor
+#{ x<-structure(c(1,2,1), .Label=c("a", "b"), class = c('factor'), .Names=c("111","112","113")); names(x) }
+[1] "111" "112" "113"
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testFactor
 #{ x<-structure(c(1,2,1), .Label=c("a", "b"), class = c('factor'), .Names=c("111","112","113")); y<-structure(c(1,2,1), .Label=c("a", "b"), class = c('factor'), .Names=c("111","112","113")); x==y }
 [1] TRUE TRUE TRUE
 
@@ -17348,6 +17352,10 @@ TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE
 $names
 [1] "121" "122" "123" "124"
 
+
+##com.oracle.truffle.r.test.library.base.TestSimpleComparison.testAttributes
+#{ x<-factor(c(a=1)); y<-factor(c(b=1)); x==y }
+[1] TRUE
 
 ##com.oracle.truffle.r.test.library.base.TestSimpleComparison.testMatrices
 #{ m <- matrix(1:6, nrow=2) ; m > c(1,2,3) }
