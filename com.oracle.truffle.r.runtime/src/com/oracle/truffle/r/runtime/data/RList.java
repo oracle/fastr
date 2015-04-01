@@ -33,7 +33,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
 public final class RList extends RVector implements RAbstractVector, RGPBits {
 
-    private Object[] data;
+    @CompilationFinal private Object[] data;
     private int gpbits;
 
     private static final RStringVector implicitClassHeader = RDataFactory.createStringVector(new String[]{RType.List.getName()}, true);
@@ -229,6 +229,9 @@ public final class RList extends RVector implements RAbstractVector, RGPBits {
 
     @Override
     protected void resizeInternal(int size) {
+        // speculating that this happens mostly before code gets compiled, whereas length is
+        // accessed all over the place and this way can be constant folded
+        CompilerDirectives.transferToInterpreterAndInvalidate();
         this.data = createResizedData(size, true);
     }
 

@@ -25,6 +25,7 @@ package com.oracle.truffle.r.runtime.data;
 import java.util.*;
 
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
@@ -35,7 +36,7 @@ public final class RRawVector extends RVector implements RAbstractRawVector {
     private static final RStringVector implicitClassHeaderArray = RDataFactory.createStringVector(new String[]{RType.Array.getName(), RType.Raw.getName()}, true);
     private static final RStringVector implicitClassHeaderMatrix = RDataFactory.createStringVector(new String[]{RType.Matrix.getName(), RType.Raw.getName()}, true);
 
-    private byte[] data;
+    @CompilationFinal private byte[] data;
 
     RRawVector(byte[] data, int[] dims, RStringVector names) {
         super(true, data.length, dims, names);
@@ -153,6 +154,9 @@ public final class RRawVector extends RVector implements RAbstractRawVector {
 
     @Override
     protected void resizeInternal(int size) {
+        // speculating that this happens mostly before code gets compiled, whereas length is
+        // accessed all over the place and this way can be constant folded
+        CompilerDirectives.transferToInterpreterAndInvalidate();
         this.data = createResizedData(size, true);
     }
 

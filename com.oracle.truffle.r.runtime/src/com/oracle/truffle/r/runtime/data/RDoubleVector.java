@@ -25,13 +25,14 @@ package com.oracle.truffle.r.runtime.data;
 import java.util.*;
 
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
 public final class RDoubleVector extends RVector implements RAbstractDoubleVector {
 
-    private double[] data;
+    @CompilationFinal private double[] data;
 
     static final RStringVector implicitClassHeader = RDataFactory.createStringVector(new String[]{RType.Double.getName(), RType.Numeric.getName()}, true);
     private static final RStringVector implicitClassHeaderArray = RDataFactory.createStringVector(new String[]{RType.Array.getName(), RType.Double.getName(), RType.Numeric.getName()}, true);
@@ -183,6 +184,9 @@ public final class RDoubleVector extends RVector implements RAbstractDoubleVecto
 
     @Override
     protected void resizeInternal(int size) {
+        // speculating that this happens mostly before code gets compiled, whereas length is
+        // accessed all over the place and this way can be constant folded
+        CompilerDirectives.transferToInterpreterAndInvalidate();
         this.data = createResizedData(size, true);
     }
 
