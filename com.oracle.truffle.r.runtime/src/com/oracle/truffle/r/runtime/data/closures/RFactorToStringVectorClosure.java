@@ -34,11 +34,13 @@ public class RFactorToStringVectorClosure extends RToStringVectorClosure impleme
 
     private final RIntVector vector;
     private final RAbstractStringVector levels;
+    private final boolean withNames;
 
-    public RFactorToStringVectorClosure(RFactor factor, RAbstractStringVector levels, NACheck naCheck) {
+    public RFactorToStringVectorClosure(RFactor factor, RAbstractStringVector levels, NACheck naCheck, boolean withNames) {
         super(factor.getVector(), naCheck);
         this.vector = factor.getVector();
         this.levels = levels;
+        this.withNames = withNames;
         if (this.levels == null) {
             RError.warning(RError.Message.IS_NA_TO_NON_VECTOR, "NULL");
         }
@@ -61,5 +63,10 @@ public class RFactorToStringVectorClosure extends RToStringVectorClosure impleme
                 }
             }
         }
+    }
+
+    @Override
+    public RStringVector getNames(RAttributeProfiles attrProfiles) {
+        return withNames ? super.getNames(attrProfiles) : null;
     }
 }

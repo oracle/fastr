@@ -98,7 +98,7 @@ public abstract class Match extends RBuiltinNode {
     protected RIntVector match(VirtualFrame frame, RFactor x, RFactor table, Object nomatchObj, Object incomparables) {
         naCheck.enable(x.getVector());
         naCheck.enable(table.getVector());
-        return matchRecursive(frame, RClosures.createFactorToVector(x, naCheck, attrProfiles), RClosures.createFactorToVector(table, naCheck, attrProfiles), nomatchObj, incomparables);
+        return matchRecursive(frame, RClosures.createFactorToVector(x, naCheck, true, attrProfiles), RClosures.createFactorToVector(table, naCheck, true, attrProfiles), nomatchObj, incomparables);
     }
 
     @Specialization

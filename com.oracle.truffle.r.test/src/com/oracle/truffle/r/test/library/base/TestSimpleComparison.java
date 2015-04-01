@@ -27,6 +27,7 @@ public class TestSimpleComparison extends TestBase {
         assertEval("{ x<-1:4; names(x)<-101:104; y<-21:28; names(y)<-121:128;  attributes(y > x) }");
         assertEval("{ x<-1:4; names(x)<-101:104; y<-21:28; attributes(x > y) }");
         assertEvalError("{ x<-1:4; dim(x)<-c(2,2); y<-21:28; x > y }");
+        assertEval("{ x<-factor(c(a=1)); y<-factor(c(b=1)); x==y }");
     }
 
     @Test

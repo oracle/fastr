@@ -34,12 +34,14 @@ public class RFactorToComplexVectorClosure extends RToComplexVectorClosure imple
 
     private final RIntVector vector;
     private final RAbstractComplexVector levels;
+    private final boolean withNames;
 
-    public RFactorToComplexVectorClosure(RFactor factor, RAbstractComplexVector levels, NACheck naCheck) {
+    public RFactorToComplexVectorClosure(RFactor factor, RAbstractComplexVector levels, NACheck naCheck, boolean withNames) {
         super(factor.getVector(), naCheck);
         this.vector = factor.getVector();
         assert levels != null;
         this.levels = levels;
+        this.withNames = withNames;
         naCheck.enable(this.vector);
     }
 
@@ -51,4 +53,10 @@ public class RFactorToComplexVectorClosure extends RToComplexVectorClosure imple
             return levels.getDataAt(val - 1);
         }
     }
+
+    @Override
+    public RStringVector getNames(RAttributeProfiles attrProfiles) {
+        return withNames ? super.getNames(attrProfiles) : null;
+    }
+
 }

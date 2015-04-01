@@ -34,12 +34,14 @@ public class RFactorToDoubleVectorClosure extends RToDoubleVectorClosure impleme
 
     private final RIntVector vector;
     private final RAbstractDoubleVector levels;
+    private final boolean withNames;
 
-    public RFactorToDoubleVectorClosure(RFactor factor, RAbstractDoubleVector levels, NACheck naCheck) {
+    public RFactorToDoubleVectorClosure(RFactor factor, RAbstractDoubleVector levels, NACheck naCheck, boolean withNames) {
         super(factor.getVector(), naCheck);
         this.vector = factor.getVector();
         assert levels != null;
         this.levels = levels;
+        this.withNames = withNames;
         naCheck.enable(this.vector);
     }
 
@@ -51,4 +53,10 @@ public class RFactorToDoubleVectorClosure extends RToDoubleVectorClosure impleme
             return levels.getDataAt(val - 1);
         }
     }
+
+    @Override
+    public RStringVector getNames(RAttributeProfiles attrProfiles) {
+        return withNames ? super.getNames(attrProfiles) : null;
+    }
+
 }

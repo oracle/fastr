@@ -1173,7 +1173,7 @@ public abstract class PrettyPrinterNode extends RNode {
 
         @TruffleBoundary
         private String formatLevelStrings(RFactor operand, Object listElementName, byte right, RVector vec, String[] strings) {
-            StringBuilder sb = new StringBuilder(prettyPrintSingleElement(RClosures.createFactorToVector(operand, naCheck, attrProfiles), listElementName, RRuntime.LOGICAL_FALSE, right));
+            StringBuilder sb = new StringBuilder(prettyPrintSingleElement(RClosures.createFactorToVector(operand, naCheck, true, attrProfiles), listElementName, RRuntime.LOGICAL_FALSE, right));
             sb.append("\nLevels:");
             if (vec != null) {
                 for (int i = 0; i < vec.getLength(); i++) {
