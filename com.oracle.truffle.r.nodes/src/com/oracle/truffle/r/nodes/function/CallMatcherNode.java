@@ -186,7 +186,7 @@ public abstract class CallMatcherNode extends Node {
             FormalArguments formals = ((RRootNode) function.getRootNode()).getFormalArguments();
             for (int i = 0; i < formals.getSignature().getLength(); i++) {
                 Object arg = args[i];
-                if (missingArgProfile.profile(arg == RMissing.instance)) {
+                if (formals.getInternalDefaultArgumentAt(i) != RMissing.instance && missingArgProfile.profile(arg == RMissing.instance)) {
                     args[i] = formals.getInternalDefaultArgumentAt(i);
                 }
             }
@@ -249,7 +249,7 @@ public abstract class CallMatcherNode extends Node {
             FormalArguments formals = ((RRootNode) function.getRootNode()).getFormalArguments();
             for (int i = 0; i < formals.getSignature().getLength(); i++) {
                 Object arg = args[i];
-                if (missingArgProfile.profile(arg == RMissing.instance)) {
+                if (formals.getInternalDefaultArgumentAt(i) != RMissing.instance && missingArgProfile.profile(arg == RMissing.instance)) {
                     args[i] = formals.getInternalDefaultArgumentAt(i);
                 }
             }
