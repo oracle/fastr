@@ -24,7 +24,9 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
@@ -44,6 +46,17 @@ import com.oracle.truffle.r.runtime.data.model.*;
  */
 @RBuiltin(name = "array", kind = INTERNAL, parameterNames = {"data", "dim", "dimnames"})
 public abstract class Array extends RBuiltinNode {
+
+    @Child private UpdateDimNames updateDimNames;
+
+    // it's OK for the following method to update dimnames in-place as the container is "fresh"
+    private void updateDimNames(VirtualFrame frame, RAbstractContainer container, Object o) {
+        if (updateDimNames == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            updateDimNames = insert(UpdateDimNamesFactory.create(new RNode[2], getBuiltin(), getSuppliedSignature()));
+        }
+        updateDimNames.executeRAbstractContainer(frame, container, o);
+    }
 
     @CreateCast({"arguments"})
     protected RNode[] createCastDimensions(RNode[] children) {
@@ -86,10 +99,10 @@ public abstract class Array extends RBuiltinNode {
     }
 
     @Specialization
-    protected RIntVector doArray(RAbstractIntVector vec, RAbstractIntVector dim, RList dimnames) {
-        controlVisibility();
+    protected RIntVector doArray(VirtualFrame frame, RAbstractIntVector vec, RAbstractIntVector dim, RList dimnames) {
         RIntVector ret = doArrayInt(vec, dim);
-        ret.setDimNames(dimnames, getEncapsulatingSourceSection());
+        updateDimNames(frame, ret, dimnames);
+        controlVisibility();
         return ret;
     }
 
@@ -110,10 +123,10 @@ public abstract class Array extends RBuiltinNode {
     }
 
     @Specialization
-    protected RDoubleVector doArray(RAbstractDoubleVector vec, RAbstractIntVector dim, RList dimnames) {
-        controlVisibility();
+    protected RDoubleVector doArray(VirtualFrame frame, RAbstractDoubleVector vec, RAbstractIntVector dim, RList dimnames) {
         RDoubleVector ret = doArrayDouble(vec, dim);
-        ret.setDimNames(dimnames, getEncapsulatingSourceSection());
+        updateDimNames(frame, ret, dimnames);
+        controlVisibility();
         return ret;
     }
 
@@ -134,10 +147,10 @@ public abstract class Array extends RBuiltinNode {
     }
 
     @Specialization
-    protected RLogicalVector doArray(RAbstractLogicalVector vec, RAbstractIntVector dim, RList dimnames) {
-        controlVisibility();
+    protected RLogicalVector doArray(VirtualFrame frame, RAbstractLogicalVector vec, RAbstractIntVector dim, RList dimnames) {
         RLogicalVector ret = doArrayLogical(vec, dim);
-        ret.setDimNames(dimnames, getEncapsulatingSourceSection());
+        updateDimNames(frame, ret, dimnames);
+        controlVisibility();
         return ret;
     }
 
@@ -158,10 +171,10 @@ public abstract class Array extends RBuiltinNode {
     }
 
     @Specialization
-    protected RStringVector doArray(RAbstractStringVector vec, RAbstractIntVector dim, RList dimnames) {
-        controlVisibility();
+    protected RStringVector doArray(VirtualFrame frame, RAbstractStringVector vec, RAbstractIntVector dim, RList dimnames) {
         RStringVector ret = doArrayString(vec, dim);
-        ret.setDimNames(dimnames, getEncapsulatingSourceSection());
+        updateDimNames(frame, ret, dimnames);
+        controlVisibility();
         return ret;
     }
 
@@ -185,10 +198,10 @@ public abstract class Array extends RBuiltinNode {
     }
 
     @Specialization
-    protected RComplexVector doArray(RAbstractComplexVector vec, RAbstractIntVector dim, RList dimnames) {
-        controlVisibility();
+    protected RComplexVector doArray(VirtualFrame frame, RAbstractComplexVector vec, RAbstractIntVector dim, RList dimnames) {
         RComplexVector ret = doArrayComplex(vec, dim);
-        ret.setDimNames(dimnames, getEncapsulatingSourceSection());
+        updateDimNames(frame, ret, dimnames);
+        controlVisibility();
         return ret;
     }
 
@@ -209,10 +222,10 @@ public abstract class Array extends RBuiltinNode {
     }
 
     @Specialization
-    protected RRawVector doArray(RAbstractRawVector vec, RAbstractIntVector dim, RList dimnames) {
-        controlVisibility();
+    protected RRawVector doArray(VirtualFrame frame, RAbstractRawVector vec, RAbstractIntVector dim, RList dimnames) {
         RRawVector ret = doArrayRaw(vec, dim);
-        ret.setDimNames(dimnames, getEncapsulatingSourceSection());
+        updateDimNames(frame, ret, dimnames);
+        controlVisibility();
         return ret;
     }
 
@@ -234,10 +247,10 @@ public abstract class Array extends RBuiltinNode {
     }
 
     @Specialization
-    protected RList doArray(RList vec, RAbstractIntVector dim, RList dimnames) {
-        controlVisibility();
+    protected RList doArray(VirtualFrame frame, RList vec, RAbstractIntVector dim, RList dimnames) {
         RList ret = doArrayList(vec, dim);
-        ret.setDimNames(dimnames, getEncapsulatingSourceSection());
+        updateDimNames(frame, ret, dimnames);
+        controlVisibility();
         return ret;
     }
 }

@@ -67,7 +67,7 @@ public abstract class UpdateDimNames extends RInvisibleBuiltinNode {
         }
     }
 
-    public abstract RAbstractContainer executeList(VirtualFrame frame, RAbstractContainer container, Object o);
+    public abstract RAbstractContainer executeRAbstractContainer(VirtualFrame frame, RAbstractContainer container, Object o);
 
     public RList convertToListOfStrings(VirtualFrame frame, RList oldList) {
         RList list = oldList;

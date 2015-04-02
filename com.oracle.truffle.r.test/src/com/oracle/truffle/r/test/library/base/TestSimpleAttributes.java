@@ -37,6 +37,9 @@ public class TestSimpleAttributes extends TestBase {
 
         assertEval("{ x<-1; dim(x)<-1; y<-list(a=\"1\"); z<-(attr(x, \"dimnames\")<-y); z }");
         assertEval("{ x<-1; dim(x)<-1; y<-list(a=\"1\"); attr(y, \"foo\")<-\"foo\"; z<-(attr(x, \"dimnames\")<-y); z }");
+
+        assertEval("{ x<-array(1:4, c(2,2), list(c(1,2), c(3,4))); attributes(x) }");
+        assertEval("{ x<-1:4; attributes(x)<-list(dim=c(2,2), dimnames=list(c(1,2), c(3,4))); attributes(x) }");
     }
 
     @Test
@@ -144,5 +147,8 @@ public class TestSimpleAttributes extends TestBase {
     @Test
     public void testOtherPropagation() {
         assertEval("{ x <- 1:2;  attr(x, \"hi\") <- 2 ;  x == x }");
+
+        assertEval("{ xx<-c(Package=\"digest\", Version=\"0.6.4\"); db<-list(xx); db <- do.call(\"rbind\", db); attributes(db) }");
+        assertEval("{ xx<-c(Package=\"digest\", Version=\"0.6.4\"); db<-list(xx); db <- rbind(db); attributes(db) }");
     }
 }

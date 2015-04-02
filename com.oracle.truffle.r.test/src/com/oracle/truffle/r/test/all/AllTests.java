@@ -4320,6 +4320,16 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleAttributes_testDefinition_f52517f9ac6fcc333f03d720baa9d41e() {
+        assertEval("{ x<-array(1:4, c(2,2), list(c(1,2), c(3,4))); attributes(x) }");
+    }
+
+    @Test
+    public void TestSimpleAttributes_testDefinition_75a15ea55911d8281a99501653dab720() {
+        assertEval("{ x<-1:4; attributes(x)<-list(dim=c(2,2), dimnames=list(c(1,2), c(3,4))); attributes(x) }");
+    }
+
+    @Test
     public void TestSimpleAttributes_testOtherPropagation_4957f6dceaabc15ff469b4e6e576d6dc() {
         assertEval("{ x <- 1:2;  attr(x, \"hi\") <- 2 ;  x == x }");
     }
