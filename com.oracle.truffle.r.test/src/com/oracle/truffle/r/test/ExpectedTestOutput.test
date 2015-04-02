@@ -4061,6 +4061,34 @@ $dimnames[[2]]
 #{ x <- 1:2;  attr(x, "hi") <- 2 ;  x == x }
 [1] TRUE TRUE
 
+##com.oracle.truffle.r.test.library.base.TestSimpleAttributes.testOtherPropagation
+#{ xx<-c(Package="digest", Version="0.6.4"); db<-list(xx); db <- do.call("rbind", db); attributes(db) }
+$dim
+[1] 1 2
+
+$dimnames
+$dimnames[[1]]
+NULL
+
+$dimnames[[2]]
+[1] "Package" "Version"
+
+
+
+##com.oracle.truffle.r.test.library.base.TestSimpleAttributes.testOtherPropagation
+#{ xx<-c(Package="digest", Version="0.6.4"); db<-list(xx); db <- rbind(db); attributes(db) }
+$dim
+[1] 1 1
+
+$dimnames
+$dimnames[[1]]
+[1] "db"
+
+$dimnames[[2]]
+NULL
+
+
+
 ##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testAbs
 #{ abs((-0-1i)/(0+0i)) }
 [1] NaN

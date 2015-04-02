@@ -4335,6 +4335,16 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleAttributes_testOtherPropagation_bc09227858b690b2182431d95a5337d1() {
+        assertEval("{ xx<-c(Package=\"digest\", Version=\"0.6.4\"); db<-list(xx); db <- do.call(\"rbind\", db); attributes(db) }");
+    }
+
+    @Test
+    public void TestSimpleAttributes_testOtherPropagation_4c4465ee66ba11b504086c690d1acc7e() {
+        assertEval("{ xx<-c(Package=\"digest\", Version=\"0.6.4\"); db<-list(xx); db <- rbind(db); attributes(db) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testAbs_68f096986a0e9ceed28506f20d94f257() {
         assertEval("{ abs(0) }");
     }
