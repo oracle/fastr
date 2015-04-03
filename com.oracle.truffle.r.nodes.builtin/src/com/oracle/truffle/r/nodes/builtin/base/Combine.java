@@ -278,7 +278,7 @@ public abstract class Combine extends RCastingBuiltinNode {
         }
 
         protected boolean needsCopy(RAbstractVector vector) {
-            return vector.getAttributes() != null || vector.getNames(attrProfiles) != null || vector.getDimNames() != null;
+            return vector.getAttributes() != null || vector.getNames(attrProfiles) != null || vector.getDimNames(attrProfiles) != null;
         }
 
     }

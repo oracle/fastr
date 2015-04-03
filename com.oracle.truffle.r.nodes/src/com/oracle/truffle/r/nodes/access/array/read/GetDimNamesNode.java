@@ -62,6 +62,7 @@ abstract class GetDimNamesNode extends RNode {
     private final ConditionProfile srcNamesNullProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile emptyPosProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile diffDimLenProfile = ConditionProfile.createBinaryProfile();
+    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
     @Specialization
     protected Object getDimNames(VirtualFrame frame, RList dstDimNames, RAbstractVector vector, Object[] positions, int currentSrcDimLevel, int currentDstDimLevel) {
@@ -71,7 +72,7 @@ abstract class GetDimNamesNode extends RNode {
         RIntVector p = (RIntVector) positions[currentSrcDimLevel - 1];
         int numPositions = p.getLength();
         if (multiPosProfile.profile(numPositions > 1)) {
-            RList srcDimNames = vector.getDimNames();
+            RList srcDimNames = vector.getDimNames(attrProfiles);
             RStringVector srcNames = srcDimNames == null ? null : (srcDimNames.getDataAt(currentSrcDimLevel - 1) == RNull.instance ? null
                             : (RStringVector) srcDimNames.getDataAt(currentSrcDimLevel - 1));
             if (srcNamesNullProfile.profile(srcNames == null)) {
@@ -102,7 +103,7 @@ abstract class GetDimNamesNode extends RNode {
                     // skip source dimensions
                     getDimNamesRecursive(frame, dstDimNames, vector, positions, currentSrcDimLevel - 1, currentDstDimLevel, namesNACheck);
                 } else {
-                    RList srcDimNames = vector.getDimNames();
+                    RList srcDimNames = vector.getDimNames(attrProfiles);
                     RStringVector srcNames = srcDimNames == null ? null : (srcDimNames.getDataAt(currentSrcDimLevel - 1) == RNull.instance ? null
                                     : (RStringVector) srcDimNames.getDataAt(currentSrcDimLevel - 1));
                     if (srcNamesNullProfile.profile(srcNames == null)) {

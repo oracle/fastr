@@ -79,8 +79,8 @@ public abstract class RToVectorClosure implements RAbstractVector {
     }
 
     @Override
-    public RList getDimNames() {
-        return vector.getDimNames();
+    public RList getDimNames(RAttributeProfiles attrProfiles) {
+        return vector.getDimNames(attrProfiles);
     }
 
     @Override
@@ -89,8 +89,8 @@ public abstract class RToVectorClosure implements RAbstractVector {
     }
 
     @Override
-    public Object getRowNames() {
-        return vector.getRowNames();
+    public Object getRowNames(RAttributeProfiles attrProfiles) {
+        return vector.getRowNames(attrProfiles);
     }
 
     @Override

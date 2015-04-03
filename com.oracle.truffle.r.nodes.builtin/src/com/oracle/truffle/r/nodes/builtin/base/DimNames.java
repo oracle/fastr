@@ -53,7 +53,7 @@ public abstract class DimNames extends RBuiltinNode {
     @Specialization(guards = {"!isNull(container)", "!isObject(frame, container)"})
     protected RList getDimNames(@SuppressWarnings("unused") VirtualFrame frame, RAbstractContainer container) {
         controlVisibility();
-        return container.getDimNames();
+        return container.getDimNames(attrProfiles);
     }
 
     @Specialization(guards = {"isNull(vector)", "!isObject(frame, vector)"})
@@ -73,12 +73,12 @@ public abstract class DimNames extends RBuiltinNode {
         try {
             return dcn.execute(frame, container.getClassHierarchy(), new Object[]{container});
         } catch (S3FunctionLookupNode.NoGenericMethodException e) {
-            return isNull(container) ? RNull.instance : container.getDimNames();
+            return isNull(container) ? RNull.instance : container.getDimNames(attrProfiles);
         }
     }
 
     protected boolean isNull(RAbstractContainer container) {
-        return container.getDimNames() == null;
+        return container.getDimNames(attrProfiles) == null;
     }
 
     @SuppressFBWarnings(value = "ES_COMPARING_STRINGS_WITH_EQ", justification = "generic name is interned in the interpreted code for faster comparison")

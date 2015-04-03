@@ -72,11 +72,12 @@ abstract class GetNamesNode extends RNode {
     private final BranchProfile nullNames = BranchProfile.create();
     private final BranchProfile nonNullSrcNames = BranchProfile.create();
     private final ConditionProfile multiPosProfile = ConditionProfile.createBinaryProfile();
+    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
     RStringVector getNamesInternal(VirtualFrame frame, RAbstractVector vector, Object[] positions, int currentDimLevel, RStringVector names) {
         RIntVector p = (RIntVector) positions[currentDimLevel - 1];
         int numPositions = p.getLength();
-        RList dimNames = vector.getDimNames();
+        RList dimNames = vector.getDimNames(attrProfiles);
         Object srcNames = dimNames == null ? RNull.instance : (dimNames.getDataAt(currentDimLevel - 1) == RNull.instance ? RNull.instance : dimNames.getDataAt(currentDimLevel - 1));
         RStringVector newNames = null;
         if (numPositions > 0) {

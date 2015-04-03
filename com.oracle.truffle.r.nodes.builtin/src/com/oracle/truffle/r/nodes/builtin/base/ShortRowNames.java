@@ -71,14 +71,14 @@ public abstract class ShortRowNames extends RBuiltinNode {
     @Specialization(guards = {"!invalidType(type)", "!returnScalar(type)"})
     protected Object getNamesNull(RAbstractContainer operand, RAbstractIntVector type) {
         controlVisibility();
-        return operand.getRowNames();
+        return operand.getRowNames(attrProfiles);
     }
 
     @Specialization(guards = {"!invalidType(type)", "returnScalar(type)"})
     protected int getNames(RAbstractContainer operand, RAbstractIntVector type) {
         controlVisibility();
         int t = type.getDataAt(0);
-        Object rowNames = operand.getRowNames();
+        Object rowNames = operand.getRowNames(attrProfiles);
         if (nameConditionProfile.profile(rowNames == RNull.instance)) {
             return 0;
         } else {

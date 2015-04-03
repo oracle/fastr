@@ -770,14 +770,15 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
         int length = Math.max(leftLength, rightLength);
         RAbstractVector attributeSource = leftLength == length ? left : right;
 
-        if (attributeSource.getAttributes() != null || left.hasDimensions() || right.hasDimensions() || attributeSource.getNames(attrProfiles) != null || attributeSource.getDimNames() != null) {
+        if (attributeSource.getAttributes() != null || left.hasDimensions() || right.hasDimensions() || attributeSource.getNames(attrProfiles) != null ||
+                        attributeSource.getDimNames(attrProfiles) != null) {
             hasAttributesProfile.enter();
             copyAttributesInternal(ret, attributeSource, left, right);
         }
     }
 
     private void copyAttributes(RVector ret, RAbstractVector source) {
-        if (source.getAttributes() != null || source.hasDimensions() || source.getNames(attrProfiles) != null || source.getDimNames() != null) {
+        if (source.getAttributes() != null || source.hasDimensions() || source.getNames(attrProfiles) != null || source.getDimNames(attrProfiles) != null) {
             hasAttributesProfile.enter();
             copyAttributesInternal(ret, source);
         }
@@ -799,7 +800,7 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
 
     private void copyAttributesSameLength(RVector ret, RAbstractVector left, RAbstractVector right) {
         if (left.getAttributes() != null || right.getAttributes() != null || left.hasDimensions() || right.hasDimensions() || left.getNames(attrProfiles) != null ||
-                        right.getNames(attrProfiles) != null || left.getDimNames() != null || right.getDimNames() != null) {
+                        right.getNames(attrProfiles) != null || left.getDimNames(attrProfiles) != null || right.getDimNames(attrProfiles) != null) {
             hasAttributesProfile.enter();
             copyAttributesSameLengthInternal(ret, left, right);
         }

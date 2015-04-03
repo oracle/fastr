@@ -66,7 +66,7 @@ public abstract class CastNode extends UnaryNode {
     }
 
     protected void preserveDimensionNames(RAbstractContainer operand, RVector ret) {
-        RList dimNames = isDimensionsPreservation() ? operand.getDimNames() : null;
+        RList dimNames = isDimensionsPreservation() ? operand.getDimNames(attrProfiles) : null;
         if (hasDimNamesProfile.profile(dimNames != null)) {
             ret.setDimNames((RList) dimNames.copy());
         }

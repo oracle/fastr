@@ -121,7 +121,7 @@ public class RExpression implements RShareable, RAbstractContainer {
     }
 
     @Override
-    public RList getDimNames() {
+    public RList getDimNames(RAttributeProfiles attrProfiles) {
         return data.getDimNames();
     }
 
@@ -131,7 +131,7 @@ public class RExpression implements RShareable, RAbstractContainer {
     }
 
     @Override
-    public Object getRowNames() {
+    public Object getRowNames(RAttributeProfiles attrProfiles) {
         return data.getRowNames();
     }
 

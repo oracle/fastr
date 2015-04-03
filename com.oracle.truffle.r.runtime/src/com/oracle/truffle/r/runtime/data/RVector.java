@@ -290,6 +290,10 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
     }
 
     @Override
+    public final RList getDimNames(RAttributeProfiles attrProfiles) {
+        return getDimNames();
+    }
+
     public final RList getDimNames() {
         return dimNames;
     }
@@ -359,6 +363,10 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
     }
 
     @Override
+    public final Object getRowNames(RAttributeProfiles attrProfiles) {
+        return getRowNames();
+    }
+
     public final Object getRowNames() {
         return rowNames;
     }
@@ -610,8 +618,8 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
             // one-dimensional array)
             this.names = vector.getNames(attrProfiles);
         }
-        this.dimNames = vector.getDimNames();
-        this.rowNames = vector.getRowNames();
+        this.dimNames = vector.getDimNames(attrProfiles);
+        this.rowNames = vector.getRowNames(attrProfiles);
         this.dimensions = vector.getDimensions();
         RAttributes vecAttributes = vector.getAttributes();
         if (vecAttributes != null) {
@@ -655,7 +663,7 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
             this.setNames(vector.getNames(attrProfiles), sourceSection);
         }
         this.setDimensions(vector.getDimensions(), sourceSection);
-        this.setDimNames(vector.getDimNames(), sourceSection);
+        this.setDimNames(vector.getDimNames(attrProfiles), sourceSection);
     }
 
     public final boolean copyNamesFrom(RAttributeProfiles attrProfiles, RAbstractVector vector) {
@@ -671,8 +679,8 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
                 return false;
             }
         } else {
-            if (vector.getDimNames() != null) {
-                this.setDimNames(vector.getDimNames());
+            if (vector.getDimNames(attrProfiles) != null) {
+                this.setDimNames(vector.getDimNames(attrProfiles));
                 return true;
             } else {
                 return false;
@@ -684,13 +692,18 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
     public final RVector copyRegAttributesFrom(RAbstractContainer vector) {
         RAttributes orgAttributes = vector.getAttributes();
         if (orgAttributes != null) {
+            Object newRowNames = null;
             for (RAttribute e : orgAttributes) {
                 String name = e.getName();
                 if (name != RRuntime.DIM_ATTR_KEY && name != RRuntime.DIMNAMES_ATTR_KEY && name != RRuntime.NAMES_ATTR_KEY) {
-                    putAttribute(name, e.getValue());
+                    Object val = e.getValue();
+                    putAttribute(name, val);
+                    if (name == RRuntime.ROWNAMES_ATTR_KEY) {
+                        newRowNames = val;
+                    }
                 }
             }
-            this.rowNames = vector.getRowNames();
+            this.rowNames = newRowNames == null ? RNull.instance : newRowNames;
         }
         return this;
     }

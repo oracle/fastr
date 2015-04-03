@@ -457,7 +457,7 @@ public abstract class PrettyPrinterNode extends RNode {
             }
             return result;
         } else {
-            boolean printNamesHeader = ((!vector.hasDimensions() || (vector.getDimensions().length == 1 && vector.getDimNames() != null)) && vector.getNames(attrProfiles) != null);
+            boolean printNamesHeader = ((!vector.hasDimensions() || (vector.getDimensions().length == 1 && vector.getDimNames(attrProfiles) != null)) && vector.getNames(attrProfiles) != null);
             RStringVector names = printNamesHeader ? (RStringVector) vector.getNames(attrProfiles) : null;
             int maxWidth = 0;
             for (String s : values) {
@@ -567,8 +567,8 @@ public abstract class PrettyPrinterNode extends RNode {
         }
     }
 
-    protected static String padColHeader(int r, int dataColWidth, RAbstractVector vector, boolean isListOrStringVector) {
-        RList dimNames = vector.getDimNames();
+    protected static String padColHeader(int r, int dataColWidth, RAbstractVector vector, boolean isListOrStringVector, RAttributeProfiles attrProfiles) {
+        RList dimNames = vector.getDimNames(attrProfiles);
         StringBuilder sb = new StringBuilder();
         int wdiff;
         if (dimNames == null || dimNames.getDataAt(1) == RNull.instance) {
@@ -606,8 +606,8 @@ public abstract class PrettyPrinterNode extends RNode {
         return dimNames == null || dimNames.getDataAt(0) == RNull.instance;
     }
 
-    protected static String rowHeader(int c, RAbstractVector vector) {
-        RList dimNames = vector.getDimNames();
+    protected static String rowHeader(int c, RAbstractVector vector, RAttributeProfiles attrProfiles) {
+        RList dimNames = vector.getDimNames(attrProfiles);
         if (rowHeaderUsesIndices(dimNames)) {
             return concat("[", intString(c), ",]");
         } else {
@@ -627,9 +627,9 @@ public abstract class PrettyPrinterNode extends RNode {
         return sb;
     }
 
-    private static String getDimId(RAbstractVector vector, int dimLevel, int dimInd) {
+    private static String getDimId(RAbstractVector vector, int dimLevel, int dimInd, RAttributeProfiles attrProfiles) {
         String dimId;
-        RList dimNames = vector.getDimNames();
+        RList dimNames = vector.getDimNames(attrProfiles);
         if (dimNames == null || dimNames.getDataAt(dimLevel - 1) == RNull.instance) {
             dimId = intString(dimInd + 1);
         } else {
@@ -1291,6 +1291,8 @@ public abstract class PrettyPrinterNode extends RNode {
         @Child private PrintVector2DimNode vector2DimPrinter;
         @Child private PrintDimNode dimPrinter;
 
+        private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+
         private String printVector2Dim(RAbstractVector vector, RIntVector dimensions, int offset, byte isListOrStringVector, byte isComplexOrRawVector, byte isQuoted) {
             if (vector2DimPrinter == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -1331,7 +1333,7 @@ public abstract class PrettyPrinterNode extends RNode {
                         // Checkstyle: stop
                         sb.append(", , ");
                         // Checkstyle: resume
-                        sb.append(getDimId(vector, numDimensions, dimInd));
+                        sb.append(getDimId(vector, numDimensions, dimInd, attrProfiles));
                         sb.append("\n\n");
                         sb.append(printVector2Dim(vector, dimensionsVector, dimInd * matrixSize, isListOrStringVector, isComplexOrRawVector, isQuoted));
                         sb.append("\n");
@@ -1343,7 +1345,7 @@ public abstract class PrettyPrinterNode extends RNode {
                     int accDimensions = vector.getLength() / dimSize;
                     for (int dimInd = 0; dimInd < dimSize; dimInd++) {
                         int arrayBase = accDimensions * dimInd;
-                        String dimId = getDimId(vector, numDimensions, dimInd);
+                        String dimId = getDimId(vector, numDimensions, dimInd, attrProfiles);
                         String innerDims = printDim(vector, isListOrStringVector, isComplexOrRawVector, numDimensions - 1, arrayBase, accDimensions, dimId, isQuoted);
                         if (innerDims == null) {
                             return "";
@@ -1367,6 +1369,8 @@ public abstract class PrettyPrinterNode extends RNode {
     abstract static class PrintVector2DimNode extends RNode {
 
         @Child private PrettyPrinterSingleVectorElementNode singleVectorElementPrettyPrinter;
+
+        private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
         private String prettyPrintSingleVectorElement(Object o, byte isQuoted) {
             if (singleVectorElementPrettyPrinter == null) {
@@ -1419,7 +1423,7 @@ public abstract class PrettyPrinterNode extends RNode {
             }
 
             StringBuilder sb = new StringBuilder();
-            RList dimNames = vector.getDimNames();
+            RList dimNames = vector.getDimNames(attrProfiles);
             if (ncol > 0) {
                 sb.append("     ");
                 for (int c = 1; c <= ncol; ++c) {
@@ -1450,7 +1454,7 @@ public abstract class PrettyPrinterNode extends RNode {
             // prepare data (relevant for column widths)
             String[] dataStrings = new String[nrow * ncol];
             int[] dataColWidths = new int[ncol];
-            RList dimNames = vector.getDimNames();
+            RList dimNames = vector.getDimNames(attrProfiles);
             RStringVector columnDimNames = null;
             if (dimNames != null && dimNames.getDataAt(1) != RNull.instance) {
                 columnDimNames = (RStringVector) dimNames.getDataAt(1);
@@ -1475,7 +1479,7 @@ public abstract class PrettyPrinterNode extends RNode {
                     int index = c * nrow + r;
                     dataStrings[index] = prettyPrint(vector.getDataAt(index + offset), maxRoundFactors[c], maxDigitsBehindDot[c]);
                     maintainColumnData(dataColWidths, columnDimNames, c, dataStrings[index]);
-                    rowHeaderWidth = Math.max(rowHeaderWidth, rowHeader(r + 1, vector).length());
+                    rowHeaderWidth = Math.max(rowHeaderWidth, rowHeader(r + 1, vector, attrProfiles).length());
                 }
             }
 
@@ -1514,7 +1518,7 @@ public abstract class PrettyPrinterNode extends RNode {
             String[] imStrings = new String[nrow * ncol];
             String[] siStrings = new String[nrow * ncol];
             int[] dataColWidths = new int[ncol];
-            RList dimNames = vector.getDimNames();
+            RList dimNames = vector.getDimNames(attrProfiles);
             RStringVector columnDimNames = null;
             if (dimNames != null && dimNames.getDataAt(1) != RNull.instance) {
                 columnDimNames = (RStringVector) dimNames.getDataAt(1);
@@ -1529,7 +1533,7 @@ public abstract class PrettyPrinterNode extends RNode {
                     // "" because column width is computed later
                     maintainColumnData(dataColWidths, columnDimNames, c, "");
                 }
-                rowHeaderWidth = Math.max(rowHeaderWidth, rowHeader(r + 1, vector).length());
+                rowHeaderWidth = Math.max(rowHeaderWidth, rowHeader(r + 1, vector, attrProfiles).length());
             }
 
             // adjust formatting
@@ -1567,7 +1571,7 @@ public abstract class PrettyPrinterNode extends RNode {
             // prepare data (relevant for column widths)
             String[] dataStrings = new String[nrow * ncol];
             int[] dataColWidths = new int[ncol];
-            RList dimNames = vector.getDimNames();
+            RList dimNames = vector.getDimNames(attrProfiles);
             RStringVector columnDimNames = null;
             if (dimNames != null && dimNames.getDataAt(1) != RNull.instance) {
                 if (dimNames.getDataAt(1) instanceof String) {
@@ -1583,7 +1587,7 @@ public abstract class PrettyPrinterNode extends RNode {
                     dataStrings[index] = prettyPrintSingleVectorElement(vector.getDataAtAsObject(index + offset), isQuoted);
                     maintainColumnData(dataColWidths, columnDimNames, c, dataStrings[index]);
                 }
-                rowHeaderWidth = Math.max(rowHeaderWidth, rowHeader(r + 1, vector).length());
+                rowHeaderWidth = Math.max(rowHeaderWidth, rowHeader(r + 1, vector, attrProfiles).length());
             }
 
             return formatResult(vector, nrow, ncol, dataStrings, dataColWidths, rowHeaderWidth, isListOrStringVector == RRuntime.LOGICAL_TRUE);
@@ -1645,7 +1649,7 @@ public abstract class PrettyPrinterNode extends RNode {
             }
         }
 
-        private static String formatResult(RAbstractVector vector, int nrow, int ncol, String[] dataStrings, int[] dataColWidths, int rowHeaderWidth, boolean isListOrStringVector) {
+        private String formatResult(RAbstractVector vector, int nrow, int ncol, String[] dataStrings, int[] dataColWidths, int rowHeaderWidth, boolean isListOrStringVector) {
             boolean isComplexVector = vector.getElementClass() == RComplex.class;
             boolean isDoubleVector = vector.getElementClass() == RDouble.class;
             String rowFormat = concat("%", intString(rowHeaderWidth), "s");
@@ -1676,18 +1680,18 @@ public abstract class PrettyPrinterNode extends RNode {
                     // header of the first column needs extra padding if this column has negative
                     // numbers
                     int padding = Math.abs(dataColWidths[c - 1]) + ((isDoubleVector || isComplexVector) && hasNegative ? 1 : 0);
-                    b.append(padColHeader(c, padding, vector, isListOrStringVector));
+                    b.append(padColHeader(c, padding, vector, isListOrStringVector, attrProfiles));
                     if (c < colInd) {
                         b.append(" ");
                     }
                 }
                 b.append('\n');
 
-                boolean indexRowHeaders = rowHeaderUsesIndices(vector.getDimNames());
+                boolean indexRowHeaders = rowHeaderUsesIndices(vector.getDimNames(attrProfiles));
 
                 // rows
                 for (int r = 1; r <= nrow; ++r) {
-                    String headerString = rowHeader(r, vector);
+                    String headerString = rowHeader(r, vector, attrProfiles);
                     if (indexRowHeaders) {
                         spaces(b, rowHeaderWidth - headerString.length());
                         b.append(headerString).append(' ');
@@ -1703,11 +1707,11 @@ public abstract class PrettyPrinterNode extends RNode {
                             // list elements are left-justified, and so are complex matrix elements
                             // that are not NA
                             b.append(dataString);
-                            spaces(b, padColHeader(c, padding, vector, isListOrStringVector).length() - dataString.length());
+                            spaces(b, padColHeader(c, padding, vector, isListOrStringVector, attrProfiles).length() - dataString.length());
                         } else {
                             // vector elements are right-justified, and so are NAs in complex
                             // matrices
-                            String cellFormat = concat("%", intString(padColHeader(c, padding, vector, isListOrStringVector).length()), "s");
+                            String cellFormat = concat("%", intString(padColHeader(c, padding, vector, isListOrStringVector, attrProfiles).length()), "s");
                             b.append(stringFormat(cellFormat, dataString));
                         }
                         if (c < colInd) {
@@ -1739,6 +1743,8 @@ public abstract class PrettyPrinterNode extends RNode {
 
         @Child private PrintVector2DimNode vector2DimPrinter;
         @Child private PrintDimNode dimPrinter;
+
+        private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
         private String printVector2Dim(RAbstractVector vector, RIntVector dimensions, int offset, byte isListOrStringVector, byte isComplexOrRawVector, byte isQuoted) {
             if (vector2DimPrinter == null) {
@@ -1773,7 +1779,7 @@ public abstract class PrettyPrinterNode extends RNode {
                     // Checkstyle: stop
                     sb.append(", , ");
                     // Checkstyle: resume
-                    sb.append(getDimId(vector, currentDimLevel, dimInd));
+                    sb.append(getDimId(vector, currentDimLevel, dimInd, attrProfiles));
                     sb.append(", ");
                     sb.append(header);
                     sb.append("\n\n");
@@ -1787,7 +1793,7 @@ public abstract class PrettyPrinterNode extends RNode {
                 int newAccDimensions = accDimensions / dimSize;
                 for (int dimInd = 0; dimInd < dimSize; dimInd++) {
                     int newArrayBase = arrayBase + newAccDimensions * dimInd;
-                    String dimId = getDimId(vector, currentDimLevel, dimInd);
+                    String dimId = getDimId(vector, currentDimLevel, dimInd, attrProfiles);
                     String innerDims = printDimRecursive(vector, isListOrStringVector, isComplexOrRawVector, currentDimLevel - 1, newArrayBase, newAccDimensions, concat(dimId, ", ", header), isQuoted);
                     if (innerDims == null) {
                         return null;

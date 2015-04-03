@@ -135,7 +135,7 @@ public final class RFactor implements RShareable, RAbstractContainer {
     }
 
     @Override
-    public RList getDimNames() {
+    public RList getDimNames(RAttributeProfiles attrProfiles) {
         return vector.getDimNames();
     }
 
@@ -145,7 +145,7 @@ public final class RFactor implements RShareable, RAbstractContainer {
     }
 
     @Override
-    public Object getRowNames() {
+    public Object getRowNames(RAttributeProfiles attrProfiles) {
         return vector.getRowNames();
     }
 

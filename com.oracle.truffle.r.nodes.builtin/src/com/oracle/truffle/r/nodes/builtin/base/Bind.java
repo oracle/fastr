@@ -200,7 +200,7 @@ public abstract class Bind extends RPrecedenceBuiltinNode {
         Object firstDimResultNames = RNull.instance;
         Object firstDimNames = RNull.instance;
         if (vec.isMatrix()) {
-            RList vecDimNames = vec.getDimNames();
+            RList vecDimNames = vec.getDimNames(attrProfiles);
             if (vecDimNames != null) {
                 firstDimNames = vecDimNames.getDataAt(dimInd);
             }
@@ -237,7 +237,7 @@ public abstract class Bind extends RPrecedenceBuiltinNode {
                     int dimNamesInd) {
         int ind = oldInd;
         if (vec.isMatrix()) {
-            RList vecDimNames = vec.getDimNames();
+            RList vecDimNames = vec.getDimNames(attrProfiles);
             if (vecDimNames != null) {
                 Object resDimNames = vecDimNames.getDataAt(dimNamesInd);
                 if (resDimNames != RNull.instance) {
