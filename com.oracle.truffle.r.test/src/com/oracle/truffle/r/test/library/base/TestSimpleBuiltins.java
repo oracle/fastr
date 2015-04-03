@@ -1731,19 +1731,19 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ gsub(\"a\",\"aa\", \"prague alley\") }");
         assertEval("{ sub(\"a\",\"aa\", \"prague alley\") }");
         assertEval("{ gsub(\"a\",\"aa\", \"prAgue alley\") }");
+        assertEval("{ gsub(\"a\",\"aa\", \"prague alley\", fixed=TRUE) }");
+        assertEval("{ sub(\"a\",\"aa\", \"prague alley\", fixed=TRUE) }");
+        assertEval("{ gsub(\"a\",\"aa\", \"prAgue alley\", fixed=TRUE) }");
+        assertEvalWarning("{ gsub(\"a\",\"aa\", \"prAgue alley\", fixed=TRUE, ignore.case=TRUE) }");
+        assertEval("{ gsub(\"([a-e])\",\"\\\\1\\\\1\", \"prague alley\") }");
+        assertEval("{ gsub(\"h\",\"\", c(\"hello\", \"hi\", \"bye\")) }");
+        assertEval("{ gsub(\"h\",\"\", c(\"hello\", \"hi\", \"bye\"), fixed=TRUE) }");
     }
 
     @Test
     @Ignore
     public void testSubIgnore() {
-        assertEval("{ gsub(\"a\",\"aa\", \"prague alley\", fixed=TRUE) }");
-        assertEval("{ sub(\"a\",\"aa\", \"prague alley\", fixed=TRUE) }");
-        assertEval("{ gsub(\"a\",\"aa\", \"prAgue alley\", fixed=TRUE) }");
-        assertEval("{ gsub(\"a\",\"aa\", \"prAgue alley\", fixed=TRUE, ignore.case=TRUE) }");
         assertEval("{ gsub(\"a\",\"aa\", \"prAgue alley\", ignore.case=TRUE) }");
-        assertEval("{ gsub(\"([a-e])\",\"\\\\1\\\\1\", \"prague alley\") }");
-        assertEval("{ gsub(\"h\",\"\", c(\"hello\", \"hi\", \"bye\")) }");
-        assertEval("{ gsub(\"h\",\"\", c(\"hello\", \"hi\", \"bye\"), fixed=TRUE) }");
     }
 
     @Test

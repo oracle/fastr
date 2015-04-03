@@ -324,29 +324,32 @@ public class SysFunctions {
             FileSystem fileSystem = FileSystems.getDefault();
             for (int i = 0; i < pathVec.getLength(); i++) {
                 String pathPattern = pathVec.getDataAt(i);
-                if (pathPattern.length() == 0) {
+                if (pathPattern.length() == 0 || RRuntime.isNA(pathPattern)) {
                     continue;
                 }
-                @SuppressWarnings("unused")
-                int firstGlobChar;
-                if ((firstGlobChar = containsGlobChar(pathPattern)) >= 0) {
+                pathPattern = Utils.tildeExpand(pathPattern);
+                if (containsGlobChar(pathPattern) >= 0) {
                     Path path = fileSystem.getPath(pathPattern);
-                    ArrayList<Path> components = components(path);
-                    if (components.size() > 1) {
-                        // No easy way to do this in a single shot
-                        throw RError.nyi(getEncapsulatingSourceSection(), " glob on dir");
-                    } else {
-                        try (Stream<Path> stream = Files.find(fileSystem.getPath(""), 1, new FileMatcher(pathPattern))) {
-                            Iterator<Path> iter = stream.iterator();
-                            while (iter.hasNext()) {
-                                String s = iter.next().getFileName().toString();
-                                if (s.length() > 0) {
-                                    matches.add(s);
-                                }
+                    Path root = path.getRoot();
+                    /*
+                     * Searching from the root can be super-expensive and hit unreadable directories
+                     * and we only need to start from the path containing the the first glob
+                     * character.
+                     */
+                    if (root != null) {
+                        root = findLowerStart(path);
+                    }
+                    try (Stream<Path> stream = Files.find(root != null ? root : fileSystem.getPath(""), path.getNameCount(), new FileMatcher(pathPattern))) {
+                        Iterator<Path> iter = stream.iterator();
+                        while (iter.hasNext()) {
+                            Path matchPath = iter.next();
+                            String s = matchPath.toString();
+                            if (s.length() > 0) {
+                                matches.add(s);
                             }
-                        } catch (IOException ex) {
-                            // ignored
                         }
+                    } catch (IOException ex) {
+                        // ignored
                     }
                 } else {
                     matches.add(pathPattern);
@@ -369,13 +372,22 @@ public class SysFunctions {
             return -1;
         }
 
-        private static ArrayList<Path> components(Path path) {
-            ArrayList<Path> list = new ArrayList<>();
-            Iterator<Path> iter = path.iterator();
-            while (iter.hasNext()) {
-                list.add(iter.next());
+        private static Path findLowerStart(Path path) {
+            int count = path.getNameCount();
+            for (int i = 0; i < count; i++) {
+                Path element = path.getName(i);
+                if (containsGlobChar(element.toString()) >= 0) {
+                    // can't use subpath as it's relative
+                    Path result = path;
+                    int j = count;
+                    while (j > i) {
+                        result = result.getParent();
+                        j--;
+                    }
+                    return result;
+                }
             }
-            return list;
+            throw RInternalError.shouldNotReachHere();
         }
 
         private static class FileMatcher implements BiPredicate<Path, BasicFileAttributes> {

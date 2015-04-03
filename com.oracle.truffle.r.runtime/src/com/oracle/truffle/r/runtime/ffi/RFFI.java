@@ -30,11 +30,13 @@ package com.oracle.truffle.r.runtime.ffi;
  * package.</li>
  * <li>{@link LapackRFFI}: the specific, typed, foreign functions required by the built-in
  * {@code Lapack} functions.</li>
- * <li>{@link RDerivedRFFI}: the specific, typed, foreign functions required by the built-in
+ * <li>{@link StatsRFFI}: native functions in the {@code stats} package.</li>
+ * <li>{@link RApplRFFI}: the specific, typed, foreign functions required by the built-in
  * {@code Linpack} functions.</li>
- * <li>{@link CRFFI}: {@code .C} and {@code .Fortran} call interface.
- * <li>{@link CallRFFI}: {@code .Call} and {@code .External} call interface.
- * <li>{@link UserRngRFFI}: specific interface to user-supplied random number generator.
+ * <li>{@link CRFFI}: {@code .C} and {@code .Fortran} call interface.</li>
+ * <li>{@link CallRFFI}: {@code .Call} and {@code .External} call interface.</li>
+ * <li>{@link UserRngRFFI}: specific interface to user-supplied random number generator.</li>
+ * <li>{@link PCRERFFI}: interface to PCRE library (Perl regexp).</li>
  * </ul>
  *
  * These interfaces may be implemented by one or more providers, specified either when the FastR
@@ -45,12 +47,16 @@ public interface RFFI {
 
     LapackRFFI getLapackRFFI();
 
-    RDerivedRFFI getRDerivedRFFI();
+    RApplRFFI getRApplRFFI();
+
+    StatsRFFI getStatsRFFI();
 
     CRFFI getCRFFI();
 
     CallRFFI getCallRFFI();
 
     UserRngRFFI getUserRngRFFI();
+
+    PCRERFFI getPCRERFFI();
 
 }

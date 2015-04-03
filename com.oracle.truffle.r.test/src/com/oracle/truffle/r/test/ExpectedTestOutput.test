@@ -15269,15 +15269,46 @@ a b
 
 
 ##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testSub
+#{ gsub("([a-e])","\\1\\1", "prague alley") }
+[1] "praaguee aalleey"
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testSub
 #{ gsub("a","aa", "prAgue alley") }
 [1] "prAgue aalley"
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testSub
+#{ gsub("a","aa", "prAgue alley", fixed=TRUE) }
+[1] "prAgue aalley"
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testSub
+#{ gsub("a","aa", "prAgue alley", fixed=TRUE, ignore.case=TRUE) }
+[1] "prAgue aalley"
+Warning message:
+In gsub("a", "aa", "prAgue alley", fixed = TRUE, ignore.case = TRUE) :
+  argument 'ignore.case = TRUE' will be ignored
 
 ##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testSub
 #{ gsub("a","aa", "prague alley") }
 [1] "praague aalley"
 
 ##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testSub
+#{ gsub("a","aa", "prague alley", fixed=TRUE) }
+[1] "praague aalley"
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testSub
+#{ gsub("h","", c("hello", "hi", "bye")) }
+[1] "ello" "i"    "bye"
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testSub
+#{ gsub("h","", c("hello", "hi", "bye"), fixed=TRUE) }
+[1] "ello" "i"    "bye"
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testSub
 #{ sub("a","aa", "prague alley") }
+[1] "praague alley"
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testSub
+#{ sub("a","aa", "prague alley", fixed=TRUE) }
 [1] "praague alley"
 
 ##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testSubstitute

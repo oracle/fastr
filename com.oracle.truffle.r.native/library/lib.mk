@@ -23,7 +23,7 @@
 
 # Common Makefile for creating FastR variants of the default packages
 # The common part of the archive (everything except the .so) is created
-# by untar'ing the comnressed archive (from GnuR). Then the FastR .so file is created
+# by copying the directory in the GnuR build. Then the FastR .so file is created
 # and overwrites the default. The libraries are stored in the directory denoted
 # FASTR_LIBDIR.
 
@@ -33,8 +33,12 @@ include ../../platform.mk
 
 PKG = $(PACKAGE)
 
+ifeq ($(GNUR_DIR),)
+$(error must be run from top-level)
+endif
+
 SRC = src
-OBJ = lib/$(OS_DIR)
+OBJ = lib
 
 C_SOURCES := $(wildcard $(SRC)/*.c)
 
@@ -63,8 +67,8 @@ endif
 
 libcommon: $(PKGDIR)
 
-$(PKGDIR): $(PKGTAR)
-	tar xf $(PKGTAR) -C $(FASTR_LIBDIR)
+$(PKGDIR): $(GNUR_DIR)/library/$(PKG)
+	(cd $(GNUR_DIR)/library; tar cf - $(PKG)) | (cd $(FASTR_LIBDIR); tar xf -)
 	touch $(FASTR_LIBDIR)/$(PKG)
 
 $(OBJ):
@@ -82,11 +86,7 @@ $(OBJ)/%.o: $(SRC)/%.c  $(H_SOURCES)
 $(OBJ)/%.o: $(SRC)/%.f
 	$(FC) $(CFLAGS) -c $< -o $@
 
-clean: cleanobj cleanlib
-
-cleanlib:
-	rm -f $(LIB_PKG)
-
-cleanobj:
-	rm -f $(LIBDIR)/*.o
+clean: 
+	rm -f $(LIBDIR)/*
+	rm -rf $(FASTR_LIBDIR)/$(PKG)
 

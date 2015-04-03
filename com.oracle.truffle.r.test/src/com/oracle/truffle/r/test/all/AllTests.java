@@ -15235,43 +15235,43 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleBuiltins_testSubIgnore_0902579a0dce5fa8d7a808155b8c09b0() {
+    public void TestSimpleBuiltins_testSub_0902579a0dce5fa8d7a808155b8c09b0() {
         assertEval("{ gsub(\"a\",\"aa\", \"prague alley\", fixed=TRUE) }");
     }
 
     @Test
-    public void TestSimpleBuiltins_testSubIgnore_fa9e3d4d6577b70532d26a56fc343b17() {
+    public void TestSimpleBuiltins_testSub_fa9e3d4d6577b70532d26a56fc343b17() {
         assertEval("{ sub(\"a\",\"aa\", \"prague alley\", fixed=TRUE) }");
     }
 
     @Test
-    public void TestSimpleBuiltins_testSubIgnore_dca0ae0449dfa1c58f334818a4b87673() {
+    public void TestSimpleBuiltins_testSub_dca0ae0449dfa1c58f334818a4b87673() {
         assertEval("{ gsub(\"a\",\"aa\", \"prAgue alley\", fixed=TRUE) }");
     }
 
     @Test
-    public void TestSimpleBuiltins_testSubIgnore_3d79a5bb75bf60e95350618f5485daa6() {
-        assertEval("{ gsub(\"a\",\"aa\", \"prAgue alley\", fixed=TRUE, ignore.case=TRUE) }");
+    public void TestSimpleBuiltins_testSub_fec73fb8a79be7e6b705d46bbc16a617() {
+        assertEval("{ gsub(\"([a-e])\",\"\\\\1\\\\1\", \"prague alley\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSub_8df24d5d1e0149a6b232c373b6057aa7() {
+        assertEval("{ gsub(\"h\",\"\", c(\"hello\", \"hi\", \"bye\")) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSub_42529469f0a7019b2a56e1e5312e0577() {
+        assertEval("{ gsub(\"h\",\"\", c(\"hello\", \"hi\", \"bye\"), fixed=TRUE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testSub_3d79a5bb75bf60e95350618f5485daa6() {
+        assertEvalWarning("{ gsub(\"a\",\"aa\", \"prAgue alley\", fixed=TRUE, ignore.case=TRUE) }");
     }
 
     @Test
     public void TestSimpleBuiltins_testSubIgnore_d1977e782dbbd1ca4da912d5f56d63ed() {
         assertEval("{ gsub(\"a\",\"aa\", \"prAgue alley\", ignore.case=TRUE) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testSubIgnore_fec73fb8a79be7e6b705d46bbc16a617() {
-        assertEval("{ gsub(\"([a-e])\",\"\\\\1\\\\1\", \"prague alley\") }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testSubIgnore_8df24d5d1e0149a6b232c373b6057aa7() {
-        assertEval("{ gsub(\"h\",\"\", c(\"hello\", \"hi\", \"bye\")) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testSubIgnore_42529469f0a7019b2a56e1e5312e0577() {
-        assertEval("{ gsub(\"h\",\"\", c(\"hello\", \"hi\", \"bye\"), fixed=TRUE) }");
     }
 
     @Test

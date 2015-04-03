@@ -21,9 +21,15 @@
 # questions.
 #
 suite = {
-  "mxversion" : "2.9.2",
+  "mxversion" : "2.9.7",
   "name" : "fastr",
   "libraries" : {
+    "GNUR" : {
+        "path" : "lib/R-3.1.3.tar.gz",
+        "urls" : ["http://cran.rstudio.com/src/base/R-3/R-3.1.3.tar.gz"],
+        "sha1" : "2c9165060b91e45ac73d8cb7507ee9e52816f8b3"
+    },
+
     "JDK_TOOLS" : {
       "path" : "${JAVA_HOME}/lib/tools.jar",
       "sha1" : "NOCHECK",
@@ -338,6 +344,9 @@ suite = {
 
     "com.oracle.truffle.r.native" : {
       "sourceDirs" : [],
+      "dependencies" : [
+        "GNUR"
+      ],
       "native" : "true",
       "workingSets" : "FastR",
     },
@@ -401,6 +410,7 @@ suite = {
         "JLINE",
         "ANTLR-C",
         "ANTLR",
+        "GNUR",
       ],
       "distDependencies" : [
         "TRUFFLE",

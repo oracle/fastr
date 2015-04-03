@@ -38,37 +38,58 @@ public class LocaleFunctions {
 
         @TruffleBoundary
         @Specialization
-        protected Object getLocal(RAbstractIntVector categoryVec) {
+        protected Object getLocale(RAbstractIntVector categoryVec) {
             controlVisibility();
+            // TODO implement all: for now just return not available (NULL)
             int category = categoryVec.getDataAt(0);
             switch (category) {
                 case 3: // "LC_CTYPE",
                     return RDataFactory.createStringVector(Charset.defaultCharset().name());
                 case 1: // "LC_ALL"
+                    break;
                 case 2: // "LC_COLLATE"
+                    break;
                 case 4: // "LC_MONETARY"
+                    break;
                 case 5: // "LC_NUMERIC"
+                    break;
                 case 6: // "LC_TIME"
+                    break;
                 case 7: // "LC_MESSAGES"
+                    break;
                 case 8: // "LC_PAPER"
+                    return RDataFactory.createStringVectorFromScalar("");
                 case 9: // "LC_MEASUREMENT"
+                    break;
                 default:
-                    RError.nyi(getEncapsulatingSourceSection(), "category not implemented: " + category);
-
+                    throw RInternalError.shouldNotReachHere();
             }
             return RNull.instance;
         }
 
     }
 
-    @RBuiltin(name = "Sys.setlocale", kind = RBuiltinKind.INTERNAL, parameterNames = {"category, locale"})
+    @RBuiltin(name = "Sys.setlocale", kind = RBuiltinKind.INTERNAL, parameterNames = {"category", "locale"})
     public abstract static class SetLocale extends RBuiltinNode {
+
+        @SuppressWarnings("unused")
+        @TruffleBoundary
+        @Specialization
+        protected Object setLocale(RAbstractIntVector categoryVec, RAbstractStringVector locale) {
+            controlVisibility();
+            // TODO implement properly!!
+            return locale;
+        }
+    }
+
+    @RBuiltin(name = "Sys.localeconv", kind = RBuiltinKind.INTERNAL, parameterNames = {})
+    public abstract static class LocaleConv extends RBuiltinNode {
 
         @TruffleBoundary
         @Specialization
-        protected Object setLocal(@SuppressWarnings("unused") RAbstractStringVector category) {
+        protected Object localeconv() {
             controlVisibility();
-            RError.nyi(getEncapsulatingSourceSection(), "setlocale");
+            RError.nyi(getEncapsulatingSourceSection(), "localeconv");
             return RNull.instance;
         }
     }
@@ -85,6 +106,34 @@ public class LocaleFunctions {
             data[1] = RRuntime.LOGICAL_FALSE;
             data[2] = RRuntime.LOGICAL_FALSE;
             return RDataFactory.createList(data, NAMES);
+        }
+    }
+
+    @RBuiltin(name = "enc2native", kind = RBuiltinKind.PRIMITIVE, parameterNames = "x")
+    public abstract static class Enc2Native extends RBuiltinNode {
+        @Specialization
+        protected Object enc2Native(RAbstractStringVector x) {
+            // TODO implement properly
+            return x;
+        }
+    }
+
+    @RBuiltin(name = "enc2utf8", kind = RBuiltinKind.PRIMITIVE, parameterNames = "x")
+    public abstract static class Enc2Utf8 extends RBuiltinNode {
+        @Specialization
+        protected Object enc2Native(RAbstractStringVector x) {
+            // TODO implement properly
+            return x;
+        }
+    }
+
+    @RBuiltin(name = "bindtextdomain", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"domain", "dirname"})
+    public abstract static class BindTextDomain extends RBuiltinNode {
+        @SuppressWarnings("unused")
+        @Specialization
+        protected RNull bindtextdomain(RAbstractStringVector domain, Object dirname) {
+            // TODO implement properly
+            return RNull.instance;
         }
     }
 }

@@ -25,7 +25,9 @@ PKG_EXTRAS = $(FASTR_LIBDIR)/$(PKG)/R/Rprofile
 
 include ../lib.mk
 
-# override the Rprofile
+# edit the Rprofile to add fastr as a default package
 
-$(PKG_EXTRAS): $(SRC)/Rprofile.R
-	cp $(SRC)/Rprofile.R $(PKG_EXTRAS)
+$(PKG_EXTRAS): $(FASTR_LIBDIR)/$(PKG)/R/Rprofile.orig
+
+$(FASTR_LIBDIR)/$(PKG)/R/Rprofile.orig:
+	sed -f sed_profile -i .orig $(FASTR_LIBDIR)/$(PKG)/R/Rprofile

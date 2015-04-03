@@ -31,12 +31,13 @@ import jnr.ffi.annotations.*;
 import jnr.posix.*;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.ffi.*;
 
 /**
  * JNR-based factory.
  */
-public class JNR_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI, RDerivedRFFI, LapackRFFI, UserRngRFFI {
+public class JNR_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI, StatsRFFI, RApplRFFI, LapackRFFI, UserRngRFFI, PCRERFFI {
 
     public JNR_RFFIFactory() {
     }
@@ -318,14 +319,11 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI, RDer
     }
 
     /*
-     * Linpack functions
-     *
-     * TODO In order to finesse a problem that "libR" does not exists separately on Linux, the
-     * Linpack functions should be amalgamated with FFT in RDerived.
+     * Linpack (libappl) functions
      */
 
     @Override
-    public RDerivedRFFI getRDerivedRFFI() {
+    public RApplRFFI getRApplRFFI() {
         return this;
     }
 
@@ -340,9 +338,9 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI, RDer
 
         @TruffleBoundary
         private static Linpack createAndLoadLib() {
-            // need to load blas lib as Fortran functions in RDerived lib need it
+            // need to load blas lib as Fortran functions in appl lib need it
             LibraryLoader.create(Linpack.class).load("Rblas");
-            return LibraryLoader.create(Linpack.class).load("RDerived");
+            return LibraryLoader.create(Linpack.class).load("appl");
         }
 
         static Linpack linpack() {
@@ -367,45 +365,53 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI, RDer
         linpack().dqrcf_(x, wrapInt(n), wrapInt(k), qraux, y, wrapInt(ny), b, info);
     }
 
-    // fft functions
+    // Stats functions
 
-    public interface FFT {
-        // TODO add @In/@Out to any arrays that are known to be either @In or @Out (default is
-// @Inout)
+    @Override
+    public StatsRFFI getStatsRFFI() {
+        return this;
+    }
+
+    public interface Stats {
+        /*
+         * TODO add @In/@Out to any arrays that are known to be either @In or @Out (default is
+         * 
+         * @Inout)
+         */
 
         void fft_factor(@In int[] n, int[] pmaxf, int[] pmaxp);
 
         int fft_work(double[] a, @In int[] nseg, @In int[] n, @In int[] nspn, @In int[] isn, double[] work, int[] iwork);
     }
 
-    private static class FFTProvider {
-        private static FFT fft;
+    private static class StatsProvider {
+        private static Stats stats;
 
         @TruffleBoundary
-        private static FFT createAndLoadLib() {
-            return LibraryLoader.create(FFT.class).load("RDerived");
+        private static Stats createAndLoadLib() {
+            return LibraryLoader.create(Stats.class).load("appl");
         }
 
-        static FFT fft() {
-            if (fft == null) {
-                fft = createAndLoadLib();
+        static Stats fft() {
+            if (stats == null) {
+                stats = createAndLoadLib();
             }
-            return fft;
+            return stats;
         }
     }
 
-    private static FFT fft() {
-        return FFTProvider.fft();
+    private static Stats stats() {
+        return StatsProvider.fft();
     }
 
     @TruffleBoundary
     public void fft_factor(int n, int[] pmaxf, int[] pmaxp) {
-        fft().fft_factor(wrapInt(n), pmaxf, pmaxp);
+        stats().fft_factor(wrapInt(n), pmaxf, pmaxp);
     }
 
     @TruffleBoundary
     public int fft_work(double[] a, int nseg, int n, int nspn, int isn, double[] work, int[] iwork) {
-        return fft().fft_work(a, wrapInt(nseg), wrapInt(n), wrapInt(nspn), wrapInt(isn), work, iwork);
+        return stats().fft_work(a, wrapInt(nseg), wrapInt(n), wrapInt(nspn), wrapInt(isn), work, iwork);
     }
 
     /*
@@ -539,6 +545,64 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI, RDer
     @TruffleBoundary
     public int uncompress(byte[] dest, long[] destlen, byte[] source) {
         return zip().uncompress(dest, destlen, source, source.length);
+    }
+
+    // PCRE
+
+    @Override
+    public PCRERFFI getPCRERFFI() {
+        return this;
+    }
+
+    public interface PCRE {
+        long pcre_maketables();
+
+        long pcre_compile(String pattern, int options, @Out byte[] errorMessage, @Out int[] errOffset, long tables);
+
+        int pcre_exec(long code, long extra, @In byte[] subject, int subjectLength, int startOffset, int options, @Out int[] ovector, int ovecSize);
+    }
+
+    private static class PCREProvider {
+        private static PCRE pcre;
+
+        @TruffleBoundary
+        private static PCRE createAndLoadLib() {
+            return LibraryLoader.create(PCRE.class).load("pcre");
+        }
+
+        static PCRE pcre() {
+            if (pcre == null) {
+                pcre = createAndLoadLib();
+            }
+            return pcre;
+        }
+    }
+
+    private static PCRE pcre() {
+        return PCREProvider.pcre();
+    }
+
+    public long maketables() {
+        return pcre().pcre_maketables();
+    }
+
+    public Result compile(String pattern, int options, long tables) {
+        int[] errOffset = new int[1];
+        byte[] errorMessage = new byte[512];
+        long result = pcre().pcre_compile(pattern, options, errorMessage, errOffset, tables);
+        if (result == 0) {
+            return new Result(result, new String(errorMessage), errOffset[0]);
+        } else {
+            return new Result(result, null, 0);
+        }
+    }
+
+    public Result study(long code, int options) {
+        throw RInternalError.unimplemented("pcre_study");
+    }
+
+    public int exec(long code, long extra, String subject, int offset, int options, int[] ovector) {
+        return pcre().pcre_exec(code, extra, subject.getBytes(), subject.length(), offset, options, ovector, ovector.length);
     }
 
 }

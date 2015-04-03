@@ -23,22 +23,7 @@
 
 .PHONY: all clean
 
-export TOPDIR = $(CURDIR)
-export R_VERSION = 3.1.3
-export GNUR_DIR = $(TOPDIR)/gnur/R-$(R_VERSION)
-
 all:
-	$(MAKE) -C gnur
-	$(MAKE) -C include
-	$(MAKE) -C builtinlibs
-	$(MAKE) -C fficall
-	$(MAKE) -C library
-	$(MAKE) -C run
-
+	$(MAKE) -C jni
 clean:
-	$(MAKE) -C gnur clean
-	$(MAKE) -C include clean
-	$(MAKE) -C builtinlibs clean
-	$(MAKE) -C fficall clean
-	$(MAKE) -C library clean
-	$(MAKE) -C run clean
+	$(MAKE) -C jni clean

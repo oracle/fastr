@@ -101,7 +101,7 @@ public class ForeignFunctions {
                 int[] rank = rankVec.getDataTemp();
                 double[] qraux = qrauxVec.getDataTemp();
                 int[] pivot = pivotVec.getDataTemp();
-                RFFIFactory.getRFFI().getRDerivedRFFI().dqrdc2(x, ldx, n, p, tol, rank, qraux, pivot, workVec.getDataCopy());
+                RFFIFactory.getRFFI().getRApplRFFI().dqrdc2(x, ldx, n, p, tol, rank, qraux, pivot, workVec.getDataCopy());
                 // @formatter:off
                 Object[] data = new Object[]{
                             RDataFactory.createDoubleVector(x, RDataFactory.COMPLETE_VECTOR, xVec.getDimensions()),
@@ -144,7 +144,7 @@ public class ForeignFunctions {
                 double[] y = yVec.getDataTemp();
                 double[] b = bVec.getDataTemp();
                 int[] info = infoVec.getDataTemp();
-                RFFIFactory.getRFFI().getRDerivedRFFI().dqrcf(x, n, k.getDataAt(0), qraux, y, ny, b, info);
+                RFFIFactory.getRFFI().getRApplRFFI().dqrcf(x, n, k.getDataAt(0), qraux, y, ny, b, info);
                 RDoubleVector coef = RDataFactory.createDoubleVector(b, RDataFactory.COMPLETE_VECTOR);
                 coef.copyAttributesFrom(attrProfiles, bVec);
                 // @formatter:off
@@ -316,14 +316,14 @@ public class ForeignFunctions {
                 int[] maxp = new int[1];
                 if (noDims.profile(zVec.getDimensions() == null)) {
                     int n = zVec.getLength();
-                    RFFIFactory.getRFFI().getRDerivedRFFI().fft_factor(n, maxf, maxp);
+                    RFFIFactory.getRFFI().getStatsRFFI().fft_factor(n, maxf, maxp);
                     if (maxf[0] == 0) {
                         errorProfile.enter();
                         throw RError.error(getEncapsulatingSourceSection(), RError.Message.FFT_FACTORIZATION);
                     }
                     double[] work = new double[4 * maxf[0]];
                     int[] iwork = new int[maxp[0]];
-                    retCode = RFFIFactory.getRFFI().getRDerivedRFFI().fft_work(z, 1, n, 1, inv, work, iwork);
+                    retCode = RFFIFactory.getRFFI().getStatsRFFI().fft_work(z, 1, n, 1, inv, work, iwork);
                 } else {
                     int maxmaxf = 1;
                     int maxmaxp = 1;
@@ -332,7 +332,7 @@ public class ForeignFunctions {
                     /* do whole loop just for error checking and maxmax[fp] .. */
                     for (int i = 0; i < ndims; i++) {
                         if (d[i] > 1) {
-                            RFFIFactory.getRFFI().getRDerivedRFFI().fft_factor(d[i], maxf, maxp);
+                            RFFIFactory.getRFFI().getStatsRFFI().fft_factor(d[i], maxf, maxp);
                             if (maxf[0] == 0) {
                                 errorProfile.enter();
                                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.FFT_FACTORIZATION);
@@ -355,8 +355,8 @@ public class ForeignFunctions {
                             nspn *= n;
                             n = d[i];
                             nseg /= n;
-                            RFFIFactory.getRFFI().getRDerivedRFFI().fft_factor(n, maxf, maxp);
-                            RFFIFactory.getRFFI().getRDerivedRFFI().fft_work(z, nseg, n, nspn, inv, work, iwork);
+                            RFFIFactory.getRFFI().getStatsRFFI().fft_factor(n, maxf, maxp);
+                            RFFIFactory.getRFFI().getStatsRFFI().fft_work(z, nseg, n, nspn, inv, work, iwork);
                         }
                     }
 

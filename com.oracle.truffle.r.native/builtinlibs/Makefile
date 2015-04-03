@@ -22,9 +22,10 @@
 #
 
 #
-# This Makefile contains the recipe for creating libRDerived. However, it is distributed
-# as a "source" in the repository file to avoid users having to have gfortran installed.
-# Use "make cleanlib; make force" to force a rebuild.
+# This Makefile contains the recipe for creating a modified version of 
+# GnuR's libappl, essentially just the Fortran components. Unfortunately
+# we can't just copy the GnuR library as it contains some compiled C code
+# that refers to GnuR-internal symbols.
 #
 
 include ../platform.mk
@@ -32,38 +33,30 @@ include ../platform.mk
 .PHONY: all clean cleanlib cleanobj force libr
 
 SRC = src
-OBJ = lib/$(OS_DIR)
+OBJ = lib
 
 C_SOURCES := $(wildcard $(SRC)/*.c)
-F_SOURCES := $(wildcard $(SRC)/*.f)
 
 C_OBJECTS := $(subst $(SRC),$(OBJ),$(C_SOURCES:.c=.o))
-F_OBJECTS := $(subst $(SRC),$(OBJ),$(F_SOURCES:.f=.o))
+F_OBJECTS := $(wildcard $(GNUR_DIR)/src/appl/d*.o)
 
 LIBDIR := $(OBJ)
-LIB_DERIVED := $(OBJ)/libRDerived.$(SHARED_EXT)
+LIB_APPL := $(OBJ)/libappl.$(SHARED_EXT)
 
-all: libr
-	@echo $(LIB_DERIVED) is up to date
+all: $(LIB_APPL) libr
 
-force: $(LIB_DERIVED)
-# build+install blas and lapack too
-#	$(MAKE) -C src/blas
-#	cp src/blas/libRblas.$(SHARED_EXT) $(LIBDIR)
-#	$(MAKE) -C src/lapack
-#	cp src/lapack/libRlapack.$(SHARED_EXT) $(LIBDIR)
-
-$(LIB_DERIVED): $(C_OBJECTS) $(F_OBJECTS)
+$(LIB_APPL): $(C_OBJECTS) $(F_OBJECTS)
 	mkdir -p $(LIBDIR)
-	$(CC) $(LDFLAGS) -o $(LIB_DERIVED) $(C_OBJECTS) $(F_OBJECTS) $(LIBS)
+	$(CC) $(LDFLAGS) -o $(LIB_APPL) $(C_OBJECTS) $(F_OBJECTS) $(LIBS)
 
+# On Darwin we need to create a dummy libR.dylib
 ifeq ($(OSNAME), Darwin)
 LIB_RDUMMY := $(OBJ)/libR.$(SHARED_EXT)
 
 libr: $(LIB_RDUMMY)
 $(LIB_RDUMMY): $(OBJ)/rdummy.o
 	mkdir -p $(LIBDIR)
-	$(CC) $(LDFLAGS) -o $(LIB_RDUMMY) -current_version 3.1.3 -compatibility_version 3.1.3 $(OBJ)/rdummy.o
+	$(CC) $(LDFLAGS) -o $(LIB_RDUMMY) -current_version $(R_VERSION) -compatibility_version $(R_VERSION) $(OBJ)/rdummy.o
 
 cleanlibr:
 	rm -f $(LIB_RDUMMY)
@@ -83,11 +76,9 @@ $(OBJ)/%.o: $(SRC)/%.f
 
 
 cleanlib:
-	rm -f $(LIBDIR)/libRDerived.* $(LIBDIR)/libRblas.$(SHARED_EXT) $(LIBDIR)/libRlapack.$(SHARED_EXT)
+	rm -f $(LIBDIR)/libappl.*
 
 clean: cleanobj cleanlibr
-#	$(MAKE) -C src/blas clean
-#	$(MAKE) -C src/lapack clean
 
 cleanobj:
 	rm -f $(LIBDIR)/*.o
