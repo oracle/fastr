@@ -48,18 +48,24 @@ public class TestSimpleValues extends TestBase {
     private static final String[] BINARY_OPERATORS = new String[]{"+", "-", "*", "/", "^", "%%"};
     private static final String[] UNARY_BUILTINS = new String[]{"length", "abs", "rev", "names"};
 
+    private static final WhiteList BINARY_ARITHMETIC_WHITELIST = new WhiteList("binary arithmetic");
+
     static {
-        TestBase.registerErrorWhiteList(new ErrorWhiteList());
+        BINARY_ARITHMETIC_WHITELIST.add("1i/(1/0)", "[1] 0+0i\n", "[1] NaN+NaNi\n");
+        BINARY_ARITHMETIC_WHITELIST.add("c(1i,1i,1i)/(1/0)", "[1] 0+0i 0+0i 0+0i\n", "[1] NaN+NaNi NaN+NaNi NaN+NaNi\n");
+        BINARY_ARITHMETIC_WHITELIST.add("1i/(-(1/0))", "[1] 0+0i\n", "[1] NaN+NaNi\n");
+        BINARY_ARITHMETIC_WHITELIST.add("c(1i,1i,1i)/(-(1/0))", "[1] 0+0i 0+0i 0+0i\n", "[1] NaN+NaNi NaN+NaNi NaN+NaNi\n");
+        BINARY_ARITHMETIC_WHITELIST.add("exp(-abs((0+1i)/(0+0i)))", "[1] NaN\n", "[1] 0\n");
     }
 
     @Test
     public void testPrintValues() {
-        assertTemplateEval(template("%0", ALL_VALUES));
+        assertEval(template("%0", ALL_VALUES));
     }
 
     @Test
     public void testUnaryBuiltings() {
-        assertTemplateEval(template("%0(%1)", UNARY_BUILTINS, ALL_ARITHMETIC_VALUES));
+        assertEval(Output.MayContainError, template("%0(%1)", UNARY_BUILTINS, ALL_ARITHMETIC_VALUES));
     }
 
     private static final String[] SUBSCRIPT_SEQUENCE_VALUES = new String[]{"1:1", "2:4", "4:2"};
@@ -79,8 +85,8 @@ public class TestSimpleValues extends TestBase {
 
     @Test
     public void testAttributes() {
-        assertTemplateEval(template("x <- 1; attr(x, \"a\") <- %0; attr(x, \"a\");", ALL_VALUES));
-        assertTemplateEval(template("x <- 1; attr(x, \"a\") <- %0; names(attributes(x));", ALL_VALUES));
+        assertEval(template("x <- 1; attr(x, \"a\") <- %0; attr(x, \"a\");", ALL_VALUES));
+        assertEval(template("x <- 1; attr(x, \"a\") <- %0; names(attributes(x));", ALL_VALUES));
     }
 
     @Test
@@ -108,7 +114,7 @@ public class TestSimpleValues extends TestBase {
 
     @Test
     public void testVectorAccess() {
-        assertTemplateEval(template("x <- %1; x[%0]", SUBSCRIPT_ALL_VALUES, TESTED_VECTORS));
+        assertEval(Output.MayContainError, template("x <- %1; x[%0]", SUBSCRIPT_ALL_VALUES, TESTED_VECTORS));
     }
 
     @Test
@@ -118,22 +124,23 @@ public class TestSimpleValues extends TestBase {
         assertEval("v <- double(5) ; v[[3]] <- c(1) ; v");
         assertEval("v <- double(5) ; v[[3]] <- matrix(c(1)) ; v");
         // TODO(tw): Expand this test.
-        assertTemplateEval(template("x <- %2; x[%0] <- %1; x", join(SUBSCRIPT_VECTOR_THREE_VALUES, SUBSCRIPT_SEQUENCE_VALUES), INT_UPDATE_VALUES, TESTED_VECTORS));
+        assertEval(Output.MayContainError, Output.MayContainWarning,
+                        template("{ x <- %2; x[%0] <- %1; x }", join(SUBSCRIPT_VECTOR_THREE_VALUES, SUBSCRIPT_SEQUENCE_VALUES), INT_UPDATE_VALUES, TESTED_VECTORS));
     }
 
     @Test
     public void testMatrixAccess() {
-        assertTemplateEval(template("x <- matrix(c(1,2,3,4),2) ; x[%0]", SUBSCRIPT_MISSING_VALUES));
+        assertEval(template("x <- matrix(c(1,2,3,4),2) ; x[%0]", SUBSCRIPT_MISSING_VALUES));
     }
 
     @Test
     public void testTypeofValues() {
-        assertTemplateEval(template("typeof(%0)", ALL_VALUES));
+        assertEval(template("typeof(%0)", ALL_VALUES));
     }
 
     @Test
     public void testFunctionCall() {
-        assertTemplateEval(template("f <- function(x) { x[1] = 2; }; x <- %0; f(x); x[1]", new String[]{"1:3", "(1:3)+0.1", "c(1, 2, 3)", "1", "c(1L, 2L, 3L)", "1L"}));
+        assertEval(template("f <- function(x) { x[1] = 2; }; x <- %0; f(x); x[1]", new String[]{"1:3", "(1:3)+0.1", "c(1, 2, 3)", "1", "c(1L, 2L, 3L)", "1L"}));
     }
 
     private static final String[] TESTED_EXPRESSIONS = new String[]{"a <- b", "a[1] <- 7", "b <- a", "b[2] <- 8", "a[3] <- 9", "b <- a + 0"};
@@ -142,18 +149,18 @@ public class TestSimpleValues extends TestBase {
 
     @Test
     public void testVectorCopySemantics() {
-        assertTemplateEval(template("a <- c(1, 2, 3); b <- c(4, 5, 6); %0; c(toString(a),toString(b))", TESTED_EXPRESSION_SEQS));
+        assertEval(template("a <- c(1, 2, 3); b <- c(4, 5, 6); %0; c(toString(a),toString(b))", TESTED_EXPRESSION_SEQS));
     }
 
     @Test
     public void testBinaryArithmetic() {
         assertEval("FALSE^(-3)");
-        assertTemplateEval(new BinaryArithmeticWhiteList(), template("%0%1%2", ALL_ARITHMETIC_VALUES, BINARY_OPERATORS, ALL_ARITHMETIC_VALUES));
+        assertEval(Output.MayContainError, BINARY_ARITHMETIC_WHITELIST, template("%0%1%2", ALL_ARITHMETIC_VALUES, BINARY_OPERATORS, ALL_ARITHMETIC_VALUES));
     }
 
     @Test
     public void testAmbiguousExpression() {
-        assertTemplateEval(new BinaryArithmeticWhiteList(), new String[]{"exp(-abs((0+1i)/(0+0i)))"});
+        assertEval(BINARY_ARITHMETIC_WHITELIST, new String[]{"exp(-abs((0+1i)/(0+0i)))"});
     }
 
     @Test

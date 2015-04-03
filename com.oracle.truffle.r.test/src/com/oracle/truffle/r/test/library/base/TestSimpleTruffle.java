@@ -54,10 +54,8 @@ public class TestSimpleTruffle extends TestBase {
 
     @Test
     public void testWarningsAndErrors() {
-        assertEvalWarning("{ (c(1, 2) < c(1, 2, 3)) ==  (c(1, 2) < c(1, 3, 4)) }");
-        assertEvalErrorWarning("{ 1i > (c(1, 2) < c(1, 2, 3)) }");
-        assertEvalErrorWarning("{ 1i > ((c(1, 2) < c(1, 2, 3)) ==  (c(1, 2) < c(1, 3, 4))) }");
-
+        assertEval(Output.ContainsWarning, "{ (c(1, 2) < c(1, 2, 3)) ==  (c(1, 2) < c(1, 3, 4)) }");
+        assertEval(Output.ContainsError, Output.ContainsWarning, "{ 1i > (c(1, 2) < c(1, 2, 3)) }");
+        assertEval(Output.ContainsError, Output.ContainsWarning, "{ 1i > ((c(1, 2) < c(1, 2, 3)) ==  (c(1, 2) < c(1, 3, 4))) }");
     }
-
 }

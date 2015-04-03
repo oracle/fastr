@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,15 +20,23 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.test.library.base;
+package com.oracle.truffle.r.test;
 
-import com.oracle.truffle.r.test.*;
+import java.lang.reflect.*;
+import java.util.*;
 
-public class ErrorWhiteList extends WhiteList {
-    private static final String WHITELIST = "ErrorWhiteList.test";
+public interface TestTrait {
 
-    public ErrorWhiteList() {
-        super(WHITELIST);
+    static int contains(TestTrait[] traits, Class<?> clazz) {
+        return (int) Arrays.stream(traits).filter(t -> clazz.isInstance(t)).count();
     }
 
+    static boolean contains(TestTrait[] traits, TestTrait trait) {
+        return Arrays.stream(traits).anyMatch(t -> t == trait);
+    }
+
+    @SuppressWarnings("unchecked")
+    static <T> T[] collect(TestTrait[] traits, Class<T> clazz) {
+        return Arrays.stream(traits).filter(t -> clazz.isInstance(t)).toArray(len -> (T[]) Array.newInstance(clazz, len));
+    }
 }

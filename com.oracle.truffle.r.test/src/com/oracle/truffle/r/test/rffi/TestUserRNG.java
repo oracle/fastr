@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -41,6 +41,6 @@ public class TestUserRNG extends TestBase {
         Path cwd = Paths.get(System.getProperty("user.dir"));
         Path libPath = Paths.get(REnvVars.rHome(), "com.oracle.truffle.r.test.native/urand/lib/liburand.so");
         Path relLibPath = cwd.relativize(libPath);
-        assertTemplateEval(TestBase.template("{ dyn.load(\"%0\"); RNGkind(\"user\"); print(RNGkind()); set.seed(4567); runif(10) }", new String[]{relLibPath.toString()}));
+        assertEval(TestBase.template("{ dyn.load(\"%0\"); RNGkind(\"user\"); print(RNGkind()); set.seed(4567); runif(10) }", new String[]{relLibPath.toString()}));
     }
 }

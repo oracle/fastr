@@ -1,9 +1,0 @@
-# This is a file of differences between FastR output and GnuR output on certain arithmetic operations.
-# The syntax is: expression|FastR output|GnuR output
-# The exact set of expressions that differs varies from platform to platform.
-# Currently, these differences are ignored in unit testing.
-1i/(1/0)|[1] 0+0i|[1] NaN+NaNi
-c(1i,1i,1i)/(1/0)|[1] 0+0i 0+0i 0+0i|[1] NaN+NaNi NaN+NaNi NaN+NaNi
-1i/(-(1/0))|[1] 0+0i|[1] NaN+NaNi
-c(1i,1i,1i)/(-(1/0))|[1] 0+0i 0+0i 0+0i|[1] NaN+NaNi NaN+NaNi NaN+NaNi
-exp(-abs((0+1i)/(0+0i)))|[1] NaN|[1] 0

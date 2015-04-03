@@ -31,8 +31,8 @@ public class TestConditionHandling extends TestBase {
     @Test
     public void testTryCatch() {
         assertEval("{ tryCatch(1, finally = print(\"Hello\")) }");
-        assertEvalError("{ e <- simpleError(\"test error\"); tryCatch(stop(e), finally = print(\"Hello\")) }");
-        assertEvalError("{ tryCatch(stop(\"fred\"), finally = print(\"Hello\")) }");
+        assertEval(Output.ContainsError, "{ e <- simpleError(\"test error\"); tryCatch(stop(e), finally = print(\"Hello\")) }");
+        assertEval(Output.ContainsError, "{ tryCatch(stop(\"fred\"), finally = print(\"Hello\")) }");
         assertEval("{ e <- simpleError(\"test error\"); tryCatch(stop(e), error = function(e) e, finally = print(\"Hello\"))}");
     }
 

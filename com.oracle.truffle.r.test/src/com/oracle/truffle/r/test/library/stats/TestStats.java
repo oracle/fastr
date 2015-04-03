@@ -32,7 +32,7 @@ public class TestStats extends TestBase {
         assertEval("{ cor(c(1,2,3),c(1,2,3)) }");
         assertEval("{ as.integer(cor(c(1,2,3),c(1,2,5))*10000000) }");
         assertEval("{ cor(cbind(c(3,2,1), c(1,2,3))) }");
-        assertEvalWarning("{ cor(cbind(c(1, 1, 1), c(1, 1, 1))) }");
+        assertEval(Output.ContainsWarning, "{ cor(cbind(c(1, 1, 1), c(1, 1, 1))) }");
         assertEval("{ cor(cbind(c(1:9,0/0), 101:110)) }");
         assertEval("{ round( cor(cbind(c(10,5,4,1), c(2,5,10,5))), digits=5 ) }");
     }

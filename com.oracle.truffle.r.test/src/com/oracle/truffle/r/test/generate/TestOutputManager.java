@@ -318,10 +318,10 @@ public class TestOutputManager {
      * @param test R test string
      * @param d handler for diagnostics
      * @param checkOnly if {@code true} do not invoke GnuR, just update map
-     * @param stripTrailingWhiteSpace TODO
+     * @param keepTrailingWhiteSpace TODO
      * @return the GnuR output
      */
-    public String genTestResult(String testElementName, String test, DiagnosticHandler d, boolean checkOnly, boolean stripTrailingWhiteSpace) {
+    public String genTestResult(String testElementName, String test, DiagnosticHandler d, boolean checkOnly, boolean keepTrailingWhiteSpace) {
         Map<String, TestInfo> testMap = getTestMap(testElementName);
         TestInfo testInfo = testMap.get(test);
         if (testInfo != null) {
@@ -337,9 +337,7 @@ public class TestOutputManager {
             String expected = null;
             if (!checkOnly) {
                 expected = rSession.eval(test);
-                if (stripTrailingWhiteSpace) {
-                    expected = stripTrailingWhitespace(expected);
-                }
+                expected = prepareResult(expected, keepTrailingWhiteSpace);
             }
             testMap.put(test, new TestInfo(testElementName, expected, true));
             return expected;
@@ -396,7 +394,10 @@ public class TestOutputManager {
         return result;
     }
 
-    public static String stripTrailingWhitespace(String s) {
+    public static String prepareResult(String s, boolean keepTrailingWhiteSpace) {
+        if (keepTrailingWhiteSpace) {
+            return s;
+        }
         int len = s.length();
         if (len == 0) {
             return s;

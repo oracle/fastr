@@ -56,9 +56,9 @@ public class TestSimpleDataFrames extends TestBase {
     @Test
     public void testRowNames() {
         // testing row.names
-        assertEvalError("{ x<-c(1,2); row.names(x)<-c(7, 42); attributes(x) }");
+        assertEval(Output.ContainsError, "{ x<-c(1,2); row.names(x)<-c(7, 42); attributes(x) }");
         assertEval("{ x<-c(1,2); row.names(x)<-NULL; attributes(x) }");
-        assertEvalError("{ x<-c(1,2); row.names(x)<-logical(); attributes(x) }");
+        assertEval(Output.ContainsError, "{ x<-c(1,2); row.names(x)<-logical(); attributes(x) }");
         assertEval("{ x<-c(1,2); dim(x)<-2; row.names(x)<-c(7, 42); attributes(x) }");
         assertEval("{ x<-c(1,2); dim(x)<-2; row.names(x)<-c(7, 42); row.names(x) }");
         assertEval("{ x<-c(1,2); dim(x)<-2; row.names(x)<-NULL; attributes(x) }");
@@ -71,8 +71,8 @@ public class TestSimpleDataFrames extends TestBase {
         assertEval("{ x<-c(1,2); dim(x)<-c(1,2); dimnames(x)<-list(1.1, c(2.2, 3.3)); row.names(x)<-NULL; row.names(x) }");
         assertEval("{ x<-c(1,2); dim(x)<-c(1,2); dimnames(x)<-list(1.1, c(2.2, 3.3)); row.names(x)<-logical(); attributes(x) }");
         assertEval("{ x<-c(1,2); dim(x)<-c(1,2); dimnames(x)<-list(1.1, c(2.2, 3.3)); row.names(x)<-logical(); row.names(x) }");
-        assertEvalError("{ x<-c(1,2); dim(x)<-c(2,1); dimnames(x)<-list(c(2.2, 3.3), 1.1); row.names(x)<-7; attributess(x) }");
-        assertEvalError("{ x<-c(1,2); dim(x)<-c(2,1); dimnames(x)<-list(c(2.2, 3.3), 1.1); row.names(x)<-7; row.names(x) }");
+        assertEval(Output.ContainsError, "{ x<-c(1,2); dim(x)<-c(2,1); dimnames(x)<-list(c(2.2, 3.3), 1.1); row.names(x)<-7; attributess(x) }");
+        assertEval(Output.ContainsError, "{ x<-c(1,2); dim(x)<-c(2,1); dimnames(x)<-list(c(2.2, 3.3), 1.1); row.names(x)<-7; row.names(x) }");
         assertEval("{ x<-c(1,2); dim(x)<-c(2,1); dimnames(x)<-list(c(2.2, 3.3), 1.1); row.names(x)<-c(7, 42); attributes(x) }");
         assertEval("{ x<-c(1,2); dim(x)<-c(2,1); dimnames(x)<-list(c(2.2, 3.3), 1.1); row.names(x)<-c(7, 42); row.names(x) }");
 
@@ -87,7 +87,7 @@ public class TestSimpleDataFrames extends TestBase {
     public void testAsDataFrame() {
         assertEval("{ x<-list(1,2); class(x)<-\"data.frame\"; row.names(x)<-\"r1\"; y<-as.data.frame(x, \"r2\"); attributes(x) }");
         assertEval("{ x<-list(1,2); class(x)<-\"data.frame\"; row.names(x)<-\"r1\"; y<-as.data.frame(x, \"r2\"); attributes(y) }");
-        assertEvalError("{ x<-list(1,2); class(x)<-\"data.frame\"; row.names(x)<-\"r1\"; y<-as.data.frame(x, c(\"r1\", \"r2\")); attributes(y) }");
+        assertEval(Output.ContainsError, "{ x<-list(1,2); class(x)<-\"data.frame\"; row.names(x)<-\"r1\"; y<-as.data.frame(x, c(\"r1\", \"r2\")); attributes(y) }");
         assertEval("{ x<-c(7L,42L); y<-as.data.frame(x, row.names=NULL, nm=\"x\"); attributes(y); }");
         assertEval("{ x<-as.double(c(7L,42L)); y<-as.data.frame(x, row.names=NULL, nm=\"x\"); attributes(y); }");
         assertEval("{ x<-as.logical(c(7L,42L)); y<-as.data.frame(x, row.names=NULL, nm=\"x\"); attributes(y); }");
@@ -105,7 +105,7 @@ public class TestSimpleDataFrames extends TestBase {
         assertEval("{ x<-c(7L,42L); y<-as.data.frame(x, row.names=c(\"r1\", \"r2\", \"r3\"), nm=\"x\"); attributes(y); }");
         assertEval("{ x<-matrix(c(1,2,3,4), nrow=2); y<-as.data.frame(x, row.names=NULL, optional=FALSE); attributes(y); }");
         assertEval("{ x<-matrix(c(1,2,3,4), nrow=2); y<-as.data.frame(x, row.names=\"r1\", optional=FALSE); attributes(y); }");
-        assertEvalError("{ x<-1; class(x)<-\"foo\"; y<-as.data.frame(x) }");
+        assertEval(Output.ContainsError, "{ x<-1; class(x)<-\"foo\"; y<-as.data.frame(x) }");
     }
 
     @Test
@@ -118,7 +118,7 @@ public class TestSimpleDataFrames extends TestBase {
         assertEval("{ x<-data.frame(a=list(1,2), b=list(11,12)); x[[1,2]] }");
         assertEval("{ x<-data.frame(a=list(1,2), b=list(11,12)); x[1,2] }");
         assertEval("{ x<-data.frame(a=c(1,2), b=c(11,12)); x[c(1,2),2] }");
-        assertEvalError("{ x<-data.frame(a=c(1,2), b=c(11,12)); x[[c(1,2),2]] }");
+        assertEval(Output.ContainsError, "{ x<-data.frame(a=c(1,2), b=c(11,12)); x[[c(1,2),2]] }");
 
         assertEval("{ x<-data.frame(a=c(1,2), b=c(3,4)); attr(x, \"foo\")<-\"foo\"; x[1, c(1,2)] }");
         assertEval("{ x<-data.frame(a=c(1,2), b=c(3,4)); attr(x, \"foo\")<-\"foo\"; attributes(x[1, c(1,2)]) }");
@@ -172,7 +172,7 @@ public class TestSimpleDataFrames extends TestBase {
     public void testMisc() {
         assertEval("{ y<-data.frame(7); as.logical(y) }");
         assertEval("{ y<-data.frame(integer()); as.logical(y) }");
-        assertEvalError("{ y<-data.frame(c(1,2,3)); as.logical(y) }");
+        assertEval(Output.ContainsError, "{ y<-data.frame(c(1,2,3)); as.logical(y) }");
 
         assertEval("{ y<-data.frame(c(1,2,3)); length(y) }");
 

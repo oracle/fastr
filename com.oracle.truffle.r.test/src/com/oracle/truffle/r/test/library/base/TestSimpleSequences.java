@@ -38,9 +38,9 @@ public class TestSimpleSequences extends TestBase {
         assertEval("{ NA:1 }");
         assertEval("{ NA:NA }");
 
-        assertEvalWarning("{ (1:3):3 }");
-        assertEvalWarning("{ 1:(1:3) }");
-        assertEvalWarning("{ (1:3):(1:3) }");
+        assertEval(Output.ContainsWarning, "{ (1:3):3 }");
+        assertEval(Output.ContainsWarning, "{ 1:(1:3) }");
+        assertEval(Output.ContainsWarning, "{ (1:3):(1:3) }");
     }
 
 }
