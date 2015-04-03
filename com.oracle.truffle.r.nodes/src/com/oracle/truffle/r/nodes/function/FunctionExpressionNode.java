@@ -58,7 +58,7 @@ public final class FunctionExpressionNode extends RNode {
         NodeCountFilter dispatchingMethodsFilter = node -> {
             if (node instanceof ReadVariableNode) {
                 String identifier = ((ReadVariableNode) node).getIdentifier();
-                return "UseMethod".equals(identifier) || "NextMethod".equals(identifier);
+                return "UseMethod".equals(identifier) /* || "NextMethod".equals(identifier) */;
             }
             return false;
         };
