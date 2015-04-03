@@ -80,7 +80,7 @@ public abstract class Unlist extends RBuiltinNode {
         @Specialization(guards = "isVectorList(vector)")
         protected int getLengthList(VirtualFrame frame, RAbstractVector vector) {
             int totalSize = 0;
-            for (int i = 0; i < vector.getLength(); ++i) {
+            for (int i = 0; i < vector.getLength(); i++) {
                 Object data = vector.getDataAtAsObject(i);
                 totalSize += getRecursiveLength(frame, data);
             }
@@ -149,7 +149,7 @@ public abstract class Unlist extends RBuiltinNode {
 
         int precedence = -1;
         int totalSize = 0;
-        for (int i = 0; i < list.getLength(); ++i) {
+        for (int i = 0; i < list.getLength(); i++) {
             Object data = list.getDataAt(i);
             precedence = Math.max(precedence, precedenceNode.executeInteger(frame, data, recursive));
             if (isRecursive) {
@@ -316,7 +316,7 @@ public abstract class Unlist extends RBuiltinNode {
         if (o instanceof RAbstractVector) {
             RAbstractVector v = (RAbstractVector) o;
             RStringVector listNames = useNames && v.getNames(attrProfiles) != null ? (RStringVector) v.getNames(attrProfiles) : null;
-            for (int i = 0; i < v.getLength(); ++i) {
+            for (int i = 0; i < v.getLength(); i++) {
                 String name = itemName(listNames, i);
                 Object cur = v.getDataAtAsObject(i);
                 if (v instanceof RList && recursive) {
@@ -352,7 +352,7 @@ public abstract class Unlist extends RBuiltinNode {
         if (o instanceof RAbstractVector) {
             RAbstractVector v = (RAbstractVector) o;
             RStringVector listNames = useNames && v.getNames(attrProfiles) != null ? (RStringVector) v.getNames(attrProfiles) : null;
-            for (int i = 0; i < v.getLength(); ++i) {
+            for (int i = 0; i < v.getLength(); i++) {
                 String name = itemName(listNames, i);
                 Object cur = v.getDataAtAsObject(i);
                 if (v instanceof RList && recursive) {
@@ -388,7 +388,7 @@ public abstract class Unlist extends RBuiltinNode {
         if (o instanceof RAbstractVector) {
             RAbstractVector v = (RAbstractVector) o;
             RStringVector listNames = useNames && v.getNames(attrProfiles) != null ? (RStringVector) v.getNames(attrProfiles) : null;
-            for (int i = 0; i < v.getLength(); ++i) {
+            for (int i = 0; i < v.getLength(); i++) {
                 String name = itemName(listNames, i);
                 Object cur = v.getDataAtAsObject(i);
                 if (v instanceof RList && recursive) {
@@ -424,7 +424,7 @@ public abstract class Unlist extends RBuiltinNode {
         if (o instanceof RAbstractVector) {
             RAbstractVector v = (RAbstractVector) o;
             RStringVector listNames = useNames && v.getNames(attrProfiles) != null ? (RStringVector) v.getNames(attrProfiles) : null;
-            for (int i = 0; i < v.getLength(); ++i) {
+            for (int i = 0; i < v.getLength(); i++) {
                 String name = itemName(listNames, i);
                 Object cur = v.getDataAtAsObject(i);
                 if (v instanceof RList && recursive) {
@@ -460,7 +460,7 @@ public abstract class Unlist extends RBuiltinNode {
         if (o instanceof RAbstractVector) {
             RAbstractVector v = (RAbstractVector) o;
             RStringVector listNames = useNames && v.getNames(attrProfiles) != null ? (RStringVector) v.getNames(attrProfiles) : null;
-            for (int i = 0; i < v.getLength(); ++i) {
+            for (int i = 0; i < v.getLength(); i++) {
                 String name = itemName(listNames, i);
                 Object cur = v.getDataAtAsObject(i);
                 if (v instanceof RList && recursive) {
@@ -505,7 +505,7 @@ public abstract class Unlist extends RBuiltinNode {
         if (o instanceof RAbstractVector) {
             RAbstractVector v = (RAbstractVector) o;
             RStringVector listNames = useNames && v.getNames(attrProfiles) != null ? (RStringVector) v.getNames(attrProfiles) : null;
-            for (int i = 0; i < v.getLength(); ++i) {
+            for (int i = 0; i < v.getLength(); i++) {
                 String name = itemName(listNames, i);
                 Object cur = v.getDataAtAsObject(i);
                 if (v instanceof RList && recursive) {
@@ -541,7 +541,7 @@ public abstract class Unlist extends RBuiltinNode {
         if (o instanceof RAbstractVector) {
             RAbstractVector v = (RAbstractVector) o;
             RStringVector listNames = useNames && v.getNames(attrProfiles) != null ? (RStringVector) v.getNames(attrProfiles) : null;
-            for (int i = 0; i < v.getLength(); ++i) {
+            for (int i = 0; i < v.getLength(); i++) {
                 String name = itemName(listNames, i);
                 Object cur = v.getDataAtAsObject(i);
                 if (v instanceof RList && recursive) {

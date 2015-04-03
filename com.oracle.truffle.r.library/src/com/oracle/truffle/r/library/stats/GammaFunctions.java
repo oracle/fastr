@@ -1489,7 +1489,7 @@ public abstract class GammaFunctions {
                 xsq = x * x;
                 xnum = pba[4] * xsq;
                 xden = xsq;
-                for (i = 0; i < 3; ++i) {
+                for (i = 0; i < 3; i++) {
                     xnum = (xnum + pba[i]) * xsq;
                     xden = (xden + pbb[i]) * xsq;
                 }
@@ -1517,7 +1517,7 @@ public abstract class GammaFunctions {
 
             xnum = pbc[8] * y;
             xden = y;
-            for (i = 0; i < 7; ++i) {
+            for (i = 0; i < 7; i++) {
                 xnum = (xnum + pbc[i]) * y;
                 xden = (xden + pbd[i]) * y;
             }
@@ -1554,7 +1554,7 @@ public abstract class GammaFunctions {
             xsq = 1.0 / (x * x); /* (1./x)*(1./x) might be better */
             xnum = pbp[5] * xsq;
             xden = xsq;
-            for (i = 0; i < 4; ++i) {
+            for (i = 0; i < 4; i++) {
                 xnum = (xnum + pbp[i]) * xsq;
                 xden = (xden + pbq[i]) * xsq;
             }

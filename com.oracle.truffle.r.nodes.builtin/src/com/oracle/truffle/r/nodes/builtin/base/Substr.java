@@ -62,7 +62,7 @@ public abstract class Substr extends RBuiltinNode {
         na.enable(arg);
         na.enable(start);
         na.enable(stop);
-        for (int i = 0, j, k; i < arg.getLength(); ++i) {
+        for (int i = 0, j, k; i < arg.getLength(); i++) {
             // Checkstyle: stop modified control variable check
             j = i % start.getLength();
             k = i % stop.getLength();

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -58,7 +58,7 @@ public abstract class CombineBinaryDoubleNode extends CombineBinaryNode {
     protected RDoubleVector combine(RAbstractDoubleVector left, double right) {
         int dataLength = left.getLength();
         double[] result = new double[dataLength + 1];
-        for (int i = 0; i < dataLength; ++i) {
+        for (int i = 0; i < dataLength; i++) {
             result[i] = left.getDataAt(i);
         }
         result[dataLength] = right;
@@ -70,7 +70,7 @@ public abstract class CombineBinaryDoubleNode extends CombineBinaryNode {
         int dataLength = right.getLength();
         double[] result = new double[dataLength + 1];
         result[0] = left;
-        for (int i = 0; i < dataLength; ++i) {
+        for (int i = 0; i < dataLength; i++) {
             result[i + 1] = right.getDataAt(i);
         }
         return RDataFactory.createDoubleVector(result, RRuntime.isComplete(left) && right.isComplete(), combineNames(right, true));
@@ -82,10 +82,10 @@ public abstract class CombineBinaryDoubleNode extends CombineBinaryNode {
         int rightLength = right.getLength();
         double[] result = new double[leftLength + rightLength];
         int i = 0;
-        for (; i < leftLength; ++i) {
+        for (; i < leftLength; i++) {
             result[i] = left.getDataAt(i);
         }
-        for (; i < leftLength + rightLength; ++i) {
+        for (; i < leftLength + rightLength; i++) {
             result[i] = right.getDataAt(i - leftLength);
         }
         return RDataFactory.createDoubleVector(result, left.isComplete() && right.isComplete(), combineNames(left, right));

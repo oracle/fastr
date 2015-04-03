@@ -495,7 +495,7 @@ public abstract class PrettyPrinterNode extends RNode {
                     appendSpaces(builder, maxPositionLength - positionString.length());
                     builder.append("[").append(positionString).append("]");
                 }
-                for (int j = 0; j < numberOfColumns && index < vector.getLength(); ++j) {
+                for (int j = 0; j < numberOfColumns && index < vector.getLength(); j++) {
                     String valueString = values[index];
                     if (!printNamesHeader) {
                         builder.append(' ');
@@ -562,7 +562,7 @@ public abstract class PrettyPrinterNode extends RNode {
     }
 
     private static void appendSpaces(StringBuilder builder, int spaces) {
-        for (int k = 0; k < spaces; ++k) {
+        for (int k = 0; k < spaces; k++) {
             builder.append(' ');
         }
     }
@@ -882,7 +882,7 @@ public abstract class PrettyPrinterNode extends RNode {
         int length = operand.getLength();
         String[] realValues = new String[length];
         String[] imaginaryValues = new String[length];
-        for (int i = 0; i < length; ++i) {
+        for (int i = 0; i < length; i++) {
             realValues[i] = prettyPrint(realParts.getDataAt(i));
             imaginaryValues[i] = prettyPrint(imaginaryParts.getDataAt(i));
         }
@@ -939,7 +939,7 @@ public abstract class PrettyPrinterNode extends RNode {
         boolean foundWithoutDecimalPoint = false;
         boolean inequalLenAfterPoint = false;
         int maxLenAfterPoint = -1;
-        for (int i = 0; i < values.length; ++i) {
+        for (int i = 0; i < values.length; i++) {
             String v = values[i];
             decimalPointOffsets[i] = v.indexOf('.');
             if (decimalPointOffsets[i] == -1) {
@@ -968,7 +968,7 @@ public abstract class PrettyPrinterNode extends RNode {
             return;
         }
 
-        for (int i = 0; i < values.length; ++i) {
+        for (int i = 0; i < values.length; i++) {
             String v = values[i];
             if (RRuntime.isNA(v) || RRuntime.isNaN(v)) {
                 continue;
@@ -986,7 +986,7 @@ public abstract class PrettyPrinterNode extends RNode {
         int maxLen = 0;
         boolean inequalLengths = false;
         int lastLen = 0;
-        for (int i = 0; i < values.length; ++i) {
+        for (int i = 0; i < values.length; i++) {
             String v = values[i];
             if (RRuntime.isNA(v)) {
                 // do not use NA for deciding alignment
@@ -1000,7 +1000,7 @@ public abstract class PrettyPrinterNode extends RNode {
         if (!inequalLengths) {
             return;
         }
-        for (int i = 0; i < values.length; ++i) {
+        for (int i = 0; i < values.length; i++) {
             String v = values[i];
             int l = v.length();
             if (l < maxLen) {
@@ -1015,7 +1015,7 @@ public abstract class PrettyPrinterNode extends RNode {
     }
 
     private static void removeLeadingMinus(String[] values) {
-        for (int i = 0; i < values.length; ++i) {
+        for (int i = 0; i < values.length; i++) {
             String v = values[i];
             if (v.charAt(0) == '-') {
                 values[i] = substring(v, 1);
@@ -1426,7 +1426,7 @@ public abstract class PrettyPrinterNode extends RNode {
             RList dimNames = vector.getDimNames(attrProfiles);
             if (ncol > 0) {
                 sb.append("     ");
-                for (int c = 1; c <= ncol; ++c) {
+                for (int c = 1; c <= ncol; c++) {
                     sb.append(getDimId(dimNames, 1, c, isComplexOrRawVector));
                     if (c < ncol) {
                         sb.append(' ');
@@ -1435,7 +1435,7 @@ public abstract class PrettyPrinterNode extends RNode {
             }
             if (nrow > 0) {
                 sb.append('\n');
-                for (int r = 1; r <= nrow; ++r) {
+                for (int r = 1; r <= nrow; r++) {
                     sb.append(getDimId(dimNames, 0, r, isComplexOrRawVector));
                     if (r < nrow) {
                         sb.append('\n');
@@ -1461,9 +1461,9 @@ public abstract class PrettyPrinterNode extends RNode {
             }
             double[] maxRoundFactors = new double[ncol];
             int[] maxDigitsBehindDot = new int[ncol];
-            for (int c = 0; c < ncol; ++c) {
+            for (int c = 0; c < ncol; c++) {
                 maxRoundFactors[c] = 0;
-                for (int r = 0; r < nrow; ++r) {
+                for (int r = 0; r < nrow; r++) {
                     int index = c * nrow + r;
                     double data = vector.getDataAt(index + offset);
                     double roundFactor = calcRoundFactor(data, 10000000);
@@ -1474,8 +1474,8 @@ public abstract class PrettyPrinterNode extends RNode {
                 maxDigitsBehindDot[c] = getMaxDigitsBehindDot(maxRoundFactors[c]);
             }
             int rowHeaderWidth = 0;
-            for (int c = 0; c < ncol; ++c) {
-                for (int r = 0; r < nrow; ++r) {
+            for (int c = 0; c < ncol; c++) {
+                for (int r = 0; r < nrow; r++) {
                     int index = c * nrow + r;
                     dataStrings[index] = prettyPrint(vector.getDataAt(index + offset), maxRoundFactors[c], maxDigitsBehindDot[c]);
                     maintainColumnData(dataColWidths, columnDimNames, c, dataStrings[index]);
@@ -1485,11 +1485,11 @@ public abstract class PrettyPrinterNode extends RNode {
 
             // probably add trailing decimal points and zeroes
             // iterate over columns
-            for (int c = 0; c < ncol; ++c) {
+            for (int c = 0; c < ncol; c++) {
                 postProcessDoubleColumn(dataStrings, nrow, ncol, c);
                 // final adjustment of column width
                 boolean hasNegative = false;
-                for (int r = 0; r < nrow; ++r) {
+                for (int r = 0; r < nrow; r++) {
                     // do not count minus signs
                     String data = dataStrings[c * nrow + r];
                     boolean isNegative = data.charAt(0) == '-';
@@ -1524,8 +1524,8 @@ public abstract class PrettyPrinterNode extends RNode {
                 columnDimNames = (RStringVector) dimNames.getDataAt(1);
             }
             int rowHeaderWidth = 0;
-            for (int r = 0; r < nrow; ++r) {
-                for (int c = 0; c < ncol; ++c) {
+            for (int r = 0; r < nrow; r++) {
+                for (int c = 0; c < ncol; c++) {
                     int index = c * nrow + r;
                     reStrings[index] = prettyPrintSingleVectorElement(vector.getDataAt(index + offset).getRealPart(), isQuoted);
                     imStrings[index] = prettyPrintSingleVectorElement(vector.getDataAt(index + offset).getImaginaryPart(), isQuoted);
@@ -1538,7 +1538,7 @@ public abstract class PrettyPrinterNode extends RNode {
 
             // adjust formatting
             // iterate over columns
-            for (int c = 0; c < ncol; ++c) {
+            for (int c = 0; c < ncol; c++) {
                 postProcessComplexColumn(reStrings, imStrings, nrow, ncol, c);
             }
 
@@ -1548,8 +1548,8 @@ public abstract class PrettyPrinterNode extends RNode {
             }
 
             // final adjustment of column width
-            for (int c = 0; c < ncol; ++c) {
-                for (int r = 0; r < nrow; ++r) {
+            for (int c = 0; c < ncol; c++) {
+                for (int r = 0; r < nrow; r++) {
                     // do not count minus signs
                     String data = dataStrings[c * nrow + r];
                     int l = data.charAt(0) == '-' ? data.length() - 1 : data.length();
@@ -1581,8 +1581,8 @@ public abstract class PrettyPrinterNode extends RNode {
                 }
             }
             int rowHeaderWidth = 0;
-            for (int r = 0; r < nrow; ++r) {
-                for (int c = 0; c < ncol; ++c) {
+            for (int r = 0; r < nrow; r++) {
+                for (int c = 0; c < ncol; c++) {
                     int index = c * nrow + r;
                     dataStrings[index] = prettyPrintSingleVectorElement(vector.getDataAtAsObject(index + offset), isQuoted);
                     maintainColumnData(dataColWidths, columnDimNames, c, dataStrings[index]);
@@ -1600,12 +1600,12 @@ public abstract class PrettyPrinterNode extends RNode {
         private static void postProcessDoubleColumn(String[] dataStrings, int nrow, int ncol, int col) {
             // create and populate array with column data
             String[] columnData = new String[nrow];
-            for (int r = 0; r < nrow; ++r) {
+            for (int r = 0; r < nrow; r++) {
                 columnData[r] = dataStrings[col * nrow + r];
             }
             padTrailingDecimalPointAndZeroesIfRequired(columnData);
             // put possibly changed data back
-            for (int r = 0; r < nrow; ++r) {
+            for (int r = 0; r < nrow; r++) {
                 dataStrings[col * nrow + r] = columnData[r];
             }
         }
@@ -1614,7 +1614,7 @@ public abstract class PrettyPrinterNode extends RNode {
             // create and populate arrays with column data
             String[] cre = new String[nrow];
             String[] cim = new String[nrow];
-            for (int r = 0; r < nrow; ++r) {
+            for (int r = 0; r < nrow; r++) {
                 cre[r] = re[col * nrow + r];
                 cim[r] = im[col * nrow + r];
             }
@@ -1626,7 +1626,7 @@ public abstract class PrettyPrinterNode extends RNode {
             rightJustify(cim);
 
             // put possibly changed data back
-            for (int r = 0; r < nrow; ++r) {
+            for (int r = 0; r < nrow; r++) {
                 re[col * nrow + r] = cre[r];
                 im[col * nrow + r] = cim[r];
             }
@@ -1675,7 +1675,7 @@ public abstract class PrettyPrinterNode extends RNode {
 
                 // column header
                 spaces(b, rowHeaderWidth + 1);
-                for (int c = startColInd + 1; c <= colInd; ++c) {
+                for (int c = startColInd + 1; c <= colInd; c++) {
                     boolean hasNegative = dataColWidths[c - 1] < 0;
                     // header of the first column needs extra padding if this column has negative
                     // numbers
@@ -1690,7 +1690,7 @@ public abstract class PrettyPrinterNode extends RNode {
                 boolean indexRowHeaders = rowHeaderUsesIndices(vector.getDimNames(attrProfiles));
 
                 // rows
-                for (int r = 1; r <= nrow; ++r) {
+                for (int r = 1; r <= nrow; r++) {
                     String headerString = rowHeader(r, vector, attrProfiles);
                     if (indexRowHeaders) {
                         spaces(b, rowHeaderWidth - headerString.length());
@@ -1699,7 +1699,7 @@ public abstract class PrettyPrinterNode extends RNode {
                         b.append(headerString);
                         spaces(b, rowHeaderWidth - headerString.length() + 1);
                     }
-                    for (int c = startColInd + 1; c <= colInd; ++c) {
+                    for (int c = startColInd + 1; c <= colInd; c++) {
                         String dataString = dataStrings[(c - 1) * nrow + (r - 1)];
                         boolean hasNegative = dataColWidths[c - 1] < 0;
                         int padding = Math.abs(dataColWidths[c - 1]) + ((isDoubleVector || isComplexVector) && hasNegative ? 1 : 0);

@@ -85,7 +85,7 @@ public abstract class CumMax extends RBuiltinNode {
         cmaxV[0] = max;
         na.enable(v);
         int i;
-        for (i = 1; i < v.getLength(); ++i) {
+        for (i = 1; i < v.getLength(); i++) {
             if (v.getDataAt(i) > max) {
                 max = v.getDataAt(i);
             }
@@ -108,7 +108,7 @@ public abstract class CumMax extends RBuiltinNode {
         cmaxV[0] = max;
         na.enable(v);
         int i;
-        for (i = 1; i < v.getLength(); ++i) {
+        for (i = 1; i < v.getLength(); i++) {
             if (v.getDataAt(i) > max) {
                 max = v.getDataAt(i);
             }
@@ -131,7 +131,7 @@ public abstract class CumMax extends RBuiltinNode {
         cmaxV[0] = max;
         na.enable(v);
         int i;
-        for (i = 1; i < v.getLength(); ++i) {
+        for (i = 1; i < v.getLength(); i++) {
             if (v.getDataAt(i) > max) {
                 max = v.getDataAt(i);
             }

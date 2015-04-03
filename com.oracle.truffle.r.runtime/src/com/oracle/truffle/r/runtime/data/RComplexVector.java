@@ -154,7 +154,7 @@ public final class RComplexVector extends RVector implements RAbstractComplexVec
         double[] newData = Arrays.copyOf(data, csize);
         if (csize > this.getLength()) {
             if (fillNA) {
-                for (int i = data.length; i < size; ++i) {
+                for (int i = data.length; i < size; i++) {
                     newData[i] = RRuntime.DOUBLE_NA;
                 }
             } else {

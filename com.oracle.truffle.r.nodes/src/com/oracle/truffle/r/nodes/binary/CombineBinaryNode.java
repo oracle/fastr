@@ -75,11 +75,11 @@ public abstract class CombineBinaryNode extends BinaryNode {
         naCheck.enable((leftNames != null && leftNames != RNull.instance && !((RStringVector) leftNames).isComplete()) ||
                         (rightNames != null && rightNames != RNull.instance && !((RStringVector) rightNames).isComplete()));
         if (leftNames == null || leftNames == RNull.instance) {
-            for (int i = 0; i < leftLength; ++i) {
+            for (int i = 0; i < leftLength; i++) {
                 namesData[i] = RRuntime.NAMES_ATTR_EMPTY_VALUE;
             }
         } else {
-            for (int i = 0; i < leftLength; ++i) {
+            for (int i = 0; i < leftLength; i++) {
                 namesData[i] = ((RStringVector) leftNames).getDataAt(i);
                 naCheck.check(namesData[i]);
             }
@@ -102,10 +102,10 @@ public abstract class CombineBinaryNode extends BinaryNode {
         int rightLength = right.getLength();
         RVector result = left.createEmptySameType(leftLength + rightLength, left.isComplete() && right.isComplete());
         int i = 0;
-        for (; i < leftLength; ++i) {
+        for (; i < leftLength; i++) {
             result.transferElementSameType(i, left, i);
         }
-        for (; i < leftLength + rightLength; ++i) {
+        for (; i < leftLength + rightLength; i++) {
             result.transferElementSameType(i, right, i - leftLength);
         }
         RStringVector names = combineNames(left, right);

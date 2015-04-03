@@ -112,7 +112,7 @@ public abstract class Match extends RBuiltinNode {
         if (bigTableProfile.profile(table.getLength() > (x.getLength() * TABLE_SIZE_FACTOR))) {
             hashTable = new NonRecursiveHashMapInt(x.getLength());
             NonRecursiveHashSetInt hashSet = new NonRecursiveHashSetInt(x.getLength());
-            for (int i = 0; i < result.length; ++i) {
+            for (int i = 0; i < result.length; i++) {
                 hashSet.add(x.getDataAt(i));
             }
             for (int i = table.getLength() - 1; i >= 0; i--) {
@@ -127,7 +127,7 @@ public abstract class Match extends RBuiltinNode {
                 hashTable.put(table.getDataAt(i), i);
             }
         }
-        for (int i = 0; i < result.length; ++i) {
+        for (int i = 0; i < result.length; i++) {
             int xx = x.getDataAt(i);
             int index = hashTable.get(xx);
             if (index != -1) {
@@ -150,7 +150,7 @@ public abstract class Match extends RBuiltinNode {
         if (bigTableProfile.profile(table.getLength() > (x.getLength() * TABLE_SIZE_FACTOR))) {
             hashTable = new NonRecursiveHashMapDouble(x.getLength());
             NonRecursiveHashSetDouble hashSet = new NonRecursiveHashSetDouble(x.getLength());
-            for (int i = 0; i < result.length; ++i) {
+            for (int i = 0; i < result.length; i++) {
                 hashSet.add(x.getDataAt(i));
             }
             for (int i = table.getLength() - 1; i >= 0; i--) {
@@ -165,7 +165,7 @@ public abstract class Match extends RBuiltinNode {
                 hashTable.put(RRuntime.int2double(table.getDataAt(i)), i);
             }
         }
-        for (int i = 0; i < result.length; ++i) {
+        for (int i = 0; i < result.length; i++) {
             double xx = x.getDataAt(i);
             int index = hashTable.get(xx);
             if (index != -1) {
@@ -188,7 +188,7 @@ public abstract class Match extends RBuiltinNode {
         if (bigTableProfile.profile(table.getLength() > (x.getLength() * TABLE_SIZE_FACTOR))) {
             hashTable = new NonRecursiveHashMapInt(x.getLength());
             NonRecursiveHashSetInt hashSet = new NonRecursiveHashSetInt(x.getLength());
-            for (int i = 0; i < result.length; ++i) {
+            for (int i = 0; i < result.length; i++) {
                 hashSet.add(x.getDataAt(i));
             }
             for (int i = table.getLength() - 1; i >= 0; i--) {
@@ -210,7 +210,7 @@ public abstract class Match extends RBuiltinNode {
                 }
             }
         }
-        for (int i = 0; i < result.length; ++i) {
+        for (int i = 0; i < result.length; i++) {
             int xx = x.getDataAt(i);
             int index = hashTable.get(xx);
             if (index != -1) {
@@ -233,7 +233,7 @@ public abstract class Match extends RBuiltinNode {
         if (bigTableProfile.profile(table.getLength() > (x.getLength() * TABLE_SIZE_FACTOR))) {
             hashTable = new NonRecursiveHashMapDouble(x.getLength());
             NonRecursiveHashSetDouble hashSet = new NonRecursiveHashSetDouble(x.getLength());
-            for (int i = 0; i < result.length; ++i) {
+            for (int i = 0; i < result.length; i++) {
                 hashSet.add(x.getDataAt(i));
             }
             for (int i = table.getLength() - 1; i >= 0; i--) {
@@ -248,7 +248,7 @@ public abstract class Match extends RBuiltinNode {
                 hashTable.put(table.getDataAt(i), i);
             }
         }
-        for (int i = 0; i < result.length; ++i) {
+        for (int i = 0; i < result.length; i++) {
             double xx = x.getDataAt(i);
             int index = hashTable.get(xx);
             if (index != -1) {
@@ -279,7 +279,7 @@ public abstract class Match extends RBuiltinNode {
             }
             values[i] = RRuntime.logical2int(value);
         }
-        for (int i = 0; i < result.length; ++i) {
+        for (int i = 0; i < result.length; i++) {
             int xx = x.getDataAt(i);
             boolean match = false;
             for (int j = 0; j < values.length; j++) {
@@ -304,7 +304,7 @@ public abstract class Match extends RBuiltinNode {
         if (bigTableProfile.profile(table.getLength() > (x.getLength() * TABLE_SIZE_FACTOR))) {
             hashTable = new NonRecursiveHashMapCharacter(x.getLength());
             NonRecursiveHashSetCharacter hashSet = new NonRecursiveHashSetCharacter(x.getLength());
-            for (int i = 0; i < result.length; ++i) {
+            for (int i = 0; i < result.length; i++) {
                 hashSet.add(x.getDataAt(i));
             }
             for (int i = table.getLength() - 1; i >= 0; i--) {
@@ -319,7 +319,7 @@ public abstract class Match extends RBuiltinNode {
                 hashTable.put(table.getDataAt(i), i);
             }
         }
-        for (int i = 0; i < result.length; ++i) {
+        for (int i = 0; i < result.length; i++) {
             String xx = x.getDataAt(i);
             int index = hashTable.get(xx);
             if (index != -1) {
@@ -355,7 +355,7 @@ public abstract class Match extends RBuiltinNode {
                 }
             }
         }
-        for (int i = 0; i < result.length; ++i) {
+        for (int i = 0; i < result.length; i++) {
             byte xx = x.getDataAt(i);
             boolean match = false;
             for (int j = 0; j < values.length; j++) {
@@ -381,7 +381,7 @@ public abstract class Match extends RBuiltinNode {
         for (int i = table.getLength() - 1; i >= 0; i--) {
             hashTable.put(castString(frame, table.getDataAtAsObject(i)), i);
         }
-        for (int i = 0; i < result.length; ++i) {
+        for (int i = 0; i < result.length; i++) {
             String xx = x.getDataAt(i);
             int index = hashTable.get(xx);
             if (index != -1) {
@@ -404,7 +404,7 @@ public abstract class Match extends RBuiltinNode {
         if (bigTableProfile.profile(table.getLength() > (x.getLength() * TABLE_SIZE_FACTOR))) {
             hashTable = new NonRecursiveHashMapComplex(x.getLength());
             NonRecursiveHashSetComplex hashSet = new NonRecursiveHashSetComplex(x.getLength());
-            for (int i = 0; i < result.length; ++i) {
+            for (int i = 0; i < result.length; i++) {
                 hashSet.add(x.getDataAt(i));
             }
             for (int i = table.getLength() - 1; i >= 0; i--) {
@@ -419,7 +419,7 @@ public abstract class Match extends RBuiltinNode {
                 hashTable.put(table.getDataAt(i), i);
             }
         }
-        for (int i = 0; i < result.length; ++i) {
+        for (int i = 0; i < result.length; i++) {
             RComplex xx = x.getDataAt(i);
             int index = hashTable.get(xx);
             if (index != -1) {

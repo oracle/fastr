@@ -522,7 +522,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
         List<ArgNode> rfArgs = new ArrayList<>();
         rfArgs.add(ArgNode.create(null, null, AccessVariable.create(null, tmpSymbol, false)));
         if (args.size() > 1) {
-            for (int i = 1; i < args.size(); ++i) {
+            for (int i = 1; i < args.size(); i++) {
                 rfArgs.add(args.get(i));
             }
         }

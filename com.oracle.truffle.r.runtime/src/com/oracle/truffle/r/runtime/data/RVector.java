@@ -139,7 +139,7 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
         if (getNames(attrProfiles) == null) {
             return -1;
         }
-        for (int i = 0; i < names.getLength(); ++i) {
+        for (int i = 0; i < names.getLength(); i++) {
             if (names.getDataAt(i).equals(name)) {
                 return i;
             }
@@ -159,7 +159,7 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
         }
         boolean oneMatch = false;
         int match = -1;
-        for (int i = 0; i < names.getLength(); ++i) {
+        for (int i = 0; i < names.getLength(); i++) {
             if (names.getDataAt(i).startsWith(name)) {
                 if (oneMatch) {
                     return -1;
@@ -600,7 +600,7 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
 
     public final RStringVector toStringVector() {
         String[] values = new String[getLength()];
-        for (int i = 0; i < getLength(); ++i) {
+        for (int i = 0; i < getLength(); i++) {
             values[i] = this.getDataAtAsString(i);
         }
         return RDataFactory.createStringVector(values, this.isComplete());

@@ -134,7 +134,7 @@ public abstract class AsRaw extends RBuiltinNode {
         controlVisibility();
         int length = value.getLength();
         RRawVector result = RDataFactory.createRawVector(length);
-        for (int i = 0; i < length; ++i) {
+        for (int i = 0; i < length; i++) {
             result.updateDataAt(i, castRaw(frame, value.getDataAt(i)));
         }
         return result;

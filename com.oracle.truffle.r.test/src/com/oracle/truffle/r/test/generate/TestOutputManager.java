@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -380,14 +380,14 @@ public class TestOutputManager {
         int[] positions = new int[parameters.length];
         while (index < result.length) {
             String currentString = template;
-            for (int i = 0; i < parameters.length; ++i) {
+            for (int i = 0; i < parameters.length; i++) {
                 int currentPos = positions[i];
                 currentString = currentString.replace("%" + i, parameters[i][currentPos]);
             }
             result[index] = currentString;
-            ++index;
+            index++;
 
-            for (int i = 0; i < parameters.length; ++i) {
+            for (int i = 0; i < parameters.length; i++) {
                 positions[i]++;
                 if (positions[i] == parameters[i].length) {
                     positions[i] = 0;

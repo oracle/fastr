@@ -123,7 +123,7 @@ public abstract class UpdateSubstr extends RBuiltinNode {
         int j;
         int k;
         int l;
-        for (int i = 0; i < argLength; ++i) {
+        for (int i = 0; i < argLength; i++) {
             j = i % startLength;
             k = i % stopLength;
             l = i % valueLength;

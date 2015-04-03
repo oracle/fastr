@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -125,7 +125,7 @@ public abstract class AsDouble extends RBuiltinNode {
         controlVisibility();
         double current = sequence.getStart();
         double[] result = new double[sequence.getLength()];
-        for (int i = 0; i < sequence.getLength(); ++i) {
+        for (int i = 0; i < sequence.getLength(); i++) {
             result[i] = castDouble(frame, current);
             current += sequence.getStride();
         }

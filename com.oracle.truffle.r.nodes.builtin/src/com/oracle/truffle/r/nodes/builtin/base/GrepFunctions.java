@@ -549,7 +549,7 @@ public class GrepFunctions {
             for (int i = 0; i < splits.length; i++) {
                 splits[i] = fixed == RRuntime.LOGICAL_TRUE ? split.getDataAt(i) : RegExp.checkPreDefinedClasses(split.getDataAt(i));
             }
-            for (int i = 0; i < x.getLength(); ++i) {
+            for (int i = 0; i < x.getLength(); i++) {
                 String data = x.getDataAt(i);
                 String currentSplit = splits[i % splits.length];
                 if (emptySplitProfile.profile(currentSplit.isEmpty())) {

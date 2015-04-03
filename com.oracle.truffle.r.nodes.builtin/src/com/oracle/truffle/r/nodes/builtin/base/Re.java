@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -45,7 +45,7 @@ public abstract class Re extends RBuiltinNode {
         controlVisibility();
         double[] result = new double[vector.getLength()];
         check.enable(vector);
-        for (int i = 0; i < vector.getLength(); ++i) {
+        for (int i = 0; i < vector.getLength(); i++) {
             result[i] = vector.getDataAt(i).getRealPart();
             check.check(result[i]);
         }

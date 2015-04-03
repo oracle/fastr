@@ -57,7 +57,7 @@ public class BaseGammaFunctions {
         protected RDoubleVector lgamma(RAbstractDoubleVector x) {
             naValCheck.enable(true);
             double[] result = new double[x.getLength()];
-            for (int i = 0; i < x.getLength(); ++i) {
+            for (int i = 0; i < x.getLength(); i++) {
                 double xv = x.getDataAt(i);
                 result[i] = GammaFunctions.lgammafn(xv);
                 naValCheck.check(result[i]);
@@ -110,7 +110,7 @@ public class BaseGammaFunctions {
             naValCheck.enable(x);
             double[] result = new double[x.getLength()];
             boolean warnNaN = false;
-            for (int i = 0; i < x.getLength(); ++i) {
+            for (int i = 0; i < x.getLength(); i++) {
                 double xv = x.getDataAt(i);
                 if (naValCheck.check(xv)) {
                     result[i] = xv;

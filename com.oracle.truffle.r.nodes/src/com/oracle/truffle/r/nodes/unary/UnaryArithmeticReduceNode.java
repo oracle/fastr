@@ -262,7 +262,7 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
     protected int doIntSequence(RIntSequence operand, @SuppressWarnings("unused") byte naRm) {
         int result = semantics.getIntStart();
         int current = operand.getStart();
-        for (int i = 0; i < operand.getLength(); ++i) {
+        for (int i = 0; i < operand.getLength(); i++) {
             result = arithmetic.op(result, current);
             current += operand.getStride();
         }
@@ -276,7 +276,7 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
     protected double doDoubleSequence(RDoubleSequence operand, @SuppressWarnings("unused") byte naRm) {
         double result = semantics.getDoubleStart();
         double current = operand.getStart();
-        for (int i = 0; i < operand.getLength(); ++i) {
+        for (int i = 0; i < operand.getLength(); i++) {
             result = arithmetic.op(result, current);
             current += operand.getStride();
         }
@@ -293,7 +293,7 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
             RComplex result = RRuntime.double2complex(semantics.getDoubleStart());
             int opCount = 0;
             na.enable(operand);
-            for (int i = 0; i < operand.getLength(); ++i) {
+            for (int i = 0; i < operand.getLength(); i++) {
                 RComplex current = operand.getDataAt(i);
                 if (na.check(current)) {
                     if (profiledNaRm) {
@@ -462,7 +462,7 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
             }
             // when we reach here, it means that we have already seen one non-NA element
             assert !RRuntime.isNA(result);
-            for (int i = offset + 1; i < operand.getLength(); ++i) {
+            for (int i = offset + 1; i < operand.getLength(); i++) {
                 String current = operand.getDataAt(i);
                 if (na.check(current)) {
                     if (profiledNaRm) {

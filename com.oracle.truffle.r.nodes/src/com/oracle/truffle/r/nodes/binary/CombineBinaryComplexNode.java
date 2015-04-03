@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -67,7 +67,7 @@ public abstract class CombineBinaryComplexNode extends CombineBinaryNode {
     protected RComplexVector combine(RComplexVector left, RComplex right) {
         int dataLength = left.getLength();
         double[] result = new double[(dataLength + 1) << 1];
-        for (int i = 0; i < dataLength; ++i) {
+        for (int i = 0; i < dataLength; i++) {
             RComplex leftValue = left.getDataAt(i);
             int index = i << 1;
             result[index] = leftValue.getRealPart();
@@ -84,7 +84,7 @@ public abstract class CombineBinaryComplexNode extends CombineBinaryNode {
         double[] result = new double[(1 + dataLength) << 1];
         result[0] = left.getRealPart();
         result[1] = left.getImaginaryPart();
-        for (int i = 0; i < dataLength; ++i) {
+        for (int i = 0; i < dataLength; i++) {
             int index = (i + 1) << 1;
             RComplex rightValue = right.getDataAt(i);
             result[index] = rightValue.getRealPart();

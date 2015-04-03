@@ -263,7 +263,7 @@ public abstract class CallMatcherNode extends Node {
             int argListSize = argCount;
 
             boolean hasVarArgs = false;
-            for (int fi = 0; fi < argCount; ++fi) {
+            for (int fi = 0; fi < argCount; fi++) {
                 Object arg = args[fi];
                 if (hasVarArgsProfile.profile(arg instanceof RArgsValuesAndNames)) {
                     hasVarArgs = true;
@@ -276,7 +276,7 @@ public abstract class CallMatcherNode extends Node {
                 argValues = new Object[argListSize];
                 String[] argNames = new String[argListSize];
                 int index = 0;
-                for (int fi = 0; fi < argCount; ++fi) {
+                for (int fi = 0; fi < argCount; fi++) {
                     Object arg = args[fi];
                     if (arg instanceof RArgsValuesAndNames) {
                         RArgsValuesAndNames varArgs = (RArgsValuesAndNames) arg;

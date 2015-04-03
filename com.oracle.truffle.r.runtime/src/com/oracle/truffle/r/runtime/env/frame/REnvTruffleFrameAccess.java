@@ -120,7 +120,7 @@ public class REnvTruffleFrameAccess extends REnvFrameAccessBindingsAdapter {
         FrameDescriptor fd = frame.getFrameDescriptor();
         String[] names = getStringIdentifiers(fd);
         ArrayList<String> matchedNamesList = new ArrayList<>(names.length);
-        for (int i = 0; i < names.length; ++i) {
+        for (int i = 0; i < names.length; i++) {
             String name = names[i];
             if (frame.getValue(fd.findFrameSlot(name)) == null) {
                 continue;

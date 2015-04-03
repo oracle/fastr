@@ -367,7 +367,7 @@ public abstract class PMinMax extends RBuiltinNode {
             }
             // when we reach here, it means that we have already seen one non-NA element
             assert !RRuntime.isNA(result);
-            for (int i = offset + 1; i < argValues.length; ++i) {
+            for (int i = offset + 1; i < argValues.length; i++) {
                 vec = (RAbstractStringVector) argValues[i];
                 if (vec.getLength() > 1 && vec.getLength() < maxLength && warningAdded == RRuntime.LOGICAL_FALSE) {
                     RError.warning(RError.Message.ARG_RECYCYLED);

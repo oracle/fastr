@@ -85,7 +85,7 @@ public abstract class UnaryArithmeticNode extends UnaryNode {
     @Specialization(guards = "operands.isComplete()")
     protected RDoubleVector doDoubleVector(RAbstractDoubleVector operands) {
         double[] res = new double[operands.getLength()];
-        for (int i = 0; i < operands.getLength(); ++i) {
+        for (int i = 0; i < operands.getLength(); i++) {
             res[i] = arithmetic.op(operands.getDataAt(i));
         }
         RDoubleVector ret = RDataFactory.createDoubleVector(res, RDataFactory.COMPLETE_VECTOR);
@@ -96,7 +96,7 @@ public abstract class UnaryArithmeticNode extends UnaryNode {
     @Specialization(guards = "!operands.isComplete()")
     protected RDoubleVector doDoubleVectorNA(RAbstractDoubleVector operands) {
         double[] res = new double[operands.getLength()];
-        for (int i = 0; i < operands.getLength(); ++i) {
+        for (int i = 0; i < operands.getLength(); i++) {
             if (RRuntime.isNA(operands.getDataAt(i))) {
                 res[i] = RRuntime.DOUBLE_NA;
             } else {
@@ -111,7 +111,7 @@ public abstract class UnaryArithmeticNode extends UnaryNode {
     @Specialization(guards = "operands.isComplete()")
     protected RComplexVector doComplexVector(RAbstractComplexVector operands) {
         double[] res = new double[operands.getLength() * 2];
-        for (int i = 0; i < operands.getLength(); ++i) {
+        for (int i = 0; i < operands.getLength(); i++) {
             RComplex r = arithmetic.op(operands.getDataAt(i).getRealPart(), operands.getDataAt(i).getImaginaryPart());
             res[2 * i] = r.getRealPart();
             res[2 * i + 1] = r.getImaginaryPart();
@@ -124,7 +124,7 @@ public abstract class UnaryArithmeticNode extends UnaryNode {
     @Specialization(guards = "!operands.isComplete()")
     protected RComplexVector doComplexVectorNA(RAbstractComplexVector operands) {
         double[] res = new double[operands.getLength() * 2];
-        for (int i = 0; i < operands.getLength(); ++i) {
+        for (int i = 0; i < operands.getLength(); i++) {
             if (RRuntime.isNA(operands.getDataAt(i))) {
                 res[2 * i] = RRuntime.DOUBLE_NA;
                 res[2 * i + 1] = 0.0;
@@ -142,7 +142,7 @@ public abstract class UnaryArithmeticNode extends UnaryNode {
     @Specialization(guards = "operands.isComplete()")
     protected RIntVector doIntVector(RAbstractIntVector operands) {
         int[] res = new int[operands.getLength()];
-        for (int i = 0; i < operands.getLength(); ++i) {
+        for (int i = 0; i < operands.getLength(); i++) {
             res[i] = arithmetic.op(operands.getDataAt(i));
         }
         RIntVector ret = RDataFactory.createIntVector(res, RDataFactory.COMPLETE_VECTOR);
@@ -153,7 +153,7 @@ public abstract class UnaryArithmeticNode extends UnaryNode {
     @Specialization(guards = "!operands.isComplete()")
     protected RIntVector doIntVectorNA(RAbstractIntVector operands) {
         int[] res = new int[operands.getLength()];
-        for (int i = 0; i < operands.getLength(); ++i) {
+        for (int i = 0; i < operands.getLength(); i++) {
             if (RRuntime.isNA(operands.getDataAt(i))) {
                 res[i] = RRuntime.INT_NA;
             } else {

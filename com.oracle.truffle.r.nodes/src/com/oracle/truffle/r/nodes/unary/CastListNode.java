@@ -64,7 +64,7 @@ public abstract class CastListNode extends CastNode {
     @Specialization
     protected RList doAbstractVector(RAbstractVector operand) {
         Object[] data = new Object[operand.getLength()];
-        for (int i = 0; i < data.length; ++i) {
+        for (int i = 0; i < data.length; i++) {
             data[i] = operand.getDataAtAsObject(i);
         }
         RList ret = RDataFactory.createList(data, getPreservedDimensions(operand), getPreservedNames(operand));

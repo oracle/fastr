@@ -152,7 +152,7 @@ public abstract class PrecedenceNode extends UnaryNode {
     @Specialization(guards = "recursive == LOGICAL_TRUE")
     protected int doListRecursive(VirtualFrame frame, RList val, byte recursive) {
         int precedence = -1;
-        for (int i = 0; i < val.getLength(); ++i) {
+        for (int i = 0; i < val.getLength(); i++) {
             Object data = val.getDataAt(i);
             precedence = Math.max(precedence, precedenceRecursive(frame, val.getDataAtAsObject(i), recursive));
         }

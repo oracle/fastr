@@ -878,7 +878,7 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
             }
         }
         if (notMultiple) {
-            for (int i = 0; i < length; ++i) {
+            for (int i = 0; i < length; i++) {
                 op.apply(this, result, left, right, i, j, k);
                 j = Utils.incMod(j, leftLength);
                 k = Utils.incMod(k, rightLength);
@@ -899,7 +899,7 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
         reportWork(length);
         resultNACheck.enable(arithmetic.introducesNA());
         ArrayT result = arrayConstructor.apply(length);
-        for (int i = 0; i < length; ++i) {
+        for (int i = 0; i < length; i++) {
             op.apply(this, result, source, i, tmp);
         }
         ResultT ret = resultFunction.apply(result, isComplete());
@@ -918,7 +918,7 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
         reportWork(length);
         resultNACheck.enable(arithmetic.introducesNA());
         ArrayT result = arrayConstructor.apply(source);
-        for (int i = 0; i < length; ++i) {
+        for (int i = 0; i < length; i++) {
             op.apply(this, result, i, tmp);
         }
         source.setComplete(isComplete());
@@ -965,7 +965,7 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
         rightNACheck.enable(right);
         resultNACheck.enable(arithmetic.introducesNA());
         ArrayT result = arrayConstructor.apply(length);
-        for (int i = 0; i < length; ++i) {
+        for (int i = 0; i < length; i++) {
             op.apply(this, result, left, right, i);
         }
         ResultT ret = resultFunction.apply(result, isComplete());

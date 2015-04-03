@@ -1053,7 +1053,7 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
             int positionsLength = positions.getLength();
             int dimLength = numDimensions == 1 ? container.getLength() : getDimensions(container)[dimension];
             boolean outOfBounds = false;
-            for (int i = 0; i < positionsLength; ++i) {
+            for (int i = 0; i < positionsLength; i++) {
                 int pos = positions.getDataAt(i);
                 if (positionNACheck.check(pos)) {
                     seenNA.enter();

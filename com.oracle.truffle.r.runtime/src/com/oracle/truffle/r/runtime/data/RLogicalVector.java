@@ -53,7 +53,7 @@ public final class RLogicalVector extends RVector implements RAbstractLogicalVec
 
     public RLogicalVector copyResetData(byte[] newData) {
         boolean isComplete = true;
-        for (int i = 0; i < newData.length; ++i) {
+        for (int i = 0; i < newData.length; i++) {
             if (RRuntime.isNA(newData[i])) {
                 isComplete = false;
                 break;
@@ -123,7 +123,7 @@ public final class RLogicalVector extends RVector implements RAbstractLogicalVec
         byte[] newData = Arrays.copyOf(data, size);
         if (size > this.getLength()) {
             if (fillNA) {
-                for (int i = data.length; i < size; ++i) {
+                for (int i = data.length; i < size; i++) {
                     newData[i] = RRuntime.LOGICAL_NA;
                 }
             } else {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,7 +38,7 @@ public abstract class RToDoubleVectorClosure extends RToVectorClosure implements
     public RDoubleVector materialize() {
         int length = getLength();
         double[] result = new double[length];
-        for (int i = 0; i < result.length; ++i) {
+        for (int i = 0; i < result.length; i++) {
             double data = getDataAt(i);
             result[i] = data;
         }

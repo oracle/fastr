@@ -133,7 +133,7 @@ public final class RStringVector extends RVector implements RAbstractStringVecto
         String[] newData = Arrays.copyOf(data, size);
         if (size > this.getLength()) {
             if (fill != null) {
-                for (int i = data.length; i < size; ++i) {
+                for (int i = data.length; i < size; i++) {
                     newData[i] = fill;
                 }
             } else {

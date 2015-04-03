@@ -118,7 +118,7 @@ public abstract class CastRawNode extends CastNode {
         int length = operand.getLength();
         byte[] bdata = new byte[length];
         boolean warning = false;
-        for (int i = 0; i < length; ++i) {
+        for (int i = 0; i < length; i++) {
             int intValue = operand.getDataAt(i);
             int intRawValue = RRuntime.int2rawIntValue(intValue);
             if (intRawValue != intValue) {
@@ -211,7 +211,7 @@ public abstract class CastRawNode extends CastNode {
         int length = operand.getLength();
         byte[] bdata = new byte[length];
         boolean warning = false;
-        for (int i = 0; i < length; ++i) {
+        for (int i = 0; i < length; i++) {
             double doubleValue = operand.getDataAt(i);
             int intRawValue = RRuntime.double2rawIntValue(doubleValue);
             if (intRawValue != (int) doubleValue) {

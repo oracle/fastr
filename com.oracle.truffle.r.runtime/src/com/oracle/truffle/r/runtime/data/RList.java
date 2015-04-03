@@ -204,7 +204,7 @@ public final class RList extends RVector implements RAbstractVector, RGPBits {
     private static Object[] resizeData(Object[] newData, Object[] oldData, int oldDataLength, boolean fillNA) {
         if (newData.length > oldDataLength) {
             if (fillNA) {
-                for (int i = oldDataLength; i < newData.length; ++i) {
+                for (int i = oldDataLength; i < newData.length; i++) {
                     newData[i] = RNull.instance;
                 }
             } else {

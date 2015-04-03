@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -64,7 +64,7 @@ public abstract class CombineBinaryStringNode extends CombineBinaryNode {
     protected RStringVector combine(RStringVector left, String right) {
         int dataLength = left.getLength();
         String[] result = new String[dataLength + 1];
-        for (int i = 0; i < dataLength; ++i) {
+        for (int i = 0; i < dataLength; i++) {
             result[i] = left.getDataAt(i);
         }
         result[dataLength] = right;
@@ -75,7 +75,7 @@ public abstract class CombineBinaryStringNode extends CombineBinaryNode {
     protected RStringVector combine(String left, RStringVector right) {
         int dataLength = right.getLength();
         String[] result = new String[dataLength + 1];
-        for (int i = 0; i < dataLength; ++i) {
+        for (int i = 0; i < dataLength; i++) {
             result[i + 1] = right.getDataAt(i);
         }
         result[0] = left;

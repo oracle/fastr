@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -46,7 +46,7 @@ public abstract class Col extends RBuiltinNode {
         int nrows = x.getDataAt(0);
         int ncols = x.getDataAt(1);
         int[] result = new int[nrows * ncols];
-        for (int i = 0; i < ncols; ++i) {
+        for (int i = 0; i < ncols; i++) {
             int colstart = i * nrows;
             Arrays.fill(result, colstart, colstart + nrows, i + 1);
         }

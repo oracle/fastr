@@ -75,7 +75,7 @@ public abstract class Sprintf extends RBuiltinNode {
     protected RStringVector sprintf(String fmt, RAbstractIntVector x) {
         controlVisibility();
         String[] r = new String[x.getLength()];
-        for (int k = 0; k < r.length; ++k) {
+        for (int k = 0; k < r.length; k++) {
             r[k] = format(fmt, x.getDataAt(k));
         }
         return RDataFactory.createStringVector(r, RDataFactory.COMPLETE_VECTOR);
@@ -112,7 +112,7 @@ public abstract class Sprintf extends RBuiltinNode {
     protected RStringVector sprintf(String fmt, RAbstractDoubleVector x) {
         controlVisibility();
         String[] r = new String[x.getLength()];
-        for (int k = 0; k < r.length; ++k) {
+        for (int k = 0; k < r.length; k++) {
             r[k] = sprintf(fmt, x.getDataAt(k));
         }
         return RDataFactory.createStringVector(r, RDataFactory.COMPLETE_VECTOR);
@@ -142,7 +142,7 @@ public abstract class Sprintf extends RBuiltinNode {
     protected RStringVector sprintf(String fmt, RAbstractStringVector x) {
         controlVisibility();
         String[] r = new String[x.getLength()];
-        for (int k = 0; k < r.length; ++k) {
+        for (int k = 0; k < r.length; k++) {
             r[k] = format(fmt, x.getDataAt(k));
         }
         return RDataFactory.createStringVector(r, RDataFactory.COMPLETE_VECTOR);
@@ -278,7 +278,7 @@ public abstract class Sprintf extends RBuiltinNode {
                 continue;
             }
             while (!Character.isLetter(fmt.charAt(pos + 1)) && pos < fmt.length() - 1) {
-                ++pos;
+                pos++;
             }
         }
         return f;
@@ -290,7 +290,7 @@ public abstract class Sprintf extends RBuiltinNode {
     }
 
     private static void adjustValues(Object[] args, char[] conversions) {
-        for (int i = 0; i < args.length; ++i) {
+        for (int i = 0; i < args.length; i++) {
             if (conversions[i] == 0) {
                 continue;
             }
@@ -359,23 +359,23 @@ public abstract class Sprintf extends RBuiltinNode {
                 switch (c) {
                     case '-':
                         fi.adjustLeft = true;
-                        ++j;
+                        j++;
                         break;
                     case '+':
                         fi.alwaysSign = true;
-                        ++j;
+                        j++;
                         break;
                     case ' ':
                         fi.spacePrefix = true;
-                        ++j;
+                        j++;
                         break;
                     case '0':
                         fi.padZero = true;
-                        ++j;
+                        j++;
                         break;
                     case '#':
                         fi.alternate = true;
-                        ++j;
+                        j++;
                         break;
                     case '*':
                         widthAndPrecision(cs, j, fi);
@@ -424,7 +424,7 @@ public abstract class Sprintf extends RBuiltinNode {
             } else {
                 fi.precisionIsArg = true;
             }
-            ++j;
+            j++;
             if (isNumeric(cs[j])) {
                 n = number(cs, j, fi);
                 j = fi.nextChar;

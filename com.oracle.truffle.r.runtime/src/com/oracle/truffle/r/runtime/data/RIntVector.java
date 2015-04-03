@@ -57,7 +57,7 @@ public final class RIntVector extends RVector implements RAbstractIntVector {
 
     public RIntVector copyResetData(int[] newData) {
         boolean isComplete = true;
-        for (int i = 0; i < newData.length; ++i) {
+        for (int i = 0; i < newData.length; i++) {
             if (RRuntime.isNA(newData[i])) {
                 isComplete = false;
                 break;
@@ -151,7 +151,7 @@ public final class RIntVector extends RVector implements RAbstractIntVector {
     public static int[] resizeData(int[] newData, int[] oldData, int oldDataLength, boolean fillNA) {
         if (newData.length > oldDataLength) {
             if (fillNA) {
-                for (int i = oldDataLength; i < newData.length; ++i) {
+                for (int i = oldDataLength; i < newData.length; i++) {
                     newData[i] = RRuntime.INT_NA;
                 }
             } else {

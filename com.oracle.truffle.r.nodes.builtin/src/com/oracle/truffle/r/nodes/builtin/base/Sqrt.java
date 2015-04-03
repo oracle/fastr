@@ -78,7 +78,7 @@ public abstract class Sqrt extends RBuiltinNode {
         controlVisibility();
         double[] res = new double[xs.getLength()];
         int current = xs.getStart();
-        for (int i = 0; i < xs.getLength(); ++i) {
+        for (int i = 0; i < xs.getLength(); i++) {
             double sqrt = Math.sqrt(current);
             res[i] = sqrt;
             current += xs.getStride();
@@ -93,7 +93,7 @@ public abstract class Sqrt extends RBuiltinNode {
         controlVisibility();
         double[] res = new double[xs.getLength()];
         na.enable(xs);
-        for (int i = 0; i < xs.getLength(); ++i) {
+        for (int i = 0; i < xs.getLength(); i++) {
             if (naConditionProfile.profile(na.check(xs.getDataAt(i)))) {
                 res[i] = RRuntime.DOUBLE_NA;
             } else {
