@@ -22,20 +22,14 @@
  */
 package com.oracle.truffle.r.nodes.builtin.fastr;
 
-import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.api.nodes.NodeUtil;
-import com.oracle.truffle.api.nodes.NodeUtil.NodeClass;
-import com.oracle.truffle.api.nodes.NodeUtil.NodeField;
-import com.oracle.truffle.api.nodes.NodeUtil.NodeFieldKind;
-import com.oracle.truffle.api.nodes.RootNode;
-import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.RFunction;
-import com.oracle.truffle.r.runtime.data.RNull;
-
 import java.io.*;
 
-import static com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.nodes.*;
+import com.oracle.truffle.api.nodes.NodeFieldAccessor.NodeFieldKind;
+import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.data.*;
 
 /**
  * Dump Truffle trees to a listening IGV instance, if any. If igvDump == FALSE, dumps tree to
@@ -137,12 +131,12 @@ public class FastRDumpTrees {
             StringBuilder label = new StringBuilder("label = <<TABLE>");
             label.append(ROW_START).append("<B>").append(nodeName(node)).append("</B>").append(ROW_END);
 
-            NodeField[] fields = NodeClass.get(node.getClass()).getFields();
+            NodeFieldAccessor[] fields = NodeClass.get(node.getClass()).getFields();
 
             // DATA fields are omitted when not told to be verbose
             if (verbose) {
                 // Simple DATA fields are added as name/value pairs
-                for (NodeField field : fields) {
+                for (NodeFieldAccessor field : fields) {
                     if (field.getKind() != NodeFieldKind.DATA) {
                         continue;
                     }
@@ -160,7 +154,7 @@ public class FastRDumpTrees {
                 }
             } else {
                 // If not being verbose, print at least "sourceSection"s content
-                for (NodeField field : fields) {
+                for (NodeFieldAccessor field : fields) {
                     if (FIELD_SOURCE_SECTION.equals(field.getName())) {
                         Object value = field.loadValue(node);
                         if (value == null) {
@@ -181,7 +175,7 @@ public class FastRDumpTrees {
 
             // Child and children, however, get their name and port inside the record.
             int localPortId = 0;
-            for (NodeField field : fields) {
+            for (NodeFieldAccessor field : fields) {
                 if (field.getKind() != NodeFieldKind.CHILD && field.getKind() != NodeFieldKind.CHILDREN) {
                     continue;
                 }
@@ -234,9 +228,9 @@ public class FastRDumpTrees {
         }
 
         protected void printNodeChildren(Node node, int nodeId) {
-            NodeField[] fields = NodeClass.get(node.getClass()).getFields();
+            NodeFieldAccessor[] fields = NodeClass.get(node.getClass()).getFields();
             int localPortId = 0;
-            for (NodeField field : fields) {
+            for (NodeFieldAccessor field : fields) {
                 if (field.getKind() != NodeFieldKind.CHILD && field.getKind() != NodeFieldKind.CHILDREN) {
                     continue;
                 }
