@@ -1241,7 +1241,7 @@ public class TestSimpleVectors extends TestBase {
 
         // logical equality selection
         assertEval("{ f<-function(x,l) { x[l == 3] } ; f(c(1,2,3), c(1,2,3)) ; f(c(1,2,3), 1:3) ; f(1:3, c(3,3,2)) }");
-        assertEvalNoOutput("{ f<-function(x,l) { x[l == 3] <- 4 } ; f(c(1,2,3), c(1,2,3)) ; f(c(1,2,3), 1:3) ; f(1:3, c(3,3,2)) }");
+        assertEval("{ f<-function(x,l) { x[l == 3] <- 4 } ; f(c(1,2,3), c(1,2,3)) ; f(c(1,2,3), 1:3) ; f(1:3, c(3,3,2)) }");
 
         assertEvalError("{ x <- function(){3} ; x[3:2] }");
         assertEvalError("{ x <- c(1,2,3) ; x[-1:2] }");

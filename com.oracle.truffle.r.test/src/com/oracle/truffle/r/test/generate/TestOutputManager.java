@@ -315,19 +315,15 @@ public class TestOutputManager {
      *
      * @param testElementName identification of the annotated test element, i.e.,
      *            {@code class.testmethod}.
-     * @param testMethodName name of method invoking specific test
      * @param test R test string
-     * @param testId key to record test. {@code null} for single line tests, unique name for
-     *            multi-line tests.
      * @param d handler for diagnostics
      * @param checkOnly if {@code true} do not invoke GnuR, just update map
      * @param stripTrailingWhiteSpace TODO
      * @return the GnuR output
      */
-    public String genTestResult(String testElementName, String testMethodName, String test, String testId, DiagnosticHandler d, boolean checkOnly, boolean stripTrailingWhiteSpace) {
+    public String genTestResult(String testElementName, String test, DiagnosticHandler d, boolean checkOnly, boolean stripTrailingWhiteSpace) {
         Map<String, TestInfo> testMap = getTestMap(testElementName);
-        String testKey = testId == null ? test : testId;
-        TestInfo testInfo = testMap.get(testKey);
+        TestInfo testInfo = testMap.get(test);
         if (testInfo != null) {
             if (testInfo.inCode()) {
                 // we have already seen this test - duplicates are harmless but we warn about it
@@ -337,7 +333,7 @@ public class TestOutputManager {
             testInfo.setElementName(testElementName);
             return testInfo.output;
         } else {
-            d.note("test file does not contain: " + testKey);
+            d.note("test file does not contain: " + test);
             String expected = null;
             if (!checkOnly) {
                 expected = rSession.eval(test);
@@ -345,7 +341,7 @@ public class TestOutputManager {
                     expected = stripTrailingWhitespace(expected);
                 }
             }
-            testMap.put(testKey, new TestInfo(testElementName, expected, true));
+            testMap.put(test, new TestInfo(testElementName, expected, true));
             return expected;
         }
     }

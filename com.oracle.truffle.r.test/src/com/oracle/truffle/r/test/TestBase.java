@@ -274,15 +274,6 @@ public class TestBase {
         errorWhiteList = whiteList;
     }
 
-    /*
-     * The following methods should be used by test subclasses. Why so many variants that take a
-     * single input argument? Partly it is to make clear the expectation of the test writer, e.g.
-     * assertEvalError, even though this can be deduced from the expected output. Partly this is to
-     * assist the TestGenerator; for example a test that produces no output will timeout, which the
-     * test generator will consider an error unless it is expecting it. N.B. This is no longer an
-     * issue with the one-shot GnuR session.
-     */
-
     /**
      * If this is set to {@code true}, {@link #assertEvalError} will compare the full output instead
      * of truncating leading "Error" strings and such. This means it will behave like
@@ -296,23 +287,7 @@ public class TestBase {
      * respect.
      */
     protected static void assertEval(String input) {
-        evalAndCompare(input, "assertEval");
-    }
-
-    /**
-     * Test a given string with R source against no expected output (e.g., assignment). This method
-     * is named differently so that the test generator is prepared for no output.
-     */
-    protected static void assertEvalNoOutput(String input) {
-        evalAndCompare(input, "assertEvalNoOutput");
-    }
-
-    /**
-     * Test a given R input against expected output without a newline. This method is named
-     * differently so that the test generator is prepared for the lack of newline.
-     */
-    protected static void assertEvalNoNL(String input) {
-        evalAndCompare(input, "assertEvalNoNL");
+        evalAndCompare(input);
     }
 
     /**
@@ -322,7 +297,7 @@ public class TestBase {
         if (FULL_COMPARE_ERRORS) {
             assertEval(input);
         } else {
-            assertEvalErrorOrWarning(input, "assertEvalError");
+            assertEvalErrorOrWarning(input, true);
         }
     }
 
@@ -330,50 +305,18 @@ public class TestBase {
      * Similar to {@link #assertEvalError} but for warnings.
      */
     protected static void assertEvalWarning(String input) {
-        assertEvalErrorOrWarning(input, "assertEvalWarning");
+        assertEvalErrorOrWarning(input, false);
     }
 
     /**
      * Should produce an error and a warning.
      */
     protected static void assertEvalErrorWarning(String input) {
-        assertEvalErrorAndWarning(input, "assertEvalErrorWarning");
-    }
-
-    protected static void assertEvalNoWarnings(String input) {
-        evalAndCompare(input, "assertEvalNoWarnings");
-    }
-
-    /**
-     * A variant that handles tests where the order of printing might (legitimately) be different.
-     * In this case the alternatives are explicitly provided, one of which must match the expected
-     * output. This is the one remaining case where the expected outputs are explicitly provided
-     * with the test, but we do compare them with the generated expected output as a sanity check.
-     */
-    protected static void assertEvalAlt(String input, String... expectedResults) {
-        String expected = expectedEval(input, null, "assertEvalAlt");
-        if (generatingExpected()) {
-            return;
+        String expected = expectedEval(input);
+        if (!generatingExpected()) {
+            String result = fastREval(input);
+            checkErrorAndWarning(input, expected, result);
         }
-        // Validate that one of explicitly provided expectedResults matches expected!
-        boolean ok = false;
-        for (String er : expectedResults) {
-            if (er.equals(expected)) {
-                ok = true;
-                break;
-            }
-        }
-        assertTrue(ok);
-        // Now validate our result
-        String result = fastREval(input);
-        ok = false;
-        for (String er : expectedResults) {
-            if (er.equals(result)) {
-                ok = true;
-                break;
-            }
-        }
-        assertTrue(ok);
     }
 
     /**
@@ -382,14 +325,14 @@ public class TestBase {
      *
      * @param expressions
      */
-    protected static void assertTemplateEval(String... expressions) {
+    protected static void assertTemplateEval(String[] expressions) {
         assertTemplateEval(null, expressions);
     }
 
-    protected static void assertTemplateEval(WhiteList whiteList, String... expressions) {
+    protected static void assertTemplateEval(WhiteList whiteList, String[] expressions) {
         int index = 1;
         for (String expression : expressions) {
-            String expected = expectedEval(expression, null, "assertTemplateEval");
+            String expected = expectedEval(expression);
             if (!generatingExpected()) {
                 boolean ok = true; // assume ok
                 String result = fastREval(expression);
@@ -400,9 +343,9 @@ public class TestBase {
                 if (expectedIsError && expectedHasWarning) {
                     ok = checkErrorAndWarning(expression, expected, result);
                 } else if (expectedIsError) {
-                    ok = checkErrorOrWarning(expression, expected, result, "assertEvalError");
+                    ok = checkErrorOrWarning(expression, expected, result, true);
                 } else if (expectedHasWarning) {
-                    ok = checkErrorOrWarning(expression, expected, result, "assertEvalWarning");
+                    ok = checkErrorOrWarning(expression, expected, result, false);
                 } else {
                     if (!expected.equals(result)) {
                         if (whiteList != null && whiteList.get(expression) != null) {
@@ -507,8 +450,8 @@ public class TestBase {
         return false;
     }
 
-    private static void evalAndCompare(String input, String invokeMethodName) {
-        String expected = expectedEval(input, null, invokeMethodName);
+    private static void evalAndCompare(String input) {
+        String expected = expectedEval(input);
         if (!generatingExpected()) {
             String result = fastREval(input);
             if (!expected.equals(result)) {
@@ -530,28 +473,17 @@ public class TestBase {
      * Furthermore, sometimes GnuR includes a newline and whitespace after the ':', for who knows
      * what reason, and FastR doesn't. Perhaps FastR shouldn't but perhaps it's a GnuR bug.
      */
-    private static void assertEvalErrorOrWarning(String input, String kind) {
-        String expected = expectedEval(input, null, kind);
+    private static void assertEvalErrorOrWarning(String input, boolean error) {
+        String expected = expectedEval(input);
         if (!generatingExpected()) {
             String result = fastREval(input);
-            checkErrorOrWarning(input, expected, result, kind);
+            checkErrorOrWarning(input, expected, result, error);
         }
     }
 
-    /**
-     * Similar to {@link #assertEvalErrorOrWarning} but both an error and a warning are expected.
-     */
-    private static void assertEvalErrorAndWarning(String input, String kind) {
-        String expected = expectedEval(input, null, kind);
-        if (!generatingExpected()) {
-            String result = fastREval(input);
-            checkErrorAndWarning(input, expected, result);
-        }
-    }
-
-    private static boolean checkErrorOrWarning(String input, String expected, String result, String kind) {
+    private static boolean checkErrorOrWarning(String input, String expected, String result, boolean error) {
         boolean truth;
-        if (kind.equals("assertEvalError")) {
+        if (error) {
             truth = assertTrue(result.startsWith(ERROR));
         } else {
             if (result.contains(WARNING)) {
@@ -646,19 +578,18 @@ public class TestBase {
      * Evaluate expected output from {@code input}. By default the lookup is based on {@code input}
      * but can be overridden by providing a non-null {@code testIdOrNull}.
      */
-    protected static String expectedEval(String input, String testIdOrNull, String invokeMethodName) {
+    protected static String expectedEval(String input) {
         assert !input.contains("\n") : "test input cannot contain newlines - not supported by ExpectedTestOutput.test file format";
-        String testId = testIdOrNull == null ? input : testIdOrNull;
         if (generatingExpected()) {
             // generation mode
-            return genTestResult(input, testIdOrNull, invokeMethodName);
+            return genTestResult(input);
         } else {
             // unit test mode
-            String expected = expectedOutputManager.getOutput(testId);
+            String expected = expectedOutputManager.getOutput(input);
             if (expected == null) {
                 // get the expected output dynamically (but do not update the file)
                 expectedOutputManager.createRSession();
-                expected = genTestResult(input, testIdOrNull, invokeMethodName);
+                expected = genTestResult(input);
                 if (expected == null) {
                     assertTrue(false);
                     expected = "NO EXPECTED OUTPUT";
@@ -669,8 +600,8 @@ public class TestBase {
         }
     }
 
-    private static String genTestResult(String input, String testIdOrNull, String invokeMethodName) {
-        return expectedOutputManager.genTestResult(testElementName, invokeMethodName, input, testIdOrNull, localDiagnosticHandler, expectedOutputManager.checkOnly, !keepTrailingWhiteSpace);
+    private static String genTestResult(String input) {
+        return expectedOutputManager.genTestResult(testElementName, input, localDiagnosticHandler, expectedOutputManager.checkOnly, !keepTrailingWhiteSpace);
     }
 
     protected static String[] template(String template, String[]... parameters) {

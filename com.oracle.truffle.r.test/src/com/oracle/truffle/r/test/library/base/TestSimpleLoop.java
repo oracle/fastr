@@ -32,9 +32,9 @@ public class TestSimpleLoop extends TestBase {
 
     @Test
     public void testOneIterationLoops() {
-        assertEvalNoNL("{ for (a in 1) cat(a) }");
-        assertEvalNoNL("{ for (a in 1L) cat(a) }");
-        assertEvalNoNL("{ for (a in \"xyz\") cat(a) }");
+        assertEval("{ for (a in 1) cat(a) }");
+        assertEval("{ for (a in 1L) cat(a) }");
+        assertEval("{ for (a in \"xyz\") cat(a) }");
     }
 
     @Test

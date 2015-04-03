@@ -9105,7 +9105,7 @@ Error in get("x", e) : object 'x' not found
 [1] FALSE
 
 ##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testEnvironment
-#{ h <- new.env(parent=emptyenv()) ; assign("y", 1, h) ; assign("x", 2, h) ; ls(h) }
+#{ h <- new.env(parent=emptyenv()) ; assign("y", 1, h) ; assign("x", 2, h) ; sort(ls(h)) }
 [1] "x" "y"
 
 ##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testEnvironment
@@ -10833,11 +10833,11 @@ $z
 [1] 1
 
 ##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testLookup
-#{ f <- function() { assign("x", 1) ; y <- 2 ; if (FALSE) { z <- 3 } ; ls() } ; f() }
+#{ f <- function() { assign("x", 1) ; y <- 2 ; if (FALSE) { z <- 3 } ; ls() } ; sort(f()) }
 [1] "x" "y"
 
 ##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testLookup
-#{ f <- function() { assign("x", 1) ; y <- 2 ; ls() } ; f() }
+#{ f <- function() { assign("x", 1) ; y <- 2 ; ls() } ; sort(f()) }
 [1] "x" "y"
 
 ##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testLookup
@@ -10889,7 +10889,7 @@ $z
 [1] 2
 
 ##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testLookup
-#{ f <- function() { x <- 1 ; y <- 2 ; ls() } ; f() }
+#{ f <- function() { x <- 1 ; y <- 2 ; ls() } ; sort(f()) }
 [1] "x" "y"
 
 ##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testLookup
@@ -10937,7 +10937,7 @@ $z
 [1] TRUE
 
 ##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testLookup
-#{ fu <- function() { uu <<- 23 } ; fu() ; ls(globalenv()) }
+#{ fu <- function() { uu <<- 23 } ; fu() ; sort(ls(globalenv())) }
 [1] "fu" "uu"
 
 ##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testLookup

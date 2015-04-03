@@ -407,7 +407,7 @@ public class FailingTests extends TestBase {
 
     @Test
     public void TestSimpleBuiltins_testCatIgnore_f979ff1eaf80c178d2d1b3159eb94792() {
-        assertEvalNoNL("{ cat(c(\"a\", \"b\", \"c\"), \"d\", sep=c(\"-\", \"+\")) }");
+        assertEval("{ cat(c(\"a\", \"b\", \"c\"), \"d\", sep=c(\"-\", \"+\")) }");
         check("TestSimpleBuiltins_testCatIgnore_f979ff1eaf80c178d2d1b3159eb94792");
     }
 
@@ -1507,6 +1507,12 @@ public class FailingTests extends TestBase {
     public void TestSimpleFunctions_testFunctionPrintingIgnore_ce0b9f76f47f6752297f2228240d69f9() {
         assertEval("{ exists }");
         check("TestSimpleFunctions_testFunctionPrintingIgnore_ce0b9f76f47f6752297f2228240d69f9");
+    }
+
+    @Test
+    public void TestSimpleFunctions_testVarArgPromises_ef07c7d5117a108f1ca204897cf87496() {
+        assertEval("g <- function(e) get(\"ex\", e);f <- function(e, en) {  exports <- g(e);  unlist(lapply(en, get, envir = exports, inherits = FALSE))}; e1 <- new.env(); e1n <- new.env(); assign(\"a\", \"isa\", e1n); assign(\"ex\", e1n, e1); e2 <- new.env(); e2n <- new.env(); assign(\"b\", \"isb\", e2n); assign(\"ex\", e2n, e2); ex1 <- c(\"a\"); ex2 <- c(\"b\"); f(e1, ex1); f(e2, ex2) == \"isb\"");
+        check("TestSimpleFunctions_testVarArgPromises_ef07c7d5117a108f1ca204897cf87496");
     }
 
     @Test

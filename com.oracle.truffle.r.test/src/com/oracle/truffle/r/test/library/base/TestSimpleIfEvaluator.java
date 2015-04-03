@@ -23,7 +23,7 @@ public class TestSimpleIfEvaluator extends TestBase {
 
     @Test
     public void testIfWithoutElseIgnore() {
-        assertEvalNoOutput("if(FALSE) 1");
+        assertEval("if(FALSE) 1");
     }
 
     @Test
@@ -45,7 +45,7 @@ public class TestSimpleIfEvaluator extends TestBase {
 
     @Test
     public void testIfDanglingElseIgnore() {
-        assertEvalNoOutput("if(FALSE) if (FALSE) 1 else 2");
+        assertEval("if(FALSE) if (FALSE) 1 else 2");
     }
 
     @Test

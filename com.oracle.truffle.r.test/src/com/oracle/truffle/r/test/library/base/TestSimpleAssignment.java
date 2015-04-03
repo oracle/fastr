@@ -51,9 +51,9 @@ public class TestSimpleAssignment extends TestBase {
     @Test
     public void testAssign() {
         // FIXME print regression
-        assertEvalNoOutput("{ a<-1 }");
-        assertEvalNoOutput("{ a<-FALSE ; b<-a }");
-        assertEvalNoOutput("{ x = if (FALSE) 1 }");
+        assertEval("{ a<-1 }");
+        assertEval("{ a<-FALSE ; b<-a }");
+        assertEval("{ x = if (FALSE) 1 }");
     }
 
     @Test
@@ -79,8 +79,8 @@ public class TestSimpleAssignment extends TestBase {
 
         assertEval("{ answer <<- 42 }");
 
-        assertEvalNoOutput("{ x <<- 1 }");
-        assertEvalNoOutput("{ x <<- 1 ; x }");
+        assertEval("{ x <<- 1 }");
+        assertEval("{ x <<- 1 ; x }");
         assertEval("{ a <- c(1,2,3) ; f <- function() { a[2] <- 4 } ; list(f(),a) }");
     }
 

@@ -1097,51 +1097,51 @@ public class TestSimpleBuiltins extends TestBase {
 
     @Test
     public void testCat() {
-        assertEvalNoOutput("{ cat() }");
-        assertEvalNoNL("{ cat(1) }");
-        assertEvalNoNL("{ cat(1, sep=\"\\n\") }");
-        assertEvalNoNL("{ cat(1,2,3) }");
-        assertEvalNoNL("{ cat(\"a\") }");
-        assertEvalNoNL("{ cat(\"a\", \"b\") }");
-        assertEvalNoNL("{ cat(1, \"a\") }");
-        assertEvalNoNL("{ cat(c(1,2,3)) }");
-        assertEvalNoNL("{ cat(c(\"a\",\"b\")) }");
-        assertEvalNoNL("{ cat(c(1,2,3),c(\"a\",\"b\")) }");
-        assertEvalNoNL("{ cat(TRUE) }");
-        assertEvalNoNL("{ cat(TRUE, c(1,2,3), FALSE, 7, c(\"a\",\"b\"), \"x\") }");
-        assertEvalNoNL("{ cat(1:3) }");
-        assertEvalNoNL("{ cat(\"hi\",1:3,\"hello\") }");
-        assertEvalNoNL("{ cat(2.3) }");
-        assertEvalNoNL("{ cat(1.2,3.4) }");
-        assertEvalNoNL("{ cat(c(1.2,3.4),5.6) }");
-        assertEvalNoNL("{ cat(c(TRUE,FALSE), TRUE) }");
-        assertEvalNoNL("{ cat(NULL) }");
-        assertEvalNoNL("{ cat(1L) }");
-        assertEvalNoNL("{ cat(1L, 2L, 3L) }");
-        assertEvalNoNL("{ cat(c(1L, 2L, 3L)) }");
-        assertEvalNoNL("{ cat(1,2,sep=\".\") }");
-        assertEvalNoNL("{ cat(\"hi\",1[2],\"hello\",sep=\"-\") }");
-        assertEvalNoNL("{ cat(\"hi\",1[2],\"hello\",sep=\"-\\n\") }");
-        assertEvalNoNL("{ m <- matrix(as.character(1:6), nrow=2) ; cat(m) }");
-        assertEvalNoNL("{ cat(sep=\" \", \"hello\") }");
+        assertEval("{ cat() }");
+        assertEval("{ cat(1) }");
+        assertEval("{ cat(1, sep=\"\\n\") }");
+        assertEval("{ cat(1,2,3) }");
+        assertEval("{ cat(\"a\") }");
+        assertEval("{ cat(\"a\", \"b\") }");
+        assertEval("{ cat(1, \"a\") }");
+        assertEval("{ cat(c(1,2,3)) }");
+        assertEval("{ cat(c(\"a\",\"b\")) }");
+        assertEval("{ cat(c(1,2,3),c(\"a\",\"b\")) }");
+        assertEval("{ cat(TRUE) }");
+        assertEval("{ cat(TRUE, c(1,2,3), FALSE, 7, c(\"a\",\"b\"), \"x\") }");
+        assertEval("{ cat(1:3) }");
+        assertEval("{ cat(\"hi\",1:3,\"hello\") }");
+        assertEval("{ cat(2.3) }");
+        assertEval("{ cat(1.2,3.4) }");
+        assertEval("{ cat(c(1.2,3.4),5.6) }");
+        assertEval("{ cat(c(TRUE,FALSE), TRUE) }");
+        assertEval("{ cat(NULL) }");
+        assertEval("{ cat(1L) }");
+        assertEval("{ cat(1L, 2L, 3L) }");
+        assertEval("{ cat(c(1L, 2L, 3L)) }");
+        assertEval("{ cat(1,2,sep=\".\") }");
+        assertEval("{ cat(\"hi\",1[2],\"hello\",sep=\"-\") }");
+        assertEval("{ cat(\"hi\",1[2],\"hello\",sep=\"-\\n\") }");
+        assertEval("{ m <- matrix(as.character(1:6), nrow=2) ; cat(m) }");
+        assertEval("{ cat(sep=\" \", \"hello\") }");
         assertEval("{ cat(rep(NA, 8), \"Hey\",\"Hey\",\"Goodbye\",\"\\n\") }");
-        assertEvalNoNL("{ cat(\"hi\",NULL,\"hello\",sep=\"-\") }");
-        assertEvalNoNL("{ cat(\"hi\",integer(0),\"hello\",sep=\"-\") }");
-        assertEvalNoNL("{ cat(\"a\", \"b\", \"c\", sep=c(\"-\", \"+\")) }");
+        assertEval("{ cat(\"hi\",NULL,\"hello\",sep=\"-\") }");
+        assertEval("{ cat(\"hi\",integer(0),\"hello\",sep=\"-\") }");
+        assertEval("{ cat(\"a\", \"b\", \"c\", sep=c(\"-\", \"+\")) }");
     }
 
     @Test
     public void testCatVarargs() {
-        assertEvalNoOutput("{ f <- function(...) {cat(...,sep=\"-\")}; f(\"a\") }");
-        assertEvalNoOutput("{ f <- function(...) {cat(...,sep=\"-\\n\")}; f(\"a\") }");
-        assertEvalNoOutput("{ f <- function(...) {cat(...,sep=\"-\")}; f(\"a\", \"b\") }");
-        assertEvalNoOutput("{ f <- function(...) {cat(...,sep=\"-\\n\")}; f(\"a\", \"b\") }");
+        assertEval("{ f <- function(...) {cat(...,sep=\"-\")}; f(\"a\") }");
+        assertEval("{ f <- function(...) {cat(...,sep=\"-\\n\")}; f(\"a\") }");
+        assertEval("{ f <- function(...) {cat(...,sep=\"-\")}; f(\"a\", \"b\") }");
+        assertEval("{ f <- function(...) {cat(...,sep=\"-\\n\")}; f(\"a\", \"b\") }");
     }
 
     @Test
     @Ignore
     public void testCatIgnore() {
-        assertEvalNoNL("{ cat(c(\"a\", \"b\", \"c\"), \"d\", sep=c(\"-\", \"+\")) }");
+        assertEval("{ cat(c(\"a\", \"b\", \"c\"), \"d\", sep=c(\"-\", \"+\")) }");
     }
 
     @Test
@@ -1904,9 +1904,9 @@ public class TestSimpleBuiltins extends TestBase {
         assertEvalError("{ x <- 2 ; rm(\"x\") ; get(\"x\") }");
         assertEvalError("{ get(\"x\") }");
 
-        assertEvalAlt("{ f <- function() { assign(\"x\", 1) ; y <- 2 ; ls() } ; f() }", "[1] \"x\" \"y\"\n", "[1] \"y\" \"x\"\n");
-        assertEvalAlt("{ f <- function() { x <- 1 ; y <- 2 ; ls() } ; f() }", "[1] \"x\" \"y\"\n", "[1] \"y\" \"x\"\n");
-        assertEvalAlt("{ f <- function() { assign(\"x\", 1) ; y <- 2 ; if (FALSE) { z <- 3 } ; ls() } ; f() }", "[1] \"x\" \"y\"\n", "[1] \"y\" \"x\"\n");
+        assertEval("{ f <- function() { assign(\"x\", 1) ; y <- 2 ; ls() } ; sort(f()) }");
+        assertEval("{ f <- function() { x <- 1 ; y <- 2 ; ls() } ; sort(f()) }");
+        assertEval("{ f <- function() { assign(\"x\", 1) ; y <- 2 ; if (FALSE) { z <- 3 } ; ls() } ; sort(f()) }");
         assertEval("{ f <- function() { if (FALSE) { x <- 1 } ; y <- 2 ; ls() } ; f() }");
         // the actual elements are formatted differently from GNU-R, also in different order
         assertEval("{ f <- function() { for (i in rev(1:10)) { assign(as.character(i), i) } ; ls() } ; length(f()) }");
@@ -1973,7 +1973,7 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ x <- function() {3} ; f <- function(i) { if (i == 1) { assign(\"x\", function() {4}) } ; function() { x() } } ; f1 <- f(1) ; f2 <- f(2) ; f1() ; f2() }");
 
         // lookup with super assignment
-        assertEvalAlt("{ fu <- function() { uu <<- 23 } ; fu() ; ls(globalenv()) }", "[1] \"fu\" \"uu\"\n", "[1] \"uu\" \"fu\"\n");
+        assertEval("{ fu <- function() { uu <<- 23 } ; fu() ; sort(ls(globalenv())) }");
         assertEval("{ x <- 3 ; g <- function() { if (FALSE) { x <- 2 } ; f <- function() { h <- function() { x ; hh <- function() { x <<- 4 } ; hh() } ; h() } ; f() } ; g() ; x }");
         assertEval("{ f <- function() { x <- 1 ; g <- function() { h <- function() { x <<- 2 } ; h() } ; g() ; x } ; f() }");
         assertEval("{ g <- function() { if (FALSE) { x <- 2 } ; f <- function() { assign(\"x\", 4) ; x <<- 3 } ; f() } ; g() ; x }");
@@ -2020,7 +2020,7 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ h <- new.env() ; assign(c(\"a\"), 1L, h) ; ls(h) }");
 
         assertEval("{ h <- new.env(parent=emptyenv()) ; assign(\"x\", 1, h) ; assign(\"y\", 2, h) ; ls(h) }");
-        assertEvalAlt("{ h <- new.env(parent=emptyenv()) ; assign(\"y\", 1, h) ; assign(\"x\", 2, h) ; ls(h) }", "[1] \"y\" \"x\"\n", "[1] \"x\" \"y\"\n");
+        assertEval("{ h <- new.env(parent=emptyenv()) ; assign(\"y\", 1, h) ; assign(\"x\", 2, h) ; sort(ls(h)) }");
 
         assertEval("{ hh <- new.env() ; assign(\"z\", 3, hh) ; h <- new.env(parent=hh) ; assign(\"y\", 2, h) ; get(\"z\", h) }");
 
@@ -3326,7 +3326,7 @@ public class TestSimpleBuiltins extends TestBase {
 
     @Test
     public void testInvisible() {
-        assertEvalNoOutput("{ f <- function() { invisible(23) } ; f() }");
+        assertEval("{ f <- function() { invisible(23) } ; f() }");
         assertEval("{ f <- function() { invisible(23) } ; toString(f()) }");
         assertEval("{ f <- function(x, r) { if (x) invisible(r) else r }; f(FALSE, 1) }");
         assertEval("{ f <- function(x, r) { if (x) invisible(r) else r }; f(TRUE, 1) }");

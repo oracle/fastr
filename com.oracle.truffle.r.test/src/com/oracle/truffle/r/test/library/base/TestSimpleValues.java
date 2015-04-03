@@ -153,7 +153,7 @@ public class TestSimpleValues extends TestBase {
 
     @Test
     public void testAmbiguousExpression() {
-        assertTemplateEval(new BinaryArithmeticWhiteList(), "exp(-abs((0+1i)/(0+0i)))");
+        assertTemplateEval(new BinaryArithmeticWhiteList(), new String[]{"exp(-abs((0+1i)/(0+0i)))"});
     }
 
     @Test

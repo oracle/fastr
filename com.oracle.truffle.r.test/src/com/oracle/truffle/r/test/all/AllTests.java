@@ -3681,17 +3681,17 @@ public class AllTests extends TestBase {
 
     @Test
     public void TestSimpleAssignment_testAssign_283c9530c525c82a5e49b43433fdced9() {
-        assertEvalNoOutput("{ a<-1 }");
+        assertEval("{ a<-1 }");
     }
 
     @Test
     public void TestSimpleAssignment_testAssign_e7172f616e0946e808cf73fe8c5ba64b() {
-        assertEvalNoOutput("{ a<-FALSE ; b<-a }");
+        assertEval("{ a<-FALSE ; b<-a }");
     }
 
     @Test
     public void TestSimpleAssignment_testAssign_b21774dbc3b823d809cfaf4ee17527de() {
-        assertEvalNoOutput("{ x = if (FALSE) 1 }");
+        assertEval("{ x = if (FALSE) 1 }");
     }
 
     @Test
@@ -3905,18 +3905,18 @@ public class AllTests extends TestBase {
     }
 
     @Test
-    public void TestSimpleAssignment_testSuperAssign_aa206594ebb10eb912cbc08e7c82e4e3() {
-        assertEval("{ a <- c(1,2,3) ; f <- function() { a[2] <- 4 } ; list(f(),a) }");
-    }
-
-    @Test
     public void TestSimpleAssignment_testSuperAssign_cfdf1ec04d27a60bdfe3a1bea92933e6() {
-        assertEvalNoOutput("{ x <<- 1 }");
+        assertEval("{ x <<- 1 }");
     }
 
     @Test
     public void TestSimpleAssignment_testSuperAssign_437eb5c1cc18125d4b5896cf3d2b5365() {
-        assertEvalNoOutput("{ x <<- 1 ; x }");
+        assertEval("{ x <<- 1 ; x }");
+    }
+
+    @Test
+    public void TestSimpleAssignment_testSuperAssign_aa206594ebb10eb912cbc08e7c82e4e3() {
+        assertEval("{ a <- c(1,2,3) ; f <- function() { a[2] <- 4 } ; list(f(),a) }");
     }
 
     @Test
@@ -6030,183 +6030,183 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testCat_c991c3c93c858a033c1e8f63f4994441() {
+        assertEval("{ cat() }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testCat_75fb049558704ed597a4d49441bae349() {
+        assertEval("{ cat(1) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testCat_5cd9f21c97025b5427f8244d0c0e0ffc() {
+        assertEval("{ cat(1, sep=\"\\n\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testCat_f48953c23109705840adb64bc147151b() {
+        assertEval("{ cat(1,2,3) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testCat_a81cf8070ed30384fb6e475357ba6ef8() {
+        assertEval("{ cat(\"a\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testCat_17b9c8977c744dc3a518927c5e2b3f09() {
+        assertEval("{ cat(\"a\", \"b\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testCat_eeff96fd8a6223eef32597eb5a8d122e() {
+        assertEval("{ cat(1, \"a\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testCat_7a2128db30707429040a36f92034b6cd() {
+        assertEval("{ cat(c(1,2,3)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testCat_bddd79155851c51527a56d721c6a5ca7() {
+        assertEval("{ cat(c(\"a\",\"b\")) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testCat_28b3773384f60d21783ce562b6af2054() {
+        assertEval("{ cat(c(1,2,3),c(\"a\",\"b\")) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testCat_320c1a9bf7626562dbaa7c8df589911f() {
+        assertEval("{ cat(TRUE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testCat_d0340760d75ec0574dcfb5f2911b8a76() {
+        assertEval("{ cat(TRUE, c(1,2,3), FALSE, 7, c(\"a\",\"b\"), \"x\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testCat_aa0b2066d8aae3f345ec5228155c79c9() {
+        assertEval("{ cat(1:3) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testCat_552441fae9eb3e1a0c1a2581f8262af5() {
+        assertEval("{ cat(\"hi\",1:3,\"hello\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testCat_841a466346563a15e8a9bfafef0e2b8e() {
+        assertEval("{ cat(2.3) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testCat_2b31ce579fc7c9f6166788e9922374af() {
+        assertEval("{ cat(1.2,3.4) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testCat_d2dd302303cc1c2828fdb841e9329b7d() {
+        assertEval("{ cat(c(1.2,3.4),5.6) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testCat_ce7de0a3b63f9b62750fcaeb0d4bb324() {
+        assertEval("{ cat(c(TRUE,FALSE), TRUE) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testCat_f79a3c333c0aa46279a83870d12d4e38() {
+        assertEval("{ cat(NULL) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testCat_d08462e99741a36b3646a6a147d53b1a() {
+        assertEval("{ cat(1L) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testCat_c5ec77152f3be07536df7806d49a1b49() {
+        assertEval("{ cat(1L, 2L, 3L) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testCat_c46a1d13e87c8a06a425354c68780eae() {
+        assertEval("{ cat(c(1L, 2L, 3L)) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testCat_8de12861bed933861dbbda4217d79576() {
+        assertEval("{ cat(1,2,sep=\".\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testCat_8f49d4d29ce2ef92acf8dc9735d6ebde() {
+        assertEval("{ cat(\"hi\",1[2],\"hello\",sep=\"-\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testCat_91de7df676b06ad665ce3584e334842c() {
+        assertEval("{ cat(\"hi\",1[2],\"hello\",sep=\"-\\n\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testCat_1dcd33ce696ea60d54dd157e9d0dd76f() {
+        assertEval("{ m <- matrix(as.character(1:6), nrow=2) ; cat(m) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testCat_a3f20135d23156229fddeb4a1f3b8cb0() {
+        assertEval("{ cat(sep=\" \", \"hello\") }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testCat_605cce36686bb0b231fa1fd9e485b6c3() {
         assertEval("{ cat(rep(NA, 8), \"Hey\",\"Hey\",\"Goodbye\",\"\\n\") }");
     }
 
     @Test
-    public void TestSimpleBuiltins_testCat_75fb049558704ed597a4d49441bae349() {
-        assertEvalNoNL("{ cat(1) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testCat_5cd9f21c97025b5427f8244d0c0e0ffc() {
-        assertEvalNoNL("{ cat(1, sep=\"\\n\") }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testCat_f48953c23109705840adb64bc147151b() {
-        assertEvalNoNL("{ cat(1,2,3) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testCat_a81cf8070ed30384fb6e475357ba6ef8() {
-        assertEvalNoNL("{ cat(\"a\") }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testCat_17b9c8977c744dc3a518927c5e2b3f09() {
-        assertEvalNoNL("{ cat(\"a\", \"b\") }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testCat_eeff96fd8a6223eef32597eb5a8d122e() {
-        assertEvalNoNL("{ cat(1, \"a\") }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testCat_7a2128db30707429040a36f92034b6cd() {
-        assertEvalNoNL("{ cat(c(1,2,3)) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testCat_bddd79155851c51527a56d721c6a5ca7() {
-        assertEvalNoNL("{ cat(c(\"a\",\"b\")) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testCat_28b3773384f60d21783ce562b6af2054() {
-        assertEvalNoNL("{ cat(c(1,2,3),c(\"a\",\"b\")) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testCat_320c1a9bf7626562dbaa7c8df589911f() {
-        assertEvalNoNL("{ cat(TRUE) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testCat_d0340760d75ec0574dcfb5f2911b8a76() {
-        assertEvalNoNL("{ cat(TRUE, c(1,2,3), FALSE, 7, c(\"a\",\"b\"), \"x\") }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testCat_aa0b2066d8aae3f345ec5228155c79c9() {
-        assertEvalNoNL("{ cat(1:3) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testCat_552441fae9eb3e1a0c1a2581f8262af5() {
-        assertEvalNoNL("{ cat(\"hi\",1:3,\"hello\") }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testCat_841a466346563a15e8a9bfafef0e2b8e() {
-        assertEvalNoNL("{ cat(2.3) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testCat_2b31ce579fc7c9f6166788e9922374af() {
-        assertEvalNoNL("{ cat(1.2,3.4) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testCat_d2dd302303cc1c2828fdb841e9329b7d() {
-        assertEvalNoNL("{ cat(c(1.2,3.4),5.6) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testCat_ce7de0a3b63f9b62750fcaeb0d4bb324() {
-        assertEvalNoNL("{ cat(c(TRUE,FALSE), TRUE) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testCat_f79a3c333c0aa46279a83870d12d4e38() {
-        assertEvalNoNL("{ cat(NULL) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testCat_d08462e99741a36b3646a6a147d53b1a() {
-        assertEvalNoNL("{ cat(1L) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testCat_c5ec77152f3be07536df7806d49a1b49() {
-        assertEvalNoNL("{ cat(1L, 2L, 3L) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testCat_c46a1d13e87c8a06a425354c68780eae() {
-        assertEvalNoNL("{ cat(c(1L, 2L, 3L)) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testCat_8de12861bed933861dbbda4217d79576() {
-        assertEvalNoNL("{ cat(1,2,sep=\".\") }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testCat_8f49d4d29ce2ef92acf8dc9735d6ebde() {
-        assertEvalNoNL("{ cat(\"hi\",1[2],\"hello\",sep=\"-\") }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testCat_91de7df676b06ad665ce3584e334842c() {
-        assertEvalNoNL("{ cat(\"hi\",1[2],\"hello\",sep=\"-\\n\") }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testCat_1dcd33ce696ea60d54dd157e9d0dd76f() {
-        assertEvalNoNL("{ m <- matrix(as.character(1:6), nrow=2) ; cat(m) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testCat_a3f20135d23156229fddeb4a1f3b8cb0() {
-        assertEvalNoNL("{ cat(sep=\" \", \"hello\") }");
-    }
-
-    @Test
     public void TestSimpleBuiltins_testCat_01ac467ff40598b5a055378fc7882537() {
-        assertEvalNoNL("{ cat(\"hi\",NULL,\"hello\",sep=\"-\") }");
+        assertEval("{ cat(\"hi\",NULL,\"hello\",sep=\"-\") }");
     }
 
     @Test
     public void TestSimpleBuiltins_testCat_4949a7df83738286ea025e86159c9cdc() {
-        assertEvalNoNL("{ cat(\"hi\",integer(0),\"hello\",sep=\"-\") }");
+        assertEval("{ cat(\"hi\",integer(0),\"hello\",sep=\"-\") }");
     }
 
     @Test
     public void TestSimpleBuiltins_testCat_90d0eb7682820f8871a877503c191775() {
-        assertEvalNoNL("{ cat(\"a\", \"b\", \"c\", sep=c(\"-\", \"+\")) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testCat_c991c3c93c858a033c1e8f63f4994441() {
-        assertEvalNoOutput("{ cat() }");
+        assertEval("{ cat(\"a\", \"b\", \"c\", sep=c(\"-\", \"+\")) }");
     }
 
     @Test
     public void TestSimpleBuiltins_testCatIgnore_f979ff1eaf80c178d2d1b3159eb94792() {
-        assertEvalNoNL("{ cat(c(\"a\", \"b\", \"c\"), \"d\", sep=c(\"-\", \"+\")) }");
+        assertEval("{ cat(c(\"a\", \"b\", \"c\"), \"d\", sep=c(\"-\", \"+\")) }");
     }
 
     @Test
     public void TestSimpleBuiltins_testCatVarargs_ff51d78a6902080ce5f8721aa9bd9932() {
-        assertEvalNoOutput("{ f <- function(...) {cat(...,sep=\"-\")}; f(\"a\") }");
+        assertEval("{ f <- function(...) {cat(...,sep=\"-\")}; f(\"a\") }");
     }
 
     @Test
     public void TestSimpleBuiltins_testCatVarargs_a217c0f15c1bc137c95929aaed1c51f2() {
-        assertEvalNoOutput("{ f <- function(...) {cat(...,sep=\"-\\n\")}; f(\"a\") }");
+        assertEval("{ f <- function(...) {cat(...,sep=\"-\\n\")}; f(\"a\") }");
     }
 
     @Test
     public void TestSimpleBuiltins_testCatVarargs_ca16199a5bf10ef8a2fccd05debcaf73() {
-        assertEvalNoOutput("{ f <- function(...) {cat(...,sep=\"-\")}; f(\"a\", \"b\") }");
+        assertEval("{ f <- function(...) {cat(...,sep=\"-\")}; f(\"a\", \"b\") }");
     }
 
     @Test
     public void TestSimpleBuiltins_testCatVarargs_782dd61fabc4402b2636903c37f05fe6() {
-        assertEvalNoOutput("{ f <- function(...) {cat(...,sep=\"-\\n\")}; f(\"a\", \"b\") }");
+        assertEval("{ f <- function(...) {cat(...,sep=\"-\\n\")}; f(\"a\", \"b\") }");
     }
 
     @Test
@@ -8210,6 +8210,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testEnvironment_9a4cdc988f060fc423497c054d0f6221() {
+        assertEval("{ h <- new.env(parent=emptyenv()) ; assign(\"y\", 1, h) ; assign(\"x\", 2, h) ; sort(ls(h)) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testEnvironment_b58f915b8ffcad4f39b069e781f79c8b() {
         assertEval("{ hh <- new.env() ; assign(\"z\", 3, hh) ; h <- new.env(parent=hh) ; assign(\"y\", 2, h) ; get(\"z\", h) }");
     }
@@ -8452,11 +8457,6 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testEnvironment_ce30ddfe4bd336aa1ca03e769de77455() {
         assertEval("{ ph <- new.env() ; h <- new.env(parent=ph) ; assign(\"x\", 10, h, inherits=TRUE) ; x }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testEnvironment_9da65acccab58ab951f83fcc62eb2a9d() {
-        assertEvalAlt("{ h <- new.env(parent=emptyenv()) ; assign(\"y\", 1, h) ; assign(\"x\", 2, h) ; ls(h) }");
     }
 
     @Test
@@ -9395,6 +9395,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testInvisible_45ebb4beda7d951423729ceea489852e() {
+        assertEval("{ f <- function() { invisible(23) } ; f() }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testInvisible_8469019c606ff78421cea952d395fa6b() {
         assertEval("{ f <- function() { invisible(23) } ; toString(f()) }");
     }
@@ -9417,11 +9422,6 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testInvisible_3ae8cab1c90cde308137c39d8377a6b1() {
         assertEval("{ f <- function(x, r) { if (x) return(invisible(r)) else return(r) }; f(TRUE, 1) }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testInvisible_45ebb4beda7d951423729ceea489852e() {
-        assertEvalNoOutput("{ f <- function() { invisible(23) } ; f() }");
     }
 
     @Test
@@ -10455,6 +10455,21 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testLookup_741488066b86d6e368d53fb621970c0f() {
+        assertEval("{ f <- function() { assign(\"x\", 1) ; y <- 2 ; ls() } ; sort(f()) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_a78904254c40ced722bfd79da9f08e9b() {
+        assertEval("{ f <- function() { x <- 1 ; y <- 2 ; ls() } ; sort(f()) }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testLookup_ee4b4f0a6accac36fa7ad1c9397eba1c() {
+        assertEval("{ f <- function() { assign(\"x\", 1) ; y <- 2 ; if (FALSE) { z <- 3 } ; ls() } ; sort(f()) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testLookup_5f9149f4bb0770f64df8392c8f0f1560() {
         assertEval("{ f <- function() { if (FALSE) { x <- 1 } ; y <- 2 ; ls() } ; f() }");
     }
@@ -10750,6 +10765,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testLookup_b4673277d8c47a7ada7da7998bea72cb() {
+        assertEval("{ fu <- function() { uu <<- 23 } ; fu() ; sort(ls(globalenv())) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testLookup_14f99f57844c42586b995c05bb9a1ea3() {
         assertEval("{ x <- 3 ; g <- function() { if (FALSE) { x <- 2 } ; f <- function() { h <- function() { x ; hh <- function() { x <<- 4 } ; hh() } ; h() } ; f() } ; g() ; x }");
     }
@@ -10837,26 +10857,6 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleBuiltins_testLookup_48d8f6c2d2586ee471cfa0421ea5b4ae() {
         assertEval("{ exists(\"sum\") }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testLookup_bf436a43a6caacd418317cd684d67d8e() {
-        assertEvalAlt("{ f <- function() { assign(\"x\", 1) ; y <- 2 ; ls() } ; f() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testLookup_23454b3e47dfe4aa28afa243683df359() {
-        assertEvalAlt("{ f <- function() { x <- 1 ; y <- 2 ; ls() } ; f() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testLookup_f5b6d5670ee3679c2214a7720ed4f5e9() {
-        assertEvalAlt("{ f <- function() { assign(\"x\", 1) ; y <- 2 ; if (FALSE) { z <- 3 } ; ls() } ; f() }");
-    }
-
-    @Test
-    public void TestSimpleBuiltins_testLookup_3f6070106221293533a2b2c1eab24f36() {
-        assertEvalAlt("{ fu <- function() { uu <<- 23 } ; fu() ; ls(globalenv()) }");
     }
 
     @Test
@@ -19895,6 +19895,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleFunctions_testVarArgPromises_ef07c7d5117a108f1ca204897cf87496() {
+        assertEval("g <- function(e) get(\"ex\", e);f <- function(e, en) {  exports <- g(e);  unlist(lapply(en, get, envir = exports, inherits = FALSE))}; e1 <- new.env(); e1n <- new.env(); assign(\"a\", \"isa\", e1n); assign(\"ex\", e1n, e1); e2 <- new.env(); e2n <- new.env(); assign(\"b\", \"isb\", e2n); assign(\"ex\", e2n, e2); ex1 <- c(\"a\"); ex2 <- c(\"b\"); f(e1, ex1); f(e2, ex2) == \"isb\"");
+    }
+
+    @Test
     public void TestSimpleIfEvaluator_testCast_9199af29689a0510d0f2b7657d6f9656() {
         assertEvalError("{ if (integer()) { TRUE } }");
     }
@@ -20046,7 +20051,7 @@ public class AllTests extends TestBase {
 
     @Test
     public void TestSimpleIfEvaluator_testIfDanglingElseIgnore_d73be7d76c1d5f7720c73594824df7ea() {
-        assertEvalNoOutput("if(FALSE) if (FALSE) 1 else 2");
+        assertEval("if(FALSE) if (FALSE) 1 else 2");
     }
 
     @Test
@@ -20096,7 +20101,7 @@ public class AllTests extends TestBase {
 
     @Test
     public void TestSimpleIfEvaluator_testIfWithoutElseIgnore_a1e01cf7b16f44e54f53f0bd7b7d4712() {
-        assertEvalNoOutput("if(FALSE) 1");
+        assertEval("if(FALSE) 1");
     }
 
     @Test
@@ -20441,17 +20446,17 @@ public class AllTests extends TestBase {
 
     @Test
     public void TestSimpleLoop_testOneIterationLoops_2b49e8a8d835c688af57e7939698d86a() {
-        assertEvalNoNL("{ for (a in 1) cat(a) }");
+        assertEval("{ for (a in 1) cat(a) }");
     }
 
     @Test
     public void TestSimpleLoop_testOneIterationLoops_d16fcada6748f3bb2cf6eb7647ccd86f() {
-        assertEvalNoNL("{ for (a in 1L) cat(a) }");
+        assertEval("{ for (a in 1L) cat(a) }");
     }
 
     @Test
     public void TestSimpleLoop_testOneIterationLoops_133be12813e36ebfe9c2af618ab288c8() {
-        assertEvalNoNL("{ for (a in \"xyz\") cat(a) }");
+        assertEval("{ for (a in \"xyz\") cat(a) }");
     }
 
     @Test
@@ -20866,22 +20871,22 @@ public class AllTests extends TestBase {
 
     @Test
     public void TestSimpleTruffle_test1Ignore_3ec182256a363ba8d70350f6d949593b() {
-        assertEvalNoOutput("{ f<-function(i) { if(i==1) { i } } ; f(1) ; f(2) }");
+        assertEval("{ f<-function(i) { if(i==1) { i } } ; f(1) ; f(2) }");
     }
 
     @Test
     public void TestSimpleTruffle_test1Ignore_6b932d60711336223d0b7667e5e39f6d() {
-        assertEvalNoOutput("{ f<-function() { if (!1) TRUE } ; f(); f() }");
+        assertEval("{ f<-function() { if (!1) TRUE } ; f(); f() }");
     }
 
     @Test
     public void TestSimpleTruffle_test1Ignore_97edc61479ed325f8e463f75a53a34d4() {
-        assertEvalNoOutput("{ f<-function() { if (!TRUE) 1 } ; f(); f() }");
+        assertEval("{ f<-function() { if (!TRUE) 1 } ; f(); f() }");
     }
 
     @Test
     public void TestSimpleTruffle_test1Ignore_71c46963de35ffad054f0a585f749a4f() {
-        assertEvalNoOutput("{ f<-function(i) { if (FALSE) { i } } ; f(2) ; f(1) }");
+        assertEval("{ f<-function(i) { if (FALSE) { i } } ; f(2) ; f(1) }");
     }
 
     @Test
@@ -28270,6 +28275,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleVectors_testVectorIndex_3a122572c4f5c947c4e9b5e44bd356cc() {
+        assertEval("{ f<-function(x,l) { x[l == 3] <- 4 } ; f(c(1,2,3), c(1,2,3)) ; f(c(1,2,3), 1:3) ; f(1:3, c(3,3,2)) }");
+    }
+
+    @Test
     public void TestSimpleVectors_testVectorIndex_44308cd20aba8b285780210d692923db() {
         assertEval("{ x <- c(TRUE,FALSE,TRUE) ; x[2:3] }");
     }
@@ -28622,11 +28632,6 @@ public class AllTests extends TestBase {
     @Test
     public void TestSimpleVectors_testVectorIndex_1cad751e84ef65887eda84669bd42192() {
         assertEvalError("{ x <- list(a=1,b=1:3) ; f <- function(i) { x[[i]] } ; f(c(2,2)) ; x <- f ; f(2+3i) }");
-    }
-
-    @Test
-    public void TestSimpleVectors_testVectorIndex_3a122572c4f5c947c4e9b5e44bd356cc() {
-        assertEvalNoOutput("{ f<-function(x,l) { x[l == 3] <- 4 } ; f(c(1,2,3), c(1,2,3)) ; f(c(1,2,3), 1:3) ; f(1:3, c(3,3,2)) }");
     }
 
     @Test
