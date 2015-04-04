@@ -36,7 +36,7 @@ public abstract class Unlist extends RBuiltinNode {
         return new Object[]{RMissing.instance, RRuntime.LOGICAL_TRUE, RRuntime.LOGICAL_TRUE};
     }
 
-    @Child private PrecedenceNode precedenceNode = PrecedenceNodeGen.create(null, null);
+    @Child private PrecedenceNode precedenceNode = PrecedenceNodeGen.create();
     @Child private Length lengthNode;
     @Child private RecursiveLength recursiveLengthNode;
 
@@ -151,7 +151,7 @@ public abstract class Unlist extends RBuiltinNode {
         int totalSize = 0;
         for (int i = 0; i < list.getLength(); i++) {
             Object data = list.getDataAt(i);
-            precedence = Math.max(precedence, precedenceNode.executeInteger(frame, data, recursive));
+            precedence = Math.max(precedence, precedenceNode.executeInteger(data, recursive));
             if (isRecursive) {
                 totalSize += getRecursiveLength(frame, data);
             } else {

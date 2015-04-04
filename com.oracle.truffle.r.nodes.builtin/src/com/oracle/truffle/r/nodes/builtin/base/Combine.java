@@ -46,7 +46,7 @@ public abstract class Combine extends RCastingBuiltinNode {
 
     protected static final int COMBINE_CACHED_LIMIT = PrecedenceNode.NUMBER_OF_PRECEDENCES;
 
-    @Child private PrecedenceNode precedenceNode = PrecedenceNodeGen.create(null, null);
+    @Child private PrecedenceNode precedenceNode = PrecedenceNodeGen.create();
     @Child private CombineInputCast inputCast = CombineInputCastNodeGen.create(null);
     @Child private CastToVectorNode castVector;
 
@@ -54,10 +54,10 @@ public abstract class Combine extends RCastingBuiltinNode {
 
     public abstract Object executeCombine(VirtualFrame frame, Object value);
 
-    @Specialization(limit = "1", guards = {"args.length() == cachedLength", "cachedPrecedence == precedence(frame, args, cachedLength)"})
+    @Specialization(limit = "1", guards = {"args.length() == cachedLength", "cachedPrecedence == precedence(args, cachedLength)"})
     protected Object combineLengthCached(VirtualFrame frame, RArgsValuesAndNames args, //
                     @Cached("args.length()") int cachedLength, //
-                    @Cached("precedence(frame, args, cachedLength)") int cachedPrecedence, //
+                    @Cached("precedence( args, cachedLength)") int cachedPrecedence, //
                     @Cached("createCast(cachedPrecedence)") CastNode cast, //
                     @Cached("createFold(cachedPrecedence)") CombineBinaryNode combineBinary) {
         controlVisibility();
@@ -87,9 +87,9 @@ public abstract class Combine extends RCastingBuiltinNode {
         }
     }
 
-    @Specialization(contains = "combineLengthCached", limit = "COMBINE_CACHED_LIMIT", guards = {"cachedPrecedence == precedence(frame, args, args.length())"})
+    @Specialization(contains = "combineLengthCached", limit = "COMBINE_CACHED_LIMIT", guards = {"cachedPrecedence == precedence(args, args.length())"})
     protected Object combineCached(VirtualFrame frame, RArgsValuesAndNames args, //
-                    @Cached("precedence(frame, args, args.length())") int cachedPrecedence, //
+                    @Cached("precedence(args, args.length())") int cachedPrecedence, //
                     @Cached("createCast(cachedPrecedence)") CastNode cast, //
                     @Cached("createFold(cachedPrecedence)") CombineBinaryNode combineBinary) {
         return combineLengthCached(frame, args, args.length(), cachedPrecedence, cast, combineBinary);
@@ -133,11 +133,11 @@ public abstract class Combine extends RCastingBuiltinNode {
         return resultVector;
     }
 
-    protected int precedence(VirtualFrame frame, RArgsValuesAndNames args, int length) {
+    protected int precedence(RArgsValuesAndNames args, int length) {
         int precedence = -1;
         Object[] array = args.getValues();
         for (int i = 0; i < length; i++) {
-            precedence = Math.max(precedence, precedenceNode.executeInteger(frame, array[i], RRuntime.LOGICAL_FALSE));
+            precedence = Math.max(precedence, precedenceNode.executeInteger(array[i], RRuntime.LOGICAL_FALSE));
         }
         return precedence;
     }
