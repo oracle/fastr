@@ -50,7 +50,10 @@ build: $(GNUR_DIR)/bin/R
 $(GNUR_DIR)/bin/R:
 	(cd $(GNUR_DIR); make >& make.log)
 
-copy: $(BLAS_TARGET) $(LAPACK_TARGET) $(PCRE_TARGET)
+copy: $(TARGET_DIR) $(BLAS_TARGET) $(LAPACK_TARGET) $(PCRE_TARGET)
+
+$(TARGET_DIR):
+	mkdir -p $(TARGET_DIR)
 
 $(BLAS_TARGET): $(GNUR_DIR)/lib/libRblas.$(SHARED_EXT)
 	cp $(GNUR_DIR)/lib/libRblas.$(SHARED_EXT) $(BLAS_TARGET)
@@ -63,4 +66,4 @@ $(PCRE_TARGET):
 
 clean:
 	rm -rf $(GNUR_DIR)
-	rm $(TARGET_DIR)/*
+	rm -f $(BLAS_TARGET) $(LAPACK_TARGET) $(PCRE_TARGET)

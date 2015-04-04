@@ -1,0 +1,12 @@
+/typedef struct SEXPREC \*SEXP;/
+i
+#ifdef FASTR
+#include <jni.h>
+typedef jobject SEXP;
+#else
+.
++1
+a
+#endif
+.
+w include/Rinternals.h

@@ -46,10 +46,10 @@ linked:
 	mkdir -p include
 	mkdir -p include/R_ext
 	$(foreach file,$(R_HEADERS_TO_LINK),ln -sf $(GNUR_DIR)/include/$(file) include/$(file);)
-	cp src/libintl.h .
-	sed -f sed_Rinternals src/Rinternals.h > include/Rinternals.h
+	cp src/libintl.h include
+	ed $(GNUR_DIR)/include/Rinternals.h < ed_Rinternals
 	$(foreach file,$(R_EXT_HEADERS_TO_LINK),ln -sf $(GNUR_DIR)/include/R_ext/$(file) include/R_ext/$(file);)
-	cp $(R_EXT_HEADERS_LOCAL) R_ext
+	cp $(R_EXT_HEADERS_LOCAL) include/R_ext
 	touch linked
 
 clean:

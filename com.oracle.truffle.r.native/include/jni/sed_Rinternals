@@ -1,7 +1,0 @@
-/typedef struct SEXPREC *SEXP;/i\
-#ifdef FASTR\
-#include <jni.h>\
-typedef jobject SEXP\
-#else
-/typedef struct SEXPREC *SEXP;/a\
-#endif

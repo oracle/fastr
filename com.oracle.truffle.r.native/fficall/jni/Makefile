@@ -49,7 +49,7 @@ $(C_LIB): $(OBJ) $(C_OBJECTS)
 $(OBJ):
 	mkdir -p $(OBJ)
 
-$(OBJ)/%.o: $(SRC)/%.c $(TOPDIR)/include/jni/Rinternals.h
+$(OBJ)/%.o: $(SRC)/%.c $(TOPDIR)/include/jni/include/Rinternals.h
 	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
 
 clean:
