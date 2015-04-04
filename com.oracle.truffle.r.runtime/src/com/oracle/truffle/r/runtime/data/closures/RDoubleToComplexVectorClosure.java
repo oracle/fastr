@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.data.closures;
 
-import com.oracle.truffle.r.runtime.ops.na.NACheck;
+import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
@@ -30,12 +30,17 @@ public class RDoubleToComplexVectorClosure extends RToComplexVectorClosure imple
 
     private final RAbstractDoubleVector vector;
 
-    public RDoubleToComplexVectorClosure(RAbstractDoubleVector vector, NACheck naCheck) {
-        super(vector, naCheck);
+    public RDoubleToComplexVectorClosure(RAbstractDoubleVector vector, boolean neverSeenNA) {
+        super(vector, neverSeenNA);
         this.vector = vector;
     }
 
     public RComplex getDataAt(int index) {
-        return naCheck.convertDoubleToComplex(vector.getDataAt(index));
+        double real = vector.getDataAt(index);
+        double imaginary = 0.0;
+        if (Double.isNaN(real)) {
+            real = RRuntime.COMPLEX_NA_REAL_PART;
+        }
+        return RDataFactory.createComplex(real, imaginary);
     }
 }

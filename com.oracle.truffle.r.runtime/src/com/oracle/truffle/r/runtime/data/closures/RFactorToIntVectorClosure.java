@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.runtime.data.closures;
 
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.ops.na.NACheck;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
@@ -36,24 +35,22 @@ public class RFactorToIntVectorClosure extends RToIntVectorClosure implements RA
     private final RAbstractIntVector levels;
     private final boolean withNames;
 
-    public RFactorToIntVectorClosure(RFactor factor, RAbstractIntVector levels, NACheck naCheck, boolean withNames) {
-        super(factor.getVector(), naCheck);
+    public RFactorToIntVectorClosure(RFactor factor, RAbstractIntVector levels, boolean neverSeenNA, boolean withNames) {
+        super(factor.getVector(), factor.getVector().isComplete() && neverSeenNA);
         this.vector = factor.getVector();
         assert levels != null;
         this.levels = levels;
         this.withNames = withNames;
-        naCheck.enable(this.vector);
     }
 
     public int getDataAt(int index) {
         int val = vector.getDataAt(index);
-        if (naCheck.check(val)) {
+        if (!neverSeenNA && RRuntime.isNA(val)) {
             return RRuntime.INT_NA;
         } else {
             return levels.getDataAt(val - 1);
         }
     }
-
     @Override
     public RStringVector getNames(RAttributeProfiles attrProfiles) {
         return withNames ? super.getNames(attrProfiles) : null;

@@ -31,97 +31,162 @@ public class RClosures {
     // Logical to ...
 
     public static RAbstractIntVector createLogicalToIntVector(RAbstractLogicalVector vector, NACheck check) {
-        return new RLogicalToIntVectorClosure(vector, check);
+        return createLogicalToIntVector(vector, check.neverSeenNA());
     }
 
     public static RAbstractDoubleVector createLogicalToDoubleVector(RAbstractLogicalVector vector, NACheck check) {
-        return new RLogicalToDoubleVectorClosure(vector, check);
+        return createLogicalToDoubleVector(vector, check.neverSeenNA());
     }
 
     public static RAbstractComplexVector createLogicalToComplexVector(RAbstractLogicalVector vector, NACheck check) {
-        return new RLogicalToComplexVectorClosure(vector, check);
+        return createLogicalToComplexVector(vector, check.neverSeenNA());
     }
 
     public static RAbstractStringVector createLogicalToStringVector(RAbstractLogicalVector vector, NACheck check) {
-        return new RLogicalToStringVectorClosure(vector, check);
+        return createLogicalToStringVector(vector, check.neverSeenNA());
+    }
+
+    public static RAbstractIntVector createLogicalToIntVector(RAbstractLogicalVector vector, boolean neverSeenNA) {
+        return new RLogicalToIntVectorClosure(vector, neverSeenNA);
+    }
+
+    public static RAbstractDoubleVector createLogicalToDoubleVector(RAbstractLogicalVector vector, boolean neverSeenNA) {
+        return new RLogicalToDoubleVectorClosure(vector, neverSeenNA);
+    }
+
+    public static RAbstractComplexVector createLogicalToComplexVector(RAbstractLogicalVector vector, boolean neverSeenNA) {
+        return new RLogicalToComplexVectorClosure(vector, neverSeenNA);
+    }
+
+    public static RAbstractStringVector createLogicalToStringVector(RAbstractLogicalVector vector, boolean neverSeenNA) {
+        return new RLogicalToStringVectorClosure(vector, neverSeenNA);
     }
 
     // Int to ...
 
     public static RAbstractDoubleVector createIntToDoubleVector(RAbstractIntVector vector, NACheck check) {
-        return new RIntToDoubleVectorClosure(vector, check);
+        return createIntToDoubleVector(vector, check.neverSeenNA());
     }
 
     public static RAbstractComplexVector createIntToComplexVector(RAbstractIntVector vector, NACheck check) {
-        return new RIntToComplexVectorClosure(vector, check);
+        return createIntToComplexVector(vector, check.neverSeenNA());
     }
 
     public static RAbstractStringVector createIntToStringVector(RAbstractIntVector vector, NACheck check) {
-        return new RIntToStringVectorClosure(vector, check);
+        return createIntToStringVector(vector, check.neverSeenNA());
+    }
+
+    public static RAbstractDoubleVector createIntToDoubleVector(RAbstractIntVector vector, boolean neverSeenNA) {
+        return new RIntToDoubleVectorClosure(vector, neverSeenNA);
+    }
+
+    public static RAbstractComplexVector createIntToComplexVector(RAbstractIntVector vector, boolean neverSeenNA) {
+        return new RIntToComplexVectorClosure(vector, neverSeenNA);
+    }
+
+    public static RAbstractStringVector createIntToStringVector(RAbstractIntVector vector, boolean neverSeenNA) {
+        return new RIntToStringVectorClosure(vector, neverSeenNA);
     }
 
     // Double to ...
 
     public static RAbstractComplexVector createDoubleToComplexVector(RAbstractDoubleVector vector, NACheck check) {
-        return new RDoubleToComplexVectorClosure(vector, check);
+        return createDoubleToComplexVector(vector, check.neverSeenNA());
     }
 
     public static RAbstractStringVector createDoubleToStringVector(RAbstractDoubleVector vector, NACheck check) {
-        return new RDoubleToStringVectorClosure(vector, check);
+        return createDoubleToStringVector(vector, check.neverSeenNA());
     }
 
     public static RAbstractIntVector createDoubleToIntVector(RAbstractDoubleVector vector, NACheck check) {
-        return new RDoubleToIntVectorClosure(vector, check);
+        return createDoubleToIntVector(vector, check.neverSeenNA());
     }
 
     public static RAbstractIntVector createComplexToIntVectorDiscardImaginary(RAbstractComplexVector vector, NACheck check) {
-        return new RComplexToIntVectorClosure(vector, check);
+        return createComplexToIntVectorDiscardImaginary(vector, check.neverSeenNA());
+    }
+
+    public static RAbstractComplexVector createDoubleToComplexVector(RAbstractDoubleVector vector, boolean neverSeenNA) {
+        return new RDoubleToComplexVectorClosure(vector, neverSeenNA);
+    }
+
+    public static RAbstractStringVector createDoubleToStringVector(RAbstractDoubleVector vector, boolean neverSeenNA) {
+        return new RDoubleToStringVectorClosure(vector, neverSeenNA);
+    }
+
+    public static RAbstractIntVector createDoubleToIntVector(RAbstractDoubleVector vector, boolean neverSeenNA) {
+        return new RDoubleToIntVectorClosure(vector, neverSeenNA);
+    }
+
+    public static RAbstractIntVector createComplexToIntVectorDiscardImaginary(RAbstractComplexVector vector, boolean neverSeenNA) {
+        return new RComplexToIntVectorClosure(vector, neverSeenNA);
     }
 
     // Raw to ...
 
     public static RAbstractIntVector createRawToIntVector(RAbstractRawVector vector, NACheck check) {
-        return new RRawToIntVectorClosure(vector, check);
+        return createRawToIntVector(vector, check.neverSeenNA());
     }
 
     public static RAbstractDoubleVector createRawToDoubleVector(RAbstractRawVector vector, NACheck check) {
-        return new RRawToDoubleVectorClosure(vector, check);
+        return createRawToDoubleVector(vector, check.neverSeenNA());
     }
 
     public static RAbstractComplexVector createRawToComplexVector(RAbstractRawVector vector, NACheck check) {
-        return new RRawToComplexVectorClosure(vector, check);
+        return createRawToComplexVector(vector, check.neverSeenNA());
     }
 
     public static RAbstractStringVector createRawToStringVector(RAbstractRawVector vector, NACheck check) {
-        return new RRawToStringVectorClosure(vector, check);
+        return createRawToStringVector(vector, check.neverSeenNA());
+    }
+
+    public static RAbstractIntVector createRawToIntVector(RAbstractRawVector vector, boolean neverSeenNA) {
+        return new RRawToIntVectorClosure(vector, neverSeenNA);
+    }
+
+    public static RAbstractDoubleVector createRawToDoubleVector(RAbstractRawVector vector, boolean neverSeenNA) {
+        return new RRawToDoubleVectorClosure(vector, neverSeenNA);
+    }
+
+    public static RAbstractComplexVector createRawToComplexVector(RAbstractRawVector vector, boolean neverSeenNA) {
+        return new RRawToComplexVectorClosure(vector, neverSeenNA);
+    }
+
+    public static RAbstractStringVector createRawToStringVector(RAbstractRawVector vector, boolean neverSeenNA) {
+        return new RRawToStringVectorClosure(vector, neverSeenNA);
     }
 
     // Complex to ...
 
     public static RAbstractStringVector createComplexToStringVector(RAbstractComplexVector vector, NACheck check) {
-        return new RComplexToStringVectorClosure(vector, check);
+        return createComplexToStringVector(vector, check.neverSeenNA());
+    }
+
+    public static RAbstractStringVector createComplexToStringVector(RAbstractComplexVector vector, boolean neverSeenNA) {
+        return new RComplexToStringVectorClosure(vector, neverSeenNA);
     }
 
     // Factor to vector
 
     public static RAbstractVector createFactorToVector(RFactor factor, NACheck check, boolean withNames, RAttributeProfiles attrProfiles) {
         RAbstractVector levels = factor.getLevels(attrProfiles);
+        boolean complete = check.hasNeverBeenTrue();
         if (levels == null) {
-            return new RFactorToStringVectorClosure(factor, null, check, withNames);
+            return new RFactorToStringVectorClosure(factor, null, complete, withNames);
         } else {
             if (levels.getElementClass() == RInt.class) {
-                return new RFactorToIntVectorClosure(factor, (RAbstractIntVector) levels, check, withNames);
+                return new RFactorToIntVectorClosure(factor, (RAbstractIntVector) levels, complete, withNames);
             } else if (levels.getElementClass() == RDouble.class) {
-                return new RFactorToDoubleVectorClosure(factor, (RAbstractDoubleVector) levels, check, withNames);
+                return new RFactorToDoubleVectorClosure(factor, (RAbstractDoubleVector) levels, complete, withNames);
             } else if (levels.getElementClass() == RLogical.class) {
-                return new RFactorToIntVectorClosure(factor, createLogicalToIntVector((RAbstractLogicalVector) levels, check), check, withNames);
+                return new RFactorToIntVectorClosure(factor, createLogicalToIntVector((RAbstractLogicalVector) levels, check), complete, withNames);
             } else if (levels.getElementClass() == RComplex.class) {
-                return new RFactorToComplexVectorClosure(factor, (RAbstractComplexVector) levels, check, withNames);
+                return new RFactorToComplexVectorClosure(factor, (RAbstractComplexVector) levels, complete, withNames);
             } else if (levels.getElementClass() == RString.class) {
-                return new RFactorToStringVectorClosure(factor, (RAbstractStringVector) levels, check, withNames);
+                return new RFactorToStringVectorClosure(factor, (RAbstractStringVector) levels, complete, withNames);
             } else {
                 assert levels.getElementClass() == RRaw.class;
-                return new RFactorToIntVectorClosure(factor, createRawToIntVector((RAbstractRawVector) levels, check), check, withNames);
+                return new RFactorToIntVectorClosure(factor, createRawToIntVector((RAbstractRawVector) levels, check), complete, withNames);
             }
 
         }

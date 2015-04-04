@@ -23,16 +23,15 @@
 package com.oracle.truffle.r.runtime.data.closures;
 
 import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.ops.na.NACheck;
 import com.oracle.truffle.r.runtime.data.model.*;
 
 public abstract class RToComplexVectorClosure extends RToVectorClosure implements RAbstractComplexVector {
 
-    protected final NACheck naCheck;
+    protected final boolean neverSeenNA;
 
-    public RToComplexVectorClosure(RAbstractVector vector, NACheck naCheck) {
+    public RToComplexVectorClosure(RAbstractVector vector, boolean neverSeenNA) {
         super(vector);
-        this.naCheck = naCheck;
+        this.neverSeenNA = neverSeenNA;
     }
 
     public RComplexVector materialize() {
@@ -44,7 +43,7 @@ public abstract class RToComplexVectorClosure extends RToVectorClosure implement
             result[index] = data.getRealPart();
             result[index + 1] = data.getImaginaryPart();
         }
-        return RDataFactory.createComplexVector(result, naCheck.hasNeverBeenTrue());
+        return RDataFactory.createComplexVector(result, neverSeenNA);
     }
 
     public Class<?> getElementClass() {

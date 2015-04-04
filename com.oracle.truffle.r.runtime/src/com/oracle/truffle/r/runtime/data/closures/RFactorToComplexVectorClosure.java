@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.runtime.data.closures;
 
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.ops.na.NACheck;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
@@ -36,18 +35,17 @@ public class RFactorToComplexVectorClosure extends RToComplexVectorClosure imple
     private final RAbstractComplexVector levels;
     private final boolean withNames;
 
-    public RFactorToComplexVectorClosure(RFactor factor, RAbstractComplexVector levels, NACheck naCheck, boolean withNames) {
-        super(factor.getVector(), naCheck);
+    public RFactorToComplexVectorClosure(RFactor factor, RAbstractComplexVector levels, boolean neverSeenNA, boolean withNames) {
+        super(factor.getVector(), factor.getVector().isComplete() && neverSeenNA);
         this.vector = factor.getVector();
         assert levels != null;
         this.levels = levels;
         this.withNames = withNames;
-        naCheck.enable(this.vector);
     }
 
     public RComplex getDataAt(int index) {
         int val = vector.getDataAt(index);
-        if (naCheck.check(val)) {
+        if (!neverSeenNA && RRuntime.isNA(val)) {
             return RRuntime.createComplexNA();
         } else {
             return levels.getDataAt(val - 1);

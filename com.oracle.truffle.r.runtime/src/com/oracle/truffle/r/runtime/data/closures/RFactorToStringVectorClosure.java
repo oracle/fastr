@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.runtime.data.closures;
 
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.ops.na.NACheck;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
@@ -36,15 +35,14 @@ public class RFactorToStringVectorClosure extends RToStringVectorClosure impleme
     private final RAbstractStringVector levels;
     private final boolean withNames;
 
-    public RFactorToStringVectorClosure(RFactor factor, RAbstractStringVector levels, NACheck naCheck, boolean withNames) {
-        super(factor.getVector(), naCheck);
+    public RFactorToStringVectorClosure(RFactor factor, RAbstractStringVector levels, boolean neverSeenNA, boolean withNames) {
+        super(factor.getVector(), neverSeenNA);
         this.vector = factor.getVector();
         this.levels = levels;
         this.withNames = withNames;
         if (this.levels == null) {
             RError.warning(RError.Message.IS_NA_TO_NON_VECTOR, "NULL");
         }
-        naCheck.enable(this.vector);
     }
 
     public String getDataAt(int index) {
@@ -52,11 +50,11 @@ public class RFactorToStringVectorClosure extends RToStringVectorClosure impleme
             return RRuntime.STRING_NA;
         } else {
             int val = vector.getDataAt(index);
-            if (naCheck.check(val)) {
+            if (!neverSeenNA && RRuntime.isNA(val)) {
                 return RRuntime.STRING_NA;
             } else {
                 String l = levels.getDataAt(val - 1);
-                if (naCheck.check(l)) {
+                if (!neverSeenNA && RRuntime.isNA(l)) {
                     return "NA"; // for comparison
                 } else {
                     return l;

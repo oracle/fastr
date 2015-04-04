@@ -23,16 +23,15 @@
 package com.oracle.truffle.r.runtime.data.closures;
 
 import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.ops.na.NACheck;
 import com.oracle.truffle.r.runtime.data.model.*;
 
 public abstract class RToStringVectorClosure extends RToVectorClosure implements RAbstractStringVector {
 
-    protected final NACheck naCheck;
+    protected final boolean neverSeenNA;
 
-    public RToStringVectorClosure(RAbstractVector vector, NACheck naCheck) {
+    public RToStringVectorClosure(RAbstractVector vector, boolean neverSeenNA) {
         super(vector);
-        this.naCheck = naCheck;
+        this.neverSeenNA = neverSeenNA;
     }
 
     public RStringVector materialize() {
@@ -42,7 +41,7 @@ public abstract class RToStringVectorClosure extends RToVectorClosure implements
             String data = getDataAt(i);
             result[i] = data;
         }
-        return RDataFactory.createStringVector(result, naCheck.hasNeverBeenTrue());
+        return RDataFactory.createStringVector(result, neverSeenNA);
     }
 
     public Class<?> getElementClass() {

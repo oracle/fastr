@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,19 +22,28 @@
  */
 package com.oracle.truffle.r.runtime.data.closures;
 
+import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.model.*;
-import com.oracle.truffle.r.runtime.ops.na.*;
 
 public class RDoubleToIntVectorClosure extends RToIntVectorClosure implements RAbstractIntVector {
 
     private final RAbstractDoubleVector vector;
 
-    public RDoubleToIntVectorClosure(RAbstractDoubleVector vector, NACheck naCheck) {
-        super(vector, naCheck);
+    public RDoubleToIntVectorClosure(RAbstractDoubleVector vector, boolean neverSeenNA) {
+        super(vector, neverSeenNA);
         this.vector = vector;
     }
 
     public int getDataAt(int index) {
-        return naCheck.convertDoubleToInt(vector.getDataAt(index));
+        double value = vector.getDataAt(index);
+        if (Double.isNaN(value)) {
+            return RRuntime.INT_NA;
+        }
+        int result = (int) value;
+        if (result == Integer.MIN_VALUE || value > Integer.MAX_VALUE) {
+            RError.warning(RError.Message.NA_INTRODUCED_COERCION);
+            return RRuntime.INT_NA;
+        }
+        return result;
     }
 }
