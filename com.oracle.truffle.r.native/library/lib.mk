@@ -87,6 +87,6 @@ $(OBJ)/%.o: $(SRC)/%.f
 	$(FC) $(CFLAGS) -c $< -o $@
 
 clean: 
-	rm -f $(LIBDIR)/*
+	rm -rf $(LIBDIR)/*
 	rm -rf $(FASTR_LIBDIR)/$(PKG)
 

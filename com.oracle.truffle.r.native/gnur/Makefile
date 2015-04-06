@@ -39,11 +39,11 @@ all: Makefile $(GNUR_DIR) config build copy
 
 $(GNUR_DIR): 
 	tar xf $(TOPDIR)/../lib/R-$(R_VERSION).tar.gz
-	
+
 config: $(GNUR_DIR)/Makefile
 
 $(GNUR_DIR)/Makefile: 
-	(cd $(GNUR_DIR); ./configure --with-x=no --without-recommended-packages >& /dev/null)
+	(cd $(GNUR_DIR); ./configure --with-x=no --without-recommended-packages --enable-R-shlib >& /dev/null)
 
 build: $(GNUR_DIR)/bin/R
 
