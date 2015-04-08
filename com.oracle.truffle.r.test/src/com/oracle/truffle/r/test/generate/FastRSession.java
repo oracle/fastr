@@ -123,11 +123,11 @@ public final class FastRSession implements RSession {
     }
 
     @SuppressWarnings("deprecation")
-    public String eval(String expression) {
+    public String eval(String expression) throws Throwable {
         consoleHandler.reset();
 
         EvalThread thread = evalThread;
-        if (thread == null || !thread.isAlive() || thread.isDying) {
+        if (thread == null || !thread.isAlive()) {
             thread = new EvalThread();
             thread.setName("FastR evaluation");
             thread.start();
@@ -145,13 +145,17 @@ public final class FastRSession implements RSession {
         } catch (InterruptedException e1) {
             e1.printStackTrace();
         }
+        if (thread.killedByException != null) {
+            evalThread = null;
+            throw thread.killedByException;
+        }
         return consoleHandler.buffer.toString();
     }
 
     private static final class EvalThread extends Thread {
 
         private volatile String expression;
-        private volatile boolean isDying;
+        private volatile Throwable killedByException;
         private final Semaphore entry = new Semaphore(0);
         private final Semaphore exit = new Semaphore(0);
 
@@ -174,8 +178,10 @@ public final class FastRSession implements RSession {
                 }
                 try {
                     REngine.getInstance().parseAndEvalTest(expression, true);
+                } catch (RError e) {
+                    // nothing to do
                 } catch (Throwable t) {
-                    isDying = true;
+                    killedByException = t;
                 } finally {
                     exit.release();
                 }

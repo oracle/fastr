@@ -322,7 +322,7 @@ public class AnalyzeRBuiltin {
                 try {
                     contents = Files.readAllLines(file.toPath());
                 } catch (MalformedInputException | UnmappableCharacterException e) {
-                    for (Charset charset : new Charset[]{Charset.forName("ISO-8859-1")}) {
+                    for (Charset charset : new Charset[]{StandardCharsets.ISO_8859_1}) {
                         try {
                             contents = Files.readAllLines(file.toPath(), charset);
                             break;

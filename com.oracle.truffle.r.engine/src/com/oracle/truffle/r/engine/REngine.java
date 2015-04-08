@@ -191,17 +191,59 @@ public final class REngine implements RContext.Engine {
         return childTimes;
     }
 
-    public Object parseAndEval(Source sourceDesc, MaterializedFrame frame, REnvironment envForFrame, boolean printResult, boolean allowIncompleteSource) {
-        return parseAndEvalImpl(new ANTLRStringStream(sourceDesc.getCode()), sourceDesc, frame, printResult, allowIncompleteSource);
+    @Override
+    public Object parseAndEval(Source source, MaterializedFrame frame, REnvironment envForFrame, boolean printResult, boolean allowIncompleteSource) {
+        try {
+            return parseAndEvalImpl(source, frame, printResult, allowIncompleteSource);
+        } catch (RecognitionException e) {
+            writeStderr("Exception while parsing: " + e, true);
+            e.printStackTrace();
+            return null;
+        } catch (UnsupportedSpecializationException use) {
+            writeStderr("Unsupported specialization in node " + use.getNode().getClass().getSimpleName() + " - supplied values: " +
+                            Arrays.asList(use.getSuppliedValues()).stream().map(v -> v == null ? "null" : v.getClass().getSimpleName()).collect(Collectors.toList()), true);
+            use.printStackTrace();
+            return null;
+        } catch (DebugExitException | BrowserQuitException e) {
+            throw e;
+        } catch (Throwable t) {
+            writeStderr("Exception while parsing: " + t, true);
+            t.printStackTrace();
+            return null;
+        }
     }
 
-    public Object parseAndEvalTest(String rscript, boolean printResult) {
+    @Override
+    public Object parseAndEvalTest(String rscript, boolean printResult) throws RecognitionException {
         // We first remove all the definitions from the previous test
         MaterializedFrame globalFrame = REnvironment.globalEnv().getFrame();
         for (FrameSlot slot : globalFrame.getFrameDescriptor().getSlots()) {
             FrameSlotChangeMonitor.setObjectAndInvalidate(globalFrame, slot, null, true, null);
         }
-        return parseAndEvalImpl(new ANTLRStringStream(rscript), Source.fromText(rscript, "<test_input>"), REnvironment.globalEnv().getFrame(), printResult, false);
+        return parseAndEvalImpl(Source.fromText(rscript, "<test_input>"), REnvironment.globalEnv().getFrame(), printResult, false);
+    }
+
+    private static Object parseAndEvalImpl(Source source, MaterializedFrame frame, boolean printResult, boolean allowIncompleteSource) throws RecognitionException {
+        RNode node;
+        try {
+            node = parseToRNode(source);
+        } catch (NoViableAltException | MismatchedTokenException e) {
+            if (e.token.getType() == Token.EOF && allowIncompleteSource) {
+                // the parser got stuck at the eof, request another line
+                return INCOMPLETE_SOURCE;
+            }
+            String line = source.getCode(e.line);
+            String message = "Error: unexpected '" + e.token.getText() + "' in \"" + line.substring(0, Math.min(line.length(), e.charPositionInLine + 1)) + "\"";
+            writeStderr(source.getLineCount() == 1 ? message : (message + " (line " + e.line + ")"), true);
+            return null;
+        }
+        try {
+            RootCallTarget callTarget = doMakeCallTarget(node, "<repl wrapper>");
+            return runCall(callTarget, frame, printResult, true);
+        } catch (RError e) {
+            // RError prints the correct result on the console
+            return null;
+        }
     }
 
     public RExpression parse(Source source) throws RContext.Engine.ParseException {
@@ -300,44 +342,14 @@ public final class REngine implements RContext.Engine {
         return evalTarget(closure.getCallTarget(), callSrc, env, null, RArguments.getDepth(frame));
     }
 
-    private static Object parseAndEvalImpl(ANTLRStringStream stream, Source source, MaterializedFrame frame, boolean printResult, boolean allowIncompleteSource) {
-        try {
-            RootCallTarget callTarget = doMakeCallTarget(parseToRNode(stream, source), "<repl wrapper>");
-            return runCall(callTarget, frame, printResult, true);
-        } catch (NoViableAltException | MismatchedTokenException e) {
-            if (e.token.getType() == Token.EOF && allowIncompleteSource) {
-                // the parser got stuck at the eof, request another line
-                return INCOMPLETE_SOURCE;
-            }
-            String line = source.getCode(e.line);
-            String message = "Error: unexpected '" + e.token.getText() + "' in \"" + line.substring(0, Math.min(line.length(), e.charPositionInLine + 1)) + "\"";
-            writeStderr(source.getLineCount() == 1 ? message : (message + " (line " + e.line + ")"), true);
-            return null;
-        } catch (RError e) {
-            return null;
-        } catch (UnsupportedSpecializationException use) {
-            writeStderr("Unsupported specialization in node " + use.getNode().getClass().getSimpleName() + " - supplied values: " +
-                            Arrays.asList(use.getSuppliedValues()).stream().map(v -> v == null ? "null" : v.getClass().getSimpleName()).collect(Collectors.toList()), true);
-            throw use;
-        } catch (DebugExitException | BrowserQuitException e) {
-            throw e;
-        } catch (RecognitionException | RuntimeException e) {
-            writeStderr("Exception while parsing: " + e, true);
-            e.printStackTrace();
-            return null;
-        }
-    }
-
     /**
      * Parses a text stream into a Truffle AST.
      *
-     * @param stream
-     * @param source
      * @return the root node of the Truffle AST
      * @throws RecognitionException on parse error
      */
-    private static RNode parseToRNode(ANTLRStringStream stream, Source source) throws RecognitionException {
-        return transform(ParseUtil.parseAST(stream, source));
+    private static RNode parseToRNode(Source source) throws RecognitionException {
+        return transform(ParseUtil.parseAST(new ANTLRStringStream(source.getCode()), source));
     }
 
     /**

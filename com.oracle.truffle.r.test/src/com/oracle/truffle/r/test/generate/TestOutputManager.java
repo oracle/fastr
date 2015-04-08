@@ -25,6 +25,8 @@ package com.oracle.truffle.r.test.generate;
 import java.io.*;
 import java.util.*;
 
+import com.oracle.graal.compiler.common.*;
+
 /**
  * Supports the management of expected test output.
  *
@@ -336,7 +338,11 @@ public class TestOutputManager {
             d.note("test file does not contain: " + test);
             String expected = null;
             if (!checkOnly) {
-                expected = rSession.eval(test);
+                try {
+                    expected = rSession.eval(test);
+                } catch (Throwable e) {
+                    throw GraalInternalError.shouldNotReachHere("unexpected exception thrown by GNUR session: " + e);
+                }
                 expected = prepareResult(expected, keepTrailingWhiteSpace);
             }
             testMap.put(test, new TestInfo(testElementName, expected, true));

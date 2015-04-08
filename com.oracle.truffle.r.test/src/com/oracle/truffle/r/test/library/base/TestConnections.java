@@ -55,7 +55,9 @@ public class TestConnections extends TestBase {
 
     @AfterClass
     public static void teardownTestDir() {
-        assertTrue(deleteDir(testDir.testDirPath));
+        if (!deleteDir(testDir.testDirPath)) {
+            throw new AssertionError();
+        }
     }
 
     @Test

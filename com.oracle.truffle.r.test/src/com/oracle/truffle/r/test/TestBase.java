@@ -15,6 +15,7 @@ import java.net.*;
 import java.nio.file.*;
 import java.nio.file.attribute.*;
 import java.util.*;
+import java.util.Map.Entry;
 import java.util.regex.*;
 
 import static org.junit.Assert.fail;
@@ -37,11 +38,33 @@ import com.oracle.truffle.r.test.generate.*;
  * in the {@link #afterTest()} method.
  */
 public class TestBase {
+
+    private static final boolean ProcessFailedTests = Boolean.getBoolean("ProcessFailedTests");
+
     public static enum Output implements TestTrait {
         ContainsError,
         ContainsWarning,
         MayContainError,
-        MayContainWarning
+        MayContainWarning;
+    }
+
+    public static enum Ignored implements TestTrait {
+        Unknown("failing tests that have not been classified yet"),
+        Unstable("tests that produce inconsistent results in GNUR"),
+        OutputFormatting("tests that fail because of problems with output formatting"),
+        ParserError("tests that fail because of bugs in the parser"),
+        SideEffects("tests that are ignored because they would interfere with other tests"),
+        Unimplemented("tests that fail because of missing functionality");
+
+        private final String description;
+
+        private Ignored(String description) {
+            this.description = description;
+        }
+
+        public String getDescription() {
+            return description;
+        }
     }
 
     /**
@@ -259,6 +282,17 @@ public class TestBase {
      */
     private static ArrayList<String> failedMicroTests;
 
+    private static ArrayList<String> unexpectedSuccessfulMicroTests = new ArrayList<>();
+
+    private static SortedMap<String, Integer> exceptionCounts = new TreeMap<>();
+
+    private static int successfulTestCount;
+    private static int ignoredTestCount;
+    private static int failedTestCount;
+    private static int successfulInputCount;
+    private static int ignoredInputCount;
+    private static int failedInputCount;
+
     /**
      * A way to limit which tests are actually run. TODO requires more JUnit support for filtering
      * in the wrapper.
@@ -342,17 +376,18 @@ public class TestBase {
         return cwd.relativize(path);
     }
 
-    /**
-     * The method to call when a micro-test fails.
-     */
-    protected static boolean assertTrue(boolean truth) {
-        if (!truth) {
-            microTestFailed();
+    private static void microTestFailed() {
+        if (!ProcessFailedTests) {
+            System.err.printf("%nMicro-test failute: %s%n", getTestContext());
+            System.err.printf("%16s %s%n", "Expression:", microTestInfo.expression);
+            System.err.printf("%16s %s", "Expected output:", microTestInfo.expectedOutput);
+            System.err.printf("%16s %s%n", "FastR output:", microTestInfo.fastROutput);
+
+            failedMicroTests.add(getTestContext());
         }
-        return true;
     }
 
-    private static void microTestFailed() {
+    private static String getTestContext() {
         // We want the stack trace as if the JUnit test failed
         RuntimeException ex = new RuntimeException();
         // The first method not in TestBase is the culprit
@@ -364,73 +399,83 @@ public class TestBase {
             }
         }
         String context = String.format("%s(%s:%d)", culprit.getMethodName(), culprit.getClassName(), culprit.getLineNumber());
-        System.err.printf("%nMicro-test failute: %s%n", context);
-        System.err.printf("%16s %s%n", "Expression:", microTestInfo.expression);
-        System.err.printf("%16s %s", "Expected output:", microTestInfo.expectedOutput);
-        System.err.printf("%16s %s%n", "FastR output:", microTestInfo.fastROutput);
-
-        failedMicroTests.add(context);
-    }
-
-    protected static boolean assertFalse() {
-        assertTrue(false);
-        return false;
+        return context;
     }
 
     private void evalAndCompare(String[] inputs, TestTrait... traits) {
         WhiteList[] whiteLists = TestTrait.collect(traits, WhiteList.class);
+
+        boolean ignored = TestTrait.contains(traits, Ignored.class) ^ (ProcessFailedTests && !TestTrait.contains(traits, Ignored.Unstable));
+
+        boolean containsWarning = TestTrait.contains(traits, Output.ContainsWarning);
+        boolean containsError = (!FULL_COMPARE_ERRORS && TestTrait.contains(traits, Output.ContainsError));
+        boolean mayContainWarning = TestTrait.contains(traits, Output.MayContainWarning);
+        boolean mayContainError = TestTrait.contains(traits, Output.MayContainError);
+
         int index = 1;
+        boolean allOk = true;
         for (String input : inputs) {
             String expected = expectedEval(input);
-            if (!generatingExpected()) {
+            if (ignored || generatingExpected()) {
+                ignoredInputCount++;
+            } else {
                 String result = fastREval(input);
 
-                if (!expected.equals(result)) {
-                    boolean foundInWhitelist = false;
-                    for (WhiteList list : whiteLists) {
-                        WhiteList.Results wlr = list.get(input);
-                        if (wlr != null) {
-                            assertTrue(wlr.expected.equals(expected));
-                            if (wlr.fastR.equals(result)) {
-                                list.markUsed(input);
-                                foundInWhitelist = true;
-                                break;
-                            }
-                        }
+                boolean ok;
+                if (expected.equals(result) || searchWhiteLists(whiteLists, input, expected, result)) {
+                    ok = true;
+                } else {
+                    if (containsWarning || (mayContainWarning && expected.contains(WARNING))) {
+                        String resultWarning = getWarningMessage(result);
+                        String expectedWarning = getWarningMessage(expected);
+                        ok = resultWarning.equals(expectedWarning);
+                        result = getOutputWithoutWarning(result);
+                        expected = getOutputWithoutWarning(expected);
+                    } else {
+                        ok = true;
                     }
-                    if (!foundInWhitelist) {
-                        boolean containsError = (!FULL_COMPARE_ERRORS && TestTrait.contains(traits, Output.ContainsError)) ||
-                                        (TestTrait.contains(traits, Output.MayContainError) && expected.startsWith(ERROR));
-                        boolean containsWarning = TestTrait.contains(traits, Output.ContainsWarning) || (TestTrait.contains(traits, Output.MayContainWarning) && expected.contains(WARNING));
-
-                        boolean ok;
-                        if (containsError && !assertTrue(result.startsWith(ERROR))) {
-                            ok = false;
+                    if (ok) {
+                        if (containsError || (mayContainError && expected.startsWith(ERROR))) {
+                            ok = result.startsWith(ERROR) && checkMessageStripped(expected, result);
                         } else {
-                            if (containsWarning) {
-                                String resultWarning = getWarningMessage(result);
-                                String expectedWarning = getWarningMessage(expected);
-                                ok = assertTrue(resultWarning.equals(expectedWarning));
-                                result = getOutputWithoutWarning(result);
-                                expected = getOutputWithoutWarning(expected);
-                            }
-                            if (containsError) {
-                                ok = checkMessageStripped(expected, result);
-                            } else {
-                                ok = assertTrue(expected.equals(result));
-                            }
-                        }
-                        if (!ok) {
-                            System.out.print('E');
+                            ok = expected.equals(result);
                         }
                     }
                 }
+                if (ProcessFailedTests) {
+                    if (ok) {
+                        unexpectedSuccessfulMicroTests.add(getTestContext() + ": " + input);
+                    } else if (expected.startsWith(ERROR) && result.startsWith(ERROR)) {
+                        if (checkMessageStripped(expected, result)) {
+                            unexpectedSuccessfulMicroTests.add("<error> " + getTestContext() + ": " + input);
+                        }
+                    } else if (expected.contains(WARNING) && result.contains(WARNING)) {
+                        if (getOutputWithoutWarning(expected).equals(getOutputWithoutWarning(result)) && getWarningMessage(expected).equals(getWarningMessage(result))) {
+                            unexpectedSuccessfulMicroTests.add("<warning> " + getTestContext() + ": " + input);
+                        }
+                    }
+                }
+                if (ok) {
+                    successfulInputCount++;
+                } else {
+                    failedInputCount++;
+                    microTestFailed();
+                    System.out.print('E');
+                }
+                allOk &= allOk;
                 afterMicroTest();
             }
             if ((index) % 100 == 0) {
                 System.out.print('.');
             }
             index++;
+        }
+        if (ignored) {
+            ignoredTestCount++;
+        } else if (allOk) {
+            successfulTestCount++;
+        } else {
+            failedTestCount++;
         }
         if (!generatingExpected()) {
             for (WhiteList list : whiteLists) {
@@ -439,14 +484,32 @@ public class TestBase {
         }
     }
 
-    private static final Pattern warningPattern1 = Pattern.compile("^(?<pre>.*)Warning messages:\n1:(?<msg0>.*)\n2:(?<msg1>.*)\n3:(?<msg2>.*)\n4:(?<msg3>.*)$", Pattern.DOTALL);
-    private static final Pattern warningPattern2 = Pattern.compile("^(?<pre>.*)Warning messages:\n1:(?<msg0>.*)\n2:(?<msg1>.*)\n3:(?<msg2>.*)$", Pattern.DOTALL);
-    private static final Pattern warningPattern3 = Pattern.compile("^(?<pre>.*)Warning messages:\n1:(?<msg0>.*)\n2:(?<msg1>.*)$", Pattern.DOTALL);
-    private static final Pattern warningPattern4 = Pattern.compile("^(?<pre>.*)Warning message:(?<msg0>.*)$", Pattern.DOTALL);
+    private static boolean searchWhiteLists(WhiteList[] whiteLists, String input, String expected, String result) {
+        for (WhiteList list : whiteLists) {
+            WhiteList.Results wlr = list.get(input);
+            if (wlr != null) {
+                if (!wlr.expected.equals(expected)) {
+                    System.out.println("expected output does not match: " + wlr.expected + " vs. " + expected);
+                    return false;
+                }
+                if (wlr.fastR.equals(result)) {
+                    list.markUsed(input);
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private static final Pattern warningPattern1 = Pattern.compile("^(?<pre>.*)Warning messages:\n1:(?<msg0>.*)\n2:(?<msg1>.*)\n3:(?<msg2>.*)\n4:(?<msg3>.*)5:(?<msg4>.*)$", Pattern.DOTALL);
+    private static final Pattern warningPattern2 = Pattern.compile("^(?<pre>.*)Warning messages:\n1:(?<msg0>.*)\n2:(?<msg1>.*)\n3:(?<msg2>.*)\n4:(?<msg3>.*)$", Pattern.DOTALL);
+    private static final Pattern warningPattern3 = Pattern.compile("^(?<pre>.*)Warning messages:\n1:(?<msg0>.*)\n2:(?<msg1>.*)\n3:(?<msg2>.*)$", Pattern.DOTALL);
+    private static final Pattern warningPattern4 = Pattern.compile("^(?<pre>.*)Warning messages:\n1:(?<msg0>.*)\n2:(?<msg1>.*)$", Pattern.DOTALL);
+    private static final Pattern warningPattern5 = Pattern.compile("^(?<pre>.*)Warning message:(?<msg0>.*)$", Pattern.DOTALL);
 
     private static final Pattern warningMessagePattern = Pattern.compile("^\n? ? ?(?:In .* :[ \n])?(?<m>[^\n]*)\n?$", Pattern.DOTALL);
 
-    private static final Pattern[] warningPatterns = new Pattern[]{warningPattern1, warningPattern2, warningPattern3, warningPattern4};
+    private static final Pattern[] warningPatterns = new Pattern[]{warningPattern1, warningPattern2, warningPattern3, warningPattern4, warningPattern5};
 
     private static Matcher getWarningMatcher(String output) {
         for (Pattern pattern : warningPatterns) {
@@ -464,7 +527,7 @@ public class TestBase {
             return "";
         }
         StringBuilder str = new StringBuilder();
-        for (int i = 0; i < 4; i++) {
+        for (int i = 0; i < warningPatterns.length; i++) {
             try {
                 String message = matcher.group("msg" + i);
                 Matcher messageMatcher = warningMessagePattern.matcher(message);
@@ -489,10 +552,12 @@ public class TestBase {
     private static boolean checkMessageStripped(String expected, String result) {
         int cxr = result.lastIndexOf(':');
         int cxe = expected.lastIndexOf(':');
-        assertTrue(cxr > 0 && cxe > 0);
+        if (cxr < 0 || cxe < 0) {
+            return false;
+        }
         String resultStripped = stripWhitespace(result, cxr + 1);
         String expectedStripped = stripWhitespace(expected, cxe + 1);
-        return assertTrue(resultStripped.equals(expectedStripped));
+        return resultStripped.equals(expectedStripped);
     }
 
     private static String stripWhitespace(String r, int ix) {
@@ -513,7 +578,15 @@ public class TestBase {
      */
     protected static String fastREval(String input) {
         microTestInfo.expression = input;
-        String result = fastROutputManager.fastRSession.eval(input);
+        String result;
+        try {
+            result = fastROutputManager.fastRSession.eval(input);
+        } catch (Throwable e) {
+            String clazz = e.getClass().getSimpleName();
+            Integer count = exceptionCounts.get(clazz);
+            exceptionCounts.put(clazz, count == null ? 1 : count + 1);
+            result = e.toString();
+        }
         if (fastROutputManager.outputFile != null) {
             fastROutputManager.addTestResult(testElementName, input, result);
         }
@@ -542,8 +615,7 @@ public class TestBase {
                 expectedOutputManager.createRSession();
                 expected = genTestResult(input);
                 if (expected == null) {
-                    assertTrue(false);
-                    expected = "NO EXPECTED OUTPUT";
+                    expected = "<<NO EXPECTED OUTPUT>>";
                 }
             }
             microTestInfo.expectedOutput = expected;
@@ -616,4 +688,32 @@ public class TestBase {
     }
 
     private static final DeleteVisitor DELETE_VISITOR = new DeleteVisitor();
+
+    static {
+        Runtime.getRuntime().addShutdownHook(new Thread() {
+            @Override
+            public void run() {
+                if (!unexpectedSuccessfulMicroTests.isEmpty()) {
+                    System.out.println("Unexpectedly successful tests:");
+                    for (String test : unexpectedSuccessfulMicroTests) {
+                        System.out.println(test);
+                    }
+                }
+                if (!exceptionCounts.isEmpty()) {
+                    System.out.println("Exceptions encountered during test runs:");
+                    for (Entry<String, Integer> entry : exceptionCounts.entrySet()) {
+                        System.out.println(entry);
+                    }
+                }
+                System.out.println("            tests | inputs");
+                System.out.printf("successful: %6d | %6d%n", successfulTestCount, successfulInputCount);
+                double successfulTestPercentage = 100 * successfulTestCount / (double) (successfulTestCount + failedTestCount + ignoredTestCount);
+                double successfulInputPercentage = 100 * successfulInputCount / (double) (successfulInputCount + failedInputCount + ignoredInputCount);
+                System.out.printf("            %5.1f%% | %5.1f%%%n", successfulTestPercentage, successfulInputPercentage);
+                System.out.printf("   ignored: %6d | %6d%n", ignoredTestCount, ignoredInputCount);
+                System.out.printf("    failed: %6d | %6d%n", failedTestCount, failedInputCount);
+            }
+        });
+
+    }
 }

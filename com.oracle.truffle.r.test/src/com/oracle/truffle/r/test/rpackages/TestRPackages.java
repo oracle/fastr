@@ -109,15 +109,23 @@ public class TestRPackages extends TestBase {
     public static void setupInstallTestPackages() {
         // @BeforeClass to avoid installation of already present package (results in RC == 1 on my
         // platform)
-        for (String p : TEST_PACKAGES) {
-            assertTrue(packagePaths.installPackage(p));
+        if (!generatingExpected()) {
+            for (String p : TEST_PACKAGES) {
+                if (!packagePaths.installPackage(p)) {
+                    throw new AssertionError();
+                }
+            }
         }
     }
 
     @AfterClass
     public static void tearDownUninstallTestPackages() {
-        for (String p : TEST_PACKAGES) {
-            assertTrue(packagePaths.uninstallPackage(p));
+        if (!generatingExpected()) {
+            for (String p : TEST_PACKAGES) {
+                if (!packagePaths.uninstallPackage(p)) {
+                    throw new AssertionError();
+                }
+            }
         }
     }
 

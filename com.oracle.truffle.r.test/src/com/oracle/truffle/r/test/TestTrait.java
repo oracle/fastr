@@ -27,8 +27,8 @@ import java.util.*;
 
 public interface TestTrait {
 
-    static int contains(TestTrait[] traits, Class<?> clazz) {
-        return (int) Arrays.stream(traits).filter(t -> clazz.isInstance(t)).count();
+    static boolean contains(TestTrait[] traits, Class<?> clazz) {
+        return Arrays.stream(traits).anyMatch(t -> clazz.isInstance(t));
     }
 
     static boolean contains(TestTrait[] traits, TestTrait trait) {
