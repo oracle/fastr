@@ -24,7 +24,7 @@ public class TestrGenBuiltinwhich extends TestBase {
 
     @Test
     public void testwhich2() {
-        assertEval("argv <- list(structure(c(TRUE, TRUE, TRUE, TRUE), .Dim = c(2L, 2L), .Dimnames = list(c(\'A\', \'B\'), c(\'A\', \'B\')))); .Internal(which(argv[[1]]))");
+        assertEval("argv <- list(structure(c(TRUE, TRUE, TRUE, TRUE), .Dim = c(2L, 2L), .Dimnames = list(c('A', 'B'), c('A', 'B')))); .Internal(which(argv[[1]]))");
     }
 
     @Test
@@ -34,7 +34,7 @@ public class TestrGenBuiltinwhich extends TestBase {
 
     @Test
     public void testwhich4() {
-        assertEval("argv <- list(structure(TRUE, .Names = \'V1\')); .Internal(which(argv[[1]]))");
+        assertEval("argv <- list(structure(TRUE, .Names = 'V1')); .Internal(which(argv[[1]]))");
     }
 
     @Test
@@ -59,6 +59,6 @@ public class TestrGenBuiltinwhich extends TestBase {
 
     @Test
     public void testwhich9() {
-        assertEval("argv <- list(structure(FALSE, .Names = \'signature-class.Rd\')); .Internal(which(argv[[1]]))");
+        assertEval("argv <- list(structure(FALSE, .Names = 'signature-class.Rd')); .Internal(which(argv[[1]]))");
     }
 }

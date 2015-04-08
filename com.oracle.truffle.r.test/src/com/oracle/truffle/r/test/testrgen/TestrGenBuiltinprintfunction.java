@@ -19,26 +19,26 @@ public class TestrGenBuiltinprintfunction extends TestBase {
 
     @Test
     public void testprintfunction1() {
-        assertEval(Ignored.Unknown, "argv <- list(.Primitive(\'+\'), TRUE); .Internal(print.function(argv[[1]], argv[[2]]))");
+        assertEval(Ignored.Unknown, "argv <- list(.Primitive('+'), TRUE); .Internal(print.function(argv[[1]], argv[[2]]))");
     }
 
     @Test
     public void testprintfunction2() {
-        assertEval(Ignored.Unknown, "argv <- list(.Primitive(\'if\'), TRUE); .Internal(print.function(argv[[1]], argv[[2]]))");
+        assertEval(Ignored.Unknown, "argv <- list(.Primitive('if'), TRUE); .Internal(print.function(argv[[1]], argv[[2]]))");
     }
 
     @Test
     public void testprintfunction3() {
-        assertEval(Ignored.Unknown, "argv <- list(.Primitive(\'c\'), TRUE); .Internal(print.function(argv[[1]], argv[[2]]))");
+        assertEval(Ignored.Unknown, "argv <- list(.Primitive('c'), TRUE); .Internal(print.function(argv[[1]], argv[[2]]))");
     }
 
     @Test
     public void testprintfunction4() {
-        assertEval("argv <- list(.Primitive(\'.Internal\'), TRUE); .Internal(print.function(argv[[1]], argv[[2]]))");
+        assertEval("argv <- list(.Primitive('.Internal'), TRUE); .Internal(print.function(argv[[1]], argv[[2]]))");
     }
 
     @Test
     public void testprintfunction5() {
-        assertEval(Ignored.Unknown, "argv <- list(.Primitive(\'log\'), TRUE); .Internal(print.function(argv[[1]], argv[[2]]))");
+        assertEval(Ignored.Unknown, "argv <- list(.Primitive('log'), TRUE); .Internal(print.function(argv[[1]], argv[[2]]))");
     }
 }

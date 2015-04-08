@@ -19,7 +19,7 @@ public class TestrGenBuiltinformals extends TestBase {
 
     @Test
     public void testformals1() {
-        assertEval("argv <- list(.Primitive(\'length<-\')); .Internal(formals(argv[[1]]))");
+        assertEval("argv <- list(.Primitive('length<-')); .Internal(formals(argv[[1]]))");
     }
 
     @Test
@@ -34,6 +34,7 @@ public class TestrGenBuiltinformals extends TestBase {
 
     @Test
     public void testformals4() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(list(c0 = structure(integer(0), .Label = character(0), class = \'factor\')), .Names = \'c0\', row.names = character(0), class = \'data.frame\')); .Internal(formals(argv[[1]]))");
+        assertEval(Ignored.Unknown,
+                        "argv <- list(structure(list(c0 = structure(integer(0), .Label = character(0), class = 'factor')), .Names = 'c0', row.names = character(0), class = 'data.frame')); .Internal(formals(argv[[1]]))");
     }
 }

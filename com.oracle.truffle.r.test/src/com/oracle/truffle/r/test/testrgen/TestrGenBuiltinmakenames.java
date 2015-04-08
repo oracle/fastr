@@ -19,37 +19,37 @@ public class TestrGenBuiltinmakenames extends TestBase {
 
     @Test
     public void testmakenames1() {
-        assertEval("argv <- list(\'head\', TRUE); .Internal(make.names(argv[[1]], argv[[2]]))");
+        assertEval("argv <- list('head', TRUE); .Internal(make.names(argv[[1]], argv[[2]]))");
     }
 
     @Test
     public void testmakenames2() {
-        assertEval("argv <- list(\'FALSE\', TRUE); .Internal(make.names(argv[[1]], argv[[2]]))");
+        assertEval("argv <- list('FALSE', TRUE); .Internal(make.names(argv[[1]], argv[[2]]))");
     }
 
     @Test
     public void testmakenames3() {
-        assertEval("argv <- list(c(\'.Call\', \'.Call numParameters\', \'.Fortran\', \'.Fortran numParameters\'), TRUE); .Internal(make.names(argv[[1]], argv[[2]]))");
+        assertEval("argv <- list(c('.Call', '.Call numParameters', '.Fortran', '.Fortran numParameters'), TRUE); .Internal(make.names(argv[[1]], argv[[2]]))");
     }
 
     @Test
     public void testmakenames4() {
-        assertEval("argv <- list(\'..adfl.row.names\', TRUE); .Internal(make.names(argv[[1]], argv[[2]]))");
+        assertEval("argv <- list('..adfl.row.names', TRUE); .Internal(make.names(argv[[1]], argv[[2]]))");
     }
 
     @Test
     public void testmakenames5() {
-        assertEval("argv <- list(c(\'name\', \'title\', \'other.author\'), TRUE); .Internal(make.names(argv[[1]], argv[[2]]))");
+        assertEval("argv <- list(c('name', 'title', 'other.author'), TRUE); .Internal(make.names(argv[[1]], argv[[2]]))");
     }
 
     @Test
     public void testmakenames6() {
-        assertEval("argv <- list(\'.2a\', TRUE); .Internal(make.names(argv[[1]], argv[[2]]))");
+        assertEval("argv <- list('.2a', TRUE); .Internal(make.names(argv[[1]], argv[[2]]))");
     }
 
     @Test
     public void testmakenames7() {
-        assertEval("argv <- list(\'\', TRUE); .Internal(make.names(argv[[1]], argv[[2]]))");
+        assertEval("argv <- list('', TRUE); .Internal(make.names(argv[[1]], argv[[2]]))");
     }
 
     @Test
@@ -59,12 +59,12 @@ public class TestrGenBuiltinmakenames extends TestBase {
 
     @Test
     public void testmakenames9() {
-        assertEval("argv <- list(c(\'Subject\', \'predict.fixed\', \'predict.Subject\'), TRUE); .Internal(make.names(argv[[1]], argv[[2]]))");
+        assertEval("argv <- list(c('Subject', 'predict.fixed', 'predict.Subject'), TRUE); .Internal(make.names(argv[[1]], argv[[2]]))");
     }
 
     @Test
     public void testmakenames10() {
-        assertEval("argv <- list(c(\'\', \'\', \'bady\'), TRUE); .Internal(make.names(argv[[1]], argv[[2]]))");
+        assertEval("argv <- list(c('', '', 'bady'), TRUE); .Internal(make.names(argv[[1]], argv[[2]]))");
     }
 
     @Test
@@ -72,4 +72,3 @@ public class TestrGenBuiltinmakenames extends TestBase {
         assertEval("argv <- list(character(0), TRUE); .Internal(make.names(argv[[1]], argv[[2]]))");
     }
 }
-

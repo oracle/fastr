@@ -19,7 +19,7 @@ public class TestrGenBuiltinallequal extends TestBase {
 
     @Test
     public void testallequal1() {
-        assertEval("argv <- structure(list(target = 0.261799387799149, current = 6.54498469497874),     .Names = c(\'target\', \'current\'));" + "do.call(\'all.equal\', argv)");
+        assertEval("argv <- structure(list(target = 0.261799387799149, current = 6.54498469497874),     .Names = c('target', 'current'));do.call('all.equal', argv)");
     }
 
 }

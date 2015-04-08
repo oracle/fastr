@@ -15,20 +15,16 @@ import com.oracle.truffle.r.test.*;
 
 // Checkstyle: stop line length check
 
-                                                                 public class TestrGenBuiltinrawShift extends TestBase {
+public class TestrGenBuiltinrawShift extends TestBase {
 
-	@Test
-	public void testrawShift1() {
-		assertEval(Ignored.Unknown, "argv <- structure(list(x = as.raw(c(109, 121, 32, 116, 101, 120,     116)), n = 0L), .Names = c(\'x\', \'n\'));"+
-			"do.call(\'rawShift\', argv)");
-	}
+    @Test
+    public void testrawShift1() {
+        assertEval(Ignored.Unknown, "argv <- structure(list(x = as.raw(c(109, 121, 32, 116, 101, 120,     116)), n = 0L), .Names = c('x', 'n'));do.call('rawShift', argv)");
+    }
 
-
-	@Test
-	public void testrawShift2() {
-		assertEval(Ignored.Unknown, "argv <- structure(list(x = as.raw(c(109, 121, 32, 116, 101, 120,     116)), n = 3L), .Names = c(\'x\', \'n\'));"+
-			"do.call(\'rawShift\', argv)");
-	}
+    @Test
+    public void testrawShift2() {
+        assertEval(Ignored.Unknown, "argv <- structure(list(x = as.raw(c(109, 121, 32, 116, 101, 120,     116)), n = 3L), .Names = c('x', 'n'));do.call('rawShift', argv)");
+    }
 
 }
-

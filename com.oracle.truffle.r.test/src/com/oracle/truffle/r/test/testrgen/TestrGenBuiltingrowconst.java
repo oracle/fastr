@@ -22,4 +22,3 @@ public class TestrGenBuiltingrowconst extends TestBase {
         assertEval(Ignored.Unknown, "argv <- list(list(list())); .Internal(growconst(argv[[1]]))");
     }
 }
-

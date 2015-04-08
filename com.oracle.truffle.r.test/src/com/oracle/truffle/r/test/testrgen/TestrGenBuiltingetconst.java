@@ -27,4 +27,3 @@ public class TestrGenBuiltingetconst extends TestBase {
         assertEval(Ignored.Unknown, "argv <- list(list(FALSE), 1); .Internal(getconst(argv[[1]], argv[[2]]))");
     }
 }
-

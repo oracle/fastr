@@ -22,4 +22,3 @@ public class TestrGenBuiltinlbeta extends TestBase {
         assertEval(Ignored.Unknown, "argv <- list(FALSE, FALSE); .Internal(lbeta(argv[[1]], argv[[2]]))");
     }
 }
-

@@ -19,12 +19,12 @@ public class TestrGenBuiltinatan2 extends TestBase {
 
     @Test
     public void testatan21() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(0.142857142857143, .Names = \'Var2\'), structure(1.75510204081633, .Names = \'Var1\')); .Internal(atan2(argv[[1]], argv[[2]]))");
+        assertEval(Ignored.Unknown, "argv <- list(structure(0.142857142857143, .Names = 'Var2'), structure(1.75510204081633, .Names = 'Var1')); .Internal(atan2(argv[[1]], argv[[2]]))");
     }
 
     @Test
     public void testatan22() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(-0.224489795918367, .Names = \'Var2\'), structure(-0.816326530612245, .Names = \'Var1\')); .Internal(atan2(argv[[1]], argv[[2]]))");
+        assertEval(Ignored.Unknown, "argv <- list(structure(-0.224489795918367, .Names = 'Var2'), structure(-0.816326530612245, .Names = 'Var1')); .Internal(atan2(argv[[1]], argv[[2]]))");
     }
 
     @Test

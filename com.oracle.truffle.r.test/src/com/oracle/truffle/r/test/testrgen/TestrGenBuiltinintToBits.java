@@ -27,4 +27,3 @@ public class TestrGenBuiltinintToBits extends TestBase {
         assertEval(Ignored.Unknown, "argv <- list(NULL); .Internal(intToBits(argv[[1]]))");
     }
 }
-

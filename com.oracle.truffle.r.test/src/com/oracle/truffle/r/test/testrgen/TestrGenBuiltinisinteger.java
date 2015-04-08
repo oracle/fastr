@@ -39,7 +39,7 @@ public class TestrGenBuiltinisinteger extends TestBase {
 
     @Test
     public void testisinteger5() {
-        assertEval("argv <- list(structure(list(`character(0)` = structure(integer(0), .Label = character(0), class = \'factor\')), .Names = \'character(0)\', row.names = character(0), class = \'data.frame\'));is.integer(argv[[1]]);");
+        assertEval("argv <- list(structure(list(`character(0)` = structure(integer(0), .Label = character(0), class = 'factor')), .Names = 'character(0)', row.names = character(0), class = 'data.frame'));is.integer(argv[[1]]);");
     }
 
     @Test
@@ -54,7 +54,7 @@ public class TestrGenBuiltinisinteger extends TestBase {
 
     @Test
     public void testisinteger8() {
-        assertEval("argv <- list(structure(3.14159265358979, class = structure(\'3.14159265358979\', class = \'testit\')));is.integer(argv[[1]]);");
+        assertEval("argv <- list(structure(3.14159265358979, class = structure('3.14159265358979', class = 'testit')));is.integer(argv[[1]]);");
     }
 
     @Test
@@ -62,11 +62,9 @@ public class TestrGenBuiltinisinteger extends TestBase {
         assertEval("argv <- list(structure(c(1, 1, 1, 1, 1, 1), .Dim = 1:3));is.integer(argv[[1]]);");
     }
 
-	@Test
-	public void testisinteger11() {
-		assertEval("argv <- list(c(1L, 0L, NA, 1L));"+
-			"do.call(\'is.integer\', argv)");
-	}
+    @Test
+    public void testisinteger11() {
+        assertEval("argv <- list(c(1L, 0L, NA, 1L));do.call('is.integer', argv)");
+    }
 
 }
-

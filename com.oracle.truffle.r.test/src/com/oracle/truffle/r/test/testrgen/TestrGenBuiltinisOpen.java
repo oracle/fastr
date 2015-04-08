@@ -19,7 +19,7 @@ public class TestrGenBuiltinisOpen extends TestBase {
 
     @Test
     public void testisOpen1() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(2L, class = c(\'terminal\', \'connection\')), 0L); .Internal(isOpen(argv[[1]], argv[[2]]))");
+        assertEval(Ignored.Unknown, "argv <- list(structure(2L, class = c('terminal', 'connection')), 0L); .Internal(isOpen(argv[[1]], argv[[2]]))");
     }
 
     @Test
@@ -27,4 +27,3 @@ public class TestrGenBuiltinisOpen extends TestBase {
         assertEval(Ignored.Unknown, "argv <- list(FALSE, 2L); .Internal(isOpen(argv[[1]], argv[[2]]))");
     }
 }
-

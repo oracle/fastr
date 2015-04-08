@@ -32,4 +32,3 @@ public class TestrGenBuiltinlchoose extends TestBase {
         assertEval(Ignored.Unknown, "argv <- list(0.5, 1:9); .Internal(lchoose(argv[[1]], argv[[2]]))");
     }
 }
-

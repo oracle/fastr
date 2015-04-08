@@ -34,12 +34,6 @@ public class TestConditionHandling extends TestBase {
         assertEval(Output.ContainsError, "{ e <- simpleError(\"test error\"); tryCatch(stop(e), finally = print(\"Hello\")) }");
         assertEval(Output.ContainsError, "{ tryCatch(stop(\"fred\"), finally = print(\"Hello\")) }");
         assertEval("{ e <- simpleError(\"test error\"); tryCatch(stop(e), error = function(e) e, finally = print(\"Hello\"))}");
-    }
-
-    @Test
-    public void testTryCatchIgnore() {
-        // Don't get the call source correct
         assertEval(Ignored.Unknown, "{ tryCatch(stop(\"fred\"), error = function(e) e, finally = print(\"Hello\"))}");
     }
-
 }

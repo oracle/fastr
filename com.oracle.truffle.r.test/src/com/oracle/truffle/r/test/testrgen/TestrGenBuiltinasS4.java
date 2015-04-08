@@ -15,13 +15,11 @@ import com.oracle.truffle.r.test.*;
 
 // Checkstyle: stop line length check
 
-                                                                 public class TestrGenBuiltinasS4 extends TestBase {
+public class TestrGenBuiltinasS4 extends TestBase {
 
-	@Test
-	public void testasS41() {
-		assertEval(Ignored.Unknown, "argv <- structure(list(object = structure(NA, .Dim = c(1L, 1L))),     .Names = \'object\');"+
-			"do.call(\'asS4\', argv)");
-	}
+    @Test
+    public void testasS41() {
+        assertEval(Ignored.Unknown, "argv <- structure(list(object = structure(NA, .Dim = c(1L, 1L))),     .Names = 'object');do.call('asS4', argv)");
+    }
 
 }
-

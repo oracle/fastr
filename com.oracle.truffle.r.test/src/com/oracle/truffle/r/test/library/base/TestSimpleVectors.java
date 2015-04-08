@@ -611,20 +611,33 @@ public class TestSimpleVectors extends TestBase {
         assertEval(Output.ContainsError, "{ z<-1; s<-substitute(z); x<-matrix(1:4, ncol=2); x[s]<-1; }");
 
         assertEval("{ x<-list(data=list(matrix(1:4, ncol=2))); x$data[[1]][2,2]<-42; x }");
-    }
 
-    @Test
-    /**
-     * These tests, which should generate errors, appear to be non-deterministic in GnuR in the error message produced.
-     * It is either "more elements supplied than there are to replace" or some type-error, e.g. "incompatible types (from NULL to double) in [[ assignment".
-     * We could address this with a whitelist.
-     */
-    public void testMoreVectorsNonDet() {
-        assertEval(Ignored.Unknown, Output.ContainsError, "{ x<-c(1,2,3,4); dim(x)<-c(2,2); x[[1,1]]<-NULL; x }");
-        assertEval(Ignored.Unknown, Output.ContainsError, "{ b<-as.list(3:5); dim(b) <- c(1,3) ; b[[c(1,2)]] <- NULL ; b }");
-        assertEval(Ignored.Unknown, Output.ContainsError, "{ x<-c(1,2,3); x[[-4]]<-NULL }");
+        /*
+         * These tests, which should generate errors, appear to be non-deterministic in GnuR in the
+         * error message produced. It is either "more elements supplied than there are to replace"
+         * or some type-error, e.g. "incompatible types (from NULL to double) in [[ assignment". We
+         * could address this with a whitelist.
+         */
+        assertEval(Ignored.Unstable, Output.ContainsError, "{ x<-c(1,2,3,4); dim(x)<-c(2,2); x[[1,1]]<-NULL; x }");
+        assertEval(Ignored.Unstable, Output.ContainsError, "{ b<-as.list(3:5); dim(b) <- c(1,3) ; b[[c(1,2)]] <- NULL ; b }");
+        assertEval(Ignored.Unstable, Output.ContainsError, "{ x<-c(1,2,3); x[[-4]]<-NULL }");
         // this came from testRawIndex
         assertEval(Ignored.Unknown, Output.ContainsError, "{ x<-c(1,2,3,4); dim(x)<-c(2,2); x[[as.raw(1), 1]]<-NULL }");
+
+        // weird problems with fluctuating error messages in GNU R
+        assertEval(Ignored.Unknown, Output.ContainsError, "{ x<-1:4; x[[1]]<-NULL; x }");
+        assertEval(Ignored.Unknown, Output.ContainsError, "{ x<-1:4; x[[0]]<-NULL; x }");
+        assertEval(Ignored.Unknown, Output.ContainsError, "{ b<-3:5; dim(b) <- c(1,3) ; b[[c(1)]] <- NULL ; b }");
+        assertEval(Ignored.Unknown, Output.ContainsError, "{ b<-3:5; dim(b) <- c(1,3) ; b[[0]] <- NULL ; b }");
+        assertEval(Ignored.Unknown, Output.ContainsError, "{ x <- integer() ; x[[NA]] <- NULL ; x }");
+        assertEval(Ignored.Unknown, Output.ContainsError, "{ x <- c(1) ; x[[NA]] <- NULL ; x }");
+        assertEval(Ignored.Unknown, Output.ContainsError, "{ x <- c(1,2) ; x[[NA]] <- NULL ; x }");
+        assertEval(Ignored.Unknown, Output.ContainsError, "{ x <- c(1,2,3) ; x[[NA]] <- NULL ; x }");
+        assertEval(Ignored.Unknown, Output.ContainsError, "{ x<-c(1,2,3,4); dim(x)<-c(2,2); x[[1]]<-NULL; x }");
+
+        // inconsistent error messages in expected output and shell
+        assertEval(Ignored.Unknown, "{ x <- c(1); x[[-4]] <- NULL }");
+        assertEval(Ignored.Unknown, "{ x <- c(1,2,3); x[[-1]] <- NULL }");
     }
 
     @Test
@@ -738,18 +751,15 @@ public class TestSimpleVectors extends TestBase {
         assertEval(Output.ContainsError, "{ x<-list(1,2,3,4); dim(x)<-c(2,2); x[1+1i, 1]<-7 }");
         assertEval(Output.ContainsError, "{ x<-list(1,2,3,4); dim(x)<-c(2,2); x[1+1i, 1]<-c(7,42) }");
 
-    }
-
-    @Test
-    public void testComplexIndexIgnore() {
         // weird fluctuating error messages in GNUR
-        assertEval(Ignored.Unknown, Output.ContainsError, "{ x<-c(1,2,3,4); x[[1+1i]]<-NULL }");
-        assertEval(Ignored.Unknown, Output.ContainsError, "{ x<-c(1,2,3,4); dim(x)<-c(2,2); x[1+1i, 1]<-NULL }");
-        assertEval(Ignored.Unknown, Output.ContainsError, "{ x<-c(1,2,3,4); dim(x)<-c(2,2); x[[1+1i, 1]]<-NULL }");
+        assertEval(Ignored.Unstable, Output.ContainsError, "{ x<-c(1,2,3,4); x[[1+1i]]<-NULL }");
+        assertEval(Ignored.Unstable, Output.ContainsError, "{ x<-c(1,2,3,4); dim(x)<-c(2,2); x[1+1i, 1]<-NULL }");
+        assertEval(Ignored.Unstable, Output.ContainsError, "{ x<-c(1,2,3,4); dim(x)<-c(2,2); x[[1+1i, 1]]<-NULL }");
     }
 
     @Test
     public void testRawIndex() {
+        assertEval(Output.ContainsError, "{ x<-c(1,2,3,4); x[[as.raw(1)]]<-NULL }");
         assertEval(Output.ContainsError, "{ x<-c(1,2,3,4); x[[as.raw(1)]]<-integer() }");
         assertEval(Output.ContainsError, "{ x<-c(1,2,3,4); x[[as.raw(1)]]<-c(1) }");
         assertEval(Output.ContainsError, "{ x<-c(1,2,3,4); x[[as.raw(1)]]<-c(1,2) }");
@@ -787,11 +797,7 @@ public class TestSimpleVectors extends TestBase {
         assertEval(Output.ContainsError, "{ x<-list(1,2,3,4); dim(x)<-c(2,2); x[as.raw(1), 1]<-integer() }");
         assertEval(Output.ContainsError, "{ x<-list(1,2,3,4); dim(x)<-c(2,2); x[as.raw(1), 1]<-7 }");
         assertEval(Output.ContainsError, "{ x<-list(1,2,3,4); dim(x)<-c(2,2); x[as.raw(1), 1]<-c(7,42) }");
-    }
 
-    @Test
-    public void testRawIndexIgnore() {
-        assertEval(Ignored.Unknown, Output.ContainsError, "{ x<-c(1,2,3,4); x[[as.raw(1)]]<-NULL }");
     }
 
     @Test
@@ -816,6 +822,7 @@ public class TestSimpleVectors extends TestBase {
         assertEval(Output.ContainsError, "{ z<-1:4; z[[list(1)]]<-integer() }");
         assertEval(Output.ContainsError, "{ z<-1:4; z[[list(1,2)]]<-integer() }");
         assertEval(Output.ContainsError, "{ z<-1:4; z[[list(1,2,3)]]<-integer() }");
+        assertEval(Output.ContainsError, "{ z<-1:4; z[[list(1)]]<-NULL }");
         assertEval(Output.ContainsError, "{ z<-1:4; z[[list(1,2)]]<-NULL }");
         assertEval(Output.ContainsError, "{ z<-1:4; z[[list(1,2,3)]]<-NULL }");
 
@@ -840,6 +847,7 @@ public class TestSimpleVectors extends TestBase {
         assertEval(Output.ContainsError, "{ z<-list(1,2,3,4); z[[list(1,2)]]<-integer() }");
         assertEval(Output.ContainsError, "{ z<-list(1,2,3,4); z[[list(1,2,3)]]<-integer() }");
         assertEval(Output.ContainsError, "{ z<-list(1,2,3,4); z[[list()]]<-NULL }");
+        assertEval(Output.ContainsError, "{ z<-list(1,2,3,4); z[[list(1)]]<-NULL }");
         assertEval(Output.ContainsError, "{ z<-list(1,2,3,4); z[[list(1,2)]]<-NULL }");
         assertEval(Output.ContainsError, "{ z<-list(1,2,3,4); z[[list(1,2,3)]]<-NULL }");
 
@@ -926,31 +934,8 @@ public class TestSimpleVectors extends TestBase {
         assertEval(Output.ContainsError, "{ x<-list(1,2,3,4); dim(x)<-c(2,2); x[[list(), 1]] }");
         assertEval(Output.ContainsError, "{ x<-list(1,2,3,4); dim(x)<-c(2,2); x[[list(1), 1]] }");
         assertEval(Output.ContainsError, "{ x<-list(1,2,3,4); dim(x)<-c(2,2); x[[list(1,2), 1]] }");
-    }
 
-    @Test
-    public void testListIndexIgnore() {
         assertEval(Ignored.Unknown, Output.ContainsError, "{ z<-1:4; z[[list()]]<-NULL }");
-        assertEval(Ignored.Unknown, Output.ContainsError, "{ z<-1:4; z[[list(1)]]<-NULL }");
-        assertEval(Ignored.Unknown, Output.ContainsError, "{ z<-list(1,2,3,4); z[[list(1)]]<-NULL }");
-    }
-
-    @Test
-    public void testMoreVectorsOtherIgnore() {
-        // weird problems with fluctuating error messages in GNU R
-        assertEval(Ignored.Unknown, Output.ContainsError, "{ x<-1:4; x[[1]]<-NULL; x }");
-        assertEval(Ignored.Unknown, Output.ContainsError, "{ x<-1:4; x[[0]]<-NULL; x }");
-        assertEval(Ignored.Unknown, Output.ContainsError, "{ b<-3:5; dim(b) <- c(1,3) ; b[[c(1)]] <- NULL ; b }");
-        assertEval(Ignored.Unknown, Output.ContainsError, "{ b<-3:5; dim(b) <- c(1,3) ; b[[0]] <- NULL ; b }");
-        assertEval(Ignored.Unknown, Output.ContainsError, "{ x <- integer() ; x[[NA]] <- NULL ; x }");
-        assertEval(Ignored.Unknown, Output.ContainsError, "{ x <- c(1) ; x[[NA]] <- NULL ; x }");
-        assertEval(Ignored.Unknown, Output.ContainsError, "{ x <- c(1,2) ; x[[NA]] <- NULL ; x }");
-        assertEval(Ignored.Unknown, Output.ContainsError, "{ x <- c(1,2,3) ; x[[NA]] <- NULL ; x }");
-        assertEval(Ignored.Unknown, Output.ContainsError, "{ x<-c(1,2,3,4); dim(x)<-c(2,2); x[[1]]<-NULL; x }");
-
-        // inconsistent error messages in expected output and shell
-        assertEval(Ignored.Unknown, "{ x <- c(1); x[[-4]] <- NULL }");
-        assertEval(Ignored.Unknown, "{ x <- c(1,2,3); x[[-1]] <- NULL }");
     }
 
     @Test
@@ -990,10 +975,7 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ x<-c(1,2,3); typeof(x[NA]) }");
         assertEval("{ x<-c(1L,2L,3L); typeof(x[NA]) }");
         assertEval("{ x<-1:3; typeof(x[NA]) }");
-    }
 
-    @Test
-    public void testScalarOutOfBoundsOnVectorIgnored() {
         assertEval(Ignored.Unknown, "{ x<-c(1,2,3); x[-0.1] }");
         assertEval(Ignored.Unknown, "{ x<-c(1L,2L,3L); x[-0.1] }");
         assertEval(Ignored.Unknown, "{ x<-1:3; x[-0.1] }");
@@ -1150,10 +1132,7 @@ public class TestSimpleVectors extends TestBase {
 
         assertEval(Output.ContainsError, "{ f <- function(x,i) { x[[i]]} ; f(list(1,2,3,4), 3); f(f,2) }");
         assertEval(Output.ContainsError, "{ f <- function(x,i) { x[i] } ; x <- c(a=1,b=2) ; f(x,\"a\") ; f(function(){3},\"b\") }");
-    }
 
-    @Test
-    public void testScalarIndexIgnored() {
         assertEval(Ignored.Unknown, "{ x<-1:4; x[c(-0.5)] }");
     }
 
@@ -1439,10 +1418,7 @@ public class TestSimpleVectors extends TestBase {
         assertEval(Output.ContainsError, "{ f <- function(b,i,v) { b[[i]] <- v ; b } ; f(1:2,\"hi\",3L) ; f(1:2,2,10) ; f(as.list(1:2),1:3, 10) }");
 
         assertEval("{ b <- list(1+2i,3+4i) ; dim(b) <- c(2,1) ; b[3] <- NULL ; b }");
-    }
 
-    @Test
-    public void testScalarUpdateIgnore() {
         // weird problems with fluctuating error messages in GNU R
         assertEval(Ignored.Unknown, Output.ContainsError, "{ f <- function(b,v) { b[[2]] <- v ; b } ; f(c(\"a\",\"b\"),\"d\") ; f(c(\"a\",\"b\"),NULL) }");
         assertEval(Ignored.Unknown, Output.ContainsError, "{ x <- 4:10 ; x[[\"z\"]] <- NULL ; x }");
@@ -1807,10 +1783,7 @@ public class TestSimpleVectors extends TestBase {
         // lazy evaluation...
         assertEval("{ x<-1:5 ; x[x[4]<-2] <- (x[4]<-100) ; x }");
         assertEval("{ x<-5:1 ; x[x[2]<-2] }");
-    }
 
-    @Test
-    public void testVectorUpdateIgnore() {
         assertEval(Ignored.Unknown, "{ f <- function(a) { a }; x<-1:5 ; x[x[4]<-2] <- ({x[4]<-100; f(x)[4]}) ; x }");
     }
 
@@ -2013,10 +1986,7 @@ public class TestSimpleVectors extends TestBase {
         // FIXME print format
         assertEval("{ l <- matrix(list(1,2)) ; l[[3]] <- NULL ; l }");
         assertEval("{ l <- matrix(list(1,2)) ; l[[4]] <- NULL ; l }");
-    }
 
-    @Test
-    public void testListUpdateIgnore() {
         assertEval(Ignored.Unknown, Output.ContainsError, "{ f <- function(b,i,v) { b[[i]] <- v ; b } ; f(list(1,2,list(3)), c(3,1), 4) ; f(c(1,2,3), 2L, NULL) }");
         assertEval(Ignored.Unknown, Output.ContainsError, "{ f <- function(b,i,v) { b[[i]] <- v ; b } ;  f(list(1,2,b=list(a=1)),c(\"b\",\"a\"),10) ; f(c(a=1,b=2),\"b\",NULL) }");
     }
@@ -2059,7 +2029,6 @@ public class TestSimpleVectors extends TestBase {
         // FIXME print format
         assertEval("{ a <- 'hello'; a[[5]] <- 'done'; a[[3]] <- 'muhuhu'; a; }");
         assertEval("{ a <- 'hello'; a[[5]] <- 'done'; b <- a; b[[3]] <- 'muhuhu'; b; }");
-
     }
 
     @Test
@@ -2073,10 +2042,7 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ x <- NULL; x[1] <- c(5); x; }");
         assertEval("{ x <- NULL; x[c(1,2)] <- c(5); x; }");
         assertEval("{ x <- NULL; x[c(1,2)] <- c(1,5); x; }");
-    }
 
-    @Test
-    public void testNullUpdateIgnore() {
         assertEval(Ignored.Unknown, "{ x <- NULL; x[[0]] <- c(); x; }");
         assertEval(Ignored.Unknown, "{ x <- NULL; x[[1]] <- c(); x; }");
         assertEval(Ignored.Unknown, "{ x <- NULL; x[[c(1,0)]] <- c(); x; }");
@@ -2286,14 +2252,11 @@ public class TestSimpleVectors extends TestBase {
 
         assertEval("{ mp<-getOption(\"max.print\"); options(max.print=3); x<-c(1,2,3,4,5); print(x); options(max.print=mp) }");
         assertEval("{ mp<-getOption(\"max.print\"); options(max.print=3); x<-c(1,2,3,4,5); attr(x, \"foo\")<-\"foo\"; print(x); options(max.print=mp) }");
-    }
 
-    public void testPrintIgnore() {
         // GnuR 3.1.3 is outputting, e.g. "<1 x 0 x 2 x 0 x 2 array of integer>"
-        assertEval("{ x<-integer(0); dim(x)<-c(1, 0, 0); x }");
-        assertEval("{ x<-integer(0); dim(x)<-c(1, 0, 0, 2); x }");
-        assertEval("{ x<-integer(0); dim(x)<-c(1, 0, 2, 0, 2); x }");
-
+        assertEval(Ignored.Unknown, "{ x<-integer(0); dim(x)<-c(1, 0, 0); x }");
+        assertEval(Ignored.Unknown, "{ x<-integer(0); dim(x)<-c(1, 0, 0, 2); x }");
+        assertEval(Ignored.Unknown, "{ x<-integer(0); dim(x)<-c(1, 0, 2, 0, 2); x }");
     }
 
     @Test

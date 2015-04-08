@@ -22,4 +22,3 @@ public class TestrGenBuiltinicuSetCollate extends TestBase {
         assertEval(Ignored.Unknown, " .Internal(icuSetCollate())");
     }
 }
-

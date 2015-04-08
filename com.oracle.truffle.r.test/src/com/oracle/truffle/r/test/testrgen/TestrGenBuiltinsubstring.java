@@ -15,20 +15,16 @@ import com.oracle.truffle.r.test.*;
 
 // Checkstyle: stop line length check
 
-                                                                 public class TestrGenBuiltinsubstring extends TestBase {
+public class TestrGenBuiltinsubstring extends TestBase {
 
-	@Test
-	public void testsubstring1() {
-		assertEval("argv <- structure(list(text = c(\'NA\', NA, \'BANANA\'), first = 1,     last = 1), .Names = c(\'text\', \'first\', \'last\'));"+
-			"do.call(\'substring\', argv)");
-	}
+    @Test
+    public void testsubstring1() {
+        assertEval("argv <- structure(list(text = c('NA', NA, 'BANANA'), first = 1,     last = 1), .Names = c('text', 'first', 'last'));do.call('substring', argv)");
+    }
 
-
-	@Test
-	public void testsubstring2() {
-		assertEval("argv <- structure(list(text = \'abcdef\', first = 1:6, last = 1:6),     .Names = c(\'text\', \'first\', \'last\'));"+
-			"do.call(\'substring\', argv)");
-	}
+    @Test
+    public void testsubstring2() {
+        assertEval("argv <- structure(list(text = 'abcdef', first = 1:6, last = 1:6),     .Names = c('text', 'first', 'last'));do.call('substring', argv)");
+    }
 
 }
-

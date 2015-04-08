@@ -19,7 +19,6 @@ public class TestrGenBuiltinmapply extends TestBase {
 
     @Test
     public void testmapply1() {
-        assertEval(Ignored.Unknown, "argv <- list(.Primitive(\'c\'), list(list(), list(), list()), NULL); .Internal(mapply(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval(Ignored.Unknown, "argv <- list(.Primitive('c'), list(list(), list(), list()), NULL); .Internal(mapply(argv[[1]], argv[[2]], argv[[3]]))");
     }
 }
-

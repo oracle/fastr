@@ -27,4 +27,3 @@ public class TestrGenBuiltingcinfo extends TestBase {
         assertEval(Ignored.Unknown, "argv <- list(FALSE); .Internal(gcinfo(argv[[1]]))");
     }
 }
-

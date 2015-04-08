@@ -19,7 +19,6 @@ public class TestrGenBuiltinSysglob extends TestBase {
 
     @Test
     public void testSysglob1() {
-        assertEval(Ignored.Unknown, "argv <- list(\'/home/lzhao/hg/r-instrumented/src/library/utils/man/unix/*.rd\', FALSE); .Internal(Sys.glob(argv[[1]], argv[[2]]))");
+        assertEval(Ignored.Unknown, "argv <- list('/home/lzhao/hg/r-instrumented/src/library/utils/man/unix/*.rd', FALSE); .Internal(Sys.glob(argv[[1]], argv[[2]]))");
     }
 }
-

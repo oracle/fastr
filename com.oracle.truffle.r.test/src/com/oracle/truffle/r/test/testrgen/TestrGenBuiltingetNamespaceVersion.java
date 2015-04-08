@@ -15,13 +15,11 @@ import com.oracle.truffle.r.test.*;
 
 // Checkstyle: stop line length check
 
-                                                                 public class TestrGenBuiltingetNamespaceVersion extends TestBase {
+public class TestrGenBuiltingetNamespaceVersion extends TestBase {
 
-	@Test
-	public void testgetNamespaceVersion1() {
-		assertEval("argv <- structure(list(ns = \'stats\'), .Names = \'ns\');"+
-			"do.call(\'getNamespaceVersion\', argv)");
-	}
+    @Test
+    public void testgetNamespaceVersion1() {
+        assertEval("argv <- structure(list(ns = 'stats'), .Names = 'ns');do.call('getNamespaceVersion', argv)");
+    }
 
 }
-

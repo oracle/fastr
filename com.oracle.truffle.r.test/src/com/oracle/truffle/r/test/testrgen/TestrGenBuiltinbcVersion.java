@@ -22,4 +22,3 @@ public class TestrGenBuiltinbcVersion extends TestBase {
         assertEval(Ignored.Unknown, " .Internal(bcVersion())");
     }
 }
-

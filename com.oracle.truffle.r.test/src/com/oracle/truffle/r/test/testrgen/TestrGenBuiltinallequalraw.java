@@ -19,7 +19,7 @@ public class TestrGenBuiltinallequalraw extends TestBase {
 
     @Test
     public void testallequalraw1() {
-        assertEval("argv <- structure(list(target = as.raw(c(1, 2, 3)), current = as.raw(c(1,     2, 3))), .Names = c(\'target\', \'current\'));" + "do.call(\'all.equal.raw\', argv)");
+        assertEval("argv <- structure(list(target = as.raw(c(1, 2, 3)), current = as.raw(c(1,     2, 3))), .Names = c('target', 'current'));do.call('all.equal.raw', argv)");
     }
 
 }

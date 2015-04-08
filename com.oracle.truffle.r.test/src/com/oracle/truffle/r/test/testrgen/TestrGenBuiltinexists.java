@@ -19,6 +19,6 @@ public class TestrGenBuiltinexists extends TestBase {
 
     @Test
     public void testexists1() {
-        assertEval("argv <- structure(list(x = \'.Device\'), .Names = \'x\');" + "do.call(\'exists\', argv)");
+        assertEval("argv <- structure(list(x = '.Device'), .Names = 'x');do.call('exists', argv)");
     }
 }

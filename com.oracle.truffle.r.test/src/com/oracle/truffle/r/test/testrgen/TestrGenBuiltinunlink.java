@@ -19,7 +19,7 @@ public class TestrGenBuiltinunlink extends TestBase {
 
     @Test
     public void testunlink1() {
-        assertEval(Ignored.Unknown, "argv <- list(\'/tmp/RtmptPgrXI/Pkgs\', TRUE, FALSE); .Internal(unlink(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval(Ignored.Unknown, "argv <- list('/tmp/RtmptPgrXI/Pkgs', TRUE, FALSE); .Internal(unlink(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
@@ -29,14 +29,12 @@ public class TestrGenBuiltinunlink extends TestBase {
 
     @Test
     public void testunlink3() {
-        assertEval(Ignored.Unknown, "argv <- list(\'/home/lzhao/tmp/Rtmphu0Cms/file74e1676db2e7\', FALSE, FALSE); .Internal(unlink(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval(Ignored.Unknown, "argv <- list('/home/lzhao/tmp/Rtmphu0Cms/file74e1676db2e7', FALSE, FALSE); .Internal(unlink(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
-	@Test
-	public void testunlink5() {
-		assertEval(Ignored.Unknown, "argv <- structure(list(x = \'/tmp/RtmpHjOdmd/file7ac7792619bc\'),     .Names = \'x\');"+
-			"do.call(\'unlink\', argv)");
-	}
+    @Test
+    public void testunlink5() {
+        assertEval(Ignored.Unknown, "argv <- structure(list(x = '/tmp/RtmpHjOdmd/file7ac7792619bc'),     .Names = 'x');do.call('unlink', argv)");
+    }
 
 }
-

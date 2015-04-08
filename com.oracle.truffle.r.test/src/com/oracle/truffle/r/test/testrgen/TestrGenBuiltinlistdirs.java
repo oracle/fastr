@@ -19,7 +19,6 @@ public class TestrGenBuiltinlistdirs extends TestBase {
 
     @Test
     public void testlistdirs1() {
-        assertEval(Ignored.Unknown, "argv <- list(\'/home/lzhao/hg/r-instrumented/library/rpart/doc\', TRUE, FALSE); .Internal(list.dirs(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval(Ignored.Unknown, "argv <- list('/home/lzhao/hg/r-instrumented/library/rpart/doc', TRUE, FALSE); .Internal(list.dirs(argv[[1]], argv[[2]], argv[[3]]))");
     }
 }
-

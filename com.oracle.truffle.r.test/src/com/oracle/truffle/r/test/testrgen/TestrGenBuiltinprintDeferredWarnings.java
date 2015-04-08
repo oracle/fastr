@@ -22,4 +22,3 @@ public class TestrGenBuiltinprintDeferredWarnings extends TestBase {
         assertEval(Ignored.Unknown, " .Internal(printDeferredWarnings())");
     }
 }
-

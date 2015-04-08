@@ -19,12 +19,12 @@ public class TestrGenBuiltinisraw extends TestBase {
 
     @Test
     public void testisraw1() {
-        assertEval("argv <- list(structure(list(`character(0)` = structure(integer(0), .Label = character(0), class = \'factor\')), .Names = \'character(0)\', row.names = character(0), class = \'data.frame\'));is.raw(argv[[1]]);");
+        assertEval("argv <- list(structure(list(`character(0)` = structure(integer(0), .Label = character(0), class = 'factor')), .Names = 'character(0)', row.names = character(0), class = 'data.frame'));is.raw(argv[[1]]);");
     }
 
     @Test
     public void testisraw2() {
-        assertEval("argv <- list(structure(3.14159265358979, class = structure(\'3.14159265358979\', class = \'testit\')));is.raw(argv[[1]]);");
+        assertEval("argv <- list(structure(3.14159265358979, class = structure('3.14159265358979', class = 'testit')));is.raw(argv[[1]]);");
     }
 
     @Test
@@ -42,4 +42,3 @@ public class TestrGenBuiltinisraw extends TestBase {
         assertEval("argv <- list(raw(0));is.raw(argv[[1]]);");
     }
 }
-

@@ -19,7 +19,6 @@ public class TestrGenBuiltinunitsassign_difftime extends TestBase {
 
     @Test
     public void testunitsassign_difftime1() {
-        assertEval("argv <- structure(list(x = structure(500, units = \'secs\', class = \'difftime\',     .Names = \'a\'), value = \'mins\'), .Names = c(\'x\', \'value\'));"
-                        + "do.call(\'units<-.difftime\', argv)");
+        assertEval("argv <- structure(list(x = structure(500, units = 'secs', class = 'difftime',     .Names = 'a'), value = 'mins'), .Names = c('x', 'value'));do.call('units<-.difftime', argv)");
     }
 }

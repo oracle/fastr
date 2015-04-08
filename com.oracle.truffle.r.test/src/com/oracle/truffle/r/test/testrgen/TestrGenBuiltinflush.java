@@ -19,12 +19,11 @@ public class TestrGenBuiltinflush extends TestBase {
 
     @Test
     public void testflush1() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(1L, class = c(\'terminal\', \'connection\'))); .Internal(flush(argv[[1]]))");
+        assertEval(Ignored.Unknown, "argv <- list(structure(1L, class = c('terminal', 'connection'))); .Internal(flush(argv[[1]]))");
     }
 
     @Test
     public void testflush2() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(2L, class = c(\'terminal\', \'connection\'))); .Internal(flush(argv[[1]]))");
+        assertEval(Ignored.Unknown, "argv <- list(structure(2L, class = c('terminal', 'connection'))); .Internal(flush(argv[[1]]))");
     }
 }
-

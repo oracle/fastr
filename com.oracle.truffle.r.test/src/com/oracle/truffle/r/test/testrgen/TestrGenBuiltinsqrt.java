@@ -44,17 +44,18 @@ public class TestrGenBuiltinsqrt extends TestBase {
 
     @Test
     public void testsqrt6() {
-        assertEval("argv <- list(structure(c(0.0101832147522745, 0.0107298799092166, 0.0605795647466432, 7.03601392438852e-05), .Names = c(\'ar1\', \'ar2\', \'intercept\', \'trend\')));sqrt(argv[[1]]);");
+        assertEval("argv <- list(structure(c(0.0101832147522745, 0.0107298799092166, 0.0605795647466432, 7.03601392438852e-05), .Names = c('ar1', 'ar2', 'intercept', 'trend')));sqrt(argv[[1]]);");
     }
 
     @Test
     public void testsqrt7() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(1:10, id = \'test 1\', class = structure(\'withId\', package = \'.GlobalEnv\')));sqrt(argv[[1]]);");
+        assertEval(Ignored.Unknown, "argv <- list(structure(1:10, id = 'test 1', class = structure('withId', package = '.GlobalEnv')));sqrt(argv[[1]]);");
     }
 
     @Test
     public void testsqrt8() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(c(660, 543, 711, 500, 410, 309, 546, 351, 269, 203, 370, 193, 181, 117, 243, 136, 117, 87, 154, 84), .Dim = 4:5, .Dimnames = list(c(\'Rural Male\', \'Rural Female\', \'Urban Male\', \'Urban Female\'), c(\'70-74\', \'65-69\', \'60-64\', \'55-59\', \'50-54\'))));sqrt(argv[[1]]);");
+        assertEval(Ignored.Unknown,
+                        "argv <- list(structure(c(660, 543, 711, 500, 410, 309, 546, 351, 269, 203, 370, 193, 181, 117, 243, 136, 117, 87, 154, 84), .Dim = 4:5, .Dimnames = list(c('Rural Male', 'Rural Female', 'Urban Male', 'Urban Female'), c('70-74', '65-69', '60-64', '55-59', '50-54'))));sqrt(argv[[1]]);");
     }
 
     @Test

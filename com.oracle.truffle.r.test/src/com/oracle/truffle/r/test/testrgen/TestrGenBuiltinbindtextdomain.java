@@ -19,12 +19,11 @@ public class TestrGenBuiltinbindtextdomain extends TestBase {
 
     @Test
     public void testbindtextdomain1() {
-        assertEval(Ignored.Unknown, "argv <- list(\'splines\', \'/home/roman/r-instrumented/library/translations\'); .Internal(bindtextdomain(argv[[1]], argv[[2]]))");
+        assertEval(Ignored.Unknown, "argv <- list('splines', '/home/roman/r-instrumented/library/translations'); .Internal(bindtextdomain(argv[[1]], argv[[2]]))");
     }
 
     @Test
     public void testbindtextdomain2() {
-        assertEval(Ignored.Unknown, "argv <- list(\'utils\', \'/home/lzhao/hg/r-instrumented/library/translations\'); .Internal(bindtextdomain(argv[[1]], argv[[2]]))");
+        assertEval(Ignored.Unknown, "argv <- list('utils', '/home/lzhao/hg/r-instrumented/library/translations'); .Internal(bindtextdomain(argv[[1]], argv[[2]]))");
     }
 }
-

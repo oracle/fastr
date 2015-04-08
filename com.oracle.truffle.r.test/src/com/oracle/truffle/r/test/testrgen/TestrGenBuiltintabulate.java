@@ -39,7 +39,7 @@ public class TestrGenBuiltintabulate extends TestBase {
 
     @Test
     public void testtabulate5() {
-        assertEval("argv <- list(structure(1:49, .Label = c(\'0\', \'1\', \'2\', \'3\', \'4\', \'5\', \'6\', \'7\', \'8\', \'9\', \'10\', \'11\', \'12\', \'13\', \'14\', \'15\', \'16\', \'17\', \'18\', \'19\', \'20\', \'21\', \'22\', \'23\', \'24\', \'25\', \'26\', \'27\', \'28\', \'29\', \'30\', \'31\', \'32\', \'33\', \'34\', \'35\', \'36\', \'37\', \'38\', \'39\', \'40\', \'41\', \'42\', \'43\', \'44\', \'45\', \'46\', \'47\', \'48\'), class = \'factor\'), 49L); .Internal(tabulate(argv[[1]], argv[[2]]))");
+        assertEval("argv <- list(structure(1:49, .Label = c('0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23', '24', '25', '26', '27', '28', '29', '30', '31', '32', '33', '34', '35', '36', '37', '38', '39', '40', '41', '42', '43', '44', '45', '46', '47', '48'), class = 'factor'), 49L); .Internal(tabulate(argv[[1]], argv[[2]]))");
     }
 
     @Test
@@ -49,7 +49,7 @@ public class TestrGenBuiltintabulate extends TestBase {
 
     @Test
     public void testtabulate8() {
-        assertEval("argv <- structure(list(bin = numeric(0)), .Names = \'bin\');" + "do.call(\'tabulate\', argv)");
+        assertEval("argv <- structure(list(bin = numeric(0)), .Names = 'bin');do.call('tabulate', argv)");
     }
 
 }

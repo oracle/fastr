@@ -29,12 +29,12 @@ public class TestrGenBuiltinascall extends TestBase {
 
     @Test
     public void testascall3() {
-        assertEval("argv <- list(list(quote(quote), list(NULL, c(\'time\', \'status\'))));as.call(argv[[1]]);");
+        assertEval("argv <- list(list(quote(quote), list(NULL, c('time', 'status'))));as.call(argv[[1]]);");
     }
 
     @Test
     public void testascall4() {
-        assertEval("argv <- list(structure(expression(data.frame, check.names = TRUE, stringsAsFactors = TRUE), .Names = c(\'\', \'check.names\', \'stringsAsFactors\')));as.call(argv[[1]]);");
+        assertEval("argv <- list(structure(expression(data.frame, check.names = TRUE, stringsAsFactors = TRUE), .Names = c('', 'check.names', 'stringsAsFactors')));as.call(argv[[1]]);");
     }
 
     @Test

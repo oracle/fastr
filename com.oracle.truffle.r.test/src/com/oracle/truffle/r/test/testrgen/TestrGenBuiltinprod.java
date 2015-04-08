@@ -34,7 +34,7 @@ public class TestrGenBuiltinprod extends TestBase {
 
     @Test
     public void testprod4() {
-        assertEval("argv <- list(structure(c(4L, 4L, 2L), .Names = c(\'Hair\', \'Eye\', \'Sex\')));prod(argv[[1]]);");
+        assertEval("argv <- list(structure(c(4L, 4L, 2L), .Names = c('Hair', 'Eye', 'Sex')));prod(argv[[1]]);");
     }
 
     @Test
@@ -44,12 +44,12 @@ public class TestrGenBuiltinprod extends TestBase {
 
     @Test
     public void testprod6() {
-        assertEval("argv <- list(structure(c(2, 0, 1, 2), .Dim = c(2L, 2L), .Dimnames = list(c(\'A\', \'B\'), c(\'A\', \'B\'))));prod(argv[[1]]);");
+        assertEval("argv <- list(structure(c(2, 0, 1, 2), .Dim = c(2L, 2L), .Dimnames = list(c('A', 'B'), c('A', 'B'))));prod(argv[[1]]);");
     }
 
     @Test
     public void testprod7() {
-        assertEval("argv <- list(structure(c(TRUE, TRUE, TRUE, TRUE), .Dim = c(2L, 2L), .Dimnames = list(c(\'A\', \'B\'), c(\'A\', \'B\'))));prod(argv[[1]]);");
+        assertEval("argv <- list(structure(c(TRUE, TRUE, TRUE, TRUE), .Dim = c(2L, 2L), .Dimnames = list(c('A', 'B'), c('A', 'B'))));prod(argv[[1]]);");
     }
 
     @Test
@@ -72,4 +72,3 @@ public class TestrGenBuiltinprod extends TestBase {
         assertEval(Ignored.Unknown, "argv <- list(numeric(0));prod(argv[[1]]);");
     }
 }
-

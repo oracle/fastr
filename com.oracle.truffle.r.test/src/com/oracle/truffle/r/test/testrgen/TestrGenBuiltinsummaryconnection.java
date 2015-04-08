@@ -19,7 +19,6 @@ public class TestrGenBuiltinsummaryconnection extends TestBase {
 
     @Test
     public void testsummaryconnection1() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(2L, class = c(\'terminal\', \'connection\'))); .Internal(summary.connection(argv[[1]]))");
+        assertEval(Ignored.Unknown, "argv <- list(structure(2L, class = c('terminal', 'connection'))); .Internal(summary.connection(argv[[1]]))");
     }
 }
-

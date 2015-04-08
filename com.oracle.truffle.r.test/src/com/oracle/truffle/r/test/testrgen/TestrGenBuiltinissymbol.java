@@ -34,7 +34,6 @@ public class TestrGenBuiltinissymbol extends TestBase {
 
     @Test
     public void testissymbol4() {
-        assertEval("argv <- list(structure(3.14159265358979, class = structure(\'3.14159265358979\', class = \'testit\')));is.symbol(argv[[1]]);");
+        assertEval("argv <- list(structure(3.14159265358979, class = structure('3.14159265358979', class = 'testit')));is.symbol(argv[[1]]);");
     }
 }
-

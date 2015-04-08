@@ -19,7 +19,7 @@ public class TestrGenBuiltinformatAsIs extends TestBase {
 
     @Test
     public void testformatAsIs1() {
-        assertEval("argv <- structure(list(x = structure(integer(0), class = \'AsIs\')),     .Names = \'x\');" + "do.call(\'format.AsIs\', argv)");
+        assertEval("argv <- structure(list(x = structure(integer(0), class = 'AsIs')),     .Names = 'x');do.call('format.AsIs', argv)");
     }
 
 }

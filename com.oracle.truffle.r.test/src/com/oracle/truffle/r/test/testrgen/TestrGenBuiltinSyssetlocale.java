@@ -19,14 +19,12 @@ public class TestrGenBuiltinSyssetlocale extends TestBase {
 
     @Test
     public void testSyssetlocale1() {
-        assertEval(Ignored.Unknown, "argv <- list(3L, \'C\'); .Internal(Sys.setlocale(argv[[1]], argv[[2]]))");
+        assertEval(Ignored.Unknown, "argv <- list(3L, 'C'); .Internal(Sys.setlocale(argv[[1]], argv[[2]]))");
     }
 
-	@Test
-	public void testSyssetlocale3() {
-		assertEval(Ignored.Unknown, "argv <- structure(list(category = \'LC_TIME\', locale = \'C\'), .Names = c(\'category\',     \'locale\'));"+
-			"do.call(\'Sys.setlocale\', argv)");
-	}
+    @Test
+    public void testSyssetlocale3() {
+        assertEval(Ignored.Unknown, "argv <- structure(list(category = 'LC_TIME', locale = 'C'), .Names = c('category',     'locale'));do.call('Sys.setlocale', argv)");
+    }
 
 }
-

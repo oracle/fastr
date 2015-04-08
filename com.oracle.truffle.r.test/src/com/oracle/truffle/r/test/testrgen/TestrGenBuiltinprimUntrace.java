@@ -19,7 +19,6 @@ public class TestrGenBuiltinprimUntrace extends TestBase {
 
     @Test
     public void testprimUntrace1() {
-        assertEval(Ignored.Unknown, "argv <- list(.Primitive(\'sum\'));.primUntrace(argv[[1]]);");
+        assertEval(Ignored.Unknown, "argv <- list(.Primitive('sum'));.primUntrace(argv[[1]]);");
     }
 }
-

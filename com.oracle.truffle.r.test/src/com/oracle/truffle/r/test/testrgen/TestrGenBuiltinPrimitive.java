@@ -19,7 +19,6 @@ public class TestrGenBuiltinPrimitive extends TestBase {
 
     @Test
     public void testPrimitive1() {
-        assertEval(Ignored.Unknown, "argv <- list(\'c\');.Primitive(argv[[1]]);");
+        assertEval(Ignored.Unknown, "argv <- list('c');.Primitive(argv[[1]]);");
     }
 }
-

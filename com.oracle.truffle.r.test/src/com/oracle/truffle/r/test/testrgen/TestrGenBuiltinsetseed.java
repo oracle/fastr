@@ -57,4 +57,3 @@ public class TestrGenBuiltinsetseed extends TestBase {
         assertEval("argv <- list(NULL, NULL, NULL); .Internal(set.seed(argv[[1]], argv[[2]], argv[[3]]))");
     }
 }
-

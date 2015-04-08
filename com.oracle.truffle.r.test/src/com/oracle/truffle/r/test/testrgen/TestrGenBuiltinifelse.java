@@ -15,13 +15,11 @@ import com.oracle.truffle.r.test.*;
 
 // Checkstyle: stop line length check
 
-                                                                 public class TestrGenBuiltinifelse extends TestBase {
+public class TestrGenBuiltinifelse extends TestBase {
 
-	@Test
-	public void testifelse1() {
-		assertEval("argv <- structure(list(test = c(TRUE, TRUE, FALSE, TRUE, FALSE),     yes = \'True\', no = \'False\'), .Names = c(\'test\', \'yes\', \'no\'));"+
-			"do.call(\'ifelse\', argv)");
-	}
+    @Test
+    public void testifelse1() {
+        assertEval("argv <- structure(list(test = c(TRUE, TRUE, FALSE, TRUE, FALSE),     yes = 'True', no = 'False'), .Names = c('test', 'yes', 'no'));do.call('ifelse', argv)");
+    }
 
 }
-

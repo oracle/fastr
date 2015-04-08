@@ -15,13 +15,11 @@ import com.oracle.truffle.r.test.*;
 
 // Checkstyle: stop line length check
 
-                                                                 public class TestrGenBuiltinasDatefactor extends TestBase {
+public class TestrGenBuiltinasDatefactor extends TestBase {
 
-	@Test
-	public void testasDatefactor1() {
-		assertEval(Ignored.Unknown, "argv <- structure(list(x = structure(1L, .Label = \'2000-01-02\',     class = \'factor\')), .Names = \'x\');"+
-			"do.call(\'as.Date.factor\', argv)");
-	}
+    @Test
+    public void testasDatefactor1() {
+        assertEval(Ignored.Unknown, "argv <- structure(list(x = structure(1L, .Label = '2000-01-02',     class = 'factor')), .Names = 'x');do.call('as.Date.factor', argv)");
+    }
 
 }
-

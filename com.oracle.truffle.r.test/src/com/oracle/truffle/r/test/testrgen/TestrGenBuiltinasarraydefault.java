@@ -19,7 +19,7 @@ public class TestrGenBuiltinasarraydefault extends TestBase {
 
     @Test
     public void testasarraydefault1() {
-        assertEval("argv <- structure(list(x = structure(c(1, 2), .Dim = 2L, .Dimnames = list(c(\'a\',     \'b\')))), .Names = \'x\');" + "do.call(\'as.array.default\', argv)");
+        assertEval("argv <- structure(list(x = structure(c(1, 2), .Dim = 2L, .Dimnames = list(c('a',     'b')))), .Names = 'x');do.call('as.array.default', argv)");
     }
 
 }

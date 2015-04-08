@@ -29,7 +29,6 @@ public class TestrGenBuiltinenc2native extends TestBase {
 
     @Test
     public void testenc2native4() {
-        assertEval(Ignored.Unknown, "argv <- list(\'José Pinheiro [aut] (S version)\');enc2native(argv[[1]]);");
+        assertEval(Ignored.Unknown, "argv <- list('José Pinheiro [aut] (S version)');enc2native(argv[[1]]);");
     }
 }
-

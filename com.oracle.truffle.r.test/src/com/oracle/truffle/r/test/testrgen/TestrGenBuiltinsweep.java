@@ -15,13 +15,12 @@ import com.oracle.truffle.r.test.*;
 
 // Checkstyle: stop line length check
 
-                                                                 public class TestrGenBuiltinsweep extends TestBase {
+public class TestrGenBuiltinsweep extends TestBase {
 
-	@Test
-	public void testsweep1() {
-		assertEval(Ignored.Unknown, "argv <- structure(list(x = structure(integer(0), .Dim = c(5L,     0L)), MARGIN = 2, STATS = integer(0)), .Names = c(\'x\', \'MARGIN\',     \'STATS\'));"+
-			"do.call(\'sweep\', argv)");
-	}
+    @Test
+    public void testsweep1() {
+        assertEval(Ignored.Unknown, "argv <- structure(list(x = structure(integer(0), .Dim = c(5L,     0L)), MARGIN = 2, STATS = integer(0)), .Names = c('x', 'MARGIN',     'STATS'));"
+                        + "do.call('sweep', argv)");
+    }
 
 }
-

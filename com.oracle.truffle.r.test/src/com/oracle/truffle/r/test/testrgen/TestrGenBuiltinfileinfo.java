@@ -19,7 +19,7 @@ public class TestrGenBuiltinfileinfo extends TestBase {
 
     @Test
     public void testfileinfo1() {
-        assertEval(Ignored.Unknown, "argv <- list(\'/home/lzhao/hg/r-instrumented/library/codetools/data\'); .Internal(file.info(argv[[1]]))");
+        assertEval(Ignored.Unknown, "argv <- list('/home/lzhao/hg/r-instrumented/library/codetools/data'); .Internal(file.info(argv[[1]]))");
     }
 
     @Test
@@ -27,4 +27,3 @@ public class TestrGenBuiltinfileinfo extends TestBase {
         assertEval(Ignored.Unknown, "argv <- list(character(0)); .Internal(file.info(argv[[1]]))");
     }
 }
-

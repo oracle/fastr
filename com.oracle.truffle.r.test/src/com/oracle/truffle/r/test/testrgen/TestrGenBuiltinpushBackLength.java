@@ -22,4 +22,3 @@ public class TestrGenBuiltinpushBackLength extends TestBase {
         assertEval(Ignored.Unknown, "argv <- list(FALSE); .Internal(pushBackLength(argv[[1]]))");
     }
 }
-

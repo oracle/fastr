@@ -15,13 +15,11 @@ import com.oracle.truffle.r.test.*;
 
 // Checkstyle: stop line length check
 
-                                                                 public class TestrGenBuiltininteractive extends TestBase {
+public class TestrGenBuiltininteractive extends TestBase {
 
-	@Test
-	public void testinteractive1() {
-		assertEval(Ignored.Unknown, "argv <- list();"+
-			"do.call(\'interactive\', argv)");
-	}
+    @Test
+    public void testinteractive1() {
+        assertEval(Ignored.Unknown, "argv <- list();do.call('interactive', argv)");
+    }
 
 }
-

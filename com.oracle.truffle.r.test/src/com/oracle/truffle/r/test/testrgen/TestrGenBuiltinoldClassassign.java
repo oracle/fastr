@@ -27,4 +27,3 @@ public class TestrGenBuiltinoldClassassign extends TestBase {
         assertEval(Ignored.Unknown, "argv <- list(NULL, NULL);`oldClass<-`(argv[[1]],argv[[2]]);");
     }
 }
-

@@ -34,12 +34,12 @@ public class TestrGenBuiltinbody extends TestBase {
 
     @Test
     public void testbody4() {
-        assertEval(Ignored.Unknown, "argv <- list(.Primitive(\'/\')); .Internal(body(argv[[1]]))");
+        assertEval(Ignored.Unknown, "argv <- list(.Primitive('/')); .Internal(body(argv[[1]]))");
     }
 
     @Test
     public void testbody5() {
-        assertEval("argv <- list(structure(list(c0 = structure(integer(0), .Label = character(0), class = \'factor\')), .Names = \'c0\', row.names = character(0), class = \'data.frame\')); .Internal(body(argv[[1]]))");
+        assertEval("argv <- list(structure(list(c0 = structure(integer(0), .Label = character(0), class = 'factor')), .Names = 'c0', row.names = character(0), class = 'data.frame')); .Internal(body(argv[[1]]))");
     }
 
     @Test

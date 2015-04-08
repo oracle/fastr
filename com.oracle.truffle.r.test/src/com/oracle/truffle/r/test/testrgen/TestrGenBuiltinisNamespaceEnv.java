@@ -29,7 +29,7 @@ public class TestrGenBuiltinisNamespaceEnv extends TestBase {
 
     @Test
     public void testisNamespaceEnv3() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(list(c0 = structure(integer(0), .Label = character(0), class = \'factor\')), .Names = \'c0\', row.names = character(0), class = \'data.frame\')); .Internal(isNamespaceEnv(argv[[1]]))");
+        assertEval(Ignored.Unknown,
+                        "argv <- list(structure(list(c0 = structure(integer(0), .Label = character(0), class = 'factor')), .Names = 'c0', row.names = character(0), class = 'data.frame')); .Internal(isNamespaceEnv(argv[[1]]))");
     }
 }
-

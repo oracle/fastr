@@ -19,14 +19,12 @@ public class TestrGenBuiltinutf8ToInt extends TestBase {
 
     @Test
     public void testutf8ToInt1() {
-        assertEval(Ignored.Unknown, "argv <- list(\'lasy\'); .Internal(utf8ToInt(argv[[1]]))");
+        assertEval(Ignored.Unknown, "argv <- list('lasy'); .Internal(utf8ToInt(argv[[1]]))");
     }
 
-	@Test
-	public void testutf8ToInt3() {
-		assertEval(Ignored.Unknown, "argv <- structure(list(x = NA_character_), .Names = \'x\');"+
-			"do.call(\'utf8ToInt\', argv)");
-	}
+    @Test
+    public void testutf8ToInt3() {
+        assertEval(Ignored.Unknown, "argv <- structure(list(x = NA_character_), .Names = 'x');do.call('utf8ToInt', argv)");
+    }
 
 }
-

@@ -27,4 +27,3 @@ public class TestrGenBuiltinsetSessionTimeLimit extends TestBase {
         assertEval(Ignored.Unknown, "argv <- list(FALSE, Inf); .Internal(setSessionTimeLimit(argv[[1]], argv[[2]]))");
     }
 }
-

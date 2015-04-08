@@ -32,4 +32,3 @@ public class TestrGenBuiltinrow extends TestBase {
         assertEval(Ignored.Unknown, "argv <- list(0:1); .Internal(row(argv[[1]]))");
     }
 }
-

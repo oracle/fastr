@@ -29,7 +29,7 @@ public class TestrGenBuiltinpolyroot extends TestBase {
 
     @Test
     public void testpolyroot3() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(c(1, 0.035205614861993, 0.237828814667385), .Names = c(\'\', \'\', \'\'))); .Internal(polyroot(argv[[1]]))");
+        assertEval(Ignored.Unknown, "argv <- list(structure(c(1, 0.035205614861993, 0.237828814667385), .Names = c('', '', ''))); .Internal(polyroot(argv[[1]]))");
     }
 
     @Test
@@ -47,4 +47,3 @@ public class TestrGenBuiltinpolyroot extends TestBase {
         assertEval(Ignored.Unknown, "argv <- list(c(1, 8, 28, 56, 70, 56, 28, 8, 1)); .Internal(polyroot(argv[[1]]))");
     }
 }
-

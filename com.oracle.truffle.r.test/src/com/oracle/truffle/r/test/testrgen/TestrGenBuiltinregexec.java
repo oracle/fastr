@@ -19,7 +19,7 @@ public class TestrGenBuiltinregexec extends TestBase {
 
     @Test
     public void testregexec1() {
-        assertEval(Ignored.Unknown, "argv <- list(\'^(([^:]+)://)?([^:/]+)(:([0-9]+))?(/.*)\', \'http://stat.umn.edu:80/xyz\', FALSE, FALSE, FALSE); .Internal(regexec(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
+        assertEval(Ignored.Unknown,
+                        "argv <- list('^(([^:]+)://)?([^:/]+)(:([0-9]+))?(/.*)', 'http://stat.umn.edu:80/xyz', FALSE, FALSE, FALSE); .Internal(regexec(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
     }
 }
-

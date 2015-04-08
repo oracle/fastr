@@ -19,7 +19,7 @@ public class TestrGenBuiltinasarray extends TestBase {
 
     @Test
     public void testasarray1() {
-        assertEval("argv <- structure(list(x = 1:3), .Names = \'x\');" + "do.call(\'as.array\', argv)");
+        assertEval("argv <- structure(list(x = 1:3), .Names = 'x');do.call('as.array', argv)");
     }
 
 }

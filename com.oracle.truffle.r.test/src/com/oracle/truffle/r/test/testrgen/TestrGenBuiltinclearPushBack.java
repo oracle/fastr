@@ -22,4 +22,3 @@ public class TestrGenBuiltinclearPushBack extends TestBase {
         assertEval(Ignored.Unknown, "argv <- list(FALSE); .Internal(clearPushBack(argv[[1]]))");
     }
 }
-
