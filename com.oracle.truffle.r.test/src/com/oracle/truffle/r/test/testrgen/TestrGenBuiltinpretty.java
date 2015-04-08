@@ -18,27 +18,23 @@ import com.oracle.truffle.r.test.*;
 public class TestrGenBuiltinpretty extends TestBase {
 
     @Test
-    @Ignore
     public void testpretty1() {
-        assertEval("argv <- list(0L, 3L, 5, 1, 0.75, c(1.5, 2.75), 0); .Internal(pretty(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+        assertEval(Ignored.Unknown, "argv <- list(0L, 3L, 5, 1, 0.75, c(1.5, 2.75), 0); .Internal(pretty(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
-    @Ignore
     public void testpretty2() {
-        assertEval("argv <- list(-0.03, 1.11, 5, 1, 0.75, c(1.5, 2.75), 0); .Internal(pretty(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+        assertEval(Ignored.Unknown, "argv <- list(-0.03, 1.11, 5, 1, 0.75, c(1.5, 2.75), 0); .Internal(pretty(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
-    @Ignore
     public void testpretty3() {
-        assertEval("argv <- list(-6.64448090063514e-06, 6.64454021993011e-06, 1, 0, 0.75, c(1.5, 2.75), 0); .Internal(pretty(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+        assertEval(Ignored.Unknown, "argv <- list(-6.64448090063514e-06, 6.64454021993011e-06, 1, 0, 0.75, c(1.5, 2.75), 0); .Internal(pretty(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
-    @Ignore
     public void testpretty4() {
-        assertEval("argv <- list(1.234e+100, 1.234e+100, 5, 1, 0.75, c(1.5, 2.75), 0); .Internal(pretty(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+        assertEval(Ignored.Unknown, "argv <- list(1.234e+100, 1.234e+100, 5, 1, 0.75, c(1.5, 2.75), 0); .Internal(pretty(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 }
 

@@ -18,9 +18,8 @@ import com.oracle.truffle.r.test.*;
                                                                  public class TestrGenBuiltinattributesassign_ extends TestBase {
 
 	@Test
-    @Ignore
 	public void testattributesassign_1() {
-		assertEval("argv <- structure(list(structure(list(), class = structure(\'L\',     package = \'.GlobalEnv\')), value = NULL), .Names = c(\'\', \'value\'));"+
+		assertEval(Ignored.Unknown, "argv <- structure(list(structure(list(), class = structure(\'L\',     package = \'.GlobalEnv\')), value = NULL), .Names = c(\'\', \'value\'));"+
 			"do.call(\'attributes<-\', argv)");
 	}
 

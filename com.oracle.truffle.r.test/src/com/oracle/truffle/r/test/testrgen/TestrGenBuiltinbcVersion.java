@@ -18,9 +18,8 @@ import com.oracle.truffle.r.test.*;
 public class TestrGenBuiltinbcVersion extends TestBase {
 
     @Test
-    @Ignore
     public void testbcVersion1() {
-        assertEval(" .Internal(bcVersion())");
+        assertEval(Ignored.Unknown, " .Internal(bcVersion())");
     }
 }
 

@@ -23,9 +23,8 @@ public class TestrGenBuiltinReduce extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testReduce2() {
-        assertEval("argv <- structure(list(f = function(f, ...) f(...), x = list(.Primitive(\'log\'),     .Primitive(\'exp\'), .Primitive(\'acos\'), .Primitive(\'cos\')),     init = 0, right = TRUE), .Names = c(\'f\', \'x\', \'init\', \'right\'));"
+        assertEval(Ignored.Unknown, "argv <- structure(list(f = function(f, ...) f(...), x = list(.Primitive(\'log\'),     .Primitive(\'exp\'), .Primitive(\'acos\'), .Primitive(\'cos\')),     init = 0, right = TRUE), .Names = c(\'f\', \'x\', \'init\', \'right\'));"
                         + "do.call(\'Reduce\', argv)");
     }
 }

@@ -18,9 +18,8 @@ import com.oracle.truffle.r.test.*;
                                                                  public class TestrGenBuiltininteractive extends TestBase {
 
 	@Test
-    @Ignore
 	public void testinteractive1() {
-		assertEval("argv <- list();"+
+		assertEval(Ignored.Unknown, "argv <- list();"+
 			"do.call(\'interactive\', argv)");
 	}
 

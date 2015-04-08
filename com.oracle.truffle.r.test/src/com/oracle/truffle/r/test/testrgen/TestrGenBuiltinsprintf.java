@@ -23,15 +23,13 @@ public class TestrGenBuiltinsprintf extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testsprintf2() {
-        assertEval("argv <- list(\'%1.0f\', 3.14159265358979); .Internal(sprintf(argv[[1]], argv[[2]]))");
+        assertEval(Ignored.Unknown, "argv <- list(\'%1.0f\', 3.14159265358979); .Internal(sprintf(argv[[1]], argv[[2]]))");
     }
 
     @Test
-    @Ignore
     public void testsprintf3() {
-        assertEval("argv <- list(\'min 10-char string '%10s'\', c(\'a\', \'ABC\', \'and an even longer one\')); .Internal(sprintf(argv[[1]], argv[[2]]))");
+        assertEval(Ignored.Unknown, "argv <- list(\'min 10-char string '%10s'\', c(\'a\', \'ABC\', \'and an even longer one\')); .Internal(sprintf(argv[[1]], argv[[2]]))");
     }
 
     @Test
@@ -50,27 +48,23 @@ public class TestrGenBuiltinsprintf extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testsprintf7() {
-        assertEval("argv <- list(\'p,L,S = (%2d,%2d,%2d): \', TRUE, FALSE, NA); .Internal(sprintf(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
+        assertEval(Ignored.Unknown, "argv <- list(\'p,L,S = (%2d,%2d,%2d): \', TRUE, FALSE, NA); .Internal(sprintf(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
     }
 
     @Test
-    @Ignore
     public void testsprintf8() {
-        assertEval("argv <- list(\'plot_%02g\', 1L); .Internal(sprintf(argv[[1]], argv[[2]]))");
+        assertEval(Ignored.Unknown, "argv <- list(\'plot_%02g\', 1L); .Internal(sprintf(argv[[1]], argv[[2]]))");
     }
 
     @Test
-    @Ignore
     public void testsprintf9() {
-        assertEval("argv <- list(\'tools:::.createExdotR(\\\'%s\\\', \\\'%s\\\', silent = TRUE, use_gct = %s, addTiming = %s)\', structure(\'KernSmooth\', .Names = \'Package\'), \'/home/lzhao/hg/r-instrumented/library/KernSmooth\', FALSE, FALSE); .Internal(sprintf(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
+        assertEval(Ignored.Unknown, "argv <- list(\'tools:::.createExdotR(\\\'%s\\\', \\\'%s\\\', silent = TRUE, use_gct = %s, addTiming = %s)\', structure(\'KernSmooth\', .Names = \'Package\'), \'/home/lzhao/hg/r-instrumented/library/KernSmooth\', FALSE, FALSE); .Internal(sprintf(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
     }
 
     @Test
-    @Ignore
     public void testsprintf10() {
-        assertEval("argv <- list(\'%.0f%% said yes (out of a sample of size %.0f)\', 66.666, 3); .Internal(sprintf(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval(Ignored.Unknown, "argv <- list(\'%.0f%% said yes (out of a sample of size %.0f)\', 66.666, 3); .Internal(sprintf(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
@@ -109,9 +103,8 @@ public class TestrGenBuiltinsprintf extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testsprintf18() {
-        assertEval("argv <- list(\'%5g\', structure(c(18, 18, 0, 14, 4, 12, 12, 0, 4, 8, 26, 23, 3, 18, 5, 8, 5, 3, 0, 5, 21, 0, 21, 0, 0), .Dim = c(5L, 5L), .Dimnames = list(NULL, c(\'\', \'\', \'\', \'\', \'\')))); .Internal(sprintf(argv[[1]], argv[[2]]))");
+        assertEval(Ignored.Unknown, "argv <- list(\'%5g\', structure(c(18, 18, 0, 14, 4, 12, 12, 0, 4, 8, 26, 23, 3, 18, 5, 8, 5, 3, 0, 5, 21, 0, 21, 0, 0), .Dim = c(5L, 5L), .Dimnames = list(NULL, c(\'\', \'\', \'\', \'\', \'\')))); .Internal(sprintf(argv[[1]], argv[[2]]))");
     }
 
     @Test

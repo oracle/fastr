@@ -18,9 +18,8 @@ import com.oracle.truffle.r.test.*;
                                                                  public class TestrGenBuiltinasDatenumeric extends TestBase {
 
 	@Test
-    @Ignore
 	public void testasDatenumeric1() {
-		assertEval("argv <- structure(list(x = 0.5, origin = \'1969-12-31\'), .Names = c(\'x\',     \'origin\'));"+
+		assertEval(Ignored.Unknown, "argv <- structure(list(x = 0.5, origin = \'1969-12-31\'), .Names = c(\'x\',     \'origin\'));"+
 			"do.call(\'as.Date.numeric\', argv)");
 	}
 

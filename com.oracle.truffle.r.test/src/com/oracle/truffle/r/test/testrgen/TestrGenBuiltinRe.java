@@ -23,9 +23,8 @@ public class TestrGenBuiltinRe extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testRe2() {
-        assertEval("argv <- list(structure(c(3+2i, 3+2i, NA, 3+2i, 3+2i, 3+2i, 3+2i, 3+2i, 4-5i, 3-5i, NA, NA, 2-5i, 3-5i, 4-5i, 5-5i), .Dim = c(8L, 2L), .Dimnames = list(NULL, c(\'x1\', \'x2\'))));Re(argv[[1]]);");
+        assertEval(Ignored.Unknown, "argv <- list(structure(c(3+2i, 3+2i, NA, 3+2i, 3+2i, 3+2i, 3+2i, 3+2i, 4-5i, 3-5i, NA, NA, 2-5i, 3-5i, 4-5i, 5-5i), .Dim = c(8L, 2L), .Dimnames = list(NULL, c(\'x1\', \'x2\'))));Re(argv[[1]]);");
     }
 
     @Test
@@ -34,21 +33,18 @@ public class TestrGenBuiltinRe extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testRe4() {
-        assertEval("argv <- list(c(0.923879532511287+0.38268343236509i, 0.707106781186548+0.707106781186547i, 0.38268343236509+0.923879532511287i, 0+1i, -0.38268343236509+0.923879532511287i, -0.707106781186547+0.707106781186548i, -0.923879532511287+0.38268343236509i, -1+0i, -0.923879532511287-0.38268343236509i, -0.707106781186548-0.707106781186547i, -0.38268343236509-0.923879532511287i, 0-1i, 0.38268343236509-0.923879532511287i, 0.707106781186547-0.707106781186548i, 0.923879532511287-0.38268343236509i, 1-0i));Re(argv[[1]]);");
+        assertEval(Ignored.Unknown, "argv <- list(c(0.923879532511287+0.38268343236509i, 0.707106781186548+0.707106781186547i, 0.38268343236509+0.923879532511287i, 0+1i, -0.38268343236509+0.923879532511287i, -0.707106781186547+0.707106781186548i, -0.923879532511287+0.38268343236509i, -1+0i, -0.923879532511287-0.38268343236509i, -0.707106781186548-0.707106781186547i, -0.38268343236509-0.923879532511287i, 0-1i, 0.38268343236509-0.923879532511287i, 0.707106781186547-0.707106781186548i, 0.923879532511287-0.38268343236509i, 1-0i));Re(argv[[1]]);");
     }
 
     @Test
-    @Ignore
     public void testRe5() {
-        assertEval("argv <- list(logical(0));Re(argv[[1]]);");
+        assertEval(Ignored.Unknown, "argv <- list(logical(0));Re(argv[[1]]);");
     }
 
     @Test
-    @Ignore
     public void testRe6() {
-        assertEval("argv <- list(FALSE);Re(argv[[1]]);");
+        assertEval(Ignored.Unknown, "argv <- list(FALSE);Re(argv[[1]]);");
     }
 
     @Test

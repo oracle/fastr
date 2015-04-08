@@ -56,11 +56,10 @@ public class TestSimpleLoop extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testLoopsErrorsIgnore() {
-        assertEval(Output.ContainsError, "{ l <- quote(for(i in s) { x <- i }) ; s <- 1:3 ; eval(l) ; s <- function(){} ; eval(l) ; x }");
-        assertEval(Output.ContainsError, "{ l <- function(s) { for(i in s) { x <- i } ; x } ; l(1:3) ; s <- function(){} ; l(s) ; x }");
-        assertEval(Output.ContainsError, "{ l <- quote({ for(i in s) { x <- i } ; x }) ; f <- function(s) { eval(l) } ; f(1:3) ; s <- function(){} ; f(s) ; x }");
+        assertEval(Ignored.Unknown, Output.ContainsError, "{ l <- quote(for(i in s) { x <- i }) ; s <- 1:3 ; eval(l) ; s <- function(){} ; eval(l) ; x }");
+        assertEval(Ignored.Unknown, Output.ContainsError, "{ l <- function(s) { for(i in s) { x <- i } ; x } ; l(1:3) ; s <- function(){} ; l(s) ; x }");
+        assertEval(Ignored.Unknown, Output.ContainsError, "{ l <- quote({ for(i in s) { x <- i } ; x }) ; f <- function(s) { eval(l) } ; f(1:3) ; s <- function(){} ; f(s) ; x }");
     }
 
     @Test

@@ -38,15 +38,13 @@ public class TestrGenBuiltinidentical extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testidentical5() {
-        assertEval("argv <- list(structure(list(a = 1), .Dim = 1L, .Dimnames = list(\'a\')), structure(list(a = 1), .Dim = 1L, .Dimnames = list(\'a\')), TRUE, TRUE, TRUE, TRUE, FALSE); .Internal(identical(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+        assertEval(Ignored.Unknown, "argv <- list(structure(list(a = 1), .Dim = 1L, .Dimnames = list(\'a\')), structure(list(a = 1), .Dim = 1L, .Dimnames = list(\'a\')), TRUE, TRUE, TRUE, TRUE, FALSE); .Internal(identical(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
-    @Ignore
     public void testidentical6() {
-        assertEval("argv <- list(structure(list(), .Names = character(0), row.names = integer(0), class = \'data.frame\'), structure(list(), .Names = character(0), row.names = integer(0), class = \'data.frame\'), TRUE, TRUE, TRUE, TRUE, FALSE); .Internal(identical(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+        assertEval(Ignored.Unknown, "argv <- list(structure(list(), .Names = character(0), row.names = integer(0), class = \'data.frame\'), structure(list(), .Names = character(0), row.names = integer(0), class = \'data.frame\'), TRUE, TRUE, TRUE, TRUE, FALSE); .Internal(identical(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
@@ -55,9 +53,8 @@ public class TestrGenBuiltinidentical extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testidentical8() {
-        assertEval("argv <- list(structure(list(a = 1), .Names = \'a\', .Tsp = c(1, 1, 1), class = \'ts\'), structure(list(a = 1), .Names = \'a\', .Tsp = c(1, 1, 1), class = \'ts\'), TRUE, TRUE, TRUE, TRUE, FALSE); .Internal(identical(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+        assertEval(Ignored.Unknown, "argv <- list(structure(list(a = 1), .Names = \'a\', .Tsp = c(1, 1, 1), class = \'ts\'), structure(list(a = 1), .Names = \'a\', .Tsp = c(1, 1, 1), class = \'ts\'), TRUE, TRUE, TRUE, TRUE, FALSE); .Internal(identical(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
@@ -71,9 +68,8 @@ public class TestrGenBuiltinidentical extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testidentical11() {
-        assertEval("argv <- list(NULL, \'\\\\link\', TRUE, TRUE, TRUE, TRUE, FALSE); .Internal(identical(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+        assertEval(Ignored.Unknown, "argv <- list(NULL, \'\\\\link\', TRUE, TRUE, TRUE, TRUE, FALSE); .Internal(identical(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
@@ -82,27 +78,23 @@ public class TestrGenBuiltinidentical extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testidentical13() {
-        assertEval("argv <- list(NA_complex_, NA_complex_, TRUE, TRUE, TRUE, TRUE, FALSE); .Internal(identical(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+        assertEval(Ignored.Unknown, "argv <- list(NA_complex_, NA_complex_, TRUE, TRUE, TRUE, TRUE, FALSE); .Internal(identical(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
-    @Ignore
     public void testidentical14() {
-        assertEval("argv <- list(structure(c(1, 1, 1, 1, 2, 3), .Dim = c(3L, 2L), .Dimnames = list(NULL, c(\'I\', \'a\')), foo = \'bar\', class = \'matrix\'), structure(c(1, 1, 1, 1, 2, 3), .Dim = c(3L, 2L), class = \'matrix\', foo = \'bar\', .Dimnames = list(NULL, c(\'I\', \'a\'))), TRUE, TRUE, FALSE, TRUE, FALSE); .Internal(identical(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+        assertEval(Ignored.Unknown, "argv <- list(structure(c(1, 1, 1, 1, 2, 3), .Dim = c(3L, 2L), .Dimnames = list(NULL, c(\'I\', \'a\')), foo = \'bar\', class = \'matrix\'), structure(c(1, 1, 1, 1, 2, 3), .Dim = c(3L, 2L), class = \'matrix\', foo = \'bar\', .Dimnames = list(NULL, c(\'I\', \'a\'))), TRUE, TRUE, FALSE, TRUE, FALSE); .Internal(identical(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
-    @Ignore
     public void testidentical15() {
-        assertEval("argv <- list(structure(list(x = 1L), .Names = \'x\', row.names = c(NA, -1L), class = \'data.frame\'), structure(list(x = 1L), .Names = \'x\', row.names = c(NA, -1L), class = \'data.frame\'), TRUE, TRUE, TRUE, TRUE, FALSE); .Internal(identical(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+        assertEval(Ignored.Unknown, "argv <- list(structure(list(x = 1L), .Names = \'x\', row.names = c(NA, -1L), class = \'data.frame\'), structure(list(x = 1L), .Names = \'x\', row.names = c(NA, -1L), class = \'data.frame\'), TRUE, TRUE, TRUE, TRUE, FALSE); .Internal(identical(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
-    @Ignore
     public void testidentical16() {
-        assertEval("argv <- list(structure(c(1L, 1L, 1L), .Label = c(\'1\', \'2\'), class = \'factor\'), structure(list(f = structure(c(1L, 1L, 1L), .Label = c(\'1\', \'2\'), class = \'factor\'), u = structure(12:14, unit = \'kg\', class = \'avector\')), .Names = c(\'f\', \'u\'), row.names = 2:4, class = \'data.frame\'), TRUE, TRUE, TRUE, TRUE, FALSE); .Internal(identical(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+        assertEval(Ignored.Unknown, "argv <- list(structure(c(1L, 1L, 1L), .Label = c(\'1\', \'2\'), class = \'factor\'), structure(list(f = structure(c(1L, 1L, 1L), .Label = c(\'1\', \'2\'), class = \'factor\'), u = structure(12:14, unit = \'kg\', class = \'avector\')), .Names = c(\'f\', \'u\'), row.names = 2:4, class = \'data.frame\'), TRUE, TRUE, TRUE, TRUE, FALSE); .Internal(identical(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
@@ -121,9 +113,8 @@ public class TestrGenBuiltinidentical extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testidentical20() {
-        assertEval("argv <- list(NaN, NaN, TRUE, TRUE, TRUE, TRUE, FALSE); .Internal(identical(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+        assertEval(Ignored.Unknown, "argv <- list(NaN, NaN, TRUE, TRUE, TRUE, TRUE, FALSE); .Internal(identical(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
@@ -142,9 +133,8 @@ public class TestrGenBuiltinidentical extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testidentical24() {
-        assertEval("argv <- list(list(c(\'r1\', \'r3\', \'r4\', \'r5\', \'r6\', \'r7\', \'r8\', \'r9\', \'r10\', \'r11\', \'r12\', \'r13\', \'r14\', \'r15\', \'r16\', \'r17\', \'r18\', \'r19\', \'r20\', \'r21\', \'r22\', \'r23\', \'r24\', \'r25\', \'r26\', \'r27\', \'r28\', \'r29\', \'r30\', \'r31\', \'r32\', \'r33\', \'r34\', \'r35\', \'r36\', \'r37\', \'r38\', \'r39\', \'r40\'), c(\'c1\', \'c2\', \'c3\', \'c4\', \'c5\', \'c6\', \'c7\', \'c8\', \'c9\', \'c10\', \'c11\', \'c12\', \'c13\', \'c14\', \'c15\', \'c16\', \'c17\', \'c18\', \'c19\', \'c20\')), list(character(0), character(0)), TRUE, TRUE, TRUE, TRUE, FALSE); .Internal(identical(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+        assertEval(Ignored.Unknown, "argv <- list(list(c(\'r1\', \'r3\', \'r4\', \'r5\', \'r6\', \'r7\', \'r8\', \'r9\', \'r10\', \'r11\', \'r12\', \'r13\', \'r14\', \'r15\', \'r16\', \'r17\', \'r18\', \'r19\', \'r20\', \'r21\', \'r22\', \'r23\', \'r24\', \'r25\', \'r26\', \'r27\', \'r28\', \'r29\', \'r30\', \'r31\', \'r32\', \'r33\', \'r34\', \'r35\', \'r36\', \'r37\', \'r38\', \'r39\', \'r40\'), c(\'c1\', \'c2\', \'c3\', \'c4\', \'c5\', \'c6\', \'c7\', \'c8\', \'c9\', \'c10\', \'c11\', \'c12\', \'c13\', \'c14\', \'c15\', \'c16\', \'c17\', \'c18\', \'c19\', \'c20\')), list(character(0), character(0)), TRUE, TRUE, TRUE, TRUE, FALSE); .Internal(identical(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
@@ -163,9 +153,8 @@ public class TestrGenBuiltinidentical extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testidentical28() {
-        assertEval("argv <- list(structure(list(x = c(1, 1, 1, 1, 1, 1, 1, 1, 1, 1), y = c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10), fac = structure(c(1L, 3L, 2L, 3L, 3L, 1L, 2L, 3L, 2L, 2L), .Label = c(\'A\', \'B\', \'C\'), class = \'factor\')), .Names = c(\'x\', \'y\', \'fac\'), row.names = c(NA, -10L), class = \'data.frame\'), structure(list(x = c(1, 1, 1, 1, 1, 1, 1, 1, 1, 1), y = c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10), fac = structure(c(1L, 3L, 2L, 3L, 3L, 1L, 2L, 3L, 2L, 2L), .Label = c(\'A\', \'B\', \'C\'), class = \'factor\')), .Names = c(\'x\', \'y\', \'fac\'), row.names = c(NA, 10L), class = \'data.frame\'), TRUE, TRUE, TRUE, TRUE, FALSE); .Internal(identical(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+        assertEval(Ignored.Unknown, "argv <- list(structure(list(x = c(1, 1, 1, 1, 1, 1, 1, 1, 1, 1), y = c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10), fac = structure(c(1L, 3L, 2L, 3L, 3L, 1L, 2L, 3L, 2L, 2L), .Label = c(\'A\', \'B\', \'C\'), class = \'factor\')), .Names = c(\'x\', \'y\', \'fac\'), row.names = c(NA, -10L), class = \'data.frame\'), structure(list(x = c(1, 1, 1, 1, 1, 1, 1, 1, 1, 1), y = c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10), fac = structure(c(1L, 3L, 2L, 3L, 3L, 1L, 2L, 3L, 2L, 2L), .Label = c(\'A\', \'B\', \'C\'), class = \'factor\')), .Names = c(\'x\', \'y\', \'fac\'), row.names = c(NA, 10L), class = \'data.frame\'), TRUE, TRUE, TRUE, TRUE, FALSE); .Internal(identical(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
@@ -184,9 +173,8 @@ public class TestrGenBuiltinidentical extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testidentical32() {
-        assertEval("argv <- list(structure(function (x) standardGeneric(\'cosh\', .Primitive(\'cosh\')), generic = structure(\'cosh\', package = \'base\'), package = \'base\', group = list(\'Math\'), valueClass = character(0), signature = \'x\', default = .Primitive(\'cosh\'), skeleton = quote(.Primitive(\'cosh\')(x)), class = structure(\'standardGeneric\', package = \'methods\')), FALSE, TRUE, TRUE, TRUE, TRUE, FALSE); .Internal(identical(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+        assertEval(Ignored.Unknown, "argv <- list(structure(function (x) standardGeneric(\'cosh\', .Primitive(\'cosh\')), generic = structure(\'cosh\', package = \'base\'), package = \'base\', group = list(\'Math\'), valueClass = character(0), signature = \'x\', default = .Primitive(\'cosh\'), skeleton = quote(.Primitive(\'cosh\')(x)), class = structure(\'standardGeneric\', package = \'methods\')), FALSE, TRUE, TRUE, TRUE, TRUE, FALSE); .Internal(identical(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
@@ -195,25 +183,22 @@ public class TestrGenBuiltinidentical extends TestBase {
     }
 
 	@Test
-    @Ignore
 	public void testidentical35() {
-		assertEval("argv <- structure(list(x = expression(exp(-0.5 * u^2)), y = expression(exp(-0.5 *     u^2))), .Names = c(\'x\', \'y\'));"+
+		assertEval(Ignored.Unknown, "argv <- structure(list(x = expression(exp(-0.5 * u^2)), y = expression(exp(-0.5 *     u^2))), .Names = c(\'x\', \'y\'));"+
 			"do.call(\'identical\', argv)");
 	}
 
 
 	@Test
-    @Ignore
 	public void testidentical36() {
-		assertEval("argv <- structure(list(x = structure(list(X1.4 = 1:4), .Names = \'X1.4\',     row.names = c(NA, -4L), class = \'data.frame\'), y = structure(list(X1.4 = 1:4),     .Names = \'X1.4\', row.names = c(\'1\', \'2\', \'3\', \'4\'), class = \'data.frame\')),     .Names = c(\'x\', \'y\'));"+
+		assertEval(Ignored.Unknown, "argv <- structure(list(x = structure(list(X1.4 = 1:4), .Names = \'X1.4\',     row.names = c(NA, -4L), class = \'data.frame\'), y = structure(list(X1.4 = 1:4),     .Names = \'X1.4\', row.names = c(\'1\', \'2\', \'3\', \'4\'), class = \'data.frame\')),     .Names = c(\'x\', \'y\'));"+
 			"do.call(\'identical\', argv)");
 	}
 
 
 	@Test
-    @Ignore
 	public void testidentical37() {
-		assertEval("argv <- structure(list(x = structure(list(a = NA, b = NA_integer_,     c = NA_real_, d = NA_complex_, e = 1, f = 1L, g = 1:3, h = c(NA,         1L, 2L, 3L), i = NA_character_, j = c(\'foo\', NA, \'bar\')),     .Names = c(\'a\', \'b\', \'c\', \'d\', \'e\', \'f\', \'g\', \'h\', \'i\', \'j\')),     y = structure(list(a = NA, b = NA_integer_, c = NA_real_,         d = NA_complex_, e = 1, f = 1L, g = 1:3, h = c(NA, 1L,             2L, 3L), i = NA_character_, j = c(\'foo\', NA, \'bar\')),         .Names = c(\'a\', \'b\', \'c\', \'d\', \'e\', \'f\', \'g\', \'h\', \'i\',             \'j\'))), .Names = c(\'x\', \'y\'));"+
+		assertEval(Ignored.Unknown, "argv <- structure(list(x = structure(list(a = NA, b = NA_integer_,     c = NA_real_, d = NA_complex_, e = 1, f = 1L, g = 1:3, h = c(NA,         1L, 2L, 3L), i = NA_character_, j = c(\'foo\', NA, \'bar\')),     .Names = c(\'a\', \'b\', \'c\', \'d\', \'e\', \'f\', \'g\', \'h\', \'i\', \'j\')),     y = structure(list(a = NA, b = NA_integer_, c = NA_real_,         d = NA_complex_, e = 1, f = 1L, g = 1:3, h = c(NA, 1L,             2L, 3L), i = NA_character_, j = c(\'foo\', NA, \'bar\')),         .Names = c(\'a\', \'b\', \'c\', \'d\', \'e\', \'f\', \'g\', \'h\', \'i\',             \'j\'))), .Names = c(\'x\', \'y\'));"+
 			"do.call(\'identical\', argv)");
 	}
 

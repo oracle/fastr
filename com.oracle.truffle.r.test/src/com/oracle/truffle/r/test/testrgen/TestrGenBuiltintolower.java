@@ -38,9 +38,8 @@ public class TestrGenBuiltintolower extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testtolower5() {
-        assertEval("argv <- list(structure(\'base\', .Names = \'Priority\')); .Internal(tolower(argv[[1]]))");
+        assertEval(Ignored.Unknown, "argv <- list(structure(\'base\', .Names = \'Priority\')); .Internal(tolower(argv[[1]]))");
     }
 
     @Test
@@ -49,9 +48,8 @@ public class TestrGenBuiltintolower extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testtolower8() {
-        assertEval("argv <- structure(list(x = c(\'NA\', NA, \'BANANA\')), .Names = \'x\');" + "do.call(\'tolower\', argv)");
+        assertEval(Ignored.Unknown, "argv <- structure(list(x = c(\'NA\', NA, \'BANANA\')), .Names = \'x\');" + "do.call(\'tolower\', argv)");
     }
 
 }

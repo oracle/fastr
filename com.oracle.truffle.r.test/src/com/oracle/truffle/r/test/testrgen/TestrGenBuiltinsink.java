@@ -23,8 +23,7 @@ public class TestrGenBuiltinsink extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testsink3() {
-        assertEval("argv <- list(-1L, FALSE, FALSE, FALSE); .Internal(sink(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
+        assertEval(Ignored.Unknown, "argv <- list(-1L, FALSE, FALSE, FALSE); .Internal(sink(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
     }
 }

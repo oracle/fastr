@@ -18,9 +18,8 @@ import com.oracle.truffle.r.test.*;
                                                                  public class TestrGenBuiltinEncodingassign_ extends TestBase {
 
 	@Test
-    @Ignore
 	public void testEncodingassign_1() {
-		assertEval("argv <- structure(list(x = \'abc\', value = \'UTF-8\'), .Names = c(\'x\',     \'value\'));"+
+		assertEval(Ignored.Unknown, "argv <- structure(list(x = \'abc\', value = \'UTF-8\'), .Names = c(\'x\',     \'value\'));"+
 			"do.call(\'Encoding<-\', argv)");
 	}
 

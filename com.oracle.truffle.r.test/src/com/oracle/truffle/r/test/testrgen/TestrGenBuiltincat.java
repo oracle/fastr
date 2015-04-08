@@ -23,9 +23,8 @@ public class TestrGenBuiltincat extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testcat2() {
-        assertEval("argv <- list(list(\'Loading required package: splines\\n\'), structure(2L, class = c(\'terminal\', \'connection\')), \'\', FALSE, NULL, FALSE); .Internal(cat(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]]))");
+        assertEval(Ignored.Unknown, "argv <- list(list(\'Loading required package: splines\\n\'), structure(2L, class = c(\'terminal\', \'connection\')), \'\', FALSE, NULL, FALSE); .Internal(cat(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]]))");
     }
 
     @Test

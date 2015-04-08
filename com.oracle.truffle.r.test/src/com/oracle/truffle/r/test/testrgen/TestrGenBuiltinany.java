@@ -38,9 +38,8 @@ public class TestrGenBuiltinany extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testany5() {
-        assertEval("argv <- list(structure(c(14, 2, 0, 2, -7, 0), .Dim = c(3L, 2L)));any(argv[[1]]);");
+        assertEval(Ignored.Unknown, "argv <- list(structure(c(14, 2, 0, 2, -7, 0), .Dim = c(3L, 2L)));any(argv[[1]]);");
     }
 
     @Test
@@ -94,9 +93,8 @@ public class TestrGenBuiltinany extends TestBase {
     }
 
 	@Test
-    @Ignore
 	public void testany17() {
-		assertEval("argv <- list(\'NA\');"+
+		assertEval(Ignored.Unknown, "argv <- list(\'NA\');"+
 			"do.call(\'any\', argv)");
 	}
 

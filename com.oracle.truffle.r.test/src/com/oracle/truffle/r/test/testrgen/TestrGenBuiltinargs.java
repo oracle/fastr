@@ -23,15 +23,13 @@ public class TestrGenBuiltinargs extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testargs2() {
-        assertEval("argv <- list(character(0)); .Internal(args(argv[[1]]))");
+        assertEval(Ignored.Unknown, "argv <- list(character(0)); .Internal(args(argv[[1]]))");
     }
 
     @Test
-    @Ignore
     public void testargs3() {
-        assertEval("argv <- list(.Primitive(\':\')); .Internal(args(argv[[1]]))");
+        assertEval(Ignored.Unknown, "argv <- list(.Primitive(\':\')); .Internal(args(argv[[1]]))");
     }
 
     @Test

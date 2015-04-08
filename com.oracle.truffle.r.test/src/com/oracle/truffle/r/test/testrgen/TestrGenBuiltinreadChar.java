@@ -18,9 +18,8 @@ import com.oracle.truffle.r.test.*;
                                                                  public class TestrGenBuiltinreadChar extends TestBase {
 
 	@Test
-    @Ignore
 	public void testreadChar1() {
-		assertEval("argv <- structure(list(con = as.raw(c(65, 66, 67, 68, 69, 70,     71, 72, 73, 74)), nchars = c(3, 3, 0, 3, 3, 3)), .Names = c(\'con\',     \'nchars\'));"+
+		assertEval(Ignored.Unknown, "argv <- structure(list(con = as.raw(c(65, 66, 67, 68, 69, 70,     71, 72, 73, 74)), nchars = c(3, 3, 0, 3, 3, 3)), .Names = c(\'con\',     \'nchars\'));"+
 			"do.call(\'readChar\', argv)");
 	}
 

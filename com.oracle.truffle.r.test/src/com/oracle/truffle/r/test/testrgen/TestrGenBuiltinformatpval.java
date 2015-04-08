@@ -18,9 +18,8 @@ import com.oracle.truffle.r.test.*;
                                                                  public class TestrGenBuiltinformatpval extends TestBase {
 
 	@Test
-    @Ignore
 	public void testformatpval1() {
-		assertEval("argv <- structure(list(pv = 0.200965994008331, digits = 3), .Names = c(\'pv\',     \'digits\'));"+
+		assertEval(Ignored.Unknown, "argv <- structure(list(pv = 0.200965994008331, digits = 3), .Names = c(\'pv\',     \'digits\'));"+
 			"do.call(\'format.pval\', argv)");
 	}
 

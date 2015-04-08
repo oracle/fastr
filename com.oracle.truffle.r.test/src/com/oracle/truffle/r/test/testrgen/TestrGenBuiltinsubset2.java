@@ -33,9 +33,8 @@ public class TestrGenBuiltinsubset2 extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testsubset24() {
-        assertEval("argv <- list(NULL, NULL);.subset2(argv[[1]],argv[[2]]);");
+        assertEval(Ignored.Unknown, "argv <- list(NULL, NULL);.subset2(argv[[1]],argv[[2]]);");
     }
 
     @Test
@@ -49,21 +48,18 @@ public class TestrGenBuiltinsubset2 extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testsubset27() {
-        assertEval("argv <- list(structure(list(surname = structure(c(\'Tukey\', \'Venables\', \'Tierney\', \'Ripley\', \'McNeil\'), class = \'AsIs\')), .Names = \'surname\'), 1L);.subset2(argv[[1]],argv[[2]]);");
+        assertEval(Ignored.Unknown, "argv <- list(structure(list(surname = structure(c(\'Tukey\', \'Venables\', \'Tierney\', \'Ripley\', \'McNeil\'), class = \'AsIs\')), .Names = \'surname\'), 1L);.subset2(argv[[1]],argv[[2]]);");
     }
 
     @Test
-    @Ignore
     public void testsubset28() {
-        assertEval("argv <- list(structure(list(surname = structure(\'R Core\', class = \'AsIs\'), nationality = structure(NA_integer_, .Label = c(\'Australia\', \'UK\', \'US\'), class = \'factor\'), deceased = structure(NA_integer_, .Label = c(\'no\', \'yes\'), class = \'factor\')), .Names = c(\'surname\', \'nationality\', \'deceased\'), row.names = 7L, class = \'data.frame\'), 1L);.subset2(argv[[1]],argv[[2]]);");
+        assertEval(Ignored.Unknown, "argv <- list(structure(list(surname = structure(\'R Core\', class = \'AsIs\'), nationality = structure(NA_integer_, .Label = c(\'Australia\', \'UK\', \'US\'), class = \'factor\'), deceased = structure(NA_integer_, .Label = c(\'no\', \'yes\'), class = \'factor\')), .Names = c(\'surname\', \'nationality\', \'deceased\'), row.names = 7L, class = \'data.frame\'), 1L);.subset2(argv[[1]],argv[[2]]);");
     }
 
     @Test
-    @Ignore
     public void testsubset29() {
-        assertEval("argv <- list(structure(list(z = structure(c(\'a\', \'b\', \'c\', \'d\', \'e\', \'f\', \'g\', \'h\', \'i\'), .Dim = c(3L, 3L), class = \'AsIs\')), .Names = \'z\'), 1L);.subset2(argv[[1]],argv[[2]]);");
+        assertEval(Ignored.Unknown, "argv <- list(structure(list(z = structure(c(\'a\', \'b\', \'c\', \'d\', \'e\', \'f\', \'g\', \'h\', \'i\'), .Dim = c(3L, 3L), class = \'AsIs\')), .Names = \'z\'), 1L);.subset2(argv[[1]],argv[[2]]);");
     }
 
     @Test
@@ -72,21 +68,18 @@ public class TestrGenBuiltinsubset2 extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testsubset212() {
-        assertEval("argv <- list(structure(list(Res.Df = c(20, 21), RSS = c(652424.52183908, 658770.746755654), Df = c(NA, -1), `Sum of Sq` = c(NA, -6346.22491657443), F = c(NA, 0.194542807762205), `Pr(>F)` = c(NA, 0.663893424608742)), .Names = c(\'Res.Df\', \'RSS\', \'Df\', \'Sum of Sq\', \'F\', \'Pr(>F)\'), row.names = c(\'1\', \'2\'), class = c(\'anova\', \'data.frame\'), heading = c(\'Analysis of Variance Table\\n\', \'Model 1: birthw ~ sex + sex:age - 1\\nModel 2: birthw ~ sex + age - 1\')), 6L);.subset2(argv[[1]],argv[[2]]);");
+        assertEval(Ignored.Unknown, "argv <- list(structure(list(Res.Df = c(20, 21), RSS = c(652424.52183908, 658770.746755654), Df = c(NA, -1), `Sum of Sq` = c(NA, -6346.22491657443), F = c(NA, 0.194542807762205), `Pr(>F)` = c(NA, 0.663893424608742)), .Names = c(\'Res.Df\', \'RSS\', \'Df\', \'Sum of Sq\', \'F\', \'Pr(>F)\'), row.names = c(\'1\', \'2\'), class = c(\'anova\', \'data.frame\'), heading = c(\'Analysis of Variance Table\\n\', \'Model 1: birthw ~ sex + sex:age - 1\\nModel 2: birthw ~ sex + age - 1\')), 6L);.subset2(argv[[1]],argv[[2]]);");
     }
 
     @Test
-    @Ignore
     public void testsubset213() {
-        assertEval("argv <- list(structure(list(a = structure(\'abc\', class = \'AsIs\'), b = structure(\'def\\\'gh\', class = \'AsIs\')), .Names = c(\'a\', \'b\'), row.names = \'1\', class = \'data.frame\'), 1L);.subset2(argv[[1]],argv[[2]]);");
+        assertEval(Ignored.Unknown, "argv <- list(structure(list(a = structure(\'abc\', class = \'AsIs\'), b = structure(\'def\\\'gh\', class = \'AsIs\')), .Names = c(\'a\', \'b\'), row.names = \'1\', class = \'data.frame\'), 1L);.subset2(argv[[1]],argv[[2]]);");
     }
 
     @Test
-    @Ignore
     public void testsubset214() {
-        assertEval("argv <- list(structure(list(mtime = structure(1395082258.61787, class = c(\'POSIXct\', \'POSIXt\'))), .Names = \'mtime\'), 1L);.subset2(argv[[1]],argv[[2]]);");
+        assertEval(Ignored.Unknown, "argv <- list(structure(list(mtime = structure(1395082258.61787, class = c(\'POSIXct\', \'POSIXt\'))), .Names = \'mtime\'), 1L);.subset2(argv[[1]],argv[[2]]);");
     }
 
     @Test
@@ -110,9 +103,8 @@ public class TestrGenBuiltinsubset2 extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testsubset219() {
-        assertEval("argv <- list(structure(list(surname = structure(2L, .Label = c(\'McNeil\', \'R Core\', \'Ripley\', \'Tierney\', \'Tukey\', \'Venables\'), class = \'factor\'), nationality = structure(NA_integer_, .Label = c(\'Australia\', \'UK\', \'US\'), class = \'factor\'), deceased = structure(NA_integer_, .Label = c(\'no\', \'yes\'), class = \'factor\'), title = structure(1L, .Label = c(\'An Introduction to R\', \'Exploratory Data Analysis\', \'Interactive Data Analysis\', \'LISP-STAT\', \'Modern Applied Statistics ...\', \'Spatial Statistics\', \'Stochastic Simulation\'), class = \'factor\'), other.author = structure(2L, .Label = c(\'Ripley\', \'Venables & Smith\'), class = \'factor\')), .Names = c(\'surname\', \'nationality\', \'deceased\', \'title\', \'other.author\'), row.names = 1L, class = \'data.frame\'), 4L);.subset2(argv[[1]],argv[[2]]);");
+        assertEval(Ignored.Unknown, "argv <- list(structure(list(surname = structure(2L, .Label = c(\'McNeil\', \'R Core\', \'Ripley\', \'Tierney\', \'Tukey\', \'Venables\'), class = \'factor\'), nationality = structure(NA_integer_, .Label = c(\'Australia\', \'UK\', \'US\'), class = \'factor\'), deceased = structure(NA_integer_, .Label = c(\'no\', \'yes\'), class = \'factor\'), title = structure(1L, .Label = c(\'An Introduction to R\', \'Exploratory Data Analysis\', \'Interactive Data Analysis\', \'LISP-STAT\', \'Modern Applied Statistics ...\', \'Spatial Statistics\', \'Stochastic Simulation\'), class = \'factor\'), other.author = structure(2L, .Label = c(\'Ripley\', \'Venables & Smith\'), class = \'factor\')), .Names = c(\'surname\', \'nationality\', \'deceased\', \'title\', \'other.author\'), row.names = 1L, class = \'data.frame\'), 4L);.subset2(argv[[1]],argv[[2]]);");
     }
 
     @Test
@@ -156,15 +148,13 @@ public class TestrGenBuiltinsubset2 extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testsubset228() {
-        assertEval("argv <- list(structure(list(Df = c(NA, 1, 1, 1, 1), `Sum of Sq` = c(NA, 25.9509113775335, 2.97247824113524, 0.109090049888117, 0.246974722154086), RSS = c(47.863639350499, 73.8145507280325, 50.8361175916342, 47.9727294003871, 48.1106140726531), AIC = c(26.9442879283302, 30.5758847476115, 25.7275503692601, 24.9738836085411, 25.0111950072736)), .Names = c(\'Df\', \'Sum of Sq\', \'RSS\', \'AIC\'), row.names = c(\'<none>\', \'- x1\', \'- x2\', \'- x3\', \'- x4\'), class = c(\'anova\', \'data.frame\')), 2L);.subset2(argv[[1]],argv[[2]]);");
+        assertEval(Ignored.Unknown, "argv <- list(structure(list(Df = c(NA, 1, 1, 1, 1), `Sum of Sq` = c(NA, 25.9509113775335, 2.97247824113524, 0.109090049888117, 0.246974722154086), RSS = c(47.863639350499, 73.8145507280325, 50.8361175916342, 47.9727294003871, 48.1106140726531), AIC = c(26.9442879283302, 30.5758847476115, 25.7275503692601, 24.9738836085411, 25.0111950072736)), .Names = c(\'Df\', \'Sum of Sq\', \'RSS\', \'AIC\'), row.names = c(\'<none>\', \'- x1\', \'- x2\', \'- x3\', \'- x4\'), class = c(\'anova\', \'data.frame\')), 2L);.subset2(argv[[1]],argv[[2]]);");
     }
 
     @Test
-    @Ignore
     public void testsubset229() {
-        assertEval("argv <- list(structure(list(mtime = structure(1342423171, class = c(\'POSIXct\', \'POSIXt\'))), .Names = \'mtime\'), 1L);.subset2(argv[[1]],argv[[2]]);");
+        assertEval(Ignored.Unknown, "argv <- list(structure(list(mtime = structure(1342423171, class = c(\'POSIXct\', \'POSIXt\'))), .Names = \'mtime\'), 1L);.subset2(argv[[1]],argv[[2]]);");
     }
 
     @Test
@@ -183,8 +173,7 @@ public class TestrGenBuiltinsubset2 extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testsubset234() {
-        assertEval("argv <- list(structure(list(variog = c(0.00723952158228125, 0.014584633605134, 0.0142079356273193, 0.0184422668389517, 0.0111285046171491, 0.0199100817701382, 0.0270723108677323, 0.0341403794476899, 0.0283206569034573, 0.03752550654923), dist = c(1, 6, 7, 8, 13, 14, 15, 20, 21, 22), n.pairs = structure(c(16L, 16L, 144L, 16L, 16L, 128L, 16L, 16L, 112L, 16L), .Dim = 10L, .Dimnames = structure(list(c(\'1\', \'6\', \'7\', \'8\', \'13\', \'14\', \'15\', \'20\', \'21\', \'22\')), .Names = \'\'))), .Names = c(\'variog\', \'dist\', \'n.pairs\'), collapse = TRUE, row.names = c(NA, 10L), class = c(\'Variogram\', \'data.frame\')), 3L);.subset2(argv[[1]],argv[[2]]);");
+        assertEval(Ignored.Unknown, "argv <- list(structure(list(variog = c(0.00723952158228125, 0.014584633605134, 0.0142079356273193, 0.0184422668389517, 0.0111285046171491, 0.0199100817701382, 0.0270723108677323, 0.0341403794476899, 0.0283206569034573, 0.03752550654923), dist = c(1, 6, 7, 8, 13, 14, 15, 20, 21, 22), n.pairs = structure(c(16L, 16L, 144L, 16L, 16L, 128L, 16L, 16L, 112L, 16L), .Dim = 10L, .Dimnames = structure(list(c(\'1\', \'6\', \'7\', \'8\', \'13\', \'14\', \'15\', \'20\', \'21\', \'22\')), .Names = \'\'))), .Names = c(\'variog\', \'dist\', \'n.pairs\'), collapse = TRUE, row.names = c(NA, 10L), class = c(\'Variogram\', \'data.frame\')), 3L);.subset2(argv[[1]],argv[[2]]);");
     }
 }

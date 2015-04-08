@@ -23,9 +23,8 @@ public class TestrGenBuiltinSyssleep extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testSyssleep2() {
-        assertEval("argv <- list(FALSE); .Internal(Sys.sleep(argv[[1]]))");
+        assertEval(Ignored.Unknown, "argv <- list(FALSE); .Internal(Sys.sleep(argv[[1]]))");
     }
 }
 

@@ -18,9 +18,8 @@ import com.oracle.truffle.r.test.*;
                                                                  public class TestrGenBuiltinsignif extends TestBase {
 
 	@Test
-    @Ignore
 	public void testsignif1() {
-		assertEval("argv <- list(structure(c(0, NaN, 0, 4.94065645841247e-324), class = \'integer64\'));"+
+		assertEval(Ignored.Unknown, "argv <- list(structure(c(0, NaN, 0, 4.94065645841247e-324), class = \'integer64\'));"+
 			"do.call(\'signif\', argv)");
 	}
 

@@ -23,9 +23,8 @@ public class TestrGenBuiltinmean extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testmean2() {
-        assertEval("argv <- list(c(0.104166666666667, 0.285714285714286, 0.285714285714286, NA)); .Internal(mean(argv[[1]]))");
+        assertEval(Ignored.Unknown, "argv <- list(c(0.104166666666667, 0.285714285714286, 0.285714285714286, NA)); .Internal(mean(argv[[1]]))");
     }
 
     @Test
@@ -49,9 +48,8 @@ public class TestrGenBuiltinmean extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testmean7() {
-        assertEval("argv <- list(1.47130567537631e-314); .Internal(mean(argv[[1]]))");
+        assertEval(Ignored.Unknown, "argv <- list(1.47130567537631e-314); .Internal(mean(argv[[1]]))");
     }
 
     @Test
@@ -100,9 +98,8 @@ public class TestrGenBuiltinmean extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testmean17() {
-        assertEval("argv <- list(c(1.77635683940025e-15, 7.105427357601e-14, 4.54747350886464e-13, 4.54747350886464e-13, 1.81898940354586e-12, 7.27595761418343e-12, 7.27595761418343e-12, 1.45519152283669e-11, 2.91038304567337e-11, 5.82076609134674e-11)); .Internal(mean(argv[[1]]))");
+        assertEval(Ignored.Unknown, "argv <- list(c(1.77635683940025e-15, 7.105427357601e-14, 4.54747350886464e-13, 4.54747350886464e-13, 1.81898940354586e-12, 7.27595761418343e-12, 7.27595761418343e-12, 1.45519152283669e-11, 2.91038304567337e-11, 5.82076609134674e-11)); .Internal(mean(argv[[1]]))");
     }
 
     @Test
@@ -116,15 +113,13 @@ public class TestrGenBuiltinmean extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testmean21() {
-        assertEval("argv <- structure(list(x = c(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,     50), trim = 0.5), .Names = c(\'x\', \'trim\'));" + "do.call(\'mean\', argv)");
+        assertEval(Ignored.Unknown, "argv <- structure(list(x = c(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,     50), trim = 0.5), .Names = c(\'x\', \'trim\'));" + "do.call(\'mean\', argv)");
     }
 
     @Test
-    @Ignore
     public void testmean22() {
-        assertEval("argv <- structure(list(x = structure(c(2L, 1L, 2L, 2L), .Label = c(\'FALSE\',     \'TRUE\'), class = \'factor\')), .Names = \'x\');" + "do.call(\'mean\', argv)");
+        assertEval(Ignored.Unknown, "argv <- structure(list(x = structure(c(2L, 1L, 2L, 2L), .Label = c(\'FALSE\',     \'TRUE\'), class = \'factor\')), .Names = \'x\');" + "do.call(\'mean\', argv)");
     }
 
     @Test

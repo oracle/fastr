@@ -18,9 +18,8 @@ import com.oracle.truffle.r.test.*;
                                                                  public class TestrGenBuiltinrawToChar extends TestBase {
 
 	@Test
-    @Ignore
 	public void testrawToChar1() {
-		assertEval("argv <- structure(list(x = as.raw(c(115, 116, 114, 105, 110,     103))), .Names = \'x\');"+
+		assertEval(Ignored.Unknown, "argv <- structure(list(x = as.raw(c(115, 116, 114, 105, 110,     103))), .Names = \'x\');"+
 			"do.call(\'rawToChar\', argv)");
 	}
 

@@ -18,9 +18,8 @@ import com.oracle.truffle.r.test.*;
                                                                  public class TestrGenBuiltinweekdaysDate extends TestBase {
 
 	@Test
-    @Ignore
 	public void testweekdaysDate1() {
-		assertEval("argv <- structure(list(x = structure(16352, class = \'Date\')),     .Names = \'x\');"+
+		assertEval(Ignored.Unknown, "argv <- structure(list(x = structure(16352, class = \'Date\')),     .Names = \'x\');"+
 			"do.call(\'weekdays.Date\', argv)");
 	}
 

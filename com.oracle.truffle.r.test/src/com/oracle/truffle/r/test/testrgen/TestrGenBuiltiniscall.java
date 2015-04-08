@@ -138,8 +138,7 @@ public class TestrGenBuiltiniscall extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testiscall26() {
-        assertEval("argv <- list(quote(cbind(X, M) ~ M.user + Temp + M.user:Temp));is.call(argv[[1]]);");
+        assertEval(Ignored.Unknown, "argv <- list(quote(cbind(X, M) ~ M.user + Temp + M.user:Temp));is.call(argv[[1]]);");
     }
 }

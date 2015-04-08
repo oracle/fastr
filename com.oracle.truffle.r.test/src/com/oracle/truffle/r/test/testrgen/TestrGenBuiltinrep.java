@@ -33,9 +33,8 @@ public class TestrGenBuiltinrep extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testrep4() {
-        assertEval("argv <- list(list(), 0L); .Internal(rep_len(argv[[1]], argv[[2]]))");
+        assertEval(Ignored.Unknown, "argv <- list(list(), 0L); .Internal(rep_len(argv[[1]], argv[[2]]))");
     }
 
     @Test
@@ -54,15 +53,13 @@ public class TestrGenBuiltinrep extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testrep8() {
-        assertEval("argv <- list(list(c(\'                  \', \'                \')), 1L); .Internal(rep_len(argv[[1]], argv[[2]]))");
+        assertEval(Ignored.Unknown, "argv <- list(list(c(\'                  \', \'                \')), 1L); .Internal(rep_len(argv[[1]], argv[[2]]))");
     }
 
     @Test
-    @Ignore
     public void testrep9() {
-        assertEval("argv <- list(structure(1:4, .Label = c(\'A\', \'B\', \'C\', \'D\'), class = \'factor\', .Names = c(\'a\', \'b\', \'c\', \'d\')), 10); .Internal(rep_len(argv[[1]], argv[[2]]))");
+        assertEval(Ignored.Unknown, "argv <- list(structure(1:4, .Label = c(\'A\', \'B\', \'C\', \'D\'), class = \'factor\', .Names = c(\'a\', \'b\', \'c\', \'d\')), 10); .Internal(rep_len(argv[[1]], argv[[2]]))");
     }
 
     @Test

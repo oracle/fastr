@@ -18,15 +18,13 @@ import com.oracle.truffle.r.test.*;
 public class TestrGenBuiltinSysunsetenv extends TestBase {
 
     @Test
-    @Ignore
     public void testSysunsetenv1() {
-        assertEval("argv <- list(\'_R_NS_LOAD_\'); .Internal(Sys.unsetenv(argv[[1]]))");
+        assertEval(Ignored.Unknown, "argv <- list(\'_R_NS_LOAD_\'); .Internal(Sys.unsetenv(argv[[1]]))");
     }
 
     @Test
-    @Ignore
     public void testSysunsetenv3() {
-        assertEval("argv <- list(character(0)); .Internal(Sys.unsetenv(argv[[1]]))");
+        assertEval(Ignored.Unknown, "argv <- list(character(0)); .Internal(Sys.unsetenv(argv[[1]]))");
     }
 }
 

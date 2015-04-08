@@ -28,9 +28,8 @@ public class TestrGenBuiltinatan extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testatan3() {
-        assertEval("argv <- list(c(0+2i, 0.0001+2i, 0-2i, 0-2.0001i));atan(argv[[1]]);");
+        assertEval(Ignored.Unknown, "argv <- list(c(0+2i, 0.0001+2i, 0-2i, 0-2.0001i));atan(argv[[1]]);");
     }
 
     @Test
@@ -44,8 +43,7 @@ public class TestrGenBuiltinatan extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testatan6() {
-        assertEval("argv <- list(-1.46941282670977e-16);atan(argv[[1]]);");
+        assertEval(Ignored.Unknown, "argv <- list(-1.46941282670977e-16);atan(argv[[1]]);");
     }
 }

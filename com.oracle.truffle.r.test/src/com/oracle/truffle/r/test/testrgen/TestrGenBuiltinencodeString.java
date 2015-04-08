@@ -38,9 +38,8 @@ public class TestrGenBuiltinencodeString extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testencodeString7() {
-        assertEval("argv <- list(\'ab\\bc\\ndef\', 0L, \'\', 0L, TRUE); .Internal(encodeString(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
+        assertEval(Ignored.Unknown, "argv <- list(\'ab\\bc\\ndef\', 0L, \'\', 0L, TRUE); .Internal(encodeString(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
     }
 
     @Test
@@ -49,32 +48,27 @@ public class TestrGenBuiltinencodeString extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testencodeString9() {
-        assertEval("argv <- list(structure(\'integer(0)\', .Names = \'c0\', row.names = character(0)), 0L, \'\', 0L, TRUE); .Internal(encodeString(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
+        assertEval(Ignored.Unknown, "argv <- list(structure(\'integer(0)\', .Names = \'c0\', row.names = character(0)), 0L, \'\', 0L, TRUE); .Internal(encodeString(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
     }
 
     @Test
-    @Ignore
     public void testencodeString10() {
-        assertEval("argv <- list(\'\\\'class\\\' is a reserved slot name and cannot be redefined\', 0L, \'\\\'\', 0L, FALSE); .Internal(encodeString(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
+        assertEval(Ignored.Unknown, "argv <- list(\'\\\'class\\\' is a reserved slot name and cannot be redefined\', 0L, \'\\\'\', 0L, FALSE); .Internal(encodeString(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
     }
 
     @Test
-    @Ignore
     public void testencodeString11() {
-        assertEval("argv <- list(structure(character(0), .Dim = c(0L, 0L)), 0L, \'\', 0L, TRUE); .Internal(encodeString(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
+        assertEval(Ignored.Unknown, "argv <- list(structure(character(0), .Dim = c(0L, 0L)), 0L, \'\', 0L, TRUE); .Internal(encodeString(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
     }
 
     @Test
-    @Ignore
     public void testencodeString12() {
-        assertEval("argv <- list(character(0), logical(0), \'\', 0L, TRUE); .Internal(encodeString(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
+        assertEval(Ignored.Unknown, "argv <- list(character(0), logical(0), \'\', 0L, TRUE); .Internal(encodeString(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
     }
 
     @Test
-    @Ignore
     public void testencodeString13() {
-        assertEval("argv <- list(structure(\'integer(0)\', .Names = \'c0\', row.names = character(0)), structure(list(c0 = structure(integer(0), .Label = character(0), class = \'factor\')), .Names = \'c0\', row.names = character(0), class = structure(\'integer(0)\', .Names = \'c0\')), \'\', 0L, TRUE); .Internal(encodeString(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
+        assertEval(Ignored.Unknown, "argv <- list(structure(\'integer(0)\', .Names = \'c0\', row.names = character(0)), structure(list(c0 = structure(integer(0), .Label = character(0), class = \'factor\')), .Names = \'c0\', row.names = character(0), class = structure(\'integer(0)\', .Names = \'c0\')), \'\', 0L, TRUE); .Internal(encodeString(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
     }
 }

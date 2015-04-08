@@ -18,9 +18,8 @@ import com.oracle.truffle.r.test.*;
 public class TestrGenBuiltinsetTimeLimit extends TestBase {
 
     @Test
-    @Ignore
     public void testsetTimeLimit1() {
-        assertEval("argv <- list(FALSE, Inf, FALSE); .Internal(setTimeLimit(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval(Ignored.Unknown, "argv <- list(FALSE, Inf, FALSE); .Internal(setTimeLimit(argv[[1]], argv[[2]], argv[[3]]))");
     }
 }
 

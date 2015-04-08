@@ -18,27 +18,23 @@ import com.oracle.truffle.r.test.*;
 public class TestrGenBuiltinbody extends TestBase {
 
     @Test
-    @Ignore
     public void testbody1() {
-        assertEval("argv <- list(function (x, y) {    c(x, y)}); .Internal(body(argv[[1]]))");
+        assertEval(Ignored.Unknown, "argv <- list(function (x, y) {    c(x, y)}); .Internal(body(argv[[1]]))");
     }
 
     @Test
-    @Ignore
     public void testbody2() {
-        assertEval("argv <- list(function (object) TRUE); .Internal(body(argv[[1]]))");
+        assertEval(Ignored.Unknown, "argv <- list(function (object) TRUE); .Internal(body(argv[[1]]))");
     }
 
     @Test
-    @Ignore
     public void testbody3() {
-        assertEval("argv <- list(function (from, strict = TRUE) from); .Internal(body(argv[[1]]))");
+        assertEval(Ignored.Unknown, "argv <- list(function (from, strict = TRUE) from); .Internal(body(argv[[1]]))");
     }
 
     @Test
-    @Ignore
     public void testbody4() {
-        assertEval("argv <- list(.Primitive(\'/\')); .Internal(body(argv[[1]]))");
+        assertEval(Ignored.Unknown, "argv <- list(.Primitive(\'/\')); .Internal(body(argv[[1]]))");
     }
 
     @Test

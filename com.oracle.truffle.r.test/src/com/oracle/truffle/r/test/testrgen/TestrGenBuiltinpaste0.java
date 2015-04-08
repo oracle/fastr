@@ -58,15 +58,13 @@ public class TestrGenBuiltinpaste0 extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testpaste011() {
-        assertEval("argv <- list(list(character(0), character(0), character(0)), NULL); .Internal(paste0(argv[[1]], argv[[2]]))");
+        assertEval(Ignored.Unknown, "argv <- list(list(character(0), character(0), character(0)), NULL); .Internal(paste0(argv[[1]], argv[[2]]))");
     }
 
     @Test
-    @Ignore
     public void testpaste012() {
-        assertEval("argv <- list(list(c(\'Package:\', \'Type:\', \'Version:\', \'Date:\', \'License:\', \'Depends:\'), \' \\\\tab \', structure(c(\'myTst2\', \'Package\', \'1.0\', \'2014-03-17\', \'What license is it under?\', \'methods\'), .Names = c(\'Package\', \'Type\', \'Version\', \'Date\', \'License\', \'Depends\')), \'\\\\cr\'), NULL); .Internal(paste0(argv[[1]], argv[[2]]))");
+        assertEval(Ignored.Unknown, "argv <- list(list(c(\'Package:\', \'Type:\', \'Version:\', \'Date:\', \'License:\', \'Depends:\'), \' \\\\tab \', structure(c(\'myTst2\', \'Package\', \'1.0\', \'2014-03-17\', \'What license is it under?\', \'methods\'), .Names = c(\'Package\', \'Type\', \'Version\', \'Date\', \'License\', \'Depends\')), \'\\\\cr\'), NULL); .Internal(paste0(argv[[1]], argv[[2]]))");
     }
 
     @Test
@@ -75,9 +73,8 @@ public class TestrGenBuiltinpaste0 extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testpaste014() {
-        assertEval("argv <- list(list(c(\'text> \', \'text> \', \'text> \', \'text+ \'), c(\'## The following two examples use latin1 characters: these may not\', \'## appear correctly (or be omitted entirely).\', \'plot(1:10, 1:10, main = \\\'text(...) examples\\\\n~~~~~~~~~~~~~~\\\',\', \'     sub = \\\'R is GNU ©, but not ® ...\\\')\')), \'\\n\'); .Internal(paste0(argv[[1]], argv[[2]]))");
+        assertEval(Ignored.Unknown, "argv <- list(list(c(\'text> \', \'text> \', \'text> \', \'text+ \'), c(\'## The following two examples use latin1 characters: these may not\', \'## appear correctly (or be omitted entirely).\', \'plot(1:10, 1:10, main = \\\'text(...) examples\\\\n~~~~~~~~~~~~~~\\\',\', \'     sub = \\\'R is GNU ©, but not ® ...\\\')\')), \'\\n\'); .Internal(paste0(argv[[1]], argv[[2]]))");
     }
 
     @Test

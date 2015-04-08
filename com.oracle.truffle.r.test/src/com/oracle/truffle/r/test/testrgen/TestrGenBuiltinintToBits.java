@@ -18,15 +18,13 @@ import com.oracle.truffle.r.test.*;
 public class TestrGenBuiltinintToBits extends TestBase {
 
     @Test
-    @Ignore
     public void testintToBits1() {
-        assertEval("argv <- list(list()); .Internal(intToBits(argv[[1]]))");
+        assertEval(Ignored.Unknown, "argv <- list(list()); .Internal(intToBits(argv[[1]]))");
     }
 
     @Test
-    @Ignore
     public void testintToBits2() {
-        assertEval("argv <- list(NULL); .Internal(intToBits(argv[[1]]))");
+        assertEval(Ignored.Unknown, "argv <- list(NULL); .Internal(intToBits(argv[[1]]))");
     }
 }
 

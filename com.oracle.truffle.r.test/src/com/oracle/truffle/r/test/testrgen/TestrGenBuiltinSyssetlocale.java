@@ -18,15 +18,13 @@ import com.oracle.truffle.r.test.*;
 public class TestrGenBuiltinSyssetlocale extends TestBase {
 
     @Test
-    @Ignore
     public void testSyssetlocale1() {
-        assertEval("argv <- list(3L, \'C\'); .Internal(Sys.setlocale(argv[[1]], argv[[2]]))");
+        assertEval(Ignored.Unknown, "argv <- list(3L, \'C\'); .Internal(Sys.setlocale(argv[[1]], argv[[2]]))");
     }
 
 	@Test
-    @Ignore
 	public void testSyssetlocale3() {
-		assertEval("argv <- structure(list(category = \'LC_TIME\', locale = \'C\'), .Names = c(\'category\',     \'locale\'));"+
+		assertEval(Ignored.Unknown, "argv <- structure(list(category = \'LC_TIME\', locale = \'C\'), .Names = c(\'category\',     \'locale\'));"+
 			"do.call(\'Sys.setlocale\', argv)");
 	}
 

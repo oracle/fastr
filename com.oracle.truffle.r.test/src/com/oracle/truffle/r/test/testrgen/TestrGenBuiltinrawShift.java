@@ -18,17 +18,15 @@ import com.oracle.truffle.r.test.*;
                                                                  public class TestrGenBuiltinrawShift extends TestBase {
 
 	@Test
-    @Ignore
 	public void testrawShift1() {
-		assertEval("argv <- structure(list(x = as.raw(c(109, 121, 32, 116, 101, 120,     116)), n = 0L), .Names = c(\'x\', \'n\'));"+
+		assertEval(Ignored.Unknown, "argv <- structure(list(x = as.raw(c(109, 121, 32, 116, 101, 120,     116)), n = 0L), .Names = c(\'x\', \'n\'));"+
 			"do.call(\'rawShift\', argv)");
 	}
 
 
 	@Test
-    @Ignore
 	public void testrawShift2() {
-		assertEval("argv <- structure(list(x = as.raw(c(109, 121, 32, 116, 101, 120,     116)), n = 3L), .Names = c(\'x\', \'n\'));"+
+		assertEval(Ignored.Unknown, "argv <- structure(list(x = as.raw(c(109, 121, 32, 116, 101, 120,     116)), n = 3L), .Names = c(\'x\', \'n\'));"+
 			"do.call(\'rawShift\', argv)");
 	}
 

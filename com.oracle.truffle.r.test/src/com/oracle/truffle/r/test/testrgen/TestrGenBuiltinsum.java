@@ -93,9 +93,8 @@ public class TestrGenBuiltinsum extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testsum16() {
-        assertEval("argv <- list(1073741824L, 1073741824L);sum(argv[[1]],argv[[2]]);");
+        assertEval(Ignored.Unknown, "argv <- list(1073741824L, 1073741824L);sum(argv[[1]],argv[[2]]);");
     }
 
     @Test
@@ -104,9 +103,8 @@ public class TestrGenBuiltinsum extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testsum18() {
-        assertEval("argv <- list(c(1073741824L, 1073741824L));sum(argv[[1]]);");
+        assertEval(Ignored.Unknown, "argv <- list(c(1073741824L, 1073741824L));sum(argv[[1]]);");
     }
 
     @Test

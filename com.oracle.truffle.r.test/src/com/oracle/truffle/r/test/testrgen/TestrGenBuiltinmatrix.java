@@ -78,9 +78,8 @@ public class TestrGenBuiltinmatrix extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testmatrix13() {
-        assertEval("argv <- list(c(0, 0, 0, 0), 4L, 0L, FALSE, NULL, FALSE, FALSE); .Internal(matrix(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+        assertEval(Ignored.Unknown, "argv <- list(c(0, 0, 0, 0), 4L, 0L, FALSE, NULL, FALSE, FALSE); .Internal(matrix(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
@@ -129,21 +128,18 @@ public class TestrGenBuiltinmatrix extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testmatrix23() {
-        assertEval("argv <- list(character(0), 0L, 17L, FALSE, NULL, FALSE, FALSE); .Internal(matrix(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+        assertEval(Ignored.Unknown, "argv <- list(character(0), 0L, 17L, FALSE, NULL, FALSE, FALSE); .Internal(matrix(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
-    @Ignore
     public void testmatrix24() {
-        assertEval("argv <- list(c(TRUE, FALSE, FALSE, TRUE), 2L, 2L, TRUE, NULL, FALSE, FALSE); .Internal(matrix(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+        assertEval(Ignored.Unknown, "argv <- list(c(TRUE, FALSE, FALSE, TRUE), 2L, 2L, TRUE, NULL, FALSE, FALSE); .Internal(matrix(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
-    @Ignore
     public void testmatrix25() {
-        assertEval("argv <- list(c(0.342020143325669, 0, -0.939692620785908, 0, 1, 0, 0.939692620785908, 0, 0.342020143325669), 3, 3, FALSE, NULL, FALSE, FALSE); .Internal(matrix(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+        assertEval(Ignored.Unknown, "argv <- list(c(0.342020143325669, 0, -0.939692620785908, 0, 1, 0, 0.939692620785908, 0, 0.342020143325669), 3, 3, FALSE, NULL, FALSE, FALSE); .Internal(matrix(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
@@ -162,15 +158,13 @@ public class TestrGenBuiltinmatrix extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testmatrix29() {
-        assertEval("argv <- list(NA_character_, 4L, 17L, FALSE, NULL, FALSE, FALSE); .Internal(matrix(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+        assertEval(Ignored.Unknown, "argv <- list(NA_character_, 4L, 17L, FALSE, NULL, FALSE, FALSE); .Internal(matrix(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
-    @Ignore
     public void testmatrix30() {
-        assertEval("argv <- list(c(2.8421709430404e-14, 0, 0, 0, 0, 0, 0, -4.44089209850063e-16, 0, 0, 0, 0, 0, 0, 4.44089209850063e-16, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7.105427357601e-15), 6L, 6L, FALSE, NULL, FALSE, FALSE); .Internal(matrix(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+        assertEval(Ignored.Unknown, "argv <- list(c(2.8421709430404e-14, 0, 0, 0, 0, 0, 0, -4.44089209850063e-16, 0, 0, 0, 0, 0, 0, 4.44089209850063e-16, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7.105427357601e-15), 6L, 6L, FALSE, NULL, FALSE, FALSE); .Internal(matrix(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
@@ -184,9 +178,8 @@ public class TestrGenBuiltinmatrix extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testmatrix33() {
-        assertEval("argv <- list(c(1+2i, 3-4i, 5+0i, -6+0i), 2L, 2L, TRUE, NULL, FALSE, FALSE); .Internal(matrix(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+        assertEval(Ignored.Unknown, "argv <- list(c(1+2i, 3-4i, 5+0i, -6+0i), 2L, 2L, TRUE, NULL, FALSE, FALSE); .Internal(matrix(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
@@ -200,15 +193,13 @@ public class TestrGenBuiltinmatrix extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testmatrix36() {
-        assertEval("argv <- list(c(0, 0, 0, 0, 0, 0, 4.94065645841247e-324, 0, 0, 0, 0, 0), structure(12L, .Names = \'1\'), 1L, FALSE, NULL, FALSE, FALSE); .Internal(matrix(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+        assertEval(Ignored.Unknown, "argv <- list(c(0, 0, 0, 0, 0, 0, 4.94065645841247e-324, 0, 0, 0, 0, 0), structure(12L, .Names = \'1\'), 1L, FALSE, NULL, FALSE, FALSE); .Internal(matrix(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
-    @Ignore
     public void testmatrix37() {
-        assertEval("argv <- list(1:7, 3, 4, FALSE, NULL, FALSE, FALSE); .Internal(matrix(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+        assertEval(Ignored.Unknown, "argv <- list(1:7, 3, 4, FALSE, NULL, FALSE, FALSE); .Internal(matrix(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
@@ -217,9 +208,8 @@ public class TestrGenBuiltinmatrix extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testmatrix39() {
-        assertEval("argv <- list(c(-1, 4, 4, 9, 5, 1, 4, 8, 8, 2, 6, 0, 2, 3, 8, 8, 4, 4, 2, 3, 4, 0, -1, 7, 2, 4, 2, 3, 5, 6, 6, 5, 4, 3, 7, -1, 3, 1, -1, 2, 32, 1, 4, 4), 2L, 5L, FALSE, NULL, FALSE, FALSE); .Internal(matrix(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+        assertEval(Ignored.Unknown, "argv <- list(c(-1, 4, 4, 9, 5, 1, 4, 8, 8, 2, 6, 0, 2, 3, 8, 8, 4, 4, 2, 3, 4, 0, -1, 7, 2, 4, 2, 3, 5, 6, 6, 5, 4, 3, 7, -1, 3, 1, -1, 2, 32, 1, 4, 4), 2L, 5L, FALSE, NULL, FALSE, FALSE); .Internal(matrix(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
@@ -233,9 +223,8 @@ public class TestrGenBuiltinmatrix extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testmatrix42() {
-        assertEval("argv <- list(NA_character_, 1L, 17L, FALSE, NULL, FALSE, FALSE); .Internal(matrix(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+        assertEval(Ignored.Unknown, "argv <- list(NA_character_, 1L, 17L, FALSE, NULL, FALSE, FALSE); .Internal(matrix(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test

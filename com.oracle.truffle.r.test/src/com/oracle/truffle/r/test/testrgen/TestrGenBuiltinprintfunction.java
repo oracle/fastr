@@ -18,21 +18,18 @@ import com.oracle.truffle.r.test.*;
 public class TestrGenBuiltinprintfunction extends TestBase {
 
     @Test
-    @Ignore
     public void testprintfunction1() {
-        assertEval("argv <- list(.Primitive(\'+\'), TRUE); .Internal(print.function(argv[[1]], argv[[2]]))");
+        assertEval(Ignored.Unknown, "argv <- list(.Primitive(\'+\'), TRUE); .Internal(print.function(argv[[1]], argv[[2]]))");
     }
 
     @Test
-    @Ignore
     public void testprintfunction2() {
-        assertEval("argv <- list(.Primitive(\'if\'), TRUE); .Internal(print.function(argv[[1]], argv[[2]]))");
+        assertEval(Ignored.Unknown, "argv <- list(.Primitive(\'if\'), TRUE); .Internal(print.function(argv[[1]], argv[[2]]))");
     }
 
     @Test
-    @Ignore
     public void testprintfunction3() {
-        assertEval("argv <- list(.Primitive(\'c\'), TRUE); .Internal(print.function(argv[[1]], argv[[2]]))");
+        assertEval(Ignored.Unknown, "argv <- list(.Primitive(\'c\'), TRUE); .Internal(print.function(argv[[1]], argv[[2]]))");
     }
 
     @Test
@@ -41,8 +38,7 @@ public class TestrGenBuiltinprintfunction extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testprintfunction5() {
-        assertEval("argv <- list(.Primitive(\'log\'), TRUE); .Internal(print.function(argv[[1]], argv[[2]]))");
+        assertEval(Ignored.Unknown, "argv <- list(.Primitive(\'log\'), TRUE); .Internal(print.function(argv[[1]], argv[[2]]))");
     }
 }

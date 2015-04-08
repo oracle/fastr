@@ -18,15 +18,13 @@ import com.oracle.truffle.r.test.*;
 public class TestrGenBuiltinretracemem extends TestBase {
 
     @Test
-    @Ignore
     public void testretracemem1() {
-        assertEval("argv <- list(FALSE, FALSE);retracemem(argv[[1]],argv[[2]]);");
+        assertEval(Ignored.Unknown, "argv <- list(FALSE, FALSE);retracemem(argv[[1]],argv[[2]]);");
     }
 
     @Test
-    @Ignore
     public void testretracemem2() {
-        assertEval("argv <- list(structure(3.14159265358979, class = structure(\'3.14159265358979\', class = \'testit\')), structure(3.14159265358979, class = structure(\'3.14159265358979\', class = \'testit\')));retracemem(argv[[1]],argv[[2]]);");
+        assertEval(Ignored.Unknown, "argv <- list(structure(3.14159265358979, class = structure(\'3.14159265358979\', class = \'testit\')), structure(3.14159265358979, class = structure(\'3.14159265358979\', class = \'testit\')));retracemem(argv[[1]],argv[[2]]);");
     }
 }
 

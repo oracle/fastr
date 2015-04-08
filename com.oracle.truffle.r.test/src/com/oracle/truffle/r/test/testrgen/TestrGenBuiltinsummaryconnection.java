@@ -18,9 +18,8 @@ import com.oracle.truffle.r.test.*;
 public class TestrGenBuiltinsummaryconnection extends TestBase {
 
     @Test
-    @Ignore
     public void testsummaryconnection1() {
-        assertEval("argv <- list(structure(2L, class = c(\'terminal\', \'connection\'))); .Internal(summary.connection(argv[[1]]))");
+        assertEval(Ignored.Unknown, "argv <- list(structure(2L, class = c(\'terminal\', \'connection\'))); .Internal(summary.connection(argv[[1]]))");
     }
 }
 

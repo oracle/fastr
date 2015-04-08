@@ -182,9 +182,8 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testSetAttrIgnore() {
-        assertEval("{ x <- NULL; levels(x)<-\"dog\"; levels(x)}");
+        assertEval(Ignored.Unknown, "{ x <- NULL; levels(x)<-\"dog\"; levels(x)}");
 
     }
 
@@ -383,13 +382,12 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testMaximumIgnore() {
-        assertEval(Output.ContainsWarning, "{ max(integer(0)) }");
-        assertEval(Output.ContainsWarning, "{ max(integer()) }");
-        assertEval(Output.ContainsWarning, "{ max(as.double(NA), na.rm=TRUE) }");
-        assertEval(Output.ContainsWarning, "{ max(as.integer(NA), na.rm=TRUE) }");
-        assertEval(Output.ContainsWarning, "{ max(as.integer(NA), as.integer(NA), na.rm=TRUE) }");
+        assertEval(Ignored.Unknown, Output.ContainsWarning, "{ max(integer(0)) }");
+        assertEval(Ignored.Unknown, Output.ContainsWarning, "{ max(integer()) }");
+        assertEval(Ignored.Unknown, Output.ContainsWarning, "{ max(as.double(NA), na.rm=TRUE) }");
+        assertEval(Ignored.Unknown, Output.ContainsWarning, "{ max(as.integer(NA), na.rm=TRUE) }");
+        assertEval(Ignored.Unknown, Output.ContainsWarning, "{ max(as.integer(NA), as.integer(NA), na.rm=TRUE) }");
     }
 
     @Test
@@ -445,13 +443,12 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testMininumIgnore() {
-        assertEval(Output.ContainsWarning, "{ min(integer(0)) }");
-        assertEval(Output.ContainsWarning, "{ min(integer()) }");
-        assertEval(Output.ContainsWarning, "{ min(as.double(NA), na.rm=TRUE) }");
-        assertEval(Output.ContainsWarning, "{ min(as.integer(NA), na.rm=TRUE) }");
-        assertEval(Output.ContainsWarning, "{ min(as.integer(NA), as.integer(NA), na.rm=TRUE) }");
+        assertEval(Ignored.Unknown, Output.ContainsWarning, "{ min(integer(0)) }");
+        assertEval(Ignored.Unknown, Output.ContainsWarning, "{ min(integer()) }");
+        assertEval(Ignored.Unknown, Output.ContainsWarning, "{ min(as.double(NA), na.rm=TRUE) }");
+        assertEval(Ignored.Unknown, Output.ContainsWarning, "{ min(as.integer(NA), na.rm=TRUE) }");
+        assertEval(Ignored.Unknown, Output.ContainsWarning, "{ min(as.integer(NA), as.integer(NA), na.rm=TRUE) }");
     }
 
     @Test
@@ -504,10 +501,9 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testRepIntIgnore() {
         // Missing space in error message.
-        assertEval("{ rep.int(c(1,2,3),c(2,8)) }");
+        assertEval(Ignored.Unknown, "{ rep.int(c(1,2,3),c(2,8)) }");
     }
 
     @Test
@@ -684,9 +680,8 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testCombineBroken() {
-        assertEval("{ c(1i,0/0) }"); // yes, this is done by GNU-R, note
+        assertEval(Ignored.Unknown, "{ c(1i,0/0) }"); // yes, this is done by GNU-R, note
         // inconsistency with as.complex(0/0)
     }
 
@@ -753,13 +748,12 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testAsCharacterIgnore() {
-        assertEval("{ as.character(list(1,2,3)) }");
-        assertEval("{ as.character(list(c(\"hello\", \"hi\"))) }");
-        assertEval("{ as.character(list(list(c(\"hello\", \"hi\")))) }");
-        assertEval("{ as.character(list(c(2L, 3L))) }");
-        assertEval("{ as.character(list(c(2L, 3L, 5L))) }");
+        assertEval(Ignored.Unknown, "{ as.character(list(1,2,3)) }");
+        assertEval(Ignored.Unknown, "{ as.character(list(c(\"hello\", \"hi\"))) }");
+        assertEval(Ignored.Unknown, "{ as.character(list(list(c(\"hello\", \"hi\")))) }");
+        assertEval(Ignored.Unknown, "{ as.character(list(c(2L, 3L))) }");
+        assertEval(Ignored.Unknown, "{ as.character(list(c(2L, 3L, 5L))) }");
     }
 
     @Test
@@ -810,12 +804,11 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testAsComplexIgnore() {
-        assertEval("{ as.complex(\"1e10+5i\") }");
-        assertEval("{ as.complex(\"-.1e10+5i\") }");
-        assertEval("{ as.complex(\"1e-2+3i\") }");
-        assertEval("{ as.complex(\"+.1e+2-3i\") }");
+        assertEval(Ignored.Unknown, "{ as.complex(\"1e10+5i\") }");
+        assertEval(Ignored.Unknown, "{ as.complex(\"-.1e10+5i\") }");
+        assertEval(Ignored.Unknown, "{ as.complex(\"1e-2+3i\") }");
+        assertEval(Ignored.Unknown, "{ as.complex(\"+.1e+2-3i\") }");
     }
 
     @Test
@@ -915,12 +908,11 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testMatrixIgnore() {
-        assertEval("{ matrix(c(NaN,4+5i,2+0i,5+10i)} ");
+        assertEval(Ignored.Unknown, "{ matrix(c(NaN,4+5i,2+0i,5+10i)} ");
         // FIXME missing warning
-        assertEval(Output.ContainsWarning, "{ matrix(c(1,2,3,4),3,2) }");
-        assertEval(Output.ContainsWarning, "{ matrix(1:4,3,2) }");
+        assertEval(Ignored.Unknown, Output.ContainsWarning, "{ matrix(c(1,2,3,4),3,2) }");
+        assertEval(Ignored.Unknown, Output.ContainsWarning, "{ matrix(1:4,3,2) }");
     }
 
     @Test
@@ -1149,9 +1141,8 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testCatIgnore() {
-        assertEval("{ cat(c(\"a\", \"b\", \"c\"), \"d\", sep=c(\"-\", \"+\")) }");
+        assertEval(Ignored.Unknown, "{ cat(c(\"a\", \"b\", \"c\"), \"d\", sep=c(\"-\", \"+\")) }");
     }
 
     @Test
@@ -1200,21 +1191,19 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testLowerTriangular() {
-        assertEval("{ m <- matrix(1:6, nrow=2) ;  lower.tri(m, diag=TRUE) }");
-        assertEval("{ m <- matrix(1:6, nrow=2) ;  lower.tri(m, diag=FALSE) }");
+        assertEval(Ignored.Unknown, "{ m <- matrix(1:6, nrow=2) ;  lower.tri(m, diag=TRUE) }");
+        assertEval(Ignored.Unknown, "{ m <- matrix(1:6, nrow=2) ;  lower.tri(m, diag=FALSE) }");
 
-        assertEval("{ lower.tri(1:3, diag=TRUE) }");
-        assertEval("{ lower.tri(1:3, diag=FALSE) }");
+        assertEval(Ignored.Unknown, "{ lower.tri(1:3, diag=TRUE) }");
+        assertEval(Ignored.Unknown, "{ lower.tri(1:3, diag=FALSE) }");
     }
 
     @Test
-    @Ignore
     public void testTriangular() {
-        assertEval("{ m <- { matrix( as.character(1:6), nrow=2 ) } ; diag(m) <- c(1,2) ; m }");
-        assertEval("{ m <- { matrix( (1:6) * (1+3i), nrow=2 ) } ; diag(m) <- c(1,2) ; m }");
-        assertEval("{ m <- { matrix( as.raw(11:16), nrow=2 ) } ; diag(m) <- c(as.raw(1),as.raw(2)) ; m }");
+        assertEval(Ignored.Unknown, "{ m <- { matrix( as.character(1:6), nrow=2 ) } ; diag(m) <- c(1,2) ; m }");
+        assertEval(Ignored.Unknown, "{ m <- { matrix( (1:6) * (1+3i), nrow=2 ) } ; diag(m) <- c(1,2) ; m }");
+        assertEval(Ignored.Unknown, "{ m <- { matrix( as.raw(11:16), nrow=2 ) } ; diag(m) <- c(as.raw(1),as.raw(2)) ; m }");
     }
 
     @Test
@@ -1352,17 +1341,16 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testCumulativeSumBroken() {
-        assertEval("{ cumsum(c(1,2,3,0/0,5)) }");
-        assertEval("{ cumsum(c(1,0/0,5+1i)) }");
-        assertEval("{ cumsum(as.raw(1:6)) }");
-        assertEval("{ cumsum(rep(1e308, 3) ) }"); // FIXME 1e+308
-        assertEval("{ cumsum(c(1e308, 1e308, NA, 1, 2)) }"); // FIXME 1e+308
+        assertEval(Ignored.Unknown, "{ cumsum(c(1,2,3,0/0,5)) }");
+        assertEval(Ignored.Unknown, "{ cumsum(c(1,0/0,5+1i)) }");
+        assertEval(Ignored.Unknown, "{ cumsum(as.raw(1:6)) }");
+        assertEval(Ignored.Unknown, "{ cumsum(rep(1e308, 3) ) }"); // FIXME 1e+308
+        assertEval(Ignored.Unknown, "{ cumsum(c(1e308, 1e308, NA, 1, 2)) }"); // FIXME 1e+308
 
-        assertEval("{ cumsum(c(2000000000L, 2000000000L)) }"); // FIXME missing warning
-        assertEval("{ cumsum(c(-2147483647L, -1L)) }"); // FIXME missing warning
-        assertEval("{ cumsum((1:6)*(1+1i)) }"); // FIXME print formatting
+        assertEval(Ignored.Unknown, "{ cumsum(c(2000000000L, 2000000000L)) }"); // FIXME missing warning
+        assertEval(Ignored.Unknown, "{ cumsum(c(-2147483647L, -1L)) }"); // FIXME missing warning
+        assertEval(Ignored.Unknown, "{ cumsum((1:6)*(1+1i)) }"); // FIXME print formatting
 
     }
 
@@ -1614,10 +1602,9 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testLogIgnore() {
-        assertEval("{ m <- matrix(1:4, nrow=2) ; round( log10(m), digits=5 )  }");
-        assertEval("{ x <- c(a=1, b=10) ; round( c(log(x), log10(x), log2(x)), digits=5 ) }");
+        assertEval(Ignored.Unknown, "{ m <- matrix(1:4, nrow=2) ; round( log10(m), digits=5 )  }");
+        assertEval(Ignored.Unknown, "{ x <- c(a=1, b=10) ; round( c(log(x), log10(x), log2(x)), digits=5 ) }");
     }
 
     @Test
@@ -1632,10 +1619,9 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testSqrtBroken() {
-        assertEval("{ sqrt(-1L) }"); // FIXME warning
-        assertEval("{ sqrt(-1) }"); // FIXME warning
+        assertEval(Ignored.Unknown, "{ sqrt(-1L) }"); // FIXME warning
+        assertEval(Ignored.Unknown, "{ sqrt(-1) }"); // FIXME warning
     }
 
     @Test
@@ -1670,12 +1656,11 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testAbsIgnore() {
-        assertEval("{ abs(c(0/0,1i)) }");
-        assertEval("{ abs(1:3) }");
-        assertEval("{ abs(-1:-3) }");
-        assertEval(Output.ContainsError, "{ abs(NULL) }");
+        assertEval(Ignored.Unknown, "{ abs(c(0/0,1i)) }");
+        assertEval(Ignored.Unknown, "{ abs(1:3) }");
+        assertEval(Ignored.Unknown, "{ abs(-1:-3) }");
+        assertEval(Ignored.Unknown, Output.ContainsError, "{ abs(NULL) }");
     }
 
     @Test
@@ -1698,14 +1683,13 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testCharUtilsIgnore() {
-        assertEval("{ tolower(1E100) }");
-        assertEval("{ toupper(1E100) }");
-        assertEval("{ m <- matrix(\"hi\") ; toupper(m) }");
-        assertEval("{ toupper(c(a=\"hi\", \"hello\")) }");
-        assertEval("{ tolower(c(a=\"HI\", \"HELlo\")) }");
-        assertEval("{ tolower(NA) }");
+        assertEval(Ignored.Unknown, "{ tolower(1E100) }");
+        assertEval(Ignored.Unknown, "{ toupper(1E100) }");
+        assertEval(Ignored.Unknown, "{ m <- matrix(\"hi\") ; toupper(m) }");
+        assertEval(Ignored.Unknown, "{ toupper(c(a=\"hi\", \"hello\")) }");
+        assertEval(Ignored.Unknown, "{ tolower(c(a=\"HI\", \"HELlo\")) }");
+        assertEval(Ignored.Unknown, "{ tolower(NA) }");
     }
 
     @Test
@@ -1747,16 +1731,15 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testSubIgnore() {
-        assertEval("{ gsub(\"a\",\"aa\", \"prague alley\", fixed=TRUE) }");
-        assertEval("{ sub(\"a\",\"aa\", \"prague alley\", fixed=TRUE) }");
-        assertEval("{ gsub(\"a\",\"aa\", \"prAgue alley\", fixed=TRUE) }");
-        assertEval("{ gsub(\"a\",\"aa\", \"prAgue alley\", fixed=TRUE, ignore.case=TRUE) }");
-        assertEval("{ gsub(\"a\",\"aa\", \"prAgue alley\", ignore.case=TRUE) }");
-        assertEval("{ gsub(\"([a-e])\",\"\\\\1\\\\1\", \"prague alley\") }");
-        assertEval("{ gsub(\"h\",\"\", c(\"hello\", \"hi\", \"bye\")) }");
-        assertEval("{ gsub(\"h\",\"\", c(\"hello\", \"hi\", \"bye\"), fixed=TRUE) }");
+        assertEval(Ignored.Unknown, "{ gsub(\"a\",\"aa\", \"prague alley\", fixed=TRUE) }");
+        assertEval(Ignored.Unknown, "{ sub(\"a\",\"aa\", \"prague alley\", fixed=TRUE) }");
+        assertEval(Ignored.Unknown, "{ gsub(\"a\",\"aa\", \"prAgue alley\", fixed=TRUE) }");
+        assertEval(Ignored.Unknown, "{ gsub(\"a\",\"aa\", \"prAgue alley\", fixed=TRUE, ignore.case=TRUE) }");
+        assertEval(Ignored.Unknown, "{ gsub(\"a\",\"aa\", \"prAgue alley\", ignore.case=TRUE) }");
+        assertEval(Ignored.Unknown, "{ gsub(\"([a-e])\",\"\\\\1\\\\1\", \"prague alley\") }");
+        assertEval(Ignored.Unknown, "{ gsub(\"h\",\"\", c(\"hello\", \"hi\", \"bye\")) }");
+        assertEval(Ignored.Unknown, "{ gsub(\"h\",\"\", c(\"hello\", \"hi\", \"bye\"), fixed=TRUE) }");
     }
 
     @Test
@@ -1769,20 +1752,18 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testRegExprIgnore() {
-        assertEval("regexpr(\"e\",c(\"arm\",\"foot\",\"lefroo\", \"bafoobar\"))"); // FIXME: missing
+        assertEval(Ignored.Unknown, "regexpr(\"e\",c(\"arm\",\"foot\",\"lefroo\", \"bafoobar\"))"); // FIXME: missing
         // attributes
-        assertEval("gregexpr(\"e\",c(\"arm\",\"foot\",\"lefroo\", \"bafoobar\"))"); // FIXME:
+        assertEval(Ignored.Unknown, "gregexpr(\"e\",c(\"arm\",\"foot\",\"lefroo\", \"bafoobar\"))"); // FIXME:
         // missing attributes
     }
 
     @Test
-    @Ignore
     public void testRegExprComplex() {
-        assertEval("gregexpr(\"(a)[^a]\\\\1\", c(\"andrea apart\", \"amadeus\", NA))"); // NOTE:
+        assertEval(Ignored.Unknown, "gregexpr(\"(a)[^a]\\\\1\", c(\"andrea apart\", \"amadeus\", NA))"); // NOTE:
         // this is without attributes
-        assertEval("regexpr(\"(a)[^a]\\\\1\", c(\"andrea apart\", \"amadeus\", NA))"); // NOTE:
+        assertEval(Ignored.Unknown, "regexpr(\"(a)[^a]\\\\1\", c(\"andrea apart\", \"amadeus\", NA))"); // NOTE:
         // this is without attributes
     }
 
@@ -2011,14 +1992,13 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testLookupIgnore() {
         // lookup with function matching
         // require lapply
-        assertEval("{ g <- function() { assign(\"myfunc\", function(i) { sum(i) });  f <- function() { lapply(2, \"myfunc\") } ; f() } ; g() }");
-        assertEval("{ myfunc <- function(i) { sum(i) } ; g <- function() { assign(\"z\", 1);  f <- function() { lapply(2, \"myfunc\") } ; f() } ; g() }");
-        assertEval("{ g <- function() { f <- function() { assign(\"myfunc\", function(i) { sum(i) }); lapply(2, \"myfunc\") } ; f() } ; g() }");
-        assertEval("{ g <- function() { myfunc <- function(i) { i+i } ; f <- function() { lapply(2, \"myfunc\") } ; f() } ; g() }");
+        assertEval(Ignored.Unknown, "{ g <- function() { assign(\"myfunc\", function(i) { sum(i) });  f <- function() { lapply(2, \"myfunc\") } ; f() } ; g() }");
+        assertEval(Ignored.Unknown, "{ myfunc <- function(i) { sum(i) } ; g <- function() { assign(\"z\", 1);  f <- function() { lapply(2, \"myfunc\") } ; f() } ; g() }");
+        assertEval(Ignored.Unknown, "{ g <- function() { f <- function() { assign(\"myfunc\", function(i) { sum(i) }); lapply(2, \"myfunc\") } ; f() } ; g() }");
+        assertEval(Ignored.Unknown, "{ g <- function() { myfunc <- function(i) { i+i } ; f <- function() { lapply(2, \"myfunc\") } ; f() } ; g() }");
 
     }
 
@@ -2125,16 +2105,14 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testEnvironmentIgnore() {
         // Requires generic specialization
-        assertEval(Output.ContainsError, "{ as.environment(as.environment) }");
+        assertEval(Ignored.Unknown, Output.ContainsError, "{ as.environment(as.environment) }");
     }
 
     @Test
-    @Ignore
     public void testEnvironmentAssignLockedIgnore() {
-        assertEval(Output.ContainsError, "{ x <- 1; lockBinding(\"x\", globalenv()); x <- 1 }");
+        assertEval(Ignored.Unknown, Output.ContainsError, "{ x <- 1; lockBinding(\"x\", globalenv()); x <- 1 }");
     }
 
     @Test
@@ -2236,23 +2214,22 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testEigen() {
         // symmetric real input
-        assertEval("{ r <- eigen(matrix(rep(1,4), nrow=2), only.values=FALSE) ; round( r$vectors, digits=5 ) }");
-        assertEval("{ r <- eigen(matrix(rep(1,4), nrow=2), only.values=FALSE) ; round( r$values, digits=5 ) }");
-        assertEval("{ eigen(10, only.values=FALSE) }");
+        assertEval(Ignored.Unknown, "{ r <- eigen(matrix(rep(1,4), nrow=2), only.values=FALSE) ; round( r$vectors, digits=5 ) }");
+        assertEval(Ignored.Unknown, "{ r <- eigen(matrix(rep(1,4), nrow=2), only.values=FALSE) ; round( r$values, digits=5 ) }");
+        assertEval(Ignored.Unknown, "{ eigen(10, only.values=FALSE) }");
 
         // non-symmetric real input, real output
-        assertEval("{ r <- eigen(matrix(c(1,2,2,3), nrow=2), only.values=FALSE); round( r$vectors, digits=5 ) }");
-        assertEval("{ r <- eigen(matrix(c(1,2,2,3), nrow=2), only.values=FALSE); round( r$values, digits=5 ) }");
-        assertEval("{ r <- eigen(matrix(c(1,2,3,4), nrow=2), only.values=FALSE); round( r$vectors, digits=5 ) }");
-        assertEval("{ r <- eigen(matrix(c(1,2,3,4), nrow=2), only.values=FALSE); round( r$values, digits=5 ) }");
+        assertEval(Ignored.Unknown, "{ r <- eigen(matrix(c(1,2,2,3), nrow=2), only.values=FALSE); round( r$vectors, digits=5 ) }");
+        assertEval(Ignored.Unknown, "{ r <- eigen(matrix(c(1,2,2,3), nrow=2), only.values=FALSE); round( r$values, digits=5 ) }");
+        assertEval(Ignored.Unknown, "{ r <- eigen(matrix(c(1,2,3,4), nrow=2), only.values=FALSE); round( r$vectors, digits=5 ) }");
+        assertEval(Ignored.Unknown, "{ r <- eigen(matrix(c(1,2,3,4), nrow=2), only.values=FALSE); round( r$values, digits=5 ) }");
 
         // non-symmetric real input, complex output
         // FIXME: GNUR is won't print the minus sign for negative zero
-        assertEval("{ r <- eigen(matrix(c(3,-2,4,-1), nrow=2), only.values=FALSE); round( r$vectors, digits=5 ) }");
-        assertEval("{ r <- eigen(matrix(c(3,-2,4,-1), nrow=2), only.values=FALSE); round( r$values, digits=5 ) }");
+        assertEval(Ignored.Unknown, "{ r <- eigen(matrix(c(3,-2,4,-1), nrow=2), only.values=FALSE); round( r$vectors, digits=5 ) }");
+        assertEval(Ignored.Unknown, "{ r <- eigen(matrix(c(3,-2,4,-1), nrow=2), only.values=FALSE); round( r$values, digits=5 ) }");
     }
 
     @Test
@@ -2437,9 +2414,8 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testCrossprodIgnore() {
-        assertEval("{ x <- matrix(c(NaN,2+3i,3,4+1i,5,NA), nrow=3); crossprod(x) }");
+        assertEval(Ignored.Unknown, "{ x <- matrix(c(NaN,2+3i,3,4+1i,5,NA), nrow=3); crossprod(x) }");
     }
 
     @Test
@@ -2531,35 +2507,32 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testRank() {
-        assertEval("{ rank(c(10,100,100,1000)) }");
-        assertEval("{ rank(c(1000,100,100,100, 10)) }");
-        assertEval("{ rank(c(a=2,b=1,c=3,40)) }");
-        assertEval("{ rank(c(a=2,b=1,c=3,d=NA,e=40), na.last=NA) }");
-        assertEval("{ rank(c(a=2,b=1,c=3,d=NA,e=40), na.last=\"keep\") }");
-        assertEval("{ rank(c(a=2,b=1,c=3,d=NA,e=40), na.last=TRUE) }");
-        assertEval("{ rank(c(a=2,b=1,c=3,d=NA,e=40), na.last=FALSE) }");
-        assertEval("{ rank(c(a=1,b=1,c=3,d=NA,e=3), na.last=FALSE, ties.method=\"max\") }");
-        assertEval("{ rank(c(a=1,b=1,c=3,d=NA,e=3), na.last=NA, ties.method=\"min\") }");
-        assertEval("{ rank(c(1000, 100, 100, NA, 1, 20), ties.method=\"first\") }");
+        assertEval(Ignored.Unknown, "{ rank(c(10,100,100,1000)) }");
+        assertEval(Ignored.Unknown, "{ rank(c(1000,100,100,100, 10)) }");
+        assertEval(Ignored.Unknown, "{ rank(c(a=2,b=1,c=3,40)) }");
+        assertEval(Ignored.Unknown, "{ rank(c(a=2,b=1,c=3,d=NA,e=40), na.last=NA) }");
+        assertEval(Ignored.Unknown, "{ rank(c(a=2,b=1,c=3,d=NA,e=40), na.last=\"keep\") }");
+        assertEval(Ignored.Unknown, "{ rank(c(a=2,b=1,c=3,d=NA,e=40), na.last=TRUE) }");
+        assertEval(Ignored.Unknown, "{ rank(c(a=2,b=1,c=3,d=NA,e=40), na.last=FALSE) }");
+        assertEval(Ignored.Unknown, "{ rank(c(a=1,b=1,c=3,d=NA,e=3), na.last=FALSE, ties.method=\"max\") }");
+        assertEval(Ignored.Unknown, "{ rank(c(a=1,b=1,c=3,d=NA,e=3), na.last=NA, ties.method=\"min\") }");
+        assertEval(Ignored.Unknown, "{ rank(c(1000, 100, 100, NA, 1, 20), ties.method=\"first\") }");
     }
 
     @Test
-    @Ignore
     public void testDet() {
-        assertEval("{ det(matrix(c(1,2,4,5),nrow=2)) }");
-        assertEval("{ det(matrix(c(1,-3,4,-5),nrow=2)) }");
-        assertEval("{ det(matrix(c(1,0,4,NA),nrow=2)) }");
+        assertEval(Ignored.Unknown, "{ det(matrix(c(1,2,4,5),nrow=2)) }");
+        assertEval(Ignored.Unknown, "{ det(matrix(c(1,-3,4,-5),nrow=2)) }");
+        assertEval(Ignored.Unknown, "{ det(matrix(c(1,0,4,NA),nrow=2)) }");
     }
 
     @Test
-    @Ignore
     public void testChol() {
-        assertEval("{ chol(1) }");
-        assertEval("{ round( chol(10), digits=5) }");
-        assertEval("{ m <- matrix(c(5,1,1,3),2) ; round( chol(m), digits=5 ) }");
-        assertEval(Output.ContainsError, "{ m <- matrix(c(5,-5,-5,3),2,2) ; chol(m) }");
+        assertEval(Ignored.Unknown, "{ chol(1) }");
+        assertEval(Ignored.Unknown, "{ round( chol(10), digits=5) }");
+        assertEval(Ignored.Unknown, "{ m <- matrix(c(5,1,1,3),2) ; round( chol(m), digits=5 ) }");
+        assertEval(Ignored.Unknown, Output.ContainsError, "{ m <- matrix(c(5,-5,-5,3),2,2) ; chol(m) }");
     }
 
     @Test
@@ -2574,23 +2547,22 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testQrIgnore() {
-        assertEval("{ x <- qr(t(cbind(1:10,2:11)), LAPACK=TRUE) ; qr.coef(x, 1:2) }");
-        assertEval("{ qr(10, LAPACK=TRUE) }");
-        assertEval("{ round( qr(matrix(1:6,nrow=2), LAPACK=TRUE)$qr, digits=5) }");
+        assertEval(Ignored.Unknown, "{ x <- qr(t(cbind(1:10,2:11)), LAPACK=TRUE) ; qr.coef(x, 1:2) }");
+        assertEval(Ignored.Unknown, "{ qr(10, LAPACK=TRUE) }");
+        assertEval(Ignored.Unknown, "{ round( qr(matrix(1:6,nrow=2), LAPACK=TRUE)$qr, digits=5) }");
 
         // qr.coef
-        assertEval(Output.ContainsError, "{ x <- qr(cbind(1:10,2:11), LAPACK=TRUE) ; qr.coef(x, 1:2) }");
-        assertEval(" { x <- qr(cbind(1:10,2:11), LAPACK=TRUE) ; round( qr.coef(x, 1:10), digits=5 ) }");
-        assertEval("{ x <- qr(c(3,1,2), LAPACK=TRUE) ; round( qr.coef(x, c(1,3,2)), digits=5 ) }");
+        assertEval(Ignored.Unknown, Output.ContainsError, "{ x <- qr(cbind(1:10,2:11), LAPACK=TRUE) ; qr.coef(x, 1:2) }");
+        assertEval(Ignored.Unknown, " { x <- qr(cbind(1:10,2:11), LAPACK=TRUE) ; round( qr.coef(x, 1:10), digits=5 ) }");
+        assertEval(Ignored.Unknown, "{ x <- qr(c(3,1,2), LAPACK=TRUE) ; round( qr.coef(x, c(1,3,2)), digits=5 ) }");
         // FIXME: GNU-R will print negative zero as zero
-        assertEval("{ x <- qr(t(cbind(1:10,2:11)), LAPACK=FALSE) ; qr.coef(x, 1:2) }");
-        assertEval("{ x <- qr(c(3,1,2), LAPACK=FALSE) ; round( qr.coef(x, c(1,3,2)), digits=5 ) }");
+        assertEval(Ignored.Unknown, "{ x <- qr(t(cbind(1:10,2:11)), LAPACK=FALSE) ; qr.coef(x, 1:2) }");
+        assertEval(Ignored.Unknown, "{ x <- qr(c(3,1,2), LAPACK=FALSE) ; round( qr.coef(x, c(1,3,2)), digits=5 ) }");
 
         // qr.solve
-        assertEval("{ round( qr.solve(qr(c(1,3,4,2)), c(1,2,3,4)), digits=5 ) }");
-        assertEval("{ round( qr.solve(c(1,3,4,2), c(1,2,3,4)), digits=5) }");
+        assertEval(Ignored.Unknown, "{ round( qr.solve(qr(c(1,3,4,2)), c(1,2,3,4)), digits=5 ) }");
+        assertEval(Ignored.Unknown, "{ round( qr.solve(c(1,3,4,2), c(1,2,3,4)), digits=5) }");
     }
 
     @Test
@@ -2604,12 +2576,11 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testComplexIgnore() {
-        assertEval("{ x <- 1:2 ; attr(x,\"my\") <- 2 ; Im(x) }");
-        assertEval("{ x <- c(1+2i,3-4i) ; attr(x,\"my\") <- 2 ; Im(x) }");
-        assertEval("{ x <- 1:2 ; attr(x,\"my\") <- 2 ; Re(x) }");
-        assertEval("{ x <- c(1+2i,3-4i) ; attr(x,\"my\") <- 2 ; Re(x) }");
+        assertEval(Ignored.Unknown, "{ x <- 1:2 ; attr(x,\"my\") <- 2 ; Im(x) }");
+        assertEval(Ignored.Unknown, "{ x <- c(1+2i,3-4i) ; attr(x,\"my\") <- 2 ; Im(x) }");
+        assertEval(Ignored.Unknown, "{ x <- 1:2 ; attr(x,\"my\") <- 2 ; Re(x) }");
+        assertEval(Ignored.Unknown, "{ x <- c(1+2i,3-4i) ; attr(x,\"my\") <- 2 ; Re(x) }");
     }
 
     @Test
@@ -2648,9 +2619,8 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testRoundIgnore() {
-        assertEval("{ round(1.123456,digit=2.8) }");
+        assertEval(Ignored.Unknown, "{ round(1.123456,digit=2.8) }");
     }
 
     @Test
@@ -2706,12 +2676,11 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testDelayedAssignIgnore() {
         // These fail because the check/evaluation for a promise in "get"
         // can't handle a frame that won't cast to VirtualFrame
-        assertEval("{ h <- new.env(parent=emptyenv()) ; delayedAssign(\"x\", y, h, h) ; assign(\"y\", 2, h) ; get(\"x\", h) }");
-        assertEval("{ h <- new.env(parent=emptyenv()) ; assign(\"x\", 1, h) ; delayedAssign(\"x\", y, h, h) ; assign(\"y\", 2, h) ; get(\"x\", h) }");
+        assertEval(Ignored.Unknown, "{ h <- new.env(parent=emptyenv()) ; delayedAssign(\"x\", y, h, h) ; assign(\"y\", 2, h) ; get(\"x\", h) }");
+        assertEval(Ignored.Unknown, "{ h <- new.env(parent=emptyenv()) ; assign(\"x\", 1, h) ; delayedAssign(\"x\", y, h, h) ; assign(\"y\", 2, h) ; get(\"x\", h) }");
     }
 
     @Test
@@ -2828,12 +2797,11 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testSubstituteIgnore() {
-        assertEval("{ f <- function(y) { substitute(y) } ; f() }");
-        assertEval("{ substitute(function(x, a) { x + a }, list(a = quote(x + y), x = 1)) }");
-        assertEval("{ substitute(a[x], list(a = quote(x + y), x = 1)) }");
-        assertEval("{ substitute(x <- x + 1, list(x = 1) }");
+        assertEval(Ignored.Unknown, "{ f <- function(y) { substitute(y) } ; f() }");
+        assertEval(Ignored.Unknown, "{ substitute(function(x, a) { x + a }, list(a = quote(x + y), x = 1)) }");
+        assertEval(Ignored.Unknown, "{ substitute(a[x], list(a = quote(x + y), x = 1)) }");
+        assertEval(Ignored.Unknown, "{ substitute(x <- x + 1, list(x = 1) }");
 
     }
 
@@ -2860,13 +2828,12 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testInvocationIgnore() {
-        assertEval(Output.ContainsError, "{ matrix(x=1) }");
+        assertEval(Ignored.Unknown, Output.ContainsError, "{ matrix(x=1) }");
 
-        assertEval("{ round( rnorm(1,), digits = 5 ) }");
+        assertEval(Ignored.Unknown, "{ round( rnorm(1,), digits = 5 ) }");
 
-        assertEval(Output.ContainsError, "{ max(1,2,) }");
+        assertEval(Ignored.Unknown, Output.ContainsError, "{ max(1,2,) }");
     }
 
     @Test
@@ -2894,9 +2861,8 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testEvalIgnore() {
-        assertEval("eval({ xx <- pi; xx^2}) ; xx");  // should print two values, xx^2 and xx
+        assertEval(Ignored.Unknown, "eval({ xx <- pi; xx^2}) ; xx");  // should print two values, xx^2 and xx
     }
 
     @Test
@@ -2937,12 +2903,11 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testDeparseIgnore() {
-        assertEval("{ f <- function() 23 ; deparse(f) }");
-        assertEval("{ deparse(nrow) }");
+        assertEval(Ignored.Unknown, "{ f <- function() 23 ; deparse(f) }");
+        assertEval(Ignored.Unknown, "{ deparse(nrow) }");
         // should deparse as structure(...
-        assertEval("{ e <- new.env(); assign(\"a\", 1, e); assign(\"b\", 2, e); le <- as.list(e); deparse(le)}");
+        assertEval(Ignored.Unknown, "{ e <- new.env(); assign(\"a\", 1, e); assign(\"b\", 2, e); le <- as.list(e); deparse(le)}");
     }
 
     @Test
@@ -2978,13 +2943,12 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testIdenticalIgnore() {
-        assertEval("{ identical(0/0,1[2]) }");
-        assertEval("{ identical(list(1, list(2)), list(list(1), 1)) }");
-        assertEval("{ identical(list(1, list(2)), list(1, list(2))) }");
-        assertEval("{ x <- 1 ; attr(x, \"my\") <- 10; identical(x, 1) }");
-        assertEval("{ x <- 1 ; attr(x, \"my\") <- 10; y <- 1 ; attr(y, \"my\") <- 11 ; identical(x,y) }");
+        assertEval(Ignored.Unknown, "{ identical(0/0,1[2]) }");
+        assertEval(Ignored.Unknown, "{ identical(list(1, list(2)), list(list(1), 1)) }");
+        assertEval(Ignored.Unknown, "{ identical(list(1, list(2)), list(1, list(2))) }");
+        assertEval(Ignored.Unknown, "{ x <- 1 ; attr(x, \"my\") <- 10; identical(x, 1) }");
+        assertEval(Ignored.Unknown, "{ x <- 1 ; attr(x, \"my\") <- 10; y <- 1 ; attr(y, \"my\") <- 11 ; identical(x,y) }");
     }
 
     @Test
@@ -3004,9 +2968,8 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testFileListingIgnore() {
-        assertEval("{ list.files(\"test/r/simple/data/tree1\", pattern=\"*.tx\") }");
+        assertEval(Ignored.Unknown, "{ list.files(\"test/r/simple/data/tree1\", pattern=\"*.tx\") }");
     }
 
     @Test
@@ -3029,13 +2992,12 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testAllIgnore() {
-        assertEval("{ all(TRUE, TRUE, NA,  na.rm=TRUE) }");
-        assertEval("{ all(1) }"); // FIXME coercion warning missing
-        assertEval("{ all(0) }"); // FIXME coercion warning missing
-        assertEval("{ all(TRUE,c(TRUE,TRUE),1) }"); // FIXME coercion warning missing
-        assertEval("{ all(TRUE,c(TRUE,TRUE),1,0) }"); // FIXME coercion warning missing
+        assertEval(Ignored.Unknown, "{ all(TRUE, TRUE, NA,  na.rm=TRUE) }");
+        assertEval(Ignored.Unknown, "{ all(1) }"); // FIXME coercion warning missing
+        assertEval(Ignored.Unknown, "{ all(0) }"); // FIXME coercion warning missing
+        assertEval(Ignored.Unknown, "{ all(TRUE,c(TRUE,TRUE),1) }"); // FIXME coercion warning missing
+        assertEval(Ignored.Unknown, "{ all(TRUE,c(TRUE,TRUE),1,0) }"); // FIXME coercion warning missing
     }
 
     @Test
@@ -3060,22 +3022,20 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testAnyIgnore() {
-        assertEval("{ any(FALSE, NA,  na.rm=TRUE) }");
-        assertEval(Output.ContainsWarning, "{ any(1) }"); // FIXME coercion warning missing
-        assertEval(Output.ContainsWarning, "{ any(0) }"); // FIXME coercion warning missing
+        assertEval(Ignored.Unknown, "{ any(FALSE, NA,  na.rm=TRUE) }");
+        assertEval(Ignored.Unknown, Output.ContainsWarning, "{ any(1) }"); // FIXME coercion warning missing
+        assertEval(Ignored.Unknown, Output.ContainsWarning, "{ any(0) }"); // FIXME coercion warning missing
     }
 
     @Test
-    @Ignore
     public void testSource() {
-        assertEval("{ source(\"test/r/simple/data/tree2/setx.r\") ; x }");
-        assertEval("{ source(\"test/r/simple/data/tree2/setx.r\", local=TRUE) ; x }");
-        assertEval("{ x <- 1; f <- function() { source(\"test/r/simple/data/tree2/setx.r\", local=TRUE) ; x } ; c(f(), x) }");
-        assertEval("{ x <- 1; f <- function() { source(\"test/r/simple/data/tree2/setx.r\", local=FALSE) ; x } ; c(f(), x) }");
-        assertEval("{ x <- 1; f <- function() { source(\"test/r/simple/data/tree2/incx.r\", local=FALSE) ; x } ; c(f(), x) }");
-        assertEval("{ x <- 1; f <- function() { source(\"test/r/simple/data/tree2/incx.r\", local=TRUE) ; x } ; c(f(), x) }");
+        assertEval(Ignored.Unknown, "{ source(\"test/r/simple/data/tree2/setx.r\") ; x }");
+        assertEval(Ignored.Unknown, "{ source(\"test/r/simple/data/tree2/setx.r\", local=TRUE) ; x }");
+        assertEval(Ignored.Unknown, "{ x <- 1; f <- function() { source(\"test/r/simple/data/tree2/setx.r\", local=TRUE) ; x } ; c(f(), x) }");
+        assertEval(Ignored.Unknown, "{ x <- 1; f <- function() { source(\"test/r/simple/data/tree2/setx.r\", local=FALSE) ; x } ; c(f(), x) }");
+        assertEval(Ignored.Unknown, "{ x <- 1; f <- function() { source(\"test/r/simple/data/tree2/incx.r\", local=FALSE) ; x } ; c(f(), x) }");
+        assertEval(Ignored.Unknown, "{ x <- 1; f <- function() { source(\"test/r/simple/data/tree2/incx.r\", local=TRUE) ; x } ; c(f(), x) }");
     }
 
     @Test
@@ -3131,13 +3091,12 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testSysCallIgnore() {
         // TODO these fail because the argument name "x" is wrongly always output
-        assertEval("{ f <- function(x) sys.call() ; f(2) }");
-        assertEval("{ f <- function(x) sys.call() ; g <- function() 23 ; f(g()) }");
+        assertEval(Ignored.Unknown, "{ f <- function(x) sys.call() ; f(2) }");
+        assertEval(Ignored.Unknown, "{ f <- function(x) sys.call() ; g <- function() 23 ; f(g()) }");
         // fails because can't parse out the "name"
-        assertEval("{ (function() sys.call())() }");
+        assertEval(Ignored.Unknown, "{ (function() sys.call())() }");
     }
 
     @Test
@@ -3162,9 +3121,8 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testSysParentsIgnore() {
-        assertEval("{ u <- function() sys.parents() ; f <- function(x) x ; g <- function(y) f(y) ; h <- function(z=u()) g(z) ; h() }");
+        assertEval(Ignored.Unknown, "{ u <- function() sys.parents() ; f <- function(x) x ; g <- function(y) f(y) ; h <- function(z=u()) g(z) ; h() }");
     }
 
     @Test
@@ -3178,9 +3136,8 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testSysNFrameIgnore() {
-        assertEval("{ u <- function() sys.nframe() ; f <- function(x) x ; g <- function(y) f(y) ; h <- function(z=u()) g(z) ; h() }");
+        assertEval(Ignored.Unknown, "{ u <- function() sys.nframe() ; f <- function(x) x ; g <- function(y) f(y) ; h <- function(z=u()) g(z) ; h() }");
     }
 
     @Test
@@ -3269,10 +3226,9 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testMatMultIgnore() {
-        assertEval("{ matrix(c(3+3i,1-1i,2+2i,0-0i,1+1i,2-2i),2) %*% c(1+1i,0-0i,4+4i) }");
-        assertEval("{ c(1+1i,0-0i,4+4i) %*% matrix(c(3+3i,1-1i,2+2i,0-0i,1+1i,2-2i),3) }");
+        assertEval(Ignored.Unknown, "{ matrix(c(3+3i,1-1i,2+2i,0-0i,1+1i,2-2i),2) %*% c(1+1i,0-0i,4+4i) }");
+        assertEval(Ignored.Unknown, "{ c(1+1i,0-0i,4+4i) %*% matrix(c(3+3i,1-1i,2+2i,0-0i,1+1i,2-2i),3) }");
     }
 
     @Test
@@ -3386,11 +3342,10 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testUseMethodLocalVars() {
         // The variables defined before call to UseMethod should be
         // accessible to target function.
-        assertEval("{f <- function(x){ y<-2;locFun <- function(){cat(\"local\")}; UseMethod(\"f\"); }; f.second <- function(x){cat(\"f second\",x);locFun();}; obj <-1; attr(obj,\"class\")  <- \"second\"; f(obj);}");
+        assertEval(Ignored.Unknown, "{f <- function(x){ y<-2;locFun <- function(){cat(\"local\")}; UseMethod(\"f\"); }; f.second <- function(x){cat(\"f second\",x);locFun();}; obj <-1; attr(obj,\"class\")  <- \"second\"; f(obj);}");
     }
 
     @Test
@@ -3487,11 +3442,10 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testUpdateClassIgnore() {
         // Fails because of exact string matching in error message.
-        assertEval("{x<-c(1,2,3,4); class(x)<-\"array\"; class(x)<-\"matrix\";}");
-        assertEval("{x<-1;attr(x,\"class\")<-c(1,2,3);}");
+        assertEval(Ignored.Unknown, "{x<-c(1,2,3,4); class(x)<-\"array\"; class(x)<-\"matrix\";}");
+        assertEval(Ignored.Unknown, "{x<-1;attr(x,\"class\")<-c(1,2,3);}");
     }
 
     @Test
@@ -3539,11 +3493,10 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testInheritsIgnore() {
         // Fails because of exact string matching in error message.
-        assertEval("{x <- 10;class(x) <- c(\"a\", \"b\");inherits(x, 2, c(TRUE)) ;}");
-        assertEval("{x <- 10;class(x) <- c(\"a\", \"b\");inherits(x, \"a\", 1) ;}");
+        assertEval(Ignored.Unknown, "{x <- 10;class(x) <- c(\"a\", \"b\");inherits(x, 2, c(TRUE)) ;}");
+        assertEval(Ignored.Unknown, "{x <- 10;class(x) <- c(\"a\", \"b\");inherits(x, \"a\", 1) ;}");
     }
 
     @Test
@@ -3666,15 +3619,13 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testIsFactorIgnore() {
-        assertEval("{x<-1;class(x)<-\"factor\";is.factor(x)}");
+        assertEval(Ignored.Unknown, "{x<-1;class(x)<-\"factor\";is.factor(x)}");
     }
 
     @Test
-    @Ignore
     public void testParen() {
-        assertEval("{ a = array(1,c(3,3,3)); (a[1,2,3] = 3) }");
+        assertEval(Ignored.Unknown, "{ a = array(1,c(3,3,3)); (a[1,2,3] = 3) }");
     }
 
     @Test
@@ -3732,10 +3683,9 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    @Ignore
     // Date at real time differs by milliseconds.
     public void testDateIgnore() {
-        assertEval("{date()}");
+        assertEval(Ignored.Unknown, "{date()}");
     }
 
     public void testFormat() {
@@ -3759,11 +3709,10 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testProdNa() {
-        assertEval("{prod(c(2,4,NA))}");
-        assertEval("{prod(c(2,4,3,NA),TRUE)}");
-        assertEval("{prod(c(1,2,3,4,5,NA),FALSE)}");
+        assertEval(Ignored.Unknown, "{prod(c(2,4,NA))}");
+        assertEval(Ignored.Unknown, "{prod(c(2,4,3,NA),TRUE)}");
+        assertEval(Ignored.Unknown, "{prod(c(1,2,3,4,5,NA),FALSE)}");
     }
 
     @Test
@@ -3837,16 +3786,15 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testSampleIgnore() {
-        assertEval("{ set.seed(9567, \"Marsaglia-Multicarry\");x <- c(5) ; prob <- c(1, 2, 3, 4, 5) ; sample(x, 5, TRUE, prob) ; }");
-        assertEval("{ set.seed(9567, \"Marsaglia-Multicarry\");x <- c(5) ; prob <- c(1, 2, 3, 4, 5) ; sample(x, 5, FALSE, prob) ; }");
-        assertEval("{ set.seed(4357, \"default\"); x <- c(5) ; prob <- c(1, 2, 3, 4, 5) ; sample(x, 5, TRUE, prob) ; }");
-        assertEval("{ set.seed(4357, \"default\"); x <- c(5) ; prob <- c(1, 2, 3, 4, 5) ; sample(x, 5, FALSE, prob) ; }");
+        assertEval(Ignored.Unknown, "{ set.seed(9567, \"Marsaglia-Multicarry\");x <- c(5) ; prob <- c(1, 2, 3, 4, 5) ; sample(x, 5, TRUE, prob) ; }");
+        assertEval(Ignored.Unknown, "{ set.seed(9567, \"Marsaglia-Multicarry\");x <- c(5) ; prob <- c(1, 2, 3, 4, 5) ; sample(x, 5, FALSE, prob) ; }");
+        assertEval(Ignored.Unknown, "{ set.seed(4357, \"default\"); x <- c(5) ; prob <- c(1, 2, 3, 4, 5) ; sample(x, 5, TRUE, prob) ; }");
+        assertEval(Ignored.Unknown, "{ set.seed(4357, \"default\"); x <- c(5) ; prob <- c(1, 2, 3, 4, 5) ; sample(x, 5, FALSE, prob) ; }");
 
         // Fails because of error message mismatch.
-        assertEval("{ set.seed(4357, \"default\"); x <- 5 ; sample(x, 6, FALSE, NULL) ;}");
-        assertEval("{ set.seed(9567, \"Marsaglia-Multicarry\"); x <- 5 ; sample(x, 6, FALSE, NULL) ;}");
+        assertEval(Ignored.Unknown, "{ set.seed(4357, \"default\"); x <- 5 ; sample(x, 6, FALSE, NULL) ;}");
+        assertEval(Ignored.Unknown, "{ set.seed(9567, \"Marsaglia-Multicarry\"); x <- 5 ; sample(x, 6, FALSE, NULL) ;}");
     }
 
     @Test
@@ -3923,21 +3871,19 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testSweepBroken() {
         // Correct output but warnings
-        assertEval("{ A <- matrix(1:50, nrow=4); sweep(A, 1, 5, '-') }");
-        assertEval("{ A <- matrix(7:1, nrow=5); sweep(A, 1, -1, '*') }");
+        assertEval(Ignored.Unknown, "{ A <- matrix(1:50, nrow=4); sweep(A, 1, 5, '-') }");
+        assertEval(Ignored.Unknown, "{ A <- matrix(7:1, nrow=5); sweep(A, 1, -1, '*') }");
 
-        assertEval("{rowMeans(matrix(c(NaN,4+5i,2+0i,5+10i),nrow=2,ncol=2), na.rm = FALSE)}");
+        assertEval(Ignored.Unknown, "{rowMeans(matrix(c(NaN,4+5i,2+0i,5+10i),nrow=2,ncol=2), na.rm = FALSE)}");
     }
 
     @Test
-    @Ignore
     public void testRowMeansIgnore() {
         // Error message mismatch
-        assertEval("{rowMeans(matrix(NA,NA,NA),TRUE)}");
-        assertEval("{x<-matrix(c(\"1\",\"2\",\"3\",\"4\"),ncol=2);rowMeans(x)}");
+        assertEval(Ignored.Unknown, "{rowMeans(matrix(NA,NA,NA),TRUE)}");
+        assertEval(Ignored.Unknown, "{x<-matrix(c(\"1\",\"2\",\"3\",\"4\"),ncol=2);rowMeans(x)}");
     }
 
     @Test
@@ -3963,10 +3909,9 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testRowSumsIgnore() {
         // Error message mismatch
-        assertEval("{x<-matrix(c(\"1\",\"2\",\"3\",\"4\"),ncol=2);rowSums(x)}");
+        assertEval(Ignored.Unknown, "{x<-matrix(c(\"1\",\"2\",\"3\",\"4\"),ncol=2);rowSums(x)}");
     }
 
     @Test
@@ -4050,9 +3995,8 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testColMeansIgnore() {
-        assertEval("{colMeans(matrix(c(NaN,4+5i,2+0i,5+10i),nrow=2,ncol=2), na.rm = TRUE)}");
+        assertEval(Ignored.Unknown, "{colMeans(matrix(c(NaN,4+5i,2+0i,5+10i),nrow=2,ncol=2), na.rm = TRUE)}");
     }
 
     @Test
@@ -4067,10 +4011,9 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testCumulativeMaxIgnore() {
-        assertEval("{ cummax(c(1+1i,2-3i,4+5i)) }");
-        assertEval("{ cummax(c(1+1i, NA, 2+3i)) }");
+        assertEval(Ignored.Unknown, "{ cummax(c(1+1i,2-3i,4+5i)) }");
+        assertEval(Ignored.Unknown, "{ cummax(c(1+1i, NA, 2+3i)) }");
     }
 
     @Test
@@ -4085,11 +4028,10 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testCumulativeMinIgnore() {
         // Error message mismatch.
-        assertEval("{ cummin(c(1+1i,2-3i,4+5i)) }");
-        assertEval("{ cummin(c(1+1i, NA, 2+3i)) }");
+        assertEval(Ignored.Unknown, "{ cummin(c(1+1i,2-3i,4+5i)) }");
+        assertEval(Ignored.Unknown, "{ cummin(c(1+1i, NA, 2+3i)) }");
     }
 
     @Test
@@ -4190,17 +4132,16 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testFactorIgnore() {
-        assertEval(Output.ContainsWarning, "{ x<-factor(c(\"a\", \"b\", \"a\")); x > \"a\" }");
-        assertEval(Output.ContainsWarning, "{ x<-factor(c(\"a\", \"b\", \"a\")); x + \"a\" }");
-        assertEval(Output.ContainsWarning, "{ x<-factor(c(\"a\", \"b\", \"a\")); x > c(\"a\", \"b\") }");
-        assertEval(Output.ContainsWarning, "{ x<-factor(c(\"a\", \"b\", \"a\")); x + c(\"a\", \"b\") }");
-        assertEval(Output.ContainsWarning, "{ x<-factor(c(\"a\", \"b\", \"a\"), ordered=TRUE); x + \"a\" }");
-        assertEval(Output.ContainsWarning, "{ x<-c(1L, 2L, 1L); class(x)<-c(\"factor\", \"ordered\"); levels(x)<-c(\"a\", \"b\"); x > \"a\" }");
-        assertEval(Output.ContainsWarning, "{ x<-c(1L, 2L, 1L); class(x)<-c(\"ordered\", \"factor\"); levels(x)<-c(\"a\", \"b\"); x + \"a\" }");
-        assertEval(Output.ContainsWarning, "{ x<-c(1L, 2L, 1L); class(x)<-c(\"factor\", \"ordered\"); levels(x)<-c(\"a\", \"b\"); x + \"a\" }");
-        assertEval(Output.ContainsWarning,
+        assertEval(Ignored.Unknown, Output.ContainsWarning, "{ x<-factor(c(\"a\", \"b\", \"a\")); x > \"a\" }");
+        assertEval(Ignored.Unknown, Output.ContainsWarning, "{ x<-factor(c(\"a\", \"b\", \"a\")); x + \"a\" }");
+        assertEval(Ignored.Unknown, Output.ContainsWarning, "{ x<-factor(c(\"a\", \"b\", \"a\")); x > c(\"a\", \"b\") }");
+        assertEval(Ignored.Unknown, Output.ContainsWarning, "{ x<-factor(c(\"a\", \"b\", \"a\")); x + c(\"a\", \"b\") }");
+        assertEval(Ignored.Unknown, Output.ContainsWarning, "{ x<-factor(c(\"a\", \"b\", \"a\"), ordered=TRUE); x + \"a\" }");
+        assertEval(Ignored.Unknown, Output.ContainsWarning, "{ x<-c(1L, 2L, 1L); class(x)<-c(\"factor\", \"ordered\"); levels(x)<-c(\"a\", \"b\"); x > \"a\" }");
+        assertEval(Ignored.Unknown, Output.ContainsWarning, "{ x<-c(1L, 2L, 1L); class(x)<-c(\"ordered\", \"factor\"); levels(x)<-c(\"a\", \"b\"); x + \"a\" }");
+        assertEval(Ignored.Unknown, Output.ContainsWarning, "{ x<-c(1L, 2L, 1L); class(x)<-c(\"factor\", \"ordered\"); levels(x)<-c(\"a\", \"b\"); x + \"a\" }");
+        assertEval(Ignored.Unknown, Output.ContainsWarning,
                         "{ x<-structure(c(1,2,1), .Label=c(\"a\", \"b\"), class = c('factor'), .Names=c(\"111\",\"112\",\"113\")); y<-structure(c(1,2,1), .Label=c(\"a\", \"b\"), class = c('factor'), .Names=c(\"111\",\"112\",\"113\")); x+y }");
     }
 
@@ -4280,10 +4221,9 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testColIgnore() {
         // reports wrong source section
-        assertEval("{ col(c(1,2,3)) }");
+        assertEval(Ignored.Unknown, "{ col(c(1,2,3)) }");
     }
 
     @Test
@@ -4303,9 +4243,8 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testNArgsIgnore() {
-        assertEval("{  f <- function (a, b, c) { nargs() }; f(,,a) }");
+        assertEval(Ignored.Unknown, "{  f <- function (a, b, c) { nargs() }; f(,,a) }");
     }
 
     @Test
@@ -4342,23 +4281,22 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testBitwiseFunctionsIgnore() {
-        assertEval("{ bitwAnd(NULL, NULL) }");
-        assertEval("{ bitwAnd(c(), c(1,2,3)) }");
+        assertEval(Ignored.Unknown, "{ bitwAnd(NULL, NULL) }");
+        assertEval(Ignored.Unknown, "{ bitwAnd(c(), c(1,2,3)) }");
         // Error message mismatch
-        assertEval("{ bitwAnd(c(1,2,3,4), c(TRUE)) }");
-        assertEval("{ bitwOr(c(1,2,3,4), c(3+3i)) }");
-        assertEval("{ bitwXor(c(\"r\"), c(16,17)) }");
-        assertEval("{ bitwShiftL(TRUE, c(TRUE, FALSE)) }");
-        assertEval("{ bitwShiftL(c(3+3i), c(3,2,4)) }");
-        assertEval("{ bitwNot(TRUE) }");
+        assertEval(Ignored.Unknown, "{ bitwAnd(c(1,2,3,4), c(TRUE)) }");
+        assertEval(Ignored.Unknown, "{ bitwOr(c(1,2,3,4), c(3+3i)) }");
+        assertEval(Ignored.Unknown, "{ bitwXor(c(\"r\"), c(16,17)) }");
+        assertEval(Ignored.Unknown, "{ bitwShiftL(TRUE, c(TRUE, FALSE)) }");
+        assertEval(Ignored.Unknown, "{ bitwShiftL(c(3+3i), c(3,2,4)) }");
+        assertEval(Ignored.Unknown, "{ bitwNot(TRUE) }");
         // Warning message mismatch
-        assertEval("{ bitwShiftR(c(3,2,4), c(3+3i)) }");
-        assertEval("{ bitwShiftL(c(3,2,4), c(3+3i)) }");
+        assertEval(Ignored.Unknown, "{ bitwShiftR(c(3,2,4), c(3+3i)) }");
+        assertEval(Ignored.Unknown, "{ bitwShiftL(c(3,2,4), c(3+3i)) }");
         // No warning message printed for NAs produced by coercion
-        assertEval("{ bitwShiftR(c(1,2,3,4), c(\"Hello\")) }");
-        assertEval("{ bitwShiftL(c(1,2,3,4), c(\"a\")) }");
+        assertEval(Ignored.Unknown, "{ bitwShiftR(c(1,2,3,4), c(\"Hello\")) }");
+        assertEval(Ignored.Unknown, "{ bitwShiftL(c(1,2,3,4), c(\"a\")) }");
     }
 
 }

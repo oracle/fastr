@@ -37,10 +37,9 @@ public class TestConditionHandling extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testTryCatchIgnore() {
         // Don't get the call source correct
-        assertEval("{ tryCatch(stop(\"fred\"), error = function(e) e, finally = print(\"Hello\"))}");
+        assertEval(Ignored.Unknown, "{ tryCatch(stop(\"fred\"), error = function(e) e, finally = print(\"Hello\"))}");
     }
 
 }

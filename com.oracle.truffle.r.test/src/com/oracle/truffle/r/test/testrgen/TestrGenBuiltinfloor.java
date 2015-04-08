@@ -33,9 +33,8 @@ public class TestrGenBuiltinfloor extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testfloor4() {
-        assertEval("argv <- list(structure(c(1920.5, 1920.5833, 1920.6667, 1920.75, 1920.8333, 1920.9167, 1921, 1921.0833, 1921.1667, 1921.25), .Tsp = c(1920.5, 1921.25, 12), class = \'ts\'));floor(argv[[1]]);");
+        assertEval(Ignored.Unknown, "argv <- list(structure(c(1920.5, 1920.5833, 1920.6667, 1920.75, 1920.8333, 1920.9167, 1921, 1921.0833, 1921.1667, 1921.25), .Tsp = c(1920.5, 1921.25, 12), class = \'ts\'));floor(argv[[1]]);");
     }
 
     @Test
@@ -54,14 +53,12 @@ public class TestrGenBuiltinfloor extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testfloor8() {
-        assertEval("argv <- list(structure(c(1976, 1976.0833, 1976.1667, 1976.25, 1976.3333, 1976.4167, 1976.5, 1976.5833, 1976.6667, 1976.75, 1976.8333, 1976.9167, 1977, 1977.0833, 1977.1667, 1977.25, 1977.3333, 1977.4167, 1977.5, 1977.5833, 1977.6667, 1977.75, 1977.8333, 1977.9167, 1978), .Tsp = c(1976, 1978, 12), class = \'ts\'));floor(argv[[1]]);");
+        assertEval(Ignored.Unknown, "argv <- list(structure(c(1976, 1976.0833, 1976.1667, 1976.25, 1976.3333, 1976.4167, 1976.5, 1976.5833, 1976.6667, 1976.75, 1976.8333, 1976.9167, 1977, 1977.0833, 1977.1667, 1977.25, 1977.3333, 1977.4167, 1977.5, 1977.5833, 1977.6667, 1977.75, 1977.8333, 1977.9167, 1978), .Tsp = c(1976, 1978, 12), class = \'ts\'));floor(argv[[1]]);");
     }
 
     @Test
-    @Ignore
     public void testfloor9() {
-        assertEval("argv <- list(logical(0));floor(argv[[1]]);");
+        assertEval(Ignored.Unknown, "argv <- list(logical(0));floor(argv[[1]]);");
     }
 }

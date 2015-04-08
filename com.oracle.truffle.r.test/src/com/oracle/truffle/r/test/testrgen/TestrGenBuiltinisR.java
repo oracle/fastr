@@ -18,9 +18,8 @@ import com.oracle.truffle.r.test.*;
                                                                  public class TestrGenBuiltinisR extends TestBase {
 
 	@Test
-    @Ignore
 	public void testisR1() {
-		assertEval("argv <- list();"+
+		assertEval(Ignored.Unknown, "argv <- list();"+
 			"do.call(\'is.R\', argv)");
 	}
 

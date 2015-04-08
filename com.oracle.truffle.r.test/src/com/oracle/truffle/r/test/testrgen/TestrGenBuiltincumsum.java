@@ -28,9 +28,8 @@ public class TestrGenBuiltincumsum extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testcumsum3() {
-        assertEval("argv <- list(structure(c(79.3831968838961, 8.55983483385341e+101), .Names = c(\'\', \'\')));cumsum(argv[[1]]);");
+        assertEval(Ignored.Unknown, "argv <- list(structure(c(79.3831968838961, 8.55983483385341e+101), .Names = c(\'\', \'\')));cumsum(argv[[1]]);");
     }
 
     @Test
@@ -39,9 +38,8 @@ public class TestrGenBuiltincumsum extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testcumsum5() {
-        assertEval("argv <- list(NULL);cumsum(argv[[1]]);");
+        assertEval(Ignored.Unknown, "argv <- list(NULL);cumsum(argv[[1]]);");
     }
 
     @Test
@@ -50,9 +48,8 @@ public class TestrGenBuiltincumsum extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testcumsum7() {
-        assertEval("argv <- list(structure(list(c0 = structure(integer(0), .Label = character(0), class = \'factor\')), .Names = \'c0\', row.names = character(0), class = structure(\'integer(0)\', .Names = \'c0\')));cumsum(argv[[1]]);");
+        assertEval(Ignored.Unknown, "argv <- list(structure(list(c0 = structure(integer(0), .Label = character(0), class = \'factor\')), .Names = \'c0\', row.names = character(0), class = structure(\'integer(0)\', .Names = \'c0\')));cumsum(argv[[1]]);");
     }
 
     @Test

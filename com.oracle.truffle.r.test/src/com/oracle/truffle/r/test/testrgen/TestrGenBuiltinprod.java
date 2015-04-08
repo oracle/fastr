@@ -23,9 +23,8 @@ public class TestrGenBuiltinprod extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testprod2() {
-        assertEval("argv <- list(c(1000L, 1000L));prod(argv[[1]]);");
+        assertEval(Ignored.Unknown, "argv <- list(c(1000L, 1000L));prod(argv[[1]]);");
     }
 
     @Test
@@ -39,9 +38,8 @@ public class TestrGenBuiltinprod extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testprod5() {
-        assertEval("argv <- list(integer(0));prod(argv[[1]]);");
+        assertEval(Ignored.Unknown, "argv <- list(integer(0));prod(argv[[1]]);");
     }
 
     @Test
@@ -55,27 +53,23 @@ public class TestrGenBuiltinprod extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testprod8() {
-        assertEval("argv <- list(c(0.138260298853371, 0.000636169906925458));prod(argv[[1]]);");
+        assertEval(Ignored.Unknown, "argv <- list(c(0.138260298853371, 0.000636169906925458));prod(argv[[1]]);");
     }
 
     @Test
-    @Ignore
     public void testprod9() {
-        assertEval("argv <- list(NA_integer_);prod(argv[[1]]);");
+        assertEval(Ignored.Unknown, "argv <- list(NA_integer_);prod(argv[[1]]);");
     }
 
     @Test
-    @Ignore
     public void testprod10() {
-        assertEval("prod( );");
+        assertEval(Ignored.Unknown, "prod( );");
     }
 
     @Test
-    @Ignore
     public void testprod11() {
-        assertEval("argv <- list(numeric(0));prod(argv[[1]]);");
+        assertEval(Ignored.Unknown, "argv <- list(numeric(0));prod(argv[[1]]);");
     }
 }
 

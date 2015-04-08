@@ -18,9 +18,8 @@ import com.oracle.truffle.r.test.*;
 public class TestrGenBuiltinseqint extends TestBase {
 
     @Test
-    @Ignore
     public void testseqint1() {
-        assertEval("argv <- list(16146, by = 1, length.out = 4);seq.int(argv[[1]],argv[[2]],argv[[3]]);");
+        assertEval(Ignored.Unknown, "argv <- list(16146, by = 1, length.out = 4);seq.int(argv[[1]],argv[[2]],argv[[3]]);");
     }
 
     @Test
@@ -34,9 +33,8 @@ public class TestrGenBuiltinseqint extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testseqint4() {
-        assertEval("argv <- list(1.2e+100, 1.3e+100, length.out = 2);seq.int(argv[[1]],argv[[2]],argv[[3]]);");
+        assertEval(Ignored.Unknown, "argv <- list(1.2e+100, 1.3e+100, length.out = 2);seq.int(argv[[1]],argv[[2]],argv[[3]]);");
     }
 
     @Test
@@ -45,27 +43,23 @@ public class TestrGenBuiltinseqint extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testseqint6() {
-        assertEval("argv <- list(953553600, by = 86400, length.out = 10);seq.int(argv[[1]],argv[[2]],argv[[3]]);");
+        assertEval(Ignored.Unknown, "argv <- list(953553600, by = 86400, length.out = 10);seq.int(argv[[1]],argv[[2]],argv[[3]]);");
     }
 
     @Test
-    @Ignore
     public void testseqint7() {
-        assertEval("argv <- list(25L);seq.int(argv[[1]]);");
+        assertEval(Ignored.Unknown, "argv <- list(25L);seq.int(argv[[1]]);");
     }
 
     @Test
-    @Ignore
     public void testseqint8() {
-        assertEval("argv <- list(from = 2.0943951023932, to = 2.61799387799149, by = 0.0174532925199433);seq.int(argv[[1]],argv[[2]],argv[[3]]);");
+        assertEval(Ignored.Unknown, "argv <- list(from = 2.0943951023932, to = 2.61799387799149, by = 0.0174532925199433);seq.int(argv[[1]],argv[[2]],argv[[3]]);");
     }
 
     @Test
-    @Ignore
     public void testseqint9() {
-        assertEval("argv <- list(from = 0, to = 0.793110173512391, length.out = FALSE);seq.int(argv[[1]],argv[[2]],argv[[3]]);");
+        assertEval(Ignored.Unknown, "argv <- list(from = 0, to = 0.793110173512391, length.out = FALSE);seq.int(argv[[1]],argv[[2]],argv[[3]]);");
     }
 
     @Test
@@ -89,15 +83,13 @@ public class TestrGenBuiltinseqint extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testseqint14() {
-        assertEval("argv <- list(from = 0.95, by = -0.120360949612403, length.out = 6);seq.int(argv[[1]],argv[[2]],argv[[3]]);");
+        assertEval(Ignored.Unknown, "argv <- list(from = 0.95, by = -0.120360949612403, length.out = 6);seq.int(argv[[1]],argv[[2]],argv[[3]]);");
     }
 
     @Test
-    @Ignore
     public void testseqint15() {
-        assertEval("argv <- list(list());seq.int(argv[[1]]);");
+        assertEval(Ignored.Unknown, "argv <- list(list());seq.int(argv[[1]]);");
     }
 
     @Test
@@ -106,9 +98,8 @@ public class TestrGenBuiltinseqint extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testseqint17() {
-        assertEval("argv <- list(from = 0.070740277703696, to = 0.793110173512391, length.out = NULL);seq.int(argv[[1]],argv[[2]],argv[[3]]);");
+        assertEval(Ignored.Unknown, "argv <- list(from = 0.070740277703696, to = 0.793110173512391, length.out = NULL);seq.int(argv[[1]],argv[[2]],argv[[3]]);");
     }
 
     @Test
@@ -147,27 +138,23 @@ public class TestrGenBuiltinseqint extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testseqint26() {
-        assertEval("argv <- list(NaN, NaN);" + "do.call(\'seq.int\', argv)");
+        assertEval(Ignored.Unknown, "argv <- list(NaN, NaN);" + "do.call(\'seq.int\', argv)");
     }
 
     @Test
-    @Ignore
     public void testseqint27() {
-        assertEval("argv <- structure(list(1.2, 1, by = 1), .Names = c(\'\', \'\', \'by\'));" + "do.call(\'seq.int\', argv)");
+        assertEval(Ignored.Unknown, "argv <- structure(list(1.2, 1, by = 1), .Names = c(\'\', \'\', \'by\'));" + "do.call(\'seq.int\', argv)");
     }
 
     @Test
-    @Ignore
     public void testseqint28() {
-        assertEval("argv <- structure(list(to = NaN), .Names = \'to\');" + "do.call(\'seq.int\', argv)");
+        assertEval(Ignored.Unknown, "argv <- structure(list(to = NaN), .Names = \'to\');" + "do.call(\'seq.int\', argv)");
     }
 
     @Test
-    @Ignore
     public void testseqint29() {
-        assertEval("argv <- list(NaN);" + "do.call(\'seq.int\', argv)");
+        assertEval(Ignored.Unknown, "argv <- list(NaN);" + "do.call(\'seq.int\', argv)");
     }
 
 }

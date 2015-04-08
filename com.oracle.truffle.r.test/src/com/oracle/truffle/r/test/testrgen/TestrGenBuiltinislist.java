@@ -18,9 +18,8 @@ import com.oracle.truffle.r.test.*;
 public class TestrGenBuiltinislist extends TestBase {
 
     @Test
-    @Ignore
     public void testislist1() {
-        assertEval("argv <- list(structure(function (e1, e2) standardGeneric(\'/\', .Primitive(\'/\')), generic = structure(\'/\', package = \'base\'), package = \'base\', group = list(\'Arith\'), valueClass = character(0), signature = c(\'e1\', \'e2\'), default = .Primitive(\'/\'), skeleton = quote(.Primitive(\'/\')(e1, e2)), class = structure(\'standardGeneric\', package = \'methods\')));is.list(argv[[1]]);");
+        assertEval(Ignored.Unknown, "argv <- list(structure(function (e1, e2) standardGeneric(\'/\', .Primitive(\'/\')), generic = structure(\'/\', package = \'base\'), package = \'base\', group = list(\'Arith\'), valueClass = character(0), signature = c(\'e1\', \'e2\'), default = .Primitive(\'/\'), skeleton = quote(.Primitive(\'/\')(e1, e2)), class = structure(\'standardGeneric\', package = \'methods\')));is.list(argv[[1]]);");
     }
 
     @Test
@@ -54,9 +53,8 @@ public class TestrGenBuiltinislist extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testislist8() {
-        assertEval("argv <- list(structure(list(title = structure(1L, .Label = c(\'An Introduction to R\', \'Exploratory Data Analysis\', \'Interactive Data Analysis\', \'LISP-STAT\', \'Modern Applied Statistics ...\', \'Spatial Statistics\', \'Stochastic Simulation\'), class = \'factor\'), other.author = structure(2L, .Label = c(\'Ripley\', \'Venables & Smith\'), class = \'factor\')), .Names = c(\'title\', \'other.author\'), row.names = 1L, class = \'data.frame\'));is.list(argv[[1]]);");
+        assertEval(Ignored.Unknown, "argv <- list(structure(list(title = structure(1L, .Label = c(\'An Introduction to R\', \'Exploratory Data Analysis\', \'Interactive Data Analysis\', \'LISP-STAT\', \'Modern Applied Statistics ...\', \'Spatial Statistics\', \'Stochastic Simulation\'), class = \'factor\'), other.author = structure(2L, .Label = c(\'Ripley\', \'Venables & Smith\'), class = \'factor\')), .Names = c(\'title\', \'other.author\'), row.names = 1L, class = \'data.frame\'));is.list(argv[[1]]);");
     }
 
     @Test

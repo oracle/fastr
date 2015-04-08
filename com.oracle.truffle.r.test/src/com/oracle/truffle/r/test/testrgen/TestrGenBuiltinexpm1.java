@@ -23,9 +23,8 @@ public class TestrGenBuiltinexpm1 extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testexpm12() {
-        assertEval("argv <- list(-1.5314339531682e-113);expm1(argv[[1]]);");
+        assertEval(Ignored.Unknown, "argv <- list(-1.5314339531682e-113);expm1(argv[[1]]);");
     }
 
     @Test
@@ -34,9 +33,8 @@ public class TestrGenBuiltinexpm1 extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testexpm14() {
-        assertEval("argv <- list(logical(0));expm1(argv[[1]]);");
+        assertEval(Ignored.Unknown, "argv <- list(logical(0));expm1(argv[[1]]);");
     }
 
     @Test

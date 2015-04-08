@@ -18,15 +18,13 @@ import com.oracle.truffle.r.test.*;
 public class TestrGenBuiltinatan2 extends TestBase {
 
     @Test
-    @Ignore
     public void testatan21() {
-        assertEval("argv <- list(structure(0.142857142857143, .Names = \'Var2\'), structure(1.75510204081633, .Names = \'Var1\')); .Internal(atan2(argv[[1]], argv[[2]]))");
+        assertEval(Ignored.Unknown, "argv <- list(structure(0.142857142857143, .Names = \'Var2\'), structure(1.75510204081633, .Names = \'Var1\')); .Internal(atan2(argv[[1]], argv[[2]]))");
     }
 
     @Test
-    @Ignore
     public void testatan22() {
-        assertEval("argv <- list(structure(-0.224489795918367, .Names = \'Var2\'), structure(-0.816326530612245, .Names = \'Var1\')); .Internal(atan2(argv[[1]], argv[[2]]))");
+        assertEval(Ignored.Unknown, "argv <- list(structure(-0.224489795918367, .Names = \'Var2\'), structure(-0.816326530612245, .Names = \'Var1\')); .Internal(atan2(argv[[1]], argv[[2]]))");
     }
 
     @Test
@@ -35,15 +33,13 @@ public class TestrGenBuiltinatan2 extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testatan24() {
-        assertEval("argv <- list(0+1i, 0+0i); .Internal(atan2(argv[[1]], argv[[2]]))");
+        assertEval(Ignored.Unknown, "argv <- list(0+1i, 0+0i); .Internal(atan2(argv[[1]], argv[[2]]))");
     }
 
     @Test
-    @Ignore
     public void testatan25() {
-        assertEval("argv <- list(2.43782895752771e-05, 0.999996523206508); .Internal(atan2(argv[[1]], argv[[2]]))");
+        assertEval(Ignored.Unknown, "argv <- list(2.43782895752771e-05, 0.999996523206508); .Internal(atan2(argv[[1]], argv[[2]]))");
     }
 
     @Test

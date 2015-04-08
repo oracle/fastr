@@ -73,9 +73,8 @@ public class TestrGenBuiltininherits extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testinherits12() {
-        assertEval("argv <- list(quote(y ~ a + b:c + d + e + e:d), \'formula\', FALSE); .Internal(inherits(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval(Ignored.Unknown, "argv <- list(quote(y ~ a + b:c + d + e + e:d), \'formula\', FALSE); .Internal(inherits(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
@@ -174,9 +173,8 @@ public class TestrGenBuiltininherits extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testinherits32() {
-        assertEval("argv <- list(quote(breaks ~ (wool + tension) - tension), \'formula\', FALSE); .Internal(inherits(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval(Ignored.Unknown, "argv <- list(quote(breaks ~ (wool + tension) - tension), \'formula\', FALSE); .Internal(inherits(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test

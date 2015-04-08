@@ -23,9 +23,8 @@ public class TestrGenBuiltinlog2 extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testlog22() {
-        assertEval("argv <- list(FALSE);log2(argv[[1]]);");
+        assertEval(Ignored.Unknown, "argv <- list(FALSE);log2(argv[[1]]);");
     }
 
     @Test

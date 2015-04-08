@@ -33,11 +33,10 @@ public class TestSimpleArithmetic extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testScalarsRealIgnore() {
-        assertEval("{ 1000000000*100000000000 }"); // FIXME GNU R: 1e+20
-        assertEval("{ 1000000000L*1000000000 }"); // FIXME GNU R: 1e+18
-        assertEval("{ 1000000000L*1000000000L }"); // FIXME missing warning
+        assertEval(Ignored.Unknown, "{ 1000000000*100000000000 }"); // FIXME GNU R: 1e+20
+        assertEval(Ignored.Unknown, "{ 1000000000L*1000000000 }"); // FIXME GNU R: 1e+18
+        assertEval(Ignored.Unknown, "{ 1000000000L*1000000000L }"); // FIXME missing warning
     }
 
     @Test
@@ -110,14 +109,13 @@ public class TestSimpleArithmetic extends TestBase {
     }
 
     @Test
-    @Ignore
     /**
      * FIXME These expressions evaluate correctly in the shell but produce 1+0i in unit test environment
      */
     public void testScalarsComplexIgnore() {
-        assertEval("{ (1+2i)^(-2) }");
-        assertEval("{ ((1+0i)/(0+0i)) ^ (-3) }");
-        assertEval("{ ((1+1i)/(0+0i)) ^ (-3) }");
+        assertEval(Ignored.Unknown, "{ (1+2i)^(-2) }");
+        assertEval(Ignored.Unknown, "{ ((1+0i)/(0+0i)) ^ (-3) }");
+        assertEval(Ignored.Unknown, "{ ((1+1i)/(0+0i)) ^ (-3) }");
     }
 
     @Test
@@ -712,33 +710,31 @@ public class TestSimpleArithmetic extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testVectorizedLogicalAttributesIgnore() {
         // Warning message mismatch
         // Expected output: Error: dims [product 4] do not match the length of object [8]
         // FastR output: Error in x | y : dims [product 4] do not match the length of object [8]
-        assertEval("{ x<-1:4; dim(x)<-c(2,2); y<-21:28; x | y }");
+        assertEval(Ignored.Unknown, "{ x<-1:4; dim(x)<-c(2,2); y<-21:28; x | y }");
     }
 
     @Test
-    @Ignore
     public void testIntegerOverflow() {
-        assertEval(Output.ContainsWarning, "{ x <- 2147483647L ; x + 1L }");
-        assertEval(Output.ContainsWarning, "{ x <- 2147483647L ; x * x }");
-        assertEval(Output.ContainsWarning, "{ x <- -2147483647L ; x - 2L }");
-        assertEval(Output.ContainsWarning, "{ x <- -2147483647L ; x - 1L }");
-        assertEval(Output.ContainsWarning, "{ 2147483647L + 1:3 }");
-        assertEval(Output.ContainsWarning, "{ 2147483647L + c(1L,2L,3L) }");
-        assertEval(Output.ContainsWarning, "{ 1:3 + 2147483647L }");
-        assertEval(Output.ContainsWarning, "{ c(1L,2L,3L) + 2147483647L }");
-        assertEval(Output.ContainsWarning, "{ 1:3 + c(2147483647L,2147483647L,2147483647L) }");
-        assertEval(Output.ContainsWarning, "{ c(2147483647L,2147483647L,2147483647L) + 1:3 }");
-        assertEval(Output.ContainsWarning, "{ c(1L,2L,3L) + c(2147483647L,2147483647L,2147483647L) }");
-        assertEval(Output.ContainsWarning, "{ c(2147483647L,2147483647L,2147483647L) + c(1L,2L,3L) }");
-        assertEval(Output.ContainsWarning, "{ 1:4 + c(2147483647L,2147483647L) }");
-        assertEval(Output.ContainsWarning, "{ c(2147483647L,2147483647L) + 1:4 }");
-        assertEval(Output.ContainsWarning, "{ c(1L,2L,3L,4L) + c(2147483647L,2147483647L) }");
-        assertEval(Output.ContainsWarning, "{ c(2147483647L,2147483647L) + c(1L,2L,3L,4L) }");
+        assertEval(Ignored.Unknown, Output.ContainsWarning, "{ x <- 2147483647L ; x + 1L }");
+        assertEval(Ignored.Unknown, Output.ContainsWarning, "{ x <- 2147483647L ; x * x }");
+        assertEval(Ignored.Unknown, Output.ContainsWarning, "{ x <- -2147483647L ; x - 2L }");
+        assertEval(Ignored.Unknown, Output.ContainsWarning, "{ x <- -2147483647L ; x - 1L }");
+        assertEval(Ignored.Unknown, Output.ContainsWarning, "{ 2147483647L + 1:3 }");
+        assertEval(Ignored.Unknown, Output.ContainsWarning, "{ 2147483647L + c(1L,2L,3L) }");
+        assertEval(Ignored.Unknown, Output.ContainsWarning, "{ 1:3 + 2147483647L }");
+        assertEval(Ignored.Unknown, Output.ContainsWarning, "{ c(1L,2L,3L) + 2147483647L }");
+        assertEval(Ignored.Unknown, Output.ContainsWarning, "{ 1:3 + c(2147483647L,2147483647L,2147483647L) }");
+        assertEval(Ignored.Unknown, Output.ContainsWarning, "{ c(2147483647L,2147483647L,2147483647L) + 1:3 }");
+        assertEval(Ignored.Unknown, Output.ContainsWarning, "{ c(1L,2L,3L) + c(2147483647L,2147483647L,2147483647L) }");
+        assertEval(Ignored.Unknown, Output.ContainsWarning, "{ c(2147483647L,2147483647L,2147483647L) + c(1L,2L,3L) }");
+        assertEval(Ignored.Unknown, Output.ContainsWarning, "{ 1:4 + c(2147483647L,2147483647L) }");
+        assertEval(Ignored.Unknown, Output.ContainsWarning, "{ c(2147483647L,2147483647L) + 1:4 }");
+        assertEval(Ignored.Unknown, Output.ContainsWarning, "{ c(1L,2L,3L,4L) + c(2147483647L,2147483647L) }");
+        assertEval(Ignored.Unknown, Output.ContainsWarning, "{ c(2147483647L,2147483647L) + c(1L,2L,3L,4L) }");
     }
 
     @Test

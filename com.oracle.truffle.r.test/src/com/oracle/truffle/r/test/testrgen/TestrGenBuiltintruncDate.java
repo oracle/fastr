@@ -18,9 +18,8 @@ import com.oracle.truffle.r.test.*;
                                                                  public class TestrGenBuiltintruncDate extends TestBase {
 
 	@Test
-    @Ignore
 	public void testtruncDate1() {
-		assertEval("argv <- structure(list(x = structure(-3620.8, class = \'Date\')),     .Names = \'x\');"+
+		assertEval(Ignored.Unknown, "argv <- structure(list(x = structure(-3620.8, class = \'Date\')),     .Names = \'x\');"+
 			"do.call(\'trunc.Date\', argv)");
 	}
 

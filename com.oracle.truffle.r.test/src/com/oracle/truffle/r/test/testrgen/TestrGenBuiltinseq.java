@@ -88,9 +88,8 @@ public class TestrGenBuiltinseq extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testseq16() {
-        assertEval("argv <- list(list(list(c(\'\', \'\', \'\\036\', \'\', \'New\', \'print()\', \'(S3)\', \'method\', \'for\', \'class\', \'\\\'function\\\',\', \'\', \'\', \'\', \'\', \'\', \'\', \'\', \'also\', \'used\', \'for\', \'auto-printing.\', \'\', \'Further,\', \'.Primitive\', \'\', \'\', \'\', \'\', \'\', \'\', \'\', \'functions\', \'now\', \'print\', \'and\', \'auto-print\', \'identically.\', \'\', \'The\', \'new\', \'method\', \'\', \'\', \'\', \'\', \'\', \'\', \'\', \'is\', \'based\', \'on\', \'code\', \'suggestions\', \'by\', \'Romain\', \'François.\'))));seq_along(argv[[1]]);");
+        assertEval(Ignored.Unknown, "argv <- list(list(list(c(\'\', \'\', \'\\036\', \'\', \'New\', \'print()\', \'(S3)\', \'method\', \'for\', \'class\', \'\\\'function\\\',\', \'\', \'\', \'\', \'\', \'\', \'\', \'\', \'also\', \'used\', \'for\', \'auto-printing.\', \'\', \'Further,\', \'.Primitive\', \'\', \'\', \'\', \'\', \'\', \'\', \'\', \'functions\', \'now\', \'print\', \'and\', \'auto-print\', \'identically.\', \'\', \'The\', \'new\', \'method\', \'\', \'\', \'\', \'\', \'\', \'\', \'\', \'is\', \'based\', \'on\', \'code\', \'suggestions\', \'by\', \'Romain\', \'François.\'))));seq_along(argv[[1]]);");
     }
 
     @Test
@@ -144,9 +143,8 @@ public class TestrGenBuiltinseq extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testseq27() {
-        assertEval("argv <- list(c(2L, 2L));" + "do.call(\'seq_len\', argv)");
+        assertEval(Ignored.Unknown, "argv <- list(c(2L, 2L));" + "do.call(\'seq_len\', argv)");
     }
 
     @Test

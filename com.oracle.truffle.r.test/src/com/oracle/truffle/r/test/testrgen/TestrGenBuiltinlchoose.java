@@ -18,21 +18,18 @@ import com.oracle.truffle.r.test.*;
 public class TestrGenBuiltinlchoose extends TestBase {
 
     @Test
-    @Ignore
     public void testlchoose1() {
-        assertEval("argv <- list(FALSE, FALSE); .Internal(lchoose(argv[[1]], argv[[2]]))");
+        assertEval(Ignored.Unknown, "argv <- list(FALSE, FALSE); .Internal(lchoose(argv[[1]], argv[[2]]))");
     }
 
     @Test
-    @Ignore
     public void testlchoose2() {
-        assertEval("argv <- list(50L, 0:48); .Internal(lchoose(argv[[1]], argv[[2]]))");
+        assertEval(Ignored.Unknown, "argv <- list(50L, 0:48); .Internal(lchoose(argv[[1]], argv[[2]]))");
     }
 
     @Test
-    @Ignore
     public void testlchoose3() {
-        assertEval("argv <- list(0.5, 1:9); .Internal(lchoose(argv[[1]], argv[[2]]))");
+        assertEval(Ignored.Unknown, "argv <- list(0.5, 1:9); .Internal(lchoose(argv[[1]], argv[[2]]))");
     }
 }
 

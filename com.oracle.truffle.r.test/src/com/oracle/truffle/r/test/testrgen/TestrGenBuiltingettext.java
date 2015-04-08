@@ -28,9 +28,8 @@ public class TestrGenBuiltingettext extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testgettext3() {
-        assertEval("argv <- list(NULL, \'The following object is masked from ‘package:base’:\\n\\n    det\\n\'); .Internal(gettext(argv[[1]], argv[[2]]))");
+        assertEval(Ignored.Unknown, "argv <- list(NULL, \'The following object is masked from ‘package:base’:\\n\\n    det\\n\'); .Internal(gettext(argv[[1]], argv[[2]]))");
     }
 
     @Test
@@ -44,9 +43,8 @@ public class TestrGenBuiltingettext extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testgettext6() {
-        assertEval("argv <- list(NULL, NULL); .Internal(gettext(argv[[1]], argv[[2]]))");
+        assertEval(Ignored.Unknown, "argv <- list(NULL, NULL); .Internal(gettext(argv[[1]], argv[[2]]))");
     }
 }
 

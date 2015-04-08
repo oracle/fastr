@@ -48,9 +48,8 @@ public class TestrGenBuiltinisunsorted extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testisunsorted7() {
-        assertEval("argv <- list(structure(list(c0 = structure(integer(0), .Label = character(0), class = \'factor\')), .Names = \'c0\', row.names = character(0), class = structure(\'integer(0)\', .Names = \'c0\')), FALSE); .Internal(is.unsorted(argv[[1]], argv[[2]]))");
+        assertEval(Ignored.Unknown, "argv <- list(structure(list(c0 = structure(integer(0), .Label = character(0), class = \'factor\')), .Names = \'c0\', row.names = character(0), class = structure(\'integer(0)\', .Names = \'c0\')), FALSE); .Internal(is.unsorted(argv[[1]], argv[[2]]))");
     }
 
     @Test
@@ -81,9 +80,8 @@ public class TestrGenBuiltinisunsorted extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testisunsorted14() {
-        assertEval("argv <- structure(list(x = structure(list(x = 3:4, y = 1:2),     .Names = c(\'x\', \'y\'), row.names = c(NA, -2L), class = \'data.frame\')),     .Names = \'x\');"
+        assertEval(Ignored.Unknown, "argv <- structure(list(x = structure(list(x = 3:4, y = 1:2),     .Names = c(\'x\', \'y\'), row.names = c(NA, -2L), class = \'data.frame\')),     .Names = \'x\');"
                         + "do.call(\'is.unsorted\', argv)");
     }
 

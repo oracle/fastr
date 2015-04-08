@@ -18,9 +18,8 @@ import com.oracle.truffle.r.test.*;
                                                                  public class TestrGenBuiltinmeandefault extends TestBase {
 
 	@Test
-    @Ignore
 	public void testmeandefault1() {
-		assertEval("argv <- structure(list(x = structure(c(2L, 1L, 2L, 2L), .Label = c(\'FALSE\',     \'TRUE\'), class = \'factor\')), .Names = \'x\');"+
+		assertEval(Ignored.Unknown, "argv <- structure(list(x = structure(c(2L, 1L, 2L, 2L), .Label = c(\'FALSE\',     \'TRUE\'), class = \'factor\')), .Names = \'x\');"+
 			"do.call(\'mean.default\', argv)");
 	}
 

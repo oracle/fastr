@@ -23,9 +23,8 @@ public class TestrGenBuiltinascharacter extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testascharacter2() {
-        assertEval("argv <- list(structure(c(12784, 12874, 12965, 13057, 13149, 13239, 13330, 13422, 13514, 13604, 13695, 13787, 13879, 13970, 14061, 14153, 14245), class = \'Date\'));as.character(argv[[1]]);");
+        assertEval(Ignored.Unknown, "argv <- list(structure(c(12784, 12874, 12965, 13057, 13149, 13239, 13330, 13422, 13514, 13604, 13695, 13787, 13879, 13970, 14061, 14153, 14245), class = \'Date\'));as.character(argv[[1]]);");
     }
 
     @Test
@@ -34,15 +33,13 @@ public class TestrGenBuiltinascharacter extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testascharacter4() {
-        assertEval("argv <- list(c(\'### Encoding: UTF-8\', \'\', \'### Name: text\', \'### Title: Add Text to a Plot\', \'### Aliases: text text.default\', \'### Keywords: aplot\', \'\', \'### ** Examples\', \'\', \'plot(-1:1, -1:1, type = \\\'n\\\', xlab = \\\'Re\\\', ylab = \\\'Im\\\')\', \'K <- 16; text(exp(1i * 2 * pi * (1:K) / K), col = 2)\', \'\', \'## The following two examples use latin1 characters: these may not\', \'## appear correctly (or be omitted entirely).\', \'plot(1:10, 1:10, main = \\\'text(...) examples\\\\n~~~~~~~~~~~~~~\\\',\', \'     sub = \\\'R is GNU ©, but not ® ...\\\')\', \'mtext(\\\'«Latin-1 accented chars»: éè øØ å<Å æ<Æ\\\', side = 3)\', \'points(c(6,2), c(2,1), pch = 3, cex = 4, col = \\\'red\\\')\', \'text(6, 2, \\\'the text is CENTERED around (x,y) = (6,2) by default\\\',\', \'     cex = .8)\', \'text(2, 1, \\\'or Left/Bottom - JUSTIFIED at (2,1) by 'adj = c(0,0)'\\\',\', \'     adj = c(0,0))\', \'text(4, 9, expression(hat(beta) == (X^t * X)^{-1} * X^t * y))\', \'text(4, 8.4, \\\'expression(hat(beta) == (X^t * X)^{-1} * X^t * y)\\\',\', \'     cex = .75)\', \'text(4, 7, expression(bar(x) == sum(frac(x[i], n), i==1, n)))\', \'\', \'## Two more latin1 examples\', \'text(5, 10.2,\', \'     \\\'Le français, c'est façile: Règles, Liberté, Egalité, Fraternité...\\\')\', \'text(5, 9.8,\', \'     \\\'Jetz no chli züritüütsch: (noch ein bißchen Zürcher deutsch)\\\')\', \'\', \'\', \'\'));as.character(argv[[1]]);");
+        assertEval(Ignored.Unknown, "argv <- list(c(\'### Encoding: UTF-8\', \'\', \'### Name: text\', \'### Title: Add Text to a Plot\', \'### Aliases: text text.default\', \'### Keywords: aplot\', \'\', \'### ** Examples\', \'\', \'plot(-1:1, -1:1, type = \\\'n\\\', xlab = \\\'Re\\\', ylab = \\\'Im\\\')\', \'K <- 16; text(exp(1i * 2 * pi * (1:K) / K), col = 2)\', \'\', \'## The following two examples use latin1 characters: these may not\', \'## appear correctly (or be omitted entirely).\', \'plot(1:10, 1:10, main = \\\'text(...) examples\\\\n~~~~~~~~~~~~~~\\\',\', \'     sub = \\\'R is GNU ©, but not ® ...\\\')\', \'mtext(\\\'«Latin-1 accented chars»: éè øØ å<Å æ<Æ\\\', side = 3)\', \'points(c(6,2), c(2,1), pch = 3, cex = 4, col = \\\'red\\\')\', \'text(6, 2, \\\'the text is CENTERED around (x,y) = (6,2) by default\\\',\', \'     cex = .8)\', \'text(2, 1, \\\'or Left/Bottom - JUSTIFIED at (2,1) by 'adj = c(0,0)'\\\',\', \'     adj = c(0,0))\', \'text(4, 9, expression(hat(beta) == (X^t * X)^{-1} * X^t * y))\', \'text(4, 8.4, \\\'expression(hat(beta) == (X^t * X)^{-1} * X^t * y)\\\',\', \'     cex = .75)\', \'text(4, 7, expression(bar(x) == sum(frac(x[i], n), i==1, n)))\', \'\', \'## Two more latin1 examples\', \'text(5, 10.2,\', \'     \\\'Le français, c'est façile: Règles, Liberté, Egalité, Fraternité...\\\')\', \'text(5, 9.8,\', \'     \\\'Jetz no chli züritüütsch: (noch ein bißchen Zürcher deutsch)\\\')\', \'\', \'\', \'\'));as.character(argv[[1]]);");
     }
 
     @Test
-    @Ignore
     public void testascharacter5() {
-        assertEval("argv <- list(structure(1395082040.29392, class = c(\'POSIXct\', \'POSIXt\')));as.character(argv[[1]]);");
+        assertEval(Ignored.Unknown, "argv <- list(structure(1395082040.29392, class = c(\'POSIXct\', \'POSIXt\')));as.character(argv[[1]]);");
     }
 
     @Test
@@ -86,9 +83,8 @@ public class TestrGenBuiltinascharacter extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testascharacter14() {
-        assertEval("argv <- list(structure(\'Estimates a probability density function,  \\n\', Rd_tag = \'TEXT\'));as.character(argv[[1]]);");
+        assertEval(Ignored.Unknown, "argv <- list(structure(\'Estimates a probability density function,  \\n\', Rd_tag = \'TEXT\'));as.character(argv[[1]]);");
     }
 
     @Test
@@ -97,33 +93,28 @@ public class TestrGenBuiltinascharacter extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testascharacter16() {
-        assertEval("argv <- list(structure(-841, class = \'Date\'));as.character(argv[[1]]);");
+        assertEval(Ignored.Unknown, "argv <- list(structure(-841, class = \'Date\'));as.character(argv[[1]]);");
     }
 
     @Test
-    @Ignore
     public void testascharacter17() {
-        assertEval("argv <- list(structure(list(list(structure(\'x\', Rd_tag = \'TEXT\')), list(structure(\'an R object representing a hierarchical clustering.\\n\', Rd_tag = \'TEXT\'), structure(\'    For the default method, an object of class \', Rd_tag = \'TEXT\'), structure(list(structure(\'\\\'\', Rd_tag = \'RCODE\'), structure(list(structure(\'hclust\', Rd_tag = \'TEXT\')), Rd_tag = \'\\\\link\'), structure(\'\\\'\', Rd_tag = \'RCODE\')), Rd_tag = \'\\\\code\'), structure(\' or\\n\', Rd_tag = \'TEXT\'), structure(\'    with a method for \', Rd_tag = \'TEXT\'), structure(list(    structure(list(structure(\'as.hclust\', Rd_tag = \'TEXT\')), Rd_tag = \'\\\\link\'), structure(\'()\', Rd_tag = \'RCODE\')), Rd_tag = \'\\\\code\'), structure(\' such as\\n\', Rd_tag = \'TEXT\'), structure(\'    \', Rd_tag = \'TEXT\'), structure(list(structure(\'\\\'\', Rd_tag = \'RCODE\'), structure(list(structure(\'agnes\', Rd_tag = \'TEXT\')), Rd_tag = \'\\\\link\', Rd_option = structure(\'cluster\', Rd_tag = \'TEXT\')), structure(\'\\\'\', Rd_tag = \'RCODE\')), Rd_tag = \'\\\\code\'), structure(\' in package \', Rd_tag = \'TEXT\'), structure(c(\'\\\\href{http://CRAN.R-project.org/package=#1}{\\\\pkg{#1}}\', \'cluster\'), Rd_tag = \'USERMACRO\'), structure(list(list(structure(\'http://CRAN.R-project.org/package=cluster\', Rd_tag = \'VERB\')), list(structure(list(structure(\'cluster\', Rd_tag = \'TEXT\')), Rd_tag = \'\\\\pkg\'))), Rd_tag = \'\\\\href\'), structure(\'.\', Rd_tag = \'TEXT\'))), Rd_tag = \'\\\\item\'));as.character(argv[[1]]);");
+        assertEval(Ignored.Unknown, "argv <- list(structure(list(list(structure(\'x\', Rd_tag = \'TEXT\')), list(structure(\'an R object representing a hierarchical clustering.\\n\', Rd_tag = \'TEXT\'), structure(\'    For the default method, an object of class \', Rd_tag = \'TEXT\'), structure(list(structure(\'\\\'\', Rd_tag = \'RCODE\'), structure(list(structure(\'hclust\', Rd_tag = \'TEXT\')), Rd_tag = \'\\\\link\'), structure(\'\\\'\', Rd_tag = \'RCODE\')), Rd_tag = \'\\\\code\'), structure(\' or\\n\', Rd_tag = \'TEXT\'), structure(\'    with a method for \', Rd_tag = \'TEXT\'), structure(list(    structure(list(structure(\'as.hclust\', Rd_tag = \'TEXT\')), Rd_tag = \'\\\\link\'), structure(\'()\', Rd_tag = \'RCODE\')), Rd_tag = \'\\\\code\'), structure(\' such as\\n\', Rd_tag = \'TEXT\'), structure(\'    \', Rd_tag = \'TEXT\'), structure(list(structure(\'\\\'\', Rd_tag = \'RCODE\'), structure(list(structure(\'agnes\', Rd_tag = \'TEXT\')), Rd_tag = \'\\\\link\', Rd_option = structure(\'cluster\', Rd_tag = \'TEXT\')), structure(\'\\\'\', Rd_tag = \'RCODE\')), Rd_tag = \'\\\\code\'), structure(\' in package \', Rd_tag = \'TEXT\'), structure(c(\'\\\\href{http://CRAN.R-project.org/package=#1}{\\\\pkg{#1}}\', \'cluster\'), Rd_tag = \'USERMACRO\'), structure(list(list(structure(\'http://CRAN.R-project.org/package=cluster\', Rd_tag = \'VERB\')), list(structure(list(structure(\'cluster\', Rd_tag = \'TEXT\')), Rd_tag = \'\\\\pkg\'))), Rd_tag = \'\\\\href\'), structure(\'.\', Rd_tag = \'TEXT\'))), Rd_tag = \'\\\\item\'));as.character(argv[[1]]);");
     }
 
     @Test
-    @Ignore
     public void testascharacter18() {
-        assertEval("argv <- list(list(epsilon = 1e-08, maxit = 25, trace = FALSE));as.character(argv[[1]]);");
+        assertEval(Ignored.Unknown, "argv <- list(list(epsilon = 1e-08, maxit = 25, trace = FALSE));as.character(argv[[1]]);");
     }
 
     @Test
-    @Ignore
     public void testascharacter19() {
-        assertEval("argv <- list(structure(list(structure(list(given = c(\'George\', \'E.\', \'P.\'), family = \'Box\', role = NULL, email = NULL, comment = NULL), .Names = c(\'given\', \'family\', \'role\', \'email\', \'comment\')), structure(list(given = c(\'David\', \'R.\'), family = \'Cox\', role = NULL, email = NULL, comment = NULL), .Names = c(\'given\', \'family\', \'role\', \'email\', \'comment\'))), class = \'person\'));as.character(argv[[1]]);");
+        assertEval(Ignored.Unknown, "argv <- list(structure(list(structure(list(given = c(\'George\', \'E.\', \'P.\'), family = \'Box\', role = NULL, email = NULL, comment = NULL), .Names = c(\'given\', \'family\', \'role\', \'email\', \'comment\')), structure(list(given = c(\'David\', \'R.\'), family = \'Cox\', role = NULL, email = NULL, comment = NULL), .Names = c(\'given\', \'family\', \'role\', \'email\', \'comment\'))), class = \'person\'));as.character(argv[[1]]);");
     }
 
     @Test
-    @Ignore
     public void testascharacter20() {
-        assertEval("argv <- list(structure(list(structure(\'\\n\', Rd_tag = \'TEXT\'), structure(\'    \', Rd_tag = \'TEXT\'), structure(list(list(structure(\'coerce\', Rd_tag = \'TEXT\')), list(structure(list(structure(\'signature(from = \\\'dgCMatrix\\\', to =\\n\', Rd_tag = \'RCODE\'), structure(\'\\t\\\'ngCMatrix\\\')\', Rd_tag = \'RCODE\')), Rd_tag = \'\\\\code\'), structure(\', and many similar ones; typically you should\\n\', Rd_tag = \'TEXT\'), structure(\'      coerce to \', Rd_tag = \'TEXT\'), structure(list(structure(\'\\\'nsparseMatrix\\\'\', Rd_tag = \'RCODE\')), Rd_tag = \'\\\\code\'),     structure(\' (or \', Rd_tag = \'TEXT\'), structure(list(structure(\'\\\'nMatrix\\\'\', Rd_tag = \'RCODE\')), Rd_tag = \'\\\\code\'), structure(\').  Note that\\n\', Rd_tag = \'TEXT\'), structure(\'      coercion to a sparse pattern matrix records all the potential\\n\', Rd_tag = \'TEXT\'), structure(\'      non-zero entries, i.e., explicit (\', Rd_tag = \'TEXT\'), structure(list(structure(\'non-structural\', Rd_tag = \'TEXT\')), Rd_tag = \'\\\\dQuote\'), structure(\') zeroes\\n\', Rd_tag = \'TEXT\'), structure(\'      are coerced to \', Rd_tag = \'TEXT\'),     structure(list(structure(\'TRUE\', Rd_tag = \'RCODE\')), Rd_tag = \'\\\\code\'), structure(\', not \', Rd_tag = \'TEXT\'), structure(list(structure(\'FALSE\', Rd_tag = \'RCODE\')), Rd_tag = \'\\\\code\'), structure(\', see the example.\\n\', Rd_tag = \'TEXT\'), structure(\'    \', Rd_tag = \'TEXT\'))), Rd_tag = \'\\\\item\'), structure(\'\\n\', Rd_tag = \'TEXT\'), structure(\'    \', Rd_tag = \'TEXT\'), structure(list(list(structure(\'t\', Rd_tag = \'TEXT\')), list(structure(list(structure(\'signature(x = \\\'ngCMatrix\\\')\', Rd_tag = \'RCODE\')), Rd_tag = \'\\\\code\'),     structure(\': returns the transpose\\n\', Rd_tag = \'TEXT\'), structure(\'      of \', Rd_tag = \'TEXT\'), structure(list(structure(\'x\', Rd_tag = \'RCODE\')), Rd_tag = \'\\\\code\'))), Rd_tag = \'\\\\item\'), structure(\'\\n\', Rd_tag = \'TEXT\'), structure(\'\\n\', Rd_tag = \'TEXT\'), structure(\'    \', Rd_tag = \'TEXT\'), structure(list(list(structure(\'which\', Rd_tag = \'TEXT\')), list(structure(list(structure(\'signature(x = \\\'lsparseMatrix\\\')\', Rd_tag = \'RCODE\')), Rd_tag = \'\\\\code\'), structure(\', semantically\\n\', Rd_tag = \'TEXT\'),     structure(\'      equivalent to \', Rd_tag = \'TEXT\'), structure(list(structure(\'base\', Rd_tag = \'TEXT\')), Rd_tag = \'\\\\pkg\'), structure(\' function \', Rd_tag = \'TEXT\'), structure(list(structure(list(structure(\'which\', Rd_tag = \'TEXT\')), Rd_tag = \'\\\\link\'), structure(\'(x, arr.ind)\', Rd_tag = \'RCODE\')), Rd_tag = \'\\\\code\'), structure(\';\\n\', Rd_tag = \'TEXT\'), structure(\'      for details, see the \', Rd_tag = \'TEXT\'), structure(list(structure(list(structure(\'lMatrix\', Rd_tag = \'TEXT\')), Rd_tag = \'\\\\linkS4class\')), Rd_tag = \'\\\\code\'),     structure(\' class documentation.\', Rd_tag = \'TEXT\'))), Rd_tag = \'\\\\item\'), structure(\'\\n\', Rd_tag = \'TEXT\'), structure(\'  \', Rd_tag = \'TEXT\')), Rd_tag = \'\\\\describe\'));as.character(argv[[1]]);");
+        assertEval(Ignored.Unknown, "argv <- list(structure(list(structure(\'\\n\', Rd_tag = \'TEXT\'), structure(\'    \', Rd_tag = \'TEXT\'), structure(list(list(structure(\'coerce\', Rd_tag = \'TEXT\')), list(structure(list(structure(\'signature(from = \\\'dgCMatrix\\\', to =\\n\', Rd_tag = \'RCODE\'), structure(\'\\t\\\'ngCMatrix\\\')\', Rd_tag = \'RCODE\')), Rd_tag = \'\\\\code\'), structure(\', and many similar ones; typically you should\\n\', Rd_tag = \'TEXT\'), structure(\'      coerce to \', Rd_tag = \'TEXT\'), structure(list(structure(\'\\\'nsparseMatrix\\\'\', Rd_tag = \'RCODE\')), Rd_tag = \'\\\\code\'),     structure(\' (or \', Rd_tag = \'TEXT\'), structure(list(structure(\'\\\'nMatrix\\\'\', Rd_tag = \'RCODE\')), Rd_tag = \'\\\\code\'), structure(\').  Note that\\n\', Rd_tag = \'TEXT\'), structure(\'      coercion to a sparse pattern matrix records all the potential\\n\', Rd_tag = \'TEXT\'), structure(\'      non-zero entries, i.e., explicit (\', Rd_tag = \'TEXT\'), structure(list(structure(\'non-structural\', Rd_tag = \'TEXT\')), Rd_tag = \'\\\\dQuote\'), structure(\') zeroes\\n\', Rd_tag = \'TEXT\'), structure(\'      are coerced to \', Rd_tag = \'TEXT\'),     structure(list(structure(\'TRUE\', Rd_tag = \'RCODE\')), Rd_tag = \'\\\\code\'), structure(\', not \', Rd_tag = \'TEXT\'), structure(list(structure(\'FALSE\', Rd_tag = \'RCODE\')), Rd_tag = \'\\\\code\'), structure(\', see the example.\\n\', Rd_tag = \'TEXT\'), structure(\'    \', Rd_tag = \'TEXT\'))), Rd_tag = \'\\\\item\'), structure(\'\\n\', Rd_tag = \'TEXT\'), structure(\'    \', Rd_tag = \'TEXT\'), structure(list(list(structure(\'t\', Rd_tag = \'TEXT\')), list(structure(list(structure(\'signature(x = \\\'ngCMatrix\\\')\', Rd_tag = \'RCODE\')), Rd_tag = \'\\\\code\'),     structure(\': returns the transpose\\n\', Rd_tag = \'TEXT\'), structure(\'      of \', Rd_tag = \'TEXT\'), structure(list(structure(\'x\', Rd_tag = \'RCODE\')), Rd_tag = \'\\\\code\'))), Rd_tag = \'\\\\item\'), structure(\'\\n\', Rd_tag = \'TEXT\'), structure(\'\\n\', Rd_tag = \'TEXT\'), structure(\'    \', Rd_tag = \'TEXT\'), structure(list(list(structure(\'which\', Rd_tag = \'TEXT\')), list(structure(list(structure(\'signature(x = \\\'lsparseMatrix\\\')\', Rd_tag = \'RCODE\')), Rd_tag = \'\\\\code\'), structure(\', semantically\\n\', Rd_tag = \'TEXT\'),     structure(\'      equivalent to \', Rd_tag = \'TEXT\'), structure(list(structure(\'base\', Rd_tag = \'TEXT\')), Rd_tag = \'\\\\pkg\'), structure(\' function \', Rd_tag = \'TEXT\'), structure(list(structure(list(structure(\'which\', Rd_tag = \'TEXT\')), Rd_tag = \'\\\\link\'), structure(\'(x, arr.ind)\', Rd_tag = \'RCODE\')), Rd_tag = \'\\\\code\'), structure(\';\\n\', Rd_tag = \'TEXT\'), structure(\'      for details, see the \', Rd_tag = \'TEXT\'), structure(list(structure(list(structure(\'lMatrix\', Rd_tag = \'TEXT\')), Rd_tag = \'\\\\linkS4class\')), Rd_tag = \'\\\\code\'),     structure(\' class documentation.\', Rd_tag = \'TEXT\'))), Rd_tag = \'\\\\item\'), structure(\'\\n\', Rd_tag = \'TEXT\'), structure(\'  \', Rd_tag = \'TEXT\')), Rd_tag = \'\\\\describe\'));as.character(argv[[1]]);");
     }
 
     @Test
@@ -132,9 +123,8 @@ public class TestrGenBuiltinascharacter extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testascharacter22() {
-        assertEval("argv <- list(structure(list(structure(\'\\n\', Rd_tag = \'TEXT\'), structure(\'    \', Rd_tag = \'TEXT\'), structure(list(list(structure(list(structure(\'languageEl\', Rd_tag = \'RCODE\')), Rd_tag = \'\\\\code\'), structure(\':\', Rd_tag = \'TEXT\')), list(structure(\'\\n\', Rd_tag = \'TEXT\'), structure(\'      extract an element of a language object, consistently for\\n\', Rd_tag = \'TEXT\'), structure(\'      different kinds of objects.\\n\', Rd_tag = \'TEXT\'), structure(\'\\n\', Rd_tag = \'TEXT\'), structure(\'      The 1st., etc. elements of a function are the corresponding formal\\n\', Rd_tag = \'TEXT\'),     structure(\'      arguments, with the default expression if any as value.\\n\', Rd_tag = \'TEXT\'), structure(\'\\n\', Rd_tag = \'TEXT\'), structure(\'      The first element of a call is the name or the function object\\n\', Rd_tag = \'TEXT\'), structure(\'      being called.\\n\', Rd_tag = \'TEXT\'), structure(\'\\n\', Rd_tag = \'TEXT\'), structure(\'      The 2nd, 3rd, etc. elements are the 1st, 2nd, etc. arguments\\n\', Rd_tag = \'TEXT\'), structure(\'      expressions.  Note that the form of the extracted name is\\n\', Rd_tag = \'TEXT\'),     structure(\'      different for R and S-Plus.  When the name (the first element) of\\n\', Rd_tag = \'TEXT\'), structure(\'      a call is replaced, the languageEl replacement function coerces a\\n\', Rd_tag = \'TEXT\'), structure(\'      character string to the internal form for each system.\\n\', Rd_tag = \'TEXT\'), structure(\'\\n\', Rd_tag = \'TEXT\'), structure(\'      The 1st, 2nd, 3rd elements of an \', Rd_tag = \'TEXT\'), structure(list(structure(\'if\', Rd_tag = \'RCODE\')), Rd_tag = \'\\\\code\'), structure(\' expression are the\\n\', Rd_tag = \'TEXT\'),     structure(\'      test, first, and second branch.\\n\', Rd_tag = \'TEXT\'), structure(\'\\n\', Rd_tag = \'TEXT\'), structure(\'      The 1st element of a \', Rd_tag = \'TEXT\'), structure(list(structure(\'for\', Rd_tag = \'RCODE\')), Rd_tag = \'\\\\code\'), structure(\' object is the name (symbol) being\\n\', Rd_tag = \'TEXT\'), structure(\'      used in the loop, the second is the expression for the range of\\n\', Rd_tag = \'TEXT\'), structure(\'      the loop, the third is the body of the loop.\\n\', Rd_tag = \'TEXT\'), structure(\'\\n\', Rd_tag = \'TEXT\'),     structure(\'      The first element of a \', Rd_tag = \'TEXT\'), structure(list(structure(\'while\', Rd_tag = \'RCODE\')), Rd_tag = \'\\\\code\'), structure(\' object is the loop test, and\\n\', Rd_tag = \'TEXT\'), structure(\'      the second the body of the loop.\\n\', Rd_tag = \'TEXT\'), structure(\'    \', Rd_tag = \'TEXT\'))), Rd_tag = \'\\\\item\'), structure(\'\\n\', Rd_tag = \'TEXT\'), structure(\'\\n\', Rd_tag = \'TEXT\'), structure(\'    \', Rd_tag = \'TEXT\'), structure(list(list(structure(list(structure(\'isGrammarSymbol\', Rd_tag = \'RCODE\')), Rd_tag = \'\\\\code\'),     structure(\':\', Rd_tag = \'TEXT\')), list(structure(\'\\n\', Rd_tag = \'TEXT\'), structure(\'      Checks whether the symbol is part of the grammar.\\n\', Rd_tag = \'TEXT\'), structure(\'      Don't use this function directly.\\n\', Rd_tag = \'TEXT\'), structure(\'    \', Rd_tag = \'TEXT\'))), Rd_tag = \'\\\\item\'), structure(\'\\n\', Rd_tag = \'TEXT\'), structure(\'  \', Rd_tag = \'TEXT\')), Rd_tag = \'\\\\describe\'));as.character(argv[[1]]);");
+        assertEval(Ignored.Unknown, "argv <- list(structure(list(structure(\'\\n\', Rd_tag = \'TEXT\'), structure(\'    \', Rd_tag = \'TEXT\'), structure(list(list(structure(list(structure(\'languageEl\', Rd_tag = \'RCODE\')), Rd_tag = \'\\\\code\'), structure(\':\', Rd_tag = \'TEXT\')), list(structure(\'\\n\', Rd_tag = \'TEXT\'), structure(\'      extract an element of a language object, consistently for\\n\', Rd_tag = \'TEXT\'), structure(\'      different kinds of objects.\\n\', Rd_tag = \'TEXT\'), structure(\'\\n\', Rd_tag = \'TEXT\'), structure(\'      The 1st., etc. elements of a function are the corresponding formal\\n\', Rd_tag = \'TEXT\'),     structure(\'      arguments, with the default expression if any as value.\\n\', Rd_tag = \'TEXT\'), structure(\'\\n\', Rd_tag = \'TEXT\'), structure(\'      The first element of a call is the name or the function object\\n\', Rd_tag = \'TEXT\'), structure(\'      being called.\\n\', Rd_tag = \'TEXT\'), structure(\'\\n\', Rd_tag = \'TEXT\'), structure(\'      The 2nd, 3rd, etc. elements are the 1st, 2nd, etc. arguments\\n\', Rd_tag = \'TEXT\'), structure(\'      expressions.  Note that the form of the extracted name is\\n\', Rd_tag = \'TEXT\'),     structure(\'      different for R and S-Plus.  When the name (the first element) of\\n\', Rd_tag = \'TEXT\'), structure(\'      a call is replaced, the languageEl replacement function coerces a\\n\', Rd_tag = \'TEXT\'), structure(\'      character string to the internal form for each system.\\n\', Rd_tag = \'TEXT\'), structure(\'\\n\', Rd_tag = \'TEXT\'), structure(\'      The 1st, 2nd, 3rd elements of an \', Rd_tag = \'TEXT\'), structure(list(structure(\'if\', Rd_tag = \'RCODE\')), Rd_tag = \'\\\\code\'), structure(\' expression are the\\n\', Rd_tag = \'TEXT\'),     structure(\'      test, first, and second branch.\\n\', Rd_tag = \'TEXT\'), structure(\'\\n\', Rd_tag = \'TEXT\'), structure(\'      The 1st element of a \', Rd_tag = \'TEXT\'), structure(list(structure(\'for\', Rd_tag = \'RCODE\')), Rd_tag = \'\\\\code\'), structure(\' object is the name (symbol) being\\n\', Rd_tag = \'TEXT\'), structure(\'      used in the loop, the second is the expression for the range of\\n\', Rd_tag = \'TEXT\'), structure(\'      the loop, the third is the body of the loop.\\n\', Rd_tag = \'TEXT\'), structure(\'\\n\', Rd_tag = \'TEXT\'),     structure(\'      The first element of a \', Rd_tag = \'TEXT\'), structure(list(structure(\'while\', Rd_tag = \'RCODE\')), Rd_tag = \'\\\\code\'), structure(\' object is the loop test, and\\n\', Rd_tag = \'TEXT\'), structure(\'      the second the body of the loop.\\n\', Rd_tag = \'TEXT\'), structure(\'    \', Rd_tag = \'TEXT\'))), Rd_tag = \'\\\\item\'), structure(\'\\n\', Rd_tag = \'TEXT\'), structure(\'\\n\', Rd_tag = \'TEXT\'), structure(\'    \', Rd_tag = \'TEXT\'), structure(list(list(structure(list(structure(\'isGrammarSymbol\', Rd_tag = \'RCODE\')), Rd_tag = \'\\\\code\'),     structure(\':\', Rd_tag = \'TEXT\')), list(structure(\'\\n\', Rd_tag = \'TEXT\'), structure(\'      Checks whether the symbol is part of the grammar.\\n\', Rd_tag = \'TEXT\'), structure(\'      Don't use this function directly.\\n\', Rd_tag = \'TEXT\'), structure(\'    \', Rd_tag = \'TEXT\'))), Rd_tag = \'\\\\item\'), structure(\'\\n\', Rd_tag = \'TEXT\'), structure(\'  \', Rd_tag = \'TEXT\')), Rd_tag = \'\\\\describe\'));as.character(argv[[1]]);");
     }
 
     @Test
@@ -163,9 +153,8 @@ public class TestrGenBuiltinascharacter extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testascharacter28() {
-        assertEval("argv <- list(structure(c(11323, 11330, 11337, 11344, 11351, 11358, 11365, 11372, 11379, 11386), class = \'Date\'));as.character(argv[[1]]);");
+        assertEval(Ignored.Unknown, "argv <- list(structure(c(11323, 11330, 11337, 11344, 11351, 11358, 11365, 11372, 11379, 11386), class = \'Date\'));as.character(argv[[1]]);");
     }
 
     @Test
@@ -179,15 +168,13 @@ public class TestrGenBuiltinascharacter extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testascharacter31() {
-        assertEval("argv <- list(structure(c(1338523200, 1338609600, 1338696000, 1338782400, 1338868800, 1338955200, 1339041600), class = c(\'POSIXct\', \'POSIXt\'), tzone = \'\'));as.character(argv[[1]]);");
+        assertEval(Ignored.Unknown, "argv <- list(structure(c(1338523200, 1338609600, 1338696000, 1338782400, 1338868800, 1338955200, 1339041600), class = c(\'POSIXct\', \'POSIXt\'), tzone = \'\'));as.character(argv[[1]]);");
     }
 
     @Test
-    @Ignore
     public void testascharacter32() {
-        assertEval("argv <- list(structure(1:4, class = \'roman\'));as.character(argv[[1]]);");
+        assertEval(Ignored.Unknown, "argv <- list(structure(1:4, class = \'roman\'));as.character(argv[[1]]);");
     }
 
     @Test
@@ -196,9 +183,8 @@ public class TestrGenBuiltinascharacter extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testascharacter34() {
-        assertEval("argv <- list(structure(c(1104537600, 1107216000, 1109635200, 1112313600, 1114905600, 1117584000, 1120176000, 1122854400, 1125532800, 1128124800, 1130803200, 1133395200, 1136073600, 1138752000, 1141171200, 1143849600, 1146441600, 1149120000, 1151712000, 1154390400, 1157068800, 1159660800, 1162339200, 1164931200, 1167609600, 1170288000, 1172707200, 1175385600, 1177977600, 1180656000, 1183248000, 1185926400, 1188604800, 1191196800, 1193875200, 1196467200, 1199145600, 1201824000, 1204329600, 1207008000, 1209600000, 1212278400, 1214870400, 1217548800, 1220227200, 1222819200, 1225497600, 1228089600, 1230768000), class = c(\'POSIXct\', \'POSIXt\'), tzone = \'UTC\'));as.character(argv[[1]]);");
+        assertEval(Ignored.Unknown, "argv <- list(structure(c(1104537600, 1107216000, 1109635200, 1112313600, 1114905600, 1117584000, 1120176000, 1122854400, 1125532800, 1128124800, 1130803200, 1133395200, 1136073600, 1138752000, 1141171200, 1143849600, 1146441600, 1149120000, 1151712000, 1154390400, 1157068800, 1159660800, 1162339200, 1164931200, 1167609600, 1170288000, 1172707200, 1175385600, 1177977600, 1180656000, 1183248000, 1185926400, 1188604800, 1191196800, 1193875200, 1196467200, 1199145600, 1201824000, 1204329600, 1207008000, 1209600000, 1212278400, 1214870400, 1217548800, 1220227200, 1222819200, 1225497600, 1228089600, 1230768000), class = c(\'POSIXct\', \'POSIXt\'), tzone = \'UTC\'));as.character(argv[[1]]);");
     }
 
     @Test
@@ -207,9 +193,8 @@ public class TestrGenBuiltinascharacter extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testascharacter36() {
-        assertEval("argv <- list(list(exit.code = 0L, send = NULL));as.character(argv[[1]]);");
+        assertEval(Ignored.Unknown, "argv <- list(list(exit.code = 0L, send = NULL));as.character(argv[[1]]);");
     }
 
     @Test
@@ -218,15 +203,13 @@ public class TestrGenBuiltinascharacter extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testascharacter38() {
-        assertEval("argv <- list(structure(c(978307200, 978912000, 979516800, 980121600, 980726400, 981331200, 981936000, 982540800, 983145600, 983750400), class = c(\'POSIXct\', \'POSIXt\'), tzone = \'GMT\'));as.character(argv[[1]]);");
+        assertEval(Ignored.Unknown, "argv <- list(structure(c(978307200, 978912000, 979516800, 980121600, 980726400, 981331200, 981936000, 982540800, 983145600, 983750400), class = c(\'POSIXct\', \'POSIXt\'), tzone = \'GMT\'));as.character(argv[[1]]);");
     }
 
     @Test
-    @Ignore
     public void testascharacter39() {
-        assertEval("argv <- list(structure(list(c0 = structure(integer(0), .Label = character(0), class = \'factor\')), .Names = \'c0\', row.names = character(0), class = \'data.frame\'), structure(list(c0 = structure(integer(0), .Label = character(0), class = \'factor\')), .Names = \'c0\', row.names = character(0), class = \'data.frame\'));as.character(argv[[1]],argv[[2]]);");
+        assertEval(Ignored.Unknown, "argv <- list(structure(list(c0 = structure(integer(0), .Label = character(0), class = \'factor\')), .Names = \'c0\', row.names = character(0), class = \'data.frame\'), structure(list(c0 = structure(integer(0), .Label = character(0), class = \'factor\')), .Names = \'c0\', row.names = character(0), class = \'data.frame\'));as.character(argv[[1]],argv[[2]]);");
     }
 
     @Test
@@ -240,9 +223,8 @@ public class TestrGenBuiltinascharacter extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testascharacter42() {
-        assertEval("argv <- list(structure(c(12784, 13879), class = \'Date\'));as.character(argv[[1]]);");
+        assertEval(Ignored.Unknown, "argv <- list(structure(c(12784, 13879), class = \'Date\'));as.character(argv[[1]]);");
     }
 
     @Test

@@ -23,9 +23,8 @@ public class TestrGenBuiltinisnaassign_default extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testisnaassign_default2() {
-        assertEval("argv <- structure(list(x = structure(c(\'A\', \'3\', \'C\'), class = \'AsIs\'),     value = 2), .Names = c(\'x\', \'value\'));" + "do.call(\'is.na<-.default\', argv)");
+        assertEval(Ignored.Unknown, "argv <- structure(list(x = structure(c(\'A\', \'3\', \'C\'), class = \'AsIs\'),     value = 2), .Names = c(\'x\', \'value\'));" + "do.call(\'is.na<-.default\', argv)");
     }
 
 }

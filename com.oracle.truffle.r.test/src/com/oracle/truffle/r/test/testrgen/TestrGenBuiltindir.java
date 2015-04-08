@@ -18,9 +18,8 @@ import com.oracle.truffle.r.test.*;
                                                                  public class TestrGenBuiltindir extends TestBase {
 
 	@Test
-    @Ignore
 	public void testdir1() {
-		assertEval("argv <- structure(list(path = \'.\', pattern = \'myTst_.*tar\\.gz$\'),     .Names = c(\'path\', \'pattern\'));"+
+		assertEval(Ignored.Unknown, "argv <- structure(list(path = \'.\', pattern = \'myTst_.*tar\\.gz$\'),     .Names = c(\'path\', \'pattern\'));"+
 			"do.call(\'dir\', argv)");
 	}
 

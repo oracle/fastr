@@ -18,9 +18,8 @@ import com.oracle.truffle.r.test.*;
                                                                  public class TestrGenBuiltinasDatedefault extends TestBase {
 
 	@Test
-    @Ignore
 	public void testasDatedefault1() {
-		assertEval("argv <- structure(list(x = logical(0)), .Names = \'x\');"+
+		assertEval(Ignored.Unknown, "argv <- structure(list(x = logical(0)), .Names = \'x\');"+
 			"do.call(\'as.Date.default\', argv)");
 	}
 

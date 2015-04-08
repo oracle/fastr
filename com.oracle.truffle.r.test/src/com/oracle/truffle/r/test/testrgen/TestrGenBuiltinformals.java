@@ -23,20 +23,17 @@ public class TestrGenBuiltinformals extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testformals2() {
-        assertEval("argv <- list(logical(0)); .Internal(formals(argv[[1]]))");
+        assertEval(Ignored.Unknown, "argv <- list(logical(0)); .Internal(formals(argv[[1]]))");
     }
 
     @Test
-    @Ignore
     public void testformals3() {
-        assertEval("argv <- list(structure(numeric(0), .Dim = c(0L, 0L))); .Internal(formals(argv[[1]]))");
+        assertEval(Ignored.Unknown, "argv <- list(structure(numeric(0), .Dim = c(0L, 0L))); .Internal(formals(argv[[1]]))");
     }
 
     @Test
-    @Ignore
     public void testformals4() {
-        assertEval("argv <- list(structure(list(c0 = structure(integer(0), .Label = character(0), class = \'factor\')), .Names = \'c0\', row.names = character(0), class = \'data.frame\')); .Internal(formals(argv[[1]]))");
+        assertEval(Ignored.Unknown, "argv <- list(structure(list(c0 = structure(integer(0), .Label = character(0), class = \'factor\')), .Names = \'c0\', row.names = character(0), class = \'data.frame\')); .Internal(formals(argv[[1]]))");
     }
 }

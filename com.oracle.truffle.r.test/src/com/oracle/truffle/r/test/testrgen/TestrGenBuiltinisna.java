@@ -28,9 +28,8 @@ public class TestrGenBuiltinisna extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testisna3() {
-        assertEval("argv <- list(structure(c(17L, 18L, 18L, 18L), .Dim = 4L, .Dimnames = structure(list(N = c(\'0.0cwt\', \'0.2cwt\', \'0.4cwt\', \'0.6cwt\')), .Names = \'N\')));is.na(argv[[1]]);");
+        assertEval(Ignored.Unknown, "argv <- list(structure(c(17L, 18L, 18L, 18L), .Dim = 4L, .Dimnames = structure(list(N = c(\'0.0cwt\', \'0.2cwt\', \'0.4cwt\', \'0.6cwt\')), .Names = \'N\')));is.na(argv[[1]]);");
     }
 
     @Test
@@ -44,15 +43,13 @@ public class TestrGenBuiltinisna extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testisna7() {
-        assertEval("argv <- list(structure(list(sec = 0, min = 0L, hour = 0L, mday = 9L, mon = 9L, year = 103L, wday = 4L, yday = 281L, isdst = 1L), .Names = c(\'sec\', \'min\', \'hour\', \'mday\', \'mon\', \'year\', \'wday\', \'yday\', \'isdst\'), class = c(\'POSIXlt\', \'POSIXt\')));is.na(argv[[1]]);");
+        assertEval(Ignored.Unknown, "argv <- list(structure(list(sec = 0, min = 0L, hour = 0L, mday = 9L, mon = 9L, year = 103L, wday = 4L, yday = 281L, isdst = 1L), .Names = c(\'sec\', \'min\', \'hour\', \'mday\', \'mon\', \'year\', \'wday\', \'yday\', \'isdst\'), class = c(\'POSIXlt\', \'POSIXt\')));is.na(argv[[1]]);");
     }
 
     @Test
-    @Ignore
     public void testisna8() {
-        assertEval("argv <- list(structure(c(23L, 24L, 47L, 48L, 71L, 72L, 95L, 96L, 119L, 120L), .Dim = c(2L, 5L), .Dimnames = list(NULL, c(\'V5\', \'V6\', \'V7\', \'V8\', \'V9\'))));is.na(argv[[1]]);");
+        assertEval(Ignored.Unknown, "argv <- list(structure(c(23L, 24L, 47L, 48L, 71L, 72L, 95L, 96L, 119L, 120L), .Dim = c(2L, 5L), .Dimnames = list(NULL, c(\'V5\', \'V6\', \'V7\', \'V8\', \'V9\'))));is.na(argv[[1]]);");
     }
 
     @Test
@@ -71,9 +68,8 @@ public class TestrGenBuiltinisna extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testisna13() {
-        assertEval("argv <- list(structure(list(VAR1 = c(1, 2, 3, 4, 5), VAR3 = c(1, 1, 1, 1, NA)), .Names = c(\'VAR1\', \'VAR3\'), class = \'data.frame\', row.names = c(NA, -5L)));is.na(argv[[1]]);");
+        assertEval(Ignored.Unknown, "argv <- list(structure(list(VAR1 = c(1, 2, 3, 4, 5), VAR3 = c(1, 1, 1, 1, NA)), .Names = c(\'VAR1\', \'VAR3\'), class = \'data.frame\', row.names = c(NA, -5L)));is.na(argv[[1]]);");
     }
 
     @Test
@@ -107,9 +103,8 @@ public class TestrGenBuiltinisna extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testisna20() {
-        assertEval("argv <- list(structure(list(conc = c(NA, 1.4, NA, NA, NA, NA, NA, NA, 2.2, NA, NA, 0.6)), .Names = \'conc\', row.names = 407:418, class = \'data.frame\'));is.na(argv[[1]]);");
+        assertEval(Ignored.Unknown, "argv <- list(structure(list(conc = c(NA, 1.4, NA, NA, NA, NA, NA, NA, 2.2, NA, NA, 0.6)), .Names = \'conc\', row.names = 407:418, class = \'data.frame\'));is.na(argv[[1]]);");
     }
 
     @Test
@@ -123,27 +118,23 @@ public class TestrGenBuiltinisna extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testisna23() {
-        assertEval("argv <- list(structure(list(sec = 0, min = 0L, hour = 0L, mday = 1L, mon = 0L, year = 105L, wday = 6L, yday = 0L, isdst = 0L), .Names = c(\'sec\', \'min\', \'hour\', \'mday\', \'mon\', \'year\', \'wday\', \'yday\', \'isdst\'), class = c(\'POSIXlt\', \'POSIXt\'), tzone = \'GMT\'));is.na(argv[[1]]);");
+        assertEval(Ignored.Unknown, "argv <- list(structure(list(sec = 0, min = 0L, hour = 0L, mday = 1L, mon = 0L, year = 105L, wday = 6L, yday = 0L, isdst = 0L), .Names = c(\'sec\', \'min\', \'hour\', \'mday\', \'mon\', \'year\', \'wday\', \'yday\', \'isdst\'), class = c(\'POSIXlt\', \'POSIXt\'), tzone = \'GMT\'));is.na(argv[[1]]);");
     }
 
     @Test
-    @Ignore
     public void testisna24() {
-        assertEval("argv <- list(structure(list(c0 = structure(integer(0), .Label = character(0), class = \'factor\')), .Names = \'c0\', row.names = character(0), class = \'data.frame\'));is.na(argv[[1]]);");
+        assertEval(Ignored.Unknown, "argv <- list(structure(list(c0 = structure(integer(0), .Label = character(0), class = \'factor\')), .Names = \'c0\', row.names = character(0), class = \'data.frame\'));is.na(argv[[1]]);");
     }
 
     @Test
-    @Ignore
     public void testisna25() {
-        assertEval("argv <- list(structure(list(sec = 0, min = 0L, hour = 0L, mday = 1L, mon = 0L, year = 60L, wday = 5L, yday = 0L, isdst = 0L), .Names = c(\'sec\', \'min\', \'hour\', \'mday\', \'mon\', \'year\', \'wday\', \'yday\', \'isdst\'), class = c(\'POSIXlt\', \'POSIXt\'), tzone = \'GMT\'));is.na(argv[[1]]);");
+        assertEval(Ignored.Unknown, "argv <- list(structure(list(sec = 0, min = 0L, hour = 0L, mday = 1L, mon = 0L, year = 60L, wday = 5L, yday = 0L, isdst = 0L), .Names = c(\'sec\', \'min\', \'hour\', \'mday\', \'mon\', \'year\', \'wday\', \'yday\', \'isdst\'), class = c(\'POSIXlt\', \'POSIXt\'), tzone = \'GMT\'));is.na(argv[[1]]);");
     }
 
     @Test
-    @Ignore
     public void testisna26() {
-        assertEval("argv <- list(structure(list(conc = c(NA, NA, NA, NA, NA, NA, NA, 1.4, NA, NA, NA, NA, NA, NA, NA, 3)), .Names = \'conc\', row.names = c(NA, 16L), class = \'data.frame\'));is.na(argv[[1]]);");
+        assertEval(Ignored.Unknown, "argv <- list(structure(list(conc = c(NA, NA, NA, NA, NA, NA, NA, 1.4, NA, NA, NA, NA, NA, NA, NA, 3)), .Names = \'conc\', row.names = c(NA, 16L), class = \'data.frame\'));is.na(argv[[1]]);");
     }
 
     @Test
@@ -152,21 +143,18 @@ public class TestrGenBuiltinisna extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testisna28() {
-        assertEval("argv <- list(structure(list(conc = c(NA, 3.6)), .Names = \'conc\', row.names = 419:420, class = \'data.frame\'));is.na(argv[[1]]);");
+        assertEval(Ignored.Unknown, "argv <- list(structure(list(conc = c(NA, 3.6)), .Names = \'conc\', row.names = 419:420, class = \'data.frame\'));is.na(argv[[1]]);");
     }
 
     @Test
-    @Ignore
     public void testisna29() {
-        assertEval("argv <- list(NULL);is.na(argv[[1]]);");
+        assertEval(Ignored.Unknown, "argv <- list(NULL);is.na(argv[[1]]);");
     }
 
     @Test
-    @Ignore
     public void testisna30() {
-        assertEval("argv <- list(structure(list(sec = NA_real_, min = NA_integer_, hour = NA_integer_, mday = NA_integer_, mon = NA_integer_, year = NA_integer_, wday = NA_integer_, yday = NA_integer_, isdst = -1L), .Names = c(\'sec\', \'min\', \'hour\', \'mday\', \'mon\', \'year\', \'wday\', \'yday\', \'isdst\'), class = c(\'POSIXlt\', \'POSIXt\'), tzone = \'GMT\'));is.na(argv[[1]]);");
+        assertEval(Ignored.Unknown, "argv <- list(structure(list(sec = NA_real_, min = NA_integer_, hour = NA_integer_, mday = NA_integer_, mon = NA_integer_, year = NA_integer_, wday = NA_integer_, yday = NA_integer_, isdst = -1L), .Names = c(\'sec\', \'min\', \'hour\', \'mday\', \'mon\', \'year\', \'wday\', \'yday\', \'isdst\'), class = c(\'POSIXlt\', \'POSIXt\'), tzone = \'GMT\'));is.na(argv[[1]]);");
     }
 
     @Test
@@ -175,9 +163,8 @@ public class TestrGenBuiltinisna extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testisna32() {
-        assertEval("argv <- list(structure(list(sec = 0, min = 0L, hour = 0L, mday = 12L, mon = 2L, year = 112L, wday = 1L, yday = 71L, isdst = 0L), .Names = c(\'sec\', \'min\', \'hour\', \'mday\', \'mon\', \'year\', \'wday\', \'yday\', \'isdst\'), class = c(\'POSIXlt\', \'POSIXt\'), tzone = \'GMT\'));is.na(argv[[1]]);");
+        assertEval(Ignored.Unknown, "argv <- list(structure(list(sec = 0, min = 0L, hour = 0L, mday = 12L, mon = 2L, year = 112L, wday = 1L, yday = 71L, isdst = 0L), .Names = c(\'sec\', \'min\', \'hour\', \'mday\', \'mon\', \'year\', \'wday\', \'yday\', \'isdst\'), class = c(\'POSIXlt\', \'POSIXt\'), tzone = \'GMT\'));is.na(argv[[1]]);");
     }
 
     @Test
@@ -186,9 +173,8 @@ public class TestrGenBuiltinisna extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testisna34() {
-        assertEval("argv <- list(structure(c(\'Min.   : 1.00  \', \'1st Qu.: 9.00  \', \'Median :18.00  \', \'Mean   :14.74  \', \'3rd Qu.:20.00  \', \'Max.   :23.00  \', NA, \'Min.   :5.000  \', \'1st Qu.:5.300  \', \'Median :6.100  \', \'Mean   :6.084  \', \'3rd Qu.:6.600  \', \'Max.   :7.700  \', NA, \'117    :  5  \', \'1028   :  4  \', \'113    :  4  \', \'112    :  3  \', \'135    :  3  \', \'(Other):147  \', \'NA's   : 16  \', \'Min.   :  0.50  \', \'1st Qu.: 11.32  \', \'Median : 23.40  \', \'Mean   : 45.60  \', \'3rd Qu.: 47.55  \', \'Max.   :370.00  \', NA, \'Min.   :0.00300  \', \'1st Qu.:0.04425  \', \'Median :0.11300  \', \'Mean   :0.15422  \', \'3rd Qu.:0.21925  \', \'Max.   :0.81000  \', NA), .Dim = c(7L, 5L), .Dimnames = list(c(\'\', \'\', \'\', \'\', \'\', \'\', \'\'), c(\'    event\', \'     mag\', \'   station\', \'     dist\', \'    accel\')), class = \'table\'));is.na(argv[[1]]);");
+        assertEval(Ignored.Unknown, "argv <- list(structure(c(\'Min.   : 1.00  \', \'1st Qu.: 9.00  \', \'Median :18.00  \', \'Mean   :14.74  \', \'3rd Qu.:20.00  \', \'Max.   :23.00  \', NA, \'Min.   :5.000  \', \'1st Qu.:5.300  \', \'Median :6.100  \', \'Mean   :6.084  \', \'3rd Qu.:6.600  \', \'Max.   :7.700  \', NA, \'117    :  5  \', \'1028   :  4  \', \'113    :  4  \', \'112    :  3  \', \'135    :  3  \', \'(Other):147  \', \'NA's   : 16  \', \'Min.   :  0.50  \', \'1st Qu.: 11.32  \', \'Median : 23.40  \', \'Mean   : 45.60  \', \'3rd Qu.: 47.55  \', \'Max.   :370.00  \', NA, \'Min.   :0.00300  \', \'1st Qu.:0.04425  \', \'Median :0.11300  \', \'Mean   :0.15422  \', \'3rd Qu.:0.21925  \', \'Max.   :0.81000  \', NA), .Dim = c(7L, 5L), .Dimnames = list(c(\'\', \'\', \'\', \'\', \'\', \'\', \'\'), c(\'    event\', \'     mag\', \'   station\', \'     dist\', \'    accel\')), class = \'table\'));is.na(argv[[1]]);");
     }
 
     @Test
@@ -202,21 +188,18 @@ public class TestrGenBuiltinisna extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testisna37() {
-        assertEval("argv <- list(structure(list(sec = 40, min = 24L, hour = 11L, mday = 15L, mon = 11L, year = 100L, wday = 5L, yday = 349L, isdst = 0L), .Names = c(\'sec\', \'min\', \'hour\', \'mday\', \'mon\', \'year\', \'wday\', \'yday\', \'isdst\'), class = c(\'POSIXlt\', \'POSIXt\')));is.na(argv[[1]]);");
+        assertEval(Ignored.Unknown, "argv <- list(structure(list(sec = 40, min = 24L, hour = 11L, mday = 15L, mon = 11L, year = 100L, wday = 5L, yday = 349L, isdst = 0L), .Names = c(\'sec\', \'min\', \'hour\', \'mday\', \'mon\', \'year\', \'wday\', \'yday\', \'isdst\'), class = c(\'POSIXlt\', \'POSIXt\')));is.na(argv[[1]]);");
     }
 
     @Test
-    @Ignore
     public void testisna38() {
-        assertEval("argv <- list(structure(c(2L, 6L, 2L, 5L, 4L, 2L, 5L, 4L), .Dim = 8L, .Dimnames = structure(list(statef = c(\'act\', \'nsw\', \'nt\', \'qld\', \'sa\', \'tas\', \'vic\', \'wa\')), .Names = \'statef\'), class = \'table\'));is.na(argv[[1]]);");
+        assertEval(Ignored.Unknown, "argv <- list(structure(c(2L, 6L, 2L, 5L, 4L, 2L, 5L, 4L), .Dim = 8L, .Dimnames = structure(list(statef = c(\'act\', \'nsw\', \'nt\', \'qld\', \'sa\', \'tas\', \'vic\', \'wa\')), .Names = \'statef\'), class = \'table\'));is.na(argv[[1]]);");
     }
 
     @Test
-    @Ignore
     public void testisna39() {
-        assertEval("argv <- list(structure(c(2, 0, 0, 0, 2, 0, 0, 0, 1, 0, 0, 0), .Dim = 3:4, .Dimnames = structure(list(x1 = c(\'a\', \'b\', \'c\'), x2 = c(\'a\', \'b\', \'c\', NA)), .Names = c(\'x1\', \'x2\')), class = c(\'xtabs\', \'table\')));is.na(argv[[1]]);");
+        assertEval(Ignored.Unknown, "argv <- list(structure(c(2, 0, 0, 0, 2, 0, 0, 0, 1, 0, 0, 0), .Dim = 3:4, .Dimnames = structure(list(x1 = c(\'a\', \'b\', \'c\'), x2 = c(\'a\', \'b\', \'c\', NA)), .Names = c(\'x1\', \'x2\')), class = c(\'xtabs\', \'table\')));is.na(argv[[1]]);");
     }
 
     @Test
@@ -240,9 +223,8 @@ public class TestrGenBuiltinisna extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testisna44() {
-        assertEval("argv <- list(structure(list(sec = 0, min = 0L, hour = 0L, mday = 1L, mon = 0L, year = 70L, wday = 4L, yday = 0L, isdst = 0L), .Names = c(\'sec\', \'min\', \'hour\', \'mday\', \'mon\', \'year\', \'wday\', \'yday\', \'isdst\'), class = c(\'POSIXlt\', \'POSIXt\'), tzone = \'GMT\'));is.na(argv[[1]]);");
+        assertEval(Ignored.Unknown, "argv <- list(structure(list(sec = 0, min = 0L, hour = 0L, mday = 1L, mon = 0L, year = 70L, wday = 4L, yday = 0L, isdst = 0L), .Names = c(\'sec\', \'min\', \'hour\', \'mday\', \'mon\', \'year\', \'wday\', \'yday\', \'isdst\'), class = c(\'POSIXlt\', \'POSIXt\'), tzone = \'GMT\'));is.na(argv[[1]]);");
     }
 
     @Test

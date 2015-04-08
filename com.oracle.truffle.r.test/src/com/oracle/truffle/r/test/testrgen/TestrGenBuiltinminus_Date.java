@@ -18,9 +18,8 @@ import com.oracle.truffle.r.test.*;
                                                                  public class TestrGenBuiltinminus_Date extends TestBase {
 
 	@Test
-    @Ignore
 	public void testminus_Date1() {
-		assertEval("argv <- structure(list(e1 = structure(14580, class = \'Date\'),     e2 = structure(1, units = \'days\', class = \'difftime\')), .Names = c(\'e1\',     \'e2\'));"+
+		assertEval(Ignored.Unknown, "argv <- structure(list(e1 = structure(14580, class = \'Date\'),     e2 = structure(1, units = \'days\', class = \'difftime\')), .Names = c(\'e1\',     \'e2\'));"+
 			"do.call(\'-.Date\', argv)");
 	}
 

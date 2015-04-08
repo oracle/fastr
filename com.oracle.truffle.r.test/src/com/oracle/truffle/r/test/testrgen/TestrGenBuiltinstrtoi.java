@@ -28,15 +28,13 @@ public class TestrGenBuiltinstrtoi extends TestBase {
     }
 
     @Test
-    @Ignore
     public void teststrtoi3() {
-        assertEval("argv <- list(c(\'0xff\', \'077\', \'123\'), 0L); .Internal(strtoi(argv[[1]], argv[[2]]))");
+        assertEval(Ignored.Unknown, "argv <- list(c(\'0xff\', \'077\', \'123\'), 0L); .Internal(strtoi(argv[[1]], argv[[2]]))");
     }
 
     @Test
-    @Ignore
     public void teststrtoi4() {
-        assertEval("argv <- list(\'1.3\', 16L); .Internal(strtoi(argv[[1]], argv[[2]]))");
+        assertEval(Ignored.Unknown, "argv <- list(\'1.3\', 16L); .Internal(strtoi(argv[[1]], argv[[2]]))");
     }
 
     @Test

@@ -18,9 +18,8 @@ import com.oracle.truffle.r.test.*;
                                                                  public class TestrGenBuiltinlengthassign_ extends TestBase {
 
 	@Test
-    @Ignore
 	public void testlengthassign_1() {
-		assertEval("argv <- structure(list(1:3, value = TRUE), .Names = c(\'\', \'value\'));"+
+		assertEval(Ignored.Unknown, "argv <- structure(list(1:3, value = TRUE), .Names = c(\'\', \'value\'));"+
 			"do.call(\'length<-\', argv)");
 	}
 

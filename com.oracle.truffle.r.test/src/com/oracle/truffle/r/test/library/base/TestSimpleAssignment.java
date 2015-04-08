@@ -28,19 +28,17 @@ public class TestSimpleAssignment extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testAssignShadowBuiltin1() {
         // FIXME print regression
-        assertEval("f <- function(b) { c <- function(x,y) 42; c(1,1); }; f(0); f(1)");
-        assertEval("f <- function(b) { if (b) c <- function(x,y) 42; c(1,1); }; f(0); f(1)");
+        assertEval(Ignored.Unknown, "f <- function(b) { c <- function(x,y) 42; c(1,1); }; f(0); f(1)");
+        assertEval(Ignored.Unknown, "f <- function(b) { if (b) c <- function(x,y) 42; c(1,1); }; f(0); f(1)");
     }
 
     @Test
-    @Ignore
     public void testAssignFunctionLookup1() {
         // FIXME print regression
-        assertEval("f <- function(b) { c <- 42; c(1,1); }; f(0); f(1)");
-        assertEval("f <- function(b) { if (b) c <- 42; c(1,1); }; f(0); f(1)");
+        assertEval(Ignored.Unknown, "f <- function(b) { c <- 42; c(1,1); }; f(0); f(1)");
+        assertEval(Ignored.Unknown, "f <- function(b) { if (b) c <- 42; c(1,1); }; f(0); f(1)");
     }
 
     @Test

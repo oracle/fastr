@@ -33,14 +33,12 @@ public class TestrGenBuiltinoptions extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testoptions4() {
-        assertEval("argv <- list(\'ts.eps\'); .Internal(options(argv[[1]]))");
+        assertEval(Ignored.Unknown, "argv <- list(\'ts.eps\'); .Internal(options(argv[[1]]))");
     }
 
     @Test
-    @Ignore
     public void testoptions5() {
-        assertEval("argv <- list(NULL); .Internal(options(argv[[1]]))");
+        assertEval(Ignored.Unknown, "argv <- list(NULL); .Internal(options(argv[[1]]))");
     }
 }

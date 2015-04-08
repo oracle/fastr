@@ -33,15 +33,13 @@ public class TestrGenBuiltinqsort extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testqsort4() {
-        assertEval("argv <- list(c(1.64819754690779, 0.502718643389684, 0.845467412356198, 0.467247395729231, -0.402055063696625, 0.923526703253396, -0.0080556407117813, 1.03378423761425, -0.799126981726699, 1.00423302095334, -0.311973356192691, -0.88614958536232, -1.9222548962705, 1.61970074406333, 0.519269904664384, -0.055849931834021, 0.696417610118512), TRUE); .Internal(qsort(argv[[1]], argv[[2]]))");
+        assertEval(Ignored.Unknown, "argv <- list(c(1.64819754690779, 0.502718643389684, 0.845467412356198, 0.467247395729231, -0.402055063696625, 0.923526703253396, -0.0080556407117813, 1.03378423761425, -0.799126981726699, 1.00423302095334, -0.311973356192691, -0.88614958536232, -1.9222548962705, 1.61970074406333, 0.519269904664384, -0.055849931834021, 0.696417610118512), TRUE); .Internal(qsort(argv[[1]], argv[[2]]))");
     }
 
     @Test
-    @Ignore
     public void testqsort5() {
-        assertEval("argv <- list(c(1L, 7L, 11L, 12L, 13L, 19L, 25L, 3L, 8L), TRUE); .Internal(qsort(argv[[1]], argv[[2]]))");
+        assertEval(Ignored.Unknown, "argv <- list(c(1L, 7L, 11L, 12L, 13L, 19L, 25L, 3L, 8L), TRUE); .Internal(qsort(argv[[1]], argv[[2]]))");
     }
 
     @Test
@@ -75,9 +73,8 @@ public class TestrGenBuiltinqsort extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testqsort12() {
-        assertEval("argv <- list(FALSE, FALSE); .Internal(qsort(argv[[1]], argv[[2]]))");
+        assertEval(Ignored.Unknown, "argv <- list(FALSE, FALSE); .Internal(qsort(argv[[1]], argv[[2]]))");
     }
 
     @Test

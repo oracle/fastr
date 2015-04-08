@@ -78,9 +78,8 @@ public class TestrGenBuiltinrepint extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testrepint13() {
-        assertEval("argv <- list(structure(1:4, .Label = c(\'A\', \'B\', \'C\', \'D\'), class = \'factor\', .Names = c(\'a\', \'b\', \'c\', \'d\')), 2); .Internal(rep.int(argv[[1]], argv[[2]]))");
+        assertEval(Ignored.Unknown, "argv <- list(structure(1:4, .Label = c(\'A\', \'B\', \'C\', \'D\'), class = \'factor\', .Names = c(\'a\', \'b\', \'c\', \'d\')), 2); .Internal(rep.int(argv[[1]], argv[[2]]))");
     }
 
     @Test
@@ -136,9 +135,8 @@ public class TestrGenBuiltinrepint extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testrepint24() {
-        assertEval("argv <- list(3.1e-06, 49); .Internal(rep.int(argv[[1]], argv[[2]]))");
+        assertEval(Ignored.Unknown, "argv <- list(3.1e-06, 49); .Internal(rep.int(argv[[1]], argv[[2]]))");
     }
 
     @Test

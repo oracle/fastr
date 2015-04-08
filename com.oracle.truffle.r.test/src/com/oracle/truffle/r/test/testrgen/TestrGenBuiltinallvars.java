@@ -18,9 +18,8 @@ import com.oracle.truffle.r.test.*;
                                                                  public class TestrGenBuiltinallvars extends TestBase {
 
 	@Test
-    @Ignore
 	public void testallvars1() {
-		assertEval("argv <- structure(list(expr = expression(quote(temp[1, ] ~ 3))),     .Names = \'expr\');"+
+		assertEval(Ignored.Unknown, "argv <- structure(list(expr = expression(quote(temp[1, ] ~ 3))),     .Names = \'expr\');"+
 			"do.call(\'all.vars\', argv)");
 	}
 
