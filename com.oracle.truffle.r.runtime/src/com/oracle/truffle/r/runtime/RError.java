@@ -205,6 +205,8 @@ public final class RError extends RuntimeException {
         INVALID_FOR_SEQUENCE("invalid for() loop sequence"),
         NO_NONMISSING_MAX("no non-missing arguments to max; returning -Inf"),
         NO_NONMISSING_MIN("no non-missing arguments to min; returning Inf"),
+        NO_NONMISSING_MAX_NA("no non-missing arguments, returning NA"),
+        NO_NONMISSING_MIN_NA("no non-missing arguments, returning NA"),
         LENGTH_NONNEGATIVE("length must be non-negative number"),
         MUST_BE_POSITIVE("%s must be a non-negative number"),
         INVALID_TFB("invalid (to - from)/by in seq(.)"),
@@ -522,7 +524,7 @@ public final class RError extends RuntimeException {
         NOT_DEBUGGED("argument is not being debugged"),
         ADDING_INVALID_CLASS("adding class \"%s\" to an invalid object"),
         IS_NA_TO_NON_VECTOR("is.na() applied to non-(list or vector) of type '%s'"),
-        NOT_MEANINGFUL_FOR_FACTORS("%s not meaningful for factors"),
+        NOT_MEANINGFUL_FOR_FACTORS("‘%s’ not meaningful for factors"), // GNUR uses special ‘ and ’
         INPUTS_DIFFERENT_LENGTHS("inputs of different lengths"),
         MATRIX_LIKE_REQUIRED("a matrix-like object is required as argument to '%s'"),
         NOT_MEANINGFUL_FOR_ORDERED_FACTORS("'%s' is not meaningful for ordered factors"),

@@ -15,12 +15,12 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.utilities.*;
+import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.closures.*;
 import com.oracle.truffle.r.runtime.data.model.*;
-import com.oracle.truffle.r.runtime.ops.na.*;
 
 //TODO: Implement permuting with DimNames
 @RBuiltin(name = "aperm", kind = INTERNAL, parameterNames = {"a", "perm", "resize"})
@@ -30,7 +30,10 @@ public abstract class APerm extends RBuiltinNode {
     private final BranchProfile emptyPermVector = BranchProfile.create();
     private final ConditionProfile mustResize = ConditionProfile.createBinaryProfile();
 
-    private final NACheck na = new NACheck();
+    @CreateCast("arguments")
+    public RNode[] createCastValue(RNode[] children) {
+        return new RNode[]{children[0], CastIntegerNodeGen.create(children[1], false, false, false), children[2]};
+    }
 
     private void checkErrorConditions(RAbstractVector vector, byte resize) {
         if (!vector.isArray()) {
@@ -107,18 +110,6 @@ public abstract class APerm extends RBuiltinNode {
         }
 
         return result;
-    }
-
-    @Specialization
-    protected RAbstractVector aPerm(RAbstractVector vector, RAbstractDoubleVector permVector, byte resize) {
-        na.enable(permVector);
-        return aPerm(vector, RClosures.createDoubleToIntVector(permVector, na), resize);
-    }
-
-    @Specialization
-    protected RAbstractVector aPerm(RAbstractVector vector, RAbstractComplexVector permVector, byte resize) {
-        na.enable(permVector);
-        return aPerm(vector, RClosures.createComplexToIntVectorDiscardImaginary(permVector, na), resize);
     }
 
     private static int[] getReverse(int[] dim) {

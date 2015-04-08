@@ -47,24 +47,25 @@ public abstract class CastRawNode extends CastNode {
         return RNull.instance;
     }
 
-    @Specialization
-    protected RRaw doInt(int operand) {
-        int intResult = RRuntime.int2rawIntValue(operand);
+    private RRaw checkOutOfRange(int operand, int intResult) {
         if (intResult != operand) {
             warningBranch.enter();
             RError.warning(RError.Message.OUT_OF_RANGE);
+            return RDataFactory.createRaw((byte) 0);
         }
         return RDataFactory.createRaw((byte) intResult);
     }
 
     @Specialization
+    protected RRaw doInt(int operand) {
+        int intResult = RRuntime.int2rawIntValue(operand);
+        return checkOutOfRange(operand, intResult);
+    }
+
+    @Specialization
     protected RRaw doDouble(double operand) {
         int intResult = RRuntime.double2rawIntValue(operand);
-        if (intResult != (int) operand) {
-            warningBranch.enter();
-            RError.warning(RError.Message.OUT_OF_RANGE);
-        }
-        return RDataFactory.createRaw((byte) intResult);
+        return checkOutOfRange((int) operand, intResult);
     }
 
     @Specialization
@@ -74,11 +75,7 @@ public abstract class CastRawNode extends CastNode {
             warningBranch.enter();
             RError.warning(RError.Message.IMAGINARY_PARTS_DISCARDED_IN_COERCION);
         }
-        if (intResult != (int) operand.getRealPart()) {
-            warningBranch.enter();
-            RError.warning(RError.Message.OUT_OF_RANGE);
-        }
-        return RDataFactory.createRaw((byte) intResult);
+        return checkOutOfRange((int) operand.getRealPart(), intResult);
     }
 
     @Specialization
@@ -122,12 +119,13 @@ public abstract class CastRawNode extends CastNode {
             int intValue = operand.getDataAt(i);
             int intRawValue = RRuntime.int2rawIntValue(intValue);
             if (intRawValue != intValue) {
+                warningBranch.enter();
                 warning = true;
+                intRawValue = 0;
             }
             bdata[i] = (byte) intRawValue;
         }
         if (warning) {
-            warningBranch.enter();
             RError.warning(RError.Message.OUT_OF_RANGE);
         }
         return createResultVector(operand, bdata);
@@ -141,12 +139,13 @@ public abstract class CastRawNode extends CastNode {
             int intVal = RRuntime.logical2int(operand.getDataAt(i));
             int intRawValue = RRuntime.int2rawIntValue(intVal);
             if (intVal != intRawValue) {
+                warningBranch.enter();
                 warning = true;
+                intRawValue = 0;
             }
             bdata[i] = (byte) intRawValue;
         }
         if (warning) {
-            warningBranch.enter();
             RError.warning(RError.Message.OUT_OF_RANGE);
         }
         return createResultVector(operand, bdata);
@@ -161,19 +160,20 @@ public abstract class CastRawNode extends CastNode {
             int intVal = RRuntime.string2int(operand.getDataAt(i));
             int intRawValue = RRuntime.int2rawIntValue(intVal);
             if (RRuntime.isNA(intVal)) {
+                warningBranch.enter();
                 naCoercionWarning = true;
             }
             if (intVal != intRawValue) {
+                warningBranch.enter();
                 outOfRangeWarning = true;
+                intRawValue = 0;
             }
             bdata[i] = (byte) intRawValue;
         }
         if (naCoercionWarning) {
-            warningBranch.enter();
             RError.warning(RError.Message.NA_INTRODUCED_COERCION);
         }
         if (outOfRangeWarning) {
-            warningBranch.enter();
             RError.warning(RError.Message.OUT_OF_RANGE);
         }
         return createResultVector(operand, bdata);
@@ -188,19 +188,20 @@ public abstract class CastRawNode extends CastNode {
             RComplex complexVal = operand.getDataAt(i);
             int intRawValue = RRuntime.complex2rawIntValue(complexVal);
             if (complexVal.getImaginaryPart() != 0.0) {
+                warningBranch.enter();
                 imaginaryDiscardedWarning = true;
             }
             if ((int) complexVal.getRealPart() != intRawValue) {
+                warningBranch.enter();
                 outOfRangeWarning = true;
+                intRawValue = 0;
             }
             bdata[i] = (byte) intRawValue;
         }
         if (imaginaryDiscardedWarning) {
-            warningBranch.enter();
             RError.warning(RError.Message.IMAGINARY_PARTS_DISCARDED_IN_COERCION);
         }
         if (outOfRangeWarning) {
-            warningBranch.enter();
             RError.warning(RError.Message.OUT_OF_RANGE);
         }
         return createResultVector(operand, bdata);
@@ -215,12 +216,13 @@ public abstract class CastRawNode extends CastNode {
             double doubleValue = operand.getDataAt(i);
             int intRawValue = RRuntime.double2rawIntValue(doubleValue);
             if (intRawValue != (int) doubleValue) {
+                warningBranch.enter();
                 warning = true;
+                intRawValue = 0;
             }
             bdata[i] = (byte) intRawValue;
         }
         if (warning) {
-            warningBranch.enter();
             RError.warning(RError.Message.OUT_OF_RANGE);
         }
         return createResultVector(operand, bdata);

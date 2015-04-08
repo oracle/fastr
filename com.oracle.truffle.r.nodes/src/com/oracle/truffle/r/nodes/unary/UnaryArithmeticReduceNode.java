@@ -161,7 +161,9 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
             na.enable(operand);
             if (naRmProfile.profile(naRm == RRuntime.LOGICAL_TRUE)) {
                 if (na.check(operand)) {
-                    emptyWarning();
+                    if (semantics.getEmptyWarning() != null) {
+                        RError.warning(semantics.emptyWarningCharacter);
+                    }
                     return semantics.getStringStart();
                 } else {
                     return operand;
@@ -324,7 +326,7 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
     private static String doStringVectorEmptyInternal(RStringVector operand, byte naRm, ReduceSemantics semantics, SourceSection sourceSection) {
         if (semantics.supportString) {
             if (semantics.getEmptyWarning() != null) {
-                RError.warning(semantics.emptyWarning);
+                RError.warning(semantics.emptyWarningCharacter);
             }
             return semantics.getStringStart();
         } else {
@@ -376,14 +378,16 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
         private final String stringStart = RRuntime.STRING_NA; // does not seem to change
         private final boolean nullInt;
         private final RError.Message emptyWarning;
+        private final RError.Message emptyWarningCharacter;
         private final boolean supportComplex;
         private final boolean supportString;
 
-        public ReduceSemantics(int intStart, double doubleStart, boolean nullInt, RError.Message emptyWarning, boolean supportComplex, boolean supportString) {
+        public ReduceSemantics(int intStart, double doubleStart, boolean nullInt, RError.Message emptyWarning, RError.Message emptyWarningCharacter, boolean supportComplex, boolean supportString) {
             this.intStart = intStart;
             this.doubleStart = doubleStart;
             this.nullInt = nullInt;
             this.emptyWarning = emptyWarning;
+            this.emptyWarningCharacter = emptyWarningCharacter;
             this.supportComplex = supportComplex;
             this.supportString = supportString;
         }
@@ -406,6 +410,10 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
 
         public RError.Message getEmptyWarning() {
             return emptyWarning;
+        }
+
+        public RError.Message getEmptyWarningCharacter() {
+            return emptyWarningCharacter;
         }
     }
 

@@ -96,7 +96,7 @@ public abstract class CastIntegerNode extends CastNode {
     @Specialization
     protected int doComplex(RComplex operand) {
         naCheck.enable(operand);
-        int result = naCheck.convertComplexToInt(operand);
+        int result = naCheck.convertComplexToInt(operand, false);
         if (operand.getImaginaryPart() != 0.0) {
             warningBranch.enter();
             RError.warning(RError.Message.IMAGINARY_PARTS_DISCARDED_IN_COERCION);
