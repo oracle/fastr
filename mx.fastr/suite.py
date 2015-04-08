@@ -241,17 +241,6 @@ suite = {
       "jacoco" : "include",
     },
 
-    "com.oracle.truffle.r.test.ignore.processor" : {
-      "sourceDirs" : ["src"],
-      "dependencies" : [
-        "JUNIT",
-        "JDK_TOOLS",
-      ],
-      "checkstyle" : "com.oracle.truffle.r.runtime",
-      "javaCompliance" : "1.8",
-      "workingSets" : "Truffle,FastR",
-    },
-
     "com.oracle.truffle.r.test" : {
       "sourceDirs" : ["src"],
       "dependencies" : [
@@ -260,7 +249,6 @@ suite = {
       ],
       "checkstyle" : "com.oracle.truffle.r.runtime",
       "javaCompliance" : "1.8",
-      "annotationProcessors" : ["com.oracle.truffle.r.test.ignore.processor"],
       "workingSets" : "Truffle,FastR,Test",
       "jacoco" : "include",
     },
