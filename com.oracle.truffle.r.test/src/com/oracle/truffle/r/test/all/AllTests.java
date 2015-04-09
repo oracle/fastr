@@ -5150,6 +5150,16 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testAsInteger_56a02a649dd22565e28513e72919ad59() {
+        assertEval("{ as.integer(\"\") }");
+    }
+
+    @Test
+    public void TestSimpleBuiltins_testAsInteger_16c4b0a8a053531eff1e390480a86de8() {
+        assertEval("{ as.integer(as.character(NA)) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testAsInteger_bdee86802f4d5a14a501cbdf208e49b7() {
         assertEvalWarning("{ as.integer(10+2i) }");
     }

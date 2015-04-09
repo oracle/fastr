@@ -4941,6 +4941,10 @@ Error in as.vector(x, "expression") :
   cannot coerce type 'builtin' to vector of type 'expression'
 
 ##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testAsInteger
+#{ as.integer("") }
+[1] NA
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testAsInteger
 #{ as.integer("1") }
 [1] 1
 
@@ -4989,6 +4993,10 @@ NAs introduced by coercion
 ##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testAsInteger
 #{ as.integer(NULL) }
 integer(0)
+
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testAsInteger
+#{ as.integer(as.character(NA)) }
+[1] NA
 
 ##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testAsInteger
 #{ as.integer(as.raw(1)) }
