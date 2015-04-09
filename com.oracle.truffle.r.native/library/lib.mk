@@ -64,7 +64,7 @@ endif
 libcommon: $(PKGDIR)
 
 $(PKGDIR): $(PKGTAR)
-	tar xf $(PKGTAR) -C $(FASTR_LIBDIR)
+	(mkdir -p $(FASTR_LIBDIR) && cd $(FASTR_LIBDIR) && tar xf -) < $(PKGTAR)
 	touch $(FASTR_LIBDIR)/$(PKG)
 
 $(OBJ):
