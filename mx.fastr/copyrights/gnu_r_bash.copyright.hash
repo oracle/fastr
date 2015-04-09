@@ -10,11 +10,3 @@
 #
 # All rights reserved.
 #
-
-# Fledgling Rscript command to startup FastR
-
-source="${BASH_SOURCE[0]}"
-while [ -h "$source" ] ; do source="$(readlink "$source")"; done
-PRIMARY_PATH="$( cd -P "$( dirname "$source" )" && pwd )"/..
-
-mx --primary-suite-path $PRIMARY_PATH Rscript "$@"
