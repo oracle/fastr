@@ -728,6 +728,8 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ x<-c(a=1L, b=2L); dim(x)<-c(1,2); attr(x, \"foo\")<-\"foo\"; y<-as.integer(x); attributes(y) }");
         assertEval("{ as.integer(1.1:5.1) }");
         assertEval("{ as.integer(NULL) }");
+        assertEval("{ as.integer(\"\") }");
+        assertEval("{ as.integer(as.character(NA)) }");
     }
 
     @Test
