@@ -32,9 +32,10 @@ include $(TOPDIR)/platform.mk
 OBJ = lib
 SRC = src
 C_SOURCES := $(wildcard $(SRC)/*.c)
-C_LIBNAME := librfficall.$(SHARED_EXT)
+C_LIBNAME := librfficall$(DYLIB_EXT)
 C_OBJECTS := $(subst $(SRC),$(OBJ),$(C_SOURCES:.c=.o))
 C_LIB := $(TOPDIR)/builtinlibs/$(OBJ)/$(C_LIBNAME)
+CFLAGS := $(CFLAGS) -DFASTR
 
 JNI_INCLUDES = -I $(JAVA_HOME)/include -I $(JAVA_HOME)/include/$(OS_DIR)
 FFI_INCLUDES = -I$(TOPDIR)/include/jni/include -I$(TOPDIR)/include/jni/include/R_ext
@@ -44,7 +45,7 @@ INCLUDES := $(JNI_INCLUDES) $(FFI_INCLUDES)
 all: $(C_LIB)
 
 $(C_LIB): $(OBJ) $(C_OBJECTS)
-	$(CC) $(LDFLAGS) -o $(C_LIB) $(C_OBJECTS)
+	$(DYLIB_LD) $(DYLIB_LDFLAGS) -o $(C_LIB) $(C_OBJECTS)
 
 $(OBJ):
 	mkdir -p $(OBJ)

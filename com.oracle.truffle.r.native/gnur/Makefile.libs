@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2015, 2015, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -21,35 +21,32 @@
 # questions.
 #
 
-OSNAME := $(shell uname)
+# Copies the Lbas and lapack libraries and builds the pcre library
 
-ifeq ($(OSNAME), Linux)
-  OS_DIR      := linux
-  CC          := gcc
-  FC          := gfortran
-  CFLAGS      := -fPIC -O2
-  LDFLAGS     := -fPIC -shared
-  SHARED_EXT  := so
-  LIBS        := -lgfortran
-else ifeq ($(OSNAME), SunOS)
-  OS_DIR      := solaris
-  CC          := cc
-  FC          := f90
-  CFLAGS      := -m64 -O -xcode=pic13
-  LDFLAGS     := -G -m64
-  SHARED_EXT  := so
-  LIBS        := -lgfortran
-else ifeq ($(OSNAME), Darwin)
-  OS_DIR      := darwin
-  CC          := gcc
-  FC          := gfortran
-  CFLAGS      := -fPIC -O2
-  LDFLAGS     := -dynamiclib -undefined dynamic_lookup
-  SHARED_EXT  := dylib
-else
-all:
-	@echo "This Makefile does not know how to compile for $(OSNAME)"
-	@false
-endif
+include $(TOPDIR)/platform.mk
 
-CFLAGS := $(CFLAGS) -DFASTR
+TARGET_DIR := $(TOPDIR)/builtinlibs/lib
+BLAS_TARGET := $(TARGET_DIR)/libRblas$(DYLIB_EXT)
+LAPACK_TARGET := $(TARGET_DIR)/libRlapack$(DYLIB_EXT)
+PCRE_TARGET := $(TARGET_DIR)/libpcre$(DYLIB_EXT)
+
+all: $(TARGET_DIR) $(BLAS_TARGET) $(LAPACK_TARGET) $(PCRE_TARGET) 
+
+$(TARGET_DIR):
+	mkdir -p $(TARGET_DIR)
+
+$(BLAS_TARGET): $(GNUR_DIR)/lib/libRblas$(DYLIB_EXT)
+	cp $(GNUR_DIR)/lib/libRblas$(DYLIB_EXT) $(BLAS_TARGET)
+
+$(LAPACK_TARGET): $(GNUR_DIR)/lib/libRlapack$(DYLIB_EXT)
+	cp $(GNUR_DIR)/lib/libRlapack$(DYLIB_EXT) $(LAPACK_TARGET)
+
+PCRE_OBJS := $(wildcard $(GNUR_DIR)/src/extra/pcre/pcre_*.o)
+
+$(PCRE_TARGET): $(PCRE_OBJS) $(TOPDIR)/platform.mk
+	$(DYLIB_LD) $(DYLIB_LDFLAGS) -o $(PCRE_TARGET) $(PCRE_OBJS)
+
+clean:
+	rm -f $(BLAS_TARGET) $(LAPACK_TARGET) $(PCRE_TARGET)
+
+		

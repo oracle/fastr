@@ -33,7 +33,7 @@ include $(NATIVE_PROJECT)/platform.mk
 
 ifeq ($(FASTR_INSTALL), GNUR)
     INCLUDES := -I $(R_HOME)/include
-    ifeq ($(OSNAME), Darwin)
+    ifeq ($(OS_NAME), Darwin)
         FRAMEWORKFLAGS := -F${R_HOME}/../.. -framework R
     else
         FRAMEWORKFLAGS :=

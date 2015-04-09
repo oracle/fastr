@@ -28,7 +28,7 @@
 # that refers to GnuR-internal symbols.
 #
 
-include ../platform.mk
+include $(TOPDIR)/platform.mk
 
 .PHONY: all clean cleanlib cleanobj force libr
 
@@ -41,22 +41,22 @@ C_OBJECTS := $(subst $(SRC),$(OBJ),$(C_SOURCES:.c=.o))
 F_OBJECTS := $(wildcard $(GNUR_DIR)/src/appl/d*.o)
 
 LIBDIR := $(OBJ)
-LIB_APPL := $(OBJ)/libappl.$(SHARED_EXT)
+LIB_APPL := $(OBJ)/libappl$(DYLIB_EXT)
 
 all: $(LIB_APPL) libr
 
 $(LIB_APPL): $(C_OBJECTS) $(F_OBJECTS)
 	mkdir -p $(LIBDIR)
-	$(CC) $(LDFLAGS) -o $(LIB_APPL) $(C_OBJECTS) $(F_OBJECTS) $(LIBS)
+	$(DYLIB_LD) $(DYLIB_LDFLAGS)  -o $(LIB_APPL) $(C_OBJECTS) $(F_OBJECTS) $(LIBS)
 
 # On Darwin we need to create a dummy libR.dylib
-ifeq ($(OSNAME), Darwin)
-LIB_RDUMMY := $(OBJ)/libR.$(SHARED_EXT)
+ifeq ($(OS_NAME), Darwin)
+LIB_RDUMMY := $(OBJ)/libR$(DYLIB_EXT)
 
 libr: $(LIB_RDUMMY)
 $(LIB_RDUMMY): $(OBJ)/rdummy.o
 	mkdir -p $(LIBDIR)
-	$(CC) $(LDFLAGS) -o $(LIB_RDUMMY) -current_version $(R_VERSION) -compatibility_version $(R_VERSION) $(OBJ)/rdummy.o
+	$(DYLIB_LD) $(DYLIB_LDFLAGS) -o $(LIB_RDUMMY) -current_version $(R_VERSION) -compatibility_version $(R_VERSION) $(OBJ)/rdummy.o
 
 cleanlibr:
 	rm -f $(LIB_RDUMMY)
@@ -70,10 +70,6 @@ endif
 
 $(OBJ)/%.o: $(SRC)/%.c
 	$(CC) $(CFLAGS) -c $< -o $@
-
-$(OBJ)/%.o: $(SRC)/%.f
-	$(FC) $(CFLAGS) -c $< -o $@
-
 
 cleanlib:
 	rm -f $(LIBDIR)/libappl.*

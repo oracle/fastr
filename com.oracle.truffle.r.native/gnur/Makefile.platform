@@ -21,13 +21,20 @@
 # questions.
 #
 
-# This is separate because at the time the parent Makefile is analyzed
-# the pcre object files do not exist
+# Extracts relevant parts of the generated GnuR Makeconf file into FastR's platform.mk
 
-include ../platform.mk
+.PHONY: all clean
 
-PCRE_OBJS := $(wildcard $(GNUR_DIR)/src/extra/pcre/pcre_*.o)
+OS_NAME := $(shell uname)
+OS_DIR := $(shell echo $(OS_NAME) | tr '[:upper:]' '[:lower:]' )
 
-$(PCRE_TARGET): $(PCRE_OBJS)
-	$(CC) $(LDFLAGS) -o $(PCRE_TARGET) $(PCRE_OBJS)
-		
+all: $(TOPDIR)/platform.mk
+
+$(TOPDIR)/platform.mk: sedMakeconf
+	sed -f sedMakeconf $(GNUR_DIR)/Makeconf >& /dev/null
+	echo OS_NAME = $(OS_NAME) >> platform.mk.temp
+	echo OS_DIR = $(OS_DIR) >> platform.mk.temp
+	cp platform.mk.temp $(TOPDIR)/platform.mk
+
+clean:
+	rm -f $(TOPDIR)/platform.mk

@@ -27,7 +27,7 @@
 # and overwrites the default. The libraries are stored in the directory denoted
 # FASTR_LIBDIR.
 
-include ../../platform.mk
+include $(TOPDIR)/platform.mk
 
 .PHONY: all clean cleanlib cleanobj force libr libcommon 
 
@@ -57,7 +57,6 @@ FFI_INCLUDES = -I$(TOPDIR)/include/jni/include
 INCLUDES := $(JNI_INCLUDES) $(FFI_INCLUDES)
 
 PKGDIR := $(FASTR_LIBDIR)/$(PKG)
-PKGTAR := $(SRC)/$(OS_DIR)/$(PKG).tar.gz
 
 ifneq ($(C_SOURCES),)
 all: libcommon $(LIB_PKG) $(PKG_EXTRAS)
@@ -76,15 +75,12 @@ $(OBJ):
 
 $(LIB_PKG): $(OBJ) $(C_OBJECTS) $(PKGDIR)
 	mkdir -p $(LIBDIR)
-	$(CC) $(LDFLAGS) -o $(LIB_PKG) $(C_OBJECTS)
+	$(DYLIB_LD) $(DYLIB_LDFLAGS) -o $(LIB_PKG) $(C_OBJECTS)
 	mkdir -p $(FASTR_LIBDIR)/$(PKG)/libs
 	cp $(LIB_PKG) $(FASTR_LIBDIR)/$(PKG)/libs
 
 $(OBJ)/%.o: $(SRC)/%.c  $(H_SOURCES)
 	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
-
-$(OBJ)/%.o: $(SRC)/%.f
-	$(FC) $(CFLAGS) -c $< -o $@
 
 clean: 
 	rm -rf $(LIBDIR)/*

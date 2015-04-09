@@ -21,49 +21,12 @@
 # questions.
 #
 
-# This extracts, configures and builds GnuR for the current platform.
-# FastR does not, obviously, need all of GnuR to be built; only those pieces
-# that it shares, but is simpler and safer to just build all of it. The relevant 
-# pieces are then copied to other FastR directories
+.PHONY: all clean
 
-include ../platform.mk
-
-.PHONY: all clean config build copy
-
-TARGET_DIR := ../builtinlibs/lib
-BLAS_TARGET := $(TARGET_DIR)/libRblas.$(SHARED_EXT)
-LAPACK_TARGET := $(TARGET_DIR)/libRlapack.$(SHARED_EXT)
-export PCRE_TARGET := $(TARGET_DIR)/libpcre.$(SHARED_EXT)
-
-all: Makefile $(GNUR_DIR) config build copy
-
-$(GNUR_DIR): 
-	tar xf $(TOPDIR)/../lib/R-$(R_VERSION).tar.gz
-
-config: $(GNUR_DIR)/Makefile
-
-$(GNUR_DIR)/Makefile: 
-	(cd $(GNUR_DIR); ./configure --with-x=no --without-recommended-packages --enable-R-shlib >& /dev/null)
-
-build: $(GNUR_DIR)/bin/R
-
-$(GNUR_DIR)/bin/R:
-	(cd $(GNUR_DIR); make >& make.log)
-
-copy: $(TARGET_DIR) $(BLAS_TARGET) $(LAPACK_TARGET) $(PCRE_TARGET)
-
-$(TARGET_DIR):
-	mkdir -p $(TARGET_DIR)
-
-$(BLAS_TARGET): $(GNUR_DIR)/lib/libRblas.$(SHARED_EXT)
-	cp $(GNUR_DIR)/lib/libRblas.$(SHARED_EXT) $(BLAS_TARGET)
-
-$(LAPACK_TARGET): $(GNUR_DIR)/lib/libRlapack.$(SHARED_EXT)
-	cp $(GNUR_DIR)/lib/libRlapack.$(SHARED_EXT) $(LAPACK_TARGET)
-
-$(PCRE_TARGET):
-	$(MAKE) -f Makefile.pcre
+all: 
+	$(MAKE) -f Makefile.gnur
+	$(MAKE) -f Makefile.libs
 
 clean:
-	rm -rf $(GNUR_DIR)
-	rm -f $(BLAS_TARGET) $(LAPACK_TARGET) $(PCRE_TARGET)
+	$(MAKE) -f Makefile.gnur clean
+	$(MAKE) -f Makefile.libs clean

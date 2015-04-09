@@ -1,0 +1,4 @@
+/^CFLAGS/s/$/ -fpic/
+/^FFLAGS/s/$/ -fpic/
+w
+q

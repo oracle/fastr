@@ -46,7 +46,7 @@ INCLUDE_DIR := $(NATIVE_PROJECT)/include/jni/include
 all: $(C_LIB)
 
 $(C_LIB): $(OBJ) $(C_OBJECTS)
-	$(CC) $(LDFLAGS)  -o $(C_LIB) $(C_OBJECTS)
+	$(DYLIB_LD) $(DYLIB_LDFLAGS)  -o $(C_LIB) $(C_OBJECTS)
 
 $(OBJ):
 	mkdir -p $(OBJ)
