@@ -36,6 +36,7 @@ def runR(args, className, nonZeroIsFatal=True, extraVmArgs=None, runBench=False)
     setREnvironment()
     project = className.rpartition(".")[0]
     vmArgs = ['-cp', mx.classpath(project)]
+    vmArgs = vmArgs + ["-Drhome.path=" + _fastr_suite.dir]
 
     if runBench == False:
         vmArgs = vmArgs + ['-ea', '-esa']
