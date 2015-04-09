@@ -17247,6 +17247,9 @@ logical(0)
 #{ vector(length=3) }
 [1] FALSE FALSE FALSE
 
+##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testVectorConstructor
+#{ x<-as.vector(3); y<-vector(length=x) }
+
 ##com.oracle.truffle.r.test.library.base.TestSimpleBuiltins.testWhich
 #{ which(NA) }
 integer(0)
