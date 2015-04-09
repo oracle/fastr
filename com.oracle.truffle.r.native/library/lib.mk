@@ -65,7 +65,7 @@ libcommon: $(PKGDIR)
 
 $(PKGDIR): $(PKGTAR)
 	tar xf $(PKGTAR) -C $(FASTR_LIBDIR)
-	touch $(FASTR_LIBDIR)/$(PKG)
+	touch $(FASTR_LIBDIR)/$(PKG).t
 
 $(OBJ):
 	mkdir -p $(OBJ)

@@ -28,4 +28,5 @@ include ../lib.mk
 # override the Rprofile
 
 $(PKG_EXTRAS): $(SRC)/Rprofile.R
+	mkdir -p $(PKG_EXTRAS)
 	cp $(SRC)/Rprofile.R $(PKG_EXTRAS)
