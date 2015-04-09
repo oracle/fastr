@@ -25,8 +25,11 @@
 
 all: 
 	$(MAKE) -f Makefile.gnur
+	$(MAKE) -f Makefile.platform
 	$(MAKE) -f Makefile.libs
 
 clean:
 	$(MAKE) -f Makefile.gnur clean
 	$(MAKE) -f Makefile.libs clean
+	$(MAKE) -f Makefile.platform clean
+	

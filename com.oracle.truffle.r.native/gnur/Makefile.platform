@@ -34,7 +34,7 @@ $(TOPDIR)/platform.mk: sedMakeconf
 	sed -f sedMakeconf $(GNUR_DIR)/Makeconf >& /dev/null
 	echo OS_NAME = $(OS_NAME) >> platform.mk.temp
 	echo OS_DIR = $(OS_DIR) >> platform.mk.temp
-	cp platform.mk.temp $(TOPDIR)/platform.mk
+	mv platform.mk.temp $(TOPDIR)/platform.mk
 
 clean:
 	rm -f $(TOPDIR)/platform.mk

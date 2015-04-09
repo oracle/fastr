@@ -21,7 +21,7 @@
 # questions.
 #
 
-# Copies the Lbas and lapack libraries and builds the pcre library
+# Copies the Blas and lapack libraries and builds the pcre library
 
 include $(TOPDIR)/platform.mk
 

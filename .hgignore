@@ -91,6 +91,8 @@ R.tokens
 findbugs.html
 com.oracle.truffle.r.native/builtinlibs/lib/*
 com.oracle.truffle.r.native/library/*/lib/*
+com.oracle.truffle.r.native/platform.mk
+com.oracle.truffle.r.native/gnur/Makeconf.done
 com.oracle.truffle.r.native/include/jni/include
 com.oracle.truffle.r.native/include/jni/linked
 com.oracle.truffle.r.test.native/packages/*/lib/*
