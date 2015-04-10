@@ -27,6 +27,9 @@
 # and overwrites the default. The libraries are stored in the directory denoted
 # FASTR_LIBDIR.
 
+# A package that requires special processing before the library is built should
+# define LIB_PKG_PRE and for post processing define LIB_PKG_POST
+
 include $(TOPDIR)/platform.mk
 
 .PHONY: all clean cleanlib cleanobj force libr libcommon 
@@ -59,9 +62,9 @@ INCLUDES := $(JNI_INCLUDES) $(FFI_INCLUDES)
 PKGDIR := $(FASTR_LIBDIR)/$(PKG)
 
 ifneq ($(C_SOURCES),)
-all: libcommon $(LIB_PKG) $(PKG_EXTRAS)
+all: $(LIB_PKG_PRE) libcommon $(LIB_PKG) $(LIB_PKG_POST)
 else
-all: libcommon
+all: $(LIB_PKG_PRE) libcommon $(LIB_PKG_POST) 
 endif
 
 libcommon: $(PKGDIR)

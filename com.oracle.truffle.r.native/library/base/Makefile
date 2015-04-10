@@ -23,14 +23,14 @@
 
 RPROFILE := $(FASTR_LIBDIR)/base/R/Rprofile
 RPROFILE_ORIG := $(RPROFILE).orig
-PKG_EXTRAS = $(RPROFILE)
+LIB_PKG_POST = $(RPROFILE)
 
 include ../lib.mk
 
 # edit the Rprofile to add fastr as a default package
 # sed's edit in place option with backup is not portable
 
-$(PKG_EXTRAS): $(RPROFILE_ORIG)
+$(LIB_PKG_POST): $(RPROFILE_ORIG)
 
 $(RPROFILE_ORIG):
 	cp $(RPROFILE) $(RPROFILE_ORIG)

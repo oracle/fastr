@@ -33,6 +33,7 @@ import jnr.posix.*;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.ffi.*;
+import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
 
 /**
  * JNR-based factory.
@@ -389,7 +390,9 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI, Stat
 
         @TruffleBoundary
         private static Stats createAndLoadLib() {
-            return LibraryLoader.create(Stats.class).load("appl");
+            // fft is in the stats package .so
+            DLLInfo dllInfo = DLL.findLibraryContainingSymbol("fft");
+            return LibraryLoader.create(Stats.class).load(dllInfo.path);
         }
 
         static Stats fft() {
