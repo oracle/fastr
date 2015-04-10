@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.test.rpackages;
 
+import java.io.*;
+import java.nio.charset.*;
 import java.nio.file.*;
 import java.util.*;
 
@@ -83,7 +85,26 @@ public class TestRPackages extends TestBase {
                 }
                 Process install = pb.start();
                 int rc = install.waitFor();
-                return rc == 0;
+                if (rc == 0) {
+                    return true;
+                } else {
+                    BufferedReader out = new BufferedReader(new InputStreamReader(install.getInputStream(), StandardCharsets.UTF_8));
+                    BufferedReader err = new BufferedReader(new InputStreamReader(install.getErrorStream(), StandardCharsets.UTF_8));
+                    try {
+                        StringBuilder str = new StringBuilder();
+                        String line;
+                        while ((line = out.readLine()) != null) {
+                            str.append(line).append('\n');
+                        }
+                        while ((line = err.readLine()) != null) {
+                            str.append(line).append('\n');
+                        }
+                        System.out.println(str);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    return false;
+                }
             } catch (Exception ex) {
                 return false;
             }
@@ -94,6 +115,7 @@ public class TestRPackages extends TestBase {
             try {
                 deleteDir(packageDir);
             } catch (Exception e) {
+                e.printStackTrace();
                 return false;
             }
             return true;
