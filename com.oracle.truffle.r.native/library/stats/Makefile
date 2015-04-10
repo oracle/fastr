@@ -21,12 +21,13 @@
 # questions.
 #
 
-LIB_PKG_PRE = lib/fft.o
+LIB_PKG_PRE = $(OBJ)/fft.o
 GNUR_FFT := $(GNUR_DIR)/src/library/stats/src/fft.c
 
 include ../lib.mk
 
-C_SOURCES := $(C_SOURCES) src/fft.c
+C_SOURCES := $(C_SOURCES) $(SRC)/fft.c
+C_OBJECTS := $(C_OBJECTS) $(OBJ)/fft.o
 
-src/fft.c: $(GNUR_FFT) src/ed_fft
+$(SRC)/fft.c: $(GNUR_FFT) src/ed_fft
 	ed $(GNUR_FFT) < src/ed_fft
