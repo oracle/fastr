@@ -323,6 +323,7 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ vector(\"numeric\") }");
         assertEval("{ vector(\"numeric\", length=4) }");
         assertEval("{ vector(length=3) }");
+        assertEval("{ x<-as.vector(3); y<-vector(length=x) }");
     }
 
     @Test

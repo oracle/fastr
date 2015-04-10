@@ -17395,6 +17395,11 @@ public class AllTests extends TestBase {
     }
 
     @Test
+    public void TestSimpleBuiltins_testVectorConstructor_8a7ca116eb05f15d73e9d7ac5b4a272a() {
+        assertEval("{ x<-as.vector(3); y<-vector(length=x) }");
+    }
+
+    @Test
     public void TestSimpleBuiltins_testWhich_abb40fde89cc0dfbb69ec73c399e9ee0() {
         assertEval("{ which(c(TRUE, FALSE, NA, TRUE)) }");
     }
