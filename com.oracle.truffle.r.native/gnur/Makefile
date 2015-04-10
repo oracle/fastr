@@ -45,4 +45,3 @@ else
 cleangnur:
 	$(MAKE) -f Makefile.gnur clean
 endif
-	
