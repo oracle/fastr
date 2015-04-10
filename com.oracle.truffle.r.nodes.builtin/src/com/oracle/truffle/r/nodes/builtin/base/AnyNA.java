@@ -46,7 +46,7 @@ public abstract class AnyNA extends RBuiltinNode {
     protected Object anyNA(VirtualFrame frame, Object x, byte recursive) {
         if (RRuntime.fromLogical(recursive)) {
             CompilerDirectives.transferToInterpreter();
-            throw RError.nyi(getEncapsulatingSourceSection(), "recursive = TRUE not implemented");
+            throw RError.nyi(getEncapsulatingSourceSection(), "recursive = TRUE");
         }
         return any.execute(frame, isna.execute(frame, x));
     }

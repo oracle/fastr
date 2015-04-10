@@ -67,7 +67,7 @@ public abstract class Attributes extends RBuiltinNode {
                 return createResult((RAttributable) object, false);
             }
         } else {
-            throw RError.nyi(getEncapsulatingSourceSection(), ": object cannot be attributed");
+            throw RError.nyi(getEncapsulatingSourceSection(), "object cannot be attributed");
         }
     }
 

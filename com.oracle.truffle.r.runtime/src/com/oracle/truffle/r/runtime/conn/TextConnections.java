@@ -65,7 +65,7 @@ public class TextConnections {
                     delegate = new TextWriteRConnection(this);
                     break;
                 default:
-                    throw RError.nyi((SourceSection) null, "unimplemented open mode: " + getOpenMode().modeString);
+                    throw RError.nyi((SourceSection) null, "open mode: " + getOpenMode().modeString);
             }
             setDelegate(delegate);
         }
@@ -130,21 +130,21 @@ public class TextConnections {
 
         @Override
         public int readBin(ByteBuffer buffer) throws IOException {
-            throw RError.nyi(null, " readBin on text connection");
+            throw RError.nyi(null, "readBin on text connection");
         }
 
         @Override
         public byte[] readBinChars() throws IOException {
-            throw RError.nyi(null, " readBinChars on text connection");
+            throw RError.nyi(null, "readBinChars on text connection");
         }
 
         @Override
         public String readChar(int nchars, boolean useBytes) throws IOException {
-            throw RError.nyi(null, " readChar on text connection");
+            throw RError.nyi(null, "readChar on text connection");
         }
 
         public String[] getValue() {
-            throw RError.nyi(null, " textConnectionValue");
+            throw RError.nyi(null, "textConnectionValue");
         }
 
     }
@@ -240,16 +240,16 @@ public class TextConnections {
 
         @Override
         public void writeChar(String s, int pad, String eos, boolean useBytes) throws IOException {
-            throw RError.nyi(null, " writeChar on text connection");
+            throw RError.nyi(null, "writeChar on text connection");
         }
 
         @Override
         public void writeBin(ByteBuffer buffer) throws IOException {
-            throw RError.nyi(null, " writeBin on text connection");
+            throw RError.nyi(null, "writeBin on text connection");
         }
 
         public String[] getValue() {
-            throw RError.nyi(null, " textConnectionValue");
+            throw RError.nyi(null, "textConnectionValue");
         }
 
     }

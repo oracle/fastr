@@ -67,14 +67,14 @@ public class GrepFunctions {
         protected void valueCheck(byte value) {
             if (RRuntime.fromLogical(value)) {
                 errorProfile.enter();
-                throw RError.nyi(getEncapsulatingSourceSection(), "value == true is not implemented");
+                throw RError.nyi(getEncapsulatingSourceSection(), "value == true");
             }
         }
 
         protected void checkNotImplemented(boolean condition, String arg, boolean b) {
             if (condition) {
                 errorProfile.enter();
-                throw RError.nyi(getEncapsulatingSourceSection(), arg + " == " + b + " not implemented");
+                throw RError.nyi(getEncapsulatingSourceSection(), arg + " == " + b);
             }
         }
 

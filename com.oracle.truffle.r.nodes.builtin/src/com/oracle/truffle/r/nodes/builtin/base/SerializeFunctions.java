@@ -118,7 +118,7 @@ public class SerializeFunctions {
         @Specialization
         protected Object serializeB(VirtualFrame frame, Object object, RConnection conn, byte xdrLogical, RNull version, RNull refhook) {
             if (!RRuntime.fromLogical(xdrLogical)) {
-                throw RError.nyi(getEncapsulatingSourceSection(), " xdr==FALSE");
+                throw RError.nyi(getEncapsulatingSourceSection(), "xdr==FALSE");
             }
             return doSerializeToConn(object, conn, RRuntime.LOGICAL_FALSE, xdrLogical, version, refhook, RArguments.getDepth(frame));
         }

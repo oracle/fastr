@@ -53,7 +53,7 @@ public class LocaleFunctions {
                 case 8: // "LC_PAPER"
                 case 9: // "LC_MEASUREMENT"
                 default:
-                    RError.nyi(getEncapsulatingSourceSection(), "category not implemented: " + category);
+                    RError.nyi(getEncapsulatingSourceSection(), "category " + category);
 
             }
             return RNull.instance;

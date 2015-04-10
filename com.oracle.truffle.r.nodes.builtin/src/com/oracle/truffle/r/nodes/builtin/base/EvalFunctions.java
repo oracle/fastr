@@ -86,7 +86,7 @@ public class EvalFunctions {
         @Fallback
         @TruffleBoundary
         protected Object doEval(Object expr, Object envir, Object enclos) {
-            throw RError.nyi(getEncapsulatingSourceSection(), " eval arg type");
+            throw RError.nyi(getEncapsulatingSourceSection(), "eval arg type");
         }
     }
 

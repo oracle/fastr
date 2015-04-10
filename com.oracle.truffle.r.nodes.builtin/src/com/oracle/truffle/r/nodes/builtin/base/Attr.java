@@ -152,7 +152,7 @@ public abstract class Attr extends RBuiltinNode {
             return attrRA((RAttributable) object, intern(sname));
         } else {
             errorProfile.enter();
-            throw RError.nyi(getEncapsulatingSourceSection(), ": object cannot be attributed");
+            throw RError.nyi(getEncapsulatingSourceSection(), "object cannot be attributed");
         }
     }
 

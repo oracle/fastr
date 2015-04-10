@@ -37,7 +37,7 @@ public abstract class SystemFunction extends RBuiltinNode {
     @TruffleBoundary
     public Object system(RAbstractStringVector command, byte intern) {
         if (RRuntime.fromLogical(intern)) {
-            throw RError.nyi(getEncapsulatingSourceSection(), " intern");
+            throw RError.nyi(getEncapsulatingSourceSection(), ".Internal(system)");
         }
         String shell = REnvVars.get("SHELL");
         if (shell == null) {

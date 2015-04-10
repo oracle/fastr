@@ -257,7 +257,7 @@ public class SysFunctions {
         @TruffleBoundary
         protected Object sysChmod(RAbstractStringVector pathVec, Object octmode, byte useUmask) {
             controlVisibility();
-            throw RError.nyi(getEncapsulatingSourceSection(), " Sys.chmod");
+            throw RError.nyi(getEncapsulatingSourceSection(), "Sys.chmod");
         }
 
     }
@@ -270,7 +270,7 @@ public class SysFunctions {
         @TruffleBoundary
         protected Object sysChmod(Object octmode) {
             controlVisibility();
-            throw RError.nyi(getEncapsulatingSourceSection(), " Sys.umask");
+            throw RError.nyi(getEncapsulatingSourceSection(), "Sys.umask");
         }
 
     }
@@ -334,7 +334,7 @@ public class SysFunctions {
                     ArrayList<Path> components = components(path);
                     if (components.size() > 1) {
                         // No easy way to do this in a single shot
-                        throw RError.nyi(getEncapsulatingSourceSection(), " glob on dir");
+                        throw RError.nyi(getEncapsulatingSourceSection(), "glob on dir");
                     } else {
                         try (Stream<Path> stream = Files.find(fileSystem.getPath(""), 1, new FileMatcher(pathPattern))) {
                             Iterator<Path> iter = stream.iterator();

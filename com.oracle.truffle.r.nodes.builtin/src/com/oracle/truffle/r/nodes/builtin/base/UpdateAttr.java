@@ -216,7 +216,7 @@ public abstract class UpdateAttr extends RInvisibleBuiltinNode {
             return object;
         } else {
             errorProfile.enter();
-            throw RError.nyi(getEncapsulatingSourceSection(), ": object cannot be attributed");
+            throw RError.nyi(getEncapsulatingSourceSection(), "object cannot be attributed");
         }
     }
 }

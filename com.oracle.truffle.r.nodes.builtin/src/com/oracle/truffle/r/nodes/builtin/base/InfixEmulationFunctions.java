@@ -56,7 +56,7 @@ public class InfixEmulationFunctions {
 
     public abstract static class ErrorAdapter extends RBuiltinNode {
         protected RError nyi() throws RError {
-            throw RError.nyi(getEncapsulatingSourceSection(), "");
+            throw RError.nyi(getEncapsulatingSourceSection(), String.valueOf(getBuiltin()));
         }
     }
 

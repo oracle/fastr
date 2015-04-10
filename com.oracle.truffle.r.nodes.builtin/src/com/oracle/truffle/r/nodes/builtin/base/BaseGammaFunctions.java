@@ -35,7 +35,7 @@ public class BaseGammaFunctions {
     public abstract static class Gamma extends RBuiltinNode {
         @Specialization
         protected RDoubleVector lgamma(@SuppressWarnings("unused") RAbstractDoubleVector x) {
-            throw RError.nyi(getEncapsulatingSourceSection(), " gamma");
+            throw RError.nyi(getEncapsulatingSourceSection(), "gamma");
         }
     }
 
@@ -43,7 +43,7 @@ public class BaseGammaFunctions {
     public abstract static class TriGamma extends RBuiltinNode {
         @Specialization
         protected RDoubleVector trigamma(@SuppressWarnings("unused") RAbstractDoubleVector x) {
-            throw RError.nyi(getEncapsulatingSourceSection(), " trigamma");
+            throw RError.nyi(getEncapsulatingSourceSection(), "trigamma");
         }
     }
 

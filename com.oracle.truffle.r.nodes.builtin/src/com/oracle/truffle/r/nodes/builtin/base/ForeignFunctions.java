@@ -565,7 +565,7 @@ public class ForeignFunctions {
             RDoubleVector y = argValues[1] == RNull.instance ? null : (RDoubleVector) argValues[1];
             int method = ((RIntVector) argValues[2]).getDataAt(0);
             if (method != 4) {
-                throw RError.nyi(getEncapsulatingSourceSection(), " method ");
+                throw RError.nyi(getEncapsulatingSourceSection(), "method");
             }
             boolean iskendall = RRuntime.fromLogical(castLogical(frame, castVector(frame, argValues[3])));
             return Covcor.getInstance().corcov(x, y, method, iskendall, !isCov, getEncapsulatingSourceSection());

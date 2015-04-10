@@ -285,7 +285,7 @@ public class TrigExpFunctions {
     public abstract static class Sinpi extends AdapterCall1 {
         @Specialization
         protected Object sinpi(@SuppressWarnings("unused") Object x) {
-            throw RError.nyi(getEncapsulatingSourceSection(), " sinpi");
+            throw RError.nyi(getEncapsulatingSourceSection(), "sinpi");
         }
     }
 
@@ -345,7 +345,7 @@ public class TrigExpFunctions {
         }
 
         private RError nyi() throws RError {
-            throw RError.nyi(getEncapsulatingSourceSection(), " cosh");
+            throw RError.nyi(getEncapsulatingSourceSection(), "cosh");
         }
     }
 
@@ -353,7 +353,7 @@ public class TrigExpFunctions {
     public abstract static class Cospi extends AdapterCall1 {
         @Specialization
         protected Object cospi(@SuppressWarnings("unused") Object x) {
-            throw RError.nyi(getEncapsulatingSourceSection(), " cospi");
+            throw RError.nyi(getEncapsulatingSourceSection(), "cospi");
         }
     }
 
@@ -413,7 +413,7 @@ public class TrigExpFunctions {
         }
 
         private RError nyi() throws RError {
-            throw RError.nyi(getEncapsulatingSourceSection(), " cosh");
+            throw RError.nyi(getEncapsulatingSourceSection(), "cosh");
         }
     }
 
@@ -421,7 +421,7 @@ public class TrigExpFunctions {
     public abstract static class Tanpi extends AdapterCall1 {
         @Specialization
         protected Object tanpi(@SuppressWarnings("unused") Object x) {
-            throw RError.nyi(getEncapsulatingSourceSection(), " tanpi");
+            throw RError.nyi(getEncapsulatingSourceSection(), "tanpi");
         }
     }
 
@@ -479,7 +479,7 @@ public class TrigExpFunctions {
         }
 
         private RError nyi() throws RError {
-            throw RError.nyi(getEncapsulatingSourceSection(), " asinh");
+            throw RError.nyi(getEncapsulatingSourceSection(), "asinh");
         }
     }
 
@@ -537,7 +537,7 @@ public class TrigExpFunctions {
         }
 
         private RError nyi() throws RError {
-            throw RError.nyi(getEncapsulatingSourceSection(), " acosh");
+            throw RError.nyi(getEncapsulatingSourceSection(), "acosh");
         }
     }
 
@@ -595,7 +595,7 @@ public class TrigExpFunctions {
         }
 
         private RError nyi() throws RError {
-            throw RError.nyi(getEncapsulatingSourceSection(), " atanh");
+            throw RError.nyi(getEncapsulatingSourceSection(), "atanh");
         }
     }
 

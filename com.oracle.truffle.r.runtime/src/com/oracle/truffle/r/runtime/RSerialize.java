@@ -588,7 +588,7 @@ public class RSerialize {
         private RStringVector inStringVec(boolean strsxp) throws IOException {
             if (!strsxp) {
                 if (stream.readInt() != 0) {
-                    throw RError.nyi(null, "names in persistent strings are not supported yet");
+                    throw RError.nyi(null, "names in persistent strings");
                 }
             }
             int len = stream.readInt();

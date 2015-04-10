@@ -148,7 +148,7 @@ public class SortFunctions {
         @SuppressWarnings("unused")
         @Fallback
         protected Object sort(Object vec, Object decreasing) {
-            throw RError.nyi(getEncapsulatingSourceSection(), " .Internal(sort)");
+            throw RError.nyi(getEncapsulatingSourceSection(), ".Internal(sort)");
         }
 
     }
@@ -168,12 +168,36 @@ public class SortFunctions {
 
     }
 
-    @RBuiltin(name = "psort", kind = INTERNAL, parameterNames = {"x", "decreasing"})
-    public abstract static class PartialSort extends RBuiltinNode {
+    @RBuiltin(name = "psort", kind = INTERNAL, parameterNames = {"x", "partial"})
+    public abstract static class PartialSort extends Adapter {
         @SuppressWarnings("unused")
         @Specialization
-        protected Object pSort(Object zz, Object naLast, Object decreasing) {
-            throw RError.nyi(getEncapsulatingSourceSection(), " .Internal(psort)");
+        protected RDoubleVector sort(RAbstractDoubleVector vec, Object partial) {
+            return jdkSort(vec, RRuntime.LOGICAL_FALSE);
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization
+        protected RIntVector sort(RAbstractIntVector vec, Object partial) {
+            return jdkSort(vec, RRuntime.LOGICAL_FALSE);
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization
+        protected RStringVector sort(RAbstractStringVector vec, Object partial) {
+            return jdkSort(vec, RRuntime.LOGICAL_FALSE);
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization
+        protected RLogicalVector sort(RAbstractLogicalVector vec, Object partial) {
+            return jdkSort(vec, RRuntime.LOGICAL_FALSE);
+        }
+
+        @SuppressWarnings("unused")
+        @Fallback
+        protected Object sort(Object x, Object partial) {
+            throw RError.nyi(getEncapsulatingSourceSection(), ".Internal(psort)");
         }
     }
 
@@ -182,7 +206,7 @@ public class SortFunctions {
         @SuppressWarnings("unused")
         @Specialization
         protected Object radixSort(Object zz, Object naLast, Object decreasing) {
-            throw RError.nyi(getEncapsulatingSourceSection(), " .Internal(raxdixsort)");
+            throw RError.nyi(getEncapsulatingSourceSection(), ".Internal(raxdixsort)");
         }
     }
 

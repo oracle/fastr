@@ -56,7 +56,7 @@ public abstract class Cat extends RInvisibleBuiltinNode {
     @Specialization
     protected RNull cat(VirtualFrame frame, RList args, RConnection conn, RAbstractStringVector sepVec, byte fill, @SuppressWarnings("unused") RNull labels, byte append) {
         if (RRuntime.fromLogical(fill) || RRuntime.fromLogical(append)) {
-            throw RError.nyi(getEncapsulatingSourceSection(), " fill/append = TRUE");
+            throw RError.nyi(getEncapsulatingSourceSection(), "fill/append = TRUE");
         }
         ensureToString();
         String sep = sepVec.getDataAt(0);

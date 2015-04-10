@@ -176,7 +176,7 @@ public final class RError extends RuntimeException {
         /**
          * Eventually this will go away, used only by {@link RError#nyi}.
          */
-        NYI("%s"),
+        NYI("not yet implemented: %s"),
         /**
          * {@code GENERIC} should only be used in the rare case where a known error is not
          * available.

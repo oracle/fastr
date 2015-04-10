@@ -94,7 +94,7 @@ public abstract class ConnectionFunctions {
         protected Object file(RAbstractStringVector description, RAbstractStringVector open, byte blocking, RAbstractStringVector encoding, byte raw) {
             controlVisibility();
             if (!RRuntime.fromLogical(blocking)) {
-                throw RError.nyi(getEncapsulatingSourceSection(), " non-blocking mode not supported");
+                throw RError.nyi(getEncapsulatingSourceSection(), "non-blocking mode not supported");
             }
             String path = removeFileURLPrefix(description.getDataAt(0));
             try {
@@ -784,7 +784,7 @@ public abstract class ConnectionFunctions {
                     } else if (object instanceof RRawVector) {
                         writeRaw((RAbstractRawVector) object, con, size, swap);
                     } else {
-                        throw RError.nyi(getEncapsulatingSourceSection(), " vector type");
+                        throw RError.nyi(getEncapsulatingSourceSection(), "vector type");
                     }
                 } catch (IOException x) {
                     throw RError.error(getEncapsulatingSourceSection(), RError.Message.ERROR_WRITING_CONNECTION, x.getMessage());
