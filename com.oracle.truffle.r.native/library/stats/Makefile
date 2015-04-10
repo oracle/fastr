@@ -24,7 +24,7 @@
 .PHONY: cleanfft
 
 LIB_PKG_PRE = $(OBJ)/fft.o
-GNUR_FFT := $(GNUR_DIR)/src/library/stats/src/fft.c
+GNUR_FFT := $(GNUR_HOME)/src/library/stats/src/fft.c
 CLEAN_PKG := cleanfft
 
 include ../lib.mk

@@ -23,12 +23,26 @@
 
 .PHONY: all clean
 
-all: 
+all: makegnur
 	$(MAKE) -f Makefile.gnur
 	$(MAKE) -f Makefile.platform
 	$(MAKE) -f Makefile.libs
 
-clean:
-	$(MAKE) -f Makefile.gnur clean
+ifeq "$(origin GNUR_HOME)" "environment"
+makegnur:
+else
+makegnur:
+	$(MAKE) -f Makefile.gnur
+endif
+
+clean: cleangnur
 	$(MAKE) -f Makefile.libs clean
 	$(MAKE) -f Makefile.platform clean
+
+ifeq "$(origin GNUR_HOME)" "environment"
+cleangnur:
+else
+cleangnur:
+	$(MAKE) -f Makefile.gnur clean
+endif
+	

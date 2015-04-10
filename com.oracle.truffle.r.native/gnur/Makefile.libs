@@ -37,13 +37,13 @@ all: $(TARGET_DIR) $(BLAS_TARGET) $(LAPACK_TARGET) $(PCRE_TARGET)
 $(TARGET_DIR):
 	mkdir -p $(TARGET_DIR)
 
-$(BLAS_TARGET): $(GNUR_DIR)/lib/libRblas$(DYLIB_EXT)
-	cp $(GNUR_DIR)/lib/libRblas$(DYLIB_EXT) $(BLAS_TARGET)
+$(BLAS_TARGET): $(GNUR_HOME)/lib/libRblas$(DYLIB_EXT)
+	cp $(GNUR_HOME)/lib/libRblas$(DYLIB_EXT) $(BLAS_TARGET)
 
-$(LAPACK_TARGET): $(GNUR_DIR)/lib/libRlapack$(DYLIB_EXT)
-	cp $(GNUR_DIR)/lib/libRlapack$(DYLIB_EXT) $(LAPACK_TARGET)
+$(LAPACK_TARGET): $(GNUR_HOME)/lib/libRlapack$(DYLIB_EXT)
+	cp $(GNUR_HOME)/lib/libRlapack$(DYLIB_EXT) $(LAPACK_TARGET)
 
-PCRE_OBJS := $(wildcard $(GNUR_DIR)/src/extra/pcre/pcre_*.o)
+PCRE_OBJS := $(wildcard $(GNUR_HOME)/src/extra/pcre/pcre_*.o)
 
 $(PCRE_TARGET): $(PCRE_OBJS) $(TOPDIR)/platform.mk
 	$(DYLIB_LD) $(DYLIB_LDFLAGS) -o $(PCRE_TARGET) $(PCRE_OBJS)

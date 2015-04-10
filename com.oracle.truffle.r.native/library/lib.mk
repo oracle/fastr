@@ -39,7 +39,7 @@ endif
 
 PKG = $(PACKAGE)
 
-ifeq ($(GNUR_DIR),)
+ifeq ($(GNUR_HOME),)
 $(error must be run from top-level)
 endif
 
@@ -72,8 +72,8 @@ endif
 
 libcommon: $(PKGDIR)
 
-$(PKGDIR): $(GNUR_DIR)/library/$(PKG)
-	(cd $(GNUR_DIR)/library; tar cf - $(PKG)) | (cd $(FASTR_LIBDIR); tar xf -)
+$(PKGDIR): $(GNUR_HOME)/library/$(PKG)
+	(cd $(GNUR_HOME)/library; tar cf - $(PKG)) | (cd $(FASTR_LIBDIR); tar xf -)
 	touch $(FASTR_LIBDIR)/$(PKG)
 
 $(C_OBJECTS): | $(OBJ)

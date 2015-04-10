@@ -21,13 +21,16 @@
 # questions.
 #
 
-.PHONY: all clean
+.PHONY: all clean makegnur cleangnur
 
 export TOPDIR = $(CURDIR)
 export R_VERSION = 3.1.3
-export GNUR_DIR = $(TOPDIR)/gnur/R-$(R_VERSION)
 
-all:
+ifndef GNUR_HOME
+export GNUR_HOME = $(TOPDIR)/gnur/R-$(R_VERSION)
+endif
+
+all: 
 	$(MAKE) -C gnur
 	$(MAKE) -C include
 	$(MAKE) -C builtinlibs
@@ -35,10 +38,11 @@ all:
 	$(MAKE) -C library
 	$(MAKE) -C run
 
-clean:
+clean: 
 	$(MAKE) -C include clean
 	$(MAKE) -C builtinlibs clean
 	$(MAKE) -C fficall clean
 	$(MAKE) -C library clean
 	$(MAKE) -C run clean
 	$(MAKE) -C gnur clean
+

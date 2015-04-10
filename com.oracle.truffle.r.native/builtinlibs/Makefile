@@ -40,7 +40,7 @@ OBJ = lib
 C_SOURCES := $(wildcard $(SRC)/*.c)
 
 C_OBJECTS := $(subst $(SRC),$(OBJ),$(C_SOURCES:.c=.o))
-F_OBJECTS := $(wildcard $(GNUR_DIR)/src/appl/d*.o)
+F_OBJECTS := $(wildcard $(GNUR_HOME)/src/appl/d*.o)
 
 LIBDIR := $(OBJ)
 LIB_APPL := $(OBJ)/libappl$(DYLIB_EXT)
