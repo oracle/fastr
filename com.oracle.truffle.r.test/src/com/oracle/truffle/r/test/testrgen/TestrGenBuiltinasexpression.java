@@ -19,7 +19,7 @@ public class TestrGenBuiltinasexpression extends TestBase {
 
     @Test
     public void testasexpression1() {
-        assertEval("argv <- structure(list(x = 1), .Names = \'x\');" + "do.call(\'as.expression\', argv)");
+        assertEval("argv <- structure(list(x = 1), .Names = 'x');do.call('as.expression', argv)");
     }
 
 }

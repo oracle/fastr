@@ -53,7 +53,7 @@ public class URLConnections {
                     delegate = new URLReadRConnection(this);
                     break;
                 default:
-                    throw RError.nyi((SourceSection) null, "unimplemented open mode: " + getOpenMode());
+                    throw RError.nyi((SourceSection) null, "open mode: " + getOpenMode());
             }
             setDelegate(delegate);
         }
@@ -71,12 +71,12 @@ public class URLConnections {
 
         @Override
         public int readBin(ByteBuffer buffer) throws IOException {
-            throw RError.nyi(null, " readBin on URL");
+            throw RError.nyi(null, "readBin on URL");
         }
 
         @Override
         public byte[] readBinChars() throws IOException {
-            throw RError.nyi(null, " readBinChars on URL");
+            throw RError.nyi(null, "readBinChars on URL");
         }
 
         @Override

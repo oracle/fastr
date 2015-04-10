@@ -71,7 +71,7 @@ public abstract class UpdateAttr extends RInvisibleBuiltinNode {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             updateDimNames = insert(UpdateDimNamesFactory.create(new RNode[2], getBuiltin(), getSuppliedSignature()));
         }
-        return updateDimNames.executeList(frame, container, o);
+        return updateDimNames.executeRAbstractContainer(frame, container, o);
     }
 
     private RAbstractIntVector castInteger(VirtualFrame frame, RAbstractVector vector) {
@@ -216,7 +216,7 @@ public abstract class UpdateAttr extends RInvisibleBuiltinNode {
             return object;
         } else {
             errorProfile.enter();
-            throw RError.nyi(getEncapsulatingSourceSection(), ": object cannot be attributed");
+            throw RError.nyi(getEncapsulatingSourceSection(), "object cannot be attributed");
         }
     }
 }

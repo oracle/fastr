@@ -14,6 +14,9 @@ import java.io.*;
 import java.net.*;
 import java.nio.file.*;
 import java.nio.file.attribute.*;
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.regex.*;
 
 import static org.junit.Assert.fail;
 
@@ -35,6 +38,35 @@ import com.oracle.truffle.r.test.generate.*;
  * in the {@link #afterTest()} method.
  */
 public class TestBase {
+
+    private static final boolean ProcessFailedTests = Boolean.getBoolean("ProcessFailedTests");
+
+    public static enum Output implements TestTrait {
+        ContainsError,
+        ContainsWarning,
+        MayContainError,
+        MayContainWarning;
+    }
+
+    public static enum Ignored implements TestTrait {
+        Unknown("failing tests that have not been classified yet"),
+        Unstable("tests that produce inconsistent results in GNUR"),
+        OutputFormatting("tests that fail because of problems with output formatting"),
+        ParserError("tests that fail because of bugs in the parser"),
+        SideEffects("tests that are ignored because they would interfere with other tests"),
+        Unimplemented("tests that fail because of missing functionality");
+
+        private final String description;
+
+        private Ignored(String description) {
+            this.description = description;
+        }
+
+        public String getDescription() {
+            return description;
+        }
+    }
+
     /**
      * Instantiated by the mx {@code JUnit} wrapper. The arguments are passed in the constructor and
      * must be a comma-separated list of strings, i.e.:
@@ -143,9 +175,8 @@ public class TestBase {
         @Override
         public void testStarted(Description description) {
             testElementName = description.getClassName() + "." + description.getMethodName();
-            microTestFailed = false;
+            failedMicroTests = new ArrayList<>();
         }
-
     }
 
     @Before
@@ -247,10 +278,20 @@ public class TestBase {
     private static String testElementName;
 
     /**
-     * Set {@code false} at the start of a JUnit test, then set to {@code true} if a micro-test
-     * fails.
+     * Emptied at the start of a JUnit test, each failed micro test will be added to the list.
      */
-    protected static boolean microTestFailed;
+    private static ArrayList<String> failedMicroTests;
+
+    private static ArrayList<String> unexpectedSuccessfulMicroTests = new ArrayList<>();
+
+    private static SortedMap<String, Integer> exceptionCounts = new TreeMap<>();
+
+    private static int successfulTestCount;
+    private static int ignoredTestCount;
+    private static int failedTestCount;
+    private static int successfulInputCount;
+    private static int ignoredInputCount;
+    private static int failedInputCount;
 
     /**
      * A way to limit which tests are actually run. TODO requires more JUnit support for filtering
@@ -266,26 +307,10 @@ public class TestBase {
 
     protected static final String ERROR = "Error";
     protected static final String WARNING = "Warning message";
-    private static final String MISSING_WARNING = "MISSING WARNING";
-
-    private static WhiteList errorWhiteList;
-
-    protected static void registerErrorWhiteList(WhiteList whiteList) {
-        errorWhiteList = whiteList;
-    }
-
-    /*
-     * The following methods should be used by test subclasses. Why so many variants that take a
-     * single input argument? Partly it is to make clear the expectation of the test writer, e.g.
-     * assertEvalError, even though this can be deduced from the expected output. Partly this is to
-     * assist the TestGenerator; for example a test that produces no output will timeout, which the
-     * test generator will consider an error unless it is expecting it. N.B. This is no longer an
-     * issue with the one-shot GnuR session.
-     */
 
     /**
-     * If this is set to {@code true}, {@link #assertEvalError} will compare the full output instead
-     * of truncating leading "Error" strings and such. This means it will behave like
+     * If this is set to {@code true}, {@link Output#ContainsError} will compare the full output
+     * instead of truncating leading "Error" strings and such. This means it will behave like
      * {@link #assertEval}.
      */
     private static final boolean FULL_COMPARE_ERRORS = false;
@@ -295,149 +320,32 @@ public class TestBase {
      * match, so any warnings or errors will cause a failure until FastR matches GnuR in that
      * respect.
      */
-    protected static void assertEval(String input) {
-        evalAndCompare(input, "assertEval");
+    protected void assertEval(String... input) {
+        evalAndCompare(input);
     }
 
-    /**
-     * Test a given string with R source against no expected output (e.g., assignment). This method
-     * is named differently so that the test generator is prepared for no output.
-     */
-    protected static void assertEvalNoOutput(String input) {
-        evalAndCompare(input, "assertEvalNoOutput");
+    protected void assertEval(TestTrait trait1, String... input) {
+        evalAndCompare(input, trait1);
     }
 
-    /**
-     * Test a given R input against expected output without a newline. This method is named
-     * differently so that the test generator is prepared for the lack of newline.
-     */
-    protected static void assertEvalNoNL(String input) {
-        evalAndCompare(input, "assertEvalNoNL");
+    protected void assertEval(TestTrait trait1, TestTrait trait2, String... input) {
+        evalAndCompare(input, trait1, trait2);
     }
 
-    /**
-     * Test a given R input where an error is expected.
-     */
-    protected static void assertEvalError(String input) {
-        if (FULL_COMPARE_ERRORS) {
-            assertEval(input);
-        } else {
-            assertEvalErrorOrWarning(input, "assertEvalError");
-        }
+    protected void assertEval(TestTrait trait1, TestTrait trait2, TestTrait trait3, String... input) {
+        evalAndCompare(input, trait1, trait2, trait3);
     }
 
-    /**
-     * Similar to {@link #assertEvalError} but for warnings.
-     */
-    protected static void assertEvalWarning(String input) {
-        assertEvalErrorOrWarning(input, "assertEvalWarning");
+    protected void assertEval(TestTrait trait1, TestTrait trait2, TestTrait trait3, TestTrait trait4, String... input) {
+        evalAndCompare(input, trait1, trait2, trait3, trait4);
     }
 
-    /**
-     * Should produce an error and a warning.
-     */
-    protected static void assertEvalErrorWarning(String input) {
-        assertEvalErrorAndWarning(input, "assertEvalErrorWarning");
+    protected void assertEval(TestTrait trait1, TestTrait trait2, TestTrait trait3, TestTrait trait4, TestTrait trait5, String... input) {
+        evalAndCompare(input, trait1, trait2, trait3, trait4, trait5);
     }
 
-    protected static void assertEvalNoWarnings(String input) {
-        evalAndCompare(input, "assertEvalNoWarnings");
-    }
-
-    /**
-     * A variant that handles tests where the order of printing might (legitimately) be different.
-     * In this case the alternatives are explicitly provided, one of which must match the expected
-     * output. This is the one remaining case where the expected outputs are explicitly provided
-     * with the test, but we do compare them with the generated expected output as a sanity check.
-     */
-    protected static void assertEvalAlt(String input, String... expectedResults) {
-        String expected = expectedEval(input, null, "assertEvalAlt");
-        if (generatingExpected()) {
-            return;
-        }
-        // Validate that one of explicitly provided expectedResults matches expected!
-        boolean ok = false;
-        for (String er : expectedResults) {
-            if (er.equals(expected)) {
-                ok = true;
-                break;
-            }
-        }
-        assertTrue(ok);
-        // Now validate our result
-        String result = fastREval(input);
-        ok = false;
-        for (String er : expectedResults) {
-            if (er.equals(result)) {
-                ok = true;
-                break;
-            }
-        }
-        assertTrue(ok);
-    }
-
-    /**
-     * Variant where the expressions to be checked are generated from a template. Tests may cause
-     * errors and/or warnings.
-     *
-     * @param expressions
-     */
-    protected static void assertTemplateEval(String... expressions) {
-        assertTemplateEval(null, expressions);
-    }
-
-    protected static void assertTemplateEval(WhiteList whiteList, String... expressions) {
-        int index = 1;
-        for (String expression : expressions) {
-            String expected = expectedEval(expression, null, "assertTemplateEval");
-            if (!generatingExpected()) {
-                boolean ok = true; // assume ok
-                String result = fastREval(expression);
-                // We have no context to tell us whether an error, warning or both is expected,
-                // so we have to used the generated expected output.
-                boolean expectedIsError = expected.startsWith(ERROR);
-                boolean expectedHasWarning = expected.contains(WARNING);
-                if (expectedIsError && expectedHasWarning) {
-                    ok = checkErrorAndWarning(expression, expected, result);
-                } else if (expectedIsError) {
-                    ok = checkErrorOrWarning(expression, expected, result, "assertEvalError");
-                } else if (expectedHasWarning) {
-                    ok = checkErrorOrWarning(expression, expected, result, "assertEvalWarning");
-                } else {
-                    if (!expected.equals(result)) {
-                        if (whiteList != null && whiteList.get(expression) != null) {
-                            WhiteList.Results results = whiteList.get(expression);
-                            assertTrue(results.expected.equals(cutLineEnding(expected)));
-                            if (results.fastR.equals(cutLineEnding(result))) {
-                                whiteList.markUsed(expression);
-                            } else {
-                                ok = assertFalse();
-                            }
-                        } else {
-                            if (keepTrailingWhiteSpace) {
-                                ok = assertFalse();
-                            } else {
-                                result = TestOutputManager.stripTrailingWhitespace(result);
-                                if (!expected.equals(result)) {
-                                    ok = assertFalse();
-                                }
-                            }
-                        }
-                    }
-                }
-                if (!ok) {
-                    System.out.print('E');
-                } else if ((index) % 100 == 0) {
-                    System.out.print('.');
-                }
-            }
-            index++;
-        }
-        if (!generatingExpected()) {
-            if (whiteList != null) {
-                whiteList.report();
-            }
-        }
+    protected void afterMicroTest() {
+        // empty
     }
 
     /*
@@ -451,8 +359,8 @@ public class TestBase {
      */
     @After
     public void afterTest() {
-        if (microTestFailed) {
-            fail("one or more micro-tests failed");
+        if (!failedMicroTests.isEmpty()) {
+            fail(failedMicroTests.size() + " micro-test(s) failed: \n  " + new TreeSet<>(failedMicroTests));
         }
     }
 
@@ -468,144 +376,188 @@ public class TestBase {
         return cwd.relativize(path);
     }
 
-    /**
-     * The method to call when a micro-test fails.
-     */
-    protected static boolean assertTrue(boolean truth) {
-        if (!truth) {
-            microTestFailed();
+    private static void microTestFailed() {
+        if (!ProcessFailedTests) {
+            System.err.printf("%nMicro-test failute: %s%n", getTestContext());
+            System.err.printf("%16s %s%n", "Expression:", microTestInfo.expression);
+            System.err.printf("%16s %s", "Expected output:", microTestInfo.expectedOutput);
+            System.err.printf("%16s %s%n", "FastR output:", microTestInfo.fastROutput);
+
+            failedMicroTests.add(getTestContext());
         }
-        return true;
     }
 
-    private static void microTestFailed() {
-        microTestFailed = true;
+    private static String getTestContext() {
         // We want the stack trace as if the JUnit test failed
-        try {
-            throw new AssertionError();
-        } catch (AssertionError ex) {
-            // The first method not in TestBase is the culprit
-            StackTraceElement culprit = null;
-            for (StackTraceElement se : ex.getStackTrace()) {
-                if (!se.getClassName().endsWith("TestBase")) {
-                    culprit = se;
-                    break;
+        RuntimeException ex = new RuntimeException();
+        // The first method not in TestBase is the culprit
+        StackTraceElement culprit = null;
+        for (StackTraceElement se : ex.getStackTrace()) {
+            if (!se.getClassName().endsWith("TestBase")) {
+                culprit = se;
+                break;
+            }
+        }
+        String context = String.format("%s(%s:%d)", culprit.getMethodName(), culprit.getClassName(), culprit.getLineNumber());
+        return context;
+    }
+
+    private void evalAndCompare(String[] inputs, TestTrait... traits) {
+        WhiteList[] whiteLists = TestTrait.collect(traits, WhiteList.class);
+
+        boolean ignored = TestTrait.contains(traits, Ignored.class) ^ (ProcessFailedTests && !TestTrait.contains(traits, Ignored.Unstable));
+
+        boolean containsWarning = TestTrait.contains(traits, Output.ContainsWarning);
+        boolean containsError = (!FULL_COMPARE_ERRORS && TestTrait.contains(traits, Output.ContainsError));
+        boolean mayContainWarning = TestTrait.contains(traits, Output.MayContainWarning);
+        boolean mayContainError = TestTrait.contains(traits, Output.MayContainError);
+
+        int index = 1;
+        boolean allOk = true;
+        for (String input : inputs) {
+            String expected = expectedEval(input);
+            if (ignored || generatingExpected()) {
+                ignoredInputCount++;
+            } else {
+                String result = fastREval(input);
+
+                boolean ok;
+                if (expected.equals(result) || searchWhiteLists(whiteLists, input, expected, result)) {
+                    ok = true;
+                } else {
+                    if (containsWarning || (mayContainWarning && expected.contains(WARNING))) {
+                        String resultWarning = getWarningMessage(result);
+                        String expectedWarning = getWarningMessage(expected);
+                        ok = resultWarning.equals(expectedWarning);
+                        result = getOutputWithoutWarning(result);
+                        expected = getOutputWithoutWarning(expected);
+                    } else {
+                        ok = true;
+                    }
+                    if (ok) {
+                        if (containsError || (mayContainError && expected.startsWith(ERROR))) {
+                            ok = result.startsWith(ERROR) && checkMessageStripped(expected, result);
+                        } else {
+                            ok = expected.equals(result);
+                        }
+                    }
+                }
+                if (ProcessFailedTests) {
+                    if (ok) {
+                        unexpectedSuccessfulMicroTests.add(getTestContext() + ": " + input);
+                    } else if (expected.startsWith(ERROR) && result.startsWith(ERROR)) {
+                        if (checkMessageStripped(expected, result)) {
+                            unexpectedSuccessfulMicroTests.add("<error> " + getTestContext() + ": " + input);
+                        }
+                    } else if (expected.contains(WARNING) && result.contains(WARNING)) {
+                        if (getOutputWithoutWarning(expected).equals(getOutputWithoutWarning(result)) && getWarningMessage(expected).equals(getWarningMessage(result))) {
+                            unexpectedSuccessfulMicroTests.add("<warning> " + getTestContext() + ": " + input);
+                        }
+                    }
+                }
+                if (ok) {
+                    successfulInputCount++;
+                } else {
+                    failedInputCount++;
+                    microTestFailed();
+                    System.out.print('E');
+                }
+                allOk &= allOk;
+                afterMicroTest();
+            }
+            if ((index) % 100 == 0) {
+                System.out.print('.');
+            }
+            index++;
+        }
+        if (ignored) {
+            ignoredTestCount++;
+        } else if (allOk) {
+            successfulTestCount++;
+        } else {
+            failedTestCount++;
+        }
+        if (!generatingExpected()) {
+            for (WhiteList list : whiteLists) {
+                list.report();
+            }
+        }
+    }
+
+    private static boolean searchWhiteLists(WhiteList[] whiteLists, String input, String expected, String result) {
+        for (WhiteList list : whiteLists) {
+            WhiteList.Results wlr = list.get(input);
+            if (wlr != null) {
+                if (!wlr.expected.equals(expected)) {
+                    System.out.println("expected output does not match: " + wlr.expected + " vs. " + expected);
+                    return false;
+                }
+                if (wlr.fastR.equals(result)) {
+                    list.markUsed(input);
+                    return true;
                 }
             }
-            // @formatter:off
-             System.err.printf("%nMicro-test failure: %s(%s:%d)%n",
-                            culprit.getMethodName(), culprit.getClassName(), culprit.getLineNumber());
-             System.err.printf("%16s %s%n", "Expression:", microTestInfo.expression);
-             System.err.printf("%16s %s", "Expected output:", microTestInfo.expectedOutput);
-             System.err.printf("%16s %s%n", "FastR output:", microTestInfo.fastROutput);
-            // @formatter:on
         }
-    }
-
-    protected static boolean assertFalse() {
-        assertTrue(false);
         return false;
     }
 
-    private static void evalAndCompare(String input, String invokeMethodName) {
-        String expected = expectedEval(input, null, invokeMethodName);
-        if (!generatingExpected()) {
-            String result = fastREval(input);
-            if (!expected.equals(result)) {
-                if (keepTrailingWhiteSpace) {
-                    assertFalse();
-                } else {
-                    result = TestOutputManager.stripTrailingWhitespace(result);
-                    assertTrue(expected.equals(result));
-                }
+    private static final Pattern warningPattern1 = Pattern.compile("^(?<pre>.*)Warning messages:\n1:(?<msg0>.*)\n2:(?<msg1>.*)\n3:(?<msg2>.*)\n4:(?<msg3>.*)5:(?<msg4>.*)$", Pattern.DOTALL);
+    private static final Pattern warningPattern2 = Pattern.compile("^(?<pre>.*)Warning messages:\n1:(?<msg0>.*)\n2:(?<msg1>.*)\n3:(?<msg2>.*)\n4:(?<msg3>.*)$", Pattern.DOTALL);
+    private static final Pattern warningPattern3 = Pattern.compile("^(?<pre>.*)Warning messages:\n1:(?<msg0>.*)\n2:(?<msg1>.*)\n3:(?<msg2>.*)$", Pattern.DOTALL);
+    private static final Pattern warningPattern4 = Pattern.compile("^(?<pre>.*)Warning messages:\n1:(?<msg0>.*)\n2:(?<msg1>.*)$", Pattern.DOTALL);
+    private static final Pattern warningPattern5 = Pattern.compile("^(?<pre>.*)Warning message:(?<msg0>.*)$", Pattern.DOTALL);
+
+    private static final Pattern warningMessagePattern = Pattern.compile("^\n? ? ?(?:In .* :[ \n])?(?<m>[^\n]*)\n?$", Pattern.DOTALL);
+
+    private static final Pattern[] warningPatterns = new Pattern[]{warningPattern1, warningPattern2, warningPattern3, warningPattern4, warningPattern5};
+
+    private static Matcher getWarningMatcher(String output) {
+        for (Pattern pattern : warningPatterns) {
+            Matcher matcher = pattern.matcher(output);
+            if (matcher.matches()) {
+                return matcher;
             }
         }
+        return null;
     }
 
-    /**
-     * Test a given string with R source against stored expected error/warning. This is specially
-     * named because, currently, FastR does not provide the 'context' output to the left of the ':',
-     * so we cannot do a simple exact match.
-     *
-     * Furthermore, sometimes GnuR includes a newline and whitespace after the ':', for who knows
-     * what reason, and FastR doesn't. Perhaps FastR shouldn't but perhaps it's a GnuR bug.
-     */
-    private static void assertEvalErrorOrWarning(String input, String kind) {
-        String expected = expectedEval(input, null, kind);
-        if (!generatingExpected()) {
-            String result = fastREval(input);
-            checkErrorOrWarning(input, expected, result, kind);
+    private static String getWarningMessage(String output) {
+        Matcher matcher = getWarningMatcher(output);
+        if (matcher == null) {
+            return "";
         }
-    }
-
-    /**
-     * Similar to {@link #assertEvalErrorOrWarning} but both an error and a warning are expected.
-     */
-    private static void assertEvalErrorAndWarning(String input, String kind) {
-        String expected = expectedEval(input, null, kind);
-        if (!generatingExpected()) {
-            String result = fastREval(input);
-            checkErrorAndWarning(input, expected, result);
-        }
-    }
-
-    private static boolean checkErrorOrWarning(String input, String expected, String result, String kind) {
-        boolean truth;
-        if (kind.equals("assertEvalError")) {
-            truth = assertTrue(result.startsWith(ERROR));
-        } else {
-            if (result.contains(WARNING)) {
-                return true;
-            } else {
-                if (errorWhiteList == null || errorWhiteList.get(input) == null) {
-                    return assertFalse();
-                } else {
-                    WhiteList.Results results = errorWhiteList.get(input);
-                    return assertTrue(results.fastR.equals(MISSING_WARNING));
-                }
+        StringBuilder str = new StringBuilder();
+        for (int i = 0; i < warningPatterns.length; i++) {
+            try {
+                String message = matcher.group("msg" + i);
+                Matcher messageMatcher = warningMessagePattern.matcher(message);
+                assert messageMatcher.matches() : "unexpected format in warning message: " + message;
+                str.append(messageMatcher.group("m").trim()).append('|');
+            } catch (IllegalArgumentException e) {
+                break;
             }
         }
-        if (truth) {
-            truth = checkMessageStripped(input, expected, result);
-        }
-        return truth;
+        return str.toString();
     }
 
-    private static boolean checkErrorAndWarning(String input, String expected, String result) {
-        boolean truth = assertTrue(result.startsWith(ERROR));
-        truth = truth && assertTrue(result.contains(WARNING));
-        if (truth) {
-            truth = checkMessageStripped(input, expected, result);
-        }
-        return truth;
+    private static String getOutputWithoutWarning(String output) {
+        Matcher matcher = getWarningMatcher(output);
+        return matcher != null ? matcher.group("pre") : output;
     }
 
     /**
      * Compares the actual error message, after removing any context before the ':' and after
      * removing whitespace.
      */
-    private static boolean checkMessageStripped(String input, String expected, String result) {
+    private static boolean checkMessageStripped(String expected, String result) {
         int cxr = result.lastIndexOf(':');
         int cxe = expected.lastIndexOf(':');
-        assertTrue(cxr > 0 && cxe > 0);
+        if (cxr < 0 || cxe < 0) {
+            return false;
+        }
         String resultStripped = stripWhitespace(result, cxr + 1);
         String expectedStripped = stripWhitespace(expected, cxe + 1);
-        if (resultStripped.equals(expectedStripped)) {
-            return true;
-        } else {
-            if (errorWhiteList == null) {
-                return assertFalse();
-            } else {
-                WhiteList.Results results = errorWhiteList.get(input);
-                String e = cutLineEnding(expectedStripped);
-                String f = cutLineEnding(resultStripped);
-                if (results == null) {
-                    return assertFalse();
-                } else {
-                    return assertTrue(e.equals(results.expected) && f.equals(results.fastR));
-                }
-            }
-        }
+        return resultStripped.equals(expectedStripped);
     }
 
     private static String stripWhitespace(String r, int ix) {
@@ -621,21 +573,25 @@ public class TestBase {
         return r.substring(x);
     }
 
-    private static String cutLineEnding(String s) {
-        return s.substring(0, s.length() - 1);
-    }
-
     /**
      * Evaluate {@code input} in FastR, returning all (virtual) console output that was produced.
      */
     protected static String fastREval(String input) {
         microTestInfo.expression = input;
-        String result = fastROutputManager.fastRSession.eval(input);
+        String result;
+        try {
+            result = fastROutputManager.fastRSession.eval(input);
+        } catch (Throwable e) {
+            String clazz = e.getClass().getSimpleName();
+            Integer count = exceptionCounts.get(clazz);
+            exceptionCounts.put(clazz, count == null ? 1 : count + 1);
+            result = e.toString();
+        }
         if (fastROutputManager.outputFile != null) {
             fastROutputManager.addTestResult(testElementName, input, result);
         }
         microTestInfo.fastROutput = result;
-        return result;
+        return TestOutputManager.prepareResult(result, keepTrailingWhiteSpace);
     }
 
     protected static boolean generatingExpected() {
@@ -646,22 +602,20 @@ public class TestBase {
      * Evaluate expected output from {@code input}. By default the lookup is based on {@code input}
      * but can be overridden by providing a non-null {@code testIdOrNull}.
      */
-    protected static String expectedEval(String input, String testIdOrNull, String invokeMethodName) {
+    protected static String expectedEval(String input) {
         assert !input.contains("\n") : "test input cannot contain newlines - not supported by ExpectedTestOutput.test file format";
-        String testId = testIdOrNull == null ? input : testIdOrNull;
         if (generatingExpected()) {
             // generation mode
-            return genTestResult(input, testIdOrNull, invokeMethodName);
+            return genTestResult(input);
         } else {
             // unit test mode
-            String expected = expectedOutputManager.getOutput(testId);
+            String expected = expectedOutputManager.getOutput(input);
             if (expected == null) {
                 // get the expected output dynamically (but do not update the file)
                 expectedOutputManager.createRSession();
-                expected = genTestResult(input, testIdOrNull, invokeMethodName);
+                expected = genTestResult(input);
                 if (expected == null) {
-                    assertTrue(false);
-                    expected = "NO EXPECTED OUTPUT";
+                    expected = "<<NO EXPECTED OUTPUT>>";
                 }
             }
             microTestInfo.expectedOutput = expected;
@@ -669,8 +623,8 @@ public class TestBase {
         }
     }
 
-    private static String genTestResult(String input, String testIdOrNull, String invokeMethodName) {
-        return expectedOutputManager.genTestResult(testElementName, invokeMethodName, input, testIdOrNull, localDiagnosticHandler, expectedOutputManager.checkOnly, !keepTrailingWhiteSpace);
+    private static String genTestResult(String input) {
+        return expectedOutputManager.genTestResult(testElementName, input, localDiagnosticHandler, expectedOutputManager.checkOnly, keepTrailingWhiteSpace);
     }
 
     protected static String[] template(String template, String[]... parameters) {
@@ -734,4 +688,32 @@ public class TestBase {
     }
 
     private static final DeleteVisitor DELETE_VISITOR = new DeleteVisitor();
+
+    static {
+        Runtime.getRuntime().addShutdownHook(new Thread() {
+            @Override
+            public void run() {
+                if (!unexpectedSuccessfulMicroTests.isEmpty()) {
+                    System.out.println("Unexpectedly successful tests:");
+                    for (String test : unexpectedSuccessfulMicroTests) {
+                        System.out.println(test);
+                    }
+                }
+                if (!exceptionCounts.isEmpty()) {
+                    System.out.println("Exceptions encountered during test runs:");
+                    for (Entry<String, Integer> entry : exceptionCounts.entrySet()) {
+                        System.out.println(entry);
+                    }
+                }
+                System.out.println("            tests | inputs");
+                System.out.printf("successful: %6d | %6d%n", successfulTestCount, successfulInputCount);
+                double successfulTestPercentage = 100 * successfulTestCount / (double) (successfulTestCount + failedTestCount + ignoredTestCount);
+                double successfulInputPercentage = 100 * successfulInputCount / (double) (successfulInputCount + failedInputCount + ignoredInputCount);
+                System.out.printf("            %5.1f%% | %5.1f%%%n", successfulTestPercentage, successfulInputPercentage);
+                System.out.printf("   ignored: %6d | %6d%n", ignoredTestCount, ignoredInputCount);
+                System.out.printf("    failed: %6d | %6d%n", failedTestCount, failedInputCount);
+            }
+        });
+
+    }
 }

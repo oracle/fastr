@@ -33,7 +33,7 @@ public abstract class CharMatch extends RBuiltinNode {
     protected RIntVector doCharMatch(RAbstractStringVector x, RAbstractStringVector table, RAbstractIntVector noMatch) {
         int noMatchValue = noMatch.getDataAt(0);
         int[] ans = new int[x.getLength()];
-        for (int i = 0; i < x.getLength(); ++i) {
+        for (int i = 0; i < x.getLength(); i++) {
             int matchIndex = RRuntime.INT_NA;
             boolean perfect = false;
             final String matchString = x.getDataAt(i);

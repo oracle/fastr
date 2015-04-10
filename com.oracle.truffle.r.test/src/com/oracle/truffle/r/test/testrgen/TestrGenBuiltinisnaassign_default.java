@@ -19,13 +19,12 @@ public class TestrGenBuiltinisnaassign_default extends TestBase {
 
     @Test
     public void testisnaassign_default1() {
-        assertEval("argv <- structure(list(x = 9L, value = TRUE), .Names = c(\'x\',     \'value\'));" + "do.call(\'is.na<-.default\', argv)");
+        assertEval("argv <- structure(list(x = 9L, value = TRUE), .Names = c('x',     'value'));do.call('is.na<-.default', argv)");
     }
 
     @Test
-    @Ignore
     public void testisnaassign_default2() {
-        assertEval("argv <- structure(list(x = structure(c(\'A\', \'3\', \'C\'), class = \'AsIs\'),     value = 2), .Names = c(\'x\', \'value\'));" + "do.call(\'is.na<-.default\', argv)");
+        assertEval(Ignored.Unknown, "argv <- structure(list(x = structure(c('A', '3', 'C'), class = 'AsIs'),     value = 2), .Names = c('x', 'value'));do.call('is.na<-.default', argv)");
     }
 
 }

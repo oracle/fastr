@@ -15,14 +15,11 @@ import com.oracle.truffle.r.test.*;
 
 // Checkstyle: stop line length check
 
-                                                                 public class TestrGenBuiltinshQuote extends TestBase {
+public class TestrGenBuiltinshQuote extends TestBase {
 
-	@Test
-    @Ignore
-	public void testshQuote1() {
-		assertEval("argv <- structure(list(string = c(\'ABC\', \'\\'123\\'\', \'a'b\'), type = \'cmd\'),     .Names = c(\'string\', \'type\'));"+
-			"do.call(\'shQuote\', argv)");
-	}
+    @Test
+    public void testshQuote1() {
+        assertEval(Ignored.Unknown, "argv <- structure(list(string = c('ABC', '\\'123\\'', 'a'b'), type = 'cmd'),     .Names = c('string', 'type'));do.call('shQuote', argv)");
+    }
 
 }
-

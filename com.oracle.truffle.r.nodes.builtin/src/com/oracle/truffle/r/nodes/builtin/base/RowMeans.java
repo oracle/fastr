@@ -72,14 +72,14 @@ public abstract class RowMeans extends RBuiltinNode {
         double[] result = new double[rowNum];
         boolean isComplete = true;
         na.enable(x);
-        for (int i = 0; i < rowNum; ++i) {
+        for (int i = 0; i < rowNum; i++) {
             double sum = 0;
             int nonNaNumCount = 0;
-            for (int c = 0; c < colNum; ++c) {
+            for (int c = 0; c < colNum; c++) {
                 double el = x.getDataAt(c * rowNum + i);
                 if (!na.check(el) && !Double.isNaN(el)) {
                     sum = add.op(sum, el);
-                    ++nonNaNumCount;
+                    nonNaNumCount++;
                 }
             }
             if (nonNaNumCount == 0) {
@@ -120,14 +120,14 @@ public abstract class RowMeans extends RBuiltinNode {
         double[] result = new double[rowNum];
         boolean isComplete = true;
         na.enable(x);
-        for (int i = 0; i < rowNum; ++i) {
+        for (int i = 0; i < rowNum; i++) {
             double sum = 0;
             int nonNaNumCount = 0;
-            for (int c = 0; c < colNum; ++c) {
+            for (int c = 0; c < colNum; c++) {
                 byte el = x.getDataAt(c * rowNum + i);
                 if (!na.check(el)) {
                     sum = add.op(sum, el);
-                    ++nonNaNumCount;
+                    nonNaNumCount++;
                 }
             }
             if (nonNaNumCount == 0) {
@@ -168,14 +168,14 @@ public abstract class RowMeans extends RBuiltinNode {
         double[] result = new double[rowNum];
         boolean isComplete = true;
         na.enable(x);
-        for (int i = 0; i < rowNum; ++i) {
+        for (int i = 0; i < rowNum; i++) {
             double sum = 0;
             int nonNaNumCount = 0;
-            for (int c = 0; c < colNum; ++c) {
+            for (int c = 0; c < colNum; c++) {
                 int el = x.getDataAt(c * rowNum + i);
                 if (!na.check(el)) {
                     sum = add.op(sum, el);
-                    ++nonNaNumCount;
+                    nonNaNumCount++;
                 }
             }
             if (nonNaNumCount == 0) {

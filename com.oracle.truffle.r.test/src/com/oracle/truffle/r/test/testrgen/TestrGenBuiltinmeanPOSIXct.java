@@ -15,14 +15,11 @@ import com.oracle.truffle.r.test.*;
 
 // Checkstyle: stop line length check
 
-                                                                 public class TestrGenBuiltinmeanPOSIXct extends TestBase {
+public class TestrGenBuiltinmeanPOSIXct extends TestBase {
 
-	@Test
-    @Ignore
-	public void testmeanPOSIXct1() {
-		assertEval("argv <- structure(list(x = structure(1412795929.08562, class = c(\'POSIXct\',     \'POSIXt\'))), .Names = \'x\');"+
-			"do.call(\'mean.POSIXct\', argv)");
-	}
+    @Test
+    public void testmeanPOSIXct1() {
+        assertEval(Ignored.Unknown, "argv <- structure(list(x = structure(1412795929.08562, class = c('POSIXct',     'POSIXt'))), .Names = 'x');do.call('mean.POSIXct', argv)");
+    }
 
 }
-

@@ -19,17 +19,17 @@ public class TestrGenBuiltinaslogical extends TestBase {
 
     @Test
     public void testaslogical1() {
-        assertEval("argv <- list(structure(c(0L, 0L, 0L, 1L), .Names = c(\'Y\', \'B\', \'V\', \'N\')));as.logical(argv[[1]]);");
+        assertEval("argv <- list(structure(c(0L, 0L, 0L, 1L), .Names = c('Y', 'B', 'V', 'N')));as.logical(argv[[1]]);");
     }
 
     @Test
     public void testaslogical2() {
-        assertEval("argv <- list(structure(c(-4, 1), .Names = c(\'\', \'\')));as.logical(argv[[1]]);");
+        assertEval("argv <- list(structure(c(-4, 1), .Names = c('', '')));as.logical(argv[[1]]);");
     }
 
     @Test
     public void testaslogical3() {
-        assertEval("argv <- list(structure(c(1L, 0L, 0L, 0L, 0L), .Names = c(\'bibtype\', NA, NA, NA, NA)));as.logical(argv[[1]]);");
+        assertEval("argv <- list(structure(c(1L, 0L, 0L, 0L, 0L), .Names = c('bibtype', NA, NA, NA, NA)));as.logical(argv[[1]]);");
     }
 
     @Test
@@ -39,7 +39,7 @@ public class TestrGenBuiltinaslogical extends TestBase {
 
     @Test
     public void testaslogical7() {
-        assertEval("argv <- list(\'FALSE\');as.logical(argv[[1]]);");
+        assertEval("argv <- list('FALSE');as.logical(argv[[1]]);");
     }
 
     @Test
@@ -59,12 +59,12 @@ public class TestrGenBuiltinaslogical extends TestBase {
 
     @Test
     public void testaslogical11() {
-        assertEval("argv <- list(structure(\'TRUE\', .Names = \'.registration\'));as.logical(argv[[1]]);");
+        assertEval("argv <- list(structure('TRUE', .Names = '.registration'));as.logical(argv[[1]]);");
     }
 
     @Test
     public void testaslogical12() {
-        assertEval("argv <- list(structure(c(0, 1, 2, 2), .Dim = c(4L, 1L), .Dimnames = list(c(\'Y\', \'B\', \'V\', \'N\'), NULL)));as.logical(argv[[1]]);");
+        assertEval("argv <- list(structure(c(0, 1, 2, 2), .Dim = c(4L, 1L), .Dimnames = list(c('Y', 'B', 'V', 'N'), NULL)));as.logical(argv[[1]]);");
     }
 
     @Test
@@ -74,12 +74,12 @@ public class TestrGenBuiltinaslogical extends TestBase {
 
     @Test
     public void testaslogical14() {
-        assertEval("argv <- list(structure(list(a = 1), .Names = \'a\'));as.logical(argv[[1]]);");
+        assertEval("argv <- list(structure(list(a = 1), .Names = 'a'));as.logical(argv[[1]]);");
     }
 
     @Test
     public void testaslogical15() {
-        assertEval("argv <- list(structure(list(c0 = structure(integer(0), .Label = character(0), class = \'factor\')), .Names = \'c0\', row.names = character(0), class = \'data.frame\'));as.logical(argv[[1]]);");
+        assertEval("argv <- list(structure(list(c0 = structure(integer(0), .Label = character(0), class = 'factor')), .Names = 'c0', row.names = character(0), class = 'data.frame'));as.logical(argv[[1]]);");
     }
 
     @Test
@@ -87,4 +87,3 @@ public class TestrGenBuiltinaslogical extends TestBase {
         assertEval("argv <- list(c(1, 2, 3, 4, 5, NA, NA, 2, 3, 4, 5, 6));as.logical(argv[[1]]);");
     }
 }
-

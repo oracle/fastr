@@ -15,14 +15,13 @@ import com.oracle.truffle.r.test.*;
 
 // Checkstyle: stop line length check
 
-                                                                 public class TestrGenBuiltinproptable extends TestBase {
+public class TestrGenBuiltinproptable extends TestBase {
 
-	@Test
-    @Ignore
-	public void testproptable1() {
-		assertEval("argv <- structure(list(x = structure(c(15L, 37L, 30L, 18L, 12L,     30L, 64L, 44L), .Dim = c(4L, 2L), .Dimnames = structure(list(Evaluation = c(\'very good\',     \'good\', \'bad\', \'very bad\'), Location = c(\'city centre\', \'suburbs\')),     .Names = c(\'Evaluation\', \'Location\'))), margin = 2), .Names = c(\'x\',     \'margin\'));"+
-			"do.call(\'prop.table\', argv)");
-	}
+    @Test
+    public void testproptable1() {
+        assertEval(Ignored.Unknown,
+                        "argv <- structure(list(x = structure(c(15L, 37L, 30L, 18L, 12L,     30L, 64L, 44L), .Dim = c(4L, 2L), .Dimnames = structure(list(Evaluation = c('very good',     'good', 'bad', 'very bad'), Location = c('city centre', 'suburbs')),     .Names = c('Evaluation', 'Location'))), margin = 2), .Names = c('x',     'margin'));"
+                                        + "do.call('prop.table', argv)");
+    }
 
 }
-

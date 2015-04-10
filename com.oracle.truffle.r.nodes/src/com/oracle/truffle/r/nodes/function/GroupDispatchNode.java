@@ -39,6 +39,8 @@ public final class GroupDispatchNode extends RNode {
 
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
     private final ConditionProfile mismatchProfile = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile isObjectProfile = ConditionProfile.createBinaryProfile();
+    private final ValueProfile argTypeProfile = ValueProfile.createClassProfile();
 
     public GroupDispatchNode(String genericName, RGroupGenerics group, CallArgumentsNode callArgNode) {
         this.genericName = genericName.intern();
@@ -92,8 +94,9 @@ public final class GroupDispatchNode extends RNode {
     }
 
     protected RStringVector getArgClass(Object arg) {
-        if (arg instanceof RAbstractContainer && ((RAbstractContainer) arg).isObject(attrProfiles)) {
-            return ((RAbstractContainer) arg).getClassHierarchy();
+        Object profiledArg = argTypeProfile.profile(arg);
+        if (profiledArg instanceof RAbstractContainer && isObjectProfile.profile(((RAbstractContainer) profiledArg).isObject(attrProfiles))) {
+            return ((RAbstractContainer) profiledArg).getClassHierarchy();
         }
         return null;
     }

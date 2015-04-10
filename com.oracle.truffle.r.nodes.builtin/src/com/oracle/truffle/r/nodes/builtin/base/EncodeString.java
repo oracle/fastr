@@ -49,7 +49,7 @@ public abstract class EncodeString extends RBuiltinNode {
         int maxElWidth = -1;
         na.enable(x);
         // Find the element in x with the largest width.
-        for (int i = 0; i < x.getLength(); ++i) {
+        for (int i = 0; i < x.getLength(); i++) {
             if (!na.check(x.getDataAt(i))) {
                 int curLen = x.getDataAt(i).length();
                 if (maxElWidth < curLen) {
@@ -85,7 +85,7 @@ public abstract class EncodeString extends RBuiltinNode {
         final int maxElWidth = computeWidth(x, width, quoteEl);
         final String[] result = new String[x.getLength()];
         na.enable(x);
-        for (int i = 0; i < x.getLength(); ++i) {
+        for (int i = 0; i < x.getLength(); i++) {
             String currentEl = x.getDataAt(i);
             if (na.check(currentEl)) {
                 everSeenNA.enter();
@@ -108,7 +108,7 @@ public abstract class EncodeString extends RBuiltinNode {
         final String[] result = new String[x.getLength()];
         na.enable(x);
         boolean seenNA = false;
-        for (int i = 0; i < x.getLength(); ++i) {
+        for (int i = 0; i < x.getLength(); i++) {
             final String currentEl = x.getDataAt(i);
             if (na.check(currentEl)) {
                 everSeenNA.enter();
@@ -128,7 +128,7 @@ public abstract class EncodeString extends RBuiltinNode {
         final int maxElWidth = computeWidth(x, width, quoteEl);
         final String[] result = new String[x.getLength()];
         na.enable(x);
-        for (int i = 0; i < x.getLength(); ++i) {
+        for (int i = 0; i < x.getLength(); i++) {
             String currentEl = x.getDataAt(i);
             if (na.check(currentEl)) {
                 everSeenNA.enter();
@@ -151,7 +151,7 @@ public abstract class EncodeString extends RBuiltinNode {
         final String[] result = new String[x.getLength()];
         na.enable(x);
         boolean seenNA = false;
-        for (int i = 0; i < x.getLength(); ++i) {
+        for (int i = 0; i < x.getLength(); i++) {
             final String currentEl = x.getDataAt(i);
             if (na.check(currentEl)) {
                 everSeenNA.enter();
@@ -174,7 +174,7 @@ public abstract class EncodeString extends RBuiltinNode {
         final int padding = maxElWidth - quoteLength;
 
         na.enable(x);
-        for (int i = 0; i < x.getLength(); ++i) {
+        for (int i = 0; i < x.getLength(); i++) {
             final String currentEl = x.getDataAt(i);
             int totalPadding = padding - currentEl.length();
             if (na.check(currentEl)) {
@@ -203,7 +203,7 @@ public abstract class EncodeString extends RBuiltinNode {
         final int padding = maxElWidth - quoteLength;
         na.enable(x);
         boolean seenNA = false;
-        for (int i = 0; i < x.getLength(); ++i) {
+        for (int i = 0; i < x.getLength(); i++) {
             final String currentEl = x.getDataAt(i);
             if (na.check(currentEl)) {
                 everSeenNA.enter();
@@ -222,13 +222,13 @@ public abstract class EncodeString extends RBuiltinNode {
     @TruffleBoundary
     private static String addPaddingIgnoreNA(final String el, final int leftPadding, final int rightPadding, final String quoteEl) {
         final StringBuffer sb = new StringBuffer();
-        for (int j = 0; j < leftPadding; ++j) {
+        for (int j = 0; j < leftPadding; j++) {
             sb.append(" ");
         }
         sb.append(quoteEl);
         sb.append(el);
         sb.append(quoteEl);
-        for (int j = 0; j < rightPadding; ++j) {
+        for (int j = 0; j < rightPadding; j++) {
             sb.append(" ");
         }
         return sb.toString();
@@ -237,7 +237,7 @@ public abstract class EncodeString extends RBuiltinNode {
     @TruffleBoundary
     private String addPadding(final String el, final int leftPadding, final int rightPadding, final String quoteEl) {
         final StringBuffer sb = new StringBuffer();
-        for (int j = 0; j < leftPadding; ++j) {
+        for (int j = 0; j < leftPadding; j++) {
             sb.append(" ");
         }
         if (RRuntime.isNA(el)) {
@@ -254,7 +254,7 @@ public abstract class EncodeString extends RBuiltinNode {
             sb.append(el);
             sb.append(quoteEl);
         }
-        for (int j = 0; j < rightPadding; ++j) {
+        for (int j = 0; j < rightPadding; j++) {
             sb.append(" ");
         }
         return sb.toString();
@@ -266,7 +266,7 @@ public abstract class EncodeString extends RBuiltinNode {
         final String quoteEl = quote.getDataAt(0);
         final String[] result = new String[x.getLength()];
         na.enable(x);
-        for (int i = 0; i < x.getLength(); ++i) {
+        for (int i = 0; i < x.getLength(); i++) {
             final String currentEl = x.getDataAt(i);
             if (na.check(currentEl)) {
                 everSeenNA.enter();
@@ -285,7 +285,7 @@ public abstract class EncodeString extends RBuiltinNode {
         final String[] result = new String[x.getLength()];
         na.enable(x);
         boolean seenNA = false;
-        for (int i = 0; i < x.getLength(); ++i) {
+        for (int i = 0; i < x.getLength(); i++) {
             final String currentEl = x.getDataAt(i);
             if (na.check(currentEl)) {
                 everSeenNA.enter();

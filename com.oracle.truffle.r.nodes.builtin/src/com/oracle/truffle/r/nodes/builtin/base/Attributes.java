@@ -67,7 +67,7 @@ public abstract class Attributes extends RBuiltinNode {
                 return createResult((RAttributable) object, false);
             }
         } else {
-            throw RError.nyi(getEncapsulatingSourceSection(), ": object cannot be attributed");
+            throw RError.nyi(getEncapsulatingSourceSection(), "object cannot be attributed");
         }
     }
 
@@ -92,7 +92,7 @@ public abstract class Attributes extends RBuiltinNode {
             } else {
                 values[z] = attr.getValue();
             }
-            ++z;
+            z++;
         }
         if (ignoreNames && z != names.length) {
             if (z == 0) {

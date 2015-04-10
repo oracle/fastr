@@ -15,14 +15,11 @@ import com.oracle.truffle.r.test.*;
 
 // Checkstyle: stop line length check
 
-                                                                 public class TestrGenBuiltindir extends TestBase {
+public class TestrGenBuiltindir extends TestBase {
 
-	@Test
-    @Ignore
-	public void testdir1() {
-		assertEval("argv <- structure(list(path = \'.\', pattern = \'myTst_.*tar\\.gz$\'),     .Names = c(\'path\', \'pattern\'));"+
-			"do.call(\'dir\', argv)");
-	}
+    @Test
+    public void testdir1() {
+        assertEval(Ignored.Unknown, "argv <- structure(list(path = '.', pattern = 'myTst_.*tar\\.gz$'),     .Names = c('path', 'pattern'));do.call('dir', argv)");
+    }
 
 }
-

@@ -86,7 +86,7 @@ public abstract class CumMin extends RBuiltinNode {
         cminV[0] = min;
         na.enable(v);
         int i;
-        for (i = 1; i < v.getLength(); ++i) {
+        for (i = 1; i < v.getLength(); i++) {
             if (v.getDataAt(i) < min) {
                 min = v.getDataAt(i);
             }
@@ -109,7 +109,7 @@ public abstract class CumMin extends RBuiltinNode {
         cminV[0] = min;
         na.enable(v);
         int i;
-        for (i = 1; i < v.getLength(); ++i) {
+        for (i = 1; i < v.getLength(); i++) {
             if (v.getDataAt(i) < min) {
                 min = v.getDataAt(i);
             }
@@ -132,7 +132,7 @@ public abstract class CumMin extends RBuiltinNode {
         cminV[0] = min;
         na.enable(v);
         int i;
-        for (i = 1; i < v.getLength(); ++i) {
+        for (i = 1; i < v.getLength(); i++) {
             if (v.getDataAt(i) < min) {
                 min = v.getDataAt(i);
             }

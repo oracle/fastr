@@ -24,7 +24,7 @@ public class TestrGenBuiltiniscomplex extends TestBase {
 
     @Test
     public void testiscomplex2() {
-        assertEval("argv <- list(structure(list(`character(0)` = structure(integer(0), .Label = character(0), class = \'factor\')), .Names = \'character(0)\', row.names = character(0), class = \'data.frame\'));is.complex(argv[[1]]);");
+        assertEval("argv <- list(structure(list(`character(0)` = structure(integer(0), .Label = character(0), class = 'factor')), .Names = 'character(0)', row.names = character(0), class = 'data.frame'));is.complex(argv[[1]]);");
     }
 
     @Test
@@ -49,6 +49,6 @@ public class TestrGenBuiltiniscomplex extends TestBase {
 
     @Test
     public void testiscomplex7() {
-        assertEval("argv <- list(structure(3.14159265358979, class = structure(\'3.14159265358979\', class = \'testit\')));is.complex(argv[[1]]);");
+        assertEval("argv <- list(structure(3.14159265358979, class = structure('3.14159265358979', class = 'testit')));is.complex(argv[[1]]);");
     }
 }

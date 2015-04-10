@@ -27,7 +27,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 
 public final class RFactor implements RShareable, RAbstractContainer {
 
-    private RIntVector vector;
+    private final RIntVector vector;
 
     private final boolean ordered;
 
@@ -135,7 +135,7 @@ public final class RFactor implements RShareable, RAbstractContainer {
     }
 
     @Override
-    public RList getDimNames() {
+    public RList getDimNames(RAttributeProfiles attrProfiles) {
         return vector.getDimNames();
     }
 
@@ -146,7 +146,7 @@ public final class RFactor implements RShareable, RAbstractContainer {
 
     @Override
     public Object getRowNames(RAttributeProfiles attrProfiles) {
-        return vector.getRowNames(attrProfiles);
+        return vector.getRowNames();
     }
 
     @Override
@@ -167,6 +167,16 @@ public final class RFactor implements RShareable, RAbstractContainer {
     @Override
     public RAttributes initAttributes() {
         return vector.initAttributes();
+    }
+
+    @Override
+    public void setAttr(String name, Object value) {
+        vector.setAttr(name, value);
+    }
+
+    @Override
+    public Object getAttr(RAttributeProfiles attrProfiles, String name) {
+        return vector.getAttr(attrProfiles, name);
     }
 
     @Override

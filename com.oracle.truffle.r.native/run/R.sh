@@ -1,3 +1,4 @@
+#!/bin/bash
 #
 # This material is distributed under the GNU General Public License
 # Version 2. You may review the terms of this license at
@@ -15,9 +16,13 @@
 #
 GNUR=`which R`
 
+source="${BASH_SOURCE[0]}"
+while [ -h "$source" ] ; do source="$(readlink "$source")"; done
+PRIMARY_PATH="$( cd -P "$( dirname "$source" )" && pwd )"/..
+
 case ${1} in
     CMD)
       exec $GNUR "$@";;
     *)
-      exec mx R "$@";;
+      exec mx --primary-suite-path $PRIMARY_PATH R "$@";;
  esac

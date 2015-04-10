@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -66,7 +66,7 @@ public abstract class CombineBinaryRawNode extends CombineBinaryNode {
     protected RRawVector combine(RRawVector left, RRaw right) {
         int dataLength = left.getLength();
         byte[] result = new byte[dataLength + 1];
-        for (int i = 0; i < dataLength; ++i) {
+        for (int i = 0; i < dataLength; i++) {
             result[i] = left.getDataAt(i).getValue();
         }
         result[dataLength] = right.getValue();
@@ -77,7 +77,7 @@ public abstract class CombineBinaryRawNode extends CombineBinaryNode {
     protected RRawVector combine(RRaw left, RRawVector right) {
         int dataLength = right.getLength();
         byte[] result = new byte[dataLength + 1];
-        for (int i = 0; i < dataLength; ++i) {
+        for (int i = 0; i < dataLength; i++) {
             result[i + 1] = right.getDataAt(i).getValue();
         }
         result[0] = left.getValue();

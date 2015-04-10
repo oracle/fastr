@@ -218,7 +218,7 @@ public class LogFunctions {
         @SuppressWarnings("unused")
         @Specialization
         protected Object log1p(Object x) {
-            throw RError.nyi(getEncapsulatingSourceSection(), " log1p");
+            throw RError.nyi(getEncapsulatingSourceSection(), "log1p");
         }
     }
 

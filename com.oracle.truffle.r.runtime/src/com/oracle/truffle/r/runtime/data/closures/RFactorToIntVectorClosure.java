@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,12 +34,14 @@ public class RFactorToIntVectorClosure extends RToIntVectorClosure implements RA
 
     private final RIntVector vector;
     private final RAbstractIntVector levels;
+    private final boolean withNames;
 
-    public RFactorToIntVectorClosure(RFactor factor, RAbstractIntVector levels, NACheck naCheck) {
+    public RFactorToIntVectorClosure(RFactor factor, RAbstractIntVector levels, NACheck naCheck, boolean withNames) {
         super(factor.getVector(), naCheck);
         this.vector = factor.getVector();
         assert levels != null;
         this.levels = levels;
+        this.withNames = withNames;
         naCheck.enable(this.vector);
     }
 
@@ -51,4 +53,10 @@ public class RFactorToIntVectorClosure extends RToIntVectorClosure implements RA
             return levels.getDataAt(val - 1);
         }
     }
+
+    @Override
+    public RStringVector getNames(RAttributeProfiles attrProfiles) {
+        return withNames ? super.getNames(attrProfiles) : null;
+    }
+
 }

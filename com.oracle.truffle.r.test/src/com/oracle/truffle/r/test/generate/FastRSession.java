@@ -123,7 +123,7 @@ public final class FastRSession implements RSession {
     }
 
     @SuppressWarnings("deprecation")
-    public String eval(String expression) {
+    public String eval(String expression) throws Throwable {
         consoleHandler.reset();
 
         EvalThread thread = evalThread;
@@ -137,19 +137,25 @@ public final class FastRSession implements RSession {
         thread.push(expression);
 
         try {
-            thread.await(TIMEOUT);
-        } catch (InterruptedException e1) {
-            if (thread.isAlive()) {
+            if (!thread.await(TIMEOUT)) {
                 consoleHandler.println("<timeout>");
                 thread.stop();
+                evalThread = null;
             }
+        } catch (InterruptedException e1) {
+            e1.printStackTrace();
+        }
+        if (thread.killedByException != null) {
+            evalThread = null;
+            throw thread.killedByException;
         }
         return consoleHandler.buffer.toString();
     }
 
     private static final class EvalThread extends Thread {
 
-        private String expression;
+        private volatile String expression;
+        private volatile Throwable killedByException;
         private final Semaphore entry = new Semaphore(0);
         private final Semaphore exit = new Semaphore(0);
 
@@ -158,8 +164,8 @@ public final class FastRSession implements RSession {
             this.entry.release();
         }
 
-        public void await(int millisTimeout) throws InterruptedException {
-            this.exit.tryAcquire(millisTimeout, TimeUnit.MILLISECONDS);
+        public boolean await(int millisTimeout) throws InterruptedException {
+            return exit.tryAcquire(millisTimeout, TimeUnit.MILLISECONDS);
         }
 
         @Override
@@ -172,12 +178,15 @@ public final class FastRSession implements RSession {
                 }
                 try {
                     REngine.getInstance().parseAndEvalTest(expression, true);
+                } catch (RError e) {
+                    // nothing to do
+                } catch (Throwable t) {
+                    killedByException = t;
                 } finally {
                     exit.release();
                 }
             }
         }
-
     }
 
     public String name() {

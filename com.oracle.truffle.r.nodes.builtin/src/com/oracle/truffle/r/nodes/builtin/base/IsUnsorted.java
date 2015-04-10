@@ -43,7 +43,7 @@ public abstract class IsUnsorted extends RBuiltinNode {
     protected byte isUnsorted(RDoubleVector x, @SuppressWarnings("unused") byte strictly) {
         controlVisibility();
         double last = x.getDataAt(0);
-        for (int k = 1; k < x.getLength(); ++k) {
+        for (int k = 1; k < x.getLength(); k++) {
             double current = x.getDataAt(k);
             if (ge.doDouble(current, last) == RRuntime.LOGICAL_FALSE) {
                 return RRuntime.LOGICAL_TRUE;
@@ -57,7 +57,7 @@ public abstract class IsUnsorted extends RBuiltinNode {
     protected byte isUnsorted(RIntVector x, @SuppressWarnings("unused") byte strictly) {
         controlVisibility();
         int last = x.getDataAt(0);
-        for (int k = 1; k < x.getLength(); ++k) {
+        for (int k = 1; k < x.getLength(); k++) {
             int current = x.getDataAt(k);
             if (ge.doInt(current, last) == RRuntime.LOGICAL_FALSE) {
                 return RRuntime.LOGICAL_TRUE;
@@ -71,7 +71,7 @@ public abstract class IsUnsorted extends RBuiltinNode {
     protected byte isUnsorted(RStringVector x, @SuppressWarnings("unused") byte strictly) {
         controlVisibility();
         String last = x.getDataAt(0);
-        for (int k = 1; k < x.getLength(); ++k) {
+        for (int k = 1; k < x.getLength(); k++) {
             String current = x.getDataAt(k);
             if (ge.doString(current, last) == RRuntime.LOGICAL_FALSE) {
                 return RRuntime.LOGICAL_TRUE;

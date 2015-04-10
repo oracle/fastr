@@ -84,7 +84,7 @@ public abstract class UnaryNotNode extends RBuiltinNode {
         } else {
             na.enable(vector);
             result = new byte[length];
-            for (int i = 0; i < length; ++i) {
+            for (int i = 0; i < length; i++) {
                 byte value = vector.getDataAt(i);
                 result[i] = na.check(value) ? RRuntime.LOGICAL_NA : not(value);
             }
@@ -103,7 +103,7 @@ public abstract class UnaryNotNode extends RBuiltinNode {
         } else {
             na.enable(vector);
             result = new byte[length];
-            for (int i = 0; i < length; ++i) {
+            for (int i = 0; i < length; i++) {
                 int value = vector.getDataAt(i);
                 result[i] = na.check(value) ? RRuntime.LOGICAL_NA : not(value);
             }
@@ -122,7 +122,7 @@ public abstract class UnaryNotNode extends RBuiltinNode {
         } else {
             na.enable(vector);
             result = new byte[length];
-            for (int i = 0; i < length; ++i) {
+            for (int i = 0; i < length; i++) {
                 double value = vector.getDataAt(i);
                 result[i] = na.check(value) ? RRuntime.LOGICAL_NA : not(value);
             }
@@ -140,7 +140,7 @@ public abstract class UnaryNotNode extends RBuiltinNode {
             result = RDataFactory.EMPTY_RAW_ARRAY;
         } else {
             result = new byte[length];
-            for (int i = 0; i < length; ++i) {
+            for (int i = 0; i < length; i++) {
                 result[i] = notRaw(vector.getDataAt(i));
             }
         }

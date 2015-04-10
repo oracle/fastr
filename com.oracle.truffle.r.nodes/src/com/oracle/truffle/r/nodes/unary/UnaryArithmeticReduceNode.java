@@ -161,7 +161,9 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
             na.enable(operand);
             if (naRmProfile.profile(naRm == RRuntime.LOGICAL_TRUE)) {
                 if (na.check(operand)) {
-                    emptyWarning();
+                    if (semantics.getEmptyWarning() != null) {
+                        RError.warning(semantics.emptyWarningCharacter);
+                    }
                     return semantics.getStringStart();
                 } else {
                     return operand;
@@ -262,7 +264,7 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
     protected int doIntSequence(RIntSequence operand, @SuppressWarnings("unused") byte naRm) {
         int result = semantics.getIntStart();
         int current = operand.getStart();
-        for (int i = 0; i < operand.getLength(); ++i) {
+        for (int i = 0; i < operand.getLength(); i++) {
             result = arithmetic.op(result, current);
             current += operand.getStride();
         }
@@ -276,7 +278,7 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
     protected double doDoubleSequence(RDoubleSequence operand, @SuppressWarnings("unused") byte naRm) {
         double result = semantics.getDoubleStart();
         double current = operand.getStart();
-        for (int i = 0; i < operand.getLength(); ++i) {
+        for (int i = 0; i < operand.getLength(); i++) {
             result = arithmetic.op(result, current);
             current += operand.getStride();
         }
@@ -293,7 +295,7 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
             RComplex result = RRuntime.double2complex(semantics.getDoubleStart());
             int opCount = 0;
             na.enable(operand);
-            for (int i = 0; i < operand.getLength(); ++i) {
+            for (int i = 0; i < operand.getLength(); i++) {
                 RComplex current = operand.getDataAt(i);
                 if (na.check(current)) {
                     if (profiledNaRm) {
@@ -324,7 +326,7 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
     private static String doStringVectorEmptyInternal(RStringVector operand, byte naRm, ReduceSemantics semantics, SourceSection sourceSection) {
         if (semantics.supportString) {
             if (semantics.getEmptyWarning() != null) {
-                RError.warning(semantics.emptyWarning);
+                RError.warning(semantics.emptyWarningCharacter);
             }
             return semantics.getStringStart();
         } else {
@@ -376,14 +378,16 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
         private final String stringStart = RRuntime.STRING_NA; // does not seem to change
         private final boolean nullInt;
         private final RError.Message emptyWarning;
+        private final RError.Message emptyWarningCharacter;
         private final boolean supportComplex;
         private final boolean supportString;
 
-        public ReduceSemantics(int intStart, double doubleStart, boolean nullInt, RError.Message emptyWarning, boolean supportComplex, boolean supportString) {
+        public ReduceSemantics(int intStart, double doubleStart, boolean nullInt, RError.Message emptyWarning, RError.Message emptyWarningCharacter, boolean supportComplex, boolean supportString) {
             this.intStart = intStart;
             this.doubleStart = doubleStart;
             this.nullInt = nullInt;
             this.emptyWarning = emptyWarning;
+            this.emptyWarningCharacter = emptyWarningCharacter;
             this.supportComplex = supportComplex;
             this.supportString = supportString;
         }
@@ -406,6 +410,10 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
 
         public RError.Message getEmptyWarning() {
             return emptyWarning;
+        }
+
+        public RError.Message getEmptyWarningCharacter() {
+            return emptyWarningCharacter;
         }
     }
 
@@ -462,7 +470,7 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
             }
             // when we reach here, it means that we have already seen one non-NA element
             assert !RRuntime.isNA(result);
-            for (int i = offset + 1; i < operand.getLength(); ++i) {
+            for (int i = offset + 1; i < operand.getLength(); i++) {
                 String current = operand.getDataAt(i);
                 if (na.check(current)) {
                     if (profiledNaRm) {

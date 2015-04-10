@@ -77,7 +77,7 @@ public abstract class CastDoubleNode extends CastNode {
     @Specialization
     protected double doDouble(RComplex operand) {
         naCheck.enable(operand);
-        double result = naCheck.convertComplexToDouble(operand);
+        double result = naCheck.convertComplexToDouble(operand, false);
         if (operand.getImaginaryPart() != 0.0) {
             warningBranch.enter();
             RError.warning(RError.Message.IMAGINARY_PARTS_DISCARDED_IN_COERCION);
@@ -174,7 +174,7 @@ public abstract class CastDoubleNode extends CastNode {
         boolean warning = false;
         for (int i = 0; i < operand.getLength(); i++) {
             RComplex value = operand.getDataAt(i);
-            ddata[i] = naCheck.convertComplexToDouble(value);
+            ddata[i] = naCheck.convertComplexToDouble(value, false);
             if (value.getImaginaryPart() != 0.0) {
                 warning = true;
             }

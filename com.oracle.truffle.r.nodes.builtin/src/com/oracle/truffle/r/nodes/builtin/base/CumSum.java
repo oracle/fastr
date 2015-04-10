@@ -72,7 +72,7 @@ public abstract class CumSum extends RBuiltinNode {
         int prev = 0;
         int i;
         na.enable(arg);
-        for (i = 0; i < arg.getLength(); ++i) {
+        for (i = 0; i < arg.getLength(); i++) {
             prev = add.op(prev, current);
             if (na.check(prev)) {
                 break;
@@ -93,7 +93,7 @@ public abstract class CumSum extends RBuiltinNode {
         double prev = 0.0;
         na.enable(arg);
         int i;
-        for (i = 0; i < arg.getLength(); ++i) {
+        for (i = 0; i < arg.getLength(); i++) {
             prev = add.op(prev, arg.getDataAt(i));
             if (na.check(arg.getDataAt(i))) {
                 break;
@@ -113,7 +113,7 @@ public abstract class CumSum extends RBuiltinNode {
         int prev = 0;
         int i;
         na.enable(arg);
-        for (i = 0; i < arg.getLength(); ++i) {
+        for (i = 0; i < arg.getLength(); i++) {
             if (na.check(arg.getDataAt(i))) {
                 break;
             }
@@ -136,7 +136,7 @@ public abstract class CumSum extends RBuiltinNode {
         int prev = 0;
         int i;
         na.enable(arg);
-        for (i = 0; i < arg.getLength(); ++i) {
+        for (i = 0; i < arg.getLength(); i++) {
             prev = add.op(prev, arg.getDataAt(i));
             if (na.check(arg.getDataAt(i))) {
                 break;
@@ -156,7 +156,7 @@ public abstract class CumSum extends RBuiltinNode {
         double prev = 0.0;
         na.enable(arg);
         int i;
-        for (i = 0; i < arg.getLength(); ++i) {
+        for (i = 0; i < arg.getLength(); i++) {
             double value = na.convertStringToDouble(arg.getDataAt(i));
             prev = add.op(prev, value);
             if (na.check(arg.getDataAt(i))) {
@@ -177,7 +177,7 @@ public abstract class CumSum extends RBuiltinNode {
         RComplex prev = RDataFactory.createComplex(0.0, 0.0);
         int i;
         na.enable(arg);
-        for (i = 0; i < arg.getLength(); ++i) {
+        for (i = 0; i < arg.getLength(); i++) {
             prev = add.op(prev.getRealPart(), prev.getImaginaryPart(), arg.getDataAt(i).getRealPart(), arg.getDataAt(i).getImaginaryPart());
             if (na.check(arg.getDataAt(i))) {
                 break;

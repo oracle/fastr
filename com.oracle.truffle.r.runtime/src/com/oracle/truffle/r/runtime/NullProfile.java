@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,15 +20,27 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.test.library.base;
+package com.oracle.truffle.r.runtime;
 
-import com.oracle.truffle.r.test.*;
+import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 
-public class BinaryArithmeticWhiteList extends WhiteList {
-    private static final String WHITELIST = "BinaryArithmeticWhiteList.test";
+public final class NullProfile {
 
-    public BinaryArithmeticWhiteList() {
-        super(WHITELIST);
+    @CompilationFinal private boolean alwaysNull = true;
+
+    public static NullProfile create() {
+        return new NullProfile();
     }
 
+    public <T> T profile(T value) {
+        if (alwaysNull) {
+            if (value == null) {
+                return null;
+            }
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            alwaysNull = false;
+        }
+        return value;
+    }
 }

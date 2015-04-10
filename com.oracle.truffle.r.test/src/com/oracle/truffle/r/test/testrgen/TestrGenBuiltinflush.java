@@ -18,15 +18,12 @@ import com.oracle.truffle.r.test.*;
 public class TestrGenBuiltinflush extends TestBase {
 
     @Test
-    @Ignore
     public void testflush1() {
-        assertEval("argv <- list(structure(1L, class = c(\'terminal\', \'connection\'))); .Internal(flush(argv[[1]]))");
+        assertEval(Ignored.Unknown, "argv <- list(structure(1L, class = c('terminal', 'connection'))); .Internal(flush(argv[[1]]))");
     }
 
     @Test
-    @Ignore
     public void testflush2() {
-        assertEval("argv <- list(structure(2L, class = c(\'terminal\', \'connection\'))); .Internal(flush(argv[[1]]))");
+        assertEval(Ignored.Unknown, "argv <- list(structure(2L, class = c('terminal', 'connection'))); .Internal(flush(argv[[1]]))");
     }
 }
-

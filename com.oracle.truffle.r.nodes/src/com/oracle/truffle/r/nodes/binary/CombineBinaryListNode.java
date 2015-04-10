@@ -38,7 +38,7 @@ public abstract class CombineBinaryListNode extends CombineBinaryNode {
         Object[] data = left.getDataWithoutCopying();
         Object[] result = new Object[data.length + right.getLength()];
         System.arraycopy(data, 0, result, 0, data.length);
-        for (int i = 0; i < right.getLength(); ++i) {
+        for (int i = 0; i < right.getLength(); i++) {
             result[i + data.length] = right.getDataAtAsObject(i);
         }
         return RDataFactory.createList(result, combineNames(left, right));

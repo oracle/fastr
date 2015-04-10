@@ -84,7 +84,7 @@ public final class RBuiltinPackages implements RBuiltinLookup {
         try {
             baseSource = Source.fromFileName(basePathbase.toString());
         } catch (IOException ex) {
-            Utils.fail("unable to open the base package");
+            Utils.fail(String.format("unable to open the base package %s", basePathbase));
         }
         // Load the (stub) DLL for base
         try {

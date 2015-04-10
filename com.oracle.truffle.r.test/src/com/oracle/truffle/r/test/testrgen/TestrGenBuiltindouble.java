@@ -15,13 +15,11 @@ import com.oracle.truffle.r.test.*;
 
 // Checkstyle: stop line length check
 
-                                                                 public class TestrGenBuiltindouble extends TestBase {
+public class TestrGenBuiltindouble extends TestBase {
 
-	@Test
-	public void testdouble1() {
-		assertEval("argv <- list();"+
-			"do.call(\'double\', argv)");
-	}
+    @Test
+    public void testdouble1() {
+        assertEval("argv <- list();do.call('double', argv)");
+    }
 
 }
-

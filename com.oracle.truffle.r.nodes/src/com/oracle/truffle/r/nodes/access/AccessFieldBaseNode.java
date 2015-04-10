@@ -42,7 +42,7 @@ public abstract class AccessFieldBaseNode extends RNode {
 
     @TruffleBoundary
     public static int getElementIndexByName(RStringVector names, String name) {
-        for (int i = 0; i < names.getLength(); ++i) {
+        for (int i = 0; i < names.getLength(); i++) {
             if (names.getDataAt(i).equals(name)) {
                 return i;
             }

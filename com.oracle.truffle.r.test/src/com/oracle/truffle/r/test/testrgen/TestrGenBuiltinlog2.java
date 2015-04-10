@@ -23,9 +23,8 @@ public class TestrGenBuiltinlog2 extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testlog22() {
-        assertEval("argv <- list(FALSE);log2(argv[[1]]);");
+        assertEval(Ignored.Unknown, "argv <- list(FALSE);log2(argv[[1]]);");
     }
 
     @Test
@@ -33,11 +32,9 @@ public class TestrGenBuiltinlog2 extends TestBase {
         assertEval("argv <- list(2.2250738585072e-308);log2(argv[[1]]);");
     }
 
-	@Test
-	public void testlog25() {
-		assertEval("argv <- list(2.2250738585072e-308);"+
-			"do.call(\'log2\', argv)");
-	}
+    @Test
+    public void testlog25() {
+        assertEval("argv <- list(2.2250738585072e-308);do.call('log2', argv)");
+    }
 
 }
-

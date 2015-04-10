@@ -19,6 +19,6 @@ public class TestrGenBuiltingetSymbolInfo extends TestBase {
 
     @Test
     public void testgetSymbolInfo1() {
-        assertEval("argv <- list(\'FALSE\', \'\', FALSE); .Internal(getSymbolInfo(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval("argv <- list('FALSE', '', FALSE); .Internal(getSymbolInfo(argv[[1]], argv[[2]], argv[[3]]))");
     }
 }

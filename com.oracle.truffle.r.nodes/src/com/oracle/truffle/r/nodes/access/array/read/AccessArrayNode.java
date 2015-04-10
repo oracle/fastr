@@ -1884,8 +1884,8 @@ public abstract class AccessArrayNode extends RNode {
         return container.getNames(attrProfiles) != null;
     }
 
-    protected static boolean hasDimNames(RAbstractContainer container) {
-        return container.getDimNames() != null;
+    protected boolean hasDimNames(RAbstractContainer container) {
+        return container.getDimNames(attrProfiles) != null;
     }
 
     protected static boolean twoPosition(RAbstractVector p) {

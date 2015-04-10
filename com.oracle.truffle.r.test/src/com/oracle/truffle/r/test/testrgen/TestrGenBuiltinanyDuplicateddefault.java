@@ -15,13 +15,11 @@ import com.oracle.truffle.r.test.*;
 
 // Checkstyle: stop line length check
 
-                                                                 public class TestrGenBuiltinanyDuplicateddefault extends TestBase {
+public class TestrGenBuiltinanyDuplicateddefault extends TestBase {
 
-	@Test
-	public void testanyDuplicateddefault1() {
-		assertEval("argv <- structure(list(x = c(1, NA, 3, NA, 3), incomparables = c(3,     NA)), .Names = c(\'x\', \'incomparables\'));"+
-			"do.call(\'anyDuplicated.default\', argv)");
-	}
+    @Test
+    public void testanyDuplicateddefault1() {
+        assertEval("argv <- structure(list(x = c(1, NA, 3, NA, 3), incomparables = c(3,     NA)), .Names = c('x', 'incomparables'));do.call('anyDuplicated.default', argv)");
+    }
 
 }
-

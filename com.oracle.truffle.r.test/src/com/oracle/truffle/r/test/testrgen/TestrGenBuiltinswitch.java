@@ -19,17 +19,17 @@ public class TestrGenBuiltinswitch extends TestBase {
 
     @Test
     public void testswitch1() {
-        assertEval("argv <- structure(list(\'forward\', forward = \'posS\', reverse = \'negS\'),     .Names = c(\'\', \'forward\', \'reverse\'));" + "do.call(\'switch\', argv)");
+        assertEval("argv <- structure(list('forward', forward = 'posS', reverse = 'negS'),     .Names = c('', 'forward', 'reverse'));do.call('switch', argv)");
     }
 
     @Test
     public void testswitch2() {
-        assertEval("argv <- list(3L);" + "do.call(\'switch\', argv)");
+        assertEval("argv <- list(3L);do.call('switch', argv)");
     }
 
     @Test
     public void testswitch4() {
-        assertEval("argv <- list(2L, TRUE, FALSE, FALSE);" + "do.call(\'switch\', argv)");
+        assertEval("argv <- list(2L, TRUE, FALSE, FALSE);do.call('switch', argv)");
     }
 
 }

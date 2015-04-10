@@ -18,35 +18,28 @@ import com.oracle.truffle.r.test.*;
 public class TestrGenBuiltinenc2utf8 extends TestBase {
 
     @Test
-    @Ignore
     public void testenc2utf81() {
-        assertEval("argv <- list(\'Add Text to a Plot\');enc2utf8(argv[[1]]);");
+        assertEval(Ignored.Unknown, "argv <- list('Add Text to a Plot');enc2utf8(argv[[1]]);");
     }
 
     @Test
-    @Ignore
     public void testenc2utf82() {
-        assertEval("argv <- list(\'Modes\');enc2utf8(argv[[1]]);");
+        assertEval(Ignored.Unknown, "argv <- list('Modes');enc2utf8(argv[[1]]);");
     }
 
     @Test
-    @Ignore
     public void testenc2utf83() {
-        assertEval("argv <- list(c(\'\', \'(De)compress I/O Through Connections\'));enc2utf8(argv[[1]]);");
+        assertEval(Ignored.Unknown, "argv <- list(c('', '(De)compress I/O Through Connections'));enc2utf8(argv[[1]]);");
     }
 
     @Test
-    @Ignore
     public void testenc2utf84() {
-        assertEval("argv <- list(character(0));enc2utf8(argv[[1]]);");
+        assertEval(Ignored.Unknown, "argv <- list(character(0));enc2utf8(argv[[1]]);");
     }
 
-	@Test
-    @Ignore
-	public void testenc2utf86() {
-		assertEval("argv <- list(NA_character_);"+
-			"do.call(\'enc2utf8\', argv)");
-	}
+    @Test
+    public void testenc2utf86() {
+        assertEval(Ignored.Unknown, "argv <- list(NA_character_);do.call('enc2utf8', argv)");
+    }
 
 }
-

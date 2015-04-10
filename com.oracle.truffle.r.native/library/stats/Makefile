@@ -29,8 +29,16 @@ CLEAN_PKG := cleanfft
 
 include ../lib.mk
 
+# The above will set set C_SOURCES to all the .c files in src
+# If we happen to have a pre-generated fft.c, then ok, otherwise
+# we need to add it. Can't always add it as then we get it duplicated
+# in C_OBJECTS, which causes a link failure
+
+HAVE_FFT_SRC := $(shell [ -f $(SRC)/fft.c ] && echo "exists")
+ifneq ($(HAVE_FFT_SRC), exists)
 C_SOURCES := $(C_SOURCES) $(SRC)/fft.c
 C_OBJECTS := $(C_OBJECTS) $(OBJ)/fft.o
+endif
 
 $(SRC)/fft.c: $(GNUR_FFT) src/ed_fft
 	ed $(GNUR_FFT) < src/ed_fft

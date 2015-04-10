@@ -35,7 +35,7 @@ public final class RComplexVector extends RVector implements RAbstractComplexVec
     private static final RStringVector implicitClassHeaderArray = RDataFactory.createStringVector(new String[]{RType.Array.getName(), RType.Complex.getName()}, true);
     private static final RStringVector implicitClassHeaderMatrix = RDataFactory.createStringVector(new String[]{RType.Matrix.getName(), RType.Complex.getName()}, true);
 
-    private double[] data;
+    private final double[] data;
 
     RComplexVector(double[] data, boolean complete, int[] dims, RStringVector names) {
         super(complete, data.length >> 1, dims, names);
@@ -154,7 +154,7 @@ public final class RComplexVector extends RVector implements RAbstractComplexVec
         double[] newData = Arrays.copyOf(data, csize);
         if (csize > this.getLength()) {
             if (fillNA) {
-                for (int i = data.length; i < size; ++i) {
+                for (int i = data.length; i < size; i++) {
                     newData[i] = RRuntime.DOUBLE_NA;
                 }
             } else {
@@ -167,20 +167,10 @@ public final class RComplexVector extends RVector implements RAbstractComplexVec
         return newData;
     }
 
-    private double[] createResizedData(int size, boolean fillNA) {
-        assert !this.isShared();
-        return copyResizedData(size, fillNA);
-    }
-
     @Override
     public RComplexVector copyResized(int size, boolean fillNA) {
         boolean isComplete = isComplete() && ((data.length >= size) || !fillNA);
         return RDataFactory.createComplexVector(copyResizedData(size, fillNA), isComplete);
-    }
-
-    @Override
-    protected void resizeInternal(int size) {
-        this.data = createResizedData(size, true);
     }
 
     public RComplexVector materialize() {

@@ -18,9 +18,7 @@ import com.oracle.truffle.r.test.*;
 public class TestrGenBuiltinprimUntrace extends TestBase {
 
     @Test
-    @Ignore
     public void testprimUntrace1() {
-        assertEval("argv <- list(.Primitive(\'sum\'));.primUntrace(argv[[1]]);");
+        assertEval(Ignored.Unknown, "argv <- list(.Primitive('sum'));.primUntrace(argv[[1]]);");
     }
 }
-

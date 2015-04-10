@@ -32,7 +32,7 @@ public class TestStats extends TestBase {
         assertEval("{ cor(c(1,2,3),c(1,2,3)) }");
         assertEval("{ as.integer(cor(c(1,2,3),c(1,2,5))*10000000) }");
         assertEval("{ cor(cbind(c(3,2,1), c(1,2,3))) }");
-        assertEvalWarning("{ cor(cbind(c(1, 1, 1), c(1, 1, 1))) }");
+        assertEval(Output.ContainsWarning, "{ cor(cbind(c(1, 1, 1), c(1, 1, 1))) }");
         assertEval("{ cor(cbind(c(1:9,0/0), 101:110)) }");
         assertEval("{ round( cor(cbind(c(10,5,4,1), c(2,5,10,5))), digits=5 ) }");
     }
@@ -97,26 +97,25 @@ public class TestStats extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testRandomIgnore() {
-        assertEval("{ round( rnorm(3,c(1000,2,3),c(10,11)), digits = 5 ) }");
+        assertEval(Ignored.Unknown, "{ round( rnorm(3,c(1000,2,3),c(10,11)), digits = 5 ) }");
 
-        assertEval("{ round( runif(3), digits = 5 ) }");
-        assertEval("{ round( runif(3,1,10), digits = 5 ) }");
-        assertEval("{ round( runif(3,1:3,3:2), digits = 5 ) }");
+        assertEval(Ignored.Unknown, "{ round( runif(3), digits = 5 ) }");
+        assertEval(Ignored.Unknown, "{ round( runif(3,1,10), digits = 5 ) }");
+        assertEval(Ignored.Unknown, "{ round( runif(3,1:3,3:2), digits = 5 ) }");
 
-        assertEval("{ round( rgamma(3,1), digits = 5 ) }");
-        assertEval("{ round( rgamma(3,0.5,scale=1:3), digits = 5 ) }");
-        assertEval("{ round( rgamma(3,0.5,rate=1:3), digits = 5 ) }");
+        assertEval(Ignored.Unknown, "{ round( rgamma(3,1), digits = 5 ) }");
+        assertEval(Ignored.Unknown, "{ round( rgamma(3,0.5,scale=1:3), digits = 5 ) }");
+        assertEval(Ignored.Unknown, "{ round( rgamma(3,0.5,rate=1:3), digits = 5 ) }");
 
-        assertEval("{ round( rbinom(3,3,0.9), digits = 5 ) }");
-        assertEval("{ round( rbinom(3,10,(1:5)/5), digits = 5 ) }");
+        assertEval(Ignored.Unknown, "{ round( rbinom(3,3,0.9), digits = 5 ) }");
+        assertEval(Ignored.Unknown, "{ round( rbinom(3,10,(1:5)/5), digits = 5 ) }");
 
-        assertEval("{ round( rlnorm(3), digits = 5 ) }");
-        assertEval("{ round( rlnorm(3,sdlog=c(10,3,0.5)), digits = 5 ) }");
+        assertEval(Ignored.Unknown, "{ round( rlnorm(3), digits = 5 ) }");
+        assertEval(Ignored.Unknown, "{ round( rlnorm(3,sdlog=c(10,3,0.5)), digits = 5 ) }");
 
-        assertEval("{ round( rcauchy(3), digits = 5 ) }");
-        assertEval("{ round( rcauchy(3, scale=4, location=1:3), digits = 5 ) }");
+        assertEval(Ignored.Unknown, "{ round( rcauchy(3), digits = 5 ) }");
+        assertEval(Ignored.Unknown, "{ round( rcauchy(3, scale=4, location=1:3), digits = 5 ) }");
     }
 
 }

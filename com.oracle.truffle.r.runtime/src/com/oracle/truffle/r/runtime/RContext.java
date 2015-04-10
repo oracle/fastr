@@ -183,7 +183,7 @@ public final class RContext extends ExecutionContext {
          * This is intended for use by the unit test environment, where a "fresh" global environment
          * is desired for each evaluation.
          */
-        Object parseAndEvalTest(String rscript, boolean printResult);
+        Object parseAndEvalTest(String rscript, boolean printResult) throws Exception;
 
         /**
          * Support for the {@code eval} {@code .Internal}.

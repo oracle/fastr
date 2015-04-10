@@ -15,14 +15,11 @@ import com.oracle.truffle.r.test.*;
 
 // Checkstyle: stop line length check
 
-                                                                 public class TestrGenBuiltinrawToChar extends TestBase {
+public class TestrGenBuiltinrawToChar extends TestBase {
 
-	@Test
-    @Ignore
-	public void testrawToChar1() {
-		assertEval("argv <- structure(list(x = as.raw(c(115, 116, 114, 105, 110,     103))), .Names = \'x\');"+
-			"do.call(\'rawToChar\', argv)");
-	}
+    @Test
+    public void testrawToChar1() {
+        assertEval(Ignored.Unknown, "argv <- structure(list(x = as.raw(c(115, 116, 114, 105, 110,     103))), .Names = 'x');do.call('rawToChar', argv)");
+    }
 
 }
-

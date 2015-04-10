@@ -19,7 +19,7 @@ public class TestrGenBuiltindQuote extends TestBase {
 
     @Test
     public void testdQuote1() {
-        assertEval("argv <- structure(list(x = character(0)), .Names = \'x\');" + "do.call(\'dQuote\', argv)");
+        assertEval("argv <- structure(list(x = character(0)), .Names = 'x');do.call('dQuote', argv)");
     }
 
 }

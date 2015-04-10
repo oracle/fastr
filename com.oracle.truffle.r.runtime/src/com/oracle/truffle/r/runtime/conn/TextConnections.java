@@ -65,7 +65,7 @@ public class TextConnections {
                     delegate = new TextWriteRConnection(this);
                     break;
                 default:
-                    throw RError.nyi((SourceSection) null, "unimplemented open mode: " + getOpenMode().modeString);
+                    throw RError.nyi((SourceSection) null, "open mode: " + getOpenMode().modeString);
             }
             setDelegate(delegate);
         }
@@ -130,40 +130,44 @@ public class TextConnections {
 
         @Override
         public int readBin(ByteBuffer buffer) throws IOException {
-            throw RError.nyi(null, " readBin on text connection");
+            throw RError.nyi(null, "readBin on text connection");
         }
 
         @Override
         public byte[] readBinChars() throws IOException {
-            throw RError.nyi(null, " readBinChars on text connection");
+            throw RError.nyi(null, "readBinChars on text connection");
         }
 
         @Override
         public String readChar(int nchars, boolean useBytes) throws IOException {
-            throw RError.nyi(null, " readChar on text connection");
+            throw RError.nyi(null, "readChar on text connection");
         }
 
         public String[] getValue() {
-            throw RError.nyi(null, " textConnectionValue");
+            throw RError.nyi(null, "textConnectionValue");
         }
 
     }
 
     private static class TextWriteRConnection extends DelegateWriteRConnection implements GetConnectionValue {
-        String incompleteLine;
-        final RStringVector textVec;
+        private String incompleteLine;
+        private RStringVector textVec;
 
-        protected TextWriteRConnection(BaseRConnection base) {
-            super(base);
-            TextRConnection textBase = (TextRConnection) base;
+        private void initTextVec(RStringVector v, TextRConnection textBase) {
             try {
-                textVec = RDataFactory.createStringVector(0);
+                textVec = v;
                 textBase.env.put(textBase.nm, textVec);
             } catch (PutException ex) {
                 throw RError.error((SourceSection) null, ex);
             }
-            // lock the binding until close
+            // lock the binding
             textBase.env.lockBinding(textBase.nm);
+        }
+
+        protected TextWriteRConnection(BaseRConnection base) {
+            super(base);
+            TextRConnection textBase = (TextRConnection) base;
+            initTextVec(RDataFactory.createStringVector(0), textBase);
         }
 
         @Override
@@ -216,7 +220,11 @@ public class TextConnections {
                     System.arraycopy(existingData, 0, updateData, 0, existingData.length);
                     System.arraycopy(appendedData, 0, updateData, existingData.length, appendedData.length);
                 }
-                textVec.setDataInternal(updateData);
+                // TODO: not thread safe
+                TextRConnection textBase = (TextRConnection) base;
+                textBase.env.unlockBinding(textBase.nm);
+                // TODO: is vector really complete?
+                initTextVec(RDataFactory.createStringVector(updateData, RDataFactory.COMPLETE_VECTOR), textBase);
             }
         }
 
@@ -232,16 +240,16 @@ public class TextConnections {
 
         @Override
         public void writeChar(String s, int pad, String eos, boolean useBytes) throws IOException {
-            throw RError.nyi(null, " writeChar on text connection");
+            throw RError.nyi(null, "writeChar on text connection");
         }
 
         @Override
         public void writeBin(ByteBuffer buffer) throws IOException {
-            throw RError.nyi(null, " writeBin on text connection");
+            throw RError.nyi(null, "writeBin on text connection");
         }
 
         public String[] getValue() {
-            throw RError.nyi(null, " textConnectionValue");
+            throw RError.nyi(null, "textConnectionValue");
         }
 
     }

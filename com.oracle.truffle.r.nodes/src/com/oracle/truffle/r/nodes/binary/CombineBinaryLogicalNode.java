@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -68,7 +68,7 @@ public abstract class CombineBinaryLogicalNode extends CombineBinaryNode {
         check.enable(right);
         int dataLength = left.getLength();
         byte[] result = new byte[dataLength + 1];
-        for (int i = 0; i < dataLength; ++i) {
+        for (int i = 0; i < dataLength; i++) {
             byte value = left.getDataAt(i);
             check.check(value);
             result[i] = value;
@@ -84,7 +84,7 @@ public abstract class CombineBinaryLogicalNode extends CombineBinaryNode {
         check.enable(left);
         int dataLength = right.getLength();
         byte[] result = new byte[dataLength + 1];
-        for (int i = 0; i < dataLength; ++i) {
+        for (int i = 0; i < dataLength; i++) {
             byte value = right.getDataAt(i);
             check.check(value);
             result[i + 1] = value;

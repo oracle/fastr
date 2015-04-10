@@ -37,6 +37,9 @@ public class TestSimpleAttributes extends TestBase {
 
         assertEval("{ x<-1; dim(x)<-1; y<-list(a=\"1\"); z<-(attr(x, \"dimnames\")<-y); z }");
         assertEval("{ x<-1; dim(x)<-1; y<-list(a=\"1\"); attr(y, \"foo\")<-\"foo\"; z<-(attr(x, \"dimnames\")<-y); z }");
+
+        assertEval("{ x<-array(1:4, c(2,2), list(c(1,2), c(3,4))); attributes(x) }");
+        assertEval("{ x<-1:4; attributes(x)<-list(dim=c(2,2), dimnames=list(c(1,2), c(3,4))); attributes(x) }");
     }
 
     @Test
@@ -49,7 +52,7 @@ public class TestSimpleAttributes extends TestBase {
 
         assertEval("{ x <- c(1+1i,2+2i);  attr(x, \"hi\") <- 3 ; y <- 2:3 ; attr(y,\"zz\") <- 2; x+y }");
         assertEval("{ x <- 1+1i;  attr(x, \"hi\") <- 1+2 ; y <- 2:3 ; attr(y,\"zz\") <- 2; x+y }");
-        assertEval("{ x <- c(1+1i, 2+2i) ;  attr(x, \"hi\") <- 3 ; attr(x, \"hihi\") <- 10 ; y <- c(2+2i, 3+3i) ; attr(y,\"zz\") <- 2; attr(y,\"hi\") <-3; " + "attr(y,\"bye\") <- 4 ; x+y }");
+        assertEval("{ x <- c(1+1i, 2+2i) ;  attr(x, \"hi\") <- 3 ; attr(x, \"hihi\") <- 10 ; y <- c(2+2i, 3+3i) ; attr(y,\"zz\") <- 2; attr(y,\"hi\") <-3; attr(y,\"bye\") <- 4 ; x+y }");
         assertEval("{ x <- 1 ; attr(x, \"my\") <- 2; 2+x }");
 
         assertEval("{ x <- c(a=1) ; y <- c(b=2,c=3) ; x + y }");
@@ -135,14 +138,16 @@ public class TestSimpleAttributes extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testBuiltinPropagationIgnore() {
         // eigen implementation problem
-        assertEval("{ m <- matrix(c(1,1,1,1), nrow=2) ; attr(m,\"a\") <- 1 ;  r <- eigen(m) ; r$vectors <- round(r$vectors, digits=5) ; r  }");
+        assertEval(Ignored.Unknown, "{ m <- matrix(c(1,1,1,1), nrow=2) ; attr(m,\"a\") <- 1 ;  r <- eigen(m) ; r$vectors <- round(r$vectors, digits=5) ; r  }");
     }
 
     @Test
     public void testOtherPropagation() {
         assertEval("{ x <- 1:2;  attr(x, \"hi\") <- 2 ;  x == x }");
+
+        assertEval("{ xx<-c(Package=\"digest\", Version=\"0.6.4\"); db<-list(xx); db <- do.call(\"rbind\", db); attributes(db) }");
+        assertEval("{ xx<-c(Package=\"digest\", Version=\"0.6.4\"); db<-list(xx); db <- rbind(db); attributes(db) }");
     }
 }

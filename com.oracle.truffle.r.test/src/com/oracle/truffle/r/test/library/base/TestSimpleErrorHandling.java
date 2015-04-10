@@ -35,12 +35,8 @@ import com.oracle.truffle.r.test.*;
  */
 public class TestSimpleErrorHandling extends TestBase {
 
-    /**
-     * This special version of {@code assertEval()} overrides {@link TestBase#assertEval(String)}
-     * and ensures the {@code error} handler option is reset after executing a test.
-     */
-    protected static void assertEval(String input) {
-        TestBase.assertEval(input);
+    @Override
+    protected void afterMicroTest() {
         ROptions.addOption("error", RNull.instance);
     }
 
@@ -51,5 +47,4 @@ public class TestSimpleErrorHandling extends TestBase {
         // make sure the error handler has been reset
         assertEval("{ nonExistentVariable }");
     }
-
 }

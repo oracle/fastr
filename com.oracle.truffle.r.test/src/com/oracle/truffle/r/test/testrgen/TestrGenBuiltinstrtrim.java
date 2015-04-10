@@ -18,45 +18,37 @@ import com.oracle.truffle.r.test.*;
 public class TestrGenBuiltinstrtrim extends TestBase {
 
     @Test
-    @Ignore
     public void teststrtrim1() {
-        assertEval("argv <- list(c(\'\\\'time\\\'\', \'\\\'status\\\'\'), 128); .Internal(strtrim(argv[[1]], argv[[2]]))");
+        assertEval(Ignored.Unknown, "argv <- list(c('\\\'time\\\'', '\\\'status\\\''), 128); .Internal(strtrim(argv[[1]], argv[[2]]))");
     }
 
     @Test
-    @Ignore
     public void teststrtrim2() {
-        assertEval("argv <- list(\'2014-03-17 14:47:20\', 8); .Internal(strtrim(argv[[1]], argv[[2]]))");
+        assertEval(Ignored.Unknown, "argv <- list('2014-03-17 14:47:20', 8); .Internal(strtrim(argv[[1]], argv[[2]]))");
     }
 
     @Test
-    @Ignore
     public void teststrtrim3() {
-        assertEval("argv <- list(c(\'\\\'1\\\'\', \'\\\'2\\\'\', NA), 128); .Internal(strtrim(argv[[1]], argv[[2]]))");
+        assertEval(Ignored.Unknown, "argv <- list(c('\\\'1\\\'', '\\\'2\\\'', NA), 128); .Internal(strtrim(argv[[1]], argv[[2]]))");
     }
 
     @Test
-    @Ignore
     public void teststrtrim4() {
-        assertEval("argv <- list(c(\'\\\'gray17\\\'\', \'\\\'grey17\\\'\'), 128); .Internal(strtrim(argv[[1]], argv[[2]]))");
+        assertEval(Ignored.Unknown, "argv <- list(c('\\\'gray17\\\'', '\\\'grey17\\\''), 128); .Internal(strtrim(argv[[1]], argv[[2]]))");
     }
 
     @Test
-    @Ignore
     public void teststrtrim5() {
-        assertEval("argv <- list(structure(\'\\\'@CRAN@\\\'\', .Names = \'CRAN\'), 128); .Internal(strtrim(argv[[1]], argv[[2]]))");
+        assertEval(Ignored.Unknown, "argv <- list(structure('\\\'@CRAN@\\\'', .Names = 'CRAN'), 128); .Internal(strtrim(argv[[1]], argv[[2]]))");
     }
 
     @Test
-    @Ignore
     public void teststrtrim6() {
-        assertEval("argv <- list(\'FALSE\', FALSE); .Internal(strtrim(argv[[1]], argv[[2]]))");
+        assertEval(Ignored.Unknown, "argv <- list('FALSE', FALSE); .Internal(strtrim(argv[[1]], argv[[2]]))");
     }
 
     @Test
-    @Ignore
     public void teststrtrim8() {
-        assertEval("argv <- list(character(0), 40L); .Internal(strtrim(argv[[1]], argv[[2]]))");
+        assertEval(Ignored.Unknown, "argv <- list(character(0), 40L); .Internal(strtrim(argv[[1]], argv[[2]]))");
     }
 }
-

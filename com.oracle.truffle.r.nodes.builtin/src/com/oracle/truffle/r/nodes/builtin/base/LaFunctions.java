@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -72,7 +72,7 @@ public class LaFunctions {
             boolean vectors = onlyValues == RRuntime.LOGICAL_FALSE;
             if (vectors) {
                 // TODO fix
-                RError.nyi(getEncapsulatingSourceSection(), "\"only.values == FALSE\" not implemented");
+                RError.nyi(getEncapsulatingSourceSection(), "\"only.values == FALSE\"");
             }
             double[] left = null;
             double[] right = null;

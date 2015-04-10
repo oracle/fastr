@@ -131,7 +131,7 @@ public abstract class RepeatInternal extends RBuiltinNode {
         int length = value.getLength() * times;
         Object[] array = new Object[length];
         for (int i = 0; i < times; i++) {
-            for (int j = 0; j < oldLength; ++j) {
+            for (int j = 0; j < oldLength; j++) {
                 array[i * oldLength + j] = value.getDataAt(j);
             }
         }

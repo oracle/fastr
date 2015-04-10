@@ -15,14 +15,11 @@ import com.oracle.truffle.r.test.*;
 
 // Checkstyle: stop line length check
 
-                                                                 public class TestrGenBuiltinstoragemodeassign_ extends TestBase {
+public class TestrGenBuiltinstoragemodeassign_ extends TestBase {
 
-	@Test
-    @Ignore
-	public void teststoragemodeassign_1() {
-		assertEval("argv <- structure(list(structure(c(0, 1, 2), .Dim = c(3L, 1L)),     value = \'integer\'), .Names = c(\'\', \'value\'));"+
-			"do.call(\'storage.mode<-\', argv)");
-	}
+    @Test
+    public void teststoragemodeassign_1() {
+        assertEval(Ignored.Unknown, "argv <- structure(list(structure(c(0, 1, 2), .Dim = c(3L, 1L)),     value = 'integer'), .Names = c('', 'value'));do.call('storage.mode<-', argv)");
+    }
 
 }
-

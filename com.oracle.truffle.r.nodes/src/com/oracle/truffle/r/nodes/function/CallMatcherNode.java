@@ -31,6 +31,8 @@ public abstract class CallMatcherNode extends Node {
 
     @Child private PromiseHelperNode promiseHelper;
 
+    protected final ConditionProfile missingArgProfile = ConditionProfile.createBinaryProfile();
+
     public CallMatcherNode(boolean forNextMethod, boolean argsAreEvaluated) {
         this.forNextMethod = forNextMethod;
         this.argsAreEvaluated = argsAreEvaluated;
@@ -104,15 +106,11 @@ public abstract class CallMatcherNode extends Node {
                     }
                 }
             }
-            FormalArguments formals = ((RRootNode) function.getRootNode()).getFormalArguments();
-            for (int i = 0; i < args.length; i++) {
-                Object arg = args[i];
-                if (arg == RMissing.instance) {
-                    args[i] = formals.getInternalDefaultArgumentAt(i);
-                }
-            }
+            replaceMissingArguments(function, args);
         }
     }
+
+    protected abstract void replaceMissingArguments(RFunction function, Object[] args);
 
     @NodeInfo(cost = NodeCost.UNINITIALIZED)
     private static final class CallMatcherUninitializedNode extends CallMatcherNode {
@@ -131,6 +129,11 @@ public abstract class CallMatcherNode extends Node {
                 CallMatcherCachedNode cachedNode = replace(specialize(suppliedSignature, suppliedArguments, function, getEncapsulatingSourceSection(), forNextMethod, argsAreEvaluated, this));
                 return cachedNode.execute(frame, suppliedSignature, suppliedArguments, function, s3Args);
             }
+        }
+
+        @Override
+        protected void replaceMissingArguments(RFunction function, Object[] args) {
+            throw RInternalError.shouldNotReachHere();
         }
     }
 
@@ -167,13 +170,25 @@ public abstract class CallMatcherNode extends Node {
 
                 Object[] preparedArguments = prepareSuppliedArgument(preparePermutation, suppliedArguments);
 
-                FormalArguments formals = ((RRootNode) function.getRootNode()).getFormalArguments();
+                FormalArguments formals = ((RRootNode) cachedFunction.getRootNode()).getFormalArguments();
                 Object[] reorderedArgs = ArgumentMatcher.matchArgumentsEvaluated(permutation, preparedArguments, formals);
-                evaluatePromises(frame, function, reorderedArgs);
-                Object[] arguments = prepareArguments(frame, reorderedArgs, formals.getSignature(), function, s3Args);
+                evaluatePromises(frame, cachedFunction, reorderedArgs);
+                Object[] arguments = prepareArguments(frame, reorderedArgs, formals.getSignature(), cachedFunction, s3Args);
                 return call.call(frame, arguments);
             } else {
                 return next.execute(frame, suppliedSignature, suppliedArguments, function, s3Args);
+            }
+        }
+
+        @Override
+        @ExplodeLoop
+        protected void replaceMissingArguments(RFunction function, Object[] args) {
+            FormalArguments formals = ((RRootNode) function.getRootNode()).getFormalArguments();
+            for (int i = 0; i < formals.getSignature().getLength(); i++) {
+                Object arg = args[i];
+                if (formals.getInternalDefaultArgumentAt(i) != RMissing.instance && missingArgProfile.profile(arg == RMissing.instance)) {
+                    args[i] = formals.getInternalDefaultArgumentAt(i);
+                }
             }
         }
 
@@ -229,6 +244,17 @@ public abstract class CallMatcherNode extends Node {
             return call.call(frame, function.getTarget(), arguments);
         }
 
+        @Override
+        protected void replaceMissingArguments(RFunction function, Object[] args) {
+            FormalArguments formals = ((RRootNode) function.getRootNode()).getFormalArguments();
+            for (int i = 0; i < formals.getSignature().getLength(); i++) {
+                Object arg = args[i];
+                if (formals.getInternalDefaultArgumentAt(i) != RMissing.instance && missingArgProfile.profile(arg == RMissing.instance)) {
+                    args[i] = formals.getInternalDefaultArgumentAt(i);
+                }
+            }
+        }
+
         @TruffleBoundary
         protected EvaluatedArguments reorderArguments(Object[] args, RFunction function, ArgumentsSignature paramSignature, SourceSection errorSourceSection) {
             assert paramSignature.getLength() == args.length;
@@ -237,7 +263,7 @@ public abstract class CallMatcherNode extends Node {
             int argListSize = argCount;
 
             boolean hasVarArgs = false;
-            for (int fi = 0; fi < argCount; ++fi) {
+            for (int fi = 0; fi < argCount; fi++) {
                 Object arg = args[fi];
                 if (hasVarArgsProfile.profile(arg instanceof RArgsValuesAndNames)) {
                     hasVarArgs = true;
@@ -250,7 +276,7 @@ public abstract class CallMatcherNode extends Node {
                 argValues = new Object[argListSize];
                 String[] argNames = new String[argListSize];
                 int index = 0;
-                for (int fi = 0; fi < argCount; ++fi) {
+                for (int fi = 0; fi < argCount; fi++) {
                     Object arg = args[fi];
                     if (arg instanceof RArgsValuesAndNames) {
                         RArgsValuesAndNames varArgs = (RArgsValuesAndNames) arg;

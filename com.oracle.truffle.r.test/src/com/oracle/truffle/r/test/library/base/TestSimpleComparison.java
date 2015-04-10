@@ -26,7 +26,8 @@ public class TestSimpleComparison extends TestBase {
         assertEval("{ x<-1:4; y<-21:24; names(y)<-121:124; attributes(x > y) }");
         assertEval("{ x<-1:4; names(x)<-101:104; y<-21:28; names(y)<-121:128;  attributes(y > x) }");
         assertEval("{ x<-1:4; names(x)<-101:104; y<-21:28; attributes(x > y) }");
-        assertEvalError("{ x<-1:4; dim(x)<-c(2,2); y<-21:28; x > y }");
+        assertEval(Output.ContainsError, "{ x<-1:4; dim(x)<-c(2,2); y<-21:28; x > y }");
+        assertEval("{ x<-factor(c(a=1)); y<-factor(c(b=1)); x==y }");
     }
 
     @Test
@@ -65,9 +66,9 @@ public class TestSimpleComparison extends TestBase {
         assertEval("{ \"1+1.1i\" == 1+1.1i }");
         assertEval("{ \"1+1.100i\" == 1+1.100i }");
 
-        assertEvalError("{ x<-1+1i; x > FALSE }");
+        assertEval(Output.ContainsError, "{ x<-1+1i; x > FALSE }");
         assertEval("{ z <- TRUE; dim(z) <- c(1) ; dim(z == TRUE) }");
-        assertEvalError("{ z <- TRUE; dim(z) <- c(1) ; u <- 1:3 ; dim(u) <- 3 ; u == z }");
+        assertEval(Output.ContainsError, "{ z <- TRUE; dim(z) <- c(1) ; u <- 1:3 ; dim(u) <- 3 ; u == z }");
     }
 
     @Test
@@ -177,10 +178,10 @@ public class TestSimpleComparison extends TestBase {
         assertEval("{ 3 != 1:2 }");
         assertEval("{ b <- 1:3 ; z <- FALSE ; b[2==2] }");
 
-        assertEvalError("{ x<-1+1i; y<-2+2i; x > y }");
-        assertEvalError("{ x<-1+1i; y<-2+2i; x < y }");
-        assertEvalError("{ x<-1+1i; y<-2+2i; x >= y }");
-        assertEvalError("{ x<-1+1i; y<-2+2i; x <= y }");
+        assertEval(Output.ContainsError, "{ x<-1+1i; y<-2+2i; x > y }");
+        assertEval(Output.ContainsError, "{ x<-1+1i; y<-2+2i; x < y }");
+        assertEval(Output.ContainsError, "{ x<-1+1i; y<-2+2i; x >= y }");
+        assertEval(Output.ContainsError, "{ x<-1+1i; y<-2+2i; x <= y }");
 
         assertEval("{ c(1,2,NA,4) != 2 }");
         assertEval("{ c(1,2,NA,4) == 2 }");
@@ -206,18 +207,18 @@ public class TestSimpleComparison extends TestBase {
         assertEval("{ 1:3 == TRUE }");
         assertEval("{ TRUE == 1:3 }");
 
-        assertEvalWarning("{ c(1,2) < c(2,1,4) }");
-        assertEvalWarning("{ c(2,1,4) < c(1,2) }");
-        assertEvalWarning("{ c(1L,2L) < c(2L,1L,4L) }");
-        assertEvalWarning("{ c(2L,1L,4L) < c(1L,2L) }");
-        assertEvalWarning("{ c(TRUE,FALSE,FALSE) < c(TRUE,TRUE) }");
-        assertEvalWarning("{ c(TRUE,TRUE) == c(TRUE,FALSE,FALSE) }");
-        assertEvalWarning("{ as.raw(c(1,2)) < as.raw(c(2,1,4)) }");
-        assertEvalWarning("{ as.raw(c(2,1,4)) < as.raw(c(1,2)) }");
-        assertEvalWarning("{ c(\"hi\",\"hello\",\"bye\") > c(\"cau\", \"ahoj\") }");
-        assertEvalWarning("{ c(\"cau\", \"ahoj\") != c(\"hi\",\"hello\",\"bye\") }");
-        assertEvalWarning("{ c(1+1i,2+2i) == c(2+1i,1+2i,1+1i) }");
-        assertEvalWarning("{ c(2+1i,1+2i,1+1i) == c(1+1i, 2+2i) }");
+        assertEval(Output.ContainsWarning, "{ c(1,2) < c(2,1,4) }");
+        assertEval(Output.ContainsWarning, "{ c(2,1,4) < c(1,2) }");
+        assertEval(Output.ContainsWarning, "{ c(1L,2L) < c(2L,1L,4L) }");
+        assertEval(Output.ContainsWarning, "{ c(2L,1L,4L) < c(1L,2L) }");
+        assertEval(Output.ContainsWarning, "{ c(TRUE,FALSE,FALSE) < c(TRUE,TRUE) }");
+        assertEval(Output.ContainsWarning, "{ c(TRUE,TRUE) == c(TRUE,FALSE,FALSE) }");
+        assertEval(Output.ContainsWarning, "{ as.raw(c(1,2)) < as.raw(c(2,1,4)) }");
+        assertEval(Output.ContainsWarning, "{ as.raw(c(2,1,4)) < as.raw(c(1,2)) }");
+        assertEval(Output.ContainsWarning, "{ c(\"hi\",\"hello\",\"bye\") > c(\"cau\", \"ahoj\") }");
+        assertEval(Output.ContainsWarning, "{ c(\"cau\", \"ahoj\") != c(\"hi\",\"hello\",\"bye\") }");
+        assertEval(Output.ContainsWarning, "{ c(1+1i,2+2i) == c(2+1i,1+2i,1+1i) }");
+        assertEval(Output.ContainsWarning, "{ c(2+1i,1+2i,1+1i) == c(1+1i, 2+2i) }");
 
         assertEval("{ as.raw(c(2,1,4)) < raw() }");
         assertEval("{ raw() < as.raw(c(2,1,4)) }");
@@ -253,7 +254,7 @@ public class TestSimpleComparison extends TestBase {
         assertEval("{ c(0/0+1i,2+1i) == c(1+1i,2+1i) }");
         assertEval("{ c(1+1i,2+1i) == c(0/0+1i,2+1i) }");
 
-        assertEvalError("{ m <- matrix(nrow=2, ncol=2, 1:4) ; m == 1:16 }");
+        assertEval(Output.ContainsError, "{ m <- matrix(nrow=2, ncol=2, 1:4) ; m == 1:16 }");
     }
 
     @Test

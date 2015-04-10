@@ -1,3 +1,4 @@
+#!/bin/bash
 #
 # This material is distributed under the GNU General Public License
 # Version 2. You may review the terms of this license at
@@ -12,4 +13,8 @@
 
 # Fledgling Rscript command to startup FastR
 
-mx Rscript "$@"
+source="${BASH_SOURCE[0]}"
+while [ -h "$source" ] ; do source="$(readlink "$source")"; done
+PRIMARY_PATH="$( cd -P "$( dirname "$source" )" && pwd )"/..
+
+mx --primary-suite-path $PRIMARY_PATH Rscript "$@"

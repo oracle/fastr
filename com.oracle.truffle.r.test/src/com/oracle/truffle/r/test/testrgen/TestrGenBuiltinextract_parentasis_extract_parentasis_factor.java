@@ -19,6 +19,6 @@ public class TestrGenBuiltinextract_parentasis_extract_parentasis_factor extends
 
     @Test
     public void testextract_parentasis_extract_parentasis_factor1() {
-        assertEval("argv <- structure(list(x = structure(2:4, .Label = c(\'A\', \'B\',     \'C\', \'D\', \'E\'), class = \'factor\'), 2), .Names = c(\'x\', \'\'));" + "do.call(\'[[.factor\', argv)");
+        assertEval("argv <- structure(list(x = structure(2:4, .Label = c('A', 'B',     'C', 'D', 'E'), class = 'factor'), 2), .Names = c('x', ''));do.call('[[.factor', argv)");
     }
 }

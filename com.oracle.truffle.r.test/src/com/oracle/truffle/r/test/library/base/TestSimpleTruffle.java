@@ -36,10 +36,10 @@ public class TestSimpleTruffle extends TestBase {
     @Test
     public void test1Ignore() {
         // FIXME these incorrectly output NULL
-        assertEvalNoOutput("{ f<-function(i) { if(i==1) { i } } ; f(1) ; f(2) }");
-        assertEvalNoOutput("{ f<-function() { if (!1) TRUE } ; f(); f() }");
-        assertEvalNoOutput("{ f<-function() { if (!TRUE) 1 } ; f(); f() }");
-        assertEvalNoOutput("{ f<-function(i) { if (FALSE) { i } } ; f(2) ; f(1) }");
+        assertEval("{ f<-function(i) { if(i==1) { i } } ; f(1) ; f(2) }");
+        assertEval("{ f<-function() { if (!1) TRUE } ; f(); f() }");
+        assertEval("{ f<-function() { if (!TRUE) 1 } ; f(); f() }");
+        assertEval("{ f<-function(i) { if (FALSE) { i } } ; f(2) ; f(1) }");
     }
 
     @Test
@@ -54,10 +54,8 @@ public class TestSimpleTruffle extends TestBase {
 
     @Test
     public void testWarningsAndErrors() {
-        assertEvalWarning("{ (c(1, 2) < c(1, 2, 3)) ==  (c(1, 2) < c(1, 3, 4)) }");
-        assertEvalErrorWarning("{ 1i > (c(1, 2) < c(1, 2, 3)) }");
-        assertEvalErrorWarning("{ 1i > ((c(1, 2) < c(1, 2, 3)) ==  (c(1, 2) < c(1, 3, 4))) }");
-
+        assertEval(Output.ContainsWarning, "{ (c(1, 2) < c(1, 2, 3)) ==  (c(1, 2) < c(1, 3, 4)) }");
+        assertEval(Output.ContainsError, Output.ContainsWarning, "{ 1i > (c(1, 2) < c(1, 2, 3)) }");
+        assertEval(Output.ContainsError, Output.ContainsWarning, "{ 1i > ((c(1, 2) < c(1, 2, 3)) ==  (c(1, 2) < c(1, 3, 4))) }");
     }
-
 }

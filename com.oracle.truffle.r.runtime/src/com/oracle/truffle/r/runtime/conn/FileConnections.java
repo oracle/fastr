@@ -64,7 +64,7 @@ public class FileConnections {
                     delegate = new FileWriteBinaryConnection(this, false);
                     break;
                 default:
-                    throw RError.nyi((SourceSection) null, "unimplemented open mode: " + getOpenMode());
+                    throw RError.nyi((SourceSection) null, "open mode: " + getOpenMode());
             }
             setDelegate(delegate);
         }

@@ -65,6 +65,11 @@ public final class WrapArgumentNode extends RNode {
         }
     }
 
+    @Override
+    public NodeCost getCost() {
+        return modeChange ? NodeCost.MONOMORPHIC : NodeCost.NONE;
+    }
+
     public RNode getOperand() {
         return operand;
     }

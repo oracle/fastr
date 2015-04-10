@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -74,20 +74,20 @@ public class TestUnserializeFromGnuR extends TestBase {
         readCharTests("testchar.bin", new String[]{"c(3, 10, 3)", "c(1, 8, 3)", "c(4, 9, 3)"});
     }
 
-    private static void runUnserializeFromConn(String fileName) {
-        assertTemplateEval(TestBase.template("{ print(.Internal(unserializeFromConn(gzfile(\"%0\"), NULL))) }", new String[]{paths.get(fileName).toString()}));
+    private void runUnserializeFromConn(String fileName) {
+        assertEval(TestBase.template("{ print(.Internal(unserializeFromConn(gzfile(\"%0\"), NULL))) }", new String[]{paths.get(fileName).toString()}));
     }
 
-    private static void checkDataFrame(String fileName) {
-        assertTemplateEval(TestBase.template("{ x <- .Internal(unserializeFromConn(gzfile(\"%0\"), NULL)); is.data.frame(x) }", new String[]{paths.get(fileName).toString()}));
+    private void checkDataFrame(String fileName) {
+        assertEval(TestBase.template("{ x <- .Internal(unserializeFromConn(gzfile(\"%0\"), NULL)); is.data.frame(x) }", new String[]{paths.get(fileName).toString()}));
     }
 
-    private static void checkFactor(String fileName) {
-        assertTemplateEval(TestBase.template("{ x <- .Internal(unserializeFromConn(gzfile(\"%0\"), NULL)); is.factor(x) }", new String[]{paths.get(fileName).toString()}));
+    private void checkFactor(String fileName) {
+        assertEval(TestBase.template("{ x <- .Internal(unserializeFromConn(gzfile(\"%0\"), NULL)); is.factor(x) }", new String[]{paths.get(fileName).toString()}));
     }
 
-    private static void readCharTests(String fileName, String[] nchars) {
-        assertTemplateEval(TestBase.template("{ zz <- file(\"%0\", \"rb\"); nc<-%1; readChar(zz, nc) }", new String[]{paths.get(fileName).toString()}, nchars));
+    private void readCharTests(String fileName, String[] nchars) {
+        assertEval(TestBase.template("{ zz <- file(\"%0\", \"rb\"); nc<-%1; readChar(zz, nc) }", new String[]{paths.get(fileName).toString()}, nchars));
     }
 
 }

@@ -68,14 +68,14 @@ public abstract class InheritsNode extends BinaryNode {
     private byte checkDoesInherit(RStringVector classHr, RAbstractStringVector what) {
         if (sizeOneProfile.profile(what.getLength() == 1)) {
             String whatString = what.getDataAt(0);
-            for (int i = 0; i < classHr.getLength(); ++i) {
+            for (int i = 0; i < classHr.getLength(); i++) {
                 if (whatString.equals(classHr.getDataAt(i))) {
                     return RRuntime.LOGICAL_TRUE;
                 }
             }
         } else {
             Map<String, Integer> classToPos = initClassToPos(classHr);
-            for (int i = 0; i < what.getLength(); ++i) {
+            for (int i = 0; i < what.getLength(); i++) {
                 if (classToPos.get(what.getDataAt(i)) != null) {
                     return RRuntime.LOGICAL_TRUE;
                 }
@@ -90,7 +90,7 @@ public abstract class InheritsNode extends BinaryNode {
         // Create a mapping for elements to their respective positions
         // in the vector for faster lookup.
         HashMap<String, Integer> classToPos = new HashMap<>();
-        for (int i = 0; i < classHr.getLength(); ++i) {
+        for (int i = 0; i < classHr.getLength(); i++) {
             classToPos.put(classHr.getDataAt(i), i);
         }
         return classToPos;

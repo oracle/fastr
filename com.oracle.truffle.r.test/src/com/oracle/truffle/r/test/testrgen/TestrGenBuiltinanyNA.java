@@ -15,13 +15,11 @@ import com.oracle.truffle.r.test.*;
 
 // Checkstyle: stop line length check
 
-                                                                 public class TestrGenBuiltinanyNA extends TestBase {
+public class TestrGenBuiltinanyNA extends TestBase {
 
-	@Test
-	public void testanyNA1() {
-		assertEval("argv <- list(c(1.81566026854212e-304, 0, 0, 0, 0, 0, 0, 0, 0,     0, 0, 0, 0, 0, 0, 0, 0, 0, 0));"+
-			"do.call(\'anyNA\', argv)");
-	}
+    @Test
+    public void testanyNA1() {
+        assertEval("argv <- list(c(1.81566026854212e-304, 0, 0, 0, 0, 0, 0, 0, 0,     0, 0, 0, 0, 0, 0, 0, 0, 0, 0));do.call('anyNA', argv)");
+    }
 
 }
-

@@ -236,7 +236,7 @@ public class FrameFunctions {
                 Frame cframe = Utils.getCallerFrame(frame, FrameAccess.READ_ONLY);
                 return createCall(cframe, false, RRuntime.fromLogical(expandDots));
             } else {
-                throw RError.nyi(getEncapsulatingSourceSection(), " explicit call argument not implemented");
+                throw RError.nyi(getEncapsulatingSourceSection(), "explicit call argument");
             }
         }
 
@@ -368,7 +368,7 @@ public class FrameFunctions {
         protected Object sysFrames() {
             errorProfile.enter();
             // TODO DEOPT RPromise.deoptimizeFrame every frame that escapes it's stack here
-            throw RError.nyi(null, "sys.frames is not implemented");
+            throw RError.nyi(null, "sys.frames");
         }
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,14 +22,26 @@
  */
 package com.oracle.truffle.r.nodes.unary;
 
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.data.model.*;
 
 public abstract class ConvertInt extends UnaryNode {
 
+    @Child private ConvertInt convertIntRecursive;
+
     public abstract int executeInteger(VirtualFrame frame, Object operand);
+
+    private int convertIntRecursive(VirtualFrame frame, Object operand) {
+        if (convertIntRecursive == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            convertIntRecursive = insert(ConvertIntNodeGen.create(null));
+        }
+        return executeInteger(frame, operand);
+    }
 
     @Specialization
     protected int doInt(int operand) {
@@ -44,6 +56,11 @@ public abstract class ConvertInt extends UnaryNode {
     @Specialization
     protected int doLogical(byte operand) {
         return RRuntime.logical2int(operand);
+    }
+
+    @Specialization(guards = "operand.getLength() == 1")
+    protected int doLogical(VirtualFrame frame, RAbstractContainer operand) {
+        return convertIntRecursive(frame, operand.getDataAtAsObject(0));
     }
 
     @Fallback

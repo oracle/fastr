@@ -25,7 +25,7 @@ package com.oracle.truffle.r.runtime;
 import java.util.*;
 
 import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.utilities.*;
@@ -84,6 +84,7 @@ public final class RArguments {
     @CompilationFinal public static final Object[] EMPTY_OBJECT_ARRAY = new Object[0];
     @CompilationFinal public static final String[] EMPTY_STRING_ARRAY = new String[0];
 
+    @ValueType
     public static final class S3Args {
         public final String generic;
         public final Object clazz;
@@ -177,22 +178,9 @@ public final class RArguments {
         a[INDEX_DEPTH] = depth;
         a[INDEX_IS_IRREGULAR] = false;
         a[INDEX_SIGNATURE] = signature;
-        copyArguments(evaluatedArgs, a, INDEX_ARGUMENTS);
+        System.arraycopy(evaluatedArgs, 0, a, INDEX_ARGUMENTS, evaluatedArgs.length);
         // assert envFunctionInvariant(a);
         return a;
-    }
-
-    /**
-     * This method is used instead of System.arraycopy because the arraycopy would be optimized too
-     * late (after Truffle partial evaluation). At this late stage, there is no more information
-     * about the finalness of array contents, and according to the Java spec array contents can
-     * change at any point in time. Therefore, even though source is known at compile time, Graal
-     * would have to be conservative and keep the array copy.
-     */
-    private static void copyArguments(Object[] source, Object[] destination, int position) {
-        for (int i = 0; i < source.length; i++) {
-            destination[position + i] = source[i];
-        }
     }
 
     @SuppressWarnings("unused")

@@ -52,7 +52,7 @@ public abstract class Mean extends RBuiltinNode {
             return Double.NaN;
         }
         double sum = x.getDataAt(0);
-        for (int k = 1; k < x.getLength(); ++k) {
+        for (int k = 1; k < x.getLength(); k++) {
             sum = add.op(sum, x.getDataAt(k));
         }
         return div.op(sum, x.getLength());
@@ -66,7 +66,7 @@ public abstract class Mean extends RBuiltinNode {
             return Double.NaN;
         }
         double sum = x.getDataAt(0);
-        for (int k = 1; k < x.getLength(); ++k) {
+        for (int k = 1; k < x.getLength(); k++) {
             sum = add.op(sum, x.getDataAt(k));
         }
         return div.op(sum, x.getLength());
@@ -80,7 +80,7 @@ public abstract class Mean extends RBuiltinNode {
             return Double.NaN;
         }
         double sum = x.getDataAt(0);
-        for (int k = 1; k < x.getLength(); ++k) {
+        for (int k = 1; k < x.getLength(); k++) {
             sum = add.op(sum, x.getDataAt(k));
         }
         return div.op(sum, x.getLength());
@@ -95,7 +95,7 @@ public abstract class Mean extends RBuiltinNode {
         }
         RComplex sum = x.getDataAt(0);
         RComplex comp;
-        for (int k = 1; k < x.getLength(); ++k) {
+        for (int k = 1; k < x.getLength(); k++) {
             comp = x.getDataAt(k);
             sum = add.op(sum.getRealPart(), sum.getImaginaryPart(), comp.getRealPart(), comp.getImaginaryPart());
         }

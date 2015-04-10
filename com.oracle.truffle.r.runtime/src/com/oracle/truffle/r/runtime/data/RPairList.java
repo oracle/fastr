@@ -192,7 +192,7 @@ public class RPairList extends RAttributeStorage implements RAttributable, RAbst
     }
 
     @Override
-    public RList getDimNames() {
+    public RList getDimNames(RAttributeProfiles attrProfiles) {
         throw RInternalError.shouldNotReachHere();
     }
 

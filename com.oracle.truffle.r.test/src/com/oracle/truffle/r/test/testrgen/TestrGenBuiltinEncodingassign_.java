@@ -15,14 +15,11 @@ import com.oracle.truffle.r.test.*;
 
 // Checkstyle: stop line length check
 
-                                                                 public class TestrGenBuiltinEncodingassign_ extends TestBase {
+public class TestrGenBuiltinEncodingassign_ extends TestBase {
 
-	@Test
-    @Ignore
-	public void testEncodingassign_1() {
-		assertEval("argv <- structure(list(x = \'abc\', value = \'UTF-8\'), .Names = c(\'x\',     \'value\'));"+
-			"do.call(\'Encoding<-\', argv)");
-	}
+    @Test
+    public void testEncodingassign_1() {
+        assertEval(Ignored.Unknown, "argv <- structure(list(x = 'abc', value = 'UTF-8'), .Names = c('x',     'value'));do.call('Encoding<-', argv)");
+    }
 
 }
-

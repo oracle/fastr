@@ -56,12 +56,14 @@ abstract class ArrayPositionsCastBase extends RNode {
     private final BranchProfile errorProfile = BranchProfile.create();
 
     private final ConditionProfile nameConditionProfile = ConditionProfile.createBinaryProfile();
-    private final BranchProfile naValueMet = BranchProfile.create();
-    private final BranchProfile intVectorMet = BranchProfile.create();
 
     private final ConditionProfile dataFrameProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile dimNullProfile = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile intVecProfile = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile compressedProfile = ConditionProfile.createBinaryProfile();
     protected final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+
+    private final ValueProfile rowNamesProfile = ValueProfile.createClassProfile();
 
     protected int[] getDimensions(RAbstractContainer container) {
         if (dataFrameProfile.profile(container.getElementClass() == RDataFrame.class)) {
@@ -78,15 +80,17 @@ abstract class ArrayPositionsCastBase extends RNode {
     }
 
     private int calculateN(RAbstractVector rowNames) {
-        if (rowNames.getElementClass() == RInt.class && rowNames.getLength() == 2) {
-            RAbstractIntVector rowNamesIntVector = (RAbstractIntVector) rowNames;
-            intVectorMet.enter();
-            if (RRuntime.isNA(rowNamesIntVector.getDataAt(0))) {
-                naValueMet.enter();
+        RAbstractVector profiledRowNames = rowNamesProfile.profile(rowNames);
+        if (intVecProfile.profile(profiledRowNames.getElementClass() == RInt.class && profiledRowNames.getLength() == 2)) {
+            RAbstractIntVector rowNamesIntVector = (RAbstractIntVector) profiledRowNames;
+            if (compressedProfile.profile(RRuntime.isNA(rowNamesIntVector.getDataAt(0)))) {
                 return rowNamesIntVector.getDataAt(1);
+            } else {
+                return profiledRowNames.getLength();
             }
+        } else {
+            return profiledRowNames.getLength();
         }
-        return rowNames.getLength();
     }
 
     private void dimensionsError() {
@@ -471,7 +475,7 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
                     if (dimSizeOneProfile.profile(dimSize == 1)) {
                         /*
                          * e.g. c(7)[-2] vs c(7)[[-2]]
-                         *
+                         * 
                          * only one element to be picked or ultimately an error caused by operand
                          */
                         return isSubset ? 1 : operand;
@@ -1052,7 +1056,7 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
             int positionsLength = positions.getLength();
             int dimLength = numDimensions == 1 ? container.getLength() : getDimensions(container)[dimension];
             boolean outOfBounds = false;
-            for (int i = 0; i < positionsLength; ++i) {
+            for (int i = 0; i < positionsLength; i++) {
                 int pos = positions.getDataAt(i);
                 if (positionNACheck.check(pos)) {
                     seenNA.enter();
@@ -1211,7 +1215,7 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
 
         @Specialization(guards = "!isDataFrame(container)")
         RList getDim(RAbstractContainer container) {
-            return container.getDimNames();
+            return container.getDimNames(attrProfiles);
         }
 
         @Specialization(guards = "isDataFrame(container)")

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,6 +24,8 @@ package com.oracle.truffle.r.test.generate;
 
 import java.io.*;
 import java.util.*;
+
+import com.oracle.graal.compiler.common.*;
 
 /**
  * Supports the management of expected test output.
@@ -315,19 +317,15 @@ public class TestOutputManager {
      *
      * @param testElementName identification of the annotated test element, i.e.,
      *            {@code class.testmethod}.
-     * @param testMethodName name of method invoking specific test
      * @param test R test string
-     * @param testId key to record test. {@code null} for single line tests, unique name for
-     *            multi-line tests.
      * @param d handler for diagnostics
      * @param checkOnly if {@code true} do not invoke GnuR, just update map
-     * @param stripTrailingWhiteSpace TODO
+     * @param keepTrailingWhiteSpace TODO
      * @return the GnuR output
      */
-    public String genTestResult(String testElementName, String testMethodName, String test, String testId, DiagnosticHandler d, boolean checkOnly, boolean stripTrailingWhiteSpace) {
+    public String genTestResult(String testElementName, String test, DiagnosticHandler d, boolean checkOnly, boolean keepTrailingWhiteSpace) {
         Map<String, TestInfo> testMap = getTestMap(testElementName);
-        String testKey = testId == null ? test : testId;
-        TestInfo testInfo = testMap.get(testKey);
+        TestInfo testInfo = testMap.get(test);
         if (testInfo != null) {
             if (testInfo.inCode()) {
                 // we have already seen this test - duplicates are harmless but we warn about it
@@ -337,15 +335,17 @@ public class TestOutputManager {
             testInfo.setElementName(testElementName);
             return testInfo.output;
         } else {
-            d.note("test file does not contain: " + testKey);
+            d.note("test file does not contain: " + test);
             String expected = null;
             if (!checkOnly) {
-                expected = rSession.eval(test);
-                if (stripTrailingWhiteSpace) {
-                    expected = stripTrailingWhitespace(expected);
+                try {
+                    expected = rSession.eval(test);
+                } catch (Throwable e) {
+                    throw GraalInternalError.shouldNotReachHere("unexpected exception thrown by GNUR session: " + e);
                 }
+                expected = prepareResult(expected, keepTrailingWhiteSpace);
             }
-            testMap.put(testKey, new TestInfo(testElementName, expected, true));
+            testMap.put(test, new TestInfo(testElementName, expected, true));
             return expected;
         }
     }
@@ -380,14 +380,14 @@ public class TestOutputManager {
         int[] positions = new int[parameters.length];
         while (index < result.length) {
             String currentString = template;
-            for (int i = 0; i < parameters.length; ++i) {
+            for (int i = 0; i < parameters.length; i++) {
                 int currentPos = positions[i];
                 currentString = currentString.replace("%" + i, parameters[i][currentPos]);
             }
             result[index] = currentString;
-            ++index;
+            index++;
 
-            for (int i = 0; i < parameters.length; ++i) {
+            for (int i = 0; i < parameters.length; i++) {
                 positions[i]++;
                 if (positions[i] == parameters[i].length) {
                     positions[i] = 0;
@@ -400,7 +400,10 @@ public class TestOutputManager {
         return result;
     }
 
-    public static String stripTrailingWhitespace(String s) {
+    public static String prepareResult(String s, boolean keepTrailingWhiteSpace) {
+        if (keepTrailingWhiteSpace) {
+            return s;
+        }
         int len = s.length();
         if (len == 0) {
             return s;

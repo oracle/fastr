@@ -109,7 +109,7 @@ public class CallArgumentsNode extends ArgumentsNode implements UnmatchedArgumen
         // Prepare arguments: wrap in WrapArgumentNode
         RNode[] wrappedArgs = new RNode[args.length];
         List<Integer> varArgsSymbolIndices = new ArrayList<>();
-        for (int i = 0; i < wrappedArgs.length; ++i) {
+        for (int i = 0; i < wrappedArgs.length; i++) {
             RNode arg = args[i];
             if (arg == null) {
                 wrappedArgs[i] = null;

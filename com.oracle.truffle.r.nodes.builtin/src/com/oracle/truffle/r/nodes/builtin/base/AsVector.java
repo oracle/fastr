@@ -222,7 +222,7 @@ public abstract class AsVector extends RBuiltinNode {
         if (x.getLength() == 0) {
             return RNull.instance;
         } else {
-            throw RError.nyi(getEncapsulatingSourceSection(), " non-empty lists");
+            throw RError.nyi(getEncapsulatingSourceSection(), "non-empty lists");
         }
     }
 

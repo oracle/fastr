@@ -50,9 +50,9 @@ public abstract class RowSums extends RBuiltinNode {
         boolean isComplete = true;
         final boolean rna = removeNA.profile(naRm == RRuntime.LOGICAL_TRUE);
         na.enable(x);
-        nextRow: for (int i = 0; i < rowNum; ++i) {
+        nextRow: for (int i = 0; i < rowNum; i++) {
             double sum = 0;
-            for (int c = 0; c < colNum; ++c) {
+            for (int c = 0; c < colNum; c++) {
                 double el = x.getDataAt(c * rowNum + i);
                 if (rna) {
                     if (!na.check(el) && !Double.isNaN(el)) {
@@ -83,9 +83,9 @@ public abstract class RowSums extends RBuiltinNode {
         double[] result = new double[rowNum];
         final boolean rna = removeNA.profile(naRm == RRuntime.LOGICAL_TRUE);
         na.enable(x);
-        nextRow: for (int i = 0; i < rowNum; ++i) {
+        nextRow: for (int i = 0; i < rowNum; i++) {
             double sum = 0;
-            for (int c = 0; c < colNum; ++c) {
+            for (int c = 0; c < colNum; c++) {
                 byte el = x.getDataAt(c * rowNum + i);
                 if (rna) {
                     if (!na.check(el)) {
@@ -111,9 +111,9 @@ public abstract class RowSums extends RBuiltinNode {
         double[] result = new double[rowNum];
         final boolean rna = removeNA.profile(naRm == RRuntime.LOGICAL_TRUE);
         na.enable(x);
-        nextRow: for (int i = 0; i < rowNum; ++i) {
+        nextRow: for (int i = 0; i < rowNum; i++) {
             double sum = 0;
-            for (int c = 0; c < colNum; ++c) {
+            for (int c = 0; c < colNum; c++) {
                 int el = x.getDataAt(c * rowNum + i);
                 if (rna) {
                     if (!na.check(el)) {

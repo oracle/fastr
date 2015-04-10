@@ -28,19 +28,18 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
 public final class RList extends RVector implements RAbstractVector, RGPBits {
 
-    private Object[] data;
+    private final Object[] data;
     private int gpbits;
 
     private static final RStringVector implicitClassHeader = RDataFactory.createStringVector(new String[]{RType.List.getName()}, true);
     private static final RStringVector implicitClassHeaderArray = RDataFactory.createStringVector(new String[]{RType.Array.getName(), RType.List.getName()}, true);
     private static final RStringVector implicitClassHeaderMatrix = RDataFactory.createStringVector(new String[]{RType.Matrix.getName(), RType.List.getName()}, true);
 
-    @CompilationFinal public String elementNamePrefix;
+    public String elementNamePrefix;
 
     @SuppressWarnings("unused")
     RList(Object[] data, boolean isComplete, int[] dims, RStringVector names) {
@@ -197,11 +196,6 @@ public final class RList extends RVector implements RAbstractVector, RGPBits {
         return this.getDataAt(index);
     }
 
-    private Object[] createResizedData(int size, boolean fillNA) {
-        assert !this.isShared();
-        return copyResizedData(size, fillNA);
-    }
-
     private Object[] copyResizedData(int size, boolean fillNA) {
         Object[] newData = Arrays.copyOf(data, size);
         return resizeData(newData, this.data, this.getLength(), fillNA);
@@ -210,7 +204,7 @@ public final class RList extends RVector implements RAbstractVector, RGPBits {
     private static Object[] resizeData(Object[] newData, Object[] oldData, int oldDataLength, boolean fillNA) {
         if (newData.length > oldDataLength) {
             if (fillNA) {
-                for (int i = oldDataLength; i < newData.length; ++i) {
+                for (int i = oldDataLength; i < newData.length; i++) {
                     newData[i] = RNull.instance;
                 }
             } else {
@@ -225,11 +219,6 @@ public final class RList extends RVector implements RAbstractVector, RGPBits {
     @Override
     public RList copyResized(int size, boolean fillNA) {
         return RDataFactory.createList(copyResizedData(size, fillNA));
-    }
-
-    @Override
-    protected void resizeInternal(int size) {
-        this.data = createResizedData(size, true);
     }
 
     @Override

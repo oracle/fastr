@@ -58,9 +58,9 @@ public abstract class ColSums extends RBuiltinNode {
         na.enable(x);
         double[] data = x.getDataWithoutCopying();
         int pos = 0;
-        nextCol: for (int c = 0; c < colNum; ++c) {
+        nextCol: for (int c = 0; c < colNum; c++) {
             double sum = 0;
-            for (int i = 0; i < rowNum; ++i) {
+            for (int i = 0; i < rowNum; i++) {
                 double el = data[pos++];
                 if (rna) {
                     if (!na.check(el) && !Double.isNaN(el)) {
@@ -94,9 +94,9 @@ public abstract class ColSums extends RBuiltinNode {
         na.enable(x);
         byte[] data = x.getDataWithoutCopying();
         int pos = 0;
-        nextCol: for (int c = 0; c < colNum; ++c) {
+        nextCol: for (int c = 0; c < colNum; c++) {
             double sum = 0;
-            for (int i = 0; i < rowNum; ++i) {
+            for (int i = 0; i < rowNum; i++) {
                 byte el = data[pos++];
                 if (rna) {
                     if (!na.check(el)) {
@@ -124,9 +124,9 @@ public abstract class ColSums extends RBuiltinNode {
         na.enable(x);
         int[] data = x.getDataWithoutCopying();
         int pos = 0;
-        nextCol: for (int c = 0; c < colNum; ++c) {
+        nextCol: for (int c = 0; c < colNum; c++) {
             double sum = 0;
-            for (int i = 0; i < rowNum; ++i) {
+            for (int i = 0; i < rowNum; i++) {
                 int el = data[pos++];
                 if (rna) {
                     if (!na.check(el)) {

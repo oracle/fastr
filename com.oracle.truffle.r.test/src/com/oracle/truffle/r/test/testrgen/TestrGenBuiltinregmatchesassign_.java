@@ -15,14 +15,13 @@ import com.oracle.truffle.r.test.*;
 
 // Checkstyle: stop line length check
 
-                                                                 public class TestrGenBuiltinregmatchesassign_ extends TestBase {
+public class TestrGenBuiltinregmatchesassign_ extends TestBase {
 
-	@Test
-    @Ignore
-	public void testregmatchesassign_1() {
-		assertEval("argv <- structure(list(x = c(\'A\', \'B\', \'C\'), m = structure(c(1L,     -1L, 1L), match.length = c(1L, -1L, 1L), useBytes = TRUE),     value = c(\'A\', \'C\')), .Names = c(\'x\', \'m\', \'value\'));"+
-			"do.call(\'regmatches<-\', argv)");
-	}
+    @Test
+    public void testregmatchesassign_1() {
+        assertEval(Ignored.Unknown,
+                        "argv <- structure(list(x = c('A', 'B', 'C'), m = structure(c(1L,     -1L, 1L), match.length = c(1L, -1L, 1L), useBytes = TRUE),     value = c('A', 'C')), .Names = c('x', 'm', 'value'));"
+                                        + "do.call('regmatches<-', argv)");
+    }
 
 }
-

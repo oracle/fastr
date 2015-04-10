@@ -770,14 +770,15 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
         int length = Math.max(leftLength, rightLength);
         RAbstractVector attributeSource = leftLength == length ? left : right;
 
-        if (attributeSource.getAttributes() != null || left.hasDimensions() || right.hasDimensions() || attributeSource.getNames(attrProfiles) != null || attributeSource.getDimNames() != null) {
+        if (attributeSource.getAttributes() != null || left.hasDimensions() || right.hasDimensions() || attributeSource.getNames(attrProfiles) != null ||
+                        attributeSource.getDimNames(attrProfiles) != null) {
             hasAttributesProfile.enter();
             copyAttributesInternal(ret, attributeSource, left, right);
         }
     }
 
     private void copyAttributes(RVector ret, RAbstractVector source) {
-        if (source.getAttributes() != null || source.hasDimensions() || source.getNames(attrProfiles) != null || source.getDimNames() != null) {
+        if (source.getAttributes() != null || source.hasDimensions() || source.getNames(attrProfiles) != null || source.getDimNames(attrProfiles) != null) {
             hasAttributesProfile.enter();
             copyAttributesInternal(ret, source);
         }
@@ -799,7 +800,7 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
 
     private void copyAttributesSameLength(RVector ret, RAbstractVector left, RAbstractVector right) {
         if (left.getAttributes() != null || right.getAttributes() != null || left.hasDimensions() || right.hasDimensions() || left.getNames(attrProfiles) != null ||
-                        right.getNames(attrProfiles) != null || left.getDimNames() != null || right.getDimNames() != null) {
+                        right.getNames(attrProfiles) != null || left.getDimNames(attrProfiles) != null || right.getDimNames(attrProfiles) != null) {
             hasAttributesProfile.enter();
             copyAttributesSameLengthInternal(ret, left, right);
         }
@@ -877,7 +878,7 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
             }
         }
         if (notMultiple) {
-            for (int i = 0; i < length; ++i) {
+            for (int i = 0; i < length; i++) {
                 op.apply(this, result, left, right, i, j, k);
                 j = Utils.incMod(j, leftLength);
                 k = Utils.incMod(k, rightLength);
@@ -898,7 +899,7 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
         reportWork(length);
         resultNACheck.enable(arithmetic.introducesNA());
         ArrayT result = arrayConstructor.apply(length);
-        for (int i = 0; i < length; ++i) {
+        for (int i = 0; i < length; i++) {
             op.apply(this, result, source, i, tmp);
         }
         ResultT ret = resultFunction.apply(result, isComplete());
@@ -917,7 +918,7 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
         reportWork(length);
         resultNACheck.enable(arithmetic.introducesNA());
         ArrayT result = arrayConstructor.apply(source);
-        for (int i = 0; i < length; ++i) {
+        for (int i = 0; i < length; i++) {
             op.apply(this, result, i, tmp);
         }
         source.setComplete(isComplete());
@@ -964,7 +965,7 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
         rightNACheck.enable(right);
         resultNACheck.enable(arithmetic.introducesNA());
         ArrayT result = arrayConstructor.apply(length);
-        for (int i = 0; i < length; ++i) {
+        for (int i = 0; i < length; i++) {
             op.apply(this, result, left, right, i);
         }
         ResultT ret = resultFunction.apply(result, isComplete());

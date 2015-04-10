@@ -130,7 +130,7 @@ public class FileFunctions {
                     // failure to open output file not reported as error by GnuR
                 }
             } else {
-                throw RError.nyi(getEncapsulatingSourceSection(), " appending multiple files not implemented");
+                throw RError.nyi(getEncapsulatingSourceSection(), "appending multiple files not implemented");
             }
             return RDataFactory.createLogicalVector(status, RDataFactory.COMPLETE_VECTOR);
         }
@@ -194,7 +194,7 @@ public class FileFunctions {
              * the information. The R closure that called the .Internal turns the result into a
              * dataframe and sets the row.names attributes to the paths in vec. It also updates the
              * mtime, ctime, atime fields using .POSIXct.
-             *
+             * 
              * We try to use the JDK classes, even though they provide a more abstract interface
              * than R. In particular there seems to be no way to get the uid/gid values. We might be
              * better off justing using a native call.
@@ -703,7 +703,7 @@ public class FileFunctions {
                 boolean copyDate = checkLogical(copyDateArg, "copy.dates");
 
                 if (recursive) {
-                    throw RError.nyi(getEncapsulatingSourceSection(), " 'recursive' option not implemented");
+                    throw RError.nyi(getEncapsulatingSourceSection(), "'recursive' option");
                 }
                 CopyOption[] copyOption = copyMode || copyDate ? new CopyOption[]{StandardCopyOption.COPY_ATTRIBUTES} : new CopyOption[0];
                 FileSystem fileSystem = FileSystems.getDefault();
@@ -803,7 +803,7 @@ public class FileFunctions {
         @SuppressWarnings("unused")
         @Fallback
         protected int doUnlink(Object vec, Object recursive, Object force) {
-            throw RError.nyi(getEncapsulatingSourceSection(), " unlink");
+            throw RError.nyi(getEncapsulatingSourceSection(), "unlink");
         }
 
         public static boolean simpleArgs(@SuppressWarnings("unused") RAbstractStringVector vec, byte recursive, byte force) {

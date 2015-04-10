@@ -29,12 +29,12 @@ public class TestrGenBuiltinislanguage extends TestBase {
 
     @Test
     public void testislanguage3() {
-        assertEval("argv <- list(structure(c(-5.96781464124519, -6.49437440734601, -3.09795335180399, -6.0516983940436, 2.94181419227242, 1.32243907887975, -6.14000748997388, -1.17705131190311), .Dim = c(4L, 2L), .Dimnames = list(c(\'Murder\', \'Assault\', \'UrbanPop\', \'Rape\'), c(\'PC1\', \'PC2\'))));is.language(argv[[1]]);");
+        assertEval("argv <- list(structure(c(-5.96781464124519, -6.49437440734601, -3.09795335180399, -6.0516983940436, 2.94181419227242, 1.32243907887975, -6.14000748997388, -1.17705131190311), .Dim = c(4L, 2L), .Dimnames = list(c('Murder', 'Assault', 'UrbanPop', 'Rape'), c('PC1', 'PC2'))));is.language(argv[[1]]);");
     }
 
     @Test
     public void testislanguage4() {
-        assertEval("argv <- list(structure(3.14159265358979, class = structure(\'3.14159265358979\', class = \'testit\')));is.language(argv[[1]]);");
+        assertEval("argv <- list(structure(3.14159265358979, class = structure('3.14159265358979', class = 'testit')));is.language(argv[[1]]);");
     }
 
     @Test
@@ -44,7 +44,7 @@ public class TestrGenBuiltinislanguage extends TestBase {
 
     @Test
     public void testislanguage7() {
-        assertEval("argv <- list(c(\'2001-01-01\', NA, NA, \'2004-10-26\'));is.language(argv[[1]]);");
+        assertEval("argv <- list(c('2001-01-01', NA, NA, '2004-10-26'));is.language(argv[[1]]);");
     }
 
     @Test
@@ -54,7 +54,7 @@ public class TestrGenBuiltinislanguage extends TestBase {
 
     @Test
     public void testislanguage9() {
-        assertEval("argv <- list(structure(c(-0.148741651280925, -0.200659450546418, -0.0705810742857073, -0.356547323513813, -0.214670164989233, -0.161150909262745, -0.0362121726544447, -0.259637310505756, -0.142667503568732, -0.113509274827518, -0.0362121726544447, -0.221848749616356, -0.0809219076239261, -0.0969100130080564, 0, -0.113509274827518, -0.0362121726544447, 0, 0.0934216851622351, 0, 0.0644579892269184, 0.113943352306837, 0.161368002234975, 0.0969100130080564, 0.100370545117563, 0.139879086401236, 0.269512944217916, 0.193124598354462, 0.184691430817599, 0.201397124320452, 0.262451089730429, 0.269512944217916, 0.184691430817599, 0.315970345456918, 0.369215857410143, 0.352182518111362, 0.334453751150931, 0.385606273598312, 0.431363764158987, 0.352182518111362, 0.445604203273598, 0.534026106056135, 0.56702636615906, 0.556302500767287, 0.556302500767287, 0.635483746814912, 0.635483746814912, 0.607455023214668, 0.686636269262293, 0.702430536445525, 0.702430536445525, 0.644438589467839, 0.746634198937579, 0.76715586608218, 0.817565369559781, 0.725094521081469, 0.780317312140151, 0.8055008581584, 0.840733234611807, 0.76715586608218, 0.840733234611807, 0.888740960682893, 0.893761762057943, 0.786751422145561, 0.888740960682893, 0.949877704036875, 0.91803033678488, 0.835056101720116, 0.979548374704095, 1.0111473607758, 0.979548374704095, 0.94101424370557, 1.07481644064517, 1.08134730780413, 1.08457627793433, 0.949877704036875, 1.14736710779379, 1.11260500153457, 1.17172645365323, 0.999565488225982, 1.20951501454263, 1.16643011384328, 1.20466251174822, 1.06483221973857), .Tsp = c(1960, 1980.75, 4), class = \'ts\'));is.language(argv[[1]]);");
+        assertEval("argv <- list(structure(c(-0.148741651280925, -0.200659450546418, -0.0705810742857073, -0.356547323513813, -0.214670164989233, -0.161150909262745, -0.0362121726544447, -0.259637310505756, -0.142667503568732, -0.113509274827518, -0.0362121726544447, -0.221848749616356, -0.0809219076239261, -0.0969100130080564, 0, -0.113509274827518, -0.0362121726544447, 0, 0.0934216851622351, 0, 0.0644579892269184, 0.113943352306837, 0.161368002234975, 0.0969100130080564, 0.100370545117563, 0.139879086401236, 0.269512944217916, 0.193124598354462, 0.184691430817599, 0.201397124320452, 0.262451089730429, 0.269512944217916, 0.184691430817599, 0.315970345456918, 0.369215857410143, 0.352182518111362, 0.334453751150931, 0.385606273598312, 0.431363764158987, 0.352182518111362, 0.445604203273598, 0.534026106056135, 0.56702636615906, 0.556302500767287, 0.556302500767287, 0.635483746814912, 0.635483746814912, 0.607455023214668, 0.686636269262293, 0.702430536445525, 0.702430536445525, 0.644438589467839, 0.746634198937579, 0.76715586608218, 0.817565369559781, 0.725094521081469, 0.780317312140151, 0.8055008581584, 0.840733234611807, 0.76715586608218, 0.840733234611807, 0.888740960682893, 0.893761762057943, 0.786751422145561, 0.888740960682893, 0.949877704036875, 0.91803033678488, 0.835056101720116, 0.979548374704095, 1.0111473607758, 0.979548374704095, 0.94101424370557, 1.07481644064517, 1.08134730780413, 1.08457627793433, 0.949877704036875, 1.14736710779379, 1.11260500153457, 1.17172645365323, 0.999565488225982, 1.20951501454263, 1.16643011384328, 1.20466251174822, 1.06483221973857), .Tsp = c(1960, 1980.75, 4), class = 'ts'));is.language(argv[[1]]);");
     }
 
     @Test
@@ -89,22 +89,22 @@ public class TestrGenBuiltinislanguage extends TestBase {
 
     @Test
     public void testislanguage16() {
-        assertEval("argv <- list(structure(list(nationality = structure(c(1L, 2L, 2L, 3L, 3L, 1L), .Label = c(\'Australia\', \'UK\', \'US\'), class = \'factor\'), deceased = structure(c(1L, 1L, 1L, 1L, 2L, 1L), .Label = c(\'no\', \'yes\'), class = \'factor\'), title = structure(c(3L, 6L, 7L, 4L, 2L, 5L), .Label = c(\'An Introduction to R\', \'Exploratory Data Analysis\', \'Interactive Data Analysis\', \'LISP-STAT\', \'Modern Applied Statistics ...\', \'Spatial Statistics\', \'Stochastic Simulation\'), class = \'factor\'), other.author = structure(c(NA, NA, NA, NA, NA, 1L), .Label = c(\'Ripley\', \'Venables & Smith\'), class = \'factor\')), .Names = c(\'nationality\', \'deceased\', \'title\', \'other.author\'), class = \'data.frame\', row.names = c(NA, -6L)));is.language(argv[[1]]);");
+        assertEval("argv <- list(structure(list(nationality = structure(c(1L, 2L, 2L, 3L, 3L, 1L), .Label = c('Australia', 'UK', 'US'), class = 'factor'), deceased = structure(c(1L, 1L, 1L, 1L, 2L, 1L), .Label = c('no', 'yes'), class = 'factor'), title = structure(c(3L, 6L, 7L, 4L, 2L, 5L), .Label = c('An Introduction to R', 'Exploratory Data Analysis', 'Interactive Data Analysis', 'LISP-STAT', 'Modern Applied Statistics ...', 'Spatial Statistics', 'Stochastic Simulation'), class = 'factor'), other.author = structure(c(NA, NA, NA, NA, NA, 1L), .Label = c('Ripley', 'Venables & Smith'), class = 'factor')), .Names = c('nationality', 'deceased', 'title', 'other.author'), class = 'data.frame', row.names = c(NA, -6L)));is.language(argv[[1]]);");
     }
 
     @Test
     public void testislanguage17() {
-        assertEval("argv <- list(structure(list(x = c(0.3, 3.6, 6.2, 3.8, 3.1, 4.1, 6), y = c(6.1, 6.2, 5.2, 2.3, 1.1, 0.8, 0.1)), .Names = c(\'x\', \'y\'), row.names = c(1L, 4L, 12L, 31L, 37L, 48L, 50L), class = \'data.frame\'));is.language(argv[[1]]);");
+        assertEval("argv <- list(structure(list(x = c(0.3, 3.6, 6.2, 3.8, 3.1, 4.1, 6), y = c(6.1, 6.2, 5.2, 2.3, 1.1, 0.8, 0.1)), .Names = c('x', 'y'), row.names = c(1L, 4L, 12L, 31L, 37L, 48L, 50L), class = 'data.frame'));is.language(argv[[1]]);");
     }
 
     @Test
     public void testislanguage18() {
-        assertEval("argv <- list(c(\'1\', \'2\', NA));is.language(argv[[1]]);");
+        assertEval("argv <- list(c('1', '2', NA));is.language(argv[[1]]);");
     }
 
     @Test
     public void testislanguage19() {
-        assertEval("argv <- list(structure(c(9, 13, 13, 18, 23, 28, 31, 34, 45, 48, 161, 5, 5, 8, 8, 12, 16, 23, 27, 30, 33, 43, 45, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1), .Dim = c(23L, 2L), .Dimnames = list(NULL, c(\'time\', \'status\')), type = \'right\', class = \'Surv\'));is.language(argv[[1]]);");
+        assertEval("argv <- list(structure(c(9, 13, 13, 18, 23, 28, 31, 34, 45, 48, 161, 5, 5, 8, 8, 12, 16, 23, 27, 30, 33, 43, 45, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1), .Dim = c(23L, 2L), .Dimnames = list(NULL, c('time', 'status')), type = 'right', class = 'Surv'));is.language(argv[[1]]);");
     }
 
     @Test
@@ -119,7 +119,7 @@ public class TestrGenBuiltinislanguage extends TestBase {
 
     @Test
     public void testislanguage22() {
-        assertEval("argv <- list(structure(0:100, .Tsp = c(1, 101, 1), class = \'ts\'));is.language(argv[[1]]);");
+        assertEval("argv <- list(structure(0:100, .Tsp = c(1, 101, 1), class = 'ts'));is.language(argv[[1]]);");
     }
 
     @Test
@@ -129,6 +129,6 @@ public class TestrGenBuiltinislanguage extends TestBase {
 
     @Test
     public void testislanguage24() {
-        assertEval("argv <- list(\'«Latin-1 accented chars»: éè øØ å<Å æ<Æ\');is.language(argv[[1]]);");
+        assertEval("argv <- list('«Latin-1 accented chars»: éè øØ å<Å æ<Æ');is.language(argv[[1]]);");
     }
 }

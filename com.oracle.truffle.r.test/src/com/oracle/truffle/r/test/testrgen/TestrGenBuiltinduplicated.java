@@ -19,12 +19,12 @@ public class TestrGenBuiltinduplicated extends TestBase {
 
     @Test
     public void testduplicated1() {
-        assertEval("argv <- list(c(\'methods\', \'base\'), FALSE, FALSE, NA); .Internal(duplicated(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
+        assertEval("argv <- list(c('methods', 'base'), FALSE, FALSE, NA); .Internal(duplicated(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
     }
 
     @Test
     public void testduplicated2() {
-        assertEval("argv <- list(list(\'!\', \'%%\', \'%*%\', \'%/%\', \'&\', \'*\', \'+\', \'-\', \'/\', \'Arith\', \'BunchKaufman\', \'Cholesky\', \'Compare\', \'Logic\', \'Math2\', \'Math\', \'Ops\', \'Schur\', \'Summary\', \'[\', \'[<-\', \'^\', \'all.equal\', \'all\', \'any\', \'as.array\', \'as.integer\', \'as.logical\', \'as.matrix\', \'as.numeric\', \'as.vector\', \'band\', \'cbind2\', \'chol2inv\', \'chol\', \'coerce\', \'coerce<-\', \'colMeans\', \'colSums\', \'cov2cor\', \'crossprod\', \'determinant\', \'diag\', \'diag<-\', \'diff\', \'dim\', \'dim<-\', \'dimnames\', \'dimnames<-\', \'drop\', \'expand\', \'expm\',     \'facmul\', \'forceSymmetric\', \'format\', \'head\', \'image\', \'initialize\', \'is.finite\', \'is.infinite\', \'is.na\', \'isDiagonal\', \'isSymmetric\', \'isTriangular\', \'kronecker\', \'length\', \'lu\', \'mean\', \'nnzero\', \'norm\', \'pack\', \'print\', \'prod\', \'qr.Q\', \'qr.R\', \'qr.coef\', \'qr.fitted\', \'qr.qty\', \'qr.qy\', \'qr.resid\', \'qr\', \'rbind2\', \'rcond\', \'rep\', \'rowMeans\', \'rowSums\', \'show\', \'skewpart\', \'solve\', \'sum\', \'summary\', \'symmpart\', \'t\', \'tail\', \'tcrossprod\', \'toeplitz\', \'tril\', \'triu\', \'unname\', \'unpack\', \'update\',     \'updown\', \'which\', \'writeMM\', \'zapsmall\', \'Ops\', \'[\', \'Math\'), FALSE, FALSE, NA); .Internal(duplicated(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
+        assertEval("argv <- list(list('!', '%%', '%*%', '%/%', '&', '*', '+', '-', '/', 'Arith', 'BunchKaufman', 'Cholesky', 'Compare', 'Logic', 'Math2', 'Math', 'Ops', 'Schur', 'Summary', '[', '[<-', '^', 'all.equal', 'all', 'any', 'as.array', 'as.integer', 'as.logical', 'as.matrix', 'as.numeric', 'as.vector', 'band', 'cbind2', 'chol2inv', 'chol', 'coerce', 'coerce<-', 'colMeans', 'colSums', 'cov2cor', 'crossprod', 'determinant', 'diag', 'diag<-', 'diff', 'dim', 'dim<-', 'dimnames', 'dimnames<-', 'drop', 'expand', 'expm',     'facmul', 'forceSymmetric', 'format', 'head', 'image', 'initialize', 'is.finite', 'is.infinite', 'is.na', 'isDiagonal', 'isSymmetric', 'isTriangular', 'kronecker', 'length', 'lu', 'mean', 'nnzero', 'norm', 'pack', 'print', 'prod', 'qr.Q', 'qr.R', 'qr.coef', 'qr.fitted', 'qr.qty', 'qr.qy', 'qr.resid', 'qr', 'rbind2', 'rcond', 'rep', 'rowMeans', 'rowSums', 'show', 'skewpart', 'solve', 'sum', 'summary', 'symmpart', 't', 'tail', 'tcrossprod', 'toeplitz', 'tril', 'triu', 'unname', 'unpack', 'update',     'updown', 'which', 'writeMM', 'zapsmall', 'Ops', '[', 'Math'), FALSE, FALSE, NA); .Internal(duplicated(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
     }
 
     @Test
@@ -49,27 +49,27 @@ public class TestrGenBuiltinduplicated extends TestBase {
 
     @Test
     public void testduplicated7() {
-        assertEval("argv <- list(list(\'plot\', \'Ops\', \'[\', \'Math\'), FALSE, FALSE, NA); .Internal(duplicated(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
+        assertEval("argv <- list(list('plot', 'Ops', '[', 'Math'), FALSE, FALSE, NA); .Internal(duplicated(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
     }
 
     @Test
     public void testduplicated8() {
-        assertEval("argv <- list(structure(\'lattice\', .Names = \'\'), FALSE, FALSE, NA); .Internal(duplicated(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
+        assertEval("argv <- list(structure('lattice', .Names = ''), FALSE, FALSE, NA); .Internal(duplicated(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
     }
 
     @Test
     public void testduplicated10() {
-        assertEval("argv <- list(structure(list(c0 = structure(integer(0), .Label = character(0), class = \'factor\')), .Names = \'c0\', row.names = character(0), class = structure(\'integer(0)\', .Names = \'c0\')), structure(list(c0 = structure(integer(0), .Label = character(0), class = \'factor\')), .Names = \'c0\', row.names = character(0), class = structure(\'integer(0)\', .Names = \'c0\')), FALSE, NA); .Internal(duplicated(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
+        assertEval("argv <- list(structure(list(c0 = structure(integer(0), .Label = character(0), class = 'factor')), .Names = 'c0', row.names = character(0), class = structure('integer(0)', .Names = 'c0')), structure(list(c0 = structure(integer(0), .Label = character(0), class = 'factor')), .Names = 'c0', row.names = character(0), class = structure('integer(0)', .Names = 'c0')), FALSE, NA); .Internal(duplicated(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
     }
 
     @Test
     public void testduplicated11() {
-        assertEval("argv <- list(c(\'\\\\title\', \'\\\\name\', \'\\\\alias\', \'\\\\alias\', \'\\\\keyword\', \'\\\\keyword\', \'\\\\description\', \'\\\\usage\', \'\\\\arguments\', \'\\\\details\', \'\\\\value\', \'\\\\section\', \'\\\\section\', \'\\\\seealso\', \'\\\\examples\'), FALSE, FALSE, NA); .Internal(duplicated(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
+        assertEval("argv <- list(c('\\\\title', '\\\\name', '\\\\alias', '\\\\alias', '\\\\keyword', '\\\\keyword', '\\\\description', '\\\\usage', '\\\\arguments', '\\\\details', '\\\\value', '\\\\section', '\\\\section', '\\\\seealso', '\\\\examples'), FALSE, FALSE, NA); .Internal(duplicated(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
     }
 
     @Test
     public void testduplicated12() {
-        assertEval("argv <- list(structure(c(-0.838428742794102, 0.838428742794102, 0.838428742794102, 0.838428742794102, -0.838428742794102, -0.838428742794102), .Dim = c(6L, 1L), .Dimnames = list(c(\'1\', \'3\', \'4\', \'5\', \'6\', \'7\'), NULL)), FALSE, FALSE, NA); .Internal(duplicated(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
+        assertEval("argv <- list(structure(c(-0.838428742794102, 0.838428742794102, 0.838428742794102, 0.838428742794102, -0.838428742794102, -0.838428742794102), .Dim = c(6L, 1L), .Dimnames = list(c('1', '3', '4', '5', '6', '7'), NULL)), FALSE, FALSE, NA); .Internal(duplicated(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
     }
 
     @Test

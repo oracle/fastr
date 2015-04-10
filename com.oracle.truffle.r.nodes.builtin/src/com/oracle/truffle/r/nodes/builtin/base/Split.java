@@ -61,7 +61,7 @@ public abstract class Split extends RBuiltinNode {
         // initialise result arrays
         int[][] collectResults = new int[nLevels][];
         int[] collectResultSize = new int[nLevels];
-        for (int i = 0; i < collectResults.length; ++i) {
+        for (int i = 0; i < collectResults.length; i++) {
             collectResults[i] = new int[INITIAL_SIZE];
         }
 
@@ -78,7 +78,7 @@ public abstract class Split extends RBuiltinNode {
 
         // assemble result vectors and level names
         Object[] results = new Object[nLevels];
-        for (int i = 0; i < nLevels; ++i) {
+        for (int i = 0; i < nLevels; i++) {
             results[i] = RDataFactory.createIntVector(Arrays.copyOfRange(collectResults[i], 0, collectResultSize[i]), RDataFactory.COMPLETE_VECTOR);
         }
 
@@ -93,7 +93,7 @@ public abstract class Split extends RBuiltinNode {
         // initialise result arrays
         double[][] collectResults = new double[nLevels][];
         int[] collectResultSize = new int[nLevels];
-        for (int i = 0; i < collectResults.length; ++i) {
+        for (int i = 0; i < collectResults.length; i++) {
             collectResults[i] = new double[INITIAL_SIZE];
         }
 
@@ -110,7 +110,7 @@ public abstract class Split extends RBuiltinNode {
 
         // assemble result vectors and level names
         Object[] results = new Object[nLevels];
-        for (int i = 0; i < nLevels; ++i) {
+        for (int i = 0; i < nLevels; i++) {
             results[i] = RDataFactory.createDoubleVector(Arrays.copyOfRange(collectResults[i], 0, collectResultSize[i]), RDataFactory.COMPLETE_VECTOR);
         }
 
@@ -125,7 +125,7 @@ public abstract class Split extends RBuiltinNode {
         // initialise result arrays
         String[][] collectResults = new String[nLevels][];
         int[] collectResultSize = new int[nLevels];
-        for (int i = 0; i < collectResults.length; ++i) {
+        for (int i = 0; i < collectResults.length; i++) {
             collectResults[i] = new String[INITIAL_SIZE];
         }
 
@@ -142,7 +142,7 @@ public abstract class Split extends RBuiltinNode {
 
         // assemble result vectors and level names
         Object[] results = new Object[nLevels];
-        for (int i = 0; i < nLevels; ++i) {
+        for (int i = 0; i < nLevels; i++) {
             results[i] = RDataFactory.createStringVector(Arrays.copyOfRange(collectResults[i], 0, collectResultSize[i]), RDataFactory.COMPLETE_VECTOR);
         }
 
@@ -157,7 +157,7 @@ public abstract class Split extends RBuiltinNode {
         // initialise result arrays
         byte[][] collectResults = new byte[nLevels][];
         int[] collectResultSize = new int[nLevels];
-        for (int i = 0; i < collectResults.length; ++i) {
+        for (int i = 0; i < collectResults.length; i++) {
             collectResults[i] = new byte[INITIAL_SIZE];
         }
 
@@ -174,7 +174,7 @@ public abstract class Split extends RBuiltinNode {
 
         // assemble result vectors and level names
         Object[] results = new Object[nLevels];
-        for (int i = 0; i < nLevels; ++i) {
+        for (int i = 0; i < nLevels; i++) {
             results[i] = RDataFactory.createLogicalVector(Arrays.copyOfRange(collectResults[i], 0, collectResultSize[i]), RDataFactory.COMPLETE_VECTOR);
         }
 

@@ -30,6 +30,6 @@ import com.oracle.truffle.r.runtime.*;
 public abstract class Trunc extends RBuiltinNode {
     @Specialization
     protected Object trunc(@SuppressWarnings("unused") Object x) {
-        throw RError.nyi(getEncapsulatingSourceSection(), " trunc");
+        throw RError.nyi(getEncapsulatingSourceSection(), "trunc");
     }
 }

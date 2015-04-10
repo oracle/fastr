@@ -18,9 +18,7 @@ import com.oracle.truffle.r.test.*;
 public class TestrGenBuiltinSysglob extends TestBase {
 
     @Test
-    @Ignore
     public void testSysglob1() {
-        assertEval("argv <- list(\'/home/lzhao/hg/r-instrumented/src/library/utils/man/unix/*.rd\', FALSE); .Internal(Sys.glob(argv[[1]], argv[[2]]))");
+        assertEval(Ignored.Unknown, "argv <- list('/home/lzhao/hg/r-instrumented/src/library/utils/man/unix/*.rd', FALSE); .Internal(Sys.glob(argv[[1]], argv[[2]]))");
     }
 }
-

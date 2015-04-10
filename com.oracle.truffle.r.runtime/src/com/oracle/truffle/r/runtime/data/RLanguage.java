@@ -44,8 +44,6 @@ import com.oracle.truffle.r.runtime.data.model.*;
 @ValueType
 public class RLanguage extends RLanguageRep implements RAbstractContainer, RAttributable {
 
-    private final RAttributeProfiles localAttrProfiles = RAttributeProfiles.create();
-
     private RAttributes attributes;
     /**
      * Lazily computed value.
@@ -130,8 +128,8 @@ public class RLanguage extends RLanguageRep implements RAbstractContainer, RAttr
     }
 
     @Override
-    public RList getDimNames() {
-        return (RList) getAttr(localAttrProfiles, RRuntime.DIMNAMES_ATTR_KEY);
+    public RList getDimNames(RAttributeProfiles attrProfiles) {
+        return (RList) getAttr(attrProfiles, RRuntime.DIMNAMES_ATTR_KEY);
     }
 
     @Override

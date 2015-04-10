@@ -252,10 +252,6 @@ public final class NACheck {
         return RRuntime.complexToStringNoCheck(value);
     }
 
-    public double convertComplexToDouble(RComplex value) {
-        return convertComplexToDouble(value, false);
-    }
-
     public double convertComplexToDouble(RComplex value, boolean warning) {
         if (check(value)) {
             return RRuntime.DOUBLE_NA;
@@ -271,10 +267,6 @@ public final class NACheck {
             return RRuntime.LOGICAL_NA;
         }
         return RRuntime.complex2logicalNoCheck(value);
-    }
-
-    public int convertComplexToInt(RComplex right) {
-        return convertComplexToInt(right, true);
     }
 
     public int convertComplexToInt(RComplex right, boolean warning) {

@@ -165,21 +165,27 @@ public class SocketConnections {
     }
 
     private static class RServerSocketConnection extends RSocketReadWriteConnection {
-        private ServerSocket serverSocket;
+        private Socket connectionSocket;
 
         RServerSocketConnection(RSocketConnection base) throws IOException {
             super(base);
             InetSocketAddress addr = new InetSocketAddress(base.port);
-            ServerSocketChannel serverSocketChannel = ServerSocketChannel.open();
-            serverSocketChannel.bind(addr);
-            serverSocket = serverSocketChannel.socket();
-            openStreams(serverSocket.accept());
+            ServerSocket serverSocket = new ServerSocket();
+            // we expect only one connection per-server socket; furthermore, we need to accommodate
+            // for multiple connections being established locally on the same server port;
+            // consequently, we close the server socket at the end of the constructor and allow
+            // address reuse to be able to open the next connection after the current one closes
+            serverSocket.setReuseAddress(true);
+            serverSocket.bind(addr);
+            connectionSocket = serverSocket.accept();
+            openStreams(connectionSocket);
+            serverSocket.close();
         }
 
         @Override
         public void close() throws IOException {
             super.close();
-            serverSocket.close();
+            connectionSocket.close();
         }
     }
 

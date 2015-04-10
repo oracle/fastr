@@ -104,24 +104,24 @@ public class RClosures {
 
     // Factor to vector
 
-    public static RAbstractVector createFactorToVector(RFactor factor, NACheck check, RAttributeProfiles attrProfiles) {
+    public static RAbstractVector createFactorToVector(RFactor factor, NACheck check, boolean withNames, RAttributeProfiles attrProfiles) {
         RAbstractVector levels = factor.getLevels(attrProfiles);
         if (levels == null) {
-            return new RFactorToStringVectorClosure(factor, null, check);
+            return new RFactorToStringVectorClosure(factor, null, check, withNames);
         } else {
             if (levels.getElementClass() == RInt.class) {
-                return new RFactorToIntVectorClosure(factor, (RAbstractIntVector) levels, check);
+                return new RFactorToIntVectorClosure(factor, (RAbstractIntVector) levels, check, withNames);
             } else if (levels.getElementClass() == RDouble.class) {
-                return new RFactorToDoubleVectorClosure(factor, (RAbstractDoubleVector) levels, check);
+                return new RFactorToDoubleVectorClosure(factor, (RAbstractDoubleVector) levels, check, withNames);
             } else if (levels.getElementClass() == RLogical.class) {
-                return new RFactorToIntVectorClosure(factor, createLogicalToIntVector((RAbstractLogicalVector) levels, check), check);
+                return new RFactorToIntVectorClosure(factor, createLogicalToIntVector((RAbstractLogicalVector) levels, check), check, withNames);
             } else if (levels.getElementClass() == RComplex.class) {
-                return new RFactorToComplexVectorClosure(factor, (RAbstractComplexVector) levels, check);
+                return new RFactorToComplexVectorClosure(factor, (RAbstractComplexVector) levels, check, withNames);
             } else if (levels.getElementClass() == RString.class) {
-                return new RFactorToStringVectorClosure(factor, (RAbstractStringVector) levels, check);
+                return new RFactorToStringVectorClosure(factor, (RAbstractStringVector) levels, check, withNames);
             } else {
                 assert levels.getElementClass() == RRaw.class;
-                return new RFactorToIntVectorClosure(factor, createRawToIntVector((RAbstractRawVector) levels, check), check);
+                return new RFactorToIntVectorClosure(factor, createRawToIntVector((RAbstractRawVector) levels, check), check, withNames);
             }
 
         }

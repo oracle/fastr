@@ -56,14 +56,14 @@ public abstract class Cat extends RInvisibleBuiltinNode {
     @Specialization
     protected RNull cat(VirtualFrame frame, RList args, RConnection conn, RAbstractStringVector sepVec, byte fill, @SuppressWarnings("unused") RNull labels, byte append) {
         if (RRuntime.fromLogical(fill) || RRuntime.fromLogical(append)) {
-            throw RError.nyi(getEncapsulatingSourceSection(), " fill/append = TRUE");
+            throw RError.nyi(getEncapsulatingSourceSection(), "fill/append = TRUE");
         }
         ensureToString();
         String sep = sepVec.getDataAt(0);
         int length = args.getLength();
 
         String[] values = new String[length];
-        for (int i = 0; i < length; ++i) {
+        for (int i = 0; i < length; i++) {
             Object obj = args.getDataAt(i);
             if (!(obj instanceof RNull)) {
                 if (zeroLength(obj)) {
@@ -83,7 +83,7 @@ public abstract class Cat extends RInvisibleBuiltinNode {
     private void output(RConnection conn, RAbstractStringVector sepVec, String[] values) {
         int sepLength = sepVec.getLength();
         StringBuffer sb = new StringBuffer();
-        for (int i = 0; i < values.length; ++i) {
+        for (int i = 0; i < values.length; i++) {
             String str = values[i];
             if (str != null) {
                 sb.append(str);

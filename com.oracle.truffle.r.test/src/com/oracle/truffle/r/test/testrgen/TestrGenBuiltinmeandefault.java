@@ -15,14 +15,11 @@ import com.oracle.truffle.r.test.*;
 
 // Checkstyle: stop line length check
 
-                                                                 public class TestrGenBuiltinmeandefault extends TestBase {
+public class TestrGenBuiltinmeandefault extends TestBase {
 
-	@Test
-    @Ignore
-	public void testmeandefault1() {
-		assertEval("argv <- structure(list(x = structure(c(2L, 1L, 2L, 2L), .Label = c(\'FALSE\',     \'TRUE\'), class = \'factor\')), .Names = \'x\');"+
-			"do.call(\'mean.default\', argv)");
-	}
+    @Test
+    public void testmeandefault1() {
+        assertEval(Ignored.Unknown, "argv <- structure(list(x = structure(c(2L, 1L, 2L, 2L), .Label = c('FALSE',     'TRUE'), class = 'factor')), .Names = 'x');do.call('mean.default', argv)");
+    }
 
 }
-

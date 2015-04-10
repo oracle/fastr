@@ -257,7 +257,7 @@ public class SysFunctions {
         @TruffleBoundary
         protected Object sysChmod(RAbstractStringVector pathVec, Object octmode, byte useUmask) {
             controlVisibility();
-            throw RError.nyi(getEncapsulatingSourceSection(), " Sys.chmod");
+            throw RError.nyi(getEncapsulatingSourceSection(), "Sys.chmod");
         }
 
     }
@@ -270,7 +270,7 @@ public class SysFunctions {
         @TruffleBoundary
         protected Object sysChmod(Object octmode) {
             controlVisibility();
-            throw RError.nyi(getEncapsulatingSourceSection(), " Sys.umask");
+            throw RError.nyi(getEncapsulatingSourceSection(), "Sys.umask");
         }
 
     }

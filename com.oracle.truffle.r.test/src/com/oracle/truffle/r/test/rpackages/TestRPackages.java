@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.test.rpackages;
 
+import java.io.*;
+import java.nio.charset.*;
 import java.nio.file.*;
 import java.util.*;
 
@@ -83,7 +85,26 @@ public class TestRPackages extends TestBase {
                 }
                 Process install = pb.start();
                 int rc = install.waitFor();
-                return rc == 0;
+                if (rc == 0) {
+                    return true;
+                } else {
+                    BufferedReader out = new BufferedReader(new InputStreamReader(install.getInputStream(), StandardCharsets.UTF_8));
+                    BufferedReader err = new BufferedReader(new InputStreamReader(install.getErrorStream(), StandardCharsets.UTF_8));
+                    try {
+                        StringBuilder str = new StringBuilder();
+                        String line;
+                        while ((line = out.readLine()) != null) {
+                            str.append(line).append('\n');
+                        }
+                        while ((line = err.readLine()) != null) {
+                            str.append(line).append('\n');
+                        }
+                        System.out.println(str);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    return false;
+                }
             } catch (Exception ex) {
                 return false;
             }
@@ -94,6 +115,7 @@ public class TestRPackages extends TestBase {
             try {
                 deleteDir(packageDir);
             } catch (Exception e) {
+                e.printStackTrace();
                 return false;
             }
             return true;
@@ -109,26 +131,34 @@ public class TestRPackages extends TestBase {
     public static void setupInstallTestPackages() {
         // @BeforeClass to avoid installation of already present package (results in RC == 1 on my
         // platform)
-        for (String p : TEST_PACKAGES) {
-            assertTrue(packagePaths.installPackage(p));
+        if (!generatingExpected()) {
+            for (String p : TEST_PACKAGES) {
+                if (!packagePaths.installPackage(p)) {
+                    throw new AssertionError();
+                }
+            }
         }
     }
 
     @AfterClass
     public static void tearDownUninstallTestPackages() {
-        for (String p : TEST_PACKAGES) {
-            assertTrue(packagePaths.uninstallPackage(p));
+        if (!generatingExpected()) {
+            for (String p : TEST_PACKAGES) {
+                if (!packagePaths.uninstallPackage(p)) {
+                    throw new AssertionError();
+                }
+            }
         }
     }
 
     @Test
     public void testLoadVanilla() {
-        assertTemplateEval(TestBase.template("{ library(\"vanilla\", lib.loc = \"%0\"); r <- vanilla(); detach(\"package:vanilla\"); r }", new String[]{packagePaths.rpackagesLibs.toString()}));
+        assertEval(TestBase.template("{ library(\"vanilla\", lib.loc = \"%0\"); r <- vanilla(); detach(\"package:vanilla\"); r }", new String[]{packagePaths.rpackagesLibs.toString()}));
     }
 
     @Test
     public void testLoadTestRFFI() {
-        assertTemplateEval(TestBase.template(
+        assertEval(TestBase.template(
                         "{ library(\"testrffi\", lib.loc = \"%0\"); r1 <- add_int(2L, 3L); r2 <- add_double(2, 3); v <- createIntVector(2); v[1] <- 1; v[2] <- 2; detach(\"package:testrffi\"); list(r1, r2, v) }",
                         new String[]{packagePaths.rpackagesLibs.toString()}));
     }

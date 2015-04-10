@@ -18,9 +18,7 @@ import com.oracle.truffle.r.test.*;
 public class TestrGenBuiltinsysonexit extends TestBase {
 
     @Test
-    @Ignore
     public void testsysonexit1() {
-        assertEval(" .Internal(sys.on.exit())");
+        assertEval(Ignored.Unknown, " .Internal(sys.on.exit())");
     }
 }
-

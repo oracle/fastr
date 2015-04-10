@@ -120,7 +120,7 @@ public abstract class Parse extends RBuiltinNode {
         String[] lines;
         if (textVec == RNull.instance) {
             if (conn == StdConnections.getStdin()) {
-                throw RError.nyi(getEncapsulatingSourceSection(), " parse from stdin not implemented");
+                throw RError.nyi(getEncapsulatingSourceSection(), "parse from stdin not implemented");
             }
             try (RConnection openConn = conn.forceOpen("r")) {
                 lines = openConn.readLines(0);

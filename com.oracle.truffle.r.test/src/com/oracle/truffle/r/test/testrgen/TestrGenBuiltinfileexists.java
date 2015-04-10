@@ -19,12 +19,12 @@ public class TestrGenBuiltinfileexists extends TestBase {
 
     @Test
     public void testfileexists1() {
-        assertEval("argv <- list(\'/home/lzhao/hg/r-instrumented/library/methods/data/Rdata.rdb\'); .Internal(file.exists(argv[[1]]))");
+        assertEval("argv <- list('/home/lzhao/hg/r-instrumented/library/methods/data/Rdata.rdb'); .Internal(file.exists(argv[[1]]))");
     }
 
     @Test
     public void testfileexists2() {
-        assertEval("argv <- list(c(\'src/Makevars\', \'src/Makevars.in\')); .Internal(file.exists(argv[[1]]))");
+        assertEval("argv <- list(c('src/Makevars', 'src/Makevars.in')); .Internal(file.exists(argv[[1]]))");
     }
 
     @Test
@@ -32,4 +32,3 @@ public class TestrGenBuiltinfileexists extends TestBase {
         assertEval("argv <- list(character(0)); .Internal(file.exists(argv[[1]]))");
     }
 }
-

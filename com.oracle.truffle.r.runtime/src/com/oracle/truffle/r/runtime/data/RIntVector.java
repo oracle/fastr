@@ -35,7 +35,7 @@ public final class RIntVector extends RVector implements RAbstractIntVector {
     private static final RStringVector implicitClassHeaderArray = RDataFactory.createStringVector(new String[]{RType.Array.getName(), RType.Integer.getName(), RType.Numeric.getName()}, true);
     private static final RStringVector implicitClassHeaderMatrix = RDataFactory.createStringVector(new String[]{RType.Matrix.getName(), RType.Integer.getName(), RType.Numeric.getName()}, true);
 
-    private int[] data;
+    private final int[] data;
 
     RIntVector(int[] data, boolean complete, int[] dims, RStringVector names) {
         super(complete, data.length, dims, names);
@@ -57,7 +57,7 @@ public final class RIntVector extends RVector implements RAbstractIntVector {
 
     public RIntVector copyResetData(int[] newData) {
         boolean isComplete = true;
-        for (int i = 0; i < newData.length; ++i) {
+        for (int i = 0; i < newData.length; i++) {
             if (RRuntime.isNA(newData[i])) {
                 isComplete = false;
                 break;
@@ -151,7 +151,7 @@ public final class RIntVector extends RVector implements RAbstractIntVector {
     public static int[] resizeData(int[] newData, int[] oldData, int oldDataLength, boolean fillNA) {
         if (newData.length > oldDataLength) {
             if (fillNA) {
-                for (int i = oldDataLength; i < newData.length; ++i) {
+                for (int i = oldDataLength; i < newData.length; i++) {
                     newData[i] = RRuntime.INT_NA;
                 }
             } else {
@@ -168,20 +168,10 @@ public final class RIntVector extends RVector implements RAbstractIntVector {
         return resizeData(newData, this.data, this.getLength(), fillNA);
     }
 
-    private int[] createResizedData(int size, boolean fillNA) {
-        assert !this.isShared();
-        return copyResizedData(size, fillNA);
-    }
-
     @Override
     public RIntVector copyResized(int size, boolean fillNA) {
         boolean isComplete = isComplete() && ((data.length >= size) || !fillNA);
         return RDataFactory.createIntVector(copyResizedData(size, fillNA), isComplete);
-    }
-
-    @Override
-    protected void resizeInternal(int size) {
-        this.data = createResizedData(size, true);
     }
 
     public RIntVector materialize() {

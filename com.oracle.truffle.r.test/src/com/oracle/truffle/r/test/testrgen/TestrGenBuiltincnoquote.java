@@ -15,14 +15,13 @@ import com.oracle.truffle.r.test.*;
 
 // Checkstyle: stop line length check
 
-                                                                 public class TestrGenBuiltincnoquote extends TestBase {
+public class TestrGenBuiltincnoquote extends TestBase {
 
-	@Test
-    @Ignore
-	public void testcnoquote1() {
-		assertEval("argv <- structure(list(structure(c(\'.\', \'.\', \'|\', \'.\', \'.\', \'|\',     \'.\', \'.\'), .Dim = c(2L, 4L), .Dimnames = list(NULL, c(\'\',     \'\', \'\', \'\')), class = \'noquote\')), .Names = \'\');"+
-			"do.call(\'c.noquote\', argv)");
-	}
+    @Test
+    public void testcnoquote1() {
+        assertEval(Ignored.Unknown,
+                        "argv <- structure(list(structure(c('.', '.', '|', '.', '.', '|',     '.', '.'), .Dim = c(2L, 4L), .Dimnames = list(NULL, c('',     '', '', '')), class = 'noquote')), .Names = '');"
+                                        + "do.call('c.noquote', argv)");
+    }
 
 }
-

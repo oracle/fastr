@@ -229,7 +229,6 @@ public abstract class RNode extends Node implements RSyntaxNode, RInstrumentable
         }
     }
 
-    @TruffleBoundary
     private void reportWorkInternal(long amount) {
         CompilerAsserts.neverPartOfCompilation();
         if (amount >= WORK_SCALE_FACTOR) {

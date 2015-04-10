@@ -55,33 +55,34 @@ public class TestConnections extends TestBase {
 
     @AfterClass
     public static void teardownTestDir() {
-        assertTrue(deleteDir(testDir.testDirPath));
+        if (!deleteDir(testDir.testDirPath)) {
+            throw new AssertionError();
+        }
     }
 
     @Test
     public void testFileWriteReadLines() {
-        assertTemplateEval(TestBase.template("{ writeLines(c(\"line1\", \"line2\"), file(\"%0\")) }", testDir.subDir("wl1")));
-        assertTemplateEval(TestBase.template("{ readLines(file(\"%0\"), 2) }", testDir.subDir("wl1")));
-        assertTemplateEval(TestBase.template("{ con <- file(\"%0\"); writeLines(c(\"line1\", \"line2\"), con) }", testDir.subDir("wl2")));
-        assertTemplateEval(TestBase.template("{ con <- file(\"%0\"); readLines(con, 2) }", testDir.subDir("wl2")));
+        assertEval(TestBase.template("{ writeLines(c(\"line1\", \"line2\"), file(\"%0\")) }", testDir.subDir("wl1")));
+        assertEval(TestBase.template("{ readLines(file(\"%0\"), 2) }", testDir.subDir("wl1")));
+        assertEval(TestBase.template("{ con <- file(\"%0\"); writeLines(c(\"line1\", \"line2\"), con) }", testDir.subDir("wl2")));
+        assertEval(TestBase.template("{ con <- file(\"%0\"); readLines(con, 2) }", testDir.subDir("wl2")));
     }
 
     @Test
     public void testFileWriteReadChar() {
-        assertTemplateEval(TestBase.template("{ writeChar(\"abc\", file(\"%0\")) }", testDir.subDir("wc1")));
-        assertTemplateEval(TestBase.template("{ readChar(file(\"%0\"), 3) }", testDir.subDir("wc1")));
+        assertEval(TestBase.template("{ writeChar(\"abc\", file(\"%0\")) }", testDir.subDir("wc1")));
+        assertEval(TestBase.template("{ readChar(file(\"%0\"), 3) }", testDir.subDir("wc1")));
     }
 
     @Test
     public void testFileWriteReadBin() {
-        assertTemplateEval(TestBase.template("{ writeBin(\"abc\", file(\"%0\", open=\"wb\")) }", testDir.subDir("wb1")));
-        assertTemplateEval(TestBase.template("{ readBin(file(\"%0\", \"rb\"), 3) }", testDir.subDir("wb1")));
+        assertEval(TestBase.template("{ writeBin(\"abc\", file(\"%0\", open=\"wb\")) }", testDir.subDir("wb1")));
+        assertEval(TestBase.template("{ readBin(file(\"%0\", \"rb\"), 3) }", testDir.subDir("wb1")));
     }
 
     @Test
-    @Ignore
     public void testWriteTextReadConnection() {
-        assertEvalError("{ writeChar(\"x\", textConnection(\"abc\")) }");
+        assertEval(Ignored.Unknown, Output.ContainsError, "{ writeChar(\"x\", textConnection(\"abc\")) }");
     }
 
     @Test

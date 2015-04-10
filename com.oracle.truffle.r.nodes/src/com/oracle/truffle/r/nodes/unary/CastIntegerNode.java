@@ -96,7 +96,7 @@ public abstract class CastIntegerNode extends CastNode {
     @Specialization
     protected int doComplex(RComplex operand) {
         naCheck.enable(operand);
-        int result = naCheck.convertComplexToInt(operand);
+        int result = naCheck.convertComplexToInt(operand, false);
         if (operand.getImaginaryPart() != 0.0) {
             warningBranch.enter();
             RError.warning(RError.Message.IMAGINARY_PARTS_DISCARDED_IN_COERCION);
@@ -107,6 +107,9 @@ public abstract class CastIntegerNode extends CastNode {
     @Specialization
     protected int doCharacter(String operand) {
         naCheck.enable(operand);
+        if (operand.length() == 0 || naCheck.check(operand)) {
+            return RRuntime.INT_NA;
+        }
         int result = naCheck.convertStringToInt(operand);
         if (isNA(result)) {
             warningBranch.enter();
@@ -184,9 +187,13 @@ public abstract class CastIntegerNode extends CastNode {
         boolean seenNA = false;
         for (int i = 0; i < operand.getLength(); i++) {
             String value = operand.getDataAt(i);
-            idata[i] = naCheck.convertStringToInt(value);
-            if (RRuntime.isNA(idata[i])) {
-                seenNA = true;
+            if (value.length() == 0 || naCheck.check(value)) {
+                idata[i] = RRuntime.INT_NA;
+            } else {
+                idata[i] = naCheck.convertStringToInt(value);
+                if (RRuntime.isNA(idata[i])) {
+                    seenNA = true;
+                }
             }
         }
         if (seenNA) {

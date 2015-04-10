@@ -15,13 +15,12 @@ import com.oracle.truffle.r.test.*;
 
 // Checkstyle: stop line length check
 
-                                                                 public class TestrGenBuiltinasmatrix extends TestBase {
+public class TestrGenBuiltinasmatrix extends TestBase {
 
-	@Test
-	public void testasmatrix1() {
-		assertEval("argv <- structure(list(x = structure(c(9L, 27L, 27L, 27L, 27L,     3L, 3L, 3L, 3L, 9L, 9L, 9L, 9L, 9L, 9L), .Names = c(\'Blocks\',     \'A\', \'B\', \'C\', \'D\', \'Blocks:A\', \'Blocks:B\', \'Blocks:C\', \'Blocks:D\',     \'A:B\', \'A:C\', \'A:D\', \'B:C\', \'B:D\', \'C:D\'))), .Names = \'x\');"+
-			"do.call(\'as.matrix\', argv)");
-	}
+    @Test
+    public void testasmatrix1() {
+        assertEval("argv <- structure(list(x = structure(c(9L, 27L, 27L, 27L, 27L,     3L, 3L, 3L, 3L, 9L, 9L, 9L, 9L, 9L, 9L), .Names = c('Blocks',     'A', 'B', 'C', 'D', 'Blocks:A', 'Blocks:B', 'Blocks:C', 'Blocks:D',     'A:B', 'A:C', 'A:D', 'B:C', 'B:D', 'C:D'))), .Names = 'x');"
+                        + "do.call('as.matrix', argv)");
+    }
 
 }
-

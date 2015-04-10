@@ -15,13 +15,11 @@ import com.oracle.truffle.r.test.*;
 
 // Checkstyle: stop line length check
 
-                                                                 public class TestrGenBuiltinpairlist extends TestBase {
+public class TestrGenBuiltinpairlist extends TestBase {
 
-	@Test
-	public void testpairlist1() {
-		assertEval("argv <- list();"+
-			"do.call(\'pairlist\', argv)");
-	}
+    @Test
+    public void testpairlist1() {
+        assertEval("argv <- list();do.call('pairlist', argv)");
+    }
 
 }
-

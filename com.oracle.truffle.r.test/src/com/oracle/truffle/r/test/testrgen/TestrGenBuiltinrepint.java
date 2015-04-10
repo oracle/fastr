@@ -44,7 +44,7 @@ public class TestrGenBuiltinrepint extends TestBase {
 
     @Test
     public void testrepint6() {
-        assertEval("argv <- list(\'\', 2L); .Internal(rep.int(argv[[1]], argv[[2]]))");
+        assertEval("argv <- list('', 2L); .Internal(rep.int(argv[[1]], argv[[2]]))");
     }
 
     @Test
@@ -54,7 +54,7 @@ public class TestrGenBuiltinrepint extends TestBase {
 
     @Test
     public void testrepint8() {
-        assertEval("argv <- list(\'   \', 8L); .Internal(rep.int(argv[[1]], argv[[2]]))");
+        assertEval("argv <- list('   ', 8L); .Internal(rep.int(argv[[1]], argv[[2]]))");
     }
 
     @Test
@@ -78,9 +78,8 @@ public class TestrGenBuiltinrepint extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testrepint13() {
-        assertEval("argv <- list(structure(1:4, .Label = c(\'A\', \'B\', \'C\', \'D\'), class = \'factor\', .Names = c(\'a\', \'b\', \'c\', \'d\')), 2); .Internal(rep.int(argv[[1]], argv[[2]]))");
+        assertEval(Ignored.Unknown, "argv <- list(structure(1:4, .Label = c('A', 'B', 'C', 'D'), class = 'factor', .Names = c('a', 'b', 'c', 'd')), 2); .Internal(rep.int(argv[[1]], argv[[2]]))");
     }
 
     @Test
@@ -91,7 +90,7 @@ public class TestrGenBuiltinrepint extends TestBase {
 
     @Test
     public void testrepint15() {
-        assertEval("argv <- list(c(\'A\', \'B\'), structure(list(A = 2L, B = 1L), .Names = c(\'A\', \'B\'))); .Internal(rep.int(argv[[1]], argv[[2]]))");
+        assertEval("argv <- list(c('A', 'B'), structure(list(A = 2L, B = 1L), .Names = c('A', 'B'))); .Internal(rep.int(argv[[1]], argv[[2]]))");
     }
 
     @Test
@@ -112,7 +111,7 @@ public class TestrGenBuiltinrepint extends TestBase {
 
     @Test
     public void testrepint19() {
-        assertEval("argv <- list(structure(c(1974, 1974.08333333333, 1974.16666666667, 1974.25, 1974.33333333333, 1974.41666666667, 1974.5, 1974.58333333333, 1974.66666666667, 1974.75, 1974.83333333333, 1974.91666666667, 1975, 1975.08333333333, 1975.16666666667, 1975.25, 1975.33333333333, 1975.41666666667, 1975.5, 1975.58333333333, 1975.66666666667, 1975.75, 1975.83333333333, 1975.91666666667, 1976, 1976.08333333333, 1976.16666666667, 1976.25, 1976.33333333333, 1976.41666666667, 1976.5, 1976.58333333333, 1976.66666666667, 1976.75, 1976.83333333333, 1976.91666666667, 1977, 1977.08333333333, 1977.16666666667, 1977.25, 1977.33333333333, 1977.41666666667, 1977.5, 1977.58333333333, 1977.66666666667, 1977.75, 1977.83333333333, 1977.91666666667, 1978, 1978.08333333333, 1978.16666666667, 1978.25, 1978.33333333333, 1978.41666666667, 1978.5, 1978.58333333333, 1978.66666666667, 1978.75, 1978.83333333333, 1978.91666666667, 1979, 1979.08333333333, 1979.16666666667, 1979.25, 1979.33333333333, 1979.41666666667, 1979.5, 1979.58333333333, 1979.66666666667, 1979.75, 1979.83333333333, 1979.91666666667), .Tsp = c(1974, 1979.91666666667, 12), class = \'ts\'), 3L); .Internal(rep.int(argv[[1]], argv[[2]]))");
+        assertEval("argv <- list(structure(c(1974, 1974.08333333333, 1974.16666666667, 1974.25, 1974.33333333333, 1974.41666666667, 1974.5, 1974.58333333333, 1974.66666666667, 1974.75, 1974.83333333333, 1974.91666666667, 1975, 1975.08333333333, 1975.16666666667, 1975.25, 1975.33333333333, 1975.41666666667, 1975.5, 1975.58333333333, 1975.66666666667, 1975.75, 1975.83333333333, 1975.91666666667, 1976, 1976.08333333333, 1976.16666666667, 1976.25, 1976.33333333333, 1976.41666666667, 1976.5, 1976.58333333333, 1976.66666666667, 1976.75, 1976.83333333333, 1976.91666666667, 1977, 1977.08333333333, 1977.16666666667, 1977.25, 1977.33333333333, 1977.41666666667, 1977.5, 1977.58333333333, 1977.66666666667, 1977.75, 1977.83333333333, 1977.91666666667, 1978, 1978.08333333333, 1978.16666666667, 1978.25, 1978.33333333333, 1978.41666666667, 1978.5, 1978.58333333333, 1978.66666666667, 1978.75, 1978.83333333333, 1978.91666666667, 1979, 1979.08333333333, 1979.16666666667, 1979.25, 1979.33333333333, 1979.41666666667, 1979.5, 1979.58333333333, 1979.66666666667, 1979.75, 1979.83333333333, 1979.91666666667), .Tsp = c(1974, 1979.91666666667, 12), class = 'ts'), 3L); .Internal(rep.int(argv[[1]], argv[[2]]))");
     }
 
     @Test
@@ -122,7 +121,7 @@ public class TestrGenBuiltinrepint extends TestBase {
 
     @Test
     public void testrepint21() {
-        assertEval("argv <- list(c(\'C\', \'A\', \'B\'), structure(list(C = 1L, A = 1L, B = 1L), .Names = c(\'C\', \'A\', \'B\'))); .Internal(rep.int(argv[[1]], argv[[2]]))");
+        assertEval("argv <- list(c('C', 'A', 'B'), structure(list(C = 1L, A = 1L, B = 1L), .Names = c('C', 'A', 'B'))); .Internal(rep.int(argv[[1]], argv[[2]]))");
     }
 
     @Test
@@ -136,9 +135,8 @@ public class TestrGenBuiltinrepint extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testrepint24() {
-        assertEval("argv <- list(3.1e-06, 49); .Internal(rep.int(argv[[1]], argv[[2]]))");
+        assertEval(Ignored.Unknown, "argv <- list(3.1e-06, 49); .Internal(rep.int(argv[[1]], argv[[2]]))");
     }
 
     @Test
@@ -153,6 +151,6 @@ public class TestrGenBuiltinrepint extends TestBase {
 
     @Test
     public void testrepint27() {
-        assertEval("argv <- list(structure(c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101), .Tsp = c(1, 101, 1), class = \'ts\'), 3L); .Internal(rep.int(argv[[1]], argv[[2]]))");
+        assertEval("argv <- list(structure(c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101), .Tsp = c(1, 101, 1), class = 'ts'), 3L); .Internal(rep.int(argv[[1]], argv[[2]]))");
     }
 }

@@ -169,8 +169,8 @@ public abstract class Repeat extends RBuiltinNode {
      */
     private static RVector handleEach(RAbstractVector x, int each) {
         RVector r = x.createEmptySameType(x.getLength() * each, x.isComplete());
-        for (int i = 0; i < x.getLength(); ++i) {
-            for (int j = i * each; j < (i + 1) * each; ++j) {
+        for (int i = 0; i < x.getLength(); i++) {
+            for (int j = i * each; j < (i + 1) * each; j++) {
                 r.transferElementSameType(j, x, i);
             }
         }
@@ -207,13 +207,13 @@ public abstract class Repeat extends RBuiltinNode {
             }
             // iterate once over the times vector to determine result vector size
             int resultLength = 0;
-            for (int i = 0; i < times.getLength(); ++i) {
+            for (int i = 0; i < times.getLength(); i++) {
                 resultLength += times.getDataAt(i);
             }
             // create and populate result vector
             RVector r = x.createEmptySameType(resultLength, x.isComplete());
             int wp = 0; // write pointer
-            for (int i = 0; i < x.getLength(); ++i) {
+            for (int i = 0; i < x.getLength(); i++) {
                 for (int j = 0; j < times.getDataAt(i); ++j, ++wp) {
                     r.transferElementSameType(wp, x, i);
                 }

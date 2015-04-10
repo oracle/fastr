@@ -18,31 +18,23 @@ import com.oracle.truffle.r.test.*;
 public class TestrGenBuiltinbeta extends TestBase {
 
     @Test
-    @Ignore
     public void testbeta1() {
-        assertEval("argv <- list(FALSE, FALSE); .Internal(beta(argv[[1]], argv[[2]]))");
+        assertEval(Ignored.Unknown, "argv <- list(FALSE, FALSE); .Internal(beta(argv[[1]], argv[[2]]))");
     }
 
     @Test
-    @Ignore
     public void testbeta2() {
-        assertEval("argv <- list(logical(0), logical(0)); .Internal(beta(argv[[1]], argv[[2]]))");
+        assertEval(Ignored.Unknown, "argv <- list(logical(0), logical(0)); .Internal(beta(argv[[1]], argv[[2]]))");
     }
 
-	@Test
-    @Ignore
-	public void testbeta4() {
-		assertEval("argv <- structure(list(a = 0.01, b = 171), .Names = c(\'a\', \'b\'));"+
-			"do.call(\'beta\', argv)");
-	}
+    @Test
+    public void testbeta4() {
+        assertEval(Ignored.Unknown, "argv <- structure(list(a = 0.01, b = 171), .Names = c('a', 'b'));do.call('beta', argv)");
+    }
 
-
-	@Test
-    @Ignore
-	public void testbeta5() {
-		assertEval("argv <- structure(list(a = 1e-200, b = 1e-200), .Names = c(\'a\',     \'b\'));"+
-			"do.call(\'beta\', argv)");
-	}
+    @Test
+    public void testbeta5() {
+        assertEval(Ignored.Unknown, "argv <- structure(list(a = 1e-200, b = 1e-200), .Names = c('a',     'b'));do.call('beta', argv)");
+    }
 
 }
-

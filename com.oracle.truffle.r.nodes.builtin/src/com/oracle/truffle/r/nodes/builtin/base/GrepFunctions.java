@@ -95,13 +95,13 @@ public class GrepFunctions {
          */
         protected void valueCheck(byte value) {
             if (RRuntime.fromLogical(value)) {
-                throw RError.nyi(getEncapsulatingSourceSection(), "value == true is not implemented");
+                throw RError.nyi(getEncapsulatingSourceSection(), "value == true");
             }
         }
 
         protected void checkNotImplemented(boolean condition, String arg, boolean b) {
             if (condition) {
-                throw RError.nyi(getEncapsulatingSourceSection(), arg + " == " + b + " not implemented");
+                throw RError.nyi(getEncapsulatingSourceSection(), arg + " == " + b);
             }
         }
 
@@ -690,7 +690,7 @@ public class GrepFunctions {
                     }
                 }
             }
-            for (int i = 0; i < x.getLength(); ++i) {
+            for (int i = 0; i < x.getLength(); i++) {
                 String data = x.getDataAt(i);
                 String currentSplit = splits[i % splits.length];
                 if (currentSplit.isEmpty()) {

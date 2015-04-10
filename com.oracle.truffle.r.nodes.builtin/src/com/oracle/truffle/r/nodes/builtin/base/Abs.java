@@ -42,7 +42,7 @@ public abstract class Abs extends RBuiltinNode {
     @Specialization
     protected RNull abs(RNull x) {
         controlVisibility();
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.NON_NUMERIC_ARGUMENT_FUNCTION);
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.NON_NUMERIC_MATH);
     }
 
     @Specialization

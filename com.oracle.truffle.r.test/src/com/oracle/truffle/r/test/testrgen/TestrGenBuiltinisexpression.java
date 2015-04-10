@@ -24,7 +24,7 @@ public class TestrGenBuiltinisexpression extends TestBase {
 
     @Test
     public void testisexpression2() {
-        assertEval("argv <- list(structure(list(class = c(\'ordered\', \'factor\'), levels = character(0)), .Names = c(\'class\', \'levels\')));is.expression(argv[[1]]);");
+        assertEval("argv <- list(structure(list(class = c('ordered', 'factor'), levels = character(0)), .Names = c('class', 'levels')));is.expression(argv[[1]]);");
     }
 
     @Test
@@ -34,12 +34,12 @@ public class TestrGenBuiltinisexpression extends TestBase {
 
     @Test
     public void testisexpression4() {
-        assertEval("argv <- list(structure(list(nationality = structure(c(1L, 2L, 2L, 3L, 3L, 1L), .Label = c(\'Australia\', \'UK\', \'US\'), class = \'factor\'), deceased = structure(c(1L, 1L, 1L, 1L, 2L, 1L), .Label = c(\'no\', \'yes\'), class = \'factor\'), title = structure(c(3L, 6L, 7L, 4L, 2L, 5L), .Label = c(\'An Introduction to R\', \'Exploratory Data Analysis\', \'Interactive Data Analysis\', \'LISP-STAT\', \'Modern Applied Statistics ...\', \'Spatial Statistics\', \'Stochastic Simulation\'), class = \'factor\'), other.author = structure(c(NA, NA, NA, NA, NA, 1L), .Label = c(\'Ripley\', \'Venables & Smith\'), class = \'factor\')), .Names = c(\'nationality\', \'deceased\', \'title\', \'other.author\'), class = \'data.frame\', row.names = c(NA, -6L)));is.expression(argv[[1]]);");
+        assertEval("argv <- list(structure(list(nationality = structure(c(1L, 2L, 2L, 3L, 3L, 1L), .Label = c('Australia', 'UK', 'US'), class = 'factor'), deceased = structure(c(1L, 1L, 1L, 1L, 2L, 1L), .Label = c('no', 'yes'), class = 'factor'), title = structure(c(3L, 6L, 7L, 4L, 2L, 5L), .Label = c('An Introduction to R', 'Exploratory Data Analysis', 'Interactive Data Analysis', 'LISP-STAT', 'Modern Applied Statistics ...', 'Spatial Statistics', 'Stochastic Simulation'), class = 'factor'), other.author = structure(c(NA, NA, NA, NA, NA, 1L), .Label = c('Ripley', 'Venables & Smith'), class = 'factor')), .Names = c('nationality', 'deceased', 'title', 'other.author'), class = 'data.frame', row.names = c(NA, -6L)));is.expression(argv[[1]]);");
     }
 
     @Test
     public void testisexpression5() {
-        assertEval("argv <- list(structure(c(\'Min.   :10.00  \', \'1st Qu.:15.25  \', \'Median :20.50  \', \'Mean   :21.67  \', \'3rd Qu.:25.50  \', \'Max.   :43.00  \', \'A:9  \', \'B:9  \', NA, NA, NA, NA), .Dim = c(6L, 2L), .Dimnames = list(c(\'\', \'\', \'\', \'\', \'\', \'\'), c(\'    breaks\', \'wool\'))));is.expression(argv[[1]]);");
+        assertEval("argv <- list(structure(c('Min.   :10.00  ', '1st Qu.:15.25  ', 'Median :20.50  ', 'Mean   :21.67  ', '3rd Qu.:25.50  ', 'Max.   :43.00  ', 'A:9  ', 'B:9  ', NA, NA, NA, NA), .Dim = c(6L, 2L), .Dimnames = list(c('', '', '', '', '', ''), c('    breaks', 'wool'))));is.expression(argv[[1]]);");
     }
 
     @Test
@@ -49,32 +49,32 @@ public class TestrGenBuiltinisexpression extends TestBase {
 
     @Test
     public void testisexpression7() {
-        assertEval("argv <- list(structure(list(), .Names = character(0), row.names = integer(0), class = \'data.frame\'));is.expression(argv[[1]]);");
+        assertEval("argv <- list(structure(list(), .Names = character(0), row.names = integer(0), class = 'data.frame'));is.expression(argv[[1]]);");
     }
 
     @Test
     public void testisexpression8() {
-        assertEval("argv <- list(structure(3.14159265358979, class = structure(\'3.14159265358979\', class = \'testit\')));is.expression(argv[[1]]);");
+        assertEval("argv <- list(structure(3.14159265358979, class = structure('3.14159265358979', class = 'testit')));is.expression(argv[[1]]);");
     }
 
     @Test
     public void testisexpression9() {
-        assertEval("argv <- list(structure(3.14159265358979, .Tsp = c(1, 1, 1), class = \'ts\'));is.expression(argv[[1]]);");
+        assertEval("argv <- list(structure(3.14159265358979, .Tsp = c(1, 1, 1), class = 'ts'));is.expression(argv[[1]]);");
     }
 
     @Test
     public void testisexpression10() {
-        assertEval("argv <- list(structure(list(a = 1), .Dim = 1L, .Dimnames = list(\'a\')));is.expression(argv[[1]]);");
+        assertEval("argv <- list(structure(list(a = 1), .Dim = 1L, .Dimnames = list('a')));is.expression(argv[[1]]);");
     }
 
     @Test
     public void testisexpression11() {
-        assertEval("argv <- list(structure(list(var = structure(c(3L, 5L, 3L, 1L, 1L, 1L, 3L, 4L, 1L, 2L, 1L, 1L, 1L), .Label = c(\'<leaf>\', \'frost\', \'life.exp\', \'population\', \'region\'), class = \'factor\'), n = c(50L, 21L, 13L, 10L, 3L, 8L, 29L, 21L, 4L, 17L, 9L, 8L, 8L), wt = c(50, 21, 13, 10, 3, 8, 29, 21, 4, 17, 9, 8, 8), dev = c(667.7458, 87.3866666666667, 18.8523076923077, 6.989, 2.84666666666667, 28.2, 222.311724137931, 116.909523809524, 10.18, 50.8823529411765, 24.24, 11.62, 14.415), yval = c(7.378, 4.23333333333333, 3.14615384615385, 2.69, 4.66666666666667, 6, 9.6551724137931, 8.56190476190476, 5.2, 9.35294117647059, 8.46666666666667, 10.35, 12.525), complexity = c(0.536203161735203, 0.0604037628905475, 0.0135031040639133, 0.00508384221318095, 0.01, 0.01, 0.136260236048519, 0.0836353757198433, 0.01, 0.0224971133344103, 0.01, 0.01, 0.01), ncompete = c(4L, 4L, 4L, 0L, 0L, 0L, 4L, 4L, 0L, 4L, 0L, 0L, 0L), nsurrogate = c(5L, 4L, 1L, 0L, 0L, 0L, 4L, 3L, 0L, 5L, 0L, 0L, 0L)), .Names = c(\'var\', \'n\', \'wt\', \'dev\', \'yval\', \'complexity\', \'ncompete\', \'nsurrogate\'), row.names = c(1L, 2L, 4L, 8L, 9L, 5L, 3L, 6L, 12L, 13L, 26L, 27L, 7L), class = \'data.frame\'));is.expression(argv[[1]]);");
+        assertEval("argv <- list(structure(list(var = structure(c(3L, 5L, 3L, 1L, 1L, 1L, 3L, 4L, 1L, 2L, 1L, 1L, 1L), .Label = c('<leaf>', 'frost', 'life.exp', 'population', 'region'), class = 'factor'), n = c(50L, 21L, 13L, 10L, 3L, 8L, 29L, 21L, 4L, 17L, 9L, 8L, 8L), wt = c(50, 21, 13, 10, 3, 8, 29, 21, 4, 17, 9, 8, 8), dev = c(667.7458, 87.3866666666667, 18.8523076923077, 6.989, 2.84666666666667, 28.2, 222.311724137931, 116.909523809524, 10.18, 50.8823529411765, 24.24, 11.62, 14.415), yval = c(7.378, 4.23333333333333, 3.14615384615385, 2.69, 4.66666666666667, 6, 9.6551724137931, 8.56190476190476, 5.2, 9.35294117647059, 8.46666666666667, 10.35, 12.525), complexity = c(0.536203161735203, 0.0604037628905475, 0.0135031040639133, 0.00508384221318095, 0.01, 0.01, 0.136260236048519, 0.0836353757198433, 0.01, 0.0224971133344103, 0.01, 0.01, 0.01), ncompete = c(4L, 4L, 4L, 0L, 0L, 0L, 4L, 4L, 0L, 4L, 0L, 0L, 0L), nsurrogate = c(5L, 4L, 1L, 0L, 0L, 0L, 4L, 3L, 0L, 5L, 0L, 0L, 0L)), .Names = c('var', 'n', 'wt', 'dev', 'yval', 'complexity', 'ncompete', 'nsurrogate'), row.names = c(1L, 2L, 4L, 8L, 9L, 5L, 3L, 6L, 12L, 13L, 26L, 27L, 7L), class = 'data.frame'));is.expression(argv[[1]]);");
     }
 
     @Test
     public void testisexpression12() {
-        assertEval("argv <- list(structure(c(1, 24.25, 56.5, 56.92771, 86.75, 117), .Names = c(\'Min.\', \'1st Qu.\', \'Median\', \'Mean\', \'3rd Qu.\', \'Max.\')));is.expression(argv[[1]]);");
+        assertEval("argv <- list(structure(c(1, 24.25, 56.5, 56.92771, 86.75, 117), .Names = c('Min.', '1st Qu.', 'Median', 'Mean', '3rd Qu.', 'Max.')));is.expression(argv[[1]]);");
     }
 
     @Test
@@ -94,22 +94,22 @@ public class TestrGenBuiltinisexpression extends TestBase {
 
     @Test
     public void testisexpression16() {
-        assertEval("argv <- list(structure(c(\'***\', \'***\', \'*\', \'*\'), legend = \'0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1\', class = \'noquote\'));is.expression(argv[[1]]);");
+        assertEval("argv <- list(structure(c('***', '***', '*', '*'), legend = '0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1', class = 'noquote'));is.expression(argv[[1]]);");
     }
 
     @Test
     public void testisexpression17() {
-        assertEval("argv <- list(structure(c(-0.0880891704401362, -0.508170309402877, -0.00510235947825228, 0.0737329622006759), .Names = c(\'(Intercept)\', \'x1\', \'z\', \'x1:z\')));is.expression(argv[[1]]);");
+        assertEval("argv <- list(structure(c(-0.0880891704401362, -0.508170309402877, -0.00510235947825228, 0.0737329622006759), .Names = c('(Intercept)', 'x1', 'z', 'x1:z')));is.expression(argv[[1]]);");
     }
 
     @Test
     public void testisexpression18() {
-        assertEval("argv <- list(structure(c(-Inf, -Inf, -2.248e+263, -Inf, -3.777e+116, -1), .Names = c(\'Min.\', \'1st Qu.\', \'Median\', \'Mean\', \'3rd Qu.\', \'Max.\')));is.expression(argv[[1]]);");
+        assertEval("argv <- list(structure(c(-Inf, -Inf, -2.248e+263, -Inf, -3.777e+116, -1), .Names = c('Min.', '1st Qu.', 'Median', 'Mean', '3rd Qu.', 'Max.')));is.expression(argv[[1]]);");
     }
 
     @Test
     public void testisexpression19() {
-        assertEval("argv <- list(quote(print(.leap.seconds, tz = \'PST8PDT\')));is.expression(argv[[1]]);");
+        assertEval("argv <- list(quote(print(.leap.seconds, tz = 'PST8PDT')));is.expression(argv[[1]]);");
     }
 
     @Test
@@ -119,12 +119,12 @@ public class TestrGenBuiltinisexpression extends TestBase {
 
     @Test
     public void testisexpression21() {
-        assertEval("argv <- list(structure(list(dim = 1L, dimnames = list(\'a\')), .Names = c(\'dim\', \'dimnames\')));is.expression(argv[[1]]);");
+        assertEval("argv <- list(structure(list(dim = 1L, dimnames = list('a')), .Names = c('dim', 'dimnames')));is.expression(argv[[1]]);");
     }
 
     @Test
     public void testisexpression22() {
-        assertEval("argv <- list(structure(c(NA, 6346.2), .Names = c(\'1\', \'2\')));is.expression(argv[[1]]);");
+        assertEval("argv <- list(structure(c(NA, 6346.2), .Names = c('1', '2')));is.expression(argv[[1]]);");
     }
 
     @Test
@@ -134,7 +134,7 @@ public class TestrGenBuiltinisexpression extends TestBase {
 
     @Test
     public void testisexpression25() {
-        assertEval("argv <- list(expression(quote(expression(b = pi^3))));" + "do.call(\'is.expression\', argv)");
+        assertEval("argv <- list(expression(quote(expression(b = pi^3))));do.call('is.expression', argv)");
     }
 
 }

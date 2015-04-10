@@ -18,15 +18,12 @@ import com.oracle.truffle.r.test.*;
 public class TestrGenBuiltinfileinfo extends TestBase {
 
     @Test
-    @Ignore
     public void testfileinfo1() {
-        assertEval("argv <- list(\'/home/lzhao/hg/r-instrumented/library/codetools/data\'); .Internal(file.info(argv[[1]]))");
+        assertEval(Ignored.Unknown, "argv <- list('/home/lzhao/hg/r-instrumented/library/codetools/data'); .Internal(file.info(argv[[1]]))");
     }
 
     @Test
-    @Ignore
     public void testfileinfo2() {
-        assertEval("argv <- list(character(0)); .Internal(file.info(argv[[1]]))");
+        assertEval(Ignored.Unknown, "argv <- list(character(0)); .Internal(file.info(argv[[1]]))");
     }
 }
-

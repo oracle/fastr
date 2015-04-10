@@ -18,17 +18,13 @@ import com.oracle.truffle.r.test.*;
 public class TestrGenBuiltindoTrace extends TestBase {
 
     @Test
-    @Ignore
     public void testdoTrace1() {
-        assertEval("argv <- list(c(1, 1, 2));.doTrace(argv[[1]]);");
+        assertEval(Ignored.Unknown, "argv <- list(c(1, 1, 2));.doTrace(argv[[1]]);");
     }
 
-	@Test
-    @Ignore
-	public void testdoTrace3() {
-		assertEval("argv <- structure(list(expr = expression(quote(x <- c(1, x)))),     .Names = \'expr\');"+
-			"do.call(\'.doTrace\', argv)");
-	}
+    @Test
+    public void testdoTrace3() {
+        assertEval(Ignored.Unknown, "argv <- structure(list(expr = expression(quote(x <- c(1, x)))),     .Names = 'expr');do.call('.doTrace', argv)");
+    }
 
 }
-

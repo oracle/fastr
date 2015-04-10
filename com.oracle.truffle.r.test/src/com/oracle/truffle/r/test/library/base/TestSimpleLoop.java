@@ -32,9 +32,9 @@ public class TestSimpleLoop extends TestBase {
 
     @Test
     public void testOneIterationLoops() {
-        assertEvalNoNL("{ for (a in 1) cat(a) }");
-        assertEvalNoNL("{ for (a in 1L) cat(a) }");
-        assertEvalNoNL("{ for (a in \"xyz\") cat(a) }");
+        assertEval("{ for (a in 1) cat(a) }");
+        assertEval("{ for (a in 1L) cat(a) }");
+        assertEval("{ for (a in \"xyz\") cat(a) }");
     }
 
     @Test
@@ -49,18 +49,17 @@ public class TestSimpleLoop extends TestBase {
 
     @Test
     public void testLoopsErrors() {
-        assertEvalError("{ while (1 < NA) { 1 } }");
+        assertEval(Output.ContainsError, "{ while (1 < NA) { 1 } }");
 
-        assertEvalError("{ break; }");
-        assertEvalError("{ next; }");
+        assertEval(Output.ContainsError, "{ break; }");
+        assertEval(Output.ContainsError, "{ next; }");
     }
 
     @Test
-    @Ignore
     public void testLoopsErrorsIgnore() {
-        assertEvalError("{ l <- quote(for(i in s) { x <- i }) ; s <- 1:3 ; eval(l) ; s <- function(){} ; eval(l) ; x }");
-        assertEvalError("{ l <- function(s) { for(i in s) { x <- i } ; x } ; l(1:3) ; s <- function(){} ; l(s) ; x }");
-        assertEvalError("{ l <- quote({ for(i in s) { x <- i } ; x }) ; f <- function(s) { eval(l) } ; f(1:3) ; s <- function(){} ; f(s) ; x }");
+        assertEval(Ignored.Unknown, Output.ContainsError, "{ l <- quote(for(i in s) { x <- i }) ; s <- 1:3 ; eval(l) ; s <- function(){} ; eval(l) ; x }");
+        assertEval(Ignored.Unknown, Output.ContainsError, "{ l <- function(s) { for(i in s) { x <- i } ; x } ; l(1:3) ; s <- function(){} ; l(s) ; x }");
+        assertEval(Ignored.Unknown, Output.ContainsError, "{ l <- quote({ for(i in s) { x <- i } ; x }) ; f <- function(s) { eval(l) } ; f(1:3) ; s <- function(){} ; f(s) ; x }");
     }
 
     @Test

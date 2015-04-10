@@ -77,7 +77,7 @@ public abstract class Round extends RBuiltinNode {
         controlVisibility();
         double[] result = new double[x.getLength()];
         check.enable(x);
-        for (int i = 0; i < x.getLength(); ++i) {
+        for (int i = 0; i < x.getLength(); i++) {
             result[i] = round(x.getDataAt(i), digits);
             check.check(result[i]);
         }
@@ -91,7 +91,7 @@ public abstract class Round extends RBuiltinNode {
         controlVisibility();
         double[] result = new double[x.getLength()];
         check.enable(x);
-        for (int i = 0; i < x.getLength(); ++i) {
+        for (int i = 0; i < x.getLength(); i++) {
             result[i] = roundDigits(x.getDataAt(i), digits);
             check.check(result[i]);
         }
@@ -117,7 +117,7 @@ public abstract class Round extends RBuiltinNode {
         controlVisibility();
         double[] result = new double[x.getLength() << 1];
         check.enable(x);
-        for (int i = 0; i < x.getLength(); ++i) {
+        for (int i = 0; i < x.getLength(); i++) {
             RComplex z = x.getDataAt(i);
             RComplex r = round(z, digits);
             result[2 * i] = r.getRealPart();
@@ -134,7 +134,7 @@ public abstract class Round extends RBuiltinNode {
         controlVisibility();
         double[] result = new double[x.getLength() << 1];
         check.enable(x);
-        for (int i = 0; i < x.getLength(); ++i) {
+        for (int i = 0; i < x.getLength(); i++) {
             RComplex z = x.getDataAt(i);
             RComplex r = roundDigits(z, digits);
             result[2 * i] = r.getRealPart();

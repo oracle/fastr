@@ -55,7 +55,7 @@ public abstract class CombineBinaryIntegerNode extends CombineBinaryNode {
     protected RIntVector performAbstractIntVectorInt(RAbstractIntVector left, int right) {
         int dataLength = left.getLength();
         int[] result = new int[dataLength + 1];
-        for (int i = 0; i < dataLength; ++i) {
+        for (int i = 0; i < dataLength; i++) {
             result[i] = left.getDataAt(i);
         }
         result[dataLength] = right;
@@ -66,7 +66,7 @@ public abstract class CombineBinaryIntegerNode extends CombineBinaryNode {
     protected RIntVector performIntAbstractIntVector(int left, RAbstractIntVector right) {
         int dataLength = right.getLength();
         int[] result = new int[dataLength + 1];
-        for (int i = 0; i < dataLength; ++i) {
+        for (int i = 0; i < dataLength; i++) {
             result[i + 1] = right.getDataAt(i);
         }
         result[0] = left;
@@ -79,10 +79,10 @@ public abstract class CombineBinaryIntegerNode extends CombineBinaryNode {
         int rightLength = right.getLength();
         int[] result = new int[leftLength + rightLength];
         int i = 0;
-        for (; i < leftLength; ++i) {
+        for (; i < leftLength; i++) {
             result[i] = left.getDataAt(i);
         }
-        for (; i < leftLength + rightLength; ++i) {
+        for (; i < leftLength + rightLength; i++) {
             result[i] = right.getDataAt(i - leftLength);
         }
         return RDataFactory.createIntVector(result, left.isComplete() && right.isComplete(), combineNames(left, right));

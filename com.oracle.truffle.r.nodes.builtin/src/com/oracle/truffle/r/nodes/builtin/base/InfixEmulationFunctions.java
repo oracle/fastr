@@ -56,7 +56,7 @@ public class InfixEmulationFunctions {
 
     public abstract static class ErrorAdapter extends RBuiltinNode {
         protected RError nyi() throws RError {
-            throw RError.nyi(getEncapsulatingSourceSection(), "");
+            throw RError.nyi(getEncapsulatingSourceSection(), String.valueOf(getBuiltin()));
         }
     }
 
@@ -140,7 +140,6 @@ public class InfixEmulationFunctions {
             return op;
         }
 
-        @ExplodeLoop
         @Specialization(guards = "!argsEmpty(args)")
         protected RArgsValuesAndNames eval(VirtualFrame frame, RArgsValuesAndNames args) {
             Object[] values = args.getValues();

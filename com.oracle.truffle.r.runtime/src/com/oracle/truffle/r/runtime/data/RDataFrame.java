@@ -27,10 +27,13 @@ import com.oracle.truffle.r.runtime.data.model.*;
 
 public final class RDataFrame implements RShareable, RAbstractContainer {
 
-    private RVector vector;
+    private final RVector vector;
+    private final int length;
 
     public RDataFrame(RVector vector) {
         this.vector = vector;
+        int vecLength = vector.getLength();
+        this.length = vector instanceof RList ? vecLength : (vecLength == 0 ? 0 : 1);
     }
 
     public RType getRType() {
@@ -48,11 +51,7 @@ public final class RDataFrame implements RShareable, RAbstractContainer {
 
     @Override
     public int getLength() {
-        if (vector instanceof RList || vector.getLength() == 0) {
-            return vector.getLength();
-        } else {
-            return 1;
-        }
+        return length;
     }
 
     @Override
@@ -63,7 +62,7 @@ public final class RDataFrame implements RShareable, RAbstractContainer {
             RVector v = RDataFactory.createList();
             v.resize(size);
             v.setNames(vector.getNames());
-            if (vector.getLength() == 0) {
+            if (length == 0) {
                 v.updateDataAtAsObject(0, vector, null);
             }
             return v;
@@ -146,7 +145,7 @@ public final class RDataFrame implements RShareable, RAbstractContainer {
     }
 
     @Override
-    public RList getDimNames() {
+    public RList getDimNames(RAttributeProfiles attrProfiles) {
         Utils.nyi("data frame's dimnames needs to be obtained using builtins");
         return null;
     }
@@ -158,7 +157,7 @@ public final class RDataFrame implements RShareable, RAbstractContainer {
 
     @Override
     public Object getRowNames(RAttributeProfiles attrProfiles) {
-        return vector.getRowNames(attrProfiles);
+        return vector.getRowNames();
     }
 
     @Override
@@ -179,6 +178,16 @@ public final class RDataFrame implements RShareable, RAbstractContainer {
     @Override
     public RAttributes initAttributes() {
         return vector.initAttributes();
+    }
+
+    @Override
+    public void setAttr(String name, Object value) {
+        vector.setAttr(name, value);
+    }
+
+    @Override
+    public Object getAttr(RAttributeProfiles attrProfiles, String name) {
+        return vector.getAttr(attrProfiles, name);
     }
 
     @Override

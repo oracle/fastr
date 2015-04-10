@@ -78,7 +78,7 @@ public abstract class Lapply extends RBuiltinNode {
 
             int length = lengthNode.executeInt(frame, vector);
             Object[] result = new Object[length];
-            for (int i = 1; i <= length; ++i) {
+            for (int i = 1; i <= length; i++) {
                 writeIndex.execute(frame, i);
                 writeVectorElement.execute(frame, indexedLoadNode.execute(frame));
                 result[i - 1] = callNode.execute(frame, function);
@@ -94,7 +94,7 @@ public abstract class Lapply extends RBuiltinNode {
              * It might be rather straight forward to implement as soon as RCallNode supports
              * executing with an evaluated RArgsValuesAndNames. This should be implemented first.
              */
-            throw RError.nyi(getSourceSection(), "generic lApply still needs to be implemented");
+            throw RError.nyi(getSourceSection(), "generic lApply");
         }
 
         private static RNode createIndexedLoad() {

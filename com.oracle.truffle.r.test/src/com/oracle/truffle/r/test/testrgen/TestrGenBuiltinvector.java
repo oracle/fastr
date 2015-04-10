@@ -19,43 +19,41 @@ public class TestrGenBuiltinvector extends TestBase {
 
     @Test
     public void testvector1() {
-        assertEval("argv <- list(\'integer\', 0L); .Internal(vector(argv[[1]], argv[[2]]))");
+        assertEval("argv <- list('integer', 0L); .Internal(vector(argv[[1]], argv[[2]]))");
     }
 
     @Test
     public void testvector2() {
-        assertEval("argv <- list(\'double\', 17.1); .Internal(vector(argv[[1]], argv[[2]]))");
+        assertEval("argv <- list('double', 17.1); .Internal(vector(argv[[1]], argv[[2]]))");
     }
 
     @Test
     public void testvector3() {
-        assertEval("argv <- list(\'list\', 1L); .Internal(vector(argv[[1]], argv[[2]]))");
+        assertEval("argv <- list('list', 1L); .Internal(vector(argv[[1]], argv[[2]]))");
     }
 
     @Test
     public void testvector4() {
-        assertEval("argv <- list(\'logical\', 15L); .Internal(vector(argv[[1]], argv[[2]]))");
+        assertEval("argv <- list('logical', 15L); .Internal(vector(argv[[1]], argv[[2]]))");
     }
 
     @Test
     public void testvector5() {
-        assertEval("argv <- list(\'double\', 2); .Internal(vector(argv[[1]], argv[[2]]))");
+        assertEval("argv <- list('double', 2); .Internal(vector(argv[[1]], argv[[2]]))");
     }
 
     @Test
     public void testvector9() {
-        assertEval("argv <- list(\'raw\', 0L); .Internal(vector(argv[[1]], argv[[2]]))");
+        assertEval("argv <- list('raw', 0L); .Internal(vector(argv[[1]], argv[[2]]))");
     }
 
     @Test
-    @Ignore
     public void testvector10() {
-        assertEval("argv <- list(\'list\', structure(1L, .Names = \'\\\\c\')); .Internal(vector(argv[[1]], argv[[2]]))");
+        assertEval(Ignored.Unknown, "argv <- list('list', structure(1L, .Names = '\\\\c')); .Internal(vector(argv[[1]], argv[[2]]))");
     }
 
     @Test
-    @Ignore
     public void testvector11() {
-        assertEval("argv <- structure(list(mode = \'complex\', length = 7), .Names = c(\'mode\',     \'length\'));" + "do.call(\'vector\', argv)");
+        assertEval(Ignored.Unknown, "argv <- structure(list(mode = 'complex', length = 7), .Names = c('mode',     'length'));do.call('vector', argv)");
     }
 }

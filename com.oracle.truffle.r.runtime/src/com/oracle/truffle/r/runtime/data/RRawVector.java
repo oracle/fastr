@@ -35,7 +35,7 @@ public final class RRawVector extends RVector implements RAbstractRawVector {
     private static final RStringVector implicitClassHeaderArray = RDataFactory.createStringVector(new String[]{RType.Array.getName(), RType.Raw.getName()}, true);
     private static final RStringVector implicitClassHeaderMatrix = RDataFactory.createStringVector(new String[]{RType.Matrix.getName(), RType.Raw.getName()}, true);
 
-    private byte[] data;
+    private final byte[] data;
 
     RRawVector(byte[] data, int[] dims, RStringVector names) {
         super(true, data.length, dims, names);
@@ -141,19 +141,9 @@ public final class RRawVector extends RVector implements RAbstractRawVector {
         return newData;
     }
 
-    private byte[] createResizedData(int size, boolean fillNA) {
-        assert !this.isShared();
-        return copyResizedData(size, fillNA);
-    }
-
     @Override
     public RRawVector copyResized(int size, boolean fillNA) {
         return RDataFactory.createRawVector(copyResizedData(size, fillNA));
-    }
-
-    @Override
-    protected void resizeInternal(int size) {
-        this.data = createResizedData(size, true);
     }
 
     @Override

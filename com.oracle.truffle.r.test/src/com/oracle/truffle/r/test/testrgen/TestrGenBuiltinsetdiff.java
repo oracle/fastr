@@ -15,13 +15,11 @@ import com.oracle.truffle.r.test.*;
 
 // Checkstyle: stop line length check
 
-                                                                 public class TestrGenBuiltinsetdiff extends TestBase {
+public class TestrGenBuiltinsetdiff extends TestBase {
 
-	@Test
-	public void testsetdiff1() {
-		assertEval("argv <- structure(list(x = c(\'bibtex\', \'tex\'), y = \'.svn\'), .Names = c(\'x\',     \'y\'));"+
-			"do.call(\'setdiff\', argv)");
-	}
+    @Test
+    public void testsetdiff1() {
+        assertEval("argv <- structure(list(x = c('bibtex', 'tex'), y = '.svn'), .Names = c('x',     'y'));do.call('setdiff', argv)");
+    }
 
 }
-

@@ -47,4 +47,3 @@ public class TestrGenBuiltinasraw extends TestBase {
         assertEval("argv <- list(list());as.raw(argv[[1]]);");
     }
 }
-

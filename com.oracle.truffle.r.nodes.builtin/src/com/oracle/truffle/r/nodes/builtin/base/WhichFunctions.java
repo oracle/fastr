@@ -54,13 +54,13 @@ public class WhichFunctions {
         protected RIntVector which(RAbstractLogicalVector x) {
             controlVisibility();
             ArrayList<Integer> w = new ArrayList<>();
-            for (int i = 0; i < x.getLength(); ++i) {
+            for (int i = 0; i < x.getLength(); i++) {
                 if (x.getDataAt(i) == RRuntime.LOGICAL_TRUE) {
                     w.add(i);
                 }
             }
             int[] result = new int[w.size()];
-            for (int i = 0; i < result.length; ++i) {
+            for (int i = 0; i < result.length; i++) {
                 result[i] = w.get(i) + 1;
             }
             return RDataFactory.createIntVector(result, RDataFactory.COMPLETE_VECTOR);
@@ -74,7 +74,7 @@ public class WhichFunctions {
             ArrayList<String> n = new ArrayList<>();
             RStringVector oldNames = x.getNames(attrProfiles);
             naCheck.enable(oldNames);
-            for (int i = 0; i < x.getLength(); ++i) {
+            for (int i = 0; i < x.getLength(); i++) {
                 if (x.getDataAt(i) == RRuntime.LOGICAL_TRUE) {
                     w.add(i);
                     String s = oldNames.getDataAt(i);
@@ -83,7 +83,7 @@ public class WhichFunctions {
                 }
             }
             int[] result = new int[w.size()];
-            for (int i = 0; i < result.length; ++i) {
+            for (int i = 0; i < result.length; i++) {
                 result[i] = w.get(i) + 1;
             }
             String[] names = new String[n.size()];

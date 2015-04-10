@@ -19,7 +19,7 @@ public class TestrGenBuiltinasoctmode extends TestBase {
 
     @Test
     public void testasoctmode1() {
-        assertEval("argv <- structure(list(x = 1:255), .Names = \'x\');" + "do.call(\'as.octmode\', argv)");
+        assertEval("argv <- structure(list(x = 1:255), .Names = 'x');do.call('as.octmode', argv)");
     }
 
 }

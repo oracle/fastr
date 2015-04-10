@@ -67,7 +67,7 @@ public abstract class UpdateDimNames extends RInvisibleBuiltinNode {
         }
     }
 
-    public abstract RAbstractContainer executeList(VirtualFrame frame, RAbstractContainer container, Object o);
+    public abstract RAbstractContainer executeRAbstractContainer(VirtualFrame frame, RAbstractContainer container, Object o);
 
     public RList convertToListOfStrings(VirtualFrame frame, RList oldList) {
         RList list = oldList;
@@ -88,26 +88,26 @@ public abstract class UpdateDimNames extends RInvisibleBuiltinNode {
     @TruffleBoundary
     protected RAbstractContainer updateDimnames(RAbstractContainer container, RNull list) {
         RAbstractContainer result = container.materializeNonShared();
-        container.setDimNames(null);
+        result.setDimNames(null);
         controlVisibility();
-        return container;
+        return result;
     }
 
     @Specialization(guards = "isZeroLength(list)")
     @TruffleBoundary
     protected RAbstractContainer updateDimnamesEmpty(RAbstractContainer container, RList list) {
         RAbstractContainer result = container.materializeNonShared();
-        container.setDimNames(null);
+        result.setDimNames(null);
         controlVisibility();
-        return container;
+        return result;
     }
 
     @Specialization(guards = "!isZeroLength(list)")
     protected RAbstractContainer updateDimnames(VirtualFrame frame, RAbstractContainer container, RList list) {
         RAbstractContainer result = container.materializeNonShared();
-        container.setDimNames(convertToListOfStrings(frame, list));
+        result.setDimNames(convertToListOfStrings(frame, list));
         controlVisibility();
-        return container;
+        return result;
     }
 
     @Specialization(guards = "!isContainerList(c)")

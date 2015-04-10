@@ -34,7 +34,7 @@ public class TestrGenBuiltinsample extends TestBase {
 
     @Test
     public void testsample5() {
-        assertEval("argv <- structure(list(x = c(0, 0)), .Names = \'x\');" + "do.call(\'sample\', argv)");
+        assertEval("argv <- structure(list(x = c(0, 0)), .Names = 'x');do.call('sample', argv)");
     }
 
 }

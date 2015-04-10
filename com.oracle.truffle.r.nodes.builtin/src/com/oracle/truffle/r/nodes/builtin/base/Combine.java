@@ -170,7 +170,7 @@ public abstract class Combine extends RCastingBuiltinNode {
             case NO_PRECEDENCE:
                 return null;
             default:
-                throw RError.nyi(null, "unsupported combine type?");
+                throw RError.nyi(null, "unsupported combine type");
         }
     }
 
@@ -194,7 +194,7 @@ public abstract class Combine extends RCastingBuiltinNode {
             case NO_PRECEDENCE:
                 return null;
             default:
-                throw RError.nyi(null, "unsupported cast type?");
+                throw RError.nyi(null, "unsupported cast type");
         }
     }
 
@@ -278,7 +278,7 @@ public abstract class Combine extends RCastingBuiltinNode {
         }
 
         protected boolean needsCopy(RAbstractVector vector) {
-            return vector.getAttributes() != null || vector.getNames(attrProfiles) != null || vector.getDimNames() != null;
+            return vector.getAttributes() != null || vector.getNames(attrProfiles) != null || vector.getDimNames(attrProfiles) != null;
         }
 
     }

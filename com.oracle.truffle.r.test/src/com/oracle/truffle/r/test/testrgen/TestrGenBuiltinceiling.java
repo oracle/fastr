@@ -48,14 +48,13 @@ public class TestrGenBuiltinceiling extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testceiling7() {
-        assertEval("argv <- list(1e+05);ceiling(argv[[1]]);");
+        assertEval(Ignored.Unknown, "argv <- list(1e+05);ceiling(argv[[1]]);");
     }
 
     @Test
     public void testceiling9() {
-        assertEval("argv <- list(c(-2, -1.5, -1, -0.5, 0, 0.5, 1, 1.5, 2, 2.5, 3,     3.5, 4));" + "do.call(\'ceiling\', argv)");
+        assertEval("argv <- list(c(-2, -1.5, -1, -0.5, 0, 0.5, 1, 1.5, 2, 2.5, 3,     3.5, 4));do.call('ceiling', argv)");
     }
 
 }

@@ -169,7 +169,7 @@ public abstract class Format extends RBuiltinNode {
             RStringVector result = convertToString(value);
             if (value.getDimensions() != null) {
                 result.setDimensions(value.getDimensions());
-                result.setDimNames(value.getDimNames());
+                result.setDimNames(value.getDimNames(attrProfiles));
             } else {
                 result.setNames(value.getNames(attrProfiles));
             }

@@ -31,7 +31,7 @@ import com.oracle.truffle.r.runtime.ops.na.*;
 
 public final class RDoubleVector extends RVector implements RAbstractDoubleVector {
 
-    private double[] data;
+    private final double[] data;
 
     static final RStringVector implicitClassHeader = RDataFactory.createStringVector(new String[]{RType.Double.getName(), RType.Numeric.getName()}, true);
     private static final RStringVector implicitClassHeaderArray = RDataFactory.createStringVector(new String[]{RType.Array.getName(), RType.Double.getName(), RType.Numeric.getName()}, true);
@@ -53,7 +53,7 @@ public final class RDoubleVector extends RVector implements RAbstractDoubleVecto
 
     public RDoubleVector copyResetData(double[] newData) {
         boolean isComplete = true;
-        for (int i = 0; i < newData.length; ++i) {
+        for (int i = 0; i < newData.length; i++) {
             if (RRuntime.isNA(newData[i])) {
                 isComplete = false;
                 break;
@@ -153,7 +153,7 @@ public final class RDoubleVector extends RVector implements RAbstractDoubleVecto
     static double[] resizeData(double[] newData, double[] oldData, int oldDataLength, boolean fillNA) {
         if (newData.length > oldDataLength) {
             if (fillNA) {
-                for (int i = oldDataLength; i < newData.length; ++i) {
+                for (int i = oldDataLength; i < newData.length; i++) {
                     newData[i] = RRuntime.DOUBLE_NA;
                 }
             } else {
@@ -170,20 +170,10 @@ public final class RDoubleVector extends RVector implements RAbstractDoubleVecto
         return resizeData(newData, this.data, this.getLength(), fillNA);
     }
 
-    private double[] createResizedData(int size, boolean fillNA) {
-        assert !this.isShared();
-        return copyResizedData(size, fillNA);
-    }
-
     @Override
     public RDoubleVector copyResized(int size, boolean fillNA) {
         boolean isComplete = isComplete() && ((data.length >= size) || !fillNA);
         return RDataFactory.createDoubleVector(copyResizedData(size, fillNA), isComplete);
-    }
-
-    @Override
-    protected void resizeInternal(int size) {
-        this.data = createResizedData(size, true);
     }
 
     public RDoubleVector materialize() {

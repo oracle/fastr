@@ -68,7 +68,7 @@ public abstract class Signif extends RBuiltinNode {
         }
         double[] data = new double[x.getLength()];
         naCheck.enable(x);
-        for (int i = 0; i < x.getLength(); ++i) {
+        for (int i = 0; i < x.getLength(); i++) {
             double val = x.getDataAt(i);
             if (naCheck.check(val)) {
                 data[i] = RRuntime.DOUBLE_NA;

@@ -45,16 +45,28 @@ public abstract class UpdateAttributes extends RInvisibleBuiltinNode {
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
     @Child private UpdateNames updateNames;
+    @Child private UpdateDimNames updateDimNames;
     @Child private CastIntegerNode castInteger;
     @Child private CastToVectorNode castVector;
     @Child private CastListNode castList;
 
-    private void updateNamesStringVector(VirtualFrame frame, RAbstractContainer container, Object o) {
+    // it's OK for the following two methods to update attributes in-place as the container has been
+    // already materialized to non-shared
+
+    private void updateNames(VirtualFrame frame, RAbstractContainer container, Object o) {
         if (updateNames == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             updateNames = insert(UpdateNamesFactory.create(new RNode[2], getBuiltin(), getSuppliedSignature()));
         }
         updateNames.executeStringVector(frame, container, o);
+    }
+
+    private void updateDimNames(VirtualFrame frame, RAbstractContainer container, Object o) {
+        if (updateDimNames == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            updateDimNames = insert(UpdateDimNamesFactory.create(new RNode[2], getBuiltin(), getSuppliedSignature()));
+        }
+        updateDimNames.executeRAbstractContainer(frame, container, o);
     }
 
     private RAbstractIntVector castInteger(VirtualFrame frame, RAbstractVector vector) {
@@ -167,13 +179,9 @@ public abstract class UpdateAttributes extends RInvisibleBuiltinNode {
             if (attrName.equals(RRuntime.DIM_ATTR_KEY)) {
                 continue;
             } else if (attrName.equals(RRuntime.NAMES_ATTR_KEY)) {
-                updateNamesStringVector(virtualFrame, res, value);
+                updateNames(virtualFrame, res, value);
             } else if (attrName.equals(RRuntime.DIMNAMES_ATTR_KEY)) {
-                if (value == RNull.instance) {
-                    res.setDimNames(null);
-                } else {
-                    res.setDimNames(castList(virtualFrame, value));
-                }
+                updateDimNames(virtualFrame, res, value);
             } else if (attrName.equals(RRuntime.CLASS_ATTR_KEY)) {
                 if (value == RNull.instance) {
                     res = (RAbstractContainer) result.setClassAttr(null, false);

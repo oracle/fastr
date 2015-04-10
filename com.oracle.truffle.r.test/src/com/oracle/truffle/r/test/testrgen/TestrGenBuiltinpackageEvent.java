@@ -15,13 +15,11 @@ import com.oracle.truffle.r.test.*;
 
 // Checkstyle: stop line length check
 
-                                                                 public class TestrGenBuiltinpackageEvent extends TestBase {
+public class TestrGenBuiltinpackageEvent extends TestBase {
 
-	@Test
-	public void testpackageEvent1() {
-		assertEval("argv <- structure(list(pkgname = \'stats4\', event = \'onLoad\'),     .Names = c(\'pkgname\', \'event\'));"+
-			"do.call(\'packageEvent\', argv)");
-	}
+    @Test
+    public void testpackageEvent1() {
+        assertEval("argv <- structure(list(pkgname = 'stats4', event = 'onLoad'),     .Names = c('pkgname', 'event'));do.call('packageEvent', argv)");
+    }
 
 }
-

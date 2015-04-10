@@ -94,7 +94,7 @@ public abstract class RSequence extends RBounded implements RAbstractVector {
     }
 
     @Override
-    public final RList getDimNames() {
+    public final RList getDimNames(RAttributeProfiles attrProfiles) {
         return null;
     }
 
