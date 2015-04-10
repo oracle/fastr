@@ -21,8 +21,11 @@
 # questions.
 #
 
+.PHONY: cleanfft
+
 LIB_PKG_PRE = $(OBJ)/fft.o
 GNUR_FFT := $(GNUR_DIR)/src/library/stats/src/fft.c
+CLEAN_PKG := cleanfft
 
 include ../lib.mk
 
@@ -31,3 +34,6 @@ C_OBJECTS := $(C_OBJECTS) $(OBJ)/fft.o
 
 $(SRC)/fft.c: $(GNUR_FFT) src/ed_fft
 	ed $(GNUR_FFT) < src/ed_fft
+
+cleanfft:
+	rm -f $(SRC)/fft.c

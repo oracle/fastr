@@ -28,7 +28,8 @@
 # FASTR_LIBDIR.
 
 # A package that requires special processing before the library is built should
-# define LIB_PKG_PRE and for post processing define LIB_PKG_POST
+# define LIB_PKG_PRE and for post processing define LIB_PKG_POST in its Makefile.
+# If a package-specfic clean is needed it should define CLEAN_PKG
 
 ifneq ($(MAKECMDGOALS),clean)
 include $(TOPDIR)/platform.mk
@@ -75,10 +76,12 @@ $(PKGDIR): $(GNUR_DIR)/library/$(PKG)
 	(cd $(GNUR_DIR)/library; tar cf - $(PKG)) | (cd $(FASTR_LIBDIR); tar xf -)
 	touch $(FASTR_LIBDIR)/$(PKG)
 
+$(C_OBJECTS): | $(OBJ)
+
 $(OBJ):
 	mkdir -p $(OBJ)
 
-$(LIB_PKG): $(OBJ) $(C_OBJECTS) $(PKGDIR)
+$(LIB_PKG): $(C_OBJECTS) $(PKGDIR)
 	mkdir -p $(LIBDIR)
 	$(DYLIB_LD) $(DYLIB_LDFLAGS) -o $(LIB_PKG) $(C_OBJECTS)
 	mkdir -p $(FASTR_LIBDIR)/$(PKG)/libs
@@ -87,7 +90,7 @@ $(LIB_PKG): $(OBJ) $(C_OBJECTS) $(PKGDIR)
 $(OBJ)/%.o: $(SRC)/%.c  $(H_SOURCES)
 	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
 
-clean: 
+clean: $(CLEAN_PKG)
 	rm -rf $(LIBDIR)/*
 	rm -rf $(FASTR_LIBDIR)/$(PKG)
 
