@@ -25,7 +25,7 @@ package com.oracle.truffle.r.runtime;
 import java.util.*;
 
 import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.utilities.*;
@@ -84,6 +84,7 @@ public final class RArguments {
     @CompilationFinal public static final Object[] EMPTY_OBJECT_ARRAY = new Object[0];
     @CompilationFinal public static final String[] EMPTY_STRING_ARRAY = new String[0];
 
+    @ValueType
     public static final class S3Args {
         public final String generic;
         public final Object clazz;
