@@ -30,7 +30,9 @@
 # A package that requires special processing before the library is built should
 # define LIB_PKG_PRE and for post processing define LIB_PKG_POST
 
+ifneq ($(MAKECMDGOALS),clean)
 include $(TOPDIR)/platform.mk
+endif
 
 .PHONY: all clean cleanlib cleanobj force libr libcommon 
 

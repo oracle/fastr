@@ -77,6 +77,11 @@ build: $(GNUR_DIR)/bin/R
 $(GNUR_DIR)/bin/R: $(GNUR_DIR)/Makeconf 
 	(cd $(GNUR_DIR); make >& gnur_make.log)
 
+HAVE_MAKEFILE := $(shell [ -f $(GNUR_DIR)/Makefile ] && echo "Makefile.exists")
+ifeq ($(HAVE_MAKEFILE),Makefile.exists)
 clean:
 	rm -f Makeconf.done
 	(cd $(GNUR_DIR); make distclean)
+else
+clean:
+endif

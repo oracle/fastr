@@ -29,7 +29,9 @@ C_OBJECTS := $(C_SOURCES:.c=.o)
 C_LIB := testrffi.so
 
 NATIVE_PROJECT=$(FASTR_HOME)/com.oracle.truffle.r.native
+ifneq ($(MAKECMDGOALS),clean)
 include $(NATIVE_PROJECT)/platform.mk
+endif
 
 ifeq ($(FASTR_INSTALL), GNUR)
     INCLUDES := -I $(R_HOME)/include

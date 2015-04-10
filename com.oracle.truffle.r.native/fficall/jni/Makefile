@@ -25,7 +25,9 @@ ifeq ($(TOPDIR),)
     TOPDIR = $(abspath ../..)
 endif
 
+ifneq ($(MAKECMDGOALS),clean)
 include $(TOPDIR)/platform.mk
+endif
 
 .PHONY: all clean
 

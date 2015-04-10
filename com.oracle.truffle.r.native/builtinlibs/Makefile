@@ -28,7 +28,9 @@
 # that refers to GnuR-internal symbols.
 #
 
+ifneq ($(MAKECMDGOALS),clean)
 include $(TOPDIR)/platform.mk
+endif
 
 .PHONY: all clean cleanlib cleanobj force libr
 

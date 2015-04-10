@@ -27,7 +27,9 @@ endif
 
 NATIVE_PROJECT = $(subst test.native,native,$(TOPDIR))
 
+ifneq ($(MAKECMDGOALS),clean)
 include $(NATIVE_PROJECT)/platform.mk
+endif
 
 .PHONY: all clean
 

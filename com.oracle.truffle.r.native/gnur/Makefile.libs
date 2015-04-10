@@ -23,7 +23,9 @@
 
 # Copies the Blas and lapack libraries and builds the pcre library
 
+ifneq ($(MAKECMDGOALS),clean)
 include $(TOPDIR)/platform.mk
+endif
 
 TARGET_DIR := $(TOPDIR)/builtinlibs/lib
 BLAS_TARGET := $(TARGET_DIR)/libRblas$(DYLIB_EXT)
