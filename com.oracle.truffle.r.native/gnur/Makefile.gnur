@@ -78,5 +78,5 @@ $(GNUR_DIR)/bin/R: $(GNUR_DIR)/Makeconf
 	(cd $(GNUR_DIR); make >& gnur_make.log)
 
 clean:
-	rm Makeconf.done
+	rm -f Makeconf.done
 	(cd $(GNUR_DIR); make distclean)

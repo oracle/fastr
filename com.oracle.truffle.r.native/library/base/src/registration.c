@@ -77,8 +77,6 @@ static R_FortranMethodDef fortranMethods[] = {
     {NULL, NULL, 0}
 };
 
-#include <R_ext/Visibility.h>
-void attribute_hidden
 R_init_base(DllInfo *dll)
 {
 //    R_registerRoutines(dll, NULL, callMethods, fortranMethods, NULL);

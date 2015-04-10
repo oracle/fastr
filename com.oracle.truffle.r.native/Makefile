@@ -36,9 +36,10 @@ all:
 	$(MAKE) -C run
 
 clean:
-	$(MAKE) -C gnur clean
 	$(MAKE) -C include clean
 	$(MAKE) -C builtinlibs clean
 	$(MAKE) -C fficall clean
 	$(MAKE) -C library clean
 	$(MAKE) -C run clean
+	$(MAKE) -C gnur clean
+	
