@@ -268,6 +268,9 @@ def testgen(args):
     parser = ArgumentParser(prog='r testgen')
     parser.add_argument('--tests', action='store', default=_all_unit_tests(), help='pattern to match test classes')
     args = parser.parse_args(args)
+    # check we are in the home directory
+    if os.getcwd() != _fastr_suite.dir:
+        mx.abort('must run rtestgen from FastR home directory')
     # check the version of GnuR against FastR
     try:
         fastr_version = subprocess.check_output([mx.java().java, '-cp', mx.classpath('com.oracle.truffle.r.runtime'), 'com.oracle.truffle.r.runtime.RVersionNumber'])
