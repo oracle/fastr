@@ -40,6 +40,8 @@ C_SOURCES := $(C_SOURCES) $(SRC)/fft.c
 C_OBJECTS := $(C_OBJECTS) $(OBJ)/fft.o
 endif
 
+$(C_OBJECTS): | $(OBJ)
+
 $(SRC)/fft.c: $(GNUR_FFT) src/ed_fft
 	ed $(GNUR_FFT) < src/ed_fft
 

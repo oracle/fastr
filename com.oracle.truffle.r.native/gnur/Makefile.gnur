@@ -74,13 +74,8 @@ build: $(GNUR_HOME)/bin/R
 $(GNUR_HOME)/bin/R: $(GNUR_HOME)/Makeconf 
 	(cd $(GNUR_HOME); make >& gnur_make.log)
 
-HAVE_MAKEFILE := $(shell [ -f $(GNUR_HOME)/Makefile ] && echo "Makefile.exists")
 clean: cleangnur
 	rm -f Makeconf.done
 
-ifeq ($(HAVE_MAKEFILE),Makefile.exists)
 cleangnur:
-	(cd $(GNUR_HOME); make distclean)
-else
-cleangnur:
-endif
+	rm -rf R-$(R_VERSION)
