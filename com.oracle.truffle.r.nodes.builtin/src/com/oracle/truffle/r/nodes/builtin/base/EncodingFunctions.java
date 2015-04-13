@@ -34,7 +34,7 @@ public class EncodingFunctions {
     public abstract static class Encoding extends RBuiltinNode {
         @Specialization
         protected RStringVector encoding(@SuppressWarnings("unused") RAbstractStringVector x) {
-            // TODO
+            // TODO implement properly
             return RDataFactory.createStringVectorFromScalar("unknown");
         }
 
@@ -44,4 +44,20 @@ public class EncodingFunctions {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.CHAR_VEC_ARGUMENT);
         }
     }
+
+    @RBuiltin(name = "setEncoding", kind = RBuiltinKind.INTERNAL, parameterNames = {"x", "value"})
+    public abstract static class SetEncoding extends RBuiltinNode {
+        @Specialization
+        protected Object setEncoding(RAbstractStringVector x) {
+            // TODO implement properly
+            return x;
+        }
+
+        @SuppressWarnings("unused")
+        @Fallback
+        protected RStringVector setEncoding(Object x) {
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.CHAR_VEC_ARGUMENT);
+        }
+    }
+
 }
