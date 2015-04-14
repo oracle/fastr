@@ -40,16 +40,22 @@ public class FastRComponent extends JComponent {
     private boolean shouldDraw;
     private CoordinateSystem coordinateSystem;
 
+    /**
+     * Note! Called from ED thread.
+     */
     @Override
     public void doLayout() {
         super.doLayout();
         Dimension size = getSize();
         coordinateSystem = new CoordinateSystem(0, size.getWidth(), 0, size.getHeight());
+        shouldDraw = true;
         recalculateDisplayList();
     }
 
     private void recalculateDisplayList() {
-        displayList.stream().forEach(d -> d.recalculateForDrawingIn(coordinateSystem));
+        synchronized (displayList) {
+            displayList.stream().forEach(drawableObject -> drawableObject.recalculateForDrawingIn(coordinateSystem));
+        }
     }
 
     /**
@@ -66,14 +72,14 @@ public class FastRComponent extends JComponent {
 
     private void drawDisplayListOn(Graphics2D g2) {
         synchronized (displayList) {
-            for (DrawableObject drawableObject : displayList) {
-                drawableObject.drawOn(g2);
-            }
+            displayList.stream().forEach(drawableObject -> drawableObject.drawOn(g2));
         }
     }
 
     public void addDrawableObject(DrawableObject drawableObject) {
-        displayList.add(drawableObject);
+        synchronized (displayList) {
+            displayList.add(drawableObject);
+        }
         shouldDraw = true;
         if (coordinateSystem != null) {
             drawableObject.recalculateForDrawingIn(coordinateSystem);
