@@ -24,8 +24,20 @@ package com.oracle.truffle.r.library.graphics.core;
 
 public abstract class AbstractGraphicsSystem implements GraphicsSystem {
     private final GraphicsSystemParameters graphicsSystemParameters = new GraphicsSystemParameters();
+    private int id;
 
     protected GraphicsSystemParameters getGraphicsSystemParameters() {
         return graphicsSystemParameters;
+    }
+
+
+    @Override
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    @Override
+    public int getId() {
+        return id;
     }
 }

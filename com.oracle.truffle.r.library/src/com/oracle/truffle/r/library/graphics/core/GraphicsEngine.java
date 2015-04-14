@@ -25,10 +25,9 @@ package com.oracle.truffle.r.library.graphics.core;
 import com.oracle.truffle.r.library.graphics.core.geometry.Coordinates;
 
 public interface GraphicsEngine {
-    int registerGraphicsSystem(GraphicsSystem newGraphicsSystem) throws Exception;
+    void registerGraphicsSystem(GraphicsSystem newGraphicsSystem) throws Exception;
 
-    // todo replace index with object ?
-    void unRegisterGraphicsSystem(int graphicsSystemId);
+    void unRegisterGraphicsSystem(GraphicsSystem graphicsSystem);
 
     void registerGraphicsDevice(GraphicsDevice newGraphicsDevice) throws Exception;
 

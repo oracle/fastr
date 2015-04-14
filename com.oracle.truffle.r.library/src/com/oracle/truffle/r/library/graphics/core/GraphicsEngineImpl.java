@@ -62,19 +62,18 @@ public final class GraphicsEngineImpl implements GraphicsEngine {
         graphicsDevices[NULL_GRAPHICS_DEVICE_INDEX] = NullGraphicsDevice.getInstance();
     }
 
-    public int registerGraphicsSystem(GraphicsSystem newGraphicsSystem) throws Exception {
+    public void registerGraphicsSystem(GraphicsSystem newGraphicsSystem) throws Exception {
         if (newGraphicsSystem == null) {
             throw new NullPointerException("Graphics system to register is null");
         }
-        int index = findElementIndexInArray(null, graphicsSystems); // find null in the
-        // graphicsSystems
+        int index = findElementIndexInArray(null, graphicsSystems); // find null in the graphicsSystems
         if (NOT_FOUND == index) {
             throw handleErrorAndMakeException("too many graphics systems registered");
         }
+        newGraphicsSystem.setId(index);
         graphicsSystems[index] = newGraphicsSystem;
         callListenerForEachDevice(newGraphicsSystem.getGraphicsEventsListener(), GE_INIT_STATE);
         graphicsSystemsAmount++;
-        return index;
     }
 
     private void callListenerForEachDevice(AbstractGraphicsSystem.GraphicsEventsListener listener, GraphicsEvent event) {
@@ -99,13 +98,13 @@ public final class GraphicsEngineImpl implements GraphicsEngine {
         Utils.warn(warningMessage);
     }
 
-    public void unRegisterGraphicsSystem(int graphicsSystemId) {
+    public void unRegisterGraphicsSystem(GraphicsSystem graphicsSystem) {
+        int graphicsSystemId = graphicsSystem.getId();
         checkGraphicsSystemIndex(graphicsSystemId);
         if (graphicsSystemsAmount == 0) {
             issueWarning("no graphics system to unregister");
             return;
         }
-        GraphicsSystem graphicsSystem = graphicsSystems[graphicsSystemId];
         callListenerForEachDevice(graphicsSystem.getGraphicsEventsListener(), GE_FINAL_STATE);
         graphicsSystems[graphicsSystemId] = null;
         graphicsSystemsAmount--;
