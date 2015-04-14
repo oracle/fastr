@@ -36,4 +36,16 @@ public class TestSimpleParsing extends TestBase {
         assertEval("/");
     }
 
+    @Test
+    public void testUnaryNotParsing() {
+        assertEval("x <- 1; y <- TRUE; x - !y");
+        assertEval("x <- 1; y <- TRUE; !x - !y");
+        assertEval("x <- 1; y <- TRUE; (!x) - !y");
+        assertEval("x <- FALSE; y <- TRUE; !x && !y");
+        assertEval("x <- FALSE; y <- TRUE; !x && y");
+        assertEval("x <- FALSE; y <- TRUE; (!x) && y");
+        assertEval("x <- 1; y <- 2; !x < y");
+        assertEval("x <- 1; y <- 2; !(x < y)");
+        assertEval("x <- 1; y <- 2; !(x) < y");
+    }
 }
