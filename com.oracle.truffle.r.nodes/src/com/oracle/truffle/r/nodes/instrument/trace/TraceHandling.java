@@ -64,7 +64,7 @@ public class TraceHandling {
         return probe;
     }
 
-    private abstract static class TraceEventReceiver implements ASTInstrumentListener {
+    private abstract static class TraceEventReceiver implements StandardInstrumentListener {
 
         @CompilationFinal private boolean disabled;
         CyclicAssumption disabledUnchangedAssumption = new CyclicAssumption("trace event disabled state unchanged");

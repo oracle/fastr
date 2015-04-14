@@ -25,7 +25,6 @@ package com.oracle.truffle.r.nodes.instrument;
 import java.util.*;
 
 import com.oracle.truffle.api.instrument.*;
-import com.oracle.truffle.api.instrument.impl.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 
@@ -54,9 +53,23 @@ public class REntryCounters {
                     enterCount++;
                 }
 
-                @Override
-                public void returnAny(Probe probe) {
+                private void returnAny(@SuppressWarnings("unused") Probe probe) {
                     exitCount++;
+                }
+
+                @Override
+                public void returnVoid(Probe probe) {
+                    returnAny(probe);
+                }
+
+                @Override
+                public void returnValue(Probe probe, Object result) {
+                    returnAny(probe);
+                }
+
+                @Override
+                public void returnExceptional(Probe probe, Exception exception) {
+                    returnAny(probe);
                 }
             }, "R node entry counter");
 
