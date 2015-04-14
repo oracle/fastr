@@ -178,7 +178,7 @@ public class DebugHandling {
         });
     }
 
-    private abstract static class DebugEventReceiver implements ASTInstrumentListener {
+    private abstract static class DebugEventReceiver implements StandardInstrumentListener {
 
         protected final Object text;
         protected final Object condition;

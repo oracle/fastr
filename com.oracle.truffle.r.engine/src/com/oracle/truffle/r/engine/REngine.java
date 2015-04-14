@@ -239,7 +239,11 @@ public final class REngine implements RContext.Engine {
         }
         try {
             RootCallTarget callTarget = doMakeCallTarget(node, "<repl wrapper>");
-            return runCall(callTarget, frame, printResult, true);
+            try {
+                return runCall(callTarget, frame, printResult, true);
+            } catch (BreakException | NextException cfe) {
+                throw RError.error(RError.Message.NO_LOOP_FOR_BREAK_NEXT);
+            }
         } catch (RError e) {
             // RError prints the correct result on the console
             return null;
@@ -419,7 +423,8 @@ public final class REngine implements RContext.Engine {
                 // condition handling can cause a "return" that needs to skip over this call
                 throw ex;
             } catch (BreakException | NextException cfe) {
-                throw RError.error(RError.Message.NO_LOOP_FOR_BREAK_NEXT);
+                // there can be an outer loop
+                throw cfe;
             }
             assert checkResult(result);
             if (printResult) {
@@ -432,6 +437,8 @@ public final class REngine implements RContext.Engine {
             throw e;
         } catch (ReturnException ex) {
             throw ex;
+        } catch (BreakException | NextException cfe) {
+            throw cfe;
         } catch (UnsupportedSpecializationException use) {
             throw use;
         } catch (DebugExitException | BrowserQuitException e) {
