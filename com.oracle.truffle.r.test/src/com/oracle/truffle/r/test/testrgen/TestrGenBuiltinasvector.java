@@ -101,7 +101,7 @@ public class TestrGenBuiltinasvector extends TestBase {
 
     @Test
     public void testasvector17() {
-        assertEval(Ignored.Unknown, "argv <- list(quote(list(X[[2L]])), 'list'); .Internal(as.vector(argv[[1]], argv[[2]]))");
+        assertEval("argv <- list(quote(list(X[[2L]])), 'list'); .Internal(as.vector(argv[[1]], argv[[2]]))");
     }
 
     @Test

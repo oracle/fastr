@@ -113,9 +113,9 @@ public class TestSimpleArithmetic extends TestBase {
      * FIXME These expressions evaluate correctly in the shell but produce 1+0i in unit test environment
      */
     public void testScalarsComplexIgnore() {
-        assertEval(Ignored.Unknown, "{ (1+2i)^(-2) }");
-        assertEval(Ignored.Unknown, "{ ((1+0i)/(0+0i)) ^ (-3) }");
-        assertEval(Ignored.Unknown, "{ ((1+1i)/(0+0i)) ^ (-3) }");
+        assertEval("{ (1+2i)^(-2) }");
+        assertEval("{ ((1+0i)/(0+0i)) ^ (-3) }");
+        assertEval("{ ((1+1i)/(0+0i)) ^ (-3) }");
     }
 
     @Test
@@ -707,14 +707,7 @@ public class TestSimpleArithmetic extends TestBase {
         assertEval("{ x<-1:4; y<-21:24; names(y)<-121:124; attributes(x | y) }");
         assertEval("{ x<-1:4; names(x)<-101:104; y<-21:28; names(y)<-121:128;  attributes(y | x) }");
         assertEval("{ x<-1:4; names(x)<-101:104; y<-21:28; attributes(x | y) }");
-    }
-
-    @Test
-    public void testVectorizedLogicalAttributesIgnore() {
-        // Warning message mismatch
-        // Expected output: Error: dims [product 4] do not match the length of object [8]
-        // FastR output: Error in x | y : dims [product 4] do not match the length of object [8]
-        assertEval(Ignored.Unknown, "{ x<-1:4; dim(x)<-c(2,2); y<-21:28; x | y }");
+        assertEval("{ x<-1:4; dim(x)<-c(2,2); y<-21:28; x | y }");
     }
 
     @Test

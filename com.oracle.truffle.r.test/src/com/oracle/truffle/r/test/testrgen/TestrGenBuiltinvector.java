@@ -49,7 +49,7 @@ public class TestrGenBuiltinvector extends TestBase {
 
     @Test
     public void testvector10() {
-        assertEval(Ignored.Unknown, "argv <- list('list', structure(1L, .Names = '\\\\c')); .Internal(vector(argv[[1]], argv[[2]]))");
+        assertEval("argv <- list('list', structure(1L, .Names = '\\\\c')); .Internal(vector(argv[[1]], argv[[2]]))");
     }
 
     @Test

@@ -83,9 +83,8 @@ public class TestrGenBuiltinrepint extends TestBase {
     }
 
     @Test
-    @Ignore("formatting")
     public void testrepint14() {
-        assertEval("argv <- list(2e-08, 9); .Internal(rep.int(argv[[1]], argv[[2]]))");
+        assertEval(Ignored.OutputFormatting, "argv <- list(2e-08, 9); .Internal(rep.int(argv[[1]], argv[[2]]))");
     }
 
     @Test
@@ -104,9 +103,8 @@ public class TestrGenBuiltinrepint extends TestBase {
     }
 
     @Test
-    @Ignore("formatting")
     public void testrepint18() {
-        assertEval("argv <- list(c(-1.74520963996789, -1.58308930128988, NA), 100L); .Internal(rep.int(argv[[1]], argv[[2]]))");
+        assertEval(Ignored.OutputFormatting, "argv <- list(c(-1.74520963996789, -1.58308930128988, NA), 100L); .Internal(rep.int(argv[[1]], argv[[2]]))");
     }
 
     @Test

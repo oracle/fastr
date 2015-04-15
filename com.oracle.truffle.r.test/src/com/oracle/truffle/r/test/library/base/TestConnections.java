@@ -82,7 +82,7 @@ public class TestConnections extends TestBase {
 
     @Test
     public void testWriteTextReadConnection() {
-        assertEval(Ignored.Unknown, Output.ContainsError, "{ writeChar(\"x\", textConnection(\"abc\")) }");
+        assertEval(Output.ContainsError, "{ writeChar(\"x\", textConnection(\"abc\")) }");
     }
 
     @Test
@@ -122,6 +122,6 @@ public class TestConnections extends TestBase {
         assertEval("{ con <- textConnection(\"tcval\", open=\"w\"); writeLines(\"a\", con); writeLines(c(\"a\", \"b\"), con, sep=\".\"); tcval; close(con) }");
         assertEval("{ con <- textConnection(\"tcval\", open=\"w\"); writeLines(\"a\", con); writeLines(c(\"a\", \"b\"), con, sep=\".\"); writeLines(\"\", con); tcval; close(con) }");
         assertEval("{ con <- textConnection(\"tcval\", open=\"w\"); writeLines(\"a\\nb\", con); tcval; close(con) }");
-
+        assertEval(Ignored.Unimplemented, "c <- textConnection('out', 'w'); cat('testtext', file=c); isIncomplete(c); cat('testtext2\\n', file=c); isIncomplete(c); close(c); out");
     }
 }

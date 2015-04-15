@@ -1935,7 +1935,7 @@ public class TestSimpleBuiltins extends TestBase {
         // lookup with function matching
         // require lapply
         assertEval(Ignored.Unknown, "{ g <- function() { assign(\"myfunc\", function(i) { sum(i) });  f <- function() { lapply(2, \"myfunc\") } ; f() } ; g() }");
-        assertEval(Ignored.Unknown, "{ myfunc <- function(i) { sum(i) } ; g <- function() { assign(\"z\", 1);  f <- function() { lapply(2, \"myfunc\") } ; f() } ; g() }");
+        assertEval("{ myfunc <- function(i) { sum(i) } ; g <- function() { assign(\"z\", 1);  f <- function() { lapply(2, \"myfunc\") } ; f() } ; g() }");
         assertEval(Ignored.Unknown, "{ g <- function() { f <- function() { assign(\"myfunc\", function(i) { sum(i) }); lapply(2, \"myfunc\") } ; f() } ; g() }");
         assertEval(Ignored.Unknown, "{ g <- function() { myfunc <- function(i) { i+i } ; f <- function() { lapply(2, \"myfunc\") } ; f() } ; g() }");
 
@@ -2446,21 +2446,21 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval(Ignored.Unknown, "{ rank(c(a=2,b=1,c=3,d=NA,e=40), na.last=FALSE) }");
         assertEval(Ignored.Unknown, "{ rank(c(a=1,b=1,c=3,d=NA,e=3), na.last=FALSE, ties.method=\"max\") }");
         assertEval(Ignored.Unknown, "{ rank(c(a=1,b=1,c=3,d=NA,e=3), na.last=NA, ties.method=\"min\") }");
-        assertEval(Ignored.Unknown, "{ rank(c(1000, 100, 100, NA, 1, 20), ties.method=\"first\") }");
+        assertEval("{ rank(c(1000, 100, 100, NA, 1, 20), ties.method=\"first\") }");
     }
 
     @Test
     public void testDet() {
-        assertEval(Ignored.Unknown, "{ det(matrix(c(1,2,4,5),nrow=2)) }");
-        assertEval(Ignored.Unknown, "{ det(matrix(c(1,-3,4,-5),nrow=2)) }");
+        assertEval("{ det(matrix(c(1,2,4,5),nrow=2)) }");
+        assertEval("{ det(matrix(c(1,-3,4,-5),nrow=2)) }");
         assertEval(Ignored.Unknown, "{ det(matrix(c(1,0,4,NA),nrow=2)) }");
     }
 
     @Test
     public void testChol() {
-        assertEval(Ignored.Unknown, "{ chol(1) }");
-        assertEval(Ignored.Unknown, "{ round( chol(10), digits=5) }");
-        assertEval(Ignored.Unknown, "{ m <- matrix(c(5,1,1,3),2) ; round( chol(m), digits=5 ) }");
+        assertEval("{ chol(1) }");
+        assertEval("{ round( chol(10), digits=5) }");
+        assertEval("{ m <- matrix(c(5,1,1,3),2) ; round( chol(m), digits=5 ) }");
         assertEval(Ignored.Unknown, Output.ContainsError, "{ m <- matrix(c(5,-5,-5,3),2,2) ; chol(m) }");
     }
 
@@ -2475,7 +2475,7 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ x <- qr(cbind(1:3,2:4), LAPACK=FALSE) ; round( qr.coef(x, 1:3), digits=5 ) }");
 
         assertEval(Ignored.Unknown, "{ x <- qr(t(cbind(1:10,2:11)), LAPACK=TRUE) ; qr.coef(x, 1:2) }");
-        assertEval(Ignored.Unknown, "{ qr(10, LAPACK=TRUE) }");
+        assertEval("{ qr(10, LAPACK=TRUE) }");
         assertEval(Ignored.Unknown, "{ round( qr(matrix(1:6,nrow=2), LAPACK=TRUE)$qr, digits=5) }");
 
         // qr.coef
@@ -2483,7 +2483,7 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval(Ignored.Unknown, " { x <- qr(cbind(1:10,2:11), LAPACK=TRUE) ; round( qr.coef(x, 1:10), digits=5 ) }");
         assertEval(Ignored.Unknown, "{ x <- qr(c(3,1,2), LAPACK=TRUE) ; round( qr.coef(x, c(1,3,2)), digits=5 ) }");
         // FIXME: GNU-R will print negative zero as zero
-        assertEval(Ignored.Unknown, "{ x <- qr(t(cbind(1:10,2:11)), LAPACK=FALSE) ; qr.coef(x, 1:2) }");
+        assertEval("{ x <- qr(t(cbind(1:10,2:11)), LAPACK=FALSE) ; qr.coef(x, 1:2) }");
         assertEval(Ignored.Unknown, "{ x <- qr(c(3,1,2), LAPACK=FALSE) ; round( qr.coef(x, c(1,3,2)), digits=5 ) }");
 
         // qr.solve
@@ -2593,11 +2593,8 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ f <- function() { delayedAssign(\"x\",y); delayedAssign(\"y\",x); print(x, y)}; f() }");
         assertEval("{ f <- function() { p <- 0; for (i in 1:10) { if (i %% 2 == 0) { delayedAssign(\"a\", p + 1); } else { a <- p + 1; }; p <- a; }; p }; f() }");
         assertEval("{ f <- function() { x <- 4 ; delayedAssign(\"x\", y); y <- 10; x  } ; f() }");
-
-        // These fail because the check/evaluation for a promise in "get"
-        // can't handle a frame that won't cast to VirtualFrame
-        assertEval(Ignored.Unknown, "{ h <- new.env(parent=emptyenv()) ; delayedAssign(\"x\", y, h, h) ; assign(\"y\", 2, h) ; get(\"x\", h) }");
-        assertEval(Ignored.Unknown, "{ h <- new.env(parent=emptyenv()) ; assign(\"x\", 1, h) ; delayedAssign(\"x\", y, h, h) ; assign(\"y\", 2, h) ; get(\"x\", h) }");
+        assertEval("{ h <- new.env(parent=emptyenv()) ; delayedAssign(\"x\", y, h, h) ; assign(\"y\", 2, h) ; get(\"x\", h) }");
+        assertEval("{ h <- new.env(parent=emptyenv()) ; assign(\"x\", 1, h) ; delayedAssign(\"x\", y, h, h) ; assign(\"y\", 2, h) ; get(\"x\", h) }");
     }
 
     @Test
@@ -3747,7 +3744,7 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval(Ignored.Unknown, "{ A <- matrix(1:50, nrow=4); sweep(A, 1, 5, '-') }");
         assertEval(Ignored.Unknown, "{ A <- matrix(7:1, nrow=5); sweep(A, 1, -1, '*') }");
 
-        assertEval(Ignored.Unknown, "{rowMeans(matrix(c(NaN,4+5i,2+0i,5+10i),nrow=2,ncol=2), na.rm = FALSE)}");
+        assertEval("{rowMeans(matrix(c(NaN,4+5i,2+0i,5+10i),nrow=2,ncol=2), na.rm = FALSE)}");
     }
 
     @Test

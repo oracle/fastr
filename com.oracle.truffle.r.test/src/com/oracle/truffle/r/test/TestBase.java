@@ -52,6 +52,7 @@ public class TestBase {
         Unknown("failing tests that have not been classified yet"),
         Unstable("tests that produce inconsistent results in GNUR"),
         OutputFormatting("tests that fail because of problems with output formatting"),
+        ParserErrorFormatting("tests that fail because of the formatting of parser error messages"),
         ParserError("tests that fail because of bugs in the parser"),
         SideEffects("tests that are ignored because they would interfere with other tests"),
         Unimplemented("tests that fail because of missing functionality");
@@ -405,7 +406,7 @@ public class TestBase {
     private void evalAndCompare(String[] inputs, TestTrait... traits) {
         WhiteList[] whiteLists = TestTrait.collect(traits, WhiteList.class);
 
-        boolean ignored = TestTrait.contains(traits, Ignored.class) ^ (ProcessFailedTests && !TestTrait.contains(traits, Ignored.Unstable));
+        boolean ignored = TestTrait.contains(traits, Ignored.class) ^ (ProcessFailedTests && !(TestTrait.contains(traits, Ignored.Unstable) || TestTrait.contains(traits, Ignored.SideEffects)));
 
         boolean containsWarning = TestTrait.contains(traits, Output.ContainsWarning);
         boolean containsError = (!FULL_COMPARE_ERRORS && TestTrait.contains(traits, Output.ContainsError));
@@ -695,7 +696,7 @@ public class TestBase {
             public void run() {
                 if (!unexpectedSuccessfulMicroTests.isEmpty()) {
                     System.out.println("Unexpectedly successful tests:");
-                    for (String test : unexpectedSuccessfulMicroTests) {
+                    for (String test : new TreeSet<>(unexpectedSuccessfulMicroTests)) {
                         System.out.println(test);
                     }
                 }

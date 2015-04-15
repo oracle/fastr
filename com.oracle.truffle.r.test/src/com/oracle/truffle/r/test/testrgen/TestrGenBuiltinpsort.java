@@ -2,7 +2,7 @@
  * This material is distributed under the GNU General Public License
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
- * 
+ *
  * Copyright (c) 2014, Purdue University
  * Copyright (c) 2014, Oracle and/or its affiliates
  *
@@ -19,7 +19,7 @@ public class TestrGenBuiltinpsort extends TestBase {
 
     @Test
     public void testpsort1() {
-        assertEval(Ignored.Unknown, "argv <- list(7:8, 1:2); .Internal(psort(argv[[1]], argv[[2]]))");
+        assertEval("argv <- list(7:8, 1:2); .Internal(psort(argv[[1]], argv[[2]]))");
     }
 
     @Test
@@ -54,29 +54,27 @@ public class TestrGenBuiltinpsort extends TestBase {
 
     @Test
     public void testpsort7() {
-        assertEval(Ignored.Unknown, "argv <- list(c(1, 2, 2, 3, 3, 4, 4, 5), 1:8); .Internal(psort(argv[[1]], argv[[2]]))");
+        assertEval("argv <- list(c(1, 2, 2, 3, 3, 4, 4, 5), 1:8); .Internal(psort(argv[[1]], argv[[2]]))");
     }
 
     @Test
     public void testpsort8() {
-        assertEval(Ignored.Unknown, "argv <- list(27:28, 1:2); .Internal(psort(argv[[1]], argv[[2]]))");
+        assertEval("argv <- list(27:28, 1:2); .Internal(psort(argv[[1]], argv[[2]]))");
     }
 
     @Test
     public void testpsort9() {
-        assertEval(Ignored.Unknown, "argv <- list(c(-Inf, -Inf, Inf, Inf), 1:4); .Internal(psort(argv[[1]], argv[[2]]))");
+        assertEval("argv <- list(c(-Inf, -Inf, Inf, Inf), 1:4); .Internal(psort(argv[[1]], argv[[2]]))");
     }
 
     @Test
     public void testpsort10() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(c(-1.05715266611575, -0.873306430909872, -0.548705796690786, -0.288240908441576, -0.0649703574297026, 0.224762433374997, 0.3255545927283, 0.4813346401898, 0.530823516045489, 1.2699009772491), c(1L, 3L, 4L, 5L, 6L, 7L, 8L, 10L)); .Internal(psort(argv[[1]], argv[[2]]))");
+        assertEval("argv <- list(c(-1.05715266611575, -0.873306430909872, -0.548705796690786, -0.288240908441576, -0.0649703574297026, 0.224762433374997, 0.3255545927283, 0.4813346401898, 0.530823516045489, 1.2699009772491), c(1L, 3L, 4L, 5L, 6L, 7L, 8L, 10L)); .Internal(psort(argv[[1]], argv[[2]]))");
     }
 
     @Test
     public void testpsort11() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(c(-1.05715266611575, -0.873306430909873, -0.548705796690787, -0.288240908441577, -0.0649703574297025, 0.224762433374994, 0.3255545927283, 0.481334640189799, 0.530823516045488, 1.2699009772491), c(1L, 3L, 4L, 5L, 6L, 7L, 8L, 10L)); .Internal(psort(argv[[1]], argv[[2]]))");
+        assertEval("argv <- list(c(-1.05715266611575, -0.873306430909873, -0.548705796690787, -0.288240908441577, -0.0649703574297025, 0.224762433374994, 0.3255545927283, 0.481334640189799, 0.530823516045488, 1.2699009772491), c(1L, 3L, 4L, 5L, 6L, 7L, 8L, 10L)); .Internal(psort(argv[[1]], argv[[2]]))");
     }
 
     @Test
@@ -93,7 +91,6 @@ public class TestrGenBuiltinpsort extends TestBase {
 
     @Test
     public void testpsort14() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(c(-1.36919169254062, -0.667819876370237, -0.253162069270378, -0.0834190388782434, -0.00786394222146348, 0.0246733498130512, 0.0730305465518564, 0.0881443844426084, 0.170711734013213, 0.552921941721332), c(1L, 3L, 4L, 5L, 6L, 7L, 8L, 10L)); .Internal(psort(argv[[1]], argv[[2]]))");
+        assertEval("argv <- list(c(-1.36919169254062, -0.667819876370237, -0.253162069270378, -0.0834190388782434, -0.00786394222146348, 0.0246733498130512, 0.0730305465518564, 0.0881443844426084, 0.170711734013213, 0.552921941721332), c(1L, 3L, 4L, 5L, 6L, 7L, 8L, 10L)); .Internal(psort(argv[[1]], argv[[2]]))");
     }
 }
