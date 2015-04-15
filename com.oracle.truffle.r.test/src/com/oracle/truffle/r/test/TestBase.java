@@ -398,7 +398,7 @@ public class TestBase {
                 break;
             }
         }
-        String context = String.format("%s(%s:%d)", culprit.getMethodName(), culprit.getClassName(), culprit.getLineNumber());
+        String context = String.format("%s:%d (%s)", culprit.getClassName(), culprit.getLineNumber(), culprit.getMethodName());
         return context;
     }
 
