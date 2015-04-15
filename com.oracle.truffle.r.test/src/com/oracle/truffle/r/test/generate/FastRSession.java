@@ -141,6 +141,7 @@ public final class FastRSession implements RSession {
                 consoleHandler.println("<timeout>");
                 thread.stop();
                 evalThread = null;
+                throw new TimeoutException();
             }
         } catch (InterruptedException e1) {
             e1.printStackTrace();
