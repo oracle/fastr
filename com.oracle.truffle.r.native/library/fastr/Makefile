@@ -26,7 +26,8 @@
 # It is a "real" package, and loaded in the same way as any R package.
 
 # We use a 'tar' file of the sources as the sentinel for whether the INSTALL step is needed
-# Since this is just R code, we use GnuR to do the INSTALL
+# Since this is just R code, we use GnuR to do the INSTALL. In case the system does not have R 
+# installed we use the one we built.
 
 .PHONY: all
 
@@ -42,7 +43,7 @@ $(PKG_TAR): $(PKG_FILES)
 	(cd src; tar cf ../$(PKG_TAR) *)
 
 $(INSTALL_SENTINEL): $(PKG_TAR)
-	R CMD INSTALL --library=$(FASTR_LIBDIR) src
+	$(GNUR_HOME)/bin/R CMD INSTALL --library=$(FASTR_LIBDIR) src
 	
 clean:
 	rm -f $(PKG_TAR)

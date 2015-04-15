@@ -39,23 +39,65 @@
 .PHONY: all config config_update build clean
 
 OSNAME := $(shell uname)
+
+$(info cmd=$(MAKECMDGOALS))
+
 ifeq ($(OSNAME), Linux)
+  FORCE_PIC := true
 else ifeq ($(OSNAME), SunOS)
+  FORCE_PIC := true
 else ifeq ($(OSNAME), Darwin)
 else
-all:
-	@echo "This Makefile does not know how to compile for $(OSNAME)"
-	@false
+	$(error OS $(OSNAME) is not supported)
 endif
 
-all: Makefile $(GNUR_HOME) config build
+all: Makefile $(GNUR_HOME) iconv config build
 
 $(GNUR_HOME): 
 	tar xf $(TOPDIR)/../lib/R-$(R_VERSION).tar.gz
 
+ifeq ($(OSNAME), SunOS)
+#
+# Configuring GnuR for Solaris is slightly complicated for three reasons:
+# 1. the default iconv utility is inadequate and has to be replaced by Gnu iconv
+# 2. there is a choice of compilers, gcc or solaris studio, the latter requiring
+#    more configuration options
+# 3. Solaris runs on x64 and Sparc
+#
+# Currently we only support gcc and x64 (gcc assumed to be on the PATH)
+#
+    OS_ARCH := $(shell uname -p)
+    ifneq ($(OS_ARCH), i386)
+        $(error Solaris/SPARC not supported)
+    endif
+    ICONV := libiconv-1.14
+    $(shell mkdir -p iconv_install)
+    ICONV_INSTALL := $(abspath iconv_install)
+    $(info ICONV_INSTALL=$(ICONV_INSTALL))
+    ICONV_FLAGS := "-L$(ICONV_INSTALL)/lib -I$(ICONV_INSTALL)/include"
+    ICONV_CONFIG_FLAGS := CFLAGS=$(ICONV_FLAGS) CPPFLAGS=$(ICONV_FLAGS) LDFLAGS=$(ICONV_FLAGS)
+
+iconv: $(ICONV) iconv_config iconv_build
+
+$(ICONV):
+	tar xf $(TOPDIR)/../lib/$(ICONV).tar.gz
+
+iconv_config: $(ICONV)/Makefile
+
+$(ICONV)/Makefile:
+	(cd $(ICONV); ./configure --prefix $(ICONV_INSTALL) $(ICONV_CONFIG_FLAGS) > iconv_configure.log 2>&1)
+
+iconv_build: $(ICONV)/lib/libcharset.so
+
+$(ICONV)/lib/libcharset.so:
+	(cd $(ICONV); $(MAKE) && $(MAKE) install > iconv_make.log 2>&1)
+else
+iconv:
+endif
+
 config: $(GNUR_HOME)/Makefile config_update
 
-ifeq ($(OSNAME), Linux)
+ifeq ($(FORCE_PIC), true)
 config_update: Makeconf.done
 
 Makeconf.done: edMakeconf
@@ -66,16 +108,25 @@ config_update:
 endif
 
 $(GNUR_HOME)/Makefile:
-	(cd $(GNUR_HOME); ./configure --with-x=no --without-recommended-packages >& gnur_configure.log)
+	(cd $(GNUR_HOME); ./configure --with-x=no --without-recommended-packages $(ICONV_CONFIG_FLAGS) > gnur_configure.log 2>&1)
 
 
 build: $(GNUR_HOME)/bin/R
 
 $(GNUR_HOME)/bin/R: $(GNUR_HOME)/Makeconf 
-	(cd $(GNUR_HOME); make >& gnur_make.log)
+	(cd $(GNUR_HOME); $(MAKE) > gnur_make.log 2>&1)
 
-clean: cleangnur
+clean: cleangnur cleaniconv
 	rm -f Makeconf.done
 
 cleangnur:
 	rm -rf R-$(R_VERSION)
+
+ifeq ($(OSNAME), SunOS)
+cleaniconv:
+	rm -rf $(ICONV)
+	rm -rf $(ICONV_INSTALL)
+else
+cleaniconv:
+endif
+

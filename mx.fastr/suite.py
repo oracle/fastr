@@ -30,6 +30,12 @@ suite = {
         "sha1" : "2c9165060b91e45ac73d8cb7507ee9e52816f8b3"
     },
 
+    "GNU_ICONV" : {
+        "path" : "lib/libiconv-1.14.tar.gz",
+        "urls" : ["http://ftp.gnu.org/pub/gnu/libiconv/libiconv-1.14.tar.gz"],
+        "sha1" : "be7d67e50d72ff067b2c0291311bc283add36965"
+    },
+
     "JDK_TOOLS" : {
       "path" : "${JAVA_HOME}/lib/tools.jar",
       "sha1" : "NOCHECK",
@@ -333,7 +339,8 @@ suite = {
     "com.oracle.truffle.r.native" : {
       "sourceDirs" : [],
       "dependencies" : [
-        "GNUR"
+        "GNUR",
+        "GNU_ICONV",
       ],
       "native" : "true",
       "workingSets" : "FastR",
@@ -399,6 +406,7 @@ suite = {
         "ANTLR-C",
         "ANTLR",
         "GNUR",
+        "GNU_ICONV",
       ],
       "distDependencies" : [
         "TRUFFLE",

@@ -24,11 +24,10 @@
 .PHONY: all clean
 
 all: makegnur
-	$(MAKE) -f Makefile.gnur
 	$(MAKE) -f Makefile.platform
 	$(MAKE) -f Makefile.libs
 
-ifeq "$(origin GNUR_HOME)" "environment"
+ifeq  ($(GNUR_HOME_ORIGIN), environment)
 makegnur:
 else
 makegnur:
@@ -39,9 +38,11 @@ clean: cleangnur
 	$(MAKE) -f Makefile.libs clean
 	$(MAKE) -f Makefile.platform clean
 
-ifeq "$(origin GNUR_HOME)" "environment"
+ifeq  ($(GNUR_HOME_ORIGIN), environment)
+$(info E)
 cleangnur:
 else
+$(info NE)
 cleangnur:
 	$(MAKE) -f Makefile.gnur clean
 endif

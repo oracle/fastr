@@ -21,13 +21,18 @@
 # questions.
 #
 
-.PHONY: all clean makegnur cleangnur
+# If GNUR_HOME is defined we take that as a pre-built, immutable, entity
+
+.PHONY: all clean 
 
 export TOPDIR = $(CURDIR)
 export R_VERSION = 3.1.3
 
 ifndef GNUR_HOME
 export GNUR_HOME = $(TOPDIR)/gnur/R-$(R_VERSION)
+export GNUR_HOME_ORIGIN = local
+else
+export GNUR_HOME_ORIGIN = environment
 endif
 
 all: 
