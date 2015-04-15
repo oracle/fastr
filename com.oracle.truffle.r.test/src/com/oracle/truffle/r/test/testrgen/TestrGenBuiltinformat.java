@@ -284,8 +284,7 @@ public class TestrGenBuiltinformat extends TestBase {
 
     @Test
     public void testformat52() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure('def\\\'gh', class = 'AsIs'), FALSE, NULL, 0L, NULL, 3L, TRUE, NA); .Internal(format(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]]))");
+        assertEval("argv <- list(structure('def\\\'gh', class = 'AsIs'), FALSE, NULL, 0L, NULL, 3L, TRUE, NA); .Internal(format(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]]))");
     }
 
     @Test

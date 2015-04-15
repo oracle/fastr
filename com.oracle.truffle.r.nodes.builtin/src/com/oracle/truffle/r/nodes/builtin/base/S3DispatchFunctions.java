@@ -12,6 +12,8 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
+import java.util.*;
+
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.*;
@@ -140,6 +142,7 @@ public abstract class S3DispatchFunctions extends RBuiltinNode {
         @Child private ReadVariableNode rvnDef = ReadVariableNode.create(RRuntime.RDotGenericDefEnv, RType.Any, ReadKind.SilentLocal);
 
         @Child private CombineSignaturesNode combineSignatures;
+        @Child private CollectArgumentsNode collectArguments = CollectArgumentsNodeGen.create(null);
 
         @CompilationFinal private RAttributeProfiles attrProfiles;
         @Child private PromiseHelperNode promiseHelper;
@@ -180,11 +183,10 @@ public abstract class S3DispatchFunctions extends RBuiltinNode {
             String group = (String) rvnGroup.execute(frame);
 
             ArgumentsSignature suppliedSignature;
-            Object[] suppliedArguments;
             ArgumentsSignature parameterSignature = parameterSignatureProfile.profile(RArguments.getSignature(frame));
+            Object[] suppliedArguments = collectArguments.execute(frame, parameterSignature);
             if (emptyArgsProfile.profile(args == RArgsValuesAndNames.EMPTY)) {
                 suppliedSignature = parameterSignature;
-                suppliedArguments = RArguments.getArguments(frame);
             } else {
                 if (combineSignatures == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -192,13 +194,8 @@ public abstract class S3DispatchFunctions extends RBuiltinNode {
                 }
                 suppliedSignature = combineSignatures.execute(parameterSignature, args.getSignature());
 
-                suppliedArguments = new Object[suppliedSignature.getLength()];
-                for (int i = 0; i < parameterSignature.getLength(); i++) {
-                    suppliedArguments[i] = RArguments.getArgument(frame, i);
-                }
-                for (int i = 0; i < args.getSignature().getLength(); i++) {
-                    suppliedArguments[parameterSignature.getLength() + i] = args.getValues()[i];
-                }
+                suppliedArguments = Arrays.copyOf(suppliedArguments, suppliedSignature.getLength());
+                System.arraycopy(args.getValues(), 0, suppliedArguments, parameterSignature.getLength(), suppliedSignature.getLength() - parameterSignature.getLength());
             }
             return dispatch(frame, generic, readType(frame), group, genericCallFrame, genericDefFrame, suppliedSignature, suppliedArguments);
         }

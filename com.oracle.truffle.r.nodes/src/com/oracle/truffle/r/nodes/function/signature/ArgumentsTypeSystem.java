@@ -25,7 +25,7 @@ package com.oracle.truffle.r.nodes.function.signature;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.runtime.*;
 
-@TypeSystem(ArgumentsSignature.class)
+@TypeSystem({ArgumentsSignature.class, Object[].class})
 public class ArgumentsTypeSystem {
 
 }

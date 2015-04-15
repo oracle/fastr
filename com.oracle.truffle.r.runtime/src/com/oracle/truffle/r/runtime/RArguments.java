@@ -252,10 +252,6 @@ public final class RArguments {
         return (boolean) getArgumentsWithEvalCheck(frame)[INDEX_IS_IRREGULAR];
     }
 
-    public static void copyArgumentsInto(Frame frame, Object[] target) {
-        System.arraycopy(getArgumentsWithEvalCheck(frame), INDEX_ARGUMENTS, target, 0, getNArgs(frame));
-    }
-
     public static Object getArgument(Frame frame, int argIndex) {
         assert (argIndex >= 0 && argIndex < getNArgs(frame));
         return getArgumentsWithEvalCheck(frame)[INDEX_ARGUMENTS + argIndex];
@@ -264,6 +260,11 @@ public final class RArguments {
     public static Object[] getArguments(Frame frame) {
         Object[] args = getArgumentsWithEvalCheck(frame);
         return Arrays.copyOfRange(args, INDEX_ARGUMENTS, INDEX_ARGUMENTS + ((ArgumentsSignature) args[INDEX_SIGNATURE]).getLength());
+    }
+
+    public static void copyArguments(Frame frame, Object[] dest, int pos) {
+        Object[] args = getArgumentsWithEvalCheck(frame);
+        System.arraycopy(args, INDEX_ARGUMENTS, dest, pos, ((ArgumentsSignature) args[INDEX_SIGNATURE]).getLength());
     }
 
     /**
