@@ -62,6 +62,7 @@ public class ParserGeneration {
         "support strings in field accesses",
         "allow NULL= in switch",
         "support NA_complex_",
-        "simplified unary and binary operations"
+        "simplified unary and binary operations",
+        "allow unary ! in normal expressions"
     };
 }

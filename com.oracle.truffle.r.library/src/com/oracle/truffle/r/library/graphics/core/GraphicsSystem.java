@@ -25,6 +25,10 @@ package com.oracle.truffle.r.library.graphics.core;
 public interface GraphicsSystem {
     GraphicsEventsListener getGraphicsEventsListener();
 
+    void setId(int id);
+
+    int getId();
+
     public interface GraphicsEventsListener {
         void onEvent(GraphicsEvent graphicsEvent, GraphicsDevice graphicsDevice);
     }

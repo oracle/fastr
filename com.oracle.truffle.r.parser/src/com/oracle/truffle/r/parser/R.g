@@ -360,7 +360,7 @@ and_expr returns [ASTNode v]
     ;
 
 not_expr returns [ASTNode v]
-    : t=NOT n_ l=not_expr { $v = UnaryOperation.create(sourceSection("not_expr", $t, $l.stop), Operator.UNARY_NOT, $l.v); }
+    : {true}? t=NOT n_ l=not_expr { $v = UnaryOperation.create(sourceSection("not_expr", $t, $l.stop), Operator.UNARY_NOT, $l.v); }
     | b=comp_expr         { $v = $b.v; }
     ;
 
@@ -439,6 +439,9 @@ unary_expression returns [ASTNode v]
     | m=MINUS n_ { plusOrMinus = true; }
       ( (number) => num=number { ((Constant) num).addNegativeSign(); $v = num; }
       | l=unary_expression     { $v = UnaryOperation.create(sourceSection("unary_expression/MINUS", $m, $l.stop), Operator.UNARY_MINUS, $l.v); }
+      )
+    | m=NOT n_ { plusOrMinus = true; }
+      ( l=unary_expression     { $v = UnaryOperation.create(sourceSection("unary_expression/UNARY_NOT", $m, $l.stop), Operator.UNARY_NOT, $l.v); }
       )
     | b=power_expr             { $v = $b.v; }
     ;
