@@ -321,6 +321,7 @@ public final class RError extends RuntimeException {
         TYPE_EXPECTED("%s argument expected"),
         CANNOT_CHANGE_DIRECTORY("cannot change working directory"),
         FIRST_ARG_MUST_BE_STRING("first argument must be a character string"),
+        MUST_BE_STRING_OR_FUNCTION("'%s' must be a character string or a function"),
         ARG_MUST_BE_CHARACTER_VECTOR_LENGTH_ONE("argument must be a character vector of length 1"),
         ARG_SHOULD_BE_CHARACTER_VECTOR_LENGTH_ONE("argument should be a character vector of length 1\nall but the first element will be ignored"),
         ZERO_LENGTH_VARIABLE("attempt to use zero-length variable name"),
