@@ -69,10 +69,7 @@ public abstract class Vector extends RBuiltinNode {
         }
     }
 
-    @SuppressWarnings("unused")
-    @Specialization(guards = {"mode == cachedMode"}, limit = CACHED_MODES_LIMIT)
-    RAbstractVector vector(String mode, int length, @Cached("mode") String cachedMode, @Cached("modeToType(mode)") RType type) {
-        controlVisibility();
+    private static RAbstractVector vectorInternal(int length, RType type) {
         switch (type) {
             case Character:
                 return RDataFactory.createStringVector(length);
@@ -93,8 +90,16 @@ public abstract class Vector extends RBuiltinNode {
         }
     }
 
-    @Specialization
+    @SuppressWarnings("unused")
+    @Specialization(guards = {"mode == cachedMode"}, limit = CACHED_MODES_LIMIT)
+    RAbstractVector vectorCached(String mode, int length, @Cached("mode") String cachedMode, @Cached("modeToType(mode)") RType type) {
+        controlVisibility();
+        return vectorInternal(length, type);
+    }
+
+    @Specialization(contains = "vectorCached")
     protected RAbstractVector vector(String mode, int length) {
-        return vector(mode, length, mode, modeToType(mode));
+        controlVisibility();
+        return vectorInternal(length, modeToType(mode));
     }
 }
