@@ -194,9 +194,11 @@ public class RASTUtils {
         } else if (fn instanceof GroupDispatchNode) {
             GroupDispatchNode gdcn = (GroupDispatchNode) fn;
             return GroupDispatchNode.create(gdcn.getGenericName(), gdcn.getGroup(), callArgsNode, gdcn.getCallSrc());
-        } else {
+        } else if (fn instanceof RFunction) {
             RFunction rfn = (RFunction) fn;
             return RCallNode.createCall(null, ConstantNode.create(rfn), callArgsNode, null);
+        } else {
+            return RCallNode.createCall(null, ((RCallNode) fn).getFunctionNode(), callArgsNode, null);
         }
     }
 
