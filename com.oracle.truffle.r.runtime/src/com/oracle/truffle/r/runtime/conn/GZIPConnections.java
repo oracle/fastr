@@ -33,7 +33,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
 public class GZIPConnections {
-    private static final int GZIP_BUFFER_SIZE = (2 << 20);
+    public static final int GZIP_BUFFER_SIZE = (2 << 20);
 
     /**
      * Base class for all modes of gzfile connections.
