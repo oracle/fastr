@@ -39,9 +39,9 @@ import com.oracle.truffle.r.runtime.data.*;
 /**
  * The {@code .Internal} builtin. In {@code .Internal(func(args))} we have an AST where the
  * RCallNode.Uninitialized and the function child should be a {@link ReadVariableNode} node with
- * symbol {@code func}. We could just eval this, but eval has a lot of unnecessary overhead given
- * that we know that {@code func} is either a builtin or it's an error. We want to rewrite the AST
- * as if the {@code func} had been called directly.
+ * symbol {@code func}. We want to rewrite the AST as if the {@code func} had been called directly.
+ * However, we must do this in a non-destructive way otherwise deparsing and serialization will
+ * fail.
  *
  * A note on {@link RInstrumentableNode}. Since both the {@code .Internal} and the argument are
  * {@link RCallNode}s both may have been wrapped. The call to {@link RASTUtils#unwrap} will go
@@ -54,6 +54,8 @@ public abstract class Internal extends RBuiltinNode {
 
     protected final BranchProfile errorProfile = BranchProfile.create();
 
+    @Child private RCallNode builtinCallNode;
+
     @Specialization
     protected Object doInternal(@SuppressWarnings("unused") RMissing x) {
         errorProfile.enter();
@@ -63,30 +65,29 @@ public abstract class Internal extends RBuiltinNode {
     @Specialization
     protected Object doInternal(VirtualFrame frame, RPromise x) {
         controlVisibility();
-        RNode call = (RNode) x.getRep();
-        RNode operand = (RNode) RASTUtils.unwrap(call);
+        if (builtinCallNode == null) {
+            RNode call = (RNode) x.getRep();
+            RNode operand = (RNode) RASTUtils.unwrap(call);
 
-        if (!(operand instanceof RootCallNode)) {
-            errorProfile.enter();
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_INTERNAL);
+            if (!(operand instanceof RootCallNode)) {
+                errorProfile.enter();
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_INTERNAL);
+            }
+
+            RootCallNode callNode = (RootCallNode) operand;
+            RNode func = callNode.getFunctionNode();
+            String name = ((ReadVariableNode) func).getIdentifier();
+            RFunction function = RContext.getEngine().lookupBuiltin(name);
+            if (function == null || function.getRBuiltin() != null && function.getRBuiltin().kind() != RBuiltinKind.INTERNAL) {
+                errorProfile.enter();
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.NO_SUCH_INTERNAL, name);
+            }
+
+            // .Internal function is validated
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            builtinCallNode = insert(RCallNode.createInternalCall(frame, call.getSourceSection(), callNode, function, name));
         }
-
-        RootCallNode callNode = (RootCallNode) operand;
-        RNode func = callNode.getFunctionNode();
-        String name = ((ReadVariableNode) func).getIdentifier();
-        RFunction function = RContext.getEngine().lookupBuiltin(name);
-        if (function == null || function.getRBuiltin() != null && function.getRBuiltin().kind() != RBuiltinKind.INTERNAL) {
-            errorProfile.enter();
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.NO_SUCH_INTERNAL, name);
-        }
-
-        // .Internal function is validated
-        CompilerDirectives.transferToInterpreterAndInvalidate();
-        // Replace the original call; we can't just use callNode as that will cause recursion!
-        RCallNode internalCallNode = RCallNode.createInternalCall(frame, call.getSourceSection(), callNode, function, name);
-        this.getParent().replace(internalCallNode);
-        // evaluate the actual builtin this time, next time we won't get here!
-        Object result = internalCallNode.execute(frame);
+        Object result = builtinCallNode.execute(frame);
         return result;
     }
 
