@@ -53,7 +53,7 @@ public abstract class Bind extends RPrecedenceBuiltinNode {
 
     protected String getBindType() {
         // this method should be abstract but due to annotation processor problem it does not work
-        Utils.nyi("getBindType() method must be overridden in a subclass");
+        RInternalError.unimplemented("getBindType() method must be overridden in a subclass");
         return null;
     }
 
@@ -208,7 +208,7 @@ public abstract class Bind extends RPrecedenceBuiltinNode {
             RStringVector names = vec.getNames(attrProfiles);
             firstDimNames = names == null ? RNull.instance : names;
         } else {
-            Utils.nyi("binding multi-dimensional arrays is not supported");
+            RInternalError.unimplemented("binding multi-dimensional arrays is not supported");
         }
         if (firstDimNames != RNull.instance) {
             RStringVector names = (RStringVector) firstDimNames;
@@ -275,7 +275,7 @@ public abstract class Bind extends RPrecedenceBuiltinNode {
                 }
             }
         } else {
-            Utils.nyi("binding multi-dimensional arrays is not supported");
+            RInternalError.unimplemented("binding multi-dimensional arrays is not supported");
             return 0;
         }
     }
@@ -283,7 +283,7 @@ public abstract class Bind extends RPrecedenceBuiltinNode {
     @SuppressWarnings("unused")
     protected RVector genericBind(VirtualFrame frame, RAbstractVector[] vectors, boolean complete, String[] vacNames, boolean vecNamesComplete, Object deparseLevel) {
         // this method should be abstract but due to annotation processor problem it does not work
-        Utils.nyi("genericBind() method must be overridden in a subclass");
+        RInternalError.unimplemented("genericBind() method must be overridden in a subclass");
         return null;
     }
 

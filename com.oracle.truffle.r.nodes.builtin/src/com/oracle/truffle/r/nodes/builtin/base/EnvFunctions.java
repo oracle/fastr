@@ -451,7 +451,7 @@ public class EnvFunctions {
 
         @Fallback
         Object copy(@SuppressWarnings("unused") Object o) {
-            throw Utils.nyi("copying of object in the environment not supported");
+            throw RInternalError.unimplemented("copying of object in the environment not supported");
         }
 
     }

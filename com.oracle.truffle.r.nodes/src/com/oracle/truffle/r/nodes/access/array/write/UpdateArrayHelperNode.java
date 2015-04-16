@@ -1305,7 +1305,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
             }
         }
         if (value.getLength() == 0) {
-            Utils.nyi();
+            RInternalError.unimplemented();
         }
         if (positions.getLength() % value.getLength() != 0) {
             warning.enter();
