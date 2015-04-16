@@ -84,6 +84,28 @@ public class RegExp {
                 result = result.substring(0, xxIndex) + "[\\[" + result.substring(xxIndex + 2);
             }
         }
+        // this loop replaces "[[]" (illegal in Java regex) to "[\[]"
+        boolean withinCharClass = false;
+        int i = 0;
+        while (i < result.length()) {
+            switch (result.charAt(i)) {
+                case '\\':
+                    i++;
+                    break;
+                case '[':
+                    if (withinCharClass) {
+                        result = result.substring(0, i) + '\\' + result.substring(i);
+                        i++;
+                    } else {
+                        withinCharClass = true;
+                    }
+                    break;
+                case ']':
+                    withinCharClass = false;
+                    break;
+            }
+            i++;
+        }
         return result;
     }
 
