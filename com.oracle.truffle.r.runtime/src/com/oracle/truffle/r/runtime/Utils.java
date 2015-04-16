@@ -276,17 +276,27 @@ public final class Utils {
      */
     @TruffleBoundary
     public static String createStackTrace(boolean printFrameSlots) {
-        StringBuilder str = new StringBuilder();
-
         FrameInstance current = Truffle.getRuntime().getCurrentFrame();
-        dumpFrame(str, current.getCallTarget(), current.getFrame(FrameAccess.READ_ONLY, true), printFrameSlots, current.isVirtualFrame());
-
-        Truffle.getRuntime().iterateFrames(frameInstance -> {
-            dumpFrame(str, frameInstance.getCallTarget(), frameInstance.getFrame(FrameAccess.READ_ONLY, true), printFrameSlots, frameInstance.isVirtualFrame());
-            return null;
-        });
-        str.append("\n");
-        return str.toString();
+        if (current == null) {
+            return "no R stack trace available\n";
+        } else {
+            StringBuilder str = new StringBuilder();
+            dumpFrame(str, current.getCallTarget(), current.getFrame(FrameAccess.READ_ONLY, true), false, current.isVirtualFrame());
+            Truffle.getRuntime().iterateFrames(frameInstance -> {
+                dumpFrame(str, frameInstance.getCallTarget(), frameInstance.getFrame(FrameAccess.READ_ONLY, true), false, frameInstance.isVirtualFrame());
+                return null;
+            });
+            if (printFrameSlots) {
+                str.append("\n\nwith frame slot contents:\n");
+                dumpFrame(str, current.getCallTarget(), current.getFrame(FrameAccess.READ_ONLY, true), true, current.isVirtualFrame());
+                Truffle.getRuntime().iterateFrames(frameInstance -> {
+                    dumpFrame(str, frameInstance.getCallTarget(), frameInstance.getFrame(FrameAccess.READ_ONLY, true), true, frameInstance.isVirtualFrame());
+                    return null;
+                });
+            }
+            str.append("\n");
+            return str.toString();
+        }
     }
 
     private static void dumpFrame(StringBuilder str, CallTarget callTarget, Frame frame, boolean printFrameSlots, boolean isVirtual) {
@@ -295,15 +305,13 @@ public final class Utils {
         }
         SourceSection callSrc = RArguments.getCallSourceSection(frame);
         str.append("Frame: ").append(callTarget).append(isVirtual ? " (virtual)" : "");
-        if (callSrc == null) {
-            str.append("\n  <no call info>");
-        } else {
-            str.append("\n  called as: ").append(callSrc.getCode());
+        if (callSrc != null) {
+            str.append(" (called as: ").append(callSrc.getCode()).append(')');
         }
         if (printFrameSlots) {
             FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
             for (FrameSlot s : frameDescriptor.getSlots()) {
-                str.append("\n  ").append(s.getIdentifier()).append("=").append(frame.getValue(s));
+                str.append("\n      ").append(s.getIdentifier()).append(" = ").append(frame.getValue(s));
             }
         }
     }
