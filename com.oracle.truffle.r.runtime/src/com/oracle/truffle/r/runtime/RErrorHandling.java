@@ -310,7 +310,7 @@ public class RErrorHandling {
                 throw new RError(Message.INVALID_ERROR.message);
             }
         }
-        throw new RError(null);
+        throw new RError(errorMessage);
     }
 
     private static MaterializedFrame safeCurrentFrame() {
