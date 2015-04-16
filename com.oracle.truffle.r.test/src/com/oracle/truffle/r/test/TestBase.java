@@ -463,7 +463,7 @@ public class TestBase {
                     microTestFailed();
                     System.out.print('E');
                 }
-                allOk &= allOk;
+                allOk &= ok;
                 afterMicroTest();
             }
             if ((index) % 100 == 0) {
