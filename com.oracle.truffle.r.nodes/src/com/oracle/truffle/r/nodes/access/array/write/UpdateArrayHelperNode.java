@@ -234,7 +234,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
                     int accSrcDimensions, int accDstDimensions, NACheck posNACheck, NACheck elementNACheck) {
         if (setMultiDimData == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            setMultiDimData = insert(SetMultiDimDataNodeGen.create(posNACheck, elementNACheck, this.isSubset, null, null, null, null, null, null, null, null));
+            setMultiDimData = insert(SetMultiDimDataNodeGen.create(posNACheck, elementNACheck, this.isSubset));
         }
         return setMultiDimData.executeMultiDimDataSet(frame, value, vector, positions, currentDimLevel, srcArrayBase, dstArrayBase, accSrcDimensions, accDstDimensions);
     }
@@ -1185,6 +1185,11 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     @Specialization(guards = {"!isObject(vector)", "isSubset", "!posNames(positions)", "multiPos(positions)"})
     protected RAbstractIntVector updateSubset(VirtualFrame frame, Object v, RAbstractLogicalVector value, int recLevel, RIntVector positions, RAbstractIntVector vector) {
+        return updateSubset(v, castInteger(frame, value), recLevel, positions, vector);
+    }
+
+    @Specialization(guards = {"!isObject(vector)", "isSubset", "!posNames(positions)", "multiPos(positions)"})
+    protected RAbstractIntVector updateSubset(VirtualFrame frame, Object v, RAbstractDoubleVector value, int recLevel, RIntVector positions, RAbstractIntVector vector) {
         return updateSubset(v, castInteger(frame, value), recLevel, positions, vector);
     }
 

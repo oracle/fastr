@@ -25,17 +25,15 @@ package com.oracle.truffle.r.nodes.access.array.read;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.utilities.*;
-import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
-@NodeChildren({@NodeChild(value = "vec", type = RNode.class), @NodeChild(value = "pos", type = RNode.class), @NodeChild(value = "currDimLevel", type = RNode.class),
-                @NodeChild(value = "names", type = RNode.class)})
-abstract class GetNamesNode extends RNode {
+abstract class GetNamesNode extends Node {
 
-    public abstract Object executeNamesGet(VirtualFrame frame, RAbstractVector vector, Object[] positions, int currentDimLevel, Object names);
+    public abstract RStringVector executeNamesGet(VirtualFrame frame, RAbstractVector vector, Object[] positions, int currentDimLevel, Object names);
 
     private final NACheck namesNACheck;
 
@@ -44,17 +42,13 @@ abstract class GetNamesNode extends RNode {
     private RStringVector getNamesRecursive(VirtualFrame frame, RAbstractVector vector, Object[] positions, int currentDimLevel, Object names, NACheck namesCheck) {
         if (getNamesNodeRecursive == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            getNamesNodeRecursive = insert(GetNamesNodeGen.create(namesCheck, null, null, null, null));
+            getNamesNodeRecursive = insert(GetNamesNodeGen.create(namesCheck));
         }
-        return (RStringVector) getNamesNodeRecursive.executeNamesGet(frame, vector, positions, currentDimLevel, names);
+        return getNamesNodeRecursive.executeNamesGet(frame, vector, positions, currentDimLevel, names);
     }
 
     protected GetNamesNode(NACheck namesNACheck) {
         this.namesNACheck = namesNACheck;
-    }
-
-    protected GetNamesNode(GetNamesNode other) {
-        this.namesNACheck = other.namesNACheck;
     }
 
     @Specialization

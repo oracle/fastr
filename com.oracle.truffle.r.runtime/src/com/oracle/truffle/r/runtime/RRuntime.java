@@ -167,6 +167,8 @@ public class RRuntime {
             return RType.Character.getName();
         } else if (c == RFunction.class) {
             return RType.Function.getName();
+        } else if (c == Object.class) {
+            return RType.Any.getName();
         } else {
             throw new RuntimeException("internal error, unknown class: " + c);
         }
@@ -192,6 +194,8 @@ public class RRuntime {
             return "Raw";
         } else if (c == RString.class) {
             return "Character";
+        } else if (c == Object.class) {
+            return "Any";
         } else {
             throw new RuntimeException("internal error, unknown class: " + c);
         }

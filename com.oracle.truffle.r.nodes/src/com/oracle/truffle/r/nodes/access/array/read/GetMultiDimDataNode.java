@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.access.array.read;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.*;
@@ -32,10 +33,8 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
-@NodeChildren({@NodeChild(value = "data", type = RNode.class), @NodeChild(value = "vec", type = RNode.class), @NodeChild(value = "pos", type = RNode.class),
-                @NodeChild(value = "currDimLevel", type = RNode.class), @NodeChild(value = "srcArrayBase", type = RNode.class), @NodeChild(value = "dstArrayBase", type = RNode.class),
-                @NodeChild(value = "accSrcDimensions", type = RNode.class), @NodeChild(value = "accDstDimensions", type = RNode.class)})
-abstract class GetMultiDimDataNode extends RNode {
+@TypeSystemReference(RTypes.class)
+abstract class GetMultiDimDataNode extends Node {
 
     public abstract Object executeMultiDimDataGet(VirtualFrame frame, Object data, RAbstractVector vector, Object[] positions, int currentDimLevel, int srcArrayBase, int dstArrayBase,
                     int accSrcDimensions, int accDstDimensions);
@@ -53,7 +52,7 @@ abstract class GetMultiDimDataNode extends RNode {
                     int accDstDimensions, NACheck posCheck, NACheck elementCheck) {
         if (getMultiDimDataRecursive == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            getMultiDimDataRecursive = insert(GetMultiDimDataNodeGen.create(posCheck, elementCheck, null, null, null, null, null, null, null, null));
+            getMultiDimDataRecursive = insert(GetMultiDimDataNodeGen.create(posCheck, elementCheck));
         }
         return getMultiDimDataRecursive.executeMultiDimDataGet(frame, data, vector, positions, currentDimLevel, srcArrayBase, dstArrayBase, accSrcDimensions, accDstDimensions);
     }

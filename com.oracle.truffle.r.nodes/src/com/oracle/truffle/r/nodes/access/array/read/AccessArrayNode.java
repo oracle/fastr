@@ -182,7 +182,7 @@ public abstract class AccessArrayNode extends RNode {
                     int accDstDimensions, NACheck posCheck, NACheck elementCheck) {
         if (getMultiDimData == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            getMultiDimData = insert(GetMultiDimDataNodeGen.create(posCheck, elementCheck, null, null, null, null, null, null, null, null));
+            getMultiDimData = insert(GetMultiDimDataNodeGen.create(posCheck, elementCheck));
         }
         return getMultiDimData.executeMultiDimDataGet(frame, data, vector, positions, currentDimLevel, srcArrayBase, dstArrayBase, accSrcDimensions, accDstDimensions);
     }
@@ -190,15 +190,15 @@ public abstract class AccessArrayNode extends RNode {
     private RStringVector getNames(VirtualFrame frame, RAbstractVector vector, Object[] positions, int currentDimLevel, NACheck namesCheck) {
         if (getNamesNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            getNamesNode = insert(GetNamesNodeGen.create(namesCheck, null, null, null, null));
+            getNamesNode = insert(GetNamesNodeGen.create(namesCheck));
         }
-        return (RStringVector) getNamesNode.executeNamesGet(frame, vector, positions, currentDimLevel, RNull.instance);
+        return getNamesNode.executeNamesGet(frame, vector, positions, currentDimLevel, RNull.instance);
     }
 
     private RStringVector getDimNames(VirtualFrame frame, RList dstDimNames, RAbstractVector vector, Object[] positions, int currentSrcDimLevel, int currentDstDimLevel, NACheck namesCheck) {
         if (getDimNamesNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            getDimNamesNode = insert(GetDimNamesNodeGen.create(namesCheck, null, null, null, null, null));
+            getDimNamesNode = insert(GetDimNamesNodeGen.create(namesCheck));
         }
         return (RStringVector) getDimNamesNode.executeDimNamesGet(frame, dstDimNames, vector, positions, currentSrcDimLevel, currentDstDimLevel);
     }

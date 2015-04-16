@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.access.array.write;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.*;
@@ -32,10 +33,8 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
-@NodeChildren({@NodeChild(value = "val", type = RNode.class), @NodeChild(value = "vec", type = RNode.class), @NodeChild(value = "pos", type = RNode.class),
-                @NodeChild(value = "currDimLevel", type = RNode.class), @NodeChild(value = "srcArrayBase", type = RNode.class), @NodeChild(value = "dstArrayBase", type = RNode.class),
-                @NodeChild(value = "accSrcDimensions", type = RNode.class), @NodeChild(value = "accDstDimensions", type = RNode.class)})
-abstract class SetMultiDimDataNode extends RNode {
+@TypeSystemReference(RTypes.class)
+abstract class SetMultiDimDataNode extends Node {
 
     public abstract Object executeMultiDimDataSet(VirtualFrame frame, RAbstractContainer value, RAbstractVector vector, Object[] positions, int currentDimLevel, int srcArrayBase, int dstArrayBase,
                     int accSrcDimensions, int accDstDimensions);
@@ -51,7 +50,7 @@ abstract class SetMultiDimDataNode extends RNode {
                     int accSrcDimensions, int accDstDimensions, NACheck posCheck, NACheck elementCheck) {
         if (setMultiDimDataRecursive == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            setMultiDimDataRecursive = insert(SetMultiDimDataNodeGen.create(posCheck, elementCheck, this.isSubset, null, null, null, null, null, null, null, null));
+            setMultiDimDataRecursive = insert(SetMultiDimDataNodeGen.create(posCheck, elementCheck, this.isSubset));
         }
         return setMultiDimDataRecursive.executeMultiDimDataSet(frame, value, vector, positions, currentDimLevel, srcArrayBase, dstArrayBase, accSrcDimensions, accDstDimensions);
     }

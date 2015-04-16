@@ -281,7 +281,7 @@ public class TestBase {
     /**
      * Emptied at the start of a JUnit test, each failed micro test will be added to the list.
      */
-    private static ArrayList<String> failedMicroTests;
+    private static ArrayList<String> failedMicroTests = new ArrayList<>();
 
     private static ArrayList<String> unexpectedSuccessfulMicroTests = new ArrayList<>();
 
@@ -360,7 +360,7 @@ public class TestBase {
      */
     @After
     public void afterTest() {
-        if (!failedMicroTests.isEmpty()) {
+        if (failedMicroTests != null && !failedMicroTests.isEmpty()) {
             fail(failedMicroTests.size() + " micro-test(s) failed: \n  " + new TreeSet<>(failedMicroTests));
         }
     }
