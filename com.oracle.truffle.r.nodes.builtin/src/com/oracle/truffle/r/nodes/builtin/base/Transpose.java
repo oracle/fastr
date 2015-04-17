@@ -33,6 +33,7 @@ import com.oracle.truffle.r.runtime.ops.na.*;
 public abstract class Transpose extends RBuiltinNode {
 
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+    private final BranchProfile hasDimNamesProfile = BranchProfile.create();
 
     private final NACheck check = NACheck.create();
 
@@ -96,6 +97,7 @@ public abstract class Transpose extends RBuiltinNode {
         RIntVector r = RDataFactory.createIntVector(result, vector.isComplete());
         r.copyAttributesFrom(attrProfiles, vector);
         r.setDimensions(newDim);
+        setDimNames(r, vector);
         return r;
     }
 
@@ -121,6 +123,7 @@ public abstract class Transpose extends RBuiltinNode {
         RDoubleVector r = RDataFactory.createDoubleVector(result, vector.isComplete());
         r.copyAttributesFrom(attrProfiles, vector);
         r.setDimensions(newDim);
+        setDimNames(r, vector);
         return r;
     }
 
@@ -146,7 +149,17 @@ public abstract class Transpose extends RBuiltinNode {
         RStringVector r = RDataFactory.createStringVector(result, vector.isComplete());
         r.copyAttributesFrom(attrProfiles, vector);
         r.setDimensions(newDim);
+        setDimNames(r, vector);
         return r;
+    }
+
+    private final void setDimNames(RVector newVector, RAbstractVector oldVector) {
+        RList dimNames = oldVector.getDimNames(attrProfiles);
+        if (dimNames != null) {
+            hasDimNamesProfile.enter();
+            assert dimNames.getLength() == 2;
+            newVector.setDimNames(RDataFactory.createList(new Object[]{dimNames.getDataAt(1), dimNames.getDataAt(0)}));
+        }
     }
 
     protected static boolean isEmpty2D(RAbstractVector vector) {
