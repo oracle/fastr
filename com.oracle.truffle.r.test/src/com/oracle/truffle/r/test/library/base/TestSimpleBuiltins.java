@@ -730,6 +730,8 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval(Ignored.Unknown, "{ as.character(list(list(c(\"hello\", \"hi\")))) }");
         assertEval(Ignored.Unknown, "{ as.character(list(c(2L, 3L))) }");
         assertEval(Ignored.Unknown, "{ as.character(list(c(2L, 3L, 5L))) }");
+
+        assertEval("{ x<-as.character(Sys.time()) }");
     }
 
     @Test
