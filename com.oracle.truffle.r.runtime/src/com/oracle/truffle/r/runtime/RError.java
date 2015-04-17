@@ -558,6 +558,7 @@ public final class RError extends RuntimeException {
         FILE_CANNOT_REMOVE("  cannot remove file '%s'"),
         FILE_CANNOT_RENAME("  cannot rename file '%s' to '%s'"),
         DIR_CANNOT_CREATE("cannot create dir '%s'"),
+        IMPOSSIBLE_SUBSTITUTE("substitute result cannot be represented"),
         PERFORMANCE("performance problem: %s");
 
         public final String message;

@@ -393,7 +393,7 @@ public abstract class ConstantNode extends RNode implements VisibilityController
         }
     }
 
-    private static final class ConstantFunctionNode extends ConstantNode {
+    public static final class ConstantFunctionNode extends ConstantNode {
 
         private final RFunction function;
 

@@ -27,6 +27,7 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.instrument.ProbeNode.WrapperNode;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
+import com.oracle.truffle.r.nodes.access.ConstantNode.ConstantFunctionNode;
 import com.oracle.truffle.r.nodes.access.ConstantNode.ConstantMissingNode;
 import com.oracle.truffle.r.nodes.access.variables.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -171,17 +172,18 @@ public class RASTUtils {
         return expr instanceof RExpression || expr instanceof RLanguage;
     }
 
-    @TruffleBoundary
     /**
-     * Create an {@link RCallNode} where {@code fn} is either a:
+     * Create an {@link RCallNode}. Where {@code fn} is either a:
      * <ul>
-     * <li>{@link RFunction}\<li>
-     * <li>{@link ConstantFunctioNode}</li>
-     * <li>{@link ConstantStringNode}</li>
+     * <li>{@link RFunction}\
+     * <li>{@code ConstantFunctionNode}</li>
+     * <li>{@code ConstantStringNode}</li>
      * <li>{@link ReadVariableNode}</li>
+     * <li>{@link RCallNode}</li>
      * <li>GroupDispatchNode</li>
      * </ul>
      */
+    @TruffleBoundary
     public static RNode createCall(Object fna, CallArgumentsNode callArgsNode) {
         Object fn = fna;
         if (fn instanceof ConstantNode) {
@@ -197,8 +199,11 @@ public class RASTUtils {
         } else if (fn instanceof RFunction) {
             RFunction rfn = (RFunction) fn;
             return RCallNode.createCall(null, ConstantNode.create(rfn), callArgsNode, null);
+        } else if (fn instanceof RCallNode) {
+            return RCallNode.createCall(null, (RCallNode) fn, callArgsNode, null);
         } else {
-            return RCallNode.createCall(null, ((RCallNode) fn).getFunctionNode(), callArgsNode, null);
+            // some value that we cannot represent (from substitute)
+            throw RError.error(RError.Message.IMPOSSIBLE_SUBSTITUTE);
         }
     }
 
@@ -235,14 +240,14 @@ public class RASTUtils {
     private static final CallArgsNodeFinder callArgsNodeFinder = new CallArgsNodeFinder();
 
     /**
-     * Returns the name (as an {@link RSymbol} or the function associated with an {@link RCallNode}
+     * Returns the name (as an {@link RSymbol} of the function associated with an {@link RCallNode}
      * or {@link GroupDispatchNode}.
      *
      * @param escape Add escape characters to non-standard names
      */
     public static Object findFunctionName(Node node, boolean escape) {
-        RNode child = (RNode) unwrap(findFunctionNode(node));
-        if (child instanceof ConstantNode && ((ConstantNode) child).getValue() instanceof RFunction) {
+        RNode child = (RNode) unwrap(getFunctionNode(node));
+        if (child instanceof ConstantFunctionNode) {
             return ((ConstantNode) child).getValue();
         } else if (child instanceof ReadVariableNode) {
             String name = ((ReadVariableNode) child).getIdentifier();
@@ -260,9 +265,8 @@ public class RASTUtils {
         } else if (child instanceof RBuiltinNode) {
             RBuiltinNode builtinNode = (RBuiltinNode) child;
             return RDataFactory.createSymbol((builtinNode.getBuiltin().getRBuiltin().name()));
-        } else if (child instanceof RCallNode) {
-            return findFunctionName(child, escape);
         } else {
+            // TODO This should really fail in some way as (clearly) this is not a "name"
             // some more complicated expression, just deparse it
             RDeparse.State state = RDeparse.State.createPrintableState();
             child.deparse(state);
@@ -270,15 +274,20 @@ public class RASTUtils {
         }
     }
 
+    public static boolean isNamedFunctionNode(Node aCallNode) {
+        RNode n = (RNode) unwrap(getFunctionNode(aCallNode));
+        return (n instanceof ReadVariableNode || n instanceof GroupDispatchNode || n instanceof RBuiltinNode || n instanceof ConstantFunctionNode);
+
+    }
+
     private static String escapeName(String name) {
         return RDeparse.quotify(name, RDeparse.BACKTICK);
     }
 
     /**
-     * Returns the {@link ReadVariableNode} associated with a {@link RCallNode} or the
-     * {@link GroupDispatchNode} .
+     * Unifies {@link RCallNode} and {@link GroupDispatchNode} for accessing (likely) function name.
      */
-    public static RNode findFunctionNode(Node node) {
+    public static RNode getFunctionNode(Node node) {
         if (node instanceof RCallNode) {
             return ((RCallNode) node).getFunctionNode();
         } else if (node instanceof GroupDispatchNode) {

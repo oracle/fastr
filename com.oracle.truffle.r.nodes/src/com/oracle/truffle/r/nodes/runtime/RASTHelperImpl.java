@@ -139,7 +139,11 @@ public class RASTHelperImpl implements RASTHelper {
         int index = indexArg;
         if (node instanceof RCallNode || node instanceof GroupDispatchNode) {
             if (index == 0) {
-                return RASTUtils.findFunctionName(node, true);
+                if (RASTUtils.isNamedFunctionNode(node)) {
+                    return RASTUtils.findFunctionName(node, true);
+                } else {
+                    return RDataFactory.createLanguage(RASTUtils.getFunctionNode(node));
+                }
             } else {
                 CallArgumentsNode args = RASTUtils.findCallArgumentsNode(node);
                 return RASTUtils.createLanguageElement(args, index - 1);
