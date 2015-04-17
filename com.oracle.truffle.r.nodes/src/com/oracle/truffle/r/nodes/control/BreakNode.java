@@ -25,7 +25,7 @@ package com.oracle.truffle.r.nodes.control;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.runtime.RDeparse.*;
+import com.oracle.truffle.r.runtime.*;
 
 public final class BreakNode extends RNode {
 
@@ -39,8 +39,13 @@ public final class BreakNode extends RNode {
     }
 
     @Override
-    public void deparse(State state) {
+    public void deparse(RDeparse.State state) {
         state.append("break");
+    }
+
+    @Override
+    public void serialize(RSerialize.State state) {
+        state.setAsBuiltin("break");
     }
 
     @Override

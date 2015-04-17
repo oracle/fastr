@@ -58,6 +58,13 @@ public interface RASTHelper {
     void deparse(RDeparse.State state, RFunction f);
 
     /**
+     * Serialize function {@code f} (not a builtin).
+     */
+    Object serialize(RSerialize.State state, RFunction f);
+
+    void serializeNode(RSerialize.State state, Object node);
+
+    /**
      * Call out to R to find a namespace during unserialization.
      */
     REnvironment findNamespace(RStringVector name, int depth);

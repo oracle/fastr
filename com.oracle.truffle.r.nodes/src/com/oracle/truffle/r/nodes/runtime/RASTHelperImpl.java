@@ -325,4 +325,18 @@ public class RASTHelperImpl implements RASTHelper {
         callOut(signalSimpleWarningCall, depth, msg, call);
     }
 
+    @Override
+    public Object serialize(RSerialize.State state, RFunction f) {
+        FunctionDefinitionNode fdn = (FunctionDefinitionNode) f.getRootNode();
+        REnvironment env = REnvironment.frameToEnvironment(f.getEnclosingFrame());
+        state.openPairList().setTag(env);
+        fdn.serialize(state);
+        return state.closePairList();
+    }
+
+    @Override
+    public void serializeNode(RSerialize.State state, Object node) {
+        ((RNode) node).serialize(state);
+    }
+
 }

@@ -37,9 +37,9 @@ import com.oracle.truffle.r.nodes.runtime.*;
 import com.oracle.truffle.r.parser.ast.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RDeparse.Func;
-import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
+import com.oracle.truffle.r.runtime.gnur.*;
 
 /**
  * This class denotes a call site to a function,e.g.:
@@ -184,7 +184,7 @@ public abstract class RCallNode extends RNode {
     }
 
     @Override
-    public void deparse(State state) {
+    public void deparse(RDeparse.State state) {
         Object fname = RASTUtils.findFunctionName(this, false);
         if (fname instanceof RSymbol) {
             String sfname = ((RSymbol) fname).getName();
@@ -216,6 +216,13 @@ public abstract class RCallNode extends RNode {
             getFunctionNode().deparse(state);
             getArgumentsNode().deparse(state);
         }
+    }
+
+    @Override
+    public void serialize(RSerialize.State state) {
+        state.setAsLangType();
+        state.serializeNodeSetCar(getFunctionNode());
+        state.serializeNodeSetCdr(getArgumentsNode(), SEXPTYPE.LISTSXP);
     }
 
     @Override

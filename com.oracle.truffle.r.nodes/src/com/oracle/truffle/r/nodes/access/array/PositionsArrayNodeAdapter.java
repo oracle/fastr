@@ -24,8 +24,8 @@ package com.oracle.truffle.r.nodes.access.array;
 
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.nodes.access.ConstantNode.ConstantMissingNode;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.RDeparse.*;
 import com.oracle.truffle.r.runtime.env.*;
 
 public class PositionsArrayNodeAdapter extends RNode {
@@ -47,12 +47,31 @@ public class PositionsArrayNodeAdapter extends RNode {
     }
 
     @Override
-    public void deparse(State state) {
+    public void deparse(RDeparse.State state) {
         for (int i = 0; i < positions.length; i++) {
             positions[i].deparse(state);
             if (i != positions.length - 1) {
                 state.append(", ");
             }
+        }
+    }
+
+    @Override
+    public void serialize(RSerialize.State state) {
+        if (positions.length == 0 || (positions.length == 1 && positions[0] instanceof ConstantMissingNode)) {
+            state.setPositionsLength(0);
+        } else {
+            state.setPositionsLength(positions.length);
+            for (int i = 0; i < positions.length; i++) {
+                state.serializeNodeSetCar(positions[i]);
+                if (i != positions.length - 1) {
+                    state.openPairList();
+                }
+            }
+            /*
+             * N.B. We do not call linkPairList as per other argument lists because the "drop" and
+             * "exact" arguments must append to the list and we don't have access to them here.
+             */
         }
     }
 

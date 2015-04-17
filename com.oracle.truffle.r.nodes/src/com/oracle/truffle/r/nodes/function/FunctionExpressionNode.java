@@ -33,7 +33,6 @@ import com.oracle.truffle.r.nodes.function.PromiseHelperNode.*;
 import com.oracle.truffle.r.nodes.function.opt.*;
 import com.oracle.truffle.r.nodes.instrument.*;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.env.frame.*;
@@ -129,8 +128,13 @@ public final class FunctionExpressionNode extends RNode {
     }
 
     @Override
-    public void deparse(State state) {
+    public void deparse(RDeparse.State state) {
         ((FunctionDefinitionNode) callTarget.getRootNode()).deparse(state);
+    }
+
+    @Override
+    public void serialize(RSerialize.State state) {
+        ((FunctionDefinitionNode) callTarget.getRootNode()).serialize(state);
     }
 
     @Override

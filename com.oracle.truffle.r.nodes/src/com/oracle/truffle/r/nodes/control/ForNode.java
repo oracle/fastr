@@ -35,10 +35,10 @@ import com.oracle.truffle.r.nodes.access.variables.*;
 import com.oracle.truffle.r.nodes.control.ForNodeFactory.LengthNodeGen;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RContext.Engine.ParseException;
-import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
+import com.oracle.truffle.r.runtime.gnur.*;
 
 public final class ForNode extends AbstractLoopNode {
 
@@ -89,7 +89,7 @@ public final class ForNode extends AbstractLoopNode {
     }
 
     @Override
-    public void deparse(State state) {
+    public void deparse(RDeparse.State state) {
         state.append("for (");
         getCvar().deparse(state);
         state.append(" in ");
@@ -98,6 +98,24 @@ public final class ForNode extends AbstractLoopNode {
         state.writeOpenCurlyNLIncIndent();
         getBody().deparse(state);
         state.decIndentWriteCloseCurly();
+    }
+
+    @Override
+    public void serialize(RSerialize.State state) {
+        state.setAsBuiltin("for");
+        state.openPairList(SEXPTYPE.LISTSXP);
+        // variable
+        state.serializeNodeSetCar(getCvar());
+        // range
+        state.openPairList(SEXPTYPE.LISTSXP);
+        state.serializeNodeSetCar(getRange());
+        // body
+        state.openPairList(SEXPTYPE.LISTSXP);
+        state.openBrace();
+        state.serializeNodeSetCdr(getBody(), SEXPTYPE.LISTSXP);
+        state.closeBrace();
+        state.linkPairList(3);
+        state.setCdr(state.closePairList());
     }
 
     @Override

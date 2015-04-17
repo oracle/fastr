@@ -36,11 +36,11 @@ import com.oracle.truffle.r.nodes.access.array.ArrayPositionCastNodeGen.Operator
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
+import com.oracle.truffle.r.runtime.gnur.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
 @NodeChildren({@NodeChild(value = "vector", type = RNode.class), @NodeChild(value = "exact", type = RNode.class), @NodeChild(value = "recursionLevel", type = RNode.class),
@@ -97,7 +97,7 @@ public abstract class AccessArrayNode extends RNode {
     }
 
     @Override
-    public void deparse(State state) {
+    public void deparse(RDeparse.State state) {
         getVector().deparse(state);
         state.append(isSubset ? "[" : "[[");
         getPositions().deparse(state);
@@ -110,6 +110,47 @@ public abstract class AccessArrayNode extends RNode {
             getDropDim().deparse(state);
         }
         state.append(isSubset ? "]" : "]]");
+    }
+
+    @Override
+    public void serialize(RSerialize.State state) {
+        /*
+         * Since in R this is a function, the vector, the positions and the optional exact, drop are
+         * all "arguments" and hang off the same list. Unfortunately the positions are in a
+         * sub-node, so this is a bit complicated to handle. In particular MISSINGSXP is only set if
+         * everything is missing.
+         */
+        state.setAsBuiltin(isSubset ? "[" : "[[");
+        state.openPairList(SEXPTYPE.LISTSXP);
+        state.serializeNodeSetCar(getVector());
+        state.openPairList(SEXPTYPE.LISTSXP);
+        RContext.getRASTHelper().serializeNode(state, getPositions());
+        // N.B. The above call left the result unlinked so we can add exact/drop
+        int posCount = state.getPositionsLength();
+        if (posCount == 0 && !(exactInSource || dropInSource)) {
+            state.setCarMissing();
+            state.setCdr(state.closePairList());
+        } else {
+            if (exactInSource) {
+                if (posCount > 0) {
+                    state.openPairList();
+                }
+                state.setTagAsSymbol("exact");
+                state.setCar(RRuntime.asLogical(exactInSource));
+                posCount++;
+            }
+            if (dropInSource) {
+                if (posCount > 0) {
+                    state.openPairList();
+                }
+                state.setTagAsSymbol("drop");
+                state.setCar(RRuntime.asLogical(dropInSource));
+                posCount++;
+            }
+            state.linkPairList(posCount + 1); // the vector counts as well
+        }
+        // set CDR of LANGSXP
+        state.setCdr(state.closePairList());
     }
 
     @Override

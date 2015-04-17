@@ -28,10 +28,10 @@ import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.unary.*;
-import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
+import com.oracle.truffle.r.runtime.gnur.*;
 
 public final class WhileNode extends AbstractLoopNode {
 
@@ -79,7 +79,7 @@ public final class WhileNode extends AbstractLoopNode {
     }
 
     @Override
-    public void deparse(State state) {
+    public void deparse(RDeparse.State state) {
         if (isRepeat) {
             state.append("repeat ");
         } else {
@@ -90,6 +90,22 @@ public final class WhileNode extends AbstractLoopNode {
         state.writeOpenCurlyNLIncIndent();
         getBody().deparse(state);
         state.decIndentWriteCloseCurly();
+    }
+
+    @Override
+    public void serialize(RSerialize.State state) {
+        state.setAsBuiltin(isRepeat ? "repeat" : "while");
+        if (!isRepeat) {
+            state.openPairList(SEXPTYPE.LISTSXP);
+            // condition
+            state.serializeNodeSetCar(getCondition());
+        }
+        state.openPairList(SEXPTYPE.LISTSXP);
+        state.openBrace();
+        state.serializeNodeSetCdr(getBody(), SEXPTYPE.LISTSXP);
+        state.closeBrace();
+        state.linkPairList(isRepeat ? 1 : 2);
+        state.setCdr(state.closePairList());
     }
 
     @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,7 +24,7 @@ package com.oracle.truffle.r.nodes.function;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.runtime.RDeparse.State;
+import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
 /**
@@ -76,8 +76,14 @@ public class FunctionBodyNode extends RNode {
     }
 
     @Override
-    public void deparse(State state) {
+    public void deparse(RDeparse.State state) {
         // Don't deparse the argument saving nodes
         statements.deparse(state);
+    }
+
+    @Override
+    public void serialize(RSerialize.State state) {
+        // Don't serialize the argument saving nodes
+        statements.serialize(state);
     }
 }

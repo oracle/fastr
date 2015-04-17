@@ -31,7 +31,6 @@ import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.function.*;
-import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.env.*;
 
@@ -116,7 +115,7 @@ public class SequenceNode extends RNode {
 
     @TruffleBoundary
     @Override
-    public void deparse(State state) {
+    public void deparse(RDeparse.State state) {
         for (int i = 0; i < sequence.length; i++) {
             state.mark();
             sequence[i].deparse(state);
@@ -125,6 +124,33 @@ public class SequenceNode extends RNode {
                 state.writeline();
                 state.mark(); // in case last
             }
+        }
+    }
+
+    @Override
+    public void serialize(RSerialize.State state) {
+        /*
+         * In GnuR there are no empty statement sequences, because "{" is really a function in R, so
+         * it is represented as a LANGSXP with symbol "{" and a NULL cdr, representing the empty
+         * sequence. This is an unpleasant special case in FastR that we can only detect by
+         * re-examining the original source.
+         * 
+         * A sequence of length 1, i.e. a single statement, is represented at itself, e.g. a SYMSXP
+         * for "x" or a LANGSXP for a function call. Otherwise, the representation is a LISTSXP
+         * pairlist, where the car is the statement and the cdr is either NILSXP or a LISTSXP for
+         * the next statement. Typically the statement (car) is itself a LANGSXP pairlist but it
+         * might be a simple value, e.g. SYMSXP.
+         */
+        if (sequence.length == 0) {
+            state.setNull();
+        } else {
+            for (int i = 0; i < sequence.length; i++) {
+                state.serializeNodeSetCar(sequence[i]);
+                if (i != sequence.length - 1) {
+                    state.openPairList();
+                }
+            }
+            state.linkPairList(sequence.length);
         }
     }
 

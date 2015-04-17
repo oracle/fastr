@@ -20,10 +20,10 @@ import com.oracle.truffle.r.nodes.function.S3FunctionLookupNode.Result;
 import com.oracle.truffle.r.nodes.runtime.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RArguments.S3Args;
-import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
+import com.oracle.truffle.r.runtime.gnur.*;
 
 public final class GroupDispatchNode extends RNode {
 
@@ -75,7 +75,7 @@ public final class GroupDispatchNode extends RNode {
     }
 
     @Override
-    public void deparse(State state) {
+    public void deparse(RDeparse.State state) {
         String name = getGenericName();
         RDeparse.Func func = RDeparse.getFunc(name);
         if (func != null) {
@@ -85,6 +85,13 @@ public final class GroupDispatchNode extends RNode {
             state.append(name);
             callArgsNode.deparse(state);
         }
+    }
+
+    @Override
+    public void serialize(RSerialize.State state) {
+        String name = getGenericName();
+        state.setAsBuiltin(name);
+        state.serializeNodeSetCdr(callArgsNode, SEXPTYPE.LISTSXP);
     }
 
     @Override

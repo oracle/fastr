@@ -22,6 +22,7 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
 import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.gnur.*;
+import com.oracle.truffle.r.runtime.gnur.SEXPTYPE.FastRString;
 
 // Code loosely transcribed from GnuR serialize.c.
 
@@ -148,7 +149,7 @@ public class RSerialize {
         protected int getRefIndex(Object obj) {
             for (int i = 0; i < refTableIndex; i++) {
                 if (refTable[i] == obj) {
-                    return i;
+                    return i + 1;
                 }
             }
             return -1;
@@ -160,10 +161,10 @@ public class RSerialize {
     protected static boolean traceInit;
 
     private static boolean trace() {
-        if (!traceInit) {
-            trace = FastROptions.debugMatches("serialize");
-            traceInit = true;
-        }
+// if (!traceInit) {
+        trace = FastROptions.debugMatches("serialize");
+// traceInit = true;
+// }
         return trace;
     }
 
@@ -363,6 +364,9 @@ public class RSerialize {
                         // We could convert to an AST directly, but it is easier and more robust
                         // to deparse and reparse.
                         RPairList rpl = (RPairList) result;
+                        if (FastROptions.debugMatches("printUclosure")) {
+                            Debug.printClosure(rpl);
+                        }
                         String deparse = RDeparse.deparse(rpl);
                         try {
                             /*
@@ -821,10 +825,17 @@ public class RSerialize {
             for (int i = 0; i < nesting; i++) {
                 System.out.print("  ");
             }
-            System.out.printf("%d %s%n", nesting, type);
+            System.out.printf("%d %s", nesting, type);
+            if (type != SEXPTYPE.CHARSXP) {
+                System.out.println();
+            }
             nesting++;
             Object result = super.readItem(flags);
+            if (type == SEXPTYPE.CHARSXP) {
+                System.out.printf(" \"%s\"%n", result);
+            }
             nesting--;
+
             return result;
         }
 
@@ -917,6 +928,7 @@ public class RSerialize {
     }
 
     private static class Output extends Common {
+        private State state;
         protected final POutputStream stream;
         private int version;
 
@@ -939,7 +951,8 @@ public class RSerialize {
             }
         }
 
-        private void serialize(Object obj) throws IOException {
+        private void serialize(State s, Object obj) throws IOException {
+            this.state = s;
             switch (version) {
                 case 2:
                     stream.writeInt(version);
@@ -971,12 +984,21 @@ public class RSerialize {
             return null;
         }
 
-        private static SEXPTYPE checkType(SEXPTYPE type, Object obj) {
+        private static SEXPTYPE outputType(SEXPTYPE type, Object obj) {
             switch (type) {
                 case FUNSXP: {
                     RFunction func = (RFunction) obj;
                     if (func.isBuiltin()) {
                         return SEXPTYPE.BUILTINSXP;
+                    } else {
+                        return SEXPTYPE.CLOSXP;
+                    }
+                }
+
+                case LISTSXP: {
+                    RPairList pl = (RPairList) obj;
+                    if (pl.getType() != null && pl.getType() == SEXPTYPE.LANGSXP) {
+                        return SEXPTYPE.LANGSXP;
                     } else {
                         return type;
                     }
@@ -999,13 +1021,15 @@ public class RSerialize {
         }
 
         private void writeItem(Object obj) throws IOException {
-            SEXPTYPE type = SEXPTYPE.typeForClass(obj.getClass());
-            SEXPTYPE outType = checkType(type, obj);
             SEXPTYPE specialType;
-            int refIndex;
             if ((specialType = saveSpecialHook(obj)) != null) {
                 stream.writeInt(specialType.code);
-            } else if ((refIndex = getRefIndex(obj)) != -1) {
+                return;
+            }
+            SEXPTYPE type = SEXPTYPE.typeForClass(obj.getClass());
+            SEXPTYPE outType = outputType(type, obj);
+            int refIndex;
+            if ((refIndex = getRefIndex(obj)) != -1) {
                 outRefIndex(refIndex);
             } else if (type == SEXPTYPE.SYMSXP) {
                 addReadRef(obj);
@@ -1031,7 +1055,8 @@ public class RSerialize {
                         attributes = null;
                     }
                 }
-                int flags = Flags.packFlags(outType, 0, false, attributes != null, false);
+                boolean hasTag = outType == SEXPTYPE.CLOSXP || (type == SEXPTYPE.LISTSXP && !((RPairList) obj).isNullTag());
+                int flags = Flags.packFlags(outType, 0, false, attributes != null, hasTag);
                 stream.writeInt(flags);
                 switch (type) {
                     case STRSXP: {
@@ -1107,13 +1132,40 @@ public class RSerialize {
                         break;
                     }
 
+                    case LISTSXP: {
+                        if (attributes != null) {
+                            writeAttributes(attributes);
+                            attributes = null;
+                        }
+                        RPairList pl = (RPairList) obj;
+                        if (!pl.isNullTag()) {
+                            writeItem(pl.getTag());
+                        }
+                        writeItem(pl.car());
+                        writeItem(pl.cdr());
+                        break;
+                    }
+
                     case FUNSXP: {
                         RFunction fun = (RFunction) obj;
                         if (fun.isBuiltin()) {
                             String name = fun.getRBuiltin().name();
                             stream.writeString(name);
                         } else {
-                            throw RInternalError.unimplemented();
+                            // write attributes first (cf GnuR)
+                            if (attributes != null) {
+                                writeAttributes(attributes);
+                                attributes = null;
+                            }
+                            RPairList pl = (RPairList) RContext.getRASTHelper().serialize(state, fun);
+                            if (pl != null) {
+                                if (FastROptions.debugMatches("printWclosure")) {
+                                    Debug.printClosure(pl);
+                                }
+                                writeItem(pl.getTag());
+                                writeItem(pl.car());
+                                writeItem(pl.cdr());
+                            }
                         }
                         break;
                     }
@@ -1148,13 +1200,9 @@ public class RSerialize {
                     }
 
                     case FASTR_STRING: {
-                        String value = (String) obj;
+                        String value = ((FastRString) obj).value;
                         stream.writeInt(1);
-                        if (value == RRuntime.STRING_NA) {
-                            stream.writeInt(-1);
-                        } else {
-                            stream.writeString(value);
-                        }
+                        writeItem(value);
                         break;
                     }
 
@@ -1163,21 +1211,26 @@ public class RSerialize {
                 }
 
                 if (attributes != null) {
-                    // have to convert to GnuR pairlist
-                    Iterator<RAttribute> iter = attributes.iterator();
-                    while (iter.hasNext()) {
-                        RAttribute attr = iter.next();
-                        // name is the tag of the virtual pairlist
-                        // value is the car
-                        // next is the cdr
-                        stream.writeInt(Flags.packFlags(SEXPTYPE.LISTSXP, 0, false, false, true));
-                        stream.writeInt(SEXPTYPE.SYMSXP.code);
-                        writeItem(attr.getName());
-                        writeItem(attr.getValue());
-                    }
-                    stream.writeInt(Flags.packFlags(SEXPTYPE.NILVALUE_SXP, 0, false, false, false));
+                    writeAttributes(attributes);
                 }
             }
+        }
+
+        private void writeAttributes(RAttributes attributes) throws IOException {
+            // have to convert to GnuR pairlist
+            Iterator<RAttribute> iter = attributes.iterator();
+            while (iter.hasNext()) {
+                RAttribute attr = iter.next();
+                // name is the tag of the virtual pairlist
+                // value is the car
+                // next is the cdr
+                stream.writeInt(Flags.packFlags(SEXPTYPE.LISTSXP, 0, false, false, true));
+                stream.writeInt(SEXPTYPE.SYMSXP.code);
+                writeItem(attr.getName());
+                writeItem(attr.getValue());
+            }
+            stream.writeInt(Flags.packFlags(SEXPTYPE.NILVALUE_SXP, 0, false, false, false));
+
         }
 
         private void outRefIndex(int index) throws IOException {
@@ -1190,10 +1243,396 @@ public class RSerialize {
         }
     }
 
+    /**
+     * Value that is passed to the Truffle AST walker {@code RSyntaxNode.serialize} to convert AST
+     * nodes into a pairlist as required by the GnuR serialization format. The intent is to abstract
+     * the client from the details of physical pairlists, possibly not actually creating them at
+     * all. Since pairlists are inherently recursive structures through the {@code car} and
+     * {@code cdr} fields, the class maintains a virtual stack, however for the most part only the
+     * top entry is of interest. The general invariant is that on entry to
+     * {@code RSyntaxNode.serialize} the top entry is the one that the method should update and
+     * leave on the stack. Any child nodes visited by the method may need a new virtual pairlist
+     * that should be pushed with one of the {@code openXXX} methods prior to calling the child's
+     * {@code serialize} method. On return the caller is responsible for removing the virtual
+     * pairlist with {@link State#closePairList()} and assigning it into the appropriate field (
+     * {@code car} or {@code cdr}) of it's virtual pairlist.
+     *
+     */
+    public abstract static class State {
+
+        protected final Output output;
+
+        private State(Output output) {
+            this.output = output;
+        }
+
+        /**
+         * Pushes a new virtual pairlist (no type) onto the stack. An untyped pairlist is subject to
+         * the down-shifting to a simple value on {@link #closePairList()}.
+         *
+         * @return {@code this}, to allow immediate use of {@code setTag}.
+         */
+        public abstract State openPairList();
+
+        /**
+         * Pushes a new virtual pairlist of specific type onto the stack. Such a virtual pairlist
+         * will never down-shift" to its {@code car}.
+         *
+         * @return {@code this}, to allow immediate use of {@code setTag}.
+         */
+        public abstract State openPairList(SEXPTYPE type);
+
+        /**
+         * Change the type of the active element to LANGSXP.
+         */
+        public abstract void setAsLangType();
+
+        /**
+         * Sets the {@code tag} of the current pairlist.
+         */
+        public abstract void setTag(Object tag);
+
+        /**
+         * A special form of {@link #setTag} that <b<must</b> be used for symbols, i.e. identifiers.
+         */
+        public abstract void setTagAsSymbol(String name);
+
+        /**
+         * A special form of {@link #setCar} that <b<must</b> be used for symbols, i.e. identifiers.
+         */
+        public abstract void setCarAsSymbol(String name);
+
+        /**
+         * Sets the {@code car} of the current pairlist.
+         */
+        public abstract void setCar(Object car);
+
+        /**
+         * Sets the {@code cdr} of the current pairlist.
+         */
+        public abstract void setCdr(Object cdr);
+
+        /**
+         * Use this for the case where the current pairlist should be replaced by an {@link RNull}
+         * value, e.g., empty statement sequence.
+         */
+        public abstract void setNull();
+
+        /**
+         * Checks for the special case where the active pairlist only has a {@link RNull}
+         * {@code cdr}.
+         */
+        public abstract boolean isNullCdr();
+
+        /**
+         * Closes the current pairlist, handling the case where a "simple" value is down-shifted
+         * from a pairlist to just the value.
+         *
+         * @return If the {@code tag}, {@code type} and the {@cdr} are unset ({@code null}), return
+         *         the {@code car} else return the pairlist.
+         */
+        public abstract Object closePairList();
+
+        /**
+         * Use this for sequences, e.g. formals, call arguments, statements. If {@code n <= 1} has
+         * no effect, otherwise it connects the stack of pairlists through their {@code cdr} fields,
+         * terminates the pairlist with a {@link RNull#instance} and and pops {@code n - 1} entries
+         * off the stack. On exit, therefore, the top element of the stack is the head of a chained
+         * list.
+         */
+        public abstract void linkPairList(int n);
+
+        /**
+         * Handles the special case of '[', where the indices and "drop/exact" values are in
+         * different parts of the AST but need to be in the same list.
+         */
+        public abstract void setPositionsLength(int n);
+
+        /**
+         * Returns value from previous call to {@link #setPositionsLength(int)}.
+         */
+        public abstract int getPositionsLength();
+
+        /**
+         * Special case where the value is in the {@code cdr} and it needs to be in the {@code car}.
+         */
+        public abstract void switchCdrToCar();
+
+        // Implementation independent convenience methods
+
+        /**
+         * Similar to {@link #setNull} but denotes a missing value, e.g., missing default for
+         * function argument.
+         */
+        public void setCarMissing() {
+            setCar(RMissing.instance);
+        }
+
+        public void openBrace() {
+            openPairList(SEXPTYPE.LANGSXP);
+            setCarAsSymbol("{");
+        }
+
+        public void closeBrace() {
+            setCar(closePairList());
+        }
+
+        public void setAsBuiltin(String name) {
+            setAsLangType();
+            setCarAsSymbol(name);
+        }
+
+        public void serializeNodeSetCar(Object node) {
+            openPairList();
+            RContext.getRASTHelper().serializeNode(this, node);
+            setCar(closePairList());
+        }
+
+        public void serializeNodeSetCdr(Object node, SEXPTYPE type) {
+            openPairList(type);
+            RContext.getRASTHelper().serializeNode(this, node);
+            setCdr(closePairList());
+        }
+
+    }
+
+    /**
+     * Implementation that creates a physical {@link RPairList}.
+     */
+    private static class PLState extends State {
+        private static final RPairList NULL = RDataFactory.createPairList(null, null);
+        private Deque<RPairList> active = new LinkedList<>();
+        private Map<String, RSymbol> symbolMap = new HashMap<>();
+        private int[] positionsLength = new int[10];
+        private int px = 0;
+
+        private PLState(Output output) {
+            super(output);
+        }
+
+        @Override
+        public State openPairList() {
+            RPairList result = RDataFactory.createPairList(null, null, null);
+            active.addFirst(result);
+            return this;
+        }
+
+        @Override
+        public State openPairList(SEXPTYPE type) {
+            RPairList result = RDataFactory.createPairList(null, null, null, type);
+            active.addFirst(result);
+            return this;
+        }
+
+        @Override
+        public void setAsLangType() {
+            assert active.peekFirst() != NULL;
+            active.peekFirst().setType(SEXPTYPE.LANGSXP);
+        }
+
+        @Override
+        public void setTag(Object tag) {
+            active.peekFirst().setTag(tag);
+        }
+
+        @Override
+        public void setTagAsSymbol(String name) {
+            active.peekFirst().setTag(findSymbol(name));
+        }
+
+        @Override
+        public void setCarAsSymbol(String name) {
+            active.peekFirst().setCar(findSymbol(name));
+        }
+
+        private RSymbol findSymbol(String name) {
+            RSymbol symbol = symbolMap.get(name);
+            if (symbol == null) {
+                symbol = RDataFactory.createSymbol(name);
+                symbolMap.put(name, symbol);
+            }
+            return symbol;
+        }
+
+        @Override
+        public void setCar(Object car) {
+            active.peekFirst().setCar(car);
+        }
+
+        @Override
+        public void setCdr(Object cdr) {
+            active.peekFirst().setCdr(cdr);
+        }
+
+        @Override
+        public void setNull() {
+            active.removeFirst();
+            active.addFirst(NULL);
+        }
+
+        @Override
+        public Object closePairList() {
+            RPairList top = active.removeFirst();
+            if (top == NULL) {
+                return RNull.instance;
+            } else {
+                if (top.cdr() == null) {
+                    if (top.getTag() == null && top.getType() == null) {
+                        // shrink back to non-pairlist (cf GnuR)
+                        assert top.car() != null;
+                        return top.car();
+                    } else {
+                        top.setCdr(RNull.instance);
+                        return top;
+                    }
+                } else if (top.car() == null) {
+                    assert false;
+                    assert top.getTag() == null && top.getType() == null && top.cdr() != null;
+                    return top.cdr();
+                } else {
+                    return top;
+                }
+            }
+        }
+
+        @Override
+        public void linkPairList(int n) {
+            if (n > 1) {
+                setCdr(RNull.instance); // terminate pairlist
+                for (int i = 0; i < n - 1; i++) {
+                    RPairList top = active.removeFirst();
+                    setCdr(top); // chain
+                }
+            }
+        }
+
+        @Override
+        public boolean isNullCdr() {
+            RPairList pl = active.peekFirst();
+            return pl.getTag() == null && pl.car() == null && pl.cdr() == RNull.instance;
+        }
+
+        @Override
+        public void switchCdrToCar() {
+            RPairList pl = active.removeFirst();
+            assert pl.cdr() != null && pl.car() == null;
+            // setting the type prevents the usual value down-shift on close
+            SEXPTYPE type;
+            if (pl.cdr() instanceof RPairList && ((RPairList) pl.cdr()).getType() == null) {
+                type = null;
+            } else {
+                type = SEXPTYPE.LISTSXP;
+            }
+            active.addFirst(RDataFactory.createPairList(pl.cdr(), null, null, type));
+        }
+
+        @Override
+        public String toString() {
+            // IDE debugging
+            Iterator<RPairList> iter = active.iterator();
+            if (iter.hasNext()) {
+                StringBuffer sb = new StringBuffer();
+                while (iter.hasNext()) {
+                    RPairList pl = iter.next();
+                    sb.append('[');
+                    if (pl == NULL) {
+                        sb.append("NULL");
+                    } else {
+                        sb.append(pl.toString());
+                    }
+                    sb.append("] ");
+                }
+                return sb.toString();
+            } else {
+                return "EMPTY";
+            }
+        }
+
+        @Override
+        public void setPositionsLength(int n) {
+            positionsLength[px++] = n;
+        }
+
+        @Override
+        public int getPositionsLength() {
+            px--;
+            return positionsLength[px];
+        }
+
+    }
+
     @TruffleBoundary
     public static void serialize(RConnection conn, Object obj, boolean ascii, @SuppressWarnings("unused") boolean xdr, int version, Object refhook, int depth) throws IOException {
         Output output = new Output(conn, ascii ? 'A' : 'X', version, (CallHook) refhook, depth);
-        output.serialize(obj);
+        State state = new PLState(output);
+        output.serialize(state, obj);
+    }
+
+    private static class Debug {
+        private static int indent;
+        private static PrintStream out;
+
+        private static void printClosure(RPairList pl) {
+            indent = 0;
+            out = System.out;
+            printObject(pl);
+        }
+
+        private static SEXPTYPE type(Object obj) {
+            if (obj instanceof RPairList) {
+                SEXPTYPE s = ((RPairList) obj).getType();
+                return s == null ? SEXPTYPE.LISTSXP : s;
+            } else {
+                return SEXPTYPE.typeForClass(obj.getClass());
+            }
+        }
+
+        private static void printObject(Object obj) {
+            printObject(obj, true);
+        }
+
+        private static void printObject(Object obj, boolean printType) {
+            SEXPTYPE type = type(obj);
+            if (printType) {
+                print("%s", type.name());
+            }
+            switch (type) {
+                case SYMSXP: {
+                    print("\"%s\"", ((RSymbol) obj).getName());
+                    break;
+                }
+
+                case CLOSXP:
+                case LISTSXP:
+                case LANGSXP: {
+                    RPairList pl = (RPairList) obj;
+                    indent++;
+                    print("TAG: %s", pl.getTag());
+                    SEXPTYPE carType = type(pl.car());
+                    print("CAR: %s %s", type(pl.car()).name(), (carType == SEXPTYPE.SYMSXP ? ((RSymbol) pl.car()).getName() : ""));
+                    if (carType != SEXPTYPE.SYMSXP) {
+                        printObject(pl.car(), false);
+                    }
+                    SEXPTYPE cdrType = type(pl.cdr());
+                    print("CDR: %s %s", type(pl.cdr()).name(), (cdrType == SEXPTYPE.SYMSXP ? ((RSymbol) pl.cdr()).getName() : ""));
+                    if (cdrType != SEXPTYPE.SYMSXP) {
+                        printObject(pl.cdr(), false);
+                    }
+                    indent--;
+                    break;
+                }
+
+                default:
+            }
+        }
+
+        private static void print(String format, Object... objects) {
+            for (int i = 0; i < indent * 2; i++) {
+                out.write(' ');
+            }
+            out.printf(format, objects);
+            out.write('\n');
+        }
     }
 
 }

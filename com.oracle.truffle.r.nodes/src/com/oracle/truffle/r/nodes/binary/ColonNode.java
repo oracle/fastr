@@ -31,6 +31,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.gnur.*;
 
 @NodeChildren({@NodeChild("left"), @NodeChild("right")})
 public abstract class ColonNode extends RNode implements VisibilityController {
@@ -123,10 +124,21 @@ public abstract class ColonNode extends RNode implements VisibilityController {
     }
 
     @Override
-    public void deparse(State state) {
+    public void deparse(RDeparse.State state) {
         getLeft().deparse(state);
         state.append(':');
         getRight().deparse(state);
+    }
+
+    @Override
+    public void serialize(RSerialize.State state) {
+        state.setAsBuiltin(":");
+        state.openPairList(SEXPTYPE.LISTSXP);
+        state.serializeNodeSetCar(getLeft());
+        state.openPairList(SEXPTYPE.LISTSXP);
+        state.serializeNodeSetCar(getRight());
+        state.linkPairList(2);
+        state.setCdr(state.closePairList());
     }
 
     @Override
@@ -208,6 +220,11 @@ public abstract class ColonNode extends RNode implements VisibilityController {
         @Override
         public void deparse(State state) {
             getOperand().deparse(state);
+        }
+
+        @Override
+        public void serialize(RSerialize.State state) {
+            getOperand().serialize(state);
         }
 
         @Override

@@ -31,14 +31,14 @@ import com.oracle.truffle.r.runtime.gnur.*;
  * Denotes the (rarely seen) {@code pairlist} type in R.
  */
 public class RPairList extends RAttributeStorage implements RAttributable, RAbstractContainer {
-    private final Object car;
+    private Object car;
     private Object cdr;
     private Object tag;
 
     /**
      * Denotes the (GnuR) typeof entity that the pairlist represents.
      */
-    private final SEXPTYPE type;
+    private SEXPTYPE type;
 
     /**
      * Variant used in unserialization to record the GnuR type the pairlist denotes.
@@ -72,6 +72,11 @@ public class RPairList extends RAttributeStorage implements RAttributable, RAbst
         return cdr;
     }
 
+    public void setCar(Object newCar) {
+        assert car == null;
+        car = newCar;
+    }
+
     public void setCdr(Object newCdr) {
         assert cdr == null;
         cdr = newCdr;
@@ -96,8 +101,18 @@ public class RPairList extends RAttributeStorage implements RAttributable, RAbst
         return tag;
     }
 
-    public void setTag(Object tag) {
-        this.tag = tag;
+    public void setTag(Object newTag) {
+        assert tag == null;
+        this.tag = newTag;
+    }
+
+    public void setType(SEXPTYPE type) {
+        assert this.type == null || this.type.equals(type);
+        this.type = type;
+    }
+
+    public boolean isNullTag() {
+        return tag == null || tag == RNull.instance;
     }
 
     public SEXPTYPE getType() {

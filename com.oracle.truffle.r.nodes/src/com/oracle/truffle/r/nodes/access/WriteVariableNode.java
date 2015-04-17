@@ -41,6 +41,7 @@ import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.env.frame.*;
+import com.oracle.truffle.r.runtime.gnur.*;
 
 @NodeChild(value = "rhs", type = RNode.class)
 @NodeFields({@NodeField(name = "argWrite", type = boolean.class), @NodeField(name = "name", type = String.class)})
@@ -130,7 +131,7 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
         return newValue;
     }
 
-    protected void deparseHelper(State state, String op) {
+    protected void deparseHelper(RDeparse.State state, String op) {
         if (!isArgWrite()) {
             state.append(getName());
             RNode rhs = getRhs();
@@ -138,6 +139,22 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
                 state.append(op);
                 getRhs().deparse(state);
             }
+        }
+    }
+
+    protected void serializeHelper(RSerialize.State state, String op) {
+        assert !isArgWrite();
+        RNode rhs = getRhs();
+        if (rhs == null) {
+            state.setCarAsSymbol(getName());
+        } else {
+            state.setAsBuiltin(op);
+            state.openPairList(SEXPTYPE.LISTSXP);
+            state.setCarAsSymbol(getName());
+            state.openPairList(SEXPTYPE.LISTSXP);
+            state.serializeNodeSetCar(getRhs());
+            state.linkPairList(2);
+            state.setCdr(state.closePairList());
         }
     }
 
@@ -227,6 +244,11 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
         public void deparse(State state) {
             deparseHelper(state, " <- ");
         }
+
+        @Override
+        public void serialize(RSerialize.State state) {
+            serializeHelper(state, "<-");
+        }
     }
 
     @NodeFields({@NodeField(name = "frameSlot", type = FrameSlot.class), @NodeField(name = "mode", type = Mode.class)})
@@ -274,6 +296,11 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
         public void deparse(State state) {
             deparseHelper(state, " <- ");
         }
+
+        @Override
+        public void serialize(RSerialize.State state) {
+            serializeHelper(state, "<-");
+        }
     }
 
     public abstract static class AbstractWriteSuperVariableNode extends WriteVariableNode {
@@ -292,6 +319,10 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
             deparseHelper(state, " <<- ");
         }
 
+        @Override
+        public void serialize(RSerialize.State state) {
+            serializeHelper(state, "<<-");
+        }
     }
 
     public static final class WriteSuperVariableConditionalNode extends AbstractWriteSuperVariableNode {
