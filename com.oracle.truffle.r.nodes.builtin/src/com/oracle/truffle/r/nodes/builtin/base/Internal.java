@@ -27,6 +27,7 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.variables.*;
@@ -49,6 +50,7 @@ import com.oracle.truffle.r.runtime.data.*;
  * parent of the the {@code .Internal}, which will be an {@link RNodeWrapper}, will remain so any
  * instrumentation at that level will remain in place.
  */
+@NodeInfo(cost = NodeCost.NONE)
 @RBuiltin(name = ".Internal", kind = PRIMITIVE, parameterNames = {"call"}, nonEvalArgs = 0)
 public abstract class Internal extends RBuiltinNode {
 
