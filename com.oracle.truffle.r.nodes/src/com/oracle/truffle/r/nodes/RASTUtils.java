@@ -160,8 +160,14 @@ public class RASTUtils {
             RLanguage l = (RLanguage) value;
             return (RNode) NodeUtil.cloneNode((Node) l.getRep());
         } else if (value instanceof RPromise) {
-            // TODO: flatten nested promises?
-            return NodeUtil.cloneNode(((RNode) ((RPromise) value).getRep()).unwrap());
+            RPromise promise = (RPromise) value;
+            RNode promiseRep = ((RNode) ((RPromise) value).getRep()).unwrap();
+            if (promiseRep instanceof VarArgNode) {
+                VarArgNode varArgNode = (VarArgNode) promiseRep;
+                RPromise varArgPromise = varArgNode.executeNonEvaluated((VirtualFrame) promise.getFrame());
+                return createNodeForValue(varArgPromise);
+            }
+            return NodeUtil.cloneNode(promiseRep);
         } else {
             return ConstantNode.create(value);
         }
