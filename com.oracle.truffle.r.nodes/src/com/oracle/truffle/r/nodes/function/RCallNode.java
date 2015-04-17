@@ -250,6 +250,7 @@ public abstract class RCallNode extends RNode {
      * @param name The name of the function
      */
     public static RCallNode createInternalCall(VirtualFrame frame, SourceSection src, RCallNode internalCallArg, RFunction function, String name) {
+        CompilerAsserts.neverPartOfCompilation();
         assert internalCallArg instanceof UninitializedCallNode;
         return UninitializedCallNode.createCacheNode(frame, function, ((UninitializedCallNode) internalCallArg).args, src);
     }
