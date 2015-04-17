@@ -110,9 +110,7 @@ public abstract class AccessFieldNode extends AccessFieldBaseNode {
     public void serialize(RSerialize.State state) {
         state.setAsBuiltin("$");
         state.openPairList(SEXPTYPE.LISTSXP);
-        state.openPairList();
-        getObject().serialize(state);
-        state.setCar(state.closePairList());
+        state.serializeNodeSetCar(getObject());
         state.openPairList(SEXPTYPE.LISTSXP);
         state.setCarAsSymbol(getField());
         state.linkPairList(2);

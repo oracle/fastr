@@ -29,6 +29,21 @@ import com.oracle.truffle.r.runtime.gnur.SEXPTYPE.FastRString;
 /**
  * Serialize/unserialize.
  *
+ * It is sometimes convenient when debugging to trace the serialization process, particularly when
+ * unserializing an object created by GnurR. The following options are available. N.B. These should
+ * normally be set in the console using the {@code fastr.debug} function as a great deal of
+ * unserialization happens on startup.
+ * <p>
+ * Debugging options:
+ * <ul>
+ * <li>unserialize: trace the input as it is read</li>
+ * <li>printUclosure: print the pairlist resulting from unserializing an object of type CLOSXP.</li>
+ * <li>printWclosure: print the pairlist that will be written when serializing a CLOSXP.</li>
+ * </ul>
+ * N.B. All output goes to the Java standard output. Once {@code printUclosure} is set all lazily
+ * loaded functions will print, e.g. calling {@code quit()} will print the pairlist for the
+ * {@code quit} function.
+ *
  */
 // Checkstyle: stop final class check
 public class RSerialize {
@@ -157,15 +172,13 @@ public class RSerialize {
 
     }
 
-    protected static boolean trace;
-    protected static boolean traceInit;
-
+    /**
+     * Lazily read in case set during execution for debugging purposes. This is necessary because
+     * setting the option on startup will trace all the standard library functions as they are
+     * lazily loaded.
+     */
     private static boolean trace() {
-// if (!traceInit) {
-        trace = FastROptions.debugMatches("serialize");
-// traceInit = true;
-// }
-        return trace;
+        return FastROptions.debugMatches("unserialize");
     }
 
     @TruffleBoundary
