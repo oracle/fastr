@@ -153,7 +153,7 @@ public abstract class Transpose extends RBuiltinNode {
         return r;
     }
 
-    private final void setDimNames(RVector newVector, RAbstractVector oldVector) {
+    private void setDimNames(RVector newVector, RAbstractVector oldVector) {
         RList dimNames = oldVector.getDimNames(attrProfiles);
         if (dimNames != null) {
             hasDimNamesProfile.enter();
