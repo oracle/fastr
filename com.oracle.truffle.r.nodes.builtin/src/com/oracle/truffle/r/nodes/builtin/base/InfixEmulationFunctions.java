@@ -119,7 +119,7 @@ public class InfixEmulationFunctions {
 
         protected abstract Object execute(VirtualFrame frame, Object op);
 
-        @Child private PromiseHelperNode promiseHelper = new PromiseHelperNode();
+        @Child private PromiseHelperNode promiseHelper;
         @Child private PromiseEvaluator evalRecursive;
 
         protected Object evalRecursive(VirtualFrame frame, Object op) {
@@ -130,14 +130,18 @@ public class InfixEmulationFunctions {
             return evalRecursive.execute(frame, op);
         }
 
-        @Specialization
-        protected Object eval(VirtualFrame frame, RPromise p) {
-            return promiseHelper.evaluate(frame, p);
+        @Specialization(guards = {"!isRPromise(op)", "!isRArgsValuesAndNames(op)"})
+        protected Object eval(Object op) {
+            return op;
         }
 
         @Specialization
-        protected RAbstractVector eval(RAbstractVector op) {
-            return op;
+        protected Object eval(VirtualFrame frame, RPromise p) {
+            if (promiseHelper == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                promiseHelper = insert(new PromiseHelperNode());
+            }
+            return promiseHelper.evaluate(frame, p);
         }
 
         @Specialization(guards = "!argsEmpty(args)")
@@ -154,15 +158,9 @@ public class InfixEmulationFunctions {
             return args;
         }
 
-        @Fallback
-        protected Object eval(Object op) {
-            return op;
-        }
-
         protected boolean argsEmpty(RArgsValuesAndNames args) {
             return args.length() == 0;
         }
-
     }
 
     public abstract static class AccessArrayBuiltin extends RBuiltinNode {

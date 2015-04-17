@@ -187,12 +187,11 @@ public class EnvFunctions {
     @RBuiltin(name = "environment", kind = INTERNAL, parameterNames = {"fun"})
     public abstract static class Environment extends RBuiltinNode {
 
-        private final ConditionProfile isFunctionProfile = ConditionProfile.createBinaryProfile();
         private final ConditionProfile createEnvironmentProfile = ConditionProfile.createBinaryProfile();
         private final PromiseDeoptimizeFrameNode deoptFrameNode = new PromiseDeoptimizeFrameNode();
 
         @Specialization
-        protected Object environment(VirtualFrame frame, @SuppressWarnings("unused") RNull x) {
+        protected Object environment(VirtualFrame frame, @SuppressWarnings("unused") RNull fun) {
             controlVisibility();
             Frame callerFrame = Utils.getCallerFrame(frame, FrameAccess.MATERIALIZE);
             MaterializedFrame matFrame = callerFrame.materialize();
@@ -205,24 +204,24 @@ public class EnvFunctions {
          * cannot both have a specialization for {@link RFunction} and one for {@link Object}, but
          * an object that is not an {@link RFunction} is legal and must return {@code NULL}.
          */
-        @Fallback
-        protected Object environment(Object funcArg) {
+        @Specialization
+        protected Object environment(RFunction fun) {
             controlVisibility();
-            if (isFunctionProfile.profile(funcArg instanceof RFunction)) {
-                RFunction func = (RFunction) funcArg;
-                Frame enclosing = func.getEnclosingFrame();
-                REnvironment env = RArguments.getEnvironment(enclosing);
-                if (createEnvironmentProfile.profile(env == null)) {
-                    return REnvironment.createEnclosingEnvironments(enclosing.materialize());
-                } else {
-                    return env;
-                }
+            Frame enclosing = fun.getEnclosingFrame();
+            REnvironment env = RArguments.getEnvironment(enclosing);
+            if (createEnvironmentProfile.profile(env == null)) {
+                return REnvironment.createEnclosingEnvironments(enclosing.materialize());
             } else {
-                // Not an error according to GnuR
-                return RNull.instance;
+                return env;
             }
         }
 
+        @Specialization(guards = {"!isRNull(fun)", "!isRFunction(fun)"})
+        protected Object environment(@SuppressWarnings("unused") Object fun) {
+            // Not an error according to GnuR
+            controlVisibility();
+            return RNull.instance;
+        }
     }
 
     @RBuiltin(name = "environmentName", kind = INTERNAL, parameterNames = {"fun"})
@@ -234,7 +233,7 @@ public class EnvFunctions {
             return env.getName();
         }
 
-        @Fallback
+        @Specialization(guards = "!isREnvironment(env)")
         protected String environmentName(@SuppressWarnings("unused") Object env) {
             controlVisibility();
             // Not an error according to GnuR
@@ -282,19 +281,17 @@ public class EnvFunctions {
 
     }
 
-    private interface BindingErrorMixin {
-        default void check(SourceSection source, Object sym, Object env) throws RError {
-            if (!(sym instanceof RSymbol)) {
-                throw RError.error(source, RError.Message.NOT_A_SYMBOL);
-            }
-            if (!(env instanceof REnvironment)) {
-                throw RError.error(source, RError.Message.NOT_AN_ENVIRONMENT);
-            }
+    private static RuntimeException typeError(SourceSection source, Object sym, Object env) {
+        if (!(sym instanceof RSymbol)) {
+            throw RError.error(source, RError.Message.NOT_A_SYMBOL);
+        } else {
+            assert !(env instanceof REnvironment);
+            throw RError.error(source, RError.Message.NOT_AN_ENVIRONMENT);
         }
     }
 
     @RBuiltin(name = "lockBinding", kind = INTERNAL, parameterNames = {"sym", "env"})
-    public abstract static class LockBinding extends RInvisibleBuiltinNode implements BindingErrorMixin {
+    public abstract static class LockBinding extends RInvisibleBuiltinNode {
         @Specialization
         protected Object lockBinding(RSymbol sym, REnvironment env) {
             controlVisibility();
@@ -302,61 +299,38 @@ public class EnvFunctions {
             return RNull.instance;
         }
 
-        @Specialization
-        protected Object lockBinding(RAbstractStringVector name, REnvironment env) {
-            controlVisibility();
-            env.lockBinding(name.getDataAt(0));
-            return RNull.instance;
-        }
-
         @Fallback
         protected Object lockBinding(Object sym, Object env) {
-            check(getEncapsulatingSourceSection(), sym, env);
-            return RNull.instance;
+            throw typeError(getEncapsulatingSourceSection(), sym, env);
         }
     }
 
     @RBuiltin(name = "unlockBinding", kind = INTERNAL, parameterNames = {"sym", "env"})
-    public abstract static class UnlockBinding extends RInvisibleBuiltinNode implements BindingErrorMixin {
+    public abstract static class UnlockBinding extends RInvisibleBuiltinNode {
         @Specialization
-        protected Object unlockBinding(RSymbol sym, REnvironment env) {
+        protected RNull unlockBinding(RSymbol sym, REnvironment env) {
             controlVisibility();
             env.unlockBinding(sym.getName());
             return RNull.instance;
         }
 
-        @Specialization
-        protected Object unlockBinding(RAbstractStringVector name, REnvironment env) {
-            controlVisibility();
-            env.unlockBinding(name.getDataAt(0));
-            return RNull.instance;
-        }
-
         @Fallback
-        protected Object unlockBinding(Object sym, Object env) {
-            check(getEncapsulatingSourceSection(), sym, env);
-            return RNull.instance;
+        protected Object unlockBindings(Object sym, Object env) {
+            throw typeError(getEncapsulatingSourceSection(), sym, env);
         }
     }
 
     @RBuiltin(name = "bindingIsLocked", kind = INTERNAL, parameterNames = {"sym", "env"})
-    public abstract static class BindingIsLocked extends RBuiltinNode implements BindingErrorMixin {
+    public abstract static class BindingIsLocked extends RBuiltinNode {
         @Specialization
         protected Object bindingIsLocked(RSymbol sym, REnvironment env) {
             controlVisibility();
             return RDataFactory.createLogicalVectorFromScalar(env.bindingIsLocked(sym.getName()));
         }
 
-        @Specialization
-        protected Object bindingIsLocked(RAbstractStringVector name, REnvironment env) {
-            controlVisibility();
-            return RDataFactory.createLogicalVectorFromScalar(env.bindingIsLocked(name.getDataAt(0)));
-        }
-
         @Fallback
         protected Object bindingIsLocked(Object sym, Object env) {
-            check(getEncapsulatingSourceSection(), sym, env);
-            return RNull.instance;
+            throw typeError(getEncapsulatingSourceSection(), sym, env);
         }
     }
 
