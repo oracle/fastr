@@ -730,6 +730,8 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval(Ignored.Unknown, "{ as.character(list(list(c(\"hello\", \"hi\")))) }");
         assertEval(Ignored.Unknown, "{ as.character(list(c(2L, 3L))) }");
         assertEval(Ignored.Unknown, "{ as.character(list(c(2L, 3L, 5L))) }");
+
+        assertEval("{ x<-as.character(Sys.time()) }");
     }
 
     @Test
@@ -2081,6 +2083,8 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ t(t(matrix(1:6, nrow=2))) }");
         assertEval("{ t(matrix(1:4, nrow=2)) }");
         assertEval("{ t(t(matrix(1:4, nrow=2))) }");
+
+        assertEval("{ x<-matrix(1:2, ncol=2, dimnames=list(\"a\", c(\"b\", \"c\"))); t(x) }");
     }
 
     //@formatter:off
