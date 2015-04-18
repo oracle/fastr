@@ -40,8 +40,8 @@ public abstract class Attributes extends RBuiltinNode {
 
     private final BranchProfile rownamesBranch = BranchProfile.create();
 
-    @Specialization(guards = "!hasAttributes(vector)")
-    protected RNull attributesNull(@SuppressWarnings("unused") RAbstractVector vector) {
+    @Specialization(guards = "!hasAttributes(container)")
+    protected Object attributesNull(@SuppressWarnings("unused") RAbstractContainer container) {
         controlVisibility();
         return RNull.instance;
     }

@@ -58,7 +58,7 @@ public abstract class AssignVariable extends ASTNode {
             String value = c.getValues()[0];
             return writeVariable(src, isSuper, value, rhs);
         }
-        Utils.nyi();
+        RInternalError.unimplemented();
         return null;
     }
 
@@ -92,7 +92,7 @@ public abstract class AssignVariable extends ASTNode {
             lhs.getArguments().add(ArgNode.create(rhs.getSource(), "value", rhs));
             return writeFunction(lhs.getSource(), isSuper, replacementFunc, update);
         } else {
-            Utils.nyi(); // TODO here we need to flatten complex assignments
+            RInternalError.unimplemented(); // TODO here we need to flatten complex assignments
             return null;
         }
     }
@@ -116,7 +116,7 @@ public abstract class AssignVariable extends ASTNode {
             if (first instanceof SimpleAccessVariable || first instanceof AccessVector || first instanceof FieldAccess) {
                 return new Replacement(src, isSuper, lhs, rhs);
             } else {
-                Utils.nyi(); // TODO here we need to flatten complex assignments
+                RInternalError.unimplemented(); // TODO here we need to flatten complex assignments
             }
         }
         return lhs;

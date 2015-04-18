@@ -206,6 +206,14 @@ public final class REngine implements RContext.Engine {
             return null;
         } catch (DebugExitException | BrowserQuitException e) {
             throw e;
+        } catch (RInternalError e) {
+            singleton.context.getConsoleHandler().printErrorln("FastR internal error: " + e.getMessage());
+            RInternalError.reportError(e);
+            return null;
+        } catch (RError e) {
+            // RError prints the correct result on the console during construction
+            RInternalError.reportError(e);
+            return null;
         } catch (Throwable t) {
             writeStderr("Exception while parsing: " + t, true);
             t.printStackTrace();
@@ -220,7 +228,13 @@ public final class REngine implements RContext.Engine {
         for (FrameSlot slot : globalFrame.getFrameDescriptor().getSlots()) {
             FrameSlotChangeMonitor.setObjectAndInvalidate(globalFrame, slot, null, true, null);
         }
-        return parseAndEvalImpl(Source.fromText(rscript, "<test_input>"), REnvironment.globalEnv().getFrame(), printResult, false);
+        try {
+            return parseAndEvalImpl(Source.fromText(rscript, "<test_input>"), REnvironment.globalEnv().getFrame(), printResult, false);
+        } catch (RInternalError e) {
+            singleton.context.getConsoleHandler().printErrorln("FastR internal error: " + e.getMessage());
+            RInternalError.reportError(e);
+            throw e;
+        }
     }
 
     private static Object parseAndEvalImpl(Source source, MaterializedFrame frame, boolean printResult, boolean allowIncompleteSource) throws RecognitionException {
@@ -237,16 +251,11 @@ public final class REngine implements RContext.Engine {
             writeStderr(source.getLineCount() == 1 ? message : (message + " (line " + e.line + ")"), true);
             return null;
         }
+        RootCallTarget callTarget = doMakeCallTarget(node, "<repl wrapper>");
         try {
-            RootCallTarget callTarget = doMakeCallTarget(node, "<repl wrapper>");
-            try {
-                return runCall(callTarget, frame, printResult, true);
-            } catch (BreakException | NextException cfe) {
-                throw RError.error(RError.Message.NO_LOOP_FOR_BREAK_NEXT);
-            }
-        } catch (RError e) {
-            // RError prints the correct result on the console
-            return null;
+            return runCall(callTarget, frame, printResult, true);
+        } catch (BreakException | NextException cfe) {
+            throw RError.error(RError.Message.NO_LOOP_FOR_BREAK_NEXT);
         }
     }
 
@@ -445,6 +454,13 @@ public final class REngine implements RContext.Engine {
             throw e;
         } catch (Throwable e) {
             reportImplementationError(e);
+            if (e instanceof Error) {
+                throw (Error) e;
+            } else if (e instanceof RuntimeException) {
+                throw (RuntimeException) e;
+            } else {
+                throw new RInternalError(e, "throwable caught while evaluating");
+            }
         }
         return result;
     }
@@ -494,13 +510,13 @@ public final class REngine implements RContext.Engine {
 
     @TruffleBoundary
     private static void reportImplementationError(Throwable e) {
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        e.printStackTrace(new PrintStream(out));
-        // We don't call writeStdErr as that may exercise the (broken) implementation
-        singleton.context.getConsoleHandler().printErrorln(out.toString());
         // R suicide, unless, e.g., we are running units tests.
         // We also don't call quit as the system is broken.
         if (singleton.crashOnFatalError) {
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            e.printStackTrace(new PrintStream(out));
+            // We don't call writeStdErr as that may exercise the (broken) implementation
+            singleton.context.getConsoleHandler().printErrorln(out.toString());
             Utils.exit(2);
         }
     }

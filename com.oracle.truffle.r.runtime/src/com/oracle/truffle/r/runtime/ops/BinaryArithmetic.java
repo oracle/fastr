@@ -910,7 +910,7 @@ public abstract class BinaryArithmetic extends Operation {
 
         @Override
         public String opName() {
-            throw Utils.nyi();
+            throw RInternalError.unimplemented();
         }
 
         @Override
@@ -944,7 +944,7 @@ public abstract class BinaryArithmetic extends Operation {
 
         @Override
         public String opName() {
-            throw Utils.nyi();
+            throw RInternalError.unimplemented();
         }
 
         @Override

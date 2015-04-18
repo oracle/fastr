@@ -22,10 +22,12 @@
  */
 package com.oracle.truffle.r.runtime;
 
+import java.io.*;
+import java.nio.charset.*;
+import java.nio.file.*;
+import java.util.*;
+
 import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.nodes.*;
-import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.options.*;
 
 /**
@@ -35,14 +37,20 @@ public final class RInternalError extends Error {
 
     private static final long serialVersionUID = 80698622974155216L;
 
+    private final String verboseStackTrace;
+
     public RInternalError(String message, Object... args) {
         super(String.format(message, args));
-        reportError(this, null);
+        verboseStackTrace = createVerboseStackTrace();
     }
 
     public RInternalError(Throwable cause, String message, Object... args) {
         super(String.format(message, args), cause);
-        reportError(this, null);
+        verboseStackTrace = createVerboseStackTrace();
+    }
+
+    public String getVerboseStackTrace() {
+        return verboseStackTrace;
     }
 
     public static RuntimeException unimplemented() {
@@ -70,34 +78,39 @@ public final class RInternalError extends Error {
         throw new RInternalError("should not reach here: %s", message);
     }
 
-    static void reportError(Throwable t, SourceSection source) {
-        CompilerDirectives.transferToInterpreter();
-        if (FastROptions.PrintErrorStacktraces.getValue()) {
-            System.err.printf("RError with message %s:%n", t.getMessage());
-            if (source != null) {
-                System.err.printf("        at %s%n", source.getShortDescription());
-            }
-            Truffle.getRuntime().iterateFrames(frame -> {
-                String sourceDesc = findSourceDesc(frame);
-                System.err.printf("        at %s%n", sourceDesc != null ? sourceDesc : frame.getCallTarget().toString());
-                return null;
-            });
-            System.err.println("Java stack trace:");
-            t.printStackTrace();
+    static String createVerboseStackTrace() {
+        if (FastROptions.PrintErrorStacktracesToFile.getValue() || FastROptions.PrintErrorStacktraces.getValue()) {
+            return Utils.createStackTrace(true);
+        } else {
+            return "";
         }
     }
 
-    private static String findSourceDesc(FrameInstance frame) {
-        if (frame.getCallNode() == null) {
-            return null;
-        }
-        Node current = frame.getCallNode();
-        do {
-            if (current.getSourceSection() != null) {
-                return current.getSourceSection().getShortDescription();
+    public static void reportError(Throwable t) {
+        if (FastROptions.PrintErrorStacktracesToFile.getValue() || FastROptions.PrintErrorStacktraces.getValue()) {
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            t.printStackTrace(new PrintStream(out));
+            String verboseStackTrace;
+            if (t instanceof RInternalError) {
+                verboseStackTrace = ((RInternalError) t).getVerboseStackTrace();
+            } else if (t instanceof RError) {
+                verboseStackTrace = ((RError) t).getVerboseStackTrace();
+            } else {
+                verboseStackTrace = "";
             }
-            current = current.getParent();
-        } while (current != null);
-        return null;
+            if (FastROptions.PrintErrorStacktraces.getValue()) {
+                System.err.println(out.toString());
+                System.err.println(verboseStackTrace);
+            }
+            if (FastROptions.PrintErrorStacktracesToFile.getValue()) {
+                try (BufferedWriter writer = Files.newBufferedWriter(new File("fastr_errors.log").toPath(), StandardCharsets.UTF_8, StandardOpenOption.APPEND, StandardOpenOption.CREATE)) {
+                    writer.append(new Date().toString()).append('\n');
+                    writer.append(out.toString()).append('\n');
+                    writer.append(verboseStackTrace).append("\n\n");
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
     }
 }
