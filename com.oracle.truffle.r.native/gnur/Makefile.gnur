@@ -60,22 +60,25 @@ ifeq ($(OSNAME), SunOS)
 #
 # Configuring GnuR for Solaris is slightly complicated for three reasons:
 # 1. the default iconv utility is inadequate and has to be replaced by Gnu iconv
-# 2. there is a choice of compilers, gcc or solaris studio, the latter requiring
-#    more configuration options
+# 2. the solaris studio compilers must be used, assumed to be in /opt/solarisstudio12.3
 # 3. Solaris runs on x64 and Sparc
 #
-# Currently we only support gcc and x64 (gcc assumed to be on the PATH)
-#
     OS_ARCH := $(shell uname -p)
-    ifneq ($(OS_ARCH), i386)
-        $(error Solaris/SPARC not supported)
+    SSTUDIO := /opt/solarisstudio12.3
+    FLIBS_COMMON := -lsunimath -lfai -lfui -lsunmath -lmtsk -lfsu
+    ifeq ($(OS_ARCH), i386)
+        SUB_ARCH := amd64
+    else
+        SUB_ARCH := sparc/64
+        FLIBS_SUB_ARCH := -lifai -lfai2 -lfsumai -lfprodai -lfminlai -lfmaxlai -lfminvai -lfmaxvai
     endif
     ICONV := libiconv-1.14
     $(shell mkdir -p iconv_install)
     ICONV_INSTALL := $(abspath iconv_install)
-    $(info ICONV_INSTALL=$(ICONV_INSTALL))
     ICONV_FLAGS := "-L$(ICONV_INSTALL)/lib -I$(ICONV_INSTALL)/include"
-    ICONV_CONFIG_FLAGS := CFLAGS=$(ICONV_FLAGS) CPPFLAGS=$(ICONV_FLAGS) LDFLAGS=$(ICONV_FLAGS)
+    ICONV_CONFIG_FLAGS := CC="$(SSTUDIO)/bin/cc -m64" CXX="$(SSTUDIO)/bin/CC -m64" CFLAGS=$(ICONV_FLAGS) LDFLAGS=$(ICONV_FLAGS)
+    GNUR_FLIBS := FLIBS="-R$(SSTUDIO)/prod/lib/$(SUB_ARCH) $(FLIBS_COMMON) $(FLIBS_SUB_ARCH)"
+    GNUR_CONFIG_FLAGS := $(ICONV_CONFIG_FLAGS) CPPFLAGS=$(ICONV_FLAGS) $(GNUR_FLIBS) F77="$(SSTUDIO)/bin/sunf95 -m64"
 
 iconv: $(ICONV) iconv_config iconv_build
 
@@ -108,7 +111,7 @@ config_update:
 endif
 
 $(GNUR_HOME)/Makefile:
-	(cd $(GNUR_HOME); ./configure --with-x=no --without-recommended-packages $(ICONV_CONFIG_FLAGS) > gnur_configure.log 2>&1)
+	(cd $(GNUR_HOME); ./configure --with-x=no --without-recommended-packages $(GNUR_CONFIG_FLAGS) > gnur_configure.log 2>&1)
 
 
 build: $(GNUR_HOME)/bin/R
