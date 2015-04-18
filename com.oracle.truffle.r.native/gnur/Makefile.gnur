@@ -40,8 +40,6 @@
 
 OSNAME := $(shell uname)
 
-$(info cmd=$(MAKECMDGOALS))
-
 ifeq ($(OSNAME), Linux)
   FORCE_PIC := true
 else ifeq ($(OSNAME), SunOS)
@@ -61,7 +59,7 @@ ifeq ($(OSNAME), SunOS)
 # Configuring GnuR for Solaris is slightly complicated for three reasons:
 # 1. the default iconv utility is inadequate and has to be replaced by Gnu iconv
 # 2. the solaris studio compilers must be used, assumed to be in /opt/solarisstudio12.3
-# 3. Solaris runs on x64 and Sparc
+# 3. Solaris runs on x64 and Sparc and the configure options are different
 #
     OS_ARCH := $(shell uname -p)
     SSTUDIO := /opt/solarisstudio12.3
