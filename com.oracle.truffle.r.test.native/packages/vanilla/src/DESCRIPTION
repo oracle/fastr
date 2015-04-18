@@ -8,3 +8,4 @@ Maintainer: FastR Tester <fastr@yahoogroups.com>
 Description: Tests the package loading implementation
 License: GPL-2
 Packaged: 2014-08-22 00:34:45 UTC; mjj
+Depends: R (>= 3.1.3)
