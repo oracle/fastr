@@ -25,10 +25,9 @@ package com.oracle.truffle.r.nodes.function.signature;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
-import com.oracle.truffle.r.runtime.*;
 
 @TypeSystemReference(ArgumentsTypeSystem.class)
 public abstract class ArgumentsNode extends Node {
 
-    public abstract ArgumentsSignature execute(VirtualFrame frame);
+    public abstract Object execute(VirtualFrame frame);
 }

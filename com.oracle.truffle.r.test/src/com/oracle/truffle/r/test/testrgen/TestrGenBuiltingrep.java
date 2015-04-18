@@ -24,8 +24,7 @@ public class TestrGenBuiltingrep extends TestBase {
 
     @Test
     public void testgrep2() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list('éè', '«Latin-1 accented chars»: éè øØ å<Å æ<Æ é éè', TRUE, FALSE, TRUE, FALSE, FALSE, FALSE); .Internal(grep(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]]))");
+        assertEval("argv <- list('éè', '«Latin-1 accented chars»: éè øØ å<Å æ<Æ é éè', TRUE, FALSE, TRUE, FALSE, FALSE, FALSE); .Internal(grep(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]]))");
     }
 
     @Test
@@ -50,8 +49,11 @@ public class TestrGenBuiltingrep extends TestBase {
 
     @Test
     public void testgrep7() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(\''', structure('exNSS4_1.0.tar.gz', .Names = ''), FALSE, FALSE, FALSE, FALSE, FALSE, FALSE); .Internal(grep(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]]))");
+        assertEval(Ignored.ParserErrorFormatting,
+                        Output.ContainsError,
+                        "argv <- list(''', structure('exNSS4_1.0.tar.gz', .Names = ''), FALSE, FALSE, FALSE, FALSE, FALSE, FALSE); .Internal(grep(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]]))");
+        assertEval("argv <- list('\\'', structure('exNSS4_1.0.tar.gz', .Names = ''), FALSE, FALSE, FALSE, FALSE, FALSE, FALSE); .Internal(grep(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]]))");
+        assertEval("argv <- list('', structure('exNSS4_1.0.tar.gz', .Names = ''), FALSE, FALSE, FALSE, FALSE, FALSE, FALSE); .Internal(grep(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]]))");
     }
 
     @Test
@@ -61,8 +63,7 @@ public class TestrGenBuiltingrep extends TestBase {
 
     @Test
     public void testgrep10() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list('-package$', structure(c('bkde', 'bkde2D', 'bkfe', 'dpih', 'dpik', 'dpill', 'locpoly'), .Names = c('/home/lzhao/tmp/RtmphvE7Uy/ltxf49c4960bf/bkde.tex', '/home/lzhao/tmp/RtmphvE7Uy/ltxf49c4960bf/bkde2D.tex', '/home/lzhao/tmp/RtmphvE7Uy/ltxf49c4960bf/bkfe.tex', '/home/lzhao/tmp/RtmphvE7Uy/ltxf49c4960bf/dpih.tex', '/home/lzhao/tmp/RtmphvE7Uy/ltxf49c4960bf/dpik.tex', '/home/lzhao/tmp/RtmphvE7Uy/ltxf49c4960bf/dpill.tex', '/home/lzhao/tmp/RtmphvE7Uy/ltxf49c4960bf/locpoly.tex')), FALSE, FALSE, TRUE, FALSE, FALSE, FALSE); .Internal(grep(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]]))");
+        assertEval("argv <- list('-package$', structure(c('bkde', 'bkde2D', 'bkfe', 'dpih', 'dpik', 'dpill', 'locpoly'), .Names = c('/home/lzhao/tmp/RtmphvE7Uy/ltxf49c4960bf/bkde.tex', '/home/lzhao/tmp/RtmphvE7Uy/ltxf49c4960bf/bkde2D.tex', '/home/lzhao/tmp/RtmphvE7Uy/ltxf49c4960bf/bkfe.tex', '/home/lzhao/tmp/RtmphvE7Uy/ltxf49c4960bf/dpih.tex', '/home/lzhao/tmp/RtmphvE7Uy/ltxf49c4960bf/dpik.tex', '/home/lzhao/tmp/RtmphvE7Uy/ltxf49c4960bf/dpill.tex', '/home/lzhao/tmp/RtmphvE7Uy/ltxf49c4960bf/locpoly.tex')), FALSE, FALSE, TRUE, FALSE, FALSE, FALSE); .Internal(grep(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]]))");
     }
 
     @Test

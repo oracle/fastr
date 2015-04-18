@@ -101,13 +101,13 @@ public final class RDataFrame implements RShareable, RAbstractContainer {
 
     @Override
     public boolean hasDimensions() {
-        Utils.nyi("data frame's dimensions need to be obtained using builtins");
+        RInternalError.unimplemented("data frame's dimensions need to be obtained using builtins");
         return false;
     }
 
     @Override
     public int[] getDimensions() {
-        Utils.nyi("data frame's dimensions need to be obtained using builtins");
+        RInternalError.unimplemented("data frame's dimensions need to be obtained using builtins");
         return null;
     }
 
@@ -146,7 +146,7 @@ public final class RDataFrame implements RShareable, RAbstractContainer {
 
     @Override
     public RList getDimNames(RAttributeProfiles attrProfiles) {
-        Utils.nyi("data frame's dimnames needs to be obtained using builtins");
+        RInternalError.unimplemented("data frame's dimnames needs to be obtained using builtins");
         return null;
     }
 

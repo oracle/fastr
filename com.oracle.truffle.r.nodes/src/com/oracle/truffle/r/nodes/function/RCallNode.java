@@ -37,9 +37,9 @@ import com.oracle.truffle.r.nodes.runtime.*;
 import com.oracle.truffle.r.parser.ast.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RDeparse.Func;
-import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
+import com.oracle.truffle.r.runtime.gnur.*;
 
 /**
  * This class denotes a call site to a function,e.g.:
@@ -78,13 +78,13 @@ import com.oracle.truffle.r.runtime.env.*;
  *  U = {@link UninitializedCallNode}: Forms the uninitialized end of the function PIC
  *  D = {@link DispatchedCallNode}: Function fixed, no varargs
  *  G = {@link GenericCallNode}: Function arbitrary, no varargs (generic case)
- *
+ * 
  *  UV = {@link UninitializedCallNode} with varargs,
  *  UVC = {@link UninitializedVarArgsCacheCallNode} with varargs, for varargs cache
  *  DV = {@link DispatchedVarArgsCallNode}: Function fixed, with cached varargs
  *  DGV = {@link DispatchedGenericVarArgsCallNode}: Function fixed, with arbitrary varargs (generic case)
  *  GV = {@link GenericVarArgsCallNode}: Function arbitrary, with arbitrary varargs (generic case)
- *
+ * 
  * (RB = {@link RBuiltinNode}: individual functions that are builtins are represented by this node
  * which is not aware of caching). Due to {@link CachedCallNode} (see below) this is transparent to
  * the cache and just behaves like a D/DGV)
@@ -97,11 +97,11 @@ import com.oracle.truffle.r.runtime.env.*;
  * non varargs, max depth:
  * |
  * D-D-D-U
- *
+ * 
  * no varargs, generic (if max depth is exceeded):
  * |
  * D-D-D-D-G
- *
+ * 
  * varargs:
  * |
  * DV-DV-UV         <- function call target identity level cache
@@ -109,7 +109,7 @@ import com.oracle.truffle.r.runtime.env.*;
  *    DV
  *    |
  *    UVC           <- varargs signature level cache
- *
+ * 
  * varargs, max varargs depth exceeded:
  * |
  * DV-DV-UV
@@ -121,7 +121,7 @@ import com.oracle.truffle.r.runtime.env.*;
  *    DV
  *    |
  *    DGV
- *
+ * 
  * varargs, max function depth exceeded:
  * |
  * DV-DV-DV-DV-GV
@@ -184,7 +184,7 @@ public abstract class RCallNode extends RNode {
     }
 
     @Override
-    public void deparse(State state) {
+    public void deparse(RDeparse.State state) {
         Object fname = RASTUtils.findFunctionName(this, false);
         if (fname instanceof RSymbol) {
             String sfname = ((RSymbol) fname).getName();
@@ -219,6 +219,13 @@ public abstract class RCallNode extends RNode {
     }
 
     @Override
+    public void serialize(RSerialize.State state) {
+        state.setAsLangType();
+        state.serializeNodeSetCar(getFunctionNode());
+        state.serializeNodeSetCdr(getArgumentsNode(), SEXPTYPE.LISTSXP);
+    }
+
+    @Override
     public RNode substitute(REnvironment env) {
         RNode functionSub = getFunctionNode().substitute(env);
         CallArgumentsNode argsSub = (CallArgumentsNode) getArgumentsNode().substitute(env);
@@ -250,7 +257,7 @@ public abstract class RCallNode extends RNode {
      * @param name The name of the function
      */
     public static RCallNode createInternalCall(VirtualFrame frame, SourceSection src, RCallNode internalCallArg, RFunction function, String name) {
-        CompilerDirectives.transferToInterpreter();
+        CompilerAsserts.neverPartOfCompilation();
         assert internalCallArg instanceof UninitializedCallNode;
         return UninitializedCallNode.createCacheNode(frame, function, ((UninitializedCallNode) internalCallArg).args, src);
     }

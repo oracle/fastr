@@ -179,7 +179,7 @@ public class RCommand {
         }
         try {
             // long start = System.currentTimeMillis();
-            MaterializedFrame globalFrame = REngine.initialize(commandArgs, new JLineConsoleHandler(isInteractive, console), true, false);
+            MaterializedFrame globalFrame = REngine.initialize(commandArgs, new JLineConsoleHandler(isInteractive, console), false, false);
             // console.println("initialize time: " + (System.currentTimeMillis() - start));
             for (;;) {
                 console.setPrompt(SLAVE.getValue() ? "" : "> ");

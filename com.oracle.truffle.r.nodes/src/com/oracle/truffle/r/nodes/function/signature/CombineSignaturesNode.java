@@ -29,10 +29,12 @@ import com.oracle.truffle.r.runtime.*;
 @NodeChildren({@NodeChild("left"), @NodeChild("right")})
 public abstract class CombineSignaturesNode extends ArgumentsNode {
 
+    protected static final int CACHE_LIMIT = 3;
+
     public abstract ArgumentsSignature execute(ArgumentsSignature left, ArgumentsSignature right);
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"left == leftCached", "right == rightCached"})
+    @Specialization(limit = "CACHE_LIMIT", guards = {"left == leftCached", "right == rightCached"})
     protected ArgumentsSignature combineCached(ArgumentsSignature left, ArgumentsSignature right, @Cached("left") ArgumentsSignature leftCached, @Cached("right") ArgumentsSignature rightCached,
                     @Cached("combine(left, right)") ArgumentsSignature resultCached) {
         return resultCached;

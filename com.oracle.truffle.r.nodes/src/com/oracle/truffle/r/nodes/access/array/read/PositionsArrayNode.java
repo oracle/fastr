@@ -29,7 +29,6 @@ import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.array.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.RDeparse.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
 
@@ -76,9 +75,9 @@ public class PositionsArrayNode extends RNode {
 
     public Object executeEval(VirtualFrame frame, Object vector, Object exact) {
         if (hasVarArg) {
-            return executeEvalVarArg(frame, vector, exact);
+            return doEvalVarArg(frame, vector, exact);
         } else {
-            return executeEvalNoVarArg(frame, vector, exact);
+            return doEvalNoVarArg(frame, vector, exact);
         }
     }
 
@@ -91,11 +90,11 @@ public class PositionsArrayNode extends RNode {
         return evaluatedElements;
     }
 
-    public Object executeEvalNoVarArg(VirtualFrame frame, Object vector, Object exact) {
+    private Object doEvalNoVarArg(VirtualFrame frame, Object vector, Object exact) {
         int length = conversionAdapter.getLength();
         Object[] evaluatedElements = explodeLoopNoVarArg(frame, positionsAdapter, length);
         length = conversionAdapter.getLength(); // could have changed
-        executeEvalInternal(frame, vector, exact, evaluatedElements, length);
+        doEvalInternal(frame, vector, exact, evaluatedElements, length);
         return conversionAdapter.getLength() == 1 ? evaluatedElements[0] : evaluatedElements;
     }
 
@@ -116,7 +115,7 @@ public class PositionsArrayNode extends RNode {
         return evaluatedElements;
     }
 
-    public Object executeEvalVarArg(VirtualFrame frame, Object vector, Object exact) {
+    private Object doEvalVarArg(VirtualFrame frame, Object vector, Object exact) {
         int length = conversionAdapter.getLength();
         Object[] evaluatedElements = explodeLoopVarArg(frame, positionsAdapter, length, promiseHelper);
         if (evaluatedElements.length != conversionAdapter.getLength()) {
@@ -124,12 +123,12 @@ public class PositionsArrayNode extends RNode {
             this.conversionAdapter = insert(new PositionsArrayConversionNodeMultiDimAdapter(this.conversionAdapter.isSubset(), evaluatedElements.length));
         }
         length = conversionAdapter.getLength(); // could have changed
-        executeEvalInternal(frame, vector, exact, evaluatedElements, length);
+        doEvalInternal(frame, vector, exact, evaluatedElements, length);
         return conversionAdapter.getLength() == 1 ? evaluatedElements[0] : evaluatedElements;
     }
 
     @ExplodeLoop
-    public void executeEvalInternal(VirtualFrame frame, Object vector, Object exact, Object[] evaluatedElements, int length) {
+    private void doEvalInternal(VirtualFrame frame, Object vector, Object exact, Object[] evaluatedElements, int length) {
         for (int i = 0; i < length; i++) {
             Object convertedOperator = conversionAdapter.executeConvert(frame, vector, evaluatedElements[i], exact, i);
             evaluatedElements[i] = conversionAdapter.executeArg(frame, vector, convertedOperator, i);
@@ -146,8 +145,12 @@ public class PositionsArrayNode extends RNode {
     }
 
     @Override
-    public void deparse(State state) {
+    public void deparse(RDeparse.State state) {
         positionsAdapter.deparse(state);
     }
 
+    @Override
+    public void serialize(RSerialize.State state) {
+        positionsAdapter.serialize(state);
+    }
 }

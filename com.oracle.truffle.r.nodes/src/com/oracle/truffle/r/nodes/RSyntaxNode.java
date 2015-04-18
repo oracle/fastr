@@ -54,6 +54,13 @@ public interface RSyntaxNode {
     }
 
     /**
+     * Support for serializing closures.
+     */
+    default void serialize(@SuppressWarnings("unused") RSerialize.State state) {
+        throw RInternalError.unimplemented("serialize not implemented in " + getClass());
+    }
+
+    /**
      * Returns {@code true} if and only if this node is part of the syntactic view of the AST.
      * Perhaps surprisingly the majority of nodes are not syntactic, hence the {@code false}
      * default.

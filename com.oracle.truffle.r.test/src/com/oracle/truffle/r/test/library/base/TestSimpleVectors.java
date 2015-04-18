@@ -612,6 +612,9 @@ public class TestSimpleVectors extends TestBase {
 
         assertEval("{ x<-list(data=list(matrix(1:4, ncol=2))); x$data[[1]][2,2]<-42; x }");
 
+        assertEval(Output.ContainsError, "{ x<-c(1,2,3,4); dim(x)<-c(2,2); x[[as.raw(1), 1]]<-NULL }");
+        assertEval(Output.ContainsError, "{ x<-1:4; x[[1]]<-NULL; x }");
+
         /*
          * These tests, which should generate errors, appear to be non-deterministic in GnuR in the
          * error message produced. It is either "more elements supplied than there are to replace"
@@ -622,10 +625,8 @@ public class TestSimpleVectors extends TestBase {
         assertEval(Ignored.Unstable, Output.ContainsError, "{ b<-as.list(3:5); dim(b) <- c(1,3) ; b[[c(1,2)]] <- NULL ; b }");
         assertEval(Ignored.Unstable, Output.ContainsError, "{ x<-c(1,2,3); x[[-4]]<-NULL }");
         // this came from testRawIndex
-        assertEval(Ignored.Unknown, Output.ContainsError, "{ x<-c(1,2,3,4); dim(x)<-c(2,2); x[[as.raw(1), 1]]<-NULL }");
 
         // weird problems with fluctuating error messages in GNU R
-        assertEval(Ignored.Unknown, Output.ContainsError, "{ x<-1:4; x[[1]]<-NULL; x }");
         assertEval(Ignored.Unknown, Output.ContainsError, "{ x<-1:4; x[[0]]<-NULL; x }");
         assertEval(Ignored.Unknown, Output.ContainsError, "{ b<-3:5; dim(b) <- c(1,3) ; b[[c(1)]] <- NULL ; b }");
         assertEval(Ignored.Unknown, Output.ContainsError, "{ b<-3:5; dim(b) <- c(1,3) ; b[[0]] <- NULL ; b }");
@@ -1420,8 +1421,8 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ b <- list(1+2i,3+4i) ; dim(b) <- c(2,1) ; b[3] <- NULL ; b }");
 
         // weird problems with fluctuating error messages in GNU R
-        assertEval(Ignored.Unknown, Output.ContainsError, "{ f <- function(b,v) { b[[2]] <- v ; b } ; f(c(\"a\",\"b\"),\"d\") ; f(c(\"a\",\"b\"),NULL) }");
-        assertEval(Ignored.Unknown, Output.ContainsError, "{ x <- 4:10 ; x[[\"z\"]] <- NULL ; x }");
+        assertEval(Output.ContainsError, "{ f <- function(b,v) { b[[2]] <- v ; b } ; f(c(\"a\",\"b\"),\"d\") ; f(c(\"a\",\"b\"),NULL) }");
+        assertEval(Output.ContainsError, "{ x <- 4:10 ; x[[\"z\"]] <- NULL ; x }");
     }
 
     @Test
@@ -1978,6 +1979,7 @@ public class TestSimpleVectors extends TestBase {
         assertEval(Output.ContainsError, "{ f <- function(b,i,v) { b[[i]] <- v ; b } ;  f(list(1,2,b=list(a=1)),c(\"b\",\"a\"),10) ; f(list(a=1,b=c(a=2)),1+2i,1:3) }");
         assertEval(" { f <- function(b,i,v) { b[[i]] <- v ; b } ;  f(list(1,2,b=list(a=1)),c(\"b\",\"a\"),10) ; f(list(a=1,b=c(a=2)),c(TRUE,TRUE),3) }");
         assertEval(Output.ContainsError, "{ f <- function(b,i,v) { b[[i]] <- v ; b } ;  f(list(1,2,b=list(a=1)),c(\"b\",\"a\"),10) ; f(f,TRUE,3) }");
+        assertEval(Output.ContainsError, "{ f <- function(b,i,v) { b[[i]] <- v ; b } ;  f(list(1,2,b=list(a=1)),c(\"b\",\"a\"),10) ; f(c(a=1,b=2),\"b\",NULL) }");
         assertEval(Output.ContainsError, "{ f <- function(b,i,v) { b[[i]] <- v ; b } ;  f(list(1,2,b=list(a=1)),c(\"b\",\"a\"),10) ; f(c(a=1,b=2),\"b\",as.raw(12)) }");
         assertEval(Output.ContainsError, "{ f <- function(b,i,v) { b[[i]] <- v ; b } ;  f(list(1,2,b=list(a=1)),c(\"b\",\"a\"),10) ; f(c(a=1,b=2),c(1+2i,3+4i),as.raw(12)) }");
         assertEval("{ l <- list(a=1,b=2,cd=list(c=3,d=4)) ; x <- list(l,xy=list(x=l,y=l)) ; x[[c(2,2,3,2)]] <- 10 ; l }");
@@ -1988,7 +1990,6 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ l <- matrix(list(1,2)) ; l[[4]] <- NULL ; l }");
 
         assertEval(Ignored.Unknown, Output.ContainsError, "{ f <- function(b,i,v) { b[[i]] <- v ; b } ; f(list(1,2,list(3)), c(3,1), 4) ; f(c(1,2,3), 2L, NULL) }");
-        assertEval(Ignored.Unknown, Output.ContainsError, "{ f <- function(b,i,v) { b[[i]] <- v ; b } ;  f(list(1,2,b=list(a=1)),c(\"b\",\"a\"),10) ; f(c(a=1,b=2),\"b\",NULL) }");
     }
 
     @Test

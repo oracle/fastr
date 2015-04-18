@@ -29,6 +29,7 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.builtin.base.GetFunctionsFactory.GetFactory;
@@ -39,7 +40,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
 
 // TODO Implement properly, this is a simple implementation that works when the environment doesn't matter
-@RBuiltin(name = "do.call", kind = INTERNAL, parameterNames = {"name", "args", "env"})
+@RBuiltin(name = "do.call", kind = INTERNAL, parameterNames = {"what", "args", "envir"})
 public abstract class DoCall extends RBuiltinNode {
 
     @Child private CallInlineCacheNode callCache = CallInlineCacheNode.create(3);
@@ -49,19 +50,24 @@ public abstract class DoCall extends RBuiltinNode {
     @CompilationFinal private boolean needsCallerFrame;
 
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
-
-    @Specialization(guards = "fname.getLength() == 1")
-    protected Object doDoCall(VirtualFrame frame, RAbstractStringVector fname, RList argsAsList, REnvironment env) {
-        if (getNode == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            getNode = insert(GetFactory.create(new RNode[4], getBuiltin(), getSuppliedSignature()));
-        }
-        RFunction func = (RFunction) getNode.execute(frame, fname, env, RType.Function.getName(), RRuntime.LOGICAL_TRUE);
-        return doDoCall(frame, func, argsAsList, env);
-    }
+    private final BranchProfile errorProfile = BranchProfile.create();
 
     @Specialization
-    protected Object doDoCall(VirtualFrame frame, RFunction func, RList argsAsList, @SuppressWarnings("unused") REnvironment env) {
+    protected Object doDoCall(VirtualFrame frame, Object what, RList argsAsList, REnvironment env) {
+        RFunction func;
+        if (what instanceof RFunction) {
+            func = (RFunction) what;
+        } else if (what instanceof String || (what instanceof RAbstractStringVector && ((RAbstractStringVector) what).getLength() == 1)) {
+            if (getNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                getNode = insert(GetFactory.create(new RNode[4], getBuiltin(), getSuppliedSignature()));
+            }
+            func = (RFunction) getNode.execute(frame, what, env, RType.Function.getName(), RRuntime.LOGICAL_TRUE);
+        } else {
+            errorProfile.enter();
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.MUST_BE_STRING_OR_FUNCTION, "what");
+        }
+
         Object[] argValues = argsAsList.getDataNonShared();
         RStringVector n = argsAsList.getNames(attrProfiles);
         String[] argNames = n == null ? new String[argValues.length] : n.getDataNonShared();

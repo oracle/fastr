@@ -277,7 +277,7 @@ public abstract class Unlist extends RBuiltinNode {
                 return RDataFactory.createList(result, namesInfo != null && namesInfo.namesAssigned ? RDataFactory.createStringVector(namesData, RDataFactory.INCOMPLETE_VECTOR) : null);
             }
             default:
-                throw Utils.nyi();
+                throw RInternalError.unimplemented();
         }
     }
 

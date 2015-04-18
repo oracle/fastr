@@ -2,7 +2,7 @@
  * This material is distributed under the GNU General Public License
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
- * 
+ *
  * Copyright (c) 2014, Purdue University
  * Copyright (c) 2014, Oracle and/or its affiliates
  *
@@ -19,27 +19,27 @@ public class TestrGenBuiltinenc2utf8 extends TestBase {
 
     @Test
     public void testenc2utf81() {
-        assertEval(Ignored.Unknown, "argv <- list('Add Text to a Plot');enc2utf8(argv[[1]]);");
+        assertEval("argv <- list('Add Text to a Plot');enc2utf8(argv[[1]]);");
     }
 
     @Test
     public void testenc2utf82() {
-        assertEval(Ignored.Unknown, "argv <- list('Modes');enc2utf8(argv[[1]]);");
+        assertEval("argv <- list('Modes');enc2utf8(argv[[1]]);");
     }
 
     @Test
     public void testenc2utf83() {
-        assertEval(Ignored.Unknown, "argv <- list(c('', '(De)compress I/O Through Connections'));enc2utf8(argv[[1]]);");
+        assertEval("argv <- list(c('', '(De)compress I/O Through Connections'));enc2utf8(argv[[1]]);");
     }
 
     @Test
     public void testenc2utf84() {
-        assertEval(Ignored.Unknown, "argv <- list(character(0));enc2utf8(argv[[1]]);");
+        assertEval("argv <- list(character(0));enc2utf8(argv[[1]]);");
     }
 
     @Test
     public void testenc2utf86() {
-        assertEval(Ignored.Unknown, "argv <- list(NA_character_);do.call('enc2utf8', argv)");
+        assertEval("argv <- list(NA_character_);do.call('enc2utf8', argv)");
     }
 
 }

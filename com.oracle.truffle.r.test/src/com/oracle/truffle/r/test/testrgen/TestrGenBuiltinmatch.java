@@ -69,7 +69,7 @@ public class TestrGenBuiltinmatch extends TestBase {
 
     @Test
     public void testmatch11() {
-        assertEval(Ignored.Unknown, "argv <- list('g', 'l', NA_character_, NULL); .Internal(match(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
+        assertEval("argv <- list('g', 'l', NA_character_, NULL); .Internal(match(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
     }
 
     @Test

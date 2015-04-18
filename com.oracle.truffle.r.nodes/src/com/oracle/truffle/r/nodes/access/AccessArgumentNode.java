@@ -26,9 +26,9 @@ import static com.oracle.truffle.r.nodes.function.opt.EagerEvalHelper.*;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.variables.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -42,12 +42,13 @@ import com.oracle.truffle.r.runtime.data.RPromise.RPromiseFactory;
 import com.oracle.truffle.r.runtime.env.*;
 
 /**
- * This {@link RNode} returns a function's argument specified by its formal index (
- * {@link #getIndex()}). It is used to populate a function's new frame right after the actual
- * function call and before the function's actual body is executed.
+ * This {@link RNode} returns a function's argument specified by its formal index. It is used to
+ * populate a function's new frame right after the actual function call and before the function's
+ * actual body is executed.
  */
-@NodeChild(value = "readArgNode", type = ReadArgumentNode.class)
-public abstract class AccessArgumentNode extends RNode {
+public final class AccessArgumentNode extends RNode {
+
+    @Child private ReadArgumentNode readArgNode;
 
     @Child private PromiseHelperNode promiseHelper;
 
@@ -56,7 +57,9 @@ public abstract class AccessArgumentNode extends RNode {
      */
     private final int index;
 
-    public abstract ReadArgumentNode getReadArgNode();
+    public ReadArgumentNode getReadArgNode() {
+        return readArgNode;
+    }
 
     /**
      * Used to cache {@link RPromise} evaluations.
@@ -68,23 +71,22 @@ public abstract class AccessArgumentNode extends RNode {
     @CompilationFinal private boolean deoptimized;
     @CompilationFinal private boolean defaultArgCanBeOptimized = EagerEvalHelper.optConsts() || EagerEvalHelper.optDefault() || EagerEvalHelper.optExprs();
 
+    private final ConditionProfile isMissingProfile = ConditionProfile.createBinaryProfile();
+
     protected AccessArgumentNode(int index) {
         this.index = index;
+        this.readArgNode = new ReadArgumentNode(index);
     }
 
     public void setFormals(FormalArguments formals) {
         CompilerAsserts.neverPartOfCompilation();
         assert this.formals == null;
         this.formals = formals;
-        hasDefaultArg = formals.hasDefaultArgumentAt(getIndex());
+        hasDefaultArg = formals.hasDefaultArgumentAt(index);
     }
 
-    /**
-     * @param index {@link #getIndex()}
-     * @return A fresh {@link AccessArgumentNode} for the given index
-     */
     public static AccessArgumentNode create(int index) {
-        return AccessArgumentNodeGen.create(index, new ReadArgumentNode(index));
+        return new AccessArgumentNode(index);
     }
 
     @Override
@@ -92,34 +94,44 @@ public abstract class AccessArgumentNode extends RNode {
         return this;
     }
 
-    @Specialization(guards = {"hasDefaultArg()"})
-    protected Object doArgumentDefaultArg(VirtualFrame frame, @SuppressWarnings("unused") RMissing argMissing) {
-        assert !(getRootNode() instanceof RBuiltinRootNode) : getRootNode();
-        Object result;
-        if (canBeOptimized()) {
-            // Insert default value
-            checkPromiseFactory();
-            if (checkInsertOptDefaultArg()) {
-                result = optDefaultArgNode.execute(frame);
-                // Update RArguments for S3 dispatch to work
-                RArguments.setArgument(frame, index, result);
-                return result;
-            } else {
-                // Default arg cannot be optimized: Rewrite to default and assure that we don't take
-                // this path again
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                defaultArgCanBeOptimized = false;
-            }
-        }
-        // Insert default value
-        checkPromiseFactory();
-        result = factory.createPromise(frame.materialize());
-        RArguments.setArgument(frame, index, result);   // Update RArguments for S3 dispatch to work
-        return result;
+    @Override
+    public Object execute(VirtualFrame frame) {
+        return doArgument(frame, readArgNode.execute(frame));
     }
 
-    protected boolean hasDefaultArg() {
-        return hasDefaultArg;
+    @Override
+    public NodeCost getCost() {
+        return hasDefaultArg ? NodeCost.MONOMORPHIC : NodeCost.NONE;
+    }
+
+    protected Object doArgument(VirtualFrame frame, Object arg) {
+        if (hasDefaultArg && isMissingProfile.profile(arg == RMissing.instance)) {
+            assert !(getRootNode() instanceof RBuiltinRootNode) : getRootNode();
+            // Insert default value
+            checkPromiseFactory();
+            Object result;
+            if (canBeOptimized()) {
+                if (checkInsertOptDefaultArg()) {
+                    result = optDefaultArgNode.execute(frame);
+                    // Update RArguments for S3 dispatch to work
+                    RArguments.setArgument(frame, index, result);
+                    return result;
+                } else {
+                    /*
+                     * Default arg cannot be optimized: Rewrite to default and assure that we don't
+                     * take this path again
+                     */
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    defaultArgCanBeOptimized = false;
+                }
+            }
+            // Insert default value
+            result = factory.createPromise(frame.materialize());
+            // Update RArguments for S3 dispatch to work
+            RArguments.setArgument(frame, index, result);
+            return result;
+        }
+        return arg;
     }
 
     private boolean canBeOptimized() {
@@ -129,14 +141,14 @@ public abstract class AccessArgumentNode extends RNode {
     private void checkPromiseFactory() {
         if (factory == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            Closure defaultClosure = formals.getOrCreateClosure(formals.getDefaultArgumentAt(getIndex()));
+            Closure defaultClosure = formals.getOrCreateClosure(formals.getDefaultArgumentAt(index));
             factory = RPromiseFactory.create(PromiseType.ARG_DEFAULT, defaultClosure);
         }
     }
 
     private boolean checkInsertOptDefaultArg() {
         if (optDefaultArgNode == null) {
-            RNode defaultArg = formals.getDefaultArgumentAt(getIndex());
+            RNode defaultArg = formals.getDefaultArgumentAt(index);
             RNode arg = EagerEvalHelper.unfold(defaultArg);
 
             CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -155,15 +167,6 @@ public abstract class AccessArgumentNode extends RNode {
             insert(optDefaultArgNode);
         }
         return true;
-    }
-
-    @Fallback
-    protected Object doArgument(Object obj) {
-        return obj;
-    }
-
-    public int getIndex() {
-        return index;
     }
 
     protected final class OptVariableDefaultPromiseNode extends OptVariablePromiseBaseNode {
@@ -187,12 +190,12 @@ public abstract class AccessArgumentNode extends RNode {
         protected Object rewriteToAndExecuteFallback(VirtualFrame frame) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             deoptimized = true;
-            return doArgumentDefaultArg(frame, RMissing.instance);
+            return doArgument(frame, RMissing.instance);
         }
 
         @Override
         protected Object executeFallback(VirtualFrame frame) {
-            return doArgumentDefaultArg(frame, RMissing.instance);
+            return doArgument(frame, RMissing.instance);
         }
 
         @Override

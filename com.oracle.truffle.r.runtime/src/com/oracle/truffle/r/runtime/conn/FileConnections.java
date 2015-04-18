@@ -26,6 +26,7 @@ import static com.oracle.truffle.r.runtime.conn.ConnectionSupport.*;
 
 import java.io.*;
 import java.nio.*;
+import java.util.zip.*;
 
 import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.source.*;
@@ -71,11 +72,29 @@ public class FileConnections {
     }
 
     static class FileReadTextRConnection extends DelegateReadRConnection implements ReadWriteHelper {
-        private BufferedInputStream inputStream;
+        private InputStream inputStream;
 
         FileReadTextRConnection(BasePathRConnection base) throws IOException {
             super(base);
             inputStream = new BufferedInputStream(new FileInputStream(base.path));
+            // can be compressed - check for it
+            inputStream.mark(2);
+            int byte1 = inputStream.read();
+            if (byte1 == -1) {
+                inputStream.reset();
+            } else {
+                int byte2 = inputStream.read();
+                if (byte2 == -1) {
+                    inputStream.reset();
+                } else {
+                    if (byte1 == (GZIPInputStream.GZIP_MAGIC & 0x000000FF) && byte2 == (GZIPInputStream.GZIP_MAGIC >> 8)) {
+                        inputStream.close();
+                        inputStream = new GZIPInputStream(new FileInputStream(base.path), GZIPConnections.GZIP_BUFFER_SIZE);
+                    } else {
+                        inputStream.reset();
+                    }
+                }
+            }
         }
 
         @Override

@@ -38,7 +38,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 @RBuiltin(name = "vector", kind = INTERNAL, parameterNames = {"mode", "length"})
 public abstract class Vector extends RBuiltinNode {
 
-    private final ValueProfile modeProfile = ValueProfile.createIdentityProfile();
+    private static final String CACHED_MODES_LIMIT = "3";
     private final BranchProfile errorProfile = BranchProfile.create();
 
     @CreateCast("arguments")
@@ -48,28 +48,58 @@ public abstract class Vector extends RBuiltinNode {
         return arguments;
     }
 
-    @Specialization
-    protected RAbstractVector vector(String mode, int length) {
-        controlVisibility();
-        switch (modeProfile.profile(mode)) {
+    protected RType modeToType(String mode) {
+        switch (mode) {
             case "character":
-                return RDataFactory.createStringVector(length);
+                return RType.Character;
             case "logical":
-                return RDataFactory.createLogicalVector(length);
+                return RType.Logical;
             case "numeric":
             case "double":
-                return RDataFactory.createDoubleVector(length);
+                return RType.Double;
             case "integer":
-                return RDataFactory.createIntVector(length);
+                return RType.Integer;
             case "list":
-                Object[] data = new Object[length];
-                Arrays.fill(data, RNull.instance);
-                return RDataFactory.createList(data);
+                return RType.List;
             case "raw":
-                return RDataFactory.createRawVector(length);
+                return RType.Raw;
             default:
                 errorProfile.enter();
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.CANNOT_MAKE_VECTOR_OF_MODE, mode);
         }
+    }
+
+    private static RAbstractVector vectorInternal(int length, RType type) {
+        switch (type) {
+            case Character:
+                return RDataFactory.createStringVector(length);
+            case Logical:
+                return RDataFactory.createLogicalVector(length);
+            case Double:
+                return RDataFactory.createDoubleVector(length);
+            case Integer:
+                return RDataFactory.createIntVector(length);
+            case List:
+                Object[] data = new Object[length];
+                Arrays.fill(data, RNull.instance);
+                return RDataFactory.createList(data);
+            case Raw:
+                return RDataFactory.createRawVector(length);
+            default:
+                throw RInternalError.shouldNotReachHere();
+        }
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization(guards = {"mode == cachedMode"}, limit = CACHED_MODES_LIMIT)
+    RAbstractVector vectorCached(String mode, int length, @Cached("mode") String cachedMode, @Cached("modeToType(mode)") RType type) {
+        controlVisibility();
+        return vectorInternal(length, type);
+    }
+
+    @Specialization(contains = "vectorCached")
+    protected RAbstractVector vector(String mode, int length) {
+        controlVisibility();
+        return vectorInternal(length, modeToType(mode));
     }
 }

@@ -90,33 +90,30 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
     }
 
     @Specialization(guards = {"isEmpty(left)", "expectLogical()"})
-    protected RLogicalVector doEmptyLogical(RAbstractRawVector left, RRaw right) {
-        return RDataFactory.createLogicalVector(0);
+    protected RAbstractVector doEmptyRaw(RAbstractRawVector left, RAbstractRawVector right) {
+        if (expectLogical()) {
+            return RDataFactory.createLogicalVector(0);
+        } else {
+            return RDataFactory.createRawVector(0);
+        }
     }
 
-    @Specialization(guards = {"isEmpty(right)", "expectLogical()"})
-    protected RLogicalVector doEmptyLogical(RRaw left, RAbstractRawVector right) {
-        return RDataFactory.createLogicalVector(0);
+    @Specialization(guards = "isEmpty(left)")
+    protected RAbstractVector doEmpty(RAbstractVector left, Object right) {
+        if (left instanceof RAbstractRawVector) {
+            return doEmptyRaw(null, null);
+        } else {
+            return RDataFactory.createLogicalVector(0);
+        }
     }
 
-    @Specialization(guards = {"isEmpty(left)", "!expectLogical()"})
-    protected RAbstractRawVector doEmptyRaw(RAbstractRawVector left, RRaw right) {
-        return RDataFactory.createRawVector(0);
-    }
-
-    @Specialization(guards = {"isEmpty(right)", "!expectLogical()"})
-    protected RAbstractRawVector doEmptyRaw(RRaw left, RAbstractRawVector right) {
-        return RDataFactory.createRawVector(0);
-    }
-
-    @Specialization(guards = {"isEmpty(left) || isEmpty(right)", "expectLogical()"})
-    protected RLogicalVector doEmptyLogical(RAbstractRawVector left, RAbstractRawVector right) {
-        return RDataFactory.createLogicalVector(0);
-    }
-
-    @Specialization(guards = {"isEmpty(left) || isEmpty(right)", "!expectLogical()"})
-    protected RAbstractRawVector doEmptyRaw(RAbstractRawVector left, RAbstractRawVector right) {
-        return RDataFactory.createRawVector(0);
+    @Specialization(guards = "isEmpty(right)")
+    protected RAbstractVector doEmpty(Object left, RAbstractVector right) {
+        if (right instanceof RAbstractRawVector) {
+            return doEmptyRaw(null, null);
+        } else {
+            return RDataFactory.createLogicalVector(0);
+        }
     }
 
     // int
@@ -346,16 +343,6 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
     }
 
     // empty vectors
-
-    @Specialization(guards = "isEmpty(left)")
-    protected RLogicalVector doEmpty(RAbstractVector left, Object right) {
-        return RDataFactory.createLogicalVector(0);
-    }
-
-    @Specialization(guards = "isEmpty(right)")
-    protected RLogicalVector doEmpty(Object left, RAbstractVector right) {
-        return RDataFactory.createLogicalVector(0);
-    }
 
     // int vector and scalar
 

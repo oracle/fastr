@@ -39,7 +39,6 @@ import com.oracle.truffle.r.nodes.access.variables.*;
 import com.oracle.truffle.r.nodes.instrument.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RArguments.S3Args;
-import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.env.frame.*;
@@ -255,7 +254,12 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         return true;
     }
 
-    public void deparse(State state) {
+    /*
+     * TODO Decide whether we really care about the braces/no-braces issue for deparse and
+     * serialize, since we do not distinguish them in other nodes at the present time.
+     */
+
+    public void deparse(RDeparse.State state) {
         // TODO linebreaks
         state.append("function (");
         FormalArguments formals = getFormalArguments();
@@ -291,6 +295,63 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
     @Override
     public RNode substitute(REnvironment env) {
         throw RInternalError.shouldNotReachHere();
+    }
+
+    /**
+     * Serialize a function. On entry {@code state} has an active pairlist, whose {@code tag} is the
+     * enclosing {@link REnvironment}. The {@code car} must be set to the pairlist representing the
+     * formal arguments (or {@link RNull} if none) and the {@code cdr} to the pairlist representing
+     * the body. Each formal argument is represented as a pairlist:
+     * <ul>
+     * <li>{@code tag}: RSymbol(name)</li>
+     * <li>{@code car}: Missing or default value</li>
+     * <li>{@code cdr}: if last formal then RNull else pairlist for next argument.
+     * </ul>
+     * N.B. The body is never empty as the syntax "{}" has a value, however if the body is a simple
+     * expression, e.g. {@code function(x) x}, the body is not represented as a pairlist, just a
+     * SYMSXP, which is handled transparently in {@code RSerialize.State.closePairList()}.
+     *
+     */
+    @Override
+    public void serialize(RSerialize.State state) {
+        FormalArguments formals = getFormalArguments();
+        int formalsLength = formals.getSignature().getLength();
+        if (formalsLength > 0) {
+            for (int i = 0; i < formalsLength; i++) {
+                RNode defaultArg = formals.getDefaultArgumentAt(i);
+                state.openPairList();
+                state.setTagAsSymbol(formals.getSignature().getName(i));
+                if (defaultArg != null) {
+                    state.serializeNodeSetCar(defaultArg);
+                } else {
+                    state.setCarMissing();
+                }
+            }
+            state.linkPairList(formalsLength);
+            state.setCar(state.closePairList());
+        } else {
+            state.setCar(RNull.instance);
+        }
+        boolean hasBraces = hasBraces();
+        if (hasBraces) {
+            state.openBrace();
+            state.openPairList();
+        }
+
+        state.openPairList();
+        body.serialize(state);
+        state.setCdr(state.closePairList());
+
+        if (hasBraces) {
+            if (state.isNullCdr()) {
+                // special case of empty body "{ }"
+                state.setNull();
+            } else {
+                state.switchCdrToCar();
+            }
+            state.setCdr(state.closePairList());
+            state.setCdr(state.closePairList());
+        }
     }
 
     private boolean instrumentationApplied = false;

@@ -27,7 +27,6 @@ import java.util.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.instrument.*;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.RDeparse.State;
 
 /**
  * Base class that represents a list of argument/name pairs with some convenience methods. Semantics
@@ -61,7 +60,7 @@ public abstract class ArgumentsNode extends RNode implements ArgumentsTrait {
     }
 
     @Override
-    public void deparse(State state) {
+    public void deparse(RDeparse.State state) {
         state.append('(');
         for (int i = 0; i < arguments.length; i++) {
             RNode argument = arguments[i];
@@ -79,7 +78,31 @@ public abstract class ArgumentsNode extends RNode implements ArgumentsTrait {
             }
         }
         state.append(')');
+    }
 
+    @Override
+    public void serialize(RSerialize.State state) {
+        if (arguments.length == 0) {
+            state.setNull();
+        } else {
+            for (int i = 0; i < arguments.length; i++) {
+                RNode argument = arguments[i];
+                String name = signature.getName(i);
+                if (name != null) {
+                    state.setTagAsSymbol(name);
+                }
+                if (argument == null) {
+                    RInternalError.unimplemented();
+                } else {
+                    state.serializeNodeSetCar(argument);
+                }
+                if (i != arguments.length - 1) {
+                    state.openPairList();
+                }
+
+            }
+            state.linkPairList(arguments.length);
+        }
     }
 
     /**

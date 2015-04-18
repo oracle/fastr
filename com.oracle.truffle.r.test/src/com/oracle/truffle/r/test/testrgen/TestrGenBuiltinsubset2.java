@@ -49,8 +49,7 @@ public class TestrGenBuiltinsubset2 extends TestBase {
 
     @Test
     public void testsubset27() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(list(surname = structure(c('Tukey', 'Venables', 'Tierney', 'Ripley', 'McNeil'), class = 'AsIs')), .Names = 'surname'), 1L);.subset2(argv[[1]],argv[[2]]);");
+        assertEval("argv <- list(structure(list(surname = structure(c('Tukey', 'Venables', 'Tierney', 'Ripley', 'McNeil'), class = 'AsIs')), .Names = 'surname'), 1L);.subset2(argv[[1]],argv[[2]]);");
     }
 
     @Test
@@ -61,8 +60,7 @@ public class TestrGenBuiltinsubset2 extends TestBase {
 
     @Test
     public void testsubset29() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(list(z = structure(c('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i'), .Dim = c(3L, 3L), class = 'AsIs')), .Names = 'z'), 1L);.subset2(argv[[1]],argv[[2]]);");
+        assertEval("argv <- list(structure(list(z = structure(c('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i'), .Dim = c(3L, 3L), class = 'AsIs')), .Names = 'z'), 1L);.subset2(argv[[1]],argv[[2]]);");
     }
 
     @Test
@@ -78,8 +76,7 @@ public class TestrGenBuiltinsubset2 extends TestBase {
 
     @Test
     public void testsubset213() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(list(a = structure('abc', class = 'AsIs'), b = structure('def\\\'gh', class = 'AsIs')), .Names = c('a', 'b'), row.names = '1', class = 'data.frame'), 1L);.subset2(argv[[1]],argv[[2]]);");
+        assertEval("argv <- list(structure(list(a = structure('abc', class = 'AsIs'), b = structure('def\\\'gh', class = 'AsIs')), .Names = c('a', 'b'), row.names = '1', class = 'data.frame'), 1L);.subset2(argv[[1]],argv[[2]]);");
     }
 
     @Test

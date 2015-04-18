@@ -241,4 +241,92 @@ public abstract class RNode extends Node implements RSyntaxNode, RInstrumentable
             }
         }
     }
+
+    protected boolean isRAbstractContainer(Object value) {
+        return value instanceof RAbstractContainer;
+    }
+
+    protected boolean isRAbstractVector(Object value) {
+        return value instanceof RAbstractVector;
+    }
+
+    protected boolean isRAbstractIntVector(Object value) {
+        return value instanceof RAbstractIntVector;
+    }
+
+    protected boolean isRAbstractDoubleVector(Object value) {
+        return value instanceof RAbstractDoubleVector;
+    }
+
+    protected boolean isRAbstractComplexVector(Object value) {
+        return value instanceof RAbstractComplexVector;
+    }
+
+    protected boolean isRAbstractRawVector(Object value) {
+        return value instanceof RAbstractRawVector;
+    }
+
+    protected boolean isRAbstractStringVector(Object value) {
+        return value instanceof RAbstractStringVector;
+    }
+
+    protected boolean isRAbstractLogicalVector(Object value) {
+        return value instanceof RAbstractLogicalVector;
+    }
+
+    protected boolean isRList(Object value) {
+        return value instanceof RList;
+    }
+
+    protected boolean isRDataFrame(Object value) {
+        return value instanceof RDataFrame;
+    }
+
+    protected boolean isRFactor(Object value) {
+        return value instanceof RFactor;
+    }
+
+    protected boolean isRPromise(Object value) {
+        return value instanceof RPromise;
+    }
+
+    protected boolean isRLanguage(Object value) {
+        return value instanceof RLanguage;
+    }
+
+    protected boolean isRExpression(Object value) {
+        return value instanceof RExpression;
+    }
+
+    protected boolean isRFunction(Object value) {
+        return value instanceof RFunction;
+    }
+
+    protected boolean isREnvironment(Object value) {
+        return value instanceof REnvironment;
+    }
+
+    protected boolean isRConnection(Object value) {
+        return value instanceof RConnection;
+    }
+
+    protected boolean isRPairList(Object value) {
+        return value instanceof RPairList;
+    }
+
+    protected boolean isRSymbol(Object value) {
+        return value instanceof RSymbol;
+    }
+
+    protected boolean isRArgsValuesAndNames(Object value) {
+        return value instanceof RArgsValuesAndNames;
+    }
+
+    protected boolean isRMissing(Object value) {
+        return value == RMissing.instance;
+    }
+
+    protected boolean isRNull(Object value) {
+        return value == RNull.instance;
+    }
 }

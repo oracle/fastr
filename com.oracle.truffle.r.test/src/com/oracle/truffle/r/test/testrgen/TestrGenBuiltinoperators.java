@@ -483,8 +483,7 @@ public class TestrGenBuiltinoperators extends TestBase {
 
     @Test
     public void testoperators91() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(list(c(3L, 0L, 1L)), class = c('R_system_version', 'package_version', 'numeric_version')), structure('3.1', .Names = 'gridSVG2'));`<`(argv[[1]],argv[[2]]);");
+        assertEval("argv <- list(structure(list(c(3L, 0L, 1L)), class = c('R_system_version', 'package_version', 'numeric_version')), structure('3.1', .Names = 'gridSVG2'));`<`(argv[[1]],argv[[2]]);");
     }
 
     @Test
@@ -746,8 +745,7 @@ public class TestrGenBuiltinoperators extends TestBase {
 
     @Test
     public void testoperators142() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(list(c(3L, 0L, 1L)), class = c('R_system_version', 'package_version', 'numeric_version')), structure('2.13.2', .Names = 'SweaveListingUtils'));`>`(argv[[1]],argv[[2]]);");
+        assertEval("argv <- list(structure(list(c(3L, 0L, 1L)), class = c('R_system_version', 'package_version', 'numeric_version')), structure('2.13.2', .Names = 'SweaveListingUtils'));`>`(argv[[1]],argv[[2]]);");
     }
 
     @Test
@@ -803,7 +801,7 @@ public class TestrGenBuiltinoperators extends TestBase {
 
     @Test
     public void testoperators153() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(list(2L), class = 'numeric_version'), '2');`>=`(argv[[1]],argv[[2]]);");
+        assertEval("argv <- list(structure(list(2L), class = 'numeric_version'), '2');`>=`(argv[[1]],argv[[2]]);");
     }
 
     @Test

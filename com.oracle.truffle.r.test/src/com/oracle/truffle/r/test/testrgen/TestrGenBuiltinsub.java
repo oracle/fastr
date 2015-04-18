@@ -24,8 +24,7 @@ public class TestrGenBuiltinsub extends TestBase {
 
     @Test
     public void testsub2() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list('[b-e]', '.', c('The', 'licenses', 'for', 'most', 'software', 'are', 'designed', 'to', 'take', 'away', 'your', 'freedom', 'to', 'share', 'and', 'change', 'it.', '', 'By', 'contrast,', 'the', 'GNU', 'General', 'Public', 'License', 'is', 'intended', 'to', 'guarantee', 'your', 'freedom', 'to', 'share', 'and', 'change', 'free', 'software', '--', 'to', 'make', 'sure', 'the', 'software', 'is', 'free', 'for', 'all', 'its', 'users'), FALSE, TRUE, FALSE, FALSE); .Internal(sub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+        assertEval("argv <- list('[b-e]', '.', c('The', 'licenses', 'for', 'most', 'software', 'are', 'designed', 'to', 'take', 'away', 'your', 'freedom', 'to', 'share', 'and', 'change', 'it.', '', 'By', 'contrast,', 'the', 'GNU', 'General', 'Public', 'License', 'is', 'intended', 'to', 'guarantee', 'your', 'freedom', 'to', 'share', 'and', 'change', 'free', 'software', '--', 'to', 'make', 'sure', 'the', 'software', 'is', 'free', 'for', 'all', 'its', 'users'), FALSE, TRUE, FALSE, FALSE); .Internal(sub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
@@ -53,8 +52,7 @@ public class TestrGenBuiltinsub extends TestBase {
 
     @Test
     public void testsub7() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list('(\\\\w)(\\\\w*)(\\\\w)', '\\\\U\\\\1\\\\E\\\\2\\\\U\\\\3', 'useRs may fly into JFK or laGuardia', FALSE, TRUE, FALSE, FALSE); .Internal(sub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+        assertEval("argv <- list('(\\\\w)(\\\\w*)(\\\\w)', '\\\\U\\\\1\\\\E\\\\2\\\\U\\\\3', 'useRs may fly into JFK or laGuardia', FALSE, TRUE, FALSE, FALSE); .Internal(sub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test

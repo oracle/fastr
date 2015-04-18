@@ -25,10 +25,10 @@ package com.oracle.truffle.r.nodes.access;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
+import com.oracle.truffle.r.runtime.gnur.*;
 
 /**
  * Perform a field access. This node represents the {@code $} operator in R.
@@ -100,10 +100,21 @@ public abstract class AccessFieldNode extends AccessFieldBaseNode {
     }
 
     @Override
-    public void deparse(State state) {
+    public void deparse(RDeparse.State state) {
         getObject().deparse(state);
         state.append('$');
         state.append(getField());
+    }
+
+    @Override
+    public void serialize(RSerialize.State state) {
+        state.setAsBuiltin("$");
+        state.openPairList(SEXPTYPE.LISTSXP);
+        state.serializeNodeSetCar(getObject());
+        state.openPairList(SEXPTYPE.LISTSXP);
+        state.setCarAsSymbol(getField());
+        state.linkPairList(2);
+        state.setCdr(state.closePairList());
     }
 
     @Override

@@ -36,26 +36,22 @@ public class TestrGenBuiltingsub extends TestBase {
 
     @Test
     public void testgsub4() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list('\\\\bsl', '\\\\bsl{}', structure('  ', Rd_tag = 'TEXT'), FALSE, FALSE, TRUE, TRUE); .Internal(gsub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+        assertEval("argv <- list('\\\\bsl', '\\\\bsl{}', structure('  ', Rd_tag = 'TEXT'), FALSE, FALSE, TRUE, TRUE); .Internal(gsub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
     public void testgsub5() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list('([{}$#_])', '\\\\\\\\\\\\1', structure('2013-03-19 13:18:58', .Names = 'Date/Publication'), FALSE, FALSE, FALSE, TRUE); .Internal(gsub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+        assertEval("argv <- list('([{}$#_])', '\\\\\\\\\\\\1', structure('2013-03-19 13:18:58', .Names = 'Date/Publication'), FALSE, FALSE, FALSE, TRUE); .Internal(gsub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
     public void testgsub6() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list('é', 'gh', '«Latin-1 accented chars»: éè øØ å<Å æ<Æ é éè', FALSE, FALSE, TRUE, FALSE); .Internal(gsub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+        assertEval("argv <- list('é', 'gh', '«Latin-1 accented chars»: éè øØ å<Å æ<Æ é éè', FALSE, FALSE, TRUE, FALSE); .Internal(gsub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
     public void testgsub7() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list('([&$%_#])', '\\\\\\\\\\\\1', structure(', then ', Rd_tag = 'TEXT'), FALSE, TRUE, FALSE, TRUE); .Internal(gsub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+        assertEval("argv <- list('([&$%_#])', '\\\\\\\\\\\\1', structure(', then ', Rd_tag = 'TEXT'), FALSE, TRUE, FALSE, TRUE); .Internal(gsub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
@@ -65,8 +61,7 @@ public class TestrGenBuiltingsub extends TestBase {
 
     @Test
     public void testgsub9() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list('\\\\\', '\\\\bsl', structure('range specified by ', Rd_tag = 'TEXT'), FALSE, FALSE, TRUE, TRUE); .Internal(gsub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+        assertEval("argv <- list('\\\\\', '\\\\bsl', structure('range specified by ', Rd_tag = 'TEXT'), FALSE, FALSE, TRUE, TRUE); .Internal(gsub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
@@ -92,8 +87,7 @@ public class TestrGenBuiltingsub extends TestBase {
 
     @Test
     public void testgsub14() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list('/home/lzhao/hg/r-instrumented/src/library/utils', '', '/home/lzhao/hg/r-instrumented/src/library/utils/vignettes', FALSE, FALSE, TRUE, FALSE); .Internal(gsub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+        assertEval("argv <- list('/home/lzhao/hg/r-instrumented/src/library/utils', '', '/home/lzhao/hg/r-instrumented/src/library/utils/vignettes', FALSE, FALSE, TRUE, FALSE); .Internal(gsub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
@@ -104,14 +98,12 @@ public class TestrGenBuiltingsub extends TestBase {
 
     @Test
     public void testgsub16() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list('[[:blank:][:cntrl:]]*', '', structure(' unix\\n', Rd_tag = 'TEXT'), FALSE, TRUE, FALSE, TRUE); .Internal(gsub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+        assertEval("argv <- list('[[:blank:][:cntrl:]]*', '', structure(' unix\\n', Rd_tag = 'TEXT'), FALSE, TRUE, FALSE, TRUE); .Internal(gsub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
     public void testgsub17() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list('(\\\\w)(\\\\w*)', '\\\\U\\\\1\\\\L\\\\2', 'a test of capitalizing', FALSE, TRUE, FALSE, FALSE); .Internal(gsub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+        assertEval("argv <- list('(\\\\w)(\\\\w*)', '\\\\U\\\\1\\\\L\\\\2', 'a test of capitalizing', FALSE, TRUE, FALSE, FALSE); .Internal(gsub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
@@ -122,8 +114,7 @@ public class TestrGenBuiltingsub extends TestBase {
 
     @Test
     public void testgsub19() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list('(\\\\w)(\\\\w*)(\\\\w)', '\\\\U\\\\1\\\\E\\\\2\\\\U\\\\3', 'useRs may fly into JFK or laGuardia', FALSE, TRUE, FALSE, FALSE); .Internal(gsub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+        assertEval("argv <- list('(\\\\w)(\\\\w*)(\\\\w)', '\\\\U\\\\1\\\\E\\\\2\\\\U\\\\3', 'useRs may fly into JFK or laGuardia', FALSE, TRUE, FALSE, FALSE); .Internal(gsub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
@@ -139,8 +130,7 @@ public class TestrGenBuiltingsub extends TestBase {
 
     @Test
     public void testgsub22() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list('^\\\\s+', '', ' utilities ', FALSE, TRUE, FALSE, TRUE); .Internal(gsub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+        assertEval("argv <- list('^\\\\s+', '', ' utilities ', FALSE, TRUE, FALSE, TRUE); .Internal(gsub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
@@ -178,8 +168,7 @@ public class TestrGenBuiltingsub extends TestBase {
 
     @Test
     public void testgsub30() {
-        assertEval(Ignored.Unknown, "argv <- structure(list(pattern = 'a*', replacement = 'x', x = 'baaaac',     perl = TRUE), .Names = c('pattern', 'replacement', 'x', 'perl'));"
-                        + "do.call('gsub', argv)");
+        assertEval("argv <- structure(list(pattern = 'a*', replacement = 'x', x = 'baaaac',     perl = TRUE), .Names = c('pattern', 'replacement', 'x', 'perl'));do.call('gsub', argv)");
     }
 
     @Test

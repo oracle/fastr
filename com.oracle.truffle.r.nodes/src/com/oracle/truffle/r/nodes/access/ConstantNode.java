@@ -42,7 +42,7 @@ public abstract class ConstantNode extends RNode implements VisibilityController
 
     @Override
     @TruffleBoundary
-    public void deparse(State state) {
+    public void deparse(RDeparse.State state) {
         if (!(this instanceof ConstantMissingNode)) {
             Object val = getValue();
             if (this instanceof ConstantStringScalarNode) {
@@ -55,6 +55,19 @@ public abstract class ConstantNode extends RNode implements VisibilityController
     @Override
     public RNode substitute(REnvironment env) {
         return this;
+    }
+
+    @Override
+    public void serialize(RSerialize.State state) {
+        if (this instanceof ConstantMissingNode) {
+            state.setCar(RMissing.instance);
+        } else {
+            Object val = getValue();
+            if (this instanceof ConstantStringScalarNode) {
+                val = new SEXPTYPE.FastRString((String) val);
+            }
+            state.setCar(val);
+        }
     }
 
     public static ConstantNode create(Object value) {
@@ -380,7 +393,7 @@ public abstract class ConstantNode extends RNode implements VisibilityController
         }
     }
 
-    private static final class ConstantFunctionNode extends ConstantNode {
+    public static final class ConstantFunctionNode extends ConstantNode {
 
         private final RFunction function;
 

@@ -115,7 +115,7 @@ public class WrapperProcessor extends AbstractProcessor {
             wr.printf("import com.oracle.truffle.api.instrument.ProbeNode.WrapperNode;%n");
             wr.printf("import com.oracle.truffle.api.nodes.*;%n");
             wr.printf("import com.oracle.truffle.r.nodes.RNode;%n");
-            wr.printf("import com.oracle.truffle.r.runtime.RDeparse;%n");
+            wr.printf("import com.oracle.truffle.r.runtime.*;%n");
             wr.printf("import com.oracle.truffle.r.runtime.env.REnvironment;%n");
             wr.println();
             wr.printf("@NodeInfo(cost = NodeCost.NONE)%n");
@@ -209,6 +209,11 @@ public class WrapperProcessor extends AbstractProcessor {
             wr.printf("%s}%n", INDENT4);
             wr.println();
             wr.printf("%s@Override%n", INDENT4);
+            wr.printf("%spublic void serialize(RSerialize.State state) {%n", INDENT4);
+            wr.printf("%schild.serialize(state);%n", INDENT8);
+            wr.printf("%s}%n", INDENT4);
+            wr.println();
+            wr.printf("%s@Override%n", INDENT4);
             wr.printf("%spublic boolean isInstrumentable() {%n", INDENT4);
             wr.printf("%sreturn false;%n", INDENT8);
             wr.printf("%s}%n", INDENT4);
@@ -227,7 +232,7 @@ public class WrapperProcessor extends AbstractProcessor {
             }
             wr.printf("%sProbeNode.insertProbe(wrapperSub);%n", INDENT8);
             wr.printf("%sreturn wrapperSub;%n", INDENT8);
-            wr.printf("%s}%n", INDENT8);
+            wr.printf("%s}%n", INDENT4);
 
             wr.println("}");
         } finally {

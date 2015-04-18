@@ -73,7 +73,7 @@ public abstract class AsRaw extends RBuiltinNode {
         return (RRawVector) castRawNode.executeRaw(frame, o);
     }
 
-    public abstract RRaw executeRaw(VirtualFrame frame, Object o);
+    public abstract Object executeRaw(VirtualFrame frame, Object o);
 
     @Specialization
     protected RRawVector asRaw(RNull vector) {

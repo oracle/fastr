@@ -73,12 +73,13 @@ public class TestSimpleFunctions extends TestBase {
         assertEval("{ x <- function(a,b) { a^b } ; g <- function() { x <- \"sum\" ; f <- function() { sapply(1, x, 2) } ; f() }  ; g() }");
         assertEval("{ foo <- function (x) { x } ; foo() }");
 
+        assertEval("{ x <- function(a,b) { a^b } ; dummy <- sum ; f <- function() { x <- \"dummy\" ; sapply(1, x, 2) } ; f() }");
+        assertEval("{ x <- function(a,b) { a^b } ; dummy <- sum ; f <- function() { x <- \"dummy\" ; dummy <- 200 ; sapply(1, x, 2) } ; f() }");
+
         assertEval(Output.ContainsError, "{ foo <- function (x) { x } ; foo(1,2,3) }");
 
         // function matching, builtins
         assertEval(Ignored.Unknown, "{ x <- function(a,b) { a^b } ; f <- function() { x <- 211 ; sapply(1, x, 2) } ; f() }");
-        assertEval(Ignored.Unknown, "{ x <- function(a,b) { a^b } ; dummy <- sum ; f <- function() { x <- \"dummy\" ; sapply(1, x, 2) } ; f() }");
-        assertEval(Ignored.Unknown, "{ x <- function(a,b) { a^b } ; dummy <- sum ; f <- function() { x <- \"dummy\" ; dummy <- 200 ; sapply(1, x, 2) } ; f() }");
     }
 
     @Test

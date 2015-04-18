@@ -52,6 +52,7 @@ public class TestBase {
         Unknown("failing tests that have not been classified yet"),
         Unstable("tests that produce inconsistent results in GNUR"),
         OutputFormatting("tests that fail because of problems with output formatting"),
+        ParserErrorFormatting("tests that fail because of the formatting of parser error messages"),
         ParserError("tests that fail because of bugs in the parser"),
         SideEffects("tests that are ignored because they would interfere with other tests"),
         Unimplemented("tests that fail because of missing functionality");
@@ -280,7 +281,7 @@ public class TestBase {
     /**
      * Emptied at the start of a JUnit test, each failed micro test will be added to the list.
      */
-    private static ArrayList<String> failedMicroTests;
+    private static ArrayList<String> failedMicroTests = new ArrayList<>();
 
     private static ArrayList<String> unexpectedSuccessfulMicroTests = new ArrayList<>();
 
@@ -359,7 +360,7 @@ public class TestBase {
      */
     @After
     public void afterTest() {
-        if (!failedMicroTests.isEmpty()) {
+        if (failedMicroTests != null && !failedMicroTests.isEmpty()) {
             fail(failedMicroTests.size() + " micro-test(s) failed: \n  " + new TreeSet<>(failedMicroTests));
         }
     }
@@ -398,14 +399,14 @@ public class TestBase {
                 break;
             }
         }
-        String context = String.format("%s(%s:%d)", culprit.getMethodName(), culprit.getClassName(), culprit.getLineNumber());
+        String context = String.format("%s:%d (%s)", culprit.getClassName(), culprit.getLineNumber(), culprit.getMethodName());
         return context;
     }
 
     private void evalAndCompare(String[] inputs, TestTrait... traits) {
         WhiteList[] whiteLists = TestTrait.collect(traits, WhiteList.class);
 
-        boolean ignored = TestTrait.contains(traits, Ignored.class) ^ (ProcessFailedTests && !TestTrait.contains(traits, Ignored.Unstable));
+        boolean ignored = TestTrait.contains(traits, Ignored.class) ^ (ProcessFailedTests && !(TestTrait.contains(traits, Ignored.Unstable) || TestTrait.contains(traits, Ignored.SideEffects)));
 
         boolean containsWarning = TestTrait.contains(traits, Output.ContainsWarning);
         boolean containsError = (!FULL_COMPARE_ERRORS && TestTrait.contains(traits, Output.ContainsError));
@@ -462,7 +463,7 @@ public class TestBase {
                     microTestFailed();
                     System.out.print('E');
                 }
-                allOk &= allOk;
+                allOk &= ok;
                 afterMicroTest();
             }
             if ((index) % 100 == 0) {
@@ -695,7 +696,7 @@ public class TestBase {
             public void run() {
                 if (!unexpectedSuccessfulMicroTests.isEmpty()) {
                     System.out.println("Unexpectedly successful tests:");
-                    for (String test : unexpectedSuccessfulMicroTests) {
+                    for (String test : new TreeSet<>(unexpectedSuccessfulMicroTests)) {
                         System.out.println(test);
                     }
                 }

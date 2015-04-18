@@ -29,9 +29,9 @@ import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
+import com.oracle.truffle.r.runtime.gnur.*;
 
 public final class IfNode extends RNode implements VisibilityController {
 
@@ -115,11 +115,7 @@ public final class IfNode extends RNode implements VisibilityController {
     }
 
     @Override
-    public void deparse(State state) {
-        /*
-         * We have a problem with { }, since they do not exist as AST nodes (functions), so we
-         * insert them routinely, which means we can't match GnuR output in simple cases.
-         */
+    public void deparse(RDeparse.State state) {
         state.append("if (");
         condition.deparse(state);
         state.append(") ");
@@ -132,6 +128,27 @@ public final class IfNode extends RNode implements VisibilityController {
             elsePart.deparse(state);
             state.decIndentWriteCloseCurly();
         }
+    }
+
+    @Override
+    public void serialize(RSerialize.State state) {
+        state.setAsBuiltin("if");
+        state.openPairList(SEXPTYPE.LISTSXP);
+        // condition
+        state.serializeNodeSetCar(condition);
+        // then, with brace
+        state.openPairList(SEXPTYPE.LISTSXP);
+        state.openBrace();
+        state.serializeNodeSetCdr(thenPart, SEXPTYPE.LISTSXP);
+        state.closeBrace();
+        if (elsePart != null) {
+            state.openPairList(SEXPTYPE.LISTSXP);
+            state.openBrace();
+            state.serializeNodeSetCdr(elsePart, SEXPTYPE.LISTSXP);
+            state.closeBrace();
+        }
+        state.linkPairList(elsePart == null ? 2 : 3);
+        state.setCdr(state.closePairList());
     }
 
     @Override

@@ -139,7 +139,11 @@ public class RASTHelperImpl implements RASTHelper {
         int index = indexArg;
         if (node instanceof RCallNode || node instanceof GroupDispatchNode) {
             if (index == 0) {
-                return RASTUtils.findFunctionName(node, true);
+                if (RASTUtils.isNamedFunctionNode(node)) {
+                    return RASTUtils.findFunctionName(node, true);
+                } else {
+                    return RDataFactory.createLanguage(RASTUtils.getFunctionNode(node));
+                }
             } else {
                 CallArgumentsNode args = RASTUtils.findCallArgumentsNode(node);
                 return RASTUtils.createLanguageElement(args, index - 1);
@@ -323,6 +327,20 @@ public class RASTHelperImpl implements RASTHelper {
             signalSimpleWarningCall = getCallNode(SIGNAL_SIMPLE_WARNING_SOURCE);
         }
         callOut(signalSimpleWarningCall, depth, msg, call);
+    }
+
+    @Override
+    public Object serialize(RSerialize.State state, RFunction f) {
+        FunctionDefinitionNode fdn = (FunctionDefinitionNode) f.getRootNode();
+        REnvironment env = REnvironment.frameToEnvironment(f.getEnclosingFrame());
+        state.openPairList().setTag(env);
+        fdn.serialize(state);
+        return state.closePairList();
+    }
+
+    @Override
+    public void serializeNode(RSerialize.State state, Object node) {
+        ((RNode) node).serialize(state);
     }
 
 }

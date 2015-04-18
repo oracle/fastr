@@ -70,7 +70,7 @@ public class GetFunctions {
     @GenerateNodeFactory
     public abstract static class Get extends Adapter {
 
-        public abstract Object execute(VirtualFrame frame, RAbstractStringVector name, REnvironment envir, String mode, byte inherits);
+        public abstract Object execute(VirtualFrame frame, Object name, REnvironment envir, String mode, byte inherits);
 
         public static boolean isInherits(byte inherits) {
             return inherits == RRuntime.LOGICAL_TRUE;

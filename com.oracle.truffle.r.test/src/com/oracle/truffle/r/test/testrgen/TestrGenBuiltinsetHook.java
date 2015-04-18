@@ -18,9 +18,9 @@ import com.oracle.truffle.r.test.*;
 public class TestrGenBuiltinsetHook extends TestBase {
 
     @Test
-    @Ignore("test with sideeffects")
     public void testsetHook1() {
-        assertEval("argv <- structure(list(hookName = 'UserHook::stats4::onUnload',     value = function(pkgname, ...) cat('onUnload', sQuote(pkgname),         'B', '\\n')), .Names = c('hookName', 'value'));"
-                        + "do.call('setHook', argv)");
+        assertEval(Ignored.SideEffects,
+                        "argv <- structure(list(hookName = 'UserHook::stats4::onUnload',     value = function(pkgname, ...) cat('onUnload', sQuote(pkgname),         'B', '\\n')), .Names = c('hookName', 'value'));"
+                                        + "do.call('setHook', argv)");
     }
 }

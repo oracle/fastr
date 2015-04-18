@@ -146,7 +146,7 @@ public class ArgumentMatcher {
     public static MatchPermutation matchArguments(ArgumentsSignature suppliedSignature, ArgumentsSignature formalSignature, SourceSection callSrc, boolean forNextMethod) {
         CompilerAsserts.neverPartOfCompilation();
         MatchPermutation match = permuteArguments(suppliedSignature, formalSignature, callSrc, null, forNextMethod, index -> {
-            throw Utils.nyi("S3Dispatch should not have arg length mismatch");
+            throw RInternalError.unimplemented("S3Dispatch should not have arg length mismatch");
         }, index -> suppliedSignature.getName(index));
         return match;
     }
@@ -212,7 +212,7 @@ public class ArgumentMatcher {
         RRootNode rootNode = (RRootNode) function.getTarget().getRootNode();
         FormalArguments formals = rootNode.getFormalArguments();
         MatchPermutation match = permuteArguments(evaluatedArgs.getSignature(), formals.getSignature(), callSrc, null, forNextMethod, index -> {
-            throw Utils.nyi("S3Dispatch should not have arg length mismatch");
+            throw RInternalError.unimplemented("S3Dispatch should not have arg length mismatch");
         }, index -> evaluatedArgs.getSignature().getName(index));
 
         Object[] evaledArgs = new Object[match.resultPermutation.length];

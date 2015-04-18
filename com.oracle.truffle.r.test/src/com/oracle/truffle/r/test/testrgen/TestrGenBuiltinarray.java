@@ -85,7 +85,7 @@ public class TestrGenBuiltinarray extends TestBase {
 
     @Test
     public void testarray13() {
-        assertEval(Ignored.Unknown, "argv <- list(NA, 1L, list('1')); .Internal(array(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval("argv <- list(NA, 1L, list('1')); .Internal(array(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test

@@ -35,7 +35,6 @@ import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.options.*;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
@@ -148,8 +147,13 @@ public class ReadVariableNode extends RNode implements VisibilityController {
     }
 
     @Override
-    public void deparse(State state) {
+    public void deparse(RDeparse.State state) {
         state.append(identifier);
+    }
+
+    @Override
+    public void serialize(RSerialize.State state) {
+        state.setCarAsSymbol(identifier);
     }
 
     @Override

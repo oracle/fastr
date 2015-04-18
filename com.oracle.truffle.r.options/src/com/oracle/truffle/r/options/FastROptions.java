@@ -43,8 +43,10 @@ public class FastROptions {
     //@formatter:off
     @Option(help = "Disable prototypical group generics implementation")
     public static final OptionValue<Boolean> DisableGroupGenerics = new OptionValue<>(false);
-    @Option(help = "Prints Java and R stack traces for all R errors")
+    @Option(help = "Prints Java and R stack traces for all errors")
     public static final OptionValue<Boolean> PrintErrorStacktraces = new OptionValue<>(false);
+    @Option(help = "Dumps Java and R stack traces to file for all errors")
+    public static final OptionValue<Boolean> PrintErrorStacktracesToFile = new OptionValue<>(true);
     @Option(help = "Assert completeness of results vectors after evaluating unit tests and R shell commands")
     public static final OptionValue<Boolean> CheckResultCompleteness = new OptionValue<>(true);
     @Option(help = "Debug=name1,name2,...; Turn on debugging output for 'name1', 'name2', etc.")

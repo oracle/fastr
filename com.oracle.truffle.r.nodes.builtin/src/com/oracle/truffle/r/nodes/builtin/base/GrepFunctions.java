@@ -412,37 +412,30 @@ public class GrepFunctions {
 
         @TruffleBoundary
         private static String convertGroups(String value) {
-            int x = 0;
-            int groupStart = groupIndex(value, x);
-            if (groupStart < 0) {
-                return value;
+            StringBuilder result = new StringBuilder();
+            int i = 0;
+            while (i < value.length()) {
+                char c = value.charAt(i);
+                if (c == '\\') {
+                    i++;
+                    if (i >= value.length()) {
+                        result.append('\\');
+                    } else {
+                        c = value.charAt(i);
+                        if (c >= '0' && c <= '9') {
+                            result.append('$');
+                        } else {
+                            result.append('\\');
+                        }
+                        result.append(c);
+                    }
+                } else {
+                    result.append(c);
+                }
+                i++;
             }
-            StringBuffer result = new StringBuffer();
-            while (groupStart >= 0) {
-                result.append(value.substring(x, groupStart));
-                result.append('$');
-                result.append(value.charAt(groupStart + 1));
-                x = groupStart + 2;
-                groupStart = groupIndex(value, x);
-            }
-            result.append(value.substring(x));
             return result.toString();
         }
-
-        private static int groupIndex(String value, int x) {
-            int ix = value.indexOf('\\', x);
-            if (ix < 0 || ix >= value.length() - 2) {
-                return ix;
-            } else {
-                char ch = value.charAt(ix + 1);
-                if (Character.isDigit(ch)) {
-                    return ix;
-                } else {
-                    return -1;
-                }
-            }
-        }
-
     }
 
     @RBuiltin(name = "sub", kind = INTERNAL, parameterNames = {"pattern", "replacement", "x", "ignore.case", "perl", "fixed", "useBytes"})

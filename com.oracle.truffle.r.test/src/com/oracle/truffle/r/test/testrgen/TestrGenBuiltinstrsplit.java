@@ -35,7 +35,7 @@ public class TestrGenBuiltinstrsplit extends TestBase {
 
     @Test
     public void teststrsplit4() {
-        assertEval(Ignored.Unknown, "argv <- list('Keywords:  device ', '[ \\t\\n]', FALSE, TRUE, TRUE); .Internal(strsplit(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
+        assertEval("argv <- list('Keywords:  device ', '[ \\t\\n]', FALSE, TRUE, TRUE); .Internal(strsplit(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
     }
 
     @Test
@@ -46,8 +46,7 @@ public class TestrGenBuiltinstrsplit extends TestBase {
 
     @Test
     public void teststrsplit6() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure('Formal Methods and Classes', .Names = 'Title'), '\\n\\n', TRUE, FALSE, TRUE); .Internal(strsplit(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
+        assertEval("argv <- list(structure('Formal Methods and Classes', .Names = 'Title'), '\\n\\n', TRUE, FALSE, TRUE); .Internal(strsplit(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
     }
 
     @Test
@@ -79,7 +78,7 @@ public class TestrGenBuiltinstrsplit extends TestBase {
 
     @Test
     public void teststrsplit12() {
-        assertEval(Ignored.Unknown, "argv <- list('Keywords:  utilities ', '\\n[ \\t\\n]*\\n', FALSE, TRUE, TRUE); .Internal(strsplit(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
+        assertEval("argv <- list('Keywords:  utilities ', '\\n[ \\t\\n]*\\n', FALSE, TRUE, TRUE); .Internal(strsplit(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
     }
 
     @Test

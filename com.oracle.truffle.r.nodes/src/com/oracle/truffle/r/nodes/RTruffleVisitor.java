@@ -414,7 +414,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
         } else if (v.getVector() instanceof FunctionCall) {
             return null;
         } else {
-            Utils.nyi();
+            RInternalError.unimplemented();
             return null;
         }
     }
@@ -425,7 +425,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
         } else if (a.getLhs() instanceof FunctionCall) {
             return null;
         } else {
-            Utils.nyi();
+            RInternalError.unimplemented();
             return null;
         }
     }
@@ -498,7 +498,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
             CoerceVector coerceVector = CoerceVectorNodeGen.create(null, null, null);
             return createPositions(a.getArguments(), argLength, a.isSubset(), null, callAST.accept(this), rhs, coerceVector, true);
         } else {
-            Utils.nyi();
+            RInternalError.unimplemented();
             return null;
         }
     }
@@ -722,7 +722,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
             arguments.add(ArgNode.create(null, (String) null, Constant.createStringConstant(null, new String[]{a.getFieldName().toString()})));
             return createPositions(arguments, arguments.size(), false, null, callAST.accept(this), rhs, coerceVector, true);
         } else {
-            Utils.nyi();
+            RInternalError.unimplemented();
             return null;
         }
     }

@@ -31,8 +31,6 @@ import com.oracle.truffle.api.frame.*;
 
 public abstract class CastToContainerNode extends CastNode {
 
-    public abstract RAbstractContainer executeRAbstractContainer(VirtualFrame frame, Object value);
-
     public abstract Object executeObject(VirtualFrame frame, Object value);
 
     @Specialization
