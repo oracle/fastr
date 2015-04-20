@@ -1073,20 +1073,16 @@ public class RSerialize {
                 stream.writeInt(flags);
                 switch (type) {
                     case STRSXP: {
-                        RStringVector vec = (RStringVector) obj;
-                        stream.writeInt(vec.getLength());
-                        for (int i = 0; i < vec.getLength(); i++) {
-                            writeItem(vec.getDataAt(i));
-                        }
-                        break;
-                    }
-
-                    case CHARSXP: {
-                        String s = (String) obj;
-                        if (s == RRuntime.STRING_NA) {
-                            stream.writeInt(-1);
+                        if (obj instanceof String) {
+                            // length 1 vector
+                            stream.writeInt(1);
+                            writeCHARSXP((String) obj);
                         } else {
-                            stream.writeString(s);
+                            RStringVector vec = (RStringVector) obj;
+                            stream.writeInt(vec.getLength());
+                            for (int i = 0; i < vec.getLength(); i++) {
+                                writeCHARSXP(vec.getDataAt(i));
+                            }
                         }
                         break;
                     }
@@ -1226,6 +1222,20 @@ public class RSerialize {
                 if (attributes != null) {
                     writeAttributes(attributes);
                 }
+            }
+        }
+
+        /**
+         * Write the element of a STRSXP. We can't call {@link #writeItem} because that always
+         * treats a {@code String} as an STRSXP.
+         */
+        private void writeCHARSXP(String s) throws IOException {
+            int flags = Flags.packFlags(SEXPTYPE.CHARSXP, 0, false, false, false);
+            stream.writeInt(flags);
+            if (s == RRuntime.STRING_NA) {
+                stream.writeInt(-1);
+            } else {
+                stream.writeString(s);
             }
         }
 

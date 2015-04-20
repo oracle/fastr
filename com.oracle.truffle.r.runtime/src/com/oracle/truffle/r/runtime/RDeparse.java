@@ -721,6 +721,7 @@ public class RDeparse {
             case REALSXP:
             case CPLXSXP:
             case RAWSXP:
+                obj = checkScalarVector(obj);
                 vector2buff(state, (RVector) obj);
                 break;
 
@@ -757,6 +758,22 @@ public class RDeparse {
             return ((RPairList) obj).getType();
         } else {
             return SEXPTYPE.typeForClass(klass);
+        }
+    }
+
+    private static RVector checkScalarVector(Object obj) {
+        if (obj instanceof String) {
+            return RDataFactory.createStringVectorFromScalar((String) obj);
+        } else if (obj instanceof Byte) {
+            return RDataFactory.createLogicalVectorFromScalar((Byte) obj);
+        } else if (obj instanceof Integer) {
+            return RDataFactory.createIntVectorFromScalar((Integer) obj);
+        } else if (obj instanceof Double) {
+            return RDataFactory.createDoubleVectorFromScalar((Double) obj);
+        } else if (obj instanceof RComplex) {
+            return RDataFactory.createComplexVectorFromScalar((RComplex) obj);
+        } else {
+            return (RVector) obj;
         }
     }
 

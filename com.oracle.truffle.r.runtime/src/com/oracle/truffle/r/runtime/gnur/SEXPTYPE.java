@@ -29,47 +29,48 @@ public enum SEXPTYPE {
     ENVSXP(4, REnvironment.class), /* environments */
     PROMSXP(5, RPromise.class), /* promises: [un]evaluated closure arguments */
     LANGSXP(6, RLanguage.class), /* language constructs (special lists) */
-    SPECIALSXP(7, null), /* special forms */
-    BUILTINSXP(8, null), /* builtin non-special forms */
-    CHARSXP(9, String.class), /* "scalar" string type (internal only) */
+    SPECIALSXP(7), /* special forms */
+    BUILTINSXP(8), /* builtin non-special forms */
+    CHARSXP(9), /* "scalar" string type (GnuR internal only) */
     LGLSXP(10, RLogicalVector.class), /* logical vectors */
     INTSXP(13, RIntVector.class), /* integer vectors */
     REALSXP(14, RDoubleVector.class), /* real variables */
     CPLXSXP(15, RComplexVector.class), /* complex variables */
-    STRSXP(16, RStringVector.class), /* string vectors */
+    STRSXP(16, new Class<?>[]{RStringVector.class, String.class}), /* string vectors */
     DOTSXP(17, RPairList.class), /* dot-dot-dot object */
-    ANYSXP(18, null), /* make "any" args work */
+    ANYSXP(18), /* make "any" args work */
     VECSXP(19, RList.class), /* generic vectors */
     EXPRSXP(20, RExpression.class), /* expressions vectors */
-    BCODESXP(21, null), /* byte code */
-    EXTPTRSXP(22, null), /* external pointer */
-    WEAKREFSXP(23, null), /* weak reference */
+    BCODESXP(21), /* byte code */
+    EXTPTRSXP(22), /* external pointer */
+    WEAKREFSXP(23), /* weak reference */
     RAWSXP(24, RRawVector.class), /* raw bytes */
-    S4SXP(25, null), /* S4 non-vector */
+    S4SXP(25), /* S4 non-vector */
 
-    NEWSXP(30, null), /* fresh node created in new page */
-    FREESXP(31, null), /* node released by GC */
+    NEWSXP(30), /* fresh node created in new page */
+    FREESXP(31), /* node released by GC */
 
     FUNSXP(99, RFunction.class), /* Closure or Builtin */
 
     // used in RSerialize
-    REFSXP(255, null),
-    NILVALUE_SXP(254, null),
-    GLOBALENV_SXP(253, null),
-    UNBOUNDVALUE_SXP(252, null),
+    REFSXP(255),
+    NILVALUE_SXP(254),
+    GLOBALENV_SXP(253),
+    UNBOUNDVALUE_SXP(252),
     MISSINGARG_SXP(251, RMissing.class),
-    BASENAMESPACE_SXP(250, null),
-    NAMESPACESXP(249, null),
-    PACKAGESXP(248, null),
-    PERSISTSXP(247, null),
-    BCREPDEF(244, null),
-    BCREPREF(243, null),
-    EMPTYENV_SXP(242, null),
-    BASEENV_SXP(241, null),
-    ATTRLANGSXP(240, null),
-    ATTRLISTSXP(239, null),
+    BASENAMESPACE_SXP(250),
+    NAMESPACESXP(249),
+    PACKAGESXP(248),
+    PERSISTSXP(247),
+    BCREPDEF(244),
+    BCREPREF(243),
+    EMPTYENV_SXP(242),
+    BASEENV_SXP(241),
+    ATTRLANGSXP(240),
+    ATTRLISTSXP(239),
 
     // FastR scalar variants of GnuR vector types
+    // TODO remove these
     FASTR_DOUBLE(300, Double.class),
     FASTR_INT(301, Integer.class),
     FASTR_BYTE(302, Byte.class),
@@ -79,13 +80,23 @@ public enum SEXPTYPE {
     FASTR_SOURCESECTION(306, SourceSection.class);
 
     public final int code;
-    public final Class<?> fastRClass;
+    public final Class<?>[] fastRClasses;
 
-    @CompilationFinal private static final SEXPTYPE[] VALUES = values();
+    @CompilationFinal private static final SEXPTYPE[] NON_NULL_VALUES;
+
+    SEXPTYPE(int code) {
+        this.code = code;
+        this.fastRClasses = null;
+    }
+
+    SEXPTYPE(int code, Class<?>[] fastRClasses) {
+        this.code = code;
+        this.fastRClasses = fastRClasses;
+
+    }
 
     SEXPTYPE(int code, Class<?> fastRClass) {
-        this.code = code;
-        this.fastRClass = fastRClass;
+        this(code, new Class<?>[]{fastRClass});
     }
 
     private static final Map<Integer, SEXPTYPE> codeMap = new HashMap<>();
@@ -100,9 +111,15 @@ public enum SEXPTYPE {
      * {@code type} field on the {@link RPairList} has to be consulted.
      */
     public static SEXPTYPE typeForClass(Class<?> fastRClass) {
-        for (SEXPTYPE type : VALUES) {
-            if (fastRClass == type.fastRClass) {
-                return type;
+        for (SEXPTYPE type : NON_NULL_VALUES) {
+            if (type.fastRClasses.length == 1) {
+                if (fastRClass == type.fastRClasses[0]) {
+                    return type;
+                }
+            } else {
+                if (fastRClass == type.fastRClasses[0] || fastRClass == type.fastRClasses[1]) {
+                    return type;
+                }
             }
         }
         throw RInternalError.shouldNotReachHere(fastRClass.getName());
@@ -137,8 +154,19 @@ public enum SEXPTYPE {
     }
 
     static {
+        int nonNullCount = 0;
         for (SEXPTYPE type : SEXPTYPE.values()) {
             SEXPTYPE.codeMap.put(type.code, type);
+            if (type.fastRClasses != null) {
+                nonNullCount++;
+            }
+        }
+        NON_NULL_VALUES = new SEXPTYPE[nonNullCount];
+        nonNullCount = 0;
+        for (SEXPTYPE type : SEXPTYPE.values()) {
+            if (type.fastRClasses != null) {
+                NON_NULL_VALUES[nonNullCount++] = type;
+            }
         }
     }
 
