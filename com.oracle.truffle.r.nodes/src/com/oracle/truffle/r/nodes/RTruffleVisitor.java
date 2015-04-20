@@ -135,8 +135,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
             ASTNode astBody = func.getBody();
             FunctionStatementsNode statements;
             if (astBody != null) {
-                // TODO fix
-                statements = new FunctionStatementsNode(func.getSource(), astBody.accept(this));
+                statements = new FunctionStatementsNode(astBody.accept(this));
             } else {
                 statements = new FunctionStatementsNode(RNode.EMTPY_RNODE_ARRAY);
             }
