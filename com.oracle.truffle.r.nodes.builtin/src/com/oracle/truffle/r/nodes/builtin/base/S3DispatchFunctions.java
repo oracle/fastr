@@ -142,7 +142,7 @@ public abstract class S3DispatchFunctions extends RBuiltinNode {
         @Child private ReadVariableNode rvnDef = ReadVariableNode.create(RRuntime.RDotGenericDefEnv, RType.Any, ReadKind.SilentLocal);
 
         @Child private CombineSignaturesNode combineSignatures;
-        @Child private CollectArgumentsNode collectArguments = CollectArgumentsNodeGen.create(null);
+        @Child private CollectArgumentsNode collectArguments = CollectArgumentsNodeGen.create();
 
         @CompilationFinal private RAttributeProfiles attrProfiles;
         @Child private PromiseHelperNode promiseHelper;
@@ -190,7 +190,7 @@ public abstract class S3DispatchFunctions extends RBuiltinNode {
             } else {
                 if (combineSignatures == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    combineSignatures = insert(CombineSignaturesNodeGen.create(null, null));
+                    combineSignatures = insert(CombineSignaturesNodeGen.create());
                 }
                 suppliedSignature = combineSignatures.execute(parameterSignature, args.getSignature());
 
