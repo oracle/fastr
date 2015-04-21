@@ -375,6 +375,7 @@ public final class RError extends RuntimeException {
         VALUE_OUT_OF_RANGE("value out of range in '%s'"),
         MUST_BE_STRING("'%s' must be a character string"),
         ARGUMENT_MUST_BE_STRING("argument '%s' must be a character string"),
+        ARGUMENT_MUST_BE_RAW_VECTOR("argument '%s' must be a raw vector"),
         MUST_BE_NONNULL_STRING("'%s' must be non-null character string"),
         IS_OF_WRONG_LENGTH("'%s' is of wrong length %d (!= %d)"),
         IS_OF_WRONG_ARITY("'%d' argument passed to '%s' which requires '%d'"),

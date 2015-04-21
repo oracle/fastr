@@ -55,6 +55,42 @@ public class RawFunctions {
 
     }
 
+    @RBuiltin(name = "rawToChar", kind = RBuiltinKind.INTERNAL, parameterNames = {"x", "multiple"})
+    public abstract static class RawToChar extends RBuiltinNode {
+        @Specialization
+        protected RStringVector rawToChar(RAbstractRawVector x, byte multiple) {
+            if (RRuntime.isNA(multiple)) {
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_LOGICAL, "multiple");
+            }
+            RStringVector result;
+            if (RRuntime.fromLogical(multiple)) {
+                String[] data = new String[x.getLength()];
+                for (int i = 0; i < data.length; i++) {
+                    data[i] = new String(new byte[]{x.getDataAt(i).getValue()});
+                }
+                result = RDataFactory.createStringVector(data, RDataFactory.COMPLETE_VECTOR);
+            } else {
+                int j = 0;
+                byte[] data = new byte[x.getLength()];
+                for (int i = 0; i < data.length; i++) {
+                    byte b = x.getDataAt(i).getValue();
+                    if (b != 0) {
+                        data[j++] = b;
+                    }
+                }
+                result = RDataFactory.createStringVectorFromScalar(new String(data, 0, j));
+            }
+            return result;
+        }
+
+        @SuppressWarnings("unused")
+        @Fallback
+        protected Object rawToChar(Object x, Object multiple) {
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.ARGUMENT_MUST_BE_RAW_VECTOR, "x");
+        }
+
+    }
+
     // TODO the rest of the functions
 
 }
