@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.engine;
 
+import static com.oracle.truffle.r.runtime.RCmdOptions.NO_RESTORE;
+
 import java.io.*;
 import java.util.*;
 import java.util.stream.*;
@@ -141,9 +143,11 @@ public final class REngine implements RContext.Engine {
                 if (userProfile != null) {
                     singleton.parseAndEval(userProfile, globalFrame, REnvironment.globalEnv(), false, false);
                 }
-                /*
-                 * TODO This is where we would load any saved user data
-                 */
+                if (!NO_RESTORE.getValue()) {
+                    /*
+                     * TODO This is where we would load any saved user data
+                     */
+                }
                 checkAndRunStartupFunction(".First");
                 checkAndRunStartupFunction(".First.sys");
                 RBuiltinPackages.loadDefaultPackageOverrides();

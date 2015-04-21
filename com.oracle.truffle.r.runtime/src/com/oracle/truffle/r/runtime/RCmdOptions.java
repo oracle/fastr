@@ -69,7 +69,7 @@ public class RCmdOptions {
     public static final Option<Boolean> RESTORE = newBooleanOption(false, null, "restore", true, "Do restore previously saved objects at startup");
     public static final Option<Boolean> NO_RESTORE_DATA = newBooleanOption(false, null, "no-restore-data", false, "Don't restore previously saved objects");
     public static final Option<Boolean> NO_RESTORE_HISTORY = newBooleanOption(false, null, "no-restore-history", false, "Don't restore the R history file");
-    public static final Option<Boolean> NO_RESTORE = newBooleanOption(false, null, "no-restore", false, "Don't restore anything");
+    public static final Option<Boolean> NO_RESTORE = newBooleanOption(true, null, "no-restore", false, "Don't restore anything");
     public static final Option<Boolean> VANILLA = newBooleanOption(true, null, "vanilla", false, "Combine --no-save, --no-restore, --no-site-file,\n"
                     + "                          --no-init-file and --no-environ");
     public static final Option<Boolean> NO_READLINE = newBooleanOption(false, null, "no-readline", false, "Don't use readline for command-line editing");
