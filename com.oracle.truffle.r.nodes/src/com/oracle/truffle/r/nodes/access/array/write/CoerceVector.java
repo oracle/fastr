@@ -26,6 +26,7 @@ import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.nodes.control.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -43,6 +44,8 @@ public abstract class CoerceVector extends RNode {
     @Child private CastStringNode castString;
     @Child private CastListNode castList;
     @Child private CoerceVector coerceRecursive;
+
+    public abstract RNode getVector();
 
     private Object coerceRecursive(VirtualFrame frame, Object value, Object vector, Object operand) {
         if (coerceRecursive == null) {
@@ -365,5 +368,20 @@ public abstract class CoerceVector extends RNode {
 
     protected boolean isVectorListOrDataFrame(RAbstractContainer vector) {
         return vector instanceof RList || vector.getElementClass() == RDataFrame.class;
+    }
+
+    /**
+     * N.B. The only reason that these are required is that the {@link UpdateArrayHelperNode} in the
+     * "syntaxAST" form of the {@link ReplacementNode} still takes a {@link CoerceVector}, even
+     * though no coercion happens in the syntax.
+     */
+    @Override
+    public void deparse(RDeparse.State state) {
+        getVector().deparse(state);
+    }
+
+    @Override
+    public void serialize(RSerialize.State state) {
+        getVector().serialize(state);
     }
 }
