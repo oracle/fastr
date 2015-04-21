@@ -1046,7 +1046,7 @@ public class RSerialize {
             } else if (type == SEXPTYPE.SYMSXP) {
                 addReadRef(obj);
                 stream.writeInt(SEXPTYPE.SYMSXP.code);
-                writeItem(((RSymbol) obj).getName());
+                writeCHARSXP(((RSymbol) obj).getName());
             } else if (type == SEXPTYPE.ENVSXP) {
                 throw RInternalError.unimplemented();
             } else if (type == SEXPTYPE.FASTR_DATAFRAME) {
