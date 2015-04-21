@@ -742,7 +742,6 @@ public class RDeparse {
             case FASTR_DOUBLE:
             case FASTR_INT:
             case FASTR_BYTE:
-            case FASTR_STRING:
                 vecElement2buff(state, SEXPTYPE.convertFastRScalarType(type), obj);
                 break;
 
@@ -974,11 +973,10 @@ public class RDeparse {
 
     private static State vecElement2buff(State state, SEXPTYPE type, Object element) {
         switch (type) {
-            case FASTR_STRING:
             case STRSXP:
                 // TODO encoding
                 state.append('"');
-                String s = type == SEXPTYPE.STRSXP ? (String) element : ((SEXPTYPE.FastRString) element).value;
+                String s = (String) element;
                 for (int i = 0; i < s.length(); i++) {
                     char ch = s.charAt(i);
                     int charInt = ch;

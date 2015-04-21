@@ -22,7 +22,6 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
 import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.gnur.*;
-import com.oracle.truffle.r.runtime.gnur.SEXPTYPE.FastRString;
 
 // Code loosely transcribed from GnuR serialize.c.
 
@@ -1021,13 +1020,13 @@ public class RSerialize {
                     return SEXPTYPE.INTSXP;
                 case FASTR_DOUBLE:
                     return SEXPTYPE.REALSXP;
-                case FASTR_STRING:
-                    return SEXPTYPE.STRSXP;
                 case FASTR_BYTE:
                     return SEXPTYPE.LGLSXP;
+                case FASTR_COMPLEX:
+                    return SEXPTYPE.CPLXSXP;
                 case FASTR_DATAFRAME:
+                case FASTR_FACTOR:
                     return SEXPTYPE.VECSXP;
-
                 default:
                     return type;
             }
@@ -1208,10 +1207,11 @@ public class RSerialize {
                         break;
                     }
 
-                    case FASTR_STRING: {
-                        String value = ((FastRString) obj).value;
+                    case FASTR_COMPLEX: {
+                        RComplex value = (RComplex) obj;
                         stream.writeInt(1);
-                        writeItem(value);
+                        stream.writeDouble(value.getRealPart());
+                        stream.writeDouble(value.getImaginaryPart());
                         break;
                     }
 

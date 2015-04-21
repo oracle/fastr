@@ -69,14 +69,18 @@ public enum SEXPTYPE {
     ATTRLANGSXP(240),
     ATTRLISTSXP(239),
 
-    // FastR scalar variants of GnuR vector types
-    // TODO remove these
+    /*
+     * FastR scalar variants of GnuR vector types (other than String) These could be removed in a
+     * similar way to String, but there is no pressing need.
+     */
     FASTR_DOUBLE(300, Double.class),
     FASTR_INT(301, Integer.class),
     FASTR_BYTE(302, Byte.class),
-    FASTR_STRING(303, FastRString.class),
+    FASTR_COMPLEX(303, RComplex.class),
+    // FastR special "vector" types
     FASTR_DATAFRAME(304, RDataFrame.class),
     FASTR_FACTOR(305, RFactor.class),
+    // very special case
     FASTR_SOURCESECTION(306, SourceSection.class);
 
     public final int code;
@@ -125,18 +129,6 @@ public enum SEXPTYPE {
         throw RInternalError.shouldNotReachHere(fastRClass.getName());
     }
 
-    /**
-     * A wrapper class that allows {@link RDeparse} to distinguish {@link SEXPTYPE#CHARSXP} and
-     * {@link SEXPTYPE#FASTR_STRING}.
-     */
-    public static class FastRString {
-        public final String value;
-
-        public FastRString(String value) {
-            this.value = value;
-        }
-    }
-
     public static SEXPTYPE convertFastRScalarType(SEXPTYPE type) {
         switch (type) {
             case FASTR_DOUBLE:
@@ -145,8 +137,6 @@ public enum SEXPTYPE {
                 return SEXPTYPE.INTSXP;
             case FASTR_BYTE:
                 return SEXPTYPE.LGLSXP;
-            case FASTR_STRING:
-                return type;
             default:
                 assert false;
                 return null;
