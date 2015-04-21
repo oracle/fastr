@@ -37,13 +37,13 @@ import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
 
 public class TextConnections {
     public static class TextRConnection extends BaseRConnection {
-        protected String nm;
+        protected String description;
         protected RAbstractStringVector object;
         protected REnvironment env;
 
-        public TextRConnection(String nm, RAbstractStringVector object, REnvironment env, String modeString) throws IOException {
+        public TextRConnection(String description, RAbstractStringVector object, REnvironment env, String modeString) throws IOException {
             super(ConnectionClass.Text, modeString, AbstractOpenMode.Read);
-            this.nm = nm;
+            this.description = description;
             this.object = object;
             this.env = env;
             openNonLazyConnection();
@@ -51,7 +51,7 @@ public class TextConnections {
 
         @Override
         public String getSummaryDescription() {
-            return nm;
+            return description;
         }
 
         @Override
@@ -152,16 +152,21 @@ public class TextConnections {
     private static class TextWriteRConnection extends DelegateWriteRConnection implements GetConnectionValue {
         private String incompleteLine;
         private RStringVector textVec;
+        private String idName;
 
         private void initTextVec(RStringVector v, TextRConnection textBase) {
+            if (textBase.description.equals("NULL")) {
+                throw RError.nyi(null, "anonymous text output connection");
+            }
+            idName = textBase.object.getDataAt(0);
             try {
                 textVec = v;
-                textBase.env.put(textBase.nm, textVec);
+                textBase.env.put(idName, textVec);
             } catch (PutException ex) {
                 throw RError.error((SourceSection) null, ex);
             }
             // lock the binding
-            textBase.env.lockBinding(textBase.nm);
+            textBase.env.lockBinding(idName);
         }
 
         protected TextWriteRConnection(BaseRConnection base) {
@@ -179,7 +184,7 @@ public class TextConnections {
         public void closeAndDestroy() throws IOException {
             base.closed = true;
             TextRConnection textBase = (TextRConnection) base;
-            textBase.env.unlockBinding(textBase.nm);
+            textBase.env.unlockBinding(idName);
         }
 
         @Override
@@ -222,7 +227,7 @@ public class TextConnections {
                 }
                 // TODO: not thread safe
                 TextRConnection textBase = (TextRConnection) base;
-                textBase.env.unlockBinding(textBase.nm);
+                textBase.env.unlockBinding(idName);
                 // TODO: is vector really complete?
                 initTextVec(RDataFactory.createStringVector(updateData, RDataFactory.COMPLETE_VECTOR), textBase);
             }
@@ -234,8 +239,7 @@ public class TextConnections {
 
         @Override
         public void writeString(String s, boolean nl) throws IOException {
-            // TODO Auto-generated method stub
-
+            throw RError.nyi(null, "writeString on text connection");
         }
 
         @Override

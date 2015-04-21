@@ -124,7 +124,7 @@ public abstract class AccessArrayNode extends RNode {
         state.openPairList(SEXPTYPE.LISTSXP);
         state.serializeNodeSetCar(getVector());
         state.openPairList(SEXPTYPE.LISTSXP);
-        RContext.getRASTHelper().serializeNode(state, getPositions());
+        getPositions().serialize(state);
         // N.B. The above call left the result unlinked so we can add exact/drop
         int posCount = state.getPositionsLength();
         if (posCount == 0 && !(exactInSource || dropInSource)) {

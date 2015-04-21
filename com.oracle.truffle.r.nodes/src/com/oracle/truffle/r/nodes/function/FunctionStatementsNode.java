@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,19 +30,19 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
 /**
  * Encapsulates the sequence of statements (expressions) of a function. Has no specific execute
  * behavior but is an important placeholder for debugging instrumentation.
+ *
+ * The {@link SourceSection} for a non-empty sequence is that of the sequence itself.
  */
 public class FunctionStatementsNode extends SequenceNode {
 
     public FunctionStatementsNode(RNode[] sequence) {
+        // TODO revisit what this variant is really for
         super(sequence);
     }
 
-    public FunctionStatementsNode(SourceSection src, RNode sequence) {
-        super(src, sequence);
-    }
-
-    public FunctionStatementsNode(RNode node) {
-        super(node);
+    public FunctionStatementsNode(RNode sequence) {
+        super(sequence);
+        assignSourceSection(sequence.getSourceSection());
     }
 
     @Override

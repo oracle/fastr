@@ -30,7 +30,6 @@ import com.oracle.truffle.r.nodes.access.array.*;
 import com.oracle.truffle.r.nodes.access.array.read.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.RDeparse.*;
 
 public class PositionsArrayNodeValue extends RNode {
 
@@ -93,7 +92,12 @@ public class PositionsArrayNodeValue extends RNode {
     }
 
     @Override
-    public void deparse(State state) {
+    public void deparse(RDeparse.State state) {
         positionsAdapter.deparse(state);
+    }
+
+    @Override
+    public void serialize(RSerialize.State state) {
+        positionsAdapter.serialize(state);
     }
 }

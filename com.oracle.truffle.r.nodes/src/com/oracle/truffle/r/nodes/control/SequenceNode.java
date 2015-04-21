@@ -214,7 +214,7 @@ public class SequenceNode extends RNode {
                                 total += sequence.timing[i];
                             }
                         }
-                        if (total > 1000000000L) {
+                        if (total > 0L) {
                             int startLine = sequence.getSourceSection().getStartLine();
                             int endLine = startLine + sequence.getSourceSection().getCode().split("\n").length - 1;
                             RPerfStats.out().println("File " + source.getName() + " lines " + startLine + "-" + endLine + ", total: " + (total / 1000000) + "ms");

@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.function;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.env.REnvironment;
@@ -33,6 +34,8 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
  *
  * Children are typed as {@link RNode} to avoid a custom instrumentation wrapper node.
  *
+ * The {@link SourceSection} is that of the {@link FunctionStatementsNode} as the
+ * {@link SaveArgumentsNode} is not part of the syntax.
  */
 public class FunctionBodyNode extends RNode {
 
@@ -42,11 +45,13 @@ public class FunctionBodyNode extends RNode {
     public FunctionBodyNode(SaveArgumentsNode saveArgs, FunctionStatementsNode statements) {
         this.saveArgs = saveArgs;
         this.statements = statements;
+        assignSourceSection(statements.getSourceSection());
     }
 
     private FunctionBodyNode(RNode saveArgs, RNode statements) {
         this.saveArgs = saveArgs;
         this.statements = statements;
+        assignSourceSection(statements.getSourceSection());
     }
 
     @Override

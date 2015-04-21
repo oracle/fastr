@@ -42,6 +42,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.gnur.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
 @SuppressWarnings("unused")
@@ -2160,14 +2161,41 @@ public abstract class UpdateArrayHelperNode extends RNode {
         return vector.isObject(attrProfiles) && forObjects;
     }
 
-    /**
-     * N.B. array updates are always part of a "replacement" so all that deparse does is handle the
-     * {@link #getPositions()}. See {@code SequenceNode.Replacement}.
-     */
     @Override
-    public void deparse(State state) {
+    public void deparse(RDeparse.State state) {
+        getVector().deparse(state);
         state.append(isSubset ? "[" : "[[");
         getPositions().deparse(state);
         state.append(isSubset ? "]" : "]]");
+        state.append(" <- ");
+        getNewValue().deparse(state);
+    }
+
+    @Override
+    public void serialize(RSerialize.State state) {
+        state.setAsBuiltin("<-");
+        state.openPairList(SEXPTYPE.LISTSXP);
+        // array access
+        state.openPairList(SEXPTYPE.LANGSXP);
+        state.setAsBuiltin(isSubset ? "[" : "[[");
+        state.openPairList(SEXPTYPE.LISTSXP);
+        state.serializeNodeSetCar(getVector());
+        state.openPairList(SEXPTYPE.LISTSXP);
+        getPositions().serialize(state);
+        // N.B. The above call left the positions unlinked, see AccessArrayNode
+        int posCount = state.getPositionsLength();
+        if (posCount == 0) {
+            state.setCarMissing();
+            state.setCdr(state.closePairList());
+        } else {
+            state.linkPairList(posCount + 1); // the vector counts as well
+        }
+        state.setCdr(state.closePairList());
+        // end array access
+        state.setCar(state.closePairList());
+        state.openPairList(SEXPTYPE.LISTSXP);
+        state.serializeNodeSetCar(getNewValue());
+        state.linkPairList(2);
+        state.setCdr(state.closePairList());
     }
 }

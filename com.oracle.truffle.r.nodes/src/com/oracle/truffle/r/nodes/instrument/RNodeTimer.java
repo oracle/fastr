@@ -124,15 +124,15 @@ public class RNodeTimer {
 
         private static class PerfHandler implements RPerfStats.Handler {
             static final String NAME = "timing";
-            private boolean expand;
+            private boolean stmts;
             private int threshold;
 
             public void initialize(String optionText) {
                 if (optionText.length() > 0) {
                     String[] subOptions = optionText.split(":");
                     for (String subOption : subOptions) {
-                        if (subOption.equals("expand")) {
-                            expand = true;
+                        if (subOption.equals("stmts")) {
+                            stmts = true;
                         } else if (subOption.startsWith("threshold")) {
                             threshold = Integer.parseInt(subOption.substring(subOption.indexOf('=') + 1)) * 1000;
                         }
@@ -169,17 +169,25 @@ public class RNodeTimer {
                 TimingData[] sortedData = new TimingData[values.size()];
                 values.toArray(sortedData);
                 Arrays.sort(sortedData);
+                long totalTime = 0;
+                for (TimingData t : sortedData) {
+                    totalTime += t.time;
+                }
 
                 for (TimingData t : sortedData) {
                     if (t.time > 0) {
                         if (t.time > threshold) {
                             FunctionIdentification fdi = RInstrument.getFunctionIdentification(t.functionUID);
                             RPerfStats.out().println("==========");
-                            RPerfStats.out().printf("%d ms: %s, %s%n", t.time, fdi.name, fdi.origin);
-                            if (expand) {
+                            RPerfStats.out().printf("%d ms (%.2f%%): %s, %s%n", t.time, percent(t.time, totalTime), fdi.name, fdi.origin);
+                            if (stmts) {
                                 SourceSection ss = fdi.node.getSourceSection();
                                 if (ss == null) {
-                                    RPerfStats.out().println("no source available");
+                                    // wrapper
+                                    ss = fdi.node.getBody().getSourceSection();
+                                    if (ss == null) {
+                                        RPerfStats.out().println("no source available");
+                                    }
                                 } else {
                                     long[] time = createLineTimes(fdi);
                                     int startLine = ss.getStartLine();
@@ -196,12 +204,16 @@ public class RNodeTimer {
             }
         }
 
+        private static double percent(long a, long b) {
+            return ((double) a * 100) / b;
+        }
+
         private static class LineTimesNodeVisitor extends RASTProber.SyntaxNodeVisitor {
-            private final long[] time;
+            private final long[] times;
 
             LineTimesNodeVisitor(FunctionUID uid, long[] time) {
                 super(uid);
-                this.time = time;
+                this.times = time;
             }
 
             @Override
@@ -211,7 +223,10 @@ public class RNodeTimer {
                     NodeId nodeId = new NodeId(uid, node);
                     Statement stmt = (Statement) timerMap.get(nodeId);
                     if (stmt != null) {
-                        time[ss.getStartLine()] += millis(stmt.cumulativeTime);
+                        assert ss.getStartLine() != 0;
+                        long stmtTime = millis(stmt.cumulativeTime);
+                        times[0] += stmtTime;
+                        times[ss.getStartLine()] += stmtTime;
                     } else {
                         /*
                          * This happens because default arguments are not visited during the AST
@@ -241,11 +256,11 @@ public class RNodeTimer {
             /*
              * Although only those lines occupied by the function will actually have entries in the
              * array, addressing is easier if we allocate an array that is as long as the entire
-             * source.
+             * source. Since there is never a line 0, we use that to compute the total.
              */
-            final long[] time = new long[fdi.source.getLineCount() + 1];
-            fdi.node.getBody().accept(new LineTimesNodeVisitor(fdi.node.getUID(), time));
-            return time;
+            final long[] times = new long[fdi.source.getLineCount() + 1];
+            fdi.node.getBody().accept(new LineTimesNodeVisitor(fdi.node.getUID(), times));
+            return times;
         }
 
         public static boolean enabled() {

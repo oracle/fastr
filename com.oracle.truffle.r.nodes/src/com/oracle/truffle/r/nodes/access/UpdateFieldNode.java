@@ -31,11 +31,11 @@ import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.env.REnvironment.*;
+import com.oracle.truffle.r.runtime.gnur.*;
 
 @NodeChild(value = "value", type = RNode.class)
 public abstract class UpdateFieldNode extends AccessFieldBaseNode {
@@ -170,13 +170,33 @@ public abstract class UpdateFieldNode extends AccessFieldBaseNode {
     }
 
     @Override
-    public void deparse(State state) {
-        // This is rather strange as it effectively includes an assignment
+    public void deparse(RDeparse.State state) {
         getObject().deparse(state);
         state.append('$');
         state.append(getField());
         state.append(" <- ");
         getValue().deparse(state);
+    }
+
+    @Override
+    public void serialize(RSerialize.State state) {
+        state.setAsBuiltin("<-");
+        state.openPairList(SEXPTYPE.LISTSXP);
+        // field access
+        state.openPairList(SEXPTYPE.LANGSXP);
+        state.setAsBuiltin("$");
+        state.openPairList(SEXPTYPE.LISTSXP);
+        state.serializeNodeSetCar(getObject());
+        state.openPairList(SEXPTYPE.LISTSXP);
+        state.setCarAsSymbol(getField());
+        state.linkPairList(2);
+        state.setCdr(state.closePairList());
+        // end field access
+        state.setCar(state.closePairList());
+        state.openPairList(SEXPTYPE.LISTSXP);
+        state.serializeNodeSetCar(getValue());
+        state.linkPairList(2);
+        state.setCdr(state.closePairList());
     }
 
 }

@@ -721,6 +721,7 @@ public class RDeparse {
             case REALSXP:
             case CPLXSXP:
             case RAWSXP:
+                obj = checkScalarVector(obj);
                 vector2buff(state, (RVector) obj);
                 break;
 
@@ -741,7 +742,6 @@ public class RDeparse {
             case FASTR_DOUBLE:
             case FASTR_INT:
             case FASTR_BYTE:
-            case FASTR_STRING:
                 vecElement2buff(state, SEXPTYPE.convertFastRScalarType(type), obj);
                 break;
 
@@ -757,6 +757,22 @@ public class RDeparse {
             return ((RPairList) obj).getType();
         } else {
             return SEXPTYPE.typeForClass(klass);
+        }
+    }
+
+    private static RVector checkScalarVector(Object obj) {
+        if (obj instanceof String) {
+            return RDataFactory.createStringVectorFromScalar((String) obj);
+        } else if (obj instanceof Byte) {
+            return RDataFactory.createLogicalVectorFromScalar((Byte) obj);
+        } else if (obj instanceof Integer) {
+            return RDataFactory.createIntVectorFromScalar((Integer) obj);
+        } else if (obj instanceof Double) {
+            return RDataFactory.createDoubleVectorFromScalar((Double) obj);
+        } else if (obj instanceof RComplex) {
+            return RDataFactory.createComplexVectorFromScalar((RComplex) obj);
+        } else {
+            return (RVector) obj;
         }
     }
 
@@ -957,11 +973,10 @@ public class RDeparse {
 
     private static State vecElement2buff(State state, SEXPTYPE type, Object element) {
         switch (type) {
-            case FASTR_STRING:
             case STRSXP:
                 // TODO encoding
                 state.append('"');
-                String s = type == SEXPTYPE.STRSXP ? (String) element : ((SEXPTYPE.FastRString) element).value;
+                String s = (String) element;
                 for (int i = 0; i < s.length(); i++) {
                     char ch = s.charAt(i);
                     int charInt = ch;

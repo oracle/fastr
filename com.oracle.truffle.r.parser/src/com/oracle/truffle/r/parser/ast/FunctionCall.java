@@ -21,6 +21,7 @@ public class FunctionCall extends Call {
     private boolean isAssignment;
     private boolean isSuper;
     private final boolean isReplacement;
+    private boolean tempSuppressReplacement;
 
     public FunctionCall(SourceSection source, Object lhs, List<ArgNode> arguments, boolean isReplacement) {
         super(source, arguments);
@@ -49,7 +50,11 @@ public class FunctionCall extends Call {
     }
 
     public String getName() {
-        return (String) lhs;
+        String result = (String) lhs;
+        if (tempSuppressReplacement) {
+            return result.replace("<-", "");
+        }
+        return result;
     }
 
     public FunctionCall getFunctionCall() {
@@ -78,6 +83,13 @@ public class FunctionCall extends Call {
 
     public boolean isReplacement() {
         return this.isReplacement;
+    }
+
+    /**
+     * Calls to getName will suppress the "<-" suffix when {@code on == true}.
+     */
+    public void tempSuppressReplacementSuffix(boolean on) {
+        tempSuppressReplacement = on;
     }
 
     @Override

@@ -22,7 +22,6 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
 import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.gnur.*;
-import com.oracle.truffle.r.runtime.gnur.SEXPTYPE.FastRString;
 
 // Code loosely transcribed from GnuR serialize.c.
 
@@ -1021,13 +1020,13 @@ public class RSerialize {
                     return SEXPTYPE.INTSXP;
                 case FASTR_DOUBLE:
                     return SEXPTYPE.REALSXP;
-                case FASTR_STRING:
-                    return SEXPTYPE.STRSXP;
                 case FASTR_BYTE:
                     return SEXPTYPE.LGLSXP;
+                case FASTR_COMPLEX:
+                    return SEXPTYPE.CPLXSXP;
                 case FASTR_DATAFRAME:
+                case FASTR_FACTOR:
                     return SEXPTYPE.VECSXP;
-
                 default:
                     return type;
             }
@@ -1047,7 +1046,7 @@ public class RSerialize {
             } else if (type == SEXPTYPE.SYMSXP) {
                 addReadRef(obj);
                 stream.writeInt(SEXPTYPE.SYMSXP.code);
-                writeItem(((RSymbol) obj).getName());
+                writeCHARSXP(((RSymbol) obj).getName());
             } else if (type == SEXPTYPE.ENVSXP) {
                 throw RInternalError.unimplemented();
             } else if (type == SEXPTYPE.FASTR_DATAFRAME) {
@@ -1073,20 +1072,16 @@ public class RSerialize {
                 stream.writeInt(flags);
                 switch (type) {
                     case STRSXP: {
-                        RStringVector vec = (RStringVector) obj;
-                        stream.writeInt(vec.getLength());
-                        for (int i = 0; i < vec.getLength(); i++) {
-                            writeItem(vec.getDataAt(i));
-                        }
-                        break;
-                    }
-
-                    case CHARSXP: {
-                        String s = (String) obj;
-                        if (s == RRuntime.STRING_NA) {
-                            stream.writeInt(-1);
+                        if (obj instanceof String) {
+                            // length 1 vector
+                            stream.writeInt(1);
+                            writeCHARSXP((String) obj);
                         } else {
-                            stream.writeString(s);
+                            RStringVector vec = (RStringVector) obj;
+                            stream.writeInt(vec.getLength());
+                            for (int i = 0; i < vec.getLength(); i++) {
+                                writeCHARSXP(vec.getDataAt(i));
+                            }
                         }
                         break;
                     }
@@ -1212,10 +1207,11 @@ public class RSerialize {
                         break;
                     }
 
-                    case FASTR_STRING: {
-                        String value = ((FastRString) obj).value;
+                    case FASTR_COMPLEX: {
+                        RComplex value = (RComplex) obj;
                         stream.writeInt(1);
-                        writeItem(value);
+                        stream.writeDouble(value.getRealPart());
+                        stream.writeDouble(value.getImaginaryPart());
                         break;
                     }
 
@@ -1226,6 +1222,20 @@ public class RSerialize {
                 if (attributes != null) {
                     writeAttributes(attributes);
                 }
+            }
+        }
+
+        /**
+         * Write the element of a STRSXP. We can't call {@link #writeItem} because that always
+         * treats a {@code String} as an STRSXP.
+         */
+        private void writeCHARSXP(String s) throws IOException {
+            int flags = Flags.packFlags(SEXPTYPE.CHARSXP, 0, false, false, false);
+            stream.writeInt(flags);
+            if (s == RRuntime.STRING_NA) {
+                stream.writeInt(-1);
+            } else {
+                stream.writeString(s);
             }
         }
 

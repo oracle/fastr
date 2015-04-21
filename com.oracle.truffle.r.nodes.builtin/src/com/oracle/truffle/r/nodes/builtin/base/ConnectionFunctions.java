@@ -151,11 +151,21 @@ public abstract class ConnectionFunctions {
         @TruffleBoundary
         protected Object textConnection(RAbstractStringVector nm, RAbstractStringVector object, RAbstractStringVector open, REnvironment env, @SuppressWarnings("unused") RIntVector encoding) {
             controlVisibility();
+            if (nm.getLength() != 1) {
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "description");
+            }
+            // TODO more error checking as per GnuR
             try {
                 return new TextRConnection(nm.getDataAt(0), object, env, open.getDataAt(0));
             } catch (IOException ex) {
                 throw RInternalError.shouldNotReachHere();
             }
+        }
+
+        @SuppressWarnings("unused")
+        @Fallback
+        protected Object textConnection(Object nm, Object object, Object open, Object env, Object encoding) {
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
         }
     }
 

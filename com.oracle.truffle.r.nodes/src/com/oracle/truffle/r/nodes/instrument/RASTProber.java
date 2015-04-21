@@ -31,6 +31,7 @@ import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.control.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.options.FastROptions;
+import com.oracle.truffle.r.runtime.*;
 
 /**
  * A visitor which traverses a completely parsed R AST (presumed not yet executed) and attaches
@@ -57,8 +58,14 @@ public final class RASTProber implements ASTProber {
     public void probeAST(Node node) {
         FunctionBodyNode body = (FunctionBodyNode) node;
         FunctionDefinitionNode fdn = (FunctionDefinitionNode) body.getParent();
-        if (fdn.getSourceSection() == null) {
-            // Can't instrument ASTs without a SourceSection
+        if (body.getSourceSection() == null) {
+            // Can't instrument AST (bodies) without a SourceSection
+            if (FastROptions.debugMatches("RASTProberNoSource")) {
+                RDeparse.State state = RDeparse.State.createPrintableState();
+                fdn.deparse(state);
+                System.out.printf("No source sections for %s, can't instrument%n", fdn);
+                System.out.println(state.toString());
+            }
             return;
         }
         RInstrument.registerFunctionDefinition(fdn);
@@ -67,7 +74,7 @@ public final class RASTProber implements ASTProber {
         body.probe().tagAs(RSyntaxTag.FUNCTION_BODY, uid);
         stmts.probe().tagAs(START_METHOD, uid);
         TagSyntaxNodeVisitor visitor = new TagSyntaxNodeVisitor(uid);
-        if (FastROptions.debugMatches("astprober")) {
+        if (FastROptions.debugMatches("RASTProberTag")) {
             System.out.printf("Tagging function %s%n", uid);
         }
         body.accept(visitor);
@@ -111,7 +118,7 @@ public final class RASTProber implements ASTProber {
         protected boolean callback(RNode node) {
             RInstrument.NodeId nodeId = new RInstrument.NodeId(uid, node);
             node.probe().tagAs(STATEMENT, new RInstrument.NodeId(uid, node));
-            if (FastROptions.debugMatches("astprober")) {
+            if (FastROptions.debugMatches("RASTProberTag")) {
                 System.out.printf("Tagged %s as STATEMENT: %s%n", node.toString(), nodeId.toString());
             }
             return true;
