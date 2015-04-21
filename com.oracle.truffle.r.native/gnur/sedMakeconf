@@ -5,3 +5,4 @@
 /^FFLAGS =.*/ w platform.mk.temp
 /^FPICFLAGS =.*/ w platform.mk.temp
 /^FLIBS_IN_SO =.*/ w platform.mk.temp
+/^SHLIB_.* = .*/ w platform.mk.temp

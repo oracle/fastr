@@ -11,18 +11,15 @@
 # All rights reserved.
 #
 
-# Fledgling R command to startup FastR
-# Currently all R CMD calls are forwarded to GnuR
+# Startup FastR using the mx tool (development)
+# This is exec'ed by the (generic) R script in the parent directory.
 #
-GNUR=`which R`
+
+#echo args="$@"
+#printenv | fgrep R_
 
 source="${BASH_SOURCE[0]}"
 while [ -h "$source" ] ; do source="$(readlink "$source")"; done
-PRIMARY_PATH="$( cd -P "$( dirname "$source" )" && pwd )"/..
+PRIMARY_PATH="$( cd -P "$( dirname "$source" )" && pwd )"/../..
 
-case ${1} in
-    CMD)
-      exec $GNUR "$@";;
-    *)
-      exec mx --primary-suite-path $PRIMARY_PATH R "$@";;
- esac
+exec mx $MX_R_GLOBAL_ARGS --primary-suite-path $PRIMARY_PATH R $MX_R_CMD_ARGS "$@"

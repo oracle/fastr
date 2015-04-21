@@ -21,21 +21,44 @@
 # questions.
 #
 
+# Sets up the "bin" directory with scripts mostly copied from GnuR.
+# The FastR'ness is handled in the "R" file in the "bin/exec" subdirectory.
+# Rscript is an exception as this is a separate program in GnuR and
+# stored directly in the "bin" directory.
+#
+# The R script defines the R_HOME environment variable from R_HOME_DIR
+# which is set in the script during the GnuR build. This has to be changed.
+
 .PHONY: bindir all rcmd
 
-FASTR_BINDIR = $(TOPDIR)/../bin
+FASTR_R_HOME := $(abspath $(TOPDIR)/..)
+FASTR_BINDIR = $(FASTR_R_HOME)/bin
+FASTR_ETCDIR = $(FASTR_R_HOME)/etc
 
-all: bindir rcmd
+R_SCRIPT := $(addprefix $(GNUR_HOME)/bin/,R)
+SUPPORT_SCRIPTS := $(addprefix $(GNUR_HOME)/bin/,BATCH COMPILE INSTALL Rcmd)
 
-bindir:
+# Not all of these work unchanged
+ETC_FILES := $(addprefix $(GNUR_HOME)/etc/,javaconf,ldpaths,Renviron,repositories)
+
+all: rundirs rcmds
+
+rundirs:
 	mkdir -p $(FASTR_BINDIR)
+	mkdir -p $(FASTR_BINDIR)/exec
+	mkdir -p $(FASTR_ETCDIR)
 	
-rcmd: $(FASTR_BINDIR)/R
+rcmds: $(FASTR_BINDIR)/R
 
-$(FASTR_BINDIR)/R: R.sh Rscript.sh
-	cp R.sh $(FASTR_BINDIR)/R
+$(FASTR_BINDIR)/R: Makefile R.sh Rscript.sh
+	cp R.sh $(FASTR_BINDIR)/exec/R
+	chmod +x $(FASTR_BINDIR)/exec/R
 	cp Rscript.sh $(FASTR_BINDIR)/Rscript
-	chmod +x $(FASTR_BINDIR)/R
-	touch $(FASTR_BINDIR)/INSTALL
+	cp $(SUPPORT_SCRIPTS) $(FASTR_BINDIR)
+	sed -e 's!\(^R_HOME_DIR=\)\(.*\)!\1"$(FASTR_R_HOME)"!' < $(R_SCRIPT) > $(FASTR_BINDIR)/R
+	touch $(FASTR_ETCDIR)/ldpaths
+	cp $(GNUR_HOME)/etc/Renviron $(FASTR_ETCDIR)
+	cp Makeconf $(FASTR_ETCDIR)/Makeconf
 
 clean:
+	rm -rf $(FASTR_BINDIR)
