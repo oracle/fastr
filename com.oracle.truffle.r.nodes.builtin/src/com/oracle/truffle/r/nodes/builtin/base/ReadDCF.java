@@ -39,16 +39,20 @@ import com.oracle.truffle.r.runtime.data.model.*;
 public abstract class ReadDCF extends RBuiltinNode {
 
     @Specialization
-    protected RStringVector doReadDCF(RConnection conn, @SuppressWarnings("unused") RNull fields, RNull keepWhite) {
-        return doReadDCF(conn, (RAbstractStringVector) null, keepWhite);
-    }
-
-    @Specialization
     @TruffleBoundary
-    protected RStringVector doReadDCF(RConnection conn, RAbstractStringVector fields, @SuppressWarnings("unused") RNull keepWhite) {
+    protected RStringVector doReadDCF(RConnection conn, Object fieldsObj, Object keepWhiteObj) {
+        RAbstractStringVector fields = fieldsObj == RNull.instance ? null : (RAbstractStringVector) fieldsObj;
+        RAbstractStringVector keepWhite = keepWhiteObj == RNull.instance ? null : (RAbstractStringVector) keepWhiteObj;
         DCF dcf = null;
         try (RConnection openConn = conn.forceOpen("r")) {
-            dcf = DCF.read(conn.readLines(0));
+            Set<String> keepWhiteSet = null;
+            if (keepWhite != null) {
+                keepWhiteSet = new HashSet<>(keepWhite.getLength());
+                for (int i = 0; i < keepWhite.getLength(); i++) {
+                    keepWhiteSet.add(keepWhite.getDataAt(i));
+                }
+            }
+            dcf = DCF.read(conn.readLines(0), keepWhiteSet);
         } catch (IOException ex) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.ERROR_READING_CONNECTION, ex.getMessage());
         }
@@ -110,4 +114,11 @@ public abstract class ReadDCF extends RBuiltinNode {
         }
         return false;
     }
+
+    @SuppressWarnings("unused")
+    @Fallback
+    protected RStringVector doReadDCF(Object conn, Object fields, Object keepWhite) {
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
+    }
+
 }

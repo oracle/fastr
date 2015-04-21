@@ -46,7 +46,7 @@ public class DCF {
 
     private ArrayList<Fields> paragraphs = new ArrayList<>();
 
-    public static DCF read(String[] lines) {
+    public static DCF read(String[] lines, Set<String> keepWhiteSet) {
         DCF result = new DCF();
         String fieldName = null;
         StringBuffer fieldContent = new StringBuffer();
@@ -85,7 +85,12 @@ public class DCF {
         }
         // end of the field for sure
         if (fieldName != null) {
-            fields.add(fieldName, fieldContent.toString());
+            boolean stripWhite = keepWhiteSet == null || !keepWhiteSet.contains(fieldName);
+            String fieldAsString = fieldContent.toString();
+            if (stripWhite) {
+                fieldAsString = fieldAsString.trim();
+            }
+            fields.add(fieldName, fieldAsString);
             result.paragraphs.add(fields);
         }
         return result;
