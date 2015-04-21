@@ -167,12 +167,12 @@ public abstract class UnaryArithmeticNode extends UnaryNode {
 
     @Specialization(guards = "operands.isComplete()")
     protected RIntVector doLogicalVector(RAbstractLogicalVector operands) {
-        return doIntVector(RClosures.createLogicalToIntVector(operands, na));
+        return doIntVector(RClosures.createLogicalToIntVector(operands));
     }
 
     @Specialization(guards = "!operands.isComplete()")
     protected RIntVector doLogicalVectorNA(RAbstractLogicalVector operands) {
-        return doIntVectorNA(RClosures.createLogicalToIntVector(operands, na));
+        return doIntVectorNA(RClosures.createLogicalToIntVector(operands));
     }
 
     @Fallback

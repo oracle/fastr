@@ -29,8 +29,8 @@ public class RRawToStringVectorClosure extends RToStringVectorClosure implements
 
     private final RAbstractRawVector vector;
 
-    public RRawToStringVectorClosure(RAbstractRawVector vector, boolean neverSeenNA) {
-        super(vector, neverSeenNA);
+    public RRawToStringVectorClosure(RAbstractRawVector vector) {
+        super(vector);
         this.vector = vector;
     }
 

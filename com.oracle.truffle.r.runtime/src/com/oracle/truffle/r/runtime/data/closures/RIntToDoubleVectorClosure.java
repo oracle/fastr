@@ -29,14 +29,14 @@ public class RIntToDoubleVectorClosure extends RToDoubleVectorClosure implements
 
     private final RAbstractIntVector vector;
 
-    public RIntToDoubleVectorClosure(RAbstractIntVector vector, boolean neverSeenNA) {
-        super(vector, neverSeenNA);
+    public RIntToDoubleVectorClosure(RAbstractIntVector vector) {
+        super(vector);
         this.vector = vector;
     }
 
     public double getDataAt(int index) {
         int data = vector.getDataAt(index);
-        if (!neverSeenNA && RRuntime.isNA(data)) {
+        if (!vector.isComplete() && RRuntime.isNA(data)) {
             return RRuntime.DOUBLE_NA;
         }
         return RRuntime.int2doubleNoCheck(data);

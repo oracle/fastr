@@ -35,8 +35,8 @@ public class RFactorToDoubleVectorClosure extends RToDoubleVectorClosure impleme
     private final RAbstractDoubleVector levels;
     private final boolean withNames;
 
-    public RFactorToDoubleVectorClosure(RFactor factor, RAbstractDoubleVector levels, boolean neverSeenNA, boolean withNames) {
-        super(factor.getVector(), factor.getVector().isComplete() && neverSeenNA);
+    public RFactorToDoubleVectorClosure(RFactor factor, RAbstractDoubleVector levels, boolean withNames) {
+        super(factor.getVector());
         this.vector = factor.getVector();
         assert levels != null;
         this.levels = levels;
@@ -45,7 +45,7 @@ public class RFactorToDoubleVectorClosure extends RToDoubleVectorClosure impleme
 
     public double getDataAt(int index) {
         int val = vector.getDataAt(index);
-        if (!neverSeenNA && RRuntime.isNA(val)) {
+        if (!vector.isComplete() && RRuntime.isNA(val)) {
             return RRuntime.DOUBLE_NA;
         } else {
             return levels.getDataAt(val - 1);

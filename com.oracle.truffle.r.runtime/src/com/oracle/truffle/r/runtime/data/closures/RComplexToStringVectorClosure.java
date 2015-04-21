@@ -30,14 +30,14 @@ public class RComplexToStringVectorClosure extends RToStringVectorClosure implem
 
     private final RAbstractComplexVector vector;
 
-    public RComplexToStringVectorClosure(RAbstractComplexVector vector, boolean neverSeenNA) {
-        super(vector, neverSeenNA);
+    public RComplexToStringVectorClosure(RAbstractComplexVector vector) {
+        super(vector);
         this.vector = vector;
     }
 
     public String getDataAt(int index) {
         RComplex data = vector.getDataAt(index);
-        if (!neverSeenNA && RRuntime.isNA(data)) {
+        if (!vector.isComplete() && RRuntime.isNA(data)) {
             return RRuntime.STRING_NA;
         }
         return RRuntime.complexToString(data);

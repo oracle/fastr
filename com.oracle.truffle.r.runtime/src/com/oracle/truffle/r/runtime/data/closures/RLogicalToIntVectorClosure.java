@@ -29,14 +29,14 @@ public class RLogicalToIntVectorClosure extends RToIntVectorClosure implements R
 
     private final RAbstractLogicalVector vector;
 
-    public RLogicalToIntVectorClosure(RAbstractLogicalVector vector, boolean neverSeenNA) {
-        super(vector, neverSeenNA);
+    public RLogicalToIntVectorClosure(RAbstractLogicalVector vector) {
+        super(vector);
         this.vector = vector;
     }
 
     public int getDataAt(int index) {
         byte data = vector.getDataAt(index);
-        if (!neverSeenNA && RRuntime.isNA(data)) {
+        if (!vector.isComplete() && RRuntime.isNA(data)) {
             return RRuntime.INT_NA;
         }
         return data;

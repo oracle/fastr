@@ -30,8 +30,8 @@ public class RLogicalToComplexVectorClosure extends RToComplexVectorClosure impl
 
     private final RAbstractLogicalVector vector;
 
-    public RLogicalToComplexVectorClosure(RAbstractLogicalVector vector, boolean neverSeenNA) {
-        super(vector, neverSeenNA);
+    public RLogicalToComplexVectorClosure(RAbstractLogicalVector vector) {
+        super(vector);
         this.vector = vector;
     }
 
@@ -39,7 +39,7 @@ public class RLogicalToComplexVectorClosure extends RToComplexVectorClosure impl
         byte data = vector.getDataAt(index);
         double real;
         double imaginary;
-        if (!neverSeenNA && RRuntime.isNA(data)) {
+        if (!vector.isComplete() && RRuntime.isNA(data)) {
             real = RRuntime.COMPLEX_NA_REAL_PART;
             imaginary = RRuntime.COMPLEX_NA_IMAGINARY_PART;
         } else {

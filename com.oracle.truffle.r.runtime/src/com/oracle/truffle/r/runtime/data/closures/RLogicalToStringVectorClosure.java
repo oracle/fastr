@@ -29,14 +29,14 @@ public class RLogicalToStringVectorClosure extends RToStringVectorClosure implem
 
     private final RAbstractLogicalVector vector;
 
-    public RLogicalToStringVectorClosure(RAbstractLogicalVector vector, boolean neverSeenNA) {
-        super(vector, neverSeenNA);
+    public RLogicalToStringVectorClosure(RAbstractLogicalVector vector) {
+        super(vector);
         this.vector = vector;
     }
 
     public String getDataAt(int index) {
         byte data = vector.getDataAt(index);
-        if (!neverSeenNA && RRuntime.isNA(data)) {
+        if (!vector.isComplete() && RRuntime.isNA(data)) {
             return RRuntime.STRING_NA;
         }
         return RRuntime.logicalToStringNoCheck(data);

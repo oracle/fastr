@@ -124,7 +124,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
     @Specialization(guards = {"oneVec(args)", "isFirstLogicalPrecedence(args)"})
     Object orderLogical(VirtualFrame frame, RAbstractLogicalVector naLastVec, RAbstractLogicalVector decVec, RArgsValuesAndNames args) {
         Object[] vectors = args.getValues();
-        vectors[0] = RClosures.createLogicalToIntVector((RAbstractLogicalVector) castVector(frame, vectors[0]), naCheck);
+        vectors[0] = RClosures.createLogicalToIntVector((RAbstractLogicalVector) castVector(frame, vectors[0]));
         return orderInt(frame, naLastVec, decVec, args);
     }
 

@@ -27,11 +27,8 @@ import com.oracle.truffle.r.runtime.data.model.*;
 
 public abstract class RToStringVectorClosure extends RToVectorClosure implements RAbstractStringVector {
 
-    protected final boolean neverSeenNA;
-
-    public RToStringVectorClosure(RAbstractVector vector, boolean neverSeenNA) {
+    public RToStringVectorClosure(RAbstractVector vector) {
         super(vector);
-        this.neverSeenNA = neverSeenNA;
     }
 
     public RStringVector materialize() {
@@ -41,7 +38,7 @@ public abstract class RToStringVectorClosure extends RToVectorClosure implements
             String data = getDataAt(i);
             result[i] = data;
         }
-        return RDataFactory.createStringVector(result, neverSeenNA);
+        return RDataFactory.createStringVector(result, vector.isComplete());
     }
 
     public Class<?> getElementClass() {

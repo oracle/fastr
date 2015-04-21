@@ -94,7 +94,7 @@ public abstract class Abs extends RBuiltinNode {
     protected RIntVector abs(RLogicalVector value) {
         controlVisibility();
         check.enable(value);
-        return doAbs(RClosures.createLogicalToIntVector(value, check));
+        return doAbs(RClosures.createLogicalToIntVector(value));
     }
 
     @Specialization

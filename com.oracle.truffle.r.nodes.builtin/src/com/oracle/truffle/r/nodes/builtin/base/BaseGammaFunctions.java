@@ -68,12 +68,12 @@ public class BaseGammaFunctions {
 
         @Specialization
         protected RDoubleVector lgamma(RAbstractIntVector x) {
-            return lgamma(RClosures.createIntToDoubleVector(x, naClosureCheck));
+            return lgamma(RClosures.createIntToDoubleVector(x));
         }
 
         @Specialization
         protected RDoubleVector lgamma(RAbstractLogicalVector x) {
-            return lgamma(RClosures.createLogicalToDoubleVector(x, naClosureCheck));
+            return lgamma(RClosures.createLogicalToDoubleVector(x));
         }
 
         @Specialization
@@ -132,12 +132,12 @@ public class BaseGammaFunctions {
 
         @Specialization
         protected RDoubleVector digamma(VirtualFrame frame, RAbstractIntVector x) {
-            return digamma(frame, RClosures.createIntToDoubleVector(x, naClosureCheck));
+            return digamma(frame, RClosures.createIntToDoubleVector(x));
         }
 
         @Specialization
         protected RDoubleVector digamma(VirtualFrame frame, RAbstractLogicalVector x) {
-            return digamma(frame, RClosures.createLogicalToDoubleVector(x, naClosureCheck));
+            return digamma(frame, RClosures.createLogicalToDoubleVector(x));
         }
 
         @Specialization

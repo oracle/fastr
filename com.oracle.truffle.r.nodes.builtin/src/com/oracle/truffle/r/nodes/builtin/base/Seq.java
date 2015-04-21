@@ -536,27 +536,27 @@ public abstract class Seq extends RBuiltinNode {
 
     @Specialization
     protected Object seq(VirtualFrame frame, RAbstractLogicalVector start, RAbstractLogicalVector to, Object stride, Object lengthOut, Object alongWith) {
-        return seqRecursive(frame, RClosures.createLogicalToDoubleVector(start, naCheck), RClosures.createLogicalToDoubleVector(to, naCheck), stride, lengthOut, alongWith);
+        return seqRecursive(frame, RClosures.createLogicalToDoubleVector(start), RClosures.createLogicalToDoubleVector(to), stride, lengthOut, alongWith);
     }
 
     @Specialization(guards = "!isLogical(to)")
     protected Object seq(VirtualFrame frame, RAbstractLogicalVector start, RAbstractVector to, Object stride, Object lengthOut, Object alongWith) {
-        return seqRecursive(frame, RClosures.createLogicalToDoubleVector(start, naCheck), to, stride, lengthOut, alongWith);
+        return seqRecursive(frame, RClosures.createLogicalToDoubleVector(start), to, stride, lengthOut, alongWith);
     }
 
     @Specialization(guards = "!isLogical(start)")
     protected Object seq(VirtualFrame frame, RAbstractVector start, RAbstractLogicalVector to, Object stride, Object lengthOut, Object alongWith) {
-        return seqRecursive(frame, start, RClosures.createLogicalToDoubleVector(to, naCheck), stride, lengthOut, alongWith);
+        return seqRecursive(frame, start, RClosures.createLogicalToDoubleVector(to), stride, lengthOut, alongWith);
     }
 
     @Specialization
     protected Object seq(VirtualFrame frame, RAbstractLogicalVector start, RMissing to, Object stride, Object lengthOut, Object alongWith) {
-        return seqRecursive(frame, RClosures.createLogicalToDoubleVector(start, naCheck), to, stride, lengthOut, alongWith);
+        return seqRecursive(frame, RClosures.createLogicalToDoubleVector(start), to, stride, lengthOut, alongWith);
     }
 
     @Specialization
     protected Object seq(VirtualFrame frame, RMissing start, RAbstractLogicalVector to, Object stride, Object lengthOut, Object alongWith) {
-        return seqRecursive(frame, start, RClosures.createLogicalToDoubleVector(to, naCheck), stride, lengthOut, alongWith);
+        return seqRecursive(frame, start, RClosures.createLogicalToDoubleVector(to), stride, lengthOut, alongWith);
     }
 
     protected boolean isLogical(RAbstractVector v) {

@@ -29,7 +29,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 
 public abstract class RToVectorClosure implements RAbstractVector {
 
-    private final RAbstractVector vector;
+    protected final RAbstractVector vector;
 
     public RToVectorClosure(RAbstractVector vector) {
         this.vector = vector;

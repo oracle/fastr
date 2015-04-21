@@ -11,11 +11,7 @@
  */
 package com.oracle.truffle.r.runtime;
 
-import javax.swing.text.html.HTMLDocument.HTMLReader.*;
-
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
 
 public enum RType {
 

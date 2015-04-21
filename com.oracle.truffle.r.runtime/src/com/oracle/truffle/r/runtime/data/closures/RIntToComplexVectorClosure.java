@@ -30,8 +30,8 @@ public class RIntToComplexVectorClosure extends RToComplexVectorClosure implemen
 
     private final RAbstractIntVector vector;
 
-    public RIntToComplexVectorClosure(RAbstractIntVector vector, boolean neverSeenNA) {
-        super(vector, neverSeenNA);
+    public RIntToComplexVectorClosure(RAbstractIntVector vector) {
+        super(vector);
         this.vector = vector;
     }
 
@@ -39,7 +39,7 @@ public class RIntToComplexVectorClosure extends RToComplexVectorClosure implemen
         int data = vector.getDataAt(index);
         double real;
         double imaginary;
-        if (!neverSeenNA && RRuntime.isNA(data)) {
+        if (!vector.isComplete() && RRuntime.isNA(data)) {
             real = RRuntime.COMPLEX_NA_REAL_PART;
             imaginary = RRuntime.COMPLEX_NA_IMAGINARY_PART;
         } else {

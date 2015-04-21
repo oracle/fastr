@@ -35,8 +35,8 @@ public class RFactorToIntVectorClosure extends RToIntVectorClosure implements RA
     private final RAbstractIntVector levels;
     private final boolean withNames;
 
-    public RFactorToIntVectorClosure(RFactor factor, RAbstractIntVector levels, boolean neverSeenNA, boolean withNames) {
-        super(factor.getVector(), factor.getVector().isComplete() && neverSeenNA);
+    public RFactorToIntVectorClosure(RFactor factor, RAbstractIntVector levels, boolean withNames) {
+        super(factor.getVector());
         this.vector = factor.getVector();
         assert levels != null;
         this.levels = levels;
@@ -45,12 +45,13 @@ public class RFactorToIntVectorClosure extends RToIntVectorClosure implements RA
 
     public int getDataAt(int index) {
         int val = vector.getDataAt(index);
-        if (!neverSeenNA && RRuntime.isNA(val)) {
+        if (!vector.isComplete() && RRuntime.isNA(val)) {
             return RRuntime.INT_NA;
         } else {
             return levels.getDataAt(val - 1);
         }
     }
+
     @Override
     public RStringVector getNames(RAttributeProfiles attrProfiles) {
         return withNames ? super.getNames(attrProfiles) : null;

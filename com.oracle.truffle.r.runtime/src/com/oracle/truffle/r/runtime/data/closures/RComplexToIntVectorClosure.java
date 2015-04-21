@@ -33,14 +33,14 @@ public class RComplexToIntVectorClosure extends RToIntVectorClosure implements R
 
     private final RAbstractComplexVector vector;
 
-     public RComplexToIntVectorClosure(RAbstractComplexVector vector, boolean neverSeenNA) {
-        super(vector, neverSeenNA);
+    public RComplexToIntVectorClosure(RAbstractComplexVector vector) {
+        super(vector);
         this.vector = vector;
     }
 
     public int getDataAt(int index) {
         RComplex right = vector.getDataAt(index);
-        if (!neverSeenNA && RRuntime.isNA(right)) {
+        if (!vector.isComplete() && RRuntime.isNA(right)) {
             return RRuntime.INT_NA;
         }
         RError.warning(RError.Message.IMAGINARY_PARTS_DISCARDED_IN_COERCION);

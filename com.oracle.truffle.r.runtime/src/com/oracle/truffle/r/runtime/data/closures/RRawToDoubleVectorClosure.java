@@ -29,8 +29,8 @@ public class RRawToDoubleVectorClosure extends RToDoubleVectorClosure implements
 
     private final RAbstractRawVector vector;
 
-    public RRawToDoubleVectorClosure(RAbstractRawVector vector, boolean neverSeenNA) {
-        super(vector, neverSeenNA);
+    public RRawToDoubleVectorClosure(RAbstractRawVector vector) {
+        super(vector);
         this.vector = vector;
     }
 

@@ -29,8 +29,8 @@ public class RRawToIntVectorClosure extends RToIntVectorClosure implements RAbst
 
     private final RAbstractRawVector vector;
 
-    public RRawToIntVectorClosure(RAbstractRawVector vector, boolean neverSeenNA) {
-        super(vector, neverSeenNA);
+    public RRawToIntVectorClosure(RAbstractRawVector vector) {
+        super(vector);
         this.vector = vector;
     }
 

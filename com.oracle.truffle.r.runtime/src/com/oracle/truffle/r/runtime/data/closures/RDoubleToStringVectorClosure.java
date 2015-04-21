@@ -29,14 +29,14 @@ public class RDoubleToStringVectorClosure extends RToStringVectorClosure impleme
 
     private final RAbstractDoubleVector vector;
 
-    public RDoubleToStringVectorClosure(RAbstractDoubleVector vector, boolean neverSeenNA) {
-        super(vector, neverSeenNA);
+    public RDoubleToStringVectorClosure(RAbstractDoubleVector vector) {
+        super(vector);
         this.vector = vector;
     }
 
     public String getDataAt(int index) {
         double data = vector.getDataAt(index);
-        if (!neverSeenNA && RRuntime.isNA(data)) {
+        if (!vector.isComplete() && RRuntime.isNA(data)) {
             return RRuntime.STRING_NA;
         } else {
             return RRuntime.doubleToStringNoCheck(data);

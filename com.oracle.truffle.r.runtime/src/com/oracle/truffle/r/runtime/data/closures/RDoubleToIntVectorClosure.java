@@ -29,8 +29,8 @@ public class RDoubleToIntVectorClosure extends RToIntVectorClosure implements RA
 
     private final RAbstractDoubleVector vector;
 
-    public RDoubleToIntVectorClosure(RAbstractDoubleVector vector, boolean neverSeenNA) {
-        super(vector, neverSeenNA);
+    public RDoubleToIntVectorClosure(RAbstractDoubleVector vector) {
+        super(vector);
         this.vector = vector;
     }
 

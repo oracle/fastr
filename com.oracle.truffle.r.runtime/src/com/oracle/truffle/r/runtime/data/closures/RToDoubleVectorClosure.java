@@ -27,11 +27,8 @@ import com.oracle.truffle.r.runtime.data.model.*;
 
 public abstract class RToDoubleVectorClosure extends RToVectorClosure implements RAbstractDoubleVector {
 
-    protected final boolean neverSeenNA;
-
-    public RToDoubleVectorClosure(RAbstractVector vector, boolean neverSeenNA) {
+    public RToDoubleVectorClosure(RAbstractVector vector) {
         super(vector);
-        this.neverSeenNA = neverSeenNA;
     }
 
     public RDoubleVector materialize() {
@@ -41,7 +38,7 @@ public abstract class RToDoubleVectorClosure extends RToVectorClosure implements
             double data = getDataAt(i);
             result[i] = data;
         }
-        return RDataFactory.createDoubleVector(result, neverSeenNA);
+        return RDataFactory.createDoubleVector(result, vector.isComplete());
     }
 
     public Class<?> getElementClass() {

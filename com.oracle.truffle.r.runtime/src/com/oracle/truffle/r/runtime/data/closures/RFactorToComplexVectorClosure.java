@@ -35,8 +35,8 @@ public class RFactorToComplexVectorClosure extends RToComplexVectorClosure imple
     private final RAbstractComplexVector levels;
     private final boolean withNames;
 
-    public RFactorToComplexVectorClosure(RFactor factor, RAbstractComplexVector levels, boolean neverSeenNA, boolean withNames) {
-        super(factor.getVector(), factor.getVector().isComplete() && neverSeenNA);
+    public RFactorToComplexVectorClosure(RFactor factor, RAbstractComplexVector levels, boolean withNames) {
+        super(factor.getVector());
         this.vector = factor.getVector();
         assert levels != null;
         this.levels = levels;
@@ -45,7 +45,7 @@ public class RFactorToComplexVectorClosure extends RToComplexVectorClosure imple
 
     public RComplex getDataAt(int index) {
         int val = vector.getDataAt(index);
-        if (!neverSeenNA && RRuntime.isNA(val)) {
+        if (!vector.isComplete() && RRuntime.isNA(val)) {
             return RRuntime.createComplexNA();
         } else {
             return levels.getDataAt(val - 1);

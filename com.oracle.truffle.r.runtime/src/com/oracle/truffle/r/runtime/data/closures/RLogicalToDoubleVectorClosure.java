@@ -29,14 +29,14 @@ public class RLogicalToDoubleVectorClosure extends RToDoubleVectorClosure implem
 
     private final RAbstractLogicalVector vector;
 
-    public RLogicalToDoubleVectorClosure(RAbstractLogicalVector vector, boolean neverSeenNA) {
-        super(vector, neverSeenNA);
+    public RLogicalToDoubleVectorClosure(RAbstractLogicalVector vector) {
+        super(vector);
         this.vector = vector;
     }
 
     public double getDataAt(int index) {
         byte data = vector.getDataAt(index);
-        if (!neverSeenNA && RRuntime.isNA(data)) {
+        if (!vector.isComplete() && RRuntime.isNA(data)) {
             return RRuntime.DOUBLE_NA;
         }
         return RRuntime.logical2doubleNoCheck(data);

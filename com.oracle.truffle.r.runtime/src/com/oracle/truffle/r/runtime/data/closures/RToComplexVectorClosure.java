@@ -27,11 +27,8 @@ import com.oracle.truffle.r.runtime.data.model.*;
 
 public abstract class RToComplexVectorClosure extends RToVectorClosure implements RAbstractComplexVector {
 
-    protected final boolean neverSeenNA;
-
-    public RToComplexVectorClosure(RAbstractVector vector, boolean neverSeenNA) {
+    public RToComplexVectorClosure(RAbstractVector vector) {
         super(vector);
-        this.neverSeenNA = neverSeenNA;
     }
 
     public RComplexVector materialize() {
@@ -43,7 +40,7 @@ public abstract class RToComplexVectorClosure extends RToVectorClosure implement
             result[index] = data.getRealPart();
             result[index + 1] = data.getImaginaryPart();
         }
-        return RDataFactory.createComplexVector(result, neverSeenNA);
+        return RDataFactory.createComplexVector(result, vector.isComplete());
     }
 
     public Class<?> getElementClass() {

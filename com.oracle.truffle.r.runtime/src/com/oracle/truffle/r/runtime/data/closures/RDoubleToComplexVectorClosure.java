@@ -30,8 +30,8 @@ public class RDoubleToComplexVectorClosure extends RToComplexVectorClosure imple
 
     private final RAbstractDoubleVector vector;
 
-    public RDoubleToComplexVectorClosure(RAbstractDoubleVector vector, boolean neverSeenNA) {
-        super(vector, neverSeenNA);
+    public RDoubleToComplexVectorClosure(RAbstractDoubleVector vector) {
+        super(vector);
         this.vector = vector;
     }
 

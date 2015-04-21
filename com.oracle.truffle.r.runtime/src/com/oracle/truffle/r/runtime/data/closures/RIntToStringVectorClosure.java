@@ -29,14 +29,14 @@ public class RIntToStringVectorClosure extends RToStringVectorClosure implements
 
     private final RAbstractIntVector vector;
 
-    public RIntToStringVectorClosure(RAbstractIntVector vector, boolean neverSeenNA) {
-        super(vector, neverSeenNA);
+    public RIntToStringVectorClosure(RAbstractIntVector vector) {
+        super(vector);
         this.vector = vector;
     }
 
     public String getDataAt(int index) {
         int data = vector.getDataAt(index);
-        if (!neverSeenNA && RRuntime.isNA(data)) {
+        if (!vector.isComplete() && RRuntime.isNA(data)) {
             return RRuntime.STRING_NA;
         }
         return RRuntime.intToStringNoCheck(data);

@@ -35,8 +35,8 @@ public class RFactorToStringVectorClosure extends RToStringVectorClosure impleme
     private final RAbstractStringVector levels;
     private final boolean withNames;
 
-    public RFactorToStringVectorClosure(RFactor factor, RAbstractStringVector levels, boolean neverSeenNA, boolean withNames) {
-        super(factor.getVector(), neverSeenNA);
+    public RFactorToStringVectorClosure(RFactor factor, RAbstractStringVector levels, boolean withNames) {
+        super(factor.getVector());
         this.vector = factor.getVector();
         this.levels = levels;
         this.withNames = withNames;
@@ -50,11 +50,11 @@ public class RFactorToStringVectorClosure extends RToStringVectorClosure impleme
             return RRuntime.STRING_NA;
         } else {
             int val = vector.getDataAt(index);
-            if (!neverSeenNA && RRuntime.isNA(val)) {
+            if (!vector.isComplete() && RRuntime.isNA(val)) {
                 return RRuntime.STRING_NA;
             } else {
                 String l = levels.getDataAt(val - 1);
-                if (!neverSeenNA && RRuntime.isNA(l)) {
+                if (!levels.isComplete() && RRuntime.isNA(l)) {
                     return "NA"; // for comparison
                 } else {
                     return l;

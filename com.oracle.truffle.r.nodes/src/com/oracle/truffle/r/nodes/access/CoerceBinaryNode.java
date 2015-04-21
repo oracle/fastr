@@ -247,19 +247,19 @@ public abstract class CoerceBinaryNode extends RNode {
     @Specialization
     protected RIntVector access(VirtualFrame frame, RLogicalVector left, int right) {
         leftNACheck.enable(left);
-        return doInt(frame, RClosures.createLogicalToIntVector(left, leftNACheck).materialize(), right);
+        return doInt(frame, RClosures.createLogicalToIntVector(left).materialize(), right);
     }
 
     @Specialization
     protected RDoubleVector access(VirtualFrame frame, RLogicalVector left, double right) {
         leftNACheck.enable(left);
-        return doDouble(frame, RClosures.createLogicalToDoubleVector(left, leftNACheck).materialize(), right);
+        return doDouble(frame, RClosures.createLogicalToDoubleVector(left).materialize(), right);
     }
 
     @Specialization
     protected RComplexVector access(VirtualFrame frame, RLogicalVector left, RComplex right) {
         leftNACheck.enable(left);
-        return doComplex(frame, RClosures.createLogicalToComplexVector(left, leftNACheck).materialize(), right);
+        return doComplex(frame, RClosures.createLogicalToComplexVector(left).materialize(), right);
     }
 
     @Specialization
@@ -275,19 +275,19 @@ public abstract class CoerceBinaryNode extends RNode {
     @Specialization
     protected RIntVector access(VirtualFrame frame, RLogicalVector left, RIntVector right) {
         leftNACheck.enable(left);
-        return doInt(frame, RClosures.createLogicalToIntVector(left, leftNACheck).materialize(), right);
+        return doInt(frame, RClosures.createLogicalToIntVector(left).materialize(), right);
     }
 
     @Specialization
     protected RDoubleVector access(VirtualFrame frame, RLogicalVector left, RDoubleVector right) {
         leftNACheck.enable(left);
-        return doDouble(frame, RClosures.createLogicalToDoubleVector(left, leftNACheck).materialize(), right);
+        return doDouble(frame, RClosures.createLogicalToDoubleVector(left).materialize(), right);
     }
 
     @Specialization
     protected RComplexVector access(VirtualFrame frame, RLogicalVector left, RComplexVector right) {
         leftNACheck.enable(left);
-        return doComplex(frame, RClosures.createLogicalToComplexVector(left, leftNACheck).materialize(), right);
+        return doComplex(frame, RClosures.createLogicalToComplexVector(left).materialize(), right);
     }
 
     @Specialization
@@ -314,12 +314,12 @@ public abstract class CoerceBinaryNode extends RNode {
 
     @Specialization
     protected RDoubleVector access(VirtualFrame frame, RIntVector left, double right) {
-        return doDouble(frame, RClosures.createIntToDoubleVector(left, leftNACheck).materialize(), right);
+        return doDouble(frame, RClosures.createIntToDoubleVector(left).materialize(), right);
     }
 
     @Specialization
     protected RComplexVector access(VirtualFrame frame, RIntVector left, RComplex right) {
-        return doComplex(frame, RClosures.createIntToComplexVector(left, leftNACheck).materialize(), right);
+        return doComplex(frame, RClosures.createIntToComplexVector(left).materialize(), right);
     }
 
     @Specialization
@@ -329,7 +329,8 @@ public abstract class CoerceBinaryNode extends RNode {
 
     @Specialization
     protected RIntVector access(VirtualFrame frame, RIntVector left, RLogicalVector right) {
-        return doInt(frame, left, RClosures.createLogicalToIntVector(right, rightNACheck).materialize());
+        rightNACheck.enable(right);
+        return doInt(frame, left, RClosures.createLogicalToIntVector(right).materialize());
     }
 
     @Specialization
@@ -339,12 +340,12 @@ public abstract class CoerceBinaryNode extends RNode {
 
     @Specialization
     protected RDoubleVector access(VirtualFrame frame, RIntVector left, RDoubleVector right) {
-        return doDouble(frame, RClosures.createIntToDoubleVector(left, leftNACheck).materialize(), right);
+        return doDouble(frame, RClosures.createIntToDoubleVector(left).materialize(), right);
     }
 
     @Specialization
     protected RComplexVector access(VirtualFrame frame, RIntVector left, RComplexVector right) {
-        return doComplex(frame, RClosures.createIntToComplexVector(left, leftNACheck).materialize(), right);
+        return doComplex(frame, RClosures.createIntToComplexVector(left).materialize(), right);
     }
 
     @Specialization
@@ -376,7 +377,7 @@ public abstract class CoerceBinaryNode extends RNode {
 
     @Specialization
     protected RComplexVector access(VirtualFrame frame, RDoubleVector left, RComplex right) {
-        return doComplex(frame, RClosures.createDoubleToComplexVector(left, leftNACheck).materialize(), right);
+        return doComplex(frame, RClosures.createDoubleToComplexVector(left).materialize(), right);
     }
 
     @Specialization
@@ -386,12 +387,12 @@ public abstract class CoerceBinaryNode extends RNode {
 
     @Specialization
     protected RDoubleVector access(VirtualFrame frame, RDoubleVector left, RLogicalVector right) {
-        return doDouble(frame, left, RClosures.createLogicalToDoubleVector(right, rightNACheck).materialize());
+        return doDouble(frame, left, RClosures.createLogicalToDoubleVector(right).materialize());
     }
 
     @Specialization
     protected RDoubleVector access(VirtualFrame frame, RDoubleVector left, RIntVector right) {
-        return doDouble(frame, left, RClosures.createIntToDoubleVector(right, rightNACheck).materialize());
+        return doDouble(frame, left, RClosures.createIntToDoubleVector(right).materialize());
     }
 
     @Specialization
@@ -401,7 +402,7 @@ public abstract class CoerceBinaryNode extends RNode {
 
     @Specialization
     protected RComplexVector access(VirtualFrame frame, RDoubleVector left, RComplexVector right) {
-        return doComplex(frame, RClosures.createDoubleToComplexVector(left, leftNACheck).materialize(), right);
+        return doComplex(frame, RClosures.createDoubleToComplexVector(left).materialize(), right);
     }
 
     @Specialization
@@ -443,17 +444,17 @@ public abstract class CoerceBinaryNode extends RNode {
 
     @Specialization
     protected RComplexVector access(VirtualFrame frame, RComplexVector left, RLogicalVector right) {
-        return doComplex(frame, left, RClosures.createLogicalToComplexVector(right, rightNACheck).materialize());
+        return doComplex(frame, left, RClosures.createLogicalToComplexVector(right).materialize());
     }
 
     @Specialization
     protected RComplexVector access(VirtualFrame frame, RComplexVector left, RIntVector right) {
-        return doComplex(frame, left, RClosures.createIntToComplexVector(right, rightNACheck).materialize());
+        return doComplex(frame, left, RClosures.createIntToComplexVector(right).materialize());
     }
 
     @Specialization
     protected RComplexVector access(VirtualFrame frame, RComplexVector left, RDoubleVector right) {
-        return doComplex(frame, left, RClosures.createDoubleToComplexVector(right, rightNACheck).materialize());
+        return doComplex(frame, left, RClosures.createDoubleToComplexVector(right).materialize());
     }
 
     @Specialization

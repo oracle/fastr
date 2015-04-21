@@ -30,8 +30,8 @@ public class RRawToComplexVectorClosure extends RToComplexVectorClosure implemen
 
     private final RAbstractRawVector logicalVector;
 
-    public RRawToComplexVectorClosure(RAbstractRawVector vector, boolean neverSeenNA) {
-        super(vector, neverSeenNA);
+    public RRawToComplexVectorClosure(RAbstractRawVector vector) {
+        super(vector);
         this.logicalVector = vector;
     }
 
