@@ -107,9 +107,15 @@ public class RCommand {
 
         REnvVars.initialize();
 
-        // Whether the input is from stdin, a file or an expression on the command line (-e)
-        // it goes through the console. However, we cannot (yet) do incremental parsing, so file
-        // input has to be treated specially.
+        if (!(QUIET.getValue() || SILENT.getValue())) {
+            System.out.println(RRuntime.WELCOME_MESSAGE);
+        }
+        /*
+         * Whether the input is from stdin, a file or an expression on the command line (-e) it goes
+         * through the console. However, we cannot (yet) do incremental parsing, so file input has
+         * to be treated specially. TODO This is no longer true so we could unify file input with
+         * the readEvalPrint loop.
+         */
         if (fileArg != null) {
             evalFileInput(fileArg, args);
         } else {
@@ -168,15 +174,15 @@ public class RCommand {
             JLineConsoleHandler consoleHandler = new JLineConsoleHandler(false, new ConsoleReader(null, System.out));
             MaterializedFrame frame = REngine.initialize(commandArgs, consoleHandler, true, true);
             REngine.getInstance().parseAndEval(fileSource, frame, REnvironment.globalEnv(), false, false);
+            // Need to call quit explicitly
+            Source quitSource = Source.fromText("quit(\"default\", 0L, TRUE)", "<quit_file>");
+            REngine.getInstance().parseAndEval(quitSource, frame, REnvironment.globalEnv(), false, false);
         } catch (IOException ex) {
             Utils.fail("unexpected error creating console");
         }
     }
 
     private static void readEvalPrint(boolean isInteractive, ConsoleReader console, String[] commandArgs) {
-        if (!(QUIET.getValue() || SILENT.getValue())) {
-            System.out.println(RRuntime.WELCOME_MESSAGE);
-        }
         try {
             // long start = System.currentTimeMillis();
             MaterializedFrame globalFrame = REngine.initialize(commandArgs, new JLineConsoleHandler(isInteractive, console), false, false);
