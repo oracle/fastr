@@ -67,15 +67,18 @@ ifeq ($(OSNAME), SunOS)
 # Currently we only support gcc and x64 (gcc assumed to be on the PATH)
 #
     OS_ARCH := $(shell uname -p)
-    ifneq ($(OS_ARCH), i386)
-        $(error Solaris/SPARC not supported)
-    endif
     ICONV := libiconv-1.14
     $(shell mkdir -p iconv_install)
     ICONV_INSTALL := $(abspath iconv_install)
     $(info ICONV_INSTALL=$(ICONV_INSTALL))
-    ICONV_FLAGS := "-L$(ICONV_INSTALL)/lib -I$(ICONV_INSTALL)/include"
-    ICONV_CONFIG_FLAGS := CFLAGS=$(ICONV_FLAGS) CPPFLAGS=$(ICONV_FLAGS) LDFLAGS=$(ICONV_FLAGS)
+    ICONV_FLAGS := "-m64 -xcode=pic32 -L$(ICONV_INSTALL)/lib -I$(ICONV_INSTALL)/include"
+
+ifeq ($(OS_ARCH), sparc)
+    ICONV_CONFIG_FLAGS := CC=cc CXX=CC F77=sunf95 FFLAGS=$(ICONV_FLAGS) CFLAGS=$(ICONV_FLAGS) CPPFLAGS=$(ICONV_FLAGS) LDFLAGS=$(ICONV_FLAGS) DYLIB_LDFLAGS=$(ICONV_FLAGS)
+    SOLARISSTUDIO_HOME := $(shell which cc | sed s/bin\\/*cc//g)
+else
+    ICONV_CONFIG_FLAGS :=  FFLAGS=$(ICONV_FLAGS) CFLAGS=$(ICONV_FLAGS) CPPFLAGS=$(ICONV_FLAGS) LDFLAGS=$(ICONV_FLAGS)
+endif
 
 iconv: $(ICONV) iconv_config iconv_build
 
@@ -90,7 +93,7 @@ $(ICONV)/Makefile:
 iconv_build: $(ICONV)/lib/libcharset.so
 
 $(ICONV)/lib/libcharset.so:
-	(cd $(ICONV); $(MAKE) && $(MAKE) install > iconv_make.log 2>&1)
+	(cd $(ICONV); $(MAKE) MAKE=$(MAKE) && $(MAKE) MAKE=$(MAKE) install > iconv_make.log 2>&1)
 else
 iconv:
 endif
@@ -108,13 +111,17 @@ config_update:
 endif
 
 $(GNUR_HOME)/Makefile:
+ifeq ($(OS_ARCH), sparc)
+# required for Solaris compiler >=12.2, see Appendix C of R installation guide: http://cran.r-project.org/doc/manuals/r-release/R-admin.html#Solaris 
+	(echo 'FLIBS="-R$(SOLARISSTUDIO_HOME)prod/lib/sparc/64 -lifai -lsunimath -lfai -lfai2 -lfsumai -lfprodai -lfminlai -lfmaxlai -lfminvai -lfmaxvai -lfui -lsunmath -lmtsk $(SOLARISSTUDIO_HOME)prod/lib/sparc/64/libfsu.so.1"' >> $(GNUR_HOME)/config.site)
+endif
 	(cd $(GNUR_HOME); ./configure --with-x=no --without-recommended-packages $(ICONV_CONFIG_FLAGS) > gnur_configure.log 2>&1)
 
 
 build: $(GNUR_HOME)/bin/R
 
 $(GNUR_HOME)/bin/R: $(GNUR_HOME)/Makeconf 
-	(cd $(GNUR_HOME); $(MAKE) > gnur_make.log 2>&1)
+	(cd $(GNUR_HOME); $(MAKE) -j > gnur_make.log 2>&1)
 
 clean: cleangnur cleaniconv
 	rm -f Makeconf.done
