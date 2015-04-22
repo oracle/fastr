@@ -1057,6 +1057,10 @@ public class RSerialize {
                 RFactor factor = (RFactor) obj;
                 writeItem(factor.getVector());
                 return;
+            } else if (type == SEXPTYPE.FASTR_SOCKET_CONN || type == SEXPTYPE.FASTR_FILE_CONN) {
+                // serializing a socket or file connection is not meaningful
+                writeItem(RDataFactory.createIntVectorFromScalar(RRuntime.INT_NA));
+                return;
             } else {
                 // flags
                 RAttributes attributes = null;
