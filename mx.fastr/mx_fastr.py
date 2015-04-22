@@ -149,6 +149,15 @@ def gate(args):
 
     mx.gate(args, _fastr_gate_body)
 
+def _test_harness_body(args, vmArgs):
+    '''the callback from mx.bench'''
+    print "placeholder for mx test"
+
+def test(args):
+    vm = mx_graal.VM('server' if mx_graal._vm is None else mx_graal._vm)
+    with vm:
+        mx.test(args, harness=_test_harness_body)
+
 def _test_srcdir():
     tp = 'com.oracle.truffle.r.test'
     return join(mx.project(tp).dir, 'src', tp.replace('.', sep))
@@ -415,6 +424,7 @@ def mx_init(suite):
         'unittest' : [unittest, ['options']],
         'rbcheck' : [rbcheck, ['options']],
         'rcmplib' : [rcmplib, ['options']],
-        'findbugs' : [findbugs, '']
+        'findbugs' : [findbugs, ''],
+        'test' : [test, ['options']],
     }
     mx.update_commands(suite, commands)
