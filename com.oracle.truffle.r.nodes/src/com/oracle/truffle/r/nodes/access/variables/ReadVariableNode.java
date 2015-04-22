@@ -370,11 +370,10 @@ public class ReadVariableNode extends RNode implements VisibilityController {
             MaterializedFrame nextFrame;
             Object function = arguments[RArguments.INDEX_FUNCTION];
             if (isFunctionFrame.profile(function != null)) {
-                nextFrame = ((RFunction) function).getEnclosingFrame();
+                nextFrame = frameProfile.profile(((RFunction) function).getEnclosingFrame());
             } else {
                 nextFrame = (MaterializedFrame) frameProfile.profile(arguments[RArguments.INDEX_ENCLOSING_FRAME]);
             }
-            nextFrame = RArguments.getEnclosingFrame(variableFrame);
             if (nextDescriptor == null) {
                 if (nextFrame != null) {
                     throw new LayoutChangedException();

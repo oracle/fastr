@@ -1057,6 +1057,10 @@ public class RSerialize {
                 RFactor factor = (RFactor) obj;
                 writeItem(factor.getVector());
                 return;
+            } else if (type == SEXPTYPE.FASTR_SOCKET_CONN || type == SEXPTYPE.FASTR_FILE_CONN) {
+                // serializing a socket or file connection is not meaningful
+                writeItem(RDataFactory.createIntVectorFromScalar(RRuntime.INT_NA));
+                return;
             } else {
                 // flags
                 RAttributes attributes = null;
@@ -1249,7 +1253,7 @@ public class RSerialize {
                 // next is the cdr
                 stream.writeInt(Flags.packFlags(SEXPTYPE.LISTSXP, 0, false, false, true));
                 stream.writeInt(SEXPTYPE.SYMSXP.code);
-                writeItem(attr.getName());
+                writeCHARSXP(attr.getName());
                 writeItem(attr.getValue());
             }
             stream.writeInt(Flags.packFlags(SEXPTYPE.NILVALUE_SXP, 0, false, false, false));

@@ -26,6 +26,7 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.runtime.*;
 
 /**
@@ -93,8 +94,10 @@ public final class RFunction extends RScalar implements RAttributable {
         return enclosingFrame;
     }
 
+    private static final ValueProfile assumptionTypeProfile = ValueProfile.createClassProfile();
+
     public MaterializedFrame getEnclosingFrameWithAssumption() {
-        StableValue<MaterializedFrame> value = enclosingFrameAssumption;
+        StableValue<MaterializedFrame> value = assumptionTypeProfile.profile(enclosingFrameAssumption);
         try {
             value.getAssumption().check();
         } catch (InvalidAssumptionException e) {

@@ -25,17 +25,14 @@ package com.oracle.truffle.r.nodes.unary;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.nodes.Node.*;
-import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.api.nodes.*;
+import com.oracle.truffle.api.nodes.Node.Child;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-import edu.umd.cs.findbugs.internalAnnotations.*;
-
 @SuppressWarnings("unused")
-@NodeChild(value = "recursive", type = RNode.class)
 @ImportStatic(RRuntime.class)
-public abstract class PrecedenceNode extends UnaryNode {
+public abstract class PrecedenceNode extends Node {
 
     public static final int NO_PRECEDENCE = -1;
     public static final int RAW_PRECEDENCE = 0;
@@ -49,25 +46,7 @@ public abstract class PrecedenceNode extends UnaryNode {
 
     public static final int NUMBER_OF_PRECEDENCES = 9;
 
-    @Override
-    public final Object execute(VirtualFrame frame) {
-        return executeInteger(frame);
-    }
-
-    @Override
-    public abstract int executeInteger(VirtualFrame frame);
-
-    public abstract int executeInteger(VirtualFrame frame, Object object, byte recursive);
-
-    @Child private PrecedenceNode precedenceNode;
-
-    private int precedenceRecursive(VirtualFrame frame, Object o, byte recursive) {
-        if (precedenceNode == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            precedenceNode = insert(PrecedenceNodeGen.create(null, null));
-        }
-        return precedenceNode.executeInteger(frame, o, recursive);
-    }
+    public abstract int executeInteger(Object object, byte recursive);
 
     @Specialization
     protected int doNull(RNull val, byte recursive) {
@@ -150,13 +129,18 @@ public abstract class PrecedenceNode extends UnaryNode {
     }
 
     @Specialization(guards = "recursive == LOGICAL_TRUE")
-    protected int doListRecursive(VirtualFrame frame, RList val, byte recursive) {
+    protected int doListRecursive(RList val, byte recursive, //
+                    @Cached("createRecursive()") PrecedenceNode precedenceNode) {
         int precedence = -1;
         for (int i = 0; i < val.getLength(); i++) {
             Object data = val.getDataAt(i);
-            precedence = Math.max(precedence, precedenceRecursive(frame, val.getDataAtAsObject(i), recursive));
+            precedence = Math.max(precedence, precedenceNode.executeInteger(val.getDataAtAsObject(i), recursive));
         }
         return precedence;
+    }
+
+    protected static PrecedenceNode createRecursive() {
+        return PrecedenceNodeGen.create();
     }
 
     @Specialization(guards = "recursive != LOGICAL_TRUE")

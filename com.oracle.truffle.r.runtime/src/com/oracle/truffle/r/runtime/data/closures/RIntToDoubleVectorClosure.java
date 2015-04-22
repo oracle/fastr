@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,19 +22,20 @@
  */
 package com.oracle.truffle.r.runtime.data.closures;
 
-import com.oracle.truffle.r.runtime.ops.na.NACheck;
+import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
 public class RIntToDoubleVectorClosure extends RToDoubleVectorClosure implements RAbstractDoubleVector {
 
-    private final RAbstractIntVector vector;
-
-    public RIntToDoubleVectorClosure(RAbstractIntVector vector, NACheck naCheck) {
-        super(vector, naCheck);
-        this.vector = vector;
+    public RIntToDoubleVectorClosure(RAbstractIntVector vector) {
+        super(vector);
     }
 
     public double getDataAt(int index) {
-        return naCheck.convertIntToDouble(vector.getDataAt(index));
+        int data = ((RAbstractIntVector) vector).getDataAt(index);
+        if (!vector.isComplete() && RRuntime.isNA(data)) {
+            return RRuntime.DOUBLE_NA;
+        }
+        return RRuntime.int2doubleNoCheck(data);
     }
 }

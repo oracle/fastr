@@ -32,8 +32,7 @@ import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode.ReadKind;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-@NodeChildren({@NodeChild("signature")})
-public abstract class CollectArgumentsNode extends ArgumentsNode {
+public abstract class CollectArgumentsNode extends Node {
 
     protected static final int CACHE_LIMIT = 3;
 

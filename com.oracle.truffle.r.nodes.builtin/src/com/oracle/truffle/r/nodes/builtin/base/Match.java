@@ -334,7 +334,7 @@ public abstract class Match extends RBuiltinNode {
     @Specialization
     protected RIntVector match(VirtualFrame frame, RAbstractLogicalVector x, RAbstractStringVector table, Object nomatchObj, Object incomparables) {
         naCheck.enable(x);
-        return match(frame, RClosures.createLogicalToStringVector(x, naCheck), table, nomatchObj, incomparables);
+        return match(frame, RClosures.createLogicalToStringVector(x), table, nomatchObj, incomparables);
     }
 
     @Specialization

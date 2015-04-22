@@ -41,6 +41,7 @@ import com.oracle.truffle.r.nodes.builtin.base.PrettyPrinterNodeGen.PrintVectorM
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.conn.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
 import com.oracle.truffle.r.runtime.data.closures.*;
@@ -1075,6 +1076,13 @@ public abstract class PrettyPrinterNode extends RNode {
         public abstract Object executeString(VirtualFrame frame, byte o, Object listElementName, byte quote, byte right);
 
         public abstract Object executeString(VirtualFrame frame, Object o, Object listElementName, byte quote, byte right);
+
+        @Specialization
+        protected String prettyPrintListElement(SocketConnections.RSocketConnection operand, Object listElementName, byte quote, byte right) {
+            // TODO; fixing this properly would likely require overhaul of the whole
+            // formatting/printing infrastructure, which does not seem worth it at this point
+            return "SOCKET CONNECTION";
+        }
 
         @TruffleBoundary
         @Specialization

@@ -22,94 +22,93 @@
  */
 package com.oracle.truffle.r.nodes.builtin;
 
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
 public abstract class RPrecedenceBuiltinNode extends RCastingBuiltinNode {
 
-    @Child private PrecedenceNode precedenceNode = PrecedenceNodeGen.create(null, null);
+    @Child private PrecedenceNode precedenceNode = PrecedenceNodeGen.create();
 
-    private int precedence(VirtualFrame frame, RArgsValuesAndNames args) {
+    private int precedence(RArgsValuesAndNames args) {
         int precedence = -1;
         Object[] array = args.getValues();
         for (int i = 0; i < array.length; i++) {
-            precedence = Math.max(precedence, precedenceNode.executeInteger(frame, array[i], RRuntime.LOGICAL_FALSE));
+            precedence = Math.max(precedence, precedenceNode.executeInteger(array[i], RRuntime.LOGICAL_FALSE));
         }
         return precedence;
     }
 
-    protected boolean isIntegerPrecedence(VirtualFrame frame, RArgsValuesAndNames args) {
-        return precedence(frame, args) == PrecedenceNode.INT_PRECEDENCE;
+    protected boolean isIntegerPrecedence(RArgsValuesAndNames args) {
+        return precedence(args) == PrecedenceNode.INT_PRECEDENCE;
     }
 
-    protected boolean isLogicalPrecedence(VirtualFrame frame, RArgsValuesAndNames args) {
-        return precedence(frame, args) == PrecedenceNode.LOGICAL_PRECEDENCE;
+    protected boolean isLogicalPrecedence(RArgsValuesAndNames args) {
+        return precedence(args) == PrecedenceNode.LOGICAL_PRECEDENCE;
     }
 
-    protected boolean isDoublePrecedence(VirtualFrame frame, RArgsValuesAndNames args) {
-        return precedence(frame, args) == PrecedenceNode.DOUBLE_PRECEDENCE;
+    protected boolean isDoublePrecedence(RArgsValuesAndNames args) {
+        return precedence(args) == PrecedenceNode.DOUBLE_PRECEDENCE;
     }
 
-    protected boolean isComplexPrecedence(VirtualFrame frame, RArgsValuesAndNames args) {
-        return precedence(frame, args) == PrecedenceNode.COMPLEX_PRECEDENCE;
+    protected boolean isComplexPrecedence(RArgsValuesAndNames args) {
+        return precedence(args) == PrecedenceNode.COMPLEX_PRECEDENCE;
     }
 
-    protected boolean isStringPrecedence(VirtualFrame frame, RArgsValuesAndNames args) {
-        return precedence(frame, args) == PrecedenceNode.STRING_PRECEDENCE;
+    protected boolean isStringPrecedence(RArgsValuesAndNames args) {
+        return precedence(args) == PrecedenceNode.STRING_PRECEDENCE;
     }
 
-    protected boolean isRawPrecedence(VirtualFrame frame, RArgsValuesAndNames args) {
-        return precedence(frame, args) == PrecedenceNode.RAW_PRECEDENCE;
+    protected boolean isRawPrecedence(RArgsValuesAndNames args) {
+        return precedence(args) == PrecedenceNode.RAW_PRECEDENCE;
     }
 
-    protected boolean isNullPrecedence(VirtualFrame frame, RArgsValuesAndNames args) {
-        return precedence(frame, args) == PrecedenceNode.NO_PRECEDENCE;
+    protected boolean isNullPrecedence(RArgsValuesAndNames args) {
+        return precedence(args) == PrecedenceNode.NO_PRECEDENCE;
     }
 
-    protected boolean isListPrecedence(VirtualFrame frame, RArgsValuesAndNames args) {
-        return precedence(frame, args) == PrecedenceNode.LIST_PRECEDENCE;
+    protected boolean isListPrecedence(RArgsValuesAndNames args) {
+        return precedence(args) == PrecedenceNode.LIST_PRECEDENCE;
     }
 
-    protected boolean isExprPrecedence(VirtualFrame frame, RArgsValuesAndNames args) {
-        return precedence(frame, args) == PrecedenceNode.EXPRESSION_PRECEDENCE;
+    protected boolean isExprPrecedence(RArgsValuesAndNames args) {
+        return precedence(args) == PrecedenceNode.EXPRESSION_PRECEDENCE;
     }
 
-    protected boolean isIntegerPrecedence(VirtualFrame frame, Object arg) {
-        return precedenceNode.executeInteger(frame, arg, RRuntime.LOGICAL_FALSE) == PrecedenceNode.INT_PRECEDENCE;
+    protected boolean isIntegerPrecedence(Object arg) {
+        return precedenceNode.executeInteger(arg, RRuntime.LOGICAL_FALSE) == PrecedenceNode.INT_PRECEDENCE;
     }
 
-    protected boolean isLogicalPrecedence(VirtualFrame frame, Object arg) {
-        return precedenceNode.executeInteger(frame, arg, RRuntime.LOGICAL_FALSE) == PrecedenceNode.LOGICAL_PRECEDENCE;
+    protected boolean isLogicalPrecedence(Object arg) {
+        return precedenceNode.executeInteger(arg, RRuntime.LOGICAL_FALSE) == PrecedenceNode.LOGICAL_PRECEDENCE;
     }
 
-    protected boolean isDoublePrecedence(VirtualFrame frame, Object arg) {
-        return precedenceNode.executeInteger(frame, arg, RRuntime.LOGICAL_FALSE) == PrecedenceNode.DOUBLE_PRECEDENCE;
+    protected boolean isDoublePrecedence(Object arg) {
+        return precedenceNode.executeInteger(arg, RRuntime.LOGICAL_FALSE) == PrecedenceNode.DOUBLE_PRECEDENCE;
     }
 
-    protected boolean isComplexPrecedence(VirtualFrame frame, Object arg) {
-        return precedenceNode.executeInteger(frame, arg, RRuntime.LOGICAL_FALSE) == PrecedenceNode.COMPLEX_PRECEDENCE;
+    protected boolean isComplexPrecedence(Object arg) {
+        return precedenceNode.executeInteger(arg, RRuntime.LOGICAL_FALSE) == PrecedenceNode.COMPLEX_PRECEDENCE;
     }
 
-    protected boolean isStringPrecedence(VirtualFrame frame, Object arg) {
-        return precedenceNode.executeInteger(frame, arg, RRuntime.LOGICAL_FALSE) == PrecedenceNode.STRING_PRECEDENCE;
+    protected boolean isStringPrecedence(Object arg) {
+        return precedenceNode.executeInteger(arg, RRuntime.LOGICAL_FALSE) == PrecedenceNode.STRING_PRECEDENCE;
     }
 
-    protected boolean isRawPrecedence(VirtualFrame frame, Object arg) {
-        return precedenceNode.executeInteger(frame, arg, RRuntime.LOGICAL_FALSE) == PrecedenceNode.RAW_PRECEDENCE;
+    protected boolean isRawPrecedence(Object arg) {
+        return precedenceNode.executeInteger(arg, RRuntime.LOGICAL_FALSE) == PrecedenceNode.RAW_PRECEDENCE;
     }
 
-    protected boolean isNullPrecedence(VirtualFrame frame, Object arg) {
-        return precedenceNode.executeInteger(frame, arg, RRuntime.LOGICAL_FALSE) == PrecedenceNode.NO_PRECEDENCE;
+    protected boolean isNullPrecedence(Object arg) {
+        return precedenceNode.executeInteger(arg, RRuntime.LOGICAL_FALSE) == PrecedenceNode.NO_PRECEDENCE;
     }
 
-    protected boolean isListPrecedence(VirtualFrame frame, Object arg) {
-        return precedenceNode.executeInteger(frame, arg, RRuntime.LOGICAL_FALSE) == PrecedenceNode.LIST_PRECEDENCE;
+    protected boolean isListPrecedence(Object arg) {
+        return precedenceNode.executeInteger(arg, RRuntime.LOGICAL_FALSE) == PrecedenceNode.LIST_PRECEDENCE;
     }
 
-    protected boolean isExprPrecedence(VirtualFrame frame, Object arg) {
-        return precedenceNode.executeInteger(frame, arg, RRuntime.LOGICAL_FALSE) == PrecedenceNode.EXPRESSION_PRECEDENCE;
+    protected boolean isExprPrecedence(Object arg) {
+        return precedenceNode.executeInteger(arg, RRuntime.LOGICAL_FALSE) == PrecedenceNode.EXPRESSION_PRECEDENCE;
     }
 
 }

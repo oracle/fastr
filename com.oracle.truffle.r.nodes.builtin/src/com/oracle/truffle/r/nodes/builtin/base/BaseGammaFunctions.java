@@ -50,7 +50,6 @@ public class BaseGammaFunctions {
     @RBuiltin(name = "lgamma", kind = PRIMITIVE, parameterNames = {"x"})
     public abstract static class Lgamma extends RBuiltinNode {
 
-        private final NACheck naClosureCheck = NACheck.create();
         private final NACheck naValCheck = NACheck.create();
 
         @Specialization
@@ -68,12 +67,12 @@ public class BaseGammaFunctions {
 
         @Specialization
         protected RDoubleVector lgamma(RAbstractIntVector x) {
-            return lgamma(RClosures.createIntToDoubleVector(x, naClosureCheck));
+            return lgamma(RClosures.createIntToDoubleVector(x));
         }
 
         @Specialization
         protected RDoubleVector lgamma(RAbstractLogicalVector x) {
-            return lgamma(RClosures.createLogicalToDoubleVector(x, naClosureCheck));
+            return lgamma(RClosures.createLogicalToDoubleVector(x));
         }
 
         @Specialization
@@ -93,7 +92,6 @@ public class BaseGammaFunctions {
 
         @Child private DpsiFnCalc dpsiFnCalc;
 
-        private final NACheck naClosureCheck = NACheck.create();
         private final NACheck naValCheck = NACheck.create();
 
         private double dpsiFnCalc(VirtualFrame frame, double x, int n, int kode, double ans) {
@@ -132,12 +130,12 @@ public class BaseGammaFunctions {
 
         @Specialization
         protected RDoubleVector digamma(VirtualFrame frame, RAbstractIntVector x) {
-            return digamma(frame, RClosures.createIntToDoubleVector(x, naClosureCheck));
+            return digamma(frame, RClosures.createIntToDoubleVector(x));
         }
 
         @Specialization
         protected RDoubleVector digamma(VirtualFrame frame, RAbstractLogicalVector x) {
-            return digamma(frame, RClosures.createLogicalToDoubleVector(x, naClosureCheck));
+            return digamma(frame, RClosures.createLogicalToDoubleVector(x));
         }
 
         @Specialization

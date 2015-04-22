@@ -22,22 +22,25 @@
  */
 package com.oracle.truffle.r.runtime.data.closures;
 
+import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
-import com.oracle.truffle.r.runtime.ops.na.*;
 
 /**
  * In converting complex numbers to integers, this closure discards the imaginary parts.
  */
 public class RComplexToIntVectorClosure extends RToIntVectorClosure implements RAbstractIntVector {
 
-    private final RAbstractComplexVector vector;
-
-    public RComplexToIntVectorClosure(RAbstractComplexVector vector, NACheck naCheck) {
-        super(vector, naCheck);
-        this.vector = vector;
+    public RComplexToIntVectorClosure(RAbstractComplexVector vector) {
+        super(vector);
     }
 
     public int getDataAt(int index) {
-        return naCheck.convertComplexToInt(vector.getDataAt(index), true);
+        RComplex right = ((RAbstractComplexVector) vector).getDataAt(index);
+        if (!vector.isComplete() && RRuntime.isNA(right)) {
+            return RRuntime.INT_NA;
+        }
+        RError.warning(RError.Message.IMAGINARY_PARTS_DISCARDED_IN_COERCION);
+        return RRuntime.complex2intNoCheck(right);
     }
 }

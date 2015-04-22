@@ -78,8 +78,11 @@ public final class Utils {
             gotSection = true;
             if (s == null) {
                 s = src.getSource();
-            } else {
-                assert s == src.getSource();
+            } else if (s != src.getSource()) {
+                // this can happen, for example, if actual parameters are specified in the REPL and
+                // formal parameteres default values come from unserialized version of the function
+                gotSection = false;
+                break;
             }
 
             if (src.getStartLine() < minLine) {

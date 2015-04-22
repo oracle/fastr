@@ -23,16 +23,12 @@
 package com.oracle.truffle.r.runtime.data.closures;
 
 import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.ops.na.NACheck;
 import com.oracle.truffle.r.runtime.data.model.*;
 
 public abstract class RToIntVectorClosure extends RToVectorClosure implements RAbstractIntVector {
 
-    protected final NACheck naCheck;
-
-    public RToIntVectorClosure(RAbstractVector vector, NACheck naCheck) {
+    public RToIntVectorClosure(RAbstractVector vector) {
         super(vector);
-        this.naCheck = naCheck;
     }
 
     public RIntVector materialize() {
@@ -42,7 +38,7 @@ public abstract class RToIntVectorClosure extends RToVectorClosure implements RA
             int data = getDataAt(i);
             result[i] = data;
         }
-        return RDataFactory.createIntVector(result, naCheck.hasNeverBeenTrue());
+        return RDataFactory.createIntVector(result, vector.isComplete());
     }
 
     public Class<?> getElementClass() {

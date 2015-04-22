@@ -513,268 +513,268 @@ public abstract class MatMult extends RBuiltinNode {
 
     @Specialization(guards = "matmat(a, b)")
     protected RIntVector matmatmult(RAbstractLogicalVector a, RAbstractLogicalVector b) {
-        return matmatmult(RClosures.createLogicalToIntVector(a, na), RClosures.createLogicalToIntVector(b, na));
+        return matmatmult(RClosures.createLogicalToIntVector(a), RClosures.createLogicalToIntVector(b));
     }
 
     @Specialization(guards = "vecvec(a, b)")
     protected RIntVector vecvecmult(RAbstractLogicalVector a, RAbstractLogicalVector b) {
-        return vecvecmult(RClosures.createLogicalToIntVector(a, na), RClosures.createLogicalToIntVector(b, na));
+        return vecvecmult(RClosures.createLogicalToIntVector(a), RClosures.createLogicalToIntVector(b));
     }
 
     @Specialization(guards = "matvec(a, b)")
     protected RIntVector matvecmult(RAbstractLogicalVector a, RAbstractLogicalVector b) {
-        return matvecmult(RClosures.createLogicalToIntVector(a, na), RClosures.createLogicalToIntVector(b, na));
+        return matvecmult(RClosures.createLogicalToIntVector(a), RClosures.createLogicalToIntVector(b));
     }
 
     @Specialization(guards = "vecmat(a, b)")
     protected RIntVector vecmatmult(RAbstractLogicalVector a, RAbstractLogicalVector b) {
-        return vecmatmult(RClosures.createLogicalToIntVector(a, na), RClosures.createLogicalToIntVector(b, na));
+        return vecmatmult(RClosures.createLogicalToIntVector(a), RClosures.createLogicalToIntVector(b));
     }
 
     // to int
 
     @Specialization(guards = "matmat(a, b)")
     protected RIntVector matmatmult(RAbstractLogicalVector a, RAbstractIntVector b) {
-        return matmatmult(RClosures.createLogicalToIntVector(a, na), b);
+        return matmatmult(RClosures.createLogicalToIntVector(a), b);
     }
 
     @Specialization(guards = "vecvec(a, b)")
     protected RIntVector vecvecmult(RAbstractLogicalVector a, RAbstractIntVector b) {
-        return vecvecmult(RClosures.createLogicalToIntVector(a, na), b);
+        return vecvecmult(RClosures.createLogicalToIntVector(a), b);
     }
 
     @Specialization(guards = "matvec(a, b)")
     protected RIntVector matvecmult(RAbstractLogicalVector a, RAbstractIntVector b) {
-        return matvecmult(RClosures.createLogicalToIntVector(a, na), b);
+        return matvecmult(RClosures.createLogicalToIntVector(a), b);
     }
 
     @Specialization(guards = "vecmat(a, b)")
     protected RIntVector vecmatmult(RAbstractLogicalVector a, RAbstractIntVector b) {
-        return vecmatmult(RClosures.createLogicalToIntVector(a, na), b);
+        return vecmatmult(RClosures.createLogicalToIntVector(a), b);
     }
 
     @Specialization(guards = "matmat(a, b)")
     protected RIntVector matmatmult(RAbstractIntVector a, RAbstractLogicalVector b) {
-        return matmatmult(a, RClosures.createLogicalToIntVector(b, na));
+        return matmatmult(a, RClosures.createLogicalToIntVector(b));
     }
 
     @Specialization(guards = "vecvec(a, b)")
     protected RIntVector vecvecmult(RAbstractIntVector a, RAbstractLogicalVector b) {
-        return vecvecmult(a, RClosures.createLogicalToIntVector(b, na));
+        return vecvecmult(a, RClosures.createLogicalToIntVector(b));
     }
 
     @Specialization(guards = "matvec(a, b)")
     protected RIntVector matvecmult(RAbstractIntVector a, RAbstractLogicalVector b) {
-        return matvecmult(a, RClosures.createLogicalToIntVector(b, na));
+        return matvecmult(a, RClosures.createLogicalToIntVector(b));
     }
 
     @Specialization(guards = "vecmat(a, b)")
     protected RIntVector vecmatmult(RAbstractIntVector a, RAbstractLogicalVector b) {
-        return vecmatmult(a, RClosures.createLogicalToIntVector(b, na));
+        return vecmatmult(a, RClosures.createLogicalToIntVector(b));
     }
 
     // to complex
 
     @Specialization(guards = "matmat(a, b)")
     protected RComplexVector matmatmult(RAbstractIntVector a, RAbstractComplexVector b) {
-        return matmatmult(RClosures.createIntToComplexVector(a, na), b);
+        return matmatmult(RClosures.createIntToComplexVector(a), b);
     }
 
     @Specialization(guards = "vecvec(a, b)")
     protected RComplexVector vecvecmult(RAbstractIntVector a, RAbstractComplexVector b) {
-        return vecvecmult(RClosures.createIntToComplexVector(a, na), b);
+        return vecvecmult(RClosures.createIntToComplexVector(a), b);
     }
 
     @Specialization(guards = "matvec(a, b)")
     protected RComplexVector matvecmult(RAbstractIntVector a, RAbstractComplexVector b) {
-        return matvecmult(RClosures.createIntToComplexVector(a, na), b);
+        return matvecmult(RClosures.createIntToComplexVector(a), b);
     }
 
     @Specialization(guards = "vecmat(a, b)")
     protected RComplexVector vecmatmult(RAbstractIntVector a, RAbstractComplexVector b) {
-        return vecmatmult(RClosures.createIntToComplexVector(a, na), b);
+        return vecmatmult(RClosures.createIntToComplexVector(a), b);
     }
 
     @Specialization(guards = "matmat(a, b)")
     protected RComplexVector matmatmult(RAbstractComplexVector a, RAbstractIntVector b) {
-        return matmatmult(a, RClosures.createIntToComplexVector(b, na));
+        return matmatmult(a, RClosures.createIntToComplexVector(b));
     }
 
     @Specialization(guards = "vecvec(a, b)")
     protected RComplexVector vecvecmult(RAbstractComplexVector a, RAbstractIntVector b) {
-        return vecvecmult(a, RClosures.createIntToComplexVector(b, na));
+        return vecvecmult(a, RClosures.createIntToComplexVector(b));
     }
 
     @Specialization(guards = "matvec(a, b)")
     protected RComplexVector matvecmult(RAbstractComplexVector a, RAbstractIntVector b) {
-        return matvecmult(a, RClosures.createIntToComplexVector(b, na));
+        return matvecmult(a, RClosures.createIntToComplexVector(b));
     }
 
     @Specialization(guards = "vecmat(a, b)")
     protected RComplexVector vecmatmult(RAbstractComplexVector a, RAbstractIntVector b) {
-        return vecmatmult(a, RClosures.createIntToComplexVector(b, na));
+        return vecmatmult(a, RClosures.createIntToComplexVector(b));
     }
 
     @Specialization(guards = "matmat(a, b)")
     protected RComplexVector matmatmult(RAbstractLogicalVector a, RAbstractComplexVector b) {
-        return matmatmult(RClosures.createLogicalToComplexVector(a, na), b);
+        return matmatmult(RClosures.createLogicalToComplexVector(a), b);
     }
 
     @Specialization(guards = "vecvec(a, b)")
     protected RComplexVector vecvecmult(RAbstractLogicalVector a, RAbstractComplexVector b) {
-        return vecvecmult(RClosures.createLogicalToComplexVector(a, na), b);
+        return vecvecmult(RClosures.createLogicalToComplexVector(a), b);
     }
 
     @Specialization(guards = "matvec(a, b)")
     protected RComplexVector matvecmult(RAbstractLogicalVector a, RAbstractComplexVector b) {
-        return matvecmult(RClosures.createLogicalToComplexVector(a, na), b);
+        return matvecmult(RClosures.createLogicalToComplexVector(a), b);
     }
 
     @Specialization(guards = "vecmat(a, b)")
     protected RComplexVector vecmatmult(RAbstractLogicalVector a, RAbstractComplexVector b) {
-        return vecmatmult(RClosures.createLogicalToComplexVector(a, na), b);
+        return vecmatmult(RClosures.createLogicalToComplexVector(a), b);
     }
 
     @Specialization(guards = "matmat(a, b)")
     protected RComplexVector matmatmult(RAbstractComplexVector a, RAbstractLogicalVector b) {
-        return matmatmult(a, RClosures.createLogicalToComplexVector(b, na));
+        return matmatmult(a, RClosures.createLogicalToComplexVector(b));
     }
 
     @Specialization(guards = "vecvec(a, b)")
     protected RComplexVector vecvecmult(RAbstractComplexVector a, RAbstractLogicalVector b) {
-        return vecvecmult(a, RClosures.createLogicalToComplexVector(b, na));
+        return vecvecmult(a, RClosures.createLogicalToComplexVector(b));
     }
 
     @Specialization(guards = "matvec(a, b)")
     protected RComplexVector matvecmult(RAbstractComplexVector a, RAbstractLogicalVector b) {
-        return matvecmult(a, RClosures.createLogicalToComplexVector(b, na));
+        return matvecmult(a, RClosures.createLogicalToComplexVector(b));
     }
 
     @Specialization(guards = "vecmat(a, b)")
     protected RComplexVector vecmatmult(RAbstractComplexVector a, RAbstractLogicalVector b) {
-        return vecmatmult(a, RClosures.createLogicalToComplexVector(b, na));
+        return vecmatmult(a, RClosures.createLogicalToComplexVector(b));
     }
 
     @Specialization(guards = "matmat(a, b)")
     protected RComplexVector matmatmult(RAbstractDoubleVector a, RAbstractComplexVector b) {
-        return matmatmult(RClosures.createDoubleToComplexVector(a, na), b);
+        return matmatmult(RClosures.createDoubleToComplexVector(a), b);
     }
 
     @Specialization(guards = "vecvec(a, b)")
     protected RComplexVector vecvecmult(RAbstractDoubleVector a, RAbstractComplexVector b) {
-        return vecvecmult(RClosures.createDoubleToComplexVector(a, na), b);
+        return vecvecmult(RClosures.createDoubleToComplexVector(a), b);
     }
 
     @Specialization(guards = "matvec(a, b)")
     protected RComplexVector matvecmult(RAbstractDoubleVector a, RAbstractComplexVector b) {
-        return matvecmult(RClosures.createDoubleToComplexVector(a, na), b);
+        return matvecmult(RClosures.createDoubleToComplexVector(a), b);
     }
 
     @Specialization(guards = "vecmat(a, b)")
     protected RComplexVector vecmatmult(RAbstractDoubleVector a, RAbstractComplexVector b) {
-        return vecmatmult(RClosures.createDoubleToComplexVector(a, na), b);
+        return vecmatmult(RClosures.createDoubleToComplexVector(a), b);
     }
 
     @Specialization(guards = "matmat(a, b)")
     protected RComplexVector matmatmult(RAbstractComplexVector a, RAbstractDoubleVector b) {
-        return matmatmult(a, RClosures.createDoubleToComplexVector(b, na));
+        return matmatmult(a, RClosures.createDoubleToComplexVector(b));
     }
 
     @Specialization(guards = "vecvec(a, b)")
     protected RComplexVector vecvecmult(RAbstractComplexVector a, RAbstractDoubleVector b) {
-        return vecvecmult(a, RClosures.createDoubleToComplexVector(b, na));
+        return vecvecmult(a, RClosures.createDoubleToComplexVector(b));
     }
 
     @Specialization(guards = "matvec(a, b)")
     protected RComplexVector matvecmult(RAbstractComplexVector a, RAbstractDoubleVector b) {
-        return matvecmult(a, RClosures.createDoubleToComplexVector(b, na));
+        return matvecmult(a, RClosures.createDoubleToComplexVector(b));
     }
 
     @Specialization(guards = "vecmat(a, b)")
     protected RComplexVector vecmatmult(RAbstractComplexVector a, RAbstractDoubleVector b) {
-        return vecmatmult(a, RClosures.createDoubleToComplexVector(b, na));
+        return vecmatmult(a, RClosures.createDoubleToComplexVector(b));
     }
 
     // to double
 
     @Specialization(guards = "matmat(a, b)")
     protected RDoubleVector matmatmult(RAbstractIntVector a, RAbstractDoubleVector b) {
-        return matmatmult(RClosures.createIntToDoubleVector(a, na), b);
+        return matmatmult(RClosures.createIntToDoubleVector(a), b);
     }
 
     @Specialization(guards = "vecvec(a, b)")
     protected RDoubleVector vecvecmult(RAbstractIntVector a, RAbstractDoubleVector b) {
-        return vecvecmult(RClosures.createIntToDoubleVector(a, na), b);
+        return vecvecmult(RClosures.createIntToDoubleVector(a), b);
     }
 
     @Specialization(guards = "matvec(a, b)")
     protected RDoubleVector matvecmult(RAbstractIntVector a, RAbstractDoubleVector b) {
-        return matvecmult(RClosures.createIntToDoubleVector(a, na), b);
+        return matvecmult(RClosures.createIntToDoubleVector(a), b);
     }
 
     @Specialization(guards = "vecmat(a, b)")
     protected RDoubleVector vecmatmult(RAbstractIntVector a, RAbstractDoubleVector b) {
-        return vecmatmult(RClosures.createIntToDoubleVector(a, na), b);
+        return vecmatmult(RClosures.createIntToDoubleVector(a), b);
     }
 
     @Specialization(guards = "matmat(a, b)")
     protected RDoubleVector matmatmult(RAbstractDoubleVector a, RAbstractIntVector b) {
-        return matmatmult(a, RClosures.createIntToDoubleVector(b, na));
+        return matmatmult(a, RClosures.createIntToDoubleVector(b));
     }
 
     @Specialization(guards = "vecvec(a, b)")
     protected RDoubleVector vecvecmult(RAbstractDoubleVector a, RAbstractIntVector b) {
-        return vecvecmult(a, RClosures.createIntToDoubleVector(b, na));
+        return vecvecmult(a, RClosures.createIntToDoubleVector(b));
     }
 
     @Specialization(guards = "matvec(a, b)")
     protected RDoubleVector matvecmult(RAbstractDoubleVector a, RAbstractIntVector b) {
-        return matvecmult(a, RClosures.createIntToDoubleVector(b, na));
+        return matvecmult(a, RClosures.createIntToDoubleVector(b));
     }
 
     @Specialization(guards = "vecmat(a, b)")
     protected RDoubleVector vecmatmult(RAbstractDoubleVector a, RAbstractIntVector b) {
-        return vecmatmult(a, RClosures.createIntToDoubleVector(b, na));
+        return vecmatmult(a, RClosures.createIntToDoubleVector(b));
     }
 
     @Specialization(guards = "matmat(a, b)")
     protected RDoubleVector matmatmult(RAbstractLogicalVector a, RAbstractDoubleVector b) {
-        return matmatmult(RClosures.createLogicalToDoubleVector(a, na), b);
+        return matmatmult(RClosures.createLogicalToDoubleVector(a), b);
     }
 
     @Specialization(guards = "vecvec(a, b)")
     protected RDoubleVector vecvecmult(RAbstractLogicalVector a, RAbstractDoubleVector b) {
-        return vecvecmult(RClosures.createLogicalToDoubleVector(a, na), b);
+        return vecvecmult(RClosures.createLogicalToDoubleVector(a), b);
     }
 
     @Specialization(guards = "matvec(a, b)")
     protected RDoubleVector matvecmult(RAbstractLogicalVector a, RAbstractDoubleVector b) {
-        return matvecmult(RClosures.createLogicalToDoubleVector(a, na), b);
+        return matvecmult(RClosures.createLogicalToDoubleVector(a), b);
     }
 
     @Specialization(guards = "vecmat(a, b)")
     protected RDoubleVector vecmatmult(RAbstractLogicalVector a, RAbstractDoubleVector b) {
-        return vecmatmult(RClosures.createLogicalToDoubleVector(a, na), b);
+        return vecmatmult(RClosures.createLogicalToDoubleVector(a), b);
     }
 
     @Specialization(guards = "matmat(a, b)")
     protected RDoubleVector matmatmult(RAbstractDoubleVector a, RAbstractLogicalVector b) {
-        return matmatmult(a, RClosures.createLogicalToDoubleVector(b, na));
+        return matmatmult(a, RClosures.createLogicalToDoubleVector(b));
     }
 
     @Specialization(guards = "vecvec(a, b)")
     protected RDoubleVector vecvecmult(RAbstractDoubleVector a, RAbstractLogicalVector b) {
-        return vecvecmult(a, RClosures.createLogicalToDoubleVector(b, na));
+        return vecvecmult(a, RClosures.createLogicalToDoubleVector(b));
     }
 
     @Specialization(guards = "matvec(a, b)")
     protected RDoubleVector matvecmult(RAbstractDoubleVector a, RAbstractLogicalVector b) {
-        return matvecmult(a, RClosures.createLogicalToDoubleVector(b, na));
+        return matvecmult(a, RClosures.createLogicalToDoubleVector(b));
     }
 
     @Specialization(guards = "vecmat(a, b)")
     protected RDoubleVector vecmatmult(RAbstractDoubleVector a, RAbstractLogicalVector b) {
-        return vecmatmult(a, RClosures.createLogicalToDoubleVector(b, na));
+        return vecmatmult(a, RClosures.createLogicalToDoubleVector(b));
     }
 
     // errors
