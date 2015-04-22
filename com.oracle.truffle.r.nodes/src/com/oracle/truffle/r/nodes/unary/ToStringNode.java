@@ -75,6 +75,12 @@ public abstract class ToStringNode extends UnaryNode {
 
     @SuppressWarnings("unused")
     @Specialization
+    protected String toString(RSymbol symbol, boolean quotes, String separator) {
+        return symbol.getName();
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization
     protected String toString(RComplex complex, boolean quotes, String separator) {
         return complex.toString();
     }

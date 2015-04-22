@@ -70,7 +70,7 @@ public class RLanguage extends RLanguageRep implements RAbstractContainer, RAttr
     }
 
     public boolean isComplete() {
-        throw RInternalError.shouldNotReachHere();
+        return true;
     }
 
     @Override
