@@ -538,7 +538,18 @@ public class RSerialize {
                     Object value = readItem();
                     long addr = value == RNull.instance ? 0 : (long) value;
                     Object tagObj = readItem();
-                    String tag = tagObj == RNull.instance ? null : (String) tagObj;
+                    String tag;
+                    if (tagObj == RNull.instance) {
+                        tag = null;
+                    } else {
+                        if (tagObj instanceof RSymbol) {
+                            tag = ((RSymbol) tagObj).getName();
+                        } else if (tagObj instanceof String) {
+                            tag = (String) tagObj;
+                        } else {
+                            throw RInternalError.unimplemented();
+                        }
+                    }
                     result = RDataFactory.createExternalPtr(addr, tag);
                     addReadRef(result);
                     break;
