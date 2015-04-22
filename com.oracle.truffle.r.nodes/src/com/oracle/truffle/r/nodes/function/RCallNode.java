@@ -536,7 +536,7 @@ public abstract class RCallNode extends RNode {
                 // Now we need to distinguish: Do supplied arguments vary between calls?
                 if (args.containsVarArgsSymbol()) {
                     // Yes, maybe.
-                    VarArgsCacheCallNode nextNode = new UninitializedVarArgsCacheCallNode(args);
+                    VarArgsCacheCallNode nextNode = new UninitializedVarArgsCacheCallNode(args, callSrc);
                     VarArgsSignature varArgsSignature = args.createSignature(frame);
                     callNode = DispatchedVarArgsCallNode.create(frame, args, nextNode, callSrc, function, varArgsSignature, true);
                 } else {
@@ -699,8 +699,9 @@ public abstract class RCallNode extends RNode {
         @Child private CallArgumentsNode args;
         private int depth = 1;  // varargs cached is started with a [DV] DispatchedVarArgsCallNode
 
-        public UninitializedVarArgsCacheCallNode(CallArgumentsNode args) {
+        public UninitializedVarArgsCacheCallNode(CallArgumentsNode args, SourceSection callSrc) {
             this.args = args;
+            assignSourceSection(callSrc);
         }
 
         @Override
@@ -710,17 +711,17 @@ public abstract class RCallNode extends RNode {
             // Extend cache
             this.depth += 1;
             CallArgumentsNode clonedArgs = NodeUtil.cloneNode(args);
-            VarArgsCacheCallNode next = createNextNode(function);
+            VarArgsCacheCallNode next = createNextNode(function, getSourceSection());
             DispatchedVarArgsCallNode newCallNode = DispatchedVarArgsCallNode.create(frame, clonedArgs, next, getSourceSection(), function, varArgsSignature, false);
             return replace(newCallNode).execute(frame, function, varArgsSignature);
         }
 
-        private VarArgsCacheCallNode createNextNode(RFunction function) {
+        private VarArgsCacheCallNode createNextNode(RFunction function, SourceSection callSrc) {
             if (depth < VARARGS_INLINE_CACHE_SIZE) {
                 return this;
             } else {
                 CallArgumentsNode clonedArgs = NodeUtil.cloneNode(args);
-                return new DispatchedGenericVarArgsCallNode(function, clonedArgs);
+                return new DispatchedGenericVarArgsCallNode(function, clonedArgs, callSrc);
             }
         }
     }
@@ -769,6 +770,9 @@ public abstract class RCallNode extends RNode {
         protected static DispatchedVarArgsCallNode create(VirtualFrame frame, CallArgumentsNode args, VarArgsCacheCallNode next, SourceSection callSrc, RFunction function,
                         VarArgsSignature varArgsSignature, boolean isVarArgsRoot) {
             UnrolledVariadicArguments unrolledArguments = args.executeFlatten(frame);
+            if (callSrc == null) {
+                throw RInternalError.shouldNotReachHere("null callSrc");
+            }
             MatchedArguments matchedArgs = ArgumentMatcher.matchArguments(function, unrolledArguments, callSrc, args.getEncapsulatingSourceSection(), false);
             return new DispatchedVarArgsCallNode(args, next, function, varArgsSignature, matchedArgs, isVarArgsRoot);
         }
@@ -820,9 +824,10 @@ public abstract class RCallNode extends RNode {
 
         @CompilationFinal private boolean needsCallerFrame;
 
-        DispatchedGenericVarArgsCallNode(RFunction function, CallArgumentsNode suppliedArgs) {
+        DispatchedGenericVarArgsCallNode(RFunction function, CallArgumentsNode suppliedArgs, SourceSection callSrc) {
             this.call = Truffle.getRuntime().createDirectCallNode(function.getTarget());
             this.suppliedArgs = suppliedArgs;
+            assignSourceSection(callSrc);
         }
 
         @Override
