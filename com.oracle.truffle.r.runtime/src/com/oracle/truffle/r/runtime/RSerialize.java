@@ -1253,7 +1253,7 @@ public class RSerialize {
                 // next is the cdr
                 stream.writeInt(Flags.packFlags(SEXPTYPE.LISTSXP, 0, false, false, true));
                 stream.writeInt(SEXPTYPE.SYMSXP.code);
-                writeItem(attr.getName());
+                writeCHARSXP(attr.getName());
                 writeItem(attr.getValue());
             }
             stream.writeInt(Flags.packFlags(SEXPTYPE.NILVALUE_SXP, 0, false, false, false));
