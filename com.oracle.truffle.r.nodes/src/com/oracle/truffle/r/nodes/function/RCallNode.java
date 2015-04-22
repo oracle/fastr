@@ -33,6 +33,7 @@ import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.variables.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.function.MatchedArguments.MatchedArgumentsNode;
+import com.oracle.truffle.r.nodes.function.signature.*;
 import com.oracle.truffle.r.nodes.runtime.*;
 import com.oracle.truffle.r.parser.ast.*;
 import com.oracle.truffle.r.runtime.*;
@@ -602,6 +603,7 @@ public abstract class RCallNode extends RNode {
 
         @Child private DirectCallNode call;
         @Child private MatchedArgumentsNode matchedArgs;
+        @Child private RArgumentsNode argsNode = RArgumentsNode.create();
 
         private final boolean needsCallerFrame;
         @CompilationFinal private boolean needsSplitting;
@@ -621,7 +623,8 @@ public abstract class RCallNode extends RNode {
                 call.cloneCallTarget();
             }
             MaterializedFrame callerFrame = needsCallerFrame ? frame.materialize() : null;
-            Object[] argsObject = RArguments.create(currentFunction, getSourceSection(), callerFrame, RArguments.getDepth(frame) + 1, matchedArgs.executeArray(frame), matchedArgs.getSignature());
+
+            Object[] argsObject = argsNode.execute(currentFunction, getSourceSection(), callerFrame, RArguments.getDepth(frame) + 1, matchedArgs.executeArray(frame), matchedArgs.getSignature());
             return call.call(frame, argsObject);
         }
 
