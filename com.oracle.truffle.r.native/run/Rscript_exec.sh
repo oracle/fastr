@@ -22,15 +22,11 @@
 # questions.
 #
 
-# Startup FastR (R) using the mx tool (development)
-# This is exec'ed by the (generic) R script in the parent directory.
-#
-
-#echo args="$@"
-#printenv | fgrep R_
+# Startup FastR (Rscript) using the mx tool (development)
+# This is exec'ed by the (generic) Rscript script in the parent directory.
 
 source="${BASH_SOURCE[0]}"
 while [ -h "$source" ] ; do source="$(readlink "$source")"; done
 PRIMARY_PATH="$( cd -P "$( dirname "$source" )" && pwd )"/../..
 
-exec mx $MX_R_GLOBAL_ARGS --primary-suite-path $PRIMARY_PATH R $MX_R_CMD_ARGS "$@"
+mx $MX_R_GLOBAL_ARGS --primary-suite-path $PRIMARY_PATH Rscript $MX_R_CMD_ARGS "$@"

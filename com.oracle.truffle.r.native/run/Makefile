@@ -50,15 +50,17 @@ rundirs:
 	
 rcmds: $(FASTR_BINDIR)/R
 
-$(FASTR_BINDIR)/R: Makefile R.sh Rscript.sh
+$(FASTR_BINDIR)/R: Makefile R.sh Rscript.sh Rscript_exec.sh
 	cp R.sh $(FASTR_BINDIR)/exec/R
-	chmod +x $(FASTR_BINDIR)/exec/R
+	cp Rscript_exec.sh $(FASTR_BINDIR)/exec/Rscript
 	cp Rscript.sh $(FASTR_BINDIR)/Rscript
+	chmod +x $(FASTR_BINDIR)/exec/R $(FASTR_BINDIR)/exec/Rscript $(FASTR_BINDIR)/Rscript
 	cp $(SUPPORT_SCRIPTS) $(FASTR_BINDIR)
 	sed -e 's!\(^R_HOME_DIR=\)\(.*\)!\1"$(FASTR_R_HOME)"!' < $(R_SCRIPT) > $(FASTR_BINDIR)/R
 	touch $(FASTR_ETCDIR)/ldpaths
 	cp $(GNUR_HOME)/etc/Renviron $(FASTR_ETCDIR)
-	cp Makeconf $(FASTR_ETCDIR)/Makeconf
+	cp Makeconf.etc $(FASTR_ETCDIR)/Makeconf
 
 clean:
 	rm -rf $(FASTR_BINDIR)
+	rm -f Makeconf.etc
