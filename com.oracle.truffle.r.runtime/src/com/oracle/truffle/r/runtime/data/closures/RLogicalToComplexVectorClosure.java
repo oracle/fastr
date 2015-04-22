@@ -28,15 +28,12 @@ import com.oracle.truffle.r.runtime.data.model.*;
 
 public class RLogicalToComplexVectorClosure extends RToComplexVectorClosure implements RAbstractComplexVector {
 
-    private final RAbstractLogicalVector vector;
-
     public RLogicalToComplexVectorClosure(RAbstractLogicalVector vector) {
         super(vector);
-        this.vector = vector;
     }
 
     public RComplex getDataAt(int index) {
-        byte data = vector.getDataAt(index);
+        byte data = ((RAbstractLogicalVector) vector).getDataAt(index);
         double real;
         double imaginary;
         if (!vector.isComplete() && RRuntime.isNA(data)) {

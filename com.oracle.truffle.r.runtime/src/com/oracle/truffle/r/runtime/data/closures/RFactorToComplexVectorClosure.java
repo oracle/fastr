@@ -31,20 +31,18 @@ import com.oracle.truffle.r.runtime.data.model.*;
  */
 public class RFactorToComplexVectorClosure extends RToComplexVectorClosure implements RAbstractComplexVector {
 
-    private final RIntVector vector;
     private final RAbstractComplexVector levels;
     private final boolean withNames;
 
     public RFactorToComplexVectorClosure(RFactor factor, RAbstractComplexVector levels, boolean withNames) {
         super(factor.getVector());
-        this.vector = factor.getVector();
         assert levels != null;
         this.levels = levels;
         this.withNames = withNames;
     }
 
     public RComplex getDataAt(int index) {
-        int val = vector.getDataAt(index);
+        int val = ((RIntVector) vector).getDataAt(index);
         if (!vector.isComplete() && RRuntime.isNA(val)) {
             return RRuntime.createComplexNA();
         } else {

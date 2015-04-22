@@ -27,15 +27,12 @@ import com.oracle.truffle.r.runtime.data.model.*;
 
 public class RLogicalToDoubleVectorClosure extends RToDoubleVectorClosure implements RAbstractDoubleVector {
 
-    private final RAbstractLogicalVector vector;
-
     public RLogicalToDoubleVectorClosure(RAbstractLogicalVector vector) {
         super(vector);
-        this.vector = vector;
     }
 
     public double getDataAt(int index) {
-        byte data = vector.getDataAt(index);
+        byte data = ((RAbstractLogicalVector) vector).getDataAt(index);
         if (!vector.isComplete() && RRuntime.isNA(data)) {
             return RRuntime.DOUBLE_NA;
         }

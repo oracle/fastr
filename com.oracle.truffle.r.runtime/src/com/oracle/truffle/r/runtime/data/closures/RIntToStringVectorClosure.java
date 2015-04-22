@@ -27,15 +27,12 @@ import com.oracle.truffle.r.runtime.data.model.*;
 
 public class RIntToStringVectorClosure extends RToStringVectorClosure implements RAbstractStringVector {
 
-    private final RAbstractIntVector vector;
-
     public RIntToStringVectorClosure(RAbstractIntVector vector) {
         super(vector);
-        this.vector = vector;
     }
 
     public String getDataAt(int index) {
-        int data = vector.getDataAt(index);
+        int data = ((RAbstractIntVector) vector).getDataAt(index);
         if (!vector.isComplete() && RRuntime.isNA(data)) {
             return RRuntime.STRING_NA;
         }

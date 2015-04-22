@@ -31,20 +31,18 @@ import com.oracle.truffle.r.runtime.data.model.*;
  */
 public class RFactorToDoubleVectorClosure extends RToDoubleVectorClosure implements RAbstractDoubleVector {
 
-    private final RIntVector vector;
     private final RAbstractDoubleVector levels;
     private final boolean withNames;
 
     public RFactorToDoubleVectorClosure(RFactor factor, RAbstractDoubleVector levels, boolean withNames) {
         super(factor.getVector());
-        this.vector = factor.getVector();
         assert levels != null;
         this.levels = levels;
         this.withNames = withNames;
     }
 
     public double getDataAt(int index) {
-        int val = vector.getDataAt(index);
+        int val = ((RIntVector) vector).getDataAt(index);
         if (!vector.isComplete() && RRuntime.isNA(val)) {
             return RRuntime.DOUBLE_NA;
         } else {

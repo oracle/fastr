@@ -31,13 +31,11 @@ import com.oracle.truffle.r.runtime.data.model.*;
  */
 public class RFactorToStringVectorClosure extends RToStringVectorClosure implements RAbstractStringVector {
 
-    private final RIntVector vector;
     private final RAbstractStringVector levels;
     private final boolean withNames;
 
     public RFactorToStringVectorClosure(RFactor factor, RAbstractStringVector levels, boolean withNames) {
         super(factor.getVector());
-        this.vector = factor.getVector();
         this.levels = levels;
         this.withNames = withNames;
         if (this.levels == null) {
@@ -49,7 +47,7 @@ public class RFactorToStringVectorClosure extends RToStringVectorClosure impleme
         if (levels == null || levels.getLength() == 0) {
             return RRuntime.STRING_NA;
         } else {
-            int val = vector.getDataAt(index);
+            int val = ((RIntVector) vector).getDataAt(index);
             if (!vector.isComplete() && RRuntime.isNA(val)) {
                 return RRuntime.STRING_NA;
             } else {

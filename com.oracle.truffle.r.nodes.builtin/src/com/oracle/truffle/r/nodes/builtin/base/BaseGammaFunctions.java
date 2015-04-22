@@ -50,7 +50,6 @@ public class BaseGammaFunctions {
     @RBuiltin(name = "lgamma", kind = PRIMITIVE, parameterNames = {"x"})
     public abstract static class Lgamma extends RBuiltinNode {
 
-        private final NACheck naClosureCheck = NACheck.create();
         private final NACheck naValCheck = NACheck.create();
 
         @Specialization
@@ -93,7 +92,6 @@ public class BaseGammaFunctions {
 
         @Child private DpsiFnCalc dpsiFnCalc;
 
-        private final NACheck naClosureCheck = NACheck.create();
         private final NACheck naValCheck = NACheck.create();
 
         private double dpsiFnCalc(VirtualFrame frame, double x, int n, int kode, double ans) {

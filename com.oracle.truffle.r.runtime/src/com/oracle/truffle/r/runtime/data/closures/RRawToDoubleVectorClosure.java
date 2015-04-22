@@ -27,14 +27,11 @@ import com.oracle.truffle.r.runtime.data.model.*;
 
 public class RRawToDoubleVectorClosure extends RToDoubleVectorClosure implements RAbstractDoubleVector {
 
-    private final RAbstractRawVector vector;
-
     public RRawToDoubleVectorClosure(RAbstractRawVector vector) {
         super(vector);
-        this.vector = vector;
     }
 
     public double getDataAt(int index) {
-        return RRuntime.raw2double(vector.getDataAt(index));
+        return RRuntime.raw2double(((RAbstractRawVector) vector).getDataAt(index));
     }
 }

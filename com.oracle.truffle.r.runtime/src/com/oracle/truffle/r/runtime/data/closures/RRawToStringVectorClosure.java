@@ -27,14 +27,11 @@ import com.oracle.truffle.r.runtime.data.model.*;
 
 public class RRawToStringVectorClosure extends RToStringVectorClosure implements RAbstractStringVector {
 
-    private final RAbstractRawVector vector;
-
     public RRawToStringVectorClosure(RAbstractRawVector vector) {
         super(vector);
-        this.vector = vector;
     }
 
     public String getDataAt(int index) {
-        return RRuntime.rawToString(vector.getDataAt(index));
+        return RRuntime.rawToString(((RAbstractRawVector) vector).getDataAt(index));
     }
 }

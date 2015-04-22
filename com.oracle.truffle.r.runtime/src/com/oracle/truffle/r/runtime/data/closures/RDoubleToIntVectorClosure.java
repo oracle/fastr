@@ -27,15 +27,12 @@ import com.oracle.truffle.r.runtime.data.model.*;
 
 public class RDoubleToIntVectorClosure extends RToIntVectorClosure implements RAbstractIntVector {
 
-    private final RAbstractDoubleVector vector;
-
     public RDoubleToIntVectorClosure(RAbstractDoubleVector vector) {
         super(vector);
-        this.vector = vector;
     }
 
     public int getDataAt(int index) {
-        double value = vector.getDataAt(index);
+        double value = ((RAbstractDoubleVector) vector).getDataAt(index);
         if (Double.isNaN(value)) {
             return RRuntime.INT_NA;
         }

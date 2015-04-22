@@ -38,7 +38,6 @@ public abstract class UnaryArithmeticNode extends UnaryNode {
     private final UnaryArithmetic arithmetic;
 
     private final NAProfile naProfile = NAProfile.create();
-    private final NACheck na = NACheck.create();
 
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 

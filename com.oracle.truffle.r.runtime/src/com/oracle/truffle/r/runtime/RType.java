@@ -49,12 +49,11 @@ public enum RType {
     public static final int NO_PRECEDENCE = -1;
     public static final int NUMBER_OF_PRECEDENCES = 9;
 
-    private final int precedence;
     private final String name;
 
-    private RType(String name, int precedence) {
+    private RType(String name, @SuppressWarnings("unused") int precedence) {
         this.name = name;
-        this.precedence = precedence;
+        // TODO: do we need precedence for anything herw
     }
 
     public String getName() {

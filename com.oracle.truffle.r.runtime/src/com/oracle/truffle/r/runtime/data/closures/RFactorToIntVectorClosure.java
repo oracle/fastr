@@ -31,20 +31,18 @@ import com.oracle.truffle.r.runtime.data.model.*;
  */
 public class RFactorToIntVectorClosure extends RToIntVectorClosure implements RAbstractIntVector {
 
-    private final RIntVector vector;
     private final RAbstractIntVector levels;
     private final boolean withNames;
 
     public RFactorToIntVectorClosure(RFactor factor, RAbstractIntVector levels, boolean withNames) {
         super(factor.getVector());
-        this.vector = factor.getVector();
         assert levels != null;
         this.levels = levels;
         this.withNames = withNames;
     }
 
     public int getDataAt(int index) {
-        int val = vector.getDataAt(index);
+        int val = ((RIntVector) vector).getDataAt(index);
         if (!vector.isComplete() && RRuntime.isNA(val)) {
             return RRuntime.INT_NA;
         } else {
