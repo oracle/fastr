@@ -41,33 +41,33 @@ import com.oracle.truffle.r.runtime.env.frame.*;
  *
  * The frame layout, depicted, is as follows:
  * <pre>
- *                            +-------------------+
- * INDEX_ENVIRONMENT       -> | REnvironment      |
- *                            +-------------------+
- * INDEX_FUNCTION          -> | RFunction         |
- *                            +-------------------+
- * INDEX_CALL_SRC          -> | SourceSection     |
- *                            +-------------------+
- * INDEX_ENCLOSING_FRAME   -> | MaterializedFrame |
- *                            +-------------------+
- * INDEX_N_ARGS            -> | nArgs             |
- *                            +-------------------+
- * INDEX_DEPTH             -> | depth             |
- *                            +-------------------+
- * INDEX_IS_IRREGULAR      -> | isIrregular       |
- *                            +-------------------+
- * INDEX_N_NAMES           -> | nNames            |
- *                            +-------------------+
- * INDEX_ARGUMENTS         -> | arg_0             |
- *                            | arg_1             |
- *                            | ...               |
- *                            | arg_(nArgs-1)     |
- *                            +-------------------+
- * INDEX_ARGUMENTS + nArgs -> | name_0            |
- *                            | name_1            |
- *                            | ...               |
- *                            | name_(nNames-1)   |
- *                            +-------------------+
+ *                            +--------------------+
+ * INDEX_ENVIRONMENT       -> | REnvironment       |
+ *                            +--------------------+
+ * INDEX_FUNCTION          -> | RFunction          |
+ *                            +--------------------+
+ * INDEX_CALL_SRC          -> | SourceSection      |
+ *                            +--------------------+
+ * INDEX_CALLER_FRAME   ->    | MaterializedFrame  |
+ *                            +--------------------+
+ * INDEX_ENCLOSING_FRAME   -> | MaterializedFrame  |
+ *                            +--------------------+
+ * INDEX_S3_ARGS           -> | S3Args             |
+ *                            +--------------------+
+ * INDEX_DEPTH             -> | depth              |
+ *                            +--------------------+
+ * INDEX_IS_IRREGULAR      -> | isIrregular        |
+ *                            +--------------------+
+ * INDEX_SIGNATURE         -> | ArgumentsSignature |
+ *                            +--------------------+
+ * INDEX_ARGUMENTS         -> | arg_0              |
+ *                            | arg_1              |
+ *                            | ...                |
+ *                            | arg_(nArgs-1)      |
+ *                            +--------------------+
+ *
+ * If the formal parameter is "..." then the corresponding argument slot will
+ * always be of type {@link RArgsValuesAndNames}.
  * </pre>
  *
  * All frame elements should <b>always</b> be accessed through the getter and setter functions
@@ -128,11 +128,11 @@ public final class RArguments {
     }
 
     /**
-     * Get the {@code arguments} checking for an "eval" frame. An eval can create a pseudo-call
+     * Get the {@code RArguments} checking for an "eval" frame. An eval can create a pseudo-call
      * where {@code arguments.length == 1} and the real {@code arguments} are at
      * {@code arguments[0]}. See {@code REngine}.
      */
-    private static Object[] getArgumentsWithEvalCheck(Frame frame) {
+    private static Object[] getRArgumentsWithEvalCheck(Frame frame) {
         Object[] arguments = frame.getArguments();
         if (arguments.length == 1) {
             return materializedFrameProfile.profile((Frame) arguments[0]).getArguments();
@@ -201,12 +201,12 @@ public final class RArguments {
     }
 
     public static MaterializedFrame getCallerFrame(Frame frame) {
-        Object[] args = getArgumentsWithEvalCheck(frame);
+        Object[] args = getRArgumentsWithEvalCheck(frame);
         return (MaterializedFrame) args[INDEX_CALLER_FRAME];
     }
 
     public static S3Args getS3Args(Frame frame) {
-        return (S3Args) getArgumentsWithEvalCheck(frame)[INDEX_S3_ARGS];
+        return (S3Args) getRArgumentsWithEvalCheck(frame)[INDEX_S3_ARGS];
     }
 
     public static void setS3Args(Object[] args, S3Args s3Args) {
@@ -214,15 +214,15 @@ public final class RArguments {
     }
 
     public static REnvironment getEnvironment(Frame frame) {
-        return (REnvironment) getArgumentsWithEvalCheck(frame)[INDEX_ENVIRONMENT];
+        return (REnvironment) getRArgumentsWithEvalCheck(frame)[INDEX_ENVIRONMENT];
     }
 
     public static RFunction getFunction(Frame frame) {
-        return (RFunction) getArgumentsWithEvalCheck(frame)[INDEX_FUNCTION];
+        return (RFunction) getRArgumentsWithEvalCheck(frame)[INDEX_FUNCTION];
     }
 
     public static SourceSection getCallSourceSection(Frame frame) {
-        return (SourceSection) getArgumentsWithEvalCheck(frame)[INDEX_CALL_SRC];
+        return (SourceSection) getRArgumentsWithEvalCheck(frame)[INDEX_CALL_SRC];
     }
 
     /**
@@ -245,25 +245,25 @@ public final class RArguments {
     }
 
     public static int getDepth(Frame frame) {
-        return (Integer) getArgumentsWithEvalCheck(frame)[INDEX_DEPTH];
+        return (Integer) getRArgumentsWithEvalCheck(frame)[INDEX_DEPTH];
     }
 
     public static boolean getIsIrregular(Frame frame) {
-        return (boolean) getArgumentsWithEvalCheck(frame)[INDEX_IS_IRREGULAR];
+        return (boolean) getRArgumentsWithEvalCheck(frame)[INDEX_IS_IRREGULAR];
     }
 
     public static Object getArgument(Frame frame, int argIndex) {
         assert (argIndex >= 0 && argIndex < getNArgs(frame));
-        return getArgumentsWithEvalCheck(frame)[INDEX_ARGUMENTS + argIndex];
+        return getRArgumentsWithEvalCheck(frame)[INDEX_ARGUMENTS + argIndex];
     }
 
     public static Object[] getArguments(Frame frame) {
-        Object[] args = getArgumentsWithEvalCheck(frame);
+        Object[] args = getRArgumentsWithEvalCheck(frame);
         return Arrays.copyOfRange(args, INDEX_ARGUMENTS, INDEX_ARGUMENTS + ((ArgumentsSignature) args[INDEX_SIGNATURE]).getLength());
     }
 
     public static void copyArguments(Frame frame, Object[] dest, int pos) {
-        Object[] args = getArgumentsWithEvalCheck(frame);
+        Object[] args = getRArgumentsWithEvalCheck(frame);
         System.arraycopy(args, INDEX_ARGUMENTS, dest, pos, ((ArgumentsSignature) args[INDEX_SIGNATURE]).getLength());
     }
 
@@ -276,7 +276,7 @@ public final class RArguments {
      */
     public static void setArgument(Frame frame, int argIndex, Object newValue) {
         assert (argIndex >= 0 && argIndex < getNArgs(frame));
-        getArgumentsWithEvalCheck(frame)[INDEX_ARGUMENTS + argIndex] = newValue;
+        getRArgumentsWithEvalCheck(frame)[INDEX_ARGUMENTS + argIndex] = newValue;
     }
 
     public static int getArgumentsLength(Frame frame) {
@@ -284,41 +284,41 @@ public final class RArguments {
     }
 
     public static MaterializedFrame getEnclosingFrame(Frame frame) {
-        Object[] arguments = getArgumentsWithEvalCheck(frame);
+        Object[] arguments = getRArgumentsWithEvalCheck(frame);
         if (arguments[INDEX_FUNCTION] != null) {
             return ((RFunction) arguments[INDEX_FUNCTION]).getEnclosingFrame();
         }
-        return (MaterializedFrame) getArgumentsWithEvalCheck(frame)[INDEX_ENCLOSING_FRAME];
+        return (MaterializedFrame) getRArgumentsWithEvalCheck(frame)[INDEX_ENCLOSING_FRAME];
     }
 
     public static ArgumentsSignature getSignature(Frame frame) {
-        return (ArgumentsSignature) getArgumentsWithEvalCheck(frame)[INDEX_SIGNATURE];
+        return (ArgumentsSignature) getRArgumentsWithEvalCheck(frame)[INDEX_SIGNATURE];
     }
 
     public static void setEnvironment(Frame frame, REnvironment env) {
-        getArgumentsWithEvalCheck(frame)[INDEX_ENVIRONMENT] = env;
+        getRArgumentsWithEvalCheck(frame)[INDEX_ENVIRONMENT] = env;
     }
 
     /**
      * Explicitly set the function. Used by {@code REngine.eval}.
      */
     public static void setFunction(Frame frame, RFunction function) {
-        getArgumentsWithEvalCheck(frame)[INDEX_FUNCTION] = function;
+        getRArgumentsWithEvalCheck(frame)[INDEX_FUNCTION] = function;
     }
 
     /**
      * Explicitly set the callSrc. Used by {@code REngine.eval}.
      */
     public static void setCallSourceSection(Frame frame, SourceSection callSrc) {
-        getArgumentsWithEvalCheck(frame)[INDEX_CALL_SRC] = callSrc;
+        getRArgumentsWithEvalCheck(frame)[INDEX_CALL_SRC] = callSrc;
     }
 
     public static void setDepth(Frame frame, int depth) {
-        getArgumentsWithEvalCheck(frame)[INDEX_DEPTH] = depth;
+        getRArgumentsWithEvalCheck(frame)[INDEX_DEPTH] = depth;
     }
 
     public static void setIsIrregular(Frame frame, boolean isIrregularFrame) {
-        getArgumentsWithEvalCheck(frame)[INDEX_IS_IRREGULAR] = isIrregularFrame;
+        getRArgumentsWithEvalCheck(frame)[INDEX_IS_IRREGULAR] = isIrregularFrame;
     }
 
     public static void setIsIrregular(Object[] arguments, boolean isIrregularFrame) {
@@ -328,7 +328,7 @@ public final class RArguments {
 
     public static void setEnclosingFrame(Frame frame, MaterializedFrame encl) {
         CompilerAsserts.neverPartOfCompilation();
-        Object[] arguments = getArgumentsWithEvalCheck(frame);
+        Object[] arguments = getRArgumentsWithEvalCheck(frame);
         arguments[INDEX_ENCLOSING_FRAME] = encl;
         if (arguments[INDEX_FUNCTION] != null) {
             ((RFunction) arguments[INDEX_FUNCTION]).setEnclosingFrame(encl);
@@ -343,7 +343,7 @@ public final class RArguments {
      */
     public static void attachFrame(Frame frame, MaterializedFrame newEncl) {
         CompilerAsserts.neverPartOfCompilation();
-        Object[] arguments = getArgumentsWithEvalCheck(frame);
+        Object[] arguments = getRArgumentsWithEvalCheck(frame);
         MaterializedFrame encl = (MaterializedFrame) arguments[INDEX_ENCLOSING_FRAME];
         Object[] newArguments = newEncl.getArguments();
         newArguments[INDEX_ENCLOSING_FRAME] = encl;
@@ -358,7 +358,7 @@ public final class RArguments {
      */
     public static void detachFrame(Frame frame) {
         CompilerAsserts.neverPartOfCompilation();
-        Object[] arguments = getArgumentsWithEvalCheck(frame);
+        Object[] arguments = getRArgumentsWithEvalCheck(frame);
         MaterializedFrame encl = (MaterializedFrame) arguments[INDEX_ENCLOSING_FRAME];
         Object[] enclArguments = encl.getArguments();
         arguments[INDEX_ENCLOSING_FRAME] = enclArguments[INDEX_ENCLOSING_FRAME];
