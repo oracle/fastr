@@ -83,10 +83,8 @@ public abstract class RBuiltinNode extends LeafCallNode implements VisibilityCon
      * overridden by the subclass. Now the information is acquired from the {@link RBuiltin}
      * annotation. If that cannot be determined (because {@link #getBuiltin()} returns {@code null}
      * the result is null, which allows the (sole) caller in this class to handle it.
-     *
-     * TODO This should go away once all builtins are converted to annotation based specification.
      */
-    protected final String[] getParameterNames() {
+    private String[] getParameterNames() {
         RBuiltin builtin = getRBuiltin();
         return builtin == null ? null : builtin.parameterNames();
     }
