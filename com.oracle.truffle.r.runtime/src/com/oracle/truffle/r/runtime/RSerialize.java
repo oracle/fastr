@@ -133,11 +133,11 @@ public class RSerialize {
         protected Object[] refTable = new Object[128];
         protected int refTableIndex;
         protected final CallHook hook;
-        protected final int depth;
+        protected final int frameDepth;
 
-        protected Common(CallHook hook, int depth) {
+        protected Common(CallHook hook, int frameDepth) {
             this.hook = hook;
-            this.depth = depth;
+            this.frameDepth = frameDepth;
         }
 
         protected static IOException formatError(byte format, boolean ok) throws IOException {
@@ -181,8 +181,8 @@ public class RSerialize {
     }
 
     @TruffleBoundary
-    public static Object unserialize(RConnection conn, int depth) throws IOException {
-        Input instance = trace() ? new TracingInput(conn, depth) : new Input(conn, depth);
+    public static Object unserialize(RConnection conn, int frameDepth) throws IOException {
+        Input instance = trace() ? new TracingInput(conn, frameDepth) : new Input(conn, frameDepth);
         return instance.unserialize();
     }
 
@@ -194,9 +194,9 @@ public class RSerialize {
      * @param packageName the name of the package that the lozyLoad is from
      */
     @TruffleBoundary
-    public static Object unserialize(byte[] data, CallHook hook, int depth, String packageName) throws IOException {
+    public static Object unserialize(byte[] data, CallHook hook, int frameDepth, String packageName) throws IOException {
         InputStream is = new PByteArrayInputStream(data);
-        Input instance = trace() ? new TracingInput(is, hook, depth, packageName) : new Input(is, hook, depth, packageName);
+        Input instance = trace() ? new TracingInput(is, hook, frameDepth, packageName) : new Input(is, hook, frameDepth, packageName);
         return instance.unserialize();
     }
 
@@ -208,6 +208,12 @@ public class RSerialize {
          */
         protected final String packageName;
 
+        /**
+         * We need to know whether we are unserializing a {@link SEXPTYPE#CLOSXP} as we do not want
+         * convert embedded instances of {@link SEXPTYPE#LANGSXP} into ASTs.
+         */
+        private int closureDepth;
+
         private Input(RConnection conn, int depth) throws IOException {
             this(conn.getInputStream(), null, depth, null);
         }
@@ -215,6 +221,7 @@ public class RSerialize {
         private Input(InputStream is, CallHook hook, int depth, String packageName) throws IOException {
             super(hook, depth);
             this.packageName = packageName;
+            this.closureDepth = 0;
             byte[] buf = new byte[2];
             is.read(buf);
             switch (buf[0]) {
@@ -259,7 +266,6 @@ public class RSerialize {
 
         protected Object readItem(int flags) throws IOException {
             Object result = null;
-
             SEXPTYPE type = SEXPTYPE.mapInt(Flags.ptype(flags));
             switch (type) {
                 case NILVALUE_SXP:
@@ -288,7 +294,7 @@ public class RSerialize {
 
                 case NAMESPACESXP: {
                     RStringVector s = inStringVec(false);
-                    return checkResult(addReadRef(RContext.getRASTHelper().findNamespace(s, depth)));
+                    return checkResult(addReadRef(RContext.getRASTHelper().findNamespace(s, frameDepth)));
                 }
 
                 case PERSISTSXP: {
@@ -350,9 +356,10 @@ public class RSerialize {
                     return checkResult(addReadRef(pkgEnv));
                 }
 
-                case LISTSXP:
-                case LANGSXP:
                 case CLOSXP:
+                    closureDepth++;
+                case LANGSXP:
+                case LISTSXP:
                 case PROMSXP:
                 case DOTSXP: {
                     Object attrItem = null;
@@ -372,9 +379,13 @@ public class RSerialize {
                         setAttributes(pairList, attrItem);
                     }
                     if (type == SEXPTYPE.CLOSXP) {
-                        // must convert the RPairList to a FastR RFunction
-                        // We could convert to an AST directly, but it is easier and more robust
-                        // to deparse and reparse.
+                        closureDepth--;
+                        /*
+                         * Must convert the RPairList to a FastR AST We could convert to an AST
+                         * directly, but it is easier and more robust to deparse and reparse. N.B.
+                         * We always convert closures regardless of whether they are at top level or
+                         * not (and they are not always at the top in the default packages)
+                         */
                         RPairList rpl = (RPairList) result;
                         if (FastROptions.debugMatches("printUclosure")) {
                             Debug.printClosure(rpl);
@@ -387,19 +398,27 @@ public class RSerialize {
                              * there (and overwrite the promise), so we fix the enclosing frame up
                              * on return.
                              */
-                            String packageId = "<package:" + packageName + " deparse>";
-                            Source source = Source.asPseudoFile(deparse, packageId);
-                            RExpression expr = RContext.getEngine().parse(source);
-                            RFunction func = (RFunction) RContext.getEngine().eval(expr, RDataFactory.createNewEnv(REnvironment.emptyEnv(), 0), depth + 1);
+                            RExpression expr = parse(deparse);
+                            RFunction func = (RFunction) RContext.getEngine().eval(expr, RDataFactory.createNewEnv(REnvironment.emptyEnv(), 0), frameDepth + 1);
                             func.setEnclosingFrame(((REnvironment) rpl.getTag()).getFrame());
                             result = func;
                         } catch (Throwable ex) {
-                            // denotes a deparse/eval error, which is an unrecoverable bug
-                            try (FileWriter wr = new FileWriter(new File(new File(REnvVars.rHome()), "DEPARSE_ERROR"))) {
-                                wr.write(deparse);
-                            }
-                            Utils.fail("internal deparse error - see file DEPARSE_ERROR");
+                            Utils.fail("unserialize - failed to eval deparsed closure");
                         }
+                    } else if (type == SEXPTYPE.LANGSXP) {
+                        /*
+                         * N.B. LANGSXP values occur within CLOSXP structures, so we only want to
+                         * convert them to an AST when they occur outside of a CLOSXP, as in the
+                         * CLOSXP case, the entire structure is deparsed at the end.
+                         */
+                        if (closureDepth == 0) {
+                            String deparse = RDeparse.deparse((RPairList) result);
+                            RExpression expr = parse(deparse);
+                            assert expr.getLength() == 1;
+                            result = expr.getDataAt(0);
+                        }
+                    } else if (type == SEXPTYPE.PROMSXP) {
+                        result = RDataFactory.createPromise(RContext.getRASTHelper().createNodeForValue(cdrItem), (REnvironment) carItem);
                     }
                     return checkResult(result);
                 }
@@ -409,6 +428,7 @@ public class RSerialize {
                  * filled in.
                  */
 
+                case EXPRSXP:
                 case VECSXP: {
                     int len = stream.readInt();
                     // TODO long vector support?
@@ -418,8 +438,12 @@ public class RSerialize {
                         Object elem = readItem();
                         data[i] = elem;
                     }
-                    // this could (ultimately) be a list,factor or dataframe
-                    result = RDataFactory.createList(data);
+                    if (type == SEXPTYPE.EXPRSXP) {
+                        result = RDataFactory.createExpression(RDataFactory.createList(data));
+                    } else {
+                        // this could (ultimately) be a list, factor or dataframe
+                        result = RDataFactory.createList(data);
+                    }
                     break;
                 }
 
@@ -582,6 +606,20 @@ public class RSerialize {
         private static Object checkResult(Object result) {
             assert result != null;
             return result;
+        }
+
+        private RExpression parse(String deparse) throws IOException {
+            try {
+                String packageId = "<package:" + packageName + " deparse>";
+                Source source = Source.asPseudoFile(deparse, packageId);
+                return RContext.getEngine().parse(source);
+            } catch (Throwable ex) {
+                // denotes a deparse/eval error, which is an unrecoverable bug
+                try (FileWriter wr = new FileWriter(new File(new File(REnvVars.rHome()), "DEPARSE_ERROR"))) {
+                    wr.write(deparse);
+                }
+                throw Utils.fail("internal deparse error - see file DEPARSE_ERROR");
+            }
         }
 
         /**
@@ -1227,6 +1265,13 @@ public class RSerialize {
                         stream.writeInt(1);
                         stream.writeDouble(value.getRealPart());
                         stream.writeDouble(value.getImaginaryPart());
+                        break;
+                    }
+
+                    case LANGSXP: {
+                        RPairList pl = (RPairList) RContext.getRASTHelper().serialize(state, obj);
+                        writeItem(pl.car());
+                        writeItem(pl.cdr());
                         break;
                     }
 
