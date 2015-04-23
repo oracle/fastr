@@ -40,13 +40,13 @@ import com.oracle.truffle.r.runtime.ops.*;
 @RBuiltin(name = "sum", kind = PRIMITIVE, parameterNames = {"...", "na.rm"})
 public final class Sum extends RWrapperBuiltinNode {
 
+    public Sum(RNode[] arguments, RBuiltinFactory builtin, ArgumentsSignature suppliedSignature) {
+        super(arguments, builtin, suppliedSignature);
+    }
+
     @Override
     public Object[] getDefaultParameterValues() {
         return new Object[]{RArgsValuesAndNames.EMPTY, RRuntime.LOGICAL_FALSE};
-    }
-
-    public Sum(RBuiltinNode prev) {
-        super(prev);
     }
 
     @Override

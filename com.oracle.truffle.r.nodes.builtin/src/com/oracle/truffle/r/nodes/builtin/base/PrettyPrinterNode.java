@@ -23,21 +23,24 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.*;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
-import com.oracle.truffle.api.nodes.Node.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.ConstantNode;
+import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.builtin.base.Im.ImNode;
+import com.oracle.truffle.r.nodes.builtin.base.ImFactory.ImNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.PrettyPrinterNodeGen.PrettyPrinterSingleListElementNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.PrettyPrinterNodeGen.PrettyPrinterSingleVectorElementNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.PrettyPrinterNodeGen.PrintDimNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.PrettyPrinterNodeGen.PrintVector2DimNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.PrettyPrinterNodeGen.PrintVectorMultiDimNodeGen;
+import com.oracle.truffle.r.nodes.builtin.base.Re.ReNode;
+import com.oracle.truffle.r.nodes.builtin.base.ReFactory.ReNodeGen;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
@@ -72,8 +75,8 @@ public abstract class PrettyPrinterNode extends RNode {
     @Child private PrettyPrinterSingleVectorElementNode singleVectorElementPrettyPrinter;
     @Child private PrintVectorMultiDimNode multiDimPrinter;
 
-    @Child private Re re;
-    @Child private Im im;
+    @Child private ReNode re;
+    @Child private ImNode im;
 
     @Child private IndirectCallNode indirectCall = Truffle.getRuntime().createIndirectCallNode();
 
@@ -219,7 +222,7 @@ public abstract class PrettyPrinterNode extends RNode {
     protected String prettyPrint(RFunction operand, Object listElementName, byte quote, byte right) {
         String string;
         if (operand.isBuiltin()) {
-            RBuiltin rBuiltin = operand.getRBuiltin();
+            RBuiltinDescriptor rBuiltin = operand.getRBuiltin();
             RRootNode node = (RRootNode) operand.getTarget().getRootNode();
             FormalArguments formals = node.getFormalArguments();
             StringBuffer sb = new StringBuffer();
@@ -240,7 +243,7 @@ public abstract class PrettyPrinterNode extends RNode {
                 }
             }
             sb.append(")  .Primitive(\"");
-            sb.append(rBuiltin.name());
+            sb.append(rBuiltin.getName());
             sb.append("\")");
             string = sb.toString();
         } else {
@@ -872,13 +875,13 @@ public abstract class PrettyPrinterNode extends RNode {
         if (re == null) {
             // the two are allocated side by side; checking for re is sufficient
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            re = insert(ReFactory.create(new RNode[1], RBuiltinPackages.lookupBuiltin("Re"), null));
-            im = insert(ImFactory.create(new RNode[1], RBuiltinPackages.lookupBuiltin("Im"), null));
+            re = insert(ReNodeGen.create(null));
+            im = insert(ImNodeGen.create(null));
         }
 
         VirtualFrame frame = currentFrame();
-        RDoubleVector realParts = (RDoubleVector) re.executeRDoubleVector(frame, operand);
-        RDoubleVector imaginaryParts = (RDoubleVector) im.executeRDoubleVector(frame, operand);
+        RDoubleVector realParts = (RDoubleVector) re.executeRDoubleVector(operand);
+        RDoubleVector imaginaryParts = (RDoubleVector) im.executeRDoubleVector(operand);
 
         int length = operand.getLength();
         String[] realValues = new String[length];

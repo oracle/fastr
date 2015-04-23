@@ -22,65 +22,33 @@
  */
 package com.oracle.truffle.r.nodes.builtin;
 
-import com.oracle.truffle.api.dsl.*;
+import java.util.*;
+
+import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.env.*;
+import com.oracle.truffle.r.runtime.data.*;
 
-public class RBuiltinFactory {
+public final class RBuiltinFactory extends RBuiltinDescriptor {
 
-    private final NodeFactory<RBuiltinNode> factory;
-    private String[] builtinNames;
-    private RBuiltin builtin;
-    private Object[] constantArguments;
-    private final Object pkg;
-    private REnvironment env;
-
-    public RBuiltinFactory(String[] names, RBuiltin builtin, NodeFactory<RBuiltinNode> factory, Object[] constantArguments, Object pkg) {
-        this.builtinNames = names;
-        this.builtin = builtin;
-        this.factory = factory;
-        this.constantArguments = constantArguments;
-        this.pkg = pkg;
+    @FunctionalInterface
+    public interface NodeGenFactory {
+        RBuiltinNode get(RNode[] arguments, RBuiltinFactory builtin, ArgumentsSignature suppliedSignature);
     }
 
-    void setBuiltinNames(String[] builtinNames) {
-        this.builtinNames = builtinNames;
+    private final NodeGenFactory constructor;
+
+    public RBuiltinFactory(String name, String[] aliases, RBuiltinKind kind, ArgumentsSignature signature, int[] nonEvalArgs, boolean splitCaller, NodeGenFactory constructor) {
+        super(name, aliases, kind, signature, nonEvalArgs, splitCaller);
+        this.constructor = constructor;
     }
 
-    void setConstantArguments(Object[] constantArguments) {
-        this.constantArguments = constantArguments;
+    public NodeGenFactory getConstructor() {
+        return constructor;
     }
 
-    public Object[] getConstantArguments() {
-        return constantArguments;
-    }
-
-    void setRBuiltin(RBuiltin builtin) {
-        this.builtin = builtin;
-    }
-
-    public RBuiltin getRBuiltin() {
-        return builtin;
-    }
-
-    public String[] getBuiltinNames() {
-        return builtinNames;
-    }
-
-    Object getPackage() {
-        return pkg;
-    }
-
-    void setEnv(REnvironment env) {
-        this.env = env;
-    }
-
-    public REnvironment getEnv() {
-        assert env != null;
-        return env;
-    }
-
-    public NodeFactory<RBuiltinNode> getFactory() {
-        return factory;
+    @Override
+    public String toString() {
+        return "RBuiltinFactory [name=" + getName() + ", aliases=" + Arrays.toString(getAliases()) + ", kind=" + getKind() + ", siagnature=" + getSignature() + ", nonEvaledArgs=" +
+                        Arrays.toString(getNonEvalArgs()) + ", splitCaller=" + isSplitCaller() + "]";
     }
 }

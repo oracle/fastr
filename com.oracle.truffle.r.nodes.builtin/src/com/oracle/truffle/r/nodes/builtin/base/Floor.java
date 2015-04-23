@@ -34,8 +34,8 @@ import com.oracle.truffle.r.runtime.ops.*;
 @RBuiltin(name = "floor", kind = PRIMITIVE, parameterNames = {"x"})
 public class Floor extends RWrapperBuiltinNode {
 
-    public Floor(RBuiltinNode prev) {
-        super(prev);
+    public Floor(RNode[] arguments, RBuiltinFactory builtin, ArgumentsSignature suppliedSignature) {
+        super(arguments, builtin, suppliedSignature);
     }
 
     @Override

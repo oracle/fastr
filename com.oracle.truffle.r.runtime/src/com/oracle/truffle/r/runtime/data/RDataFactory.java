@@ -385,7 +385,7 @@ public final class RDataFactory {
         return traceDataCreated(new RFunction(name, target, null, enclosingFrame, containsDispatch));
     }
 
-    public static RFunction createFunction(String name, RootCallTarget target, RBuiltin builtin, MaterializedFrame enclosingFrame) {
+    public static RFunction createFunction(String name, RootCallTarget target, RBuiltinDescriptor builtin, MaterializedFrame enclosingFrame) {
         return traceDataCreated(new RFunction(name, target, builtin, enclosingFrame, false));
     }
 

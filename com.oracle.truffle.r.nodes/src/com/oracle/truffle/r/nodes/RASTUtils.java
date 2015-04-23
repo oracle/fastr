@@ -270,7 +270,7 @@ public class RASTUtils {
             return RDataFactory.createSymbol(gname);
         } else if (child instanceof RBuiltinNode) {
             RBuiltinNode builtinNode = (RBuiltinNode) child;
-            return RDataFactory.createSymbol((builtinNode.getBuiltin().getRBuiltin().name()));
+            return RDataFactory.createSymbol((builtinNode.getBuiltin().getName()));
         } else {
             // TODO This should really fail in some way as (clearly) this is not a "name"
             // some more complicated expression, just deparse it

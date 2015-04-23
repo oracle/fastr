@@ -23,15 +23,11 @@
 package com.oracle.truffle.r.nodes.builtin;
 
 import java.io.*;
-import java.lang.reflect.*;
 import java.util.*;
 
-import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
-import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.builtin.RBuiltinNode.RCustomBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinFactory.NodeGenFactory;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.env.*;
 
@@ -58,6 +54,8 @@ import com.oracle.truffle.r.runtime.env.*;
  */
 public abstract class RBuiltinPackage {
 
+    private final String name;
+
     /**
      * Any "override" sources associated with the package.
      */
@@ -67,18 +65,34 @@ public abstract class RBuiltinPackage {
      */
     private final TreeMap<String, RBuiltinFactory> builtins = new TreeMap<>();
 
-    private synchronized void putBuiltin(String name, RBuiltinFactory factory) {
-        builtins.put(name, factory);
+    private synchronized void putBuiltin(RBuiltinFactory factory) {
+        putBuiltinInternal(factory.getName(), factory);
+        for (String alias : factory.getAliases()) {
+            putBuiltinInternal(alias, factory);
+        }
+    }
+
+    private void putBuiltinInternal(String builtinName, RBuiltinFactory factory) {
+        if (builtins.containsKey(builtinName)) {
+            throw new RuntimeException("Duplicate builtin " + builtinName + " defined.");
+        }
+        builtins.put(builtinName, factory);
     }
 
     protected REnvironment env;
 
-    protected RBuiltinPackage() {
+    protected RBuiltinPackage(String name) {
+        this.name = name;
+
         // Check for overriding R code
         ArrayList<Source> componentList = getRFiles(getName());
         if (componentList.size() > 0) {
             rSources.put(getName(), componentList);
         }
+    }
+
+    public final String getName() {
+        return name;
     }
 
     public static ArrayList<Source> getRFiles(String pkgName) {
@@ -130,137 +144,12 @@ public abstract class RBuiltinPackage {
         }
     }
 
-    public abstract String getName();
+    protected void add(Class<?> builtinClass, NodeGenFactory constructor) {
+        RBuiltin annotation = builtinClass.getAnnotation(RBuiltin.class);
+        String[] parameterNames = annotation.parameterNames();
+        parameterNames = Arrays.stream(parameterNames).map(n -> n.isEmpty() ? null : n).toArray(String[]::new);
+        ArgumentsSignature signature = ArgumentsSignature.get(parameterNames);
 
-    /**
-     * Loads the {@link RBuiltin} annotated classes. N.B. This is driven from a static initializer
-     * so it is ok to use reflection even in an AOT VM.
-     */
-    @SuppressWarnings("unchecked")
-    protected final void loadBuiltins() {
-        Class<?> builtinClassesClass = null;
-        try {
-            builtinClassesClass = Class.forName(getClass().getPackage().getName() + ".RBuiltinClasses");
-        } catch (ClassNotFoundException ex) {
-            return;
-        }
-        try {
-            Field field = builtinClassesClass.getField("RBUILTIN_CLASSES");
-            Class<?>[] builtinClasses = (Class<?>[]) field.get(null);
-            for (Class<?> builtinClass : builtinClasses) {
-                load((Class<? extends RBuiltinNode>) builtinClass);
-            }
-        } catch (NoSuchFieldException | IllegalAccessException ex) {
-            Utils.fail("error loading RBuiltin classes from " + getClass().getSimpleName() + " : " + ex);
-        }
+        putBuiltin(new RBuiltinFactory(annotation.name(), annotation.aliases(), annotation.kind(), signature, annotation.nonEvalArgs(), annotation.splitCaller(), constructor));
     }
-
-    protected final RBuiltinBuilder load(Class<? extends RBuiltinNode> clazz) {
-        RBuiltin builtin = clazz.getAnnotation(RBuiltin.class);
-        String[] names = null;
-        if (builtin != null) {
-            int al = builtin.aliases().length;
-            names = new String[1 + al];
-            String name = builtin.name();
-            names[0] = name;
-            if (al > 0) {
-                System.arraycopy(builtin.aliases(), 0, names, 1, al);
-            }
-        }
-        return loadImpl(clazz, names, builtin);
-    }
-
-    void updateNames(RBuiltinFactory builtin, String[] oldNames, String[] newNames) {
-        for (String oldName : oldNames) {
-            builtins.remove(oldName);
-        }
-
-        for (String name : newNames) {
-            RBuiltinFactory registered = builtins.get(name);
-            if (registered != null && registered != builtin) {
-                throw new RuntimeException("Duplicate builtin " + name + " defined.");
-            }
-            putBuiltin(name, builtin);
-        }
-    }
-
-    @SuppressWarnings("unchecked")
-    private RBuiltinBuilder loadImpl(Class<? extends RBuiltinNode> clazz, String[] names, RBuiltin builtin) {
-        if (!RBuiltinNode.class.isAssignableFrom(clazz)) {
-            throw new RuntimeException(clazz.getName() + " is must be assignable to " + RBuiltinNode.class);
-        }
-        String[] aliases = names != null ? names : new String[0];
-        NodeFactory<RBuiltinNode> nodeFactory;
-        if (!RCustomBuiltinNode.class.isAssignableFrom(clazz)) {
-            // normal builtin
-            final String className = clazz.getName();
-            String factoryClassName = className;
-            if (className.contains("$")) {
-                // nested class, Factory appear twice
-                int dx = className.lastIndexOf('$');
-                factoryClassName = className.substring(0, dx) + "Factory$" + className.substring(dx + 1);
-            }
-            factoryClassName += "Factory";
-            try {
-                nodeFactory = (NodeFactory<RBuiltinNode>) Class.forName(factoryClassName).getMethod("getInstance").invoke(null);
-            } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException | ClassNotFoundException e) {
-                throw new RuntimeException("Failed to load builtin " + clazz.getName(), e);
-            }
-        } else {
-            // custom builtin
-            if (Modifier.isAbstract(clazz.getModifiers())) {
-                throw new RuntimeException("Custom builtin must not be abstract (builtin " + clazz.getName() + ").");
-            }
-            nodeFactory = new ReflectiveNodeFactory(clazz);
-        }
-        RBuiltinFactory factory = new RBuiltinFactory(aliases, builtin, nodeFactory, new Object[0], this);
-        for (String name : factory.getBuiltinNames()) {
-            if (builtins.containsKey(name)) {
-                throw new RuntimeException("Duplicate builtin " + name + " defined.");
-            }
-            putBuiltin(name, factory);
-        }
-        return new RBuiltinBuilder(this, factory);
-    }
-
-    /**
-     * A {@link NodeFactory} implementation used to create {@link RCustomBuiltinNode}s.
-     * {@link #createNode(Object...)} uses {@link RBuiltinCustomConstructors} is maintained by hand.
-     */
-    private static class ReflectiveNodeFactory implements NodeFactory<RBuiltinNode> {
-
-        private final Class<? extends RBuiltinNode> clazz;
-
-        public ReflectiveNodeFactory(Class<? extends RBuiltinNode> clazz) {
-            this.clazz = clazz;
-        }
-
-        public RBuiltinNode createNode(Object... arguments) {
-            try {
-                RBuiltinNode builtin = new RCustomBuiltinNode((RNode[]) arguments[0], (RBuiltinFactory) arguments[1], (ArgumentsSignature) arguments[2]);
-                return RBuiltinCustomConstructors.createNode(clazz.getName(), builtin);
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-        }
-
-        @SuppressWarnings("unused")
-        public RBuiltinNode createNodeGeneric(RBuiltinNode thisNode) {
-            throw new UnsupportedOperationException();
-        }
-
-        @SuppressWarnings("unchecked")
-        public Class<RBuiltinNode> getNodeClass() {
-            return (Class<RBuiltinNode>) clazz;
-        }
-
-        public List<List<Class<?>>> getNodeSignatures() {
-            throw new UnsupportedOperationException();
-        }
-
-        public List<Class<? extends Node>> getExecutionSignature() {
-            return Collections.emptyList();
-        }
-    }
-
 }

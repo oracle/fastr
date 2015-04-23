@@ -45,14 +45,14 @@ public final class RFunction extends RScalar implements RAttributable {
 
     private final String name;
     private final RootCallTarget target;
-    private final RBuiltin builtin;
+    private final RBuiltinDescriptor builtin;
     private final boolean containsDispatch;
 
     private MaterializedFrame enclosingFrame;
     @CompilationFinal private StableValue<MaterializedFrame> enclosingFrameAssumption;
     private RAttributes attributes;
 
-    RFunction(String name, RootCallTarget target, RBuiltin builtin, MaterializedFrame enclosingFrame, boolean containsDispatch) {
+    RFunction(String name, RootCallTarget target, RBuiltinDescriptor builtin, MaterializedFrame enclosingFrame, boolean containsDispatch) {
         this.name = name;
         this.target = target;
         this.builtin = builtin;
@@ -70,7 +70,7 @@ public final class RFunction extends RScalar implements RAttributable {
         return builtin != null;
     }
 
-    public RBuiltin getRBuiltin() {
+    public RBuiltinDescriptor getRBuiltin() {
         return builtin;
     }
 

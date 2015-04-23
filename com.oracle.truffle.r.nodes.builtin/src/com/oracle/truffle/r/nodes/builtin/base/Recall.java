@@ -43,8 +43,8 @@ import com.oracle.truffle.r.runtime.data.*;
 @RBuiltin(name = "Recall", kind = INTERNAL, parameterNames = {"..."})
 public final class Recall extends RWrapperBuiltinNode {
 
-    public Recall(RBuiltinNode prev) {
-        super(prev);
+    public Recall(RNode[] arguments, RBuiltinFactory builtin, ArgumentsSignature suppliedSignature) {
+        super(arguments, builtin, suppliedSignature);
     }
 
     @Override

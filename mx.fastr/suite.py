@@ -211,14 +211,6 @@ suite = {
       "workingSets" : "Truffle,FastR",
     },
 
-    "com.oracle.truffle.r.nodes.builtin.processor" : {
-      "sourceDirs" : ["src"],
-      "dependencies" : ["JDK_TOOLS"],
-      "checkstyle" : "com.oracle.truffle.r.runtime",
-      "javaCompliance" : "1.8",
-      "workingSets" : "Truffle,FastR",
-    },
-
     "com.oracle.truffle.r.nodes" : {
       "sourceDirs" : ["src"],
       "dependencies" : [
@@ -246,7 +238,6 @@ suite = {
       "javaCompliance" : "1.8",
       "annotationProcessors" : [
         "com.oracle.truffle.dsl.processor",
-        "com.oracle.truffle.r.nodes.builtin.processor",
         "com.oracle.truffle.r.nodes.wrapper.processor",
       ],
       "workingSets" : "Truffle,FastR",

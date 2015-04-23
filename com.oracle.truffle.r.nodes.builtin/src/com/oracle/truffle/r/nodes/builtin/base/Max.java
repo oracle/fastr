@@ -37,13 +37,13 @@ import com.oracle.truffle.r.runtime.ops.*;
 @RBuiltin(name = "max", kind = PRIMITIVE, parameterNames = {"...", "na.rm"})
 public final class Max extends RWrapperBuiltinNode {
 
+    public Max(RNode[] arguments, RBuiltinFactory builtin, ArgumentsSignature suppliedSignature) {
+        super(arguments, builtin, suppliedSignature);
+    }
+
     @Override
     public Object[] getDefaultParameterValues() {
         return new Object[]{RArgsValuesAndNames.EMPTY, RRuntime.LOGICAL_FALSE};
-    }
-
-    public Max(RBuiltinNode prev) {
-        super(prev);
     }
 
     @Override

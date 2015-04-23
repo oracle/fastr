@@ -34,8 +34,8 @@ import com.oracle.truffle.r.runtime.ops.*;
 @RBuiltin(name = "ceiling", kind = PRIMITIVE, parameterNames = {"x"})
 public class Ceiling extends RWrapperBuiltinNode {
 
-    public Ceiling(RBuiltinNode prev) {
-        super(prev);
+    public Ceiling(RNode[] arguments, RBuiltinFactory builtin, ArgumentsSignature suppliedSignature) {
+        super(arguments, builtin, suppliedSignature);
     }
 
     @Override
