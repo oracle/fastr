@@ -188,6 +188,7 @@ public abstract class RBuiltinNode extends LeafCallNode implements VisibilityCon
      * as builtin (e.g., 'max', 'sum', etc.). It can be used as normal builtin. Implement
      * {@link #createDelegate()} to create that node.
      */
+    @NodeInfo(cost = NodeCost.NONE)
     public abstract static class RWrapperBuiltinNode extends RCustomBuiltinNode {
 
         @Child private RNode delegate;
