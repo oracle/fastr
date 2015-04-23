@@ -32,7 +32,7 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.builtin.base.GetFunctionsFactory.GetFactory;
+import com.oracle.truffle.r.nodes.builtin.base.GetFunctionsFactory.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -60,7 +60,7 @@ public abstract class DoCall extends RBuiltinNode {
         } else if (what instanceof String || (what instanceof RAbstractStringVector && ((RAbstractStringVector) what).getLength() == 1)) {
             if (getNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                getNode = insert(GetFactory.create(new RNode[4], getBuiltin(), getSuppliedSignature()));
+                getNode = insert(GetNodeGen.create(new RNode[4], getBuiltin(), getSuppliedSignature()));
             }
             func = (RFunction) getNode.execute(frame, what, env, RType.Function.getName(), RRuntime.LOGICAL_TRUE);
         } else {

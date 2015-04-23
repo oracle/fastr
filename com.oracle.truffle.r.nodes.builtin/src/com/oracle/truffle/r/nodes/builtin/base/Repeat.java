@@ -56,7 +56,6 @@ import com.oracle.truffle.r.runtime.data.model.*;
  * </ol>
  */
 @RBuiltin(name = "rep", kind = PRIMITIVE, parameterNames = {"x", "times", "length.out", "each"})
-@GenerateNodeFactory
 public abstract class Repeat extends RBuiltinNode {
 
     protected abstract Object execute(VirtualFrame frame, RAbstractVector x, RAbstractIntVector times, int lengthOut, int each);
@@ -72,7 +71,7 @@ public abstract class Repeat extends RBuiltinNode {
     private Object repeatRecursive(VirtualFrame frame, RAbstractVector x, RAbstractIntVector times, int lengthOut, int each) {
         if (repeatRecursive == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            repeatRecursive = insert(RepeatFactory.create(new RNode[4], getBuiltin(), getSuppliedSignature()));
+            repeatRecursive = insert(RepeatNodeGen.create(new RNode[4], getBuiltin(), getSuppliedSignature()));
         }
         return repeatRecursive.execute(frame, x, times, lengthOut, each);
     }

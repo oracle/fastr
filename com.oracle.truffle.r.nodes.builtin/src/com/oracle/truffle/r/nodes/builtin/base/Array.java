@@ -53,7 +53,7 @@ public abstract class Array extends RBuiltinNode {
     private void updateDimNames(VirtualFrame frame, RAbstractContainer container, Object o) {
         if (updateDimNames == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            updateDimNames = insert(UpdateDimNamesFactory.create(new RNode[2], getBuiltin(), getSuppliedSignature()));
+            updateDimNames = insert(UpdateDimNamesNodeGen.create(new RNode[2], getBuiltin(), getSuppliedSignature()));
         }
         updateDimNames.executeRAbstractContainer(frame, container, o);
     }

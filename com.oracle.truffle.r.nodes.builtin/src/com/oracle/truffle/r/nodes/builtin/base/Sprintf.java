@@ -37,7 +37,6 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
 @RBuiltin(name = "sprintf", kind = INTERNAL, parameterNames = {"fmt", "..."})
-@GenerateNodeFactory
 public abstract class Sprintf extends RBuiltinNode {
 
     public abstract Object executeObject(VirtualFrame frame, String fmt, Object args);
@@ -166,7 +165,7 @@ public abstract class Sprintf extends RBuiltinNode {
         controlVisibility();
         if (sprintfRecursive == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            sprintfRecursive = insert(SprintfFactory.create(new RNode[2], getBuiltin(), getSuppliedSignature()));
+            sprintfRecursive = insert(SprintfNodeGen.create(new RNode[2], getBuiltin(), getSuppliedSignature()));
         }
         return sprintfRecursive.executeObject(frame, fmt, args.getValues()[0]);
     }

@@ -102,14 +102,14 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
                 throw RError.error(getSourceSection(), RError.Message.ARGUMENT_EMPTY, 2);
             } else {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                unaryNode = insert(UnaryArithmeticNodeFactory.create(unaryFactory, RError.Message.INVALID_ARG_TYPE_UNARY, null));
+                unaryNode = insert(UnaryArithmeticNodeGen.create(unaryFactory, RError.Message.INVALID_ARG_TYPE_UNARY, null));
             }
         }
         return unaryNode;
     }
 
     public static BinaryArithmeticNode create(BinaryArithmeticFactory arithmetic) {
-        return BinaryArithmeticNodeFactory.create(arithmetic, null, new RNode[2], null, null);
+        return BinaryArithmeticNodeGen.create(arithmetic, null, new RNode[2], null, null);
     }
 
     // special cases for sequences

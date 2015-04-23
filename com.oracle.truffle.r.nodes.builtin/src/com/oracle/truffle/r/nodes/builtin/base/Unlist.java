@@ -19,11 +19,11 @@ import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.builtin.base.UnlistNodeGen.RecursiveLengthNodeGen;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
-import com.oracle.truffle.r.nodes.builtin.base.UnlistFactory.RecursiveLengthNodeGen;
 
 @RBuiltin(name = "unlist", kind = SUBSTITUTE, parameterNames = {"x", "recursive", "use.names"})
 // TODO INTERNAL
@@ -100,7 +100,7 @@ public abstract class Unlist extends RBuiltinNode {
     private void initLengthNode() {
         if (lengthNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            lengthNode = insert(LengthFactory.create(new RNode[1], getBuiltin(), null));
+            lengthNode = insert(LengthNodeGen.create(new RNode[1], getBuiltin(), null));
         }
     }
 

@@ -34,7 +34,7 @@ import com.oracle.truffle.r.runtime.data.*;
 public abstract class Invisible extends RInvisibleBuiltinNode {
 
     public static RNode create(RNode value) {
-        return InvisibleFactory.create(new RNode[]{value}, null, null);
+        return InvisibleNodeGen.create(new RNode[]{value}, null, null);
     }
 
     @Override

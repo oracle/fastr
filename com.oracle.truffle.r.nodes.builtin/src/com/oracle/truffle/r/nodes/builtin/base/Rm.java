@@ -37,7 +37,6 @@ import com.oracle.truffle.r.runtime.env.frame.*;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
 
 @RBuiltin(name = "remove", kind = INTERNAL, parameterNames = {"list", "envir", "inherits"})
-@GenerateNodeFactory
 public abstract class Rm extends RInvisibleBuiltinNode {
 
     private final BranchProfile invalidateProfile = BranchProfile.create();

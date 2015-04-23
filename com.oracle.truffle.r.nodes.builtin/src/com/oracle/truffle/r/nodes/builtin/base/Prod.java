@@ -21,7 +21,6 @@ import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.*;
 
 @RBuiltin(name = "prod", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"...", "na.rm"})
-@GenerateNodeFactory
 public abstract class Prod extends RBuiltinNode {
 
     @Override
@@ -39,7 +38,7 @@ public abstract class Prod extends RBuiltinNode {
     protected Object prod(VirtualFrame frame, RArgsValuesAndNames args) {
         if (prodRecursive == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            prodRecursive = insert(ProdFactory.create(new RNode[1], getBuiltin(), getSuppliedSignature()));
+            prodRecursive = insert(ProdNodeGen.create(new RNode[1], getBuiltin(), getSuppliedSignature()));
         }
         // TODO: eventually handle multiple vectors properly
         return prodRecursive.executeObject(frame, args.getValues()[0]);

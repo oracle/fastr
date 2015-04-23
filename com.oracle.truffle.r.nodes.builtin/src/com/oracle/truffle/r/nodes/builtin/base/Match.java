@@ -40,7 +40,6 @@ import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
 @RBuiltin(name = "match", kind = INTERNAL, parameterNames = {"x", "table", "nomatch", "incomparables"})
-@GenerateNodeFactory
 public abstract class Match extends RBuiltinNode {
 
     private static final int TABLE_SIZE_FACTOR = 10;
@@ -75,7 +74,7 @@ public abstract class Match extends RBuiltinNode {
     private RIntVector matchRecursive(VirtualFrame frame, Object x, Object table, Object noMatch, Object incomparables) {
         if (matchRecursive == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            matchRecursive = insert(MatchFactory.create(new RNode[4], getBuiltin(), getSuppliedSignature()));
+            matchRecursive = insert(MatchNodeGen.create(new RNode[4], getBuiltin(), getSuppliedSignature()));
         }
         return matchRecursive.executeRIntVector(frame, x, table, noMatch, incomparables);
     }

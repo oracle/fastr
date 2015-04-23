@@ -376,7 +376,6 @@ public class FrameFunctions {
      * The environment of the caller of the function that called parent.frame.
      */
     @RBuiltin(name = "parent.frame", kind = INTERNAL, parameterNames = {"n"})
-    @GenerateNodeFactory
     public abstract static class ParentFrame extends FrameHelper {
 
         private final ConditionProfile nullProfile = ConditionProfile.createBinaryProfile();

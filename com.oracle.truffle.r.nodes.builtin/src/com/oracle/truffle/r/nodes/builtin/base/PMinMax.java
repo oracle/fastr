@@ -30,14 +30,14 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.builtin.base.PMinMaxNodeGen.MultiElemStringHandlerNodeGen;
 import com.oracle.truffle.r.nodes.unary.*;
-import com.oracle.truffle.r.nodes.unary.UnaryArithmeticReduceNode.*;
+import com.oracle.truffle.r.nodes.unary.UnaryArithmeticReduceNode.ReduceSemantics;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
-import com.oracle.truffle.r.nodes.builtin.base.PMinMaxFactory.MultiElemStringHandlerNodeGen;
 
 public abstract class PMinMax extends RBuiltinNode {
 

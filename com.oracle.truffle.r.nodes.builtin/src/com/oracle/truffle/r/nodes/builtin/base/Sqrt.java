@@ -32,7 +32,6 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
 @RBuiltin(name = "sqrt", kind = PRIMITIVE, parameterNames = {"x"})
-@GenerateNodeFactory
 public abstract class Sqrt extends RBuiltinNode {
     private final NACheck na = NACheck.create();
     private final ConditionProfile naConditionProfile = ConditionProfile.createBinaryProfile();

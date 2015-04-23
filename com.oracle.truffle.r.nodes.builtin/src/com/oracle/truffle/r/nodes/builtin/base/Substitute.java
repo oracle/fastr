@@ -48,7 +48,7 @@ public abstract class Substitute extends RBuiltinNode {
     private Quote checkQuote() {
         if (quote == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            quote = insert(QuoteFactory.create(new RNode[1], getBuiltin(), getSuppliedSignature()));
+            quote = insert(QuoteNodeGen.create(new RNode[1], getBuiltin(), getSuppliedSignature()));
         }
         return quote;
     }

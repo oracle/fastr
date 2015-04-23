@@ -31,7 +31,6 @@ import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
 @RBuiltin(name = "!", kind = RBuiltinKind.PRIMITIVE, parameterNames = {""})
-@GenerateNodeFactory
 public abstract class UnaryNotNode extends RBuiltinNode {
 
     private final NACheck na = NACheck.create();

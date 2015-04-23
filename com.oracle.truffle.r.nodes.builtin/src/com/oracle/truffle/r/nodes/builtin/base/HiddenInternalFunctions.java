@@ -57,7 +57,7 @@ public class HiddenInternalFunctions {
         private void initEval() {
             if (eval == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                eval = insert(EvalFunctionsFactory.EvalFactory.create(new RNode[3], getBuiltin(), getSuppliedSignature()));
+                eval = insert(EvalFunctionsFactory.EvalNodeGen.create(new RNode[3], getBuiltin(), getSuppliedSignature()));
             }
         }
 

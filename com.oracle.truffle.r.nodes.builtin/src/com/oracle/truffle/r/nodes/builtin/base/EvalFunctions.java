@@ -65,7 +65,6 @@ public class EvalFunctions {
     }
 
     @RBuiltin(name = "eval", kind = INTERNAL, parameterNames = {"expr", "envir", "enclos"})
-    @GenerateNodeFactory
     public abstract static class Eval extends EvalAdapter {
 
         public abstract Object execute(VirtualFrame frame, Object expr, REnvironment envir, REnvironment enclos);

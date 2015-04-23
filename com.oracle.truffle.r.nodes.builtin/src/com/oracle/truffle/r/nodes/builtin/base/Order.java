@@ -20,14 +20,13 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.builtin.base.OrderFactory.CmpNodeGen;
+import com.oracle.truffle.r.nodes.builtin.base.OrderNodeGen.CmpNodeGen;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.closures.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-@GenerateNodeFactory
 @RBuiltin(name = "order", kind = INTERNAL, parameterNames = {"na.last", "decreasing", "..."})
 public abstract class Order extends RPrecedenceBuiltinNode {
 

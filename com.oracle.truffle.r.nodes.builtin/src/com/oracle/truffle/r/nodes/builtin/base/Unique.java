@@ -54,7 +54,7 @@ public abstract class Unique extends RBuiltinNode {
     protected RVector uniqueRecursive(VirtualFrame frame, RVector vec, byte incomparables, byte fromLast, Object nmax, RArgsValuesAndNames vararg) {
         if (uniqueRecursive == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            uniqueRecursive = insert(UniqueFactory.create(new RNode[5], getBuiltin(), getSuppliedSignature()));
+            uniqueRecursive = insert(UniqueNodeGen.create(new RNode[5], getBuiltin(), getSuppliedSignature()));
         }
         return (RVector) uniqueRecursive.execute(frame, vec, incomparables, fromLast, nmax, vararg);
     }

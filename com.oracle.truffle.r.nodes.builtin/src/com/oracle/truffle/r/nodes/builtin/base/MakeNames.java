@@ -31,7 +31,7 @@ import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.builtin.base.MakeNamesFactory.AllowUnderscoreConverterNodeGen;
+import com.oracle.truffle.r.nodes.builtin.base.MakeNamesNodeGen.AllowUnderscoreConverterNodeGen;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
