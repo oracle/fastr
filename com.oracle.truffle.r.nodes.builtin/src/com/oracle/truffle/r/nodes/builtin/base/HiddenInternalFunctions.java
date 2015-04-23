@@ -141,7 +141,7 @@ public class HiddenInternalFunctions {
     @RBuiltin(name = "lazyLoadDBfetch", kind = PRIMITIVE, parameterNames = {"key", "dtafile", "compressed", "envhook"})
     public abstract static class LazyLoadDBFetch extends RBuiltinNode {
 
-        @Child private CallInlineCacheNode callCache = CallInlineCacheNode.create(3);
+        @Child private CallInlineCacheNode callCache = CallInlineCacheNodeGen.create();
         @Child private CastIntegerNode castIntNode;
 
         private void initCast() {

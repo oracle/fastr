@@ -126,7 +126,7 @@ public class GetFunctions {
     public abstract static class MGet extends Adapter {
         private final BranchProfile wrongLengthErrorProfile = BranchProfile.create();
 
-        @Child private CallInlineCacheNode callCache = CallInlineCacheNode.create(3);
+        @Child private CallInlineCacheNode callCache = CallInlineCacheNodeGen.create();
 
         @CompilationFinal private boolean needsCallerFrame;
 

@@ -43,7 +43,7 @@ import com.oracle.truffle.r.runtime.env.*;
 @RBuiltin(name = "do.call", kind = INTERNAL, parameterNames = {"what", "args", "envir"})
 public abstract class DoCall extends RBuiltinNode {
 
-    @Child private CallInlineCacheNode callCache = CallInlineCacheNode.create(3);
+    @Child private CallInlineCacheNode callCache = CallInlineCacheNodeGen.create();
     @Child private GetFunctions.Get getNode;
 
     @Child private PromiseHelperNode promiseHelper = new PromiseHelperNode();
