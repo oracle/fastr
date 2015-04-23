@@ -40,6 +40,7 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.env.REnvironment.*;
+import com.oracle.truffle.r.runtime.gnur.*;
 
 /**
  * Implementation of {@link RASTHelper}.
@@ -330,12 +331,23 @@ public class RASTHelperImpl implements RASTHelper {
     }
 
     @Override
-    public Object serialize(RSerialize.State state, RFunction f) {
-        FunctionDefinitionNode fdn = (FunctionDefinitionNode) f.getRootNode();
-        REnvironment env = REnvironment.frameToEnvironment(f.getEnclosingFrame());
-        state.openPairList().setTag(env);
-        fdn.serialize(state);
-        return state.closePairList();
+    public Object serialize(RSerialize.State state, Object obj) {
+        if (obj instanceof RFunction) {
+            RFunction f = (RFunction) obj;
+            FunctionDefinitionNode fdn = (FunctionDefinitionNode) f.getRootNode();
+            REnvironment env = REnvironment.frameToEnvironment(f.getEnclosingFrame());
+            state.openPairList().setTag(env);
+            fdn.serialize(state);
+            return state.closePairList();
+        } else if (obj instanceof RLanguage) {
+            RLanguage lang = (RLanguage) obj;
+            RNode node = (RNode) lang.getRep();
+            state.openPairList(SEXPTYPE.LANGSXP);
+            node.serialize(state);
+            return state.closePairList();
+        } else {
+            throw RInternalError.unimplemented("serialize");
+        }
     }
 
     @Override

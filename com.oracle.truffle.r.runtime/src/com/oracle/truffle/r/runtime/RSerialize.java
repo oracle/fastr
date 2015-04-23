@@ -1219,6 +1219,13 @@ public class RSerialize {
                         break;
                     }
 
+                    case LANGSXP: {
+                        RPairList pl = (RPairList) RContext.getRASTHelper().serialize(state, obj);
+                        writeItem(pl.car());
+                        writeItem(pl.cdr());
+                        break;
+                    }
+
                     default:
                         throw RInternalError.unimplemented();
                 }

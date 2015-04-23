@@ -58,10 +58,14 @@ public interface RASTHelper {
     void deparse(RDeparse.State state, RFunction f);
 
     /**
-     * Serialize function {@code f} (not a builtin).
+     * Serialize a runtime value that requires non-standard treatment.
      */
-    Object serialize(RSerialize.State state, RFunction f);
+    Object serialize(RSerialize.State state, Object f);
 
+    /**
+     * Helper function for {@code serialize} working around cyclic dependency. {@code node} is an
+     * {@RNode}.
+     */
     void serializeNode(RSerialize.State state, Object node);
 
     /**
