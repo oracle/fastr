@@ -82,8 +82,7 @@ public abstract class CallMatcherNode extends Node {
         ArgumentsSignature formalSignature = ArgumentMatcher.getFunctionSignature(function);
         MatchPermutation permutation = ArgumentMatcher.matchArguments(resultSignature, formalSignature, source, forNextMethod);
 
-        CallMatcherCachedNode cachedNode = new CallMatcherCachedNode(suppliedSignature, varArgSignatures, function, preparePermutation, permutation, forNextMethod, argsAreEvaluated, next);
-        return cachedNode;
+        return new CallMatcherCachedNode(suppliedSignature, varArgSignatures, function, preparePermutation, permutation, forNextMethod, argsAreEvaluated, next);
     }
 
     protected final Object[] prepareArguments(VirtualFrame frame, Object[] reorderedArgs, ArgumentsSignature reorderedSignature, RFunction function, S3Args s3Args) {
