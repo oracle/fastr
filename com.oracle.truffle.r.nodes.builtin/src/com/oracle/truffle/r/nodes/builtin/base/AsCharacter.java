@@ -37,7 +37,6 @@ import com.oracle.truffle.r.runtime.data.model.*;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 @RBuiltin(name = "as.character", kind = PRIMITIVE, parameterNames = {"x", "..."})
-@GenerateNodeFactory
 public abstract class AsCharacter extends RBuiltinNode {
 
     private static final String NAME = "as.character";

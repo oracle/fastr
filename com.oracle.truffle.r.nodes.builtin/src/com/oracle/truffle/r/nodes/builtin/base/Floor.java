@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,12 +34,12 @@ import com.oracle.truffle.r.runtime.ops.*;
 @RBuiltin(name = "floor", kind = PRIMITIVE, parameterNames = {"x"})
 public class Floor extends RWrapperBuiltinNode {
 
-    public Floor(RBuiltinNode prev) {
-        super(prev);
+    public Floor(RNode[] arguments, RBuiltinFactory builtin, ArgumentsSignature suppliedSignature) {
+        super(arguments, builtin, suppliedSignature);
     }
 
     @Override
     protected RNode createDelegate() {
-        return UnaryArithmeticNodeFactory.create(UnaryArithmetic.FLOOR, RError.Message.NON_NUMERIC_MATH, getArguments()[0]);
+        return UnaryArithmeticNodeGen.create(UnaryArithmetic.FLOOR, RError.Message.NON_NUMERIC_MATH, getArguments()[0]);
     }
 }

@@ -112,7 +112,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
                      * This could get exploited.
                      */
                     RFunction directBuiltin = RContext.getEngine().lookupBuiltin(readInternal.getIdentifier());
-                    if (directBuiltin != null && directBuiltin.getRBuiltin().splitCaller()) {
+                    if (directBuiltin != null && directBuiltin.getRBuiltin().isSplitCaller()) {
                         return true;
                     }
 
@@ -123,7 +123,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
                             if (innerCall.getFunctionNode() instanceof ReadVariableNode) {
                                 ReadVariableNode readInnerCall = (ReadVariableNode) innerCall.getFunctionNode();
                                 RFunction builtin = RContext.getEngine().lookupBuiltin(readInnerCall.getIdentifier());
-                                if (builtin != null && builtin.getRBuiltin().splitCaller()) {
+                                if (builtin != null && builtin.getRBuiltin().isSplitCaller()) {
                                     return true;
                                 }
                             }

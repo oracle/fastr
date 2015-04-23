@@ -34,7 +34,6 @@ import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.*;
 
 @RBuiltin(name = "mean", kind = INTERNAL, parameterNames = {"x"})
-@GenerateNodeFactory
 public abstract class Mean extends RBuiltinNode {
 
     private final BranchProfile emptyProfile = BranchProfile.create();

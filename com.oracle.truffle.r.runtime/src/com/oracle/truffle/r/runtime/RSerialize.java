@@ -1210,7 +1210,7 @@ public class RSerialize {
                     case FUNSXP: {
                         RFunction fun = (RFunction) obj;
                         if (fun.isBuiltin()) {
-                            String name = fun.getRBuiltin().name();
+                            String name = fun.getRBuiltin().getName();
                             stream.writeString(name);
                         } else {
                             // write attributes first (cf GnuR)

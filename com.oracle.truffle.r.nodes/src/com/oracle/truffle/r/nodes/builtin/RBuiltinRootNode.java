@@ -22,9 +22,6 @@
  */
 package com.oracle.truffle.r.nodes.builtin;
 
-import java.util.*;
-
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.function.*;
@@ -33,21 +30,10 @@ import com.oracle.truffle.r.runtime.*;
 public final class RBuiltinRootNode extends RRootNode {
 
     @Child private RBuiltinNode builtin;
-    @CompilationFinal private final boolean[] evaluatesArgument;
 
     public RBuiltinRootNode(RBuiltinNode builtin, FormalArguments formalArguments, FrameDescriptor frameDescriptor) {
         super(builtin.getSourceSection(), formalArguments, frameDescriptor);
         this.builtin = builtin;
-
-        evaluatesArgument = new boolean[formalArguments.getSignature().getLength()];
-        Arrays.fill(evaluatesArgument, true);
-        RBuiltin rBuiltin = builtin.getRBuiltin();
-        if (rBuiltin != null) {
-            for (int index : rBuiltin.nonEvalArgs()) {
-                assert evaluatesArgument[index] : "duplicate nonEvalArgs entry " + index + " in " + this;
-                evaluatesArgument[index] = false;
-            }
-        }
     }
 
     @Override
@@ -63,10 +49,6 @@ public final class RBuiltinRootNode extends RRootNode {
     public RCallNode inline(InlinedArguments args) {
         assert builtin.getSuppliedSignature() != null : this;
         return builtin.inline(args);
-    }
-
-    public boolean evaluatesArg(int index) {
-        return evaluatesArgument[index];
     }
 
     public Object getDefaultParameterValue(int index) {

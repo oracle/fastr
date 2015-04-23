@@ -23,14 +23,14 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.*;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.builtin.base.FrameFunctionsFactory.ParentFrameFactory;
-import com.oracle.truffle.r.nodes.builtin.base.GetFunctionsFactory.GetFactory;
+import com.oracle.truffle.r.nodes.builtin.base.FrameFunctionsFactory.ParentFrameNodeGen;
+import com.oracle.truffle.r.nodes.builtin.base.GetFunctionsFactory.GetNodeGen;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -54,8 +54,8 @@ public abstract class Args extends RBuiltinNode {
     protected Object args(VirtualFrame frame, RAbstractStringVector funName) {
         if (getNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            getNode = insert(GetFactory.create(new RNode[4], getBuiltin(), getSuppliedSignature()));
-            parentFrameNode = insert(ParentFrameFactory.create(new RNode[1], getBuiltin(), getSuppliedSignature()));
+            getNode = insert(GetNodeGen.create(new RNode[4], null, null));
+            parentFrameNode = insert(ParentFrameNodeGen.create(new RNode[1], null, null));
 
         }
         return args((RFunction) getNode.execute(frame, funName, (REnvironment) parentFrameNode.execute(frame, 1), RType.Function.getName(), RRuntime.LOGICAL_TRUE));

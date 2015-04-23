@@ -3056,6 +3056,8 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval(Output.ContainsError, "{ f <- function(x) x; do.call(f, list(quote(y)))}");
         assertEval(Output.ContainsError, "{ f <- function(x) x; do.call(f, list(quote(y + 1)))}");
         assertEval("{ do.call(\"+\", list(quote(1), 2))}");
+        assertEval("v1 <- as.numeric_version('3.0.0'); v2 <- as.numeric_version('3.1.0'); do.call('<', list(v1, v2))");
+        assertEval("v1 <- as.numeric_version('3.0.0'); v2 <- as.numeric_version('3.1.0'); do.call('<', list(quote(v1), quote(v2)))");
     }
 
     @Test

@@ -67,7 +67,6 @@ public class GetFunctions {
     }
 
     @RBuiltin(name = "get", kind = INTERNAL, parameterNames = {"x", "envir", "mode", "inherits"})
-    @GenerateNodeFactory
     public abstract static class Get extends Adapter {
 
         public abstract Object execute(VirtualFrame frame, Object name, REnvironment envir, String mode, byte inherits);
@@ -126,7 +125,7 @@ public class GetFunctions {
     public abstract static class MGet extends Adapter {
         private final BranchProfile wrongLengthErrorProfile = BranchProfile.create();
 
-        @Child private CallInlineCacheNode callCache = CallInlineCacheNode.create(3);
+        @Child private CallInlineCacheNode callCache = CallInlineCacheNodeGen.create();
 
         @CompilationFinal private boolean needsCallerFrame;
 

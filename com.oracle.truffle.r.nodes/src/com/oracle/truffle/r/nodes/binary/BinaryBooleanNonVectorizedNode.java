@@ -22,23 +22,16 @@
  */
 package com.oracle.truffle.r.nodes.binary;
 
-import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.nodes.Node.*;
 import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.unary.*;
-import com.oracle.truffle.r.nodes.binary.BinaryArithmeticNodeFactory.*;
-import com.oracle.truffle.r.nodes.binary.BinaryBooleanNonVectorizedNodeFactory.LeftOpToLogicalScalarCastNodeGen;
+import com.oracle.truffle.r.nodes.binary.BinaryBooleanNonVectorizedNodeGen.LeftOpToLogicalScalarCastNodeGen;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
-
-import static com.oracle.truffle.r.runtime.RRuntime.*;
 
 @SuppressWarnings("unused")
 public abstract class BinaryBooleanNonVectorizedNode extends RBuiltinNode {

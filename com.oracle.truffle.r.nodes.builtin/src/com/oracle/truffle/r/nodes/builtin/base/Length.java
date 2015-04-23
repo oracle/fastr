@@ -32,7 +32,6 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
 @RBuiltin(name = "length", kind = PRIMITIVE, parameterNames = {"x"})
-@GenerateNodeFactory
 public abstract class Length extends RBuiltinNode {
 
     public abstract int executeInt(VirtualFrame frame, Object vector);

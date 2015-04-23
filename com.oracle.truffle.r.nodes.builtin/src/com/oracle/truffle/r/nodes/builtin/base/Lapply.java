@@ -23,7 +23,7 @@ import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.access.array.read.*;
 import com.oracle.truffle.r.nodes.access.variables.*;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.builtin.base.LapplyFactory.LapplyInternalNodeGen;
+import com.oracle.truffle.r.nodes.builtin.base.LapplyNodeGen.LapplyInternalNodeGen;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RContext.Engine.ParseException;
@@ -62,7 +62,7 @@ public abstract class Lapply extends RBuiltinNode {
         private static final String INDEX_NAME = AnonymousFrameVariable.create("LAPPLY_ITER_INDEX");
         private static final String VECTOR_ELEMENT = AnonymousFrameVariable.create("LAPPLY_VEC_ELEM");
 
-        @Child private Length lengthNode = LengthFactory.create(null, null, null);
+        @Child private Length lengthNode = LengthNodeGen.create(null, null, null);
         @Child private WriteVariableNode writeVectorElement = WriteVariableNode.create(VECTOR_ELEMENT, null, false, false);
         @Child private WriteVariableNode writeIndex = WriteVariableNode.create(INDEX_NAME, null, false, false);
         @Child private RNode indexedLoadNode = createIndexedLoad();

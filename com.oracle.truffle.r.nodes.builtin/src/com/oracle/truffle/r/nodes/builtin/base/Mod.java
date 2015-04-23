@@ -38,7 +38,7 @@ public abstract class Mod extends RBuiltinNode {
 
     @Child private BinaryArithmeticNode pow = BinaryArithmeticNode.create(BinaryArithmetic.POW);
     @Child private BinaryArithmeticNode add = BinaryArithmeticNode.create(BinaryArithmetic.ADD);
-    @Child private Sqrt sqrt = SqrtFactory.create(new RNode[1], getBuiltin(), getSuppliedSignature());
+    @Child private Sqrt sqrt = SqrtNodeGen.create(new RNode[1], null, null);
 
     @Specialization
     protected RDoubleVector mod(RAbstractComplexVector vec) {

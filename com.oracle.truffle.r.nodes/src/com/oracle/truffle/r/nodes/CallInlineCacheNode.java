@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,73 +31,27 @@ import com.oracle.truffle.api.nodes.*;
  * This node reifies a runtime object into the AST by creating nodes for frequently encountered
  * values. This can be used to bridge the gap between code as runtime data and executed code.
  */
-@TypeSystemReference(RTypes.class)
 public abstract class CallInlineCacheNode extends Node {
+
+    protected static final int CACHE_LIMIT = 2;
 
     public abstract Object execute(VirtualFrame frame, CallTarget target, Object[] arguments);
 
-    /**
-     * Creates an inline cache.
-     *
-     * @param maxPicDepth maximum number of entries in the polymorphic inline cache
-     */
-    public static CallInlineCacheNode create(int maxPicDepth) {
-        return new UninitializedCallInlineCacheNode(maxPicDepth);
+    protected static DirectCallNode createDirectCallNode(CallTarget target) {
+        return Truffle.getRuntime().createDirectCallNode(target);
     }
 
-    @NodeInfo(cost = NodeCost.UNINITIALIZED)
-    private static final class UninitializedCallInlineCacheNode extends CallInlineCacheNode {
-
-        private final int maxPicDepth;
-
-        /** The current depth of the inline cache. */
-        private int picDepth = 0;
-
-        public UninitializedCallInlineCacheNode(int maxPicDepth) {
-            this.maxPicDepth = maxPicDepth;
-        }
-
-        @Override
-        public Object execute(VirtualFrame frame, CallTarget target, Object[] arguments) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-
-            // Specialize below
-            CallInlineCacheNode replacement;
-            if (picDepth < maxPicDepth) {
-                picDepth += 1;
-                replacement = new DirectCallInlineCacheNode(target, this);
-            } else {
-                replacement = new GenericCallInlineCacheNode();
-            }
-            return replace(replacement).execute(frame, target, arguments);
-        }
+    @Specialization(guards = "target == callNode.getCallTarget()", limit = "CACHE_LIMIT")
+    protected Object call(VirtualFrame frame, @SuppressWarnings("unused") CallTarget target, Object[] arguments, @Cached("createDirectCallNode(target)") DirectCallNode callNode) {
+        return callNode.call(frame, arguments);
     }
 
-    private static final class DirectCallInlineCacheNode extends CallInlineCacheNode {
-
-        private final CallTarget originalTarget;
-        @Child private DirectCallNode callNode;
-        @Child private CallInlineCacheNode next;
-
-        protected DirectCallInlineCacheNode(CallTarget originalTarget, CallInlineCacheNode next) {
-            this.originalTarget = originalTarget;
-            this.callNode = Truffle.getRuntime().createDirectCallNode(originalTarget);
-            this.next = next;
-        }
-
-        @Override
-        public Object execute(VirtualFrame frame, CallTarget target, Object[] arguments) {
-            return target == originalTarget ? callNode.call(frame, arguments) : next.execute(frame, target, arguments);
-        }
+    protected static IndirectCallNode createIndirectCallNode() {
+        return Truffle.getRuntime().createIndirectCallNode();
     }
 
-    private static final class GenericCallInlineCacheNode extends CallInlineCacheNode {
-
-        @Child private IndirectCallNode indirectCall = Truffle.getRuntime().createIndirectCallNode();
-
-        @Override
-        public Object execute(VirtualFrame frame, CallTarget target, Object[] arguments) {
-            return indirectCall.call(frame, target, arguments);
-        }
+    @Specialization
+    protected Object call(VirtualFrame frame, CallTarget target, Object[] arguments, @Cached("createIndirectCallNode()") IndirectCallNode callNode) {
+        return callNode.call(frame, target, arguments);
     }
 }

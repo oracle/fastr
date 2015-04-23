@@ -37,20 +37,20 @@ import com.oracle.truffle.r.runtime.ops.*;
 @RBuiltin(name = "min", kind = PRIMITIVE, parameterNames = {"...", "na.rm"})
 public final class Min extends RWrapperBuiltinNode {
 
+    public Min(RNode[] arguments, RBuiltinFactory builtin, ArgumentsSignature suppliedSignature) {
+        super(arguments, builtin, suppliedSignature);
+    }
+
     @Override
     public Object[] getDefaultParameterValues() {
         return new Object[]{RArgsValuesAndNames.EMPTY, RRuntime.LOGICAL_FALSE};
-    }
-
-    public Min(RBuiltinNode prev) {
-        super(prev);
     }
 
     @Override
     protected RNode createDelegate() {
         ReduceSemantics semantics = new ReduceSemantics(RRuntime.INT_MAX_VALUE, Double.POSITIVE_INFINITY, false, RError.Message.NO_NONMISSING_MIN, RError.Message.NO_NONMISSING_MIN_NA, false, true);
         RNode[] args = getArguments();
-        Combine combine = CombineFactory.create(new RNode[]{args[0]}, getBuiltin(), ArgumentsSignature.empty(1));
+        Combine combine = CombineNodeGen.create(new RNode[]{args[0]}, null, null);
         return UnaryArithmeticReduceNodeGen.create(semantics, BinaryArithmetic.MIN, combine, args.length > 1 ? args[1] : ConstantNode.create(RRuntime.LOGICAL_FALSE));
     }
 }

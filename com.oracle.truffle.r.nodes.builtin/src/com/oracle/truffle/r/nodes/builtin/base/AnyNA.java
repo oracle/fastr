@@ -33,8 +33,8 @@ import com.oracle.truffle.r.runtime.data.*;
 @RBuiltin(name = "anyNA", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x", "recursive"})
 public abstract class AnyNA extends RBuiltinNode {
 
-    @Child private IsNA isna = IsNAFactory.create(new RNode[1], null, null);
-    @Child private Any any = AnyFactory.create(new RNode[1], null, null);
+    @Child private IsNA isna = IsNANodeGen.create(new RNode[1], null, null);
+    @Child private Any any = AnyNodeGen.create(new RNode[1], null, null);
 
     @Override
     public Object[] getDefaultParameterValues() {

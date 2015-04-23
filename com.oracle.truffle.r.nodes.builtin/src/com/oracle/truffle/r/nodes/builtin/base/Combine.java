@@ -32,14 +32,13 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.binary.*;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.builtin.base.CombineFactory.CombineInputCastNodeGen;
+import com.oracle.truffle.r.nodes.builtin.base.CombineNodeGen.CombineInputCastNodeGen;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
 @RBuiltin(name = "c", kind = PRIMITIVE, parameterNames = {"..."})
-@GenerateNodeFactory
 public abstract class Combine extends RCastingBuiltinNode {
 
     private static final ArgumentsSignature EMPTY_SIGNATURE = ArgumentsSignature.empty(1);
@@ -67,7 +66,7 @@ public abstract class Combine extends RCastingBuiltinNode {
             return RNull.instance;
         }
 
-        boolean signatureHasNames = getSuppliedSignature().getNonNullCount() > 0;
+        boolean signatureHasNames = getSuppliedSignature() != null && getSuppliedSignature().getNonNullCount() > 0;
 
         CompilerAsserts.partialEvaluationConstant(signatureHasNames);
 
@@ -147,7 +146,7 @@ public abstract class Combine extends RCastingBuiltinNode {
     }
 
     protected Combine createRecursive() {
-        return CombineFactory.create(null, getBuiltin(), getSuppliedSignature());
+        return CombineNodeGen.create(null, null, null);
     }
 
     protected static CombineBinaryNode createFold(int precedence) {

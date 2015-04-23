@@ -37,7 +37,6 @@ import com.oracle.truffle.r.runtime.ops.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
 @RBuiltin(name = "%*%", kind = PRIMITIVE, parameterNames = {"", ""})
-@GenerateNodeFactory
 public abstract class MatMult extends RBuiltinNode {
 
     private static final int BLOCK_SIZE = 64;

@@ -40,20 +40,20 @@ import com.oracle.truffle.r.runtime.ops.*;
 @RBuiltin(name = "sum", kind = PRIMITIVE, parameterNames = {"...", "na.rm"})
 public final class Sum extends RWrapperBuiltinNode {
 
+    public Sum(RNode[] arguments, RBuiltinFactory builtin, ArgumentsSignature suppliedSignature) {
+        super(arguments, builtin, suppliedSignature);
+    }
+
     @Override
     public Object[] getDefaultParameterValues() {
         return new Object[]{RArgsValuesAndNames.EMPTY, RRuntime.LOGICAL_FALSE};
-    }
-
-    public Sum(RBuiltinNode prev) {
-        super(prev);
     }
 
     @Override
     protected RNode createDelegate() {
         ReduceSemantics semantics = new ReduceSemantics(0, 0.0, true, null, null, true, false);
         RNode[] args = getArguments();
-        Combine combine = CombineFactory.create(new RNode[]{args[0]}, getBuiltin(), ArgumentsSignature.empty(1));
+        Combine combine = CombineNodeGen.create(new RNode[]{args[0]}, null, null);
         return UnaryArithmeticReduceNodeGen.create(semantics, BinaryArithmetic.ADD, combine, args.length > 1 ? args[1] : ConstantNode.create(RRuntime.LOGICAL_FALSE));
     }
 }

@@ -32,7 +32,6 @@ import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
-@GenerateNodeFactory
 public abstract class UnaryArithmeticNode extends UnaryNode {
 
     private final UnaryArithmetic arithmetic;

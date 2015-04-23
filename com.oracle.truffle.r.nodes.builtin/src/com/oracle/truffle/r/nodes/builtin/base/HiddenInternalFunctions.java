@@ -57,7 +57,7 @@ public class HiddenInternalFunctions {
         private void initEval() {
             if (eval == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                eval = insert(EvalFunctionsFactory.EvalFactory.create(new RNode[3], getBuiltin(), getSuppliedSignature()));
+                eval = insert(EvalFunctionsFactory.EvalNodeGen.create(new RNode[3], null, null));
             }
         }
 
@@ -141,7 +141,7 @@ public class HiddenInternalFunctions {
     @RBuiltin(name = "lazyLoadDBfetch", kind = PRIMITIVE, parameterNames = {"key", "dtafile", "compressed", "envhook"})
     public abstract static class LazyLoadDBFetch extends RBuiltinNode {
 
-        @Child private CallInlineCacheNode callCache = CallInlineCacheNode.create(3);
+        @Child private CallInlineCacheNode callCache = CallInlineCacheNodeGen.create();
         @Child private CastIntegerNode castIntNode;
 
         private void initCast() {

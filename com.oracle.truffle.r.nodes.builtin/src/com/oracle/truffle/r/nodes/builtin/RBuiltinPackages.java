@@ -62,9 +62,7 @@ public final class RBuiltinPackages implements RBuiltinLookup {
         for (Map.Entry<String, RBuiltinFactory> entrySet : builtins.entrySet()) {
             String methodName = entrySet.getKey();
             RBuiltinFactory builtinFactory = entrySet.getValue();
-            builtinFactory.setEnv(baseEnv);
-            RBuiltin builtin = builtinFactory.getRBuiltin();
-            if (builtin.kind() != RBuiltinKind.INTERNAL) {
+            if (builtinFactory.getKind() != RBuiltinKind.INTERNAL) {
                 RFunction function = createFunction(builtinFactory, methodName);
                 try {
                     baseEnv.put(methodName, function);
@@ -137,17 +135,14 @@ public final class RBuiltinPackages implements RBuiltinLookup {
     private static RFunction createFunction(RBuiltinFactory builtinFactory, String methodName) {
         try {
             RootCallTarget callTarget = RBuiltinNode.createArgumentsCallTarget(builtinFactory);
-            RBuiltin builtin = builtinFactory.getRBuiltin();
-            assert builtin != null;
-            return RContext.getInstance().putCachedFunction(methodName, RDataFactory.createFunction(builtinFactory.getBuiltinNames()[0], callTarget, builtin, builtinFactory.getEnv().getFrame()));
+            return RContext.getInstance().putCachedFunction(methodName, RDataFactory.createFunction(builtinFactory.getName(), callTarget, builtinFactory, REnvironment.baseEnv().getFrame()));
         } catch (Throwable t) {
-            throw new RuntimeException("error while creating builtin " + methodName + " / " + builtinFactory.getFactory().getNodeClass().getCanonicalName(), t);
+            throw new RuntimeException("error while creating builtin " + methodName + " / " + builtinFactory, t);
         }
     }
 
     public static RBuiltinFactory lookupBuiltin(String name) {
-        RBuiltinFactory factory = basePackage.lookupByName(name);
-        return factory;
+        return basePackage.lookupByName(name);
     }
 
     /**
@@ -157,8 +152,8 @@ public final class RBuiltinPackages implements RBuiltinLookup {
      */
     public boolean isPrimitiveBuiltin(String name) {
         RBuiltinPackage pkg = basePackage;
-        RBuiltinFactory rbf = pkg.lookupByName(name);
-        if (rbf != null && rbf.getRBuiltin().kind() != RBuiltinKind.INTERNAL) {
+        RBuiltinDescriptor rbf = pkg.lookupByName(name);
+        if (rbf != null && rbf.getKind() != RBuiltinKind.INTERNAL) {
             return true;
         }
         return false;
