@@ -674,7 +674,7 @@ public class FileFunctions {
         @CreateCast("arguments")
         public RNode[] castArguments(RNode[] arguments) {
             for (int i = 2; i < 5; i++) {
-                arguments[i] = CastLogicalNodeGen.create(arguments[0], true, false, false);
+                arguments[i] = CastLogicalNodeGen.create(arguments[i], true, false, false);
             }
             return arguments;
         }
