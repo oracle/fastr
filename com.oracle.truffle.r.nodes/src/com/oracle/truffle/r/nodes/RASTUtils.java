@@ -201,7 +201,7 @@ public class RASTUtils {
             return RCallNode.createCall(null, (ReadVariableNode) fn, callArgsNode, null);
         } else if (fn instanceof GroupDispatchNode) {
             GroupDispatchNode gdcn = (GroupDispatchNode) fn;
-            return GroupDispatchNode.create(gdcn.getGenericName(), gdcn.getGroup(), callArgsNode, gdcn.getCallSrc());
+            return GroupDispatchNode.create(gdcn.getGenericName(), callArgsNode, gdcn.getCallSrc());
         } else if (fn instanceof RFunction) {
             RFunction rfn = (RFunction) fn;
             return RCallNode.createCall(null, ConstantNode.create(rfn), callArgsNode, null);

@@ -29,11 +29,14 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.builtin.base.GetFunctionsFactory.*;
+import com.oracle.truffle.r.nodes.builtin.base.GetFunctionsFactory.GetNodeGen;
 import com.oracle.truffle.r.nodes.function.*;
+import com.oracle.truffle.r.nodes.function.signature.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -45,12 +48,16 @@ public abstract class DoCall extends RBuiltinNode {
 
     @Child private CallInlineCacheNode callCache = CallInlineCacheNodeGen.create();
     @Child private GetFunctions.Get getNode;
+    @Child private GroupDispatchNode groupDispatch;
+    @Child private GetCallerFrameNode getCallerFrame;
 
     @Child private PromiseHelperNode promiseHelper = new PromiseHelperNode();
     @CompilationFinal private boolean needsCallerFrame;
 
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
     private final BranchProfile errorProfile = BranchProfile.create();
+    private final BranchProfile containsRLanguageProfile = BranchProfile.create();
+    private final BranchProfile containsRSymbolProfile = BranchProfile.create();
 
     @Specialization
     protected Object doDoCall(VirtualFrame frame, Object what, RList argsAsList, REnvironment env) {
@@ -68,53 +75,55 @@ public abstract class DoCall extends RBuiltinNode {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.MUST_BE_STRING_OR_FUNCTION, "what");
         }
 
-        Object[] argValues = argsAsList.getDataNonShared();
+        Object[] argValues = argsAsList.getDataCopy();
         RStringVector n = argsAsList.getNames(attrProfiles);
         String[] argNames = n == null ? new String[argValues.length] : n.getDataNonShared();
         ArgumentsSignature signature = ArgumentsSignature.get(argNames);
+        RBuiltinDescriptor builtin = func.getRBuiltin();
+        MaterializedFrame callerFrame = null;
+        for (int i = 0; i < argValues.length; i++) {
+            Object arg = argValues[i];
+            if (arg instanceof RLanguage) {
+                containsRLanguageProfile.enter();
+                callerFrame = getCallerFrame(frame, callerFrame);
+                RLanguage lang = (RLanguage) arg;
+                argValues[i] = createArgPromise(callerFrame, NodeUtil.cloneNode(((RNode) lang.getRep())));
+            } else if (arg instanceof RSymbol) {
+                containsRSymbolProfile.enter();
+                callerFrame = getCallerFrame(frame, callerFrame);
+                RSymbol symbol = (RSymbol) arg;
+                argValues[i] = createArgPromise(callerFrame, RASTUtils.createReadVariableNode(symbol.getName()));
+            }
+        }
+        if (func.isBuiltin()) {
+            if (builtin.getGroup() != null) {
+                if (groupDispatch == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    groupDispatch = insert(GroupDispatchNode.create(builtin.getName(), null, func, getSourceSection()));
+                }
+                for (int i = 0; i < argValues.length; i++) {
+                    Object arg = argValues[i];
+                    if (arg instanceof RPromise) {
+                        argValues[i] = promiseHelper.evaluate(frame, (RPromise) arg);
+                    }
+                }
+                return groupDispatch.executeDynamic(frame, new RArgsValuesAndNames(argValues, signature), builtin.getName(), builtin.getGroup(), func);
+            }
+        }
         EvaluatedArguments evaledArgs = EvaluatedArguments.create(argValues, signature);
         EvaluatedArguments reorderedArgs = ArgumentMatcher.matchArgumentsEvaluated(func, evaledArgs, getEncapsulatingSourceSection(), false);
         if (func.isBuiltin()) {
-            RBuiltinRootNode builtinNode = (RBuiltinRootNode) func.getRootNode();
             Object[] argArray = reorderedArgs.getEvaluatedArgs();
             for (int i = 0; i < argArray.length; i++) {
                 Object arg = argArray[i];
-                if (builtinNode.evaluatesArg(i)) {
+                if (builtin.evaluatesArg(i)) {
                     if (arg instanceof RPromise) {
                         argArray[i] = promiseHelper.evaluate(frame, (RPromise) arg);
-                    } else if (arg instanceof RLanguage) {
-                        /*
-                         * This is necessary for, e.g., do.call("+", list(quote(a), 2)). But is it
-                         * always ok to unconditionally evaluate an RLanguage arg? Are there any
-                         * builtins that takes RLanguage values? Also not clear what env to evaluate
-                         * in. Can't be frame as, e.g., do.call closure itself defines "quote" as a
-                         * logical!
-                         */
-                        argArray[i] = promiseHelper.evaluate(frame, createArgPromise(REnvironment.globalEnv().getFrame(), arg));
                     }
                 } else {
-                    if (!(arg instanceof RPromise) && arg != RMissing.instance) {
-                        // TODO there are some builtins that take unevaluated ..., e.g. switch
-                        if (!(arg instanceof RArgsValuesAndNames)) {
-                            argArray[i] = createArgPromise(frame.materialize(), arg);
-                        }
-                    }
-                }
-            }
-        } else {
-            /*
-             * Create promises for all arguments. This is very simplistic, it creates a promise for
-             * everything, even constants. Why is this important? E.g. "do.call(f, list(quote(y)))".
-             * The "quote(y)" has been evaluated with result RSymbol, but if "f" accesses the
-             * argument, it must try to resolve "y" and not just return the RSymbol value.
-             */
-            Object[] argArray = reorderedArgs.getEvaluatedArgs();
-            for (int i = 0; i < argArray.length; i++) {
-                Object arg = argArray[i];
-                if (!(arg instanceof RPromise) && arg != RMissing.instance) {
-                    // TODO RArgsValuesAndNames
-                    if (!(arg instanceof RArgsValuesAndNames)) {
-                        argArray[i] = createArgPromise(frame.materialize(), arg);
+                    if (!(arg instanceof RPromise) && arg != RMissing.instance && !(arg instanceof RArgsValuesAndNames)) {
+                        callerFrame = getCallerFrame(frame, callerFrame);
+                        argArray[i] = createArgPromise(callerFrame, ConstantNode.create(arg));
                     }
                 }
             }
@@ -123,15 +132,26 @@ public abstract class DoCall extends RBuiltinNode {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             needsCallerFrame = true;
         }
-        MaterializedFrame callerFrame = needsCallerFrame ? frame.materialize() : null;
+        callerFrame = needsCallerFrame ? getCallerFrame(frame, callerFrame) : null;
         Object[] callArgs = RArguments.create(func, callCache.getSourceSection(), callerFrame, RArguments.getDepth(frame) + 1, reorderedArgs.getEvaluatedArgs(), reorderedArgs.getSignature());
         RArguments.setIsIrregular(callArgs, true);
         return callCache.execute(frame, func.getTarget(), callArgs);
     }
 
-    @TruffleBoundary
-    private static RPromise createArgPromise(MaterializedFrame frame, Object arg) {
-        return RDataFactory.createPromise(RPromise.PromiseType.ARG_SUPPLIED, frame, RPromise.Closure.create(RASTUtils.createNodeForValue(arg)));
+    private MaterializedFrame getCallerFrame(VirtualFrame frame, MaterializedFrame callerFrame) {
+        if (getCallerFrame == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            getCallerFrame = insert(new GetCallerFrameNode());
+        }
+        if (callerFrame == null) {
+            return getCallerFrame.execute(frame);
+        } else {
+            return callerFrame;
+        }
     }
 
+    @TruffleBoundary
+    private static RPromise createArgPromise(MaterializedFrame frame, RNode rep) {
+        return RDataFactory.createPromise(RPromise.PromiseType.ARG_SUPPLIED, frame, RPromise.Closure.create(rep));
+    }
 }

@@ -49,6 +49,6 @@ public final class RBuiltinFactory extends RBuiltinDescriptor {
     @Override
     public String toString() {
         return "RBuiltinFactory [name=" + getName() + ", aliases=" + Arrays.toString(getAliases()) + ", kind=" + getKind() + ", siagnature=" + getSignature() + ", nonEvaledArgs=" +
-                        Arrays.toString(getNonEvalArgs()) + ", splitCaller=" + isSplitCaller() + "]";
+                        Arrays.toString(getNonEvalArgs()) + ", splitCaller=" + isSplitCaller() + ", group=" + getGroup() + "]";
     }
 }

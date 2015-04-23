@@ -22,6 +22,9 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
+import java.util.*;
+
+import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.r.runtime.*;
 
 public abstract class RBuiltinDescriptor {
@@ -31,6 +34,8 @@ public abstract class RBuiltinDescriptor {
     private final ArgumentsSignature signature;
     private final int[] nonEvalArgs;
     private final boolean splitCaller;
+    private final RGroupGenerics group;
+    @CompilationFinal private final boolean[] evaluatesArgument;
 
     public RBuiltinDescriptor(String name, String[] aliases, RBuiltinKind kind, ArgumentsSignature signature, int[] nonEvalArgs, boolean splitCaller) {
         this.name = name;
@@ -39,6 +44,14 @@ public abstract class RBuiltinDescriptor {
         this.signature = signature;
         this.nonEvalArgs = nonEvalArgs;
         this.splitCaller = splitCaller;
+        this.group = RGroupGenerics.getGroup(name);
+
+        evaluatesArgument = new boolean[signature.getLength()];
+        Arrays.fill(evaluatesArgument, true);
+        for (int index : nonEvalArgs) {
+            assert evaluatesArgument[index] : "duplicate nonEvalArgs entry " + index + " in " + this;
+            evaluatesArgument[index] = false;
+        }
     }
 
     public String getName() {
@@ -63,5 +76,13 @@ public abstract class RBuiltinDescriptor {
 
     public boolean isSplitCaller() {
         return splitCaller;
+    }
+
+    public RGroupGenerics getGroup() {
+        return group;
+    }
+
+    public boolean evaluatesArg(int index) {
+        return evaluatesArgument[index];
     }
 }

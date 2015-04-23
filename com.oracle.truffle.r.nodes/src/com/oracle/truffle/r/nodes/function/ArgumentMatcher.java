@@ -302,8 +302,7 @@ public class ArgumentMatcher {
          */
 
         // Check whether this is a builtin
-        RootNode rootNode = function.getTarget().getRootNode();
-        RBuiltinRootNode builtinRootNode = rootNode instanceof RBuiltinRootNode ? (RBuiltinRootNode) rootNode : null;
+        RBuiltinDescriptor builtin = function.getRBuiltin();
 
         // int logicalIndex = 0; As our builtin's 'evalsArgs' is meant for FastR arguments (which
         // take "..." as one), we don't need a logicalIndex
@@ -353,35 +352,35 @@ public class ArgumentMatcher {
                 }
 
                 ArgumentsSignature signature = ArgumentsSignature.get(newNames);
-                if (shouldInlineArgument(builtinRootNode, formalIndex)) {
+                if (shouldInlineArgument(builtin, formalIndex)) {
                     resArgs[formalIndex] = PromiseNode.createVarArgsInlined(newVarArgs, signature);
                 } else {
                     resArgs[formalIndex] = PromiseNode.createVarArgs(newVarArgs, signature, closureCache);
                 }
             } else if (suppliedIndex == MatchPermutation.UNMATCHED || suppliedArgs[suppliedIndex] == null) {
-                resArgs[formalIndex] = wrapUnmatched(formals, builtinRootNode, formalIndex, noOpt);
+                resArgs[formalIndex] = wrapUnmatched(formals, builtin, formalIndex, noOpt);
             } else {
-                resArgs[formalIndex] = wrapMatched(formals, builtinRootNode, closureCache, suppliedArgs[suppliedIndex], formalIndex, noOpt);
+                resArgs[formalIndex] = wrapMatched(formals, builtin, closureCache, suppliedArgs[suppliedIndex], formalIndex, noOpt);
             }
         }
         return resArgs;
     }
 
     /**
-     * @param builtinRootNode The {@link RBuiltinRootNode} of the function
+     * @param builtin The {@link RBuiltinDescriptor} of the function
      * @param formalIndex The formalIndex of this argument
      * @return A single suppliedArg and its corresponding defaultValue wrapped up into a
      *         {@link PromiseNode}
      */
-    private static boolean shouldInlineArgument(RBuiltinRootNode builtinRootNode, int formalIndex) {
+    private static boolean shouldInlineArgument(RBuiltinDescriptor builtin, int formalIndex) {
         // This is for actual function calls. However, if the arguments are meant for a
         // builtin, we have to consider whether they should be forced or not!
-        return builtinRootNode != null && builtinRootNode.evaluatesArg(formalIndex);
+        return builtin != null && builtin.evaluatesArg(formalIndex);
     }
 
     @TruffleBoundary
-    private static RNode wrapUnmatched(FormalArguments formals, RBuiltinRootNode builtinRootNode, int formalIndex, boolean noOpt) {
-        if (builtinRootNode != null && !builtinRootNode.evaluatesArg(formalIndex)) {
+    private static RNode wrapUnmatched(FormalArguments formals, RBuiltinDescriptor builtin, int formalIndex, boolean noOpt) {
+        if (builtin != null && !builtin.evaluatesArg(formalIndex)) {
             // this is a non-evaluated builtin argument, create a proper promise
             RNode defaultArg = formals.getDefaultArgumentAt(formalIndex);
             Closure defaultClosure = formals.getOrCreateClosure(defaultArg);
@@ -391,9 +390,9 @@ public class ArgumentMatcher {
     }
 
     @TruffleBoundary
-    private static RNode wrapMatched(FormalArguments formals, RBuiltinRootNode builtinRootNode, ClosureCache closureCache, RNode suppliedArg, int formalIndex, boolean noOpt) {
+    private static RNode wrapMatched(FormalArguments formals, RBuiltinDescriptor builtin, ClosureCache closureCache, RNode suppliedArg, int formalIndex, boolean noOpt) {
         // Create promise
-        if (shouldInlineArgument(builtinRootNode, formalIndex)) {
+        if (shouldInlineArgument(builtin, formalIndex)) {
             return PromiseNode.createInlined(suppliedArg.getSourceSection(), suppliedArg, formals.getInternalDefaultArgumentAt(formalIndex));
         } else {
             Closure closure = closureCache.getOrCreateClosure(suppliedArg);

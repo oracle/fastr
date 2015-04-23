@@ -11,6 +11,7 @@
 package com.oracle.truffle.r.nodes.function;
 
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.utilities.*;
@@ -32,37 +33,39 @@ public final class GroupDispatchNode extends RNode {
     @Child private S3FunctionLookupNode functionLookupR;
     @Child private CallMatcherNode callMatcher = CallMatcherNode.create(false, true);
 
-    private final String genericName;
-    private final RGroupGenerics group;
-    private final RFunction builtinFunc;
-    private final boolean binaryLookup;
+    private final String fixedGenericName;
+    private final RGroupGenerics fixedGroup;
+    private final RFunction fixedBuiltinFunction;
 
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
     private final ConditionProfile mismatchProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile isObjectProfile = ConditionProfile.createBinaryProfile();
     private final ValueProfile argTypeProfile = ValueProfile.createClassProfile();
 
-    public GroupDispatchNode(String genericName, RGroupGenerics group, CallArgumentsNode callArgNode) {
-        this.genericName = genericName.intern();
-        this.group = group;
-        this.callArgsNode = callArgNode;
-        this.binaryLookup = group == RGroupGenerics.Ops && callArgsNode.getSignature().getLength() >= 2;
+    @CompilationFinal private boolean dynamicLookup;
+    private final ConditionProfile exactEqualsProfile = ConditionProfile.createBinaryProfile();
 
-        this.builtinFunc = RContext.getEngine().lookupBuiltin(genericName);
+    private GroupDispatchNode(String genericName, CallArgumentsNode callArgNode, RFunction builtinFunction) {
+        this.fixedGenericName = genericName.intern();
+        this.fixedGroup = RGroupGenerics.getGroup(genericName);
+        this.callArgsNode = callArgNode;
+        this.fixedBuiltinFunction = builtinFunction;
     }
 
-    public static GroupDispatchNode create(String aGenericName, RGroupGenerics group, CallArgumentsNode callArgNode, SourceSection callSrc) {
-        GroupDispatchNode gdcn = new GroupDispatchNode(aGenericName, group, callArgNode);
+    public static GroupDispatchNode create(String genericName, CallArgumentsNode callArgNode, SourceSection callSrc) {
+        GroupDispatchNode gdcn = new GroupDispatchNode(genericName, callArgNode, RContext.getEngine().lookupBuiltin(genericName));
+        gdcn.assignSourceSection(callSrc);
+        return gdcn;
+    }
+
+    public static GroupDispatchNode create(String genericName, CallArgumentsNode callArgNode, RFunction builtinFunction, SourceSection callSrc) {
+        GroupDispatchNode gdcn = new GroupDispatchNode(genericName, callArgNode, builtinFunction);
         gdcn.assignSourceSection(callSrc);
         return gdcn;
     }
 
     public String getGenericName() {
-        return genericName;
-    }
-
-    public RGroupGenerics getGroup() {
-        return group;
+        return fixedGenericName;
     }
 
     public SourceSection getCallSrc() {
@@ -111,6 +114,21 @@ public final class GroupDispatchNode extends RNode {
     @Override
     public Object execute(VirtualFrame frame) {
         RArgsValuesAndNames argAndNames = callArgsNode.evaluateFlatten(frame);
+        return executeInternal(frame, argAndNames, fixedGenericName, fixedGroup, fixedBuiltinFunction);
+    }
+
+    public Object executeDynamic(VirtualFrame frame, RArgsValuesAndNames argAndNames, String genericName, RGroupGenerics group, RFunction builtinFunction) {
+        if (!dynamicLookup) {
+            if (builtinFunction == fixedBuiltinFunction && (exactEqualsProfile.profile(fixedGenericName == genericName) || fixedGenericName.equals(genericName))) {
+                return executeInternal(frame, argAndNames, fixedGenericName, fixedGroup, fixedBuiltinFunction);
+            }
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            dynamicLookup = true;
+        }
+        return executeInternal(frame, argAndNames, genericName, group, builtinFunction);
+    }
+
+    private Object executeInternal(VirtualFrame frame, RArgsValuesAndNames argAndNames, String genericName, RGroupGenerics group, RFunction builtinFunction) {
         Object[] evaluatedArgs = argAndNames.getValues();
 
         RStringVector typeL = evaluatedArgs.length == 0 ? null : getArgClass(evaluatedArgs[0]);
@@ -128,7 +146,7 @@ public final class GroupDispatchNode extends RNode {
             }
         }
         Result resultR = null;
-        if (binaryLookup) {
+        if (group == RGroupGenerics.Ops && argAndNames.getSignature().getLength() >= 2) {
             RStringVector typeR = getArgClass(evaluatedArgs[1]);
             if (typeR != null) {
                 try {
@@ -169,11 +187,15 @@ public final class GroupDispatchNode extends RNode {
             }
         }
         ArgumentsSignature signature = argAndNames.getSignature();
+        S3Args s3Args;
+        RFunction function;
         if (result == null) {
-            return callMatcher.execute(frame, signature, evaluatedArgs, builtinFunc, null);
+            s3Args = null;
+            function = builtinFunction;
         } else {
-            S3Args s3Args = new S3Args(genericName, result.clazz, dotMethod, frame.materialize(), null, result.groupMatch ? group.getName() : null);
-            return callMatcher.execute(frame, signature, evaluatedArgs, result.function, s3Args);
+            s3Args = new S3Args(genericName, result.clazz, dotMethod, frame.materialize(), null, result.groupMatch ? group.getName() : null);
+            function = result.function;
         }
+        return callMatcher.execute(frame, signature, evaluatedArgs, function, s3Args);
     }
 }
