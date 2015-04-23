@@ -82,4 +82,11 @@ public interface RASTHelper {
      * Call out to R to .signalSimpleWarning.
      */
     void signalSimpleWarning(RStringVector msg, Object call, int depth);
+
+    /**
+     * {@code RASTUtils.createNodeForValue}.
+     *
+     * @return and {@code RNode} for {@code value}.
+     */
+    Object createNodeForValue(Object value);
 }

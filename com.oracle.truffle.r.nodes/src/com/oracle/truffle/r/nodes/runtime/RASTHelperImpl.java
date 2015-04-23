@@ -355,4 +355,8 @@ public class RASTHelperImpl implements RASTHelper {
         ((RNode) node).serialize(state);
     }
 
+    public Object createNodeForValue(Object value) {
+        return RASTUtils.createNodeForValue(value);
+    }
+
 }
