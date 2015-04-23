@@ -232,7 +232,7 @@ public abstract class S3DispatchFunctions extends RBuiltinNode {
                 promiseHelper = insert(new PromiseHelperNode());
             }
             if (RArguments.getArgumentsLength(frame) == 0 || RArguments.getArgument(frame, 0) == null ||
-                            (!(RArguments.getArgument(frame, 0) instanceof RAbstractVector) && !(RArguments.getArgument(frame, 0) instanceof RPromise))) {
+                            (!(RArguments.getArgument(frame, 0) instanceof RAbstractContainer) && !(RArguments.getArgument(frame, 0) instanceof RPromise))) {
                 errorProfile.enter();
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.OBJECT_NOT_SPECIFIED);
             }
