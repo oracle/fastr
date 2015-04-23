@@ -54,8 +54,8 @@ public abstract class Args extends RBuiltinNode {
     protected Object args(VirtualFrame frame, RAbstractStringVector funName) {
         if (getNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            getNode = insert(GetNodeGen.create(new RNode[4], getBuiltin(), getSuppliedSignature()));
-            parentFrameNode = insert(ParentFrameNodeGen.create(new RNode[1], getBuiltin(), getSuppliedSignature()));
+            getNode = insert(GetNodeGen.create(new RNode[4], null, null));
+            parentFrameNode = insert(ParentFrameNodeGen.create(new RNode[1], null, null));
 
         }
         return args((RFunction) getNode.execute(frame, funName, (REnvironment) parentFrameNode.execute(frame, 1), RType.Function.getName(), RRuntime.LOGICAL_TRUE));

@@ -48,7 +48,7 @@ public abstract class Matrix extends RBuiltinNode {
     private RAbstractVector updateDimNames(VirtualFrame frame, RAbstractVector vector, Object o) {
         if (updateDimNames == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            updateDimNames = insert(UpdateDimNamesNodeGen.create(new RNode[2], getBuiltin(), getSuppliedSignature()));
+            updateDimNames = insert(UpdateDimNamesNodeGen.create(new RNode[2], null, null));
         }
         return (RAbstractVector) updateDimNames.executeRAbstractContainer(frame, vector, o);
     }
@@ -89,7 +89,7 @@ public abstract class Matrix extends RBuiltinNode {
         int[] dim = computeDimByRow(data.getLength(), nrow, ncol, missingNr, missingNc);
         if (transpose == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            transpose = insert(TransposeNodeGen.create(new RNode[1], getBuiltin(), getSuppliedSignature()));
+            transpose = insert(TransposeNodeGen.create(new RNode[1], null, null));
         }
         return (RAbstractVector) transpose.execute(frame, data.copyResizedWithDimensions(dim));
     }
@@ -100,7 +100,7 @@ public abstract class Matrix extends RBuiltinNode {
         int[] dim = computeDimByRow(data.getLength(), nrow, ncol, missingNr, missingNc);
         if (transpose == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            transpose = insert(TransposeNodeGen.create(new RNode[1], getBuiltin(), getSuppliedSignature()));
+            transpose = insert(TransposeNodeGen.create(new RNode[1], null, null));
         }
         RAbstractVector res = (RVector) transpose.execute(frame, data.copyResizedWithDimensions(dim));
         res = updateDimNames(frame, res, dimnames);

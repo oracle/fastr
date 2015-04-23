@@ -51,7 +51,7 @@ public abstract class Dim extends RBuiltinNode {
     private int dataFrameRowNames(VirtualFrame frame, RDataFrame operand) {
         if (shortRowNames == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            shortRowNames = insert(ShortRowNamesNodeGen.create(new RNode[2], getBuiltin(), getSuppliedSignature()));
+            shortRowNames = insert(ShortRowNamesNodeGen.create(new RNode[2], null, null));
         }
         return (int) shortRowNames.executeObject(frame, operand, 2);
     }

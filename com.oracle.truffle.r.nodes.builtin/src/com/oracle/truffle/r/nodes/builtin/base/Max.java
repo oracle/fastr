@@ -50,7 +50,7 @@ public final class Max extends RWrapperBuiltinNode {
     protected RNode createDelegate() {
         ReduceSemantics semantics = new ReduceSemantics(RRuntime.INT_MIN_VALUE, Double.NEGATIVE_INFINITY, false, RError.Message.NO_NONMISSING_MAX, RError.Message.NO_NONMISSING_MAX_NA, false, true);
         RNode[] args = getArguments();
-        Combine combine = CombineNodeGen.create(new RNode[]{args[0]}, getBuiltin(), ArgumentsSignature.empty(1));
+        Combine combine = CombineNodeGen.create(new RNode[]{args[0]}, null, null);
         return UnaryArithmeticReduceNodeGen.create(semantics, BinaryArithmetic.MAX, combine, args.length > 1 ? args[1] : ConstantNode.create(RRuntime.LOGICAL_FALSE));
     }
 }

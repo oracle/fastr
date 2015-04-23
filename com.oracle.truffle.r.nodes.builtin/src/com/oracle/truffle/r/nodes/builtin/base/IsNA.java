@@ -45,7 +45,7 @@ public abstract class IsNA extends RBuiltinNode {
     private Object isNARecursive(VirtualFrame frame, Object o) {
         if (recursiveIsNA == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            recursiveIsNA = insert(IsNANodeGen.create(new RNode[1], getBuiltin(), getSuppliedSignature()));
+            recursiveIsNA = insert(IsNANodeGen.create(new RNode[1], null, null));
         }
         return recursiveIsNA.execute(frame, o);
     }

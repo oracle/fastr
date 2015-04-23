@@ -56,7 +56,7 @@ public abstract class UpdateAttributes extends RInvisibleBuiltinNode {
     private void updateNames(VirtualFrame frame, RAbstractContainer container, Object o) {
         if (updateNames == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            updateNames = insert(UpdateNamesNodeGen.create(new RNode[2], getBuiltin(), getSuppliedSignature()));
+            updateNames = insert(UpdateNamesNodeGen.create(new RNode[2], null, null));
         }
         updateNames.executeStringVector(frame, container, o);
     }
@@ -64,7 +64,7 @@ public abstract class UpdateAttributes extends RInvisibleBuiltinNode {
     private void updateDimNames(VirtualFrame frame, RAbstractContainer container, Object o) {
         if (updateDimNames == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            updateDimNames = insert(UpdateDimNamesNodeGen.create(new RNode[2], getBuiltin(), getSuppliedSignature()));
+            updateDimNames = insert(UpdateDimNamesNodeGen.create(new RNode[2], null, null));
         }
         updateDimNames.executeRAbstractContainer(frame, container, o);
     }

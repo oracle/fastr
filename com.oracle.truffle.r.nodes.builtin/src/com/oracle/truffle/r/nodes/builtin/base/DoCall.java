@@ -60,7 +60,7 @@ public abstract class DoCall extends RBuiltinNode {
         } else if (what instanceof String || (what instanceof RAbstractStringVector && ((RAbstractStringVector) what).getLength() == 1)) {
             if (getNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                getNode = insert(GetNodeGen.create(new RNode[4], getBuiltin(), getSuppliedSignature()));
+                getNode = insert(GetNodeGen.create(new RNode[4], null, null));
             }
             func = (RFunction) getNode.execute(frame, what, env, RType.Function.getName(), RRuntime.LOGICAL_TRUE);
         } else {

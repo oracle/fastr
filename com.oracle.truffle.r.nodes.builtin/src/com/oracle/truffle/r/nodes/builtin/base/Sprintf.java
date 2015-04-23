@@ -165,7 +165,7 @@ public abstract class Sprintf extends RBuiltinNode {
         controlVisibility();
         if (sprintfRecursive == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            sprintfRecursive = insert(SprintfNodeGen.create(new RNode[2], getBuiltin(), getSuppliedSignature()));
+            sprintfRecursive = insert(SprintfNodeGen.create(new RNode[2], null, null));
         }
         return sprintfRecursive.executeObject(frame, fmt, args.getValues()[0]);
     }

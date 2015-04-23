@@ -66,7 +66,7 @@ public abstract class Combine extends RCastingBuiltinNode {
             return RNull.instance;
         }
 
-        boolean signatureHasNames = getSuppliedSignature().getNonNullCount() > 0;
+        boolean signatureHasNames = getSuppliedSignature() != null && getSuppliedSignature().getNonNullCount() > 0;
 
         CompilerAsserts.partialEvaluationConstant(signatureHasNames);
 
@@ -146,7 +146,7 @@ public abstract class Combine extends RCastingBuiltinNode {
     }
 
     protected Combine createRecursive() {
-        return CombineNodeGen.create(null, getBuiltin(), getSuppliedSignature());
+        return CombineNodeGen.create(null, null, null);
     }
 
     protected static CombineBinaryNode createFold(int precedence) {

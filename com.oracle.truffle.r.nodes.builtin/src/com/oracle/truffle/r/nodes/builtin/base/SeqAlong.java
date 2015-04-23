@@ -35,7 +35,7 @@ public abstract class SeqAlong extends RBuiltinNode {
 
     @CreateCast("arguments")
     public RNode[] createCastValue(RNode[] children) {
-        return new RNode[]{LengthNodeGen.create(new RNode[]{children[0]}, getBuiltin(), null)};
+        return new RNode[]{LengthNodeGen.create(new RNode[]{children[0]}, null, null)};
     }
 
     @Specialization

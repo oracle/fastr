@@ -56,7 +56,7 @@ public abstract class Paste extends RBuiltinNode {
     private RStringVector castCharacter(VirtualFrame frame, Object o) {
         if (asCharacterNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            asCharacterNode = insert(AsCharacterNodeGen.create(new RNode[1], this.getBuiltin(), getSuppliedSignature()));
+            asCharacterNode = insert(AsCharacterNodeGen.create(new RNode[1], null, null));
         }
         Object ret = asCharacterNode.execute(frame, o);
         if (ret instanceof String) {

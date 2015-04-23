@@ -53,7 +53,7 @@ public final class Sum extends RWrapperBuiltinNode {
     protected RNode createDelegate() {
         ReduceSemantics semantics = new ReduceSemantics(0, 0.0, true, null, null, true, false);
         RNode[] args = getArguments();
-        Combine combine = CombineNodeGen.create(new RNode[]{args[0]}, getBuiltin(), ArgumentsSignature.empty(1));
+        Combine combine = CombineNodeGen.create(new RNode[]{args[0]}, null, null);
         return UnaryArithmeticReduceNodeGen.create(semantics, BinaryArithmetic.ADD, combine, args.length > 1 ? args[1] : ConstantNode.create(RRuntime.LOGICAL_FALSE));
     }
 }
