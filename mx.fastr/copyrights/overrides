@@ -22,6 +22,9 @@ com.oracle.truffle.r.native/library/tools/src/tools.h,no.copyright
 com.oracle.truffle.r.native/library/tools/src/init.c,no.copyright
 com.oracle.truffle.r.native/library/utils/src/utils.h,no.copyright
 com.oracle.truffle.r.native/library/utils/src/init.c,no.copyright
+com.oracle.truffle.r.native/run/R.sh,oracle_bash.copyright
+com.oracle.truffle.r.native/run/Rscript.sh,oracle_bash.copyright
+com.oracle.truffle.r.native/run/Rscript_exec.sh,oracle_bash.copyright
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/function/CallMatcherNode.java,purdue.copyright
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/function/GroupDispatchNode.java,purdue.copyright
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/function/S3FunctionLookupNode.java,purdue.copyright
