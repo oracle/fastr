@@ -20,6 +20,7 @@ import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.gnur.*;
+import com.sun.corba.se.impl.javax.rmi.CORBA.*;
 
 /**
  * The details of error handling, including condition handling. Derived from GnUR src/main/errors.c.
@@ -150,7 +151,10 @@ public class RErrorHandling {
                 if (h == RESTART_TOKEN) {
                     errorcallDflt(fromCall(call), Message.GENERIC, msg);
                 } else {
-                    throw RInternalError.unimplemented();
+                    // TODO: temporary workaround just to prevent suppressMessages from failing -
+                    // what we really need to do is to evaluate the handler with proper arguments
+                    Utils.warn("condition signalling not fully supported");
+                    break;
                 }
             } else {
                 throw gotoExitingHandler(cond, call, entry);
