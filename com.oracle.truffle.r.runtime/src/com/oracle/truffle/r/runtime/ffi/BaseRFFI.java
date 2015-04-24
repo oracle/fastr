@@ -65,6 +65,11 @@ public interface BaseRFFI {
     String mkdtemp(String template);
 
     /**
+     * Change the file mode of {@code path}.
+     */
+    int chmod(String path, int mode);
+
+    /**
      * Open a DLL.
      *
      * @return {@code null} on error, opaque handle for following calls otherwise.

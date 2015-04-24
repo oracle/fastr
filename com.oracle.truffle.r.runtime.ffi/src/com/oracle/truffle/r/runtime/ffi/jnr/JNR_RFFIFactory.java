@@ -170,6 +170,10 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI, Stat
         }
     }
 
+    public int chmod(String path, int mode) {
+        return posix().chmod(path, mode);
+    }
+
     public long strtol(String s, int base) throws IllegalArgumentException {
         posix().errno(0);
         long result = libcx().strtol(s, null, base);

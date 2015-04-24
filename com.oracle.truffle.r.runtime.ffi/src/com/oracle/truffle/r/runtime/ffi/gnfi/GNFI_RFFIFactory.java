@@ -190,8 +190,11 @@ public class GNFI_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI {
     }
 
     public UtsName uname() {
-        RInternalError.unimplemented();
-        return null;
+        throw Utils.fail("uname not implemented");
+    }
+
+    public int chmod(String path, int mode) {
+        throw Utils.fail("chmod not implemented");
     }
 
 }
