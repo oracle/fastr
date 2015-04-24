@@ -610,6 +610,24 @@ public class ForeignFunctions {
             return matchName(f, "doTabExpand");
         }
 
+        @Specialization(guards = "isCodeFilesAppend(f)")
+        protected RLogicalVector codeFilesAppend(VirtualFrame frame, @SuppressWarnings("unused") RList f, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName) {
+            Object[] argValues = args.getValues();
+            RStringVector file1 = (RStringVector) castVector(frame, argValues[0]);
+            RStringVector file2 = (RStringVector) castVector(frame, argValues[1]);
+            if (file1.getLength() != 1) {
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "file1");
+            }
+            if (file2.getLength() < 1) {
+                return RDataFactory.createEmptyLogicalVector();
+            }
+            return Text.filesAppendLF(file1.getDataAt(0), file2);
+        }
+
+        public boolean isCodeFilesAppend(RList f) {
+            return matchName(f, "codeFilesAppend");
+        }
+
         @SuppressWarnings("unused")
         @Fallback
         protected Object dotCallFallback(Object fobj, Object args, Object packageName) {
