@@ -27,6 +27,7 @@ import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.builtin.base.SysFunctions.SysGlob;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -779,17 +780,44 @@ public class FileFunctions {
 
     @RBuiltin(name = "unlink", kind = INTERNAL, parameterNames = {"x", "recursive", "force"})
     public abstract static class Unlink extends RInvisibleBuiltinNode {
-        @SuppressWarnings("unused")
+        @CreateCast("arguments")
+        public RNode[] castArguments(RNode[] arguments) {
+            arguments[1] = CastLogicalNodeGen.create(arguments[1], true, false, false);
+            arguments[2] = CastLogicalNodeGen.create(arguments[2], true, false, false);
+            return arguments;
+        }
+
+        protected boolean checkLogical(byte value, String name) throws RError {
+            if (RRuntime.isNA(value)) {
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, name);
+            } else {
+                return RRuntime.fromLogical(value);
+            }
+        }
+
         @Specialization
         @TruffleBoundary
-        protected int doUnlink(RAbstractStringVector vec, byte recursive, byte force) {
-            // TODO casts
+        protected int doUnlink(RAbstractStringVector vec, byte recursiveArg, byte forceArg) {
+            @SuppressWarnings("unused")
+            boolean force = checkLogical(forceArg, "force");
+            boolean recursive = checkLogical(recursiveArg, "recursive");
             int result = 1;
             FileSystem fileSystem = FileSystems.getDefault();
             for (int i = -0; i < vec.getLength(); i++) {
-                Path path = fileSystem.getPath(Utils.tildeExpand(vec.getDataAt(i)));
-                if (Files.isDirectory(path)) {
+                String pathPattern = Utils.tildeExpand(vec.getDataAt(i));
+                if (pathPattern.length() == 0 || RRuntime.isNA(pathPattern)) {
                     continue;
+                }
+                if (SysGlob.containsGlobChar(pathPattern) >= 0) {
+                    throw RError.nyi(getEncapsulatingSourceSection(), "wildcards");
+                }
+                Path path = fileSystem.getPath(pathPattern);
+                if (Files.isDirectory(path)) {
+                    if (!recursive) {
+                        continue;
+                    } else {
+                        result = recursiveDelete(path);
+                    }
                 }
                 try {
                     Files.deleteIfExists(path);
@@ -798,6 +826,21 @@ public class FileFunctions {
                 }
             }
             return result;
+        }
+
+        private int recursiveDelete(Path path) {
+            try (DirectoryStream<Path> stream = Files.newDirectoryStream(path)) {
+                for (Path entry : stream) {
+                    if (Files.isDirectory(entry)) {
+                        recursiveDelete(entry);
+                    }
+                    Files.deleteIfExists(entry);
+                }
+                return 1;
+            } catch (IOException ex) {
+                return 0;
+            }
+
         }
 
         @SuppressWarnings("unused")
