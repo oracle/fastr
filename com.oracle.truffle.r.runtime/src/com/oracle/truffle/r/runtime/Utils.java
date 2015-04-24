@@ -24,6 +24,7 @@ package com.oracle.truffle.r.runtime;
 
 import java.io.*;
 import java.net.*;
+import java.nio.file.*;
 import java.util.*;
 
 import com.oracle.truffle.api.*;
@@ -199,11 +200,75 @@ public final class Utils {
         return userHome;
     }
 
+    private static final class WorkingDirectoryState {
+        /**
+         * The initial working directory on startup. This and {@link #current} are always absolute
+         * paths.
+         */
+        private final String initial;
+        private String current;
+
+        private WorkingDirectoryState() {
+            initial = System.getProperty("user.dir");
+            current = initial;
+        }
+
+        private String getCurrent() {
+            return current;
+        }
+
+        private void setCurrent(String path) {
+            current = path;
+        }
+
+        private boolean isInitial() {
+            return current.equals(initial);
+        }
+    }
+
+    /**
+     * Keeps a record of the current working directory as Java provides no way to change this AND
+     * many of the file methods that operate on relative paths work from the initial value.
+     */
+    private static WorkingDirectoryState wdState;
+
+    private static WorkingDirectoryState wdState() {
+        if (wdState == null) {
+            wdState = new WorkingDirectoryState();
+        }
+        return wdState;
+    }
+
+    public static void updateCurwd(String path) {
+        wdState().setCurrent(path);
+    }
+
+    /**
+     * Performs "~" expansion and also checks whether we need to take special case over relative
+     * paths due to the curwd having moved from the initial setting.
+     */
     public static String tildeExpand(String path) {
         if (path.length() > 0 && path.charAt(0) == '~') {
             return userHome() + path.substring(1);
         } else {
-            return path;
+            if (wdState().isInitial()) {
+                return path;
+            } else {
+                /*
+                 * This is moderately painful, as can't rely on most of the normal relative path
+                 * support in Java as much of it works relative to the initial setting.
+                 */
+                if (path.length() == 0) {
+                    return wdState().getCurrent();
+                } else {
+                    Path p = FileSystems.getDefault().getPath(path);
+                    if (p.isAbsolute()) {
+                        return path;
+                    } else {
+                        return FileSystems.getDefault().getPath(wdState().getCurrent(), path).toString();
+                    }
+                }
+            }
         }
     }
 
