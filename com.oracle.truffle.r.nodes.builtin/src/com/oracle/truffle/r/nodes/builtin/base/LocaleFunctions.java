@@ -80,6 +80,15 @@ public class LocaleFunctions {
             // TODO implement properly!!
             return locale;
         }
+
+        @SuppressWarnings("unused")
+        @TruffleBoundary
+        @Specialization
+        protected Object setLocale(RAbstractIntVector categoryVec, RNull locale) {
+            controlVisibility();
+            // TODO implement properly!!
+            return locale;
+        }
     }
 
     @RBuiltin(name = "Sys.localeconv", kind = RBuiltinKind.INTERNAL, parameterNames = {})
