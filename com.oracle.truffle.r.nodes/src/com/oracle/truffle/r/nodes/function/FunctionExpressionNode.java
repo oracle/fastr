@@ -36,6 +36,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.env.frame.*;
+import com.oracle.truffle.r.runtime.gnur.*;
 
 public final class FunctionExpressionNode extends RNode {
 
@@ -134,7 +135,15 @@ public final class FunctionExpressionNode extends RNode {
 
     @Override
     public void serialize(RSerialize.State state) {
-        ((FunctionDefinitionNode) callTarget.getRootNode()).serialize(state);
+        state.setAsBuiltin("function");
+        state.openPairList(SEXPTYPE.LISTSXP);
+        FunctionDefinitionNode fdn = (FunctionDefinitionNode) callTarget.getRootNode();
+        // Cannot just serialize fdn, as this needs to generate slightly different output
+        fdn.serializeFormals(state);
+        state.openPairList(SEXPTYPE.LISTSXP);
+        fdn.getBody().serialize(state);
+        state.setCdr(state.closePairList());
+        state.setCdr(state.closePairList());
     }
 
     @Override

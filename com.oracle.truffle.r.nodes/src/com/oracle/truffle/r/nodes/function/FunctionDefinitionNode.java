@@ -314,24 +314,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
      */
     @Override
     public void serialize(RSerialize.State state) {
-        FormalArguments formals = getFormalArguments();
-        int formalsLength = formals.getSignature().getLength();
-        if (formalsLength > 0) {
-            for (int i = 0; i < formalsLength; i++) {
-                RNode defaultArg = formals.getDefaultArgumentAt(i);
-                state.openPairList();
-                state.setTagAsSymbol(formals.getSignature().getName(i));
-                if (defaultArg != null) {
-                    state.serializeNodeSetCar(defaultArg);
-                } else {
-                    state.setCarMissing();
-                }
-            }
-            state.linkPairList(formalsLength);
-            state.setCar(state.closePairList());
-        } else {
-            state.setCar(RNull.instance);
-        }
+        serializeFormals(state);
         boolean hasBraces = hasBraces();
         if (hasBraces) {
             state.openBrace();
@@ -351,6 +334,27 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
             }
             state.setCdr(state.closePairList());
             state.setCdr(state.closePairList());
+        }
+    }
+
+    public void serializeFormals(RSerialize.State state) {
+        FormalArguments formals = getFormalArguments();
+        int formalsLength = formals.getSignature().getLength();
+        if (formalsLength > 0) {
+            for (int i = 0; i < formalsLength; i++) {
+                RNode defaultArg = formals.getDefaultArgumentAt(i);
+                state.openPairList();
+                state.setTagAsSymbol(formals.getSignature().getName(i));
+                if (defaultArg != null) {
+                    state.serializeNodeSetCar(defaultArg);
+                } else {
+                    state.setCarMissing();
+                }
+            }
+            state.linkPairList(formalsLength);
+            state.setCar(state.closePairList());
+        } else {
+            state.setCar(RNull.instance);
         }
     }
 

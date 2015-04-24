@@ -77,6 +77,7 @@ public class RDeparse {
     public static final int PREC_SUM = 9;
     public static final int PREC_PERCENT = 11;
     public static final int PREC_SIGN = 13;
+    public static final int PREC_DOLLAR = 15;
 
     public static class PPInfo {
         public final PP kind;
@@ -87,6 +88,10 @@ public class RDeparse {
             this.kind = kind;
             this.prec = prec;
             this.rightassoc = rightassoc;
+        }
+
+        PPInfo changePrec(int newPrec) {
+            return new PPInfo(kind, newPrec, rightassoc);
         }
 
     }
@@ -507,12 +512,21 @@ public class RDeparse {
                         }
                         switch (fop.kind) {
                             case ASSIGN: {
-                                // TODO needsparens
-                                deparse2buff(state, pl.car());
+                                Object left = pl.car();
+                                boolean parens = needsParens(fop, left, true);
+                                if (parens) {
+                                    state.append('(');
+                                }
+                                deparse2buff(state, left);
                                 state.append(' ');
                                 state.append(op);
                                 state.append(' ');
-                                deparse2buff(state, ((RPairList) pl.cdr()).car());
+                                Object right = pl.cadr();
+                                parens = needsParens(fop, right, false);
+                                deparse2buff(state, right);
+                                if (parens) {
+                                    state.append(')');
+                                }
                                 break;
                             }
 
@@ -575,8 +589,15 @@ public class RDeparse {
 
                             case BINARY:
                             case BINARY2: {
-                                // TODO parens
+                                Object left = pl.car();
+                                boolean parens = needsParens(fop, left, true);
+                                if (parens) {
+                                    state.append('(');
+                                }
                                 deparse2buff(state, pl.car());
+                                if (parens) {
+                                    state.append(')');
+                                }
                                 if (fop.kind == PP.BINARY) {
                                     state.append(' ');
                                 }
@@ -587,7 +608,15 @@ public class RDeparse {
                                 if (fop.kind == PP.BINARY) {
                                     lbreak = state.linebreak(lbreak);
                                 }
-                                deparse2buff(state, pl.cadr());
+                                Object right = pl.cadr();
+                                parens = needsParens(fop, right, false);
+                                if (parens) {
+                                    state.append('(');
+                                }
+                                deparse2buff(state, right);
+                                if (parens) {
+                                    state.append(')');
+                                }
                                 if (fop.kind == PP.BINARY) {
                                     if (lbreak) {
                                         state.indent--;
@@ -599,7 +628,15 @@ public class RDeparse {
 
                             case UNARY: {
                                 state.append(op);
-                                deparse2buff(state, pl.car());
+                                Object left = pl.car();
+                                boolean parens = needsParens(fop, left, true);
+                                if (parens) {
+                                    state.append('(');
+                                }
+                                deparse2buff(state, left);
+                                if (parens) {
+                                    state.append(')');
+                                }
                                 break;
                             }
 
@@ -646,10 +683,29 @@ public class RDeparse {
                                 break;
 
                             case DOLLAR: {
-                                // TODO needparens, etc
-                                deparse2buff(state, pl.car());
+                                Object left = pl.car();
+                                boolean parens = needsParens(fop, left, true);
+                                if (parens) {
+                                    state.append('(');
+                                }
+                                deparse2buff(state, left);
+                                if (parens) {
+                                    state.append(')');
+                                }
                                 state.append(op);
-                                deparse2buff(state, pl.cadr());
+                                Object right = pl.cadr();
+                                if (right instanceof RSymbol) {
+                                    deparse2buff(state, right);
+                                } else {
+                                    parens = needsParens(fop, right, true);
+                                    if (parens) {
+                                        state.append('(');
+                                    }
+                                    deparse2buff(state, right);
+                                    if (parens) {
+                                        state.append(')');
+                                    }
+                                }
                                 break;
                             }
 
@@ -694,8 +750,13 @@ public class RDeparse {
                         }
                     }
                 } else if (carType == SEXPTYPE.CLOSXP || carType == SEXPTYPE.SPECIALSXP || carType == SEXPTYPE.BUILTINSXP) {
-                    // TODO needparens, etc
-                    deparse2buff(state, car);
+                    if (parenthesizeCaller(car)) {
+                        state.append('(');
+                        deparse2buff(state, car);
+                        state.append(')');
+                    } else {
+                        deparse2buff(state, car);
+                    }
                     state.append('(');
                     args2buff(state, cdr, false, false);
                     state.append(')');
@@ -781,9 +842,42 @@ public class RDeparse {
         return false;
     }
 
-    @SuppressWarnings("unused")
+    /**
+     * Check for whether we need to parenthesize a caller. The unevaluated ones are tricky: We want
+     * 
+     * <pre>
+     *  x$f(z)
+     *  x[n](z)
+     *  base::mean(x)
+     * </pre>
+     * 
+     * but <pre< (f+g)(z) (function(x) 1)(x) </pre> etc.
+     */
     private static boolean parenthesizeCaller(Object s) {
-        // TODO implement
+        if (s instanceof RPairList) {
+            RPairList pl = (RPairList) s;
+            if (pl.getType() == SEXPTYPE.CLOSXP) {
+                return true;
+            } else if (pl.getType() == SEXPTYPE.LANGSXP) {
+                Object car = pl.car();
+                if (car instanceof RSymbol) {
+                    String op = ((RSymbol) car).getName();
+                    if (isUserBinop(op)) {
+                        return true;
+                    }
+                    if (RContext.getEngine().isPrimitiveBuiltin(op)) {
+                        PPInfo info = ppInfo(op);
+                        if (info.prec >= PREC_DOLLAR || info.kind == PP.FUNCALL || info.kind == PP.PAREN || info.kind == PP.CURLY) {
+                            return true;
+                        }
+                    }
+                    return false;
+                } else {
+                    return true;
+                }
+
+            }
+        }
         return false;
     }
 
@@ -811,11 +905,76 @@ public class RDeparse {
 
     }
 
-    @SuppressWarnings("unused")
-    private static boolean needsParens(PPInfo mainop, Object arg, boolean isLeft) {
-        // TODO
-        assert false;
+    /**
+     * Check for needing parentheses in expressions. needsparens looks at an arg to a unary or
+     * binary operator to determine if it needs to be parenthesized when deparsed.{@code mainop} is
+     * a unary or binary operator, {@code arg} is an argument to it, on the left if
+     * {@code left == true}.
+     */
+    private static boolean needsParens(PPInfo mainop, Object arg, boolean left) {
+        if (arg instanceof RPairList) {
+            RPairList pl = (RPairList) arg;
+            if (pl.getType() == SEXPTYPE.LANGSXP) {
+                Object car = pl.car();
+                if (car instanceof RSymbol) {
+                    String op = ((RSymbol) car).getName();
+                    if (RContext.getEngine().isPrimitiveBuiltin(op)) {
+                        PPInfo arginfo = ppInfo(op);
+                        switch (arginfo.kind) {
+                            case BINARY:
+                            case BINARY2: {
+                                switch (pl.getLength()) {
+                                    case 1:
+                                        if (!left) {
+                                            return false;
+                                        }
+                                        if (arginfo.prec == PREC_SUM) {
+                                            arginfo = arginfo.changePrec(PREC_SIGN);
+                                        }
+                                        break;
+                                    case 2:
+                                        break;
+                                    default:
+                                        return false;
+                                }
+                                return checkPrec(mainop, arginfo, left);
+                            }
+
+                            case ASSIGN:
+                            case SUBSET:
+                            case UNARY:
+                            case DOLLAR:
+                                return checkPrec(mainop, arginfo, left);
+
+                            case FOR:
+                            case IF:
+                            case WHILE:
+                            case REPEAT:
+                                return left;
+                            default:
+                                return false;
+                        }
+                    } else if (isUserBinop(op)) {
+                        if (mainop.prec == PREC_PERCENT || (mainop.prec == PREC_PERCENT && left == mainop.rightassoc)) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        } else if (isComplexLengthOne(arg)) {
+            if (mainop.prec > PREC_SUM || (mainop.prec == PREC_SUM && left == mainop.rightassoc)) {
+                return true;
+            }
+        }
         return false;
+    }
+
+    private static boolean checkPrec(PPInfo mainop, PPInfo arginfo, boolean left) {
+        return mainop.prec > arginfo.prec || (mainop.prec == arginfo.prec && left == mainop.rightassoc);
+    }
+
+    private static boolean isComplexLengthOne(Object arg) {
+        return ((arg instanceof RComplexVector && ((RComplexVector) arg).getLength() == 1) || arg instanceof RComplex);
     }
 
     @TruffleBoundary

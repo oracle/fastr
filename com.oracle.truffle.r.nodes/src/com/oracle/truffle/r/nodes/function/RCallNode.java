@@ -30,6 +30,7 @@ import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.access.variables.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.function.MatchedArguments.MatchedArgumentsNode;
@@ -222,8 +223,29 @@ public abstract class RCallNode extends RNode {
     @Override
     public void serialize(RSerialize.State state) {
         state.setAsLangType();
-        state.serializeNodeSetCar(getFunctionNode());
-        state.serializeNodeSetCdr(getArgumentsNode(), SEXPTYPE.LISTSXP);
+        RNode functionNode = getFunctionNode();
+        state.serializeNodeSetCar(functionNode);
+        if (isColon(functionNode)) {
+            // special case, have to translate Strings to Symbols
+            state.openPairList();
+            RNode[] args = getArgumentsNode().getArguments();
+            state.setCarAsSymbol((String) ((ConstantNode) args[0]).getValue());
+            state.openPairList();
+            state.setCarAsSymbol((String) ((ConstantNode) args[1]).getValue());
+            state.linkPairList(2);
+            state.setCdr(state.closePairList());
+        } else {
+            state.serializeNodeSetCdr(getArgumentsNode(), SEXPTYPE.LISTSXP);
+        }
+    }
+
+    private static boolean isColon(RNode node) {
+        if (node instanceof ReadVariableNode) {
+            ReadVariableNode rvn = (ReadVariableNode) node;
+            String name = rvn.getIdentifier();
+            return name.equals("::") || name.equals(":::");
+        }
+        return false;
     }
 
     @Override
