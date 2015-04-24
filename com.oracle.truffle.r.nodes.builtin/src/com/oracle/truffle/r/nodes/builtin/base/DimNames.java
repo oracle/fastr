@@ -27,6 +27,7 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
@@ -43,6 +44,10 @@ public abstract class DimNames extends RBuiltinNode {
     @Child private UseMethodInternalNode dcn;
 
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+    private final ConditionProfile nullProfile = ConditionProfile.createBinaryProfile();
+    private final BranchProfile dataframeProfile = BranchProfile.create();
+    private final BranchProfile factorProfile = BranchProfile.create();
+    private final BranchProfile otherProfile = BranchProfile.create();
 
     @Specialization
     protected RNull getDimNames(RNull operand) {
@@ -50,17 +55,15 @@ public abstract class DimNames extends RBuiltinNode {
         return operand;
     }
 
-    @Specialization(guards = {"!isNull(container)", "!isObject(frame, container)"})
-    protected RList getDimNames(@SuppressWarnings("unused") VirtualFrame frame, RAbstractContainer container) {
-        controlVisibility();
-        return container.getDimNames(attrProfiles);
+    private Object checkNull(RList names) {
+        return nullProfile.profile(names == null) ? RNull.instance : names;
     }
 
-    @Specialization(guards = {"isNull(vector)", "!isObject(frame, vector)"})
-    @SuppressWarnings("unused")
-    protected RNull getDimNamesNull(VirtualFrame frame, RAbstractContainer vector) {
+    @Specialization(guards = "!isObject(frame, container)")
+    protected Object getDimNames(@SuppressWarnings("unused") VirtualFrame frame, RAbstractContainer container) {
         controlVisibility();
-        return RNull.instance;
+        RList names = container.getDimNames(attrProfiles);
+        return checkNull(names);
     }
 
     @Specialization(guards = "isObject(frame, container)")
@@ -73,7 +76,18 @@ public abstract class DimNames extends RBuiltinNode {
         try {
             return dcn.execute(frame, container.getClassHierarchy(), new Object[]{container});
         } catch (S3FunctionLookupNode.NoGenericMethodException e) {
-            return isNull(container) ? RNull.instance : container.getDimNames(attrProfiles);
+            RList names = null;
+            if (container instanceof RDataFrame) {
+                dataframeProfile.enter();
+                names = ((RDataFrame) container).getVector().getDimNames();
+            } else if (container instanceof RFactor) {
+                factorProfile.enter();
+                names = ((RFactor) container).getVector().getDimNames();
+            } else {
+                otherProfile.enter();
+                names = container.getDimNames(attrProfiles);
+            }
+            return checkNull(names);
         }
     }
 
@@ -85,5 +99,4 @@ public abstract class DimNames extends RBuiltinNode {
     protected boolean isObject(VirtualFrame frame, RAbstractContainer container) {
         return container.isObject(attrProfiles) && !(RArguments.getS3Args(frame) != null && RArguments.getS3Args(frame).generic == NAME);
     }
-
 }
