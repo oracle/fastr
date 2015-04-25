@@ -225,6 +225,7 @@ public class BasePackage extends RBuiltinPackage {
         add(ForeignFunctions.Fortran.class, ForeignFunctionsFactory.FortranNodeGen::create);
         add(Formals.class, FormalsNodeGen::create);
         add(Format.class, FormatNodeGen::create);
+        add(FormatC.class, FormatCNodeGen::create);
         add(FrameFunctions.MatchCall.class, FrameFunctionsFactory.MatchCallNodeGen::create);
         add(FrameFunctions.ParentFrame.class, FrameFunctionsFactory.ParentFrameNodeGen::create);
         add(FrameFunctions.SysCall.class, FrameFunctionsFactory.SysCallNodeGen::create);
