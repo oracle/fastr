@@ -239,9 +239,11 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
                 throw RInternalError.unimplemented("The \"class\" attribute should be reset using a separate method");
             } else {
                 attributes.remove(name);
-            }
-            if (attributes.size() == 0) {
-                attributes = null;
+                // nullify only here because other methods invoke removeAttributeMapping which does
+                // it already
+                if (attributes.size() == 0) {
+                    attributes = null;
+                }
             }
         }
     }
