@@ -30,8 +30,6 @@ public class TestrGenBuiltinrownames extends TestBase {
 
     @Test
     public void testrownames3() {
-        assertEval(Ignored.Unknown, "argv <- structure(list(x = structure(list(x = 3:4), .Names = 'x',     row.names = c(NA, -2L), class = 'data.frame')), .Names = 'x');"
-                        + "do.call('rownames', argv)");
+        assertEval("argv <- structure(list(x = structure(list(x = 3:4), .Names = 'x',     row.names = c(NA, -2L), class = 'data.frame')), .Names = 'x');" + "do.call('rownames', argv)");
     }
-
 }

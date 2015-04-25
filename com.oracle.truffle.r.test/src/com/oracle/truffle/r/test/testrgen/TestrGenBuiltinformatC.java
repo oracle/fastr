@@ -2,7 +2,7 @@
  * This material is distributed under the GNU General Public License
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
- * 
+ *
  * Copyright (c) 2014, Purdue University
  * Copyright (c) 2014, Oracle and/or its affiliates
  *
@@ -42,8 +42,7 @@ public class TestrGenBuiltinformatC extends TestBase {
 
     @Test
     public void testformatC5() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(c(-3, -2, -1, 0, 1, 2, 3), 'double', 1L, 4L, 'g', '', c(12L, 12L, 12L, 12L, 12L, 12L, 12L)); .Internal(formatC(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+        assertEval("argv <- list(c(-3, -2, -1, 0, 1, 2, 3), 'double', 1L, 4L, 'g', '', c(12L, 12L, 12L, 12L, 12L, 12L, 12L)); .Internal(formatC(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
@@ -53,8 +52,7 @@ public class TestrGenBuiltinformatC extends TestBase {
 
     @Test
     public void testformatC7() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(c(0, 25, 50, 75, 100), 'double', 1, 7L, 'fg', '', c(16L, 15L, 15L, 15L, 15L)); .Internal(formatC(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+        assertEval("argv <- list(c(0, 25, 50, 75, 100), 'double', 1, 7L, 'fg', '', c(16L, 15L, 15L, 15L, 15L)); .Internal(formatC(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
@@ -71,14 +69,12 @@ public class TestrGenBuiltinformatC extends TestBase {
 
     @Test
     public void testformatC10() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(c(20, 30, 40, 50, 60, 70, 80, 90, 100), 'double', 1, 7L, 'fg', '', c(15L, 15L, 15L, 15L, 15L, 15L, 15L, 15L, 15L)); .Internal(formatC(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+        assertEval("argv <- list(c(20, 30, 40, 50, 60, 70, 80, 90, 100), 'double', 1, 7L, 'fg', '', c(15L, 15L, 15L, 15L, 15L, 15L, 15L, 15L, 15L)); .Internal(formatC(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
     public void testformatC11() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(c(0, 25, 50, 75, 100), 'double', 1, 6L, 'fg', '', c(14L, 13L, 13L, 13L, 13L)); .Internal(formatC(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+        assertEval("argv <- list(c(0, 25, 50, 75, 100), 'double', 1, 6L, 'fg', '', c(14L, 13L, 13L, 13L, 13L)); .Internal(formatC(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test

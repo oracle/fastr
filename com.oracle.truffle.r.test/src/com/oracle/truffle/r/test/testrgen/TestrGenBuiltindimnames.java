@@ -54,8 +54,7 @@ public class TestrGenBuiltindimnames extends TestBase {
 
     @Test
     public void testdimnames8() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(list(visible = c(TRUE, TRUE, TRUE, TRUE, TRUE), from = structure(c(2L, 2L, 2L, 2L, 2L), .Label = c('CheckExEnv', 'package:base', 'package:datasets', 'package:graphics', 'package:grDevices', 'package:methods', 'package:stats', 'package:utils'), class = 'factor')), .Names = c('visible', 'from'), row.names = c('[[.data.frame', '[[.Date', '[[.factor', '[[.numeric_version', '[[.POSIXct'), class = 'data.frame'));dimnames(argv[[1]]);");
+        assertEval("argv <- list(structure(list(visible = c(TRUE, TRUE, TRUE, TRUE, TRUE), from = structure(c(2L, 2L, 2L, 2L, 2L), .Label = c('CheckExEnv', 'package:base', 'package:datasets', 'package:graphics', 'package:grDevices', 'package:methods', 'package:stats', 'package:utils'), class = 'factor')), .Names = c('visible', 'from'), row.names = c('[[.data.frame', '[[.Date', '[[.factor', '[[.numeric_version', '[[.POSIXct'), class = 'data.frame'));dimnames(argv[[1]]);");
     }
 
     @Test
@@ -65,14 +64,12 @@ public class TestrGenBuiltindimnames extends TestBase {
 
     @Test
     public void testdimnames10() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(list(Ozone = c(41L, 36L, 12L, 18L, NA, 28L, 23L, 19L, 8L, NA, 7L, 16L, 11L, 14L, 18L, 14L, 34L, 6L, 30L, 11L, 1L, 11L, 4L, 32L, NA, NA, NA, 23L, 45L, 115L, 37L), Solar.R = c(190L, 118L, 149L, 313L, NA, NA, 299L, 99L, 19L, 194L, NA, 256L, 290L, 274L, 65L, 334L, 307L, 78L, 322L, 44L, 8L, 320L, 25L, 92L, 66L, 266L, NA, 13L, 252L, 223L, 279L), Wind = c(7.4, 8, 12.6, 11.5, 14.3, 14.9, 8.6, 13.8, 20.1, 8.6, 6.9, 9.7, 9.2, 10.9, 13.2, 11.5, 12, 18.4, 11.5, 9.7, 9.7, 16.6, 9.7, 12, 16.6, 14.9, 8, 12, 14.9, 5.7, 7.4), Temp = c(67L, 72L, 74L, 62L, 56L, 66L, 65L, 59L, 61L, 69L, 74L, 69L, 66L, 68L, 58L, 64L, 66L, 57L, 68L, 62L, 59L, 73L, 61L, 61L, 57L, 58L, 57L, 67L, 81L, 79L, 76L), Month = c(5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L), Day = 1:31, Oz.Z = c(0.782229292792786, 0.557251841325834, -0.522639925715534, -0.252666983955192, NA, 0.197287918978711, -0.0276895324882403, -0.207671493661802, -0.702621886889095, NA, -0.747617377182486, -0.342657964541973, -0.567635416008924, -0.432648945128753, -0.252666983955192, -0.432648945128753, 0.467260860739053, -0.792612867475876, 0.287278899565492, -0.567635416008924, -1.01759031894283, -0.567635416008924, -0.882603848062657, 0.377269880152273, NA, NA, NA, -0.0276895324882403, 0.962211253966347, 4.11189557450367, 0.602247331619224)), .Names = c('Ozone', 'Solar.R', 'Wind', 'Temp', 'Month', 'Day', 'Oz.Z'), row.names = c(NA, 31L), class = 'data.frame'));dimnames(argv[[1]]);");
+        assertEval("argv <- list(structure(list(Ozone = c(41L, 36L, 12L, 18L, NA, 28L, 23L, 19L, 8L, NA, 7L, 16L, 11L, 14L, 18L, 14L, 34L, 6L, 30L, 11L, 1L, 11L, 4L, 32L, NA, NA, NA, 23L, 45L, 115L, 37L), Solar.R = c(190L, 118L, 149L, 313L, NA, NA, 299L, 99L, 19L, 194L, NA, 256L, 290L, 274L, 65L, 334L, 307L, 78L, 322L, 44L, 8L, 320L, 25L, 92L, 66L, 266L, NA, 13L, 252L, 223L, 279L), Wind = c(7.4, 8, 12.6, 11.5, 14.3, 14.9, 8.6, 13.8, 20.1, 8.6, 6.9, 9.7, 9.2, 10.9, 13.2, 11.5, 12, 18.4, 11.5, 9.7, 9.7, 16.6, 9.7, 12, 16.6, 14.9, 8, 12, 14.9, 5.7, 7.4), Temp = c(67L, 72L, 74L, 62L, 56L, 66L, 65L, 59L, 61L, 69L, 74L, 69L, 66L, 68L, 58L, 64L, 66L, 57L, 68L, 62L, 59L, 73L, 61L, 61L, 57L, 58L, 57L, 67L, 81L, 79L, 76L), Month = c(5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L), Day = 1:31, Oz.Z = c(0.782229292792786, 0.557251841325834, -0.522639925715534, -0.252666983955192, NA, 0.197287918978711, -0.0276895324882403, -0.207671493661802, -0.702621886889095, NA, -0.747617377182486, -0.342657964541973, -0.567635416008924, -0.432648945128753, -0.252666983955192, -0.432648945128753, 0.467260860739053, -0.792612867475876, 0.287278899565492, -0.567635416008924, -1.01759031894283, -0.567635416008924, -0.882603848062657, 0.377269880152273, NA, NA, NA, -0.0276895324882403, 0.962211253966347, 4.11189557450367, 0.602247331619224)), .Names = c('Ozone', 'Solar.R', 'Wind', 'Temp', 'Month', 'Day', 'Oz.Z'), row.names = c(NA, 31L), class = 'data.frame'));dimnames(argv[[1]]);");
     }
 
     @Test
     public void testdimnames11() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(list(c0 = structure(integer(0), .Label = character(0), class = 'factor')), .Names = 'c0', row.names = character(0), class = 'data.frame'));dimnames(argv[[1]]);");
+        assertEval("argv <- list(structure(list(c0 = structure(integer(0), .Label = character(0), class = 'factor')), .Names = 'c0', row.names = character(0), class = 'data.frame'));dimnames(argv[[1]]);");
     }
 
     @Test
@@ -108,8 +105,7 @@ public class TestrGenBuiltindimnames extends TestBase {
 
     @Test
     public void testdimnames18() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(list(Ozone = c(39L, 9L, 16L, 78L, 35L, 66L, 122L, 89L, 110L, NA, NA, 44L, 28L, 65L, NA, 22L, 59L, 23L, 31L, 44L, 21L, 9L, NA, 45L, 168L, 73L, NA, 76L, 118L, 84L, 85L), Solar.R = c(83L, 24L, 77L, NA, NA, NA, 255L, 229L, 207L, 222L, 137L, 192L, 273L, 157L, 64L, 71L, 51L, 115L, 244L, 190L, 259L, 36L, 255L, 212L, 238L, 215L, 153L, 203L, 225L, 237L, 188L), Wind = c(6.9, 13.8, 7.4, 6.9, 7.4, 4.6, 4, 10.3, 8, 8.6, 11.5, 11.5, 11.5, 9.7, 11.5, 10.3, 6.3, 7.4, 10.9, 10.3, 15.5, 14.3, 12.6, 9.7, 3.4, 8, 5.7, 9.7, 2.3, 6.3, 6.3), Temp = c(81L, 81L, 82L, 86L, 85L, 87L, 89L, 90L, 90L, 92L, 86L, 86L, 82L, 80L, 79L, 77L, 79L, 76L, 78L, 78L, 77L, 72L, 75L, 79L, 81L, 86L, 88L, 97L, 94L, 96L, 94L), Month = c(8L, 8L, 8L, 8L, 8L, 8L, 8L, 8L, 8L, 8L, 8L, 8L, 8L, 8L, 8L, 8L, 8L, 8L, 8L, 8L, 8L, 8L, 8L, 8L, 8L, 8L, 8L, 8L, 8L, 8L, 8L), Day = 1:31, Oz.Z = c(-0.528248463997741, -1.28427378861836, -1.10786787954022, 0.454584458009066, -0.629051840613824, 0.152174328160817, 1.56342160078598, 0.731793743703293, 1.26101147093773, NA, NA, -0.402244243227638, -0.805457749691969, 0.126973484006797, NA, -0.956662814616093, -0.0242315809173275, -0.931461970462072, -0.729855217229907, -0.402244243227638, -0.981863658770114, -1.28427378861836, NA, -0.377043399073617, 2.72266043187093, 0.328580237238962, NA, 0.404182769701024, 1.46261822416989, 0.60578952293319, 0.63099036708721)), .Names = c('Ozone', 'Solar.R', 'Wind', 'Temp', 'Month', 'Day', 'Oz.Z'), row.names = 93:123, class = 'data.frame'));dimnames(argv[[1]]);");
+        assertEval("argv <- list(structure(list(Ozone = c(39L, 9L, 16L, 78L, 35L, 66L, 122L, 89L, 110L, NA, NA, 44L, 28L, 65L, NA, 22L, 59L, 23L, 31L, 44L, 21L, 9L, NA, 45L, 168L, 73L, NA, 76L, 118L, 84L, 85L), Solar.R = c(83L, 24L, 77L, NA, NA, NA, 255L, 229L, 207L, 222L, 137L, 192L, 273L, 157L, 64L, 71L, 51L, 115L, 244L, 190L, 259L, 36L, 255L, 212L, 238L, 215L, 153L, 203L, 225L, 237L, 188L), Wind = c(6.9, 13.8, 7.4, 6.9, 7.4, 4.6, 4, 10.3, 8, 8.6, 11.5, 11.5, 11.5, 9.7, 11.5, 10.3, 6.3, 7.4, 10.9, 10.3, 15.5, 14.3, 12.6, 9.7, 3.4, 8, 5.7, 9.7, 2.3, 6.3, 6.3), Temp = c(81L, 81L, 82L, 86L, 85L, 87L, 89L, 90L, 90L, 92L, 86L, 86L, 82L, 80L, 79L, 77L, 79L, 76L, 78L, 78L, 77L, 72L, 75L, 79L, 81L, 86L, 88L, 97L, 94L, 96L, 94L), Month = c(8L, 8L, 8L, 8L, 8L, 8L, 8L, 8L, 8L, 8L, 8L, 8L, 8L, 8L, 8L, 8L, 8L, 8L, 8L, 8L, 8L, 8L, 8L, 8L, 8L, 8L, 8L, 8L, 8L, 8L, 8L), Day = 1:31, Oz.Z = c(-0.528248463997741, -1.28427378861836, -1.10786787954022, 0.454584458009066, -0.629051840613824, 0.152174328160817, 1.56342160078598, 0.731793743703293, 1.26101147093773, NA, NA, -0.402244243227638, -0.805457749691969, 0.126973484006797, NA, -0.956662814616093, -0.0242315809173275, -0.931461970462072, -0.729855217229907, -0.402244243227638, -0.981863658770114, -1.28427378861836, NA, -0.377043399073617, 2.72266043187093, 0.328580237238962, NA, 0.404182769701024, 1.46261822416989, 0.60578952293319, 0.63099036708721)), .Names = c('Ozone', 'Solar.R', 'Wind', 'Temp', 'Month', 'Day', 'Oz.Z'), row.names = 93:123, class = 'data.frame'));dimnames(argv[[1]]);");
     }
 
     @Test
@@ -124,8 +120,7 @@ public class TestrGenBuiltindimnames extends TestBase {
 
     @Test
     public void testdimnames21() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(list(Df = c(NA, 1, 1, 2), Deviance = c(12.2441566485997, 32.825622681839, 8.44399377410362, 11.9670615295804), AIC = c(73.9421143635373, 92.5235803967766, 72.1419514890412, 77.665019244518)), .Names = c('Df', 'Deviance', 'AIC'), row.names = c('<none>', '- M.user', '+ Temp', '+ Soft'), class = c('anova', 'data.frame')));dimnames(argv[[1]]);");
+        assertEval("argv <- list(structure(list(Df = c(NA, 1, 1, 2), Deviance = c(12.2441566485997, 32.825622681839, 8.44399377410362, 11.9670615295804), AIC = c(73.9421143635373, 92.5235803967766, 72.1419514890412, 77.665019244518)), .Names = c('Df', 'Deviance', 'AIC'), row.names = c('<none>', '- M.user', '+ Temp', '+ Soft'), class = c('anova', 'data.frame')));dimnames(argv[[1]]);");
     }
 
     @Test
