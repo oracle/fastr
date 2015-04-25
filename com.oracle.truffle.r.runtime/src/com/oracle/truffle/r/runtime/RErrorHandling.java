@@ -20,7 +20,6 @@ import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.gnur.*;
-import com.sun.corba.se.impl.javax.rmi.CORBA.*;
 
 /**
  * The details of error handling, including condition handling. Derived from GnUR src/main/errors.c.
