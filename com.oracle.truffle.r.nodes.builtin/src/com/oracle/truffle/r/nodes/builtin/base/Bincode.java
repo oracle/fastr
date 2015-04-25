@@ -55,7 +55,7 @@ public abstract class Bincode extends RBuiltinNode {
             errorProfile.enter();
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "include.lowest");
         }
-        boolean include_border = RRuntime.fromLogical(includeLowestVec.getDataAt(0));
+        boolean includeBorder = RRuntime.fromLogical(includeLowestVec.getDataAt(0));
 
         int lo;
         int hi;
@@ -79,7 +79,7 @@ public abstract class Bincode extends RBuiltinNode {
             if (!naCheck.check(x.getDataAt(i))) {
                 lo = 0;
                 hi = nb1;
-                if (x.getDataAt(i) < breaks.getDataAt(lo) || breaks.getDataAt(hi) < x.getDataAt(i) || (x.getDataAt(i) == breaks.getDataAt(lft ? hi : lo) && !include_border)) {
+                if (x.getDataAt(i) < breaks.getDataAt(lo) || breaks.getDataAt(hi) < x.getDataAt(i) || (x.getDataAt(i) == breaks.getDataAt(lft ? hi : lo) && !includeBorder)) {
                     complete = false;
                     continue;
                 } else {
