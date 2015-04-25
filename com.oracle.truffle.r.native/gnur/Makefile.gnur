@@ -40,8 +40,6 @@
 
 OSNAME := $(shell uname)
 
-$(info cmd=$(MAKECMDGOALS))
-
 ifeq ($(OSNAME), Linux)
   FORCE_PIC := true
 else ifeq ($(OSNAME), SunOS)
@@ -60,22 +58,28 @@ ifeq ($(OSNAME), SunOS)
 #
 # Configuring GnuR for Solaris is slightly complicated for three reasons:
 # 1. the default iconv utility is inadequate and has to be replaced by Gnu iconv
-# 2. there is a choice of compilers, gcc or solaris studio, the latter requiring
-#    more configuration options
-# 3. Solaris runs on x64 and Sparc
-#
-# Currently we only support gcc and x64 (gcc assumed to be on the PATH)
+# 2. the solaris studio compilers must be used, assumed to be on the PATH
+# 3. Solaris runs on x64 and Sparc and the configure options are different
 #
     OS_ARCH := $(shell uname -p)
-    ifneq ($(OS_ARCH), i386)
-        $(error Solaris/SPARC not supported)
+    SSTUDIO_HOME := $(shell which cc | sed s/bin\\/*cc//g)
+    FLIBS_COMMON := -lsunimath -lfai -lsunmath -lmtsk
+    ifeq ($(OS_ARCH), i386)
+        SUB_ARCH := amd64
+        FLIBS_SUB_ARCH := $(SSTUDIO_HOME)prod/lib/$(SUB_ARCH)/libfsu.so.1 $(SSTUDIO_HOME)prod/lib/$(SUB_ARCH)/libfui.so.2
+    else
+        SUB_ARCH := sparc/64
+        FLIBS_SUB_ARCH := -lifai -lfai2 -lfsumai -lfprodai -lfminlai -lfmaxlai -lfminvai -lfmaxvai -lfui $(SSTUDIO_HOME)prod/lib/$(SUB_ARCH)/libfsu.so.1
     endif
     ICONV := libiconv-1.14
     $(shell mkdir -p iconv_install)
     ICONV_INSTALL := $(abspath iconv_install)
-    $(info ICONV_INSTALL=$(ICONV_INSTALL))
-    ICONV_FLAGS := "-L$(ICONV_INSTALL)/lib -I$(ICONV_INSTALL)/include"
-    ICONV_CONFIG_FLAGS := CFLAGS=$(ICONV_FLAGS) CPPFLAGS=$(ICONV_FLAGS) LDFLAGS=$(ICONV_FLAGS)
+    ICONV_FLAGS := "-m64 -xcode=pic32 -L$(ICONV_INSTALL)/lib -I$(ICONV_INSTALL)/include"
+    ICONV_CONFIG_FLAGS := CC=cc CXX=CC CFLAGS=$(ICONV_FLAGS) LDFLAGS=$(ICONV_FLAGS)
+# required for Solaris compiler >=12.2, see Appendix C of R installation guide: 
+# http://cran.r-project.org/doc/manuals/r-release/R-admin.html#Solaris 
+    GNUR_FLIBS := FLIBS="-R$(SSTUDIO_HOME)prod/lib/$(SUB_ARCH) $(FLIBS_COMMON) $(FLIBS_SUB_ARCH)"
+    GNUR_CONFIG_FLAGS := $(ICONV_CONFIG_FLAGS) CPPFLAGS=$(ICONV_FLAGS) $(GNUR_FLIBS) F77="sunf95 -m64 -xcode=pic32"
 
 iconv: $(ICONV) iconv_config iconv_build
 
@@ -90,10 +94,11 @@ $(ICONV)/Makefile:
 iconv_build: $(ICONV)/lib/libcharset.so
 
 $(ICONV)/lib/libcharset.so:
-	(cd $(ICONV); $(MAKE) && $(MAKE) install > iconv_make.log 2>&1)
+	(cd $(ICONV); $(MAKE) MAKE=$(MAKE) && $(MAKE) MAKE=$(MAKE) install > iconv_make.log 2>&1)
 else
 iconv:
 endif
+# end SunOS
 
 config: $(GNUR_HOME)/Makefile config_update
 
@@ -106,15 +111,15 @@ Makeconf.done: edMakeconf
 else
 config_update:
 endif
+# end FORCE_PIC
 
 $(GNUR_HOME)/Makefile:
-	(cd $(GNUR_HOME); ./configure --with-x=no --without-recommended-packages $(ICONV_CONFIG_FLAGS) > gnur_configure.log 2>&1)
-
+	(cd $(GNUR_HOME); ./configure --with-x=no --without-recommended-packages $(GNUR_CONFIG_FLAGS) > gnur_configure.log 2>&1)
 
 build: $(GNUR_HOME)/bin/R
 
 $(GNUR_HOME)/bin/R: $(GNUR_HOME)/Makeconf 
-	(cd $(GNUR_HOME); $(MAKE) > gnur_make.log 2>&1)
+	(cd $(GNUR_HOME); $(MAKE) -j > gnur_make.log 2>&1)
 
 clean: cleangnur cleaniconv
 	rm -f Makeconf.done
@@ -129,4 +134,5 @@ cleaniconv:
 else
 cleaniconv:
 endif
+#end SunOS
 

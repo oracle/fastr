@@ -62,6 +62,10 @@ public class GenerateRParserProcessor extends AbstractProcessor {
 
                 File tempFile = File.createTempFile("rparser", "out");
                 try {
+                    String javaHome = System.getenv("JAVA_HOME");
+                    if (javaHome != null && javaHome.trim().length() > 0) {
+                        command[0] = javaHome + File.separator + "bin" + File.separator + command[0];
+                    }
                     int rc = new ProcessBuilder(command).directory(parserSrcDir).redirectError(tempFile).start().waitFor();
                     if (rc != 0) {
                         String out = new String(Files.readAllBytes(tempFile.toPath()));

@@ -252,12 +252,20 @@ public class SysFunctions {
     // TODO implement
     @RBuiltin(name = "Sys.chmod", kind = INTERNAL, parameterNames = {"paths", "octmode", "use_umask"})
     public abstract static class SysChmod extends RBuiltinNode {
-        @SuppressWarnings("unused")
         @Specialization
         @TruffleBoundary
-        protected Object sysChmod(RAbstractStringVector pathVec, Object octmode, byte useUmask) {
+        protected RLogicalVector sysChmod(RAbstractStringVector pathVec, RAbstractIntVector octmode, @SuppressWarnings("unused") byte useUmask) {
             controlVisibility();
-            throw RError.nyi(getEncapsulatingSourceSection(), "Sys.chmod");
+            byte[] data = new byte[pathVec.getLength()];
+            for (int i = 0; i < data.length; i++) {
+                String path = Utils.tildeExpand(pathVec.getDataAt(i));
+                if (path.length() == 0 || RRuntime.isNA(path)) {
+                    continue;
+                }
+                int result = RFFIFactory.getRFFI().getBaseRFFI().chmod(path, octmode.getDataAt(i % octmode.getLength()));
+                data[i] = RRuntime.asLogical(result == 0);
+            }
+            return RDataFactory.createLogicalVector(data, RDataFactory.COMPLETE_VECTOR);
         }
 
     }
@@ -360,7 +368,7 @@ public class SysFunctions {
             return RDataFactory.createStringVector(data, RDataFactory.COMPLETE_VECTOR);
         }
 
-        private static int containsGlobChar(String pathPattern) {
+        static int containsGlobChar(String pathPattern) {
             for (int i = 0; i < pathPattern.length(); i++) {
                 char ch = pathPattern.charAt(i);
                 for (int j = 0; j < GLOBCHARS.length; j++) {

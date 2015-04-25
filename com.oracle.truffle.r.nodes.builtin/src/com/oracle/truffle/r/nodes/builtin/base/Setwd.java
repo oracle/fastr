@@ -25,8 +25,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
-import com.oracle.truffle.r.runtime.RBuiltin;
-import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 
@@ -46,12 +45,16 @@ public abstract class Setwd extends RInvisibleBuiltinNode {
             errorProfile.enter();
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.CHAR_ARGUMENT);
         }
-        int rc = RFFIFactory.getRFFI().getBaseRFFI().setwd(path.getDataAt(0));
+        String owd = RFFIFactory.getRFFI().getBaseRFFI().getwd();
+        String nwd = Utils.tildeExpand(path.getDataAt(0));
+        int rc = RFFIFactory.getRFFI().getBaseRFFI().setwd(nwd);
         if (rc != 0) {
             errorProfile.enter();
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.CANNOT_CHANGE_DIRECTORY);
         } else {
-            return RFFIFactory.getRFFI().getBaseRFFI().getwd();
+            String nwdAbs = RFFIFactory.getRFFI().getBaseRFFI().getwd();
+            Utils.updateCurwd(nwdAbs);
+            return owd;
         }
     }
 

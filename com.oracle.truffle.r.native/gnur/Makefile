@@ -39,10 +39,8 @@ clean: cleangnur
 	$(MAKE) -f Makefile.platform clean
 
 ifeq  ($(GNUR_HOME_ORIGIN), environment)
-$(info E)
 cleangnur:
 else
-$(info NE)
 cleangnur:
 	$(MAKE) -f Makefile.gnur clean
 endif
