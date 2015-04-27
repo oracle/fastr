@@ -130,7 +130,7 @@ public class ConditionFunctions {
         }
     }
 
-    @RBuiltin(name = "seterrmessage", kind = RBuiltinKind.INTERNAL, parameterNames = {})
+    @RBuiltin(name = "seterrmessage", kind = RBuiltinKind.INTERNAL, parameterNames = "msg")
     public abstract static class Seterrmessage extends Adapter {
         @Specialization
         protected RNull seterrmessage(RAbstractStringVector msg) {
