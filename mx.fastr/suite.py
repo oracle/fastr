@@ -342,6 +342,7 @@ suite = {
       "dependencies" : [
         "com.oracle.graal.options",
       ],
+      "annotationProcessors" : ["com.oracle.graal.options.processor"],
       "checkstyle" : "com.oracle.truffle.r.runtime",
       "javaCompliance" : "1.8",
       "workingSets" : "FastR",
