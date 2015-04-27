@@ -135,7 +135,7 @@ public class SequenceNode extends RNode {
          * sequence. This is an unpleasant special case in FastR that we can only detect by
          * re-examining the original source.
          * 
-         * A sequence of length 1, i.e. a single statement, is represented at itself, e.g. a SYMSXP
+         * A sequence of length 1, i.e. a single statement, is represented as itself, e.g. a SYMSXP
          * for "x" or a LANGSXP for a function call. Otherwise, the representation is a LISTSXP
          * pairlist, where the car is the statement and the cdr is either NILSXP or a LISTSXP for
          * the next statement. Typically the statement (car) is itself a LANGSXP pairlist but it
