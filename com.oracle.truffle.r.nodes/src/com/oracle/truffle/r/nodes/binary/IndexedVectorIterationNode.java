@@ -142,6 +142,7 @@ abstract class IndexedVectorIterationNode extends Node {
                 return true;
             case Character:
                 assert store instanceof String[] && ((String[]) store).length == maxLength;
+                return true;
             default:
                 throw RInternalError.shouldNotReachHere();
         }
@@ -181,7 +182,8 @@ abstract class IndexedVectorIterationNode extends Node {
 
     @Specialization(contains = {"doVectorScalar", "doScalarVector", "doSameLength"}, guards = {"multiplesMinMax(leftLength, rightLength)"})
     protected void doMultiplesLeft(ScalarBinaryNode node, Object store, RAbstractVector left, int leftLength, RAbstractVector right, int rightLength) {
-        for (int j = 0; j < rightLength;) {
+        int j = 0;
+        while (j < rightLength) {
             for (int k = 0; k < leftLength; k++) {
                 indexedAction.perform(node, store, j, left, k, right, j);
                 j++;
@@ -191,7 +193,8 @@ abstract class IndexedVectorIterationNode extends Node {
 
     @Specialization(contains = {"doVectorScalar", "doScalarVector", "doSameLength"}, guards = {"multiplesMinMax(rightLength, leftLength)"})
     protected void doMultiplesRight(ScalarBinaryNode node, Object store, RAbstractVector left, int leftLength, RAbstractVector right, int rightLength) {
-        for (int j = 0; j < leftLength;) {
+        int j = 0;
+        while (j < leftLength) {
             for (int k = 0; k < rightLength; k++) {
                 indexedAction.perform(node, store, j, left, j, right, k);
                 j++;

@@ -69,7 +69,7 @@ public final class ScalarArithmeticNode extends ScalarBinaryNode {
     }
 
     @Override
-    public final double applyDouble(double left, double right) {
+    public double applyDouble(double left, double right) {
         if (leftNACheck.check(left)) {
             if (this.arithmetic instanceof BinaryArithmetic.Pow && right == 0) {
                 // CORNER: Make sure NA^0 == 1
@@ -97,7 +97,7 @@ public final class ScalarArithmeticNode extends ScalarBinaryNode {
     }
 
     @Override
-    public final int applyInteger(int left, int right) {
+    public int applyInteger(int left, int right) {
         assert arithmetic.isSupportsIntResult();
 
         if (leftNACheck.check(left)) {
@@ -112,7 +112,7 @@ public final class ScalarArithmeticNode extends ScalarBinaryNode {
     }
 
     @Override
-    public final double applyDouble(int left, int right) {
+    public double applyDouble(int left, int right) {
         assert !arithmetic.isSupportsIntResult();
 
         if (leftNACheck.check(left)) {
@@ -127,7 +127,7 @@ public final class ScalarArithmeticNode extends ScalarBinaryNode {
     }
 
     @Override
-    public final RComplex applyComplex(RComplex left, RComplex right) {
+    public RComplex applyComplex(RComplex left, RComplex right) {
         if (leftNACheck.check(left)) {
             if (this.arithmetic instanceof BinaryArithmetic.Pow && right.isZero()) {
                 // CORNER: (0i + NA)^0 == 1

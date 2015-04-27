@@ -84,7 +84,7 @@ final class VectorBinaryNode extends Node {
         this.dimensionsProfile = mayContainMetadata ? ConditionProfile.createBinaryProfile() : null;
     }
 
-    public final boolean isSupported(Object left, Object right) {
+    public boolean isSupported(Object left, Object right) {
         return left.getClass() == leftClass && right.getClass() == rightClass;
     }
 
