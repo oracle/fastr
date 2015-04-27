@@ -291,6 +291,9 @@ public class RASTHelperImpl implements RASTHelper {
         boolean gd = DebugHandling.globalDisable(true);
         try {
             return RContext.getEngine().eval(RDataFactory.createLanguage(call), REnvironment.globalEnv(), depth + 1);
+        } catch (ReturnException ex) {
+            // cannot throw return exceptions further up.
+            return ex.getResult();
         } catch (PutException ex) {
             throw RInternalError.shouldNotReachHere("callOut");
         } finally {

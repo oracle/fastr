@@ -171,10 +171,6 @@ public final class RStringVector extends RVector implements RAbstractStringVecto
         data[toIndex] = other.data[fromIndex];
     }
 
-    public Class<?> getElementClass() {
-        return RString.class;
-    }
-
     @Override
     public RStringVector copyWithNewDimensions(int[] newDimensions) {
         return RDataFactory.createStringVector(data, isComplete(), newDimensions);

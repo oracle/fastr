@@ -31,7 +31,11 @@ public abstract class RToIntVectorClosure extends RToVectorClosure implements RA
         super(vector);
     }
 
-    public RIntVector materialize() {
+    public final RVector createEmptySameType(int newLength, boolean newIsComplete) {
+        return RDataFactory.createIntVector(new int[newLength], newIsComplete);
+    }
+
+    public final RIntVector materialize() {
         int length = getLength();
         int[] result = new int[length];
         for (int i = 0; i < length; i++) {
@@ -41,17 +45,9 @@ public abstract class RToIntVectorClosure extends RToVectorClosure implements RA
         return RDataFactory.createIntVector(result, vector.isComplete());
     }
 
-    public Class<?> getElementClass() {
-        return RInt.class;
-    }
-
     @Override
-    public RIntVector copyWithNewDimensions(int[] newDimensions) {
+    public final RIntVector copyWithNewDimensions(int[] newDimensions) {
         return materialize().copyWithNewDimensions(newDimensions);
     }
 
-    @Override
-    public Object getDataAtAsObject(int index) {
-        return getDataAt(index);
-    }
 }

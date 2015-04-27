@@ -46,9 +46,4 @@ public class RIntToComplexVectorClosure extends RToComplexVectorClosure implemen
         return RDataFactory.createComplex(real, imaginary);
     }
 
-    @Override
-    public Object getDataAtAsObject(int index) {
-        return getDataAt(index);
-    }
-
 }

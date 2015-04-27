@@ -61,7 +61,11 @@ public class TestUtilities {
 
         @Override
         public Object execute(VirtualFrame frame) {
-            return invoke.invoke(node, (Object[]) frame.getArguments()[RArguments.INDEX_ARGUMENTS]);
+            try {
+                return invoke.invoke(node, (Object[]) frame.getArguments()[RArguments.INDEX_ARGUMENTS]);
+            } catch (ReturnException e) {
+                return e.getResult();
+            }
         }
 
     }

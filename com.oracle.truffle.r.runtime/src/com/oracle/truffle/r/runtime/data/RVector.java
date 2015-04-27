@@ -88,7 +88,7 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
         }
     }
 
-    public void setComplete(boolean complete) {
+    public final void setComplete(boolean complete) {
         this.complete = complete;
     }
 
@@ -511,7 +511,7 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
                         return enclosingFactor;
                     } else {
                         RIntVector resVector;
-                        if (vector.getElementClass() != RInt.class) {
+                        if (vector.getElementClass() != RInteger.class) {
                             if (vector.getElementClass() == RDouble.class && convertToInt) {
                                 RDoubleVector sourceVector = (RDoubleVector) vector;
                                 int[] data = new int[sourceVector.getLength()];

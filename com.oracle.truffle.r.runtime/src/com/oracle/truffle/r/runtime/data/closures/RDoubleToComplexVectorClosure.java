@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.runtime.data.closures;
 
-import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
@@ -36,7 +35,7 @@ public class RDoubleToComplexVectorClosure extends RToComplexVectorClosure imple
         double real = ((RAbstractDoubleVector) vector).getDataAt(index);
         double imaginary = 0.0;
         if (Double.isNaN(real)) {
-            real = RRuntime.COMPLEX_NA_REAL_PART;
+            return RComplex.NA;
         }
         return RDataFactory.createComplex(real, imaginary);
     }

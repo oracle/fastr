@@ -81,7 +81,7 @@ abstract class ArrayPositionsCastBase extends RNode {
 
     private int calculateN(RAbstractVector rowNames) {
         RAbstractVector profiledRowNames = rowNamesProfile.profile(rowNames);
-        if (intVecProfile.profile(profiledRowNames.getElementClass() == RInt.class && profiledRowNames.getLength() == 2)) {
+        if (intVecProfile.profile(profiledRowNames.getElementClass() == RInteger.class && profiledRowNames.getLength() == 2)) {
             RAbstractIntVector rowNamesIntVector = (RAbstractIntVector) profiledRowNames;
             if (compressedProfile.profile(RRuntime.isNA(rowNamesIntVector.getDataAt(0)))) {
                 return rowNamesIntVector.getDataAt(1);
@@ -475,7 +475,7 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
                     if (dimSizeOneProfile.profile(dimSize == 1)) {
                         /*
                          * e.g. c(7)[-2] vs c(7)[[-2]]
-                         * 
+                         *
                          * only one element to be picked or ultimately an error caused by operand
                          */
                         return isSubset ? 1 : operand;

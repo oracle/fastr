@@ -43,8 +43,16 @@ public abstract class RSequence extends RBounded implements RAbstractVector {
         return materialize().resize(size);
     }
 
+    public abstract Object getStartObject();
+
+    public abstract Object getStrideObject();
+
     public final boolean isComplete() {
         return true;
+    }
+
+    public void setComplete(boolean complete) {
+        // sequences are always complete
     }
 
     public final boolean hasDimensions() {

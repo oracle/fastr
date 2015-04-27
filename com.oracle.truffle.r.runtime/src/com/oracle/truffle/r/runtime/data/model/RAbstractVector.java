@@ -24,6 +24,7 @@ package com.oracle.truffle.r.runtime.data.model;
 
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.source.*;
+import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
 public interface RAbstractVector extends RAbstractContainer {
@@ -59,4 +60,27 @@ public interface RAbstractVector extends RAbstractContainer {
     boolean isArray();
 
     boolean checkCompleteness();
+
+    /**
+     * Casts a vector to another {@link RType}. If a safe cast to the target {@link RType} is not
+     * supported <code>null</code> is returned. Instead of materializing the cast for each index the
+     * implementation may decide to just wrap the original vector with a closure. This method is
+     * optimized for invocation with a compile-time constant {@link RType}.
+     *
+     * @see RType#getPrecedence()
+     */
+    default RAbstractVector castSafe(RType type) {
+        if (type == getRType()) {
+            return this;
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     *
+     * @param complete
+     */
+    void setComplete(boolean complete);
+
 }

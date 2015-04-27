@@ -35,31 +35,39 @@ public abstract class RToVectorClosure implements RAbstractVector {
         this.vector = vector;
     }
 
-    public int getLength() {
+    public final RAbstractVector castSafe(RType type) {
+        return vector.castSafe(type);
+    }
+
+    public final int getLength() {
         return vector.getLength();
     }
 
     @Override
-    public RAbstractContainer resize(int size) {
+    public final RAbstractContainer resize(int size) {
         return vector.resize(size);
     }
 
-    public boolean isComplete() {
+    public final void setComplete(boolean complete) {
+        this.vector.setComplete(complete);
+    }
+
+    public final boolean isComplete() {
         return vector.isComplete();
     }
 
     @Override
-    public boolean hasDimensions() {
+    public final boolean hasDimensions() {
         return vector.hasDimensions();
     }
 
     @Override
-    public int[] getDimensions() {
+    public final int[] getDimensions() {
         return vector.getDimensions();
     }
 
     @Override
-    public void setDimensions(int[] newDimensions) {
+    public final void setDimensions(int[] newDimensions) {
         vector.setDimensions(newDimensions);
     }
 
@@ -74,52 +82,52 @@ public abstract class RToVectorClosure implements RAbstractVector {
     }
 
     @Override
-    public void setNames(RStringVector newNames) {
+    public final void setNames(RStringVector newNames) {
         vector.setNames(newNames);
     }
 
     @Override
-    public RList getDimNames(RAttributeProfiles attrProfiles) {
+    public final RList getDimNames(RAttributeProfiles attrProfiles) {
         return vector.getDimNames(attrProfiles);
     }
 
     @Override
-    public void setDimNames(RList newDimNames) {
+    public final void setDimNames(RList newDimNames) {
         vector.setDimNames(newDimNames);
     }
 
     @Override
-    public Object getRowNames(RAttributeProfiles attrProfiles) {
+    public final Object getRowNames(RAttributeProfiles attrProfiles) {
         return vector.getRowNames(attrProfiles);
     }
 
     @Override
-    public void setRowNames(RAbstractVector rowNames) {
+    public final void setRowNames(RAbstractVector rowNames) {
         vector.setRowNames(rowNames);
     }
 
     @Override
-    public RAttributes initAttributes() {
+    public final RAttributes initAttributes() {
         return vector.initAttributes();
     }
 
     @Override
-    public RAttributes getAttributes() {
+    public final RAttributes getAttributes() {
         return vector.getAttributes();
     }
 
     @Override
-    public RAbstractVector copy() {
+    public final RAbstractVector copy() {
         return vector.copy();
     }
 
     @Override
-    public RVector copyResized(int size, boolean fillNA) {
+    public final RVector copyResized(int size, boolean fillNA) {
         return vector.copyResized(size, fillNA);
     }
 
     @Override
-    public RVector copyResizedWithDimensions(int[] newDimensions) {
+    public final RVector copyResizedWithDimensions(int[] newDimensions) {
         // TODO support for higher dimensions
         assert newDimensions.length == 2;
         RVector result = copyResized(newDimensions[0] * newDimensions[1], false);
@@ -128,43 +136,38 @@ public abstract class RToVectorClosure implements RAbstractVector {
     }
 
     @Override
-    public RAbstractVector copyDropAttributes() {
+    public final RAbstractVector copyDropAttributes() {
         return vector.copyDropAttributes();
     }
 
-    public boolean isMatrix() {
+    public final boolean isMatrix() {
         return vector.isMatrix();
     }
 
-    public boolean isArray() {
+    public final boolean isArray() {
         return vector.isArray();
     }
 
-    public RStringVector getClassHierarchy() {
+    public final RStringVector getClassHierarchy() {
         return vector.getClassHierarchy();
     }
 
-    public boolean isObject(RAttributeProfiles attrProfiles) {
+    public final boolean isObject(RAttributeProfiles attrProfiles) {
         return vector.isObject(attrProfiles);
     }
 
     @Override
-    public RAbstractVector materializeNonShared() {
+    public final RAbstractVector materializeNonShared() {
         return (RAbstractVector) vector.materializeNonShared();
     }
 
     @Override
-    public RShareable materializeToShareable() {
+    public final RShareable materializeToShareable() {
         return vector.materialize();
     }
 
     @Override
-    public RVector createEmptySameType(int newLength, boolean newIsComplete) {
-        return vector.createEmptySameType(newLength, newIsComplete);
-    }
-
-    @Override
-    public void transferElementSameType(int toIndex, RAbstractVector fromVector, int fromIndex) {
+    public final void transferElementSameType(int toIndex, RAbstractVector fromVector, int fromIndex) {
         throw RInternalError.shouldNotReachHere();
     }
 

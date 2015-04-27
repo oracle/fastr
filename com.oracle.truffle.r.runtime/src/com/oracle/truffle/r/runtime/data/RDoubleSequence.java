@@ -23,6 +23,8 @@
 package com.oracle.truffle.r.runtime.data;
 
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.data.closures.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
 public final class RDoubleSequence extends RSequence implements RAbstractDoubleVector {
@@ -37,12 +39,45 @@ public final class RDoubleSequence extends RSequence implements RAbstractDoubleV
         this.stride = stride;
     }
 
+    @Override
+    public double getDataAt(int index) {
+        assert index >= 0 && index < getLength();
+        return start + stride * index;
+    }
+
     public double getStart() {
         return start;
     }
 
     public double getStride() {
         return stride;
+    }
+
+    @Override
+    public Object getStartObject() {
+        return getStart();
+    }
+
+    @Override
+    public Object getStrideObject() {
+        return getStride();
+    }
+
+    public RAbstractVector castSafe(RType type) {
+        // TODO might be possible to implement some of these without closures
+        switch (type) {
+            case Double:
+            case Numeric:
+                return this;
+            case Integer:
+                return RClosures.createDoubleToIntVector(this);
+            case Complex:
+                return RClosures.createDoubleToComplexVector(this);
+            case Character:
+                return RClosures.createDoubleToStringVector(this);
+            default:
+                return null;
+        }
     }
 
     private RDoubleVector populateVectorData(double[] result) {
@@ -60,29 +95,8 @@ public final class RDoubleSequence extends RSequence implements RAbstractDoubleV
     }
 
     @Override
-    public String toString() {
-        CompilerAsserts.neverPartOfCompilation();
-        return internalCreateVector().toString();
-    }
-
-    @Override
-    public double getDataAt(int index) {
-        assert index >= 0 && index < getLength();
-        return start + stride * index;
-    }
-
-    @Override
     public RDoubleVector materialize() {
         return this.internalCreateVector();
-    }
-
-    public Class<?> getElementClass() {
-        return RDouble.class;
-    }
-
-    @Override
-    public Object getDataAtAsObject(int index) {
-        return getDataAt(index);
     }
 
     @Override
@@ -102,4 +116,24 @@ public final class RDoubleSequence extends RSequence implements RAbstractDoubleV
     public RDoubleVector createEmptySameType(int newLength, boolean newIsComplete) {
         return RDataFactory.createDoubleVector(new double[newLength], newIsComplete);
     }
+
+    @Override
+    public String toString() {
+        CompilerAsserts.neverPartOfCompilation();
+        return internalCreateVector().toString();
+    }
+
+    public static void main(String[] args) {
+        divExact(Long.MIN_VALUE, 2);
+
+    }
+
+    public static long divExact(long x, long y) {
+        long r = x / y;
+        if ((x & y & r) < 0) {
+            throw new ArithmeticException("long overflow");
+        }
+        return r;
+    }
+
 }

@@ -110,7 +110,7 @@ public class RClosures {
         if (levels == null) {
             return new RFactorToStringVectorClosure(factor, null, withNames);
         } else {
-            if (levels.getElementClass() == RInt.class) {
+            if (levels.getElementClass() == RInteger.class) {
                 return new RFactorToIntVectorClosure(factor, (RAbstractIntVector) levels, withNames);
             } else if (levels.getElementClass() == RDouble.class) {
                 return new RFactorToDoubleVectorClosure(factor, (RAbstractDoubleVector) levels, withNames);
