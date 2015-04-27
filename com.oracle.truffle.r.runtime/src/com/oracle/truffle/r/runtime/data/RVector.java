@@ -669,9 +669,6 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
     }
 
     public final boolean copyNamesFrom(RAttributeProfiles attrProfiles, RAbstractVector vector) {
-        // it's meant to be used on a "fresh" vector with only dimensions potentially set
-        assert (this.names == null);
-        assert (this.dimNames == null);
         if (this.dimensions == null) {
             RStringVector vecNames = vector.getNames(attrProfiles);
             if (vecNames != null) {
