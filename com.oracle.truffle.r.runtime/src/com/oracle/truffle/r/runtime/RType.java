@@ -12,6 +12,8 @@
 package com.oracle.truffle.r.runtime;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.*;
 
 public enum RType {
 
@@ -50,14 +52,19 @@ public enum RType {
     public static final int NUMBER_OF_PRECEDENCES = 9;
 
     private final String name;
+    private final int precedence;
 
-    private RType(String name, @SuppressWarnings("unused") int precedence) {
+    private RType(String name, int precedence) {
         this.name = name;
-        // TODO: do we need precedence for anything herw
+        this.precedence = precedence;
     }
 
     public String getName() {
         return name;
+    }
+
+    public int getPrecedence() {
+        return precedence;
     }
 
     public boolean isNumeric() {
@@ -91,6 +98,39 @@ public enum RType {
             }
         }
         return null;
+    }
+
+    public static RType maxPrecedence(RType t1, RType t2) {
+        if (t1.precedence == NO_PRECEDENCE || t2.precedence == NO_PRECEDENCE) {
+            throw new IllegalArgumentException("invalid precedence");
+        }
+        if (t1.precedence >= t2.precedence) {
+            return t1;
+        } else {
+            return t2;
+        }
+    }
+
+    public RAbstractVector getEmpty() {
+        switch (this) {
+            case Numeric:
+            case Double:
+                return RDataFactory.createEmptyDoubleVector();
+            case Integer:
+                return RDataFactory.createEmptyIntVector();
+            case Complex:
+                return RDataFactory.createEmptyComplexVector();
+            case Logical:
+                return RDataFactory.createEmptyLogicalVector();
+            case Character:
+                return RDataFactory.createEmptyStringVector();
+            case Raw:
+                return RDataFactory.createEmptyRawVector();
+            case List:
+                return RDataFactory.createList();
+            default:
+                throw RInternalError.shouldNotReachHere();
+        }
     }
 
 }

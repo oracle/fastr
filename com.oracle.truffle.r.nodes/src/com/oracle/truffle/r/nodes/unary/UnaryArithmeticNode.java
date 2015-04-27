@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.nodes.unary;
 
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.data.*;
@@ -52,7 +51,7 @@ public abstract class UnaryArithmeticNode extends UnaryNode {
         this.error = prev.error;
     }
 
-    public abstract Object execute(VirtualFrame frame, Object operand);
+    public abstract Object execute(Object operand);
 
     @Specialization
     protected int doInt(int operand) {

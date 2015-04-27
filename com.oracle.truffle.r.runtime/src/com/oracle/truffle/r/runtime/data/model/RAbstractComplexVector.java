@@ -27,6 +27,11 @@ import com.oracle.truffle.r.runtime.data.*;
 
 public interface RAbstractComplexVector extends RAbstractVector {
 
+    @Override
+    default Object getDataAtAsObject(int index) {
+        return getDataAt(index);
+    }
+
     RComplex getDataAt(int index);
 
     RComplexVector materialize();
@@ -42,6 +47,10 @@ public interface RAbstractComplexVector extends RAbstractVector {
 
     default RType getRType() {
         return RType.Complex;
+    }
+
+    default Class<?> getElementClass() {
+        return RComplex.class;
     }
 
 }

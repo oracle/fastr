@@ -26,16 +26,52 @@ import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.data.closures.*;
+import com.oracle.truffle.r.runtime.data.model.*;
 
 @ValueType
-public final class RComplex extends RScalar {
+public final class RComplex extends RScalarVector implements RAbstractComplexVector {
+
+    public static final RComplex NA = new RComplex(RRuntime.COMPLEX_NA_REAL_PART, RRuntime.COMPLEX_NA_IMAGINARY_PART);
+    public static final RComplex DEFAULT = new RComplex(0.0, 0.0);
 
     private final double realPart;
     private final double imaginaryPart;
 
-    RComplex(double realPart, double imaginaryPart) {
+    private RComplex(double realPart, double imaginaryPart) {
         this.realPart = realPart;
         this.imaginaryPart = imaginaryPart;
+    }
+
+    public static RComplex valueOf(double real, double imaginary) {
+        return new RComplex(real, imaginary);
+    }
+
+    @Override
+    public RAbstractVector castSafe(RType type) {
+        switch (type) {
+            case Complex:
+                return this;
+            case Character:
+                return RClosures.createComplexToStringVector(this);
+            default:
+                return null;
+        }
+    }
+
+    @Override
+    public RStringVector getClassHierarchy() {
+        return RDataFactory.createStringVector(RRuntime.CLASS_DOUBLE, RDataFactory.COMPLETE_VECTOR);
+    }
+
+    @Override
+    public RComplexVector materialize() {
+        return RDataFactory.createComplexVectorFromScalar(this);
+    }
+
+    public RComplex getDataAt(int index) {
+        assert index == 0;
+        return this;
     }
 
     @Override
@@ -63,6 +99,7 @@ public final class RComplex extends RScalar {
         return isNA() ? "NA" : realPartString + (imaginaryPart < 0.0 ? "" : "+") + imaginaryPartString + "i";
     }
 
+    @Override
     public boolean isNA() {
         return RRuntime.isNA(realPart);
     }

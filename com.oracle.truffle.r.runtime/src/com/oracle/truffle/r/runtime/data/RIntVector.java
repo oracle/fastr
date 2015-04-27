@@ -26,10 +26,11 @@ import java.util.*;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.data.closures.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
-public final class RIntVector extends RVector implements RAbstractIntVector {
+public final class RIntVector extends RVector implements RAbstractIntVector, RAccessibleStore<int[]> {
 
     static final RStringVector implicitClassHeader = RDataFactory.createStringVector(new String[]{RType.Integer.getName(), RType.Numeric.getName()}, true);
     private static final RStringVector implicitClassHeaderArray = RDataFactory.createStringVector(new String[]{RType.Array.getName(), RType.Integer.getName(), RType.Numeric.getName()}, true);
@@ -44,6 +45,27 @@ public final class RIntVector extends RVector implements RAbstractIntVector {
 
     private RIntVector(int[] data, boolean complete, int[] dims) {
         this(data, complete, dims, null);
+    }
+
+    public RAbstractVector castSafe(RType type) {
+        switch (type) {
+            case Double:
+            case Numeric:
+                return RClosures.createIntToDoubleVector(this);
+            case Integer:
+                return this;
+            case Complex:
+                return RClosures.createIntToComplexVector(this);
+            case Character:
+                return RClosures.createIntToStringVector(this);
+            default:
+                return null;
+        }
+    }
+
+    @Override
+    public int[] getInternalStore() {
+        return data;
     }
 
     public int getDataAt(int index) {
@@ -187,10 +209,6 @@ public final class RIntVector extends RVector implements RAbstractIntVector {
     public void transferElementSameType(int toIndex, RAbstractVector fromVector, int fromIndex) {
         RAbstractIntVector other = (RAbstractIntVector) fromVector;
         data[toIndex] = other.getDataAt(fromIndex);
-    }
-
-    public Class<?> getElementClass() {
-        return RInt.class;
     }
 
     @Override

@@ -41,8 +41,8 @@ public abstract class MatMult extends RBuiltinNode {
 
     private static final int BLOCK_SIZE = 64;
 
-    @Child private BinaryArithmeticNode mult = BinaryArithmeticNode.create(BinaryArithmetic.MULTIPLY);
-    @Child private BinaryArithmeticNode add = BinaryArithmeticNode.create(BinaryArithmetic.ADD);
+    @Child private ScalarArithmeticNode mult = new ScalarArithmeticNode(BinaryArithmetic.MULTIPLY.create());
+    @Child private ScalarArithmeticNode add = new ScalarArithmeticNode(BinaryArithmetic.ADD.create());
 
     private final BranchProfile errorProfile = BranchProfile.create();
 
@@ -232,7 +232,7 @@ public abstract class MatMult extends RBuiltinNode {
             if (na.check(aValue) || na.check(bValue)) {
                 return RDataFactory.createDoubleVector(new double[]{RRuntime.DOUBLE_NA}, false, new int[]{1, 1});
             }
-            result = add.doDouble(result, mult.doDouble(aValue, bValue));
+            result = add.applyDouble(result, mult.applyDouble(aValue, bValue));
         }
         return RDataFactory.createDoubleVector(new double[]{result}, true, new int[]{1, 1});
     }
@@ -291,7 +291,7 @@ public abstract class MatMult extends RBuiltinNode {
             for (int col = 0; col < bCols; col++) {
                 RComplex x = RDataFactory.createComplexZero();
                 for (int k = 0; k < aCols; k++) {
-                    x = add.doComplex(x, mult.doComplex(a.getDataAt(k * aRows + row), b.getDataAt(col * bRows + k)));
+                    x = add.applyComplex(x, mult.applyComplex(a.getDataAt(k * aRows + row), b.getDataAt(col * bRows + k)));
                     na.check(x);
                 }
                 final int index = 2 * (col * aRows + row);
@@ -313,7 +313,7 @@ public abstract class MatMult extends RBuiltinNode {
         na.enable(a);
         na.enable(b);
         for (int k = 0; k < a.getLength(); k++) {
-            result = add.doComplex(result, mult.doComplex(a.getDataAt(k), b.getDataAt(k)));
+            result = add.applyComplex(result, mult.applyComplex(a.getDataAt(k), b.getDataAt(k)));
             na.check(result);
         }
         return RDataFactory.createComplexVector(new double[]{result.getRealPart(), result.getImaginaryPart()}, na.neverSeenNA(), new int[]{1, 1});
@@ -335,7 +335,7 @@ public abstract class MatMult extends RBuiltinNode {
             for (int row = 0; row < aRows; row++) {
                 RComplex x = RDataFactory.createComplexZero();
                 for (int k = 0; k < b.getLength(); k++) {
-                    x = add.doComplex(x, mult.doComplex(a.getDataAt(k * aRows + row), b.getDataAt(k)));
+                    x = add.applyComplex(x, mult.applyComplex(a.getDataAt(k * aRows + row), b.getDataAt(k)));
                     na.check(x);
                 }
                 result[row << 1] = x.getRealPart();
@@ -346,7 +346,7 @@ public abstract class MatMult extends RBuiltinNode {
             double[] result = new double[aRows * b.getLength() << 1];
             for (int row = 0; row < aRows; row++) {
                 for (int k = 0; k < b.getLength(); k++) {
-                    RComplex x = mult.doComplex(a.getDataAt(row), b.getDataAt(k));
+                    RComplex x = mult.applyComplex(a.getDataAt(row), b.getDataAt(k));
                     na.check(x);
                     result[(k * aRows + row) << 1] = x.getRealPart();
                     result[(k * aRows + row) << 1 + 1] = x.getRealPart();
@@ -372,7 +372,7 @@ public abstract class MatMult extends RBuiltinNode {
             for (int k = 0; k < bCols; k++) {
                 RComplex x = RDataFactory.createComplexZero();
                 for (int row = 0; row < a.getLength(); row++) {
-                    x = add.doComplex(x, mult.doComplex(a.getDataAt(row), b.getDataAt(k * a.getLength() + row)));
+                    x = add.applyComplex(x, mult.applyComplex(a.getDataAt(row), b.getDataAt(k * a.getLength() + row)));
                     na.check(x);
                 }
                 result[k << 1] = x.getRealPart();
@@ -383,7 +383,7 @@ public abstract class MatMult extends RBuiltinNode {
             double[] result = new double[(bCols * a.getLength()) << 1];
             for (int row = 0; row < a.getLength(); row++) {
                 for (int k = 0; k < bCols; k++) {
-                    RComplex x = mult.doComplex(a.getDataAt(row), b.getDataAt(k));
+                    RComplex x = mult.applyComplex(a.getDataAt(row), b.getDataAt(k));
                     na.check(x);
                     result[(k * a.getLength() + row) << 1] = x.getRealPart();
                     result[(k * a.getLength() + row) << 1 + 1] = x.getImaginaryPart();
@@ -413,7 +413,7 @@ public abstract class MatMult extends RBuiltinNode {
             for (int col = 0; col < bCols; col++) {
                 int x = 0;
                 for (int k = 0; k < aCols; k++) {
-                    x = add.doInt(x, mult.doInt(a.getDataAt(k * aRows + row), b.getDataAt(col * bRows + k)));
+                    x = add.applyInteger(x, mult.applyInteger(a.getDataAt(k * aRows + row), b.getDataAt(col * bRows + k)));
                     na.check(x);
                 }
                 result[col * aRows + row] = x;
@@ -432,7 +432,7 @@ public abstract class MatMult extends RBuiltinNode {
         int result = 0;
         na.enable(result);
         for (int k = 0; k < a.getLength(); k++) {
-            result = add.doInt(result, mult.doInt(a.getDataAt(k), b.getDataAt(k)));
+            result = add.applyInteger(result, mult.applyInteger(a.getDataAt(k), b.getDataAt(k)));
             na.check(result);
         }
         return RDataFactory.createIntVector(new int[]{result}, na.neverSeenNA(), new int[]{1, 1});
@@ -454,7 +454,7 @@ public abstract class MatMult extends RBuiltinNode {
             for (int row = 0; row < aRows; row++) {
                 int x = 0;
                 for (int k = 0; k < b.getLength(); k++) {
-                    x = add.doInt(x, mult.doInt(a.getDataAt(k * aRows + row), b.getDataAt(k)));
+                    x = add.applyInteger(x, mult.applyInteger(a.getDataAt(k * aRows + row), b.getDataAt(k)));
                     na.check(x);
                 }
                 result[row] = x;
@@ -464,7 +464,7 @@ public abstract class MatMult extends RBuiltinNode {
             int[] result = new int[aRows * b.getLength()];
             for (int row = 0; row < aRows; row++) {
                 for (int k = 0; k < b.getLength(); k++) {
-                    int x = mult.doInt(a.getDataAt(row), b.getDataAt(k));
+                    int x = mult.applyInteger(a.getDataAt(row), b.getDataAt(k));
                     na.check(x);
                     result[k * aRows + row] = x;
                 }
@@ -489,7 +489,7 @@ public abstract class MatMult extends RBuiltinNode {
             for (int k = 0; k < bCols; k++) {
                 int x = 0;
                 for (int row = 0; row < a.getLength(); row++) {
-                    x = add.doInt(x, mult.doInt(a.getDataAt(row), b.getDataAt(k * a.getLength() + row)));
+                    x = add.applyInteger(x, mult.applyInteger(a.getDataAt(row), b.getDataAt(k * a.getLength() + row)));
                     na.check(x);
                 }
                 result[k] = x;
@@ -499,7 +499,7 @@ public abstract class MatMult extends RBuiltinNode {
             int[] result = new int[bCols * a.getLength()];
             for (int row = 0; row < a.getLength(); row++) {
                 for (int k = 0; k < bCols; k++) {
-                    int x = mult.doInt(a.getDataAt(row), b.getDataAt(k));
+                    int x = mult.applyInteger(a.getDataAt(row), b.getDataAt(k));
                     na.check(x);
                     result[k * a.getLength() + row] = x;
                 }

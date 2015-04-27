@@ -26,10 +26,11 @@ import java.util.*;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.data.closures.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
-public final class RLogicalVector extends RVector implements RAbstractLogicalVector {
+public final class RLogicalVector extends RVector implements RAbstractLogicalVector, RAccessibleStore<byte[]> {
 
     private static final RStringVector implicitClassHeader = RDataFactory.createStringVector(new String[]{RType.Logical.getName()}, true);
     private static final RStringVector implicitClassHeaderArray = RDataFactory.createStringVector(new String[]{RType.Array.getName(), RType.Logical.getName()}, true);
@@ -44,6 +45,29 @@ public final class RLogicalVector extends RVector implements RAbstractLogicalVec
 
     private RLogicalVector(byte[] data, boolean complete, int[] dims) {
         this(data, complete, dims, null);
+    }
+
+    public RAbstractVector castSafe(RType type) {
+        switch (type) {
+            case Logical:
+                return this;
+            case Double:
+            case Numeric:
+                return RClosures.createLogicalToDoubleVector(this);
+            case Integer:
+                return RClosures.createLogicalToIntVector(this);
+            case Complex:
+                return RClosures.createLogicalToComplexVector(this);
+            case Character:
+                return RClosures.createLogicalToStringVector(this);
+            default:
+                return null;
+        }
+    }
+
+    @Override
+    public byte[] getInternalStore() {
+        return data;
     }
 
     @Override
@@ -150,10 +174,6 @@ public final class RLogicalVector extends RVector implements RAbstractLogicalVec
     public void transferElementSameType(int toIndex, RAbstractVector fromVector, int fromIndex) {
         RLogicalVector other = (RLogicalVector) fromVector;
         data[toIndex] = other.data[fromIndex];
-    }
-
-    public Class<?> getElementClass() {
-        return RLogical.class;
     }
 
     public byte[] getDataCopy() {

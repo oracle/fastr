@@ -41,22 +41,26 @@ import com.oracle.truffle.r.runtime.gnur.*;
 
 public final class RDataFactory {
 
+    @CompilationFinal public static final byte[] EMPTY_RAW_ARRAY = new byte[0];
+    @CompilationFinal public static final byte[] EMPTY_LOGICAL_ARRAY = new byte[0];
+    @CompilationFinal public static final int[] EMPTY_INTEGER_ARRAY = new int[0];
+    @CompilationFinal public static final double[] EMPTY_DOUBLE_ARRAY = new double[0];
+    @CompilationFinal public static final double[] EMPTY_COMPLEX_ARRAY = new double[0];
+    @CompilationFinal public static final String[] EMPTY_STRING_ARRAY = new String[0];
+
     /**
      * Profile for creation tracing; must precede following declarations.
      */
     private static final ConditionProfile statsProfile = ConditionProfile.createBinaryProfile();
 
-    private static final RIntVector EMPTY_INT_VECTOR = createIntVector(0);
-    private static final RDoubleVector EMPTY_DOUBLE_VECTOR = createDoubleVector(0);
-    private static final RLogicalVector EMPTY_LOGICAL_VECTOR = createLogicalVector(0);
-    private static final RStringVector EMPTY_STRING_VECTOR = createStringVector(0);
-    private static final RComplexVector EMPTY_COMPLEX_VECTOR = createComplexVector(0);
-    private static final RRawVector EMPTY_RAW_VECTOR = createRawVector(0);
+    private static final RIntVector EMPTY_INT_VECTOR = createIntVector(EMPTY_INTEGER_ARRAY, true);
+    private static final RDoubleVector EMPTY_DOUBLE_VECTOR = createDoubleVector(EMPTY_DOUBLE_ARRAY, true);
+    private static final RLogicalVector EMPTY_LOGICAL_VECTOR = createLogicalVector(EMPTY_LOGICAL_ARRAY, true);
+    private static final RStringVector EMPTY_STRING_VECTOR = createStringVector(EMPTY_STRING_ARRAY, true);
+    private static final RComplexVector EMPTY_COMPLEX_VECTOR = createComplexVector(EMPTY_COMPLEX_ARRAY, true);
+    private static final RRawVector EMPTY_RAW_VECTOR = createRawVector(EMPTY_RAW_ARRAY);
 
     private static final RStringVector NA_STRING_VECTOR = createStringVector(new String[]{RRuntime.STRING_NA}, false);
-
-    @CompilationFinal public static final byte[] EMPTY_RAW_ARRAY = new byte[0];
-    @CompilationFinal public static final byte[] EMPTY_LOGICAL_ARRAY = new byte[0];
 
     public static final boolean INCOMPLETE_VECTOR = false;
     public static final boolean COMPLETE_VECTOR = true;
@@ -257,7 +261,7 @@ public final class RDataFactory {
     }
 
     public static RComplex createComplex(double realPart, double imaginaryPart) {
-        return traceDataCreated(new RComplex(realPart, imaginaryPart));
+        return traceDataCreated(RComplex.valueOf(realPart, imaginaryPart));
     }
 
     public static RRaw createRaw(byte value) {

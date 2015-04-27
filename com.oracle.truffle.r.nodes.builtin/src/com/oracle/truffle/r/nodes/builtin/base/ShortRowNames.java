@@ -91,7 +91,7 @@ public abstract class ShortRowNames extends RBuiltinNode {
     }
 
     private int calculateN(RAbstractVector rowNames) {
-        if (rowNames.getElementClass() == RInt.class && rowNames.getLength() == 2) {
+        if (rowNames.getElementClass() == RInteger.class && rowNames.getLength() == 2) {
             RAbstractIntVector rowNamesIntVector = (RAbstractIntVector) rowNames;
             intVectorMet.enter();
             if (RRuntime.isNA(rowNamesIntVector.getDataAt(0))) {

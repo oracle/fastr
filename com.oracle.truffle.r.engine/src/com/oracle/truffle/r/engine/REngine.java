@@ -159,7 +159,7 @@ public final class REngine implements RContext.Engine {
 
     private static void checkAndRunStartupFunction(String name) {
         Object func = REnvironment.globalEnv().findFunction(name);
-        if (func != null) {
+        if (func instanceof RFunction) {
             /*
              * We could just invoke runCall, but that way causes problems for debugging, so we parse
              * and eval a "fake" call.
@@ -208,6 +208,8 @@ public final class REngine implements RContext.Engine {
                             Arrays.asList(use.getSuppliedValues()).stream().map(v -> v == null ? "null" : v.getClass().getSimpleName()).collect(Collectors.toList()), true);
             use.printStackTrace();
             return null;
+        } catch (ReturnException ex) {
+            return ex.getResult();
         } catch (DebugExitException | BrowserQuitException e) {
             throw e;
         } catch (RInternalError e) {

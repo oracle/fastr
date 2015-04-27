@@ -31,7 +31,11 @@ public abstract class RToDoubleVectorClosure extends RToVectorClosure implements
         super(vector);
     }
 
-    public RDoubleVector materialize() {
+    public final RVector createEmptySameType(int newLength, boolean newIsComplete) {
+        return RDataFactory.createDoubleVector(new double[newLength], newIsComplete);
+    }
+
+    public final RDoubleVector materialize() {
         int length = getLength();
         double[] result = new double[length];
         for (int i = 0; i < result.length; i++) {
@@ -41,17 +45,9 @@ public abstract class RToDoubleVectorClosure extends RToVectorClosure implements
         return RDataFactory.createDoubleVector(result, vector.isComplete());
     }
 
-    public Class<?> getElementClass() {
-        return RDouble.class;
-    }
-
     @Override
-    public RDoubleVector copyWithNewDimensions(int[] newDimensions) {
+    public final RDoubleVector copyWithNewDimensions(int[] newDimensions) {
         return materialize().copyWithNewDimensions(newDimensions);
     }
 
-    @Override
-    public Object getDataAtAsObject(int index) {
-        return getDataAt(index);
-    }
 }

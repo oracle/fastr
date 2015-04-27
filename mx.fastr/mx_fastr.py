@@ -248,6 +248,9 @@ def _test_package():
 def _test_subpackage(name):
     return '.'.join((_test_package(), name))
 
+def _nodes_unit_tests():
+    return 'com.oracle.truffle.r.nodes.test'
+
 def _library_unit_tests():
     return ','.join((_test_subpackage('library.base'), _test_subpackage('library.stats'), _test_subpackage('library.utils')))
 
@@ -267,7 +270,7 @@ def _app_unit_tests():
     return _test_subpackage('apps')
 
 def _gate_unit_tests():
-    return ','.join((_library_unit_tests(), _rffi_unit_tests(), _rpackages_unit_tests(), _testrgen_unit_tests(), _ser_unit_tests(), _app_unit_tests()))
+    return ','.join((_library_unit_tests(), _rffi_unit_tests(), _rpackages_unit_tests(), _testrgen_unit_tests(), _ser_unit_tests(), _app_unit_tests(), _nodes_unit_tests()))
 
 def _all_unit_tests():
     return _gate_unit_tests()

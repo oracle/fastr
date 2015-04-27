@@ -24,9 +24,16 @@ package com.oracle.truffle.r.runtime.data;
 
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.data.closures.*;
+import com.oracle.truffle.r.runtime.data.model.*;
 
 @ValueType
-public final class RLogical extends RScalar {
+public final class RLogical extends RScalarVector implements RAbstractLogicalVector {
+
+    public static final RLogical NA = new RLogical(RRuntime.LOGICAL_NA);
+    public static final RLogical TRUE = new RLogical(RRuntime.LOGICAL_TRUE);
+    public static final RLogical FALSE = new RLogical(RRuntime.LOGICAL_FALSE);
+    public static final RLogical DEFAULT = FALSE;
 
     private final byte value;
 
@@ -34,8 +41,42 @@ public final class RLogical extends RScalar {
         this.value = value;
     }
 
+    public static RLogical valueOf(byte value) {
+        return new RLogical(value);
+    }
+
     public byte getValue() {
         return value;
+    }
+
+    public RAbstractVector castSafe(RType type) {
+        switch (type) {
+            case Logical:
+                return this;
+            case Integer:
+                if (isNA()) {
+                    return RInteger.NA;
+                } else {
+                    return RInteger.valueOf(value);
+                }
+            case Numeric:
+            case Double:
+                if (isNA()) {
+                    return RDouble.NA;
+                } else {
+                    return RDouble.valueOf(value);
+                }
+            case Complex:
+                if (isNA()) {
+                    return RComplex.NA;
+                } else {
+                    return RComplex.valueOf(value, 0.0);
+                }
+            case Character:
+                return RClosures.createLogicalToStringVector(this);
+            default:
+                return null;
+        }
     }
 
     @Override
@@ -46,5 +87,19 @@ public final class RLogical extends RScalar {
     @Override
     public String toString() {
         return RRuntime.logicalToString(value);
+    }
+
+    public byte getDataAt(int index) {
+        assert index == 0;
+        return getValue();
+    }
+
+    public RLogicalVector materialize() {
+        return RDataFactory.createLogicalVectorFromScalar(value);
+    }
+
+    @Override
+    public boolean isNA() {
+        return RRuntime.isNA(value);
     }
 }

@@ -62,6 +62,11 @@ public abstract class TypeofNode extends UnaryNode {
         return RType.Character;
     }
 
+    @Specialization
+    protected static RType doString(RMissing x) {
+        return RType.Missing;
+    }
+
     @Specialization(guards = {"operand.getClass() == cachedClass"}, limit = "NUMBER_OF_CACHED_CLASSES")
     protected static RType doCachedTyped(Object operand, //
                     @Cached("getTypedValueClass(operand)") Class<? extends RTypedValue> cachedClass) {

@@ -25,9 +25,14 @@ package com.oracle.truffle.r.runtime.data;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.data.closures.*;
+import com.oracle.truffle.r.runtime.data.model.*;
 
 @ValueType
-public final class RDouble extends RScalar {
+public final class RDouble extends RScalarVector implements RAbstractDoubleVector {
+
+    public static final RDouble NA = new RDouble(RRuntime.DOUBLE_NA);
+    public static final RDouble DEFAULT = new RDouble(0.0);
 
     private final double value;
 
@@ -39,6 +44,30 @@ public final class RDouble extends RScalar {
         return value;
     }
 
+    public static RDouble valueOf(double value) {
+        return new RDouble(value);
+    }
+
+    public RAbstractVector castSafe(RType type) {
+        switch (type) {
+            case Integer:
+                return this;
+            case Numeric:
+            case Double:
+                return this;
+            case Complex:
+                if (Double.isNaN(value)) {
+                    return RComplex.NA;
+                } else {
+                    return RComplex.valueOf(value, 0.0);
+                }
+            case Character:
+                return RClosures.createDoubleToStringVector(this);
+            default:
+                return null;
+        }
+    }
+
     @Override
     public RType getRType() {
         return RType.Double;
@@ -48,5 +77,19 @@ public final class RDouble extends RScalar {
     public String toString() {
         CompilerAsserts.neverPartOfCompilation();
         return Double.toString(value);
+    }
+
+    public double getDataAt(int index) {
+        assert index == 0;
+        return getValue();
+    }
+
+    public RDoubleVector materialize() {
+        return RDataFactory.createDoubleVectorFromScalar(getValue());
+    }
+
+    @Override
+    public boolean isNA() {
+        return RRuntime.isNA(getValue());
     }
 }

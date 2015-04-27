@@ -23,6 +23,8 @@
 package com.oracle.truffle.r.runtime.data;
 
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.data.closures.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
 public final class RIntSequence extends RSequence implements RAbstractIntVector {
@@ -35,6 +37,37 @@ public final class RIntSequence extends RSequence implements RAbstractIntVector 
         // assert length > 0;
         this.start = start;
         this.stride = stride;
+    }
+
+    public int getDataAt(int index) {
+        assert index >= 0 && index < getLength();
+        return start + stride * index;
+    }
+
+    public RAbstractVector castSafe(RType type) {
+        switch (type) {
+            case Integer:
+                return this;
+            case Double:
+            case Numeric:
+                return RDataFactory.createDoubleSequence(RRuntime.int2double(getStart()), RRuntime.int2double(getStride()), getLength());
+            case Complex:
+                return RClosures.createIntToComplexVector(this);
+            case Character:
+                return RClosures.createIntToStringVector(this);
+            default:
+                return null;
+        }
+    }
+
+    @Override
+    public Object getStartObject() {
+        return getStart();
+    }
+
+    @Override
+    public Object getStrideObject() {
+        return getStride();
     }
 
     public int getStart() {
@@ -65,26 +98,12 @@ public final class RIntSequence extends RSequence implements RAbstractIntVector 
         return internalCreateVector().toString();
     }
 
-    public int getDataAt(int index) {
-        assert index >= 0 && index < getLength();
-        return start + stride * index;
-    }
-
     public int getEnd() {
         return start + (getLength() - 1) * stride;
     }
 
     public RIntVector materialize() {
         return this.internalCreateVector();
-    }
-
-    public Class<?> getElementClass() {
-        return RInt.class;
-    }
-
-    @Override
-    public Object getDataAtAsObject(int index) {
-        return getDataAt(index);
     }
 
     public RStringVector getClassHierarchy() {

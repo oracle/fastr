@@ -31,7 +31,11 @@ public abstract class RToComplexVectorClosure extends RToVectorClosure implement
         super(vector);
     }
 
-    public RComplexVector materialize() {
+    public final RVector createEmptySameType(int newLength, boolean newIsComplete) {
+        return RDataFactory.createComplexVector(new double[newLength << 1], newIsComplete);
+    }
+
+    public final RComplexVector materialize() {
         int length = getLength();
         double[] result = new double[length << 1];
         for (int i = 0; i < length; i++) {
@@ -43,17 +47,9 @@ public abstract class RToComplexVectorClosure extends RToVectorClosure implement
         return RDataFactory.createComplexVector(result, vector.isComplete());
     }
 
-    public Class<?> getElementClass() {
-        return RComplex.class;
-    }
-
     @Override
-    public RComplexVector copyWithNewDimensions(int[] newDimensions) {
+    public final RComplexVector copyWithNewDimensions(int[] newDimensions) {
         return materialize().copyWithNewDimensions(newDimensions);
     }
 
-    @Override
-    public Object getDataAtAsObject(int index) {
-        return getDataAt(index);
-    }
 }

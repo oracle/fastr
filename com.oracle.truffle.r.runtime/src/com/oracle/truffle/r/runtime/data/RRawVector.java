@@ -158,10 +158,6 @@ public final class RRawVector extends RVector implements RAbstractRawVector {
         data[toIndex] = other.data[fromIndex];
     }
 
-    public Class<?> getElementClass() {
-        return RRaw.class;
-    }
-
     @Override
     public Object getDataAtAsObject(int index) {
         return getDataAt(index);

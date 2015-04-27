@@ -26,10 +26,11 @@ import java.util.*;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.data.closures.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
-public final class RComplexVector extends RVector implements RAbstractComplexVector {
+public final class RComplexVector extends RVector implements RAbstractComplexVector, RAccessibleStore<double[]> {
 
     private static final RStringVector implicitClassHeader = RDataFactory.createStringVector(new String[]{RType.Complex.getName()}, true);
     private static final RStringVector implicitClassHeaderArray = RDataFactory.createStringVector(new String[]{RType.Array.getName(), RType.Complex.getName()}, true);
@@ -53,8 +54,24 @@ public final class RComplexVector extends RVector implements RAbstractComplexVec
     }
 
     @Override
+    public double[] getInternalStore() {
+        return data;
+    }
+
+    @Override
     public int getLength() {
         return data.length >> 1;
+    }
+
+    public RAbstractVector castSafe(RType type) {
+        switch (type) {
+            case Complex:
+                return this;
+            case Character:
+                return RClosures.createComplexToStringVector(this);
+            default:
+                return null;
+        }
     }
 
     @Override
@@ -81,6 +98,12 @@ public final class RComplexVector extends RVector implements RAbstractComplexVec
             }
         }
         return true;
+    }
+
+    public RAbstractVector setDataAt(int index, RComplex value) {
+        data[index << 1] = value.getRealPart();
+        data[(index << 1) + 1] = value.getImaginaryPart();
+        return this;
     }
 
     public RComplex getDataAt(int i) {
@@ -189,15 +212,6 @@ public final class RComplexVector extends RVector implements RAbstractComplexVec
         int fromIndex2 = fromIndex << 1;
         data[toIndex2] = other.data[fromIndex2];
         data[toIndex2 + 1] = other.data[fromIndex2 + 1];
-    }
-
-    public Class<?> getElementClass() {
-        return RComplex.class;
-    }
-
-    @Override
-    public Object getDataAtAsObject(int index) {
-        return getDataAt(index);
     }
 
     @Override
