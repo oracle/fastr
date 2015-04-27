@@ -79,7 +79,7 @@ ifeq ($(OSNAME), SunOS)
 # required for Solaris compiler >=12.2, see Appendix C of R installation guide: 
 # http://cran.r-project.org/doc/manuals/r-release/R-admin.html#Solaris 
     GNUR_FLIBS := FLIBS="-R$(SSTUDIO_HOME)prod/lib/$(SUB_ARCH) $(FLIBS_COMMON) $(FLIBS_SUB_ARCH)"
-    GNUR_CONFIG_FLAGS := $(ICONV_CONFIG_FLAGS) CPPFLAGS=$(ICONV_FLAGS) $(GNUR_FLIBS) F77="sunf95 -m64 -xcode=pic32"
+    GNUR_CONFIG_FLAGS := $(ICONV_CONFIG_FLAGS) CPPFLAGS=$(ICONV_FLAGS) DYLIB_LDFLAGS=$(ICONV_FLAGS) $(GNUR_FLIBS) F77="sunf95 -m64 -xcode=pic32"
 
 iconv: $(ICONV) iconv_config iconv_build
 
@@ -119,7 +119,7 @@ $(GNUR_HOME)/Makefile:
 build: $(GNUR_HOME)/bin/R
 
 $(GNUR_HOME)/bin/R: $(GNUR_HOME)/Makeconf 
-	(cd $(GNUR_HOME); $(MAKE) -j > gnur_make.log 2>&1)
+	(cd $(GNUR_HOME); $(MAKE) MAKE=$(MAKE) -j > gnur_make.log 2>&1)
 
 clean: cleangnur cleaniconv
 	rm -f Makeconf.done
