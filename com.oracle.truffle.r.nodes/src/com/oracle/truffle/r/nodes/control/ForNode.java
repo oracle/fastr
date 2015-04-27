@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.nodes.control;
 
 import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
@@ -54,7 +53,7 @@ public final class ForNode extends AbstractLoopNode {
 
         this.writeIndexNode = WriteVariableNode.create(indexName, null, false, false);
         this.writeRangeNode = WriteVariableNode.create(rangeName, range, false, false);
-        this.writeLengthNode = WriteVariableNode.create(lengthName, LengthNodeGen.create(ReadVariableNode.create(rangeName, false)), false, false);
+        this.writeLengthNode = WriteVariableNode.create(lengthName, RLengthNodeGen.create(ReadVariableNode.create(rangeName, false)), false, false);
         this.loopNode = Truffle.getRuntime().createLoopNode(new ForRepeatingNode(cvar, body, indexName, lengthName, rangeName));
     }
 
@@ -193,52 +192,6 @@ public final class ForNode extends AbstractLoopNode {
             } finally {
                 writeIndexNode.execute(frame, index + 1);
             }
-        }
-    }
-
-    @NodeChild("operand")
-    protected abstract static class LengthNode extends RNode {
-
-        @Override
-        public final Object execute(VirtualFrame frame) {
-            return executeInteger(frame);
-        }
-
-        @Override
-        public abstract int executeInteger(VirtualFrame frame);
-
-        public abstract int executeInteger(VirtualFrame frame, Object value);
-
-        @Specialization
-        @SuppressWarnings("unused")
-        protected int getLength(RNull operand) {
-            return 0;
-        }
-
-        @Specialization
-        @SuppressWarnings("unused")
-        protected int getLength(int operand) {
-            return 1;
-        }
-
-        @Specialization
-        @SuppressWarnings("unused")
-        protected int getLength(double operand) {
-            return 1;
-        }
-
-        @Specialization
-        protected int getLength(VirtualFrame frame, RExpression operand, @Cached("createRecursive()") LengthNode recursiveLength) {
-            return recursiveLength.executeInteger(frame, operand.getList());
-        }
-
-        @Specialization
-        protected int getLength(RAbstractContainer operand) {
-            return operand.getLength();
-        }
-
-        public static LengthNode createRecursive() {
-            return LengthNodeGen.create(null);
         }
     }
 }
