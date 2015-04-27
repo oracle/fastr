@@ -418,7 +418,10 @@ public class RSerialize {
                             result = expr.getDataAt(0);
                         }
                     } else if (type == SEXPTYPE.PROMSXP) {
-                        result = RDataFactory.createPromise(RContext.getRASTHelper().createNodeForValue(cdrItem), (REnvironment) carItem);
+                        // @formatter:off
+                        // TODO figure out why this causes an error on startup
+                        // result = RDataFactory.createPromise(RContext.getRASTHelper().createNodeForValue(cdrItem), (REnvironment) carItem);
+                        // @formatter:on
                     }
                     return checkResult(result);
                 }
