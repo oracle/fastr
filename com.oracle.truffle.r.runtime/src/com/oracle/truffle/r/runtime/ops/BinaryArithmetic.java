@@ -66,6 +66,8 @@ public abstract class BinaryArithmetic extends Operation {
     public static final BinaryArithmeticFactory MAX = Max::new;
     public static final BinaryArithmeticFactory MIN = Min::new;
 
+    public static final BinaryArithmeticFactory[] ALL = {ADD, SUBTRACT, MULTIPLY, INTEGER_DIV, DIV, MOD, POW, MAX, MIN};
+
     private final boolean supportsIntResult;
 
     public BinaryArithmetic(boolean commutative, boolean associative, boolean supportsInt) {
@@ -314,7 +316,7 @@ public abstract class BinaryArithmetic extends Operation {
 
     }
 
-    private static class Div extends BinaryArithmetic {
+    public static class Div extends BinaryArithmetic {
 
         public Div() {
             super(false, false, false);
@@ -391,7 +393,7 @@ public abstract class BinaryArithmetic extends Operation {
         }
     }
 
-    private static final class IntegerDiv extends BinaryArithmetic {
+    public static final class IntegerDiv extends BinaryArithmetic {
 
         public IntegerDiv() {
             super(false, false, true);
@@ -910,7 +912,7 @@ public abstract class BinaryArithmetic extends Operation {
 
         @Override
         public String opName() {
-            throw RInternalError.unimplemented();
+            return "max";
         }
 
         @Override
@@ -944,7 +946,7 @@ public abstract class BinaryArithmetic extends Operation {
 
         @Override
         public String opName() {
-            throw RInternalError.unimplemented();
+            return "min";
         }
 
         @Override

@@ -24,10 +24,10 @@ package com.oracle.truffle.r.runtime.data;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
-import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.data.model.*;
 
 @ValueType
-public final class RRaw extends RScalar {
+public final class RRaw extends RScalarVector implements RAbstractRawVector {
 
     private final byte value;
 
@@ -35,13 +35,22 @@ public final class RRaw extends RScalar {
         this.value = value;
     }
 
-    public byte getValue() {
-        return value;
+    @Override
+    public boolean isNA() {
+        return false;
     }
 
-    @Override
-    public RType getRType() {
-        return RType.Raw;
+    public RRawVector materialize() {
+        return RDataFactory.createRawVector(new byte[]{value});
+    }
+
+    public RRaw getDataAt(int index) {
+        assert index == 0;
+        return this;
+    }
+
+    public byte getValue() {
+        return value;
     }
 
     @Override

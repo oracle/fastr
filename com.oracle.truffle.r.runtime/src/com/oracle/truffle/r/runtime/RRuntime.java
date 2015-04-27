@@ -155,7 +155,7 @@ public class RRuntime {
     public static String classToString(Class<?> c, boolean numeric) {
         if (c == RLogical.class) {
             return RType.Logical.getName();
-        } else if (c == RInt.class) {
+        } else if (c == RInteger.class) {
             return RType.Integer.getName();
         } else if (c == RDouble.class) {
             return numeric ? RType.Numeric.getName() : RType.Double.getName();
@@ -184,7 +184,7 @@ public class RRuntime {
     public static String classToStringCap(Class<?> c) {
         if (c == RLogical.class) {
             return "Logical";
-        } else if (c == RInt.class) {
+        } else if (c == RInteger.class) {
             return "Integer";
         } else if (c == RDouble.class) {
             return "Numeric";

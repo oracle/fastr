@@ -24,14 +24,28 @@ package com.oracle.truffle.r.runtime.data;
 
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.data.closures.*;
+import com.oracle.truffle.r.runtime.data.model.*;
 
 @ValueType
-public final class RInt extends RScalar {
+public final class RInteger extends RScalarVector implements RAbstractIntVector {
+
+    public static final RInteger NA = new RInteger(RRuntime.INT_NA);
+    public static final RInteger DEFAULT = new RInteger(0);
 
     private final int value;
 
-    private RInt(byte value) {
+    private RInteger(int value) {
         this.value = value;
+    }
+
+    public static RInteger valueOf(int value) {
+        return new RInteger(value);
+    }
+
+    public int getDataAt(int index) {
+        assert index == 0;
+        return value;
     }
 
     public int getValue() {
@@ -43,8 +57,41 @@ public final class RInt extends RScalar {
         return RType.Integer;
     }
 
+    public RAbstractVector castSafe(RType type) {
+        switch (type) {
+            case Integer:
+                return this;
+            case Numeric:
+            case Double:
+                if (isNA()) {
+                    return RDouble.NA;
+                } else {
+                    return RDouble.valueOf(value);
+                }
+            case Complex:
+                if (isNA()) {
+                    return RComplex.NA;
+                } else {
+                    return RComplex.valueOf(value, 0.0);
+                }
+            case Character:
+                return RClosures.createIntToStringVector(this);
+            default:
+                return null;
+        }
+    }
+
     @Override
     public String toString() {
         return RRuntime.intToString(value);
+    }
+
+    public RIntVector materialize() {
+        return RDataFactory.createIntVectorFromScalar(value);
+    }
+
+    @Override
+    public boolean isNA() {
+        return RRuntime.isNA(value);
     }
 }

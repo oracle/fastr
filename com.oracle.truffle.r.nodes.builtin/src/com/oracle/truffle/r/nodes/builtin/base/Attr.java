@@ -105,7 +105,7 @@ public abstract class Attr extends RBuiltinNode {
             return RNull.instance;
         } else {
             RAbstractVector rowNames = (RAbstractVector) a;
-            return rowNames.getElementClass() == RInt.class && rowNames.getLength() == 2 && RRuntime.isNA(((RAbstractIntVector) rowNames).getDataAt(0)) ? RDataFactory.createIntSequence(1, 1,
+            return rowNames.getElementClass() == RInteger.class && rowNames.getLength() == 2 && RRuntime.isNA(((RAbstractIntVector) rowNames).getDataAt(0)) ? RDataFactory.createIntSequence(1, 1,
                             Math.abs(((RAbstractIntVector) rowNames).getDataAt(1))) : a;
         }
     }

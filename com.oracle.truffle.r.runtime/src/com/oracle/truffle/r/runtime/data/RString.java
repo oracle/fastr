@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,14 +23,19 @@
 package com.oracle.truffle.r.runtime.data;
 
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
+import com.oracle.truffle.r.runtime.data.model.*;
 
 @ValueType
-public final class RString {
+public final class RString extends RScalarVector implements RAbstractStringVector {
 
     private final String value;
 
     private RString(String value) {
         this.value = value;
+    }
+
+    public static RString valueOf(String s) {
+        return new RString(s);
     }
 
     public String getValue() {
@@ -40,5 +45,19 @@ public final class RString {
     @Override
     public String toString() {
         return value;
+    }
+
+    public String getDataAt(int index) {
+        assert index == 0;
+        return value;
+    }
+
+    public RStringVector materialize() {
+        return RDataFactory.createStringVector(getValue());
+    }
+
+    @Override
+    public boolean isNA() {
+        return false;
     }
 }

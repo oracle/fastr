@@ -562,7 +562,7 @@ public abstract class Scan extends RBuiltinNode {
                 return RRuntime.string2logicalNoCheck(buffer);
             }
         }
-        if (what.getElementClass() == RInt.class) {
+        if (what.getElementClass() == RInteger.class) {
             if (isNaString(buffer, 0, data)) {
                 return RRuntime.INT_NA;
             } else {

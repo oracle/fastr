@@ -26,10 +26,11 @@ import java.util.*;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.data.closures.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
-public final class RDoubleVector extends RVector implements RAbstractDoubleVector {
+public final class RDoubleVector extends RVector implements RAbstractDoubleVector, RAccessibleStore<double[]> {
 
     private final double[] data;
 
@@ -46,9 +47,30 @@ public final class RDoubleVector extends RVector implements RAbstractDoubleVecto
         this(data, complete, dims, null);
     }
 
+    public RAbstractVector castSafe(RType type) {
+        switch (type) {
+            case Double:
+            case Numeric:
+                return this;
+            case Integer:
+                return RClosures.createDoubleToIntVector(this);
+            case Complex:
+                return RClosures.createDoubleToComplexVector(this);
+            case Character:
+                return RClosures.createDoubleToStringVector(this);
+            default:
+                return null;
+        }
+    }
+
     @Override
     protected RDoubleVector internalCopy() {
         return new RDoubleVector(Arrays.copyOf(data, data.length), this.isComplete(), null);
+    }
+
+    @Override
+    public double[] getInternalStore() {
+        return data;
     }
 
     public RDoubleVector copyResetData(double[] newData) {
@@ -189,10 +211,6 @@ public final class RDoubleVector extends RVector implements RAbstractDoubleVecto
     public void transferElementSameType(int toIndex, RAbstractVector fromVector, int fromIndex) {
         RAbstractDoubleVector other = (RAbstractDoubleVector) fromVector;
         data[toIndex] = other.getDataAt(fromIndex);
-    }
-
-    public Class<?> getElementClass() {
-        return RDouble.class;
     }
 
     @Override

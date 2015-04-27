@@ -27,6 +27,11 @@ import com.oracle.truffle.r.runtime.data.*;
 
 public interface RAbstractIntVector extends RAbstractVector {
 
+    @Override
+    default Object getDataAtAsObject(int index) {
+        return getDataAt(index);
+    }
+
     int getDataAt(int index);
 
     RIntVector materialize();
@@ -43,4 +48,9 @@ public interface RAbstractIntVector extends RAbstractVector {
     default RType getRType() {
         return RType.Integer;
     }
+
+    default Class<?> getElementClass() {
+        return RInteger.class;
+    }
+
 }

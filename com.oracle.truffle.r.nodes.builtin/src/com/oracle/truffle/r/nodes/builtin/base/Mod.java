@@ -36,8 +36,8 @@ import com.oracle.truffle.r.runtime.ops.*;
 @RBuiltin(name = "Mod", kind = PRIMITIVE, parameterNames = {"z"})
 public abstract class Mod extends RBuiltinNode {
 
-    @Child private BinaryArithmeticNode pow = BinaryArithmeticNode.create(BinaryArithmetic.POW);
-    @Child private BinaryArithmeticNode add = BinaryArithmeticNode.create(BinaryArithmetic.ADD);
+    @Child private ScalarArithmeticNode pow = new ScalarArithmeticNode(BinaryArithmetic.POW.create());
+    @Child private ScalarArithmeticNode add = new ScalarArithmeticNode(BinaryArithmetic.ADD.create());
     @Child private Sqrt sqrt = SqrtNodeGen.create(new RNode[1], null, null);
 
     @Specialization
@@ -46,7 +46,7 @@ public abstract class Mod extends RBuiltinNode {
         double[] data = new double[vec.getLength()];
         for (int i = 0; i < vec.getLength(); i++) {
             RComplex x = vec.getDataAt(i);
-            data[i] = sqrt.sqrt(add.doDouble(pow.doInt(x.getRealPart(), 2), pow.doInt(x.getImaginaryPart(), 2)));
+            data[i] = sqrt.sqrt(add.applyDouble(pow.applyDouble(x.getRealPart(), 2), pow.applyDouble(x.getImaginaryPart(), 2)));
         }
         return RDataFactory.createDoubleVector(data, RDataFactory.COMPLETE_VECTOR);
     }

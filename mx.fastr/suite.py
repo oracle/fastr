@@ -244,6 +244,18 @@ suite = {
       "jacoco" : "include",
     },
 
+    "com.oracle.truffle.r.nodes.test" : {
+      "sourceDirs" : ["src"],
+      "dependencies" : [
+        "JUNIT",
+        "com.oracle.truffle.r.engine",
+      ],
+      "checkstyle" : "com.oracle.truffle.r.runtime",
+      "javaCompliance" : "1.8",
+      "workingSets" : "Truffle,FastR,Test",
+      "jacoco" : "include",
+    },
+
     "com.oracle.truffle.r.test" : {
       "sourceDirs" : ["src"],
       "dependencies" : [

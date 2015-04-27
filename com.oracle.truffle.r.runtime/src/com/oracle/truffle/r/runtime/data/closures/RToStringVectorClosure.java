@@ -31,7 +31,11 @@ public abstract class RToStringVectorClosure extends RToVectorClosure implements
         super(vector);
     }
 
-    public RStringVector materialize() {
+    public final RVector createEmptySameType(int newLength, boolean newIsComplete) {
+        return RDataFactory.createStringVector(new String[newLength], newIsComplete);
+    }
+
+    public final RStringVector materialize() {
         int length = getLength();
         String[] result = new String[length];
         for (int i = 0; i < length; i++) {
@@ -41,17 +45,9 @@ public abstract class RToStringVectorClosure extends RToVectorClosure implements
         return RDataFactory.createStringVector(result, vector.isComplete());
     }
 
-    public Class<?> getElementClass() {
-        return RString.class;
-    }
-
     @Override
-    public RStringVector copyWithNewDimensions(int[] newDimensions) {
+    public final RStringVector copyWithNewDimensions(int[] newDimensions) {
         return materialize().copyWithNewDimensions(newDimensions);
     }
 
-    @Override
-    public Object getDataAtAsObject(int index) {
-        return getDataAt(index);
-    }
 }

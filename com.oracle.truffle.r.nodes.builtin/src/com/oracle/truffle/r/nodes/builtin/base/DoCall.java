@@ -119,6 +119,13 @@ public abstract class DoCall extends RBuiltinNode {
                 if (builtin.evaluatesArg(i)) {
                     if (arg instanceof RPromise) {
                         argArray[i] = promiseHelper.evaluate(frame, (RPromise) arg);
+                    } else if (arg instanceof RArgsValuesAndNames) {
+                        Object[] varArgValues = ((RArgsValuesAndNames) arg).getValues();
+                        for (int j = 0; j < varArgValues.length; j++) {
+                            if (varArgValues[j] instanceof RPromise) {
+                                varArgValues[j] = promiseHelper.evaluate(frame, (RPromise) varArgValues[j]);
+                            }
+                        }
                     }
                 } else {
                     if (!(arg instanceof RPromise) && arg != RMissing.instance && !(arg instanceof RArgsValuesAndNames)) {

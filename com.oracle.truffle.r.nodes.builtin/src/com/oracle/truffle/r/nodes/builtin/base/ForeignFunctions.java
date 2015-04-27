@@ -88,20 +88,20 @@ public class ForeignFunctions {
             controlVisibility();
             Object[] argValues = args.getValues();
             try {
-                RDoubleVector xVec = (RDoubleVector) argValues[0];
+                RAbstractDoubleVector xVec = (RAbstractDoubleVector) argValues[0];
                 int ldx = (int) argValues[1];
                 int n = (int) argValues[2];
                 int p = (int) argValues[3];
                 double tol = (double) argValues[4];
-                RIntVector rankVec = (RIntVector) argValues[5];
-                RDoubleVector qrauxVec = (RDoubleVector) argValues[6];
-                RIntVector pivotVec = (RIntVector) argValues[7];
-                RDoubleVector workVec = (RDoubleVector) argValues[8];
-                double[] x = xVec.getDataTemp();
-                int[] rank = rankVec.getDataTemp();
-                double[] qraux = qrauxVec.getDataTemp();
-                int[] pivot = pivotVec.getDataTemp();
-                RFFIFactory.getRFFI().getRApplRFFI().dqrdc2(x, ldx, n, p, tol, rank, qraux, pivot, workVec.getDataCopy());
+                RAbstractIntVector rankVec = (RAbstractIntVector) argValues[5];
+                RAbstractDoubleVector qrauxVec = (RAbstractDoubleVector) argValues[6];
+                RAbstractIntVector pivotVec = (RAbstractIntVector) argValues[7];
+                RAbstractDoubleVector workVec = (RAbstractDoubleVector) argValues[8];
+                double[] x = xVec.materialize().getDataTemp();
+                int[] rank = rankVec.materialize().getDataTemp();
+                double[] qraux = qrauxVec.materialize().getDataTemp();
+                int[] pivot = pivotVec.materialize().getDataTemp();
+                RFFIFactory.getRFFI().getRApplRFFI().dqrdc2(x, ldx, n, p, tol, rank, qraux, pivot, workVec.materialize().getDataCopy());
                 // @formatter:off
                 Object[] data = new Object[]{
                             RDataFactory.createDoubleVector(x, RDataFactory.COMPLETE_VECTOR, xVec.getDimensions()),
@@ -131,19 +131,19 @@ public class ForeignFunctions {
             controlVisibility();
             Object[] argValues = args.getValues();
             try {
-                RDoubleVector xVec = (RDoubleVector) argValues[0];
+                RAbstractDoubleVector xVec = (RAbstractDoubleVector) argValues[0];
                 int n = (int) argValues[1];
-                RIntVector k = (RIntVector) argValues[2];
-                RDoubleVector qrauxVec = (RDoubleVector) argValues[3];
-                RDoubleVector yVec = (RDoubleVector) argValues[4];
+                RAbstractIntVector k = (RAbstractIntVector) argValues[2];
+                RAbstractDoubleVector qrauxVec = (RAbstractDoubleVector) argValues[3];
+                RAbstractDoubleVector yVec = (RAbstractDoubleVector) argValues[4];
                 int ny = (int) argValues[5];
-                RDoubleVector bVec = (RDoubleVector) argValues[6];
-                RIntVector infoVec = (RIntVector) argValues[7];
-                double[] x = xVec.getDataTemp();
-                double[] qraux = qrauxVec.getDataTemp();
-                double[] y = yVec.getDataTemp();
-                double[] b = bVec.getDataTemp();
-                int[] info = infoVec.getDataTemp();
+                RAbstractDoubleVector bVec = (RAbstractDoubleVector) argValues[6];
+                RAbstractIntVector infoVec = (RAbstractIntVector) argValues[7];
+                double[] x = xVec.materialize().getDataTemp();
+                double[] qraux = qrauxVec.materialize().getDataTemp();
+                double[] y = yVec.materialize().getDataTemp();
+                double[] b = bVec.materialize().getDataTemp();
+                int[] info = infoVec.materialize().getDataTemp();
                 RFFIFactory.getRFFI().getRApplRFFI().dqrcf(x, n, k.getDataAt(0), qraux, y, ny, b, info);
                 RDoubleVector coef = RDataFactory.createDoubleVector(b, RDataFactory.COMPLETE_VECTOR);
                 coef.copyAttributesFrom(attrProfiles, bVec);
@@ -202,16 +202,16 @@ public class ForeignFunctions {
             Object[] nativeArgs = new Object[argValues.length];
             for (int i = 0; i < argValues.length; i++) {
                 Object arg = argValues[i];
-                if (arg instanceof RDoubleVector) {
+                if (arg instanceof RAbstractDoubleVector) {
                     argTypes[i] = VECTOR_DOUBLE;
-                    nativeArgs[i] = checkNAs(i + 1, ((RDoubleVector) arg).getDataCopy());
-                } else if (arg instanceof RIntVector) {
+                    nativeArgs[i] = checkNAs(i + 1, ((RAbstractDoubleVector) arg).materialize().getDataCopy());
+                } else if (arg instanceof RAbstractIntVector) {
                     argTypes[i] = VECTOR_INT;
-                    nativeArgs[i] = checkNAs(i + 1, ((RIntVector) arg).getDataCopy());
-                } else if (arg instanceof RLogicalVector) {
+                    nativeArgs[i] = checkNAs(i + 1, ((RAbstractIntVector) arg).materialize().getDataCopy());
+                } else if (arg instanceof RAbstractLogicalVector) {
                     argTypes[i] = VECTOR_LOGICAL;
                     // passed as int[]
-                    byte[] data = ((RLogicalVector) arg).getDataWithoutCopying();
+                    byte[] data = ((RAbstractLogicalVector) arg).materialize().getDataWithoutCopying();
                     int[] dataAsInt = new int[data.length];
                     for (int j = 0; j < data.length; j++) {
                         // An NA is an error but the error handling happens in checkNAs
@@ -253,15 +253,15 @@ public class ForeignFunctions {
                         results[i] = RDataFactory.createLogicalVector((byte[]) nativeArgs[i], RDataFactory.COMPLETE_VECTOR);
                         break;
                     case VECTOR_DOUBLE: {
-                        results[i] = ((RDoubleVector) argValues[i]).copyResetData((double[]) nativeArgs[i]);
+                        results[i] = ((RAbstractDoubleVector) argValues[i]).materialize().copyResetData((double[]) nativeArgs[i]);
                         break;
                     }
                     case VECTOR_INT: {
-                        results[i] = ((RIntVector) argValues[i]).copyResetData((int[]) nativeArgs[i]);
+                        results[i] = ((RAbstractIntVector) argValues[i]).materialize().copyResetData((int[]) nativeArgs[i]);
                         break;
                     }
                     case VECTOR_LOGICAL: {
-                        results[i] = ((RLogicalVector) argValues[i]).copyResetData((byte[]) nativeArgs[i]);
+                        results[i] = ((RAbstractLogicalVector) argValues[i]).materialize().copyResetData((byte[]) nativeArgs[i]);
                         break;
                     }
 
@@ -504,8 +504,8 @@ public class ForeignFunctions {
             String[] choices;
             if (values[0] instanceof String) {
                 choices = new String[]{(String) values[0]};
-            } else if (values[0] instanceof RStringVector) {
-                choices = ((RStringVector) values[0]).getDataWithoutCopying();
+            } else if (values[0] instanceof RAbstractStringVector) {
+                choices = ((RAbstractStringVector) values[0]).materialize().getDataWithoutCopying();
             } else {
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "choices");
             }
@@ -561,14 +561,14 @@ public class ForeignFunctions {
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.IS_NULL, "x");
             }
             // TODO error checks/coercions
-            RDoubleVector x = (RDoubleVector) argValues[0];
-            RDoubleVector y = argValues[1] == RNull.instance ? null : (RDoubleVector) argValues[1];
-            int method = ((RIntVector) argValues[2]).getDataAt(0);
+            RAbstractDoubleVector x = (RAbstractDoubleVector) argValues[0];
+            RAbstractDoubleVector y = argValues[1] == RNull.instance ? null : (RAbstractDoubleVector) argValues[1];
+            int method = ((RAbstractIntVector) argValues[2]).getDataAt(0);
             if (method != 4) {
                 throw RError.nyi(getEncapsulatingSourceSection(), "method");
             }
             boolean iskendall = RRuntime.fromLogical(castLogical(frame, castVector(frame, argValues[3])));
-            return Covcor.getInstance().corcov(x, y, method, iskendall, !isCov, getEncapsulatingSourceSection());
+            return Covcor.getInstance().corcov(x.materialize(), y != null ? y.materialize() : null, method, iskendall, !isCov, getEncapsulatingSourceSection());
 
         }
 
@@ -576,9 +576,9 @@ public class ForeignFunctions {
         protected RList splineCoef(VirtualFrame frame, @SuppressWarnings("unused") RList f, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName) {
             Object[] argValues = args.getValues();
             int method = castInt(frame, castVector(frame, argValues[0]));
-            RDoubleVector x = (RDoubleVector) castVector(frame, argValues[1]);
-            RDoubleVector y = (RDoubleVector) castVector(frame, argValues[2]);
-            return SplineFunctions.splineCoef(method, x, y);
+            RAbstractDoubleVector x = (RAbstractDoubleVector) castVector(frame, argValues[1]);
+            RAbstractDoubleVector y = (RAbstractDoubleVector) castVector(frame, argValues[2]);
+            return SplineFunctions.splineCoef(method, x.materialize(), y.materialize());
         }
 
         public boolean isSplineCoef(RList f) {
@@ -588,10 +588,10 @@ public class ForeignFunctions {
         @Specialization(guards = "isSplineEval(f)")
         protected RDoubleVector splineEval(VirtualFrame frame, @SuppressWarnings("unused") RList f, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName) {
             Object[] argValues = args.getValues();
-            RDoubleVector xout = (RDoubleVector) castVector(frame, argValues[0]);
+            RAbstractDoubleVector xout = (RAbstractDoubleVector) castVector(frame, argValues[0]);
             // This is called with the result of SplineCoef, so it is surely an RList
             RList z = (RList) argValues[1];
-            return SplineFunctions.splineEval(attrProfiles, xout, z);
+            return SplineFunctions.splineEval(attrProfiles, xout.materialize(), z);
         }
 
         public boolean isSplineEval(RList f) {
@@ -601,9 +601,9 @@ public class ForeignFunctions {
         @Specialization(guards = "isDoTabExpand(f)")
         protected RStringVector tabExpand(VirtualFrame frame, @SuppressWarnings("unused") RList f, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName) {
             Object[] argValues = args.getValues();
-            RStringVector strings = (RStringVector) castVector(frame, argValues[0]);
-            RIntVector starts = (RIntVector) castVector(frame, argValues[1]);
-            return Text.doTabExpand(strings, starts);
+            RAbstractStringVector strings = (RAbstractStringVector) castVector(frame, argValues[0]);
+            RAbstractIntVector starts = (RAbstractIntVector) castVector(frame, argValues[1]);
+            return Text.doTabExpand(strings.materialize(), starts.materialize());
         }
 
         public boolean isDoTabExpand(RList f) {
@@ -650,11 +650,11 @@ public class ForeignFunctions {
     private static String isString(Object arg) {
         if (arg instanceof String) {
             return (String) arg;
-        } else if (arg instanceof RStringVector) {
-            if (((RStringVector) arg).getLength() == 0) {
+        } else if (arg instanceof RAbstractStringVector) {
+            if (((RAbstractStringVector) arg).getLength() == 0) {
                 return null;
             } else {
-                return ((RStringVector) arg).getDataAt(0);
+                return ((RAbstractStringVector) arg).getDataAt(0);
             }
         } else {
             return null;
@@ -679,7 +679,7 @@ public class ForeignFunctions {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 castLogical = insert(CastLogicalNodeGen.create(null, false, false, false));
             }
-            return ((RLogicalVector) castLogical.executeCast(frame, operand)).getDataAt(0);
+            return ((RAbstractLogicalVector) castLogical.executeCast(frame, operand)).getDataAt(0);
         }
 
         protected int castInt(VirtualFrame frame, RAbstractVector operand) {
@@ -687,15 +687,15 @@ public class ForeignFunctions {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 castInt = insert(CastIntegerNodeGen.create(null, false, false, false));
             }
-            return ((RIntVector) castInt.executeCast(frame, operand)).getDataAt(0);
+            return ((RAbstractIntVector) castInt.executeCast(frame, operand)).getDataAt(0);
         }
 
-        protected RDoubleVector castDouble(VirtualFrame frame, RAbstractVector operand) {
+        protected RAbstractDoubleVector castDouble(VirtualFrame frame, RAbstractVector operand) {
             if (castDouble == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 castDouble = insert(CastDoubleNodeGen.create(null, false, false, false));
             }
-            return (RDoubleVector) castDouble.executeCast(frame, operand);
+            return (RAbstractDoubleVector) castDouble.executeCast(frame, operand);
         }
 
         protected RComplexVector castComplexVector(VirtualFrame frame, Object operand) {
@@ -723,7 +723,7 @@ public class ForeignFunctions {
             if (f.getNames(attrProfiles) == null) {
                 return false;
             }
-            RStringVector names = f.getNames(attrProfiles);
+            RAbstractStringVector names = f.getNames(attrProfiles);
             for (int i = 0; i < names.getLength(); i++) {
                 if (names.getDataAt(i).equals("name")) {
                     return f.getDataAt(i).equals(name) ? true : false;
@@ -853,12 +853,12 @@ public class ForeignFunctions {
         }
 
         @Specialization(guards = "isQgamma(f)")
-        protected RDoubleVector doQgamma(VirtualFrame frame, @SuppressWarnings("unused") RList f, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName) {
+        protected RAbstractDoubleVector doQgamma(VirtualFrame frame, @SuppressWarnings("unused") RList f, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName) {
             controlVisibility();
             Object[] argValues = args.getValues();
-            RDoubleVector p = (RDoubleVector) castVector(frame, argValues[0]);
-            RDoubleVector shape = (RDoubleVector) castVector(frame, argValues[1]);
-            RDoubleVector scale = (RDoubleVector) castVector(frame, argValues[2]);
+            RAbstractDoubleVector p = (RAbstractDoubleVector) castVector(frame, argValues[0]);
+            RAbstractDoubleVector shape = (RAbstractDoubleVector) castVector(frame, argValues[1]);
+            RAbstractDoubleVector scale = (RAbstractDoubleVector) castVector(frame, argValues[2]);
             if (shape.getLength() == 0 || scale.getLength() == 0) {
                 return RDataFactory.createEmptyDoubleVector();
             }
@@ -964,7 +964,7 @@ public class ForeignFunctions {
             }
             boolean[] quoteCol = new boolean[nc];
             boolean quoteRn = false;
-            RIntVector quote = (RIntVector) castVector(frame, quoteArg);
+            RAbstractIntVector quote = (RAbstractIntVector) castVector(frame, quoteArg);
             for (int i = 0; i < quote.getLength(); i++) {
                 int qi = quote.getDataAt(i);
                 if (qi == 0) {
@@ -1026,7 +1026,7 @@ public class ForeignFunctions {
         @Specialization(guards = "isPlotXY(f)")
         protected RNull doPlotXY(@SuppressWarnings("unused") RList f, RArgsValuesAndNames args) {
             controlVisibility();
-            GraphicsCCalls.plotXy((RDoubleVector) args.getValues()[0]);
+            GraphicsCCalls.plotXy(((RAbstractDoubleVector) args.getValues()[0]).materialize());
             return RNull.instance;
         }
 

@@ -368,9 +368,11 @@ public class RErrorHandling {
             throw RInternalError.unimplemented();
         }
 
-        Object wObj = ROptions.getValue("warn");
-
-        int w = RRuntime.asInteger(wObj);
+        Integer wObj = RRuntime.asInteger(ROptions.getValue("warn"));
+        int w = 0;
+        if (wObj != null) {
+            w = wObj;
+        }
         if (w == RRuntime.INT_NA) {
             w = 0;
         }
