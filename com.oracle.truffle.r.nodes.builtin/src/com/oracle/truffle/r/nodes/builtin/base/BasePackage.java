@@ -87,6 +87,7 @@ public class BasePackage extends RBuiltinPackage {
         add(BaseGammaFunctions.Gamma.class, BaseGammaFunctionsFactory.GammaNodeGen::create);
         add(BaseGammaFunctions.Lgamma.class, BaseGammaFunctionsFactory.LgammaNodeGen::create);
         add(BaseGammaFunctions.TriGamma.class, BaseGammaFunctionsFactory.TriGammaNodeGen::create);
+        add(Bincode.class, BincodeNodeGen::create);
         add(Bind.CbindInternal.class, BindNodeGen.CbindInternalNodeGen::create);
         add(Bind.RbindInternal.class, BindNodeGen.RbindInternalNodeGen::create);
         add(BitwiseFunctions.BitwiseAnd.class, BitwiseFunctionsFactory.BitwiseAndNodeGen::create);
@@ -225,6 +226,7 @@ public class BasePackage extends RBuiltinPackage {
         add(ForeignFunctions.Fortran.class, ForeignFunctionsFactory.FortranNodeGen::create);
         add(Formals.class, FormalsNodeGen::create);
         add(Format.class, FormatNodeGen::create);
+        add(FormatC.class, FormatCNodeGen::create);
         add(FrameFunctions.MatchCall.class, FrameFunctionsFactory.MatchCallNodeGen::create);
         add(FrameFunctions.ParentFrame.class, FrameFunctionsFactory.ParentFrameNodeGen::create);
         add(FrameFunctions.SysCall.class, FrameFunctionsFactory.SysCallNodeGen::create);

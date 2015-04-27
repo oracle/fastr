@@ -20,6 +20,14 @@ import com.oracle.truffle.r.test.*;
 public class TestSimpleBuiltins extends TestBase {
 
     @Test
+    public void testBincode() {
+        assertEval("{ x <- c(0, 0.01, 0.5, 0.99, 1); b <- c(0, 0, 1, 1); .bincode(x, b, TRUE) }");
+        assertEval("{ x <- c(0, 0.01, 0.5, 0.99, 1); b <- c(0, 0, 1, 1); .bincode(x, b, FALSE) }");
+        assertEval("{ x <- c(0, 0.01, 0.5, 0.99, 1); b <- c(0, 0, 1, 1); .bincode(x, b, TRUE, TRUE) }");
+        assertEval("{ x <- c(0, 0.01, 0.5, 0.99, 1); b <- c(0, 0, 1, 1); .bincode(x, b, FALSE, TRUE) }");
+    }
+
+    @Test
     public void testCopyDDFattr() {
         assertEval("{ x<-7; attr(x, \"foo\")<-\"foo\"; y<-42; z<-.Internal(copyDFattr(x, y)); attributes(z) }");
         assertEval("{ x<-data.frame(a=c(1,2), b=c(11,12)); y<-7; z<-.Internal(copyDFattr(y, x)); attributes(z) }");
