@@ -226,11 +226,27 @@ public class StdConnections {
         }
 
         @Override
+        public void flush() throws IOException {
+            if (top < 0) {
+                // no API to flush console
+            } else {
+                diversions[top].conn.flush();
+            }
+        }
+
+        @Override
         public void writeLines(RAbstractStringVector lines, String sep) throws IOException {
-            for (int i = 0; i < lines.getLength(); i++) {
-                String line = lines.getDataAt(i);
-                writeString(line, false);
-                writeString(sep, false);
+            /*
+             * It is more efficient to test for diversion, as this is the most common entry point.
+             */
+            if (top < 0) {
+                for (int i = 0; i < lines.getLength(); i++) {
+                    String line = lines.getDataAt(i);
+                    writeString(line, false);
+                    writeString(sep, false);
+                }
+            } else {
+                diversions[top].conn.writeLines(lines, sep);
             }
         }
 
@@ -293,11 +309,27 @@ public class StdConnections {
         }
 
         @Override
+        public void flush() throws IOException {
+            if (diversion == null) {
+                // no API to flush console
+            } else {
+                diversion.flush();
+            }
+        }
+
+        @Override
         public void writeLines(RAbstractStringVector lines, String sep) throws IOException {
-            for (int i = 0; i < lines.getLength(); i++) {
-                String line = lines.getDataAt(i);
-                writeString(line, false);
-                writeString(sep, false);
+            /*
+             * It is more efficient to test for diversion, as this is the most common entry point.
+             */
+            if (diversion == null) {
+                for (int i = 0; i < lines.getLength(); i++) {
+                    String line = lines.getDataAt(i);
+                    writeString(line, false);
+                    writeString(sep, false);
+                }
+            } else {
+                diversion.writeLines(lines, sep);
             }
         }
 
