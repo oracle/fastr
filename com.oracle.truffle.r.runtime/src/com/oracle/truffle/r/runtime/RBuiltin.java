@@ -63,4 +63,6 @@ public @interface RBuiltin {
      * sites. <code>name</code> indicates the builtin name defined in {@link #name()}.
      */
     boolean splitCaller() default false;
+
+    boolean alwaysSplit() default false;
 }

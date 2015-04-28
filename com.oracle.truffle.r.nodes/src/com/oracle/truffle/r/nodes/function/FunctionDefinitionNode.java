@@ -137,6 +137,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
 
     }
 
+    @Override
     public boolean needsSplitting() {
         return needsSplitting;
     }
