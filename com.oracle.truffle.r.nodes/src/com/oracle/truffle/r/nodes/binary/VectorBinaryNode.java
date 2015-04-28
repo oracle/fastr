@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.binary;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.utilities.*;
+import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.profile.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -174,7 +175,8 @@ final class VectorBinaryNode extends Node {
             target = scalarNode.tryFoldConstantTime(leftCast, leftLength, rightCast, rightLength);
         }
         if (target == null) {
-            target = createOrShareVector(leftLength, left, rightLength, right);
+            int maxLength = Math.max(leftLength, rightLength);
+            target = createOrShareVector(leftLength, left, rightLength, right, maxLength);
             Object store;
             if (target instanceof RAccessibleStore) {
                 store = ((RAccessibleStore<?>) target).getInternalStore();
@@ -182,6 +184,7 @@ final class VectorBinaryNode extends Node {
                 throw RInternalError.shouldNotReachHere();
             }
             vectorNode.apply(scalarNode, store, leftCast, leftLength, rightCast, rightLength);
+            RNode.reportWork(this, maxLength);
         }
         if (mayContainMetadata) {
             target = handleMetadata(target, left, leftLength, right, rightLength);
@@ -190,8 +193,8 @@ final class VectorBinaryNode extends Node {
         return target;
     }
 
-    private RAbstractVector createOrShareVector(int leftLength, RAbstractVector left, int rightLength, RAbstractVector right) {
-        int maxLength = Math.max(leftLength, rightLength);
+    private RAbstractVector createOrShareVector(int leftLength, RAbstractVector left, int rightLength, RAbstractVector right, int maxLength) {
+
         RType resultType = getResultType();
         if (mayShareLeft && left.getRType() == resultType && shareLeft.profile(leftLength == maxLength && ((RShareable) left).isTemporary())) {
             return left;
