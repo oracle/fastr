@@ -57,7 +57,9 @@ public class REnvVars {
         // set the standard vars defined by R
         String rHome = rHome();
         envVars.put("R_HOME", rHome);
+        // Always read the system file
         FileSystem fileSystem = FileSystems.getDefault();
+        safeReadEnvironFile(fileSystem.getPath(rHome, "etc", "Renviron").toString());
         envVars.put("R_DOC_DIR", fileSystem.getPath(rHome, "doc").toString());
         envVars.put("R_INCLUDE_DIR", fileSystem.getPath(rHome, "include").toString());
         envVars.put("R_SHARE_DIR", fileSystem.getPath(rHome, "share").toString());
@@ -202,7 +204,7 @@ public class REnvVars {
         checkEnvVars();
         while (paramStart >= 0) {
             result.append(value.substring(x, paramStart));
-            int paramEnd = value.indexOf('}', paramStart);
+            int paramEnd = value.lastIndexOf('}');
             String param = value.substring(paramStart + 2, paramEnd);
             String paramDefault = "";
             String paramName = param;
