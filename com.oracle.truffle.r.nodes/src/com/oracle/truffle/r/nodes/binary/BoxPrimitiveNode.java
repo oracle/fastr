@@ -32,7 +32,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
  * analogies.
  */
 @NodeChild("operand")
-abstract class BoxPrimitiveNode extends RNode {
+public abstract class BoxPrimitiveNode extends RNode {
 
     @Specialization
     protected static RAbstractVector doInt(int vector) {

@@ -25,6 +25,7 @@ public abstract class UnaryArithmetic extends Operation {
     public static final UnaryArithmeticFactory FLOOR = Floor::new;
     public static final UnaryArithmeticFactory CEILING = Ceiling::new;
     public static final UnaryArithmeticFactory PLUS = Plus::new;
+    public static final UnaryArithmeticFactory[] ALL = new UnaryArithmeticFactory[]{NEGATE, ROUND, FLOOR, CEILING, PLUS};
 
     public UnaryArithmetic() {
         super(false, false);
