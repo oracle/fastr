@@ -88,18 +88,13 @@ public class RNGFunctions {
     public abstract static class RNGkind extends RBuiltinNode {
 
         @Specialization
-        @SuppressWarnings("unused")
-        protected RIntVector doRNGkind(VirtualFrame frame, RNull x, RNull y) {
-            controlVisibility();
-            return getCurrent();
-        }
-
-        @Specialization
-        protected RIntVector doRNGkind(VirtualFrame frame, RAbstractIntVector kind, @SuppressWarnings("unused") RNull normKind) {
+        protected RIntVector doRNGkind(VirtualFrame frame, Object kind, Object normKind) {
             controlVisibility();
             RIntVector result = getCurrent();
+            int kindChange = checkType(kind, "kind");
+            int normKindChange = checkType(normKind, "normkind");
             try {
-                RRNG.doRNGKind(frame, kind.getDataAt(0), RRNG.NO_KIND_CHANGE);
+                RRNG.doRNGKind(frame, kindChange, normKindChange);
             } catch (RNGException ex) {
                 if (ex.isError()) {
                     throw RError.error(getEncapsulatingSourceSection(), ex);
@@ -108,6 +103,13 @@ public class RNGFunctions {
                 }
             }
             return result;
+        }
+
+        private int checkType(Object kind, String name) {
+            if (!(kind == RNull.instance || kind instanceof RIntVector || kind instanceof Integer)) {
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, name);
+            }
+            return kind == RNull.instance ? RRNG.NO_KIND_CHANGE : kind instanceof Integer ? (Integer) kind : ((RAbstractIntVector) kind).getDataAt(0);
         }
 
         private static RIntVector getCurrent() {

@@ -210,6 +210,7 @@ public class RRNG {
 
     private static Kind changeKinds(int kindAsInt, int normKindAsInt) throws RNGException {
         Kind kind;
+        NormKind normKind;
         if (kindAsInt != NO_KIND_CHANGE) {
             if (kindAsInt == RESET_KIND) {
                 kind = DEFAULT_KIND;
@@ -223,7 +224,11 @@ public class RRNG {
             kind = currentKind;
         }
         if (normKindAsInt != NO_KIND_CHANGE) {
-            setNormKind(normKindAsInt);
+            if (normKindAsInt == RESET_KIND) {
+                normKind = DEFAULT_NORM_KIND;
+            } else {
+                normKind = setNormKind(normKindAsInt);
+            }
         }
         return kind;
     }
@@ -248,10 +253,8 @@ public class RRNG {
 
     }
 
-    @SuppressWarnings("unused")
-    private static NormKind setNormKind(int normKindAsInt) throws RNGException {
-        assert false;
-        return null;
+    private static NormKind setNormKind(int normKindAsInt) {
+        return NormKind.VALUES[normKindAsInt];
     }
 
     private static void initGenerator(Kind kind, int aSeed) throws RNGException {
