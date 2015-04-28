@@ -133,4 +133,21 @@ public enum RType {
         }
     }
 
+    public RAbstractVector create(int length) {
+        switch (this) {
+            case Logical:
+                return RDataFactory.createLogicalVector(length);
+            case Integer:
+                return RDataFactory.createIntVector(length);
+            case Double:
+                return RDataFactory.createDoubleVector(length);
+            case Complex:
+                return RDataFactory.createComplexVector(length);
+            case Character:
+                return RDataFactory.createStringVector(length);
+            default:
+                throw RInternalError.shouldNotReachHere();
+        }
+    }
+
 }

@@ -32,11 +32,11 @@ import com.oracle.truffle.r.runtime.ops.na.*;
 /**
  *
  */
-public final class ScalarArithmeticNode extends ScalarBinaryNode {
+public final class ScalarBinaryArithmeticNode extends ScalarBinaryNode {
 
     @Child private BinaryArithmetic arithmetic;
 
-    public ScalarArithmeticNode(BinaryArithmetic arithmetic) {
+    public ScalarBinaryArithmeticNode(BinaryArithmetic arithmetic) {
         this.arithmetic = arithmetic;
     }
 
