@@ -102,6 +102,7 @@ public abstract class FrameSlotNode extends Node {
         }
     }
 
+    @NodeInfo(cost = NodeCost.NONE)
     private static final class AbsentFrameSlotNode extends FrameSlotNode {
 
         @CompilationFinal private Assumption assumption;
