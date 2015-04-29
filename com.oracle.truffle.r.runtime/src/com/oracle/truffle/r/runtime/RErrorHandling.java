@@ -283,7 +283,6 @@ public class RErrorHandling {
                 call = RArguments.getCallSourceSection(frame);
             }
         }
-        // TODO RInternalError.reportError
 
         String errorMessage = createErrorMessage(call, fmsg);
         Utils.writeStderr(errorMessage, true);
@@ -296,21 +295,31 @@ public class RErrorHandling {
         // we are not quite done - need to check for options(error=expr)
         Object errorExpr = ROptions.getValue("error");
         if (errorExpr != RNull.instance) {
-            // errorExpr can be anything, but not everything makes sense
-            if (errorExpr instanceof RArgsValuesAndNames) {
-                // TODO: worry about other potential ... values?
-                errorExpr = ((RArgsValuesAndNames) errorExpr).getValues()[0];
-            }
-            if (errorExpr instanceof RLanguage || errorExpr instanceof RExpression) {
-                MaterializedFrame materializedFrame = safeCurrentFrame();
+            MaterializedFrame materializedFrame = safeCurrentFrame();
+            // type already checked in ROptions
+            if (errorExpr instanceof RFunction) {
+                // Called with no arguments, but defaults will be applied
+                RFunction errorFunction = (RFunction) errorExpr;
+                ArgumentsSignature argsSig = RContext.getRASTHelper().getArgumentsSignature(errorFunction);
+                Object[] evaluatedArgs;
+                if (errorFunction.isBuiltin()) {
+                    evaluatedArgs = RContext.getRASTHelper().getBuiltinDefaultParameterValues(errorFunction);
+                } else {
+                    evaluatedArgs = new Object[argsSig.getLength()];
+                    for (int i = 0; i < evaluatedArgs.length; i++) {
+                        evaluatedArgs[i] = RMissing.instance;
+                    }
+                }
+                errorFunction.getTarget().call(RArguments.create(errorFunction, call, materializedFrame, RArguments.getDepth(materializedFrame) + 1, evaluatedArgs, argsSig));
+            } else if (errorExpr instanceof RLanguage || errorExpr instanceof RExpression) {
                 if (errorExpr instanceof RLanguage) {
                     RContext.getEngine().eval((RLanguage) errorExpr, materializedFrame);
                 } else if (errorExpr instanceof RExpression) {
                     RContext.getEngine().eval((RExpression) errorExpr, materializedFrame);
                 }
             } else {
-                // GnuR checks this earlier when the option is set
-                throw new RError(Message.INVALID_ERROR.message);
+                // Checked when set
+                throw RInternalError.shouldNotReachHere();
             }
         }
         throw new RError(errorMessage);
@@ -368,11 +377,8 @@ public class RErrorHandling {
             throw RInternalError.unimplemented();
         }
 
-        Integer wObj = RRuntime.asInteger(ROptions.getValue("warn"));
-        int w = 0;
-        if (wObj != null) {
-            w = wObj;
-        }
+        // ensured in ROptions
+        int w = ((RIntVector) ROptions.getValue("warn")).getDataAt(0);
         if (w == RRuntime.INT_NA) {
             w = 0;
         }

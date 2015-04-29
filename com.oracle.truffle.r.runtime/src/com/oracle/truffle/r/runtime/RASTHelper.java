@@ -89,4 +89,14 @@ public interface RASTHelper {
      * @return and {@code RNode} for {@code value}.
      */
     Object createNodeForValue(Object value);
+
+    /**
+     * Returns the {@link ArgumentsSignature} for {@code f}.
+     */
+    ArgumentsSignature getArgumentsSignature(RFunction f);
+
+    /**
+     * Returns the default parameters for a builtin.
+     */
+    Object[] getBuiltinDefaultParameterValues(RFunction f);
 }

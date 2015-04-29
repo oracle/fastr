@@ -32,6 +32,7 @@ import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RError.Message;
+import com.oracle.truffle.r.runtime.ROptions.OptionsException;
 import com.oracle.truffle.r.runtime.data.*;
 
 @RBuiltin(name = "options", kind = INTERNAL, parameterNames = {"..."})
@@ -67,73 +68,77 @@ public abstract class Options extends RBuiltinNode {
     @Specialization(guards = "!isMissing(args)")
     @TruffleBoundary
     protected Object options(RArgsValuesAndNames args) {
-        Object[] values = args.getValues();
-        ArgumentsSignature signature = args.getSignature();
-        Object[] data = new Object[values.length];
-        String[] names = new String[values.length];
-        for (int i = 0; i < values.length; i++) {
-            String argName = signature.getName(i);
-            Object value = values[i];
-            if (argNameNull.profile(argName == null)) {
-                // getting
-                String optionName = null;
-                if (value instanceof RStringVector) {
-                    optionName = ((RStringVector) value).getDataAt(0); // ignore rest (cf GnuR)
-                } else if (value instanceof String) {
-                    optionName = (String) value;
-                } else if (value instanceof RList) {
-                    // setting
-                    RList list = (RList) value;
-                    RStringVector thisListnames = null;
-                    Object nn = list.getNames(attrProfiles);
-                    if (nn instanceof RStringVector) {
-                        thisListnames = (RStringVector) nn;
+        try {
+            Object[] values = args.getValues();
+            ArgumentsSignature signature = args.getSignature();
+            Object[] data = new Object[values.length];
+            String[] names = new String[values.length];
+            for (int i = 0; i < values.length; i++) {
+                String argName = signature.getName(i);
+                Object value = values[i];
+                if (argNameNull.profile(argName == null)) {
+                    // getting
+                    String optionName = null;
+                    if (value instanceof RStringVector) {
+                        optionName = ((RStringVector) value).getDataAt(0); // ignore rest (cf GnuR)
+                    } else if (value instanceof String) {
+                        optionName = (String) value;
+                    } else if (value instanceof RList) {
+                        // setting
+                        RList list = (RList) value;
+                        RStringVector thisListnames = null;
+                        Object nn = list.getNames(attrProfiles);
+                        if (nn instanceof RStringVector) {
+                            thisListnames = (RStringVector) nn;
+                        } else {
+                            throw RInternalError.shouldNotReachHere();
+                        }
+                        Object[] listData = new Object[list.getLength()];
+                        String[] listNames = new String[listData.length];
+                        for (int j = 0; j < listData.length; j++) {
+                            String name = thisListnames.getDataAt(j);
+                            Object previousVal = ROptions.getValue(name);
+                            listData[j] = previousVal == null ? RNull.instance : previousVal;
+                            listNames[j] = name;
+                            ROptions.setValue(name, list.getDataAtAsObject(j));
+                        }
+                        // if this is the only argument, no need to copy, can just return
+                        if (values.length == 1) {
+                            data = listData;
+                            names = listNames;
+                            break;
+                        } else {
+                            // resize and copy
+                            int newSize = values.length - 1 + listData.length;
+                            Object[] newData = new Object[newSize];
+                            String[] newNames = new String[newSize];
+                            System.arraycopy(data, 0, newData, 0, i);
+                            System.arraycopy(names, 0, newNames, 0, i);
+                            System.arraycopy(listData, 0, newData, i, listData.length);
+                            System.arraycopy(listNames, 0, newNames, i, listNames.length);
+                            data = newData;
+                            names = newNames;
+                        }
                     } else {
-                        throw RInternalError.shouldNotReachHere();
+                        throw RError.error(getEncapsulatingSourceSection(), Message.INVALID_UNNAMED_ARGUMENT);
                     }
-                    Object[] listData = new Object[list.getLength()];
-                    String[] listNames = new String[listData.length];
-                    for (int j = 0; j < listData.length; j++) {
-                        String name = thisListnames.getDataAt(j);
-                        Object previousVal = ROptions.getValue(name);
-                        listData[j] = previousVal == null ? RNull.instance : previousVal;
-                        listNames[j] = name;
-                        ROptions.setValue(name, list.getDataAtAsObject(j));
-                    }
-                    // if this is the only argument, no need to copy, can just return
-                    if (values.length == 1) {
-                        data = listData;
-                        names = listNames;
-                        break;
-                    } else {
-                        // resize and copy
-                        int newSize = values.length - 1 + listData.length;
-                        Object[] newData = new Object[newSize];
-                        String[] newNames = new String[newSize];
-                        System.arraycopy(data, 0, newData, 0, i);
-                        System.arraycopy(names, 0, newNames, 0, i);
-                        System.arraycopy(listData, 0, newData, i, listData.length);
-                        System.arraycopy(listNames, 0, newNames, i, listNames.length);
-                        data = newData;
-                        names = newNames;
-                    }
+                    Object optionVal = ROptions.getValue(optionName);
+                    data[i] = optionVal == null ? RNull.instance : optionVal;
+                    names[i] = optionName;
                 } else {
-                    throw RError.error(getEncapsulatingSourceSection(), Message.INVALID_UNNAMED_ARGUMENT);
+                    // setting
+                    Object previousVal = ROptions.getValue(argName);
+                    data[i] = previousVal == null ? RNull.instance : previousVal;
+                    names[i] = argName;
+                    ROptions.setValue(argName, value);
+                    // any settings means result is invisible
+                    RContext.setVisible(false);
                 }
-                Object optionVal = ROptions.getValue(optionName);
-                data[i] = optionVal == null ? RNull.instance : optionVal;
-                names[i] = optionName;
-            } else {
-                // setting
-                Object previousVal = ROptions.getValue(argName);
-                data[i] = previousVal == null ? RNull.instance : previousVal;
-                names[i] = argName;
-                ROptions.setValue(argName, value);
-                // any settings means result is invisible
-                RContext.setVisible(false);
             }
+            return RDataFactory.createList(data, RDataFactory.createStringVector(names, RDataFactory.COMPLETE_VECTOR));
+        } catch (OptionsException ex) {
+            throw RError.error(getEncapsulatingSourceSection(), ex);
         }
-        return RDataFactory.createList(data, RDataFactory.createStringVector(names, RDataFactory.COMPLETE_VECTOR));
     }
 
     protected boolean isMissing(RArgsValuesAndNames args) {

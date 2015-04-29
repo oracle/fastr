@@ -505,7 +505,7 @@ public final class RError extends RuntimeException {
         INVALID_INTERNAL("invalid .Internal() argument"),
         NO_SUCH_INTERNAL("there is no .Internal function '%s'"),
         NO_SUCH_PRIMITIVE("no such primitive function"),
-        INVALID_ERROR("invalid value for 'error'"),
+        INVALID_VALUE_FOR("invalid value for '%s'"),
         IMP_EXP_NAMES_MATCH("length of import and export names must match"),
         ENV_ADD_BINDINGS("cannot add bindings to a locked environment"),
         ENV_REMOVE_BINDINGS("cannot remove bindings from a locked environment"),

@@ -111,7 +111,6 @@ public final class REngine implements RContext.Engine {
             RPerfStats.initialize();
             Locale.setDefault(Locale.ROOT);
             RAccuracyInfo.initialize();
-            ROptions.initialize();
             singleton.crashOnFatalError = crashOnFatalErrorArg;
             singleton.builtinLookup = RBuiltinPackages.getInstance();
             singleton.context = RContext.setRuntimeState(singleton, commandArgs, consoleHandler, new RASTHelperImpl(), headless);

@@ -711,17 +711,42 @@ public class RRuntime {
     }
 
     /**
-     * Java equivalent of R as.integer (almost).
+     * Java equivalent of GnuR asInteger fur use outside Truffle boundary. TODO support for warnings
      */
-    public static Integer asInteger(Object obj) {
-        if (obj instanceof Integer) {
-            return (Integer) obj;
-        } else if (obj instanceof Double) {
-            return (int) ((double) obj);
-        } else if (obj instanceof Byte) {
-            return (int) ((byte) obj);
+    public static int asInteger(Object objArg) {
+        Object obj = asAbstractVector(objArg);
+        if (obj instanceof RIntVector) {
+            int v = ((RIntVector) obj).getDataAt(0);
+            return v;
+        } else if (obj instanceof RDoubleVector) {
+            double d = ((RDoubleVector) obj).getDataAt(0);
+            if (isNAorNaN(d)) {
+                return INT_NA;
+            } else {
+                return (int) d;
+            }
+        } else if (obj instanceof RLogicalVector) {
+            byte v = ((RLogicalVector) obj).getDataAt(0);
+            if (isNA(v)) {
+                return INT_NA;
+            } else {
+                return v;
+            }
+        } else if (obj instanceof RComplexVector) {
+            RComplex v = ((RComplexVector) obj).getDataAt(0);
+            if (isNAorNaN(v.getRealPart()) || isNAorNaN(v.getImaginaryPart())) {
+                return INT_NA;
+            } else {
+                return (int) v.getRealPart();
+            }
+        } else if (obj instanceof RStringVector) {
+            try {
+                return Integer.parseInt(((RStringVector) obj).getDataAt(0));
+            } catch (NumberFormatException ex) {
+                return INT_NA;
+            }
         } else {
-            return null;
+            return INT_NA;
         }
     }
 

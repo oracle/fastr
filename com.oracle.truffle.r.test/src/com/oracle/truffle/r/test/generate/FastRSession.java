@@ -114,6 +114,7 @@ public final class FastRSession implements RSession {
         consoleHandler = new ConsoleHandler();
         Load_RFFIFactory.initialize();
         FastROptions.initialize();
+        ROptions.initialize();
         REnvVars.initialize();
         try {
             REngine.initialize(new String[0], consoleHandler, false, false);

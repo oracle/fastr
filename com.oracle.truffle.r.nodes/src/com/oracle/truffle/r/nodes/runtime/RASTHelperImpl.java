@@ -29,6 +29,7 @@ import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.access.array.read.*;
 import com.oracle.truffle.r.nodes.access.variables.*;
+import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.control.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.nodes.function.PromiseNode.VarArgsPromiseNode;
@@ -360,6 +361,15 @@ public class RASTHelperImpl implements RASTHelper {
 
     public Object createNodeForValue(Object value) {
         return RASTUtils.createNodeForValue(value);
+    }
+
+    public ArgumentsSignature getArgumentsSignature(RFunction f) {
+        return ((RRootNode) f.getRootNode()).getSignature();
+    }
+
+    public Object[] getBuiltinDefaultParameterValues(RFunction f) {
+        assert f.isBuiltin();
+        return ((RBuiltinRootNode) f.getRootNode()).getBuiltin().getDefaultParameterValues();
     }
 
 }

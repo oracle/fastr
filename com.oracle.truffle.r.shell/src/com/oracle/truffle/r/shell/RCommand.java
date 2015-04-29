@@ -33,6 +33,7 @@ import com.oracle.truffle.r.engine.*;
 import com.oracle.truffle.r.options.FastROptions;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RContext.Engine;
+import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.ffi.*;
 
@@ -104,8 +105,8 @@ public class RCommand {
         }
 
         FastROptions.initialize();
-
         REnvVars.initialize();
+        ROptions.initialize();
 
         if (!(QUIET.getValue() || SILENT.getValue())) {
             System.out.println(RRuntime.WELCOME_MESSAGE);
@@ -188,7 +189,8 @@ public class RCommand {
             MaterializedFrame globalFrame = REngine.initialize(commandArgs, new JLineConsoleHandler(isInteractive, console), false, false);
             // console.println("initialize time: " + (System.currentTimeMillis() - start));
             for (;;) {
-                console.setPrompt(SLAVE.getValue() ? "" : "> ");
+                boolean doEcho = doEcho();
+                console.setPrompt(doEcho ? "> " : "");
                 String input = console.readLine();
                 if (input == null) {
                     return;
@@ -199,8 +201,9 @@ public class RCommand {
                 }
 
                 try {
+                    String continuePrompt = getContinuePrompt();
                     while (REngine.getInstance().parseAndEval(Source.fromText(input, "<shell_input>"), globalFrame, REnvironment.globalEnv(), true, true) == Engine.INCOMPLETE_SOURCE) {
-                        console.setPrompt(SLAVE.getValue() ? "" : "+ ");
+                        console.setPrompt(doEcho ? "" : continuePrompt);
                         String additionalInput = console.readLine();
                         if (additionalInput == null) {
                             return;
@@ -219,4 +222,15 @@ public class RCommand {
             Utils.fail("unexpected error reading console input");
         }
     }
+
+    private static boolean doEcho() {
+        RLogicalVector echo = (RLogicalVector) RRuntime.asAbstractVector(ROptions.getValue("echo"));
+        return RRuntime.fromLogical(echo.getDataAt(0));
+    }
+
+    private static String getContinuePrompt() {
+        RStringVector continuePrompt = (RStringVector) RRuntime.asAbstractVector(ROptions.getValue("continue"));
+        return continuePrompt.getDataAt(0);
+    }
+
 }
