@@ -166,6 +166,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
          */
         Object handlerStack = RErrorHandling.getHandlerStack();
         Object restartStack = RErrorHandling.getRestartStack();
+        boolean runOnExitHandlers = true;
         try {
             verifyEnclosingAssumptions(vf);
             setupS3Slots(vf);
@@ -178,9 +179,13 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
             } else {
                 return ex.getResult();
             }
+        } catch (RInternalError e) {
+            CompilerDirectives.transferToInterpreter();
+            runOnExitHandlers = false;
+            throw e;
         } finally {
             RErrorHandling.restoreStacks(handlerStack, restartStack);
-            if (onExitSlot != null && onExitProfile.profile(onExitSlot.hasValue(vf))) {
+            if (runOnExitHandlers && onExitSlot != null && onExitProfile.profile(onExitSlot.hasValue(vf))) {
                 if (onExitExpressionCache == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
                     onExitExpressionCache = insert(InlineCacheNode.createExpression(3));
