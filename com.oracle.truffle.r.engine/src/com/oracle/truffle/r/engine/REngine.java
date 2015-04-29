@@ -226,6 +226,7 @@ public final class REngine implements RContext.Engine {
         for (FrameSlot slot : globalFrame.getFrameDescriptor().getSlots()) {
             FrameSlotChangeMonitor.setObjectAndInvalidate(globalFrame, slot, null, true, null);
         }
+        RRNG.initialize();
         try {
             return parseAndEvalImpl(Source.fromText(rscript, "<test_input>"), REnvironment.globalEnv().getFrame(), printResult, false);
         } catch (RInternalError e) {
