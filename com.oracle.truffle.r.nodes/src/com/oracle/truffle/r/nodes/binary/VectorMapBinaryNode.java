@@ -35,7 +35,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
  * implementation also ensures that there is no internal boxing inside the loop.
  */
 @SuppressWarnings("unused")
-abstract class IndexedVectorIterationNode extends Node {
+abstract class VectorMapBinaryNode extends Node {
 
     private static final MapBinaryIndexedAction<byte[], RAbstractLogicalVector> LOGICAL = //
     (arithmetic, result, resultIndex, left, leftIndex, right, rightIndex) -> {
@@ -73,7 +73,7 @@ abstract class IndexedVectorIterationNode extends Node {
     private final RType resultType;
 
     @SuppressWarnings("unchecked")
-    protected IndexedVectorIterationNode(RType resultType, RType argumentType) {
+    protected VectorMapBinaryNode(RType resultType, RType argumentType) {
         this.indexedAction = (MapBinaryIndexedAction<Object, RAbstractVector>) createIndexedAction(resultType, argumentType);
         this.argumentType = argumentType;
         this.resultType = resultType;
@@ -87,8 +87,8 @@ abstract class IndexedVectorIterationNode extends Node {
         return resultType;
     }
 
-    public static IndexedVectorIterationNode create(RType resultType, RType argumentType) {
-        return IndexedVectorIterationNodeGen.create(resultType, argumentType);
+    public static VectorMapBinaryNode create(RType resultType, RType argumentType) {
+        return VectorMapBinaryNodeGen.create(resultType, argumentType);
     }
 
     private static MapBinaryIndexedAction<? extends Object, ? extends RAbstractVector> createIndexedAction(RType resultType, RType argumentType) {

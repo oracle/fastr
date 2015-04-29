@@ -60,7 +60,7 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
         return BinaryArithmeticNodeGen.create(binary, unary, new RNode[]{null, null}, null, null);
     }
 
-    @Specialization(guards = {"cached != null", "cached.isSupported(left, right)"})
+    @Specialization(limit = "3", guards = {"cached != null", "cached.isSupported(left, right)"})
     protected Object doNumericVectorCached(Object left, Object right, //
                     @Cached("createFastCached(left, right)") VectorBinaryNode cached) {
         return cached.apply(left, right);
@@ -88,10 +88,14 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
     }
 
     protected static Class<? extends RAbstractVector> getVectorClass(Object value) {
-        if (value instanceof RAbstractVector && ((RAbstractVector) value).getRType().isNumeric()) {
+        if (isNumericVector(value)) {
             return ((RAbstractVector) value).getClass();
         }
         return null;
+    }
+
+    private static boolean isNumericVector(Object value) {
+        return value instanceof RAbstractIntVector || value instanceof RAbstractDoubleVector || value instanceof RAbstractComplexVector || value instanceof RAbstractLogicalVector;
     }
 
     protected static boolean isNonNumericVector(Object value) {
@@ -173,7 +177,7 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
             resultType = RType.Double;
         }
 
-        return new VectorBinaryNode(new ScalarArithmeticNode(innerArithmetic), leftVector.getClass(), rightVector.getClass(), argumentType, resultType);
+        return new VectorBinaryNode(new ScalarBinaryArithmeticNode(innerArithmetic), leftVector.getClass(), rightVector.getClass(), argumentType, resultType);
     }
 
     protected static final class LRUCache {

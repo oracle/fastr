@@ -28,31 +28,31 @@ public abstract class BinaryArithmetic extends Operation {
 
     /* Fake RBuiltins to unify the binary operations */
 
-    @RBuiltin(name = "+", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", ""})
+    @RBuiltin(name = "+", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", ""}, alwaysSplit = true)
     public static class AddBuiltin {
     }
 
-    @RBuiltin(name = "-", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", ""})
+    @RBuiltin(name = "-", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", ""}, alwaysSplit = true)
     public static class SubtractBuiltin {
     }
 
-    @RBuiltin(name = "/", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", ""})
+    @RBuiltin(name = "/", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", ""}, alwaysSplit = true)
     public static class DivBuiltin {
     }
 
-    @RBuiltin(name = "%/%", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", ""})
+    @RBuiltin(name = "%/%", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", ""}, alwaysSplit = true)
     public static class IntegerDivBuiltin {
     }
 
-    @RBuiltin(name = "%%", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", ""})
+    @RBuiltin(name = "%%", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", ""}, alwaysSplit = true)
     public static class ModBuiltin {
     }
 
-    @RBuiltin(name = "*", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", ""})
+    @RBuiltin(name = "*", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", ""}, alwaysSplit = true)
     public static class MultiplyBuiltin {
     }
 
-    @RBuiltin(name = "^", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", ""})
+    @RBuiltin(name = "^", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", ""}, alwaysSplit = true)
     public static class PowBuiltin {
     }
 

@@ -34,16 +34,18 @@ public abstract class RBuiltinDescriptor {
     private final ArgumentsSignature signature;
     private final int[] nonEvalArgs;
     private final boolean splitCaller;
+    private final boolean alwaysSplit;
     private final RGroupGenerics group;
     @CompilationFinal private final boolean[] evaluatesArgument;
 
-    public RBuiltinDescriptor(String name, String[] aliases, RBuiltinKind kind, ArgumentsSignature signature, int[] nonEvalArgs, boolean splitCaller) {
+    public RBuiltinDescriptor(String name, String[] aliases, RBuiltinKind kind, ArgumentsSignature signature, int[] nonEvalArgs, boolean splitCaller, boolean alwaysSplit) {
         this.name = name;
         this.aliases = aliases;
         this.kind = kind;
         this.signature = signature;
         this.nonEvalArgs = nonEvalArgs;
         this.splitCaller = splitCaller;
+        this.alwaysSplit = alwaysSplit;
         this.group = RGroupGenerics.getGroup(name);
 
         evaluatesArgument = new boolean[signature.getLength()];
@@ -72,6 +74,10 @@ public abstract class RBuiltinDescriptor {
 
     public int[] getNonEvalArgs() {
         return nonEvalArgs;
+    }
+
+    public boolean isAlwaysSplit() {
+        return alwaysSplit;
     }
 
     public boolean isSplitCaller() {

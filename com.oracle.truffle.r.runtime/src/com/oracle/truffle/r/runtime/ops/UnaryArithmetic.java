@@ -7,7 +7,7 @@
  * Copyright (c) 1998, Ross Ihaka
  * Copyright (c) 1998-2012, The R Core Team
  * Copyright (c) 2005, The R Foundation
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -25,6 +25,7 @@ public abstract class UnaryArithmetic extends Operation {
     public static final UnaryArithmeticFactory FLOOR = Floor::new;
     public static final UnaryArithmeticFactory CEILING = Ceiling::new;
     public static final UnaryArithmeticFactory PLUS = Plus::new;
+    public static final UnaryArithmeticFactory[] ALL = new UnaryArithmeticFactory[]{NEGATE, ROUND, FLOOR, CEILING, PLUS};
 
     public UnaryArithmetic() {
         super(false, false);

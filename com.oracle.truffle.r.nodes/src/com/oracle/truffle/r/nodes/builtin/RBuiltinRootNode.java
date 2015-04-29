@@ -46,6 +46,11 @@ public final class RBuiltinRootNode extends RRootNode {
         return builtin;
     }
 
+    @Override
+    public boolean needsSplitting() {
+        return builtin.getBuiltin().isAlwaysSplit();
+    }
+
     public RCallNode inline(InlinedArguments args) {
         assert builtin.getSuppliedSignature() != null : this;
         return builtin.inline(args);

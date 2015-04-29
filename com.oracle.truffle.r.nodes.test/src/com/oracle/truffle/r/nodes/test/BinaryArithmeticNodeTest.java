@@ -48,37 +48,9 @@ import com.oracle.truffle.r.runtime.ops.*;
  * should NOT verify correctness. This is done by the integration test suite.
  */
 @RunWith(Theories.class)
-public class BinaryArithmeticNodeTest extends TestBase {
+public class BinaryArithmeticNodeTest extends ArithmeticTest {
 
     @DataPoints public static final BinaryArithmeticFactory[] BINARY = ALL;
-
-    @DataPoint public static final RScalarVector PRIMITIVE_LOGICAL = RLogical.valueOf((byte) 1);
-    @DataPoint public static final RScalarVector PRIMITIVE_INTEGER = RInteger.valueOf(42);
-    @DataPoint public static final RScalarVector PRIMITIVE_DOUBLE = RDouble.valueOf(42d);
-    @DataPoint public static final RScalarVector PRIMITIVE_COMPLEX = RComplex.valueOf(1.0, 1.0);
-
-    @DataPoint public static final RAbstractVector EMPTY_LOGICAL = createEmptyLogicalVector();
-    @DataPoint public static final RAbstractVector EMPTY_INTEGER = createEmptyIntVector();
-    @DataPoint public static final RAbstractVector EMPTY_DOUBLE = createEmptyDoubleVector();
-    @DataPoint public static final RAbstractVector EMPTY_COMPLEX = createEmptyComplexVector();
-
-    @DataPoint public static final RSequence SEQUENCE_INT = createIntSequence(1, 2, 10);
-    @DataPoint public static final RSequence SEQUENCE_DOUBLE = createDoubleSequence(1, 2, 10);
-
-    @DataPoint public static final RAbstractVector FOUR_LOGICAL = createLogicalVector(new byte[]{1, 0, 1, 0}, true);
-    @DataPoint public static final RAbstractVector FOUR_INT = createIntVector(new int[]{1, 2, 3, 4}, true);
-    @DataPoint public static final RAbstractVector FOUR_DOUBLE = createDoubleVector(new double[]{1, 2, 3, 4}, true);
-    @DataPoint public static final RAbstractVector FOUR_COMPLEX = createComplexVector(new double[]{1, 1, 2, 2, 3, 3, 4, 4}, true);
-
-    @DataPoint public static final RAbstractVector NOT_COMPLETE_LOGICAL = createLogicalVector(new byte[]{1, 2, RRuntime.LOGICAL_NA, 4}, false);
-    @DataPoint public static final RAbstractVector NOT_COMPLETE_INT = createIntVector(new int[]{1, 2, RInteger.NA.getValue(), 4}, false);
-    @DataPoint public static final RAbstractVector NOT_COMPLETE_DOUBLE = createDoubleVector(new double[]{1, 2, RDouble.NA.getValue(), 4}, false);
-    @DataPoint public static final RAbstractVector NOT_COMPLETE_COMPLEX = createComplexVector(new double[]{1.0d, 0.0d, RRuntime.COMPLEX_NA_REAL_PART, RRuntime.COMPLEX_NA_IMAGINARY_PART}, false);
-
-    @DataPoint public static final RAbstractVector ONE = createIntVector(new int[]{1}, true);
-    @DataPoint public static final RAbstractVector TWO = createIntVector(new int[]{1, 2}, true);
-    @DataPoint public static final RAbstractVector THREE = createIntVector(new int[]{1, 2, 3}, true);
-    @DataPoint public static final RAbstractVector FIVE = createIntVector(new int[]{1, 2, 3, 4, 5}, true);
 
     @Theory
     public void testScalarUnboxing(BinaryArithmeticFactory factory, RScalarVector a, RAbstractVector b) {

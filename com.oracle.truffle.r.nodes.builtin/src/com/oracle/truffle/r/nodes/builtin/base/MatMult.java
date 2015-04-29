@@ -41,8 +41,8 @@ public abstract class MatMult extends RBuiltinNode {
 
     private static final int BLOCK_SIZE = 64;
 
-    @Child private ScalarArithmeticNode mult = new ScalarArithmeticNode(BinaryArithmetic.MULTIPLY.create());
-    @Child private ScalarArithmeticNode add = new ScalarArithmeticNode(BinaryArithmetic.ADD.create());
+    @Child private ScalarBinaryArithmeticNode mult = new ScalarBinaryArithmeticNode(BinaryArithmetic.MULTIPLY.create());
+    @Child private ScalarBinaryArithmeticNode add = new ScalarBinaryArithmeticNode(BinaryArithmetic.ADD.create());
 
     private final BranchProfile errorProfile = BranchProfile.create();
 

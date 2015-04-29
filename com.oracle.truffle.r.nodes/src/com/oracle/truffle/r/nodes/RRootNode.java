@@ -80,6 +80,10 @@ public abstract class RRootNode extends RootNode implements HasSignature {
         return formalArguments.getSignature();
     }
 
+    public boolean needsSplitting() {
+        return false;
+    }
+
     @TruffleBoundary
     public String getSourceCode() {
         SourceSection ss = getSourceSection();

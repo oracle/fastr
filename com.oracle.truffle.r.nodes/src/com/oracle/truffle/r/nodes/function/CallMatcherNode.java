@@ -126,6 +126,10 @@ public abstract class CallMatcherNode extends Node {
                 return replace(new CallMatcherGenericNode(forNextMethod, argsAreEvaluated)).execute(frame, suppliedSignature, suppliedArguments, function, s3Args);
             } else {
                 CallMatcherCachedNode cachedNode = replace(specialize(suppliedSignature, suppliedArguments, function, getEncapsulatingSourceSection(), forNextMethod, argsAreEvaluated, this));
+                // for splitting if necessary
+                if (RCallNode.needsSplitting(function)) {
+                    cachedNode.call.cloneCallTarget();
+                }
                 return cachedNode.execute(frame, suppliedSignature, suppliedArguments, function, s3Args);
             }
         }
@@ -159,7 +163,6 @@ public abstract class CallMatcherNode extends Node {
             this.preparePermutation = preparePermutation;
             this.permutation = permutation;
             this.next = next;
-
             this.call = Truffle.getRuntime().createDirectCallNode(cachedCallTarget);
         }
 

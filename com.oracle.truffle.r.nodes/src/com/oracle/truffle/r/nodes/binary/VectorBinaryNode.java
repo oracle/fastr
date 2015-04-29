@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.binary;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.utilities.*;
+import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.profile.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -35,13 +36,13 @@ import com.oracle.truffle.r.runtime.data.model.*;
  * ensures that attributes and dimensions are properly migrated from the source vectors to the
  * result vectors. It also implements sharing of temporary vectors as result vector. Internally it
  * uses a {@link ScalarBinaryNode} to abstract one scalar operation invocation on the vector and
- * {@link IndexedVectorIterationNode} to abstract the iteration over two arrays with potentially
- * differing length. The {@link ScalarBinaryNode} instance can be passed from the outside in order
- * to enable the use for different scalar operations like logic and arithmetic operations.
+ * {@link VectorMapBinaryNode} to abstract the iteration over two arrays with potentially differing
+ * length. The {@link ScalarBinaryNode} instance can be passed from the outside in order to enable
+ * the use for different scalar operations like logic and arithmetic operations.
  */
 final class VectorBinaryNode extends Node {
 
-    @Child private IndexedVectorIterationNode vectorNode;
+    @Child private VectorMapBinaryNode vectorNode;
     @Child private ScalarBinaryNode scalarNode;
 
     // profiles
@@ -67,7 +68,7 @@ final class VectorBinaryNode extends Node {
         this.scalarNode = scalarNode;
         this.leftClass = leftclass;
         this.rightClass = rightClass;
-        this.vectorNode = IndexedVectorIterationNode.create(resultType, argumentType);
+        this.vectorNode = VectorMapBinaryNode.create(resultType, argumentType);
         this.scalarTypes = RScalarVector.class.isAssignableFrom(leftclass) && RScalarVector.class.isAssignableFrom(rightClass);
         boolean leftVectorImpl = RVector.class.isAssignableFrom(leftclass);
         boolean rightVectorImpl = RVector.class.isAssignableFrom(rightClass);
@@ -174,7 +175,8 @@ final class VectorBinaryNode extends Node {
             target = scalarNode.tryFoldConstantTime(leftCast, leftLength, rightCast, rightLength);
         }
         if (target == null) {
-            target = createOrShareVector(leftLength, left, rightLength, right);
+            int maxLength = Math.max(leftLength, rightLength);
+            target = createOrShareVector(leftLength, left, rightLength, right, maxLength);
             Object store;
             if (target instanceof RAccessibleStore) {
                 store = ((RAccessibleStore<?>) target).getInternalStore();
@@ -182,6 +184,7 @@ final class VectorBinaryNode extends Node {
                 throw RInternalError.shouldNotReachHere();
             }
             vectorNode.apply(scalarNode, store, leftCast, leftLength, rightCast, rightLength);
+            RNode.reportWork(this, maxLength);
         }
         if (mayContainMetadata) {
             target = handleMetadata(target, left, leftLength, right, rightLength);
@@ -190,8 +193,8 @@ final class VectorBinaryNode extends Node {
         return target;
     }
 
-    private RAbstractVector createOrShareVector(int leftLength, RAbstractVector left, int rightLength, RAbstractVector right) {
-        int maxLength = Math.max(leftLength, rightLength);
+    private RAbstractVector createOrShareVector(int leftLength, RAbstractVector left, int rightLength, RAbstractVector right, int maxLength) {
+
         RType resultType = getResultType();
         if (mayShareLeft && left.getRType() == resultType && shareLeft.profile(leftLength == maxLength && ((RShareable) left).isTemporary())) {
             return left;
@@ -199,24 +202,7 @@ final class VectorBinaryNode extends Node {
         if (mayShareRight && right.getRType() == resultType && shareRight.profile(rightLength == maxLength && ((RShareable) right).isTemporary())) {
             return right;
         }
-        return createResult(maxLength);
-    }
-
-    private RAbstractVector createResult(int length) {
-        switch (getResultType()) {
-            case Logical:
-                return RDataFactory.createLogicalVector(length);
-            case Integer:
-                return RDataFactory.createIntVector(length);
-            case Double:
-                return RDataFactory.createDoubleVector(length);
-            case Complex:
-                return RDataFactory.createComplexVector(length);
-            case Character:
-                return RDataFactory.createStringVector(length);
-            default:
-                throw RInternalError.shouldNotReachHere();
-        }
+        return getResultType().create(maxLength);
     }
 
     private RType getArgumentType() {
@@ -243,6 +229,7 @@ final class VectorBinaryNode extends Node {
 
     @TruffleBoundary
     private void copyAttributesInternal(RVector result, RAbstractVector left, int leftLength, RAbstractVector right, int rightLength) {
+        // TODO this method needs its own specializing node
         if (leftLength == rightLength) {
             if (result != right) {
                 result.copyRegAttributesFrom(right);

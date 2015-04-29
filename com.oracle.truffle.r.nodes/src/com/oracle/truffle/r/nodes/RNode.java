@@ -224,19 +224,18 @@ public abstract class RNode extends Node implements RSyntaxNode, RInstrumentable
      * @param amount an approximation of the number of operations
      */
     protected void reportWork(long amount) {
-        if (CompilerDirectives.inInterpreter()) {
-            reportWorkInternal(amount);
-        }
+        reportWork(this, amount);
     }
 
-    private void reportWorkInternal(long amount) {
-        CompilerAsserts.neverPartOfCompilation();
-        if (amount >= WORK_SCALE_FACTOR) {
-            int scaledAmount = (int) (amount / WORK_SCALE_FACTOR);
-            if (amount > 0) {
-                RootNode root = getRootNode();
-                if (root.getCallTarget() instanceof LoopCountReceiver) {
-                    ((LoopCountReceiver) root.getCallTarget()).reportLoopCount(scaledAmount);
+    public static void reportWork(Node base, long amount) {
+        if (CompilerDirectives.inInterpreter()) {
+            if (amount >= WORK_SCALE_FACTOR) {
+                int scaledAmount = (int) (amount / WORK_SCALE_FACTOR);
+                if (amount > 0) {
+                    RootNode root = base.getRootNode();
+                    if (root != null && root.getCallTarget() instanceof LoopCountReceiver) {
+                        ((LoopCountReceiver) root.getCallTarget()).reportLoopCount(scaledAmount);
+                    }
                 }
             }
         }
