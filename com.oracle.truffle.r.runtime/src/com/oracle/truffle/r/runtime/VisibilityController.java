@@ -27,6 +27,8 @@ package com.oracle.truffle.r.runtime;
  * visibility of results in the shell. All specializations or, if no specializations exist,
  * {@code execute()} methods, of a node implementing this interface must call the
  * {@link #controlVisibility()} method as defined in this interface.
+ *
+ * N.B. printing visibility is independent from 'interactive'.
  */
 public interface VisibilityController {
 
@@ -49,9 +51,7 @@ public interface VisibilityController {
      * guaranteed to always replace and execute, as is common in "unresolved" node implementations.
      */
     default void controlVisibility() {
-        if (!RContext.isHeadless()) {
-            RContext.setVisible(getVisibility());
-        }
+        RContext.setVisible(getVisibility());
     }
 
     /**
@@ -59,8 +59,6 @@ public interface VisibilityController {
      * the result, e.g. {@code switch}.
      */
     default void forceVisibility(boolean state) {
-        if (!RContext.isHeadless()) {
-            RContext.setVisible(state);
-        }
+        RContext.setVisible(state);
     }
 }
