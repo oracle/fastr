@@ -102,19 +102,13 @@ public class RPromise extends RLanguageRep implements RTypedValue {
     private Object value = null;
 
     /**
-     * A flag to indicate the promise has been evaluated.
-     */
-    private boolean isEvaluated = false;
-
-    /**
      * A flag which is necessary to avoid cyclic evaluation. Manipulated by
      * {@link #setUnderEvaluation(boolean)} and can by checked via {@link #isUnderEvaluation()}.
      */
     private boolean underEvaluation = false;
 
     /**
-     * This creates a new tuple (isEvaluated=false, expr, env, closure, value=null), which may later
-     * be evaluated.
+     * This creates a new tuple (expr, env, closure, value=null), which may later be evaluated.
      */
     RPromise(PromiseType type, OptType optType, MaterializedFrame execFrame, Closure closure) {
         super(closure.getExpr());
@@ -126,15 +120,14 @@ public class RPromise extends RLanguageRep implements RTypedValue {
     }
 
     /**
-     * This creates a new tuple (isEvaluated=true, expr, null, null, value), which is already
-     * evaluated.
+     * This creates a new tuple (expr, null, null, value), which is already evaluated.
      */
     RPromise(PromiseType type, OptType optType, Object expr, Object value) {
         super(expr);
+        assert value != null;
         this.type = type;
         this.optType = optType;
         this.value = value;
-        this.isEvaluated = true;
         // Not needed as already evaluated:
         this.execFrame = null;
         this.closure = null;
@@ -178,8 +171,8 @@ public class RPromise extends RLanguageRep implements RTypedValue {
      * @param newValue
      */
     public final void setValue(Object newValue) {
+        assert newValue != null;
         this.value = newValue;
-        this.isEvaluated = true;
 
         // set NAMED = 2
         if (newValue instanceof RShareable) {
@@ -232,7 +225,7 @@ public class RPromise extends RLanguageRep implements RTypedValue {
      * @return The raw {@link #value}.
      */
     public final Object getValue() {
-        assert isEvaluated;
+        assert value != null;
         return value;
     }
 
@@ -240,7 +233,7 @@ public class RPromise extends RLanguageRep implements RTypedValue {
      * Returns {@code true} if this promise has been evaluated?
      */
     public final boolean isEvaluated() {
-        return isEvaluated;
+        return value != null;
     }
 
     /**
@@ -269,7 +262,7 @@ public class RPromise extends RLanguageRep implements RTypedValue {
     @Override
     public String toString() {
         CompilerAsserts.neverPartOfCompilation();
-        return "[" + type + ", " + optType + ", " + execFrame + ", expr=" + getRep() + ", " + value + ", " + isEvaluated + "]";
+        return "[" + type + ", " + optType + ", " + execFrame + ", expr=" + getRep() + ", " + value + "]";
     }
 
     /**
