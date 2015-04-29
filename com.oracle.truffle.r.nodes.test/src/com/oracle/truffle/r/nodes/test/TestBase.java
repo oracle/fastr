@@ -39,7 +39,7 @@ public class TestBase {
         FastROptions.initialize();
         REnvVars.initialize();
         ROptions.initialize();
-        ROptions.setValue("defaultPackages", RDataFactory.createStringVector(new String[]{}, true));
+        ROptions.setValueNoCheck("defaultPackages", RDataFactory.createStringVector(new String[]{}, true));
         REngine.initialize(new String[0], new ConsoleHandler(), false, true);
     }
 

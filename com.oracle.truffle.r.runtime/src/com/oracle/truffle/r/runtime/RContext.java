@@ -263,10 +263,11 @@ public final class RContext extends ExecutionContext {
     private boolean resultVisible = true;
 
     /**
-     * Denote whether the FastR instance is running in headless mode ({@code true}), or in the shell
-     * or test harness ({@code false}).
+     * Denote whether the FastR instance is running in 'interactive' mode. This can be set in a
+     * number of ways and is <b>not</> simply equivalent to taking input from a file. However, it is
+     * final once set.
      */
-    @CompilationFinal private boolean headless;
+    @CompilationFinal private boolean interactive;
 
     @CompilationFinal private ConsoleHandler consoleHandler;
     @CompilationFinal private String[] commandArgs;
@@ -294,12 +295,12 @@ public final class RContext extends ExecutionContext {
      * Although there is only ever one instance of a {@code RContext}, the following state fields
      * are runtime specific and must be set explicitly.
      */
-    public static RContext setRuntimeState(Engine engine, String[] commandArgs, ConsoleHandler consoleHandler, RASTHelper rLanguageHelper, boolean headless) {
+    public static RContext setRuntimeState(Engine engine, String[] commandArgs, ConsoleHandler consoleHandler, RASTHelper rLanguageHelper, boolean interactive) {
         singleton.engine = engine;
         singleton.commandArgs = commandArgs;
         singleton.consoleHandler = consoleHandler;
         singleton.rASTHelper = rLanguageHelper;
-        singleton.headless = headless;
+        singleton.interactive = interactive;
         return singleton;
     }
 
@@ -311,8 +312,8 @@ public final class RContext extends ExecutionContext {
         singleton.resultVisible = v;
     }
 
-    public static boolean isHeadless() {
-        return singleton.headless;
+    public static boolean isInteractive() {
+        return singleton.interactive;
     }
 
     public ConsoleHandler getConsoleHandler() {

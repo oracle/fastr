@@ -112,40 +112,53 @@ public class RCommand {
             System.out.println(RRuntime.WELCOME_MESSAGE);
         }
         /*
-         * Whether the input is from stdin, a file or an expression on the command line (-e) it goes
-         * through the console. However, we cannot (yet) do incremental parsing, so file input has
-         * to be treated specially. TODO This is no longer true so we could unify file input with
-         * the readEvalPrint loop.
+         * Whether the input is from stdin, a file (-f), or an expression on the command line (-e)
+         * it goes through the console. N.B. -f and -e can't be used together and this is already
+         * checked.
          */
+        InputStream consoleInput = System.in;
+        OutputStream consoleOutput = System.out;
         if (fileArg != null) {
-            evalFileInput(fileArg, args);
-        } else {
-            InputStream consoleInput = System.in;
-            OutputStream consoleOutput = System.out;
+            File file = new File(fileArg);
+            boolean ok = false;
+            if (file.exists() && file.canRead()) {
+                try {
+                    consoleInput = new BufferedInputStream(new FileInputStream(file));
+                    ok = true;
+                } catch (IOException ex) {
+                    // fall through to fail
+                }
+            }
+            if (!ok) {
+                Utils.fatalError("cannot open file '" + fileArg + "': No such file or directory");
+            }
+        } else if (EXPR.getValue() != null) {
             List<String> exprs = EXPR.getValue();
-            if (exprs != null) {
-                if (!SAVE.getValue()) {
-                    NO_SAVE.setValue(true);
-                }
-                StringBuffer sb = new StringBuffer(exprs.get(0));
-                if (exprs.size() > 1) {
-                    for (int i = 1; i < exprs.size(); i++) {
-                        sb.append('\n');
-                        sb.append(exprs.get(i));
-                    }
-                }
-                consoleInput = new StringBufferInputStream(sb.toString());
+            if (!SAVE.getValue()) {
+                NO_SAVE.setValue(true);
             }
-            ConsoleReader console;
-            try {
-                console = new RJLineConsoleReader(consoleInput, consoleOutput);
-            } catch (IOException ex) {
-                throw Utils.fail("unexpected error opening console reader");
+            StringBuffer sb = new StringBuffer(exprs.get(0));
+            if (exprs.size() > 1) {
+                for (int i = 1; i < exprs.size(); i++) {
+                    sb.append('\n');
+                    sb.append(exprs.get(i));
+                }
             }
-            readEvalPrint(consoleInput == System.in, console, args);
+            consoleInput = new StringBufferInputStream(sb.toString());
         }
-        // TODO exit code
-        Utils.exit(0);
+        ConsoleReader console;
+        try {
+            console = new RJLineConsoleReader(consoleInput, consoleOutput);
+        } catch (IOException ex) {
+            throw Utils.fail("unexpected error opening console reader");
+        }
+        MaterializedFrame globalFrame = readEvalPrint(consoleInput, console, args);
+        // We should only reach here if interactive == false
+        // Need to call quit explicitly
+        Source quitSource = Source.fromText("quit(\"default\", 0L, TRUE)", "<quit_file>");
+        REngine.getInstance().parseAndEval(quitSource, globalFrame, REnvironment.globalEnv(), false, false);
+        // never returns
+        assert false;
     }
 
     private static void printVersionAndExit() {
@@ -160,40 +173,29 @@ public class RCommand {
         throw Utils.exit(0);
     }
 
-    private static void evalFileInput(String filePath, String[] commandArgs) {
-        File file = new File(filePath);
-        if (!file.exists()) {
-            Utils.fatalError("cannot open file '" + filePath + "': No such file or directory");
-        }
-        Source fileSource = null;
+    private static MaterializedFrame readEvalPrint(InputStream inputStream, ConsoleReader consoleReader, String[] commandArgs) {
+        /*
+         * GnuR behavior differs from the manual entry for {@code interactive} in that {@code
+         * --interactive} never applies to {@code -e/-f}, only to console input that has been
+         * redirected from a pipe/file etc.
+         */
+        Console sysConsole = System.console();
+        boolean haveConsole = inputStream == System.in && sysConsole != null;
+        boolean isInteractive = inputStream == System.in && (INTERACTIVE.getValue() || sysConsole != null);
+        // long start = System.currentTimeMillis();
+        JLineConsoleHandler consoleHandler = new JLineConsoleHandler(isInteractive, consoleReader);
+        MaterializedFrame globalFrame = REngine.initialize(commandArgs, consoleHandler, false, isInteractive);
         try {
-            fileSource = Source.fromFileName(filePath);
-        } catch (IOException ex) {
-            Utils.fail("unexpected error reading file input");
-        }
-        try {
-            JLineConsoleHandler consoleHandler = new JLineConsoleHandler(false, new ConsoleReader(null, System.out));
-            MaterializedFrame frame = REngine.initialize(commandArgs, consoleHandler, true, true);
-            REngine.getInstance().parseAndEval(fileSource, frame, REnvironment.globalEnv(), false, false);
-            // Need to call quit explicitly
-            Source quitSource = Source.fromText("quit(\"default\", 0L, TRUE)", "<quit_file>");
-            REngine.getInstance().parseAndEval(quitSource, frame, REnvironment.globalEnv(), false, false);
-        } catch (IOException ex) {
-            Utils.fail("unexpected error creating console");
-        }
-    }
-
-    private static void readEvalPrint(boolean isInteractive, ConsoleReader console, String[] commandArgs) {
-        try {
-            // long start = System.currentTimeMillis();
-            MaterializedFrame globalFrame = REngine.initialize(commandArgs, new JLineConsoleHandler(isInteractive, console), false, false);
             // console.println("initialize time: " + (System.currentTimeMillis() - start));
             for (;;) {
                 boolean doEcho = doEcho();
-                console.setPrompt(doEcho ? "> " : "");
-                String input = console.readLine();
+                consoleReader.setPrompt(doEcho ? "> " : "");
+                String input = consoleReader.readLine();
                 if (input == null) {
-                    return;
+                    return globalFrame;
+                }
+                if (!haveConsole && doEcho) {
+                    consoleHandler.println(input);
                 }
                 input = input.trim();
                 if (input.equals("") || input.charAt(0) == '#') {
@@ -203,10 +205,13 @@ public class RCommand {
                 try {
                     String continuePrompt = getContinuePrompt();
                     while (REngine.getInstance().parseAndEval(Source.fromText(input, "<shell_input>"), globalFrame, REnvironment.globalEnv(), true, true) == Engine.INCOMPLETE_SOURCE) {
-                        console.setPrompt(doEcho ? "" : continuePrompt);
-                        String additionalInput = console.readLine();
+                        consoleReader.setPrompt(doEcho ? "" : continuePrompt);
+                        String additionalInput = consoleReader.readLine();
                         if (additionalInput == null) {
-                            return;
+                            return globalFrame;
+                        }
+                        if (!haveConsole && doEcho) {
+                            consoleHandler.println(additionalInput);
                         }
                         input = input + "\n" + additionalInput;
                     }
@@ -221,6 +226,7 @@ public class RCommand {
         } catch (IOException ex) {
             Utils.fail("unexpected error reading console input");
         }
+        return globalFrame;
     }
 
     private static boolean doEcho() {

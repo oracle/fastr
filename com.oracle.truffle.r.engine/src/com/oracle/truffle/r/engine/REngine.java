@@ -102,7 +102,7 @@ public final class REngine implements RContext.Engine {
      * @return a {@link VirtualFrame} that can be passed to
      *         {@link #parseAndEval(Source, MaterializedFrame, REnvironment, boolean, boolean)}
      */
-    public static MaterializedFrame initialize(String[] commandArgs, ConsoleHandler consoleHandler, boolean crashOnFatalErrorArg, boolean headless) {
+    public static MaterializedFrame initialize(String[] commandArgs, ConsoleHandler consoleHandler, boolean crashOnFatalErrorArg, boolean interactive) {
         singleton.startTime = System.nanoTime();
         singleton.childTimes = new long[]{0, 0};
         MaterializedFrame globalFrame = RRuntime.createNonFunctionFrame().materialize();
@@ -113,7 +113,7 @@ public final class REngine implements RContext.Engine {
             RAccuracyInfo.initialize();
             singleton.crashOnFatalError = crashOnFatalErrorArg;
             singleton.builtinLookup = RBuiltinPackages.getInstance();
-            singleton.context = RContext.setRuntimeState(singleton, commandArgs, consoleHandler, new RASTHelperImpl(), headless);
+            singleton.context = RContext.setRuntimeState(singleton, commandArgs, consoleHandler, new RASTHelperImpl(), interactive);
             suppressWarnings = true;
             StdConnections.initialize();
             MaterializedFrame baseFrame = RRuntime.createNonFunctionFrame().materialize();

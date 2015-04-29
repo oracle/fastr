@@ -78,9 +78,7 @@ public final class IfNode extends RNode implements VisibilityController {
     @Override
     public Object execute(VirtualFrame frame) {
         byte cond = condition.executeByte(frame);
-        if (!RContext.isHeadless()) {
-            isVisible = cond == RRuntime.LOGICAL_TRUE || elsePart != null;
-        }
+        isVisible = cond == RRuntime.LOGICAL_TRUE || elsePart != null;
         controlVisibility();
 
         if (cond == RRuntime.LOGICAL_NA) {
