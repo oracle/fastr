@@ -73,4 +73,3 @@ clean:
 	rm -rf $(FASTR_BIN_DIR)
 	rm -rf $(FASTR_ETC_DIR)
 	rm -rf $(FASTR_SHARE_DIR)
-	
