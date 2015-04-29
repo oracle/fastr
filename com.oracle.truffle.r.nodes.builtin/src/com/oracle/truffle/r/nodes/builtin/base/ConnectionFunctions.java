@@ -422,7 +422,7 @@ public abstract class ConnectionFunctions {
     }
 
     @RBuiltin(name = "flush", kind = INTERNAL, parameterNames = {"con"})
-    public abstract static class Flush extends RBuiltinNode {
+    public abstract static class Flush extends RInvisibleBuiltinNode {
         @TruffleBoundary
         @Specialization
         protected RNull flush(RConnection con) {
