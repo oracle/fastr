@@ -198,30 +198,23 @@ public final class REngine implements RContext.Engine {
     public Object parseAndEval(Source source, MaterializedFrame frame, REnvironment envForFrame, boolean printResult, boolean allowIncompleteSource) {
         try {
             return parseAndEvalImpl(source, frame, printResult, allowIncompleteSource);
-        } catch (RecognitionException e) {
-            writeStderr("Exception while parsing: " + e, true);
-            e.printStackTrace();
-            return null;
-        } catch (UnsupportedSpecializationException use) {
-            writeStderr("Unsupported specialization in node " + use.getNode().getClass().getSimpleName() + " - supplied values: " +
-                            Arrays.asList(use.getSuppliedValues()).stream().map(v -> v == null ? "null" : v.getClass().getSimpleName()).collect(Collectors.toList()), true);
-            use.printStackTrace();
-            return null;
         } catch (ReturnException ex) {
             return ex.getResult();
         } catch (DebugExitException | BrowserQuitException e) {
             throw e;
-        } catch (RInternalError e) {
-            singleton.context.getConsoleHandler().printErrorln("FastR internal error: " + e.getMessage());
-            RInternalError.reportError(e);
-            return null;
         } catch (RError e) {
             // RError prints the correct result on the console during construction
             RInternalError.reportError(e);
             return null;
+        } catch (UnsupportedSpecializationException use) {
+            String message = "FastR internal error: Unsupported specialization in node " + use.getNode().getClass().getSimpleName() + " - supplied values: " +
+                            Arrays.asList(use.getSuppliedValues()).stream().map(v -> v == null ? "null" : v.getClass().getSimpleName()).collect(Collectors.toList());
+            singleton.context.getConsoleHandler().printErrorln(message);
+            RInternalError.reportError(use);
+            return null;
         } catch (Throwable t) {
-            writeStderr("Exception while parsing: " + t, true);
-            t.printStackTrace();
+            singleton.context.getConsoleHandler().printErrorln("FastR internal error: " + t.getMessage());
+            RInternalError.reportError(t);
             return null;
         }
     }
