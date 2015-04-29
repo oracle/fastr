@@ -525,13 +525,13 @@ public class DebugHandling {
         }
 
         static void setTrap() {
-            Probe.setTagTrap(fastRSyntaxTagTrap);
+            Probe.setBeforeTagTrap(fastRSyntaxTagTrap);
             set = true;
         }
 
         static void clearTrap() {
             if (set) {
-                Probe.setTagTrap(null);
+                Probe.setBeforeTagTrap(null);
                 set = false;
             }
         }
