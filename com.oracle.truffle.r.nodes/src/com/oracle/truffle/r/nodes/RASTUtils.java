@@ -27,8 +27,6 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.instrument.ProbeNode.WrapperNode;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
-import com.oracle.truffle.r.nodes.access.ConstantNode.ConstantFunctionNode;
-import com.oracle.truffle.r.nodes.access.ConstantNode.ConstantMissingNode;
 import com.oracle.truffle.r.nodes.access.variables.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.function.*;
@@ -92,11 +90,12 @@ public class RASTUtils {
     @TruffleBoundary
     public static Object createLanguageElement(Node argNode) {
         if (argNode instanceof ConstantNode) {
-            if (argNode instanceof ConstantMissingNode) {
+            Object value = ((ConstantNode) argNode).getValue();
+            if (value == RMissing.instance) {
                 // special case which GnuR handles as an unnamed symbol
                 return RSymbol.MISSING;
             }
-            return ((ConstantNode) argNode).getValue();
+            return value;
         } else if (argNode instanceof ReadVariableNode) {
             return RASTUtils.createRSymbol(argNode);
         } else if (argNode instanceof VarArgsPromiseNode) {
@@ -209,6 +208,7 @@ public class RASTUtils {
             return RCallNode.createCall(null, (RCallNode) fn, callArgsNode, null);
         } else {
             // some value that we cannot represent (from substitute)
+            System.out.println(fn + " " + fn.getClass().getSimpleName());
             throw RError.error(RError.Message.IMPOSSIBLE_SUBSTITUTE);
         }
     }
@@ -253,7 +253,7 @@ public class RASTUtils {
      */
     public static Object findFunctionName(Node node, boolean escape) {
         RNode child = (RNode) unwrap(getFunctionNode(node));
-        if (child instanceof ConstantFunctionNode) {
+        if (child instanceof ConstantNode && ConstantNode.isFunction(child)) {
             return ((ConstantNode) child).getValue();
         } else if (child instanceof ReadVariableNode) {
             String name = ((ReadVariableNode) child).getIdentifier();
@@ -282,7 +282,7 @@ public class RASTUtils {
 
     public static boolean isNamedFunctionNode(Node aCallNode) {
         RNode n = (RNode) unwrap(getFunctionNode(aCallNode));
-        return (n instanceof ReadVariableNode || n instanceof GroupDispatchNode || n instanceof RBuiltinNode || n instanceof ConstantFunctionNode);
+        return (n instanceof ReadVariableNode || n instanceof GroupDispatchNode || n instanceof RBuiltinNode || ConstantNode.isFunction(n));
 
     }
 

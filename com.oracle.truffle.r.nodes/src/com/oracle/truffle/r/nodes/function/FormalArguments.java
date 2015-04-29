@@ -28,7 +28,6 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
-import com.oracle.truffle.r.nodes.access.ConstantNode.ConstantMissingNode;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -71,7 +70,7 @@ public final class FormalArguments extends Arguments<RNode> implements ClosureCa
         RNode[] newDefaults = Arrays.copyOf(defaultArguments, signature.getLength());
         for (int i = 0; i < newDefaults.length; i++) {
             RNode defArg = newDefaults[i];
-            newDefaults[i] = defArg instanceof ConstantMissingNode ? null : defArg;
+            newDefaults[i] = ConstantNode.isMissing(defArg) ? null : defArg;
         }
         Object[] internalDefaultArguments = new Object[signature.getLength()];
         for (int i = 0; i < internalDefaultArguments.length; i++) {

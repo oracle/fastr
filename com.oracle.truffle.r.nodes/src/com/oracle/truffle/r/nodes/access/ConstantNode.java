@@ -28,12 +28,18 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
 
 public abstract class ConstantNode extends RNode implements VisibilityController {
+
+    public static boolean isFunction(RNode node) {
+        return node instanceof ConstantObjectNode && ((ConstantObjectNode) node).value instanceof RFunction;
+    }
+
+    public static boolean isMissing(RNode node) {
+        return node instanceof ConstantObjectNode && ((ConstantObjectNode) node).value == RMissing.instance;
+    }
 
     public final Object getValue() {
         return execute(null);
@@ -42,9 +48,7 @@ public abstract class ConstantNode extends RNode implements VisibilityController
     @Override
     @TruffleBoundary
     public void deparse(RDeparse.State state) {
-        if (!(this instanceof ConstantMissingNode)) {
-            RDeparse.deparse2buff(state, getValue());
-        }
+        RDeparse.deparse2buff(state, getValue());
     }
 
     @Override
@@ -54,11 +58,7 @@ public abstract class ConstantNode extends RNode implements VisibilityController
 
     @Override
     public void serialize(RSerialize.State state) {
-        if (this instanceof ConstantMissingNode) {
-            state.setCar(RMissing.instance);
-        } else {
-            state.setCar(getValue());
-        }
+        state.setCar(getValue());
     }
 
     public static ConstantNode create(Object value) {
@@ -72,37 +72,16 @@ public abstract class ConstantNode extends RNode implements VisibilityController
         } else if (value instanceof Byte) {
             return new ConstantLogicalScalarNode((Byte) value);
         } else if (value instanceof String) {
-            return new ConstantStringScalarNode((String) value);
-        } else if (value == RNull.instance) {
-            return new ConstantNullNode();
-        } else if (value == RMissing.instance) {
-            return new ConstantMissingNode();
-        } else if (value == EMPTY_OBJECT_ARRAY) {
-            return new ConstantEmptyObjectArrayNode();
-        } else if (value instanceof RComplex) {
-            return new ConstantComplexNode((RComplex) value);
-        } else if (value instanceof RAbstractVector) {
-            return new ConstantVectorNode((RAbstractVector) value);
-        } else if (value instanceof RDataFrame) {
-            return new ConstantDataFrameNode((RDataFrame) value);
-        } else if (value instanceof RFactor) {
-            return new ConstantFactorNode((RFactor) value);
-        } else if (value instanceof RRaw) {
-            return new ConstantRawNode((RRaw) value);
-        } else if (value instanceof RFunction) {
-            return new ConstantFunctionNode((RFunction) value);
-        } else if (value instanceof RFormula) {
-            return new ConstantFormulaNode((RFormula) value);
+            return new ConstantObjectNode(value);
         } else if (value instanceof RSymbol) {
-            return new ConstantStringScalarNode(((RSymbol) value).getName());
-        } else if (value instanceof REnvironment) {
-            return new ConstantREnvironmentNode((REnvironment) value);
+            return new ConstantObjectNode(((RSymbol) value).getName());
         } else if (value instanceof RArgsValuesAndNames) {
-            return new ConstantRArgsValuesAndNamesNode((RArgsValuesAndNames) value);
-        } else if (value instanceof RPairList) {
-            return new ConstantRPairListNode((RPairList) value);
+            // this can be created during argument matching and "call"
+            return new ConstantObjectNode(value);
+        } else {
+            assert value instanceof RTypedValue && !(value instanceof RPromise) : value;
+            return new ConstantObjectNode(value);
         }
-        throw new UnsupportedOperationException(value.getClass().getName());
     }
 
     public static ConstantNode create(SourceSection src, Object value) {
@@ -213,254 +192,12 @@ public abstract class ConstantNode extends RNode implements VisibilityController
         }
     }
 
-    public static final class ConstantStringScalarNode extends ConstantNode {
+    private static final class ConstantObjectNode extends ConstantNode {
 
-        private final String objectValue;
+        private final Object value;
 
-        public ConstantStringScalarNode(String value) {
-            this.objectValue = value;
-        }
-
-        @Override
-        public Object execute(VirtualFrame frame) {
+        public ConstantObjectNode(Object value) {
             controlVisibility();
-            return objectValue;
-        }
-
-        @Override
-        public String executeString(VirtualFrame frame) {
-            controlVisibility();
-            return objectValue;
-        }
-    }
-
-    private static final class ConstantComplexNode extends ConstantNode {
-
-        private final RComplex complexValue;
-
-        public ConstantComplexNode(RComplex value) {
-            this.complexValue = value;
-        }
-
-        @Override
-        public RComplex executeRComplex(VirtualFrame frame) {
-            controlVisibility();
-            return complexValue;
-        }
-
-        @Override
-        public Object execute(VirtualFrame frame) {
-            controlVisibility();
-            return complexValue;
-        }
-    }
-
-    private static final class ConstantNullNode extends ConstantNode {
-
-        @Override
-        public RNull executeNull(VirtualFrame frame) {
-            controlVisibility();
-            return RNull.instance;
-        }
-
-        @Override
-        public Object execute(VirtualFrame frame) {
-            controlVisibility();
-            return RNull.instance;
-        }
-    }
-
-    public static final class ConstantMissingNode extends ConstantNode {
-
-        @Override
-        public RMissing executeMissing(VirtualFrame frame) {
-            controlVisibility();
-            return RMissing.instance;
-        }
-
-        @Override
-        public Object execute(VirtualFrame frame) {
-            controlVisibility();
-            return RMissing.instance;
-        }
-    }
-
-    private static final class ConstantEmptyObjectArrayNode extends ConstantNode {
-
-        @Override
-        public Object[] executeArray(VirtualFrame frame) {
-            controlVisibility();
-            return EMPTY_OBJECT_ARRAY;
-        }
-
-        @Override
-        public Object execute(VirtualFrame frame) {
-            controlVisibility();
-            return EMPTY_OBJECT_ARRAY;
-        }
-    }
-
-    private static final class ConstantVectorNode extends ConstantNode {
-
-        private final RAbstractVector vector;
-
-        public ConstantVectorNode(RAbstractVector vector) {
-            this.vector = vector;
-        }
-
-        @Override
-        public RAbstractVector executeRAbstractVector(VirtualFrame frame) {
-            controlVisibility();
-            return vector;
-        }
-
-        @Override
-        public Object execute(VirtualFrame frame) {
-            controlVisibility();
-            return vector;
-        }
-    }
-
-    private static final class ConstantDataFrameNode extends ConstantNode {
-
-        private final RDataFrame dataFrame;
-
-        public ConstantDataFrameNode(RDataFrame dataFrame) {
-            this.dataFrame = dataFrame;
-        }
-
-        @Override
-        public RDataFrame executeRDataFrame(VirtualFrame frame) {
-            controlVisibility();
-            return dataFrame;
-        }
-
-        @Override
-        public Object execute(VirtualFrame frame) {
-            controlVisibility();
-            return dataFrame;
-        }
-    }
-
-    private static final class ConstantFactorNode extends ConstantNode {
-
-        private final RFactor factor;
-
-        public ConstantFactorNode(RFactor factor) {
-            this.factor = factor;
-        }
-
-        @Override
-        public RFactor executeRFactor(VirtualFrame frame) {
-            controlVisibility();
-            return factor;
-        }
-
-        @Override
-        public Object execute(VirtualFrame frame) {
-            controlVisibility();
-            return factor;
-        }
-    }
-
-    private static final class ConstantRawNode extends ConstantNode {
-
-        private final RRaw data;
-
-        public ConstantRawNode(RRaw data) {
-            this.data = data;
-        }
-
-        @Override
-        public RRaw executeRRaw(VirtualFrame frame) {
-            controlVisibility();
-            return data;
-        }
-
-        @Override
-        public Object execute(VirtualFrame frame) {
-            controlVisibility();
-            return data;
-        }
-    }
-
-    public static final class ConstantFunctionNode extends ConstantNode {
-
-        private final RFunction function;
-
-        public ConstantFunctionNode(RFunction function) {
-            this.function = function;
-        }
-
-        @Override
-        public RFunction executeFunction(VirtualFrame frame) {
-            controlVisibility();
-            return function;
-        }
-
-        @Override
-        public Object execute(VirtualFrame frame) {
-            controlVisibility();
-            return function;
-        }
-    }
-
-    private static final class ConstantFormulaNode extends ConstantNode {
-
-        private final RFormula formula;
-
-        public ConstantFormulaNode(RFormula formula) {
-            this.formula = formula;
-        }
-
-        @Override
-        public RFormula executeFormula(VirtualFrame frame) {
-            controlVisibility();
-            return formula;
-        }
-
-        @Override
-        public Object execute(VirtualFrame frame) {
-            controlVisibility();
-            return formula;
-        }
-    }
-
-    private static final class ConstantREnvironmentNode extends ConstantNode {
-
-        private final REnvironment envValue;
-
-        public ConstantREnvironmentNode(REnvironment envValue) {
-            this.envValue = envValue;
-        }
-
-        @Override
-        public Object execute(VirtualFrame frame) {
-            controlVisibility();
-            return envValue;
-        }
-    }
-
-    private static final class ConstantRPairListNode extends ConstantNode {
-
-        private final RPairList envValue;
-
-        public ConstantRPairListNode(RPairList envValue) {
-            this.envValue = envValue;
-        }
-
-        @Override
-        public Object execute(VirtualFrame frame) {
-            controlVisibility();
-            return envValue;
-        }
-    }
-
-    private static final class ConstantRArgsValuesAndNamesNode extends ConstantNode {
-
-        private final RArgsValuesAndNames value;
-
-        public ConstantRArgsValuesAndNamesNode(RArgsValuesAndNames value) {
             this.value = value;
         }
 
@@ -471,25 +208,42 @@ public abstract class ConstantNode extends RNode implements VisibilityController
         }
 
         @Override
-        public void deparse(State state) {
-            Object[] values = value.getValues();
-            for (int i = 0; i < values.length; i++) {
-                String name = value.getSignature().getName(i);
-                if (name != null) {
-                    state.append(name);
-                    state.append(" = ");
+        @TruffleBoundary
+        public void deparse(RDeparse.State state) {
+            if (value == RMissing.instance) {
+                // nothing to do
+            } else if (value instanceof RArgsValuesAndNames) {
+                RArgsValuesAndNames args = (RArgsValuesAndNames) value;
+                Object[] values = args.getValues();
+                for (int i = 0; i < values.length; i++) {
+                    String name = args.getSignature().getName(i);
+                    if (name != null) {
+                        state.append(name);
+                        state.append(" = ");
+                    }
+                    Object argValue = values[i];
+                    if (argValue instanceof RNode) {
+                        ((RNode) argValue).deparse(state);
+                    } else if (argValue instanceof RPromise) {
+                        ((RNode) RASTUtils.unwrap(((RPromise) argValue).getRep())).deparse(state);
+                    } else {
+                        RInternalError.shouldNotReachHere();
+                    }
+                    if (i < values.length - 1) {
+                        state.append(", ");
+                    }
                 }
-                Object argValue = values[i];
-                if (argValue instanceof RNode) {
-                    ((RNode) argValue).deparse(state);
-                } else if (argValue instanceof RPromise) {
-                    ((RNode) RASTUtils.unwrap(((RPromise) argValue).getRep())).deparse(state);
-                } else {
-                    RInternalError.shouldNotReachHere();
-                }
-                if (i < values.length - 1) {
-                    state.append(", ");
-                }
+            } else {
+                super.deparse(state);
+            }
+        }
+
+        @Override
+        public void serialize(RSerialize.State state) {
+            if (value == RMissing.instance) {
+                state.setCar(RMissing.instance);
+            } else {
+                super.serialize(state);
             }
         }
     }

@@ -24,7 +24,6 @@ package com.oracle.truffle.r.nodes.function.opt;
 
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
-import com.oracle.truffle.r.nodes.access.ConstantNode.ConstantMissingNode;
 import com.oracle.truffle.r.nodes.access.variables.*;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode.ReadKind;
 import com.oracle.truffle.r.nodes.function.*;
@@ -98,8 +97,8 @@ public class EagerEvalHelper {
      * Use {@link #unfold(Object)} first!!!
      *
      * This methods checks if an argument is a {@link ConstantNode}. Thanks to "..." unrolling, this
-     * does not need to handle "..." as special case (which might result in a
-     * {@link ConstantMissingNode} if empty).
+     * does not need to handle "..." as special case (which might result in a {@link ConstantNode}
+     * of RMissing.instance if empty).
      *
      * @param expr
      * @return Whether the given {@link RNode} is a {@link ConstantNode}

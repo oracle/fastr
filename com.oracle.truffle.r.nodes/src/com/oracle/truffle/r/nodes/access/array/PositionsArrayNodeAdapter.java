@@ -24,7 +24,7 @@ package com.oracle.truffle.r.nodes.access.array;
 
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.ConstantNode.ConstantMissingNode;
+import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.env.*;
 
@@ -58,7 +58,7 @@ public class PositionsArrayNodeAdapter extends RNode {
 
     @Override
     public void serialize(RSerialize.State state) {
-        if (positions.length == 0 || (positions.length == 1 && positions[0] instanceof ConstantMissingNode)) {
+        if (positions.length == 0 || (positions.length == 1 && ConstantNode.isMissing(positions[0]))) {
             state.setPositionsLength(0);
         } else {
             state.setPositionsLength(positions.length);
