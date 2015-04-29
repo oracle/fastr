@@ -587,6 +587,9 @@ public class TestBase {
             Integer count = exceptionCounts.get(clazz);
             exceptionCounts.put(clazz, count == null ? 1 : count + 1);
             result = e.toString();
+            if (!ProcessFailedTests) {
+                e.printStackTrace();
+            }
         }
         if (fastROutputManager.outputFile != null) {
             fastROutputManager.addTestResult(testElementName, input, result);
