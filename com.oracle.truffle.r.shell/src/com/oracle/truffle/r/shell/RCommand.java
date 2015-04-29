@@ -205,7 +205,7 @@ public class RCommand {
                 try {
                     String continuePrompt = getContinuePrompt();
                     while (REngine.getInstance().parseAndEval(Source.fromText(input, "<shell_input>"), globalFrame, REnvironment.globalEnv(), true, true) == Engine.INCOMPLETE_SOURCE) {
-                        consoleReader.setPrompt(doEcho ? "" : continuePrompt);
+                        consoleReader.setPrompt(doEcho ? continuePrompt : "");
                         String additionalInput = consoleReader.readLine();
                         if (additionalInput == null) {
                             return globalFrame;
@@ -230,6 +230,9 @@ public class RCommand {
     }
 
     private static boolean doEcho() {
+        if (SLAVE.getValue()) {
+            return false;
+        }
         RLogicalVector echo = (RLogicalVector) RRuntime.asAbstractVector(ROptions.getValue("echo"));
         return RRuntime.fromLogical(echo.getDataAt(0));
     }

@@ -48,9 +48,9 @@ def runRCommand(args, nonZeroIsFatal=True, extraVmArgs=None, runBench=False):
     '''run R shell'''
     return runR(args, "com.oracle.truffle.r.shell.RCommand", nonZeroIsFatal=nonZeroIsFatal, extraVmArgs=extraVmArgs, runBench=runBench)
 
-def runRscriptCommand(args, nonZeroIsFatal=True):
+def runRscriptCommand(args, nonZeroIsFatal=True, extraVmArgs=None, runBench=False):
     '''run Rscript file'''
-    return runR(args, "com.oracle.truffle.r.shell.RscriptCommand", nonZeroIsFatal=nonZeroIsFatal)
+    return runR(args, "com.oracle.truffle.r.shell.RscriptCommand", nonZeroIsFatal=nonZeroIsFatal, extraVmArgs=extraVmArgs, runBench=runBench)
 
 def setREnvironment():
     osname = platform.system()
