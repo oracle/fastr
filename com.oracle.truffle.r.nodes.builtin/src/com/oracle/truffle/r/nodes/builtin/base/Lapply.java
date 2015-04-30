@@ -133,22 +133,22 @@ public abstract class Lapply extends RBuiltinNode {
             RNode[] args;
             String[] names;
             if (additionalArguments.isEmpty()) {    // == null || (varArgs.length() == 1 &&
-                // varArgs.getValues()[0]
+                // varArgs.getValue(0)
                 // == RMissing.instance)) {
                 args = new RNode[]{readVector};
                 names = new String[]{readVectorElementName};
             } else {
                 // Insert expressions found inside "..." as arguments
-                args = new RNode[additionalArguments.length() + 1];
+                args = new RNode[additionalArguments.getLength() + 1];
                 args[0] = readVector;
-                Object[] varArgsValues = additionalArguments.getValues();
-                for (int i = 0; i < additionalArguments.length(); i++) {
+                Object[] varArgsValues = additionalArguments.getArguments();
+                for (int i = 0; i < additionalArguments.getLength(); i++) {
                     args[i + 1] = CallArgumentsNode.wrapVarArgValue(varArgsValues[i], i);
 
                 }
-                names = new String[additionalArguments.length() + 1];
+                names = new String[additionalArguments.getLength() + 1];
                 names[0] = readVectorElementName;
-                for (int i = 0; i < additionalArguments.length(); i++) {
+                for (int i = 0; i < additionalArguments.getLength(); i++) {
                     String name = additionalArguments.getSignature().getName(i);
                     if (name != null && !name.isEmpty()) {
                         // change "" to null

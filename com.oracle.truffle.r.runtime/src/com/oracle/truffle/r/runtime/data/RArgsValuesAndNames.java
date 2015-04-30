@@ -24,51 +24,20 @@ package com.oracle.truffle.r.runtime.data;
 
 import java.util.*;
 
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.r.runtime.*;
 
 /**
  * A simple wrapper class for passing the ... argument through RArguments
  */
-public final class RArgsValuesAndNames {
+public final class RArgsValuesAndNames extends Arguments<Object> {
     /**
      * Default instance for empty "..." ("..." that resolve to contain no expression at runtime).
      * The {@link RMissing#instance} for "...".
      */
     public static final RArgsValuesAndNames EMPTY = new RArgsValuesAndNames(new Object[0], ArgumentsSignature.empty(0));
 
-    @CompilationFinal private final Object[] values;
-    private final ArgumentsSignature signature;
-
     public RArgsValuesAndNames(Object[] values, ArgumentsSignature signature) {
+        super(values, signature);
         assert signature != null && signature.getLength() == values.length : Arrays.toString(values) + " " + signature;
-        this.values = values;
-        this.signature = signature;
-    }
-
-    public Object[] getValues() {
-        return values;
-    }
-
-    public ArgumentsSignature getSignature() {
-        return signature;
-    }
-
-    public int length() {
-        return values.length;
-    }
-
-    /**
-     * @return The same as {@link #isMissing()}, kept for semantic context.
-     */
-    public boolean isEmpty() {
-        return length() == 0;
-    }
-
-    /**
-     * @return The same as {@link #isEmpty()}, kept for semantic context.
-     */
-    public boolean isMissing() {
-        return length() == 0;
     }
 }

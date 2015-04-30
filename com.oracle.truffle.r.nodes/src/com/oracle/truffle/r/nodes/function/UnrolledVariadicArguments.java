@@ -48,11 +48,6 @@ public final class UnrolledVariadicArguments extends Arguments<RNode> implements
     }
 
     @Override
-    public RNode[] getArguments() {
-        return arguments;
-    }
-
-    @Override
     public IdentityHashMap<RNode, Closure> getContent() {
         return closureCache;
     }

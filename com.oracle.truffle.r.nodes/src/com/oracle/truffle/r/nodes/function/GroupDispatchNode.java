@@ -129,7 +129,7 @@ public final class GroupDispatchNode extends RNode {
     }
 
     private Object executeInternal(VirtualFrame frame, RArgsValuesAndNames argAndNames, String genericName, RGroupGenerics group, RFunction builtinFunction) {
-        Object[] evaluatedArgs = argAndNames.getValues();
+        Object[] evaluatedArgs = argAndNames.getArguments();
 
         RStringVector typeL = evaluatedArgs.length == 0 ? null : getArgClass(evaluatedArgs[0]);
 

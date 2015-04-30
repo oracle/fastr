@@ -73,7 +73,7 @@ public abstract class Structure extends RBuiltinNode {
     @Specialization
     @TruffleBoundary
     protected Object structure(RAbstractContainer obj, RArgsValuesAndNames args) {
-        Object[] values = args.getValues();
+        Object[] values = args.getArguments();
         ArgumentsSignature signature = getSuppliedSignature();
         validateArgNames(signature);
         RAbstractContainer res = obj;

@@ -55,7 +55,7 @@ public abstract class Switch extends RBuiltinNode {
 
     protected Object doSwitchString(VirtualFrame frame, RAbstractStringVector x, RArgsValuesAndNames optionalArgs) {
         controlVisibility();
-        Object[] optionalArgValues = optionalArgs.getValues();
+        Object[] optionalArgValues = optionalArgs.getArguments();
         final String xStr = x.getDataAt(0);
         ArgumentsSignature signature = optionalArgs.getSignature();
         for (int i = 0; i < signature.getLength(); i++) {
@@ -148,7 +148,7 @@ public abstract class Switch extends RBuiltinNode {
     }
 
     private Object doSwitchInt(VirtualFrame frame, int index, RArgsValuesAndNames optionalArgs) {
-        Object[] optionalArgValues = optionalArgs.getValues();
+        Object[] optionalArgValues = optionalArgs.getArguments();
         if (index >= 1 && index <= optionalArgValues.length) {
             Object value = promiseHelper.checkEvaluate(frame, optionalArgValues[index - 1]);
             if (value != null) {

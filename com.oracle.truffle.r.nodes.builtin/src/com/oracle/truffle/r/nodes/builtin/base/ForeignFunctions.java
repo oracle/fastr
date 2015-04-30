@@ -86,7 +86,7 @@ public class ForeignFunctions {
         @Specialization(guards = "dqrdc2(f)")
         protected RList fortranDqrdc2(RList f, RArgsValuesAndNames args, byte naok, byte dup, RMissing rPackage, RMissing encoding) {
             controlVisibility();
-            Object[] argValues = args.getValues();
+            Object[] argValues = args.getArguments();
             try {
                 RAbstractDoubleVector xVec = (RAbstractDoubleVector) argValues[0];
                 int ldx = (int) argValues[1];
@@ -129,7 +129,7 @@ public class ForeignFunctions {
         @Specialization(guards = "dqrcf(f)")
         protected RList fortranDqrcf(RList f, RArgsValuesAndNames args, byte naok, byte dup, RMissing rPackage, RMissing encoding) {
             controlVisibility();
-            Object[] argValues = args.getValues();
+            Object[] argValues = args.getArguments();
             try {
                 RAbstractDoubleVector xVec = (RAbstractDoubleVector) argValues[0];
                 int n = (int) argValues[1];
@@ -189,7 +189,7 @@ public class ForeignFunctions {
         @Specialization
         protected RList c(String f, RArgsValuesAndNames args, byte naok, byte dup, RMissing rPackage, RMissing encoding) {
             controlVisibility();
-            Object[] argValues = args.getValues();
+            Object[] argValues = args.getArguments();
             SymbolInfo symbolInfo = DLL.findSymbolInfo(f, null);
             if (symbolInfo == null) {
                 errorProfile.enter();
@@ -305,7 +305,7 @@ public class ForeignFunctions {
         @Specialization(guards = "fft(f)")
         protected RComplexVector callFFT(VirtualFrame frame, RList f, RArgsValuesAndNames args, RMissing packageName) {
             controlVisibility();
-            Object[] argValues = args.getValues();
+            Object[] argValues = args.getArguments();
             RComplexVector zVec = castComplexVector(frame, castVector(frame, argValues[0]));
             double[] z = zVec.getDataTemp();
             byte inverse = castLogical(frame, castVector(frame, argValues[1]));
@@ -375,7 +375,7 @@ public class ForeignFunctions {
         @TruffleBoundary
         protected REnvironment initMethodDispatch(RList f, RArgsValuesAndNames args, RMissing packageName) {
             controlVisibility();
-            Object[] argValues = args.getValues();
+            Object[] argValues = args.getArguments();
             REnvironment env = (REnvironment) argValues[0];
             // TBD what should we actually do here
             return MethodsListDispatch.getInstance().initMethodDispatch(env);
@@ -390,7 +390,7 @@ public class ForeignFunctions {
         @Specialization(guards = "methodsPackageMetaName(f)")
         protected String callMethodsPackageMetaName(RList f, RArgsValuesAndNames args, RMissing packageName) {
             controlVisibility();
-            Object[] argValues = args.getValues();
+            Object[] argValues = args.getArguments();
             // TODO proper error checks
             String prefixString = (String) argValues[0];
             String nameString = (String) argValues[1];
@@ -407,7 +407,7 @@ public class ForeignFunctions {
         @TruffleBoundary
         protected Object setPrimitiveMethods(RList f, RArgsValuesAndNames args, RMissing packageName) {
             controlVisibility();
-            Object[] argValues = args.getValues();
+            Object[] argValues = args.getArguments();
             // TODO proper error checks
             String fname = RRuntime.asString(argValues[0]);
             Object op = argValues[1];
@@ -426,7 +426,7 @@ public class ForeignFunctions {
         @Specialization(guards = "getClassFromCache(f)")
         protected Object callGetClassFromCache(RList f, RArgsValuesAndNames args, RMissing packageName) {
             controlVisibility();
-            Object[] argValues = args.getValues();
+            Object[] argValues = args.getArguments();
             REnvironment table = (REnvironment) argValues[1];
             String klassString = RRuntime.asString(argValues[0]);
             if (klassString != null) {
@@ -445,8 +445,7 @@ public class ForeignFunctions {
         @Specialization(guards = "setMethodDispatch(f)")
         protected Object callSetMethodDispatch(RList f, RArgsValuesAndNames args, RMissing packageName) {
             controlVisibility();
-            Object[] argValues = args.getValues();
-            byte onOff = (byte) argValues[0];
+            byte onOff = (byte) args.getArgument(0);
             return MethodsListDispatch.getInstance().setMethodDispatch(onOff);
         }
 
@@ -467,7 +466,7 @@ public class ForeignFunctions {
                 throw RError.error(getEncapsulatingSourceSection(), Message.C_SYMBOL_NOT_IN_TABLE, name);
             }
             try {
-                return RFFIFactory.getRFFI().getCallRFFI().invokeCall(symbolInfo, args.getValues());
+                return RFFIFactory.getRFFI().getCallRFFI().invokeCall(symbolInfo, args.getArguments());
             } catch (Throwable t) {
                 errorProfile.enter();
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.NATIVE_CALL_FAILED, t.getMessage());
@@ -487,8 +486,7 @@ public class ForeignFunctions {
         @SuppressWarnings("unused")
         @Specialization(guards = "isCrc64(f)")
         protected String crc64(RList f, RArgsValuesAndNames args, RMissing packageName) {
-            Object[] argValues = args.getValues();
-            String input = RRuntime.asString(argValues[0]);
+            String input = RRuntime.asString(args.getArgument(0));
             return Crc64.crc64(input);
         }
 
@@ -500,7 +498,7 @@ public class ForeignFunctions {
         @Specialization(guards = "isMenu(f)")
         @TruffleBoundary
         protected int menu(RList f, RArgsValuesAndNames args, RMissing packageName) {
-            Object[] values = args.getValues();
+            Object[] values = args.getArguments();
             String[] choices;
             if (values[0] instanceof String) {
                 choices = new String[]{(String) values[0]};
@@ -556,7 +554,7 @@ public class ForeignFunctions {
 
         private Object doCovCor(VirtualFrame frame, boolean isCov, RArgsValuesAndNames args) {
             controlVisibility();
-            Object[] argValues = args.getValues();
+            Object[] argValues = args.getArguments();
             if (argValues[0] == RNull.instance) {
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.IS_NULL, "x");
             }
@@ -574,10 +572,9 @@ public class ForeignFunctions {
 
         @Specialization(guards = "isSplineCoef(f)")
         protected RList splineCoef(VirtualFrame frame, @SuppressWarnings("unused") RList f, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName) {
-            Object[] argValues = args.getValues();
-            int method = castInt(frame, castVector(frame, argValues[0]));
-            RAbstractDoubleVector x = (RAbstractDoubleVector) castVector(frame, argValues[1]);
-            RAbstractDoubleVector y = (RAbstractDoubleVector) castVector(frame, argValues[2]);
+            int method = castInt(frame, castVector(frame, args.getArguments()[0]));
+            RAbstractDoubleVector x = (RAbstractDoubleVector) castVector(frame, args.getArguments()[1]);
+            RAbstractDoubleVector y = (RAbstractDoubleVector) castVector(frame, args.getArguments()[2]);
             return SplineFunctions.splineCoef(method, x.materialize(), y.materialize());
         }
 
@@ -587,11 +584,9 @@ public class ForeignFunctions {
 
         @Specialization(guards = "isSplineEval(f)")
         protected RDoubleVector splineEval(VirtualFrame frame, @SuppressWarnings("unused") RList f, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName) {
-            Object[] argValues = args.getValues();
-            RAbstractDoubleVector xout = (RAbstractDoubleVector) castVector(frame, argValues[0]);
+            RAbstractDoubleVector xout = (RAbstractDoubleVector) castVector(frame, args.getArgument(0));
             // This is called with the result of SplineCoef, so it is surely an RList
-            RList z = (RList) argValues[1];
-            return SplineFunctions.splineEval(attrProfiles, xout.materialize(), z);
+            return SplineFunctions.splineEval(attrProfiles, xout.materialize(), (RList) args.getArgument(1));
         }
 
         public boolean isSplineEval(RList f) {
@@ -600,9 +595,8 @@ public class ForeignFunctions {
 
         @Specialization(guards = "isDoTabExpand(f)")
         protected RStringVector tabExpand(VirtualFrame frame, @SuppressWarnings("unused") RList f, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName) {
-            Object[] argValues = args.getValues();
-            RAbstractStringVector strings = (RAbstractStringVector) castVector(frame, argValues[0]);
-            RAbstractIntVector starts = (RAbstractIntVector) castVector(frame, argValues[1]);
+            RAbstractStringVector strings = (RAbstractStringVector) castVector(frame, args.getArgument(0));
+            RAbstractIntVector starts = (RAbstractIntVector) castVector(frame, args.getArgument(1));
             return Text.doTabExpand(strings.materialize(), starts.materialize());
         }
 
@@ -612,9 +606,8 @@ public class ForeignFunctions {
 
         @Specialization(guards = "isCodeFilesAppend(f)")
         protected RLogicalVector codeFilesAppend(VirtualFrame frame, @SuppressWarnings("unused") RList f, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName) {
-            Object[] argValues = args.getValues();
-            RStringVector file1 = (RStringVector) castVector(frame, argValues[0]);
-            RStringVector file2 = (RStringVector) castVector(frame, argValues[1]);
+            RStringVector file1 = (RStringVector) castVector(frame, args.getArgument(0));
+            RStringVector file2 = (RStringVector) castVector(frame, args.getArgument(1));
             if (file1.getLength() != 1) {
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "file1");
             }
@@ -744,7 +737,7 @@ public class ForeignFunctions {
         @Specialization(guards = "isCountFields(f)")
         protected Object countFields(VirtualFrame frame, RList f, RArgsValuesAndNames args, RMissing packageName) {
             controlVisibility();
-            Object[] argValues = args.getValues();
+            Object[] argValues = args.getArguments();
             RConnection conn = (RConnection) argValues[0];
             Object sepArg = argValues[1];
             char sepChar;
@@ -807,7 +800,7 @@ public class ForeignFunctions {
         protected Object doReadTableHead(VirtualFrame frame, @SuppressWarnings("unused") RList f, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName) {
             // TODO This is quite incomplete and just uses readLines, which works for some inputs
             controlVisibility();
-            Object[] argValues = args.getValues();
+            Object[] argValues = args.getArguments();
             RConnection conn = (RConnection) argValues[0];
             int nlines = castInt(frame, castVector(frame, argValues[1]));
             try (RConnection openConn = conn.forceOpen("r")) {
@@ -825,7 +818,7 @@ public class ForeignFunctions {
         @Specialization(guards = "isRnorm(f)")
         protected Object doRnorm(VirtualFrame frame, @SuppressWarnings("unused") RList f, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName) {
             controlVisibility();
-            Object[] argValues = args.getValues();
+            Object[] argValues = args.getArguments();
             int n = castInt(frame, castVector(frame, argValues[0]));
             // TODO full error checks
             double mean = (double) argValues[1];
@@ -840,7 +833,7 @@ public class ForeignFunctions {
         @Specialization(guards = "isRunif(f)")
         protected Object doRunif(VirtualFrame frame, @SuppressWarnings("unused") RList f, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName) {
             controlVisibility();
-            Object[] argValues = args.getValues();
+            Object[] argValues = args.getArguments();
             // TODO full error checks
             int n = castInt(frame, castVector(frame, argValues[0]));
             double min = (castDouble(frame, castVector(frame, argValues[1]))).getDataAt(0);
@@ -855,7 +848,7 @@ public class ForeignFunctions {
         @Specialization(guards = "isQgamma(f)")
         protected RAbstractDoubleVector doQgamma(VirtualFrame frame, @SuppressWarnings("unused") RList f, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName) {
             controlVisibility();
-            Object[] argValues = args.getValues();
+            Object[] argValues = args.getArguments();
             RAbstractDoubleVector p = (RAbstractDoubleVector) castVector(frame, argValues[0]);
             RAbstractDoubleVector shape = (RAbstractDoubleVector) castVector(frame, argValues[1]);
             RAbstractDoubleVector scale = (RAbstractDoubleVector) castVector(frame, argValues[2]);
@@ -874,7 +867,7 @@ public class ForeignFunctions {
         @Specialization(guards = "isDownload(f)")
         protected int doDownload(VirtualFrame frame, @SuppressWarnings("unused") RList f, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName) {
             controlVisibility();
-            Object[] argValues = args.getValues();
+            Object[] argValues = args.getArguments();
             String url = isString(argValues[0]);
             String destFile = isString(argValues[1]);
             byte quiet = castLogical(frame, castVector(frame, argValues[2]));
@@ -908,7 +901,7 @@ public class ForeignFunctions {
         @Specialization(guards = "isWriteTable(f)")
         protected Object doWriteTable(VirtualFrame frame, @SuppressWarnings("unused") RList f, RArgsValuesAndNames args) {
             controlVisibility();
-            Object[] argValues = args.getValues();
+            Object[] argValues = args.getArguments();
             Object conArg = argValues[1];
             RConnection conn;
             if (!(conArg instanceof RConnection)) {
@@ -996,7 +989,7 @@ public class ForeignFunctions {
         @Specialization(guards = "isTypeConvert(f)")
         protected Object doTypeConvert(@SuppressWarnings("unused") RList f, RArgsValuesAndNames args) {
             controlVisibility();
-            Object[] argValues = args.getValues();
+            Object[] argValues = args.getArguments();
             RAbstractStringVector x = (RAbstractStringVector) argValues[0];
             RAbstractStringVector naStrings = (RAbstractStringVector) argValues[1];
             byte asIs = (byte) argValues[2];
@@ -1026,7 +1019,7 @@ public class ForeignFunctions {
         @Specialization(guards = "isPlotXY(f)")
         protected RNull doPlotXY(@SuppressWarnings("unused") RList f, RArgsValuesAndNames args) {
             controlVisibility();
-            GraphicsCCalls.plotXy(((RAbstractDoubleVector) args.getValues()[0]).materialize());
+            GraphicsCCalls.plotXy(((RAbstractDoubleVector) args.getArgument(0)).materialize());
             return RNull.instance;
         }
 

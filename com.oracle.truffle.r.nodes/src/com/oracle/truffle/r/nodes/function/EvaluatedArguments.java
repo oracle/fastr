@@ -25,8 +25,8 @@ package com.oracle.truffle.r.nodes.function;
 import com.oracle.truffle.r.runtime.*;
 
 /**
- * Simple container class for holding arguments ({@link #getEvaluatedArgs()}) which are ready to be
- * pushed into {@link RArguments} (or are taken from there!).
+ * Simple container class for holding arguments which are ready to be pushed into {@link RArguments}
+ * (or are taken from there!). 'argument missing' is denoted by <code>null</code>.
  */
 public class EvaluatedArguments extends Arguments<Object> {
 
@@ -36,13 +36,5 @@ public class EvaluatedArguments extends Arguments<Object> {
 
     public static EvaluatedArguments create(Object[] args, ArgumentsSignature signature) {
         return new EvaluatedArguments(args, signature);
-    }
-
-    /**
-     * @return The already evaluated arguments, in formal order. 'argument missing' is denoted by
-     *         <code>null</code>
-     */
-    public Object[] getEvaluatedArgs() {
-        return arguments;
     }
 }

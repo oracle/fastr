@@ -51,7 +51,7 @@ import com.oracle.truffle.r.runtime.env.*;
  * </p>
  */
 @CreateWrapper
-public class CallArgumentsNode extends ArgumentsNode implements UnmatchedArguments {
+public class CallArgumentsNode extends ArgumentsNode {
 
     @Child private FrameSlotNode varArgsSlotNode;
     @Child private PromiseCheckHelperNode promiseHelper;
@@ -165,7 +165,7 @@ public class CallArgumentsNode extends ArgumentsNode implements UnmatchedArgumen
             return VarArgsSignature.NO_VARARGS_GIVEN;
         } else {
             // Arguments wrapped into "..."
-            Object[] varArgs = varArgsAndNames.getValues();
+            Object[] varArgs = varArgsAndNames.getArguments();
             Object[] content;
             if (cachedSignatureLength != VARIABLE && cachedSignatureLength != varArgs.length) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -198,7 +198,7 @@ public class CallArgumentsNode extends ArgumentsNode implements UnmatchedArgumen
             return VarArgsSignature.NO_VARARGS_GIVEN;
         } else {
             // Arguments wrapped into "..."
-            Object[] varArgs = varArgsAndNames.getValues();
+            Object[] varArgs = varArgsAndNames.getArguments();
             Object[] content = new Object[varArgs.length];
 
             createSignatureLoop(content, varArgs);
@@ -259,14 +259,14 @@ public class CallArgumentsNode extends ArgumentsNode implements UnmatchedArgumen
                     }
 
                     // length == 0 cannot happen, in that case RMissing is caught above
-                    values = Utils.resizeArray(values, values.length + varArgInfo.length() - 1);
-                    newNames = Utils.resizeArray(newNames, newNames.length + varArgInfo.length() - 1);
-                    for (int j = 0; j < varArgInfo.length(); j++) {
+                    values = Utils.resizeArray(values, values.length + varArgInfo.getLength() - 1);
+                    newNames = Utils.resizeArray(newNames, newNames.length + varArgInfo.getLength() - 1);
+                    for (int j = 0; j < varArgInfo.getLength(); j++) {
                         // TODO SourceSection necessary here?
                         // VarArgInfo may contain two types of values here: RPromises and
                         // RMissing.instance. Both need to be wrapped into ConstantNodes, so
                         // they might get wrapped into new promises later on
-                        Object varArgValue = varArgInfo.getValues()[j];
+                        Object varArgValue = varArgInfo.getArgument(j);
                         values[index] = wrapVarArgValue(varArgValue, j);
                         String newName = varArgInfo.getSignature().getName(j);
                         newNames[index] = newName;
@@ -293,7 +293,7 @@ public class CallArgumentsNode extends ArgumentsNode implements UnmatchedArgumen
         String[] names = null;
         if (containsVarArgsSymbol()) {
             varArgInfo = getVarargsAndNames(frame);
-            size += (varArgInfo.length() - 1) * varArgsSymbolIndices.length;
+            size += (varArgInfo.getLength() - 1) * varArgsSymbolIndices.length;
             names = new String[size];
         } else {
             resultSignature = signature;
@@ -321,12 +321,12 @@ public class CallArgumentsNode extends ArgumentsNode implements UnmatchedArgumen
 
     private int flattenVarArgs(VirtualFrame frame, RArgsValuesAndNames varArgInfo, String[] names, Object[] values, int startIndex) {
         int index = startIndex;
-        for (int j = 0; j < varArgInfo.length(); j++) {
+        for (int j = 0; j < varArgInfo.getLength(); j++) {
             if (promiseHelper == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 promiseHelper = insert(new PromiseCheckHelperNode());
             }
-            values[index] = promiseHelper.checkEvaluate(frame, varArgInfo.getValues()[j]);
+            values[index] = promiseHelper.checkEvaluate(frame, varArgInfo.getArgument(j));
             names[index] = varArgInfo.getSignature().getName(j);
             index++;
         }

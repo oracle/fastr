@@ -53,7 +53,7 @@ public abstract class NArgs extends RBuiltinNode {
                     result++;
                 }
             } else if (arg instanceof RArgsValuesAndNames) {
-                result += ((RArgsValuesAndNames) arg).length();
+                result += ((RArgsValuesAndNames) arg).getLength();
             } else if (!(arg instanceof RMissing)) {
                 result++;
             }

@@ -146,7 +146,7 @@ public class InfixEmulationFunctions {
 
         @Specialization(guards = "!argsEmpty(args)")
         protected RArgsValuesAndNames eval(VirtualFrame frame, RArgsValuesAndNames args) {
-            Object[] values = args.getValues();
+            Object[] values = args.getArguments();
             for (int i = 0; i < values.length; i++) {
                 values[i] = evalRecursive(frame, values[i]);
             }
@@ -159,7 +159,7 @@ public class InfixEmulationFunctions {
         }
 
         protected boolean argsEmpty(RArgsValuesAndNames args) {
-            return args.length() == 0;
+            return args.isEmpty();
         }
     }
 
@@ -178,20 +178,20 @@ public class InfixEmulationFunctions {
 
         @ExplodeLoop
         protected Object access(VirtualFrame frame, Object vector, byte exact, RArgsValuesAndNames inds, Object dropDim, boolean isSubset) {
-            if (accessNode == null || positions.getLength() != inds.length()) {
+            if (accessNode == null || positions.getLength() != inds.getLength()) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 if (accessNode == null) {
                     accessNode = insert(AccessArrayNodeGen.create(isSubset, false, false, false, null, null, null, null, null));
                 }
-                int len = inds.length();
+                int len = inds.getLength();
                 positions = insert(AccessPositions.create(isSubset, len));
             }
-            Object[] pos = inds.getValues();
+            Object[] pos = inds.getArguments();
             return accessNode.executeAccess(frame, vector, exact, 0, positions.execute(frame, vector, pos, exact, pos), dropDim);
         }
 
         protected boolean noInd(RArgsValuesAndNames inds) {
-            return inds.length() == 0;
+            return inds.isEmpty();
         }
 
     }
@@ -208,7 +208,7 @@ public class InfixEmulationFunctions {
 
         protected Object get(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames inds, @SuppressWarnings("unused") RMissing dropVec) {
             byte drop;
-            if (multiIndexProfile.profile(inds.length() > 1)) {
+            if (multiIndexProfile.profile(inds.getLength() > 1)) {
                 drop = RRuntime.LOGICAL_TRUE;
             } else {
                 drop = RRuntime.LOGICAL_FALSE;
@@ -261,7 +261,7 @@ public class InfixEmulationFunctions {
         @Specialization(guards = {"!noInd(inds)", "isObject(frame, x)"})
         protected Object getObj(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames inds, @SuppressWarnings("unused") RMissing dropVec) {
             byte drop;
-            if (multiIndexProfile.profile(inds.length() > 1)) {
+            if (multiIndexProfile.profile(inds.getLength() > 1)) {
                 drop = RRuntime.LOGICAL_TRUE;
             } else {
                 drop = RRuntime.LOGICAL_FALSE;
@@ -415,7 +415,7 @@ public class InfixEmulationFunctions {
 
         @ExplodeLoop
         protected Object update(VirtualFrame frame, Object vector, RArgsValuesAndNames args, Object value, boolean isSubset) {
-            int len = args.length() == 1 ? 1 : args.length() - 1;
+            int len = args.getLength() == 1 ? 1 : args.getLength() - 1;
 
             if (updateNode == null || positions.getLength() != len) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -426,8 +426,8 @@ public class InfixEmulationFunctions {
                 coerceVector = insert(CoerceVectorNodeGen.create(null, null, null));
             }
             Object[] pos;
-            if (args.length() > 1) {
-                pos = Arrays.copyOf(args.getValues(), args.length() - 1);
+            if (args.getLength() > 1) {
+                pos = Arrays.copyOf(args.getArguments(), args.getLength() - 1);
             } else {
                 pos = new Object[]{RMissing.instance};
             }
@@ -442,7 +442,7 @@ public class InfixEmulationFunctions {
         }
 
         protected boolean noInd(RArgsValuesAndNames args) {
-            return args.length() == 0;
+            return args.isEmpty();
         }
 
     }
@@ -466,14 +466,14 @@ public class InfixEmulationFunctions {
             try {
                 return dcn.execute(frame, x.getClassHierarchy(), new Object[]{x, args});
             } catch (S3FunctionLookupNode.NoGenericMethodException e) {
-                Object value = args.getValues()[args.length() - 1];
+                Object value = args.getArgument(args.getLength() - 1);
                 return update(frame, x, args, value, IS_SUBSET);
             }
         }
 
         @Specialization(guards = {"!noInd(args)", "!isObject(frame, x)"})
         protected Object update(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames args) {
-            Object value = args.getValues()[args.length() - 1];
+            Object value = args.getArgument(args.getLength() - 1);
             return update(frame, x, args, value, IS_SUBSET);
         }
 
@@ -500,14 +500,14 @@ public class InfixEmulationFunctions {
             try {
                 return dcn.execute(frame, x.getClassHierarchy(), new Object[]{x, args});
             } catch (S3FunctionLookupNode.NoGenericMethodException e) {
-                Object value = args.getValues()[args.length() - 1];
+                Object value = args.getArgument(args.getLength() - 1);
                 return update(frame, x, args, value, IS_SUBSET);
             }
         }
 
         @Specialization(guards = {"!noInd(args)", "!isObject(frame, x)"})
         protected Object update(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames args) {
-            Object value = args.getValues()[args.length() - 1];
+            Object value = args.getArgument(args.getLength() - 1);
             return update(frame, x, args, value, IS_SUBSET);
         }
 

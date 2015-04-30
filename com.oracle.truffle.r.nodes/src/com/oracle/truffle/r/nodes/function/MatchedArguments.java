@@ -72,7 +72,7 @@ public final class MatchedArguments extends Arguments<RNode> {
     }
 
     public MatchedArgumentsNode createNode() {
-        return new MatchedArgumentsNode(arguments, signature);
+        return new MatchedArgumentsNode(getArguments(), getSignature());
     }
 
     /**
@@ -93,26 +93,10 @@ public final class MatchedArguments extends Arguments<RNode> {
      */
     @ExplodeLoop
     public Object[] doExecuteArray(VirtualFrame frame) {
-        Object[] result = new Object[arguments.length];
-        for (int i = 0; i < arguments.length; i++) {
-            result[i] = arguments[i].execute(frame);
+        Object[] result = new Object[getArguments().length];
+        for (int i = 0; i < getArguments().length; i++) {
+            result[i] = getArguments()[i].execute(frame);
         }
         return result;
-    }
-
-    /**
-     * @return The consolidated list of arguments that should be passed to a function.
-     *         <code>null</code> denotes 'no argument specified'
-     */
-    public RNode[] getArguments() {
-        return arguments;
-    }
-
-    /**
-     * @return The nr of arguments there are to be passed into a function (vargs are counted as
-     *         <u>one</u>, as they are wrapped into one object!)
-     */
-    public int getNrOfArgs() {
-        return arguments.length;
     }
 }

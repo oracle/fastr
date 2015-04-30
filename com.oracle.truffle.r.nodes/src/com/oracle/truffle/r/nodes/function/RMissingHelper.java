@@ -43,7 +43,7 @@ public class RMissingHelper {
      * @return Whether the given value represents an argument that has not been provided.
      */
     public static boolean isMissing(Object value) {
-        return value == RMissing.instance || (value instanceof RArgsValuesAndNames) && ((RArgsValuesAndNames) value).isMissing();
+        return value == RMissing.instance || (value instanceof RArgsValuesAndNames) && ((RArgsValuesAndNames) value).isEmpty();
     }
 
     /**

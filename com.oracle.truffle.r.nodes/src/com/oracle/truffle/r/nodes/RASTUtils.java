@@ -335,7 +335,7 @@ public class RASTUtils {
             if (rva.isEmpty()) {
                 return new MissingDotsNode();
             }
-            Object[] values = rva.getValues();
+            Object[] values = rva.getArguments();
             RNode[] expandedNodes = new RNode[values.length];
             for (int i = 0; i < values.length; i++) {
                 Object argval = values[i];
@@ -346,7 +346,7 @@ public class RASTUtils {
                         VarArgNode varArgNode = (VarArgNode) unwrap;
                         try {
                             RArgsValuesAndNames v = (RArgsValuesAndNames) promise.getFrame().getObject(promise.getFrame().getFrameDescriptor().findFrameSlot("..."));
-                            argval = v.getValues()[varArgNode.getIndex()];
+                            argval = v.getArguments()[varArgNode.getIndex()];
                         } catch (FrameSlotTypeException e) {
                             throw RInternalError.shouldNotReachHere();
                         }

@@ -68,7 +68,7 @@ public abstract class GetText extends RBuiltinNode {
         // no translation done at this point
         // TODO: cannot specify args as RArgsValuesAndNames due to annotation processor error
         RArgsValuesAndNames varargs = (RArgsValuesAndNames) args;
-        Object[] argValues = varargs.getValues();
+        Object[] argValues = varargs.getArguments();
         String[] a = new String[0];
         int aLength = 0;
         int index = 0;

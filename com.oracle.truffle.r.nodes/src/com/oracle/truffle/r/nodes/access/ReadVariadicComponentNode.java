@@ -58,16 +58,16 @@ public class ReadVariadicComponentNode extends RNode {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.NO_DOT_DOT, index + 1);
         }
         RArgsValuesAndNames argsValuesAndNames = (RArgsValuesAndNames) args;
-        if (argsValuesAndNames.isMissing()) {
+        if (argsValuesAndNames.isEmpty()) {
             errorBranch.enter();
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.NO_LIST_FOR_CDR);
         }
 
-        if (argsValuesAndNames.length() <= index) {
+        if (argsValuesAndNames.getLength() <= index) {
             errorBranch.enter();
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.DOT_DOT_SHORT, index + 1);
         }
-        Object ret = argsValuesAndNames.getValues()[index];
+        Object ret = argsValuesAndNames.getArgument(index);
         if (ret instanceof RPromise) {
             promiseBranch.enter();
             // This might be the case, as lookup only checks for "..." to be a promise and forces it

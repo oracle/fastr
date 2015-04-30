@@ -32,7 +32,7 @@ public abstract class RPrecedenceBuiltinNode extends RCastingBuiltinNode {
 
     private int precedence(RArgsValuesAndNames args) {
         int precedence = -1;
-        Object[] array = args.getValues();
+        Object[] array = args.getArguments();
         for (int i = 0; i < array.length; i++) {
             precedence = Math.max(precedence, precedenceNode.executeInteger(array[i], RRuntime.LOGICAL_FALSE));
         }
