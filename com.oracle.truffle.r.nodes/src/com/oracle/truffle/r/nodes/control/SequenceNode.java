@@ -32,6 +32,7 @@ import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
 
 @NodeInfo(cost = NodeCost.NONE)
@@ -100,7 +101,7 @@ public class SequenceNode extends RNode {
     @Override
     @ExplodeLoop
     public Object execute(VirtualFrame frame) {
-        Object lastResult = null;
+        Object lastResult = RNull.instance;
         long t1 = timing == null ? 0 : System.nanoTime();
         for (int i = 0; i < sequence.length; i++) {
             lastResult = sequence[i].execute(frame);
