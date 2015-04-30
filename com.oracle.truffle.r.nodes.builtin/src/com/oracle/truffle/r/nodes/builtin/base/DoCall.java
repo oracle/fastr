@@ -90,9 +90,13 @@ public abstract class DoCall extends RBuiltinNode {
                 argValues[i] = createArgPromise(callerFrame, NodeUtil.cloneNode(((RNode) lang.getRep())));
             } else if (arg instanceof RSymbol) {
                 containsRSymbolProfile.enter();
-                callerFrame = getCallerFrame(frame, callerFrame);
                 RSymbol symbol = (RSymbol) arg;
-                argValues[i] = createArgPromise(callerFrame, RASTUtils.createReadVariableNode(symbol.getName()));
+                if (symbol.getName().isEmpty()) {
+                    argValues[i] = RMissing.instance;
+                } else {
+                    callerFrame = getCallerFrame(frame, callerFrame);
+                    argValues[i] = createArgPromise(callerFrame, RASTUtils.createReadVariableNode(symbol.getName()));
+                }
             }
         }
         if (func.isBuiltin()) {
