@@ -51,7 +51,7 @@ import com.oracle.truffle.r.runtime.env.*;
  * </p>
  */
 @CreateWrapper
-public class CallArgumentsNode extends ArgumentsNode implements UnmatchedArguments {
+public class CallArgumentsNode extends ArgumentsNode {
 
     @Child private FrameSlotNode varArgsSlotNode;
     @Child private PromiseCheckHelperNode promiseHelper;
