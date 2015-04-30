@@ -147,7 +147,7 @@ public abstract class RBuiltinNode extends LeafCallNode implements VisibilityCon
     }
 
     protected RNode[] inlineStaticArguments(InlinedArguments args) {
-        return args.getInlinedArgs();
+        return args.getArguments();
     }
 
     /*

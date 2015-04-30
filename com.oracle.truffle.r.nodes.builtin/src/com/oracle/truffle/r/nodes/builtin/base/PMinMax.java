@@ -106,8 +106,8 @@ public abstract class PMinMax extends RBuiltinNode {
 
     private int convertToVectorAndEnableNACheck(VirtualFrame frame, RArgsValuesAndNames args, CastNode castNode) {
         int length = 0;
-        Object[] argValues = args.getValues();
-        for (int i = 0; i < args.length(); i++) {
+        Object[] argValues = args.getArguments();
+        for (int i = 0; i < args.getLength(); i++) {
             RAbstractVector v = castVector(frame, argValues[i]);
             na.enable(v);
             int vecLength = v.getLength();
@@ -123,7 +123,7 @@ public abstract class PMinMax extends RBuiltinNode {
 
     @Specialization(guards = {"isIntegerPrecedence(args)", "oneVector(args)"})
     protected Object pMinMaxOneVecInt(@SuppressWarnings("unused") VirtualFrame frame, @SuppressWarnings("unused") byte naRm, RArgsValuesAndNames args) {
-        return args.getValues()[0];
+        return args.getArgument(0);
     }
 
     @Specialization(guards = {"isIntegerPrecedence(args)", "!oneVector(args)"})
@@ -134,7 +134,7 @@ public abstract class PMinMax extends RBuiltinNode {
         } else {
             boolean profiledNaRm = naRmProfile.profile(naRm == RRuntime.LOGICAL_TRUE);
             int[] data = new int[maxLength];
-            Object[] argValues = args.getValues();
+            Object[] argValues = args.getArguments();
             boolean warningAdded = false;
             for (int i = 0; i < maxLength; i++) {
                 int result = semantics.getIntStart();
@@ -165,7 +165,7 @@ public abstract class PMinMax extends RBuiltinNode {
 
     @Specialization(guards = {"isLogicalPrecedence(args)", "oneVector(args)"})
     protected Object pMinMaxOneVecLogical(@SuppressWarnings("unused") VirtualFrame frame, @SuppressWarnings("unused") byte naRm, RArgsValuesAndNames args) {
-        return args.getValues()[0];
+        return args.getArgument(0);
     }
 
     @Specialization(guards = {"isLogicalPrecedence(args)", "!oneVector(args)"})
@@ -176,7 +176,7 @@ public abstract class PMinMax extends RBuiltinNode {
     @Specialization(guards = {"isDoublePrecedence(args)", "oneVector(args)"})
     @SuppressWarnings("unused")
     protected Object pMinMaxOneVecDouble(VirtualFrame frame, byte naRm, RArgsValuesAndNames args) {
-        return args.getValues()[0];
+        return args.getArgument(0);
     }
 
     @Specialization(guards = {"isDoublePrecedence(args)", "!oneVector(args)"})
@@ -187,7 +187,7 @@ public abstract class PMinMax extends RBuiltinNode {
         } else {
             boolean profiledNaRm = naRmProfile.profile(naRm == RRuntime.LOGICAL_TRUE);
             double[] data = new double[maxLength];
-            Object[] argValues = args.getValues();
+            Object[] argValues = args.getArguments();
             boolean warningAdded = false;
             for (int i = 0; i < maxLength; i++) {
                 double result = semantics.getDoubleStart();
@@ -219,7 +219,7 @@ public abstract class PMinMax extends RBuiltinNode {
     @Specialization(guards = {"isStringPrecedence(args)", "oneVector(args)"})
     @SuppressWarnings("unused")
     protected Object pMinMaxOneVecString(VirtualFrame frame, byte naRm, RArgsValuesAndNames args) {
-        return args.getValues()[0];
+        return args.getArgument(0);
     }
 
     @Specialization(guards = {"isStringPrecedence(args)", "!oneVector(args)"})
@@ -230,7 +230,7 @@ public abstract class PMinMax extends RBuiltinNode {
         } else {
             boolean profiledNaRm = naRmProfile.profile(naRm == RRuntime.LOGICAL_TRUE);
             String[] data = new String[maxLength];
-            Object[] argValues = args.getValues();
+            Object[] argValues = args.getArguments();
             byte warningAdded = RRuntime.LOGICAL_FALSE;
             for (int i = 0; i < maxLength; i++) {
                 warningAdded = handleString(frame, argValues, naRm, 0, i, maxLength, warningAdded, data);
@@ -296,12 +296,12 @@ public abstract class PMinMax extends RBuiltinNode {
     }
 
     protected boolean oneVector(RArgsValuesAndNames args) {
-        return args.length() == 1;
+        return args.getLength() == 1;
     }
 
     private int precedence(RArgsValuesAndNames args) {
         int precedence = -1;
-        Object[] array = args.getValues();
+        Object[] array = args.getArguments();
         for (int i = 0; i < array.length; i++) {
             precedence = Math.max(precedence, precedenceNode.executeInteger(array[i], RRuntime.LOGICAL_FALSE));
         }

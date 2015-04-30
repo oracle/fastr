@@ -226,7 +226,7 @@ public class ArgumentMatcher {
                 Object[] newVarArgs = new Object[varArgsLen];
                 boolean nonNull = false;
                 for (int i = 0; i < varArgsLen; i++) {
-                    newVarArgs[i] = evaluatedArgs.arguments[match.varargsPermutation[i]];
+                    newVarArgs[i] = evaluatedArgs.getArguments()[match.varargsPermutation[i]];
                     nonNull |= newVarArgs[i] != null;
                 }
                 if (nonNull) {
@@ -234,10 +234,10 @@ public class ArgumentMatcher {
                 } else {
                     evaledArgs[formalIndex] = RArgsValuesAndNames.EMPTY;
                 }
-            } else if (suppliedIndex == MatchPermutation.UNMATCHED || evaluatedArgs.arguments[suppliedIndex] == null) {
+            } else if (suppliedIndex == MatchPermutation.UNMATCHED || evaluatedArgs.getArgument(suppliedIndex) == null) {
                 evaledArgs[formalIndex] = formals.getInternalDefaultArgumentAt(formalIndex);
             } else {
-                evaledArgs[formalIndex] = evaluatedArgs.arguments[suppliedIndex];
+                evaledArgs[formalIndex] = evaluatedArgs.getArgument(suppliedIndex);
             }
         }
         return new EvaluatedArguments(evaledArgs, formals.getSignature());
@@ -251,7 +251,7 @@ public class ArgumentMatcher {
             try {
                 // TODO: this error handling code takes many assumptions about the argument types
                 RArgsValuesAndNames varArg = (RArgsValuesAndNames) frame.getObject(frame.getFrameDescriptor().findFrameSlot("..."));
-                RPromise promise = (RPromise) varArg.getValues()[((VarArgNode) node).getIndex()];
+                RPromise promise = (RPromise) varArg.getArguments()[((VarArgNode) node).getIndex()];
                 return ((Node) promise.getRep()).getSourceSection().getCode();
             } catch (FrameSlotTypeException | ClassCastException e) {
                 throw RInternalError.shouldNotReachHere();
@@ -382,7 +382,7 @@ public class ArgumentMatcher {
     private static RNode wrapUnmatched(FormalArguments formals, RBuiltinDescriptor builtin, int formalIndex, boolean noOpt) {
         if (builtin != null && !builtin.evaluatesArg(formalIndex)) {
             // this is a non-evaluated builtin argument, create a proper promise
-            RNode defaultArg = formals.getDefaultArgumentAt(formalIndex);
+            RNode defaultArg = formals.getDefaultArgument(formalIndex);
             Closure defaultClosure = formals.getOrCreateClosure(defaultArg);
             return PromiseNode.create(defaultArg.getSourceSection(), RPromiseFactory.create(PromiseType.ARG_DEFAULT, defaultClosure), noOpt);
         }

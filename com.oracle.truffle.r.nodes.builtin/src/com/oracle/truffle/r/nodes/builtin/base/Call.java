@@ -77,9 +77,9 @@ public abstract class Call extends RBuiltinNode {
      * @return the {@link RLanguage} instance denoting the call
      */
     private static RLanguage makeCall0(Object fn, RArgsValuesAndNames argsAndNames) {
-        int argLength = argsAndNames == null ? 0 : argsAndNames.length();
+        int argLength = argsAndNames == null ? 0 : argsAndNames.getLength();
         RNode[] args = new RNode[argLength];
-        Object[] values = argsAndNames == null ? null : argsAndNames.getValues();
+        Object[] values = argsAndNames == null ? null : argsAndNames.getArguments();
         ArgumentsSignature signature = argsAndNames == null ? ArgumentsSignature.empty(0) : argsAndNames.getSignature();
 
         for (int i = 0; i < argLength; i++) {

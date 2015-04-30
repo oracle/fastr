@@ -229,7 +229,7 @@ public abstract class PrettyPrinterNode extends RNode {
             sb.append("function (");
             ArgumentsSignature signature = formals.getSignature();
             for (int i = 0; i < signature.getLength(); i++) {
-                RNode defaultArg = formals.getDefaultArgumentAt(i);
+                RNode defaultArg = formals.getDefaultArgument(i);
                 sb.append(signature.getName(i));
                 if (defaultArg != null) {
                     sb.append(" = ");

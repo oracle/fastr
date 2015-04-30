@@ -64,7 +64,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
 
     @Specialization(guards = {"oneVec(args)", "isFirstIntegerPrecedence(args)"})
     Object orderInt(VirtualFrame frame, RAbstractLogicalVector naLastVec, RAbstractLogicalVector decVec, RArgsValuesAndNames args) {
-        Object[] vectors = args.getValues();
+        Object[] vectors = args.getArguments();
         RAbstractIntVector v = (RAbstractIntVector) castVector(frame, vectors[0]);
         int n = v.getLength();
 
@@ -92,7 +92,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
 
     @Specialization(guards = {"oneVec(args)", "isFirstDoublePrecedence(args)"})
     Object orderDouble(VirtualFrame frame, RAbstractLogicalVector naLastVec, RAbstractLogicalVector decVec, RArgsValuesAndNames args) {
-        Object[] vectors = args.getValues();
+        Object[] vectors = args.getArguments();
         RAbstractDoubleVector v = (RAbstractDoubleVector) castVector(frame, vectors[0]);
         int n = v.getLength();
 
@@ -120,14 +120,14 @@ public abstract class Order extends RPrecedenceBuiltinNode {
 
     @Specialization(guards = {"oneVec(args)", "isFirstLogicalPrecedence(args)"})
     Object orderLogical(VirtualFrame frame, RAbstractLogicalVector naLastVec, RAbstractLogicalVector decVec, RArgsValuesAndNames args) {
-        Object[] vectors = args.getValues();
+        Object[] vectors = args.getArguments();
         vectors[0] = RClosures.createLogicalToIntVector((RAbstractLogicalVector) castVector(frame, vectors[0]));
         return orderInt(frame, naLastVec, decVec, args);
     }
 
     @Specialization(guards = {"oneVec(args)", "isFirstStringPrecedence(args)"})
     Object orderString(VirtualFrame frame, RAbstractLogicalVector naLastVec, RAbstractLogicalVector decVec, RArgsValuesAndNames args) {
-        Object[] vectors = args.getValues();
+        Object[] vectors = args.getArguments();
         RAbstractStringVector v = (RAbstractStringVector) castVector(frame, vectors[0]);
         int n = v.getLength();
 
@@ -155,7 +155,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
 
     @Specialization(guards = {"oneVec(args)", "isFirstComplexPrecedence( args)"})
     Object orderComplex(VirtualFrame frame, RAbstractLogicalVector naLastVec, RAbstractLogicalVector decVec, RArgsValuesAndNames args) {
-        Object[] vectors = args.getValues();
+        Object[] vectors = args.getArguments();
         RAbstractComplexVector v = (RAbstractComplexVector) castVector(frame, vectors[0]);
         int n = v.getLength();
 
@@ -182,7 +182,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
     }
 
     private int preprocessVectors(VirtualFrame frame, RArgsValuesAndNames args) {
-        Object[] vectors = args.getValues();
+        Object[] vectors = args.getArguments();
         RAbstractVector v = castVector(frame, vectors[0]);
         int n = v.getLength();
         vectors[0] = v;
@@ -224,9 +224,9 @@ public abstract class Order extends RPrecedenceBuiltinNode {
     }
 
     private boolean greaterSub(VirtualFrame frame, int i, int j, RArgsValuesAndNames args, byte naLast, boolean dec) {
-        Object[] vectors = args.getValues();
+        Object[] vectors = args.getArguments();
         int c = -1;
-        for (int k = 0; k < args.length(); k++) {
+        for (int k = 0; k < args.getLength(); k++) {
             RAbstractVector v = (RAbstractVector) vectors[k];
             c = cmp(frame, v, i, j, naLast);
             if (dec) {
@@ -543,31 +543,31 @@ public abstract class Order extends RPrecedenceBuiltinNode {
     }
 
     protected boolean isFirstIntegerPrecedence(RArgsValuesAndNames args) {
-        return isIntegerPrecedence(args.getValues()[0]);
+        return isIntegerPrecedence(args.getArgument(0));
     }
 
     protected boolean isFirstDoublePrecedence(RArgsValuesAndNames args) {
-        return isDoublePrecedence(args.getValues()[0]);
+        return isDoublePrecedence(args.getArgument(0));
     }
 
     protected boolean isFirstLogicalPrecedence(RArgsValuesAndNames args) {
-        return isLogicalPrecedence(args.getValues()[0]);
+        return isLogicalPrecedence(args.getArgument(0));
     }
 
     protected boolean isFirstStringPrecedence(RArgsValuesAndNames args) {
-        return isStringPrecedence(args.getValues()[0]);
+        return isStringPrecedence(args.getArgument(0));
     }
 
     protected boolean isFirstComplexPrecedence(RArgsValuesAndNames args) {
-        return isComplexPrecedence(args.getValues()[0]);
+        return isComplexPrecedence(args.getArgument(0));
     }
 
     protected boolean noVec(RArgsValuesAndNames args) {
-        return args.length() == 0;
+        return args.isEmpty();
     }
 
     protected boolean oneVec(RArgsValuesAndNames args) {
-        return args.length() == 1;
+        return args.getLength() == 1;
     }
 
     @NodeChildren({@NodeChild("v"), @NodeChild("i"), @NodeChild("j"), @NodeChild("naLast")})

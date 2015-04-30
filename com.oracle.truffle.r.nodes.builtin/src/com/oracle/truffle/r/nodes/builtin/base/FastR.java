@@ -37,7 +37,7 @@ public abstract class FastR extends RBuiltinNode {
     @Specialization
     protected Object doFastR(RAbstractStringVector name, RArgsValuesAndNames args) {
         controlVisibility();
-        Object[] argValues = args.getValues();
+        Object[] argValues = args.getArguments();
         return FastRFunctionEntry.invoke(name.getDataAt(0), argValues, this);
     }
 

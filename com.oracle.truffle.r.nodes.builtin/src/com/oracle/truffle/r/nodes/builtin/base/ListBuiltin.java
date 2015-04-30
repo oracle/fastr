@@ -98,7 +98,7 @@ public abstract class ListBuiltin extends RBuiltinNode {
     @Specialization(guards = "!missing(args)")
     protected RList list(RArgsValuesAndNames args) {
         controlVisibility();
-        return RDataFactory.createList(args.getValues(), argNameVector(args.getSignature()));
+        return RDataFactory.createList(args.getArguments(), argNameVector(args.getSignature()));
     }
 
     @Specialization(guards = "missing(args)")
@@ -138,11 +138,11 @@ public abstract class ListBuiltin extends RBuiltinNode {
     }
 
     protected boolean missing(RArgsValuesAndNames args) {
-        return args.isMissing();    // .length() == 1 && args.getValues()[0] == RMissing.instance;
+        return args.isEmpty();    // .length() == 1 && args.getValue(0) == RMissing.instance;
     }
 
     protected boolean oneElement(RArgsValuesAndNames args) {
-        return args.length() == 1;
+        return args.getLength() == 1;
     }
 
 }

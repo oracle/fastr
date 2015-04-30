@@ -117,14 +117,14 @@ public abstract class DoCall extends RBuiltinNode {
         EvaluatedArguments evaledArgs = EvaluatedArguments.create(argValues, signature);
         EvaluatedArguments reorderedArgs = ArgumentMatcher.matchArgumentsEvaluated(func, evaledArgs, getEncapsulatingSourceSection(), false);
         if (func.isBuiltin()) {
-            Object[] argArray = reorderedArgs.getEvaluatedArgs();
+            Object[] argArray = reorderedArgs.getArguments();
             for (int i = 0; i < argArray.length; i++) {
                 Object arg = argArray[i];
                 if (builtin.evaluatesArg(i)) {
                     if (arg instanceof RPromise) {
                         argArray[i] = promiseHelper.evaluate(frame, (RPromise) arg);
                     } else if (arg instanceof RArgsValuesAndNames) {
-                        Object[] varArgValues = ((RArgsValuesAndNames) arg).getValues();
+                        Object[] varArgValues = ((RArgsValuesAndNames) arg).getArguments();
                         for (int j = 0; j < varArgValues.length; j++) {
                             if (varArgValues[j] instanceof RPromise) {
                                 varArgValues[j] = promiseHelper.evaluate(frame, (RPromise) varArgValues[j]);
@@ -144,7 +144,7 @@ public abstract class DoCall extends RBuiltinNode {
             needsCallerFrame = true;
         }
         callerFrame = needsCallerFrame ? getCallerFrame(frame, callerFrame) : null;
-        Object[] callArgs = RArguments.create(func, callCache.getSourceSection(), callerFrame, RArguments.getDepth(frame) + 1, reorderedArgs.getEvaluatedArgs(), reorderedArgs.getSignature());
+        Object[] callArgs = RArguments.create(func, callCache.getSourceSection(), callerFrame, RArguments.getDepth(frame) + 1, reorderedArgs.getArguments(), reorderedArgs.getSignature());
         RArguments.setIsIrregular(callArgs, true);
         return callCache.execute(frame, func.getTarget(), callArgs);
     }

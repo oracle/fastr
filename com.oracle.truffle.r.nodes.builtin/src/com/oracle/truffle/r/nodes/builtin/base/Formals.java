@@ -46,7 +46,7 @@ public abstract class Formals extends RBuiltinNode {
         FormalArguments formalArgs = fdNode.getFormalArguments();
         Object succ = null;
         for (int i = formalArgs.getSignature().getLength() - 1; i >= 0; i--) {
-            RNode def = formalArgs.getDefaultArgumentAt(i);
+            RNode def = formalArgs.getDefaultArgument(i);
             Object defValue = def == null ? RMissing.instance : RDataFactory.createLanguage(def);
             RPairList pl = RDataFactory.createPairList(defValue, succ, formalArgs.getSignature().getName(i));
             succ = pl;

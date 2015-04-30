@@ -69,7 +69,7 @@ public abstract class Options extends RBuiltinNode {
     @TruffleBoundary
     protected Object options(RArgsValuesAndNames args) {
         try {
-            Object[] values = args.getValues();
+            Object[] values = args.getArguments();
             ArgumentsSignature signature = args.getSignature();
             Object[] data = new Object[values.length];
             String[] names = new String[values.length];
@@ -142,7 +142,7 @@ public abstract class Options extends RBuiltinNode {
     }
 
     protected boolean isMissing(RArgsValuesAndNames args) {
-        return args.isMissing();    // length() == 1 && args.getValues()[0] == RMissing.instance;
+        return args.isEmpty();    // length() == 1 && args.getValue(0) == RMissing.instance;
     }
 
 }

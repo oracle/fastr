@@ -81,7 +81,7 @@ public abstract class Any extends RBuiltinNode {
         }
         controlVisibility();
         boolean seenNA = false;
-        Object[] argValues = args.getValues();
+        Object[] argValues = args.getArguments();
         for (Object argValue : argValues) {
             byte result;
             if (argValue instanceof RVector || argValue instanceof RSequence) {

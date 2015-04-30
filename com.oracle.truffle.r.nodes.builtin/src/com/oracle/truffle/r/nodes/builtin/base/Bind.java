@@ -81,7 +81,7 @@ public abstract class Bind extends RPrecedenceBuiltinNode {
             dcn = insert(new UseMethodInternalNode(getBindType(), SIGNATURE));
         }
         try {
-            return dcn.execute(frame, ((RDataFrame) args.getValues()[0]).getClassHierarchy(), new Object[]{deparseLevel, args});
+            return dcn.execute(frame, ((RDataFrame) args.getArgument(0)).getClassHierarchy(), new Object[]{deparseLevel, args});
         } catch (S3FunctionLookupNode.NoGenericMethodException e) {
             throw RInternalError.shouldNotReachHere();
         }
@@ -89,10 +89,10 @@ public abstract class Bind extends RPrecedenceBuiltinNode {
 
     private Object bindInternal(VirtualFrame frame, Object deparseLevel, RArgsValuesAndNames args, CastNode castNode, boolean needsVectorCast) {
         controlVisibility();
-        Object[] array = args.getValues();
+        Object[] array = args.getArguments();
         ArgumentsSignature signature = args.getSignature();
         String[] vecNames = nullNamesProfile.profile(signature.getNonNullCount() == 0) ? null : new String[signature.getLength()];
-        RAbstractVector[] vectors = new RAbstractVector[args.length()];
+        RAbstractVector[] vectors = new RAbstractVector[args.getLength()];
         boolean complete = true;
         int ind = 0;
         naCheck.enable(true);
@@ -153,7 +153,7 @@ public abstract class Bind extends RPrecedenceBuiltinNode {
     }
 
     protected Object allOneElem(VirtualFrame frame, Object deparseLevelObj, RArgsValuesAndNames args, boolean cbind) {
-        RAbstractVector vec = castVector(frame, args.getValues()[0]);
+        RAbstractVector vec = castVector(frame, args.getArgument(0));
         if (vec.isMatrix()) {
             return vec;
         }
@@ -341,8 +341,8 @@ public abstract class Bind extends RPrecedenceBuiltinNode {
 
     @TruffleBoundary
     protected static String deparseArgName(RArgsValuesAndNames varArg, int deparseLevel, int argInd) {
-        assert varArg.length() >= argInd;
-        Object argValue = varArg.getValues()[argInd];
+        assert varArg.getLength() >= argInd;
+        Object argValue = varArg.getArgument(argInd);
         if (argValue instanceof RPromise) {
             RPromise p = (RPromise) argValue;
             Object node = RASTUtils.createLanguageElement(RASTUtils.unwrap(p.getRep()));
@@ -358,11 +358,11 @@ public abstract class Bind extends RPrecedenceBuiltinNode {
     }
 
     protected boolean oneElement(RArgsValuesAndNames args) {
-        return args.length() == 1;
+        return args.getLength() == 1;
     }
 
     protected boolean isDataFrame(RArgsValuesAndNames args) {
-        return args.getValues()[0] instanceof RDataFrame;
+        return args.getArgument(0) instanceof RDataFrame;
     }
 
     @RBuiltin(name = "cbind", kind = INTERNAL, parameterNames = {"deparse.level", "..."})

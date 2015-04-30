@@ -253,7 +253,7 @@ public abstract class PromiseNode extends RNode {
         }
 
         public RArgsValuesAndNames checkEvaluateArgs(VirtualFrame frame, RArgsValuesAndNames args) {
-            Object[] values = args.getValues();
+            Object[] values = args.getArguments();
             Object[] newValues = new Object[values.length];
             for (int i = 0; i < values.length; i++) {
                 Object value = values[i];
@@ -317,11 +317,11 @@ public abstract class PromiseNode extends RNode {
         }
 
         public RPromise executeNonEvaluated(VirtualFrame frame) {
-            return (RPromise) getVarargsAndNames(frame).getValues()[index];
+            return (RPromise) getVarargsAndNames(frame).getArgument(index);
         }
 
         public RNode substitute(REnvironment env) {
-            Object obj = ((RArgsValuesAndNames) env.get("...")).getValues()[index];
+            Object obj = ((RArgsValuesAndNames) env.get("...")).getArgument(index);
             return obj instanceof RPromise ? (RNode) ((RPromise) obj).getRep() : ConstantNode.create(obj);
         }
 
@@ -444,7 +444,7 @@ public abstract class PromiseNode extends RNode {
                     // this can happen if ... is simply passed around (in particular when the call
                     // chain contains two functions with just the ... argument)
                     RArgsValuesAndNames argsValuesAndNames = (RArgsValuesAndNames) argValue;
-                    int newLength = evaluatedArgs.length + argsValuesAndNames.length() - 1;
+                    int newLength = evaluatedArgs.length + argsValuesAndNames.getLength() - 1;
                     if (newLength == 0) {
                         // Corner case: "f <- function(...) g(...); g <- function(...)"
                         // In this case, "..." gets evaluated, and its only content is "...", which
@@ -453,7 +453,7 @@ public abstract class PromiseNode extends RNode {
                     }
                     evaluatedArgs = Utils.resizeArray(evaluatedArgs, newLength);
                     evaluatedNames = Utils.resizeArray(evaluatedNames, newLength);
-                    Object[] varargValues = argsValuesAndNames.getValues();
+                    Object[] varargValues = argsValuesAndNames.getArguments();
                     index = copyVarArgs(frame, evaluatedArgs, evaluatedNames, index, argsValuesAndNames, varargValues);
                 } else {
                     if (evaluatedNames != null) {
@@ -477,7 +477,7 @@ public abstract class PromiseNode extends RNode {
 
         private int copyVarArgs(VirtualFrame frame, Object[] evaluatedArgs, String[] evaluatedNames, int startIndex, RArgsValuesAndNames argsValuesAndNames, Object[] varargValues) {
             int index = startIndex;
-            for (int j = 0; j < argsValuesAndNames.length(); j++) {
+            for (int j = 0; j < argsValuesAndNames.getLength(); j++) {
                 evaluatedArgs[index] = promiseCheckHelper.checkEvaluate(frame, varargValues[j]);
                 evaluatedNames[index] = argsValuesAndNames.getSignature().getName(j);
                 index++;

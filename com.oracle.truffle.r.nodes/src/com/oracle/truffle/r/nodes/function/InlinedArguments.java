@@ -27,20 +27,12 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 
 /**
- * Simple container class for holding arguments ({@link #getInlinedArgs()}) which are going to be
- * inlined into FastR built-ins (using {@link RBuiltinNode#inline(InlinedArguments)}.
+ * Simple container class for holding arguments which are going to be inlined into FastR built-ins
+ * (using {@link RBuiltinNode#inline(InlinedArguments)}.
  */
-public class InlinedArguments extends Arguments<RNode> {
+public final class InlinedArguments extends Arguments<RNode> {
 
     InlinedArguments(RNode[] evaluatedArgs, ArgumentsSignature signature) {
         super(evaluatedArgs, signature);
-    }
-
-    /**
-     * @return The argument array that contains the evaluated arguments, in formal order. Arguments
-     *         may NOT be <code>null</code>.
-     */
-    public RNode[] getInlinedArgs() {
-        return arguments;
     }
 }

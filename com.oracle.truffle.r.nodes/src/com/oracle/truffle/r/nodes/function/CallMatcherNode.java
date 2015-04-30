@@ -61,7 +61,7 @@ public abstract class CallMatcherNode extends Node {
                     varArgSignatures = new ArgumentsSignature[suppliedArguments.length];
                 }
                 varArgSignatures[i] = ((RArgsValuesAndNames) arg).getSignature();
-                argListSize += ((RArgsValuesAndNames) arg).length() - 1;
+                argListSize += ((RArgsValuesAndNames) arg).getLength() - 1;
             }
         }
 
@@ -220,7 +220,7 @@ public abstract class CallMatcherNode extends Node {
                     result[i] = arguments[(int) source];
                 } else {
                     source = -source;
-                    result[i] = ((RArgsValuesAndNames) arguments[(int) (source >> 32)]).getValues()[(int) source];
+                    result[i] = ((RArgsValuesAndNames) arguments[(int) (source >> 32)]).getArguments()[(int) source];
                 }
             }
             return result;
@@ -241,8 +241,8 @@ public abstract class CallMatcherNode extends Node {
         @Override
         public Object execute(VirtualFrame frame, ArgumentsSignature suppliedSignature, Object[] suppliedArguments, RFunction function, S3Args s3Args) {
             EvaluatedArguments reorderedArgs = reorderArguments(suppliedArguments, function, suppliedSignature, getEncapsulatingSourceSection());
-            evaluatePromises(frame, function, reorderedArgs.arguments);
-            Object[] arguments = prepareArguments(frame, reorderedArgs.arguments, reorderedArgs.signature, function, s3Args);
+            evaluatePromises(frame, function, reorderedArgs.getArguments());
+            Object[] arguments = prepareArguments(frame, reorderedArgs.getArguments(), reorderedArgs.getSignature(), function, s3Args);
             return call.call(frame, function.getTarget(), arguments);
         }
 
@@ -269,7 +269,7 @@ public abstract class CallMatcherNode extends Node {
                 Object arg = args[fi];
                 if (hasVarArgsProfile.profile(arg instanceof RArgsValuesAndNames)) {
                     hasVarArgs = true;
-                    argListSize += ((RArgsValuesAndNames) arg).length() - 1;
+                    argListSize += ((RArgsValuesAndNames) arg).getLength() - 1;
                 }
             }
             Object[] argValues;
@@ -282,9 +282,9 @@ public abstract class CallMatcherNode extends Node {
                     Object arg = args[fi];
                     if (arg instanceof RArgsValuesAndNames) {
                         RArgsValuesAndNames varArgs = (RArgsValuesAndNames) arg;
-                        Object[] varArgValues = varArgs.getValues();
+                        Object[] varArgValues = varArgs.getArguments();
                         ArgumentsSignature varArgSignature = varArgs.getSignature();
-                        for (int i = 0; i < varArgs.length(); i++) {
+                        for (int i = 0; i < varArgs.getLength(); i++) {
                             argNames[index] = varArgSignature.getName(i);
                             argValues[index++] = checkMissing(varArgValues[i]);
                         }

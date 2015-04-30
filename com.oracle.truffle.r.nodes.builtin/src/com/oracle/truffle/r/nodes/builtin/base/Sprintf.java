@@ -157,7 +157,7 @@ public abstract class Sprintf extends RBuiltinNode {
     @TruffleBoundary
     protected String sprintf(String fmt, RArgsValuesAndNames args) {
         controlVisibility();
-        return format(fmt, args.getValues());
+        return format(fmt, args.getArguments());
     }
 
     @Specialization(guards = "oneElement(args)")
@@ -167,7 +167,7 @@ public abstract class Sprintf extends RBuiltinNode {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             sprintfRecursive = insert(SprintfNodeGen.create(new RNode[2], null, null));
         }
-        return sprintfRecursive.executeObject(frame, fmt, args.getValues()[0]);
+        return sprintfRecursive.executeObject(frame, fmt, args.getArgument(0));
     }
 
     @Specialization(guards = {"!oneElement(args)", "fmtLengthOne(fmt)"})
@@ -474,7 +474,7 @@ public abstract class Sprintf extends RBuiltinNode {
     }
 
     protected boolean oneElement(RArgsValuesAndNames args) {
-        return args.length() == 1;
+        return args.getLength() == 1;
     }
 
     @TruffleBoundary

@@ -58,8 +58,8 @@ public class PositionsArrayNode extends RNode {
     public static Object[] expandVarArg(VirtualFrame frame, RArgsValuesAndNames varArg, int oldInd, Object[] oldEvaluatedElements, PromiseHelperNode promiseHelper) {
         int ind = oldInd;
         Object[] evaluatedElements = oldEvaluatedElements;
-        Object[] varArgValues = varArg.getValues();
-        int varArgLength = varArg.length();
+        Object[] varArgValues = varArg.getArguments();
+        int varArgLength = varArg.getLength();
         if (varArgLength > 1) {
             evaluatedElements = Utils.resizeArray(evaluatedElements, evaluatedElements.length + varArgLength - 1);
         }
@@ -107,7 +107,7 @@ public class PositionsArrayNode extends RNode {
             if (p instanceof RArgsValuesAndNames) {
                 RArgsValuesAndNames varArg = (RArgsValuesAndNames) p;
                 evaluatedElements = expandVarArg(frame, varArg, ind, evaluatedElements, promiseHelper);
-                ind += varArg.length();
+                ind += varArg.getLength();
             } else {
                 evaluatedElements[ind++] = p;
             }

@@ -37,7 +37,7 @@ import com.oracle.truffle.r.runtime.data.RPromise.Closure;
  * This class denotes a list of formal arguments which consist of the tuple
  * <ul>
  * <li>argument name (part of the signature)</li>
- * <li>expression ({@link RNode}, {@link #getDefaultArguments()})</li>
+ * <li>expression ({@link RNode}, {@link #getDefaultArgument(int)})</li>
  * </ul>
  * The order is always the one defined by the function definition.
  * <p>
@@ -118,18 +118,6 @@ public final class FormalArguments extends Arguments<RNode> implements ClosureCa
     }
 
     /**
-     * @return The list of default arguments a function body specifies. 'No default value' is
-     *         denoted by <code>null</code>
-     */
-    public RNode[] getDefaultArguments() {
-        return arguments;
-    }
-
-    public boolean hasDefaultArgumentAt(int index) {
-        return arguments[index] != null;
-    }
-
-    /**
      * The internal default value is the one to be used at the caller in case no argument is
      * supplied - this represents missing for normal functions, but may be overridden for builtin
      * functions using {@link RBuiltinNode#getDefaultParameterValues()}.
@@ -139,12 +127,14 @@ public final class FormalArguments extends Arguments<RNode> implements ClosureCa
     }
 
     /**
-     * This works as a direct accessor to one of the {@link #getDefaultArguments()}.
-     *
-     * @param index
-     * @return The default argument for the given index.
+     * @return The list of default arguments a function body specifies. 'No default value' is
+     *         denoted by <code>null</code>
      */
-    public RNode getDefaultArgumentAt(int index) {
-        return arguments[index];
+    public RNode getDefaultArgument(int index) {
+        return getArgument(index);
+    }
+
+    public boolean hasDefaultArgument(int index) {
+        return getArgument(index) != null;
     }
 }

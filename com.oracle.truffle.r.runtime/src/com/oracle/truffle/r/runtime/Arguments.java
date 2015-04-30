@@ -20,36 +20,60 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.function;
+package com.oracle.truffle.r.runtime;
 
-import com.oracle.truffle.api.CompilerDirectives.*;
-import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.nodes.*;
 
 /**
- * Simple generic base class for pairs of {@link #arguments} and {@link #signature} (that are not
- * {@link RNode}s).
+ * Simple generic base class for pairs of {@link #values} and {@link #signature} (that are not
+ * {@link Node}s).
  *
- * @param <T> The type of {@link #arguments}
+ * @param <T> The type of {@link #values}
  */
-public abstract class Arguments<T> implements ArgumentsTrait {
+public abstract class Arguments<T> {
 
     /**
      * Array of arguments; semantics have to be specified by child classes.
      */
-    @CompilationFinal protected final T[] arguments;
+    @CompilationFinal private final T[] values;
 
     /**
      * Array of arguments; semantics have to be specified by child classes.
      */
-    protected final ArgumentsSignature signature;
+    private final ArgumentsSignature signature;
 
-    Arguments(T[] arguments, ArgumentsSignature signature) {
-        this.arguments = arguments;
+    protected Arguments(T[] arguments, ArgumentsSignature signature) {
+        this.values = arguments;
         this.signature = signature;
     }
 
     public final ArgumentsSignature getSignature() {
         return signature;
+    }
+
+    public final int getLength() {
+        return signature.getLength();
+    }
+
+    public final T[] getArguments() {
+        return values;
+    }
+
+    public final T getArgument(int index) {
+        return values[index];
+    }
+
+    public boolean isEmpty() {
+        return signature.isEmpty();
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder str = new StringBuilder().append(getClass().getSimpleName()).append(": ");
+        for (int i = 0; i < values.length; i++) {
+            str.append(i == 0 ? "" : ", ").append(signature.getName(i)).append(" = ").append(values[i]);
+        }
+        return str.toString();
     }
 }

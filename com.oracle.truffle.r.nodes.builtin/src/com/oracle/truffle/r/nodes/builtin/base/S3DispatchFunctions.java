@@ -118,11 +118,11 @@ public abstract class S3DispatchFunctions extends RBuiltinNode {
             if (argsValueAndNamesProfile.profile(enclosingArg instanceof RArgsValuesAndNames)) {
                 // The GnuR "1. argument" might be hidden inside a "..."! Unwrap for proper dispatch
                 RArgsValuesAndNames varArgs = (RArgsValuesAndNames) enclosingArg;
-                if (varArgs.length() == 0) {
+                if (varArgs.isEmpty()) {
                     errorProfile.enter();
                     throw RError.error(getEncapsulatingSourceSection(), RError.Message.UNKNOWN_FUNCTION_USE_METHOD, generic, RRuntime.toString(RNull.instance));
                 }
-                enclosingArg = varArgs.getValues()[0];
+                enclosingArg = varArgs.getArgument(0);
             }
             if (promiseCheckHelper == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -195,7 +195,7 @@ public abstract class S3DispatchFunctions extends RBuiltinNode {
                 suppliedSignature = combineSignatures.execute(parameterSignature, args.getSignature());
 
                 suppliedArguments = Arrays.copyOf(suppliedArguments, suppliedSignature.getLength());
-                System.arraycopy(args.getValues(), 0, suppliedArguments, parameterSignature.getLength(), suppliedSignature.getLength() - parameterSignature.getLength());
+                System.arraycopy(args.getArguments(), 0, suppliedArguments, parameterSignature.getLength(), suppliedSignature.getLength() - parameterSignature.getLength());
             }
             return dispatch(frame, generic, readType(frame), group, genericCallFrame, genericDefFrame, suppliedSignature, suppliedArguments);
         }

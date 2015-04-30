@@ -113,14 +113,14 @@ public class FrameFunctions {
                 if (arg1 instanceof RArgsValuesAndNames) {
                     // ...
                     RArgsValuesAndNames temp = ((RArgsValuesAndNames) arg1);
-                    if (expandDots || temp.length() == 0) {
-                        values = temp.getValues();
+                    if (expandDots || temp.isEmpty()) {
+                        values = temp.getArguments();
                         signature = temp.getSignature();
                     } else {
                         signature = ArgumentsSignature.VARARG_SIGNATURE;
-                        RNode[] listArgs = new RNode[temp.getValues().length];
+                        RNode[] listArgs = new RNode[temp.getArguments().length];
                         for (int i = 0; i < listArgs.length; i++) {
-                            listArgs[i] = RASTUtils.createNodeForValue(temp.getValues()[i]);
+                            listArgs[i] = RASTUtils.createNodeForValue(temp.getArgument(i));
                         }
                         RNode varArgs = PromiseNode.createVarArgs(listArgs, temp.getSignature(), this);
                         CallArgumentsNode callArgsNode = CallArgumentsNode.create(false, false, new RNode[]{varArgs}, signature);

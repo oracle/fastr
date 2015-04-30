@@ -77,7 +77,7 @@ public abstract class All extends RBuiltinNode {
             castLogicalNode = insert(CastLogicalNodeGen.create(null, true, false, false));
         }
         controlVisibility();
-        Object[] argValues = args.getValues();
+        Object[] argValues = args.getArguments();
         for (Object argValue : argValues) {
             byte result;
             if (argValue instanceof RVector || argValue instanceof RSequence) {

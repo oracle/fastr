@@ -82,7 +82,7 @@ public final class AccessArgumentNode extends RNode {
         CompilerAsserts.neverPartOfCompilation();
         assert this.formals == null;
         this.formals = formals;
-        hasDefaultArg = formals.hasDefaultArgumentAt(index);
+        hasDefaultArg = formals.hasDefaultArgument(index);
     }
 
     public static AccessArgumentNode create(int index) {
@@ -141,14 +141,14 @@ public final class AccessArgumentNode extends RNode {
     private void checkPromiseFactory() {
         if (factory == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            Closure defaultClosure = formals.getOrCreateClosure(formals.getDefaultArgumentAt(index));
+            Closure defaultClosure = formals.getOrCreateClosure(formals.getDefaultArgument(index));
             factory = RPromiseFactory.create(PromiseType.ARG_DEFAULT, defaultClosure);
         }
     }
 
     private boolean checkInsertOptDefaultArg() {
         if (optDefaultArgNode == null) {
-            RNode defaultArg = formals.getDefaultArgumentAt(index);
+            RNode defaultArg = formals.getDefaultArgument(index);
             RNode arg = EagerEvalHelper.unfold(defaultArg);
 
             CompilerDirectives.transferToInterpreterAndInvalidate();

@@ -214,7 +214,7 @@ public abstract class ConstantNode extends RNode implements VisibilityController
                 // nothing to do
             } else if (value instanceof RArgsValuesAndNames) {
                 RArgsValuesAndNames args = (RArgsValuesAndNames) value;
-                Object[] values = args.getValues();
+                Object[] values = args.getArguments();
                 for (int i = 0; i < values.length; i++) {
                     String name = args.getSignature().getName(i);
                     if (name != null) {

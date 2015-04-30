@@ -271,7 +271,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         FormalArguments formals = getFormalArguments();
         int formalsLength = formals.getSignature().getLength();
         for (int i = 0; i < formalsLength; i++) {
-            RNode defaultArg = formals.getDefaultArgumentAt(i);
+            RNode defaultArg = formals.getDefaultArgument(i);
             state.append(formals.getSignature().getName(i));
             if (defaultArg != null) {
                 state.append(" = ");
@@ -348,7 +348,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         int formalsLength = formals.getSignature().getLength();
         if (formalsLength > 0) {
             for (int i = 0; i < formalsLength; i++) {
-                RNode defaultArg = formals.getDefaultArgumentAt(i);
+                RNode defaultArg = formals.getDefaultArgument(i);
                 state.openPairList();
                 state.setTagAsSymbol(formals.getSignature().getName(i));
                 if (defaultArg != null) {

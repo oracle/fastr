@@ -43,7 +43,7 @@ public abstract class Expression extends RBuiltinNode {
     @Specialization
     @ExplodeLoop
     protected Object doExpression(RArgsValuesAndNames args) {
-        Object[] argValues = args.getValues();
+        Object[] argValues = args.getArguments();
         Object[] data = new Object[argValues.length];
         ArgumentsSignature signature = args.getSignature();
         boolean hasNonNull = signature.getNonNullCount() > 0;
