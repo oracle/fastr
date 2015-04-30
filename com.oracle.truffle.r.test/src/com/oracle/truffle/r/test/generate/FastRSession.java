@@ -117,7 +117,7 @@ public final class FastRSession implements RSession {
         ROptions.initialize();
         REnvVars.initialize();
         try {
-            REngine.initialize(new String[0], consoleHandler, false, false);
+            REngine.initialize(new String[0], consoleHandler, false, false, ignoreVisibility);
         } finally {
             System.out.print(consoleHandler.buffer.toString());
         }

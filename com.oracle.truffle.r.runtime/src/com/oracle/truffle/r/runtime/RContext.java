@@ -269,6 +269,12 @@ public final class RContext extends ExecutionContext {
      */
     @CompilationFinal private boolean interactive;
 
+    /**
+     * A (hopefully) temporary workaround to ignore the setting of {@link #resultVisible} for
+     * benchmarks.
+     */
+    @CompilationFinal private boolean ignoreVisibility;
+
     @CompilationFinal private ConsoleHandler consoleHandler;
     @CompilationFinal private String[] commandArgs;
     @CompilationFinal private Engine engine;
@@ -294,13 +300,16 @@ public final class RContext extends ExecutionContext {
     /**
      * Although there is only ever one instance of a {@code RContext}, the following state fields
      * are runtime specific and must be set explicitly.
+     * 
+     * @param ignoreVisibility TODO
      */
-    public static RContext setRuntimeState(Engine engine, String[] commandArgs, ConsoleHandler consoleHandler, RASTHelper rLanguageHelper, boolean interactive) {
+    public static RContext setRuntimeState(Engine engine, String[] commandArgs, ConsoleHandler consoleHandler, RASTHelper rLanguageHelper, boolean interactive, boolean ignoreVisibility) {
         singleton.engine = engine;
         singleton.commandArgs = commandArgs;
         singleton.consoleHandler = consoleHandler;
         singleton.rASTHelper = rLanguageHelper;
         singleton.interactive = interactive;
+        singleton.ignoreVisibility = ignoreVisibility;
         return singleton;
     }
 
@@ -314,6 +323,10 @@ public final class RContext extends ExecutionContext {
 
     public static boolean isInteractive() {
         return singleton.interactive;
+    }
+
+    public static boolean isIgnoringVisibility() {
+        return singleton.ignoreVisibility;
     }
 
     public ConsoleHandler getConsoleHandler() {

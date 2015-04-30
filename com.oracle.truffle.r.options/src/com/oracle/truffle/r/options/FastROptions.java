@@ -67,6 +67,8 @@ public class FastROptions {
     public static final OptionValue<Boolean> LoadBase = new OptionValue<>(true);
     @Option(help = "Print a message for each non-trivial variable lookup")
     public static final OptionValue<Boolean> PrintComplexLookups = new OptionValue<>(false);
+    @Option(help = "Ignore setting of the visibility flag")
+    public static final OptionValue<Boolean> IgnoreVisibility = new OptionValue<>(false);
 
     // Promises optimizations
     @Option(help = "If enabled, overrides all other EagerEval switches (see EagerEvalHelper)")

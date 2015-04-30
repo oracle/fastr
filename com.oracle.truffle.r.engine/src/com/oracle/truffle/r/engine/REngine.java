@@ -99,10 +99,11 @@ public final class REngine implements RContext.Engine {
      * @param consoleHandler for console input/output
      * @param crashOnFatalErrorArg if {@code true} any unhandled exception will terminate the
      *            process.
+     * @param ignoreVisibility TODO
      * @return a {@link VirtualFrame} that can be passed to
      *         {@link #parseAndEval(Source, MaterializedFrame, REnvironment, boolean, boolean)}
      */
-    public static MaterializedFrame initialize(String[] commandArgs, ConsoleHandler consoleHandler, boolean crashOnFatalErrorArg, boolean interactive) {
+    public static MaterializedFrame initialize(String[] commandArgs, ConsoleHandler consoleHandler, boolean crashOnFatalErrorArg, boolean interactive, boolean ignoreVisibility) {
         singleton.startTime = System.nanoTime();
         singleton.childTimes = new long[]{0, 0};
         MaterializedFrame globalFrame = RRuntime.createNonFunctionFrame().materialize();
@@ -113,7 +114,7 @@ public final class REngine implements RContext.Engine {
             RAccuracyInfo.initialize();
             singleton.crashOnFatalError = crashOnFatalErrorArg;
             singleton.builtinLookup = RBuiltinPackages.getInstance();
-            singleton.context = RContext.setRuntimeState(singleton, commandArgs, consoleHandler, new RASTHelperImpl(), interactive);
+            singleton.context = RContext.setRuntimeState(singleton, commandArgs, consoleHandler, new RASTHelperImpl(), interactive, ignoreVisibility);
             suppressWarnings = true;
             StdConnections.initialize();
             MaterializedFrame baseFrame = RRuntime.createNonFunctionFrame().materialize();

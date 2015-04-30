@@ -184,7 +184,7 @@ public class RCommand {
         boolean isInteractive = inputStream == System.in && (INTERACTIVE.getValue() || sysConsole != null);
         // long start = System.currentTimeMillis();
         JLineConsoleHandler consoleHandler = new JLineConsoleHandler(isInteractive, consoleReader);
-        MaterializedFrame globalFrame = REngine.initialize(commandArgs, consoleHandler, false, isInteractive);
+        MaterializedFrame globalFrame = REngine.initialize(commandArgs, consoleHandler, false, isInteractive, FastROptions.IgnoreVisibility.getValue());
         try {
             // console.println("initialize time: " + (System.currentTimeMillis() - start));
             for (;;) {
