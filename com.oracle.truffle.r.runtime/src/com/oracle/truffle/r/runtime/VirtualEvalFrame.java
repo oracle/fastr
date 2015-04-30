@@ -20,20 +20,19 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.engine;
+package com.oracle.truffle.r.runtime;
 
 import java.util.*;
 
 import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.source.*;
-import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
 /**
- * A "fake" {@link VirtualFrame}, to be used by {@link REngine}.eval only!
+ * A "fake" {@link VirtualFrame}, to be used by {@code REngine}.eval only!
  */
-final class VirtualEvalFrame implements VirtualFrame, MaterializedFrame {
+public final class VirtualEvalFrame implements VirtualFrame, MaterializedFrame {
 
     private final MaterializedFrame originalFrame;
     @CompilationFinal private final Object[] arguments;
@@ -47,7 +46,7 @@ final class VirtualEvalFrame implements VirtualFrame, MaterializedFrame {
         RArguments.setCallSourceSection(this, callSrc);
     }
 
-    protected static VirtualEvalFrame create(MaterializedFrame originalFrame, RFunction function, SourceSection callSrc, int depth) {
+    public static VirtualEvalFrame create(MaterializedFrame originalFrame, RFunction function, SourceSection callSrc, int depth) {
         return new VirtualEvalFrame(originalFrame, function, callSrc, depth);
     }
 
@@ -57,6 +56,10 @@ final class VirtualEvalFrame implements VirtualFrame, MaterializedFrame {
 
     public Object[] getArguments() {
         return arguments;
+    }
+
+    public MaterializedFrame getOriginalFrame() {
+        return originalFrame;
     }
 
     public MaterializedFrame materialize() {

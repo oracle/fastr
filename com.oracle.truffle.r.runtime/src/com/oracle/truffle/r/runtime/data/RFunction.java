@@ -57,8 +57,12 @@ public final class RFunction extends RScalar implements RAttributable {
         this.target = target;
         this.builtin = builtin;
         this.containsDispatch = containsDispatch;
-        this.enclosingFrame = enclosingFrame;
-        this.enclosingFrameAssumption = new StableValue<>(enclosingFrame, "RFunction enclosing frame");
+        if (enclosingFrame instanceof VirtualEvalFrame) {
+            this.enclosingFrame = ((VirtualEvalFrame) enclosingFrame).getOriginalFrame();
+        } else {
+            this.enclosingFrame = enclosingFrame;
+        }
+        this.enclosingFrameAssumption = new StableValue<>(this.enclosingFrame, "RFunction enclosing frame");
     }
 
     @Override
