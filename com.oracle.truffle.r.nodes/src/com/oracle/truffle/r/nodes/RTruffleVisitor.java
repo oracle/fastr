@@ -120,7 +120,9 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
             if (!FastROptions.DisableGroupGenerics.getValue() && RGroupGenerics.isGroupGeneric(functionName)) {
                 return GroupDispatchNode.create(functionName, aCallArgNode, callSource);
             }
-            return RCallNode.createCall(callSource, ReadVariableNode.createForced(functionName, RType.Function), aCallArgNode, callParam);
+            // create a SourceSection for the ReadVariableNode
+            SourceSection varSource = callSource.getSource().createSection(callSource.getIdentifier(), callSource.getCharIndex(), functionName.length());
+            return RCallNode.createCall(callSource, ReadVariableNode.createForced(varSource, functionName, RType.Function), aCallArgNode, callParam);
         } else {
             RNode lhs = call.getLhsNode().accept(this);
             return RCallNode.createCall(callSource, lhs, aCallArgNode, callParam);

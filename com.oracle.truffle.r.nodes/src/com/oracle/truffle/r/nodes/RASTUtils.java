@@ -72,7 +72,7 @@ public class RASTUtils {
      */
     @TruffleBoundary
     public static ReadVariableNode createReadVariableNode(String name) {
-        return ReadVariableNode.createForced(name, RType.Any);
+        return ReadVariableNode.createForced(null, name, RType.Any);
     }
 
     /**

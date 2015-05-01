@@ -15,11 +15,12 @@ import java.util.*;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
+import com.oracle.truffle.r.runtime.RContext.Engine.ParseException;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
-import com.oracle.truffle.r.runtime.gnur.*;
 
 /**
  * The details of error handling, including condition handling. Derived from GnUR src/main/errors.c.
@@ -165,7 +166,8 @@ public class RErrorHandling {
     /**
      * Called from {@link RError} to initiate the condition handling logic.
      */
-    static void signalError(SourceSection callSrc, Message msg, Object... args) {
+    static void signalError(SourceSection callSrcArg, Message msg, Object... args) {
+        SourceSection callSrc = checkNullSourceSection(callSrcArg);
         String fMsg = formatMessage(msg, args);
         Object oldStack = handlerStack;
         RPairList pList;
@@ -250,29 +252,48 @@ public class RErrorHandling {
     private static SourceSection fromCall(Object call) {
         if (call == RNull.instance) {
             return null;
-        } else if (call instanceof RPairList) {
-            RPairList pl = (RPairList) call;
-            return (SourceSection) pl.getTag();
+        } else if (call instanceof RLanguage) {
+            Node callNode = (Node) ((RLanguage) call).getRep();
+            return callNode.getEncapsulatingSourceSection();
         } else {
             throw RInternalError.shouldNotReachHere();
         }
     }
 
     /**
-     * Create an (opaque) value to carry a {@link SourceSection} for callback to R. The input value
-     * may be {@code null}. We assert that no R code ever accesses the content of the result. TODO
-     * The assertion is false as {@code try} compares {@code call[[1L]]} against
-     * {@code quote(tryCatch)}, so this really does need to be an {@link RLanguage} object. We can
-     * only do this easily by reparsing the {@link SourceSection}. Ideally we would have access to
-     * the AST that the {@link SourceSection} originated from. This is all tied up with a needed
-     * refactoringing of the use of {@link SourceSection} in the execution side of FastR.
+     * Create an {@link RLanguage} object to carry a {@link SourceSection} for callback to R. The
+     * input value may be {@code null} (but really should never be).
      *
-     * @return Either {@link RNull#instance} or an {@link RPairList} with tag set to {@code src}.
-     *         The {@code type} tag helps {@code deparse} distinguish this value from a standard
-     *         {@link RPairList}.
+     * The only was we can do this is to reparse the source. This is ridiculous, of course, as we
+     * must have had an AST to start with - we just can't get access to it. Unfortunately, fixing
+     * this would require a complete overhaul of a lot of code.
+     *
      */
     private static Object createCall(SourceSection src) {
-        return src == null ? RNull.instance : RDataFactory.createPairList(null, null, src, SEXPTYPE.FASTR_SOURCESECTION);
+        if (src == null) {
+            return RNull.instance;
+        }
+        try {
+            String callSource = src.getCode();
+            RExpression call = RContext.getEngine().parse(Source.asPseudoFile(callSource, "<error call source>"));
+            return call.getDataAt(0);
+        } catch (ParseException ex) {
+            throw RInternalError.shouldNotReachHere("parse call source");
+        }
+    }
+
+    /**
+     * Check {@code source} for {@code null} and if so, try to find it in the current frame.
+     * Eventually it should be an error if we cannot find a valid value.
+     */
+    private static SourceSection checkNullSourceSection(SourceSection call) {
+        if (call == null) {
+            Frame frame = Utils.getActualCurrentFrame();
+            if (frame != null) {
+                return RArguments.getCallSourceSection(frame);
+            }
+        }
+        return call;
     }
 
     /**
@@ -280,14 +301,8 @@ public class RErrorHandling {
      * output.
      */
     static RError errorcallDflt(SourceSection callArg, Message msg, Object... objects) throws RError {
-        SourceSection call = callArg;
         String fmsg = formatMessage(msg, objects);
-        if (call == null) {
-            Frame frame = Utils.getActualCurrentFrame();
-            if (frame != null) {
-                call = RArguments.getCallSourceSection(frame);
-            }
-        }
+        SourceSection call = checkNullSourceSection(callArg);
 
         String errorMessage = createErrorMessage(call, fmsg);
         Utils.writeStderr(errorMessage, true);

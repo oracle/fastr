@@ -13,14 +13,12 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
-import com.oracle.truffle.r.runtime.gnur.*;
 
 // Part of this transcribed from GnuR src/main/deparse.c
 
@@ -37,7 +35,7 @@ public abstract class Deparse extends RBuiltinNode {
     }
 
     @TruffleBoundary
-    @Specialization(guards = "!isSource(expr)")
+    @Specialization
     protected RStringVector deparse(Object expr, int widthCutoffArg, RAbstractLogicalVector backtick, int control, int nlines) {
         controlVisibility();
         int widthCutoff = widthCutoffArg;
@@ -48,16 +46,6 @@ public abstract class Deparse extends RBuiltinNode {
 
         String[] data = RDeparse.deparse(expr, widthCutoff, RRuntime.fromLogical(backtick.getDataAt(0)), control, nlines);
         return RDataFactory.createStringVector(data, RDataFactory.COMPLETE_VECTOR);
-    }
-
-    @SuppressWarnings("unused")
-    @Specialization(guards = "isSource(expr)")
-    protected RStringVector deparse(RPairList expr, int widthCutoffArg, RAbstractLogicalVector backtick, int control, int nlines) {
-        return RDataFactory.createStringVectorFromScalar(((SourceSection) expr.getTag()).getCode());
-    }
-
-    public static boolean isSource(Object expr) {
-        return (expr instanceof RPairList) && ((RPairList) expr).getType() == SEXPTYPE.FASTR_SOURCESECTION;
     }
 
 }

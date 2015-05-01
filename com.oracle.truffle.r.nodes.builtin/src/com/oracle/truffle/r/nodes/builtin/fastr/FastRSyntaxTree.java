@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.builtin.fastr;
 
 import com.oracle.truffle.api.nodes.*;
+import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -37,10 +38,16 @@ public class FastRSyntaxTree {
                     System.out.print(' ');
                 }
                 if (node instanceof FunctionDefinitionNode) {
-                    System.out.println(((FunctionDefinitionNode) node).parentToString());
+                    System.out.print(((FunctionDefinitionNode) node).parentToString());
                 } else {
-                    System.out.println(node.toString());
+                    System.out.print(node.toString());
                 }
+                SourceSection ss = ((Node) node).getSourceSection();
+                // All syntax nodes should have source sections
+                if (ss == null) {
+                    System.out.print(" *** null source section");
+                }
+                System.out.println();
                 return true;
             }
         });

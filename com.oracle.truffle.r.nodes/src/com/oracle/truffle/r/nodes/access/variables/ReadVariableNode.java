@@ -93,12 +93,18 @@ public class ReadVariableNode extends RNode implements VisibilityController {
     /**
      * Creates every {@link ReadVariableNode} out there.
      *
+     * @param src A {@link SourceSection} for the variable
      * @param name The symbol the {@link ReadVariableNode} is meant to resolve
      * @param mode The mode of the variable
+     *
      * @return The appropriate implementation of {@link ReadVariableNode}
      */
-    public static ReadVariableNode createForced(String name, RType mode) {
-        return new ReadVariableNode(name, mode, ReadKind.Forced);
+    public static ReadVariableNode createForced(SourceSection src, String name, RType mode) {
+        ReadVariableNode result = new ReadVariableNode(name, mode, ReadKind.Forced);
+        if (src != null) {
+            result.assignSourceSection(src);
+        }
+        return result;
     }
 
     @Child protected PromiseHelperNode promiseHelper;
@@ -144,6 +150,11 @@ public class ReadVariableNode extends RNode implements VisibilityController {
 
     private boolean seenValueKind(FrameSlotKind slotKind) {
         return seenValueKinds[slotKind.ordinal()];
+    }
+
+    @Override
+    public boolean isSyntax() {
+        return true;
     }
 
     @Override

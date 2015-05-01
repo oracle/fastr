@@ -91,4 +91,9 @@ public class FunctionBodyNode extends RNode {
         // Don't serialize the argument saving nodes
         statements.serialize(state);
     }
+
+    @Override
+    public boolean isSyntax() {
+        return true;
+    }
 }
