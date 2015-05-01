@@ -154,7 +154,6 @@ public class GrepFunctions {
             boolean fixed = RRuntime.fromLogical(fixedLogical);
             perl = checkPerlFixed(RRuntime.fromLogical(perlLogical), fixed);
             checkCaseFixed(ignoreCase, fixed);
-            checkNotImplemented(invert, "invert", true);
 
             String pattern = checkLength(patternArgVec, "pattern");
             int len = vector.getLength();
