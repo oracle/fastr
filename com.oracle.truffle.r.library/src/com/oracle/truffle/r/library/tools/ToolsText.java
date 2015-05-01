@@ -17,7 +17,7 @@ import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-public class Text {
+public class ToolsText {
     public static RStringVector doTabExpand(RStringVector strings, RIntVector starts) {
         String[] data = new String[strings.getLength()];
         for (int i = 0; i < data.length; i++) {

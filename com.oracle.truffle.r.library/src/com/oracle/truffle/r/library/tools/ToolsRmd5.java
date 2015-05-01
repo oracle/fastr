@@ -1,0 +1,73 @@
+/*
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ *
+ * This code is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 2 only, as
+ * published by the Free Software Foundation.
+ *
+ * This code is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * version 2 for more details (a copy is included in the LICENSE file that
+ * accompanied this code).
+ *
+ * You should have received a copy of the GNU General Public License version
+ * 2 along with this work; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+ *
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
+ */
+package com.oracle.truffle.r.library.tools;
+
+import java.io.*;
+import java.security.*;
+
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.data.*;
+
+public class ToolsRmd5 {
+    @TruffleBoundary
+    public static RStringVector rmd5(RStringVector files) {
+        MessageDigest digest;
+        boolean complete = RDataFactory.COMPLETE_VECTOR;
+        try {
+            digest = MessageDigest.getInstance("MD5");
+        } catch (NoSuchAlgorithmException ex) {
+            throw RInternalError.shouldNotReachHere("no MD5");
+        }
+        String[] data = new String[files.getLength()];
+        for (int i = 0; i < data.length; i++) {
+            File file = new File(files.getDataAt(i));
+            String dataValue = RRuntime.STRING_NA;
+            if (!(file.exists() && file.canRead())) {
+                complete = false;
+            } else {
+                try (BufferedInputStream in = new BufferedInputStream(new FileInputStream(file))) {
+                    byte[] bytes = new byte[(int) file.length()];
+                    in.read(bytes);
+                    byte[] md5 = digest.digest(bytes);
+                    StringBuffer sb = new StringBuffer();
+                    for (byte b : md5) {
+                        int ub = Byte.toUnsignedInt(b);
+                        if (ub > 15) {
+                            sb.append(Integer.toHexString(ub >> 4));
+                        } else {
+                            sb.append('0');
+                        }
+                        sb.append(Integer.toHexString(ub & 0xF));
+                    }
+                    dataValue = sb.toString();
+                } catch (IOException ex) {
+                    // unexpected as we checked
+                    complete = false;
+                }
+            }
+            data[i] = dataValue;
+        }
+        return RDataFactory.createStringVector(data, complete);
+    }
+}

@@ -597,7 +597,7 @@ public class ForeignFunctions {
         protected RStringVector tabExpand(VirtualFrame frame, @SuppressWarnings("unused") RList f, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName) {
             RAbstractStringVector strings = (RAbstractStringVector) castVector(frame, args.getArgument(0));
             RAbstractIntVector starts = (RAbstractIntVector) castVector(frame, args.getArgument(1));
-            return Text.doTabExpand(strings.materialize(), starts.materialize());
+            return ToolsText.doTabExpand(strings.materialize(), starts.materialize());
         }
 
         public boolean isDoTabExpand(RList f) {
@@ -614,11 +614,21 @@ public class ForeignFunctions {
             if (file2.getLength() < 1) {
                 return RDataFactory.createEmptyLogicalVector();
             }
-            return Text.filesAppendLF(file1.getDataAt(0), file2);
+            return ToolsText.filesAppendLF(file1.getDataAt(0), file2);
         }
 
         public boolean isCodeFilesAppend(RList f) {
             return matchName(f, "codeFilesAppend");
+        }
+
+        @Specialization(guards = "isRmd5(f)")
+        protected RStringVector rmd5(VirtualFrame frame, @SuppressWarnings("unused") RList f, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName) {
+            RStringVector files = (RStringVector) castVector(frame, args.getArgument(0));
+            return ToolsRmd5.rmd5(files);
+        }
+
+        public boolean isRmd5(RList f) {
+            return matchName(f, "Rmd5");
         }
 
         @SuppressWarnings("unused")
