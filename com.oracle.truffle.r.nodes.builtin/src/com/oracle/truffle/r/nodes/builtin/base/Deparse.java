@@ -19,6 +19,7 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.gnur.*;
 
 // Part of this transcribed from GnuR src/main/deparse.c
@@ -37,7 +38,7 @@ public abstract class Deparse extends RBuiltinNode {
 
     @TruffleBoundary
     @Specialization(guards = "!isSource(expr)")
-    protected RStringVector deparse(Object expr, int widthCutoffArg, RLogicalVector backtick, int control, int nlines) {
+    protected RStringVector deparse(Object expr, int widthCutoffArg, RAbstractLogicalVector backtick, int control, int nlines) {
         controlVisibility();
         int widthCutoff = widthCutoffArg;
         if (widthCutoff == RRuntime.INT_NA || widthCutoff < RDeparse.MIN_Cutoff || widthCutoff > RDeparse.MAX_Cutoff) {
@@ -51,7 +52,7 @@ public abstract class Deparse extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization(guards = "isSource(expr)")
-    protected RStringVector deparse(RPairList expr, int widthCutoffArg, RLogicalVector backtick, int control, int nlines) {
+    protected RStringVector deparse(RPairList expr, int widthCutoffArg, RAbstractLogicalVector backtick, int control, int nlines) {
         return RDataFactory.createStringVectorFromScalar(((SourceSection) expr.getTag()).getCode());
     }
 
