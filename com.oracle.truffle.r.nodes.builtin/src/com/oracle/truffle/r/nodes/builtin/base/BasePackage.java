@@ -119,6 +119,7 @@ public class BasePackage extends RBuiltinPackage {
         add(ConditionFunctions.GetRestart.class, ConditionFunctionsFactory.GetRestartNodeGen::create);
         add(ConditionFunctions.Geterrmessage.class, ConditionFunctionsFactory.GeterrmessageNodeGen::create);
         add(ConditionFunctions.InvokeRestart.class, ConditionFunctionsFactory.InvokeRestartNodeGen::create);
+        add(ConditionFunctions.PrintDeferredWarnings.class, ConditionFunctionsFactory.PrintDeferredWarningsNodeGen::create);
         add(ConditionFunctions.ResetCondHands.class, ConditionFunctionsFactory.ResetCondHandsNodeGen::create);
         add(ConditionFunctions.Seterrmessage.class, ConditionFunctionsFactory.SeterrmessageNodeGen::create);
         add(ConditionFunctions.SignalCondition.class, ConditionFunctionsFactory.SignalConditionNodeGen::create);
@@ -216,6 +217,7 @@ public class BasePackage extends RBuiltinPackage {
         add(FileFunctions.FileRename.class, FileFunctionsFactory.FileRenameNodeGen::create);
         add(FileFunctions.FileSymLink.class, FileFunctionsFactory.FileSymLinkNodeGen::create);
         add(FileFunctions.ListFiles.class, FileFunctionsFactory.ListFilesNodeGen::create);
+        add(FileFunctions.ListDirs.class, FileFunctionsFactory.ListDirsNodeGen::create);
         add(FileFunctions.Unlink.class, FileFunctionsFactory.UnlinkNodeGen::create);
         add(Floor.class, Floor::new);
         add(ForeignFunctions.C.class, ForeignFunctionsFactory.CNodeGen::create);

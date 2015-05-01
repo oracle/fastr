@@ -203,8 +203,8 @@ public class DLL {
     }
 
     public static synchronized DLLInfo load(String path, boolean local, boolean now) throws DLLException {
-        File file = new File(Utils.tildeExpand(path));
-        String absPath = file.getAbsolutePath();
+        String absPath = Utils.tildeExpand(path);
+        File file = new File(absPath);
         Object handle = RFFIFactory.getRFFI().getBaseRFFI().dlopen(absPath, local, now);
         if (handle == null) {
             String dlError = RFFIFactory.getRFFI().getBaseRFFI().dlerror();
@@ -237,7 +237,7 @@ public class DLL {
     }
 
     public static synchronized void unload(String path) throws DLLException {
-        String absPath = new File(Utils.tildeExpand(path)).getAbsolutePath();
+        String absPath = Utils.tildeExpand(path);
         for (DLLInfo info : list) {
             if (info.path.equals(absPath)) {
                 int rc = RFFIFactory.getRFFI().getBaseRFFI().dlclose(info.handle);

@@ -260,7 +260,12 @@ public class RErrorHandling {
 
     /**
      * Create an (opaque) value to carry a {@link SourceSection} for callback to R. The input value
-     * may be {@code null}. We assert that no R code ever accesses the content of the result.
+     * may be {@code null}. We assert that no R code ever accesses the content of the result. TODO
+     * The assertion is false as {@code try} compares {@code call[[1L]]} against
+     * {@code quote(tryCatch)}, so this really does need to be an {@link RLanguage} object. We can
+     * only do this easily by reparsing the {@link SourceSection}. Ideally we would have access to
+     * the AST that the {@link SourceSection} originated from. This is all tied up with a needed
+     * refactoringing of the use of {@link SourceSection} in the execution side of FastR.
      *
      * @return Either {@link RNull#instance} or an {@link RPairList} with tag set to {@code src}.
      *         The {@code type} tag helps {@code deparse} distinguish this value from a standard
@@ -459,6 +464,13 @@ public class RErrorHandling {
         } finally {
             errorState.get().inPrintWarning = false;
             warnings.clear();
+        }
+    }
+
+    public static void printDeferredWarnings() {
+        if (warnings.size() > 0) {
+            Utils.writeStderr("In addition: ", false);
+            printWarnings(false);
         }
     }
 

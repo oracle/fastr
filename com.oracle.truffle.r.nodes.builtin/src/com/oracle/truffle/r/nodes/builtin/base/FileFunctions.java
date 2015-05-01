@@ -20,6 +20,7 @@ import java.nio.file.attribute.*;
 import java.util.*;
 import java.util.function.*;
 import java.util.regex.*;
+import java.util.stream.*;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.*;
@@ -79,10 +80,18 @@ public class FileFunctions {
 
     @RBuiltin(name = "file.append", kind = INTERNAL, parameterNames = {"file1", "file2"})
     public abstract static class FileAppend extends RBuiltinNode {
-
         @Specialization
         @TruffleBoundary
         protected RLogicalVector doFileAppend(RAbstractStringVector file1Vec, RAbstractStringVector file2Vec) {
+            /*
+             * There are two simple (non-trivial) cases and one tricky 1. 1. Append one or more
+             * files to a single file (len1 == 1, len2 >= 1) 2. Append one file to one file for
+             * several files (len1 == len2)
+             * 
+             * The tricky case is when len1 > 1 && len2 > len1. E.g. f1,f2 <- g1,g2,g3 In this case,
+             * this is really f1,f2,f1 <- g1,g2,g3
+             */
+
             int len1 = file1Vec.getLength();
             int len2 = file2Vec.getLength();
             if (len1 < 1) {
@@ -95,45 +104,67 @@ public class FileFunctions {
             byte[] status = new byte[len];
             if (len1 == 1) {
                 String file1 = file1Vec.getDataAt(0);
-                if (file1 == RRuntime.STRING_NA) {
-                    return RDataFactory.createEmptyLogicalVector();
-                }
-                file1 = Utils.tildeExpand(file1);
-                try (BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(file1, true))) {
-                    status[0] = RRuntime.LOGICAL_TRUE;
-                    for (int i = 0; i < len; i++) {
-                        String file2 = file2Vec.getDataAt(i % len2);
-                        if (file2 == RRuntime.STRING_NA) {
-                            continue;
+                if (file1 != RRuntime.STRING_NA) {
+                    file1 = Utils.tildeExpand(file1);
+                    try (BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(file1, true))) {
+                        for (int f2 = 0; f2 < len2; f2++) {
+                            String file2 = file2Vec.getDataAt(f2);
+                            status[f2] = RRuntime.asLogical(appendFile(out, file2));
                         }
-                        file2 = Utils.tildeExpand(file2);
-                        File file2File = new File(file2);
-                        if (!file2File.exists()) {
-                            // not an error (cf GnuR)
-                            continue;
-                        } else {
-                            byte[] buf = new byte[(int) file2File.length()];
-                            try (BufferedInputStream in = new BufferedInputStream(new FileInputStream(file2))) {
-                                in.read();
-                            } catch (IOException ex) {
-                                // not an error (cf GnuR)
-                                continue;
-                            }
-                            try {
-                                out.write(buf);
-                            } catch (IOException ex) {
-                                RError.warning(getEncapsulatingSourceSection(), RError.Message.FILE_APPEND_WRITE);
-                                status[0] = RRuntime.LOGICAL_FALSE;
-                            }
-                        }
+                    } catch (IOException ex) {
+                        // failure to open output file not reported as error by GnuR, just status
                     }
-                } catch (IOException ex) {
-                    // failure to open output file not reported as error by GnuR
                 }
             } else {
-                throw RError.nyi(getEncapsulatingSourceSection(), "appending multiple files not implemented");
+                // align vectors, redundant if len1 == len2, but avoids duplication
+                String[] file1A = new String[len];
+                String[] file2A = new String[len];
+                for (int f = 0; f < len; f++) {
+                    file1A[f] = file1Vec.getDataAt(f % len1);
+                    file2A[f] = file2Vec.getDataAt(f % len2);
+                }
+                for (int f = 0; f < len; f++) {
+                    String file1 = file1A[f];
+                    if (file1 != RRuntime.STRING_NA) {
+                        file1 = Utils.tildeExpand(file1);
+                        try (BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(file1, true))) {
+                            String file2 = file2A[f];
+                            status[f] = RRuntime.asLogical(appendFile(out, file2));
+                        } catch (IOException ex) {
+                            // status is set
+                        }
+                    }
+                }
             }
             return RDataFactory.createLogicalVector(status, RDataFactory.COMPLETE_VECTOR);
+        }
+
+        private boolean appendFile(BufferedOutputStream out, String pathArg) {
+            if (pathArg == RRuntime.STRING_NA) {
+                return false;
+            }
+            String path = Utils.tildeExpand(pathArg);
+            File file = new File(path);
+            if (!file.exists()) {
+                // not an error (cf GnuR), just status
+                return false;
+            } else {
+                byte[] buf = new byte[(int) file.length()];
+                try (BufferedInputStream in = new BufferedInputStream(new FileInputStream(path))) {
+                    in.read(buf);
+                } catch (IOException ex) {
+                    // not an error (cf GnuR), just status
+                    return false;
+                }
+                try {
+                    out.write(buf);
+                    return true;
+                } catch (IOException ex) {
+                    RError.warning(getEncapsulatingSourceSection(), RError.Message.FILE_APPEND_WRITE);
+                    return false;
+                }
+            }
+
         }
     }
 
@@ -528,40 +559,58 @@ public class FileFunctions {
         @Specialization
         @TruffleBoundary
         protected RStringVector doListFiles(RAbstractStringVector vec, RAbstractStringVector patternVec, byte allFiles, byte fullNames, byte recursive, byte ignoreCase, byte includeDirs, byte noDotDot) {
-            // pattern in first element of vector, remaining elements are ignored (as per GnuR).
+            /*
+             * Pattern in first element of vector, remaining elements are ignored (as per GnuR).
+             * N.B. The pattern matches file names not paths, which means we cannot just use the
+             * Java File path matcher.
+             */
 
-            DirectoryStream.Filter<Path> filter = null;
+            String pattern = null;
             if (!(patternVec.getLength() == 0 || patternVec.getDataAt(0).length() == 0)) {
-                String patternString = patternVec.getLength() == 0 ? "" : patternVec.getDataAt(0);
-                final Pattern pattern = Pattern.compile(patternString);
-                filter = new DirectoryStream.Filter<Path>() {
-                    public boolean accept(Path file) throws IOException {
-                        return pattern.matcher(file.getFileName().toString()).matches();
-                    }
-                };
+                pattern = patternVec.getDataAt(0);
             }
-            return doListFilesBody(vec, filter, allFiles, fullNames, recursive, ignoreCase, includeDirs, noDotDot);
+            return doListFilesBody(vec, pattern, allFiles, fullNames, recursive, ignoreCase, includeDirs, noDotDot);
         }
 
-        @SuppressWarnings("unused")
-        protected RStringVector doListFilesBody(RAbstractStringVector vec, DirectoryStream.Filter<Path> filter, byte allFiles, byte fullNames, byte recursive, byte ignoreCase, byte includeDirs,
-                        byte noDotDot) {
+        protected RStringVector doListFilesBody(RAbstractStringVector vec, String pattern, byte allFilesL, byte fullNamesL, byte recursiveL, byte ignoreCaseL, byte includeDirsL, byte noDotDotL) {
             controlVisibility();
+            boolean allFiles = RRuntime.fromLogical(allFilesL);
+            boolean fullNames = RRuntime.fromLogical(fullNamesL);
+            boolean recursive = RRuntime.fromLogical(recursiveL);
+            @SuppressWarnings("unused")
+            boolean ignoreCase = check(ignoreCaseL, "ignoreCase");
+            boolean includeDirs = !recursive || RRuntime.fromLogical(includeDirsL);
+            boolean noDotDot = RRuntime.fromLogical(noDotDotL);
             // Curiously the result is not a vector of same length as the input,
             // as typical for R, but a single vector, which means duplicates may occur
             ArrayList<String> files = new ArrayList<>();
             for (int i = 0; i < vec.getLength(); i++) {
-                String path = Utils.tildeExpand(vec.getDataAt(i));
-                File dir = new File(path);
-                if (!dir.exists()) {
+                String vecPathString = vec.getDataAt(i);
+                String pathString = Utils.tildeExpand(vecPathString, true);
+                File root = new File(pathString);
+                if (!root.exists()) {
                     continue;
                 }
-                try (DirectoryStream<Path> stream = getDirectoryStream(dir.toPath(), filter)) {
-                    for (Path entry : stream) {
-                        files.add(fullNames == RRuntime.LOGICAL_TRUE ? entry.toString() : entry.getFileName().toString());
+                Path rootPath = root.toPath();
+                try (Stream<Path> stream = Files.find(rootPath, recursive ? Integer.MAX_VALUE : 1, new FileMatcher(pattern, allFiles, includeDirs, noDotDot))) {
+                    Iterator<Path> iter = stream.iterator();
+                    Path vecPath = null;
+                    if (!fullNames) {
+                        FileSystem fileSystem = FileSystems.getDefault();
+                        vecPath = fileSystem.getPath(vecPathString);
+                    }
+                    while (iter.hasNext()) {
+                        Path file = iter.next();
+                        if (Files.isSameFile(file, rootPath)) {
+                            continue;
+                        }
+                        if (!fullNames) {
+                            file = vecPath.relativize(file);
+                        }
+                        files.add(file.toString());
                     }
                 } catch (IOException ex) {
-                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, ex.getMessage());
+                    // ignored
                 }
             }
             if (files.size() == 0) {
@@ -570,12 +619,96 @@ public class FileFunctions {
             } else {
                 String[] data = new String[files.size()];
                 files.toArray(data);
+                Arrays.sort(data);
                 return RDataFactory.createStringVector(data, RDataFactory.COMPLETE_VECTOR);
             }
         }
 
-        protected DirectoryStream<Path> getDirectoryStream(Path path, DirectoryStream.Filter<Path> filter) throws IOException {
-            return filter == null ? Files.newDirectoryStream(path) : Files.newDirectoryStream(path, filter);
+        private boolean check(byte valueLogical, String argName) {
+            boolean value = RRuntime.fromLogical(valueLogical);
+            if (value) {
+                RError.warning(getEncapsulatingSourceSection(), RError.Message.GENERIC, "'" + argName + "'" + " is not implemented");
+            }
+            return value;
+        }
+
+        private static class FileMatcher implements BiPredicate<Path, BasicFileAttributes> {
+            final Pattern pattern;
+            final boolean includeDirs;
+            final boolean noDotDot;
+            final boolean allFiles;
+
+            FileMatcher(String pattern, boolean allFiles, boolean includeDirs, boolean noDotDot) {
+                this.allFiles = allFiles;
+                this.includeDirs = includeDirs;
+                this.noDotDot = noDotDot;
+                this.pattern = pattern == null ? null : Pattern.compile(pattern);
+            }
+
+            public boolean test(Path path, BasicFileAttributes u) {
+                if (u.isDirectory() && !includeDirs) {
+                    return false;
+                }
+                if (!allFiles && path.getFileName().toString().charAt(0) == '.') {
+                    return false;
+                }
+                if (noDotDot && path.getFileName().toString().equals("..")) {
+                    return false;
+                }
+                if (pattern == null) {
+                    return true;
+                }
+                boolean result = pattern.matcher(path.getFileName().toString()).matches();
+                return result;
+            }
+        }
+    }
+
+    @RBuiltin(name = "list.dirs", kind = INTERNAL, parameterNames = {"path", "full.names", "recursive"})
+    public abstract static class ListDirs extends RBuiltinNode {
+        @Specialization
+        @TruffleBoundary
+        protected RStringVector listDirs(RAbstractStringVector paths, byte fullNamesL, byte recursiveL) {
+            boolean fullNames = RRuntime.fromLogical(fullNamesL);
+            boolean recursive = RRuntime.fromLogical(recursiveL);
+            ArrayList<String> dirList = new ArrayList<>();
+            for (int i = 0; i < paths.getLength(); i++) {
+                String vecPathString = paths.getDataAt(i);
+                String pathString = Utils.tildeExpand(vecPathString, true);
+                File root = new File(pathString);
+                if (!root.exists()) {
+                    continue;
+                }
+                Path path = root.toPath();
+                try (Stream<Path> stream = Files.find(path, recursive ? Integer.MAX_VALUE : 1, new FileMatcher())) {
+                    Iterator<Path> iter = stream.iterator();
+                    Path vecPath = null;
+                    if (!fullNames) {
+                        FileSystem fileSystem = FileSystems.getDefault();
+                        vecPath = fileSystem.getPath(vecPathString);
+                    }
+                    while (iter.hasNext()) {
+                        Path dir = iter.next();
+                        if (!fullNames) {
+                            dir = vecPath.relativize(dir);
+                        }
+                        dirList.add(dir.toString());
+                    }
+                } catch (IOException ex) {
+                    // ignored
+                }
+            }
+            String[] data = new String[dirList.size()];
+            dirList.toArray(data);
+            Arrays.sort(data);
+            return RDataFactory.createStringVector(data, RDataFactory.COMPLETE_VECTOR);
+        }
+
+        private static class FileMatcher implements BiPredicate<Path, BasicFileAttributes> {
+            public boolean test(Path path, BasicFileAttributes u) {
+                boolean result = u.isDirectory();
+                return result;
+            }
         }
     }
 
@@ -706,7 +839,19 @@ public class FileFunctions {
                 if (recursive) {
                     throw RError.nyi(getEncapsulatingSourceSection(), "'recursive' option");
                 }
-                CopyOption[] copyOption = copyMode || copyDate ? new CopyOption[]{StandardCopyOption.COPY_ATTRIBUTES} : new CopyOption[0];
+                // Java cannot distinguish copy.mode and copy.dates
+                CopyOption[] copyOptions;
+                if (copyMode || copyDate) {
+                    copyOptions = new CopyOption[overWrite ? 2 : 1];
+                    copyOptions[1] = StandardCopyOption.COPY_ATTRIBUTES;
+                } else if (overWrite) {
+                    copyOptions = new CopyOption[1];
+                } else {
+                    copyOptions = new CopyOption[0];
+                }
+                if (overWrite) {
+                    copyOptions[0] = StandardCopyOption.REPLACE_EXISTING;
+                }
                 FileSystem fileSystem = FileSystems.getDefault();
                 Path toDir = fileSystem.getPath(Utils.tildeExpand(vecTo.getDataAt(0)));
 
@@ -719,7 +864,7 @@ public class FileFunctions {
                     status[i] = RRuntime.LOGICAL_TRUE;
                     try {
                         if (!Files.exists(toPath) || overWrite) {
-                            Files.copy(fromPath, toPath, copyOption);
+                            Files.copy(fromPath, toPath, copyOptions);
                         }
                     } catch (UnsupportedOperationException | IOException ex) {
                         status[i] = RRuntime.LOGICAL_FALSE;

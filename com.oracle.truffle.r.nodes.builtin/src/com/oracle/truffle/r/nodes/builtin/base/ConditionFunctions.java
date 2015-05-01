@@ -159,4 +159,15 @@ public class ConditionFunctions {
             return RNull.instance;
         }
     }
+
+    @RBuiltin(name = "printDeferredWarnings", kind = RBuiltinKind.INTERNAL, parameterNames = {})
+    public abstract static class PrintDeferredWarnings extends Adapter {
+        @Specialization
+        protected RNull printDeferredWarnings() {
+            controlVisibility();
+            RErrorHandling.printDeferredWarnings();
+            return RNull.instance;
+        }
+    }
+
 }

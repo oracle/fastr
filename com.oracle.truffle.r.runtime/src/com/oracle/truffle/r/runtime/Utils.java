@@ -205,24 +205,35 @@ public final class Utils {
          * The initial working directory on startup. This and {@link #current} are always absolute
          * paths.
          */
+        private FileSystem fileSystem;
         private final String initial;
         private String current;
+        private Path currentPath;
 
         private WorkingDirectoryState() {
+            if (fileSystem == null) {
+                fileSystem = FileSystems.getDefault();
+            }
             initial = System.getProperty("user.dir");
             current = initial;
+            currentPath = fileSystem.getPath(initial);
         }
 
-        private String getCurrent() {
-            return current;
+        private Path getCurrentPath() {
+            return currentPath;
         }
 
         private void setCurrent(String path) {
             current = path;
+            currentPath = fileSystem.getPath(path);
         }
 
         private boolean isInitial() {
             return current.equals(initial);
+        }
+
+        private FileSystem getFileSystem() {
+            return fileSystem;
         }
     }
 
@@ -245,9 +256,14 @@ public final class Utils {
 
     /**
      * Performs "~" expansion and also checks whether we need to take special case over relative
-     * paths due to the curwd having moved from the initial setting.
+     * paths due to the curwd having moved from the initial setting. In the latter case, if the path
+     * was relative it is adjusted for the new curwd setting. If {@code keepRelative == true} the
+     * value is returned as a relative path, otherwise absolute. Almost all use cases should call
+     * {@link #tildeExpand(String)} because providing a relative path to Java file methods with a
+     * shifted curwd will not produce the right result. This @code keepRelative == true} case is
+     * required for file/directory listings.
      */
-    public static String tildeExpand(String path) {
+    public static String tildeExpand(String path, boolean keepRelative) {
         if (path.length() > 0 && path.charAt(0) == '~') {
             return userHome() + path.substring(1);
         } else {
@@ -259,17 +275,32 @@ public final class Utils {
                  * support in Java as much of it works relative to the initial setting.
                  */
                 if (path.length() == 0) {
-                    return wdState().getCurrent();
+                    return wdState().getCurrentPath().toString();
                 } else {
-                    Path p = FileSystems.getDefault().getPath(path);
+                    Path p = wdState().getFileSystem().getPath(path);
                     if (p.isAbsolute()) {
                         return path;
                     } else {
-                        return FileSystems.getDefault().getPath(wdState().getCurrent(), path).toString();
+                        Path currentPath = wdState().getCurrentPath();
+                        Path truePath = currentPath.resolve(p);
+                        if (keepRelative) {
+                            // relativize it (it was relative to start with)
+                            return currentPath.relativize(truePath).toString();
+                        } else {
+                            return truePath.toString();
+                        }
                     }
                 }
             }
         }
+    }
+
+    /**
+     * Return an absolute path, with "~" expansion, for {@code path}, taking into account any change
+     * in curwd.
+     */
+    public static String tildeExpand(String path) {
+        return tildeExpand(path, false);
     }
 
     /**
