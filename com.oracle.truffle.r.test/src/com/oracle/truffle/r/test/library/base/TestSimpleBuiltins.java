@@ -2880,7 +2880,7 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ list.files(\"test/r/simple/data/tree1\", recursive=TRUE, pattern=\".*dummy.*\") }");
         assertEval("{ list.files(\"test/r/simple/data/tree1\", recursive=TRUE, pattern=\"dummy\") }");
 
-        assertEval(Ignored.Unknown, "{ list.files(\"test/r/simple/data/tree1\", pattern=\"*.tx\") }");
+        assertEval("{ list.files(\"test/r/simple/data/tree1\", pattern=\"*.tx\") }");
     }
 
     @Test

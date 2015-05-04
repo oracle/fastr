@@ -24,11 +24,11 @@ public class TestrGenBuiltinseterrmessage extends TestBase {
 
     @Test
     public void testseterrmessage2() {
-        assertEval(Ignored.Unknown, "argv <- list('Error in as.POSIXlt.character(x, tz, ...) : \\n  character string is not in a standard unambiguous format\\n'); .Internal(seterrmessage(argv[[1]]))");
+        assertEval("argv <- list('Error in as.POSIXlt.character(x, tz, ...) : \\n  character string is not in a standard unambiguous format\\n'); .Internal(seterrmessage(argv[[1]]))");
     }
 
     @Test
     public void testseterrmessage3() {
-        assertEval(Ignored.Unknown, "argv <- list('Error in validObject(.Object) : \\n  invalid class “trackCurve” object: Unequal x,y lengths: 20, 10\\n'); .Internal(seterrmessage(argv[[1]]))");
+        assertEval("argv <- list('Error in validObject(.Object) : \\n  invalid class “trackCurve” object: Unequal x,y lengths: 20, 10\\n'); .Internal(seterrmessage(argv[[1]]))");
     }
 }

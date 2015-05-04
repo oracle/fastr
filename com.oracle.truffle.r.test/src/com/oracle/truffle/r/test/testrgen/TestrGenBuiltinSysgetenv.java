@@ -2,7 +2,7 @@
  * This material is distributed under the GNU General Public License
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
- * 
+ *
  * Copyright (c) 2014, Purdue University
  * Copyright (c) 2014, Oracle and/or its affiliates
  *
@@ -19,7 +19,7 @@ public class TestrGenBuiltinSysgetenv extends TestBase {
 
     @Test
     public void testSysgetenv1() {
-        assertEval(Ignored.Unknown, "argv <- list('EDITOR', ''); .Internal(Sys.getenv(argv[[1]], argv[[2]]))");
+        assertEval("argv <- list('EDITOR', ''); .Internal(Sys.getenv(argv[[1]], argv[[2]]))");
     }
 
     @Test
