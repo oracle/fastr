@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin;
 
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.function.*;
@@ -39,7 +40,12 @@ public final class RBuiltinRootNode extends RRootNode {
     @Override
     public Object execute(VirtualFrame frame) {
         verifyEnclosingAssumptions(frame);
-        return builtin.execute(frame);
+        try {
+            return builtin.execute(frame);
+        } catch (NullPointerException | ArrayIndexOutOfBoundsException | AssertionError e) {
+            CompilerDirectives.transferToInterpreter();
+            throw new RInternalError(e, "internal error");
+        }
     }
 
     public RBuiltinNode getBuiltin() {
