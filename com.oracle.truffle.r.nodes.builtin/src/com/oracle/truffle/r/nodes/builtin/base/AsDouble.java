@@ -115,21 +115,15 @@ public abstract class AsDouble extends RBuiltinNode {
     }
 
     @Specialization
-    protected RDoubleVector asDouble(RDoubleSequence sequence) {
+    protected RDoubleSequence asDouble(RDoubleSequence sequence) {
         controlVisibility();
-        return (RDoubleVector) sequence.createVector();
+        return sequence;
     }
 
     @Specialization
-    protected RDoubleVector asDouble(VirtualFrame frame, RIntSequence sequence) {
+    protected RDoubleSequence asDouble(VirtualFrame frame, RIntSequence sequence) {
         controlVisibility();
-        double current = sequence.getStart();
-        double[] result = new double[sequence.getLength()];
-        for (int i = 0; i < sequence.getLength(); i++) {
-            result[i] = castDouble(frame, current);
-            current += sequence.getStride();
-        }
-        return RDataFactory.createDoubleVector(result, RDataFactory.INCOMPLETE_VECTOR);
+        return RDataFactory.createDoubleSequence(sequence.getStart(), sequence.getStride(), sequence.getLength());
     }
 
     @Specialization
