@@ -287,7 +287,7 @@ public class BasePackage extends RBuiltinPackage {
         add(Invisible.class, InvisibleNodeGen::create);
         add(IsFiniteFunctions.IsFinite.class, IsFiniteFunctionsFactory.IsFiniteNodeGen::create);
         add(IsFiniteFunctions.IsInfinite.class, IsFiniteFunctionsFactory.IsInfiniteNodeGen::create);
-        add(IsFiniteFunctions.IsNan.class, IsFiniteFunctionsFactory.IsNanNodeGen::create);
+        add(IsFiniteFunctions.IsNaN.class, IsFiniteFunctionsFactory.IsNaNNodeGen::create);
         add(IsMethodsDispatchOn.class, IsMethodsDispatchOnNodeGen::create);
         add(IsNA.class, IsNANodeGen::create);
         add(IsS4.class, IsS4NodeGen::create);

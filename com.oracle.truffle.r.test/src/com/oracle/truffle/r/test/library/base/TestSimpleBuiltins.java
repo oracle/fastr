@@ -3514,6 +3514,24 @@ public class TestSimpleBuiltins extends TestBase {
     }
 
     @Test
+    public void testIsFinite() {
+        assertEval("{ is.finite(1:100) }");
+        assertEval("{ is.finite(1:1) }");
+        assertEval("{ is.finite(c(1,2,3)) }");
+        assertEval("{ is.finite(c(1,2,Inf)) }");
+        assertEval("{ is.finite(c(1,2,-Inf)) }");
+        assertEval("{ is.finite(c(Inf,2,-Inf)) }");
+        assertEval("{ is.finite(c(Inf,NA,-Inf)) }");
+        assertEval("{ is.finite(1) }");
+        assertEval("{ is.finite(c(1L,2L,3L)) }");
+        assertEval("{ is.finite(c(1L,2L,NA)) }");
+        assertEval("{ is.finite(1L) }");
+        assertEval("{ is.finite(as.raw(c(1L,2L,3L))) }");
+        assertEval("{ is.finite(c(TRUE, FALSE)) }");
+        assertEval("{ is.finite(c(TRUE, FALSE, NA)) }");
+    }
+
+    @Test
     public void testParen() {
         assertEval(Ignored.Unknown, "{ a = array(1,c(3,3,3)); (a[1,2,3] = 3) }");
     }

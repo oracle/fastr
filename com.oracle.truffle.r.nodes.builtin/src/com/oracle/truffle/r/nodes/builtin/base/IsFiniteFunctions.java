@@ -24,6 +24,9 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
+import java.util.*;
+import java.util.function.*;
+
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
@@ -35,12 +38,14 @@ import com.oracle.truffle.r.runtime.data.model.*;
 public class IsFiniteFunctions {
 
     public abstract static class Adapter extends RBuiltinNode {
-        protected interface IsFinCall {
-            boolean call(double x);
+        @FunctionalInterface
+        protected interface ComplexPredicate {
+            boolean test(RComplex x);
         }
 
-        protected interface IsComplexFinCall {
-            boolean call(RComplex x);
+        @FunctionalInterface
+        protected interface LogicalPredicate {
+            boolean test(byte x);
         }
 
         @Specialization
@@ -48,33 +53,14 @@ public class IsFiniteFunctions {
             return RDataFactory.createEmptyLogicalVector();
         }
 
-        private static RLogicalVector doAllFalse(int length) {
-            byte[] data = new byte[length];
-            for (int i = 0; i < data.length; i++) {
-                data[i] = RRuntime.LOGICAL_FALSE;
-            }
-            return RDataFactory.createLogicalVector(data, RDataFactory.COMPLETE_VECTOR);
-        }
-
         @Specialization
         public RLogicalVector doString(RAbstractStringVector x) {
-            return doAllFalse(x.getLength());
+            return doFunConstant(x, RRuntime.LOGICAL_FALSE);
         }
 
         @Specialization
         public RLogicalVector doRaw(RAbstractRawVector x) {
-            return doAllFalse(x.getLength());
-        }
-
-        @Specialization
-        public RLogicalVector doLogical(RAbstractLogicalVector x) {
-            // TODO is.infinite
-            byte[] data = new byte[x.getLength()];
-            for (int i = 0; i < data.length; i++) {
-                data[i] = RRuntime.asLogical(!RRuntime.isNA(x.getDataAt(i)));
-            }
-            return RDataFactory.createLogicalVector(data, RDataFactory.COMPLETE_VECTOR);
-
+            return doFunConstant(x, RRuntime.LOGICAL_FALSE);
         }
 
         @Child private TypeofNode typeofNode;
@@ -89,21 +75,45 @@ public class IsFiniteFunctions {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.DEFAULT_METHOD_NOT_IMPLEMENTED_FOR_TYPE, type);
         }
 
-        protected RLogicalVector doFun(RAbstractVector x, IsFinCall fun) {
-            boolean isDouble = x instanceof RDoubleVector;
-            RDoubleVector dx = isDouble ? (RDoubleVector) x : null;
-            RIntVector ix = !isDouble ? (RIntVector) x : null;
+        protected RLogicalVector doFunConstant(RAbstractVector x, byte value) {
+            controlVisibility();
+            byte[] b = new byte[x.getLength()];
+            Arrays.fill(b, value);
+            return RDataFactory.createLogicalVector(b, RDataFactory.COMPLETE_VECTOR);
+        }
+
+        protected RLogicalVector doFunDouble(RAbstractDoubleVector x, DoublePredicate fun) {
+            controlVisibility();
             byte[] b = new byte[x.getLength()];
             for (int i = 0; i < b.length; i++) {
-                b[i] = RRuntime.asLogical(fun.call(isDouble ? dx.getDataAt(i) : ix.getDataAt(i)));
+                b[i] = RRuntime.asLogical(fun.test(x.getDataAt(i)));
             }
             return RDataFactory.createLogicalVector(b, RDataFactory.COMPLETE_VECTOR);
         }
 
-        protected RLogicalVector doFun(RAbstractComplexVector x, IsComplexFinCall fun) {
+        protected RLogicalVector doFunLogical(RAbstractLogicalVector x, LogicalPredicate fun) {
+            controlVisibility();
             byte[] b = new byte[x.getLength()];
             for (int i = 0; i < b.length; i++) {
-                b[i] = RRuntime.asLogical(fun.call(x.getDataAt(i)));
+                b[i] = RRuntime.asLogical(fun.test(x.getDataAt(i)));
+            }
+            return RDataFactory.createLogicalVector(b, RDataFactory.COMPLETE_VECTOR);
+        }
+
+        protected RLogicalVector doFunInt(RAbstractIntVector x, IntPredicate fun) {
+            controlVisibility();
+            byte[] b = new byte[x.getLength()];
+            for (int i = 0; i < b.length; i++) {
+                b[i] = RRuntime.asLogical(fun.test(x.getDataAt(i)));
+            }
+            return RDataFactory.createLogicalVector(b, RDataFactory.COMPLETE_VECTOR);
+        }
+
+        protected RLogicalVector doFunComplex(RAbstractComplexVector x, ComplexPredicate fun) {
+            controlVisibility();
+            byte[] b = new byte[x.getLength()];
+            for (int i = 0; i < b.length; i++) {
+                b[i] = RRuntime.asLogical(fun.test(x.getDataAt(i)));
             }
             return RDataFactory.createLogicalVector(b, RDataFactory.COMPLETE_VECTOR);
         }
@@ -114,26 +124,33 @@ public class IsFiniteFunctions {
 
         @Specialization
         protected RLogicalVector doIsFinite(RAbstractDoubleVector vec) {
-            controlVisibility();
-            return doFun(vec, RRuntime::isFinite);
+            return doFunDouble(vec, RRuntime::isFinite);
         }
 
-        @Specialization
+        @Specialization(guards = "vec.isComplete()")
+        protected RLogicalVector doComplete(RAbstractIntVector vec) {
+            return doFunConstant(vec, RRuntime.LOGICAL_TRUE);
+        }
+
+        @Specialization(contains = "doComplete")
         protected RLogicalVector doIsFinite(RAbstractIntVector vec) {
-            controlVisibility();
-            return doFun(vec, RRuntime::isFinite);
+            return doFunInt(vec, value -> !RRuntime.isNA(value));
         }
 
-        private static boolean bothFinite(RComplex complex) {
-            return RRuntime.isFinite(complex.getRealPart()) && RRuntime.isFinite(complex.getImaginaryPart());
+        @Specialization(guards = "vec.isComplete()")
+        protected RLogicalVector doComplete(RAbstractLogicalVector vec) {
+            return doFunConstant(vec, RRuntime.LOGICAL_TRUE);
+        }
+
+        @Specialization(contains = "doComplete")
+        protected RLogicalVector doIsFinite(RAbstractLogicalVector vec) {
+            return doFunLogical(vec, value -> !RRuntime.isNA(value));
         }
 
         @Specialization
         protected RLogicalVector doIsFinite(RAbstractComplexVector vec) {
-            controlVisibility();
-            return doFun(vec, IsFinite::bothFinite);
+            return doFunComplex(vec, value -> RRuntime.isFinite(value.getRealPart()) && RRuntime.isFinite(value.getImaginaryPart()));
         }
-
     }
 
     @RBuiltin(name = "is.infinite", kind = PRIMITIVE, parameterNames = {"x"})
@@ -141,53 +158,50 @@ public class IsFiniteFunctions {
 
         @Specialization
         protected RLogicalVector doIsInfinite(RAbstractDoubleVector vec) {
-            controlVisibility();
-            return doFun(vec, Double::isInfinite);
+            return doFunDouble(vec, Double::isInfinite);
         }
 
         @Specialization
-        protected RLogicalVector doIsInfinite(RAbstractIntVector vec) {
-            controlVisibility();
-            return doFun(vec, Double::isInfinite);
+        protected RLogicalVector doComplete(RAbstractIntVector vec) {
+            return doFunConstant(vec, RRuntime.LOGICAL_FALSE);
         }
 
-        private static boolean eitherInfinite(RComplex complex) {
-            return Double.isFinite(complex.getRealPart()) || Double.isFinite(complex.getImaginaryPart());
+        @Specialization
+        protected RLogicalVector doComplete(RAbstractLogicalVector vec) {
+            return doFunConstant(vec, RRuntime.LOGICAL_FALSE);
         }
 
         @Specialization
         protected RLogicalVector doIsInfinite(RAbstractComplexVector vec) {
-            controlVisibility();
-            return doFun(vec, IsInfinite::eitherInfinite);
+            return doFunComplex(vec, value -> Double.isInfinite(value.getRealPart()) || Double.isInfinite(value.getImaginaryPart()));
         }
-
     }
 
     @RBuiltin(name = "is.nan", kind = PRIMITIVE, parameterNames = {"x"})
-    public abstract static class IsNan extends Adapter {
+    public abstract static class IsNaN extends Adapter {
+
+        public static boolean isNaN(double value) {
+            return Double.isNaN(value) && !RRuntime.isNA(value);
+        }
 
         @Specialization
         protected RLogicalVector doIsNan(RAbstractDoubleVector vec) {
-            controlVisibility();
-            return doFun(vec, Double::isNaN);
+            return doFunDouble(vec, IsNaN::isNaN);
         }
 
         @Specialization
         protected RLogicalVector doIsNan(RAbstractIntVector vec) {
-            controlVisibility();
-            return doFun(vec, Double::isNaN);
+            return doFunConstant(vec, RRuntime.LOGICAL_FALSE);
         }
 
-        private static boolean eitherNaN(RComplex complex) {
-            return Double.isNaN(complex.getRealPart()) || Double.isNaN(complex.getImaginaryPart());
+        @Specialization
+        protected RLogicalVector doIsNan(RAbstractLogicalVector vec) {
+            return doFunConstant(vec, RRuntime.LOGICAL_FALSE);
         }
 
         @Specialization
         protected RLogicalVector doIsNan(RAbstractComplexVector vec) {
-            controlVisibility();
-            return doFun(vec, IsNan::eitherNaN);
+            return doFunComplex(vec, value -> isNaN(value.getRealPart()) || isNaN(value.getImaginaryPart()));
         }
-
     }
-
 }
