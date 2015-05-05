@@ -32,7 +32,7 @@ import com.oracle.truffle.r.runtime.*;
  * Base class that represents a list of argument/name pairs with some convenience methods. Semantics
  * of {@link #arguments} and the signature have to be defined by subclasses!
  */
-public abstract class ArgumentsNode extends RNode implements UnmatchedArguments {
+public abstract class ArgumentsNode extends RNode implements RSyntaxNode, UnmatchedArguments {
 
     /**
      * A list of arguments. Single arguments may be <code>null</code>; semantics have to be
@@ -71,7 +71,7 @@ public abstract class ArgumentsNode extends RNode implements UnmatchedArguments 
             }
             if (argument != null) {
                 // e.g. not f(, foo)
-                argument.deparse(state);
+                RSyntaxNode.cast(argument).deparse(state);
             }
             if (i != arguments.length - 1) {
                 state.append(", ");

@@ -112,7 +112,7 @@ public abstract class Switch extends RBuiltinNode {
         if (arg instanceof RPromise) {
             // We do not want to evaluate the promise,just display the rep
             RPromise p = (RPromise) arg;
-            RNode node = (RNode) p.getRep();
+            RSyntaxNode node = (RSyntaxNode) p.getRep();
             State state = State.createPrintableState();
             node.deparse(state);
             return state.toString();

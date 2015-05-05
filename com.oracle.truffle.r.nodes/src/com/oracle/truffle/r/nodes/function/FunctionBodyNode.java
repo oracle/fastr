@@ -37,7 +37,7 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
  * The {@link SourceSection} is that of the {@link FunctionStatementsNode} as the
  * {@link SaveArgumentsNode} is not part of the syntax.
  */
-public class FunctionBodyNode extends RNode {
+public class FunctionBodyNode extends RNode implements RSyntaxNode {
 
     @Child private RNode saveArgs;
     @Child private RNode statements;
@@ -74,26 +74,22 @@ public class FunctionBodyNode extends RNode {
     }
 
     @Override
-    public RNode substitute(REnvironment env) {
-        RNode saveArgsSub = saveArgs.substitute(env);
-        RNode statementsSub = statements.substitute(env);
-        return new FunctionBodyNode(saveArgsSub, statementsSub);
+    public RSyntaxNode substitute(REnvironment env) {
+        // TODO what about saveArgs ?
+        RNode statementsSub = RSyntaxNode.cast(statements).substitute(env).asRNode();
+        return new FunctionBodyNode(saveArgs, statementsSub);
     }
 
     @Override
     public void deparse(RDeparse.State state) {
         // Don't deparse the argument saving nodes
-        statements.deparse(state);
+        RSyntaxNode.cast(statements).deparse(state);
     }
 
     @Override
     public void serialize(RSerialize.State state) {
         // Don't serialize the argument saving nodes
-        statements.serialize(state);
+        RSyntaxNode.cast(statements).serialize(state);
     }
 
-    @Override
-    public boolean isSyntax() {
-        return true;
-    }
 }

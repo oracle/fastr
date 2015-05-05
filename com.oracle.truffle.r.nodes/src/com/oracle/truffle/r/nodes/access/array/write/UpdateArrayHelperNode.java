@@ -49,7 +49,7 @@ import com.oracle.truffle.r.runtime.ops.na.*;
 @NodeChildren({@NodeChild(value = "v", type = RNode.class), @NodeChild(value = "newValue", type = RNode.class), @NodeChild(value = "recursionLevel", type = RNode.class),
                 @NodeChild(value = "positions", type = PositionsArrayNodeValue.class, executeWith = {"v", "newValue"}),
                 @NodeChild(value = "vector", type = CoerceVector.class, executeWith = {"newValue", "v", "positions"})})
-public abstract class UpdateArrayHelperNode extends RNode {
+public abstract class UpdateArrayHelperNode extends RNode implements RSyntaxNode {
 
     protected final boolean isSubset;
     private final boolean forObjects;
@@ -2163,12 +2163,12 @@ public abstract class UpdateArrayHelperNode extends RNode {
 
     @Override
     public void deparse(RDeparse.State state) {
-        getVector().deparse(state);
+        RSyntaxNode.cast(getVector()).deparse(state);
         state.append(isSubset ? "[" : "[[");
-        getPositions().deparse(state);
+        RSyntaxNode.cast(getPositions()).deparse(state);
         state.append(isSubset ? "]" : "]]");
         state.append(" <- ");
-        getNewValue().deparse(state);
+        RSyntaxNode.cast(getNewValue()).deparse(state);
     }
 
     @Override
@@ -2181,7 +2181,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         state.openPairList(SEXPTYPE.LISTSXP);
         state.serializeNodeSetCar(getVector());
         state.openPairList(SEXPTYPE.LISTSXP);
-        getPositions().serialize(state);
+        RSyntaxNode.cast(getPositions()).serialize(state);
         // N.B. The above call left the positions unlinked, see AccessArrayNode
         int posCount = state.getPositionsLength();
         if (posCount == 0) {

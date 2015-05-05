@@ -46,7 +46,7 @@ import com.oracle.truffle.r.runtime.env.*;
  */
 @RBuiltin(name = "args", kind = RBuiltinKind.INTERNAL, parameterNames = {"name"})
 public abstract class Args extends RBuiltinNode {
-    private static final FunctionStatementsNode nullBody = new FunctionStatementsNode(new RNode[]{ConstantNode.create(RNull.instance)});
+    private static final FunctionStatementsNode nullBody = new FunctionStatementsNode(null, ConstantNode.create(RNull.instance));
     @Child private GetFunctions.Get getNode;
     @Child private FrameFunctions.ParentFrame parentFrameNode;
 

@@ -38,7 +38,7 @@ import com.oracle.truffle.r.runtime.env.*;
 
 @TypeSystemReference(RTypes.class)
 @CreateWrapper
-public abstract class RNode extends Node implements RSyntaxNode, RInstrumentableNode {
+public abstract class RNode extends Node implements RInstrumentableNode {
 
     @CompilationFinal public static final RNode[] EMTPY_RNODE_ARRAY = new RNode[0];
     @CompilationFinal protected static final Object[] EMPTY_OBJECT_ARRAY = new Object[0];
@@ -327,5 +327,28 @@ public abstract class RNode extends Node implements RSyntaxNode, RInstrumentable
 
     protected boolean isRNull(Object value) {
         return value == RNull.instance;
+    }
+
+    /**
+     * Returns the {@link RSyntaxNode} associated with this node. In the case that this does not
+     * implement {@link RSyntaxNode} the assumption is that this is a child of one that can be
+     * retrieved by following the parent chain.
+     */
+    protected RSyntaxNode getRSyntaxNode() {
+        if (this instanceof RSyntaxNode) {
+            return (RSyntaxNode) this;
+        } else {
+            Node current = this;
+            while (current != null) {
+                if (current instanceof RSyntaxNode) {
+                    return (RSyntaxNode) current;
+                }
+                current = current.getParent();
+                if (current instanceof WrapperNode) {
+                    current = current.getParent();
+                }
+            }
+            throw RInternalError.shouldNotReachHere("getRSynaxNode");
+        }
     }
 }

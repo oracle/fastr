@@ -33,7 +33,7 @@ import com.oracle.truffle.r.runtime.gnur.*;
 /**
  * Perform a field access. This node represents the {@code $} operator in R.
  */
-public abstract class AccessFieldNode extends AccessFieldBaseNode {
+public abstract class AccessFieldNode extends AccessFieldBaseNode implements RSyntaxNode {
 
     @Specialization
     protected RNull access(@SuppressWarnings("unused") RNull object) {
@@ -95,13 +95,8 @@ public abstract class AccessFieldNode extends AccessFieldBaseNode {
     }
 
     @Override
-    public boolean isSyntax() {
-        return true;
-    }
-
-    @Override
     public void deparse(RDeparse.State state) {
-        getObject().deparse(state);
+        RSyntaxNode.cast(getObject()).deparse(state);
         state.append('$');
         state.append(getField());
     }
@@ -118,13 +113,13 @@ public abstract class AccessFieldNode extends AccessFieldBaseNode {
     }
 
     @Override
-    public RNode substitute(REnvironment env) {
-        RNode object = getObject().substitute(env);
+    public RSyntaxNode substitute(REnvironment env) {
+        RSyntaxNode object = RSyntaxNode.cast(getObject()).substitute(env);
         String field = getField();
         RNode fieldSub = RASTUtils.substituteName(field, env);
         if (fieldSub != null) {
             field = RASTUtils.expectName(fieldSub);
         }
-        return AccessFieldNodeGen.create(object, field);
+        return AccessFieldNodeGen.create(object.asRNode(), field);
     }
 }

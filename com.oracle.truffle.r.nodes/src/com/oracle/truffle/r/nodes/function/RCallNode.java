@@ -80,13 +80,13 @@ import com.oracle.truffle.r.runtime.gnur.*;
  *  U = {@link UninitializedCallNode}: Forms the uninitialized end of the function PIC
  *  D = {@link DispatchedCallNode}: Function fixed, no varargs
  *  G = {@link GenericCallNode}: Function arbitrary, no varargs (generic case)
- *
+ * 
  *  UV = {@link UninitializedCallNode} with varargs,
  *  UVC = {@link UninitializedVarArgsCacheCallNode} with varargs, for varargs cache
  *  DV = {@link DispatchedVarArgsCallNode}: Function fixed, with cached varargs
  *  DGV = {@link DispatchedGenericVarArgsCallNode}: Function fixed, with arbitrary varargs (generic case)
  *  GV = {@link GenericVarArgsCallNode}: Function arbitrary, with arbitrary varargs (generic case)
- *
+ * 
  * (RB = {@link RBuiltinNode}: individual functions that are builtins are represented by this node
  * which is not aware of caching). Due to {@link CachedCallNode} (see below) this is transparent to
  * the cache and just behaves like a D/DGV)
@@ -99,11 +99,11 @@ import com.oracle.truffle.r.runtime.gnur.*;
  * non varargs, max depth:
  * |
  * D-D-D-U
- *
+ * 
  * no varargs, generic (if max depth is exceeded):
  * |
  * D-D-D-D-G
- *
+ * 
  * varargs:
  * |
  * DV-DV-UV         <- function call target identity level cache
@@ -111,7 +111,7 @@ import com.oracle.truffle.r.runtime.gnur.*;
  *    DV
  *    |
  *    UVC           <- varargs signature level cache
- *
+ * 
  * varargs, max varargs depth exceeded:
  * |
  * DV-DV-UV
@@ -123,7 +123,7 @@ import com.oracle.truffle.r.runtime.gnur.*;
  *    DV
  *    |
  *    DGV
- *
+ * 
  * varargs, max function depth exceeded:
  * |
  * DV-DV-DV-DV-GV
@@ -152,8 +152,10 @@ import com.oracle.truffle.r.runtime.gnur.*;
  * reason for the current choice is the expectation that R users will try to call same functions
  * with the same arguments, and there will very rarely be the case that the same arguments get
  * passed via "..." to the same functions.
+ *
+ * TODO Many of the classes here do not really need to implement {@link RSyntaxNode}.
  */
-public abstract class RCallNode extends RNode {
+public abstract class RCallNode extends RNode implements RSyntaxNode {
 
     private static final int FUNCTION_INLINE_CACHE_SIZE = 4;
     private static final int VARARGS_INLINE_CACHE_SIZE = 4;
@@ -181,11 +183,6 @@ public abstract class RCallNode extends RNode {
     }
 
     @Override
-    public boolean isSyntax() {
-        return true;
-    }
-
-    @Override
     public void deparse(RDeparse.State state) {
         Object fname = RASTUtils.findFunctionName(this, false);
         if (fname instanceof RSymbol) {
@@ -202,9 +199,9 @@ public abstract class RCallNode extends RNode {
                     colonCall = this;
                     argValues = getArgumentsNode().getArguments();
                 }
-                argValues[0].deparse(state);
+                RSyntaxNode.cast(argValues[0]).deparse(state);
                 state.append(sfname);
-                argValues[1].deparse(state);
+                RSyntaxNode.cast(argValues[1]).deparse(state);
                 if (fn instanceof RCallNode) {
                     getArgumentsNode().deparse(state);
                 }
@@ -215,7 +212,7 @@ public abstract class RCallNode extends RNode {
         if (func != null) {
             RASTDeparse.deparseInfixOperator(state, this, func);
         } else {
-            getFunctionNode().deparse(state);
+            RSyntaxNode.cast(getFunctionNode()).deparse(state);
             getArgumentsNode().deparse(state);
         }
     }
@@ -249,11 +246,11 @@ public abstract class RCallNode extends RNode {
     }
 
     @Override
-    public RNode substitute(REnvironment env) {
-        RNode functionSub = getFunctionNode().substitute(env);
+    public RSyntaxNode substitute(REnvironment env) {
+        RNode functionSub = RSyntaxNode.cast(getFunctionNode()).substitute(env).asRNode();
         CallArgumentsNode argsSub = (CallArgumentsNode) getArgumentsNode().substitute(env);
         // TODO check type of functionSub
-        return RASTUtils.createCall(functionSub, argsSub);
+        return RSyntaxNode.cast(RASTUtils.createCall(functionSub, argsSub));
     }
 
     public int executeInteger(VirtualFrame frame, RFunction function) throws UnexpectedResultException {
@@ -264,8 +261,8 @@ public abstract class RCallNode extends RNode {
         return RTypesGen.expectDouble(execute(frame, function));
     }
 
-    public static RCallNode createStaticCall(SourceSection src, String function, CallArgumentsNode arguments, ASTNode parserNode) {
-        return RCallNode.createCall(src, ReadVariableNode.createFunctionLookup(function, true), arguments, parserNode);
+    public static RCallNode createOpCall(SourceSection src, SourceSection opNameSrc, String function, CallArgumentsNode arguments, ASTNode parserNode) {
+        return RCallNode.createCall(src, ReadVariableNode.createFunctionLookup(opNameSrc, function, true), arguments, parserNode);
     }
 
     /**
@@ -522,7 +519,7 @@ public abstract class RCallNode extends RNode {
         private RootCallNode createNextNode() {
             if (depth + 1 < FUNCTION_INLINE_CACHE_SIZE) {
                 if (parserNode != null) {
-                    return new UninitializedLazyCallNode(depth, parserNode);
+                    return new UninitializedLazyCallNode(getSourceSection(), depth, parserNode);
                 } else {
                     return new UninitializedCallNode(this);
                 }
@@ -589,10 +586,11 @@ public abstract class RCallNode extends RNode {
         private final int depth;
         private final ASTNode parserNode;
 
-        protected UninitializedLazyCallNode(int depth, ASTNode parserNode) {
+        protected UninitializedLazyCallNode(SourceSection src, int depth, ASTNode parserNode) {
             super(null, null);
             this.depth = depth;
             this.parserNode = parserNode;
+            assignSourceSection(src);
         }
 
         @Override

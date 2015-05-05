@@ -475,7 +475,7 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
                     if (dimSizeOneProfile.profile(dimSize == 1)) {
                         /*
                          * e.g. c(7)[-2] vs c(7)[[-2]]
-                         *
+                         * 
                          * only one element to be picked or ultimately an error caused by operand
                          */
                         return isSubset ? 1 : operand;

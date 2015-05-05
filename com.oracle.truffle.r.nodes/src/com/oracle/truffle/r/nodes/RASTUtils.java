@@ -30,6 +30,7 @@ import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.access.variables.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.function.*;
+import com.oracle.truffle.r.nodes.function.PromiseNode.VArgsPromiseNodeAsSyntax;
 import com.oracle.truffle.r.nodes.function.PromiseNode.VarArgNode;
 import com.oracle.truffle.r.nodes.function.PromiseNode.VarArgsPromiseNode;
 import com.oracle.truffle.r.nodes.instrument.*;
@@ -98,12 +99,12 @@ public class RASTUtils {
             return value;
         } else if (argNode instanceof ReadVariableNode) {
             return RASTUtils.createRSymbol(argNode);
-        } else if (argNode instanceof VarArgsPromiseNode) {
+        } else if (argNode instanceof VArgsPromiseNodeAsSyntax) {
             /*
              * This is mighty tedious, but GnuR represents this as a pairlist and we do have to
              * convert it into either an RPairList or an RList for compatibility.
              */
-            VarArgsPromiseNode vapn = ((VarArgsPromiseNode) argNode);
+            VarArgsPromiseNode vapn = ((VArgsPromiseNodeAsSyntax) argNode).getVarArgsPromiseNode();
             Closure[] closures = vapn.getClosures();
             ArgumentsSignature signature = vapn.getSignature();
             RPairList prev = null;
@@ -275,7 +276,7 @@ public class RASTUtils {
             // TODO This should really fail in some way as (clearly) this is not a "name"
             // some more complicated expression, just deparse it
             RDeparse.State state = RDeparse.State.createPrintableState();
-            child.deparse(state);
+            RSyntaxNode.cast(child).deparse(state);
             return RDataFactory.createSymbol(state.toString());
         }
     }
@@ -389,7 +390,7 @@ public class RASTUtils {
     /**
      * Marker class for special '...' handling.
      */
-    public abstract static class DotsNode extends RNode {
+    public abstract static class DotsNode extends RNode implements RSyntaxNode {
     }
 
     /**

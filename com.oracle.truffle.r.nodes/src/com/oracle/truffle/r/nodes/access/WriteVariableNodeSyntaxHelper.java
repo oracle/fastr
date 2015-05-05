@@ -20,32 +20,35 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.control;
+package com.oracle.truffle.r.nodes.access;
 
-import com.oracle.truffle.api.source.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.gnur.*;
 
-public final class BreakNode extends RNode implements RSyntaxNode, VisibilityController {
-
-    public BreakNode(SourceSection src) {
-        assignSourceSection(src);
+abstract class WriteVariableNodeSyntaxHelper extends WriteVariableNode {
+    protected void deparseHelper(RDeparse.State state, String op) {
+        state.append(getName());
+        RNode rhs = getRhs();
+        if (rhs != null) {
+            state.append(op);
+            RSyntaxNode.cast(getRhs()).deparse(state);
+        }
     }
 
-    @Override
-    public void deparse(RDeparse.State state) {
-        state.append("break");
+    protected void serializeHelper(RSerialize.State state, String op) {
+        RNode rhs = getRhs();
+        if (rhs == null) {
+            state.setCarAsSymbol(getName());
+        } else {
+            state.setAsBuiltin(op);
+            state.openPairList(SEXPTYPE.LISTSXP);
+            state.setCarAsSymbol(getName());
+            state.openPairList(SEXPTYPE.LISTSXP);
+            state.serializeNodeSetCar(getRhs());
+            state.linkPairList(2);
+            state.setCdr(state.closePairList());
+        }
     }
 
-    @Override
-    public void serialize(RSerialize.State state) {
-        state.setAsBuiltin("break");
-    }
-
-    @Override
-    public Object execute(VirtualFrame frame) {
-        forceVisibility(false);
-        throw BreakException.instance;
-    }
 }

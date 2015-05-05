@@ -34,13 +34,13 @@ import com.oracle.truffle.r.runtime.env.*;
  * Holds the sequence of nodes created for R's replacement assignment. Allows custom deparse and
  * debug handling.
  */
-public class ReplacementNode extends RNode {
+public class ReplacementNode extends RNode implements RSyntaxNode {
 
     /**
      * This holds the AST for the "untransformed" AST, i.e. as it appears in the source. Currently
      * only used in {@code deparse} and {@code serialize}.
      */
-    @CompilationFinal private RNode syntaxAST;
+    @CompilationFinal private RSyntaxNode syntaxAST;
 
     @Children protected final RNode[] sequence;
 
@@ -49,7 +49,7 @@ public class ReplacementNode extends RNode {
         assignSourceSection(src);
     }
 
-    public void setSyntaxAST(RNode syntaxAST) {
+    public void setSyntaxAST(RSyntaxNode syntaxAST) {
         this.syntaxAST = syntaxAST;
     }
 
@@ -64,11 +64,6 @@ public class ReplacementNode extends RNode {
     }
 
     @Override
-    public boolean isSyntax() {
-        return true;
-    }
-
-    @Override
     public void deparse(RDeparse.State state) {
         syntaxAST.deparse(state);
     }
@@ -79,7 +74,7 @@ public class ReplacementNode extends RNode {
     }
 
     @Override
-    public RNode substitute(REnvironment env) {
+    public RSyntaxNode substitute(REnvironment env) {
         return syntaxAST.substitute(env);
     }
 }

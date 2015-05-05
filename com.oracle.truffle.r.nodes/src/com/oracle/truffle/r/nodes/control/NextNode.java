@@ -27,7 +27,7 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.*;
 
-public final class NextNode extends RNode {
+public final class NextNode extends RNode implements RSyntaxNode, VisibilityController {
 
     public NextNode(SourceSection src) {
         assignSourceSection(src);
@@ -35,6 +35,7 @@ public final class NextNode extends RNode {
 
     @Override
     public Object execute(VirtualFrame frame) {
+        forceVisibility(false);
         throw NextException.instance;
     }
 
@@ -48,8 +49,4 @@ public final class NextNode extends RNode {
         state.setAsBuiltin("next");
     }
 
-    @Override
-    public boolean isSyntax() {
-        return true;
-    }
 }

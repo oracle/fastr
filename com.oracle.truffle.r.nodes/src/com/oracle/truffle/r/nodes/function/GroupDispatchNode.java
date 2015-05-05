@@ -26,7 +26,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.gnur.*;
 
-public final class GroupDispatchNode extends RNode {
+public final class GroupDispatchNode extends RNode implements RSyntaxNode {
 
     @Child private CallArgumentsNode callArgsNode;
     @Child private S3FunctionLookupNode functionLookupL;
@@ -73,11 +73,6 @@ public final class GroupDispatchNode extends RNode {
     }
 
     @Override
-    public boolean isSyntax() {
-        return true;
-    }
-
-    @Override
     public void deparse(RDeparse.State state) {
         String name = getGenericName();
         RDeparse.Func func = RDeparse.getFunc(name);
@@ -98,9 +93,9 @@ public final class GroupDispatchNode extends RNode {
     }
 
     @Override
-    public RNode substitute(REnvironment env) {
+    public RSyntaxNode substitute(REnvironment env) {
         // TODO substitute aDispatchNode
-        return RASTUtils.createCall(this, (CallArgumentsNode) callArgsNode.substitute(env));
+        return RSyntaxNode.cast(RASTUtils.createCall(this, (CallArgumentsNode) callArgsNode.substitute(env).asRNode()));
     }
 
     protected RStringVector getArgClass(Object arg) {

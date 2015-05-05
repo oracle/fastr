@@ -255,11 +255,6 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         return !substituteFrame;
     }
 
-    @Override
-    public boolean isSyntax() {
-        return true;
-    }
-
     /*
      * TODO Decide whether we really care about the braces/no-braces issue for deparse and
      * serialize, since we do not distinguish them in other nodes at the present time.
@@ -275,7 +270,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
             state.append(formals.getSignature().getName(i));
             if (defaultArg != null) {
                 state.append(" = ");
-                defaultArg.deparse(state);
+                RSyntaxNode.cast(defaultArg).deparse(state);
             }
             if (i != formalsLength - 1) {
                 state.append(", ");
@@ -284,23 +279,13 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         state.append(") ");
         state.writeNLOpenCurlyIncIndent();
         state.writeline();
-        body.deparse(state);
+        RSyntaxNode.cast(body).deparse(state);
         state.decIndentWriteCloseCurly();
     }
 
-    /**
-     * Since a {@link FunctionDefinitionNode} is not a subclass of an {@link RNode} we cannot just
-     * override the {@link RSyntaxNode#substitute} method as that requires an {@link RNode} result.
-     * So we define this custom method. N.B. The formal arguments are <b>not</b> subject to
-     * substitution, just the body.
-     */
-    public FunctionDefinitionNode substituteFDN(REnvironment env) {
-        return new FunctionDefinitionNode(null, new FrameDescriptor(), body.substitute(env), getFormalArguments(), null, substituteFrame);
-    }
-
     @Override
-    public RNode substitute(REnvironment env) {
-        throw RInternalError.shouldNotReachHere();
+    public RSyntaxNode substitute(REnvironment env) {
+        return new FunctionDefinitionNode(null, new FrameDescriptor(), RSyntaxNode.cast(body).substitute(env).asRNode(), getFormalArguments(), null, substituteFrame);
     }
 
     /**
@@ -328,7 +313,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         }
 
         state.openPairList();
-        body.serialize(state);
+        RSyntaxNode.cast(body).serialize(state);
         state.setCdr(state.closePairList());
 
         if (hasBraces) {

@@ -33,7 +33,7 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.gnur.*;
 
-public final class WhileNode extends AbstractLoopNode {
+public final class WhileNode extends AbstractLoopNode implements RSyntaxNode, VisibilityController {
 
     @Child private LoopNode loop;
 
@@ -42,18 +42,19 @@ public final class WhileNode extends AbstractLoopNode {
      */
     private final boolean isRepeat;
 
-    private WhileNode(RNode condition, RNode body, boolean isRepeat) {
-        this.loop = Truffle.getRuntime().createLoopNode(new WhileRepeatingNode(ConvertBooleanNode.create(condition), body));
+    private WhileNode(RSyntaxNode condition, RSyntaxNode body, boolean isRepeat) {
+        this.loop = Truffle.getRuntime().createLoopNode(new WhileRepeatingNode(ConvertBooleanNode.create(condition), body.asRNode()));
         this.isRepeat = isRepeat;
     }
 
-    public static WhileNode create(RNode condition, RNode body, boolean isRepeat) {
+    public static WhileNode create(RSyntaxNode condition, RSyntaxNode body, boolean isRepeat) {
         return new WhileNode(condition, body, isRepeat);
     }
 
     @Override
     public Object execute(VirtualFrame frame) {
         loop.executeLoop(frame);
+        forceVisibility(false);
         return RNull.instance;
     }
 
@@ -74,11 +75,6 @@ public final class WhileNode extends AbstractLoopNode {
     }
 
     @Override
-    public boolean isSyntax() {
-        return true;
-    }
-
-    @Override
     public void deparse(RDeparse.State state) {
         if (isRepeat) {
             state.append("repeat ");
@@ -88,7 +84,7 @@ public final class WhileNode extends AbstractLoopNode {
             state.append(") ");
         }
         state.writeOpenCurlyNLIncIndent();
-        getBody().deparse(state);
+        RSyntaxNode.cast(getBody()).deparse(state);
         state.decIndentWriteCloseCurly();
     }
 
@@ -109,8 +105,8 @@ public final class WhileNode extends AbstractLoopNode {
     }
 
     @Override
-    public RNode substitute(REnvironment env) {
-        return create(getCondition().substitute(env), getBody().substitute(env), isRepeat);
+    public RSyntaxNode substitute(REnvironment env) {
+        return create(getCondition().substitute(env), RSyntaxNode.cast(getBody()).substitute(env), isRepeat);
     }
 
     private static final class WhileRepeatingNode extends Node implements RepeatingNode {

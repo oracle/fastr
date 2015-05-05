@@ -31,10 +31,12 @@ import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
 @CreateWrapper
-public abstract class ConvertBooleanNode extends UnaryNode {
+@NodeChildren({@NodeChild("operand")})
+public abstract class ConvertBooleanNode extends RNode implements RSyntaxNode {
 
     private final NAProfile naProfile = NAProfile.create();
     private final BranchProfile invalidElementCountBranch = BranchProfile.create();
@@ -44,6 +46,8 @@ public abstract class ConvertBooleanNode extends UnaryNode {
     public final Object execute(VirtualFrame frame) {
         return executeByte(frame);
     }
+
+    public abstract RNode getOperand();
 
     @Override
     public abstract byte executeByte(VirtualFrame frame);
@@ -149,11 +153,33 @@ public abstract class ConvertBooleanNode extends UnaryNode {
         return doRaw(value.getDataAt(0));
     }
 
-    public static ConvertBooleanNode create(RNode node) {
+    public static ConvertBooleanNode create(RSyntaxNode node) {
         if (node instanceof ConvertBooleanNode) {
             return (ConvertBooleanNode) node;
         }
-        return ConvertBooleanNodeGen.create(node);
+        ConvertBooleanNode result = ConvertBooleanNodeGen.create(node.asRNode());
+        result.assignSourceSection(node.getSourceSection());
+        return result;
+    }
+
+    @Override
+    public boolean isBackbone() {
+        return true;
+    }
+
+    @Override
+    public void deparse(RDeparse.State state) {
+        RSyntaxNode.cast(getOperand()).deparse(state);
+    }
+
+    @Override
+    public void serialize(RSerialize.State state) {
+        RSyntaxNode.cast(getOperand()).serialize(state);
+    }
+
+    @Override
+    public RSyntaxNode substitute(REnvironment env) {
+        return ConvertBooleanNodeGen.create(RSyntaxNode.cast(getOperand()).substitute(env));
     }
 
     @Override

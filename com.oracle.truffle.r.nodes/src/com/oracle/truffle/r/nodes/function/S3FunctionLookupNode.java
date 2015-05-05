@@ -127,7 +127,7 @@ public abstract class S3FunctionLookupNode extends Node {
         ReadVariableNode rvn;
         RFunction function;
         if (createReadVariableNodes) {
-            rvn = ReadVariableNode.createFunctionLookup(functionName, false);
+            rvn = ReadVariableNode.createFunctionLookup(null, functionName, false);
             function = (RFunction) rvn.execute(null, lookupFrame);
         } else {
             rvn = null;

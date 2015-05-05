@@ -39,7 +39,6 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseType;
 import com.oracle.truffle.r.runtime.data.RPromise.RPromiseFactory;
-import com.oracle.truffle.r.runtime.env.*;
 
 /**
  * This {@link RNode} returns a function's argument specified by its formal index. It is used to
@@ -87,11 +86,6 @@ public final class AccessArgumentNode extends RNode {
 
     public static AccessArgumentNode create(int index) {
         return new AccessArgumentNode(index);
-    }
-
-    @Override
-    public RNode substitute(REnvironment env) {
-        return this;
     }
 
     @Override

@@ -401,7 +401,7 @@ public class DebugHandling {
     private static void printNode(Node node, boolean curly) {
         RContext.ConsoleHandler consoleHandler = RContext.getInstance().getConsoleHandler();
         RDeparse.State state = RDeparse.State.createPrintableState();
-        ((RNode) node).deparse(state);
+        ((RSyntaxNode) node).deparse(state);
         consoleHandler.print("debug: ");
         if (curly) {
             consoleHandler.println("{");

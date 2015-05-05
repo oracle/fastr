@@ -25,10 +25,15 @@ package com.oracle.truffle.r.nodes.access.array;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
+import com.oracle.truffle.r.nodes.access.array.write.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.env.*;
 
-public class PositionsArrayNodeAdapter extends RNode {
+/**
+ * This is a helper child of {@link PositionsArrayNodeValue}. It is, therefore, not truly
+ * {@link RSyntaxNode}, although it actually carries all the syntax state for deparse etc.
+ */
+public class PositionsArrayNodeAdapter extends RNode implements RSyntaxNode {
 
     @Children public final RNode[] positions;
 
@@ -49,7 +54,7 @@ public class PositionsArrayNodeAdapter extends RNode {
     @Override
     public void deparse(RDeparse.State state) {
         for (int i = 0; i < positions.length; i++) {
-            positions[i].deparse(state);
+            RSyntaxNode.cast(positions[i]).deparse(state);
             if (i != positions.length - 1) {
                 state.append(", ");
             }
@@ -78,7 +83,7 @@ public class PositionsArrayNodeAdapter extends RNode {
     public RNode[] substitutePositions(REnvironment env) {
         RNode[] subPositions = new RNode[positions.length];
         for (int i = 0; i < positions.length; i++) {
-            subPositions[i] = positions[i].substitute(env);
+            subPositions[i] = RSyntaxNode.cast(positions[i]).substitute(env).asRNode();
         }
         return subPositions;
     }

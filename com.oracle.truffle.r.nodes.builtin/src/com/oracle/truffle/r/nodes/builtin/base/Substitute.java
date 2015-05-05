@@ -120,9 +120,9 @@ public abstract class Substitute extends RBuiltinNode {
         // so get the actual expression (AST) from that
         Node node = RASTUtils.unwrap(expr.getRep());
         // substitution is destructive so clone the tree
-        RNode rNode = (RNode) NodeUtil.cloneNode(node);
+        RSyntaxNode rNode = (RSyntaxNode) NodeUtil.cloneNode(node);
         // NodeUtil.printTree(System.out, node);
-        return RASTUtils.createLanguageElement(clearSourceSection(rNode.substitute(env)));
+        return RASTUtils.createLanguageElement(clearSourceSection(rNode.substitute(env).asRNode()));
     }
 
     private static Node clearSourceSection(Node node) {

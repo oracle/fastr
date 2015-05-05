@@ -45,7 +45,7 @@ import com.oracle.truffle.r.runtime.env.frame.*;
  * a particular layout of frame descriptors and enclosing environments, and re-specializes in case
  * the layout changes.
  */
-public class ReadVariableNode extends RNode implements VisibilityController {
+public class ReadVariableNode extends RNode implements RSyntaxNode, VisibilityController {
 
     public static enum ReadKind {
         Normal,
@@ -80,8 +80,10 @@ public class ReadVariableNode extends RNode implements VisibilityController {
      * be thrown if the specified function is not found, if throwError is false, a {@code null}
      * value will silently be returned.
      */
-    public static ReadVariableNode createFunctionLookup(String identifier, boolean throwError) {
-        return new ReadVariableNode(identifier, RType.Function, throwError ? ReadKind.Normal : ReadKind.Silent);
+    public static ReadVariableNode createFunctionLookup(SourceSection src, String identifier, boolean throwError) {
+        ReadVariableNode result = new ReadVariableNode(identifier, RType.Function, throwError ? ReadKind.Normal : ReadKind.Silent);
+        result.assignSourceSection(src);
+        return result;
     }
 
     public static ReadVariableNode createSuperLookup(SourceSection src, String name) {
@@ -153,11 +155,6 @@ public class ReadVariableNode extends RNode implements VisibilityController {
     }
 
     @Override
-    public boolean isSyntax() {
-        return true;
-    }
-
-    @Override
     public void deparse(RDeparse.State state) {
         state.append(identifier);
     }
@@ -168,8 +165,8 @@ public class ReadVariableNode extends RNode implements VisibilityController {
     }
 
     @Override
-    public RNode substitute(REnvironment env) {
-        RNode result = RASTUtils.substituteName(identifier, env);
+    public RSyntaxNode substitute(REnvironment env) {
+        RSyntaxNode result = RSyntaxNode.cast(RASTUtils.substituteName(identifier, env));
         if (result == null) {
             result = NodeUtil.cloneNode(this);
         }

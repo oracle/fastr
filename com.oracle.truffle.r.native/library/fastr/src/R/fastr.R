@@ -31,11 +31,9 @@ fastr.dumptrees <- function(func, igvDump=FALSE, verbose=FALSE) .FastR(.NAME="du
 
 fastr.source <- function(func) .FastR(.NAME="source", func)
 
-fastr.syntaxtree <- function(func) .FastR(.NAME="syntaxtree", func)
+fastr.syntaxtree <- function(func, source=FALSE) .FastR(.NAME="syntaxtree", func, source)
 
 fastr.tree <- function(func, verbose=FALSE) .FastR(.NAME="tree", func, verbose)
-
-fastr.seqlengths <- function(func) .FastR(.NAME="seqlengths", func)
 
 fastr.typeof <- function(x) .FastR(.NAME="typeof", x)
 

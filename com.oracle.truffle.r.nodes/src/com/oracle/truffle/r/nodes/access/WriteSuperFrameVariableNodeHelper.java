@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,16 +20,23 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes;
+package com.oracle.truffle.r.nodes.access;
 
-import com.oracle.truffle.r.runtime.RDeparse.State;
+import com.oracle.truffle.api.frame.*;
 
 /**
- * An adapter than can be subclassed that does nothing on {@code deparse}.
+ * Helper class for the WriteSuperFrame variants. This ought to be a static class in
+ * {@link WriteSuperFrameVariableNode} but that causes compilation problems.
  */
-public abstract class RNoDeparseNode extends RNode {
+public abstract class WriteSuperFrameVariableNodeHelper extends BaseWriteVariableNode {
+
+    public abstract void execute(VirtualFrame frame, Object value, MaterializedFrame enclosingFrame);
+
     @Override
-    public void deparse(State state) {
-        // do nothing
+    public final Object execute(VirtualFrame frame) {
+        Object value = getRhs().execute(frame);
+        execute(frame, value);
+        return value;
     }
+
 }

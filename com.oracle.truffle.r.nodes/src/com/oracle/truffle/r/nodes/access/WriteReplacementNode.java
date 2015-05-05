@@ -33,7 +33,7 @@ import com.oracle.truffle.r.runtime.gnur.*;
  * A node that current only exists as the "syntaxAST" argument of a {@link ReplacementNode}, for
  * assignments of the form {@code f(a) <- rhs}.
  */
-public class WriteReplacementNode extends RNode {
+public class WriteReplacementNode extends RNode implements RSyntaxNode {
 
     private final RCallNode replacementCall;
     private final RNode rhs;
@@ -57,15 +57,10 @@ public class WriteReplacementNode extends RNode {
     }
 
     @Override
-    public boolean isSyntax() {
-        return true;
-    }
-
-    @Override
     public void deparse(RDeparse.State state) {
-        getReplacementCall().deparse(state);
+        RSyntaxNode.cast(getReplacementCall()).deparse(state);
         state.append(" <- ");
-        getRhs().deparse(state);
+        RSyntaxNode.cast(getRhs()).deparse(state);
     }
 
     @Override
