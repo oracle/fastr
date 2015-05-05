@@ -29,7 +29,7 @@ import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.binary.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.*;
 
 @RBuiltin(name = "is.unsorted", kind = INTERNAL, parameterNames = {"x", "strictly"})
@@ -40,7 +40,7 @@ public abstract class IsUnsorted extends RBuiltinNode {
     @Child private BinaryBooleanNode ge = BinaryBooleanNodeGen.create(BinaryCompare.GREATER_EQUAL, new RNode[1], null, null);
 
     @Specialization
-    protected byte isUnsorted(RDoubleVector x, @SuppressWarnings("unused") byte strictly) {
+    protected byte isUnsorted(RAbstractDoubleVector x, @SuppressWarnings("unused") byte strictly) {
         controlVisibility();
         double last = x.getDataAt(0);
         for (int k = 1; k < x.getLength(); k++) {
@@ -54,7 +54,7 @@ public abstract class IsUnsorted extends RBuiltinNode {
     }
 
     @Specialization
-    protected byte isUnsorted(RIntVector x, @SuppressWarnings("unused") byte strictly) {
+    protected byte isUnsorted(RAbstractIntVector x, @SuppressWarnings("unused") byte strictly) {
         controlVisibility();
         int last = x.getDataAt(0);
         for (int k = 1; k < x.getLength(); k++) {
@@ -68,7 +68,7 @@ public abstract class IsUnsorted extends RBuiltinNode {
     }
 
     @Specialization
-    protected byte isUnsorted(RStringVector x, @SuppressWarnings("unused") byte strictly) {
+    protected byte isUnsorted(RAbstractStringVector x, @SuppressWarnings("unused") byte strictly) {
         controlVisibility();
         String last = x.getDataAt(0);
         for (int k = 1; k < x.getLength(); k++) {
