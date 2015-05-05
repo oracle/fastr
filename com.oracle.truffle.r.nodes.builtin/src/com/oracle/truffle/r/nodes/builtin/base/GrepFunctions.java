@@ -16,6 +16,7 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 import java.util.*;
 import java.util.regex.*;
 
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -282,98 +283,104 @@ public class GrepFunctions {
 
         protected RStringVector doSub(RAbstractStringVector patternArgVec, RAbstractStringVector replacementVec, RAbstractStringVector vector, byte ignoreCaseLogical, byte perlLogical,
                         byte fixedLogical, @SuppressWarnings("unused") byte useBytes, boolean gsub) {
-            boolean perl = RRuntime.fromLogical(perlLogical);
-            boolean fixed = RRuntime.fromLogical(fixedLogical);
-            boolean ignoreCase = RRuntime.fromLogical(ignoreCaseLogical);
-            checkNotImplemented(!(perl || fixed) && ignoreCase, "ignoreCase", true);
-            checkCaseFixed(ignoreCase, fixed);
-            perl = checkPerlFixed(perl, fixed);
-            String pattern = checkLength(patternArgVec, "pattern");
-            String replacement = checkLength(replacementVec, "replacement");
+            try {
+                boolean perl = RRuntime.fromLogical(perlLogical);
+                boolean fixed = RRuntime.fromLogical(fixedLogical);
+                boolean ignoreCase = RRuntime.fromLogical(ignoreCaseLogical);
+                checkNotImplemented(!(perl || fixed) && ignoreCase, "ignoreCase", true);
+                checkCaseFixed(ignoreCase, fixed);
+                perl = checkPerlFixed(perl, fixed);
+                String pattern = checkLength(patternArgVec, "pattern");
+                String replacement = checkLength(replacementVec, "replacement");
 
-            int len = vector.getLength();
-            if (RRuntime.isNA(pattern)) {
-                return allStringNAResult(len);
-            }
-
-            PCRERFFI.Result pcre = null;
-            if (fixed) {
-                // TODO case
-            } else if (perl) {
-                int cflags = ignoreCase ? PCRERFFI.CASELESS : 0;
-                long tables = RFFIFactory.getRFFI().getPCRERFFI().maketables();
-                pcre = RFFIFactory.getRFFI().getPCRERFFI().compile(pattern, cflags, tables);
-                if (pcre.result == 0) {
-                    // TODO output warning if pcre.errorMessage not NULL
-                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_REGEXP, pattern);
-                }
-                // TODO pcre_study for vectors > 10 ? (cf GnuR)
-            } else {
-                pattern = RegExp.checkPreDefinedClasses(pattern);
-            }
-            String[] result = new String[len];
-            for (int i = 0; i < len; i++) {
-                String input = vector.getDataAt(i);
-                if (RRuntime.isNA(input)) {
-                    result[i] = input;
-                    continue;
+                int len = vector.getLength();
+                if (RRuntime.isNA(pattern)) {
+                    return allStringNAResult(len);
                 }
 
-                String value;
+                PCRERFFI.Result pcre = null;
                 if (fixed) {
-                    if (gsub) {
-                        value = input.replace(pattern, replacement);
-                    } else {
-                        int ix = input.indexOf(pattern);
-                        value = ix < 0 ? pattern : input.substring(0, ix) + replacement + input.substring(ix + 1);
-                    }
+                    // TODO case
                 } else if (perl) {
-                    int offset = 0;
-                    int[] ovector = new int[30];
-                    int nmatch = 0;
-                    int eflag = 0;
-                    int lastEnd = -1;
-                    StringBuffer sb = new StringBuffer();
-                    while (RFFIFactory.getRFFI().getPCRERFFI().exec(pcre.result, 0, input, offset, eflag, ovector) >= 0) {
-                        nmatch++;
-                        for (int j = offset; j < ovector[0]; j++) {
-                            sb.append(input.charAt(j));
-                        }
-                        if (ovector[1] > lastEnd) {
-                            pcreStringAdj(sb, input, replacement, ovector);
-                            lastEnd = ovector[1];
-                        }
-                        offset = ovector[1];
-                        if (offset >= input.length() || !gsub) {
-                            break;
-                        }
-                        if (ovector[0] == ovector[1]) {
-                            sb.append(input.charAt(offset++));
-                        }
-                        eflag |= PCRERFFI.NOTBOL;
+                    int cflags = ignoreCase ? PCRERFFI.CASELESS : 0;
+                    long tables = RFFIFactory.getRFFI().getPCRERFFI().maketables();
+                    pcre = RFFIFactory.getRFFI().getPCRERFFI().compile(pattern, cflags, tables);
+                    if (pcre.result == 0) {
+                        // TODO output warning if pcre.errorMessage not NULL
+                        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_REGEXP, pattern);
                     }
-                    if (nmatch == 0) {
-                        value = input;
-                    } else {
-                        /* copy the tail */
-                        for (int j = offset; j < input.length(); j++) {
-                            sb.append(input.charAt(j));
-                        }
-                        value = sb.toString();
-                    }
+                    // TODO pcre_study for vectors > 10 ? (cf GnuR)
                 } else {
-                    replacement = convertGroups(replacement);
-                    if (gsub) {
-                        value = input.replaceAll(pattern, replacement);
-                    } else {
-                        value = input.replaceFirst(pattern, replacement);
-                    }
+                    pattern = RegExp.checkPreDefinedClasses(pattern);
                 }
-                result[i] = value;
+                String[] result = new String[len];
+                for (int i = 0; i < len; i++) {
+                    String input = vector.getDataAt(i);
+                    if (RRuntime.isNA(input)) {
+                        result[i] = input;
+                        continue;
+                    }
+
+                    String value;
+                    if (fixed) {
+                        if (gsub) {
+                            value = input.replace(pattern, replacement);
+                        } else {
+                            int ix = input.indexOf(pattern);
+                            value = ix < 0 ? pattern : input.substring(0, ix) + replacement + input.substring(ix + 1);
+                        }
+                    } else if (perl) {
+                        int offset = 0;
+                        int[] ovector = new int[30];
+                        int nmatch = 0;
+                        int eflag = 0;
+                        int lastEnd = -1;
+                        StringBuffer sb = new StringBuffer();
+                        while (RFFIFactory.getRFFI().getPCRERFFI().exec(pcre.result, 0, input, offset, eflag, ovector) >= 0) {
+                            nmatch++;
+                            for (int j = offset; j < ovector[0]; j++) {
+                                sb.append(input.charAt(j));
+                            }
+                            if (ovector[1] > lastEnd) {
+                                pcreStringAdj(sb, input, replacement, ovector);
+                                lastEnd = ovector[1];
+                            }
+                            offset = ovector[1];
+                            if (offset >= input.length() || !gsub) {
+                                break;
+                            }
+                            if (ovector[0] == ovector[1]) {
+                                sb.append(input.charAt(offset++));
+                            }
+                            eflag |= PCRERFFI.NOTBOL;
+                        }
+                        if (nmatch == 0) {
+                            value = input;
+                        } else {
+                            /* copy the tail */
+                            for (int j = offset; j < input.length(); j++) {
+                                sb.append(input.charAt(j));
+                            }
+                            value = sb.toString();
+                        }
+                    } else {
+                        replacement = convertGroups(replacement);
+
+                        if (gsub) {
+                            value = input.replaceAll(pattern, replacement);
+                        } else {
+                            value = input.replaceFirst(pattern, replacement);
+                        }
+                    }
+                    result[i] = value;
+                }
+                RStringVector ret = RDataFactory.createStringVector(result, vector.isComplete());
+                ret.copyAttributesFrom(attrProfiles, vector);
+                return ret;
+            } catch (PatternSyntaxException e) {
+                CompilerDirectives.transferToInterpreter();
+                throw new RInternalError(e, "internal error: %s", e.getMessage());
             }
-            RStringVector ret = RDataFactory.createStringVector(result, vector.isComplete());
-            ret.copyAttributesFrom(attrProfiles, vector);
-            return ret;
         }
 
         private static void pcreStringAdj(StringBuffer sb, String input, String repl, int[] ovector) {
