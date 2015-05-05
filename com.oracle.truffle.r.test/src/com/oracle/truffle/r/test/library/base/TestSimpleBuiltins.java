@@ -2880,7 +2880,7 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ list.files(\"test/r/simple/data/tree1\", recursive=TRUE, pattern=\".*dummy.*\") }");
         assertEval("{ list.files(\"test/r/simple/data/tree1\", recursive=TRUE, pattern=\"dummy\") }");
 
-        assertEval(Ignored.Unknown, "{ list.files(\"test/r/simple/data/tree1\", pattern=\"*.tx\") }");
+        assertEval("{ list.files(\"test/r/simple/data/tree1\", pattern=\"*.tx\") }");
     }
 
     @Test
@@ -3511,6 +3511,24 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{is.factor(c)}");
 
         assertEval(Output.ContainsError, "{x<-1;class(x)<-\"factor\";is.factor(x)}");
+    }
+
+    @Test
+    public void testIsFinite() {
+        assertEval("{ is.finite(1:100) }");
+        assertEval("{ is.finite(1:1) }");
+        assertEval("{ is.finite(c(1,2,3)) }");
+        assertEval("{ is.finite(c(1,2,Inf)) }");
+        assertEval("{ is.finite(c(1,2,-Inf)) }");
+        assertEval("{ is.finite(c(Inf,2,-Inf)) }");
+        assertEval("{ is.finite(c(Inf,NA,-Inf)) }");
+        assertEval("{ is.finite(1) }");
+        assertEval("{ is.finite(c(1L,2L,3L)) }");
+        assertEval("{ is.finite(c(1L,2L,NA)) }");
+        assertEval("{ is.finite(1L) }");
+        assertEval("{ is.finite(as.raw(c(1L,2L,3L))) }");
+        assertEval("{ is.finite(c(TRUE, FALSE)) }");
+        assertEval("{ is.finite(c(TRUE, FALSE, NA)) }");
     }
 
     @Test

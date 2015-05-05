@@ -466,7 +466,7 @@ public class RErrorHandling {
                 if (nWarnings < maxWarnings) {
                     Utils.writeStderr(String.format("There were %d warnings (use warnings() to see them)", nWarnings), true);
                 } else {
-                    Utils.writeStderr(String.format("There were %d or more warnings (use warnings() to see the first %d)", nWarnings), true);
+                    Utils.writeStderr(String.format("There were %d or more warnings (use warnings() to see the first %d)", nWarnings, maxWarnings), true);
                 }
             }
             Object[] wData = new Object[nWarnings];

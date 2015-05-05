@@ -115,7 +115,7 @@ public class TestrGenBuiltinmean extends TestBase {
 
     @Test
     public void testmean21() {
-        assertEval(Ignored.Unknown, "argv <- structure(list(x = c(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,     50), trim = 0.5), .Names = c('x', 'trim'));do.call('mean', argv)");
+        assertEval("argv <- structure(list(x = c(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,     50), trim = 0.5), .Names = c('x', 'trim'));do.call('mean', argv)");
     }
 
     @Test

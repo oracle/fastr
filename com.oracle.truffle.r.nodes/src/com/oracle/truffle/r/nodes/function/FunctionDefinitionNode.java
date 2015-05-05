@@ -171,6 +171,9 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
             verifyEnclosingAssumptions(vf);
             setupS3Slots(vf);
             return body.execute(vf);
+        } catch (NullPointerException | ArrayIndexOutOfBoundsException | AssertionError e) {
+            CompilerDirectives.transferToInterpreter();
+            throw new RInternalError(e, "internal error");
         } catch (ReturnException ex) {
             returnProfile.enter();
             MaterializedFrame returnFrame = ex.getReturnFrame();
