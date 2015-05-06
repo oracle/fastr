@@ -23,16 +23,11 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.runtime.RBuiltin;
-import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
-
-import java.io.File;
-import java.util.Random;
 
 import static com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import static com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -42,11 +37,6 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
 public abstract class TempFile extends RBuiltinNode {
     @CompilationFinal private int stringVectorsAmount;
 
-    private static final Random rand = new Random();
-
-    private static final String RANDOM_CHARACTERS = "0123456789abcdefghijklmnopqrstuvwxyz";
-    private static final int RANDOM_CHARACTERS_LENGTH = RANDOM_CHARACTERS.length();
-    private static final int RANDOM_LENGTH = 12; // as per GnuR
     private static final String INVALID_PATTERN = mkErrorMsg("filename");
     private static final String INVALID_TEMPDIR = mkErrorMsg("tempdir");
     private static final String INVALID_FILEEXT = mkErrorMsg("file extension");
@@ -59,7 +49,7 @@ public abstract class TempFile extends RBuiltinNode {
     @TruffleBoundary
     protected RStringVector tempfile(String pattern, RAbstractStringVector tempDir, String fileExt) {
         controlVisibility();
-        return RDataFactory.createStringVector(createNonExistedFilePath(pattern, tempDir.getDataAt(0), fileExt));
+        return RDataFactory.createStringVector(TempPathName.createNonExistingFilePath(pattern, tempDir.getDataAt(0), fileExt));
     }
 
     public static boolean tempDirL1(RAbstractStringVector tempDir) {
@@ -78,8 +68,6 @@ public abstract class TempFile extends RBuiltinNode {
         return RDataFactory.createStringVector(createTempFilesPaths(argVecs, maxL), true);
     }
 
-    @ExplodeLoop
-    // sure that array not empty
     @TruffleBoundary
     private int findMaxLengthIn(RStringVector[] stringVectors) {
         int maxLength = 0;
@@ -92,7 +80,6 @@ public abstract class TempFile extends RBuiltinNode {
         return maxLength;
     }
 
-    @ExplodeLoop
     @TruffleBoundary
     private void extendVectorsToSameLength(RStringVector[] stringVectors, int desiredLength) {
         for (int i = 0; i < stringVectorsAmount; i++) {
@@ -120,12 +107,11 @@ public abstract class TempFile extends RBuiltinNode {
     }
 
     @TruffleBoundary
-    @ExplodeLoop
     private static String[] createTempFilesPaths(RStringVector[] stringVectors, int pathsAmount) {
         // pathsAmount must be equals to length of vector. All vectors must be same length
         String[] paths = new String[pathsAmount];
         for (int i = 0; i < pathsAmount; i++) {
-            paths[i] = createNonExistedFilePath(stringVectors[0].getDataAt(i), stringVectors[1].getDataAt(i), stringVectors[2].getDataAt(i));
+            paths[i] = TempPathName.createNonExistingFilePath(stringVectors[0].getDataAt(i), stringVectors[1].getDataAt(i), stringVectors[2].getDataAt(i));
         }
         return paths;
     }
@@ -141,31 +127,6 @@ public abstract class TempFile extends RBuiltinNode {
             return RDataFactory.createStringVector((String) obj);
         }
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, msg);
-    }
-
-    @TruffleBoundary
-    private static String createNonExistedFilePath(String pattern, String tempDir, String fileExt) {
-        while (true) {
-            StringBuilder sb = new StringBuilder(tempDir);
-            sb.append(File.separatorChar);
-            sb.append(pattern);
-            appendRandomString(sb);
-            if (fileExt.length() > 0) {
-                sb.append(fileExt);
-            }
-            String path = sb.toString();
-            if (!new File(path).exists()) {
-                return path;
-            }
-        }
-    }
-
-    @ExplodeLoop
-    @TruffleBoundary
-    private static void appendRandomString(StringBuilder sb) {
-        for (int i = 0; i < RANDOM_LENGTH; i++) {
-            sb.append(RANDOM_CHARACTERS.charAt(rand.nextInt(RANDOM_CHARACTERS_LENGTH)));
-        }
     }
 
 }

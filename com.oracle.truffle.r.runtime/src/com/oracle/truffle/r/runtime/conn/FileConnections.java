@@ -41,8 +41,16 @@ public class FileConnections {
     public static class FileRConnection extends BasePathRConnection {
 
         public FileRConnection(String path, String modeString) throws IOException {
-            super(path, ConnectionClass.File, modeString);
+            super(checkTemp(path), ConnectionClass.File, modeString);
             openNonLazyConnection();
+        }
+
+        private static String checkTemp(String path) {
+            if (path.length() == 0) {
+                return TempPathName.createNonExistingFilePath("Rf", TempPathName.tempDirPath(), "");
+            } else {
+                return path;
+            }
         }
 
         @Override
@@ -63,6 +71,10 @@ public class FileConnections {
                     break;
                 case WriteBinary:
                     delegate = new FileWriteBinaryConnection(this, false);
+                    break;
+                case ReadWriteTrunc:
+                case ReadWriteTruncBinary:
+                    delegate = new FileReadWriteConnection(this);
                     break;
                 default:
                     throw RError.nyi((SourceSection) null, "open mode: " + getOpenMode());
@@ -288,6 +300,100 @@ public class FileConnections {
             outputStream.flush();
         }
 
+    }
+
+    private static class FileReadWriteConnection extends DelegateReadWriteRConnection implements ReadWriteHelper {
+        /*
+         * This does not fit in well as it does not support streams so most of the helpers are
+         * useless. Life would be a little better if we converted everything to channels, as it does
+         * support those. This is a minimal implementation to support one specific use in package
+         * installation (write only).
+         */
+        private final RandomAccessFile raf;
+
+        FileReadWriteConnection(FileRConnection base) throws IOException {
+            super(base);
+            OpenMode openMode = base.getOpenMode();
+            String rafMode = null;
+            switch (openMode.abstractOpenMode) {
+                case ReadWriteTrunc:
+                case ReadWriteTruncBinary:
+                    rafMode = "rw";
+                    break;
+                default:
+                    throw RInternalError.shouldNotReachHere();
+            }
+            raf = new RandomAccessFile(base.path, rafMode);
+        }
+
+        @Override
+        public String[] readLinesInternal(int n) throws IOException {
+            throw RInternalError.unimplemented();
+        }
+
+        @Override
+        public InputStream getInputStream() throws IOException {
+            throw RInternalError.unimplemented();
+        }
+
+        @Override
+        public OutputStream getOutputStream() throws IOException {
+            throw RInternalError.unimplemented();
+        }
+
+        @Override
+        public void closeAndDestroy() throws IOException {
+            base.closed = true;
+            close();
+        }
+
+        @Override
+        public void close() throws IOException {
+            raf.close();
+        }
+
+        @Override
+        public void writeLines(RAbstractStringVector lines, String sep) throws IOException {
+            for (int i = 0; i < lines.getLength(); i++) {
+                raf.writeChars(lines.getDataAt(i));
+                raf.writeChars(sep);
+            }
+
+        }
+
+        @Override
+        public void flush() throws IOException {
+        }
+
+        @Override
+        public void writeString(String s, boolean nl) throws IOException {
+            throw RInternalError.unimplemented();
+        }
+
+        @Override
+        public void writeChar(String s, int pad, String eos, boolean useBytes) throws IOException {
+            throw RInternalError.unimplemented();
+        }
+
+        @Override
+        public String readChar(int nchars, boolean useBytes) throws IOException {
+            throw RInternalError.unimplemented();
+        }
+
+        @Override
+        public void writeBin(ByteBuffer buffer) throws IOException {
+            throw RInternalError.unimplemented();
+        }
+
+        @Override
+        public int readBin(ByteBuffer buffer) throws IOException {
+            throw RInternalError.unimplemented();
+        }
+
+        @Override
+        public byte[] readBinChars() throws IOException {
+            throw RInternalError.unimplemented();
+        }
     }
 
 }

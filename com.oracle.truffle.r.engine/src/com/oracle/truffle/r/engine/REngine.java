@@ -123,7 +123,7 @@ public final class REngine implements RContext.Engine {
             RBuiltinPackages.loadBase(baseFrame, loadBase);
             RVersionInfo.initialize();
             RRNG.initialize();
-            TempDirPath.initialize();
+            TempPathName.initialize();
             RProfile.initialize();
             RGraphics.initialize();
             if (loadBase) {

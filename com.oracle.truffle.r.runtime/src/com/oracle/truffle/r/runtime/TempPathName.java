@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,7 +23,9 @@
 package com.oracle.truffle.r.runtime;
 
 import java.io.*;
+import java.util.*;
 
+import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.r.runtime.ffi.*;
 
 /**
@@ -31,9 +33,13 @@ import com.oracle.truffle.r.runtime.ffi.*;
  * As per the GnuR spec, the tempdir() directory is identified on startup.
  *
  */
-public class TempDirPath {
+public class TempPathName {
+    private static final String RANDOM_CHARACTERS = "0123456789abcdefghijklmnopqrstuvwxyz";
+    private static final int RANDOM_CHARACTERS_LENGTH = RANDOM_CHARACTERS.length();
+    private static final int RANDOM_LENGTH = 12; // as per GnuR
 
     private static String tempDirPath;
+    private static final Random rand = new Random();
 
     public static void initialize() {
         if (tempDirPath == null) {
@@ -69,4 +75,28 @@ public class TempDirPath {
     public static String tempDirPath() {
         return tempDirPath;
     }
+
+    @TruffleBoundary
+    public static String createNonExistingFilePath(String pattern, String tempDir, String fileExt) {
+        while (true) {
+            StringBuilder sb = new StringBuilder(tempDir);
+            sb.append(File.separatorChar);
+            sb.append(pattern);
+            appendRandomString(sb);
+            if (fileExt.length() > 0) {
+                sb.append(fileExt);
+            }
+            String path = sb.toString();
+            if (!new File(path).exists()) {
+                return path;
+            }
+        }
+    }
+
+    private static void appendRandomString(StringBuilder sb) {
+        for (int i = 0; i < RANDOM_LENGTH; i++) {
+            sb.append(RANDOM_CHARACTERS.charAt(rand.nextInt(RANDOM_CHARACTERS_LENGTH)));
+        }
+    }
+
 }
