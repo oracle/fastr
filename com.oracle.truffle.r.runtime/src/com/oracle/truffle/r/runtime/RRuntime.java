@@ -477,7 +477,7 @@ public class RRuntime {
     }
 
     public static byte double2logicalNoCheck(double d) {
-        return d == 0.0 ? LOGICAL_FALSE : LOGICAL_TRUE;
+        return Double.isNaN(d) ? LOGICAL_NA : d == 0.0 ? LOGICAL_FALSE : LOGICAL_TRUE;
     }
 
     public static byte double2logical(double d) {
