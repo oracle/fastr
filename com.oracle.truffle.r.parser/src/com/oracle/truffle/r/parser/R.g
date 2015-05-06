@@ -714,7 +714,6 @@ STRING
       )
     ;
 
-/* not supporting \v and \a */
 fragment ESCAPE [StringBuilder buf]
     : '\\'
       ( 't' { buf.append('\t'); }
