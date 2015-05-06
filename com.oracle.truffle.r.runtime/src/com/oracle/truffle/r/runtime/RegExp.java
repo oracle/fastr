@@ -22,9 +22,7 @@
  */
 package com.oracle.truffle.r.runtime;
 
-import java.util.regex.*;
-
-import com.oracle.truffle.api.CompilerDirectives.*;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
 /**
  * Support methods for regular expressions.
@@ -81,19 +79,23 @@ public class RegExp {
                     break;
                 case '[':
                     if (withinCharClass) {
-                        result = result.substring(0, i) + '\\' + result.substring(i);
-                        i++;
-                    } else {
-                        withinCharClass = true;
-                        if (i + 2 < result.length() && result.charAt(i + 1) == '[' && result.charAt(i + 2) == ':') {
+                        boolean predefined = false;
+                        if (i + 1 < result.length() && result.charAt(i + 1) == ':') {
                             for (Predefined pre : Predefined.values()) {
-                                if (pre.syntax.regionMatches(0, result, i + 1, pre.syntaxLength)) {
-                                    result = result.substring(0, i) + pre.replacement + result.substring(i + pre.syntaxLength + 2);
-                                    withinCharClass = false;
+                                if (pre.syntax.regionMatches(0, result, i, pre.syntaxLength)) {
+                                    result = result.substring(0, i) + pre.replacement + result.substring(i + pre.syntaxLength);
+                                    i += pre.replacement.length() - 1;
+                                    predefined = true;
                                     break;
                                 }
                             }
                         }
+                        if (!predefined) {
+                            result = result.substring(0, i) + '\\' + result.substring(i);
+                            i++;
+                        }
+                    } else {
+                        withinCharClass = true;
                     }
                     break;
                 case ']':
