@@ -57,11 +57,6 @@ public class TestBase {
             buffer.append(s);
         }
 
-        @TruffleBoundary
-        public void printf(String format, Object... args) {
-            buffer.append(String.format(format, args));
-        }
-
         public String readLine() {
             return null;
         }
@@ -100,7 +95,5 @@ public class TestBase {
         public int getWidth() {
             return RContext.CONSOLE_WIDTH;
         }
-
     }
-
 }

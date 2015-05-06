@@ -53,11 +53,6 @@ public class JLineConsoleHandler implements RContext.ConsoleHandler {
     }
 
     @TruffleBoundary
-    public void printf(String format, Object... args) {
-        printWriter.format(format, args);
-    }
-
-    @TruffleBoundary
     public String readLine() {
         try {
             return console.readLine();
