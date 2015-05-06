@@ -63,6 +63,8 @@ public class ParserGeneration {
         "allow NULL= in switch",
         "support NA_complex_",
         "simplified unary and binary operations",
-        "allow unary ! in normal expressions"
+        "allow unary ! in normal expressions",
+        "added \\a, \\v and \\` escape sequences",
+        "added octal escape sequences for strings"
     };
 }

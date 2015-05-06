@@ -2824,7 +2824,7 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval(Ignored.Unknown, "{ f <- function() 23 ; deparse(f) }");
         assertEval(Ignored.Unknown, "{ deparse(nrow) }");
         // should deparse as structure(...
-        assertEval(Ignored.Unknown, "{ e <- new.env(); assign(\"a\", 1, e); assign(\"b\", 2, e); le <- as.list(e); deparse(le)}");
+        assertEval("{ e <- new.env(); assign(\"a\", 1, e); assign(\"b\", 2, e); le <- as.list(e); deparse(le)}");
     }
 
     @Test

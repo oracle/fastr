@@ -14,7 +14,8 @@ package com.oracle.truffle.r.runtime;
 import java.text.*;
 import java.util.*;
 
-import com.oracle.truffle.api.CompilerDirectives.*;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
@@ -198,22 +199,17 @@ public class RDeparse {
         private boolean active = true;
         @SuppressWarnings("unused") private int isS4;
         private boolean changed;
-        /**
-         * This is set when deparsing a deserialized CLOSXP to prevent quoting that would not parse.
-         */
-        private boolean parseable;
 
-        private State(int widthCutOff, boolean backtick, int maxlines, int opts, boolean needVector, boolean parseable) {
+        private State(int widthCutOff, boolean backtick, int maxlines, int opts, boolean needVector) {
             this.cutoff = widthCutOff;
             this.backtick = backtick;
             this.maxlines = maxlines == -1 ? Integer.MAX_VALUE : maxlines;
-            this.parseable = parseable;
             this.opts = opts;
             lines = needVector ? new ArrayList<>() : null;
         }
 
         public static State createPrintableState() {
-            return new RDeparse.State(RDeparse.MAX_Cutoff, false, -1, 0, false, false);
+            return new RDeparse.State(RDeparse.MAX_Cutoff, false, -1, 0, false);
         }
 
         private void preAppend() {
@@ -333,7 +329,7 @@ public class RDeparse {
      */
     @TruffleBoundary
     public static String deparse(RPairList pl) {
-        State state = new State(80, true, -1, 0, false, true);
+        State state = new State(80, true, -1, 0, false);
         return deparse2buff(state, pl).sb.toString();
     }
 
@@ -353,7 +349,7 @@ public class RDeparse {
      */
     @TruffleBoundary
     public static String[] deparse(Object expr, int widthCutoff, boolean backtick, int opts, int nlines) {
-        State state = new State(widthCutoff, backtick, nlines, opts, true, false);
+        State state = new State(widthCutoff, backtick, nlines, opts, true);
         deparse2buff(state, expr);
         state.writeline();
         String[] data = new String[state.lines.size()];
@@ -417,9 +413,9 @@ public class RDeparse {
                 RFunction f = (RFunction) obj;
                 if (f.isBuiltin()) {
                     state.append(".Primitive(");
-                    state.append(state.parseable ? "\"" : "\\\"");
+                    state.append("\"");
                     state.append(f.getName());
-                    state.append(state.parseable ? "\")" : "\\\")");
+                    state.append("\")");
                 } else {
                     RContext.getRASTHelper().deparse(state, f);
                 }
@@ -844,13 +840,13 @@ public class RDeparse {
 
     /**
      * Check for whether we need to parenthesize a caller. The unevaluated ones are tricky: We want
-     * 
+     *
      * <pre>
      *  x$f(z)
      *  x[n](z)
      *  base::mean(x)
      * </pre>
-     * 
+     *
      * but <pre< (f+g)(z) (function(x) 1)(x) </pre> etc.
      */
     private static boolean parenthesizeCaller(Object s) {

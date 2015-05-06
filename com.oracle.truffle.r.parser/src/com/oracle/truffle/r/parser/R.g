@@ -719,12 +719,18 @@ fragment ESCAPE [StringBuilder buf]
     : '\\'
       ( 't' { buf.append('\t'); }
       | 'n' { buf.append('\n'); }
+      | 'a' { buf.appendCodePoint(7); }
+      | 'v' { buf.appendCodePoint(11); }
       | 'r' { buf.append('\r'); }
       | 'b' { buf.append('\b'); }
       | 'f' { buf.append('\f'); }
       | '"' { buf.append('\"'); }
+      | '`' { buf.append('`'); }
       | '\'' { buf.append('\''); }
       | '\\' { buf.append('\\'); }
+      | a = OCT_DIGIT b = OCT_DIGIT c = OCT_DIGIT { buf.append(ParseUtil.octChar($a.text, $b.text, $c.text)); }
+      | a = OCT_DIGIT b = OCT_DIGIT { buf.append(ParseUtil.octChar($a.text, $b.text)); }
+      | a = OCT_DIGIT { buf.append(ParseUtil.octChar($a.text)); }
       | 'x' a = HEX_DIGIT b = HEX_DIGIT { buf.append(ParseUtil.hexChar($a.text, $b.text)); }
       | 'u' a = HEX_DIGIT b = HEX_DIGIT c = HEX_DIGIT d = HEX_DIGIT { buf.append(ParseUtil.hexChar($a.text, $b.text, $c.text, $d.text)); }
       | 'U' a = HEX_DIGIT b = HEX_DIGIT c = HEX_DIGIT d = HEX_DIGIT e = HEX_DIGIT f = HEX_DIGIT g = HEX_DIGIT h = HEX_DIGIT { buf.append(ParseUtil.hexChar($a.text, $b.text, $c.text, $d.text, $e.text, $f.text, $g.text, $h.text)); }
@@ -756,6 +762,7 @@ fragment ESC_SEQ
 fragment UNICODE_ESC : '\\' 'u' HEX_DIGIT HEX_DIGIT HEX_DIGIT HEX_DIGIT ;
 fragment HEX_ESC     : '\\x' HEX_DIGIT HEX_DIGIT? ;
 fragment HEX_DIGIT   : ('0'..'9'|'a'..'f'|'A'..'F') ;
+fragment OCT_DIGIT   : ('0'..'7') ;
 
 fragment OCTAL_ESC
     : '\\' ('0'..'3') ('0'..'7') ('0'..'7')

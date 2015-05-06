@@ -2,7 +2,7 @@
  * This material is distributed under the GNU General Public License
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
- * 
+ *
  * Copyright (c) 2014, Purdue University
  * Copyright (c) 2014, Oracle and/or its affiliates
  *
@@ -29,7 +29,7 @@ public class TestrGenBuiltingettext extends TestBase {
 
     @Test
     public void testgettext3() {
-        assertEval(Ignored.Unknown, "argv <- list(NULL, 'The following object is masked from ‘package:base’:\\n\\n    det\\n'); .Internal(gettext(argv[[1]], argv[[2]]))");
+        assertEval("argv <- list(NULL, 'The following object is masked from ‘package:base’:\\n\\n    det\\n'); .Internal(gettext(argv[[1]], argv[[2]]))");
     }
 
     @Test

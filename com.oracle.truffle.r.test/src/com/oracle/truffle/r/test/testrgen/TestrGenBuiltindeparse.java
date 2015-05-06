@@ -80,7 +80,7 @@ public class TestrGenBuiltindeparse extends TestBase {
 
     @Test
     public void testdeparse13() {
-        assertEval(Ignored.Unknown, "argv <- list(quote(read.table('foo1')), 60L, TRUE, 69, -1L); .Internal(deparse(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
+        assertEval("argv <- list(quote(read.table('foo1')), 60L, TRUE, 69, -1L); .Internal(deparse(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
     }
 
     @Test
@@ -95,7 +95,7 @@ public class TestrGenBuiltindeparse extends TestBase {
 
     @Test
     public void testdeparse16() {
-        assertEval(Ignored.Unknown, "argv <- list('coef.corStruct', 60L, FALSE, 69, -1L); .Internal(deparse(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
+        assertEval("argv <- list('coef.corStruct', 60L, FALSE, 69, -1L); .Internal(deparse(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
     }
 
     @Test
@@ -132,8 +132,7 @@ public class TestrGenBuiltindeparse extends TestBase {
 
     @Test
     public void testdeparse23() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(quote(cor(Z[, FALSE], use = 'pairwise.complete.obs', method = 'kendall')), 60L, TRUE, 69, -1L); .Internal(deparse(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
+        assertEval("argv <- list(quote(cor(Z[, FALSE], use = 'pairwise.complete.obs', method = 'kendall')), 60L, TRUE, 69, -1L); .Internal(deparse(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
     }
 
     @Test
@@ -155,17 +154,17 @@ public class TestrGenBuiltindeparse extends TestBase {
 
     @Test
     public void testdeparse27() {
-        assertEval(Ignored.Unknown, "argv <- list('\\t *ERROR* !!\\n', 60L, FALSE, 69, -1L); .Internal(deparse(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
+        assertEval("argv <- list('\\t *ERROR* !!\\n', 60L, FALSE, 69, -1L); .Internal(deparse(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
     }
 
     @Test
     public void testdeparse28() {
-        assertEval(Ignored.Unknown, "argv <- list('\\n\\f\\n', 60L, FALSE, 69, -1L); .Internal(deparse(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
+        assertEval("argv <- list('\\n\\f\\n', 60L, FALSE, 69, -1L); .Internal(deparse(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
     }
 
     @Test
     public void testdeparse29() {
-        assertEval(Ignored.Unknown, "argv <- list(' +\\\\.', 60L, FALSE, 69, -1L); .Internal(deparse(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
+        assertEval("argv <- list(' +\\\\.', 60L, FALSE, 69, -1L); .Internal(deparse(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
     }
 
     @Test

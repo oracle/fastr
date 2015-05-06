@@ -679,7 +679,54 @@ public class RRuntime {
 
     @TruffleBoundary
     public static String quoteString(String value) {
-        return isNA(value) ? STRING_NA : "\"" + value + "\"";
+        if (isNA(value)) {
+            return STRING_NA;
+        }
+        StringBuilder str = new StringBuilder(value.length() + 2);
+        str.append('\"');
+        int offset = 0;
+        while (offset < value.length()) {
+            int codepoint = value.codePointAt(offset);
+            switch (codepoint) {
+                case '\n':
+                    str.append("\\n");
+                    break;
+                case '\r':
+                    str.append("\\r");
+                    break;
+                case '\t':
+                    str.append("\\t");
+                    break;
+                case '\b':
+                    str.append("\\b");
+                    break;
+                case 7:
+                    str.append("\\a");
+                    break;
+                case '\f':
+                    str.append("\\f");
+                    break;
+                case 11:
+                    str.append("\\v");
+                    break;
+                case '\\':
+                    str.append("\\\\");
+                    break;
+                case '"':
+                    str.append("\\\"");
+                    break;
+                default:
+                    if (codepoint < 32) {
+                        str.append("\\0").append(codepoint / 8).append(codepoint % 8);
+                    } else {
+                        str.appendCodePoint(codepoint);
+                    }
+                    break;
+            }
+            offset += Character.charCount(codepoint);
+        }
+        str.append('\"');
+        return str.toString();
     }
 
     public static FrameSlotKind getSlotKind(Object value) {

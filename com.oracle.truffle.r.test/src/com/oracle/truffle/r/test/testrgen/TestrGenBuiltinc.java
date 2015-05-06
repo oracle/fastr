@@ -193,7 +193,7 @@ public class TestrGenBuiltinc extends TestBase {
 
     @Test
     public void testc33() {
-        assertEval(Ignored.Unknown, "argv <- list(list('*', ' ', 'skipping installation test', '\\n'), sep = '');c(argv[[1]],argv[[2]]);");
+        assertEval("argv <- list(list('*', ' ', 'skipping installation test', '\\n'), sep = '');c(argv[[1]],argv[[2]]);");
     }
 
     @Test
@@ -287,8 +287,7 @@ public class TestrGenBuiltinc extends TestBase {
 
     @Test
     public void testc51() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(list('1: In matrix(1:7, 3, 4) :\\n  data length [7] is not a sub-multiple or multiple of the number of rows [3]'), list(), fill = TRUE);c(argv[[1]],argv[[2]],argv[[3]]);");
+        assertEval("argv <- list(list('1: In matrix(1:7, 3, 4) :\\n  data length [7] is not a sub-multiple or multiple of the number of rows [3]'), list(), fill = TRUE);c(argv[[1]],argv[[2]],argv[[3]]);");
     }
 
     @Test

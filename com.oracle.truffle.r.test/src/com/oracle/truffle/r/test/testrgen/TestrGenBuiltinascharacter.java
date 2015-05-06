@@ -86,7 +86,7 @@ public class TestrGenBuiltinascharacter extends TestBase {
 
     @Test
     public void testascharacter14() {
-        assertEval(Ignored.Unknown, "argv <- list(structure('Estimates a probability density function,  \\n', Rd_tag = 'TEXT'));as.character(argv[[1]]);");
+        assertEval("argv <- list(structure('Estimates a probability density function,  \\n', Rd_tag = 'TEXT'));as.character(argv[[1]]);");
     }
 
     @Test
