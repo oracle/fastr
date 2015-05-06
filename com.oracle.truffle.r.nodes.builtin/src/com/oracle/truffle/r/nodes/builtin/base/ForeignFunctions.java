@@ -904,7 +904,12 @@ public class ForeignFunctions {
 
     }
 
-    @RBuiltin(name = ".External2", kind = RBuiltinKind.PRIMITIVE, parameterNames = {".NAME", "..."})
+    /*
+     * Fully qualified class necessary otherwise javac cannot find the symbol, related to nested
+     * ParseRd class.
+     */
+
+    @com.oracle.truffle.r.runtime.RBuiltin(name = ".External2", kind = RBuiltinKind.PRIMITIVE, parameterNames = {".NAME", "..."})
     public abstract static class DotExternal2 extends CastAdapter {
 
         private final BranchProfile errorProfile = BranchProfile.create();
