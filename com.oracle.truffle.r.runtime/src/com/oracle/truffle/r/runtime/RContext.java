@@ -302,7 +302,7 @@ public final class RContext extends ExecutionContext {
     /**
      * Although there is only ever one instance of a {@code RContext}, the following state fields
      * are runtime specific and must be set explicitly.
-     * 
+     *
      * @param ignoreVisibility TODO
      */
     public static RContext setRuntimeState(Engine engine, String[] commandArgs, ConsoleHandler consoleHandler, RASTHelper rLanguageHelper, boolean interactive, boolean ignoreVisibility) {

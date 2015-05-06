@@ -23,46 +23,49 @@
 package com.oracle.truffle.r.shell;
 
 import java.io.*;
+import java.util.*;
 
-import jline.console.*;
-
-import com.oracle.truffle.api.CompilerDirectives.*;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.*;
 
-public class JLineConsoleHandler implements RContext.ConsoleHandler {
-    private final ConsoleReader console;
-    private final boolean isInteractive;
-    private final PrintWriter printWriter;
+public class StringConsoleHandler implements RContext.ConsoleHandler {
+    private final PrintStream output;
+    private final List<String> lines;
+    private String prompt;
+    private int currentLine;
 
-    public JLineConsoleHandler(boolean isInteractive, ConsoleReader console) {
-        this.console = console;
-        printWriter = new PrintWriter(console.getOutput());
-        this.isInteractive = isInteractive;
+    public StringConsoleHandler(List<String> lines, PrintStream output) {
+        this.lines = lines;
+        this.output = output;
     }
 
     @TruffleBoundary
     public void println(String s) {
-        printWriter.println(s);
-        printWriter.flush();
+        output.println(s);
+        output.flush();
     }
 
     @TruffleBoundary
     public void print(String s) {
-        printWriter.print(s);
-        printWriter.flush();
+        output.print(s);
+        output.flush();
     }
 
     @TruffleBoundary
     public String readLine() {
-        try {
-            return console.readLine();
-        } catch (IOException ex) {
-            throw Utils.fail("unexpected error reading console input");
+        if (currentLine < lines.size()) {
+            if (prompt != null) {
+                output.print(prompt);
+                output.println(lines.get(currentLine));
+            }
+            return lines.get(currentLine++);
+        } else {
+            return null;
         }
     }
 
     public boolean isInteractive() {
-        return isInteractive;
+        return false;
     }
 
     @TruffleBoundary
@@ -80,12 +83,12 @@ public class JLineConsoleHandler implements RContext.ConsoleHandler {
 
     @TruffleBoundary
     public String getPrompt() {
-        return console.getPrompt();
+        return prompt;
     }
 
     @TruffleBoundary
     public void setPrompt(String prompt) {
-        console.setPrompt(prompt);
+        this.prompt = prompt;
     }
 
     public int getWidth() {

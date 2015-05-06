@@ -40,7 +40,7 @@ public class TestBase {
         REnvVars.initialize();
         ROptions.initialize();
         ROptions.setValueNoCheck("defaultPackages", RDataFactory.createStringVector(new String[]{}, true));
-        REngine.initialize(new String[0], new ConsoleHandler(), false, true, false);
+        REngine.initialize(new String[0], new ConsoleHandler(), false, false);
     }
 
     private static class ConsoleHandler implements RContext.ConsoleHandler {
