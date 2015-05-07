@@ -80,7 +80,7 @@ public abstract class CallMatcherNode extends Node {
 
         assert resultSignature != null;
         ArgumentsSignature formalSignature = ArgumentMatcher.getFunctionSignature(function);
-        MatchPermutation permutation = ArgumentMatcher.matchArguments(resultSignature, formalSignature, source, forNextMethod);
+        MatchPermutation permutation = ArgumentMatcher.matchArguments(resultSignature, formalSignature, source, forNextMethod, function.getRBuiltin());
 
         return new CallMatcherCachedNode(suppliedSignature, varArgSignatures, function, preparePermutation, permutation, forNextMethod, argsAreEvaluated, next);
     }
