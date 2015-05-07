@@ -97,6 +97,29 @@ public class RASTDeparse {
                 }
                 break;
 
+            case SUBSET:
+                argValues[0].deparse(state);
+                state.append(func.op == "[" ? "[" : "[[");
+                ArgumentsSignature signature = args.getSignature();
+                // similar to ArgumentsNode.deparse()
+                for (int i = 1; i < argValues.length; i++) {
+                    RNode argument = argValues[i];
+                    String name = signature.getName(i);
+                    if (name != null) {
+                        state.append(name);
+                        state.append(" = ");
+                    }
+                    if (argument != null) {
+                        // e.g. not f(, foo)
+                        argument.deparse(state);
+                    }
+                    if (i != argValues.length - 1) {
+                        state.append(", ");
+                    }
+                }
+                state.append(func.op == "[" ? "]" : "]]");
+
+                break;
             default:
                 assert false;
         }
