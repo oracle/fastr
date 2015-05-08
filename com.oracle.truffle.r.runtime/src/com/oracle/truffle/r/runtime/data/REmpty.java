@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,42 +20,30 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.parser.ast;
+package com.oracle.truffle.r.runtime.data;
 
-import java.util.*;
+import com.oracle.truffle.r.runtime.*;
 
-import com.oracle.truffle.api.source.*;
+/**
+ * See singleton {@link #instance}.
+ */
+public final class REmpty extends RScalar {
 
-public final class ArgNode extends ASTNode {
+    /**
+     * This object denotes a missing argument in a function call.
+     */
+    public static final REmpty instance = new REmpty();
 
-    private final String name;
-    ASTNode value;
-
-    private ArgNode(SourceSection source, String name, ASTNode value) {
-        super(source);
-        this.name = name;
-        this.value = value;
-    }
-
-    public static ArgNode create(SourceSection source, String name, ASTNode value) {
-        return new ArgNode(source, name, value);
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public ASTNode getValue() {
-        return value;
+    private REmpty() {
     }
 
     @Override
-    public <R> R accept(Visitor<R> v) {
-        return v.visit(this);
+    public RType getRType() {
+        return RType.Null;
     }
 
     @Override
-    public <R> List<R> visitAll(Visitor<R> v) {
-        return Arrays.asList(getValue().accept(v));
+    public String toString() {
+        return "empty";
     }
 }

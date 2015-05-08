@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,27 +26,15 @@ import java.util.*;
 
 import com.oracle.truffle.api.source.*;
 
-public final class ArgNode extends ASTNode {
+public final class Missing extends ASTNode {
 
-    private final String name;
-    ASTNode value;
-
-    private ArgNode(SourceSection source, String name, ASTNode value) {
+    public Missing(SourceSection source) {
         super(source);
-        this.name = name;
-        this.value = value;
     }
 
-    public static ArgNode create(SourceSection source, String name, ASTNode value) {
-        return new ArgNode(source, name, value);
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public ASTNode getValue() {
-        return value;
+    @Override
+    public <R> List<R> visitAll(Visitor<R> v) {
+        return Collections.emptyList();
     }
 
     @Override
@@ -54,8 +42,4 @@ public final class ArgNode extends ASTNode {
         return v.visit(this);
     }
 
-    @Override
-    public <R> List<R> visitAll(Visitor<R> v) {
-        return Arrays.asList(getValue().accept(v));
-    }
 }

@@ -1091,6 +1091,8 @@ public class RSerialize {
 // if (item == R_UnboundValue) return UNBOUNDVALUE_SXP;
             if (item == RMissing.instance)
                 return SEXPTYPE.MISSINGARG_SXP;
+            if (item == REmpty.instance)
+                return SEXPTYPE.MISSINGARG_SXP;
             if (item == REnvironment.baseNamespaceEnv())
                 return SEXPTYPE.BASENAMESPACE_SXP;
             return null;

@@ -372,6 +372,7 @@ public class RDeparse {
                 break;
 
             case MISSINGARG_SXP:
+            case EMPTYARG_SXP:
                 break;
 
             case SYMSXP: {
