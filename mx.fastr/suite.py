@@ -21,7 +21,7 @@
 # questions.
 #
 suite = {
-  "mxversion" : "3.0.0",
+  "mxversion" : "3.1.0",
   "name" : "fastr",
   "libraries" : {
     "GNUR" : {
