@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import java.util.*;
 
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
@@ -257,16 +258,19 @@ public class InfixEmulationFunctions {
     public abstract static class AccessArraySubsetBuiltin extends AccessArraySubsetBuiltinBase {
 
         private static final ArgumentsSignature SIGNATURE = ArgumentsSignature.get("", "", "drop");
+        private static final ArgumentsSignature SIGNATURE_NODROP = ArgumentsSignature.get("", "");
 
         private static final String NAME = "[";
 
         @Child private UseMethodInternalNode dcn;
+        @CompilationFinal boolean noDrop;
 
         @Specialization(guards = {"!noInd(inds)", "isObject(frame, x)"})
         protected Object getObj(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames inds, RAbstractLogicalVector dropVec) {
-            if (dcn == null) {
+            if (dcn == null || noDrop) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 dcn = insert(new UseMethodInternalNode(NAME, SIGNATURE));
+                noDrop = false;
             }
             try {
                 return dcn.execute(frame, x.getClassHierarchy(), new Object[]{x, inds, dropVec});
@@ -282,12 +286,13 @@ public class InfixEmulationFunctions {
 
         @Specialization(guards = {"!noInd(inds)", "isObject(frame, x)"})
         protected Object getObj(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames inds, RMissing dropVec) {
-            if (dcn == null) {
+            if (dcn == null || !noDrop) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                dcn = insert(new UseMethodInternalNode(NAME, SIGNATURE));
+                dcn = insert(new UseMethodInternalNode(NAME, SIGNATURE_NODROP));
+                noDrop = true;
             }
             try {
-                return dcn.execute(frame, x.getClassHierarchy(), new Object[]{x, inds, dropVec});
+                return dcn.execute(frame, x.getClassHierarchy(), new Object[]{x, inds});
             } catch (S3FunctionLookupNode.NoGenericMethodException e) {
                 return access(frame, x, RRuntime.LOGICAL_FALSE, inds, dropVec, IS_SUBSET);
             }
