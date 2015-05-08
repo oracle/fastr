@@ -30,6 +30,9 @@ import com.oracle.truffle.r.runtime.data.*;
  * Parts transcribed from GnuR deparse.c
  */
 public class RASTDeparse {
+
+    private static final String SQUARE = "[";
+
     public static void deparse(State state, RLanguage rl) {
         RSyntaxNode node = (RSyntaxNode) rl.getRep();
         node.deparse(state);
@@ -99,7 +102,7 @@ public class RASTDeparse {
 
             case SUBSET:
                 argValues[0].deparse(state);
-                state.append(func.op == "[" ? "[" : "[[");
+                state.append(func.op == SQUARE ? "[" : "[[");
                 ArgumentsSignature signature = args.getSignature();
                 // similar to ArgumentsNode.deparse()
                 for (int i = 1; i < argValues.length; i++) {
@@ -117,7 +120,7 @@ public class RASTDeparse {
                         state.append(", ");
                     }
                 }
-                state.append(func.op == "[" ? "]" : "]]");
+                state.append(func.op == SQUARE ? "]" : "]]");
 
                 break;
             default:
