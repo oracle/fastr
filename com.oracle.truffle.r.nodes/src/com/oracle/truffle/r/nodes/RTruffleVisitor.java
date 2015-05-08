@@ -126,7 +126,7 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
                 return GroupDispatchNode.create(functionName, aCallArgNode, callSource);
             }
             // create a SourceSection for the ReadVariableNode
-            SourceSection varSource = callSource.getSource().createSection(callSource.getIdentifier(), callSource.getCharIndex(), functionName.length());
+            SourceSection varSource = null;
             return RCallNode.createCall(callSource, ReadVariableNode.createForced(varSource, functionName, RType.Function), aCallArgNode, callParam);
         } else {
             RNode lhs = call.getLhsNode().accept(this);
