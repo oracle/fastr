@@ -143,11 +143,11 @@ public class ArgumentMatcher {
         return new InlinedArguments(wrappedArgs, suppliedArgs.getSignature());
     }
 
-    public static MatchPermutation matchArguments(ArgumentsSignature suppliedSignature, ArgumentsSignature formalSignature, SourceSection callSrc, boolean forNextMethod) {
+    public static MatchPermutation matchArguments(ArgumentsSignature suppliedSignature, ArgumentsSignature formalSignature, SourceSection callSrc, boolean forNextMethod, RBuiltinDescriptor builtin) {
         CompilerAsserts.neverPartOfCompilation();
         MatchPermutation match = permuteArguments(suppliedSignature, formalSignature, callSrc, null, forNextMethod, index -> {
             throw RInternalError.unimplemented("S3Dispatch should not have arg length mismatch");
-        }, index -> suppliedSignature.getName(index));
+        }, index -> suppliedSignature.getName(index), builtin);
         return match;
     }
 
@@ -213,7 +213,7 @@ public class ArgumentMatcher {
         FormalArguments formals = rootNode.getFormalArguments();
         MatchPermutation match = permuteArguments(evaluatedArgs.getSignature(), formals.getSignature(), callSrc, null, forNextMethod, index -> {
             throw RInternalError.unimplemented("S3Dispatch should not have arg length mismatch");
-        }, index -> evaluatedArgs.getSignature().getName(index));
+        }, index -> evaluatedArgs.getSignature().getName(index), null);
 
         Object[] evaledArgs = new Object[match.resultPermutation.length];
 
@@ -284,7 +284,7 @@ public class ArgumentMatcher {
 
         // Rearrange arguments
         MatchPermutation match = permuteArguments(suppliedSignature, formals.getSignature(), callSrc, argsSrc, false,
-                        index -> ArgumentsSignature.VARARG_NAME.equals(RMissingHelper.unwrapName(suppliedArgs[index])), index -> getErrorForArgument(suppliedArgs, index));
+                        index -> ArgumentsSignature.VARARG_NAME.equals(RMissingHelper.unwrapName(suppliedArgs[index])), index -> getErrorForArgument(suppliedArgs, index), function.getRBuiltin());
 
         RNode[] resArgs = new RNode[match.resultPermutation.length];
 
@@ -391,7 +391,13 @@ public class ArgumentMatcher {
 
     @TruffleBoundary
     private static RNode wrapMatched(FormalArguments formals, RBuiltinDescriptor builtin, ClosureCache closureCache, RNode suppliedArg, int formalIndex, boolean noOpt) {
-        // Create promise
+        // Create promise, unless it's the empty value
+        if (suppliedArg instanceof ConstantNode) {
+            ConstantNode a = (ConstantNode) suppliedArg;
+            if (a.getValue() == REmpty.instance) {
+                return a;
+            }
+        }
         if (shouldInlineArgument(builtin, formalIndex)) {
             return PromiseNode.createInlined(suppliedArg.getSourceSection(), suppliedArg, formals.getInternalDefaultArgumentAt(formalIndex));
         } else {
@@ -424,12 +430,13 @@ public class ArgumentMatcher {
      * @param callSrc The source of the function call currently executed
      * @param argsSrc The source code encapsulating the arguments, for debugging purposes
      * @param forNextMethod matching when evaluating NextMethod
+     * @param builtin builtin function descriptor (or null if not a builtin)
      *
      * @return An array of type <T> with the supplied arguments in the correct order
      */
     @TruffleBoundary
     private static MatchPermutation permuteArguments(ArgumentsSignature signature, ArgumentsSignature formalSignature, SourceSection callSrc, SourceSection argsSrc, boolean forNextMethod,
-                    IntPredicate isVarSuppliedVarargs, IntFunction<String> errorString) {
+                    IntPredicate isVarSuppliedVarargs, IntFunction<String> errorString, RBuiltinDescriptor builtin) {
         // assert Arrays.stream(suppliedNames).allMatch(name -> name == null || !name.isEmpty());
 
         // Preparations
@@ -448,7 +455,7 @@ public class ArgumentMatcher {
 
             // Search for argument name inside formal arguments
             int formalIndex = findParameterPosition(formalSignature, signature.getName(suppliedIndex), resultPermutation, suppliedIndex, hasVarArgs, callSrc, argsSrc, varArgIndex, forNextMethod,
-                            errorString);
+                            errorString, builtin);
             if (formalIndex != MatchPermutation.UNMATCHED) {
                 resultPermutation[formalIndex] = suppliedIndex;
                 matchedSuppliedArgs[suppliedIndex] = true;
@@ -499,12 +506,15 @@ public class ArgumentMatcher {
             int pos = 0;
             for (suppliedIndex = 0; suppliedIndex < signature.getLength(); suppliedIndex++) {
                 if (!matchedSuppliedArgs[suppliedIndex]) {
+                    // match only non-missing arguments to vararg
                     matchedSuppliedArgs[suppliedIndex] = true;
                     varArgsPermutation[pos] = suppliedIndex;
                     namesArray[pos] = signature.getName(suppliedIndex);
                     pos++;
                 }
             }
+            varArgsPermutation = Arrays.copyOf(varArgsPermutation, pos);
+            namesArray = Arrays.copyOf(namesArray, pos);
 
             resultPermutation[varArgIndex] = MatchPermutation.VARARGS;
             return new MatchPermutation(resultPermutation, varArgsPermutation, ArgumentsSignature.get(namesArray));
@@ -563,7 +573,7 @@ public class ArgumentMatcher {
      *         argument has been matched before
      */
     private static <T> int findParameterPosition(ArgumentsSignature formalsSignature, String suppliedName, int[] resultPermutation, int suppliedIndex, boolean hasVarArgs, SourceSection callSrc,
-                    SourceSection argsSrc, int varArgIndex, boolean forNextMethod, IntFunction<String> errorString) {
+                    SourceSection argsSrc, int varArgIndex, boolean forNextMethod, IntFunction<String> errorString, RBuiltinDescriptor builtin) {
         int found = MatchPermutation.UNMATCHED;
         for (int i = 0; i < formalsSignature.getLength(); i++) {
             String formalName = formalsSignature.getName(i);
@@ -574,8 +584,15 @@ public class ArgumentMatcher {
             if (formalName.equals(suppliedName)) {
                 found = i;
                 if (resultPermutation[found] != MatchPermutation.UNMATCHED) {
-                    // Has already been matched: Error!
-                    throw RError.error(argsSrc, RError.Message.FORMAL_MATCHED_MULTIPLE, formalName);
+                    if (builtin != null && builtin.getKind() == RBuiltinKind.PRIMITIVE && hasVarArgs) {
+                        // for primitives, the first argument is matched, and the others are folded
+                        // into varargs, for example:
+                        // x<-1:64; dim(x)<-c(4,4,2,2); x[1,drop=FALSE,1,drop=TRUE,-1]
+                        found = MatchPermutation.UNMATCHED;
+                    } else {
+                        // Has already been matched: Error!
+                        throw RError.error(argsSrc, RError.Message.FORMAL_MATCHED_MULTIPLE, formalName);
+                    }
                 }
                 break;
             } else if (!suppliedName.isEmpty() && formalName.startsWith(suppliedName) &&

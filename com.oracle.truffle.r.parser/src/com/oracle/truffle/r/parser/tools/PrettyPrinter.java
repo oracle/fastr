@@ -219,15 +219,6 @@ public class PrettyPrinter extends BasicVisitor<Void> {
     }
 
     @Override
-    public Void visit(AccessVector n) {
-        print(n.getVector());
-        print(n.isSubset() ? "[" : "[[");
-        print(n.getArguments(), true);
-        print(n.isSubset() ? "]" : "]]");
-        return null;
-    }
-
-    @Override
     public Void visit(UpdateVector n) {
         print(n.getVector());
         print(" <- ");

@@ -14,13 +14,13 @@ import java.util.*;
 
 import com.oracle.truffle.api.source.*;
 
-public final class AccessVector extends Call {
+public final class AccessVector extends FunctionCall {
 
     private final ASTNode vector;
     private final boolean subset;
 
     AccessVector(SourceSection source, ASTNode vector, List<ArgNode> arguments, boolean subset) {
-        super(source, arguments);
+        super(source, subset ? "[" : "[[", arguments);
         this.vector = vector;
         this.subset = subset;
     }
@@ -31,6 +31,10 @@ public final class AccessVector extends Call {
 
     public boolean isSubset() {
         return subset;
+    }
+
+    public List<ArgNode> getIndexes() {
+        return super.getArguments().subList(1, super.getArguments().size());
     }
 
     @Override
