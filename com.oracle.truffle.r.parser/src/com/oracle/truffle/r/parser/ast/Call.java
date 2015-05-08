@@ -66,6 +66,12 @@ public abstract class Call extends ASTNode {
     }
 
     public static ASTNode create(SourceSection src, CallOperator op, ASTNode lhs, List<ArgNode> args) {
+        for (ArgNode a : args) {
+            // otherwise "empty" indexes are not recorded at all
+            if (a.getName() == null && a.getValue() == null) {
+                a.value = new Missing(a.getSource());
+            }
+        }
         args.add(0, ArgNode.create(src, null, lhs));
         return new AccessVector(src, lhs, args, op == CallOperator.SUBSET);
     }

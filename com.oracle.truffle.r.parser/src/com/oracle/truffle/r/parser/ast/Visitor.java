@@ -52,8 +52,6 @@ public interface Visitor<R> {
 
     R visit(FunctionCall functionCall);
 
-    R visit(AccessVector accessVector);
-
     R visit(ArgNode arg);
 
     R visit(Formula arg);

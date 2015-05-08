@@ -122,11 +122,6 @@ public class BasicVisitor<R> implements Visitor<R> {
     }
 
     @Override
-    public R visit(AccessVector a) {
-        return visit((Call) a);
-    }
-
-    @Override
     public R visit(Function n) {
         return visit((ASTNode) n);
     }

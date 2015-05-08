@@ -29,8 +29,8 @@ import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
-import com.oracle.truffle.r.nodes.access.array.read.*;
 import com.oracle.truffle.r.nodes.access.variables.*;
+import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RContext.Engine.ParseException;
 import com.oracle.truffle.r.runtime.data.*;
@@ -152,9 +152,9 @@ public final class ForNode extends AbstractLoopNode {
         }
 
         private static RNode createIndexedLoad(String indexName, String rangeName) {
-            AccessArrayNode indexNode;
+            RCallNode indexNode;
             try {
-                indexNode = (AccessArrayNode) ((RLanguage) RContext.getEngine().parse(ACCESS_ARRAY_SOURCE).getDataAt(0)).getRep();
+                indexNode = (RCallNode) ((RLanguage) RContext.getEngine().parse(ACCESS_ARRAY_SOURCE).getDataAt(0)).getRep();
             } catch (ParseException ex) {
                 throw RInternalError.shouldNotReachHere();
             }
