@@ -44,3 +44,31 @@ fastr.stacktrace <- function(print.frame.contents=TRUE) .FastR(.NAME="stacktrace
 fastr.debug <- function(element) .FastR(.NAME="debug", element)
 
 fastr.inspect <- function(...) .FastR(.NAME="inspect", ...)
+
+fastr.createpkgsources <- function(pkgs = NULL) {
+    if (!length(pkgs)) {
+        pkgs <- search()
+    }
+    for (pkg in pkgs) {
+    	ns <- asNamespace(pkg)
+    	for (n in ls(envir=ns, all.names=TRUE)) {
+    	    .FastR(.NAME="pkgsource.pre", pkg, n)
+    	     val <- get(n, ns)
+    	    .FastR(.NAME="pkgsource.post", pkg, n, val)
+    	}
+    }
+	.FastR(.NAME="pkgsource.done", pkg)
+	invisible(NULL)
+}
+
+fastr.createpkgsource <- function(pkg, name) {
+	ns <- asNamespace(pkg)
+	n <- ls(pattern=name, envir=ns, all.names=TRUE)
+	.FastR(.NAME="pkgsource.pre", pkg, n)
+	val <- get(n, ns)
+	.FastR(.NAME="pkgsource.post", pkg, n, val)
+	.FastR(.NAME="pkgsource.done", pkg)
+	invisible(NULL)
+}
+
+

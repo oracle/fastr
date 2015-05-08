@@ -185,12 +185,12 @@ public abstract class Parse extends RBuiltinNode {
                 }
                 return createFileSource(path, coalescedLines);
             } else {
-                return Source.asPseudoFile(coalescedLines, "<parse>");
+                return Source.fromText(coalescedLines, "<parse>");
             }
         } else {
             String srcFileText = RRuntime.asString(srcFile);
             if (srcFileText.equals("<text>")) {
-                return Source.asPseudoFile(coalescedLines, "<parse>");
+                return Source.fromText(coalescedLines, "<parse>");
             } else {
                 return createFileSource(ConnectionSupport.removeFileURLPrefix(srcFileText), coalescedLines);
             }

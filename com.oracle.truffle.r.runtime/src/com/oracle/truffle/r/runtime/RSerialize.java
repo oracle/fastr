@@ -22,6 +22,7 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
 import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.gnur.*;
+import com.oracle.truffle.r.runtime.instrument.*;
 
 // Code loosely transcribed from GnuR serialize.c.
 
@@ -180,6 +181,25 @@ public class RSerialize {
         return FastROptions.debugMatches("unserialize");
     }
 
+    private static boolean saveDeparse;
+
+    /**
+     * Supports the saving of deparsed lazily loaded package functions for instrumentation access.
+     */
+    public static void setSaveDeparse(boolean status) {
+        saveDeparse = status;
+    }
+
+    private static boolean locateSource;
+
+    /**
+     * Supports locating the file associated with a lazily loaded package function that, presumably,
+     * was save by a previous run with {@link #saveDeparse == true}.
+     */
+    public static void setLocateSource(boolean status) {
+        locateSource = status;
+    }
+
     @TruffleBoundary
     public static Object unserialize(RConnection conn, int frameDepth) throws IOException {
         Input instance = trace() ? new TracingInput(conn, frameDepth) : new Input(conn, frameDepth);
@@ -201,6 +221,8 @@ public class RSerialize {
     }
 
     private static class Input extends Common {
+        private static final String UNKNOWN_PACKAGE_SOURCE_PREFIX = "<package:";
+
         protected final PInputStream stream;
         /**
          * Only set when called from lazyLoadDBFetch. Helps to identify the package of the deparsed
@@ -398,9 +420,18 @@ public class RSerialize {
                              * there (and overwrite the promise), so we fix the enclosing frame up
                              * on return.
                              */
-                            RExpression expr = parse(deparse);
+                            RExpression expr = parse(deparse, true);
                             RFunction func = (RFunction) RContext.getEngine().eval(expr, RDataFactory.createNewEnv(REnvironment.emptyEnv(), 0), frameDepth + 1);
                             func.setEnclosingFrame(((REnvironment) rpl.getTag()).getFrame());
+                            Source source = func.getRootNode().getSourceSection().getSource();
+                            if (!source.getName().startsWith(UNKNOWN_PACKAGE_SOURCE_PREFIX)) {
+                                /*
+                                 * Located a function source file from which we can retrieve the
+                                 * function name
+                                 */
+                                String funcName = PackageSource.decodeName(source.getName());
+                                func.setName(funcName);
+                            }
                             result = func;
                         } catch (Throwable ex) {
                             Utils.fail("unserialize - failed to eval deparsed closure");
@@ -413,7 +444,7 @@ public class RSerialize {
                          */
                         if (closureDepth == 0) {
                             String deparse = RDeparse.deparse((RPairList) result);
-                            RExpression expr = parse(deparse);
+                            RExpression expr = parse(deparse, false);
                             assert expr.getLength() == 1;
                             result = expr.getDataAt(0);
                         }
@@ -611,17 +642,34 @@ public class RSerialize {
             return result;
         }
 
-        private RExpression parse(String deparse) throws IOException {
+        private RExpression parse(String deparse, boolean isClosure) throws IOException {
             try {
-                String packageId = "<package:" + packageName + " deparse>";
-                Source source = Source.asPseudoFile(deparse, packageId);
+                String sourcePath = null;
+                if (isClosure) {
+                    if (saveDeparse) {
+                        saveDeparseResult(deparse);
+                    }
+                    if (locateSource) {
+                        sourcePath = PackageSource.lookup(deparse);
+                    }
+                }
+                Source source;
+                if (sourcePath == null) {
+                    source = Source.fromText(deparse, UNKNOWN_PACKAGE_SOURCE_PREFIX + packageName + " deparse>");
+                } else {
+                    source = Source.fromNamedText(deparse, sourcePath);
+                }
                 return RContext.getEngine().parse(source);
             } catch (Throwable ex) {
                 // denotes a deparse/eval error, which is an unrecoverable bug
-                try (FileWriter wr = new FileWriter(new File(new File(REnvVars.rHome()), "DEPARSE_ERROR"))) {
-                    wr.write(deparse);
-                }
-                throw Utils.fail("internal deparse error - see file DEPARSE_ERROR");
+                saveDeparseResult(deparse);
+                throw Utils.fail("internal deparse error - see file DEPARSE");
+            }
+        }
+
+        private static void saveDeparseResult(String deparse) throws IOException {
+            try (FileWriter wr = new FileWriter(new File(new File(REnvVars.rHome()), "DEPARSE"))) {
+                wr.write(deparse);
             }
         }
 

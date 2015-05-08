@@ -697,4 +697,18 @@ public final class Utils {
         }
     }
 
+    public static String toHexString(byte[] data) {
+        StringBuffer sb = new StringBuffer();
+        for (byte b : data) {
+            int ub = Byte.toUnsignedInt(b);
+            if (ub > 15) {
+                sb.append(Integer.toHexString(ub >> 4));
+            } else {
+                sb.append('0');
+            }
+            sb.append(Integer.toHexString(ub & 0xF));
+        }
+        return sb.toString();
+    }
+
 }

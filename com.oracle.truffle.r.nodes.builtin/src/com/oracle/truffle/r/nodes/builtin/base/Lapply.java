@@ -57,7 +57,7 @@ public abstract class Lapply extends RBuiltinNode {
     @NodeChildren({@NodeChild(type = RNode.class), @NodeChild(type = RNode.class), @NodeChild(type = RNode.class)})
     protected abstract static class LapplyInternalNode extends RNode {
 
-        private static final Source ACCESS_ARRAY_SOURCE = Source.asPseudoFile("X[[i]]", "<lapply_array_access>");
+        private static final Source ACCESS_ARRAY_SOURCE = Source.fromText("X[[i]]", "<lapply_array_access>");
 
         private static final String INDEX_NAME = AnonymousFrameVariable.create("LAPPLY_ITER_INDEX");
         private static final String VECTOR_ELEMENT = AnonymousFrameVariable.create("LAPPLY_VEC_ELEM");

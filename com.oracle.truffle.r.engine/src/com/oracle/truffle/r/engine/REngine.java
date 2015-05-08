@@ -36,6 +36,7 @@ import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.source.*;
+import com.oracle.truffle.api.source.Source.AppendableSource;
 import com.oracle.truffle.r.library.graphics.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -167,7 +168,7 @@ public final class REngine implements RContext.Engine {
             RInstrument.checkDebugRequested(name, (RFunction) func);
             String call = name + "()";
             // Should this print the result?
-            singleton.parseAndEval(Source.asPseudoFile(call, "<startup>"), REnvironment.globalEnv().getFrame(), REnvironment.globalEnv(), false, false);
+            singleton.parseAndEval(Source.fromText(call, "<startup>"), REnvironment.globalEnv().getFrame(), REnvironment.globalEnv(), false, false);
         }
     }
 
@@ -362,7 +363,13 @@ public final class REngine implements RContext.Engine {
      * @throws RecognitionException on parse error
      */
     private static RNode parseToRNode(Source source) throws RecognitionException {
-        return transform(ParseUtil.parseAST(new ANTLRStringStream(source.getCode()), source));
+        String code;
+        if (source instanceof AppendableSource) {
+            code = ((AppendableSource) source).getCodeFromMark();
+        } else {
+            code = source.getCode();
+        }
+        return transform(ParseUtil.parseAST(new ANTLRStringStream(code), source));
     }
 
     /**
@@ -492,7 +499,7 @@ public final class REngine implements RContext.Engine {
     }
 
     // Only relevant when running without base package loaded
-    private static final Source INTERNAL_PRINT = Source.asPseudoFile(".print.internal <- function(x) { .Internal(print.default(x, NULL, TRUE, NULL, NULL, FALSE, NULL, TRUE))}", "<internal_print>");
+    private static final Source INTERNAL_PRINT = Source.fromText(".print.internal <- function(x) { .Internal(print.default(x, NULL, TRUE, NULL, NULL, FALSE, NULL, TRUE))}", "<internal_print>");
     @CompilationFinal private static RFunction printInternal;
 
     private static RFunction getPrintInternal() {

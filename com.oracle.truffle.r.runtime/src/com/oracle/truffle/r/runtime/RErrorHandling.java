@@ -275,7 +275,7 @@ public class RErrorHandling {
         }
         try {
             String callSource = src.getCode();
-            RExpression call = RContext.getEngine().parse(Source.asPseudoFile(callSource, "<error call source>"));
+            RExpression call = RContext.getEngine().parse(Source.fromText(callSource, "<error call source>"));
             return call.getDataAt(0);
         } catch (ParseException ex) {
             throw RInternalError.shouldNotReachHere("parse call source");

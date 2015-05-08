@@ -33,7 +33,8 @@ import com.oracle.truffle.r.runtime.*;
  * An instance of {@link RFunction} represents a function defined in R. The properties of a function
  * are as follows:
  * <ul>
- * <li>The {@link #name} is optional. It is given only for builtins.
+ * <li>The {@link #name} is optional. It is only set initially for builtins (required) but (for
+ * debugging) may be set later by {@link #setName}.
  * <li>The {@link #target} represents the actually callable entry point to the function.
  * <li>Functions may represent builtins; this is indicated by the {@link #builtin} flag set to the
  * associated {@link RBuiltin} instance.
@@ -43,7 +44,7 @@ import com.oracle.truffle.r.runtime.*;
  */
 public final class RFunction extends RScalar implements RAttributable {
 
-    private final String name;
+    private String name;
     private final RootCallTarget target;
     private final RBuiltinDescriptor builtin;
     private final boolean containsDispatch;
@@ -148,6 +149,12 @@ public final class RFunction extends RScalar implements RAttributable {
     @Override
     public String toString() {
         return target.toString();
+    }
+
+    public void setName(String name) {
+        assert !isBuiltin();
+        this.name = name;
+        RContext.getRASTHelper().setFunctionName(getRootNode(), name);
     }
 
 }

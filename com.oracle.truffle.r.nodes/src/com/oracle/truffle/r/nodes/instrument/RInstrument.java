@@ -34,6 +34,7 @@ import com.oracle.truffle.r.options.FastROptions;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
+import com.oracle.truffle.r.runtime.instrument.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -114,7 +115,7 @@ public class RInstrument {
                     String functionBody = state.toString();
                     idOrigin = idName;
                     idName = functionBody.substring(0, Math.min(functionBody.length(), 40)).replace("\n", "\\n");
-                    idSource = Source.asPseudoFile(functionBody, "<deparsed>");
+                    idSource = Source.fromText(functionBody, "<deparsed>");
                 }
                 ident = new FunctionIdentification(idSource, idName, idOrigin, fdn);
             }
@@ -245,6 +246,7 @@ public class RInstrument {
         if (instrumentingEnabled) {
             Probe.registerASTProber(RASTProber.getRASTProber());
             Probe.addProbeListener(new RProbeListener());
+            PackageSource.initialize();
         }
         String rdebugValue = FastROptions.Rdebug.getValue();
         if (rdebugValue != null) {

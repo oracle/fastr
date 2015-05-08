@@ -49,18 +49,7 @@ public class ToolsRmd5 {
                 try (BufferedInputStream in = new BufferedInputStream(new FileInputStream(file))) {
                     byte[] bytes = new byte[(int) file.length()];
                     in.read(bytes);
-                    byte[] md5 = digest.digest(bytes);
-                    StringBuffer sb = new StringBuffer();
-                    for (byte b : md5) {
-                        int ub = Byte.toUnsignedInt(b);
-                        if (ub > 15) {
-                            sb.append(Integer.toHexString(ub >> 4));
-                        } else {
-                            sb.append('0');
-                        }
-                        sb.append(Integer.toHexString(ub & 0xF));
-                    }
-                    dataValue = sb.toString();
+                    dataValue = Utils.toHexString(digest.digest(bytes));
                 } catch (IOException ex) {
                     // unexpected as we checked
                     complete = false;

@@ -302,7 +302,7 @@ public class RASTHelperImpl implements RASTHelper {
         }
     }
 
-    private static final Source GET_NAMESPACE_SOURCE = Source.asPseudoFile("..getNamespace(name)", "<..getNamespace>");
+    private static final Source GET_NAMESPACE_SOURCE = Source.fromText("..getNamespace(name)", "<..getNamespace>");
     private static RCallNode getNamespaceCall;
 
     @Override
@@ -313,7 +313,7 @@ public class RASTHelperImpl implements RASTHelper {
         return (REnvironment) callOut(getNamespaceCall, depth, name);
     }
 
-    private static final Source HANDLE_SIMPLE_ERROR_SOURCE = Source.asPseudoFile(".handleSimpleError(h, msg, call)", "<.handleSimpleError>");
+    private static final Source HANDLE_SIMPLE_ERROR_SOURCE = Source.fromText(".handleSimpleError(h, msg, call)", "<.handleSimpleError>");
     private static RCallNode handleSimpleErrorCall;
 
     @Override
@@ -324,7 +324,7 @@ public class RASTHelperImpl implements RASTHelper {
         callOut(handleSimpleErrorCall, depth, f, msg, call);
     }
 
-    private static final Source SIGNAL_SIMPLE_WARNING_SOURCE = Source.asPseudoFile(".signalSimpleWarning(call, msg)", "<.signalSimpleWarning>");
+    private static final Source SIGNAL_SIMPLE_WARNING_SOURCE = Source.fromText(".signalSimpleWarning(call, msg)", "<.signalSimpleWarning>");
     private static RCallNode signalSimpleWarningCall;
 
     public void signalSimpleWarning(RStringVector msg, Object call, int depth) {
@@ -370,6 +370,11 @@ public class RASTHelperImpl implements RASTHelper {
     public Object[] getBuiltinDefaultParameterValues(RFunction f) {
         assert f.isBuiltin();
         return ((RBuiltinRootNode) f.getRootNode()).getBuiltin().getDefaultParameterValues();
+    }
+
+    public void setFunctionName(RootNode node, String name) {
+        ((FunctionDefinitionNode) node).setDescription(name);
+
     }
 
 }

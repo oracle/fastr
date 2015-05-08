@@ -127,7 +127,7 @@ public final class ForNode extends AbstractLoopNode {
 
     private static final class ForRepeatingNode extends Node implements RepeatingNode {
 
-        private static final Source ACCESS_ARRAY_SOURCE = Source.asPseudoFile("x[[i]]", "<lfor_array_access>");
+        private static final Source ACCESS_ARRAY_SOURCE = Source.fromText("x[[i]]", "<lfor_array_access>");
 
         private final ConditionProfile conditionProfile = ConditionProfile.createCountingProfile();
         private final BranchProfile breakBlock = BranchProfile.create();

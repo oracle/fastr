@@ -32,6 +32,7 @@ import jline.console.*;
 
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.source.*;
+import com.oracle.truffle.api.source.Source.AppendableSource;
 import com.oracle.truffle.r.engine.*;
 import com.oracle.truffle.r.options.*;
 import com.oracle.truffle.r.runtime.*;
@@ -120,10 +121,13 @@ public class RCommand {
         ConsoleHandler consoleHandler;
         InputStream consoleInput = System.in;
         OutputStream consoleOutput = System.out;
+        String filePath = null;
         if (fileArg != null) {
             List<String> lines;
             try {
-                lines = Files.readAllLines(new File(fileArg).toPath());
+                File file = new File(fileArg);
+                lines = Files.readAllLines(file.toPath());
+                filePath = file.getCanonicalPath();
             } catch (IOException e) {
                 throw Utils.fatalError("cannot open file '" + fileArg + "': " + e.getMessage());
             }
@@ -156,7 +160,7 @@ public class RCommand {
             // long start = System.currentTimeMillis();
             consoleHandler = new JLineConsoleHandler(isInteractive, consoleReader);
         }
-        MaterializedFrame globalFrame = readEvalPrint(consoleHandler, args);
+        MaterializedFrame globalFrame = readEvalPrint(consoleHandler, args, filePath);
         // We should only reach here if interactive == false
         // Need to call quit explicitly
         Source quitSource = Source.fromText("quit(\"default\", 0L, TRUE)", "<quit_file>");
@@ -177,7 +181,9 @@ public class RCommand {
         throw Utils.exit(0);
     }
 
-    private static MaterializedFrame readEvalPrint(ConsoleHandler consoleHandler, String[] commandArgs) {
+    private static MaterializedFrame readEvalPrint(ConsoleHandler consoleHandler, String[] commandArgs, String filePath) {
+        String inputDescription = filePath == null ? "<shell_input>" : filePath;
+        AppendableSource source = Source.fromNamedAppendableText(inputDescription);
         MaterializedFrame globalFrame = REngine.initialize(commandArgs, consoleHandler, false, FastROptions.IgnoreVisibility.getValue());
         try {
             // console.println("initialize time: " + (System.currentTimeMillis() - start));
@@ -195,13 +201,15 @@ public class RCommand {
 
                 try {
                     String continuePrompt = getContinuePrompt();
-                    while (REngine.getInstance().parseAndEval(Source.fromText(input, "<shell_input>"), globalFrame, REnvironment.globalEnv(), true, true) == Engine.INCOMPLETE_SOURCE) {
+                    source.setMark();
+                    source.appendCode(input);
+                    while (REngine.getInstance().parseAndEval(source, globalFrame, REnvironment.globalEnv(), true, true) == Engine.INCOMPLETE_SOURCE) {
                         consoleHandler.setPrompt(doEcho ? continuePrompt : null);
                         String additionalInput = consoleHandler.readLine();
                         if (additionalInput == null) {
                             return globalFrame;
                         }
-                        input = input + "\n" + additionalInput;
+                        source.appendCode("\n" + additionalInput);
                     }
                 } catch (BrowserQuitException ex) {
                     // Q in browser

@@ -45,6 +45,18 @@ public class FastRFunctionEntry {
         } else if (name.equals("inspect")) {
             fastRNode.forceVisibility(false);
             return FastRInspect.inspect(argValues);
+        } else if (name.contains("pkgsource")) {
+            switch (name) {
+                case "pkgsource.pre":
+                    return FastRPkgSource.preLoad(RRuntime.asString(arg0), RRuntime.asString(argValues[1]));
+
+                case "pkgsource.post":
+                    return FastRPkgSource.postLoad(RRuntime.asString(arg0), RRuntime.asString(argValues[1]), argValues[2]);
+
+                case "pkgsource.done":
+                    return FastRPkgSource.done();
+
+            }
         }
         // The remainder all take a func argument
         RFunction func = checkFunction(arg0, fastRNode);

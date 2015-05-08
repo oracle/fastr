@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.runtime;
 
+import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
 
@@ -99,4 +100,9 @@ public interface RASTHelper {
      * Returns the default parameters for a builtin.
      */
     Object[] getBuiltinDefaultParameterValues(RFunction f);
+
+    /**
+     * Update the {@code name} in a {@code FunctionDefinitionNode}.
+     */
+    void setFunctionName(RootNode node, String name);
 }

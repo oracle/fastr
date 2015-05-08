@@ -47,7 +47,19 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
 
     @Child private RNode body; // typed as RNode to avoid custom instrument wrapper
     private final RNode uninitializedBody; // copy for "body" builtin
-    private final String description;
+    /**
+     * This exists for debugging purposes. It is set initially when the function is defined to
+     * either:
+     * <ul>
+     * <li>The name of the variable that the function degfinition is assigned to, e.g,
+     * {@code f <- function}.
+     * <li>The first several characters of the function definitioin for anyonmous functions.
+     * </ul>
+     * It can be updated later by calling {@link #setDescription}, which is useful for functions
+     * lazily loaded from packages, where at the point of definition any assignee variable is
+     * unknown.
+     */
+    private String description;
     private final FunctionUID uuid;
 
     @Child private FrameSlotNode onExitSlot;
@@ -365,6 +377,10 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         } else {
             state.setCar(RNull.instance);
         }
+    }
+
+    public void setDescription(String name) {
+        this.description = name;
     }
 
     private boolean instrumentationApplied = false;
