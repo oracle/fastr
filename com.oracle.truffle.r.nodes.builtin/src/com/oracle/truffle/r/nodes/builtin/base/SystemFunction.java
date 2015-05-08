@@ -29,33 +29,61 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
 @RBuiltin(name = "system", kind = RBuiltinKind.INTERNAL, parameterNames = {"command", "intern"})
 public abstract class SystemFunction extends RBuiltinNode {
     @Specialization
     @TruffleBoundary
-    public Object system(RAbstractStringVector command, byte intern) {
-        if (RRuntime.fromLogical(intern)) {
-            throw RError.nyi(getEncapsulatingSourceSection(), ".Internal(system)");
-        }
+    public Object system(RAbstractStringVector command, byte internLogical) {
+        Object result;
+        boolean intern = RRuntime.fromLogical(internLogical);
         String shell = REnvVars.get("SHELL");
         if (shell == null) {
             shell = "/bin/sh";
         }
         ProcessBuilder pb = new ProcessBuilder(shell, "-c", command.getDataAt(0));
         pb.redirectInput(Redirect.INHERIT);
-        pb.redirectOutput(Redirect.INHERIT);
-        pb.redirectError(Redirect.INHERIT);
+        if (intern) {
+            pb.redirectErrorStream(true);
+        } else {
+            pb.redirectOutput(Redirect.INHERIT);
+            pb.redirectError(Redirect.INHERIT);
+        }
         int rc;
         try {
             Process p = pb.start();
+            InputStream os = p.getInputStream();
             rc = p.waitFor();
+            if (intern) {
+                String output = readAvailable(os);
+                RStringVector vec;
+                if (output.length() == 0) {
+                    vec = RDataFactory.createEmptyStringVector();
+                } else {
+                    String[] data = output.split("\n");
+                    vec = RDataFactory.createStringVector(data, RDataFactory.COMPLETE_VECTOR);
+                }
+                if (rc != 0) {
+                    vec.setAttr("status", RDataFactory.createIntVectorFromScalar(rc));
+                }
+                result = vec;
+            } else {
+                result = rc;
+            }
         } catch (InterruptedException | IOException ex) {
-            rc = 127;
+            result = 127;
         }
         RContext.setVisible(false);
-        return rc;
+        return result;
+    }
+
+    protected String readAvailable(InputStream output) throws IOException {
+        int n = output.available();
+        byte[] data = new byte[n];
+        output.read(data);
+        return new String(data);
     }
 
 }

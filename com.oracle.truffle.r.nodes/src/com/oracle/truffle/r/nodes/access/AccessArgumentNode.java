@@ -72,6 +72,7 @@ public final class AccessArgumentNode extends RNode {
     @CompilationFinal private boolean defaultArgCanBeOptimized = EagerEvalHelper.optConsts() || EagerEvalHelper.optDefault() || EagerEvalHelper.optExprs();
 
     private final ConditionProfile isMissingProfile = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile isEmptyProfile = ConditionProfile.createBinaryProfile();
 
     protected AccessArgumentNode(int index) {
         this.index = index;
@@ -104,32 +105,41 @@ public final class AccessArgumentNode extends RNode {
         return hasDefaultArg ? NodeCost.MONOMORPHIC : NodeCost.NONE;
     }
 
-    protected Object doArgument(VirtualFrame frame, Object arg) {
-        if (hasDefaultArg && isMissingProfile.profile(arg == RMissing.instance)) {
-            assert !(getRootNode() instanceof RBuiltinRootNode) : getRootNode();
-            // Insert default value
-            checkPromiseFactory();
-            Object result;
-            if (canBeOptimized()) {
-                if (checkInsertOptDefaultArg()) {
-                    result = optDefaultArgNode.execute(frame);
-                    // Update RArguments for S3 dispatch to work
-                    RArguments.setArgument(frame, index, result);
-                    return result;
-                } else {
-                    /*
-                     * Default arg cannot be optimized: Rewrite to default and assure that we don't
-                     * take this path again
-                     */
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    defaultArgCanBeOptimized = false;
-                }
+    private Object doArgumentInternal(VirtualFrame frame) {
+        assert !(getRootNode() instanceof RBuiltinRootNode) : getRootNode();
+        // Insert default value
+        checkPromiseFactory();
+        Object result;
+        if (canBeOptimized()) {
+            if (checkInsertOptDefaultArg()) {
+                result = optDefaultArgNode.execute(frame);
+                // Update RArguments for S3 dispatch to work
+                RArguments.setArgument(frame, index, result);
+                return result;
+            } else {
+                /*
+                 * Default arg cannot be optimized: Rewrite to default and assure that we don't take
+                 * this path again
+                 */
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                defaultArgCanBeOptimized = false;
             }
-            // Insert default value
-            result = factory.createPromise(frame.materialize());
-            // Update RArguments for S3 dispatch to work
-            RArguments.setArgument(frame, index, result);
-            return result;
+        }
+        // Insert default value
+        result = factory.createPromise(frame.materialize());
+        // Update RArguments for S3 dispatch to work
+        RArguments.setArgument(frame, index, result);
+        return result;
+    }
+
+    protected Object doArgument(VirtualFrame frame, Object arg) {
+        if (hasDefaultArg) {
+            if (isMissingProfile.profile(arg == RMissing.instance)) {
+                return doArgumentInternal(frame);
+            }
+            if (isEmptyProfile.profile(arg == REmpty.instance)) {
+                return doArgumentInternal(frame);
+            }
         }
         return arg;
     }

@@ -86,7 +86,9 @@ public enum SEXPTYPE {
 
     // Other FastR internals
     FASTR_SOCKET_CONN(400, SocketConnections.RSocketConnection.class),
-    FASTR_FILE_CONN(401, FileConnections.FileRConnection.class);
+    FASTR_FILE_CONN(401, FileConnections.FileRConnection.class),
+
+    EMPTYARG_SXP(500, REmpty.class);
 
     public final int code;
     public final Class<?>[] fastRClasses;
