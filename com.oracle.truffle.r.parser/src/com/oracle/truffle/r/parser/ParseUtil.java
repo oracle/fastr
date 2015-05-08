@@ -25,6 +25,15 @@ public class ParseUtil {
         return new String(new int[]{value}, 0, 1);
     }
 
+    static String octChar(String... chars) {
+        int value = 0;
+        for (int i = 0; i < chars.length; i++) {
+            value = value * 8 + Integer.parseInt(chars[i], 8);
+        }
+        value &= 0xff; // octal escape sequences are clamped the 0-255 range
+        return new String(new int[]{value}, 0, 1);
+    }
+
     public static ASTNode parseAST(ANTLRStringStream stream, Source source) throws RecognitionException {
         CommonTokenStream tokens = new CommonTokenStream();
         RLexer lexer = new RLexer(stream);

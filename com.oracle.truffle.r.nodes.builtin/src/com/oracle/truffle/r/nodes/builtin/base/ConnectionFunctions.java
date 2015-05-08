@@ -91,14 +91,33 @@ public abstract class ConnectionFunctions {
         @Specialization
         @TruffleBoundary
         @SuppressWarnings("unused")
-        protected Object file(RAbstractStringVector description, RAbstractStringVector open, byte blocking, RAbstractStringVector encoding, byte raw) {
+        protected Object file(RAbstractStringVector description, RAbstractStringVector openVec, byte blocking, RAbstractStringVector encoding, byte raw) {
             controlVisibility();
             if (!RRuntime.fromLogical(blocking)) {
                 throw RError.nyi(getEncapsulatingSourceSection(), "non-blocking mode not supported");
             }
+            if (description.getLength() > 1) {
+                RError.warning(getEncapsulatingSourceSection(), RError.Message.ARGUMENT_ONLY_FIRST_1, "description");
+            }
+            if (openVec.getLength() > 1) {
+                throw RError.error(RError.Message.INVALID_ARGUMENT, "open");
+            }
+            // TODO handle http/ftp prefixes and redirect
             String path = removeFileURLPrefix(description.getDataAt(0));
+            String open = openVec.getDataAt(0);
+            if (path.length() == 0) {
+                // special case, temp file opened in "w+" or "w+b" only
+                if (open.length() == 0) {
+                    open = "w+";
+                } else {
+                    if (!(open.equals("w+") || open.equals("w+b"))) {
+                        open = "w+";
+                        RError.warning(getEncapsulatingSourceSection(), RError.Message.FILE_OPEN_TMP);
+                    }
+                }
+            }
             try {
-                return new FileRConnection(path, open.getDataAt(0));
+                return new FileRConnection(path, open);
             } catch (IOException ex) {
                 RError.warning(RError.Message.CANNOT_OPEN_FILE, description.getDataAt(0), ex.getMessage());
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.CANNOT_OPEN_CONNECTION);

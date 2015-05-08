@@ -183,8 +183,18 @@ public class FrameFunctions {
         @TruffleBoundary
         private static String extractFunctionName(String callSource) {
             // TODO in the general case we need to parse this into an AST
-            int index = callSource.indexOf('(');
-            return callSource.substring(0, index);
+            if (callSource.startsWith("[[<-")) {
+                return "[[<-";
+            } else if (callSource.startsWith("[<-")) {
+                return "[<-";
+            } else if (callSource.startsWith("[[")) {
+                return "[[";
+            } else if (callSource.startsWith("[")) {
+                return "[";
+            } else {
+                int index = callSource.indexOf('(');
+                return callSource.substring(0, index);
+            }
         }
     }
 

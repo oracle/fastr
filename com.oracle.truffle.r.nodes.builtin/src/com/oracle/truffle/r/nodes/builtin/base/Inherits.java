@@ -18,9 +18,9 @@ import java.util.*;
 import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
-import com.oracle.truffle.r.nodes.unary.InheritsNodeGen;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.conn.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -33,11 +33,14 @@ public abstract class Inherits extends RBuiltinNode {
 
     protected final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
+    protected abstract Object execute(VirtualFrame frame, Object x, Object what, Object which);
+
     @Child private InheritsNode inheritsNode;
+    @Child private Inherits recursiveInherits;
 
     private InheritsNode initInheritsNode() {
         if (inheritsNode == null) {
-            inheritsNode = insert(InheritsNodeGen.create(null, null));
+            inheritsNode = insert(com.oracle.truffle.r.nodes.unary.InheritsNodeGen.create(null, null));
         }
         return inheritsNode;
     }
@@ -100,6 +103,16 @@ public abstract class Inherits extends RBuiltinNode {
     @Specialization(guards = "isTrue(which)")
     protected Object doesInherit(RAbstractVector x, RAbstractStringVector what, @SuppressWarnings("unused") byte which) {
         return doDoesInherit(x.getClassHierarchy(), what);
+    }
+
+    @Specialization(guards = "!isTrue(which)")
+    protected Object doesInherit(VirtualFrame frame, RArgsValuesAndNames x, RAbstractStringVector what, byte which) {
+        assert x.getLength() == 1;
+        if (recursiveInherits == null) {
+            recursiveInherits = insert(com.oracle.truffle.r.nodes.builtin.base.InheritsNodeGen.create(new RNode[3], getBuiltin(), getSuppliedSignature()));
+        }
+        Object result = recursiveInherits.execute(frame, x.getArgument(0), what, which);
+        return result;
     }
 
     @TruffleBoundary

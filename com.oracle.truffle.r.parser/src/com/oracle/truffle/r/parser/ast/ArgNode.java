@@ -29,7 +29,7 @@ import com.oracle.truffle.api.source.*;
 public final class ArgNode extends ASTNode {
 
     private final String name;
-    private final ASTNode value;
+    ASTNode value;
 
     private ArgNode(SourceSection source, String name, ASTNode value) {
         super(source);

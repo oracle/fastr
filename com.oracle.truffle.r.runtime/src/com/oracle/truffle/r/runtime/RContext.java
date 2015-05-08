@@ -69,7 +69,9 @@ public final class RContext extends ExecutionContext {
          * Formatted output.
          */
         @TruffleBoundary
-        void printf(String format, Object... args);
+        default void printf(String format, Object... args) {
+            print(String.format(format, args));
+        }
 
         /**
          * Error output with a newline.

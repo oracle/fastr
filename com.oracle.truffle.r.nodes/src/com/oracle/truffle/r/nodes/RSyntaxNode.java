@@ -101,27 +101,31 @@ public interface RSyntaxNode {
 
     /**
      * Traverses the entire tree but only invokes the {@code visit} method for nodes that return
-     * {@code true} to {instance RSyntaxNode}. Similar therefore to {@code Node#accept}. The
-     * assumption is that the syntax is properly connected so that there is no need to visit the
-     * children of non-syntax nodes. We visit but do not call {@code nodeVisitor} on nodes that
-     * return {@code true} to {@link #isBackbone()}.
+     * {@code true} to {@code instanceof RSyntaxNode}. Similar therefore to {@code Node#accept}.
+     * Note that AST transformations can change the shape of the tree in drastic ways; in particular
+     * one cannot truncate the walk on encountering a non-syntax node, as the related
+     * {@link RSyntaxNode} may be have been transformed into a child of a non-syntax node. We visit
+     * but do not call the {@code nodeVisitor} on {@link RSyntaxNode}s that return {@code true} to
+     * {@link #isBackbone()}.
      *
      * N.B. A {@link ReplacementNode} is a very special case. Its children are {@link RSyntaxNode}s,
      * but we do not want to visit them at all. Hopefully this node will be retired eventually.
      */
     static void accept(Node node, int depth, RSyntaxNodeVisitor nodeVisitor) {
         boolean visitChildren = true;
+        int incDepth = 0;
         if (node instanceof RSyntaxNode) {
             RSyntaxNode syntaxNode = (RSyntaxNode) node;
             if (!syntaxNode.isBackbone()) {
                 visitChildren = nodeVisitor.visit(syntaxNode, depth);
             }
-            if (!(node instanceof ReplacementNode)) {
-                if (visitChildren) {
-                    for (Node child : node.getChildren()) {
-                        if (child != null && child instanceof RSyntaxNode) {
-                            accept(child, depth + 1, nodeVisitor);
-                        }
+            incDepth = 1;
+        }
+        if (!(node instanceof ReplacementNode)) {
+            if (visitChildren) {
+                for (Node child : node.getChildren()) {
+                    if (child != null) {
+                        accept(child, depth + incDepth, nodeVisitor);
                     }
                 }
             }

@@ -1,0 +1,11 @@
+Package: vanilla
+Type: Package
+Title: Tests the package loading implementation
+Version: 1.0
+Date: 2014-08-21
+Author: FastR Tester
+Maintainer: FastR Tester <fastr@yahoogroups.com>
+Description: Tests the package loading implementation
+License: GPL-2
+Packaged: 2014-08-22 00:34:45 UTC; mjj
+Depends: R (>= 3.1.3)

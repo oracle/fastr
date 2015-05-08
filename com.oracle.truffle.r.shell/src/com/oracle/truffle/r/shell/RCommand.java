@@ -25,19 +25,21 @@ package com.oracle.truffle.r.shell;
 import static com.oracle.truffle.r.runtime.RCmdOptions.*;
 
 import java.io.*;
+import java.nio.file.*;
 import java.util.*;
+
+import jline.console.*;
 
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.engine.*;
-import com.oracle.truffle.r.options.FastROptions;
+import com.oracle.truffle.r.options.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.RContext.ConsoleHandler;
 import com.oracle.truffle.r.runtime.RContext.Engine;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.ffi.*;
-
-import jline.console.*;
 
 /**
  * Emulates the (Gnu)R command as precisely as possible.
@@ -75,7 +77,6 @@ public class RCommand {
     /**
      * Entry point for {@link RscriptCommand} avoiding re-parsing.
      */
-    @SuppressWarnings("deprecation")
     public static void subMain(String[] args) {
 
         if (SLAVE.getValue()) {
@@ -116,43 +117,46 @@ public class RCommand {
          * it goes through the console. N.B. -f and -e can't be used together and this is already
          * checked.
          */
+        ConsoleHandler consoleHandler;
         InputStream consoleInput = System.in;
         OutputStream consoleOutput = System.out;
         if (fileArg != null) {
-            File file = new File(fileArg);
-            boolean ok = false;
-            if (file.exists() && file.canRead()) {
-                try {
-                    consoleInput = new BufferedInputStream(new FileInputStream(file));
-                    ok = true;
-                } catch (IOException ex) {
-                    // fall through to fail
-                }
+            List<String> lines;
+            try {
+                lines = Files.readAllLines(new File(fileArg).toPath());
+            } catch (IOException e) {
+                throw Utils.fatalError("cannot open file '" + fileArg + "': " + e.getMessage());
             }
-            if (!ok) {
-                Utils.fatalError("cannot open file '" + fileArg + "': No such file or directory");
-            }
+            consoleHandler = new StringConsoleHandler(lines, System.out);
         } else if (EXPR.getValue() != null) {
             List<String> exprs = EXPR.getValue();
             if (!SAVE.getValue()) {
                 NO_SAVE.setValue(true);
             }
-            StringBuffer sb = new StringBuffer(exprs.get(0));
-            if (exprs.size() > 1) {
-                for (int i = 1; i < exprs.size(); i++) {
-                    sb.append('\n');
-                    sb.append(exprs.get(i));
-                }
+            consoleHandler = new StringConsoleHandler(exprs, System.out);
+        } else {
+            /*
+             * GnuR behavior differs from the manual entry for {@code interactive} in that {@code
+             * --interactive} never applies to {@code -e/-f}, only to console input that has been
+             * redirected from a pipe/file etc.
+             */
+            Console sysConsole = System.console();
+            ConsoleReader consoleReader;
+            try {
+                consoleReader = new ConsoleReader(consoleInput, consoleOutput);
+                consoleReader.setHandleUserInterrupt(true);
+                consoleReader.setExpandEvents(false);
+            } catch (IOException ex) {
+                throw Utils.fail("unexpected error opening console reader");
             }
-            consoleInput = new StringBufferInputStream(sb.toString());
+            boolean isInteractive = INTERACTIVE.getValue() || sysConsole != null;
+            if (!isInteractive && !SAVE.getValue() && !NO_SAVE.getValue() && !VANILLA.getValue()) {
+                throw Utils.fatalError("you must specify '--save', '--no-save' or '--vanilla'");
+            }
+            // long start = System.currentTimeMillis();
+            consoleHandler = new JLineConsoleHandler(isInteractive, consoleReader);
         }
-        ConsoleReader console;
-        try {
-            console = new RJLineConsoleReader(consoleInput, consoleOutput);
-        } catch (IOException ex) {
-            throw Utils.fail("unexpected error opening console reader");
-        }
-        MaterializedFrame globalFrame = readEvalPrint(consoleInput, console, args);
+        MaterializedFrame globalFrame = readEvalPrint(consoleHandler, args);
         // We should only reach here if interactive == false
         // Need to call quit explicitly
         Source quitSource = Source.fromText("quit(\"default\", 0L, TRUE)", "<quit_file>");
@@ -173,29 +177,16 @@ public class RCommand {
         throw Utils.exit(0);
     }
 
-    private static MaterializedFrame readEvalPrint(InputStream inputStream, ConsoleReader consoleReader, String[] commandArgs) {
-        /*
-         * GnuR behavior differs from the manual entry for {@code interactive} in that {@code
-         * --interactive} never applies to {@code -e/-f}, only to console input that has been
-         * redirected from a pipe/file etc.
-         */
-        Console sysConsole = System.console();
-        boolean haveConsole = inputStream == System.in && sysConsole != null;
-        boolean isInteractive = inputStream == System.in && (INTERACTIVE.getValue() || sysConsole != null);
-        // long start = System.currentTimeMillis();
-        JLineConsoleHandler consoleHandler = new JLineConsoleHandler(isInteractive, consoleReader);
-        MaterializedFrame globalFrame = REngine.initialize(commandArgs, consoleHandler, false, isInteractive, FastROptions.IgnoreVisibility.getValue());
+    private static MaterializedFrame readEvalPrint(ConsoleHandler consoleHandler, String[] commandArgs) {
+        MaterializedFrame globalFrame = REngine.initialize(commandArgs, consoleHandler, false, FastROptions.IgnoreVisibility.getValue());
         try {
             // console.println("initialize time: " + (System.currentTimeMillis() - start));
             for (;;) {
                 boolean doEcho = doEcho();
-                consoleReader.setPrompt(doEcho ? "> " : "");
-                String input = consoleReader.readLine();
+                consoleHandler.setPrompt(doEcho ? "> " : null);
+                String input = consoleHandler.readLine();
                 if (input == null) {
                     return globalFrame;
-                }
-                if (!haveConsole && doEcho) {
-                    consoleHandler.println(input);
                 }
                 input = input.trim();
                 if (input.equals("") || input.charAt(0) == '#') {
@@ -205,13 +196,10 @@ public class RCommand {
                 try {
                     String continuePrompt = getContinuePrompt();
                     while (REngine.getInstance().parseAndEval(Source.fromText(input, "<shell_input>"), globalFrame, REnvironment.globalEnv(), true, true) == Engine.INCOMPLETE_SOURCE) {
-                        consoleReader.setPrompt(doEcho ? continuePrompt : "");
-                        String additionalInput = consoleReader.readLine();
+                        consoleHandler.setPrompt(doEcho ? continuePrompt : null);
+                        String additionalInput = consoleHandler.readLine();
                         if (additionalInput == null) {
                             return globalFrame;
-                        }
-                        if (!haveConsole && doEcho) {
-                            consoleHandler.println(additionalInput);
                         }
                         input = input + "\n" + additionalInput;
                     }
@@ -223,8 +211,6 @@ public class RCommand {
             // can happen if user profile invokes browser
         } catch (UserInterruptException e) {
             // interrupted
-        } catch (IOException ex) {
-            Utils.fail("unexpected error reading console input");
         }
         return globalFrame;
     }

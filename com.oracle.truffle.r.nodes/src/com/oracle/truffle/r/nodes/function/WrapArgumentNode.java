@@ -94,6 +94,8 @@ public final class WrapArgumentNode extends RNode implements RSyntaxNode {
             } else if (result instanceof RFactor) {
                 everSeenFactor.enter();
                 vector = ((RFactor) result).getVector();
+            } else {
+                return result;
             }
 
             if (vector != null) {

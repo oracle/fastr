@@ -1,7 +1,0 @@
-## package has a dynamic library
-useDynLib(testrffi)
-
-## and exported functions
-export(add_int)
-export(add_double)
-export(createIntVector)

@@ -89,8 +89,7 @@ public class TestrGenBuiltinseq extends TestBase {
 
     @Test
     public void testseq16() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(list(list(c('', '', '\\036', '', 'New', 'print()', '(S3)', 'method', 'for', 'class', '\\\'function\\\',', '', '', '', '', '', '', '', 'also', 'used', 'for', 'auto-printing.', '', 'Further,', '.Primitive', '', '', '', '', '', '', '', 'functions', 'now', 'print', 'and', 'auto-print', 'identically.', '', 'The', 'new', 'method', '', '', '', '', '', '', '', 'is', 'based', 'on', 'code', 'suggestions', 'by', 'Romain', 'François.'))));seq_along(argv[[1]]);");
+        assertEval("argv <- list(list(list(c('', '', '\\036', '', 'New', 'print()', '(S3)', 'method', 'for', 'class', '\\\'function\\\',', '', '', '', '', '', '', '', 'also', 'used', 'for', 'auto-printing.', '', 'Further,', '.Primitive', '', '', '', '', '', '', '', 'functions', 'now', 'print', 'and', 'auto-print', 'identically.', '', 'The', 'new', 'method', '', '', '', '', '', '', '', 'is', 'based', 'on', 'code', 'suggestions', 'by', 'Romain', 'François.'))));seq_along(argv[[1]]);");
     }
 
     @Test

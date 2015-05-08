@@ -1693,6 +1693,25 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ gsub(\"h\",\"\", c(\"hello\", \"hi\", \"bye\")) }");
         assertEval("{ gsub(\"h\",\"\", c(\"hello\", \"hi\", \"bye\"), fixed=TRUE) }");
         assertEval(Ignored.Unknown, "{ gsub(\"a\",\"aa\", \"prAgue alley\", ignore.case=TRUE) }");
+
+        assertEval("{ sub('[[:space:]]+$', '', 'R (>= 3.0.3)  ') }");
+        assertEval("{ sub('^[[:space:]]*(.*)', '\\\\1', 'R (>= 3.0.3)') }");
+        assertEval("{ sub('^([[:alnum:].]+).*$', '\\\\1', 'R (>= 3.0.3)') }");
+
+        assertEval("{ sub('^([1[:alpha:].]+).*$', '\\\\1', '1R.ff (>= 3.0.3)') }");
+
+        assertEval("{ sub('^([[:alnum:]]*).*$', '\\\\1', 'aZ45j%$  ') }");
+        assertEval("{ sub('^([[:alpha:]]*).*$', '\\\\1', 'aZ45j%$  ') }");
+        assertEval("{ sub('^([[:blank:]]*).*$', '\\\\1', '  \\ta45j%$  ') }");
+        assertEval("{ sub('^([[:cntrl:]]*).*$', '\\\\1', '\\ta45j%$  ') }");
+        assertEval("{ sub('^([[:digit:]]*).*$', '\\\\1', '12a45j%$  ') }");
+        assertEval("{ sub('^([[:graph:]]*).*$', '\\\\1', 'a45j%$  ') }");
+        assertEval("{ sub('^([[:lower:]]*).*$', '\\\\1', 'a45j%$  ') }");
+        assertEval("{ sub('^([[:print:]]*).*$', '\\\\1', 'a45j%$  ') }");
+        assertEval("{ sub('^([[:punct:]]*).*$', '\\\\1', '.,/a45j%$  ') }");
+        assertEval("{ sub('^([[:space:]]*).*$', '\\\\1', '   a45j%$  ') }");
+        assertEval("{ sub('^([[:upper:]]*).*$', '\\\\1', 'AASDFAa45j%$  ') }");
+        assertEval("{ sub('^([[:xdigit:]]*).*$', '\\\\1', '1234abABhxa45j%$  ') }");
     }
 
     @Test
@@ -2824,7 +2843,7 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval(Ignored.Unknown, "{ f <- function() 23 ; deparse(f) }");
         assertEval(Ignored.Unknown, "{ deparse(nrow) }");
         // should deparse as structure(...
-        assertEval(Ignored.Unknown, "{ e <- new.env(); assign(\"a\", 1, e); assign(\"b\", 2, e); le <- as.list(e); deparse(le)}");
+        assertEval("{ e <- new.env(); assign(\"a\", 1, e); assign(\"b\", 2, e); le <- as.list(e); deparse(le)}");
     }
 
     @Test
@@ -4120,7 +4139,7 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{  f <- function (a, b=TRUE, c=FALSE) { nargs() }; f(1, FALSE) }");
         assertEval("{  f<-function(x, ..., y=TRUE) { nargs() }; f(1, 2, 3) }");
 
-        assertEval(Ignored.Unknown, "{  f <- function (a, b, c) { nargs() }; f(,,a) }");
+        assertEval("{  f <- function (a, b, c) { nargs() }; f(,,a) }");
     }
 
     @Test

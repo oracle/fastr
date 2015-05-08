@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import java.util.*;
 
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
@@ -35,9 +36,11 @@ import com.oracle.truffle.r.nodes.access.array.write.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.builtin.base.InfixEmulationFunctionsFactory.PromiseEvaluatorNodeGen;
 import com.oracle.truffle.r.nodes.function.*;
+import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.env.*;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
@@ -96,7 +99,7 @@ public class InfixEmulationFunctions {
         @ExplodeLoop
         public Object execute(VirtualFrame frame, Object vector, Object[] pos, Object[] newPositions, Object value) {
             for (int i = 0; i < getLength(); i++) {
-                newPositions[i] = executeArg(frame, vector, executeConvert(frame, vector, pos[i], true, i), i);
+                newPositions[i] = executeArg(frame, vector, executeConvert(frame, vector, pos[i], RRuntime.LOGICAL_TRUE, i), i);
                 if (multiDimOperatorConverters != null) {
                     newPositions[i] = executeMultiConvert(frame, vector, value, newPositions[i], i);
                 }
@@ -173,6 +176,7 @@ public class InfixEmulationFunctions {
             for (int i = 0; i < arguments.length; i++) {
                 arguments[i] = PromiseEvaluatorNodeGen.create(arguments[i]);
             }
+            arguments[2] = CastLogicalNodeGen.create(arguments[2], false, false, false);
             return arguments;
         }
 
@@ -202,18 +206,38 @@ public class InfixEmulationFunctions {
 
         protected final ConditionProfile multiIndexProfile = ConditionProfile.createBinaryProfile();
 
-        protected Object get(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames inds, RAbstractLogicalVector dropVec) {
-            return access(frame, x, RRuntime.LOGICAL_FALSE, inds, dropVec, true);
+        protected Object getInternal(VirtualFrame frame, Object x, RArgsValuesAndNames inds, RAbstractLogicalVector dropVec) {
+            return access(frame, x, RRuntime.LOGICAL_FALSE, inds, dropVec, IS_SUBSET);
         }
 
-        protected Object get(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames inds, @SuppressWarnings("unused") RMissing dropVec) {
-            byte drop;
-            if (multiIndexProfile.profile(inds.getLength() > 1)) {
-                drop = RRuntime.LOGICAL_TRUE;
-            } else {
-                drop = RRuntime.LOGICAL_FALSE;
-            }
-            return access(frame, x, RRuntime.LOGICAL_FALSE, inds, drop, IS_SUBSET);
+        protected Object getInternal(VirtualFrame frame, Object x, RArgsValuesAndNames inds, RMissing dropVec) {
+            return access(frame, x, RRuntime.LOGICAL_FALSE, inds, dropVec, IS_SUBSET);
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization
+        protected RNull getNoInd(RNull x, Object inds, Object dropVec) {
+            return x;
+        }
+
+        @Specialization
+        protected Object get(VirtualFrame frame, REnvironment x, RArgsValuesAndNames inds, RAbstractLogicalVector dropVec) {
+            return getInternal(frame, x, inds, dropVec);
+        }
+
+        @Specialization
+        protected Object get(VirtualFrame frame, REnvironment x, RArgsValuesAndNames inds, RMissing dropVec) {
+            return getInternal(frame, x, inds, dropVec);
+        }
+
+        @Specialization
+        protected Object get(VirtualFrame frame, RFunction x, RArgsValuesAndNames inds, RAbstractLogicalVector dropVec) {
+            return getInternal(frame, x, inds, dropVec);
+        }
+
+        @Specialization
+        protected Object get(VirtualFrame frame, RFunction x, RArgsValuesAndNames inds, RMissing dropVec) {
+            return getInternal(frame, x, inds, dropVec);
         }
 
         @SuppressWarnings("unused")
@@ -234,16 +258,19 @@ public class InfixEmulationFunctions {
     public abstract static class AccessArraySubsetBuiltin extends AccessArraySubsetBuiltinBase {
 
         private static final ArgumentsSignature SIGNATURE = ArgumentsSignature.get("", "", "drop");
+        private static final ArgumentsSignature SIGNATURE_NODROP = ArgumentsSignature.get("", "");
 
         private static final String NAME = "[";
 
         @Child private UseMethodInternalNode dcn;
+        @CompilationFinal boolean noDrop;
 
         @Specialization(guards = {"!noInd(inds)", "isObject(frame, x)"})
         protected Object getObj(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames inds, RAbstractLogicalVector dropVec) {
-            if (dcn == null) {
+            if (dcn == null || noDrop) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 dcn = insert(new UseMethodInternalNode(NAME, SIGNATURE));
+                noDrop = false;
             }
             try {
                 return dcn.execute(frame, x.getClassHierarchy(), new Object[]{x, inds, dropVec});
@@ -252,41 +279,34 @@ public class InfixEmulationFunctions {
             }
         }
 
-        @Override
         @Specialization(guards = {"!noInd(inds)", "!isObject(frame, x)"})
         protected Object get(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames inds, RAbstractLogicalVector dropVec) {
-            return super.get(frame, x, inds, dropVec);
+            return super.getInternal(frame, x, inds, dropVec);
         }
 
         @Specialization(guards = {"!noInd(inds)", "isObject(frame, x)"})
-        protected Object getObj(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames inds, @SuppressWarnings("unused") RMissing dropVec) {
-            byte drop;
-            if (multiIndexProfile.profile(inds.getLength() > 1)) {
-                drop = RRuntime.LOGICAL_TRUE;
-            } else {
-                drop = RRuntime.LOGICAL_FALSE;
-            }
-
-            if (dcn == null) {
+        protected Object getObj(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames inds, RMissing dropVec) {
+            if (dcn == null || !noDrop) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                dcn = insert(new UseMethodInternalNode(NAME, SIGNATURE));
+                dcn = insert(new UseMethodInternalNode(NAME, SIGNATURE_NODROP));
+                noDrop = true;
             }
             try {
-                return dcn.execute(frame, x.getClassHierarchy(), new Object[]{x, inds, drop});
+                return dcn.execute(frame, x.getClassHierarchy(), new Object[]{x, inds});
             } catch (S3FunctionLookupNode.NoGenericMethodException e) {
-                return access(frame, x, RRuntime.LOGICAL_FALSE, inds, drop, IS_SUBSET);
+                return access(frame, x, RRuntime.LOGICAL_FALSE, inds, dropVec, IS_SUBSET);
             }
         }
 
-        @Override
         @Specialization(guards = {"!noInd(inds)", "!isObject(frame, x)"})
         protected Object get(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames inds, RMissing dropVec) {
-            return super.get(frame, x, inds, dropVec);
+            return super.getInternal(frame, x, inds, dropVec);
         }
 
         @SuppressFBWarnings(value = "ES_COMPARING_STRINGS_WITH_EQ", justification = "generic name is interned in the interpreted code for faster comparison")
         protected boolean isObject(VirtualFrame frame, RAbstractContainer x) {
-            return x.isObject(attrProfiles) && !(RArguments.getS3Args(frame) != null && RArguments.getS3Args(frame).generic == NAME);
+            // treat as non-object if we got here through S3 dispatch on the object of the same type
+            return x.isObject(attrProfiles) && !(RArguments.getS3Args(frame) != null && RArguments.getS3Args(frame).generic == NAME && RArguments.getArgument(frame, 0).getClass() == x.getClass());
         }
 
     }
@@ -294,16 +314,14 @@ public class InfixEmulationFunctions {
     @RBuiltin(name = ".subset", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", "...", "drop"})
     public abstract static class AccessArraySubsetDefaultBuiltin extends AccessArraySubsetBuiltinBase {
 
-        @Override
         @Specialization(guards = "!noInd(inds)")
         protected Object get(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames inds, RAbstractLogicalVector dropVec) {
-            return super.get(frame, x, inds, dropVec);
+            return super.getInternal(frame, x, inds, dropVec);
         }
 
-        @Override
         @Specialization(guards = "!noInd(inds)")
         protected Object get(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames inds, RMissing dropVec) {
-            return super.get(frame, x, inds, dropVec);
+            return super.getInternal(frame, x, inds, dropVec);
         }
     }
 
@@ -313,7 +331,7 @@ public class InfixEmulationFunctions {
 
         protected final ConditionProfile emptyExactProfile = ConditionProfile.createBinaryProfile();
 
-        protected Object get(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames inds, RAbstractLogicalVector exactVec) {
+        protected Object getInternal(VirtualFrame frame, Object x, RArgsValuesAndNames inds, RAbstractLogicalVector exactVec) {
             byte exact;
             if (emptyExactProfile.profile(exactVec.getLength() == 0)) {
                 exact = RRuntime.LOGICAL_FALSE;
@@ -324,19 +342,35 @@ public class InfixEmulationFunctions {
         }
 
         @SuppressWarnings("unused")
+        @Specialization
+        protected RNull getNoInd(RNull x, Object inds, Object exactVec, Object dropVec) {
+            return x;
+        }
+
+        @Specialization
+        protected Object getNoInd(VirtualFrame frame, REnvironment x, RArgsValuesAndNames inds, RAbstractLogicalVector exactVec, @SuppressWarnings("unused") RAbstractLogicalVector dropVec) {
+            return getInternal(frame, x, inds, exactVec);
+        }
+
+        @Specialization
+        protected Object getNoInd(VirtualFrame frame, RFunction x, RArgsValuesAndNames inds, RAbstractLogicalVector exactVec, @SuppressWarnings("unused") RAbstractLogicalVector dropVec) {
+            return getInternal(frame, x, inds, exactVec);
+        }
+
+        @SuppressWarnings("unused")
         @Specialization(guards = "noInd(inds)")
-        protected Object getNoInd(RAbstractContainer x, RArgsValuesAndNames inds, RAbstractLogicalVector exactVec) {
+        protected Object getNoInd(RAbstractContainer x, RArgsValuesAndNames inds, RAbstractLogicalVector exactVec, RAbstractLogicalVector dropVec) {
             throw RError.error(RError.Message.NO_INDEX);
         }
 
         @SuppressWarnings("unused")
         @Specialization
-        protected Object get(RAbstractContainer x, RMissing inds, RAbstractLogicalVector exactVec) {
+        protected Object get(RAbstractContainer x, RMissing inds, RAbstractLogicalVector exactVec, RAbstractLogicalVector dropVec) {
             throw RError.error(RError.Message.NO_INDEX);
         }
     }
 
-    @RBuiltin(name = "[[", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", "...", "exact"})
+    @RBuiltin(name = "[[", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", "...", "exact", "drop"})
     public abstract static class AccessArraySubscriptBuiltin extends AccessArraySubscriptBuiltinBase {
 
         private static final ArgumentsSignature SIGNATURE = ArgumentsSignature.get("", "", "exact");
@@ -347,11 +381,11 @@ public class InfixEmulationFunctions {
 
         @Override
         public Object[] getDefaultParameterValues() {
-            return new Object[]{RMissing.instance, RArgsValuesAndNames.EMPTY, RRuntime.LOGICAL_TRUE};
+            return new Object[]{RMissing.instance, RArgsValuesAndNames.EMPTY, RRuntime.LOGICAL_TRUE, RRuntime.LOGICAL_TRUE};
         }
 
         @Specialization(guards = {"!noInd(inds)", "isObject(frame, x)"})
-        protected Object getObj(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames inds, RAbstractLogicalVector exactVec) {
+        protected Object getObj(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames inds, RAbstractLogicalVector exactVec, @SuppressWarnings("unused") RAbstractLogicalVector dropVec) {
             byte exact;
             if (emptyExactProfile.profile(exactVec.getLength() == 0)) {
                 exact = RRuntime.LOGICAL_FALSE;
@@ -369,31 +403,30 @@ public class InfixEmulationFunctions {
             }
         }
 
-        @Override
         @Specialization(guards = {"!noInd(inds)", "!isObject(frame, x)"})
-        protected Object get(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames inds, RAbstractLogicalVector exactVec) {
-            return super.get(frame, x, inds, exactVec);
+        protected Object get(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames inds, RAbstractLogicalVector exactVec, @SuppressWarnings("unused") RAbstractLogicalVector dropVec) {
+            return super.getInternal(frame, x, inds, exactVec);
         }
 
         @SuppressFBWarnings(value = "ES_COMPARING_STRINGS_WITH_EQ", justification = "generic name is interned in the interpreted code for faster comparison")
         protected boolean isObject(VirtualFrame frame, RAbstractContainer x) {
-            return x.isObject(attrProfiles) && !(RArguments.getS3Args(frame) != null && RArguments.getS3Args(frame).generic == NAME);
+            // treat as non-object if we got here through S3 dispatch on the object of the same type
+            return x.isObject(attrProfiles) && !(RArguments.getS3Args(frame) != null && RArguments.getS3Args(frame).generic == NAME && RArguments.getArgument(frame, 0).getClass() == x.getClass());
         }
 
     }
 
-    @RBuiltin(name = ".subset2", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x", "...", "exact"})
+    @RBuiltin(name = ".subset2", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x", "...", "exact", "drop"})
     public abstract static class AccessArraySubscriptDefaultBuiltin extends AccessArraySubscriptBuiltinBase {
 
         @Override
         public Object[] getDefaultParameterValues() {
-            return new Object[]{RMissing.instance, RArgsValuesAndNames.EMPTY, RRuntime.LOGICAL_TRUE};
+            return new Object[]{RMissing.instance, RArgsValuesAndNames.EMPTY, RRuntime.LOGICAL_TRUE, RRuntime.LOGICAL_TRUE};
         }
 
-        @Override
         @Specialization(guards = "!noInd(inds)")
-        protected Object get(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames inds, RAbstractLogicalVector exactVec) {
-            return super.get(frame, x, inds, exactVec);
+        protected Object get(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames inds, RAbstractLogicalVector exactVec, @SuppressWarnings("unused") RAbstractLogicalVector dropVec) {
+            return super.getInternal(frame, x, inds, exactVec);
         }
 
     }
@@ -479,7 +512,8 @@ public class InfixEmulationFunctions {
 
         @SuppressFBWarnings(value = "ES_COMPARING_STRINGS_WITH_EQ", justification = "generic name is interned in the interpreted code for faster comparison")
         protected boolean isObject(VirtualFrame frame, RAbstractContainer x) {
-            return x.isObject(attrProfiles) && !(RArguments.getS3Args(frame) != null && RArguments.getS3Args(frame).generic == NAME);
+            // treat as non-object if we got here through S3 dispatch on the object of the same type
+            return x.isObject(attrProfiles) && !(RArguments.getS3Args(frame) != null && RArguments.getS3Args(frame).generic == NAME && RArguments.getArgument(frame, 0).getClass() == x.getClass());
         }
     }
 
@@ -513,7 +547,8 @@ public class InfixEmulationFunctions {
 
         @SuppressFBWarnings(value = "ES_COMPARING_STRINGS_WITH_EQ", justification = "generic name is interned in the interpreted code for faster comparison")
         protected boolean isObject(VirtualFrame frame, RAbstractContainer x) {
-            return x.isObject(attrProfiles) && !(RArguments.getS3Args(frame) != null && RArguments.getS3Args(frame).generic == NAME);
+            // treat as non-object if we got here through S3 dispatch on the object of the same type
+            return x.isObject(attrProfiles) && !(RArguments.getS3Args(frame) != null && RArguments.getS3Args(frame).generic == NAME && RArguments.getArgument(frame, 0).getClass() == x.getClass());
         }
 
     }

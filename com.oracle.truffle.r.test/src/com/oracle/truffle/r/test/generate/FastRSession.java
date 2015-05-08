@@ -52,11 +52,6 @@ public final class FastRSession implements RSession {
             buffer.append(s);
         }
 
-        @TruffleBoundary
-        public void printf(String format, Object... args) {
-            buffer.append(String.format(format, args));
-        }
-
         public String readLine() {
             return null;
         }
@@ -117,7 +112,7 @@ public final class FastRSession implements RSession {
         ROptions.initialize();
         REnvVars.initialize();
         try {
-            REngine.initialize(new String[0], consoleHandler, false, false, false);
+            REngine.initialize(new String[0], consoleHandler, false, false);
         } finally {
             System.out.print(consoleHandler.buffer.toString());
         }

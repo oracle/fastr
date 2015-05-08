@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -50,11 +50,6 @@ public class JLineConsoleHandler implements RContext.ConsoleHandler {
     public void print(String s) {
         printWriter.print(s);
         printWriter.flush();
-    }
-
-    @TruffleBoundary
-    public void printf(String format, Object... args) {
-        printWriter.format(format, args);
     }
 
     @TruffleBoundary

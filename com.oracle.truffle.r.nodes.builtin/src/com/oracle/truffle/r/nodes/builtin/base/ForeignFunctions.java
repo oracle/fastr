@@ -17,6 +17,7 @@ import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.library.graphics.*;
 import com.oracle.truffle.r.library.methods.*;
@@ -24,6 +25,7 @@ import com.oracle.truffle.r.library.stats.*;
 import com.oracle.truffle.r.library.tools.*;
 import com.oracle.truffle.r.library.utils.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.builtin.base.ForeignFunctionsFactory.DotExternal2NodeGen.ParseRdNodeGen;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RError.Message;
@@ -902,7 +904,12 @@ public class ForeignFunctions {
 
     }
 
-    @RBuiltin(name = ".External2", kind = RBuiltinKind.PRIMITIVE, parameterNames = {".NAME", "..."})
+    /*
+     * Fully qualified class necessary otherwise javac cannot find the symbol, related to nested
+     * ParseRd class.
+     */
+
+    @com.oracle.truffle.r.runtime.RBuiltin(name = ".External2", kind = RBuiltinKind.PRIMITIVE, parameterNames = {".NAME", "..."})
     public abstract static class DotExternal2 extends CastAdapter {
 
         private final BranchProfile errorProfile = BranchProfile.create();
@@ -1020,6 +1027,37 @@ public class ForeignFunctions {
 
         public boolean isPar(RList f) {
             return matchName(f, "C_par");
+        }
+
+        @Child ParseRdNode parseRdNode;
+
+        @Specialization(guards = "isParseRd(f)")
+        protected Object parseRd(VirtualFrame frame, @SuppressWarnings("unused") RList f, RArgsValuesAndNames args) {
+            if (parseRdNode == null) {
+                parseRdNode = insert(ParseRdNodeGen.create());
+            }
+            Object[] av = args.getArguments();
+            return parseRdNode.execute(frame, av[0], av[1], av[2], av[3], av[4], av[5], av[6]);
+        }
+
+        public abstract static class ParseRdNode extends Node {
+            public abstract Object execute(VirtualFrame frame, Object con, Object srcfile, Object encoding, Object verbose, Object basename, Object fragment, Object warningCalls);
+
+            @Specialization
+            protected Object parseRd(RConnection con, REnvironment srcfile, String encoding, byte verbose, RAbstractStringVector basename, byte fragment, byte warningCalls) {
+                return ToolsParseRd.parseRd(con, srcfile, encoding, RRuntime.fromLogical(verbose), basename, RRuntime.fromLogical(fragment), RRuntime.fromLogical(warningCalls));
+            }
+
+            @SuppressWarnings("unused")
+            @Fallback
+            public Object parseRd(VirtualFrame frame, Object con, Object srcfile, Object encoding, Object verbose, Object basename, Object fragment, Object warningCalls) {
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
+            }
+
+        }
+
+        public boolean isParseRd(RList f) {
+            return matchName(f, "C_parseRd");
         }
     }
 

@@ -21,7 +21,6 @@ import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.access.WriteVariableNode.Mode;
-import com.oracle.truffle.r.nodes.access.array.read.*;
 import com.oracle.truffle.r.nodes.access.variables.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.builtin.base.LapplyNodeGen.LapplyInternalNodeGen;
@@ -99,9 +98,9 @@ public abstract class Lapply extends RBuiltinNode {
         }
 
         private static RNode createIndexedLoad() {
-            AccessArrayNode indexNode;
+            RCallNode indexNode;
             try {
-                indexNode = (AccessArrayNode) ((RLanguage) RContext.getEngine().parse(ACCESS_ARRAY_SOURCE).getDataAt(0)).getRep();
+                indexNode = (RCallNode) ((RLanguage) RContext.getEngine().parse(ACCESS_ARRAY_SOURCE).getDataAt(0)).getRep();
             } catch (ParseException ex) {
                 throw RInternalError.shouldNotReachHere();
             }

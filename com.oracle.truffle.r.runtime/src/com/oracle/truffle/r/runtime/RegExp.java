@@ -22,9 +22,7 @@
  */
 package com.oracle.truffle.r.runtime;
 
-import java.util.regex.*;
-
-import com.oracle.truffle.api.CompilerDirectives.*;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
 /**
  * Support methods for regular expressions.
@@ -56,8 +54,6 @@ public class RegExp {
         }
     }
 
-    private static final Predefined[] preDefinedClasses = Predefined.values();
-
     /**
      * R defines some short forms of character classes. E.g. {@code [[:alnum:]]} means
      * {@code [0-9A-Za-z]} but independent of locale and character encoding. So we have to translate
@@ -67,35 +63,37 @@ public class RegExp {
     @TruffleBoundary
     public static String checkPreDefinedClasses(String pattern) {
         String result = pattern;
-        int xxIndex;
-        while ((xxIndex = result.indexOf("[[")) >= 0) {
-            boolean predefined = false;
-            for (int i = 0; i < preDefinedClasses.length; i++) {
-                Predefined preDefined = preDefinedClasses[i];
-                int ix = result.indexOf(preDefined.syntax);
-                if (ix >= 0) {
-                    String replacement = preDefined.replacement;
-                    result = result.substring(0, ix) + replacement + result.substring(ix + preDefined.syntaxLength);
-                    predefined = true;
-                }
-            }
-            if (!predefined) {
-                // it's a freestanding [[, which is legal in R but not in Java.
-                result = result.substring(0, xxIndex) + "[\\[" + result.substring(xxIndex + 2);
-            }
-        }
-        // this loop replaces "[[]" (illegal in Java regex) to "[\[]"
+        /*
+         * this loop replaces "[[]" (illegal in Java regex) with "[\[]", "[\]" with "[\\]" and
+         * predefined classes like "[:alpha:]" with "\p{Alpha}".
+         */
         boolean withinCharClass = false;
         int i = 0;
         while (i < result.length()) {
             switch (result.charAt(i)) {
                 case '\\':
+                    if (withinCharClass) {
+                        result = result.substring(0, i) + '\\' + result.substring(i);
+                    }
                     i++;
                     break;
                 case '[':
                     if (withinCharClass) {
-                        result = result.substring(0, i) + '\\' + result.substring(i);
-                        i++;
+                        boolean predefined = false;
+                        if (i + 1 < result.length() && result.charAt(i + 1) == ':') {
+                            for (Predefined pre : Predefined.values()) {
+                                if (pre.syntax.regionMatches(0, result, i, pre.syntaxLength)) {
+                                    result = result.substring(0, i) + pre.replacement + result.substring(i + pre.syntaxLength);
+                                    i += pre.replacement.length() - 1;
+                                    predefined = true;
+                                    break;
+                                }
+                            }
+                        }
+                        if (!predefined) {
+                            result = result.substring(0, i) + '\\' + result.substring(i);
+                            i++;
+                        }
                     } else {
                         withinCharClass = true;
                     }
@@ -108,14 +106,4 @@ public class RegExp {
         }
         return result;
     }
-
-    public static void main(String[] args) {
-        String result = checkPreDefinedClasses(args[0]);
-        try {
-            Pattern.compile(result);
-        } catch (PatternSyntaxException ex) {
-            System.console();
-        }
-    }
-
 }

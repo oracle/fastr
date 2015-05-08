@@ -23,13 +23,10 @@
 
 # This "builds" a test package, resulting in a tar file,
 # which is then loaded by the unit tests in TestRPackages.
-# Note that the tar file root must be a single directoru but
-# the name is unimportant because the install process takes the 
-# package name from the DESCRIPTION. So we just use the "src" directory.
 
 .PHONY: all
 
-PKG_FILES = $(shell find src/ -type f -name '*')
+PKG_FILES = $(shell find $(PACKAGE)/ -type f -name '*')
 
 PKG_TAR = lib/$(PACKAGE).tar
 
@@ -37,7 +34,7 @@ all: $(PKG_TAR)
 
 $(PKG_TAR): $(PKG_FILES)
 	mkdir -p lib
-	tar cf $(PKG_TAR) src
+	tar cf $(PKG_TAR) $(PACKAGE)
 
 clean:
 	rm -f $(PKG_TAR)
