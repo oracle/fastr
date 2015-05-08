@@ -40,6 +40,12 @@ public abstract class Call extends ASTNode {
     }
 
     public static ASTNode create(SourceSection source, ASTNode call, List<ArgNode> arguments) {
+        for (ArgNode a : arguments) {
+            // otherwise "empty" indexes are not recorded at all
+            if (a.getName() == null && a.getValue() == null) {
+                a.value = new Missing(a.getSource());
+            }
+        }
         if (call instanceof SimpleAccessVariable) {
             SimpleAccessVariable ccall = (SimpleAccessVariable) call;
             return create(source, ccall.getVariable(), arguments);
@@ -60,6 +66,7 @@ public abstract class Call extends ASTNode {
     }
 
     public static ASTNode create(SourceSection src, CallOperator op, ASTNode lhs, List<ArgNode> args) {
+        args.add(0, ArgNode.create(src, null, lhs));
         return new AccessVector(src, lhs, args, op == CallOperator.SUBSET);
     }
 

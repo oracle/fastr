@@ -140,4 +140,10 @@ public class BasicVisitor<R> implements Visitor<R> {
     public R visit(Formula n) {
         return visit((ASTNode) n);
     }
+
+    @Override
+    public R visit(Missing m) {
+        return visit((ASTNode) m);
+    }
+
 }

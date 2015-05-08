@@ -32,6 +32,7 @@ public abstract class CallMatcherNode extends Node {
     @Child private PromiseHelperNode promiseHelper;
 
     protected final ConditionProfile missingArgProfile = ConditionProfile.createBinaryProfile();
+    protected final ConditionProfile emptyArgProfile = ConditionProfile.createBinaryProfile();
 
     public CallMatcherNode(boolean forNextMethod, boolean argsAreEvaluated) {
         this.forNextMethod = forNextMethod;
@@ -188,7 +189,7 @@ public abstract class CallMatcherNode extends Node {
             FormalArguments formals = ((RRootNode) function.getRootNode()).getFormalArguments();
             for (int i = 0; i < formals.getSignature().getLength(); i++) {
                 Object arg = args[i];
-                if (formals.getInternalDefaultArgumentAt(i) != RMissing.instance && missingArgProfile.profile(arg == RMissing.instance)) {
+                if (formals.getInternalDefaultArgumentAt(i) != RMissing.instance && (missingArgProfile.profile(arg == RMissing.instance) || emptyArgProfile.profile(arg == REmpty.instance))) {
                     args[i] = formals.getInternalDefaultArgumentAt(i);
                 }
             }
@@ -251,7 +252,7 @@ public abstract class CallMatcherNode extends Node {
             FormalArguments formals = ((RRootNode) function.getRootNode()).getFormalArguments();
             for (int i = 0; i < formals.getSignature().getLength(); i++) {
                 Object arg = args[i];
-                if (formals.getInternalDefaultArgumentAt(i) != RMissing.instance && missingArgProfile.profile(arg == RMissing.instance)) {
+                if (formals.getInternalDefaultArgumentAt(i) != RMissing.instance && (missingArgProfile.profile(arg == RMissing.instance) || emptyArgProfile.profile(arg == REmpty.instance))) {
                     args[i] = formals.getInternalDefaultArgumentAt(i);
                 }
             }

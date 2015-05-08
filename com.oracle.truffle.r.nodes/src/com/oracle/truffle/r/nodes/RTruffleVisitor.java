@@ -94,6 +94,11 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
     }
 
     @Override
+    public RNode visit(Missing m) {
+        return ConstantNode.create(REmpty.instance);
+    }
+
+    @Override
     public RNode visit(FunctionCall callParam) {
         FunctionCall call = callParam;
         String callName = call.isSymbol() ? call.getName() : null;

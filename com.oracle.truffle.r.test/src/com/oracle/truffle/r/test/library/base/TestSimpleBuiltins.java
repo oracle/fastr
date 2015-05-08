@@ -4139,7 +4139,7 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{  f <- function (a, b=TRUE, c=FALSE) { nargs() }; f(1, FALSE) }");
         assertEval("{  f<-function(x, ..., y=TRUE) { nargs() }; f(1, 2, 3) }");
 
-        assertEval(Ignored.Unknown, "{  f <- function (a, b, c) { nargs() }; f(,,a) }");
+        assertEval("{  f <- function (a, b, c) { nargs() }; f(,,a) }");
     }
 
     @Test

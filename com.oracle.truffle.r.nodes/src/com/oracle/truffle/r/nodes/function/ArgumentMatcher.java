@@ -391,7 +391,13 @@ public class ArgumentMatcher {
 
     @TruffleBoundary
     private static RNode wrapMatched(FormalArguments formals, RBuiltinDescriptor builtin, ClosureCache closureCache, RNode suppliedArg, int formalIndex, boolean noOpt) {
-        // Create promise
+        // Create promise, unless it's the empty value
+        if (suppliedArg instanceof ConstantNode) {
+            ConstantNode a = (ConstantNode) suppliedArg;
+            if (a.getValue() == REmpty.instance) {
+                return a;
+            }
+        }
         if (shouldInlineArgument(builtin, formalIndex)) {
             return PromiseNode.createInlined(suppliedArg.getSourceSection(), suppliedArg, formals.getInternalDefaultArgumentAt(formalIndex));
         } else {
