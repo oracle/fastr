@@ -300,7 +300,8 @@ public class InfixEmulationFunctions {
 
         @SuppressFBWarnings(value = "ES_COMPARING_STRINGS_WITH_EQ", justification = "generic name is interned in the interpreted code for faster comparison")
         protected boolean isObject(VirtualFrame frame, RAbstractContainer x) {
-            return x.isObject(attrProfiles) && !(RArguments.getS3Args(frame) != null && RArguments.getS3Args(frame).generic == NAME);
+            // treat as non-object if we got here through S3 dispatch on the object of the same type
+            return x.isObject(attrProfiles) && !(RArguments.getS3Args(frame) != null && RArguments.getS3Args(frame).generic == NAME && RArguments.getArgument(frame, 0).getClass() == x.getClass());
         }
 
     }
@@ -404,7 +405,8 @@ public class InfixEmulationFunctions {
 
         @SuppressFBWarnings(value = "ES_COMPARING_STRINGS_WITH_EQ", justification = "generic name is interned in the interpreted code for faster comparison")
         protected boolean isObject(VirtualFrame frame, RAbstractContainer x) {
-            return x.isObject(attrProfiles) && !(RArguments.getS3Args(frame) != null && RArguments.getS3Args(frame).generic == NAME);
+            // treat as non-object if we got here through S3 dispatch on the object of the same type
+            return x.isObject(attrProfiles) && !(RArguments.getS3Args(frame) != null && RArguments.getS3Args(frame).generic == NAME && RArguments.getArgument(frame, 0).getClass() == x.getClass());
         }
 
     }
@@ -505,7 +507,8 @@ public class InfixEmulationFunctions {
 
         @SuppressFBWarnings(value = "ES_COMPARING_STRINGS_WITH_EQ", justification = "generic name is interned in the interpreted code for faster comparison")
         protected boolean isObject(VirtualFrame frame, RAbstractContainer x) {
-            return x.isObject(attrProfiles) && !(RArguments.getS3Args(frame) != null && RArguments.getS3Args(frame).generic == NAME);
+            // treat as non-object if we got here through S3 dispatch on the object of the same type
+            return x.isObject(attrProfiles) && !(RArguments.getS3Args(frame) != null && RArguments.getS3Args(frame).generic == NAME && RArguments.getArgument(frame, 0).getClass() == x.getClass());
         }
     }
 
@@ -539,7 +542,8 @@ public class InfixEmulationFunctions {
 
         @SuppressFBWarnings(value = "ES_COMPARING_STRINGS_WITH_EQ", justification = "generic name is interned in the interpreted code for faster comparison")
         protected boolean isObject(VirtualFrame frame, RAbstractContainer x) {
-            return x.isObject(attrProfiles) && !(RArguments.getS3Args(frame) != null && RArguments.getS3Args(frame).generic == NAME);
+            // treat as non-object if we got here through S3 dispatch on the object of the same type
+            return x.isObject(attrProfiles) && !(RArguments.getS3Args(frame) != null && RArguments.getS3Args(frame).generic == NAME && RArguments.getArgument(frame, 0).getClass() == x.getClass());
         }
 
     }
