@@ -350,7 +350,10 @@ public class RErrorHandling {
         return frame == null ? REnvironment.globalEnv().getFrame() : frame.materialize();
     }
 
-    // TODO ? GnuR uses a vector with names
+    /**
+     * A temporary class used to accumulate warnins in deferred mode, Eventually these are converted
+     * to a list and stored in {@code last.warning} in {@code baseenv}.
+     */
     private static class Warning {
         final String message;
         final Object call;
@@ -422,7 +425,7 @@ public class RErrorHandling {
             } else if (w == 1) {
                 Utils.writeStderr(message, true);
             } else if (w == 0) {
-                warnings.add(new Warning(fmsg, call));
+                warnings.add(new Warning(fmsg, createCall(call)));
             }
         } finally {
             myErrorState.inWarning = false;
@@ -451,10 +454,21 @@ public class RErrorHandling {
             if (nWarnings == 1) {
                 Utils.writeStderr("Warning message:", true);
                 Warning warning = warnings.get(0);
-                if (warning.call == null) {
+                if (warning.call == RNull.instance) {
                     Utils.writeStderr(warning.message, true);
                 } else {
-                    Utils.writeStderr(String.format("In %s : %s", warning.call, warning.message), true);
+                    RLanguage callRL = (RLanguage) warning.call;
+                    Node callNode = (Node) callRL.getRep();
+                    SourceSection ss = callNode.getSourceSection();
+                    String callSource;
+                    if (ss == null) {
+                        RDeparse.State state = RDeparse.State.createPrintableState();
+                        RContext.getRASTHelper().deparse(state, callRL);
+                        callSource = state.toString();
+                    } else {
+                        callSource = ss.getCode();
+                    }
+                    Utils.writeStderr(String.format("In %s : %s", callSource, warning.message), true);
                 }
             } else if (nWarnings <= 10) {
                 Utils.writeStderr("Warning messages:", true);
@@ -470,11 +484,12 @@ public class RErrorHandling {
                 }
             }
             Object[] wData = new Object[nWarnings];
-            // TODO names
+            String[] names = new String[nWarnings];
             for (int i = 0; i < nWarnings; i++) {
-                wData[i] = warnings.get(i);
+                wData[i] = warnings.get(i).call;
+                names[i] = warnings.get(i).message;
             }
-            RList lw = RDataFactory.createList(wData);
+            RList lw = RDataFactory.createList(wData, RDataFactory.createStringVector(names, RDataFactory.COMPLETE_VECTOR));
             REnvironment.baseEnv().safePut("last.warning", lw);
         } finally {
             errorState.get().inPrintWarning = false;

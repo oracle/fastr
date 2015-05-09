@@ -414,13 +414,21 @@ public class RSerialize {
                         }
                         String deparse = RDeparse.deparse(rpl);
                         try {
+                            RExpression expr = parse(deparse, true);
+                            if (expr == null) {
+                                /*
+                                 * The source did not deparse, either due to an error in the deparse
+                                 * logic or an error in the FastR parser. Rather than fail, we
+                                 * return a function that, if invoked, reports this as an R error.
+                                 */
+                                expr = createFailedDeparseExpression();
+                            }
                             /*
                              * The tag of result is the enclosing environment (from NAMESPACESEXP)
                              * for the function. However the namespace is locked, so can't just eval
                              * there (and overwrite the promise), so we fix the enclosing frame up
                              * on return.
                              */
-                            RExpression expr = parse(deparse, true);
                             RFunction func = (RFunction) RContext.getEngine().eval(expr, RDataFactory.createNewEnv(REnvironment.emptyEnv(), 0), frameDepth + 1);
                             func.setEnclosingFrame(((REnvironment) rpl.getTag()).getFrame());
                             Source source = func.getRootNode().getSourceSection().getSource();
@@ -429,7 +437,7 @@ public class RSerialize {
                                  * Located a function source file from which we can retrieve the
                                  * function name
                                  */
-                                String funcName = PackageSource.decodeName(source.getName());
+                                String funcName = RPackageSource.decodeName(source.getName());
                                 func.setName(funcName);
                             }
                             result = func;
@@ -642,15 +650,21 @@ public class RSerialize {
             return result;
         }
 
-        private RExpression parse(String deparse, boolean isClosure) throws IOException {
+        private RExpression parse(String deparseRaw, boolean isClosure) throws IOException {
             try {
                 String sourcePath = null;
+                String deparse = deparseRaw;
                 if (isClosure) {
                     if (saveDeparse) {
-                        saveDeparseResult(deparse);
+                        /*
+                         * To disambiguate identical saved deparsed files in different packages add
+                         * a header line
+                         */
+                        deparse = "# deparsed from package: " + packageName + "\n" + deparse;
+                        saveDeparseResult(deparse, false);
                     }
                     if (locateSource) {
-                        sourcePath = PackageSource.lookup(deparse);
+                        sourcePath = RPackageSource.lookup(deparse);
                     }
                 }
                 Source source;
@@ -661,16 +675,38 @@ public class RSerialize {
                 }
                 return RContext.getEngine().parse(source);
             } catch (Throwable ex) {
-                // denotes a deparse/eval error, which is an unrecoverable bug
-                saveDeparseResult(deparse);
-                throw Utils.fail("internal deparse error - see file DEPARSE");
+                /*
+                 * Denotes a deparse/eval error, which is an unrecoverable bug, except in the
+                 * special case where we are just saving package sources.
+                 */
+                saveDeparseResult(deparseRaw, true);
+                if (!saveDeparse) {
+                    throw Utils.fail("internal deparse error - see file DEPARSE_ERROR");
+                } else {
+                    return null;
+                }
             }
         }
 
-        private static void saveDeparseResult(String deparse) throws IOException {
-            try (FileWriter wr = new FileWriter(new File(new File(REnvVars.rHome()), "DEPARSE"))) {
+        private static void saveDeparseResult(String deparse, boolean isError) throws IOException {
+            try (FileWriter wr = new FileWriter(new File(new File(REnvVars.rHome()), "DEPARSE" + (isError ? "_ERROR" : "")))) {
                 wr.write(deparse);
             }
+        }
+
+        private static final String FAILED_DEPARSE_FUNCTION = "function(...) stop(\"FastR error: proxy for lazily loaded function that did not deparse/parse\")";
+        private static final Source FAILED_DEPARSE_FUNCTION_SOURCE = Source.fromText(FAILED_DEPARSE_FUNCTION, UNKNOWN_PACKAGE_SOURCE_PREFIX + "deparse_error>");
+        private static RExpression failedDeparseExpression;
+
+        private static RExpression createFailedDeparseExpression() {
+            if (failedDeparseExpression == null) {
+                try {
+                    failedDeparseExpression = RContext.getEngine().parse(FAILED_DEPARSE_FUNCTION_SOURCE);
+                } catch (Throwable ex) {
+                    throw RInternalError.shouldNotReachHere();
+                }
+            }
+            return failedDeparseExpression;
         }
 
         /**

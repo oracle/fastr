@@ -432,6 +432,7 @@ public final class RError extends RuntimeException {
         INCORRECT_NUM_PROB("incorrect number of probabilities"),
         NA_IN_PROB_VECTOR("NA in probability vector"),
         NEGATIVE_PROBABILITY("non-positive probability"),
+        NON_POSITIVE_FILL("non-positive 'fill' argument will be ignored"),
         MUST_BE_ONE_BYTE("invalid %s: must be one byte"),
         INVALID_DECIMAL_SEP("invalid decimal separator"),
         INVALID_QUOTE_SYMBOL("invalid quote symbol set"),
