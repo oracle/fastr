@@ -22,26 +22,23 @@
  */
 package com.oracle.truffle.r.nodes.builtin.fastr;
 
-import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.instrument.*;
 
 public class FastRPkgSource {
 
-    @SuppressWarnings("unused")
     public static RNull preLoad(String pkg, String fname) {
-        RSerialize.setSaveDeparse(true);
+        RPackageSource.preLoad(pkg, fname);
         return RNull.instance;
     }
 
     public static RNull postLoad(String pkg, String fname, Object val) {
-        RSerialize.setSaveDeparse(false);
-        PackageSource.postLoad(pkg, fname, val);
+        RPackageSource.postLoad(pkg, fname, val);
         return RNull.instance;
     }
 
     public static RNull done() {
-        PackageSource.saveMap();
+        RPackageSource.saveMap();
         return RNull.instance;
     }
 

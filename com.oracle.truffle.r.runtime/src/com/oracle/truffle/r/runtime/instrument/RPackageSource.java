@@ -41,27 +41,34 @@ import com.oracle.truffle.r.runtime.data.*;
  * The {@code INDEX} file is a series of lines of the form:
  *
  * <pre>
- * FNAME,FINGERPRINT,RPATH
+ * FNAME,FINGERPRINT,PKG,RPATH
  * </pre>
  *
  * where FNAME is the function name as it appears in the source code and RPATH is a relative
- * pathname to the generated source file. Internally we record the path in canonical form for fast
- * processing.
+ * pathname to the generated source file from PKG. Internally we record the path in canonical form
+ * for fast processing.
  */
-public class PackageSource {
+public class RPackageSource {
     public static final String PKGSOURCE_PROJECT = "Rpkgsource";
     public static final String INDEX = "INDEX";
     private static final String DOT_PREFIX = "_dot_";
+    private static final String SLASH_SWAP = "_slash_";
+    private static final int FNAME = 0;
+    private static final int FINGERPRINT = 1;
+    private static final int PKG = 2;
+    private static final int RPATH = 3;
 
     private static class FunctionInfo {
-        private final String path;
         /**
          * name of function in source code.
          */
         private final String sourceName;
+        private final String path;
+        private final String pkg;
 
-        FunctionInfo(String sourceName, String path) {
+        FunctionInfo(String sourceName, String pkg, String path) {
             this.sourceName = sourceName;
+            this.pkg = pkg;
             this.path = path;
         }
     }
@@ -84,9 +91,9 @@ public class PackageSource {
             Path dirPath = dirPath();
             for (String line : lines) {
                 String[] parts = line.split(",");
-                String canonPath = dirPath.resolve(parts[2]).toString();
-                indexMap.put(parts[1], new FunctionInfo(parts[0], canonPath));
-                pathToNameMap.put(canonPath, parts[0]);
+                String canonPath = dirPath.resolve(parts[PKG]).resolve(parts[RPATH]).toString();
+                indexMap.put(parts[FINGERPRINT], new FunctionInfo(parts[FINGERPRINT], parts[PKG], canonPath));
+                pathToNameMap.put(canonPath, parts[FNAME]);
             }
             RSerialize.setLocateSource(true);
         } catch (IOException ex) {
@@ -108,15 +115,21 @@ public class PackageSource {
         }
     }
 
-    public static void register(Path sourcePath, String fname) {
+    public static void register(String fname, String pkg, Path sourcePath) {
         try {
             byte[] sourceData = Files.readAllBytes(sourcePath);
             String fingerprint = getFingerPrint(sourceData);
             FunctionInfo prev = indexMap.get(fingerprint);
             if (!((prev == null) || (prev.sourceName == fname && prev.path == sourcePath.toString()))) {
-                throw RInternalError.shouldNotReachHere("two package functions with same fingerprint");
+                /*
+                 * This could arise in several ways. Most likely the same function is assigned to
+                 * multiple names in the same package, or the same (likely trivial) body is assigned
+                 * to several unrelated functions. These are annoying but essentially benign.
+                 */
+                RError.warning(RError.Message.GENERIC, "two package functions with same fingerprint, prev: '" + qualName(prev.pkg, prev.sourceName) + "', this '" + qualName(pkg, fname) + "'");
+                return;
             }
-            indexMap.put(fingerprint, new FunctionInfo(fname, dirPath().relativize(sourcePath).toString()));
+            indexMap.put(fingerprint, new FunctionInfo(fname, pkg, dirPath().resolve(pkg).relativize(sourcePath).toString()));
         } catch (IOException ex) {
             throw RInternalError.shouldNotReachHere(ex.getMessage());
         }
@@ -132,21 +145,57 @@ public class PackageSource {
 
     }
 
+    @SuppressWarnings("unused")
+    public static void preLoad(String pkg, String fname) {
+        RSerialize.setSaveDeparse(true);
+        // make sure no previous file exists
+        Path source = deparse(false);
+        Path errorSource = deparse(true);
+        try {
+            Files.deleteIfExists(source);
+            Files.deleteIfExists(errorSource);
+        } catch (IOException ex) {
+            throw RInternalError.shouldNotReachHere("failed to delete existing DEPARSE");
+        }
+    }
+
     public static void postLoad(String pkg, String fname, Object val) {
+        RSerialize.setSaveDeparse(false);
         if (val instanceof RFunction) {
             /*
              * RSerialize will have saved the deparsed output in DEPARSE, so we move it to the
-             * correct location based on the "fname", and update the index.
+             * correct location based on the "fname", and update the index. N.B. If the function had
+             * been (lazily) loaded before this process began, the file will not exist. This is
+             * quite likely for the default packages used on startup, which really need special
+             * treatment. N.B. Also, if the function did not deparse correctly, it will be in a file
+             * named DEPARSE_ERROR, which we ignore.
              */
-            Path source = FileSystems.getDefault().getPath(REnvVars.rHome(), "DEPARSE");
-            try {
-                Path target = targetPath(pkg, fname);
-                Files.move(source, target, StandardCopyOption.REPLACE_EXISTING);
-                PackageSource.register(target, fname);
-            } catch (IOException ex) {
-                throw RError.error(RError.Message.GENERIC, ex.getMessage());
+            Path source = deparse(false);
+            if (Files.exists(source)) {
+                try {
+                    Path target = targetPath(pkg, fname);
+                    Files.move(source, target, StandardCopyOption.REPLACE_EXISTING);
+                    RPackageSource.register(fname, pkg, target);
+                } catch (IOException ex) {
+                    throw RError.error(RError.Message.GENERIC, ex.getMessage());
+                }
+            } else {
+                /*
+                 * Either (a) no unserialize happened because it had already happened or (b) there
+                 * was an error, the latter indicated by the existence of DEPARSE_ERROR
+                 */
+                String qualName = qualName(pkg, fname);
+                if (Files.exists(deparse(true))) {
+                    RError.warning(RError.Message.GENERIC, "the function '" + qualName + "' did not deparse successfully");
+                } else {
+                    RError.warning(RError.Message.GENERIC, "the function '" + qualName + "' has already been unserialized");
+                }
             }
         }
+    }
+
+    private static String qualName(String pkg, String fname) {
+        return pkg + "::" + fname;
     }
 
     public static String decodeName(String path) {
@@ -162,11 +211,16 @@ public class PackageSource {
      * that.
      */
     private static String mungeName(String fname) {
+        String result = fname;
         if (fname.charAt(0) == '.') {
-            return DOT_PREFIX + fname.substring(1);
-        } else {
-            return fname;
+            result = DOT_PREFIX + fname.substring(1);
         }
+        result = result.replace("/", SLASH_SWAP);
+        return result;
+    }
+
+    private static Path deparse(boolean isError) {
+        return FileSystems.getDefault().getPath(REnvVars.rHome(), "DEPARSE" + (isError ? "_ERROR" : ""));
     }
 
     private static Path targetPath(String pkg, String fnameArg) throws IOException {
@@ -183,6 +237,8 @@ public class PackageSource {
                 wr.append(entry.getValue().sourceName);
                 wr.append(',');
                 wr.append(entry.getKey());
+                wr.append(',');
+                wr.append(entry.getValue().pkg);
                 wr.append(',');
                 wr.append(entry.getValue().path);
                 wr.append('\n');
