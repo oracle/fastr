@@ -246,6 +246,8 @@ public class RInstrument {
         if (instrumentingEnabled) {
             Probe.registerASTProber(RASTProber.getRASTProber());
             Probe.addProbeListener(new RProbeListener());
+        }
+        if (instrumentingEnabled || FastROptions.LoadPkgSourcesIndex.getValue()) {
             RPackageSource.initialize();
         }
         String rdebugValue = FastROptions.Rdebug.getValue();

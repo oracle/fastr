@@ -454,10 +454,21 @@ public class RErrorHandling {
             if (nWarnings == 1) {
                 Utils.writeStderr("Warning message:", true);
                 Warning warning = warnings.get(0);
-                if (warning.call == null) {
+                if (warning.call == RNull.instance) {
                     Utils.writeStderr(warning.message, true);
                 } else {
-                    Utils.writeStderr(String.format("In %s : %s", warning.call, warning.message), true);
+                    RLanguage callRL = (RLanguage) warning.call;
+                    Node callNode = (Node) callRL.getRep();
+                    SourceSection ss = callNode.getSourceSection();
+                    String callSource;
+                    if (ss == null) {
+                        RDeparse.State state = RDeparse.State.createPrintableState();
+                        RContext.getRASTHelper().deparse(state, callRL);
+                        callSource = state.toString();
+                    } else {
+                        callSource = ss.getCode();
+                    }
+                    Utils.writeStderr(String.format("In %s : %s", callSource, warning.message), true);
                 }
             } else if (nWarnings <= 10) {
                 Utils.writeStderr("Warning messages:", true);
