@@ -629,6 +629,17 @@ public class RSerialize {
                     break;
                 }
 
+                case UNBOUNDVALUE_SXP: {
+                    /*
+                     * GnuR uses this to represent "no-value". FastR does not have such a type, so
+                     * we return RNull for now. N.B. This has never occurred in real code, only when
+                     * unserializing package sources from "utils", where a PROMSXP has a
+                     * UNBOUNDVALUE_SXP.
+                     */
+                    result = RNull.instance;
+                    break;
+                }
+
                 default:
                     throw RInternalError.unimplemented();
             }
