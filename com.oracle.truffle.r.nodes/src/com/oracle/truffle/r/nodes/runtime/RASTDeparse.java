@@ -73,7 +73,7 @@ public class RASTDeparse {
         switch (kind) {
             case UNARY:
                 state.append(func.op);
-                argValues[0].deparse(state);
+                RSyntaxNode.cast(argValues[0]).deparse(state);
                 break;
 
             case BINARY:
@@ -83,7 +83,7 @@ public class RASTDeparse {
                 if (parens) {
                     state.append('(');
                 }
-                argValues[0].deparse(state);
+                RSyntaxNode.cast(argValues[0]).deparse(state);
                 if (parens) {
                     state.append(')');
                 }
@@ -94,14 +94,14 @@ public class RASTDeparse {
                 if (parens) {
                     state.append('(');
                 }
-                argValues[1].deparse(state);
+                RSyntaxNode.cast(argValues[1]).deparse(state);
                 if (parens) {
                     state.append(')');
                 }
                 break;
 
             case SUBSET:
-                argValues[0].deparse(state);
+                RSyntaxNode.cast(argValues[0]).deparse(state);
                 state.append(func.op == SQUARE ? "[" : "[[");
                 ArgumentsSignature signature = args.getSignature();
                 // similar to ArgumentsNode.deparse()
@@ -114,7 +114,7 @@ public class RASTDeparse {
                     }
                     if (argument != null) {
                         // e.g. not f(, foo)
-                        argument.deparse(state);
+                        RSyntaxNode.cast(argument).deparse(state);
                     }
                     if (i != argValues.length - 1) {
                         state.append(", ");

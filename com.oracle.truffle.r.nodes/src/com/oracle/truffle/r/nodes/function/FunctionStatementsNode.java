@@ -24,30 +24,28 @@ package com.oracle.truffle.r.nodes.function;
 
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.control.SequenceNode;
+import com.oracle.truffle.r.nodes.control.*;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
 /**
- * Encapsulates the sequence of statements (expressions) of a function. Has no specific execute
- * behavior but is an important placeholder for debugging instrumentation.
+ * Encapsulates the sequence of statements (expressions) of a function, i.e. the function body. Has
+ * no specific execute behavior but is an important placeholder for debugging instrumentation as it
+ * is the place in the AST where a debugger wants to stop on entry.
  *
- * The {@link SourceSection} for a non-empty sequence is that of the sequence itself.
  */
-public class FunctionStatementsNode extends SequenceNode {
+public class FunctionStatementsNode extends BlockNode {
 
-    public FunctionStatementsNode(RNode[] sequence) {
-        // TODO revisit what this variant is really for
-        super(sequence);
+    public FunctionStatementsNode() {
+        super(null, BlockNode.EMPTY_BLOCK);
     }
 
-    public FunctionStatementsNode(RNode sequence) {
-        super(sequence);
-        assignSourceSection(sequence.getSourceSection());
+    public FunctionStatementsNode(SourceSection src, RSyntaxNode sequence) {
+        super(src, sequence);
     }
 
     @Override
-    public RNode substitute(REnvironment env) {
-        return new FunctionStatementsNode(super.substitute(env));
+    public RSyntaxNode substitute(REnvironment env) {
+        return new FunctionStatementsNode(null, (RSyntaxNode) super.substitute(env));
     }
 
 }

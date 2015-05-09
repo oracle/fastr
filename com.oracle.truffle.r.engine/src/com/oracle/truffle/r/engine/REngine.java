@@ -239,7 +239,7 @@ public final class REngine implements RContext.Engine {
     }
 
     private static Object parseAndEvalImpl(Source source, MaterializedFrame frame, boolean printResult, boolean allowIncompleteSource) throws RecognitionException {
-        RNode node;
+        RSyntaxNode node;
         try {
             node = parseToRNode(source);
         } catch (NoViableAltException | MismatchedTokenException e) {
@@ -279,7 +279,7 @@ public final class REngine implements RContext.Engine {
         for (int i = 0; i < exprs.getLength(); i++) {
             Object obj = RASTUtils.checkForRSymbol(exprs.getDataAt(i));
             if (obj instanceof RLanguage) {
-                result = evalNode((RNode) ((RLanguage) obj).getRep(), envir, enclos, depth);
+                result = evalNode((RSyntaxNode) ((RLanguage) obj).getRep(), envir, enclos, depth);
             } else {
                 result = obj;
             }
@@ -288,7 +288,7 @@ public final class REngine implements RContext.Engine {
     }
 
     public Object eval(RLanguage expr, REnvironment envir, REnvironment enclos, int depth) throws PutException {
-        return evalNode((RNode) expr.getRep(), envir, enclos, depth);
+        return evalNode((RSyntaxNode) expr.getRep(), envir, enclos, depth);
     }
 
     public Object eval(RExpression expr, MaterializedFrame frame) {
@@ -306,7 +306,7 @@ public final class REngine implements RContext.Engine {
     private static final String EVAL_FUNCTION_NAME = "<eval wrapper>";
 
     public Object eval(RLanguage expr, MaterializedFrame frame) {
-        RNode n = (RNode) expr.getRep();
+        RSyntaxNode n = (RSyntaxNode) expr.getRep();
         RootCallTarget callTarget = doMakeCallTarget(n, EVAL_FUNCTION_NAME);
         return runCall(callTarget, frame, false, false);
     }
@@ -315,7 +315,7 @@ public final class REngine implements RContext.Engine {
      * @return @see
      *         {@link #evalTarget(RootCallTarget, SourceSection, REnvironment, REnvironment, int)}
      */
-    private static Object evalNode(RNode exprRep, REnvironment envir, REnvironment enclos, int depth) {
+    private static Object evalNode(RSyntaxNode exprRep, REnvironment envir, REnvironment enclos, int depth) {
         RootCallTarget callTarget = doMakeCallTarget(exprRep, EVAL_FUNCTION_NAME);
         SourceSection callSrc = RArguments.getCallSourceSection(envir.getFrame());
         return evalTarget(callTarget, callSrc, envir, enclos, depth);
@@ -362,7 +362,7 @@ public final class REngine implements RContext.Engine {
      * @return the root node of the Truffle AST
      * @throws RecognitionException on parse error
      */
-    private static RNode parseToRNode(Source source) throws RecognitionException {
+    private static RSyntaxNode parseToRNode(Source source) throws RecognitionException {
         String code;
         if (source instanceof AppendableSource) {
             code = ((AppendableSource) source).getCodeFromMark();
@@ -378,38 +378,43 @@ public final class REngine implements RContext.Engine {
      * @param astNode parser AST instance
      * @return the root node of the Truffle AST
      */
-    private static RNode transform(ASTNode astNode) {
+    private static RSyntaxNode transform(ASTNode astNode) {
         RTruffleVisitor transform = new RTruffleVisitor();
-        RNode result = transform.transform(astNode);
+        RSyntaxNode result = transform.transform(astNode);
         return result;
     }
 
-    /**
-     * Wraps the Truffle AST in {@code node} in an anonymous function and returns a
-     * {@link RootCallTarget} for it.
-     *
-     * N.B. For certain expressions, there might be some value in enclosing the wrapper function in
-     * a specific lexical scope. E.g., as a way to access names in the expression known to be
-     * defined in that scope.
-     *
-     * @param body The AST for the body of the wrapper, i.e., the expression being evaluated.
-     */
     @Override
-    public RootCallTarget makeCallTarget(Object body, String funName) {
-        assert body instanceof RNode;
-        return doMakeCallTarget((RNode) body, funName);
+    public RootCallTarget makePromiseCallTarget(Object bodyArg, String funName) {
+        RNode body = (RNode) bodyArg;
+        if (!(body instanceof RSyntaxNode)) {
+            // some (promise) that is not a syntax node
+            body = new PromiseStatement(body);
+        }
+        return doMakeCallTarget((RSyntaxNode) body, funName);
+    }
+
+    private static class PromiseStatement extends RNode implements RSyntaxNode {
+        private final RNode promise;
+
+        PromiseStatement(RNode promise) {
+            this.promise = promise;
+        }
+
+        @Override
+        public Object execute(VirtualFrame frame) {
+            return promise.execute(frame);
+        }
+
     }
 
     /**
      * Creates an anonymous function, with no arguments, whose {@link FunctionStatementsNode} is
      * {@code body}.
-     *
-     * @param body
-     * @return {@link #makeCallTarget(Object, String)}
      */
     @TruffleBoundary
-    private static RootCallTarget doMakeCallTarget(RNode body, String funName) {
-        FunctionBodyNode fbn = new FunctionBodyNode(SaveArgumentsNode.NO_ARGS, new FunctionStatementsNode(body));
+    private static RootCallTarget doMakeCallTarget(RSyntaxNode body, String funName) {
+        FunctionBodyNode fbn = new FunctionBodyNode(SaveArgumentsNode.NO_ARGS, new FunctionStatementsNode(null, body));
         FrameDescriptor descriptor = new FrameDescriptor();
         FrameSlotChangeMonitor.initializeFunctionFrameDescriptor(descriptor);
         FunctionDefinitionNode rootNode = new FunctionDefinitionNode(null, descriptor, fbn, FormalArguments.NO_ARGS, funName, true, true);
@@ -425,9 +430,9 @@ public final class REngine implements RContext.Engine {
      * {@code frame} will be accessible via {@code newFrame.getArguments()[0]}, and the execution
      * will continue using {@code frame}.
      *
-     * TODO This method is too generic for the different cases it handles, e.g. promise evaluation,
-     * so the exception handling in particular is overly complex.. It should be refactored into
-     * separate methods to reflect the usages more precisely.
+     * TODO This method is perhaps too generic for the different cases it handles, e.g. promise
+     * evaluation, so the exception handling in particular is overly complex.. It should be
+     * refactored into separate methods to reflect the usages more precisely.
      */
     private static Object runCall(RootCallTarget callTarget, MaterializedFrame frame, boolean printResult, boolean topLevel) {
         Object result = null;

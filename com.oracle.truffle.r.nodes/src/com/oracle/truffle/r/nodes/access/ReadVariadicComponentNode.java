@@ -36,7 +36,7 @@ import com.oracle.truffle.r.runtime.data.*;
 /**
  * An {@link RNode} that handles accesses to components of the variadic argument (..1, ..2, etc.).
  */
-public class ReadVariadicComponentNode extends RNode {
+public class ReadVariadicComponentNode extends RNode implements RSyntaxNode {
 
     @Child private ReadVariableNode lookup = ReadVariableNode.create("...", RType.Any, ReadKind.Silent);
     @Child private PromiseHelperNode promiseHelper;

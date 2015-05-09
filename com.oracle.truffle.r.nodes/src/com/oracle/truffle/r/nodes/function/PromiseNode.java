@@ -37,7 +37,6 @@ import com.oracle.truffle.r.nodes.access.variables.*;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseCheckHelperNode;
 import com.oracle.truffle.r.nodes.function.opt.*;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseType;
@@ -48,6 +47,9 @@ import com.oracle.truffle.r.runtime.env.*;
  * These {@link RNode} implementations are used as a factory-nodes for {@link RPromise}s.<br/>
  * All these classes are created during/after argument matching and get cached afterwards, so they
  * get (and need to get) called every repeated call to a function with the same arguments.
+ *
+ * TODO Certain subclasses used to override {@code deparse}. Since a {@link PromiseNode} is not a
+ * {@link RSyntaxNode} this is no longer possible. So we probably need wrappers.
  */
 public abstract class PromiseNode extends RNode {
     /**
@@ -265,10 +267,6 @@ public abstract class PromiseNode extends RNode {
             return new RArgsValuesAndNames(newValues, args.getSignature());
         }
 
-        @Override
-        public void deparse(State state) {
-            expression.deparse(state);
-        }
     }
 
     /**
@@ -367,35 +365,58 @@ public abstract class PromiseNode extends RNode {
             return new RArgsValuesAndNames(promises, signature);
         }
 
-        @Override
-        public void deparse(State state) {
-            // In support of match.call(expand.dots=FALSE)
-            // GnuR represents this with a pairlist and deparses it as "list(a,b,..)"
-            state.append("list(");
-            for (int i = 0; i < closures.length; i++) {
-                String name = signature.getName(i);
-                if (name != null) {
-                    state.append(name);
-                    state.append(" = ");
-                }
-                ((RNode) closures[i].getExpr()).deparse(state);
-                if (i < closures.length - 1) {
-                    state.append(", ");
-                }
-            }
-            state.append(')');
-        }
-
-        public RNode substitute(REnvironment env) {
-            return RASTUtils.substituteName("...", env);
-        }
-
         public Closure[] getClosures() {
             return closures;
         }
 
         public ArgumentsSignature getSignature() {
             return signature;
+        }
+    }
+
+    @TruffleBoundary
+    public static RNode createVarArgsAsSyntax(RNode[] nodes, ArgumentsSignature signature, ClosureCache closureCache) {
+        return new VArgsPromiseNodeAsSyntax(new VarArgsPromiseNode(nodes, signature, closureCache));
+    }
+
+    /**
+     * A fake piece of syntax that allows a {@link VarArgsPromiseNode} to be deparsed.
+     */
+    public static final class VArgsPromiseNodeAsSyntax extends RNode implements RSyntaxNode {
+        private final VarArgsPromiseNode vapNode;
+
+        public VArgsPromiseNodeAsSyntax(VarArgsPromiseNode vapNode) {
+            this.vapNode = vapNode;
+        }
+
+        public VarArgsPromiseNode getVarArgsPromiseNode() {
+            return vapNode;
+        }
+
+        @Override
+        public Object execute(VirtualFrame frame) {
+            return vapNode.execute(frame);
+        }
+
+        @Override
+        public void deparse(RDeparse.State state) {
+            // In support of match.call(expand.dots=FALSE)
+            // GnuR represents this with a pairlist and deparses it as "list(a,b,..)"
+            state.append("list(");
+            Closure[] closures = vapNode.getClosures();
+            ArgumentsSignature signature = vapNode.getSignature();
+            for (int i = 0; i < closures.length; i++) {
+                String name = signature.getName(i);
+                if (name != null) {
+                    state.append(name);
+                    state.append(" = ");
+                }
+                ((RSyntaxNode) closures[i].getExpr()).deparse(state);
+                if (i < closures.length - 1) {
+                    state.append(", ");
+                }
+            }
+            state.append(')');
         }
     }
 
@@ -483,17 +504,6 @@ public abstract class PromiseNode extends RNode {
                 index++;
             }
             return index;
-        }
-
-        @Override
-        public void deparse(State state) {
-            for (int i = 0; i < varargs.length; i++) {
-                RNode argValue = varargs[i];
-                argValue.deparse(state);
-                if (i != varargs.length - 1) {
-                    state.append(", ");
-                }
-            }
         }
     }
 }

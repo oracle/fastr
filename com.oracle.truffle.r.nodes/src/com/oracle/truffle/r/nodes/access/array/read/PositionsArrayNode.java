@@ -32,7 +32,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
 
-public class PositionsArrayNode extends RNode {
+public class PositionsArrayNode extends RNode implements RSyntaxNode {
 
     @Child private PositionsArrayConversionNodeMultiDimAdapter conversionAdapter;
     @Child private PositionsArrayNodeAdapter positionsAdapter;
@@ -140,7 +140,12 @@ public class PositionsArrayNode extends RNode {
     }
 
     @Override
-    public RNode substitute(REnvironment env) {
+    public boolean isBackbone() {
+        return true;
+    }
+
+    @Override
+    public RSyntaxNode substitute(REnvironment env) {
         return new PositionsArrayNode(conversionAdapter.isSubset(), positionsAdapter.substitutePositions(env), hasVarArg);
     }
 

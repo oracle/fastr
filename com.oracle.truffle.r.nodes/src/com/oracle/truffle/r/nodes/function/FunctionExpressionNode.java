@@ -27,6 +27,7 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.nodes.NodeUtil.NodeCountFilter;
+import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.variables.*;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode.*;
@@ -38,10 +39,10 @@ import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.env.frame.*;
 import com.oracle.truffle.r.runtime.gnur.*;
 
-public final class FunctionExpressionNode extends RNode {
+public final class FunctionExpressionNode extends RNode implements RSyntaxNode {
 
-    public static FunctionExpressionNode create(RootCallTarget callTarget) {
-        return new FunctionExpressionNode(callTarget);
+    public static FunctionExpressionNode create(SourceSection src, RootCallTarget callTarget) {
+        return new FunctionExpressionNode(src, callTarget);
     }
 
     private final RootCallTarget callTarget;
@@ -51,7 +52,8 @@ public final class FunctionExpressionNode extends RNode {
     @CompilationFinal private StableValue<MaterializedFrame> enclosingFrameAssumption;
     @CompilationFinal private StableValue<FrameDescriptor> enclosingFrameDescriptorAssumption;
 
-    public FunctionExpressionNode(RootCallTarget callTarget) {
+    private FunctionExpressionNode(SourceSection src, RootCallTarget callTarget) {
+        assignSourceSection(src);
         this.callTarget = callTarget;
         this.deoptFrameNode = EagerEvalHelper.optExprs() || EagerEvalHelper.optVars() || EagerEvalHelper.optDefault() ? new PromiseDeoptimizeFrameNode() : null;
 
@@ -124,11 +126,6 @@ public final class FunctionExpressionNode extends RNode {
     }
 
     @Override
-    public boolean isSyntax() {
-        return true;
-    }
-
-    @Override
     public void deparse(RDeparse.State state) {
         ((FunctionDefinitionNode) callTarget.getRootNode()).deparse(state);
     }
@@ -147,8 +144,9 @@ public final class FunctionExpressionNode extends RNode {
     }
 
     @Override
-    public RNode substitute(REnvironment env) {
-        FunctionDefinitionNode fdn = ((FunctionDefinitionNode) callTarget.getRootNode()).substituteFDN(env);
-        return new FunctionExpressionNode(Truffle.getRuntime().createCallTarget(fdn));
+    public RSyntaxNode substitute(REnvironment env) {
+        FunctionDefinitionNode thisFdn = (FunctionDefinitionNode) callTarget.getRootNode();
+        FunctionDefinitionNode fdn = (FunctionDefinitionNode) thisFdn.substitute(env);
+        return new FunctionExpressionNode(null, Truffle.getRuntime().createCallTarget(fdn));
     }
 }

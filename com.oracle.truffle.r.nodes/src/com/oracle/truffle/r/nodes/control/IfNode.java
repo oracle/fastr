@@ -33,7 +33,7 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.gnur.*;
 
-public final class IfNode extends RNode implements VisibilityController {
+public final class IfNode extends RNode implements RSyntaxNode, VisibilityController {
 
     @Child private ConvertBooleanNode condition;
     @Child private RNode thenPart;
@@ -41,14 +41,14 @@ public final class IfNode extends RNode implements VisibilityController {
 
     private final ConditionProfile conditionProfile = ConditionProfile.createCountingProfile();
 
-    private IfNode(RNode condition, RNode thenPart, RNode elsePart) {
+    private IfNode(RSyntaxNode condition, RSyntaxNode thenPart, RSyntaxNode elsePart) {
         this.condition = ConvertBooleanNode.create(condition);
-        this.thenPart = thenPart;
-        this.elsePart = elsePart;
+        this.thenPart = thenPart.asRNode();
+        this.elsePart = elsePart == null ? null : elsePart.asRNode();
     }
 
-    public static IfNode create(SourceSection src, RNode condition, RNode thenPart, RNode elsePart) {
-        IfNode i = new IfNode(condition, thenPart, elsePart);
+    public static IfNode create(SourceSection src, RSyntaxNode condition, RSyntaxNode thenPart, RSyntaxNode elsePart) {
+        IfNode i = new IfNode(condition, thenPart, elsePart == null ? null : elsePart);
         i.assignSourceSection(src);
         return i;
     }
@@ -68,11 +68,6 @@ public final class IfNode extends RNode implements VisibilityController {
     @Override
     public boolean getVisibility() {
         return isVisible;
-    }
-
-    @Override
-    public boolean isSyntax() {
-        return true;
     }
 
     @Override
@@ -118,12 +113,12 @@ public final class IfNode extends RNode implements VisibilityController {
         condition.deparse(state);
         state.append(") ");
         state.writeOpenCurlyNLIncIndent();
-        thenPart.deparse(state);
+        RSyntaxNode.cast(thenPart).deparse(state);
         state.decIndentWriteCloseCurly();
         if (elsePart != null) {
             state.append(" else ");
             state.writeOpenCurlyNLIncIndent();
-            elsePart.deparse(state);
+            RSyntaxNode.cast(elsePart).deparse(state);
             state.decIndentWriteCloseCurly();
         }
     }
@@ -150,7 +145,7 @@ public final class IfNode extends RNode implements VisibilityController {
     }
 
     @Override
-    public RNode substitute(REnvironment env) {
-        return new IfNode(condition.substitute(env), thenPart.substitute(env), elsePart.substitute(env));
+    public RSyntaxNode substitute(REnvironment env) {
+        return create(null, RSyntaxNode.cast(condition).substitute(env), RSyntaxNode.cast(thenPart).substitute(env), RSyntaxNode.cast(elsePart).substitute(env));
     }
 }

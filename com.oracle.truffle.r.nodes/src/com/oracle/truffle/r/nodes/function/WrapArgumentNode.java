@@ -31,7 +31,13 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
 
-public final class WrapArgumentNode extends RNode {
+/**
+ * A {@link WrapArgumentNode} is used to wrap all arguments to function calls to implement correct
+ * copy semantics for vectors. As such it is not really a syntax node, but it is created during
+ * parsing and therefore forms part of the syntactic backbone.
+ *
+ */
+public final class WrapArgumentNode extends RNode implements RSyntaxNode {
 
     @Child private RNode operand;
 
@@ -145,22 +151,27 @@ public final class WrapArgumentNode extends RNode {
     }
 
     @Override
+    public boolean isBackbone() {
+        return true;
+    }
+
+    @Override
     public void deparse(RDeparse.State state) {
-        getOperand().deparse(state);
+        RSyntaxNode.cast(getOperand()).deparse(state);
     }
 
     @Override
     public void serialize(RSerialize.State state) {
-        getOperand().serialize(state);
+        RSyntaxNode.cast(getOperand()).serialize(state);
     }
 
     @Override
-    public RNode substitute(REnvironment env) {
-        RNode sub = getOperand().substitute(env);
+    public RSyntaxNode substitute(REnvironment env) {
+        RNode sub = RSyntaxNode.cast(getOperand()).substitute(env).asRNode();
         if (sub instanceof RASTUtils.DotsNode) {
-            return sub;
+            return (RASTUtils.DotsNode) sub;
         } else {
-            return create(sub, modeChange);
+            return RSyntaxNode.cast(create(sub, modeChange));
         }
     }
 }

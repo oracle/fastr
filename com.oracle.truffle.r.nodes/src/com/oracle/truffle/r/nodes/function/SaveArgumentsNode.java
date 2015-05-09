@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,12 +24,15 @@ package com.oracle.truffle.r.nodes.function;
 
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.control.SequenceNode;
-import com.oracle.truffle.r.runtime.env.REnvironment;
 
 /**
  * Encapsulates the nodes that save the incoming function arguments into the frame. Functionally a
  * pass-through, but provides structure that assists instrumentation. This <b>always</b> exists even
  * if the function has no formal arguments.
+ *
+ * TODO This used to forward the substitute method even though it is not part of the "syntax".
+ * However, it is likely that without it, substitute on an entire function will not execute
+ * correctly.
  */
 public class SaveArgumentsNode extends SequenceNode {
 
@@ -37,12 +40,6 @@ public class SaveArgumentsNode extends SequenceNode {
 
     public SaveArgumentsNode(RNode[] sequence) {
         super(sequence);
-    }
-
-    @Override
-    public RNode substitute(REnvironment env) {
-        SequenceNode seqSub = (SequenceNode) super.substitute(env);
-        return new SaveArgumentsNode(seqSub.getSequence());
     }
 
 }

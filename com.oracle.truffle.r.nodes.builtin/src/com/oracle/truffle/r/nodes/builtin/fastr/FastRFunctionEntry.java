@@ -82,10 +82,7 @@ public class FastRFunctionEntry {
 
             case "syntaxtree":
                 fastRNode.forceVisibility(false);
-                return FastRSyntaxTree.printTree(func);
-
-            case "seqlengths":
-                return FastRSyntaxTree.printTree(func);
+                return FastRSyntaxTree.printTree(func, checkLogical(argValues[1], fastRNode));
 
             default:
                 throw RInternalError.shouldNotReachHere();

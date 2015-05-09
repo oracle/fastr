@@ -25,11 +25,12 @@ package com.oracle.truffle.r.nodes.builtin.fastr;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.function.*;
+import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
 public class FastRSyntaxTree {
-    public static Object printTree(RFunction function) {
+    public static Object printTree(RFunction function, byte source) {
+        boolean showSource = RRuntime.fromLogical(source);
         Node root = function.getTarget().getRootNode();
         RSyntaxNode.accept(root, 0, new RSyntaxNodeVisitor() {
 
@@ -37,15 +38,21 @@ public class FastRSyntaxTree {
                 for (int i = 0; i < depth; i++) {
                     System.out.print(' ');
                 }
-                if (node instanceof FunctionDefinitionNode) {
-                    System.out.print(((FunctionDefinitionNode) node).parentToString());
-                } else {
-                    System.out.print(node.toString());
-                }
+                System.out.print(node.getClass().getSimpleName());
                 SourceSection ss = ((Node) node).getSourceSection();
                 // All syntax nodes should have source sections
                 if (ss == null) {
                     System.out.print(" *** null source section");
+                } else {
+                    if (showSource) {
+                        String code = ss.getCode();
+                        if (code.length() > 20) {
+                            code = code.substring(0, 20) + " ....";
+                        }
+                        code = code.replace("\n", "\\n ");
+                        System.out.print(" : ");
+                        System.out.print(code.length() == 0 ? "<EMPTY>" : code);
+                    }
                 }
                 System.out.println();
                 return true;

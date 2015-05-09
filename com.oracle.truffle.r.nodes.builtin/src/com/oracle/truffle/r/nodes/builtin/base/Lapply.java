@@ -20,6 +20,7 @@ import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
+import com.oracle.truffle.r.nodes.access.WriteVariableNode.Mode;
 import com.oracle.truffle.r.nodes.access.variables.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.builtin.base.LapplyNodeGen.LapplyInternalNodeGen;
@@ -62,8 +63,8 @@ public abstract class Lapply extends RBuiltinNode {
         private static final String VECTOR_ELEMENT = AnonymousFrameVariable.create("LAPPLY_VEC_ELEM");
 
         @Child private Length lengthNode = LengthNodeGen.create(null, null, null);
-        @Child private WriteVariableNode writeVectorElement = WriteVariableNode.create(VECTOR_ELEMENT, null, false, false);
-        @Child private WriteVariableNode writeIndex = WriteVariableNode.create(INDEX_NAME, null, false, false);
+        @Child private WriteVariableNode writeVectorElement = WriteVariableNode.createAnonymous(VECTOR_ELEMENT, null, Mode.REGULAR);
+        @Child private WriteVariableNode writeIndex = WriteVariableNode.createAnonymous(INDEX_NAME, null, Mode.REGULAR);
         @Child private RNode indexedLoadNode = createIndexedLoad();
 
         public abstract Object[] execute(VirtualFrame frame, Object vector, RFunction function, RArgsValuesAndNames additionalArguments);
@@ -105,7 +106,7 @@ public abstract class Lapply extends RBuiltinNode {
             }
             REnvironment env = RDataFactory.createNewEnv("dummy");
             env.safePut("i", RDataFactory.createLanguage(ReadVariableNode.create(INDEX_NAME, false)));
-            return indexNode.substitute(env);
+            return indexNode.substitute(env).asRNode();
         }
 
         /**

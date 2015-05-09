@@ -32,7 +32,7 @@ import com.oracle.truffle.r.nodes.access.variables.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.control.*;
 import com.oracle.truffle.r.nodes.function.*;
-import com.oracle.truffle.r.nodes.function.PromiseNode.VarArgsPromiseNode;
+import com.oracle.truffle.r.nodes.function.PromiseNode.VArgsPromiseNodeAsSyntax;
 import com.oracle.truffle.r.nodes.instrument.debug.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RContext.Engine.*;
@@ -102,7 +102,7 @@ public class RASTHelperImpl implements RASTHelper {
             FunctionStatementsNode fsNode = fbn.getStatements();
             result = hasBrace ? 1 : 0;
             for (RNode s : fsNode.getSequence()) {
-                if (s.unwrap().isSyntax()) {
+                if (s.unwrap() instanceof RSyntaxNode) {
                     result++;
                 }
             }
@@ -124,8 +124,8 @@ public class RASTHelperImpl implements RASTHelper {
             return baseResult;
         } else if (node instanceof AccessFieldNode) {
             return 3;
-        } else if (node instanceof VarArgsPromiseNode) {
-            return ((VarArgsPromiseNode) node).getClosures().length;
+        } else if (node instanceof VArgsPromiseNodeAsSyntax) {
+            return ((VArgsPromiseNodeAsSyntax) node).getVarArgsPromiseNode().getClosures().length;
         } else {
             // TODO fill out
             assert false : node;
@@ -237,7 +237,6 @@ public class RASTHelperImpl implements RASTHelper {
                 default:
                     assert false;
             }
-
         } else {
             // TODO fill out
             assert false;
@@ -345,7 +344,7 @@ public class RASTHelperImpl implements RASTHelper {
             return state.closePairList();
         } else if (obj instanceof RLanguage) {
             RLanguage lang = (RLanguage) obj;
-            RNode node = (RNode) lang.getRep();
+            RSyntaxNode node = (RSyntaxNode) lang.getRep();
             state.openPairList(SEXPTYPE.LANGSXP);
             node.serialize(state);
             return state.closePairList();
@@ -356,7 +355,7 @@ public class RASTHelperImpl implements RASTHelper {
 
     @Override
     public void serializeNode(RSerialize.State state, Object node) {
-        ((RNode) node).serialize(state);
+        RSyntaxNode.cast((RNode) node).serialize(state);
     }
 
     public Object createNodeForValue(Object value) {

@@ -39,25 +39,29 @@ public abstract class Call extends ASTNode {
         return arguments;
     }
 
-    public static ASTNode create(SourceSection source, ASTNode call, List<ArgNode> arguments) {
+    public static ASTNode create(SourceSection src, ASTNode call, List<ArgNode> arguments) {
+        String code = src.getCode();
+        assert code.charAt(0) == '(';
         for (ArgNode a : arguments) {
             // otherwise "empty" indexes are not recorded at all
             if (a.getName() == null && a.getValue() == null) {
                 a.value = new Missing(a.getSource());
             }
         }
+        // Add "call"'s source to src
+        SourceSection callSrc = combineSource(call.getSource(), src);
         if (call instanceof SimpleAccessVariable) {
             SimpleAccessVariable ccall = (SimpleAccessVariable) call;
-            return create(source, ccall.getVariable(), arguments);
+            return create(callSrc, ccall.getVariable(), arguments);
         } else if (call instanceof Constant) {
             Constant c = (Constant) call;
             assert c.getType() == Constant.ConstantType.STRING;
             assert c.getValues().length == 1;
-            return create(source, c.getValues()[0], arguments);
+            return create(callSrc, c.getValues()[0], arguments);
         } else if (call instanceof FunctionCall) {
-            return new FunctionCall(source, (FunctionCall) call, arguments);
+            return new FunctionCall(callSrc, (FunctionCall) call, arguments);
         } else {
-            return new FunctionCall(source, call, arguments, false);
+            return new FunctionCall(callSrc, call, arguments, false);
         }
     }
 
@@ -66,14 +70,19 @@ public abstract class Call extends ASTNode {
     }
 
     public static ASTNode create(SourceSection src, CallOperator op, ASTNode lhs, List<ArgNode> args) {
+        String code = src.getCode();
+        assert code.charAt(0) == '[';
         for (ArgNode a : args) {
             // otherwise "empty" indexes are not recorded at all
             if (a.getName() == null && a.getValue() == null) {
                 a.value = new Missing(a.getSource());
             }
         }
-        args.add(0, ArgNode.create(src, null, lhs));
-        return new AccessVector(src, lhs, args, op == CallOperator.SUBSET);
+        // lhs is actually the first argument when rewritten as a call, `[`(lhs, args)
+        args.add(0, ArgNode.create(lhs.getSource(), null, lhs));
+        // adjust src to encompass the entire expression
+        SourceSection newSrc = combineSource(lhs.getSource(), src);
+        return new AccessVector(newSrc, lhs, args, op == CallOperator.SUBSET);
     }
 
     public enum CallOperator {

@@ -31,7 +31,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
 
-public abstract class ConstantNode extends RNode implements VisibilityController {
+public abstract class ConstantNode extends RNode implements RSyntaxNode, VisibilityController {
 
     public static boolean isFunction(RNode node) {
         return node instanceof ConstantObjectNode && ((ConstantObjectNode) node).value instanceof RFunction;
@@ -52,7 +52,7 @@ public abstract class ConstantNode extends RNode implements VisibilityController
     }
 
     @Override
-    public RNode substitute(REnvironment env) {
+    public RSyntaxNode substitute(REnvironment env) {
         return this;
     }
 
@@ -88,11 +88,6 @@ public abstract class ConstantNode extends RNode implements VisibilityController
         ConstantNode cn = create(value);
         cn.assignSourceSection(src);
         return cn;
-    }
-
-    @Override
-    public boolean isSyntax() {
-        return true;
     }
 
     public static final class ConstantDoubleScalarNode extends ConstantNode {
@@ -222,10 +217,10 @@ public abstract class ConstantNode extends RNode implements VisibilityController
                         state.append(" = ");
                     }
                     Object argValue = values[i];
-                    if (argValue instanceof RNode) {
-                        ((RNode) argValue).deparse(state);
+                    if (argValue instanceof RSyntaxNode) {
+                        ((RSyntaxNode) argValue).deparse(state);
                     } else if (argValue instanceof RPromise) {
-                        ((RNode) RASTUtils.unwrap(((RPromise) argValue).getRep())).deparse(state);
+                        ((RSyntaxNode) RASTUtils.unwrap(((RPromise) argValue).getRep())).deparse(state);
                     } else {
                         RInternalError.shouldNotReachHere();
                     }

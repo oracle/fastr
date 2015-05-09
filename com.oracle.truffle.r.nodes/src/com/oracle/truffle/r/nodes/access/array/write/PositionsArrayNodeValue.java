@@ -31,7 +31,7 @@ import com.oracle.truffle.r.nodes.access.array.read.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 
-public class PositionsArrayNodeValue extends RNode {
+public class PositionsArrayNodeValue extends RNode implements RSyntaxNode {
 
     @Child private PositionsArrayConversionValueNodeMultiDimAdapter conversionAdapter;
     @Child private PositionsArrayNodeAdapter positionsAdapter;

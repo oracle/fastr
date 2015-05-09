@@ -34,7 +34,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 
 @SuppressWarnings("unused")
 @NodeChildren({@NodeChild(value = "newValue", type = RNode.class), @NodeChild(value = "vector", type = RNode.class), @NodeChild(value = "operand", type = RNode.class)})
-public abstract class CoerceVector extends RNode {
+public abstract class CoerceVector extends RNode implements RSyntaxNode/* temp */{
 
     public abstract Object executeEvaluated(VirtualFrame frame, Object value, Object vector, Object operand);
 
@@ -377,11 +377,11 @@ public abstract class CoerceVector extends RNode {
      */
     @Override
     public void deparse(RDeparse.State state) {
-        getVector().deparse(state);
+        RSyntaxNode.cast(getVector()).deparse(state);
     }
 
     @Override
     public void serialize(RSerialize.State state) {
-        getVector().serialize(state);
+        RSyntaxNode.cast(getVector()).serialize(state);
     }
 }

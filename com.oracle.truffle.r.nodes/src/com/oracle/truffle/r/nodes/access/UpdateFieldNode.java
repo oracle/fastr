@@ -38,7 +38,7 @@ import com.oracle.truffle.r.runtime.env.REnvironment.*;
 import com.oracle.truffle.r.runtime.gnur.*;
 
 @NodeChild(value = "value", type = RNode.class)
-public abstract class UpdateFieldNode extends AccessFieldBaseNode {
+public abstract class UpdateFieldNode extends AccessFieldBaseNode implements RSyntaxNode {
 
     public abstract RNode getValue();
 
@@ -165,17 +165,12 @@ public abstract class UpdateFieldNode extends AccessFieldBaseNode {
     }
 
     @Override
-    public boolean isSyntax() {
-        return true;
-    }
-
-    @Override
     public void deparse(RDeparse.State state) {
-        getObject().deparse(state);
+        RSyntaxNode.cast(getObject()).deparse(state);
         state.append('$');
         state.append(getField());
         state.append(" <- ");
-        getValue().deparse(state);
+        RSyntaxNode.cast(getValue()).deparse(state);
     }
 
     @Override

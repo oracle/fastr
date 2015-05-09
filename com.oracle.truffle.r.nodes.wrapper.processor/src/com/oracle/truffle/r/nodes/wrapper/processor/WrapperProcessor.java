@@ -62,6 +62,7 @@ public class WrapperProcessor extends AbstractProcessor {
             for (Element element : roundEnv.getElementsAnnotatedWith(createWrapperElement)) {
                 if (element instanceof TypeElement) {
                     TypeElement classElement = (TypeElement) element;
+                    note("CreateWrapperProcessor: analyzing class: " + classElement.toString());
                     PackageElement packageElement = getPackage(classElement);
 
                     Set<ExecutableElement> wrappedMethods = resolveWrappedExecutes(classElement);
@@ -82,7 +83,9 @@ public class WrapperProcessor extends AbstractProcessor {
         Set<ExecutableElement> wrappedMethods = new HashSet<>();
         for (ExecutableElement wrappedMethod : ElementFilter.methodsIn(processingEnv.getElementUtils().getAllMembers(classElement))) {
             Set<Modifier> modifiers = wrappedMethod.getModifiers();
+            note("CreateWrapperProcessor: considering method: " + wrappedMethod.toString() + ", modifiers" + modifiers.toString());
             if (modifiers.contains(Modifier.ABSTRACT) || hasCreateWrapper(wrappedMethod)) {
+                note("CreateWrapperProcessor: adding method " + wrappedMethod.toString());
                 wrappedMethods.add(wrappedMethod);
             }
         }
@@ -114,12 +117,12 @@ public class WrapperProcessor extends AbstractProcessor {
             wr.printf("import com.oracle.truffle.api.instrument.ProbeNode;%n");
             wr.printf("import com.oracle.truffle.api.instrument.ProbeNode.WrapperNode;%n");
             wr.printf("import com.oracle.truffle.api.nodes.*;%n");
-            wr.printf("import com.oracle.truffle.r.nodes.RNode;%n");
+            wr.printf("import com.oracle.truffle.r.nodes.RSyntaxNode;%n");
             wr.printf("import com.oracle.truffle.r.runtime.*;%n");
             wr.printf("import com.oracle.truffle.r.runtime.env.REnvironment;%n");
             wr.println();
             wr.printf("@NodeInfo(cost = NodeCost.NONE)%n");
-            wr.printf("public final class %s  extends %s implements WrapperNode {%n", wrapperClassName, qualClassName);
+            wr.printf("public final class %s  extends %s implements WrapperNode, RSyntaxNode {%n", wrapperClassName, qualClassName);
             wr.printf("%s@Child %s child;%n", INDENT4, qualClassName);
             wr.printf("%s@Child private ProbeNode probeNode;%n", INDENT4);
             wr.println();
@@ -205,12 +208,12 @@ public class WrapperProcessor extends AbstractProcessor {
             // FastR specific
             wr.printf("%s@Override%n", INDENT4);
             wr.printf("%spublic void deparse(RDeparse.State state) {%n", INDENT4);
-            wr.printf("%schild.deparse(state);%n", INDENT8);
+            wr.printf("%sRSyntaxNode.cast(child).deparse(state);%n", INDENT8);
             wr.printf("%s}%n", INDENT4);
             wr.println();
             wr.printf("%s@Override%n", INDENT4);
             wr.printf("%spublic void serialize(RSerialize.State state) {%n", INDENT4);
-            wr.printf("%schild.serialize(state);%n", INDENT8);
+            wr.printf("%sRSyntaxNode.cast(child).serialize(state);%n", INDENT8);
             wr.printf("%s}%n", INDENT4);
             wr.println();
             wr.printf("%s@Override%n", INDENT4);
@@ -219,16 +222,16 @@ public class WrapperProcessor extends AbstractProcessor {
             wr.printf("%s}%n", INDENT4);
             wr.println();
             wr.printf("%s@Override%n", INDENT4);
-            wr.printf("%spublic boolean isSyntax() {%n", INDENT4);
-            wr.printf("%sreturn false;%n", INDENT8);
+            wr.printf("%spublic boolean isBackbone() {%n", INDENT4);
+            wr.printf("%sreturn true;%n", INDENT8);
             wr.printf("%s}%n", INDENT4);
             wr.println();
             wr.printf("%s@Override%n", INDENT4);
-            wr.printf("%spublic RNode substitute(REnvironment env) {%n", INDENT4);
+            wr.printf("%spublic RSyntaxNode substitute(REnvironment env) {%n", INDENT4);
             if (qualClassName.equals("com.oracle.truffle.r.nodes.RNode")) {
-                wr.printf("%s%s wrapperSub = new %s(child.substitute(env));%n", INDENT8, wrapperClassName, wrapperClassName);
+                wr.printf("%s%s wrapperSub = new %s(RSyntaxNode.cast(child).substitute(env).asRNode());%n", INDENT8, wrapperClassName, wrapperClassName);
             } else {
-                wr.printf("%s%s wrapperSub = new %s((%s) child.substitute(env));%n", INDENT8, wrapperClassName, wrapperClassName, qualClassName);
+                wr.printf("%s%s wrapperSub = new %s((%s) RSyntaxNode.cast(child).substitute(env).asRNode());%n", INDENT8, wrapperClassName, wrapperClassName, qualClassName);
             }
             wr.printf("%sProbeNode.insertProbe(wrapperSub);%n", INDENT8);
             wr.printf("%sreturn wrapperSub;%n", INDENT8);

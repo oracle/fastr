@@ -44,4 +44,12 @@ public abstract class ASTNode {
     public int getPrecedence() {
         return Operation.MIN_PRECEDENCE;
     }
+
+    public static SourceSection combineSource(SourceSection lhs, SourceSection rhs) {
+        return rhs.getSource().createSection(rhs.getIdentifier(), lhs.getCharIndex(), lhs.getCharLength() + rhs.getCharLength());
+    }
+
+    public static SourceSection adjustedSource(SourceSection src, int charIndex, int charLength) {
+        return src.getSource().createSection(src.getIdentifier(), charIndex, charLength);
+    }
 }

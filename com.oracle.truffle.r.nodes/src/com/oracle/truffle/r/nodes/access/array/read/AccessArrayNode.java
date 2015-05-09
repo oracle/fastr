@@ -45,7 +45,7 @@ import com.oracle.truffle.r.runtime.ops.na.*;
 
 @NodeChildren({@NodeChild(value = "vector", type = RNode.class), @NodeChild(value = "exact", type = RNode.class), @NodeChild(value = "recursionLevel", type = RNode.class),
                 @NodeChild(value = "positions", type = PositionsArrayNode.class, executeWith = {"vector", "exact"}), @NodeChild(value = "dropDim", type = RNode.class)})
-public abstract class AccessArrayNode extends RNode {
+public abstract class AccessArrayNode extends RNode implements RSyntaxNode {
 
     public final boolean isSubset;
     public final boolean forObjects;
@@ -92,22 +92,17 @@ public abstract class AccessArrayNode extends RNode {
     public abstract Object executeAccess(VirtualFrame frame, Object vector, Object exact, int recLevel, Object operand, Object dropDim);
 
     @Override
-    public boolean isSyntax() {
-        return true;
-    }
-
-    @Override
     public void deparse(RDeparse.State state) {
-        getVector().deparse(state);
+        RSyntaxNode.cast(getVector()).deparse(state);
         state.append(isSubset ? "[" : "[[");
-        getPositions().deparse(state);
+        RSyntaxNode.cast(getPositions()).deparse(state);
         if (exactInSource) {
             state.append(", exact = ");
-            getExact().deparse(state);
+            RSyntaxNode.cast(getExact()).deparse(state);
         }
         if (dropInSource) {
             state.append(", drop = ");
-            getDropDim().deparse(state);
+            RSyntaxNode.cast(getDropDim()).deparse(state);
         }
         state.append(isSubset ? "]" : "]]");
     }
@@ -124,7 +119,7 @@ public abstract class AccessArrayNode extends RNode {
         state.openPairList(SEXPTYPE.LISTSXP);
         state.serializeNodeSetCar(getVector());
         state.openPairList(SEXPTYPE.LISTSXP);
-        getPositions().serialize(state);
+        RSyntaxNode.cast(getPositions()).serialize(state);
         // N.B. The above call left the result unlinked so we can add exact/drop
         int posCount = state.getPositionsLength();
         if (posCount == 0 && !(exactInSource || dropInSource)) {
@@ -154,11 +149,11 @@ public abstract class AccessArrayNode extends RNode {
     }
 
     @Override
-    public RNode substitute(REnvironment env) {
-        RNode vector = getVector().substitute(env);
-        PositionsArrayNode positions = (PositionsArrayNode) getPositions().substitute(env);
-        RNode exact = getExact().substitute(env);
-        RNode dropDim = getDropDim().substitute(env);
+    public RSyntaxNode substitute(REnvironment env) {
+        RNode vector = RSyntaxNode.cast(getVector()).substitute(env).asRNode();
+        PositionsArrayNode positions = (PositionsArrayNode) RSyntaxNode.cast(getPositions()).substitute(env);
+        RNode exact = RSyntaxNode.cast(getExact()).substitute(env).asRNode();
+        RNode dropDim = RSyntaxNode.cast(getDropDim()).substitute(env).asRNode();
         return AccessArrayNodeGen.create(isSubset, forObjects, true, true, vector, exact, getRecursionLevel(), positions, dropDim);
     }
 

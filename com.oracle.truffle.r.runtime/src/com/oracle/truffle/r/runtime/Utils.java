@@ -55,9 +55,9 @@ public final class Utils {
         return result;
     }
 
-    public static SourceSection sourceBoundingBox(Node[] nodes) {
+    public static SourceSection sourceBoundingBox(SourceSection argsSrc, Node[] nodes) {
         if (nodes == null || nodes.length == 0) {
-            return null;
+            return argsSrc;
         }
 
         int minLine = Integer.MAX_VALUE;
@@ -81,7 +81,7 @@ public final class Utils {
                 s = src.getSource();
             } else if (s != src.getSource()) {
                 // this can happen, for example, if actual parameters are specified in the REPL and
-                // formal parameteres default values come from unserialized version of the function
+                // formal parameters default values come from unserialized version of the function
                 gotSection = false;
                 break;
             }

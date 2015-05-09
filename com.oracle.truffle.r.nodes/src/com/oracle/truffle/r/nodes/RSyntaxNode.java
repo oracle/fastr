@@ -22,22 +22,57 @@
  */
 package com.oracle.truffle.r.nodes;
 
+import com.oracle.truffle.api.instrument.ProbeNode.WrapperNode;
 import com.oracle.truffle.api.nodes.*;
-import com.oracle.truffle.r.nodes.access.*;
-import com.oracle.truffle.r.runtime.RDeparse.State;
-import com.oracle.truffle.r.runtime.env.*;
+import com.oracle.truffle.api.source.*;
+import com.oracle.truffle.r.nodes.control.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.RDeparse.*;
+import com.oracle.truffle.r.runtime.env.*;
 
 /**
  * An interface that identifies an AST node as being part of the syntactic structure of the
- * (original) AST. This, perhaps unfortunately, is not a static property of the node class. For
- * example, some {@link WriteVariableNode} instances are created that do not correspond to syntax.
+ * (original) AST. Essentially a syntax node is defined as one produced by the parser and before any
+ * evaluation takes place. I.e. a visit to every node in such a tree should have
+ * {@code node instanceof RSyntaxNode == true}. A syntax node (necessarily) includes <i>backbone</i>
+ * nodes that, while carrying no actual syntactic information, are used to connect one syntax node
+ * to another. It is possible to detect backbone nodes using the {@link #isBackbone} method.
+ *
+ * Currently FastR deviates from this ideal in that the parsing process or, more accurately, the
+ * conversion of the AST produced by the parser into a Truffle AST effects some transformations that
+ * introduce nodes that do not correspond to the original syntax. The most notable such
+ * transformation is seen in the {@code ReplacementNode} that implements a lowering of the so-called
+ * <i>replacement</i> logic into a sequence of lower-level nodes that nonetheless implement this
+ * interface.
  */
 public interface RSyntaxNode {
     /**
-     * Support for the {@code deparse} builtin function. N.B. {@link #isSyntax()} does not have to
-     * return {@code true} for a node to override this method. Whether to override is an
-     * implementation convenience.
+     * A convenience method that captures the fact that, while the notion of a syntax node is
+     * described in this interface, in practice all {@link RSyntaxNode} instances are also
+     * {@link RNode}s. At runtime this method should be inlined away.
+     */
+    default RNode asRNode() {
+        return (RNode) this;
+    }
+
+    /**
+     * Denotes that this node is part of the "backbone" of the AST, but carries no useful syntactic
+     * information. A classic case is a {@link WrapperNode} inserted for instrumentation purposes.
+     */
+    default boolean isBackbone() {
+        return false;
+    }
+
+    /**
+     * A placeholder. Eventually this method will appear on a Truffle super-interface and will
+     * disappear from the {@link Node} class.
+     */
+    default SourceSection getSourceSection() {
+        return (asRNode().getSourceSection());
+    }
+
+    /**
+     * Support for the {@code deparse} builtin function.
      */
     default void deparse(@SuppressWarnings("unused") State state) {
         throw RInternalError.unimplemented("deparse not implemented in " + getClass());
@@ -49,7 +84,7 @@ public interface RSyntaxNode {
      * to the substitution; therefore there is no need to create a new node if it can be determined
      * that no changes were made.
      */
-    default RNode substitute(@SuppressWarnings("unused") REnvironment env) {
+    default RSyntaxNode substitute(@SuppressWarnings("unused") REnvironment env) {
         throw RInternalError.unimplemented("substitute not implemented in " + getClass());
     }
 
@@ -60,31 +95,38 @@ public interface RSyntaxNode {
         throw RInternalError.unimplemented("serialize not implemented in " + getClass());
     }
 
-    /**
-     * Returns {@code true} if and only if this node is part of the syntactic view of the AST.
-     * Perhaps surprisingly the majority of nodes are not syntactic, hence the {@code false}
-     * default.
-     */
-    default boolean isSyntax() {
-        return false;
+    static RSyntaxNode cast(RNode node) {
+        return (RSyntaxNode) node;
     }
 
     /**
      * Traverses the entire tree but only invokes the {@code visit} method for nodes that return
-     * {@code true} to {@link RSyntaxNode#isSyntax()}.
+     * {@code true} to {@code instanceof RSyntaxNode}. Similar therefore to {@code Node#accept}.
+     * Note that AST transformations can change the shape of the tree in drastic ways; in particular
+     * one cannot truncate the walk on encountering a non-syntax node, as the related
+     * {@link RSyntaxNode} may be have been transformed into a child of a non-syntax node. We visit
+     * but do not call the {@code nodeVisitor} on {@link RSyntaxNode}s that return {@code true} to
+     * {@link #isBackbone()}.
+     *
+     * N.B. A {@link ReplacementNode} is a very special case. Its children are {@link RSyntaxNode}s,
+     * but we do not want to visit them at all. Hopefully this node will be retired eventually.
      */
     static void accept(Node node, int depth, RSyntaxNodeVisitor nodeVisitor) {
         boolean visitChildren = true;
+        int incDepth = 0;
         if (node instanceof RSyntaxNode) {
             RSyntaxNode syntaxNode = (RSyntaxNode) node;
-            if (syntaxNode.isSyntax()) {
+            if (!syntaxNode.isBackbone()) {
                 visitChildren = nodeVisitor.visit(syntaxNode, depth);
             }
+            incDepth = 1;
         }
-        if (visitChildren) {
-            for (Node child : node.getChildren()) {
-                if (child != null) {
-                    accept(child, depth + 1, nodeVisitor);
+        if (!(node instanceof ReplacementNode)) {
+            if (visitChildren) {
+                for (Node child : node.getChildren()) {
+                    if (child != null) {
+                        accept(child, depth + incDepth, nodeVisitor);
+                    }
                 }
             }
         }

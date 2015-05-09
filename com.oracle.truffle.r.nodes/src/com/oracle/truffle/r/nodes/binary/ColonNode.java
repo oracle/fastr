@@ -34,7 +34,7 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.gnur.*;
 
 @NodeChildren({@NodeChild("left"), @NodeChild("right")})
-public abstract class ColonNode extends RNode implements VisibilityController {
+public abstract class ColonNode extends RNode implements RSyntaxNode, VisibilityController {
 
     private final BranchProfile naCheckErrorProfile = BranchProfile.create();
 
@@ -119,15 +119,10 @@ public abstract class ColonNode extends RNode implements VisibilityController {
     }
 
     @Override
-    public boolean isSyntax() {
-        return true;
-    }
-
-    @Override
     public void deparse(RDeparse.State state) {
-        getLeft().deparse(state);
+        RSyntaxNode.cast(getLeft()).deparse(state);
         state.append(':');
-        getRight().deparse(state);
+        RSyntaxNode.cast(getRight()).deparse(state);
     }
 
     @Override
@@ -142,8 +137,8 @@ public abstract class ColonNode extends RNode implements VisibilityController {
     }
 
     @Override
-    public RNode substitute(REnvironment env) {
-        return create(null, getLeft().substitute(env), getRight().substitute(env));
+    public RSyntaxNode substitute(REnvironment env) {
+        return create(null, RSyntaxNode.cast(getLeft()).substitute(env).asRNode(), RSyntaxNode.cast(getRight()).substitute(env).asRNode());
     }
 
     protected static double asDouble(int intValue) {
@@ -151,7 +146,7 @@ public abstract class ColonNode extends RNode implements VisibilityController {
     }
 
     @NodeChild("operand")
-    public abstract static class ColonCastNode extends RNode {
+    public abstract static class ColonCastNode extends RNode implements RSyntaxNode {
 
         private final ConditionProfile lengthGreaterOne = ConditionProfile.createBinaryProfile();
 
@@ -219,17 +214,17 @@ public abstract class ColonNode extends RNode implements VisibilityController {
 
         @Override
         public void deparse(State state) {
-            getOperand().deparse(state);
+            RSyntaxNode.cast(getOperand()).deparse(state);
         }
 
         @Override
         public void serialize(RSerialize.State state) {
-            getOperand().serialize(state);
+            RSyntaxNode.cast(getOperand()).serialize(state);
         }
 
         @Override
-        public RNode substitute(REnvironment env) {
-            return getOperand().substitute(env);
+        public RSyntaxNode substitute(REnvironment env) {
+            return RSyntaxNode.cast(getOperand()).substitute(env);
         }
     }
 }

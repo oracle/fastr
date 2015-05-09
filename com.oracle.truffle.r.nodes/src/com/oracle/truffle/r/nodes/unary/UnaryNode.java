@@ -25,7 +25,6 @@ package com.oracle.truffle.r.nodes.unary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.env.*;
 
 @NodeChildren({@NodeChild("operand")})
 public abstract class UnaryNode extends RNode {
@@ -40,28 +39,4 @@ public abstract class UnaryNode extends RNode {
         return RRuntime.isNA(operand);
     }
 
-    @Override
-    public boolean isSyntax() {
-        // TODO check, may be bi-modal
-        return false;
-    }
-
-    @Override
-    public void deparse(RDeparse.State state) {
-        getOperand().deparse(state);
-    }
-
-    @Override
-    public void serialize(RSerialize.State state) {
-        getOperand().serialize(state);
-    }
-
-    @Override
-    public RNode substitute(REnvironment env) {
-        /*
-         * TODO this works for simple cases but is inadequate in general; need to create an instance
-         * of "this" with substituted operand.
-         */
-        return getOperand().substitute(env);
-    }
 }

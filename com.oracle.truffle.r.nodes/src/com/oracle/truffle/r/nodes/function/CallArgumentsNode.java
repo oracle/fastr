@@ -99,13 +99,26 @@ public class CallArgumentsNode extends ArgumentsNode {
     }
 
     /**
+     * Called only from the parser.
+     */
+    public static CallArgumentsNode create(SourceSection argsSource, boolean modeChange, RNode[] args, ArgumentsSignature signature) {
+        return create(argsSource, modeChange, false, args, signature);
+    }
+
+    public static CallArgumentsNode create(boolean modeChange, boolean modeChangeForAll, RNode[] args, ArgumentsSignature signature) {
+        return create(null, modeChange, modeChangeForAll, args, signature);
+    }
+
+    /**
+     * @param argsSource the {@link SourceSection} object associated with the arguments (or
+     *            {@code null})
      * @param modeChange {@link #modeChange}
      * @param modeChangeForAll {@link #modeChangeForAll}
      * @param args {@link #arguments}; new array gets created. Every {@link RNode} (except
      *            <code>null</code>) gets wrapped into a {@link WrapArgumentNode}.
      * @return A fresh {@link CallArgumentsNode}
      */
-    public static CallArgumentsNode create(boolean modeChange, boolean modeChangeForAll, RNode[] args, ArgumentsSignature signature) {
+    private static CallArgumentsNode create(SourceSection argsSource, boolean modeChange, boolean modeChangeForAll, RNode[] args, ArgumentsSignature signature) {
         // Prepare arguments: wrap in WrapArgumentNode
         RNode[] wrappedArgs = new RNode[args.length];
         List<Integer> varArgsSymbolIndices = new ArrayList<>();
@@ -126,7 +139,7 @@ public class CallArgumentsNode extends ArgumentsNode {
         }
 
         // Setup and return
-        SourceSection src = Utils.sourceBoundingBox(wrappedArgs);
+        SourceSection src = Utils.sourceBoundingBox(argsSource, wrappedArgs);
         int[] varArgsSymbolIndicesArr = new int[varArgsSymbolIndices.size()];
         for (int i = 0; i < varArgsSymbolIndicesArr.length; i++) {
             varArgsSymbolIndicesArr[i] = varArgsSymbolIndices.get(i);
@@ -383,13 +396,13 @@ public class CallArgumentsNode extends ArgumentsNode {
 
     @TruffleBoundary
     @Override
-    public RNode substitute(REnvironment env) {
+    public RSyntaxNode substitute(REnvironment env) {
         RNode[] argNodesNew = new RNode[arguments.length];
         boolean layoutChanged = false;
         boolean contentChanged = false;
         int size = arguments.length;
         for (int i = 0; i < arguments.length; i++) {
-            RNode argNodeSubs = arguments[i].substitute(env);
+            RNode argNodeSubs = RSyntaxNode.cast(arguments[i]).substitute(env).asRNode();
             argNodesNew[i] = argNodeSubs;
             if (argNodeSubs instanceof RASTUtils.MissingDotsNode) {
                 // in this case we remove the argument altogether

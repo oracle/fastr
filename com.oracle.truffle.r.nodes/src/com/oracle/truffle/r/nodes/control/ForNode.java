@@ -29,6 +29,7 @@ import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
+import com.oracle.truffle.r.nodes.access.WriteVariableNode.Mode;
 import com.oracle.truffle.r.nodes.access.variables.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
@@ -37,7 +38,7 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.gnur.*;
 
-public final class ForNode extends AbstractLoopNode {
+public final class ForNode extends AbstractLoopNode implements VisibilityController, RSyntaxNode {
 
     @Child private WriteVariableNode writeLengthNode;
     @Child private WriteVariableNode writeIndexNode;
@@ -49,14 +50,14 @@ public final class ForNode extends AbstractLoopNode {
         String rangeName = AnonymousFrameVariable.create("FOR_RANGE");
         String lengthName = AnonymousFrameVariable.create("FOR_LENGTH");
 
-        this.writeIndexNode = WriteVariableNode.create(indexName, null, false, false);
-        this.writeRangeNode = WriteVariableNode.create(rangeName, range, false, false);
-        this.writeLengthNode = WriteVariableNode.create(lengthName, RLengthNodeGen.create(ReadVariableNode.create(rangeName, false)), false, false);
+        this.writeIndexNode = WriteVariableNode.createAnonymous(indexName, null, Mode.REGULAR);
+        this.writeRangeNode = WriteVariableNode.createAnonymous(rangeName, range, Mode.REGULAR);
+        this.writeLengthNode = WriteVariableNode.createAnonymous(lengthName, RLengthNodeGen.create(ReadVariableNode.create(rangeName, false)), Mode.REGULAR);
         this.loopNode = Truffle.getRuntime().createLoopNode(new ForRepeatingNode(cvar, body, indexName, lengthName, rangeName));
     }
 
-    public static ForNode create(WriteVariableNode cvar, RNode range, RNode body) {
-        return new ForNode(cvar, range, body);
+    public static ForNode create(WriteVariableNode cvar, RSyntaxNode range, RSyntaxNode body) {
+        return new ForNode(cvar, range.asRNode(), body.asRNode());
     }
 
     @Override
@@ -65,6 +66,7 @@ public final class ForNode extends AbstractLoopNode {
         writeRangeNode.execute(frame);
         writeLengthNode.execute(frame);
         loopNode.executeLoop(frame);
+        forceVisibility(false);
         return RNull.instance;
     }
 
@@ -81,19 +83,14 @@ public final class ForNode extends AbstractLoopNode {
     }
 
     @Override
-    public boolean isSyntax() {
-        return true;
-    }
-
-    @Override
     public void deparse(RDeparse.State state) {
         state.append("for (");
-        getCvar().deparse(state);
+        RSyntaxNode.cast(getCvar()).deparse(state);
         state.append(" in ");
-        getRange().deparse(state);
+        RSyntaxNode.cast(getRange()).deparse(state);
         state.append(") ");
         state.writeOpenCurlyNLIncIndent();
-        getBody().deparse(state);
+        RSyntaxNode.cast(getBody()).deparse(state);
         state.decIndentWriteCloseCurly();
     }
 
@@ -116,9 +113,8 @@ public final class ForNode extends AbstractLoopNode {
     }
 
     @Override
-    public RNode substitute(REnvironment env) {
-        // TODO check type of cvar.substitute
-        return create((WriteVariableNode) getCvar().substitute(env), getRange().substitute(env), getBody().substitute(env));
+    public RSyntaxNode substitute(REnvironment env) {
+        return create((WriteVariableNode) RSyntaxNode.cast(getCvar()).substitute(env), RSyntaxNode.cast(getRange()).substitute(env), RSyntaxNode.cast(getBody()).substitute(env));
     }
 
     private ForRepeatingNode getForRepeatingNode() {
@@ -141,13 +137,13 @@ public final class ForNode extends AbstractLoopNode {
         @Child private WriteVariableNode writeIndexNode;
         @Child private RNode loadElement;
 
-        public ForRepeatingNode(WriteVariableNode writeElementNode, RNode body, String indexName, String lengthName, String rangeName) {
-            this.writeElementNode = writeElementNode;
+        public ForRepeatingNode(WriteVariableNode cvar, RNode body, String indexName, String lengthName, String rangeName) {
+            this.writeElementNode = cvar;
             this.body = body;
 
             this.readIndexNode = ReadVariableNode.create(indexName, false);
             this.readLengthNode = ReadVariableNode.create(lengthName, false);
-            this.writeIndexNode = WriteVariableNode.create(indexName, null, false, false);
+            this.writeIndexNode = WriteVariableNode.createAnonymous(indexName, null, Mode.REGULAR);
             this.loadElement = createIndexedLoad(indexName, rangeName);
         }
 
@@ -161,7 +157,7 @@ public final class ForNode extends AbstractLoopNode {
             REnvironment env = RDataFactory.createNewEnv("dummy");
             env.safePut("i", RDataFactory.createLanguage(ReadVariableNode.create(indexName, false)));
             env.safePut("x", RDataFactory.createLanguage(ReadVariableNode.create(rangeName, false)));
-            return indexNode.substitute(env);
+            return indexNode.substitute(env).asRNode();
         }
 
         public boolean executeRepeating(VirtualFrame frame) {

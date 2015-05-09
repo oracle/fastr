@@ -22,32 +22,16 @@
  */
 package com.oracle.truffle.r.nodes.access;
 
-import static com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor.*;
-
-import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.instrument.*;
-import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
-import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.WriteVariableNodeFactory.ResolvedWriteLocalVariableNodeGen;
-import com.oracle.truffle.r.nodes.access.WriteVariableNodeFactory.UnresolvedWriteLocalVariableNodeGen;
-import com.oracle.truffle.r.nodes.access.WriteVariableNodeFactory.WriteSuperVariableNodeGen;
-import com.oracle.truffle.r.nodes.instrument.*;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.RDeparse.State;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.env.*;
-import com.oracle.truffle.r.runtime.env.frame.*;
-import com.oracle.truffle.r.runtime.gnur.*;
 
-@NodeChild(value = "rhs", type = RNode.class)
-@NodeFields({@NodeField(name = "argWrite", type = boolean.class), @NodeField(name = "name", type = String.class)})
-@CreateWrapper
-public abstract class WriteVariableNode extends RNode implements VisibilityController {
-
+/**
+ * The base of the {@code WriteVariableNode} type hierarchy. There are several variants for
+ * different situations and this class provides static methods to create these.
+ */
+public abstract class WriteVariableNode extends RNode {
     public enum Mode {
 
         REGULAR,
@@ -55,463 +39,48 @@ public abstract class WriteVariableNode extends RNode implements VisibilityContr
         INVISIBLE
     }
 
-    public abstract boolean isArgWrite();
-
     public abstract String getName();
 
     public abstract RNode getRhs();
 
-    private final ConditionProfile isCurrentProfile = ConditionProfile.createBinaryProfile();
-    private final ConditionProfile isShareableProfile = ConditionProfile.createBinaryProfile();
-    private final ConditionProfile isTemporaryProfile = ConditionProfile.createBinaryProfile();
-    private final ConditionProfile isSharedProfile = ConditionProfile.createBinaryProfile();
-
-    private final BranchProfile initialSetKindProfile = BranchProfile.create();
-
-    @Override
-    public boolean isSyntax() {
-        return !isArgWrite();
-    }
-
-    @Override
-    public final boolean getVisibility() {
-        return false;
-    }
-
-    // setting value of the mode parameter to COPY is meant to induce creation of a copy
-    // of the RHS; this needed for the implementation of the replacement forms of
-    // builtin functions whose last argument can be mutated; for example, in
-    // "dimnames(x)<-list(1)", the assigned value list(1) must become list("1"), with the latter
-    // value returned as a result of the call;
-    // TODO: is there a better way than to eagerly create a copy of RHS?
-    // the above, however, is not necessary for vector updates, which never coerces RHS to a
-    // different type; in this case we set the mode parameter to INVISIBLE is meant to prevent
-    // changing state altogether
-    // setting value of the mode parameter to TEMP is meant to modify how the state is changed; this
-    // is needed for the replacement forms of vector updates where a vector is assigned to a
-    // temporary (visible) variable and then, again, to the original variable (which would cause the
-    // vector to be copied each time);
-    protected final Object shareObjectValue(Frame frame, FrameSlot frameSlot, Object value, Mode mode, boolean isSuper) {
-        Object newValue = value;
-        if (!isArgWrite()) {
-            // for the meaning of INVISIBLE mode see the comment preceding the current method;
-            // also change state when assigning to the enclosing frame as there must
-            // be a distinction between variables with the same name defined in
-            // different scopes, for example to correctly support:
-            // x<-1:3; f<-function() { x[2]<-10; x[2]<<-100; x[2]<-1000 }; f()
-            // or
-            // x<-c(1); f<-function() { x[[1]]<<-x[[1]] + 1; x }; a<-f(); b<-f(); c(a,b)
-            if ((mode != Mode.INVISIBLE || isSuper) && !isCurrentProfile.profile(isCurrentValue(frame, frameSlot, value))) {
-                if (isShareableProfile.profile(value instanceof RShareable)) {
-                    RShareable rShareable = (RShareable) value;
-                    if (isTemporaryProfile.profile(rShareable.isTemporary())) {
-                        if (mode == Mode.COPY) {
-                            RShareable shareableCopy = rShareable.copy();
-                            newValue = shareableCopy;
-                        } else {
-                            rShareable.markNonTemporary();
-                        }
-                    } else if (isSharedProfile.profile(rShareable.isShared())) {
-                        RShareable shareableCopy = rShareable.copy();
-                        if (mode != Mode.COPY) {
-                            shareableCopy.markNonTemporary();
-                        }
-                        newValue = shareableCopy;
-                    } else {
-                        if (mode == Mode.COPY) {
-                            RShareable shareableCopy = rShareable.copy();
-                            newValue = shareableCopy;
-                        } else {
-                            rShareable.makeShared();
-                        }
-                    }
-                }
-            }
-        }
-        return newValue;
-    }
-
-    protected void deparseHelper(RDeparse.State state, String op) {
-        if (!isArgWrite()) {
-            state.append(getName());
-            RNode rhs = getRhs();
-            if (rhs != null) {
-                state.append(op);
-                getRhs().deparse(state);
-            }
-        }
-    }
-
-    protected void serializeHelper(RSerialize.State state, String op) {
-        assert !isArgWrite();
-        RNode rhs = getRhs();
-        if (rhs == null) {
-            state.setCarAsSymbol(getName());
-        } else {
-            state.setAsBuiltin(op);
-            state.openPairList(SEXPTYPE.LISTSXP);
-            state.setCarAsSymbol(getName());
-            state.openPairList(SEXPTYPE.LISTSXP);
-            state.serializeNodeSetCar(getRhs());
-            state.linkPairList(2);
-            state.setCdr(state.closePairList());
-        }
-    }
-
-    @Override
-    public RNode substitute(REnvironment env) {
-        String name = getName();
-        RNode nameSub = RASTUtils.substituteName(name, env);
-        if (nameSub != null) {
-            name = RASTUtils.expectName(nameSub);
-        }
-        RNode rhsSub = null;
-        if (getRhs() != null) {
-            rhsSub = getRhs().substitute(env);
-        }
-        return create(name, rhsSub, false, this instanceof WriteSuperVariableNode);
-    }
-
-    private static boolean isCurrentValue(Frame frame, FrameSlot frameSlot, Object value) {
-        try {
-            return frame.isObject(frameSlot) && frame.getObject(frameSlot) == value;
-        } catch (FrameSlotTypeException ex) {
-            throw RInternalError.shouldNotReachHere();
-        }
-    }
-
-    public static WriteVariableNode create(String name, RNode rhs, boolean isArgWrite, boolean isSuper, Mode mode) {
-        if (!isSuper) {
-            return UnresolvedWriteLocalVariableNodeGen.create(rhs, isArgWrite, name, mode);
-        } else {
-            assert !isArgWrite;
-            return new UnresolvedWriteSuperVariableNode(rhs, name, mode);
-        }
-    }
-
-    public static WriteVariableNode create(String name, RNode rhs, boolean isArgWrite, boolean isSuper) {
-        return create(name, rhs, isArgWrite, isSuper, Mode.REGULAR);
-    }
-
-    public static WriteVariableNode create(SourceSection src, String name, RNode rhs, boolean isArgWrite, boolean isSuper) {
-        WriteVariableNode wvn = create(name, rhs, isArgWrite, isSuper, Mode.REGULAR);
-        wvn.assignSourceSection(src);
-        return wvn;
-    }
-
     public abstract void execute(VirtualFrame frame, Object value);
 
-    @NodeField(name = "mode", type = Mode.class)
-    @NodeInfo(cost = NodeCost.UNINITIALIZED)
-    public abstract static class UnresolvedWriteLocalVariableNode extends WriteVariableNode {
-
-        public abstract Mode getMode();
-
-        @Specialization
-        protected byte doLogical(VirtualFrame frame, byte value) {
-            resolveAndSet(frame, value, FrameSlotKind.Byte);
-            return value;
-        }
-
-        @Specialization
-        protected int doInteger(VirtualFrame frame, int value) {
-            resolveAndSet(frame, value, FrameSlotKind.Int);
-            return value;
-        }
-
-        @Specialization
-        protected double doDouble(VirtualFrame frame, double value) {
-            resolveAndSet(frame, value, FrameSlotKind.Double);
-            return value;
-        }
-
-        @Specialization
-        protected Object doObject(VirtualFrame frame, Object value) {
-            resolveAndSet(frame, value, FrameSlotKind.Object);
-            return value;
-        }
-
-        private void resolveAndSet(VirtualFrame frame, Object value, FrameSlotKind initialKind) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            if (getName().isEmpty()) {
-                throw RError.error(RError.Message.ZERO_LENGTH_VARIABLE);
-            }
-            FrameSlot frameSlot = findOrAddFrameSlot(frame.getFrameDescriptor(), getName(), initialKind);
-            replace(ResolvedWriteLocalVariableNode.create(getRhs(), this.isArgWrite(), getName(), frameSlot, getMode())).execute(frame, value);
-        }
-
-        @Override
-        public void deparse(State state) {
-            deparseHelper(state, " <- ");
-        }
-
-        @Override
-        public void serialize(RSerialize.State state) {
-            serializeHelper(state, "<-");
-        }
-    }
-
-    @NodeFields({@NodeField(name = "frameSlot", type = FrameSlot.class), @NodeField(name = "mode", type = Mode.class)})
-    public abstract static class ResolvedWriteLocalVariableNode extends WriteVariableNode {
-
-        private final ValueProfile storedObjectProfile = ValueProfile.createClassProfile();
-        private final BranchProfile invalidateProfile = BranchProfile.create();
-
-        public abstract Mode getMode();
-
-        public static ResolvedWriteLocalVariableNode create(RNode rhs, boolean isArgWrite, String name, FrameSlot frameSlot, Mode mode) {
-            return ResolvedWriteLocalVariableNodeGen.create(rhs, isArgWrite, name, frameSlot, mode);
-        }
-
-        @Specialization(guards = "isLogicalKind(frame, frameSlot)")
-        protected byte doLogical(VirtualFrame frame, FrameSlot frameSlot, byte value) {
-            controlVisibility();
-            FrameSlotChangeMonitor.setByteAndInvalidate(frame, frameSlot, value, false, invalidateProfile);
-            return value;
-        }
-
-        @Specialization(guards = "isIntegerKind(frame, frameSlot)")
-        protected int doInteger(VirtualFrame frame, FrameSlot frameSlot, int value) {
-            controlVisibility();
-            FrameSlotChangeMonitor.setIntAndInvalidate(frame, frameSlot, value, false, invalidateProfile);
-            return value;
-        }
-
-        @Specialization(guards = "isDoubleKind(frame, frameSlot)")
-        protected double doDouble(VirtualFrame frame, FrameSlot frameSlot, double value) {
-            controlVisibility();
-            FrameSlotChangeMonitor.setDoubleAndInvalidate(frame, frameSlot, value, false, invalidateProfile);
-            return value;
-        }
-
-        @Specialization
-        protected Object doObject(VirtualFrame frame, FrameSlot frameSlot, Object value) {
-            controlVisibility();
-            Object newValue = shareObjectValue(frame, frameSlot, storedObjectProfile.profile(value), getMode(), false);
-            FrameSlotChangeMonitor.setObjectAndInvalidate(frame, frameSlot, newValue, false, invalidateProfile);
-            return value;
-        }
-
-        @Override
-        public void deparse(State state) {
-            deparseHelper(state, " <- ");
-        }
-
-        @Override
-        public void serialize(RSerialize.State state) {
-            serializeHelper(state, "<-");
-        }
-    }
-
-    public abstract static class AbstractWriteSuperVariableNode extends WriteVariableNode {
-
-        public abstract void execute(VirtualFrame frame, Object value, MaterializedFrame enclosingFrame);
-
-        @Override
-        public final Object execute(VirtualFrame frame) {
-            Object value = getRhs().execute(frame);
-            execute(frame, value);
-            return value;
-        }
-
-        @Override
-        public void deparse(State state) {
-            deparseHelper(state, " <<- ");
-        }
-
-        @Override
-        public void serialize(RSerialize.State state) {
-            serializeHelper(state, "<<-");
-        }
-    }
-
-    public static final class WriteSuperVariableConditionalNode extends AbstractWriteSuperVariableNode {
-
-        @Child private WriteSuperVariableNode writeNode;
-        @Child private AbstractWriteSuperVariableNode nextNode;
-        @Child private RNode rhs;
-
-        WriteSuperVariableConditionalNode(WriteSuperVariableNode writeNode, AbstractWriteSuperVariableNode nextNode, RNode rhs) {
-            this.writeNode = writeNode;
-            this.nextNode = nextNode;
-            this.rhs = rhs;
-        }
-
-        @Override
-        public String getName() {
-            return writeNode.getName();
-        }
-
-        @Override
-        public RNode getRhs() {
-            return rhs;
-        }
-
-        @Override
-        public void execute(VirtualFrame frame, Object value, MaterializedFrame enclosingFrame) {
-            controlVisibility();
-            if (writeNode.getFrameSlotNode().hasValue(enclosingFrame)) {
-                writeNode.execute(frame, value, enclosingFrame);
-            } else {
-                MaterializedFrame superFrame = RArguments.getEnclosingFrame(enclosingFrame);
-                if (superFrame == null) {
-                    // Might be the case if "{ x <<- 42 }": This is in glovalEnv!
-                    superFrame = REnvironment.globalEnv().getFrame();
-                }
-                nextNode.execute(frame, value, superFrame);
-            }
-        }
-
-        @Override
-        public void execute(VirtualFrame frame, Object value) {
-            controlVisibility();
-            assert RArguments.getEnclosingFrame(frame) != null;
-            execute(frame, value, RArguments.getEnclosingFrame(frame));
-        }
-
-        @Override
-        public boolean isArgWrite() {
-            return false;
-        }
-    }
-
-    public static final class UnresolvedWriteSuperVariableNode extends AbstractWriteSuperVariableNode {
-
-        @Child private RNode rhs;
-        private final String symbol;
-        private final WriteVariableNode.Mode mode;
-
-        public UnresolvedWriteSuperVariableNode(RNode rhs, String symbol, WriteVariableNode.Mode mode) {
-            this.rhs = rhs;
-            this.symbol = symbol;
-            this.mode = mode;
-        }
-
-        @Override
-        public String getName() {
-            return symbol;
-        }
-
-        @Override
-        public RNode getRhs() {
-            return rhs;
-        }
-
-        @Override
-        public void execute(VirtualFrame frame, Object value, MaterializedFrame enclosingFrame) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            if (getName().isEmpty()) {
-                throw RError.error(RError.Message.ZERO_LENGTH_VARIABLE);
-            }
-            final AbstractWriteSuperVariableNode writeNode;
-            if (REnvironment.isGlobalEnvFrame(enclosingFrame)) {
-                // we've reached the global scope, do unconditional write
-                // if this is the first node in the chain, needs the rhs and enclosingFrame nodes
-                AccessEnclosingFrameNode enclosingFrameNode = RArguments.getEnclosingFrame(frame) == enclosingFrame ? AccessEnclosingFrameNodeGen.create(1) : null;
-                writeNode = WriteSuperVariableNodeGen.create(getRhs(), enclosingFrameNode, FrameSlotNode.create(findOrAddFrameSlot(enclosingFrame.getFrameDescriptor(), symbol)), this.isArgWrite(),
-                                getName(), mode);
-            } else {
-                WriteSuperVariableNode actualWriteNode = WriteSuperVariableNodeGen.create(null, null, FrameSlotNode.create(symbol), this.isArgWrite(), this.getName(), mode);
-                writeNode = new WriteSuperVariableConditionalNode(actualWriteNode, new UnresolvedWriteSuperVariableNode(null, symbol, mode), getRhs());
-            }
-            replace(writeNode).execute(frame, value, enclosingFrame);
-        }
-
-        @Override
-        public void execute(VirtualFrame frame, Object value) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            MaterializedFrame enclosingFrame = RArguments.getEnclosingFrame(frame);
-            if (enclosingFrame != null) {
-                execute(frame, value, enclosingFrame);
-            } else {
-                // we're in global scope, do a local write instead
-                replace(UnresolvedWriteLocalVariableNodeGen.create(getRhs(), this.isArgWrite(), symbol, mode)).execute(frame, value);
-            }
-        }
-
-        @Override
-        public boolean isArgWrite() {
-            return false;
-        }
-
-    }
-
-    @SuppressWarnings("unused")
-    @NodeChildren({@NodeChild(value = "enclosingFrame", type = AccessEnclosingFrameNode.class), @NodeChild(value = "frameSlotNode", type = FrameSlotNode.class)})
-    @NodeField(name = "mode", type = Mode.class)
-    public abstract static class WriteSuperVariableNode extends AbstractWriteSuperVariableNode {
-
-        private final ValueProfile storedObjectProfile = ValueProfile.createClassProfile();
-        private final BranchProfile invalidateProfile = BranchProfile.create();
-        private final ValueProfile enclosingFrameProfile = ValueProfile.createClassProfile();
-
-        protected abstract FrameSlotNode getFrameSlotNode();
-
-        public abstract Mode getMode();
-
-        @Specialization(guards = "isLogicalKind(frame, frameSlot)")
-        protected void doLogical(VirtualFrame frame, byte value, MaterializedFrame enclosingFrame, FrameSlot frameSlot) {
-            controlVisibility();
-            FrameSlotChangeMonitor.setByteAndInvalidate(enclosingFrameProfile.profile(enclosingFrame), frameSlot, value, true, invalidateProfile);
-        }
-
-        @Specialization(guards = "isIntegerKind(frame, frameSlot)")
-        protected void doInteger(VirtualFrame frame, int value, MaterializedFrame enclosingFrame, FrameSlot frameSlot) {
-            controlVisibility();
-            FrameSlotChangeMonitor.setIntAndInvalidate(enclosingFrameProfile.profile(enclosingFrame), frameSlot, value, true, invalidateProfile);
-        }
-
-        @Specialization(guards = "isDoubleKind(frame, frameSlot)")
-        protected void doDouble(VirtualFrame frame, double value, MaterializedFrame enclosingFrame, FrameSlot frameSlot) {
-            controlVisibility();
-            FrameSlotChangeMonitor.setDoubleAndInvalidate(enclosingFrameProfile.profile(enclosingFrame), frameSlot, value, true, invalidateProfile);
-        }
-
-        @Specialization
-        protected void doObject(VirtualFrame frame, Object value, MaterializedFrame enclosingFrame, FrameSlot frameSlot) {
-            controlVisibility();
-            MaterializedFrame profiledFrame = enclosingFrameProfile.profile(enclosingFrame);
-            Object newValue = shareObjectValue(profiledFrame, frameSlot, storedObjectProfile.profile(value), getMode(), true);
-            FrameSlotChangeMonitor.setObjectAndInvalidate(profiledFrame, frameSlot, newValue, true, invalidateProfile);
-        }
-
-    }
-
-    @SuppressWarnings("unused")
-    protected boolean isLogicalKind(VirtualFrame frame, FrameSlot frameSlot) {
-        return isKind(frameSlot, FrameSlotKind.Boolean);
-    }
-
-    @SuppressWarnings("unused")
-    protected boolean isIntegerKind(VirtualFrame frame, FrameSlot frameSlot) {
-        return isKind(frameSlot, FrameSlotKind.Int);
-    }
-
-    @SuppressWarnings("unused")
-    protected boolean isDoubleKind(VirtualFrame frame, FrameSlot frameSlot) {
-        return isKind(frameSlot, FrameSlotKind.Double);
-    }
-
-    private boolean isKind(FrameSlot frameSlot, FrameSlotKind kind) {
-        if (frameSlot.getKind() == kind) {
-            return true;
+    /**
+     * Variant for a variable that appears in the R language source.
+     *
+     * @param isSuper {@code true} if the write is {@code <<-}.
+     */
+    public static WriteVariableNode create(SourceSection src, String name, RNode rhs, boolean isSuper) {
+        if (isSuper) {
+            return WriteSuperVariableNode.create(src, name, rhs);
         } else {
-            initialSetKindProfile.enter();
-            return initialSetKind(frameSlot, kind);
+            return WriteCurrentVariableNode.create(src, name, rhs);
         }
     }
 
-    private static boolean initialSetKind(FrameSlot frameSlot, FrameSlotKind kind) {
-        if (frameSlot.getKind() == FrameSlotKind.Illegal) {
-            frameSlot.setKind(kind);
-            return true;
-        }
-        return false;
+    /**
+     * Variant for saving function arguments, i.e. from {@link RArguments} into the frame.
+     */
+    public static WriteVariableNode createArgSave(String name, RNode rhs) {
+        return WriteLocalFrameVariableNode.create(name, rhs, Mode.REGULAR);
     }
 
-    @Override
-    public ProbeNode.WrapperNode createWrapperNode() {
-        return new WriteVariableNodeWrapper(this);
+    /**
+     * Variant for anonymous variables in the current frame.
+     */
+    public static WriteVariableNode createAnonymous(String name, RNode rhs, Mode mode) {
+        return WriteLocalFrameVariableNode.create(name, rhs, mode);
+    }
+
+    /**
+     * Variant for anonymous variables in either the current or a super frame..
+     */
+    public static WriteVariableNode createAnonymous(String name, RNode rhs, Mode mode, boolean isSuper) {
+        if (isSuper) {
+            return WriteSuperFrameVariableNode.create(name, rhs, mode);
+        } else {
+            return WriteLocalFrameVariableNode.create(name, rhs, mode);
+        }
     }
 
 }

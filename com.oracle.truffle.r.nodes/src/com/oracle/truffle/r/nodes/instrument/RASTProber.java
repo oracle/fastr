@@ -89,12 +89,12 @@ public final class RASTProber implements ASTProber {
 
         @Override
         public boolean visit(Node node) {
-            if (node instanceof SequenceNode) {
-                SequenceNode sequenceNode = (SequenceNode) node;
-                RNode[] sequence = sequenceNode.getSequence();
-                for (int i = 0; i < sequence.length; i++) {
-                    RNode n = sequence[i].unwrap();
-                    if (n.isSyntax() && n.getSourceSection() != null) {
+            if (node instanceof BlockNode) {
+                BlockNode sequenceNode = (BlockNode) node;
+                RNode[] block = sequenceNode.getSequence();
+                for (int i = 0; i < block.length; i++) {
+                    RNode n = block[i].unwrap();
+                    if (n.getSourceSection() != null) {
                         if (!callback(n)) {
                             return false;
                         }
