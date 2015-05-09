@@ -54,9 +54,9 @@ public abstract class Cat extends RInvisibleBuiltinNode {
     }
 
     @Specialization
-    protected RNull cat(VirtualFrame frame, RList args, RConnection conn, RAbstractStringVector sepVec, byte fill, @SuppressWarnings("unused") RNull labels, byte append) {
-        if (RRuntime.fromLogical(fill) || RRuntime.fromLogical(append)) {
-            throw RError.nyi(getEncapsulatingSourceSection(), "fill/append = TRUE");
+    protected RNull cat(VirtualFrame frame, RList args, RConnection conn, RAbstractStringVector sepVec, Object fillObj, @SuppressWarnings("unused") RNull labels, byte append) {
+        if (RRuntime.fromLogical(append)) {
+            throw RError.nyi(getEncapsulatingSourceSection(), "append = TRUE");
         }
         ensureToString();
         String sep = sepVec.getDataAt(0);
@@ -74,13 +74,13 @@ public abstract class Cat extends RInvisibleBuiltinNode {
             }
         }
 
-        output(conn, sepVec, values);
+        output(conn, sepVec, values, fillObj);
         controlVisibility();
         return RNull.instance;
     }
 
     @TruffleBoundary
-    private void output(RConnection conn, RAbstractStringVector sepVec, String[] values) {
+    private void output(RConnection conn, RAbstractStringVector sepVec, String[] values, Object fillObj) {
         int sepLength = sepVec.getLength();
         StringBuffer sb = new StringBuffer();
         for (int i = 0; i < values.length; i++) {
@@ -93,12 +93,29 @@ public abstract class Cat extends RInvisibleBuiltinNode {
             }
         }
 
+        int fillWidth = Integer.MAX_VALUE;
+        if (fillObj instanceof Byte) {
+            if (RRuntime.fromLogical((byte) fillObj)) {
+                fillWidth = ((RIntVector) ROptions.getValue("width")).getDataAt(0);
+            }
+        } else {
+            fillWidth = RRuntime.asInteger(fillObj);
+            if (fillWidth < 1) {
+                RError.warning(getEncapsulatingSourceSection(), RError.Message.NON_POSITIVE_FILL);
+            }
+        }
+
+        String data = sb.toString();
+        if (data.length() > fillWidth) {
+            throw RInternalError.unimplemented("fill");
+        }
+
         boolean sepContainsNewline = sepContainsNewline(sepVec);
         if (sepContainsNewline && values.length > 0) {
-            sb.append('\n');
+            data = data + "\n";
         }
         try {
-            conn.writeLines(RDataFactory.createStringVectorFromScalar(sb.toString()), "");
+            conn.writeLines(RDataFactory.createStringVectorFromScalar(data), "");
         } catch (IOException ex) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, ex.getMessage());
         }
