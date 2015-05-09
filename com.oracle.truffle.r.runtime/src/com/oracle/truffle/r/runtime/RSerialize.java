@@ -621,6 +621,14 @@ public class RSerialize {
                     break;
                 }
 
+                case RAWSXP: {
+                    int len = stream.readInt();
+                    byte[] data = new byte[len];
+                    stream.readRaw(data);
+                    result = RDataFactory.createRawVector(data);
+                    break;
+                }
+
                 default:
                     throw RInternalError.unimplemented();
             }
@@ -655,12 +663,12 @@ public class RSerialize {
                 String sourcePath = null;
                 String deparse = deparseRaw;
                 if (isClosure) {
+                    /*
+                     * To disambiguate identical saved deparsed files in different packages add a
+                     * header line
+                     */
+                    deparse = "# deparsed from package: " + packageName + "\n" + deparse;
                     if (saveDeparse) {
-                        /*
-                         * To disambiguate identical saved deparsed files in different packages add
-                         * a header line
-                         */
-                        deparse = "# deparsed from package: " + packageName + "\n" + deparse;
                         saveDeparseResult(deparse, false);
                     }
                     if (locateSource) {
@@ -689,8 +697,12 @@ public class RSerialize {
         }
 
         private static void saveDeparseResult(String deparse, boolean isError) throws IOException {
-            try (FileWriter wr = new FileWriter(new File(new File(REnvVars.rHome()), "DEPARSE" + (isError ? "_ERROR" : "")))) {
-                wr.write(deparse);
+            if (saveDeparse) {
+                RPackageSource.deparsed(deparse, isError);
+            } else if (isError) {
+                try (FileWriter wr = new FileWriter(new File(new File(REnvVars.rHome()), "DEPARSE" + (isError ? "_ERROR" : "")))) {
+                    wr.write(deparse);
+                }
             }
         }
 
@@ -871,6 +883,8 @@ public class RSerialize {
 
         abstract double readDouble() throws IOException;
 
+        abstract void readRaw(byte[] data) throws IOException;
+
     }
 
     @SuppressWarnings("unused")
@@ -949,6 +963,13 @@ public class RSerialize {
             }
         }
 
+        @Override
+        void readRaw(byte[] data) throws IOException {
+            ensureData(data.length);
+            System.arraycopy(buf, offset, data, 0, data.length);
+            offset += data.length;
+        }
+
     }
 
     /**
@@ -1004,6 +1025,8 @@ public class RSerialize {
         abstract void writeString(String value) throws IOException;
 
         abstract void writeDouble(double value) throws IOException;
+
+        abstract void writeRaw(byte[] value) throws IOException;
 
         abstract void flush() throws IOException;
 
@@ -1072,6 +1095,13 @@ public class RSerialize {
         void flush() throws IOException {
             flushBuffer();
             os.flush();
+        }
+
+        @Override
+        void writeRaw(byte[] value) throws IOException {
+            ensureSpace(value.length);
+            System.arraycopy(value, 0, buf, offset, value.length);
+            offset += value.length;
         }
     }
 
@@ -1293,6 +1323,14 @@ public class RSerialize {
                         }
                         writeItem(pl.car());
                         writeItem(pl.cdr());
+                        break;
+                    }
+
+                    case RAWSXP: {
+                        RRawVector raw = (RRawVector) obj;
+                        byte[] data = raw.getDataWithoutCopying();
+                        stream.writeInt(data.length);
+                        stream.writeRaw(data);
                         break;
                     }
 

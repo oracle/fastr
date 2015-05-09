@@ -197,10 +197,10 @@ public final class RTruffleVisitor extends BasicVisitor<RNode> {
             String description = getFunctionDescription(func);
             FunctionDefinitionNode rootNode = new FunctionDefinitionNode(func.getSource(), descriptor, new FunctionBodyNode(saveArguments, statements), formals, description, false);
             callTarget = Truffle.getRuntime().createCallTarget(rootNode);
+            return FunctionExpressionNode.create(callTarget);
         } catch (Throwable err) {
-            err.printStackTrace();
+            throw new RInternalError(err, "visit(Function)");
         }
-        return FunctionExpressionNode.create(callTarget);
     }
 
     private static String getFunctionDescription(Function func) {

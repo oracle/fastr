@@ -47,7 +47,7 @@ fastr.inspect <- function(...) .FastR(.NAME="inspect", ...)
 
 fastr.createpkgsources <- function(pkgs = NULL) {
     if (!length(pkgs)) {
-        pkgs <- search()
+        pkgs <- sub("package:", "", grep("package:", search(), value=TRUE, fixed=TRUE), fixed=TRUE)
     }
     for (pkg in pkgs) {
     	ns <- asNamespace(pkg)

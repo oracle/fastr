@@ -51,7 +51,6 @@ import com.oracle.truffle.r.runtime.data.*;
 public class RPackageSource {
     public static final String PKGSOURCE_PROJECT = "Rpkgsource";
     public static final String INDEX = "INDEX";
-    private static final String DOT_PREFIX = "_dot_";
     private static final String SLASH_SWAP = "_slash_";
     private static final int FNAME = 0;
     private static final int FINGERPRINT = 1;
@@ -145,51 +144,59 @@ public class RPackageSource {
 
     }
 
-    @SuppressWarnings("unused")
-    public static void preLoad(String pkg, String fname) {
-        RSerialize.setSaveDeparse(true);
-        // make sure no previous file exists
-        Path source = deparse(false);
-        Path errorSource = deparse(true);
-        try {
-            Files.deleteIfExists(source);
-            Files.deleteIfExists(errorSource);
-        } catch (IOException ex) {
-            throw RInternalError.shouldNotReachHere("failed to delete existing DEPARSE");
-        }
+    /**
+     * Temporary save of the results from {@link #deparsed}.
+     */
+    private static String deparseResult;
+    private static boolean deparseError;
+
+    /**
+     * Called from {@link RSerialize} with the deparsed content of a unserialized closure
+     * (function).
+     *
+     * @param deparse deparse closure
+     * @param isError {@code true} iff the parse of {@code deparse} failed.
+     */
+    public static void deparsed(String deparse, boolean isError) {
+        deparseResult = deparse;
+        deparseError = isError;
     }
 
+    /**
+     * Called just prior to the (expected) unserialization of the closure associated with
+     * {@code fname}.
+     */
+    @SuppressWarnings("unused")
+    public static void preLoad(String pkg, String fname) {
+        // Cause RSerialize to call "deparsed".
+        RSerialize.setSaveDeparse(true);
+        deparseResult = null;
+        deparseError = false;
+    }
+
+    /**
+     * Called after the unserialization has occurred to bind {@code fname} to the resulting closure.
+     */
     public static void postLoad(String pkg, String fname, Object val) {
         RSerialize.setSaveDeparse(false);
         if (val instanceof RFunction) {
-            /*
-             * RSerialize will have saved the deparsed output in DEPARSE, so we move it to the
-             * correct location based on the "fname", and update the index. N.B. If the function had
-             * been (lazily) loaded before this process began, the file will not exist. This is
-             * quite likely for the default packages used on startup, which really need special
-             * treatment. N.B. Also, if the function did not deparse correctly, it will be in a file
-             * named DEPARSE_ERROR, which we ignore.
-             */
-            Path source = deparse(false);
-            if (Files.exists(source)) {
+            String qualName = qualName(pkg, fname);
+            if (deparseResult != null) {
+                if (deparseError) {
+                    RError.warning(RError.Message.GENERIC, "the function '" + qualName + "' did not deparse successfully");
+                    // write the file anyway
+                }
                 try {
                     Path target = targetPath(pkg, fname);
-                    Files.move(source, target, StandardCopyOption.REPLACE_EXISTING);
-                    RPackageSource.register(fname, pkg, target);
+                    try (FileWriter wr = new FileWriter(target.toFile())) {
+                        wr.write(deparseResult);
+                    }
+                    register(fname, pkg, target);
                 } catch (IOException ex) {
                     throw RError.error(RError.Message.GENERIC, ex.getMessage());
                 }
             } else {
-                /*
-                 * Either (a) no unserialize happened because it had already happened or (b) there
-                 * was an error, the latter indicated by the existence of DEPARSE_ERROR
-                 */
-                String qualName = qualName(pkg, fname);
-                if (Files.exists(deparse(true))) {
-                    RError.warning(RError.Message.GENERIC, "the function '" + qualName + "' did not deparse successfully");
-                } else {
-                    RError.warning(RError.Message.GENERIC, "the function '" + qualName + "' has already been unserialized");
-                }
+                RError.warning(RError.Message.GENERIC, "the function '" + qualName + "' has already been unserialized");
             }
         }
     }
@@ -212,15 +219,8 @@ public class RPackageSource {
      */
     private static String mungeName(String fname) {
         String result = fname;
-        if (fname.charAt(0) == '.') {
-            result = DOT_PREFIX + fname.substring(1);
-        }
         result = result.replace("/", SLASH_SWAP);
         return result;
-    }
-
-    private static Path deparse(boolean isError) {
-        return FileSystems.getDefault().getPath(REnvVars.rHome(), "DEPARSE" + (isError ? "_ERROR" : ""));
     }
 
     private static Path targetPath(String pkg, String fnameArg) throws IOException {
