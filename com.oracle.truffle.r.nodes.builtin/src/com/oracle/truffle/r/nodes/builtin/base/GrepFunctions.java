@@ -327,7 +327,7 @@ public class GrepFunctions {
                             value = input.replace(pattern, replacement);
                         } else {
                             int ix = input.indexOf(pattern);
-                            value = ix < 0 ? pattern : input.substring(0, ix) + replacement + input.substring(ix + 1);
+                            value = ix < 0 ? input : input.substring(0, ix) + replacement + input.substring(ix + pattern.length());
                         }
                     } else if (perl) {
                         int offset = 0;
