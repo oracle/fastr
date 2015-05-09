@@ -350,7 +350,10 @@ public class RErrorHandling {
         return frame == null ? REnvironment.globalEnv().getFrame() : frame.materialize();
     }
 
-    // TODO ? GnuR uses a vector with names
+    /**
+     * A temporary class used to accumulate warnins in deferred mode, Eventually these are converted
+     * to a list and stored in {@code last.warning} in {@code baseenv}.
+     */
     private static class Warning {
         final String message;
         final Object call;
@@ -422,7 +425,7 @@ public class RErrorHandling {
             } else if (w == 1) {
                 Utils.writeStderr(message, true);
             } else if (w == 0) {
-                warnings.add(new Warning(fmsg, call));
+                warnings.add(new Warning(fmsg, createCall(call)));
             }
         } finally {
             myErrorState.inWarning = false;
@@ -470,11 +473,12 @@ public class RErrorHandling {
                 }
             }
             Object[] wData = new Object[nWarnings];
-            // TODO names
+            String[] names = new String[nWarnings];
             for (int i = 0; i < nWarnings; i++) {
-                wData[i] = warnings.get(i);
+                wData[i] = warnings.get(i).call;
+                names[i] = warnings.get(i).message;
             }
-            RList lw = RDataFactory.createList(wData);
+            RList lw = RDataFactory.createList(wData, RDataFactory.createStringVector(names, RDataFactory.COMPLETE_VECTOR));
             REnvironment.baseEnv().safePut("last.warning", lw);
         } finally {
             errorState.get().inPrintWarning = false;
