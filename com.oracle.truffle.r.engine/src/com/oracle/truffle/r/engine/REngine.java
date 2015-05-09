@@ -364,6 +364,12 @@ public final class REngine implements RContext.Engine {
      */
     private static RSyntaxNode parseToRNode(Source source) throws RecognitionException {
         String code;
+        /*
+         * FIXME This is not a sufficient solution. While it works to parse the current entity in
+         * the source, it does not produce the correct indexes into the generated SourceSections
+         * because the parser uses zero-based indices in the current entity. We need the notion of a
+         * SubSource which can generate correct indexes transparently.
+         */
         if (source instanceof AppendableSource) {
             code = ((AppendableSource) source).getCodeFromMark();
         } else {

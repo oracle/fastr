@@ -40,8 +40,6 @@ public abstract class Call extends ASTNode {
     }
 
     public static ASTNode create(SourceSection src, ASTNode call, List<ArgNode> arguments) {
-        String code = src.getCode();
-        assert code.charAt(0) == '(';
         for (ArgNode a : arguments) {
             // otherwise "empty" indexes are not recorded at all
             if (a.getName() == null && a.getValue() == null) {
@@ -70,8 +68,6 @@ public abstract class Call extends ASTNode {
     }
 
     public static ASTNode create(SourceSection src, CallOperator op, ASTNode lhs, List<ArgNode> args) {
-        String code = src.getCode();
-        assert code.charAt(0) == '[';
         for (ArgNode a : args) {
             // otherwise "empty" indexes are not recorded at all
             if (a.getName() == null && a.getValue() == null) {
