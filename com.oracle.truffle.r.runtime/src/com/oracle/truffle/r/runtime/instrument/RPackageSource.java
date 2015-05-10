@@ -76,17 +76,18 @@ public class RPackageSource {
      * A map from source fingerprints to pathnames that are relative to the
      * {@value #PKGSOURCE_PROJECT} directory.
      */
-    private static SortedMap<String, FunctionInfo> indexMap = new TreeMap<>();
+    private static SortedMap<String, FunctionInfo> indexMap;
 
     /**
      * A reverse map from pathnames to function names.
      */
-    private static Map<String, String> pathToNameMap = new HashMap<>();
+    private static Map<String, String> pathToNameMap;
 
     public static void initialize() {
         Path indexPath = indexPath();
         try {
             List<String> lines = Files.readAllLines(indexPath);
+            checkCreateMaps();
             Path dirPath = dirPath();
             for (String line : lines) {
                 String[] parts = line.split(",");
@@ -94,9 +95,15 @@ public class RPackageSource {
                 indexMap.put(parts[FINGERPRINT], new FunctionInfo(parts[FINGERPRINT], parts[PKG], canonPath));
                 pathToNameMap.put(canonPath, parts[FNAME]);
             }
-            RSerialize.setLocateSource(true);
         } catch (IOException ex) {
-            // no index
+            // no index, not a problem
+        }
+    }
+
+    private static void checkCreateMaps() {
+        if (indexMap == null) {
+            indexMap = new TreeMap<>();
+            pathToNameMap = new HashMap<>();
         }
     }
 
@@ -105,6 +112,9 @@ public class RPackageSource {
      * associated file or {@code null} if not found.
      */
     public static String lookup(String source) {
+        if (indexMap == null) {
+            return null;
+        }
         String fingerprint = getFingerPrint(source.getBytes());
         FunctionInfo info = indexMap.get(fingerprint);
         if (info == null) {
@@ -114,7 +124,7 @@ public class RPackageSource {
         }
     }
 
-    public static void register(String fname, String pkg, Path sourcePath) {
+    private static void register(String fname, String pkg, Path sourcePath) {
         try {
             byte[] sourceData = Files.readAllBytes(sourcePath);
             String fingerprint = getFingerPrint(sourceData);
@@ -170,6 +180,7 @@ public class RPackageSource {
     public static void preLoad(String pkg, String fname) {
         // Cause RSerialize to call "deparsed".
         RSerialize.setSaveDeparse(true);
+        checkCreateMaps();
         deparseResult = null;
         deparseError = false;
     }

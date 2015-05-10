@@ -190,16 +190,6 @@ public class RSerialize {
         saveDeparse = status;
     }
 
-    private static boolean locateSource;
-
-    /**
-     * Supports locating the file associated with a lazily loaded package function that, presumably,
-     * was save by a previous run with {@link #saveDeparse == true}.
-     */
-    public static void setLocateSource(boolean status) {
-        locateSource = status;
-    }
-
     @TruffleBoundary
     public static Object unserialize(RConnection conn, int frameDepth) throws IOException {
         Input instance = trace() ? new TracingInput(conn, frameDepth) : new Input(conn, frameDepth);
@@ -681,8 +671,7 @@ public class RSerialize {
                     deparse = "# deparsed from package: " + packageName + "\n" + deparse;
                     if (saveDeparse) {
                         saveDeparseResult(deparse, false);
-                    }
-                    if (locateSource) {
+                    } else {
                         sourcePath = RPackageSource.lookup(deparse);
                     }
                 }

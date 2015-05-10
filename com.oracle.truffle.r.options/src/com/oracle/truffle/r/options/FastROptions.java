@@ -41,8 +41,6 @@ import com.oracle.graal.options.*;
  */
 public class FastROptions {
     //@formatter:off
-    @Option(help = "Disable prototypical group generics implementation")
-    public static final OptionValue<Boolean> DisableGroupGenerics = new OptionValue<>(false);
     @Option(help = "Prints Java and R stack traces for all errors")
     public static final OptionValue<Boolean> PrintErrorStacktraces = new OptionValue<>(false);
     @Option(help = "Dumps Java and R stack traces to file for all errors")
@@ -70,7 +68,7 @@ public class FastROptions {
     @Option(help = "Ignore setting of the visibility flag")
     public static final OptionValue<Boolean> IgnoreVisibility = new OptionValue<>(false);
     @Option(help = "Load R package sources index")
-    public static final OptionValue<Boolean> LoadPkgSourcesIndex = new OptionValue<>(false);
+    public static final OptionValue<Boolean> LoadPkgSourcesIndex = new OptionValue<>(true);
 
     // Promises optimizations
     @Option(help = "If enabled, overrides all other EagerEval switches (see EagerEvalHelper)")
