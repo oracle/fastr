@@ -273,7 +273,9 @@ public class RSerialize {
 
         protected Object readItem() throws IOException {
             int flags = stream.readInt();
-            return readItem(flags);
+            Object result = readItem(flags);
+            assert result != null;
+            return result;
         }
 
         protected Object readItem(int flags) throws IOException {
@@ -374,8 +376,8 @@ public class RSerialize {
                 case LISTSXP:
                 case PROMSXP:
                 case DOTSXP: {
-                    Object attrItem = null;
-                    Object tagItem = null;
+                    Object attrItem = RNull.instance;
+                    Object tagItem = RNull.instance;
                     if (Flags.hasAttr(flags)) {
                         attrItem = readItem();
 
@@ -387,7 +389,7 @@ public class RSerialize {
                     Object cdrItem = readItem();
                     RPairList pairList = RDataFactory.createPairList(carItem, cdrItem, tagItem, type);
                     result = pairList;
-                    if (attrItem != null) {
+                    if (attrItem != RNull.instance) {
                         setAttributes(pairList, attrItem);
                     }
                     if (type == SEXPTYPE.CLOSXP) {
@@ -790,7 +792,7 @@ public class RSerialize {
             Object car = readItem();
             // TODO R_bcEncode(car) (if we care)
             Object cdr = readBCConsts(reps);
-            return RDataFactory.createPairList(car, cdr, null, SEXPTYPE.BCODESXP);
+            return RDataFactory.createPairList(car, cdr, RNull.instance, SEXPTYPE.BCODESXP);
         }
 
         private Object readBCConsts(Object[] reps) throws IOException {
@@ -1610,7 +1612,7 @@ public class RSerialize {
      * Implementation that creates a physical {@link RPairList}.
      */
     private static class PLState extends State {
-        private static final RPairList NULL = RDataFactory.createPairList(null, null);
+        private static final RPairList NULL = RDataFactory.createPairList(RNull.instance, RNull.instance);
         private Deque<RPairList> active = new LinkedList<>();
         private Map<String, RSymbol> symbolMap = new HashMap<>();
         private int[] positionsLength = new int[10];
@@ -1622,14 +1624,14 @@ public class RSerialize {
 
         @Override
         public State openPairList() {
-            RPairList result = RDataFactory.createPairList(null, null, null);
+            RPairList result = RDataFactory.createPairList(RNull.instance, RNull.instance, RNull.instance);
             active.addFirst(result);
             return this;
         }
 
         @Override
         public State openPairList(SEXPTYPE type) {
-            RPairList result = RDataFactory.createPairList(null, null, null, type);
+            RPairList result = RDataFactory.createPairList(RNull.instance, RNull.instance, RNull.instance, type);
             active.addFirst(result);
             return this;
         }
@@ -1733,7 +1735,7 @@ public class RSerialize {
             } else {
                 type = SEXPTYPE.LISTSXP;
             }
-            active.addFirst(RDataFactory.createPairList(pl.cdr(), null, null, type));
+            active.addFirst(RDataFactory.createPairList(pl.cdr(), RNull.instance, RNull.instance, type));
         }
 
         @Override

@@ -43,14 +43,14 @@ public abstract class Identical extends RBuiltinNode {
 
     private final ConditionProfile vecLengthProfile = ConditionProfile.createBinaryProfile();
 
-    @Specialization
-    protected byte doInternalIdentical(Object x, @SuppressWarnings("unused") RNull y,
+    @Specialization(guards = "isRNull(x) || isRNull(y)")
+    protected byte doInternalIdentical(Object x, Object y,
                     // @formatter:off
                     @SuppressWarnings("unused") byte numEq, @SuppressWarnings("unused") byte singleNA, @SuppressWarnings("unused") byte attribAsSet,
                     @SuppressWarnings("unused") byte ignoreBytecode, @SuppressWarnings("unused") byte ignoreEnvironment) {
                     // @formatter:on
         controlVisibility();
-        return x == RNull.instance ? RRuntime.LOGICAL_TRUE : RRuntime.LOGICAL_FALSE;
+        return x == y ? RRuntime.LOGICAL_TRUE : RRuntime.LOGICAL_FALSE;
     }
 
     @Specialization

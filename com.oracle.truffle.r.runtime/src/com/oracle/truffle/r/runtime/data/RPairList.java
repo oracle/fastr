@@ -31,9 +31,9 @@ import com.oracle.truffle.r.runtime.gnur.*;
  * Denotes the (rarely seen) {@code pairlist} type in R.
  */
 public class RPairList extends RAttributeStorage implements RAttributable, RAbstractContainer {
-    private Object car;
-    private Object cdr;
-    private Object tag;
+    private Object car = RNull.instance;
+    private Object cdr = RNull.instance;
+    private Object tag = RNull.instance;
 
     /**
      * Denotes the (GnuR) typeof entity that the pairlist represents.
@@ -44,6 +44,9 @@ public class RPairList extends RAttributeStorage implements RAttributable, RAbst
      * Variant used in unserialization to record the GnuR type the pairlist denotes.
      */
     RPairList(Object car, Object cdr, Object tag, SEXPTYPE type) {
+        assert car != null;
+        assert cdr != null;
+        assert tag != null;
         this.car = car;
         this.cdr = cdr;
         this.tag = tag;
@@ -73,12 +76,14 @@ public class RPairList extends RAttributeStorage implements RAttributable, RAbst
     }
 
     public void setCar(Object newCar) {
-        assert car == null;
+        assert car == RNull.instance;
+        assert newCar != null;
         car = newCar;
     }
 
     public void setCdr(Object newCdr) {
-        assert cdr == null;
+        assert cdr == RNull.instance;
+        assert newCdr != null;
         cdr = newCdr;
     }
 
@@ -102,7 +107,8 @@ public class RPairList extends RAttributeStorage implements RAttributable, RAbst
     }
 
     public void setTag(Object newTag) {
-        assert tag == null;
+        assert tag == RNull.instance;
+        assert newTag != null;
         this.tag = newTag;
     }
 
@@ -112,7 +118,7 @@ public class RPairList extends RAttributeStorage implements RAttributable, RAbst
     }
 
     public boolean isNullTag() {
-        return tag == null || tag == RNull.instance;
+        return tag == RNull.instance;
     }
 
     public SEXPTYPE getType() {
@@ -128,7 +134,7 @@ public class RPairList extends RAttributeStorage implements RAttributable, RAbst
     public int getLength() {
         int result = 1;
         Object tcdr = cdr;
-        while (tcdr != null && tcdr != RNull.instance) {
+        while (tcdr != RNull.instance) {
             if (tcdr instanceof RPairList) {
                 tcdr = ((RPairList) tcdr).cdr;
             }
@@ -192,7 +198,7 @@ public class RPairList extends RAttributeStorage implements RAttributable, RAbst
             if (pl.tag == RRuntime.STRING_NA) {
                 complete = false;
             }
-            if (pl.cdr == null || pl.cdr == RNull.instance) {
+            if (pl.cdr == RNull.instance) {
                 break;
             }
             pl = (RPairList) pl.cdr;

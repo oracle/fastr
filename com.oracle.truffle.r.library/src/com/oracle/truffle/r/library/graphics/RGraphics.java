@@ -36,7 +36,7 @@ public class RGraphics {
     public static void initialize() {
         REnvironment baseEnv = REnvironment.baseEnv();
         baseEnv.safePut(DOT_DEVICE, NULL_DEVICE);
-        RPairList devices = RDataFactory.createPairList(NULL_DEVICE, null, null);
+        RPairList devices = RDataFactory.createPairList(NULL_DEVICE, RNull.instance, RNull.instance);
         baseEnv.safePut(DOT_DEVICES, devices);
         registerBaseGraphicsSystem();
     }
