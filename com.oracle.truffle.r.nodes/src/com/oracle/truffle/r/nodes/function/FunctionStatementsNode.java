@@ -45,7 +45,7 @@ public class FunctionStatementsNode extends BlockNode {
 
     @Override
     public RSyntaxNode substitute(REnvironment env) {
-        return new FunctionStatementsNode(null, (RSyntaxNode) super.substitute(env));
+        return new FunctionStatementsNode(null, super.substitute(env));
     }
 
 }
