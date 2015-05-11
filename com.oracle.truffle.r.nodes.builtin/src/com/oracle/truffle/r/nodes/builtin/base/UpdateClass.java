@@ -79,7 +79,7 @@ public abstract class UpdateClass extends RBuiltinNode {
             }
         }
         initCastTypeNode();
-        RType mode = RType.fromString(modeProfile.profile(className));
+        RType mode = RType.fromMode(modeProfile.profile(className));
         if (mode != null) {
             Object result = castTypeNode.execute(frame, arg, mode);
             if (result != null) {
