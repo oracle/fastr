@@ -64,10 +64,7 @@ public abstract class GetText extends RBuiltinNode {
     }
 
     @Specialization
-    protected RStringVector getText(VirtualFrame frame, Object args, Object domain) {
-        // no translation done at this point
-        // TODO: cannot specify args as RArgsValuesAndNames due to annotation processor error
-        RArgsValuesAndNames varargs = (RArgsValuesAndNames) args;
+    protected RStringVector getText(VirtualFrame frame, RArgsValuesAndNames varargs, Object domain) {
         Object[] argValues = varargs.getArguments();
         String[] a = new String[0];
         int aLength = 0;
