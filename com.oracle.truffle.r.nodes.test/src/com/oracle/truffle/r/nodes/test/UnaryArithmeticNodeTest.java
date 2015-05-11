@@ -142,6 +142,14 @@ public class UnaryArithmeticNodeTest extends ArithmeticTest {
         assertFold(false, createDoubleSequence(1, 3, 10), ROUND, FLOOR, CEILING);
     }
 
+    @Theory
+    public void testGeneric(UnaryArithmeticFactory factory) {
+        // this should trigger the generic case
+        for (RAbstractVector vector : ALL_VECTORS) {
+            executeArithmetic(factory, vector);
+        }
+    }
+
     private static void assertAttributes(Object value, String... keys) {
         if (!(value instanceof RAbstractVector)) {
             Assert.assertEquals(0, keys.length);

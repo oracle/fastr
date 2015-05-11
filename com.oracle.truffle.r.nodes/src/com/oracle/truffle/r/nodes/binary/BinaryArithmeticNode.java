@@ -29,6 +29,7 @@ import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.control.*;
+import com.oracle.truffle.r.nodes.profile.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RError.Message;
@@ -66,40 +67,25 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
         return cached.apply(left, right);
     }
 
-    @Specialization(contains = "doNumericVectorCached", guards = {"isVector(left)", "isVector(right)"})
+    @Specialization(contains = "doNumericVectorCached", guards = {"isNumericVector(left)", "isNumericVector(right)"})
     @TruffleBoundary
     protected Object doNumericVectorGeneric(Object left, Object right, //
                     @Cached("binary.create()") BinaryArithmetic arithmetic, //
-                    @Cached("new(createCached(arithmetic, left, right))") LRUCache lru) {
+                    @Cached("new(createCached(arithmetic, left, right))") GenericNumericVectorNode generic) {
         RAbstractVector leftVector = (RAbstractVector) left;
         RAbstractVector rightVector = (RAbstractVector) right;
-        return lru.get(arithmetic, leftVector, rightVector).apply(leftVector, rightVector);
+        return generic.get(arithmetic, leftVector, rightVector).apply(leftVector, rightVector);
     }
 
     protected VectorBinaryNode createFastCached(Object left, Object right) {
-        if (isVector(left) && isVector(right)) {
+        if (isNumericVector(left) && isNumericVector(right)) {
             return createCached(binary.create(), left, right);
         }
         return null;
     }
 
-    protected static boolean isVector(Object value) {
-        return getVectorClass(value) != null;
-    }
-
-    protected static Class<? extends RAbstractVector> getVectorClass(Object value) {
-        if (isNumericVector(value)) {
-            return ((RAbstractVector) value).getClass();
-        }
-        return null;
-    }
-
-    private static boolean isNumericVector(Object value) {
+    protected static boolean isNumericVector(Object value) {
         return value instanceof RAbstractIntVector || value instanceof RAbstractDoubleVector || value instanceof RAbstractComplexVector || value instanceof RAbstractLogicalVector;
-    }
-
-    protected static boolean isNonNumericVector(Object value) {
-        return value instanceof RAbstractVector && !((RAbstractVector) value).getRType().isNumeric();
     }
 
     @Specialization
@@ -145,7 +131,7 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
         return RType.Double.getEmpty();
     }
 
-    @Specialization(guards = "isVector(right)")
+    @Specialization(guards = "isNumericVector(right)")
     protected static Object doLeftNull(@SuppressWarnings("unused") RNull left, Object right, //
                     @Cached("createClassProfile()") ValueProfile classProfile) {
         if (((RAbstractVector) classProfile.profile(right)).getRType() == RType.Complex) {
@@ -155,7 +141,7 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
         }
     }
 
-    @Specialization(guards = "isVector(left)")
+    @Specialization(guards = "isNumericVector(left)")
     protected static Object doRightNull(Object left, RNull right, //
                     @Cached("createClassProfile()") ValueProfile classProfile) {
         return doLeftNull(right, left, classProfile);
@@ -180,22 +166,20 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
         return new VectorBinaryNode(new ScalarBinaryArithmeticNode(innerArithmetic), leftVector.getClass(), rightVector.getClass(), argumentType, resultType);
     }
 
-    protected static final class LRUCache {
+    protected static final class GenericNumericVectorNode extends TruffleBoundaryNode {
 
-        private VectorBinaryNode cached;
+        @Child private VectorBinaryNode cached;
 
-        public VectorBinaryNode get(BinaryArithmetic arithmetic, RAbstractVector left, RAbstractVector right) {
-            if (!cached.isSupported(left, right)) {
-                cached = createCached(arithmetic, left, right);
-                cached.adoptChildren();
-            }
-            return cached;
+        public GenericNumericVectorNode(VectorBinaryNode cachedOperation) {
+            this.cached = insert(cachedOperation);
         }
 
-        public LRUCache(VectorBinaryNode cachedOperation) {
-            this.cached = cachedOperation;
-            // force adoption of the children for use in Truffle boundary -> vector might rewrite.
-            this.cached.adoptChildren();
+        public VectorBinaryNode get(BinaryArithmetic arithmetic, RAbstractVector left, RAbstractVector right) {
+            CompilerAsserts.neverPartOfCompilation();
+            if (!cached.isSupported(left, right)) {
+                cached = cached.replace(createCached(arithmetic, left, right));
+            }
+            return cached;
         }
 
     }

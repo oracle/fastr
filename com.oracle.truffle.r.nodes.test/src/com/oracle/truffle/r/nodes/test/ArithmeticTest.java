@@ -60,4 +60,12 @@ public class ArithmeticTest extends TestBase {
     @DataPoint public static final RAbstractVector THREE = createIntVector(new int[]{1, 2, 3}, true);
     @DataPoint public static final RAbstractVector FIVE = createIntVector(new int[]{1, 2, 3, 4, 5}, true);
 
+    /*
+     * We keep the fields @DataPoint instead of the ALL_VECTORS field in order to have better error
+     * messages.
+     */
+    public static final RAbstractVector[] ALL_VECTORS = new RAbstractVector[]{PRIMITIVE_LOGICAL, PRIMITIVE_INTEGER, PRIMITIVE_DOUBLE, //
+                    PRIMITIVE_COMPLEX, EMPTY_LOGICAL, EMPTY_INTEGER, EMPTY_DOUBLE, EMPTY_COMPLEX, SEQUENCE_INT, SEQUENCE_DOUBLE, FOUR_LOGICAL, FOUR_INT, //
+                    FOUR_COMPLEX, NOT_COMPLETE_LOGICAL, NOT_COMPLETE_INT, NOT_COMPLETE_DOUBLE, NOT_COMPLETE_COMPLEX, ONE, TWO, THREE, FIVE};
+
 }

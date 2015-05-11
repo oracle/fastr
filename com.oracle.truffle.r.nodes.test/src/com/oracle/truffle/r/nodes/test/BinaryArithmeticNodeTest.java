@@ -33,6 +33,7 @@ import java.util.*;
 
 import org.junit.*;
 import org.junit.experimental.theories.*;
+import org.junit.internal.*;
 import org.junit.runner.*;
 
 import com.oracle.truffle.r.nodes.binary.*;
@@ -239,6 +240,19 @@ public class BinaryArithmeticNodeTest extends ArithmeticTest {
         assertFold(true, createDoubleSequence(1, 3, 10), createDoubleSequence(2, 5, 10), ADD, SUBTRACT);
         assertFold(false, createDoubleVectorFromScalar(5), createDoubleSequence(1, 3, 10), SUBTRACT, INTEGER_DIV, MOD);
         assertFold(false, createDoubleSequence(1, 3, 10), createDoubleSequence(2, 5, 5), ADD, SUBTRACT, MULTIPLY, INTEGER_DIV);
+    }
+
+    @Theory
+    public void testGeneric(BinaryArithmeticFactory factory) {
+        // this should trigger the generic case
+        for (RAbstractVector vector : ALL_VECTORS) {
+            try {
+                assumeArithmeticCompatible(factory, vector, vector);
+            } catch (AssumptionViolatedException e) {
+                continue;
+            }
+            executeArithmetic(factory, vector.copy(), vector.copy());
+        }
     }
 
     private static void assertAttributes(Object value, String... keys) {

@@ -26,6 +26,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.binary.*;
+import com.oracle.truffle.r.nodes.profile.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -80,9 +81,9 @@ public abstract class UnaryArithmeticNode extends UnaryNode {
     @TruffleBoundary
     protected Object doGeneric(Object operand, //
                     @Cached("unary.create()") UnaryArithmetic arithmetic, //
-                    @Cached("new(createCached(arithmetic, operand))") LRUCache lru) {
+                    @Cached("new(createCached(arithmetic, operand))") GenericNumericVectorNode generic) {
         RAbstractVector operandVector = (RAbstractVector) operand;
-        return lru.get(arithmetic, operandVector).apply(operandVector);
+        return generic.get(arithmetic, operandVector).apply(operandVector);
     }
 
     @Fallback
@@ -90,22 +91,20 @@ public abstract class UnaryArithmeticNode extends UnaryNode {
         throw RError.error(getEncapsulatingSourceSection(), error);
     }
 
-    protected static final class LRUCache {
+    protected static final class GenericNumericVectorNode extends TruffleBoundaryNode {
 
-        private VectorUnaryNode cached;
+        @Child private VectorUnaryNode cached;
 
         public VectorUnaryNode get(UnaryArithmetic arithmetic, RAbstractVector operand) {
-            if (!cached.isSupported(operand)) {
-                cached = createCached(arithmetic, operand);
-                cached.adoptChildren();
+            VectorUnaryNode next = cached;
+            if (!next.isSupported(operand)) {
+                next = cached.replace(createCached(arithmetic, operand));
             }
-            return cached;
+            return next;
         }
 
-        public LRUCache(VectorUnaryNode cachedOperation) {
+        public GenericNumericVectorNode(VectorUnaryNode cachedOperation) {
             this.cached = cachedOperation;
-            // force adoption of the children for use in Truffle boundary -> vector might rewrite.
-            this.cached.adoptChildren();
         }
 
     }
