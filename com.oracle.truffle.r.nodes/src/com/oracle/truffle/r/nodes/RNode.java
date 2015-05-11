@@ -241,91 +241,91 @@ public abstract class RNode extends Node implements RInstrumentableNode {
         }
     }
 
-    protected boolean isRAbstractContainer(Object value) {
+    protected static boolean isRAbstractContainer(Object value) {
         return value instanceof RAbstractContainer;
     }
 
-    protected boolean isRAbstractVector(Object value) {
+    protected static boolean isRAbstractVector(Object value) {
         return value instanceof RAbstractVector;
     }
 
-    protected boolean isRAbstractIntVector(Object value) {
+    protected static boolean isRAbstractIntVector(Object value) {
         return value instanceof RAbstractIntVector;
     }
 
-    protected boolean isRAbstractDoubleVector(Object value) {
+    protected static boolean isRAbstractDoubleVector(Object value) {
         return value instanceof RAbstractDoubleVector;
     }
 
-    protected boolean isRAbstractComplexVector(Object value) {
+    protected static boolean isRAbstractComplexVector(Object value) {
         return value instanceof RAbstractComplexVector;
     }
 
-    protected boolean isRAbstractRawVector(Object value) {
+    protected static boolean isRAbstractRawVector(Object value) {
         return value instanceof RAbstractRawVector;
     }
 
-    protected boolean isRAbstractStringVector(Object value) {
+    protected static boolean isRAbstractStringVector(Object value) {
         return value instanceof RAbstractStringVector;
     }
 
-    protected boolean isRAbstractLogicalVector(Object value) {
+    protected static boolean isRAbstractLogicalVector(Object value) {
         return value instanceof RAbstractLogicalVector;
     }
 
-    protected boolean isRList(Object value) {
+    protected static boolean isRList(Object value) {
         return value instanceof RList;
     }
 
-    protected boolean isRDataFrame(Object value) {
+    protected static boolean isRDataFrame(Object value) {
         return value instanceof RDataFrame;
     }
 
-    protected boolean isRFactor(Object value) {
+    protected static boolean isRFactor(Object value) {
         return value instanceof RFactor;
     }
 
-    protected boolean isRPromise(Object value) {
+    protected static boolean isRPromise(Object value) {
         return value instanceof RPromise;
     }
 
-    protected boolean isRLanguage(Object value) {
+    protected static boolean isRLanguage(Object value) {
         return value instanceof RLanguage;
     }
 
-    protected boolean isRExpression(Object value) {
+    protected static boolean isRExpression(Object value) {
         return value instanceof RExpression;
     }
 
-    protected boolean isRFunction(Object value) {
+    protected static boolean isRFunction(Object value) {
         return value instanceof RFunction;
     }
 
-    protected boolean isREnvironment(Object value) {
+    protected static boolean isREnvironment(Object value) {
         return value instanceof REnvironment;
     }
 
-    protected boolean isRConnection(Object value) {
+    protected static boolean isRConnection(Object value) {
         return value instanceof RConnection;
     }
 
-    protected boolean isRPairList(Object value) {
+    protected static boolean isRPairList(Object value) {
         return value instanceof RPairList;
     }
 
-    protected boolean isRSymbol(Object value) {
+    protected static boolean isRSymbol(Object value) {
         return value instanceof RSymbol;
     }
 
-    protected boolean isRArgsValuesAndNames(Object value) {
+    protected static boolean isRArgsValuesAndNames(Object value) {
         return value instanceof RArgsValuesAndNames;
     }
 
-    protected boolean isRMissing(Object value) {
+    protected static boolean isRMissing(Object value) {
         return value == RMissing.instance;
     }
 
-    protected boolean isRNull(Object value) {
+    protected static boolean isRNull(Object value) {
         return value == RNull.instance;
     }
 
