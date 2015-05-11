@@ -88,7 +88,7 @@ public class GetFunctions {
             if (r == null) {
                 inheritsProfile.enter();
                 String x = xv.getDataAt(0);
-                RType modeType = RType.fromString(mode);
+                RType modeType = RType.fromMode(mode);
                 REnvironment env = envir;
                 while (env != null) {
                     env = env.getParent();
@@ -108,7 +108,7 @@ public class GetFunctions {
 
         protected Object getAndCheck(VirtualFrame frame, RAbstractStringVector xv, REnvironment env, String mode, boolean fail) throws RError {
             String x = xv.getDataAt(0);
-            RType modeType = RType.fromString(modeProfile.profile(mode));
+            RType modeType = RType.fromMode(modeProfile.profile(mode));
             Object obj = checkPromise(frame, env.get(x));
             if (obj != null && RRuntime.checkType(obj, modeType)) {
                 return obj;
@@ -188,7 +188,7 @@ public class GetFunctions {
             for (int i = 0; i < state.svLength; i++) {
                 String x = state.checkNA(xv.getDataAt(i));
                 state.names[i] = x;
-                RType modeType = RType.fromString(mode.getDataAt(state.modeLength == 1 ? 0 : i));
+                RType modeType = RType.fromMode(mode.getDataAt(state.modeLength == 1 ? 0 : i));
                 Object r = checkPromise(frame, env.get(x));
                 if (r != null && RRuntime.checkType(r, modeType)) {
                     state.data[i] = r;
@@ -206,7 +206,7 @@ public class GetFunctions {
             for (int i = 0; i < state.svLength; i++) {
                 String x = state.checkNA(xv.getDataAt(i));
                 state.names[i] = x;
-                RType modeType = RType.fromString(mode.getDataAt(state.modeLength == 1 ? 0 : i));
+                RType modeType = RType.fromMode(mode.getDataAt(state.modeLength == 1 ? 0 : i));
                 Object r = envir.get(x);
                 if (r == null || !RRuntime.checkType(r, modeType)) {
                     inheritsProfile.enter();

@@ -20,32 +20,23 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.function;
+package com.oracle.truffle.r.nodes.profile;
 
-import com.oracle.truffle.api.source.SourceSection;
-import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.control.*;
-import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.nodes.*;
 
 /**
- * Encapsulates the sequence of statements (expressions) of a function, i.e. the function body. Has
- * no specific execute behavior but is an important placeholder for debugging instrumentation as it
- * is the place in the AST where a debugger wants to stop on entry.
+ * Base class for nodes that are solely executed behind a {@link TruffleBoundary} to ensure that
+ * replaces or insertions below this node do not trigger invalidation of compiled code.
  *
+ * TODO this is a candidate for Truffle standardization in the future.
  */
-public class FunctionStatementsNode extends BlockNode {
-
-    public FunctionStatementsNode() {
-        super(null, BlockNode.EMPTY_BLOCK);
-    }
-
-    public FunctionStatementsNode(SourceSection src, RSyntaxNode sequence) {
-        super(src, sequence);
-    }
+public abstract class TruffleBoundaryNode extends Node implements ReplaceObserver {
 
     @Override
-    public RSyntaxNode substitute(REnvironment env) {
-        return new FunctionStatementsNode(null, super.substitute(env));
+    public final boolean nodeReplaced(Node oldNode, Node newNode, CharSequence reason) {
+        return true;
     }
 
 }

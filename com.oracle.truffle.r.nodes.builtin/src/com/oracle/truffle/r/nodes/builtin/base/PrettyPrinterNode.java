@@ -348,9 +348,10 @@ public abstract class PrettyPrinterNode extends RNode {
     protected String prettyPrintPairList(RPairList pairList, Object listElementName, byte quote, byte right) {
         StringBuilder sb = new StringBuilder();
         int i = 1;
+        Object plObject = pairList;
         RPairList pl = pairList;
-        while (pl != null) {
-            if (pl.getTag() != null) {
+        while (plObject != RNull.instance) {
+            if (pl.getTag() != RNull.instance) {
                 sb.append('$');
                 sb.append(pl.getTag());
             } else {
@@ -359,12 +360,13 @@ public abstract class PrettyPrinterNode extends RNode {
                 sb.append("]]");
             }
             sb.append('\n');
-            if (pl.car() != null) {
+            if (pl.car() != RNull.instance) {
                 sb.append(prettyPrintRecursive(pl.car(), listElementName, quote, right));
                 sb.append('\n');
             }
-            pl = (RPairList) pl.cdr();
-            if (pl != null) {
+            plObject = pl.cdr();
+            if (plObject != RNull.instance) {
+                pl = (RPairList) plObject;
                 sb.append('\n');
             }
             i++;
@@ -1184,7 +1186,7 @@ public abstract class PrettyPrinterNode extends RNode {
 
         @TruffleBoundary
         private String formatLevelStrings(RFactor operand, Object listElementName, byte right, RVector vec, String[] strings) {
-            StringBuilder sb = new StringBuilder(prettyPrintSingleElement(RClosures.createFactorToVector(operand, naCheck, true, attrProfiles), listElementName, RRuntime.LOGICAL_FALSE, right));
+            StringBuilder sb = new StringBuilder(prettyPrintSingleElement(RClosures.createFactorToVector(operand, true, attrProfiles), listElementName, RRuntime.LOGICAL_FALSE, right));
             sb.append("\nLevels:");
             if (vec != null) {
                 for (int i = 0; i < vec.getLength(); i++) {

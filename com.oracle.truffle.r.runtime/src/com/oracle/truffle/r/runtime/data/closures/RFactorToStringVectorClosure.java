@@ -43,6 +43,16 @@ public class RFactorToStringVectorClosure extends RToStringVectorClosure impleme
         }
     }
 
+    @Override
+    public final RAbstractVector castSafe(RType type) {
+        switch (type) {
+            case Character:
+                return this;
+            default:
+                return null;
+        }
+    }
+
     public String getDataAt(int index) {
         if (levels == null || levels.getLength() == 0) {
             return RRuntime.STRING_NA;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.ops;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
 public abstract class BooleanOperation extends Operation {
@@ -33,13 +33,22 @@ public abstract class BooleanOperation extends Operation {
 
     public abstract String opName();
 
-    public abstract byte op(int left, int right);
+    public boolean opLogical(byte left, byte right) {
+        return op(RRuntime.logical2int(left), RRuntime.logical2int(right));
+    }
 
-    public abstract byte op(double left, double right);
+    @SuppressWarnings("unused")
+    public byte opRaw(byte left, byte right) {
+        throw new UnsupportedOperationException();
+    }
 
-    public abstract byte op(String left, String right);
+    public abstract boolean op(int left, int right);
 
-    public abstract byte op(RComplex left, RComplex right);
+    public abstract boolean op(double left, double right);
+
+    public abstract boolean op(String left, String right);
+
+    public abstract boolean op(RComplex left, RComplex right);
 
     // methods below are to be overridden by subclasses that need them
 
@@ -52,48 +61,15 @@ public abstract class BooleanOperation extends Operation {
         return true;
     }
 
-    @TruffleBoundary
+    public boolean op(@SuppressWarnings("unused") RRaw left, @SuppressWarnings("unused") Object right) {
+        throw new UnsupportedOperationException();
+    }
+
+    public boolean op(@SuppressWarnings("unused") Object left, @SuppressWarnings("unused") RRaw right) {
+        throw new UnsupportedOperationException();
+    }
+
     public RRaw op(@SuppressWarnings("unused") RRaw left, @SuppressWarnings("unused") RRaw right) {
-        throw new UnsupportedOperationException();
-    }
-
-    @TruffleBoundary
-    public byte op(@SuppressWarnings("unused") int left, @SuppressWarnings("unused") String right) {
-        throw new UnsupportedOperationException();
-    }
-
-    @TruffleBoundary
-    public byte op(@SuppressWarnings("unused") String left, @SuppressWarnings("unused") int right) {
-        throw new UnsupportedOperationException();
-    }
-
-    @TruffleBoundary
-    public byte op(@SuppressWarnings("unused") double left, @SuppressWarnings("unused") String right) {
-        throw new UnsupportedOperationException();
-    }
-
-    @TruffleBoundary
-    public byte op(@SuppressWarnings("unused") String left, @SuppressWarnings("unused") double right) {
-        throw new UnsupportedOperationException();
-    }
-
-    @TruffleBoundary
-    public byte op(@SuppressWarnings("unused") RNull left, @SuppressWarnings("unused") Object right) {
-        throw new UnsupportedOperationException();
-    }
-
-    @TruffleBoundary
-    public byte op(@SuppressWarnings("unused") Object left, @SuppressWarnings("unused") RNull right) {
-        throw new UnsupportedOperationException();
-    }
-
-    @TruffleBoundary
-    public byte op(@SuppressWarnings("unused") RRaw left, @SuppressWarnings("unused") Object right) {
-        throw new UnsupportedOperationException();
-    }
-
-    @TruffleBoundary
-    public byte op(@SuppressWarnings("unused") Object left, @SuppressWarnings("unused") RRaw right) {
         throw new UnsupportedOperationException();
     }
 

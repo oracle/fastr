@@ -26,10 +26,11 @@ import java.util.*;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.data.closures.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
-public final class RRawVector extends RVector implements RAbstractRawVector {
+public final class RRawVector extends RVector implements RAbstractRawVector, RAccessibleStore<byte[]> {
 
     private static final RStringVector implicitClassHeader = RDataFactory.createStringVector(new String[]{RType.Raw.getName()}, true);
     private static final RStringVector implicitClassHeaderArray = RDataFactory.createStringVector(new String[]{RType.Array.getName(), RType.Raw.getName()}, true);
@@ -44,6 +45,31 @@ public final class RRawVector extends RVector implements RAbstractRawVector {
 
     private RRawVector(byte[] data, int[] dims) {
         this(data, dims, null);
+    }
+
+    public RAbstractVector castSafe(RType type) {
+        switch (type) {
+            case Raw:
+                return this;
+            case Integer:
+                return RClosures.createRawToIntVector(this);
+            case Double:
+                return RClosures.createRawToDoubleVector(this);
+            case Complex:
+                return RClosures.createRawToComplexVector(this);
+            case Character:
+                return RClosures.createRawToStringVector(this);
+            default:
+                return null;
+        }
+    }
+
+    public byte getRawDataAt(int index) {
+        return data[index];
+    }
+
+    public byte[] getInternalStore() {
+        return data;
     }
 
     @Override

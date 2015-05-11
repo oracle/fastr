@@ -24,6 +24,8 @@ package com.oracle.truffle.r.runtime.data;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
+import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.data.closures.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
 @ValueType
@@ -40,8 +42,30 @@ public final class RRaw extends RScalarVector implements RAbstractRawVector {
         return false;
     }
 
+    public RAbstractVector castSafe(RType type) {
+        switch (type) {
+            case Raw:
+                return this;
+            case Integer:
+                return RInteger.valueOf(value);
+            case Double:
+                return RDouble.valueOf(value);
+            case Complex:
+                return RComplex.valueOf(value, 0.0);
+            case Character:
+                return RClosures.createRawToStringVector(this);
+            default:
+                return null;
+        }
+    }
+
     public RRawVector materialize() {
         return RDataFactory.createRawVector(new byte[]{value});
+    }
+
+    public byte getRawDataAt(int index) {
+        assert index == 0;
+        return value;
     }
 
     public RRaw getDataAt(int index) {
@@ -58,4 +82,9 @@ public final class RRaw extends RScalarVector implements RAbstractRawVector {
         CompilerAsserts.neverPartOfCompilation();
         return String.format("%02x", value);
     }
+
+    public static RRaw valueOf(byte value) {
+        return new RRaw(value);
+    }
+
 }

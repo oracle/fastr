@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.unary;
+package com.oracle.truffle.r.nodes.primitive;
 
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.runtime.*;
@@ -28,15 +28,8 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
-/**
- * Encapsulates an abstract scalar unary operation to be executed multiple times when calculating
- * vectors or primitive types.
- */
-
 @SuppressWarnings("unused")
-public abstract class ScalarUnaryNode extends Node {
-
-    protected final NACheck operandNACheck = new NACheck();
+public abstract class UnaryMapFunctionNode extends Node {
 
     public boolean mayFoldConstantTime(Class<? extends RAbstractVector> operandClass) {
         return false;
@@ -49,17 +42,11 @@ public abstract class ScalarUnaryNode extends Node {
     /**
      * Enables all NA checks for the given input vectors.
      */
-    public final void enable(RAbstractVector operand) {
-        operandNACheck.enable(operand);
+    public void enable(RAbstractVector operand) {
     }
 
-    /**
-     * Returns <code>true</code> if there was never a <code>null</code> value encountered when using
-     * this node. Make you have enabled the NA check properly using {@link #enable(RAbstractVector)}
-     * before relying on this method.
-     */
-    public final boolean isComplete() {
-        return operandNACheck.neverSeenNA();
+    public boolean isComplete() {
+        return false;
     }
 
     public byte applyLogical(byte operand) {

@@ -41,6 +41,20 @@ public class RFactorToDoubleVectorClosure extends RToDoubleVectorClosure impleme
         this.withNames = withNames;
     }
 
+    @Override
+    public final RAbstractVector castSafe(RType type) {
+        switch (type) {
+            case Double:
+                return this;
+            case Character:
+                return new RDoubleToStringVectorClosure(this);
+            case Complex:
+                return new RDoubleToComplexVectorClosure(this);
+            default:
+                return null;
+        }
+    }
+
     public double getDataAt(int index) {
         int val = ((RIntVector) vector).getDataAt(index);
         if (!vector.isComplete() && RRuntime.isNA(val)) {

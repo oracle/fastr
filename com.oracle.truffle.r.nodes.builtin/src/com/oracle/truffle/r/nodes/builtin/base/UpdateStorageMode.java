@@ -40,7 +40,7 @@ public abstract class UpdateStorageMode extends RBuiltinNode {
     @Specialization
     protected Object update(VirtualFrame frame, Object x, String value) {
         controlVisibility();
-        RType mode = RType.fromString(modeProfile.profile(value));
+        RType mode = RType.fromMode(modeProfile.profile(value));
         if (mode == RType.DefunctReal || mode == RType.DefunctSingle) {
             errorProfile.enter();
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.USE_DEFUNCT, mode.getName(), mode == RType.DefunctSingle ? "mode<-" : "double");

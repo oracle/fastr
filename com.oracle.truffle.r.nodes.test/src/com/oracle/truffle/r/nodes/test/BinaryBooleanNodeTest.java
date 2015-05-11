@@ -24,7 +24,6 @@ package com.oracle.truffle.r.nodes.test;
 
 import static com.oracle.truffle.r.nodes.test.TestUtilities.*;
 import static com.oracle.truffle.r.runtime.data.RDataFactory.*;
-import static com.oracle.truffle.r.runtime.ops.BinaryArithmetic.*;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.*;
 import static org.junit.Assume.*;
@@ -49,12 +48,23 @@ import com.oracle.truffle.r.runtime.ops.*;
  * should NOT verify correctness. This is done by the integration test suite.
  */
 @RunWith(Theories.class)
-public class BinaryArithmeticNodeTest extends BinaryVectorTest {
+public class BinaryBooleanNodeTest extends BinaryVectorTest {
 
-    @DataPoints public static final BinaryArithmeticFactory[] BINARY = ALL;
+    @DataPoint public static final RAbstractVector EMPTY_STRING = createEmptyStringVector();
+    @DataPoint public static final RAbstractVector EMPTY_RAW = createEmptyRawVector();
+
+    @DataPoint public static final RAbstractVector RAW = createRaw((byte) 0xA);
+    @DataPoint public static final RAbstractVector RAW2 = createRawVector(new byte[]{0xF, 0x3, 0xF});
+
+    @DataPoint public static final RAbstractVector STRING1 = createStringVector("42");
+    @DataPoint public static final RAbstractVector STRING2 = createStringVector(new String[]{"43", "42", "41", "40"}, true);
+    @DataPoint public static final RAbstractVector STRING_NOT_COMPLETE = createStringVector(new String[]{"43", RRuntime.STRING_NA, "41", "40"}, false);
+
+    @DataPoints public static final BooleanOperationFactory[] LOGIC = BinaryLogic.ALL;
+    @DataPoints public static final BooleanOperationFactory[] COMPARE = BinaryCompare.ALL;
 
     @Theory
-    public void testScalarUnboxing(BinaryArithmeticFactory factory, RScalarVector aOrig, RAbstractVector bOrig) {
+    public void testScalarUnboxing(BooleanOperationFactory factory, RScalarVector aOrig, RAbstractVector bOrig) {
         RAbstractVector a = aOrig.copy();
         RAbstractVector b = bOrig.copy();
         // unboxing cannot work if length is 1
@@ -69,7 +79,7 @@ public class BinaryArithmeticNodeTest extends BinaryVectorTest {
     }
 
     @Theory
-    public void testVectorResult(BinaryArithmeticFactory factory, RAbstractVector aOrig, RAbstractVector bOrig) {
+    public void testVectorResult(BooleanOperationFactory factory, RAbstractVector aOrig, RAbstractVector bOrig) {
         RAbstractVector a = aOrig.copy();
         RAbstractVector b = bOrig.copy();
         assumeThat(a, is(not(instanceOf(RScalarVector.class))));
@@ -86,10 +96,10 @@ public class BinaryArithmeticNodeTest extends BinaryVectorTest {
     }
 
     @Theory
-    public void testSharing(BinaryArithmeticFactory factory, RAbstractVector aOrig, RAbstractVector bOrig) {
+    public void testSharing(BooleanOperationFactory factory, RAbstractVector aOrig, RAbstractVector bOrig) {
         RAbstractVector a = aOrig.copy();
         RAbstractVector b = bOrig.copy();
-        assumeArithmeticCompatible(factory, a, b);
+        assumeArithmeticCompatible(factory, aOrig, bOrig);
 
         // not part of this test, see #testEmptyArrays
         assumeThat(a.getLength(), is(not(0)));
@@ -132,7 +142,7 @@ public class BinaryArithmeticNodeTest extends BinaryVectorTest {
         return false;
     }
 
-    private static void assertLengthAndType(BinaryArithmeticFactory factory, RAbstractVector a, RAbstractVector b, RAbstractVector resultVector) {
+    private static void assertLengthAndType(BooleanOperationFactory factory, RAbstractVector a, RAbstractVector b, RAbstractVector resultVector) {
         int expectedLength = Math.max(a.getLength(), b.getLength());
         if (a.getLength() == 0 || b.getLength() == 0) {
             expectedLength = 0;
@@ -142,17 +152,28 @@ public class BinaryArithmeticNodeTest extends BinaryVectorTest {
         assertThat(resultVector.getRType(), is(equalTo(resultType)));
     }
 
-    private static RType getResultType(BinaryArithmeticFactory factory, RAbstractVector a, RAbstractVector b) {
-        RType resultType = getArgumentType(a, b);
-        if (!factory.create().isSupportsIntResult() && resultType == RType.Integer) {
-            resultType = RType.Double;
+    private static RType getResultType(BooleanOperationFactory factory, RAbstractVector a, RAbstractVector b) {
+        RType resultType = RType.Logical;
+        if (factory == BinaryLogic.AND || factory == BinaryLogic.OR && getArgumentType(a, b) == RType.Raw) {
+            resultType = RType.Raw;
+        } else {
+            resultType = RType.Logical;
         }
         return resultType;
     }
 
+    private static RType getArgumentType(RAbstractVector a, RAbstractVector b) {
+        return RType.maxPrecedence(a.getRType(), b.getRType());
+    }
+
     @Theory
-    public void testEmptyArrays(BinaryArithmeticFactory factory, RAbstractVector originalVector) {
+    public void testEmptyArrays(BooleanOperationFactory factory, RAbstractVector originalVector) {
         RAbstractVector vector = originalVector.copy();
+        assumeArithmeticCompatible(factory, vector, createEmptyLogicalVector());
+        assumeArithmeticCompatible(factory, vector, createEmptyIntVector());
+        assumeArithmeticCompatible(factory, vector, createEmptyDoubleVector());
+        assumeArithmeticCompatible(factory, vector, createEmptyComplexVector());
+
         testEmptyArray(factory, vector, createEmptyLogicalVector());
         testEmptyArray(factory, vector, createEmptyIntVector());
         testEmptyArray(factory, vector, createEmptyDoubleVector());
@@ -161,29 +182,26 @@ public class BinaryArithmeticNodeTest extends BinaryVectorTest {
     }
 
     @Theory
-    public void testRNullConstantResult(BinaryArithmeticFactory factory, RAbstractVector originalVector) {
+    public void testRNullConstantResult(BooleanOperationFactory factory, RAbstractVector originalVector) {
         RAbstractVector vector = originalVector.copy();
-        RAbstractVector result = vector.getRType() == RType.Complex ? createEmptyComplexVector() : createEmptyDoubleVector();
-
+        assumeFalse(isLogicOp(factory));
+        assumeFalse(vector.getRType() == RType.Raw);
+        RAbstractVector result = createEmptyLogicalVector();
         assertThat(executeArithmetic(factory, vector, RNull.instance), is(result));
         assertThat(executeArithmetic(factory, RNull.instance, vector), is(result));
     }
 
     @Theory
-    public void testBothNull(BinaryArithmeticFactory factory) {
-        assertThat(executeArithmetic(factory, RNull.instance, RNull.instance), is(createEmptyDoubleVector()));
+    public void testBothNull(BooleanOperationFactory factory) {
+        assumeFalse(isLogicOp(factory));
+        assertThat(executeArithmetic(factory, RNull.instance, RNull.instance), is(createEmptyLogicalVector()));
     }
 
     @Theory
-    public void testCompleteness(BinaryArithmeticFactory factory, RAbstractVector aOrig, RAbstractVector bOrig) {
+    public void testCompleteness(BooleanOperationFactory factory, RAbstractVector aOrig, RAbstractVector bOrig) {
         RAbstractVector a = aOrig.copy();
         RAbstractVector b = bOrig.copy();
         assumeArithmeticCompatible(factory, a, b);
-
-        // disable division they might produce NA values by division with 0
-        assumeFalse(factory == BinaryArithmetic.DIV);
-        assumeFalse(factory == BinaryArithmetic.INTEGER_DIV);
-        assumeFalse(factory == BinaryArithmetic.MOD);
 
         Object result = executeArithmetic(factory, a, b);
 
@@ -197,63 +215,30 @@ public class BinaryArithmeticNodeTest extends BinaryVectorTest {
         }
     }
 
-    @Theory
-    public void testCopyAttributes(BinaryArithmeticFactory factory, RAbstractVector aOrig, RAbstractVector bOrig) {
-        assumeArithmeticCompatible(factory, aOrig, bOrig);
-
-        // we have to e careful not to change mutable vectors
-        RAbstractVector a = aOrig.copy();
-        RAbstractVector b = bOrig.copy();
-        if (a instanceof RShareable) {
-            ((RShareable) a).markNonTemporary();
-        }
-        if (b instanceof RShareable) {
-            ((RShareable) b).markNonTemporary();
-        }
-
-        RVector aMaterialized = a.copy().materialize();
-        RVector bMaterialized = b.copy().materialize();
-
-        aMaterialized.setAttr("a", "a");
-        bMaterialized.setAttr("b", "b");
-
-        if (a.getLength() == 0 || b.getLength() == 0) {
-            assertAttributes(executeArithmetic(factory, aMaterialized.copy(), bMaterialized.copy()));
-            assertAttributes(executeArithmetic(factory, a, bMaterialized.copy()));
-            assertAttributes(executeArithmetic(factory, aMaterialized.copy(), b));
-        } else if (a.getLength() == b.getLength()) {
-            assertAttributes(executeArithmetic(factory, aMaterialized.copy(), bMaterialized.copy()), "a", "b");
-            assertAttributes(executeArithmetic(factory, a, bMaterialized.copy()), "b");
-            assertAttributes(executeArithmetic(factory, aMaterialized.copy(), b), "a");
-        } else if (a.getLength() > b.getLength()) {
-            assertAttributes(executeArithmetic(factory, aMaterialized.copy(), bMaterialized.copy()), "a");
-            assertAttributes(executeArithmetic(factory, a, bMaterialized.copy()));
-            assertAttributes(executeArithmetic(factory, aMaterialized.copy(), b), "a");
-        } else {
-            assert a.getLength() < b.getLength();
-            assertAttributes(executeArithmetic(factory, aMaterialized.copy(), bMaterialized.copy()), "b");
-            assertAttributes(executeArithmetic(factory, a, bMaterialized.copy()), "b");
-            assertAttributes(executeArithmetic(factory, aMaterialized.copy(), b));
-        }
-    }
-
     @Test
     public void testSequenceFolding() {
-        assertFold(true, createIntSequence(1, 3, 10), createIntVectorFromScalar(5), ADD, SUBTRACT, MULTIPLY, INTEGER_DIV);
-        assertFold(true, createIntVectorFromScalar(5), createIntSequence(1, 3, 10), ADD, MULTIPLY);
-        assertFold(true, createIntSequence(1, 3, 10), createIntSequence(2, 5, 10), ADD, SUBTRACT);
-        assertFold(false, createIntVectorFromScalar(5), createIntSequence(1, 3, 10), SUBTRACT, INTEGER_DIV, MOD);
-        assertFold(false, createIntSequence(1, 3, 10), createIntSequence(2, 5, 5), ADD, SUBTRACT, MULTIPLY, INTEGER_DIV);
-
-        assertFold(true, createDoubleSequence(1, 3, 10), createDoubleVectorFromScalar(5), ADD, SUBTRACT, MULTIPLY, INTEGER_DIV);
-        assertFold(true, createDoubleVectorFromScalar(5), createDoubleSequence(1, 3, 10), ADD, MULTIPLY);
-        assertFold(true, createDoubleSequence(1, 3, 10), createDoubleSequence(2, 5, 10), ADD, SUBTRACT);
-        assertFold(false, createDoubleVectorFromScalar(5), createDoubleSequence(1, 3, 10), SUBTRACT, INTEGER_DIV, MOD);
-        assertFold(false, createDoubleSequence(1, 3, 10), createDoubleSequence(2, 5, 5), ADD, SUBTRACT, MULTIPLY, INTEGER_DIV);
+// assertFold(true, createIntSequence(1, 3, 10), createIntVectorFromScalar(5), ADD, SUBTRACT,
+// MULTIPLY, INTEGER_DIV);
+// assertFold(true, createIntVectorFromScalar(5), createIntSequence(1, 3, 10), ADD, MULTIPLY);
+// assertFold(true, createIntSequence(1, 3, 10), createIntSequence(2, 5, 10), ADD, SUBTRACT);
+// assertFold(false, createIntVectorFromScalar(5), createIntSequence(1, 3, 10), SUBTRACT,
+// INTEGER_DIV, MOD);
+// assertFold(false, createIntSequence(1, 3, 10), createIntSequence(2, 5, 5), ADD, SUBTRACT,
+// MULTIPLY, INTEGER_DIV);
+//
+// assertFold(true, createDoubleSequence(1, 3, 10), createDoubleVectorFromScalar(5), ADD, SUBTRACT,
+// MULTIPLY, INTEGER_DIV);
+// assertFold(true, createDoubleVectorFromScalar(5), createDoubleSequence(1, 3, 10), ADD, MULTIPLY);
+// assertFold(true, createDoubleSequence(1, 3, 10), createDoubleSequence(2, 5, 10), ADD, SUBTRACT);
+// assertFold(false, createDoubleVectorFromScalar(5), createDoubleSequence(1, 3, 10), SUBTRACT,
+// INTEGER_DIV, MOD);
+// assertFold(false, createDoubleSequence(1, 3, 10), createDoubleSequence(2, 5, 5), ADD, SUBTRACT,
+// MULTIPLY, INTEGER_DIV);
+//
     }
 
     @Theory
-    public void testGeneric(BinaryArithmeticFactory factory) {
+    public void testGeneric(BooleanOperationFactory factory) {
         // this should trigger the generic case
         for (RAbstractVector vector : ALL_VECTORS) {
             try {
@@ -287,35 +272,34 @@ public class BinaryArithmeticNodeTest extends BinaryVectorTest {
         Assert.assertEquals(expectedAttributes, foundAttributes);
     }
 
-    private static void assumeArithmeticCompatible(BinaryArithmeticFactory factory, RAbstractVector a, RAbstractVector b) {
+    private static void assumeArithmeticCompatible(BooleanOperationFactory factory, RAbstractVector a, RAbstractVector b) {
         RType argumentType = getArgumentType(a, b);
-        assumeTrue(argumentType.isNumeric());
 
-        // TODO complex mod, div, min, max not yet implemented
-        assumeFalse(factory == DIV && (argumentType == RType.Complex));
-        assumeFalse(factory == INTEGER_DIV && (argumentType == RType.Complex));
-        assumeFalse(factory == MOD && (argumentType == RType.Complex));
-        assumeFalse(factory == MAX && (argumentType == RType.Complex));
-        assumeFalse(factory == MIN && (argumentType == RType.Complex));
+        assumeFalse(isLogicOp(factory) && getResultType(factory, a, b) == RType.Raw && (argumentType != RType.Raw));
+        assumeFalse(!isLogicOp(factory) && (argumentType == RType.Complex));
+        assumeFalse(isLogicOp(factory) && (argumentType != RType.Raw && (a.getRType() == RType.Raw || b.getRType() == RType.Raw)));
+        assumeFalse(!isLogicOp(factory) && (a.getRType() == RType.Raw || b.getRType() == RType.Raw));
+        assumeFalse(isLogicOp(factory) && (a.getRType() == RType.Character || b.getRType() == RType.Character));
+
     }
 
-    private void testEmptyArray(BinaryArithmeticFactory factory, RAbstractVector vector, RAbstractVector empty) {
+    private static boolean isLogicOp(BooleanOperationFactory factory) {
+        return factory == BinaryLogic.AND || factory == BinaryLogic.OR;
+    }
+
+    private void testEmptyArray(BooleanOperationFactory factory, RAbstractVector vector, RAbstractVector empty) {
         assertThat(executeArithmetic(factory, vector, empty), is(getResultType(factory, vector, empty).getEmpty()));
         assertThat(executeArithmetic(factory, empty, vector), is(getResultType(factory, empty, vector).getEmpty()));
         assertThat(executeArithmetic(factory, empty, empty), is(getResultType(factory, empty, empty).getEmpty()));
-    }
-
-    private static RType getArgumentType(RAbstractVector a, RAbstractVector b) {
-        return RType.maxPrecedence(RType.Integer, RType.maxPrecedence(a.getRType(), b.getRType()));
     }
 
     private static boolean isPrimitive(Object result) {
         return result instanceof Integer || result instanceof Double || result instanceof Byte || result instanceof RComplex;
     }
 
-    private void assertFold(boolean expectedFold, RAbstractVector left, RAbstractVector right, BinaryArithmeticFactory... arithmetics) {
+    private void assertFold(boolean expectedFold, RAbstractVector left, RAbstractVector right, BooleanOperationFactory... arithmetics) {
         for (int i = 0; i < arithmetics.length; i++) {
-            BinaryArithmeticFactory factory = arithmetics[i];
+            BooleanOperationFactory factory = arithmetics[i];
             Object result = executeArithmetic(factory, left, right);
             if (expectedFold) {
                 assertThat("expected fold " + left + " <op> " + right, result instanceof RSequence);
@@ -325,8 +309,8 @@ public class BinaryArithmeticNodeTest extends BinaryVectorTest {
         }
     }
 
-    private NodeHandle<BinaryArithmeticNode> handle;
-    private BinaryArithmeticFactory currentFactory;
+    private NodeHandle<BinaryBooleanNode> handle;
+    private BooleanOperationFactory currentFactory;
 
     @Before
     public void setUp() {
@@ -338,7 +322,7 @@ public class BinaryArithmeticNodeTest extends BinaryVectorTest {
         handle = null;
     }
 
-    private Object executeArithmetic(BinaryArithmeticFactory factory, Object left, Object right) {
+    private Object executeArithmetic(BooleanOperationFactory factory, Object left, Object right) {
         if (handle == null || this.currentFactory != factory) {
             handle = create(factory);
             this.currentFactory = factory;
@@ -346,8 +330,8 @@ public class BinaryArithmeticNodeTest extends BinaryVectorTest {
         return handle.call(left, right);
     }
 
-    private static NodeHandle<BinaryArithmeticNode> create(BinaryArithmeticFactory factory) {
-        return createHandle(BinaryArithmeticNode.create(factory, null), //
+    private static NodeHandle<BinaryBooleanNode> create(BooleanOperationFactory factory) {
+        return createHandle(BinaryBooleanNode.create(factory), //
                         (node, args) -> node.execute(args[0], args[1]));
     }
 

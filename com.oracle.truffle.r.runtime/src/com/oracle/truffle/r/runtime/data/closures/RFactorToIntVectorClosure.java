@@ -41,6 +41,22 @@ public class RFactorToIntVectorClosure extends RToIntVectorClosure implements RA
         this.withNames = withNames;
     }
 
+    @Override
+    public final RAbstractVector castSafe(RType type) {
+        switch (type) {
+            case Integer:
+                return this;
+            case Double:
+                return new RIntToDoubleVectorClosure(this);
+            case Character:
+                return new RIntToStringVectorClosure(this);
+            case Complex:
+                return new RIntToComplexVectorClosure(this);
+            default:
+                return null;
+        }
+    }
+
     public int getDataAt(int index) {
         int val = ((RIntVector) vector).getDataAt(index);
         if (!vector.isComplete() && RRuntime.isNA(val)) {

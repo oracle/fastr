@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,33 +20,35 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.runtime.data.model;
+package com.oracle.truffle.r.nodes.primitive;
 
+import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.ops.na.*;
 
-public interface RAbstractRawVector extends RAbstractVector {
+@SuppressWarnings("unused")
+public abstract class UnaryMapNAFunctionNode extends UnaryMapFunctionNode {
 
+    protected final NACheck operandNACheck = new NACheck();
+
+    /**
+     * Enables all NA checks for the given input vectors.
+     */
     @Override
-    default Object getDataAtAsObject(int index) {
-        return getDataAt(index);
+    public final void enable(RAbstractVector operand) {
+        operandNACheck.enable(operand);
     }
 
-    RRaw getDataAt(int index);
-
-    byte getRawDataAt(int index);
-
-    RRawVector materialize();
-
-    default boolean checkCompleteness() {
-        return true;
+    /**
+     * Returns <code>true</code> if there was never a <code>null</code> value encountered when using
+     * this node. Make you have enabled the NA check properly using {@link #enable(RAbstractVector)}
+     * before relying on this method.
+     */
+    @Override
+    public final boolean isComplete() {
+        return operandNACheck.neverSeenNA();
     }
 
-    default RType getRType() {
-        return RType.Raw;
-    }
-
-    default Class<?> getElementClass() {
-        return RRaw.class;
-    }
 }

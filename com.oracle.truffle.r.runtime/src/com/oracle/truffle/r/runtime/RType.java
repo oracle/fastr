@@ -11,12 +11,13 @@
  */
 package com.oracle.truffle.r.runtime;
 
+import java.util.*;
+
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
 public enum RType {
-
     Any("any", -1),
     Null("NULL", -1),
     Raw("raw", 0),
@@ -80,24 +81,86 @@ public enum RType {
         }
     }
 
-    public static RType fromString(String mode) {
-        if (mode == Any.getName()) {
-            return Any;
-        } else if (mode == Function.getName()) {
-            return Function;
-        } else {
-            return lookup(mode);
+    public boolean isVector() {
+        switch (this) {
+            case Logical:
+            case Numeric:
+            case Double:
+            case Integer:
+            case Complex:
+            case Character:
+            case Raw:
+            case List:
+                return true;
+            default:
+                return false;
         }
     }
 
-    @TruffleBoundary
-    private static RType lookup(String mode) {
-        for (RType type : values()) {
-            if (type.getName().equals(mode)) {
-                return type;
-            }
+    public static RType fromMode(String mode) {
+        switch (mode) {
+            case "any":
+                return Any;
+            case "NULL":
+                return Null;
+            case "raw":
+                return Raw;
+            case "logical":
+                return Logical;
+            case "integer":
+                return Integer;
+            case "numeric":
+            case "double":
+                return Double;
+            case "complex":
+                return Complex;
+            case "character":
+                return Character;
+            case "list":
+                return List;
+            case "expression":
+                return Expression;
+            case "missing":
+                return Missing;
+            case "formula":
+                return Formula;
+            case "function":
+                return Function;
+            case "matrix":
+                return Matrix;
+            case "array":
+                return Array;
+            case "closure":
+                return Closure;
+            case "builtin":
+                return Builtin;
+            case "special":
+                return Special;
+            case "data.frame":
+                return DataFrame;
+            case "factor":
+                return Factor;
+            case "symbol":
+                return Symbol;
+            case "environment":
+                return Environment;
+            case "pairlist":
+                return PairList;
+            case "language":
+                return Language;
+            case "promise":
+                return Promise;
+            case "real":
+                return DefunctReal;
+            case "single":
+                return DefunctSingle;
+            case "externalptr":
+                return ExternalPtr;
+            case "s4object":
+                return S4Object;
+            default:
+                return null;
         }
-        return null;
     }
 
     public static RType maxPrecedence(RType t1, RType t2) {
@@ -145,6 +208,12 @@ public enum RType {
                 return RDataFactory.createComplexVector(length);
             case Character:
                 return RDataFactory.createStringVector(length);
+            case List:
+                Object[] data = new Object[length];
+                Arrays.fill(data, RNull.instance);
+                return RDataFactory.createList(data);
+            case Raw:
+                return RDataFactory.createRawVector(length);
             default:
                 throw RInternalError.shouldNotReachHere();
         }

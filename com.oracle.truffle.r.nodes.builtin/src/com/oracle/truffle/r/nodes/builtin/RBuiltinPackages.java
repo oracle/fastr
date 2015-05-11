@@ -32,6 +32,7 @@ import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.builtin.base.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
 import com.oracle.truffle.r.runtime.ffi.*;
@@ -101,19 +102,23 @@ public final class RBuiltinPackages implements RBuiltinLookup {
     }
 
     public static void loadDefaultPackageOverrides() {
-        RStringVector defPkgs = (RStringVector) ROptions.getValue("defaultPackages");
-        for (int i = 0; i < defPkgs.getLength(); i++) {
-            String pkgName = defPkgs.getDataAt(i);
-            ArrayList<Source> componentList = RBuiltinPackage.getRFiles(pkgName);
-            if (componentList == null) {
-                continue;
-            }
-            /*
-             * Only the overriding code can know which environment to update, package or namespace.
-             */
-            REnvironment env = REnvironment.baseEnv();
-            for (Source source : componentList) {
-                RContext.getEngine().parseAndEval(source, env.getFrame(), env, false, false);
+        Object defaultPackages = ROptions.getValue("defaultPackages");
+        if (defaultPackages instanceof RAbstractStringVector) {
+            RAbstractStringVector defPkgs = (RAbstractStringVector) defaultPackages;
+            for (int i = 0; i < defPkgs.getLength(); i++) {
+                String pkgName = defPkgs.getDataAt(i);
+                ArrayList<Source> componentList = RBuiltinPackage.getRFiles(pkgName);
+                if (componentList == null) {
+                    continue;
+                }
+                /*
+                 * Only the overriding code can know which environment to update, package or
+                 * namespace.
+                 */
+                REnvironment env = REnvironment.baseEnv();
+                for (Source source : componentList) {
+                    RContext.getEngine().parseAndEval(source, env.getFrame(), env, false, false);
+                }
             }
         }
     }

@@ -40,4 +40,9 @@ public final class RNull extends RScalar {
     public RType getRType() {
         return RType.Null;
     }
+
+    public static Object toRNull(Object value) {
+        return value == null ? instance : value;
+    }
+
 }
