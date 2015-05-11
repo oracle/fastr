@@ -22,16 +22,12 @@
  */
 package com.oracle.truffle.r.nodes.binary;
 
-import java.util.*;
-
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.nodes.Node.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.unary.CastLogicalNode.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.conn.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -39,8 +35,6 @@ import com.oracle.truffle.r.runtime.data.closures.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
-
-import static com.oracle.truffle.r.runtime.RRuntime.*;
 
 @SuppressWarnings("unused")
 public abstract class BinaryBooleanNode extends RBuiltinNode {
@@ -71,10 +65,6 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
     public BinaryBooleanNode(BooleanOperationFactory factory) {
         this.factory = factory;
         this.logic = factory.create();
-    }
-
-    public BinaryBooleanNode(BinaryBooleanNode op) {
-        this(op.factory);
     }
 
     // There are a lot of similarities between vectorized logic operators and
@@ -1223,14 +1213,6 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
 
     public boolean isFactor(RAbstractContainer operand) {
         return operand.getElementClass() == RFactor.class;
-    }
-
-    public boolean isDataFrame(RDataFrame left, RAbstractContainer right) {
-        return right.getElementClass() == RDataFrame.class;
-    }
-
-    public boolean isDataFrame(RAbstractContainer left, RDataFrame right) {
-        return left.getElementClass() == RDataFrame.class;
     }
 
     protected boolean meaningfulOp(RFactor left, RFactor right) {

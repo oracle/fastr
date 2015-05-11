@@ -102,4 +102,8 @@ public final class RLogical extends RScalarVector implements RAbstractLogicalVec
     public boolean isNA() {
         return RRuntime.isNA(value);
     }
+
+    public static boolean isValid(byte left) {
+        return left == RRuntime.LOGICAL_NA || left == RRuntime.LOGICAL_FALSE || left == RRuntime.LOGICAL_TRUE;
+    }
 }
