@@ -106,21 +106,21 @@ public abstract class InlineCacheNode<F extends Frame, T> extends Node {
             InlineCacheNode<F, T> replacement;
             if (picDepth < maxPicDepth) {
                 picDepth += 1;
-                replacement = new DirectInlineCacheNode(value, this);
+                replacement = new DirectInlineCacheNode<>(reify, value, this);
             } else {
-                replacement = new GenericInlineCacheNode();
+                replacement = new GenericInlineCacheNode<>(generic);
             }
             return replace(replacement).execute(frame, value);
         }
 
-        private final class DirectInlineCacheNode extends InlineCacheNode<F, T> {
+        private final static class DirectInlineCacheNode<F extends Frame, T> extends InlineCacheNode<F, T> {
 
             private final ConditionProfile isVirtualFrameProfile = ConditionProfile.createBinaryProfile();
             private final T originalValue;
             @Child private RNode reified;
             @Child private InlineCacheNode<F, T> next;
 
-            protected DirectInlineCacheNode(T originalValue, InlineCacheNode<F, T> next) {
+            protected DirectInlineCacheNode(Function<T, RNode> reify, T originalValue, InlineCacheNode<F, T> next) {
                 /*
                  * The expression needs to be cloned in order to be inserted as a child (which is
                  * required for it to be executed). But at the same time the PIC relies on the
@@ -138,7 +138,13 @@ public abstract class InlineCacheNode<F extends Frame, T> extends Node {
             }
         }
 
-        private final class GenericInlineCacheNode extends InlineCacheNode<F, T> {
+        private static final class GenericInlineCacheNode<F extends Frame, T> extends InlineCacheNode<F, T> {
+
+            private final BiFunction<F, T, Object> generic;
+
+            public GenericInlineCacheNode(BiFunction<F, T, Object> generic) {
+                this.generic = generic;
+            }
 
             @Override
             public Object execute(F frame, T value) {
