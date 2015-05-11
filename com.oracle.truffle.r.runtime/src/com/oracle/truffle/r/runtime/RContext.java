@@ -145,8 +145,8 @@ public final class RContext extends ExecutionContext {
         public static class ParseException extends Exception {
             private static final long serialVersionUID = 1L;
 
-            public ParseException(String msg) {
-                super(msg);
+            public ParseException(Throwable cause, String msg) {
+                super(msg, cause);
             }
         }
 

@@ -274,7 +274,7 @@ public final class REngine implements RContext.Engine {
             }
             return RDataFactory.createExpression(RDataFactory.createList(data));
         } catch (RecognitionException ex) {
-            throw new RContext.Engine.ParseException(ex.getMessage());
+            throw new RContext.Engine.ParseException(ex, ex.getMessage());
         }
     }
 
