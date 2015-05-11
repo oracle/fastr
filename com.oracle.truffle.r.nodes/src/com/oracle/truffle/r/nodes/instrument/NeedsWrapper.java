@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,8 +27,20 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import com.oracle.truffle.api.instrument.ProbeNode.WrapperNode;
+import com.oracle.truffle.api.nodes.Node.Child;
+import com.oracle.truffle.r.nodes.*;
+
+/**
+ * Denotes that a class requires a custom {@link WrapperNode} because a {@link Child} node typed as
+ * this class (rather than plain {@link RNode}) exists in some other node class. Without the custom
+ * wrapper, the assignment of the child will fail the runtime type check when the node is inserted.
+ * Can also be used on a method of the class to indicate that the method needs special treatment
+ * inthe wrapper.
+ *
+ */
 @Retention(RetentionPolicy.CLASS)
 @Target({ElementType.TYPE, ElementType.METHOD})
-public @interface CreateWrapper {
+public @interface NeedsWrapper {
 
 }

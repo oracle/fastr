@@ -36,6 +36,7 @@ import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.access.variables.*;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseCheckHelperNode;
 import com.oracle.truffle.r.nodes.instrument.*;
+import com.oracle.truffle.r.nodes.instrument.wrappers.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
@@ -50,7 +51,7 @@ import com.oracle.truffle.r.runtime.env.*;
  * {@link RootCallTarget} for every argument.
  * </p>
  */
-@CreateWrapper
+@NeedsWrapper
 public class CallArgumentsNode extends ArgumentsNode {
 
     @Child private FrameSlotNode varArgsSlotNode;
