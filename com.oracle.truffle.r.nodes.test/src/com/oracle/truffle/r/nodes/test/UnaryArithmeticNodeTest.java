@@ -48,12 +48,13 @@ import com.oracle.truffle.r.runtime.ops.*;
  * should NOT verify correctness. This is done by the integration test suite.
  */
 @RunWith(Theories.class)
-public class UnaryArithmeticNodeTest extends ArithmeticTest {
+public class UnaryArithmeticNodeTest extends BinaryVectorTest {
 
     @DataPoints public static final UnaryArithmeticFactory[] UNARY = ALL;
 
     @Theory
-    public void testVectorResult(UnaryArithmeticFactory factory, RAbstractVector operand) {
+    public void testVectorResult(UnaryArithmeticFactory factory, RAbstractVector originalOperand) {
+        RAbstractVector operand = originalOperand.copy();
         assumeThat(operand, is(not(instanceOf(RScalarVector.class))));
 
         Object result = executeArithmetic(factory, operand);
@@ -65,19 +66,20 @@ public class UnaryArithmeticNodeTest extends ArithmeticTest {
     }
 
     @Theory
-    public void testSharing(UnaryArithmeticFactory factory, RAbstractVector a) {
+    public void testSharing(UnaryArithmeticFactory factory, RAbstractVector originalOperand) {
+        RAbstractVector operand = originalOperand.copy();
         // sharing does not work if a is a scalar vector
-        assumeThat(true, is(isShareable(a, a.getRType())));
+        assumeThat(true, is(isShareable(operand, operand.getRType())));
 
-        RType resultType = getArgumentType(a);
+        RType resultType = getArgumentType(operand);
         Object sharedResult = null;
-        if (isShareable(a, resultType)) {
-            sharedResult = a;
+        if (isShareable(operand, resultType)) {
+            sharedResult = operand;
         }
 
-        Object result = executeArithmetic(factory, a);
+        Object result = executeArithmetic(factory, operand);
         if (sharedResult == null) {
-            Assert.assertNotSame(a, result);
+            Assert.assertNotSame(operand, result);
         } else {
             Assert.assertSame(sharedResult, result);
         }
@@ -98,7 +100,8 @@ public class UnaryArithmeticNodeTest extends ArithmeticTest {
     }
 
     @Theory
-    public void testCompleteness(UnaryArithmeticFactory factory, RAbstractVector operand) {
+    public void testCompleteness(UnaryArithmeticFactory factory, RAbstractVector originalOperand) {
+        RAbstractVector operand = originalOperand.copy();
         Object result = executeArithmetic(factory, operand);
 
         boolean resultComplete = isPrimitive(result) ? true : ((RAbstractVector) result).isComplete();
@@ -112,7 +115,8 @@ public class UnaryArithmeticNodeTest extends ArithmeticTest {
     }
 
     @Theory
-    public void testCopyAttributes(UnaryArithmeticFactory factory, RAbstractVector operand) {
+    public void testCopyAttributes(UnaryArithmeticFactory factory, RAbstractVector originalOperand) {
+        RAbstractVector operand = originalOperand.copy();
         // we have to e careful not to change mutable vectors
         RAbstractVector a = operand.copy();
         if (a instanceof RShareable) {
@@ -125,7 +129,8 @@ public class UnaryArithmeticNodeTest extends ArithmeticTest {
     }
 
     @Theory
-    public void testPlusFolding(RAbstractVector operand) {
+    public void testPlusFolding(RAbstractVector originalOperand) {
+        RAbstractVector operand = originalOperand.copy();
         assumeThat(operand, is(not(instanceOf(RScalarVector.class))));
         if (operand.getRType() == getArgumentType(operand)) {
             assertFold(true, operand, PLUS);
@@ -146,7 +151,7 @@ public class UnaryArithmeticNodeTest extends ArithmeticTest {
     public void testGeneric(UnaryArithmeticFactory factory) {
         // this should trigger the generic case
         for (RAbstractVector vector : ALL_VECTORS) {
-            executeArithmetic(factory, vector);
+            executeArithmetic(factory, vector.copy());
         }
     }
 

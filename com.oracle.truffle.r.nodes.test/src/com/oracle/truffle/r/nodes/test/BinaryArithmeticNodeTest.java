@@ -49,12 +49,14 @@ import com.oracle.truffle.r.runtime.ops.*;
  * should NOT verify correctness. This is done by the integration test suite.
  */
 @RunWith(Theories.class)
-public class BinaryArithmeticNodeTest extends ArithmeticTest {
+public class BinaryArithmeticNodeTest extends BinaryVectorTest {
 
     @DataPoints public static final BinaryArithmeticFactory[] BINARY = ALL;
 
     @Theory
-    public void testScalarUnboxing(BinaryArithmeticFactory factory, RScalarVector a, RAbstractVector b) {
+    public void testScalarUnboxing(BinaryArithmeticFactory factory, RScalarVector aOrig, RAbstractVector bOrig) {
+        RAbstractVector a = aOrig.copy();
+        RAbstractVector b = bOrig.copy();
         // unboxing cannot work if length is 1
         assumeThat(b.getLength(), is(1));
 
@@ -67,7 +69,9 @@ public class BinaryArithmeticNodeTest extends ArithmeticTest {
     }
 
     @Theory
-    public void testVectorResult(BinaryArithmeticFactory factory, RAbstractVector a, RAbstractVector b) {
+    public void testVectorResult(BinaryArithmeticFactory factory, RAbstractVector aOrig, RAbstractVector bOrig) {
+        RAbstractVector a = aOrig.copy();
+        RAbstractVector b = bOrig.copy();
         assumeThat(a, is(not(instanceOf(RScalarVector.class))));
         assumeThat(b, is(not(instanceOf(RScalarVector.class))));
         assumeArithmeticCompatible(factory, a, b);
@@ -82,7 +86,9 @@ public class BinaryArithmeticNodeTest extends ArithmeticTest {
     }
 
     @Theory
-    public void testSharing(BinaryArithmeticFactory factory, RAbstractVector a, RAbstractVector b) {
+    public void testSharing(BinaryArithmeticFactory factory, RAbstractVector aOrig, RAbstractVector bOrig) {
+        RAbstractVector a = aOrig.copy();
+        RAbstractVector b = bOrig.copy();
         assumeArithmeticCompatible(factory, a, b);
 
         // not part of this test, see #testEmptyArrays
@@ -145,7 +151,8 @@ public class BinaryArithmeticNodeTest extends ArithmeticTest {
     }
 
     @Theory
-    public void testEmptyArrays(BinaryArithmeticFactory factory, RAbstractVector vector) {
+    public void testEmptyArrays(BinaryArithmeticFactory factory, RAbstractVector originalVector) {
+        RAbstractVector vector = originalVector.copy();
         testEmptyArray(factory, vector, createEmptyLogicalVector());
         testEmptyArray(factory, vector, createEmptyIntVector());
         testEmptyArray(factory, vector, createEmptyDoubleVector());
@@ -154,7 +161,8 @@ public class BinaryArithmeticNodeTest extends ArithmeticTest {
     }
 
     @Theory
-    public void testRNullConstantResult(BinaryArithmeticFactory factory, RAbstractVector vector) {
+    public void testRNullConstantResult(BinaryArithmeticFactory factory, RAbstractVector originalVector) {
+        RAbstractVector vector = originalVector.copy();
         RAbstractVector result = vector.getRType() == RType.Complex ? createEmptyComplexVector() : createEmptyDoubleVector();
 
         assertThat(executeArithmetic(factory, vector, RNull.instance), is(result));
@@ -167,7 +175,9 @@ public class BinaryArithmeticNodeTest extends ArithmeticTest {
     }
 
     @Theory
-    public void testCompleteness(BinaryArithmeticFactory factory, RAbstractVector a, RAbstractVector b) {
+    public void testCompleteness(BinaryArithmeticFactory factory, RAbstractVector aOrig, RAbstractVector bOrig) {
+        RAbstractVector a = aOrig.copy();
+        RAbstractVector b = bOrig.copy();
         assumeArithmeticCompatible(factory, a, b);
 
         // disable division they might produce NA values by division with 0
