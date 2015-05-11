@@ -36,7 +36,7 @@ import com.oracle.truffle.r.runtime.ops.*;
 // TODO support lists
 public abstract class IsUnsorted extends RBuiltinNode {
 
-    @Child private ScalarBinaryBooleanNode ge = new ScalarBinaryBooleanNode(BinaryCompare.GREATER_EQUAL.create());
+    @Child private BinaryMapBooleanFunctionNode ge = new BinaryMapBooleanFunctionNode(BinaryCompare.GREATER_EQUAL.create());
 
     @Specialization
     protected byte isUnsorted(RAbstractDoubleVector x, @SuppressWarnings("unused") byte strictly) {

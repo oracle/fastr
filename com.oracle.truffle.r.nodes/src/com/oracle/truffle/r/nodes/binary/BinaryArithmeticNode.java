@@ -29,6 +29,7 @@ import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.control.*;
+import com.oracle.truffle.r.nodes.primitive.*;
 import com.oracle.truffle.r.nodes.profile.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
@@ -65,7 +66,7 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
 
     @Specialization(limit = "CACHE_LIMIT", guards = {"cached != null", "cached.isSupported(left, right)"})
     protected Object doNumericVectorCached(Object left, Object right, //
-                    @Cached("createFastCached(left, right)") VectorBinaryNode cached) {
+                    @Cached("createFastCached(left, right)") BinaryMapNode cached) {
         return cached.apply(left, right);
     }
 
@@ -79,7 +80,7 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
         return generic.get(arithmetic, leftVector, rightVector).apply(leftVector, rightVector);
     }
 
-    protected VectorBinaryNode createFastCached(Object left, Object right) {
+    protected BinaryMapNode createFastCached(Object left, Object right) {
         if (isNumericVector(left) && isNumericVector(right)) {
             return createCached(binary.create(), left, right);
         }
@@ -155,30 +156,28 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
         throw RError.error(getSourceSection(), Message.NON_NUMERIC_BINARY);
     }
 
-    protected static VectorBinaryNode createCached(BinaryArithmetic innerArithmetic, Object left, Object right) {
+    protected static BinaryMapNode createCached(BinaryArithmetic innerArithmetic, Object left, Object right) {
         RAbstractVector leftVector = (RAbstractVector) left;
         RAbstractVector rightVector = (RAbstractVector) right;
 
-        RType leftType = leftVector.getRType();
-        RType rightType = rightVector.getRType();
-        RType argumentType = RType.maxPrecedence(RType.Integer, RType.maxPrecedence(leftType, rightType));
+        RType argumentType = RType.maxPrecedence(RType.Integer, RType.maxPrecedence(leftVector.getRType(), rightVector.getRType()));
         RType resultType = argumentType;
         if (resultType == RType.Integer && !innerArithmetic.isSupportsIntResult()) {
             resultType = RType.Double;
         }
 
-        return new VectorBinaryNode(new ScalarBinaryArithmeticNode(innerArithmetic), leftVector.getClass(), rightVector.getClass(), leftType, rightType, argumentType, resultType, true);
+        return BinaryMapNode.create(new BinaryMapArithmeticFunctionNode(innerArithmetic), leftVector, rightVector, argumentType, resultType, true);
     }
 
     protected static final class GenericNumericVectorNode extends TruffleBoundaryNode {
 
-        @Child private VectorBinaryNode cached;
+        @Child private BinaryMapNode cached;
 
-        public GenericNumericVectorNode(VectorBinaryNode cachedOperation) {
+        public GenericNumericVectorNode(BinaryMapNode cachedOperation) {
             this.cached = insert(cachedOperation);
         }
 
-        public VectorBinaryNode get(BinaryArithmetic arithmetic, RAbstractVector left, RAbstractVector right) {
+        public BinaryMapNode get(BinaryArithmetic arithmetic, RAbstractVector left, RAbstractVector right) {
             CompilerAsserts.neverPartOfCompilation();
             if (!cached.isSupported(left, right)) {
                 cached = cached.replace(createCached(arithmetic, left, right));

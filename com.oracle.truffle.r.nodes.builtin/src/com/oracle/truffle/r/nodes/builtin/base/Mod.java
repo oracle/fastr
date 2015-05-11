@@ -36,8 +36,8 @@ import com.oracle.truffle.r.runtime.ops.*;
 @RBuiltin(name = "Mod", kind = PRIMITIVE, parameterNames = {"z"})
 public abstract class Mod extends RBuiltinNode {
 
-    @Child private ScalarBinaryArithmeticNode pow = new ScalarBinaryArithmeticNode(BinaryArithmetic.POW.create());
-    @Child private ScalarBinaryArithmeticNode add = new ScalarBinaryArithmeticNode(BinaryArithmetic.ADD.create());
+    @Child private BinaryMapArithmeticFunctionNode pow = new BinaryMapArithmeticFunctionNode(BinaryArithmetic.POW.create());
+    @Child private BinaryMapArithmeticFunctionNode add = new BinaryMapArithmeticFunctionNode(BinaryArithmetic.ADD.create());
     @Child private Sqrt sqrt = SqrtNodeGen.create(new RNode[1], null, null);
 
     @Specialization

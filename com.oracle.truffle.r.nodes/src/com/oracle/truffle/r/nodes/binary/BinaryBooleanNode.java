@@ -28,6 +28,7 @@ import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.control.*;
+import com.oracle.truffle.r.nodes.primitive.*;
 import com.oracle.truffle.r.nodes.profile.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RError.Message;
@@ -73,7 +74,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
 
     @Specialization(limit = "CACHE_LIMIT", guards = {"cached != null", "cached.isSupported(left, right)"})
     protected Object doNumericVectorCached(Object left, Object right, //
-                    @Cached("createFastCached(left, right)") VectorBinaryNode cached) {
+                    @Cached("createFastCached(left, right)") BinaryMapNode cached) {
         return cached.apply(left, right);
     }
 
@@ -87,7 +88,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
         return generic.get(operation, leftVector, rightVector).apply(leftVector, rightVector);
     }
 
-    protected VectorBinaryNode createFastCached(Object left, Object right) {
+    protected BinaryMapNode createFastCached(Object left, Object right) {
         if (isSupported(left, right)) {
             return createCached(factory.create(), left, right);
         }
@@ -194,13 +195,11 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
         throw RError.error(getSourceSection(), Message.OPERATIONS_NUMERIC_LOGICAL_COMPLEX);
     }
 
-    protected static VectorBinaryNode createCached(BooleanOperation operation, Object left, Object right) {
+    protected static BinaryMapNode createCached(BooleanOperation operation, Object left, Object right) {
         RAbstractVector leftVector = (RAbstractVector) left;
         RAbstractVector rightVector = (RAbstractVector) right;
 
-        RType leftType = leftVector.getRType();
-        RType rightType = rightVector.getRType();
-        RType argumentType = RType.maxPrecedence(leftType, rightType);
+        RType argumentType = RType.maxPrecedence(leftVector.getRType(), rightVector.getRType());
         RType resultType = RType.Logical;
         if (isLogicOp(operation) && argumentType == RType.Raw) {
             resultType = RType.Raw;
@@ -208,18 +207,18 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
             resultType = RType.Logical;
         }
 
-        return new VectorBinaryNode(new ScalarBinaryBooleanNode(operation), leftVector.getClass(), rightVector.getClass(), leftType, rightType, argumentType, resultType, false);
+        return BinaryMapNode.create(new BinaryMapBooleanFunctionNode(operation), leftVector, rightVector, argumentType, resultType, false);
     }
 
     protected static final class GenericNumericVectorNode extends TruffleBoundaryNode {
 
-        @Child private VectorBinaryNode cached;
+        @Child private BinaryMapNode cached;
 
-        public GenericNumericVectorNode(VectorBinaryNode cachedOperation) {
+        public GenericNumericVectorNode(BinaryMapNode cachedOperation) {
             this.cached = insert(cachedOperation);
         }
 
-        public VectorBinaryNode get(BooleanOperation arithmetic, RAbstractVector left, RAbstractVector right) {
+        public BinaryMapNode get(BooleanOperation arithmetic, RAbstractVector left, RAbstractVector right) {
             CompilerAsserts.neverPartOfCompilation();
             if (!cached.isSupported(left, right)) {
                 cached = cached.replace(createCached(arithmetic, left, right));

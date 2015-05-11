@@ -23,7 +23,7 @@
 package com.oracle.truffle.r.nodes.binary;
 
 import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.*;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
@@ -38,8 +38,6 @@ import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
-import edu.umd.cs.findbugs.graph.*;
-
 @SuppressWarnings("unused")
 public final class BinaryBooleanScalarNode extends RCustomBuiltinNode {
 
@@ -51,7 +49,7 @@ public final class BinaryBooleanScalarNode extends RCustomBuiltinNode {
     private final ConditionProfile profile = ConditionProfile.createCountingProfile();
 
     private final BooleanOperationFactory factory;
-    @Child private ScalarBinaryBooleanNode logic;
+    @Child private BinaryMapBooleanFunctionNode logic;
     @Child private LogicalScalarCastNode leftCast;
     @Child private LogicalScalarCastNode rightCast;
 
@@ -63,11 +61,10 @@ public final class BinaryBooleanScalarNode extends RCustomBuiltinNode {
         arguments[1] = BoxPrimitiveNodeGen.create(arguments[1]);
         this.factory = factory;
         BooleanOperation booleanLogic = factory.create();
-        this.logic = new ScalarBinaryBooleanNode(booleanLogic);
+        this.logic = new BinaryMapBooleanFunctionNode(booleanLogic);
         String operationName = booleanLogic.opName();
-        this.leftCast = LogicalScalarCastNodeGen.create(operationName, "x", logic.leftNACheck);
-        this.rightCast = LogicalScalarCastNodeGen.create(operationName, "y", logic.rightNACheck);
-
+        this.leftCast = LogicalScalarCastNodeGen.create(operationName, "x", logic.getLeftNACheck());
+        this.rightCast = LogicalScalarCastNodeGen.create(operationName, "y", logic.getRightNACheck());
     }
 
     private RNode getRight() {
@@ -88,9 +85,9 @@ public final class BinaryBooleanScalarNode extends RCustomBuiltinNode {
         return left;
     }
 
-    protected static abstract class LogicalScalarCastNode extends Node {
+    protected abstract static class LogicalScalarCastNode extends Node {
 
-        protected static int CACHE_LIMIT = 3;
+        protected static final int CACHE_LIMIT = 3;
 
         public abstract byte executeCast(Object o);
 

@@ -26,6 +26,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.binary.*;
+import com.oracle.truffle.r.nodes.primitive.*;
 import com.oracle.truffle.r.nodes.profile.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RError.Message;
@@ -50,24 +51,24 @@ public abstract class UnaryArithmeticNode extends UnaryNode {
     public abstract Object execute(Object operand);
 
     @Specialization(guards = {"cachedNode != null", "cachedNode.isSupported(operand)"})
-    protected Object doCached(Object operand, @Cached("createCachedFast(operand)") VectorUnaryNode cachedNode) {
+    protected Object doCached(Object operand, @Cached("createCachedFast(operand)") UnaryMapNode cachedNode) {
         return cachedNode.apply(operand);
     }
 
-    protected VectorUnaryNode createCachedFast(Object operand) {
+    protected UnaryMapNode createCachedFast(Object operand) {
         if (isNumericVector(operand)) {
             return createCached(unary.create(), operand);
         }
         return null;
     }
 
-    protected static VectorUnaryNode createCached(UnaryArithmetic arithmetic, Object operand) {
+    protected static UnaryMapNode createCached(UnaryArithmetic arithmetic, Object operand) {
         if (operand instanceof RAbstractVector) {
             RAbstractVector castOperand = (RAbstractVector) operand;
             RType operandType = castOperand.getRType();
             if (operandType.isNumeric()) {
                 RType type = RType.maxPrecedence(operandType, RType.Integer);
-                return new VectorUnaryNode(new ScalarUnaryArithmeticNode(arithmetic), castOperand.getClass(), type, type);
+                return UnaryMapNode.create(new ScalarUnaryArithmeticNode(arithmetic), castOperand, type, type);
             }
         }
         return null;
@@ -93,17 +94,17 @@ public abstract class UnaryArithmeticNode extends UnaryNode {
 
     protected static final class GenericNumericVectorNode extends TruffleBoundaryNode {
 
-        @Child private VectorUnaryNode cached;
+        @Child private UnaryMapNode cached;
 
-        public VectorUnaryNode get(UnaryArithmetic arithmetic, RAbstractVector operand) {
-            VectorUnaryNode next = cached;
+        public UnaryMapNode get(UnaryArithmetic arithmetic, RAbstractVector operand) {
+            UnaryMapNode next = cached;
             if (!next.isSupported(operand)) {
                 next = cached.replace(createCached(arithmetic, operand));
             }
             return next;
         }
 
-        public GenericNumericVectorNode(VectorUnaryNode cachedOperation) {
+        public GenericNumericVectorNode(UnaryMapNode cachedOperation) {
             this.cached = cachedOperation;
         }
 

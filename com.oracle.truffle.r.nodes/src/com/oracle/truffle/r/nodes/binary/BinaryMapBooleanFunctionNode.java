@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.binary;
 
+import com.oracle.truffle.r.nodes.primitive.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -29,18 +30,23 @@ import com.oracle.truffle.r.runtime.ops.BinaryLogic.And;
 import com.oracle.truffle.r.runtime.ops.BinaryLogic.Or;
 import com.oracle.truffle.r.runtime.ops.*;
 
-public final class ScalarBinaryBooleanNode extends ScalarBinaryNode {
+public final class BinaryMapBooleanFunctionNode extends BinaryMapNAFunctionNode {
 
     @Child private BooleanOperation operation;
 
-    public ScalarBinaryBooleanNode(BooleanOperation arithmetic) {
+    public BinaryMapBooleanFunctionNode(BooleanOperation arithmetic) {
         this.operation = arithmetic;
     }
 
     @Override
     public boolean mayFoldConstantTime(Class<? extends RAbstractVector> left, Class<? extends RAbstractVector> right) {
-        // TODO
         return super.mayFoldConstantTime(left, right);
+    }
+
+    @Override
+    public RAbstractVector tryFoldConstantTime(RAbstractVector left, int leftLength, RAbstractVector right, int rightLength) {
+
+        return super.tryFoldConstantTime(left, leftLength, right, rightLength);
     }
 
     @Override

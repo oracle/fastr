@@ -113,7 +113,7 @@ public abstract class InlineCacheNode<F extends Frame, T> extends Node {
             return replace(replacement).execute(frame, value);
         }
 
-        private final static class DirectInlineCacheNode<F extends Frame, T> extends InlineCacheNode<F, T> {
+        private static final class DirectInlineCacheNode<F extends Frame, T> extends InlineCacheNode<F, T> {
 
             private final ConditionProfile isVirtualFrameProfile = ConditionProfile.createBinaryProfile();
             private final T originalValue;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,23 +20,35 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.profile;
+package com.oracle.truffle.r.nodes.primitive;
 
-import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.nodes.*;
+import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.ops.na.*;
 
-/**
- * Base class for nodes that are solely executed behind a {@link TruffleBoundary} to ensure that
- * replaces or insertions below this node do not trigger invalidation of compiled code.
- *
- * TODO this is a candidate for Truffle standardization in the future.
- */
-public abstract class TruffleBoundaryNode extends Node implements ReplaceObserver {
+@SuppressWarnings("unused")
+public abstract class UnaryMapNAFunctionNode extends UnaryMapFunctionNode {
 
+    protected final NACheck operandNACheck = new NACheck();
+
+    /**
+     * Enables all NA checks for the given input vectors.
+     */
     @Override
-    public final boolean nodeReplaced(Node oldNode, Node newNode, CharSequence reason) {
-        return true;
+    public final void enable(RAbstractVector operand) {
+        operandNACheck.enable(operand);
+    }
+
+    /**
+     * Returns <code>true</code> if there was never a <code>null</code> value encountered when using
+     * this node. Make you have enabled the NA check properly using {@link #enable(RAbstractVector)}
+     * before relying on this method.
+     */
+    @Override
+    public final boolean isComplete() {
+        return operandNACheck.neverSeenNA();
     }
 
 }

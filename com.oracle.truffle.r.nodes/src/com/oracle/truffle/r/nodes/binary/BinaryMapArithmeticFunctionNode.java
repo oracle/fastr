@@ -22,21 +22,26 @@
  */
 package com.oracle.truffle.r.nodes.binary;
 
+import com.oracle.truffle.r.nodes.primitive.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.*;
-import com.oracle.truffle.r.runtime.ops.BinaryArithmetic.*;
+import com.oracle.truffle.r.runtime.ops.BinaryArithmetic.Add;
+import com.oracle.truffle.r.runtime.ops.BinaryArithmetic.Div;
+import com.oracle.truffle.r.runtime.ops.BinaryArithmetic.IntegerDiv;
+import com.oracle.truffle.r.runtime.ops.BinaryArithmetic.Multiply;
+import com.oracle.truffle.r.runtime.ops.BinaryArithmetic.Subtract;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
 /**
  *
  */
-public final class ScalarBinaryArithmeticNode extends ScalarBinaryNode {
+public final class BinaryMapArithmeticFunctionNode extends BinaryMapNAFunctionNode {
 
     @Child private BinaryArithmetic arithmetic;
 
-    public ScalarBinaryArithmeticNode(BinaryArithmetic arithmetic) {
+    public BinaryMapArithmeticFunctionNode(BinaryArithmetic arithmetic) {
         this.arithmetic = arithmetic;
     }
 
