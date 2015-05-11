@@ -51,7 +51,7 @@ public final class BinaryBooleanScalarNode extends RCustomBuiltinNode {
     private final ConditionProfile profile = ConditionProfile.createCountingProfile();
 
     private final BooleanOperationFactory factory;
-    @Child private BooleanOperation logic;
+    @Child private ScalarBinaryBooleanNode logic;
     @Child private LogicalScalarCastNode leftCast;
     @Child private LogicalScalarCastNode rightCast;
 
@@ -62,10 +62,12 @@ public final class BinaryBooleanScalarNode extends RCustomBuiltinNode {
         arguments[0] = BoxPrimitiveNodeGen.create(arguments[0]);
         arguments[1] = BoxPrimitiveNodeGen.create(arguments[1]);
         this.factory = factory;
-        this.logic = factory.create();
-        String operationName = logic.opName();
-        this.leftCast = LogicalScalarCastNodeGen.create(operationName, "x");
-        this.rightCast = LogicalScalarCastNodeGen.create(operationName, "y");
+        BooleanOperation booleanLogic = factory.create();
+        this.logic = new ScalarBinaryBooleanNode(booleanLogic);
+        String operationName = booleanLogic.opName();
+        this.leftCast = LogicalScalarCastNodeGen.create(operationName, "x", logic.leftNACheck);
+        this.rightCast = LogicalScalarCastNodeGen.create(operationName, "y", logic.rightNACheck);
+
     }
 
     private RNode getRight() {
@@ -81,7 +83,7 @@ public final class BinaryBooleanScalarNode extends RCustomBuiltinNode {
         byte left = leftCast.executeCast(getLeft().execute(frame));
         if (profile.profile(logic.requiresRightOperand(left))) {
             byte right = rightCast.executeCast(getRight().execute(frame));
-            return logic.op(left, right);
+            return logic.applyLogical(left, right);
         }
         return left;
     }
@@ -95,12 +97,13 @@ public final class BinaryBooleanScalarNode extends RCustomBuiltinNode {
         private final String opName;
         private final String argumentName;
 
-        private final NACheck check = NACheck.create();
+        private final NACheck check;
         private final BranchProfile seenEmpty = BranchProfile.create();
 
-        public LogicalScalarCastNode(String opName, String argumentName) {
+        public LogicalScalarCastNode(String opName, String argumentName, NACheck check) {
             this.opName = opName;
             this.argumentName = argumentName;
+            this.check = check;
         }
 
         @Specialization(limit = "CACHE_LIMIT", guards = {"cachedClass != null", "operand.getClass() == cachedClass"})

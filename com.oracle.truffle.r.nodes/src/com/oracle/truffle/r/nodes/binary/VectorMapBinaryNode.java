@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.binary;
 
+import sun.security.util.*;
+
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.runtime.*;
@@ -37,9 +39,33 @@ import com.oracle.truffle.r.runtime.data.model.*;
 @SuppressWarnings("unused")
 abstract class VectorMapBinaryNode extends Node {
 
-    private static final MapBinaryIndexedAction<byte[], RAbstractLogicalVector> LOGICAL = //
+    private static final MapBinaryIndexedAction<byte[], RAbstractLogicalVector> LOGICAL_LOGICAL = //
     (arithmetic, result, resultIndex, left, leftIndex, right, rightIndex) -> {
         result[resultIndex] = arithmetic.applyLogical(left.getDataAt(leftIndex), right.getDataAt(rightIndex));
+    };
+    private static final MapBinaryIndexedAction<byte[], RAbstractIntVector> LOGICAL_INTEGER = //
+    (arithmetic, result, resultIndex, left, leftIndex, right, rightIndex) -> {
+        result[resultIndex] = arithmetic.applyLogical(left.getDataAt(leftIndex), right.getDataAt(rightIndex));
+    };
+    private static final MapBinaryIndexedAction<byte[], RAbstractDoubleVector> LOGICAL_DOUBLE = //
+    (arithmetic, result, resultIndex, left, leftIndex, right, rightIndex) -> {
+        result[resultIndex] = arithmetic.applyLogical(left.getDataAt(leftIndex), right.getDataAt(rightIndex));
+    };
+    private static final MapBinaryIndexedAction<byte[], RAbstractComplexVector> LOGICAL_COMPLEX = //
+    (arithmetic, result, resultIndex, left, leftIndex, right, rightIndex) -> {
+        result[resultIndex] = arithmetic.applyLogical(left.getDataAt(leftIndex), right.getDataAt(rightIndex));
+    };
+    private static final MapBinaryIndexedAction<byte[], RAbstractStringVector> LOGICAL_CHARACTER = //
+    (arithmetic, result, resultIndex, left, leftIndex, right, rightIndex) -> {
+        result[resultIndex] = arithmetic.applyLogical(left.getDataAt(leftIndex), right.getDataAt(rightIndex));
+    };
+    private static final MapBinaryIndexedAction<byte[], RAbstractRawVector> LOGICAL_RAW = //
+    (arithmetic, result, resultIndex, left, leftIndex, right, rightIndex) -> {
+        result[resultIndex] = arithmetic.applyLogical(RRuntime.raw2int(left.getRawDataAt(leftIndex)), RRuntime.raw2int(right.getRawDataAt(rightIndex)));
+    };
+    private static final MapBinaryIndexedAction<byte[], RAbstractRawVector> RAW_RAW = //
+    (arithmetic, result, resultIndex, left, leftIndex, right, rightIndex) -> {
+        result[resultIndex] = arithmetic.applyRaw(left.getRawDataAt(leftIndex), right.getRawDataAt(rightIndex));
     };
 
     private static final MapBinaryIndexedAction<int[], RAbstractIntVector> INTEGER_INTEGER = //
@@ -92,23 +118,44 @@ abstract class VectorMapBinaryNode extends Node {
     }
 
     private static MapBinaryIndexedAction<? extends Object, ? extends RAbstractVector> createIndexedAction(RType resultType, RType argumentType) {
-        switch (argumentType) {
+        switch (resultType) {
+            case Raw:
+                assert argumentType == RType.Raw;
+                return RAW_RAW;
             case Logical:
-                return LOGICAL;
-            case Integer:
-                switch (resultType) {
+                switch (argumentType) {
+                    case Raw:
+                        return LOGICAL_RAW;
+                    case Logical:
+                        return LOGICAL_LOGICAL;
                     case Integer:
-                        return INTEGER_INTEGER;
+                        return LOGICAL_INTEGER;
                     case Double:
-                        return DOUBLE_INTEGER;
+                        return LOGICAL_DOUBLE;
+                    case Complex:
+                        return LOGICAL_COMPLEX;
+                    case Character:
+                        return LOGICAL_CHARACTER;
                     default:
                         throw RInternalError.shouldNotReachHere();
                 }
+            case Integer:
+                assert argumentType == RType.Integer;
+                return INTEGER_INTEGER;
             case Double:
-                return DOUBLE;
+                switch (argumentType) {
+                    case Integer:
+                        return DOUBLE_INTEGER;
+                    case Double:
+                        return DOUBLE;
+                    default:
+                        throw RInternalError.shouldNotReachHere();
+                }
             case Complex:
+                assert argumentType == RType.Complex;
                 return COMPLEX;
             case Character:
+                assert argumentType == RType.Character;
                 return CHARACTER;
             default:
                 throw RInternalError.shouldNotReachHere();
@@ -128,6 +175,9 @@ abstract class VectorMapBinaryNode extends Node {
     protected static boolean isStoreCompatible(Object store, RType resultType, int leftLength, int rightLength) {
         int maxLength = Math.max(leftLength, rightLength);
         switch (resultType) {
+            case Raw:
+                assert store instanceof byte[] && ((byte[]) store).length == maxLength;
+                return true;
             case Logical:
                 assert store instanceof byte[] && ((byte[]) store).length == maxLength;
                 return true;

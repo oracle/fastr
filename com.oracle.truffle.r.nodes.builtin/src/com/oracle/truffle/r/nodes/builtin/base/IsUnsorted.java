@@ -25,7 +25,6 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.binary.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
@@ -37,7 +36,7 @@ import com.oracle.truffle.r.runtime.ops.*;
 // TODO support lists
 public abstract class IsUnsorted extends RBuiltinNode {
 
-    @Child private BinaryBooleanNode ge = BinaryBooleanNodeGen.create(BinaryCompare.GREATER_EQUAL, new RNode[1], null, null);
+    @Child private ScalarBinaryBooleanNode ge = new ScalarBinaryBooleanNode(BinaryCompare.GREATER_EQUAL.create());
 
     @Specialization
     protected byte isUnsorted(RAbstractDoubleVector x, @SuppressWarnings("unused") byte strictly) {
@@ -45,7 +44,7 @@ public abstract class IsUnsorted extends RBuiltinNode {
         double last = x.getDataAt(0);
         for (int k = 1; k < x.getLength(); k++) {
             double current = x.getDataAt(k);
-            if (ge.doDouble(current, last) == RRuntime.LOGICAL_FALSE) {
+            if (ge.applyLogical(current, last) == RRuntime.LOGICAL_FALSE) {
                 return RRuntime.LOGICAL_TRUE;
             }
             last = current;
@@ -59,7 +58,7 @@ public abstract class IsUnsorted extends RBuiltinNode {
         int last = x.getDataAt(0);
         for (int k = 1; k < x.getLength(); k++) {
             int current = x.getDataAt(k);
-            if (ge.doInt(current, last) == RRuntime.LOGICAL_FALSE) {
+            if (ge.applyLogical(current, last) == RRuntime.LOGICAL_FALSE) {
                 return RRuntime.LOGICAL_TRUE;
             }
             last = current;
@@ -73,7 +72,7 @@ public abstract class IsUnsorted extends RBuiltinNode {
         String last = x.getDataAt(0);
         for (int k = 1; k < x.getLength(); k++) {
             String current = x.getDataAt(k);
-            if (ge.doString(current, last) == RRuntime.LOGICAL_FALSE) {
+            if (ge.applyLogical(current, last) == RRuntime.LOGICAL_FALSE) {
                 return RRuntime.LOGICAL_TRUE;
             }
             last = current;

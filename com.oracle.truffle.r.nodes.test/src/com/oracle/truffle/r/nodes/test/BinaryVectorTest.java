@@ -30,7 +30,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-public class ArithmeticTest extends TestBase {
+public class BinaryVectorTest extends TestBase {
 
     @DataPoint public static final RScalarVector PRIMITIVE_LOGICAL = RLogical.valueOf((byte) 1);
     @DataPoint public static final RScalarVector PRIMITIVE_INTEGER = RInteger.valueOf(42);

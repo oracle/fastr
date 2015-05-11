@@ -41,6 +41,18 @@ public class RFactorToComplexVectorClosure extends RToComplexVectorClosure imple
         this.withNames = withNames;
     }
 
+    @Override
+    public final RAbstractVector castSafe(RType type) {
+        switch (type) {
+            case Character:
+                return new RComplexToStringVectorClosure(this);
+            case Complex:
+                return this;
+            default:
+                return null;
+        }
+    }
+
     public RComplex getDataAt(int index) {
         int val = ((RIntVector) vector).getDataAt(index);
         if (!vector.isComplete() && RRuntime.isNA(val)) {

@@ -260,7 +260,11 @@ public class RRuntime {
     }
 
     public static int raw2int(RRaw value) {
-        return value.getValue() & 0xFF;
+        return raw2int(value.getValue());
+    }
+
+    public static int raw2int(byte value) {
+        return value & 0xFF;
     }
 
     public static double raw2double(RRaw value) {

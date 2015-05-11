@@ -64,7 +64,11 @@ final class VectorBinaryNode extends Node {
     private final boolean mayShareLeft;
     private final boolean mayShareRight;
 
-    VectorBinaryNode(ScalarBinaryNode scalarNode, Class<? extends RAbstractVector> leftclass, Class<? extends RAbstractVector> rightClass, RType argumentType, RType resultType) {
+    // config flags
+    private final boolean copyAttributes;
+
+    VectorBinaryNode(ScalarBinaryNode scalarNode, Class<? extends RAbstractVector> leftclass, Class<? extends RAbstractVector> rightClass, RType leftType, RType rightType, RType argumentType,
+                    RType resultType, boolean copyAttributes) {
         this.scalarNode = scalarNode;
         this.leftClass = leftclass;
         this.rightClass = rightClass;
@@ -74,8 +78,8 @@ final class VectorBinaryNode extends Node {
         boolean rightVectorImpl = RVector.class.isAssignableFrom(rightClass);
         this.mayContainMetadata = leftVectorImpl || rightVectorImpl;
         this.mayFoldConstantTime = scalarNode.mayFoldConstantTime(leftclass, rightClass);
-        this.mayShareLeft = argumentType == resultType && leftVectorImpl;
-        this.mayShareRight = argumentType == resultType && rightVectorImpl;
+        this.mayShareLeft = leftType == resultType && leftVectorImpl;
+        this.mayShareRight = rightType == resultType && rightVectorImpl;
 
         // lazily create profiles only if needed to avoid unnecessary allocations
         this.shareLeft = mayShareLeft ? ConditionProfile.createBinaryProfile() : null;
@@ -83,6 +87,8 @@ final class VectorBinaryNode extends Node {
         this.attrProfiles = mayContainMetadata ? RAttributeProfiles.create() : null;
         this.hasAttributesProfile = mayContainMetadata ? BranchProfile.create() : null;
         this.dimensionsProfile = mayContainMetadata ? ConditionProfile.createBinaryProfile() : null;
+
+        this.copyAttributes = copyAttributes;
     }
 
     public boolean isSupported(Object left, Object right) {
@@ -100,6 +106,9 @@ final class VectorBinaryNode extends Node {
         RType argumentType = getArgumentType();
         RAbstractVector leftCast = left.castSafe(argumentType);
         RAbstractVector rightCast = right.castSafe(argumentType);
+
+        assert leftCast != null;
+        assert rightCast != null;
 
         scalarNode.enable(leftCast, rightCast);
 
@@ -132,23 +141,65 @@ final class VectorBinaryNode extends Node {
 
     private Object scalarOperation(RAbstractVector left, RAbstractVector right) {
         switch (getArgumentType()) {
-            case Logical:
-                return scalarNode.applyLogical(((RAbstractLogicalVector) left).getDataAt(0), ((RAbstractLogicalVector) right).getDataAt(0));
-            case Integer:
-                int leftValue = ((RAbstractIntVector) left).getDataAt(0);
-                int rightValue = ((RAbstractIntVector) right).getDataAt(0);
+            case Raw:
+                byte leftValueRaw = ((RAbstractRawVector) left).getRawDataAt(0);
+                byte rightValueRaw = ((RAbstractRawVector) right).getRawDataAt(0);
                 switch (getResultType()) {
+                    case Raw:
+                        return RRaw.valueOf(scalarNode.applyRaw(leftValueRaw, rightValueRaw));
+                    case Logical:
+                        return scalarNode.applyLogical(RRuntime.raw2int(leftValueRaw), RRuntime.raw2int(rightValueRaw));
+                    default:
+                        throw RInternalError.shouldNotReachHere();
+                }
+            case Logical:
+                byte leftValueLogical = ((RAbstractLogicalVector) left).getDataAt(0);
+                byte rightValueLogical = ((RAbstractLogicalVector) right).getDataAt(0);
+                return scalarNode.applyLogical(leftValueLogical, rightValueLogical);
+            case Integer:
+                int leftValueInt = ((RAbstractIntVector) left).getDataAt(0);
+                int rightValueInt = ((RAbstractIntVector) right).getDataAt(0);
+                switch (getResultType()) {
+                    case Logical:
+                        return scalarNode.applyLogical(leftValueInt, rightValueInt);
                     case Integer:
-                        return scalarNode.applyInteger(leftValue, rightValue);
+                        return scalarNode.applyInteger(leftValueInt, rightValueInt);
                     case Double:
-                        return scalarNode.applyDouble(leftValue, rightValue);
+                        return scalarNode.applyDouble(leftValueInt, rightValueInt);
                     default:
                         throw RInternalError.shouldNotReachHere();
                 }
             case Double:
-                return scalarNode.applyDouble(((RAbstractDoubleVector) left).getDataAt(0), ((RAbstractDoubleVector) right).getDataAt(0));
+                double leftValueDouble = ((RAbstractDoubleVector) left).getDataAt(0);
+                double rightValueDouble = ((RAbstractDoubleVector) right).getDataAt(0);
+                switch (getResultType()) {
+                    case Logical:
+                        return scalarNode.applyLogical(leftValueDouble, rightValueDouble);
+                    case Double:
+                        return scalarNode.applyDouble(leftValueDouble, rightValueDouble);
+                    default:
+                        throw RInternalError.shouldNotReachHere();
+                }
             case Complex:
-                return scalarNode.applyComplex(((RAbstractComplexVector) left).getDataAt(0), ((RAbstractComplexVector) right).getDataAt(0));
+                RComplex leftValueComplex = ((RAbstractComplexVector) left).getDataAt(0);
+                RComplex rightValueComplex = ((RAbstractComplexVector) right).getDataAt(0);
+                switch (getResultType()) {
+                    case Logical:
+                        return scalarNode.applyLogical(leftValueComplex, rightValueComplex);
+                    case Complex:
+                        return scalarNode.applyComplex(leftValueComplex, rightValueComplex);
+                    default:
+                        throw RInternalError.shouldNotReachHere();
+                }
+            case Character:
+                String leftValueString = ((RAbstractStringVector) left).getDataAt(0);
+                String rightValueString = ((RAbstractStringVector) right).getDataAt(0);
+                switch (getResultType()) {
+                    case Logical:
+                        return scalarNode.applyLogical(leftValueString, rightValueString);
+                    default:
+                        throw RInternalError.shouldNotReachHere();
+                }
             default:
                 throw RInternalError.shouldNotReachHere();
         }
@@ -224,19 +275,23 @@ final class VectorBinaryNode extends Node {
     }
 
     private boolean containsMetadata(RAbstractVector vector) {
-        return vector instanceof RVector && (vector.hasDimensions() || vector.getAttributes() != null || vector.getNames(attrProfiles) != null || vector.getDimNames(attrProfiles) != null);
+        return vector instanceof RVector &&
+                        (vector.hasDimensions() || (copyAttributes && vector.getAttributes() != null) || vector.getNames(attrProfiles) != null || vector.getDimNames(attrProfiles) != null);
     }
 
     @TruffleBoundary
     private void copyAttributesInternal(RVector result, RAbstractVector left, int leftLength, RAbstractVector right, int rightLength) {
         // TODO this method needs its own specializing node
         if (leftLength == rightLength) {
-            if (result != right) {
-                result.copyRegAttributesFrom(right);
+            if (copyAttributes) {
+                if (result != right) {
+                    result.copyRegAttributesFrom(right);
+                }
+                if (result != left) {
+                    result.copyRegAttributesFrom(left);
+                }
             }
-            if (result != left) {
-                result.copyRegAttributesFrom(left);
-            }
+
             result.setDimensions(left.hasDimensions() ? left.getDimensions() : right.getDimensions(), getEncapsulatingSourceSection());
 
             boolean hadNames;
@@ -250,7 +305,7 @@ final class VectorBinaryNode extends Node {
             }
         } else {
             RAbstractVector attributeSource = leftLength < rightLength ? right : left;
-            if (result != attributeSource) {
+            if (copyAttributes && result != attributeSource) {
                 result.copyRegAttributesFrom(attributeSource);
             }
             result.setDimensions(left.hasDimensions() ? left.getDimensions() : right.getDimensions(), getEncapsulatingSourceSection());

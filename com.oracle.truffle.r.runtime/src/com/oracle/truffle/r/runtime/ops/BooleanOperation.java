@@ -33,17 +33,22 @@ public abstract class BooleanOperation extends Operation {
 
     public abstract String opName();
 
-    public byte op(byte left, byte right) {
+    public boolean opLogical(byte left, byte right) {
         return op(RRuntime.logical2int(left), RRuntime.logical2int(right));
     }
 
-    public abstract byte op(int left, int right);
+    @SuppressWarnings("unused")
+    public byte opRaw(byte left, byte right) {
+        throw new UnsupportedOperationException();
+    }
 
-    public abstract byte op(double left, double right);
+    public abstract boolean op(int left, int right);
 
-    public abstract byte op(String left, String right);
+    public abstract boolean op(double left, double right);
 
-    public abstract byte op(RComplex left, RComplex right);
+    public abstract boolean op(String left, String right);
+
+    public abstract boolean op(RComplex left, RComplex right);
 
     // methods below are to be overridden by subclasses that need them
 
@@ -56,11 +61,11 @@ public abstract class BooleanOperation extends Operation {
         return true;
     }
 
-    public byte op(@SuppressWarnings("unused") RRaw left, @SuppressWarnings("unused") Object right) {
+    public boolean op(@SuppressWarnings("unused") RRaw left, @SuppressWarnings("unused") Object right) {
         throw new UnsupportedOperationException();
     }
 
-    public byte op(@SuppressWarnings("unused") Object left, @SuppressWarnings("unused") RRaw right) {
+    public boolean op(@SuppressWarnings("unused") Object left, @SuppressWarnings("unused") RRaw right) {
         throw new UnsupportedOperationException();
     }
 

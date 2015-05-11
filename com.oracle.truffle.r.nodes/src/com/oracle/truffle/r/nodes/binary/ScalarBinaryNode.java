@@ -83,6 +83,22 @@ public abstract class ScalarBinaryNode extends Node {
         throw RInternalError.shouldNotReachHere();
     }
 
+    public byte applyLogical(int left, int right) {
+        throw RInternalError.shouldNotReachHere();
+    }
+
+    public byte applyLogical(double left, double right) {
+        throw RInternalError.shouldNotReachHere();
+    }
+
+    public byte applyLogical(RComplex left, RComplex right) {
+        throw RInternalError.shouldNotReachHere();
+    }
+
+    public byte applyLogical(String left, String right) {
+        throw RInternalError.shouldNotReachHere();
+    }
+
     public int applyInteger(int left, int right) {
         throw RInternalError.shouldNotReachHere();
     }
@@ -92,6 +108,10 @@ public abstract class ScalarBinaryNode extends Node {
     }
 
     public double applyDouble(int left, int right) {
+        throw RInternalError.shouldNotReachHere();
+    }
+
+    public byte applyRaw(byte left, byte right) {
         throw RInternalError.shouldNotReachHere();
     }
 

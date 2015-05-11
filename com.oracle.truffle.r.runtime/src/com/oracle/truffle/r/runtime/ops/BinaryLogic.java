@@ -50,6 +50,8 @@ public abstract class BinaryLogic extends BooleanOperation {
     public static final BooleanOperationFactory AND = BinaryLogic::createAnd;
     public static final BooleanOperationFactory OR = BinaryLogic::createOr;
 
+    public static final BooleanOperationFactory[] ALL = new BooleanOperationFactory[]{AND, OR};
+
     private static BooleanOperation createAnd() {
         return new And("&");
     }
@@ -85,7 +87,7 @@ public abstract class BinaryLogic extends BooleanOperation {
 
         @Override
         public boolean requiresRightOperand(byte leftOperand) {
-            if (RRuntime.isNA(leftOperand) || leftOperand == RRuntime.LOGICAL_TRUE) {
+            if (leftOperand == RRuntime.LOGICAL_TRUE) {
                 return true;
             } else {
                 return false;
@@ -93,72 +95,35 @@ public abstract class BinaryLogic extends BooleanOperation {
         }
 
         @Override
-        public byte op(byte left, byte right) {
-            assert RLogical.isValid(left);
-            assert RLogical.isValid(right);
-            if (RRuntime.isNA(left)) {
-                if (right == 0) {
-                    return RRuntime.LOGICAL_FALSE;
-                } else {
-                    return RRuntime.LOGICAL_NA;
-                }
-            }
-            if (RRuntime.isNA(right)) {
-                if (left == 0) {
-                    return RRuntime.LOGICAL_FALSE;
-                } else {
-                    return RRuntime.LOGICAL_NA;
-                }
-            }
+        public boolean opLogical(byte left, byte right) {
+            assert RLogical.isValid(left) && !RRuntime.isNA(left);
+            assert RLogical.isValid(right) && !RRuntime.isNA(right);
+            return (left & right) == 0x1;
+        }
+
+        @Override
+        public byte opRaw(byte left, byte right) {
             return (byte) (left & right);
         }
 
         @Override
-        public byte op(int left, int right) {
-            if (RRuntime.isNA(left)) {
-                if (right == 0) {
-                    return RRuntime.LOGICAL_FALSE;
-                } else {
-                    return RRuntime.LOGICAL_NA;
-                }
-            }
-            if (RRuntime.isNA(right)) {
-                if (left == 0) {
-                    return RRuntime.LOGICAL_FALSE;
-                } else {
-                    return RRuntime.LOGICAL_NA;
-                }
-            }
-            return RRuntime.asLogical(left != 0 && right != 0);
+        public boolean op(int left, int right) {
+            return left != 0 && right != 0;
         }
 
         @Override
-        public byte op(double left, double right) {
-            if (RRuntime.isNAorNaN(left)) {
-                if (right == 0.0) {
-                    return RRuntime.LOGICAL_FALSE;
-                } else {
-                    return RRuntime.LOGICAL_NA;
-                }
-            }
-            if (RRuntime.isNAorNaN(right)) {
-                if (left == 0.0) {
-                    return RRuntime.LOGICAL_FALSE;
-                } else {
-                    return RRuntime.LOGICAL_NA;
-                }
-            }
-            return RRuntime.asLogical(left != 0.0 && right != 0.0);
+        public boolean op(double left, double right) {
+            return left != 0.0 && right != 0.0;
         }
 
         @Override
-        public byte op(String left, String right) {
+        public boolean op(String left, String right) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.OPERATIONS_NUMERIC_LOGICAL_COMPLEX);
         }
 
         @Override
-        public byte op(RComplex left, RComplex right) {
-            return RRuntime.asLogical(!left.isZero() && !right.isZero());
+        public boolean op(RComplex left, RComplex right) {
+            return !left.isZero() && !right.isZero();
         }
 
         @Override
@@ -167,12 +132,12 @@ public abstract class BinaryLogic extends BooleanOperation {
         }
 
         @Override
-        public byte op(RRaw left, Object right) {
+        public boolean op(RRaw left, Object right) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.OPERATIONS_NUMERIC_LOGICAL_COMPLEX);
         }
 
         @Override
-        public byte op(Object left, RRaw right) {
+        public boolean op(Object left, RRaw right) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.OPERATIONS_NUMERIC_LOGICAL_COMPLEX);
         }
 
@@ -193,7 +158,7 @@ public abstract class BinaryLogic extends BooleanOperation {
 
         @Override
         public boolean requiresRightOperand(byte leftOperand) {
-            if (RRuntime.isNA(leftOperand) || leftOperand == RRuntime.LOGICAL_FALSE) {
+            if (leftOperand == RRuntime.LOGICAL_FALSE) {
                 return true;
             } else {
                 return false;
@@ -201,72 +166,35 @@ public abstract class BinaryLogic extends BooleanOperation {
         }
 
         @Override
-        public byte op(byte left, byte right) {
+        public boolean opLogical(byte left, byte right) {
             assert RLogical.isValid(left);
             assert RLogical.isValid(right);
-            if (RRuntime.isNA(left)) {
-                if (right == RRuntime.LOGICAL_TRUE) {
-                    return RRuntime.LOGICAL_TRUE;
-                } else {
-                    return RRuntime.LOGICAL_NA;
-                }
-            }
-            if (RRuntime.isNA(right)) {
-                if (left == RRuntime.LOGICAL_TRUE) {
-                    return RRuntime.LOGICAL_TRUE;
-                } else {
-                    return RRuntime.LOGICAL_NA;
-                }
-            }
+            return (left | right) == 0x1;
+        }
+
+        @Override
+        public byte opRaw(byte left, byte right) {
             return (byte) (left | right);
         }
 
         @Override
-        public byte op(int left, int right) {
-            if (RRuntime.isNA(left)) {
-                if (!RRuntime.isNA(right) && right != 0) {
-                    return RRuntime.LOGICAL_TRUE;
-                } else {
-                    return RRuntime.LOGICAL_NA;
-                }
-            }
-            if (RRuntime.isNA(right)) {
-                if (left != 0) {
-                    return RRuntime.LOGICAL_TRUE;
-                } else {
-                    return RRuntime.LOGICAL_NA;
-                }
-            }
-            return RRuntime.asLogical(left != 0 || right != 0);
+        public boolean op(int left, int right) {
+            return left != 0 || right != 0;
         }
 
         @Override
-        public byte op(double left, double right) {
-            if (RRuntime.isNAorNaN(left)) {
-                if (!RRuntime.isNAorNaN(right) && right != 0.0) {
-                    return RRuntime.LOGICAL_TRUE;
-                } else {
-                    return RRuntime.LOGICAL_NA;
-                }
-            }
-            if (RRuntime.isNAorNaN(right)) {
-                if (left != 0.0) {
-                    return RRuntime.LOGICAL_TRUE;
-                } else {
-                    return RRuntime.LOGICAL_NA;
-                }
-            }
-            return RRuntime.asLogical(left != 0.0 || right != 0.0);
+        public boolean op(double left, double right) {
+            return left != 0.0 || right != 0.0;
         }
 
         @Override
-        public byte op(String left, String right) {
+        public boolean op(String left, String right) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.OPERATIONS_NUMERIC_LOGICAL_COMPLEX);
         }
 
         @Override
-        public byte op(RComplex left, RComplex right) {
-            return RRuntime.asLogical(!left.isZero() || !right.isZero());
+        public boolean op(RComplex left, RComplex right) {
+            return !left.isZero() || !right.isZero();
         }
 
         @Override
@@ -275,12 +203,12 @@ public abstract class BinaryLogic extends BooleanOperation {
         }
 
         @Override
-        public byte op(RRaw left, Object right) {
+        public boolean op(RRaw left, Object right) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.OPERATIONS_NUMERIC_LOGICAL_COMPLEX);
         }
 
         @Override
-        public byte op(Object left, RRaw right) {
+        public boolean op(Object left, RRaw right) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.OPERATIONS_NUMERIC_LOGICAL_COMPLEX);
         }
 

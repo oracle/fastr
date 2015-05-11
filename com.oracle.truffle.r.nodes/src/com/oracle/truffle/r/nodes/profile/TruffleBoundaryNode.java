@@ -6,7 +6,7 @@ import com.oracle.truffle.api.nodes.*;
 
 /**
  * Base class for nodes that are solely executed behind a {@link TruffleBoundary} to ensure that
- * these replaces or insertions below this node do not trigger invalidation any compiled code.
+ * these replaces or insertions below this node do not trigger invalidation of compiled code.
  *
  * TODO this is a candidate for Truffle standardization in the future.
  */

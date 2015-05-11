@@ -35,11 +35,7 @@ public abstract class RToVectorClosure implements RAbstractVector {
         this.vector = vector;
     }
 
-    public final RAbstractVector castSafe(RType type) {
-        return vector.castSafe(type);
-    }
-
-    public final int getLength() {
+    public int getLength() {
         return vector.getLength();
     }
 

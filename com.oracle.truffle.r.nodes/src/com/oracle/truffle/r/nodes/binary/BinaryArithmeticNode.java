@@ -39,6 +39,8 @@ import com.oracle.truffle.r.runtime.ops.*;
 
 public abstract class BinaryArithmeticNode extends RBuiltinNode {
 
+    protected static final int CACHE_LIMIT = 5;
+
     protected final BinaryArithmeticFactory binary;
     protected final UnaryArithmeticFactory unary;
 
@@ -61,7 +63,7 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
         return BinaryArithmeticNodeGen.create(binary, unary, new RNode[]{null, null}, null, null);
     }
 
-    @Specialization(limit = "3", guards = {"cached != null", "cached.isSupported(left, right)"})
+    @Specialization(limit = "CACHE_LIMIT", guards = {"cached != null", "cached.isSupported(left, right)"})
     protected Object doNumericVectorCached(Object left, Object right, //
                     @Cached("createFastCached(left, right)") VectorBinaryNode cached) {
         return cached.apply(left, right);
@@ -157,13 +159,15 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
         RAbstractVector leftVector = (RAbstractVector) left;
         RAbstractVector rightVector = (RAbstractVector) right;
 
-        RType argumentType = RType.maxPrecedence(RType.Integer, RType.maxPrecedence(leftVector.getRType(), rightVector.getRType()));
+        RType leftType = leftVector.getRType();
+        RType rightType = rightVector.getRType();
+        RType argumentType = RType.maxPrecedence(RType.Integer, RType.maxPrecedence(leftType, rightType));
         RType resultType = argumentType;
         if (resultType == RType.Integer && !innerArithmetic.isSupportsIntResult()) {
             resultType = RType.Double;
         }
 
-        return new VectorBinaryNode(new ScalarBinaryArithmeticNode(innerArithmetic), leftVector.getClass(), rightVector.getClass(), argumentType, resultType);
+        return new VectorBinaryNode(new ScalarBinaryArithmeticNode(innerArithmetic), leftVector.getClass(), rightVector.getClass(), leftType, rightType, argumentType, resultType, true);
     }
 
     protected static final class GenericNumericVectorNode extends TruffleBoundaryNode {
