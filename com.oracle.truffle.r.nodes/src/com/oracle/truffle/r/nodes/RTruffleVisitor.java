@@ -303,7 +303,7 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
          * but we don't want to change that class.
          */
         CoerceVector coerceVector = CoerceVectorNodeGen.create(null, vector, null);
-        return UpdateArrayHelperNodeGen.create(isSubset, true, vector, rhs, ConstantNode.create(0), posArrayNodeValue, coerceVector);
+        return UpdateArrayHelperNodeGen.create(isSubset, true, 0, vector, rhs, posArrayNodeValue, coerceVector);
     }
 
     private RSyntaxNode createPositions(List<ArgNode> argList, int argLength, boolean isSubset, RNode castContainer, RNode tmpVarAccess, RNode rhsAccess, CoerceVector coerceVector,

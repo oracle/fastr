@@ -36,6 +36,7 @@ import com.oracle.truffle.r.nodes.access.array.*;
 import com.oracle.truffle.r.nodes.access.array.ArrayPositionCast.OperatorConverterNode;
 import com.oracle.truffle.r.nodes.access.array.ArrayPositionCastNodeGen.OperatorConverterNodeGen;
 import com.oracle.truffle.r.nodes.access.array.read.*;
+import com.oracle.truffle.r.nodes.control.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
@@ -46,10 +47,10 @@ import com.oracle.truffle.r.runtime.gnur.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
 @SuppressWarnings("unused")
-@NodeChildren({@NodeChild(value = "v", type = RNode.class), @NodeChild(value = "newValue", type = RNode.class), @NodeChild(value = "recursionLevel", type = RNode.class),
+@NodeChildren({@NodeChild(value = "v", type = RNode.class), @NodeChild(value = "newValue", type = RNode.class),
                 @NodeChild(value = "positions", type = PositionsArrayNodeValue.class, executeWith = {"v", "newValue"}),
                 @NodeChild(value = "vector", type = CoerceVector.class, executeWith = {"newValue", "v", "positions"})})
-public abstract class UpdateArrayHelperNode extends RNode implements RSyntaxNode {
+public abstract class UpdateArrayHelperNode extends UpdateNode implements RSyntaxNode {
 
     protected final boolean isSubset;
     private final boolean forObjects;
@@ -60,15 +61,22 @@ public abstract class UpdateArrayHelperNode extends RNode implements RSyntaxNode
 
     protected abstract RNode getVector();
 
-    protected abstract RNode getPositions();
+    protected abstract PositionsArrayNodeValue getPositions();
 
     protected abstract RNode getNewValue();
 
-    public abstract Object executeUpdate(VirtualFrame frame, Object v, Object value, int recLevel, Object positions, Object vector);
+    @Override
+    public Object executeUpdate(VirtualFrame frame, Object lhs, Object rhs) {
+        throw RInternalError.shouldNotReachHere();
+// return executeUpdate(frame, );
+    }
+
+    public abstract Object executeUpdate(VirtualFrame frame, Object v, Object value, Object positions, Object vector);
 
     @CompilationFinal private boolean recursiveIsSubset;
 
     @Child private UpdateArrayHelperNode updateRecursive;
+    @Child private UpdateArrayHelperNode updateDelegate;
     @Child private CastComplexNode castComplex;
     @Child private CastDoubleNode castDouble;
     @Child private CastIntegerNode castInteger;
@@ -91,21 +99,16 @@ public abstract class UpdateArrayHelperNode extends RNode implements RSyntaxNode
     private final ConditionProfile noResultNames = ConditionProfile.createBinaryProfile();
     private final ConditionProfile multiPosProfile = ConditionProfile.createBinaryProfile();
 
-    private final BranchProfile recLevelZero = BranchProfile.create();
     private final ConditionProfile twoPosProfile = ConditionProfile.createBinaryProfile();
 
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+    protected final int recLevel;
 
-    protected UpdateArrayHelperNode(boolean isSubset, boolean forObjects) {
+    protected UpdateArrayHelperNode(boolean isSubset, boolean forObjects, int recLevel) {
         this.isSubset = isSubset;
         this.forObjects = forObjects;
         this.recursiveIsSubset = isSubset;
-    }
-
-    protected UpdateArrayHelperNode(UpdateArrayHelperNode other) {
-        this.isSubset = other.isSubset;
-        this.forObjects = other.forObjects;
-        this.recursiveIsSubset = other.recursiveIsSubset;
+        this.recLevel = recLevel;
     }
 
     private RIntVector updateVector(VirtualFrame frame, RAbstractIntVector value, RAbstractIntVector vector, Object[] positions) {
@@ -140,12 +143,20 @@ public abstract class UpdateArrayHelperNode extends RNode implements RSyntaxNode
         return resultVector;
     }
 
-    private Object updateRecursive(VirtualFrame frame, Object v, Object value, Object vector, Object operand, int recLevel) {
+    private Object updateDelegate(VirtualFrame frame, Object v, Object value, Object vector, Object operand) {
+        if (updateDelegate == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            updateDelegate = insert(UpdateArrayHelperNodeGen.create(isSubset, false, recLevel, null, null, null, null));
+        }
+        return updateDelegate.executeUpdate(frame, v, value, operand, vector);
+    }
+
+    private Object updateRecursive(VirtualFrame frame, Object v, Object value, Object vector, Object operand) {
         if (updateRecursive == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            updateRecursive = insert(UpdateArrayHelperNodeGen.create(isSubset, false, null, null, null, null, null));
+            updateRecursive = insert(UpdateArrayHelperNodeGen.create(isSubset, false, recLevel + 1, null, null, null, null));
         }
-        return updateRecursive.executeUpdate(frame, v, value, recLevel, operand, vector);
+        return updateRecursive.executeUpdate(frame, v, value, operand, vector);
     }
 
     private final ConditionProfile needsCastProfile = ConditionProfile.createBinaryProfile();
@@ -248,7 +259,7 @@ public abstract class UpdateArrayHelperNode extends RNode implements RSyntaxNode
     private static final ArgumentsSignature VALUE_SIGNATURE = ArgumentsSignature.get("", "", "value");
 
     @Specialization(guards = {"isObject(container)", "isSubset"})
-    protected Object updateObjectSubset(VirtualFrame frame, Object v, Object value, int recLevel, Object positions, RAbstractContainer container) {
+    protected Object updateObjectSubset(VirtualFrame frame, Object v, Object value, Object positions, RAbstractContainer container) {
         if (dcn == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             dcn = insert(new UseMethodInternalNode("[<-", VALUE_SIGNATURE));
@@ -257,12 +268,12 @@ public abstract class UpdateArrayHelperNode extends RNode implements RSyntaxNode
             Object inds = positions instanceof Object[] ? new RArgsValuesAndNames((Object[]) positions, ArgumentsSignature.empty(((Object[]) positions).length)) : positions;
             return dcn.execute(frame, container.getClassHierarchy(), new Object[]{container, inds, value});
         } catch (S3FunctionLookupNode.NoGenericMethodException e) {
-            return updateRecursive(frame, v, value, container, positions, recLevel);
+            return updateDelegate(frame, v, value, container, positions);
         }
     }
 
     @Specialization(guards = {"isObject(container)", "!isSubset"})
-    protected Object updateObject(VirtualFrame frame, Object v, Object value, int recLevel, Object positions, RAbstractContainer container) {
+    protected Object updateObject(VirtualFrame frame, Object v, Object value, Object positions, RAbstractContainer container) {
         if (dcn == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             dcn = insert(new UseMethodInternalNode("[[<-", VALUE_SIGNATURE));
@@ -271,27 +282,27 @@ public abstract class UpdateArrayHelperNode extends RNode implements RSyntaxNode
             Object inds = positions instanceof Object[] ? new RArgsValuesAndNames((Object[]) positions, ArgumentsSignature.empty(((Object[]) positions).length)) : positions;
             return dcn.execute(frame, container.getClassHierarchy(), new Object[]{container, inds, value});
         } catch (S3FunctionLookupNode.NoGenericMethodException e) {
-            return updateRecursive(frame, v, value, container, positions, recLevel);
+            return updateDelegate(frame, v, value, container, positions);
         }
     }
 
     @Specialization
-    protected Object update(VirtualFrame frame, Object v, RAbstractVector value, int recLevel, Object positions, RFactor factor) {
-        return updateRecursive(frame, v, value, factor.getVector(), positions, recLevel);
+    protected Object update(VirtualFrame frame, Object v, RAbstractVector value, Object positions, RFactor factor) {
+        return updateDelegate(frame, v, value, factor.getVector(), positions);
     }
 
     @Specialization
-    protected Object update(VirtualFrame frame, Object v, Object value, int recLevel, Object positions, RDataFrame dataFrame) {
-        return updateRecursive(frame, v, value, dataFrame.getVector(), positions, recLevel);
+    protected Object update(VirtualFrame frame, Object v, Object value, Object positions, RDataFrame dataFrame) {
+        return updateDelegate(frame, v, value, dataFrame.getVector(), positions);
     }
 
     @Specialization(guards = "isSubset")
-    protected Object update(VirtualFrame frame, Object v, RFactor value, int recLevel, Object positions, Object vector) {
-        return updateRecursive(frame, v, value.getVector(), vector, positions, recLevel);
+    protected Object update(VirtualFrame frame, Object v, RFactor value, Object positions, Object vector) {
+        return updateDelegate(frame, v, value.getVector(), vector, positions);
     }
 
     @Specialization(guards = {"!isObject(vector)", "emptyValue(value)"})
-    protected RAbstractVector update(Object v, RAbstractVector value, int recLevel, Object[] positions, RAbstractVector vector) {
+    protected RAbstractVector update(Object v, RAbstractVector value, Object[] positions, RAbstractVector vector) {
         if (isSubset) {
             int replacementLength = getReplacementLength(positions, value, false);
             if (replacementLength == 0) {
@@ -303,13 +314,13 @@ public abstract class UpdateArrayHelperNode extends RNode implements RSyntaxNode
 
     @TruffleBoundary
     @Specialization
-    protected RNull accessFunction(Object v, Object value, int recLevel, Object position, RFunction vector) {
+    protected RNull accessFunction(Object v, Object value, Object position, RFunction vector) {
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.OBJECT_NOT_SUBSETTABLE, "closure");
     }
 
     @TruffleBoundary
     @Specialization(guards = "!isObject(vector)")
-    protected RAbstractVector update(Object v, RNull value, int recLevel, Object[] positions, RList vector) {
+    protected RAbstractVector update(Object v, RNull value, Object[] positions, RList vector) {
         if (isSubset) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.NOT_MULTIPLE_REPLACEMENT);
         } else {
@@ -318,7 +329,7 @@ public abstract class UpdateArrayHelperNode extends RNode implements RSyntaxNode
     }
 
     @Specialization(guards = {"!isObject(vector)", "isPosZero(position)"})
-    protected RAbstractVector updateNAOrZero(Object v, RNull value, int recLevel, int position, RList vector) {
+    protected RAbstractVector updateNAOrZero(Object v, RNull value, int position, RList vector) {
         if (!isSubset) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
         } else {
@@ -328,7 +339,7 @@ public abstract class UpdateArrayHelperNode extends RNode implements RSyntaxNode
 
     @TruffleBoundary
     @Specialization(guards = "!isObject(vector)")
-    protected RAbstractVector update(Object v, RNull value, int recLevel, Object[] positions, RAbstractVector vector) {
+    protected RAbstractVector update(Object v, RNull value, Object[] positions, RAbstractVector vector) {
         if (isSubset) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.NOT_MULTIPLE_REPLACEMENT);
         } else {
@@ -338,24 +349,24 @@ public abstract class UpdateArrayHelperNode extends RNode implements RSyntaxNode
 
     @TruffleBoundary
     @Specialization(guards = {"!isObject(vector)", "emptyValue(value)", "!isPosZero(position)", "!isPosNA(position)", "!isVectorList(vector)"})
-    protected RAbstractVector update(Object v, RAbstractVector value, int recLevel, int position, RAbstractVector vector) {
+    protected RAbstractVector update(Object v, RAbstractVector value, int position, RAbstractVector vector) {
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.REPLACEMENT_0);
     }
 
     @TruffleBoundary
     @Specialization(guards = "!isObject(vector)")
-    protected RAbstractVector updateVectorLongerThanOne(Object v, RNull value, int recLevel, RNull position, RList vector) {
+    protected RAbstractVector updateVectorLongerThanOne(Object v, RNull value, RNull position, RList vector) {
         throw RError.error(getEncapsulatingSourceSection(), vector.getLength() > 1 ? RError.Message.SELECT_MORE_1 : RError.Message.SELECT_LESS_1);
     }
 
     @TruffleBoundary
     @Specialization(guards = "!isObject(vector)")
-    protected RAbstractVector update(Object v, RAbstractVector value, int recLevel, RNull position, RAbstractVector vector) {
+    protected RAbstractVector update(Object v, RAbstractVector value, RNull position, RAbstractVector vector) {
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_MORE_1);
     }
 
     @Specialization(guards = {"!isObject(vector)", "isPosNA(position)", "isValueLengthOne(value)"})
-    protected RAbstractVector updateNAValueLengthOneLongVector(Object v, RAbstractVector value, int recLevel, int position, RAbstractVector vector) {
+    protected RAbstractVector updateNAValueLengthOneLongVector(Object v, RAbstractVector value, int position, RAbstractVector vector) {
         if (!isSubset) {
             throw RError.error(getEncapsulatingSourceSection(), vector.getLength() > 1 ? RError.Message.SELECT_MORE_1 : RError.Message.SELECT_LESS_1);
         } else {
@@ -365,7 +376,7 @@ public abstract class UpdateArrayHelperNode extends RNode implements RSyntaxNode
 
     @TruffleBoundary
     @Specialization(guards = {"!isObject(vector)", "isPosNA(position)", "!isValueLengthOne(value)"})
-    protected RAbstractVector updateNA(Object v, RAbstractVector value, int recLevel, int position, RAbstractVector vector) {
+    protected RAbstractVector updateNA(Object v, RAbstractVector value, int position, RAbstractVector vector) {
         if (isSubset) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.NA_SUBSCRIPTED);
         } else {
@@ -385,7 +396,7 @@ public abstract class UpdateArrayHelperNode extends RNode implements RSyntaxNode
     }
 
     @Specialization(guards = {"!isObject(vector)", "isPosZero(position)"})
-    protected RAbstractVector updatePosZero(Object v, RAbstractVector value, int recLevel, int position, RAbstractVector vector) {
+    protected RAbstractVector updatePosZero(Object v, RAbstractVector value, int position, RAbstractVector vector) {
         if (!isSubset) {
             throw RError.error(getEncapsulatingSourceSection(), getErrorForValueLength(value));
         }
@@ -489,17 +500,17 @@ public abstract class UpdateArrayHelperNode extends RNode implements RSyntaxNode
     // null
 
     @Specialization
-    protected RNull updateWrongDimensions(Object v, RNull value, int recLevel, Object[] positions, RNull vector) {
+    protected RNull updateWrongDimensions(Object v, RNull value, Object[] positions, RNull vector) {
         return vector;
     }
 
     @Specialization(guards = {"!wrongDimensionsMatrix(positions, vector)", "!wrongDimensions(positions, vector)"})
-    protected RNull updateWrongDimensions(Object v, RAbstractVector value, int recLevel, Object[] positions, RNull vector) {
+    protected RNull updateWrongDimensions(Object v, RAbstractVector value, Object[] positions, RNull vector) {
         return vector;
     }
 
     @Specialization(guards = "emptyValue(value)")
-    protected RNull updatePosZero(Object v, RAbstractVector value, int recLevel, int position, RNull vector) {
+    protected RNull updatePosZero(Object v, RAbstractVector value, int position, RNull vector) {
         if (!isSubset) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.REPLACEMENT_0);
         }
@@ -507,7 +518,7 @@ public abstract class UpdateArrayHelperNode extends RNode implements RSyntaxNode
     }
 
     @Specialization(guards = "emptyValue(value)")
-    protected RNull updatePosZero(Object v, RAbstractVector value, int recLevel, RIntVector positions, RNull vector) {
+    protected RNull updatePosZero(Object v, RAbstractVector value, RIntVector positions, RNull vector) {
         if (!isSubset) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.REPLACEMENT_0);
         }
@@ -515,7 +526,7 @@ public abstract class UpdateArrayHelperNode extends RNode implements RSyntaxNode
     }
 
     @Specialization(guards = "!emptyValue(value)")
-    protected RIntVector update(Object v, RAbstractIntVector value, int recLevel, RIntVector positions, RNull vector) {
+    protected RIntVector update(Object v, RAbstractIntVector value, RIntVector positions, RNull vector) {
         int highestPos = getHighestPos(positions);
         int[] data = new int[highestPos];
         Arrays.fill(data, RRuntime.INT_NA);
@@ -523,7 +534,7 @@ public abstract class UpdateArrayHelperNode extends RNode implements RSyntaxNode
     }
 
     @Specialization(guards = {"!emptyValue(value)", "!isPosNA(position)", "!isPosZero(position)"})
-    protected RIntVector update(Object v, RAbstractIntVector value, int recLevel, int position, RNull vector) {
+    protected RIntVector update(Object v, RAbstractIntVector value, int position, RNull vector) {
         if (multiPosProfile.profile(position > 1)) {
             int[] data = new int[position];
             Arrays.fill(data, RRuntime.INT_NA);
@@ -534,7 +545,7 @@ public abstract class UpdateArrayHelperNode extends RNode implements RSyntaxNode
     }
 
     @Specialization(guards = "!emptyValue(value)")
-    protected RDoubleVector update(Object v, RAbstractDoubleVector value, int recLevel, RIntVector positions, RNull vector) {
+    protected RDoubleVector update(Object v, RAbstractDoubleVector value, RIntVector positions, RNull vector) {
         int highestPos = getHighestPos(positions);
         double[] data = new double[highestPos];
         Arrays.fill(data, RRuntime.DOUBLE_NA);
@@ -542,7 +553,7 @@ public abstract class UpdateArrayHelperNode extends RNode implements RSyntaxNode
     }
 
     @Specialization(guards = {"!emptyValue(value)", "!isPosNA(position)", "!isPosZero(position)"})
-    protected RDoubleVector update(Object v, RAbstractDoubleVector value, int recLevel, int position, RNull vector) {
+    protected RDoubleVector update(Object v, RAbstractDoubleVector value, int position, RNull vector) {
         if (multiPosProfile.profile(position > 1)) {
             double[] data = new double[position];
             Arrays.fill(data, RRuntime.DOUBLE_NA);
@@ -553,7 +564,7 @@ public abstract class UpdateArrayHelperNode extends RNode implements RSyntaxNode
     }
 
     @Specialization(guards = "!emptyValue(value)")
-    protected RLogicalVector update(Object v, RAbstractLogicalVector value, int recLevel, RIntVector positions, RNull vector) {
+    protected RLogicalVector update(Object v, RAbstractLogicalVector value, RIntVector positions, RNull vector) {
         int highestPos = getHighestPos(positions);
         byte[] data = new byte[highestPos];
         Arrays.fill(data, RRuntime.LOGICAL_NA);
@@ -561,7 +572,7 @@ public abstract class UpdateArrayHelperNode extends RNode implements RSyntaxNode
     }
 
     @Specialization(guards = {"!emptyValue(value)", "!isPosNA(position)", "!isPosZero(position)"})
-    protected RLogicalVector update(Object v, RAbstractLogicalVector value, int recLevel, int position, RNull vector) {
+    protected RLogicalVector update(Object v, RAbstractLogicalVector value, int position, RNull vector) {
         if (multiPosProfile.profile(position > 1)) {
             byte[] data = new byte[position];
             Arrays.fill(data, RRuntime.LOGICAL_NA);
@@ -572,7 +583,7 @@ public abstract class UpdateArrayHelperNode extends RNode implements RSyntaxNode
     }
 
     @Specialization(guards = "!emptyValue(value)")
-    protected RStringVector update(Object v, RAbstractStringVector value, int recLevel, RIntVector positions, RNull vector) {
+    protected RStringVector update(Object v, RAbstractStringVector value, RIntVector positions, RNull vector) {
         int highestPos = getHighestPos(positions);
         String[] data = new String[highestPos];
         Arrays.fill(data, RRuntime.STRING_NA);
@@ -580,7 +591,7 @@ public abstract class UpdateArrayHelperNode extends RNode implements RSyntaxNode
     }
 
     @Specialization(guards = {"!emptyValue(value)", "!isPosNA(position)", "!isPosZero(position)"})
-    protected RStringVector update(Object v, RAbstractStringVector value, int recLevel, int position, RNull vector) {
+    protected RStringVector update(Object v, RAbstractStringVector value, int position, RNull vector) {
         if (multiPosProfile.profile(position > 1)) {
             String[] data = new String[position];
             Arrays.fill(data, RRuntime.STRING_NA);
@@ -591,7 +602,7 @@ public abstract class UpdateArrayHelperNode extends RNode implements RSyntaxNode
     }
 
     @Specialization(guards = "!emptyValue(value)")
-    protected RComplexVector update(Object v, RAbstractComplexVector value, int recLevel, RIntVector positions, RNull vector) {
+    protected RComplexVector update(Object v, RAbstractComplexVector value, RIntVector positions, RNull vector) {
         int highestPos = getHighestPos(positions);
         double[] data = new double[highestPos << 1];
         int ind = 0;
@@ -603,7 +614,7 @@ public abstract class UpdateArrayHelperNode extends RNode implements RSyntaxNode
     }
 
     @Specialization(guards = {"!emptyValue(value)", "!isPosNA(position)", "!isPosZero(position)"})
-    protected RComplexVector update(VirtualFrame frame, Object v, RAbstractComplexVector value, int recLevel, int position, RNull vector) {
+    protected RComplexVector update(VirtualFrame frame, Object v, RAbstractComplexVector value, int position, RNull vector) {
         if (multiPosProfile.profile(position > 1)) {
             double[] data = new double[position << 1];
             int ind = 0;
@@ -618,24 +629,24 @@ public abstract class UpdateArrayHelperNode extends RNode implements RSyntaxNode
     }
 
     @Specialization(guards = "!emptyValue(value)")
-    protected RRawVector update(Object v, RAbstractRawVector value, int recLevel, RIntVector positions, RNull vector) {
+    protected RRawVector update(Object v, RAbstractRawVector value, RIntVector positions, RNull vector) {
         return updateSingleDimVector(value, 0, RDataFactory.createRawVector(getHighestPos(positions)), positions);
     }
 
     @Specialization(guards = {"!emptyValue(value)", "!isPosNA(position)", "!isPosZero(position)"})
-    protected RRawVector update(Object v, RAbstractRawVector value, int recLevel, int position, RNull vector) {
+    protected RRawVector update(Object v, RAbstractRawVector value, int position, RNull vector) {
         return updateSingleDim(value, RDataFactory.createRawVector(position), position);
     }
 
     @TruffleBoundary
     @Specialization(guards = {"!isObject(vector)", "!isPosNA(position)", "isPositionNegative(position)", "!isVectorList(vector)"})
-    protected RList updateNegativeNull(Object v, RNull value, int recLevel, int position, RAbstractVector vector) {
+    protected RList updateNegativeNull(Object v, RNull value, int position, RAbstractVector vector) {
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
     }
 
     @TruffleBoundary
     @Specialization(guards = {"!isObject(vector)", "!isPosNA(position)", "isPositionNegative(position)"})
-    protected RList updateNegativeNull(Object v, Object value, int recLevel, int position, RAbstractVector vector) {
+    protected RList updateNegativeNull(Object v, Object value, int position, RAbstractVector vector) {
         throw RError.error(getEncapsulatingSourceSection(), -position <= vector.getLength() || vector.getLength() != 1 ? RError.Message.SELECT_MORE_1 : RError.Message.SELECT_LESS_1);
     }
 
@@ -694,7 +705,7 @@ public abstract class UpdateArrayHelperNode extends RNode implements RSyntaxNode
         return resultVector;
     }
 
-    private int getPositionInRecursion(RList vector, int position, int recLevel, boolean lastPos) {
+    private int getPositionInRecursion(RList vector, int position, boolean lastPos) {
         if (RRuntime.isNA(position)) {
             error.enter();
             if (lastPos && recLevel > 0) {
@@ -743,8 +754,8 @@ public abstract class UpdateArrayHelperNode extends RNode implements RSyntaxNode
         return val;
     }
 
-    private RList updateSingleDimRec(RAbstractContainer value, RList resultVector, RIntVector p, int recLevel) {
-        int position = getPositionInRecursion(resultVector, p.getDataAt(0), recLevel, true);
+    private RList updateSingleDimRec(RAbstractContainer value, RList resultVector, RIntVector p) {
+        int position = getPositionInRecursion(resultVector, p.getDataAt(0), true);
         resultVector.updateDataAt(position - 1, adjustRhsStateOnAssignment(value), null);
         updateNames(resultVector, p);
         return resultVector;
@@ -774,7 +785,7 @@ public abstract class UpdateArrayHelperNode extends RNode implements RSyntaxNode
         return resultVector;
     }
 
-    private Object updateListRecursive(VirtualFrame frame, Object v, Object value, RList vector, int recLevel, RStringVector p) {
+    private Object updateListRecursive(VirtualFrame frame, Object v, Object value, RList vector, RStringVector p) {
         int position = AccessArrayNode.getPositionInRecursion(vector, p.getDataAt(0), recLevel, getEncapsulatingSourceSection(), error, attrProfiles);
         if (p.getLength() == 2 && RRuntime.isNA(p.getDataAt(1))) {
             // catch it here, otherwise it will get caught at lower level of recursion resulting in
@@ -785,17 +796,16 @@ public abstract class UpdateArrayHelperNode extends RNode implements RSyntaxNode
         Object el;
         RList resultList = vector;
         if (recLevel == 0) {
-            recLevelZero.enter();
             // TODO: does it matter to make it smarter (mark nested lists as shared during copy?)
             resultList = (RList) vector.deepCopy();
         }
         if (twoPosProfile.profile(p.getLength() == 2)) {
             Object finalVector = coerceVector(frame, resultList.getDataAt(position - 1), value, p);
             Object lastPosition = castPosition(frame, finalVector, convertOperand(frame, finalVector, p.getDataAt(1)));
-            el = updateRecursive(frame, v, value, finalVector, lastPosition, recLevel + 1);
+            el = updateRecursive(frame, v, value, finalVector, lastPosition);
         } else {
             RStringVector newP = AccessArrayNode.popHead(p, posNACheck);
-            el = updateRecursive(frame, v, value, resultList.getDataAt(position - 1), newP, recLevel + 1);
+            el = updateRecursive(frame, v, value, resultList.getDataAt(position - 1), newP);
         }
 
         resultList.updateDataAt(position - 1, el, null);
@@ -803,60 +813,60 @@ public abstract class UpdateArrayHelperNode extends RNode implements RSyntaxNode
     }
 
     @Specialization(guards = {"!isObject(vector)", "multiDim(vector)", "!wrongDimensionsMatrix(positions, vector)", "!wrongDimensions(positions, vector)"})
-    protected RList update(VirtualFrame frame, Object v, RAbstractContainer value, int recLevel, Object[] positions, RList vector) {
+    protected RList update(VirtualFrame frame, Object v, RAbstractContainer value, Object[] positions, RList vector) {
         return updateVector(frame, value, vector, positions);
     }
 
     @Specialization(guards = "!isObject(vector)")
-    protected Object updateString(VirtualFrame frame, Object v, RNull value, int recLevel, RStringVector positions, RList vector) {
-        return updateListRecursive(frame, v, value, vector, recLevel, positions);
+    protected Object updateString(VirtualFrame frame, Object v, RNull value, RStringVector positions, RList vector) {
+        return updateListRecursive(frame, v, value, vector, positions);
     }
 
     @Specialization(guards = "!isObject(vector)")
-    protected Object updateString(VirtualFrame frame, Object v, RAbstractContainer value, int recLevel, RStringVector positions, RList vector) {
-        return updateListRecursive(frame, v, value, vector, recLevel, positions);
+    protected Object updateString(VirtualFrame frame, Object v, RAbstractContainer value, RStringVector positions, RList vector) {
+        return updateListRecursive(frame, v, value, vector, positions);
     }
 
     @Specialization(guards = {"!isObject(vector)", "isSubset", "!posNames(positions)", "multiPos(positions)"})
-    protected RList update(Object v, RAbstractContainer value, int recLevel, RIntVector positions, RList vector) {
+    protected RList update(Object v, RAbstractContainer value, RIntVector positions, RList vector) {
         return updateSingleDimVector(value, vector.getLength(), getResultVector(vector, getHighestPos(positions), false), positions);
     }
 
     @Specialization(guards = {"!isObject(vector)", "isSubset", "!posNames(positions)", "onePosition(positions)"})
-    protected Object updateOne(VirtualFrame frame, Object v, RAbstractContainer value, int recLevel, RIntVector positions, RList vector) {
-        return updateRecursive(frame, v, value, vector, positions.getDataAt(0), recLevel);
+    protected Object updateOne(VirtualFrame frame, Object v, RAbstractContainer value, RIntVector positions, RList vector) {
+        return updateDelegate(frame, v, value, vector, positions.getDataAt(0));
     }
 
     @Specialization(guards = {"!isObject(vector)", "isSubset", "posNames(positions)"})
-    protected RList updateNames(Object v, RAbstractContainer value, int recLevel, RIntVector positions, RList vector) {
+    protected RList updateNames(Object v, RAbstractContainer value, RIntVector positions, RList vector) {
         return updateSingleDimVector(value, vector.getLength(), getResultVector(vector, getHighestPos(positions), false), positions);
     }
 
     @Specialization(guards = {"!isObject(vector)", "!isValueLengthOne(value)", "isSubset", "!isPosNA(position)", "!isPosZero(position)", "!isPositionNegative(position)"})
-    protected RList updateTooManyValuesSubset(Object v, RAbstractContainer value, int recLevel, int position, RList vector) {
+    protected RList updateTooManyValuesSubset(Object v, RAbstractContainer value, int position, RList vector) {
         RError.warning(RError.Message.NOT_MULTIPLE_REPLACEMENT);
         return updateSingleDim(value, getResultVector(vector, position, false), position);
     }
 
     @Specialization(guards = {"!isObject(vector)", "isValueLengthOne(value)", "isSubset", "!isPosNA(position)", "!isPosZero(position)", "!isPositionNegative(position)"})
-    protected RList update(Object v, RAbstractContainer value, int recLevel, int position, RList vector) {
+    protected RList update(Object v, RAbstractContainer value, int position, RList vector) {
         return updateSingleDim(value, getResultVector(vector, position, false), position);
     }
 
     @Specialization(guards = {"!isObject(vector)", "!isSubset", "!isPosNA(position)", "!isPosZero(position)", "!isPositionNegative(position)"})
-    protected RList updateTooManyValuesSubscript(Object v, RAbstractContainer value, int recLevel, int position, RList vector) {
+    protected RList updateTooManyValuesSubscript(Object v, RAbstractContainer value, int position, RList vector) {
         RList resultVector = getResultVector(vector, position, false);
         resultVector.updateDataAt(position - 1, adjustRhsStateOnAssignment(value), null);
         return resultVector;
     }
 
     @Specialization(guards = {"!isObject(vector)", "isPosNA(position)"})
-    protected RList updateListNullValue(Object v, RNull value, int recLevel, int position, RList vector) {
+    protected RList updateListNullValue(Object v, RNull value, int position, RList vector) {
         return vector;
     }
 
     @Specialization(guards = {"!isObject(vector)", "!isPosZero(position)", "emptyList(vector)", "!isPosNA(position)", "!isPositionNegative(position)"})
-    protected RList updateEmptyList(Object v, RNull value, int recLevel, int position, RList vector) {
+    protected RList updateEmptyList(Object v, RNull value, int position, RList vector) {
         return vector;
     }
 
@@ -897,19 +907,19 @@ public abstract class UpdateArrayHelperNode extends RNode implements RSyntaxNode
     }
 
     @Specialization(guards = {"!isObject(vector)", "!isPosZero(position)", "!emptyList(vector)", "!isPosNA(position)", "!isPositionNegative(position)"})
-    protected RList update(Object v, RNull value, int recLevel, int position, RList vector) {
+    protected RList update(Object v, RNull value, int position, RList vector) {
         return removeElement(vector, position, false, isSubset);
     }
 
     private static final Object DELETE_MARKER = new Object();
 
     @Specialization(guards = {"!isObject(vector)", "isSubset", "noPosition(positions)"})
-    protected RList updateEmptyPos(Object v, RNull value, int recLevel, RIntVector positions, RList vector) {
+    protected RList updateEmptyPos(Object v, RNull value, RIntVector positions, RList vector) {
         return vector;
     }
 
     @Specialization(guards = {"!isObject(vector)", "isSubset", "!noPosition(positions)"})
-    protected RList update(Object v, RNull value, int recLevel, RIntVector positions, RList vector) {
+    protected RList update(Object v, RNull value, RIntVector positions, RList vector) {
         if (!isSubset) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
         }
@@ -973,8 +983,8 @@ public abstract class UpdateArrayHelperNode extends RNode implements RSyntaxNode
         return result;
     }
 
-    private Object updateListRecursive(VirtualFrame frame, Object v, Object value, RList vector, int recLevel, RIntVector p) {
-        int position = getPositionInRecursion(vector, p.getDataAt(0), recLevel, false);
+    private Object updateListRecursive(VirtualFrame frame, Object v, Object value, RList vector, RIntVector p) {
+        int position = getPositionInRecursion(vector, p.getDataAt(0), false);
         if (p.getLength() == 2 && RRuntime.isNA(p.getDataAt(1))) {
             // catch it here, otherwise it will get caught at lower level of recursion resulting in
             // a different message
@@ -984,17 +994,16 @@ public abstract class UpdateArrayHelperNode extends RNode implements RSyntaxNode
         RList resultList = vector;
         if (recLevel == 0) {
             // TODO: does it matter to make it smarter (mark nested lists as shared during copy?)
-            recLevelZero.enter();
             resultList = (RList) vector.deepCopy();
         }
         Object el;
         if (twoPosProfile.profile(p.getLength() == 2)) {
             Object finalVector = coerceVector(frame, resultList.getDataAt(position - 1), value, p);
             Object lastPosition = castPosition(frame, finalVector, convertOperand(frame, finalVector, p.getDataAt(1)));
-            el = updateRecursive(frame, v, value, finalVector, lastPosition, recLevel + 1);
+            el = updateRecursive(frame, v, value, finalVector, lastPosition);
         } else {
             RIntVector newP = AccessArrayNode.popHead(p, posNACheck);
-            el = updateRecursive(frame, v, value, resultList.getDataAt(position - 1), newP, recLevel + 1);
+            el = updateRecursive(frame, v, value, resultList.getDataAt(position - 1), newP);
         }
 
         resultList.updateDataAt(position - 1, el, null);
@@ -1002,54 +1011,54 @@ public abstract class UpdateArrayHelperNode extends RNode implements RSyntaxNode
     }
 
     @Specialization(guards = {"!isObject(vector)", "!isSubset", "multiPos(positions)"})
-    protected Object access(VirtualFrame frame, Object v, RNull value, int recLevel, RIntVector positions, RList vector) {
-        return updateListRecursive(frame, v, value, vector, recLevel, positions);
+    protected Object access(VirtualFrame frame, Object v, RNull value, RIntVector positions, RList vector) {
+        return updateListRecursive(frame, v, value, vector, positions);
     }
 
     @Specialization(guards = {"!isObject(vector)", "!isSubset", "multiPos(positions)"})
-    protected Object access(VirtualFrame frame, Object v, RAbstractContainer value, int recLevel, RIntVector positions, RList vector) {
-        return updateListRecursive(frame, v, value, vector, recLevel, positions);
+    protected Object access(VirtualFrame frame, Object v, RAbstractContainer value, RIntVector positions, RList vector) {
+        return updateListRecursive(frame, v, value, vector, positions);
     }
 
-    @Specialization(guards = {"!isObject(vector)", "!isSubset", "inRecursion(recLevel)", "multiPos(positions)"})
-    protected Object accessRecFailed(Object v, RAbstractContainer value, int recLevel, RIntVector positions, RAbstractVector vector) {
+    @Specialization(guards = {"!isObject(vector)", "!isSubset", "recLevel > 0", "multiPos(positions)"})
+    protected Object accessRecFailed(Object v, RAbstractContainer value, RIntVector positions, RAbstractVector vector) {
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.RECURSIVE_INDEXING_FAILED, recLevel + 1);
     }
 
     @Specialization(guards = {"!isObject(vector)", "!isSubset", "!multiPos(positions)"})
-    protected Object accessSubscriptListValue(Object v, RList value, int recLevel, RIntVector positions, RList vector) {
-        int position = getPositionInRecursion(vector, positions.getDataAt(0), recLevel, true);
-        return updateSingleDimRec(value, getResultVector(vector, position, false), positions, recLevel);
+    protected Object accessSubscriptListValue(Object v, RList value, RIntVector positions, RList vector) {
+        int position = getPositionInRecursion(vector, positions.getDataAt(0), true);
+        return updateSingleDimRec(value, getResultVector(vector, position, false), positions);
     }
 
-    @Specialization(guards = {"!isObject(vector)", "!isSubset", "inRecursion(recLevel)", "!multiPos(positions)"})
-    protected Object accessSubscriptNullValueInRecursion(Object v, RNull value, int recLevel, RIntVector positions, RList vector) {
-        int position = getPositionInRecursion(vector, positions.getDataAt(0), recLevel, true);
+    @Specialization(guards = {"!isObject(vector)", "!isSubset", "recLevel > 0", "!multiPos(positions)"})
+    protected Object accessSubscriptNullValueInRecursion(Object v, RNull value, RIntVector positions, RList vector) {
+        int position = getPositionInRecursion(vector, positions.getDataAt(0), true);
         return removeElement(vector, position, true, false);
     }
 
-    @Specialization(guards = {"!isObject(vector)", "!isSubset", "!inRecursion(recLevel)", "!multiPos(positions)"})
-    protected Object accessSubscriptNullValue(Object v, RNull value, int recLevel, RIntVector positions, RList vector) {
-        int position = getPositionInRecursion(vector, positions.getDataAt(0), recLevel, true);
+    @Specialization(guards = {"!isObject(vector)", "!isSubset", "recLevel == 0", "!multiPos(positions)"})
+    protected Object accessSubscriptNullValue(Object v, RNull value, RIntVector positions, RList vector) {
+        int position = getPositionInRecursion(vector, positions.getDataAt(0), true);
         return removeElement(vector, position, false, false);
     }
 
     @Specialization(guards = {"!isObject(vector)", "!isSubset", "!multiPos(positions)"})
-    protected Object accessSubscript(Object v, RAbstractContainer value, int recLevel, RIntVector positions, RList vector) {
-        int position = getPositionInRecursion(vector, positions.getDataAt(0), recLevel, true);
-        return updateSingleDimRec(value, getResultVector(vector, position, false), positions, recLevel);
+    protected Object accessSubscript(Object v, RAbstractContainer value, RIntVector positions, RList vector) {
+        int position = getPositionInRecursion(vector, positions.getDataAt(0), true);
+        return updateSingleDimRec(value, getResultVector(vector, position, false), positions);
     }
 
     @TruffleBoundary
     @Specialization(guards = {"!isObject(vector)", "!isValueLengthOne(value)", "!emptyValue(value)", "!isSubset", "!isPosNA(position)", "!isPosZero(position)"})
-    protected RAbstractVector updateTooManyValues(Object v, RAbstractContainer value, int recLevel, int position, RAbstractVector vector) {
+    protected RAbstractVector updateTooManyValues(Object v, RAbstractContainer value, int position, RAbstractVector vector) {
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
     }
 
     // null value (with vectors)
 
     @Specialization(guards = {"!isObject(vector)", "isPosZero(position)", "!isVectorList(vector)"})
-    protected RAbstractVector updatePosZero(Object v, RNull value, int recLevel, int position, RAbstractVector vector) {
+    protected RAbstractVector updatePosZero(Object v, RNull value, int position, RAbstractVector vector) {
         if (!isSubset) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.REPLACEMENT_0);
         }
@@ -1058,7 +1067,7 @@ public abstract class UpdateArrayHelperNode extends RNode implements RSyntaxNode
 
     @TruffleBoundary
     @Specialization(guards = {"!isObject(vector)", "!isPosZero(position)", "!isPosNA(position)", "!isVectorList(vector)"})
-    protected RAbstractVector update(Object v, RNull value, int recLevel, int position, RAbstractVector vector) {
+    protected RAbstractVector update(Object v, RNull value, int position, RAbstractVector vector) {
         if (!isSubset) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
         } else {
@@ -1067,19 +1076,19 @@ public abstract class UpdateArrayHelperNode extends RNode implements RSyntaxNode
     }
 
     @Specialization(guards = {"!isObject(vector)", "isSubset", "!isVectorList(vector)", "noPosition(positions)"})
-    protected RAbstractVector updateNullSubsetNoPos(Object v, RNull value, int recLevel, RIntVector positions, RAbstractVector vector) {
+    protected RAbstractVector updateNullSubsetNoPos(Object v, RNull value, RIntVector positions, RAbstractVector vector) {
         return vector;
     }
 
     @TruffleBoundary
     @Specialization(guards = {"!isObject(vector)", "isSubset", "!isVectorList(vector)", "!noPosition(positions)"})
-    protected RAbstractVector updateNullSubset(Object v, RNull value, int recLevel, RIntVector positions, RAbstractVector vector) {
+    protected RAbstractVector updateNullSubset(Object v, RNull value, RIntVector positions, RAbstractVector vector) {
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.REPLACEMENT_0);
     }
 
     @TruffleBoundary
     @Specialization(guards = {"!isObject(vector)", "!isSubset", "!isVectorList(vector)"})
-    protected RAbstractVector updateNullNoPos(Object v, RNull value, int recLevel, RIntVector positions, RAbstractVector vector) {
+    protected RAbstractVector updateNullNoPos(Object v, RNull value, RIntVector positions, RAbstractVector vector) {
         RError.Message message = positions.getLength() <= 1 ? RError.Message.MORE_SUPPLIED_REPLACE : (positions.getLength() == 2 && positions.getDataAt(0) == 0) ? RError.Message.SELECT_LESS_1
                         : RError.Message.SELECT_MORE_1;
         throw RError.error(getEncapsulatingSourceSection(), message);
@@ -1089,7 +1098,7 @@ public abstract class UpdateArrayHelperNode extends RNode implements RSyntaxNode
 
     @TruffleBoundary
     @Specialization(guards = {"!isObject(vector)", "!isSubset", "!isVectorList(vector)", "!posNames(positions)", "multiPos(positions)"})
-    protected Object update(Object v, RAbstractVector value, int recLevel, RIntVector positions, RAbstractVector vector) {
+    protected Object update(Object v, RAbstractVector value, RIntVector positions, RAbstractVector vector) {
         throw RError.error(getEncapsulatingSourceSection(), positions.getLength() == 2 && positions.getDataAt(0) == 0 ? RError.Message.SELECT_LESS_1 : RError.Message.SELECT_MORE_1);
     }
 
@@ -1170,68 +1179,68 @@ public abstract class UpdateArrayHelperNode extends RNode implements RSyntaxNode
     }
 
     @Specialization(guards = {"!isObject(vector)", "multiDim(vector)", "!wrongDimensionsMatrix(positions, vector)", "!wrongDimensions(positions, vector)"})
-    protected RIntVector update(VirtualFrame frame, Object v, RAbstractIntVector value, int recLevel, Object[] positions, RAbstractIntVector vector) {
+    protected RIntVector update(VirtualFrame frame, Object v, RAbstractIntVector value, Object[] positions, RAbstractIntVector vector) {
         return updateVector(frame, value, vector, positions);
     }
 
     @Specialization(guards = {"!isObject(vector)", "multiDim(vector)", "!wrongDimensionsMatrix(positions, vector)", "!wrongDimensions(positions, vector)"})
-    protected RIntVector update(VirtualFrame frame, Object v, RAbstractLogicalVector value, int recLevel, Object[] positions, RAbstractIntVector vector) {
+    protected RIntVector update(VirtualFrame frame, Object v, RAbstractLogicalVector value, Object[] positions, RAbstractIntVector vector) {
         return updateVector(frame, castInteger(frame, value), vector, positions);
     }
 
     @Specialization(guards = {"!isObject(vector)", "isSubset", "!posNames(positions)", "multiPos(positions)"})
-    protected RAbstractIntVector updateSubset(Object v, RAbstractIntVector value, int recLevel, RIntVector positions, RAbstractIntVector vector) {
+    protected RAbstractIntVector updateSubset(Object v, RAbstractIntVector value, RIntVector positions, RAbstractIntVector vector) {
         return updateSingleDimVector(value, vector.getLength(), getResultVector(vector, getHighestPos(positions)), positions);
     }
 
     @Specialization(guards = {"!isObject(vector)", "isSubset", "!posNames(positions)", "multiPos(positions)"})
-    protected RAbstractIntVector updateSubset(VirtualFrame frame, Object v, RAbstractLogicalVector value, int recLevel, RIntVector positions, RAbstractIntVector vector) {
-        return updateSubset(v, castInteger(frame, value), recLevel, positions, vector);
+    protected RAbstractIntVector updateSubset(VirtualFrame frame, Object v, RAbstractLogicalVector value, RIntVector positions, RAbstractIntVector vector) {
+        return updateSubset(v, castInteger(frame, value), positions, vector);
     }
 
     @Specialization(guards = {"!isObject(vector)", "isSubset", "!posNames(positions)", "multiPos(positions)"})
-    protected RAbstractIntVector updateSubset(VirtualFrame frame, Object v, RAbstractDoubleVector value, int recLevel, RIntVector positions, RAbstractIntVector vector) {
-        return updateSubset(v, castInteger(frame, value), recLevel, positions, vector);
+    protected RAbstractIntVector updateSubset(VirtualFrame frame, Object v, RAbstractDoubleVector value, RIntVector positions, RAbstractIntVector vector) {
+        return updateSubset(v, castInteger(frame, value), positions, vector);
     }
 
     @Specialization(guards = {"!isObject(vector)", "isSubset", "!posNames(positions)", "onePosition(positions)"})
-    protected Object updateSubsetOne(VirtualFrame frame, Object v, RAbstractIntVector value, int recLevel, RIntVector positions, RAbstractIntVector vector) {
-        return updateRecursive(frame, v, value, vector, positions.getDataAt(0), recLevel);
+    protected Object updateSubsetOne(VirtualFrame frame, Object v, RAbstractIntVector value, RIntVector positions, RAbstractIntVector vector) {
+        return updateDelegate(frame, v, value, vector, positions.getDataAt(0));
     }
 
     @Specialization(guards = {"!isObject(vector)", "posNames(positions)"})
-    protected RAbstractIntVector updateNames(Object v, RAbstractIntVector value, int recLevel, RIntVector positions, RAbstractIntVector vector) {
+    protected RAbstractIntVector updateNames(Object v, RAbstractIntVector value, RIntVector positions, RAbstractIntVector vector) {
         return updateSingleDimVector(value, vector.getLength(), getResultVector(vector, getHighestPos(positions)), positions);
     }
 
     @Specialization(guards = {"!isObject(vector)", "posNames(positions)"})
-    protected RAbstractIntVector updateNames(VirtualFrame frame, Object v, RAbstractLogicalVector value, int recLevel, RIntVector positions, RAbstractIntVector vector) {
-        return updateNames(v, castInteger(frame, value), recLevel, positions, vector);
+    protected RAbstractIntVector updateNames(VirtualFrame frame, Object v, RAbstractLogicalVector value, RIntVector positions, RAbstractIntVector vector) {
+        return updateNames(v, castInteger(frame, value), positions, vector);
     }
 
     @Specialization(guards = {"!isObject(vector)", "!isValueLengthOne(value)", "isSubset", "!isPosNA(position)", "!isPosZero(position)"})
-    protected RIntVector updateTooManyValuesSubset(Object v, RAbstractIntVector value, int recLevel, int position, RAbstractIntVector vector) {
+    protected RIntVector updateTooManyValuesSubset(Object v, RAbstractIntVector value, int position, RAbstractIntVector vector) {
         RError.warning(RError.Message.NOT_MULTIPLE_REPLACEMENT);
         return updateSingleDim(value, getResultVector(vector, position), position);
     }
 
     @Specialization(guards = {"!isObject(vector)", "!isValueLengthOne(value)", "isSubset", "!isPosNA(position)", "!isPosZero(position)"})
-    protected RIntVector updateTooManyValuesSubset(VirtualFrame frame, Object v, RAbstractLogicalVector value, int recLevel, int position, RAbstractIntVector vector) {
-        return updateTooManyValuesSubset(v, castInteger(frame, value), recLevel, position, vector);
+    protected RIntVector updateTooManyValuesSubset(VirtualFrame frame, Object v, RAbstractLogicalVector value, int position, RAbstractIntVector vector) {
+        return updateTooManyValuesSubset(v, castInteger(frame, value), position, vector);
     }
 
     @Specialization(guards = {"!isObject(vector)", "isValueLengthOne(value)", "!isPosNA(position)", "!isPosZero(position)"})
-    protected RIntVector update(Object v, RAbstractIntVector value, int recLevel, int position, RAbstractIntVector vector) {
+    protected RIntVector update(Object v, RAbstractIntVector value, int position, RAbstractIntVector vector) {
         return updateSingleDim(value, getResultVector(vector, position), position);
     }
 
     @Specialization(guards = {"!isObject(vector)", "isSubset", "!posNames(positions)", "onePosition(positions)"})
-    protected Object updateSubsetOne(VirtualFrame frame, Object v, RAbstractLogicalVector value, int recLevel, RIntVector positions, RAbstractIntVector vector) {
-        return updateRecursive(frame, v, value, vector, positions.getDataAt(0), recLevel);
+    protected Object updateSubsetOne(VirtualFrame frame, Object v, RAbstractLogicalVector value, RIntVector positions, RAbstractIntVector vector) {
+        return updateDelegate(frame, v, value, vector, positions.getDataAt(0));
     }
 
     @Specialization(guards = {"!isObject(vector)", "isValueLengthOne(value)", "!isPosNA(position)", "!isPosZero(position)"})
-    protected RIntVector update(VirtualFrame frame, Object v, RAbstractLogicalVector value, int recLevel, int position, RAbstractIntVector vector) {
+    protected RIntVector update(VirtualFrame frame, Object v, RAbstractLogicalVector value, int position, RAbstractIntVector vector) {
         return updateSingleDim(castInteger(frame, value), getResultVector(vector, position), position);
     }
 
@@ -1317,95 +1326,95 @@ public abstract class UpdateArrayHelperNode extends RNode implements RSyntaxNode
     }
 
     @Specialization(guards = {"!isObject(vector)", "multiDim(vector)", "!wrongDimensionsMatrix(positions, vector)", "!wrongDimensions(positions, vector)"})
-    protected RDoubleVector update(VirtualFrame frame, Object v, RAbstractIntVector value, int recLevel, Object[] positions, RAbstractDoubleVector vector) {
+    protected RDoubleVector update(VirtualFrame frame, Object v, RAbstractIntVector value, Object[] positions, RAbstractDoubleVector vector) {
         return updateVector(frame, castDouble(frame, value), vector, positions);
     }
 
     @Specialization(guards = {"!isObject(vector)", "multiDim(vector)", "!wrongDimensionsMatrix(positions, vector)", "!wrongDimensions(positions, vector)"})
-    protected RDoubleVector update(VirtualFrame frame, Object v, RAbstractDoubleVector value, int recLevel, Object[] positions, RAbstractDoubleVector vector) {
+    protected RDoubleVector update(VirtualFrame frame, Object v, RAbstractDoubleVector value, Object[] positions, RAbstractDoubleVector vector) {
         return updateVector(frame, value, vector, positions);
     }
 
     @Specialization(guards = {"!isObject(vector)", "multiDim(vector)", "!wrongDimensionsMatrix(positions, vector)", "!wrongDimensions(positions, vector)"})
-    protected RDoubleVector update(VirtualFrame frame, Object v, RAbstractLogicalVector value, int recLevel, Object[] positions, RAbstractDoubleVector vector) {
+    protected RDoubleVector update(VirtualFrame frame, Object v, RAbstractLogicalVector value, Object[] positions, RAbstractDoubleVector vector) {
         return updateVector(frame, castDouble(frame, value), vector, positions);
     }
 
     @Specialization(guards = {"!isObject(vector)", "isSubset", "!posNames(positions)", "multiPos(positions)"})
-    protected RAbstractDoubleVector updateSubset(VirtualFrame frame, Object v, RAbstractIntVector value, int recLevel, RIntVector positions, RAbstractDoubleVector vector) {
+    protected RAbstractDoubleVector updateSubset(VirtualFrame frame, Object v, RAbstractIntVector value, RIntVector positions, RAbstractDoubleVector vector) {
         return updateSingleDimVector(castDouble(frame, value), vector.getLength(), getResultVector(vector, getHighestPos(positions)), positions);
     }
 
     @Specialization(guards = {"!isObject(vector)", "isSubset", "!posNames(positions)", "onePosition(positions)"})
-    protected Object updateSubsetOne(VirtualFrame frame, Object v, RAbstractIntVector value, int recLevel, RIntVector positions, RAbstractDoubleVector vector) {
-        return updateRecursive(frame, v, value, vector, positions.getDataAt(0), recLevel);
+    protected Object updateSubsetOne(VirtualFrame frame, Object v, RAbstractIntVector value, RIntVector positions, RAbstractDoubleVector vector) {
+        return updateDelegate(frame, v, value, vector, positions.getDataAt(0));
     }
 
     @Specialization(guards = {"!isObject(vector)", "posNames(positions)"})
-    protected RAbstractDoubleVector updateNames(VirtualFrame frame, Object v, RAbstractIntVector value, int recLevel, RIntVector positions, RAbstractDoubleVector vector) {
+    protected RAbstractDoubleVector updateNames(VirtualFrame frame, Object v, RAbstractIntVector value, RIntVector positions, RAbstractDoubleVector vector) {
         return updateSingleDimVector(castDouble(frame, value), vector.getLength(), getResultVector(vector, getHighestPos(positions)), positions);
     }
 
     @Specialization(guards = {"!isObject(vector)", "!isValueLengthOne(value)", "isSubset", "!isPosNA(position)", "!isPosZero(position)"})
-    protected RDoubleVector updateTooManyValuesSubset(VirtualFrame frame, Object v, RAbstractIntVector value, int recLevel, int position, RAbstractDoubleVector vector) {
+    protected RDoubleVector updateTooManyValuesSubset(VirtualFrame frame, Object v, RAbstractIntVector value, int position, RAbstractDoubleVector vector) {
         RError.warning(RError.Message.NOT_MULTIPLE_REPLACEMENT);
         return updateSingleDim(castDouble(frame, value), getResultVector(vector, position), position);
     }
 
     @Specialization(guards = {"!isObject(vector)", "isValueLengthOne(value)", "!isPosNA(position)", "!isPosZero(position)"})
-    protected RDoubleVector update(VirtualFrame frame, Object v, RAbstractIntVector value, int recLevel, int position, RAbstractDoubleVector vector) {
+    protected RDoubleVector update(VirtualFrame frame, Object v, RAbstractIntVector value, int position, RAbstractDoubleVector vector) {
         return updateSingleDim(castDouble(frame, value), getResultVector(vector, position), position);
     }
 
     @Specialization(guards = {"!isObject(vector)", "isSubset", "!posNames(positions)", "multiPos(positions)"})
-    protected RAbstractDoubleVector updateSubset(Object v, RAbstractDoubleVector value, int recLevel, RIntVector positions, RAbstractDoubleVector vector) {
+    protected RAbstractDoubleVector updateSubset(Object v, RAbstractDoubleVector value, RIntVector positions, RAbstractDoubleVector vector) {
         return updateSingleDimVector(value, vector.getLength(), getResultVector(vector, getHighestPos(positions)), positions);
     }
 
     @Specialization(guards = {"!isObject(vector)", "isSubset", "!posNames(positions)", "onePosition(positions)"})
-    protected Object updateSubsetOne(VirtualFrame frame, Object v, RAbstractDoubleVector value, int recLevel, RIntVector positions, RAbstractDoubleVector vector) {
-        return updateRecursive(frame, v, value, vector, positions.getDataAt(0), recLevel);
+    protected Object updateSubsetOne(VirtualFrame frame, Object v, RAbstractDoubleVector value, RIntVector positions, RAbstractDoubleVector vector) {
+        return updateDelegate(frame, v, value, vector, positions.getDataAt(0));
     }
 
     @Specialization(guards = {"!isObject(vector)", "posNames(positions)"})
-    protected RAbstractDoubleVector updateNames(Object v, RAbstractDoubleVector value, int recLevel, RIntVector positions, RAbstractDoubleVector vector) {
+    protected RAbstractDoubleVector updateNames(Object v, RAbstractDoubleVector value, RIntVector positions, RAbstractDoubleVector vector) {
         return updateSingleDimVector(value, vector.getLength(), getResultVector(vector, getHighestPos(positions)), positions);
     }
 
     @Specialization(guards = {"!isObject(vector)", "!isValueLengthOne(value)", "isSubset", "!isPosNA(position)", "!isPosZero(position)"})
-    protected RDoubleVector updateTooManyValuesSubset(Object v, RAbstractDoubleVector value, int recLevel, int position, RAbstractDoubleVector vector) {
+    protected RDoubleVector updateTooManyValuesSubset(Object v, RAbstractDoubleVector value, int position, RAbstractDoubleVector vector) {
         RError.warning(RError.Message.NOT_MULTIPLE_REPLACEMENT);
         return updateSingleDim(value, getResultVector(vector, position), position);
     }
 
     @Specialization(guards = {"!isObject(vector)", "isValueLengthOne(value)", "!isPosNA(position)", "!isPosZero(position)"})
-    protected RDoubleVector update(Object v, RAbstractDoubleVector value, int recLevel, int position, RAbstractDoubleVector vector) {
+    protected RDoubleVector update(Object v, RAbstractDoubleVector value, int position, RAbstractDoubleVector vector) {
         return updateSingleDim(value, getResultVector(vector, position), position);
     }
 
     @Specialization(guards = {"!isObject(vector)", "isSubset", "!posNames(positions)", "multiPos(positions)"})
-    protected RAbstractDoubleVector updateSubset(VirtualFrame frame, Object v, RAbstractLogicalVector value, int recLevel, RIntVector positions, RAbstractDoubleVector vector) {
+    protected RAbstractDoubleVector updateSubset(VirtualFrame frame, Object v, RAbstractLogicalVector value, RIntVector positions, RAbstractDoubleVector vector) {
         return updateSingleDimVector(castDouble(frame, value), vector.getLength(), getResultVector(vector, getHighestPos(positions)), positions);
     }
 
     @Specialization(guards = {"!isObject(vector)", "isSubset", "!posNames(positions)", "onePosition(positions)"})
-    protected Object updateSubsetOne(VirtualFrame frame, Object v, RAbstractLogicalVector value, int recLevel, RIntVector positions, RAbstractDoubleVector vector) {
-        return updateRecursive(frame, v, value, vector, positions.getDataAt(0), recLevel);
+    protected Object updateSubsetOne(VirtualFrame frame, Object v, RAbstractLogicalVector value, RIntVector positions, RAbstractDoubleVector vector) {
+        return updateDelegate(frame, v, value, vector, positions.getDataAt(0));
     }
 
     @Specialization(guards = {"!isObject(vector)", "posNames(positions)"})
-    protected RAbstractDoubleVector updateNames(VirtualFrame frame, Object v, RAbstractLogicalVector value, int recLevel, RIntVector positions, RAbstractDoubleVector vector) {
+    protected RAbstractDoubleVector updateNames(VirtualFrame frame, Object v, RAbstractLogicalVector value, RIntVector positions, RAbstractDoubleVector vector) {
         return updateSingleDimVector(castDouble(frame, value), vector.getLength(), getResultVector(vector, getHighestPos(positions)), positions);
     }
 
     @Specialization(guards = {"!isObject(vector)", "!isValueLengthOne(value)", "isSubset", "!isPosNA(position)", "!isPosZero(position)"})
-    protected RDoubleVector updateTooManyValuesSubset(VirtualFrame frame, Object v, RAbstractLogicalVector value, int recLevel, int position, RAbstractDoubleVector vector) {
+    protected RDoubleVector updateTooManyValuesSubset(VirtualFrame frame, Object v, RAbstractLogicalVector value, int position, RAbstractDoubleVector vector) {
         RError.warning(RError.Message.NOT_MULTIPLE_REPLACEMENT);
         return updateSingleDim(castDouble(frame, value), getResultVector(vector, position), position);
     }
 
     @Specialization(guards = {"!isObject(vector)", "isValueLengthOne(value)", "!isPosNA(position)", "!isPosZero(position)"})
-    protected RDoubleVector update(VirtualFrame frame, Object v, RAbstractLogicalVector value, int recLevel, int position, RAbstractDoubleVector vector) {
+    protected RDoubleVector update(VirtualFrame frame, Object v, RAbstractLogicalVector value, int position, RAbstractDoubleVector vector) {
         return updateSingleDim(castDouble(frame, value), getResultVector(vector, position), position);
     }
 
@@ -1488,33 +1497,33 @@ public abstract class UpdateArrayHelperNode extends RNode implements RSyntaxNode
     }
 
     @Specialization(guards = {"!isObject(vector)", "multiDim(vector)", "!wrongDimensionsMatrix(positions, vector)", "!wrongDimensions(positions, vector)"})
-    protected RLogicalVector update(VirtualFrame frame, Object v, RAbstractLogicalVector value, int recLevel, Object[] positions, RLogicalVector vector) {
+    protected RLogicalVector update(VirtualFrame frame, Object v, RAbstractLogicalVector value, Object[] positions, RLogicalVector vector) {
         return updateVector(frame, value, vector, positions);
     }
 
     @Specialization(guards = {"!isObject(vector)", "isSubset", "!posNames(positions)", "multiPos(positions)"})
-    protected RAbstractLogicalVector updateSubset(Object v, RAbstractLogicalVector value, int recLevel, RIntVector positions, RLogicalVector vector) {
+    protected RAbstractLogicalVector updateSubset(Object v, RAbstractLogicalVector value, RIntVector positions, RLogicalVector vector) {
         return updateSingleDimVector(value, vector.getLength(), getResultVector(vector, getHighestPos(positions)), positions);
     }
 
     @Specialization(guards = {"!isObject(vector)", "isSubset", "!posNames(positions)", "onePosition(positions)"})
-    protected Object updateSubsetOne(VirtualFrame frame, Object v, RAbstractLogicalVector value, int recLevel, RIntVector positions, RLogicalVector vector) {
-        return updateRecursive(frame, v, value, vector, positions.getDataAt(0), recLevel);
+    protected Object updateSubsetOne(VirtualFrame frame, Object v, RAbstractLogicalVector value, RIntVector positions, RLogicalVector vector) {
+        return updateDelegate(frame, v, value, vector, positions.getDataAt(0));
     }
 
     @Specialization(guards = {"!isObject(vector)", "posNames(positions)"})
-    protected RAbstractLogicalVector updateNames(Object v, RAbstractLogicalVector value, int recLevel, RIntVector positions, RLogicalVector vector) {
+    protected RAbstractLogicalVector updateNames(Object v, RAbstractLogicalVector value, RIntVector positions, RLogicalVector vector) {
         return updateSingleDimVector(value, vector.getLength(), getResultVector(vector, getHighestPos(positions)), positions);
     }
 
     @Specialization(guards = {"!isObject(vector)", "!isValueLengthOne(value)", "isSubset", "!isPosNA(position)", "!isPosZero(position)"})
-    protected RLogicalVector updateTooManyValuesSubset(Object v, RAbstractLogicalVector value, int recLevel, int position, RLogicalVector vector) {
+    protected RLogicalVector updateTooManyValuesSubset(Object v, RAbstractLogicalVector value, int position, RLogicalVector vector) {
         RError.warning(RError.Message.NOT_MULTIPLE_REPLACEMENT);
         return updateSingleDim(value, getResultVector(vector, position), position);
     }
 
     @Specialization(guards = {"!isObject(vector)", "isValueLengthOne(value)", "!isPosNA(position)", "!isPosZero(position)"})
-    protected RLogicalVector update(Object v, RAbstractLogicalVector value, int recLevel, int position, RLogicalVector vector) {
+    protected RLogicalVector update(Object v, RAbstractLogicalVector value, int position, RLogicalVector vector) {
         return updateSingleDim(value, getResultVector(vector, position), position);
     }
 
@@ -1597,64 +1606,64 @@ public abstract class UpdateArrayHelperNode extends RNode implements RSyntaxNode
     }
 
     @Specialization(guards = {"!isObject(vector)", "multiDim(vector)", "!wrongDimensionsMatrix(positions, vector)", "!wrongDimensions(positions, vector)"})
-    protected RStringVector update(VirtualFrame frame, Object v, RAbstractStringVector value, int recLevel, Object[] positions, RStringVector vector) {
+    protected RStringVector update(VirtualFrame frame, Object v, RAbstractStringVector value, Object[] positions, RStringVector vector) {
         return updateVector(frame, value, vector, positions);
     }
 
     @Specialization(guards = {"!isObject(vector)", "multiDim(vector)", "!wrongDimensionsMatrix(positions, vector)", "!wrongDimensions(positions, vector)"})
-    protected RStringVector update(VirtualFrame frame, Object v, RAbstractVector value, int recLevel, Object[] positions, RStringVector vector) {
+    protected RStringVector update(VirtualFrame frame, Object v, RAbstractVector value, Object[] positions, RStringVector vector) {
         return updateVector(frame, castString(frame, value), vector, positions);
     }
 
     @Specialization(guards = {"!isObject(vector)", "isSubset", "!posNames(positions)", "multiPos(positions)"})
-    protected RAbstractStringVector updateSubset(Object v, RAbstractStringVector value, int recLevel, RIntVector positions, RStringVector vector) {
+    protected RAbstractStringVector updateSubset(Object v, RAbstractStringVector value, RIntVector positions, RStringVector vector) {
         return updateSingleDimVector(value, vector.getLength(), getResultVector(vector, getHighestPos(positions)), positions);
     }
 
     @Specialization(guards = {"!isObject(vector)", "isSubset", "!posNames(positions)", "onePosition(positions)"})
-    protected Object updateSubsetOne(VirtualFrame frame, Object v, RAbstractStringVector value, int recLevel, RIntVector positions, RStringVector vector) {
-        return updateRecursive(frame, v, value, vector, positions.getDataAt(0), recLevel);
+    protected Object updateSubsetOne(VirtualFrame frame, Object v, RAbstractStringVector value, RIntVector positions, RStringVector vector) {
+        return updateDelegate(frame, v, value, vector, positions.getDataAt(0));
     }
 
     @Specialization(guards = {"!isObject(vector)", "posNames(positions)"})
-    protected RAbstractStringVector updateNames(Object v, RAbstractStringVector value, int recLevel, RIntVector positions, RStringVector vector) {
+    protected RAbstractStringVector updateNames(Object v, RAbstractStringVector value, RIntVector positions, RStringVector vector) {
         return updateSingleDimVector(value, vector.getLength(), getResultVector(vector, getHighestPos(positions)), positions);
     }
 
     @Specialization(guards = {"!isObject(vector)", "!isValueLengthOne(value)", "isSubset", "!isPosNA(position)", "!isPosZero(position)"})
-    protected RStringVector updateTooManyValuesSubset(Object v, RAbstractStringVector value, int recLevel, int position, RStringVector vector) {
+    protected RStringVector updateTooManyValuesSubset(Object v, RAbstractStringVector value, int position, RStringVector vector) {
         RError.warning(RError.Message.NOT_MULTIPLE_REPLACEMENT);
         return updateSingleDim(value, getResultVector(vector, position), position);
     }
 
     @Specialization(guards = {"!isObject(vector)", "isValueLengthOne(value)", "!isPosNA(position)", "!isPosZero(position)"})
-    protected RStringVector update(Object v, RAbstractStringVector value, int recLevel, int position, RStringVector vector) {
+    protected RStringVector update(Object v, RAbstractStringVector value, int position, RStringVector vector) {
         return updateSingleDim(value, getResultVector(vector, position), position);
     }
 
     @Specialization(guards = {"!isObject(vector)", "isSubset", "!posNames(positions)", "multiPos(positions)"})
-    protected RAbstractStringVector updateSubset(VirtualFrame frame, Object v, RAbstractVector value, int recLevel, RIntVector positions, RStringVector vector) {
+    protected RAbstractStringVector updateSubset(VirtualFrame frame, Object v, RAbstractVector value, RIntVector positions, RStringVector vector) {
         return updateSingleDimVector(castString(frame, value), vector.getLength(), getResultVector(vector, getHighestPos(positions)), positions);
     }
 
     @Specialization(guards = {"!isObject(vector)", "isSubset", "!posNames(positions)", "onePosition(positions)"})
-    protected Object updateSubsetOne(VirtualFrame frame, Object v, RAbstractVector value, int recLevel, RIntVector positions, RStringVector vector) {
-        return updateRecursive(frame, v, value, vector, positions.getDataAt(0), recLevel);
+    protected Object updateSubsetOne(VirtualFrame frame, Object v, RAbstractVector value, RIntVector positions, RStringVector vector) {
+        return updateDelegate(frame, v, value, vector, positions.getDataAt(0));
     }
 
     @Specialization(guards = {"!isObject(vector)", "posNames(positions)"})
-    protected RAbstractStringVector updateSubsetNames(VirtualFrame frame, Object v, RAbstractVector value, int recLevel, RIntVector positions, RStringVector vector) {
+    protected RAbstractStringVector updateSubsetNames(VirtualFrame frame, Object v, RAbstractVector value, RIntVector positions, RStringVector vector) {
         return updateSingleDimVector(castString(frame, value), vector.getLength(), getResultVector(vector, getHighestPos(positions)), positions);
     }
 
     @Specialization(guards = {"!isObject(vector)", "!isValueLengthOne(value)", "isSubset", "!isPosNA(position)", "!isPosZero(position)"})
-    protected RStringVector updateTooManyValuesSubset(VirtualFrame frame, Object v, RAbstractVector value, int recLevel, int position, RStringVector vector) {
+    protected RStringVector updateTooManyValuesSubset(VirtualFrame frame, Object v, RAbstractVector value, int position, RStringVector vector) {
         RError.warning(RError.Message.NOT_MULTIPLE_REPLACEMENT);
         return updateSingleDim(castString(frame, value), getResultVector(vector, position), position);
     }
 
     @Specialization(guards = {"!isObject(vector)", "isValueLengthOne(value)", "!isPosNA(position)", "!isPosZero(position)"})
-    protected RStringVector update(VirtualFrame frame, Object v, RAbstractVector value, int recLevel, int position, RStringVector vector) {
+    protected RStringVector update(VirtualFrame frame, Object v, RAbstractVector value, int position, RStringVector vector) {
         return updateSingleDim(castString(frame, value), getResultVector(vector, position), position);
     }
 
@@ -1737,126 +1746,126 @@ public abstract class UpdateArrayHelperNode extends RNode implements RSyntaxNode
     }
 
     @Specialization(guards = {"!isObject(vector)", "multiDim(vector)", "!wrongDimensionsMatrix(positions, vector)", "!wrongDimensions(positions, vector)"})
-    protected RComplexVector update(VirtualFrame frame, Object v, RAbstractIntVector value, int recLevel, Object[] positions, RComplexVector vector) {
+    protected RComplexVector update(VirtualFrame frame, Object v, RAbstractIntVector value, Object[] positions, RComplexVector vector) {
         return updateVector(frame, castComplex(frame, value), vector, positions);
     }
 
     @Specialization(guards = {"!isObject(vector)", "multiDim(vector)", "!wrongDimensionsMatrix(positions, vector)", "!wrongDimensions(positions, vector)"})
-    protected RComplexVector update(VirtualFrame frame, Object v, RAbstractDoubleVector value, int recLevel, Object[] positions, RComplexVector vector) {
+    protected RComplexVector update(VirtualFrame frame, Object v, RAbstractDoubleVector value, Object[] positions, RComplexVector vector) {
         return updateVector(frame, castComplex(frame, value), vector, positions);
     }
 
     @Specialization(guards = {"!isObject(vector)", "multiDim(vector)", "!wrongDimensionsMatrix(positions, vector)", "!wrongDimensions(positions, vector)"})
-    protected RComplexVector update(VirtualFrame frame, Object v, RAbstractLogicalVector value, int recLevel, Object[] positions, RComplexVector vector) {
+    protected RComplexVector update(VirtualFrame frame, Object v, RAbstractLogicalVector value, Object[] positions, RComplexVector vector) {
         return updateVector(frame, castComplex(frame, value), vector, positions);
     }
 
     @Specialization(guards = {"!isObject(vector)", "multiDim(vector)", "!wrongDimensionsMatrix(positions, vector)", "!wrongDimensions(positions, vector)"})
-    protected RComplexVector update(VirtualFrame frame, Object v, RAbstractComplexVector value, int recLevel, Object[] positions, RComplexVector vector) {
+    protected RComplexVector update(VirtualFrame frame, Object v, RAbstractComplexVector value, Object[] positions, RComplexVector vector) {
         return updateVector(frame, value, vector, positions);
     }
 
     @Specialization(guards = {"!isObject(vector)", "isSubset", "!posNames(positions)", "multiPos(positions)"})
-    protected RAbstractComplexVector updateSubset(VirtualFrame frame, Object v, RAbstractIntVector value, int recLevel, RIntVector positions, RComplexVector vector) {
+    protected RAbstractComplexVector updateSubset(VirtualFrame frame, Object v, RAbstractIntVector value, RIntVector positions, RComplexVector vector) {
         return updateSingleDimVector(castComplex(frame, value), vector.getLength(), getResultVector(vector, getHighestPos(positions)), positions);
     }
 
     @Specialization(guards = {"!isObject(vector)", "isSubset", "!posNames(positions)", "onePosition(positions)"})
-    protected Object updateSubsetOne(VirtualFrame frame, Object v, RAbstractIntVector value, int recLevel, RIntVector positions, RComplexVector vector) {
-        return updateRecursive(frame, v, value, vector, positions.getDataAt(0), recLevel);
+    protected Object updateSubsetOne(VirtualFrame frame, Object v, RAbstractIntVector value, RIntVector positions, RComplexVector vector) {
+        return updateDelegate(frame, v, value, vector, positions.getDataAt(0));
     }
 
     @Specialization(guards = {"!isObject(vector)", "posNames(positions)"})
-    protected RAbstractComplexVector updateNames(VirtualFrame frame, Object v, RAbstractIntVector value, int recLevel, RIntVector positions, RComplexVector vector) {
+    protected RAbstractComplexVector updateNames(VirtualFrame frame, Object v, RAbstractIntVector value, RIntVector positions, RComplexVector vector) {
         return updateSingleDimVector(castComplex(frame, value), vector.getLength(), getResultVector(vector, getHighestPos(positions)), positions);
     }
 
     @Specialization(guards = {"!isObject(vector)", "!isValueLengthOne(value)", "isSubset", "!isPosNA(position)", "!isPosZero(position)"})
-    protected RComplexVector updateTooManyValuesSubset(VirtualFrame frame, Object v, RAbstractIntVector value, int recLevel, int position, RComplexVector vector) {
+    protected RComplexVector updateTooManyValuesSubset(VirtualFrame frame, Object v, RAbstractIntVector value, int position, RComplexVector vector) {
         RError.warning(RError.Message.NOT_MULTIPLE_REPLACEMENT);
         return updateSingleDim(frame, castComplex(frame, value), getResultVector(vector, position), position);
     }
 
     @Specialization(guards = {"!isObject(vector)", "isValueLengthOne(value)", "!isPosNA(position)", "!isPosZero(position)"})
-    protected RComplexVector update(VirtualFrame frame, Object v, RAbstractIntVector value, int recLevel, int position, RComplexVector vector) {
+    protected RComplexVector update(VirtualFrame frame, Object v, RAbstractIntVector value, int position, RComplexVector vector) {
         return updateSingleDim(frame, castComplex(frame, value), getResultVector(vector, position), position);
     }
 
     @Specialization(guards = {"!isObject(vector)", "isSubset", "!posNames(positions)", "multiPos(positions)"})
-    protected RAbstractComplexVector updateSubset(VirtualFrame frame, Object v, RAbstractDoubleVector value, int recLevel, RIntVector positions, RComplexVector vector) {
+    protected RAbstractComplexVector updateSubset(VirtualFrame frame, Object v, RAbstractDoubleVector value, RIntVector positions, RComplexVector vector) {
         return updateSingleDimVector(castComplex(frame, value), vector.getLength(), getResultVector(vector, getHighestPos(positions)), positions);
     }
 
     @Specialization(guards = {"!isObject(vector)", "isSubset", "!posNames(positions)", "onePosition(positions)"})
-    protected Object updateSubsetOne(VirtualFrame frame, Object v, RAbstractDoubleVector value, int recLevel, RIntVector positions, RComplexVector vector) {
-        return updateRecursive(frame, v, value, vector, positions.getDataAt(0), recLevel);
+    protected Object updateSubsetOne(VirtualFrame frame, Object v, RAbstractDoubleVector value, RIntVector positions, RComplexVector vector) {
+        return updateDelegate(frame, v, value, vector, positions.getDataAt(0));
     }
 
     @Specialization(guards = {"!isObject(vector)", "posNames(positions)"})
-    protected RAbstractComplexVector updateNames(VirtualFrame frame, Object v, RAbstractDoubleVector value, int recLevel, RIntVector positions, RComplexVector vector) {
+    protected RAbstractComplexVector updateNames(VirtualFrame frame, Object v, RAbstractDoubleVector value, RIntVector positions, RComplexVector vector) {
         return updateSingleDimVector(castComplex(frame, value), vector.getLength(), getResultVector(vector, getHighestPos(positions)), positions);
     }
 
     @Specialization(guards = {"!isObject(vector)", "!isValueLengthOne(value)", "isSubset", "!isPosNA(position)", "!isPosZero(position)"})
-    protected RComplexVector updateTooManyValuesSubset(VirtualFrame frame, Object v, RAbstractDoubleVector value, int recLevel, int position, RComplexVector vector) {
+    protected RComplexVector updateTooManyValuesSubset(VirtualFrame frame, Object v, RAbstractDoubleVector value, int position, RComplexVector vector) {
         RError.warning(RError.Message.NOT_MULTIPLE_REPLACEMENT);
         return updateSingleDim(frame, castComplex(frame, value), getResultVector(vector, position), position);
     }
 
     @Specialization(guards = {"!isObject(vector)", "isValueLengthOne(value)", "!isPosNA(position)", "!isPosZero(position)"})
-    protected RComplexVector update(VirtualFrame frame, Object v, RAbstractDoubleVector value, int recLevel, int position, RComplexVector vector) {
+    protected RComplexVector update(VirtualFrame frame, Object v, RAbstractDoubleVector value, int position, RComplexVector vector) {
         return updateSingleDim(frame, castComplex(frame, value), getResultVector(vector, position), position);
     }
 
     @Specialization(guards = {"!isObject(vector)", "isSubset", "!posNames(positions)", "multiPos(positions)"})
-    protected RAbstractComplexVector updateSubset(VirtualFrame frame, Object v, RAbstractLogicalVector value, int recLevel, RIntVector positions, RComplexVector vector) {
+    protected RAbstractComplexVector updateSubset(VirtualFrame frame, Object v, RAbstractLogicalVector value, RIntVector positions, RComplexVector vector) {
         return updateSingleDimVector(castComplex(frame, value), vector.getLength(), getResultVector(vector, getHighestPos(positions)), positions);
     }
 
     @Specialization(guards = {"!isObject(vector)", "isSubset", "!posNames(positions)", "onePosition(positions)"})
-    protected Object updateSubsetOne(VirtualFrame frame, Object v, RAbstractLogicalVector value, int recLevel, RIntVector positions, RComplexVector vector) {
-        return updateRecursive(frame, v, value, vector, positions.getDataAt(0), recLevel);
+    protected Object updateSubsetOne(VirtualFrame frame, Object v, RAbstractLogicalVector value, RIntVector positions, RComplexVector vector) {
+        return updateDelegate(frame, v, value, vector, positions.getDataAt(0));
     }
 
     @Specialization(guards = {"!isObject(vector)", "posNames(positions)"})
-    protected RAbstractComplexVector updateNames(VirtualFrame frame, Object v, RAbstractLogicalVector value, int recLevel, RIntVector positions, RComplexVector vector) {
+    protected RAbstractComplexVector updateNames(VirtualFrame frame, Object v, RAbstractLogicalVector value, RIntVector positions, RComplexVector vector) {
         return updateSingleDimVector(castComplex(frame, value), vector.getLength(), getResultVector(vector, getHighestPos(positions)), positions);
     }
 
     @Specialization(guards = {"!isObject(vector)", "!isValueLengthOne(value)", "isSubset", "!isPosNA(position)", "!isPosZero(position)"})
-    protected RComplexVector updateTooManyValuesSubset(VirtualFrame frame, Object v, RAbstractLogicalVector value, int recLevel, int position, RComplexVector vector) {
+    protected RComplexVector updateTooManyValuesSubset(VirtualFrame frame, Object v, RAbstractLogicalVector value, int position, RComplexVector vector) {
         RError.warning(RError.Message.NOT_MULTIPLE_REPLACEMENT);
         return updateSingleDim(frame, castComplex(frame, value), getResultVector(vector, position), position);
     }
 
     @Specialization(guards = {"!isObject(vector)", "isValueLengthOne(value)", "!isPosNA(position)", "!isPosZero(position)"})
-    protected RComplexVector update(VirtualFrame frame, Object v, RAbstractLogicalVector value, int recLevel, int position, RComplexVector vector) {
+    protected RComplexVector update(VirtualFrame frame, Object v, RAbstractLogicalVector value, int position, RComplexVector vector) {
         return updateSingleDim(frame, castComplex(frame, value), getResultVector(vector, position), position);
     }
 
     @Specialization(guards = {"!isObject(vector)", "isSubset", "!posNames(positions)", "multiPos(positions)"})
-    protected RAbstractComplexVector updateSubset(Object v, RAbstractComplexVector value, int recLevel, RIntVector positions, RComplexVector vector) {
+    protected RAbstractComplexVector updateSubset(Object v, RAbstractComplexVector value, RIntVector positions, RComplexVector vector) {
         return updateSingleDimVector(value, vector.getLength(), getResultVector(vector, getHighestPos(positions)), positions);
     }
 
     @Specialization(guards = {"!isObject(vector)", "isSubset", "!posNames(positions)", "onePosition(positions)"})
-    protected Object updateSubsetOne(VirtualFrame frame, Object v, RAbstractComplexVector value, int recLevel, RIntVector positions, RComplexVector vector) {
-        return updateRecursive(frame, v, value, vector, positions.getDataAt(0), recLevel);
+    protected Object updateSubsetOne(VirtualFrame frame, Object v, RAbstractComplexVector value, RIntVector positions, RComplexVector vector) {
+        return updateDelegate(frame, v, value, vector, positions.getDataAt(0));
     }
 
     @Specialization(guards = {"!isObject(vector)", "posNames(positions)"})
-    protected RAbstractComplexVector updateNames(Object v, RAbstractComplexVector value, int recLevel, RIntVector positions, RComplexVector vector) {
+    protected RAbstractComplexVector updateNames(Object v, RAbstractComplexVector value, RIntVector positions, RComplexVector vector) {
         return updateSingleDimVector(value, vector.getLength(), getResultVector(vector, getHighestPos(positions)), positions);
     }
 
     @Specialization(guards = {"!isObject(vector)", "!isValueLengthOne(value)", "isSubset", "!isPosNA(position)", "!isPosZero(position)"})
-    protected RComplexVector updateTooManyValuesSubset(VirtualFrame frame, Object v, RAbstractComplexVector value, int recLevel, int position, RComplexVector vector) {
+    protected RComplexVector updateTooManyValuesSubset(VirtualFrame frame, Object v, RAbstractComplexVector value, int position, RComplexVector vector) {
         RError.warning(RError.Message.NOT_MULTIPLE_REPLACEMENT);
         return updateSingleDim(frame, value, getResultVector(vector, position), position);
     }
 
     @Specialization(guards = {"!isObject(vector)", "isValueLengthOne(value)", "!isPosNA(position)", "!isPosZero(position)"})
-    protected RComplexVector update(VirtualFrame frame, Object v, RAbstractComplexVector value, int recLevel, int position, RComplexVector vector) {
+    protected RComplexVector update(VirtualFrame frame, Object v, RAbstractComplexVector value, int position, RComplexVector vector) {
         return updateSingleDim(frame, value, getResultVector(vector, position), position);
     }
 
@@ -1938,33 +1947,33 @@ public abstract class UpdateArrayHelperNode extends RNode implements RSyntaxNode
     }
 
     @Specialization(guards = {"!isObject(vector)", "multiDim(vector)", "!wrongDimensionsMatrix(positions, vector)", "!wrongDimensions(positions, vector)"})
-    protected RRawVector update(VirtualFrame frame, Object v, RAbstractRawVector value, int recLevel, Object[] positions, RRawVector vector) {
+    protected RRawVector update(VirtualFrame frame, Object v, RAbstractRawVector value, Object[] positions, RRawVector vector) {
         return updateVector(frame, value, vector, positions);
     }
 
     @Specialization(guards = {"!isObject(vector)", "isSubset", "!posNames(positions)", "multiPos(positions)"})
-    protected RAbstractRawVector updateSubset(Object v, RAbstractRawVector value, int recLevel, RIntVector positions, RRawVector vector) {
+    protected RAbstractRawVector updateSubset(Object v, RAbstractRawVector value, RIntVector positions, RRawVector vector) {
         return updateSingleDimVector(value, vector.getLength(), getResultVector(vector, getHighestPos(positions)), positions);
     }
 
     @Specialization(guards = {"!isObject(vector)", "isSubset", "!posNames(positions)", "onePosition(positions)"})
-    protected Object updateSubsetOne(VirtualFrame frame, Object v, RAbstractRawVector value, int recLevel, RIntVector positions, RRawVector vector) {
-        return updateRecursive(frame, v, value, vector, positions.getDataAt(0), recLevel);
+    protected Object updateSubsetOne(VirtualFrame frame, Object v, RAbstractRawVector value, RIntVector positions, RRawVector vector) {
+        return updateDelegate(frame, v, value, vector, positions.getDataAt(0));
     }
 
     @Specialization(guards = {"!isObject(vector)", "posNames(positions)"})
-    protected RAbstractRawVector updateSubsetNames(Object v, RAbstractRawVector value, int recLevel, RIntVector positions, RRawVector vector) {
+    protected RAbstractRawVector updateSubsetNames(Object v, RAbstractRawVector value, RIntVector positions, RRawVector vector) {
         return updateSingleDimVector(value, vector.getLength(), getResultVector(vector, getHighestPos(positions)), positions);
     }
 
     @Specialization(guards = {"!isObject(vector)", "!isValueLengthOne(value)", "isSubset", "!isPosNA(position)", "!isPosZero(position)"})
-    protected RRawVector updateTooManyValuesSubset(Object v, RAbstractRawVector value, int recLevel, int position, RRawVector vector) {
+    protected RRawVector updateTooManyValuesSubset(Object v, RAbstractRawVector value, int position, RRawVector vector) {
         RError.warning(RError.Message.NOT_MULTIPLE_REPLACEMENT);
         return updateSingleDim(value, getResultVector(vector, position), position);
     }
 
     @Specialization(guards = {"!isObject(vector)", "isValueLengthOne(value)", "!isPosNA(position)", "!isPosZero(position)"})
-    protected RRawVector update(Object v, RAbstractRawVector value, int recLevel, int position, RRawVector vector) {
+    protected RRawVector update(Object v, RAbstractRawVector value, int position, RRawVector vector) {
         return updateSingleDim(value, getResultVector(vector, position), position);
     }
 
@@ -1975,7 +1984,7 @@ public abstract class UpdateArrayHelperNode extends RNode implements RSyntaxNode
 
     @TruffleBoundary
     @Specialization(guards = "!isObject(vector)")
-    protected Object accessListPosition(Object v, Object value, int recLevel, RList positions, RAbstractVector vector) {
+    protected Object accessListPosition(Object v, Object value, RList positions, RAbstractVector vector) {
         if (!isSubset) {
             if (vector instanceof RList) {
                 if (positions.getLength() == 0) {
@@ -2001,7 +2010,7 @@ public abstract class UpdateArrayHelperNode extends RNode implements RSyntaxNode
 
     @TruffleBoundary
     @Specialization(guards = "!isObject(vector)")
-    protected Object accessComplexPosition(Object v, Object value, int recLevel, RComplex position, RAbstractVector vector) {
+    protected Object accessComplexPosition(Object v, Object value, RComplex position, RAbstractVector vector) {
         if (isSubset || vector instanceof RList || getValueLength(value) == 1) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "complex");
         } else {
@@ -2011,7 +2020,7 @@ public abstract class UpdateArrayHelperNode extends RNode implements RSyntaxNode
 
     @TruffleBoundary
     @Specialization(guards = "!isObject(vector)")
-    protected Object accessRawPosition(Object v, Object value, int recLevel, RRaw position, RAbstractVector vector) {
+    protected Object accessRawPosition(Object v, Object value, RRaw position, RAbstractVector vector) {
         if (isSubset || vector instanceof RList || getValueLength(value) == 1) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "raw");
         } else {
@@ -2139,10 +2148,6 @@ public abstract class UpdateArrayHelperNode extends RNode implements RSyntaxNode
 
     protected boolean noPosition(RAbstractVector position) {
         return position.getLength() == 0;
-    }
-
-    protected boolean inRecursion(int recLevel) {
-        return recLevel > 0;
     }
 
     protected boolean multiPos(RIntVector positions) {
