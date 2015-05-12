@@ -454,8 +454,7 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
         } else if (v.getVector() instanceof FunctionCall) {
             return null;
         } else {
-            RInternalError.unimplemented();
-            return null;
+            throw RInternalError.unimplemented();
         }
     }
 
@@ -465,8 +464,7 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
         } else if (a.getLhs() instanceof FunctionCall) {
             return null;
         } else {
-            RInternalError.unimplemented();
-            return null;
+            throw RInternalError.unimplemented();
         }
     }
 

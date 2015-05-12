@@ -376,8 +376,7 @@ public class DLL {
     @SuppressWarnings("unused")
     public static long getCCallable(String pkgName, String functionName) {
         // TBD
-        RInternalError.unimplemented();
-        return 0;
+        throw RInternalError.unimplemented();
     }
 
 }

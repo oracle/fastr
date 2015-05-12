@@ -1306,7 +1306,7 @@ public abstract class UpdateArrayHelperNode extends RNode implements RSyntaxNode
             }
         }
         if (value.getLength() == 0) {
-            RInternalError.unimplemented();
+            throw RInternalError.unimplemented();
         }
         if (positions.getLength() % value.getLength() != 0) {
             warning.enter();
