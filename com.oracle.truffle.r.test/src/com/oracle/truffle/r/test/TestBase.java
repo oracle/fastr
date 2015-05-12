@@ -379,7 +379,7 @@ public class TestBase {
 
     private static void microTestFailed() {
         if (!ProcessFailedTests) {
-            System.err.printf("%nMicro-test failute: %s%n", getTestContext());
+            System.err.printf("%nMicro-test failure: %s%n", getTestContext());
             System.err.printf("%16s %s%n", "Expression:", microTestInfo.expression);
             System.err.printf("%16s %s", "Expected output:", microTestInfo.expectedOutput);
             System.err.printf("%16s %s%n", "FastR output:", microTestInfo.fastROutput);
