@@ -29,17 +29,15 @@ import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.access.*;
-import com.oracle.truffle.r.nodes.access.array.read.*;
 import com.oracle.truffle.r.nodes.access.array.write.*;
 import com.oracle.truffle.r.nodes.access.variables.*;
 import com.oracle.truffle.r.nodes.binary.*;
 import com.oracle.truffle.r.nodes.control.*;
 import com.oracle.truffle.r.nodes.function.*;
-import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.parser.ast.*;
 import com.oracle.truffle.r.parser.ast.Constant.ConstantType;
+import com.oracle.truffle.r.parser.ast.Operation.Operator;
 import com.oracle.truffle.r.parser.ast.Function;
-import com.oracle.truffle.r.parser.ast.Operation.*;
 import com.oracle.truffle.r.parser.tools.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -307,21 +305,6 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
         return UpdateArrayHelperNodeGen.create(isSubset, true, 0, vector, rhs, posArrayNodeValue, coerceVector);
     }
 
-    /**
-     * The sequence created for a {@linkplain #visit(Replacement) replacement} consists of the
-     * following elements:
-     * <ol>
-     * <li>(prefix) store the right-hand side in an anonymous slot,
-     * <li>(prefix) assign the left-hand side to {@code *tmp*},
-     * <li>(suffix) assign from the replacement call,
-     * <li>(suffix) remove *tmp*,
-     * <li>(suffix) remove the anonymous right-hand side slot and answer its value.
-     * <ol>
-     */
-    private static RNode[] createReplacementSequence() {
-        return new RNode[2];
-    }
-
     private static String createTempName() {
         //@formatter:off
         // store a - need to use temporary, otherwise there is a failure in case multiple calls to
@@ -337,38 +320,6 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
 
     private static RecursiveReplacementNode createUpdateSequence(String rhsSymbol, RNode rhs, String tmpSymbol, RNode v, RNode updateOp, SourceSection source) {
         return new RecursiveReplacementNode(source, rhsSymbol, rhs, tmpSymbol, v, updateOp);
-    }
-
-    private static SimpleAccessVariable getVectorVariable(AccessVector v) {
-        if (v.getVector() instanceof SimpleAccessVariable) {
-            return (SimpleAccessVariable) v.getVector();
-        } else if (v.getVector() instanceof AccessVector) {
-            return getVectorVariable((AccessVector) v.getVector());
-        } else if (v.getVector() instanceof FieldAccess) {
-            return getFieldAccessVariable((FieldAccess) v.getVector());
-        } else if (v.getVector() instanceof FunctionCall) {
-            return null;
-        } else {
-            throw RInternalError.unimplemented();
-        }
-    }
-
-    private static SimpleAccessVariable getFieldAccessVariable(FieldAccess a) {
-        if (a.getLhs() instanceof SimpleAccessVariable) {
-            return (SimpleAccessVariable) a.getLhs();
-        } else if (a.getLhs() instanceof FunctionCall) {
-            return null;
-        } else {
-            throw RInternalError.unimplemented();
-        }
-    }
-
-    private RSyntaxNode createVectorUpdate(AccessVector a, RNode rhs, boolean isSuper, SourceSection source, boolean recursive) {
-        int argLength = recursive ? a.getIndexes().size() : a.getIndexes().size() - 1;
-        // If recursive no need to set syntaxAST as already handled at top-level
-        return doReplacementLeftHandSide(a.getVector(), !recursive, rhs, isSuper, source, (receiver, rhsAccess) -> {
-            return createArrayUpdate(a.getIndexes(), argLength, a.isSubset(), receiver, rhsAccess);
-        });
     }
 
     @Override
@@ -546,6 +497,30 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
         return afn;
     }
 
+    private static SimpleAccessVariable getVectorVariable(AccessVector v) {
+        if (v.getVector() instanceof SimpleAccessVariable) {
+            return (SimpleAccessVariable) v.getVector();
+        } else if (v.getVector() instanceof AccessVector) {
+            return getVectorVariable((AccessVector) v.getVector());
+        } else if (v.getVector() instanceof FieldAccess) {
+            return getFieldAccessVariable((FieldAccess) v.getVector());
+        } else if (v.getVector() instanceof FunctionCall) {
+            return null;
+        } else {
+            throw RInternalError.unimplemented();
+        }
+    }
+
+    private static SimpleAccessVariable getFieldAccessVariable(FieldAccess a) {
+        if (a.getLhs() instanceof SimpleAccessVariable) {
+            return (SimpleAccessVariable) a.getLhs();
+        } else if (a.getLhs() instanceof FunctionCall) {
+            return null;
+        } else {
+            throw RInternalError.unimplemented();
+        }
+    }
+
     private RSyntaxNode doReplacementLeftHandSide(ASTNode receiver, boolean needsSyntaxAST, RNode rhs, boolean isSuper, SourceSection source, BiFunction<RNode, RNode, RSyntaxNode> updateFunction) {
         if (receiver.getClass() == FunctionCall.class) {
             return updateFunction.apply(receiver.accept(this).asRNode(), rhs);
@@ -585,7 +560,6 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
                 FieldAccess accessAST = (FieldAccess) receiver;
 
                 SimpleAccessVariable varAST = getFieldAccessVariable(accessAST);
-
                 RNode v;
                 if (varAST != null) {
                     String vSymbol = varAST.getVariable();
