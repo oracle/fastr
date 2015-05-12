@@ -27,6 +27,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.env.*;
 
@@ -34,7 +35,7 @@ import com.oracle.truffle.r.runtime.env.*;
  * Holds the sequence of nodes created for R's replacement assignment. Allows custom deparse and
  * debug handling.
  */
-public class ReplacementNode extends RNode implements RSyntaxNode {
+public final class ReplacementNode extends RNode implements RSyntaxNode {
 
     /**
      * This holds the AST for the "untransformed" AST, i.e. as it appears in the source. Currently
@@ -42,10 +43,19 @@ public class ReplacementNode extends RNode implements RSyntaxNode {
      */
     @CompilationFinal private RSyntaxNode syntaxAST;
 
-    @Children protected final RNode[] sequence;
+    @Child private WriteVariableNode storeRhs;
+    @Child private WriteVariableNode storeValue;
+    @Child private RNode update;
+    @Child private RemoveAndAnswerNode removeTemp;
+    @Child private RemoveAndAnswerNode removeRhs;
 
-    public ReplacementNode(SourceSection src, RNode[] seq) {
-        this.sequence = seq;
+    public ReplacementNode(SourceSection src, RNode rhs, RNode v, boolean copyRhs, RNode update, String tmpSymbol, String rhsSymbol) {
+        this.storeRhs = WriteVariableNode.createAnonymous(rhsSymbol, rhs, copyRhs ? WriteVariableNode.Mode.COPY : WriteVariableNode.Mode.INVISIBLE);
+        this.storeValue = WriteVariableNode.createAnonymous(tmpSymbol, v, WriteVariableNode.Mode.INVISIBLE);
+        this.update = update;
+        // remove var and rhs, returning rhs' value
+        this.removeTemp = RemoveAndAnswerNode.create(tmpSymbol);
+        this.removeRhs = RemoveAndAnswerNode.create(rhsSymbol);
         assignSourceSection(src);
     }
 
@@ -54,13 +64,12 @@ public class ReplacementNode extends RNode implements RSyntaxNode {
     }
 
     @Override
-    @ExplodeLoop
     public Object execute(VirtualFrame frame) {
-        Object lastResult = null;
-        for (int i = 0; i < sequence.length; i++) {
-            lastResult = sequence[i].execute(frame);
-        }
-        return lastResult;
+        storeRhs.execute(frame);
+        storeValue.execute(frame);
+        update.execute(frame);
+        removeTemp.execute(frame);
+        return removeRhs.execute(frame);
     }
 
     @Override
