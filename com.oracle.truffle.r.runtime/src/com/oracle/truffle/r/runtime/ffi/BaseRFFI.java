@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.runtime.ffi;
 
 import java.io.*;
+import java.util.*;
 
 /**
  * A statically typed interface to exactly those native functions required by the R {@code base}
@@ -125,4 +126,10 @@ public interface BaseRFFI {
      * Return {@code utsname} info.
      */
     UtsName uname();
+
+    /**
+     * Returns an array of pathnames that match {@code pattern} using the OS glob function. This is
+     * done in native code because it is very hard to write in Java in the face of {@link #setwd}.
+     */
+    ArrayList<String> glob(String pattern);
 }

@@ -658,7 +658,8 @@ public class FileFunctions {
                 if (pattern == null) {
                     return true;
                 }
-                boolean result = pattern.matcher(path.getFileName().toString()).matches();
+                Matcher m = pattern.matcher(path.getFileName().toString());
+                boolean result = m.find();
                 return result;
             }
         }
@@ -953,7 +954,7 @@ public class FileFunctions {
                 if (pathPattern.length() == 0 || RRuntime.isNA(pathPattern)) {
                     continue;
                 }
-                if (SysGlob.containsGlobChar(pathPattern) >= 0) {
+                if (containsGlobChar(pathPattern) >= 0) {
                     throw RError.nyi(getEncapsulatingSourceSection(), "wildcards");
                 }
                 Path path = fileSystem.getPath(pathPattern);
@@ -971,6 +972,20 @@ public class FileFunctions {
                 }
             }
             return result;
+        }
+
+        private static final char[] GLOBCHARS = new char[]{'*', '?', '['};
+
+        private static int containsGlobChar(String pathPattern) {
+            for (int i = 0; i < pathPattern.length(); i++) {
+                char ch = pathPattern.charAt(i);
+                for (int j = 0; j < GLOBCHARS.length; j++) {
+                    if (ch == GLOBCHARS[j]) {
+                        return i;
+                    }
+                }
+            }
+            return -1;
         }
 
         private int recursiveDelete(Path path) {
