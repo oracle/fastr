@@ -75,8 +75,9 @@ com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/U
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/Lapply.java,purdue.copyright
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/Switch.java,purdue.copyright
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/Format.java,gnu_r.copyright
+com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/grDevices/fastrgd/FastRGraphicsDevice.java,gnu_r_graphics.copyright
+com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/grDevices/NullGraphicsDevice.java,gnu_r_graphics.copyright
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/FormatC.java,gnu_r.copyright
-com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/graphics/MockGraphicsDevice.java,gnu_r_graphics.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/graphics/GraphicsCCalls.java,gnu_r_graphics.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/graphics/RGraphics.java,gnu_r_graphics.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/graphics/core/DrawingParameters.java,gnu_r_graphics.copyright
