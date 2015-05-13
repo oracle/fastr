@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,7 +26,6 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.env.*;
 
@@ -34,7 +33,7 @@ import com.oracle.truffle.r.runtime.env.*;
  * Holds the sequence of nodes created for R's replacement assignment. Allows custom deparse and
  * debug handling.
  */
-public final class ReplacementNode extends RNode implements RSyntaxNode {
+public final class RecursiveReplacementNode extends RNode implements RSyntaxNode {
 
     /**
      * This holds the AST for the "untransformed" AST, i.e. as it appears in the source. Currently
@@ -42,19 +41,14 @@ public final class ReplacementNode extends RNode implements RSyntaxNode {
      */
     @CompilationFinal private RSyntaxNode syntaxAST;
 
-    @Child private WriteVariableNode storeRhs;
-    @Child private WriteVariableNode storeValue;
-    @Child private RNode update;
-    @Child private RemoveAndAnswerNode removeTemp;
-    @Child private RemoveAndAnswerNode removeRhs;
+    @Child private RNode rhs;
+    @Child private RNode value;
+    @Child private UpdateNode update;
 
-    public ReplacementNode(SourceSection src, RNode rhs, RNode v, boolean copyRhs, RNode update, String tmpSymbol, String rhsSymbol) {
-        this.storeRhs = WriteVariableNode.createAnonymous(rhsSymbol, rhs, copyRhs ? WriteVariableNode.Mode.COPY : WriteVariableNode.Mode.INVISIBLE);
-        this.storeValue = WriteVariableNode.createAnonymous(tmpSymbol, v, WriteVariableNode.Mode.INVISIBLE);
+    public RecursiveReplacementNode(SourceSection src, RNode rhs, RNode value, UpdateNode update) {
+        this.rhs = rhs;
+        this.value = value;
         this.update = update;
-        // remove var and rhs, returning rhs' value
-        this.removeTemp = RemoveAndAnswerNode.create(tmpSymbol);
-        this.removeRhs = RemoveAndAnswerNode.create(rhsSymbol);
         assignSourceSection(src);
     }
 
@@ -64,11 +58,9 @@ public final class ReplacementNode extends RNode implements RSyntaxNode {
 
     @Override
     public Object execute(VirtualFrame frame) {
-        storeRhs.execute(frame);
-        storeValue.execute(frame);
-        update.execute(frame);
-        removeTemp.execute(frame);
-        return removeRhs.execute(frame);
+        Object rhsObject = rhs.execute(frame);
+        Object valueObject = value.execute(frame);
+        return update.executeUpdate(frame, valueObject, rhsObject);
     }
 
     @Override

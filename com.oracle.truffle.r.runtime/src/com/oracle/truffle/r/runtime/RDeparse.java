@@ -730,7 +730,7 @@ public class RDeparse {
                                 break;
 
                             default:
-                                RInternalError.unimplemented();
+                                throw RInternalError.unimplemented();
                         }
                     } else {
                         // TODO promise?

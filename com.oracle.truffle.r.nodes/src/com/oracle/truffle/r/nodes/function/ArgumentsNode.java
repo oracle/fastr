@@ -92,7 +92,7 @@ public abstract class ArgumentsNode extends RNode implements RSyntaxNode, Unmatc
                     state.setTagAsSymbol(name);
                 }
                 if (argument == null) {
-                    RInternalError.unimplemented();
+                    throw RInternalError.unimplemented();
                 } else {
                     state.serializeNodeSetCar(argument);
                 }

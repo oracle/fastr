@@ -1141,7 +1141,7 @@ public class RSerialize {
                     break;
 
                 default:
-                    RInternalError.unimplemented();
+                    throw RInternalError.unimplemented();
             }
             writeItem(obj);
             stream.flush();

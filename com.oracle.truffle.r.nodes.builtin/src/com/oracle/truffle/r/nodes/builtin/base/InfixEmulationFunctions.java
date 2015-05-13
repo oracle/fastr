@@ -453,7 +453,7 @@ public class InfixEmulationFunctions {
             if (updateNode == null || positions.getLength() != len) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 if (updateNode == null) {
-                    updateNode = insert(UpdateArrayHelperNodeGen.create(isSubset, false, null, null, null, null, null));
+                    updateNode = insert(UpdateArrayHelperNodeGen.create(isSubset, false, 0, null, null, null, null));
                 }
                 positions = insert(UpdatePositions.create(isSubset, len));
                 coerceVector = insert(CoerceVectorNodeGen.create(null, null, null));
@@ -465,7 +465,7 @@ public class InfixEmulationFunctions {
                 pos = new Object[]{RMissing.instance};
             }
             Object newPositions = positions.execute(frame, vector, pos, pos, value);
-            return updateNode.executeUpdate(frame, vector, value, 0, newPositions, coerceVector.executeEvaluated(frame, value, vector, newPositions));
+            return updateNode.executeUpdate(frame, vector, value, newPositions, coerceVector.executeEvaluated(frame, value, vector, newPositions));
         }
 
         @SuppressWarnings("unused")

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,37 +20,12 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.parser.ast;
+package com.oracle.truffle.r.nodes.control;
 
-import java.util.*;
+import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.r.nodes.*;
 
-import com.oracle.truffle.api.source.*;
+public abstract class UpdateNode extends RNode {
 
-public class SimpleAccessTempVariable extends AccessVariable {
-
-    private final String tempSymbol;
-
-    SimpleAccessTempVariable(SourceSection source, String tempSymbol) {
-        super(source);
-        this.tempSymbol = tempSymbol;
-    }
-
-    public String getSymbol() {
-        return tempSymbol;
-    }
-
-    @Override
-    public int getPrecedence() {
-        return Operation.MAX_PRECEDENCE;
-    }
-
-    @Override
-    public <R> R accept(Visitor<R> v) {
-        return v.visit(this);
-    }
-
-    @Override
-    public <R> List<R> visitAll(Visitor<R> v) {
-        return Collections.emptyList();
-    }
+    public abstract Object executeUpdate(VirtualFrame frame, Object lhs, Object rhs);
 }

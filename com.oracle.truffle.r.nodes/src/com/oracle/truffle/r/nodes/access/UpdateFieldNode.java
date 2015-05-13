@@ -25,10 +25,12 @@ package com.oracle.truffle.r.nodes.access;
 import java.util.*;
 
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.nodes.control.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -37,8 +39,27 @@ import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.env.REnvironment.*;
 import com.oracle.truffle.r.runtime.gnur.*;
 
-@NodeChild(value = "value", type = RNode.class)
-public abstract class UpdateFieldNode extends AccessFieldBaseNode implements RSyntaxNode {
+@NodeChildren({@NodeChild(value = "value", type = RNode.class), @NodeChild(value = "object", type = RNode.class)})
+@NodeField(name = "field", type = String.class)
+public abstract class UpdateFieldNode extends UpdateNode implements RSyntaxNode {
+
+    public abstract RNode getObject();
+
+    public abstract String getField();
+
+    protected final ConditionProfile hasNamesProfile = ConditionProfile.createBinaryProfile();
+    protected final BranchProfile inexactMatch = BranchProfile.create();
+    protected final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+
+    @TruffleBoundary
+    public static int getElementIndexByName(RStringVector names, String name) {
+        for (int i = 0; i < names.getLength(); i++) {
+            if (names.getDataAt(i).equals(name)) {
+                return i;
+            }
+        }
+        return -1;
+    }
 
     public abstract RNode getValue();
 
