@@ -65,7 +65,7 @@ public class SerializeFunctions {
                 if (!ascii && openConn.isTextMode()) {
                     throw RError.error(getEncapsulatingSourceSection(), RError.Message.BINARY_CONNECTION_REQUIRED);
                 }
-                RSerialize.serialize(openConn, object, ascii, RRuntime.fromLogical(xdrLogical), 2, null, depth);
+                RSerialize.serialize(openConn, object, ascii, RRuntime.fromLogical(xdrLogical), RSerialize.DEFAULT_VERSION, null, depth);
                 return RNull.instance;
             } catch (IOException ex) {
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, ex.getMessage());

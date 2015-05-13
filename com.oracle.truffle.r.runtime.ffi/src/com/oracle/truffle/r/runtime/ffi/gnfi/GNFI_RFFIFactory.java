@@ -178,6 +178,10 @@ public class GNFI_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI {
         throw Utils.fail("dlerror not implemented");
     }
 
+    public int compress(byte[] dest, long[] destlen, byte[] source) {
+        throw Utils.fail("compress not implemented");
+    }
+
     public int uncompress(byte[] dest, long[] destlen, byte[] source) {
         throw Utils.fail("uncompress not implemented");
     }

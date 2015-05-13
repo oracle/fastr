@@ -31,9 +31,8 @@ OS_DIR := $(shell echo $(OS_NAME) | tr '[:upper:]' '[:lower:]' )
 
 all: $(TOPDIR)/platform.mk
 
-$(TOPDIR)/platform.mk: sedMakeconf $(GNUR_HOME)/Makeconf
+$(TOPDIR)/platform.mk: sedMakeconf $(GNUR_HOME)/Makeconf Makefile
 	sed -f sedMakeconf $(GNUR_HOME)/Makeconf > /dev/null 2>&1
-	cp platform.mk.temp $(TOPDIR)/run/Makeconf.etc
 	echo OS_NAME = $(OS_NAME) >> platform.mk.temp
 	echo OS_DIR = $(OS_DIR) >> platform.mk.temp
 	mv platform.mk.temp $(TOPDIR)/platform.mk

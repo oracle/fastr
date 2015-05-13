@@ -69,4 +69,7 @@ fastr.createpkgsource <- function(pkg, name) {
 	invisible(NULL)
 }
 
+fastr.comparefilesizes <- function(file1, file2) .FastR(.NAME="comparefilesizes", file1, file2)
+
+
 

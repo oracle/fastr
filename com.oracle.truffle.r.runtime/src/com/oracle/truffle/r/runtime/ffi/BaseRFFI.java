@@ -99,6 +99,13 @@ public interface BaseRFFI {
     // zip compression/uncompression
 
     /**
+     * compress {@code source} into {@code dest}.
+     *
+     * @return standard return code (0 ok)
+     */
+    int compress(byte[] dest, long[] destlen, byte[] source);
+
+    /**
      * uncompress {@code source} into {@code dest}.
      *
      * @return standard return code (0 ok)

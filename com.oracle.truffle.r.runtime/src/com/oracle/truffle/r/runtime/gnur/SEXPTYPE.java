@@ -133,6 +133,10 @@ public enum SEXPTYPE {
                 }
             }
         }
+        // (only) environments have subtypes
+        if (REnvironment.class.isAssignableFrom(fastRClass)) {
+            return ENVSXP;
+        }
         throw RInternalError.shouldNotReachHere(fastRClass.getName());
     }
 
