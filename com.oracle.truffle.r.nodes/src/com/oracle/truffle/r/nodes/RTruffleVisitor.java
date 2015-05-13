@@ -318,7 +318,7 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
         return new ReplacementNode(source, rhs, v, copyRhs, assignFromTemp, tmpSymbol, rhsSymbol);
     }
 
-    private static RecursiveReplacementNode createUpdateSequence(String rhsSymbol, RNode rhs, String tmpSymbol, RNode v, RNode updateOp, SourceSection source) {
+    private static RecursiveReplacementNode createUpdateSequence(String rhsSymbol, RNode rhs, String tmpSymbol, RNode v, UpdateNode updateOp, SourceSection source) {
         return new RecursiveReplacementNode(source, rhsSymbol, rhs, tmpSymbol, v, updateOp);
     }
 
@@ -551,8 +551,8 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
                 } else {
                     v = vecAST.getVector().accept(this).asRNode();
                 }
-                RSyntaxNode updateOp = updateFunction.apply(vecAST.accept(this).asRNode(), rhsAccess);
-                RecursiveReplacementNode vecUpdate = createUpdateSequence(rhsSymbol, rhs, tmpSymbol, v, updateOp.asRNode(), source);
+                UpdateNode updateOp = (UpdateNode) updateFunction.apply(vecAST.accept(this).asRNode(), rhsAccess);
+                RecursiveReplacementNode vecUpdate = createUpdateSequence(rhsSymbol, rhs, tmpSymbol, v, updateOp, source);
                 result = doReplacementLeftHandSide(vecAST.getVector(), !true, vecUpdate, isSuper, source, (receiver1, rhsAccess1) -> {
                     return createArrayUpdate(vecAST.getIndexes(), vecAST.getIndexes().size(), vecAST.isSubset(), receiver1, rhsAccess1);
                 });
@@ -567,8 +567,8 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
                 } else {
                     v = accessAST.getLhs().accept(this).asRNode();
                 }
-                RSyntaxNode updateOp = updateFunction.apply(accessAST.accept(this).asRNode(), rhsAccess);
-                RecursiveReplacementNode fieldUpdate = createUpdateSequence(rhsSymbol, rhs, tmpSymbol, v, updateOp.asRNode(), source);
+                UpdateNode updateOp = (UpdateNode) updateFunction.apply(accessAST.accept(this).asRNode(), rhsAccess);
+                RecursiveReplacementNode fieldUpdate = createUpdateSequence(rhsSymbol, rhs, tmpSymbol, v, updateOp, source);
                 result = doReplacementLeftHandSide(accessAST.getLhs(), true, fieldUpdate, isSuper, source, (receiver1, rhsAccess1) -> {
                     return UpdateFieldNodeGen.create(receiver1, rhsAccess1, accessAST.getFieldName());
                 });

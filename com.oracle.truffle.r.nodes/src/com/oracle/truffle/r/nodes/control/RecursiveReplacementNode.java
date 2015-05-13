@@ -23,9 +23,8 @@
 package com.oracle.truffle.r.nodes.control;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.nodes.ExplodeLoop;
-import com.oracle.truffle.api.source.SourceSection;
+import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.runtime.*;
@@ -45,9 +44,9 @@ public final class RecursiveReplacementNode extends RNode implements RSyntaxNode
 
     @Child private WriteVariableNode storeRhs;
     @Child private WriteVariableNode storeValue;
-    @Child private RNode update;
+    @Child private UpdateNode update;
 
-    public RecursiveReplacementNode(SourceSection src, String rhsSymbol, RNode rhs, String tmpSymbol, RNode v, RNode update) {
+    public RecursiveReplacementNode(SourceSection src, String rhsSymbol, RNode rhs, String tmpSymbol, RNode v, UpdateNode update) {
         this.storeRhs = WriteVariableNode.createAnonymous(rhsSymbol, rhs, WriteVariableNode.Mode.INVISIBLE);
         this.storeValue = WriteVariableNode.createAnonymous(tmpSymbol, v, WriteVariableNode.Mode.INVISIBLE);
         this.update = update;

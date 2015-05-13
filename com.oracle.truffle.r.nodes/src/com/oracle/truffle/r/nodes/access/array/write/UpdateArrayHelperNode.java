@@ -59,7 +59,7 @@ public abstract class UpdateArrayHelperNode extends UpdateNode implements RSynta
     private final NACheck posNACheck = NACheck.create();
     private final NACheck namesNACheck = NACheck.create();
 
-    protected abstract RNode getVector();
+    protected abstract CoerceVector getVector();
 
     protected abstract PositionsArrayNodeValue getPositions();
 
@@ -67,8 +67,8 @@ public abstract class UpdateArrayHelperNode extends UpdateNode implements RSynta
 
     @Override
     public Object executeUpdate(VirtualFrame frame, Object lhs, Object rhs) {
-        throw RInternalError.shouldNotReachHere();
-// return executeUpdate(frame, );
+        Object positions = getPositions().executeEval(frame, lhs, rhs);
+        return executeUpdate(frame, lhs, rhs, positions, getVector().executeEvaluated(frame, rhs, lhs, positions));
     }
 
     public abstract Object executeUpdate(VirtualFrame frame, Object v, Object value, Object positions, Object vector);
