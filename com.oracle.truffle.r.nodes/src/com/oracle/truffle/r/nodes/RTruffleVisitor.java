@@ -409,15 +409,8 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
         return new ReplacementNode(source, rhs, v, copyRhs, assignFromTemp, tmpSymbol, rhsSymbol);
     }
 
-    private static SequenceNode createUpdateSequence(String rhsSymbol, RNode rhs, String tmpSymbol, RNode v, RNode updateOp, SourceSection source) {
-        RNode[] seq = new RNode[3];
-        seq[0] = WriteVariableNode.createAnonymous(rhsSymbol, rhs, WriteVariableNode.Mode.INVISIBLE);
-        seq[1] = WriteVariableNode.createAnonymous(tmpSymbol, v, WriteVariableNode.Mode.INVISIBLE);
-        seq[2] = updateOp;
-
-        SequenceNode fieldUpdate = new SequenceNode(seq);
-        fieldUpdate.assignSourceSection(source);
-        return fieldUpdate;
+    private static RecursiveReplacementNode createUpdateSequence(String rhsSymbol, RNode rhs, String tmpSymbol, RNode v, RNode updateOp, SourceSection source) {
+        return new RecursiveReplacementNode(source, rhsSymbol, rhs, tmpSymbol, v, updateOp);
     }
 
     private static SimpleAccessVariable getVectorVariable(AccessVector v) {
@@ -453,13 +446,13 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
             RNode theVector = a.getVector().accept(this).asRNode();
             syntaxAST = createPositionsForSyntaxUpdate(a.getIndexes(), argLength, a.isSubset(), theVector, rhs);
         }
-        RSyntaxNode result = null;
         if (a.getVector().getClass() == FunctionCall.class) {
             // N.B. This is the only branch that does not set result to a ReplacementNode
             FunctionCall callAST = (FunctionCall) a.getVector();
             CoerceVector coerceVector = CoerceVectorNodeGen.create(null, null, null);
-            result = createPositions(a.getIndexes(), argLength, a.isSubset(), null, callAST.accept(this).asRNode(), rhs, coerceVector, true);
+            return createPositions(a.getIndexes(), argLength, a.isSubset(), null, callAST.accept(this).asRNode(), rhs, coerceVector, true);
         } else {
+            RSyntaxNode result;
             String tmpSymbol = createTempName();
             String rhsSymbol = createTempName();
             if (a.getVector() instanceof SimpleAccessVariable) {
@@ -492,7 +485,7 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
                 RNode rhsAccess = AccessVariable.create(null, rhsSymbol).accept(this).asRNode();
                 CoerceVector coerceVector = CoerceVectorNodeGen.create(null, null, null);
                 RSyntaxNode updateOp = createPositions(a.getIndexes(), argLength, a.isSubset(), null, vecAST.accept(this).asRNode(), rhsAccess, coerceVector, true);
-                SequenceNode vecUpdate = createUpdateSequence(rhsSymbol, rhs, tmpSymbol, v, updateOp.asRNode(), source);
+                RecursiveReplacementNode vecUpdate = createUpdateSequence(rhsSymbol, rhs, tmpSymbol, v, updateOp.asRNode(), source);
                 result = createVectorUpdate(vecAST, vecUpdate, isSuper, source, true);
             } else if (a.getVector() instanceof FieldAccess) {
                 FieldAccess accessAST = (FieldAccess) a.getVector();
@@ -509,16 +502,16 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
 
                 CoerceVector coerceVector = CoerceVectorNodeGen.create(null, null, null);
                 RSyntaxNode updateOp = createPositions(a.getIndexes(), argLength, a.isSubset(), null, accessAST.accept(this).asRNode(), rhsAccess.asRNode(), coerceVector, true);
-                SequenceNode fieldUpdate = createUpdateSequence(rhsSymbol, rhs, tmpSymbol, v, updateOp.asRNode(), source);
+                RecursiveReplacementNode fieldUpdate = createUpdateSequence(rhsSymbol, rhs, tmpSymbol, v, updateOp.asRNode(), source);
                 result = createFieldUpdate(accessAST, fieldUpdate, isSuper, source);
             } else {
                 throw RInternalError.unimplemented();
             }
+            if (result instanceof ReplacementNode) {
+                ((ReplacementNode) result).setSyntaxAST(syntaxAST);
+            }
+            return result;
         }
-        if (result instanceof ReplacementNode) {
-            ((ReplacementNode) result).setSyntaxAST(syntaxAST);
-        }
-        return result;
     }
 
     @Override
@@ -731,7 +724,7 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
                 arguments.add(ArgNode.create(null, (String) null, Constant.createStringConstant(null, new String[]{a.getFieldName().toString()})));
                 CoerceVector coerceVector = CoerceVectorNodeGen.create(null, null, null);
                 RSyntaxNode updateOp = createPositions(arguments, arguments.size(), false, null, vecAST.accept(this).asRNode(), rhsAccess.asRNode(), coerceVector, true);
-                SequenceNode vecUpdate = createUpdateSequence(rhsSymbol, rhs, tmpSymbol, v, updateOp.asRNode(), source);
+                RecursiveReplacementNode vecUpdate = createUpdateSequence(rhsSymbol, rhs, tmpSymbol, v, updateOp.asRNode(), source);
                 result = createVectorUpdate(vecAST, vecUpdate, isSuper, source, true);
             } else if (a.getLhs() instanceof FieldAccess) {
                 FieldAccess accessAST = (FieldAccess) a.getLhs();
@@ -741,7 +734,7 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
                 ReadVariableNode v = isSuper ? ReadVariableNode.createSuperLookup(varAST.getSource(), vSymbol) : ReadVariableNode.create(varAST.getSource(), vSymbol, varAST.shouldCopyValue());
                 RSyntaxNode rhsAccess = AccessVariable.create(null, rhsSymbol).accept(this);
                 UpdateFieldNode ufn = UpdateFieldNodeGen.create(accessAST.accept(this).asRNode(), rhsAccess.asRNode(), a.getFieldName());
-                SequenceNode fieldUpdate = createUpdateSequence(rhsSymbol, rhs, tmpSymbol, v, ufn, source);
+                RecursiveReplacementNode fieldUpdate = createUpdateSequence(rhsSymbol, rhs, tmpSymbol, v, ufn, source);
                 result = createFieldUpdate(accessAST, fieldUpdate, isSuper, source);
             } else {
                 throw RInternalError.unimplemented();
