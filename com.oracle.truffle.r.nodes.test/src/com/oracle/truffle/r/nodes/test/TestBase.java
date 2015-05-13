@@ -33,14 +33,20 @@ import com.oracle.truffle.r.runtime.ffi.*;
 
 public class TestBase {
 
+    private static void createSession() {
+        if (!REngine.isInitialized()) {
+            Load_RFFIFactory.initialize();
+            FastROptions.initialize();
+            REnvVars.initialize();
+            ROptions.initialize();
+            ROptions.setValueNoCheck("defaultPackages", RDataFactory.createStringVector(new String[]{}, true));
+            REngine.initialize(new String[0], new ConsoleHandler(), false, false);
+        }
+    }
+
     @BeforeClass
     public static void setupClass() {
-        Load_RFFIFactory.initialize();
-        FastROptions.initialize();
-        REnvVars.initialize();
-        ROptions.initialize();
-        ROptions.setValueNoCheck("defaultPackages", RDataFactory.createStringVector(new String[]{}, true));
-        REngine.initialize(new String[0], new ConsoleHandler(), false, false);
+        createSession();
     }
 
     private static class ConsoleHandler implements RContext.ConsoleHandler {

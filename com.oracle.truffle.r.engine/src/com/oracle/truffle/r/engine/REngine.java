@@ -35,8 +35,9 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.instrument.*;
+import com.oracle.truffle.api.instrument.impl.*;
 import com.oracle.truffle.api.source.*;
-import com.oracle.truffle.api.source.Source.AppendableSource;
 import com.oracle.truffle.r.library.graphics.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -93,6 +94,10 @@ public final class REngine implements RContext.Engine {
     private REngine() {
     }
 
+    public static boolean isInitialized() {
+        return initialized;
+    }
+
     /**
      * Initialize the engine.
      *
@@ -108,53 +113,52 @@ public final class REngine implements RContext.Engine {
         singleton.startTime = System.nanoTime();
         singleton.childTimes = new long[]{0, 0};
         MaterializedFrame globalFrame = RRuntime.createNonFunctionFrame().materialize();
-        if (!initialized) {
-            RInstrument.initialize();
-            RPerfStats.initialize();
-            Locale.setDefault(Locale.ROOT);
-            RAccuracyInfo.initialize();
-            singleton.crashOnFatalError = crashOnFatalErrorArg;
-            singleton.builtinLookup = RBuiltinPackages.getInstance();
-            singleton.context = RContext.setRuntimeState(singleton, commandArgs, consoleHandler, new RASTHelperImpl(), consoleHandler.isInteractive(), ignoreVisibility);
-            suppressWarnings = true;
-            StdConnections.initialize();
-            MaterializedFrame baseFrame = RRuntime.createNonFunctionFrame().materialize();
-            REnvironment.baseInitialize(globalFrame, baseFrame);
-            loadBase = FastROptions.LoadBase.getValue();
-            RBuiltinPackages.loadBase(baseFrame, loadBase);
-            RVersionInfo.initialize();
-            RRNG.initialize();
-            TempPathName.initialize();
-            RProfile.initialize();
-            RGraphics.initialize();
-            if (loadBase) {
-                /*
-                 * eval the system/site/user profiles. Experimentally GnuR does not report warnings
-                 * during system profile evaluation, but does for the site/user profiles.
-                 */
-                singleton.parseAndEval(RProfile.systemProfile(), baseFrame, REnvironment.baseEnv(), false, false);
-                checkAndRunStartupFunction(".OptRequireMethods");
+        assert !initialized;
+        RInstrument.initialize();
+        RPerfStats.initialize();
+        Locale.setDefault(Locale.ROOT);
+        RAccuracyInfo.initialize();
+        singleton.crashOnFatalError = crashOnFatalErrorArg;
+        singleton.builtinLookup = RBuiltinPackages.getInstance();
+        singleton.context = RContext.setRuntimeState(singleton, commandArgs, consoleHandler, new RASTHelperImpl(), consoleHandler.isInteractive(), ignoreVisibility);
+        suppressWarnings = true;
+        StdConnections.initialize();
+        MaterializedFrame baseFrame = RRuntime.createNonFunctionFrame().materialize();
+        REnvironment.baseInitialize(globalFrame, baseFrame);
+        loadBase = FastROptions.LoadBase.getValue();
+        RBuiltinPackages.loadBase(baseFrame, loadBase);
+        RVersionInfo.initialize();
+        RRNG.initialize();
+        TempPathName.initialize();
+        RProfile.initialize();
+        RGraphics.initialize();
+        if (loadBase) {
+            /*
+             * eval the system/site/user profiles. Experimentally GnuR does not report warnings
+             * during system profile evaluation, but does for the site/user profiles.
+             */
+            singleton.parseAndEval(RProfile.systemProfile(), baseFrame, REnvironment.baseEnv(), false, false);
+            checkAndRunStartupFunction(".OptRequireMethods");
 
-                suppressWarnings = false;
-                Source siteProfile = RProfile.siteProfile();
-                if (siteProfile != null) {
-                    singleton.parseAndEval(siteProfile, baseFrame, REnvironment.baseEnv(), false, false);
-                }
-                Source userProfile = RProfile.userProfile();
-                if (userProfile != null) {
-                    singleton.parseAndEval(userProfile, globalFrame, REnvironment.globalEnv(), false, false);
-                }
-                if (!NO_RESTORE.getValue()) {
-                    /*
-                     * TODO This is where we would load any saved user data
-                     */
-                }
-                checkAndRunStartupFunction(".First");
-                checkAndRunStartupFunction(".First.sys");
-                RBuiltinPackages.loadDefaultPackageOverrides();
+            suppressWarnings = false;
+            Source siteProfile = RProfile.siteProfile();
+            if (siteProfile != null) {
+                singleton.parseAndEval(siteProfile, baseFrame, REnvironment.baseEnv(), false, false);
             }
-            initialized = true;
+            Source userProfile = RProfile.userProfile();
+            if (userProfile != null) {
+                singleton.parseAndEval(userProfile, globalFrame, REnvironment.globalEnv(), false, false);
+            }
+            if (!NO_RESTORE.getValue()) {
+                /*
+                 * TODO This is where we would load any saved user data
+                 */
+            }
+            checkAndRunStartupFunction(".First");
+            checkAndRunStartupFunction(".First.sys");
+            RBuiltinPackages.loadDefaultPackageOverrides();
         }
+        initialized = true;
         return globalFrame;
     }
 
@@ -363,18 +367,7 @@ public final class REngine implements RContext.Engine {
      * @throws RecognitionException on parse error
      */
     private static RSyntaxNode parseToRNode(Source source) throws RecognitionException {
-        String code;
-        /*
-         * FIXME This is not a sufficient solution. While it works to parse the current entity in
-         * the source, it does not produce the correct indexes into the generated SourceSections
-         * because the parser uses zero-based indices in the current entity. We need the notion of a
-         * SubSource which can generate correct indexes transparently.
-         */
-        if (source instanceof AppendableSource) {
-            code = ((AppendableSource) source).getCodeFromMark();
-        } else {
-            code = source.getCode();
-        }
+        String code = source.getCode();
         return transform(ParseUtil.parseAST(new ANTLRStringStream(code), source));
     }
 
@@ -455,7 +448,9 @@ public final class REngine implements RContext.Engine {
             }
             assert checkResult(result);
             if (printResult) {
-                printResult(result);
+                if (RContext.isVisible()) {
+                    printResult(result);
+                }
             }
             if (topLevel) {
                 RErrorHandling.printWarnings(suppressWarnings);
@@ -496,16 +491,14 @@ public final class REngine implements RContext.Engine {
 
     @TruffleBoundary
     private static void printResult(Object result) {
-        if (RContext.isVisible()) {
-            Object resultValue = result instanceof RPromise ? PromiseHelperNode.evaluateSlowPath(null, (RPromise) result) : result;
-            if (loadBase) {
-                Object printMethod = REnvironment.globalEnv().findFunction("print");
-                RFunction function = (RFunction) (printMethod instanceof RPromise ? PromiseHelperNode.evaluateSlowPath(null, (RPromise) printMethod) : printMethod);
-                function.getTarget().call(RArguments.create(function, null, REnvironment.baseEnv().getFrame(), 1, new Object[]{resultValue, RMissing.instance}, PRINT_SIGNATURE));
-            } else {
-                // we only have the .Internal print.default method available
-                getPrintInternal().getTarget().call(RArguments.create(printInternal, null, REnvironment.baseEnv().getFrame(), 1, new Object[]{resultValue}, PRINT_INTERNAL_SIGNATURE));
-            }
+        Object resultValue = result instanceof RPromise ? PromiseHelperNode.evaluateSlowPath(null, (RPromise) result) : result;
+        if (loadBase) {
+            Object printMethod = REnvironment.globalEnv().findFunction("print");
+            RFunction function = (RFunction) (printMethod instanceof RPromise ? PromiseHelperNode.evaluateSlowPath(null, (RPromise) printMethod) : printMethod);
+            function.getTarget().call(RArguments.create(function, null, REnvironment.baseEnv().getFrame(), 1, new Object[]{resultValue, RMissing.instance}, PRINT_SIGNATURE));
+        } else {
+            // we only have the .Internal print.default method available
+            getPrintInternal().getTarget().call(RArguments.create(printInternal, null, REnvironment.baseEnv().getFrame(), 1, new Object[]{resultValue}, PRINT_INTERNAL_SIGNATURE));
         }
     }
 
@@ -549,6 +542,52 @@ public final class REngine implements RContext.Engine {
             consoleHandler.printErrorln(s);
 
         }
+    }
+
+    public Visualizer getRVisualizer() {
+        return new RVisualizer();
+    }
+
+    /**
+     * Helper for the repl debugger.
+     */
+    private static final class RVisualizer extends DefaultVisualizer {
+        private TextConnections.InternalStringWriteConnection stringConn;
+
+        private RVisualizer() {
+            try {
+                stringConn = new TextConnections.InternalStringWriteConnection();
+            } catch (IOException ex) {
+                throw RInternalError.shouldNotReachHere();
+            }
+        }
+
+        /**
+         * A little tricky because R's printing does not "return" Strings as this API requires. So
+         * we have to redirect the output using the a temporary "sink" on the standard output
+         * connection.
+         */
+        @Override
+        public String displayValue(ExecutionContext context, Object value, int trim) {
+            try {
+                StdConnections.pushDivertOut(stringConn, false);
+                printResult(value);
+                return stringConn.getString();
+            } finally {
+                try {
+                    StdConnections.popDivertOut();
+                } catch (IOException ex) {
+                    throw RInternalError.shouldNotReachHere();
+
+                }
+            }
+        }
+
+        @Override
+        public String displayIdentifier(FrameSlot slot) {
+            return slot.getIdentifier().toString();
+        }
+
     }
 
 }

@@ -32,7 +32,6 @@ import jline.console.*;
 
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.source.*;
-import com.oracle.truffle.api.source.Source.AppendableSource;
 import com.oracle.truffle.r.engine.*;
 import com.oracle.truffle.r.options.*;
 import com.oracle.truffle.r.runtime.*;
@@ -183,7 +182,7 @@ public class RCommand {
 
     private static MaterializedFrame readEvalPrint(ConsoleHandler consoleHandler, String[] commandArgs, String filePath) {
         String inputDescription = filePath == null ? "<shell_input>" : filePath;
-        AppendableSource source = Source.fromNamedAppendableText(inputDescription);
+        Source source = Source.fromNamedAppendableText(inputDescription);
         MaterializedFrame globalFrame = REngine.initialize(commandArgs, consoleHandler, false, FastROptions.IgnoreVisibility.getValue());
         try {
             // console.println("initialize time: " + (System.currentTimeMillis() - start));
@@ -194,22 +193,27 @@ public class RCommand {
                 if (input == null) {
                     return globalFrame;
                 }
+                // Start index of the new input
+                int startLength = source.getLength();
+                // Append the input as is
+                source.appendCode(input);
                 input = input.trim();
                 if (input.equals("") || input.charAt(0) == '#') {
+                    // nothing to parse
                     continue;
                 }
 
                 try {
                     String continuePrompt = getContinuePrompt();
-                    source.setMark();
-                    source.appendCode(input);
-                    while (REngine.getInstance().parseAndEval(source, globalFrame, REnvironment.globalEnv(), true, true) == Engine.INCOMPLETE_SOURCE) {
+                    Source subSource = Source.subSource(source, startLength);
+                    while (REngine.getInstance().parseAndEval(subSource, globalFrame, REnvironment.globalEnv(), true, true) == Engine.INCOMPLETE_SOURCE) {
                         consoleHandler.setPrompt(doEcho ? continuePrompt : null);
                         String additionalInput = consoleHandler.readLine();
                         if (additionalInput == null) {
                             return globalFrame;
                         }
-                        source.appendCode("\n" + additionalInput);
+                        source.appendCode(additionalInput);
+                        subSource = Source.subSource(source, startLength);
                     }
                 } catch (BrowserQuitException ex) {
                     // Q in browser
