@@ -26,7 +26,6 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.env.*;
 
@@ -42,13 +41,13 @@ public final class RecursiveReplacementNode extends RNode implements RSyntaxNode
      */
     @CompilationFinal private RSyntaxNode syntaxAST;
 
-    @Child private WriteVariableNode storeRhs;
-    @Child private WriteVariableNode storeValue;
+    @Child private RNode rhs;
+    @Child private RNode value;
     @Child private UpdateNode update;
 
-    public RecursiveReplacementNode(SourceSection src, String rhsSymbol, RNode rhs, String tmpSymbol, RNode v, UpdateNode update) {
-        this.storeRhs = WriteVariableNode.createAnonymous(rhsSymbol, rhs, WriteVariableNode.Mode.INVISIBLE);
-        this.storeValue = WriteVariableNode.createAnonymous(tmpSymbol, v, WriteVariableNode.Mode.INVISIBLE);
+    public RecursiveReplacementNode(SourceSection src, RNode rhs, RNode value, UpdateNode update) {
+        this.rhs = rhs;
+        this.value = value;
         this.update = update;
         assignSourceSection(src);
     }
@@ -59,9 +58,9 @@ public final class RecursiveReplacementNode extends RNode implements RSyntaxNode
 
     @Override
     public Object execute(VirtualFrame frame) {
-        storeRhs.execute(frame);
-        storeValue.execute(frame);
-        return update.execute(frame);
+        Object rhsObject = rhs.execute(frame);
+        Object valueObject = value.execute(frame);
+        return update.executeUpdate(frame, valueObject, rhsObject);
     }
 
     @Override
