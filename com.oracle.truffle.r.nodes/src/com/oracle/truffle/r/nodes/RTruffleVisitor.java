@@ -394,7 +394,7 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
         if (val instanceof SimpleAccessVariable) {
             SimpleAccessVariable callArg = (SimpleAccessVariable) val;
             String vSymbol = callArg.getVariable();
-            replacementArg = createReplacementForVariableUsing(callArg, vSymbol, replacement);
+            replacementArg = createReplacementForVariableUsing(callArg, vSymbol, replacement.isSuper());
             RCallNode replacementCall = prepareReplacementCall(fAst, args, tmpSymbol, rhsSymbol, true);
             assignFromTemp = WriteLocalFrameVariableNode.createAnonymous(vSymbol, replacementCall, WriteVariableNode.Mode.INVISIBLE, replacement.isSuper());
         } else if (val instanceof AccessVector) {
@@ -420,9 +420,9 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
         return result;
     }
 
-    private static ReadVariableNode createReplacementForVariableUsing(SimpleAccessVariable simpleAccessVariable, String variableSymbol, Replacement replacement) {
+    private static ReadVariableNode createReplacementForVariableUsing(SimpleAccessVariable simpleAccessVariable, String variableSymbol, boolean isSuper) {
         SourceSection argSourceSection = simpleAccessVariable.getSource();
-        if (replacement.isSuper()) {
+        if (isSuper) {
             return ReadVariableNode.createSuperLookup(argSourceSection, variableSymbol);
         } else {
             return ReadVariableNode.create(argSourceSection, variableSymbol, simpleAccessVariable.shouldCopyValue());
@@ -497,40 +497,15 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
         return afn;
     }
 
-    private static SimpleAccessVariable getVectorVariable(AccessVector v) {
-        if (v.getVector() instanceof SimpleAccessVariable) {
-            return (SimpleAccessVariable) v.getVector();
-        } else if (v.getVector() instanceof AccessVector) {
-            return getVectorVariable((AccessVector) v.getVector());
-        } else if (v.getVector() instanceof FieldAccess) {
-            return getFieldAccessVariable((FieldAccess) v.getVector());
-        } else if (v.getVector() instanceof FunctionCall) {
-            return null;
-        } else {
-            throw RInternalError.unimplemented();
-        }
-    }
-
-    private static SimpleAccessVariable getFieldAccessVariable(FieldAccess a) {
-        if (a.getLhs() instanceof SimpleAccessVariable) {
-            return (SimpleAccessVariable) a.getLhs();
-        } else if (a.getLhs() instanceof FunctionCall) {
-            return null;
-        } else {
-            throw RInternalError.unimplemented();
-        }
-    }
-
     private RSyntaxNode doReplacementLeftHandSide(ASTNode receiver, boolean needsSyntaxAST, RNode rhs, boolean isSuper, SourceSection source, BiFunction<RNode, RNode, RSyntaxNode> updateFunction) {
         if (receiver.getClass() == FunctionCall.class) {
             return updateFunction.apply(receiver.accept(this).asRNode(), rhs);
         } else {
-
             RSyntaxNode result;
             if (receiver instanceof SimpleAccessVariable) {
                 SimpleAccessVariable varAST = (SimpleAccessVariable) receiver;
                 String vSymbol = varAST.getVariable();
-                ReadVariableNode v = isSuper ? ReadVariableNode.createSuperLookup(varAST.getSource(), vSymbol) : ReadVariableNode.create(varAST.getSource(), vSymbol, varAST.shouldCopyValue());
+                ReadVariableNode v = createReplacementForVariableUsing(varAST, vSymbol, isSuper);
 
                 String tmpSymbol = createTempName();
                 String rhsSymbol = createTempName();
