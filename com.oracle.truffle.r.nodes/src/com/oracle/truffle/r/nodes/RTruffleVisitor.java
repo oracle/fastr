@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes;
 
 import java.util.*;
+import java.util.function.*;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
@@ -37,6 +38,7 @@ import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.parser.ast.*;
 import com.oracle.truffle.r.parser.ast.Constant.ConstantType;
+import com.oracle.truffle.r.parser.ast.Function;
 import com.oracle.truffle.r.parser.ast.Operation.*;
 import com.oracle.truffle.r.parser.tools.*;
 import com.oracle.truffle.r.runtime.*;
@@ -279,22 +281,20 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
         return n.getValue().accept(this);
     }
 
-    private RSyntaxNode createPositionsForSyntaxUpdate(List<ArgNode> argList, int argLength, boolean isSubset, RNode vector, RNode rhs) {
+    private RSyntaxNode createArrayUpdate(List<ArgNode> argList, int argLength, boolean isSubset, RNode vector, RNode rhs) {
         RNode[] positions;
         boolean varArgFound = false;
         if (argLength == 0) {
             positions = new RNode[]{ConstantNode.create(RMissing.instance)};
         } else {
-            int newArgLength = argLength;
-            positions = new RNode[newArgLength];
-            int ind = 0;
+            positions = new RNode[argLength];
             for (int i = 0; i < argLength; i++) {
                 ArgNode argNode = argList.get(i);
                 ASTNode node = argNode.getValue();
                 if (node instanceof SimpleAccessVariable && ((SimpleAccessVariable) node).getVariable().equals(ArgumentsSignature.VARARG_NAME)) {
                     varArgFound = true;
                 }
-                positions[ind++] = (node == null ? ConstantNode.create(RMissing.instance) : node.accept(this).asRNode());
+                positions[i] = (node == null ? ConstantNode.create(RMissing.instance) : node.accept(this).asRNode());
             }
         }
         PositionsArrayNodeValue posArrayNodeValue = new PositionsArrayNodeValue(isSubset, positions, varArgFound);
@@ -302,33 +302,9 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
          * UpdateArrayHelperNode insists on a CoerceVector, which is unecessary for the syntax AST,
          * but we don't want to change that class.
          */
-        CoerceVector coerceVector = CoerceVectorNodeGen.create(null, vector, null);
+        CoerceVector coerceVector = CoerceVectorNodeGen.create(null, null, null);
+        assert vector != null && rhs != null && coerceVector != null;
         return UpdateArrayHelperNodeGen.create(isSubset, true, 0, vector, rhs, posArrayNodeValue, coerceVector);
-    }
-
-    private RSyntaxNode createPositions(List<ArgNode> argList, int argLength, boolean isSubset, RNode castContainer, RNode tmpVarAccess, RNode rhsAccess, CoerceVector coerceVector) {
-        RNode[] positions;
-        boolean varArgFound = false;
-        if (argLength == 0) {
-            positions = new RNode[]{ConstantNode.create(RMissing.instance)};
-        } else {
-            int newArgLength = argLength;
-            positions = new RNode[newArgLength];
-            int ind = 0;
-            for (int i = 0; i < argLength; i++) {
-                ArgNode argNode = argList.get(i);
-                ASTNode node = argNode.getValue();
-                if (node instanceof SimpleAccessVariable && ((SimpleAccessVariable) node).getVariable().equals(ArgumentsSignature.VARARG_NAME)) {
-                    varArgFound = true;
-                }
-                positions[ind++] = (node == null ? ConstantNode.create(RMissing.instance) : node.accept(this).asRNode());
-            }
-        }
-        PositionsArrayNodeValue posArrayNodeValue = new PositionsArrayNodeValue(isSubset, positions, varArgFound);
-        assert tmpVarAccess != null;
-        assert rhsAccess != null;
-        assert coerceVector != null;
-        return UpdateArrayHelperNodeGen.create(isSubset, true, tmpVarAccess, rhsAccess, ConstantNode.create(0), posArrayNodeValue, coerceVector);
     }
 
     /**
@@ -388,85 +364,21 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
     }
 
     private RSyntaxNode createVectorUpdate(AccessVector a, RNode rhs, boolean isSuper, SourceSection source, boolean recursive) {
-        RSyntaxNode syntaxAST = null;
-        int argLength = a.getIndexes().size();
+        int argLength = recursive ? a.getIndexes().size() : a.getIndexes().size() - 1;
         // If recursive no need to set syntaxAST as already handled at top-level
-        if (!recursive) {
-            argLength--; // last argument == RHS
-            RNode theVector = a.getVector().accept(this).asRNode();
-            syntaxAST = createPositionsForSyntaxUpdate(a.getIndexes(), argLength, a.isSubset(), theVector, rhs);
-        }
-        if (a.getVector().getClass() == FunctionCall.class) {
-            // N.B. This is the only branch that does not set result to a ReplacementNode
-            FunctionCall callAST = (FunctionCall) a.getVector();
-            CoerceVector coerceVector = CoerceVectorNodeGen.create(null, null, null);
-            return createPositions(a.getIndexes(), argLength, a.isSubset(), null, callAST.accept(this).asRNode(), rhs, coerceVector);
-        } else {
-            RSyntaxNode result;
-            String tmpSymbol = createTempName();
-            String rhsSymbol = createTempName();
-            if (a.getVector() instanceof SimpleAccessVariable) {
-                SimpleAccessVariable varAST = (SimpleAccessVariable) a.getVector();
-                String vSymbol = varAST.getVariable();
-
-                ReadVariableNode v = isSuper ? ReadVariableNode.createSuperLookup(varAST.getSource(), vSymbol) : ReadVariableNode.create(varAST.getSource(), vSymbol, varAST.shouldCopyValue());
-                String rhsSymbolString = RRuntime.toString(rhsSymbol);
-                RNode rhsAccess = ReadVariableNode.create(rhsSymbolString, false);
-                RNode tmpVarAccess = ReadVariableNode.create(tmpSymbol, false);
-
-                CoerceVector coerceVector = CoerceVectorNodeGen.create(null, null, null);
-                RSyntaxNode updateOp = createPositions(a.getIndexes(), argLength, a.isSubset(), null, tmpVarAccess, rhsAccess, coerceVector);
-                RNode assignFromTemp = WriteVariableNode.createAnonymous(vSymbol, updateOp.asRNode(), WriteVariableNode.Mode.INVISIBLE, isSuper);
-                result = constructReplacementSuffix(rhs, v, false, assignFromTemp, tmpSymbol, rhsSymbol, source);
-            } else if (a.getVector() instanceof AccessVector) {
-                // assign value to the outermost dimension and then the result (recursively) to
-                // appropriate position in the lower dimension
-                // TODO: it works but perhaps should be revisited
-
-                AccessVector vecAST = (AccessVector) a.getVector();
-                SimpleAccessVariable varAST = getVectorVariable(vecAST);
-                RNode v;
-                if (varAST != null) {
-                    String vSymbol = varAST.getVariable();
-                    v = isSuper ? ReadVariableNode.createSuperLookup(varAST.getSource(), vSymbol) : ReadVariableNode.create(varAST.getSource(), vSymbol, varAST.shouldCopyValue());
-                } else {
-                    v = vecAST.getVector().accept(this).asRNode();
-                }
-                RNode rhsAccess = AccessVariable.create(null, rhsSymbol).accept(this).asRNode();
-                CoerceVector coerceVector = CoerceVectorNodeGen.create(null, null, null);
-                RSyntaxNode updateOp = createPositions(a.getIndexes(), argLength, a.isSubset(), null, vecAST.accept(this).asRNode(), rhsAccess, coerceVector);
-                RecursiveReplacementNode vecUpdate = createUpdateSequence(rhsSymbol, rhs, tmpSymbol, v, updateOp.asRNode(), source);
-                result = createVectorUpdate(vecAST, vecUpdate, isSuper, source, true);
-            } else if (a.getVector() instanceof FieldAccess) {
-                FieldAccess accessAST = (FieldAccess) a.getVector();
-                SimpleAccessVariable varAST = getFieldAccessVariable(accessAST);
-
-                RNode v;
-                if (varAST != null) {
-                    String vSymbol = varAST.getVariable();
-                    v = isSuper ? ReadVariableNode.createSuperLookup(varAST.getSource(), vSymbol) : ReadVariableNode.create(varAST.getSource(), vSymbol, varAST.shouldCopyValue());
-                } else {
-                    v = accessAST.getLhs().accept(this).asRNode();
-                }
-                RSyntaxNode rhsAccess = AccessVariable.create(null, rhsSymbol).accept(this);
-
-                CoerceVector coerceVector = CoerceVectorNodeGen.create(null, null, null);
-                RSyntaxNode updateOp = createPositions(a.getIndexes(), argLength, a.isSubset(), null, accessAST.accept(this).asRNode(), rhsAccess.asRNode(), coerceVector);
-                RecursiveReplacementNode fieldUpdate = createUpdateSequence(rhsSymbol, rhs, tmpSymbol, v, updateOp.asRNode(), source);
-                result = createFieldUpdate(accessAST, fieldUpdate, isSuper, source);
-            } else {
-                throw RInternalError.unimplemented();
-            }
-            if (result instanceof ReplacementNode) {
-                ((ReplacementNode) result).setSyntaxAST(syntaxAST);
-            }
-            return result;
-        }
+        return doReplacementLeftHandSide(a.getVector(), !recursive, rhs, isSuper, source, (receiver, rhsAccess) -> {
+            return createArrayUpdate(a.getIndexes(), argLength, a.isSubset(), receiver, rhsAccess);
+        });
     }
 
     @Override
     public RSyntaxNode visit(UpdateVector u) {
-        return createVectorUpdate(u.getVector(), u.getRHS().accept(this).asRNode(), u.isSuper(), u.getSource(), false);
+        AccessVector a = u.getVector();
+        int argLength = a.getIndexes().size() - 1;
+        // If recursive no need to set syntaxAST as already handled at top-level
+        return doReplacementLeftHandSide(a.getVector(), !false, u.getRHS().accept(this).asRNode(), u.isSuper(), u.getSource(), (receiver, rhsAccess) -> {
+            return createArrayUpdate(a.getIndexes(), argLength, a.isSubset(), receiver, rhsAccess);
+        });
     }
 
     @Override
@@ -527,28 +439,30 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
         RNode assignFromTemp;
         RNode replacementArg;
         String rhsSymbol = createTempName();
+
         if (val instanceof SimpleAccessVariable) {
             SimpleAccessVariable callArg = (SimpleAccessVariable) val;
             String vSymbol = callArg.getVariable();
             replacementArg = createReplacementForVariableUsing(callArg, vSymbol, replacement);
-            RNode replacementCall = prepareReplacementCall(fAst, args, tmpSymbol, rhsSymbol, true);
-            if (replacement.isSuper()) {
-                assignFromTemp = WriteSuperFrameVariableNode.create(vSymbol, replacementCall, WriteVariableNode.Mode.INVISIBLE);
-            } else {
-                assignFromTemp = WriteLocalFrameVariableNode.createAnonymous(vSymbol, replacementCall, WriteVariableNode.Mode.INVISIBLE);
-            }
+            RCallNode replacementCall = prepareReplacementCall(fAst, args, tmpSymbol, rhsSymbol, true);
+            assignFromTemp = WriteLocalFrameVariableNode.createAnonymous(vSymbol, replacementCall, WriteVariableNode.Mode.INVISIBLE, replacement.isSuper());
         } else if (val instanceof AccessVector) {
             AccessVector callArgAst = (AccessVector) val;
             replacementArg = callArgAst.accept(this).asRNode();
-            RNode replacementCall = prepareReplacementCall(fAst, args, tmpSymbol, rhsSymbol, false);
+            RCallNode replacementCall = prepareReplacementCall(fAst, args, tmpSymbol, rhsSymbol, false);
             // see AssignVariable.writeVector (number of args must match)
             callArgAst.getArguments().add(ArgNode.create(rhsAst.getSource(), "value", rhsAst));
-            assignFromTemp = createVectorUpdate(callArgAst, replacementCall, replacement.isSuper(), replacement.getSource(), false).asRNode();
+            RSyntaxNode update = doReplacementLeftHandSide(callArgAst.getVector(), !false, replacementCall, replacement.isSuper(), replacement.getSource(), (receiver, rhsAccess) -> {
+                return createArrayUpdate(callArgAst.getIndexes(), callArgAst.getIndexes().size() - 1, callArgAst.isSubset(), receiver, rhsAccess);
+            });
+            assignFromTemp = update.asRNode();
         } else {
             FieldAccess callArgAst = (FieldAccess) val;
             replacementArg = callArgAst.accept(this).asRNode();
-            RSyntaxNode replacementCall = prepareReplacementCall(fAst, args, tmpSymbol, rhsSymbol, false);
-            assignFromTemp = createFieldUpdate(callArgAst, replacementCall.asRNode(), replacement.isSuper(), replacement.getSource()).asRNode();
+            RCallNode replacementCall = prepareReplacementCall(fAst, args, tmpSymbol, rhsSymbol, false);
+            assignFromTemp = doReplacementLeftHandSide(callArgAst.getLhs(), true, replacementCall, replacement.isSuper(), replacement.getSource(), (receiver, rhsAccess) -> {
+                return UpdateFieldNodeGen.create(receiver, rhsAccess, callArgAst.getFieldName());
+            }).asRNode();
         }
         RSyntaxNode result = constructReplacementSuffix(rhs, replacementArg, true, assignFromTemp, tmpSymbol, rhsSymbol, replacement.getSource());
         ((ReplacementNode) result).setSyntaxAST(syntaxAST);
@@ -557,8 +471,7 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
 
     private static ReadVariableNode createReplacementForVariableUsing(SimpleAccessVariable simpleAccessVariable, String variableSymbol, Replacement replacement) {
         SourceSection argSourceSection = simpleAccessVariable.getSource();
-        boolean replacementInSuperEnvironment = replacement.isSuper();
-        if (replacementInSuperEnvironment) {
+        if (replacement.isSuper()) {
             return ReadVariableNode.createSuperLookup(argSourceSection, variableSymbol);
         } else {
             return ReadVariableNode.create(argSourceSection, variableSymbol, simpleAccessVariable.shouldCopyValue());
@@ -572,8 +485,7 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
 
     @Override
     public RSyntaxNode visit(SimpleAccessTempVariable n) {
-        String symbol = RRuntime.toString(n.getSymbol());
-        return ReadVariableNode.create(n.getSource(), symbol, false);
+        return ReadVariableNode.create(n.getSource(), n.getSymbol(), false);
     }
 
     @Override
@@ -634,32 +546,28 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
         return afn;
     }
 
-    private RSyntaxNode createFieldUpdate(FieldAccess a, RNode rhs, boolean isSuper, SourceSection source) {
-        UpdateFieldNode syntaxAST = UpdateFieldNodeGen.create(a.getLhs().accept(this).asRNode(), rhs, a.getFieldName());
-        syntaxAST.assignSourceSection(source);
-        RSyntaxNode result = null;
-
-        if (a.getLhs().getClass() == FunctionCall.class) {
-            FunctionCall callAST = (FunctionCall) a.getLhs();
-            CoerceVector coerceVector = CoerceVectorNodeGen.create(null, null, null);
-            List<ArgNode> arguments = new ArrayList<>(2);
-            arguments.add(ArgNode.create(null, (String) null, Constant.createStringConstant(null, new String[]{a.getFieldName().toString()})));
-            return createPositions(arguments, arguments.size(), false, null, callAST.accept(this).asRNode(), rhs, coerceVector);
+    private RSyntaxNode doReplacementLeftHandSide(ASTNode receiver, boolean needsSyntaxAST, RNode rhs, boolean isSuper, SourceSection source, BiFunction<RNode, RNode, RSyntaxNode> updateFunction) {
+        if (receiver.getClass() == FunctionCall.class) {
+            return updateFunction.apply(receiver.accept(this).asRNode(), rhs);
         } else {
             String tmpSymbol = createTempName();
             String rhsSymbol = createTempName();
-            if (a.getLhs() instanceof SimpleAccessVariable) {
-                SimpleAccessVariable varAST = (SimpleAccessVariable) a.getLhs();
-                String vSymbol = varAST.getVariable();
+            ReadVariableNode rhsAccess = ReadVariableNode.create(rhsSymbol, false);
 
+            RSyntaxNode result;
+            if (receiver instanceof SimpleAccessVariable) {
+                SimpleAccessVariable varAST = (SimpleAccessVariable) receiver;
+                String vSymbol = varAST.getVariable();
                 ReadVariableNode v = isSuper ? ReadVariableNode.createSuperLookup(varAST.getSource(), vSymbol) : ReadVariableNode.create(varAST.getSource(), vSymbol, varAST.shouldCopyValue());
-                RNode rhsAccess = ReadVariableNode.create(rhsSymbol, false);
-                RNode tmpVarAccess = ReadVariableNode.create(tmpSymbol, false);
-                UpdateFieldNode ufn = UpdateFieldNodeGen.create(tmpVarAccess, rhsAccess, a.getFieldName());
-                RNode assignFromTemp = WriteSuperFrameVariableNode.createAnonymous(vSymbol, ufn, WriteVariableNode.Mode.INVISIBLE, isSuper);
+
+                ReadVariableNode tmpVarAccess = ReadVariableNode.create(tmpSymbol, false);
+
+                RSyntaxNode updateOp = updateFunction.apply(tmpVarAccess, rhsAccess);
+                RNode assignFromTemp = WriteVariableNode.createAnonymous(vSymbol, updateOp.asRNode(), WriteVariableNode.Mode.INVISIBLE, isSuper);
                 result = constructReplacementSuffix(rhs, v, false, assignFromTemp, tmpSymbol, rhsSymbol, source);
-            } else if (a.getLhs() instanceof AccessVector) {
-                AccessVector vecAST = (AccessVector) a.getLhs();
+            } else if (receiver instanceof AccessVector) {
+                AccessVector vecAST = (AccessVector) receiver;
+
                 SimpleAccessVariable varAST = getVectorVariable(vecAST);
                 RNode v;
                 if (varAST != null) {
@@ -668,28 +576,36 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
                 } else {
                     v = vecAST.getVector().accept(this).asRNode();
                 }
-                RSyntaxNode rhsAccess = AccessVariable.create(null, rhsSymbol).accept(this);
-
-                List<ArgNode> arguments = new ArrayList<>(2);
-                arguments.add(ArgNode.create(null, (String) null, Constant.createStringConstant(null, new String[]{a.getFieldName().toString()})));
-                CoerceVector coerceVector = CoerceVectorNodeGen.create(null, null, null);
-                RSyntaxNode updateOp = createPositions(arguments, arguments.size(), false, null, vecAST.accept(this).asRNode(), rhsAccess.asRNode(), coerceVector);
+                RSyntaxNode updateOp = updateFunction.apply(vecAST.accept(this).asRNode(), rhsAccess);
                 RecursiveReplacementNode vecUpdate = createUpdateSequence(rhsSymbol, rhs, tmpSymbol, v, updateOp.asRNode(), source);
-                result = createVectorUpdate(vecAST, vecUpdate, isSuper, source, true);
-            } else if (a.getLhs() instanceof FieldAccess) {
-                FieldAccess accessAST = (FieldAccess) a.getLhs();
+                result = doReplacementLeftHandSide(vecAST.getVector(), !true, vecUpdate, isSuper, source, (receiver1, rhsAccess1) -> {
+                    return createArrayUpdate(vecAST.getIndexes(), vecAST.getIndexes().size(), vecAST.isSubset(), receiver1, rhsAccess1);
+                });
+            } else if (receiver instanceof FieldAccess) {
+                FieldAccess accessAST = (FieldAccess) receiver;
+
                 SimpleAccessVariable varAST = getFieldAccessVariable(accessAST);
 
-                String vSymbol = varAST.getVariable();
-                ReadVariableNode v = isSuper ? ReadVariableNode.createSuperLookup(varAST.getSource(), vSymbol) : ReadVariableNode.create(varAST.getSource(), vSymbol, varAST.shouldCopyValue());
-                RSyntaxNode rhsAccess = AccessVariable.create(null, rhsSymbol).accept(this);
-                UpdateFieldNode ufn = UpdateFieldNodeGen.create(accessAST.accept(this).asRNode(), rhsAccess.asRNode(), a.getFieldName());
-                RecursiveReplacementNode fieldUpdate = createUpdateSequence(rhsSymbol, rhs, tmpSymbol, v, ufn, source);
-                result = createFieldUpdate(accessAST, fieldUpdate, isSuper, source);
+                RNode v;
+                if (varAST != null) {
+                    String vSymbol = varAST.getVariable();
+                    v = isSuper ? ReadVariableNode.createSuperLookup(varAST.getSource(), vSymbol) : ReadVariableNode.create(varAST.getSource(), vSymbol, varAST.shouldCopyValue());
+                } else {
+                    v = accessAST.getLhs().accept(this).asRNode();
+                }
+                RSyntaxNode updateOp = updateFunction.apply(accessAST.accept(this).asRNode(), rhsAccess);
+                RecursiveReplacementNode fieldUpdate = createUpdateSequence(rhsSymbol, rhs, tmpSymbol, v, updateOp.asRNode(), source);
+                result = doReplacementLeftHandSide(accessAST.getLhs(), true, fieldUpdate, isSuper, source, (receiver1, rhsAccess1) -> {
+                    return UpdateFieldNodeGen.create(receiver1, rhsAccess1, accessAST.getFieldName());
+                });
             } else {
                 throw RInternalError.unimplemented();
             }
-            ((ReplacementNode) result).setSyntaxAST(syntaxAST);
+            if (needsSyntaxAST && result instanceof ReplacementNode) {
+                RSyntaxNode syntaxAST = updateFunction.apply(receiver.accept(this).asRNode(), rhs);
+                syntaxAST.asRNode().assignSourceSection(source);
+                ((ReplacementNode) result).setSyntaxAST(syntaxAST);
+            }
             return result;
         }
     }
@@ -698,7 +614,9 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
     public RSyntaxNode visit(UpdateField u) {
         FieldAccess a = u.getVector();
         RSyntaxNode rhs = u.getRHS().accept(this);
-        return createFieldUpdate(a, rhs.asRNode(), u.isSuper(), u.getSource());
+        return doReplacementLeftHandSide(a.getLhs(), true, rhs.asRNode(), u.isSuper(), u.getSource(), (receiver, rhsAccess) -> {
+            return UpdateFieldNodeGen.create(receiver, rhsAccess, a.getFieldName());
+        });
     }
 
 }

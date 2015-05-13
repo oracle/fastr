@@ -35,7 +35,7 @@ public class SimpleAccessTempVariable extends AccessVariable {
         this.tempSymbol = tempSymbol;
     }
 
-    public Object getSymbol() {
+    public String getSymbol() {
         return tempSymbol;
     }
 
