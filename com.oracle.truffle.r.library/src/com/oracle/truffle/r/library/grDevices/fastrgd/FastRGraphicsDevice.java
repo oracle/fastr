@@ -12,8 +12,9 @@
  *
  * All rights reserved.
  */
-package com.oracle.truffle.r.library.graphics;
+package com.oracle.truffle.r.library.grDevices.fastrgd;
 
+import com.oracle.truffle.r.library.graphics.FastRFrame;
 import com.oracle.truffle.r.library.graphics.core.DrawingParameters;
 import com.oracle.truffle.r.library.graphics.core.GraphicsDevice;
 import com.oracle.truffle.r.library.graphics.core.drawables.DrawableObject;
@@ -27,7 +28,10 @@ import java.util.function.Function;
 import static com.oracle.truffle.r.library.graphics.core.geometry.AxisDirection.EAST;
 import static com.oracle.truffle.r.library.graphics.core.geometry.AxisDirection.NORTH;
 
-public class MockGraphicsDevice implements GraphicsDevice {
+/**
+ * Default interactive FastR graphics device.
+ */
+public class FastRGraphicsDevice implements GraphicsDevice {
     private static final double GNUR_DEFAULT_MAX_X = 1;
     private static final Axis GNUR_DEFAULT_X_AXIS = new Axis(0, GNUR_DEFAULT_MAX_X, EAST);
     private static final Axis GNUR_DEFAULT_Y_AXIS = new Axis(0, 1, NORTH);

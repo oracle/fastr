@@ -48,12 +48,12 @@ public interface GraphicsEngine {
     GraphicsDevice getCurrentGraphicsDevice();
 
     /**
-     * @return {@link NullGraphicsDevice} if unable to find other
+     * @return {@link com.oracle.truffle.r.library.grDevices.NullGraphicsDevice} if unable to find other
      */
     GraphicsDevice getGraphicsDeviceNextTo(GraphicsDevice graphicsDevice);
 
     /**
-     * @return {@link NullGraphicsDevice} if unable to find other
+     * @return {@link com.oracle.truffle.r.library.grDevices.NullGraphicsDevice} if unable to find other
      */
     GraphicsDevice getGraphicsDevicePrevTo(GraphicsDevice graphicsDevice);
 

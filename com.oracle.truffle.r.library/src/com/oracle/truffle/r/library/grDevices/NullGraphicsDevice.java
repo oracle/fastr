@@ -20,14 +20,16 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.library.graphics.core;
+package com.oracle.truffle.r.library.grDevices;
 
+import com.oracle.truffle.r.library.graphics.core.DrawingParameters;
+import com.oracle.truffle.r.library.graphics.core.GraphicsDevice;
 import com.oracle.truffle.r.library.graphics.core.geometry.Coordinates;
 
-final class NullGraphicsDevice implements GraphicsDevice {
+public final class NullGraphicsDevice implements GraphicsDevice {
     private static final NullGraphicsDevice instance = new NullGraphicsDevice();
 
-    static NullGraphicsDevice getInstance() {
+    public static NullGraphicsDevice getInstance() {
         return instance;
     }
 

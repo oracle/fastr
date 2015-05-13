@@ -22,8 +22,9 @@
  */
 package com.oracle.truffle.r.library.graphics.core;
 
-import com.oracle.truffle.r.library.graphics.*;
 import com.oracle.truffle.r.library.graphics.core.geometry.Coordinates;
+import com.oracle.truffle.r.library.grDevices.NullGraphicsDevice;
+import com.oracle.truffle.r.library.grDevices.fastrgd.FastRGraphicsDevice;
 import com.oracle.truffle.r.runtime.Utils;
 
 import static com.oracle.truffle.r.library.graphics.core.GraphicsEvent.*;
@@ -196,7 +197,7 @@ public final class GraphicsEngineImpl implements GraphicsEngine {
     }
 
     private void installCurrentGraphicsDevice() throws Exception {
-        registerGraphicsDevice(new MockGraphicsDevice());
+        registerGraphicsDevice(new FastRGraphicsDevice());
     }
 
     public GraphicsDevice getGraphicsDeviceNextTo(GraphicsDevice graphicsDevice) {

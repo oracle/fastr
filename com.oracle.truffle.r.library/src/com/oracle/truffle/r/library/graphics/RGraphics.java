@@ -24,12 +24,16 @@ import com.oracle.truffle.r.runtime.env.*;
  * A placeholder to keep {@code REngine} limited to calling the {@link #initialize} method. It sets
  * the {@code .Device} and {@code .Devices} variables in "base" as per GnuR.
  *
- * TODO Sort out the relationship of {@link GraphicsEngine} and the {@code grDevices} and
- * {@code graphics} packages.
- *
  */
 public class RGraphics {
     private static final RStringVector NULL_DEVICE = RDataFactory.createStringVectorFromScalar("null device");
+    /**
+     * The graphics devices system maintains two variables .Device and .Devices in the base environment
+     * both are always set:
+     * .Devices gives a list of character vectors of the names of open devices,
+     * .Device is the element corresponding to the currently active device.
+     * The null device will always be open.
+     */
     private static final String DOT_DEVICE = ".Device";
     private static final String DOT_DEVICES = ".Devices";
 
