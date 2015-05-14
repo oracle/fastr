@@ -24,7 +24,6 @@ package com.oracle.truffle.r.nodes;
 
 import java.util.function.*;
 
-import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
@@ -40,10 +39,43 @@ import com.oracle.truffle.r.runtime.data.RPromise.Closure;
  * This node reifies a runtime object into the AST by creating nodes for frequently encountered
  * values. This can be used to bridge the gap between code as runtime data and executed code.
  */
-@TypeSystemReference(RTypes.class)
-public abstract class InlineCacheNode<F extends Frame, T> extends Node {
+public abstract class InlineCacheNode extends Node {
 
-    public abstract Object execute(F frame, T value);
+    protected final int maxPicDepth;
+    private final Function<Object, RNode> reify;
+    private final BiFunction<Frame, Object, Object> generic;
+
+    public abstract Object execute(Frame frame, Object value);
+
+    public InlineCacheNode(int maxPicDepth, Function<Object, RNode> reify, BiFunction<Frame, Object, Object> generic) {
+        this.maxPicDepth = maxPicDepth;
+        this.reify = reify;
+        this.generic = generic;
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization(limit = "maxPicDepth", guards = "value == cachedValue")
+    protected Object doCached(Frame frame, Object value, //
+                    @Cached("value") Object cachedValue, //
+                    @Cached("createBinaryProfile()") ConditionProfile isVirtualFrameProfile, //
+                    @Cached("cache(cachedValue)") RNode reified) {
+        VirtualFrame vf;
+        if (isVirtualFrameProfile.profile(frame instanceof VirtualFrame)) {
+            vf = (VirtualFrame) frame;
+        } else {
+            vf = new SubstituteVirtualFrame(frame.materialize());
+        }
+        return reified.execute(vf);
+    }
+
+    protected RNode cache(Object value) {
+        return NodeUtil.cloneNode(reify.apply(value));
+    }
+
+    @Specialization(contains = "doCached")
+    protected Object doGeneric(Frame frame, Object value) {
+        return generic.apply(frame, value);
+    }
 
     /**
      * Creates an inline cache.
@@ -53,8 +85,9 @@ public abstract class InlineCacheNode<F extends Frame, T> extends Node {
      * @param generic a function that will be used to evaluate the given value after the polymorphic
      *            inline cache has reached its maximum size
      */
-    public static <F extends Frame, T> InlineCacheNode<F, T> create(int maxPicDepth, Function<T, RNode> reify, BiFunction<F, T, Object> generic) {
-        return new UninitializedInlineCacheNode<>(maxPicDepth, reify, generic);
+    @SuppressWarnings("unchecked")
+    public static <T> InlineCacheNode createCache(int maxPicDepth, Function<T, RNode> reify, BiFunction<Frame, T, Object> generic) {
+        return InlineCacheNodeGen.create(maxPicDepth, (Function<Object, RNode>) reify, (BiFunction<Frame, Object, Object>) generic);
     }
 
     /**
@@ -63,8 +96,8 @@ public abstract class InlineCacheNode<F extends Frame, T> extends Node {
      *
      * @param maxPicDepth maximum number of entries in the polymorphic inline cache
      */
-    public static <F extends Frame> InlineCacheNode<F, RNode> createExpression(int maxPicDepth) {
-        return create(maxPicDepth, value -> value, (frame, value) -> RContext.getEngine().eval(RDataFactory.createLanguage(value), frame.materialize()));
+    public static <F extends Frame> InlineCacheNode createExpression(int maxPicDepth) {
+        return createCache(maxPicDepth, value -> (RNode) value, (frame, value) -> RContext.getEngine().eval(RDataFactory.createLanguage(value), frame.materialize()));
     }
 
     /**
@@ -73,83 +106,13 @@ public abstract class InlineCacheNode<F extends Frame, T> extends Node {
      *
      * @param maxPicDepth maximum number of entries in the polymorphic inline cache
      */
-    public static <F extends Frame> InlineCacheNode<F, Closure> createPromise(int maxPicDepth) {
-        return create(maxPicDepth, closure -> (RNode) closure.getExpr(), InlineCacheNode::evalPromise);
+    public static <F extends Frame> InlineCacheNode createPromise(int maxPicDepth) {
+        return createCache(maxPicDepth, closure -> (RNode) closure.getExpr(), InlineCacheNode::evalPromise);
     }
 
     @TruffleBoundary
-    private static <F extends Frame> Object evalPromise(F frame, Closure closure) {
+    private static Object evalPromise(Frame frame, Closure closure) {
         return RContext.getEngine().evalPromise(closure, frame.materialize());
     }
 
-    @NodeInfo(cost = NodeCost.UNINITIALIZED)
-    private static final class UninitializedInlineCacheNode<F extends Frame, T> extends InlineCacheNode<F, T> {
-
-        private final int maxPicDepth;
-        private final Function<T, RNode> reify;
-        private final BiFunction<F, T, Object> generic;
-
-        /** The current depth of the inline cache. */
-        private int picDepth = 0;
-
-        public UninitializedInlineCacheNode(int maxPicDepth, Function<T, RNode> reify, BiFunction<F, T, Object> generic) {
-            this.maxPicDepth = maxPicDepth;
-            this.reify = reify;
-            this.generic = generic;
-        }
-
-        @Override
-        public Object execute(F frame, T value) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-
-            // Specialize below
-            InlineCacheNode<F, T> replacement;
-            if (picDepth < maxPicDepth) {
-                picDepth += 1;
-                replacement = new DirectInlineCacheNode<>(reify, value, this);
-            } else {
-                replacement = new GenericInlineCacheNode<>(generic);
-            }
-            return replace(replacement).execute(frame, value);
-        }
-
-        private static final class DirectInlineCacheNode<F extends Frame, T> extends InlineCacheNode<F, T> {
-
-            private final ConditionProfile isVirtualFrameProfile = ConditionProfile.createBinaryProfile();
-            private final T originalValue;
-            @Child private RNode reified;
-            @Child private InlineCacheNode<F, T> next;
-
-            protected DirectInlineCacheNode(Function<T, RNode> reify, T originalValue, InlineCacheNode<F, T> next) {
-                /*
-                 * The expression needs to be cloned in order to be inserted as a child (which is
-                 * required for it to be executed). But at the same time the PIC relies on the
-                 * identity of the original expression object, so both need to be kept.
-                 */
-                this.originalValue = originalValue;
-                this.reified = NodeUtil.cloneNode(reify.apply(originalValue));
-                this.next = next;
-            }
-
-            @Override
-            public Object execute(F frame, T value) {
-                VirtualFrame vf = isVirtualFrameProfile.profile(frame instanceof VirtualFrame) ? (VirtualFrame) frame : new SubstituteVirtualFrame(frame.materialize());
-                return value == originalValue ? reified.execute(vf) : next.execute(frame, value);
-            }
-        }
-
-        private static final class GenericInlineCacheNode<F extends Frame, T> extends InlineCacheNode<F, T> {
-
-            private final BiFunction<F, T, Object> generic;
-
-            public GenericInlineCacheNode(BiFunction<F, T, Object> generic) {
-                this.generic = generic;
-            }
-
-            @Override
-            public Object execute(F frame, T value) {
-                return generic.apply(frame, value);
-            }
-        }
-    }
 }

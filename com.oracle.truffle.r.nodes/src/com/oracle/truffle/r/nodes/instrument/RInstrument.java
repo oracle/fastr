@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.instrument;
 
+import java.util.*;
+
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.instrument.*;
 import com.oracle.truffle.api.nodes.*;
@@ -30,15 +32,11 @@ import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.nodes.instrument.debug.*;
 import com.oracle.truffle.r.nodes.instrument.trace.*;
-import com.oracle.truffle.r.options.FastROptions;
+import com.oracle.truffle.r.options.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.instrument.*;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Handles the initialization of the instrumentation system which sets up various instruments

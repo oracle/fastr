@@ -41,14 +41,14 @@ import com.oracle.truffle.r.runtime.data.*;
 @RBuiltin(name = "missing", kind = PRIMITIVE, parameterNames = {"x"}, nonEvalArgs = 0)
 public abstract class Missing extends RBuiltinNode {
 
-    @Child private InlineCacheNode<Frame, String> repCache;
+    @Child private InlineCacheNode repCache;
 
     private final ConditionProfile isSymbolNullProfile = ConditionProfile.createBinaryProfile();
 
-    private static InlineCacheNode<Frame, String> createRepCache(int level) {
+    private static InlineCacheNode createRepCache(int level) {
         Function<String, RNode> reify = symbol -> createNodeForRep(symbol, level);
         BiFunction<Frame, String, Object> generic = (frame, symbol) -> RRuntime.asLogical(RMissingHelper.isMissingArgument(frame, symbol));
-        return InlineCacheNode.create(3, reify, generic);
+        return InlineCacheNode.createCache(3, reify, generic);
     }
 
     private static RNode createNodeForRep(String symbol, int level) {
@@ -61,7 +61,7 @@ public abstract class Missing extends RBuiltinNode {
     private static class MissingCheckLevel extends RNode {
 
         @Child private GetMissingValueNode getMissingValue;
-        @Child private InlineCacheNode<Frame, String> recursive;
+        @Child private InlineCacheNode recursive;
         @Child private PromiseHelperNode promiseHelper;
 
         @CompilationFinal private FrameDescriptor recursiveDesc;

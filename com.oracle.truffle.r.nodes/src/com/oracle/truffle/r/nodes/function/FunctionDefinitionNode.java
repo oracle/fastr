@@ -64,7 +64,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
     private final FunctionUID uuid;
 
     @Child private FrameSlotNode onExitSlot;
-    @Child private InlineCacheNode<VirtualFrame, RNode> onExitExpressionCache;
+    @Child private InlineCacheNode onExitExpressionCache;
     private final ConditionProfile onExitProfile = ConditionProfile.createBinaryProfile();
 
     @CompilationFinal private BranchProfile invalidateFrameSlotProfile;
