@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.unary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.instrument.NeedsWrapper;
+import com.oracle.truffle.r.nodes.instrument.wrappers.*;
 import com.oracle.truffle.api.instrument.ProbeNode.WrapperNode;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;

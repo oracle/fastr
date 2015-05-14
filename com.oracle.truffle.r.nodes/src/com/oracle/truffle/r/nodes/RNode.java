@@ -30,6 +30,7 @@ import com.oracle.truffle.api.instrument.ProbeNode.*;
 import com.oracle.truffle.r.nodes.instrument.NeedsWrapper;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.instrument.*;
+import com.oracle.truffle.r.nodes.instrument.wrappers.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.conn.*;
 import com.oracle.truffle.r.runtime.data.*;

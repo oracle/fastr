@@ -34,6 +34,7 @@ import com.oracle.truffle.r.nodes.access.variables.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.nodes.instrument.*;
+import com.oracle.truffle.r.nodes.instrument.wrappers.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
@@ -46,10 +47,9 @@ import com.oracle.truffle.r.runtime.data.*;
  *
  * A note on {@link RInstrumentableNode}. Since both the {@code .Internal} and the argument are
  * {@link RCallNode}s both may have been wrapped. The call to {@link RASTUtils#unwrap} will go
- * through any {@link com.oracle.truffle.r.nodes.RNodeWrapper} and the rewrite will remove one level
- * of wrapping. However the parent of the the {@code .Internal}, which will be an
- * {@link com.oracle.truffle.r.nodes.RNodeWrapper}, will remain so any instrumentation at that level
- * will remain in place.
+ * through any {@link RNodeWrapper} and the rewrite will remove one level of wrapping. However the
+ * parent of the the {@code .Internal}, which will be an {@link RNodeWrapper}, will remain so any
+ * instrumentation at that level will remain in place.
  */
 @NodeInfo(cost = NodeCost.NONE)
 @RBuiltin(name = ".Internal", kind = PRIMITIVE, parameterNames = {"call"}, nonEvalArgs = 0)
