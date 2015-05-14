@@ -212,28 +212,6 @@ public class BinaryBooleanNodeTest extends BinaryVectorTest {
         }
     }
 
-    @Test
-    public void testSequenceFolding() {
-// assertFold(true, createIntSequence(1, 3, 10), createIntVectorFromScalar(5), ADD, SUBTRACT,
-// MULTIPLY, INTEGER_DIV);
-// assertFold(true, createIntVectorFromScalar(5), createIntSequence(1, 3, 10), ADD, MULTIPLY);
-// assertFold(true, createIntSequence(1, 3, 10), createIntSequence(2, 5, 10), ADD, SUBTRACT);
-// assertFold(false, createIntVectorFromScalar(5), createIntSequence(1, 3, 10), SUBTRACT,
-// INTEGER_DIV, MOD);
-// assertFold(false, createIntSequence(1, 3, 10), createIntSequence(2, 5, 5), ADD, SUBTRACT,
-// MULTIPLY, INTEGER_DIV);
-//
-// assertFold(true, createDoubleSequence(1, 3, 10), createDoubleVectorFromScalar(5), ADD, SUBTRACT,
-// MULTIPLY, INTEGER_DIV);
-// assertFold(true, createDoubleVectorFromScalar(5), createDoubleSequence(1, 3, 10), ADD, MULTIPLY);
-// assertFold(true, createDoubleSequence(1, 3, 10), createDoubleSequence(2, 5, 10), ADD, SUBTRACT);
-// assertFold(false, createDoubleVectorFromScalar(5), createDoubleSequence(1, 3, 10), SUBTRACT,
-// INTEGER_DIV, MOD);
-// assertFold(false, createDoubleSequence(1, 3, 10), createDoubleSequence(2, 5, 5), ADD, SUBTRACT,
-// MULTIPLY, INTEGER_DIV);
-//
-    }
-
     @Theory
     public void testGeneric(BooleanOperationFactory factory) {
         // this should trigger the generic case
