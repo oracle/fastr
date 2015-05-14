@@ -54,7 +54,11 @@ public abstract class BoxPrimitiveNode extends RNode {
         return RString.valueOf(value);
     }
 
-    @Specialization(limit = "5", guards = "vector.getClass() == cachedClass")
+    /*
+     * For the limit we use the number of primitive specializations - 1. After that its better to
+     * check !isPrimitve.
+     */
+    @Specialization(limit = "3", guards = "vector.getClass() == cachedClass")
     protected static Object doCached(Object vector, @Cached("vector.getClass()") Class<?> cachedClass) {
         assert (!isPrimitive(vector));
         return cachedClass.cast(vector);
