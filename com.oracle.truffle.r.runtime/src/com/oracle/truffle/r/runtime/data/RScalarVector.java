@@ -136,6 +136,7 @@ public abstract class RScalarVector extends RScalar implements RAbstractVector {
     }
 
     public void verifyDimensions(int[] newDimensions, SourceSection sourceSection) {
+        // scalar vectors have no dimensions so nothing to verify
     }
 
     public boolean isMatrix() {
