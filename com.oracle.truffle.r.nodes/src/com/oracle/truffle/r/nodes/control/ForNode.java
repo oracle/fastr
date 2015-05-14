@@ -187,5 +187,20 @@ public final class ForNode extends AbstractLoopNode implements VisibilityControl
                 writeIndexNode.execute(frame, index + 1);
             }
         }
+
+        @Override
+        public String toString() {
+            RootNode rootNode = getRootNode();
+            String function = "?";
+            if (rootNode instanceof RRootNode) {
+                function = rootNode.toString();
+            }
+            SourceSection sourceSection = getEncapsulatingSourceSection();
+            int startLine = -1;
+            if (sourceSection != null) {
+                startLine = sourceSection.getStartLine();
+            }
+            return String.format("for-<%s:%d>", function, startLine);
+        }
     }
 }

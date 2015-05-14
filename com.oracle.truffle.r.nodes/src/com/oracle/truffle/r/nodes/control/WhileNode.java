@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.control;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
+import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.unary.*;
@@ -146,6 +147,23 @@ public final class WhileNode extends AbstractLoopNode implements RSyntaxNode, Vi
                 nextBlock.enter();
                 return true;
             }
+        }
+
+        @Override
+        public String toString() {
+            RootNode rootNode = getRootNode();
+            String function = "?";
+            if (rootNode instanceof RRootNode) {
+                function = rootNode.toString();
+            }
+            SourceSection sourceSection = getEncapsulatingSourceSection();
+            int startLine = -1;
+            String shortDescription = "?";
+            if (sourceSection != null) {
+                startLine = sourceSection.getStartLine();
+                shortDescription = sourceSection.getSource() == null ? shortDescription : sourceSection.getSource().getShortName();
+            }
+            return String.format("while loop at %s<%s:%d>", function, shortDescription, startLine);
         }
     }
 }
