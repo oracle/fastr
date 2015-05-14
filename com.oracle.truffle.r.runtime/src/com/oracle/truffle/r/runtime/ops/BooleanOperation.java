@@ -25,6 +25,9 @@ package com.oracle.truffle.r.runtime.ops;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
+/**
+ * All methods must be invoked with non-NA values.
+ */
 public abstract class BooleanOperation extends Operation {
 
     public BooleanOperation(boolean commutative, boolean associative) {
