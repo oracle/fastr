@@ -101,7 +101,7 @@ public abstract class BinaryLogic extends BooleanOperation {
         public boolean opLogical(byte left, byte right) {
             assert RLogical.isValid(left) && !RRuntime.isNA(left);
             assert RLogical.isValid(right) && !RRuntime.isNA(right);
-            return (left & right) == 0x1;
+            return (left & right) != 0x0;
         }
 
         @Override
@@ -157,7 +157,7 @@ public abstract class BinaryLogic extends BooleanOperation {
         public boolean opLogical(byte left, byte right) {
             assert RLogical.isValid(left);
             assert RLogical.isValid(right);
-            return (left | right) == 0x1;
+            return (left | right) != 0x0;
         }
 
         @Override
