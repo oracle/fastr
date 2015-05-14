@@ -61,16 +61,4 @@ public abstract class BooleanOperation extends Operation {
         return true;
     }
 
-    public boolean op(@SuppressWarnings("unused") RRaw left, @SuppressWarnings("unused") Object right) {
-        throw new UnsupportedOperationException();
-    }
-
-    public boolean op(@SuppressWarnings("unused") Object left, @SuppressWarnings("unused") RRaw right) {
-        throw new UnsupportedOperationException();
-    }
-
-    public RRaw op(@SuppressWarnings("unused") RRaw left, @SuppressWarnings("unused") RRaw right) {
-        throw new UnsupportedOperationException();
-    }
-
 }

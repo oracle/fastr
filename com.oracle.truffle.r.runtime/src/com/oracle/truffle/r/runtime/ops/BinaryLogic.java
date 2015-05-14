@@ -126,21 +126,6 @@ public abstract class BinaryLogic extends BooleanOperation {
             return !left.isZero() && !right.isZero();
         }
 
-        @Override
-        public RRaw op(RRaw left, RRaw right) {
-            return RDataFactory.createRaw((byte) (left.getValue() & right.getValue()));
-        }
-
-        @Override
-        public boolean op(RRaw left, Object right) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.OPERATIONS_NUMERIC_LOGICAL_COMPLEX);
-        }
-
-        @Override
-        public boolean op(Object left, RRaw right) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.OPERATIONS_NUMERIC_LOGICAL_COMPLEX);
-        }
-
     }
 
     public static final class Or extends BinaryLogic {
@@ -195,21 +180,6 @@ public abstract class BinaryLogic extends BooleanOperation {
         @Override
         public boolean op(RComplex left, RComplex right) {
             return !left.isZero() || !right.isZero();
-        }
-
-        @Override
-        public RRaw op(RRaw left, RRaw right) {
-            return RDataFactory.createRaw((byte) (left.getValue() | right.getValue()));
-        }
-
-        @Override
-        public boolean op(RRaw left, Object right) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.OPERATIONS_NUMERIC_LOGICAL_COMPLEX);
-        }
-
-        @Override
-        public boolean op(Object left, RRaw right) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.OPERATIONS_NUMERIC_LOGICAL_COMPLEX);
         }
 
     }
