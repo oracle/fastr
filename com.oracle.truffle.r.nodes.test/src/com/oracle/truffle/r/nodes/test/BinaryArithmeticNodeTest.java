@@ -51,7 +51,7 @@ import com.oracle.truffle.r.runtime.ops.*;
 @RunWith(Theories.class)
 public class BinaryArithmeticNodeTest extends BinaryVectorTest {
 
-    @DataPoints public static final BinaryArithmeticFactory[] BINARY = ALL;
+    @DataPoints public static final BinaryArithmeticFactory[] BINARY = BinaryArithmetic.ALL;
 
     @Theory
     public void testScalarUnboxing(BinaryArithmeticFactory factory, RScalarVector aOrig, RAbstractVector bOrig) {

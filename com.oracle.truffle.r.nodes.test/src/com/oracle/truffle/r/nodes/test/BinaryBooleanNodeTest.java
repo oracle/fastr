@@ -28,8 +28,6 @@ import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.*;
 import static org.junit.Assume.*;
 
-import java.util.*;
-
 import org.junit.*;
 import org.junit.experimental.theories.*;
 import org.junit.internal.*;
@@ -39,7 +37,6 @@ import com.oracle.truffle.r.nodes.binary.*;
 import com.oracle.truffle.r.nodes.test.TestUtilities.NodeHandle;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.*;
 
@@ -250,28 +247,6 @@ public class BinaryBooleanNodeTest extends BinaryVectorTest {
         }
     }
 
-    private static void assertAttributes(Object value, String... keys) {
-        if (!(value instanceof RAbstractVector)) {
-            Assert.assertEquals(0, keys.length);
-            return;
-        }
-
-        RAbstractVector vector = (RAbstractVector) value;
-        Set<String> expectedAttributes = new HashSet<>(Arrays.asList(keys));
-
-        RAttributes attributes = vector.getAttributes();
-        if (attributes == null) {
-            Assert.assertEquals(0, keys.length);
-            return;
-        }
-        Set<Object> foundAttributes = new HashSet<>();
-        for (RAttribute attribute : attributes) {
-            foundAttributes.add(attribute.getName());
-            foundAttributes.add(attribute.getValue());
-        }
-        Assert.assertEquals(expectedAttributes, foundAttributes);
-    }
-
     private static void assumeArithmeticCompatible(BooleanOperationFactory factory, RAbstractVector a, RAbstractVector b) {
         RType argumentType = getArgumentType(a, b);
 
@@ -295,18 +270,6 @@ public class BinaryBooleanNodeTest extends BinaryVectorTest {
 
     private static boolean isPrimitive(Object result) {
         return result instanceof Integer || result instanceof Double || result instanceof Byte || result instanceof RComplex;
-    }
-
-    private void assertFold(boolean expectedFold, RAbstractVector left, RAbstractVector right, BooleanOperationFactory... arithmetics) {
-        for (int i = 0; i < arithmetics.length; i++) {
-            BooleanOperationFactory factory = arithmetics[i];
-            Object result = executeArithmetic(factory, left, right);
-            if (expectedFold) {
-                assertThat("expected fold " + left + " <op> " + right, result instanceof RSequence);
-            } else {
-                assertThat("expected not fold" + left + " <op> " + right, !(result instanceof RSequence));
-            }
-        }
     }
 
     private NodeHandle<BinaryBooleanNode> handle;
