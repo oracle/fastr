@@ -122,18 +122,4 @@ public final class RDoubleSequence extends RSequence implements RAbstractDoubleV
         CompilerAsserts.neverPartOfCompilation();
         return internalCreateVector().toString();
     }
-
-    public static void main(String[] args) {
-        divExact(Long.MIN_VALUE, 2);
-
-    }
-
-    public static long divExact(long x, long y) {
-        long r = x / y;
-        if ((x & y & r) < 0) {
-            throw new ArithmeticException("long overflow");
-        }
-        return r;
-    }
-
 }
