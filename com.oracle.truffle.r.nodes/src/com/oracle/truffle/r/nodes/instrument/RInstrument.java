@@ -131,7 +131,7 @@ public class RInstrument {
         public final FunctionUID uid;
         public final int charIndex;
 
-        NodeId(FunctionUID uid, RNode node) {
+        NodeId(FunctionUID uid, RSyntaxNode node) {
             this.uid = uid;
             SourceSection ss = node.getSourceSection();
             if (ss == null) {
