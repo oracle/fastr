@@ -27,6 +27,9 @@ import com.oracle.truffle.r.runtime.data.*;
 
 /**
  * All methods must be invoked with non-NA values.
+ *
+ * If no other implementation provided {@link #opLogical(byte, byte)} does reuse
+ * {@link #op(int, int)} with a simple int conversion.
  */
 public abstract class BooleanOperation extends Operation {
 
@@ -37,7 +40,9 @@ public abstract class BooleanOperation extends Operation {
     public abstract String opName();
 
     public boolean opLogical(byte left, byte right) {
-        return op(RRuntime.logical2int(left), RRuntime.logical2int(right));
+        assert !RRuntime.isNA(left);
+        assert !RRuntime.isNA(right);
+        return op(left, right);
     }
 
     @SuppressWarnings("unused")
