@@ -68,9 +68,9 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
                     case "NA":
                         return ConstantNode.create(src, RRuntime.LOGICAL_NA);
                     case "1":
-                        return ConstantNode.create(src, true);
+                        return ConstantNode.create(src, RRuntime.LOGICAL_TRUE);
                     case "0":
-                        return ConstantNode.create(src, false);
+                        return ConstantNode.create(src, RRuntime.LOGICAL_FALSE);
                     default:
                         throw new AssertionError();
                 }
@@ -474,7 +474,7 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
     @Override
     public RSyntaxNode visit(Repeat loop) {
         RSyntaxNode body = BlockNode.ensureBlock(loop.getBody().getSource(), loop.getBody().accept(this));
-        return matchSources(WhileNode.create(ConstantNode.create(true), body, true), loop);
+        return matchSources(WhileNode.create(ConstantNode.create(RRuntime.LOGICAL_TRUE), body, true), loop);
     }
 
     private static RSyntaxNode matchSources(RSyntaxNode truffleNode, ASTNode astNode) {
