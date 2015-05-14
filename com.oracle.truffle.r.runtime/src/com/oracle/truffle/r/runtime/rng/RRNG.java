@@ -210,6 +210,7 @@ public class RRNG {
 
     private static Kind changeKinds(int kindAsInt, int normKindAsInt) throws RNGException {
         Kind kind;
+        @SuppressWarnings("unused")
         NormKind normKind;
         if (kindAsInt != NO_KIND_CHANGE) {
             if (kindAsInt == RESET_KIND) {

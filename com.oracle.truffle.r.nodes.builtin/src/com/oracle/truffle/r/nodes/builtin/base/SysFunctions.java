@@ -26,11 +26,7 @@ import static com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import java.io.*;
-import java.nio.file.*;
-import java.nio.file.attribute.*;
 import java.util.*;
-import java.util.function.*;
-import java.util.stream.*;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;

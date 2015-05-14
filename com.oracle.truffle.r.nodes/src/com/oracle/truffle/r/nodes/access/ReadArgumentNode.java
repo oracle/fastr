@@ -26,7 +26,6 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.instrument.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.instrument.*;
-import com.oracle.truffle.r.nodes.instrument.wrappers.*;
 import com.oracle.truffle.r.runtime.*;
 
 @NeedsWrapper
