@@ -30,4 +30,4 @@ source="${BASH_SOURCE[0]}"
 while [ -h "$source" ] ; do source="$(readlink "$source")"; done
 here="$( cd -P "$( dirname "$source" )" && pwd )"
 
-exec $here/exec/Rscript "$@"
+exec $here/execRscript/Rscript "$@"

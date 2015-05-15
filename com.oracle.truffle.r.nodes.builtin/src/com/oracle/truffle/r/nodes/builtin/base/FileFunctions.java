@@ -28,7 +28,6 @@ import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.builtin.base.SysFunctions.SysGlob;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -87,7 +86,7 @@ public class FileFunctions {
              * There are two simple (non-trivial) cases and one tricky 1. 1. Append one or more
              * files to a single file (len1 == 1, len2 >= 1) 2. Append one file to one file for
              * several files (len1 == len2)
-             * 
+             *
              * The tricky case is when len1 > 1 && len2 > len1. E.g. f1,f2 <- g1,g2,g3 In this case,
              * this is really f1,f2,f1 <- g1,g2,g3
              */
@@ -226,7 +225,7 @@ public class FileFunctions {
              * the information. The R closure that called the .Internal turns the result into a
              * dataframe and sets the row.names attributes to the paths in vec. It also updates the
              * mtime, ctime, atime fields using .POSIXct.
-             * 
+             *
              * We try to use the JDK classes, even though they provide a more abstract interface
              * than R. In particular there seems to be no way to get the uid/gid values. We might be
              * better off justing using a native call.
@@ -658,7 +657,8 @@ public class FileFunctions {
                 if (pattern == null) {
                     return true;
                 }
-                boolean result = pattern.matcher(path.getFileName().toString()).matches();
+                Matcher m = pattern.matcher(path.getFileName().toString());
+                boolean result = m.find();
                 return result;
             }
         }
@@ -953,7 +953,7 @@ public class FileFunctions {
                 if (pathPattern.length() == 0 || RRuntime.isNA(pathPattern)) {
                     continue;
                 }
-                if (SysGlob.containsGlobChar(pathPattern) >= 0) {
+                if (containsGlobChar(pathPattern) >= 0) {
                     throw RError.nyi(getEncapsulatingSourceSection(), "wildcards");
                 }
                 Path path = fileSystem.getPath(pathPattern);
@@ -971,6 +971,20 @@ public class FileFunctions {
                 }
             }
             return result;
+        }
+
+        private static final char[] GLOBCHARS = new char[]{'*', '?', '['};
+
+        private static int containsGlobChar(String pathPattern) {
+            for (int i = 0; i < pathPattern.length(); i++) {
+                char ch = pathPattern.charAt(i);
+                for (int j = 0; j < GLOBCHARS.length; j++) {
+                    if (ch == GLOBCHARS[j]) {
+                        return i;
+                    }
+                }
+            }
+            return -1;
         }
 
         private int recursiveDelete(Path path) {

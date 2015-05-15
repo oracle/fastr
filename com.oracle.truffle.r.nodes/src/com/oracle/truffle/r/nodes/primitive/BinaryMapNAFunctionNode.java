@@ -42,7 +42,7 @@ public abstract class BinaryMapNAFunctionNode extends BinaryMapFunctionNode {
     }
 
     /**
-     * Returns <code>true</code> if there was never a <code>null</code> value encountered when using
+     * Returns <code>true</code> if there was never a <code>NA</code> value encountered when using
      * this node. Make you have enabled the NA check properly using
      * {@link #enable(RAbstractVector, RAbstractVector)} before relying on this method.
      */

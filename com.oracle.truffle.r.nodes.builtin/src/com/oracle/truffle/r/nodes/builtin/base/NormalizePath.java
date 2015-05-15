@@ -53,7 +53,7 @@ public abstract class NormalizePath extends RBuiltinNode {
             String expandPath = Utils.tildeExpand(path);
             String normPath = expandPath;
             try {
-                normPath = fileSystem.getPath(path).toRealPath().toString();
+                normPath = fileSystem.getPath(normPath).toRealPath().toString();
             } catch (IOException e) {
                 if (doesNotNeedToWork.profile(mustWork == RRuntime.LOGICAL_FALSE)) {
                     // no error or warning

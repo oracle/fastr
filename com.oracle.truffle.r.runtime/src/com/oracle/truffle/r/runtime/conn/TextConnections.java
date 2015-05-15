@@ -28,7 +28,6 @@ import java.util.*;
 
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.conn.ConnectionSupport.BaseRConnection;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -254,6 +253,51 @@ public class TextConnections {
 
         public String[] getValue() {
             throw RError.nyi(null, "textConnectionValue");
+        }
+
+    }
+
+    /**
+     * Strictly implementation-internal connection that is used to support the external debugger.
+     */
+    public static class InternalStringWriteConnection extends BaseRConnection {
+        private StringBuffer sb = new StringBuffer();
+
+        public InternalStringWriteConnection() throws IOException {
+            super(ConnectionClass.Terminal, "w", AbstractOpenMode.Write);
+            this.opened = true;
+        }
+
+        @Override
+        protected void createDelegateConnection() throws IOException {
+        }
+
+        @Override
+        public String getSummaryDescription() {
+            throw RInternalError.shouldNotReachHere();
+        }
+
+        @Override
+        public void writeLines(RAbstractStringVector lines, String sep) throws IOException {
+            for (int i = 0; i < lines.getLength(); i++) {
+                String line = lines.getDataAt(i);
+                sb.append(line);
+                sb.append(sep);
+            }
+        }
+
+        @Override
+        public void writeString(String s, boolean nl) throws IOException {
+            sb.append(s);
+            if (nl) {
+                sb.append('\n');
+            }
+        }
+
+        public String getString() {
+            String result = sb.toString();
+            sb = new StringBuffer();
+            return result;
         }
 
     }

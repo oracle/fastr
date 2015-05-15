@@ -109,8 +109,8 @@ public class PromiseHelperNode extends Node {
         }
     }
 
-    @Child private InlineCacheNode<VirtualFrame, RNode> expressionInlineCache;
-    @Child private InlineCacheNode<Frame, Closure> promiseClosureCache;
+    @Child private InlineCacheNode expressionInlineCache;
+    @Child private InlineCacheNode promiseClosureCache;
 
     @Child private PromiseHelperNode nextNode = null;
 
@@ -190,7 +190,7 @@ public class PromiseHelperNode extends Node {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
                     expressionInlineCache = insert(InlineCacheNode.createExpression(3));
                 }
-                return expressionInlineCache.execute(frame, (RNode) promise.getRep());
+                return expressionInlineCache.execute(frame, promise.getRep());
             } else {
                 Frame promiseFrame = promiseFrameProfile.profile(promise.getFrame());
                 assert promiseFrame != null;

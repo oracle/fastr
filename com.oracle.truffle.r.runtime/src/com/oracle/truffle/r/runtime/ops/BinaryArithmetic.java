@@ -24,6 +24,9 @@ import com.oracle.truffle.r.runtime.data.*;
 /*
  * Logic derived from GNU-R, Purdue FastR and gcc.
  */
+/**
+ * All methods must be invoked with non-NA values.
+ */
 public abstract class BinaryArithmetic extends Operation {
 
     /* Fake RBuiltins to unify the binary operations */

@@ -25,6 +25,12 @@ package com.oracle.truffle.r.runtime.ops;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
+/**
+ * All methods must be invoked with non-NA values.
+ *
+ * If no other implementation provided {@link #opLogical(byte, byte)} does reuse
+ * {@link #op(int, int)} with a simple int conversion.
+ */
 public abstract class BooleanOperation extends Operation {
 
     public BooleanOperation(boolean commutative, boolean associative) {
@@ -34,7 +40,9 @@ public abstract class BooleanOperation extends Operation {
     public abstract String opName();
 
     public boolean opLogical(byte left, byte right) {
-        return op(RRuntime.logical2int(left), RRuntime.logical2int(right));
+        assert !RRuntime.isNA(left);
+        assert !RRuntime.isNA(right);
+        return op(left, right);
     }
 
     @SuppressWarnings("unused")
@@ -59,18 +67,6 @@ public abstract class BooleanOperation extends Operation {
     public boolean requiresRightOperand(@SuppressWarnings("unused") byte leftOperand) {
         // in most cases it will be true (false only for the operand with short-circuit semantics)
         return true;
-    }
-
-    public boolean op(@SuppressWarnings("unused") RRaw left, @SuppressWarnings("unused") Object right) {
-        throw new UnsupportedOperationException();
-    }
-
-    public boolean op(@SuppressWarnings("unused") Object left, @SuppressWarnings("unused") RRaw right) {
-        throw new UnsupportedOperationException();
-    }
-
-    public RRaw op(@SuppressWarnings("unused") RRaw left, @SuppressWarnings("unused") RRaw right) {
-        throw new UnsupportedOperationException();
     }
 
 }

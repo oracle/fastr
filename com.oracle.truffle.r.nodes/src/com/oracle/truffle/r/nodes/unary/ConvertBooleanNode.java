@@ -24,7 +24,8 @@ package com.oracle.truffle.r.nodes.unary;
 
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.r.nodes.instrument.CreateWrapper;
+import com.oracle.truffle.r.nodes.instrument.NeedsWrapper;
+import com.oracle.truffle.r.nodes.instrument.wrappers.*;
 import com.oracle.truffle.api.instrument.ProbeNode.WrapperNode;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
@@ -34,7 +35,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
-@CreateWrapper
+@NeedsWrapper
 @NodeChildren({@NodeChild("operand")})
 public abstract class ConvertBooleanNode extends RNode implements RSyntaxNode {
 

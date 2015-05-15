@@ -27,6 +27,7 @@ import java.util.*;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.instrument.*;
 import com.oracle.truffle.api.nodes.*;
@@ -63,7 +64,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
     private final FunctionUID uuid;
 
     @Child private FrameSlotNode onExitSlot;
-    @Child private InlineCacheNode<VirtualFrame, RNode> onExitExpressionCache;
+    @Child private InlineCacheNode onExitExpressionCache;
     private final ConditionProfile onExitProfile = ConditionProfile.createBinaryProfile();
 
     @CompilationFinal private BranchProfile invalidateFrameSlotProfile;
@@ -194,7 +195,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
             } else {
                 return ex.getResult();
             }
-        } catch (RInternalError e) {
+        } catch (RInternalError | UnsupportedSpecializationException e) {
             CompilerDirectives.transferToInterpreter();
             runOnExitHandlers = false;
             throw e;

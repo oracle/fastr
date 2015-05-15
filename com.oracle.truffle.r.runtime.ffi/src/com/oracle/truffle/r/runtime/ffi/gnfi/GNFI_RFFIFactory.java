@@ -25,6 +25,7 @@ package com.oracle.truffle.r.runtime.ffi.gnfi;
 import static com.oracle.graal.compiler.common.UnsafeAccess.*;
 
 import java.io.*;
+import java.util.*;
 
 import com.oracle.nfi.*;
 import com.oracle.nfi.api.*;
@@ -177,6 +178,10 @@ public class GNFI_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI {
         throw Utils.fail("dlerror not implemented");
     }
 
+    public int compress(byte[] dest, long[] destlen, byte[] source) {
+        throw Utils.fail("compress not implemented");
+    }
+
     public int uncompress(byte[] dest, long[] destlen, byte[] source) {
         throw Utils.fail("uncompress not implemented");
     }
@@ -195,6 +200,10 @@ public class GNFI_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI {
 
     public int chmod(String path, int mode) {
         throw Utils.fail("chmod not implemented");
+    }
+
+    public ArrayList<String> glob(String pattern) {
+        throw Utils.fail("glob not implemented");
     }
 
 }

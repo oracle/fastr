@@ -169,8 +169,9 @@ public class RSerialize {
             }
             return -1;
         }
-
     }
+
+    public static final int DEFAULT_VERSION = 2;
 
     /**
      * Lazily read in case set during execution for debugging purposes. This is necessary because
@@ -266,7 +267,7 @@ public class RSerialize {
             int writerVersion = stream.readInt();
             @SuppressWarnings("unused")
             int releaseVersion = stream.readInt();
-            assert version == 2; // TODO proper error message
+            assert version == DEFAULT_VERSION; // TODO proper error message
             Object result = readItem();
             return result;
         }
@@ -1134,7 +1135,7 @@ public class RSerialize {
         private void serialize(State s, Object obj) throws IOException {
             this.state = s;
             switch (version) {
-                case 2:
+                case DEFAULT_VERSION:
                     stream.writeInt(version);
                     stream.writeInt(196865);
                     stream.writeInt(RVersionInfo.SERIALIZE_VERSION);
@@ -1218,7 +1219,39 @@ public class RSerialize {
                 stream.writeInt(SEXPTYPE.SYMSXP.code);
                 writeCHARSXP(((RSymbol) obj).getName());
             } else if (type == SEXPTYPE.ENVSXP) {
-                throw RInternalError.unimplemented();
+                REnvironment env = (REnvironment) obj;
+                String name = env.getName();
+                if (name.startsWith("package:")) {
+                    RError.warning(RError.Message.PACKAGE_AVAILABLE, name);
+                    stream.writeInt(SEXPTYPE.PACKAGESXP.code);
+                    stream.writeString(name);
+                } else if (env.isNamespaceEnv()) {
+                    stream.writeInt(SEXPTYPE.NAMESPACESXP.code);
+                    stream.writeString(name);
+                } else {
+                    stream.writeInt(SEXPTYPE.ENVSXP.code);
+                    stream.writeInt(env.isLocked() ? 1 : 0);
+                    writeItem(env.getParent());
+                    /*
+                     * TODO To be truly compatible with GnuR we should remember whether an
+                     * environment was created with new.env(hash=T) and output it in that form with
+                     * the associated size. For internal FastR use it does not matter, so we use the
+                     * "frame" form, which is a pairlist. tag is binding name, car is binding value
+                     */
+                    String[] bindings = env.ls(true, null, false).getDataWithoutCopying();
+                    for (String binding : bindings) {
+                        Object value = env.get(binding);
+                        writePairListEntry(binding, value);
+                    }
+                    terminatePairList();
+                    writeItem(RNull.instance); // hashtab
+                    RAttributes attributes = env.getAttributes();
+                    if (attributes != null) {
+                        writeAttributes(attributes);
+                    } else {
+                        writeItem(RNull.instance);
+                    }
+                }
             } else if (type == SEXPTYPE.FASTR_DATAFRAME) {
                 RDataFrame dataFrame = (RDataFrame) obj;
                 writeItem(dataFrame.getVector());
@@ -1251,11 +1284,7 @@ public class RSerialize {
                             stream.writeInt(1);
                             writeCHARSXP((String) obj);
                         } else {
-                            RStringVector vec = (RStringVector) obj;
-                            stream.writeInt(vec.getLength());
-                            for (int i = 0; i < vec.getLength(); i++) {
-                                writeCHARSXP(vec.getDataAt(i));
-                            }
+                            outStringVec((RStringVector) obj, true);
                         }
                         break;
                     }
@@ -1414,6 +1443,16 @@ public class RSerialize {
             }
         }
 
+        private void outStringVec(RStringVector vec, boolean strsxp) throws IOException {
+            if (!strsxp) {
+                stream.writeInt(0);
+            }
+            stream.writeInt(vec.getLength());
+            for (int i = 0; i < vec.getLength(); i++) {
+                writeCHARSXP(vec.getDataAt(i));
+            }
+        }
+
         /**
          * Write the element of a STRSXP. We can't call {@link #writeItem} because that always
          * treats a {@code String} as an STRSXP.
@@ -1436,13 +1475,20 @@ public class RSerialize {
                 // name is the tag of the virtual pairlist
                 // value is the car
                 // next is the cdr
-                stream.writeInt(Flags.packFlags(SEXPTYPE.LISTSXP, 0, false, false, true));
-                stream.writeInt(SEXPTYPE.SYMSXP.code);
-                writeCHARSXP(attr.getName());
-                writeItem(attr.getValue());
+                writePairListEntry(attr.getName(), attr.getValue());
             }
-            stream.writeInt(Flags.packFlags(SEXPTYPE.NILVALUE_SXP, 0, false, false, false));
+            terminatePairList();
+        }
 
+        private void writePairListEntry(String name, Object value) throws IOException {
+            stream.writeInt(Flags.packFlags(SEXPTYPE.LISTSXP, 0, false, false, true));
+            stream.writeInt(SEXPTYPE.SYMSXP.code);
+            writeCHARSXP(name);
+            writeItem(value);
+        }
+
+        private void terminatePairList() throws IOException {
+            stream.writeInt(Flags.packFlags(SEXPTYPE.NILVALUE_SXP, 0, false, false, false));
         }
 
         private void outRefIndex(int index) throws IOException {
@@ -1771,6 +1817,22 @@ public class RSerialize {
             return positionsLength[px];
         }
 
+    }
+
+    /**
+     * For {@code lazyLoadDBinsertValue}.
+     */
+    @TruffleBoundary
+    public static byte[] serialize(Object obj, boolean ascii, @SuppressWarnings("unused") boolean xdr, int version, Object refhook, int depth) {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        try {
+            Output output = new Output(out, ascii ? 'A' : 'X', version, (CallHook) refhook, depth);
+            State state = new PLState(output);
+            output.serialize(state, obj);
+            return out.toByteArray();
+        } catch (IOException ex) {
+            throw RInternalError.shouldNotReachHere();
+        }
     }
 
     @TruffleBoundary

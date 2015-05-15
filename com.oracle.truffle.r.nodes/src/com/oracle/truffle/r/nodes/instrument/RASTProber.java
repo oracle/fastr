@@ -73,27 +73,27 @@ public final class RASTProber implements ASTProber {
         FunctionUID uid = fdn.getUID();
         body.probe().tagAs(RSyntaxTag.FUNCTION_BODY, uid);
         stmts.probe().tagAs(START_METHOD, uid);
-        TagSyntaxNodeVisitor visitor = new TagSyntaxNodeVisitor(uid);
+        TaggingNodeVisitor visitor = new TaggingNodeVisitor(uid);
         if (FastROptions.debugMatches("RASTProberTag")) {
             System.out.printf("Tagging function %s%n", uid);
         }
-        body.accept(visitor);
+        RSyntaxNode.accept(body, 0, visitor);
     }
 
-    public abstract static class SyntaxNodeVisitor implements NodeVisitor {
-        final FunctionUID uid;
+    public abstract static class StatementVisitor implements RSyntaxNodeVisitor {
+        protected final FunctionUID uid;
 
-        SyntaxNodeVisitor(FunctionUID uid) {
+        StatementVisitor(FunctionUID uid) {
             this.uid = uid;
         }
 
         @Override
-        public boolean visit(Node node) {
+        public boolean visit(RSyntaxNode node, int depth) {
             if (node instanceof BlockNode) {
                 BlockNode sequenceNode = (BlockNode) node;
                 RNode[] block = sequenceNode.getSequence();
                 for (int i = 0; i < block.length; i++) {
-                    RNode n = block[i].unwrap();
+                    RSyntaxNode n = RSyntaxNode.cast(block[i].unwrap());
                     if (n.getSourceSection() != null) {
                         if (!callback(n)) {
                             return false;
@@ -104,23 +104,39 @@ public final class RASTProber implements ASTProber {
             return true;
         }
 
-        protected abstract boolean callback(RNode node);
+        protected abstract boolean callback(RSyntaxNode node);
 
     }
 
-    private static class TagSyntaxNodeVisitor extends SyntaxNodeVisitor {
+    public static class TaggingNodeVisitor extends StatementVisitor {
 
-        TagSyntaxNodeVisitor(FunctionUID uid) {
+        TaggingNodeVisitor(FunctionUID uid) {
             super(uid);
         }
 
         @Override
-        protected boolean callback(RNode node) {
-            RInstrument.NodeId nodeId = new RInstrument.NodeId(uid, node);
-            node.probe().tagAs(STATEMENT, new RInstrument.NodeId(uid, node));
-            if (FastROptions.debugMatches("RASTProberTag")) {
-                System.out.printf("Tagged %s as STATEMENT: %s%n", node.toString(), nodeId.toString());
+        public boolean visit(RSyntaxNode node, int depth) {
+            super.visit(node, depth);
+            if (node instanceof RCallNode) {
+                if (node.getSourceSection() != null) {
+                    tagNode(node, CALL);
+                }
             }
+            return true;
+        }
+
+        private void tagNode(RSyntaxNode node, StandardSyntaxTag tag) {
+            RInstrument.NodeId nodeId = new RInstrument.NodeId(uid, node);
+            node.asRNode().probe().tagAs(tag, new RInstrument.NodeId(uid, node));
+            if (FastROptions.debugMatches("RASTProberTag")) {
+                System.out.printf("Tagged %s as %s: %s%n", node.getClass().getSimpleName(), tag, nodeId.toString());
+            }
+
+        }
+
+        @Override
+        protected boolean callback(RSyntaxNode node) {
+            tagNode(node, STATEMENT);
             return true;
         }
 

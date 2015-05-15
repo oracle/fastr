@@ -58,7 +58,7 @@ public class StringConsoleHandler implements RContext.ConsoleHandler {
                 output.print(prompt);
                 output.println(lines.get(currentLine));
             }
-            return lines.get(currentLine++);
+            return lines.get(currentLine++) + "\n";
         } else {
             return null;
         }

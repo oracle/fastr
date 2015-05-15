@@ -396,10 +396,6 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
      * identifies them with the special element {@code .__NAMESPACE__.} which points to another
      * environment with a {@code spec} element. N.B. the {@code base} namespace does <b>not</b> have
      * a {@code .__NAMESPACE__.} entry.
-     *
-     * Currently, although this is scheduled to change, the "built-in" packages are created as
-     * instances of {@link BaseNamespace}. We fabricate a fake {@code .__NAMESPACE__.} entry to keep
-     * {@code asNameSpace} in {@code namespace.R} happy.
      */
     public boolean isNamespaceEnv() {
         if (this instanceof BaseNamespace) {

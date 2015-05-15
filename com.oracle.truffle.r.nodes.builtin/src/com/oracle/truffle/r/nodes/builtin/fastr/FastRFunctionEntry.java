@@ -57,6 +57,8 @@ public class FastRFunctionEntry {
                     return FastRPkgSource.done();
 
             }
+        } else if (name.equals("comparefilesizes")) {
+            return FastRFileSizeCompare.compare(RRuntime.asString(arg0), RRuntime.asString(argValues[1]));
         }
         // The remainder all take a func argument
         RFunction func = checkFunction(arg0, fastRNode);

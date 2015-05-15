@@ -24,6 +24,7 @@ package com.oracle.truffle.r.runtime.ffi.jnr;
 
 import java.io.*;
 import java.nio.*;
+import java.util.*;
 
 import jnr.constants.platform.*;
 import jnr.ffi.*;
@@ -36,7 +37,7 @@ import com.oracle.truffle.r.runtime.ffi.*;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
 
 /**
- * JNR-based factory.
+ * JNR/JNI-based factory.
  */
 public class JNR_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI, StatsRFFI, RApplRFFI, LapackRFFI, UserRngRFFI, PCRERFFI {
 
@@ -204,8 +205,11 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI, Stat
     }
 
     public UtsName uname() {
-        // TODO do the grunt work to make this a first class JNR call?
         return JNIUtsName.get();
+    }
+
+    public ArrayList<String> glob(String pattern) {
+        return JNIGlob.glob(pattern);
     }
 
     /*
@@ -526,7 +530,9 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI, Stat
     // zip
 
     public interface Zip {
-        int uncompress(@Out byte[] dest, @In long[] destlen, @In byte[] source, long sourcelen);
+        int compress(@Out byte[] dest, long[] destlen, @In byte[] source, long sourcelen);
+
+        int uncompress(@Out byte[] dest, long[] destlen, @In byte[] source, long sourcelen);
     }
 
     private static class ZipProvider {
@@ -547,6 +553,11 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI, Stat
 
     private static Zip zip() {
         return ZipProvider.zip();
+    }
+
+    @TruffleBoundary
+    public int compress(byte[] dest, long[] destlen, byte[] source) {
+        return zip().compress(dest, destlen, source, source.length);
     }
 
     @TruffleBoundary

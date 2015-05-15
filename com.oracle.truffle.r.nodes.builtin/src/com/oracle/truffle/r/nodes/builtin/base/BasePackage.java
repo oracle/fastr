@@ -258,6 +258,8 @@ public class BasePackage extends RBuiltinPackage {
         add(HiddenInternalFunctions.ImportIntoEnv.class, HiddenInternalFunctionsFactory.ImportIntoEnvNodeGen::create);
         add(HiddenInternalFunctions.LazyLoadDBFetch.class, HiddenInternalFunctionsFactory.LazyLoadDBFetchNodeGen::create);
         add(HiddenInternalFunctions.MakeLazy.class, HiddenInternalFunctionsFactory.MakeLazyNodeGen::create);
+        add(HiddenInternalFunctions.GetVarsFromFrame.class, HiddenInternalFunctionsFactory.GetVarsFromFrameNodeGen::create);
+        add(HiddenInternalFunctions.LazyLoadDBinsertValue.class, HiddenInternalFunctionsFactory.LazyLoadDBinsertValueNodeGen::create);
         add(IConv.class, IConvNodeGen::create);
         add(Identical.class, IdenticalNodeGen::create);
         add(Im.class, Im::new);

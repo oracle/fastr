@@ -208,7 +208,7 @@ public class RNodeTimer {
             return ((double) a * 100) / b;
         }
 
-        private static class LineTimesNodeVisitor extends RASTProber.SyntaxNodeVisitor {
+        private static class LineTimesNodeVisitor extends RASTProber.StatementVisitor {
             private final long[] times;
 
             LineTimesNodeVisitor(FunctionUID uid, long[] time) {
@@ -217,7 +217,7 @@ public class RNodeTimer {
             }
 
             @Override
-            protected boolean callback(RNode node) {
+            protected boolean callback(RSyntaxNode node) {
                 SourceSection ss = node.getSourceSection();
                 if (ss != null) {
                     NodeId nodeId = new NodeId(uid, node);
@@ -259,7 +259,7 @@ public class RNodeTimer {
              * source. Since there is never a line 0, we use that to compute the total.
              */
             final long[] times = new long[fdi.source.getLineCount() + 1];
-            fdi.node.getBody().accept(new LineTimesNodeVisitor(fdi.node.getUID(), times));
+            RSyntaxNode.accept(fdi.node.getBody(), 0, new LineTimesNodeVisitor(fdi.node.getUID(), times));
             return times;
         }
 

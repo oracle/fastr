@@ -64,7 +64,7 @@ public abstract class RLengthNode extends RNode {
     }
 
     @Specialization
-    protected int getLength(RExpression operand, @Cached("createRecursive()") RLengthNode recursiveLength) {
+    protected int getLength(RExpression operand, @Cached("create()") RLengthNode recursiveLength) {
         return recursiveLength.executeInteger(operand.getList());
     }
 
@@ -73,7 +73,4 @@ public abstract class RLengthNode extends RNode {
         return operand.getLength();
     }
 
-    public static RLengthNode createRecursive() {
-        return RLengthNodeGen.create(null);
-    }
 }

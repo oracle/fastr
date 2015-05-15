@@ -70,14 +70,25 @@ public class InfixEmulationFunctions {
         }
 
         @ExplodeLoop
-        public Object execute(VirtualFrame frame, Object vector, Object[] pos, byte exact, Object[] newPositions) {
-            for (int i = 0; i < getLength(); i++) {
-                newPositions[i] = executeArg(frame, vector, executeConvert(frame, vector, pos[i], exact, i), i);
-                if (multiDimOperatorConverters != null) {
-                    newPositions[i] = executeMultiConvert(frame, vector, newPositions[i], i);
+        public Object execute(VirtualFrame frame, Object vector, Object[] pos, byte exact, Object[] newPos) {
+            Object[] newPositions = newPos;
+            int ind = 0;
+            int i = 0;
+            for (; i < getLength(); i++) {
+                if (pos[i] instanceof RMissing) {
+                    // RMissing is really "missing" - empty indices are now represented by REmpty
+                    continue;
                 }
+                newPositions[ind] = executeArg(frame, vector, executeConvert(frame, vector, pos[i], exact, i), i);
+                if (multiDimOperatorConverters != null) {
+                    newPositions[ind] = executeMultiConvert(frame, vector, newPositions[ind], ind);
+                }
+                ind++;
             }
-            if (positionCasts.length == 1) {
+            if (ind < i) {
+                newPositions = Arrays.copyOf(newPositions, ind);
+            }
+            if (newPositions.length == 1) {
                 return newPositions[0];
             } else {
                 return newPositions;

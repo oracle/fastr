@@ -40,7 +40,7 @@ public abstract class PathExpand extends RBuiltinNode {
         controlVisibility();
         String[] results = new String[vec.getLength()];
         for (int i = 0; i < results.length; i++) {
-            String path = Utils.tildeExpand(vec.getDataAt(i));
+            String path = Utils.tildeExpand(vec.getDataAt(i), true);
             results[i] = path;
         }
         return RDataFactory.createStringVector(results, RDataFactory.COMPLETE_VECTOR);

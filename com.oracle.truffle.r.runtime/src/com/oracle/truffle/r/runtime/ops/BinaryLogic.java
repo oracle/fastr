@@ -25,6 +25,9 @@ package com.oracle.truffle.r.runtime.ops;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
+/**
+ * All methods must be invoked with non-NA values.
+ */
 public abstract class BinaryLogic extends BooleanOperation {
 
     /* Fake RBuiltins to unify the binary operations */
@@ -98,7 +101,7 @@ public abstract class BinaryLogic extends BooleanOperation {
         public boolean opLogical(byte left, byte right) {
             assert RLogical.isValid(left) && !RRuntime.isNA(left);
             assert RLogical.isValid(right) && !RRuntime.isNA(right);
-            return (left & right) == 0x1;
+            return (left & right) != 0x0;
         }
 
         @Override
@@ -124,21 +127,6 @@ public abstract class BinaryLogic extends BooleanOperation {
         @Override
         public boolean op(RComplex left, RComplex right) {
             return !left.isZero() && !right.isZero();
-        }
-
-        @Override
-        public RRaw op(RRaw left, RRaw right) {
-            return RDataFactory.createRaw((byte) (left.getValue() & right.getValue()));
-        }
-
-        @Override
-        public boolean op(RRaw left, Object right) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.OPERATIONS_NUMERIC_LOGICAL_COMPLEX);
-        }
-
-        @Override
-        public boolean op(Object left, RRaw right) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.OPERATIONS_NUMERIC_LOGICAL_COMPLEX);
         }
 
     }
@@ -169,7 +157,7 @@ public abstract class BinaryLogic extends BooleanOperation {
         public boolean opLogical(byte left, byte right) {
             assert RLogical.isValid(left);
             assert RLogical.isValid(right);
-            return (left | right) == 0x1;
+            return (left | right) != 0x0;
         }
 
         @Override
@@ -195,21 +183,6 @@ public abstract class BinaryLogic extends BooleanOperation {
         @Override
         public boolean op(RComplex left, RComplex right) {
             return !left.isZero() || !right.isZero();
-        }
-
-        @Override
-        public RRaw op(RRaw left, RRaw right) {
-            return RDataFactory.createRaw((byte) (left.getValue() | right.getValue()));
-        }
-
-        @Override
-        public boolean op(RRaw left, Object right) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.OPERATIONS_NUMERIC_LOGICAL_COMPLEX);
-        }
-
-        @Override
-        public boolean op(Object left, RRaw right) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.OPERATIONS_NUMERIC_LOGICAL_COMPLEX);
         }
 
     }

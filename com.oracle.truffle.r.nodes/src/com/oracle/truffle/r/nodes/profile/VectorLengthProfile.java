@@ -38,18 +38,19 @@ public final class VectorLengthProfile {
 
     public int profile(int length) {
         assert length >= 0;
-        if (cachedLength == length) {
+        if (cachedLength == GENERIC_LENGTH) {
+            return length;
+        } else if (cachedLength == length) {
             return cachedLength;
-        } else if (cachedLength == GENERIC_LENGTH) {
+        } else {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            if (cachedLength == UNINITIALIZED_LENGTH) {
+                cachedLength = length;
+            } else {
+                cachedLength = GENERIC_LENGTH;
+            }
             return length;
         }
-        CompilerDirectives.transferToInterpreterAndInvalidate();
-        if (cachedLength == UNINITIALIZED_LENGTH) {
-            cachedLength = length;
-        } else {
-            cachedLength = GENERIC_LENGTH;
-        }
-        return length;
     }
 
     public static VectorLengthProfile create() {

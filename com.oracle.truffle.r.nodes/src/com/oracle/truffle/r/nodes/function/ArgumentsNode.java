@@ -49,12 +49,12 @@ public abstract class ArgumentsNode extends RNode implements RSyntaxNode, Unmatc
         assert signature != null;
     }
 
-    @CreateWrapper
+    @NeedsWrapper
     public RNode[] getArguments() {
         return arguments;
     }
 
-    @CreateWrapper
+    @NeedsWrapper
     public ArgumentsSignature getSignature() {
         return signature;
     }

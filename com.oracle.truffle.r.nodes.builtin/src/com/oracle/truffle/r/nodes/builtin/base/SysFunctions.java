@@ -26,11 +26,7 @@ import static com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import java.io.*;
-import java.nio.file.*;
-import java.nio.file.attribute.*;
 import java.util.*;
-import java.util.function.*;
-import java.util.stream.*;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
@@ -322,94 +318,26 @@ public class SysFunctions {
 
     @RBuiltin(name = "Sys.glob", kind = INTERNAL, parameterNames = {"paths", "dirmask"})
     public abstract static class SysGlob extends RBuiltinNode {
-        private static final char[] GLOBCHARS = new char[]{'*', '?', '['};
 
         @Specialization
         @TruffleBoundary
         protected Object sysGlob(RAbstractStringVector pathVec, @SuppressWarnings("unused") byte dirMask) {
             controlVisibility();
             ArrayList<String> matches = new ArrayList<>();
-            FileSystem fileSystem = FileSystems.getDefault();
+            // Sys.glob closure already called path.expand
             for (int i = 0; i < pathVec.getLength(); i++) {
                 String pathPattern = pathVec.getDataAt(i);
                 if (pathPattern.length() == 0 || RRuntime.isNA(pathPattern)) {
                     continue;
                 }
-                pathPattern = Utils.tildeExpand(pathPattern);
-                if (containsGlobChar(pathPattern) >= 0) {
-                    Path path = fileSystem.getPath(pathPattern);
-                    Path root = path.getRoot();
-                    /*
-                     * Searching from the root can be super-expensive and hit unreadable directories
-                     * and we only need to start from the path containing the the first glob
-                     * character.
-                     */
-                    if (root != null) {
-                        root = findLowerStart(path);
-                    }
-                    try (Stream<Path> stream = Files.find(root != null ? root : fileSystem.getPath(""), path.getNameCount(), new FileMatcher(pathPattern))) {
-                        Iterator<Path> iter = stream.iterator();
-                        while (iter.hasNext()) {
-                            Path matchPath = iter.next();
-                            String s = matchPath.toString();
-                            if (s.length() > 0) {
-                                matches.add(s);
-                            }
-                        }
-                    } catch (IOException ex) {
-                        // ignored
-                    }
-                } else {
-                    matches.add(pathPattern);
-                }
+                ArrayList<String> pathPatternMatches = RFFIFactory.getRFFI().getBaseRFFI().glob(pathPattern);
+                matches.addAll(pathPatternMatches);
             }
             String[] data = new String[matches.size()];
             matches.toArray(data);
             return RDataFactory.createStringVector(data, RDataFactory.COMPLETE_VECTOR);
         }
 
-        static int containsGlobChar(String pathPattern) {
-            for (int i = 0; i < pathPattern.length(); i++) {
-                char ch = pathPattern.charAt(i);
-                for (int j = 0; j < GLOBCHARS.length; j++) {
-                    if (ch == GLOBCHARS[j]) {
-                        return i;
-                    }
-                }
-            }
-            return -1;
-        }
-
-        private static Path findLowerStart(Path path) {
-            int count = path.getNameCount();
-            for (int i = 0; i < count; i++) {
-                Path element = path.getName(i);
-                if (containsGlobChar(element.toString()) >= 0) {
-                    // can't use subpath as it's relative
-                    Path result = path;
-                    int j = count;
-                    while (j > i) {
-                        result = result.getParent();
-                        j--;
-                    }
-                    return result;
-                }
-            }
-            throw RInternalError.shouldNotReachHere();
-        }
-
-        private static class FileMatcher implements BiPredicate<Path, BasicFileAttributes> {
-            PathMatcher pathMatcher;
-
-            FileMatcher(String pathPattern) {
-                pathMatcher = FileSystems.getDefault().getPathMatcher("glob:" + pathPattern);
-            }
-
-            public boolean test(Path path, BasicFileAttributes u) {
-                boolean result = pathMatcher.matches(path);
-                return result;
-            }
-        }
     }
 
 }

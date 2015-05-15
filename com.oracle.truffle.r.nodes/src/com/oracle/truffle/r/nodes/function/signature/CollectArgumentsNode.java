@@ -27,6 +27,8 @@ import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.utilities.*;
+import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.access.variables.*;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode.ReadKind;
 import com.oracle.truffle.r.runtime.*;
@@ -40,10 +42,15 @@ public abstract class CollectArgumentsNode extends Node {
 
     public abstract Object[] execute(VirtualFrame frame, ArgumentsSignature signature);
 
-    protected ReadVariableNode[] createReads(ArgumentsSignature signature) {
-        ReadVariableNode[] reads = new ReadVariableNode[signature.getLength()];
+    protected RNode[] createArgs(ArgumentsSignature signature, VirtualFrame frame) {
+        RNode[] reads = new RNode[signature.getLength()];
         for (int i = 0; i < signature.getLength(); i++) {
-            reads[i] = ReadVariableNode.create(signature.getName(i), RType.Any, ReadKind.SilentLocal);
+            Object arg = RArguments.getArgument(frame, i);
+            if (arg instanceof RPromise && ((RPromise) arg).isDefault()) {
+                reads[i] = ConstantNode.create(RMissing.instance);
+            } else {
+                reads[i] = ReadVariableNode.create(signature.getName(i), RType.Any, ReadKind.SilentLocal);
+            }
         }
         return reads;
     }
@@ -51,8 +58,7 @@ public abstract class CollectArgumentsNode extends Node {
     @SuppressWarnings("unused")
     @ExplodeLoop
     @Specialization(limit = "CACHE_LIMIT", guards = {"cachedSignature == signature"})
-    protected Object[] combineCached(VirtualFrame frame, ArgumentsSignature signature, @Cached("signature") ArgumentsSignature cachedSignature,
-                    @Cached("createReads(signature)") ReadVariableNode[] reads) {
+    protected Object[] combineCached(VirtualFrame frame, ArgumentsSignature signature, @Cached("signature") ArgumentsSignature cachedSignature, @Cached("createArgs(signature, frame)") RNode[] reads) {
         Object[] result = new Object[reads.length];
         for (int i = 0; i < reads.length; i++) {
             Object value = reads[i].execute(frame);

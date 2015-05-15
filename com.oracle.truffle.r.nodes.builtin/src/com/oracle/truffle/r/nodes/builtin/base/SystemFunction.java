@@ -24,6 +24,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import java.io.*;
 import java.lang.ProcessBuilder.*;
+import java.util.*;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
@@ -44,6 +45,7 @@ public abstract class SystemFunction extends RBuiltinNode {
             shell = "/bin/sh";
         }
         ProcessBuilder pb = new ProcessBuilder(shell, "-c", command.getDataAt(0));
+        updateEnvironment(pb);
         pb.redirectInput(Redirect.INHERIT);
         if (intern) {
             pb.redirectErrorStream(true);
@@ -86,4 +88,15 @@ public abstract class SystemFunction extends RBuiltinNode {
         return new String(data);
     }
 
+    private static void updateEnvironment(ProcessBuilder pb) {
+        Map<String, String> pEnv = pb.environment();
+        Map<String, String> rEnv = REnvVars.getMap();
+        for (Map.Entry<String, String> entry : rEnv.entrySet()) {
+            String name = entry.getKey();
+            String value = entry.getValue();
+            if (!pEnv.containsKey(name) || !pEnv.get(name).equals(value)) {
+                pEnv.put(name, value);
+            }
+        }
+    }
 }

@@ -128,7 +128,7 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
         return factor.isOrdered() ? Message.NOT_MEANINGFUL_FOR_ORDERED_FACTORS : Message.NOT_MEANINGFUL_FOR_FACTORS;
     }
 
-    @Specialization(guards = "isRNull(left) || isRNull(right)")
+    @Specialization
     @SuppressWarnings("unused")
     protected static Object doBothNull(RNull left, RNull right) {
         return RType.Double.getEmpty();

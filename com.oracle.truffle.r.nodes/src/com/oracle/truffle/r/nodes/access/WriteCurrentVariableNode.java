@@ -28,6 +28,7 @@ import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.instrument.*;
+import com.oracle.truffle.r.nodes.instrument.wrappers.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RDeparse.*;
 import com.oracle.truffle.r.runtime.env.*;
@@ -36,7 +37,7 @@ import com.oracle.truffle.r.runtime.env.*;
  * The "syntax" variant corresponding to {@code x <- y} in the source.
  */
 @NodeInfo(cost = NodeCost.NONE)
-@CreateWrapper
+@NeedsWrapper
 public class WriteCurrentVariableNode extends WriteVariableNodeSyntaxHelper implements RSyntaxNode, VisibilityController {
     @Child WriteLocalFrameVariableNode writeLocalFrameVariableNode;
 
@@ -48,19 +49,19 @@ public class WriteCurrentVariableNode extends WriteVariableNodeSyntaxHelper impl
     }
 
     @Override
-    @CreateWrapper
+    @NeedsWrapper
     public String getName() {
         return writeLocalFrameVariableNode.getName();
     }
 
     @Override
-    @CreateWrapper
+    @NeedsWrapper
     public RNode getRhs() {
         return writeLocalFrameVariableNode.getRhs();
     }
 
     @Override
-    @CreateWrapper
+    @NeedsWrapper
     public Object execute(VirtualFrame frame) {
         Object result = writeLocalFrameVariableNode.execute(frame);
         forceVisibility(false);
@@ -68,7 +69,7 @@ public class WriteCurrentVariableNode extends WriteVariableNodeSyntaxHelper impl
     }
 
     @Override
-    @CreateWrapper
+    @NeedsWrapper
     public void execute(VirtualFrame frame, Object value) {
         writeLocalFrameVariableNode.execute(frame, value);
     }

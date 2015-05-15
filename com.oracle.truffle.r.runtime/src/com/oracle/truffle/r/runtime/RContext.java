@@ -28,6 +28,7 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.instrument.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
@@ -88,8 +89,10 @@ public final class RContext extends ExecutionContext {
         void printError(String s);
 
         /**
-         * Read a line of input, newline omitted in result. Returns null if {@link #isInteractive()
-         * == false}.
+         * Read a line of input, newline included in result. Returns null if
+         * {@link #isInteractive() == false}. The rationale for including the readline is to ensure
+         * that the accumulated input, whether it be from a file or the console accurately reflects
+         * the the source. TODO worry about "\r\n"?
          */
         @TruffleBoundary
         String readLine();
@@ -254,6 +257,11 @@ public final class RContext extends ExecutionContext {
          */
         RootCallTarget makePromiseCallTarget(Object body, String funName);
 
+        /**
+         * Returns an R-specific {@link Visualizer} for use by the instrumentation framework.
+         */
+        Visualizer getRVisualizer();
+
     }
 
     private final HashMap<Object, RFunction> cachedFunctions = new HashMap<>();
@@ -312,6 +320,7 @@ public final class RContext extends ExecutionContext {
         singleton.rASTHelper = rLanguageHelper;
         singleton.interactive = interactive;
         singleton.ignoreVisibility = ignoreVisibility;
+        singleton.setVisualizer(engine.getRVisualizer());
         return singleton;
     }
 

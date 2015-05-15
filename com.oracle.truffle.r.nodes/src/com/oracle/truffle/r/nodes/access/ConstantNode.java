@@ -67,8 +67,6 @@ public abstract class ConstantNode extends RNode implements RSyntaxNode, Visibil
             return new ConstantIntegerScalarNode((Integer) value);
         } else if (value instanceof Double) {
             return new ConstantDoubleScalarNode((Double) value);
-        } else if (value instanceof Boolean) {
-            return new ConstantLogicalScalarNode((Boolean) value);
         } else if (value instanceof Byte) {
             return new ConstantLogicalScalarNode((Byte) value);
         } else if (value instanceof String) {
@@ -115,32 +113,18 @@ public abstract class ConstantNode extends RNode implements RSyntaxNode, Visibil
 
     public static final class ConstantLogicalScalarNode extends ConstantNode {
 
-        private final double doubleValue;
-        private final int intValue;
         private final byte logicalValue;
-
-        public ConstantLogicalScalarNode(boolean value) {
-            this.logicalValue = RRuntime.asLogical(value);
-            this.doubleValue = value ? 1.0d : 0.0d;
-            this.intValue = value ? 1 : 0;
-        }
+        private final Byte objectValue;
 
         public ConstantLogicalScalarNode(byte value) {
             this.logicalValue = value;
-            this.doubleValue = value == RRuntime.LOGICAL_TRUE ? 1.0d : 0.0d;
-            this.intValue = value == RRuntime.LOGICAL_TRUE ? 1 : 0;
+            this.objectValue = value;
         }
 
         @Override
         public Object execute(VirtualFrame frame) {
             controlVisibility();
-            return logicalValue;
-        }
-
-        @Override
-        public int executeInteger(VirtualFrame frame) {
-            controlVisibility();
-            return intValue;
+            return objectValue;
         }
 
         @Override
@@ -148,24 +132,16 @@ public abstract class ConstantNode extends RNode implements RSyntaxNode, Visibil
             controlVisibility();
             return logicalValue;
         }
-
-        @Override
-        public double executeDouble(VirtualFrame frame) {
-            controlVisibility();
-            return doubleValue;
-        }
     }
 
     public static final class ConstantIntegerScalarNode extends ConstantNode {
 
         private final Integer objectValue;
         private final int intValue;
-        private final double doubleValue;
 
         public ConstantIntegerScalarNode(int value) {
             this.objectValue = value;
             this.intValue = value;
-            this.doubleValue = value;
         }
 
         @Override
@@ -180,11 +156,6 @@ public abstract class ConstantNode extends RNode implements RSyntaxNode, Visibil
             return intValue;
         }
 
-        @Override
-        public double executeDouble(VirtualFrame frame) {
-            controlVisibility();
-            return doubleValue;
-        }
     }
 
     private static final class ConstantObjectNode extends ConstantNode {

@@ -570,6 +570,7 @@ public final class RError extends RuntimeException {
         FILE_CANNOT_RENAME("  cannot rename file '%s' to '%s'"),
         DIR_CANNOT_CREATE("cannot create dir '%s'"),
         IMPOSSIBLE_SUBSTITUTE("substitute result cannot be represented"),
+        PACKAGE_AVAILABLE("'%s' may not be available when loading"),
         PERFORMANCE("performance problem: %s");
 
         public final String message;

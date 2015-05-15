@@ -207,13 +207,10 @@ public class HiddenInternalFunctions {
                 }
                 try {
                     RSerialize.CallHook callHook = new RSerialize.CallHook() {
-
                         public Object eval(Object arg) {
                             Object[] callArgs = RArguments.create(envhook, callCache.getSourceSection(), null, RArguments.getDepth(frame) + 1, new Object[]{arg}, SIGNATURE);
-                            // TODO this cast is problematic
                             return callCache.execute(new SubstituteVirtualFrame(frame), envhook.getTarget(), callArgs);
                         }
-
                     };
                     Object result = RSerialize.unserialize(udata, callHook, RArguments.getDepth(frame), packageName);
                     return result;
@@ -281,4 +278,94 @@ public class HiddenInternalFunctions {
 
     }
 
+    @RBuiltin(name = "getVarsFromFrame", kind = INTERNAL, parameterNames = {"vars", "e", "force"})
+    public abstract static class GetVarsFromFrame extends RBuiltinNode {
+        @Child private PromiseHelperNode promiseHelper;
+
+        @Specialization
+        protected RList getVarsFromFrame(VirtualFrame frame, RAbstractStringVector varsVec, REnvironment env, byte forceArg) {
+            boolean force = RRuntime.fromLogical(forceArg);
+            Object[] data = new Object[varsVec.getLength()];
+            for (int i = 0; i < data.length; i++) {
+                String var = varsVec.getDataAt(i);
+                Object value = env.get(var);
+                if (value == null) {
+                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.UNKNOWN_OBJECT, var);
+                }
+                if (force && value instanceof RPromise) {
+                    if (promiseHelper == null) {
+                        CompilerDirectives.transferToInterpreterAndInvalidate();
+                        promiseHelper = insert(new PromiseHelperNode());
+                    }
+                    value = promiseHelper.evaluate(frame, (RPromise) value);
+                }
+                data[i] = value;
+            }
+            return RDataFactory.createList(data, (RStringVector) varsVec);
+        }
+
+        @SuppressWarnings("unused")
+        @Fallback
+        protected RList getVarsFromFrame(Object varsVec, Object env, Object forceArg) {
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
+        }
+    }
+
+    @RBuiltin(name = "lazyLoadDBinsertValue", kind = INTERNAL, parameterNames = {"value", "file", "ascii", "compsxp", "hook"})
+    public abstract static class LazyLoadDBinsertValue extends RBuiltinNode {
+
+        private static final ArgumentsSignature SIGNATURE = ArgumentsSignature.get("e");
+        @Child private CallInlineCacheNode callCache = CallInlineCacheNodeGen.create();
+
+        @CreateCast("arguments")
+        public RNode[] castArguments(RNode[] arguments) {
+            arguments[3] = CastIntegerNodeGen.create(arguments[3], false, false, false);
+            return arguments;
+        }
+
+        @Specialization
+        protected RIntVector lazyLoadDBinsertValue(VirtualFrame frame, Object value, RAbstractStringVector file, byte asciiL, int compression, RFunction hook) {
+            if (compression != 1) {
+                throw RError.error(Message.GENERIC, "unsupported compression");
+            }
+
+            RSerialize.CallHook callHook = new RSerialize.CallHook() {
+                public Object eval(Object arg) {
+                    Object[] callArgs = RArguments.create(hook, callCache.getSourceSection(), null, RArguments.getDepth(frame) + 1, new Object[]{arg}, SIGNATURE);
+                    return callCache.execute(new SubstituteVirtualFrame(frame.materialize()), hook.getTarget(), callArgs);
+                }
+            };
+
+            byte[] data = RSerialize.serialize(value, RRuntime.fromLogical(asciiL), false, RSerialize.DEFAULT_VERSION, callHook, RArguments.getDepth(frame));
+            byte[] cdata = new byte[data.length + 20];
+            long[] cdatalen = new long[1];
+            cdatalen[0] = cdata.length;
+            int rc = RFFIFactory.getRFFI().getBaseRFFI().compress(cdata, cdatalen, data);
+            if (rc != 0) {
+                throw RError.error(Message.GENERIC, "zlib uncompress error");
+            }
+            int[] intData = new int[2];
+            intData[1] = (int) cdatalen[0];
+            intData[0] = appendFile(file.getDataAt(0), cdata, intData[1]);
+            return RDataFactory.createIntVector(intData, RDataFactory.COMPLETE_VECTOR);
+        }
+
+        @SuppressWarnings("unused")
+        @Fallback
+        protected Object lazyLoadDBinsertValue(Object value, Object file, Object ascii, Object compsxp, Object hook) {
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
+        }
+
+        private int appendFile(String path, byte[] data, int len) {
+            File file = new File(path);
+            try (BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(file, true))) {
+                int result = (int) file.length();
+                out.write(data, 0, len);
+                return result;
+            } catch (IOException ex) {
+                throw RError.error(getEncapsulatingSourceSection(), Message.GENERIC, "lazyLoadDBinsertValue file append error");
+            }
+        }
+
+    }
 }

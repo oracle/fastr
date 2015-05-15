@@ -103,7 +103,8 @@ public final class RInternalError extends Error {
                 System.err.println(verboseStackTrace);
             }
             if (FastROptions.PrintErrorStacktracesToFile.getValue()) {
-                try (BufferedWriter writer = Files.newBufferedWriter(new File("fastr_errors.log").toPath(), StandardCharsets.UTF_8, StandardOpenOption.APPEND, StandardOpenOption.CREATE)) {
+                try (BufferedWriter writer = Files.newBufferedWriter(FileSystems.getDefault().getPath(REnvVars.rHome(), "fastr_errors.log"), StandardCharsets.UTF_8, StandardOpenOption.APPEND,
+                                StandardOpenOption.CREATE)) {
                     writer.append(new Date().toString()).append('\n');
                     writer.append(out.toString()).append('\n');
                     writer.append(verboseStackTrace).append("\n\n");
