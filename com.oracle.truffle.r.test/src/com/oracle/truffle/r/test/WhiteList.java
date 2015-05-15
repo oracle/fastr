@@ -24,7 +24,7 @@ package com.oracle.truffle.r.test;
 
 import java.util.*;
 
-public final class WhiteList implements TestTrait {
+public class WhiteList implements TestTrait {
     public static class Results {
 
         public final String fastR;
