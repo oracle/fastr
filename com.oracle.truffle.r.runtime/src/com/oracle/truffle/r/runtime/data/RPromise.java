@@ -461,7 +461,7 @@ public class RPromise extends RLanguageRep implements RTypedValue {
 
         @TruffleBoundary
         private static RootCallTarget generateCallTarget(Object expr) {
-            return RContext.getEngine().makePromiseCallTarget(expr, CLOSURE_WRAPPER_NAME);
+            return RContext.getInstance().getEngine().makePromiseCallTarget(expr, CLOSURE_WRAPPER_NAME);
         }
 
         public Object getExpr() {

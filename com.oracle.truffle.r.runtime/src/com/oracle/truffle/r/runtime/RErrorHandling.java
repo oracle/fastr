@@ -275,7 +275,7 @@ public class RErrorHandling {
         }
         try {
             String callSource = src.getCode();
-            RExpression call = RContext.getEngine().parse(Source.fromText(callSource, "<error call source>"));
+            RExpression call = RContext.getInstance().getEngine().parse(Source.fromText(callSource, "<error call source>"));
             return call.getDataAt(0);
         } catch (ParseException ex) {
             throw RInternalError.shouldNotReachHere("parse call source");
@@ -330,12 +330,13 @@ public class RErrorHandling {
                         evaluatedArgs[i] = RMissing.instance;
                     }
                 }
-                errorFunction.getTarget().call(RArguments.create(errorFunction, call, materializedFrame, RArguments.getDepth(materializedFrame) + 1, evaluatedArgs, argsSig));
+                errorFunction.getTarget().call(
+                                RArguments.create(RArguments.getContext(materializedFrame), errorFunction, call, materializedFrame, RArguments.getDepth(materializedFrame) + 1, evaluatedArgs, argsSig));
             } else if (errorExpr instanceof RLanguage || errorExpr instanceof RExpression) {
                 if (errorExpr instanceof RLanguage) {
-                    RContext.getEngine().eval((RLanguage) errorExpr, materializedFrame);
+                    RContext.getInstance().getEngine().eval((RLanguage) errorExpr, materializedFrame);
                 } else if (errorExpr instanceof RExpression) {
-                    RContext.getEngine().eval((RExpression) errorExpr, materializedFrame);
+                    RContext.getInstance().getEngine().eval((RExpression) errorExpr, materializedFrame);
                 }
             } else {
                 // Checked when set
@@ -351,8 +352,8 @@ public class RErrorHandling {
     }
 
     /**
-     * A temporary class used to accumulate warnins in deferred mode, Eventually these are converted
-     * to a list and stored in {@code last.warning} in {@code baseenv}.
+     * A temporary class used to accumulate warnings in deferred mode, Eventually these are
+     * converted to a list and stored in {@code last.warning} in {@code baseenv}.
      */
     private static class Warning {
         final String message;
@@ -375,11 +376,11 @@ public class RErrorHandling {
          * destroy any visibility setting made by the calling builtin prior to this call. So we save
          * and restore it across the call.
          */
-        boolean visibility = RContext.isVisible();
+        boolean visibility = RContext.getInstance().isVisible();
         try {
             RContext.getRASTHelper().signalSimpleWarning(warningMessage, call, RArguments.getDepth(safeCurrentFrame()));
         } finally {
-            RContext.setVisible(visibility);
+            RContext.getInstance().setVisible(visibility);
         }
     }
 

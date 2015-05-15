@@ -46,7 +46,7 @@ public abstract class ProcTime extends RBuiltinNode {
     protected RDoubleVector procTime() {
         controlVisibility();
         double[] data = new double[5];
-        long nowInNanos = RContext.getEngine().elapsedTimeInNanos();
+        long nowInNanos = RContext.getInstance().getEngine().elapsedTimeInNanos();
         if (bean == null) {
             bean = ManagementFactory.getThreadMXBean();
         }
@@ -55,7 +55,7 @@ public abstract class ProcTime extends RBuiltinNode {
         data[0] = asDoubleSecs(userTimeInNanos);
         data[1] = asDoubleSecs(sysTimeInNanos);
         data[2] = asDoubleSecs(nowInNanos);
-        long[] childTimes = RContext.getEngine().childTimesInNanos();
+        long[] childTimes = RContext.getInstance().getEngine().childTimesInNanos();
         boolean na = childTimes[0] < 0 || childTimes[1] < 0;
         boolean complete = na ? RDataFactory.INCOMPLETE_VECTOR : RDataFactory.COMPLETE_VECTOR;
         data[3] = na ? RRuntime.DOUBLE_NA : asDoubleSecs(childTimes[0]);

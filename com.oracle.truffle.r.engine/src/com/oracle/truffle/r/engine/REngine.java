@@ -44,7 +44,6 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.control.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.nodes.instrument.*;
-import com.oracle.truffle.r.nodes.runtime.*;
 import com.oracle.truffle.r.options.*;
 import com.oracle.truffle.r.parser.*;
 import com.oracle.truffle.r.parser.ast.*;
@@ -61,24 +60,40 @@ import com.oracle.truffle.r.runtime.env.frame.*;
 import com.oracle.truffle.r.runtime.rng.*;
 
 /**
- * The engine for the FastR implementation. Handles parsing and evaluation. There is exactly one
- * instance of this class, stored in {link #singleton}.
+ * The engine for the FastR implementation. Handles parsing and evaluation. There is one instance of
+ * this class per {@link RContext}.
  */
 public final class REngine implements RContext.Engine {
 
-    private static final REngine singleton = new REngine();
-
+    /**
+     * Controls the behavior when an implementation errors occurs. In normal use this is fatal as
+     * the system is in an undefined and likely unusable state. However, there are special
+     * situations, e.g. unit tests, where we want to continue and delegate the termination to a
+     * higher authority.
+     */
     @CompilationFinal private boolean crashOnFatalError;
+    /**
+     * The system time when this engine was started.
+     */
     @CompilationFinal private long startTime;
+    /**
+     * The accumulated time spent by child processes on behalf of this engine.
+     */
     @CompilationFinal private long[] childTimes;
-    @CompilationFinal private RContext context;
-    @CompilationFinal private RBuiltinLookup builtinLookup;
+    /**
+     * The {@link RContext} that this engine is associated with (1-1).
+     */
+    private final RContext context;
 
     /**
-     * Only of relevance for in-process debugging, prevents most re-initialization on repeat calls
-     * to {@link #initialize}.
+     * The unique frame for the global environment for this engine.
      */
-    private static boolean initialized;
+    @CompilationFinal private MaterializedFrame globalFrame;
+
+    /**
+     * The environment search path for this engine.
+     */
+    @CompilationFinal REnvironment.SearchPath searchPath;
 
     /**
      * {@code true} iff the base package is loaded.
@@ -89,80 +104,94 @@ public final class REngine implements RContext.Engine {
      * A temporary mechanism for suppressing warnings while evaluating the system profile, until the
      * proper mechanism is understood.
      */
-    private static boolean suppressWarnings;
+    private boolean suppressWarnings;
 
-    private REngine() {
+    public void disableCrashOnFatalError() {
+        this.crashOnFatalError = false;
     }
 
-    public static boolean isInitialized() {
-        return initialized;
-    }
-
-    /**
-     * Initialize the engine.
-     *
-     * @param commandArgs
-     * @param consoleHandler for console input/output
-     * @param crashOnFatalErrorArg if {@code true} any unhandled exception will terminate the
-     *            process.
-     * @param ignoreVisibility TODO
-     * @return a {@link VirtualFrame} that can be passed to
-     *         {@link #parseAndEval(Source, MaterializedFrame, REnvironment, boolean, boolean)}
-     */
-    public static MaterializedFrame initialize(String[] commandArgs, ConsoleHandler consoleHandler, boolean crashOnFatalErrorArg, boolean ignoreVisibility) {
-        singleton.startTime = System.nanoTime();
-        singleton.childTimes = new long[]{0, 0};
-        MaterializedFrame globalFrame = RRuntime.createNonFunctionFrame().materialize();
-        assert !initialized;
-        RInstrument.initialize();
-        RPerfStats.initialize();
-        Locale.setDefault(Locale.ROOT);
-        RAccuracyInfo.initialize();
-        singleton.crashOnFatalError = crashOnFatalErrorArg;
-        singleton.builtinLookup = RBuiltinPackages.getInstance();
-        singleton.context = RContext.setRuntimeState(singleton, commandArgs, consoleHandler, new RASTHelperImpl(), consoleHandler.isInteractive(), ignoreVisibility);
-        suppressWarnings = true;
-        StdConnections.initialize();
-        MaterializedFrame baseFrame = RRuntime.createNonFunctionFrame().materialize();
-        REnvironment.baseInitialize(globalFrame, baseFrame);
-        loadBase = FastROptions.LoadBase.getValue();
-        RBuiltinPackages.loadBase(baseFrame, loadBase);
-        RVersionInfo.initialize();
-        RRNG.initialize();
-        TempPathName.initialize();
-        RProfile.initialize();
-        RGraphics.initialize();
-        if (loadBase) {
-            /*
-             * eval the system/site/user profiles. Experimentally GnuR does not report warnings
-             * during system profile evaluation, but does for the site/user profiles.
-             */
-            singleton.parseAndEval(RProfile.systemProfile(), baseFrame, REnvironment.baseEnv(), false, false);
-            checkAndRunStartupFunction(".OptRequireMethods");
-
-            suppressWarnings = false;
-            Source siteProfile = RProfile.siteProfile();
-            if (siteProfile != null) {
-                singleton.parseAndEval(siteProfile, baseFrame, REnvironment.baseEnv(), false, false);
-            }
-            Source userProfile = RProfile.userProfile();
-            if (userProfile != null) {
-                singleton.parseAndEval(userProfile, globalFrame, REnvironment.globalEnv(), false, false);
-            }
-            if (!NO_RESTORE.getValue()) {
-                /*
-                 * TODO This is where we would load any saved user data
-                 */
-            }
-            checkAndRunStartupFunction(".First");
-            checkAndRunStartupFunction(".First.sys");
-            RBuiltinPackages.loadDefaultPackageOverrides();
-        }
-        initialized = true;
+    public MaterializedFrame getGlobalFrame() {
         return globalFrame;
     }
 
-    private static void checkAndRunStartupFunction(String name) {
+    public REnvironment.SearchPath getSearchPath() {
+        return searchPath;
+    }
+
+    public void setSearchPath(REnvironment.SearchPath searchPath) {
+        this.searchPath = searchPath;
+    }
+
+    public REnvironment getGlobalEnv() {
+        return RArguments.getEnvironment(globalFrame);
+    }
+
+    private REngine(RContext context) {
+        this.context = context;
+    }
+
+    /**
+     * Currently the default packages are installed once and shared between different contexts. We
+     * may relax some or all of this at a later date.
+     */
+    private static boolean sharedInitialized;
+
+    static REngine create(RContext context) {
+        REngine engine = new REngine(context);
+        engine.startTime = System.nanoTime();
+        engine.childTimes = new long[]{0, 0};
+        engine.globalFrame = RRuntime.createNonFunctionFrame(context).materialize();
+        REnvironment.newContext(engine.globalFrame);
+        return engine;
+    }
+
+    void initializeShared() {
+        if (!sharedInitialized) {
+            RInstrument.initialize();
+            RPerfStats.initialize();
+            Locale.setDefault(Locale.ROOT);
+            RAccuracyInfo.initialize();
+            suppressWarnings = true;
+            StdConnections.initialize(context.getConsoleHandler());
+            MaterializedFrame baseFrame = RRuntime.createNonFunctionFrame(context).materialize();
+            searchPath = REnvironment.baseInitialize(baseFrame, globalFrame);
+            loadBase = FastROptions.LoadBase.getValue();
+            RBuiltinPackages.loadBase(baseFrame, loadBase);
+            RVersionInfo.initialize();
+            RRNG.initialize();
+            TempPathName.initialize();
+            RProfile.initialize();
+            RGraphics.initialize();
+            if (loadBase) {
+                /*
+                 * eval the system/site/user profiles. Experimentally GnuR does not report warnings
+                 * during system profile evaluation, but does for the site/user profiles.
+                 */
+                parseAndEval(RProfile.systemProfile(), baseFrame, false, false);
+                checkAndRunStartupFunction(".OptRequireMethods");
+
+                suppressWarnings = false;
+                Source siteProfile = RProfile.siteProfile();
+                if (siteProfile != null) {
+                    parseAndEval(siteProfile, baseFrame, false, false);
+                }
+                Source userProfile = RProfile.userProfile();
+                if (userProfile != null) {
+                    parseAndEval(userProfile, globalFrame, false, false);
+                }
+                if (!NO_RESTORE.getValue()) {
+                    /*
+                     * TODO This is where we would load any saved user data
+                     */
+                }
+                checkAndRunStartupFunction(".First");
+                checkAndRunStartupFunction(".First.sys");
+                RBuiltinPackages.loadDefaultPackageOverrides();
+            }
+        }
+    }
+
+    private void checkAndRunStartupFunction(String name) {
         Object func = REnvironment.globalEnv().findFunction(name);
         if (func instanceof RFunction) {
             /*
@@ -172,24 +201,12 @@ public final class REngine implements RContext.Engine {
             RInstrument.checkDebugRequested(name, (RFunction) func);
             String call = name + "()";
             // Should this print the result?
-            singleton.parseAndEval(Source.fromText(call, "<startup>"), REnvironment.globalEnv().getFrame(), REnvironment.globalEnv(), false, false);
+            parseAndEval(Source.fromText(call, "<startup>"), globalFrame, false, false);
         }
     }
 
     public void checkAndRunLast(String name) {
         checkAndRunStartupFunction(name);
-    }
-
-    public static REngine getInstance() {
-        return singleton;
-    }
-
-    public boolean isPrimitiveBuiltin(String name) {
-        return builtinLookup.isPrimitiveBuiltin(name);
-    }
-
-    public RFunction lookupBuiltin(String name) {
-        return builtinLookup.lookup(name);
     }
 
     public long elapsedTimeInNanos() {
@@ -201,7 +218,7 @@ public final class REngine implements RContext.Engine {
     }
 
     @Override
-    public Object parseAndEval(Source source, MaterializedFrame frame, REnvironment envForFrame, boolean printResult, boolean allowIncompleteSource) {
+    public Object parseAndEval(Source source, MaterializedFrame frame, boolean printResult, boolean allowIncompleteSource) {
         try {
             return parseAndEvalImpl(source, frame, printResult, allowIncompleteSource);
         } catch (ReturnException ex) {
@@ -215,34 +232,34 @@ public final class REngine implements RContext.Engine {
         } catch (UnsupportedSpecializationException use) {
             String message = "FastR internal error: Unsupported specialization in node " + use.getNode().getClass().getSimpleName() + " - supplied values: " +
                             Arrays.asList(use.getSuppliedValues()).stream().map(v -> v == null ? "null" : v.getClass().getSimpleName()).collect(Collectors.toList());
-            singleton.context.getConsoleHandler().printErrorln(message);
+            context.getConsoleHandler().printErrorln(message);
             RInternalError.reportError(use);
             return null;
         } catch (Throwable t) {
-            singleton.context.getConsoleHandler().printErrorln("FastR internal error: " + t.getMessage());
+            context.getConsoleHandler().printErrorln("FastR internal error: " + t.getMessage());
             RInternalError.reportError(t);
             return null;
         }
     }
 
+    // TODO refactor with per-test engine
     @Override
     public Object parseAndEvalTest(String rscript, boolean printResult) throws RecognitionException {
         // We first remove all the definitions from the previous test
-        MaterializedFrame globalFrame = REnvironment.globalEnv().getFrame();
         for (FrameSlot slot : globalFrame.getFrameDescriptor().getSlots()) {
             FrameSlotChangeMonitor.setObjectAndInvalidate(globalFrame, slot, null, true, null);
         }
         RRNG.initialize();
         try {
-            return parseAndEvalImpl(Source.fromText(rscript, "<test_input>"), REnvironment.globalEnv().getFrame(), printResult, false);
+            return parseAndEvalImpl(Source.fromText(rscript, "<test_input>"), globalFrame, printResult, false);
         } catch (RInternalError e) {
-            singleton.context.getConsoleHandler().printErrorln("FastR internal error: " + e.getMessage());
+            context.getConsoleHandler().printErrorln("FastR internal error: " + e.getMessage());
             RInternalError.reportError(e);
             throw e;
         }
     }
 
-    private static Object parseAndEvalImpl(Source source, MaterializedFrame frame, boolean printResult, boolean allowIncompleteSource) throws RecognitionException {
+    private Object parseAndEvalImpl(Source source, MaterializedFrame frame, boolean printResult, boolean allowIncompleteSource) throws RecognitionException {
         RSyntaxNode node;
         try {
             node = parseToRNode(source);
@@ -319,7 +336,7 @@ public final class REngine implements RContext.Engine {
      * @return @see
      *         {@link #evalTarget(RootCallTarget, SourceSection, REnvironment, REnvironment, int)}
      */
-    private static Object evalNode(RSyntaxNode exprRep, REnvironment envir, REnvironment enclos, int depth) {
+    private Object evalNode(RSyntaxNode exprRep, REnvironment envir, REnvironment enclos, int depth) {
         RootCallTarget callTarget = doMakeCallTarget(exprRep, EVAL_FUNCTION_NAME);
         SourceSection callSrc = RArguments.getCallSourceSection(envir.getFrame());
         return evalTarget(callTarget, callSrc, envir, enclos, depth);
@@ -335,7 +352,7 @@ public final class REngine implements RContext.Engine {
      * inefficient. In particular, in the case where a {@link VirtualFrame} is available, then the
      * {@code eval} methods that take such a {@link VirtualFrame} should be used in preference.
      */
-    private static Object evalTarget(RootCallTarget callTarget, SourceSection callSrc, REnvironment envir, @SuppressWarnings("unused") REnvironment enclos, int depth) {
+    private Object evalTarget(RootCallTarget callTarget, SourceSection callSrc, REnvironment envir, @SuppressWarnings("unused") REnvironment enclos, int depth) {
         MaterializedFrame envFrame = envir.getFrame();
         // Here we create fake frame that wraps the original frame's context and has an only
         // slightly changed arguments array (function and callSrc).
@@ -368,7 +385,8 @@ public final class REngine implements RContext.Engine {
      */
     private static RSyntaxNode parseToRNode(Source source) throws RecognitionException {
         String code = source.getCode();
-        return transform(ParseUtil.parseAST(new ANTLRStringStream(code), source));
+        RSyntaxNode result = transform(ParseUtil.parseAST(new ANTLRStringStream(code), source));
+        return result;
     }
 
     /**
@@ -433,7 +451,7 @@ public final class REngine implements RContext.Engine {
      * evaluation, so the exception handling in particular is overly complex.. It should be
      * refactored into separate methods to reflect the usages more precisely.
      */
-    private static Object runCall(RootCallTarget callTarget, MaterializedFrame frame, boolean printResult, boolean topLevel) {
+    private Object runCall(RootCallTarget callTarget, MaterializedFrame frame, boolean printResult, boolean topLevel) {
         Object result = null;
         try {
             try {
@@ -448,7 +466,7 @@ public final class REngine implements RContext.Engine {
             }
             assert checkResult(result);
             if (printResult) {
-                if (RContext.isVisible()) {
+                if (context.isVisible()) {
                     printResult(result);
                 }
             }
@@ -490,15 +508,15 @@ public final class REngine implements RContext.Engine {
     private static final ArgumentsSignature PRINT_INTERNAL_SIGNATURE = ArgumentsSignature.get("x");
 
     @TruffleBoundary
-    private static void printResult(Object result) {
+    private void printResult(Object result) {
         Object resultValue = result instanceof RPromise ? PromiseHelperNode.evaluateSlowPath(null, (RPromise) result) : result;
         if (loadBase) {
             Object printMethod = REnvironment.globalEnv().findFunction("print");
             RFunction function = (RFunction) (printMethod instanceof RPromise ? PromiseHelperNode.evaluateSlowPath(null, (RPromise) printMethod) : printMethod);
-            function.getTarget().call(RArguments.create(function, null, REnvironment.baseEnv().getFrame(), 1, new Object[]{resultValue, RMissing.instance}, PRINT_SIGNATURE));
+            function.getTarget().call(RArguments.create(context, function, null, REnvironment.baseEnv().getFrame(), 1, new Object[]{resultValue, RMissing.instance}, PRINT_SIGNATURE));
         } else {
             // we only have the .Internal print.default method available
-            getPrintInternal().getTarget().call(RArguments.create(printInternal, null, REnvironment.baseEnv().getFrame(), 1, new Object[]{resultValue}, PRINT_INTERNAL_SIGNATURE));
+            getPrintInternal().getTarget().call(RArguments.create(context, printInternal, null, REnvironment.baseEnv().getFrame(), 1, new Object[]{resultValue}, PRINT_INTERNAL_SIGNATURE));
         }
     }
 
@@ -506,11 +524,11 @@ public final class REngine implements RContext.Engine {
     private static final Source INTERNAL_PRINT = Source.fromText(".print.internal <- function(x) { .Internal(print.default(x, NULL, TRUE, NULL, NULL, FALSE, NULL, TRUE))}", "<internal_print>");
     @CompilationFinal private static RFunction printInternal;
 
-    private static RFunction getPrintInternal() {
+    private RFunction getPrintInternal() {
         if (printInternal == null) {
             try {
-                RExpression funDef = singleton.parse(INTERNAL_PRINT);
-                printInternal = (RFunction) singleton.eval(funDef, REnvironment.baseEnv().getFrame());
+                RExpression funDef = parse(INTERNAL_PRINT);
+                printInternal = (RFunction) eval(funDef, REnvironment.baseEnv().getFrame());
             } catch (RContext.Engine.ParseException ex) {
                 Utils.fail("failed to parse print.internal");
             }
@@ -520,24 +538,24 @@ public final class REngine implements RContext.Engine {
     }
 
     @TruffleBoundary
-    private static void reportImplementationError(Throwable e) {
+    private void reportImplementationError(Throwable e) {
         // R suicide, unless, e.g., we are running units tests.
         // We also don't call quit as the system is broken.
-        if (singleton.crashOnFatalError) {
+        if (crashOnFatalError) {
             ByteArrayOutputStream out = new ByteArrayOutputStream();
             e.printStackTrace(new PrintStream(out));
             // We don't call writeStdErr as that may exercise the (broken) implementation
-            singleton.context.getConsoleHandler().printErrorln(out.toString());
+            context.getConsoleHandler().printErrorln(out.toString());
             Utils.exit(2);
         }
     }
 
-    private static void writeStderr(String s, boolean nl) {
+    private void writeStderr(String s, boolean nl) {
         try {
             StdConnections.getStderr().writeString(s, nl);
         } catch (IOException ex) {
             // Very unlikely
-            ConsoleHandler consoleHandler = singleton.context.getConsoleHandler();
+            ConsoleHandler consoleHandler = context.getConsoleHandler();
             consoleHandler.printErrorln("Error writing to stderr: " + ex.getMessage());
             consoleHandler.printErrorln(s);
 
@@ -551,7 +569,7 @@ public final class REngine implements RContext.Engine {
     /**
      * Helper for the repl debugger.
      */
-    private static final class RVisualizer extends DefaultVisualizer {
+    private final class RVisualizer extends DefaultVisualizer {
         private TextConnections.InternalStringWriteConnection stringConn;
 
         private RVisualizer() {
@@ -568,7 +586,7 @@ public final class REngine implements RContext.Engine {
          * connection.
          */
         @Override
-        public String displayValue(ExecutionContext context, Object value, int trim) {
+        public String displayValue(ExecutionContext executionContext, Object value, int trim) {
             try {
                 StdConnections.pushDivertOut(stringConn, false);
                 printResult(value);

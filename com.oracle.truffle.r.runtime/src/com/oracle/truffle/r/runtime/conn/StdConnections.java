@@ -28,7 +28,7 @@ import java.util.*;
 
 import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.RContext.*;
+import com.oracle.truffle.r.runtime.RContext.ConsoleHandler;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
@@ -37,12 +37,12 @@ public class StdConnections {
     private static StdoutConnection stdout;
     private static StderrConnection stderr;
 
-    public static void initialize() {
+    public static void initialize(ConsoleHandler consoleHandler) {
         // This ensures the connections are initialized on engine startup.
         try {
             stdin = new StdinConnection();
-            stdout = new StdoutConnection();
-            stderr = new StderrConnection();
+            stdout = new StdoutConnection(consoleHandler);
+            stderr = new StderrConnection(consoleHandler);
         } catch (IOException ex) {
             Utils.fail("failed to open stdconnections:");
         }
@@ -176,10 +176,11 @@ public class StdConnections {
     }
 
     private abstract static class StdoutputAdapter extends StdConnection {
-        protected ConsoleHandler consoleHandler = RContext.getInstance().getConsoleHandler();
+        protected final ConsoleHandler consoleHandler;
 
-        StdoutputAdapter(int index) throws IOException {
+        StdoutputAdapter(int index, ConsoleHandler consoleHandler) throws IOException {
             super(AbstractOpenMode.Write, index);
+            this.consoleHandler = consoleHandler;
             this.opened = true;
         }
 
@@ -212,8 +213,8 @@ public class StdConnections {
 
         private static int top = -1;
 
-        StdoutConnection() throws IOException {
-            super(1);
+        StdoutConnection(ConsoleHandler consoleHandler) throws IOException {
+            super(1, consoleHandler);
         }
 
         int numDiversions() {
@@ -287,8 +288,8 @@ public class StdConnections {
     private static class StderrConnection extends StdoutputAdapter {
         RConnection diversion;
 
-        StderrConnection() throws IOException {
-            super(2);
+        StderrConnection(ConsoleHandler consoleHandler) throws IOException {
+            super(2, consoleHandler);
         }
 
         void divertErr(RConnection conn) {

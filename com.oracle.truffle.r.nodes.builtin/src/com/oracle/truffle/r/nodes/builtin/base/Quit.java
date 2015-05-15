@@ -92,9 +92,9 @@ public abstract class Quit extends RInvisibleBuiltinNode {
             consoleHandler.println("Image saving is not implemented");
         }
         if (runLast != 0) {
-            RContext.getEngine().checkAndRunLast(".Last");
+            RContext.getInstance().getEngine().checkAndRunLast(".Last");
             // TODO errors should return to prompt if interactive
-            RContext.getEngine().checkAndRunLast(".Last.sys");
+            RContext.getInstance().getEngine().checkAndRunLast(".Last.sys");
         }
         Utils.exit(status);
         return null;

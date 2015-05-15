@@ -53,7 +53,7 @@ public final class GroupDispatchNode extends RNode implements RSyntaxNode {
     }
 
     public static GroupDispatchNode create(String genericName, CallArgumentsNode callArgNode, SourceSection callSrc) {
-        GroupDispatchNode gdcn = new GroupDispatchNode(genericName, callArgNode, RContext.getEngine().lookupBuiltin(genericName));
+        GroupDispatchNode gdcn = new GroupDispatchNode(genericName, callArgNode, RContext.lookupBuiltin(genericName));
         gdcn.assignSourceSection(callSrc);
         return gdcn;
     }

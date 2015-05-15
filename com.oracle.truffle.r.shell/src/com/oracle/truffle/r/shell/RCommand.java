@@ -33,27 +33,15 @@ import jline.console.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.engine.*;
-import com.oracle.truffle.r.options.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RContext.ConsoleHandler;
 import com.oracle.truffle.r.runtime.RContext.Engine;
 import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.env.*;
-import com.oracle.truffle.r.runtime.ffi.*;
 
 /**
  * Emulates the (Gnu)R command as precisely as possible.
  */
 public class RCommand {
-
-    /**
-     * The choice of {@link RFFIFactory} is made statically so that it is bound into an AOT-compiled
-     * VM. The decision is node made directly in {@link RFFIFactory} to avoid some project
-     * dependencies that cause build problems.
-     */
-    static {
-        Load_RFFIFactory.initialize();
-    }
 
     // CheckStyle: stop system..print check
 
@@ -105,9 +93,7 @@ public class RCommand {
             }
         }
 
-        FastROptions.initialize();
-        REnvVars.initialize();
-        ROptions.initialize();
+        RContextFactory.initialize();
 
         if (!(QUIET.getValue() || SILENT.getValue())) {
             System.out.println(RRuntime.WELCOME_MESSAGE);
@@ -163,7 +149,7 @@ public class RCommand {
         // We should only reach here if interactive == false
         // Need to call quit explicitly
         Source quitSource = Source.fromText("quit(\"default\", 0L, TRUE)", "<quit_file>");
-        REngine.getInstance().parseAndEval(quitSource, globalFrame, REnvironment.globalEnv(), false, false);
+        RContext.getInstance().getEngine().parseAndEval(quitSource, globalFrame, false, false);
         // never returns
         assert false;
     }
@@ -183,7 +169,9 @@ public class RCommand {
     private static MaterializedFrame readEvalPrint(ConsoleHandler consoleHandler, String[] commandArgs, String filePath) {
         String inputDescription = filePath == null ? "<shell_input>" : filePath;
         Source source = Source.fromNamedAppendableText(inputDescription);
-        MaterializedFrame globalFrame = REngine.initialize(commandArgs, consoleHandler, false, FastROptions.IgnoreVisibility.getValue());
+        RContext context = RContextFactory.createContext(commandArgs, consoleHandler);
+        RContext.Engine engine = context.getEngine();
+        MaterializedFrame globalFrame = engine.getGlobalFrame();
         try {
             // console.println("initialize time: " + (System.currentTimeMillis() - start));
             for (;;) {
@@ -206,7 +194,7 @@ public class RCommand {
                 try {
                     String continuePrompt = getContinuePrompt();
                     Source subSource = Source.subSource(source, startLength);
-                    while (REngine.getInstance().parseAndEval(subSource, globalFrame, REnvironment.globalEnv(), true, true) == Engine.INCOMPLETE_SOURCE) {
+                    while (engine.parseAndEval(subSource, globalFrame, true, true) == Engine.INCOMPLETE_SOURCE) {
                         consoleHandler.setPrompt(doEcho ? continuePrompt : null);
                         String additionalInput = consoleHandler.readLine();
                         if (additionalInput == null) {

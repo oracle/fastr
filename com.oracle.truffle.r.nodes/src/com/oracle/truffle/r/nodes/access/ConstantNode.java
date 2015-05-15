@@ -163,7 +163,6 @@ public abstract class ConstantNode extends RNode implements RSyntaxNode, Visibil
         private final Object value;
 
         public ConstantObjectNode(Object value) {
-            controlVisibility();
             this.value = value;
         }
 

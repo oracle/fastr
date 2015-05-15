@@ -27,7 +27,6 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.env.*;
 
 /**
  * The interactive component of the {@code browser} function.
@@ -46,7 +45,6 @@ public class Browser {
     @TruffleBoundary
     public static ExitMode interact(MaterializedFrame frame) {
         RContext.ConsoleHandler ch = RContext.getInstance().getConsoleHandler();
-        REnvironment callerEnv = REnvironment.frameToEnvironment(frame);
         String savedPrompt = ch.getPrompt();
         ch.setPrompt(browserPrompt(RArguments.getDepth(frame)));
         ExitMode exitMode = ExitMode.NEXT;
@@ -89,7 +87,7 @@ public class Browser {
                     }
 
                     default:
-                        RContext.getEngine().parseAndEval(Source.fromText(input, BROWSER_SOURCE), frame, callerEnv, true, false);
+                        RContext.getInstance().getEngine().parseAndEval(Source.fromText(input, BROWSER_SOURCE), frame, true, false);
                         break;
                 }
             }

@@ -268,7 +268,7 @@ public class RASTHelperImpl implements RASTHelper {
 
     private static RCallNode getCallNode(Source source) {
         try {
-            return (RCallNode) ((RLanguage) RContext.getEngine().parse(source).getDataAt(0)).getRep();
+            return (RCallNode) ((RLanguage) RContext.getInstance().getEngine().parse(source).getDataAt(0)).getRep();
         } catch (ParseException ex) {
             // most unexpected
             throw RInternalError.shouldNotReachHere();
@@ -290,7 +290,7 @@ public class RASTHelperImpl implements RASTHelper {
          */
         boolean gd = DebugHandling.globalDisable(true);
         try {
-            return RContext.getEngine().eval(RDataFactory.createLanguage(call), REnvironment.globalEnv(), depth + 1);
+            return RContext.getInstance().getEngine().eval(RDataFactory.createLanguage(call), REnvironment.globalEnv(), depth + 1);
         } catch (ReturnException ex) {
             // cannot throw return exceptions further up.
             return ex.getResult();

@@ -39,7 +39,8 @@ import com.oracle.truffle.r.runtime.ffi.*;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLException;
 
 /**
- * Support for loading built-in packages, currently limited to {@code base}.
+ * Support for loading the base package and also optional overrides for the packages provided with
+ * the system.
  */
 public final class RBuiltinPackages implements RBuiltinLookup {
 
@@ -94,11 +95,11 @@ public final class RBuiltinPackages implements RBuiltinLookup {
         // Any RBuiltinKind.SUBSTITUTE functions installed above should not be overridden
         try {
             HiddenInternalFunctions.MakeLazy.loadingBase = true;
-            RContext.getEngine().parseAndEval(baseSource, frame, baseEnv, false, false);
+            RContext.getInstance().getEngine().parseAndEval(baseSource, frame, false, false);
         } finally {
             HiddenInternalFunctions.MakeLazy.loadingBase = false;
         }
-        pkg.loadOverrides(frame, baseEnv);
+        pkg.loadOverrides(frame);
     }
 
     public static void loadDefaultPackageOverrides() {
@@ -117,7 +118,7 @@ public final class RBuiltinPackages implements RBuiltinLookup {
                  */
                 REnvironment env = REnvironment.baseEnv();
                 for (Source source : componentList) {
-                    RContext.getEngine().parseAndEval(source, env.getFrame(), env, false, false);
+                    RContext.getInstance().getEngine().parseAndEval(source, env.getFrame(), false, false);
                 }
             }
         }
@@ -125,7 +126,7 @@ public final class RBuiltinPackages implements RBuiltinLookup {
 
     @Override
     public RFunction lookup(String methodName) {
-        RFunction function = RContext.getInstance().getCachedFunction(methodName);
+        RFunction function = RContext.getCachedBuiltin(methodName);
         if (function != null) {
             return function;
         }
@@ -140,7 +141,7 @@ public final class RBuiltinPackages implements RBuiltinLookup {
     private static RFunction createFunction(RBuiltinFactory builtinFactory, String methodName) {
         try {
             RootCallTarget callTarget = RBuiltinNode.createArgumentsCallTarget(builtinFactory);
-            return RContext.getInstance().putCachedFunction(methodName, RDataFactory.createFunction(builtinFactory.getName(), callTarget, builtinFactory, REnvironment.baseEnv().getFrame()));
+            return RContext.cacheBuiltin(methodName, RDataFactory.createFunction(builtinFactory.getName(), callTarget, builtinFactory, REnvironment.baseEnv().getFrame()));
         } catch (Throwable t) {
             throw new RuntimeException("error while creating builtin " + methodName + " / " + builtinFactory, t);
         }

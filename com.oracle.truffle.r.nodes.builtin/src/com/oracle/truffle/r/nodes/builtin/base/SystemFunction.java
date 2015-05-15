@@ -77,7 +77,7 @@ public abstract class SystemFunction extends RBuiltinNode {
         } catch (InterruptedException | IOException ex) {
             result = 127;
         }
-        RContext.setVisible(false);
+        RContext.getInstance().setVisible(false);
         return result;
     }
 

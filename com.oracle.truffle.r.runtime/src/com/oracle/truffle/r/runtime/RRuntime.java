@@ -135,11 +135,13 @@ public class RRuntime {
     /**
      * Create an {@link VirtualFrame} for a non-function environment, e.g., a package frame or the
      * global environment.
+     * 
+     * @param context TODO
      */
-    public static VirtualFrame createNonFunctionFrame() {
+    public static VirtualFrame createNonFunctionFrame(RContext context) {
         FrameDescriptor frameDescriptor = new FrameDescriptor();
         FrameSlotChangeMonitor.initializeNonFunctionFrameDescriptor(frameDescriptor, false);
-        return Truffle.getRuntime().createVirtualFrame(RArguments.createUnitialized(), frameDescriptor);
+        return Truffle.getRuntime().createVirtualFrame(RArguments.createUnitialized(context), frameDescriptor);
     }
 
     public static RComplex createComplexNA() {

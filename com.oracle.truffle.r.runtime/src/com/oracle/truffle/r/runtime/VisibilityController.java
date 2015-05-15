@@ -52,7 +52,7 @@ public interface VisibilityController {
      */
     default void controlVisibility() {
         if (!RContext.isIgnoringVisibility()) {
-            RContext.setVisible(getVisibility());
+            RContext.getInstance().setVisible(getVisibility());
         }
     }
 
@@ -62,7 +62,7 @@ public interface VisibilityController {
      */
     default void forceVisibility(boolean state) {
         if (!RContext.isIgnoringVisibility()) {
-            RContext.setVisible(state);
+            RContext.getInstance().setVisible(state);
         }
     }
 }

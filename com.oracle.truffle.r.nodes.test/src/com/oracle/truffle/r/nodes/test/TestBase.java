@@ -26,27 +26,21 @@ import org.junit.*;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.engine.*;
-import com.oracle.truffle.r.options.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.ffi.*;
 
 public class TestBase {
 
-    private static void createSession() {
-        if (!REngine.isInitialized()) {
-            Load_RFFIFactory.initialize();
-            FastROptions.initialize();
-            REnvVars.initialize();
-            ROptions.initialize();
-            ROptions.setValueNoCheck("defaultPackages", RDataFactory.createStringVector(new String[]{}, true));
-            REngine.initialize(new String[0], new ConsoleHandler(), false, false);
-        }
-    }
+    private static boolean haveSession;
 
     @BeforeClass
     public static void setupClass() {
-        createSession();
+        if (!haveSession) {
+            RContextFactory.initialize();
+            ROptions.setValueNoCheck("defaultPackages", RDataFactory.createStringVector(new String[]{}, true));
+            RContextFactory.createContext(new String[0], new ConsoleHandler());
+            haveSession = true;
+        }
     }
 
     private static class ConsoleHandler implements RContext.ConsoleHandler {

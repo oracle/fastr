@@ -144,7 +144,8 @@ public abstract class DoCall extends RBuiltinNode {
             needsCallerFrame = true;
         }
         callerFrame = needsCallerFrame ? getCallerFrame(frame, callerFrame) : null;
-        Object[] callArgs = RArguments.create(func, callCache.getSourceSection(), callerFrame, RArguments.getDepth(frame) + 1, reorderedArgs.getArguments(), reorderedArgs.getSignature());
+        Object[] callArgs = RArguments.create(RArguments.getContext(frame), func, callCache.getSourceSection(), callerFrame, RArguments.getDepth(frame) + 1, reorderedArgs.getArguments(),
+                        reorderedArgs.getSignature());
         RArguments.setIsIrregular(callArgs, true);
         return callCache.execute(frame, func.getTarget(), callArgs);
     }

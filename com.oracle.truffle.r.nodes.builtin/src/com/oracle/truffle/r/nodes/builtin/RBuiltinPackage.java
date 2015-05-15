@@ -135,11 +135,11 @@ public abstract class RBuiltinPackage {
     /**
      * Runtime component of the package initialization process.
      */
-    public void loadOverrides(MaterializedFrame frame, REnvironment envForFrame) {
+    public void loadOverrides(MaterializedFrame frame) {
         ArrayList<Source> sources = rSources.get(getName());
         if (sources != null) {
             for (Source source : sources) {
-                RContext.getEngine().parseAndEval(source, frame, envForFrame, false, false);
+                RContext.getInstance().getEngine().parseAndEval(source, frame, false, false);
             }
         }
     }

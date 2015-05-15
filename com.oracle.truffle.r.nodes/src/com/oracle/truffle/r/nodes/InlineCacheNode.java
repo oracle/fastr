@@ -97,7 +97,7 @@ public abstract class InlineCacheNode extends Node {
      * @param maxPicDepth maximum number of entries in the polymorphic inline cache
      */
     public static <F extends Frame> InlineCacheNode createExpression(int maxPicDepth) {
-        return createCache(maxPicDepth, value -> (RNode) value, (frame, value) -> RContext.getEngine().eval(RDataFactory.createLanguage(value), frame.materialize()));
+        return createCache(maxPicDepth, value -> (RNode) value, (frame, value) -> RContext.getInstance().getEngine().eval(RDataFactory.createLanguage(value), frame.materialize()));
     }
 
     /**
@@ -112,7 +112,7 @@ public abstract class InlineCacheNode extends Node {
 
     @TruffleBoundary
     private static Object evalPromise(Frame frame, Closure closure) {
-        return RContext.getEngine().evalPromise(closure, frame.materialize());
+        return RContext.getInstance().getEngine().evalPromise(closure, frame.materialize());
     }
 
 }

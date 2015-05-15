@@ -132,7 +132,7 @@ public abstract class Options extends RBuiltinNode {
                     names[i] = argName;
                     ROptions.setValue(argName, value);
                     // any settings means result is invisible
-                    RContext.setVisible(false);
+                    RContext.getInstance().setVisible(false);
                 }
             }
             return RDataFactory.createList(data, RDataFactory.createStringVector(names, RDataFactory.COMPLETE_VECTOR));

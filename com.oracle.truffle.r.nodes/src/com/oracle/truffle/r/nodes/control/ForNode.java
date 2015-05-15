@@ -150,7 +150,7 @@ public final class ForNode extends AbstractLoopNode implements VisibilityControl
         private static RNode createIndexedLoad(String indexName, String rangeName) {
             RCallNode indexNode;
             try {
-                indexNode = (RCallNode) ((RLanguage) RContext.getEngine().parse(ACCESS_ARRAY_SOURCE).getDataAt(0)).getRep();
+                indexNode = (RCallNode) ((RLanguage) RContext.getInstance().getEngine().parse(ACCESS_ARRAY_SOURCE).getDataAt(0)).getRep();
             } catch (ParseException ex) {
                 throw RInternalError.shouldNotReachHere();
             }

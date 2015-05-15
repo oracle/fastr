@@ -36,7 +36,7 @@ public abstract class Primitive extends RBuiltinNode {
 
     @Specialization
     protected RFunction primitive(String name) {
-        RFunction function = RContext.getEngine().lookupBuiltin(name);
+        RFunction function = RContext.lookupBuiltin(name);
         if (function == null || function.getRBuiltin() != null && function.getRBuiltin().getKind() != RBuiltinKind.PRIMITIVE) {
             errorProfile.enter();
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.NO_SUCH_PRIMITIVE, name);

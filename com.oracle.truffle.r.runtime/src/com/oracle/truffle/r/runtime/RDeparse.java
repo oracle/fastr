@@ -393,7 +393,7 @@ public class RDeparse {
                 if (promise.isEvaluated()) {
                     deparse2buff(state, promise.getValue());
                 } else {
-                    Object v = RContext.getEngine().evalPromise((RPromise) obj, (SourceSection) null);
+                    Object v = RContext.getInstance().getEngine().evalPromise((RPromise) obj, (SourceSection) null);
                     deparse2buff(state, v);
                 }
                 break;
@@ -481,7 +481,7 @@ public class RDeparse {
                     RSymbol symbol = (RSymbol) car; // TODO could be a promise according to GnuR
                     String op = symbol.getName();
                     boolean userBinop = false;
-                    if (RContext.getEngine().isPrimitiveBuiltin(op) || (userBinop = isUserBinop(op))) {
+                    if (RContext.isPrimitiveBuiltin(op) || (userBinop = isUserBinop(op))) {
                         RPairList pl = cdr instanceof RPairList ? (RPairList) cdr : null;
                         PPInfo fop;
                         if (userBinop) {
@@ -862,7 +862,7 @@ public class RDeparse {
                     if (isUserBinop(op)) {
                         return true;
                     }
-                    if (RContext.getEngine().isPrimitiveBuiltin(op)) {
+                    if (RContext.isPrimitiveBuiltin(op)) {
                         PPInfo info = ppInfo(op);
                         if (info.prec >= PREC_DOLLAR || info.kind == PP.FUNCALL || info.kind == PP.PAREN || info.kind == PP.CURLY) {
                             return true;
@@ -915,7 +915,7 @@ public class RDeparse {
                 Object car = pl.car();
                 if (car instanceof RSymbol) {
                     String op = ((RSymbol) car).getName();
-                    if (RContext.getEngine().isPrimitiveBuiltin(op)) {
+                    if (RContext.isPrimitiveBuiltin(op)) {
                         PPInfo arginfo = ppInfo(op);
                         switch (arginfo.kind) {
                             case BINARY:

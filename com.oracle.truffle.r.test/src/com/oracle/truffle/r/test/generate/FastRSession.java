@@ -26,9 +26,7 @@ import java.util.concurrent.*;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.engine.*;
-import com.oracle.truffle.r.options.*;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.ffi.*;
 
 public final class FastRSession implements RSession {
 
@@ -95,6 +93,7 @@ public final class FastRSession implements RSession {
 
     private final ConsoleHandler consoleHandler;
     private static FastRSession singleton;
+    private final RContext context;
 
     private EvalThread evalThread;
 
@@ -107,12 +106,9 @@ public final class FastRSession implements RSession {
 
     private FastRSession() {
         consoleHandler = new ConsoleHandler();
-        Load_RFFIFactory.initialize();
-        FastROptions.initialize();
-        ROptions.initialize();
-        REnvVars.initialize();
+        RContextFactory.initialize();
         try {
-            REngine.initialize(new String[0], consoleHandler, false, false);
+            context = RContextFactory.createContext(new String[0], consoleHandler);
         } finally {
             System.out.print(consoleHandler.buffer.toString());
         }
@@ -149,7 +145,7 @@ public final class FastRSession implements RSession {
         return consoleHandler.buffer.toString();
     }
 
-    private static final class EvalThread extends Thread {
+    private final class EvalThread extends Thread {
 
         private volatile String expression;
         private volatile Throwable killedByException;
@@ -174,7 +170,7 @@ public final class FastRSession implements RSession {
                     break;
                 }
                 try {
-                    REngine.getInstance().parseAndEvalTest(expression, true);
+                    context.getEngine().parseAndEvalTest(expression, true);
                 } catch (RError e) {
                     // nothing to do
                 } catch (Throwable t) {

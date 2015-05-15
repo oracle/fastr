@@ -31,6 +31,6 @@ public abstract class Interactive extends RBuiltinNode {
     @Specialization
     protected byte interactive() {
         controlVisibility();
-        return RRuntime.asLogical(RContext.isInteractive());
+        return RRuntime.asLogical(RContext.getInstance().isInteractive());
     }
 }

@@ -36,8 +36,9 @@ import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.env.REnvironment.*;
 
 /**
- * Provides access to the runtime state ("context") without being tied statically to a particular
- * implementation of the runtime.
+ * Encapsulates the runtime state ("context") of an R session. All access to that state from the
+ * implementation <b>must</b>go through this class. There can be multiple instances
+ * (multiple-tenancy) active within a single process/Java-VM.
  *
  * The context provides two sub-interfaces {@link ConsoleHandler} and {@link Engine}that are
  * (typically) implemented elsewhere, and accessed through {@link #getConsoleHandler()} and
@@ -129,6 +130,14 @@ public final class RContext extends ExecutionContext {
     }
 
     public interface Engine {
+        MaterializedFrame getGlobalFrame();
+
+        REnvironment getGlobalEnv();
+
+        REnvironment.SearchPath getSearchPath();
+
+        void setSearchPath(REnvironment.SearchPath searchPath);
+
         /**
          * Elapsed time of runtime.
          *
@@ -151,17 +160,6 @@ public final class RContext extends ExecutionContext {
         }
 
         /**
-         * Is {@code name} a builtin function (but not a {@link RBuiltinKind#INTERNAL}?
-         */
-        boolean isPrimitiveBuiltin(String name);
-
-        /**
-         * Return the {@link RFunction} for the builtin {@code name}.
-         *
-         */
-        RFunction lookupBuiltin(String name);
-
-        /**
          * Parse an R expression and return an {@link RExpression} object representing the Truffle
          * ASTs for the components.
          */
@@ -173,13 +171,12 @@ public final class RContext extends ExecutionContext {
          *
          * @param sourceDesc a {@link Source} object that describes the input to be parsed
          * @param frame the frame in which to evaluate the input
-         * @param envForFrame the environment that {@code frame} is bound to.
          * @param printResult {@code true} iff the result of the evaluation should be printed to the
          *            console
          * @param allowIncompleteSource {@code true} if partial input is acceptable
          * @return the object returned by the evaluation or {@code null} if an error occurred.
          */
-        Object parseAndEval(Source sourceDesc, MaterializedFrame frame, REnvironment envForFrame, boolean printResult, boolean allowIncompleteSource);
+        Object parseAndEval(Source sourceDesc, MaterializedFrame frame, boolean printResult, boolean allowIncompleteSource);
 
         Object INCOMPLETE_SOURCE = new Object();
 
@@ -264,7 +261,11 @@ public final class RContext extends ExecutionContext {
 
     }
 
-    private final HashMap<Object, RFunction> cachedFunctions = new HashMap<>();
+    /**
+     * Builtin cache. Valid across all contexts.
+     */
+    private static final HashMap<Object, RFunction> cachedBuiltinFunctions = new HashMap<>();
+
     private final GlobalAssumptions globalAssumptions = new GlobalAssumptions();
 
     /**
@@ -279,65 +280,120 @@ public final class RContext extends ExecutionContext {
      */
     @CompilationFinal private boolean interactive;
 
-    /**
-     * A (hopefully) temporary workaround to ignore the setting of {@link #resultVisible} for
-     * benchmarks.
-     */
-    @CompilationFinal private boolean ignoreVisibility;
-
     @CompilationFinal private ConsoleHandler consoleHandler;
     @CompilationFinal private String[] commandArgs;
     @CompilationFinal private Engine engine;
-    @CompilationFinal private RASTHelper rASTHelper;
 
-    private static final RContext singleton = new RContext();
+    /**
+     * A (hopefully) temporary workaround to ignore the setting of {@link #resultVisible} for
+     * benchmarks. Set across all contexts.
+     */
+    @CompilationFinal private static boolean ignoreVisibility;
 
-    private RContext() {
+    /*
+     * Workarounds to finesse project circularities between runtime/nodes.
+     */
+    @CompilationFinal private static RASTHelper rASTHelper;
+    @CompilationFinal private static RBuiltinLookup rBuiltinLookup;
+
+    /**
+     * Initialize VM-wide static values.
+     */
+    public static void initialize(RASTHelper rASTHelperArg, RBuiltinLookup rBuiltinLookupArg, boolean ignoreVisibilityArg) {
+        rASTHelper = rASTHelperArg;
+        rBuiltinLookup = rBuiltinLookupArg;
+        ignoreVisibility = ignoreVisibilityArg;
+    }
+
+    /**
+     * The initial context (used to initial the base package) that can be used for context-free
+     * activities such as parsing when there is no stack.
+     */
+    @CompilationFinal private static RContext initialContext;
+
+    private RContext(String[] commandArgs, ConsoleHandler consoleHandler) {
+        this.commandArgs = commandArgs;
+        this.consoleHandler = consoleHandler;
+        this.interactive = consoleHandler.isInteractive();
+        if (initialContext == null) {
+            initialContext = this;
+        }
+    }
+
+    /**
+     * The {@link RContext} and the {@link Engine} are bi-directionally linked hence an explicit
+     * method to establish one half of the link.
+     *
+     * @param engine an {@link Engine} that manages parsing and evaluation, aka the <i>evaluator</i>
+     */
+    public void setEngine(Engine engine) {
+        assert this.engine == null;
+        this.engine = engine;
+        this.setVisualizer(engine.getRVisualizer());
+    }
+
+    /**
+     *
+     * @param commandArgs the command line arguments passed this R session
+     * @param consoleHandler a {@link ConsoleHandler} for output
+     */
+    public static RContext create(String[] commandArgs, ConsoleHandler consoleHandler) {
+        return new RContext(commandArgs, consoleHandler);
     }
 
     public GlobalAssumptions getAssumptions() {
         return globalAssumptions;
     }
 
+    /**
+     * Gets the current context with no frame to provide an efficient lookup. So we have to ask
+     * Truffle for the current frame, which may be null if we are startup, result printing in the
+     * shell, or shutdown. In that case {@code #noFrame(true)} must have been called. If you have a
+     * frame at hand, use {@link #getInstance(Frame)} instead.
+     */
     public static RContext getInstance() {
-        return singleton;
+        RContext result = getInstanceNoFrame();
+        return result;
     }
 
-    public static Engine getEngine() {
-        return singleton.engine;
+    @TruffleBoundary
+    private static RContext getInstanceNoFrame() {
+        Frame frame = Utils.getActualCurrentFrame();
+        if (frame == null) {
+            assert initialContext != null;
+            return initialContext;
+        } else {
+            return RArguments.getContext(frame);
+        }
     }
 
     /**
-     * Although there is only ever one instance of a {@code RContext}, the following state fields
-     * are runtime specific and must be set explicitly.
-     *
-     * @param ignoreVisibility TODO
+     * Fast path to the context through {@code frame}.
      */
-    public static RContext setRuntimeState(Engine engine, String[] commandArgs, ConsoleHandler consoleHandler, RASTHelper rLanguageHelper, boolean interactive, boolean ignoreVisibility) {
-        singleton.engine = engine;
-        singleton.commandArgs = commandArgs;
-        singleton.consoleHandler = consoleHandler;
-        singleton.rASTHelper = rLanguageHelper;
-        singleton.interactive = interactive;
-        singleton.ignoreVisibility = ignoreVisibility;
-        singleton.setVisualizer(engine.getRVisualizer());
-        return singleton;
+    public static RContext getInstance(Frame frame) {
+        RContext context = RArguments.getContext(frame);
+        assert context != null;
+        return context;
     }
 
-    public static boolean isVisible() {
-        return singleton.resultVisible;
+    public Engine getEngine() {
+        return engine;
     }
 
-    public static void setVisible(boolean v) {
-        singleton.resultVisible = v;
+    public boolean isVisible() {
+        return resultVisible;
     }
 
-    public static boolean isInteractive() {
-        return singleton.interactive;
+    public void setVisible(boolean v) {
+        resultVisible = v;
+    }
+
+    public boolean isInteractive() {
+        return interactive;
     }
 
     public static boolean isIgnoringVisibility() {
-        return singleton.ignoreVisibility;
+        return ignoreVisibility;
     }
 
     public ConsoleHandler getConsoleHandler() {
@@ -347,17 +403,35 @@ public final class RContext extends ExecutionContext {
         return consoleHandler;
     }
 
+    /**
+     * This is a static property of the implementation and not context-specific.
+     */
     public static RASTHelper getRASTHelper() {
-        return singleton.rASTHelper;
+        return rASTHelper;
     }
 
-    public RFunction putCachedFunction(Object key, RFunction function) {
-        cachedFunctions.put(key, function);
+    /**
+     * Is {@code name} a builtin function (but not a {@link RBuiltinKind#INTERNAL}?
+     */
+    public static boolean isPrimitiveBuiltin(String name) {
+        return rBuiltinLookup.isPrimitiveBuiltin(name);
+    }
+
+    /**
+     * Return the {@link RFunction} for the builtin {@code name}.
+     *
+     */
+    public static RFunction lookupBuiltin(String name) {
+        return rBuiltinLookup.lookup(name);
+    }
+
+    public static RFunction cacheBuiltin(Object key, RFunction function) {
+        cachedBuiltinFunctions.put(key, function);
         return function;
     }
 
-    public RFunction getCachedFunction(Object key) {
-        return cachedFunctions.get(key);
+    public static RFunction getCachedBuiltin(Object key) {
+        return cachedBuiltinFunctions.get(key);
     }
 
     public String[] getCommandArgs() {

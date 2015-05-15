@@ -90,20 +90,43 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
         }
     }
 
+    public static class SearchPath {
+        private final ArrayList<REnvironment> list = new ArrayList<>();
+
+        void add(REnvironment env) {
+            list.add(env);
+        }
+
+        void add(int index, REnvironment env) {
+            list.add(index, env);
+        }
+
+        int size() {
+            return list.size();
+        }
+
+        REnvironment get(int index) {
+            return list.get(index);
+        }
+
+        void remove(int index) {
+            list.remove(index);
+        }
+    }
+
     private static final REnvFrameAccess defaultFrameAccess = new REnvFrameAccessBindingsAdapter();
 
     private static final String UNNAMED = new String("");
     private static final String NAME_ATTR_KEY = "name";
 
     private static final Empty emptyEnv = new Empty();
-    private static Global globalEnv;
     private static Base baseEnv;
     private static REnvironment namespaceRegistry;
 
     /**
      * The environments returned by the R {@code search} function.
      */
-    private static ArrayList<REnvironment> searchPath;
+    // private static ArrayList<REnvironment> searchPath;
 
     protected REnvironment parent;
     private final String name;
@@ -124,9 +147,8 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
     /**
      * Value returned by {@code globalenv()}.
      */
-    public static Global globalEnv() {
-        assert globalEnv != null;
-        return globalEnv;
+    public static REnvironment globalEnv() {
+        return RContext.getInstance().getEngine().getGlobalEnv();
     }
 
     /**
@@ -144,7 +166,7 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
      * Check whether the given frame is indeed the frame stored in the global environment.
      */
     public static boolean isGlobalEnvFrame(Frame frame) {
-        return isFrameForEnv(frame, globalEnv);
+        return isFrameForEnv(frame, RContext.getInstance().getEngine().getGlobalEnv());
     }
 
     /**
@@ -164,8 +186,8 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
     }
 
     /**
-     * Invoked on startup to setup the {@link #baseEnv} and {@link #globalEnv} values,
-     * {@link #namespaceRegistry} and package search path.
+     * Invoked on startup to setup the {@link #baseEnv}, {@link #namespaceRegistry} and package
+     * search path.
      *
      * The base "package" is special, it has no "imports" and the parent of its associated namespace
      * is {@link #globalEnv}. Unlike other packages, there is no difference between the bindings in
@@ -174,31 +196,44 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
      * "namespace:base" refers to {@link NSBaseMaterializedFrame}, which delegates all its
      * operations to {@code baseFrame}, but it's "enclosingFrame" field in {@link RArguments}
      * differs, referring to {@code globalFrame}.
+     *
+     * TODO For multi-tenancy we have multiple instances of globalFrame, but in the shared packages
+     * mode we only have one instance of base. This is ok, except for the link from namespace:base
+     * to globalframe. What this means is that we have to clone to namespace:base frame/environment
+     * and set the globalframe link for each context.
      */
-    public static void baseInitialize(MaterializedFrame globalFrame, MaterializedFrame baseFrame) {
-
+    public static SearchPath baseInitialize(MaterializedFrame baseFrame, MaterializedFrame initialGlobalFrame) {
+        MaterializedFrame globalFrame = initialGlobalFrame;
         namespaceRegistry = RDataFactory.createNewEnv(UNNAMED);
         baseEnv = new Base(baseFrame, globalFrame);
 
-        globalEnv = new Global(baseEnv, globalFrame);
+        REnvironment globalEnv = new Global(baseEnv, globalFrame);
         baseEnv.namespaceEnv.parent = globalEnv;
 
-        initSearchList();
+        return initSearchList(globalEnv);
     }
 
-    private static void initSearchList() {
-        searchPath = new ArrayList<>();
+    public static void newContext(MaterializedFrame globalFrame) {
+        if (baseEnv != null) {
+            // TODO create the cloned environment
+        }
+    }
+
+    private static SearchPath initSearchList(REnvironment globalEnv) {
+        SearchPath searchPath = new SearchPath();
         REnvironment env = globalEnv;
         do {
             searchPath.add(env);
             env = env.parent;
         } while (env != emptyEnv);
+        return searchPath;
     }
 
     /**
      * Data for the {@code search} function.
      */
     public static String[] searchPath() {
+        SearchPath searchPath = RContext.getInstance().getEngine().getSearchPath();
         String[] result = new String[searchPath.size()];
         for (int i = 0; i < searchPath.size(); i++) {
             REnvironment env = searchPath.get(i);
@@ -214,6 +249,7 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
      * @return the environment or {@code null} if not found.
      */
     public static REnvironment lookupOnSearchPath(String name) {
+        SearchPath searchPath = RContext.getInstance().getEngine().getSearchPath();
         int i = lookupIndexOnSearchPath(name);
         return i <= 0 ? null : searchPath.get(i - 1);
     }
@@ -225,6 +261,7 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
      * @return the index (1-based) or {@code 0} if not found.
      */
     public static int lookupIndexOnSearchPath(String name) {
+        SearchPath searchPath = RContext.getInstance().getEngine().getSearchPath();
         for (int i = 0; i < searchPath.size(); i++) {
             REnvironment env = searchPath.get(i);
             String searchName = env.getSearchName();
@@ -263,6 +300,7 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
         assert pos >= 2;
         // N.B. pos is 1-based
         int bpos = pos - 1;
+        SearchPath searchPath = RContext.getInstance().getEngine().getSearchPath();
         if (bpos > searchPath.size() - 1) {
             bpos = searchPath.size() - 1;
         }
@@ -293,6 +331,7 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
      * @return the {@link REnvironment} that was detached.
      */
     public static REnvironment detach(int pos) throws DetachException {
+        SearchPath searchPath = RContext.getInstance().getEngine().getSearchPath();
         if (pos == searchPath.size()) {
             detachException(RError.Message.ENV_DETACH_BASE);
         }
@@ -539,6 +578,11 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
             MaterializedFrame parentFrame = getMaterializedFrame(env.parent);
             envFrame = new REnvMaterializedFrame((UsesREnvMap) env);
             RArguments.setEnclosingFrame(envFrame, parentFrame);
+            if (parentFrame == null) {
+                assert env.parent == emptyEnv;
+                parentFrame = globalEnv().getFrame();
+            }
+            RArguments.setContext(envFrame, RArguments.getContext(parentFrame));
         }
         return envFrame;
     }

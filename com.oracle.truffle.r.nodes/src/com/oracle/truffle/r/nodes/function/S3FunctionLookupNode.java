@@ -73,7 +73,7 @@ public abstract class S3FunctionLookupNode extends Node {
         }
         RFunction builtin = null;
         if (next.throwsError && result.successfulRead == null) {
-            builtin = RContext.getEngine().lookupBuiltin(genericName);
+            builtin = RContext.lookupBuiltin(genericName);
         }
 
         UseMethodFunctionLookupCachedNode cachedNode = new UseMethodFunctionLookupCachedNode(next.throwsError, next.nextMethod, genericName, type, group, builtin, unsuccessfulReadsCaller,
@@ -301,7 +301,7 @@ public abstract class S3FunctionLookupNode extends Node {
                 lookupResult = findTargetFunctionLookup(genericDefFrame, type, genericName, group, false, nextMethod);
                 if (lookupResult == null) {
                     if (throwsError) {
-                        RFunction function = RContext.getEngine().lookupBuiltin(genericName);
+                        RFunction function = RContext.lookupBuiltin(genericName);
                         if (function != null) {
                             return new Result(genericName, function, RNull.instance, genericName, false);
                         }

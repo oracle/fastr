@@ -49,9 +49,9 @@ public class EvalFunctions {
                 try {
                     Object result;
                     if (expr instanceof RExpression) {
-                        result = RContext.getEngine().eval((RExpression) expr, envir, enclos, depth);
+                        result = RContext.getInstance().getEngine().eval((RExpression) expr, envir, enclos, depth);
                     } else {
-                        result = RContext.getEngine().eval((RLanguage) expr, envir, enclos, depth);
+                        result = RContext.getInstance().getEngine().eval((RLanguage) expr, envir, enclos, depth);
                     }
                     return result;
                 } catch (PutException ex) {
@@ -97,10 +97,10 @@ public class EvalFunctions {
         protected RList withVisible(VirtualFrame frame, RPromise expr) {
             controlVisibility();
             Object result = doEvalBody(RArguments.getDepth(frame) + 1, RDataFactory.createLanguage(expr.getRep()), REnvironment.frameToEnvironment(frame.materialize()), REnvironment.emptyEnv());
-            Object[] data = new Object[]{result, RRuntime.asLogical(RContext.isVisible())};
+            Object[] data = new Object[]{result, RRuntime.asLogical(RContext.getInstance().isVisible())};
             // Visibility is changed by the evaluation (else this code would not work),
             // so we have to force it back on.
-            RContext.setVisible(true);
+            RContext.getInstance().setVisible(true);
             return RDataFactory.createList(data, LISTNAMES);
         }
     }
