@@ -139,8 +139,7 @@ public class REnvTruffleFrameAccess extends REnvFrameAccessBindingsAdapter {
 
     @Override
     protected Set<Object> getBindingsForLock() {
-        // TODO Auto-generated method stub
-        return null;
+        return frame.getFrameDescriptor().getIdentifiers();
     }
 
     private static String[] getStringIdentifiers(FrameDescriptor fd) {
