@@ -393,12 +393,12 @@ public final class RDataFactory {
         return traceDataCreated(new RFunction(name, target, builtin, enclosingFrame, false));
     }
 
-    public static REnvironment createNewEnv(REnvironment parent, int size) {
-        return traceDataCreated(new REnvironment.NewEnv(parent, size));
+    public static REnvironment createNewHashEnv(REnvironment parent, int size) {
+        return traceDataCreated(new REnvironment.NewHashEnv(parent, size));
     }
 
-    public static REnvironment createNewEnv(String name) {
-        return traceDataCreated(new REnvironment.NewEnv(name));
+    public static REnvironment createNewEnv(REnvironment parent, String name) {
+        return traceDataCreated(new REnvironment.NewEnv(parent, RRuntime.createNonFunctionFrame().materialize(), name));
     }
 
     public static RS4Object createS4Object() {

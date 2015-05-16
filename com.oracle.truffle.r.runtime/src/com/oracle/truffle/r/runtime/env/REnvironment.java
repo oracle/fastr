@@ -177,7 +177,7 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
      */
     public static void baseInitialize(MaterializedFrame globalFrame, MaterializedFrame baseFrame) {
 
-        namespaceRegistry = RDataFactory.createNewEnv(UNNAMED);
+        namespaceRegistry = RDataFactory.createNewEnv(null, null);
         baseEnv = new Base(baseFrame, globalFrame);
 
         globalEnv = new Global(baseEnv, globalFrame);
@@ -362,8 +362,9 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
      * Convert an {@link RList} to an {@link REnvironment}, which is needed in several builtins,
      * e.g. {@code substitute}.
      */
+    @TruffleBoundary
     public static REnvironment createFromList(RAttributeProfiles attrProfiles, RList list, REnvironment parent) {
-        REnvironment result = RDataFactory.createNewEnv(parent, 0);
+        REnvironment result = RDataFactory.createNewHashEnv(parent, 0);
         RStringVector names = list.getNames(attrProfiles);
         for (int i = 0; i < list.getLength(); i++) {
             try {
@@ -713,25 +714,39 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
      * An environment explicitly created with, typically, {@code new.env}. Such environments are
      * always {@link #UNNAMED} but can be given a {@value #NAME_ATTR_KEY}.
      */
-    public static final class NewEnv extends REnvironment implements UsesREnvMap {
+    public static final class NewEnv extends REnvironment {
 
         /**
          * Constructor for the {@code new.env} function. Should only be called from
          * {@link RDataFactory}.
          */
-        public NewEnv(REnvironment parent, int size) {
-            super(parent, UNNAMED, new REnvMapFrameAccess(size));
-        }
-
-        /**
-         * Constructor for environment without a parent, e.g., for use by {@link #attach}. Should
-         * only be called from {@link RDataFactory}.
-         */
-        public NewEnv(String name) {
-            this(null, 0);
-            if (name != UNNAMED) {
+        public NewEnv(REnvironment parent, MaterializedFrame frame, String name) {
+            super(parent, UNNAMED, frame);
+            if (parent != null) {
+                RArguments.setEnclosingFrame(frame, parent.getFrame());
+            }
+            if (name != null) {
                 setAttr(NAME_ATTR_KEY, name);
             }
+        }
+
+        public REnvMapFrameAccess getFrameAccess() {
+            return (REnvMapFrameAccess) frameAccess;
+        }
+    }
+
+    /**
+     * An environment explicitly created with, typically, {@code new.env}. Such environments are
+     * always {@link #UNNAMED} but can be given a {@value #NAME_ATTR_KEY}.
+     */
+    public static final class NewHashEnv extends REnvironment implements UsesREnvMap {
+
+        /**
+         * Constructor for the {@code new.env} function. Should only be called from
+         * {@link RDataFactory}.
+         */
+        public NewHashEnv(REnvironment parent, int size) {
+            super(parent, UNNAMED, new REnvMapFrameAccess(size));
         }
 
         public REnvMapFrameAccess getFrameAccess() {

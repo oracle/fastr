@@ -243,11 +243,21 @@ public class EnvFunctions {
 
     @RBuiltin(name = "new.env", kind = INTERNAL, parameterNames = {"hash", "parent", "size"})
     public abstract static class NewEnv extends RBuiltinNode {
+
         @Specialization
-        protected REnvironment newEnv(@SuppressWarnings("unused") byte hash, REnvironment parent, int size) {
+        protected REnvironment newEnv(@SuppressWarnings("unused") byte hash, REnvironment parent, @SuppressWarnings("unused") int size) {
             controlVisibility();
-            // Ignore hash == FALSE
-            return RDataFactory.createNewEnv(parent, size);
+            /*
+             * "hash" is ignored here: the only important distinction for us would be whether an
+             * environment is used for running code in it or as a data object. unfortunately, this
+             * cannot be derived from the "hash" parameter.
+             */
+            return createEnvironment(parent);
+        }
+
+        @TruffleBoundary
+        private static REnvironment createEnvironment(REnvironment parent) {
+            return RDataFactory.createNewEnv(parent, null);
         }
     }
 
