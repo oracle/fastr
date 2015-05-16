@@ -30,10 +30,12 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.instrument.*;
 import com.oracle.truffle.api.source.*;
+import com.oracle.truffle.r.runtime.conn.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.env.REnvironment.*;
+import com.oracle.truffle.r.runtime.rng.*;
 
 /**
  * Encapsulates the runtime state ("context") of an R session. All access to that state from the
@@ -44,15 +46,18 @@ import com.oracle.truffle.r.runtime.env.REnvironment.*;
  * (typically) implemented elsewhere, and accessed through {@link #getConsoleHandler()} and
  * {@link #getEngine()}, respectively.
  *
+ * Context-specific state for implementation classes is managed by this class (or the engine) and
+ * accessed through the {@code getXXXState} methods.
+ *
  */
 public final class RContext extends ExecutionContext {
 
     public static final int CONSOLE_WIDTH = 80;
 
     /**
-     * The interface to the R console, which may have different implementations for different
-     * environments, but only one in any given VM execution. Since I/O is involved, all methods are
-     * tagged with {@link TruffleBoundary}, as should the appropriate implementation methods.
+     * The interface to a source of input/output for the context, which may have different
+     * implementations for different contexts. Since I/O is involved, all methods are tagged with
+     * {@link TruffleBoundary} as a hint that so should the associated implementation methods.
      */
     public interface ConsoleHandler {
         /**
@@ -129,15 +134,29 @@ public final class RContext extends ExecutionContext {
         int getWidth();
     }
 
+    /**
+     * Denotes a class that has context-specific state, e.g. {@link REnvironment}. Such a class must
+     * implement the {@link #newContext} method.
+     */
+    public interface StateFactory {
+        /**
+         * Create the class-specific state for a new context.
+         *
+         * @param context the context
+         * @param objects additional arguments for custom initialization, typically empty
+         */
+        ContextState newContext(RContext context, Object... objects);
+    }
+
+    /**
+     * Tagging interface denoting a class that carries the context-specific state for a class that
+     * implements {@link StateFactory}. The class specific state must implement this interface.
+     */
+    public interface ContextState {
+
+    }
+
     public interface Engine {
-        MaterializedFrame getGlobalFrame();
-
-        REnvironment getGlobalEnv();
-
-        REnvironment.SearchPath getSearchPath();
-
-        void setSearchPath(REnvironment.SearchPath searchPath);
-
         /**
          * Elapsed time of runtime.
          *
@@ -262,6 +281,42 @@ public final class RContext extends ExecutionContext {
     }
 
     /**
+     * The set of classes for which the context manages context-specific state, and their state. We
+     * could do this more dynamically with a registration process, perhaps driven by an annotation
+     * processor, but the set is relatively small, so we just enumerate them here.
+     */
+    public static enum ClassStateKind {
+        ROptions(ROptions.class, false),
+        REnvironment(REnvironment.ClassStateFactory.class, true),
+        RErrorHandling(RErrorHandling.class, false),
+        RConnection(ConnectionSupport.class, false),
+        StdConnections(StdConnections.class, true),
+        RNG(RRNG.class, false);
+
+        private final Class<? extends StateFactory> klass;
+        private StateFactory factory;
+        private final boolean customCreate;
+
+        private ClassStateKind(Class<? extends StateFactory> klass, boolean customCreate) {
+            this.klass = klass;
+            this.customCreate = customCreate;
+        }
+
+        private static final ClassStateKind[] VALUES = values();
+        // Avoid reflection at runtime (AOT VM).
+        static {
+            for (ClassStateKind css : VALUES) {
+                try {
+                    css.factory = css.klass.newInstance();
+                } catch (IllegalAccessException | InstantiationException ex) {
+                    throw Utils.fail("failed to instantiate ClassStateFactory: " + css.klass.getSimpleName());
+                }
+            }
+        }
+
+    }
+
+    /**
      * Builtin cache. Valid across all contexts.
      */
     private static final HashMap<Object, RFunction> cachedBuiltinFunctions = new HashMap<>();
@@ -283,6 +338,23 @@ public final class RContext extends ExecutionContext {
     @CompilationFinal private ConsoleHandler consoleHandler;
     @CompilationFinal private String[] commandArgs;
     @CompilationFinal private Engine engine;
+    /**
+     * The array is indexed by {@link ClassStateKind#ordinal()}.
+     */
+    @CompilationFinal private ContextState[] classState;
+
+    /**
+     * Typically there is a 1-1 relationship between an {@link RContext} and the thread that is
+     * performing the evaluation, so we can store the {@link RContext} in a {@link ThreadLocal}. If
+     * an evaluation wishes to add more threads, it must call the {@link #addThread} method.
+     */
+    @CompilationFinal private static final ThreadLocal<RContext> threadLocalContext = new ThreadLocal<>();
+
+    /**
+     * Primarily for debugging.
+     */
+    private static int nextId;
+    @CompilationFinal private int id;
 
     /**
      * A (hopefully) temporary workaround to ignore the setting of {@link #resultVisible} for
@@ -293,31 +365,44 @@ public final class RContext extends ExecutionContext {
     /*
      * Workarounds to finesse project circularities between runtime/nodes.
      */
-    @CompilationFinal private static RASTHelper rASTHelper;
-    @CompilationFinal private static RBuiltinLookup rBuiltinLookup;
+    @CompilationFinal private static RRuntimeASTAccess runtimeASTAccess;
+    @CompilationFinal private static RBuiltinLookup builtinLookup;
 
     /**
      * Initialize VM-wide static values.
      */
-    public static void initialize(RASTHelper rASTHelperArg, RBuiltinLookup rBuiltinLookupArg, boolean ignoreVisibilityArg) {
-        rASTHelper = rASTHelperArg;
-        rBuiltinLookup = rBuiltinLookupArg;
+    public static void initialize(RRuntimeASTAccess rASTHelperArg, RBuiltinLookup rBuiltinLookupArg, boolean ignoreVisibilityArg) {
+        runtimeASTAccess = rASTHelperArg;
+        builtinLookup = rBuiltinLookupArg;
         ignoreVisibility = ignoreVisibilityArg;
     }
 
     /**
-     * The initial context (used to initial the base package) that can be used for context-free
-     * activities such as parsing when there is no stack.
+     * Associates this {@link RContext} with the current thread.
      */
-    @CompilationFinal private static RContext initialContext;
+    public void addThread() {
+        threadLocalContext.set(this);
+    }
 
     private RContext(String[] commandArgs, ConsoleHandler consoleHandler) {
+        this.id = nextId++;
+        addThread();
         this.commandArgs = commandArgs;
         this.consoleHandler = consoleHandler;
         this.interactive = consoleHandler.isInteractive();
-        if (initialContext == null) {
-            initialContext = this;
+        classState = new ContextState[ClassStateKind.VALUES.length];
+        for (ClassStateKind css : ClassStateKind.VALUES) {
+            if (!css.customCreate) {
+                classState[css.ordinal()] = css.factory.newContext(this);
+            }
         }
+        installCustomClassState(ClassStateKind.StdConnections, new StdConnections().newContext(this, consoleHandler));
+    }
+
+    public void installCustomClassState(ClassStateKind kind, ContextState state) {
+        assert kind.customCreate;
+        assert classState[kind.ordinal()] == null;
+        classState[kind.ordinal()] = state;
     }
 
     /**
@@ -345,38 +430,16 @@ public final class RContext extends ExecutionContext {
         return globalAssumptions;
     }
 
-    /**
-     * Gets the current context with no frame to provide an efficient lookup. So we have to ask
-     * Truffle for the current frame, which may be null if we are startup, result printing in the
-     * shell, or shutdown. In that case {@code #noFrame(true)} must have been called. If you have a
-     * frame at hand, use {@link #getInstance(Frame)} instead.
-     */
+    @TruffleBoundary
     public static RContext getInstance() {
-        RContext result = getInstanceNoFrame();
+        RContext result = threadLocalContext.get();
         return result;
     }
 
-    @TruffleBoundary
-    private static RContext getInstanceNoFrame() {
-        Frame frame = Utils.getActualCurrentFrame();
-        if (frame == null) {
-            assert initialContext != null;
-            return initialContext;
-        } else {
-            return RArguments.getContext(frame);
-        }
-    }
-
     /**
-     * Fast path to the context through {@code frame}.
+     * Access to the engine, when an {@link RContext} object is available.
      */
-    public static RContext getInstance(Frame frame) {
-        RContext context = RArguments.getContext(frame);
-        assert context != null;
-        return context;
-    }
-
-    public Engine getEngine() {
+    public Engine getContextEngine() {
         return engine;
     }
 
@@ -406,15 +469,15 @@ public final class RContext extends ExecutionContext {
     /**
      * This is a static property of the implementation and not context-specific.
      */
-    public static RASTHelper getRASTHelper() {
-        return rASTHelper;
+    public static RRuntimeASTAccess getRRuntimeASTAccess() {
+        return runtimeASTAccess;
     }
 
     /**
      * Is {@code name} a builtin function (but not a {@link RBuiltinKind#INTERNAL}?
      */
     public static boolean isPrimitiveBuiltin(String name) {
-        return rBuiltinLookup.isPrimitiveBuiltin(name);
+        return builtinLookup.isPrimitiveBuiltin(name);
     }
 
     /**
@@ -422,7 +485,7 @@ public final class RContext extends ExecutionContext {
      *
      */
     public static RFunction lookupBuiltin(String name) {
-        return rBuiltinLookup.lookup(name);
+        return builtinLookup.lookup(name);
     }
 
     public static RFunction cacheBuiltin(Object key, RFunction function) {
@@ -444,6 +507,36 @@ public final class RContext extends ExecutionContext {
     @Override
     public String getLanguageShortName() {
         return "R";
+    }
+
+    @Override
+    public String toString() {
+        return "context: " + id;
+    }
+
+    /*
+     * static functions necessary in code where the context is only implicit in the thread(s)
+     * running an evaluation
+     */
+
+    public static Engine getEngine() {
+        return RContext.getInstance().engine;
+    }
+
+    public static ContextState getClassState(ClassStateKind kind) {
+        return getInstance().classState[kind.ordinal()];
+    }
+
+    public static REnvironment.ContextState getREnvironmentState() {
+        return (REnvironment.ContextState) getInstance().classState[ClassStateKind.REnvironment.ordinal()];
+    }
+
+    public static ROptions.ContextState getROptionsState() {
+        return (ROptions.ContextState) getInstance().classState[ClassStateKind.ROptions.ordinal()];
+    }
+
+    public static ConnectionSupport.ContextState getRConnectionState() {
+        return (ConnectionSupport.ContextState) getInstance().classState[ClassStateKind.RConnection.ordinal()];
     }
 
 }

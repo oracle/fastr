@@ -139,7 +139,7 @@ public abstract class RBuiltinPackage {
         ArrayList<Source> sources = rSources.get(getName());
         if (sources != null) {
             for (Source source : sources) {
-                RContext.getInstance().getEngine().parseAndEval(source, frame, false, false);
+                RContext.getEngine().parseAndEval(source, frame, false, false);
             }
         }
     }

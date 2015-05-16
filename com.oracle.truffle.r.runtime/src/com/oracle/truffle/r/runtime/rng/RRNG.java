@@ -14,6 +14,7 @@ package com.oracle.truffle.r.runtime.rng;
 import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.RContext.ContextState;
 import com.oracle.truffle.r.runtime.RError.RErrorException;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
@@ -34,7 +35,7 @@ import com.oracle.truffle.r.runtime.rng.user.*;
  * we do create/update it when the seed/kind is changed, primarily as a debugging aid. N.B. GnuR
  * updates it on <i>every</i> random number generation!
  */
-public class RRNG {
+public class RRNG implements RContext.StateFactory {
     /**
      * The standard kinds provided by GnuR, where the ordinal value corresponds to the argument to
      * {@link RRNG#doSetSeed}.
@@ -145,35 +146,66 @@ public class RRNG {
         }
     }
 
-    /**
-     * The current {@link GeneratorPrivate}.
-     */
-    private static Kind currentKind;
-    private static NormKind currentNormKind;
+    private static final class ContextStateImpl implements RContext.ContextState {
+        private Kind currentKind;
+        private NormKind currentNormKind;
 
-    public static void initialize() {
+        private ContextStateImpl(Kind currentKind, NormKind currentNormKind) {
+            this.currentKind = currentKind;
+            this.currentNormKind = currentNormKind;
+        }
+
+        void updateCurrentKind(Kind kind) {
+            currentKind = kind;
+        }
+
+        @SuppressWarnings("unused")
+        void updateCurrentNormKind(NormKind normKind) {
+            currentNormKind = normKind;
+        }
+    }
+
+    public ContextState newContext(RContext context, Object... objects) {
         int seed = timeToSeed();
-        currentNormKind = DEFAULT_NORM_KIND;
         try {
             initGenerator(DEFAULT_KIND.setGenerator(), seed);
         } catch (RNGException ex) {
             Utils.fail("failed to initialize default random number generator");
         }
+        return new ContextStateImpl(DEFAULT_KIND, DEFAULT_NORM_KIND);
+    }
+
+    private static ContextStateImpl getContextState() {
+        return (ContextStateImpl) RContext.getClassState(RContext.ClassStateKind.RNG);
+    }
+
+    /**
+     * The current {@link GeneratorPrivate}.
+     */
+    public static void initialize() {
     }
 
     public static int currentKindAsInt() {
-        return currentKind.ordinal();
+        return getContextState().currentKind.ordinal();
     }
 
     public static int currentNormKindAsInt() {
-        return currentNormKind.ordinal();
+        return getContextState().currentNormKind.ordinal();
+    }
+
+    private static Kind currentKind() {
+        return getContextState().currentKind;
+    }
+
+    private static NormKind currentNormKind() {
+        return getContextState().currentNormKind;
     }
 
     /**
      * Ask the current generator for a random double. (cf. {@code unif_rand} in RNG.c.
      */
     public static double unifRand() {
-        return currentKind.generator.genrandDouble();
+        return currentKind().generator.genrandDouble();
     }
 
     /**
@@ -206,6 +238,7 @@ public class RRNG {
     private static void changeKindsAndInitGenerator(int newSeed, int kindAsInt, int normKindAsInt) throws RNGException {
         Kind kind = changeKinds(kindAsInt, normKindAsInt);
         initGenerator(kind, newSeed);
+        getContextState().updateCurrentKind(kind);
     }
 
     private static Kind changeKinds(int kindAsInt, int normKindAsInt) throws RNGException {
@@ -216,19 +249,19 @@ public class RRNG {
             if (kindAsInt == RESET_KIND) {
                 kind = DEFAULT_KIND;
             } else {
-                kind = setKind(kindAsInt);
+                kind = intToKind(kindAsInt);
                 if (!kind.available) {
                     throw RNGException.raise(RError.Message.RNG_BAD_KIND, true, kind);
                 }
             }
         } else {
-            kind = currentKind;
+            kind = currentKind();
         }
         if (normKindAsInt != NO_KIND_CHANGE) {
             if (normKindAsInt == RESET_KIND) {
                 normKind = DEFAULT_NORM_KIND;
             } else {
-                normKind = setNormKind(normKindAsInt);
+                normKind = intToNormKind(normKindAsInt);
             }
         }
         return kind;
@@ -246,7 +279,7 @@ public class RRNG {
         return x;
     }
 
-    private static Kind setKind(int kindAsInt) throws RNGException {
+    private static Kind intToKind(int kindAsInt) throws RNGException {
         if (kindAsInt < 0 || kindAsInt >= Kind.VALUES.length) {
             throw RNGException.raise(RError.Message.RNG_NOT_IMPL_KIND, true, kindAsInt);
         }
@@ -254,7 +287,7 @@ public class RRNG {
 
     }
 
-    private static NormKind setNormKind(int normKindAsInt) {
+    private static NormKind intToNormKind(int normKindAsInt) {
         return NormKind.VALUES[normKindAsInt];
     }
 
@@ -268,27 +301,25 @@ public class RRNG {
             kind.setGenerator();
         }
         kind.generator.init(seed);
-        currentKind = kind;
     }
 
     @SuppressWarnings("unused")
     private static Object getDotRandomSeed(VirtualFrame frame) {
         // TODO try to find .Random.seed in R_GlobalEnv
-        return null;
+        throw RInternalError.unimplemented("getDotRandomSeed");
     }
 
     private static void updateDotRandomSeed(@SuppressWarnings("unused") VirtualFrame frame) {
-        int[] seeds = currentKind.generator.getSeeds();
+        int[] seeds = currentKind().generator.getSeeds();
         if (seeds == null) {
             seeds = NO_SEEDS;
         }
         int[] data = new int[seeds.length + 1];
-        data[0] = currentKind.ordinal() + 100 * currentNormKind.ordinal();
+        data[0] = currentKind().ordinal() + 100 * currentNormKind().ordinal();
         for (int i = 0; i < seeds.length; i++) {
             data[i + 1] = seeds[i];
         }
         RIntVector vector = RDataFactory.createIntVector(data, RDataFactory.COMPLETE_VECTOR);
-        // TODO set this properly using "frame"
         REnvironment.globalEnv().safePut(RANDOM_SEED, vector);
     }
 

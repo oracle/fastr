@@ -43,8 +43,6 @@ import com.oracle.truffle.r.runtime.env.frame.*;
  * The frame layout, depicted, is as follows:
  * <pre>
  *                            +--------------------+
- * INDEX_CONTEXT           -> | RContext           |
-  *                           +--------------------+
  * INDEX_ENVIRONMENT       -> | REnvironment       |
  *                            +--------------------+
  * INDEX_FUNCTION          -> | RFunction          |
@@ -80,9 +78,6 @@ import com.oracle.truffle.r.runtime.env.frame.*;
  * The INDEX_ENVIRONMENT slot is typically not set for frames associated with function evaluations,
  * because such environment instances are only created on demand. It is however, set for frames
  * associated with packages and the global environment.
- *
- * The INDEX_CONTEXT slot supports multiple-tenancy and is the mechanism by which the evaluation
- * accesses context-specific state.
  */
 // @formatter:on
 public final class RArguments {
@@ -111,17 +106,16 @@ public final class RArguments {
         }
     }
 
-    public static final int INDEX_CONTEXT = 0;
-    public static final int INDEX_ENVIRONMENT = 1;
-    public static final int INDEX_FUNCTION = 2;
-    public static final int INDEX_CALL_SRC = 3;
-    public static final int INDEX_CALLER_FRAME = 4;
-    public static final int INDEX_ENCLOSING_FRAME = 5;
-    public static final int INDEX_S3_ARGS = 6;
-    public static final int INDEX_DEPTH = 7;
-    public static final int INDEX_IS_IRREGULAR = 8;
-    public static final int INDEX_SIGNATURE = 9;
-    public static final int INDEX_ARGUMENTS = 10;
+    public static final int INDEX_ENVIRONMENT = 0;
+    public static final int INDEX_FUNCTION = 1;
+    public static final int INDEX_CALL_SRC = 2;
+    public static final int INDEX_CALLER_FRAME = 3;
+    public static final int INDEX_ENCLOSING_FRAME = 4;
+    public static final int INDEX_S3_ARGS = 5;
+    public static final int INDEX_DEPTH = 6;
+    public static final int INDEX_IS_IRREGULAR = 7;
+    public static final int INDEX_SIGNATURE = 8;
+    public static final int INDEX_ARGUMENTS = 9;
 
     /**
      * At the least, the array contains the function, enclosing frame, and numbers of arguments and
@@ -171,21 +165,19 @@ public final class RArguments {
         return ((HasSignature) function.getRootNode()).getSignature();
     }
 
-    public static Object[] create(RContext context, RFunction functionObj, SourceSection callSrc, MaterializedFrame callerFrame, int depth, Object[] evaluatedArgs, ArgumentsSignature signature) {
+    public static Object[] create(RFunction functionObj, SourceSection callSrc, MaterializedFrame callerFrame, int depth, Object[] evaluatedArgs, ArgumentsSignature signature) {
         MaterializedFrame enclosingFrame = functionObj.getEnclosingFrameWithAssumption();
-        assert context != null;
-        return createInternal(context, functionObj, callSrc, callerFrame, depth, evaluatedArgs, signature, enclosingFrame);
+
+        return createInternal(functionObj, callSrc, callerFrame, depth, evaluatedArgs, signature, enclosingFrame);
     }
 
-    public static Object[] createInternal(RContext context, RFunction functionObj, SourceSection callSrc, MaterializedFrame callerFrame, int depth, Object[] evaluatedArgs,
-                    ArgumentsSignature signature, MaterializedFrame enclosingFrame) {
+    public static Object[] createInternal(RFunction functionObj, SourceSection callSrc, MaterializedFrame callerFrame, int depth, Object[] evaluatedArgs, ArgumentsSignature signature,
+                    MaterializedFrame enclosingFrame) {
         assert evaluatedArgs != null && signature != null : evaluatedArgs + " " + signature;
         assert evaluatedArgs.length == signature.getLength() : Arrays.toString(evaluatedArgs) + " " + signature;
         assert signature == getSignature(functionObj) : signature + " vs. " + getSignature(functionObj);
 
         Object[] a = new Object[MINIMAL_ARRAY_LENGTH + evaluatedArgs.length];
-        a[INDEX_CONTEXT] = context;
-        assert a[INDEX_CONTEXT] != null;
         a[INDEX_ENVIRONMENT] = null;
         a[INDEX_FUNCTION] = functionObj;
         a[INDEX_CALL_SRC] = callSrc;
@@ -207,11 +199,9 @@ public final class RArguments {
     /**
      * A method for creating an uninitialized array, used only in very special situations as it
      * temporarily violates {@link #envFunctionInvariant}.
-     *
      */
-    public static Object[] createUnitialized(RContext context) {
+    public static Object[] createUnitialized() {
         Object[] a = new Object[MINIMAL_ARRAY_LENGTH];
-        a[INDEX_CONTEXT] = context;
         a[INDEX_DEPTH] = 0;
         a[INDEX_SIGNATURE] = ArgumentsSignature.empty(0);
         a[INDEX_IS_IRREGULAR] = false;
@@ -237,10 +227,6 @@ public final class RArguments {
 
     public static RFunction getFunction(Frame frame) {
         return (RFunction) getRArgumentsWithEvalCheck(frame)[INDEX_FUNCTION];
-    }
-
-    public static RContext getContext(Frame frame) {
-        return (RContext) getRArgumentsWithEvalCheck(frame)[INDEX_CONTEXT];
     }
 
     public static SourceSection getCallSourceSection(Frame frame) {
@@ -337,10 +323,6 @@ public final class RArguments {
 
     public static void setDepth(Frame frame, int depth) {
         getRArgumentsWithEvalCheck(frame)[INDEX_DEPTH] = depth;
-    }
-
-    public static void setContext(Frame frame, RContext context) {
-        getRArgumentsWithEvalCheck(frame)[INDEX_CONTEXT] = context;
     }
 
     public static void setIsIrregular(Frame frame, boolean isIrregularFrame) {

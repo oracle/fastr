@@ -63,7 +63,7 @@ public class TestUtilities {
         }
 
         public Object call(Object... args) {
-            Object[] rArguments = RArguments.createUnitialized(null);
+            Object[] rArguments = RArguments.createUnitialized();
             rArguments = Arrays.copyOf(rArguments, RArguments.INDEX_ARGUMENTS + 1);
             rArguments[RArguments.INDEX_ARGUMENTS] = args;
             return target.call(rArguments);

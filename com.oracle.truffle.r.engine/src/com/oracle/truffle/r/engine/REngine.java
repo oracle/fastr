@@ -91,11 +91,6 @@ public final class REngine implements RContext.Engine {
     @CompilationFinal private MaterializedFrame globalFrame;
 
     /**
-     * The environment search path for this engine.
-     */
-    @CompilationFinal REnvironment.SearchPath searchPath;
-
-    /**
      * {@code true} iff the base package is loaded.
      */
     private static boolean loadBase;
@@ -110,24 +105,11 @@ public final class REngine implements RContext.Engine {
         this.crashOnFatalError = false;
     }
 
-    public MaterializedFrame getGlobalFrame() {
-        return globalFrame;
-    }
-
-    public REnvironment.SearchPath getSearchPath() {
-        return searchPath;
-    }
-
-    public void setSearchPath(REnvironment.SearchPath searchPath) {
-        this.searchPath = searchPath;
-    }
-
-    public REnvironment getGlobalEnv() {
-        return RArguments.getEnvironment(globalFrame);
-    }
-
     private REngine(RContext context) {
         this.context = context;
+        this.startTime = System.nanoTime();
+        this.childTimes = new long[]{0, 0};
+        this.globalFrame = RRuntime.createNonFunctionFrame().materialize();
     }
 
     /**
@@ -138,10 +120,8 @@ public final class REngine implements RContext.Engine {
 
     static REngine create(RContext context) {
         REngine engine = new REngine(context);
-        engine.startTime = System.nanoTime();
-        engine.childTimes = new long[]{0, 0};
-        engine.globalFrame = RRuntime.createNonFunctionFrame(context).materialize();
-        REnvironment.newContext(engine.globalFrame);
+        context.setEngine(engine);
+        context.installCustomClassState(RContext.ClassStateKind.REnvironment, new REnvironment.ClassStateFactory().newContext(context, engine.globalFrame));
         return engine;
     }
 
@@ -152,9 +132,8 @@ public final class REngine implements RContext.Engine {
             Locale.setDefault(Locale.ROOT);
             RAccuracyInfo.initialize();
             suppressWarnings = true;
-            StdConnections.initialize(context.getConsoleHandler());
-            MaterializedFrame baseFrame = RRuntime.createNonFunctionFrame(context).materialize();
-            searchPath = REnvironment.baseInitialize(baseFrame, globalFrame);
+            MaterializedFrame baseFrame = RRuntime.createNonFunctionFrame().materialize();
+            REnvironment.baseInitialize(baseFrame, globalFrame);
             loadBase = FastROptions.LoadBase.getValue();
             RBuiltinPackages.loadBase(baseFrame, loadBase);
             RVersionInfo.initialize();
@@ -188,6 +167,7 @@ public final class REngine implements RContext.Engine {
                 checkAndRunStartupFunction(".First.sys");
                 RBuiltinPackages.loadDefaultPackageOverrides();
             }
+            sharedInitialized = true;
         }
     }
 
@@ -242,14 +222,15 @@ public final class REngine implements RContext.Engine {
         }
     }
 
-    // TODO refactor with per-test engine
+    /**
+     * TODO retire this method by having each test run in its own context.
+     */
     @Override
     public Object parseAndEvalTest(String rscript, boolean printResult) throws RecognitionException {
         // We first remove all the definitions from the previous test
         for (FrameSlot slot : globalFrame.getFrameDescriptor().getSlots()) {
             FrameSlotChangeMonitor.setObjectAndInvalidate(globalFrame, slot, null, true, null);
         }
-        RRNG.initialize();
         try {
             return parseAndEvalImpl(Source.fromText(rscript, "<test_input>"), globalFrame, printResult, false);
         } catch (RInternalError e) {
@@ -513,10 +494,10 @@ public final class REngine implements RContext.Engine {
         if (loadBase) {
             Object printMethod = REnvironment.globalEnv().findFunction("print");
             RFunction function = (RFunction) (printMethod instanceof RPromise ? PromiseHelperNode.evaluateSlowPath(null, (RPromise) printMethod) : printMethod);
-            function.getTarget().call(RArguments.create(context, function, null, REnvironment.baseEnv().getFrame(), 1, new Object[]{resultValue, RMissing.instance}, PRINT_SIGNATURE));
+            function.getTarget().call(RArguments.create(function, null, REnvironment.baseEnv().getFrame(), 1, new Object[]{resultValue, RMissing.instance}, PRINT_SIGNATURE));
         } else {
             // we only have the .Internal print.default method available
-            getPrintInternal().getTarget().call(RArguments.create(context, printInternal, null, REnvironment.baseEnv().getFrame(), 1, new Object[]{resultValue}, PRINT_INTERNAL_SIGNATURE));
+            getPrintInternal().getTarget().call(RArguments.create(printInternal, null, REnvironment.baseEnv().getFrame(), 1, new Object[]{resultValue}, PRINT_INTERNAL_SIGNATURE));
         }
     }
 
@@ -572,11 +553,13 @@ public final class REngine implements RContext.Engine {
     private final class RVisualizer extends DefaultVisualizer {
         private TextConnections.InternalStringWriteConnection stringConn;
 
-        private RVisualizer() {
-            try {
-                stringConn = new TextConnections.InternalStringWriteConnection();
-            } catch (IOException ex) {
-                throw RInternalError.shouldNotReachHere();
+        private void checkCreated() {
+            if (stringConn == null) {
+                try {
+                    stringConn = new TextConnections.InternalStringWriteConnection();
+                } catch (IOException ex) {
+                    throw RInternalError.shouldNotReachHere();
+                }
             }
         }
 
@@ -587,6 +570,7 @@ public final class REngine implements RContext.Engine {
          */
         @Override
         public String displayValue(ExecutionContext executionContext, Object value, int trim) {
+            checkCreated();
             try {
                 StdConnections.pushDivertOut(stringConn, false);
                 printResult(value);

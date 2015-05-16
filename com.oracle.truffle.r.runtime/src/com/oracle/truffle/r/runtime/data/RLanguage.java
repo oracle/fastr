@@ -76,7 +76,7 @@ public class RLanguage extends RLanguageRep implements RAbstractContainer, RAttr
     @Override
     public int getLength() {
         if (length < 0) {
-            length = RContext.getRASTHelper().getLength(this);
+            length = RContext.getRRuntimeASTAccess().getLength(this);
         }
         return length;
     }
@@ -114,7 +114,7 @@ public class RLanguage extends RLanguageRep implements RAbstractContainer, RAttr
     }
 
     public Object getDataAtAsObject(int index) {
-        return RContext.getRASTHelper().getDataAtAsObject(this, index);
+        return RContext.getRRuntimeASTAccess().getDataAtAsObject(this, index);
     }
 
     @Override

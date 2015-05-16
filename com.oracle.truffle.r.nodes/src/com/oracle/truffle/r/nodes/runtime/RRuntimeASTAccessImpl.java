@@ -44,7 +44,7 @@ import com.oracle.truffle.r.runtime.env.REnvironment.*;
 import com.oracle.truffle.r.runtime.gnur.*;
 
 /**
- * Implementation of {@link RASTHelper}.
+ * Implementation of {@link RRuntimeASTAccess}.
  *
  * A note on the "list" aspects of {@link RLanguage}, specified by {@link RAbstractContainer}. In
  * GnuR a language element (LANGSXP) is represented as a pairlist, so the length of the language
@@ -76,7 +76,7 @@ import com.oracle.truffle.r.runtime.gnur.*;
  * flattened tree. Rather indexing the third element would produce another language element of
  * length 2.
  */
-public class RASTHelperImpl implements RASTHelper {
+public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
 
     @TruffleBoundary
     @Override
@@ -268,7 +268,7 @@ public class RASTHelperImpl implements RASTHelper {
 
     private static RCallNode getCallNode(Source source) {
         try {
-            return (RCallNode) ((RLanguage) RContext.getInstance().getEngine().parse(source).getDataAt(0)).getRep();
+            return (RCallNode) ((RLanguage) RContext.getEngine().parse(source).getDataAt(0)).getRep();
         } catch (ParseException ex) {
             // most unexpected
             throw RInternalError.shouldNotReachHere();
@@ -290,7 +290,7 @@ public class RASTHelperImpl implements RASTHelper {
          */
         boolean gd = DebugHandling.globalDisable(true);
         try {
-            return RContext.getInstance().getEngine().eval(RDataFactory.createLanguage(call), REnvironment.globalEnv(), depth + 1);
+            return RContext.getEngine().eval(RDataFactory.createLanguage(call), REnvironment.globalEnv(), depth + 1);
         } catch (ReturnException ex) {
             // cannot throw return exceptions further up.
             return ex.getResult();

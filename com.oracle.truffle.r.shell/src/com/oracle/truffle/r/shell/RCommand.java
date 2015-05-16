@@ -149,7 +149,7 @@ public class RCommand {
         // We should only reach here if interactive == false
         // Need to call quit explicitly
         Source quitSource = Source.fromText("quit(\"default\", 0L, TRUE)", "<quit_file>");
-        RContext.getInstance().getEngine().parseAndEval(quitSource, globalFrame, false, false);
+        RContext.getEngine().parseAndEval(quitSource, globalFrame, false, false);
         // never returns
         assert false;
     }
@@ -169,9 +169,8 @@ public class RCommand {
     private static MaterializedFrame readEvalPrint(ConsoleHandler consoleHandler, String[] commandArgs, String filePath) {
         String inputDescription = filePath == null ? "<shell_input>" : filePath;
         Source source = Source.fromNamedAppendableText(inputDescription);
-        RContext context = RContextFactory.createContext(commandArgs, consoleHandler);
-        RContext.Engine engine = context.getEngine();
-        MaterializedFrame globalFrame = engine.getGlobalFrame();
+        RContextFactory.createContext(commandArgs, consoleHandler);
+        MaterializedFrame globalFrame = RContext.getREnvironmentState().getGlobalFrame();
         try {
             // console.println("initialize time: " + (System.currentTimeMillis() - start));
             for (;;) {
@@ -194,7 +193,7 @@ public class RCommand {
                 try {
                     String continuePrompt = getContinuePrompt();
                     Source subSource = Source.subSource(source, startLength);
-                    while (engine.parseAndEval(subSource, globalFrame, true, true) == Engine.INCOMPLETE_SOURCE) {
+                    while (RContext.getEngine().parseAndEval(subSource, globalFrame, true, true) == Engine.INCOMPLETE_SOURCE) {
                         consoleHandler.setPrompt(doEcho ? continuePrompt : null);
                         String additionalInput = consoleHandler.readLine();
                         if (additionalInput == null) {
@@ -219,12 +218,12 @@ public class RCommand {
         if (SLAVE.getValue()) {
             return false;
         }
-        RLogicalVector echo = (RLogicalVector) RRuntime.asAbstractVector(ROptions.getValue("echo"));
+        RLogicalVector echo = (RLogicalVector) RRuntime.asAbstractVector(RContext.getROptionsState().getValue("echo"));
         return RRuntime.fromLogical(echo.getDataAt(0));
     }
 
     private static String getContinuePrompt() {
-        RStringVector continuePrompt = (RStringVector) RRuntime.asAbstractVector(ROptions.getValue("continue"));
+        RStringVector continuePrompt = (RStringVector) RRuntime.asAbstractVector(RContext.getROptionsState().getValue("continue"));
         return continuePrompt.getDataAt(0);
     }
 

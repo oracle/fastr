@@ -49,18 +49,14 @@ public class RContextFactory {
         if (!initialized) {
             FastROptions.initialize();
             REnvVars.initialize();
-            RContext.initialize(new RASTHelperImpl(), RBuiltinPackages.getInstance(), FastROptions.IgnoreVisibility.getValue());
-            // TODO options are (partly at least) context specific
-            ROptions.initialize();
+            RContext.initialize(new RRuntimeASTAccessImpl(), RBuiltinPackages.getInstance(), FastROptions.IgnoreVisibility.getValue());
             initialized = true;
         }
-
     }
 
     public static RContext createContext(String[] commandArgs, ConsoleHandler consoleHandler) {
         RContext context = RContext.create(commandArgs, consoleHandler);
         REngine engine = REngine.create(context);
-        context.setEngine(engine);
         engine.initializeShared();
         return context;
     }

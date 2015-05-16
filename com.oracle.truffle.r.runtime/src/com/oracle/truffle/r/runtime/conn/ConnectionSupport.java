@@ -34,21 +34,33 @@ import com.oracle.truffle.r.runtime.data.model.*;
 /**
  * Basic support classes and methods for the connection implementations.
  */
-public class ConnectionSupport {
-    /**
-     * Records all connections. The index in the array is the "descriptor" used in
-     * {@code getConnection}. Defined at this level so that {code stdin} etc. are initialized before
-     * any attempt to return them via, e.g., {@code getConnection}.
-     */
-    static BaseRConnection[] allConnections = new BaseRConnection[127];
+public class ConnectionSupport implements RContext.StateFactory {
 
-    public static BaseRConnection[] getAllConnections() {
-        return allConnections;
+    public interface ContextState extends RContext.ContextState {
+        BaseRConnection[] getAllConnections();
     }
 
-    static void setStdConnection(int index, BaseRConnection conn) {
-        assert index <= 2;
-        allConnections[index] = conn;
+    /**
+     * The context specific state, which is the set of active connections.
+     */
+    private static class ContextStateImpl implements ContextState {
+        /**
+         * Records all connections. The index in the array is the "descriptor" used in
+         * {@code getConnection}.
+         */
+        private BaseRConnection[] allConnections = new BaseRConnection[127];
+
+        public BaseRConnection[] getAllConnections() {
+            return allConnections;
+        }
+    }
+
+    public ContextState newContext(RContext context, Object... objects) {
+        return new ContextStateImpl();
+    }
+
+    public static BaseRConnection[] getAllConnections() {
+        return RContext.getRConnectionState().getAllConnections();
     }
 
     private static final class ModeException extends IOException {
@@ -171,7 +183,8 @@ public class ConnectionSupport {
         GZFile("gzfile"),
         Socket("sockconn"),
         Text("textConnection"),
-        URL("url");
+        URL("url"),
+        Internal("internal");
 
         final String printName;
 
@@ -261,7 +274,9 @@ public class ConnectionSupport {
          */
         protected BaseRConnection(ConnectionClass conClass, String modeString, AbstractOpenMode defaultModeForLazy) throws IOException {
             this(conClass, new OpenMode(modeString, defaultModeForLazy));
-            setDescriptor(getConnectionIndex());
+            if (conClass != ConnectionClass.Internal) {
+                setDescriptor(getConnectionIndex());
+            }
         }
 
         /**
@@ -332,6 +347,7 @@ public class ConnectionSupport {
         }
 
         private static int getConnectionIndex() {
+            BaseRConnection[] allConnections = ConnectionSupport.getAllConnections();
             for (int i = 3; i < allConnections.length; i++) {
                 if (allConnections[i] == null) {
                     return i;
@@ -449,8 +465,8 @@ public class ConnectionSupport {
             if (theConnection != null) {
                 theConnection.closeAndDestroy();
             }
-            assert allConnections[this.descriptor] != null;
-            allConnections[this.descriptor] = null;
+            assert getAllConnections()[this.descriptor] != null;
+            getAllConnections()[this.descriptor] = null;
         }
 
         @Override
@@ -497,19 +513,21 @@ public class ConnectionSupport {
         }
 
         private void setDescriptor(int index) {
-            assert allConnections[index] == null;
+            assert getAllConnections()[index] == null;
             this.descriptor = index;
-            allConnections[index] = this;
+            getAllConnections()[index] = this;
         }
 
         public static BaseRConnection getConnection(int descriptor) {
+            BaseRConnection[] allConnections = getAllConnections();
             if (descriptor >= allConnections.length || allConnections[descriptor] == null) {
                 throw RError.error(RError.Message.INVALID_CONNECTION);
             }
             return allConnections[descriptor];
         }
 
-        public static RIntVector getAllConnections() {
+        public static RIntVector getAllConnectionsAsInt() {
+            BaseRConnection[] allConnections = getAllConnections();
             int resLen = 0;
             for (int i = 0; i < allConnections.length; i++) {
                 if (allConnections[i] != null) {

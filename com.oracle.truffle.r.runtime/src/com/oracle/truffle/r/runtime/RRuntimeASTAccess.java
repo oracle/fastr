@@ -31,7 +31,7 @@ import com.oracle.truffle.r.runtime.env.*;
  * runtime project, which does not have direct access, as it would introduce project circularities.
  *
  */
-public interface RASTHelper {
+public interface RRuntimeASTAccess {
     /**
      * Computes the "length" of the language element as per the R specification.
      */

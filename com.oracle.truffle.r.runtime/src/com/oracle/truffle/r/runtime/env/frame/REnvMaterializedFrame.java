@@ -58,7 +58,7 @@ public final class REnvMaterializedFrame implements MaterializedFrame {
             tags[i++] = (byte) kind.ordinal();
         }
         frameAccess.setMaterializedFrame(this);
-        arguments = RArguments.createUnitialized(null);
+        arguments = RArguments.createUnitialized();
         RArguments.setEnvironment(this, (REnvironment) env);
     }
 

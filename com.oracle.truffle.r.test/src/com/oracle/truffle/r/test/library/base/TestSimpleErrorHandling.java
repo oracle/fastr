@@ -37,7 +37,7 @@ public class TestSimpleErrorHandling extends TestBase {
 
     @Override
     protected void afterMicroTest() {
-        ROptions.setValueNoCheck("error", RNull.instance);
+        RContext.getROptionsState().setValueNoCheck("error", RNull.instance);
     }
 
     @Test

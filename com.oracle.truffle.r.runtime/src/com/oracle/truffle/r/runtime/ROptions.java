@@ -13,9 +13,8 @@ package com.oracle.truffle.r.runtime;
 
 import static com.oracle.truffle.r.runtime.RCmdOptions.*;
 
-// Transcribed from src/options.c
-
 import java.util.*;
+import java.util.Map.Entry;
 
 import com.oracle.truffle.r.runtime.data.*;
 
@@ -30,7 +29,43 @@ import com.oracle.truffle.r.runtime.data.*;
  * {@link RNull#instance} is illegal.
  *
  */
-public class ROptions {
+public class ROptions implements RContext.StateFactory {
+    public interface ContextState extends RContext.ContextState {
+        Set<Map.Entry<String, Object>> getValues();
+
+        Object getValue(String name);
+
+        Object setValueNoCheck(String name, Object value);
+
+        Object setValue(String name, Object value) throws OptionsException;
+    }
+
+    private static class ContextStateImpl implements ContextState {
+
+        private ROptions options;
+
+        ContextStateImpl(ROptions options) {
+            this.options = options;
+        }
+
+        public Set<Entry<String, Object>> getValues() {
+            return options.getValues();
+        }
+
+        public Object getValue(String name) {
+            return options.getValue(name);
+        }
+
+        public Object setValueNoCheck(String name, Object value) {
+            return options.setValueNoCheck(name, value);
+        }
+
+        public Object setValue(String name, Object value) throws OptionsException {
+            return options.setValue(name, value);
+        }
+
+    }
+
     @SuppressWarnings("serial")
     public static final class OptionsException extends RError.RErrorException {
         private OptionsException(RError.Message msg, Object... args) {
@@ -48,32 +83,48 @@ public class ROptions {
 
     private static final Set<String> CHECKED_OPTIONS_SET = new HashSet<>();
 
-    private static final HashMap<String, Object> map = new HashMap<>();
+    /**
+     * Holds the default values on startup of an {@link RContext}.
+     */
+    private static final HashMap<String, Object> defaultsMap = new HashMap<>();
 
-    public static void initialize() {
+    /**
+     * The current values for a given context.
+     */
+    private final HashMap<String, Object> map = new HashMap<>();
+
+    private static void initDefaults() {
         for (String s : CHECKED_OPTIONS) {
             CHECKED_OPTIONS_SET.add(s);
         }
-        ROptions.setValueNoCheck("add.smooth", RDataFactory.createLogicalVectorFromScalar(true));
-        ROptions.setValueNoCheck("check.bounds", RDataFactory.createLogicalVectorFromScalar(false));
-        ROptions.setValueNoCheck("continue", RDataFactory.createStringVector("+ "));
-        ROptions.setValueNoCheck("deparse.cutoff", RDataFactory.createIntVectorFromScalar(60));
-        ROptions.setValueNoCheck("digits", RDataFactory.createIntVectorFromScalar(7));
-        ROptions.setValueNoCheck("echo", RDataFactory.createLogicalVectorFromScalar(SLAVE.getValue() ? false : true));
-        ROptions.setValueNoCheck("encoding", RDataFactory.createStringVector("native.enc"));
-        ROptions.setValueNoCheck("expressions", RDataFactory.createIntVectorFromScalar(5000));
+        defaultsMap.put("add.smooth", RDataFactory.createLogicalVectorFromScalar(true));
+        defaultsMap.put("check.bounds", RDataFactory.createLogicalVectorFromScalar(false));
+        defaultsMap.put("continue", RDataFactory.createStringVector("+ "));
+        defaultsMap.put("deparse.cutoff", RDataFactory.createIntVectorFromScalar(60));
+        defaultsMap.put("digits", RDataFactory.createIntVectorFromScalar(7));
+        defaultsMap.put("echo", RDataFactory.createLogicalVectorFromScalar(SLAVE.getValue() ? false : true));
+        defaultsMap.put("encoding", RDataFactory.createStringVector("native.enc"));
+        defaultsMap.put("expressions", RDataFactory.createIntVectorFromScalar(5000));
         boolean keepPkgSource = optionFromEnvVar("R_KEEP_PKG_SOURCE");
-        ROptions.setValueNoCheck("keep.source", RDataFactory.createLogicalVectorFromScalar(keepPkgSource));
-        ROptions.setValueNoCheck("keep.source.pkgs", RDataFactory.createLogicalVectorFromScalar(keepPkgSource));
-        ROptions.setValueNoCheck("OutDec", RDataFactory.createStringVector("."));
-        ROptions.setValueNoCheck("prompt", RDataFactory.createStringVector("> "));
-        ROptions.setValueNoCheck("verbose", RDataFactory.createLogicalVectorFromScalar(false));
-        ROptions.setValueNoCheck("nwarnings", RDataFactory.createIntVectorFromScalar(50));
-        ROptions.setValueNoCheck("warning.length", RDataFactory.createIntVectorFromScalar(1000));
-        ROptions.setValueNoCheck("width", RDataFactory.createIntVectorFromScalar(80));
-        ROptions.setValueNoCheck("browserNLdisabled", RDataFactory.createLogicalVectorFromScalar(false));
+        defaultsMap.put("keep.source", RDataFactory.createLogicalVectorFromScalar(keepPkgSource));
+        defaultsMap.put("keep.source.pkgs", RDataFactory.createLogicalVectorFromScalar(keepPkgSource));
+        defaultsMap.put("OutDec", RDataFactory.createStringVector("."));
+        defaultsMap.put("prompt", RDataFactory.createStringVector("> "));
+        defaultsMap.put("verbose", RDataFactory.createLogicalVectorFromScalar(false));
+        defaultsMap.put("nwarnings", RDataFactory.createIntVectorFromScalar(50));
+        defaultsMap.put("warning.length", RDataFactory.createIntVectorFromScalar(1000));
+        defaultsMap.put("width", RDataFactory.createIntVectorFromScalar(80));
+        defaultsMap.put("browserNLdisabled", RDataFactory.createLogicalVectorFromScalar(false));
         boolean cBoundsCheck = optionFromEnvVar("R_C_BOUNDS_CHECK");
-        ROptions.setValueNoCheck("CBoundsCheck", RDataFactory.createLogicalVectorFromScalar(cBoundsCheck));
+        defaultsMap.put("CBoundsCheck", RDataFactory.createLogicalVectorFromScalar(cBoundsCheck));
+    }
+
+    public ContextState newContext(RContext context, Object... objects) {
+        if (defaultsMap.isEmpty()) {
+            initDefaults();
+        }
+        map.putAll(defaultsMap);
+        return new ContextStateImpl(this);
     }
 
     private static boolean optionFromEnvVar(String envVar) {
@@ -82,7 +133,7 @@ public class ROptions {
 
     }
 
-    public static Set<Map.Entry<String, Object>> getValues() {
+    public Set<Map.Entry<String, Object>> getValues() {
         Set<Map.Entry<String, Object>> result = new HashSet<>();
         for (Map.Entry<String, Object> entry : map.entrySet()) {
             if (entry.getValue() != null) {
@@ -92,7 +143,7 @@ public class ROptions {
         return result;
     }
 
-    public static Object getValue(String name) {
+    public Object getValue(String name) {
         Object value = map.get(name);
         if (value == null) {
             value = RNull.instance;
@@ -100,7 +151,7 @@ public class ROptions {
         return value;
     }
 
-    public static Object setValue(String name, Object value) throws OptionsException {
+    public Object setValue(String name, Object value) throws OptionsException {
         Object coercedValue = value;
         if (CHECKED_OPTIONS_SET.contains(name)) {
             coercedValue = check(name, value);
@@ -108,7 +159,7 @@ public class ROptions {
         return setValueNoCheck(name, coercedValue);
     }
 
-    public static Object setValueNoCheck(String name, Object value) {
+    public Object setValueNoCheck(String name, Object value) {
         Object previous = map.get(name);
         assert value != null;
         if (value == RNull.instance) {
@@ -255,7 +306,7 @@ public class ROptions {
             }
 
             case "error": {
-                if (!(value instanceof RFunction || value instanceof RLanguage || value instanceof RExpression)) {
+                if (!(value == RNull.instance || value instanceof RFunction || value instanceof RLanguage || value instanceof RExpression)) {
                     throw OptionsException.createInvalid(name);
                 }
                 break;

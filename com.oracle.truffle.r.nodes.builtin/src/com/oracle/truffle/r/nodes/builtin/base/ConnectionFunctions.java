@@ -943,7 +943,7 @@ public abstract class ConnectionFunctions {
         @TruffleBoundary
         protected RIntVector getAllConnections() {
             controlVisibility();
-            return BaseRConnection.getAllConnections();
+            return BaseRConnection.getAllConnectionsAsInt();
         }
     }
 

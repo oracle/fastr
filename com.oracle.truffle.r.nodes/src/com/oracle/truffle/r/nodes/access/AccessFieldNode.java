@@ -110,7 +110,7 @@ public abstract class AccessFieldNode extends RNode implements RSyntaxNode {
         RStringVector names = object.getNames(attrProfiles);
         if (hasNamesProfile.profile(names != null)) {
             int index = getElementIndexByName(names, getField());
-            return index == -1 ? RNull.instance : RContext.getRASTHelper().getDataAtAsObject(object, index);
+            return index == -1 ? RNull.instance : RContext.getRRuntimeASTAccess().getDataAtAsObject(object, index);
         } else {
             return RNull.instance;
         }

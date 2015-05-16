@@ -48,7 +48,7 @@ public abstract class Options extends RBuiltinNode {
     @Specialization
     protected RList options(@SuppressWarnings("unused") RMissing x) {
         controlVisibility();
-        Set<Map.Entry<String, Object>> optionSettings = ROptions.getValues();
+        Set<Map.Entry<String, Object>> optionSettings = RContext.getROptionsState().getValues();
         Object[] data = new Object[optionSettings.size()];
         String[] names = new String[data.length];
         int i = 0;
@@ -69,6 +69,7 @@ public abstract class Options extends RBuiltinNode {
     @TruffleBoundary
     protected Object options(RArgsValuesAndNames args) {
         try {
+            ROptions.ContextState options = RContext.getROptionsState();
             Object[] values = args.getArguments();
             ArgumentsSignature signature = args.getSignature();
             Object[] data = new Object[values.length];
@@ -97,10 +98,10 @@ public abstract class Options extends RBuiltinNode {
                         String[] listNames = new String[listData.length];
                         for (int j = 0; j < listData.length; j++) {
                             String name = thisListnames.getDataAt(j);
-                            Object previousVal = ROptions.getValue(name);
+                            Object previousVal = options.getValue(name);
                             listData[j] = previousVal == null ? RNull.instance : previousVal;
                             listNames[j] = name;
-                            ROptions.setValue(name, list.getDataAtAsObject(j));
+                            options.setValue(name, list.getDataAtAsObject(j));
                         }
                         // if this is the only argument, no need to copy, can just return
                         if (values.length == 1) {
@@ -122,15 +123,15 @@ public abstract class Options extends RBuiltinNode {
                     } else {
                         throw RError.error(getEncapsulatingSourceSection(), Message.INVALID_UNNAMED_ARGUMENT);
                     }
-                    Object optionVal = ROptions.getValue(optionName);
+                    Object optionVal = options.getValue(optionName);
                     data[i] = optionVal == null ? RNull.instance : optionVal;
                     names[i] = optionName;
                 } else {
                     // setting
-                    Object previousVal = ROptions.getValue(argName);
+                    Object previousVal = options.getValue(argName);
                     data[i] = previousVal == null ? RNull.instance : previousVal;
                     names[i] = argName;
-                    ROptions.setValue(argName, value);
+                    options.setValue(argName, value);
                     // any settings means result is invisible
                     RContext.getInstance().setVisible(false);
                 }

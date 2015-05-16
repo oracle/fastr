@@ -154,7 +154,7 @@ public final class RFunction extends RScalar implements RAttributable {
     public void setName(String name) {
         assert !isBuiltin();
         this.name = name;
-        RContext.getRASTHelper().setFunctionName(getRootNode(), name);
+        RContext.getRRuntimeASTAccess().setFunctionName(getRootNode(), name);
     }
 
 }

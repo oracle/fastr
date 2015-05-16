@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -52,7 +52,7 @@ public class Browser {
             LW: while (true) {
                 String input = ch.readLine();
                 if (input.length() == 0) {
-                    RLogicalVector browserNLdisabledVec = (RLogicalVector) ROptions.getValue("browserNLdisabled");
+                    RLogicalVector browserNLdisabledVec = (RLogicalVector) RContext.getROptionsState().getValue("browserNLdisabled");
                     if (!RRuntime.fromLogical(browserNLdisabledVec.getDataAt(0))) {
                         break;
                     }
@@ -87,7 +87,7 @@ public class Browser {
                     }
 
                     default:
-                        RContext.getInstance().getEngine().parseAndEval(Source.fromText(input, BROWSER_SOURCE), frame, true, false);
+                        RContext.getEngine().parseAndEval(Source.fromText(input, BROWSER_SOURCE), frame, true, false);
                         break;
                 }
             }

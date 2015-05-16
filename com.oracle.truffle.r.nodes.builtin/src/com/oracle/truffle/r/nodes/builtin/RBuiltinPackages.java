@@ -95,7 +95,7 @@ public final class RBuiltinPackages implements RBuiltinLookup {
         // Any RBuiltinKind.SUBSTITUTE functions installed above should not be overridden
         try {
             HiddenInternalFunctions.MakeLazy.loadingBase = true;
-            RContext.getInstance().getEngine().parseAndEval(baseSource, frame, false, false);
+            RContext.getEngine().parseAndEval(baseSource, frame, false, false);
         } finally {
             HiddenInternalFunctions.MakeLazy.loadingBase = false;
         }
@@ -103,7 +103,7 @@ public final class RBuiltinPackages implements RBuiltinLookup {
     }
 
     public static void loadDefaultPackageOverrides() {
-        Object defaultPackages = ROptions.getValue("defaultPackages");
+        Object defaultPackages = RContext.getROptionsState().getValue("defaultPackages");
         if (defaultPackages instanceof RAbstractStringVector) {
             RAbstractStringVector defPkgs = (RAbstractStringVector) defaultPackages;
             for (int i = 0; i < defPkgs.getLength(); i++) {
@@ -118,7 +118,7 @@ public final class RBuiltinPackages implements RBuiltinLookup {
                  */
                 REnvironment env = REnvironment.baseEnv();
                 for (Source source : componentList) {
-                    RContext.getInstance().getEngine().parseAndEval(source, env.getFrame(), false, false);
+                    RContext.getEngine().parseAndEval(source, env.getFrame(), false, false);
                 }
             }
         }

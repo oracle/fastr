@@ -87,7 +87,7 @@ public abstract class CallMatcherNode extends Node {
     }
 
     protected final Object[] prepareArguments(VirtualFrame frame, Object[] reorderedArgs, ArgumentsSignature reorderedSignature, RFunction function, S3Args s3Args) {
-        Object[] argObject = RArguments.create(RArguments.getContext(frame), function, getSourceSection(), null, RArguments.getDepth(frame) + 1, reorderedArgs, reorderedSignature);
+        Object[] argObject = RArguments.create(function, getSourceSection(), null, RArguments.getDepth(frame) + 1, reorderedArgs, reorderedSignature);
         RArguments.setS3Args(argObject, s3Args);
         return argObject;
     }

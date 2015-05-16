@@ -39,17 +39,88 @@ import com.oracle.truffle.r.runtime.env.*;
  * <p>
  * TODO Consider using an {@link RLanguage} object to denote the call (somehow).
  */
-public class RErrorHandling {
-    /*
-     * These values are either NULL or an RPairList.
+public class RErrorHandling implements RContext.StateFactory {
+
+    public static class Warnings {
+        private static ArrayList<Warning> list = new ArrayList<>();
+
+        public int size() {
+            return list.size();
+        }
+
+        Warning get(int index) {
+            return list.get(index);
+        }
+
+        public void add(Warning warning) {
+            list.add(warning);
+        }
+
+        public void clear() {
+            list.clear();
+        }
+    }
+
+    private static class ContextStateImpl implements RContext.ContextState {
+        /*
+         * These values are either NULL or an RPairList.
+         */
+        private Object restartStack = RNull.instance;
+        private Object handlerStack = RNull.instance;
+        private Warnings warnings = new Warnings();
+        private int maxWarnings = 50;
+
+        public Object getRestartStack() {
+            return restartStack;
+        }
+
+        public void setRestartStack(Object restartStack) {
+            this.restartStack = restartStack;
+
+        }
+
+        public Object getHandlerStack() {
+            return handlerStack;
+        }
+
+        public void setHandlerStack(Object handlerStack) {
+            this.handlerStack = handlerStack;
+
+        }
+
+        public Warnings getWarnings() {
+            return warnings;
+        }
+
+        public int getMaxwarnings() {
+            return maxWarnings;
+        }
+
+        @SuppressWarnings("unused")
+        public void setMaxWarnings(int max) {
+            maxWarnings = max;
+        }
+    }
+
+    /**
+     * A temporary class used to accumulate warnings in deferred mode, Eventually these are
+     * converted to a list and stored in {@code last.warning} in {@code baseenv}.
      */
-    private static Object restartStack = RNull.instance;
-    private static Object handlerStack = RNull.instance;
+    private static class Warning {
+        final String message;
+        final Object call;
+
+        Warning(String message, Object call) {
+            this.message = message;
+            this.call = call;
+        }
+    }
+
     private static final Object RESTART_TOKEN = new Object();
 
     /**
      * The R error handling framework, mostly written in R, expects to be able to get hold of the
-     * "current" error message in a context free manner through the {@code geterrmessae .Internal}.
+     * "current" error message in a context free manner through the {@code geterrmessage .Internal}.
      * There are some other state variables used during processing. To support future multi-threaded
      * behavior, we use a {@link ThreadLocal}.
      */
@@ -69,21 +140,29 @@ public class RErrorHandling {
         }
     };
 
+    public RContext.ContextState newContext(RContext context, Object... objects) {
+        return new ContextStateImpl();
+    }
+
+    private static ContextStateImpl getRErrorHandlingState() {
+        return (ContextStateImpl) RContext.getClassState(RContext.ClassStateKind.RErrorHandling);
+    }
+
     public static Object getHandlerStack() {
-        return handlerStack;
+        return getRErrorHandlingState().getHandlerStack();
     }
 
     public static Object getRestartStack() {
-        return restartStack;
+        return getRErrorHandlingState().getRestartStack();
     }
 
     public static void restoreStacks(Object savedHandlerStack, Object savedRestartStack) {
-        handlerStack = savedHandlerStack;
-        restartStack = savedRestartStack;
+        getRErrorHandlingState().setHandlerStack(savedHandlerStack);
+        getRErrorHandlingState().setRestartStack(savedRestartStack);
     }
 
     public static Object createHandlers(RStringVector classes, RList handlers, REnvironment parentEnv, Object target, byte calling) {
-        Object oldStack = handlerStack;
+        Object oldStack = getRestartStack();
         Object newStack = oldStack;
         RList result = RDataFactory.createList(new Object[]{RNull.instance, RNull.instance, RNull.instance});
         int n = handlers.getLength();
@@ -93,7 +172,7 @@ public class RErrorHandling {
             RList entry = mkHandlerEntry(klass, parentEnv, handler, target, result, calling);
             newStack = RDataFactory.createPairList(entry, newStack);
         }
-        handlerStack = newStack;
+        getRErrorHandlingState().setHandlerStack(newStack);
         return oldStack;
     }
 
@@ -136,16 +215,16 @@ public class RErrorHandling {
 
     @TruffleBoundary
     public static void addRestart(RList restart) {
-        restartStack = RDataFactory.createPairList(restart, restartStack, RNull.instance);
+        getRErrorHandlingState().setRestartStack(RDataFactory.createPairList(restart, getRestartStack(), RNull.instance));
     }
 
     @TruffleBoundary
     public static void signalCondition(RList cond, String msg, Object call) {
-        Object oldStack = handlerStack;
+        Object oldStack = getHandlerStack();
         RPairList pList;
         while ((pList = findConditionHandler(cond)) != null) {
             RList entry = (RList) pList.car();
-            handlerStack = pList.cdr();
+            getRErrorHandlingState().setHandlerStack(pList.cdr());
             if (isCallingEntry(entry)) {
                 Object h = entry.getDataAt(ENTRY_HANDLER);
                 if (h == RESTART_TOKEN) {
@@ -160,7 +239,7 @@ public class RErrorHandling {
                 throw gotoExitingHandler(cond, call, entry);
             }
         }
-        handlerStack = oldStack;
+        getRErrorHandlingState().setHandlerStack(oldStack);
     }
 
     /**
@@ -169,11 +248,11 @@ public class RErrorHandling {
     static void signalError(SourceSection callSrcArg, Message msg, Object... args) {
         SourceSection callSrc = checkNullSourceSection(callSrcArg);
         String fMsg = formatMessage(msg, args);
-        Object oldStack = handlerStack;
+        Object oldStack = getHandlerStack();
         RPairList pList;
         while ((pList = findSimpleErrorHandler()) != null) {
             RList entry = (RList) pList.car();
-            handlerStack = pList.cdr();
+            getRErrorHandlingState().setHandlerStack(pList.cdr());
             errorState.get().errMsg = fMsg;
             if (isCallingEntry(entry)) {
                 if (entry.getDataAt(ENTRY_HANDLER) == RESTART_TOKEN) {
@@ -181,13 +260,13 @@ public class RErrorHandling {
                 } else {
                     RFunction handler = (RFunction) entry.getDataAt(2);
                     RStringVector errorMsgVec = RDataFactory.createStringVectorFromScalar(fMsg);
-                    RContext.getRASTHelper().handleSimpleError(handler, errorMsgVec, createCall(callSrc), RArguments.getDepth(safeCurrentFrame()));
+                    RContext.getRRuntimeASTAccess().handleSimpleError(handler, errorMsgVec, createCall(callSrc), RArguments.getDepth(safeCurrentFrame()));
                 }
             } else {
                 throw gotoExitingHandler(RNull.instance, createCall(callSrc), entry);
             }
         }
-        handlerStack = oldStack;
+        getRErrorHandlingState().setHandlerStack(oldStack);
     }
 
     private static ReturnException gotoExitingHandler(Object cond, Object call, RList entry) throws ReturnException {
@@ -201,7 +280,7 @@ public class RErrorHandling {
     }
 
     private static RPairList findSimpleErrorHandler() {
-        Object list = handlerStack;
+        Object list = getHandlerStack();
         while (list != RNull.instance) {
             RPairList pList = (RPairList) list;
             RList entry = (RList) pList.car();
@@ -217,7 +296,7 @@ public class RErrorHandling {
     private static RPairList findConditionHandler(RList cond) {
         // GnuR checks whether this is a string vector - in FastR it's statically typed to be
         RStringVector classes = cond.getClassHierarchy();
-        Object list = handlerStack;
+        Object list = getHandlerStack();
         while (list != RNull.instance) {
             RPairList pList = (RPairList) list;
             RList entry = (RList) pList.car();
@@ -275,7 +354,7 @@ public class RErrorHandling {
         }
         try {
             String callSource = src.getCode();
-            RExpression call = RContext.getInstance().getEngine().parse(Source.fromText(callSource, "<error call source>"));
+            RExpression call = RContext.getEngine().parse(Source.fromText(callSource, "<error call source>"));
             return call.getDataAt(0);
         } catch (ParseException ex) {
             throw RInternalError.shouldNotReachHere("parse call source");
@@ -307,36 +386,35 @@ public class RErrorHandling {
         String errorMessage = createErrorMessage(call, fmsg);
         Utils.writeStderr(errorMessage, true);
 
-        if (warnings.size() > 0) {
+        if (getRErrorHandlingState().getWarnings().size() > 0) {
             Utils.writeStderr("In addition: ", false);
             printWarnings(false);
         }
 
         // we are not quite done - need to check for options(error=expr)
-        Object errorExpr = ROptions.getValue("error");
+        Object errorExpr = RContext.getROptionsState().getValue("error");
         if (errorExpr != RNull.instance) {
             MaterializedFrame materializedFrame = safeCurrentFrame();
             // type already checked in ROptions
             if (errorExpr instanceof RFunction) {
                 // Called with no arguments, but defaults will be applied
                 RFunction errorFunction = (RFunction) errorExpr;
-                ArgumentsSignature argsSig = RContext.getRASTHelper().getArgumentsSignature(errorFunction);
+                ArgumentsSignature argsSig = RContext.getRRuntimeASTAccess().getArgumentsSignature(errorFunction);
                 Object[] evaluatedArgs;
                 if (errorFunction.isBuiltin()) {
-                    evaluatedArgs = RContext.getRASTHelper().getBuiltinDefaultParameterValues(errorFunction);
+                    evaluatedArgs = RContext.getRRuntimeASTAccess().getBuiltinDefaultParameterValues(errorFunction);
                 } else {
                     evaluatedArgs = new Object[argsSig.getLength()];
                     for (int i = 0; i < evaluatedArgs.length; i++) {
                         evaluatedArgs[i] = RMissing.instance;
                     }
                 }
-                errorFunction.getTarget().call(
-                                RArguments.create(RArguments.getContext(materializedFrame), errorFunction, call, materializedFrame, RArguments.getDepth(materializedFrame) + 1, evaluatedArgs, argsSig));
+                errorFunction.getTarget().call(RArguments.create(errorFunction, call, materializedFrame, RArguments.getDepth(materializedFrame) + 1, evaluatedArgs, argsSig));
             } else if (errorExpr instanceof RLanguage || errorExpr instanceof RExpression) {
                 if (errorExpr instanceof RLanguage) {
-                    RContext.getInstance().getEngine().eval((RLanguage) errorExpr, materializedFrame);
+                    RContext.getEngine().eval((RLanguage) errorExpr, materializedFrame);
                 } else if (errorExpr instanceof RExpression) {
-                    RContext.getInstance().getEngine().eval((RExpression) errorExpr, materializedFrame);
+                    RContext.getEngine().eval((RExpression) errorExpr, materializedFrame);
                 }
             } else {
                 // Checked when set
@@ -351,23 +429,6 @@ public class RErrorHandling {
         return frame == null ? REnvironment.globalEnv().getFrame() : frame.materialize();
     }
 
-    /**
-     * A temporary class used to accumulate warnings in deferred mode, Eventually these are
-     * converted to a list and stored in {@code last.warning} in {@code baseenv}.
-     */
-    private static class Warning {
-        final String message;
-        final Object call;
-
-        Warning(String message, Object call) {
-            this.message = message;
-            this.call = call;
-        }
-    }
-
-    private static final LinkedList<Warning> warnings = new LinkedList<>();
-    private static int maxWarnings = 50;
-
     static void warningcall(SourceSection src, Message msg, Object... args) {
         Object call = createCall(src);
         RStringVector warningMessage = RDataFactory.createStringVectorFromScalar(formatMessage(msg, args));
@@ -378,7 +439,7 @@ public class RErrorHandling {
          */
         boolean visibility = RContext.getInstance().isVisible();
         try {
-            RContext.getRASTHelper().signalSimpleWarning(warningMessage, call, RArguments.getDepth(safeCurrentFrame()));
+            RContext.getRRuntimeASTAccess().signalSimpleWarning(warningMessage, call, RArguments.getDepth(safeCurrentFrame()));
         } finally {
             RContext.getInstance().setVisible(visibility);
         }
@@ -393,7 +454,7 @@ public class RErrorHandling {
         if (myErrorState.inWarning) {
             return;
         }
-        Object s = ROptions.getValue("warning.expression");
+        Object s = RContext.getROptionsState().getValue("warning.expression");
         if (s != RNull.instance) {
             if (!(s instanceof RLanguage || s instanceof RExpression)) {
                 // TODO
@@ -402,7 +463,7 @@ public class RErrorHandling {
         }
 
         // ensured in ROptions
-        int w = ((RIntVector) ROptions.getValue("warn")).getDataAt(0);
+        int w = ((RIntVector) RContext.getROptionsState().getValue("warn")).getDataAt(0);
         if (w == RRuntime.INT_NA) {
             w = 0;
         }
@@ -426,7 +487,7 @@ public class RErrorHandling {
             } else if (w == 1) {
                 Utils.writeStderr(message, true);
             } else if (w == 0) {
-                warnings.add(new Warning(fmsg, createCall(call)));
+                getRErrorHandlingState().getWarnings().add(new Warning(fmsg, createCall(call)));
             }
         } finally {
             myErrorState.inWarning = false;
@@ -435,11 +496,12 @@ public class RErrorHandling {
 
     @TruffleBoundary
     public static void printWarnings(boolean suppress) {
+        Warnings warnings = getRErrorHandlingState().getWarnings();
         if (suppress) {
             warnings.clear();
             return;
         }
-        int nWarnings = warnings.size();
+        int nWarnings = getRErrorHandlingState().getWarnings().size();
         if (nWarnings == 0) {
             return;
         }
@@ -464,7 +526,7 @@ public class RErrorHandling {
                     String callSource;
                     if (ss == null) {
                         RDeparse.State state = RDeparse.State.createPrintableState();
-                        RContext.getRASTHelper().deparse(state, callRL);
+                        RContext.getRRuntimeASTAccess().deparse(state, callRL);
                         callSource = state.toString();
                     } else {
                         callSource = ss.getCode();
@@ -478,10 +540,10 @@ public class RErrorHandling {
                     Utils.writeStderr("  " + warnings.get(i).message, true);
                 }
             } else {
-                if (nWarnings < maxWarnings) {
+                if (nWarnings < getRErrorHandlingState().getMaxwarnings()) {
                     Utils.writeStderr(String.format("There were %d warnings (use warnings() to see them)", nWarnings), true);
                 } else {
-                    Utils.writeStderr(String.format("There were %d or more warnings (use warnings() to see the first %d)", nWarnings, maxWarnings), true);
+                    Utils.writeStderr(String.format("There were %d or more warnings (use warnings() to see the first %d)", nWarnings, getRErrorHandlingState().getMaxwarnings()), true);
                 }
             }
             Object[] wData = new Object[nWarnings];
@@ -499,7 +561,7 @@ public class RErrorHandling {
     }
 
     public static void printDeferredWarnings() {
-        if (warnings.size() > 0) {
+        if (getRErrorHandlingState().getWarnings().size() > 0) {
             Utils.writeStderr("In addition: ", false);
             printWarnings(false);
         }

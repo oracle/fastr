@@ -34,7 +34,7 @@ import com.oracle.truffle.r.runtime.gnur.*;
  *
  * Much of the code here is related to case 1, which would be unnecessary if unserialize created
  * ASTs for language elements directly rather than via deparse/parse. The deparsing of ASTs is
- * handled in {@code RASTDeparse} via the {@link RASTHelper} interface.
+ * handled in {@code RASTDeparse} via the {@link RRuntimeASTAccess} interface.
  */
 public class RDeparse {
     public static final int KEEPINTEGER = 1;
@@ -393,7 +393,7 @@ public class RDeparse {
                 if (promise.isEvaluated()) {
                     deparse2buff(state, promise.getValue());
                 } else {
-                    Object v = RContext.getInstance().getEngine().evalPromise((RPromise) obj, (SourceSection) null);
+                    Object v = RContext.getEngine().evalPromise((RPromise) obj, (SourceSection) null);
                     deparse2buff(state, v);
                 }
                 break;
@@ -418,7 +418,7 @@ public class RDeparse {
                     state.append(f.getName());
                     state.append("\")");
                 } else {
-                    RContext.getRASTHelper().deparse(state, f);
+                    RContext.getRRuntimeASTAccess().deparse(state, f);
                 }
                 break;
             }
@@ -470,7 +470,7 @@ public class RDeparse {
 
             case LANGSXP: {
                 if (obj instanceof RLanguage) {
-                    RContext.getRASTHelper().deparse(state, (RLanguage) obj);
+                    RContext.getRRuntimeASTAccess().deparse(state, (RLanguage) obj);
                     break;
                 }
                 RPairList f = (RPairList) obj;

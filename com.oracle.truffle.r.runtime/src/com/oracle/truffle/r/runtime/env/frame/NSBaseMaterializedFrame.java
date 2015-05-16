@@ -51,6 +51,11 @@ public final class NSBaseMaterializedFrame implements MaterializedFrame {
         }
     }
 
+    public void updateGlobalFrame(MaterializedFrame globalFrame) {
+        RArguments.setEnclosingFrame(this, globalFrame);
+        FrameSlotChangeMonitor.invalidateEnclosingFrame(this);
+    }
+
     @Override
     public FrameDescriptor getFrameDescriptor() {
         return packageBaseFrame.getFrameDescriptor();

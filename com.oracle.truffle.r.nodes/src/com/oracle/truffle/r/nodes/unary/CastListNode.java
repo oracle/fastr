@@ -82,7 +82,7 @@ public abstract class CastListNode extends CastNode {
 
     @Specialization
     protected RList doLanguage(RLanguage operand) {
-        RList result = RContext.getRASTHelper().asList(operand);
+        RList result = RContext.getRRuntimeASTAccess().asList(operand);
         result.copyAttributesFrom(attrProfiles, operand);
         return result;
     }

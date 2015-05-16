@@ -28,56 +28,69 @@ import java.util.*;
 
 import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.RContext.ContextState;
 import com.oracle.truffle.r.runtime.RContext.ConsoleHandler;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-public class StdConnections {
-    private static StdinConnection stdin;
-    private static StdoutConnection stdout;
-    private static StderrConnection stderr;
+public class StdConnections implements RContext.StateFactory {
 
-    public static void initialize(ConsoleHandler consoleHandler) {
-        // This ensures the connections are initialized on engine startup.
+    private static class ContextStateImpl implements RContext.ContextState {
+        private final StdinConnection stdin;
+        private final StdoutConnection stdout;
+        private final StderrConnection stderr;
+
+        ContextStateImpl(StdinConnection stdin, StdoutConnection stdout, StderrConnection stderr) {
+            this.stdin = stdin;
+            this.stdout = stdout;
+            this.stderr = stderr;
+        }
+
+    }
+
+    public ContextState newContext(RContext context, Object... objects) {
+        ConsoleHandler consoleHandler = (ConsoleHandler) objects[0];
         try {
-            stdin = new StdinConnection();
-            stdout = new StdoutConnection(consoleHandler);
-            stderr = new StderrConnection(consoleHandler);
+            return new ContextStateImpl(new StdinConnection(), new StdoutConnection(consoleHandler), new StderrConnection(consoleHandler));
         } catch (IOException ex) {
-            Utils.fail("failed to open stdconnections:");
+            throw Utils.fail("failed to open stdconnections:");
         }
     }
 
+    private static ContextStateImpl getContextState() {
+        return (ContextStateImpl) RContext.getClassState(RContext.ClassStateKind.StdConnections);
+    }
+
     public static RConnection getStdin() {
-        return stdin;
+        return getContextState().stdin;
     }
 
     public static RConnection getStdout() {
-        return stdout;
+        return getContextState().stdout;
     }
 
     public static RConnection getStderr() {
-        return stderr;
+        return getContextState().stderr;
     }
 
     public static boolean pushDivertOut(RConnection conn, boolean closeOnExit) {
-        return stdout.pushDivert(conn, closeOnExit);
+        return getContextState().stdout.pushDivert(conn, closeOnExit);
     }
 
     public static void popDivertOut() throws IOException {
-        stdout.popDivert();
+        getContextState().stdout.popDivert();
     }
 
     public static void divertErr(RConnection conn) {
-        stderr.divertErr(conn);
+        getContextState().stderr.divertErr(conn);
     }
 
     public static int stdoutDiversions() {
-        return stdout.numDiversions();
+        return getContextState().stdout.numDiversions();
     }
 
     public static int stderrDiversion() {
-        return stderr.diversionIndex();
+        return getContextState().stderr.diversionIndex();
     }
 
     /**
@@ -293,7 +306,7 @@ public class StdConnections {
         }
 
         void divertErr(RConnection conn) {
-            if (conn == stderr) {
+            if (conn == getContextState().stderr) {
                 diversion = null;
             } else {
                 diversion = conn;

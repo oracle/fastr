@@ -644,7 +644,7 @@ public abstract class RCallNode extends RNode implements RSyntaxNode {
             }
             MaterializedFrame callerFrame = needsCallerFrame ? frame.materialize() : null;
 
-            Object[] argsObject = argsNode.execute(frame, currentFunction, getSourceSection(), callerFrame, RArguments.getDepth(frame) + 1, matchedArgs.executeArray(frame), matchedArgs.getSignature());
+            Object[] argsObject = argsNode.execute(currentFunction, getSourceSection(), callerFrame, RArguments.getDepth(frame) + 1, matchedArgs.executeArray(frame), matchedArgs.getSignature());
             return call.call(frame, argsObject);
         }
 
@@ -676,7 +676,7 @@ public abstract class RCallNode extends RNode implements RSyntaxNode {
 
             if (lastCallTarget == currentFunction.getTarget() && lastMatchedArgs != null) {
                 // poor man's caching succeeded - same function: no re-match needed
-                Object[] argsObject = RArguments.create(RArguments.getContext(frame), currentFunction, getSourceSection(), null, RArguments.getDepth(frame) + 1, lastMatchedArgs.doExecuteArray(frame),
+                Object[] argsObject = RArguments.create(currentFunction, getSourceSection(), null, RArguments.getDepth(frame) + 1, lastMatchedArgs.doExecuteArray(frame),
                                 lastMatchedArgs.getSignature());
                 return indirectCall.call(frame, currentFunction.getTarget(), argsObject);
             }
@@ -685,8 +685,7 @@ public abstract class RCallNode extends RNode implements RSyntaxNode {
             this.lastMatchedArgs = matchedArgs;
             this.lastCallTarget = currentFunction.getTarget();
 
-            Object[] argsObject = RArguments.create(RArguments.getContext(frame), currentFunction, getSourceSection(), null, RArguments.getDepth(frame) + 1, matchedArgs.doExecuteArray(frame),
-                            matchedArgs.getSignature());
+            Object[] argsObject = RArguments.create(currentFunction, getSourceSection(), null, RArguments.getDepth(frame) + 1, matchedArgs.doExecuteArray(frame), matchedArgs.getSignature());
             return indirectCall.call(frame, currentFunction.getTarget(), argsObject);
         }
     }
@@ -822,8 +821,7 @@ public abstract class RCallNode extends RNode implements RSyntaxNode {
                 call.cloneCallTarget();
             }
             MaterializedFrame callerFrame = needsCallerFrame ? frame.materialize() : null;
-            Object[] argsObject = RArguments.create(RArguments.getContext(frame), currentFunction, getSourceSection(), callerFrame, RArguments.getDepth(frame) + 1, matchedArgs.executeArray(frame),
-                            matchedArgs.getSignature());
+            Object[] argsObject = RArguments.create(currentFunction, getSourceSection(), callerFrame, RArguments.getDepth(frame) + 1, matchedArgs.executeArray(frame), matchedArgs.getSignature());
             return call.call(frame, argsObject);
         }
 
@@ -865,8 +863,7 @@ public abstract class RCallNode extends RNode implements RSyntaxNode {
                 needsCallerFrame = true;
             }
             MaterializedFrame callerFrame = needsCallerFrame ? frame.materialize() : null;
-            Object[] argsObject = RArguments.create(RArguments.getContext(frame), currentFunction, getSourceSection(), callerFrame, RArguments.getDepth(frame) + 1, matchedArgs.doExecuteArray(frame),
-                            matchedArgs.getSignature());
+            Object[] argsObject = RArguments.create(currentFunction, getSourceSection(), callerFrame, RArguments.getDepth(frame) + 1, matchedArgs.doExecuteArray(frame), matchedArgs.getSignature());
             return call.call(frame, argsObject);
         }
     }
@@ -892,8 +889,7 @@ public abstract class RCallNode extends RNode implements RSyntaxNode {
             UnrolledVariadicArguments argsValuesAndNames = args.executeFlatten(frame);
             MatchedArguments matchedArgs = ArgumentMatcher.matchArguments(currentFunction, argsValuesAndNames, getSourceSection(), getEncapsulatingSourceSection(), true);
 
-            Object[] argsObject = RArguments.create(RArguments.getContext(frame), currentFunction, getSourceSection(), null, RArguments.getDepth(frame) + 1, matchedArgs.doExecuteArray(frame),
-                            matchedArgs.getSignature());
+            Object[] argsObject = RArguments.create(currentFunction, getSourceSection(), null, RArguments.getDepth(frame) + 1, matchedArgs.doExecuteArray(frame), matchedArgs.getSignature());
             return indirectCall.call(frame, currentFunction.getTarget(), argsObject);
         }
     }

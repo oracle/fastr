@@ -96,7 +96,7 @@ public abstract class Cat extends RInvisibleBuiltinNode {
         int fillWidth = Integer.MAX_VALUE;
         if (fillObj instanceof Byte) {
             if (RRuntime.fromLogical((byte) fillObj)) {
-                fillWidth = ((RIntVector) ROptions.getValue("width")).getDataAt(0);
+                fillWidth = ((RIntVector) RContext.getROptionsState().getValue("width")).getDataAt(0);
             }
         } else {
             fillWidth = RRuntime.asInteger(fillObj);

@@ -49,9 +49,9 @@ public class EvalFunctions {
                 try {
                     Object result;
                     if (expr instanceof RExpression) {
-                        result = RContext.getInstance().getEngine().eval((RExpression) expr, envir, enclos, depth);
+                        result = RContext.getEngine().eval((RExpression) expr, envir, enclos, depth);
                     } else {
-                        result = RContext.getInstance().getEngine().eval((RLanguage) expr, envir, enclos, depth);
+                        result = RContext.getEngine().eval((RLanguage) expr, envir, enclos, depth);
                     }
                     return result;
                 } catch (PutException ex) {

@@ -91,27 +91,31 @@ public final class FastRSession implements RSession {
 
     }
 
-    private final ConsoleHandler consoleHandler;
+    private static ConsoleHandler consoleHandler;
     private static FastRSession singleton;
-    private final RContext context;
+    private static RContext singletonContext;
 
     private EvalThread evalThread;
 
     public static FastRSession create() {
         if (singleton == null) {
             singleton = new FastRSession();
+            createTestContext();
         }
         return singleton;
+    }
+
+    public static RContext createTestContext() {
+        create();
+        if (singletonContext == null) {
+            singletonContext = RContextFactory.createContext(new String[0], consoleHandler);
+        }
+        return singletonContext;
     }
 
     private FastRSession() {
         consoleHandler = new ConsoleHandler();
         RContextFactory.initialize();
-        try {
-            context = RContextFactory.createContext(new String[0], consoleHandler);
-        } finally {
-            System.out.print(consoleHandler.buffer.toString());
-        }
     }
 
     @SuppressWarnings("deprecation")
@@ -170,7 +174,10 @@ public final class FastRSession implements RSession {
                     break;
                 }
                 try {
-                    context.getEngine().parseAndEvalTest(expression, true);
+                    RContext context = createTestContext();
+                    // TODO not needed if context per test
+                    context.addThread();
+                    context.getContextEngine().parseAndEvalTest(expression, true);
                 } catch (RError e) {
                     // nothing to do
                 } catch (Throwable t) {
