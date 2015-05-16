@@ -72,7 +72,7 @@ public class TestrGenBuiltinidentical extends TestBase {
 
     @Test
     public void testidentical11() {
-        assertEval(Ignored.Unknown, "argv <- list(NULL, '\\\\link', TRUE, TRUE, TRUE, TRUE, FALSE); .Internal(identical(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+        assertEval("argv <- list(NULL, '\\\\link', TRUE, TRUE, TRUE, TRUE, FALSE); .Internal(identical(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
