@@ -92,7 +92,7 @@ public abstract class DoCall extends RBuiltinNode {
                 containsRSymbolProfile.enter();
                 RSymbol symbol = (RSymbol) arg;
                 if (symbol.getName().isEmpty()) {
-                    argValues[i] = RMissing.instance;
+                    argValues[i] = REmpty.instance;
                 } else {
                     callerFrame = getCallerFrame(frame, callerFrame);
                     argValues[i] = createArgPromise(callerFrame, RASTUtils.createReadVariableNode(symbol.getName()));
