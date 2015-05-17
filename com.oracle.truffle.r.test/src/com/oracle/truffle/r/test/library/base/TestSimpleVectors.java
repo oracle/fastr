@@ -28,6 +28,8 @@ public class TestSimpleVectors extends TestBase {
         assertEval(Output.ContainsError, "{ x<-c(7,aa=42); `[[`(x, \"a\") }");
         assertEval("{ x<-c(7,aa=42); `[[`(x, \"a\", exact=FALSE) }");
         assertEval(Output.ContainsError, "{ x<-c(7,aa=42); `[[`(x, \"a\", exact=TRUE) }");
+
+        assertEval("{ x<-list(a=7); `$`(x, \"a\") }");
     }
 
     @Test
@@ -43,6 +45,11 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ x<-data.frame(1,2); `[[<-.data.frame`(x, 2, value=7) }");
         assertEval("{ x<-data.frame(c(1,2), c(3,4)); `[<-.data.frame`(x, 2, 1, 7) }");
         assertEval("{ x<-data.frame(c(1,2), c(3,4)); `[[<-.data.frame`(x, 2, 1, 7) }");
+
+        assertEval("{ x<-c(a=7); class(x)<-\"foo\"; `$<-.foo`<-function(x, name, value) x[name]<-value; `$<-.foo`(x, \"a\", 42); x }");
+        assertEval("{ x<-c(a=7); class(x)<-\"foo\"; `$<-.foo`<-function(x, name, value) x[name]<-value; `$<-`(x, \"a\", 42); x }");
+        assertEval("{ x<-data.frame(a=7, b=42); `$<-`(x, \"a\", 1); x }");
+
     }
 
     @Test
@@ -61,6 +68,10 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ x<-data.frame(c(1,2), c(3,4)); x[[2,1]]<-7; x }");
 
         assertEval("{ `[.foo` <- function(x, i, ...) structure(NextMethod(\"[\"), class = class(x)); x<-c(1,2); class(x)<-\"foo\"; x[1] }");
+
+        assertEval("{ x<-c(a=6); class(x)<-\"foo\"; `$.foo`<-function(x, name) x[name]+1; x$a }");
+        assertEval("{ x<-data.frame(a=7, b=42); x$a }");
+        assertEval("{ x<-data.frame(a=7, b=42); x$a<-1; x }");
     }
 
     @Test
@@ -79,6 +90,10 @@ public class TestSimpleVectors extends TestBase {
 
         assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); `[[`(x, 1) }");
         assertEval("{ x<-factor(c(\"a\", zz=\"b\", \"a\")); `[[`(x, \"z\", exact=FALSE) }");
+
+        assertEval("{ x<-c(a=6); class(x)<-\"foo\"; `$.foo`<-function(x, name) x[name]+1; `$.foo`(x, \"a\") }");
+        assertEval("{ x<-c(a=6); class(x)<-\"foo\"; `$.foo`<-function(x, name) x[name]+1; `$`(x, \"a\") }");
+        assertEval("{ x<-data.frame(a=7, b=42); `$`(x, \"a\") }");
     }
 
     @Test

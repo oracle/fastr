@@ -233,7 +233,7 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
                 case 1:
                     return RASTUtils.createLanguageElement(accessFieldNode.getObject());
                 case 2:
-                    return RDataFactory.createSymbol(accessFieldNode.getField());
+                    return RASTUtils.createLanguageElement(accessFieldNode.getField());
                 default:
                     assert false;
             }

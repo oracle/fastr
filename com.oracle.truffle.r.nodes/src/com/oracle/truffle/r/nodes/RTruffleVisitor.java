@@ -412,7 +412,7 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
             replacementArg = callArgAst.accept(this).asRNode();
             RCallNode replacementCall = prepareReplacementCall(fAst, args, tmpSymbol, rhsSymbol, false);
             assignFromTemp = doReplacementLeftHandSide(callArgAst.getLhs(), true, replacementCall, replacement.isSuper(), replacement.getSource(), (receiver, rhsAccess) -> {
-                return UpdateFieldNodeGen.create(receiver, rhsAccess, callArgAst.getFieldName());
+                return UpdateFieldNodeGen.create(true, receiver, rhsAccess, ConstantNode.create(callArgAst.getFieldName()));
             }).asRNode();
         }
         RSyntaxNode result = constructReplacementSuffix(rhs, replacementArg, true, assignFromTemp, tmpSymbol, rhsSymbol, replacement.getSource());
@@ -492,7 +492,7 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
 
     @Override
     public RSyntaxNode visit(FieldAccess n) {
-        AccessFieldNode afn = AccessFieldNodeGen.create(n.getLhs().accept(this).asRNode(), n.getFieldName());
+        AccessFieldNode afn = AccessFieldNodeGen.create(true, n.getLhs().accept(this).asRNode(), ConstantNode.create(n.getFieldName()));
         afn.assignSourceSection(n.getSource());
         return afn;
     }
@@ -527,7 +527,7 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
                 UpdateNode updateOp = (UpdateNode) updateFunction.apply(null, null);
                 RecursiveReplacementNode fieldUpdate = createUpdateSequence(rhs, accessAST.accept(this).asRNode(), updateOp, source);
                 result = doReplacementLeftHandSide(accessAST.getLhs(), false, fieldUpdate, isSuper, source, (receiver1, rhsAccess1) -> {
-                    return UpdateFieldNodeGen.create(receiver1, rhsAccess1, accessAST.getFieldName());
+                    return UpdateFieldNodeGen.create(true, receiver1, rhsAccess1, ConstantNode.create(accessAST.getFieldName()));
                 });
             } else {
                 throw RInternalError.unimplemented();
@@ -546,7 +546,7 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
         FieldAccess a = u.getVector();
         RSyntaxNode rhs = u.getRHS().accept(this);
         return doReplacementLeftHandSide(a.getLhs(), true, rhs.asRNode(), u.isSuper(), u.getSource(), (receiver, rhsAccess) -> {
-            return UpdateFieldNodeGen.create(receiver, rhsAccess, a.getFieldName());
+            return UpdateFieldNodeGen.create(true, receiver, rhsAccess, ConstantNode.create(a.getFieldName()));
         });
     }
 

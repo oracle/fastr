@@ -31,6 +31,7 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.access.array.read.*;
 import com.oracle.truffle.r.nodes.access.array.write.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -582,22 +583,112 @@ public class InfixEmulationFunctions {
         }
     }
 
-    @RBuiltin(name = "$", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x", "i"})
-    public abstract static class AccessFieldBuiltin extends ErrorAdapter {
-        @SuppressWarnings("unused")
-        @Specialization
-        protected Object doIt(Object x, Object i) {
-            throw nyi();
+    public abstract static class FieldBuiltinBase extends RBuiltinNode {
+        @Child protected UseMethodInternalNode dcn;
+        protected final ConditionProfile nonStringFieldProfile = ConditionProfile.createBinaryProfile();
+        protected final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+
+        @SuppressFBWarnings(value = "ES_COMPARING_STRINGS_WITH_EQ", justification = "generic name is interned in the interpreted code for faster comparison")
+        protected boolean isObject(VirtualFrame frame, RAbstractContainer x, String builtinName) {
+            // treat as non-object if we got here through S3 dispatch on the object of the same type
+            return x.isObject(attrProfiles) &&
+                            !(RArguments.getS3Args(frame) != null && RArguments.getS3Args(frame).generic == builtinName && RArguments.getArgument(frame, 0).getClass() == x.getClass());
         }
+
     }
 
-    @RBuiltin(name = "$<-", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x", "i"})
-    public abstract static class UpdateFieldBuiltin extends ErrorAdapter {
-        @SuppressWarnings("unused")
-        @Specialization
-        protected Object doIt(Object x, Object i) {
-            throw nyi();
+    @RBuiltin(name = "$", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", ""})
+    public abstract static class AccessFieldBuiltin extends FieldBuiltinBase {
+
+        protected static final String NAME = "$";
+
+        @Child private AccessFieldNode accessNode;
+
+        protected Object access(VirtualFrame frame, Object x, String name) {
+            if (accessNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                if (accessNode == null) {
+                    accessNode = insert(AccessFieldNodeGen.create(false, null, null));
+                }
+            }
+            return accessNode.executeAccess(frame, x, name);
         }
+
+        @Specialization(guards = "!isObject(frame, container, NAME)")
+        protected Object accessField(VirtualFrame frame, RAbstractContainer container, Object field) {
+            if (nonStringFieldProfile.profile(!(field instanceof String))) {
+                // TODO: the error message is not quite correct for all types;
+                // for example: x<-list(a=7); `$<-`(x, c("a"), 42);)
+                throw RError.error(RError.Message.INVALID_SUBSCRIPT_TYPE, RRuntime.classToString(field.getClass()));
+            }
+            return access(frame, container, (String) field);
+        }
+
+        @Specialization(guards = "isObject(frame, container, NAME)")
+        protected Object accessFieldObject(VirtualFrame frame, RAbstractContainer container, Object field) {
+            if (nonStringFieldProfile.profile(!(field instanceof String))) {
+                // TODO: the error message is not quite correct for all types;
+                // for example: x<-list(a=7); `$<-`(x, c("a"), 42);)
+                throw RError.error(RError.Message.INVALID_SUBSCRIPT_TYPE, RRuntime.classToString(field.getClass()));
+            }
+            if (dcn == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                dcn = insert(new UseMethodInternalNode(NAME, ArgumentsSignature.get("", "")));
+            }
+            try {
+                return dcn.execute(frame, container.getClassHierarchy(), new Object[]{container, field});
+            } catch (S3FunctionLookupNode.NoGenericMethodException e) {
+                return access(frame, container, (String) field);
+            }
+        }
+
+    }
+
+    @RBuiltin(name = "$<-", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", "", ""})
+    public abstract static class UpdateFieldBuiltin extends FieldBuiltinBase {
+
+        protected static final String NAME = "$<-";
+
+        @Child private UpdateFieldNode updateNode;
+
+        protected Object update(VirtualFrame frame, Object x, Object value, String name) {
+            if (updateNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                if (updateNode == null) {
+                    updateNode = insert(UpdateFieldNodeGen.create(false, null, null, null));
+                }
+            }
+            return updateNode.executeUpdate(frame, x, value, name);
+        }
+
+        @Specialization(guards = "!isObject(frame, container, NAME)")
+        protected Object accessField(VirtualFrame frame, RAbstractContainer container, Object field, Object value) {
+            if (nonStringFieldProfile.profile(!(field instanceof String))) {
+                // TODO: the error message is not quite correct for all types;
+                // for example: x<-list(a=7); `$<-`(x, c("a"), 42);)
+                throw RError.error(RError.Message.INVALID_SUBSCRIPT_TYPE, RRuntime.classToString(field.getClass()));
+            }
+            return update(frame, container, value, (String) field);
+        }
+
+        @Specialization(guards = "isObject(frame, container, NAME)")
+        protected Object accessFieldObject(VirtualFrame frame, RAbstractContainer container, Object field, Object value) {
+            if (nonStringFieldProfile.profile(!(field instanceof String))) {
+                // TODO: the error message is not quite correct for all types;
+                // for example: x<-list(a=7); `$<-`(x, c("a"), 42);)
+                throw RError.error(RError.Message.INVALID_SUBSCRIPT_TYPE, RRuntime.classToString(field.getClass()));
+            }
+            if (dcn == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                dcn = insert(new UseMethodInternalNode(NAME, ArgumentsSignature.get("", "", "")));
+            }
+            try {
+                return dcn.execute(frame, container.getClassHierarchy(), new Object[]{container, field, value});
+            } catch (S3FunctionLookupNode.NoGenericMethodException e) {
+                return update(frame, container, value, (String) field);
+            }
+        }
+
     }
 
     @RBuiltin(name = ":", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"from", "to"})

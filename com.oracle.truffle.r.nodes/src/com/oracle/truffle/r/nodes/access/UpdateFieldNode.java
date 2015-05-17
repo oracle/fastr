@@ -31,6 +31,7 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.control.*;
+import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -39,17 +40,34 @@ import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.env.REnvironment.*;
 import com.oracle.truffle.r.runtime.gnur.*;
 
-@NodeChildren({@NodeChild(value = "value", type = RNode.class), @NodeChild(value = "object", type = RNode.class)})
-@NodeField(name = "field", type = String.class)
+@NodeChildren({@NodeChild(value = "value", type = RNode.class), @NodeChild(value = "object", type = RNode.class), @NodeChild(value = "field", type = RNode.class)})
 public abstract class UpdateFieldNode extends UpdateNode implements RSyntaxNode {
+
+    public abstract Object executeUpdate(VirtualFrame frame, Object o, Object value, String field);
 
     public abstract RNode getObject();
 
-    public abstract String getField();
+    public abstract RNode getField();
+
+    @Child private UpdateFieldNode accessRecursive;
+    @Child private UseMethodInternalNode dcn;
+    public final boolean forObjects;
 
     protected final ConditionProfile hasNamesProfile = ConditionProfile.createBinaryProfile();
     protected final BranchProfile inexactMatch = BranchProfile.create();
     protected final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+
+    public UpdateFieldNode(boolean forObjects) {
+        this.forObjects = forObjects;
+    }
+
+    private Object accessRecursive(VirtualFrame frame, RAbstractContainer container, Object value, String field) {
+        if (accessRecursive == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            accessRecursive = insert(UpdateFieldNodeGen.create(false, null, null, null));
+        }
+        return accessRecursive.executeUpdate(frame, container, value, field);
+    }
 
     @TruffleBoundary
     public static int getElementIndexByName(RStringVector names, String name) {
@@ -68,11 +86,23 @@ public abstract class UpdateFieldNode extends UpdateNode implements RSyntaxNode 
 
     @Child private CastListNode castList;
 
+    @Specialization(guards = "isObject(container)")
+    protected Object accessField(VirtualFrame frame, RAbstractContainer container, Object value, String field) {
+        if (dcn == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            dcn = insert(new UseMethodInternalNode("$<-", ArgumentsSignature.get("", "", "")));
+        }
+        try {
+            return dcn.execute(frame, container.getClassHierarchy(), new Object[]{container, field, value});
+        } catch (S3FunctionLookupNode.NoGenericMethodException e) {
+            return accessRecursive(frame, container, value, field);
+        }
+    }
+
     @Specialization(guards = "!isNull(value)")
-    protected Object updateField(RList object, Object value) {
+    protected Object updateField(RList object, Object value, String field) {
         RStringVector names = object.getNames(attrProfiles);
         int index = -1;
-        String field = getField();
         if (hasNamesProfile.profile(names != null)) {
             index = getElementIndexByName(names, field);
             if (index == -1) {
@@ -108,10 +138,9 @@ public abstract class UpdateFieldNode extends UpdateNode implements RSyntaxNode 
     }
 
     @Specialization(guards = "isNull(value)")
-    protected Object updateFieldNullValue(RList object, @SuppressWarnings("unused") Object value) {
+    protected Object updateFieldNullValue(RList object, @SuppressWarnings("unused") Object value, String field) {
         RStringVector names = object.getNames(attrProfiles);
         int index = -1;
-        String field = getField();
         if (hasNamesProfile.profile(names != null)) {
             index = getElementIndexByName(names, field);
             if (index == -1) {
@@ -157,10 +186,10 @@ public abstract class UpdateFieldNode extends UpdateNode implements RSyntaxNode 
     }
 
     @Specialization
-    protected Object updateField(REnvironment env, Object value) {
+    protected Object updateField(REnvironment env, Object value, String field) {
         // reference semantics for environments
         try {
-            env.put(getField(), value);
+            env.put(field, value);
         } catch (PutException ex) {
             throw RError.error(getEncapsulatingSourceSection(), ex);
         }
@@ -168,16 +197,16 @@ public abstract class UpdateFieldNode extends UpdateNode implements RSyntaxNode 
     }
 
     @Specialization
-    protected Object updateField(VirtualFrame frame, RAbstractVector object, Object value) {
+    protected Object updateField(VirtualFrame frame, RAbstractVector object, Object value, String field) {
         if (castList == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castList = insert(CastListNodeGen.create(null, true, true, false));
         }
         RError.warning(getEncapsulatingSourceSection(), RError.Message.COERCING_LHS_TO_LIST);
         if (nullValueProfile.profile(value == RNull.instance)) {
-            return updateFieldNullValue(castList.executeList(frame, object), value);
+            return updateFieldNullValue(castList.executeList(frame, object), value, field);
         } else {
-            return updateField(castList.executeList(frame, object), value);
+            return updateField(castList.executeList(frame, object), value, field);
         }
     }
 
@@ -189,7 +218,7 @@ public abstract class UpdateFieldNode extends UpdateNode implements RSyntaxNode 
     public void deparse(RDeparse.State state) {
         RSyntaxNode.cast(getObject()).deparse(state);
         state.append('$');
-        state.append(getField());
+        RSyntaxNode.cast(getField()).deparse(state);
         state.append(" <- ");
         RSyntaxNode.cast(getValue()).deparse(state);
     }
@@ -204,7 +233,7 @@ public abstract class UpdateFieldNode extends UpdateNode implements RSyntaxNode 
         state.openPairList(SEXPTYPE.LISTSXP);
         state.serializeNodeSetCar(getObject());
         state.openPairList(SEXPTYPE.LISTSXP);
-        state.setCarAsSymbol(getField());
+        state.serializeNodeSetCar(getField());
         state.linkPairList(2);
         state.setCdr(state.closePairList());
         // end field access
@@ -213,6 +242,10 @@ public abstract class UpdateFieldNode extends UpdateNode implements RSyntaxNode 
         state.serializeNodeSetCar(getValue());
         state.linkPairList(2);
         state.setCdr(state.closePairList());
+    }
+
+    protected boolean isObject(RAbstractContainer container) {
+        return container.isObject(attrProfiles) && forObjects;
     }
 
 }
