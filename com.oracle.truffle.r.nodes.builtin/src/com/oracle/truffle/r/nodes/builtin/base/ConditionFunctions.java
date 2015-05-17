@@ -27,7 +27,7 @@ import com.oracle.truffle.r.runtime.env.*;
  * Condition handling. Derived from GnUR src/main/errors.c
  */
 public class ConditionFunctions {
-    public abstract static class Adapter extends RInvisibleBuiltinNode {
+    public abstract static class Adapter extends RBuiltinNode {
         protected final BranchProfile errorProfile = BranchProfile.create();
 
     }
@@ -52,7 +52,7 @@ public class ConditionFunctions {
         @SuppressWarnings("unused")
         @Specialization
         protected Object addCondHands(Object classesObj, Object handlersObj, REnvironment parentEnv, Object target, byte calling) {
-            controlVisibility();
+            forceVisibility(false);
             if (nullArgs.profile(classesObj == RNull.instance || handlersObj == RNull.instance)) {
                 return getHandlerStack();
             }
@@ -73,7 +73,7 @@ public class ConditionFunctions {
         @SuppressWarnings("unused")
         @Specialization
         protected RNull resetCondHands(Object stack) {
-            controlVisibility();
+            forceVisibility(false);
             // TODO
             throw RInternalError.unimplemented();
         }
@@ -134,7 +134,7 @@ public class ConditionFunctions {
     public abstract static class Seterrmessage extends Adapter {
         @Specialization
         protected RNull seterrmessage(RAbstractStringVector msg) {
-            controlVisibility();
+            forceVisibility(false);
             RErrorHandling.seterrmessage(msg.getDataAt(0));
             return RNull.instance;
         }
@@ -164,7 +164,7 @@ public class ConditionFunctions {
     public abstract static class PrintDeferredWarnings extends Adapter {
         @Specialization
         protected RNull printDeferredWarnings() {
-            controlVisibility();
+            forceVisibility(false);
             RErrorHandling.printDeferredWarnings();
             return RNull.instance;
         }
