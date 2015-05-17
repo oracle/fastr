@@ -133,11 +133,11 @@ public final class UnaryMapNode extends Node {
             }
             vectorNode.apply(scalarNode, store, operandCast, operandLength);
             RNode.reportWork(this, operandLength);
+            target.setComplete(scalarNode.isComplete());
         }
         if (mayContainMetadata) {
             target = handleMetadata(target, operand);
         }
-        target.setComplete(scalarNode.isComplete());
         return target;
     }
 

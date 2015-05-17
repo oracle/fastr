@@ -249,11 +249,11 @@ public final class BinaryMapNode extends Node {
 
             vectorNode.execute(function, store, leftCast, leftLength, rightCast, rightLength);
             RNode.reportWork(this, maxLength);
+            target.setComplete(function.isComplete());
         }
         if (mayContainMetadata) {
             target = handleMetadata(target, left, leftLength, right, rightLength);
         }
-        target.setComplete(function.isComplete());
         return target;
     }
 
