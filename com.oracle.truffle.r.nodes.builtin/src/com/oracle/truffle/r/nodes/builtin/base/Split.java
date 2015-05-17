@@ -79,7 +79,7 @@ public abstract class Split extends RBuiltinNode {
         // assemble result vectors and level names
         Object[] results = new Object[nLevels];
         for (int i = 0; i < nLevels; i++) {
-            results[i] = RDataFactory.createIntVector(Arrays.copyOfRange(collectResults[i], 0, collectResultSize[i]), RDataFactory.COMPLETE_VECTOR);
+            results[i] = RDataFactory.createIntVector(Arrays.copyOfRange(collectResults[i], 0, collectResultSize[i]), x.isComplete());
         }
 
         return RDataFactory.createList(results, makeNames(frame, f));
@@ -175,7 +175,7 @@ public abstract class Split extends RBuiltinNode {
         // assemble result vectors and level names
         Object[] results = new Object[nLevels];
         for (int i = 0; i < nLevels; i++) {
-            results[i] = RDataFactory.createLogicalVector(Arrays.copyOfRange(collectResults[i], 0, collectResultSize[i]), RDataFactory.COMPLETE_VECTOR);
+            results[i] = RDataFactory.createLogicalVector(Arrays.copyOfRange(collectResults[i], 0, collectResultSize[i]), x.isComplete());
         }
 
         return RDataFactory.createList(results, makeNames(frame, f));
