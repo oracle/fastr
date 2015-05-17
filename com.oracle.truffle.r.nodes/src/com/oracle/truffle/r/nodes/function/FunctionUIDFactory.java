@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,7 +28,7 @@ public abstract class FunctionUIDFactory {
     private static final String FACTORY_CLASS_PROPERTY = "fastr.fuid.factory.class";
     private static final String PACKAGE_PREFIX = "com.oracle.truffle.r.nodes.function.";
     private static final String SUFFIX = "FunctionUIDFactory";
-    private static final String DEFAULT_FACTORY = "uuid";
+    private static final String DEFAULT_FACTORY = "along";
     private static final String DEFAULT_FACTORY_CLASS = mapSimpleName(DEFAULT_FACTORY);
 
     private static String mapSimpleName(String simpleName) {
