@@ -50,7 +50,7 @@ public class AttachFunctions {
         @Specialization
         protected REnvironment doAttach(@SuppressWarnings("unused") RNull what, RAbstractIntVector pos, RAbstractStringVector name) {
             controlVisibility();
-            REnvironment env = RDataFactory.createNewEnv(name.getDataAt(0));
+            REnvironment env = RDataFactory.createNewEnv(null, name.getDataAt(0));
             doAttachEnv(pos.getDataAt(0), env);
             return env;
         }
@@ -58,7 +58,7 @@ public class AttachFunctions {
         @Specialization
         protected REnvironment doAttach(REnvironment what, RAbstractIntVector pos, RAbstractStringVector name) {
             controlVisibility();
-            REnvironment env = RDataFactory.createNewEnv(name.getDataAt(0));
+            REnvironment env = RDataFactory.createNewEnv(null, name.getDataAt(0));
             RStringVector names = what.ls(true, null, false);
             for (int i = 0; i < names.getLength(); i++) {
                 String key = names.getDataAt(i);
@@ -73,7 +73,7 @@ public class AttachFunctions {
         @Specialization
         protected REnvironment doAttach(RList what, RAbstractIntVector pos, RAbstractStringVector name) {
             controlVisibility();
-            REnvironment env = RDataFactory.createNewEnv(name.getDataAt(0));
+            REnvironment env = RDataFactory.createNewEnv(null, name.getDataAt(0));
             RStringVector names = what.getNames(attrProfiles);
             for (int i = 0; i < names.getLength(); i++) {
                 env.safePut(names.getDataAt(i), what.getDataAt(i));

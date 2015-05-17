@@ -1220,7 +1220,7 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
 
         @Specialization(guards = "isDataFrame(container)")
         RList getDimDataFrame(VirtualFrame frame, RAbstractContainer container) {
-            return RDataFactory.createList(new Object[]{castString(frame, getContainerRowNames(frame, container)), container.getNames(attrProfiles)});
+            return RDataFactory.createList(new Object[]{container.getNames(attrProfiles), castString(frame, getContainerRowNames(frame, container))});
         }
 
         protected boolean isDataFrame(RAbstractContainer container) {

@@ -65,10 +65,10 @@ public abstract class PromiseNode extends RNode {
         this.factory = factory;
     }
 
-    public static RNode createInlined(SourceSection src, RNode expression, Object defaultValue) {
+    public static RNode createInlined(SourceSection src, RNode expression, Object defaultValue, boolean unwrap) {
         CompilerAsserts.neverPartOfCompilation();
         RNode clonedExpression = NodeUtil.cloneNode(expression);
-        RNode pn = clonedExpression instanceof ConstantNode ? clonedExpression : new InlinedSuppliedArgumentNode(clonedExpression, defaultValue);
+        RNode pn = clonedExpression instanceof ConstantNode ? clonedExpression : new InlinedSuppliedArgumentNode(clonedExpression, defaultValue, unwrap);
         pn.assignSourceSection(src);
         return pn;
     }
@@ -211,15 +211,17 @@ public abstract class PromiseNode extends RNode {
         @Child private RNode expression;
         @Child private RNode defaultExpressionCache;
         private final Object defaultValue;
+        private final boolean unwrap;
 
         @Child private PromiseHelperNode promiseHelper;
 
         private final BranchProfile isVarArgProfile = BranchProfile.create();
         private final ConditionProfile isPromiseProfile = ConditionProfile.createBinaryProfile();
 
-        public InlinedSuppliedArgumentNode(RNode expression, Object defaultValue) {
+        public InlinedSuppliedArgumentNode(RNode expression, Object defaultValue, boolean unwrap) {
             this.expression = expression;
             this.defaultValue = defaultValue;
+            this.unwrap = unwrap;
         }
 
         @Override
@@ -227,7 +229,12 @@ public abstract class PromiseNode extends RNode {
             // builtin.inline: We do re-evaluation every execute inside the caller frame, as we
             // know that the evaluation of default values has no side effects (has to be assured by
             // builtin implementations)
-            Object obj = expression.execute(frame);
+            Object obj;
+            if (unwrap && expression instanceof WrapArgumentNode) {
+                obj = ((WrapArgumentNode) expression).getOperand().execute(frame);
+            } else {
+                obj = expression.execute(frame);
+            }
             if (obj == RMissing.instance) {
                 if (defaultExpressionCache == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();

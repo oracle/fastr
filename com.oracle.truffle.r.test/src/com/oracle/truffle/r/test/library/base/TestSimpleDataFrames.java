@@ -135,6 +135,8 @@ public class TestSimpleDataFrames extends TestBase {
 
         assertEval("{ x<-data.frame(a=1:2, b=3:4, c=5:6); x[1, c(1,3)] }");
         assertEval("{ x<-data.frame(c(1,2), c(3,4)); x[1] }");
+
+        assertEval("{ x<-data.frame(a=c(1,2), b=c(3,4)); x[\"a\"] }");
     }
 
     @Test

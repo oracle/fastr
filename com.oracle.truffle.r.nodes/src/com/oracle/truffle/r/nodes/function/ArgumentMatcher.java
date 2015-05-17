@@ -399,7 +399,7 @@ public class ArgumentMatcher {
             }
         }
         if (shouldInlineArgument(builtin, formalIndex)) {
-            return PromiseNode.createInlined(suppliedArg.getSourceSection(), suppliedArg, formals.getInternalDefaultArgumentAt(formalIndex));
+            return PromiseNode.createInlined(suppliedArg.getSourceSection(), suppliedArg, formals.getInternalDefaultArgumentAt(formalIndex), builtin.getKind() == RBuiltinKind.PRIMITIVE);
         } else {
             Closure closure = closureCache.getOrCreateClosure(suppliedArg);
             return PromiseNode.create(suppliedArg.getSourceSection(), RPromiseFactory.create(PromiseType.ARG_SUPPLIED, closure), noOpt);

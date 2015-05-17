@@ -33,8 +33,9 @@ public abstract class UnClass extends RBuiltinNode {
         if (arg.isObject(attrProfiles)) {
             objectProfile.enter();
             RVector resultVector = arg.materialize();
-            if (resultVector.isShared()) {
+            if (!resultVector.isTemporary()) {
                 resultVector = resultVector.copy();
+                resultVector.markNonTemporary();
             }
             return RVector.setVectorClassAttr(resultVector, null, null, null);
         }
@@ -46,8 +47,9 @@ public abstract class UnClass extends RBuiltinNode {
     protected Object unClass(RDataFrame arg) {
         controlVisibility();
         RDataFrame resultFrame = arg;
-        if (resultFrame.isShared()) {
+        if (!resultFrame.isTemporary()) {
             resultFrame = resultFrame.copy();
+            resultFrame.markNonTemporary();
         }
         return RVector.setVectorClassAttr(resultFrame.getVector(), null, arg, null);
     }
@@ -56,10 +58,11 @@ public abstract class UnClass extends RBuiltinNode {
     @TruffleBoundary
     protected Object unClass(RFactor arg) {
         controlVisibility();
-        RFactor resultFrame = arg;
-        if (resultFrame.isShared()) {
-            resultFrame = resultFrame.copy();
+        RFactor resultFactor = arg;
+        if (!resultFactor.isTemporary()) {
+            resultFactor = resultFactor.copy();
+            resultFactor.markNonTemporary();
         }
-        return RVector.setVectorClassAttr(resultFrame.getVector(), null, null, arg);
+        return RVector.setVectorClassAttr(resultFactor.getVector(), null, null, arg);
     }
 }

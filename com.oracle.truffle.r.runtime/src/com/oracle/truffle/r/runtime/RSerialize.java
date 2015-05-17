@@ -325,7 +325,7 @@ public class RSerialize {
                      */
                     int locked = stream.readInt();
                     Object enclos = readItem();
-                    REnvironment env = RDataFactory.createNewEnv(enclos == RNull.instance ? REnvironment.baseEnv() : (REnvironment) enclos, 0);
+                    REnvironment env = RDataFactory.createNewEnv(enclos == RNull.instance ? REnvironment.baseEnv() : (REnvironment) enclos, null);
                     addReadRef(env);
                     Object frame = readItem();
                     Object hashtab = readItem();
@@ -422,7 +422,7 @@ public class RSerialize {
                              * there (and overwrite the promise), so we fix the enclosing frame up
                              * on return.
                              */
-                            RFunction func = (RFunction) RContext.getEngine().eval(expr, RDataFactory.createNewEnv(REnvironment.emptyEnv(), 0), frameDepth + 1);
+                            RFunction func = (RFunction) RContext.getEngine().eval(expr, RDataFactory.createNewEnv(REnvironment.emptyEnv(), null), frameDepth + 1);
                             func.setEnclosingFrame(((REnvironment) rpl.getTag()).getFrame());
                             Source source = func.getRootNode().getSourceSection().getSource();
                             if (!source.getName().startsWith(UNKNOWN_PACKAGE_SOURCE_PREFIX)) {

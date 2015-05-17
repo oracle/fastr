@@ -26,7 +26,6 @@ import static com.oracle.truffle.r.runtime.RRuntime.*;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -212,7 +211,6 @@ public final class NACheck {
         return RRuntime.intToStringNoCheck(right);
     }
 
-    @TruffleBoundary
     public double convertStringToDouble(String value) {
         if (check(value)) {
             return RRuntime.DOUBLE_NA;

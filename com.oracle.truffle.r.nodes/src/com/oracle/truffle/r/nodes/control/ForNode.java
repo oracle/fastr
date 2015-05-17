@@ -154,7 +154,7 @@ public final class ForNode extends AbstractLoopNode implements VisibilityControl
             } catch (ParseException ex) {
                 throw RInternalError.shouldNotReachHere();
             }
-            REnvironment env = RDataFactory.createNewEnv("dummy");
+            REnvironment env = RDataFactory.createNewHashEnv(null, 0);
             env.safePut("i", RDataFactory.createLanguage(ReadVariableNode.create(indexName, false)));
             env.safePut("x", RDataFactory.createLanguage(ReadVariableNode.create(rangeName, false)));
             return indexNode.substitute(env).asRNode();

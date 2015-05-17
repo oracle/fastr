@@ -209,7 +209,6 @@ public class RASTUtils {
             return RCallNode.createCall(null, (RCallNode) fn, callArgsNode, null);
         } else {
             // some value that we cannot represent (from substitute)
-            System.out.println(fn + " " + fn.getClass().getSimpleName());
             throw RError.error(RError.Message.IMPOSSIBLE_SUBSTITUTE);
         }
     }

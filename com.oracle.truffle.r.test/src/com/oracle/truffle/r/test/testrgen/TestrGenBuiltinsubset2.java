@@ -34,7 +34,7 @@ public class TestrGenBuiltinsubset2 extends TestBase {
 
     @Test
     public void testsubset24() {
-        assertEval(Ignored.Unknown, "argv <- list(NULL, NULL);.subset2(argv[[1]],argv[[2]]);");
+        assertEval("argv <- list(NULL, NULL);.subset2(argv[[1]],argv[[2]]);");
     }
 
     @Test
