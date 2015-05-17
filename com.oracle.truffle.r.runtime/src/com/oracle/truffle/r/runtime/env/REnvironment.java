@@ -253,7 +253,8 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
      * differs, referring to {@code globalFrame}.
      */
     public static void baseInitialize(MaterializedFrame baseFrame, MaterializedFrame initialGlobalFrame) {
-        namespaceRegistry = RDataFactory.createNewEnv(null, null);
+        // TODO is this ever used in an eval?
+        namespaceRegistry = RDataFactory.createInternalEnv();
         baseEnv = new Base(baseFrame, initialGlobalFrame);
         RContext.getREnvironmentState().setSearchPath(createGlobalAndSearchPath(initialGlobalFrame));
     }
@@ -462,7 +463,7 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
      */
     @TruffleBoundary
     public static REnvironment createFromList(RAttributeProfiles attrProfiles, RList list, REnvironment parent) {
-        REnvironment result = RDataFactory.createNewHashEnv(parent, 0);
+        REnvironment result = RDataFactory.createNewEnv(parent, null, false, 0);
         RStringVector names = list.getNames(attrProfiles);
         for (int i = 0; i < list.getLength(); i++) {
             try {
@@ -813,17 +814,21 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
     }
 
     /**
-     * An environment explicitly created with, typically, {@code new.env}. Such environments are
-     * always {@link #UNNAMED} but can be given a {@value #NAME_ATTR_KEY}.
+     * An environment explicitly created with, typically, {@code new.env}, but also used internally.
+     * Such environments are always {@link #UNNAMED} but can later be given a name as an attribute.
+     * This is the class used by the {@code new.env} function. We record but do not interpret the
+     * {@code hash} input, as we always use a hashmap, for possible use by the serialization code
+     * (GnuR generates different output format for hash environments).
+     *
      */
     public static final class NewEnv extends REnvironment {
+        private final boolean hash;
+        private final int size;
 
-        /**
-         * Constructor for the {@code new.env} function. Should only be called from
-         * {@link RDataFactory}.
-         */
-        public NewEnv(REnvironment parent, MaterializedFrame frame, String name) {
+        public NewEnv(REnvironment parent, MaterializedFrame frame, String name, boolean hash, int size) {
             super(parent, UNNAMED, frame);
+            this.hash = hash;
+            this.size = size;
             if (parent != null) {
                 RArguments.setEnclosingFrame(frame, parent.getFrame());
             }
@@ -832,23 +837,24 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
             }
         }
 
-        public REnvMapFrameAccess getFrameAccess() {
-            return (REnvMapFrameAccess) frameAccess;
+        public boolean hashed() {
+            return hash;
         }
+
+        public int createdSize() {
+            return size;
+        }
+
     }
 
     /**
-     * An environment explicitly created with, typically, {@code new.env}. Such environments are
-     * always {@link #UNNAMED} but can be given a {@value #NAME_ATTR_KEY}.
+     * A temporary environment used to perform internal operations, e.g. {@code substitute}. Such an
+     * environment must never escape into the R world as it does not support {@code eval}.
      */
-    public static final class NewHashEnv extends REnvironment implements UsesREnvMap {
+    public static final class NewInternalEnv extends REnvironment implements UsesREnvMap {
 
-        /**
-         * Constructor for the {@code new.env} function. Should only be called from
-         * {@link RDataFactory}.
-         */
-        public NewHashEnv(REnvironment parent, int size) {
-            super(parent, UNNAMED, new REnvMapFrameAccess(size));
+        public NewInternalEnv() {
+            super(null, UNNAMED, new REnvMapFrameAccess(0));
         }
 
         public REnvMapFrameAccess getFrameAccess() {

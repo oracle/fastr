@@ -36,6 +36,7 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.builtin.base.EnvFunctionsFactory.CopyNodeGen;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseDeoptimizeFrameNode;
+import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -244,20 +245,21 @@ public class EnvFunctions {
     @RBuiltin(name = "new.env", kind = INTERNAL, parameterNames = {"hash", "parent", "size"})
     public abstract static class NewEnv extends RBuiltinNode {
 
+        @CreateCast("arguments")
+        protected RNode[] castArguments(RNode[] arguments) {
+            arguments[2] = CastIntegerNodeGen.create(arguments[2], false, false, false);
+            return arguments;
+        }
+
         @Specialization
-        protected REnvironment newEnv(@SuppressWarnings("unused") byte hash, REnvironment parent, @SuppressWarnings("unused") int size) {
+        protected REnvironment newEnv(byte hash, REnvironment parent, int size) {
             controlVisibility();
-            /*
-             * "hash" is ignored here: the only important distinction for us would be whether an
-             * environment is used for running code in it or as a data object. unfortunately, this
-             * cannot be derived from the "hash" parameter.
-             */
-            return createEnvironment(parent);
+            return createEnvironment(parent, RRuntime.fromLogical(hash), size);
         }
 
         @TruffleBoundary
-        private static REnvironment createEnvironment(REnvironment parent) {
-            return RDataFactory.createNewEnv(parent, null);
+        private static REnvironment createEnvironment(REnvironment parent, boolean hash, int size) {
+            return RDataFactory.createNewEnv(parent, null, hash, size);
         }
     }
 

@@ -325,11 +325,14 @@ public class RSerialize {
                      */
                     int locked = stream.readInt();
                     Object enclos = readItem();
-                    REnvironment env = RDataFactory.createNewEnv(enclos == RNull.instance ? REnvironment.baseEnv() : (REnvironment) enclos, null);
-                    addReadRef(env);
+                    REnvironment enclosing = enclos == RNull.instance ? REnvironment.baseEnv() : (REnvironment) enclos;
                     Object frame = readItem();
+                    boolean hashed = frame == RNull.instance;
+                    REnvironment env;
                     Object hashtab = readItem();
-                    if (frame == RNull.instance) {
+                    if (hashed) {
+                        env = RDataFactory.createNewEnv(enclosing, null, true, ((RList) hashtab).getLength());
+                        addReadRef(env);
                         RList hashList = (RList) hashtab;
                         // GnuR sizes its hash tables, empty slots indicated by RNull
                         for (int i = 0; i < hashList.getLength(); i++) {
@@ -341,6 +344,8 @@ public class RSerialize {
                             env.safePut(((RSymbol) pl.getTag()).getName(), pl.car());
                         }
                     } else {
+                        env = RDataFactory.createNewEnv(enclosing, null);
+                        addReadRef(env);
                         while (frame != RNull.instance) {
                             RPairList pl = (RPairList) frame;
                             env.safePut(((RSymbol) pl.getTag()).getName(), pl.car());

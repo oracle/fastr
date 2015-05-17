@@ -104,7 +104,7 @@ public abstract class Lapply extends RBuiltinNode {
             } catch (ParseException ex) {
                 throw RInternalError.shouldNotReachHere();
             }
-            REnvironment env = RDataFactory.createNewHashEnv(null, 0);
+            REnvironment env = RDataFactory.createInternalEnv();
             env.safePut("i", RDataFactory.createLanguage(ReadVariableNode.create(INDEX_NAME, false)));
             return indexNode.substitute(env).asRNode();
         }
