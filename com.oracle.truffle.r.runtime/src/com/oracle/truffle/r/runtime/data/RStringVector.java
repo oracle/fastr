@@ -119,8 +119,9 @@ public final class RStringVector extends RVector implements RAbstractStringVecto
         }
         data[i] = right;
         if (rightNACheck.check(right)) {
-            complete = false;
+            setComplete(false);
         }
+        assert !isComplete() || !RRuntime.isNA(right);
         return this;
     }
 

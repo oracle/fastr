@@ -162,8 +162,9 @@ public final class RComplexVector extends RVector implements RAbstractComplexVec
         data[index] = right.getRealPart();
         data[index + 1] = right.getImaginaryPart();
         if (rightNACheck.check(right)) {
-            complete = false;
+            setComplete(false);
         }
+        assert !isComplete() || !RRuntime.isNA(right);
         return this;
     }
 

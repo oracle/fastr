@@ -160,8 +160,9 @@ public final class RIntVector extends RVector implements RAbstractIntVector, RAc
         assert !this.isShared();
         data[i] = right;
         if (valueNACheck.check(right)) {
-            complete = false;
+            setComplete(false);
         }
+        assert !isComplete() || !RRuntime.isNA(right);
         return this;
     }
 

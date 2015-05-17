@@ -164,6 +164,7 @@ public final class RDoubleVector extends RVector implements RAbstractDoubleVecto
         if (valueNACheck.check(right)) {
             complete = false;
         }
+        assert !isComplete() || !RRuntime.isNA(right);
         return this;
     }
 

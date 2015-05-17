@@ -133,8 +133,9 @@ public final class RLogicalVector extends RVector implements RAbstractLogicalVec
         assert !this.isShared();
         data[index] = right;
         if (valueNACheck.check(right)) {
-            complete = false;
+            setComplete(false);
         }
+        assert !isComplete() || !RRuntime.isNA(right);
         return this;
     }
 
