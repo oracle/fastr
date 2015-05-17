@@ -30,7 +30,6 @@ import java.util.*;
 
 import jline.console.*;
 
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.engine.*;
 import com.oracle.truffle.r.runtime.*;
@@ -145,11 +144,11 @@ public class RCommand {
             // long start = System.currentTimeMillis();
             consoleHandler = new JLineConsoleHandler(isInteractive, consoleReader);
         }
-        MaterializedFrame globalFrame = readEvalPrint(consoleHandler, args, filePath);
+        readEvalPrint(consoleHandler, args, filePath);
         // We should only reach here if interactive == false
         // Need to call quit explicitly
         Source quitSource = Source.fromText("quit(\"default\", 0L, TRUE)", "<quit_file>");
-        RContext.getEngine().parseAndEval(quitSource, globalFrame, false, false);
+        RContext.getEngine().parseAndEval(quitSource, false, false);
         // never returns
         assert false;
     }
@@ -166,11 +165,10 @@ public class RCommand {
         throw Utils.exit(0);
     }
 
-    private static MaterializedFrame readEvalPrint(ConsoleHandler consoleHandler, String[] commandArgs, String filePath) {
+    private static void readEvalPrint(ConsoleHandler consoleHandler, String[] commandArgs, String filePath) {
         String inputDescription = filePath == null ? "<shell_input>" : filePath;
         Source source = Source.fromNamedAppendableText(inputDescription);
         RContextFactory.createContext(commandArgs, consoleHandler);
-        MaterializedFrame globalFrame = RContext.getREnvironmentState().getGlobalFrame();
         try {
             // console.println("initialize time: " + (System.currentTimeMillis() - start));
             for (;;) {
@@ -178,7 +176,7 @@ public class RCommand {
                 consoleHandler.setPrompt(doEcho ? "> " : null);
                 String input = consoleHandler.readLine();
                 if (input == null) {
-                    return globalFrame;
+                    return;
                 }
                 // Start index of the new input
                 int startLength = source.getLength();
@@ -193,11 +191,11 @@ public class RCommand {
                 try {
                     String continuePrompt = getContinuePrompt();
                     Source subSource = Source.subSource(source, startLength);
-                    while (RContext.getEngine().parseAndEval(subSource, globalFrame, true, true) == Engine.INCOMPLETE_SOURCE) {
+                    while (RContext.getEngine().parseAndEval(subSource, true, true) == Engine.INCOMPLETE_SOURCE) {
                         consoleHandler.setPrompt(doEcho ? continuePrompt : null);
                         String additionalInput = consoleHandler.readLine();
                         if (additionalInput == null) {
-                            return globalFrame;
+                            return;
                         }
                         source.appendCode(additionalInput);
                         subSource = Source.subSource(source, startLength);
@@ -211,7 +209,6 @@ public class RCommand {
         } catch (UserInterruptException e) {
             // interrupted
         }
-        return globalFrame;
     }
 
     private static boolean doEcho() {

@@ -24,21 +24,12 @@ package com.oracle.truffle.r.test.library.base;
 
 import org.junit.*;
 
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.test.*;
 
 /**
- * Tests for error handling, i.e., setting error handlers using {@code options(error=...)}. The
- * tests in this class reset the {@code error} option to keep the error handler from sticking around
- * and irritating later-running tests that involve errors.
+ * Tests for error handling, i.e., setting error handlers using {@code options(error=...)}.
  */
 public class TestSimpleErrorHandling extends TestBase {
-
-    @Override
-    protected void afterMicroTest() {
-        RContext.getROptionsState().setValueNoCheck("error", RNull.instance);
-    }
 
     @Test
     public void testError() {

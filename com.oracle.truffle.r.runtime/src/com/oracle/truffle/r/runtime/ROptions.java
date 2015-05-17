@@ -41,27 +41,50 @@ public class ROptions implements RContext.StateFactory {
     }
 
     private static class ContextStateImpl implements ContextState {
+        /**
+         * The current values for a given context.
+         */
+        private final HashMap<String, Object> map;
 
-        private ROptions options;
-
-        ContextStateImpl(ROptions options) {
-            this.options = options;
+        ContextStateImpl(HashMap<String, Object> map) {
+            this.map = map;
         }
 
         public Set<Entry<String, Object>> getValues() {
-            return options.getValues();
+            Set<Map.Entry<String, Object>> result = new HashSet<>();
+            for (Map.Entry<String, Object> entry : map.entrySet()) {
+                if (entry.getValue() != null) {
+                    result.add(entry);
+                }
+            }
+            return result;
         }
 
         public Object getValue(String name) {
-            return options.getValue(name);
+            Object value = map.get(name);
+            if (value == null) {
+                value = RNull.instance;
+            }
+            return value;
         }
 
         public Object setValueNoCheck(String name, Object value) {
-            return options.setValueNoCheck(name, value);
+            Object previous = map.get(name);
+            assert value != null;
+            if (value == RNull.instance) {
+                map.remove(name);
+            } else {
+                map.put(name, value);
+            }
+            return previous;
         }
 
         public Object setValue(String name, Object value) throws OptionsException {
-            return options.setValue(name, value);
+            Object coercedValue = value;
+            if (CHECKED_OPTIONS_SET.contains(name)) {
+                coercedValue = check(name, value);
+            }
+            return setValueNoCheck(name, coercedValue);
         }
 
     }
@@ -87,11 +110,7 @@ public class ROptions implements RContext.StateFactory {
      * Holds the default values on startup of an {@link RContext}.
      */
     private static final HashMap<String, Object> defaultsMap = new HashMap<>();
-
-    /**
-     * The current values for a given context.
-     */
-    private final HashMap<String, Object> map = new HashMap<>();
+    private static HashMap<String, Object> systemInitMap;
 
     private static void initDefaults() {
         for (String s : CHECKED_OPTIONS) {
@@ -123,51 +142,22 @@ public class ROptions implements RContext.StateFactory {
         if (defaultsMap.isEmpty()) {
             initDefaults();
         }
-        map.putAll(defaultsMap);
-        return new ContextStateImpl(this);
+        HashMap<String, Object> map = new HashMap<>();
+        map.putAll(systemInitMap == null ? defaultsMap : systemInitMap);
+        return new ContextStateImpl(map);
+    }
+
+    @Override
+    public void systemInitialized(RContext context, RContext.ContextState state) {
+        ContextStateImpl optionsState = (ContextStateImpl) state;
+        systemInitMap = new HashMap<>(optionsState.map.size());
+        systemInitMap.putAll(optionsState.map);
     }
 
     private static boolean optionFromEnvVar(String envVar) {
         String envValue = REnvVars.get(envVar);
         return envValue != null && envValue.equals("yes");
 
-    }
-
-    public Set<Map.Entry<String, Object>> getValues() {
-        Set<Map.Entry<String, Object>> result = new HashSet<>();
-        for (Map.Entry<String, Object> entry : map.entrySet()) {
-            if (entry.getValue() != null) {
-                result.add(entry);
-            }
-        }
-        return result;
-    }
-
-    public Object getValue(String name) {
-        Object value = map.get(name);
-        if (value == null) {
-            value = RNull.instance;
-        }
-        return value;
-    }
-
-    public Object setValue(String name, Object value) throws OptionsException {
-        Object coercedValue = value;
-        if (CHECKED_OPTIONS_SET.contains(name)) {
-            coercedValue = check(name, value);
-        }
-        return setValueNoCheck(name, coercedValue);
-    }
-
-    public Object setValueNoCheck(String name, Object value) {
-        Object previous = map.get(name);
-        assert value != null;
-        if (value == RNull.instance) {
-            map.remove(name);
-        } else {
-            map.put(name, value);
-        }
-        return previous;
     }
 
     private static Object check(String name, Object value) throws OptionsException {

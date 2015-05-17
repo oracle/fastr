@@ -167,6 +167,11 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
         void remove(int index) {
             list.remove(index);
         }
+
+        void updateGlobal(Global globalEnv) {
+            list.set(0, globalEnv);
+        }
+
     }
 
     private static final REnvFrameAccess defaultFrameAccess = new REnvFrameAccessBindingsAdapter();
@@ -253,19 +258,36 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
      * differs, referring to {@code globalFrame}.
      */
     public static void baseInitialize(MaterializedFrame baseFrame, MaterializedFrame initialGlobalFrame) {
-        // TODO is this ever used in an eval?
+        // TODO is namespaceRegistry ever used in an eval?
         namespaceRegistry = RDataFactory.createInternalEnv();
         baseEnv = new Base(baseFrame, initialGlobalFrame);
-        RContext.getREnvironmentState().setSearchPath(createGlobalAndSearchPath(initialGlobalFrame));
+        Global globalEnv = new Global(baseEnv, initialGlobalFrame);
+        baseEnv.namespaceEnv.parent = globalEnv;
+        RContext.getREnvironmentState().setSearchPath(initSearchList(globalEnv));
     }
 
+    /**
+     * {@link RContext} creation, with {@code globalFrame}. If {@link #baseEnv} is {@code null} then
+     * this is the initial context and we only create the minimal search path with no packages.
+     * Otherwise, in the (default) shared packages mode, we keep the existing search path, just
+     * replacing the {@code globalenv} component.
+     */
     private static ContextState createContext(MaterializedFrame globalFrame) {
         SearchPath sp;
         if (baseEnv != null) {
             NSBaseMaterializedFrame nsBaseFrame = (NSBaseMaterializedFrame) baseEnv.namespaceEnv.frameAccess.getFrame();
+            MaterializedFrame prevGlobalFrame = RArguments.getEnclosingFrame(nsBaseFrame);
+            Global prevGlobalEnv = (Global) RArguments.getEnvironment(prevGlobalFrame);
             nsBaseFrame.updateGlobalFrame(globalFrame);
-            sp = createGlobalAndSearchPath(globalFrame);
-            baseEnv.safePut(".GlobalEnv", RArguments.getEnvironment(globalFrame));
+            /*
+             * To share the existing package structure, we create the new globalEnv with the parent
+             * of the previous global env. Then we create a copy of the SearchPath and patch the
+             * global entry.
+             */
+            Global newGlobalEnv = new Global(prevGlobalEnv.parent, globalFrame);
+            sp = initSearchList(prevGlobalEnv);
+            sp.updateGlobal(newGlobalEnv);
+            baseEnv.safePut(".GlobalEnv", newGlobalEnv);
         } else {
             // set by baseInitialize
             sp = new SearchPath();
@@ -273,13 +295,7 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
         return new ContextStateImpl(globalFrame, sp);
     }
 
-    private static SearchPath createGlobalAndSearchPath(MaterializedFrame globalFrame) {
-        REnvironment globalEnv = new Global(baseEnv, globalFrame);
-        baseEnv.namespaceEnv.parent = globalEnv;
-        return initSearchList(globalEnv);
-    }
-
-    private static SearchPath initSearchList(REnvironment globalEnv) {
+    private static SearchPath initSearchList(Global globalEnv) {
         SearchPath searchPath = new SearchPath();
         REnvironment env = globalEnv;
         do {

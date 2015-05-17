@@ -167,6 +167,7 @@ public final class REngine implements RContext.Engine {
                 checkAndRunStartupFunction(".First.sys");
                 RBuiltinPackages.loadDefaultPackageOverrides();
             }
+            context.systemInitialized();
             sharedInitialized = true;
         }
     }
@@ -222,22 +223,9 @@ public final class REngine implements RContext.Engine {
         }
     }
 
-    /**
-     * TODO retire this method by having each test run in its own context.
-     */
     @Override
-    public Object parseAndEvalTest(String rscript, boolean printResult) throws RecognitionException {
-        // We first remove all the definitions from the previous test
-        for (FrameSlot slot : globalFrame.getFrameDescriptor().getSlots()) {
-            FrameSlotChangeMonitor.setObjectAndInvalidate(globalFrame, slot, null, true, null);
-        }
-        try {
-            return parseAndEvalImpl(Source.fromText(rscript, "<test_input>"), globalFrame, printResult, false);
-        } catch (RInternalError e) {
-            context.getConsoleHandler().printErrorln("FastR internal error: " + e.getMessage());
-            RInternalError.reportError(e);
-            throw e;
-        }
+    public Object parseAndEval(Source source, boolean printResult, boolean allowIncompleteSource) {
+        return parseAndEval(source, globalFrame, printResult, allowIncompleteSource);
     }
 
     private Object parseAndEvalImpl(Source source, MaterializedFrame frame, boolean printResult, boolean allowIncompleteSource) throws RecognitionException {

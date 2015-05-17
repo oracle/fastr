@@ -146,6 +146,15 @@ public final class RContext extends ExecutionContext {
          * @param objects additional arguments for custom initialization, typically empty
          */
         ContextState newContext(RContext context, Object... objects);
+
+        /**
+         * A state factory may want to snapshot the state of the context just after the basic system
+         * is initialized, in which case they can override this method.
+         */
+        @SuppressWarnings("unused")
+        default void systemInitialized(RContext context, ContextState state) {
+
+        }
     }
 
     /**
@@ -197,14 +206,13 @@ public final class RContext extends ExecutionContext {
          */
         Object parseAndEval(Source sourceDesc, MaterializedFrame frame, boolean printResult, boolean allowIncompleteSource);
 
-        Object INCOMPLETE_SOURCE = new Object();
-
         /**
-         *
-         * This is intended for use by the unit test environment, where a "fresh" global environment
-         * is desired for each evaluation.
+         * Variant of {@link #parseAndEval(Source, MaterializedFrame, boolean, boolean)} for
+         * evaluation in the global frame.
          */
-        Object parseAndEvalTest(String rscript, boolean printResult) throws Exception;
+        Object parseAndEval(Source sourceDesc, boolean printResult, boolean allowIncompleteSource);
+
+        Object INCOMPLETE_SOURCE = new Object();
 
         /**
          * Support for the {@code eval} {@code .Internal}.
@@ -403,6 +411,12 @@ public final class RContext extends ExecutionContext {
         assert kind.customCreate;
         assert classState[kind.ordinal()] == null;
         classState[kind.ordinal()] = state;
+    }
+
+    public void systemInitialized() {
+        for (ClassStateKind css : ClassStateKind.VALUES) {
+            css.factory.systemInitialized(this, classState[css.ordinal()]);
+        }
     }
 
     /**

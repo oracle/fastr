@@ -25,6 +25,7 @@ package com.oracle.truffle.r.test.generate;
 import java.util.concurrent.*;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.engine.*;
 import com.oracle.truffle.r.runtime.*;
 
@@ -93,7 +94,6 @@ public final class FastRSession implements RSession {
 
     private static ConsoleHandler consoleHandler;
     private static FastRSession singleton;
-    private static RContext singletonContext;
 
     private EvalThread evalThread;
 
@@ -107,10 +107,7 @@ public final class FastRSession implements RSession {
 
     public static RContext createTestContext() {
         create();
-        if (singletonContext == null) {
-            singletonContext = RContextFactory.createContext(new String[0], consoleHandler);
-        }
-        return singletonContext;
+        return RContextFactory.createContext(new String[0], consoleHandler);
     }
 
     private FastRSession() {
@@ -175,9 +172,7 @@ public final class FastRSession implements RSession {
                 }
                 try {
                     RContext context = createTestContext();
-                    // TODO not needed if context per test
-                    context.addThread();
-                    context.getContextEngine().parseAndEvalTest(expression, true);
+                    context.getContextEngine().parseAndEval(Source.fromText(expression, "<test_input>"), true, false);
                 } catch (RError e) {
                     // nothing to do
                 } catch (Throwable t) {
