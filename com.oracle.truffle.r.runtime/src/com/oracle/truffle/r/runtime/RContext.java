@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.runtime;
 
 import java.util.*;
+import java.util.concurrent.atomic.*;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.*;
@@ -361,8 +362,8 @@ public final class RContext extends ExecutionContext {
     /**
      * Primarily for debugging.
      */
-    private static int nextId;
-    @CompilationFinal private int id;
+    private static final AtomicLong ID = new AtomicLong();
+    @CompilationFinal private long id;
 
     /**
      * A (hopefully) temporary workaround to ignore the setting of {@link #resultVisible} for
@@ -393,7 +394,7 @@ public final class RContext extends ExecutionContext {
     }
 
     private RContext(String[] commandArgs, ConsoleHandler consoleHandler) {
-        this.id = nextId++;
+        this.id = ID.incrementAndGet();
         addThread();
         this.commandArgs = commandArgs;
         this.consoleHandler = consoleHandler;
