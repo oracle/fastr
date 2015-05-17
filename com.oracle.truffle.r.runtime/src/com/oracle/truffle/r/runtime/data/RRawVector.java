@@ -41,6 +41,7 @@ public final class RRawVector extends RVector implements RAbstractRawVector, RAc
     RRawVector(byte[] data, int[] dims, RStringVector names) {
         super(true, data.length, dims, names);
         this.data = data;
+        assert verify();
     }
 
     private RRawVector(byte[] data, int[] dims) {

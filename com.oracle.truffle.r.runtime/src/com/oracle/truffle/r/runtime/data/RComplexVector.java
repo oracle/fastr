@@ -42,6 +42,7 @@ public final class RComplexVector extends RVector implements RAbstractComplexVec
         super(complete, data.length >> 1, dims, names);
         assert data.length % 2 == 0;
         this.data = data;
+        assert verify();
     }
 
     private RComplexVector(double[] data, boolean complete, int[] dims) {

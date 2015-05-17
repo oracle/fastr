@@ -41,6 +41,7 @@ public final class RLogicalVector extends RVector implements RAbstractLogicalVec
     RLogicalVector(byte[] data, boolean complete, int[] dims, RStringVector names) {
         super(complete, data.length, dims, names);
         this.data = data;
+        assert verify();
     }
 
     private RLogicalVector(byte[] data, boolean complete, int[] dims) {

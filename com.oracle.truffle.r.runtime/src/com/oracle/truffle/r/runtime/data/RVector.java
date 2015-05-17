@@ -90,6 +90,7 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
 
     public final void setComplete(boolean complete) {
         this.complete = complete;
+        assert verify();
     }
 
     private void removeAttributeMapping(String key) {

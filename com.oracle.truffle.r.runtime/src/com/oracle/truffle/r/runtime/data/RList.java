@@ -45,6 +45,7 @@ public final class RList extends RVector implements RAbstractVector, RGPBits {
     RList(Object[] data, boolean isComplete, int[] dims, RStringVector names) {
         super(false, data.length, dims, names);
         this.data = data;
+        assert verify();
     }
 
     public RType getRType() {

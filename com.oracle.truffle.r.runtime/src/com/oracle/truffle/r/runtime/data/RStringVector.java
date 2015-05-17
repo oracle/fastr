@@ -40,6 +40,7 @@ public final class RStringVector extends RVector implements RAbstractStringVecto
     RStringVector(String[] data, boolean complete, int[] dims, RStringVector names) {
         super(complete, data.length, dims, names);
         this.data = data;
+        assert verify();
     }
 
     private RStringVector(String[] data, boolean complete, int[] dims) {
