@@ -264,7 +264,7 @@ public class FileFunctions {
                         atime = getTimeInSecs(pfa.lastAccessTime());
                         uname = pfa.owner().getName();
                         grname = pfa.group().getName();
-                        mode = intFilePermissions(pfa.permissions());
+                        mode = Utils.intFilePermissions(pfa.permissions());
                     } catch (IOException ex) {
                         // ok, NA value is used
                     }
@@ -297,26 +297,6 @@ public class FileFunctions {
             } else {
                 return (int) ((FileTime) fileTime).toMillis() / 1000;
             }
-        }
-
-        int intFilePermissions(Set<PosixFilePermission> permissions) {
-            int r = 0;
-            for (PosixFilePermission pfp : permissions) {
-                // @formatter:off
-                switch (pfp) {
-                    case OTHERS_EXECUTE: r |= 1; break;
-                    case OTHERS_WRITE: r |= 2; break;
-                    case OTHERS_READ: r |= 4; break;
-                    case GROUP_EXECUTE: r |= 8; break;
-                    case GROUP_WRITE: r |= 16; break;
-                    case GROUP_READ: r |= 32; break;
-                    case OWNER_EXECUTE: r |= 64; break;
-                    case OWNER_WRITE: r |= 128; break;
-                    case OWNER_READ: r |= 256; break;
-                }
-                // @formatter:on
-            }
-            return r;
         }
 
         private static Object createColumnData(Column column, int vecLength) {

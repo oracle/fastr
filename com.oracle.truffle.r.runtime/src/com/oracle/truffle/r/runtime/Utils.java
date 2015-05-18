@@ -25,6 +25,7 @@ package com.oracle.truffle.r.runtime;
 import java.io.*;
 import java.net.*;
 import java.nio.file.*;
+import java.nio.file.attribute.*;
 import java.util.*;
 
 import com.oracle.truffle.api.*;
@@ -709,6 +710,26 @@ public final class Utils {
             sb.append(Integer.toHexString(ub & 0xF));
         }
         return sb.toString();
+    }
+
+    public static int intFilePermissions(Set<PosixFilePermission> permissions) {
+        int r = 0;
+        for (PosixFilePermission pfp : permissions) {
+            // @formatter:off
+            switch (pfp) {
+                case OTHERS_EXECUTE: r |= 1; break;
+                case OTHERS_WRITE: r |= 2; break;
+                case OTHERS_READ: r |= 4; break;
+                case GROUP_EXECUTE: r |= 8; break;
+                case GROUP_WRITE: r |= 16; break;
+                case GROUP_READ: r |= 32; break;
+                case OWNER_EXECUTE: r |= 64; break;
+                case OWNER_WRITE: r |= 128; break;
+                case OWNER_READ: r |= 256; break;
+            }
+            // @formatter:on
+        }
+        return r;
     }
 
 }

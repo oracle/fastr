@@ -91,6 +91,7 @@ com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/utils/CountFields.
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/utils/Menu.java,gnu_r.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/utils/WriteTable.java,gnu_r.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/tools/ToolsText.java,gnu_r.copyright
+com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/tools/ToolsDirChmod.java,gnu_r.copyright
 com.oracle.truffle.r.parser/src/com/oracle/truffle/r/parser/ParseUtil.java,purdue.copyright
 com.oracle.truffle.r.parser/src/com/oracle/truffle/r/parser/R.g,purdue.copyright
 com.oracle.truffle.r.parser/src/com/oracle/truffle/r/parser/ast/ASTNode.java,purdue.copyright

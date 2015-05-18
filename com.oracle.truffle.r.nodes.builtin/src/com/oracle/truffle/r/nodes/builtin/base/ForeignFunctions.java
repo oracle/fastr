@@ -633,6 +633,21 @@ public class ForeignFunctions {
             return matchName(f, "Rmd5");
         }
 
+        @Specialization(guards = "isDirChmod(f)")
+        protected RNull dirChmod(VirtualFrame frame, @SuppressWarnings("unused") RList f, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName) {
+            RAbstractVector dir = castVector(frame, args.getArgument(0));
+            if (!(dir instanceof RStringVector && ((RStringVector) dir).getLength() == 1)) {
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "dir");
+            }
+            byte gws = castLogical(frame, castVector(frame, args.getArgument(1)));
+            ToolsDirChmod.dirChmod(((RStringVector) dir).getDataAt(0), RRuntime.fromLogical(gws));
+            return RNull.instance;
+        }
+
+        public boolean isDirChmod(RList f) {
+            return matchName(f, "dirchmod");
+        }
+
         @SuppressWarnings("unused")
         @Fallback
         protected Object dotCallFallback(Object fobj, Object args, Object packageName) {
