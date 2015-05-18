@@ -890,6 +890,12 @@ public class TestSimpleBuiltins extends TestBase {
         // FIXME missing warning
         assertEval(Ignored.Unknown, Output.ContainsWarning, "{ matrix(c(1,2,3,4),3,2) }");
         assertEval(Ignored.Unknown, Output.ContainsWarning, "{ matrix(1:4,3,2) }");
+
+        assertEval("{ x<-matrix(integer(), ncol=2) }");
+        assertEval("{ x<-matrix(integer(), nrow=2) }");
+        assertEval("{ x<-matrix(integer(), ncol=2, nrow=3) }");
+        assertEval("{ x<-matrix(integer()) }");
+
     }
 
     @Test

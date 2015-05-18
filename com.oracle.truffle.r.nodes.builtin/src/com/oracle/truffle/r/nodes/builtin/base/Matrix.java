@@ -44,6 +44,7 @@ public abstract class Matrix extends RBuiltinNode {
     private final BinaryConditionProfile nrowMissingNcolGiven = (BinaryConditionProfile) ConditionProfile.createBinaryProfile();
     private final BinaryConditionProfile nrowGivenNcolMissing = (BinaryConditionProfile) ConditionProfile.createBinaryProfile();
     private final BinaryConditionProfile bothNrowNcolMissing = (BinaryConditionProfile) ConditionProfile.createBinaryProfile();
+    private final BinaryConditionProfile empty = (BinaryConditionProfile) ConditionProfile.createBinaryProfile();
 
     private RAbstractVector updateDimNames(VirtualFrame frame, RAbstractVector vector, Object o) {
         if (updateDimNames == null) {
@@ -69,15 +70,27 @@ public abstract class Matrix extends RBuiltinNode {
     protected RAbstractVector matrixbc(RAbstractVector data, int nrow, int ncol, byte byrow, RNull dimnames, byte missingNr, byte missingNc) {
         controlVisibility();
         int[] dim = computeDimByCol(data.getLength(), nrow, ncol, missingNr, missingNc);
-        return data.copyResizedWithDimensions(dim);
+        if (empty.profile(data.getLength() == 0)) {
+            RVector res = data.createEmptySameType(0, RDataFactory.COMPLETE_VECTOR);
+            res.setDimensions(dim);
+            return res;
+        } else {
+            return data.copyResizedWithDimensions(dim);
+        }
     }
 
     @Specialization(guards = "!isTrue(byrow)")
     @SuppressWarnings("unused")
     protected RAbstractVector matrixbc(VirtualFrame frame, RAbstractVector data, int nrow, int ncol, byte byrow, RList dimnames, byte missingNr, byte missingNc) {
         int[] dim = computeDimByCol(data.getLength(), nrow, ncol, missingNr, missingNc);
-        RAbstractVector res = data.copyResizedWithDimensions(dim);
-        res = updateDimNames(frame, res, dimnames);
+        RAbstractVector res;
+        if (empty.profile(data.getLength() == 0)) {
+            res = data.createEmptySameType(0, RDataFactory.COMPLETE_VECTOR);
+            res.setDimensions(dim);
+        } else {
+            res = data.copyResizedWithDimensions(dim);
+            res = updateDimNames(frame, res, dimnames);
+        }
         controlVisibility();
         return res;
     }
@@ -91,7 +104,14 @@ public abstract class Matrix extends RBuiltinNode {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             transpose = insert(TransposeNodeGen.create(new RNode[1], null, null));
         }
-        return (RAbstractVector) transpose.execute(frame, data.copyResizedWithDimensions(dim));
+        RAbstractVector res;
+        if (empty.profile(data.getLength() == 0)) {
+            res = data.createEmptySameType(0, RDataFactory.COMPLETE_VECTOR);
+            res.setDimensions(dim);
+        } else {
+            res = data.copyResizedWithDimensions(dim);
+        }
+        return (RAbstractVector) transpose.execute(frame, res);
     }
 
     @Specialization(guards = "isTrue(byrow)")
@@ -102,8 +122,15 @@ public abstract class Matrix extends RBuiltinNode {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             transpose = insert(TransposeNodeGen.create(new RNode[1], null, null));
         }
-        RAbstractVector res = (RVector) transpose.execute(frame, data.copyResizedWithDimensions(dim));
-        res = updateDimNames(frame, res, dimnames);
+        RAbstractVector res;
+        if (empty.profile(data.getLength() == 0)) {
+            res = data.createEmptySameType(0, RDataFactory.COMPLETE_VECTOR);
+            res.setDimensions(dim);
+        } else {
+
+            res = (RVector) transpose.execute(frame, data.copyResizedWithDimensions(dim));
+            res = updateDimNames(frame, res, dimnames);
+        }
         controlVisibility();
         return res;
     }
@@ -121,12 +148,20 @@ public abstract class Matrix extends RBuiltinNode {
             if (nrow == 0 && size > 0) {
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.NROW_ZERO);
             }
-            return new int[]{nrow, 1 + ((size - 1) / nrow)};
+            if (empty.profile(size == 0)) {
+                return new int[]{nrow, 0};
+            } else {
+                return new int[]{nrow, 1 + ((size - 1) / nrow)};
+            }
         } else if (nrowMissingNcolGiven.profile(mnr && !mnc)) {
             if (ncol == 0 && size > 0) {
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.NCOL_ZERO);
             }
-            return new int[]{1 + ((size - 1) / ncol), ncol};
+            if (empty.profile(size == 0)) {
+                return new int[]{0, ncol};
+            } else {
+                return new int[]{1 + ((size - 1) / ncol), ncol};
+            }
         } else {
             // only missing case: both nrow and ncol were given
             return new int[]{nrow, ncol};
@@ -142,12 +177,21 @@ public abstract class Matrix extends RBuiltinNode {
             if (nrow == 0 && size > 0) {
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.NROW_ZERO);
             }
-            return new int[]{1 + ((size - 1) / nrow), nrow};
+            if (empty.profile(size == 0)) {
+                return new int[]{0, nrow};
+            } else {
+
+                return new int[]{1 + ((size - 1) / nrow), nrow};
+            }
         } else if (nrowMissingNcolGiven.profile(mnr && !mnc)) {
             if (ncol == 0 && size > 0) {
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.NCOL_ZERO);
             }
-            return new int[]{ncol, 1 + ((size - 1) / ncol)};
+            if (empty.profile(size == 0)) {
+                return new int[]{ncol, 0};
+            } else {
+                return new int[]{ncol, 1 + ((size - 1) / ncol)};
+            }
         } else {
             // only missing case: both nrow and ncol were given
             return new int[]{ncol, nrow};
