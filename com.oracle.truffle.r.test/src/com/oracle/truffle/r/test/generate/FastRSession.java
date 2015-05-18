@@ -100,7 +100,6 @@ public final class FastRSession implements RSession {
     public static FastRSession create() {
         if (singleton == null) {
             singleton = new FastRSession();
-            createTestContext();
         }
         return singleton;
     }
@@ -172,7 +171,11 @@ public final class FastRSession implements RSession {
                 }
                 try {
                     RContext context = createTestContext();
-                    context.getContextEngine().parseAndEval(Source.fromText(expression, "<test_input>"), true, false);
+                    try {
+                        context.getContextEngine().parseAndEval(Source.fromText(expression, "<test_input>"), true, false);
+                    } finally {
+                        context.destroy();
+                    }
                 } catch (RError e) {
                     // nothing to do
                 } catch (Throwable t) {

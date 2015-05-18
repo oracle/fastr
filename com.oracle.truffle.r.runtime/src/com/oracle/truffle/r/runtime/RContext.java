@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.runtime;
 
 import java.util.*;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
@@ -40,7 +41,7 @@ import com.oracle.truffle.r.runtime.rng.*;
 
 /**
  * Encapsulates the runtime state ("context") of an R session. All access to that state from the
- * implementation <b>must</b>go through this class. There can be multiple instances
+ * implementation <b>must</b> go through this class. There can be multiple instances
  * (multiple-tenancy) active within a single process/Java-VM.
  *
  * The context provides two sub-interfaces {@link ConsoleHandler} and {@link Engine}that are
@@ -133,6 +134,22 @@ public final class RContext extends ExecutionContext {
          */
         @TruffleBoundary
         int getWidth();
+    }
+
+    public enum Kind {
+        /**
+         * Shares the set of loaded packages at the time the context is created. Only useful when
+         * there is a priori knowledge on the evaluation that the context will be used for. Cannot
+         * safely be used for parallel context evaluation. N.B. Evidently a {link SHARED_NOTHING}
+         * context must already exist for
+         */
+        SHARED_PACKAGES,
+        /**
+         * Essentially a clean restart, modulo the basic VM-wide initialization. which does include,
+         * for example, reading the external environment variables. This kind of contxt can be used
+         * in a parallel computation.
+         */
+        SHARED_NOTHING
     }
 
     /**
@@ -330,6 +347,8 @@ public final class RContext extends ExecutionContext {
      */
     private static final HashMap<Object, RFunction> cachedBuiltinFunctions = new HashMap<>();
 
+    private final Kind kind;
+
     private final GlobalAssumptions globalAssumptions = new GlobalAssumptions();
 
     /**
@@ -358,6 +377,8 @@ public final class RContext extends ExecutionContext {
      * an evaluation wishes to add more threads, it must call the {@link #addThread} method.
      */
     @CompilationFinal private static final ThreadLocal<RContext> threadLocalContext = new ThreadLocal<>();
+
+    private static final ConcurrentLinkedDeque<RContext> activeSet = new ConcurrentLinkedDeque<>();
 
     /**
      * Primarily for debugging.
@@ -393,30 +414,32 @@ public final class RContext extends ExecutionContext {
         threadLocalContext.set(this);
     }
 
-    private RContext(String[] commandArgs, ConsoleHandler consoleHandler) {
+    private RContext(Kind kind, String[] commandArgs, ConsoleHandler consoleHandler) {
+        this.kind = kind;
         this.id = ID.incrementAndGet();
         addThread();
         this.commandArgs = commandArgs;
         this.consoleHandler = consoleHandler;
         this.interactive = consoleHandler.isInteractive();
         classState = new ContextState[ClassStateKind.VALUES.length];
-        for (ClassStateKind css : ClassStateKind.VALUES) {
-            if (!css.customCreate) {
-                classState[css.ordinal()] = css.factory.newContext(this);
+        for (ClassStateKind classStateKind : ClassStateKind.VALUES) {
+            if (!classStateKind.customCreate) {
+                classState[classStateKind.ordinal()] = classStateKind.factory.newContext(this);
             }
         }
         installCustomClassState(ClassStateKind.StdConnections, new StdConnections().newContext(this, consoleHandler));
+        activeSet.add(this);
     }
 
-    public void installCustomClassState(ClassStateKind kind, ContextState state) {
-        assert kind.customCreate;
-        assert classState[kind.ordinal()] == null;
-        classState[kind.ordinal()] = state;
+    public void installCustomClassState(ClassStateKind classStateKind, ContextState state) {
+        assert classStateKind.customCreate;
+        assert classState[classStateKind.ordinal()] == null;
+        classState[classStateKind.ordinal()] = state;
     }
 
     public void systemInitialized() {
-        for (ClassStateKind css : ClassStateKind.VALUES) {
-            css.factory.systemInitialized(this, classState[css.ordinal()]);
+        for (ClassStateKind classStateKind : ClassStateKind.VALUES) {
+            classStateKind.factory.systemInitialized(this, classState[classStateKind.ordinal()]);
         }
     }
 
@@ -433,12 +456,34 @@ public final class RContext extends ExecutionContext {
     }
 
     /**
+     * Create a new {@link RContext} of the given {@link Kind}.
      *
+     * @param kind controlshow much of the existing environment is shared
      * @param commandArgs the command line arguments passed this R session
      * @param consoleHandler a {@link ConsoleHandler} for output
      */
-    public static RContext create(String[] commandArgs, ConsoleHandler consoleHandler) {
-        return new RContext(commandArgs, consoleHandler);
+    public static RContext create(Kind kind, String[] commandArgs, ConsoleHandler consoleHandler) {
+        validate(kind);
+        return new RContext(kind, commandArgs, consoleHandler);
+    }
+
+    private static void validate(Kind kind) {
+        if (kind == Kind.SHARED_PACKAGES) {
+            for (RContext c : activeSet) {
+                if (c.kind == kind) {
+                    throw new RInternalError("can't have multiple active SHARED_PACKAGES");
+                }
+            }
+        }
+    }
+
+    /**
+     * Destroy this context.
+     */
+    public void destroy() {
+        activeSet.remove(this);
+        engine = null;
+        threadLocalContext.set(null);
     }
 
     public GlobalAssumptions getAssumptions() {

@@ -55,7 +55,7 @@ public class RContextFactory {
     }
 
     public static RContext createContext(String[] commandArgs, ConsoleHandler consoleHandler) {
-        RContext context = RContext.create(commandArgs, consoleHandler);
+        RContext context = RContext.create(RContext.Kind.SHARED_PACKAGES, commandArgs, consoleHandler);
         REngine engine = REngine.create(context);
         engine.initializeShared();
         return context;
