@@ -263,4 +263,9 @@ public class TestrGenBuiltindeparse extends TestBase {
         assertEval(Ignored.Unknown,
                         "argv <- list(quote(glm(formula = cbind(X, M) ~ M.user + Temp + M.user:Temp, family = binomial, data = detg1)), 60L, TRUE, 69, -1L); .Internal(deparse(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
     }
+
+    @Test
+    public void testdeparse48() {
+        assertEval("argv <- list(quote(x[[i]] <- 0.9999997), 500L, TRUE, 69, -1L); .Internal(deparse(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
+    }
 }

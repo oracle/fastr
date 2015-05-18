@@ -300,7 +300,7 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
          * UpdateArrayHelperNode insists on a CoerceVector, which is unecessary for the syntax AST,
          * but we don't want to change that class.
          */
-        CoerceVector coerceVector = CoerceVectorNodeGen.create(null, null, null);
+        CoerceVector coerceVector = CoerceVectorNodeGen.create(null, vector, null);
         assert coerceVector != null;
         return UpdateArrayHelperNodeGen.create(isSubset, true, 0, vector, rhs, posArrayNodeValue, coerceVector);
     }
