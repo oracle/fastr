@@ -32,6 +32,7 @@ import jline.console.*;
 
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.engine.*;
+import com.oracle.truffle.r.nodes.builtin.base.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RContext.ConsoleHandler;
 import com.oracle.truffle.r.runtime.RContext.Engine;
@@ -144,12 +145,8 @@ public class RCommand {
             // long start = System.currentTimeMillis();
             consoleHandler = new JLineConsoleHandler(isInteractive, consoleReader);
         }
-        readEvalPrint(consoleHandler, args, filePath);
-        // We should only reach here if interactive == false
-        // Need to call quit explicitly
-        Source quitSource = Source.fromText("quit(\"default\", 0L, TRUE)", "<quit_file>");
-        RContext.getEngine().parseAndEval(quitSource, false, false);
         // never returns
+        readEvalPrint(consoleHandler, args, filePath);
         assert false;
     }
 
@@ -165,6 +162,19 @@ public class RCommand {
         throw Utils.exit(0);
     }
 
+    private static final Source QUIT_EOF = Source.fromText("quit(\"default\", 0L, TRUE)", "<quit_file>");
+
+    /**
+     * The read-eval-print loop, which can take input from a console, command line expression or a
+     * file. There are two ways the repl can terminate:
+     * <ol>
+     * <li>A {@code quit} command is executed successfully, which case the system exits from the
+     * {@link Quit} {@code .Internal} .</li>
+     * <li>EOF on the input.</li>
+     * </ol>
+     * In case 2, we must implicitly execute a {@code quit("default, 0L, TRUE} command before
+     * exiting. So,in either case, we never return.
+     */
     private static void readEvalPrint(ConsoleHandler consoleHandler, String[] commandArgs, String filePath) {
         String inputDescription = filePath == null ? "<shell_input>" : filePath;
         Source source = Source.fromNamedAppendableText(inputDescription);
@@ -176,7 +186,7 @@ public class RCommand {
                 consoleHandler.setPrompt(doEcho ? "> " : null);
                 String input = consoleHandler.readLine();
                 if (input == null) {
-                    return;
+                    throw new EOFException();
                 }
                 // Start index of the new input
                 int startLength = source.getLength();
@@ -191,23 +201,25 @@ public class RCommand {
                 try {
                     String continuePrompt = getContinuePrompt();
                     Source subSource = Source.subSource(source, startLength);
-                    while (RContext.getEngine().parseAndEval(subSource, true, true) == Engine.INCOMPLETE_SOURCE) {
+                    while (context.getContextEngine().parseAndEval(subSource, true, true) == Engine.INCOMPLETE_SOURCE) {
                         consoleHandler.setPrompt(doEcho ? continuePrompt : null);
                         String additionalInput = consoleHandler.readLine();
                         if (additionalInput == null) {
-                            return;
+                            throw new EOFException();
                         }
                         source.appendCode(additionalInput);
                         subSource = Source.subSource(source, startLength);
                     }
                 } catch (BrowserQuitException ex) {
-                    // Q in browser
+                    // Q in browser, which continues the repl
                 }
             }
         } catch (BrowserQuitException e) {
             // can happen if user profile invokes browser
         } catch (UserInterruptException e) {
-            // interrupted
+            // interrupted (how?)
+        } catch (EOFException ex) {
+            context.getContextEngine().parseAndEval(QUIT_EOF, false, false);
         } finally {
             context.destroy();
         }
