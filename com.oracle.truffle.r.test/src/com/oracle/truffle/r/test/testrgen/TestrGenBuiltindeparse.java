@@ -250,7 +250,7 @@ public class TestrGenBuiltindeparse extends TestBase {
 
     @Test
     public void testdeparse45() {
-        assertEval(Ignored.Unknown, "argv <- list(0.333333333333333, 60L, FALSE, 69, -1L); .Internal(deparse(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
+        assertEval("argv <- list(0.333333333333333, 60L, FALSE, 69, -1L); .Internal(deparse(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
     }
 
     @Test

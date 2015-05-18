@@ -358,8 +358,7 @@ public class RDeparse {
     }
 
     @TruffleBoundary
-    public static State deparse2buff(State state, final Object objArg) {
-        Object obj = objArg;
+    public static State deparse2buff(State state, Object obj) {
         boolean lbreak = false;
         if (!state.active) {
             return state;
@@ -779,8 +778,7 @@ public class RDeparse {
             case REALSXP:
             case CPLXSXP:
             case RAWSXP:
-                obj = checkScalarVector(obj);
-                vector2buff(state, (RVector) obj);
+                vector2buff(state, checkScalarVector(obj));
                 break;
 
             case BCODESXP: {
@@ -1125,8 +1123,6 @@ public class RDeparse {
         return state;
     }
 
-    private static final DecimalFormat decimalFormat = new DecimalFormat("#.#");
-
     private static State vecElement2buff(State state, SEXPTYPE type, Object element) {
         switch (type) {
             case STRSXP:
@@ -1205,14 +1201,34 @@ public class RDeparse {
         return state;
     }
 
+    private static final DecimalFormatSymbols decimalFormatSymbols;
+    private static final DecimalFormat decimalFormat;
+    private static final DecimalFormat simpleDecimalFormat;
+
+    static {
+        decimalFormatSymbols = new DecimalFormatSymbols();
+        decimalFormatSymbols.setExponentSeparator("e");
+        decimalFormatSymbols.setNaN("NaN");
+        decimalFormatSymbols.setInfinity("Inf");
+        decimalFormat = new DecimalFormat("#.##################E0", decimalFormatSymbols);
+        simpleDecimalFormat = new DecimalFormat("#.##################", decimalFormatSymbols);
+    }
+
     private static String encodeReal(double d) {
-        if (Double.isInfinite(d)) {
-            return "Inf";
-        } else if (Double.isNaN(d)) {
-            return "NaN";
+        if (d == 0 || withinSimpleRealRange(d)) {
+            return simpleDecimalFormat.format(d);
         } else {
-            return decimalFormat.format(d);
+            String str = decimalFormat.format(d);
+            if (!str.contains("e-") && str.contains("e")) {
+                return str.replace("e", "e+");
+            } else {
+                return str;
+            }
         }
+    }
+
+    private static boolean withinSimpleRealRange(double d) {
+        return (d > 0.0001 || d < -0.0001) && d < 100000 && d > -100000;
     }
 
     public static String quotify(String name, char qc) {

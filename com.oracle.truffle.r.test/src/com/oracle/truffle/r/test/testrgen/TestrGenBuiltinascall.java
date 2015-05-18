@@ -19,7 +19,7 @@ public class TestrGenBuiltinascall extends TestBase {
 
     @Test
     public void testascall1() {
-        assertEval(Ignored.Unknown, "argv <- list(list(quote(quote), c(0.568, 1.432, -1.08, 1.08)));as.call(argv[[1]]);");
+        assertEval("argv <- list(list(quote(quote), c(0.568, 1.432, -1.08, 1.08)));as.call(argv[[1]]);");
     }
 
     @Test
