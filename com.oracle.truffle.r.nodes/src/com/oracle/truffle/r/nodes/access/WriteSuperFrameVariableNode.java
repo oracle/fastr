@@ -116,7 +116,7 @@ public abstract class WriteSuperFrameVariableNode extends WriteSuperFrameVariabl
                  * we've reached the global scope, do unconditional write // if this is the first
                  * node in the chain, needs the rhs and enclosingFrame // nodes
                  */
-                AccessEnclosingFrameNode enclosingFrameNode = RArguments.getEnclosingFrame(frame) == enclosingFrame ? AccessEnclosingFrameNodeGen.create(1) : null;
+                AccessEnclosingFrameNode enclosingFrameNode = RArguments.getEnclosingFrame(frame) == enclosingFrame ? AccessEnclosingFrameNodeGen.create() : null;
                 writeNode = WriteSuperFrameVariableNodeGen.create(getRhs(), enclosingFrameNode, FrameSlotNode.create(findOrAddFrameSlot(enclosingFrame.getFrameDescriptor(), symbol)), getName(), mode);
             } else {
                 WriteSuperFrameVariableNode actualWriteNode = WriteSuperFrameVariableNodeGen.create(null, null, FrameSlotNode.create(symbol), this.getName(), mode);

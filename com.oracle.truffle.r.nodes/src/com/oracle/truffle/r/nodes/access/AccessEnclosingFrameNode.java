@@ -24,27 +24,15 @@ package com.oracle.truffle.r.nodes.access;
 
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.*;
 
-@NodeField(name = "level", type = int.class)
 public abstract class AccessEnclosingFrameNode extends RNode {
-
-    @Override
-    public final Object execute(VirtualFrame frame) {
-        return executeMaterializedFrame(frame);
-    }
 
     public abstract MaterializedFrame executeMaterializedFrame(VirtualFrame frame);
 
     @Specialization
-    @ExplodeLoop
-    protected MaterializedFrame doMaterializedFrame(VirtualFrame frame, int level) {
-        MaterializedFrame enclosingFrame = RArguments.getFunction(frame).getEnclosingFrame();
-        for (int i = 1; i < level; i++) {
-            enclosingFrame = RArguments.getFunction(enclosingFrame).getEnclosingFrame();
-        }
-        return enclosingFrame;
+    protected MaterializedFrame doMaterializedFrame(VirtualFrame frame) {
+        return RArguments.getEnclosingFrame(frame);
     }
 }
