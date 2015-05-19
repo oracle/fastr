@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.runtime;
 
 import java.util.*;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
@@ -53,7 +54,7 @@ import com.oracle.truffle.r.runtime.rng.*;
  *
  * The life-cycle of a {@link RContext} is:
  * <ol>
- * <li>created: {@link #create(String[], ConsoleHandler)} or
+ * <li>created: {@link #create(RContext, String[], ConsoleHandler)} or
  * {@link #createShared(RContext, String[], ConsoleHandler)}</li>
  * <li>activated: {@link #activate()}</li>
  * <li>destroyed: {@link #destroy()}</li>
@@ -390,7 +391,8 @@ public final class RContext extends ExecutionContext {
     @CompilationFinal private ContextState[] contextState;
 
     /**
-     * For a {@link Kind#SHARED_PACKAGES} context, the context we are sharing with.
+     * Any context created by another has a parent. When such a context is destroyed we must reset
+     * the {@link #threadLocalContext} to the parent.
      */
     private final RContext parent;
 
@@ -416,6 +418,8 @@ public final class RContext extends ExecutionContext {
     private static final AtomicLong ID = new AtomicLong();
     @CompilationFinal private long id;
     private boolean active;
+
+    private static final Deque<RContext> allContexts = new ConcurrentLinkedDeque<>();
 
     /**
      * A (hopefully) temporary workaround to ignore the setting of {@link #resultVisible} for
@@ -451,13 +455,14 @@ public final class RContext extends ExecutionContext {
     private RContext(Kind kind, RContext parent, String[] commandArgs, ConsoleHandler consoleHandler) {
         this.kind = kind;
         this.parent = parent;
-        this.id = ID.incrementAndGet();
+        this.id = ID.getAndIncrement();
         this.commandArgs = commandArgs;
         if (consoleHandler == null) {
             throw Utils.fail("no console handler set");
         }
         this.consoleHandler = consoleHandler;
         this.interactive = consoleHandler.isInteractive();
+        allContexts.add(this);
 
         if (singleContextAssumption.isValid()) {
             if (singleContext == null) {
@@ -496,11 +501,12 @@ public final class RContext extends ExecutionContext {
     /**
      * Create a {@link Kind#SHARED_NOTHING} {@link RContext}.
      *
+     * @param parent if non-null {@code null} the parent creating the context
      * @param commandArgs the command line arguments passed this R session
      * @param consoleHandler a {@link ConsoleHandler} for output
      */
-    public static RContext create(String[] commandArgs, ConsoleHandler consoleHandler) {
-        return create(null, Kind.SHARED_NOTHING, commandArgs, consoleHandler);
+    public static RContext create(RContext parent, String[] commandArgs, ConsoleHandler consoleHandler) {
+        return create(parent, Kind.SHARED_NOTHING, commandArgs, consoleHandler);
     }
 
     /**
@@ -520,7 +526,7 @@ public final class RContext extends ExecutionContext {
 
     }
 
-    private static RContext create(RContext parent, Kind kind, String[] commandArgs, ConsoleHandler consoleHandler) {
+    public static RContext create(RContext parent, Kind kind, String[] commandArgs, ConsoleHandler consoleHandler) {
         RContext result = new RContext(kind, parent, commandArgs, consoleHandler);
         result.engine = RContext.getRRuntimeASTAccess().createEngine(result);
         return result;
@@ -557,7 +563,12 @@ public final class RContext extends ExecutionContext {
             parent.sharedChild = null;
         }
         engine = null;
-        threadLocalContext.set(null);
+        allContexts.remove(this);
+        if (parent == null) {
+            threadLocalContext.set(null);
+        } else {
+            threadLocalContext.set(parent);
+        }
     }
 
     public RContext getParent() {
@@ -570,6 +581,15 @@ public final class RContext extends ExecutionContext {
 
     public long getId() {
         return id;
+    }
+
+    public static RContext find(int id) {
+        for (RContext context : allContexts) {
+            if (context.id == id) {
+                return context;
+            }
+        }
+        return null;
     }
 
     public GlobalAssumptions getAssumptions() {

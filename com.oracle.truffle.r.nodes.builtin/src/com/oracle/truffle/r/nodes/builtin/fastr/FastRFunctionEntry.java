@@ -33,63 +33,78 @@ import com.oracle.truffle.r.runtime.data.*;
 public class FastRFunctionEntry {
     public static Object invoke(String name, Object[] argValues, RBuiltinNode fastRNode) {
         Object arg0 = argValues[0];
-        if (name.equals("typeof")) {
-            return arg0.getClass().getSimpleName();
-        } else if (name.equals("stacktrace")) {
-            fastRNode.forceVisibility(false);
-            return FastRStackTrace.printStackTrace(checkLogical(argValues[0], fastRNode));
-        } else if (name.equals("debug")) {
-            fastRNode.forceVisibility(false);
-            FastROptions.debugUpdate(checkString(argValues[0], fastRNode));
-            return RNull.instance;
-        } else if (name.equals("inspect")) {
-            fastRNode.forceVisibility(false);
-            return FastRInspect.inspect(argValues);
-        } else if (name.contains("pkgsource")) {
-            switch (name) {
-                case "pkgsource.pre":
-                    return FastRPkgSource.preLoad(RRuntime.asString(arg0), RRuntime.asString(argValues[1]));
-
-                case "pkgsource.post":
-                    return FastRPkgSource.postLoad(RRuntime.asString(arg0), RRuntime.asString(argValues[1]), argValues[2]);
-
-                case "pkgsource.done":
-                    return FastRPkgSource.done();
-
-            }
-        } else if (name.equals("comparefilesizes")) {
-            return FastRFileSizeCompare.compare(RRuntime.asString(arg0), RRuntime.asString(argValues[1]));
-        } else if (name.equals("createcontext")) {
-            return FastRCreateContext.createContext((RStringVector) RRuntime.asAbstractVector(arg0), RRuntime.fromLogical(checkLogical(argValues[1], fastRNode)));
-        }
-        // The remainder all take a func argument
-        RFunction func = checkFunction(arg0, fastRNode);
         switch (name) {
-            case "createcc":
+            case "typeof":
+                return arg0.getClass().getSimpleName();
+
+            case "stacktrace": {
                 fastRNode.forceVisibility(false);
-                return FastRCallCounting.createCallCounter(func);
-            case "getcc":
-                return FastRCallCounting.getCallCount(func);
+                return FastRStackTrace.printStackTrace(checkLogical(argValues[0], fastRNode));
+            }
 
-            case "compile":
-                return FastRCompile.compileFunction(func, checkLogical(argValues[1], fastRNode));
-
-            case "dumptrees":
+            case "debug": {
                 fastRNode.forceVisibility(false);
-                return FastRDumpTrees.dump(func, checkLogical(argValues[1], fastRNode), checkLogical(argValues[2], fastRNode));
+                FastROptions.debugUpdate(checkString(argValues[0], fastRNode));
+                return RNull.instance;
+            }
 
-            case "source":
-                return FastRSource.debugSource(func);
-
-            case "tree":
-                return FastRTree.printTree(func, checkLogical(argValues[1], fastRNode));
-
-            case "syntaxtree":
+            case "inspect": {
                 fastRNode.forceVisibility(false);
-                return FastRSyntaxTree.printTree(func, checkLogical(argValues[1], fastRNode));
+                return FastRInspect.inspect(argValues);
+            }
+
+            case "pkgsource.pre":
+                return FastRPkgSource.preLoad(RRuntime.asString(arg0), RRuntime.asString(argValues[1]));
+
+            case "pkgsource.post":
+                return FastRPkgSource.postLoad(RRuntime.asString(arg0), RRuntime.asString(argValues[1]), argValues[2]);
+
+            case "pkgsource.done":
+                return FastRPkgSource.done();
+
+            case "comparefilesizes":
+                return FastRFileSizeCompare.compare(RRuntime.asString(arg0), RRuntime.asString(argValues[1]));
+
+            case "context.create":
+                return FastRContext.create((RStringVector) RRuntime.asAbstractVector(arg0), RRuntime.fromLogical(checkLogical(argValues[1], fastRNode)));
+
+            case "context.print":
+                FastRContext.print(((RIntVector) RRuntime.asAbstractVector(arg0)).getDataAt(0));
+                return RNull.instance;
+
+            case "context.eval":
+                return FastRContext.eval(((RIntVector) RRuntime.asAbstractVector(arg0)).getDataAt(0), ((RStringVector) RRuntime.asAbstractVector(argValues[1])).getDataAt(0));
 
             default:
-                throw RInternalError.shouldNotReachHere();
+                // The remainder all take a func argument
+                RFunction func = checkFunction(arg0, fastRNode);
+                switch (name) {
+                    case "createcc":
+                        fastRNode.forceVisibility(false);
+                        return FastRCallCounting.createCallCounter(func);
+                    case "getcc":
+                        return FastRCallCounting.getCallCount(func);
+
+                    case "compile":
+                        return FastRCompile.compileFunction(func, checkLogical(argValues[1], fastRNode));
+
+                    case "dumptrees":
+                        fastRNode.forceVisibility(false);
+                        return FastRDumpTrees.dump(func, checkLogical(argValues[1], fastRNode), checkLogical(argValues[2], fastRNode));
+
+                    case "source":
+                        return FastRSource.debugSource(func);
+
+                    case "tree":
+                        return FastRTree.printTree(func, checkLogical(argValues[1], fastRNode));
+
+                    case "syntaxtree":
+                        fastRNode.forceVisibility(false);
+                        return FastRSyntaxTree.printTree(func, checkLogical(argValues[1], fastRNode));
+
+                    default:
+                        throw RInternalError.shouldNotReachHere();
+                }
         }
 
     }

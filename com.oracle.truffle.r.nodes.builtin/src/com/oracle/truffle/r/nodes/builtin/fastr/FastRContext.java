@@ -22,11 +22,15 @@
  */
 package com.oracle.truffle.r.nodes.builtin.fastr;
 
+import java.io.*;
+
+import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.conn.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-public class FastRCreateContext {
-    static int createContext(RStringVector args, boolean shared) {
+public class FastRContext {
+    static int create(RStringVector args, boolean shared) {
         String[] argsArray = args.getDataCopy();
         RContext current = RContext.getInstance();
         RContext.ConsoleHandler consoleHandler = current.getConsoleHandler();
@@ -34,8 +38,37 @@ public class FastRCreateContext {
         if (shared) {
             newContext = RContext.getRRuntimeASTAccess().createShared(current, argsArray, consoleHandler);
         } else {
-            newContext = RContext.getRRuntimeASTAccess().create(argsArray, consoleHandler);
+            newContext = RContext.getRRuntimeASTAccess().create(current, argsArray, consoleHandler);
         }
         return (int) newContext.getId();
+    }
+
+    static void print(int contextId) {
+        @SuppressWarnings("unused")
+        RContext context = checkContext(contextId);
+        try {
+            StdConnections.getStdout().writeString("context: " + contextId, true);
+        } catch (IOException ex) {
+            throw RError.error(RError.Message.GENERIC, ex.getMessage());
+        }
+    }
+
+    static Object eval(int contextId, String expr) {
+        RContext context = checkContext(contextId);
+        try {
+            context.activate();
+            return context.getThisEngine().parseAndEval(Source.fromText(expr, "<eval_input>"), true, false);
+        } finally {
+            context.destroy();
+        }
+    }
+
+    private static RContext checkContext(int contextId) throws RError {
+        RContext context = RContext.find(contextId);
+        if (context == null) {
+            throw RError.error(RError.Message.GENERIC, "no context: " + contextId);
+        } else {
+            return context;
+        }
     }
 }

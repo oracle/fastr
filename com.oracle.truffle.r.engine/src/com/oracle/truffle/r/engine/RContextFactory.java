@@ -71,8 +71,19 @@ public class RContextFactory {
         return context;
     }
 
+    /**
+     * Create the initial context with no parent.
+     */
     public static RContext create(String[] commandArgs, ConsoleHandler consoleHandler) {
-        RContext context = RContext.create(commandArgs, consoleHandler);
+        RContext context = RContext.create(null, commandArgs, consoleHandler);
+        return context;
+    }
+
+    /**
+     * Create a shared-nothing context context with given parent.
+     */
+    public static RContext create(RContext parent, String[] commandArgs, ConsoleHandler consoleHandler) {
+        RContext context = RContext.create(parent, commandArgs, consoleHandler);
         return context;
     }
 }

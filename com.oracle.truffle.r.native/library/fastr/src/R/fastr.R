@@ -71,7 +71,21 @@ fastr.createpkgsource <- function(pkg, name) {
 
 fastr.comparefilesizes <- function(file1, file2) .FastR(.NAME="comparefilesizes", file1, file2)
 
-fastr.createcontext <- function(args, shared=FALSE) .FastR(.NAME="createcontext", args, shared)
+fastr_context.create <- function(args, shared=FALSE) {
+	context <- .FastR(.NAME="context.create", args, shared)
+	class(context) <- "fastr_context"
+    context
+}
+
+print.fastr_context <- function(context, ...) {
+	.FastR(.NAME="context.print", context)
+	invisible(context)
+}
+
+fastr_context.eval <- function(context, expr) {
+	.FastR(.NAME="context.eval", context, expr)
+	invisible(NULL)
+}
 
 
 

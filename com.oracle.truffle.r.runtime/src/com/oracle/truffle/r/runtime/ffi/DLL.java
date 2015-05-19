@@ -13,6 +13,8 @@ package com.oracle.truffle.r.runtime.ffi;
 
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.*;
 
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RError.RErrorException;
@@ -21,6 +23,19 @@ import com.oracle.truffle.r.runtime.data.*;
 /**
  * Support for Dynamically Loaded Libraries.
  *
+ * DLLs are loaded for several reasons in FastR:
+ * <ol>
+ * <li>support primitive operations</li>
+ * <li>support the default packages</li>
+ * <li>support the {@link CallRFFI}.
+ * <li>support native code of dynamically loaded user packages</li>
+ * </ol>
+ *
+ * In general, unloading a DLL may not be possible, so the set of DLLs have to be considered VM
+ * wide, in the sense of multiple {@link RContext}s. TODO what about mutable state in native code?
+ * So in the case of multiple {@link RContext}s package shared libraries may be registered muliple
+ * times and we must take care not to duplicate them in the meta-data here ({@link #list}).
+ *
  * logic derived from Rdynload.c
  */
 public class DLL {
@@ -28,12 +43,12 @@ public class DLL {
     /**
      * The list of loaded DLLs.
      */
-    private static ArrayList<DLLInfo> list = new ArrayList<>();
+    private static Deque<DLLInfo> list = new ConcurrentLinkedDeque<>();
 
     /**
      * Uniquely identifies the DLL (for use in an {@code externalptr}).
      */
-    private static int nextId;
+    private static final AtomicInteger ID = new AtomicInteger();
 
     public static enum NativeSymbolType {
         C,
@@ -88,7 +103,7 @@ public class DLL {
         private DotSymbol[][] nativeSymbols = new DotSymbol[NativeSymbolType.values().length][];
 
         DLLInfo(String name, String path, boolean dynamicLookup, Object handle) {
-            this.id = ++nextId;
+            this.id = ID.getAndIncrement();
             this.name = name;
             this.path = path;
             this.dynamicLookup = dynamicLookup;
@@ -175,7 +190,7 @@ public class DLL {
         }
     }
 
-    public static synchronized DLLInfo getDLLInfoForId(int id) {
+    public static DLLInfo getDLLInfoForId(int id) {
         for (DLLInfo dllInfo : list) {
             if (dllInfo.id == id) {
                 return dllInfo;
@@ -202,27 +217,42 @@ public class DLL {
         }
     }
 
-    public static synchronized DLLInfo load(String path, boolean local, boolean now) throws DLLException {
+    private static final Semaphore available = new Semaphore(1, false);
+
+    public static DLLInfo load(String path, boolean local, boolean now) throws DLLException {
         String absPath = Utils.tildeExpand(path);
-        File file = new File(absPath);
-        Object handle = RFFIFactory.getRFFI().getBaseRFFI().dlopen(absPath, local, now);
-        if (handle == null) {
-            String dlError = RFFIFactory.getRFFI().getBaseRFFI().dlerror();
-            throw new DLLException(RError.Message.DLL_LOAD_ERROR, path, dlError);
+        try {
+            available.acquire();
+            for (DLLInfo dllInfo : list) {
+                if (dllInfo.path.equals(absPath)) {
+                    // already loaded
+                    return dllInfo;
+                }
+            }
+            File file = new File(absPath);
+            Object handle = RFFIFactory.getRFFI().getBaseRFFI().dlopen(absPath, local, now);
+            if (handle == null) {
+                String dlError = RFFIFactory.getRFFI().getBaseRFFI().dlerror();
+                throw new DLLException(RError.Message.DLL_LOAD_ERROR, path, dlError);
+            }
+            String name = file.getName();
+            int dx = name.lastIndexOf('.');
+            if (dx > 0) {
+                name = name.substring(0, dx);
+            }
+            DLLInfo result = new DLLInfo(name, absPath, true, handle);
+            list.add(result);
+            return result;
+        } catch (InterruptedException ex) {
+            throw RInternalError.shouldNotReachHere();
+        } finally {
+            available.release();
         }
-        String name = file.getName();
-        int dx = name.lastIndexOf('.');
-        if (dx > 0) {
-            name = name.substring(0, dx);
-        }
-        DLLInfo result = new DLLInfo(name, absPath, true, handle);
-        list.add(result);
-        return result;
     }
 
     private static final String R_INIT_PREFIX = "R_init_";
 
-    public static synchronized DLLInfo loadPackageDLL(String path, boolean local, boolean now) throws DLLException {
+    public static DLLInfo loadPackageDLL(String path, boolean local, boolean now) throws DLLException {
         DLLInfo dllInfo = load(path, local, now);
         // Search for init method
         DLL.SymbolInfo symbolInfo = DLL.findSymbolInDLL(R_INIT_PREFIX + dllInfo.name, dllInfo);
@@ -236,7 +266,7 @@ public class DLL {
         return dllInfo;
     }
 
-    public static synchronized void unload(String path) throws DLLException {
+    public static void unload(String path) throws DLLException {
         String absPath = Utils.tildeExpand(path);
         for (DLLInfo info : list) {
             if (info.path.equals(absPath)) {
@@ -251,7 +281,11 @@ public class DLL {
     }
 
     public static ArrayList<DLLInfo> getLoadedDLLs() {
-        return list;
+        ArrayList<DLLInfo> result = new ArrayList<>();
+        for (DLLInfo dllInfo : list) {
+            result.add(dllInfo);
+        }
+        return result;
     }
 
     /**
@@ -262,7 +296,7 @@ public class DLL {
      * @param libName if not {@code null} or "", restrict search to this library.
      * @return a {@code SymbolInfo} instance or {@code null} if not found.
      */
-    public static synchronized SymbolInfo findSymbolInfo(String symbol, String libName) {
+    public static SymbolInfo findSymbolInfo(String symbol, String libName) {
         SymbolInfo symbolInfo = null;
         for (DLLInfo dllInfo : list) {
             if (libName == null || libName.length() == 0 || dllInfo.name.equals(libName)) {
@@ -279,7 +313,7 @@ public class DLL {
      * Attempts to locate a symbol in the given library. This does no filtering on registered
      * symbols, it uses the OS level search of the library.
      */
-    public static synchronized SymbolInfo findSymbolInDLL(String symbol, DLLInfo dllInfo) {
+    public static SymbolInfo findSymbolInDLL(String symbol, DLLInfo dllInfo) {
         boolean found = false;
         long val = RFFIFactory.getRFFI().getBaseRFFI().dlsym(dllInfo.handle, symbol);
         if (val != 0) {
@@ -297,7 +331,7 @@ public class DLL {
         }
     }
 
-    public static synchronized DLLInfo findLibraryContainingSymbol(String symbol) {
+    public static DLLInfo findLibraryContainingSymbol(String symbol) {
         SymbolInfo symbolInfo = findSymbolInfo(symbol, null);
         if (symbolInfo == null) {
             return null;
@@ -311,7 +345,7 @@ public class DLL {
      * symbols that have been registered from packages, i.e. that can be used in {@code .Call} etc.
      * functions.
      */
-    public static synchronized SymbolInfo findRegisteredSymbolinInDLL(String symbol, String libName) {
+    public static SymbolInfo findRegisteredSymbolinInDLL(String symbol, String libName) {
         for (DLLInfo dllInfo : list) {
             if (libName == null || libName.length() == 0 || dllInfo.name.equals(libName)) {
                 if (dllInfo.forceSymbols) {

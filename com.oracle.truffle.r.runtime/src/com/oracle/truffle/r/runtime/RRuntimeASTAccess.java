@@ -112,7 +112,7 @@ public interface RRuntimeASTAccess {
      */
     RContext createShared(RContext parent, String[] commandArgs, ConsoleHandler consoleHandler);
 
-    RContext create(String[] commandArgs, ConsoleHandler consoleHandler);
+    RContext create(RContext parent, String[] commandArgs, ConsoleHandler consoleHandler);
 
     RContext.Engine createEngine(RContext context);
 
