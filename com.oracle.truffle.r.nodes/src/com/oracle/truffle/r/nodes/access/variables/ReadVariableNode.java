@@ -373,8 +373,7 @@ public class ReadVariableNode extends RNode implements RSyntaxNode, VisibilityCo
 
         @Override
         public Object execute(VirtualFrame frame, Frame variableFrame) throws InvalidAssumptionException, LayoutChangedException, FrameSlotTypeException {
-            Object[] arguments = RArguments.getArgumentsWithEvalCheck(variableFrame, isEvalFrame);
-            MaterializedFrame nextFrame = (MaterializedFrame) frameProfile.profile(arguments[RArguments.INDEX_ENCLOSING_FRAME]);
+            MaterializedFrame nextFrame = frameProfile.profile(RArguments.getEnclosingFrame(variableFrame, isEvalFrame));
             if (nextDescriptor == null) {
                 if (nextFrame != null) {
                     throw new LayoutChangedException();

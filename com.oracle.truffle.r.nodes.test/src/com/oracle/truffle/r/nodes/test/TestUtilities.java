@@ -22,8 +22,6 @@
  */
 package com.oracle.truffle.r.nodes.test;
 
-import java.util.*;
-
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
@@ -32,7 +30,7 @@ import com.oracle.truffle.r.runtime.*;
 public class TestUtilities {
 
     /**
-     * Creates a handle that emulates the behavior as if this node would be executed inside of a R
+     * Creates a handle that emulates the behavior as if this node would be executed inside of an R
      * call.
      */
     public static <T extends Node> NodeHandle<T> createHandle(T node, NodeAdapter<T> invoke) {
@@ -63,12 +61,8 @@ public class TestUtilities {
         }
 
         public Object call(Object... args) {
-            Object[] rArguments = RArguments.createUnitialized();
-            rArguments = Arrays.copyOf(rArguments, RArguments.INDEX_ARGUMENTS + 1);
-            rArguments[RArguments.INDEX_ARGUMENTS] = args;
-            return target.call(rArguments);
+            return target.call(RArguments.createUnitialized((Object) args));
         }
-
     }
 
     private static class TestRoot<T extends Node> extends RootNode {
@@ -84,12 +78,10 @@ public class TestUtilities {
         @Override
         public Object execute(VirtualFrame frame) {
             try {
-                return invoke.invoke(node, (Object[]) frame.getArguments()[RArguments.INDEX_ARGUMENTS]);
+                return invoke.invoke(node, (Object[]) RArguments.getArgument(frame, 0));
             } catch (ReturnException e) {
                 return e.getResult();
             }
         }
-
     }
-
 }

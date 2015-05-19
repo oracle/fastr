@@ -40,10 +40,10 @@ public final class VirtualEvalFrame implements VirtualFrame, MaterializedFrame {
     private VirtualEvalFrame(MaterializedFrame originalFrame, RFunction function, SourceSection callSrc, int depth) {
         this.originalFrame = originalFrame;
         this.arguments = Arrays.copyOf(originalFrame.getArguments(), originalFrame.getArguments().length);
-        RArguments.setDepth(this, depth);
-        RArguments.setIsIrregular(this, true);
-        RArguments.setFunction(this, function);
-        RArguments.setCallSourceSection(this, callSrc);
+        this.arguments[RArguments.INDEX_DEPTH] = depth;
+        this.arguments[RArguments.INDEX_IS_IRREGULAR] = true;
+        this.arguments[RArguments.INDEX_FUNCTION] = function;
+        this.arguments[RArguments.INDEX_CALL_SRC] = callSrc;
     }
 
     public static VirtualEvalFrame create(MaterializedFrame originalFrame, RFunction function, SourceSection callSrc, int depth) {
