@@ -361,6 +361,49 @@ public final class RContext extends ExecutionContext {
     }
 
     /**
+     * A thread that is explicitly associated with a context for efficient lookup.
+     */
+    public static class ContextThread extends Thread {
+        protected RContext context;
+
+        public ContextThread(RContext context) {
+            this.context = context;
+        }
+
+        protected ContextThread() {
+
+        }
+
+        public void setContext(RContext context) {
+            this.context = context;
+        }
+
+    }
+
+    /**
+     * A thread for performing an evaluation (used by {@code fastr} package.
+     */
+    public static class EvalThread extends ContextThread {
+        private final Source source;
+
+        public EvalThread(RContext context, Source source) {
+            super(context);
+            this.source = source;
+        }
+
+        @Override
+        public void run() {
+            try {
+                context.activate();
+                context.engine.parseAndEval(source, true, false);
+            } finally {
+                context.destroy();
+            }
+        }
+
+    }
+
+    /**
      * Builtin cache. Valid across all contexts.
      */
     private static final HashMap<Object, RFunction> cachedBuiltinFunctions = new HashMap<>();
@@ -446,7 +489,12 @@ public final class RContext extends ExecutionContext {
      * Associates this {@link RContext} with the current thread.
      */
     public void attachThread() {
-        threadLocalContext.set(this);
+        Thread current = Thread.currentThread();
+        if (current instanceof ContextThread) {
+            ((ContextThread) current).setContext(this);
+        } else {
+            threadLocalContext.set(this);
+        }
     }
 
     private static final Assumption singleContextAssumption = Truffle.getRuntime().createAssumption("single RContext");
@@ -614,7 +662,16 @@ public final class RContext extends ExecutionContext {
                 // fallback to slow case
             }
         }
-        return getInstanceInternal();
+
+        Thread current = Thread.currentThread();
+        if (current instanceof ContextThread) {
+            context = ((ContextThread) current).context;
+            assert context != null;
+            return context;
+        } else {
+            return getInstanceInternal();
+        }
+
     }
 
     /**

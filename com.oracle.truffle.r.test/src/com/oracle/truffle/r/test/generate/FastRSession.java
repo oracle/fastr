@@ -147,7 +147,7 @@ public final class FastRSession implements RSession {
         return consoleHandler.buffer.toString();
     }
 
-    private final class EvalThread extends Thread {
+    private final class EvalThread extends RContext.ContextThread {
 
         private volatile String expression;
         private volatile Throwable killedByException;
@@ -172,11 +172,11 @@ public final class FastRSession implements RSession {
                     break;
                 }
                 try {
-                    RContext context = createTestContext();
+                    RContext testContext = createTestContext();
                     try {
-                        context.getThisEngine().parseAndEval(Source.fromText(expression, "<test_input>"), true, false);
+                        testContext.getThisEngine().parseAndEval(Source.fromText(expression, "<test_input>"), true, false);
                     } finally {
-                        context.destroy();
+                        testContext.destroy();
                     }
                 } catch (RError e) {
                     // nothing to do

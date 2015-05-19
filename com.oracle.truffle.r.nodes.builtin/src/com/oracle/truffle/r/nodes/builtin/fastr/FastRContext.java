@@ -53,13 +53,31 @@ public class FastRContext {
         }
     }
 
-    static Object eval(int contextId, String expr) {
-        RContext context = checkContext(contextId);
-        try {
-            context.activate();
-            return context.getThisEngine().parseAndEval(Source.fromText(expr, "<eval_input>"), true, false);
-        } finally {
-            context.destroy();
+    static void eval(RIntVector contexts, RStringVector exprs) {
+        if (contexts.getLength() == 1) {
+            RContext context = checkContext(contexts.getDataAt(0));
+            try {
+                context.activate();
+                context.getThisEngine().parseAndEval(Source.fromText(exprs.getDataAt(0), "<eval_input>"), true, false);
+            } finally {
+                context.destroy();
+            }
+        } else {
+            RContext.EvalThread[] threads = new RContext.EvalThread[contexts.getLength()];
+            for (int i = 0; i < threads.length; i++) {
+                RContext context = checkContext(contexts.getDataAt(i));
+                threads[i] = new RContext.EvalThread(context, Source.fromText(exprs.getDataAt(i % threads.length), "context_eval"));
+            }
+            for (int i = 0; i < threads.length; i++) {
+                threads[i].start();
+            }
+            try {
+                for (int i = 0; i < threads.length; i++) {
+                    threads[i].join();
+                }
+            } catch (InterruptedException ex) {
+
+            }
         }
     }
 

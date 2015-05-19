@@ -73,7 +73,8 @@ public class FastRFunctionEntry {
                 return RNull.instance;
 
             case "context.eval":
-                return FastRContext.eval(((RIntVector) RRuntime.asAbstractVector(arg0)).getDataAt(0), ((RStringVector) RRuntime.asAbstractVector(argValues[1])).getDataAt(0));
+                FastRContext.eval((RIntVector) RRuntime.asAbstractVector(arg0), (RStringVector) RRuntime.asAbstractVector(argValues[1]));
+                return RNull.instance;
 
             default:
                 // The remainder all take a func argument
