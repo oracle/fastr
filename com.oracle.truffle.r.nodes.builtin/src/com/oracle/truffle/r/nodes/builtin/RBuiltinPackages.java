@@ -141,7 +141,7 @@ public final class RBuiltinPackages implements RBuiltinLookup {
     private static RFunction createFunction(RBuiltinFactory builtinFactory, String methodName) {
         try {
             RootCallTarget callTarget = RBuiltinNode.createArgumentsCallTarget(builtinFactory);
-            return RContext.cacheBuiltin(methodName, RDataFactory.createFunction(builtinFactory.getName(), callTarget, builtinFactory, REnvironment.baseEnv().getFrame()));
+            return RContext.cacheBuiltin(methodName, RDataFactory.createFunction(builtinFactory.getName(), callTarget, builtinFactory, REnvironment.baseEnv().getFrame(), false));
         } catch (Throwable t) {
             throw new RuntimeException("error while creating builtin " + methodName + " / " + builtinFactory, t);
         }

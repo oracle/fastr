@@ -114,7 +114,7 @@ public final class FunctionExpressionNode extends RNode implements RSyntaxNode {
             deoptFrameNode.deoptimizeFrame(matFrame);
         }
         verifyEnclosingAssumptions(frame, callTarget.getRootNode().getFrameDescriptor());
-        RFunction func = RDataFactory.createFunction("", callTarget, matFrame, containsDispatch);
+        RFunction func = RDataFactory.createFunction("", callTarget, null, matFrame, containsDispatch);
         if (RInstrument.instrumentingEnabled()) {
             RInstrument.checkDebugRequested(callTarget.toString(), func);
         }

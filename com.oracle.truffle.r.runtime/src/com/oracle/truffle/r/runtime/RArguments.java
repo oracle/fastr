@@ -166,9 +166,14 @@ public final class RArguments {
     }
 
     public static Object[] create(RFunction functionObj, SourceSection callSrc, MaterializedFrame callerFrame, int depth, Object[] evaluatedArgs, ArgumentsSignature signature) {
-        MaterializedFrame enclosingFrame = functionObj.getEnclosingFrameWithAssumption();
-
+        MaterializedFrame enclosingFrame = functionObj.getEnclosingFrame();
         return createInternal(functionObj, callSrc, callerFrame, depth, evaluatedArgs, signature, enclosingFrame);
+    }
+
+    public static Object[] create(RFunction functionObj, SourceSection callSrc, MaterializedFrame callerFrame, int depth, Object[] evaluatedArgs, ArgumentsSignature signature, S3Args s3Args) {
+        Object[] args = create(functionObj, callSrc, callerFrame, depth, evaluatedArgs, signature);
+        setS3Args(args, s3Args);
+        return args;
     }
 
     public static Object[] createInternal(RFunction functionObj, SourceSection callSrc, MaterializedFrame callerFrame, int depth, Object[] evaluatedArgs, ArgumentsSignature signature,
@@ -193,7 +198,7 @@ public final class RArguments {
 
     @SuppressWarnings("unused")
     private static boolean envFunctionInvariant(Object[] a) {
-        return !(a[INDEX_ENVIRONMENT] == null && a[INDEX_FUNCTION] == null);
+        return a[INDEX_ENVIRONMENT] != null || a[INDEX_FUNCTION] != null;
     }
 
     /**
@@ -292,10 +297,6 @@ public final class RArguments {
     }
 
     public static MaterializedFrame getEnclosingFrame(Frame frame) {
-        Object[] arguments = getRArgumentsWithEvalCheck(frame);
-        if (arguments[INDEX_FUNCTION] != null) {
-            return ((RFunction) arguments[INDEX_FUNCTION]).getEnclosingFrame();
-        }
         return (MaterializedFrame) getRArgumentsWithEvalCheck(frame)[INDEX_ENCLOSING_FRAME];
     }
 
@@ -338,9 +339,6 @@ public final class RArguments {
         CompilerAsserts.neverPartOfCompilation();
         Object[] arguments = getRArgumentsWithEvalCheck(frame);
         arguments[INDEX_ENCLOSING_FRAME] = encl;
-        if (arguments[INDEX_FUNCTION] != null) {
-            ((RFunction) arguments[INDEX_FUNCTION]).setEnclosingFrame(encl);
-        }
         FrameSlotChangeMonitor.invalidateEnclosingFrame(frame);
     }
 

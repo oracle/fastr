@@ -365,7 +365,6 @@ public class ReadVariableNode extends RNode implements RSyntaxNode, VisibilityCo
         private final FrameDescriptor nextDescriptor;
         private final ValueProfile frameProfile = ValueProfile.createClassProfile();
         private final ConditionProfile isEvalFrame = ConditionProfile.createBinaryProfile();
-        private final ConditionProfile isFunctionFrame = ConditionProfile.createBinaryProfile();
 
         public NextFrameLevel(FrameLevel next, FrameDescriptor nextDescriptor) {
             this.next = next;
@@ -375,13 +374,7 @@ public class ReadVariableNode extends RNode implements RSyntaxNode, VisibilityCo
         @Override
         public Object execute(VirtualFrame frame, Frame variableFrame) throws InvalidAssumptionException, LayoutChangedException, FrameSlotTypeException {
             Object[] arguments = RArguments.getArgumentsWithEvalCheck(variableFrame, isEvalFrame);
-            MaterializedFrame nextFrame;
-            Object function = arguments[RArguments.INDEX_FUNCTION];
-            if (isFunctionFrame.profile(function != null)) {
-                nextFrame = frameProfile.profile(((RFunction) function).getEnclosingFrame());
-            } else {
-                nextFrame = (MaterializedFrame) frameProfile.profile(arguments[RArguments.INDEX_ENCLOSING_FRAME]);
-            }
+            MaterializedFrame nextFrame = (MaterializedFrame) frameProfile.profile(arguments[RArguments.INDEX_ENCLOSING_FRAME]);
             if (nextDescriptor == null) {
                 if (nextFrame != null) {
                     throw new LayoutChangedException();

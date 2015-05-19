@@ -393,12 +393,8 @@ public final class RDataFactory {
         return traceDataCreated(new RPairList(car, cdr, tag, type));
     }
 
-    public static RFunction createFunction(String name, RootCallTarget target, MaterializedFrame enclosingFrame, boolean containsDispatch) {
-        return traceDataCreated(new RFunction(name, target, null, enclosingFrame, containsDispatch));
-    }
-
-    public static RFunction createFunction(String name, RootCallTarget target, RBuiltinDescriptor builtin, MaterializedFrame enclosingFrame) {
-        return traceDataCreated(new RFunction(name, target, builtin, enclosingFrame, false));
+    public static RFunction createFunction(String name, RootCallTarget target, RBuiltinDescriptor builtin, MaterializedFrame enclosingFrame, boolean containsDispatch) {
+        return traceDataCreated(new RFunction(name, target, builtin, enclosingFrame, containsDispatch));
     }
 
     public static REnvironment createInternalEnv() {
