@@ -59,6 +59,7 @@ public class RCmdOptionsParser {
      * Parse the arguments, setting the corresponding {@code Option values}.
      */
     public static Result parseArguments(Client client, String[] args) {
+        RCmdOptions.reset();
         int i = 0;
         int firstNonOptionArgIndex = -1;
         while (i < args.length) {

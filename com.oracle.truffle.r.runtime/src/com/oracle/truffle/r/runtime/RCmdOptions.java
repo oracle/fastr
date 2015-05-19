@@ -119,6 +119,12 @@ public class RCmdOptions {
         return optionList;
     }
 
+    public static void reset() {
+        for (Option<?> option : optionList) {
+            option.reset();
+        }
+    }
+
     public static enum OptionType {
         BOOLEAN,
         STRING,
@@ -147,9 +153,13 @@ public class RCmdOptions {
          * The help text.
          */
         public final String help;
+
+        /** The default value. */
+        private final T defaultValue;
         /**
          * The value, either from the default or set on the command line.
          */
+
         private T value;
         /**
          * Set {@code true} iff the short form of a {@code OptionType.STRING} option matched.
@@ -172,6 +182,7 @@ public class RCmdOptions {
             this.shortName = shortName == null ? null : shortKey(shortName);
             this.name = name == null ? null : key(name);
             this.help = help;
+            this.defaultValue = defaultValue;
             this.value = defaultValue;
         }
 
@@ -223,6 +234,10 @@ public class RCmdOptions {
         @SuppressWarnings("unchecked")
         public void setValue(boolean value) {
             this.value = (T) new Boolean(value);
+        }
+
+        public void reset() {
+            this.value = defaultValue;
         }
 
         @SuppressWarnings("unchecked")
