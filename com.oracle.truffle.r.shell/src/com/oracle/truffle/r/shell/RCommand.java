@@ -178,7 +178,7 @@ public class RCommand {
     private static void readEvalPrint(ConsoleHandler consoleHandler, String[] commandArgs, String filePath) {
         String inputDescription = filePath == null ? "<shell_input>" : filePath;
         Source source = Source.fromNamedAppendableText(inputDescription);
-        RContext context = RContextFactory.createContext(commandArgs, consoleHandler);
+        RContext context = RContextFactory.create(commandArgs, consoleHandler).activate();
         try {
             // console.println("initialize time: " + (System.currentTimeMillis() - start));
             for (;;) {

@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.runtime;
+package com.oracle.truffle.r.engine;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.nodes.*;
@@ -34,7 +34,10 @@ import com.oracle.truffle.r.nodes.control.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.nodes.function.PromiseNode.VArgsPromiseNodeAsSyntax;
 import com.oracle.truffle.r.nodes.instrument.debug.*;
+import com.oracle.truffle.r.nodes.runtime.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.RContext.ConsoleHandler;
+import com.oracle.truffle.r.runtime.RContext.Engine;
 import com.oracle.truffle.r.runtime.RContext.Engine.*;
 import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.data.*;
@@ -374,6 +377,18 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
     public void setFunctionName(RootNode node, String name) {
         ((FunctionDefinitionNode) node).setDescription(name);
 
+    }
+
+    public RContext createShared(RContext parent, String[] commandArgs, ConsoleHandler consoleHandler) {
+        return RContextFactory.createShared(parent, commandArgs, consoleHandler);
+    }
+
+    public RContext create(String[] commandArgs, ConsoleHandler consoleHandler) {
+        return RContextFactory.create(commandArgs, consoleHandler);
+    }
+
+    public Engine createEngine(RContext context) {
+        return REngine.create(context);
     }
 
 }

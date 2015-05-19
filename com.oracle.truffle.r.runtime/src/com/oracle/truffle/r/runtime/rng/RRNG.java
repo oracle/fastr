@@ -179,12 +179,6 @@ public class RRNG implements RContext.StateFactory {
         return (ContextStateImpl) RContext.getClassState(RContext.ClassStateKind.RNG);
     }
 
-    /**
-     * The current {@link GeneratorPrivate}.
-     */
-    public static void initialize() {
-    }
-
     public static int currentKindAsInt() {
         return getContextState().currentKind.ordinal();
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,25 +20,22 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.test;
-
-import org.junit.*;
+package com.oracle.truffle.r.nodes.builtin.fastr;
 
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.test.generate.*;
+import com.oracle.truffle.r.runtime.data.*;
 
-public class TestBase {
-
-    private static RContext testContext;
-
-    @BeforeClass
-    public static void setupClass() {
-        testContext = FastRSession.create().createTestContext();
+public class FastRCreateContext {
+    static int createContext(RStringVector args, boolean shared) {
+        String[] argsArray = args.getDataCopy();
+        RContext current = RContext.getInstance();
+        RContext.ConsoleHandler consoleHandler = current.getConsoleHandler();
+        RContext newContext;
+        if (shared) {
+            newContext = RContext.getRRuntimeASTAccess().createShared(current, argsArray, consoleHandler);
+        } else {
+            newContext = RContext.getRRuntimeASTAccess().create(argsArray, consoleHandler);
+        }
+        return (int) newContext.getId();
     }
-
-    @AfterClass
-    public static void finishClass() {
-        testContext.destroy();
-    }
-
 }

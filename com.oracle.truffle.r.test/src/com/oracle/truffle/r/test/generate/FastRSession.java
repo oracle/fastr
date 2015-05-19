@@ -96,6 +96,7 @@ public final class FastRSession implements RSession {
     private static FastRSession singleton;
 
     private EvalThread evalThread;
+    private final RContext main;
 
     public static FastRSession create() {
         if (singleton == null) {
@@ -104,14 +105,15 @@ public final class FastRSession implements RSession {
         return singleton;
     }
 
-    public static RContext createTestContext() {
+    public RContext createTestContext() {
         create();
-        return RContextFactory.createContext(new String[0], consoleHandler);
+        return RContextFactory.createShared(main, new String[0], consoleHandler).activate();
     }
 
     private FastRSession() {
         consoleHandler = new ConsoleHandler();
         RContextFactory.initialize();
+        main = RContextFactory.create(new String[0], consoleHandler).activate();
     }
 
     @SuppressWarnings("deprecation")

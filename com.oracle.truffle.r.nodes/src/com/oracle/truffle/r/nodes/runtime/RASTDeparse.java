@@ -20,7 +20,7 @@ import com.oracle.truffle.r.runtime.RDeparse.*;
 import com.oracle.truffle.r.runtime.data.*;
 
 /**
- * Deparse support for AST instances. Helper class for {@link RRuntimeASTAccessImpl}.
+ * Deparse support for AST instances.
  *
  * N.B. We ignore the {@link SourceSection} for GnuR compatibility. E.g. in <a
  * href="https://stat.ethz.ch/R-manual/R-devel/library/base/html/deparse.html">deparse

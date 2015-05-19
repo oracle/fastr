@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.runtime;
 
 import com.oracle.truffle.api.nodes.*;
+import com.oracle.truffle.r.runtime.RContext.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
 
@@ -105,4 +106,14 @@ public interface RRuntimeASTAccess {
      * Update the {@code name} in a {@code FunctionDefinitionNode}.
      */
     void setFunctionName(RootNode node, String name);
+
+    /*
+     * runtime access to the RContextFactory/REngine
+     */
+    RContext createShared(RContext parent, String[] commandArgs, ConsoleHandler consoleHandler);
+
+    RContext create(String[] commandArgs, ConsoleHandler consoleHandler);
+
+    RContext.Engine createEngine(RContext context);
+
 }

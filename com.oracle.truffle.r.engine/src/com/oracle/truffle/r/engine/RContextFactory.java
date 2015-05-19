@@ -22,8 +22,10 @@
  */
 package com.oracle.truffle.r.engine;
 
+import java.util.*;
+
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.runtime.*;
+import com.oracle.truffle.r.nodes.instrument.*;
 import com.oracle.truffle.r.options.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RContext.*;
@@ -45,19 +47,32 @@ public class RContextFactory {
 
     private static boolean initialized;
 
+    /**
+     * Initialize all the context-independent aspects of the system.
+     */
     public static void initialize() {
         if (!initialized) {
             FastROptions.initialize();
             REnvVars.initialize();
+            RInstrument.initialize();
+            RPerfStats.initialize();
+            Locale.setDefault(Locale.ROOT);
+            RAccuracyInfo.initialize();
+            RVersionInfo.initialize();
+            TempPathName.initialize();
+            RProfile.initialize();
             RContext.initialize(new RRuntimeASTAccessImpl(), RBuiltinPackages.getInstance(), FastROptions.IgnoreVisibility.getValue());
             initialized = true;
         }
     }
 
-    public static RContext createContext(String[] commandArgs, ConsoleHandler consoleHandler) {
-        RContext context = RContext.create(RContext.Kind.SHARED_PACKAGES, commandArgs, consoleHandler);
-        REngine engine = REngine.create(context);
-        engine.initializeShared();
+    public static RContext createShared(RContext parent, String[] commandArgs, ConsoleHandler consoleHandler) {
+        RContext context = RContext.createShared(parent, commandArgs, consoleHandler);
+        return context;
+    }
+
+    public static RContext create(String[] commandArgs, ConsoleHandler consoleHandler) {
+        RContext context = RContext.create(commandArgs, consoleHandler);
         return context;
     }
 }

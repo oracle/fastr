@@ -59,6 +59,8 @@ public class FastRFunctionEntry {
             }
         } else if (name.equals("comparefilesizes")) {
             return FastRFileSizeCompare.compare(RRuntime.asString(arg0), RRuntime.asString(argValues[1]));
+        } else if (name.equals("createcontext")) {
+            return FastRCreateContext.createContext((RStringVector) RRuntime.asAbstractVector(arg0), RRuntime.fromLogical(checkLogical(argValues[1], fastRNode)));
         }
         // The remainder all take a func argument
         RFunction func = checkFunction(arg0, fastRNode);

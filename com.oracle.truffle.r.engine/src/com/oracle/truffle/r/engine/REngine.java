@@ -57,13 +57,12 @@ import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
 import com.oracle.truffle.r.runtime.env.frame.*;
-import com.oracle.truffle.r.runtime.rng.*;
 
 /**
  * The engine for the FastR implementation. Handles parsing and evaluation. There is one instance of
  * this class per {@link RContext}.
  */
-public final class REngine implements RContext.Engine {
+final class REngine implements RContext.Engine {
 
     /**
      * Controls the behavior when an implementation errors occurs. In normal use this is fatal as
@@ -107,69 +106,57 @@ public final class REngine implements RContext.Engine {
 
     private REngine(RContext context) {
         this.context = context;
-        this.startTime = System.nanoTime();
         this.childTimes = new long[]{0, 0};
         this.globalFrame = RRuntime.createNonFunctionFrame().materialize();
     }
 
-    /**
-     * Currently the default packages are installed once and shared between different contexts. We
-     * may relax some or all of this at a later date.
-     */
-    private static boolean sharedInitialized;
-
     static REngine create(RContext context) {
         REngine engine = new REngine(context);
-        context.setEngine(engine);
-        context.installCustomClassState(RContext.ClassStateKind.REnvironment, new REnvironment.ClassStateFactory().newContext(context, engine.globalFrame));
         return engine;
     }
 
-    void initializeShared() {
-        if (!sharedInitialized) {
-            RInstrument.initialize();
-            RPerfStats.initialize();
-            Locale.setDefault(Locale.ROOT);
-            RAccuracyInfo.initialize();
-            suppressWarnings = true;
-            MaterializedFrame baseFrame = RRuntime.createNonFunctionFrame().materialize();
-            REnvironment.baseInitialize(baseFrame, globalFrame);
-            loadBase = FastROptions.LoadBase.getValue();
-            RBuiltinPackages.loadBase(baseFrame, loadBase);
-            RVersionInfo.initialize();
-            RRNG.initialize();
-            TempPathName.initialize();
-            RProfile.initialize();
-            RGraphics.initialize();
-            if (loadBase) {
-                /*
-                 * eval the system/site/user profiles. Experimentally GnuR does not report warnings
-                 * during system profile evaluation, but does for the site/user profiles.
-                 */
-                parseAndEval(RProfile.systemProfile(), baseFrame, false, false);
-                checkAndRunStartupFunction(".OptRequireMethods");
-
-                suppressWarnings = false;
-                Source siteProfile = RProfile.siteProfile();
-                if (siteProfile != null) {
-                    parseAndEval(siteProfile, baseFrame, false, false);
-                }
-                Source userProfile = RProfile.userProfile();
-                if (userProfile != null) {
-                    parseAndEval(userProfile, globalFrame, false, false);
-                }
-                if (!NO_RESTORE.getValue()) {
-                    /*
-                     * TODO This is where we would load any saved user data
-                     */
-                }
-                checkAndRunStartupFunction(".First");
-                checkAndRunStartupFunction(".First.sys");
-                RBuiltinPackages.loadDefaultPackageOverrides();
-            }
-            context.systemInitialized();
-            sharedInitialized = true;
+    public void activate() {
+        this.startTime = System.nanoTime();
+        context.installCustomClassState(RContext.ClassStateKind.REnvironment, new REnvironment.ClassStateFactory().newContext(context, globalFrame));
+        if (context.getKind() == RContext.Kind.SHARED_NOTHING) {
+            initializeShared();
         }
+    }
+
+    private void initializeShared() {
+        suppressWarnings = true;
+        MaterializedFrame baseFrame = RRuntime.createNonFunctionFrame().materialize();
+        REnvironment.baseInitialize(baseFrame, globalFrame);
+        loadBase = FastROptions.LoadBase.getValue();
+        RBuiltinPackages.loadBase(baseFrame, loadBase);
+        RGraphics.initialize();
+        if (loadBase) {
+            /*
+             * eval the system/site/user profiles. Experimentally GnuR does not report warnings
+             * during system profile evaluation, but does for the site/user profiles.
+             */
+            parseAndEval(RProfile.systemProfile(), baseFrame, false, false);
+            checkAndRunStartupFunction(".OptRequireMethods");
+
+            suppressWarnings = false;
+            Source siteProfile = RProfile.siteProfile();
+            if (siteProfile != null) {
+                parseAndEval(siteProfile, baseFrame, false, false);
+            }
+            Source userProfile = RProfile.userProfile();
+            if (userProfile != null) {
+                parseAndEval(userProfile, globalFrame, false, false);
+            }
+            if (!NO_RESTORE.getValue()) {
+                /*
+                 * TODO This is where we would load any saved user data
+                 */
+            }
+            checkAndRunStartupFunction(".First");
+            checkAndRunStartupFunction(".First.sys");
+            RBuiltinPackages.loadDefaultPackageOverrides();
+        }
+        context.systemInitialized();
     }
 
     private void checkAndRunStartupFunction(String name) {
