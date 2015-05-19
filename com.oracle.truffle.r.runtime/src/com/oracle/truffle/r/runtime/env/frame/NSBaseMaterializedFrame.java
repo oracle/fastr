@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.runtime.env.frame;
 
 import java.util.*;
-import java.util.concurrent.atomic.*;
 
 import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.frame.*;
@@ -36,8 +35,6 @@ import com.oracle.truffle.r.runtime.*;
  */
 public final class NSBaseMaterializedFrame implements MaterializedFrame {
 
-    private static final AtomicLong INSTANCE_COUNT = new AtomicLong();
-
     private final MaterializedFrame packageBaseFrame;
     @CompilationFinal private final Object[] arguments;
 
@@ -46,9 +43,6 @@ public final class NSBaseMaterializedFrame implements MaterializedFrame {
         this.arguments = Arrays.copyOf(packageBaseFrame.getArguments(), packageBaseFrame.getArguments().length);
         FrameSlotChangeMonitor.initializeNonFunctionFrameDescriptor(getFrameDescriptor(), true);
         RArguments.setEnclosingFrame(this, globalFrame);
-        if (INSTANCE_COUNT.incrementAndGet() > 1) {
-            throw RInternalError.shouldNotReachHere("more than one namespace:base environment crated");
-        }
     }
 
     public void updateGlobalFrame(MaterializedFrame globalFrame) {
