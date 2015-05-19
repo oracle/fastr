@@ -94,18 +94,29 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
 
         REnvironment getGlobalEnv();
 
+        Base getBaseEnv();
+
+        REnvironment getNamespaceRegistry();
+
         REnvironment.SearchPath getSearchPath();
 
-        void setSearchPath(REnvironment.SearchPath searchPath);
     }
 
     private static class ContextStateImpl implements ContextState {
         private SearchPath searchPath;
         private final MaterializedFrame globalFrame;
+        private Base baseEnv;
+        private REnvironment namespaceRegistry;
 
         ContextStateImpl(MaterializedFrame globalFrame, SearchPath searchPath) {
             this.globalFrame = globalFrame;
             this.searchPath = searchPath;
+        }
+
+        ContextStateImpl(MaterializedFrame globalFrame, SearchPath searchPath, Base baseEnv, REnvironment namespaceRegistry) {
+            this(globalFrame, searchPath);
+            this.baseEnv = baseEnv;
+            this.namespaceRegistry = namespaceRegistry;
         }
 
         public REnvironment getGlobalEnv() {
@@ -120,8 +131,24 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
             return searchPath;
         }
 
-        public void setSearchPath(SearchPath searchPath) {
+        public Base getBaseEnv() {
+            return baseEnv;
+        }
+
+        public REnvironment getNamespaceRegistry() {
+            return namespaceRegistry;
+        }
+
+        private void setSearchPath(SearchPath searchPath) {
             this.searchPath = searchPath;
+        }
+
+        private void setBaseEnv(Base baseEnv) {
+            this.baseEnv = baseEnv;
+        }
+
+        private void setNamespaceRegistery(REnvironment namespaceRegistry) {
+            this.namespaceRegistry = namespaceRegistry;
         }
 
     }
@@ -132,7 +159,7 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
      */
     public static class ClassStateFactory implements RContext.StateFactory {
         public ContextState newContext(RContext context, Object... objects) {
-            return createContext((MaterializedFrame) objects[0]);
+            return createContext(context, (MaterializedFrame) objects[0]);
         }
     }
 
@@ -180,8 +207,6 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
     private static final String NAME_ATTR_KEY = "name";
 
     private static final Empty emptyEnv = new Empty();
-    private static Base baseEnv;
-    private static REnvironment namespaceRegistry;
 
     /**
      * The environments returned by the R {@code search} function.
@@ -233,6 +258,7 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
      * Value returned by {@code baseenv()}. This is the "package:base" environment.
      */
     public static REnvironment baseEnv() {
+        Base baseEnv = RContext.getREnvironmentState().getBaseEnv();
         assert baseEnv != null;
         return baseEnv;
     }
@@ -241,12 +267,13 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
      * Value set in {@code .baseNameSpaceEnv} variable. This is the "namespace:base" environment.
      */
     public static REnvironment baseNamespaceEnv() {
+        Base baseEnv = RContext.getREnvironmentState().getBaseEnv();
         assert baseEnv != null;
         return baseEnv.getNamespace();
     }
 
     /**
-     * Invoked on startup to setup the {@link #baseEnv}, {@link #namespaceRegistry} and package
+     * Invoked on startup to setup the {@code #baseEnv}, {@code namespaceRegistry} and package
      * search path.
      *
      * The base "package" is special, it has no "imports" and the parent of its associated namespace
@@ -259,23 +286,26 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
      */
     public static void baseInitialize(MaterializedFrame baseFrame, MaterializedFrame initialGlobalFrame) {
         // TODO is namespaceRegistry ever used in an eval?
-        namespaceRegistry = RDataFactory.createInternalEnv();
-        baseEnv = new Base(baseFrame, initialGlobalFrame);
+        ContextStateImpl state = (ContextStateImpl) RContext.getREnvironmentState();
+        state.setNamespaceRegistery(RDataFactory.createInternalEnv());
+        Base baseEnv = new Base(baseFrame, initialGlobalFrame);
         Global globalEnv = new Global(baseEnv, initialGlobalFrame);
         baseEnv.namespaceEnv.parent = globalEnv;
-        RContext.getREnvironmentState().setSearchPath(initSearchList(globalEnv));
+        state.setBaseEnv(baseEnv);
+        state.setSearchPath(initSearchList(globalEnv));
     }
 
     /**
-     * {@link RContext} creation, with {@code globalFrame}. If {@link #baseEnv} is {@code null} then
-     * this is the initial context and we only create the minimal search path with no packages.
-     * Otherwise, in the (default) shared packages mode, we keep the existing search path, just
-     * replacing the {@code globalenv} component.
+     * {@link RContext} creation, with {@code globalFrame}. If this is a {@code SHARED_NOTHING}
+     * context we only create the minimal search path with no packages as the pakage loading is
+     * handled by the engine. For a {@code SHARED_PACKAGES} context, we keep the existing search
+     * path, just replacing the {@code globalenv} component.
      */
-    private static ContextState createContext(MaterializedFrame globalFrame) {
-        SearchPath sp;
-        if (baseEnv != null) {
-            NSBaseMaterializedFrame nsBaseFrame = (NSBaseMaterializedFrame) baseEnv.namespaceEnv.frameAccess.getFrame();
+    private static ContextState createContext(RContext context, MaterializedFrame globalFrame) {
+        if (context.getKind() == RContext.Kind.SHARED_PACKAGES) {
+            ContextStateImpl parentState = (ContextStateImpl) context.getParent().getThisContextState(RContext.ClassStateKind.REnvironment);
+            Base parentBaseEnv = parentState.getBaseEnv();
+            NSBaseMaterializedFrame nsBaseFrame = (NSBaseMaterializedFrame) parentBaseEnv.namespaceEnv.frameAccess.getFrame();
             MaterializedFrame prevGlobalFrame = RArguments.getEnclosingFrame(nsBaseFrame);
             Global prevGlobalEnv = (Global) RArguments.getEnvironment(prevGlobalFrame);
             nsBaseFrame.updateGlobalFrame(globalFrame);
@@ -285,14 +315,13 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
              * global entry.
              */
             Global newGlobalEnv = new Global(prevGlobalEnv.parent, globalFrame);
-            sp = initSearchList(prevGlobalEnv);
-            sp.updateGlobal(newGlobalEnv);
-            baseEnv.safePut(".GlobalEnv", newGlobalEnv);
+            SearchPath searchPath = initSearchList(prevGlobalEnv);
+            searchPath.updateGlobal(newGlobalEnv);
+            parentState.getBaseEnv().safePut(".GlobalEnv", newGlobalEnv);
+            return new ContextStateImpl(globalFrame, searchPath, parentBaseEnv, parentState.getNamespaceRegistry());
         } else {
-            // set by baseInitialize
-            sp = new SearchPath();
+            return new ContextStateImpl(globalFrame, new SearchPath());
         }
-        return new ContextStateImpl(globalFrame, sp);
     }
 
     private static SearchPath initSearchList(Global globalEnv) {
@@ -349,11 +378,11 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
     }
 
     public static REnvironment getNamespaceRegistry() {
-        return namespaceRegistry;
+        return RContext.getREnvironmentState().getNamespaceRegistry();
     }
 
     public static void registerNamespace(String name, REnvironment env) {
-        namespaceRegistry.safePut(name, env);
+        RContext.getREnvironmentState().getNamespaceRegistry().safePut(name, env);
     }
 
     /**
@@ -362,7 +391,7 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
      * namespace.
      */
     public static REnvironment getRegisteredNamespace(String name) {
-        return (REnvironment) namespaceRegistry.get(name);
+        return (REnvironment) RContext.getREnvironmentState().getNamespaceRegistry().get(name);
     }
 
     /**
@@ -527,8 +556,8 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
      * "namespace" env.
      */
     public REnvironment getPackageNamespaceEnv() {
-        if (this == baseEnv) {
-            return baseNamespaceEnv();
+        if (this == RContext.getREnvironmentState().getBaseEnv()) {
+            return ((Base) this).namespaceEnv;
         }
         String envName = getName();
         if (envName.startsWith("package:")) {
@@ -746,7 +775,7 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
     private static final class BaseNamespace extends REnvironment {
         private BaseNamespace(REnvironment parent, String name, REnvFrameAccess frameAccess) {
             super(parent, name, frameAccess);
-            namespaceRegistry.safePut(name, this);
+            RContext.getREnvironmentState().getNamespaceRegistry().safePut(name, this);
             RArguments.setEnvironment(frameAccess.getFrame(), this);
         }
 

@@ -201,7 +201,7 @@ public class RCommand {
                 try {
                     String continuePrompt = getContinuePrompt();
                     Source subSource = Source.subSource(source, startLength);
-                    while (context.getContextEngine().parseAndEval(subSource, true, true) == Engine.INCOMPLETE_SOURCE) {
+                    while (context.getThisEngine().parseAndEval(subSource, true, true) == Engine.INCOMPLETE_SOURCE) {
                         consoleHandler.setPrompt(doEcho ? continuePrompt : null);
                         String additionalInput = consoleHandler.readLine();
                         if (additionalInput == null) {
@@ -219,7 +219,7 @@ public class RCommand {
         } catch (UserInterruptException e) {
             // interrupted (how?)
         } catch (EOFException ex) {
-            context.getContextEngine().parseAndEval(QUIT_EOF, false, false);
+            context.getThisEngine().parseAndEval(QUIT_EOF, false, false);
         } finally {
             context.destroy();
         }

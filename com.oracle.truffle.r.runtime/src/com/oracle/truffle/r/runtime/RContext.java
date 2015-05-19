@@ -386,7 +386,7 @@ public final class RContext extends ExecutionContext {
     /**
      * The array is indexed by {@link ClassStateKind#ordinal()}.
      */
-    @CompilationFinal private ContextState[] classState;
+    @CompilationFinal private ContextState[] contextState;
 
     /**
      * For a {@link Kind#SHARED_PACKAGES} context, the context we are sharing with.
@@ -458,13 +458,13 @@ public final class RContext extends ExecutionContext {
 
     public void installCustomClassState(ClassStateKind classStateKind, ContextState state) {
         assert classStateKind.customCreate;
-        assert classState[classStateKind.ordinal()] == null;
-        classState[classStateKind.ordinal()] = state;
+        assert contextState[classStateKind.ordinal()] == null;
+        contextState[classStateKind.ordinal()] = state;
     }
 
     public void systemInitialized() {
         for (ClassStateKind classStateKind : ClassStateKind.VALUES) {
-            classStateKind.factory.systemInitialized(this, classState[classStateKind.ordinal()]);
+            classStateKind.factory.systemInitialized(this, contextState[classStateKind.ordinal()]);
         }
     }
 
@@ -521,16 +521,17 @@ public final class RContext extends ExecutionContext {
         assert !active;
         active = true;
         attachThread();
-        classState = new ContextState[ClassStateKind.VALUES.length];
+        contextState = new ContextState[ClassStateKind.VALUES.length];
         for (ClassStateKind classStateKind : ClassStateKind.VALUES) {
             if (!classStateKind.customCreate) {
-                classState[classStateKind.ordinal()] = classStateKind.factory.newContext(this);
+                contextState[classStateKind.ordinal()] = classStateKind.factory.newContext(this);
             }
         }
         installCustomClassState(ClassStateKind.StdConnections, new StdConnections().newContext(this, consoleHandler));
         if (kind == Kind.SHARED_PACKAGES) {
             parent.sharedChild = this;
         }
+        // The environment state installation is handled by the engine
         engine.activate();
         return this;
     }
@@ -571,10 +572,19 @@ public final class RContext extends ExecutionContext {
     }
 
     /**
-     * Access to the engine, when an {@link RContext} object is available.
+     * Access to the engine, when an {@link RContext} object is available, and/or when {@code this}
+     * context is not active.
      */
-    public Engine getContextEngine() {
+    public Engine getThisEngine() {
         return engine;
+    }
+
+    /**
+     * Access to the {@link ContextState}, when an {@link RContext} object is available, and/or when
+     * {@code this} context is not active.
+     */
+    public ContextState getThisContextState(ClassStateKind classStateKind) {
+        return contextState[classStateKind.ordinal()];
     }
 
     public boolean isVisible() {
@@ -654,20 +664,20 @@ public final class RContext extends ExecutionContext {
         return RContext.getInstance().engine;
     }
 
-    public static ContextState getClassState(ClassStateKind kind) {
-        return getInstance().classState[kind.ordinal()];
+    public static ContextState getContextState(ClassStateKind kind) {
+        return getInstance().contextState[kind.ordinal()];
     }
 
     public static REnvironment.ContextState getREnvironmentState() {
-        return (REnvironment.ContextState) getInstance().classState[ClassStateKind.REnvironment.ordinal()];
+        return (REnvironment.ContextState) getInstance().contextState[ClassStateKind.REnvironment.ordinal()];
     }
 
     public static ROptions.ContextState getROptionsState() {
-        return (ROptions.ContextState) getInstance().classState[ClassStateKind.ROptions.ordinal()];
+        return (ROptions.ContextState) getInstance().contextState[ClassStateKind.ROptions.ordinal()];
     }
 
     public static ConnectionSupport.ContextState getRConnectionState() {
-        return (ConnectionSupport.ContextState) getInstance().classState[ClassStateKind.RConnection.ordinal()];
+        return (ConnectionSupport.ContextState) getInstance().contextState[ClassStateKind.RConnection.ordinal()];
     }
 
 }

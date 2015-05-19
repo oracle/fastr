@@ -58,7 +58,7 @@ public class StdConnections implements RContext.StateFactory {
     }
 
     private static ContextStateImpl getContextState() {
-        return (ContextStateImpl) RContext.getClassState(RContext.ClassStateKind.StdConnections);
+        return (ContextStateImpl) RContext.getContextState(RContext.ClassStateKind.StdConnections);
     }
 
     public static RConnection getStdin() {

@@ -145,7 +145,7 @@ public class RErrorHandling implements RContext.StateFactory {
     }
 
     private static ContextStateImpl getRErrorHandlingState() {
-        return (ContextStateImpl) RContext.getClassState(RContext.ClassStateKind.RErrorHandling);
+        return (ContextStateImpl) RContext.getContextState(RContext.ClassStateKind.RErrorHandling);
     }
 
     public static Object getHandlerStack() {

@@ -176,7 +176,7 @@ public class RRNG implements RContext.StateFactory {
     }
 
     private static ContextStateImpl getContextState() {
-        return (ContextStateImpl) RContext.getClassState(RContext.ClassStateKind.RNG);
+        return (ContextStateImpl) RContext.getContextState(RContext.ClassStateKind.RNG);
     }
 
     public static int currentKindAsInt() {
