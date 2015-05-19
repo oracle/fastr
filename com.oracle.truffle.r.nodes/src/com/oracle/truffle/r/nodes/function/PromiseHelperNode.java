@@ -141,6 +141,9 @@ public class PromiseHelperNode extends Node {
      * @return The value the given Promise evaluates to
      */
     private Object doEvaluate(VirtualFrame frame, RPromise promise, SourceSection callSrc) {
+        if (isEvaluated(promise)) {
+            return promise.getValue();
+        }
         RPromise current = promise;
         if (current.getOptType() == OptType.VARARG) {
             varArgProfile.enter();
@@ -149,9 +152,9 @@ public class PromiseHelperNode extends Node {
                 multiVarArgProfile.enter();
                 current = ((VarargPromise) current).getVararg();
             }
-        }
-        if (isEvaluated(current)) {
-            return current.getValue();
+            if (isEvaluated(current)) {
+                return current.getValue();
+            }
         }
 
         // Check for dependency cycle

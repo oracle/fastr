@@ -30,6 +30,7 @@ import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.instrument.*;
+import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.runtime.conn.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -444,6 +445,9 @@ public final class RContext extends ExecutionContext {
         threadLocalContext.set(this);
     }
 
+    private static final Assumption singleContextAssumption = Truffle.getRuntime().createAssumption("single RContext");
+    @CompilationFinal private static RContext singleContext;
+
     private RContext(Kind kind, RContext parent, String[] commandArgs, ConsoleHandler consoleHandler) {
         this.kind = kind;
         this.parent = parent;
@@ -454,6 +458,15 @@ public final class RContext extends ExecutionContext {
         }
         this.consoleHandler = consoleHandler;
         this.interactive = consoleHandler.isInteractive();
+
+        if (singleContextAssumption.isValid()) {
+            if (singleContext == null) {
+                singleContext = this;
+            } else {
+                singleContext = null;
+                singleContextAssumption.invalidate();
+            }
+        }
     }
 
     public void installCustomClassState(ClassStateKind classStateKind, ContextState state) {
@@ -564,11 +577,24 @@ public final class RContext extends ExecutionContext {
     }
 
     @TruffleBoundary
-    public static RContext getInstance() {
+    private static RContext getInstanceInternal() {
         RContext result = threadLocalContext.get();
         assert result != null;
         assert result.active;
         return result;
+    }
+
+    public static RContext getInstance() {
+        RContext context = singleContext;
+        if (context != null) {
+            try {
+                singleContextAssumption.check();
+                return context;
+            } catch (InvalidAssumptionException e) {
+                // fallback to slow case
+            }
+        }
+        return getInstanceInternal();
     }
 
     /**
