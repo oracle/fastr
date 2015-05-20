@@ -570,7 +570,7 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
     /**
      * Return the "spec" attribute of the "info" env in a namespace or {@code null} if not found.
      */
-    private RStringVector getNamespaceSpec() {
+    public RStringVector getNamespaceSpec() {
         Object value = frameAccess.get(NAMESPACE_KEY);
         if (value instanceof REnvironment) {
             REnvironment info = (REnvironment) value;

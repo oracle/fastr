@@ -1219,6 +1219,7 @@ public class RSerialize {
                 writeCHARSXP(((RSymbol) obj).getName());
             } else if (type == SEXPTYPE.ENVSXP) {
                 REnvironment env = (REnvironment) obj;
+                addReadRef(obj);
                 String name = env.getName();
                 if (name.startsWith("package:")) {
                     RError.warning(RError.Message.PACKAGE_AVAILABLE, name);
@@ -1226,7 +1227,8 @@ public class RSerialize {
                     stream.writeString(name);
                 } else if (env.isNamespaceEnv()) {
                     stream.writeInt(SEXPTYPE.NAMESPACESXP.code);
-                    stream.writeString(name);
+                    RStringVector nameSpaceEnvSpec = env.getNamespaceSpec();
+                    outStringVec(nameSpaceEnvSpec, false);
                 } else {
                     stream.writeInt(SEXPTYPE.ENVSXP.code);
                     stream.writeInt(env.isLocked() ? 1 : 0);
