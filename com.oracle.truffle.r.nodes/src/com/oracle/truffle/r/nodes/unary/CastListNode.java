@@ -107,13 +107,13 @@ public abstract class CastListNode extends CastNode {
         RPairList tpl = pl;
         while (tpl != null) {
             Object tag = tpl.getTag();
-            names[i] = tag == RNull.instance ? RRuntime.NAMES_ATTR_EMPTY_VALUE : (String) tag;
+            names[i] = pl.isNullTag() ? RRuntime.NAMES_ATTR_EMPTY_VALUE : (String) tag;
             if (tag == RRuntime.STRING_NA) {
                 complete = RDataFactory.INCOMPLETE_VECTOR;
             }
             data[i] = tpl.car();
             Object cdr = tpl.cdr();
-            if (cdr == RNull.instance) {
+            if (RPairList.isNull(cdr)) {
                 break;
             } else {
                 tpl = (RPairList) cdr;

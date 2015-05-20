@@ -121,6 +121,7 @@ public class RRuntime {
     public static final String SYSTEM_DATE_FORMAT = "EEE MMM dd HH:mm:ss yyyy";
 
     public static final String NULL = "NULL";
+    public static final String UNBOUND = "UNBOUND";
 
     @CompilationFinal private static final String[] numberStringCache = new String[4096];
     private static final int MIN_CACHED_NUMBER = -numberStringCache.length / 2;

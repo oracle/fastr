@@ -215,7 +215,7 @@ public class RErrorHandling implements RContext.StateFactory {
 
     @TruffleBoundary
     public static void addRestart(RList restart) {
-        getRErrorHandlingState().setRestartStack(RDataFactory.createPairList(restart, getRestartStack(), RNull.instance));
+        getRErrorHandlingState().setRestartStack(RDataFactory.createPairList(restart, getRestartStack()));
     }
 
     @TruffleBoundary

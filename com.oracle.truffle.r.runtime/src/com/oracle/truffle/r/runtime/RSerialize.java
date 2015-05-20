@@ -628,13 +628,7 @@ public class RSerialize {
                 }
 
                 case UNBOUNDVALUE_SXP: {
-                    /*
-                     * GnuR uses this to represent "no-value". FastR does not have such a type, so
-                     * we return RNull for now. N.B. This has never occurred in real code, only when
-                     * unserializing package sources from "utils", where a PROMSXP has a
-                     * UNBOUNDVALUE_SXP.
-                     */
-                    result = RNull.instance;
+                    result = RUnboundValue.instance;
                     break;
                 }
 
@@ -1663,7 +1657,7 @@ public class RSerialize {
      * Implementation that creates a physical {@link RPairList}.
      */
     private static class PLState extends State {
-        private static final RPairList NULL = RDataFactory.createPairList(RNull.instance, RNull.instance);
+        private static final RPairList NULL = RDataFactory.createPairList();
         private Deque<RPairList> active = new LinkedList<>();
         private Map<String, RSymbol> symbolMap = new HashMap<>();
         private int[] positionsLength = new int[10];
@@ -1675,14 +1669,15 @@ public class RSerialize {
 
         @Override
         public State openPairList() {
-            RPairList result = RDataFactory.createPairList(RNull.instance, RNull.instance, RNull.instance);
+            RPairList result = RDataFactory.createPairList();
             active.addFirst(result);
             return this;
         }
 
         @Override
         public State openPairList(SEXPTYPE type) {
-            RPairList result = RDataFactory.createPairList(RNull.instance, RNull.instance, RNull.instance, type);
+            RPairList result = RDataFactory.createPairList();
+            result.setType(type);
             active.addFirst(result);
             return this;
         }
@@ -1739,18 +1734,18 @@ public class RSerialize {
             if (top == NULL) {
                 return RNull.instance;
             } else {
-                if (top.cdr() == null) {
-                    if (top.getTag() == null && top.getType() == null) {
+                if (top.cdr() == RUnboundValue.instance) {
+                    if (top.getTag() == RUnboundValue.instance && top.getType() == null) {
                         // shrink back to non-pairlist (cf GnuR)
-                        assert top.car() != null;
+                        assert top.car() != RUnboundValue.instance;
                         return top.car();
                     } else {
                         top.setCdr(RNull.instance);
                         return top;
                     }
-                } else if (top.car() == null) {
+                } else if (top.car() == RUnboundValue.instance) {
                     assert false;
-                    assert top.getTag() == null && top.getType() == null && top.cdr() != null;
+                    assert top.getTag() == RUnboundValue.instance && top.getType() == null && top.cdr() != RUnboundValue.instance;
                     return top.cdr();
                 } else {
                     return top;
@@ -1772,13 +1767,13 @@ public class RSerialize {
         @Override
         public boolean isNullCdr() {
             RPairList pl = active.peekFirst();
-            return pl.getTag() == null && pl.car() == null && pl.cdr() == RNull.instance;
+            return pl.getTag() == RUnboundValue.instance && pl.car() == RUnboundValue.instance && pl.cdr() == RNull.instance;
         }
 
         @Override
         public void switchCdrToCar() {
             RPairList pl = active.removeFirst();
-            assert pl.cdr() != null && pl.car() == null;
+            assert pl.cdr() != RUnboundValue.instance && pl.car() == RUnboundValue.instance;
             // setting the type prevents the usual value down-shift on close
             SEXPTYPE type;
             if (pl.cdr() instanceof RPairList && ((RPairList) pl.cdr()).getType() == null) {
@@ -1786,7 +1781,7 @@ public class RSerialize {
             } else {
                 type = SEXPTYPE.LISTSXP;
             }
-            active.addFirst(RDataFactory.createPairList(pl.cdr(), RNull.instance, RNull.instance, type));
+            active.addFirst(RDataFactory.createPairList(pl.cdr(), RUnboundValue.instance, RUnboundValue.instance, type));
         }
 
         @Override

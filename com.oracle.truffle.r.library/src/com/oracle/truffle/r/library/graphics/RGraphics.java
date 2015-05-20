@@ -28,11 +28,10 @@ import com.oracle.truffle.r.runtime.env.*;
 public class RGraphics {
     private static final RStringVector NULL_DEVICE = RDataFactory.createStringVectorFromScalar("null device");
     /**
-     * The graphics devices system maintains two variables .Device and .Devices in the base environment
-     * both are always set:
-     * .Devices gives a list of character vectors of the names of open devices,
-     * .Device is the element corresponding to the currently active device.
-     * The null device will always be open.
+     * The graphics devices system maintains two variables .Device and .Devices in the base
+     * environment both are always set: .Devices gives a list of character vectors of the names of
+     * open devices, .Device is the element corresponding to the currently active device. The null
+     * device will always be open.
      */
     private static final String DOT_DEVICE = ".Device";
     private static final String DOT_DEVICES = ".Devices";
@@ -40,7 +39,7 @@ public class RGraphics {
     public static void initialize() {
         REnvironment baseEnv = REnvironment.baseEnv();
         baseEnv.safePut(DOT_DEVICE, NULL_DEVICE);
-        RPairList devices = RDataFactory.createPairList(NULL_DEVICE, RNull.instance, RNull.instance);
+        RPairList devices = RDataFactory.createPairList(NULL_DEVICE);
         baseEnv.safePut(DOT_DEVICES, devices);
         registerBaseGraphicsSystem();
     }

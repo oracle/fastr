@@ -19,6 +19,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 public enum RType {
     Any("any", -1),
     Null("NULL", -1),
+    Unbound("UNBOUND", -1),
     Raw("raw", 0),
     Logical("logical", 1),
     Integer("integer", 2),
@@ -102,6 +103,8 @@ public enum RType {
                 return Any;
             case "NULL":
                 return Null;
+            case "UNBOUND":
+                return Unbound;
             case "raw":
                 return Raw;
             case "logical":

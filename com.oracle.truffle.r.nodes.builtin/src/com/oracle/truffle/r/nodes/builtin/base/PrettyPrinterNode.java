@@ -350,8 +350,8 @@ public abstract class PrettyPrinterNode extends RNode {
         int i = 1;
         Object plObject = pairList;
         RPairList pl = pairList;
-        while (plObject != RNull.instance) {
-            if (pl.getTag() != RNull.instance) {
+        while (!RPairList.isNull(plObject)) {
+            if (!pl.isNullTag()) {
                 sb.append('$');
                 sb.append(pl.getTag());
             } else {
@@ -360,12 +360,12 @@ public abstract class PrettyPrinterNode extends RNode {
                 sb.append("]]");
             }
             sb.append('\n');
-            if (pl.car() != RNull.instance) {
+            if (!RPairList.isNull(pl.car())) {
                 sb.append(prettyPrintRecursive(pl.car(), listElementName, quote, right));
                 sb.append('\n');
             }
             plObject = pl.cdr();
-            if (plObject != RNull.instance) {
+            if (!RPairList.isNull(plObject)) {
                 pl = (RPairList) plObject;
                 sb.append('\n');
             }
