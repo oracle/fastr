@@ -66,9 +66,22 @@ public class TestRPackages extends TestBase {
 
         private boolean installPackage(String packageName) {
             Path packagePath = rpackagesDists.resolve(packageName).resolve("lib").resolve(packageName + ".tar");
-            // TODO remove --no-help limitation when markdown parser functioning
-            String fastR = FileSystems.getDefault().getPath(REnvVars.rHome(), "bin", "R").toString();
-            ProcessBuilder pb = new ProcessBuilder(fastR, "CMD", "INSTALL", "--no-help", packagePath.toString());
+            String[] cmds;
+            if (generatingExpected()) {
+                // use GnuR
+                cmds = new String[4];
+                cmds[0] = "R";
+            } else {
+                // use FastR
+                cmds = new String[5];
+                cmds[0] = FileSystems.getDefault().getPath(REnvVars.rHome(), "bin", "R").toString();
+                // TODO remove --no-help limitation when markdown parser functioning
+                cmds[3] = "--no-help";
+            }
+            cmds[1] = "CMD";
+            cmds[2] = "INSTALL";
+            cmds[cmds.length - 1] = packagePath.toString();
+            ProcessBuilder pb = new ProcessBuilder(cmds);
             Map<String, String> env = pb.environment();
             env.put("R_LIBS_USER", rpackagesLibs.toString());
             try {
