@@ -54,49 +54,49 @@ public abstract class AsCharacter extends RBuiltinNode {
         }
     }
 
-    private String castString(VirtualFrame frame, int o) {
+    private String castString(int o) {
         initCast();
-        return (String) castStringNode.executeString(frame, o);
+        return (String) castStringNode.executeString(o);
     }
 
-    private String castString(VirtualFrame frame, double o) {
+    private String castString(double o) {
         initCast();
-        return (String) castStringNode.executeString(frame, o);
+        return (String) castStringNode.executeString(o);
     }
 
-    private String castString(VirtualFrame frame, byte o) {
+    private String castString(byte o) {
         initCast();
-        return (String) castStringNode.executeString(frame, o);
+        return (String) castStringNode.executeString(o);
     }
 
-    private RStringVector castStringVector(VirtualFrame frame, Object o) {
+    private RStringVector castStringVector(Object o) {
         initCast();
-        return (RStringVector) ((RStringVector) castStringNode.executeString(frame, o)).copyDropAttributes();
+        return (RStringVector) ((RStringVector) castStringNode.executeString(o)).copyDropAttributes();
     }
 
     @Specialization
-    protected String doInt(VirtualFrame frame, int value) {
+    protected String doInt(int value) {
         controlVisibility();
-        return castString(frame, value);
+        return castString(value);
     }
 
     @Specialization
-    protected String doDouble(VirtualFrame frame, double value) {
+    protected String doDouble(double value) {
         controlVisibility();
-        return castString(frame, value);
+        return castString(value);
     }
 
     @Specialization
-    protected String doLogical(VirtualFrame frame, byte value) {
+    protected String doLogical(byte value) {
         controlVisibility();
-        return castString(frame, value);
+        return castString(value);
     }
 
     @Specialization
-    protected String doRaw(VirtualFrame frame, RRaw value) {
+    protected String doRaw(RRaw value) {
         controlVisibility();
         initCast();
-        return (String) castStringNode.executeString(frame, value);
+        return (String) castStringNode.executeString(value);
     }
 
     @Specialization
@@ -124,8 +124,7 @@ public abstract class AsCharacter extends RBuiltinNode {
     }
 
     @Specialization(guards = "!isObject(frame, list)")
-    @SuppressWarnings("unused")
-    protected RStringVector doList(VirtualFrame frame, RList list) {
+    protected RStringVector doList(@SuppressWarnings("unused") VirtualFrame frame, RList list) {
         controlVisibility();
         // partial implementation for simple special case
         if (list.getLength() == 1 && list.getDataAt(0) instanceof RStringVector && ((RStringVector) list.getDataAt(0)).getLength() == 1) {
@@ -136,9 +135,9 @@ public abstract class AsCharacter extends RBuiltinNode {
     }
 
     @Specialization(guards = "!isObject(frame, container)")
-    protected RStringVector doVector(VirtualFrame frame, RAbstractContainer container) {
+    protected RStringVector doVector(@SuppressWarnings("unused") VirtualFrame frame, RAbstractContainer container) {
         controlVisibility();
-        return castStringVector(frame, container);
+        return castStringVector(container);
     }
 
     @Specialization(guards = "isObject(frame, container)")
@@ -151,7 +150,7 @@ public abstract class AsCharacter extends RBuiltinNode {
         try {
             return dcn.execute(frame, container.getClassHierarchy(), new Object[]{container});
         } catch (S3FunctionLookupNode.NoGenericMethodException e) {
-            return castStringVector(frame, container);
+            return castStringVector(container);
         }
     }
 

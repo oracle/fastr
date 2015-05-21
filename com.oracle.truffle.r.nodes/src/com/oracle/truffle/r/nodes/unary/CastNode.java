@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.nodes.unary;
 
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.ConstantNode.ConstantIntegerScalarNode;
@@ -40,7 +39,7 @@ public abstract class CastNode extends UnaryNode {
     private final ConditionProfile hasNamesProfile = ConditionProfile.createBinaryProfile();
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
-    public abstract Object executeCast(VirtualFrame frame, Object value);
+    public abstract Object executeCast(Object value);
 
     protected abstract boolean isPreserveNames();
 

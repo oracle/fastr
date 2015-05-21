@@ -1169,7 +1169,7 @@ public abstract class PrettyPrinterNode extends RNode {
 
         // TODO: this should be handled by an S3 function
         @Specialization
-        protected String prettyPrintListElement(VirtualFrame frame, RFactor operand, Object listElementName, byte quote, byte right) {
+        protected String prettyPrintListElement(RFactor operand, Object listElementName, byte quote, byte right) {
             RVector vec = operand.getLevels(attrProfiles);
             String[] strings;
             if (vec == null) {
@@ -1178,7 +1178,7 @@ public abstract class PrettyPrinterNode extends RNode {
                 initCast();
                 strings = new String[vec.getLength()];
                 for (int i = 0; i < vec.getLength(); i++) {
-                    strings[i] = (String) castStringNode.executeString(frame, vec.getDataAtAsObject(i));
+                    strings[i] = (String) castStringNode.executeString(vec.getDataAtAsObject(i));
                 }
             }
             return formatLevelStrings(operand, listElementName, right, vec, strings);

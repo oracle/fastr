@@ -47,12 +47,12 @@ public abstract class Scan extends RBuiltinNode {
 
     @Child private CastToVectorNode castVector;
 
-    private RAbstractVector castVector(VirtualFrame frame, Object value) {
+    private RAbstractVector castVector(Object value) {
         if (castVector == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castVector = insert(CastToVectorNodeGen.create(null, false, false, false, false));
         }
-        return ((RAbstractVector) castVector.executeObject(frame, value)).materialize();
+        return ((RAbstractVector) castVector.executeObject(value)).materialize();
     }
 
     private static class LocalData {
@@ -380,7 +380,7 @@ public abstract class Scan extends RBuiltinNode {
                 errorProfile.enter();
                 throw RError.error(RError.Message.INVALID_ARGUMENT, "what");
             } else {
-                RAbstractVector vec = castVector(frame, what.getDataAt(i));
+                RAbstractVector vec = castVector(what.getDataAt(i));
                 list.updateDataAt(i, vec.createEmptySameType(blockSize, RDataFactory.COMPLETE_VECTOR), null);
             }
         }

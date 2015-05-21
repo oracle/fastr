@@ -181,20 +181,20 @@ public abstract class AccessArrayNode extends RNode implements RSyntaxNode {
         return accessRecursive.executeAccess(frame, vector, exact, recLevel, operand, dropDim);
     }
 
-    private Object castVector(VirtualFrame frame, Object value) {
+    private Object castVector(Object value) {
         if (castVector == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castVector = insert(CastToVectorNodeGen.create(null, false, false, false, true));
         }
-        return castVector.executeObject(frame, value);
+        return castVector.executeObject(value);
     }
 
-    private Object castPosition(VirtualFrame frame, Object vector, Object operand) {
+    private Object castPosition(Object vector, Object operand) {
         if (castPosition == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castPosition = insert(ArrayPositionCastNodeGen.create(0, 1, false, false, null, null));
         }
-        return castPosition.executeArg(frame, vector, operand);
+        return castPosition.executeArg(vector, operand);
     }
 
     private void initOperatorConvert() {
@@ -204,14 +204,14 @@ public abstract class AccessArrayNode extends RNode implements RSyntaxNode {
         }
     }
 
-    private Object convertOperand(VirtualFrame frame, Object vector, int operand, Object exact) {
+    private Object convertOperand(Object vector, int operand, Object exact) {
         initOperatorConvert();
-        return operatorConverter.executeConvert(frame, vector, operand, exact);
+        return operatorConverter.executeConvert(vector, operand, exact);
     }
 
-    private Object convertOperand(VirtualFrame frame, Object vector, String operand, Object exact) {
+    private Object convertOperand(Object vector, String operand, Object exact) {
         initOperatorConvert();
-        return operatorConverter.executeConvert(frame, vector, operand, exact);
+        return operatorConverter.executeConvert(vector, operand, exact);
     }
 
     private Object getMultiDimData(VirtualFrame frame, Object data, RAbstractVector vector, Object[] positions, int currentDimLevel, int srcArrayBase, int dstArrayBase, int accSrcDimensions,
@@ -626,8 +626,8 @@ public abstract class AccessArrayNode extends RNode implements RSyntaxNode {
     @Specialization(guards = {"!isObject(vector)", "hasNames(vector)", "!isSubset()", "twoPosition(p)"})
     protected Object accessStringTwoPosRec(VirtualFrame frame, RList vector, Object exact, int recLevel, RStringVector p, Object dropDim) {
         int position = getPositionInRecursion(vector, p.getDataAt(0), recLevel, getEncapsulatingSourceSection(), error, attrProfiles);
-        Object newVector = castVector(frame, vector.getDataAt(position - 1));
-        Object newPosition = castPosition(frame, newVector, convertOperand(frame, newVector, p.getDataAt(1), exact));
+        Object newVector = castVector(vector.getDataAt(position - 1));
+        Object newPosition = castPosition(newVector, convertOperand(newVector, p.getDataAt(1), exact));
         return accessRecursive(frame, newVector, exact, newPosition, recLevel + 1, dropDim);
     }
 
@@ -706,8 +706,8 @@ public abstract class AccessArrayNode extends RNode implements RSyntaxNode {
     protected Object accessTwoPosRec(VirtualFrame frame, RList vector, Object exact, int recLevel, RIntVector positions, Object dropDim) {
         int position = positions.getDataAt(0);
         position = getPositionInRecursion(vector, position, recLevel);
-        Object newVector = castVector(frame, vector.getDataAt(position - 1));
-        Object newPosition = castPosition(frame, newVector, convertOperand(frame, newVector, positions.getDataAt(1), exact));
+        Object newVector = castVector(vector.getDataAt(position - 1));
+        Object newPosition = castPosition(newVector, convertOperand(newVector, positions.getDataAt(1), exact));
         return accessRecursive(frame, newVector, exact, newPosition, recLevel + 1, dropDim);
     }
 

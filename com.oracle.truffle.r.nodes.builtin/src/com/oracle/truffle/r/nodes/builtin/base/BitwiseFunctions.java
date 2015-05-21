@@ -12,7 +12,6 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.binary.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -48,10 +47,10 @@ public class BitwiseFunctions {
             }
         }
 
-        protected Object basicBit(VirtualFrame frame, RAbstractVector a, RAbstractVector b, Operation op) {
+        protected Object basicBit(RAbstractVector a, RAbstractVector b, Operation op) {
             checkBasicBit(a, b, op);
-            RAbstractIntVector aVec = (RAbstractIntVector) castTypeA.execute(frame, a, RType.Integer);
-            RAbstractIntVector bVec = (RAbstractIntVector) castTypeB.execute(frame, b, RType.Integer);
+            RAbstractIntVector aVec = (RAbstractIntVector) castTypeA.execute(a, RType.Integer);
+            RAbstractIntVector bVec = (RAbstractIntVector) castTypeB.execute(b, RType.Integer);
             int aLen = aVec.getLength();
             int bLen = bVec.getLength();
             int ansSize = (aLen != 0 && bLen != 0) ? Math.max(aLen, bLen) : 0;
@@ -98,8 +97,8 @@ public class BitwiseFunctions {
             return RDataFactory.createIntVector(ans, completeVector);
         }
 
-        protected Object bitNot(VirtualFrame frame, RAbstractVector a) {
-            RAbstractIntVector aVec = (RAbstractIntVector) castTypeA.execute(frame, a, RType.Integer);
+        protected Object bitNot(RAbstractVector a) {
+            RAbstractIntVector aVec = (RAbstractIntVector) castTypeA.execute(a, RType.Integer);
             int[] ans = new int[aVec.getLength()];
             for (int i = 0; i < aVec.getLength(); i++) {
                 ans[i] = ~aVec.getDataAt(i);
@@ -155,83 +154,76 @@ public class BitwiseFunctions {
     public abstract static class BitwiseAnd extends BasicBitwise {
 
         @Specialization
-        protected Object bitwAnd(VirtualFrame frame, RAbstractVector a, RAbstractVector b) {
+        protected Object bitwAnd(RAbstractVector a, RAbstractVector b) {
             controlVisibility();
-            return basicBit(frame, a, b, Operation.AND);
+            return basicBit(a, b, Operation.AND);
         }
-
     }
 
     @RBuiltin(name = "bitwiseOr", kind = RBuiltinKind.INTERNAL, parameterNames = {"a", "b"})
     public abstract static class BitwiseOr extends BasicBitwise {
 
         @Specialization
-        protected Object bitwOr(VirtualFrame frame, RAbstractVector a, RAbstractVector b) {
+        protected Object bitwOr(RAbstractVector a, RAbstractVector b) {
             controlVisibility();
-            return basicBit(frame, a, b, Operation.OR);
+            return basicBit(a, b, Operation.OR);
         }
-
     }
 
     @RBuiltin(name = "bitwiseXor", kind = RBuiltinKind.INTERNAL, parameterNames = {"a", "b"})
     public abstract static class BitwiseXor extends BasicBitwise {
 
         @Specialization
-        protected Object bitwXor(VirtualFrame frame, RAbstractVector a, RAbstractVector b) {
+        protected Object bitwXor(RAbstractVector a, RAbstractVector b) {
             controlVisibility();
-            return basicBit(frame, a, b, Operation.XOR);
+            return basicBit(a, b, Operation.XOR);
         }
-
     }
 
     @RBuiltin(name = "bitwiseShiftR", kind = RBuiltinKind.INTERNAL, parameterNames = {"a", "n"})
     public abstract static class BitwiseShiftR extends BasicBitwise {
 
         @Specialization(guards = {"!shiftByCharacter(n)"})
-        protected Object bitwShiftR(VirtualFrame frame, RAbstractVector a, RAbstractVector n) {
+        protected Object bitwShiftR(RAbstractVector a, RAbstractVector n) {
             controlVisibility();
-            return basicBit(frame, a, n, Operation.SHIFTR);
+            return basicBit(a, n, Operation.SHIFTR);
         }
 
         @Specialization(guards = {"shiftByCharacter(n)"})
         @SuppressWarnings("unused")
-        protected Object bitwShiftRChar(VirtualFrame frame, RAbstractVector a, RAbstractVector n) {
+        protected Object bitwShiftRChar(RAbstractVector a, RAbstractVector n) {
             controlVisibility();
             checkShiftOrNot(a, Operation.SHIFTR);
             return makeNA(a.getLength());
         }
-
     }
 
     @RBuiltin(name = "bitwiseShiftL", kind = RBuiltinKind.INTERNAL, parameterNames = {"a", "n"})
     public abstract static class BitwiseShiftL extends BasicBitwise {
 
         @Specialization(guards = {"!shiftByCharacter(n)"})
-        protected Object bitwShiftR(VirtualFrame frame, RAbstractVector a, RAbstractVector n) {
+        protected Object bitwShiftR(RAbstractVector a, RAbstractVector n) {
             controlVisibility();
-            return basicBit(frame, a, n, Operation.SHIFTL);
+            return basicBit(a, n, Operation.SHIFTL);
         }
 
         @Specialization(guards = {"shiftByCharacter(n)"})
         @SuppressWarnings("unused")
-        protected Object bitwShiftRChar(VirtualFrame frame, RAbstractVector a, RAbstractVector n) {
+        protected Object bitwShiftRChar(RAbstractVector a, RAbstractVector n) {
             controlVisibility();
             checkShiftOrNot(a, Operation.SHIFTL);
             return makeNA(a.getLength());
         }
-
     }
 
     @RBuiltin(name = "bitwiseNot", kind = RBuiltinKind.INTERNAL, parameterNames = {"a"})
     public abstract static class BitwiseNot extends BasicBitwise {
 
         @Specialization
-        protected Object bitwNot(VirtualFrame frame, RAbstractVector a) {
+        protected Object bitwNot(RAbstractVector a) {
             controlVisibility();
             checkShiftOrNot(a, Operation.NOT);
-            return bitNot(frame, a);
+            return bitNot(a);
         }
-
     }
-
 }

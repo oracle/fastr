@@ -16,7 +16,6 @@ import java.util.*;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.binary.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -138,18 +137,18 @@ public class DuplicatedFunctions {
         }
 
         @Specialization(guards = {"isIncomparable(incomparables)", "!empty(x)"})
-        protected RLogicalVector duplicatedTrueIncomparables(VirtualFrame frame, RAbstractVector x, byte incomparables, byte fromLast, @SuppressWarnings("unused") int nmax) {
+        protected RLogicalVector duplicatedTrueIncomparables(RAbstractVector x, byte incomparables, byte fromLast, @SuppressWarnings("unused") int nmax) {
             initChildren();
             RType xType = typeof.execute(x);
-            RAbstractVector vector = (RAbstractVector) (castTypeNode.execute(frame, incomparables, xType));
+            RAbstractVector vector = (RAbstractVector) (castTypeNode.execute(incomparables, xType));
             return analyzeAndCreateResult(x, vector, fromLast);
         }
 
         @Specialization(guards = {"!empty(x)"})
-        protected RLogicalVector duplicated(VirtualFrame frame, RAbstractContainer x, RAbstractContainer incomparables, byte fromLast, @SuppressWarnings("unused") int nmax) {
+        protected RLogicalVector duplicated(RAbstractContainer x, RAbstractContainer incomparables, byte fromLast, @SuppressWarnings("unused") int nmax) {
             initChildren();
             RType xType = typeof.execute(x);
-            return analyzeAndCreateResult(x, (RAbstractContainer) (castTypeNode.execute(frame, incomparables, xType)), fromLast);
+            return analyzeAndCreateResult(x, (RAbstractContainer) (castTypeNode.execute(incomparables, xType)), fromLast);
         }
 
         @SuppressWarnings("unused")
@@ -176,18 +175,18 @@ public class DuplicatedFunctions {
         }
 
         @Specialization(guards = {"isIncomparable(incomparables)", "!empty(x)"})
-        protected int anyDuplicatedTrueIncomparables(VirtualFrame frame, RAbstractVector x, byte incomparables, byte fromLast) {
+        protected int anyDuplicatedTrueIncomparables(RAbstractVector x, byte incomparables, byte fromLast) {
             initChildren();
             RType xType = typeof.execute(x);
-            RAbstractVector vector = (RAbstractVector) (castTypeNode.execute(frame, incomparables, xType));
+            RAbstractVector vector = (RAbstractVector) (castTypeNode.execute(incomparables, xType));
             return analyze(x, vector, true, RRuntime.fromLogical(fromLast)).index;
         }
 
         @Specialization(guards = {"!empty(x)"})
-        protected int anyDuplicated(VirtualFrame frame, RAbstractContainer x, RAbstractContainer incomparables, byte fromLast) {
+        protected int anyDuplicated(RAbstractContainer x, RAbstractContainer incomparables, byte fromLast) {
             initChildren();
             RType xType = typeof.execute(x);
-            return analyze(x, (RAbstractContainer) (castTypeNode.execute(frame, incomparables, xType)), true, RRuntime.fromLogical(fromLast)).index;
+            return analyze(x, (RAbstractContainer) (castTypeNode.execute(incomparables, xType)), true, RRuntime.fromLogical(fromLast)).index;
         }
 
         @SuppressWarnings("unused")
@@ -195,7 +194,5 @@ public class DuplicatedFunctions {
         protected int anyDuplicatedEmpty(RAbstractContainer x, RAbstractContainer incomparables, byte fromLast) {
             return 0;
         }
-
     }
-
 }

@@ -16,7 +16,6 @@ import java.util.*;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
@@ -148,13 +147,13 @@ public abstract class CumMin extends RBuiltinNode {
     }
 
     @Specialization
-    protected RDoubleVector cummin(VirtualFrame frame, RStringVector v) {
+    protected RDoubleVector cummin(RStringVector v) {
         controlVisibility();
         if (castDouble == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castDouble = insert(CastDoubleNodeGen.create(null, false, false, false));
         }
-        return cummin((RDoubleVector) castDouble.executeDouble(frame, v));
+        return cummin((RDoubleVector) castDouble.executeDouble(v));
     }
 
     @Specialization
@@ -162,5 +161,4 @@ public abstract class CumMin extends RBuiltinNode {
         controlVisibility();
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.CUMMIN_UNDEFINED_FOR_COMPLEX);
     }
-
 }

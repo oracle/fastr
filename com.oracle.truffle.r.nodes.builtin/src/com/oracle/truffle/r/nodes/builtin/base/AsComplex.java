@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,8 +26,6 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
@@ -35,12 +33,9 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
 @RBuiltin(name = "as.complex", kind = PRIMITIVE, parameterNames = {"x", "..."})
-@SuppressWarnings("unused")
 public abstract class AsComplex extends RBuiltinNode {
 
     @Child private CastComplexNode castComplexNode;
-
-    public abstract RComplexVector executeRComplexVector(VirtualFrame frame, Object o) throws UnexpectedResultException;
 
     private void initCast() {
         if (castComplexNode == null) {
@@ -49,29 +44,29 @@ public abstract class AsComplex extends RBuiltinNode {
         }
     }
 
-    private RComplex castComplex(VirtualFrame frame, int o) {
+    private RComplex castComplex(int o) {
         initCast();
-        return (RComplex) castComplexNode.executeComplex(frame, o);
+        return (RComplex) castComplexNode.executeComplex(o);
     }
 
-    private RComplex castComplex(VirtualFrame frame, double o) {
+    private RComplex castComplex(double o) {
         initCast();
-        return (RComplex) castComplexNode.executeComplex(frame, o);
+        return (RComplex) castComplexNode.executeComplex(o);
     }
 
-    private RComplex castComplex(VirtualFrame frame, byte o) {
+    private RComplex castComplex(byte o) {
         initCast();
-        return (RComplex) castComplexNode.executeComplex(frame, o);
+        return (RComplex) castComplexNode.executeComplex(o);
     }
 
-    private RComplex castComplex(VirtualFrame frame, Object o) {
+    private RComplex castComplex(Object o) {
         initCast();
-        return (RComplex) castComplexNode.executeComplex(frame, o);
+        return (RComplex) castComplexNode.executeComplex(o);
     }
 
-    private RComplexVector castComplexVector(VirtualFrame frame, Object o) {
+    private RComplexVector castComplexVector(Object o) {
         initCast();
-        return (RComplexVector) castComplexNode.executeComplex(frame, o);
+        return (RComplexVector) castComplexNode.executeComplex(o);
     }
 
     @Specialization
@@ -81,44 +76,44 @@ public abstract class AsComplex extends RBuiltinNode {
     }
 
     @Specialization
-    protected RComplex doInt(VirtualFrame frame, int value) {
+    protected RComplex doInt(int value) {
         controlVisibility();
-        return castComplex(frame, value);
+        return castComplex(value);
     }
 
     @Specialization
-    protected RComplex doDouble(VirtualFrame frame, double value) {
+    protected RComplex doDouble(double value) {
         controlVisibility();
-        return castComplex(frame, value);
+        return castComplex(value);
     }
 
     @Specialization
-    protected RComplex doLogical(VirtualFrame frame, byte value) {
+    protected RComplex doLogical(byte value) {
         controlVisibility();
-        return castComplex(frame, value);
+        return castComplex(value);
     }
 
     @Specialization
-    protected RComplex doString(VirtualFrame frame, String value) {
+    protected RComplex doString(String value) {
         controlVisibility();
-        return castComplex(frame, value);
+        return castComplex(value);
     }
 
     @Specialization
-    protected RComplexVector doNull(RNull value) {
+    protected RComplexVector doNull(@SuppressWarnings("unused") RNull value) {
         controlVisibility();
         return RDataFactory.createComplexVector(0);
     }
 
     @Specialization
-    protected RComplexVector doComplexVector(VirtualFrame frame, RComplexVector vector) {
+    protected RComplexVector doComplexVector(RComplexVector vector) {
         controlVisibility();
         return RDataFactory.createComplexVector(vector.getDataCopy(), vector.isComplete());
     }
 
     @Specialization
-    protected RComplexVector doIntVector(VirtualFrame frame, RAbstractVector vector) {
+    protected RComplexVector doIntVector(RAbstractVector vector) {
         controlVisibility();
-        return castComplexVector(frame, vector);
+        return castComplexVector(vector);
     }
 }

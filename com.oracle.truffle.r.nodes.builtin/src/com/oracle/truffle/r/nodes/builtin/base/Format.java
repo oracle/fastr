@@ -16,7 +16,6 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -62,12 +61,12 @@ public abstract class Format extends RBuiltinNode {
         return setPrintDefaults();
     }
 
-    private RAbstractIntVector castInteger(VirtualFrame frame, Object operand) {
+    private RAbstractIntVector castInteger(Object operand) {
         if (castInteger == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castInteger = insert(CastIntegerNodeGen.create(null, true, false, false));
         }
-        return (RAbstractIntVector) castInteger.executeCast(frame, operand);
+        return (RAbstractIntVector) castInteger.executeCast(operand);
     }
 
     @CreateCast("arguments")
@@ -180,9 +179,9 @@ public abstract class Format extends RBuiltinNode {
     // TODO: even though format's arguments are not used at this point, their processing mirrors
     // what GNU R does
 
-    private int computeSciArg(VirtualFrame frame, RAbstractVector sciVec) {
+    private int computeSciArg(RAbstractVector sciVec) {
         assert sciVec.getLength() > 0;
-        int tmp = castInteger(frame, sciVec).getDataAt(0);
+        int tmp = castInteger(sciVec).getDataAt(0);
         int ret;
         if (sciVec.getElementClass() == RLogical.class) {
             if (RRuntime.isNA(tmp)) {
@@ -233,8 +232,7 @@ public abstract class Format extends RBuiltinNode {
     }
 
     @SuppressWarnings("unused")
-    private void processArguments(VirtualFrame frame, RLogicalVector trimVec, RIntVector digitsVec, RIntVector nsmallVec, RIntVector widthVec, RIntVector justifyVec, RLogicalVector naEncodeVec,
-                    RAbstractVector sciVec) {
+    private void processArguments(RLogicalVector trimVec, RIntVector digitsVec, RIntVector nsmallVec, RIntVector widthVec, RIntVector justifyVec, RLogicalVector naEncodeVec, RAbstractVector sciVec) {
         byte trim = trimVec.getLength() > 0 ? trimVec.getDataAt(0) : RRuntime.LOGICAL_NA;
         int digits = digitsVec.getLength() > 0 ? digitsVec.getDataAt(0) : RRuntime.INT_NA;
         getConfig().digits = digits;
@@ -242,7 +240,7 @@ public abstract class Format extends RBuiltinNode {
         int width = widthVec.getLength() > 0 ? widthVec.getDataAt(0) : 0;
         int justify = justifyVec.getLength() > 0 ? justifyVec.getDataAt(0) : RRuntime.INT_NA;
         byte naEncode = naEncodeVec.getLength() > 0 ? naEncodeVec.getDataAt(0) : RRuntime.LOGICAL_NA;
-        int sci = computeSciArg(frame, sciVec);
+        int sci = computeSciArg(sciVec);
     }
 
     @Specialization

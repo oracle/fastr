@@ -26,7 +26,6 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
@@ -48,76 +47,76 @@ public abstract class AsVector extends RBuiltinNode {
 
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
-    private RIntVector castInteger(VirtualFrame frame, Object operand) {
+    private RIntVector castInteger(Object operand) {
         if (castInteger == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castInteger = insert(CastIntegerNodeGen.create(null, false, false, false));
         }
-        return (RIntVector) castInteger.executeInt(frame, operand);
+        return (RIntVector) castInteger.executeInt(operand);
     }
 
-    private RDoubleVector castDouble(VirtualFrame frame, Object operand) {
+    private RDoubleVector castDouble(Object operand) {
         if (castDouble == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castDouble = insert(CastDoubleNodeGen.create(null, false, false, false));
         }
-        return (RDoubleVector) castDouble.executeDouble(frame, operand);
+        return (RDoubleVector) castDouble.executeDouble(operand);
     }
 
-    private RComplexVector castComplex(VirtualFrame frame, Object operand) {
+    private RComplexVector castComplex(Object operand) {
         if (castComplex == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castComplex = insert(CastComplexNodeGen.create(null, false, false, false));
         }
-        return (RComplexVector) castComplex.executeComplex(frame, operand);
+        return (RComplexVector) castComplex.executeComplex(operand);
     }
 
-    private RLogicalVector castLogical(VirtualFrame frame, Object operand) {
+    private RLogicalVector castLogical(Object operand) {
         if (castLogical == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castLogical = insert(CastLogicalNodeGen.create(null, false, false, false));
         }
-        return (RLogicalVector) castLogical.executeLogical(frame, operand);
+        return (RLogicalVector) castLogical.executeLogical(operand);
     }
 
-    private RStringVector castString(VirtualFrame frame, Object operand) {
+    private RStringVector castString(Object operand) {
         if (castString == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castString = insert(CastStringNodeGen.create(null, false, false, false, false));
         }
-        return (RStringVector) castString.executeString(frame, operand);
+        return (RStringVector) castString.executeString(operand);
     }
 
-    private RSymbol castSymbol(VirtualFrame frame, Object operand) {
+    private RSymbol castSymbol(Object operand) {
         if (castSymbol == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castSymbol = insert(CastSymbolNodeGen.create(null, false, false, false));
         }
-        return (RSymbol) castSymbol.executeSymbol(frame, operand);
+        return (RSymbol) castSymbol.executeSymbol(operand);
     }
 
-    private RExpression castExpression(VirtualFrame frame, Object operand) {
+    private RExpression castExpression(Object operand) {
         if (castExpression == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castExpression = insert(CastExpressionNodeGen.create(null, false, false, false));
         }
-        return (RExpression) castExpression.executeExpression(frame, operand);
+        return (RExpression) castExpression.executeExpression(operand);
     }
 
-    private RRawVector castRaw(VirtualFrame frame, Object operand) {
+    private RRawVector castRaw(Object operand) {
         if (castRaw == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castRaw = insert(CastRawNodeGen.create(null, false, false, false));
         }
-        return (RRawVector) castRaw.executeRaw(frame, operand);
+        return (RRawVector) castRaw.executeRaw(operand);
     }
 
-    private RList castList(VirtualFrame frame, Object operand) {
+    private RList castList(Object operand) {
         if (castList == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castList = insert(CastListNodeGen.create(null, true, false, false));
         }
-        return castList.executeList(frame, operand);
+        return castList.executeList(operand);
     }
 
     @Specialization
@@ -127,45 +126,45 @@ public abstract class AsVector extends RBuiltinNode {
     }
 
     @Specialization(guards = "castToInt(x, mode)")
-    protected RAbstractVector asVectorInt(VirtualFrame frame, RAbstractContainer x, @SuppressWarnings("unused") String mode) {
+    protected RAbstractVector asVectorInt(RAbstractContainer x, @SuppressWarnings("unused") String mode) {
         controlVisibility();
-        return castInteger(frame, x);
+        return castInteger(x);
     }
 
     @Specialization(guards = "castToDouble(x, mode)")
-    protected RAbstractVector asVectorDouble(VirtualFrame frame, RAbstractContainer x, @SuppressWarnings("unused") String mode) {
+    protected RAbstractVector asVectorDouble(RAbstractContainer x, @SuppressWarnings("unused") String mode) {
         controlVisibility();
-        return castDouble(frame, x);
+        return castDouble(x);
     }
 
     @Specialization(guards = "castToComplex(x, mode)")
-    protected RAbstractVector asVectorComplex(VirtualFrame frame, RAbstractContainer x, @SuppressWarnings("unused") String mode) {
+    protected RAbstractVector asVectorComplex(RAbstractContainer x, @SuppressWarnings("unused") String mode) {
         controlVisibility();
-        return castComplex(frame, x);
+        return castComplex(x);
     }
 
     @Specialization(guards = "castToLogical(x, mode)")
-    protected RAbstractVector asVectorLogical(VirtualFrame frame, RAbstractContainer x, @SuppressWarnings("unused") String mode) {
+    protected RAbstractVector asVectorLogical(RAbstractContainer x, @SuppressWarnings("unused") String mode) {
         controlVisibility();
-        return castLogical(frame, x);
+        return castLogical(x);
     }
 
     @Specialization(guards = "castToString(x, mode)")
-    protected RAbstractVector asVectorString(VirtualFrame frame, RAbstractContainer x, @SuppressWarnings("unused") String mode) {
+    protected RAbstractVector asVectorString(RAbstractContainer x, @SuppressWarnings("unused") String mode) {
         controlVisibility();
-        return castString(frame, x);
+        return castString(x);
     }
 
     @Specialization(guards = "castToRaw(x, mode)")
-    protected RAbstractVector asVectorRaw(VirtualFrame frame, RAbstractContainer x, @SuppressWarnings("unused") String mode) {
+    protected RAbstractVector asVectorRaw(RAbstractContainer x, @SuppressWarnings("unused") String mode) {
         controlVisibility();
-        return castRaw(frame, x);
+        return castRaw(x);
     }
 
     @Specialization(guards = "castToList(x, mode)")
-    protected RAbstractVector asVectorList(VirtualFrame frame, RAbstractContainer x, @SuppressWarnings("unused") String mode) {
+    protected RAbstractVector asVectorList(RAbstractContainer x, @SuppressWarnings("unused") String mode) {
         controlVisibility();
-        return castList(frame, x);
+        return castList(x);
     }
 
     @Specialization(guards = "castToList(x, mode)")
@@ -175,9 +174,9 @@ public abstract class AsVector extends RBuiltinNode {
     }
 
     @Specialization(guards = "castToSymbol(x, mode)")
-    protected RSymbol asVectorSymbol(VirtualFrame frame, RAbstractContainer x, @SuppressWarnings("unused") String mode) {
+    protected RSymbol asVectorSymbol(RAbstractContainer x, @SuppressWarnings("unused") String mode) {
         controlVisibility();
-        return castSymbol(frame, x);
+        return castSymbol(x);
     }
 
     @Specialization(guards = "isSymbol(x, mode)")
@@ -227,9 +226,9 @@ public abstract class AsVector extends RBuiltinNode {
     }
 
     @Specialization(guards = "castToExpression(x, mode)")
-    protected RExpression asVectorExpression(VirtualFrame frame, Object x, @SuppressWarnings("unused") String mode) {
+    protected RExpression asVectorExpression(Object x, @SuppressWarnings("unused") String mode) {
         controlVisibility();
-        return castExpression(frame, x);
+        return castExpression(x);
     }
 
     @Specialization(guards = "modeIsAnyOrMatches(x, mode)")

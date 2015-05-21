@@ -26,7 +26,6 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -46,12 +45,12 @@ public abstract class Matrix extends RBuiltinNode {
     private final BinaryConditionProfile bothNrowNcolMissing = (BinaryConditionProfile) ConditionProfile.createBinaryProfile();
     private final BinaryConditionProfile empty = (BinaryConditionProfile) ConditionProfile.createBinaryProfile();
 
-    private RAbstractVector updateDimNames(VirtualFrame frame, RAbstractVector vector, Object o) {
+    private RAbstractVector updateDimNames(RAbstractVector vector, Object o) {
         if (updateDimNames == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             updateDimNames = insert(UpdateDimNamesNodeGen.create(new RNode[2], null, null));
         }
-        return (RAbstractVector) updateDimNames.executeRAbstractContainer(frame, vector, o);
+        return (RAbstractVector) updateDimNames.executeRAbstractContainer(vector, o);
     }
 
     @CreateCast("arguments")
@@ -81,7 +80,7 @@ public abstract class Matrix extends RBuiltinNode {
 
     @Specialization(guards = "!isTrue(byrow)")
     @SuppressWarnings("unused")
-    protected RAbstractVector matrixbc(VirtualFrame frame, RAbstractVector data, int nrow, int ncol, byte byrow, RList dimnames, byte missingNr, byte missingNc) {
+    protected RAbstractVector matrixbc(RAbstractVector data, int nrow, int ncol, byte byrow, RList dimnames, byte missingNr, byte missingNc) {
         int[] dim = computeDimByCol(data.getLength(), nrow, ncol, missingNr, missingNc);
         RAbstractVector res;
         if (empty.profile(data.getLength() == 0)) {
@@ -89,7 +88,7 @@ public abstract class Matrix extends RBuiltinNode {
             res.setDimensions(dim);
         } else {
             res = data.copyResizedWithDimensions(dim);
-            res = updateDimNames(frame, res, dimnames);
+            res = updateDimNames(res, dimnames);
         }
         controlVisibility();
         return res;
@@ -97,7 +96,7 @@ public abstract class Matrix extends RBuiltinNode {
 
     @Specialization(guards = "isTrue(byrow)")
     @SuppressWarnings("unused")
-    protected RAbstractVector matrixbr(VirtualFrame frame, RAbstractVector data, int nrow, int ncol, byte byrow, RNull dimnames, byte missingNr, byte missingNc) {
+    protected RAbstractVector matrixbr(RAbstractVector data, int nrow, int ncol, byte byrow, RNull dimnames, byte missingNr, byte missingNc) {
         controlVisibility();
         int[] dim = computeDimByRow(data.getLength(), nrow, ncol, missingNr, missingNc);
         if (transpose == null) {
@@ -111,12 +110,12 @@ public abstract class Matrix extends RBuiltinNode {
         } else {
             res = data.copyResizedWithDimensions(dim);
         }
-        return (RAbstractVector) transpose.execute(frame, res);
+        return (RAbstractVector) transpose.execute(res);
     }
 
     @Specialization(guards = "isTrue(byrow)")
     @SuppressWarnings("unused")
-    protected RAbstractVector matrixbr(VirtualFrame frame, RAbstractVector data, int nrow, int ncol, byte byrow, RList dimnames, byte missingNr, byte missingNc) {
+    protected RAbstractVector matrixbr(RAbstractVector data, int nrow, int ncol, byte byrow, RList dimnames, byte missingNr, byte missingNc) {
         int[] dim = computeDimByRow(data.getLength(), nrow, ncol, missingNr, missingNc);
         if (transpose == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -128,8 +127,8 @@ public abstract class Matrix extends RBuiltinNode {
             res.setDimensions(dim);
         } else {
 
-            res = (RVector) transpose.execute(frame, data.copyResizedWithDimensions(dim));
-            res = updateDimNames(frame, res, dimnames);
+            res = (RVector) transpose.execute(data.copyResizedWithDimensions(dim));
+            res = updateDimNames(res, dimnames);
         }
         controlVisibility();
         return res;
@@ -205,5 +204,4 @@ public abstract class Matrix extends RBuiltinNode {
     protected static boolean isTrue(byte byrow) {
         return RRuntime.fromLogical(byrow);
     }
-
 }

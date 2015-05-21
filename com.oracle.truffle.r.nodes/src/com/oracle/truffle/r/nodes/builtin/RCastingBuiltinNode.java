@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.nodes.builtin;
 
 import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.data.*;
 
@@ -37,60 +36,59 @@ public abstract class RCastingBuiltinNode extends RBuiltinNode {
     @Child private CastRawNode castRaw;
     @Child private CastListNode castList;
 
-    protected Object castComplex(VirtualFrame frame, Object operand, boolean preserveAllAttr) {
+    protected Object castComplex(Object operand, boolean preserveAllAttr) {
         if (castComplex == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castComplex = insert(CastComplexNodeGen.create(null, true, preserveAllAttr, preserveAllAttr));
         }
-        return castComplex.executeCast(frame, operand);
+        return castComplex.executeCast(operand);
     }
 
-    protected Object castDouble(VirtualFrame frame, Object operand, boolean preserveAllAttr) {
+    protected Object castDouble(Object operand, boolean preserveAllAttr) {
         if (castDouble == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castDouble = insert(CastDoubleNodeGen.create(null, true, preserveAllAttr, preserveAllAttr));
         }
-        return castDouble.executeCast(frame, operand);
+        return castDouble.executeCast(operand);
     }
 
-    protected Object castInteger(VirtualFrame frame, Object operand, boolean preserveAllAttr) {
+    protected Object castInteger(Object operand, boolean preserveAllAttr) {
         if (castInteger == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castInteger = insert(CastIntegerNodeGen.create(null, true, preserveAllAttr, preserveAllAttr));
         }
-        return castInteger.executeCast(frame, operand);
+        return castInteger.executeCast(operand);
     }
 
-    protected Object castLogical(VirtualFrame frame, Object operand, boolean preserveAllAttr) {
+    protected Object castLogical(Object operand, boolean preserveAllAttr) {
         if (castLogical == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castLogical = insert(CastLogicalNodeGen.create(null, true, preserveAllAttr, preserveAllAttr));
         }
-        return castLogical.executeCast(frame, operand);
+        return castLogical.executeCast(operand);
     }
 
-    protected Object castString(VirtualFrame frame, Object operand, boolean preserveAllAttr) {
+    protected Object castString(Object operand, boolean preserveAllAttr) {
         if (castString == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castString = insert(CastStringNodeGen.create(null, false, true, preserveAllAttr, preserveAllAttr));
         }
-        return castString.executeCast(frame, operand);
+        return castString.executeCast(operand);
     }
 
-    protected Object castRaw(VirtualFrame frame, Object operand, boolean preserveAllAttr) {
+    protected Object castRaw(Object operand, boolean preserveAllAttr) {
         if (castRaw == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castRaw = insert(CastRawNodeGen.create(null, true, preserveAllAttr, preserveAllAttr));
         }
-        return castRaw.executeCast(frame, operand);
+        return castRaw.executeCast(operand);
     }
 
-    protected RList castList(VirtualFrame frame, Object operand, boolean preserveAllAttr) {
+    protected RList castList(Object operand, boolean preserveAllAttr) {
         if (castList == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castList = insert(CastListNodeGen.create(null, true, preserveAllAttr, preserveAllAttr));
         }
-        return castList.executeList(frame, operand);
+        return castList.executeList(operand);
     }
-
 }

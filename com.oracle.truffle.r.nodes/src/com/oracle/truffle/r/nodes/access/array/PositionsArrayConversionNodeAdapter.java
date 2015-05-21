@@ -36,12 +36,12 @@ public abstract class PositionsArrayConversionNodeAdapter extends RNode {
     private final boolean isSubset;
     private final int length;
 
-    public Object executeArg(VirtualFrame frame, Object container, Object operand, int i) {
-        return positionCasts[i].executeArg(frame, container, operand);
+    public Object executeArg(Object container, Object operand, int i) {
+        return positionCasts[i].executeArg(container, operand);
     }
 
-    public Object executeConvert(VirtualFrame frame, Object vector, Object operand, Object exact, int i) {
-        return operatorConverters[i].executeConvert(frame, vector, operand, exact);
+    public Object executeConvert(Object vector, Object operand, Object exact, int i) {
+        return operatorConverters[i].executeConvert(vector, operand, exact);
     }
 
     public boolean isSubset() {

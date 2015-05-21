@@ -23,9 +23,8 @@ import java.util.regex.*;
 import java.util.stream.*;
 
 import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.*;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
@@ -86,7 +85,7 @@ public class FileFunctions {
              * There are two simple (non-trivial) cases and one tricky 1. 1. Append one or more
              * files to a single file (len1 == 1, len2 >= 1) 2. Append one file to one file for
              * several files (len1 == len2)
-             * 
+             *
              * The tricky case is when len1 > 1 && len2 > len1. E.g. f1,f2 <- g1,g2,g3 In this case,
              * this is really f1,f2,f1 <- g1,g2,g3
              */
@@ -225,7 +224,7 @@ public class FileFunctions {
              * the information. The R closure that called the .Internal turns the result into a
              * dataframe and sets the row.names attributes to the paths in vec. It also updates the
              * mtime, ctime, atime fields using .POSIXct.
-             * 
+             *
              * We try to use the JDK classes, even though they provide a more abstract interface
              * than R. In particular there seems to be no way to get the uid/gid values. We might be
              * better off justing using a native call.
@@ -714,7 +713,7 @@ public class FileFunctions {
         }
 
         @Specialization(guards = "!lengthZero(args)")
-        protected RStringVector doFilePath(VirtualFrame frame, RList args, RAbstractStringVector fsepVec) {
+        protected RStringVector doFilePath(RList args, RAbstractStringVector fsepVec) {
             Object[] argValues = args.getDataWithoutCopying();
             int resultLength = 0;
             for (int i = 0; i < argValues.length; i++) {
@@ -737,7 +736,7 @@ public class FileFunctions {
             for (int i = 0; i < argValues.length; i++) {
                 Object elem = argValues[i];
                 if (!(elem instanceof String || elem instanceof RStringVector)) {
-                    elem = initCastStringNode().executeString(frame, elem);
+                    elem = initCastStringNode().executeString(elem);
                 }
                 if (elem instanceof String) {
                     inputs[i] = new String[]{(String) elem};

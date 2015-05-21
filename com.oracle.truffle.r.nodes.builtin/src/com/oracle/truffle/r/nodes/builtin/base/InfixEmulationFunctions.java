@@ -71,7 +71,7 @@ public class InfixEmulationFunctions {
         }
 
         @ExplodeLoop
-        public Object execute(VirtualFrame frame, Object vector, Object[] pos, byte exact, Object[] newPos) {
+        public Object execute(Object vector, Object[] pos, byte exact, Object[] newPos) {
             Object[] newPositions = newPos;
             int ind = 0;
             int i = 0;
@@ -80,9 +80,9 @@ public class InfixEmulationFunctions {
                     // RMissing is really "missing" - empty indices are now represented by REmpty
                     continue;
                 }
-                newPositions[ind] = executeArg(frame, vector, executeConvert(frame, vector, pos[i], exact, i), i);
+                newPositions[ind] = executeArg(vector, executeConvert(vector, pos[i], exact, i), i);
                 if (multiDimOperatorConverters != null) {
-                    newPositions[ind] = executeMultiConvert(frame, vector, newPositions[ind], ind);
+                    newPositions[ind] = executeMultiConvert(vector, newPositions[ind], ind);
                 }
                 ind++;
             }
@@ -99,7 +99,6 @@ public class InfixEmulationFunctions {
         public static AccessPositions create(boolean isSubset, int length) {
             return new AccessPositions(isSubset, length);
         }
-
     }
 
     private static class UpdatePositions extends PositionsArrayConversionValueNodeMultiDimAdapter {
@@ -109,11 +108,11 @@ public class InfixEmulationFunctions {
         }
 
         @ExplodeLoop
-        public Object execute(VirtualFrame frame, Object vector, Object[] pos, Object[] newPositions, Object value) {
+        public Object execute(Object vector, Object[] pos, Object[] newPositions, Object value) {
             for (int i = 0; i < getLength(); i++) {
-                newPositions[i] = executeArg(frame, vector, executeConvert(frame, vector, pos[i], RRuntime.LOGICAL_TRUE, i), i);
+                newPositions[i] = executeArg(vector, executeConvert(vector, pos[i], RRuntime.LOGICAL_TRUE, i), i);
                 if (multiDimOperatorConverters != null) {
-                    newPositions[i] = executeMultiConvert(frame, vector, value, newPositions[i], i);
+                    newPositions[i] = executeMultiConvert(vector, value, newPositions[i], i);
                 }
             }
             if (positionCasts.length == 1) {
@@ -126,7 +125,6 @@ public class InfixEmulationFunctions {
         public static UpdatePositions create(boolean isSubset, int length) {
             return new UpdatePositions(isSubset, length);
         }
-
     }
 
     @NodeChild(value = "op")
@@ -203,7 +201,7 @@ public class InfixEmulationFunctions {
                 positions = insert(AccessPositions.create(isSubset, len));
             }
             Object[] pos = inds.getArguments();
-            return accessNode.executeAccess(frame, vector, exact, 0, positions.execute(frame, vector, pos, exact, pos), dropDim);
+            return accessNode.executeAccess(frame, vector, exact, 0, positions.execute(vector, pos, exact, pos), dropDim);
         }
 
         protected boolean noInd(RArgsValuesAndNames inds) {
@@ -476,8 +474,8 @@ public class InfixEmulationFunctions {
             } else {
                 pos = new Object[]{RMissing.instance};
             }
-            Object newPositions = positions.execute(frame, vector, pos, pos, value);
-            return updateNode.executeUpdate(frame, vector, value, newPositions, coerceVector.executeEvaluated(frame, value, vector, newPositions));
+            Object newPositions = positions.execute(vector, pos, pos, value);
+            return updateNode.executeUpdate(frame, vector, value, newPositions, coerceVector.executeEvaluated(value, vector, newPositions));
         }
 
         @SuppressWarnings("unused")
@@ -489,7 +487,6 @@ public class InfixEmulationFunctions {
         protected boolean noInd(RArgsValuesAndNames args) {
             return args.isEmpty();
         }
-
     }
 
     @RBuiltin(name = "[<-", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", "..."})

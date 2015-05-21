@@ -28,14 +28,10 @@ import java.util.*;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
 @SuppressWarnings("unused")
@@ -47,32 +43,32 @@ public abstract class GetText extends RBuiltinNode {
 
     private final NACheck elementNACheck = NACheck.create();
 
-    private Object castString(VirtualFrame frame, Object operand) {
+    private Object castString(Object operand) {
         if (castString == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castString = insert(CastStringNodeGen.create(null, false, true, false, false));
         }
-        return castString.executeCast(frame, operand);
+        return castString.executeCast(operand);
     }
 
-    private Object castVector(VirtualFrame frame, Object value) {
+    private Object castVector(Object value) {
         if (castVector == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castVector = insert(CastToVectorNodeGen.create(null, false, false, false, false));
         }
-        return castVector.executeObject(frame, value);
+        return castVector.executeObject(value);
     }
 
     @Specialization
-    protected RStringVector getText(VirtualFrame frame, RArgsValuesAndNames varargs, Object domain) {
+    protected RStringVector getText(RArgsValuesAndNames varargs, Object domain) {
         Object[] argValues = varargs.getArguments();
         String[] a = new String[0];
         int aLength = 0;
         int index = 0;
         for (int i = 0; i < argValues.length; i++) {
-            Object v = castVector(frame, argValues[i]);
+            Object v = castVector(argValues[i]);
             if (v != RNull.instance) {
-                RStringVector vector = (RStringVector) castString(frame, v);
+                RStringVector vector = (RStringVector) castString(v);
                 elementNACheck.enable(vector);
                 aLength += vector.getLength();
                 a = Utils.resizeArray(a, Math.max(aLength, a.length * 2));

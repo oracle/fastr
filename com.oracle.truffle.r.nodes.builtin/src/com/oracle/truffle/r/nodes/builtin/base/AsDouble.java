@@ -26,7 +26,6 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
@@ -47,29 +46,29 @@ public abstract class AsDouble extends RBuiltinNode {
         }
     }
 
-    private double castDouble(VirtualFrame frame, int o) {
+    private double castDouble(int o) {
         initCast();
-        return (double) castDoubleNode.executeDouble(frame, o);
+        return (double) castDoubleNode.executeDouble(o);
     }
 
-    private double castDouble(VirtualFrame frame, double o) {
+    private double castDouble(double o) {
         initCast();
-        return (double) castDoubleNode.executeDouble(frame, o);
+        return (double) castDoubleNode.executeDouble(o);
     }
 
-    private double castDouble(VirtualFrame frame, byte o) {
+    private double castDouble(byte o) {
         initCast();
-        return (double) castDoubleNode.executeDouble(frame, o);
+        return (double) castDoubleNode.executeDouble(o);
     }
 
-    private double castDouble(VirtualFrame frame, Object o) {
+    private double castDouble(Object o) {
         initCast();
-        return (double) castDoubleNode.executeDouble(frame, o);
+        return (double) castDoubleNode.executeDouble(o);
     }
 
-    private RDoubleVector castDoubleVector(VirtualFrame frame, Object o) {
+    private RDoubleVector castDoubleVector(Object o) {
         initCast();
-        return (RDoubleVector) castDoubleNode.executeDouble(frame, o);
+        return (RDoubleVector) castDoubleNode.executeDouble(o);
     }
 
     @Specialization
@@ -79,27 +78,27 @@ public abstract class AsDouble extends RBuiltinNode {
     }
 
     @Specialization
-    protected double asDoubleInt(VirtualFrame frame, int value) {
+    protected double asDoubleInt(int value) {
         controlVisibility();
-        return castDouble(frame, value);
+        return castDouble(value);
     }
 
     @Specialization
-    protected double asDouble(VirtualFrame frame, byte value) {
+    protected double asDouble(byte value) {
         controlVisibility();
-        return castDouble(frame, value);
+        return castDouble(value);
     }
 
     @Specialization
-    protected double asDouble(VirtualFrame frame, RComplex value) {
+    protected double asDouble(RComplex value) {
         controlVisibility();
-        return castDouble(frame, value);
+        return castDouble(value);
     }
 
     @Specialization
-    protected double asDouble(VirtualFrame frame, String value) {
+    protected double asDouble(String value) {
         controlVisibility();
-        return castDouble(frame, value);
+        return castDouble(value);
     }
 
     @Specialization
@@ -121,20 +120,19 @@ public abstract class AsDouble extends RBuiltinNode {
     }
 
     @Specialization
-    protected RDoubleSequence asDouble(VirtualFrame frame, RIntSequence sequence) {
+    protected RDoubleSequence asDouble(RIntSequence sequence) {
         controlVisibility();
         return RDataFactory.createDoubleSequence(sequence.getStart(), sequence.getStride(), sequence.getLength());
     }
 
     @Specialization
-    protected RDoubleVector asDouble(VirtualFrame frame, RAbstractVector vector) {
+    protected RDoubleVector asDouble(RAbstractVector vector) {
         controlVisibility();
-        return castDoubleVector(frame, vector);
+        return castDoubleVector(vector);
     }
 
     @Specialization
-    protected RDoubleVector asDouble(VirtualFrame frame, RFactor vector) {
-        return asDouble(frame, vector.getVector());
+    protected RDoubleVector asDouble(RFactor vector) {
+        return asDouble(vector.getVector());
     }
-
 }

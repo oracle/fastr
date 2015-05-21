@@ -29,7 +29,6 @@ import java.io.*;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -77,39 +76,39 @@ public abstract class Parse extends RBuiltinNode {
     @Child private CastStringNode castStringNode;
     @Child private CastToVectorNode castVectorNode;
 
-    private int castInt(VirtualFrame frame, Object n) {
+    private int castInt(Object n) {
         if (castIntNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castIntNode = insert(CastIntegerNodeGen.create(null, false, false, false));
         }
-        int result = (int) castIntNode.executeInt(frame, n);
+        int result = (int) castIntNode.executeInt(n);
         if (RRuntime.isNA(result)) {
             result = -1;
         }
         return result;
     }
 
-    private RStringVector castString(VirtualFrame frame, Object s) {
+    private RStringVector castString(Object s) {
         if (castStringNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castVectorNode = insert(CastToVectorNodeGen.create(null, false, false, false, false));
             castStringNode = insert(CastStringNodeGen.create(null, false, false, false, false));
         }
-        return (RStringVector) castStringNode.executeString(frame, castVectorNode.executeObject(frame, s));
+        return (RStringVector) castStringNode.executeString(castVectorNode.executeObject(s));
     }
 
     @Specialization
-    protected Object parse(VirtualFrame frame, RConnection conn, Object n, Object text, RAbstractStringVector prompt, Object srcFile, RAbstractStringVector encoding) {
+    protected Object parse(RConnection conn, Object n, Object text, RAbstractStringVector prompt, Object srcFile, RAbstractStringVector encoding) {
         controlVisibility();
         int nAsInt;
         if (n != RNull.instance) {
-            nAsInt = castInt(frame, n);
+            nAsInt = castInt(n);
         } else {
             nAsInt = -1;
         }
         Object textVec = text;
         if (textVec != RNull.instance) {
-            textVec = castString(frame, textVec);
+            textVec = castString(textVec);
         }
         return doParse(conn, nAsInt, textVec, prompt, srcFile, encoding);
     }

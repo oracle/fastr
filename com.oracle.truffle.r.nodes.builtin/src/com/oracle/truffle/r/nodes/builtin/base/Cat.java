@@ -29,7 +29,6 @@ import java.io.*;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
@@ -54,7 +53,7 @@ public abstract class Cat extends RInvisibleBuiltinNode {
     }
 
     @Specialization
-    protected RNull cat(VirtualFrame frame, RList args, RConnection conn, RAbstractStringVector sepVec, Object fillObj, @SuppressWarnings("unused") RNull labels, byte append) {
+    protected RNull cat(RList args, RConnection conn, RAbstractStringVector sepVec, Object fillObj, @SuppressWarnings("unused") RNull labels, byte append) {
         if (RRuntime.fromLogical(append)) {
             throw RError.nyi(getEncapsulatingSourceSection(), "append = TRUE");
         }
@@ -69,7 +68,7 @@ public abstract class Cat extends RInvisibleBuiltinNode {
                 if (zeroLength(obj)) {
                     values[i] = "";
                 } else {
-                    values[i] = toString.executeString(frame, obj, false, sep);
+                    values[i] = toString.executeString(obj, false, sep);
                 }
             }
         }

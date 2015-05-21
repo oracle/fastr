@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.nodes.access.array;
 
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.*;
@@ -38,7 +37,7 @@ public abstract class ContainerRowNamesGet extends RNode {
     private final ConditionProfile nameConditionProfile = ConditionProfile.createBinaryProfile();
     protected final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
-    public abstract Object execute(VirtualFrame frame, RAbstractContainer container);
+    public abstract Object execute(RAbstractContainer container);
 
     // this is copied from Attr.java - can't use it directly due to dependence circularity
     private Object getFullRowNames(Object a) {
@@ -64,5 +63,4 @@ public abstract class ContainerRowNamesGet extends RNode {
     protected boolean isDataFrame(RAbstractContainer container) {
         return container.getElementClass() == RDataFrame.class;
     }
-
 }

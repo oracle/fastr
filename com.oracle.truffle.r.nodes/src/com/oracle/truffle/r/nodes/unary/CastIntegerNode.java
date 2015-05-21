@@ -25,7 +25,6 @@ package com.oracle.truffle.r.nodes.unary;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -38,22 +37,22 @@ public abstract class CastIntegerNode extends CastNode {
     private final NAProfile naProfile = NAProfile.create();
     private final BranchProfile warningBranch = BranchProfile.create();
 
-    public abstract Object executeInt(VirtualFrame frame, int o);
+    public abstract Object executeInt(int o);
 
-    public abstract Object executeInt(VirtualFrame frame, double o);
+    public abstract Object executeInt(double o);
 
-    public abstract Object executeInt(VirtualFrame frame, byte o);
+    public abstract Object executeInt(byte o);
 
-    public abstract Object executeInt(VirtualFrame frame, Object o);
+    public abstract Object executeInt(Object o);
 
     @Child private CastIntegerNode recursiveCastInteger;
 
-    private Object castIntegerRecursive(VirtualFrame frame, Object o) {
+    private Object castIntegerRecursive(Object o) {
         if (recursiveCastInteger == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             recursiveCastInteger = insert(CastIntegerNodeGen.create(null, isPreserveNames(), isDimensionsPreservation(), isAttrPreservation()));
         }
-        return recursiveCastInteger.executeInt(frame, o);
+        return recursiveCastInteger.executeInt(o);
     }
 
     @Specialization
@@ -225,7 +224,7 @@ public abstract class CastIntegerNode extends CastNode {
     }
 
     @Specialization
-    protected RIntVector doList(VirtualFrame frame, RList list) {
+    protected RIntVector doList(RList list) {
         int length = list.getLength();
         int[] result = new int[length];
         boolean seenNA = false;
@@ -235,7 +234,7 @@ public abstract class CastIntegerNode extends CastNode {
                 result[i] = RRuntime.INT_NA;
                 seenNA = true;
             } else {
-                Object castEntry = castIntegerRecursive(frame, entry);
+                Object castEntry = castIntegerRecursive(entry);
                 if (castEntry instanceof Integer) {
                     int value = (Integer) castEntry;
                     result[i] = value;
@@ -278,5 +277,4 @@ public abstract class CastIntegerNode extends CastNode {
     public static CastIntegerNode create() {
         return CastIntegerNodeGen.create(null, true, true, true);
     }
-
 }

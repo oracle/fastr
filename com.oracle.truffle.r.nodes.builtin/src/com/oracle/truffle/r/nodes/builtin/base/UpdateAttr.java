@@ -22,14 +22,13 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.*;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -37,9 +36,6 @@ import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
-import com.oracle.truffle.r.runtime.env.*;
-
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 @RBuiltin(name = "attr<-", kind = PRIMITIVE, parameterNames = {"x", "which", ""})
 // 2nd parameter is "value", but should not be matched against, so ""
@@ -58,44 +54,44 @@ public abstract class UpdateAttr extends RInvisibleBuiltinNode {
     @CompilationFinal private String cachedName = "";
     @CompilationFinal private String cachedInternedName = "";
 
-    private RAbstractContainer updateNames(VirtualFrame frame, RAbstractContainer container, Object o) {
+    private RAbstractContainer updateNames(RAbstractContainer container, Object o) {
         if (updateNames == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             updateNames = insert(UpdateNamesNodeGen.create(new RNode[2], null, null));
         }
-        return (RAbstractContainer) updateNames.executeStringVector(frame, container, o);
+        return (RAbstractContainer) updateNames.executeStringVector(container, o);
     }
 
-    private RAbstractContainer updateDimNames(VirtualFrame frame, RAbstractContainer container, Object o) {
+    private RAbstractContainer updateDimNames(RAbstractContainer container, Object o) {
         if (updateDimNames == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             updateDimNames = insert(UpdateDimNamesNodeGen.create(new RNode[2], null, null));
         }
-        return updateDimNames.executeRAbstractContainer(frame, container, o);
+        return updateDimNames.executeRAbstractContainer(container, o);
     }
 
-    private RAbstractIntVector castInteger(VirtualFrame frame, RAbstractVector vector) {
+    private RAbstractIntVector castInteger(RAbstractVector vector) {
         if (castInteger == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castInteger = insert(CastIntegerNodeGen.create(null, true, false, false));
         }
-        return (RAbstractIntVector) castInteger.executeCast(frame, vector);
+        return (RAbstractIntVector) castInteger.executeCast(vector);
     }
 
-    private RAbstractVector castVector(VirtualFrame frame, Object value) {
+    private RAbstractVector castVector(Object value) {
         if (castVector == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castVector = insert(CastToVectorNodeGen.create(null, false, false, false, false));
         }
-        return (RAbstractVector) castVector.executeObject(frame, value);
+        return (RAbstractVector) castVector.executeObject(value);
     }
 
-    private RList castList(VirtualFrame frame, Object value) {
+    private RList castList(Object value) {
         if (castList == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castList = insert(CastListNodeGen.create(null, true, false, false));
         }
-        return castList.executeList(frame, value);
+        return castList.executeList(value);
     }
 
     private String intern(String name) {
@@ -121,7 +117,7 @@ public abstract class UpdateAttr extends RInvisibleBuiltinNode {
     }
 
     @Specialization
-    protected RAbstractContainer updateAttr(VirtualFrame frame, RAbstractContainer container, String name, RNull value) {
+    protected RAbstractContainer updateAttr(RAbstractContainer container, String name, RNull value) {
         controlVisibility();
         String internedName = intern(name);
         RAbstractContainer result = container.materializeNonShared();
@@ -129,9 +125,9 @@ public abstract class UpdateAttr extends RInvisibleBuiltinNode {
         if (internedName == RRuntime.DIM_ATTR_KEY) {
             result.setDimensions(null);
         } else if (internedName == RRuntime.NAMES_ATTR_KEY) {
-            return updateNames(frame, result, value);
+            return updateNames(result, value);
         } else if (internedName == RRuntime.DIMNAMES_ATTR_KEY) {
-            return updateDimNames(frame, result, value);
+            return updateDimNames(result, value);
         } else if (internedName == RRuntime.CLASS_ATTR_KEY) {
             return (RAbstractContainer) result.setClassAttr(null, false);
         } else if (internedName == RRuntime.ROWNAMES_ATTR_KEY) {
@@ -154,26 +150,26 @@ public abstract class UpdateAttr extends RInvisibleBuiltinNode {
     }
 
     @Specialization(guards = "!nullValue(value)")
-    protected RAbstractContainer updateAttr(VirtualFrame frame, RAbstractContainer container, String name, Object value) {
+    protected RAbstractContainer updateAttr(RAbstractContainer container, String name, Object value) {
         controlVisibility();
         String internedName = intern(name);
         RAbstractContainer result = container.materializeNonShared();
         // the name is interned, so identity comparison is sufficient
         if (internedName == RRuntime.DIM_ATTR_KEY) {
-            RAbstractIntVector dimsVector = castInteger(frame, castVector(frame, value));
+            RAbstractIntVector dimsVector = castInteger(castVector(value));
             if (dimsVector.getLength() == 0) {
                 errorProfile.enter();
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.LENGTH_ZERO_DIM_INVALID);
             }
             result.setDimensions(dimsVector.materialize().getDataCopy());
         } else if (internedName == RRuntime.NAMES_ATTR_KEY) {
-            return updateNames(frame, result, value);
+            return updateNames(result, value);
         } else if (internedName == RRuntime.DIMNAMES_ATTR_KEY) {
-            return updateDimNames(frame, result, value);
+            return updateDimNames(result, value);
         } else if (internedName == RRuntime.CLASS_ATTR_KEY) {
             return (RAbstractContainer) result.setClassAttr(convertClassAttrFromObject(value), false);
         } else if (internedName == RRuntime.ROWNAMES_ATTR_KEY) {
-            result.setRowNames(castVector(frame, value));
+            result.setRowNames(castVector(value));
         } else {
             // generic attribute
             result.setAttr(internedName, value);
@@ -183,9 +179,9 @@ public abstract class UpdateAttr extends RInvisibleBuiltinNode {
     }
 
     @Specialization(guards = "!nullValue(value)")
-    protected RAbstractContainer updateAttr(VirtualFrame frame, RAbstractVector vector, RStringVector name, Object value) {
+    protected RAbstractContainer updateAttr(RAbstractVector vector, RStringVector name, Object value) {
         controlVisibility();
-        return updateAttr(frame, vector, name.getDataAt(0), value);
+        return updateAttr(vector, name.getDataAt(0), value);
     }
 
     // the guard is necessary as RNull and Object cannot be distinguished in case of multiple

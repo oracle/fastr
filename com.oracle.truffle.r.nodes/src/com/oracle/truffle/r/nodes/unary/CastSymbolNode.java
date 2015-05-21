@@ -24,7 +24,6 @@ package com.oracle.truffle.r.nodes.unary;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
@@ -32,10 +31,10 @@ public abstract class CastSymbolNode extends CastNode {
 
     @Child private ToStringNode toString = ToStringNodeGen.create(null, null, null);
 
-    public abstract Object executeSymbol(VirtualFrame frame, Object o);
+    public abstract Object executeSymbol(Object o);
 
-    private String toString(VirtualFrame frame, Object value) {
-        return toString.executeString(frame, value, true, ToStringNode.DEFAULT_SEPARATOR);
+    private String toString(Object value) {
+        return toString.executeString(value, true, ToStringNode.DEFAULT_SEPARATOR);
     }
 
     @Specialization
@@ -44,18 +43,18 @@ public abstract class CastSymbolNode extends CastNode {
     }
 
     @Specialization
-    protected RSymbol doInteger(VirtualFrame frame, int value) {
-        return backQuote(toString(frame, value));
+    protected RSymbol doInteger(int value) {
+        return backQuote(toString(value));
     }
 
     @Specialization
-    protected RSymbol doDouble(VirtualFrame frame, double value) {
-        return backQuote(toString(frame, value));
+    protected RSymbol doDouble(double value) {
+        return backQuote(toString(value));
     }
 
     @Specialization
-    protected RSymbol doLogical(VirtualFrame frame, byte value) {
-        return backQuote(toString(frame, value));
+    protected RSymbol doLogical(byte value) {
+        return backQuote(toString(value));
     }
 
     @Specialization
@@ -70,18 +69,18 @@ public abstract class CastSymbolNode extends CastNode {
     }
 
     @Specialization
-    protected RSymbol doIntegerVector(VirtualFrame frame, RIntVector value) {
-        return doInteger(frame, value.getDataAt(0));
+    protected RSymbol doIntegerVector(RIntVector value) {
+        return doInteger(value.getDataAt(0));
     }
 
     @Specialization
-    protected RSymbol doDoubleVector(VirtualFrame frame, RDoubleVector value) {
-        return doDouble(frame, value.getDataAt(0));
+    protected RSymbol doDoubleVector(RDoubleVector value) {
+        return doDouble(value.getDataAt(0));
     }
 
     @Specialization
-    protected RSymbol doLogicalVector(VirtualFrame frame, RLogicalVector value) {
-        return doLogical(frame, value.getDataAt(0));
+    protected RSymbol doLogicalVector(RLogicalVector value) {
+        return doLogical(value.getDataAt(0));
     }
 
     @TruffleBoundary

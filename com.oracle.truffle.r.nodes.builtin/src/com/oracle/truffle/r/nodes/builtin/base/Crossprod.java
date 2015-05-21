@@ -26,7 +26,6 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
@@ -46,17 +45,17 @@ public abstract class Crossprod extends RBuiltinNode {
         }
     }
 
-    private Object matMult(VirtualFrame frame, Object op1, Object op2) {
+    private Object matMult(Object op1, Object op2) {
         ensureMatMult();
-        return matMult.executeObject(frame, op1, op2);
+        return matMult.executeObject(op1, op2);
     }
 
-    private Object transpose(VirtualFrame frame, Object value) {
+    private Object transpose(Object value) {
         if (transpose == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             transpose = insert(TransposeNodeGen.create(new RNode[1], null, null));
         }
-        return transpose.execute(frame, value);
+        return transpose.execute(value);
     }
 
     @Specialization(guards = {"isMatrix(x)", "isMatrix(y)"})
@@ -91,9 +90,9 @@ public abstract class Crossprod extends RBuiltinNode {
     }
 
     @Specialization
-    protected Object crossprod(VirtualFrame frame, RAbstractVector x, RAbstractVector y) {
+    protected Object crossprod(RAbstractVector x, RAbstractVector y) {
         controlVisibility();
-        return matMult(frame, transpose(frame, x), y);
+        return matMult(transpose(x), y);
     }
 
     @Specialization(guards = "isMatrix(x)")
@@ -106,9 +105,9 @@ public abstract class Crossprod extends RBuiltinNode {
     }
 
     @Specialization
-    protected Object crossprod(VirtualFrame frame, RAbstractVector x, @SuppressWarnings("unused") RNull y) {
+    protected Object crossprod(RAbstractVector x, @SuppressWarnings("unused") RNull y) {
         controlVisibility();
-        return matMult(frame, transpose(frame, x), x);
+        return matMult(transpose(x), x);
     }
 
     protected static boolean isMatrix(RAbstractVector v) {

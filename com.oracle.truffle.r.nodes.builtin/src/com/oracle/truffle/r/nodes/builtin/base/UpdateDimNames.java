@@ -22,12 +22,11 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
@@ -42,9 +41,9 @@ public abstract class UpdateDimNames extends RInvisibleBuiltinNode {
     @Child private CastStringNode castStringNode;
     @Child private CastToVectorNode castVectorNode;
 
-    private Object castString(VirtualFrame frame, Object o) {
+    private Object castString(Object o) {
         initCastStringNode();
-        return castStringNode.executeCast(frame, o);
+        return castStringNode.executeCast(o);
     }
 
     private void initCastStringNode() {
@@ -54,9 +53,9 @@ public abstract class UpdateDimNames extends RInvisibleBuiltinNode {
         }
     }
 
-    private RAbstractVector castVector(VirtualFrame frame, Object value) {
+    private RAbstractVector castVector(Object value) {
         initCastVectorNode();
-        return ((RAbstractVector) castVectorNode.executeObject(frame, value)).materialize();
+        return ((RAbstractVector) castVectorNode.executeObject(value)).materialize();
     }
 
     private void initCastVectorNode() {
@@ -66,9 +65,9 @@ public abstract class UpdateDimNames extends RInvisibleBuiltinNode {
         }
     }
 
-    public abstract RAbstractContainer executeRAbstractContainer(VirtualFrame frame, RAbstractContainer container, Object o);
+    public abstract RAbstractContainer executeRAbstractContainer(RAbstractContainer container, Object o);
 
-    public RList convertToListOfStrings(VirtualFrame frame, RList oldList) {
+    public RList convertToListOfStrings(RList oldList) {
         RList list = oldList;
         if (list.isShared()) {
             list = (RList) list.copy();
@@ -76,7 +75,7 @@ public abstract class UpdateDimNames extends RInvisibleBuiltinNode {
         for (int i = 0; i < list.getLength(); i++) {
             Object element = list.getDataAt(i);
             if (element != RNull.instance) {
-                Object s = castString(frame, castVector(frame, element));
+                Object s = castString(castVector(element));
                 list.updateDataAt(i, s, null);
             }
         }
@@ -102,9 +101,9 @@ public abstract class UpdateDimNames extends RInvisibleBuiltinNode {
     }
 
     @Specialization(guards = "!isZeroLength(list)")
-    protected RAbstractContainer updateDimnames(VirtualFrame frame, RAbstractContainer container, RList list) {
+    protected RAbstractContainer updateDimnames(RAbstractContainer container, RList list) {
         RAbstractContainer result = container.materializeNonShared();
-        result.setDimNames(convertToListOfStrings(frame, list));
+        result.setDimNames(convertToListOfStrings(list));
         controlVisibility();
         return result;
     }

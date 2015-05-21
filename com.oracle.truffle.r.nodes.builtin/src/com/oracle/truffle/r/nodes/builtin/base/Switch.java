@@ -132,7 +132,7 @@ public abstract class Switch extends RBuiltinNode {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castIntNode = insert(CastIntegerNodeGen.create(null, false, false, false));
         }
-        Object objIndex = castIntNode.executeCast(frame, x);
+        Object objIndex = castIntNode.executeCast(x);
         if (!(objIndex instanceof Integer)) {
             notIntType.enter();
             return null;

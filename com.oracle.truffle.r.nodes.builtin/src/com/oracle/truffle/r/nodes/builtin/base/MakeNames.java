@@ -26,7 +26,6 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
@@ -191,9 +190,9 @@ public abstract class MakeNames extends RBuiltinNode {
         @Child private CastToVectorNode castVector = CastToVectorNodeGen.create(null, false, false, false, false);
 
         @Specialization
-        protected RAbstractLogicalVector convert(VirtualFrame frame, Object allowUnderScoreArg) {
+        protected RAbstractLogicalVector convert(Object allowUnderScoreArg) {
             try {
-                return (RLogicalVector) castLogical.executeCast(frame, castVector.executeCast(frame, allowUnderScoreArg));
+                return (RLogicalVector) castLogical.executeCast(castVector.executeCast(allowUnderScoreArg));
             } catch (RError x) {
                 throw invalidAllowValue(getEncapsulatingSourceSection());
             }

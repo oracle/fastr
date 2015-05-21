@@ -22,12 +22,11 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
@@ -103,10 +102,10 @@ public abstract class UpdateDiag extends RInvisibleBuiltinNode {
     }
 
     @Specialization(guards = {"isMatrix(vector)", "correctReplacementLength(vector, valueVector)"})
-    protected RAbstractDoubleVector updateDiag(VirtualFrame frame, RIntVector vector, RAbstractDoubleVector valueVector) {
+    protected RAbstractDoubleVector updateDiag(RIntVector vector, RAbstractDoubleVector valueVector) {
         controlVisibility();
         initCastDoubleNode();
-        RDoubleVector resultVector = (RDoubleVector) castDouble.executeDouble(frame, vector);
+        RDoubleVector resultVector = (RDoubleVector) castDouble.executeDouble(vector);
         resultVector.copyAttributesFrom(attrProfiles, vector);
         return updateDiag(resultVector, valueVector);
     }

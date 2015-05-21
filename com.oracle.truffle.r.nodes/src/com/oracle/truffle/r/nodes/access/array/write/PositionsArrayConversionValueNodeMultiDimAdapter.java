@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.nodes.access.array.write;
 
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.access.array.*;
 import com.oracle.truffle.r.runtime.data.*;
 
@@ -42,8 +41,7 @@ public class PositionsArrayConversionValueNodeMultiDimAdapter extends PositionsA
         }
     }
 
-    public RIntVector executeMultiConvert(VirtualFrame frame, Object vector, Object value, Object p, int i) {
-        return this.multiDimOperatorConverters[i].executeConvert(frame, vector, value, p);
+    public RIntVector executeMultiConvert(Object vector, Object value, Object p, int i) {
+        return this.multiDimOperatorConverters[i].executeConvert(vector, value, p);
     }
-
 }

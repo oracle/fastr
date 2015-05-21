@@ -26,7 +26,6 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -64,20 +63,20 @@ public abstract class PMinMax extends RBuiltinNode {
         this(other.semantics, other.factory);
     }
 
-    private byte handleString(VirtualFrame frame, Object[] argValues, byte naRm, int offset, int ind, int maxLength, byte warning, Object data) {
+    private byte handleString(Object[] argValues, byte naRm, int offset, int ind, int maxLength, byte warning, Object data) {
         if (stringHandler == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             stringHandler = insert(MultiElemStringHandlerNodeGen.create(semantics, factory, na, null, null, null, null, null, null, null));
         }
-        return stringHandler.executeByte(frame, argValues, naRm, offset, ind, maxLength, warning, data);
+        return stringHandler.executeByte(argValues, naRm, offset, ind, maxLength, warning, data);
     }
 
-    private RAbstractVector castVector(VirtualFrame frame, Object value) {
+    private RAbstractVector castVector(Object value) {
         if (castVector == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castVector = insert(CastToVectorNodeGen.create(null, true, true, true, false));
         }
-        return ((RAbstractVector) castVector.executeObject(frame, value)).materialize();
+        return ((RAbstractVector) castVector.executeObject(value)).materialize();
     }
 
     private CastNode getIntegerCastNode() {
@@ -104,11 +103,11 @@ public abstract class PMinMax extends RBuiltinNode {
         return castString;
     }
 
-    private int convertToVectorAndEnableNACheck(VirtualFrame frame, RArgsValuesAndNames args, CastNode castNode) {
+    private int convertToVectorAndEnableNACheck(RArgsValuesAndNames args, CastNode castNode) {
         int length = 0;
         Object[] argValues = args.getArguments();
         for (int i = 0; i < args.getLength(); i++) {
-            RAbstractVector v = castVector(frame, argValues[i]);
+            RAbstractVector v = castVector(argValues[i]);
             na.enable(v);
             int vecLength = v.getLength();
             if (vecLength == 0) {
@@ -116,19 +115,19 @@ public abstract class PMinMax extends RBuiltinNode {
                 return vecLength;
             }
             length = Math.max(length, vecLength);
-            argValues[i] = castNode.executeCast(frame, v);
+            argValues[i] = castNode.executeCast(v);
         }
         return length;
     }
 
     @Specialization(guards = {"isIntegerPrecedence(args)", "oneVector(args)"})
-    protected Object pMinMaxOneVecInt(@SuppressWarnings("unused") VirtualFrame frame, @SuppressWarnings("unused") byte naRm, RArgsValuesAndNames args) {
+    protected Object pMinMaxOneVecInt(@SuppressWarnings("unused") byte naRm, RArgsValuesAndNames args) {
         return args.getArgument(0);
     }
 
     @Specialization(guards = {"isIntegerPrecedence(args)", "!oneVector(args)"})
-    protected RIntVector pMinMaxInt(VirtualFrame frame, byte naRm, RArgsValuesAndNames args) {
-        int maxLength = convertToVectorAndEnableNACheck(frame, args, getIntegerCastNode());
+    protected RIntVector pMinMaxInt(byte naRm, RArgsValuesAndNames args) {
+        int maxLength = convertToVectorAndEnableNACheck(args, getIntegerCastNode());
         if (lengthProfile.profile(maxLength == 0)) {
             return RDataFactory.createEmptyIntVector();
         } else {
@@ -164,24 +163,24 @@ public abstract class PMinMax extends RBuiltinNode {
     }
 
     @Specialization(guards = {"isLogicalPrecedence(args)", "oneVector(args)"})
-    protected Object pMinMaxOneVecLogical(@SuppressWarnings("unused") VirtualFrame frame, @SuppressWarnings("unused") byte naRm, RArgsValuesAndNames args) {
+    protected Object pMinMaxOneVecLogical(@SuppressWarnings("unused") byte naRm, RArgsValuesAndNames args) {
         return args.getArgument(0);
     }
 
     @Specialization(guards = {"isLogicalPrecedence(args)", "!oneVector(args)"})
-    protected RIntVector pMinMaxLogical(VirtualFrame frame, byte naRm, RArgsValuesAndNames args) {
-        return pMinMaxInt(frame, naRm, args);
+    protected RIntVector pMinMaxLogical(byte naRm, RArgsValuesAndNames args) {
+        return pMinMaxInt(naRm, args);
     }
 
     @Specialization(guards = {"isDoublePrecedence(args)", "oneVector(args)"})
     @SuppressWarnings("unused")
-    protected Object pMinMaxOneVecDouble(VirtualFrame frame, byte naRm, RArgsValuesAndNames args) {
+    protected Object pMinMaxOneVecDouble(byte naRm, RArgsValuesAndNames args) {
         return args.getArgument(0);
     }
 
     @Specialization(guards = {"isDoublePrecedence(args)", "!oneVector(args)"})
-    protected RDoubleVector pMinMaxDouble(VirtualFrame frame, byte naRm, RArgsValuesAndNames args) {
-        int maxLength = convertToVectorAndEnableNACheck(frame, args, getDoubleCastNode());
+    protected RDoubleVector pMinMaxDouble(byte naRm, RArgsValuesAndNames args) {
+        int maxLength = convertToVectorAndEnableNACheck(args, getDoubleCastNode());
         if (lengthProfile.profile(maxLength == 0)) {
             return RDataFactory.createEmptyDoubleVector();
         } else {
@@ -218,13 +217,13 @@ public abstract class PMinMax extends RBuiltinNode {
 
     @Specialization(guards = {"isStringPrecedence(args)", "oneVector(args)"})
     @SuppressWarnings("unused")
-    protected Object pMinMaxOneVecString(VirtualFrame frame, byte naRm, RArgsValuesAndNames args) {
+    protected Object pMinMaxOneVecString(byte naRm, RArgsValuesAndNames args) {
         return args.getArgument(0);
     }
 
     @Specialization(guards = {"isStringPrecedence(args)", "!oneVector(args)"})
-    protected RStringVector pMinMaxString(VirtualFrame frame, byte naRm, RArgsValuesAndNames args) {
-        int maxLength = convertToVectorAndEnableNACheck(frame, args, getStringCastNode());
+    protected RStringVector pMinMaxString(byte naRm, RArgsValuesAndNames args) {
+        int maxLength = convertToVectorAndEnableNACheck(args, getStringCastNode());
         if (lengthProfile.profile(maxLength == 0)) {
             return RDataFactory.createEmptyStringVector();
         } else {
@@ -233,7 +232,7 @@ public abstract class PMinMax extends RBuiltinNode {
             Object[] argValues = args.getArguments();
             byte warningAdded = RRuntime.LOGICAL_FALSE;
             for (int i = 0; i < maxLength; i++) {
-                warningAdded = handleString(frame, argValues, naRm, 0, i, maxLength, warningAdded, data);
+                warningAdded = handleString(argValues, naRm, 0, i, maxLength, warningAdded, data);
             }
             return RDataFactory.createStringVector(data, na.neverSeenNA() || profiledNaRm);
         }
@@ -241,13 +240,13 @@ public abstract class PMinMax extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization(guards = "isComplexPrecedence(args)")
-    protected RComplexVector pMinMaxComplex(VirtualFrame frame, byte naRm, RArgsValuesAndNames args) {
+    protected RComplexVector pMinMaxComplex(byte naRm, RArgsValuesAndNames args) {
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_INPUT_TYPE);
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = "isRawPrecedence(args)")
-    protected RRawVector pMinMaxRaw(VirtualFrame frame, byte naRm, RArgsValuesAndNames args) {
+    protected RRawVector pMinMaxRaw(byte naRm, RArgsValuesAndNames args) {
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_INPUT_TYPE);
     }
 
@@ -311,7 +310,7 @@ public abstract class PMinMax extends RBuiltinNode {
     @NodeChildren({@NodeChild("argValues"), @NodeChild("naRm"), @NodeChild("offset"), @NodeChild("ind"), @NodeChild("maxLength"), @NodeChild("warning"), @NodeChild("data")})
     protected abstract static class MultiElemStringHandler extends RNode {
 
-        public abstract byte executeByte(VirtualFrame frame, Object[] argValues, byte naRm, int offset, int ind, int maxLength, byte warning, Object data);
+        public abstract byte executeByte(Object[] argValues, byte naRm, int offset, int ind, int maxLength, byte warning, Object data);
 
         @Child private MultiElemStringHandler recursiveStringHandler;
         private final ReduceSemantics semantics;
@@ -331,16 +330,16 @@ public abstract class PMinMax extends RBuiltinNode {
             this(other.semantics, other.factory, other.na);
         }
 
-        private byte handleString(VirtualFrame frame, Object[] argValues, byte naRm, int offset, int ind, int maxLength, byte warning, Object data) {
+        private byte handleString(Object[] argValues, byte naRm, int offset, int ind, int maxLength, byte warning, Object data) {
             if (recursiveStringHandler == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 recursiveStringHandler = insert(MultiElemStringHandlerNodeGen.create(semantics, factory, na, null, null, null, null, null, null, null));
             }
-            return recursiveStringHandler.executeByte(frame, argValues, naRm, offset, ind, maxLength, warning, data);
+            return recursiveStringHandler.executeByte(argValues, naRm, offset, ind, maxLength, warning, data);
         }
 
         @Specialization
-        protected byte doStringVectorMultiElem(VirtualFrame frame, Object[] argValues, byte naRm, int offset, int ind, int maxLength, byte warning, Object d) {
+        protected byte doStringVectorMultiElem(Object[] argValues, byte naRm, int offset, int ind, int maxLength, byte warning, Object d) {
             String[] data = (String[]) d;
             byte warningAdded = warning;
             RAbstractStringVector vec = (RAbstractStringVector) argValues[offset];
@@ -357,7 +356,7 @@ public abstract class PMinMax extends RBuiltinNode {
                         // last element - all other are NAs
                         data[ind] = semantics.getStringStart();
                     } else {
-                        return handleString(frame, argValues, naRm, offset + 1, ind, maxLength, warningAdded, data);
+                        return handleString(argValues, naRm, offset + 1, ind, maxLength, warningAdded, data);
                     }
                     return warningAdded;
                 }

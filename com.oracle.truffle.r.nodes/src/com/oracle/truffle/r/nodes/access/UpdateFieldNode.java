@@ -197,16 +197,16 @@ public abstract class UpdateFieldNode extends UpdateNode implements RSyntaxNode 
     }
 
     @Specialization
-    protected Object updateField(VirtualFrame frame, RAbstractVector object, Object value, String field) {
+    protected Object updateField(RAbstractVector object, Object value, String field) {
         if (castList == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castList = insert(CastListNodeGen.create(null, true, true, false));
         }
         RError.warning(getEncapsulatingSourceSection(), RError.Message.COERCING_LHS_TO_LIST);
         if (nullValueProfile.profile(value == RNull.instance)) {
-            return updateFieldNullValue(castList.executeList(frame, object), value, field);
+            return updateFieldNullValue(castList.executeList(object), value, field);
         } else {
-            return updateField(castList.executeList(frame, object), value, field);
+            return updateField(castList.executeList(object), value, field);
         }
     }
 
@@ -247,5 +247,4 @@ public abstract class UpdateFieldNode extends UpdateNode implements RSyntaxNode 
     protected boolean isObject(RAbstractContainer container) {
         return container.isObject(attrProfiles) && forObjects;
     }
-
 }

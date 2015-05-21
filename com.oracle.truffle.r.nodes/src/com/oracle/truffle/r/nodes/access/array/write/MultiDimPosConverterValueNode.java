@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.nodes.access.array.write;
 
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.*;
@@ -36,7 +35,7 @@ public abstract class MultiDimPosConverterValueNode extends RNode {
 
     private final BranchProfile errorProfile = BranchProfile.create();
 
-    public abstract RIntVector executeConvert(VirtualFrame frame, Object vector, Object value, Object positions);
+    public abstract RIntVector executeConvert(Object vector, Object value, Object positions);
 
     private final boolean isSubset;
 
