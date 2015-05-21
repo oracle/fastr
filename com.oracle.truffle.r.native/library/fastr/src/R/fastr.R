@@ -82,9 +82,13 @@ print.fastr_context <- function(context, ...) {
 	invisible(context)
 }
 
-fastr_context.eval <- function(context, expr) {
-	.FastR(.NAME="context.eval", context, expr)
+fastr_context.eval <- function(contexts, exprs, par=FALSE) {
+	.FastR(.NAME="context.eval", contexts, exprs, par)
 	invisible(NULL)
+}
+
+fastr_context.pareval <- function(contexts, exprs) {
+	fastr_context.eval(contexts, exprs, par=TRUE)
 }
 
 
