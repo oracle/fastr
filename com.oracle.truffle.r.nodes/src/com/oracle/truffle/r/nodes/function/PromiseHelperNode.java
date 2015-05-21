@@ -114,9 +114,11 @@ public class PromiseHelperNode extends Node {
 
     @Child private PromiseHelperNode nextNode = null;
 
+    private final ValueProfile optTypeProfile = ValueProfile.createIdentityProfile();
+    private final ValueProfile varArgsOptTypeProfile = ValueProfile.createIdentityProfile();
+    private final ValueProfile multiVarArgsOptTypeProfile = ValueProfile.createIdentityProfile();
     private final ValueProfile promiseFrameProfile = ValueProfile.createClassProfile();
     private final BranchProfile varArgProfile = BranchProfile.create();
-    private final BranchProfile multiVarArgProfile = BranchProfile.create();
 
     /**
      * Guarded by {@link #isInOriginFrame(VirtualFrame,RPromise)}.
@@ -136,7 +138,8 @@ public class PromiseHelperNode extends Node {
     /**
      * Main entry point for proper evaluation of the given Promise; including
      * {@link RPromise#isEvaluated()}, propagation of CallSrc and dependency cycles. Actual
-     * evaluation is delegated to {@link #generateValue(VirtualFrame, RPromise, SourceSection)}.
+     * evaluation is delegated to
+     * {@link #generateValue(VirtualFrame, OptType, RPromise, SourceSection)}.
      *
      * @return The value the given Promise evaluates to
      */
@@ -145,12 +148,14 @@ public class PromiseHelperNode extends Node {
             return promise.getValue();
         }
         RPromise current = promise;
-        if (current.getOptType() == OptType.VARARG) {
+        OptType optType = optTypeProfile.profile(current.getOptType());
+        if (optType == OptType.VARARG) {
             varArgProfile.enter();
             current = ((VarargPromise) current).getVararg();
-            while (current.getOptType() == OptType.VARARG) {
-                multiVarArgProfile.enter();
+            optType = varArgsOptTypeProfile.profile(current.getOptType());
+            while (optType == OptType.VARARG) {
                 current = ((VarargPromise) current).getVararg();
+                optType = multiVarArgsOptTypeProfile.profile(current.getOptType());
             }
             if (isEvaluated(current)) {
                 return current.getValue();
@@ -163,7 +168,7 @@ public class PromiseHelperNode extends Node {
         }
 
         // Evaluate guarded by underEvaluation
-        Object obj = generateValue(frame, current, callSrc);
+        Object obj = generateValue(frame, optType, current, callSrc);
         setValue(obj, current);
         return obj;
     }
@@ -175,12 +180,12 @@ public class PromiseHelperNode extends Node {
      * @param frame The {@link VirtualFrame} of the environment the Promise is forced in
      * @return The value this Promise represents
      */
-    private Object generateValue(VirtualFrame frame, RPromise promise, SourceSection callSrc) {
-        if (isOptDefaultProfile.profile(promise.getOptType() == OptType.DEFAULT)) {
+    private Object generateValue(VirtualFrame frame, OptType optType, RPromise promise, SourceSection callSrc) {
+        if (optType == OptType.DEFAULT) {
             return generateValueDefault(frame, promise, callSrc);
         } else {
-            assert promise.getOptType() == OptType.EAGER || promise.getOptType() == OptType.PROMISED;
-            return generateValueEager(frame, (EagerPromise) promise, callSrc);
+            assert optType == OptType.EAGER || optType == OptType.PROMISED;
+            return generateValueEager(frame, optType, (EagerPromise) promise, callSrc);
         }
     }
 
@@ -216,16 +221,16 @@ public class PromiseHelperNode extends Node {
         }
     }
 
-    private Object generateValueEager(VirtualFrame frame, EagerPromise promise, SourceSection callSrc) {
+    private Object generateValueEager(VirtualFrame frame, OptType optType, EagerPromise promise, SourceSection callSrc) {
         if (isDeoptimized(promise)) {
             // execFrame already materialized, feedback already given. Now we're a
             // plain'n'simple RPromise
             return generateValueDefault(frame, promise, callSrc);
         } else if (promise.isValid()) {
-            if (isOptEagerProfile.profile(promise.getOptType() == OptType.EAGER)) {
+            if (optType == OptType.EAGER) {
                 return getEagerValue(promise);
             } else {
-                assert promise.getOptType() == OptType.PROMISED;
+                assert optType == OptType.PROMISED;
                 return getPromisedEagerValue(frame, promise, callSrc);
             }
         } else {
@@ -322,7 +327,6 @@ public class PromiseHelperNode extends Node {
     private final ValueProfile valueProfile = ValueProfile.createClassProfile();
 
     // Eager
-    private final ConditionProfile isOptDefaultProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile isOptEagerProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile isOptPromisedProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile isDeoptimizedProfile = ConditionProfile.createBinaryProfile();
