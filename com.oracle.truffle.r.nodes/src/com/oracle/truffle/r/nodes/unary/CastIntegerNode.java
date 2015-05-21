@@ -184,10 +184,12 @@ public abstract class CastIntegerNode extends CastNode {
         naCheck.enable(operand);
         int[] idata = new int[operand.getLength()];
         boolean seenNA = false;
+        boolean seenNANoWarn = false;
         for (int i = 0; i < operand.getLength(); i++) {
             String value = operand.getDataAt(i);
             if (value.length() == 0 || naCheck.check(value)) {
                 idata[i] = RRuntime.INT_NA;
+                seenNANoWarn = true;
             } else {
                 idata[i] = naCheck.convertStringToInt(value);
                 if (RRuntime.isNA(idata[i])) {
@@ -199,7 +201,7 @@ public abstract class CastIntegerNode extends CastNode {
             warningBranch.enter();
             RError.warning(RError.Message.NA_INTRODUCED_COERCION);
         }
-        RIntVector ret = RDataFactory.createIntVector(idata, !seenNA, getPreservedDimensions(operand), getPreservedNames(operand));
+        RIntVector ret = RDataFactory.createIntVector(idata, !seenNA && !seenNANoWarn, getPreservedDimensions(operand), getPreservedNames(operand));
         preserveDimensionNames(operand, ret);
         if (isAttrPreservation()) {
             ret.copyRegAttributesFrom(operand);
