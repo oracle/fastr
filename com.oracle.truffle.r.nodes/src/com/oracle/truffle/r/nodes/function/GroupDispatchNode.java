@@ -40,7 +40,8 @@ public final class GroupDispatchNode extends RNode implements RSyntaxNode {
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
     private final ConditionProfile mismatchProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile isObjectProfile = ConditionProfile.createBinaryProfile();
-    private final ValueProfile argTypeProfile = ValueProfile.createClassProfile();
+    private final ValueProfile leftArgTypeProfile = ValueProfile.createClassProfile();
+    private final ValueProfile rightArgTypeProfile = ValueProfile.createClassProfile();
 
     @CompilationFinal private boolean dynamicLookup;
     private final ConditionProfile exactEqualsProfile = ConditionProfile.createBinaryProfile();
@@ -98,7 +99,7 @@ public final class GroupDispatchNode extends RNode implements RSyntaxNode {
         return RSyntaxNode.cast(RASTUtils.createCall(this, (CallArgumentsNode) callArgsNode.substitute(env).asRNode()));
     }
 
-    protected RStringVector getArgClass(Object arg) {
+    protected RStringVector getArgClass(Object arg, ValueProfile argTypeProfile) {
         Object profiledArg = argTypeProfile.profile(arg);
         if (profiledArg instanceof RAbstractContainer && isObjectProfile.profile(((RAbstractContainer) profiledArg).isObject(attrProfiles))) {
             return ((RAbstractContainer) profiledArg).getClassHierarchy();
@@ -126,7 +127,7 @@ public final class GroupDispatchNode extends RNode implements RSyntaxNode {
     private Object executeInternal(VirtualFrame frame, RArgsValuesAndNames argAndNames, String genericName, RGroupGenerics group, RFunction builtinFunction) {
         Object[] evaluatedArgs = argAndNames.getArguments();
 
-        RStringVector typeL = evaluatedArgs.length == 0 ? null : getArgClass(evaluatedArgs[0]);
+        RStringVector typeL = evaluatedArgs.length == 0 ? null : getArgClass(evaluatedArgs[0], leftArgTypeProfile);
 
         Result resultL = null;
         if (typeL != null) {
@@ -142,7 +143,7 @@ public final class GroupDispatchNode extends RNode implements RSyntaxNode {
         }
         Result resultR = null;
         if (group == RGroupGenerics.Ops && argAndNames.getSignature().getLength() >= 2) {
-            RStringVector typeR = getArgClass(evaluatedArgs[1]);
+            RStringVector typeR = getArgClass(evaluatedArgs[1], rightArgTypeProfile);
             if (typeR != null) {
                 try {
                     if (functionLookupR == null) {
