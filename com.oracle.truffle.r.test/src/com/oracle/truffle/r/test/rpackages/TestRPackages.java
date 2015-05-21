@@ -84,6 +84,9 @@ public class TestRPackages extends TestBase {
             ProcessBuilder pb = new ProcessBuilder(cmds);
             Map<String, String> env = pb.environment();
             env.put("R_LIBS_USER", rpackagesLibs.toString());
+            if (!generatingExpected()) {
+                env.put("R_INSTALL_TAR", "/usr/bin/tar");
+            }
             try {
                 if (FastROptions.debugMatches("TestRPackages")) {
                     pb.inheritIO();
