@@ -54,8 +54,8 @@ import com.oracle.truffle.r.runtime.rng.*;
  *
  * The life-cycle of a {@link RContext} is:
  * <ol>
- * <li>created: {@link #create(RContext, String[], ConsoleHandler)} or
- * {@link #createShared(RContext, String[], ConsoleHandler)}</li>
+ * <li>created: {@link #createSharedNothing(RContext, String[], ConsoleHandler)} or
+ * {@link #createSharedPackages(RContext, String[], ConsoleHandler)}</li>
  * <li>activated: {@link #activate()}</li>
  * <li>destroyed: {@link #destroy()}</li>
  * </ol>
@@ -149,6 +149,16 @@ public final class RContext extends ExecutionContext {
 
     public enum Kind {
         /**
+         * Essentially a clean restart, modulo the basic VM-wide initialization. which does include,
+         * for example, reading the external environment variables. This kind of context can be used
+         * in a parallel computation. The inital context is always of this kind. The intent is that
+         * all mutable state is localized to the isolate, which may not be completely achievable.
+         * For example, shared native libraries are assumed to contain no mutable state and be
+         * re-entrant.
+         */
+        SHARED_NOTHING,
+
+        /**
          * Shares the set of loaded packages at the time the context is created. Only useful when
          * there is a priori knowledge on the evaluation that the context will be used for. Cannot
          * safely be used for parallel context evaluation. Must be created as a child of an existing
@@ -157,12 +167,20 @@ public final class RContext extends ExecutionContext {
          * enforces it at creation time).
          */
         SHARED_PACKAGES,
+
         /**
-         * Essentially a clean restart, modulo the basic VM-wide initialization. which does include,
-         * for example, reading the external environment variables. This kind of context can be used
-         * in a parallel computation.
+         * Intermediate between {@link #SHARED_NOTHING} and {@link #SHARED_PACKAGES}, this is
+         * similar to the standard shared code/copied data model provided by operating systems,
+         * although the code/data distinction isn't completely applicable to a language like R.
+         * Unlike {@link #SHARED_NOTHING}, where the ASTs for the functions in the default packages
+         * are distinct copies in each context, in this kind of context, they are shared. Strictly
+         * speaking, the bindings of R functions are shared, and this is achieved by creating a
+         * shallow copy of the environments associated with the default packages of the parent
+         * context at the time the context is created.
+         *
+         * TODO Implement this mode
          */
-        SHARED_NOTHING
+        SHARED_CODE,
     }
 
     /**
@@ -184,6 +202,15 @@ public final class RContext extends ExecutionContext {
          */
         @SuppressWarnings("unused")
         default void systemInitialized(RContext context, ContextState state) {
+
+        }
+
+        /**
+         * Called in response to the {@link RContext#destroy} method. Provides a hook for finalizing
+         * any state before the context is destroyed.
+         */
+        @SuppressWarnings("unused")
+        default void beforeDestroy(RContext context, ContextState state) {
 
         }
     }
@@ -501,6 +528,12 @@ public final class RContext extends ExecutionContext {
     @CompilationFinal private static RContext singleContext;
 
     private RContext(Kind kind, RContext parent, String[] commandArgs, ConsoleHandler consoleHandler) {
+        if (kind == Kind.SHARED_PACKAGES) {
+            if (parent.sharedChild != null) {
+                throw RError.error(RError.Message.GENERIC, "can't have multiple active SHARED_PACKAGES contexts");
+            }
+            parent.sharedChild = this;
+        }
         this.kind = kind;
         this.parent = parent;
         this.id = ID.getAndIncrement();
@@ -553,8 +586,9 @@ public final class RContext extends ExecutionContext {
      * @param commandArgs the command line arguments passed this R session
      * @param consoleHandler a {@link ConsoleHandler} for output
      */
-    public static RContext create(RContext parent, String[] commandArgs, ConsoleHandler consoleHandler) {
-        return create(parent, Kind.SHARED_NOTHING, commandArgs, consoleHandler);
+    public static RContext createSharedNothing(RContext parent, String[] commandArgs, ConsoleHandler consoleHandler) {
+        RContext result = create(parent, Kind.SHARED_NOTHING, commandArgs, consoleHandler);
+        return result;
     }
 
     /**
@@ -564,16 +598,28 @@ public final class RContext extends ExecutionContext {
      * @param commandArgs the command line arguments passed this R session
      * @param consoleHandler a {@link ConsoleHandler} for output
      */
-    public static RContext createShared(RContext parent, String[] commandArgs, ConsoleHandler consoleHandler) {
-        if (parent.sharedChild != null) {
-            throw RError.error(RError.Message.GENERIC, "can't have multiple active shared contexts");
-        }
+    public static RContext createSharedPackages(RContext parent, String[] commandArgs, ConsoleHandler consoleHandler) {
         RContext result = create(parent, Kind.SHARED_PACKAGES, commandArgs, consoleHandler);
-        parent.sharedChild = result;
         return result;
 
     }
 
+    /**
+     * Create a {@link Kind#SHARED_CODE} {@link RContext}.
+     *
+     * @param parent parent context with which to shgre
+     * @param commandArgs the command line arguments passed this R session
+     * @param consoleHandler a {@link ConsoleHandler} for output
+     */
+    public static RContext createSharedCode(RContext parent, String[] commandArgs, ConsoleHandler consoleHandler) {
+        RContext result = create(parent, Kind.SHARED_CODE, commandArgs, consoleHandler);
+        return result;
+
+    }
+
+    /**
+     * Create a context of a given kind.
+     */
     public static RContext create(RContext parent, Kind kind, String[] commandArgs, ConsoleHandler consoleHandler) {
         RContext result = new RContext(kind, parent, commandArgs, consoleHandler);
         result.engine = RContext.getRRuntimeASTAccess().createEngine(result);
@@ -582,7 +628,12 @@ public final class RContext extends ExecutionContext {
 
     /**
      * Active the context by attaching the current thread and initializing the {@link StateFactory}
-     * objects.
+     * objects. Note that we attach the thread before creating the new context state. This means
+     * that code that accesses the state through this interface will receive a {@code null} value.
+     * Access to the parent state is available through the {@link RContext} argument passed to the
+     * {@link StateFactory#newContext(RContext, Object...)} method. It might be better to attach the
+     * thread after state creation but it is a finely balanced decision and risks incorrectly
+     * accessing the parent state.
      */
     public RContext activate() {
         assert !active;
@@ -607,6 +658,9 @@ public final class RContext extends ExecutionContext {
      * Destroy this context.
      */
     public void destroy() {
+        for (ClassStateKind classStateKind : ClassStateKind.VALUES) {
+            classStateKind.factory.beforeDestroy(this, contextState[classStateKind.ordinal()]);
+        }
         if (kind == Kind.SHARED_PACKAGES) {
             parent.sharedChild = null;
         }

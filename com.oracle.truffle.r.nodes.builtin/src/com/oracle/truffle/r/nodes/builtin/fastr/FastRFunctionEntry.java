@@ -66,7 +66,7 @@ public class FastRFunctionEntry {
                 return FastRFileSizeCompare.compare(RRuntime.asString(arg0), RRuntime.asString(argValues[1]));
 
             case "context.create":
-                return FastRContext.create((RStringVector) RRuntime.asAbstractVector(arg0), RRuntime.fromLogical(checkLogical(argValues[1], fastRNode)));
+                return FastRContext.create((RStringVector) RRuntime.asAbstractVector(arg0), (RIntVector) RRuntime.asAbstractVector(argValues[1]));
 
             case "context.print":
                 FastRContext.print(((RIntVector) RRuntime.asAbstractVector(arg0)).getDataAt(0));

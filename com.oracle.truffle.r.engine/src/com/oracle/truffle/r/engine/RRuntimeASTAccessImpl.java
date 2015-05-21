@@ -379,12 +379,8 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
 
     }
 
-    public RContext createShared(RContext parent, String[] commandArgs, ConsoleHandler consoleHandler) {
-        return RContextFactory.createShared(parent, commandArgs, consoleHandler);
-    }
-
-    public RContext create(RContext parent, String[] commandArgs, ConsoleHandler consoleHandler) {
-        return RContextFactory.create(parent, commandArgs, consoleHandler);
+    public RContext create(RContext parent, RContext.Kind kind, String[] commandArgs, ConsoleHandler consoleHandler) {
+        return RContextFactory.create(parent, kind, commandArgs, consoleHandler);
     }
 
     public Engine createEngine(RContext context) {

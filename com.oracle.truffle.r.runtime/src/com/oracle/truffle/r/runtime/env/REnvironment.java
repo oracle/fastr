@@ -80,12 +80,9 @@ import com.oracle.truffle.r.runtime.env.frame.*;
  *
  * Multi-tenancy (multiple {@link RContext}s).
  * <p>
- * In the present limited implementation each context shares all the default packages. In fact to be
- * precise a new context shares all loaded packages at the time it is created. Each context
- * naturally has its own globalframe/env. Contexts must only be created serially as a new context
- * effectively compromises the previous one by updating the namespace:base parent link to the new
- * globalenv. When parallel contexts are required this will need to be revisited.
- *
+ * The logic for implementing the three different forms of
+ * {@link com.oracle.truffle.r.runtime.RContext.Kind} is encapsulated in the {@link #createContext}
+ * method.
  */
 public abstract class REnvironment extends RAttributeStorage implements RAttributable, RTypedValue {
 
@@ -107,6 +104,7 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
         private final MaterializedFrame globalFrame;
         private Base baseEnv;
         private REnvironment namespaceRegistry;
+        private Global parentGlobalEnv; // SHARED_PACKAGES only
 
         ContextStateImpl(MaterializedFrame globalFrame, SearchPath searchPath) {
             this.globalFrame = globalFrame;
@@ -147,7 +145,7 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
             this.baseEnv = baseEnv;
         }
 
-        private void setNamespaceRegistery(REnvironment namespaceRegistry) {
+        private void setNamespaceRegistry(REnvironment namespaceRegistry) {
             this.namespaceRegistry = namespaceRegistry;
         }
 
@@ -158,8 +156,14 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
      * constructors, we define this class as the mechanism for creating the context-specific state.
      */
     public static class ClassStateFactory implements RContext.StateFactory {
+        @Override
         public ContextState newContext(RContext context, Object... objects) {
             return createContext(context, (MaterializedFrame) objects[0]);
+        }
+
+        @Override
+        public void beforeDestroy(RContext context, RContext.ContextState state) {
+            beforeDestroyContext(context, state);
         }
     }
 
@@ -282,13 +286,16 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
      * underlying {@link MaterializedFrame} is shared. The {@link #frameAccess} value for
      * "namespace:base" refers to {@link NSBaseMaterializedFrame}, which delegates all its
      * operations to {@code baseFrame}, but it's "enclosingFrame" field in {@link RArguments}
-     * differs, referring to {@code globalFrame}.
+     * differs, referring to {@code globalFrame}, as required by the R spec.
      */
     public static void baseInitialize(MaterializedFrame baseFrame, MaterializedFrame initialGlobalFrame) {
-        // TODO is namespaceRegistry ever used in an eval?
+        // TODO if namespaceRegistry is ever used in an eval an internal env won't suffice.
+        REnvironment namespaceRegistry = RDataFactory.createInternalEnv();
         ContextStateImpl state = (ContextStateImpl) RContext.getREnvironmentState();
-        state.setNamespaceRegistery(RDataFactory.createInternalEnv());
+        state.setNamespaceRegistry(namespaceRegistry);
         Base baseEnv = new Base(baseFrame, initialGlobalFrame);
+        namespaceRegistry.safePut("base", baseEnv.namespaceEnv);
+
         Global globalEnv = new Global(baseEnv, initialGlobalFrame);
         baseEnv.namespaceEnv.parent = globalEnv;
         state.setBaseEnv(baseEnv);
@@ -297,31 +304,90 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
 
     /**
      * {@link RContext} creation, with {@code globalFrame}. If this is a {@code SHARED_NOTHING}
-     * context we only create the minimal search path with no packages as the pakage loading is
+     * context we only create the minimal search path with no packages as the package loading is
      * handled by the engine. For a {@code SHARED_PACKAGES} context, we keep the existing search
-     * path, just replacing the {@code globalenv} component.
+     * path, just replacing the {@code globalenv} component. For a {@code SHARED_CODE} context we
+     * make shallow copies of the package environments.
+     *
+     * N.B.Calling {@link RContext#getREnvironmentState()} accesses the new, as yet uninitialized
+     * {@link ContextStateImpl} object
      */
     private static ContextState createContext(RContext context, MaterializedFrame globalFrame) {
-        if (context.getKind() == RContext.Kind.SHARED_PACKAGES) {
-            ContextStateImpl parentState = (ContextStateImpl) context.getParent().getThisContextState(RContext.ClassStateKind.REnvironment);
-            Base parentBaseEnv = parentState.getBaseEnv();
-            NSBaseMaterializedFrame nsBaseFrame = (NSBaseMaterializedFrame) parentBaseEnv.namespaceEnv.frameAccess.getFrame();
-            MaterializedFrame prevGlobalFrame = RArguments.getEnclosingFrame(nsBaseFrame);
-            Global prevGlobalEnv = (Global) RArguments.getEnvironment(prevGlobalFrame);
-            nsBaseFrame.updateGlobalFrame(globalFrame);
-            /*
-             * To share the existing package structure, we create the new globalEnv with the parent
-             * of the previous global env. Then we create a copy of the SearchPath and patch the
-             * global entry.
-             */
-            Global newGlobalEnv = new Global(prevGlobalEnv.parent, globalFrame);
-            SearchPath searchPath = initSearchList(prevGlobalEnv);
-            searchPath.updateGlobal(newGlobalEnv);
-            parentState.getBaseEnv().safePut(".GlobalEnv", newGlobalEnv);
-            return new ContextStateImpl(globalFrame, searchPath, parentBaseEnv, parentState.getNamespaceRegistry());
-        } else {
-            return new ContextStateImpl(globalFrame, new SearchPath());
+        switch (context.getKind()) {
+            case SHARED_PACKAGES: {
+                /*
+                 * To share the existing package structure, we create the new globalEnv with the
+                 * parent of the previous global env. Then we create a copy of the SearchPath and
+                 * patch the global entry.
+                 */
+                ContextStateImpl parentState = (ContextStateImpl) context.getParent().getThisContextState(RContext.ClassStateKind.REnvironment);
+                Base parentBaseEnv = parentState.getBaseEnv();
+                NSBaseMaterializedFrame nsBaseFrame = (NSBaseMaterializedFrame) parentBaseEnv.namespaceEnv.frameAccess.getFrame();
+                MaterializedFrame prevGlobalFrame = RArguments.getEnclosingFrame(nsBaseFrame);
+
+                Global prevGlobalEnv = (Global) RArguments.getEnvironment(prevGlobalFrame);
+                nsBaseFrame.updateGlobalFrame(globalFrame);
+                Global newGlobalEnv = new Global(prevGlobalEnv.parent, globalFrame);
+                SearchPath searchPath = initSearchList(prevGlobalEnv);
+                searchPath.updateGlobal(newGlobalEnv);
+                parentState.getBaseEnv().safePut(".GlobalEnv", newGlobalEnv);
+                ContextStateImpl result = new ContextStateImpl(globalFrame, searchPath, parentBaseEnv, parentState.getNamespaceRegistry());
+                result.parentGlobalEnv = prevGlobalEnv;
+                return result;
+            }
+
+            case SHARED_CODE: {
+                /* We make shallow copies of all the default package environments in the parent */
+                ContextStateImpl parentState = (ContextStateImpl) context.getParent().getThisContextState(RContext.ClassStateKind.REnvironment);
+                SearchPath parentSearchPath = parentState.getSearchPath();
+                // clone all the environments below global from the parent
+                REnvironment e = parentSearchPath.get(1).cloneEnv(globalFrame);
+                // create the new Global with clone top as parent
+                Global newGlobalEnv = new Global(e, globalFrame);
+                // create new namespaceRegistry and populate it while locating "base"
+                REnvironment newNamespaceRegistry = RDataFactory.createInternalEnv();
+                Base newBaseEnv = null;
+                while (e != emptyEnv) {
+                    if (e instanceof Base) {
+                        newBaseEnv = (Base) e;
+                    }
+                    e = e.parent;
+                }
+                assert newBaseEnv != null;
+                copyNamespaceRegistry(parentState.namespaceRegistry, newNamespaceRegistry);
+                newNamespaceRegistry.safePut("base", newBaseEnv.namespaceEnv);
+                newBaseEnv.safePut(".GlobalEnv", newGlobalEnv);
+                SearchPath newSearchPath = initSearchList(newGlobalEnv);
+                return new ContextStateImpl(globalFrame, newSearchPath, newBaseEnv, newNamespaceRegistry);
+            }
+
+            case SHARED_NOTHING: {
+                // SHARED_NOTHING: baseInitialize takes care of everything
+                return new ContextStateImpl(globalFrame, new SearchPath());
+            }
+
+            default:
+                throw RInternalError.shouldNotReachHere();
         }
+    }
+
+    private static void beforeDestroyContext(RContext context, RContext.ContextState state) {
+        switch (context.getKind()) {
+            case SHARED_PACKAGES: {
+                /*
+                 * Since we updated the parent's baseEnv with the new .GlobalEnv value we need to
+                 * restore that.
+                 */
+                Global parentGlobalEnv = ((ContextStateImpl) state).parentGlobalEnv;
+                ContextStateImpl parentState = (ContextStateImpl) context.getParent().getThisContextState(RContext.ClassStateKind.REnvironment);
+                parentState.baseEnv.safePut(".GlobalEnv", parentGlobalEnv);
+                break;
+            }
+
+            default:
+                // nothing to do
+        }
+
     }
 
     private static SearchPath initSearchList(Global globalEnv) {
@@ -332,6 +398,53 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
             env = env.parent;
         } while (env != emptyEnv);
         return searchPath;
+    }
+
+    /**
+     * Clone an environment for a {@code SHARED_CODE} context. {@link Base} overrides the method,
+     * which is why we pass {@code globalFrame} as it needs it for it's creation.
+     */
+    protected REnvironment cloneEnv(MaterializedFrame globalFrame) {
+        REnvironment parentClone = parent;
+        if (parent != emptyEnv) {
+            parentClone = parent.cloneEnv(globalFrame);
+        }
+        // N.B. Base overrides this method, so we only get here for package environments
+        REnvironment newEnv = RDataFactory.createNewEnv(parentClone, getName());
+        if (attributes != null) {
+            newEnv.attributes = attributes.copy();
+        }
+        copyBindings(newEnv);
+        return newEnv;
+    }
+
+    private static void copyNamespaceRegistry(REnvironment parent, REnvironment child) {
+        RStringVector bindings = parent.ls(true, null, false);
+        for (int i = 0; i < bindings.getLength(); i++) {
+            String name = bindings.getDataAt(i);
+            if (name.equals("base")) {
+                continue;
+            }
+            Object value = parent.get(name);
+            REnvironment parentNamespace = (REnvironment) value;
+            assert parentNamespace.isNamespaceEnv();
+            REnvironment newNamespace = RDataFactory.createInternalEnv();
+            parentNamespace.copyBindings(newNamespace);
+            child.safePut(name, newNamespace);
+        }
+    }
+
+    /**
+     * Copies the bindings from {@code this} environment to {@code newEnv}, recursively copying any
+     * bindings are are {@link REnvironment}s.
+     */
+    protected void copyBindings(REnvironment newEnv) {
+        RStringVector bindings = ls(true, null, false);
+        for (int i = 0; i < bindings.getLength(); i++) {
+            String binding = bindings.getDataAt(i);
+            Object value = get(binding);
+            newEnv.safePut(binding, value);
+        }
     }
 
     /**
@@ -552,7 +665,7 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
     }
 
     /**
-     * If this is not a "package" environent return "this", otherwise return the associated
+     * If this is not a "package" environment return "this", otherwise return the associated
      * "namespace" env.
      */
     public REnvironment getPackageNamespaceEnv() {
@@ -775,7 +888,6 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
     private static final class BaseNamespace extends REnvironment {
         private BaseNamespace(REnvironment parent, String name, REnvFrameAccess frameAccess) {
             super(parent, name, frameAccess);
-            RContext.getREnvironmentState().getNamespaceRegistry().safePut(name, this);
             RArguments.setEnvironment(frameAccess.getFrame(), this);
         }
 
@@ -811,6 +923,13 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
         public BaseNamespace getNamespace() {
             return namespaceEnv;
         }
+
+        @Override
+        protected REnvironment cloneEnv(MaterializedFrame globalFrame) {
+            Base newBase = new Base(RRuntime.createNonFunctionFrame().materialize(), globalFrame);
+            this.copyBindings(newBase);
+            return newBase;
+        }
     }
 
     /**
@@ -830,6 +949,7 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
         protected String getSearchName() {
             return SEARCHNAME;
         }
+
     }
 
     /**
@@ -937,5 +1057,6 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
         public void put(String key, Object value) throws PutException {
             throw new PutException(RError.Message.ENV_ASSIGN_EMPTY);
         }
+
     }
 }

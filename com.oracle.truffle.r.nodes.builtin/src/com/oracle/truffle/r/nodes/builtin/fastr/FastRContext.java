@@ -30,16 +30,12 @@ import com.oracle.truffle.r.runtime.conn.*;
 import com.oracle.truffle.r.runtime.data.*;
 
 public class FastRContext {
-    static int create(RStringVector args, boolean shared) {
+    static int create(RStringVector args, RIntVector kindVec) {
         String[] argsArray = args.getDataCopy();
         RContext current = RContext.getInstance();
         RContext.ConsoleHandler consoleHandler = current.getConsoleHandler();
-        RContext newContext;
-        if (shared) {
-            newContext = RContext.getRRuntimeASTAccess().createShared(current, argsArray, consoleHandler);
-        } else {
-            newContext = RContext.getRRuntimeASTAccess().create(current, argsArray, consoleHandler);
-        }
+        RContext.Kind kind = RContext.Kind.values()[kindVec.getDataAt(0) - 1];
+        RContext newContext = RContext.getRRuntimeASTAccess().create(current, kind, argsArray, consoleHandler);
         return (int) newContext.getId();
     }
 

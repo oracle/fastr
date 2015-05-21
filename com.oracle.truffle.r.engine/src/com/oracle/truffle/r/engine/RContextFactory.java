@@ -66,24 +66,29 @@ public class RContextFactory {
         }
     }
 
-    public static RContext createShared(RContext parent, String[] commandArgs, ConsoleHandler consoleHandler) {
-        RContext context = RContext.createShared(parent, commandArgs, consoleHandler);
+    public static RContext createSharedPackages(RContext parent, String[] commandArgs, ConsoleHandler consoleHandler) {
+        RContext context = RContext.createSharedPackages(parent, commandArgs, consoleHandler);
+        return context;
+    }
+
+    public static RContext createSharedCode(RContext parent, String[] commandArgs, ConsoleHandler consoleHandler) {
+        RContext context = RContext.createSharedCode(parent, commandArgs, consoleHandler);
         return context;
     }
 
     /**
      * Create the initial context with no parent.
      */
-    public static RContext create(String[] commandArgs, ConsoleHandler consoleHandler) {
-        RContext context = RContext.create(null, commandArgs, consoleHandler);
+    public static RContext createInitial(String[] commandArgs, ConsoleHandler consoleHandler) {
+        RContext context = RContext.createSharedNothing(null, commandArgs, consoleHandler);
         return context;
     }
 
     /**
-     * Create a shared-nothing context context with given parent.
+     * Create a context of given kind.
      */
-    public static RContext create(RContext parent, String[] commandArgs, ConsoleHandler consoleHandler) {
-        RContext context = RContext.create(parent, commandArgs, consoleHandler);
+    public static RContext create(RContext parent, Kind kind, String[] commandArgs, ConsoleHandler consoleHandler) {
+        RContext context = RContext.create(parent, kind, commandArgs, consoleHandler);
         return context;
     }
 }

@@ -71,8 +71,10 @@ fastr.createpkgsource <- function(pkg, name) {
 
 fastr.comparefilesizes <- function(file1, file2) .FastR(.NAME="comparefilesizes", file1, file2)
 
-fastr_context.create <- function(args="", shared=FALSE) {
-	context <- .FastR(.NAME="context.create", args, shared)
+fastr_context.create <- function(args="", kind="SHARED_NOTHING") {
+	kind <- match(kind, c("SHARED_NOTHING", "SHARED_PACKAGES", "SHARED_CODE"))
+	if (is.na(kind)) stop("invalid kind argument")
+	context <- .FastR(.NAME="context.create", args, kind)
 	class(context) <- "fastr_context"
     context
 }

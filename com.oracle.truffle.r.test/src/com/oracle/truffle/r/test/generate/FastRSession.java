@@ -107,13 +107,13 @@ public final class FastRSession implements RSession {
 
     public RContext createTestContext() {
         create();
-        return RContextFactory.createShared(main, new String[0], consoleHandler).activate();
+        return RContextFactory.createSharedPackages(main, new String[0], consoleHandler).activate();
     }
 
     private FastRSession() {
         consoleHandler = new ConsoleHandler();
         RContextFactory.initialize();
-        main = RContextFactory.create(new String[0], consoleHandler).activate();
+        main = RContextFactory.createInitial(new String[0], consoleHandler).activate();
     }
 
     @SuppressWarnings("deprecation")

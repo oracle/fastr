@@ -107,12 +107,7 @@ public interface RRuntimeASTAccess {
      */
     void setFunctionName(RootNode node, String name);
 
-    /*
-     * runtime access to the RContextFactory/REngine
-     */
-    RContext createShared(RContext parent, String[] commandArgs, ConsoleHandler consoleHandler);
-
-    RContext create(RContext parent, String[] commandArgs, ConsoleHandler consoleHandler);
+    RContext create(RContext parent, Kind kind, String[] commandArgs, ConsoleHandler consoleHandler);
 
     RContext.Engine createEngine(RContext context);
 
