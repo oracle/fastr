@@ -150,7 +150,8 @@ public final class RContext extends ExecutionContext {
     public enum Kind {
         /**
          * Essentially a clean restart, modulo the basic VM-wide initialization. which does include,
-         * for example, reading the external environment variables. This kind of context can be used
+         * for example, reading the external environment variables. I.e., it is not a goal to create
+         * a multi-user environment with different external inputs. This kind of context can be used
          * in a parallel computation. The inital context is always of this kind. The intent is that
          * all mutable state is localized to the isolate, which may not be completely achievable.
          * For example, shared native libraries are assumed to contain no mutable state and be
@@ -159,12 +160,14 @@ public final class RContext extends ExecutionContext {
         SHARED_NOTHING,
 
         /**
-         * Shares the set of loaded packages at the time the context is created. Only useful when
-         * there is a priori knowledge on the evaluation that the context will be used for. Cannot
-         * safely be used for parallel context evaluation. Must be created as a child of an existing
-         * parent context of type {@link #SHARED_NOTHING} and only one such child is allowed.
-         * (Strictly speaking the invariant should be only one active child, but the implementation
-         * enforces it at creation time).
+         * Shares the set of loaded packages of a givenparent at the time the context is created.
+         * Only useful when there is a priori knowledge on the evaluation that the context will be
+         * used for. Cannot safely be used for parallel context evaluation. Must be created as a
+         * child of an existing parent context of type {@link #SHARED_NOTHING} or {
+         * {@link #SHARED_CODE} and only one such child is allowed. (Strictly speaking the invariant
+         * should be only one active child, but the implementation enforces it at creation time).
+         * Evidently any changes made to the shared environment, e.g., loading a package, affect the
+         * parent.
          */
         SHARED_PACKAGES,
 
@@ -177,8 +180,6 @@ public final class RContext extends ExecutionContext {
          * speaking, the bindings of R functions are shared, and this is achieved by creating a
          * shallow copy of the environments associated with the default packages of the parent
          * context at the time the context is created.
-         *
-         * TODO Implement this mode
          */
         SHARED_CODE,
     }
@@ -198,7 +199,8 @@ public final class RContext extends ExecutionContext {
 
         /**
          * A state factory may want to snapshot the state of the context just after the basic system
-         * is initialized, in which case they can override this method.
+         * is initialized, in which case they can override this method. N.B. This is only invoked
+         * for {@link Kind#SHARED_NOTHING} contexts.
          */
         @SuppressWarnings("unused")
         default void systemInitialized(RContext context, ContextState state) {

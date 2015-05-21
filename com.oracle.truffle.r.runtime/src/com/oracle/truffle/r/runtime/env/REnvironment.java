@@ -104,7 +104,7 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
         private final MaterializedFrame globalFrame;
         private Base baseEnv;
         private REnvironment namespaceRegistry;
-        private Global parentGlobalEnv; // SHARED_PACKAGES only
+        private MaterializedFrame parentGlobalFrame; // SHARED_PACKAGES only
 
         ContextStateImpl(MaterializedFrame globalFrame, SearchPath searchPath) {
             this.globalFrame = globalFrame;
@@ -332,7 +332,7 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
                 searchPath.updateGlobal(newGlobalEnv);
                 parentState.getBaseEnv().safePut(".GlobalEnv", newGlobalEnv);
                 ContextStateImpl result = new ContextStateImpl(globalFrame, searchPath, parentBaseEnv, parentState.getNamespaceRegistry());
-                result.parentGlobalEnv = prevGlobalEnv;
+                result.parentGlobalFrame = prevGlobalFrame;
                 return result;
             }
 
@@ -376,10 +376,13 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
             case SHARED_PACKAGES: {
                 /*
                  * Since we updated the parent's baseEnv with the new .GlobalEnv value we need to
-                 * restore that.
+                 * restore that and the frame in NSBaseMaterializedFrame.
                  */
-                Global parentGlobalEnv = ((ContextStateImpl) state).parentGlobalEnv;
+                MaterializedFrame parentGlobalFrame = ((ContextStateImpl) state).parentGlobalFrame;
+                Global parentGlobalEnv = (Global) RArguments.getEnvironment(parentGlobalFrame);
                 ContextStateImpl parentState = (ContextStateImpl) context.getParent().getThisContextState(RContext.ClassStateKind.REnvironment);
+                NSBaseMaterializedFrame nsBaseFrame = (NSBaseMaterializedFrame) parentState.baseEnv.namespaceEnv.frameAccess.getFrame();
+                nsBaseFrame.updateGlobalFrame(parentGlobalFrame);
                 parentState.baseEnv.safePut(".GlobalEnv", parentGlobalEnv);
                 break;
             }
