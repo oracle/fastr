@@ -85,7 +85,7 @@ public class TestRPackages extends TestBase {
             Map<String, String> env = pb.environment();
             env.put("R_LIBS_USER", rpackagesLibs.toString());
             if (!generatingExpected()) {
-                env.put("R_INSTALL_TAR", "/usr/bin/tar");
+                env.put("R_INSTALL_TAR", REnvVars.get("TAR"));
             }
             try {
                 if (FastROptions.debugMatches("TestRPackages")) {

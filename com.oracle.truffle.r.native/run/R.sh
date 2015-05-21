@@ -33,14 +33,17 @@ source="${BASH_SOURCE[0]}"
 while [ -h "$source" ] ; do source="$(readlink "$source")"; done
 PRIMARY_PATH="$( cd -P "$( dirname "$source" )" && pwd )"/../..
 
-mx=`which mx`
-if [ -z "$mx"] ; then
+which mx >/dev/null 2>&1
+whichrc=$?
+if [ $whichrc == 1 ] ; then
     if [ -z "$MX_HOME" ] ; then
-	echo "Error: mx cannot be found: add to PATH or set MX_HOME"
-	exit 1
+	    echo "Error: mx cannot be found: add to PATH or set MX_HOME"
+	    exit 1
     else
-	mx=$MX_HOME/mx
+	    mx=$MX_HOME/mx
     fi
+else
+    mx=`which mx`
 fi
 
 exec $mx $MX_R_GLOBAL_ARGS R $MX_R_CMD_ARGS "$@"
