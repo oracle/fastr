@@ -21,14 +21,13 @@
 # questions.
 #
 import tempfile, shutil, platform, zipfile, sys, subprocess
-from os.path import join, sep, exists, dirname
+from os.path import join, sep, exists
 from argparse import ArgumentParser
 import mx
 import mx_graal
 import os
 
 _fastr_suite = None
-_apptests_suite = None
 
 def runR(args, className, nonZeroIsFatal=True, extraVmArgs=None, runBench=False, graalVM='server'):
     # extraVmArgs is not normally necessary as the global --J option can be used running R/RScript
@@ -409,13 +408,6 @@ def rcmplib(args):
 def bench(args):
     mx.abort("no benchmarks available")
 
-def _rREPLClass():
-    return "com.oracle.truffle.r.repl.RREPLServer"
-
-def runRREPL(args, nonZeroIsFatal=True, extraVmArgs=None):
-    '''run R repl'''
-    return runR(args, _rREPLClass(), nonZeroIsFatal=nonZeroIsFatal, extraVmArgs=['-DR:+Instrument'])
-
 def load_optional_suite(name):
     hg_base = mx.get_env('MX_HG_BASE')
     alternate = None if hg_base is None else join(hg_base, name)
@@ -426,18 +418,8 @@ def load_optional_suite(name):
 
 def mx_post_parse_cmd_line(opts):
     # load optional suites, r_apptests first so r_benchmarks can find it
-    global _apptests_suite
-    _apptests_suite = load_optional_suite('r_apptests')
-    if _apptests_suite:
-        # app tests typically run mx recursively
-        # and they need both a way to locate mx and knowledge
-        # of the suite model in use
-        os.environ['MX_HOME'] = dirname(mx.__file__)
-        suiteModel = "--src-suitemodel:" + ("sibling" if mx._src_suitemodel.nestedsuites_dirname() is None else "nested")
-        os.environ['MX_SUITEMODEL'] = suiteModel
-
+    load_optional_suite('r_apptests')
     load_optional_suite('r_benchmarks')
-    load_optional_suite('repl')
 
 def mx_init(suite):
     global _fastr_suite
@@ -462,6 +444,5 @@ def mx_init(suite):
         'rcmplib' : [rcmplib, ['options']],
         'findbugs' : [findbugs, ''],
         'test' : [test, ['options']],
-        'rrepl' : [runRREPL, '[options]'],
     }
     mx.update_commands(suite, commands)
