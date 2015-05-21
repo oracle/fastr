@@ -22,15 +22,14 @@
  */
 package com.oracle.truffle.r.nodes.unary;
 
+import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 
 @NodeField(name = "nonVectorPreserved", type = boolean.class)
 public abstract class CastToVectorNode extends CastNode {
 
-    public abstract Object executeObject(VirtualFrame frame, Object value);
+    public abstract Object executeObject(Object value);
 
     public abstract boolean isNonVectorPreserved();
 

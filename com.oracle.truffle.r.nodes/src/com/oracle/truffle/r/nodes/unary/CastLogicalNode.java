@@ -27,7 +27,6 @@ import java.util.*;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -38,18 +37,16 @@ public abstract class CastLogicalNode extends CastNode {
     private final NACheck naCheck = NACheck.create();
     private final NAProfile naProfile = NAProfile.create();
 
-    public abstract Object executeByte(VirtualFrame frame, Object o);
-
-    public abstract Object executeLogical(VirtualFrame frame, Object o);
+    public abstract Object executeLogical(Object o);
 
     @Child private CastLogicalNode recursiveCastLogical;
 
-    private Object castLogicalRecursive(VirtualFrame frame, Object o) {
+    private Object castLogicalRecursive(Object o) {
         if (recursiveCastLogical == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             recursiveCastLogical = insert(CastLogicalNodeGen.create(null, isPreserveNames(), isDimensionsPreservation(), isAttrPreservation()));
         }
-        return recursiveCastLogical.executeLogical(frame, o);
+        return recursiveCastLogical.executeLogical(o);
     }
 
     @Specialization
@@ -144,7 +141,7 @@ public abstract class CastLogicalNode extends CastNode {
     }
 
     @Specialization
-    protected RLogicalVector doList(VirtualFrame frame, RList list) {
+    protected RLogicalVector doList(RList list) {
         int length = list.getLength();
         byte[] result = new byte[length];
         boolean seenNA = false;
@@ -154,7 +151,7 @@ public abstract class CastLogicalNode extends CastNode {
                 result[i] = RRuntime.LOGICAL_NA;
                 seenNA = true;
             } else {
-                Object castEntry = castLogicalRecursive(frame, entry);
+                Object castEntry = castLogicalRecursive(entry);
                 if (castEntry instanceof Byte) {
                     byte value = (Byte) castEntry;
                     result[i] = value;
@@ -194,8 +191,8 @@ public abstract class CastLogicalNode extends CastNode {
     }
 
     @Specialization
-    protected Object asLogical(VirtualFrame frame, RDataFrame dataFrame) {
-        return castLogicalRecursive(frame, dataFrame.getVector());
+    protected Object asLogical(RDataFrame dataFrame) {
+        return castLogicalRecursive(dataFrame.getVector());
     }
 
     @Specialization
@@ -214,5 +211,4 @@ public abstract class CastLogicalNode extends CastNode {
     public static CastStringNode create() {
         return CastStringNodeGen.create(null, false, true, true, true);
     }
-
 }

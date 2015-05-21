@@ -345,8 +345,8 @@ public class HiddenInternalFunctions {
                 throw RError.error(Message.GENERIC, "zlib uncompress error");
             }
             int[] intData = new int[2];
-            intData[1] = (int) cdatalen[0];
-            intData[0] = appendFile(file.getDataAt(0), cdata, intData[1]);
+            intData[1] = (int) cdatalen[0] + 4; // include outlen
+            intData[0] = appendFile(file.getDataAt(0), cdata, data.length, (int) cdatalen[0]);
             return RDataFactory.createIntVector(intData, RDataFactory.COMPLETE_VECTOR);
         }
 
@@ -356,10 +356,26 @@ public class HiddenInternalFunctions {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
         }
 
-        private int appendFile(String path, byte[] data, int len) {
+        /**
+         * Append the compressed data to {@code path}. N.B The uncompressed length is stored as an
+         * int in the first four bytes of the data. See {@link LazyLoadDBFetch}.
+         *
+         * @param path path of file
+         * @param data the compressed data
+         * @param ulen length of uncompressed data
+         * @param len length of compressed data
+         * @return offset in file of appended data
+         */
+        private int appendFile(String path, byte[] data, int ulen, int len) {
             File file = new File(path);
             try (BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(file, true))) {
                 int result = (int) file.length();
+                ByteBuffer dataLengthBuf = ByteBuffer.allocate(4);
+                dataLengthBuf.putInt(ulen);
+                dataLengthBuf.position(0);
+                byte[] ulenData = new byte[4];
+                dataLengthBuf.get(ulenData);
+                out.write(ulenData);
                 out.write(data, 0, len);
                 return result;
             } catch (IOException ex) {

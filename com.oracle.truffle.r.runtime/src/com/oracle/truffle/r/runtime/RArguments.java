@@ -106,22 +106,22 @@ public final class RArguments {
         }
     }
 
-    public static final int INDEX_ENVIRONMENT = 0;
-    public static final int INDEX_FUNCTION = 1;
-    public static final int INDEX_CALL_SRC = 2;
-    public static final int INDEX_CALLER_FRAME = 3;
-    public static final int INDEX_ENCLOSING_FRAME = 4;
-    public static final int INDEX_S3_ARGS = 5;
-    public static final int INDEX_DEPTH = 6;
-    public static final int INDEX_IS_IRREGULAR = 7;
-    public static final int INDEX_SIGNATURE = 8;
-    public static final int INDEX_ARGUMENTS = 9;
+    static final int INDEX_ENVIRONMENT = 0;
+    static final int INDEX_FUNCTION = 1;
+    static final int INDEX_CALL_SRC = 2;
+    static final int INDEX_CALLER_FRAME = 3;
+    static final int INDEX_ENCLOSING_FRAME = 4;
+    static final int INDEX_S3_ARGS = 5;
+    static final int INDEX_DEPTH = 6;
+    static final int INDEX_IS_IRREGULAR = 7;
+    static final int INDEX_SIGNATURE = 8;
+    static final int INDEX_ARGUMENTS = 9;
 
     /**
      * At the least, the array contains the function, enclosing frame, and numbers of arguments and
      * names.
      */
-    public static final int MINIMAL_ARRAY_LENGTH = INDEX_ARGUMENTS;
+    static final int MINIMAL_ARRAY_LENGTH = INDEX_ARGUMENTS;
 
     private static final ValueProfile materializedFrameProfile = ValueProfile.createClassProfile();
 
@@ -147,7 +147,7 @@ public final class RArguments {
      * where {@code arguments.length == 1} and the real {@code arguments} are at
      * {@code arguments[0]}. See {@code REngine}.
      */
-    public static Object[] getArgumentsWithEvalCheck(Frame frame, ConditionProfile profile) {
+    public static Object[] getRArgumentsWithEvalCheck(Frame frame, ConditionProfile profile) {
         CompilerAsserts.compilationConstant(profile);
         Object[] arguments = frame.getArguments();
         if (profile.profile(arguments.length == 1)) {
@@ -166,9 +166,14 @@ public final class RArguments {
     }
 
     public static Object[] create(RFunction functionObj, SourceSection callSrc, MaterializedFrame callerFrame, int depth, Object[] evaluatedArgs, ArgumentsSignature signature) {
-        MaterializedFrame enclosingFrame = functionObj.getEnclosingFrameWithAssumption();
-
+        MaterializedFrame enclosingFrame = functionObj.getEnclosingFrame();
         return createInternal(functionObj, callSrc, callerFrame, depth, evaluatedArgs, signature, enclosingFrame);
+    }
+
+    public static Object[] create(RFunction functionObj, SourceSection callSrc, MaterializedFrame callerFrame, int depth, Object[] evaluatedArgs, ArgumentsSignature signature, S3Args s3Args) {
+        Object[] args = create(functionObj, callSrc, callerFrame, depth, evaluatedArgs, signature);
+        args[INDEX_S3_ARGS] = s3Args;
+        return args;
     }
 
     public static Object[] createInternal(RFunction functionObj, SourceSection callSrc, MaterializedFrame callerFrame, int depth, Object[] evaluatedArgs, ArgumentsSignature signature,
@@ -193,18 +198,19 @@ public final class RArguments {
 
     @SuppressWarnings("unused")
     private static boolean envFunctionInvariant(Object[] a) {
-        return !(a[INDEX_ENVIRONMENT] == null && a[INDEX_FUNCTION] == null);
+        return a[INDEX_ENVIRONMENT] != null || a[INDEX_FUNCTION] != null;
     }
 
     /**
      * A method for creating an uninitialized array, used only in very special situations as it
      * temporarily violates {@link #envFunctionInvariant}.
      */
-    public static Object[] createUnitialized() {
-        Object[] a = new Object[MINIMAL_ARRAY_LENGTH];
+    public static Object[] createUnitialized(Object... args) {
+        Object[] a = new Object[MINIMAL_ARRAY_LENGTH + args.length];
         a[INDEX_DEPTH] = 0;
-        a[INDEX_SIGNATURE] = ArgumentsSignature.empty(0);
+        a[INDEX_SIGNATURE] = ArgumentsSignature.empty(args.length);
         a[INDEX_IS_IRREGULAR] = false;
+        System.arraycopy(args, 0, a, INDEX_ARGUMENTS, args.length);
         return a;
     }
 
@@ -215,10 +221,6 @@ public final class RArguments {
 
     public static S3Args getS3Args(Frame frame) {
         return (S3Args) getRArgumentsWithEvalCheck(frame)[INDEX_S3_ARGS];
-    }
-
-    public static void setS3Args(Object[] args, S3Args s3Args) {
-        args[INDEX_S3_ARGS] = s3Args;
     }
 
     public static REnvironment getEnvironment(Frame frame) {
@@ -292,11 +294,11 @@ public final class RArguments {
     }
 
     public static MaterializedFrame getEnclosingFrame(Frame frame) {
-        Object[] arguments = getRArgumentsWithEvalCheck(frame);
-        if (arguments[INDEX_FUNCTION] != null) {
-            return ((RFunction) arguments[INDEX_FUNCTION]).getEnclosingFrame();
-        }
         return (MaterializedFrame) getRArgumentsWithEvalCheck(frame)[INDEX_ENCLOSING_FRAME];
+    }
+
+    public static MaterializedFrame getEnclosingFrame(Frame frame, ConditionProfile profile) {
+        return (MaterializedFrame) getRArgumentsWithEvalCheck(frame, profile)[INDEX_ENCLOSING_FRAME];
     }
 
     public static ArgumentsSignature getSignature(Frame frame) {
@@ -305,13 +307,6 @@ public final class RArguments {
 
     public static void setEnvironment(Frame frame, REnvironment env) {
         getRArgumentsWithEvalCheck(frame)[INDEX_ENVIRONMENT] = env;
-    }
-
-    /**
-     * Explicitly set the function. Used by {@code REngine.eval}.
-     */
-    public static void setFunction(Frame frame, RFunction function) {
-        getRArgumentsWithEvalCheck(frame)[INDEX_FUNCTION] = function;
     }
 
     /**
@@ -338,9 +333,6 @@ public final class RArguments {
         CompilerAsserts.neverPartOfCompilation();
         Object[] arguments = getRArgumentsWithEvalCheck(frame);
         arguments[INDEX_ENCLOSING_FRAME] = encl;
-        if (arguments[INDEX_FUNCTION] != null) {
-            ((RFunction) arguments[INDEX_FUNCTION]).setEnclosingFrame(encl);
-        }
         FrameSlotChangeMonitor.invalidateEnclosingFrame(frame);
     }
 

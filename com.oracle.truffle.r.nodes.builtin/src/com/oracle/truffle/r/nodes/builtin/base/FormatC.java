@@ -15,7 +15,6 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -31,12 +30,12 @@ public abstract class FormatC extends RBuiltinNode {
 
     protected final BranchProfile errorProfile = BranchProfile.create();
 
-    private RStringVector castStringVector(VirtualFrame frame, Object o) {
+    private RStringVector castStringVector(Object o) {
         if (castStringNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castStringNode = insert(CastStringNodeGen.create(null, true, true, true, false));
         }
-        return (RStringVector) ((RStringVector) castStringNode.executeString(frame, o)).copyDropAttributes();
+        return (RStringVector) ((RStringVector) castStringNode.executeString(o)).copyDropAttributes();
     }
 
     @CreateCast("arguments")
@@ -54,10 +53,9 @@ public abstract class FormatC extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization
-    RAttributable formatC(VirtualFrame frame, RAbstractContainer x, RAbstractStringVector modeVec, RAbstractIntVector widthVec, RAbstractIntVector digitsVec, RAbstractStringVector formatVec,
+    RAttributable formatC(RAbstractContainer x, RAbstractStringVector modeVec, RAbstractIntVector widthVec, RAbstractIntVector digitsVec, RAbstractStringVector formatVec,
                     RAbstractStringVector flagVec, RAbstractIntVector iStrlen) {
-        RStringVector res = castStringVector(frame, x);
+        RStringVector res = castStringVector(x);
         return res.setClassAttr(null, false);
     }
-
 }

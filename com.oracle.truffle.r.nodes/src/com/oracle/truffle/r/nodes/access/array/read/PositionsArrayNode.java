@@ -94,7 +94,7 @@ public class PositionsArrayNode extends RNode implements RSyntaxNode {
         int length = conversionAdapter.getLength();
         Object[] evaluatedElements = explodeLoopNoVarArg(frame, positionsAdapter, length);
         length = conversionAdapter.getLength(); // could have changed
-        doEvalInternal(frame, vector, exact, evaluatedElements, length);
+        doEvalInternal(vector, exact, evaluatedElements, length);
         return conversionAdapter.getLength() == 1 ? evaluatedElements[0] : evaluatedElements;
     }
 
@@ -123,17 +123,17 @@ public class PositionsArrayNode extends RNode implements RSyntaxNode {
             this.conversionAdapter = insert(new PositionsArrayConversionNodeMultiDimAdapter(this.conversionAdapter.isSubset(), evaluatedElements.length));
         }
         length = conversionAdapter.getLength(); // could have changed
-        doEvalInternal(frame, vector, exact, evaluatedElements, length);
+        doEvalInternal(vector, exact, evaluatedElements, length);
         return conversionAdapter.getLength() == 1 ? evaluatedElements[0] : evaluatedElements;
     }
 
     @ExplodeLoop
-    private void doEvalInternal(VirtualFrame frame, Object vector, Object exact, Object[] evaluatedElements, int length) {
+    private void doEvalInternal(Object vector, Object exact, Object[] evaluatedElements, int length) {
         for (int i = 0; i < length; i++) {
-            Object convertedOperator = conversionAdapter.executeConvert(frame, vector, evaluatedElements[i], exact, i);
-            evaluatedElements[i] = conversionAdapter.executeArg(frame, vector, convertedOperator, i);
+            Object convertedOperator = conversionAdapter.executeConvert(vector, evaluatedElements[i], exact, i);
+            evaluatedElements[i] = conversionAdapter.executeArg(vector, convertedOperator, i);
             if (conversionAdapter.multiDimOperatorConverters != null) {
-                evaluatedElements[i] = conversionAdapter.executeMultiConvert(frame, vector, evaluatedElements[i], i);
+                evaluatedElements[i] = conversionAdapter.executeMultiConvert(vector, evaluatedElements[i], i);
             }
         }
 

@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.nodes.unary;
 
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
@@ -32,13 +31,13 @@ public abstract class CastStringNode extends CastNode {
 
     @Child private ToStringNode toString = ToStringNodeGen.create(null, null, null);
 
-    public abstract Object executeString(VirtualFrame frame, int o);
+    public abstract Object executeString(int o);
 
-    public abstract Object executeString(VirtualFrame frame, double o);
+    public abstract Object executeString(double o);
 
-    public abstract Object executeString(VirtualFrame frame, byte o);
+    public abstract Object executeString(byte o);
 
-    public abstract Object executeString(VirtualFrame frame, Object o);
+    public abstract Object executeString(Object o);
 
     public abstract boolean isEmptyVectorConvertedToNull();
 
@@ -52,33 +51,33 @@ public abstract class CastStringNode extends CastNode {
         return value;
     }
 
-    private String toString(VirtualFrame frame, Object value) {
-        return toString.executeString(frame, value, false, ToStringNode.DEFAULT_SEPARATOR);
+    private String toString(Object value) {
+        return toString.executeString(value, false, ToStringNode.DEFAULT_SEPARATOR);
     }
 
     @Specialization
-    protected String doInteger(VirtualFrame frame, int value) {
-        return toString(frame, value);
+    protected String doInteger(int value) {
+        return toString(value);
     }
 
     @Specialization
-    protected String doDouble(VirtualFrame frame, double value) {
-        return toString(frame, value);
+    protected String doDouble(double value) {
+        return toString(value);
     }
 
     @Specialization
-    protected String doLogical(VirtualFrame frame, byte value) {
-        return toString(frame, value);
+    protected String doLogical(byte value) {
+        return toString(value);
     }
 
     @Specialization
-    protected String doRaw(VirtualFrame frame, RComplex value) {
-        return toString(frame, value);
+    protected String doRaw(RComplex value) {
+        return toString(value);
     }
 
     @Specialization
-    protected String doRaw(VirtualFrame frame, RRaw value) {
-        return toString(frame, value);
+    protected String doRaw(RRaw value) {
+        return toString(value);
     }
 
     @Specialization(guards = "vector.getLength() == 0")
@@ -92,11 +91,11 @@ public abstract class CastStringNode extends CastNode {
     }
 
     @Specialization(guards = "operand.getLength() != 0")
-    protected RAbstractContainer doIntVector(VirtualFrame frame, RAbstractContainer operand) {
+    protected RAbstractContainer doIntVector(RAbstractContainer operand) {
         String[] sdata = new String[operand.getLength()];
         // conversions to character will not introduce new NAs
         for (int i = 0; i < operand.getLength(); i++) {
-            sdata[i] = toString(frame, operand.getDataAtAsObject(i));
+            sdata[i] = toString(operand.getDataAtAsObject(i));
         }
         RStringVector ret = RDataFactory.createStringVector(sdata, operand.isComplete(), getPreservedDimensions(operand), getPreservedNames(operand));
         preserveDimensionNames(operand, ret);
@@ -114,5 +113,4 @@ public abstract class CastStringNode extends CastNode {
     public static CastStringNode create() {
         return CastStringNodeGen.create(null, false, true, true, true);
     }
-
 }

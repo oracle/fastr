@@ -13,7 +13,6 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
@@ -29,20 +28,20 @@ public abstract class UpdateLevels extends RInvisibleBuiltinNode {
 
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
-    private RAbstractVector castVector(VirtualFrame frame, Object value) {
+    private RAbstractVector castVector(Object value) {
         if (castVector == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castVector = insert(CastToVectorNodeGen.create(null, false, false, false, false));
         }
-        return (RAbstractVector) castVector.executeObject(frame, value);
+        return (RAbstractVector) castVector.executeObject(value);
     }
 
-    private Object castString(VirtualFrame frame, Object operand) {
+    private Object castString(Object operand) {
         if (castString == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castString = insert(CastStringNodeGen.create(null, false, true, false, false));
         }
-        return castString.executeCast(frame, operand);
+        return castString.executeCast(operand);
     }
 
     @Specialization
@@ -54,10 +53,10 @@ public abstract class UpdateLevels extends RInvisibleBuiltinNode {
     }
 
     @Specialization(guards = "levelsNotNull(levels)")
-    protected RAbstractVector updateLevels(VirtualFrame frame, RAbstractVector vector, Object levels) {
+    protected RAbstractVector updateLevels(RAbstractVector vector, Object levels) {
         controlVisibility();
         RVector v = (RVector) vector.materializeNonShared();
-        v.setAttr(RRuntime.LEVELS_ATTR_KEY, castVector(frame, levels));
+        v.setAttr(RRuntime.LEVELS_ATTR_KEY, castVector(levels));
         return v;
     }
 
@@ -69,9 +68,9 @@ public abstract class UpdateLevels extends RInvisibleBuiltinNode {
     }
 
     @Specialization(guards = "levelsNotNull(levels)")
-    protected RFactor updateLevels(VirtualFrame frame, RFactor factor, Object levels) {
+    protected RFactor updateLevels(RFactor factor, Object levels) {
         controlVisibility();
-        factor.getVector().setAttr(RRuntime.LEVELS_ATTR_KEY, castString(frame, castVector(frame, levels)));
+        factor.getVector().setAttr(RRuntime.LEVELS_ATTR_KEY, castString(castVector(levels)));
         return factor;
     }
 

@@ -26,7 +26,6 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
@@ -38,7 +37,7 @@ public abstract class All extends RBuiltinNode {
 
     @Child private CastLogicalNode castLogicalNode;
 
-    public abstract Object execute(VirtualFrame frame, Object o);
+    public abstract Object execute(Object o);
 
     @CreateCast("arguments")
     protected RNode[] castArguments(RNode[] arguments) {
@@ -71,7 +70,7 @@ public abstract class All extends RBuiltinNode {
     }
 
     @Specialization
-    protected byte all(VirtualFrame frame, RArgsValuesAndNames args) {
+    protected byte all(RArgsValuesAndNames args) {
         if (castLogicalNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castLogicalNode = insert(CastLogicalNodeGen.create(null, true, false, false));
@@ -81,9 +80,9 @@ public abstract class All extends RBuiltinNode {
         for (Object argValue : argValues) {
             byte result;
             if (argValue instanceof RVector || argValue instanceof RSequence) {
-                result = accumulate((RLogicalVector) castLogicalNode.executeLogical(frame, argValue));
+                result = accumulate((RLogicalVector) castLogicalNode.executeLogical(argValue));
             } else {
-                result = (byte) castLogicalNode.executeByte(frame, argValue);
+                result = (byte) castLogicalNode.executeLogical(argValue);
             }
             if (result != RRuntime.LOGICAL_TRUE) {
                 return result;

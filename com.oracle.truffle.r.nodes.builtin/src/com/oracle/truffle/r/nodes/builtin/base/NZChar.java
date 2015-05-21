@@ -37,13 +37,13 @@ import com.oracle.truffle.r.runtime.data.model.*;
 public abstract class NZChar extends RBuiltinNode {
     @Child private CastStringNode convertString;
 
-    private String coerceContent(VirtualFrame frame, Object content) {
+    private String coerceContent(Object content) {
         if (convertString == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             convertString = insert(CastStringNodeGen.create(null, false, true, false, false));
         }
         try {
-            return (String) convertString.executeCast(frame, content);
+            return (String) convertString.executeCast(content);
         } catch (ConversionFailedException e) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.TYPE_EXPECTED, RType.Character.getName());
         }
@@ -61,21 +61,21 @@ public abstract class NZChar extends RBuiltinNode {
     }
 
     @Specialization
-    protected byte rev(VirtualFrame frame, int value) {
+    protected byte rev(int value) {
         controlVisibility();
-        return isNonZeroLength(coerceContent(frame, value));
+        return isNonZeroLength(coerceContent(value));
     }
 
     @Specialization
-    protected byte rev(VirtualFrame frame, double value) {
+    protected byte rev(double value) {
         controlVisibility();
-        return isNonZeroLength(coerceContent(frame, value));
+        return isNonZeroLength(coerceContent(value));
     }
 
     @Specialization
-    protected byte rev(VirtualFrame frame, byte value) {
+    protected byte rev(byte value) {
         controlVisibility();
-        return isNonZeroLength(coerceContent(frame, value));
+        return isNonZeroLength(coerceContent(value));
     }
 
     @Specialization
@@ -90,14 +90,13 @@ public abstract class NZChar extends RBuiltinNode {
     }
 
     @Specialization
-    protected RLogicalVector rev(VirtualFrame frame, RAbstractVector vector) {
+    protected RLogicalVector rev(RAbstractVector vector) {
         controlVisibility();
         int len = vector.getLength();
         byte[] result = new byte[len];
         for (int i = 0; i < len; i++) {
-            result[i] = isNonZeroLength(coerceContent(frame, vector.getDataAtAsObject(i)));
+            result[i] = isNonZeroLength(coerceContent(vector.getDataAtAsObject(i)));
         }
         return RDataFactory.createLogicalVector(result, RDataFactory.COMPLETE_VECTOR);
     }
-
 }

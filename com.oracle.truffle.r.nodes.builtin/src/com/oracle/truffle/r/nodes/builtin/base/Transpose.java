@@ -12,31 +12,24 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.utilities.*;
-import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
-import com.oracle.truffle.r.runtime.ops.na.*;
 
 @RBuiltin(name = "t.default", kind = SUBSTITUTE, parameterNames = {"x"})
 // TODO INTERNAL
-@SuppressWarnings("unused")
 public abstract class Transpose extends RBuiltinNode {
 
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
     private final BranchProfile hasDimNamesProfile = BranchProfile.create();
 
-    private final NACheck check = NACheck.create();
-
-    public abstract Object execute(VirtualFrame frame, Object o);
+    public abstract Object execute(Object o);
 
     @Specialization
     @TruffleBoundary

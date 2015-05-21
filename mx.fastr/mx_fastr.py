@@ -30,10 +30,10 @@ import os
 _fastr_suite = None
 _apptests_suite = None
 
-def runR(args, className, nonZeroIsFatal=True, extraVmArgs=None, runBench=False):
+def runR(args, className, nonZeroIsFatal=True, extraVmArgs=None, runBench=False, graalVM='server'):
     # extraVmArgs is not normally necessary as the global --J option can be used running R/RScript
     # However, the bench command invokes other Java VMs along the way, so it must use extraVmArgs
-    setREnvironment()
+    setREnvironment(graalVM)
     project = className.rpartition(".")[0]
     vmArgs = ['-cp', mx.classpath(project)]
     vmArgs = vmArgs + ["-Drhome.path=" + _fastr_suite.dir]
@@ -42,17 +42,9 @@ def runR(args, className, nonZeroIsFatal=True, extraVmArgs=None, runBench=False)
         vmArgs = vmArgs + ['-ea', '-esa']
     if extraVmArgs:
         vmArgs = vmArgs + extraVmArgs
-    return mx_graal.vm(vmArgs + [className] + args, nonZeroIsFatal=nonZeroIsFatal)
+    return mx_graal.vm(vmArgs + [className] + args, vm=graalVM, nonZeroIsFatal=nonZeroIsFatal)
 
-def runRCommand(args, nonZeroIsFatal=True, extraVmArgs=None, runBench=False):
-    '''run R shell'''
-    return runR(args, "com.oracle.truffle.r.shell.RCommand", nonZeroIsFatal=nonZeroIsFatal, extraVmArgs=extraVmArgs, runBench=runBench)
-
-def runRscriptCommand(args, nonZeroIsFatal=True, extraVmArgs=None, runBench=False):
-    '''run Rscript file'''
-    return runR(args, "com.oracle.truffle.r.shell.RscriptCommand", nonZeroIsFatal=nonZeroIsFatal, extraVmArgs=extraVmArgs, runBench=runBench)
-
-def setREnvironment():
+def setREnvironment(graalVM):
     osname = platform.system()
     lib_base = join(_fastr_suite.dir, 'com.oracle.truffle.r.native', 'builtinlibs', 'lib')
     lib_value = lib_base
@@ -62,9 +54,41 @@ def setREnvironment():
     else:
         lib_env = 'LD_LIBRARY_PATH'
     os.environ[lib_env] = lib_value
+    # For R sub-processes we need to set the DEFAULT_VM environment variable
+    os.environ['DEFAULT_VM'] = graalVM
+
+def _add_vm_arg(parser):
+    parser.add_argument('--graal-vm', action='store', dest='graalVM', metavar='<arg>', help='Graal VM', default='server')
+
+def _process_graalVM_arg(args):
+    '''
+    Check for the --graal-vm argument and if it exists return it as fiust result else None.
+    Unfortunately we can't use ArgumentParser as that doesn't like other args with a leading '-' unless
+    a '--' separator is provide and we can't do that.
+    '''
+    graalVM = "server"
+    try:
+        vmIndex = args.index('--graal-vm')
+        graalVM = args[vmIndex + 1]
+        del args[vmIndex:vmIndex + 2]
+    except ValueError:
+        pass
+    return graalVM, args
+
+def rshell(args, nonZeroIsFatal=True, extraVmArgs=None, runBench=False):
+    '''run R shell'''
+    # Optional args for external use by benchmarks
+    graalVM, args = _process_graalVM_arg(args)
+    runR(args, "com.oracle.truffle.r.shell.RCommand", nonZeroIsFatal=nonZeroIsFatal, extraVmArgs=extraVmArgs, runBench=False, graalVM=graalVM)
+
+def rscript(args):
+    '''run Rscript'''
+    graalVM, args = _process_graalVM_arg(args)
+    runR(args, "com.oracle.truffle.r.shell.RscriptCommand", graalVM=graalVM)
 
 def build(args):
     '''FastR build'''
+    graalVM, args = _process_graalVM_arg(args)
     # Overridden in case we ever want to do anything non-standard
     # workaround for Hotspot Mac OS X build problem
     osname = platform.system()
@@ -72,7 +96,7 @@ def build(args):
         os.environ['COMPILER_WARNINGS_FATAL'] = 'false'
         os.environ['USE_CLANG'] = 'true'
         os.environ['LFLAGS'] = '-Xlinker -lstdc++'
-    mx_graal.build(args, vm='server') # this calls mx.build
+    mx_graal.build(args, vm=graalVM) # this calls mx.build
 
 def findbugs(args):
     '''run FindBugs against non-test Java projects'''
@@ -213,13 +237,14 @@ def _junit_r_harness(args, vmArgs, junitArgs):
     # suppress Truffle compilation by using a high threshold
     vmArgs += ['-G:TruffleCompilationThreshold=100000']
 
-    setREnvironment()
+    setREnvironment(args.graalVM)
 
-    return mx_graal.vm(vmArgs + junitArgs, vm="server", nonZeroIsFatal=False)
+    return mx_graal.vm(vmArgs + junitArgs, vm=args.graalVM, nonZeroIsFatal=False)
 
 def junit(args):
     '''run R Junit tests'''
     parser = ArgumentParser(prog='r junit')
+    _add_vm_arg(parser)
     parser.add_argument('--gen-expected-output', action='store_true', help='generate/update expected test output file')
     parser.add_argument('--gen-expected-quiet', action='store_true', help='suppress output on new tests being added')
     parser.add_argument('--keep-trailing-whitespace', action='store_true', help='keep trailing whitespace in expected test output file')
@@ -384,6 +409,13 @@ def rcmplib(args):
 def bench(args):
     mx.abort("no benchmarks available")
 
+def _rREPLClass():
+    return "com.oracle.truffle.r.repl.RREPLServer"
+
+def runRREPL(args, nonZeroIsFatal=True, extraVmArgs=None):
+    '''run R repl'''
+    return runR(args, _rREPLClass(), nonZeroIsFatal=nonZeroIsFatal, extraVmArgs=['-DR:+Instrument'])
+
 def load_optional_suite(name):
     hg_base = mx.get_env('MX_HG_BASE')
     alternate = None if hg_base is None else join(hg_base, name)
@@ -405,16 +437,17 @@ def mx_post_parse_cmd_line(opts):
         os.environ['MX_SUITEMODEL'] = suiteModel
 
     load_optional_suite('r_benchmarks')
+    load_optional_suite('repl')
 
 def mx_init(suite):
     global _fastr_suite
     _fastr_suite = suite
     commands = {
         # new commands
-        'r' : [runRCommand, '[options]'],
-        'R' : [runRCommand, '[options]'],
-        'rscript' : [runRscriptCommand, '[options]'],
-        'Rscript' : [runRscriptCommand, '[options]'],
+        'r' : [rshell, '[options]'],
+        'R' : [rshell, '[options]'],
+        'rscript' : [rscript, '[options]'],
+        'Rscript' : [rscript, '[options]'],
         'rtestgen' : [testgen, ''],
         # core overrides
         'bench' : [bench, ''],
@@ -429,5 +462,6 @@ def mx_init(suite):
         'rcmplib' : [rcmplib, ['options']],
         'findbugs' : [findbugs, ''],
         'test' : [test, ['options']],
+        'rrepl' : [runRREPL, '[options]'],
     }
     mx.update_commands(suite, commands)

@@ -22,17 +22,16 @@
  */
 package com.oracle.truffle.r.nodes.unary;
 
+import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 
 public abstract class CastToContainerNode extends CastNode implements RSyntaxNode {
 
-    public abstract Object executeObject(VirtualFrame frame, Object value);
+    public abstract Object executeObject(Object value);
 
     @Specialization
     @SuppressWarnings("unused")

@@ -26,7 +26,6 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
@@ -47,29 +46,29 @@ public abstract class AsInteger extends RBuiltinNode {
         }
     }
 
-    private int castInt(VirtualFrame frame, int o) {
+    private int castInt(int o) {
         initCast();
-        return (int) castIntNode.executeInt(frame, o);
+        return (int) castIntNode.executeInt(o);
     }
 
-    private int castInt(VirtualFrame frame, double o) {
+    private int castInt(double o) {
         initCast();
-        return (int) castIntNode.executeInt(frame, o);
+        return (int) castIntNode.executeInt(o);
     }
 
-    private int castInt(VirtualFrame frame, byte o) {
+    private int castInt(byte o) {
         initCast();
-        return (int) castIntNode.executeInt(frame, o);
+        return (int) castIntNode.executeInt(o);
     }
 
-    private int castInt(VirtualFrame frame, Object o) {
+    private int castInt(Object o) {
         initCast();
-        return (int) castIntNode.executeInt(frame, o);
+        return (int) castIntNode.executeInt(o);
     }
 
-    private RAbstractIntVector castIntVector(VirtualFrame frame, Object o) {
+    private RAbstractIntVector castIntVector(Object o) {
         initCast();
-        return (RAbstractIntVector) castIntNode.executeInt(frame, o);
+        return (RAbstractIntVector) castIntNode.executeInt(o);
     }
 
     @Specialization
@@ -79,37 +78,37 @@ public abstract class AsInteger extends RBuiltinNode {
     }
 
     @Specialization
-    protected int asInteger(VirtualFrame frame, double value) {
+    protected int asInteger(double value) {
         controlVisibility();
-        return castInt(frame, value);
+        return castInt(value);
     }
 
     @Specialization
-    protected int asInteger(VirtualFrame frame, byte value) {
+    protected int asInteger(byte value) {
         controlVisibility();
-        return castInt(frame, value);
+        return castInt(value);
     }
 
     @Specialization
-    protected int asInteger(VirtualFrame frame, RComplex value) {
+    protected int asInteger(RComplex value) {
         controlVisibility();
-        return castInt(frame, value);
+        return castInt(value);
     }
 
     @Specialization
-    protected int asInteger(VirtualFrame frame, RRaw value) {
+    protected int asInteger(RRaw value) {
         controlVisibility();
-        return castInt(frame, value);
+        return castInt(value);
     }
 
     @Specialization
-    protected int asInteger(VirtualFrame frame, String value) {
+    protected int asInteger(String value) {
         controlVisibility();
-        return castInt(frame, value);
+        return castInt(value);
     }
 
     @Specialization
-    protected RIntVector asInteger(VirtualFrame frame, RNull value) {
+    protected RIntVector asInteger(RNull value) {
         controlVisibility();
         return RDataFactory.createEmptyIntVector();
     }
@@ -127,9 +126,9 @@ public abstract class AsInteger extends RBuiltinNode {
     }
 
     @Specialization
-    protected RAbstractIntVector asInteger(VirtualFrame frame, RAbstractVector vector) {
+    protected RAbstractIntVector asInteger(RAbstractVector vector) {
         controlVisibility();
-        return castIntVector(frame, vector);
+        return castIntVector(vector);
     }
 
     @Specialization
@@ -141,5 +140,4 @@ public abstract class AsInteger extends RBuiltinNode {
     protected int asInteger(RConnection conn) {
         return conn.getDescriptor();
     }
-
 }

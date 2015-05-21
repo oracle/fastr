@@ -16,7 +16,6 @@ import java.util.*;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
@@ -147,13 +146,13 @@ public abstract class CumMax extends RBuiltinNode {
     }
 
     @Specialization
-    protected RDoubleVector cummax(VirtualFrame frame, RStringVector v) {
+    protected RDoubleVector cummax(RStringVector v) {
         controlVisibility();
         if (castDouble == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castDouble = insert(CastDoubleNodeGen.create(null, false, false, false));
         }
-        return cummax((RDoubleVector) castDouble.executeDouble(frame, v));
+        return cummax((RDoubleVector) castDouble.executeDouble(v));
     }
 
     @Specialization

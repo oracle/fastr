@@ -25,7 +25,6 @@ package com.oracle.truffle.r.nodes.unary;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -36,14 +35,14 @@ public abstract class CastListNode extends CastNode {
 
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
-    public abstract RList executeList(VirtualFrame frame, Object o);
+    public abstract RList executeList(Object o);
 
-    private RList castList(VirtualFrame frame, Object operand) {
+    private RList castList(Object operand) {
         if (castListRecursive == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castListRecursive = insert(CastListNodeGen.create(null, false, false, false));
         }
-        return castListRecursive.executeList(frame, operand);
+        return castListRecursive.executeList(operand);
     }
 
     @Specialization
@@ -88,8 +87,8 @@ public abstract class CastListNode extends CastNode {
     }
 
     @Specialization
-    protected RList doDataFrame(VirtualFrame frame, RDataFrame operand) {
-        return castList(frame, operand.getVector());
+    protected RList doDataFrame(RDataFrame operand) {
+        return castList(operand.getVector());
     }
 
     @Specialization

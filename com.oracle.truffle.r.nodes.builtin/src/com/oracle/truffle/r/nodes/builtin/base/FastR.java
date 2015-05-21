@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.builtin.fastr.*;
@@ -35,6 +36,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 @RBuiltin(name = ".FastR", kind = RBuiltinKind.PRIMITIVE, parameterNames = {".NAME", "..."})
 public abstract class FastR extends RBuiltinNode {
     @Specialization
+    @TruffleBoundary
     protected Object doFastR(RAbstractStringVector name, RArgsValuesAndNames args) {
         controlVisibility();
         Object[] argValues = args.getArguments();

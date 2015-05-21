@@ -23,19 +23,16 @@
 
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
-import com.oracle.truffle.r.nodes.unary.CastStringNode;
-import com.oracle.truffle.r.nodes.unary.CastStringNodeGen;
-import com.oracle.truffle.r.runtime.RBuiltin;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
-import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
-import static com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import static com.oracle.truffle.r.runtime.RBuiltinKind.PRIMITIVE;
+import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.unary.*;
+import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.*;
 
 // oldClass<- (as opposed to class<-), simply sets the attribute (without handling "implicit" attributes)
 @RBuiltin(name = "oldClass<-", kind = PRIMITIVE, parameterNames = {"x", ""})
@@ -44,16 +41,14 @@ public abstract class UpdateOldClass extends RInvisibleBuiltinNode {
 
     @Child private CastStringNode castStringNode;
 
-    public abstract Object execute(VirtualFrame frame, RAbstractContainer vector, Object o);
-
     @Specialization(guards = "!isStringVector(className)")
-    protected Object setOldClass(VirtualFrame frame, RAbstractContainer arg, RAbstractVector className) {
+    protected Object setOldClass(RAbstractContainer arg, RAbstractVector className) {
         controlVisibility();
         if (className.getLength() == 0) {
             return setOldClass(arg, RNull.instance);
         }
         initCastStringNode();
-        Object result = castStringNode.executeCast(frame, className);
+        Object result = castStringNode.executeCast(className);
         return setOldClass(arg, (RStringVector) result);
     }
 

@@ -41,6 +41,7 @@ FASTR_R_HOME := $(abspath $(TOPDIR)/..)
 FASTR_BIN_DIR := $(FASTR_R_HOME)/bin
 FASTR_ETC_DIR := $(FASTR_R_HOME)/etc
 FASTR_SHARE_DIR := $(FASTR_R_HOME)/share
+FASTR_INCLUDE_DIR := $(FASTR_R_HOME)/include
 
 R_SCRIPT := $(addprefix $(GNUR_HOME)/bin/,R)
 SUPPORT_SCRIPTS := $(addprefix $(GNUR_HOME)/bin/,BATCH COMPILE INSTALL Rcmd)
@@ -50,7 +51,7 @@ ETC_FILES := $(addprefix $(GNUR_HOME)/etc/,javaconf ldpaths Renviron repositorie
 
 SHARE_FILES := $(addprefix $(GNUR_HOME)/share/,R make)
 
-all: rundirs rcmds
+all: rundirs rcmds includedir
 
 rundirs:
 	mkdir -p $(FASTR_BIN_DIR)
@@ -78,7 +79,11 @@ $(FASTR_BIN_DIR)/R: Makefile R.sh Rscript.sh Rscript_exec.sh
 	# overrides
 	cp examples-header.R examples-footer.R $(FASTR_SHARE_DIR)/R
 
+includedir: Makefile $(TOPDIR)/include/jni/include/R.h
+	cp -rp $(TOPDIR)/include/jni/include $(FASTR_R_HOME)/include
+
 clean:
 	rm -rf $(FASTR_BIN_DIR)
 	rm -rf $(FASTR_ETC_DIR)
 	rm -rf $(FASTR_SHARE_DIR)
+	rm -rf $(FASTR_INCLUDE_DIR)

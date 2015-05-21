@@ -39,10 +39,6 @@ import com.oracle.truffle.r.runtime.data.*;
  * track of thanks to R powerful language features. To keep the maintenance for the assumption as
  * cheap as possible, it checks only local reads - which is fast - and does a more costly check on
  * "<<-" but invalidates the assumption as soon as "eval" and the like comes into play.<br/>
- *
- *
- * @see #checkAndInvalidate(Frame, FrameSlot, boolean, BranchProfile)
- * @see #getMonitor(FrameSlot)
  */
 public final class FrameSlotChangeMonitor {
 
@@ -56,20 +52,9 @@ public final class FrameSlotChangeMonitor {
 // System.out.println(String.format(format, args));
     }
 
-    public abstract static class FrameSlotInfo {
-        private boolean nonLocalModified = false;
-
-        public final boolean isNonLocalModified() {
-            return nonLocalModified;
-        }
-
-        public final void setNonLocalModified() {
-            nonLocalModified = true;
-        }
-    }
-
-    private static final class FrameSlotInfoImpl extends FrameSlotInfo {
+    private static final class FrameSlotInfoImpl {
         @CompilationFinal private StableValue<Object> stableValue;
+        private final Assumption nonLocalModifiedAssumption = Truffle.getRuntime().createAssumption();
         private final Object identifier;
         private int invalidationCount;
 
@@ -115,16 +100,12 @@ public final class FrameSlotChangeMonitor {
     }
 
     /**
-     * Retrieves the not-changed-locally {@link Assumption} in the {@link FrameSlot#getInfo()}
-     * field.
+     * Retrieves the not-changed-locally {@link Assumption} for the given frame slot.
      *
-     * @param slot
      * @return The "not changed locally" assumption of the given {@link FrameSlot}
-     *
-     * @see FrameSlotChangeMonitor
      */
-    public static FrameSlotInfo getMonitor(FrameSlot slot) {
-        return getFrameSlotInfo(slot);
+    public static Assumption getNotChangedNonLocallyAssumption(FrameSlot slot) {
+        return getFrameSlotInfo(slot).nonLocalModifiedAssumption;
     }
 
     public static FrameSlotInfoImpl getFrameSlotInfo(FrameSlot slot) {
@@ -173,7 +154,7 @@ public final class FrameSlotChangeMonitor {
             if (invalidateProfile != null) {
                 invalidateProfile.enter();
             }
-            getMonitor(slot).setNonLocalModified();
+            getNotChangedNonLocallyAssumption(slot).invalidate();
         }
     }
 

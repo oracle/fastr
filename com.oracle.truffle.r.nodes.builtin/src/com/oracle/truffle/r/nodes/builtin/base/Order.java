@@ -40,12 +40,12 @@ public abstract class Order extends RPrecedenceBuiltinNode {
 
     private static final int[] SINCS = {1073790977, 268460033, 67121153, 16783361, 4197377, 1050113, 262913, 65921, 16577, 4193, 1073, 281, 77, 23, 8, 1, 0};
 
-    private RAbstractVector castVector(VirtualFrame frame, Object value) {
+    private RAbstractVector castVector(Object value) {
         if (castVector == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castVector = insert(CastToVectorNodeGen.create(null, false, false, false, false));
         }
-        return (RAbstractVector) castVector.executeObject(frame, value);
+        return (RAbstractVector) castVector.executeObject(value);
     }
 
     private int cmp(VirtualFrame frame, Object v, int i, int j, byte naLast) {
@@ -63,9 +63,9 @@ public abstract class Order extends RPrecedenceBuiltinNode {
     }
 
     @Specialization(guards = {"oneVec(args)", "isFirstIntegerPrecedence(args)"})
-    Object orderInt(VirtualFrame frame, RAbstractLogicalVector naLastVec, RAbstractLogicalVector decVec, RArgsValuesAndNames args) {
+    Object orderInt(RAbstractLogicalVector naLastVec, RAbstractLogicalVector decVec, RArgsValuesAndNames args) {
         Object[] vectors = args.getArguments();
-        RAbstractIntVector v = (RAbstractIntVector) castVector(frame, vectors[0]);
+        RAbstractIntVector v = (RAbstractIntVector) castVector(vectors[0]);
         int n = v.getLength();
 
         boolean naLast = true;
@@ -91,9 +91,9 @@ public abstract class Order extends RPrecedenceBuiltinNode {
     }
 
     @Specialization(guards = {"oneVec(args)", "isFirstDoublePrecedence(args)"})
-    Object orderDouble(VirtualFrame frame, RAbstractLogicalVector naLastVec, RAbstractLogicalVector decVec, RArgsValuesAndNames args) {
+    Object orderDouble(RAbstractLogicalVector naLastVec, RAbstractLogicalVector decVec, RArgsValuesAndNames args) {
         Object[] vectors = args.getArguments();
-        RAbstractDoubleVector v = (RAbstractDoubleVector) castVector(frame, vectors[0]);
+        RAbstractDoubleVector v = (RAbstractDoubleVector) castVector(vectors[0]);
         int n = v.getLength();
 
         boolean naLast = true;
@@ -119,16 +119,16 @@ public abstract class Order extends RPrecedenceBuiltinNode {
     }
 
     @Specialization(guards = {"oneVec(args)", "isFirstLogicalPrecedence(args)"})
-    Object orderLogical(VirtualFrame frame, RAbstractLogicalVector naLastVec, RAbstractLogicalVector decVec, RArgsValuesAndNames args) {
+    Object orderLogical(RAbstractLogicalVector naLastVec, RAbstractLogicalVector decVec, RArgsValuesAndNames args) {
         Object[] vectors = args.getArguments();
-        vectors[0] = RClosures.createLogicalToIntVector((RAbstractLogicalVector) castVector(frame, vectors[0]));
-        return orderInt(frame, naLastVec, decVec, args);
+        vectors[0] = RClosures.createLogicalToIntVector((RAbstractLogicalVector) castVector(vectors[0]));
+        return orderInt(naLastVec, decVec, args);
     }
 
     @Specialization(guards = {"oneVec(args)", "isFirstStringPrecedence(args)"})
-    Object orderString(VirtualFrame frame, RAbstractLogicalVector naLastVec, RAbstractLogicalVector decVec, RArgsValuesAndNames args) {
+    Object orderString(RAbstractLogicalVector naLastVec, RAbstractLogicalVector decVec, RArgsValuesAndNames args) {
         Object[] vectors = args.getArguments();
-        RAbstractStringVector v = (RAbstractStringVector) castVector(frame, vectors[0]);
+        RAbstractStringVector v = (RAbstractStringVector) castVector(vectors[0]);
         int n = v.getLength();
 
         boolean naLast = true;
@@ -154,9 +154,9 @@ public abstract class Order extends RPrecedenceBuiltinNode {
     }
 
     @Specialization(guards = {"oneVec(args)", "isFirstComplexPrecedence( args)"})
-    Object orderComplex(VirtualFrame frame, RAbstractLogicalVector naLastVec, RAbstractLogicalVector decVec, RArgsValuesAndNames args) {
+    Object orderComplex(RAbstractLogicalVector naLastVec, RAbstractLogicalVector decVec, RArgsValuesAndNames args) {
         Object[] vectors = args.getArguments();
-        RAbstractComplexVector v = (RAbstractComplexVector) castVector(frame, vectors[0]);
+        RAbstractComplexVector v = (RAbstractComplexVector) castVector(vectors[0]);
         int n = v.getLength();
 
         boolean naLast = true;
@@ -181,13 +181,13 @@ public abstract class Order extends RPrecedenceBuiltinNode {
         return RDataFactory.createIntVector(indx, RDataFactory.COMPLETE_VECTOR);
     }
 
-    private int preprocessVectors(VirtualFrame frame, RArgsValuesAndNames args) {
+    private int preprocessVectors(RArgsValuesAndNames args) {
         Object[] vectors = args.getArguments();
-        RAbstractVector v = castVector(frame, vectors[0]);
+        RAbstractVector v = castVector(vectors[0]);
         int n = v.getLength();
         vectors[0] = v;
         for (int i = 1; i < vectors.length; i++) {
-            v = castVector(frame, vectors[i]);
+            v = castVector(vectors[i]);
             if (n != v.getLength()) {
                 error.enter();
                 throw RError.error(RError.Message.ARGUMENT_LENGTHS_DIFFER);
@@ -199,7 +199,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
 
     @Specialization(guards = {"!oneVec(args)", "!noVec(args)"})
     Object orderMulti(VirtualFrame frame, RAbstractLogicalVector naLastVec, RAbstractLogicalVector decVec, RArgsValuesAndNames args) {
-        int n = preprocessVectors(frame, args);
+        int n = preprocessVectors(args);
 
         byte naLast = RRuntime.LOGICAL_TRUE;
         boolean dec = true;

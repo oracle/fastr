@@ -13,6 +13,7 @@
 ^com.oracle.truffle.r.native/gnur/R-*
 ^Rpkgsource/*
 ^library/
+^include/
 ^build/
 ^build-nograal/
 ^dist/

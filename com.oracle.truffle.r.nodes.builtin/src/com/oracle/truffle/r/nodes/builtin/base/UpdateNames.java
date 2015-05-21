@@ -22,14 +22,13 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import java.util.*;
 
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
@@ -42,15 +41,15 @@ public abstract class UpdateNames extends RInvisibleBuiltinNode {
 
     @Child private CastStringNode castStringNode;
 
-    private Object castString(VirtualFrame frame, Object o) {
+    private Object castString(Object o) {
         if (castStringNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castStringNode = insert(CastStringNodeGen.create(null, false, true, false, false));
         }
-        return castStringNode.executeString(frame, o);
+        return castStringNode.executeString(o);
     }
 
-    public abstract Object executeStringVector(VirtualFrame frame, RAbstractContainer container, Object o);
+    public abstract Object executeStringVector(RAbstractContainer container, Object o);
 
     @Specialization
     @TruffleBoundary
@@ -88,13 +87,12 @@ public abstract class UpdateNames extends RInvisibleBuiltinNode {
     }
 
     @Specialization
-    protected RAbstractContainer updateNames(VirtualFrame frame, RAbstractContainer container, Object names) {
+    protected RAbstractContainer updateNames(RAbstractContainer container, Object names) {
         controlVisibility();
         if (names instanceof RAbstractVector) {
-            return updateNames(container, (RStringVector) castString(frame, names));
+            return updateNames(container, (RStringVector) castString(names));
         } else {
-            return updateNames(container, (String) castString(frame, names));
+            return updateNames(container, (String) castString(names));
         }
     }
-
 }

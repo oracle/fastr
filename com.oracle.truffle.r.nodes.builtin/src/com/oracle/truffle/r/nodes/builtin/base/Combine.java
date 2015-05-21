@@ -102,9 +102,9 @@ public abstract class Combine extends RCastingBuiltinNode {
     private Object readAndCast(VirtualFrame frame, CastNode castNode, Object[] values, int index, boolean hasNames) {
         Object value = inputCast.execute(frame, values[index]);
         if (hasNames) {
-            value = namesMerge(castVector(frame, value), getSuppliedSignature().getName(index));
+            value = namesMerge(castVector(value), getSuppliedSignature().getName(index));
         }
-        return castNode.executeCast(frame, value);
+        return castNode.executeCast(value);
     }
 
     protected RAbstractVector namesMerge(RAbstractVector vector, String name) {
@@ -118,12 +118,12 @@ public abstract class Combine extends RCastingBuiltinNode {
         return mergeNamesSlow(vector, name, orgNamesObject);
     }
 
-    private RAbstractVector castVector(VirtualFrame frame, Object value) {
+    private RAbstractVector castVector(Object value) {
         if (castVector == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castVector = insert(CastToVectorNodeGen.create(null, false, false, false, false));
         }
-        RVector resultVector = ((RAbstractVector) castVector.executeObject(frame, value)).materialize();
+        RVector resultVector = ((RAbstractVector) castVector.executeObject(value)).materialize();
         // need to copy if vector is shared in case the same variable is used in combine, e.g. :
         // x <- 1:2 ; names(x) <- c("A",NA) ; c(x,test=x)
         if (resultVector.isShared()) {

@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.nodes.access.array.read;
 
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -32,7 +31,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 @NodeChildren({@NodeChild(value = "vector", type = RNode.class), @NodeChild(value = "operand", type = RNode.class)})
 public abstract class MultiDimPosConverterNode extends RNode {
 
-    public abstract RIntVector executeConvert(VirtualFrame frame, Object vector, Object p);
+    public abstract RIntVector executeConvert(Object vector, Object p);
 
     private final boolean isSubset;
 

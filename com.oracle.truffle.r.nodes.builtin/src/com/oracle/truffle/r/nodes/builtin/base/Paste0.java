@@ -54,5 +54,4 @@ public abstract class Paste0 extends RBuiltinNode {
         controlVisibility();
         return paste(frame, values, collapse);
     }
-
 }

@@ -25,7 +25,6 @@ package com.oracle.truffle.r.nodes.unary;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -38,15 +37,15 @@ public abstract class ToStringNode extends UnaryNode {
 
     @Child private ToStringNode recursiveToString;
 
-    private String toStringRecursive(VirtualFrame frame, Object o, boolean quotes, String separator) {
+    private String toStringRecursive(Object o, boolean quotes, String separator) {
         if (recursiveToString == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             recursiveToString = insert(ToStringNodeGen.create(null, null, null));
         }
-        return recursiveToString.executeString(frame, o, quotes, separator);
+        return recursiveToString.executeString(o, quotes, separator);
     }
 
-    public abstract String executeString(VirtualFrame frame, Object o, boolean quotes, String separator);
+    public abstract String executeString(Object o, boolean quotes, String separator);
 
     @SuppressWarnings("unused")
     @Specialization
@@ -163,7 +162,7 @@ public abstract class ToStringNode extends UnaryNode {
     }
 
     @Specialization
-    protected String toString(VirtualFrame frame, RList vector, boolean quotes, String separator) {
+    protected String toString(RList vector, boolean quotes, String separator) {
         return createResultForVector(vector, quotes, separator, "list()", (index, q, s) -> {
             Object value = vector.getDataAt(index);
             if (value instanceof RList) {
@@ -171,22 +170,22 @@ public abstract class ToStringNode extends UnaryNode {
                 if (l.getLength() == 0) {
                     return "list()";
                 } else {
-                    return "list(" + toStringRecursive(frame, l, q, s) + ')';
+                    return "list(" + toStringRecursive(l, q, s) + ')';
                 }
             } else {
-                return toStringRecursive(frame, value, q, s);
+                return toStringRecursive(value, q, s);
             }
         });
     }
 
     @Specialization
-    protected String toString(VirtualFrame frame, RIntSequence vector, boolean quotes, String separator) {
-        return toStringRecursive(frame, vector.createVector(), quotes, separator);
+    protected String toString(RIntSequence vector, boolean quotes, String separator) {
+        return toStringRecursive(vector.createVector(), quotes, separator);
     }
 
     @Specialization
-    protected String toString(VirtualFrame frame, RDoubleSequence vector, boolean quotes, String separator) {
-        return toStringRecursive(frame, vector.createVector(), quotes, separator);
+    protected String toString(RDoubleSequence vector, boolean quotes, String separator) {
+        return toStringRecursive(vector.createVector(), quotes, separator);
     }
 
     @SuppressWarnings("unused")

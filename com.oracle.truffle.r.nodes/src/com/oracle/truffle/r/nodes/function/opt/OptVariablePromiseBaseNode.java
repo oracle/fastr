@@ -24,6 +24,7 @@ package com.oracle.truffle.r.nodes.function.opt;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.access.variables.*;
@@ -34,7 +35,6 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.RPromise.EagerFeedback;
 import com.oracle.truffle.r.runtime.data.RPromise.RPromiseFactory;
 import com.oracle.truffle.r.runtime.env.frame.*;
-import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor.FrameSlotInfo;
 
 public abstract class OptVariablePromiseBaseNode extends PromiseNode implements EagerFeedback {
     protected final ReadVariableNode originalRvn;
@@ -61,8 +61,10 @@ public abstract class OptVariablePromiseBaseNode extends PromiseNode implements 
         FrameSlot slot = frameSlotNode.executeFrameSlot(frame);
 
         // Check if we may apply eager evaluation on this frame slot
-        FrameSlotInfo notChangedNonLocally = FrameSlotChangeMonitor.getMonitor(slot);
-        if (notChangedNonLocally.isNonLocalModified()) {
+        Assumption notChangedNonLocally = FrameSlotChangeMonitor.getNotChangedNonLocallyAssumption(slot);
+        try {
+            notChangedNonLocally.check();
+        } catch (InvalidAssumptionException e) {
             // Cannot apply optimizations, as the value to it got invalidated
             return rewriteToAndExecuteFallback(frame);
         }

@@ -28,7 +28,6 @@ import com.oracle.truffle.api.CompilerDirectives.ValueType;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor.FrameSlotInfo;
 
 /**
  * Denotes an R {@code promise}. Its child classes - namely {@link EagerPromise} and
@@ -283,7 +282,7 @@ public class RPromise extends RLanguageRep implements RTypedValue {
     public static final class EagerPromise extends RPromise {
         protected final Object eagerValue;
 
-        private final FrameSlotInfo notChangedNonLocally;
+        private final Assumption notChangedNonLocally;
         private final int frameId;
         private final EagerFeedback feedback;
 
@@ -293,7 +292,7 @@ public class RPromise extends RLanguageRep implements RTypedValue {
          */
         private boolean deoptimized = false;
 
-        EagerPromise(PromiseType type, OptType optType, Closure closure, Object eagerValue, FrameSlotInfo notChangedNonLocally, int nFrameId, EagerFeedback feedback) {
+        EagerPromise(PromiseType type, OptType optType, Closure closure, Object eagerValue, Assumption notChangedNonLocally, int nFrameId, EagerFeedback feedback) {
             super(type, optType, (MaterializedFrame) null, closure);
             assert type != PromiseType.NO_ARG;
             this.eagerValue = eagerValue;
@@ -331,7 +330,7 @@ public class RPromise extends RLanguageRep implements RTypedValue {
         }
 
         public boolean isValid() {
-            return !notChangedNonLocally.isNonLocalModified();
+            return notChangedNonLocally.isValid();
         }
 
         public void notifySuccess() {
@@ -415,11 +414,11 @@ public class RPromise extends RLanguageRep implements RTypedValue {
          *            until evaluation
          * @return An {@link EagerPromise}
          */
-        public RPromise createEagerSuppliedPromise(Object eagerValue, FrameSlotInfo notChangedNonLocally, int nFrameId, EagerFeedback feedback) {
+        public RPromise createEagerSuppliedPromise(Object eagerValue, Assumption notChangedNonLocally, int nFrameId, EagerFeedback feedback) {
             return RDataFactory.createEagerPromise(type, OptType.EAGER, exprClosure, eagerValue, notChangedNonLocally, nFrameId, feedback);
         }
 
-        public RPromise createPromisedPromise(RPromise promisedPromise, FrameSlotInfo notChangedNonLocally, int nFrameId, EagerFeedback feedback) {
+        public RPromise createPromisedPromise(RPromise promisedPromise, Assumption notChangedNonLocally, int nFrameId, EagerFeedback feedback) {
             return RDataFactory.createEagerPromise(type, OptType.PROMISED, exprClosure, promisedPromise, notChangedNonLocally, nFrameId, feedback);
         }
 

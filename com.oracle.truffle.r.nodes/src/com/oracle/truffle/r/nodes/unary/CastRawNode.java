@@ -24,7 +24,6 @@ package com.oracle.truffle.r.nodes.unary;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -34,13 +33,13 @@ public abstract class CastRawNode extends CastNode {
 
     private final BranchProfile warningBranch = BranchProfile.create();
 
-    public abstract Object executeRaw(VirtualFrame frame, int o);
+    public abstract Object executeRaw(int o);
 
-    public abstract Object executeRaw(VirtualFrame frame, double o);
+    public abstract Object executeRaw(double o);
 
-    public abstract Object executeRaw(VirtualFrame frame, byte o);
+    public abstract Object executeRaw(byte o);
 
-    public abstract Object executeRaw(VirtualFrame frame, Object o);
+    public abstract Object executeRaw(Object o);
 
     @Specialization
     protected RNull doNull(@SuppressWarnings("unused") RNull operand) {

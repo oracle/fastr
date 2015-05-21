@@ -428,7 +428,8 @@ public class RSerialize {
                              * on return.
                              */
                             RFunction func = (RFunction) RContext.getEngine().eval(expr, RDataFactory.createNewEnv(REnvironment.emptyEnv(), null), frameDepth + 1);
-                            func.setEnclosingFrame(((REnvironment) rpl.getTag()).getFrame());
+                            // copy the function with a different enclosing frame
+                            func = RDataFactory.createFunction(func.getName(), func.getTarget(), func.getRBuiltin(), ((REnvironment) rpl.getTag()).getFrame(), func.containsDispatch());
                             Source source = func.getRootNode().getSourceSection().getSource();
                             if (!source.getName().startsWith(UNKNOWN_PACKAGE_SOURCE_PREFIX)) {
                                 /*
@@ -1219,6 +1220,7 @@ public class RSerialize {
                 writeCHARSXP(((RSymbol) obj).getName());
             } else if (type == SEXPTYPE.ENVSXP) {
                 REnvironment env = (REnvironment) obj;
+                addReadRef(obj);
                 String name = env.getName();
                 if (name.startsWith("package:")) {
                     RError.warning(RError.Message.PACKAGE_AVAILABLE, name);
@@ -1226,7 +1228,8 @@ public class RSerialize {
                     stream.writeString(name);
                 } else if (env.isNamespaceEnv()) {
                     stream.writeInt(SEXPTYPE.NAMESPACESXP.code);
-                    stream.writeString(name);
+                    RStringVector nameSpaceEnvSpec = env.getNamespaceSpec();
+                    outStringVec(nameSpaceEnvSpec, false);
                 } else {
                     stream.writeInt(SEXPTYPE.ENVSXP.code);
                     stream.writeInt(env.isLocked() ? 1 : 0);

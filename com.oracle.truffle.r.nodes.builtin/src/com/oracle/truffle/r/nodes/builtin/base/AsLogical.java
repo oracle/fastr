@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,8 +26,6 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
@@ -35,27 +33,24 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
 @RBuiltin(name = "as.logical", kind = PRIMITIVE, parameterNames = {"x", "..."})
-@SuppressWarnings("unused")
 public abstract class AsLogical extends RBuiltinNode {
 
     @Child private CastLogicalNode castLogicalNode;
 
-    public abstract RLogicalVector executeRLogicalVector(VirtualFrame frame, Object o) throws UnexpectedResultException;
-
-    private byte castLogical(VirtualFrame frame, Object o) {
+    private byte castLogical(Object o) {
         if (castLogicalNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castLogicalNode = insert(CastLogicalNodeGen.create(null, false, false, false));
         }
-        return (byte) castLogicalNode.executeByte(frame, o);
+        return (byte) castLogicalNode.executeLogical(o);
     }
 
-    private RLogicalVector castLogicalVector(VirtualFrame frame, Object o) {
+    private RLogicalVector castLogicalVector(Object o) {
         if (castLogicalNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castLogicalNode = insert(CastLogicalNodeGen.create(null, false, false, false));
         }
-        return (RLogicalVector) castLogicalNode.executeLogical(frame, o);
+        return (RLogicalVector) castLogicalNode.executeLogical(o);
     }
 
     @Specialization
@@ -65,31 +60,31 @@ public abstract class AsLogical extends RBuiltinNode {
     }
 
     @Specialization
-    protected byte asLogical(VirtualFrame frame, int value) {
+    protected byte asLogical(int value) {
         controlVisibility();
-        return castLogical(frame, value);
+        return castLogical(value);
     }
 
     @Specialization
-    protected byte asLogical(VirtualFrame frame, double value) {
+    protected byte asLogical(double value) {
         controlVisibility();
-        return castLogical(frame, value);
+        return castLogical(value);
     }
 
     @Specialization
-    protected byte asLogical(VirtualFrame frame, RComplex value) {
+    protected byte asLogical(RComplex value) {
         controlVisibility();
-        return castLogical(frame, value);
+        return castLogical(value);
     }
 
     @Specialization
-    protected byte asLogical(VirtualFrame frame, String value) {
+    protected byte asLogical(String value) {
         controlVisibility();
-        return castLogical(frame, value);
+        return castLogical(value);
     }
 
     @Specialization
-    protected RLogicalVector asLogical(RNull vector) {
+    protected RLogicalVector asLogical(@SuppressWarnings("unused") RNull vector) {
         controlVisibility();
         return RDataFactory.createLogicalVector(0);
     }
@@ -101,8 +96,8 @@ public abstract class AsLogical extends RBuiltinNode {
     }
 
     @Specialization
-    protected RLogicalVector asLogical(VirtualFrame frame, RAbstractContainer container) {
+    protected RLogicalVector asLogical(RAbstractContainer container) {
         controlVisibility();
-        return castLogicalVector(frame, container);
+        return castLogicalVector(container);
     }
 }

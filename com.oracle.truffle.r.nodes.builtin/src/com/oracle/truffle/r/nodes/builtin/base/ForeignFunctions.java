@@ -305,12 +305,12 @@ public class ForeignFunctions {
         // TODO: handle more argument types (this is sufficient to run the b25 benchmarks)
         @SuppressWarnings("unused")
         @Specialization(guards = "fft(f)")
-        protected RComplexVector callFFT(VirtualFrame frame, RList f, RArgsValuesAndNames args, RMissing packageName) {
+        protected RComplexVector callFFT(RList f, RArgsValuesAndNames args, RMissing packageName) {
             controlVisibility();
             Object[] argValues = args.getArguments();
-            RComplexVector zVec = castComplexVector(frame, castVector(frame, argValues[0]));
+            RComplexVector zVec = castComplexVector(castVector(argValues[0]));
             double[] z = zVec.getDataTemp();
-            byte inverse = castLogical(frame, castVector(frame, argValues[1]));
+            byte inverse = castLogical(castVector(argValues[1]));
             int inv = RRuntime.isNA(inverse) || inverse == RRuntime.LOGICAL_FALSE ? -2 : 2;
             int retCode = 7;
             if (zVecLgt1.profile(zVec.getLength() > 1)) {
@@ -537,8 +537,8 @@ public class ForeignFunctions {
         }
 
         @Specialization(guards = "isCor(f)")
-        protected Object doCor(VirtualFrame frame, @SuppressWarnings("unused") RList f, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName) {
-            return doCovCor(frame, false, args);
+        protected Object doCor(@SuppressWarnings("unused") RList f, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName) {
+            return doCovCor(false, args);
         }
 
         public boolean isCor(RList f) {
@@ -546,15 +546,15 @@ public class ForeignFunctions {
         }
 
         @Specialization(guards = "isCov(f)")
-        protected Object doCov(VirtualFrame frame, @SuppressWarnings("unused") RList f, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName) {
-            return doCovCor(frame, true, args);
+        protected Object doCov(@SuppressWarnings("unused") RList f, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName) {
+            return doCovCor(true, args);
         }
 
         public boolean isCov(RList f) {
             return matchName(f, "cov");
         }
 
-        private Object doCovCor(VirtualFrame frame, boolean isCov, RArgsValuesAndNames args) {
+        private Object doCovCor(boolean isCov, RArgsValuesAndNames args) {
             controlVisibility();
             Object[] argValues = args.getArguments();
             if (argValues[0] == RNull.instance) {
@@ -567,16 +567,16 @@ public class ForeignFunctions {
             if (method != 4) {
                 throw RError.nyi(getEncapsulatingSourceSection(), "method");
             }
-            boolean iskendall = RRuntime.fromLogical(castLogical(frame, castVector(frame, argValues[3])));
+            boolean iskendall = RRuntime.fromLogical(castLogical(castVector(argValues[3])));
             return Covcor.getInstance().corcov(x.materialize(), y != null ? y.materialize() : null, method, iskendall, !isCov, getEncapsulatingSourceSection());
 
         }
 
         @Specialization(guards = "isSplineCoef(f)")
-        protected RList splineCoef(VirtualFrame frame, @SuppressWarnings("unused") RList f, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName) {
-            int method = castInt(frame, castVector(frame, args.getArguments()[0]));
-            RAbstractDoubleVector x = (RAbstractDoubleVector) castVector(frame, args.getArguments()[1]);
-            RAbstractDoubleVector y = (RAbstractDoubleVector) castVector(frame, args.getArguments()[2]);
+        protected RList splineCoef(@SuppressWarnings("unused") RList f, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName) {
+            int method = castInt(castVector(args.getArguments()[0]));
+            RAbstractDoubleVector x = (RAbstractDoubleVector) castVector(args.getArguments()[1]);
+            RAbstractDoubleVector y = (RAbstractDoubleVector) castVector(args.getArguments()[2]);
             return SplineFunctions.splineCoef(method, x.materialize(), y.materialize());
         }
 
@@ -585,8 +585,8 @@ public class ForeignFunctions {
         }
 
         @Specialization(guards = "isSplineEval(f)")
-        protected RDoubleVector splineEval(VirtualFrame frame, @SuppressWarnings("unused") RList f, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName) {
-            RAbstractDoubleVector xout = (RAbstractDoubleVector) castVector(frame, args.getArgument(0));
+        protected RDoubleVector splineEval(@SuppressWarnings("unused") RList f, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName) {
+            RAbstractDoubleVector xout = (RAbstractDoubleVector) castVector(args.getArgument(0));
             // This is called with the result of SplineCoef, so it is surely an RList
             return SplineFunctions.splineEval(attrProfiles, xout.materialize(), (RList) args.getArgument(1));
         }
@@ -596,9 +596,9 @@ public class ForeignFunctions {
         }
 
         @Specialization(guards = "isDoTabExpand(f)")
-        protected RStringVector tabExpand(VirtualFrame frame, @SuppressWarnings("unused") RList f, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName) {
-            RAbstractStringVector strings = (RAbstractStringVector) castVector(frame, args.getArgument(0));
-            RAbstractIntVector starts = (RAbstractIntVector) castVector(frame, args.getArgument(1));
+        protected RStringVector tabExpand(@SuppressWarnings("unused") RList f, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName) {
+            RAbstractStringVector strings = (RAbstractStringVector) castVector(args.getArgument(0));
+            RAbstractIntVector starts = (RAbstractIntVector) castVector(args.getArgument(1));
             return ToolsText.doTabExpand(strings.materialize(), starts.materialize());
         }
 
@@ -607,9 +607,9 @@ public class ForeignFunctions {
         }
 
         @Specialization(guards = "isCodeFilesAppend(f)")
-        protected RLogicalVector codeFilesAppend(VirtualFrame frame, @SuppressWarnings("unused") RList f, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName) {
-            RStringVector file1 = (RStringVector) castVector(frame, args.getArgument(0));
-            RStringVector file2 = (RStringVector) castVector(frame, args.getArgument(1));
+        protected RLogicalVector codeFilesAppend(@SuppressWarnings("unused") RList f, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName) {
+            RStringVector file1 = (RStringVector) castVector(args.getArgument(0));
+            RStringVector file2 = (RStringVector) castVector(args.getArgument(1));
             if (file1.getLength() != 1) {
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "file1");
             }
@@ -624,8 +624,8 @@ public class ForeignFunctions {
         }
 
         @Specialization(guards = "isRmd5(f)")
-        protected RStringVector rmd5(VirtualFrame frame, @SuppressWarnings("unused") RList f, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName) {
-            RStringVector files = (RStringVector) castVector(frame, args.getArgument(0));
+        protected RStringVector rmd5(@SuppressWarnings("unused") RList f, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName) {
+            RStringVector files = (RStringVector) castVector(args.getArgument(0));
             return ToolsRmd5.rmd5(files);
         }
 
@@ -634,12 +634,12 @@ public class ForeignFunctions {
         }
 
         @Specialization(guards = "isDirChmod(f)")
-        protected RNull dirChmod(VirtualFrame frame, @SuppressWarnings("unused") RList f, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName) {
-            RAbstractVector dir = castVector(frame, args.getArgument(0));
+        protected RNull dirChmod(@SuppressWarnings("unused") RList f, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName) {
+            RAbstractVector dir = castVector(args.getArgument(0));
             if (!(dir instanceof RStringVector && ((RStringVector) dir).getLength() == 1)) {
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "dir");
             }
-            byte gws = castLogical(frame, castVector(frame, args.getArgument(1)));
+            byte gws = castLogical(castVector(args.getArgument(1)));
             ToolsDirChmod.dirChmod(((RStringVector) dir).getDataAt(0), RRuntime.fromLogical(gws));
             return RNull.instance;
         }
@@ -694,44 +694,44 @@ public class ForeignFunctions {
 
         protected final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
-        protected byte castLogical(VirtualFrame frame, RAbstractVector operand) {
+        protected byte castLogical(RAbstractVector operand) {
             if (castLogical == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 castLogical = insert(CastLogicalNodeGen.create(null, false, false, false));
             }
-            return ((RAbstractLogicalVector) castLogical.executeCast(frame, operand)).getDataAt(0);
+            return ((RAbstractLogicalVector) castLogical.executeCast(operand)).getDataAt(0);
         }
 
-        protected int castInt(VirtualFrame frame, RAbstractVector operand) {
+        protected int castInt(RAbstractVector operand) {
             if (castInt == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 castInt = insert(CastIntegerNodeGen.create(null, false, false, false));
             }
-            return ((RAbstractIntVector) castInt.executeCast(frame, operand)).getDataAt(0);
+            return ((RAbstractIntVector) castInt.executeCast(operand)).getDataAt(0);
         }
 
-        protected RAbstractDoubleVector castDouble(VirtualFrame frame, RAbstractVector operand) {
+        protected RAbstractDoubleVector castDouble(RAbstractVector operand) {
             if (castDouble == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 castDouble = insert(CastDoubleNodeGen.create(null, false, false, false));
             }
-            return (RAbstractDoubleVector) castDouble.executeCast(frame, operand);
+            return (RAbstractDoubleVector) castDouble.executeCast(operand);
         }
 
-        protected RComplexVector castComplexVector(VirtualFrame frame, Object operand) {
+        protected RComplexVector castComplexVector(Object operand) {
             if (castComplex == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 castComplex = insert(CastComplexNodeGen.create(null, true, true, false));
             }
-            return (RComplexVector) castComplex.executeCast(frame, operand);
+            return (RComplexVector) castComplex.executeCast(operand);
         }
 
-        protected RAbstractVector castVector(VirtualFrame frame, Object value) {
+        protected RAbstractVector castVector(Object value) {
             if (castVector == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 castVector = insert(CastToVectorNodeGen.create(null, false, false, false, false));
             }
-            return (RAbstractVector) castVector.executeObject(frame, value);
+            return (RAbstractVector) castVector.executeObject(value);
         }
 
         /**
@@ -762,15 +762,15 @@ public class ForeignFunctions {
         // Transcribed from GnuR, library/utils/src/io.c
         @SuppressWarnings("unused")
         @Specialization(guards = "isCountFields(f)")
-        protected Object countFields(VirtualFrame frame, RList f, RArgsValuesAndNames args, RMissing packageName) {
+        protected Object countFields(RList f, RArgsValuesAndNames args, RMissing packageName) {
             controlVisibility();
             Object[] argValues = args.getArguments();
             RConnection conn = (RConnection) argValues[0];
             Object sepArg = argValues[1];
             char sepChar;
             Object quoteArg = argValues[2];
-            int nskip = castInt(frame, castVector(frame, argValues[3]));
-            byte blskip = castLogical(frame, castVector(frame, argValues[4]));
+            int nskip = castInt(castVector(argValues[3]));
+            byte blskip = castLogical(castVector(argValues[4]));
             String commentCharArg = isString(argValues[5]);
             char comChar;
             if (!(commentCharArg != null && commentCharArg.length() == 1)) {
@@ -824,12 +824,12 @@ public class ForeignFunctions {
         }
 
         @Specialization(guards = "isReadTableHead(f)")
-        protected Object doReadTableHead(VirtualFrame frame, @SuppressWarnings("unused") RList f, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName) {
+        protected Object doReadTableHead(@SuppressWarnings("unused") RList f, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName) {
             // TODO This is quite incomplete and just uses readLines, which works for some inputs
             controlVisibility();
             Object[] argValues = args.getArguments();
             RConnection conn = (RConnection) argValues[0];
-            int nlines = castInt(frame, castVector(frame, argValues[1]));
+            int nlines = castInt(castVector(argValues[1]));
             try (RConnection openConn = conn.forceOpen("r")) {
                 return RDataFactory.createStringVector(openConn.readLines(nlines), RDataFactory.COMPLETE_VECTOR);
             } catch (IOException ex) {
@@ -843,10 +843,10 @@ public class ForeignFunctions {
         }
 
         @Specialization(guards = "isRnorm(f)")
-        protected Object doRnorm(VirtualFrame frame, @SuppressWarnings("unused") RList f, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName) {
+        protected Object doRnorm(@SuppressWarnings("unused") RList f, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName) {
             controlVisibility();
             Object[] argValues = args.getArguments();
-            int n = castInt(frame, castVector(frame, argValues[0]));
+            int n = castInt(castVector(argValues[0]));
             // TODO full error checks
             double mean = (double) argValues[1];
             double standardd = (double) argValues[2];
@@ -858,13 +858,13 @@ public class ForeignFunctions {
         }
 
         @Specialization(guards = "isRunif(f)")
-        protected Object doRunif(VirtualFrame frame, @SuppressWarnings("unused") RList f, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName) {
+        protected Object doRunif(@SuppressWarnings("unused") RList f, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName) {
             controlVisibility();
             Object[] argValues = args.getArguments();
             // TODO full error checks
-            int n = castInt(frame, castVector(frame, argValues[0]));
-            double min = (castDouble(frame, castVector(frame, argValues[1]))).getDataAt(0);
-            double max = (castDouble(frame, castVector(frame, argValues[2]))).getDataAt(0);
+            int n = castInt(castVector(argValues[0]));
+            double min = (castDouble(castVector(argValues[1]))).getDataAt(0);
+            double max = (castDouble(castVector(argValues[2]))).getDataAt(0);
             return Runif.runif(n, min, max);
         }
 
@@ -873,17 +873,17 @@ public class ForeignFunctions {
         }
 
         @Specialization(guards = "isQgamma(f)")
-        protected RAbstractDoubleVector doQgamma(VirtualFrame frame, @SuppressWarnings("unused") RList f, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName) {
+        protected RAbstractDoubleVector doQgamma(@SuppressWarnings("unused") RList f, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName) {
             controlVisibility();
             Object[] argValues = args.getArguments();
-            RAbstractDoubleVector p = (RAbstractDoubleVector) castVector(frame, argValues[0]);
-            RAbstractDoubleVector shape = (RAbstractDoubleVector) castVector(frame, argValues[1]);
-            RAbstractDoubleVector scale = (RAbstractDoubleVector) castVector(frame, argValues[2]);
+            RAbstractDoubleVector p = (RAbstractDoubleVector) castVector(argValues[0]);
+            RAbstractDoubleVector shape = (RAbstractDoubleVector) castVector(argValues[1]);
+            RAbstractDoubleVector scale = (RAbstractDoubleVector) castVector(argValues[2]);
             if (shape.getLength() == 0 || scale.getLength() == 0) {
                 return RDataFactory.createEmptyDoubleVector();
             }
-            byte lowerTail = castLogical(frame, castVector(frame, argValues[3]));
-            byte logP = castLogical(frame, castVector(frame, argValues[4]));
+            byte lowerTail = castLogical(castVector(argValues[3]));
+            byte logP = castLogical(castVector(argValues[4]));
             return GammaFunctions.Qgamma.getInstance().qgamma(p, shape, scale, lowerTail, logP, attrProfiles);
         }
 
@@ -892,14 +892,14 @@ public class ForeignFunctions {
         }
 
         @Specialization(guards = "isDownload(f)")
-        protected int doDownload(VirtualFrame frame, @SuppressWarnings("unused") RList f, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName) {
+        protected int doDownload(@SuppressWarnings("unused") RList f, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName) {
             controlVisibility();
             Object[] argValues = args.getArguments();
             String url = isString(argValues[0]);
             String destFile = isString(argValues[1]);
-            byte quiet = castLogical(frame, castVector(frame, argValues[2]));
+            byte quiet = castLogical(castVector(argValues[2]));
             String mode = isString(argValues[3]);
-            byte cacheOK = castLogical(frame, castVector(frame, argValues[4]));
+            byte cacheOK = castLogical(castVector(argValues[4]));
             if (url == null || destFile == null || mode == null) {
                 errorProfile.enter();
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_UNNAMED_ARGUMENTS);
@@ -931,7 +931,7 @@ public class ForeignFunctions {
 
         // Transcribed from GnuR, library/utils/src/io.c
         @Specialization(guards = "isWriteTable(f)")
-        protected Object doWriteTable(VirtualFrame frame, @SuppressWarnings("unused") RList f, RArgsValuesAndNames args) {
+        protected Object doWriteTable(@SuppressWarnings("unused") RList f, RArgsValuesAndNames args) {
             controlVisibility();
             Object[] argValues = args.getArguments();
             Object conArg = argValues[1];
@@ -944,15 +944,15 @@ public class ForeignFunctions {
             }
             // TODO check connection writeable
 
-            int nr = castInt(frame, castVector(frame, argValues[2]));
-            int nc = castInt(frame, castVector(frame, argValues[3]));
+            int nr = castInt(castVector(argValues[2]));
+            int nc = castInt(castVector(argValues[3]));
             Object rnamesArg = argValues[4];
             Object sepArg = argValues[5];
             Object eolArg = argValues[6];
             Object naArg = argValues[7];
             Object decArg = argValues[8];
             Object quoteArg = argValues[9];
-            byte qmethod = castLogical(frame, castVector(frame, argValues[10]));
+            byte qmethod = castLogical(castVector(argValues[10]));
 
             String csep;
             String ceol;
@@ -989,7 +989,7 @@ public class ForeignFunctions {
             }
             boolean[] quoteCol = new boolean[nc];
             boolean quoteRn = false;
-            RAbstractIntVector quote = (RAbstractIntVector) castVector(frame, quoteArg);
+            RAbstractIntVector quote = (RAbstractIntVector) castVector(quoteArg);
             for (int i = 0; i < quote.getLength(); i++) {
                 int qi = quote.getDataAt(i);
                 if (qi == 0) {

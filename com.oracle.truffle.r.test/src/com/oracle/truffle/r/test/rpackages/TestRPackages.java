@@ -43,9 +43,6 @@ public class TestRPackages extends TestBase {
      * expected output with GnuR, and running FastR, to keep the {@code lib_loc} argument the same
      * in the test string. So the install is destructive, but ok as there is never a clash.
      *
-     * Currently we are using GnuR to do the install of the FastR-compiled package. The install
-     * environment for packageds with nativge code is handled in the Makefile using environment
-     * variables set in {@link #installPackage(String)}.
      */
     private static final class PackagePaths {
         /**
@@ -69,16 +66,27 @@ public class TestRPackages extends TestBase {
 
         private boolean installPackage(String packageName) {
             Path packagePath = rpackagesDists.resolve(packageName).resolve("lib").resolve(packageName + ".tar");
-            // install the package (using GnuR for now)
-            ProcessBuilder pb = new ProcessBuilder("R", "CMD", "INSTALL", packagePath.toString());
+            String[] cmds;
+            if (generatingExpected()) {
+                // use GnuR
+                cmds = new String[4];
+                cmds[0] = "R";
+            } else {
+                // use FastR
+                cmds = new String[5];
+                cmds[0] = FileSystems.getDefault().getPath(REnvVars.rHome(), "bin", "R").toString();
+                // TODO remove --no-help limitation when markdown parser functioning
+                cmds[3] = "--no-help";
+            }
+            cmds[1] = "CMD";
+            cmds[2] = "INSTALL";
+            cmds[cmds.length - 1] = packagePath.toString();
+            ProcessBuilder pb = new ProcessBuilder(cmds);
             Map<String, String> env = pb.environment();
             env.put("R_LIBS_USER", rpackagesLibs.toString());
-            String installKind = generatingExpected() ? "GNUR" : "FASTR";
-            env.put("FASTR_INSTALL", installKind);
-            env.put("FASTR_HOME", REnvVars.rHome());
-            String javaHome = System.getenv("JAVA_HOME");
-            // GnuR INSTALL sets JAVA_HOME to a 1.6 JRE
-            env.put("FASTR_JAVA_HOME", javaHome);
+            if (!generatingExpected()) {
+                env.put("R_INSTALL_TAR", REnvVars.get("TAR"));
+            }
             try {
                 if (FastROptions.debugMatches("TestRPackages")) {
                     pb.inheritIO();

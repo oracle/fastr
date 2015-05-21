@@ -13,39 +13,40 @@ package com.oracle.truffle.r.nodes.binary;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-@SuppressWarnings("unused")
 public abstract class CastTypeNode extends BinaryNode {
 
     protected static final int NUMBER_OF_TYPES = RType.values().length;
 
     @Child protected TypeofNode typeof = TypeofNodeGen.create(null);
 
-    public abstract Object execute(VirtualFrame frame, Object value, RType type);
+    public abstract Object execute(Object value, RType type);
 
+    @SuppressWarnings("unused")
     @Specialization(guards = "typeof.execute(value) == type")
     protected static RAbstractVector doPass(RAbstractVector value, RType type) {
         return value;
     }
 
+    @SuppressWarnings("unused")
     @Specialization(guards = {"typeof.execute(value) != type", "type == cachedType", "!isNull(cast)"}, limit = "NUMBER_OF_TYPES")
-    protected static Object doCast(VirtualFrame frame, RAbstractVector value, RType type, //
+    protected static Object doCast(RAbstractVector value, RType type, //
                     @Cached("type") RType cachedType, //
                     @Cached("createCast(cachedType)") CastNode cast) {
-        return cast.executeCast(frame, value);
+        return cast.executeCast(value);
     }
 
     @Specialization
-    protected static Object doCastDataFrame(VirtualFrame frame, RDataFrame value, RType type, //
+    protected static Object doCastDataFrame(RDataFrame value, RType type, //
                     @Cached("create()") CastTypeNode castRecursive) {
-        return castRecursive.execute(frame, value.getVector(), type);
+        return castRecursive.execute(value.getVector(), type);
     }
 
+    @SuppressWarnings("unused")
     @Specialization(guards = "isNull(createCast(type))")
     @TruffleBoundary
     protected static Object doCastUnknown(RAbstractVector value, RType type) {
@@ -84,5 +85,4 @@ public abstract class CastTypeNode extends BinaryNode {
     public static CastTypeNode create() {
         return CastTypeNodeGen.create(null, null);
     }
-
 }

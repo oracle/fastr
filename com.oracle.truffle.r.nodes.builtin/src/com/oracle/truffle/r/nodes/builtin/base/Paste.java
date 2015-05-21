@@ -71,12 +71,12 @@ public abstract class Paste extends RBuiltinNode {
      * there are problem using it here, so we retain the previous implementation that just uses
      * {@link CastStringNode}.
      */
-    private RStringVector castCharacterVector(VirtualFrame frame, Object o) {
+    private RStringVector castCharacterVector(Object o) {
         if (castCharacterNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castCharacterNode = insert(CastStringNodeGen.create(null, false, true, false, false));
         }
-        Object ret = castCharacterNode.executeString(frame, o);
+        Object ret = castCharacterNode.executeString(o);
         if (ret instanceof String) {
             return RDataFactory.createStringVector((String) ret);
         } else {
@@ -102,7 +102,7 @@ public abstract class Paste extends RBuiltinNode {
             Object element = values.getDataAt(i);
             String[] array;
             if (vectorOrSequence.profile(element instanceof RVector || element instanceof RSequence)) {
-                array = castCharacterVector(frame, element).getDataWithoutCopying();
+                array = castCharacterVector(element).getDataWithoutCopying();
             } else {
                 array = castCharacter(frame, element).getDataWithoutCopying();
             }

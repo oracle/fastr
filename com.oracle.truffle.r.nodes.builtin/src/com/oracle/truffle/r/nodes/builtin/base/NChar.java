@@ -41,13 +41,13 @@ public abstract class NChar extends RBuiltinNode {
 
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
-    private String coerceContent(VirtualFrame frame, Object content) {
+    private String coerceContent(Object content) {
         if (convertString == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             convertString = insert(CastStringNodeGen.create(null, false, false, false, false));
         }
         try {
-            return (String) convertString.executeString(frame, content);
+            return (String) convertString.executeString(content);
         } catch (ConversionFailedException e) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.TYPE_EXPECTED, RType.Character.getName());
         }
@@ -62,23 +62,23 @@ public abstract class NChar extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization
-    protected int nchar(VirtualFrame frame, int value, String type, byte allowNA) {
+    protected int nchar(int value, String type, byte allowNA) {
         controlVisibility();
-        return coerceContent(frame, value).length();
+        return coerceContent(value).length();
     }
 
     @SuppressWarnings("unused")
     @Specialization
-    protected int nchar(VirtualFrame frame, double value, String type, byte allowNA) {
+    protected int nchar(double value, String type, byte allowNA) {
         controlVisibility();
-        return coerceContent(frame, value).length();
+        return coerceContent(value).length();
     }
 
     @SuppressWarnings("unused")
     @Specialization
-    protected int nchar(VirtualFrame frame, byte value, String type, byte allowNA) {
+    protected int nchar(byte value, String type, byte allowNA) {
         controlVisibility();
-        return coerceContent(frame, value).length();
+        return coerceContent(value).length();
     }
 
     @SuppressWarnings("unused")
@@ -109,7 +109,7 @@ public abstract class NChar extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Fallback
-    protected RIntVector nchar(VirtualFrame frame, Object obj, Object type, Object allowNA) {
+    protected RIntVector nchar(Object obj, Object type, Object allowNA) {
         controlVisibility();
         if (obj instanceof RFactor) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.REQUIRES_CHAR_VECTOR, "nchar");
@@ -119,7 +119,7 @@ public abstract class NChar extends RBuiltinNode {
             int len = vector.getLength();
             int[] result = new int[len];
             for (int i = 0; i < len; i++) {
-                result[i] = coerceContent(frame, vector.getDataAtAsObject(i)).length();
+                result[i] = coerceContent(vector.getDataAtAsObject(i)).length();
             }
             return RDataFactory.createIntVector(result, vector.isComplete(), vector.getNames(attrProfiles));
         } else {

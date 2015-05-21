@@ -24,7 +24,6 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
@@ -43,11 +42,11 @@ public abstract class AnyNA extends RBuiltinNode {
 
     @Specialization
     // TODO recursive == TRUE
-    protected Object anyNA(VirtualFrame frame, Object x, byte recursive) {
+    protected Object anyNA(Object x, byte recursive) {
         if (RRuntime.fromLogical(recursive)) {
             CompilerDirectives.transferToInterpreter();
             throw RError.nyi(getEncapsulatingSourceSection(), "recursive = TRUE");
         }
-        return any.execute(frame, isna.execute(frame, x));
+        return any.execute(isna.execute(x));
     }
 }

@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.nodes.unary;
 
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -32,7 +31,7 @@ public abstract class CastExpressionNode extends CastNode {
 
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
-    public abstract Object executeExpression(VirtualFrame frame, Object o);
+    public abstract Object executeExpression(Object o);
 
     @Specialization
     protected RExpression doNull(@SuppressWarnings("unused") RNull value) {
@@ -92,5 +91,4 @@ public abstract class CastExpressionNode extends CastNode {
     private static RExpression create(Object[] objArray) {
         return RDataFactory.createExpression(RDataFactory.createList(objArray));
     }
-
 }

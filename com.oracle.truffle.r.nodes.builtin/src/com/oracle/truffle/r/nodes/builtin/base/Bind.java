@@ -57,12 +57,12 @@ public abstract class Bind extends RPrecedenceBuiltinNode {
         return null;
     }
 
-    protected RAbstractVector castVector(VirtualFrame frame, Object value) {
+    protected RAbstractVector castVector(Object value) {
         if (castVector == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castVector = insert(CastToVectorNodeGen.create(null, false, false, false, false));
         }
-        return (RAbstractVector) castVector.executeObject(frame, value);
+        return (RAbstractVector) castVector.executeObject(value);
     }
 
     @SuppressWarnings("unused")
@@ -102,10 +102,10 @@ public abstract class Bind extends RPrecedenceBuiltinNode {
                 vecNames[ind] = signature.getName(i);
                 naCheck.check(vecNames[ind]);
             }
-            Object result = castNode.executeCast(frame, array[i]);
+            Object result = castNode.executeCast(array[i]);
             RAbstractVector vector;
             if (needsVectorCast) {
-                vector = castVector(frame, result);
+                vector = castVector(result);
             } else {
                 vector = (RAbstractVector) result;
             }
@@ -153,7 +153,7 @@ public abstract class Bind extends RPrecedenceBuiltinNode {
     }
 
     protected Object allOneElem(VirtualFrame frame, Object deparseLevelObj, RArgsValuesAndNames args, boolean cbind) {
-        RAbstractVector vec = castVector(frame, args.getArgument(0));
+        RAbstractVector vec = castVector(args.getArgument(0));
         if (vec.isMatrix()) {
             return vec;
         }
@@ -165,7 +165,7 @@ public abstract class Bind extends RPrecedenceBuiltinNode {
 
         ArgumentsSignature signature = args.getSignature();
         if (signature.getNonNullCount() == 0) {
-            int deparseLevel = deparseLevel(frame, deparseLevelObj);
+            int deparseLevel = deparseLevel(deparseLevelObj);
             if (deparseLevel == 0) {
                 dimNamesB = RNull.instance;
             } else {
@@ -255,7 +255,7 @@ public abstract class Bind extends RPrecedenceBuiltinNode {
             return -ind;
         } else if (!vec.isArray() || vec.getDimensions().length == 1) {
             if (argNames == null) {
-                int deparseLevel = deparseLevel(frame, deparseLevelObj);
+                int deparseLevel = deparseLevel(deparseLevelObj);
                 if (deparseLevel == 0) {
                     dimNamesArray[ind++] = RRuntime.NAMES_ATTR_EMPTY_VALUE;
                     return -ind;
@@ -320,8 +320,8 @@ public abstract class Bind extends RPrecedenceBuiltinNode {
         return notEqualDims;
     }
 
-    protected int deparseLevel(VirtualFrame frame, Object deparseLevelObj) {
-        RAbstractLogicalVector v = (RAbstractLogicalVector) castLogical(frame, castVector(frame, deparseLevelObj), true);
+    protected int deparseLevel(Object deparseLevelObj) {
+        RAbstractLogicalVector v = (RAbstractLogicalVector) castLogical(castVector(deparseLevelObj), true);
         if (v.getLength() == 0 || v.getDataAt(0) == 0) {
             return 0;
         } else {

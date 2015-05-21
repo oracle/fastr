@@ -50,7 +50,7 @@ public final class RIntSequence extends RSequence implements RAbstractIntVector 
                 return this;
             case Double:
             case Numeric:
-                return RDataFactory.createDoubleSequence(RRuntime.int2double(getStart()), RRuntime.int2double(getStride()), getLength());
+                return RDataFactory.createDoubleSequence(getStart(), getStride(), getLength());
             case Complex:
                 return RClosures.createIntToComplexVector(this);
             case Character:

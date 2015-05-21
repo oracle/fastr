@@ -27,14 +27,12 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-@SuppressWarnings("unused")
 @RBuiltin(name = "is.na", kind = PRIMITIVE, parameterNames = {"x"})
 public abstract class IsNA extends RBuiltinNode {
 
@@ -42,15 +40,15 @@ public abstract class IsNA extends RBuiltinNode {
 
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
-    private Object isNARecursive(VirtualFrame frame, Object o) {
+    private Object isNARecursive(Object o) {
         if (recursiveIsNA == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             recursiveIsNA = insert(IsNANodeGen.create(new RNode[1], null, null));
         }
-        return recursiveIsNA.execute(frame, o);
+        return recursiveIsNA.execute(o);
     }
 
-    public abstract Object execute(VirtualFrame frame, Object o);
+    public abstract Object execute(Object o);
 
     @Specialization
     protected byte isNA(int value) {
@@ -112,11 +110,11 @@ public abstract class IsNA extends RBuiltinNode {
     }
 
     @Specialization
-    protected RLogicalVector isNA(VirtualFrame frame, RList list) {
+    protected RLogicalVector isNA(RList list) {
         controlVisibility();
         byte[] resultVector = new byte[list.getLength()];
         for (int i = 0; i < list.getLength(); i++) {
-            Object result = isNARecursive(frame, list.getDataAt(i));
+            Object result = isNARecursive(list.getDataAt(i));
             byte isNAResult;
             if (result instanceof Byte) {
                 isNAResult = (Byte) result;
@@ -161,7 +159,7 @@ public abstract class IsNA extends RBuiltinNode {
     }
 
     @Specialization
-    protected byte isNA(RNull value) {
+    protected byte isNA(@SuppressWarnings("unused") RNull value) {
         controlVisibility();
         return RRuntime.LOGICAL_FALSE;
     }
@@ -172,7 +170,7 @@ public abstract class IsNA extends RBuiltinNode {
     }
 
     @Specialization
-    protected byte isNA(RRaw value) {
+    protected byte isNA(@SuppressWarnings("unused") RRaw value) {
         controlVisibility();
         return RRuntime.LOGICAL_FALSE;
     }

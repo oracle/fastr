@@ -88,19 +88,19 @@ public abstract class VApply extends RCastingBuiltinNode {
 
         // TODO check funValueLen against length of result
         if (funValueVec instanceof RAbstractIntVector) {
-            int[] data = applyResultZeroLength ? new int[0] : convertIntVector(frame, applyResult, funValueVecLen);
+            int[] data = applyResultZeroLength ? new int[0] : convertIntVector(applyResult, funValueVecLen);
             result = RDataFactory.createIntVector(data, RDataFactory.COMPLETE_VECTOR);
         } else if (funValueVec instanceof RAbstractDoubleVector) {
-            double[] data = applyResultZeroLength ? new double[0] : convertDoubleVector(frame, applyResult, funValueVecLen);
+            double[] data = applyResultZeroLength ? new double[0] : convertDoubleVector(applyResult, funValueVecLen);
             result = RDataFactory.createDoubleVector(data, RDataFactory.COMPLETE_VECTOR);
         } else if (funValueVec instanceof RAbstractLogicalVector) {
-            byte[] data = applyResultZeroLength ? new byte[0] : convertLogicalVector(frame, applyResult, funValueVecLen);
+            byte[] data = applyResultZeroLength ? new byte[0] : convertLogicalVector(applyResult, funValueVecLen);
             result = RDataFactory.createLogicalVector(data, RDataFactory.COMPLETE_VECTOR);
         } else if (funValueVec instanceof RAbstractStringVector) {
-            String[] data = applyResultZeroLength ? new String[0] : convertStringVector(frame, applyResult, funValueVecLen);
+            String[] data = applyResultZeroLength ? new String[0] : convertStringVector(applyResult, funValueVecLen);
             result = RDataFactory.createStringVector(data, RDataFactory.COMPLETE_VECTOR);
         } else if (funValueVec instanceof RAbstractComplexVector) {
-            double[] data = applyResultZeroLength ? new double[1] : convertComplexVector(frame, applyResult, funValueVecLen);
+            double[] data = applyResultZeroLength ? new double[1] : convertComplexVector(applyResult, funValueVecLen);
             result = RDataFactory.createComplexVector(data, RDataFactory.COMPLETE_VECTOR);
         } else {
             throw RInternalError.shouldNotReachHere();
@@ -126,11 +126,11 @@ public abstract class VApply extends RCastingBuiltinNode {
         return result;
     }
 
-    private double[] convertDoubleVector(VirtualFrame frame, Object[] values, int len) {
+    private double[] convertDoubleVector(Object[] values, int len) {
         double[] newArray = new double[values.length * len];
         int ind = 0;
         for (int i = 0; i < values.length; i++) {
-            RAbstractDoubleVector v = (RAbstractDoubleVector) RRuntime.asAbstractVector(castDouble(frame, values[i], false));
+            RAbstractDoubleVector v = (RAbstractDoubleVector) RRuntime.asAbstractVector(castDouble(values[i], false));
             for (int j = 0; j < v.getLength(); j++) {
                 newArray[ind++] = v.getDataAt(j);
             }
@@ -138,11 +138,11 @@ public abstract class VApply extends RCastingBuiltinNode {
         return newArray;
     }
 
-    private int[] convertIntVector(VirtualFrame frame, Object[] values, int len) {
+    private int[] convertIntVector(Object[] values, int len) {
         int[] newArray = new int[values.length * len];
         int ind = 0;
         for (int i = 0; i < values.length; i++) {
-            RAbstractIntVector v = (RAbstractIntVector) RRuntime.asAbstractVector(castInteger(frame, values[i], false));
+            RAbstractIntVector v = (RAbstractIntVector) RRuntime.asAbstractVector(castInteger(values[i], false));
             for (int j = 0; j < v.getLength(); j++) {
                 newArray[ind++] = v.getDataAt(j);
             }
@@ -150,11 +150,11 @@ public abstract class VApply extends RCastingBuiltinNode {
         return newArray;
     }
 
-    private byte[] convertLogicalVector(VirtualFrame frame, Object[] values, int len) {
+    private byte[] convertLogicalVector(Object[] values, int len) {
         byte[] newArray = new byte[values.length * len];
         int ind = 0;
         for (int i = 0; i < values.length; i++) {
-            RAbstractLogicalVector v = (RAbstractLogicalVector) RRuntime.asAbstractVector(castLogical(frame, values[i], false));
+            RAbstractLogicalVector v = (RAbstractLogicalVector) RRuntime.asAbstractVector(castLogical(values[i], false));
             for (int j = 0; j < v.getLength(); j++) {
                 newArray[ind++] = v.getDataAt(j);
             }
@@ -162,11 +162,11 @@ public abstract class VApply extends RCastingBuiltinNode {
         return newArray;
     }
 
-    private String[] convertStringVector(VirtualFrame frame, Object[] values, int len) {
+    private String[] convertStringVector(Object[] values, int len) {
         String[] newArray = new String[values.length * len];
         int ind = 0;
         for (int i = 0; i < values.length; i++) {
-            RAbstractStringVector v = (RAbstractStringVector) RRuntime.asAbstractVector(castString(frame, values[i], false));
+            RAbstractStringVector v = (RAbstractStringVector) RRuntime.asAbstractVector(castString(values[i], false));
             for (int j = 0; j < v.getLength(); j++) {
                 newArray[ind++] = v.getDataAt(j);
             }
@@ -174,11 +174,11 @@ public abstract class VApply extends RCastingBuiltinNode {
         return newArray;
     }
 
-    private double[] convertComplexVector(VirtualFrame frame, Object[] values, int len) {
+    private double[] convertComplexVector(Object[] values, int len) {
         double[] newArray = new double[values.length * len * 2];
         int ind = 0;
         for (int i = 0; i < values.length; i++) {
-            RAbstractComplexVector v = (RAbstractComplexVector) RRuntime.asAbstractVector(castComplex(frame, values[i], false));
+            RAbstractComplexVector v = (RAbstractComplexVector) RRuntime.asAbstractVector(castComplex(values[i], false));
             for (int j = 0; j < v.getLength(); j++) {
                 RComplex val = v.getDataAt(j);
                 newArray[ind++] = val.getRealPart();

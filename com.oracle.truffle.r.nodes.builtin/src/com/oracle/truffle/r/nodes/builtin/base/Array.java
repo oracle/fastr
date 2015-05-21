@@ -26,7 +26,6 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
@@ -50,12 +49,12 @@ public abstract class Array extends RBuiltinNode {
     @Child private UpdateDimNames updateDimNames;
 
     // it's OK for the following method to update dimnames in-place as the container is "fresh"
-    private void updateDimNames(VirtualFrame frame, RAbstractContainer container, Object o) {
+    private void updateDimNames(RAbstractContainer container, Object o) {
         if (updateDimNames == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             updateDimNames = insert(UpdateDimNamesNodeGen.create(new RNode[2], null, null));
         }
-        updateDimNames.executeRAbstractContainer(frame, container, o);
+        updateDimNames.executeRAbstractContainer(container, o);
     }
 
     @CreateCast({"arguments"})
@@ -99,9 +98,9 @@ public abstract class Array extends RBuiltinNode {
     }
 
     @Specialization
-    protected RIntVector doArray(VirtualFrame frame, RAbstractIntVector vec, RAbstractIntVector dim, RList dimnames) {
+    protected RIntVector doArray(RAbstractIntVector vec, RAbstractIntVector dim, RList dimnames) {
         RIntVector ret = doArrayInt(vec, dim);
-        updateDimNames(frame, ret, dimnames);
+        updateDimNames(ret, dimnames);
         controlVisibility();
         return ret;
     }
@@ -123,9 +122,9 @@ public abstract class Array extends RBuiltinNode {
     }
 
     @Specialization
-    protected RDoubleVector doArray(VirtualFrame frame, RAbstractDoubleVector vec, RAbstractIntVector dim, RList dimnames) {
+    protected RDoubleVector doArray(RAbstractDoubleVector vec, RAbstractIntVector dim, RList dimnames) {
         RDoubleVector ret = doArrayDouble(vec, dim);
-        updateDimNames(frame, ret, dimnames);
+        updateDimNames(ret, dimnames);
         controlVisibility();
         return ret;
     }
@@ -147,9 +146,9 @@ public abstract class Array extends RBuiltinNode {
     }
 
     @Specialization
-    protected RLogicalVector doArray(VirtualFrame frame, RAbstractLogicalVector vec, RAbstractIntVector dim, RList dimnames) {
+    protected RLogicalVector doArray(RAbstractLogicalVector vec, RAbstractIntVector dim, RList dimnames) {
         RLogicalVector ret = doArrayLogical(vec, dim);
-        updateDimNames(frame, ret, dimnames);
+        updateDimNames(ret, dimnames);
         controlVisibility();
         return ret;
     }
@@ -171,9 +170,9 @@ public abstract class Array extends RBuiltinNode {
     }
 
     @Specialization
-    protected RStringVector doArray(VirtualFrame frame, RAbstractStringVector vec, RAbstractIntVector dim, RList dimnames) {
+    protected RStringVector doArray(RAbstractStringVector vec, RAbstractIntVector dim, RList dimnames) {
         RStringVector ret = doArrayString(vec, dim);
-        updateDimNames(frame, ret, dimnames);
+        updateDimNames(ret, dimnames);
         controlVisibility();
         return ret;
     }
@@ -198,9 +197,9 @@ public abstract class Array extends RBuiltinNode {
     }
 
     @Specialization
-    protected RComplexVector doArray(VirtualFrame frame, RAbstractComplexVector vec, RAbstractIntVector dim, RList dimnames) {
+    protected RComplexVector doArray(RAbstractComplexVector vec, RAbstractIntVector dim, RList dimnames) {
         RComplexVector ret = doArrayComplex(vec, dim);
-        updateDimNames(frame, ret, dimnames);
+        updateDimNames(ret, dimnames);
         controlVisibility();
         return ret;
     }
@@ -222,9 +221,9 @@ public abstract class Array extends RBuiltinNode {
     }
 
     @Specialization
-    protected RRawVector doArray(VirtualFrame frame, RAbstractRawVector vec, RAbstractIntVector dim, RList dimnames) {
+    protected RRawVector doArray(RAbstractRawVector vec, RAbstractIntVector dim, RList dimnames) {
         RRawVector ret = doArrayRaw(vec, dim);
-        updateDimNames(frame, ret, dimnames);
+        updateDimNames(ret, dimnames);
         controlVisibility();
         return ret;
     }
@@ -247,9 +246,9 @@ public abstract class Array extends RBuiltinNode {
     }
 
     @Specialization
-    protected RList doArray(VirtualFrame frame, RList vec, RAbstractIntVector dim, RList dimnames) {
+    protected RList doArray(RList vec, RAbstractIntVector dim, RList dimnames) {
         RList ret = doArrayList(vec, dim);
-        updateDimNames(frame, ret, dimnames);
+        updateDimNames(ret, dimnames);
         controlVisibility();
         return ret;
     }

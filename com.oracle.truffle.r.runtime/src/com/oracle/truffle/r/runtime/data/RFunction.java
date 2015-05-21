@@ -22,11 +22,9 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
-import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.runtime.*;
 
 /**
@@ -49,8 +47,7 @@ public final class RFunction extends RScalar implements RAttributable {
     private final RBuiltinDescriptor builtin;
     private final boolean containsDispatch;
 
-    private MaterializedFrame enclosingFrame;
-    @CompilationFinal private StableValue<MaterializedFrame> enclosingFrameAssumption;
+    private final MaterializedFrame enclosingFrame;
     private RAttributes attributes;
 
     RFunction(String name, RootCallTarget target, RBuiltinDescriptor builtin, MaterializedFrame enclosingFrame, boolean containsDispatch) {
@@ -63,7 +60,6 @@ public final class RFunction extends RScalar implements RAttributable {
         } else {
             this.enclosingFrame = enclosingFrame;
         }
-        this.enclosingFrameAssumption = new StableValue<>(this.enclosingFrame, "RFunction enclosing frame");
     }
 
     @Override
@@ -99,30 +95,6 @@ public final class RFunction extends RScalar implements RAttributable {
         return enclosingFrame;
     }
 
-    private static final ValueProfile assumptionTypeProfile = ValueProfile.createClassProfile();
-
-    public MaterializedFrame getEnclosingFrameWithAssumption() {
-        StableValue<MaterializedFrame> value = assumptionTypeProfile.profile(enclosingFrameAssumption);
-        try {
-            value.getAssumption().check();
-        } catch (InvalidAssumptionException e) {
-            return getEnclosingFrame();
-        }
-        return value.getValue();
-    }
-
-    public void setEnclosingFrame(MaterializedFrame frame) {
-        if (enclosingFrame != frame) {
-            enclosingFrameAssumption.getAssumption().invalidate();
-            enclosingFrameAssumption = new StableValue<>(frame, "RFunction enclosing frame");
-            enclosingFrame = frame;
-        }
-    }
-
-    public RFunction copy() {
-        return new RFunction(name, target, builtin, enclosingFrame, containsDispatch);
-    }
-
     public RAttributes initAttributes() {
         if (attributes == null) {
             attributes = RAttributes.create();
@@ -156,5 +128,4 @@ public final class RFunction extends RScalar implements RAttributable {
         this.name = name;
         RContext.getRRuntimeASTAccess().setFunctionName(getRootNode(), name);
     }
-
 }

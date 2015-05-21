@@ -11,12 +11,11 @@
 
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.binary.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -38,16 +37,14 @@ public abstract class UpdateClass extends RBuiltinNode {
     private final ValueProfile modeProfile = ValueProfile.createIdentityProfile();
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
-    public abstract Object execute(VirtualFrame frame, RAbstractContainer vector, Object o);
-
     @Specialization(guards = "!isStringVector(className)")
-    protected Object setClass(VirtualFrame frame, RAbstractContainer arg, RAbstractVector className) {
+    protected Object setClass(RAbstractContainer arg, RAbstractVector className) {
         controlVisibility();
         if (className.getLength() == 0) {
             return setClass(arg, RNull.instance);
         }
         initCastStringNode();
-        Object result = castStringNode.executeCast(frame, className);
+        Object result = castStringNode.executeCast(className);
         return setClass(arg, (RStringVector) result);
     }
 
@@ -68,7 +65,7 @@ public abstract class UpdateClass extends RBuiltinNode {
     }
 
     @Specialization
-    protected Object setClass(VirtualFrame frame, RAbstractContainer arg, String className) {
+    protected Object setClass(RAbstractContainer arg, String className) {
         controlVisibility();
         initTypeof();
         if (!arg.isObject(attrProfiles)) {
@@ -81,7 +78,7 @@ public abstract class UpdateClass extends RBuiltinNode {
         initCastTypeNode();
         RType mode = RType.fromMode(modeProfile.profile(className));
         if (mode != null) {
-            Object result = castTypeNode.execute(frame, arg, mode);
+            Object result = castTypeNode.execute(arg, mode);
             if (result != null) {
                 return setClass((RAbstractVector) result, RNull.instance);
             }

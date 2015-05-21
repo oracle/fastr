@@ -27,7 +27,6 @@ import java.util.function.*;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -40,22 +39,22 @@ public abstract class CastDoubleNode extends CastNode {
     private final NAProfile naProfile = NAProfile.create();
     private final BranchProfile warningBranch = BranchProfile.create();
 
-    public abstract Object executeDouble(VirtualFrame frame, int o);
+    public abstract Object executeDouble(int o);
 
-    public abstract Object executeDouble(VirtualFrame frame, double o);
+    public abstract Object executeDouble(double o);
 
-    public abstract Object executeDouble(VirtualFrame frame, byte o);
+    public abstract Object executeDouble(byte o);
 
-    public abstract Object executeDouble(VirtualFrame frame, Object o);
+    public abstract Object executeDouble(Object o);
 
     @Child private CastDoubleNode recursiveCastDouble;
 
-    private Object castDoubleRecursive(VirtualFrame frame, Object o) {
+    private Object castDoubleRecursive(Object o) {
         if (recursiveCastDouble == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             recursiveCastDouble = insert(CastDoubleNodeGen.create(null, isPreserveNames(), isDimensionsPreservation(), isAttrPreservation()));
         }
-        return recursiveCastDouble.executeDouble(frame, o);
+        return recursiveCastDouble.executeDouble(o);
     }
 
     @Specialization
@@ -202,7 +201,7 @@ public abstract class CastDoubleNode extends CastNode {
     }
 
     @Specialization
-    protected RDoubleVector doList(VirtualFrame frame, RList list) {
+    protected RDoubleVector doList(RList list) {
         int length = list.getLength();
         double[] result = new double[length];
         boolean seenNA = false;
@@ -212,7 +211,7 @@ public abstract class CastDoubleNode extends CastNode {
                 result[i] = RRuntime.DOUBLE_NA;
                 seenNA = true;
             } else {
-                Object castEntry = castDoubleRecursive(frame, entry);
+                Object castEntry = castDoubleRecursive(entry);
                 if (castEntry instanceof Double) {
                     double value = (Double) castEntry;
                     result[i] = value;
@@ -250,5 +249,4 @@ public abstract class CastDoubleNode extends CastNode {
     public static CastDoubleNode create() {
         return CastDoubleNodeGen.create(null, true, true, true);
     }
-
 }

@@ -26,7 +26,6 @@ import java.util.function.*;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -39,13 +38,13 @@ public abstract class CastComplexNode extends CastNode {
     private final NAProfile naProfile = NAProfile.create();
     private final BranchProfile warningBranch = BranchProfile.create();
 
-    public abstract Object executeComplex(VirtualFrame frame, int o);
+    public abstract Object executeComplex(int o);
 
-    public abstract Object executeComplex(VirtualFrame frame, double o);
+    public abstract Object executeComplex(double o);
 
-    public abstract Object executeComplex(VirtualFrame frame, byte o);
+    public abstract Object executeComplex(byte o);
 
-    public abstract Object executeComplex(VirtualFrame frame, Object o);
+    public abstract Object executeComplex(Object o);
 
     @Specialization
     protected RNull doNull(@SuppressWarnings("unused") RNull operand) {
@@ -157,5 +156,4 @@ public abstract class CastComplexNode extends CastNode {
     public static CastComplexNode create() {
         return CastComplexNodeGen.create(null, true, true, true);
     }
-
 }

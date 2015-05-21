@@ -60,7 +60,7 @@ public abstract class RArgumentsNode extends Node {
         @Override
         public Object[] execute(RFunction function, SourceSection callSrc, MaterializedFrame callerFrame, int depth, Object[] evaluatedArgs, ArgumentsSignature signature) {
             if (function == cachedFunction) {
-                return RArguments.createInternal(cachedFunction, callSrc, callerFrame, depth, evaluatedArgs, signature, cachedFunction.getEnclosingFrameWithAssumption());
+                return RArguments.createInternal(cachedFunction, callSrc, callerFrame, depth, evaluatedArgs, signature, cachedFunction.getEnclosingFrame());
             } else {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 return replace(new RArgumentsGenericNode()).execute(function, callSrc, callerFrame, depth, evaluatedArgs, signature);

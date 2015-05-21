@@ -57,7 +57,7 @@ public abstract class UpdateStorageMode extends RBuiltinNode {
         }
         initCastTypeNode();
         if (mode != null) {
-            Object result = castTypeNode.execute(frame, x, mode);
+            Object result = castTypeNode.execute(x, mode);
             if (result != null) {
                 if (x instanceof RAttributable && result instanceof RAbstractContainer) {
                     RAttributable rx = (RAttributable) x;
