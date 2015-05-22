@@ -96,6 +96,8 @@ public abstract class Quit extends RInvisibleBuiltinNode {
             // TODO errors should return to prompt if interactive
             RContext.getEngine().checkAndRunLast(".Last.sys");
         }
+        // destroy the context
+        RContext.getInstance().destroy();
         Utils.exit(status);
         return null;
     }

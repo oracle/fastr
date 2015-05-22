@@ -265,10 +265,9 @@ public abstract class ConnectionFunctions {
         protected RList summary(Object object) {
             BaseRConnection baseCon;
             if (object instanceof Integer) {
-                baseCon = BaseRConnection.getConnection((int) object);
+                baseCon = RContext.getRConnectionState().getConnection((int) object);
             } else if (object instanceof Double) {
-                baseCon = BaseRConnection.getConnection((int) Math.floor((Double) object));
-
+                baseCon = RContext.getRConnectionState().getConnection((int) Math.floor((Double) object));
             } else {
                 RConnection con = checkIsConnection(object);
                 baseCon = getBaseConnection(con);
@@ -927,12 +926,11 @@ public abstract class ConnectionFunctions {
         @TruffleBoundary
         protected RConnection getConnection(int what) {
             controlVisibility();
-            BaseRConnection[] allConnections = getAllConnections();
-            boolean error = what < 0 || what >= allConnections.length || allConnections[what] == null;
-            if (error) {
+            BaseRConnection con = RContext.getRConnectionState().getConnection(what);
+            if (con == null) {
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.NO_SUCH_CONNECTION, what);
             } else {
-                return allConnections[what];
+                return con;
             }
         }
     }
@@ -943,7 +941,7 @@ public abstract class ConnectionFunctions {
         @TruffleBoundary
         protected RIntVector getAllConnections() {
             controlVisibility();
-            return BaseRConnection.getAllConnectionsAsInt();
+            return RContext.getRConnectionState().getAllConnections();
         }
     }
 

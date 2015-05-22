@@ -362,6 +362,7 @@ public final class RError extends RuntimeException {
         ARGUMENT_ONLY_FIRST_1("only the first element of '%s' argument used"),
         CANNOT_OPEN_FILE("cannot open file '%s': %s"),
         NOT_CONNECTION("'%s' is not a connection"),
+        UNUSED_TEXTCONN("closing unused text connection %d (%s)"),
         INCOMPLETE_FINAL_LINE("incomplete final line found on '%s'"),
         CANNOT_OPEN_PIPE("cannot open pipe() cmd '%s': %s"),
         INVALID_TYPE_ARGUMENT("invalid 'type' (%s) of argument"),

@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.runtime.conn;
 
 import java.io.*;
+import java.lang.ref.*;
 import java.nio.*;
 import java.util.*;
 
@@ -37,30 +38,150 @@ import com.oracle.truffle.r.runtime.data.model.*;
 public class ConnectionSupport implements RContext.StateFactory {
 
     public interface ContextState extends RContext.ContextState {
-        BaseRConnection[] getAllConnections();
+        BaseRConnection getConnection(int index);
+
+        RIntVector getAllConnections();
     }
 
     /**
-     * The context specific state, which is the set of active connections.
+     * The context specific state, which is the set of active connections. We stored these as weak
+     * references to detect when they become unused whuch, when detected, results in them being
+     * closed if still open.
      */
-    private static class ContextStateImpl implements ContextState {
+    private static final class ContextStateImpl implements ContextState {
+        private static final int MAX_CONNECTIONS = 128;
         /**
          * Records all connections. The index in the array is the "descriptor" used in
-         * {@code getConnection}.
+         * {@code getConnection}. A {@code null} value indicates a slot that is not in use.
          */
-        private BaseRConnection[] allConnections = new BaseRConnection[127];
+        private final ArrayList<WeakReference<BaseRConnection>> allConnections = new ArrayList<>(MAX_CONNECTIONS);
 
-        public BaseRConnection[] getAllConnections() {
-            return allConnections;
+        /**
+         * High water mark in {@link #allConnections}.
+         */
+        private int hwm = 2;
+
+        /**
+         * Periodically we can poll the queue and close unused connections as per GnuR.
+         */
+        private final ReferenceQueue<BaseRConnection> refQueue = new ReferenceQueue<>();
+
+        private ContextStateImpl() {
+            for (int i = 0; i < MAX_CONNECTIONS; i++) {
+                allConnections.add(i, null);
+            }
+        }
+
+        public BaseRConnection getConnection(int index) {
+            if (index >= 0 && index <= hwm) {
+                WeakReference<BaseRConnection> ref = allConnections.get(index);
+                if (ref != null) {
+                    return ref.get();
+                }
+            }
+            return null;
+        }
+
+        private int setStdConnection(int index, BaseRConnection con) {
+            assert index >= 0 && index <= 2;
+            return setConnection(index, con);
+        }
+
+        private int setConnection(int index, BaseRConnection con) {
+            assert allConnections.get(index) == null;
+            allConnections.set(index, new WeakReference<>(con, refQueue));
+            return index;
+        }
+
+        public RIntVector getAllConnections() {
+            ArrayList<Integer> list = new ArrayList<>();
+            for (int i = 0; i <= hwm; i++) {
+                WeakReference<BaseRConnection> ref = allConnections.get(i);
+                if (ref != null) {
+                    BaseRConnection con = ref.get();
+                    if (con != null) {
+                        list.add(i);
+                    }
+                }
+            }
+            int[] data = new int[list.size()];
+            for (int i = 0; i < data.length; i++) {
+                data[i] = list.get(i);
+            }
+            return RDataFactory.createIntVector(data, RDataFactory.COMPLETE_VECTOR);
+        }
+
+        private void destroyConnection(int index) {
+            allConnections.get(index).clear();
+            allConnections.set(index, null);
+        }
+
+        private int setConnection(BaseRConnection con) {
+            collectUnusedConnections();
+            for (int i = 3; i < MAX_CONNECTIONS; i++) {
+                if (allConnections.get(i) == null) {
+                    if (i > hwm) {
+                        hwm = i;
+                    }
+                    return setConnection(i, con);
+                }
+            }
+            throw RError.error(RError.Message.ALL_CONNECTIONS_IN_USE);
+        }
+
+        private void beforeDestroy() {
+            // close all open connections
+            for (int i = 3; i <= hwm; i++) {
+                WeakReference<BaseRConnection> ref = allConnections.get(i);
+                if (ref != null) {
+                    BaseRConnection con = ref.get();
+                    if (con != null) {
+                        closeAndDestroy(con);
+                    }
+                    ref.clear();
+                }
+            }
+        }
+
+        private void collectUnusedConnections() {
+            while (true) {
+                Reference<? extends BaseRConnection> ref = refQueue.poll();
+                if (ref == null) {
+                    return;
+                }
+                BaseRConnection con = ref.get();
+                if (con instanceof TextConnections.TextRConnection) {
+                    RError.warning(RError.Message.UNUSED_TEXTCONN, con.descriptor, ((TextConnections.TextRConnection) con).description);
+                }
+                int index = con.descriptor;
+                closeAndDestroy(con);
+                allConnections.set(index, null);
+            }
+        }
+
+        private static void closeAndDestroy(BaseRConnection con) {
+            if (!con.closed) {
+                try {
+                    con.closeAndDestroy();
+                } catch (IOException ex) {
+                    // ignore
+                }
+            }
         }
     }
 
+    private static ContextStateImpl getContextStateImpl() {
+        return (ContextStateImpl) RContext.getRConnectionState();
+    }
+
+    @Override
     public ContextState newContext(RContext context, Object... objects) {
         return new ContextStateImpl();
     }
 
-    public static BaseRConnection[] getAllConnections() {
-        return RContext.getRConnectionState().getAllConnections();
+    @Override
+    public void beforeDestroy(RContext context, RContext.ContextState state) {
+        ((ContextStateImpl) state).beforeDestroy();
     }
 
     private static final class ModeException extends IOException {
@@ -270,7 +391,7 @@ public class ConnectionSupport implements RContext.StateFactory {
         protected BaseRConnection(ConnectionClass conClass, String modeString, AbstractOpenMode defaultModeForLazy) throws IOException {
             this(conClass, new OpenMode(modeString, defaultModeForLazy));
             if (conClass != ConnectionClass.Internal) {
-                setDescriptor(getConnectionIndex());
+                this.descriptor = getContextStateImpl().setConnection(this);
             }
         }
 
@@ -279,7 +400,7 @@ public class ConnectionSupport implements RContext.StateFactory {
          */
         protected BaseRConnection(AbstractOpenMode mode, int index) throws IOException {
             this(ConnectionClass.Terminal, new OpenMode(mode));
-            setDescriptor(index);
+            this.descriptor = getContextStateImpl().setStdConnection(index, this);
         }
 
         /**
@@ -339,16 +460,6 @@ public class ConnectionSupport implements RContext.StateFactory {
         @Override
         public boolean isTextMode() {
             return getOpenMode().isText();
-        }
-
-        private static int getConnectionIndex() {
-            BaseRConnection[] allConnections = ConnectionSupport.getAllConnections();
-            for (int i = 3; i < allConnections.length; i++) {
-                if (allConnections[i] == null) {
-                    return i;
-                }
-            }
-            throw RError.error(RError.Message.ALL_CONNECTIONS_IN_USE);
         }
 
         @Override
@@ -460,8 +571,7 @@ public class ConnectionSupport implements RContext.StateFactory {
             if (theConnection != null) {
                 theConnection.closeAndDestroy();
             }
-            assert getAllConnections()[this.descriptor] != null;
-            getAllConnections()[this.descriptor] = null;
+            getContextStateImpl().destroyConnection(this.descriptor);
         }
 
         @Override
@@ -505,38 +615,6 @@ public class ConnectionSupport implements RContext.StateFactory {
         @Override
         public int getDescriptor() {
             return descriptor;
-        }
-
-        private void setDescriptor(int index) {
-            assert getAllConnections()[index] == null;
-            this.descriptor = index;
-            getAllConnections()[index] = this;
-        }
-
-        public static BaseRConnection getConnection(int descriptor) {
-            BaseRConnection[] allConnections = getAllConnections();
-            if (descriptor >= allConnections.length || allConnections[descriptor] == null) {
-                throw RError.error(RError.Message.INVALID_CONNECTION);
-            }
-            return allConnections[descriptor];
-        }
-
-        public static RIntVector getAllConnectionsAsInt() {
-            BaseRConnection[] allConnections = getAllConnections();
-            int resLen = 0;
-            for (int i = 0; i < allConnections.length; i++) {
-                if (allConnections[i] != null) {
-                    resLen++;
-                }
-            }
-            int[] data = new int[resLen];
-            int ind = 0;
-            for (int i = 0; i < allConnections.length; i++) {
-                if (allConnections[i] != null) {
-                    data[ind++] = i;
-                }
-            }
-            return RDataFactory.createIntVector(data, RDataFactory.COMPLETE_VECTOR);
         }
 
         public OpenMode getOpenMode() {
