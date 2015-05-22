@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.unary;
 
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
@@ -95,7 +96,12 @@ public abstract class CastStringNode extends CastNode {
         String[] sdata = new String[operand.getLength()];
         // conversions to character will not introduce new NAs
         for (int i = 0; i < operand.getLength(); i++) {
-            sdata[i] = toString(operand.getDataAtAsObject(i));
+            Object o = operand.getDataAtAsObject(i);
+            if (o instanceof RLanguage) {
+                sdata[i] = RDeparse.deparseForPrint(o);
+            } else {
+                sdata[i] = toString(o);
+            }
         }
         RStringVector ret = RDataFactory.createStringVector(sdata, operand.isComplete(), getPreservedDimensions(operand), getPreservedNames(operand));
         preserveDimensionNames(operand, ret);
