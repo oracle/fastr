@@ -727,7 +727,9 @@ public class RSerialize {
         /**
          * GnuR uses a pairlist to represent attributes, whereas FastR uses the abstract RAttributes
          * class. FastR also uses different types to represent data/frame and factor which is
-         * handled in the setClassAttr
+         * handled in the setClassAttr. N.B. In theory connections can be unserialized but they are
+         * unusable, so we don't go to the trouble of converting the {@link RIntVector}
+         * representation into an {@link RConnection}.
          */
         private static Object setAttributes(final Object object, Object attr) {
             RAttributable rAttributable = (RAttributable) object;
@@ -738,7 +740,8 @@ public class RSerialize {
                 String tag = tagSym.getName().intern();
                 // this may convert a plain vector to a data.frame or factor
                 if (result instanceof RVector && tag.equals(RRuntime.CLASS_ATTR_KEY)) {
-                    result = ((RVector) result).setClassAttr((RStringVector) pl.car(), false);
+                    RStringVector classes = (RStringVector) pl.car();
+                    result = ((RVector) result).setClassAttr(classes, false);
                 } else {
                     rAttributable.setAttr(tag, pl.car());
                 }
@@ -1198,6 +1201,8 @@ public class RSerialize {
                 case FASTR_DATAFRAME:
                 case FASTR_FACTOR:
                     return SEXPTYPE.VECSXP;
+                case FASTR_CONNECTION:
+                    return SEXPTYPE.INTSXP;
                 default:
                     return type;
             }
@@ -1261,10 +1266,6 @@ public class RSerialize {
             } else if (type == SEXPTYPE.FASTR_FACTOR) {
                 RFactor factor = (RFactor) obj;
                 writeItem(factor.getVector());
-                return;
-            } else if (type == SEXPTYPE.FASTR_SOCKET_CONN || type == SEXPTYPE.FASTR_FILE_CONN) {
-                // serializing a socket or file connection is not meaningful
-                writeItem(RDataFactory.createIntVectorFromScalar(RRuntime.INT_NA));
                 return;
             } else {
                 // flags
@@ -1391,6 +1392,14 @@ public class RSerialize {
                         break;
                     }
 
+                    case EXTPTRSXP: {
+                        addReadRef(obj);
+                        RExternalPtr xptr = (RExternalPtr) obj;
+                        writeItem(RNull.instance);
+                        writeItem(RDataFactory.createSymbol(xptr.tag));
+                        break;
+                    }
+
                     /*
                      * FastR scalar, (length 1) "vectors"
                      */
@@ -1425,6 +1434,13 @@ public class RSerialize {
                         stream.writeInt(1);
                         stream.writeDouble(value.getRealPart());
                         stream.writeDouble(value.getImaginaryPart());
+                        break;
+                    }
+
+                    case FASTR_CONNECTION: {
+                        RConnection con = (RConnection) obj;
+                        stream.writeInt(1);
+                        stream.writeInt(con.getDescriptor());
                         break;
                     }
 

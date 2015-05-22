@@ -412,6 +412,8 @@ public class ConnectionSupport implements RContext.StateFactory {
             classes[0] = conClass.printName;
             classes[1] = "connection";
             getAttributes().put(RRuntime.CLASS_ATTR_KEY, RDataFactory.createStringVector(classes, RDataFactory.COMPLETE_VECTOR));
+            // For GnuR compatibility we define the "conn_id" attribute
+            getAttributes().put("conn_id", RDataFactory.createExternalPtr(0, "connection"));
         }
 
         protected void openNonLazyConnection() throws IOException {

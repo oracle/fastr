@@ -43,7 +43,7 @@ public enum SEXPTYPE {
     VECSXP(19, RList.class), /* generic vectors */
     EXPRSXP(20, RExpression.class), /* expressions vectors */
     BCODESXP(21), /* byte code */
-    EXTPTRSXP(22), /* external pointer */
+    EXTPTRSXP(22, RExternalPtr.class), /* external pointer */
     WEAKREFSXP(23), /* weak reference */
     RAWSXP(24, RRawVector.class), /* raw bytes */
     S4SXP(25), /* S4 non-vector */
@@ -83,10 +83,7 @@ public enum SEXPTYPE {
     FASTR_FACTOR(305, RFactor.class),
     // very special case
     FASTR_SOURCESECTION(306, SourceSection.class),
-
-    // Other FastR internals
-    FASTR_SOCKET_CONN(400, SocketConnections.RSocketConnection.class),
-    FASTR_FILE_CONN(401, FileConnections.FileRConnection.class),
+    FASTR_CONNECTION(307, RConnection.class),
 
     EMPTYARG_SXP(500, REmpty.class);
 
@@ -133,9 +130,11 @@ public enum SEXPTYPE {
                 }
             }
         }
-        // (only) environments have subtypes
+        // (only) environments and connections have subtypes
         if (REnvironment.class.isAssignableFrom(fastRClass)) {
             return ENVSXP;
+        } else if (RConnection.class.isAssignableFrom(fastRClass)) {
+            return FASTR_CONNECTION;
         }
         throw RInternalError.shouldNotReachHere(fastRClass.getName());
     }
