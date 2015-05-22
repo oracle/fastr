@@ -47,8 +47,6 @@ import com.oracle.truffle.r.runtime.env.*;
  * parse(file, n, text, prompt, srcfile, encoding)
  * </pre>
  *
- * TODO handle case when {@code srcFile != NULL};
- *
  * There are two main modalities in the arguments:
  * <ul>
  * <li>Input is taken from "conn" or "text" (in which case conn==stdin(), but ignored).</li>
@@ -211,6 +209,8 @@ public abstract class Parse extends RBuiltinNode {
         }
     }
 
+    private static final RStringVector SRCREF_CLASS = RDataFactory.createStringVectorFromScalar("srcref");
+
     private static void addAttributes(RExpression exprs, Source source, REnvironment srcFile) {
         Object[] srcrefData = new Object[exprs.getLength()];
         for (int i = 0; i < srcrefData.length; i++) {
@@ -231,6 +231,8 @@ public abstract class Parse extends RBuiltinNode {
             llocData[6] = startLine;
             llocData[7] = lastLine;
             RIntVector lloc = RDataFactory.createIntVector(llocData, RDataFactory.COMPLETE_VECTOR);
+            lloc.setClassAttr(SRCREF_CLASS, false);
+            lloc.setAttr("srcfile", srcFile);
             srcrefData[i] = lloc;
         }
         exprs.setAttr("srcref", RDataFactory.createList(srcrefData));
