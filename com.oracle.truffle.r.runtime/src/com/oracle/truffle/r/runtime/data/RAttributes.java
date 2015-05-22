@@ -69,7 +69,7 @@ public final class RAttributes implements Iterable<RAttributes.RAttribute> {
 
     private static final ConditionProfile statsProfile = ConditionProfile.createBinaryProfile();
 
-    static RAttributes create() {
+    public static RAttributes create() {
         return new RAttributes();
     }
 

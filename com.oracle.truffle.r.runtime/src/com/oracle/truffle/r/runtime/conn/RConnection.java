@@ -36,9 +36,22 @@ import com.oracle.truffle.r.runtime.data.model.*;
  *
  * TODO Refactor the pushBack code into ConnectionsSupport
  */
-public abstract class RConnection implements RClassHierarchy, RTypedValue, AutoCloseable {
+public abstract class RConnection implements RClassHierarchy, RAttributable, RTypedValue, AutoCloseable {
 
     private LinkedList<String> pushBack;
+
+    /**
+     * Connections always have at least a class attribute.
+     */
+    private RAttributes attributes = RAttributes.create();
+
+    public RAttributes initAttributes() {
+        return attributes;
+    }
+
+    public RAttributes getAttributes() {
+        return attributes;
+    }
 
     public abstract String[] readLinesInternal(int n) throws IOException;
 

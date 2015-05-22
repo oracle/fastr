@@ -250,11 +250,6 @@ public class ConnectionSupport implements RContext.StateFactory {
         private OpenMode openMode;
 
         /**
-         * The classes of the connection, which always includes "connection".
-         */
-        private final RStringVector classHr;
-
-        /**
          * The actual connection, if delegated.
          */
         protected DelegateRConnection theConnection;
@@ -295,7 +290,7 @@ public class ConnectionSupport implements RContext.StateFactory {
             String[] classes = new String[2];
             classes[0] = conClass.printName;
             classes[1] = "connection";
-            this.classHr = RDataFactory.createStringVector(classes, RDataFactory.COMPLETE_VECTOR);
+            getAttributes().put(RRuntime.CLASS_ATTR_KEY, RDataFactory.createStringVector(classes, RDataFactory.COMPLETE_VECTOR));
         }
 
         protected void openNonLazyConnection() throws IOException {
@@ -549,7 +544,7 @@ public class ConnectionSupport implements RContext.StateFactory {
         }
 
         public RStringVector getClassHr() {
-            return classHr;
+            return (RStringVector) getAttributes().get(RRuntime.CLASS_ATTR_KEY);
         }
 
         public boolean isClosed() {
