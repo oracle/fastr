@@ -742,6 +742,9 @@ public class TestSimpleBuiltins extends TestBase {
 
         assertEval("{ x<-as.character(Sys.time()) }");
         assertEval("{ f<-function(x) { sys.call() }; as.character(f(7)) }");
+
+        assertEval("{ f1<-function() 7; f2<-function(x) { sys.call() }; as.character(f2(f1())) }");
+        assertEval("{ f1<-function(x) 7; f2<-function(y) { sys.call() }; as.character(f2(f1(42))) }");
     }
 
     @Test
