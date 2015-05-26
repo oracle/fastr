@@ -38,6 +38,7 @@ import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.access.variables.*;
 import com.oracle.truffle.r.nodes.instrument.*;
+import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RArguments.S3Args;
 import com.oracle.truffle.r.runtime.data.*;
@@ -195,7 +196,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
             } else {
                 return ex.getResult();
             }
-        } catch (RInternalError | UnsupportedSpecializationException e) {
+        } catch (RInternalError | UnsupportedSpecializationException | ConversionFailedException e) {
             CompilerDirectives.transferToInterpreter();
             runOnExitHandlers = false;
             throw e;
