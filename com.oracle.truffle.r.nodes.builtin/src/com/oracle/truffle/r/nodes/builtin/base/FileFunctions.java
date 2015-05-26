@@ -525,6 +525,9 @@ public class FileFunctions {
     // TODO Implement all the options
     @RBuiltin(name = "list.files", kind = INTERNAL, parameterNames = {"path", "pattern", "all.files", "full.names", "recursive", "ignore.case", "include.dirs", "no.."})
     public abstract static class ListFiles extends RBuiltinNode {
+        private static final String DOT = ".";
+        private static final String DOTDOT = "..";
+
         @SuppressWarnings("unused")
         @Specialization
         @TruffleBoundary
@@ -548,7 +551,7 @@ public class FileFunctions {
             return doListFilesBody(vec, pattern, allFiles, fullNames, recursive, ignoreCase, includeDirs, noDotDot);
         }
 
-        protected RStringVector doListFilesBody(RAbstractStringVector vec, String pattern, byte allFilesL, byte fullNamesL, byte recursiveL, byte ignoreCaseL, byte includeDirsL, byte noDotDotL) {
+        protected RStringVector doListFilesBody(RAbstractStringVector vec, String patternString, byte allFilesL, byte fullNamesL, byte recursiveL, byte ignoreCaseL, byte includeDirsL, byte noDotDotL) {
             controlVisibility();
             boolean allFiles = RRuntime.fromLogical(allFilesL);
             boolean fullNames = RRuntime.fromLogical(fullNamesL);
@@ -557,6 +560,7 @@ public class FileFunctions {
             boolean ignoreCase = check(ignoreCaseL, "ignoreCase");
             boolean includeDirs = !recursive || RRuntime.fromLogical(includeDirsL);
             boolean noDotDot = RRuntime.fromLogical(noDotDotL);
+            Pattern pattern = patternString == null ? null : Pattern.compile(patternString);
             // Curiously the result is not a vector of same length as the input,
             // as typical for R, but a single vector, which means duplicates may occur
             ArrayList<String> files = new ArrayList<>();
@@ -568,12 +572,11 @@ public class FileFunctions {
                     continue;
                 }
                 Path rootPath = root.toPath();
-                try (Stream<Path> stream = Files.find(rootPath, recursive ? Integer.MAX_VALUE : 1, new FileMatcher(pattern, allFiles, includeDirs, noDotDot))) {
+                try (Stream<Path> stream = Files.find(rootPath, recursive ? Integer.MAX_VALUE : 1, new FileMatcher(pattern, allFiles, includeDirs))) {
                     Iterator<Path> iter = stream.iterator();
                     Path vecPath = null;
                     if (!fullNames) {
-                        FileSystem fileSystem = FileSystems.getDefault();
-                        vecPath = fileSystem.getPath(vecPathString);
+                        vecPath = FileSystems.getDefault().getPath(vecPathString);
                     }
                     while (iter.hasNext()) {
                         Path file = iter.next();
@@ -584,6 +587,18 @@ public class FileFunctions {
                             file = vecPath.relativize(file);
                         }
                         files.add(file.toString());
+                    }
+                    /*
+                     * Annoyingly "." and ".." are never visited by Files.find, so we have to
+                     * process them manually.
+                     */
+                    if (!noDotDot) {
+                        if (pattern == null || pattern.matcher(DOT).find()) {
+                            files.add(fullNames ? FileSystems.getDefault().getPath(vecPathString, DOT).toString() : DOT);
+                        }
+                        if (pattern == null || pattern.matcher(DOTDOT).find()) {
+                            files.add(fullNames ? FileSystems.getDefault().getPath(vecPathString, DOTDOT).toString() : DOTDOT);
+                        }
                     }
                 } catch (IOException ex) {
                     // ignored
@@ -611,14 +626,12 @@ public class FileFunctions {
         private static class FileMatcher implements BiPredicate<Path, BasicFileAttributes> {
             final Pattern pattern;
             final boolean includeDirs;
-            final boolean noDotDot;
             final boolean allFiles;
 
-            FileMatcher(String pattern, boolean allFiles, boolean includeDirs, boolean noDotDot) {
+            FileMatcher(Pattern pattern, boolean allFiles, boolean includeDirs) {
                 this.allFiles = allFiles;
                 this.includeDirs = includeDirs;
-                this.noDotDot = noDotDot;
-                this.pattern = pattern == null ? null : Pattern.compile(pattern);
+                this.pattern = pattern;
             }
 
             public boolean test(Path path, BasicFileAttributes u) {
@@ -626,9 +639,6 @@ public class FileFunctions {
                     return false;
                 }
                 if (!allFiles && path.getFileName().toString().charAt(0) == '.') {
-                    return false;
-                }
-                if (noDotDot && path.getFileName().toString().equals("..")) {
                     return false;
                 }
                 if (pattern == null) {

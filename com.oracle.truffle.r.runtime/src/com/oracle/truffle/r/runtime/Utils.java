@@ -276,7 +276,7 @@ public final class Utils {
                  * support in Java as much of it works relative to the initial setting.
                  */
                 if (path.length() == 0) {
-                    return wdState().getCurrentPath().toString();
+                    return keepRelative ? path : wdState().getCurrentPath().toString();
                 } else {
                     Path p = wdState().getFileSystem().getPath(path);
                     if (p.isAbsolute()) {
