@@ -85,7 +85,7 @@ public class FileFunctions {
              * There are two simple (non-trivial) cases and one tricky 1. 1. Append one or more
              * files to a single file (len1 == 1, len2 >= 1) 2. Append one file to one file for
              * several files (len1 == len2)
-             *
+             * 
              * The tricky case is when len1 > 1 && len2 > len1. E.g. f1,f2 <- g1,g2,g3 In this case,
              * this is really f1,f2,f1 <- g1,g2,g3
              */
@@ -215,7 +215,6 @@ public class FileFunctions {
         private static final RStringVector NAMES_VECTOR = RDataFactory.createStringVector(NAMES, RDataFactory.COMPLETE_VECTOR);
         private static final RStringVector OCTMODE = RDataFactory.createStringVectorFromScalar("octmode");
 
-        @SuppressWarnings("unused")
         @Specialization
         @TruffleBoundary
         protected RList doFileInfo(RAbstractStringVector vec) {
@@ -224,7 +223,7 @@ public class FileFunctions {
              * the information. The R closure that called the .Internal turns the result into a
              * dataframe and sets the row.names attributes to the paths in vec. It also updates the
              * mtime, ctime, atime fields using .POSIXct.
-             *
+             * 
              * We try to use the JDK classes, even though they provide a more abstract interface
              * than R. In particular there seems to be no way to get the uid/gid values. We might be
              * better off justing using a native call.
@@ -233,14 +232,13 @@ public class FileFunctions {
             int vecLength = vec.getLength();
             Object[] data = new Object[NAMES.length];
             boolean[] complete = new boolean[NAMES.length];
-            for (int n = 0; n < Column.values().length; n++) {
+            for (int n = 0; n < Column.VALUES.length; n++) {
                 data[n] = createColumnData(Column.VALUES[n], vecLength);
                 complete[n] = RDataFactory.COMPLETE_VECTOR; // optimistic
             }
             FileSystem fileSystem = FileSystems.getDefault();
             for (int i = 0; i < vecLength; i++) {
                 String vecPath = vec.getDataAt(i);
-                Object colVec = data[i];
                 Path path = fileSystem.getPath(Utils.tildeExpand(vecPath));
                 // missing defaults to NA
                 if (Files.exists(path)) {
