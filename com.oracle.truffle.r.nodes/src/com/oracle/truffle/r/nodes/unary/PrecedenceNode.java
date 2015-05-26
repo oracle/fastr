@@ -163,4 +163,9 @@ public abstract class PrecedenceNode extends Node {
         return INT_PRECEDENCE;
     }
 
+    @Specialization(guards = {"recursive == LOGICAL_FALSE", "args.getLength() == 1"})
+    protected int doArgsValuesAndNames(RArgsValuesAndNames args, byte recursive, @Cached("createRecursive()") PrecedenceNode precedenceNode) {
+        return precedenceNode.executeInteger(args.getArgument(0), recursive);
+    }
+
 }
