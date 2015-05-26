@@ -112,6 +112,7 @@ public class BasePackage extends RBuiltinPackage {
         add(Combine.class, CombineNodeGen::create);
         add(CommandArgs.class, CommandArgsNodeGen::create);
         add(Complex.class, ComplexNodeGen::create);
+        add(CompilePKGS.class, CompilePKGSNodeGen::create);
         add(ConditionFunctions.AddCondHands.class, ConditionFunctionsFactory.AddCondHandsNodeGen::create);
         add(ConditionFunctions.AddRestart.class, ConditionFunctionsFactory.AddRestartNodeGen::create);
         add(ConditionFunctions.DfltStop.class, ConditionFunctionsFactory.DfltStopNodeGen::create);
