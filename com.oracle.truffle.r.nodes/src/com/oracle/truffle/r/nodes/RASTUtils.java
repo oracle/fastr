@@ -208,8 +208,10 @@ public class RASTUtils {
         } else if (fn instanceof RCallNode) {
             return RCallNode.createCall(null, (RCallNode) fn, callArgsNode, null);
         } else {
-            // some value that we cannot represent (from substitute)
-            throw RError.error(RError.Message.IMPOSSIBLE_SUBSTITUTE);
+            // this of course would not make much sense if trying to evaluate this call, yet it's
+            // syntactically possible, for example as a result of:
+            // f<-function(x,y) sys.call(); x<-f(7, 42); x[c(2,3)]
+            return RCallNode.createCall(null, ConstantNode.create(fn), callArgsNode, null);
         }
     }
 

@@ -1851,6 +1851,32 @@ public abstract class AccessArrayNode extends RNode implements RSyntaxNode {
         return lang.getDataAtAsObject(position - 1);
     }
 
+    private static RNode unwrapToRNode(Object o) {
+        if (o instanceof RLanguage) {
+            return (RNode) RASTUtils.unwrap(((RLanguage) o).getRep());
+        } else {
+            // o is RSymbol or a primitive value
+            return ConstantNode.create(o);
+        }
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization
+    protected Object access(VirtualFrame frame, RLanguage lang, Object exact, int recLevel, RIntVector position, Object dropDim) {
+        int resLength = position.getLength();
+        CallArgumentsNode args = null;
+        RNode fn = unwrapToRNode(lang.getDataAtAsObject(position.getDataAt(0) - 1));
+        RNode[] data = new RNode[resLength - 1];
+        if (resLength > 1) {
+            for (int i = 1; i < resLength; i++) {
+                Object o = lang.getDataAtAsObject(position.getDataAt(i) - 1);
+                data[i - 1] = unwrapToRNode(o);
+            }
+            args = CallArgumentsNode.createUnnamed(true, true, data);
+        }
+        return RDataFactory.createLanguage(RASTUtils.createCall(fn, args));
+    }
+
     @SuppressWarnings("unused")
     @Specialization
     protected Object access(RPairList pairlist, Object exact, int recLevel, int position, Object dropDim) {

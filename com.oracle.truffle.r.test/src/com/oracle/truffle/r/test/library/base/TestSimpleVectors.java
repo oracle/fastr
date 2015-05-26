@@ -635,6 +635,13 @@ public class TestSimpleVectors extends TestBase {
         assertEval(Output.ContainsError, "{ x<-c(1,2,3,4); dim(x)<-c(2,2); x[[as.raw(1), 1]]<-NULL }");
         assertEval(Output.ContainsError, "{ x<-1:4; x[[1]]<-NULL; x }");
 
+        assertEval("{ f<-function(x,y) sys.call(); x<-f(7, 42); x[c(1,2)] }");
+        assertEval("{ f<-function(x,y) sys.call(); x<-f(7, 42); typeof(x[c(1,2)]) }");
+        assertEval("{ f<-function(x,y) sys.call(); x<-f(7, 42); typeof(x[c(1,2)][[1]]) }");
+        assertEval("{ f<-function(x,y) sys.call(); x<-f(7, 42); typeof(x[c(1,2)][[2]]) }");
+        assertEval("{ f<-function(x,y) sys.call(); x<-f(7, 42); x[c(2,3)] }");
+        assertEval("{ f<-function(x,y) sys.call(); x<-f(7, 42); x[-1]}");
+
         /*
          * These tests, which should generate errors, appear to be non-deterministic in GnuR in the
          * error message produced. It is either "more elements supplied than there are to replace"
