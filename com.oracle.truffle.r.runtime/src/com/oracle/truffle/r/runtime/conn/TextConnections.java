@@ -190,18 +190,7 @@ public class TextConnections {
         public void close() throws IOException {
         }
 
-        @Override
-        public void writeLines(RAbstractStringVector lines, String sep) throws IOException {
-            StringBuffer sb = new StringBuffer();
-            if (incompleteLine != null) {
-                sb.append(incompleteLine);
-                incompleteLine = null;
-            }
-            for (int i = 0; i < lines.getLength(); i++) {
-                sb.append(lines.getDataAt(i));
-                sb.append(sep);
-            }
-            String result = sb.toString();
+        private void writeStringInternal(String result) {
             int nlIndex;
             int px = 0;
             ArrayList<String> appendedLines = new ArrayList<>();
@@ -230,6 +219,21 @@ public class TextConnections {
                 // TODO: is vector really complete?
                 initTextVec(RDataFactory.createStringVector(updateData, RDataFactory.COMPLETE_VECTOR), textBase);
             }
+
+        }
+
+        @Override
+        public void writeLines(RAbstractStringVector lines, String sep) throws IOException {
+            StringBuffer sb = new StringBuffer();
+            if (incompleteLine != null) {
+                sb.append(incompleteLine);
+                incompleteLine = null;
+            }
+            for (int i = 0; i < lines.getLength(); i++) {
+                sb.append(lines.getDataAt(i));
+                sb.append(sep);
+            }
+            writeStringInternal(sb.toString());
         }
 
         @Override
@@ -238,7 +242,7 @@ public class TextConnections {
 
         @Override
         public void writeString(String s, boolean nl) throws IOException {
-            throw RError.nyi(null, "writeString on text connection");
+            writeStringInternal(nl ? new StringBuffer(s).append('\n').toString() : s);
         }
 
         @Override
