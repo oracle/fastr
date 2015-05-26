@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.test.generate;
 
+import java.util.*;
 import java.util.concurrent.*;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -107,7 +108,9 @@ public final class FastRSession implements RSession {
 
     public RContext createTestContext() {
         create();
-        return RContextFactory.createSharedPackages(main, new String[0], consoleHandler).activate();
+        RContext context = RContextFactory.createSharedPackages(main, new String[0], consoleHandler).activate();
+        context.setSystemTimeZone(TimeZone.getTimeZone("CET"));
+        return context;
     }
 
     private FastRSession() {

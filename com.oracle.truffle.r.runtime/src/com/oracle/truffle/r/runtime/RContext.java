@@ -766,6 +766,16 @@ public final class RContext extends ExecutionContext {
         return consoleHandler;
     }
 
+    private TimeZone timeZone = TimeZone.getDefault();
+
+    public TimeZone getSystemTimeZone() {
+        return timeZone;
+    }
+
+    public void setSystemTimeZone(TimeZone timeZone) {
+        this.timeZone = timeZone;
+    }
+
     /**
      * This is a static property of the implementation and not context-specific.
      */
