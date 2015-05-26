@@ -820,7 +820,7 @@ public class FileFunctions {
                 CopyOption[] copyOptions;
                 if (copyMode || copyDate) {
                     copyOptions = new CopyOption[overWrite ? 2 : 1];
-                    copyOptions[1] = StandardCopyOption.COPY_ATTRIBUTES;
+                    copyOptions[overWrite ? 1 : 0] = StandardCopyOption.COPY_ATTRIBUTES;
                 } else if (overWrite) {
                     copyOptions = new CopyOption[1];
                 } else {
@@ -830,12 +830,20 @@ public class FileFunctions {
                     copyOptions[0] = StandardCopyOption.REPLACE_EXISTING;
                 }
                 FileSystem fileSystem = FileSystems.getDefault();
-                Path toDir = fileSystem.getPath(Utils.tildeExpand(vecTo.getDataAt(0)));
+                Path toDir = null;
+                if (vecTo.getLength() == 1) {
+                    Path vecTo0Path = fileSystem.getPath(Utils.tildeExpand(vecTo.getDataAt(0)));
+                    if (Files.isDirectory(vecTo0Path)) {
+                        toDir = vecTo0Path;
+                    }
+                }
 
                 for (int i = 0; i < lenFrom; i++) {
                     String from = vecFrom.getDataAt(i % lenFrom);
                     String to = vecTo.getDataAt(i % lenTo);
-                    to = fileSystem.getPath(toDir.toString(), from).toString();
+                    if (toDir != null && !fileSystem.getPath(Utils.tildeExpand(from, true)).isAbsolute()) {
+                        to = toDir.resolve(from).toString();
+                    }
                     Path fromPath = fileSystem.getPath(Utils.tildeExpand(from));
                     Path toPath = fileSystem.getPath(Utils.tildeExpand(to));
                     status[i] = RRuntime.LOGICAL_TRUE;

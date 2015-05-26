@@ -261,7 +261,7 @@ public final class Utils {
      * was relative it is adjusted for the new curwd setting. If {@code keepRelative == true} the
      * value is returned as a relative path, otherwise absolute. Almost all use cases should call
      * {@link #tildeExpand(String)} because providing a relative path to Java file methods with a
-     * shifted curwd will not produce the right result. This @code keepRelative == true} case is
+     * shifted curwd will not produce the right result. This {@code keepRelative == true} case is
      * required for file/directory listings.
      */
     public static String tildeExpand(String path, boolean keepRelative) {
