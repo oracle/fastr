@@ -217,11 +217,11 @@ public class InfixEmulationFunctions {
         protected final ConditionProfile multiIndexProfile = ConditionProfile.createBinaryProfile();
 
         protected Object getInternal(VirtualFrame frame, Object x, RArgsValuesAndNames inds, RAbstractLogicalVector dropVec) {
-            return access(frame, x, RRuntime.LOGICAL_FALSE, inds, dropVec, IS_SUBSET);
+            return access(frame, x, RRuntime.LOGICAL_TRUE, inds, dropVec, IS_SUBSET);
         }
 
         protected Object getInternal(VirtualFrame frame, Object x, RArgsValuesAndNames inds, RMissing dropVec) {
-            return access(frame, x, RRuntime.LOGICAL_FALSE, inds, dropVec, IS_SUBSET);
+            return access(frame, x, RRuntime.LOGICAL_TRUE, inds, dropVec, IS_SUBSET);
         }
 
         @SuppressWarnings("unused")

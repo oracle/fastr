@@ -269,6 +269,7 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ x<-c(TRUE,TRUE,FALSE); x[2L] }");
         assertEval("{ x<-c(TRUE,TRUE,FALSE); x[3L] }");
 
+        assertEval("{ v<-c(a=\"foo\", aa=\"me\"); v[\"a\"] }");
         assertEval("{ x<-c(1,2); x[c(\"a\")] }");
         assertEval(Output.ContainsError, "{ x<-c(1,2); x[[c(\"a\")]] }");
         assertEval("{ x<-c(1,2); dim(x)<-c(1,2); x[c(\"a\")] }");
