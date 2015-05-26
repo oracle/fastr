@@ -270,6 +270,16 @@ public abstract class CastIntegerNode extends CastNode {
         return factor.getVector();
     }
 
+    // TODO Should be type-variable and moved to CastNode
+    @Specialization(guards = {"args.getLength() == 1", "isIntVector(args.getArgument(0))"})
+    protected RIntVector doRArgsValuesAndNames(RArgsValuesAndNames args) {
+        return (RIntVector) args.getArgument(0);
+    }
+
+    protected static boolean isIntVector(Object arg) {
+        return arg instanceof RIntVector;
+    }
+
     @Fallback
     @TruffleBoundary
     public int doOther(Object operand) {
