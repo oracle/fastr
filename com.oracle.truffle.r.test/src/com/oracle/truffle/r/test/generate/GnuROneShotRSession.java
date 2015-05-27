@@ -46,6 +46,7 @@ public class GnuROneShotRSession implements RSession {
 
     protected Process createGnuR() throws IOException {
         ProcessBuilder pb = new ProcessBuilder(GNUR_COMMANDLINE);
+        // fix time zone to "CET" (to create consistent expected output)
         pb.environment().put("TZ", "CET");
         pb.redirectErrorStream(true);
         Process p = pb.start();

@@ -66,7 +66,7 @@ public class TestSimpleArrays extends TestBase {
         assertEval(Output.ContainsError, "{ e <- new.env(); assign(\"a\", 1, e); e[\"a\"] }");
         assertEval(Output.ContainsError, "{ e <- new.env(); assign(\"a\", 1, e); e[[1]] }");
 
-        assertEval(Ignored.Unimplemented, "{ x <- c(1, 2); names(x) <- c(\"A\", \"A2\"); x[\"A\"] }");
+        assertEval("{ x <- c(1, 2); names(x) <- c(\"A\", \"A2\"); x[\"A\"] }");
 
     }
 

@@ -110,9 +110,6 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
             argumentNames[index] = e.getName();
             ASTNode val = e.getValue();
             if (val != null) {
-                // the source must include a value assignment (if there is one) - this is ensured by
-                // assigning the source section of the argument node
-                val.setSource(e.getSource());
                 nodes[index] = val.accept(this).asRNode();
             }
             if (e.getSource() != null) {

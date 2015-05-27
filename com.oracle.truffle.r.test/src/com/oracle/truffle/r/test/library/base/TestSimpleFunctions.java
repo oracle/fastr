@@ -95,9 +95,9 @@ public class TestSimpleFunctions extends TestBase {
         assertEval(Output.ContainsError, "{ f <- function(x) { x } ; f() }");
         assertEval(Output.ContainsError, "{ x<-function(y,b){1} ; x(y=1,y=3,4) }");
         assertEval(Output.ContainsError, "{ x<-function(foo,bar){foo*bar} ; x(fo=10,f=1,2) }");
+        assertEval(Output.ContainsError, "{ x<-function(){1} ; x(y=1) }");
+        assertEval(Output.ContainsError, "{ f <- function(a,b,c,d) { a + b } ; f(1,x=1,2,3,4) }");
 
-        assertEval(Ignored.Unknown, Output.ContainsError, "{ f <- function(a,b,c,d) { a + b } ; f(1,x=1,2,3,4) }");
-        assertEval(Ignored.Unknown, Output.ContainsError, "{ x<-function(){1} ; x(y=1) }");
         assertEval(Ignored.Unknown, Output.ContainsError, "{ x<-function(y, b){1} ; x(y=1, 2, 3, z = 5) }");
         assertEval(Ignored.Unknown, Output.ContainsError, "{ x<-function(a){1} ; x(1,) }");
 
@@ -257,15 +257,15 @@ public class TestSimpleFunctions extends TestBase {
         assertEval("{ g <- function(x, ...) f(x,...); f <-function(x,...) c(x, ...); g(1) }");
 
         assertEval(Output.ContainsError, "{ g <- function(a,b,x) { a + b * x } ; f <- function(...) { g(x=4, ..., 10) }  ; f(b=1,a=2) }");
+        assertEval(Output.ContainsError, "{ f <- function(a, barg, bextra, dummy) { a + barg } ; g <- function(...) { f(a=1, ..., x=2) } ; g(1) }");
+        assertEval(Output.ContainsError, "{ f <- function(a, barg, bextra, dummy) { a + barg } ; g <- function(...) { f(a=1, ..., xxx=2) } ; g(1) }");
+        assertEval(Output.ContainsError, "{ f <- function(a, barg, bextra, dummy) { a + barg } ; g <- function(...) { f(a=1, xxx=2, ...) } ; g(1) }");
 
         assertEval(Ignored.Unknown, "{ f <- function(...) { substitute(..1) } ;  f(x+y) }");
 
         assertEval(Ignored.Unknown, Output.ContainsError, "{ lapply(1:3, \"dummy\") }");
 
-        assertEval(Ignored.Unknown, Output.ContainsError, "{ f <- function(a, barg, bextra, dummy) { a + barg } ; g <- function(...) { f(a=1, ..., x=2) } ; g(1) }");
         assertEval(Ignored.Unknown, Output.ContainsError, "{ f <- function(a, barg, bextra, dummy) { a + barg } ; g <- function(...) { f(a=1, ..., x=2,z=3) } ; g(1) }");
-        assertEval(Ignored.Unknown, Output.ContainsError, "{ f <- function(a, barg, bextra, dummy) { a + barg } ; g <- function(...) { f(a=1, ..., xxx=2) } ; g(1) }");
-        assertEval(Ignored.Unknown, Output.ContainsError, "{ f <- function(a, barg, bextra, dummy) { a + barg } ; g <- function(...) { f(a=1, xxx=2, ...) } ; g(1) }");
         assertEval(Ignored.Unknown, Output.ContainsError, "{ f <- function(a, barg, bextra, dummy) { a + barg } ; g <- function(...) { f(a=1, ...,,,) } ; g(1) }");
         assertEval(Ignored.Unknown, Output.ContainsError, "{ f <- function(...) { ..2 + ..2 } ; f(1,,2) }");
         assertEval(Ignored.Unknown, Output.ContainsError, "{ f <- function(...) { ..1 + ..2 } ; f(1,,3) }");

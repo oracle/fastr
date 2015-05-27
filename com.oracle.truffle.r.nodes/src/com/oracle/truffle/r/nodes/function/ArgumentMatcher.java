@@ -243,7 +243,7 @@ public class ArgumentMatcher {
         return new EvaluatedArguments(evaledArgs, formals.getSignature());
     }
 
-    private static String getErrorForArgument(RNode[] suppliedArgs, int index) {
+    private static String getErrorForArgument(RNode[] suppliedArgs, ArgumentsSignature suppliedSignature, int index) {
         RNode node = suppliedArgs[index];
         if (node instanceof VarArgNode) {
             CompilerAsserts.neverPartOfCompilation();
@@ -257,7 +257,9 @@ public class ArgumentMatcher {
                 throw RInternalError.shouldNotReachHere();
             }
         } else {
-            return node.getSourceSection().getCode();
+            String code = node.getSourceSection().getCode();
+            String name = suppliedSignature.getName(index);
+            return name == null ? code : name + " = " + code;
         }
     }
 
@@ -284,7 +286,8 @@ public class ArgumentMatcher {
 
         // Rearrange arguments
         MatchPermutation match = permuteArguments(suppliedSignature, formals.getSignature(), callSrc, argsSrc, false,
-                        index -> ArgumentsSignature.VARARG_NAME.equals(RMissingHelper.unwrapName(suppliedArgs[index])), index -> getErrorForArgument(suppliedArgs, index), function.getRBuiltin());
+                        index -> ArgumentsSignature.VARARG_NAME.equals(RMissingHelper.unwrapName(suppliedArgs[index])), index -> getErrorForArgument(suppliedArgs, suppliedSignature, index),
+                        function.getRBuiltin());
 
         RNode[] resArgs = new RNode[match.resultPermutation.length];
 

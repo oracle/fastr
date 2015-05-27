@@ -2782,7 +2782,7 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ f <- function(...) { g <- function() { list(...)$a } ; g() } ; f(a=1) }");
         assertEval("{ f <- function(...) { args <- list(...) ; args$name } ; f(name = 42) }");
 
-        assertEval(Ignored.Unknown, Output.ContainsError, "{ matrix(x=1) }");
+        assertEval(Output.ContainsError, "{ matrix(x=1) }");
         assertEval(Ignored.Unknown, "{ round( rnorm(1,), digits = 5 ) }");
         assertEval(Ignored.Unknown, Output.ContainsError, "{ max(1,2,) }");
     }
