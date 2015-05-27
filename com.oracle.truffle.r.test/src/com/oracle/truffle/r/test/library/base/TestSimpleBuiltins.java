@@ -3176,6 +3176,9 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ match(c(0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,NaN,NA,1), c(1,NA,NaN,1,2,3,4,5,6,7,8,9,10,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9)) }");
 
         assertEval("{ match(factor(c(\"a\", \"b\")), factor(c(\"c\", \"b\", \"a\", \"b\", \"c\", \"a\"))) }");
+
+        assertEval("{ match(\"a\", factor(c(\"a\", \"b\", \"a\"))) }");
+        assertEval("{ match(factor(c(\"a\", \"b\", \"a\")), \"a\") }");
     }
 
     @Test
