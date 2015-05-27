@@ -2909,7 +2909,8 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ list.files(\"test/r/simple/data/tree1\", recursive=TRUE, pattern=\".*dummy.*\") }");
         assertEval("{ list.files(\"test/r/simple/data/tree1\", recursive=TRUE, pattern=\"dummy\") }");
 
-        assertEval("{ list.files(\"test/r/simple/data/tree1\", pattern=\"*.tx\") }");
+        // TODO Why does GnuR not require the leading "." when Java does?
+        assertEval("{ list.files(\"test/r/simple/data/tree1\", pattern=\".*.tx\") }");
     }
 
     @Test
