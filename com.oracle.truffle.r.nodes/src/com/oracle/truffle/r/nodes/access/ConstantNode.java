@@ -72,7 +72,7 @@ public abstract class ConstantNode extends RNode implements RSyntaxNode, Visibil
         } else if (value instanceof String) {
             return new ConstantObjectNode(value);
         } else if (value instanceof RSymbol) {
-            return new ConstantObjectNode(((RSymbol) value).getName());
+            return new ConstantObjectNode(((RSymbol) value));
         } else if (value instanceof RArgsValuesAndNames) {
             // this can be created during argument matching and "call"
             return new ConstantObjectNode(value);
