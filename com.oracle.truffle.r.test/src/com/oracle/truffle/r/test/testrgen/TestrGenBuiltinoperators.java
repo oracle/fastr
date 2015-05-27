@@ -1139,7 +1139,7 @@ public class TestrGenBuiltinoperators extends TestBase {
 
     @Test
     public void testoperators220() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(11323, class = 'Date'), c(12, 24, 36, 48, 60, 72, 84, 96, 108));`+`(argv[[1]],argv[[2]]);");
+        assertEval("argv <- list(structure(11323, class = 'Date'), c(12, 24, 36, 48, 60, 72, 84, 96, 108));`+`(argv[[1]],argv[[2]]);");
     }
 
     @Test
@@ -1217,7 +1217,7 @@ public class TestrGenBuiltinoperators extends TestBase {
 
     @Test
     public void testoperators236() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(1395082079.75887, class = c('POSIXct', 'POSIXt')), 3600);`-`(argv[[1]],argv[[2]]);");
+        assertEval("argv <- list(structure(1395082079.75887, class = c('POSIXct', 'POSIXt')), 3600);`-`(argv[[1]],argv[[2]]);");
     }
 
     @Test

@@ -81,7 +81,7 @@ public class TestrGenBuiltinsubset2 extends TestBase {
 
     @Test
     public void testsubset214() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(list(mtime = structure(1395082258.61787, class = c('POSIXct', 'POSIXt'))), .Names = 'mtime'), 1L);.subset2(argv[[1]],argv[[2]]);");
+        assertEval("argv <- list(structure(list(mtime = structure(1395082258.61787, class = c('POSIXct', 'POSIXt'))), .Names = 'mtime'), 1L);.subset2(argv[[1]],argv[[2]]);");
     }
 
     @Test
@@ -158,7 +158,7 @@ public class TestrGenBuiltinsubset2 extends TestBase {
 
     @Test
     public void testsubset229() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(list(mtime = structure(1342423171, class = c('POSIXct', 'POSIXt'))), .Names = 'mtime'), 1L);.subset2(argv[[1]],argv[[2]]);");
+        assertEval("argv <- list(structure(list(mtime = structure(1342423171, class = c('POSIXct', 'POSIXt'))), .Names = 'mtime'), 1L);.subset2(argv[[1]],argv[[2]]);");
     }
 
     @Test

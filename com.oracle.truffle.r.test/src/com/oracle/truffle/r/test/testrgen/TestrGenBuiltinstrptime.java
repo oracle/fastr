@@ -59,8 +59,7 @@ public class TestrGenBuiltinstrptime extends TestBase {
 
     @Test
     public void teststrptime9() {
-        assertEval(Ignored.Unimplemented,
-                        "argv <- list(c('1890/01/01', '1891/01/01', '1892/01/01', '1893/01/01', '1894/01/01', '1895/01/01'), '%Y/%m/%d', ''); .Internal(strptime(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval("argv <- list(c('1890/01/01', '1891/01/01', '1892/01/01', '1893/01/01', '1894/01/01', '1895/01/01'), '%Y/%m/%d', ''); .Internal(strptime(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test

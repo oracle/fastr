@@ -174,7 +174,7 @@ public class TestrGenBuiltinattr extends TestBase {
 
     @Test
     public void testattr32() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(1:10, date = structure(200171400, class = c('POSIXct', 'POSIXt'), tzone = ''), class = 'stamped'), 'date');attr(argv[[1]],argv[[2]]);");
+        assertEval("argv <- list(structure(1:10, date = structure(200171400, class = c('POSIXct', 'POSIXt'), tzone = ''), class = 'stamped'), 'date');attr(argv[[1]],argv[[2]]);");
     }
 
     @Test

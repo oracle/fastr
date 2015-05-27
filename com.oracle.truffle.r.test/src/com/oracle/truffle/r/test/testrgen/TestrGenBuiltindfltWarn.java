@@ -24,12 +24,13 @@ public class TestrGenBuiltindfltWarn extends TestBase {
 
     @Test
     public void testdfltWarn2() {
-        assertEval(Ignored.Unknown, "argv <- list('bessel_y(2,nu=288.12): precision lost in result', quote(besselY(2, nu = nu <- seq(3, 300, len = 51)))); .Internal(.dfltWarn(argv[[1]], argv[[2]]))");
+        assertEval(Output.ContainsWarning,
+                        "argv <- list('bessel_y(2,nu=288.12): precision lost in result', quote(besselY(2, nu = nu <- seq(3, 300, len = 51)))); .Internal(.dfltWarn(argv[[1]], argv[[2]]))");
     }
 
     @Test
     public void testdfltWarn3() {
-        assertEval(Ignored.Unknown, Output.ContainsWarning, "argv <- list('glm.fit: algorithm stopped at boundary value', NULL); .Internal(.dfltWarn(argv[[1]], argv[[2]]))");
+        assertEval(Output.ContainsWarning, "argv <- list('glm.fit: algorithm stopped at boundary value', NULL); .Internal(.dfltWarn(argv[[1]], argv[[2]]))");
     }
 
     @Test
@@ -40,13 +41,13 @@ public class TestrGenBuiltindfltWarn extends TestBase {
 
     @Test
     public void testdfltWarn5() {
-        assertEval(Ignored.Unknown, Output.ContainsWarning,
+        assertEval(Output.ContainsWarning,
                         "argv <- list('‘graphics’ namespace cannot be unloaded:\\n  namespace ‘graphics’ is imported by ‘stats’ so cannot be unloaded', NULL); .Internal(.dfltWarn(argv[[1]], argv[[2]]))");
     }
 
     @Test
     public void testdfltWarn6() {
-        assertEval(Ignored.Unknown, "argv <- list('NaNs produced', quote(log(ifelse(y == 0, 1, y/mu)))); .Internal(.dfltWarn(argv[[1]], argv[[2]]))");
+        assertEval("argv <- list('NaNs produced', quote(log(ifelse(y == 0, 1, y/mu)))); .Internal(.dfltWarn(argv[[1]], argv[[2]]))");
     }
 
     @Test

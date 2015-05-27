@@ -24,8 +24,7 @@ public class TestrGenBuiltinascharacter extends TestBase {
 
     @Test
     public void testascharacter2() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(c(12784, 12874, 12965, 13057, 13149, 13239, 13330, 13422, 13514, 13604, 13695, 13787, 13879, 13970, 14061, 14153, 14245), class = 'Date'));as.character(argv[[1]]);");
+        assertEval("argv <- list(structure(c(12784, 12874, 12965, 13057, 13149, 13239, 13330, 13422, 13514, 13604, 13695, 13787, 13879, 13970, 14061, 14153, 14245), class = 'Date'));as.character(argv[[1]]);");
     }
 
     @Test
@@ -41,7 +40,7 @@ public class TestrGenBuiltinascharacter extends TestBase {
 
     @Test
     public void testascharacter5() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(1395082040.29392, class = c('POSIXct', 'POSIXt')));as.character(argv[[1]]);");
+        assertEval("argv <- list(structure(1395082040.29392, class = c('POSIXct', 'POSIXt')));as.character(argv[[1]]);");
     }
 
     @Test
@@ -96,7 +95,7 @@ public class TestrGenBuiltinascharacter extends TestBase {
 
     @Test
     public void testascharacter16() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(-841, class = 'Date'));as.character(argv[[1]]);");
+        assertEval("argv <- list(structure(-841, class = 'Date'));as.character(argv[[1]]);");
     }
 
     @Test
@@ -160,7 +159,7 @@ public class TestrGenBuiltinascharacter extends TestBase {
 
     @Test
     public void testascharacter28() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(c(11323, 11330, 11337, 11344, 11351, 11358, 11365, 11372, 11379, 11386), class = 'Date'));as.character(argv[[1]]);");
+        assertEval("argv <- list(structure(c(11323, 11330, 11337, 11344, 11351, 11358, 11365, 11372, 11379, 11386), class = 'Date'));as.character(argv[[1]]);");
     }
 
     @Test
@@ -175,8 +174,7 @@ public class TestrGenBuiltinascharacter extends TestBase {
 
     @Test
     public void testascharacter31() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(c(1338523200, 1338609600, 1338696000, 1338782400, 1338868800, 1338955200, 1339041600), class = c('POSIXct', 'POSIXt'), tzone = ''));as.character(argv[[1]]);");
+        assertEval("argv <- list(structure(c(1338523200, 1338609600, 1338696000, 1338782400, 1338868800, 1338955200, 1339041600), class = c('POSIXct', 'POSIXt'), tzone = ''));as.character(argv[[1]]);");
     }
 
     @Test
@@ -191,8 +189,7 @@ public class TestrGenBuiltinascharacter extends TestBase {
 
     @Test
     public void testascharacter34() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(c(1104537600, 1107216000, 1109635200, 1112313600, 1114905600, 1117584000, 1120176000, 1122854400, 1125532800, 1128124800, 1130803200, 1133395200, 1136073600, 1138752000, 1141171200, 1143849600, 1146441600, 1149120000, 1151712000, 1154390400, 1157068800, 1159660800, 1162339200, 1164931200, 1167609600, 1170288000, 1172707200, 1175385600, 1177977600, 1180656000, 1183248000, 1185926400, 1188604800, 1191196800, 1193875200, 1196467200, 1199145600, 1201824000, 1204329600, 1207008000, 1209600000, 1212278400, 1214870400, 1217548800, 1220227200, 1222819200, 1225497600, 1228089600, 1230768000), class = c('POSIXct', 'POSIXt'), tzone = 'UTC'));as.character(argv[[1]]);");
+        assertEval("argv <- list(structure(c(1104537600, 1107216000, 1109635200, 1112313600, 1114905600, 1117584000, 1120176000, 1122854400, 1125532800, 1128124800, 1130803200, 1133395200, 1136073600, 1138752000, 1141171200, 1143849600, 1146441600, 1149120000, 1151712000, 1154390400, 1157068800, 1159660800, 1162339200, 1164931200, 1167609600, 1170288000, 1172707200, 1175385600, 1177977600, 1180656000, 1183248000, 1185926400, 1188604800, 1191196800, 1193875200, 1196467200, 1199145600, 1201824000, 1204329600, 1207008000, 1209600000, 1212278400, 1214870400, 1217548800, 1220227200, 1222819200, 1225497600, 1228089600, 1230768000), class = c('POSIXct', 'POSIXt'), tzone = 'UTC'));as.character(argv[[1]]);");
     }
 
     @Test
@@ -212,8 +209,7 @@ public class TestrGenBuiltinascharacter extends TestBase {
 
     @Test
     public void testascharacter38() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(c(978307200, 978912000, 979516800, 980121600, 980726400, 981331200, 981936000, 982540800, 983145600, 983750400), class = c('POSIXct', 'POSIXt'), tzone = 'GMT'));as.character(argv[[1]]);");
+        assertEval("argv <- list(structure(c(978307200, 978912000, 979516800, 980121600, 980726400, 981331200, 981936000, 982540800, 983145600, 983750400), class = c('POSIXct', 'POSIXt'), tzone = 'GMT'));as.character(argv[[1]]);");
     }
 
     @Test
@@ -234,7 +230,7 @@ public class TestrGenBuiltinascharacter extends TestBase {
 
     @Test
     public void testascharacter42() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(c(12784, 13879), class = 'Date'));as.character(argv[[1]]);");
+        assertEval("argv <- list(structure(c(12784, 13879), class = 'Date'));as.character(argv[[1]]);");
     }
 
     @Test
