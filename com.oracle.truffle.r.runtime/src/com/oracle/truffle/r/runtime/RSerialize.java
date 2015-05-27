@@ -20,6 +20,7 @@ import com.oracle.truffle.r.options.*;
 import com.oracle.truffle.r.runtime.conn.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
+import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.gnur.*;
 import com.oracle.truffle.r.runtime.instrument.*;
@@ -1293,7 +1294,7 @@ public class RSerialize {
                     }
 
                     case INTSXP: {
-                        RIntVector vec = (RIntVector) obj;
+                        RAbstractIntVector vec = (RAbstractIntVector) obj;
                         stream.writeInt(vec.getLength());
                         for (int i = 0; i < vec.getLength(); i++) {
                             stream.writeInt(vec.getDataAt(i));
@@ -1302,7 +1303,7 @@ public class RSerialize {
                     }
 
                     case REALSXP: {
-                        RDoubleVector vec = (RDoubleVector) obj;
+                        RAbstractDoubleVector vec = (RAbstractDoubleVector) obj;
                         stream.writeInt(vec.getLength());
                         for (int i = 0; i < vec.getLength(); i++) {
                             stream.writeDouble(vec.getDataAt(i));

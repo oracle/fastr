@@ -3083,6 +3083,13 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ f <- function(...) match.call(expand.dots=FALSE) ; f(2, 3) }");
         assertEval("{ f <- function(...) match.call(expand.dots=FALSE) ; f(x=2, y=3) }");
         assertEval("{ f <- function(...) match.call(expand.dots=FALSE) ; f(x=2, 3) }");
+
+        assertEval("{ f1<-function(...) { dots <- match.call(expand.dots = FALSE)$...; dots }; f2<-function(...) f1(...); f2(\"a\") }");
+        assertEval("{ f1<-function(...) { dots <- match.call(expand.dots = FALSE)$...; dots }; f2<-function(...) f1(...); f2(c(\"a\")) }");
+        assertEval("{ f1<-function(...) { dots <- match.call(expand.dots = FALSE)$...; dots }; f2<-function(...) f1(...); f2(c(\"a\"), \"b\") }");
+        assertEval("{ f1<-function(...) { dots <- match.call(expand.dots = FALSE)$...; dots }; f2<-function(...) f1(...); f2(c(\"a\"), c(\"b\")) }");
+        assertEval("{ f1<-function(...) { dots <- match.call(expand.dots = FALSE)$...; dots }; f2<-function(...) f1(...); typeof(f2(\"a\")[[1]]) }");
+        assertEval("{ f1<-function(...) { dots <- match.call(expand.dots = FALSE)$...; dots }; f2<-function(...) f1(...); typeof(f2(c(\"a\"))[[1]]) }");
     }
 
     @Test
@@ -3176,6 +3183,9 @@ public class TestSimpleBuiltins extends TestBase {
         assertEval("{ match(c(0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,NaN,NA,1), c(1,NA,NaN,1,2,3,4,5,6,7,8,9,10,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9)) }");
 
         assertEval("{ match(factor(c(\"a\", \"b\")), factor(c(\"c\", \"b\", \"a\", \"b\", \"c\", \"a\"))) }");
+
+        assertEval("{ match(\"a\", factor(c(\"a\", \"b\", \"a\"))) }");
+        assertEval("{ match(factor(c(\"a\", \"b\", \"a\")), \"a\") }");
     }
 
     @Test

@@ -33,6 +33,7 @@ import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseDeoptimizeFrameNode;
@@ -121,6 +122,11 @@ public class FrameFunctions {
                         RNode[] listArgs = new RNode[temp.getArguments().length];
                         for (int i = 0; i < listArgs.length; i++) {
                             listArgs[i] = RASTUtils.createNodeForValue(temp.getArgument(i));
+                            if (listArgs[i] == null) {
+                                StringBuffer sb = new StringBuffer((i + 1) < 10 ? ".." : ".");
+                                sb.append(i + 1);
+                                listArgs[i] = ConstantNode.create(RDataFactory.createSymbol(sb.toString()));
+                            }
                         }
                         RNode varArgs = PromiseNode.createVarArgsAsSyntax(listArgs, temp.getSignature(), this);
                         CallArgumentsNode callArgsNode = CallArgumentsNode.create(false, false, new RNode[]{varArgs}, signature);
