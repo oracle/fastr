@@ -571,6 +571,15 @@ public class InfixEmulationFunctions {
         }
     }
 
+    @RBuiltin(name = "=", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x", "i"})
+    public abstract static class AssignBuiltinEq extends ErrorAdapter {
+        @SuppressWarnings("unused")
+        @Specialization
+        protected Object doIt(Object x, Object i) {
+            throw nyi();
+        }
+    }
+
     @RBuiltin(name = "<<-", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x", "i"})
     public abstract static class AssignOuterBuiltin extends ErrorAdapter {
         @SuppressWarnings("unused")

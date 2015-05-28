@@ -143,6 +143,7 @@ public class RDeparse {
         new Func("{", new PPInfo(PP.CURLY, 0, false)),
         new Func("(", new PPInfo(PP.PAREN, 0, false)),
         new Func("<-", new PPInfo(PP.ASSIGN, 1, true)),
+        new Func("=", new PPInfo(PP.ASSIGN, 1, true)),
         new Func("<<-", new PPInfo(PP.ASSIGN, 1, true)),
         new Func("[", new PPInfo(PP.SUBSET, 17, false)),
         new Func("[[", new PPInfo(PP.SUBSET, 17, false)),
