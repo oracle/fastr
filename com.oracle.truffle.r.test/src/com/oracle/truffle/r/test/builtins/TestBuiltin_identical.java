@@ -3,8 +3,8 @@
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
- * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2012-2014, Purdue University
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -211,4 +211,18 @@ public class TestBuiltin_identical extends TestBase {
                                         + "do.call('identical', argv)");
     }
 
+    @Test
+    public void testIdentical() {
+        assertEval("{ identical(1,1) }");
+        assertEval("{ identical(1L,1) }");
+        assertEval("{ identical(1:3, c(1L,2L,3L)) }");
+        assertEval("{ x <- 1 ; attr(x, \"my\") <- 10; y <- 1 ; attr(y, \"my\") <- 10 ; identical(x,y) }");
+        assertEval("{ x <- 1 ; attr(x, \"hello\") <- 2 ; attr(x, \"my\") <- 10;  attr(x, \"hello\") <- NULL ; y <- 1 ; attr(y, \"my\") <- 10 ; identical(x,y) }");
+
+        assertEval(Ignored.Unknown, "{ identical(0/0,1[2]) }");
+        assertEval(Ignored.Unknown, "{ identical(list(1, list(2)), list(list(1), 1)) }");
+        assertEval(Ignored.Unknown, "{ identical(list(1, list(2)), list(1, list(2))) }");
+        assertEval(Ignored.Unknown, "{ x <- 1 ; attr(x, \"my\") <- 10; identical(x, 1) }");
+        assertEval(Ignored.Unknown, "{ x <- 1 ; attr(x, \"my\") <- 10; y <- 1 ; attr(y, \"my\") <- 11 ; identical(x,y) }");
+    }
 }

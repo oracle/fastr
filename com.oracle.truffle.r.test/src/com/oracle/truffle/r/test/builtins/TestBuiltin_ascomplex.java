@@ -3,8 +3,8 @@
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
- * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2012-2014, Purdue University
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -72,5 +72,29 @@ public class TestBuiltin_ascomplex extends TestBase {
     @Test
     public void testascomplex11() {
         assertEval("argv <- list(NULL, NULL);as.complex(argv[[1]],argv[[2]]);");
+    }
+
+    @Test
+    public void testAsComplex() {
+        assertEval("{ as.complex(0) }");
+        assertEval("{ as.complex(TRUE) }");
+        assertEval("{ as.complex(\"1+5i\") }");
+        assertEval("{ as.complex(\"-1+5i\") }");
+        assertEval("{ as.complex(\"-1-5i\") }");
+        assertEval("{ as.complex(0/0) }");
+        assertEval("{ as.complex(c(0/0, 0/0)) }");
+        assertEval(Output.ContainsWarning, "{ as.complex(c(\"1\",\"hello\")) }");
+        assertEval(Output.ContainsWarning, "{ as.complex(\"TRUE\") }");
+        assertEval("{ x<-c(a=1.1, b=2.2); dim(x)<-c(1,2); attr(x, \"foo\")<-\"foo\"; y<-as.complex(x); attributes(y) }");
+        assertEval("{ x<-c(a=1L, b=2L); dim(x)<-c(1,2); attr(x, \"foo\")<-\"foo\"; y<-as.complex(x); attributes(y) }");
+        assertEval("{ as.complex(\"Inf\") }");
+        assertEval("{ as.complex(\"NaN\") }");
+        assertEval("{ as.complex(\"0x42\") }");
+        assertEval("{ as.complex(NULL) }");
+
+        assertEval(Ignored.Unknown, "{ as.complex(\"1e10+5i\") }");
+        assertEval(Ignored.Unknown, "{ as.complex(\"-.1e10+5i\") }");
+        assertEval(Ignored.Unknown, "{ as.complex(\"1e-2+3i\") }");
+        assertEval(Ignored.Unknown, "{ as.complex(\"+.1e+2-3i\") }");
     }
 }

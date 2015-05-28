@@ -3,8 +3,8 @@
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
- * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2012-2014, Purdue University
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -116,5 +116,30 @@ public class TestBuiltin_sub extends TestBase {
     @Test
     public void testsub19() {
         assertEval("argv <- list('([^:]*):(.*)', '\\\\2', character(0), FALSE, FALSE, FALSE, FALSE); .Internal(sub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+    }
+
+    @Test
+    public void testSub() {
+        assertEval("{ sub(\"a\",\"aa\", \"prague alley\") }");
+        assertEval("{ sub(\"a\",\"aa\", \"prague alley\", fixed=TRUE) }");
+
+        assertEval("{ sub('[[:space:]]+$', '', 'R (>= 3.0.3)  ') }");
+        assertEval("{ sub('^[[:space:]]*(.*)', '\\\\1', 'R (>= 3.0.3)') }");
+        assertEval("{ sub('^([[:alnum:].]+).*$', '\\\\1', 'R (>= 3.0.3)') }");
+
+        assertEval("{ sub('^([1[:alpha:].]+).*$', '\\\\1', '1R.ff (>= 3.0.3)') }");
+
+        assertEval("{ sub('^([[:alnum:]]*).*$', '\\\\1', 'aZ45j%$  ') }");
+        assertEval("{ sub('^([[:alpha:]]*).*$', '\\\\1', 'aZ45j%$  ') }");
+        assertEval("{ sub('^([[:blank:]]*).*$', '\\\\1', '  \\ta45j%$  ') }");
+        assertEval("{ sub('^([[:cntrl:]]*).*$', '\\\\1', '\\ta45j%$  ') }");
+        assertEval("{ sub('^([[:digit:]]*).*$', '\\\\1', '12a45j%$  ') }");
+        assertEval("{ sub('^([[:graph:]]*).*$', '\\\\1', 'a45j%$  ') }");
+        assertEval("{ sub('^([[:lower:]]*).*$', '\\\\1', 'a45j%$  ') }");
+        assertEval("{ sub('^([[:print:]]*).*$', '\\\\1', 'a45j%$  ') }");
+        assertEval("{ sub('^([[:punct:]]*).*$', '\\\\1', '.,/a45j%$  ') }");
+        assertEval("{ sub('^([[:space:]]*).*$', '\\\\1', '   a45j%$  ') }");
+        assertEval("{ sub('^([[:upper:]]*).*$', '\\\\1', 'AASDFAa45j%$  ') }");
+        assertEval("{ sub('^([[:xdigit:]]*).*$', '\\\\1', '1234abABhxa45j%$  ') }");
     }
 }

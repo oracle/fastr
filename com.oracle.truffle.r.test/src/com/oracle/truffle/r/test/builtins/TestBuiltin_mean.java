@@ -3,8 +3,8 @@
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
- * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2012-2014, Purdue University
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -129,4 +129,17 @@ public class TestBuiltin_mean extends TestBase {
                         + "do.call('mean', argv)");
     }
 
+    @Test
+    public void testMean() {
+        assertEval("{ mean(c(5,5,5,5,5)) }");
+        assertEval("{ mean(c(1,2,3,4,5)) }");
+        assertEval("{ mean(c(2,4))}");
+        assertEval("{ mean(c(2L,4L,3L))}");
+        assertEval("{ mean(c(1,2,3,4,5))}");
+        assertEval("{ mean(c(1+2i))}");
+        assertEval("{ mean(c(1+2i, 2+3i))}");
+        assertEval("{ mean(c(1+2i,1+3i,1+45i))}");
+        assertEval("{ mean(c(TRUE, TRUE))}");
+        assertEval("{ mean(c(TRUE, FALSE))}");
+    }
 }

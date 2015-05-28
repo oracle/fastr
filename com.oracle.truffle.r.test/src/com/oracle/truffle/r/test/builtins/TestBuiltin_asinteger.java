@@ -3,8 +3,8 @@
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
- * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2012-2014, Purdue University
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -113,5 +113,35 @@ public class TestBuiltin_asinteger extends TestBase {
     @Test
     public void testasinteger20() {
         assertEval("argv <- list(39);as.integer(argv[[1]]);");
+    }
+
+    @Test
+    public void testAsInteger() {
+        assertEval("{ as.integer(\"1\") }");
+        assertEval("{ as.integer(c(\"1\",\"2\")) }");
+        assertEval("{ as.integer(c(1,2,3)) }");
+        assertEval("{ as.integer(c(1.0,2.5,3.9)) }");
+        assertEval("{ as.integer(0/0) }");
+        assertEval("{ as.integer(-0/0) }");
+        assertEval("{ as.integer(as.raw(c(1,2,3,4))) }");
+        assertEval(Output.ContainsWarning, "{ as.integer(10+2i) }");
+        assertEval(Output.ContainsWarning, "{ as.integer(c(3+3i, 4+4i)) }");
+        assertEval(Output.ContainsWarning, "{ as.integer(10000000000000) }");
+        assertEval("{ as.integer(list(c(1),2,3)) }");
+        assertEval("{ as.integer(list(integer(),2,3)) }");
+        assertEval("{ as.integer(list(list(1),2,3)) }");
+        assertEval("{ as.integer(list(1,2,3,list())) }");
+        assertEval(Output.ContainsWarning, "{ as.integer(10000000000) }");
+        assertEval(Output.ContainsWarning, "{ as.integer(-10000000000) }");
+        assertEval(Output.ContainsWarning, "{ as.integer(c(\"1\",\"hello\")) }");
+        assertEval(Output.ContainsWarning, "{ as.integer(\"TRUE\") }");
+        assertEval("{ as.integer(as.raw(1)) }");
+        assertEval("{ x<-c(a=1.1, b=2.2); dim(x)<-c(1,2); attr(x, \"foo\")<-\"foo\"; y<-as.integer(x); attributes(y) }");
+        assertEval("{ x<-c(a=1L, b=2L); dim(x)<-c(1,2); attr(x, \"foo\")<-\"foo\"; y<-as.integer(x); attributes(y) }");
+        assertEval("{ as.integer(1.1:5.1) }");
+        assertEval("{ as.integer(NULL) }");
+        assertEval("{ as.integer(\"\") }");
+        assertEval("{ as.integer(as.character(NA)) }");
+        assertEval("{ as.integer(\"1\", as.character(NA)) }");
     }
 }

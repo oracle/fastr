@@ -3,8 +3,8 @@
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
- * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2012-2014, Purdue University
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -294,5 +294,73 @@ public class TestBuiltin_unlist extends TestBase {
     public void testunlist49() {
         assertEval(Ignored.Unknown,
                         "argv <- list(list(structure(list(x = 1L, y = structure(1L, .Label = c('A', 'D', 'E'), class = 'factor'), z = 6), .Names = c('x', 'y', 'z'), row.names = 1L, class = 'data.frame'), structure(list(), .Names = character(0), row.names = 1L, class = 'data.frame')), FALSE, FALSE); .Internal(unlist(argv[[1]], argv[[2]], argv[[3]]))");
+    }
+
+    @Test
+    public void testUnlist() {
+        assertEval("{ unlist(list(\"hello\", \"hi\")) }");
+
+        assertEval("{ unlist(list(a=\"hello\", b=\"hi\")) }");
+        assertEval("{ x <- list(a=1,b=2:3,list(x=FALSE)) ; unlist(x, recursive=FALSE) }");
+        assertEval("{ x <- list(1,z=list(1,b=22,3)) ; unlist(x, recursive=FALSE) }");
+        assertEval("{ x <- list(1,z=list(1,b=22,3)) ; unlist(x, recursive=FALSE, use.names=FALSE) }");
+
+        assertEval("{ x <- list(a=1,b=c(x=2, z=3),list(x=FALSE)) ; unlist(x, recursive=FALSE) }");
+        assertEval("{ y<-c(2, 3); names(y)<-c(\"z\", NA); x <- list(a=1,b=y,list(x=FALSE)) ; unlist(x, recursive=FALSE) }");
+        assertEval("{ x <- list(a=1,b=c(x=2, 3),list(x=FALSE)) ; unlist(x, recursive=FALSE) }");
+        assertEval("{ unlist(list(a=1, c(b=2,c=3))) }");
+        assertEval("{ unlist(list(a=1, c(2,3))) }");
+        assertEval("{ unlist(list(a=1, c(2,3), d=4)) }");
+        assertEval("{ unlist(list(a=1, c(2,3), 4)) }");
+        assertEval("{ unlist(list(1+1i, c(7+7i,42+42i))) }");
+        assertEval("{ unlist(list(1+1i, list(7+7i,42+42i)), recursive=FALSE) }");
+        assertEval("{ unlist(list(1+1i, c(7,42))) }");
+        assertEval("{ unlist(list(1+1i, list(7,42)), recursive=FALSE) }");
+
+        assertEval("{ unlist(list(a=1,b=2, c=list(d=3,e=list(f=7))), recursive=TRUE) }");
+        assertEval("{ unlist(list(a=1,b=2, c=list(d=3,list(f=7)))) }");
+        assertEval("{ x <- list(list(\"1\",\"2\",b=\"3\",\"4\")) ; unlist(x) }");
+        assertEval("{ x <- list(a=list(\"1\",\"2\",list(\"3\", \"4\"),\"5\")) ; unlist(x) }");
+        assertEval("{ x <- list(a=list(\"1\",\"2\",b=list(\"3\"))) ; unlist(x) }");
+        assertEval("{ x <- list(a=list(\"1\",\"2\",b=list(\"3\", \"4\"))) ; unlist(x) }");
+        assertEval("{ x <- list(a=list(\"1\",\"2\",b=list(\"3\", \"4\"),\"5\")) ; unlist(x) }");
+        assertEval("{ x <- list(a=list(\"1\",\"2\",b=c(\"3\", \"4\"),\"5\")) ; unlist(x) }");
+        assertEval("{ x <- list(a=list(\"1\",\"2\",b=list(\"3\", list(\"10\"), \"4\"),\"5\")) ; unlist(x) }");
+        assertEval("{ x <- list(a=list(\"1\",\"2\",b=list(\"3\", list(\"10\", \"11\"), \"4\"),\"5\")) ; unlist(x) }");
+
+        assertEval("{ names(unlist(list(list(list(\"1\"))))) }");
+        assertEval("{ names(unlist(list(a=list(list(\"1\"))))) }");
+        assertEval("{ names(unlist(list(a=list(list(\"1\",\"2\"))))) }");
+
+        assertEval("{ unlist(list(a=list(\"0\", list(\"1\")))) }");
+        assertEval("{ unlist(list(a=list(b=list(\"1\")))) }");
+
+        assertEval("{ unlist(list(a=list(\"0\", b=list(\"1\")))) }");
+        assertEval("{ unlist(list(a=list(b=list(\"1\"), \"2\"))) }");
+
+        assertEval("{ unlist(list(a=list(\"0\", b=list(\"1\"), \"2\"))) }");
+        assertEval("{ unlist(list(a=list(\"0\", list(b=list(\"1\"))))) }");
+
+        assertEval("{ unlist(list(a=list(\"-1\", \"0\", b=list(\"1\")))) }");
+        assertEval("{ unlist(list(a=list(b=list(\"1\"), \"2\", \"3\"))) }");
+
+        assertEval("{ names(unlist(list(list(b=list(\"1\"))))) }");
+        assertEval("{ names(unlist(list(a=list(b=list(\"1\"))))) }");
+        assertEval("{ names(unlist(list(a=list(b=list(\"1\", \"2\"))))) }");
+
+        assertEval("{ names(unlist(list(list(list(c=\"1\"))))) }");
+        assertEval("{ names(unlist(list(a=list(list(c=\"1\"))))) }");
+        assertEval("{ names(unlist(list(a=list(list(c=\"1\", d=\"2\"))))) }");
+
+        assertEval("{ unlist(list()) }");
+
+        assertEval("{ x <- list(\"a\", c(\"b\", \"c\"), list(\"d\", list(\"e\"))) ; unlist(x) }");
+        assertEval("{ x <- list(NULL, list(\"d\", list(), character())) ; unlist(x) }");
+
+        assertEval("{ x <- list(a=list(\"1\",\"2\",b=\"3\",\"4\")) ; unlist(x) }");
+        assertEval("{ x <- list(a=list(1,FALSE,b=list(2:4))) ; unlist(x) }");
+        assertEval("{ x <- list(a=list(\"1\",FALSE,b=list(2:4))) ; unlist(x) }");
+
+        assertEval("{ x <- list(1,list(2,3),4) ; z <- list(x,x) ; u <- list(z,z) ; u[[c(2,2,3)]] <- 6 ; unlist(u) }");
     }
 }

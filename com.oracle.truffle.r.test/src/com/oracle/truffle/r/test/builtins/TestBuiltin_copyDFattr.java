@@ -3,8 +3,8 @@
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
- * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2012-2014, Purdue University
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -131,5 +131,13 @@ public class TestBuiltin_copyDFattr extends TestBase {
     public void testcopyDFattr20() {
         assertEval(Ignored.Unknown,
                         "argv <- list(structure(list(`cbind(X, M)` = structure(c(68, 42, 37, 24, 66, 33, 47, 23, 63, 29, 57, 19, 42, 30, 52, 43, 50, 23, 55, 47, 53, 27, 49, 29), .Dim = c(12L, 2L), .Dimnames = list(NULL, c('X', 'M'))), M.user = structure(c(1L, 1L, 2L, 2L, 1L, 1L, 2L, 2L, 1L, 1L, 2L, 2L), .Label = c('N', 'Y'), class = 'factor'), Temp = structure(c(2L, 1L, 2L, 1L, 2L, 1L, 2L, 1L, 2L, 1L, 2L, 1L), .Label = c('High', 'Low'), class = 'factor'), Soft = structure(c(1L, 1L, 1L, 1L, 2L, 2L, 2L, 2L, 3L, 3L, 3L, 3L), .Label = c('Hard', 'Medium', 'Soft'), class = 'factor')), .Names = c('cbind(X, M)', 'M.user', 'Temp', 'Soft'), class = 'data.frame', row.names = c('1', '3', '5', '7', '9', '11', '13', '15', '17', '19', '21', '23'), terms = quote(cbind(X, M) ~ M.user + Temp + Soft)), structure(list(`cbind(X, M)` = NULL, M.user = NULL, Temp = NULL, Soft = NULL), .Names = c('cbind(X, M)', 'M.user', 'Temp', 'Soft'), class = 'data.frame', row.names = c('1', '3', '5', '7', '9', '11', '13', '15', '17', '19', '21', '23'), terms = quote(cbind(X,     M) ~ M.user + Temp + Soft))); .Internal(copyDFattr(argv[[1]], argv[[2]]))");
+    }
+
+    @Test
+    public void testCopyDDFattr() {
+        assertEval("{ x<-7; attr(x, \"foo\")<-\"foo\"; y<-42; z<-.Internal(copyDFattr(x, y)); attributes(z) }");
+        assertEval("{ x<-data.frame(a=c(1,2), b=c(11,12)); y<-7; z<-.Internal(copyDFattr(y, x)); attributes(z) }");
+        assertEval("{ x<-data.frame(a=c(1,2), b=c(11,12)); y<-7; attr(y, \"foo\")<-\"foo\"; z<-.Internal(copyDFattr(y, x)); attributes(z) }");
+        assertEval("{ x<-data.frame(c(1,2), c(11,12)); attr(x, \"dim\")<-c(1,2); attr(x, \"dimnames\")<-list(\"a\", c(\"b\", \"c\")); y<-c(7, 42); z<-.Internal(copyDFattr(x, y)); attributes(z) }");
     }
 }

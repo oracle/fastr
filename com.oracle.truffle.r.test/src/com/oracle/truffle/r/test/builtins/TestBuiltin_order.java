@@ -3,8 +3,8 @@
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
- * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2012-2014, Purdue University
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -122,4 +122,42 @@ public class TestBuiltin_order extends TestBase {
         assertEval("argv <- structure(list(1, na.last = NA), .Names = c('', 'na.last'));do.call('order', argv)");
     }
 
+    @Test
+    public void testOrder() {
+        assertEval("{ order(c(\"a\",\"c\",\"b\",\"d\",\"e\",\"f\")) }");
+        assertEval("{ order(c(5,2,2,1,7,4)) }");
+        assertEval("{ order(c(5,2,2,1,7,4),c(\"a\",\"c\",\"b\",\"d\",\"e\",\"f\")) }");
+        assertEval("{ order(c(1,1,1,1),c(4,3,2,1)) }");
+        assertEval("{ order(c(1,1,1,1),c(\"d\",\"c\",\"b\",\"a\")) }");
+        assertEval("{ order(c(1i,2i,3i)) }");
+        assertEval("{ order(c(3i,1i,2i)) }");
+        assertEval("{ order(c(3+1i,2+2i,1+3i)) }");
+        assertEval("{ order(c(3+1i,2+3i,2+2i,1+3i)) }");
+
+        assertEval("{ order(7) }");
+        assertEval("{ order(FALSE) }");
+        assertEval("{ order(character()) }");
+
+        assertEval("{ order(1:3) }");
+        assertEval("{ order(3:1) }");
+        assertEval("{ order(c(1,1,1), 3:1) }");
+        assertEval("{ order(c(1,1,1), 3:1, decreasing=FALSE) }");
+        assertEval("{ order(c(1,1,1), 3:1, decreasing=TRUE, na.last=TRUE) }");
+        assertEval("{ order(c(1,1,1), 3:1, decreasing=TRUE, na.last=NA) }");
+        assertEval("{ order(c(1,1,1), 3:1, decreasing=TRUE, na.last=FALSE) }");
+        assertEval("{ order() }");
+        assertEval("{ order(c(NA,NA,1), c(2,1,3)) }"); // infinite loop
+        assertEval("{ order(c(NA,NA,1), c(1,2,3)) }"); // infinite loop
+        assertEval("{ order(c(1,2,3,NA)) }"); // infinite loop
+        assertEval("{ order(c(1,2,3,NA), na.last=FALSE) }");
+        assertEval("{ order(c(1,2,3,NA), na.last=FALSE, decreasing=TRUE) }");
+        assertEval("{ order(c(0/0, -1/0, 2)) }");
+
+        assertEval("{ x<-c(40, 40,  1, 40,  1, 20, 40, 10, 40, 10, 16, 40, 10, 26, 40, 10, 39, 40, 11, 40, 12, 40, 12, 20); order(x, decreasing=TRUE) }");
+        assertEval("{ x<-c(40, 40,  1, 40,  1, 20, 40, 10, 40, 10, 16, 40, 10, 26, 40, 10, 39, 40, 11, 40, 12, 40, 12, 20); order(x, decreasing=FALSE) }");
+
+        assertEval("{ order(c(-1480,  -974, -1576,  -970), c(\"a\", \"b\", \"c\", \"d\")) }");
+
+        assertEval("{ order(c(0/0, -1/0, 2), na.last=NA) }");
+    }
 }

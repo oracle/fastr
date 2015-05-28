@@ -3,8 +3,8 @@
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
- * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2012-2014, Purdue University
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -39,4 +39,38 @@ public class TestBuiltin_rbind extends TestBase {
                                         + "do.call('rbind', argv)");
     }
 
+    @Test
+    public void testRbind() {
+        assertEval("{ rbind(1.1:3.3,1.1:3.3) }");
+        assertEval("{ rbind() }");
+        assertEval("{ rbind(1:3,2) }");
+        assertEval("{ rbind(1:3,1:3) }");
+        assertEval("{ m <- matrix(1:6, ncol=2) ; rbind(m, 11:12) }");
+        assertEval("{ m <- matrix(1:6, ncol=2) ; rbind(11:12, m) }");
+        assertEval(Output.ContainsWarning, "{ m <- matrix(1:6, nrow=2) ; rbind(11:12, m) }");
+
+        assertEval("{ rbind(c(1,2)) }");
+        assertEval("{ rbind(a=c(b=1,c=2)) }");
+        assertEval("{ rbind(c(b=1,c=2)) }");
+        assertEval("{ rbind(c(1,c=2)) }");
+        assertEval("{ v<-c(b=1, c=2); rbind(v) }");
+        assertEval("{ rbind(matrix(1:4, nrow=2, dimnames=list(c('a', 'b'), c('x', 'y')))) }");
+
+        assertEval("{ rbind(a=c(1,2), b=c(3,4)) }");
+        assertEval("{ rbind(a=c(x=1,y=2), b=c(3,4)) }");
+        assertEval("{ rbind(a=c(1,2), b=c(x=3,y=4)) }");
+        assertEval("{ rbind(a=c(x=1,2), b=c(3,y=4)) }");
+        assertEval("{ rbind(a=c(1,2), b=c(3,y=4)) }");
+        assertEval("{ rbind(a=c(1,x=2), b=c(y=3,4,5,6)) }");
+        assertEval("{ rbind(a=c(1,x=2), b=c(3,4,5,6)) }");
+        assertEval("{ rbind(matrix(1:4, nrow=2, dimnames=list(c('a', 'b'), c('x', 'y'))), z=c(8,9)) }");
+        assertEval("{ rbind(matrix(1:4, nrow=2, dimnames=list(c('a', 'b'), c('x', 'y'))), c(8,9)) }");
+        assertEval("{ rbind(matrix(1:4, nrow=2, dimnames=list(c('a', 'b'), NULL)), z=c(8,9)) }");
+        assertEval("{ rbind(matrix(1:4, nrow=2, dimnames=list(NULL, c('x', 'y'))), c(m=8,n=9)) }");
+        assertEval("{ rbind(matrix(1:4, nrow=2), z=c(m=8,n=9)) }");
+
+        assertEval("{ info <- c(\"print\", \"AES\", \"print.AES\") ; ns <- integer(0) ; rbind(info, ns) }");
+
+        assertEval("{ x<-list(a=7, b=NULL, c=42); y<-as.data.frame(do.call(rbind,x)); y }");
+    }
 }

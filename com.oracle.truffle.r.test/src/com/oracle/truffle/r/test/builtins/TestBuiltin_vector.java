@@ -3,8 +3,8 @@
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
- * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2012-2014, Purdue University
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -55,5 +55,15 @@ public class TestBuiltin_vector extends TestBase {
     @Test
     public void testvector11() {
         assertEval("argv <- structure(list(mode = 'complex', length = 7), .Names = c('mode',     'length'));do.call('vector', argv)");
+    }
+
+    @Test
+    public void testVectorConstructor() {
+        assertEval("{ vector() }");
+        assertEval("{ vector(\"integer\") }");
+        assertEval("{ vector(\"numeric\") }");
+        assertEval("{ vector(\"numeric\", length=4) }");
+        assertEval("{ vector(length=3) }");
+        assertEval("{ x<-as.vector(3); y<-vector(length=x) }");
     }
 }

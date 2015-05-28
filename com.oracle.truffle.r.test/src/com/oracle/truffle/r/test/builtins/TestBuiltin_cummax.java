@@ -3,8 +3,8 @@
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
- * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2012-2014, Purdue University
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -57,5 +57,19 @@ public class TestBuiltin_cummax extends TestBase {
     @Test
     public void testcummax8() {
         assertEval(Ignored.Unknown, "argv <- list(structure(numeric(0), .Dim = c(0L, 0L)));cummax(argv[[1]]);");
+    }
+
+    @Test
+    public void testCumulativeMax() {
+        assertEval("{ cummax(c(1,2,3)) }");
+        assertEval("{ cummax(NA) }");
+        assertEval("{ cummax(c(2000000000L, NA, 2000000000L)) }");
+        assertEval("{ cummax(1:10) }");
+        assertEval("{ cummax(c(TRUE,FALSE,TRUE)) }");
+        assertEval("{ cummax(c(TRUE,FALSE,NA,TRUE)) }");
+        assertEval("{ cummax(as.logical(-2:2)) }");
+
+        assertEval(Ignored.Unknown, "{ cummax(c(1+1i,2-3i,4+5i)) }");
+        assertEval(Ignored.Unknown, "{ cummax(c(1+1i, NA, 2+3i)) }");
     }
 }

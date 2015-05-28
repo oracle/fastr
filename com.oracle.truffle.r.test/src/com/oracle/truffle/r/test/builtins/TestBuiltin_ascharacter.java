@@ -3,8 +3,8 @@
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
- * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2012-2014, Purdue University
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -251,5 +251,26 @@ public class TestBuiltin_ascharacter extends TestBase {
     @Test
     public void testascharacter46() {
         assertEval("argv <- list(c(59.5, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59.5));as.character(argv[[1]]);");
+    }
+
+    @Test
+    public void testAsCharacter() {
+        assertEval("{ as.character(1) }");
+        assertEval("{ as.character(1L) }");
+        assertEval("{ as.character(TRUE) }");
+        assertEval("{ as.character(1:3) }");
+        assertEval("{ as.character(NULL) }");
+
+        assertEval(Ignored.Unknown, "{ as.character(list(1,2,3)) }");
+        assertEval(Ignored.Unknown, "{ as.character(list(c(\"hello\", \"hi\"))) }");
+        assertEval(Ignored.Unknown, "{ as.character(list(list(c(\"hello\", \"hi\")))) }");
+        assertEval(Ignored.Unknown, "{ as.character(list(c(2L, 3L))) }");
+        assertEval(Ignored.Unknown, "{ as.character(list(c(2L, 3L, 5L))) }");
+
+        assertEval("{ x<-as.character(Sys.time()) }");
+        assertEval("{ f<-function(x) { sys.call() }; as.character(f(7)) }");
+
+        assertEval("{ f1<-function() 7; f2<-function(x) { sys.call() }; as.character(f2(f1())) }");
+        assertEval("{ f1<-function(x) 7; f2<-function(y) { sys.call() }; as.character(f2(f1(42))) }");
     }
 }

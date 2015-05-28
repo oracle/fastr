@@ -3,8 +3,8 @@
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
- * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2012-2014, Purdue University
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -40,5 +40,12 @@ public class TestBuiltin_storagemodeassign extends TestBase {
     @Test
     public void teststoragemodeassign5() {
         assertEval("argv <- list(structure(c(2.5, 0, 0.75, 0, 2.5, -2.5, 0.75, -2.5, 2.8), .Dim = c(3L, 3L)), value = 'double');`storage.mode<-`(argv[[1]],argv[[2]]);");
+    }
+
+    @Test
+    public void testUpdateStorageMode() {
+        assertEval("{ x <- c(1L, 2L); storage.mode(x) <- \"double\"}");
+        assertEval(Output.ContainsError, "{ x <- c(1L, 2L); storage.mode(x) <- \"not.double\"}");
+        assertEval("{ x <- c(1L, 2L); dim(x)<-c(1,2); storage.mode(x) <- \"double\"; x}");
     }
 }

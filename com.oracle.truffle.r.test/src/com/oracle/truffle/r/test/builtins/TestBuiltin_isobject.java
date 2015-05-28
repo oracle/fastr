@@ -3,8 +3,8 @@
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
- * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2012-2014, Purdue University
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -92,4 +92,13 @@ public class TestBuiltin_isobject extends TestBase {
         assertEval("argv <- list(1:3);do.call('is.object', argv)");
     }
 
+    @Test
+    public void testIsObject() {
+        assertEval("{ is.object(1) }");
+        assertEval("{ is.object(1L) }");
+        assertEval("{ is.object(1:3) }");
+        assertEval("{ is.object(c(1,2,3)) }");
+        assertEval("{ is.object(NA) }");
+        assertEval("{ is.object(NULL) }");
+    }
 }

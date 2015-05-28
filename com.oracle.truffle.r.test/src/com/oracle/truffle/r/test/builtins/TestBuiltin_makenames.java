@@ -3,8 +3,8 @@
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
- * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2012-2014, Purdue University
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -70,5 +70,27 @@ public class TestBuiltin_makenames extends TestBase {
     @Test
     public void testmakenames11() {
         assertEval("argv <- list(character(0), TRUE); .Internal(make.names(argv[[1]], argv[[2]]))");
+    }
+
+    @Test
+    public void testMakeNames() {
+        assertEval("{ make.names(7) }");
+        assertEval("{ make.names(\"a_a\") }");
+        assertEval("{ make.names(\"a a\") }");
+        assertEval("{ make.names(\"a_a\", allow_=FALSE) }");
+        assertEval("{ make.names(\"a_a\", allow_=7) }");
+        assertEval("{ make.names(\"a_a\", allow_=c(7,42)) }");
+        assertEval("{ make.names(\"...7\") }");
+        assertEval("{ make.names(\"..7\") }");
+        assertEval("{ make.names(\".7\") }");
+        assertEval("{ make.names(\"7\") }");
+        assertEval("{ make.names(\"$\") }");
+        assertEval("{ make.names(\"$_\", allow_=FALSE) }");
+        assertEval("{ make.names(\"else\")}");
+        assertEval("{ make.names(\"NA_integer_\", allow_=FALSE) }");
+
+        assertEval(Output.ContainsError, "{ make.names(\"a_a\", allow_=\"a\") }");
+        assertEval(Output.ContainsError, "{ make.names(\"a_a\", allow_=logical()) }");
+        assertEval(Output.ContainsError, "{ make.names(\"a_a\", allow_=NULL) }");
     }
 }

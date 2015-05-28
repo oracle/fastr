@@ -3,8 +3,8 @@
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
- * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2012-2014, Purdue University
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -196,5 +196,10 @@ public class TestBuiltin_names extends TestBase {
     @Test
     public void testnames38() {
         assertEval("argv <- list(structure(list(head = logical(0)), .Names = 'head', class = 'data.frame', row.names = integer(0)));names(argv[[1]]);");
+    }
+
+    @Test
+    public void testNames() {
+        assertEval("{ x<-c(1,2,3); dim(x)<-3; dimnames(x)<-list(c(11,12,13)); names(x) }");
     }
 }

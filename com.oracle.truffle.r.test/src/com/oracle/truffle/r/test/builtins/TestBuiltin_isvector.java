@@ -3,8 +3,8 @@
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
- * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2012-2014, Purdue University
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -182,4 +182,22 @@ public class TestBuiltin_isvector extends TestBase {
         assertEval("argv <- structure(list(x = 3), .Names = 'x');do.call('is.vector', argv)");
     }
 
+    @Test
+    public void testIsVector() {
+        assertEval("{ is.vector(1) }");
+        assertEval("{ is.vector(1:3) }");
+        assertEval("{ is.vector(NULL) }");
+        assertEval("{ x<-c(1,3); is.vector(x, \"double\"); }");
+        assertEval("{ x<-c(1,3); is.vector(x, \"integer\"); }");
+        assertEval("{ x<-c(1:3); is.vector(x, \"double\"); }");
+        assertEval("{ x<-c(1:3); is.vector(x, \"integer\"); }");
+        assertEval("{ x<-c(1,3); is.vector(x, \"d\"); }");
+        assertEval("{ x<-list(1,3); }");
+        assertEval("{ x<-c(1); attr(x, \"foo\")<-\"foo\"; is.vector(x) }");
+        assertEval("{ x<-list(1); attr(x, \"foo\")<-\"foo\"; is.vector(x) }");
+        assertEval("{is.vector(c(TRUE,FALSE),\"numeric\");}");
+        assertEval("{is.vector(c(TRUE,FALSE),\"logical\");}");
+        assertEval("{x<-1;class(x)<-\"a\";is.vector(x);}");
+        assertEval("{x<-1;names(x)<-\"a\";is.vector(x);}");
+    }
 }

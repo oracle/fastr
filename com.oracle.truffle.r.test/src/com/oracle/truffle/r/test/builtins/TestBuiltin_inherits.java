@@ -3,8 +3,8 @@
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
- * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2012-2014, Purdue University
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -183,4 +183,32 @@ public class TestBuiltin_inherits extends TestBase {
                         + "do.call('inherits', argv)");
     }
 
+    @Test
+    public void testInherits() {
+        assertEval("{x <- 10; inherits(x, \"a\") ;}");
+        assertEval("{x <- 10;class(x) <- c(\"a\", \"b\"); inherits(x,\"a\") ;}");
+        assertEval("{x <- 10;class(x) <- c(\"a\", \"b\");inherits(x, \"a\", TRUE) ;}");
+        assertEval("{x <- 10;class(x) <- c(\"a\", \"b\");inherits(x, c(\"a\", \"b\", \"c\"), TRUE) ;}");
+        assertEval("{x <- 10;class(x) <- c(\"a\");inherits(x, c(\"a\", \"b\", \"a\"), TRUE) ;}");
+        assertEval("{x <- 10;class(x) <- c(\"a\", \"b\");inherits(x, c(\"c\", \"q\", \"b\"), TRUE) ;}");
+        assertEval("{x <- 10;class(x) <- c(\"a\", \"b\");inherits(x, c(\"c\", \"q\", \"b\")) ;}");
+        assertEval("{x <- 10;class(x) <- c(\"a\", \"b\");inherits(x, \"a\", c(TRUE)) ;}");
+        assertEval("{ inherits(NULL, \"try-error\") }");
+        assertEval("{ inherits(new.env(), \"try-error\") }");
+
+        assertEval("{ x<-data.frame(c(1,2)); inherits(x, \"data.frame\") }");
+        assertEval("{ x<-factor(\"a\", \"b\", \"a\"); inherits(x, \"factor\") }");
+        assertEval("{ inherits(textConnection(\"abc\"), \"connection\") }");
+
+        assertEval("{ e <- new.env(); inherits(e, \"environment\") }");
+        assertEval("{ e <- new.env(); inherits(e, \"abc\") }");
+        assertEval("{ e <- new.env(); class(e)<-\"abc\"; inherits(e, \"abc\") }");
+        assertEval("{ f <- function() { }; inherits(f, \"function\") }");
+        assertEval("{ f <- function() { }; inherits(f, \"abc\") }");
+        assertEval("{ f <- function() { }; class(f)<-\"abc\"; inherits(f, \"abc\") }");
+
+        // Fails because of exact string matching in error message.
+        assertEval(Ignored.Unknown, "{x <- 10;class(x) <- c(\"a\", \"b\");inherits(x, 2, c(TRUE)) ;}");
+        assertEval(Ignored.Unknown, "{x <- 10;class(x) <- c(\"a\", \"b\");inherits(x, \"a\", 1) ;}");
+    }
 }

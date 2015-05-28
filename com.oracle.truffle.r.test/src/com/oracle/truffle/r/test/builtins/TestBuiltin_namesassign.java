@@ -3,8 +3,8 @@
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
- * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2012-2014, Purdue University
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -110,5 +110,41 @@ public class TestBuiltin_namesassign extends TestBase {
     public void testnamesassign18() {
         assertEval(Ignored.Unknown,
                         "argv <- list(structure(c(67L, 34L), .Dim = 2L, .Dimnames = list(c('\\\'actual\\\'', 'virtual')), class = 'table'), value = c('\\\'actual\\\'', 'virtual'));`names<-`(argv[[1]],argv[[2]]);");
+    }
+
+    @Test
+    public void testUpdateNames() {
+        assertEval("{ x <- c(1,2) ; names(x) <- c(\"hello\", \"hi\"); names(x) } ");
+
+        assertEval("{ x <- 1:2 ; names(x) <- c(\"hello\", \"hi\"); names(x) } ");
+        assertEval("{ x<-c(1, 2); attr(x, \"names\")<-c(\"a\", \"b\"); x }");
+        assertEval("{ x<-c(1, 2); attr(x, \"names\")<-c(\"a\", \"b\"); names(x)<-NULL; attributes(x) }");
+        assertEval("{ x<-c(1, 2); names(x)<-c(\"a\", \"b\"); attr(x, \"names\")<-NULL; x }");
+        assertEval("{ x<-c(1, 2); names(x)<-42; x }");
+        assertEval("{ x<-c(1, 2); names(x)<-c(TRUE, FALSE); x }");
+        assertEval(Output.ContainsError, "{ x<-c(1,2); names(x) <- 42:44; x }");
+        assertEval(Output.ContainsError, "{ x<-c(1,2); attr(x, \"names\") <- 42:45; x }");
+        assertEval("{ x<-list(1,2); names(x)<-c(\"a\",NA); x }");
+        assertEval("{ x<-list(1,2); names(x)<-c(\"a\",\"$\"); x }");
+        assertEval("{ x<-list(1,2); names(x)<-c(\"a\",\"b\"); x }");
+        assertEval("{ x<-list(1,2); names(x)<-42:43; x }");
+        assertEval("{ x<-7; attr(x, \"foo\")<-\"a\"; attr(x, \"bar\")<-42; attributes(x) }");
+        assertEval("{ x<-c(\"a\", \"\", \"bbb\", \"\", \"c\"); names(x)<-1:4; x }");
+
+        assertEval("{ x <- c(1,2); names(x) <- c(\"hello\", \"hi\") ; x }");
+        assertEval("{ x <- 1:2; names(x) <- c(\"hello\", \"hi\") ; x }");
+
+        assertEval("{ x <- c(1,9); names(x) <- c(\"hello\",\"hi\") ; sqrt(x) }");
+        assertEval("{ x <- c(1,9); names(x) <- c(\"hello\",\"hi\") ; is.na(x) }");
+        assertEval("{ x <- c(1,NA); names(x) <- c(\"hello\",\"hi\") ; cumsum(x) }");
+        assertEval("{ x <- c(1,NA); names(x) <- c(NA,\"hi\") ; cumsum(x) }");
+
+        assertEval("{ x <- 1:2; names(x) <- c(\"A\", \"B\") ; abs(x) }");
+        assertEval("{ z <- c(a=1, b=2) ; names(z) <- NULL ; z }");
+        assertEval("{ x <- c(1,2) ; names(x) <- c(\"hello\"); names(x) }");
+        assertEval("{ x <- 1:2 ; names(x) <- c(\"hello\"); names(x) }");
+
+        assertEval("{ x <- c(1,2); names(x) <- c(\"A\", \"B\") ; x + 1 }");
+        assertEval("{ x <- 1:2; names(x) <- c(\"A\", \"B\") ; y <- c(1,2,3,4) ; names(y) <- c(\"X\", \"Y\", \"Z\") ; x + y }");
     }
 }

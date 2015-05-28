@@ -3,8 +3,8 @@
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
- * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2012-2014, Purdue University
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -91,4 +91,9 @@ public class TestBuiltin_isunsorted extends TestBase {
         assertEval("argv <- structure(list(x = structure(list(x = c(2L, 1L)), .Names = 'x',     row.names = c(NA, -2L), class = 'data.frame')), .Names = 'x');do.call('is.unsorted', argv)");
     }
 
+    @Test
+    public void testIsUnsorted() {
+        assertEval("{ is.unsorted(c(1,2,3,4)) }");
+        assertEval("{ is.unsorted(c(1,2,6,4)) }");
+    }
 }

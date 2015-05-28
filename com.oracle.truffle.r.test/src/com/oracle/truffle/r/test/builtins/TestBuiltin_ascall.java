@@ -3,8 +3,8 @@
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
- * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2012-2014, Purdue University
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -45,5 +45,19 @@ public class TestBuiltin_ascall extends TestBase {
     @Test
     public void testascall6() {
         assertEval("argv <- list(list(quote(quote), NA));as.call(argv[[1]]);");
+    }
+
+    @Test
+    public void testAsCall() {
+        assertEval("{ l <- list(f) ; as.call(l) }");
+        assertEval("{ l <- list(f, 2, 3) ; as.call(l) }");
+        assertEval("{ g <- function() 23 ; l <- list(f, g()) ; as.call(l) }");
+        assertEval("{ f <- round ; g <- as.call(list(f, quote(A))) }");
+        assertEval("{ f <- function() 23 ; l <- list(f) ; cl <- as.call(l) ; eval(cl) }");
+        assertEval("{ f <- function(a,b) a+b ; l <- list(f,2,3) ; cl <- as.call(l) ; eval(cl) }");
+        assertEval("{ f <- function(x) x+19 ; g <- function() 23 ; l <- list(f, g()) ; cl <- as.call(l) ; eval(cl) }");
+
+        assertEval("{ f <- function(x) x ; l <- list(f, 42) ; cl <- as.call(l); typeof(cl[[1]]) }");
+        assertEval("{ f <- function(x) x ; l <- list(f, 42) ; cl <- as.call(l); typeof(cl[[2]]) }");
     }
 }

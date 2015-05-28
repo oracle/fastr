@@ -3,8 +3,8 @@
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
- * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2012-2014, Purdue University
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -74,5 +74,22 @@ public class TestBuiltin_grep extends TestBase {
     @Test
     public void testgrep12() {
         assertEval("argv <- list('^[[:blank:]]*$', 'mtext(\\\'«Latin-1 accented chars»: éè øØ å<Å æ<Æ\\\', side = 3)', FALSE, FALSE, FALSE, FALSE, FALSE, FALSE); .Internal(grep(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]]))");
+    }
+
+    @Test
+    public void testGrep() {
+        assertEval("{ txt<-c(\"arm\",\"foot\",\"lefroo\", \"bafoobar\"); grep(\"foo\", txt) }");
+        assertEval("{ txt<-c(\"is\", \"intended\", \"to\", \"guarantee\", \"your\", \"freedom\"); grep(\"[gu]\", txt) }");
+        assertEval("{ txt<-c(\"1+1i\", \"7\", \"42.1\", \"7+42i\"); grep(\"[0-9].*[-+][0-9].*i$\", txt) }");
+        assertEval("{ txt<-c(\"rai\", \"ira\", \"iri\"); grep(\"i$\", txt) }");
+    }
+
+    @Test
+    public void testLsRegExp() {
+        assertEval("{ abc <- 1; ls(pattern=\"a.*\")}");
+        assertEval("{ .abc <- 1; ls(pattern=\"\\\\.a.*\")}");
+        assertEval("{ .abc <- 1; ls(all.names=TRUE, pattern=\"\\\\.a.*\")}");
+        assertEval("{ abc <- 1; ls(pattern=\"[[:alpha:]]*\")}");
+        assertEval("{ f <- function(abc) { ls(pattern=\"[a-z]*\") }; f(1) }");
     }
 }

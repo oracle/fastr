@@ -3,8 +3,8 @@
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
- * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2012-2014, Purdue University
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -50,4 +50,28 @@ public class TestBuiltin_print extends TestBase {
                                         + "do.call('print', argv)");
     }
 
+    @Test
+    public void testPrint() {
+        assertEval("{ print(23) }");
+        assertEval("{ print(1:3,quote=TRUE) }");
+        assertEval("{ print(list(1,2,3),quote=TRUE) }");
+        assertEval("{ x<-c(1,2); names(x)=c(\"a\", \"b\"); print(x,quote=TRUE) }");
+        assertEval("{ x<-c(1, 2:20, 21); n<-\"a\"; n[21]=\"b\"; names(x)<-n; print(x,quote=TRUE) }");
+        assertEval("{ x<-c(10000000, 10000:10007, 21000000); n<-\"a\"; n[10]=\"b\"; names(x)<-n; print(x,quote=TRUE) }");
+        assertEval("{ x<-c(\"11\", \"7\", \"2222\", \"7\", \"33\"); print(x,quote=TRUE) }");
+        assertEval("{  x<-c(11, 7, 2222, 7, 33); print(x,quote=TRUE) }");
+        assertEval("{ x<-c(\"11\", \"7\", \"2222\", \"7\", \"33\"); names(x)<-1:5; print(x,quote=TRUE) }");
+        assertEval("{ x<-c(11, 7, 2222, 7, 33); names(x)<-1:5; print(x,quote=TRUE) }");
+        assertEval("{ print(list(list(list(1,2),list(3)),list(list(4),list(5,6))),quote=TRUE) }");
+        assertEval("{ print(c(1.1,2.34567),quote=TRUE) }");
+        assertEval("{ print(c(1,2.34567),quote=TRUE) }");
+        assertEval("{ print(c(11.1,2.34567),quote=TRUE) }");
+        assertEval("{ nql <- noquote(letters); print(nql)}");
+        assertEval("{ nql <- noquote(letters); nql[1:4] <- \"oh\"; print(nql)}");
+        assertEval("{ print(c(\"foo\"),quote=FALSE)}");
+        assertEval("{ x<-matrix(c(\"a\",\"b\",\"c\",\"d\"),nrow=2);print(x,quote=FALSE)}");
+        assertEval("{ y<-c(\"a\",\"b\",\"c\",\"d\");dim(y)<-c(1,2,2);print(y,quote=FALSE)}");
+        assertEval("{ n <- 17 ; fac <- factor(rep(1:3, length = n), levels = 1:5) ; y<-tapply(1:n, fac, sum); y }");
+        assertEval("{ nql <- noquote(letters); nql}");
+    }
 }

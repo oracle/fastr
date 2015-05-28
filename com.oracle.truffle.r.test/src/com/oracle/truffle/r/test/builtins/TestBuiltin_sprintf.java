@@ -3,8 +3,8 @@
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
- * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2012-2014, Purdue University
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -117,5 +117,23 @@ public class TestBuiltin_sprintf extends TestBase {
     @Test
     public void testsprintf21() {
         assertEval("argv <- structure(list(fmt = '%9.4g', 12345.6789), .Names = c('fmt',     ''));do.call('sprintf', argv)");
+    }
+
+    @Test
+    public void testSprintf() {
+        assertEval("{ sprintf(\"0x%x\",1L) }");
+        assertEval("{ sprintf(\"0x%x\",10L) }");
+        assertEval("{ sprintf(\"%d%d\",1L,2L) }");
+        assertEval("{ sprintf(\"0x%x\",1) }");
+        assertEval("{ sprintf(\"0x%x\",10) }");
+        assertEval("{ sprintf(\"%d\", 10) }");
+        assertEval("{ sprintf(\"%7.3f\", 10.1) }");
+        assertEval("{ sprintf(\"%03d\", 1:3) }");
+        assertEval("{ sprintf(\"%3d\", 1:3) }");
+        assertEval("{ sprintf(\"%4X\", 26) }");
+        assertEval("{ sprintf(\"%04X\", 26) }");
+        assertEval("{ sprintf(\"Hello %*d\", 3, 2) }");
+        assertEval("{ sprintf(\"Hello %*2$d\", 3, 2) }");
+        assertEval("{ sprintf(\"Hello %2$*2$d\", 3, 2) }");
     }
 }

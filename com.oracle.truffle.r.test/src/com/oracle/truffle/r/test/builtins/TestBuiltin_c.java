@@ -3,12 +3,14 @@
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
- * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2012-2014, Purdue University
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
 package com.oracle.truffle.r.test.builtins;
+
+import java.util.*;
 
 import org.junit.*;
 
@@ -410,5 +412,141 @@ public class TestBuiltin_c extends TestBase {
     public void testc74() {
         assertEval(Ignored.Unknown,
                         "argv <- list(structure(list(object = c('time', 'status')), .Names = 'object'), structure(list(max.level = NA, vec.len = 4, digits.d = 3, nchar.max = 128, give.attr = TRUE, give.head = TRUE, width = 80L, envir = NULL, strict.width = 'no', formatNum = function (x, ...) format(x, trim = TRUE, drop0trailing = TRUE, ...), list.len = 99), .Names = c('max.level', 'vec.len', 'digits.d', 'nchar.max', 'give.attr', 'give.head', 'width', 'envir', 'strict.width', 'formatNum', 'list.len')), structure(list(give.length = TRUE, nest.lev = 2, indent.str = '  .. ..'), .Names = c('give.length', 'nest.lev', 'indent.str')));c(argv[[1]],argv[[2]],argv[[3]]);");
+    }
+
+    private static String[] repeat(int size, String[] array) {
+        if (size == array.length) {
+            return array;
+        } else if (size <= array.length) {
+            return Arrays.copyOf(array, size);
+        } else {
+            String[] result = new String[size];
+            for (int i = 0; i < size; i++) {
+                result[i] = array[i % array.length];
+            }
+            return result;
+        }
+    }
+
+    private void genTest(String test, int size, String[] testValues) {
+        String genTest = String.format(test, (Object[]) repeat(size, testValues));
+        assertEval(genTest);
+    }
+
+    public void testCombine(String[] testValues) {
+        genTest("{ c(%s) }", 1, testValues);
+        genTest("{ c(%s, %s) }", 2, testValues);
+        genTest("{ c(c(%s,%s), %s) }", 3, testValues);
+        genTest("{ c(%s, c(%s,%s)) }", 3, testValues);
+        genTest("{ c(NULL, c(%s,%s)) }", 2, testValues);
+        genTest("{ c(c(%s,%s), NULL) }", 2, testValues);
+        genTest("{ c(NULL, %s, NULL) }", 1, testValues);
+        genTest("{ c(NULL, %s) }", 1, testValues);
+        genTest("{ c(%s, NULL) }", 1, testValues);
+
+        genTest("{ c(c(%s,%s), c(%s,%s)) }", 4, testValues);
+        genTest("{ c(c(%s,%s), %s, c(%s,%s)) }", 5, testValues);
+        genTest("{ c(c(%s,%s), c(%s,%s), c(%s,%s)) }", 6, testValues);
+    }
+
+    @Test
+    public void testCombine() {
+        assertEval("{ c(\"1.2\",\"3.4\") }");
+        assertEval("{ c(\"a\",\"b\",\"c\") }");
+        assertEval("{ c(\"1\",\"b\") }");
+        assertEval("{ c(\"1.00\",\"2.00\") }");
+        assertEval("{ c(\"1.00\",\"b\") }");
+
+        assertEval("{ c(1.0,1L) }");
+        assertEval("{ c(1L,1.0) }");
+        assertEval("{ c( 1:3 ) }");
+        assertEval("{ c( 1L:3L ) }");
+        assertEval("{ c( 100, 1:3, 200 ) }");
+        assertEval("{ c( 1:3, 7:9 ) }");
+        assertEval("{ c( 1:3, 5, 7:9 ) }");
+
+        assertEval("{ c() }");
+        assertEval("{ c(NULL) }");
+        assertEval("{ c(NULL,NULL) }");
+        assertEval("{ c(NULL,1,2,3) }");
+
+        assertEval("{ c(1+1i,2-3i,4+5i) }");
+
+        assertEval("{ c(\"hello\", \"hi\") }");
+
+        assertEval("{ c(1+1i, as.raw(10)) }");
+        assertEval("{ c(as.raw(10), as.raw(20)) }");
+        assertEval("{ c(as.raw(10),  \"test\") }");
+
+        assertEval("{ f <- function(x,y) { c(x,y) } ; f(1,1) ; f(1, TRUE) }");
+        assertEval("{ f <- function(x,y) { c(x,y) } ; f(1,1) ; f(1, TRUE) ; f(NULL, NULL) }");
+
+        testCombine(new String[]{"1", "2", "3"});
+        testCombine(new String[]{"1L", "2L", "3L"});
+        testCombine(new String[]{"TRUE", "FALSE", "FALSE"});
+        testCombine(new String[]{"\"a\"", "\"b\"", "\"c\""});
+        testCombine(new String[]{"\"d\"", "2L", "\"f\""});
+        testCombine(new String[]{"\"g\"", "2", "2"});
+        testCombine(new String[]{"\"j\"", "TRUE", "TRUE"});
+
+        // test propagation of the "names" attribute
+        assertEval("{ x<-1:2; names(x)<-7:8; y<-3:4; names(y)<-9:10; z<-c(x, y); z }");
+        assertEval("{ x<-1:2; names(x)<-7:8; y<-3:4; z<-c(x, y); z }");
+        assertEval("{ x<-1:2; names(x)<-7:8;  z<-c(x, integer()); z }");
+        assertEval("{ x<-1:2; names(x)<-7:8; z<-c(x, 3L); z }");
+        assertEval("{ x<-1:2; names(x)<-7:8; z<-c(3L, x); z }");
+        assertEval("{ x<-1:2; names(x)<-7:8; y<-double(0);  z<-c(x, y); z }");
+        assertEval("{ x<-1:2; names(x)<-7:8; z<-c(x, 3); z }");
+        assertEval("{ x<-1:2; names(x)<-7:8; z<-c(x, 3); attributes(z) }");
+
+        assertEval("{ c(a=42) }");
+        assertEval("{ c(a=FALSE) }");
+        assertEval("{ c(a=as.raw(7)) }");
+        assertEval("{ c(a=\"foo\") }");
+        assertEval("{ c(a=7i) }");
+
+        assertEval("{ c(a=1, b=2) }");
+        assertEval("{ c(a=FALSE, b=TRUE) }");
+        assertEval("{ c(a=as.raw(1), b=as.raw(2)) }");
+        assertEval("{ c(a=\"bar\", b=\"baz\") }");
+        assertEval("{ c(a=1, 2) }");
+        assertEval("{ c(1, b=2) }");
+
+        assertEval("{ c(a=1i, b=2i) }");
+        assertEval("{ c(a=7i, a=1:2) }");
+        assertEval("{ c(a=1:2, 42) }");
+        assertEval("{ c(a=1:2, b=c(42)) }");
+        assertEval("{ c(a=1:2, b=double()) }");
+        assertEval("{ c(a=c(z=1), 42) }");
+        assertEval("{ x<-c(z=1); names(x)=c(\"\"); c(a=x, 42) }");
+        assertEval("{ x<-c(y=1, z=2); names(x)=c(\"\", \"\"); c(a=x, 42) }");
+        assertEval("{ x<-c(y=1, z=2);  c(a=x, 42) }");
+        assertEval("{ x<-c(y=1);  c(x, 42) }");
+        assertEval("{ x<-c(1);  c(z=x, 42) }");
+        assertEval("{ x<-c(y=1, 2);  c(a=x, 42) }");
+
+        assertEval("{ c(TRUE,1L,1.0,list(3,4)) }");
+        assertEval("{ c(TRUE,1L,1.0,list(3,list(4,5))) }");
+
+        assertEval("{ c(x=1,y=2) }");
+        assertEval("{ c(x=1,2) }");
+        assertEval("{ x <- 1:2 ; names(x) <- c(\"A\",NA) ; c(x,test=x) }");
+        assertEval("{ c(a=1,b=2:3,list(x=FALSE))  }");
+        assertEval("{ c(1,z=list(1,b=22,3)) }");
+
+        assertEval("{ is.matrix(c(matrix(1:4,2))) }");
+
+        assertEval("{ x<-expression(1); c(x) }");
+        assertEval("{ x<-expression(1); c(x,2) }");
+
+        // print output for a function in a list doesn't match GnuR,
+        // which seems to invoke deparse, so we just check the c didn't fail.
+        assertEval("{ f <- function() { }; length(c(f, 2)) == 2 }");
+    }
+
+    @Test
+    public void testCombineBroken() {
+        assertEval(Ignored.Unknown, "{ c(1i,0/0) }"); // yes, this is done by GNU-R, note
+        // inconsistency with as.complex(0/0)
     }
 }

@@ -3,8 +3,8 @@
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
- * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2012-2014, Purdue University
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -57,5 +57,20 @@ public class TestBuiltin_cummin extends TestBase {
     @Test
     public void testcummin8() {
         assertEval("argv <- list(FALSE);cummin(argv[[1]]);");
+    }
+
+    @Test
+    public void testCumulativeMin() {
+        assertEval("{ cummin(c(1,2,3)) }");
+        assertEval("{ cummin(NA) }");
+        assertEval("{ cummin(1:10) }");
+        assertEval("{ cummin(c(2000000000L, NA, 2000000000L)) }");
+        assertEval("{ cummin(c(TRUE,FALSE,TRUE)) }");
+        assertEval("{ cummin(c(TRUE,FALSE,NA,TRUE)) }");
+        assertEval("{ cummin(as.logical(-2:2)) }");
+
+        // Error message mismatch.
+        assertEval(Ignored.Unknown, "{ cummin(c(1+1i,2-3i,4+5i)) }");
+        assertEval(Ignored.Unknown, "{ cummin(c(1+1i, NA, 2+3i)) }");
     }
 }

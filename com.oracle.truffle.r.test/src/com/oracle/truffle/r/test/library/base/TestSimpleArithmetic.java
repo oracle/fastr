@@ -30,10 +30,7 @@ public class TestSimpleArithmetic extends TestBase {
         assertEval("{ 1+NA }");
         assertEval("{ 2L^10L }");
         assertEval("{ 0x10 + 0x10L + 1.28 }");
-    }
 
-    @Test
-    public void testScalarsRealIgnore() {
         assertEval(Ignored.Unknown, "{ 1000000000*100000000000 }"); // FIXME GNU R: 1e+20
         assertEval(Ignored.Unknown, "{ 1000000000L*1000000000 }"); // FIXME GNU R: 1e+18
         assertEval(Ignored.Unknown, "{ 1000000000L*1000000000L }"); // FIXME missing warning

@@ -3,8 +3,8 @@
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
- * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2012-2014, Purdue University
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -45,5 +45,13 @@ public class TestBuiltin_bincode extends TestBase {
     @Test
     public void testbincode6() {
         assertEval("argv <- list(c(4L, 8L, 7L, 4L, 8L, 7L, NA, 7L, 6L, 7L, 7L, 8L, 8L, 6L, 7L, 8L, 5L, 4L, 8L, 7L, 5L, 6L, 5L, 6L, 5L, 6L, 7L, 6L, 5L, 7L, 4L, 6L, 6L, 5L, 7L, 5L, 5L, 6L, 6L, 6L, 5L, 7L, 5L, 7L, 5L, 3L, 7L, 6L, 5L, 5L, 6L, 5L, 5L, 6L, 10L, 10L, 6L, 3L, 5L, 8L, 7L, 5L, 6L, 5L, 5L, 5L, 6L, 5L, 6L, 5L, 5L, 6L, 7L, 7L, 6L, 7L, 7L, 8L, 9L, 7L, 8L, 6L, 4L, 7L, 7L, 6L, NA, 8L, 5L, 7L, 6L, 5L, NA, 7L, 6L, 7L, 7L, 9L, 5L, 8L, 6L, 8L, 9L, 6L, 6L, 7L, 8L, 8L, 8L, 7L, 8L, 7L, 6L, 6L, 9L, 7L, 6L, 8L, 5L, 7L, 8L, 8L, 7L, 7L, 7L, 8L, 5L, 6L, 6L, 5L, 7L, 5L, 7L, 7L, 4L, 5L, 8L, 5L, 5L, 6L, 7L, 5L, 9L, 5L, 6L, 7L), c(2, 5.5, 10), TRUE, FALSE); .Internal(bincode(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
+    }
+
+    @Test
+    public void testBincode() {
+        assertEval("{ x <- c(0, 0.01, 0.5, 0.99, 1); b <- c(0, 0, 1, 1); .bincode(x, b, TRUE) }");
+        assertEval("{ x <- c(0, 0.01, 0.5, 0.99, 1); b <- c(0, 0, 1, 1); .bincode(x, b, FALSE) }");
+        assertEval("{ x <- c(0, 0.01, 0.5, 0.99, 1); b <- c(0, 0, 1, 1); .bincode(x, b, TRUE, TRUE) }");
+        assertEval("{ x <- c(0, 0.01, 0.5, 0.99, 1); b <- c(0, 0, 1, 1); .bincode(x, b, FALSE, TRUE) }");
     }
 }

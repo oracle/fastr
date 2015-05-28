@@ -3,8 +3,8 @@
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
- * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2012-2014, Purdue University
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -140,5 +140,13 @@ public class TestBuiltin_iscall extends TestBase {
     @Test
     public void testiscall26() {
         assertEval(Ignored.Unknown, "argv <- list(quote(cbind(X, M) ~ M.user + Temp + M.user:Temp));is.call(argv[[1]]);");
+    }
+
+    @Test
+    public void testIsCall() {
+        assertEval("{ cl <- call(\"f\") ; is.call(cl) }");
+        assertEval("{ cl <- call(\"f\", 2, 3) ; is.call(cl) }");
+        assertEval("{ cl <- list(f, 2, 3) ; is.call(cl) }");
+        assertEval("{ is.call(call) }");
     }
 }

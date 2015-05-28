@@ -3,8 +3,8 @@
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
- * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2012-2014, Purdue University
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -269,5 +269,15 @@ public class TestBuiltin_invisible extends TestBase {
     @Test
     public void testinvisible52() {
         assertEval("argv <- list(structure(c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11), .Dim = c(10L, 2L), .Dimnames = list(NULL, c('tt', 'tt + 1')), .Tsp = c(1920.5, 1921.25, 12), class = c('mts', 'ts', 'matrix')));invisible(argv[[1]]);");
+    }
+
+    @Test
+    public void testInvisible() {
+        assertEval("{ f <- function() { invisible(23) } ; f() }");
+        assertEval("{ f <- function() { invisible(23) } ; toString(f()) }");
+        assertEval("{ f <- function(x, r) { if (x) invisible(r) else r }; f(FALSE, 1) }");
+        assertEval("{ f <- function(x, r) { if (x) invisible(r) else r }; f(TRUE, 1) }");
+        assertEval("{ f <- function(x, r) { if (x) return(invisible(r)) else return(r) }; f(FALSE, 1) }");
+        assertEval("{ f <- function(x, r) { if (x) return(invisible(r)) else return(r) }; f(TRUE, 1) }");
     }
 }

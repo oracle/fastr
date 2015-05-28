@@ -3,8 +3,8 @@
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
- * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2012-2014, Purdue University
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -76,5 +76,19 @@ public class TestBuiltin_rank extends TestBase {
     public void testrank11() {
         assertEval(Ignored.Unknown,
                         "argv <- list(structure(c(4, 7, 6, 0, 0, 2, 4, 9, 3, 6, 0, 1, 5.5, 0.5, 4.5, 5.5, 0.5, 2.5, 0.5, 0.5, 2.5, 4.5, 9.5, 3.5, 1.5, 0.5, 5.5, 0.5, 1.5, 0.5, 0.5, 0.5, 1.5, 1.5, 0.5, 2.5, 2, 0, 7, 1, 1, 2, 0, 0, 0, 0, 3, 1, 0, 2, 0, 2, 0, 3, 2, 2, 0, 1, 3, 1, 4, 6, 0, 7, 0, 1, 2, 5, 11, 11, 9, 2), .Dim = 72L, .Dimnames = list(c('A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'B', 'B', 'B', 'B', 'B', 'B', 'B', 'B', 'B', 'B', 'B', 'B', 'C', 'C', 'C', 'C', 'C', 'C', 'C', 'C', 'C', 'C', 'C', 'C', 'D', 'D', 'D', 'D', 'D', 'D', 'D', 'D', 'D', 'D', 'D', 'D', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F'))), 72L, 'average'); .Internal(rank(argv[[1]], argv[[2]], argv[[3]]))");
+    }
+
+    @Test
+    public void testRank() {
+        assertEval(Ignored.Unknown, "{ rank(c(10,100,100,1000)) }");
+        assertEval(Ignored.Unknown, "{ rank(c(1000,100,100,100, 10)) }");
+        assertEval(Ignored.Unknown, "{ rank(c(a=2,b=1,c=3,40)) }");
+        assertEval(Ignored.Unknown, "{ rank(c(a=2,b=1,c=3,d=NA,e=40), na.last=NA) }");
+        assertEval(Ignored.Unknown, "{ rank(c(a=2,b=1,c=3,d=NA,e=40), na.last=\"keep\") }");
+        assertEval(Ignored.Unknown, "{ rank(c(a=2,b=1,c=3,d=NA,e=40), na.last=TRUE) }");
+        assertEval(Ignored.Unknown, "{ rank(c(a=2,b=1,c=3,d=NA,e=40), na.last=FALSE) }");
+        assertEval(Ignored.Unknown, "{ rank(c(a=1,b=1,c=3,d=NA,e=3), na.last=FALSE, ties.method=\"max\") }");
+        assertEval(Ignored.Unknown, "{ rank(c(a=1,b=1,c=3,d=NA,e=3), na.last=NA, ties.method=\"min\") }");
+        assertEval("{ rank(c(1000, 100, 100, NA, 1, 20), ties.method=\"first\") }");
     }
 }

@@ -3,8 +3,8 @@
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
- * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2012-2014, Purdue University
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -645,9 +645,7 @@ public class TestBuiltin_operators extends TestBase {
     @Test
     public void testoperators122() {
         assertEval("argv <- list(c(1.22408179743946+0i, 0.359813827057364+0i, 0.400771450594052+0i, 0.11068271594512+0i, -0.555841134754075+0i), structure(c(1.22408179743946+0i, 0.359813827057364+0i, 0.400771450594052+0i, 0.11068271594512+0i, -0.555841134754075+0i), .Dim = c(1L, 5L)));`==`(argv[[1]],argv[[2]]);");
-    }
 
-    public void testoperators123() {
         // comparison between factors does not preserve the names attribute
         assertEval("argv <- list(structure(c(1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 1L, 2L), .Label = c('0-9g/day', '10-19', '20-29', '30+'), class = c('ordered', 'factor'), .Names = c('1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23', '24', '25', '26', '27', '28', '29', '30', '31', '32', '33', '34', '35', '36', '37', '38', '39', '40', '41', '42', '43', '44', '45', '46', '47', '48', '49', '50', '51', '52', '53', '54', '55', '56', '57', '58', '59', '60', '61', '62', '63', '64', '65', '66', '67', '68', '69', '70', '71', '72', '73', '74', '75', '76', '77', '78', '79', '80', '81', '82', '83', '84', '85', '86', '87', '88')), structure(c(1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 1L, 2L), .Label = c('0-9g/day', '10-19', '20-29', '30+'), class = c('ordered', 'factor')));`==`(argv[[1]],argv[[2]]);");
     }
@@ -1965,5 +1963,52 @@ public class TestBuiltin_operators extends TestBase {
     @Test
     public void testoperators381() {
         assertEval("argv <- list(181L, 3.14159265358979);`*`(argv[[1]],argv[[2]]);");
+    }
+
+    @Test
+    public void testOperators() {
+        assertEval("{ `+`(1,2) }");
+        assertEval("{ `-`(1,2) }");
+        assertEval("{ `*`(1,2) }");
+        assertEval("{ `/`(1,2) }");
+        assertEval("{ `%/%`(1,2) }");
+        assertEval("{ `%%`(1,2) }");
+        assertEval("{ `^`(1,2) }");
+        assertEval("{ `!`(TRUE) }");
+        assertEval("{ `%o%`(3,5) }");
+        assertEval("{ x <- `+` ; x(2,3) }");
+        assertEval("{ x <- `+` ; f <- function() { x <- 1 ; x(2,3) } ; f() }");
+        assertEval("{ `||`(TRUE, FALSE) }");
+        assertEval("{ `&&`(TRUE, FALSE) }");
+        assertEval("{ `|`(TRUE, FALSE) }");
+        assertEval("{ `&`(TRUE, FALSE) }");
+        assertEval("{ `%*%`(3,5) }");
+    }
+
+    @Test
+    public void testMatMult() {
+        assertEval("{ matrix(c(1,2,3,4), 2) %*% matrix(c(5,6,7,8), 2) }");
+        assertEval("{ matrix(c(3,1,2,0,1,2), 2) %*% matrix(c(1,0,4,2,1,0), 3) }");
+        assertEval("{ c(1,2,3) %*% c(4,5,6) }");
+        assertEval("{ matrix(c(3,1,2,0,1,2),2) %*% c(1,0,4) }");
+        assertEval("{ c(1,0,4) %*% matrix(c(3,1,2,0,1,2),3) }");
+        assertEval("{ as.vector(c(1,2,3)) %*% t(as.vector(c(1,2))) }");
+
+        assertEval("{ matrix(c(1+1i,2-2i,3+3i,4-4i), 2) %*% matrix(c(5+5i,6-6i,7+7i,8-8i), 2) }");
+        assertEval("{ matrix(c(3+3i,1-1i,2+2i,0-0i,1+1i,2-2i), 2) %*% matrix(c(1+1i,0-0i,4+4i,2-2i,1+1i,0-0i), 3) }");
+        assertEval("{ c(1+1i,2-2i,3+3i) %*% c(4-4i,5+5i,6-6i) }");
+        assertEval("{ matrix(c(1+1i,0-0i,4+4i),3) %*% matrix(c(3+3i,1-1i,2+2i,0-0i,1+1i,2-2i),1) }");
+
+        assertEval(Ignored.Unknown, "{ matrix(c(3+3i,1-1i,2+2i,0-0i,1+1i,2-2i),2) %*% c(1+1i,0-0i,4+4i) }");
+        assertEval(Ignored.Unknown, "{ c(1+1i,0-0i,4+4i) %*% matrix(c(3+3i,1-1i,2+2i,0-0i,1+1i,2-2i),3) }");
+    }
+
+    @Test
+    public void testIn() {
+        assertEval("{ 2 %in% c(1,2,3) }");
+        assertEval("{ c(1,2,3,4,5) %in% c(1,2,1,2) }");
+        assertEval("{ \"hello\" %in% c(\"I\", \"say\", \"hello\", \"world\") }");
+        assertEval("{ c(\"hello\", \"say\") %in% c(\"I\", \"say\", \"hello\", \"world\") }");
+        assertEval("{ `%in%`(2,c(1,2,3)) }");
     }
 }

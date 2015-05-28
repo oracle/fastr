@@ -3,8 +3,8 @@
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
- * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2012-2014, Purdue University
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -89,5 +89,35 @@ public class TestBuiltin_pmax extends TestBase {
         // problem with number formatting
         assertEval(Ignored.Unknown,
                         "argv <- list(FALSE, structure(c(0, 0, -0.0906283137921162, -0.0801994352402973, -0.0235093686536505, -0.131187875867331, -0.131187875867331, -0.131187875867331, -0.131187875867331, 0, 0, 0, -0.106539777104723, -0.106539777104723, -0.106539777104723, 0, 0, 0.126786975893341, 0.126786975893341, 0.126786975893341, 0, -0.131187875867331, -0.131187875867331, -0.131187875867331, 0, -0.106539777104723, -0.106539777104723, -0.106539777104723, 0, 0, 0, -0.106539777104723, 0.172297822926899, 0.172297822926899, 0, 0, 0, 0, 0, -0.106539777104723, -0.106539777104723, -0.106539777104723, -0.106539777104723, 0, 0, 0, 0.172297822926899, 0.172297822926899), .Dim = c(12L, 4L)), 0); .Internal(pmax(argv[[1]], argv[[2]], argv[[3]]))");
+    }
+
+    @Test
+    public void testPMax() {
+        assertEval("{ pmax(c(1L, 7L), c(42L, 1L)) }");
+        assertEval("{ pmax(c(1L, 7L), integer()) }");
+        assertEval(Output.ContainsWarning, "{ pmax(c(1L, 7L, 8L), c(1L), c(42L, 1L)) }");
+        assertEval("{ pmax(c(1L, 7L), c(42L, as.integer(NA))) }");
+        assertEval("{ pmax(c(1L, 7L), c(42L, as.integer(NA)), na.rm=TRUE) }");
+
+        assertEval("{ pmax(c(1, 7), c(42, 1)) }");
+        assertEval("{ pmax(c(1, 7), double()) }");
+        assertEval(Output.ContainsWarning, "{ pmax(c(1, 7, 8), c(1), c(42, 1)) }");
+        assertEval("{ pmax(c(1, 7), c(42, as.double(NA))) }");
+        assertEval("{ pmax(c(1, 7), c(42, as.double(NA)), na.rm=TRUE) }");
+
+        assertEval("{ pmax(c(\"1\", \"7\"), c(\"42\", \"1\")) }");
+        assertEval("{ pmax(c(\"1\", \"7\"), character()) }");
+        assertEval(Output.ContainsWarning, "{ pmax(c(\"1\", \"7\", \"8\"), c(\"1\"), c(\"42\", \"1\")) }");
+        assertEval("{ pmax(c(\"1\", \"7\"), c(\"42\", as.character(NA))) }");
+        assertEval("{ pmax(c(\"1\", \"7\"), c(\"42\", as.character(NA)), na.rm=TRUE) }");
+        assertEval("{ pmax(c(\"1\", as.character(NA)), c(\"42\", \"1\"), na.rm=TRUE) }");
+        assertEval("{ pmax(c(\"1\", as.character(NA)), c(as.character(NA), as.character(NA)), c(\"42\", \"1\"), na.rm=TRUE) }");
+
+        assertEval("{ pmax(c(FALSE, TRUE), c(TRUE, FALSE)) }");
+        assertEval("{ pmax(c(FALSE, TRUE), logical()) }");
+        assertEval("{ pmax(c(FALSE, TRUE), c(FALSE, NA)) }");
+
+        assertEval(Output.ContainsError, "{ pmax(as.raw(42)) }");
+        assertEval(Output.ContainsError, "{ pmax(7+42i) }");
     }
 }

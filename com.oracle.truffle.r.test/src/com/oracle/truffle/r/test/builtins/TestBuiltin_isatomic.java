@@ -3,8 +3,8 @@
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
- * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2012-2014, Purdue University
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -175,5 +175,18 @@ public class TestBuiltin_isatomic extends TestBase {
     @Test
     public void testisatomic32() {
         assertEval("argv <- list(structure(1:20, .Tsp = c(1, 20, 1), class = 'ts'));is.atomic(argv[[1]]);");
+    }
+
+    @Test
+    public void testIsAtomic() {
+        assertEval("{ is.atomic(1) }");
+        assertEval("{ is.atomic(1L) }");
+        assertEval("{ is.atomic(1:3) }");
+        assertEval("{ is.atomic(c(1,2,3)) }");
+        assertEval("{ is.atomic(NA) }");
+        assertEval("{ is.atomic(NULL) }");
+        assertEval("{ is.atomic(TRUE) }");
+        assertEval("{ !is.atomic(list()) }");
+        assertEval("{ !is.atomic(function() {}) }");
     }
 }

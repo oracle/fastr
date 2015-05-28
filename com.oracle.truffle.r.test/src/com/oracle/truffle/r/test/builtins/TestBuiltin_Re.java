@@ -3,8 +3,8 @@
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
- * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2012-2014, Purdue University
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -52,5 +52,19 @@ public class TestBuiltin_Re extends TestBase {
     @Test
     public void testRe7() {
         assertEval("argv <- list(c(0.00086580086580088+0i, 0.00259740259740261+0i, 0.00519480519480521+0i, 0.00865800865800867+0i, 0.012987012987013+0i, 0.0181818181818182+0i, 0.0242424242424242+0i, 0.0303030303030303+0i, 0.0363636363636363+0i, 0.0424242424242424+0i, 0.0484848484848484+0i, 0.0536796536796536+0i, 0.058008658008658+0i, 0.0614718614718614+0i, 0.064069264069264+0i, 0.0649350649350649+0i, 0.064069264069264+0i, 0.0614718614718614+0i, 0.058008658008658+0i, 0.0536796536796536+0i, 0.0484848484848485+0i, 0.0424242424242424+0i, 0.0363636363636363+0i, 0.0303030303030303+0i, 0.0242424242424242+0i, 0.0181818181818182+0i, 0.012987012987013+0i, 0.00865800865800867+0i, 0.00519480519480521+0i, 0.00259740259740261+0i, 0.000865800865800882+0i));Re(argv[[1]]);");
+    }
+
+    @Test
+    public void testRe() {
+        assertEval("{ Re(1+1i) }");
+        assertEval("{ Re(1) }");
+        assertEval("{ Re(c(1+1i,2-2i)) }");
+        assertEval("{ Re(c(1,2)) }");
+        assertEval("{ Re(as.double(NA)) }");
+        assertEval("{ Re(c(1,NA,2)) }");
+        assertEval("{ Re(NA+2i) }");
+
+        assertEval(Ignored.Unknown, "{ x <- 1:2 ; attr(x,\"my\") <- 2 ; Re(x) }");
+        assertEval(Ignored.Unknown, "{ x <- c(1+2i,3-4i) ; attr(x,\"my\") <- 2 ; Re(x) }");
     }
 }

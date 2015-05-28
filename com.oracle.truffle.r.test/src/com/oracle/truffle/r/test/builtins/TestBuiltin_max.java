@@ -3,8 +3,8 @@
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
- * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2012-2014, Purdue University
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -160,4 +160,65 @@ public class TestBuiltin_max extends TestBase {
         assertEval("argv <- list(2, 3, NA);do.call('max', argv)");
     }
 
+    @Test
+    public void testMaximum() {
+        assertEval("{ max((-1):100) }");
+        assertEval("{ max(2L, 4L) }");
+        assertEval(Output.ContainsWarning, "{ max() }");
+        assertEval("{ max(1:10, 100:200, c(4.0, 5.0)) }");
+        assertEval("{ max(NA, 1.1) }");
+        assertEval("{ max(0/0, 1.1) }");
+        assertEval("{ max(0/0, 1.1, NA) }");
+        assertEval("{ max(c(as.character(NA), \"foo\")) }");
+        assertEval(Output.ContainsWarning, "{ max(character(0)) }");
+        assertEval(Output.ContainsWarning, "{ max(character()) }");
+        assertEval(Output.ContainsWarning, "{ max(double(0)) }");
+        assertEval(Output.ContainsWarning, "{ max(double()) }");
+        assertEval(Output.ContainsWarning, "{ max(NULL) }");
+
+        assertEval("{ max(1:10, 100:200, c(4.0, 5.0), c(TRUE,FALSE,NA)) }");
+        assertEval("{ max(c(\"hi\",\"abbey\",\"hello\")) }");
+        assertEval("{ max(\"hi\",\"abbey\",\"hello\") }");
+
+        assertEval("{ is.logical(max(TRUE, FALSE)) }");
+        assertEval("{ is.logical(max(TRUE)) }");
+        assertEval(Output.ContainsError, "{ max(as.raw(42), as.raw(7)) }");
+        assertEval(Output.ContainsError, "{ max(42+42i, 7+7i) }");
+        assertEval("{ max(\"42\", \"7\") }");
+
+        assertEval("{ max(as.double(NA), na.rm=FALSE) }");
+        assertEval(Output.ContainsWarning, "{ max(as.double(NA), as.double(NA), na.rm=TRUE) }");
+        assertEval("{ max(as.double(NA), as.double(NA), na.rm=FALSE) }");
+        assertEval("{ max(as.integer(NA), na.rm=FALSE) }");
+        assertEval("{ max(as.integer(NA), as.integer(NA), na.rm=FALSE) }");
+        assertEval(Output.ContainsWarning, "{ max(as.character(NA), na.rm=TRUE) }");
+        assertEval("{ max(as.character(NA), na.rm=FALSE) }");
+        assertEval(Output.ContainsWarning, "{ max(as.character(NA), as.character(NA), na.rm=TRUE) }");
+        assertEval("{ max(as.character(NA), as.character(NA), na.rm=FALSE) }");
+        assertEval("{ max(42L, as.integer(NA), na.rm=TRUE) }");
+        assertEval("{ max(42L, as.integer(NA), na.rm=FALSE) }");
+        assertEval("{ max(42, as.double(NA), na.rm=TRUE) }");
+        assertEval("{ max(42, as.double(NA), na.rm=FALSE) }");
+        assertEval("{ max(\"42\", as.character(NA), na.rm=TRUE) }");
+        assertEval("{ max(\"42\", as.character(NA), na.rm=FALSE) }");
+        assertEval("{ max(42L, as.integer(NA), 7L, na.rm=TRUE) }");
+        assertEval("{ max(42L, as.integer(NA), 7L, na.rm=FALSE) }");
+        assertEval("{ max(42, as.double(NA), 7, na.rm=TRUE) }");
+        assertEval("{ max(42, as.double(NA), 7, na.rm=FALSE) }");
+        assertEval("{ max(\"42\", as.character(NA), \"7\", na.rm=TRUE) }");
+        assertEval("{ max(\"42\", as.character(NA), \"7\", na.rm=FALSE) }");
+
+        assertEval("{ max(as.character(NA), as.character(NA), \"42\", na.rm=TRUE) }");
+        assertEval("{ max(as.character(NA), as.character(NA), \"42\", \"7\", na.rm=TRUE) }");
+
+        assertEval("{ max(123, NA, TRUE, 12, FALSE, na.rm=TRUE) }");
+        assertEval("{ max(123, NA, TRUE, 12, FALSE, na.rm=FALSE) }");
+        assertEval("{ max(123, NA, TRUE, 12, FALSE) }");
+
+        assertEval(Ignored.Unknown, Output.ContainsWarning, "{ max(integer(0)) }");
+        assertEval(Ignored.Unknown, Output.ContainsWarning, "{ max(integer()) }");
+        assertEval(Ignored.Unknown, Output.ContainsWarning, "{ max(as.double(NA), na.rm=TRUE) }");
+        assertEval(Ignored.Unknown, Output.ContainsWarning, "{ max(as.integer(NA), na.rm=TRUE) }");
+        assertEval(Ignored.Unknown, Output.ContainsWarning, "{ max(as.integer(NA), as.integer(NA), na.rm=TRUE) }");
+    }
 }

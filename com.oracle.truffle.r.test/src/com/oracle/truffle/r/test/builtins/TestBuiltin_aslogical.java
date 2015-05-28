@@ -3,8 +3,8 @@
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
- * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2012-2014, Purdue University
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -85,5 +85,19 @@ public class TestBuiltin_aslogical extends TestBase {
     @Test
     public void testaslogical17() {
         assertEval("argv <- list(c(1, 2, 3, 4, 5, NA, NA, 2, 3, 4, 5, 6));as.logical(argv[[1]]);");
+    }
+
+    @Test
+    public void testAsLogical() {
+        assertEval("{ as.logical(1) }");
+        assertEval("{ as.logical(\"false\") }");
+        assertEval("{ as.logical(\"dummy\") }"); // no warning produced (as it should be)
+        assertEval("{ x<-c(a=1.1, b=2.2); dim(x)<-c(1,2); attr(x, \"foo\")<-\"foo\"; y<-as.logical(x); attributes(y) }");
+        assertEval("{ x<-c(a=1L, b=2L); dim(x)<-c(1,2); attr(x, \"foo\")<-\"foo\"; y<-as.logical(x); attributes(y) }");
+        assertEval("{ as.logical(c(\"1\",\"hello\")) }");
+        assertEval("{ as.logical(\"TRUE\") }");
+        assertEval("{ as.logical(10+2i) }");
+        assertEval("{ as.logical(c(3+3i, 4+4i)) }");
+        assertEval("{ as.logical(NULL) }");
     }
 }

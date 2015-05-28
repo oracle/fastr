@@ -3,8 +3,8 @@
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
- * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2012-2014, Purdue University
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -178,4 +178,20 @@ public class TestBuiltin_class extends TestBase {
         assertEval("argv <- list(structure(c(0.909297426825682, 0.141120008059867,     -0.756802495307928), class = c('foo', 'bar')));do.call('class', argv)");
     }
 
+    @Test
+    public void testGetClass() {
+        assertEval("{x<-1L;class(x)}");
+
+        assertEval("{x<-c(1L,2L,3L);class(x)}");
+
+        assertEval("{x<-seq(1L,10L);class(x)}");
+
+        assertEval("{x<-seq(1.1,10.1);class(x)}");
+
+        assertEval("{x<-1;class(x)}");
+
+        assertEval("{x<-c(1,2,3);class(x)}");
+
+        assertEval("{x<-seq(1,10);class(x)}");
+    }
 }

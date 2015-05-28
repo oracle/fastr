@@ -3,8 +3,8 @@
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
- * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2012-2014, Purdue University
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -35,5 +35,17 @@ public class TestBuiltin_makeunique extends TestBase {
     @Test
     public void testmakeunique4() {
         assertEval("argv <- list(character(0), '.'); .Internal(make.unique(argv[[1]], argv[[2]]))");
+    }
+
+    @Test
+    public void testMakeUnique() {
+        assertEval("{ make.unique(\"a\") }");
+        assertEval("{ make.unique(character()) }");
+        assertEval("{ make.unique(c(\"a\", \"a\")) }");
+        assertEval("{ make.unique(c(\"a\", \"a\", \"a\")) }");
+        assertEval("{ make.unique(c(\"a\", \"a\"), \"_\") }");
+        assertEval(Output.ContainsError, "{ make.unique(1) }");
+        assertEval(Output.ContainsError, "{ make.unique(\"a\", 1) }");
+        assertEval(Output.ContainsError, "{ make.unique(\"a\", character()) }");
     }
 }

@@ -3,8 +3,8 @@
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
- * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2012-2014, Purdue University
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -126,5 +126,35 @@ public class TestBuiltin_abs extends TestBase {
     public void testabs21() {
         assertEval(Ignored.Unknown,
                         "argv <- list(structure(c(2671, 6.026e+77, 3.161e+152, 3.501e+299, 2.409e+227, 1.529e+302), .Names = c('Min.', '1st Qu.', 'Median', 'Mean', '3rd Qu.', 'Max.')));abs(argv[[1]]);");
+    }
+
+    @Test
+    public void testAbs() {
+        assertEval("{ abs(0) }");
+        assertEval("{ abs(100) }");
+        assertEval("{ abs(-100) }");
+        assertEval("{ abs(0/0) }");
+        assertEval("{ abs((1:2)[3]) }");
+        assertEval("{ abs((1/0)*(1-0i)) }");
+        assertEval("{ abs(1) }");
+        assertEval("{ abs(1L) }");
+        assertEval("{ abs(-1) }");
+        assertEval("{ abs(-1L) }");
+        assertEval("{ abs(NA) }");
+        assertEval("{ abs(c(1, 2, 3)) }");
+        assertEval("{ abs(c(1L, 2L, 3L)) }");
+        assertEval("{ abs(c(1, -2, 3)) }");
+        assertEval("{ abs(c(1L, -2L, 3L)) }");
+        assertEval("{ abs(c(1L, -2L, NA)) }");
+        assertEval("{ abs((-1-0i)/(0+0i)) }");
+        assertEval("{ abs((-0-1i)/(0+0i)) }");
+        assertEval("{ abs(NA+0.1) }");
+        assertEval("{ abs((0+0i)/0) }");
+        assertEval("{ abs(c(1, -2, NA)) }");
+        assertEval(Output.ContainsError, "{ abs(NULL) }");
+
+        assertEval(Ignored.Unknown, "{ abs(c(0/0,1i)) }");
+        assertEval(Ignored.Unknown, "{ abs(1:3) }");
+        assertEval(Ignored.Unknown, "{ abs(-1:-3) }");
     }
 }

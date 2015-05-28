@@ -3,8 +3,8 @@
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
- * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2012-2014, Purdue University
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -101,4 +101,14 @@ public class TestBuiltin_diag extends TestBase {
                                         + "do.call('diag', argv)");
     }
 
+    @Test
+    public void testDiagonal() {
+        assertEval("{ m <- matrix(1:6, nrow=3) ; diag(m) }");
+        assertEval("{ m <- matrix(1:6, nrow=2) ; diag(m) }");
+        assertEval("{ m <- matrix(1:9, nrow=3) ; diag(m) }");
+
+        assertEval("{ diag(1, 7) }");
+        assertEval("{ diag(1, 7, 2) }");
+        assertEval("{ diag(1, 2, 7) }");
+    }
 }

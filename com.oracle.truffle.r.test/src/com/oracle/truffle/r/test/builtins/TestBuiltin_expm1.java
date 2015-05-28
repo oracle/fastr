@@ -3,8 +3,8 @@
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
- * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2012-2014, Purdue University
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -40,5 +40,12 @@ public class TestBuiltin_expm1 extends TestBase {
     @Test
     public void testexpm15() {
         assertEval("argv <- list(structure(numeric(0), .Dim = c(0L, 0L)));expm1(argv[[1]]);");
+    }
+
+    @Test
+    public void testTrigExp() {
+        assertEval("{ expm1(2) }");
+        assertEval("{ expm1(c(1,2,3)) }");
+        assertEval(Output.ContainsError, "{ expm1() }");
     }
 }

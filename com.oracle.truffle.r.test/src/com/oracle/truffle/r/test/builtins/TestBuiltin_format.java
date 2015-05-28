@@ -3,8 +3,8 @@
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
- * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2012-2014, Purdue University
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -308,4 +308,11 @@ public class TestBuiltin_format extends TestBase {
         assertEval(Ignored.Unknown, "argv <- structure(list(x = 0.04, digits = 3, nsmall = 3), .Names = c('x',     'digits', 'nsmall'));do.call('format', argv)");
     }
 
+    public void testFormat() {
+        assertEval("{ format(7) }");
+        assertEval("{ format(7.42) }");
+        assertEval("{ format(c(7,42)) }");
+        assertEval("{ format(c(7.42,42.7)) }");
+        assertEval("{ format(c(7.42,42.7,NA)) }");
+    }
 }

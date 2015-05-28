@@ -3,8 +3,8 @@
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
- * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2012-2014, Purdue University
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -267,5 +267,26 @@ public class TestBuiltin_deparse extends TestBase {
     @Test
     public void testdeparse48() {
         assertEval("argv <- list(quote(x[[i]] <- 0.9999997), 500L, TRUE, 69, -1L); .Internal(deparse(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
+    }
+
+    @Test
+    public void testDeparse() {
+        assertEval("{ deparse(TRUE) }");
+        assertEval("{ deparse(c(T, F)) }");
+        assertEval("{ k <- 2 ; deparse(k) }");
+        assertEval("{ deparse(round) }");
+        assertEval("{ x<-expression(1); deparse(x) }");
+        assertEval("{ f<-function(...) { substitute(list(...)) }; deparse(f(c(1,2))) }");
+        assertEval("{ f<-function(...) { substitute(list(...)) }; deparse(f(c(x=1,2))) }");
+        assertEval("{ f <- function(x) { deparse(substitute(x)) } ; f(a + b * (c - d)) }");
+        assertEval("{ f<-function(x) { deparse(x) }; l<-list(7); f(l) }");
+        assertEval("{ f<-function(x) { deparse(x) }; l<-list(7, 42); f(l) }");
+        assertEval("{ f<-function(x) { deparse(x) }; l<-list(7, list(42)); f(l) }");
+        assertEval("{ deparse(expression(a+b, c+d)) }");
+
+        assertEval(Ignored.Unknown, "{ f <- function() 23 ; deparse(f) }");
+        assertEval(Ignored.Unknown, "{ deparse(nrow) }");
+        // should deparse as structure(...
+        assertEval("{ e <- new.env(); assign(\"a\", 1, e); assign(\"b\", 2, e); le <- as.list(e); deparse(le)}");
     }
 }

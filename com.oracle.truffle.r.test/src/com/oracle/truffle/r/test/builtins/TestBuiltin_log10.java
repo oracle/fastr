@@ -3,8 +3,8 @@
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
- * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2012-2014, Purdue University
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -52,5 +52,19 @@ public class TestBuiltin_log10 extends TestBase {
     public void testlog107() {
         assertEval(Ignored.Unknown,
                         "argv <- list(structure(numeric(0), .Dim = c(20L, 0L), .Dimnames = list(c('ant', 'bee', 'cat', 'cpl', 'chi', 'cow', 'duc', 'eag', 'ele', 'fly', 'fro', 'her', 'lio', 'liz', 'lob', 'man', 'rab', 'sal', 'spi', 'wha'), NULL)));log10(argv[[1]]);");
+    }
+
+    @Test
+    public void testLog10() {
+        assertEval("{ log10(1) } ");
+        assertEval("{ log10(0) }");
+        assertEval("{ log10(c(0,1)) }");
+
+        assertEval("{ log10(10) } ");
+        assertEval("{ log10(100) } ");
+        assertEval("{ as.integer(log10(200)*100000) } ");
+
+        assertEval(Ignored.Unknown, "{ m <- matrix(1:4, nrow=2) ; round( log10(m), digits=5 )  }");
+        assertEval(Ignored.Unknown, "{ x <- c(a=1, b=10) ; round( c(log(x), log10(x), log2(x)), digits=5 ) }");
     }
 }

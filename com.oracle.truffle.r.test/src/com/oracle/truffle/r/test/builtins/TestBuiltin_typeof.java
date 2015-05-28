@@ -3,8 +3,8 @@
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
- * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2012-2014, Purdue University
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -191,4 +191,34 @@ public class TestBuiltin_typeof extends TestBase {
                                         + "do.call('typeof', argv)");
     }
 
+    @Test
+    public void testTypeOf() {
+        assertEval("{ typeof(1) }");
+        assertEval("{ typeof(1L) }");
+        assertEval("{ typeof(function(){}) }");
+        assertEval("{ typeof(\"hi\") }");
+        assertEval("{ typeof(sum) }");
+        assertEval("{ typeof(NULL) }");
+        assertEval("{ typeof(TRUE) }");
+        assertEval("{ typeof(\"test\") }");
+        assertEval("{ typeof(c(1, 2, 3)) }");
+        assertEval("{ typeof(c(1L, 2L, 3L)) }");
+        assertEval("{ typeof(1:3) }");
+        assertEval("{ typeof(c(TRUE, TRUE, FALSE)) }");
+        assertEval("{ typeof(typeof(NULL)) }");
+        assertEval("{ length(typeof(NULL)) }");
+        assertEval("{ typeof(length(typeof(NULL))) }");
+
+        assertEval("{ f <- function(...) typeof(...); f(1)}");
+        assertEval("{ f <- function(...) typeof(...); f(1, 2)}");
+        assertEval("{ f <- function(...) typeof(...); f(1, 2, 3)}");
+        assertEval("{ f <- function(...) typeof(...); f(1, 2, 3, 4)}");
+
+        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); typeof(x) }");
+        assertEval("{ x<-data.frame(c(\"a\", \"b\", \"a\")); typeof(x) }");
+
+        assertEval("{ f <- function(...) typeof(...); f()}");
+
+        assertEval("{  typeof(seq(1,2)) }");
+    }
 }
