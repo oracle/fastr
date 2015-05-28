@@ -412,6 +412,8 @@ public class AnalyzeRBuiltin {
                     AtomicLong counter = wordCounts.get(rInfo.name);
                     if (counter != null) {
                         System.out.printf("%8d ", counter.get());
+                    } else {
+                        System.out.printf("         ");
                     }
                 }
                 System.out.printf("%s (%s)%n", rInfo.name, rInfo.kind);
