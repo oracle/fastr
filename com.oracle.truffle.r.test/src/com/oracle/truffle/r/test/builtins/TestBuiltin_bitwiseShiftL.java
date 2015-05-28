@@ -19,7 +19,7 @@ public class TestBuiltin_bitwiseShiftL extends TestBase {
 
     @Test
     public void generated() {
-        assertEval(Ignored.Unknown, "argv <- list(-1, 1:31); .Internal(bitwiseShiftL(argv[[1]], argv[[2]]))");
+        assertEval("argv <- list(-1, 1:31); .Internal(bitwiseShiftL(argv[[1]], argv[[2]]))");
     }
 
     @Test

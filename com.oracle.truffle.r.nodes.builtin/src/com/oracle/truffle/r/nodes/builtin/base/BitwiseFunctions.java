@@ -64,32 +64,37 @@ public class BitwiseFunctions {
                     ans[i] = RRuntime.INT_NA;
                     completeVector = false;
                 } else {
+                    int v;
                     switch (op) {
                         case AND:
-                            ans[i] = aVal & bVal;
+                            v = aVal & bVal;
                             break;
                         case OR:
-                            ans[i] = aVal | bVal;
+                            v = aVal | bVal;
                             break;
                         case XOR:
-                            ans[i] = aVal ^ bVal;
+                            v = aVal ^ bVal;
                             break;
                         case SHIFTR:
                             if (bVal > 31) {
-                                ans[i] = RRuntime.INT_NA;
-                                completeVector = false;
+                                v = RRuntime.INT_NA;
                             } else {
-                                ans[i] = aVal >>> bVal;
+                                v = aVal >>> bVal;
                             }
                             break;
                         case SHIFTL:
                             if (bVal > 31) {
-                                ans[i] = RRuntime.INT_NA;
-                                completeVector = false;
+                                v = RRuntime.INT_NA;
                             } else {
-                                ans[i] = aVal << bVal;
+                                v = aVal << bVal;
                             }
                             break;
+                        default:
+                            throw RInternalError.shouldNotReachHere();
+                    }
+                    ans[i] = v;
+                    if (v == RRuntime.INT_NA) {
+                        completeVector = false;
                     }
                 }
             }
