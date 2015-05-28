@@ -3,8 +3,8 @@
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
- * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2012-2014, Purdue University
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -178,4 +178,17 @@ public class TestBuiltin_asdouble extends TestBase {
         assertEval("argv <- list(NA);do.call('as.double', argv)");
     }
 
+    @Test
+    public void testAsDouble() {
+        assertEval("{ as.double(\"1.27\") }");
+        assertEval("{ as.double(1L) }");
+        assertEval("{ as.double(as.raw(1)) }");
+        assertEval(Output.ContainsWarning, "{ as.double(c(\"1\",\"hello\")) }");
+        assertEval(Output.ContainsWarning, "{ as.double(\"TRUE\") }");
+        assertEval(Output.ContainsWarning, "{ as.double(10+2i) }");
+        assertEval(Output.ContainsWarning, "{ as.double(c(3+3i, 4+4i)) }");
+        assertEval("{ x<-c(a=1.1, b=2.2); dim(x)<-c(1,2); attr(x, \"foo\")<-\"foo\"; y<-as.double(x); attributes(y) }");
+        assertEval("{ x<-c(a=1L, b=2L); dim(x)<-c(1,2); attr(x, \"foo\")<-\"foo\"; y<-as.double(x); attributes(y) }");
+        assertEval("{ as.double(NULL) }");
+    }
 }

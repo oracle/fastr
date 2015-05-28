@@ -3,8 +3,8 @@
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
- * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2012-2014, Purdue University
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -144,5 +144,23 @@ public class TestBuiltin_isfinite extends TestBase {
     @Test
     public void testisfinite25() {
         assertEval("argv <- list(structure(c(13991, 13995), class = 'Date'));is.finite(argv[[1]]);");
+    }
+
+    @Test
+    public void testIsFinite() {
+        assertEval("{ is.finite(1:100) }");
+        assertEval("{ is.finite(1:1) }");
+        assertEval("{ is.finite(c(1,2,3)) }");
+        assertEval("{ is.finite(c(1,2,Inf)) }");
+        assertEval("{ is.finite(c(1,2,-Inf)) }");
+        assertEval("{ is.finite(c(Inf,2,-Inf)) }");
+        assertEval("{ is.finite(c(Inf,NA,-Inf)) }");
+        assertEval("{ is.finite(1) }");
+        assertEval("{ is.finite(c(1L,2L,3L)) }");
+        assertEval("{ is.finite(c(1L,2L,NA)) }");
+        assertEval("{ is.finite(1L) }");
+        assertEval("{ is.finite(as.raw(c(1L,2L,3L))) }");
+        assertEval("{ is.finite(c(TRUE, FALSE)) }");
+        assertEval("{ is.finite(c(TRUE, FALSE, NA)) }");
     }
 }

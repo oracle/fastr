@@ -3,8 +3,8 @@
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
- * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2012-2014, Purdue University
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -41,5 +41,50 @@ public class TestBuiltin_cat extends TestBase {
     @Test
     public void testcat5() {
         assertEval("argv <- list('head\\n', file = 'foo2');cat(argv[[1]],argv[[2]]);");
+    }
+
+    @Test
+    public void testCat() {
+        assertEval("{ cat() }");
+        assertEval("{ cat(1) }");
+        assertEval("{ cat(1, sep=\"\\n\") }");
+        assertEval("{ cat(1,2,3) }");
+        assertEval("{ cat(\"a\") }");
+        assertEval("{ cat(\"a\", \"b\") }");
+        assertEval("{ cat(1, \"a\") }");
+        assertEval("{ cat(c(1,2,3)) }");
+        assertEval("{ cat(c(\"a\",\"b\")) }");
+        assertEval("{ cat(c(1,2,3),c(\"a\",\"b\")) }");
+        assertEval("{ cat(TRUE) }");
+        assertEval("{ cat(TRUE, c(1,2,3), FALSE, 7, c(\"a\",\"b\"), \"x\") }");
+        assertEval("{ cat(1:3) }");
+        assertEval("{ cat(\"hi\",1:3,\"hello\") }");
+        assertEval("{ cat(2.3) }");
+        assertEval("{ cat(1.2,3.4) }");
+        assertEval("{ cat(c(1.2,3.4),5.6) }");
+        assertEval("{ cat(c(TRUE,FALSE), TRUE) }");
+        assertEval("{ cat(NULL) }");
+        assertEval("{ cat(1L) }");
+        assertEval("{ cat(1L, 2L, 3L) }");
+        assertEval("{ cat(c(1L, 2L, 3L)) }");
+        assertEval("{ cat(1,2,sep=\".\") }");
+        assertEval("{ cat(\"hi\",1[2],\"hello\",sep=\"-\") }");
+        assertEval("{ cat(\"hi\",1[2],\"hello\",sep=\"-\\n\") }");
+        assertEval("{ m <- matrix(as.character(1:6), nrow=2) ; cat(m) }");
+        assertEval("{ cat(sep=\" \", \"hello\") }");
+        assertEval("{ cat(rep(NA, 8), \"Hey\",\"Hey\",\"Goodbye\",\"\\n\") }");
+        assertEval("{ cat(\"hi\",NULL,\"hello\",sep=\"-\") }");
+        assertEval("{ cat(\"hi\",integer(0),\"hello\",sep=\"-\") }");
+        assertEval("{ cat(\"a\", \"b\", \"c\", sep=c(\"-\", \"+\")) }");
+
+        assertEval(Ignored.Unknown, "{ cat(c(\"a\", \"b\", \"c\"), \"d\", sep=c(\"-\", \"+\")) }");
+    }
+
+    @Test
+    public void testCatVarargs() {
+        assertEval("{ f <- function(...) {cat(...,sep=\"-\")}; f(\"a\") }");
+        assertEval("{ f <- function(...) {cat(...,sep=\"-\\n\")}; f(\"a\") }");
+        assertEval("{ f <- function(...) {cat(...,sep=\"-\")}; f(\"a\", \"b\") }");
+        assertEval("{ f <- function(...) {cat(...,sep=\"-\\n\")}; f(\"a\", \"b\") }");
     }
 }

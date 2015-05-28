@@ -3,8 +3,8 @@
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
- * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2012-2014, Purdue University
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -53,4 +53,17 @@ public class TestBuiltin_whichmax extends TestBase {
         assertEval(Ignored.Unknown, "argv <- structure(list(x = c(NA, NA)), .Names = 'x');do.call('which.max', argv)");
     }
 
+    @Test
+    public void testWhichMax() {
+        assertEval("{ which.max(c(5,5,5,5,5)) }");
+        assertEval("{ which.max(c(1,2,3,4,5)) }");
+        assertEval("{ which.max(c(2,4))}");
+        assertEval("{ which.max(c(2L,4L,3L))}");
+        assertEval("{ which.max(c(1,2,3,4,5))}");
+        assertEval("{ which.max(c(TRUE, TRUE))}");
+        assertEval("{ which.max(c(TRUE, FALSE))}");
+        assertEval("{ which.max(c(1:5))}");
+        assertEval("{ which.max(c(5:1))}");
+        assertEval("{ which.max(c(1:10000))}");
+    }
 }

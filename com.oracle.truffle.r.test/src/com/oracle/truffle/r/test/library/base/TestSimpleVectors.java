@@ -613,9 +613,9 @@ public class TestSimpleVectors extends TestBase {
 
         assertEval("{ x<-matrix(1:4, ncol=2, dimnames=list(c(\"a\", \"b\"), c(\"c\", \"d\"))); dimnames(x)[[1]][1]<-\"z\"; x }");
         // this works but should generate a "coerce to list warning"
-// assertEval("{ x<-matrix(1:4, ncol=2, dimnames=list(c(m=\"a\", \"b\"), c(\"c\", \"d\"))); dimnames(x)[[1]]$m<-\"z\"; x }");
+        assertEval(Ignored.MissingWarning, "{ x<-matrix(1:4, ncol=2, dimnames=list(c(m=\"a\", \"b\"), c(\"c\", \"d\"))); dimnames(x)[[1]]$m<-\"z\"; x }");
         // this works but matrix printing is off
-// assertEval("{ x<-matrix(1:4, ncol=2, dimnames=list(m=c(\"a\", \"b\"), n=c(\"c\", \"d\"))); dimnames(x)$m[1]<-\"z\"; x }");
+        assertEval(Ignored.MissingWarning, "{ x<-matrix(1:4, ncol=2, dimnames=list(m=c(\"a\", \"b\"), n=c(\"c\", \"d\"))); dimnames(x)$m[1]<-\"z\"; x }");
 
         assertEval(Output.ContainsError, "{ x<-c(aa=1, b=2); dim(x)<-c(1,2); x[\"a\", exact=FALSE]<-7; x }");
 

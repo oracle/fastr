@@ -3,8 +3,8 @@
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
- * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2012-2014, Purdue University
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -71,5 +71,19 @@ public class TestBuiltin_sqrt extends TestBase {
     @Test
     public void testsqrt11() {
         assertEval(Ignored.Unknown, "argv <- list(0+1i);sqrt(argv[[1]]);");
+    }
+
+    @Test
+    public void testSqrt() {
+        assertEval("{ sqrt(9) }");
+        assertEval("{ sqrt(9L) }");
+        assertEval("{ sqrt(NA) }");
+        assertEval("{ sqrt(c(1,4,9,16)) }");
+        assertEval("{ sqrt(c(1,4,NA,16)) }");
+        assertEval("{ sqrt(c(a=9,b=81)) }");
+        assertEval("{ sqrt(1:5) }");
+
+        assertEval(Ignored.Unknown, "{ sqrt(-1L) }"); // FIXME warning
+        assertEval(Ignored.Unknown, "{ sqrt(-1) }"); // FIXME warning
     }
 }

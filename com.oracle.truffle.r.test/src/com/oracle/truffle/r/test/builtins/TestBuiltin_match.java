@@ -3,8 +3,8 @@
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
- * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2012-2014, Purdue University
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -179,5 +179,27 @@ public class TestBuiltin_match extends TestBase {
     @Test
     public void testmatch32() {
         assertEval("argv <- list(c('.__C__classA', '.__T__$:base', '.__T__$<-:base', '.__T__[:base', '.__T__plot:graphics', 'plot'), c('.__NAMESPACE__.', '.__S3MethodsTable__.', '.packageName', '.First.lib', '.Last.lib', '.onLoad', '.onAttach', '.onDetach', '.conflicts.OK', '.noGenerics'), 0L, NULL); .Internal(match(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
+    }
+
+    @Test
+    public void testMatch() {
+        assertEval("{ match(2,c(1,2,3)) }");
+        assertEval("{ match(c(1,2,3,4,5),c(1,2,1,2)) }");
+        assertEval("{ match(\"hello\",c(\"I\", \"say\", \"hello\", \"world\")) }");
+        assertEval("{ match(c(\"hello\", \"say\"),c(\"I\", \"say\", \"hello\", \"world\")) }");
+        assertEval("{ match(\"abc\", c(\"xyz\")) }");
+        assertEval("{ match(\"abc\", c(\"xyz\"), nomatch=-1) }");
+
+        assertEval("{ match(c(1,2,3,\"NA\",NA), c(NA,\"NA\",1,2,3,4,5,6,7,8,9,10)) }");
+        assertEval("{ match(c(1L,2L,3L,1L,NA), c(NA,1L,1L,2L,3L,4L,5L,6L,7L,8L,9L,10L)) }");
+        assertEval("{ match(c(1,2,3,NaN,NA,1), c(1,NA,NaN,1,2,3,4,5,6,7,8,9,10)) }");
+        assertEval("{ match(c(0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,\"NA\",NA), c(NA,\"NA\",1,2,3,4,5,6,7,8,9,10,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9)) }");
+        assertEval("{ match(c(0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,1L,NA), c(NA,1L,1L,2L,3L,4L,5L,6L,7L,8L,9L,10L,0L,1L,1L,2L,3L,4L,5L,6L,7L,8L,9L,10L,0L,1L,1L,2L,3L,4L,5L,6L)) }");
+        assertEval("{ match(c(0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,NaN,NA,1), c(1,NA,NaN,1,2,3,4,5,6,7,8,9,10,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9)) }");
+
+        assertEval("{ match(factor(c(\"a\", \"b\")), factor(c(\"c\", \"b\", \"a\", \"b\", \"c\", \"a\"))) }");
+
+        assertEval("{ match(\"a\", factor(c(\"a\", \"b\", \"a\"))) }");
+        assertEval("{ match(factor(c(\"a\", \"b\", \"a\")), \"a\") }");
     }
 }

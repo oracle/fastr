@@ -3,8 +3,8 @@
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
- * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2012-2014, Purdue University
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -47,5 +47,19 @@ public class TestBuiltin_Im extends TestBase {
     public void testIm6() {
         assertEval(Ignored.Unknown,
                         "argv <- list(c(0.923879532511287+0.38268343236509i, 0.707106781186548+0.707106781186547i, 0.38268343236509+0.923879532511287i, 0+1i, -0.38268343236509+0.923879532511287i, -0.707106781186547+0.707106781186548i, -0.923879532511287+0.38268343236509i, -1+0i, -0.923879532511287-0.38268343236509i, -0.707106781186548-0.707106781186547i, -0.38268343236509-0.923879532511287i, 0-1i, 0.38268343236509-0.923879532511287i, 0.707106781186547-0.707106781186548i, 0.923879532511287-0.38268343236509i, 1-0i));Im(argv[[1]]);");
+    }
+
+    @Test
+    public void testIm() {
+        assertEval("{ Im(1+1i) }");
+        assertEval("{ Im(1) }");
+        assertEval("{ Im(c(1+1i,2-2i)) }");
+        assertEval("{ Im(c(1,2)) }");
+        assertEval("{ Im(as.double(NA)) }");
+        assertEval("{ Im(c(1,NA,2)) }");
+        assertEval("{ Im(NA+2i) }");
+
+        assertEval(Ignored.Unknown, "{ x <- 1:2 ; attr(x,\"my\") <- 2 ; Im(x) }");
+        assertEval(Ignored.Unknown, "{ x <- c(1+2i,3-4i) ; attr(x,\"my\") <- 2 ; Im(x) }");
     }
 }

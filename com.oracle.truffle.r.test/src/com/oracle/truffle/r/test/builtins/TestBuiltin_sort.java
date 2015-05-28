@@ -3,8 +3,8 @@
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
- * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2012-2014, Purdue University
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -107,4 +107,20 @@ public class TestBuiltin_sort extends TestBase {
                                         + "do.call('sort', argv)");
     }
 
+    @Test
+    public void testSort() {
+        assertEval("{ sort(c(1L,10L,2L)) }");
+        assertEval("{ sort(c(3,10,2)) }");
+        assertEval("{ sort(c(1,2,0/0,NA)) }");
+        assertEval("{ sort(c(2,1,0/0,NA), na.last=NA) }");
+        assertEval("{ sort(c(3,NA,0/0,2), na.last=FALSE) }");
+        assertEval("{ sort(c(a=NA,b=NA,c=3,d=1),na.last=TRUE, decreasing=TRUE) }");
+        assertEval("{ sort(c(a=NA,b=NA,c=3,d=1),na.last=FALSE, decreasing=FALSE) }");
+        assertEval("{ sort(c(a=0/0,b=1/0,c=3,d=NA),na.last=TRUE, decreasing=FALSE) }");
+        assertEval("{ sort(c(a=NA,b=NA,c=3L,d=-1L),na.last=TRUE, decreasing=FALSE) }");
+        assertEval("{ sort(c(3,NA,1,d=10), decreasing=FALSE, index.return=TRUE) }");
+        assertEval("{ sort(3:1, index.return=TRUE) }");
+        assertEval("{ sort(c(1L,10L,2L), method=\"quick\") }");
+        assertEval("{ sort(c(\"abc\", \"aba\", \"aa\")) }");
+    }
 }

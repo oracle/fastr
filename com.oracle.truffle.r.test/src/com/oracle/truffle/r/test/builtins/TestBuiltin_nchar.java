@@ -3,8 +3,8 @@
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
- * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2012-2014, Purdue University
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -75,5 +75,12 @@ public class TestBuiltin_nchar extends TestBase {
     @Test
     public void testnchar13() {
         assertEval("argv <- list(structure(c('rpart', 'recommended', '4.1-1', '2013-03-20', 'c(person(\\\'Terry\\\', \\\'Therneau\\\', role = \\\'aut\\\',\\n\\t             email = \\\'therneau@mayo.edu\\\'),\\n             person(\\\'Beth\\\', \\\'Atkinson\\\', role = \\\'aut\\\',\\t\\n\\t             email = \\\'atkinson@mayo.edu\\\'),\\n             person(\\\'Brian\\\', \\\'Ripley\\\', role = c(\\\'aut\\\', \\\'trl\\\', \\\'cre\\\'),\\n                    email = \\\'ripley@stats.ox.ac.uk\\\',\\n\\t\\t   comment = \\\'author of R port\\\'))', 'Recursive partitioning and regression trees', 'Recursive Partitioning', 'R (>= 2.14.0), graphics, stats, grDevices', 'survival', 'GPL-2 | GPL-3', 'yes', 'yes', 'Maintainers are not available to give advice on using a package\\nthey did not author.', '2013-03-20 07:27:05 UTC; ripley', 'Terry Therneau [aut],\\n  Beth Atkinson [aut],\\n  Brian Ripley [aut, trl, cre] (author of R port)', 'Brian Ripley <ripley@stats.ox.ac.uk>'), .Names = c('Package', 'Priority', 'Version', 'Date', 'Authors@R', 'Description', 'Title', 'Depends', 'Suggests', 'License', 'LazyData', 'ByteCompile', 'Note', 'Packaged', 'Author', 'Maintainer')), 'c', TRUE); .Internal(nchar(argv[[1]], argv[[2]], argv[[3]]))");
+    }
+
+    @Test
+    public void testNChar() {
+        assertEval("{ nchar(c(\"hello\", \"hi\")) }");
+        assertEval("{ nchar(c(\"hello\", \"hi\", 10, 130)) }");
+        assertEval("{ nchar(c(10,130)) }");
     }
 }

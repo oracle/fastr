@@ -3,8 +3,8 @@
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
- * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2012-2014, Purdue University
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -39,4 +39,10 @@ public class TestBuiltin_det extends TestBase {
         assertEval("argv <- structure(list(x = structure(c(0, 0, 0, 0, 0, 0, NA,     0, 0, NA, NA, 0, 0, 0, 0, 1), .Dim = c(4L, 4L))), .Names = 'x');do.call('det', argv)");
     }
 
+    @Test
+    public void testDet() {
+        assertEval("{ det(matrix(c(1,2,4,5),nrow=2)) }");
+        assertEval("{ det(matrix(c(1,-3,4,-5),nrow=2)) }");
+        assertEval(Ignored.Unknown, "{ det(matrix(c(1,0,4,NA),nrow=2)) }");
+    }
 }

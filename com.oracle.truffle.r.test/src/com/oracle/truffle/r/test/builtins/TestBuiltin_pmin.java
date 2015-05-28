@@ -3,8 +3,8 @@
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
- * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2012-2014, Purdue University
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -74,5 +74,35 @@ public class TestBuiltin_pmin extends TestBase {
         // problem with number formatting
         assertEval(Ignored.Unknown,
                         "argv <- list(FALSE, c(2.35405350797934e-06, 0.000210159024072429, 0.000257684187404011, 0.000981478332360736, 0.00105260958830543, 0.00124148072892802, 0.00132598801923585, 0.00156850331255678, 0.00225455732762676, 0.003795380309271, 0.00611494315340942, 0.0161395372907077, 0.0330242962313738, 0.0353834177611007, 0.0523699658057458, 0.068319089314331, 0.0705922565893261, 0.0880512860101142, 0.0940103983967277, 0.112979808322889, 0.211501681388388, 0.492273640304204, 0.605329775053071, 0.626223946736039, 0.739515289321684, 0.828110328240387, 0.86333312789587, 1.19065433061771, 1.89079625396729, 2.05849377808347, 2.20921371984431, 2.85600042559897, 3.04889487308354, 4.66068200259841, 4.83080935233713, 4.92175460488491, 5.31945286062773, 5.75155046407955, 5.78319462345744), 0.943789021783783); .Internal(pmin(argv[[1]], argv[[2]], argv[[3]]))");
+    }
+
+    @Test
+    public void testPMin() {
+        assertEval("{ pmin(c(1L, 7L), c(42L, 1L)) }");
+        assertEval("{ pmin(c(1L, 7L), integer()) }");
+        assertEval(Output.ContainsWarning, "{ pmin(c(1L, 7L, 8L), c(1L), c(42L, 1L)) }");
+        assertEval("{ pmin(c(1L, 7L), c(42L, as.integer(NA))) }");
+        assertEval("{ pmin(c(1L, 7L), c(42L, as.integer(NA)), na.rm=TRUE) }");
+
+        assertEval("{ pmin(c(1, 7), c(42, 1)) }");
+        assertEval("{ pmin(c(1, 7), double()) }");
+        assertEval(Output.ContainsWarning, "{ pmin(c(1, 7, 8), c(1), c(42, 1)) }");
+        assertEval("{ pmin(c(1, 7), c(42, as.double(NA))) }");
+        assertEval("{ pmin(c(1, 7), c(42, as.double(NA)), na.rm=TRUE) }");
+
+        assertEval("{ pmin(c(\"1\", \"7\"), c(\"42\", \"1\")) }");
+        assertEval("{ pmin(c(\"1\", \"7\"), character()) }");
+        assertEval(Output.ContainsWarning, "{ pmin(c(\"1\", \"7\", \"8\"), c(\"1\"), c(\"42\", \"1\")) }");
+        assertEval("{ pmin(c(\"1\", \"7\"), c(\"42\", as.character(NA))) }");
+        assertEval("{ pmin(c(\"1\", \"7\"), c(\"42\", as.character(NA)), na.rm=TRUE) }");
+        assertEval("{ pmin(c(\"1\", as.character(NA)), c(\"42\", \"1\"), na.rm=TRUE) }");
+        assertEval("{ pmin(c(\"1\", as.character(NA)), c(as.character(NA), as.character(NA)), c(\"42\", \"1\"), na.rm=TRUE) }");
+
+        assertEval("{ pmin(c(FALSE, TRUE), c(TRUE, FALSE)) }");
+        assertEval("{ pmin(c(FALSE, TRUE), logical()) }");
+        assertEval("{ pmin(c(FALSE, TRUE), c(FALSE, NA)) }");
+
+        assertEval(Output.ContainsError, "{ pmin(as.raw(42)) }");
+        assertEval(Output.ContainsError, "{ pmin(7+42i) }");
     }
 }

@@ -3,8 +3,8 @@
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
- * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2012-2014, Purdue University
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -400,5 +400,37 @@ public class TestBuiltin_asvector extends TestBase {
     @Test
     public void testasvector81() {
         assertEval("argv <- list('diff', 'symbol'); .Internal(as.vector(argv[[1]], argv[[2]]))");
+    }
+
+    @Test
+    public void testAsVector() {
+        assertEval(Output.ContainsWarning, "{ as.vector(\"foo\", \"integer\") }");
+        assertEval(Output.ContainsWarning, "{ as.vector(\"foo\", \"double\") }");
+        assertEval(Output.ContainsWarning, "{ as.vector(\"foo\", \"numeric\") }");
+        assertEval("{ as.vector(\"foo\", \"logical\") }");
+        assertEval(Output.ContainsWarning, "{ as.vector(\"foo\", \"raw\") }");
+        assertEval("{ as.vector(\"foo\", \"character\") }");
+        assertEval("{ as.vector(\"foo\", \"list\") }");
+        assertEval("{ as.vector(\"foo\") }");
+        assertEval("{ as.vector(\"foo\", \"bar\") }");
+        assertEval(Output.ContainsWarning, "{ as.vector(c(\"foo\", \"bar\"), \"raw\") }");
+        assertEval("x<-c(a=1.1, b=2.2); as.vector(x, \"raw\")");
+        assertEval("x<-c(a=1L, b=2L); as.vector(x, \"complex\")");
+        assertEval("{ x<-c(a=FALSE, b=TRUE); attr(x, \"foo\")<-\"foo\"; y<-as.vector(x); attributes(y) }");
+        assertEval("{ x<-c(a=1, b=2); as.vector(x, \"list\") }");
+        assertEval("{ x<-c(a=FALSE, b=TRUE); attr(x, \"foo\")<-\"foo\"; y<-as.vector(x, \"list\"); attributes(y) }");
+        assertEval("{ x<-1:4; dim(x)<-c(2, 2); dimnames(x)<-list(c(\"a\", \"b\"), c(\"c\", \"d\")); y<-as.vector(x, \"list\"); y }");
+
+        assertEval("{ as.vector(NULL, \"list\") }");
+        assertEval("{ as.vector(NULL) }");
+
+        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); as.vector(x) }");
+    }
+
+    @Test
+    public void testAsSymbol() {
+        assertEval("{ as.symbol(\"name\") }");
+        assertEval("{ as.symbol(123) }");
+        assertEval("{ as.symbol(as.symbol(123)) }");
     }
 }

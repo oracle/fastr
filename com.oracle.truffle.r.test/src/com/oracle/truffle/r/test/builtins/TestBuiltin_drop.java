@@ -3,8 +3,8 @@
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
- * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2012-2014, Purdue University
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -82,4 +82,8 @@ public class TestBuiltin_drop extends TestBase {
         assertEval("argv <- structure(list(x = structure(c(8, 4, 2), .Dim = c(3L,     1L))), .Names = 'x');do.call('drop', argv)");
     }
 
+    @Test
+    public void testDrop() {
+        assertEval("{ x <- array(1:12, dim = c(1,3,1,1,2,1,2)); drop(x) }");
+    }
 }

@@ -3,8 +3,8 @@
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
- * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2012-2014, Purdue University
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -57,4 +57,49 @@ public class TestBuiltin_rowSums extends TestBase {
         assertEval("argv <- structure(list(x = structure(numeric(0), .Dim = c(0L,     2L))), .Names = 'x');do.call('rowSums', argv)");
     }
 
+    @Test
+    public void testRowSums() {
+        assertEval("{ m <- matrix(1:6, nrow=2) ; rowSums(x = m) }");
+        assertEval("{ m <- matrix(c(1,2,3,4,5,6), nrow=2) ; rowSums(m) }");
+        assertEval("{ m <- matrix(c(NA,2,3,4,NA,6), nrow=2) ; rowSums(m) }");
+        assertEval("{ m <- matrix(c(NA,2,3,4,NA,6), nrow=2) ; rowSums(m, na.rm = TRUE) }");
+        assertEval("{ rowSums(matrix(as.complex(1:6), nrow=2)) }");
+        assertEval("{ rowSums(matrix((1:6)*(1+1i), nrow=2)) }");
+
+        assertEval("{x<-cbind(1:3, 4:6, 7:9); rowSums(x)}");
+        assertEval("{x<-cbind(1:3, NA, 7:9); rowSums(x)}");
+        assertEval("{x<-cbind(1:3, NaN, 7:9); rowSums(x)}");
+        assertEval("{x<-cbind(1:3, NaN, 7:9, 10:12); rowSums(x, na.rm=TRUE)}");
+        assertEval("{x<-cbind(1:4, NA, NaN, 9:12); rowSums(x, na.rm=TRUE)}");
+        assertEval("{x<-cbind(2L:10L,3L); rowSums(x)}");
+        assertEval("{rowSums(matrix(c(3+2i,4+5i,2+0i,5+10i)))}");
+        assertEval("{rowSums(matrix(c(TRUE,FALSE,FALSE,NaN),nrow=2,ncol=2), na.rm = TRUE)}");
+        assertEval("{rowSums(matrix(c(TRUE,FALSE,FALSE,NA),nrow=2,ncol=2), na.rm = TRUE)}");
+        assertEval("{rowSums(matrix(c(TRUE,FALSE,FALSE,NaN),nrow=2,ncol=2), na.rm = FALSE)}");
+        assertEval("{rowSums(matrix(c(TRUE,FALSE,FALSE,NA),nrow=2,ncol=2), na.rm = FALSE)}");
+        assertEval("{rowSums(matrix(c(NaN,4+5i,2+0i,5+10i),nrow=2,ncol=2), na.rm = TRUE)}");
+
+        // Whichever value(NA or NaN) is first in the row will be returned for that row.
+        assertEval("{rowSums(matrix(c(NA,NaN,NaN,NA),ncol=2,nrow=2))}");
+
+        // rowSums on matrix drop dimension
+        assertEval("{ a = rowSums(matrix(1:12,3,4)); is.null(dim(a)) }");
+
+        // rowSums on matrix have correct length
+        assertEval("{ a = rowSums(matrix(1:12,3,4)); length(a) }");
+
+        // rowSums on matrix have correct values
+        assertEval("{ a = rowSums(matrix(1:12,3,4)); c(a[1],a[2],a[3]) }");
+
+        // rowSums on array have no dimension
+        assertEval("{ a = rowSums(array(1:24,c(2,3,4))); is.null(dim(a)) }");
+
+        // row on array have correct length
+        assertEval("{ a = rowSums(array(1:24,c(2,3,4))); length(a) }");
+
+        // rowSums on array have correct values
+        assertEval("{ a = rowSums(array(1:24,c(2,3,4))); c(a[1],a[2]) }");
+
+        assertEval(Output.ContainsError, "{x<-matrix(c(\"1\",\"2\",\"3\",\"4\"),ncol=2);rowSums(x)}");
+    }
 }

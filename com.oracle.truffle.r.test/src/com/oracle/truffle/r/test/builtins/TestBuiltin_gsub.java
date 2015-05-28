@@ -3,8 +3,8 @@
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
- * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2012-2014, Purdue University
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -169,4 +169,16 @@ public class TestBuiltin_gsub extends TestBase {
         assertEval(Ignored.Unknown, "argv <- structure(list(pattern = 'a*', replacement = 'x', x = 'baaaac'),     .Names = c('pattern', 'replacement', 'x'));do.call('gsub', argv)");
     }
 
+    @Test
+    public void testSub() {
+        assertEval("{ gsub(\"a\",\"aa\", \"prague alley\") }");
+        assertEval("{ gsub(\"a\",\"aa\", \"prAgue alley\") }");
+        assertEval("{ gsub(\"a\",\"aa\", \"prague alley\", fixed=TRUE) }");
+        assertEval("{ gsub(\"a\",\"aa\", \"prAgue alley\", fixed=TRUE) }");
+        assertEval(Output.ContainsWarning, "{ gsub(\"a\",\"aa\", \"prAgue alley\", fixed=TRUE, ignore.case=TRUE) }");
+        assertEval("{ gsub(\"([a-e])\",\"\\\\1\\\\1\", \"prague alley\") }");
+        assertEval("{ gsub(\"h\",\"\", c(\"hello\", \"hi\", \"bye\")) }");
+        assertEval("{ gsub(\"h\",\"\", c(\"hello\", \"hi\", \"bye\"), fixed=TRUE) }");
+        assertEval(Ignored.Unknown, "{ gsub(\"a\",\"aa\", \"prAgue alley\", ignore.case=TRUE) }");
+    }
 }

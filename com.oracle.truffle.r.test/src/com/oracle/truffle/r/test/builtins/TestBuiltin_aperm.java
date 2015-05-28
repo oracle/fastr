@@ -3,8 +3,8 @@
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
- * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2012-2014, Purdue University
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -166,4 +166,54 @@ public class TestBuiltin_aperm extends TestBase {
                                         + "do.call('aperm', argv)");
     }
 
+    @Test
+    public void testAperm() {
+        // default argument for permutation is transpose
+        assertEval("{ a = array(1:4,c(2,2)); b = aperm(a); c(a[1,1] == b[1,1], a[1,2] == b[2,1], a[2,1] == b[1,2], a[2,2] == b[2,2]) }");
+
+        // default for resize is true
+        assertEval("{ a = array(1:24,c(2,3,4)); b = aperm(a); c(dim(b)[1],dim(b)[2],dim(b)[3]) }");
+
+        // no resize does not change the dimensions
+        assertEval("{ a = array(1:24,c(2,3,4)); b = aperm(a, c(3,2,1), resize=FALSE); c(dim(b)[1],dim(b)[2],dim(b)[3]) }");
+
+        // correct structure with resize
+        assertEval("{ a = array(1:24,c(2,3,4)); b = aperm(a, c(2,3,1)); a[1,2,3] == b[2,3,1] }");
+
+        // correct structure on cubic array
+        assertEval("{ a = array(1:24,c(3,3,3)); b = aperm(a, c(2,3,1)); c(a[1,2,3] == b[2,3,1], a[2,3,1] == b[3,1,2], a[3,1,2] == b[1,2,3]) }");
+
+        // correct structure on cubic array with no resize
+        assertEval("{ a = array(1:24,c(3,3,3)); b = aperm(a, c(2,3,1), resize = FALSE); c(a[1,2,3] == b[2,3,1], a[2,3,1] == b[3,1,2], a[3,1,2] == b[1,2,3]) }");
+
+        // correct structure without resize
+        assertEval("{ a = array(1:24,c(2,3,4)); b = aperm(a, c(2,3,1), resize = FALSE); a[1,2,3] == b[2,1,2] }");
+
+        // no resize does not change the dimensions
+        assertEval("{ a = array(1:24,c(2,3,4)); b = aperm(a,, resize=FALSE); c(dim(b)[1],dim(b)[2],dim(b)[3]) }");
+
+        assertEval("{ aperm(array(c(TRUE, FALSE, TRUE, TRUE, FALSE), c(2, 5, 2))) }");
+        assertEval("{ aperm(array(c('FASTR', 'IS', 'SO', 'FAST'), c(3,1,2))) }");
+
+        // perm specified in complex numbers produces warning
+        assertEval(Output.ContainsWarning, "{ aperm(array(1:27,c(3,3,3)), c(1+1i,3+3i,2+2i))[1,2,3] == array(1:27,c(3,3,3))[1,3,2]; }");
+
+        // perm is not a permutation vector
+        assertEval(Output.ContainsError, "{ aperm(array(1,c( 3,3,3)), c(1,2,1)); }");
+
+        // perm value out of bounds
+        assertEval(Output.ContainsError, "{ aperm(array(1,c(3,3,3)), c(1,2,0)); }");
+
+        // first argument not an array
+        assertEval(Output.ContainsError, "{ aperm(c(1,2,3)); }");
+
+        // Invalid first argument, not array
+        assertEval(Output.ContainsError, "{ aperm(c(c(2,3), c(4,5), c(6,7)), c(3,4)) }");
+
+        // invalid perm length
+        assertEval(Output.ContainsError, "{ aperm(array(1,c(3,3,3)), c(1,2)); }");
+
+        // Complex Vector
+        assertEval("{ aperm(array(c(3+2i, 5+0i, 1+3i, 5-3i), c(2,2,2))) }");
+    }
 }

@@ -3,8 +3,8 @@
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
- * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2012-2014, Purdue University
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -31,5 +31,36 @@ public class TestBuiltin_rowMeans extends TestBase {
     @Test
     public void testrowMeans3() {
         assertEval("argv <- list(structure(c(2, 2, NA, 2, 2, 2, 2, 2, -5, -5, NA, NA, -5, -5, -5, -5), .Dim = c(8L, 2L), .Dimnames = list(NULL, c('x1', 'x2'))), 8, 2, TRUE); .Internal(rowMeans(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
+    }
+
+    @Test
+    public void testRowMeans() {
+        assertEval("{ m <- matrix(1:6, nrow=2) ; rowMeans(x = m, na.rm = TRUE) }");
+        assertEval("{ m <- matrix(c(1,2,3,4,5,6), nrow=2) ; rowMeans(m) }");
+        assertEval("{ m <- matrix(c(NA,2,3,4,NA,6), nrow=2) ; rowMeans(m, na.rm = TRUE) }");
+        assertEval("{ rowMeans(matrix(as.complex(1:6), nrow=2)) }");
+        assertEval("{ rowMeans(matrix((1:6)*(1+1i), nrow=2)) }");
+
+        assertEval("{rowMeans(matrix(c(3,4,2,5)))}");
+        assertEval("{rowMeans(matrix(c(3L,4L,2L,5L)))}");
+        assertEval("{rowMeans(matrix(c(TRUE,FALSE,FALSE,TRUE)))}");
+        assertEval("{rowMeans(matrix(c(3+2i,4+5i,2+0i,5+10i)))}");
+        assertEval("{rowMeans(matrix(c(3,4,NaN,5),ncol=2,nrow=2), na.rm = TRUE)}");
+        assertEval("{rowMeans(matrix(c(3,4,NaN,5),ncol=2,nrow=2), na.rm = FALSE)}");
+        assertEval("{rowMeans(matrix(c(3L,NaN,2L,5L),ncol=2,nrow=2), na.rm = TRUE)}");
+        assertEval("{rowMeans(matrix(c(3L,NA,2L,5L),ncol=2,nrow=2), na.rm = TRUE)}");
+        assertEval("{rowMeans(matrix(c(3L,NaN,2L,5L),ncol=2,nrow=2), na.rm = FALSE)}");
+        assertEval("{rowMeans(matrix(c(3L,NA,2L,5L),ncol=2,nrow=2), na.rm = FALSE)}");
+        assertEval("{rowMeans(matrix(c(TRUE,FALSE,FALSE,NaN),nrow=2,ncol=2), na.rm = TRUE)}");
+        assertEval("{rowMeans(matrix(c(TRUE,FALSE,FALSE,NA),nrow=2,ncol=2), na.rm = TRUE)}");
+        assertEval("{rowMeans(matrix(c(TRUE,FALSE,FALSE,NaN),nrow=2,ncol=2), na.rm = FALSE)}");
+        assertEval("{rowMeans(matrix(c(TRUE,FALSE,FALSE,NA),nrow=2,ncol=2), na.rm = FALSE)}");
+        assertEval("{rowMeans(matrix(c(NaN,4+5i,2+0i,5+10i),nrow=2,ncol=2), na.rm = TRUE)}");
+        // Whichever value(NA or NaN) is first in the row will be returned for that row.
+        assertEval("{rowMeans(matrix(c(NA,NaN,NaN,NA),ncol=2,nrow=2))}");
+
+        // Error message mismatch
+        assertEval(Ignored.Unknown, "{rowMeans(matrix(NA,NA,NA),TRUE)}");
+        assertEval(Output.ContainsError, "{x<-matrix(c(\"1\",\"2\",\"3\",\"4\"),ncol=2);rowMeans(x)}");
     }
 }

@@ -8,13 +8,19 @@
  *
  * All rights reserved.
  */
-package com.oracle.truffle.r.test.library.base;
+package com.oracle.truffle.r.test.functions;
 
 import org.junit.*;
 
 import com.oracle.truffle.r.test.*;
 
-public class TestSimpleFunctions extends TestBase {
+public class TestFunctions extends TestBase {
+
+    @Test
+    public void testFunctionLookup() {
+        assertEval("{ f<-1; f() }");
+        assertEval("{ abs }");
+    }
 
     @Test
     public void testDefinitionsWorking() {
@@ -28,6 +34,32 @@ public class TestSimpleFunctions extends TestBase {
         assertEval("{ f<-function() {z} ; z<-2 ; f() }");
         assertEval("{ x<-1 ; g<-function() { x<-12 ; f<-function(z) { if (z) { x<-2 } ; x } ; x<-3 ; f(FALSE) } ; g() }");
         assertEval("{ x<-function() { z<-211 ; function(a) { if (a) { z } else { 200 } } } ; f<-x() ; z<-1000 ; f(TRUE) }");
+    }
+
+    @Test
+    public void testInvocation() {
+        assertEval("{ g <- function(...) { max(...) } ; g(1,2) }");
+        assertEval("{ f <- function(a, ...) { list(...) } ; f(1) }");
+
+        assertEval(Output.ContainsError, "{ rnorm(n = 1, n = 2) }");
+        assertEval(Output.ContainsError, "{ rnorm(s = 1, s = 1) }");
+        assertEval(Output.ContainsError, "{ matrix(1:4, n = 2) }");
+
+        assertEval("{ matrix(da=1:3,1) }");
+
+        assertEval("{ f <- function(...) { l <- list(...) ; l[[1]] <- 10; ..1 } ; f(11,12,13) }");
+        assertEval("{ g <- function(...) { length(list(...)) } ; f <- function(...) { g(..., ...) } ; f(z = 1, g = 31) }");
+        assertEval("{ g <- function(...) { `-`(...) } ; g(1,2) }");
+        assertEval("{ f <- function(...) { list(a=1,...) } ; f(b=2,3) }");
+        assertEval("{ f <- function(...) { substitute(...) } ; f(x + z) } ");
+        assertEval("{ p <- function(prefix, ...) { cat(prefix, ..., \"\\n\") } ; p(\"INFO\", \"msg:\", \"Hello\", 42) }");
+
+        assertEval("{ f <- function(...) { g <- function() { list(...)$a } ; g() } ; f(a=1) }");
+        assertEval("{ f <- function(...) { args <- list(...) ; args$name } ; f(name = 42) }");
+
+        assertEval(Output.ContainsError, "{ matrix(x=1) }");
+        assertEval(Ignored.Unknown, "{ round( rnorm(1,), digits = 5 ) }");
+        assertEval(Ignored.Unknown, Output.ContainsError, "{ max(1,2,) }");
     }
 
     @Test
@@ -308,4 +340,19 @@ public class TestSimpleFunctions extends TestBase {
         assertEval("{ is.primitive(is.function) }");
     }
 
+    @Test
+    public void testDefaultArgs() {
+        assertEval(Output.ContainsError, "{ array(dim=c(-2,2)); }");
+        assertEval(Output.ContainsError, "{ array(dim=c(-2,-2)); }");
+        assertEval("{ length(array(dim=c(1,0,2,3))) }");
+        assertEval("{ dim(array(dim=c(2.1,2.9,3.1,4.7))) }");
+    }
+
+    @Test
+    public void testMatchFun() {
+        assertEval("{ f <- match.fun(length) ; f(c(1,2,3)) }");
+        assertEval("{ f <- match.fun(\"length\") ; f(c(1,2,3)) }");
+        assertEval("{ f <- function(x) { y <- match.fun(x) ; y(c(1,2,3)) } ; c(f(\"sum\"),f(\"cumsum\")) }");
+        assertEval("{ f <- function(x) { y <- match.fun(x) ; y(3,4) } ; c(f(\"+\"),f(\"*\")) }");
+    }
 }

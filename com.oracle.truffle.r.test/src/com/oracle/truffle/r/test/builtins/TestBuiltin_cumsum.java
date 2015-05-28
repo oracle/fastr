@@ -3,8 +3,8 @@
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
- * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2012-2014, Purdue University
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -91,5 +91,32 @@ public class TestBuiltin_cumsum extends TestBase {
     @Test
     public void testcumsum15() {
         assertEval("argv <- list(character(0));cumsum(argv[[1]]);");
+    }
+
+    @Test
+    public void testCumulativeSum() {
+        assertEval("{ cumsum(1:10) }");
+        assertEval("{ cumsum(c(1,2,3)) }");
+        assertEval("{ cumsum(NA) }");
+        assertEval("{ cumsum(c(2000000000L, NA, 2000000000L)) }");
+        assertEval("{ cumsum(c(TRUE,FALSE,TRUE)) }");
+        assertEval("{ cumsum(c(TRUE,FALSE,NA,TRUE)) }");
+        assertEval("{ cumsum(c(1+1i,2-3i,4+5i)) }");
+        assertEval("{ cumsum(c(1+1i, NA, 2+3i)) }");
+        assertEval("{ cumsum(as.logical(-2:2)) }");
+
+        assertEval(Ignored.Unknown, "{ cumsum(c(1,2,3,0/0,5)) }");
+        assertEval(Ignored.Unknown, "{ cumsum(c(1,0/0,5+1i)) }");
+        assertEval(Ignored.Unknown, "{ cumsum(as.raw(1:6)) }");
+        // FIXME 1e+308
+        assertEval(Ignored.Unknown, "{ cumsum(rep(1e308, 3) ) }");
+        // FIXME 1e+308
+        assertEval(Ignored.Unknown, "{ cumsum(c(1e308, 1e308, NA, 1, 2)) }");
+        // FIXME missing warning
+        assertEval(Ignored.Unknown, "{ cumsum(c(2000000000L, 2000000000L)) }");
+        // FIXME missing warning
+        assertEval(Ignored.Unknown, "{ cumsum(c(-2147483647L, -1L)) }");
+        // FIXME print formatting
+        assertEval(Ignored.Unknown, "{ cumsum((1:6)*(1+1i)) }");
     }
 }

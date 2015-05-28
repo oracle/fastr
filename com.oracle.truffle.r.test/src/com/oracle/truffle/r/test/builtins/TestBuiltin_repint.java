@@ -3,8 +3,8 @@
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
- * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2012-2014, Purdue University
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -150,5 +150,20 @@ public class TestBuiltin_repint extends TestBase {
     @Test
     public void testrepint27() {
         assertEval("argv <- list(structure(c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101), .Tsp = c(1, 101, 1), class = 'ts'), 3L); .Internal(rep.int(argv[[1]], argv[[2]]))");
+    }
+
+    @Test
+    public void testRepInt() {
+        assertEval("{ rep.int(1,3) }");
+        assertEval("{ rep.int(1:3,2) }");
+        assertEval("{ rep.int(c(1,2),0) }");
+        assertEval("{ rep.int(c(1,2),2) }");
+        assertEval("{ rep.int(as.raw(14), 4) }");
+        assertEval("{ rep.int(1L,3L) }");
+        assertEval("{ rep.int(\"a\",3) }");
+        assertEval("{ rep.int(c(1,2,3),c(2,8,3)) }");
+        assertEval("{ rep.int(seq_len(2), rep.int(8, 2)) }");
+
+        assertEval(Output.ContainsError, "{ rep.int(c(1,2,3),c(2,8)) }");
     }
 }

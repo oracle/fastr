@@ -38,15 +38,15 @@ public class TestSimpleValues extends TestBase {
 
     // TODO: Add when printing of double numbers is more compliant.
     // "0.1234567", "123456789000"
-    private static final String[] SCALAR_NORMAL_VALUES = new String[]{"TRUE", "FALSE", "1", "as.raw(10)", "3.4", "1L", "NULL", "1i", "\"hello\""};
-    private static final String[] SCALAR_SPECIAL_VALUES = new String[]{"(1+NA)", "(3.4+NA)", "(1i+NA)", "(0/0)", "((0/0)+1i)", "NULL", "(1/0)", "(-(1/0))", "(-(0/0))", "(-0.0)"};
+    private static final String[] SCALAR_NORMAL_VALUES = {"TRUE", "FALSE", "1", "as.raw(10)", "3.4", "1L", "NULL", "1i", "\"hello\""};
+    private static final String[] SCALAR_SPECIAL_VALUES = {"(1+NA)", "(3.4+NA)", "(1i+NA)", "(0/0)", "((0/0)+1i)", "NULL", "(1/0)", "(-(1/0))", "(-(0/0))", "(-0.0)"};
     private static final String[] VECTOR_VALUES = template("c(%0,%0,%0)", SCALAR_NORMAL_VALUES);
     private static final String[] SCALAR_VALUES = join(SCALAR_NORMAL_VALUES, SCALAR_SPECIAL_VALUES);
-    private static final String[] LIST_VALUES = new String[]{"list(1, 2, 3)"};
+    private static final String[] LIST_VALUES = {"list(1, 2, 3)"};
     private static final String[] ALL_VALUES = join(SCALAR_VALUES, VECTOR_VALUES, LIST_VALUES);
     private static final String[] ALL_ARITHMETIC_VALUES = join(SCALAR_VALUES, VECTOR_VALUES);
-    private static final String[] BINARY_OPERATORS = new String[]{"+", "-", "*", "/", "^", "%%"};
-    private static final String[] UNARY_BUILTINS = new String[]{"length", "abs", "rev", "names"};
+    private static final String[] BINARY_OPERATORS = {"+", "-", "*", "/", "^", "%%"};
+    private static final String[] UNARY_BUILTINS = {"length", "abs", "rev", "names"};
 
     private static final WhiteList BINARY_ARITHMETIC_WHITELIST = new WhiteList("binary arithmetic");
 
@@ -91,14 +91,14 @@ public class TestSimpleValues extends TestBase {
         assertEval(Output.MayContainError, template("%0(%1)", UNARY_BUILTINS, ALL_ARITHMETIC_VALUES));
     }
 
-    private static final String[] SUBSCRIPT_SEQUENCE_VALUES = new String[]{"1:1", "2:4", "4:2"};
-    private static final String[] SUBSCRIPT_SCALAR_VALUES = new String[]{"0", "2", "-2", "10", "-10", "(1+NA)"};
-    private static final String[] SUBSCRIPT_MISSING_VALUES = new String[]{"2,", ",2", ","};
+    private static final String[] SUBSCRIPT_SEQUENCE_VALUES = {"1:1", "2:4", "4:2"};
+    private static final String[] SUBSCRIPT_SCALAR_VALUES = {"0", "2", "-2", "10", "-10", "(1+NA)"};
+    private static final String[] SUBSCRIPT_MISSING_VALUES = {"2,", ",2", ","};
     private static final String[] SUBSCRIPT_VECTOR_TWO_VALUES = template("c(%0,%1)", SUBSCRIPT_SCALAR_VALUES, SUBSCRIPT_SCALAR_VALUES);
     private static final String[] SUBSCRIPT_VECTOR_THREE_VALUES = template("c(%0,%1,%2)", SUBSCRIPT_SCALAR_VALUES, SUBSCRIPT_SCALAR_VALUES, SUBSCRIPT_SCALAR_VALUES);
     private static final String[] SUBSCRIPT_ALL_VALUES = join(SUBSCRIPT_SCALAR_VALUES, SUBSCRIPT_VECTOR_TWO_VALUES, SUBSCRIPT_VECTOR_THREE_VALUES, SUBSCRIPT_SEQUENCE_VALUES);
-    private static final String[] INT_UPDATE_VALUES = new String[]{"c(200L,300L)", "c(400L,500L,600L)"};
-    private static final String[] TESTED_VECTORS = new String[]{"(0:4)", "c(1L, 2L, 3L, 4L, 5L)"};
+    private static final String[] INT_UPDATE_VALUES = {"c(200L,300L)", "c(400L,500L,600L)"};
+    private static final String[] TESTED_VECTORS = {"(0:4)", "c(1L, 2L, 3L, 4L, 5L)"};
 
     @Test
     public void testTranspose() {
@@ -166,7 +166,7 @@ public class TestSimpleValues extends TestBase {
         assertEval(template("f <- function(x) { x[1] = 2; }; x <- %0; f(x); x[1]", new String[]{"1:3", "(1:3)+0.1", "c(1, 2, 3)", "1", "c(1L, 2L, 3L)", "1L"}));
     }
 
-    private static final String[] TESTED_EXPRESSIONS = new String[]{"a <- b", "a[1] <- 7", "b <- a", "b[2] <- 8", "a[3] <- 9", "b <- a + 0"};
+    private static final String[] TESTED_EXPRESSIONS = {"a <- b", "a[1] <- 7", "b <- a", "b[2] <- 8", "a[3] <- 9", "b <- a + 0"};
 
     private static final String[] TESTED_EXPRESSION_SEQS = template("%0;%1;%2;%3", TESTED_EXPRESSIONS, TESTED_EXPRESSIONS, TESTED_EXPRESSIONS, TESTED_EXPRESSIONS);
 
@@ -207,12 +207,6 @@ public class TestSimpleValues extends TestBase {
     @Test
     public void testDefaultVariables() {
         assertEval("{ .Platform$endian }");
-    }
-
-    @Test
-    public void testFunctionLookup() {
-        assertEval("{ f<-1; f() }");
-        assertEval("{ abs }");
     }
 
 }

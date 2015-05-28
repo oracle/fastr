@@ -3,8 +3,8 @@
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
- * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2012-2014, Purdue University
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -99,5 +99,16 @@ public class TestBuiltin_strsplit extends TestBase {
     public void teststrsplit16() {
         assertEval(Ignored.Unknown,
                         "argv <- list(structure(c('1', '2', '3', '4', '5', '1', '2', '3', '4', '5'), .Dim = 10L), '.', TRUE, FALSE, FALSE); .Internal(strsplit(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
+    }
+
+    @Test
+    public void testStrSplit() {
+        assertEval("{ strsplit(\"helloh\", \"h\", fixed=TRUE) }");
+        assertEval("{ strsplit( c(\"helloh\", \"hi\"), c(\"h\",\"\"), fixed=TRUE) }");
+        assertEval("{ strsplit(\"helloh\", \"\", fixed=TRUE) }");
+        assertEval("{ strsplit(\"helloh\", \"h\") }");
+        assertEval("{ strsplit( c(\"helloh\", \"hi\"), c(\"h\",\"\")) }");
+        assertEval("{ strsplit(\"ahoj\", split=\"\") [[c(1,2)]] }");
+        assertEval("{ strsplit(\"a,h,o,j\", split=\",\") }");
     }
 }

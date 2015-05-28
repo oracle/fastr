@@ -3,8 +3,8 @@
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
- * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2012-2014, Purdue University
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -79,4 +79,33 @@ public class TestBuiltin_colMeans extends TestBase {
         assertEval("argv <- structure(list(x = structure(list(a = 6:10), .Names = 'a',     row.names = 6:10, class = 'data.frame')), .Names = 'x');do.call('colMeans', argv)");
     }
 
+    @Test
+    public void testColMeans() {
+        assertEval("{ m <- matrix(1:6, nrow=2) ; colMeans(m) }");
+        assertEval("{ m <- matrix(c(1,2,3,4,5,6), nrow=2) ; colMeans(m) }");
+        assertEval("{ m <- matrix(c(NA,2,3,4,NA,6), nrow=2) ; colMeans(m) }");
+        assertEval("{ m <- matrix(c(NA,2,3,4,NA,6), nrow=2) ; colMeans(m, na.rm = TRUE) }");
+        assertEval("{ colMeans(matrix(as.complex(1:6), nrow=2)) }");
+        assertEval("{ colMeans(matrix((1:6)*(1+1i), nrow=2)) }");
+
+        assertEval("{colMeans(matrix(c(3,4,2,5)))}");
+        assertEval("{colMeans(matrix(c(3L,4L,2L,5L)))}");
+        assertEval("{colMeans(matrix(c(TRUE,FALSE,FALSE,TRUE)))}");
+        assertEval("{colMeans(matrix(c(3+2i,4+5i,2+0i,5+10i)))}");
+        assertEval("{colMeans(matrix(c(3,4,NaN,5),ncol=2,nrow=2), na.rm = TRUE)}");
+        assertEval("{colMeans(matrix(c(3,4,NaN,5),ncol=2,nrow=2), na.rm = FALSE)}");
+        assertEval("{colMeans(matrix(c(3L,NaN,2L,5L),ncol=2,nrow=2), na.rm = TRUE)}");
+        assertEval("{colMeans(matrix(c(3L,NA,2L,5L),ncol=2,nrow=2), na.rm = TRUE)}");
+        assertEval("{colMeans(matrix(c(3L,NaN,2L,5L),ncol=2,nrow=2), na.rm = FALSE)}");
+        assertEval("{colMeans(matrix(c(3L,NA,2L,5L),ncol=2,nrow=2), na.rm = FALSE)}");
+        assertEval("{colMeans(matrix(c(TRUE,FALSE,FALSE,NaN),nrow=2,ncol=2), na.rm = TRUE)}");
+        assertEval("{colMeans(matrix(c(TRUE,FALSE,FALSE,NA),nrow=2,ncol=2), na.rm = TRUE)}");
+        assertEval("{colMeans(matrix(c(TRUE,FALSE,FALSE,NaN),nrow=2,ncol=2), na.rm = FALSE)}");
+        assertEval("{colMeans(matrix(c(TRUE,FALSE,FALSE,NA),nrow=2,ncol=2), na.rm = FALSE)}");
+        // Whichever value(NA or NaN) is first in the row will be returned for that row.
+        assertEval("{colMeans(matrix(c(NA,NaN,NaN,NA),ncol=2,nrow=2))}");
+        assertEval("{ a = colSums(array(1:24,c(2,3,4))); colMeans(a)}");
+
+        assertEval(Ignored.Unknown, "{colMeans(matrix(c(NaN,4+5i,2+0i,5+10i),nrow=2,ncol=2), na.rm = TRUE)}");
+    }
 }

@@ -3,8 +3,8 @@
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
- * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2012-2014, Purdue University
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -163,4 +163,39 @@ public class TestBuiltin_rep extends TestBase {
         assertEval("argv <- structure(list(c('a', 'b', 'c'), each = 3), .Names = c('',     'each'));do.call('rep', argv)");
     }
 
+    @Test
+    public void testRep() {
+        assertEval("{ rep(1,3) }");
+        assertEval("{ rep(1:3,2) }");
+        assertEval("{ rep(c(1,2),0) }");
+        assertEval("{ rep(as.raw(14), 4) }");
+        assertEval("{ rep(1:3, length.out=4) }");
+        assertEval("{ rep(\"hello\", 3) }");
+        assertEval("{ rep(c(1,2),c(3,3)) }");
+        assertEval("{ rep(NA,8) }");
+        assertEval("{ rep(TRUE,8) }");
+        assertEval("{ rep(1:3, length.out=NA) }");
+
+        assertEval("{ x <- as.raw(11) ; names(x) <- c(\"X\") ; rep(x, 3) }");
+        assertEval("{ x <- as.raw(c(11,12)) ; names(x) <- c(\"X\",\"Y\") ; rep(x, 2) }");
+        assertEval("{ x <- c(TRUE,NA) ; names(x) <- c(\"X\",NA) ; rep(x, length.out=3) }");
+        assertEval("{ x <- 1L ; names(x) <- c(\"X\") ; rep(x, times=2) } ");
+        assertEval("{ x <- 1 ; names(x) <- c(\"X\") ; rep(x, times=0) }");
+        assertEval("{ x <- 1+1i ; names(x) <- c(\"X\") ; rep(x, times=2) }");
+        assertEval("{ x <- c(1+1i,1+2i) ; names(x) <- c(\"X\") ; rep(x, times=2) }");
+        assertEval("{ x <- c(\"A\",\"B\") ; names(x) <- c(\"X\") ; rep(x, length.out=3) }");
+
+        assertEval("{ x<-c(1,2); names(x)<-c(\"X\", \"Y\"); rep(x, c(3,2)) }");
+
+        assertEval("{ rep(c(1, 2), each = 2) }");
+        assertEval("{ rep(c(1, 2), each = 2, length.out = 5) }");
+        assertEval("{ rep(c(1, 2), each = 2, length.out = 3) }");
+        assertEval("{ rep(c(1, 2), times = 3) }");
+        assertEval("{ rep(c(1, 2), times = c(2, 3)) }");
+        assertEval("{ rep(c(1, 2), times = c(1, 2, 3)) }");
+        assertEval("{ rep(c(1, 2), times = c(2, 3), each = 2) }");
+
+        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); rep(x, times=3) }");
+        assertEval("{ x<-factor(c(\"a\", \"b\", \"a\")); rep(x, length=5) }");
+    }
 }

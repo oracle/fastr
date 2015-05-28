@@ -3,8 +3,8 @@
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
- * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2012-2014, Purdue University
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -43,4 +43,14 @@ public class TestBuiltin_toupper extends TestBase {
         assertEval("argv <- structure(list(x = c('na', NA, 'banana')), .Names = 'x');do.call('toupper', argv)");
     }
 
+    @Test
+    public void testCharUtils() {
+        assertEval("{ toupper(c(\"hello\",\"bye\")) }");
+        assertEval("{ toupper(c()) }");
+        assertEval("{ toupper(NA) }");
+
+        assertEval(Ignored.Unknown, "{ toupper(1E100) }");
+        assertEval(Ignored.Unknown, "{ m <- matrix(\"hi\") ; toupper(m) }");
+        assertEval(Ignored.Unknown, "{ toupper(c(a=\"hi\", \"hello\")) }");
+    }
 }

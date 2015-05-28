@@ -3,8 +3,8 @@
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
- * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2012-2014, Purdue University
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -99,4 +99,29 @@ public class TestBuiltin_all extends TestBase {
         assertEval("argv <- structure(list(c(NA, TRUE), na.rm = FALSE), .Names = c('',     'na.rm'));do.call('all', argv)");
     }
 
+    @Test
+    public void testAll() {
+        assertEval("{ all(TRUE) }");
+        assertEval("{ all(TRUE, TRUE, TRUE) }");
+        assertEval("{ all() }");
+        assertEval("{ all(logical(0)) }");
+
+        assertEval("{ all(TRUE, FALSE) }");
+        assertEval("{ all(FALSE) }");
+
+        assertEval("{ all(TRUE, TRUE, NA) }");
+
+        assertEval("{ v <- c(\"abc\", \"def\") ; w <- c(\"abc\", \"def\") ; all(v == w) }");
+
+        assertEval("{ all(TRUE, FALSE, NA,  na.rm=FALSE) }");
+        assertEval("{ all(TRUE, FALSE, NA,  na.rm=TRUE) }");
+        assertEval("{ all(TRUE, TRUE, NA,  na.rm=FALSE) }");
+
+        assertEval(Ignored.Unknown, "{ all(TRUE, TRUE, NA,  na.rm=TRUE) }");
+        // FIXME coercion warning missing
+        assertEval(Ignored.Unknown, "{ all(1) }");
+        assertEval(Ignored.Unknown, "{ all(0) }");
+        assertEval(Ignored.Unknown, "{ all(TRUE,c(TRUE,TRUE),1) }");
+        assertEval(Ignored.Unknown, "{ all(TRUE,c(TRUE,TRUE),1,0) }");
+    }
 }

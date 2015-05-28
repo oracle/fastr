@@ -3,8 +3,8 @@
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
- * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2012-2014, Purdue University
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -165,5 +165,38 @@ public class TestBuiltin_attributes extends TestBase {
     @Test
     public void testattributes29() {
         assertEval("argv <- list(structure(list(tau = c(-0.704193760852047, 0, 1.5847914530377, 2.07658624888165, 2.62779840842982, 3.16900609499152, 3.70430313207003), par.vals = structure(c(1.19410356771918, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 0.0145810141529953, 0.24263452560295, 0.470688037052905, 0.562956252821107, 0.683253495496408, 0.823187854524599, 0.98897386701965), .Dim = c(7L, 2L), .Dimnames = list(NULL, c('a', 'b')))), .Names = c('tau', 'par.vals')));attributes(argv[[1]]);");
+    }
+
+    @Test
+    public void testAttributes() {
+        assertEval("{ x <- 1; attributes(x) }");
+        assertEval("{ x <- 1; names(x) <- \"hello\" ; attributes(x) }");
+        assertEval("{ x <- 1:3 ; attr(x, \"myatt\") <- 2:4 ; attributes(x) }");
+        assertEval("{ x <- 1:3 ; attr(x, \"myatt\") <- 2:4 ; attr(x, \"myatt1\") <- \"hello\" ; attributes(x) }");
+        assertEval("{ x <- 1:3 ; attr(x, \"myatt\") <- 2:4 ; y <- x; attr(x, \"myatt1\") <- \"hello\" ; attributes(y) }");
+        assertEval("{ x <- c(a=1, b=2) ; attr(x, \"myatt\") <- 2:4 ; y <- x; attr(x, \"myatt1\") <- \"hello\" ; attributes(y) }");
+        assertEval("{ x <- c(a=1, b=2) ; attr(x, \"names\") }");
+        assertEval("{ x <- c(a=1, b=2) ; attr(x, \"na\") }");
+        assertEval("{ x <- c(a=1, b=2) ; attr(x, \"mya\") <- 1; attr(x, \"b\") <- 2; attr(x, \"m\") }");
+        assertEval("{ x <- 1:2; attr(x, \"aa\") <- 1 ; attr(x, \"ab\") <- 2; attr(x, \"bb\") <- 3; attr(x, \"b\") }");
+        assertEval("{ z <- 1; attr(z,\"a\") <- 1; attr(z,\"b\") <- 2; attr(z,\"c\") <- 3 ; attr(z,\"b\") <- NULL ; z }");
+
+        assertEval("{ x <- 1 ; attributes(x) <- list(hi=3, hello=2) ; x }");
+        assertEval("{ x <- 1 ; attributes(x) <- list(hi=3, names=\"name\") ; x }");
+        assertEval("{ x <- c(hello=1) ; attributes(x) <- list(names=NULL) ; x }");
+        assertEval(Output.ContainsError, "{ x <- c(hello=1) ; attributes(x) <- list(hi = 1, 2) ; x }");
+        assertEval(Output.ContainsError, "{ x <- c(hello=1) ; attributes(x) <- list(1, hi = 2) ; x }");
+        assertEval(Output.ContainsError, "{ x <- c(hello=1) ; attributes(x) <- list(ho = 1, 2, 3) ; x }");
+        assertEval(Output.ContainsError, "{ x <- c(hello=1) ; attributes(x) <- list(1, hi = 2, 3) ; x }");
+        assertEval(Output.ContainsError, "{ x <- c(hello=1) ; y<-list(1,2); names(y)<-c(\"hi\", \"\"); attributes(x)<-y; x }");
+        assertEval("{ x <- 1; attributes(x) <- list(my = 1) ; y <- x; attributes(y) <- list(his = 2) ; x }");
+        assertEval("{ x <- c(hello=1) ; attributes(x) <- list(hi=1) ;  attributes(x) <- NULL ; x }");
+        assertEval("{ x <- c(hello=1) ; attributes(x) <- list(hi=1, names=NULL, hello=3, hi=2, hello=NULL) ; x }");
+        // dimensions are set first even though they are set to NULL (names are preserved even
+        // though they are second on the list)
+        assertEval("{ x<-1; attributes(x)<-list(names=\"c\", dim=NULL); attributes(x) }");
+
+        assertEval("{ e <- new.env(); attributes(e) <- list(a=1); attributes(e) }");
+        assertEval("{ e <- new.env(); attributes(e) <- list(class=\"srcfile\"); attributes(e) }");
     }
 }

@@ -3,8 +3,8 @@
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
- * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2012-2014, Purdue University
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -109,4 +109,51 @@ public class TestBuiltin_anyDuplicated extends TestBase {
         assertEval("argv <- structure(list(x = c(1, NA, 3, NA, 3), incomparables = c(3,     NA)), .Names = c('x', 'incomparables'));do.call('anyDuplicated', argv)");
     }
 
+    @Test
+    public void testAnyDuplicated() {
+        assertEval("{ anyDuplicated(c(1L, 2L, 3L, 4L, 2L, 3L)) }");
+        assertEval("{ anyDuplicated(c(1L, 2L, 3L, 4L, 2L, 3L), incomparables = TRUE )}");
+        assertEval("{ anyDuplicated(c(1L, 2L, 3L, 4L, 2L, 3L), fromLast = TRUE) }");
+
+        // strings
+        assertEval("{anyDuplicated(c(\"abc\"))}");
+        assertEval("{anyDuplicated(c(\"abc\", \"def\", \"abc\"))}");
+        assertEval("{anyDuplicated(c(\"abc\", \"def\", \"ghi\", \"jkl\"))}");
+
+        // boolean
+        assertEval("{anyDuplicated(c(FALSE))}");
+        assertEval("{anyDuplicated(c(FALSE, TRUE))}");
+        assertEval("{anyDuplicated(c(FALSE, TRUE, FALSE))}");
+
+        // complex
+        assertEval("{anyDuplicated(c(2+2i)) }");
+        assertEval("{anyDuplicated(c(2+2i, 3+3i, 2+2i)) }");
+        assertEval("{anyDuplicated(c(2+2i, 3+3i, 4+4i, 5+5i)) }");
+
+        // Double Vector
+        assertEval("{ anyDuplicated(c(27.2, 68.4, 94.3, 22.2)) }");
+        assertEval("{ anyDuplicated(c(1, 1, 4, 5, 4), TRUE, TRUE) }");
+        assertEval("{ anyDuplicated(c(1,2,1)) }");
+        assertEval("{ anyDuplicated(c(1)) }");
+        assertEval("{ anyDuplicated(c(1,2,3,4)) }");
+        assertEval("{ anyDuplicated(list(76.5, 5L, 5L, 76.5, 5, 5), incomparables = c(5L, 76.5)) }");
+
+        // Logical Vector
+        assertEval("{ anyDuplicated(c(TRUE, FALSE, TRUE), TRUE) }");
+        assertEval("{ anyDuplicated(c(TRUE, FALSE, TRUE), TRUE, fromLast = 1) }");
+
+        // String Vector
+        assertEval("{ anyDuplicated(c(\"abc\", \"good\", \"hello\", \"hello\", \"abc\")) }");
+        assertEval("{ anyDuplicated(c(\"TRUE\", \"TRUE\", \"FALSE\", \"FALSE\"), FALSE) }");
+        assertEval("{ anyDuplicated(c(\"TRUE\", \"TRUE\", \"FALSE\", \"FALSE\"), TRUE) }");
+        assertEval("{ anyDuplicated(c(\"TRUE\", \"TRUE\", \"FALSE\", \"FALSE\"), 1) }");
+
+        // Complex Vector
+        assertEval("{ anyDuplicated(c(1+0i, 6+7i, 1+0i), TRUE)}");
+        assertEval("{ anyDuplicated(c(1+1i, 4-6i, 4-6i, 6+7i)) }");
+        assertEval("{ anyDuplicated(c(1, 4+6i, 7+7i, 1), incomparables = c(1, 2)) }");
+
+        assertEval(Output.ContainsWarning, "{ anyDuplicated(c(1L, 2L, 1L, 1L, 3L, 2L), incomparables = \"cat\") }");
+        assertEval(Output.ContainsWarning, "{ anyDuplicated(c(1,2,3,2), incomparables = c(2+6i)) }");
+    }
 }

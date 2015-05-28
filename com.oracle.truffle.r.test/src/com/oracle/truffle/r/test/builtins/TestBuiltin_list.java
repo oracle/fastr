@@ -3,8 +3,8 @@
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
- * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2012-2014, Purdue University
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -371,5 +371,17 @@ public class TestBuiltin_list extends TestBase {
     public void testlist65() {
         assertEval(Ignored.Unknown,
                         "argv <- list(ANY = structure(function (x, y = NULL) .Internal(crossprod(x, y)), target = structure('ANY', class = structure('signature', package = 'methods'), .Names = 'x', package = 'methods'), defined = structure('ANY', class = structure('signature', package = 'methods'), .Names = 'x', package = 'methods'), generic = structure('crossprod', package = 'base'), class = structure('derivedDefaultMethod', package = 'methods')));list(argv[[1]]);");
+    }
+
+    @Test
+    public void testList() {
+        assertEval("{ list(a=1, b=2) }");
+        assertEval("{ list(a=1, 2) }");
+        assertEval("{ list(1, b=2) }");
+        assertEval("{ x<-c(y=1, 2);  list(a=x, 42) }");
+        assertEval("{ x<-list(y=1, 2);  c(a=x, 42) }");
+        assertEval("{ x<-list(y=1, 2);  c(42, a=x) }");
+        assertEval("{ x<-list(y=1, 2);  c(a=x, c(z=7,42)) }");
+        assertEval("{ x<-list(y=1, 2);  c(a=x, c(y=7,z=42)) }");
     }
 }

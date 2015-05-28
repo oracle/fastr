@@ -38,6 +38,18 @@ public class TestSimpleSequences extends TestBase {
         assertEval("{ NA:1 }");
         assertEval("{ NA:NA }");
         assertEval("{ }");
+        assertEval("{ 5L:10L }");
+        assertEval("{ 5L:(0L-5L) }");
+        assertEval("{ 1:10 }");
+        assertEval("{ 1:(0-10) }");
+        assertEval("{ 1L:(0-10) }");
+        assertEval("{ 1:(0L-10L) }");
+        assertEval("{ (0-12):1.5 }");
+        assertEval("{ 1.5:(0-12) }");
+        assertEval("{ (0-1.5):(0-12) }");
+        assertEval("{ 10:1 }");
+        assertEval("{ (0-5):(0-9) }");
+        assertEval("{ 1.1:5.1 }");
 
         assertEval(Output.ContainsWarning, "{ (1:3):3 }");
         assertEval(Output.ContainsWarning, "{ 1:(1:3) }");

@@ -3,8 +3,8 @@
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
- * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2012-2014, Purdue University
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -30,4 +30,16 @@ public class TestBuiltin_diagassign_ extends TestBase {
                                         + "do.call('diag<-', argv)");
     }
 
+    @Test
+    public void testUpdateDiagonal() {
+        assertEval("{ m <- matrix(1:6, nrow=3) ; diag(m) <- c(1,2) ; m }");
+        assertEval("{ m <- matrix(1:6, nrow=3); y<-m+42; diag(y) <- c(1,2); y }");
+        assertEval("{ m <- matrix(1:6, nrow=3) ;  attr(m, \"foo\")<-\"foo\"; diag(m) <- c(1,2); attributes(m) }");
+        assertEval("{ m <- matrix(1:6, nrow=3) ; diag(m) <- c(1.1,2.2); m }");
+        assertEval("{ m <- matrix(1:6, nrow=3) ; diag(m) <- c(1.1,2); m }");
+        assertEval("{ m <- matrix(1:6, nrow=3) ; diag(m) <- c(1,2.2); m }");
+        assertEval("{ m <- matrix(1:6, nrow=3) ;  attr(m, \"foo\")<-\"foo\"; diag(m) <- c(1.1,2.2); attributes(m) }");
+        assertEval("{ x <- (m <- matrix(1:6, nrow=3)) ; diag(m) <- c(1,2) ; x }");
+        assertEval("{ m <- matrix(1:6, nrow=3) ; f <- function() { diag(m) <- c(100,200) } ; f() ; m }");
+    }
 }

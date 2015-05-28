@@ -3,8 +3,8 @@
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
- * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2012-2014, Purdue University
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -163,4 +163,90 @@ public class TestBuiltin_seq extends TestBase {
         assertEval("argv <- structure(list(18000, 28000, length = 50L), .Names = c('',     '', 'length'));do.call('seq', argv)");
     }
 
+    @Test
+    public void testSequenceStatement() {
+        assertEval("{ seq(1L,10L) }");
+        assertEval("{ seq(10L,1L) }");
+        assertEval("{ seq(1L,4L,2L) }");
+        assertEval("{ seq(1,-4,-2) }");
+        assertEval("{ seq(0,0,0) }");
+        assertEval("{ seq(0,0) }");
+        assertEval("{ seq(0L,0L,0L) }");
+        assertEval("{ seq(0L,0L) }");
+        assertEval("{ seq(0,0,1i) }");
+        assertEval(Output.ContainsError, "{ seq(integer(), 7) }");
+        assertEval(Output.ContainsError, "{ seq(c(1,2), 7) }");
+        assertEval(Output.ContainsError, "{ seq(7, integer()) }");
+        assertEval(Output.ContainsError, "{ seq(7, c(41,42)) }");
+        assertEval("{ seq(integer()) }");
+        assertEval("{ seq(double()) }");
+        assertEval("{ seq(from=3L, length.out=3L) }");
+        assertEval("{ seq(to=10L, by=1) }");
+        assertEval("{ seq(to=10L, by=1.1) }");
+
+        assertEval("{ typeof(seq(1L, 3L)) }");
+        assertEval("{ typeof(seq(1, 3)) }");
+        assertEval("{ typeof(seq(1L, 3L, by=2)) }");
+        assertEval("{ typeof(seq(1L, 3L, by=2L)) }");
+        assertEval("{ typeof(seq(1L, 3L, length.out=2)) }");
+        assertEval("{ typeof(seq(1L, 3L, length.out=2L)) }");
+        assertEval("{ typeof(seq(FALSE, TRUE)) }");
+        assertEval("{ typeof(seq(TRUE, FALSE, length.out=5)) }");
+        assertEval("{ typeof(seq(TRUE, FALSE, length.out=5L)) }");
+        assertEval("{ typeof(seq(1L, 3)) }");
+        assertEval("{ typeof(seq(1L, 3, by=2)) }");
+        assertEval("{ typeof(seq(1L, 3, by=2L)) }");
+        assertEval("{ typeof(seq(1L, 3, length.out=5)) }");
+        assertEval("{ typeof(seq(1L, 3, length.out=5L)) }");
+        assertEval("{ typeof(seq(1, 3L)) }");
+        assertEval("{ typeof(seq(1, 3L, by=2)) }");
+        assertEval("{ typeof(seq(1, 3L, by=2L)) }");
+        assertEval("{ typeof(seq(1, 3L, length.out=5)) }");
+        assertEval("{ typeof(seq(1, 3L, length.out=5L)) }");
+        assertEval("{ typeof(seq(to=3L, length.out=2)) }");
+        assertEval("{ typeof(seq(to=3L, length.out=2L)) }");
+        assertEval("{ typeof(seq(to=3L, by=5)) }");
+        assertEval("{ typeof(seq(to=3L, by=5L)) }");
+        assertEval("{ typeof(seq(along.with=c(1,2))) }");
+        assertEval("{ typeof(seq(1, length.out=0)) }");
+        assertEval("{ typeof(seq(1, length.out=0L)) }");
+        assertEval("{ typeof(seq(1, along.with=double())) }");
+        assertEval("{ typeof(seq(1L, along.with=double())) }");
+
+        // seq does not work properly (added tests for vector accesses that paste correct seq's
+        // result in TestSimpleVectors)
+        assertEval("{ f <- function(b, i, v) { b[i] <- v ; b } ; f(c(1,3,10), seq(2L,4L,2L),c(TRUE,FALSE)) }");
+        assertEval("{ f <- function(b, i, v) { b[i] <- v ; b } ; f(as.double(1:5), seq(7L,1L,-3L),c(TRUE,FALSE,NA)) }");
+        assertEval("{ f <- function(b, i, v) { b[i] <- v ; b } ; f(as.logical(-3:3),seq(1L,7L,3L),c(TRUE,NA,FALSE)) }");
+        assertEval("{ f <- function(b, i, v) { b[i] <- v ; b } ; f(as.character(-3:3),seq(1L,7L,3L),c(\"A\",\"a\",\"XX\")) }");
+        assertEval("{ f <- function(b, i, v) { b[i] <- v ; b } ; f(1:2,1:2,3:4); f(1:2,1:2,c(3,4)) ; f(1:8, seq(1L,7L,3L), c(10,100,1000)) }");
+        assertEval("{ f <- function(b, i, v) { b[i] <- v ; b } ; f(1:2,1:2,3:4); f(1:2,1:2,c(3,4)) ; z <- f(1:8, seq(1L,7L,3L), list(10,100,1000)) ; sum(as.double(z)) }");
+    }
+
+    @Test
+    public void testSequenceStatementNamedParams() {
+        assertEval("{ seq(from=1,to=3) }");
+        assertEval("{ seq(length.out=1) }");
+        assertEval("{ seq(from=1.4) }");
+        assertEval("{ seq(from=1.7) }");
+        assertEval("{ seq(from=1,to=3,by=1) }");
+        assertEval("{ seq(from=-10,to=-5,by=2) }");
+
+        assertEval("{ seq(length.out=0) }");
+
+        assertEval("{ seq(to=-1,from=-10) }");
+        assertEval("{ seq(length.out=13.4) }");
+        assertEval("{ seq(along.with=10) }");
+        assertEval("{ seq(along.with=NA) }");
+        assertEval("{ seq(along.with=1:10) }");
+        assertEval("{ seq(along.with=-3:-5) }");
+        assertEval("{ seq(from=10:12) }");
+        assertEval("{ seq(from=c(TRUE, FALSE)) }");
+        assertEval("{ seq(from=TRUE, to=TRUE, length.out=0) }");
+        assertEval("{ round(seq(from=10.5, to=15.4, length.out=4), digits=5) }");
+        assertEval("{ seq(from=11, to=12, length.out=2) }");
+        assertEval("{ seq(from=-10.4,to=-5.8,by=2.1) }");
+        assertEval("{ round(seq(from=3L,to=-2L,by=-4.2), digits=5) }");
+        assertEval("{ seq(along=c(10,11,12)) }"); // test partial name match
+    }
 }

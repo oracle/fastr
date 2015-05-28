@@ -3,8 +3,8 @@
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
- * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2012-2014, Purdue University
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -127,4 +127,54 @@ public class TestBuiltin_sum extends TestBase {
         assertEval("argv <- list(2, 3, NA);do.call('sum', argv)");
     }
 
+    @Test
+    public void testSum() {
+        assertEval("{ sum() }");
+        assertEval("{ sum(0, 1, 2, 3) }");
+        assertEval("{ sum(c(0, 1, 2, 3)) }");
+        assertEval("{ sum(c(0, 1, 2, 3), 4) }");
+        assertEval("{ sum(1:6, 3, 4) }");
+        assertEval("{ sum(1:6, 3L, TRUE) }");
+        assertEval("{ `sum`(1:10) }");
+        assertEval("{ x<-c(FALSE, FALSE); is.double(sum(x)) }");
+        assertEval("{ x<-c(FALSE, FALSE); is.integer(sum(x)) }");
+
+        assertEval("{ is.logical(sum(TRUE, FALSE)) }");
+        assertEval("{ is.logical(sum(TRUE)) }");
+        assertEval(Output.ContainsError, "{ sum(as.raw(42), as.raw(7)) }");
+        assertEval("{ sum(42+42i, 7+7i) }");
+        assertEval(Output.ContainsError, "{ sum(\"42\", \"7\") }");
+
+        assertEval("{ sum(as.double(NA), na.rm=TRUE) }");
+        assertEval("{ sum(as.double(NA), na.rm=FALSE) }");
+        assertEval("{ sum(as.double(NA), as.double(NA), na.rm=TRUE) }");
+        assertEval("{ sum(as.double(NA), as.double(NA), na.rm=FALSE) }");
+        assertEval("{ sum(as.integer(NA), na.rm=TRUE) }");
+        assertEval("{ sum(as.integer(NA), na.rm=FALSE) }");
+        assertEval("{ sum(as.integer(NA), as.integer(NA), na.rm=TRUE) }");
+        assertEval("{ sum(as.integer(NA), as.integer(NA), na.rm=FALSE) }");
+        assertEval(Output.ContainsError, "{ sum(as.character(NA), na.rm=TRUE) }");
+        assertEval(Output.ContainsError, "{ sum(as.character(NA), na.rm=FALSE) }");
+        assertEval(Output.ContainsError, "{ sum(as.character(NA), as.character(NA), na.rm=TRUE) }");
+        assertEval(Output.ContainsError, "{ sum(as.character(NA), as.character(NA), na.rm=FALSE) }");
+        assertEval("{ sum(42L, as.integer(NA), na.rm=TRUE) }");
+        assertEval("{ sum(42L, as.integer(NA), na.rm=FALSE) }");
+        assertEval("{ sum(42, as.double(NA), na.rm=TRUE) }");
+        assertEval("{ sum(42, as.double(NA), na.rm=FALSE) }");
+        assertEval(Output.ContainsError, "{ sum(\"42\", as.character(NA), na.rm=TRUE) }");
+        assertEval(Output.ContainsError, "{ sum(\"42\", as.character(NA), na.rm=FALSE) }");
+        assertEval("{ sum(42L, as.integer(NA), 7L, na.rm=TRUE) }");
+        assertEval("{ sum(42L, as.integer(NA), 7L, na.rm=FALSE) }");
+        assertEval("{ sum(42, as.double(NA), 7, na.rm=TRUE) }");
+        assertEval("{ sum(42, as.double(NA), 7, na.rm=FALSE) }");
+        assertEval(Output.ContainsError, "{ sum(\"42\", as.character(NA), \"7\", na.rm=TRUE) }");
+        assertEval(Output.ContainsError, "{ sum(\"42\", as.character(NA), \"7\", na.rm=FALSE) }");
+
+        assertEval("{ sum(0, 1[3]) }");
+        assertEval("{ sum(na.rm=FALSE, 0, 1[3]) }");
+        assertEval("{ sum(0, na.rm=FALSE, 1[3]) }");
+        assertEval("{ sum(0, 1[3], na.rm=FALSE) }");
+        assertEval("{ sum(0, 1[3], na.rm=TRUE) }");
+        assertEval("{ sum(1+1i,2,NA, na.rm=TRUE) }");
+    }
 }

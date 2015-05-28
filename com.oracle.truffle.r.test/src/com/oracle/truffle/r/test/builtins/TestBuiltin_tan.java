@@ -3,8 +3,8 @@
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
- * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2012-2014, Purdue University
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -42,5 +42,12 @@ public class TestBuiltin_tan extends TestBase {
     @Test
     public void testtan5() {
         assertEval(Ignored.Unknown, "argv <- list(1+1000i);tan(argv[[1]]);");
+    }
+
+    @Test
+    public void testTrigExp() {
+        assertEval("{ tan(1.2) }");
+        assertEval("{ tan(c(0.3,0.6,0.9)) }");
+        assertEval(Output.ContainsError, "{ tan() }");
     }
 }

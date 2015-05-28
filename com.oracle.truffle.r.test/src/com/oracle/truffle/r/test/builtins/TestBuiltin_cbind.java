@@ -3,8 +3,8 @@
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
- * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2012-2014, Purdue University
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -50,4 +50,39 @@ public class TestBuiltin_cbind extends TestBase {
                         + "do.call('cbind', argv)");
     }
 
+    @Test
+    public void testCbind() {
+        assertEval("{ cbind() }");
+        assertEval("{ cbind(1:3,2) }");
+        assertEval("{ cbind(1:3,1:3) }");
+        assertEval("{ m <- matrix(1:6, nrow=2) ; cbind(11:12, m) }");
+
+        assertEval("{ cbind(c(1,2)) }");
+        assertEval("{ cbind(a=c(b=1,c=2)) }");
+        assertEval("{ cbind(c(b=1,c=2)) }");
+        assertEval("{ cbind(c(1,c=2)) }");
+        assertEval("{ v<-c(b=1, c=2); cbind(v) }");
+        assertEval("{ cbind(matrix(1:4, nrow=2, dimnames=list(c('a', 'b'), c('x', 'y')))) }");
+
+        assertEval("{ cbind(a=c(1,2), b=c(3,4)) }");
+        assertEval("{ cbind(a=c(x=1,y=2), b=c(3,4)) }");
+        assertEval("{ cbind(a=c(1,2), b=c(x=3,y=4)) }");
+        assertEval("{ cbind(a=c(x=1,2), b=c(3,y=4)) }");
+        assertEval("{ cbind(a=c(1,2), b=c(3,y=4)) }");
+        assertEval("{ cbind(a=c(1,x=2), b=c(y=3,4,5,6)) }");
+        assertEval("{ cbind(a=c(1,x=2), b=c(3,4,5,6)) }");
+        assertEval("{ cbind(matrix(1:4, nrow=2, dimnames=list(c('a', 'b'), c('x', 'y'))), z=c(8,9)) }");
+        assertEval("{ cbind(matrix(1:4, nrow=2, dimnames=list(c('a', 'b'), c('x', 'y'))), c(8,9)) }");
+        assertEval("{ cbind(matrix(1:4, nrow=2, dimnames=list(c('a', 'b'), NULL)), z=c(8,9)) }");
+        assertEval("{ cbind(matrix(1:4, nrow=2, dimnames=list(NULL, c('x', 'y'))), c(m=8,n=9)) }");
+        assertEval("{ cbind(matrix(1:4, nrow=2), z=c(m=8,n=9)) }");
+
+        assertEval("{ cbind(list(1,2), TRUE, \"a\") }");
+        assertEval(Output.ContainsWarning, "{ cbind(1:3,1:2) }");
+        assertEval("{ cbind(2,3, complex(3,3,2));}");
+        assertEval("{ cbind(2,3, c(1,1,1)) }");
+        assertEval("{ cbind(2.1:10,32.2) }");
+
+        assertEval("{ x<-list(a=7, b=NULL, c=42); y<-as.data.frame(do.call(cbind,x)); y }");
+    }
 }

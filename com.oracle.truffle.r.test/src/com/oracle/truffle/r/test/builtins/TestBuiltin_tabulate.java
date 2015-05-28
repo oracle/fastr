@@ -3,8 +3,8 @@
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
- * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2012-2014, Purdue University
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -52,4 +52,12 @@ public class TestBuiltin_tabulate extends TestBase {
         assertEval("argv <- structure(list(bin = numeric(0)), .Names = 'bin');do.call('tabulate', argv)");
     }
 
+    @Test
+    public void testTabulate() {
+        assertEval("{tabulate(c(2,3,5))}");
+        assertEval("{tabulate(c(2,3,3,5), nbins = 10)}");
+        assertEval("{tabulate(c(-2,0,2,3,3,5))}");
+        assertEval("{tabulate(c(-2,0,2,3,3,5), nbins = 3)}");
+        assertEval("{tabulate(factor(letters[1:10]))}");
+    }
 }

@@ -3,8 +3,8 @@
  * Version 2. You may review the terms of this license at
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
- * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates
+ * Copyright (c) 2012-2014, Purdue University
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -203,4 +203,22 @@ public class TestBuiltin_length extends TestBase {
                                         + "do.call('length', argv)");
     }
 
+    @Test
+    public void testLength() {
+        assertEval("{ x <- 1:4 ; length(x) <- 2 ; x }");
+        assertEval("{ x <- 1:2 ; length(x) <- 4 ; x }");
+        assertEval("{ length(c(z=1:4)) }");
+        assertEval("{ x <- 1 ; f <- function() { length(x) <<- 2 } ; f() ; x }");
+        assertEval("{ length(1) }");
+        assertEval("{ length(NULL) }");
+        assertEval("{ length(NA) }");
+        assertEval("{ length(TRUE) }");
+        assertEval("{ length(1L) }");
+        assertEval("{ length(1+1i) }");
+        assertEval("{ length(d<-dim(1:3)) }");
+        assertEval("{ length(1:3) }");
+        assertEval("{ x <- 1:2 ; z <- (length(x) <- 4) ; z }");
+        assertEval("{ x<-c(a=7, b=42); length(x)<-4; x }");
+        assertEval("{ x<-c(a=7, b=42); length(x)<-1; x }");
+    }
 }
