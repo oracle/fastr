@@ -192,6 +192,10 @@ public final class GroupDispatchNode extends RNode implements RSyntaxNode {
             s3Args = new S3Args(genericName, result.clazz, dotMethod, frame.materialize(), null, result.groupMatch ? group.getName() : null);
             function = result.function;
         }
+        if (function == null) {
+            CompilerDirectives.transferToInterpreter();
+            throw RError.nyi(getEncapsulatingSourceSection(), "missing builtin function");
+        }
         return callMatcher.execute(frame, signature, evaluatedArgs, function, s3Args);
     }
 }
