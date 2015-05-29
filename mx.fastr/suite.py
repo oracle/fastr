@@ -362,7 +362,11 @@ suite = {
     "com.oracle.truffle.r.library" : {
       "sourceDirs" : ["src"],
       "dependencies" : [
+        "com.oracle.truffle.r.nodes",
         "com.oracle.truffle.r.runtime",
+      ],
+      "annotationProcessors" : [
+          "com.oracle.truffle.dsl.processor",
       ],
       "checkstyle" : "com.oracle.truffle.r.runtime",
       "javaCompliance" : "1.8",

@@ -22,14 +22,25 @@
  */
 package com.oracle.truffle.r.library.tools;
 
+import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.conn.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
 
-public class ToolsParseRd {
+public abstract class C_ParseRd extends RExternalBuiltinNode.Arg7 {
+
     @SuppressWarnings("unused")
-    public static Object parseRd(RConnection con, REnvironment srcfile, String encoding, boolean verbose, RAbstractStringVector basename, boolean fragment, boolean warningCalls) {
+    @Specialization
+    protected Object parseRd(RConnection con, REnvironment srcfile, String encoding, byte verbose, RAbstractStringVector basename, byte fragment, byte warningCalls) {
         return RNull.instance;
+    }
+
+    @SuppressWarnings("unused")
+    @Fallback
+    public Object parseRd(Object con, Object srcfile, Object encoding, Object verbose, Object basename, Object fragment, Object warningCalls) {
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
     }
 }

@@ -14,20 +14,34 @@
  */
 package com.oracle.truffle.r.library.graphics;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.library.graphics.core.*;
 import com.oracle.truffle.r.library.graphics.core.geometry.*;
+import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.*;
 
 public class GraphicsCCalls {
-    public static void plotXy(RDoubleVector xyVector) {
-        assert xyVector.getLength() % 2 == 0 : "wrong size of vector";
-        getGraphicsEngine().setCurrentGraphicsDeviceMode(GraphicsDevice.Mode.GRAPHICS_ON);
-        drawWithLines(xyVector);
+    public static final class C_PlotXY extends RExternalBuiltinNode {
+
+        @Override
+        @TruffleBoundary
+        public RNull call(RArgsValuesAndNames args) {
+            RDoubleVector xyVector = ((RAbstractDoubleVector) args.getArgument(0)).materialize();
+            assert xyVector.getLength() % 2 == 0 : "wrong size of vector";
+            getGraphicsEngine().setCurrentGraphicsDeviceMode(GraphicsDevice.Mode.GRAPHICS_ON);
+            drawWithLines(xyVector);
+            return RNull.instance;
+        }
     }
 
-    public static Object par(@SuppressWarnings("unused") RArgsValuesAndNames args) {
-        // pch
-        return RDataFactory.createIntVectorFromScalar(1);
+    public static final class C_Par extends RExternalBuiltinNode {
+
+        @Override
+        public Object call(RArgsValuesAndNames args) {
+            // pch
+            return RDataFactory.createIntVectorFromScalar(1);
+        }
     }
 
     private static void drawWithLines(RDoubleVector xyVector) {
@@ -55,5 +69,4 @@ public class GraphicsCCalls {
     private static GraphicsEngine getGraphicsEngine() {
         return GraphicsEngineImpl.getInstance();
     }
-
 }

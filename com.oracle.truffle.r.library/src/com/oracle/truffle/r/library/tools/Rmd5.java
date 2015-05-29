@@ -26,12 +26,17 @@ import java.io.*;
 import java.security.*;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.*;
 
-public class ToolsRmd5 {
+public abstract class Rmd5 extends RExternalBuiltinNode.Arg1 {
+
+    @Specialization
     @TruffleBoundary
-    public static RStringVector rmd5(RStringVector files) {
+    protected RStringVector rmd5(RAbstractStringVector files) {
         MessageDigest digest;
         boolean complete = RDataFactory.COMPLETE_VECTOR;
         try {

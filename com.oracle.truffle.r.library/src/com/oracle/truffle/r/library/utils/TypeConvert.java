@@ -24,11 +24,13 @@ package com.oracle.truffle.r.library.utils;
 
 import java.util.*;
 
+import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-public class TypeConvert {
+public abstract class TypeConvert extends RExternalBuiltinNode.Arg5 {
 
     private static boolean isNA(String s, RAbstractStringVector naStrings) {
         for (int i = 0; i < naStrings.getLength(); i++) {
@@ -72,7 +74,8 @@ public class TypeConvert {
         return RDataFactory.createLogicalVector(data, firstPos > 0 ? RDataFactory.INCOMPLETE_VECTOR : RDataFactory.COMPLETE_VECTOR);
     }
 
-    public static Object typeConvert(RAbstractStringVector x, RAbstractStringVector naStrings, byte asIs, @SuppressWarnings("unused") String numeral) {
+    @Specialization
+    protected Object typeConvert(RAbstractStringVector x, RAbstractStringVector naStrings, byte asIs, @SuppressWarnings("unused") Object dec, @SuppressWarnings("unused") Object numeral) {
         if (x.getLength() == 0) {
             return RDataFactory.createEmptyLogicalVector();
         }

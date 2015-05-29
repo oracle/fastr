@@ -13,15 +13,39 @@ package com.oracle.truffle.r.library.stats;
 
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.utilities.*;
+import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
 /*
  * Logic derived from GNU-R, library/stats/src/cov.c
  */
-public class Covcor {
-    private static final Covcor singleton = new Covcor();
+public final class Covcor extends RExternalBuiltinNode {
+
+    private final boolean isCor;
+
+    public Covcor(boolean isCor) {
+        this.isCor = isCor;
+    }
+
+    @Override
+    public Object call(RArgsValuesAndNames args) {
+        Object[] argValues = args.getArguments();
+        if (argValues[0] == RNull.instance) {
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.IS_NULL, "x");
+        }
+        // TODO error checks/coercions
+        RAbstractDoubleVector x = (RAbstractDoubleVector) argValues[0];
+        RAbstractDoubleVector y = argValues[1] == RNull.instance ? null : (RAbstractDoubleVector) argValues[1];
+        int method = ((RAbstractIntVector) argValues[2]).getDataAt(0);
+        if (method != 4) {
+            throw RError.nyi(getEncapsulatingSourceSection(), "method");
+        }
+        boolean iskendall = RRuntime.fromLogical(castLogical(castVector(argValues[3])));
+        return corcov(x.materialize(), y != null ? y.materialize() : null, method, iskendall, getEncapsulatingSourceSection());
+    }
 
     private final NACheck check = new NACheck();
 
@@ -35,11 +59,7 @@ public class Covcor {
     private final BranchProfile error = BranchProfile.create();
     private final BranchProfile warning = BranchProfile.create();
 
-    public static Covcor getInstance() {
-        return singleton;
-    }
-
-    public RDoubleVector corcov(RDoubleVector x, RDoubleVector y, @SuppressWarnings("unused") int method, boolean iskendall, boolean cor, SourceSection src) throws RError {
+    public RDoubleVector corcov(RDoubleVector x, RDoubleVector y, @SuppressWarnings("unused") int method, boolean iskendall, SourceSection src) throws RError {
         boolean ansmat;
         boolean naFail;
         boolean everything;
@@ -96,20 +116,20 @@ public class Covcor {
         double[] xm = new double[ncx];
         if (y == null) {
             if (everything) {
-                sd0 = covNA1(n, ncx, x, xm, answerData, cor, iskendall);
+                sd0 = covNA1(n, ncx, x, xm, answerData, isCor, iskendall);
             } else {
                 RIntVector ind = RDataFactory.createIntVector(n);
                 complete1(n, ncx, x, ind, naFail);
-                sd0 = covComplete1(n, ncx, x, xm, ind, answerData, cor, iskendall);
+                sd0 = covComplete1(n, ncx, x, xm, ind, answerData, isCor, iskendall);
             }
         } else {
             double[] ym = new double[ncy];
             if (everything) {
-                sd0 = covNA2(n, ncx, ncy, x, y, xm, ym, answerData, cor, iskendall);
+                sd0 = covNA2(n, ncx, ncy, x, y, xm, ym, answerData, isCor, iskendall);
             } else {
                 RIntVector ind = RDataFactory.createIntVector(n);
                 complete2(n, ncx, ncy, x, y, ind, naFail);
-                sd0 = covComplete2(n, ncx, ncy, x, y, xm, ym, ind, answerData, cor, iskendall);
+                sd0 = covComplete2(n, ncx, ncy, x, y, xm, ym, ind, answerData, isCor, iskendall);
             }
         }
 

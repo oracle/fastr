@@ -11,9 +11,12 @@
  */
 package com.oracle.truffle.r.library.stats;
 
-import com.oracle.truffle.api.CompilerDirectives.*;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.*;
 
 /**
@@ -24,8 +27,27 @@ import com.oracle.truffle.r.runtime.ops.*;
  */
 public class SplineFunctions {
 
-    @TruffleBoundary
-    public static RList splineCoef(int method, RDoubleVector x, RDoubleVector y) {
+    public abstract static class SplineCoef extends RExternalBuiltinNode.Arg3 {
+
+        @TruffleBoundary
+        @Specialization
+        protected Object splineCoef(Object method, RAbstractDoubleVector x, RAbstractDoubleVector y) {
+            int methodInt = castInt(castVector(method));
+            return SplineFunctions.splineCoef(methodInt, x.materialize(), y.materialize());
+        }
+    }
+
+    public abstract static class SplineEval extends RExternalBuiltinNode.Arg2 {
+
+        @TruffleBoundary
+        @Specialization
+        protected Object splineEval(RAbstractDoubleVector xout, RList z) {
+            // This is called with the result of SplineCoef, so it is surely an RList
+            return SplineFunctions.splineEval(attrProfiles, xout.materialize(), z);
+        }
+    }
+
+    private static RList splineCoef(int method, RDoubleVector x, RDoubleVector y) {
         final int n = x.getLength();
         if (y.getLength() != n) {
             throw RError.error(RError.Message.INPUTS_DIFFERENT_LENGTHS);
@@ -63,7 +85,7 @@ public class SplineFunctions {
     /*
      * Periodic Spline --------------- The end conditions here match spline (and its derivatives) at
      * x[1] and x[n].
-     *
+     * 
      * Note: There is an explicit check that the user has supplied data with y[1] equal to y[n].
      */
     private static void periodicSpline(int n, double[] x, double[] y, double[] b, double[] c, double[] d) {
@@ -182,7 +204,7 @@ public class SplineFunctions {
     /*
      * Natural Splines --------------- Here the end-conditions are determined by setting the second
      * derivative of the spline at the end-points to equal to zero.
-     *
+     * 
      * There are n-2 unknowns (y[i]'' at x[2], ..., x[n-1]) and n-2 equations to determine them.
      * Either Choleski or Gaussian elimination could be used.
      */
@@ -340,7 +362,7 @@ public class SplineFunctions {
         return;
     }
 
-    public static RDoubleVector splineEval(RAttributeProfiles attrProfiles, RDoubleVector xout, RList z) {
+    private static RDoubleVector splineEval(RAttributeProfiles attrProfiles, RDoubleVector xout, RList z) {
         int nu = xout.getLength();
         double[] yout = new double[nu];
         int method = (int) z.getDataAt(z.getElementIndexByName(attrProfiles, "method"));
@@ -356,7 +378,6 @@ public class SplineFunctions {
         return RDataFactory.createDoubleVector(yout, xout.isComplete() && x.isComplete() && y.isComplete());
     }
 
-    @TruffleBoundary
     private static void splineEval(int method, int nu, double[] u, double[] v, int n, double[] x, double[] y, double[] b, double[] c, double[] d) {
         /*
          * Evaluate v[l] := spline(u[l], ...), l = 1,..,nu, i.e. 0:(nu-1) Nodes x[i], coef (y[i];

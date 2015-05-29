@@ -25,15 +25,15 @@ package com.oracle.truffle.r.library.utils;
 import java.security.*;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 
-public class Crc64 {
-    /**
-     * GnuR uses lzma, but unless we care about exact match (and the usage doesn't suggest we need
-     * to, we can use any algorithm that provides a unique-ish result.
-     */
+public abstract class Crc64 extends RExternalBuiltinNode.Arg1 {
+
     @TruffleBoundary
-    public static String crc64(String input) {
+    @Specialization
+    protected String crc64(String input) {
         try {
             MessageDigest md = MessageDigest.getInstance("MD5");
             byte[] digest = md.digest(input.getBytes());

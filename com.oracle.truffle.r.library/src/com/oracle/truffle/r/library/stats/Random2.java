@@ -13,40 +13,10 @@ package com.oracle.truffle.r.library.stats;
 
 import static com.oracle.truffle.r.library.stats.StatsUtil.*;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.rng.*;
-
 /*
  * Logic derived from GNU-R, see inline comments.
  */
 public class Random2 {
-
-    @TruffleBoundary
-    public static RDoubleVector rnorm(int n, double mean, double standardd) {
-        double[] result = new double[n];
-        for (int i = 0; i < n; i++) {
-            result[i] = generateNorm(mean, standardd);
-        }
-        return RDataFactory.createDoubleVector(result, RDataFactory.COMPLETE_VECTOR);
-    }
-
-    // from GNUR: rnorm.c
-    private static double generateNorm(double mean, double standardd) {
-        return mean + standardd * normRand();
-    }
-
-    // from GNUR: snorm.c
-    private static double normRand() {
-        double u1;
-
-        // case INVERSION:
-        double big = 134217728; /* 2^27 */
-        /* unif_rand() alone is not of high enough precision */
-        u1 = RRNG.unifRand();
-        u1 = (int) (big * u1) + RRNG.unifRand();
-        return qnorm5(u1 / big, 0.0, 1.0, true, false);
-    }
 
     // from GNUR: qnorm.c
     public static double qnorm5(double p, double mu, double sigma, boolean lowerTail, boolean logP) {
@@ -110,5 +80,4 @@ public class Random2 {
         }
         return mu + sigma * val;
     }
-
 }

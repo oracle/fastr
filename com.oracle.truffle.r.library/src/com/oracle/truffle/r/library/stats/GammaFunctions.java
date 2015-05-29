@@ -20,7 +20,10 @@ package com.oracle.truffle.r.library.stats;
 
 import static com.oracle.truffle.r.library.stats.StatsUtil.*;
 
-import com.oracle.truffle.api.CompilerDirectives.*;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -36,18 +39,12 @@ public abstract class GammaFunctions {
 
     // This is derived from distn.c.
 
-    public static class Qgamma {
-
-        private static final Qgamma singleton = new Qgamma();
+    public abstract static class Qgamma extends RExternalBuiltinNode.Arg5 {
 
         private final NACheck naCheck = NACheck.create();
 
-        public static Qgamma getInstance() {
-            return singleton;
-        }
-
         @TruffleBoundary
-        public RDoubleVector qgamma(RAbstractDoubleVector p, RAbstractDoubleVector shape, RAbstractDoubleVector scale, byte lowerTail, byte logP, RAttributeProfiles attrProfiles) {
+        private RDoubleVector qgamma(RAbstractDoubleVector p, RAbstractDoubleVector shape, RAbstractDoubleVector scale, byte lowerTail, byte logP) {
             int pLen = p.getLength();
             int shapeLen = shape.getLength();
             int scaleLen = scale.getLength();
@@ -69,6 +66,13 @@ public abstract class GammaFunctions {
             return res;
         }
 
+        @Specialization
+        public RAbstractDoubleVector qgamma(RAbstractDoubleVector p, RAbstractDoubleVector shape, RAbstractDoubleVector scale, RAbstractLogicalVector lowerTail, RAbstractLogicalVector logP) {
+            if (shape.getLength() == 0 || scale.getLength() == 0) {
+                return RDataFactory.createEmptyDoubleVector();
+            }
+            return qgamma(p, shape, scale, castLogical(lowerTail), castLogical(logP));
+        }
     }
 
     // The remainder of this file is derived from GNU R (mostly nmath): qgamma.c, nmath.h, lgamma.c,

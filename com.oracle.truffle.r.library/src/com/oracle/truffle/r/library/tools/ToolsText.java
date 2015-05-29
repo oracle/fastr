@@ -13,76 +13,96 @@ package com.oracle.truffle.r.library.tools;
 
 import java.io.*;
 
-import com.oracle.truffle.api.CompilerDirectives.*;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.*;
 
 public class ToolsText {
-    public static RStringVector doTabExpand(RStringVector strings, RIntVector starts) {
-        String[] data = new String[strings.getLength()];
-        for (int i = 0; i < data.length; i++) {
-            String input = strings.getDataAt(i);
-            if (input.indexOf('\t') >= 0) {
-                StringBuffer sb = new StringBuffer();
-                int b = 0;
-                int start = starts.getDataAt(i % data.length);
-                for (int sx = 0; sx < input.length(); sx++) {
-                    char ch = input.charAt(sx);
-                    if (ch == '\n') {
-                        start = -b - 1;
-                    }
-                    if (ch == '\t') {
-                        do {
-                            sb.append(' ');
+
+    public abstract static class DoTabExpand extends RExternalBuiltinNode.Arg2 {
+
+        @TruffleBoundary
+        @Specialization
+        protected Object doTabExpand(RAbstractStringVector strings, RAbstractIntVector starts) {
+            String[] data = new String[strings.getLength()];
+            for (int i = 0; i < data.length; i++) {
+                String input = strings.getDataAt(i);
+                if (input.indexOf('\t') >= 0) {
+                    StringBuffer sb = new StringBuffer();
+                    int b = 0;
+                    int start = starts.getDataAt(i % data.length);
+                    for (int sx = 0; sx < input.length(); sx++) {
+                        char ch = input.charAt(sx);
+                        if (ch == '\n') {
+                            start = -b - 1;
+                        }
+                        if (ch == '\t') {
+                            do {
+                                sb.append(' ');
+                                b++;
+                            } while (((b + start) & 7) != 0);
+                        } else {
+                            sb.append(ch);
                             b++;
-                        } while (((b + start) & 7) != 0);
-                    } else {
-                        sb.append(ch);
-                        b++;
+                        }
                     }
+                    data[i] = sb.toString();
+                } else {
+                    data[i] = input;
                 }
-                data[i] = sb.toString();
-            } else {
-                data[i] = input;
             }
+            return RDataFactory.createStringVector(data, RDataFactory.COMPLETE_VECTOR);
         }
-        return RDataFactory.createStringVector(data, RDataFactory.COMPLETE_VECTOR);
     }
 
-    @TruffleBoundary
-    public static RLogicalVector filesAppendLF(String file1, RStringVector file2Vec) {
-        int n2 = file2Vec.getLength();
-        byte[] data = new byte[n2];
-        if (!RRuntime.isNA(file1)) {
-            try (BufferedWriter out = new BufferedWriter(new FileWriter(file1, true))) {
-                for (int i = 0; i < file2Vec.getLength(); i++) {
-                    String path2 = file2Vec.getDataAt(i);
-                    if (RRuntime.isNA(path2)) {
-                        continue;
-                    }
-                    File path2File = new File(path2);
-                    if (!(path2File.exists() && path2File.canRead())) {
-                        continue;
-                    }
-                    char[] path2Data = new char[(int) path2File.length()];
-                    try (BufferedReader in = new BufferedReader(new FileReader(path2File))) {
-                        out.write("#line 1 \"" + path2 + "\"\n");
-                        in.read(path2Data);
-                        out.write(path2Data);
-                        if (!(path2Data.length > 0 && path2Data[path2Data.length - 1] == '\n')) {
-                            out.write('\n');
-                        }
-                        data[i] = RRuntime.LOGICAL_TRUE;
-                    } catch (IOException ex) {
-                        RError.warning(RError.Message.GENERIC, "write error during file append");
-                        // shouldn't happen, just continue with false result
-                    }
+    public abstract static class CodeFilesAppend extends RExternalBuiltinNode.Arg2 {
 
-                }
-            } catch (IOException ex) {
-                // just return logical false
+        @TruffleBoundary
+        @Specialization
+        protected Object codeFilesAppend(RAbstractStringVector file1Vector, RAbstractStringVector file2) {
+            if (file1Vector.getLength() != 1) {
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "file1");
             }
+            if (file2.getLength() < 1) {
+                return RDataFactory.createEmptyLogicalVector();
+            }
+            String file1 = file1Vector.getDataAt(0);
+            int n2 = file2.getLength();
+            byte[] data = new byte[n2];
+            if (!RRuntime.isNA(file1)) {
+                try (BufferedWriter out = new BufferedWriter(new FileWriter(file1, true))) {
+                    for (int i = 0; i < file2.getLength(); i++) {
+                        String path2 = file2.getDataAt(i);
+                        if (RRuntime.isNA(path2)) {
+                            continue;
+                        }
+                        File path2File = new File(path2);
+                        if (!(path2File.exists() && path2File.canRead())) {
+                            continue;
+                        }
+                        char[] path2Data = new char[(int) path2File.length()];
+                        try (BufferedReader in = new BufferedReader(new FileReader(path2File))) {
+                            out.write("#line 1 \"" + path2 + "\"\n");
+                            in.read(path2Data);
+                            out.write(path2Data);
+                            if (!(path2Data.length > 0 && path2Data[path2Data.length - 1] == '\n')) {
+                                out.write('\n');
+                            }
+                            data[i] = RRuntime.LOGICAL_TRUE;
+                        } catch (IOException ex) {
+                            RError.warning(RError.Message.GENERIC, "write error during file append");
+                            // shouldn't happen, just continue with false result
+                        }
+
+                    }
+                } catch (IOException ex) {
+                    // just return logical false
+                }
+            }
+            return RDataFactory.createLogicalVector(data, RDataFactory.COMPLETE_VECTOR);
         }
-        return RDataFactory.createLogicalVector(data, RDataFactory.COMPLETE_VECTOR);
     }
 }

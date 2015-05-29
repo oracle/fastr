@@ -25,13 +25,18 @@ package com.oracle.truffle.r.library.utils;
 import java.io.*;
 import java.net.*;
 
+import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.data.*;
+
 /**
  * Support for the "internal"method of "utils::download.file". TODO take note of "quiet", "mode" and
  * "cacheOK".
  */
-public class Download {
+public final class Download extends RExternalBuiltinNode {
+
     @SuppressWarnings("unused")
-    public static void download(String urlString, String destFile, boolean quiet, String mode, boolean cacheOK) throws IOException {
+    private static void download(String urlString, String destFile, boolean quiet, String mode, boolean cacheOK) throws IOException {
         URL url = new URL(urlString);
         byte[] buffer = new byte[8192];
         try (BufferedInputStream in = new BufferedInputStream(url.openStream()); BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(destFile))) {
@@ -39,6 +44,27 @@ public class Download {
             while ((nread = in.read(buffer)) > 0) {
                 out.write(buffer, 0, nread);
             }
+        }
+    }
+
+    @Override
+    public Integer call(RArgsValuesAndNames args) {
+        Object[] argValues = args.getArguments();
+        String url = isString(argValues[0]);
+        String destFile = isString(argValues[1]);
+        byte quiet = castLogical(castVector(argValues[2]));
+        String mode = isString(argValues[3]);
+        byte cacheOK = castLogical(castVector(argValues[4]));
+        if (url == null || destFile == null || mode == null) {
+            errorProfile.enter();
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_UNNAMED_ARGUMENTS);
+        }
+        try {
+            Download.download(url, destFile, RRuntime.fromLogical(quiet), mode, RRuntime.fromLogical(cacheOK));
+            return 0;
+        } catch (IOException ex) {
+            errorProfile.enter();
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, ex.getMessage());
         }
     }
 }

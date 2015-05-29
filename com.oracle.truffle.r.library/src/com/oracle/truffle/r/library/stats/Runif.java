@@ -22,20 +22,28 @@
  */
 package com.oracle.truffle.r.library.stats;
 
+import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.rng.*;
 
 /**
- * TODO GnuR checks/updates {@code .Random.seed} across this call. TODO Honor min/max.
+ * TODO GnuR checks/updates {@code .Random.seed} across this call.
  */
-public class Runif {
+public abstract class Runif extends RExternalBuiltinNode.Arg3 {
 
-    public static RDoubleVector runif(int length, @SuppressWarnings("unused") double min, @SuppressWarnings("unused") double max) {
-        double[] result = new double[length];
-        for (int i = 0; i < length; i++) {
-            result[i] = RRNG.unifRand();
+    @Specialization
+    protected Object doRunif(Object n, Object min, Object max) {
+        // TODO full error checks
+        int nInt = castInt(castVector(n));
+        double minDouble = castDouble(castVector(min)).getDataAt(0);
+        double maxDouble = castDouble(castVector(max)).getDataAt(0);
+        double delta = maxDouble - minDouble;
+
+        double[] result = new double[nInt];
+        for (int i = 0; i < nInt; i++) {
+            result[i] = minDouble + RRNG.unifRand() * delta;
         }
         return RDataFactory.createDoubleVector(result, RDataFactory.COMPLETE_VECTOR);
     }
-
 }

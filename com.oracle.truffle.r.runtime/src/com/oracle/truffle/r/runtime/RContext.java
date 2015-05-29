@@ -484,6 +484,12 @@ public final class RContext extends ExecutionContext {
      */
     @CompilationFinal private static final ThreadLocal<RContext> threadLocalContext = new ThreadLocal<>();
 
+    /**
+     * Used by the MethodListDispatch class.
+     */
+
+    private boolean methodTableDispatchOn = true;
+
     /*
      * Primarily for debugging.
      */
@@ -752,6 +758,14 @@ public final class RContext extends ExecutionContext {
 
     public void setVisible(boolean v) {
         resultVisible = v;
+    }
+
+    public boolean isMethodTableDispatchOn() {
+        return methodTableDispatchOn;
+    }
+
+    public void setMethodTableDispatchOn(boolean on) {
+        methodTableDispatchOn = on;
     }
 
     public boolean isInteractive() {

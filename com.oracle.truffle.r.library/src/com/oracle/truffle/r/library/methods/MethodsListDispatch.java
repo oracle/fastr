@@ -11,57 +11,93 @@
  */
 package com.oracle.truffle.r.library.methods;
 
+import com.oracle.truffle.api.CompilerDirectives.*;
+import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
 
 // Transcribed from src/library/methods/methods_list_dispatch.c
 
 public class MethodsListDispatch {
-    private static MethodsListDispatch singleton = new MethodsListDispatch();
 
-    private boolean tableDispatchOn = true;
+    public abstract static class R_initMethodDispatch extends RExternalBuiltinNode.Arg1 {
 
-    public static MethodsListDispatch getInstance() {
-        return singleton;
+        @Specialization
+        @TruffleBoundary
+        protected REnvironment initMethodDispatch(REnvironment env) {
+            // TBD what should we actually do here
+            return env;
+        }
     }
 
-    public REnvironment initMethodDispatch(REnvironment env) {
-        // TODO initialize
-        return env;
+    public abstract static class R_methodsPackageMetaName extends RExternalBuiltinNode.Arg3 {
+
+        @TruffleBoundary
+        @Specialization
+        protected String callMethodsPackageMetaName(String prefixString, String nameString, String pkgString) {
+            if (pkgString.length() == 0) {
+                return ".__" + prefixString + "__" + nameString;
+            } else {
+                return ".__" + prefixString + "__" + nameString + ":" + pkgString;
+            }
+        }
     }
 
-    public byte setMethodDispatch(byte onOff) {
-        boolean prev = tableDispatchOn;
+    public abstract static class R_getClassFromCache extends RExternalBuiltinNode.Arg2 {
 
-        if (onOff == RRuntime.LOGICAL_NA) {
+        @TruffleBoundary
+        @Specialization
+        protected Object callGetClassFromCache(REnvironment table, Object klass) {
+            String klassString = RRuntime.asString(klass);
+
+            if (klassString != null) {
+                Object value = table.get(klassString);
+                if (value == null) {
+                    return RNull.instance;
+                } else {
+                    // TODO check PACKAGE equality
+                    return value;
+                }
+            } else {
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARG_TYPE);
+            }
+        }
+    }
+
+    public abstract static class R_set_method_dispatch extends RExternalBuiltinNode.Arg1 {
+
+        @TruffleBoundary
+        @Specialization
+        protected Object callSetMethodDispatch(RAbstractLogicalVector onOffVector) {
+            boolean prev = RContext.getInstance().isMethodTableDispatchOn();
+            byte onOff = castLogical(onOffVector);
+
+            if (onOff == RRuntime.LOGICAL_NA) {
+                return RRuntime.asLogical(prev);
+            }
+            boolean value = RRuntime.fromLogical(onOff);
+            RContext.getInstance().setMethodTableDispatchOn(value);
+            if (value != prev) {
+                // TODO
+            }
             return RRuntime.asLogical(prev);
         }
-        boolean value = RRuntime.fromLogical(onOff);
-        tableDispatchOn = value;
-        if (value != prev) {
-            // TODO
-        }
-        return RRuntime.asLogical(prev);
     }
 
-    public String methodsPackageMetaName(String prefixString, String nameString, String pkgString) {
-        if (pkgString.length() == 0) {
-            return String.format(".__%s__%s", prefixString, nameString);
-        } else {
-            return String.format(".__%s__%s:%s", prefixString, nameString, pkgString);
-        }
-    }
+    public abstract static class R_M_setPrimitiveMethods extends RExternalBuiltinNode.Arg5 {
 
-    public Object getClassFromCache(REnvironment table, String klassString) {
-        Object value = table.get(klassString);
-        if (value == null) {
+        @SuppressWarnings("unused")
+        @Specialization
+        @TruffleBoundary
+        protected Object setPrimitiveMethods(Object fname, Object op, Object codeVec, RFunction fundef, Object mlist) {
+            String fnameString = RRuntime.asString(fname);
+            String codeVecString = RRuntime.asString(codeVec);
+
+            // TODO implement
             return RNull.instance;
-        } else {
-            // TODO check PACKAGE equality
-            return value;
         }
-
     }
-
 }

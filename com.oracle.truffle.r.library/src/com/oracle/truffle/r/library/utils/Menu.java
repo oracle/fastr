@@ -11,15 +11,21 @@
  */
 package com.oracle.truffle.r.library.utils;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.RContext.*;
+import com.oracle.truffle.r.runtime.RContext.ConsoleHandler;
+import com.oracle.truffle.r.runtime.data.model.*;
 
 // Translated from GnuR: library/utils/io.c
 
-public class Menu {
-    public static int menu(String[] choices) {
+public abstract class Menu extends RExternalBuiltinNode.Arg1 {
+
+    @Specialization
+    protected int menu(RAbstractStringVector choices) {
         ConsoleHandler ch = RContext.getInstance().getConsoleHandler();
-        int first = choices.length + 1;
+        int first = choices.getLength() + 1;
         ch.print("Selection: ");
         String response = ch.readLine().trim();
         if (response.length() > 0) {
@@ -30,8 +36,8 @@ public class Menu {
                     //
                 }
             } else {
-                for (int i = 0; i < choices.length; i++) {
-                    String entry = choices[i];
+                for (int i = 0; i < choices.getLength(); i++) {
+                    String entry = choices.getDataAt(i);
                     if (entry.equals(response)) {
                         first = i + 1;
                         break;
@@ -40,5 +46,11 @@ public class Menu {
             }
         }
         return first;
+    }
+
+    @Fallback
+    @TruffleBoundary
+    protected int menu(@SuppressWarnings("unused") Object choices) {
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "choices");
     }
 }

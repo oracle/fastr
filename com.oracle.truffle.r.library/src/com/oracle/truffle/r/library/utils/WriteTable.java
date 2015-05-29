@@ -14,6 +14,7 @@ package com.oracle.truffle.r.library.utils;
 import java.io.*;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.conn.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -21,13 +22,11 @@ import com.oracle.truffle.r.runtime.data.model.*;
 
 //Transcribed from GnuR, library/utils/src/io.c
 
-//Checkstyle: stop
-public class WriteTable {
-    // @formatter:off
+public final class WriteTable extends RExternalBuiltinNode {
+
     @TruffleBoundary
-    public static Object execute(RConnection con, Object xx, int nr, int nc, Object rnames, String csep, String ceol, String cna,
-                  char cdec, boolean qmethod, boolean[] quoteCol, boolean quoteRn) throws IOException, IllegalArgumentException {
-        // @formatter:on
+    private static Object execute(RConnection con, Object xx, int nr, int nc, Object rnames, String csep, String ceol, String cna, char cdec, boolean qmethod, boolean[] quoteCol, boolean quoteRn)
+                    throws IOException, IllegalArgumentException {
         OutputStream os = con.getOutputStream();
         String tmp = null;
         if (xx instanceof RDataFrame) { /* A data frame */
@@ -225,5 +224,88 @@ public class WriteTable {
             }
         }
         return false;
+    }
+
+    private void invalidArgument(String name) throws RError {
+        errorProfile.enter();
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, name);
+    }
+
+    // Transcribed from GnuR, library/utils/src/io.c
+    @Override
+    public Object call(RArgsValuesAndNames args) {
+        Object[] argValues = args.getArguments();
+        Object conArg = argValues[1];
+        RConnection conn;
+        if (!(conArg instanceof RConnection)) {
+            errorProfile.enter();
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, "'file' is not a connection");
+        } else {
+            conn = (RConnection) conArg;
+        }
+        // TODO check connection writeable
+
+        int nr = castInt(castVector(argValues[2]));
+        int nc = castInt(castVector(argValues[3]));
+        Object rnamesArg = argValues[4];
+        Object sepArg = argValues[5];
+        Object eolArg = argValues[6];
+        Object naArg = argValues[7];
+        Object decArg = argValues[8];
+        Object quoteArg = argValues[9];
+        byte qmethod = castLogical(castVector(argValues[10]));
+
+        String csep;
+        String ceol;
+        String cna;
+        String cdec;
+
+        if (nr == RRuntime.INT_NA) {
+            invalidArgument("nr");
+        }
+        if (nc == RRuntime.INT_NA) {
+            invalidArgument("nc");
+        }
+        if (!(rnamesArg instanceof RNull) && isString(rnamesArg) == null) {
+            invalidArgument("rnames");
+        }
+        if ((csep = isString(sepArg)) == null) {
+            invalidArgument("sep");
+        }
+        if ((ceol = isString(eolArg)) == null) {
+            invalidArgument("eol");
+        }
+        if ((cna = isString(naArg)) == null) {
+            invalidArgument("na");
+        }
+        if ((cdec = isString(decArg)) == null) {
+            invalidArgument("dec");
+        }
+        if (qmethod == RRuntime.LOGICAL_NA) {
+            invalidArgument("qmethod");
+        }
+        if (cdec.length() != 1) {
+            errorProfile.enter();
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, "'dec' must be a single character");
+        }
+        boolean[] quoteCol = new boolean[nc];
+        boolean quoteRn = false;
+        RAbstractIntVector quote = (RAbstractIntVector) castVector(quoteArg);
+        for (int i = 0; i < quote.getLength(); i++) {
+            int qi = quote.getDataAt(i);
+            if (qi == 0) {
+                quoteRn = true;
+            }
+            if (qi > 0) {
+                quoteCol[qi - 1] = true;
+            }
+        }
+        try (RConnection openConn = conn.forceOpen("wt")) {
+            execute(openConn, argValues[0], nr, nc, rnamesArg, csep, ceol, cna, cdec.charAt(0), RRuntime.fromLogical(qmethod), quoteCol, quoteRn);
+        } catch (IOException | IllegalArgumentException ex) {
+            errorProfile.enter();
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, ex.getMessage());
+        }
+        return RNull.instance;
     }
 }

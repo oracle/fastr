@@ -24,6 +24,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import com.oracle.truffle.r.nodes.binary.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.builtin.base.foreign.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.ops.*;
 
@@ -226,7 +227,7 @@ public class BasePackage extends RBuiltinPackage {
         add(FileFunctions.ListDirs.class, FileFunctionsFactory.ListDirsNodeGen::create);
         add(FileFunctions.Unlink.class, FileFunctionsFactory.UnlinkNodeGen::create);
         add(Floor.class, Floor::new);
-        add(ForeignFunctions.C.class, ForeignFunctionsFactory.CNodeGen::create);
+        add(DotC.class, DotCNodeGen::create);
         add(ForeignFunctions.DotCall.class, ForeignFunctionsFactory.DotCallNodeGen::create);
         add(ForeignFunctions.DotExternal.class, ForeignFunctionsFactory.DotExternalNodeGen::create);
         add(ForeignFunctions.DotExternal2.class, ForeignFunctionsFactory.DotExternal2NodeGen::create);
