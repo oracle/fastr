@@ -55,6 +55,7 @@ public class TestBase {
         ParserErrorFormatting("tests that fail because of the formatting of parser error messages"),
         ParserError("tests that fail because of bugs in the parser"),
         SideEffects("tests that are ignored because they would interfere with other tests"),
+        MissingWarning("tests that fail because of missing warnings"),
         Unimplemented("tests that fail because of missing functionality");
 
         private final String description;

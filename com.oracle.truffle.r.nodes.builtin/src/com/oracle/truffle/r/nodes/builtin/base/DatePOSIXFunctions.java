@@ -582,7 +582,8 @@ public class DatePOSIXFunctions {
                          * future version the default century inferred from a 2-digit year will
                          * change’.
                          */
-                        throw RInternalError.unimplemented();
+                        builder.appendPattern("yy");
+                        break;
                     case 'Y':
                         /*
                          * Year with century. Note that whereas there was no zero in the original

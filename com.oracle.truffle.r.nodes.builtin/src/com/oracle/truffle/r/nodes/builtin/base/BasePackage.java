@@ -275,6 +275,7 @@ public class BasePackage extends RBuiltinPackage {
         add(InfixEmulationFunctions.AccessArraySubsetDefaultBuiltin.class, InfixEmulationFunctionsFactory.AccessArraySubsetDefaultBuiltinNodeGen::create);
         add(InfixEmulationFunctions.AccessFieldBuiltin.class, InfixEmulationFunctionsFactory.AccessFieldBuiltinNodeGen::create);
         add(InfixEmulationFunctions.AssignBuiltin.class, InfixEmulationFunctionsFactory.AssignBuiltinNodeGen::create);
+        add(InfixEmulationFunctions.AssignBuiltinEq.class, InfixEmulationFunctionsFactory.AssignBuiltinEqNodeGen::create);
         add(InfixEmulationFunctions.AssignOuterBuiltin.class, InfixEmulationFunctionsFactory.AssignOuterBuiltinNodeGen::create);
         add(InfixEmulationFunctions.BraceBuiltin.class, InfixEmulationFunctionsFactory.BraceBuiltinNodeGen::create);
         add(InfixEmulationFunctions.BreakBuiltin.class, InfixEmulationFunctionsFactory.BreakBuiltinNodeGen::create);

@@ -29,10 +29,10 @@ import os
 
 _fastr_suite = None
 
-def runR(args, className, nonZeroIsFatal=True, extraVmArgs=None, runBench=False, graalVM='server'):
+def runR(args, className, nonZeroIsFatal=True, extraVmArgs=None, runBench=False, graal_vm='server'):
     # extraVmArgs is not normally necessary as the global --J option can be used running R/RScript
     # However, the bench command invokes other Java VMs along the way, so it must use extraVmArgs
-    setREnvironment(graalVM)
+    setREnvironment(graal_vm)
     project = className.rpartition(".")[0]
     vmArgs = ['-cp', mx.classpath(project)]
     vmArgs = vmArgs + ["-Drhome.path=" + _fastr_suite.dir]
@@ -41,9 +41,9 @@ def runR(args, className, nonZeroIsFatal=True, extraVmArgs=None, runBench=False,
         vmArgs = vmArgs + ['-ea', '-esa']
     if extraVmArgs:
         vmArgs = vmArgs + extraVmArgs
-    return mx_graal.vm(vmArgs + [className] + args, vm=graalVM, nonZeroIsFatal=nonZeroIsFatal)
+    return mx_graal.vm(vmArgs + [className] + args, vm=graal_vm, nonZeroIsFatal=nonZeroIsFatal)
 
-def setREnvironment(graalVM):
+def setREnvironment(graal_vm):
     osname = platform.system()
     lib_base = join(_fastr_suite.dir, 'com.oracle.truffle.r.native', 'builtinlibs', 'lib')
     lib_value = lib_base
@@ -54,40 +54,28 @@ def setREnvironment(graalVM):
         lib_env = 'LD_LIBRARY_PATH'
     os.environ[lib_env] = lib_value
     # For R sub-processes we need to set the DEFAULT_VM environment variable
-    os.environ['DEFAULT_VM'] = graalVM
+    os.environ['DEFAULT_VM'] = graal_vm
 
-def _add_vm_arg(parser):
-    parser.add_argument('--graal-vm', action='store', dest='graalVM', metavar='<arg>', help='Graal VM', default='server')
-
-def _process_graalVM_arg(args):
+def _get_graal_vm():
     '''
-    Check for the --graal-vm argument and if it exists return it as fiust result else None.
-    Unfortunately we can't use ArgumentParser as that doesn't like other args with a leading '-' unless
-    a '--' separator is provide and we can't do that.
+    Check for the --vm global mx argument by checking mx.graal._vm.
     '''
-    graalVM = "server"
-    try:
-        vmIndex = args.index('--graal-vm')
-        graalVM = args[vmIndex + 1]
-        del args[vmIndex:vmIndex + 2]
-    except ValueError:
-        pass
-    return graalVM, args
+    return "server" if mx_graal._vm is None else mx_graal._vm
 
 def rshell(args, nonZeroIsFatal=True, extraVmArgs=None, runBench=False):
     '''run R shell'''
     # Optional args for external use by benchmarks
-    graalVM, args = _process_graalVM_arg(args)
-    runR(args, "com.oracle.truffle.r.shell.RCommand", nonZeroIsFatal=nonZeroIsFatal, extraVmArgs=extraVmArgs, runBench=False, graalVM=graalVM)
+    graal_vm = _get_graal_vm()
+    runR(args, "com.oracle.truffle.r.shell.RCommand", nonZeroIsFatal=nonZeroIsFatal, extraVmArgs=extraVmArgs, runBench=False, graal_vm=graal_vm)
 
 def rscript(args):
     '''run Rscript'''
-    graalVM, args = _process_graalVM_arg(args)
-    runR(args, "com.oracle.truffle.r.shell.RscriptCommand", graalVM=graalVM)
+    graal_vm = _get_graal_vm()
+    runR(args, "com.oracle.truffle.r.shell.RscriptCommand", graal_vm=graal_vm)
 
 def build(args):
     '''FastR build'''
-    graalVM, args = _process_graalVM_arg(args)
+    graal_vm = _get_graal_vm()
     # Overridden in case we ever want to do anything non-standard
     # workaround for Hotspot Mac OS X build problem
     osname = platform.system()
@@ -95,7 +83,7 @@ def build(args):
         os.environ['COMPILER_WARNINGS_FATAL'] = 'false'
         os.environ['USE_CLANG'] = 'true'
         os.environ['LFLAGS'] = '-Xlinker -lstdc++'
-    mx_graal.build(args, vm=graalVM) # this calls mx.build
+    mx_graal.build(args, vm=graal_vm) # this calls mx.build
 
 def findbugs(args):
     '''run FindBugs against non-test Java projects'''
@@ -236,14 +224,14 @@ def _junit_r_harness(args, vmArgs, junitArgs):
     # suppress Truffle compilation by using a high threshold
     vmArgs += ['-G:TruffleCompilationThreshold=100000']
 
-    setREnvironment(args.graalVM)
+    graal_vm = _get_graal_vm()
+    setREnvironment(graal_vm)
 
-    return mx_graal.vm(vmArgs + junitArgs, vm=args.graalVM, nonZeroIsFatal=False)
+    return mx_graal.vm(vmArgs + junitArgs, vm=graal_vm, nonZeroIsFatal=False)
 
 def junit(args):
     '''run R Junit tests'''
     parser = ArgumentParser(prog='r junit')
-    _add_vm_arg(parser)
     parser.add_argument('--gen-expected-output', action='store_true', help='generate/update expected test output file')
     parser.add_argument('--gen-expected-quiet', action='store_true', help='suppress output on new tests being added')
     parser.add_argument('--keep-trailing-whitespace', action='store_true', help='keep trailing whitespace in expected test output file')
@@ -278,8 +266,11 @@ def _nodes_unit_tests():
 def _library_unit_tests():
     return ','.join((_test_subpackage('library.base'), _test_subpackage('library.stats'), _test_subpackage('library.utils')))
 
-def _testrgen_unit_tests():
-    return _test_subpackage('testrgen')
+def _builtins_unit_tests():
+    return _test_subpackage('builtins')
+
+def _functions_unit_tests():
+    return _test_subpackage('functions')
 
 def _rffi_unit_tests():
     return _test_subpackage('rffi')
@@ -294,7 +285,7 @@ def _app_unit_tests():
     return _test_subpackage('apps')
 
 def _gate_unit_tests():
-    return ','.join((_library_unit_tests(), _rffi_unit_tests(), _rpackages_unit_tests(), _testrgen_unit_tests(), _ser_unit_tests(), _app_unit_tests(), _nodes_unit_tests()))
+    return ','.join((_library_unit_tests(), _rffi_unit_tests(), _rpackages_unit_tests(), _builtins_unit_tests(), _functions_unit_tests(), _ser_unit_tests(), _app_unit_tests(), _nodes_unit_tests()))
 
 def _all_unit_tests():
     return _gate_unit_tests()

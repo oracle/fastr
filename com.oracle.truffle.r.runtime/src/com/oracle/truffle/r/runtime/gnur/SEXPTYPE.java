@@ -34,8 +34,8 @@ public enum SEXPTYPE {
     BUILTINSXP(8), /* builtin non-special forms */
     CHARSXP(9), /* "scalar" string type (GnuR internal only) */
     LGLSXP(10, RLogicalVector.class), /* logical vectors */
-    INTSXP(13, RIntVector.class), /* integer vectors */
-    REALSXP(14, RDoubleVector.class), /* real variables */
+    INTSXP(13, new Class<?>[]{RIntVector.class, RIntSequence.class}), /* integer vectors */
+    REALSXP(14, new Class<?>[]{RDoubleVector.class, RDoubleSequence.class}), /* real variables */
     CPLXSXP(15, RComplexVector.class), /* complex variables */
     STRSXP(16, new Class<?>[]{RStringVector.class, String.class}), /* string vectors */
     DOTSXP(17, RPairList.class), /* dot-dot-dot object */

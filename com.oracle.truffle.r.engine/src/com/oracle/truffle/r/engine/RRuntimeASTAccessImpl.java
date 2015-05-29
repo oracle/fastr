@@ -147,7 +147,12 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
                 if (RASTUtils.isNamedFunctionNode(node)) {
                     return RASTUtils.findFunctionName(node, true);
                 } else {
-                    return RDataFactory.createLanguage(RASTUtils.getFunctionNode(node));
+                    Object functionNode = RASTUtils.getFunctionNode(node);
+                    if (functionNode instanceof ConstantNode && ((ConstantNode) functionNode).getValue() instanceof RSymbol) {
+                        return ((ConstantNode) functionNode).getValue();
+                    } else {
+                        return RDataFactory.createLanguage(functionNode);
+                    }
                 }
             } else {
                 CallArgumentsNode args = RASTUtils.findCallArgumentsNode(node);

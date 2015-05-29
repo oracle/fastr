@@ -165,7 +165,16 @@ public class RASTUtils {
             if (promiseRep instanceof VarArgNode) {
                 VarArgNode varArgNode = (VarArgNode) promiseRep;
                 RPromise varArgPromise = varArgNode.executeNonEvaluated((VirtualFrame) promise.getFrame());
-                return createNodeForValue(varArgPromise);
+                Node unwrappedRep = unwrap(varArgPromise.getRep());
+                if (unwrappedRep instanceof RCallNode) {
+                    // this is for the return value is supposed to be of the form "..N" to represent
+                    // unexpanded component of ..., as for example in:
+                    // f1<-function(...) match.call(expand.dots=FALSE);
+                    // f2<-function(...) f1(...); f2(c("a"))
+                    return null;
+                } else {
+                    return createNodeForValue(varArgPromise);
+                }
             }
             return NodeUtil.cloneNode(promiseRep);
         } else {
