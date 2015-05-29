@@ -28,6 +28,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RPlatform.OSInfo;
+import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.ffi.*;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLException;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolInfo;
@@ -65,7 +66,7 @@ public class CallRFFIWithJNI implements CallRFFI {
             throw RError.error((SourceSection) null, ex);
         }
         System.load(path.toString());
-        initialize();
+        initialize(RNull.instance);
     }
 
     // @formatter:off
@@ -92,7 +93,7 @@ public class CallRFFIWithJNI implements CallRFFI {
         return null;
     }
 
-    private static native void initialize();
+    private static native void initialize(RNull instance);
     private static native Object call(long address, Object[] args);
     private static native Object call0(long address);
     private static native Object call1(long address, Object arg1);

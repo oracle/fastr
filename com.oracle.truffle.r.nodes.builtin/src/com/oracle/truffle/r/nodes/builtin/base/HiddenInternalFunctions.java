@@ -244,7 +244,7 @@ public class HiddenInternalFunctions {
         @TruffleBoundary
         protected RList getRegisteredRoutines(RExternalPtr externalPtr) {
             Object[] data = new Object[NAMES.getLength()];
-            DLL.DLLInfo dllInfo = DLL.getDLLInfoForId((int) externalPtr.value);
+            DLL.DLLInfo dllInfo = DLL.getDLLInfoForId((int) externalPtr.getAddr());
             if (dllInfo == null) {
                 throw RInternalError.shouldNotReachHere();
             }

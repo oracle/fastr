@@ -10,229 +10,25 @@
  * All rights reserved.
  */
 
+#include "rffiutils.h"
 #include <string.h>
-#include <jni.h>
 
-#include <Rinternals.h>
-#include <Rdynload.h>
-
-/*
- * All calls pass through one of the call(N) methods, which carry the JNIEnv value,
- * which needs to be saved for reuse in the many R functions such as Rf_allocVector.
- * FastR is not currently multi-threaded so the value can safely be stored in a static.
- */
-
-static JNIEnv *curenv = NULL;
-
-JNIEnv *getEnv() {
-//	printf("getEnv()=%p\n", curenv);
-	return curenv;
-}
-
-void setEnv(JNIEnv *env) {
-//	printf("setEnv(%p)\n", env);
-	curenv = env;
-}
-
-static jclass RDataFactoryClass;
-static jclass CallRFFIHelperClass;
-static jclass DLLClass;
-static jclass DotSymbolClass;
-
-static jmethodID scalarIntegerMethodID;
-static jmethodID scalarDoubleMethodID;
-static jmethodID createIntArrayMethodID;
-static jmethodID createDoubleArrayMethodID;
-static jmethodID getIntDataAtZeroID;
-static jmethodID getDoubleDataAtZeroID;
-static jmethodID registerRoutinesID;
-static jmethodID registerCCallableID;
-static jmethodID useDynamicSymbolsID;
-static jmethodID forceSymbolsID;
-static jmethodID setDotSymbolValuesID;
-
-static jclass checkFindClass(JNIEnv *env, const char *name);
-static jmethodID checkGetMethodID(JNIEnv *env, jclass klass, const char *name, const char *sig, int isStatic);
+SEXP R_NilValue;
 
 JNIEXPORT void JNICALL
-Java_com_oracle_truffle_r_runtime_ffi_jnr_CallRFFIWithJNI_initialize(JNIEnv *env, jclass c) {
-	RDataFactoryClass = checkFindClass(env, "com/oracle/truffle/r/runtime/data/RDataFactory");
-	CallRFFIHelperClass = checkFindClass(env, "com/oracle/truffle/r/runtime/ffi/jnr/CallRFFIHelper");
-	DLLClass = checkFindClass(env, "com/oracle/truffle/r/runtime/ffi/DLL");
-	DotSymbolClass = checkFindClass(env, "com/oracle/truffle/r/runtime/ffi/DLL$DotSymbol");
+Java_com_oracle_truffle_r_runtime_ffi_jnr_CallRFFIWithJNI_initialize(JNIEnv *env, jclass c, jobject RNullInstance) {
+	init_utils(env);
 
-	scalarIntegerMethodID = checkGetMethodID(env, CallRFFIHelperClass, "ScalarInteger", "(I)Lcom/oracle/truffle/r/runtime/data/RIntVector;", 1);
-	scalarDoubleMethodID = checkGetMethodID(env, CallRFFIHelperClass, "ScalarDouble", "(D)Lcom/oracle/truffle/r/runtime/data/RDoubleVector;", 1);
-	createIntArrayMethodID = checkGetMethodID(env, RDataFactoryClass, "createIntVector", "(I)Lcom/oracle/truffle/r/runtime/data/RIntVector;", 1);
-	createDoubleArrayMethodID = checkGetMethodID(env, RDataFactoryClass, "createDoubleVector", "(I)Lcom/oracle/truffle/r/runtime/data/RDoubleVector;", 1);
-	getIntDataAtZeroID = checkGetMethodID(env, CallRFFIHelperClass, "getIntDataAtZero", "(Ljava/lang/Object;)I", 1);
-	getDoubleDataAtZeroID = checkGetMethodID(env, CallRFFIHelperClass, "getDoubleDataAtZero", "(Ljava/lang/Object;)D", 1);
-	registerRoutinesID = checkGetMethodID(env, DLLClass, "registerRoutines", "(Lcom/oracle/truffle/r/runtime/ffi/DLL$DLLInfo;IIJ)V", 1);
-	registerCCallableID = checkGetMethodID(env, DLLClass, "registerCCallable", "(Ljava/lang/String;Ljava/lang/String;J)V", 1);
-	useDynamicSymbolsID = checkGetMethodID(env, DLLClass, "useDynamicSymbols", "(Lcom/oracle/truffle/r/runtime/ffi/DLL$DLLInfo;I)I", 1);
-	forceSymbolsID = checkGetMethodID(env, DLLClass, "forceSymbols", "(Lcom/oracle/truffle/r/runtime/ffi/DLL$DLLInfo;I)I", 1);
-	setDotSymbolValuesID = checkGetMethodID(env, DLLClass, "setDotSymbolValues", "(Ljava/lang/String;JI)Lcom/oracle/truffle/r/runtime/ffi/DLL$DotSymbol;", 1);
+	R_NilValue = RNullInstance;
+
+	init_register(env);
+	init_rf_functions(env);
+	init_externalptr(env);
+	init_typecoerce(env);
+	init_attrib(env);
+	init_misc(env);
+	init_vectoraccess(env);
 }
-
-// Must match ordinal value for DLL.NativeSymbolType
-#define C_NATIVE_TYPE 0
-#define CALL_NATIVE_TYPE 1
-#define FORTRAN_NATIVE_TYPE 2
-#define EXTERNAL_NATIVE_TYPE 3
-
-int
-R_registerRoutines(DllInfo *info, const R_CMethodDef * const croutines,
-		   const R_CallMethodDef * const callRoutines,
-		   const R_FortranMethodDef * const fortranRoutines,
-		   const R_ExternalMethodDef * const externalRoutines) {
-	// In theory we could create all the data here and pass it up, but in practice there were inexplicable
-	// Hotspot SEGV crashes creating Java arrays and Java objects in this function
-	JNIEnv *thisenv = getEnv();
-	int num;
-	if (croutines) {
-		for(num = 0; croutines[num].name != NULL; num++) {;}
-		(*thisenv)->CallStaticVoidMethod(thisenv, DLLClass, registerRoutinesID, info, C_NATIVE_TYPE, num, croutines);
-	}
-	if (callRoutines) {
-		for(num = 0; callRoutines[num].name != NULL; num++) {;}
-		(*thisenv)->CallStaticVoidMethod(thisenv, DLLClass, registerRoutinesID, info, CALL_NATIVE_TYPE, num, callRoutines);
-	}
-	if (fortranRoutines) {
-		for(num = 0; fortranRoutines[num].name != NULL; num++) {;}
-		(*thisenv)->CallStaticVoidMethod(thisenv, DLLClass, registerRoutinesID, info, FORTRAN_NATIVE_TYPE, num, fortranRoutines);
-	}
-	if (externalRoutines) {
-		for(num = 0; externalRoutines[num].name != NULL; num++) {;}
-		(*thisenv)->CallStaticVoidMethod(thisenv, DLLClass, registerRoutinesID, info, EXTERNAL_NATIVE_TYPE, num, externalRoutines);
-	}
-    return 1;
-}
-
-void R_RegisterCCallable(const char *package, const char *name, DL_FUNC fptr) {
-	JNIEnv *thisenv = getEnv();
-//	printf("pkgname %s, name %s\n", package, name);
-	jstring packageString = (*thisenv)->NewStringUTF(thisenv, package);
-	jstring nameString = (*thisenv)->NewStringUTF(thisenv, name);
-	(*thisenv)->CallStaticVoidMethod(thisenv, DLLClass, registerCCallableID, packageString, nameString, fptr);
-}
-
-JNIEXPORT jobject JNICALL
-Java_com_oracle_truffle_r_runtime_ffi_DLL_setSymbol(JNIEnv *env, jclass c, jint nstOrd, jlong routinesAddr, jint index) {
-	const char *name;
-	long fun;
-	int numArgs;
-
-	switch (nstOrd) {
-	case C_NATIVE_TYPE: {
-		R_CMethodDef *croutines = (R_CMethodDef *) routinesAddr;
-		name = croutines[index].name;
-		fun = (long) croutines[index].fun;
-		numArgs = croutines[index].numArgs;
-		break;
-	}
-	case CALL_NATIVE_TYPE: {
-		R_CallMethodDef *callRoutines = (R_CallMethodDef *) routinesAddr;
-		name = callRoutines[index].name;
-		fun = (long) callRoutines[index].fun;
-		numArgs = callRoutines[index].numArgs;
-		break;
-	}
-	case FORTRAN_NATIVE_TYPE: {
-		R_FortranMethodDef * fortranRoutines = (R_FortranMethodDef *) routinesAddr;
-		name = fortranRoutines[index].name;
-		fun = (long) fortranRoutines[index].fun;
-		numArgs = fortranRoutines[index].numArgs;
-		break;
-	}
-	case EXTERNAL_NATIVE_TYPE: {
-		R_ExternalMethodDef * externalRoutines = (R_ExternalMethodDef *) routinesAddr;
-		name = externalRoutines[index].name;
-		fun = (long) externalRoutines[index].fun;
-		numArgs = externalRoutines[index].numArgs;
-		break;
-	}
-	default: (*env)->FatalError(env, "NativeSymbolType out of range");
-	}
-//	printf("name %s, fun %0lx, numArgs %d\n", name, fun, numArgs);
-	jstring nameString = (*env)->NewStringUTF(env, name);
-	return (*env)->CallStaticObjectMethod(env, DLLClass, setDotSymbolValuesID, nameString, fun, numArgs);
-
-}
-
-Rboolean R_useDynamicSymbols(DllInfo *dllInfo, Rboolean value) {
-	JNIEnv *thisenv = getEnv();
-	return (*thisenv)->CallStaticIntMethod(thisenv, DLLClass, useDynamicSymbolsID, dllInfo, value);
-}
-
-Rboolean R_forceSymbols(DllInfo *dllInfo, Rboolean value) {
-	JNIEnv *thisenv = getEnv();
-	return (*thisenv)->CallStaticIntMethod(thisenv, DLLClass, forceSymbolsID, dllInfo, value);
-
-}
-
-SEXP Rf_ScalarInteger(int value) {
-	JNIEnv *thisenv = getEnv();
-	return (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, scalarIntegerMethodID, value);
-}
-
-SEXP Rf_ScalarReal(double value) {
-	JNIEnv *thisenv = getEnv();
-	return (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, scalarDoubleMethodID, value);
-}
-
-SEXP Rf_allocVector(SEXPTYPE t, R_xlen_t len) {
-	JNIEnv *thisenv = getEnv();
-	switch (t) {
-	case INTSXP: {
-		return (*thisenv)->CallStaticObjectMethod(thisenv, RDataFactoryClass, createIntArrayMethodID, len);
-	}
-	case REALSXP: {
-		return (*thisenv)->CallStaticObjectMethod(thisenv, RDataFactoryClass, createDoubleArrayMethodID, len);
-	}
-	default:
-		(*thisenv)->FatalError(thisenv, "vector type not handled");
-		return NULL;
-	}
-}
-
-int Rf_asInteger(SEXP x) {
-	JNIEnv *thisenv = getEnv();
-	return (*thisenv)->CallStaticIntMethod(thisenv, CallRFFIHelperClass, getIntDataAtZeroID, x);
-}
-
-double Rf_asReal(SEXP x) {
-	JNIEnv *thisenv = getEnv();
-	return (*thisenv)->CallStaticDoubleMethod(thisenv, CallRFFIHelperClass, getDoubleDataAtZeroID, x);
-}
-
-// Class/method search
-static jclass checkFindClass(JNIEnv *env, const char *name) {
-	jclass klass = (*env)->FindClass(env, name);
-	if (klass == NULL) {
-		char buf[1024];
-		strcpy(buf, "failed to find class ");
-		strcat(buf, name);
-		(*env)->FatalError(env, buf);
-	}
-	return klass;
-}
-
-static jmethodID checkGetMethodID(JNIEnv *env, jclass klass, const char *name, const char *sig, int isStatic) {
-	jmethodID methodID = isStatic ? (*env)->GetStaticMethodID(env, klass, name, sig) : (*env)->GetMethodID(env, klass, name, sig);
-	if (methodID == NULL) {
-		char buf[1024];
-		strcpy(buf, "failed to find ");
-		strcat(buf, isStatic ? "static" : "instance");
-		strcat(buf, " method ");
-		strcat(buf, name);
-		strcat(buf, "(");
-		strcat(buf, sig);
-		strcat(buf, ")");
-		(*env)->FatalError(env, buf);
-	}
-	return methodID;
-}
-
 
 
 // Boilerplate methods for the actual calls

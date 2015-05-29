@@ -45,7 +45,7 @@ import edu.umd.cs.findbugs.annotations.*;
  * - non-shared => shared
  * </pre>
  */
-public abstract class RVector extends RBounded implements RShareable, RAbstractVector {
+public abstract class RVector extends RBounded implements RShareable, RAbstractVector, RFFIAccess {
 
     protected boolean complete; // "complete" means: does not contain NAs
     protected int[] dimensions;

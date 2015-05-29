@@ -600,22 +600,10 @@ public class RSerialize {
                 }
 
                 case EXTPTRSXP: {
-                    Object value = readItem();
-                    long addr = value == RNull.instance ? 0 : (long) value;
-                    Object tagObj = readItem();
-                    String tag;
-                    if (tagObj == RNull.instance) {
-                        tag = null;
-                    } else {
-                        if (tagObj instanceof RSymbol) {
-                            tag = ((RSymbol) tagObj).getName();
-                        } else if (tagObj instanceof String) {
-                            tag = (String) tagObj;
-                        } else {
-                            throw RInternalError.unimplemented();
-                        }
-                    }
-                    result = RDataFactory.createExternalPtr(addr, tag);
+                    Object prot = readItem();
+                    long addr = 0;
+                    Object tag = readItem();
+                    result = RDataFactory.createExternalPtr(addr, tag, prot);
                     addReadRef(result);
                     break;
                 }
@@ -1160,7 +1148,8 @@ public class RSerialize {
                 return SEXPTYPE.BASEENV_SXP;
             if (item == REnvironment.globalEnv())
                 return SEXPTYPE.GLOBALENV_SXP;
-// if (item == R_UnboundValue) return UNBOUNDVALUE_SXP;
+            if (item == RUnboundValue.instance)
+                return SEXPTYPE.UNBOUNDVALUE_SXP;
             if (item == RMissing.instance)
                 return SEXPTYPE.MISSINGARG_SXP;
             if (item == REmpty.instance)
@@ -1170,44 +1159,6 @@ public class RSerialize {
             return null;
         }
 
-        private static SEXPTYPE outputType(SEXPTYPE type, Object obj) {
-            switch (type) {
-                case FUNSXP: {
-                    RFunction func = (RFunction) obj;
-                    if (func.isBuiltin()) {
-                        return SEXPTYPE.BUILTINSXP;
-                    } else {
-                        return SEXPTYPE.CLOSXP;
-                    }
-                }
-
-                case LISTSXP: {
-                    RPairList pl = (RPairList) obj;
-                    if (pl.getType() != null && pl.getType() == SEXPTYPE.LANGSXP) {
-                        return SEXPTYPE.LANGSXP;
-                    } else {
-                        return type;
-                    }
-                }
-
-                case FASTR_INT:
-                    return SEXPTYPE.INTSXP;
-                case FASTR_DOUBLE:
-                    return SEXPTYPE.REALSXP;
-                case FASTR_BYTE:
-                    return SEXPTYPE.LGLSXP;
-                case FASTR_COMPLEX:
-                    return SEXPTYPE.CPLXSXP;
-                case FASTR_DATAFRAME:
-                case FASTR_FACTOR:
-                    return SEXPTYPE.VECSXP;
-                case FASTR_CONNECTION:
-                    return SEXPTYPE.INTSXP;
-                default:
-                    return type;
-            }
-        }
-
         private void writeItem(Object obj) throws IOException {
             SEXPTYPE specialType;
             if ((specialType = saveSpecialHook(obj)) != null) {
@@ -1215,7 +1166,7 @@ public class RSerialize {
                 return;
             }
             SEXPTYPE type = SEXPTYPE.typeForClass(obj.getClass());
-            SEXPTYPE outType = outputType(type, obj);
+            SEXPTYPE gnuRType = SEXPTYPE.gnuRType(type, obj);
             int refIndex;
             if ((refIndex = getRefIndex(obj)) != -1) {
                 outRefIndex(refIndex);
@@ -1277,8 +1228,8 @@ public class RSerialize {
                         attributes = null;
                     }
                 }
-                boolean hasTag = outType == SEXPTYPE.CLOSXP || (type == SEXPTYPE.LISTSXP && !((RPairList) obj).isNullTag());
-                int flags = Flags.packFlags(outType, 0, false, attributes != null, hasTag);
+                boolean hasTag = gnuRType == SEXPTYPE.CLOSXP || (type == SEXPTYPE.LISTSXP && !((RPairList) obj).isNullTag());
+                int flags = Flags.packFlags(gnuRType, 0, false, attributes != null, hasTag);
                 stream.writeInt(flags);
                 switch (type) {
                     case STRSXP: {
@@ -1395,8 +1346,8 @@ public class RSerialize {
                     case EXTPTRSXP: {
                         addReadRef(obj);
                         RExternalPtr xptr = (RExternalPtr) obj;
-                        writeItem(RNull.instance);
-                        writeItem(RDataFactory.createSymbol(xptr.tag));
+                        writeItem(xptr.getProt());
+                        writeItem(xptr.getTag());
                         break;
                     }
 

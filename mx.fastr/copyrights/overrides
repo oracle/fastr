@@ -1,5 +1,6 @@
 com.oracle.truffle.r.native/builtinlibs/src/rdummy.c,no.copyright
 com.oracle.truffle.r.native/fficall/jni/src/rfficall.c,gnu_r.copyright
+com.oracle.truffle.r.native/fficall/jni/src/alloc.c,gnu_r.copyright
 com.oracle.truffle.r.native/include/jni/src/R_ext/GraphicsDevice.h,no.copyright
 com.oracle.truffle.r.native/include/jni/src/R_ext/GraphicsEngine.h,no.copyright
 com.oracle.truffle.r.native/include/jni/src/libintl.h,no.copyright

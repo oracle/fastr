@@ -20,50 +20,28 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.runtime.data;
+#include "rffiutils.h"
 
-import com.oracle.truffle.r.runtime.*;
+void init_finalizer(JNIEnv *env) {
 
-/**
- * The rarely seen {@code externalptr} type.
- */
-public class RExternalPtr extends RAttributeStorage implements RAttributable, RTypedValue {
-    private long addr;
-    private Object tag;
-    private Object prot;
+}
 
-    RExternalPtr(long addr, Object tag, Object prot) {
-        this.addr = addr;
-        this.tag = tag;
-        this.prot = prot;
-    }
 
-    public long getAddr() {
-        return addr;
-    }
+void R_RegisterFinalizer(SEXP s, SEXP fun) {
 
-    public Object getTag() {
-        return tag;
-    }
+}
+void R_RegisterCFinalizer(SEXP s, R_CFinalizer_t fun) {
 
-    public Object getProt() {
-        return prot;
-    }
+}
 
-    public void setAddr(long value) {
-        this.addr = value;
-    }
+void R_RegisterFinalizerEx(SEXP s, SEXP fun, Rboolean onexit) {
 
-    public void setTag(Object tag) {
-        this.tag = tag;
-    }
+}
 
-    public void setProt(Object prot) {
-        this.prot = prot;
-    }
+void R_RegisterCFinalizerEx(SEXP s, R_CFinalizer_t fun, Rboolean onexit) {
 
-    public RType getRType() {
-        return RType.ExternalPtr;
-    }
+}
+
+void R_RunPendingFinalizers(void) {
 
 }

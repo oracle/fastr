@@ -20,50 +20,24 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.runtime.data;
+#ifndef RFFIUTILS_H
+#define RFFIUTILS_H
 
-import com.oracle.truffle.r.runtime.*;
+#include <jni.h>
+#include <Rinternals.h>
 
-/**
- * The rarely seen {@code externalptr} type.
- */
-public class RExternalPtr extends RAttributeStorage implements RAttributable, RTypedValue {
-    private long addr;
-    private Object tag;
-    private Object prot;
+JNIEnv *getEnv();
+void setEnv(JNIEnv *env);
 
-    RExternalPtr(long addr, Object tag, Object prot) {
-        this.addr = addr;
-        this.tag = tag;
-        this.prot = prot;
-    }
+jclass checkFindClass(JNIEnv *env, const char *name);
+jmethodID checkGetMethodID(JNIEnv *env, jclass klass, const char *name, const char *sig, int isStatic);
+void unimplemented(char *msg);
 
-    public long getAddr() {
-        return addr;
-    }
+void init_externalptr(JNIEnv *env);
 
-    public Object getTag() {
-        return tag;
-    }
+extern jclass RDataFactoryClass;
+extern jclass CallRFFIHelperClass;
+extern SEXP R_NilValue;
 
-    public Object getProt() {
-        return prot;
-    }
 
-    public void setAddr(long value) {
-        this.addr = value;
-    }
-
-    public void setTag(Object tag) {
-        this.tag = tag;
-    }
-
-    public void setProt(Object prot) {
-        this.prot = prot;
-    }
-
-    public RType getRType() {
-        return RType.ExternalPtr;
-    }
-
-}
+#endif /* RFFIUTILS_H */

@@ -412,8 +412,12 @@ public final class RDataFactory {
         return traceDataCreated(new RS4Object());
     }
 
-    public static RExternalPtr createExternalPtr(long value, String tag) {
-        return traceDataCreated(new RExternalPtr(value, tag));
+    public static RExternalPtr createExternalPtr(long value, Object tag, Object prot) {
+        return traceDataCreated(new RExternalPtr(value, tag, prot));
+    }
+
+    public static RExternalPtr createExternalPtr(long value, Object tag) {
+        return traceDataCreated(new RExternalPtr(value, tag, RNull.instance));
     }
 
     @CompilationFinal private static PerfHandler stats;

@@ -22,7 +22,9 @@
  */
 package com.oracle.truffle.r.runtime.ffi.jnr;
 
+import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
 /**
@@ -36,46 +38,84 @@ public class CallRFFIHelper {
 
     // Checkstyle: stop method name check
 
-    static RIntVector ScalarInteger(int value) {
+    static RIntVector Rf_ScalarInteger(int value) {
         return RDataFactory.createIntVectorFromScalar(value);
     }
 
-    static RDoubleVector ScalarDouble(double value) {
+    static RDoubleVector Rf_ScalarDouble(double value) {
         return RDataFactory.createDoubleVectorFromScalar(value);
     }
 
-    // Checkstyle: resume method name check
-
-    /**
-     * Helper function that handles {@link Integer} and {@link RIntVector} "vectors".
-     *
-     * @return value at logical index 0
-     */
-    static int getIntDataAtZero(Object x) {
+    static int Rf_asInteger(Object x) {
         if (x instanceof Integer) {
             return ((Integer) x).intValue();
         } else if (x instanceof RIntVector) {
             return ((RIntVector) x).getDataAt(0);
         } else {
-            assert false;
-            return 0;
+            throw RInternalError.unimplemented();
         }
     }
 
-    /**
-     * Helper function that handles {@link Integer} and {@link RIntVector} "vectors".
-     *
-     * @return value at logical index 0
-     */
-    static double getDoubleDataAtZero(Object x) {
+    static double Rf_asReal(Object x) {
         if (x instanceof Double) {
             return ((Double) x).doubleValue();
         } else if (x instanceof RDoubleVector) {
             return ((RDoubleVector) x).getDataAt(0);
         } else {
-            assert false;
-            return 0;
+            throw RInternalError.unimplemented();
         }
     }
+
+    static String Rf_asChar(Object x) {
+        if (x instanceof String) {
+            return (String) x;
+        } else if (x instanceof RStringVector) {
+            return ((RStringVector) x).getDataAt(0);
+        } else {
+            throw RInternalError.unimplemented();
+        }
+    }
+
+    static int LENGTH(Object x) {
+        if (x instanceof RAbstractContainer) {
+            return ((RAbstractContainer) x).getLength();
+        } else if (x instanceof Integer || x instanceof Double || x instanceof Byte || x instanceof String) {
+            return 1;
+        } else {
+            throw RInternalError.unimplemented();
+        }
+    }
+
+    static void SET_STRING_ELT(Object x, int i, Object v) {
+        // TODO error checks
+        RStringVector xv = (RStringVector) x;
+        xv.setElement(i, v);
+    }
+
+    static byte[] RAW(Object x) {
+        if (x instanceof RRawVector) {
+            return ((RRawVector) x).getDataCopy();
+        } else {
+            throw RInternalError.unimplemented();
+        }
+
+    }
+
+    static int NAMED(Object x) {
+        if (x instanceof RShareable) {
+            return ((RShareable) x).isShared() ? 1 : 0;
+        } else {
+            throw RInternalError.unimplemented();
+        }
+    }
+
+    static Object Rf_duplicate(Object x) {
+        if (x instanceof RAbstractVector) {
+            return ((RAbstractVector) x).copy();
+        } else {
+            throw RInternalError.unimplemented();
+        }
+    }
+    // Checkstyle: resume method name check
 
 }

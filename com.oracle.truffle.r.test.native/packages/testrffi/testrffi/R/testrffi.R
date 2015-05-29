@@ -9,3 +9,15 @@ add_double <- function(a, b) {
 createIntVector <- function(n) {
 	.Call("createIntVector", as.integer(n), PACKAGE = "testrffi")
 }
+
+createExternalPtr <- function(addr, tag, prot) {
+	.Call("createExternalPtr", as.integer(addr), tag, prot, PACKAGE = "testrffi")
+}
+
+getExternalPtrAddr <- function(eptr) {
+	.Call("getExternalPtrAddr", eptr)
+}
+
+test_TYPEOF <- function(x) {
+	.Call("test_TYPEOF", x, PACKAGE = "testrffi")
+}

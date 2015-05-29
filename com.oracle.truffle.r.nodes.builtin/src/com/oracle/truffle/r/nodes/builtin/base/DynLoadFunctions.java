@@ -130,7 +130,7 @@ public class DynLoadFunctions {
         @TruffleBoundary
         protected Object getSymbolInfo(String symbol, RExternalPtr externalPtr, byte withReg) {
             controlVisibility();
-            DLL.DLLInfo dllInfo = DLL.getDLLInfoForId((int) externalPtr.value);
+            DLL.DLLInfo dllInfo = DLL.getDLLInfoForId((int) externalPtr.getAddr());
             if (dllInfo == null) {
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.REQUIRES_NAME_DLLINFO);
             }

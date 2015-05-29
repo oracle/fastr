@@ -111,6 +111,19 @@ public class SerializeFunctions {
         protected Object serialize(VirtualFrame frame, Object object, RConnection conn, byte asciiLogical, RNull version, RNull refhook) {
             return doSerializeToConn(object, conn, asciiLogical, RRuntime.LOGICAL_NA, version, refhook, RArguments.getDepth(frame));
         }
+
+        @SuppressWarnings("unused")
+        @Specialization
+        protected Object serialize(VirtualFrame frame, Object object, RNull conn, byte asciiLogical, RNull version, RNull refhook) {
+            byte[] data = RSerialize.serialize(object, RRuntime.fromLogical(asciiLogical), false, RSerialize.DEFAULT_VERSION, null, RArguments.getDepth(frame));
+            return RDataFactory.createRawVector(data);
+        }
+
+        @SuppressWarnings("unused")
+        @Fallback
+        protected Object serialize(VirtualFrame frame, Object object, Object conn, Object asciiLogical, Object version, Object refhook) {
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
+        }
     }
 
     @RBuiltin(name = "serializeb", kind = INTERNAL, parameterNames = {"object", "conn", "xdr", "version", "refhook"})

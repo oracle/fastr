@@ -20,50 +20,24 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.runtime.data;
+#include "rffiutils.h"
+#include <stdlib.h>
+#include <string.h>
 
-import com.oracle.truffle.r.runtime.*;
 
-/**
- * The rarely seen {@code externalptr} type.
- */
-public class RExternalPtr extends RAttributeStorage implements RAttributable, RTypedValue {
-    private long addr;
-    private Object tag;
-    private Object prot;
-
-    RExternalPtr(long addr, Object tag, Object prot) {
-        this.addr = addr;
-        this.tag = tag;
-        this.prot = prot;
-    }
-
-    public long getAddr() {
-        return addr;
-    }
-
-    public Object getTag() {
-        return tag;
-    }
-
-    public Object getProt() {
-        return prot;
-    }
-
-    public void setAddr(long value) {
-        this.addr = value;
-    }
-
-    public void setTag(Object tag) {
-        this.tag = tag;
-    }
-
-    public void setProt(Object prot) {
-        this.prot = prot;
-    }
-
-    public RType getRType() {
-        return RType.ExternalPtr;
-    }
-
+void init_misc(JNIEnv *env) {
 }
+
+const char *R_CHAR(SEXP string) {
+	// This is nasty:
+	// 1. the resulting character array has to be copied and zero-terminated.
+	// 2. It causes an (inevitable?) memory leak
+	JNIEnv *thisenv = getEnv();
+	jsize len = (*thisenv)->GetStringUTFLength(thisenv, string);
+	const char *stringChars = (*thisenv)->GetStringUTFChars(thisenv, string, NULL);
+	char *copyChars = malloc(len + 1);
+	memcpy(copyChars, stringChars, len);
+	copyChars[len] = 0;
+	return copyChars;
+}
+

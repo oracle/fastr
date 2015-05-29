@@ -191,4 +191,10 @@ public final class RStringVector extends RVector implements RAbstractStringVecto
     protected RStringVector getImplicitClassHr() {
         return getClassHierarchyHelper(implicitClassHeader, implicitClassHeaderArray, implicitClassHeaderMatrix);
     }
+
+    @Override
+    public void setElement(int i, Object value) {
+        data[i] = (String) value;
+    }
+
 }

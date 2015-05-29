@@ -139,6 +139,56 @@ public enum SEXPTYPE {
         throw RInternalError.shouldNotReachHere(fastRClass.getName());
     }
 
+    /**
+     * Accessed from FFI layer.
+     */
+    public static int gnuRCodeForObject(Object obj) {
+        SEXPTYPE type = typeForClass(obj.getClass());
+        return gnuRType(type, obj).code;
+    }
+
+    /**
+     * Convert an {@code SEXPTYPE} that may be a {@code FASTR_XXX} variant into the appropriate GnuR
+     * type.
+     */
+    public static SEXPTYPE gnuRType(SEXPTYPE type, Object obj) {
+        switch (type) {
+            case FUNSXP: {
+                RFunction func = (RFunction) obj;
+                if (func.isBuiltin()) {
+                    return SEXPTYPE.BUILTINSXP;
+                } else {
+                    return SEXPTYPE.CLOSXP;
+                }
+            }
+
+            case LISTSXP: {
+                RPairList pl = (RPairList) obj;
+                if (pl.getType() != null && pl.getType() == SEXPTYPE.LANGSXP) {
+                    return SEXPTYPE.LANGSXP;
+                } else {
+                    return type;
+                }
+            }
+
+            case FASTR_INT:
+                return SEXPTYPE.INTSXP;
+            case FASTR_DOUBLE:
+                return SEXPTYPE.REALSXP;
+            case FASTR_BYTE:
+                return SEXPTYPE.LGLSXP;
+            case FASTR_COMPLEX:
+                return SEXPTYPE.CPLXSXP;
+            case FASTR_DATAFRAME:
+            case FASTR_FACTOR:
+                return SEXPTYPE.VECSXP;
+            case FASTR_CONNECTION:
+                return SEXPTYPE.INTSXP;
+            default:
+                return type;
+        }
+    }
+
     public static SEXPTYPE convertFastRScalarType(SEXPTYPE type) {
         switch (type) {
             case FASTR_DOUBLE:

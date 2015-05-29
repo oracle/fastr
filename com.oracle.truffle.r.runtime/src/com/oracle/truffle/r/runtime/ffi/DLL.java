@@ -200,11 +200,12 @@ public class DLL {
     }
 
     public static boolean isDLLInfo(RExternalPtr info) {
-        return info.tag.equals(DLLInfo.DLL_INFO_REFERENCE);
+        RSymbol tag = (RSymbol) info.getTag();
+        return tag.getName().equals(DLLInfo.DLL_INFO_REFERENCE);
     }
 
     public static RExternalPtr createExternalPtr(long value, RStringVector rClass) {
-        RExternalPtr result = RDataFactory.createExternalPtr(value, rClass.getDataAt(0));
+        RExternalPtr result = RDataFactory.createExternalPtr(value, RDataFactory.createSymbol(rClass.getDataAt(0)));
         result.setClassAttr(rClass, false);
         return result;
     }

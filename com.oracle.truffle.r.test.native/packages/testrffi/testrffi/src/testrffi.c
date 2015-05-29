@@ -43,3 +43,15 @@ SEXP createIntVector(SEXP n) {
     SEXP v = allocVector(INTSXP, INTEGER_VALUE(n));
     return v;
 }
+
+SEXP createExternalPtr(SEXP addr, SEXP tag, SEXP prot) {
+	return R_MakeExternalPtr((void *) (long) INTEGER_VALUE(addr), tag, prot);
+}
+
+SEXP getExternalPtrAddr(SEXP eptr) {
+	return ScalarInteger((int) R_ExternalPtrAddr(eptr));
+}
+
+SEXP test_TYPEOF(SEXP x) {
+	return ScalarInteger(TYPEOF(x));
+}

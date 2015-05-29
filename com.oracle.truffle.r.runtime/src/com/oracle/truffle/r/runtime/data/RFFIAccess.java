@@ -25,45 +25,12 @@ package com.oracle.truffle.r.runtime.data;
 import com.oracle.truffle.r.runtime.*;
 
 /**
- * The rarely seen {@code externalptr} type.
+ * An interface for "unsafe" container access by the FFI interface. FFI code allocates vectors of a
+ * given size, as per GnuR internals, and then populates the elements in separate calls.
  */
-public class RExternalPtr extends RAttributeStorage implements RAttributable, RTypedValue {
-    private long addr;
-    private Object tag;
-    private Object prot;
-
-    RExternalPtr(long addr, Object tag, Object prot) {
-        this.addr = addr;
-        this.tag = tag;
-        this.prot = prot;
+public interface RFFIAccess {
+    @SuppressWarnings("unused")
+    default void setElement(int i, Object value) {
+        throw RInternalError.unimplemented("setElement");
     }
-
-    public long getAddr() {
-        return addr;
-    }
-
-    public Object getTag() {
-        return tag;
-    }
-
-    public Object getProt() {
-        return prot;
-    }
-
-    public void setAddr(long value) {
-        this.addr = value;
-    }
-
-    public void setTag(Object tag) {
-        this.tag = tag;
-    }
-
-    public void setProt(Object prot) {
-        this.prot = prot;
-    }
-
-    public RType getRType() {
-        return RType.ExternalPtr;
-    }
-
 }
