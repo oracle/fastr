@@ -184,40 +184,42 @@ public class RCommand {
             for (;;) {
                 boolean doEcho = doEcho();
                 consoleHandler.setPrompt(doEcho ? "> " : null);
-                String input = consoleHandler.readLine();
-                if (input == null) {
-                    throw new EOFException();
-                }
-                // Start index of the new input
-                int startLength = source.getLength();
-                // Append the input as is
-                source.appendCode(input);
-                input = input.trim();
-                if (input.equals("") || input.charAt(0) == '#') {
-                    // nothing to parse
-                    continue;
-                }
-
                 try {
-                    String continuePrompt = getContinuePrompt();
-                    Source subSource = Source.subSource(source, startLength);
-                    while (context.getThisEngine().parseAndEval(subSource, true, true) == Engine.INCOMPLETE_SOURCE) {
-                        consoleHandler.setPrompt(doEcho ? continuePrompt : null);
-                        String additionalInput = consoleHandler.readLine();
-                        if (additionalInput == null) {
-                            throw new EOFException();
-                        }
-                        source.appendCode(additionalInput);
-                        subSource = Source.subSource(source, startLength);
+                    String input = consoleHandler.readLine();
+                    if (input == null) {
+                        throw new EOFException();
                     }
-                } catch (BrowserQuitException ex) {
-                    // Q in browser, which continues the repl
+                    // Start index of the new input
+                    int startLength = source.getLength();
+                    // Append the input as is
+                    source.appendCode(input);
+                    input = input.trim();
+                    if (input.equals("") || input.charAt(0) == '#') {
+                        // nothing to parse
+                        continue;
+                    }
+
+                    try {
+                        String continuePrompt = getContinuePrompt();
+                        Source subSource = Source.subSource(source, startLength);
+                        while (context.getThisEngine().parseAndEval(subSource, true, true) == Engine.INCOMPLETE_SOURCE) {
+                            consoleHandler.setPrompt(doEcho ? continuePrompt : null);
+                            String additionalInput = consoleHandler.readLine();
+                            if (additionalInput == null) {
+                                throw new EOFException();
+                            }
+                            source.appendCode(additionalInput);
+                            subSource = Source.subSource(source, startLength);
+                        }
+                    } catch (BrowserQuitException ex) {
+                        // Q in browser, which continues the repl
+                    }
+                } catch (UserInterruptException e) {
+                    // interrupted by ctrl-c
                 }
             }
         } catch (BrowserQuitException e) {
             // can happen if user profile invokes browser
-        } catch (UserInterruptException e) {
-            // interrupted (how?)
         } catch (EOFException ex) {
             context.getThisEngine().parseAndEval(QUIT_EOF, false, false);
         } finally {
