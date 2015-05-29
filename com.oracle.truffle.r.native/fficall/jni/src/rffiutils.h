@@ -33,13 +33,13 @@ jclass checkFindClass(JNIEnv *env, const char *name);
 jmethodID checkGetMethodID(JNIEnv *env, jclass klass, const char *name, const char *sig, int isStatic);
 void unimplemented(char *msg);
 
-void init_register(env);
-void init_rf_functions(env);
-void init_externalptr(env);
-void init_typecoerce(env);
-void init_attrib(env);
-void init_misc(env);
-void init_vectoraccess(env);
+void init_register(JNIEnv *env);
+void init_rf_functions(JNIEnv *env);
+void init_externalptr(JNIEnv *env);
+void init_typecoerce(JNIEnv *env);
+void init_attrib(JNIEnv *env);
+void init_misc(JNIEnv *env);
+void init_vectoraccess(JNIEnv *env);
 
 extern jclass RDataFactoryClass;
 extern jclass CallRFFIHelperClass;
