@@ -37,6 +37,7 @@ import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.runtime.RContext.ConsoleHandler;
 import com.oracle.truffle.r.runtime.conn.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.*;
 
 public final class Utils {
 
@@ -411,7 +412,19 @@ public final class Utils {
         if (printFrameSlots) {
             FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
             for (FrameSlot s : frameDescriptor.getSlots()) {
-                str.append("\n      ").append(s.getIdentifier()).append(" = ").append(frame.getValue(s));
+                str.append("\n      ").append(s.getIdentifier()).append(" = ");
+                Object value = frame.getValue(s);
+                try {
+                    if (value instanceof RAbstractContainer && ((RAbstractContainer) value).getLength() > 32) {
+                        str.append('<').append(value.getClass().getSimpleName()).append(" with ").append(((RAbstractContainer) value).getLength()).append(" elements>");
+                    } else {
+                        str.append(value);
+                    }
+                } catch (Throwable t) {
+                    // RLanguage values may not react kindly to getLength() calls
+                    str.append("<exception ").append(t.getClass().getSimpleName()).append(" while printing value of type ").append(value == null ? "null" : value.getClass().getSimpleName()).append(
+                                    '>');
+                }
             }
         }
     }
