@@ -418,6 +418,7 @@ com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/builtins/TestBuiltin_lga
 com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/builtins/TestBuiltin_list.java,purdue.copyright
 com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/builtins/TestBuiltin_listdirs.java,purdue.copyright
 com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/builtins/TestBuiltin_listfiles.java,purdue.copyright
+com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/builtins/TestBuiltin_lm.java,purdue.copyright
 com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/builtins/TestBuiltin_log.java,purdue.copyright
 com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/builtins/TestBuiltin_log10.java,purdue.copyright
 com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/builtins/TestBuiltin_log1p.java,purdue.copyright
