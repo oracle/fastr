@@ -56,16 +56,13 @@ public class CallRFFIWithJNI implements CallRFFI {
      */
     @TruffleBoundary
     private static void loadLibrary() {
-        String rHome = REnvVars.rHome();
-        String packageName = "com.oracle.truffle.r.native";
-        OSInfo osInfo = RPlatform.getOSInfo();
-        Path path = FileSystems.getDefault().getPath(rHome, packageName, "builtinlibs", "lib", "librfficall." + osInfo.libExt);
+        String librffiPath = BuiltinLibPath.getLibPath("rfficall");
         try {
-            DLL.load(path.toString(), ForceRTLDGlobal, false);
+            DLL.load(librffiPath, ForceRTLDGlobal, false);
         } catch (DLLException ex) {
             throw RError.error((SourceSection) null, ex);
         }
-        System.load(path.toString());
+        System.load(librffiPath);
         initialize(RNull.instance);
     }
 

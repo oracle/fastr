@@ -21,35 +21,43 @@
 # questions.
 #
 
-# If GNUR_HOME is defined we take that as a pre-built, immutable, entity
-
-.PHONY: all clean 
-
-export TOPDIR = $(CURDIR)
-export R_VERSION = 3.1.3
-
-ifndef GNUR_HOME
-export GNUR_HOME = $(TOPDIR)/gnur/R-$(R_VERSION)
-export GNUR_HOME_ORIGIN = local
-else
-export GNUR_HOME_ORIGIN = environment
+ifeq ($(TOPDIR),)
+    TOPDIR = $(abspath ../..)
 endif
 
-all: 
-	$(MAKE) -C gnur
-	$(MAKE) -C include
-	$(MAKE) -C builtinlibs
-	$(MAKE) -C osextras
-	$(MAKE) -C fficall
-	$(MAKE) -C library
-	$(MAKE) -C run
+ifneq ($(MAKECMDGOALS),clean)
+include $(TOPDIR)/platform.mk
+endif
 
-clean: 
-	$(MAKE) -C include clean
-	$(MAKE) -C builtinlibs clean
-	$(MAKE) -C osextras clean
-	$(MAKE) -C fficall clean
-	$(MAKE) -C library clean
-	$(MAKE) -C run clean
-	$(MAKE) -C gnur clean
+.PHONY: all clean
 
+OBJ = lib
+SRC = src
+C_SOURCES := $(wildcard $(SRC)/*.c)
+C_LIBNAME := libosextras$(DYLIB_EXT)
+C_OBJECTS := $(subst $(SRC),$(OBJ),$(C_SOURCES:.c=.o))
+C_LIB := $(TOPDIR)/builtinlibs/$(OBJ)/$(C_LIBNAME)
+CFLAGS := $(CFLAGS) -DFASTR
+ifeq ($(OS_DIR),sunos)
+OS_INCLUDE := solaris
+else
+OS_INCLUDE := $(OS_DIR)
+endif
+
+JNI_INCLUDES = -I $(JAVA_HOME)/include -I $(JAVA_HOME)/include/$(OS_INCLUDE)
+
+INCLUDES := $(JNI_INCLUDES)
+
+all: $(C_LIB)
+
+$(C_LIB): $(OBJ) $(C_OBJECTS)
+	$(DYLIB_LD) $(DYLIB_LDFLAGS) -o $(C_LIB) $(C_OBJECTS)
+
+$(OBJ):
+	mkdir -p $(OBJ)
+
+$(OBJ)/%.o: $(SRC)/%.c 
+	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
+
+clean:
+	rm -rf $(OBJ) $(C_LIB)

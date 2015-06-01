@@ -204,12 +204,55 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI, Stat
         return com.kenai.jffi.Library.getLastError();
     }
 
+    /*
+     * Missing from JNR and require non-trivial support. We use JNI.
+     */
+
+    private interface OSExtras {
+        UtsName uname();
+
+        ArrayList<String> glob(String pattern);
+    }
+
+    private static class OSExtraProvider implements OSExtras {
+        private static OSExtras osExtras;
+
+        @TruffleBoundary
+        private static OSExtras createAndLoadLib() {
+            try {
+                System.load(BuiltinLibPath.getLibPath("osextras"));
+                return new OSExtraProvider();
+            } catch (UnsatisfiedLinkError ex) {
+                throw RInternalError.shouldNotReachHere("osextras");
+            }
+        }
+
+        static OSExtras osExtras() {
+            if (osExtras == null) {
+                osExtras = createAndLoadLib();
+            }
+            return osExtras;
+        }
+
+        public UtsName uname() {
+            return JNIUtsName.get();
+        }
+
+        public ArrayList<String> glob(String pattern) {
+            return JNIGlob.glob(pattern);
+        }
+    }
+
+    private static OSExtras osExtras() {
+        return OSExtraProvider.osExtras();
+    }
+
     public UtsName uname() {
-        return JNIUtsName.get();
+        return osExtras().uname();
     }
 
     public ArrayList<String> glob(String pattern) {
-        return JNIGlob.glob(pattern);
+        return osExtras().glob(pattern);
     }
 
     /*
