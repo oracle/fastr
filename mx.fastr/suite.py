@@ -21,7 +21,7 @@
 # questions.
 #
 suite = {
-  "mxversion" : "3.2.0",
+  "mxversion" : "3.3.0",
   "name" : "fastr",
   "libraries" : {
     "GNUR" : {
@@ -229,7 +229,7 @@ suite = {
     "com.oracle.truffle.r.nodes.builtin" : {
       "sourceDirs" : ["src"],
       "dependencies" : [
-        "com.oracle.graal.debug",
+        "com.oracle.jvmci.debug",
         "com.oracle.truffle.r.nodes",
         "com.oracle.truffle.r.library",
       ],
@@ -350,9 +350,9 @@ suite = {
     "com.oracle.truffle.r.options" : {
       "sourceDirs" : ["src"],
       "dependencies" : [
-        "com.oracle.graal.options",
+        "com.oracle.jvmci.options",
       ],
-      "annotationProcessors" : ["com.oracle.graal.options.processor"],
+      "annotationProcessors" : ["com.oracle.jvmci.options.processor"],
       "checkstyle" : "com.oracle.truffle.r.runtime",
       "javaCompliance" : "1.8",
       "workingSets" : "FastR",
