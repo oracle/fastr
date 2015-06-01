@@ -41,6 +41,7 @@ import com.oracle.truffle.r.nodes.instrument.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RArguments.S3Args;
+import com.oracle.truffle.r.runtime.Utils.DebugExitException;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.env.frame.*;
@@ -196,30 +197,32 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
             } else {
                 return ex.getResult();
             }
-        } catch (RInternalError | UnsupportedSpecializationException | ConversionFailedException e) {
+        } catch (RInternalError | UnsupportedSpecializationException | ConversionFailedException | DebugExitException e) {
             CompilerDirectives.transferToInterpreter();
             runOnExitHandlers = false;
             throw e;
         } finally {
-            RErrorHandling.restoreStacks(handlerStack, restartStack);
-            if (runOnExitHandlers && onExitSlot != null && onExitProfile.profile(onExitSlot.hasValue(vf))) {
-                if (onExitExpressionCache == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    onExitExpressionCache = insert(InlineCacheNode.createExpression(3));
-                }
-                ArrayList<Object> current = getCurrentOnExitList(vf, onExitSlot.executeFrameSlot(vf));
-                // Must preserve the visibility state as it may be changed by the on.exit expression
-                boolean isVisible = RContext.getInstance().isVisible();
-                try {
-                    for (Object expr : current) {
-                        if (!(expr instanceof RNode)) {
-                            RInternalError.shouldNotReachHere("unexpected type for on.exit entry");
-                        }
-                        RNode node = (RNode) expr;
-                        onExitExpressionCache.execute(vf, node);
+            if (runOnExitHandlers) {
+                RErrorHandling.restoreStacks(handlerStack, restartStack);
+                if (onExitSlot != null && onExitProfile.profile(onExitSlot.hasValue(vf))) {
+                    if (onExitExpressionCache == null) {
+                        CompilerDirectives.transferToInterpreterAndInvalidate();
+                        onExitExpressionCache = insert(InlineCacheNode.createExpression(3));
                     }
-                } finally {
-                    RContext.getInstance().setVisible(isVisible);
+                    ArrayList<Object> current = getCurrentOnExitList(vf, onExitSlot.executeFrameSlot(vf));
+                    // Preserve the visibility state as may be changed by the on.exit
+                    boolean isVisible = RContext.getInstance().isVisible();
+                    try {
+                        for (Object expr : current) {
+                            if (!(expr instanceof RNode)) {
+                                RInternalError.shouldNotReachHere("unexpected type for on.exit entry");
+                            }
+                            RNode node = (RNode) expr;
+                            onExitExpressionCache.execute(vf, node);
+                        }
+                    } finally {
+                        RContext.getInstance().setVisible(isVisible);
+                    }
                 }
             }
         }

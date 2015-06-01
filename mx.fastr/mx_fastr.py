@@ -399,6 +399,13 @@ def rcmplib(args):
 def bench(args):
     mx.abort("no benchmarks available")
 
+def _rREPLClass():
+    return "com.oracle.truffle.r.repl.RREPLServer"
+
+def runRREPL(args, nonZeroIsFatal=True, extraVmArgs=None):
+    '''run R repl'''
+    return runR(args, _rREPLClass(), nonZeroIsFatal=nonZeroIsFatal, extraVmArgs=['-DR:+Instrument'])
+
 def load_optional_suite(name):
     hg_base = mx.get_env('MX_HG_BASE')
     alternate = None if hg_base is None else join(hg_base, name)
@@ -409,6 +416,7 @@ def load_optional_suite(name):
 
 def mx_post_parse_cmd_line(opts):
     # load optional suites, r_apptests first so r_benchmarks can find it
+    load_optional_suite('repl')
     load_optional_suite('r_apptests')
     load_optional_suite('r_benchmarks')
 
@@ -435,5 +443,6 @@ def mx_init(suite):
         'rcmplib' : [rcmplib, ['options']],
         'findbugs' : [findbugs, ''],
         'test' : [test, ['options']],
+        'rrepl' : [runRREPL, '[options]'],
     }
     mx.update_commands(suite, commands)

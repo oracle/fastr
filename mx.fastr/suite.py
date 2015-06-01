@@ -375,6 +375,17 @@ suite = {
 
     },
 
+      "com.oracle.truffle.r.repl": {
+      "sourceDirs" : ["src"],
+      "dependencies" : [
+        "com.oracle.truffle.tools.debug.engine",
+        "com.oracle.truffle.tools.debug.shell",
+        "com.oracle.truffle.r.shell",
+        ],
+      "checkstyle" : "com.oracle.truffle.r.runtime",
+      "javaCompliance" : "1.8",
+      "workingSets" : "Truffle,FastR",
+    },
   },
 
   "distributions" : {
