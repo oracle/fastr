@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.ffi.gnfi;
 
-import static com.oracle.graal.compiler.common.UnsafeAccess.*;
+import static com.oracle.jvmci.common.UnsafeAccess.*;
 
 import java.io.*;
 import java.util.*;

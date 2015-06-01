@@ -25,7 +25,7 @@ package com.oracle.truffle.r.options;
 import java.util.*;
 import java.util.Map.Entry;
 
-import com.oracle.graal.options.*;
+import com.oracle.jvmci.options.*;
 
 /**
  * Options to control the behavior of the FastR system, that relate to the implementation, i.e., are

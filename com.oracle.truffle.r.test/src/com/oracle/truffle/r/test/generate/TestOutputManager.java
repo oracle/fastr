@@ -26,6 +26,7 @@ import java.io.*;
 import java.util.*;
 
 import com.oracle.graal.compiler.common.*;
+import com.oracle.truffle.r.runtime.*;
 
 /**
  * Supports the management of expected test output.
@@ -341,7 +342,7 @@ public class TestOutputManager {
                 try {
                     expected = rSession.eval(test);
                 } catch (Throwable e) {
-                    throw GraalInternalError.shouldNotReachHere("unexpected exception thrown by GNUR session: " + e);
+                    throw RInternalError.shouldNotReachHere("unexpected exception thrown by GNUR session: " + e);
                 }
                 expected = prepareResult(expected, keepTrailingWhiteSpace);
             }
