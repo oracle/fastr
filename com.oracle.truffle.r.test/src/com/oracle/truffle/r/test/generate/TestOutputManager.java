@@ -25,7 +25,6 @@ package com.oracle.truffle.r.test.generate;
 import java.io.*;
 import java.util.*;
 
-import com.oracle.graal.compiler.common.*;
 import com.oracle.truffle.r.runtime.*;
 
 /**
