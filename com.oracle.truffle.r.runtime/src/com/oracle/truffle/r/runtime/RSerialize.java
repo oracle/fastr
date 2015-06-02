@@ -132,6 +132,7 @@ public class RSerialize {
 
     private abstract static class Common {
 
+        private static final Object ENV_PLACEHOLDER = new Object();
         protected Object[] refTable = new Object[128];
         protected int refTableIndex;
         protected final CallHook hook;
@@ -155,6 +156,20 @@ public class RSerialize {
             }
             refTable[refTableIndex++] = item;
             return item;
+        }
+
+        /**
+         * Create a slot for an ENVSXP value and return the index for filling in later.
+         */
+        protected int addEnvReadRef() {
+            int currentRefTableIndex = refTableIndex;
+            addReadRef(ENV_PLACEHOLDER);
+            return currentRefTableIndex;
+        }
+
+        protected void updateEnvReadRef(int index, Object item) {
+            assert refTable[index] == ENV_PLACEHOLDER;
+            refTable[index] = item;
         }
 
         protected Object getReadRef(int index) {
@@ -322,9 +337,13 @@ public class RSerialize {
                 case ENVSXP: {
                     /*
                      * Behavior varies depending on whether hashtab is present, since this is
-                     * optional in GnuR.
+                     * optional in GnuR. Unfortunately, we MUST do an addReadRef before we know what
+                     * kind of environment to create, otherwise the ref indexes can get out of sync.
                      */
                     int locked = stream.readInt();
+                    /* MUST register before filling in (see serialize.c) */
+                    int envRefTableIndex = addEnvReadRef();
+
                     Object enclos = readItem();
                     REnvironment enclosing = enclos == RNull.instance ? REnvironment.baseEnv() : (REnvironment) enclos;
                     Object frame = readItem();
@@ -333,7 +352,6 @@ public class RSerialize {
                     Object hashtab = readItem();
                     if (hashed) {
                         env = RDataFactory.createNewEnv(enclosing, null, true, ((RList) hashtab).getLength());
-                        addReadRef(env);
                         RList hashList = (RList) hashtab;
                         // GnuR sizes its hash tables, empty slots indicated by RNull
                         for (int i = 0; i < hashList.getLength(); i++) {
@@ -346,13 +364,13 @@ public class RSerialize {
                         }
                     } else {
                         env = RDataFactory.createNewEnv(enclosing, null);
-                        addReadRef(env);
                         while (frame != RNull.instance) {
                             RPairList pl = (RPairList) frame;
                             env.safePut(((RSymbol) pl.getTag()).getName(), pl.car());
                             frame = pl.cdr();
                         }
                     }
+                    updateEnvReadRef(envRefTableIndex, env);
                     if (locked != 0) {
                         env.lock(false);
                     }
@@ -397,6 +415,11 @@ public class RSerialize {
                     RPairList pairList = RDataFactory.createPairList(carItem, cdrItem, tagItem, type);
                     result = pairList;
                     if (attrItem != RNull.instance) {
+                        /*
+                         * TODO Currently we are losing attributes on CLOSXP (and LANGSXP) objects
+                         * because this code places the attributes on the pairList and not on the
+                         * RFunction object we eventually convert the pairlist into.
+                         */
                         setAttributes(pairList, attrItem);
                     }
                     if (type == SEXPTYPE.CLOSXP) {

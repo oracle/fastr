@@ -135,10 +135,18 @@ public final class FunctionExpressionNode extends RNode implements RSyntaxNode {
         state.setAsBuiltin("function");
         state.openPairList(SEXPTYPE.LISTSXP);
         FunctionDefinitionNode fdn = (FunctionDefinitionNode) callTarget.getRootNode();
-        // Cannot just serialize fdn, as this needs to generate slightly different output
+        /*
+         * Cannot just serialize fdn, as this needs to generate slightly different output. In
+         * particular the body is always a LISTSXP and never shortened.
+         */
         fdn.serializeFormals(state);
         state.openPairList(SEXPTYPE.LISTSXP);
-        fdn.getBody().serialize(state);
+        boolean hasBraces = fdn.checkOpenBrace(state);
+        fdn.serializeBody(state);
+        if (hasBraces) {
+            FunctionDefinitionNode.checkCloseBrace(state, hasBraces);
+        }
+        state.switchCdrToCar();
         state.setCdr(state.closePairList());
         state.setCdr(state.closePairList());
     }

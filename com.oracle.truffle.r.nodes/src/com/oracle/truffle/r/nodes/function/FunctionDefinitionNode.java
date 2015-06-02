@@ -326,16 +326,38 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
     @Override
     public void serialize(RSerialize.State state) {
         serializeFormals(state);
+        boolean hasBraces = checkOpenBrace(state);
+
+        serializeBody(state);
+
+        checkCloseBrace(state, hasBraces);
+    }
+
+    /**
+     * Also called by {@link FunctionExpressionNode}.
+     */
+    public void serializeBody(RSerialize.State state) {
+        state.openPairList();
+        RSyntaxNode.cast(body).serialize(state);
+        state.setCdr(state.closePairList());
+    }
+
+    /**
+     * Also called by {@link FunctionExpressionNode}.
+     */
+    public boolean checkOpenBrace(RSerialize.State state) {
         boolean hasBraces = hasBraces();
         if (hasBraces) {
             state.openBrace();
             state.openPairList();
         }
+        return hasBraces;
+    }
 
-        state.openPairList();
-        RSyntaxNode.cast(body).serialize(state);
-        state.setCdr(state.closePairList());
-
+    /**
+     * Also called by {@link FunctionExpressionNode}.
+     */
+    public static void checkCloseBrace(RSerialize.State state, boolean hasBraces) {
         if (hasBraces) {
             if (state.isNullCdr()) {
                 // special case of empty body "{ }"
@@ -348,6 +370,9 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         }
     }
 
+    /**
+     * Also called by {@link FunctionExpressionNode}.
+     */
     public void serializeFormals(RSerialize.State state) {
         FormalArguments formals = getFormalArguments();
         int formalsLength = formals.getSignature().getLength();
