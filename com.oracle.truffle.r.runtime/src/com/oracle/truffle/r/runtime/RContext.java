@@ -200,7 +200,9 @@ public final class RContext extends ExecutionContext {
         /**
          * A state factory may want to snapshot the state of the context just after the basic system
          * is initialized, in which case they can override this method. N.B. This is only invoked
-         * for {@link Kind#SHARED_NOTHING} contexts.
+         * for {@link Kind#SHARED_NOTHING} contexts. The definition of "system initialized" is that
+         * the default packages have been loaded, profiles evaluated and {@code .First, First.Sys}
+         * executed.
          */
         @SuppressWarnings("unused")
         default void systemInitialized(RContext context, ContextState state) {
@@ -569,6 +571,9 @@ public final class RContext extends ExecutionContext {
         contextState[classStateKind.ordinal()] = state;
     }
 
+    /**
+     * Inform state factories that the system is initialized.
+     */
     public void systemInitialized() {
         for (ClassStateKind classStateKind : ClassStateKind.VALUES) {
             classStateKind.factory.systemInitialized(this, contextState[classStateKind.ordinal()]);
