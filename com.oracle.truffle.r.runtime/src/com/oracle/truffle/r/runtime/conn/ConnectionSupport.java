@@ -520,9 +520,9 @@ public class ConnectionSupport implements RContext.StateFactory {
         }
 
         @Override
-        public void writeLines(RAbstractStringVector lines, String sep) throws IOException {
+        public void writeLines(RAbstractStringVector lines, String sep, boolean useBytes) throws IOException {
             checkOpen();
-            theConnection.writeLines(lines, sep);
+            theConnection.writeLines(lines, sep, useBytes);
         }
 
         @Override
@@ -825,7 +825,7 @@ public class ConnectionSupport implements RContext.StateFactory {
         }
 
         @Override
-        public void writeLines(RAbstractStringVector lines, String sep) throws IOException {
+        public void writeLines(RAbstractStringVector lines, String sep, boolean useBytes) throws IOException {
             throw new IOException(RError.Message.CANNOT_WRITE_CONNECTION.message);
         }
 

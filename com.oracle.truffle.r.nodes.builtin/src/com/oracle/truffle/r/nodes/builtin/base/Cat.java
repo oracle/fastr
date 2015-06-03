@@ -114,7 +114,7 @@ public abstract class Cat extends RInvisibleBuiltinNode {
             data = data + "\n";
         }
         try {
-            conn.writeLines(RDataFactory.createStringVectorFromScalar(data), "");
+            conn.writeLines(RDataFactory.createStringVectorFromScalar(data), "", false);
         } catch (IOException ex) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, ex.getMessage());
         }

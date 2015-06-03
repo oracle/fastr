@@ -421,9 +421,9 @@ public abstract class ConnectionFunctions {
     public abstract static class WriteLines extends InternalCloseHelper {
         @Specialization
         @TruffleBoundary
-        protected RNull writeLines(RAbstractStringVector text, RConnection con, RAbstractStringVector sep, @SuppressWarnings("unused") byte useBytes) {
+        protected RNull writeLines(RAbstractStringVector text, RConnection con, RAbstractStringVector sep, byte useBytes) {
             try (RConnection openConn = con.forceOpen("wt")) {
-                openConn.writeLines(text, sep.getDataAt(0));
+                openConn.writeLines(text, sep.getDataAt(0), RRuntime.fromLogical(useBytes));
             } catch (IOException x) {
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.ERROR_WRITING_CONNECTION, x.getMessage());
             }
@@ -942,6 +942,29 @@ public abstract class ConnectionFunctions {
         protected RIntVector getAllConnections() {
             controlVisibility();
             return RContext.getRConnectionState().getAllConnections();
+        }
+    }
+
+    @RBuiltin(name = "isSeekable", kind = INTERNAL, parameterNames = "con")
+    public abstract static class IsSeekable extends RBuiltinNode {
+        @Specialization
+        @TruffleBoundary
+        protected byte isSeekable(RConnection con) {
+            return RRuntime.asLogical(con.isSeekable());
+        }
+    }
+
+    @RBuiltin(name = "seek", kind = INTERNAL, parameterNames = {"con", "where", "origin", "rw"})
+    public abstract static class Seek extends RBuiltinNode {
+        @Specialization
+        @TruffleBoundary
+        protected long seek(RConnection con, RAbstractDoubleVector where, RAbstractIntVector origin, RAbstractIntVector rw) {
+            long offset = (long) where.getDataAt(0);
+            try {
+                return con.seek(offset, RConnection.SeekMode.values()[origin.getDataAt(0)], RConnection.SeekRWMode.values()[rw.getDataAt(0)]);
+            } catch (IOException x) {
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, x.getMessage());
+            }
         }
     }
 

@@ -109,7 +109,7 @@ public class TextConnections {
 
         @SuppressWarnings("hiding")
         @Override
-        public void writeLines(RAbstractStringVector lines, String sep) throws IOException {
+        public void writeLines(RAbstractStringVector lines, String sep, boolean useBytes) throws IOException {
             throw new IOException(RError.Message.CANNOT_WRITE_CONNECTION.message);
         }
 
@@ -223,7 +223,7 @@ public class TextConnections {
         }
 
         @Override
-        public void writeLines(RAbstractStringVector lines, String sep) throws IOException {
+        public void writeLines(RAbstractStringVector lines, String sep, boolean useBytes) throws IOException {
             StringBuffer sb = new StringBuffer();
             if (incompleteLine != null) {
                 sb.append(incompleteLine);
@@ -282,7 +282,7 @@ public class TextConnections {
         }
 
         @Override
-        public void writeLines(RAbstractStringVector lines, String sep) throws IOException {
+        public void writeLines(RAbstractStringVector lines, String sep, boolean useBytes) throws IOException {
             for (int i = 0; i < lines.getLength(); i++) {
                 String line = lines.getDataAt(i);
                 sb.append(line);

@@ -132,6 +132,7 @@ public class BasePackage extends RBuiltinPackage {
         add(ConnectionFunctions.GetAllConnections.class, ConnectionFunctionsFactory.GetAllConnectionsNodeGen::create);
         add(ConnectionFunctions.GetConnection.class, ConnectionFunctionsFactory.GetConnectionNodeGen::create);
         add(ConnectionFunctions.IsOpen.class, ConnectionFunctionsFactory.IsOpenNodeGen::create);
+        add(ConnectionFunctions.IsSeekable.class, ConnectionFunctionsFactory.IsSeekableNodeGen::create);
         add(ConnectionFunctions.Open.class, ConnectionFunctionsFactory.OpenNodeGen::create);
         add(ConnectionFunctions.PushBack.class, ConnectionFunctionsFactory.PushBackNodeGen::create);
         add(ConnectionFunctions.PushBackClear.class, ConnectionFunctionsFactory.PushBackClearNodeGen::create);
@@ -139,6 +140,7 @@ public class BasePackage extends RBuiltinPackage {
         add(ConnectionFunctions.ReadBin.class, ConnectionFunctionsFactory.ReadBinNodeGen::create);
         add(ConnectionFunctions.ReadChar.class, ConnectionFunctionsFactory.ReadCharNodeGen::create);
         add(ConnectionFunctions.ReadLines.class, ConnectionFunctionsFactory.ReadLinesNodeGen::create);
+        add(ConnectionFunctions.Seek.class, ConnectionFunctionsFactory.SeekNodeGen::create);
         add(ConnectionFunctions.SocketConnection.class, ConnectionFunctionsFactory.SocketConnectionNodeGen::create);
         add(ConnectionFunctions.Stderr.class, ConnectionFunctionsFactory.StderrNodeGen::create);
         add(ConnectionFunctions.Stdin.class, ConnectionFunctionsFactory.StdinNodeGen::create);

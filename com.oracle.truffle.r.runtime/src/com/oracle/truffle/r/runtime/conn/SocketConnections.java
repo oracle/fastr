@@ -112,7 +112,7 @@ public class SocketConnections {
         }
 
         @Override
-        public void writeLines(RAbstractStringVector lines, String sep) throws IOException {
+        public void writeLines(RAbstractStringVector lines, String sep, boolean useBytes) throws IOException {
             writeLinesHelper(outputStream, lines, sep);
         }
 

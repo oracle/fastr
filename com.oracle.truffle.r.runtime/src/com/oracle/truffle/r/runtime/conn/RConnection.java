@@ -235,10 +235,38 @@ public abstract class RConnection implements RClassHierarchy, RAttributable, RTy
     }
 
     /**
+     * Internal support for reading one character at a time.
+     */
+    public int getc() throws IOException {
+        return getInputStream().read();
+    }
+
+    public boolean isSeekable() {
+        return false;
+    }
+
+    public enum SeekMode {
+        START,
+        CURRENT,
+        END
+    }
+
+    public enum SeekRWMode {
+        LAST,
+        READ,
+        WRITE
+    }
+
+    @SuppressWarnings("unused")
+    public long seek(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
+        throw RError.error(RError.Message.UNSEEKABLE_CONNECTION);
+    }
+
+    /**
      * Write the {@code lines} to the connection, with {@code sep} appended after each "line". N.B.
      * The output will only appear as a sequence of lines if {@code sep == "\n"}.
      */
-    public abstract void writeLines(RAbstractStringVector lines, String sep) throws IOException;
+    public abstract void writeLines(RAbstractStringVector lines, String sep, boolean useBytes) throws IOException;
 
     public abstract void flush() throws IOException;
 

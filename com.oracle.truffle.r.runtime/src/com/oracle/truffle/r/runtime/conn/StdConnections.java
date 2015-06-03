@@ -249,7 +249,7 @@ public class StdConnections implements RContext.StateFactory {
         }
 
         @Override
-        public void writeLines(RAbstractStringVector lines, String sep) throws IOException {
+        public void writeLines(RAbstractStringVector lines, String sep, boolean useBytes) throws IOException {
             /*
              * It is more efficient to test for diversion, as this is the most common entry point.
              */
@@ -260,7 +260,7 @@ public class StdConnections implements RContext.StateFactory {
                     writeString(sep, false);
                 }
             } else {
-                diversions[top].conn.writeLines(lines, sep);
+                diversions[top].conn.writeLines(lines, sep, useBytes);
             }
         }
 
@@ -332,7 +332,7 @@ public class StdConnections implements RContext.StateFactory {
         }
 
         @Override
-        public void writeLines(RAbstractStringVector lines, String sep) throws IOException {
+        public void writeLines(RAbstractStringVector lines, String sep, boolean useBytes) throws IOException {
             /*
              * It is more efficient to test for diversion, as this is the most common entry point.
              */
@@ -343,7 +343,7 @@ public class StdConnections implements RContext.StateFactory {
                     writeString(sep, false);
                 }
             } else {
-                diversion.writeLines(lines, sep);
+                diversion.writeLines(lines, sep, useBytes);
             }
         }
 

@@ -167,7 +167,7 @@ public class FileConnections {
         }
 
         @Override
-        public void writeLines(RAbstractStringVector lines, String sep) throws IOException {
+        public void writeLines(RAbstractStringVector lines, String sep, boolean useBytes) throws IOException {
             writeLinesHelper(outputStream, lines, sep);
             flush();
         }
@@ -282,7 +282,7 @@ public class FileConnections {
         }
 
         @Override
-        public void writeLines(RAbstractStringVector lines, String sep) throws IOException {
+        public void writeLines(RAbstractStringVector lines, String sep, boolean useBytes) throws IOException {
             for (int i = 0; i < lines.getLength(); i++) {
                 String line = lines.getDataAt(i);
                 outputStream.write(line.getBytes());
@@ -308,8 +308,15 @@ public class FileConnections {
          * useless. Life would be a little better if we converted everything to channels, as it does
          * support those. This is a minimal implementation to support one specific use in package
          * installation (write only).
+         * 
+         * N.B. R mandates separate "position" offsets for reading and writing (pain). This code is
+         * pessimistic and assumes interleaved reads and writes, so does a lot of probably redundant
+         * seeking. It could be optimized.
          */
         private final RandomAccessFile raf;
+        private long readOffset;
+        private long writeOffset;
+        private SeekRWMode lastMode = SeekRWMode.READ;
 
         FileReadWriteConnection(FileRConnection base) throws IOException {
             super(base);
@@ -324,6 +331,43 @@ public class FileConnections {
                     throw RInternalError.shouldNotReachHere();
             }
             raf = new RandomAccessFile(base.path, rafMode);
+        }
+
+        @Override
+        public int getc() throws IOException {
+            raf.seek(readOffset);
+            int value = raf.read();
+            readOffset++;
+            return value;
+        }
+
+        @Override
+        public boolean isSeekable() {
+            return true;
+        }
+
+        @Override
+        public long seek(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
+            long result = raf.getFilePointer();
+            if (seekMode != SeekMode.START) {
+                throw RError.nyi(null, "seek mode");
+            }
+            switch (seekRWMode) {
+                case LAST:
+                    if (lastMode == SeekRWMode.READ) {
+                        readOffset = offset;
+                    } else {
+                        writeOffset = offset;
+                    }
+                    break;
+                case READ:
+                    readOffset = offset;
+                    break;
+                case WRITE:
+                    writeOffset = offset;
+                    break;
+            }
+            return result;
         }
 
         @Override
@@ -353,12 +397,17 @@ public class FileConnections {
         }
 
         @Override
-        public void writeLines(RAbstractStringVector lines, String sep) throws IOException {
+        public void writeLines(RAbstractStringVector lines, String sep, boolean useBytes) throws IOException {
+            // TODO encodings
+            raf.seek(writeOffset);
+            byte[] sepData = sep.getBytes();
             for (int i = 0; i < lines.getLength(); i++) {
-                raf.writeChars(lines.getDataAt(i));
-                raf.writeChars(sep);
+                byte[] data = lines.getDataAt(i).getBytes();
+                raf.write(data);
+                raf.write(sepData);
             }
-
+            writeOffset = raf.getFilePointer();
+            lastMode = SeekRWMode.WRITE;
         }
 
         @Override
