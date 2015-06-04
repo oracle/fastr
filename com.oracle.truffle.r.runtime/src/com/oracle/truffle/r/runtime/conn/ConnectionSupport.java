@@ -594,6 +594,24 @@ public class ConnectionSupport implements RContext.StateFactory {
             return getClassHr();
         }
 
+        @Override
+        public int getc() throws IOException {
+            checkOpen();
+            return theConnection.getc();
+        }
+
+        @Override
+        public long seek(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
+            checkOpen();
+            return theConnection.seek(offset, seekMode, seekRWMode);
+        }
+
+        @Override
+        public boolean isSeekable() {
+            checkOpen();
+            return theConnection.isSeekable();
+        }
+
         /**
          * Subclass-specific creation of the {@link DelegateRConnection} using {@link #openMode}. To
          * support both lazy and non-lazy creation, the implementation of this method must
@@ -817,6 +835,16 @@ public class ConnectionSupport implements RContext.StateFactory {
             return base.forceOpen(modeString);
         }
 
+        @Override
+        public boolean isSeekable() {
+            return false;
+        }
+
+        @Override
+        public long seek(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
+            throw RError.error(RError.Message.UNSEEKABLE_CONNECTION);
+        }
+
     }
 
     abstract static class DelegateReadRConnection extends DelegateRConnection {
@@ -842,6 +870,11 @@ public class ConnectionSupport implements RContext.StateFactory {
         @Override
         public void writeBin(ByteBuffer buffer) throws IOException {
             throw new IOException(RError.Message.CANNOT_WRITE_CONNECTION.message);
+        }
+
+        @Override
+        public int getc() throws IOException {
+            return getInputStream().read();
         }
 
         @Override
@@ -887,6 +920,11 @@ public class ConnectionSupport implements RContext.StateFactory {
 
         @Override
         public byte[] readBinChars() throws IOException {
+            throw new IOException(RError.Message.CANNOT_READ_CONNECTION.message);
+        }
+
+        @Override
+        public int getc() throws IOException {
             throw new IOException(RError.Message.CANNOT_READ_CONNECTION.message);
         }
 

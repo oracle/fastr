@@ -146,6 +146,17 @@ public class StdConnections implements RContext.StateFactory {
         public RConnection forceOpen(String modeString) {
             return this;
         }
+
+        @Override
+        public boolean isSeekable() {
+            return false;
+        }
+
+        @Override
+        public long seek(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
+            throw RError.error(RError.Message.UNSEEKABLE_CONNECTION);
+        }
+
     }
 
     private static class StdinConnection extends StdConnection {
@@ -186,6 +197,10 @@ public class StdConnections implements RContext.StateFactory {
             return result;
         }
 
+        @Override
+        public int getc() throws IOException {
+            throw RInternalError.unimplemented("stdin getc");
+        }
     }
 
     private abstract static class StdoutputAdapter extends StdConnection {
@@ -205,6 +220,11 @@ public class StdConnections implements RContext.StateFactory {
         @Override
         public boolean canWrite() {
             return true;
+        }
+
+        @Override
+        public int getc() throws IOException {
+            throw new IOException(RError.Message.CANNOT_READ_CONNECTION.message);
         }
 
     }

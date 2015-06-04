@@ -234,17 +234,6 @@ public abstract class RConnection implements RClassHierarchy, RAttributable, RTy
         pushBack = null;
     }
 
-    /**
-     * Internal support for reading one character at a time.
-     */
-    public int getc() throws IOException {
-        return getInputStream().read();
-    }
-
-    public boolean isSeekable() {
-        return false;
-    }
-
     public enum SeekMode {
         START,
         CURRENT,
@@ -257,10 +246,20 @@ public abstract class RConnection implements RClassHierarchy, RAttributable, RTy
         WRITE
     }
 
-    @SuppressWarnings("unused")
-    public long seek(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
-        throw RError.error(RError.Message.UNSEEKABLE_CONNECTION);
-    }
+    /**
+     * Support for {@code isSeekable} Internal.
+     */
+    public abstract boolean isSeekable();
+
+    /**
+     * Support for {@code seek} Internal.
+     */
+    public abstract long seek(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException;
+
+    /**
+     * Internal support for reading one character at a time.
+     */
+    public abstract int getc() throws IOException;
 
     /**
      * Write the {@code lines} to the connection, with {@code sep} appended after each "line". N.B.
