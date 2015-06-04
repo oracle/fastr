@@ -959,6 +959,11 @@ public class ConnectionSupport implements RContext.StateFactory {
             return true;
         }
 
+        @Override
+        public int getc() throws IOException {
+            return getInputStream().read();
+        }
+
     }
 
     abstract static class BasePathRConnection extends BaseRConnection {
