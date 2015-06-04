@@ -196,7 +196,7 @@ public final class GraphicsEngineImpl implements GraphicsEngine {
     }
 
     private boolean isNullDeviceIsCurrent() {
-        return currentGraphicsDevice == getNullGraphicsDevice();
+        return currentGraphicsDevice.graphicsDevice == getNullGraphicsDevice();
     }
 
     private void installCurrentGraphicsDevice() throws Exception {
@@ -295,7 +295,7 @@ public final class GraphicsEngineImpl implements GraphicsEngine {
         // todo TBD
     }
 
-    private class CurrentGraphicsDevice {
+    private final class CurrentGraphicsDevice {
         private final GraphicsDevice graphicsDevice;
         private final int graphicsDeviceIndex;
 
