@@ -33,14 +33,24 @@ import com.oracle.truffle.r.runtime.gnur.*;
  * {@code null} is never allowed as a value for the tag, car or cdr, only the type.
  */
 public class RPairList extends RAttributeStorage implements RAttributable, RAbstractContainer {
-    private Object car = RUnboundValue.instance;
-    private Object cdr = RUnboundValue.instance;
-    private Object tag = RUnboundValue.instance;
+    private Object car = RNull.instance;
+    private Object cdr = RNull.instance;
+    /**
+     * Externally, i.e., when serialized this is either a SYMSXP ({@link RSymbol}) or {@link RNull}.
+     * Internally it may take on other, non-null, values.
+     */
+    private Object tag = RNull.instance;
 
     /**
-     * Denotes the (GnuR) typeof entity that the pairlist represents.
+     * Denotes the (GnuR) type of entity that the pairlist represents. (Internal use only).
      */
     private SEXPTYPE type;
+
+    /**
+     * Uninitialized pairlist.
+     */
+    RPairList() {
+    }
 
     /**
      * Variant used in unserialization to record the GnuR type the pairlist denotes.
@@ -78,13 +88,11 @@ public class RPairList extends RAttributeStorage implements RAttributable, RAbst
     }
 
     public void setCar(Object newCar) {
-        assert car == RUnboundValue.instance;
         assert newCar != null;
         car = newCar;
     }
 
     public void setCdr(Object newCdr) {
-        assert cdr == RUnboundValue.instance;
         assert newCdr != null;
         cdr = newCdr;
     }
@@ -109,7 +117,6 @@ public class RPairList extends RAttributeStorage implements RAttributable, RAbst
     }
 
     public void setTag(Object newTag) {
-        assert tag == RUnboundValue.instance;
         assert newTag != null;
         this.tag = newTag;
     }
@@ -120,7 +127,7 @@ public class RPairList extends RAttributeStorage implements RAttributable, RAbst
     }
 
     public boolean isNullTag() {
-        return tag == RUnboundValue.instance || tag == RNull.instance;
+        return tag == RNull.instance;
     }
 
     public SEXPTYPE getType() {
@@ -189,7 +196,7 @@ public class RPairList extends RAttributeStorage implements RAttributable, RAbst
     }
 
     public static boolean isNull(Object obj) {
-        return obj == RNull.instance || obj == RUnboundValue.instance;
+        return obj == RNull.instance;
     }
 
     @Override

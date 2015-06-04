@@ -1356,6 +1356,7 @@ public class RSerialize {
                             }
                             RPairList pl = (RPairList) RContext.getRRuntimeASTAccess().serialize(state, fun);
                             if (pl != null) {
+                                state.convertUnboundValues(pl);
                                 if (FastROptions.debugMatches("printWclosure")) {
                                     Debug.printClosure(pl);
                                 }
@@ -1570,10 +1571,10 @@ public class RSerialize {
         public abstract void setNull();
 
         /**
-         * Checks for the special case where the active pairlist only has a {@link RNull}
-         * {@code cdr}.
+         * Checks for the special case where the active pairlist has a {@link RNull} {@code car} and
+         * {@code cdr} and an unset {@code tag}.
          */
-        public abstract boolean isNullCdr();
+        public abstract boolean isNull();
 
         /**
          * Closes the current pairlist, handling the case where a "simple" value is down-shifted
@@ -1608,6 +1609,11 @@ public class RSerialize {
          * Special case where the value is in the {@code cdr} and it needs to be in the {@code car}.
          */
         public abstract void switchCdrToCar();
+
+        /**
+         * Clean up any {@link RUnboundValue}s from shrink optimization.
+         */
+        public abstract void convertUnboundValues(RPairList pl);
 
         // Implementation independent convenience methods
 
@@ -1663,7 +1669,11 @@ public class RSerialize {
 
         @Override
         public State openPairList() {
-            RPairList result = RDataFactory.createPairList();
+            /*
+             * In order to implement the "shrink" optimization in closePairList we set the tag and
+             * the cdr to RUnboundValue. N.B. It is a bug if this ever escapes to the outside world.
+             */
+            RPairList result = RDataFactory.createPairList(RNull.instance, RUnboundValue.instance, RUnboundValue.instance);
             active.addFirst(result);
             return this;
         }
@@ -1731,16 +1741,11 @@ public class RSerialize {
                 if (top.cdr() == RUnboundValue.instance) {
                     if (top.getTag() == RUnboundValue.instance && top.getType() == null) {
                         // shrink back to non-pairlist (cf GnuR)
-                        assert top.car() != RUnboundValue.instance;
                         return top.car();
                     } else {
                         top.setCdr(RNull.instance);
                         return top;
                     }
-                } else if (top.car() == RUnboundValue.instance) {
-                    assert false;
-                    assert top.getTag() == RUnboundValue.instance && top.getType() == null && top.cdr() != RUnboundValue.instance;
-                    return top.cdr();
                 } else {
                     return top;
                 }
@@ -1759,23 +1764,23 @@ public class RSerialize {
         }
 
         @Override
-        public boolean isNullCdr() {
+        public boolean isNull() {
             RPairList pl = active.peekFirst();
-            return pl.getTag() == RUnboundValue.instance && pl.car() == RUnboundValue.instance && pl.cdr() == RNull.instance;
+            return pl.getTag() == RUnboundValue.instance && pl.car() == RNull.instance && pl.cdr() == RNull.instance;
         }
 
         @Override
         public void switchCdrToCar() {
             RPairList pl = active.removeFirst();
-            assert pl.cdr() != RUnboundValue.instance && pl.car() == RUnboundValue.instance;
             // setting the type prevents the usual value down-shift on close
-            SEXPTYPE type;
+            RPairList spl;
             if (pl.cdr() instanceof RPairList && ((RPairList) pl.cdr()).getType() == null) {
-                type = null;
+                // preserve the "shrink" optimization
+                spl = RDataFactory.createPairList(pl.cdr(), RUnboundValue.instance, RUnboundValue.instance);
             } else {
-                type = SEXPTYPE.LISTSXP;
+                spl = RDataFactory.createPairList(pl.cdr(), RNull.instance, RNull.instance, SEXPTYPE.LISTSXP);
             }
-            active.addFirst(RDataFactory.createPairList(pl.cdr(), RUnboundValue.instance, RUnboundValue.instance, type));
+            active.addFirst(spl);
         }
 
         @Override
@@ -1809,6 +1814,22 @@ public class RSerialize {
         public int getPositionsLength() {
             px--;
             return positionsLength[px];
+        }
+
+        @Override
+        public void convertUnboundValues(RPairList pl) {
+            Object obj = pl;
+            while (obj instanceof RPairList) {
+                RPairList plt = (RPairList) obj;
+                if (plt.getTag() == RUnboundValue.instance) {
+                    plt.setTag(RNull.instance);
+                }
+                if (plt.car() instanceof RPairList) {
+                    convertUnboundValues((RPairList) plt.car());
+                }
+                obj = plt.cdr();
+                assert !(obj instanceof RUnboundValue);
+            }
         }
 
     }

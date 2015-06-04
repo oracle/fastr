@@ -359,7 +359,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
      */
     public static void checkCloseBrace(RSerialize.State state, boolean hasBraces) {
         if (hasBraces) {
-            if (state.isNullCdr()) {
+            if (state.isNull()) {
                 // special case of empty body "{ }"
                 state.setNull();
             } else {

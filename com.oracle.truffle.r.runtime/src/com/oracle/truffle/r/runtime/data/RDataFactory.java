@@ -373,15 +373,15 @@ public final class RDataFactory {
     }
 
     public static RPairList createPairList() {
-        return traceDataCreated(new RPairList(RUnboundValue.instance, RUnboundValue.instance, RUnboundValue.instance, null));
+        return traceDataCreated(new RPairList());
     }
 
     public static RPairList createPairList(Object car) {
-        return traceDataCreated(new RPairList(car, RUnboundValue.instance, RUnboundValue.instance, null));
+        return traceDataCreated(new RPairList(car, RNull.instance, RNull.instance, null));
     }
 
     public static RPairList createPairList(Object car, Object cdr) {
-        return traceDataCreated(new RPairList(car, cdr, RUnboundValue.instance, null));
+        return traceDataCreated(new RPairList(car, cdr, RNull.instance, null));
     }
 
     public static RPairList createPairList(Object car, Object cdr, Object tag) {

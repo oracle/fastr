@@ -110,7 +110,7 @@ public class RASTUtils {
             RPairList prev = null;
             RPairList result = null;
             for (int i = 0; i < closures.length; i++) {
-                RPairList pl = RDataFactory.createPairList(createLanguageElement(unwrap(closures[i].getExpr())), RUnboundValue.instance, RUnboundValue.toRUnboundValue((signature.getName(i))));
+                RPairList pl = RDataFactory.createPairList(createLanguageElement(unwrap(closures[i].getExpr())), RNull.instance, RNull.toRNull((signature.getName(i))));
                 if (prev != null) {
                     prev.setCdr(pl);
                 } else {
