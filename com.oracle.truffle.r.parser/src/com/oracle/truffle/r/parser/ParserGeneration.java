@@ -65,6 +65,7 @@ public class ParserGeneration {
         "simplified unary and binary operations",
         "allow unary ! in normal expressions",
         "added \\a, \\v and \\` escape sequences",
-        "added octal escape sequences for strings"
+        "added octal escape sequences for strings",
+        "handles escapes in `xxx` form"
     };
 }

@@ -687,10 +687,22 @@ DD : '..' ('0'..'9')+ ;
 ID
     : '.'* ID_NAME
     | '.'
-    | '`' ( ESC_SEQ | ~('\\'|'`') )* '`' { setText(getText().substring(1, getText().length()-1)); }
+    | '`' BACKTICK_NAME
     ;
 
 OP : '%' OP_NAME+ '%' ;
+
+fragment BACKTICK_NAME
+    @init { final StringBuilder buf = new StringBuilder(); }
+    : (
+        (
+          ESCAPE[buf]
+        | i = ~( '\\' | '`' ) { buf.appendCodePoint(i); }
+        )*
+        '`'
+        { setText(buf.toString()); }
+      )
+    ;
 
 STRING
     @init { final StringBuilder buf = new StringBuilder(); }
