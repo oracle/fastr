@@ -126,12 +126,23 @@ public abstract class AsCharacter extends RBuiltinNode {
     @Specialization(guards = "!isObject(frame, list)")
     protected RStringVector doList(@SuppressWarnings("unused") VirtualFrame frame, RList list) {
         controlVisibility();
-        // partial implementation for simple special case
-        if (list.getLength() == 1 && list.getDataAt(0) instanceof RStringVector && ((RStringVector) list.getDataAt(0)).getLength() == 1) {
-            return (RStringVector) ((RStringVector) list.getDataAt(0)).copyDropAttributes();
-        } else {
-            throw RInternalError.unimplemented("list type not supported for as.character - requires deparsing");
+        int len = list.getLength();
+        boolean complete = RDataFactory.COMPLETE_VECTOR;
+        String[] data = new String[len];
+        for (int i = 0; i < len; i++) {
+            Object elem = list.getDataAt(i);
+            if (elem instanceof String) {
+                data[i] = (String) elem;
+            } else if (elem instanceof RStringVector && ((RStringVector) elem).getLength() == 1) {
+                data[i] = ((RStringVector) elem).getDataAt(0);
+            } else {
+                data[i] = RDeparse.deparse1Line(elem, false);
+            }
+            if (RRuntime.isNA(data[i])) {
+                complete = RDataFactory.INCOMPLETE_VECTOR;
+            }
         }
+        return RDataFactory.createStringVector(data, complete);
     }
 
     @Specialization(guards = "!isObject(frame, container)")

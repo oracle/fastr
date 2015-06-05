@@ -343,19 +343,46 @@ public class RDeparse {
         return deparse2buff(state, expr).sb.toString();
     }
 
+    @TruffleBoundary
+    public static String deparse1Line(Object expr, boolean abbrev) {
+        String result;
+        State state = deparse1WithCutoff(expr, MAX_Cutoff, true, 0, -1);
+        int len = state.lines.size();
+        if (len > 1) {
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < len; i++) {
+                String line = state.lines.get(i);
+                sb.append(line);
+                if (i < len - 1) {
+                    sb.append('\n');
+                }
+            }
+            result = sb.toString();
+        } else {
+            result = state.lines.get(0);
+        }
+        if (abbrev && result.length() > 13) {
+            result = result.substring(0, 14);
+        }
+        return result;
+    }
+
     /**
      * Version for {@code deparse}.
-     *
-     * @param opts TODO
      */
     @TruffleBoundary
-    public static String[] deparse(Object expr, int widthCutoff, boolean backtick, int opts, int nlines) {
-        State state = new State(widthCutoff, backtick, nlines, opts, true);
-        deparse2buff(state, expr);
-        state.writeline();
+    public static String[] deparse(Object expr, int cutoff, boolean backtick, int opts, int nlines) {
+        State state = deparse1WithCutoff(expr, cutoff, backtick, opts, nlines);
         String[] data = new String[state.lines.size()];
         state.lines.toArray(data);
         return data;
+    }
+
+    private static State deparse1WithCutoff(Object expr, int cutoff, boolean backtick, int opts, int nlines) {
+        State state = new State(cutoff, backtick, nlines, opts, true);
+        deparse2buff(state, expr);
+        state.writeline();
+        return state;
     }
 
     @TruffleBoundary

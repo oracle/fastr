@@ -107,6 +107,7 @@ public class TestBuiltin_ascharacter extends TestBase {
     @Test
     public void testascharacter18() {
         assertEval(Ignored.Unknown, "argv <- list(list(epsilon = 1e-08, maxit = 25, trace = FALSE));as.character(argv[[1]]);");
+        // 1e-08 prints as 1e-8
     }
 
     @Test
@@ -199,7 +200,7 @@ public class TestBuiltin_ascharacter extends TestBase {
 
     @Test
     public void testascharacter36() {
-        assertEval(Ignored.Unknown, "argv <- list(list(exit.code = 0L, send = NULL));as.character(argv[[1]]);");
+        assertEval("argv <- list(list(exit.code = 0L, send = NULL));as.character(argv[[1]]);");
     }
 
     @Test
@@ -261,11 +262,11 @@ public class TestBuiltin_ascharacter extends TestBase {
         assertEval("{ as.character(1:3) }");
         assertEval("{ as.character(NULL) }");
 
-        assertEval(Ignored.Unknown, "{ as.character(list(1,2,3)) }");
-        assertEval(Ignored.Unknown, "{ as.character(list(c(\"hello\", \"hi\"))) }");
-        assertEval(Ignored.Unknown, "{ as.character(list(list(c(\"hello\", \"hi\")))) }");
-        assertEval(Ignored.Unknown, "{ as.character(list(c(2L, 3L))) }");
-        assertEval(Ignored.Unknown, "{ as.character(list(c(2L, 3L, 5L))) }");
+        assertEval("{ as.character(list(1,2,3)) }");
+        assertEval("{ as.character(list(c(\"hello\", \"hi\"))) }");
+        assertEval("{ as.character(list(list(c(\"hello\", \"hi\")))) }");
+        assertEval(Ignored.Unknown, "{ as.character(list(c(2L, 3L))) }"); // GnuR returns "2:3"
+        assertEval("{ as.character(list(c(2L, 3L, 5L))) }");
 
         assertEval("{ x<-as.character(Sys.time()) }");
         assertEval("{ f<-function(x) { sys.call() }; as.character(f(7)) }");
