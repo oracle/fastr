@@ -62,4 +62,8 @@ public interface GraphicsEngine {
     void setCurrentGraphicsDeviceClipRect(double x1, double y1, double x2, double y2);
 
     void drawPolyline(Coordinates coordinates, DrawingParameters drawingParameters);
+
+    void killGraphicsDeviceByIndex(int graphicsDeviceIndex);
+
+    int getCurrentGraphicsDeviceIndex();
 }

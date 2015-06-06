@@ -22,12 +22,13 @@
  */
 package com.oracle.truffle.r.library.graphics.core;
 
-import com.oracle.truffle.r.library.graphics.core.geometry.Coordinates;
 import com.oracle.truffle.r.library.grDevices.NullGraphicsDevice;
 import com.oracle.truffle.r.library.grDevices.fastrgd.FastRGraphicsDevice;
+import com.oracle.truffle.r.library.graphics.core.geometry.Coordinates;
 import com.oracle.truffle.r.runtime.Utils;
 
-import static com.oracle.truffle.r.library.graphics.core.GraphicsEvent.*;
+import static com.oracle.truffle.r.library.graphics.core.GraphicsEvent.GE_FINAL_STATE;
+import static com.oracle.truffle.r.library.graphics.core.GraphicsEvent.GE_INIT_STATE;
 
 // todo implement 'active' devices array from devices.c
 public final class GraphicsEngineImpl implements GraphicsEngine {
@@ -46,7 +47,7 @@ public final class GraphicsEngineImpl implements GraphicsEngine {
 
     private int graphicsSystemsAmount = 0;
     private int devicesAmountWithoutNullDevice = 0;
-    private GraphicsDevice currentGraphicsDevice = NullGraphicsDevice.getInstance();
+    private CurrentGraphicsDevice currentGraphicsDevice = new CurrentGraphicsDevice(NullGraphicsDevice.getInstance(), NULL_GRAPHICS_DEVICE_INDEX);
 
     public static GraphicsEngine getInstance() {
         return instance;
@@ -131,7 +132,7 @@ public final class GraphicsEngineImpl implements GraphicsEngine {
         }
         graphicsDevices[index] = newGraphicsDevice;
         devicesAmountWithoutNullDevice++;
-        currentGraphicsDevice = newGraphicsDevice;
+        currentGraphicsDevice = new CurrentGraphicsDevice(newGraphicsDevice, index);
         notifyEachGraphicsSystem(newGraphicsDevice, GE_INIT_STATE);
         newGraphicsDevice.activate();
     }
@@ -150,7 +151,10 @@ public final class GraphicsEngineImpl implements GraphicsEngine {
             throw new NullPointerException("Graphics device to unregister is null");
         }
         doUnregisterGraphicsDevice(deviceToUnregister);
-        makeItCurrent(getGraphicsDeviceNextTo(deviceToUnregister));
+        GraphicsDevice nextGraphicsDevice = getGraphicsDeviceNextTo(deviceToUnregister);
+        int index = findElementIndexInArray(nextGraphicsDevice, graphicsDevices);
+        currentGraphicsDevice = new CurrentGraphicsDevice(nextGraphicsDevice, index);
+        nextGraphicsDevice.activate();
         // todo Interesting that in GNUR a GraphicsSystem is not notified when a GraphicsDevice is
         // killed
     }
@@ -163,13 +167,8 @@ public final class GraphicsEngineImpl implements GraphicsEngine {
         }
         graphicsDevices[index] = null;
         devicesAmountWithoutNullDevice--;
-        currentGraphicsDevice = getNullGraphicsDevice();
+        currentGraphicsDevice = new CurrentGraphicsDevice(getNullGraphicsDevice(), NULL_GRAPHICS_DEVICE_INDEX);
         deviceToUnregister.close();
-    }
-
-    private void makeItCurrent(GraphicsDevice newCurrentGraphicsDevice) {
-        currentGraphicsDevice = newCurrentGraphicsDevice;
-        currentGraphicsDevice.activate();
     }
 
     public int getGraphicsDevicesAmount() {
@@ -178,6 +177,10 @@ public final class GraphicsEngineImpl implements GraphicsEngine {
 
     public boolean noGraphicsDevices() {
         return devicesAmountWithoutNullDevice == 0;
+    }
+
+    public int getCurrentGraphicsDeviceIndex() {
+        return currentGraphicsDevice.graphicsDeviceIndex;
     }
 
     public GraphicsDevice getCurrentGraphicsDevice() {
@@ -189,11 +192,11 @@ public final class GraphicsEngineImpl implements GraphicsEngine {
                 e.printStackTrace();
             }
         }
-        return currentGraphicsDevice;
+        return currentGraphicsDevice.graphicsDevice;
     }
 
     private boolean isNullDeviceIsCurrent() {
-        return currentGraphicsDevice == getNullGraphicsDevice();
+        return currentGraphicsDevice.graphicsDevice == getNullGraphicsDevice();
     }
 
     private void installCurrentGraphicsDevice() throws Exception {
@@ -285,6 +288,21 @@ public final class GraphicsEngineImpl implements GraphicsEngine {
     @Override
     public void drawPolyline(Coordinates coordinates, DrawingParameters drawingParameters) {
         getCurrentGraphicsDevice().drawPolyline(coordinates, drawingParameters);
+    }
+
+    @Override
+    public void killGraphicsDeviceByIndex(int graphicsDeviceIndex) {
+        // todo TBD
+    }
+
+    private final class CurrentGraphicsDevice {
+        private final GraphicsDevice graphicsDevice;
+        private final int graphicsDeviceIndex;
+
+        private CurrentGraphicsDevice(GraphicsDevice graphicsDevice, int graphicsDeviceIndex) {
+            this.graphicsDevice = graphicsDevice;
+            this.graphicsDeviceIndex = graphicsDeviceIndex;
+        }
     }
 
     private enum SearchDirection {
