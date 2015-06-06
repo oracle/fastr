@@ -152,6 +152,7 @@ public class TestBuiltin_order extends TestBase {
         assertEval("{ order(c(1,2,3,NA), na.last=FALSE) }");
         assertEval("{ order(c(1,2,3,NA), na.last=FALSE, decreasing=TRUE) }");
         assertEval("{ order(c(0/0, -1/0, 2)) }");
+        assertEval("{ order(c(TRUE, FALSE)) }");
 
         assertEval("{ x<-c(40, 40,  1, 40,  1, 20, 40, 10, 40, 10, 16, 40, 10, 26, 40, 10, 39, 40, 11, 40, 12, 40, 12, 20); order(x, decreasing=TRUE) }");
         assertEval("{ x<-c(40, 40,  1, 40,  1, 20, 40, 10, 40, 10, 16, 40, 10, 26, 40, 10, 39, 40, 11, 40, 12, 40, 12, 20); order(x, decreasing=FALSE) }");

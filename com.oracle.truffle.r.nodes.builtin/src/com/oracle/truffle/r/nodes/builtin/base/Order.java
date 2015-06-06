@@ -576,6 +576,30 @@ public abstract class Order extends RPrecedenceBuiltinNode {
         public abstract int executeInt(VirtualFrame frame, Object v, int i, int j, byte naLast);
 
         @Specialization
+        protected int lcmp(RAbstractLogicalVector v, int i, int j, byte naLast) {
+            byte x = v.getDataAt(i);
+            byte y = v.getDataAt(j);
+            boolean nax = RRuntime.isNA(x);
+            boolean nay = RRuntime.isNA(y);
+            if (nax && nay) {
+                return 0;
+            }
+            if (nax) {
+                return naLast == RRuntime.LOGICAL_TRUE ? 1 : -1;
+            }
+            if (nay) {
+                return naLast == RRuntime.LOGICAL_TRUE ? -1 : 1;
+            }
+            if (x < y) {
+                return -1;
+            }
+            if (x > y) {
+                return 1;
+            }
+            return 0;
+        }
+
+        @Specialization
         protected int icmp(RAbstractIntVector v, int i, int j, byte naLast) {
             int x = v.getDataAt(i);
             int y = v.getDataAt(j);
