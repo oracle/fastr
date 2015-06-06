@@ -319,6 +319,10 @@ public final class RDataFactory {
         return createList(new Object[0], null, null);
     }
 
+    public static RList createList(int n) {
+        return createList(new Object[n], null, null);
+    }
+
     public static RList createList(Object[] data, int[] newDimensions, RStringVector names) {
         return traceDataCreated(new RList(data, false, newDimensions, names));
     }

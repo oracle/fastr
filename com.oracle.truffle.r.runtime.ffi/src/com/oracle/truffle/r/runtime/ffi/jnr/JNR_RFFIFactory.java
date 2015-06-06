@@ -220,7 +220,7 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI, Stat
         @TruffleBoundary
         private static OSExtras createAndLoadLib() {
             try {
-                System.load(BuiltinLibPath.getLibPath("osextras"));
+                System.load(LibPaths.getBuiltinLibPath("osextras"));
                 return new OSExtraProvider();
             } catch (UnsatisfiedLinkError ex) {
                 throw RInternalError.shouldNotReachHere("osextras");

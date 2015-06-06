@@ -22,8 +22,11 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
+import java.util.*;
+
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.gnur.*;
 
@@ -77,6 +80,53 @@ public class RPairList extends RAttributeStorage implements RAttributable, RAbst
 
     private static String toStringHelper(Object obj) {
         return obj == null ? "null" : obj.getClass().getSimpleName();
+    }
+
+    /**
+     * Convert to a {@link RList}.
+     */
+    public RList toRList() {
+        int len = 1;
+        boolean named = false;
+        RPairList plt = this;
+        while (true) {
+            named = named | !isNullTag();
+            if (isNull(plt.cdr)) {
+                break;
+            }
+            plt = (RPairList) plt.cdr;
+            len++;
+        }
+        Object[] data = new Object[len];
+        String[] names = named ? new String[len] : null;
+        plt = this;
+        for (int i = 0; i < len; i++) {
+            data[i] = plt.car();
+            if (named) {
+                if (plt.isNullTag()) {
+                    names[i] = RRuntime.NAMES_ATTR_EMPTY_VALUE;
+                } else {
+                    names[i] = (String) plt.getTag();
+                }
+            }
+            if (i < len - 1) {
+                plt = (RPairList) plt.cdr();
+            }
+        }
+        RList result = named ? RDataFactory.createList(data, RDataFactory.createStringVector(names, RDataFactory.COMPLETE_VECTOR)) : RDataFactory.createList(data);
+        RAttributes attrs = getAttributes();
+        if (attrs != null) {
+            RAttributes resultAttrs = result.initAttributes();
+            Iterator<RAttribute> iter = attrs.iterator();
+            while (iter.hasNext()) {
+                RAttribute attr = iter.next();
+                String attrName = attr.getName();
+                if (!(attrName.equals(RRuntime.NAMES_ATTR_KEY) || attrName.equals(RRuntime.DIM_ATTR_KEY) || attrName.equals(RRuntime.DIMNAMES_ATTR_KEY))) {
+                    resultAttrs.put(attrName, attr.getValue());
+                }
+            }
+        }
+        return result;
     }
 
     public Object car() {

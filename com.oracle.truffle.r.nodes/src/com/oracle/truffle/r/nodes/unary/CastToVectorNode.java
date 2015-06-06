@@ -66,4 +66,9 @@ public abstract class CastToVectorNode extends CastNode {
         return expression.getList();
     }
 
+    @Specialization
+    protected RAbstractVector cast(RDataFrame dataFrame) {
+        return dataFrame.getVector();
+    }
+
 }

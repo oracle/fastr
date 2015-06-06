@@ -25,12 +25,22 @@
 #include <string.h>
 
 jmethodID SET_STRING_ELT_MethodID;
+jmethodID SET_INTEGER_ELT_MethodID;
+jmethodID SET_VECTOR_ELT_MethodID;
 jmethodID RAW_MethodID;
+jmethodID INTEGER_MethodID;
+jmethodID STRING_ELT_MethodID;
+jmethodID VECTOR_ELT_MethodID;
 jmethodID LENGTH_MethodID;
 
 void init_vectoraccess(JNIEnv *env) {
 	SET_STRING_ELT_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "SET_STRING_ELT", "(Ljava/lang/Object;ILjava/lang/Object;)V", 1);
+	SET_INTEGER_ELT_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "SET_INTEGER_ELT", "(Ljava/lang/Object;II)V", 1);
+	SET_VECTOR_ELT_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "SET_VECTOR_ELT", "(Ljava/lang/Object;ILjava/lang/Object;)V", 1);
 	RAW_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "RAW", "(Ljava/lang/Object;)[B", 1);
+	INTEGER_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "INTEGER", "(Ljava/lang/Object;)[I", 1);
+	STRING_ELT_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "STRING_ELT", "(Ljava/lang/Object;I)Ljava/lang/String;", 1);
+	VECTOR_ELT_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "VECTOR_ELT", "(Ljava/lang/Object;I)Ljava/lang/Object;", 1);
 	LENGTH_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "LENGTH", "(Ljava/lang/Object;)I", 1);
 }
 
@@ -43,7 +53,6 @@ int LENGTH(SEXP x) {
 R_len_t  Rf_length(SEXP x) {
 	return LENGTH(x);
 }
-
 
 
 int TRUELENGTH(SEXP x){
@@ -93,17 +102,27 @@ int *LOGICAL(SEXP x){
 
 
 int *INTEGER(SEXP x){
-	unimplemented("INTEGER");
+	// TODO This does not support write access, e.g. INTEGER(x)[i]
+	JNIEnv *thisenv = getEnv();
+	jintArray intarray = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, INTEGER_MethodID, x);
+	int len = (*thisenv)->GetArrayLength(thisenv, intarray);
+	jint *data = (*thisenv)->GetIntArrayElements(thisenv, intarray, NULL);
+	void *result = malloc(len * 4);
+	memcpy(result, data, len * 4);
+	(*thisenv)->ReleaseIntArrayElements(thisenv, intarray, data, JNI_ABORT);
+	return (int *) result;
 }
 
 
 Rbyte *RAW(SEXP x){
+	// TODO This does not support write access, e.g. RAW(x)[i]
 	JNIEnv *thisenv = getEnv();
 	jbyteArray bytearray = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, RAW_MethodID, x);
 	int len = (*thisenv)->GetArrayLength(thisenv, bytearray);
 	jbyte *data = (*thisenv)->GetByteArrayElements(thisenv, bytearray, NULL);
 	void *result = malloc(len);
 	memcpy(result, data, len);
+	(*thisenv)->ReleaseByteArrayElements(thisenv, bytearray, data, JNI_ABORT);
 	return (Rbyte *) result;
 }
 
@@ -119,14 +138,23 @@ Rcomplex *COMPLEX(SEXP x){
 
 
 SEXP STRING_ELT(SEXP x, R_xlen_t i){
-	unimplemented("STRING_ELT");
+	JNIEnv *thisenv = getEnv();
+    SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, STRING_ELT_MethodID, x, i);
+    return mkGlobalRef(thisenv, result);
 }
 
 
 SEXP VECTOR_ELT(SEXP x, R_xlen_t i){
-	unimplemented("VECTOR_ELT");
+	JNIEnv *thisenv = getEnv();
+    SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, VECTOR_ELT_MethodID, x, i);
+    return mkGlobalRef(thisenv, result);
 }
 
+void SET_INTEGER_ELT(SEXP x, R_xlen_t i, int v) {
+	JNIEnv *thisenv = getEnv();
+	(*thisenv)->CallStaticVoidMethod(thisenv, CallRFFIHelperClass, SET_INTEGER_ELT_MethodID, x, i, v);
+
+}
 
 void SET_STRING_ELT(SEXP x, R_xlen_t i, SEXP v){
 	JNIEnv *thisenv = getEnv();
@@ -135,7 +163,9 @@ void SET_STRING_ELT(SEXP x, R_xlen_t i, SEXP v){
 
 
 SEXP SET_VECTOR_ELT(SEXP x, R_xlen_t i, SEXP v){
-	unimplemented("SET_VECTOR_ELT");
+	JNIEnv *thisenv = getEnv();
+	(*thisenv)->CallStaticVoidMethod(thisenv, CallRFFIHelperClass, SET_VECTOR_ELT_MethodID, x, i, v);
+	return v;
 }
 
 

@@ -20,24 +20,27 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.runtime.ffi;
+package com.oracle.truffle.r.library.tools;
 
-import java.nio.file.*;
+import com.oracle.truffle.r.runtime.conn.*;
+import com.oracle.truffle.r.runtime.env.*;
+import com.oracle.truffle.r.runtime.ffi.*;
 
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.RPlatform.*;
+public class ToolsNative {
+    private static ToolsNative singleton;
 
-public class BuiltinLibPath {
-
-    /**
-     * Returns the absolute path to the builtin library {@code libName} for use with
-     * {@link System#load}.
-     */
-    public static String getLibPath(String libName) {
-        String rHome = REnvVars.rHome();
-        String packageName = "com.oracle.truffle.r.native";
-        OSInfo osInfo = RPlatform.getOSInfo();
-        Path path = FileSystems.getDefault().getPath(rHome, packageName, "builtinlibs", "lib", "lib" + libName + "." + osInfo.libExt);
-        return path.toString();
+    static ToolsNative provider() {
+        if (singleton == null) {
+            singleton = new ToolsNative();
+            System.load(LibPaths.getPackageLibPath("tools"));
+        }
+        return singleton;
     }
+
+    Object cParseRd(RConnection con, REnvironment srcfile, boolean verbose, boolean fragment, String basename, boolean warningCalls) {
+        return cParseRdNative(con, srcfile, verbose, fragment, basename, warningCalls);
+    }
+
+    private static native Object cParseRdNative(RConnection con, REnvironment srcfile, boolean verbose, boolean fragment, String basename, boolean warningCalls);
+
 }

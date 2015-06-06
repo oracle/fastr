@@ -33,8 +33,15 @@ jclass RDataFactoryClass;
 
 static jclass RInternalErrorClass;
 static jmethodID unimplementedMethodID;
+jmethodID createSymbolMethodID;
+static jmethodID validateMethodID;
 
 JNIEnv *curenv = NULL;
+
+//#define DEBUG_CACHE 1
+#define CACHED_GLOBALREFS_TABLE_SIZE 100
+static SEXP cachedGlobalRefs[CACHED_GLOBALREFS_TABLE_SIZE];
+static SEXP checkCachedGlobalRef(JNIEnv *env, SEXP obj);
 
 void init_utils(JNIEnv *env) {
 	curenv = env;
@@ -42,6 +49,52 @@ void init_utils(JNIEnv *env) {
 	CallRFFIHelperClass = checkFindClass(env, "com/oracle/truffle/r/runtime/ffi/jnr/CallRFFIHelper");
 	RInternalErrorClass = checkFindClass(env, "com/oracle/truffle/r/runtime/RInternalError");
 	unimplementedMethodID = checkGetMethodID(env, RInternalErrorClass, "unimplemented", "(Ljava/lang/String;)Ljava/lang/RuntimeException;", 1);
+	createSymbolMethodID = checkGetMethodID(env, RDataFactoryClass, "createSymbol", "(Ljava/lang/String;)Lcom/oracle/truffle/r/runtime/data/RSymbol;", 1);
+    validateMethodID = checkGetMethodID(env, CallRFFIHelperClass, "validate", "(Ljava/lang/Object;)Ljava/lang/Object;", 1);
+    for (int i = 0; i < CACHED_GLOBALREFS_TABLE_SIZE; i++) {
+    	cachedGlobalRefs[i] = NULL;
+    }
+}
+
+SEXP mkGlobalRef(JNIEnv *env, SEXP obj) {
+	SEXP result = checkCachedGlobalRef(env, obj);
+	return result;
+}
+
+SEXP mkNamedGlobalRef(JNIEnv *env, int index, SEXP obj) {
+	SEXP result = (*env)->NewGlobalRef(env, obj);
+	if (cachedGlobalRefs[index] != NULL) {
+		fatalError("duplicate named global ref index\n");
+	}
+	cachedGlobalRefs[index] = result;
+#if DEBUG_CACHE
+	printf("gref: %d=%p\n", index, result);
+#endif
+	return result;
+}
+
+static SEXP checkCachedGlobalRef(JNIEnv *env, SEXP obj) {
+    for (int i = 0; i < CACHED_GLOBALREFS_TABLE_SIZE; i++) {
+    	SEXP ref = cachedGlobalRefs[i];
+    	if (ref == NULL) {
+    		break;
+    	}
+    	if ((*env)->IsSameObject(env, ref, obj)) {
+#if DEBUG_CACHE
+    		printf("gref: cache hit: %d\n", i);
+#endif
+    		return ref;
+    	}
+    }
+    SEXP result = (*env)->NewGlobalRef(env, obj);
+#if DEBUG_CACHE
+	printf("gref: new=%p\n", result);
+#endif
+	return result;
+}
+
+void validate(SEXP x) {
+	(*curenv)->CallStaticObjectMethod(curenv, CallRFFIHelperClass, validateMethodID, x);
 }
 
 JNIEnv *getEnv() {
@@ -59,6 +112,11 @@ void unimplemented(char *msg) {
 	(*thisenv)->FatalError(thisenv, msg);
 }
 
+void fatalError(char *msg) {
+	JNIEnv *thisenv = getEnv();
+	(*thisenv)->FatalError(thisenv, msg);
+}
+
 // Class/method search
 jclass checkFindClass(JNIEnv *env, const char *name) {
 	jclass klass = (*env)->FindClass(env, name);
@@ -68,7 +126,7 @@ jclass checkFindClass(JNIEnv *env, const char *name) {
 		strcat(buf, name);
 		(*env)->FatalError(env, buf);
 	}
-	return klass;
+	return mkGlobalRef(env, klass);
 }
 
 jmethodID checkGetMethodID(JNIEnv *env, jclass klass, const char *name, const char *sig, int isStatic) {

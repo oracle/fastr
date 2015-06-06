@@ -210,7 +210,8 @@ public class RSerialize {
     @TruffleBoundary
     public static Object unserialize(RConnection conn, int frameDepth) throws IOException {
         Input instance = trace() ? new TracingInput(conn, frameDepth) : new Input(conn, frameDepth);
-        return instance.unserialize();
+        Object result = instance.unserialize();
+        return result;
     }
 
     /**
@@ -224,7 +225,8 @@ public class RSerialize {
     public static Object unserialize(byte[] data, CallHook hook, int frameDepth, String packageName) throws IOException {
         InputStream is = new PByteArrayInputStream(data);
         Input instance = trace() ? new TracingInput(is, hook, frameDepth, packageName) : new Input(is, hook, frameDepth, packageName);
-        return instance.unserialize();
+        Object result = instance.unserialize();
+        return result;
     }
 
     private static class Input extends Common {
@@ -1195,9 +1197,7 @@ public class RSerialize {
             if ((refIndex = getRefIndex(obj)) != -1) {
                 outRefIndex(refIndex);
             } else if (type == SEXPTYPE.SYMSXP) {
-                addReadRef(obj);
-                stream.writeInt(SEXPTYPE.SYMSXP.code);
-                writeCHARSXP(((RSymbol) obj).getName());
+                writeSymbol((RSymbol) obj);
             } else if (type == SEXPTYPE.ENVSXP) {
                 REnvironment env = (REnvironment) obj;
                 addReadRef(obj);
@@ -1476,9 +1476,14 @@ public class RSerialize {
 
         private void writePairListEntry(String name, Object value) throws IOException {
             stream.writeInt(Flags.packFlags(SEXPTYPE.LISTSXP, 0, false, false, true));
-            stream.writeInt(SEXPTYPE.SYMSXP.code);
-            writeCHARSXP(name);
+            writeSymbol(RDataFactory.createSymbol(name));
             writeItem(value);
+        }
+
+        private void writeSymbol(RSymbol name) throws IOException {
+            addReadRef(name);
+            stream.writeInt(SEXPTYPE.SYMSXP.code);
+            writeCHARSXP(name.getName());
         }
 
         private void terminatePairList() throws IOException {

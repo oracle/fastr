@@ -238,4 +238,10 @@ public final class RList extends RVector implements RAbstractVector, RGPBits {
     public void setGPBits(int value) {
         gpbits = value;
     }
+
+    @Override
+    public void setElement(int i, Object value) {
+        data[i] = value;
+    }
+
 }

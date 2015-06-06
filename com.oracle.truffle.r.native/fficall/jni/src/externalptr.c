@@ -45,7 +45,8 @@ void init_externalptr(JNIEnv *env) {
 
 SEXP R_MakeExternalPtr(void *p, SEXP tag, SEXP prot) {
 	JNIEnv *thisenv = getEnv();
-	return (*thisenv)->CallStaticObjectMethod(thisenv, RDataFactoryClass, createExternalPtrMethodID, (jlong) p, tag, prot);
+	SEXP result =  (*thisenv)->CallStaticObjectMethod(thisenv, RDataFactoryClass, createExternalPtrMethodID, (jlong) p, tag, prot);
+    return mkGlobalRef(thisenv, result);
 }
 
 void *R_ExternalPtrAddr(SEXP s) {
@@ -55,12 +56,14 @@ void *R_ExternalPtrAddr(SEXP s) {
 
 SEXP R_ExternalPtrTag(SEXP s) {
 	JNIEnv *thisenv = getEnv();
-	return (*thisenv)->CallObjectMethod(thisenv, s, externalPtrGetTagMethodID);
+	SEXP result =  (*thisenv)->CallObjectMethod(thisenv, s, externalPtrGetTagMethodID);
+    return mkGlobalRef(thisenv, result);
 }
 
 SEXP R_ExternalPtrProt(SEXP s) {
 	JNIEnv *thisenv = getEnv();
-	return (*thisenv)->CallObjectMethod(thisenv, s, externalPtrGetProtMethodID);
+	SEXP result =  (*thisenv)->CallObjectMethod(thisenv, s, externalPtrGetProtMethodID);
+    return mkGlobalRef(thisenv, result);
 }
 
 void R_SetExternalPtrAddr(SEXP s, void *p) {

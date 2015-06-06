@@ -22,9 +22,12 @@
  */
 package com.oracle.truffle.r.runtime.ffi.jnr;
 
+import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.env.*;
+import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
 /**
@@ -44,6 +47,10 @@ public class CallRFFIHelper {
 
     static RDoubleVector Rf_ScalarDouble(double value) {
         return RDataFactory.createDoubleVectorFromScalar(value);
+    }
+
+    static RStringVector Rf_ScalarString(String value) {
+        return RDataFactory.createStringVectorFromScalar(value);
     }
 
     static int Rf_asInteger(Object x) {
@@ -76,6 +83,78 @@ public class CallRFFIHelper {
         }
     }
 
+    static Object Rf_cons(Object car, Object cdr) {
+        return RDataFactory.createPairList(car, cdr);
+    }
+
+    static void Rf_defineVar(Object symbolArg, Object value, Object envArg) {
+        REnvironment env = (REnvironment) envArg;
+        RSymbol name = (RSymbol) symbolArg;
+        try {
+            env.put(name.getName(), value);
+        } catch (PutException ex) {
+            throw RError.error((SourceSection) null, ex);
+        }
+    }
+
+    static Object Rf_findVar(Object symbolArg, Object envArg) {
+        REnvironment env = (REnvironment) envArg;
+        RSymbol name = (RSymbol) symbolArg;
+        Object value = env.get(name.getName());
+        return value == null ? RUnboundValue.instance : value;
+    }
+
+    static Object Rf_getAttrib(Object obj, Object name) {
+        Object result = RNull.instance;
+        if (obj instanceof RAttributable) {
+            RAttributable attrObj = (RAttributable) obj;
+            RAttributes attrs = attrObj.getAttributes();
+            if (attrs != null) {
+                String nameAsString = ((RSymbol) name).getName().intern();
+                Object attr = attrs.get(nameAsString);
+                if (attr != null) {
+                    result = attr;
+                }
+            }
+        }
+        return result;
+    }
+
+    static void Rf_setAttrib(Object obj, Object name, Object val) {
+        if (obj instanceof RAttributable) {
+            RAttributable attrObj = (RAttributable) obj;
+            RAttributes attrs = attrObj.getAttributes();
+            if (attrs == null) {
+                attrs = attrObj.initAttributes();
+            }
+            String nameAsString;
+            if (name instanceof RSymbol) {
+                nameAsString = ((RSymbol) name).getName();
+            } else {
+                nameAsString = RRuntime.asString(name);
+                assert nameAsString != null;
+            }
+            nameAsString = nameAsString.intern();
+            attrs.put(nameAsString, val);
+        }
+    }
+
+    static int Rf_isString(Object x) {
+        return RRuntime.asString(x) == null ? 0 : 1;
+    }
+
+    static int Rf_isNull(Object x) {
+        return x == RNull.instance ? 1 : 0;
+    }
+
+    static Object Rf_PairToVectorList(Object x) {
+        if (x == RNull.instance) {
+            return RDataFactory.createList();
+        }
+        RPairList pl = (RPairList) x;
+        return pl.toRList();
+    }
+
     static int LENGTH(Object x) {
         if (x instanceof RAbstractContainer) {
             return ((RAbstractContainer) x).getLength();
@@ -92,6 +171,18 @@ public class CallRFFIHelper {
         xv.setElement(i, v);
     }
 
+    static void SET_INTEGER_ELT(Object x, int i, int v) {
+        // TODO error checks
+        RIntVector xv = (RIntVector) x;
+        xv.setElement(i, v);
+    }
+
+    static void SET_VECTOR_ELT(Object x, int i, Object v) {
+        // TODO error checks
+        RList list = (RList) x;
+        list.setElement(i, v);
+    }
+
     static byte[] RAW(Object x) {
         if (x instanceof RRawVector) {
             return ((RRawVector) x).getDataCopy();
@@ -99,6 +190,30 @@ public class CallRFFIHelper {
             throw RInternalError.unimplemented();
         }
 
+    }
+
+    static int[] INTEGER(Object x) {
+        if (x instanceof RIntVector) {
+            return ((RIntVector) x).getDataCopy();
+        } else {
+            throw RInternalError.unimplemented();
+        }
+    }
+
+    static String STRING_ELT(Object x, int i) {
+        if (x instanceof RStringVector) {
+            return ((RStringVector) x).getDataAt(i);
+        } else {
+            throw RInternalError.unimplemented();
+        }
+    }
+
+    static Object VECTOR_ELT(Object x, int i) {
+        if (x instanceof RList) {
+            return ((RList) x).getDataAt(i);
+        } else {
+            throw RInternalError.unimplemented();
+        }
     }
 
     static int NAMED(Object x) {
@@ -116,6 +231,48 @@ public class CallRFFIHelper {
             throw RInternalError.unimplemented();
         }
     }
+
+    static Object CAR(Object e) {
+        if (e instanceof RPairList) {
+            return ((RPairList) e).car();
+        } else {
+            throw RInternalError.unimplemented();
+        }
+    }
+
+    static Object CDR(Object e) {
+        if (e instanceof RPairList) {
+            return ((RPairList) e).cdr();
+        } else {
+            throw RInternalError.unimplemented();
+        }
+    }
+
+    static Object CADR(@SuppressWarnings("unused") Object x) {
+        throw RInternalError.unimplemented();
+    }
+
+    static Object SETCAR(Object x, Object y) {
+        if (x instanceof RPairList) {
+            ((RPairList) x).setCar(y);
+            return x; // TODO check or y?
+        } else {
+            throw RInternalError.unimplemented();
+        }
+    }
+
+    static Object SETCDR(Object x, Object y) {
+        if (x instanceof RPairList) {
+            ((RPairList) x).setCdr(y);
+            return x; // TODO check or y?
+        } else {
+            throw RInternalError.unimplemented();
+        }
+    }
+
     // Checkstyle: resume method name check
 
+    static Object validate(Object x) {
+        return x;
+    }
 }

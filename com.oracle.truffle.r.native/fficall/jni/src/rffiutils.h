@@ -31,8 +31,15 @@ void setEnv(JNIEnv *env);
 
 jclass checkFindClass(JNIEnv *env, const char *name);
 jmethodID checkGetMethodID(JNIEnv *env, jclass klass, const char *name, const char *sig, int isStatic);
-void unimplemented(char *msg);
+extern jmethodID createSymbolMethodID;
 
+void unimplemented(char *msg);
+void fatalError(char *msg);
+void validate(SEXP x);
+SEXP mkGlobalRef(JNIEnv *env, SEXP);
+SEXP mkNamedGlobalRef(JNIEnv *env, int index, SEXP);
+
+void init_variables(JNIEnv *env, jobjectArray initialValues);
 void init_register(JNIEnv *env);
 void init_rf_functions(JNIEnv *env);
 void init_externalptr(JNIEnv *env);
@@ -43,7 +50,5 @@ void init_vectoraccess(JNIEnv *env);
 
 extern jclass RDataFactoryClass;
 extern jclass CallRFFIHelperClass;
-extern SEXP R_NilValue;
-
 
 #endif /* RFFIUTILS_H */

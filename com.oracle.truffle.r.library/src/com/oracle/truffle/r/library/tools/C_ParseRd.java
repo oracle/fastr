@@ -22,11 +22,12 @@
  */
 package com.oracle.truffle.r.library.tools;
 
+import java.io.*;
+
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.conn.*;
-import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
 
@@ -34,8 +35,22 @@ public abstract class C_ParseRd extends RExternalBuiltinNode.Arg7 {
 
     @SuppressWarnings("unused")
     @Specialization
-    protected Object parseRd(RConnection con, REnvironment srcfile, String encoding, byte verbose, RAbstractStringVector basename, byte fragment, byte warningCalls) {
-        return RNull.instance;
+    protected Object parseRd(RConnection con, REnvironment srcfile, String encoding, byte verboseL, RAbstractStringVector basename, byte fragmentL, byte warningCallsL) {
+        boolean verbose = RRuntime.fromLogical(verboseL);
+        boolean fragment = RRuntime.fromLogical(fragmentL);
+        if (RRuntime.isNA(warningCallsL)) {
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "warningCalls");
+        }
+        boolean warningCalls = RRuntime.fromLogical(warningCallsL);
+
+        try (RConnection openConn = con.forceOpen("r")) {
+            Object result = ToolsNative.provider().cParseRd(con, srcfile, verbose, fragment, basename.getDataAt(0), warningCalls);
+            return result;
+        } catch (IOException ex) {
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, ex.getMessage());
+        } catch (Throwable ex) {
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, ex.getMessage());
+        }
     }
 
     @SuppressWarnings("unused")
@@ -43,4 +58,5 @@ public abstract class C_ParseRd extends RExternalBuiltinNode.Arg7 {
     public Object parseRd(Object con, Object srcfile, Object encoding, Object verbose, Object basename, Object fragment, Object warningCalls) {
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
     }
+
 }

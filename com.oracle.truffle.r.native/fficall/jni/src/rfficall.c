@@ -24,14 +24,11 @@
 #include "rffiutils.h"
 #include <string.h>
 
-SEXP R_NilValue;
-
 JNIEXPORT void JNICALL
-Java_com_oracle_truffle_r_runtime_ffi_jnr_CallRFFIWithJNI_initialize(JNIEnv *env, jclass c, jobject RNullInstance) {
-	init_utils(env);
-
-	R_NilValue = RNullInstance;
-
+Java_com_oracle_truffle_r_runtime_ffi_jnr_CallRFFIWithJNI_initialize(JNIEnv *env, jclass c,
+		jobjectArray initialValues) {
+	init_utils(env); // must be first
+	init_variables(env, initialValues);
 	init_register(env);
 	init_rf_functions(env);
 	init_externalptr(env);
@@ -39,6 +36,7 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_CallRFFIWithJNI_initialize(JNIEnv *env
 	init_attrib(env);
 	init_misc(env);
 	init_vectoraccess(env);
+	init_listaccess(env);
 }
 
 

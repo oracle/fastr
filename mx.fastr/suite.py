@@ -364,6 +364,7 @@ suite = {
       "dependencies" : [
         "com.oracle.truffle.r.nodes",
         "com.oracle.truffle.r.runtime",
+        "com.oracle.truffle.r.runtime.ffi",
       ],
       "annotationProcessors" : [
           "com.oracle.truffle.dsl.processor",

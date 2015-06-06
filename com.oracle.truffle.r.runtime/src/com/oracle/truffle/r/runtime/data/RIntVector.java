@@ -221,4 +221,10 @@ public final class RIntVector extends RVector implements RAbstractIntVector, RAc
     protected RStringVector getImplicitClassHr() {
         return getClassHierarchyHelper(implicitClassHeader, implicitClassHeaderArray, implicitClassHeaderMatrix);
     }
+
+    @Override
+    public void setElement(int i, Object value) {
+        data[i] = (int) value;
+    }
+
 }

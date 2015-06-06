@@ -26,6 +26,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.ffi.*;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLException;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolInfo;
@@ -44,6 +45,15 @@ public class CallRFFIWithJNI implements CallRFFI {
 
     private static final boolean ForceRTLDGlobal = false;
 
+    // The order must match that expected in rfficall.c
+    // @formatter:off
+    private static final Object[] INITIALIZE_VALUES = new Object[]{
+        REnvironment.emptyEnv(),
+        RNull.instance, RUnboundValue.instance, RMissing.instance,
+        RDataFactory.createSymbol("class")
+    };
+    // @formatter:on
+
     /**
      * Load the {@code librfficall} library. N.B. this library defines some non-JNI global symbols
      * that are referenced by C code in R packages. Unfortunately, {@link System#load(String)} uses
@@ -53,14 +63,14 @@ public class CallRFFIWithJNI implements CallRFFI {
      */
     @TruffleBoundary
     private static void loadLibrary() {
-        String librffiPath = BuiltinLibPath.getLibPath("rfficall");
+        String librffiPath = LibPaths.getBuiltinLibPath("rfficall");
         try {
             DLL.load(librffiPath, ForceRTLDGlobal, false);
         } catch (DLLException ex) {
             throw RError.error((SourceSection) null, ex);
         }
         System.load(librffiPath);
-        initialize(RNull.instance);
+        initialize(INITIALIZE_VALUES);
     }
 
     // @formatter:off
@@ -87,7 +97,7 @@ public class CallRFFIWithJNI implements CallRFFI {
         return null;
     }
 
-    private static native void initialize(RNull instance);
+    private static native void initialize(Object[] initialValues);
     private static native Object call(long address, Object[] args);
     private static native Object call0(long address);
     private static native Object call1(long address, Object arg1);

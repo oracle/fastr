@@ -94,32 +94,7 @@ public abstract class CastListNode extends CastNode {
     @Specialization
     @TruffleBoundary
     protected RList doPairList(RPairList pl) {
-        // One list type into another, not performance critical!
-        int length = pl.getLength();
-        if (length == 0) {
-            return RDataFactory.createList();
-        }
-        Object[] data = new Object[length];
-        String[] names = new String[length];
-        boolean complete = RDataFactory.COMPLETE_VECTOR;
-        int i = 0;
-        RPairList tpl = pl;
-        while (tpl != null) {
-            Object tag = tpl.getTag();
-            names[i] = pl.isNullTag() ? RRuntime.NAMES_ATTR_EMPTY_VALUE : (String) tag;
-            if (tag == RRuntime.STRING_NA) {
-                complete = RDataFactory.INCOMPLETE_VECTOR;
-            }
-            data[i] = tpl.car();
-            Object cdr = tpl.cdr();
-            if (RPairList.isNull(cdr)) {
-                break;
-            } else {
-                tpl = (RPairList) cdr;
-            }
-            i++;
-        }
-        return RDataFactory.createList(data, RDataFactory.createStringVector(names, complete));
+        return pl.toRList();
     }
 
     @Specialization

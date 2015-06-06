@@ -25,16 +25,19 @@
 static jmethodID Rf_asIntegerMethodID;
 static jmethodID Rf_asRealMethodID;
 static jmethodID Rf_asCharMethodID;
+static jmethodID Rf_PairToVectorListMethodID;
 
 void init_typecoerce(JNIEnv *env) {
 	Rf_asIntegerMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_asInteger", "(Ljava/lang/Object;)I", 1);
 	Rf_asRealMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_asReal", "(Ljava/lang/Object;)D", 1);
 	Rf_asCharMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_asChar", "(Ljava/lang/Object;)Ljava/lang/String;", 1);
+	Rf_PairToVectorListMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_PairToVectorList", "(Ljava/lang/Object;)Ljava/lang/Object;", 1);
 }
 
 SEXP Rf_asChar(SEXP x){
 	JNIEnv *thisenv = getEnv();
-	return (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_asCharMethodID, x);
+	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_asCharMethodID, x);
+	return mkGlobalRef(thisenv, result);
 }
 
 SEXP Rf_coerceVector(SEXP x, SEXPTYPE t){
@@ -42,7 +45,9 @@ SEXP Rf_coerceVector(SEXP x, SEXPTYPE t){
 }
 
 SEXP Rf_PairToVectorList(SEXP x){
-	unimplemented("Rf_PairToVectorList");
+	JNIEnv *thisenv = getEnv();
+	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_PairToVectorListMethodID, x);
+	return mkGlobalRef(thisenv, result);
 }
 
 SEXP Rf_VectorToPairList(SEXP x){
