@@ -36,6 +36,7 @@ com.oracle.truffle.r.native/library/stats/src/port.h,no.copyright
 com.oracle.truffle.r.native/library/stats/src/stats.h,no.copyright
 com.oracle.truffle.r.native/library/stats/src/statsR.h,no.copyright
 com.oracle.truffle.r.native/library/stats/src/ts.h,no.copyright
+com.oracle.truffle.r.native/library/tools/src/gramRd.c,no.copyright
 com.oracle.truffle.r.native/library/tools/src/init.c,no.copyright
 com.oracle.truffle.r.native/library/tools/src/tools.h,no.copyright
 com.oracle.truffle.r.native/library/utils/src/init.c,no.copyright
