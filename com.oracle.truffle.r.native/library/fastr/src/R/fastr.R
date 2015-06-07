@@ -92,8 +92,8 @@ fastr.context.eval <- function(contexts, exprs, par=FALSE) {
 	invisible(NULL)
 }
 
-fastr_context.pareval <- function(contexts, exprs) {
-	fastr_context.eval(contexts, exprs, par=TRUE)
+fastr.context.pareval <- function(contexts, exprs) {
+	fastr.context.eval(contexts, exprs, par=TRUE)
 }
 
 
