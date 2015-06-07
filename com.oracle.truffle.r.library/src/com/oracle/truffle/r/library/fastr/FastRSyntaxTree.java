@@ -20,16 +20,19 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.builtin.fastr;
+package com.oracle.truffle.r.library.fastr;
 
+import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-public class FastRSyntaxTree {
-    public static Object printTree(RFunction function, byte source) {
+public abstract class FastRSyntaxTree extends RExternalBuiltinNode.Arg2 {
+    @Specialization
+    protected RNull printTree(RFunction function, byte source) {
         boolean showSource = RRuntime.fromLogical(source);
         Node root = function.getTarget().getRootNode();
         RSyntaxNode.accept(root, 0, new RSyntaxNodeVisitor() {
@@ -59,6 +62,12 @@ public class FastRSyntaxTree {
             }
         });
         return RNull.instance;
+    }
+
+    @SuppressWarnings("unused")
+    @Fallback
+    protected Object fallback(Object a1, Object a2) {
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
     }
 
 }

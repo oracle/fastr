@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,28 +20,29 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.builtin.fastr;
+package com.oracle.truffle.r.library.fastr;
 
+import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.nodes.*;
-import com.oracle.truffle.r.nodes.control.SequenceNode;
+import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-import java.util.List;
-
-public class FastRTreeStats {
-
-    public static Object seqLengths(RFunction function) {
-        List<SequenceNode> list = NodeUtil.findAllNodeInstances(function.getTarget().getRootNode(), SequenceNode.class);
-        int[] counts = new int[11];
-        for (SequenceNode s : list) {
-            int l = s.getSequence().length;
-            if (l > counts.length - 1) {
-                counts[counts.length - 1]++;
-            } else {
-                counts[l]++;
-            }
+public abstract class FastRTree extends RExternalBuiltinNode.Arg2 {
+    @Specialization
+    protected String printTree(RFunction function, byte verbose) {
+        RootNode root = function.getTarget().getRootNode();
+        if (verbose == RRuntime.LOGICAL_TRUE) {
+            return NodeUtil.printTreeToString(root);
+        } else {
+            return NodeUtil.printCompactTreeToString(root);
         }
-        return RDataFactory.createIntVector(counts, RDataFactory.COMPLETE_VECTOR);
+    }
+
+    @SuppressWarnings("unused")
+    @Fallback
+    protected Object fallback(Object a1, Object a2) {
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
     }
 
 }

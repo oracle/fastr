@@ -20,13 +20,17 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.builtin.fastr;
+package com.oracle.truffle.r.library.fastr;
+
+import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.runtime.data.*;
 
 /**
  * Just a convenient way to inspect values in the Java debugger from the R shell.
  */
-class FastRInspect {
-    static Object inspect(Object[] object) {
-        return object;
+public final class FastRInspect extends RExternalBuiltinNode {
+    @Override
+    public Object call(RArgsValuesAndNames args) {
+        return RNull.instance;
     }
 }

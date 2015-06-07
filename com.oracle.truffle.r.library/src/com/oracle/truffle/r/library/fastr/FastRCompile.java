@@ -20,15 +20,17 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.builtin.fastr;
+package com.oracle.truffle.r.library.fastr;
 
 import java.lang.reflect.*;
 
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-public class FastRCompile {
+public abstract class FastRCompile extends RExternalBuiltinNode.Arg2 {
 
     private static final class Compiler {
         private final Class<?> optimizedCallTarget;
@@ -66,17 +68,24 @@ public class FastRCompile {
 
     private static final Compiler compiler = Compiler.getCompiler();
 
-    public static byte compileFunction(RFunction function, byte background) {
+    @Specialization
+    protected byte compileFunction(RFunction function, byte background) {
         if (compiler != null) {
             try {
                 if (compiler.compile(function.getTarget(), background == RRuntime.LOGICAL_TRUE)) {
                     return RRuntime.LOGICAL_TRUE;
                 }
             } catch (InvocationTargetException | IllegalAccessException e) {
-                throw RError.error(null, RError.Message.GENERIC, e.toString());
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, e.toString());
             }
         }
         return RRuntime.LOGICAL_FALSE;
+    }
+
+    @SuppressWarnings("unused")
+    @Fallback
+    protected Object fallback(Object a1, Object a2) {
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
     }
 
 }

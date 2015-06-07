@@ -21,7 +21,7 @@
 # questions.
 #
 
-fastr.createcc <- function(func) .FastR(.NAME="createcc", func)
+fastr.createcc <- function(func) invisible(.FastR(.NAME="createcc", func))
 
 fastr.getcc <- function(func) .FastR(.NAME="getcc", func)
 
@@ -31,40 +31,45 @@ fastr.dumptrees <- function(func, igvDump=FALSE, verbose=FALSE) .FastR(.NAME="du
 
 fastr.source <- function(func) .FastR(.NAME="source", func)
 
-fastr.syntaxtree <- function(func, source=FALSE) .FastR(.NAME="syntaxtree", func, source)
+fastr.syntaxtree <- function(func, source=FALSE) invisible(.FastR(.NAME="syntaxtree", func, source))
 
 fastr.tree <- function(func, verbose=FALSE) .FastR(.NAME="tree", func, verbose)
 
 fastr.typeof <- function(x) .FastR(.NAME="typeof", x)
 
-fastr.stacktrace <- function(print.frame.contents=TRUE) .FastR(.NAME="stacktrace", print.frame.contents)
+fastr.stacktrace <- function(print.frame.contents=TRUE) invisible(.FastR(.NAME="stacktrace", print.frame.contents=FALSE))
 
-fastr.debug <- function(element) .FastR(.NAME="debug", element)
+fastr.debug <- function(element) invisible(.FastR(.NAME="debug", element))
 
-fastr.inspect <- function(...) .FastR(.NAME="inspect", ...)
+fastr.inspect <- function(...) invisible(.FastR(.NAME="inspect", ...))
 
 fastr.createpkgsources <- function(pkgs = NULL) {
     if (!length(pkgs)) {
         pkgs <- sub("package:", "", grep("package:", search(), value=TRUE, fixed=TRUE), fixed=TRUE)
     }
     for (pkg in pkgs) {
-    	ns <- asNamespace(pkg)
-    	for (n in ls(envir=ns, all.names=TRUE)) {
-    	    .FastR(.NAME="pkgsource.pre", pkg, n)
-    	     val <- get(n, ns)
-    	    .FastR(.NAME="pkgsource.post", pkg, n, val)
-    	}
+		.createpkgsource(pkg)
     }
 	.FastR(.NAME="pkgsource.done", pkg)
 	invisible(NULL)
 }
 
-fastr.createpkgsource <- function(pkg, name) {
+.createpkgsource <- function(pkg, pattern) {
 	ns <- asNamespace(pkg)
-	n <- ls(pattern=name, envir=ns, all.names=TRUE)
-	.FastR(.NAME="pkgsource.pre", pkg, n)
-	val <- get(n, ns)
-	.FastR(.NAME="pkgsource.post", pkg, n, val)
+	if (missing(pattern)) {
+		names <- ls(envir=ns, all.names=TRUE)
+	} else {
+		names <- ls(pattern=name, envir=ns, all.names=TRUE)
+	}
+	for (n in names) {
+		.FastR(.NAME="pkgsource.pre", pkg, n)
+		val <- get(n, ns)
+		.FastR(.NAME="pkgsource.post", pkg, n, val)
+	}
+}
+
+fastr.createpkgsource <- function(pkg, name) {
+	.createpkgsource(pkg, name)
 	.FastR(.NAME="pkgsource.done", pkg)
 	invisible(NULL)
 }

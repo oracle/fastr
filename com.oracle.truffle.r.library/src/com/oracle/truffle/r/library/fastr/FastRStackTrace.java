@@ -20,15 +20,26 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.builtin.fastr;
+package com.oracle.truffle.r.library.fastr;
 
+import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.data.*;
 
-public class FastRStackTrace {
+public abstract class FastRStackTrace extends RExternalBuiltinNode.Arg1 {
 
-    public static Object printStackTrace(byte printFrameContents) {
+    @Specialization
+    protected RNull printStackTrace(byte printFrameContents) {
         boolean printFrameSlots = printFrameContents == RRuntime.LOGICAL_TRUE;
         RContext.getInstance().getConsoleHandler().print(Utils.createStackTrace(printFrameSlots));
-        return RRuntime.NULL;
+        return RNull.instance;
     }
+
+    @SuppressWarnings("unused")
+    @Fallback
+    protected Object fallback(Object a1) {
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "print.frame.contents");
+    }
+
 }

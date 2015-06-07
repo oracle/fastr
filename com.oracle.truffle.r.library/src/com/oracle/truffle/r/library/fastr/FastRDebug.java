@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,21 +20,28 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.builtin.fastr;
+package com.oracle.truffle.r.library.fastr;
 
-import com.oracle.truffle.api.nodes.*;
+import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.options.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.*;
 
-public class FastRTree {
-
-    public static Object printTree(RFunction function, byte verbose) {
-        RootNode root = function.getTarget().getRootNode();
-        if (verbose == RRuntime.LOGICAL_TRUE) {
-            return NodeUtil.printTreeToString(root);
-        } else {
-            return NodeUtil.printCompactTreeToString(root);
+public abstract class FastRDebug extends RExternalBuiltinNode.Arg1 {
+    @Specialization
+    protected RNull debug(RAbstractStringVector vec) {
+        for (int i = 0; i < vec.getLength(); i++) {
+            FastROptions.debugUpdate(vec.getDataAt(i));
         }
+        return RNull.instance;
+    }
+
+    @SuppressWarnings("unused")
+    @Fallback
+    protected Object fallback(Object a1) {
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "element");
     }
 
 }

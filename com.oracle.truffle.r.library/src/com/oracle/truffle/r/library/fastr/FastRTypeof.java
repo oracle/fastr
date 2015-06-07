@@ -20,27 +20,14 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.builtin.base;
+package com.oracle.truffle.r.library.fastr;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.builtin.fastr.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
 
-/**
- * This is a FastR-specific primitive that supports the extensions in the {@code fastr} package.
- */
-@RBuiltin(name = ".FastR", kind = RBuiltinKind.PRIMITIVE, parameterNames = {".NAME", "..."})
-public abstract class FastR extends RBuiltinNode {
+public abstract class FastRTypeof extends RExternalBuiltinNode.Arg1 {
     @Specialization
-    @TruffleBoundary
-    protected Object doFastR(RAbstractStringVector name, RArgsValuesAndNames args) {
-        controlVisibility();
-        Object[] argValues = args.getArguments();
-        return FastRFunctionEntry.invoke(name.getDataAt(0), argValues, this);
+    protected String typeof(Object x) {
+        return x.getClass().getSimpleName();
     }
-
 }

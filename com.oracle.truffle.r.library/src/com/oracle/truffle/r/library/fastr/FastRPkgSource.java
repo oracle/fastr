@@ -20,26 +20,38 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.builtin.fastr;
+package com.oracle.truffle.r.library.fastr;
 
+import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.instrument.*;
 
 public class FastRPkgSource {
 
-    public static RNull preLoad(String pkg, String fname) {
-        RPackageSource.preLoad(pkg, fname);
-        return RNull.instance;
+    public abstract static class PreLoad extends RExternalBuiltinNode.Arg2 {
+        @Specialization
+        protected RNull preLoad(RAbstractStringVector pkg, RAbstractStringVector fname) {
+            RPackageSource.preLoad(pkg.getDataAt(0), fname.getDataAt(0));
+            return RNull.instance;
+        }
     }
 
-    public static RNull postLoad(String pkg, String fname, Object val) {
-        RPackageSource.postLoad(pkg, fname, val);
-        return RNull.instance;
+    public abstract static class PostLoad extends RExternalBuiltinNode.Arg3 {
+        @Specialization
+        protected RNull postLoad(RAbstractStringVector pkg, RAbstractStringVector fname, Object val) {
+            RPackageSource.postLoad(pkg.getDataAt(0), fname.getDataAt(0), val);
+            return RNull.instance;
+        }
     }
 
-    public static RNull done() {
-        RPackageSource.saveMap();
-        return RNull.instance;
+    public abstract static class Done extends RExternalBuiltinNode.Arg1 {
+        @Specialization
+        protected RNull done(@SuppressWarnings("unused") RAbstractStringVector pkg) {
+            RPackageSource.saveMap();
+            return RNull.instance;
+        }
     }
 
 }

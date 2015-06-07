@@ -20,14 +20,16 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.builtin.fastr;
+package com.oracle.truffle.r.library.fastr;
 
 import java.io.*;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.nodes.NodeFieldAccessor.NodeFieldKind;
 import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
@@ -35,12 +37,13 @@ import com.oracle.truffle.r.runtime.data.*;
  * Dump Truffle trees to a listening IGV instance, if any. If igvDump == FALSE, dumps tree to
  * .dot-file in the cwd
  */
-public class FastRDumpTrees {
+public abstract class FastRDumpTrees extends RExternalBuiltinNode.Arg3 {
 
     private static final int FUNCTION_LENGTH_LIMIT = 40;
     private static final String DOT_TREE_FILE_NAME = "tree.dot";
 
-    public static Object dump(RFunction function, byte igvDump, byte verbose) {
+    @Specialization
+    protected RNull dump(RFunction function, byte igvDump, byte verbose) {
 
         RootNode root = function.getTarget().getRootNode();
         if (igvDump == RRuntime.LOGICAL_FALSE) {
@@ -53,6 +56,12 @@ public class FastRDumpTrees {
         String source = ((RRootNode) root).getSourceCode();
         Utils.dumpFunction("dump: " + (source.length() <= FUNCTION_LENGTH_LIMIT ? source : source.substring(0, FUNCTION_LENGTH_LIMIT) + "..."), function);
         return RNull.instance;
+    }
+
+    @SuppressWarnings("unused")
+    @Fallback
+    protected Object fallback(Object a1, Object a2, Object a3) {
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
     }
 
     /*

@@ -20,18 +20,22 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.builtin.fastr;
+package com.oracle.truffle.r.library.fastr;
 
 import java.util.*;
 
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.impl.*;
 import com.oracle.truffle.api.nodes.*;
+import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-public class FastRSource {
+public abstract class FastRSource extends RExternalBuiltinNode.Arg1 {
 
-    public static String debugSource(RFunction f) {
+    @Specialization
+    protected String debugSource(RFunction f) {
         CallTarget ct = f.getTarget();
         if (!(ct instanceof DefaultCallTarget)) {
             return "<no default call target>";
@@ -45,6 +49,12 @@ public class FastRSource {
         appendChildrenSource(root, sb, 1);
 
         return sb.toString();
+    }
+
+    @SuppressWarnings("unused")
+    @Fallback
+    protected Object fallback(Object a1) {
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "func");
     }
 
     private static void appendChildrenSource(Node parent, StringBuilder sb, int indentationLevel) {
