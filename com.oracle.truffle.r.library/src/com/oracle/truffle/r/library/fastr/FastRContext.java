@@ -62,7 +62,7 @@ public class FastRContext {
 
     public abstract static class Eval extends RExternalBuiltinNode.Arg3 {
         @Specialization
-        protected RNull eval(RIntVector contexts, RStringVector exprs, byte par) {
+        protected RNull eval(RIntVector contexts, RAbstractStringVector exprs, byte par) {
             if (RRuntime.fromLogical(par)) {
                 RContext.EvalThread[] threads = new RContext.EvalThread[contexts.getLength()];
                 for (int i = 0; i < threads.length; i++) {

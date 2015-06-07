@@ -107,7 +107,6 @@ final class REngine implements RContext.Engine {
     private REngine(RContext context) {
         this.context = context;
         this.childTimes = new long[]{0, 0};
-        this.globalFrame = RRuntime.createNonFunctionFrame().materialize();
     }
 
     static REngine create(RContext context) {
@@ -116,6 +115,7 @@ final class REngine implements RContext.Engine {
     }
 
     public void activate() {
+        this.globalFrame = RRuntime.createNonFunctionFrame().materialize();
         this.startTime = System.nanoTime();
         context.installCustomClassState(RContext.ClassStateKind.REnvironment, new REnvironment.ClassStateFactory().newContext(context, globalFrame));
         if (context.getKind() == RContext.Kind.SHARED_NOTHING) {
