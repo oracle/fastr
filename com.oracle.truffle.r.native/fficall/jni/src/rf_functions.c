@@ -21,6 +21,7 @@
  * questions.
  */
 #include "rffiutils.h"
+#include <string.h>
 
 // Most of the functions with a Rf_ prefix
 // TODO Lots missing yet
@@ -151,12 +152,12 @@ SEXP Rf_install(const char *name) {
 
 Rboolean Rf_isNull(SEXP s) {
 	JNIEnv *thisenv = getEnv();
-	return (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_isNullMethodID, s);
+	return (*thisenv)->CallStaticIntMethod(thisenv, CallRFFIHelperClass, Rf_isNullMethodID, s);
 }
 
 Rboolean Rf_isString(SEXP s) {
 	JNIEnv *thisenv = getEnv();
-	return (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_isStringMethodID, s);
+	return (*thisenv)->CallStaticIntMethod(thisenv, CallRFFIHelperClass, Rf_isStringMethodID, s);
 
 }
 
