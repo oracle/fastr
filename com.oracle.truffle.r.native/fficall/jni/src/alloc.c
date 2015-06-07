@@ -10,6 +10,7 @@
  * All rights reserved.
  */
 #include "rffiutils.h"
+#include <stdlib.h>
 
 void init_alloc(JNIEnv *env) {
 

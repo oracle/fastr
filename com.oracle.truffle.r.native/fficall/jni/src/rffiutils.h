@@ -47,6 +47,8 @@ void init_typecoerce(JNIEnv *env);
 void init_attrib(JNIEnv *env);
 void init_misc(JNIEnv *env);
 void init_vectoraccess(JNIEnv *env);
+void init_listaccess(JNIEnv *env);
+void init_utils(JNIEnv *env);
 
 extern jclass RDataFactoryClass;
 extern jclass CallRFFIHelperClass;
