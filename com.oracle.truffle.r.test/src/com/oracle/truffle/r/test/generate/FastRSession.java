@@ -108,7 +108,7 @@ public final class FastRSession implements RSession {
 
     public RContext createTestContext() {
         create();
-        RContext context = RContextFactory.createSharedPackages(main, new String[0], consoleHandler).activate();
+        RContext context = RContextFactory.createShareParentReadWrite(main, new String[0], consoleHandler).activate();
         context.setSystemTimeZone(TimeZone.getTimeZone("CET"));
         return context;
     }

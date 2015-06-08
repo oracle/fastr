@@ -55,8 +55,8 @@ import com.oracle.truffle.r.runtime.rng.*;
  *
  * The life-cycle of a {@link RContext} is:
  * <ol>
- * <li>created: {@link #createSharedNothing(RContext, String[], ConsoleHandler)} or
- * {@link #createSharedPackages(RContext, String[], ConsoleHandler)}</li>
+ * <li>created: {@link #createShareNothing(RContext, String[], ConsoleHandler)} or
+ * {@link #createShareParentReadOnly(RContext, String[], ConsoleHandler)}</li>
  * <li>activated: {@link #activate()}</li>
  * <li>destroyed: {@link #destroy()}</li>
  * </ol>
@@ -540,9 +540,9 @@ public final class RContext extends ExecutionContext {
     @CompilationFinal private static RContext singleContext;
 
     private RContext(Kind kind, RContext parent, String[] commandArgs, ConsoleHandler consoleHandler) {
-        if (kind == Kind.SHARE_PARENT_RO) {
+        if (kind == Kind.SHARE_PARENT_RW) {
             if (parent.sharedChild != null) {
-                throw RError.error(RError.Message.GENERIC, "can't have multiple active SHARED_PACKAGES contexts");
+                throw RError.error(RError.Message.GENERIC, "can't have multiple active SHARED_PARENT_RW contexts");
             }
             parent.sharedChild = this;
         }
@@ -601,7 +601,7 @@ public final class RContext extends ExecutionContext {
      * @param commandArgs the command line arguments passed this R session
      * @param consoleHandler a {@link ConsoleHandler} for output
      */
-    public static RContext createSharedNothing(RContext parent, String[] commandArgs, ConsoleHandler consoleHandler) {
+    public static RContext createShareNothing(RContext parent, String[] commandArgs, ConsoleHandler consoleHandler) {
         RContext result = create(parent, Kind.SHARE_NOTHING, commandArgs, consoleHandler);
         return result;
     }
@@ -613,21 +613,21 @@ public final class RContext extends ExecutionContext {
      * @param commandArgs the command line arguments passed this R session
      * @param consoleHandler a {@link ConsoleHandler} for output
      */
-    public static RContext createSharedPackages(RContext parent, String[] commandArgs, ConsoleHandler consoleHandler) {
+    public static RContext createShareParentReadOnly(RContext parent, String[] commandArgs, ConsoleHandler consoleHandler) {
         RContext result = create(parent, Kind.SHARE_PARENT_RO, commandArgs, consoleHandler);
         return result;
 
     }
 
     /**
-     * Create a {@link Kind#SHARE_PARENT_RO} {@link RContext}.
+     * Create a {@link Kind#SHARE_PARENT_RW} {@link RContext}.
      *
      * @param parent parent context with which to shgre
      * @param commandArgs the command line arguments passed this R session
      * @param consoleHandler a {@link ConsoleHandler} for output
      */
-    public static RContext createSharedCode(RContext parent, String[] commandArgs, ConsoleHandler consoleHandler) {
-        RContext result = create(parent, Kind.SHARE_PARENT_RO, commandArgs, consoleHandler);
+    public static RContext createShareParentReadWrite(RContext parent, String[] commandArgs, ConsoleHandler consoleHandler) {
+        RContext result = create(parent, Kind.SHARE_PARENT_RW, commandArgs, consoleHandler);
         return result;
 
     }
@@ -661,7 +661,7 @@ public final class RContext extends ExecutionContext {
             }
         }
         installCustomClassState(ClassStateKind.StdConnections, new StdConnections().newContext(this, consoleHandler));
-        if (kind == Kind.SHARE_PARENT_RO) {
+        if (kind == Kind.SHARE_PARENT_RW) {
             parent.sharedChild = this;
         }
         // The environment state installation is handled by the engine
@@ -676,7 +676,7 @@ public final class RContext extends ExecutionContext {
         for (ClassStateKind classStateKind : ClassStateKind.VALUES) {
             classStateKind.factory.beforeDestroy(this, contextState[classStateKind.ordinal()]);
         }
-        if (kind == Kind.SHARE_PARENT_RO) {
+        if (kind == Kind.SHARE_PARENT_RW) {
             parent.sharedChild = null;
         }
         engine = null;

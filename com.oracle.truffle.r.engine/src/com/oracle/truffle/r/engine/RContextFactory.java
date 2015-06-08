@@ -66,13 +66,13 @@ public class RContextFactory {
         }
     }
 
-    public static RContext createSharedPackages(RContext parent, String[] commandArgs, ConsoleHandler consoleHandler) {
-        RContext context = RContext.createSharedPackages(parent, commandArgs, consoleHandler);
+    public static RContext createShareParentReadWrite(RContext parent, String[] commandArgs, ConsoleHandler consoleHandler) {
+        RContext context = RContext.createShareParentReadWrite(parent, commandArgs, consoleHandler);
         return context;
     }
 
-    public static RContext createSharedCode(RContext parent, String[] commandArgs, ConsoleHandler consoleHandler) {
-        RContext context = RContext.createSharedCode(parent, commandArgs, consoleHandler);
+    public static RContext createShareParentReadOnly(RContext parent, String[] commandArgs, ConsoleHandler consoleHandler) {
+        RContext context = RContext.createShareParentReadOnly(parent, commandArgs, consoleHandler);
         return context;
     }
 
@@ -80,7 +80,7 @@ public class RContextFactory {
      * Create the initial context with no parent.
      */
     public static RContext createInitial(String[] commandArgs, ConsoleHandler consoleHandler) {
-        RContext context = RContext.createSharedNothing(null, commandArgs, consoleHandler);
+        RContext context = RContext.createShareNothing(null, commandArgs, consoleHandler);
         return context;
     }
 

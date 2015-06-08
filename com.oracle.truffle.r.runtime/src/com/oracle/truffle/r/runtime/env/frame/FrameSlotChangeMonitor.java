@@ -350,7 +350,7 @@ public final class FrameSlotChangeMonitor implements RContext.StateFactory {
     }
 
     public ContextState newContext(RContext context, Object... objects) {
-        if (context.getKind() == RContext.Kind.SHARE_PARENT_RO) {
+        if (context.getKind() == RContext.Kind.SHARE_PARENT_RW) {
             return context.getParent().getThisContextState(RContext.ClassStateKind.FrameSlotChangeMonitor);
         } else {
             return new ContextStateImpl();

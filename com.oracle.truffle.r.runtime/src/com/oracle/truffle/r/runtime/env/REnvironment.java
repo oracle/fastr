@@ -104,7 +104,7 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
         private final MaterializedFrame globalFrame;
         private Base baseEnv;
         private REnvironment namespaceRegistry;
-        private MaterializedFrame parentGlobalFrame; // SHARED_PACKAGES only
+        private MaterializedFrame parentGlobalFrame; // SHARED_PARENT_RW only
 
         ContextStateImpl(MaterializedFrame globalFrame, SearchPath searchPath) {
             this.globalFrame = globalFrame;
@@ -303,11 +303,11 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
     }
 
     /**
-     * {@link RContext} creation, with {@code globalFrame}. If this is a {@code SHARED_NOTHING}
+     * {@link RContext} creation, with {@code globalFrame}. If this is a {@code SHARE_NOTHING}
      * context we only create the minimal search path with no packages as the package loading is
-     * handled by the engine. For a {@code SHARED_PACKAGES} context, we keep the existing search
-     * path, just replacing the {@code globalenv} component. For a {@code SHARED_CODE} context we
-     * make shallow copies of the package environments.
+     * handled by the engine. For a {@code SHARE_PARENT_RW} context, we keep the existing search
+     * path, just replacing the {@code globalenv} component. For a {@code SHARE_PARENT_RO} context
+     * we make shallow copies of the package environments.
      *
      * N.B.Calling {@link RContext#getREnvironmentState()} accesses the new, as yet uninitialized
      * {@link ContextStateImpl} object
@@ -362,7 +362,7 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
             }
 
             case SHARE_NOTHING: {
-                // SHARED_NOTHING: baseInitialize takes care of everything
+                // SHARE_NOTHING: baseInitialize takes care of everything
                 return new ContextStateImpl(globalFrame, new SearchPath());
             }
 
@@ -373,7 +373,7 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
 
     private static void beforeDestroyContext(RContext context, RContext.ContextState state) {
         switch (context.getKind()) {
-            case SHARE_PARENT_RO: {
+            case SHARE_PARENT_RW: {
                 /*
                  * Since we updated the parent's baseEnv with the new .GlobalEnv value we need to
                  * restore that and the frame in NSBaseMaterializedFrame.
