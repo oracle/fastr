@@ -314,7 +314,7 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
      */
     private static ContextState createContext(RContext context, MaterializedFrame globalFrame) {
         switch (context.getKind()) {
-            case SHARED_PACKAGES: {
+            case SHARE_PARENT_RW: {
                 /*
                  * To share the existing package structure, we create the new globalEnv with the
                  * parent of the previous global env. Then we create a copy of the SearchPath and
@@ -336,7 +336,7 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
                 return result;
             }
 
-            case SHARED_CODE: {
+            case SHARE_PARENT_RO: {
                 /* We make shallow copies of all the default package environments in the parent */
                 ContextStateImpl parentState = (ContextStateImpl) context.getParent().getThisContextState(RContext.ClassStateKind.REnvironment);
                 SearchPath parentSearchPath = parentState.getSearchPath();
@@ -361,7 +361,7 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
                 return new ContextStateImpl(globalFrame, newSearchPath, newBaseEnv, newNamespaceRegistry);
             }
 
-            case SHARED_NOTHING: {
+            case SHARE_NOTHING: {
                 // SHARED_NOTHING: baseInitialize takes care of everything
                 return new ContextStateImpl(globalFrame, new SearchPath());
             }
@@ -373,7 +373,7 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
 
     private static void beforeDestroyContext(RContext context, RContext.ContextState state) {
         switch (context.getKind()) {
-            case SHARED_PACKAGES: {
+            case SHARE_PARENT_RO: {
                 /*
                  * Since we updated the parent's baseEnv with the new .GlobalEnv value we need to
                  * restore that and the frame in NSBaseMaterializedFrame.

@@ -153,36 +153,36 @@ public final class RContext extends ExecutionContext {
          * Essentially a clean restart, modulo the basic VM-wide initialization. which does include,
          * for example, reading the external environment variables. I.e., it is not a goal to create
          * a multi-user environment with different external inputs. This kind of context can be used
-         * in a parallel computation. The inital context is always of this kind. The intent is that
-         * all mutable state is localized to the isolate, which may not be completely achievable.
+         * in a parallel computation. The initial context is always of this kind. The intent is that
+         * all mutable state is localized to the context, which may not be completely achievable.
          * For example, shared native libraries are assumed to contain no mutable state and be
          * re-entrant.
          */
-        SHARED_NOTHING,
+        SHARE_NOTHING,
 
         /**
-         * Shares the set of loaded packages of a givenparent at the time the context is created.
-         * Only useful when there is a priori knowledge on the evaluation that the context will be
-         * used for. Cannot safely be used for parallel context evaluation. Must be created as a
-         * child of an existing parent context of type {@link #SHARED_NOTHING} or {
-         * {@link #SHARED_CODE} and only one such child is allowed. (Strictly speaking the invariant
-         * should be only one active child, but the implementation enforces it at creation time).
-         * Evidently any changes made to the shared environment, e.g., loading a package, affect the
-         * parent.
+         * Shares the set of loaded packages of the parent context at the time the context is
+         * created. Only useful when there is a priori knowledge on the evaluation that the context
+         * will be used for. Cannot safely be used for parallel context evaluation. Must be created
+         * as a child of an existing parent context of type {@link #SHARE_NOTHING} or
+         * {@link #SHARE_PARENT_RO} and only one such child is allowed. (Strictly speaking the
+         * invariant should be only one active child, but the implementation enforces it at creation
+         * time). Evidently any changes made to the shared environment, e.g., loading a package,
+         * affect the parent.
          */
-        SHARED_PACKAGES,
+        SHARE_PARENT_RW,
 
         /**
-         * Intermediate between {@link #SHARED_NOTHING} and {@link #SHARED_PACKAGES}, this is
-         * similar to the standard shared code/copied data model provided by operating systems,
-         * although the code/data distinction isn't completely applicable to a language like R.
-         * Unlike {@link #SHARED_NOTHING}, where the ASTs for the functions in the default packages
-         * are distinct copies in each context, in this kind of context, they are shared. Strictly
+         * Intermediate between {@link #SHARE_NOTHING} and {@link #SHARE_PARENT_RW}, this is similar
+         * to the standard shared code/copied data model provided by operating systems, although the
+         * code/data distinction isn't completely applicable to a language like R. Unlike
+         * {@link #SHARE_NOTHING}, where the ASTs for the functions in the default packages are
+         * distinct copies in each context, in this kind of context, they are shared. Strictly
          * speaking, the bindings of R functions are shared, and this is achieved by creating a
          * shallow copy of the environments associated with the default packages of the parent
          * context at the time the context is created.
          */
-        SHARED_CODE,
+        SHARE_PARENT_RO,
     }
 
     /**
@@ -201,7 +201,7 @@ public final class RContext extends ExecutionContext {
         /**
          * A state factory may want to snapshot the state of the context just after the basic system
          * is initialized, in which case they can override this method. N.B. This is only invoked
-         * for {@link Kind#SHARED_NOTHING} contexts. The definition of "system initialized" is that
+         * for {@link Kind#SHARE_NOTHING} contexts. The definition of "system initialized" is that
          * the default packages have been loaded, profiles evaluated and {@code .First, First.Sys}
          * executed.
          */
@@ -540,7 +540,7 @@ public final class RContext extends ExecutionContext {
     @CompilationFinal private static RContext singleContext;
 
     private RContext(Kind kind, RContext parent, String[] commandArgs, ConsoleHandler consoleHandler) {
-        if (kind == Kind.SHARED_PACKAGES) {
+        if (kind == Kind.SHARE_PARENT_RO) {
             if (parent.sharedChild != null) {
                 throw RError.error(RError.Message.GENERIC, "can't have multiple active SHARED_PACKAGES contexts");
             }
@@ -595,39 +595,39 @@ public final class RContext extends ExecutionContext {
     }
 
     /**
-     * Create a {@link Kind#SHARED_NOTHING} {@link RContext}.
+     * Create a {@link Kind#SHARE_NOTHING} {@link RContext}.
      *
      * @param parent if non-null {@code null} the parent creating the context
      * @param commandArgs the command line arguments passed this R session
      * @param consoleHandler a {@link ConsoleHandler} for output
      */
     public static RContext createSharedNothing(RContext parent, String[] commandArgs, ConsoleHandler consoleHandler) {
-        RContext result = create(parent, Kind.SHARED_NOTHING, commandArgs, consoleHandler);
+        RContext result = create(parent, Kind.SHARE_NOTHING, commandArgs, consoleHandler);
         return result;
     }
 
     /**
-     * Create a {@link Kind#SHARED_PACKAGES} {@link RContext}.
+     * Create a {@link Kind#SHARE_PARENT_RO} {@link RContext}.
      *
      * @param parent parent context with which to shgre
      * @param commandArgs the command line arguments passed this R session
      * @param consoleHandler a {@link ConsoleHandler} for output
      */
     public static RContext createSharedPackages(RContext parent, String[] commandArgs, ConsoleHandler consoleHandler) {
-        RContext result = create(parent, Kind.SHARED_PACKAGES, commandArgs, consoleHandler);
+        RContext result = create(parent, Kind.SHARE_PARENT_RO, commandArgs, consoleHandler);
         return result;
 
     }
 
     /**
-     * Create a {@link Kind#SHARED_CODE} {@link RContext}.
+     * Create a {@link Kind#SHARE_PARENT_RO} {@link RContext}.
      *
      * @param parent parent context with which to shgre
      * @param commandArgs the command line arguments passed this R session
      * @param consoleHandler a {@link ConsoleHandler} for output
      */
     public static RContext createSharedCode(RContext parent, String[] commandArgs, ConsoleHandler consoleHandler) {
-        RContext result = create(parent, Kind.SHARED_CODE, commandArgs, consoleHandler);
+        RContext result = create(parent, Kind.SHARE_PARENT_RO, commandArgs, consoleHandler);
         return result;
 
     }
@@ -661,7 +661,7 @@ public final class RContext extends ExecutionContext {
             }
         }
         installCustomClassState(ClassStateKind.StdConnections, new StdConnections().newContext(this, consoleHandler));
-        if (kind == Kind.SHARED_PACKAGES) {
+        if (kind == Kind.SHARE_PARENT_RO) {
             parent.sharedChild = this;
         }
         // The environment state installation is handled by the engine
@@ -676,7 +676,7 @@ public final class RContext extends ExecutionContext {
         for (ClassStateKind classStateKind : ClassStateKind.VALUES) {
             classStateKind.factory.beforeDestroy(this, contextState[classStateKind.ordinal()]);
         }
-        if (kind == Kind.SHARED_PACKAGES) {
+        if (kind == Kind.SHARE_PARENT_RO) {
             parent.sharedChild = null;
         }
         engine = null;

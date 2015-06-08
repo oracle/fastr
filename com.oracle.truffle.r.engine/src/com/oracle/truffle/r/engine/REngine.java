@@ -118,7 +118,7 @@ final class REngine implements RContext.Engine {
         this.globalFrame = RRuntime.createNonFunctionFrame().materialize();
         this.startTime = System.nanoTime();
         context.installCustomClassState(RContext.ClassStateKind.REnvironment, new REnvironment.ClassStateFactory().newContext(context, globalFrame));
-        if (context.getKind() == RContext.Kind.SHARED_NOTHING) {
+        if (context.getKind() == RContext.Kind.SHARE_NOTHING) {
             initializeShared();
         }
     }
