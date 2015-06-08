@@ -48,6 +48,12 @@ public abstract class FastR extends RBuiltinNode {
         return builtin.call(args);
     }
 
+    @SuppressWarnings("unused")
+    @Fallback
+    protected Object doFastR(Object name, Object args) {
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
+    }
+
     protected RExternalBuiltinNode lookupName(RAbstractStringVector name) {
         switch (name.getDataAt(0)) {
             case "createcc":
