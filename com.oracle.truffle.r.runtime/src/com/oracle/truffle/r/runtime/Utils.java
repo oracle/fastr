@@ -761,10 +761,9 @@ public final class Utils {
     public static void transitionStateSlowPath(Object o) {
         if (o instanceof RShareable) {
             RShareable shareable = (RShareable) o;
-            if (shareable.isShared()) {
-            } else if (shareable.isTemporary()) {
+            if (shareable.isTemporary()) {
                 shareable.markNonTemporary();
-            } else {
+            } else if (!shareable.isShared()) {
                 shareable.makeShared();
             }
         }
