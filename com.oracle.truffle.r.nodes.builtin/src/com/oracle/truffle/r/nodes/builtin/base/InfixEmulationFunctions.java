@@ -387,6 +387,8 @@ public class InfixEmulationFunctions {
 
         private static final String NAME = "[[";
 
+        public abstract Object execute(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames inds, RAbstractLogicalVector exactVec, RAbstractLogicalVector dropVec);
+
         @Child private UseMethodInternalNode dcn;
 
         @Override

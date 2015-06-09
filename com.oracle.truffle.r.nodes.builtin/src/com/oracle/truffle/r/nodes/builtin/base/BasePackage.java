@@ -350,6 +350,7 @@ public class BasePackage extends RBuiltinPackage {
         add(Ls.class, LsNodeGen::create);
         add(MakeNames.class, MakeNamesNodeGen::create);
         add(MakeUnique.class, MakeUniqueNodeGen::create);
+        add(Mapply.class, MapplyNodeGen::create);
         add(MatMult.class, MatMultNodeGen::create);
         add(Match.class, MatchNodeGen::create);
         add(MatchFun.class, MatchFunNodeGen::create);

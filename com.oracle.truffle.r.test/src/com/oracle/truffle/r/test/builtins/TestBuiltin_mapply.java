@@ -19,6 +19,14 @@ public class TestBuiltin_mapply extends TestBase {
 
     @Test
     public void testmapply1() {
-        assertEval(Ignored.Unknown, "argv <- list(.Primitive('c'), list(list(), list(), list()), NULL); .Internal(mapply(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval("argv <- list(.Primitive('c'), list(list(), list(), list()), NULL); .Internal(mapply(argv[[1]], argv[[2]], argv[[3]]))");
+    }
+
+    @Test
+    public void testmapply() {
+        assertEval("mapply(rep, 1:4, 4:1)");
+        assertEval("mapply(function(x, y) seq_len(x) + y, c(a =  1, b = 2, c = 3),  c(A = 10, B = 0, C = -10))");
+        assertEval(Ignored.Unimplemented, "mapply(rep, times = 1:4, MoreArgs = list(x = 42))");
+        assertEval(Ignored.Unimplemented, "word <- function(C, k) paste(rep.int(C, k), collapse = \"\"); utils::str(mapply(word, LETTERS[1:6], 6:1, SIMPLIFY = FALSE))");
     }
 }
