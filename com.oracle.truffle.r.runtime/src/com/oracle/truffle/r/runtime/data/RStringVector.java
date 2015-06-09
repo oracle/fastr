@@ -148,7 +148,6 @@ public final class RStringVector extends RVector implements RAbstractStringVecto
     }
 
     private String[] createResizedData(int size, String fill) {
-        assert !this.isShared();
         return copyResizedData(size, fill);
     }
 
