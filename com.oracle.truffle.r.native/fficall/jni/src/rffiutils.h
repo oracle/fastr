@@ -26,6 +26,8 @@
 #include <jni.h>
 #include <Rinternals.h>
 
+#define VALIDATE_REFS 1
+
 JNIEnv *getEnv();
 void setEnv(JNIEnv *env);
 
@@ -33,11 +35,28 @@ jclass checkFindClass(JNIEnv *env, const char *name);
 jmethodID checkGetMethodID(JNIEnv *env, jclass klass, const char *name, const char *sig, int isStatic);
 extern jmethodID createSymbolMethodID;
 
+// use for an unimplemented API function
 void unimplemented(char *msg);
+// use for any fatal error
 void fatalError(char *msg);
+// makes a call to the VM with x as an argument (for debugger validation)
 void validate(SEXP x);
-SEXP mkGlobalRef(JNIEnv *env, SEXP);
-SEXP mkNamedGlobalRef(JNIEnv *env, int index, SEXP);
+// checks x against the list of canonical (named) refs, returning the canonical version if a match
+SEXP checkRef(JNIEnv *env, SEXP x);
+// creates a JNI global ref from x for slot index of the named refs table
+SEXP mkNamedGlobalRef(JNIEnv *env, int index, SEXP x);
+// validate a JNI reference
+void validateRef(JNIEnv *env, SEXP x, const char *msg);
+
+// entering a top-level JNI call
+void callEnter(JNIEnv *env);
+// exiting a top-level JNI call
+void callExit(JNIEnv *env);
+
+// find an object for which we have cached the internal rep
+void *findCopiedObject(JNIEnv *env, SEXP x);
+// add a new object to the internal rep cache
+void addCopiedObject(JNIEnv *env, SEXP x, SEXPTYPE type, void *jArray, void *data);
 
 void init_variables(JNIEnv *env, jobjectArray initialValues);
 void init_register(JNIEnv *env);
@@ -52,5 +71,18 @@ void init_utils(JNIEnv *env);
 
 extern jclass RDataFactoryClass;
 extern jclass CallRFFIHelperClass;
+
+#define TRACE_UPCALLS 0
+
+#define TARG1 "%s(%p)\n"
+#define TARG2 "%s(%p, %p)\n"
+#define TARG2d "%s(%p, %d)\n"
+
+#if TRACE_UPCALLS
+#define TRACE(format, ...) printf(format, __FUNCTION__, __VA_ARGS__)
+#else
+#define TRACE(format, ...)
+#endif
+
 
 #endif /* RFFIUTILS_H */

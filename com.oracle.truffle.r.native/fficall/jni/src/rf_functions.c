@@ -41,6 +41,7 @@ static jmethodID Rf_getAttribMethodID;
 static jmethodID Rf_setAttribMethodID;
 static jmethodID Rf_isStringMethodID;
 static jmethodID Rf_isNullMethodID;
+static jmethodID Rf_warningMethodID;
 static jmethodID Rf_NewHashedEnvMethodID;
 
 void init_rf_functions(JNIEnv *env) {
@@ -54,6 +55,7 @@ void init_rf_functions(JNIEnv *env) {
 	Rf_setAttribMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_setAttrib", "(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)V", 1);
 	Rf_isStringMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_isString", "(Ljava/lang/Object;)I", 1);
 	Rf_isNullMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_isNull", "(Ljava/lang/Object;)I", 1);
+	Rf_warningMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_warning", "(Ljava/lang/String;)V", 1);
 	createIntArrayMethodID = checkGetMethodID(env, RDataFactoryClass, "createIntVector", "(I)Lcom/oracle/truffle/r/runtime/data/RIntVector;", 1);
 	createDoubleArrayMethodID = checkGetMethodID(env, RDataFactoryClass, "createDoubleVector", "(I)Lcom/oracle/truffle/r/runtime/data/RDoubleVector;", 1);
 	createStringArrayMethodID = checkGetMethodID(env, RDataFactoryClass, "createStringVector", "(I)Lcom/oracle/truffle/r/runtime/data/RStringVector;", 1);
@@ -63,24 +65,27 @@ void init_rf_functions(JNIEnv *env) {
 }
 
 SEXP Rf_ScalarInteger(int value) {
+	TRACE("%s(%d)\n", value);
 	JNIEnv *thisenv = getEnv();
 	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_ScalarIntegerMethodID, value);
-    return mkGlobalRef(thisenv, result);
+    return checkRef(thisenv, result);
 }
 
 SEXP Rf_ScalarReal(double value) {
 	JNIEnv *thisenv = getEnv();
 	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_ScalarDoubleMethodID, value);
-    return mkGlobalRef(thisenv, result);
+    return checkRef(thisenv, result);
 }
 
 SEXP Rf_ScalarString(SEXP value) {
+	TRACE(TARG1, value);
 	JNIEnv *thisenv = getEnv();
 	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_ScalarStringMethodID, value);
-    return mkGlobalRef(thisenv, result);
+    return checkRef(thisenv, result);
 }
 
 SEXP Rf_allocVector(SEXPTYPE t, R_xlen_t len) {
+	TRACE(TARG2d, t, len);
 	JNIEnv *thisenv = getEnv();
 	SEXP result;
 	switch (t) {
@@ -105,13 +110,13 @@ SEXP Rf_allocVector(SEXPTYPE t, R_xlen_t len) {
 		unimplemented("vector type not handled");
 		return NULL;
 	}
-	return mkGlobalRef(thisenv, result);
+	return checkRef(thisenv, result);
 }
 
 SEXP Rf_cons(SEXP car, SEXP cdr) {
 	JNIEnv *thisenv = getEnv();
 	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_consMethodID, car, cdr);
-    return mkGlobalRef(thisenv, result);
+    return checkRef(thisenv, result);
 }
 
 void Rf_defineVar(SEXP symbol, SEXP value, SEXP rho) {
@@ -122,13 +127,13 @@ void Rf_defineVar(SEXP symbol, SEXP value, SEXP rho) {
 SEXP Rf_findVar(SEXP symbol, SEXP rho) {
 	JNIEnv *thisenv = getEnv();
 	SEXP result =(*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_findVarMethodID, symbol, rho);
-    return mkGlobalRef(thisenv, result);
+    return checkRef(thisenv, result);
 }
 
 SEXP Rf_getAttrib(SEXP vec, SEXP name) {
 	JNIEnv *thisenv = getEnv();
 	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_getAttribMethodID, vec, name);
-	return mkGlobalRef(thisenv, result);
+	return checkRef(thisenv, result);
 }
 
 SEXP Rf_setAttrib(SEXP vec, SEXP name, SEXP val) {
@@ -140,14 +145,14 @@ SEXP Rf_setAttrib(SEXP vec, SEXP name, SEXP val) {
 SEXP Rf_duplicate(SEXP x) {
 	JNIEnv *thisenv = getEnv();
 	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_duplicateMethodID, x);
-	return mkGlobalRef(thisenv, result);
+	return checkRef(thisenv, result);
 }
 
 SEXP Rf_install(const char *name) {
 	JNIEnv *thisenv = getEnv();
 	jstring string = (*thisenv)->NewStringUTF(thisenv, name);
 	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, createSymbolMethodID, string);
-	return mkGlobalRef(thisenv, result);
+	return checkRef(thisenv, result);
 }
 
 Rboolean Rf_isNull(SEXP s) {
@@ -165,7 +170,7 @@ SEXP Rf_mkChar(const char *x) {
 	JNIEnv *thisenv = getEnv();
 	// TODO encoding, assume UTF for now
 	SEXP result = (*thisenv)->NewStringUTF(thisenv, x);
-	return mkGlobalRef(thisenv, result);
+	return checkRef(thisenv, result);
 }
 
 SEXP Rf_mkCharLenCE(const char *x, int len, cetype_t enc) {
@@ -175,7 +180,7 @@ SEXP Rf_mkCharLenCE(const char *x, int len, cetype_t enc) {
 	buf[len] = 0;
 	// TODO encoding, assume UTF for now, zero terminated
 	SEXP result = (*thisenv)->NewStringUTF(thisenv, buf);
-	return mkGlobalRef(thisenv, result);
+	return checkRef(thisenv, result);
 }
 
 SEXP Rf_mkString(const char *s) {
@@ -205,7 +210,9 @@ void Rf_warningcall(SEXP x, const char *msg, ...) {
 }
 
 void Rf_warning(const char *msg, ...) {
-	unimplemented("Rf_warning");
+	JNIEnv *thisenv = getEnv();
+	jstring string = (*thisenv)->NewStringUTF(thisenv, msg);
+	(*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_warningMethodID, string);
 }
 
 void Rprintf(const char *msg, ...) {
@@ -220,5 +227,5 @@ SEXP R_NewHashedEnv(SEXP parent, SEXP size) {
 	JNIEnv *thisenv = getEnv();
 	int sizeAsInt = Rf_asInteger(size);
 	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, RDataFactoryClass, Rf_NewHashedEnvMethodID, parent, NULL, JNI_TRUE, sizeAsInt);
-	return mkGlobalRef(thisenv, result);
+	return checkRef(thisenv, result);
 }

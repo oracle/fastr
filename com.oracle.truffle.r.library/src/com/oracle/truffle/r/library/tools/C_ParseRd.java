@@ -28,24 +28,27 @@ import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.conn.*;
+import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
+import com.oracle.truffle.r.runtime.ffi.*;
 
 public abstract class C_ParseRd extends RExternalBuiltinNode.Arg7 {
 
-    @SuppressWarnings("unused")
     @Specialization
-    protected Object parseRd(RConnection con, REnvironment srcfile, String encoding, byte verboseL, RAbstractStringVector basename, byte fragmentL, byte warningCallsL) {
-        boolean verbose = RRuntime.fromLogical(verboseL);
-        boolean fragment = RRuntime.fromLogical(fragmentL);
+    protected Object parseRd(RConnection con, REnvironment srcfile, @SuppressWarnings("unused") String encoding, byte verboseL, RAbstractStringVector basename, byte fragmentL, byte warningCallsL) {
         if (RRuntime.isNA(warningCallsL)) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "warningCalls");
         }
-        boolean warningCalls = RRuntime.fromLogical(warningCallsL);
 
         try (RConnection openConn = con.forceOpen("r")) {
-            Object result = ToolsNative.provider().cParseRd(con, srcfile, verbose, fragment, basename.getDataAt(0), warningCalls);
-            return result;
+            // @formatter:off
+            return RFFIFactory.getRFFI().getToolsRFFI().parseRd(openConn, srcfile,
+                            RDataFactory.createLogicalVectorFromScalar(verboseL),
+                            RDataFactory.createLogicalVectorFromScalar(fragmentL),
+                            RDataFactory.createStringVectorFromScalar(basename.getDataAt(0)),
+                            RDataFactory.createLogicalVectorFromScalar(warningCallsL));
+            // @formatter:on
         } catch (IOException ex) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, ex.getMessage());
         } catch (Throwable ex) {

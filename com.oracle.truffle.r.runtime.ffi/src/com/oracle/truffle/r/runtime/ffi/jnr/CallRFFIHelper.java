@@ -73,6 +73,16 @@ public class CallRFFIHelper {
         }
     }
 
+    static int Rf_asLogical(Object x) {
+        if (x instanceof Byte) {
+            return ((Byte) x).intValue();
+        } else if (x instanceof RLogicalVector) {
+            return ((RLogicalVector) x).getDataAt(0);
+        } else {
+            throw RInternalError.unimplemented();
+        }
+    }
+
     static String Rf_asChar(Object x) {
         if (x instanceof String) {
             return (String) x;
@@ -155,6 +165,10 @@ public class CallRFFIHelper {
         return pl.toRList();
     }
 
+    static void Rf_warning(String msg) {
+        RError.warning(RError.Message.GENERIC, msg);
+    }
+
     static int LENGTH(Object x) {
         if (x instanceof RAbstractContainer) {
             return ((RAbstractContainer) x).getLength();
@@ -185,7 +199,7 @@ public class CallRFFIHelper {
 
     static byte[] RAW(Object x) {
         if (x instanceof RRawVector) {
-            return ((RRawVector) x).getDataCopy();
+            return ((RRawVector) x).getDataWithoutCopying();
         } else {
             throw RInternalError.unimplemented();
         }
@@ -194,14 +208,17 @@ public class CallRFFIHelper {
 
     static int[] INTEGER(Object x) {
         if (x instanceof RIntVector) {
-            return ((RIntVector) x).getDataCopy();
+            return ((RIntVector) x).getDataWithoutCopying();
         } else {
             throw RInternalError.unimplemented();
         }
     }
 
     static String STRING_ELT(Object x, int i) {
-        if (x instanceof RStringVector) {
+        if (x instanceof String) {
+            assert i == 0;
+            return (String) x;
+        } else if (x instanceof RStringVector) {
             return ((RStringVector) x).getDataAt(i);
         } else {
             throw RInternalError.unimplemented();

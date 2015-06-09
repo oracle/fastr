@@ -39,6 +39,7 @@ import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.env.frame.*;
 import com.oracle.truffle.r.runtime.env.REnvironment.*;
+import com.oracle.truffle.r.runtime.ffi.*;
 import com.oracle.truffle.r.runtime.rng.*;
 
 /**
@@ -368,7 +369,8 @@ public final class RContext extends ExecutionContext {
         RConnection(ConnectionSupport.class, false),
         StdConnections(StdConnections.class, true),
         RNG(RRNG.class, false),
-        FrameSlotChangeMonitor(FrameSlotChangeMonitor.class, false);
+        FrameSlotChangeMonitor(FrameSlotChangeMonitor.class, false),
+        RFFI(RFFIContextStateFactory.class, false);
 
         private final Class<? extends StateFactory> klass;
         private StateFactory factory;

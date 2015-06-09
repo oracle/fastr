@@ -22,6 +22,7 @@
  */
 #include "rffiutils.h"
 #include <string.h>
+#include <stdlib.h>
 
 /*
  * All calls pass through one of the call(N) methods, which carry the JNIEnv value,
@@ -38,10 +39,27 @@ static jmethodID validateMethodID;
 
 JNIEnv *curenv = NULL;
 
-//#define DEBUG_CACHE 1
+#define DEBUG_CACHE 0
+#define TRACE_COPIES 0
 #define CACHED_GLOBALREFS_TABLE_SIZE 100
 static SEXP cachedGlobalRefs[CACHED_GLOBALREFS_TABLE_SIZE];
 static SEXP checkCachedGlobalRef(JNIEnv *env, SEXP obj);
+
+typedef struct CopiedVectors_struct {
+	SEXPTYPE type;
+	SEXP obj;
+	void *jArray;
+	void *data;
+} CopiedVector;
+
+#define COPIED_VECTORS_INITIAL_SIZE 100
+// A table of vectors that have been accessed and whose contents, e.g. the actual data
+// as a primitive array have been copied and handed out to the native code.
+static CopiedVector *copiedVectors;
+// hwm of copiedVectors
+static int copiedVectorsIndex;
+static int copiedVectorsLength;
+
 
 void init_utils(JNIEnv *env) {
 	curenv = env;
@@ -54,9 +72,78 @@ void init_utils(JNIEnv *env) {
     for (int i = 0; i < CACHED_GLOBALREFS_TABLE_SIZE; i++) {
     	cachedGlobalRefs[i] = NULL;
     }
+	copiedVectors = malloc(sizeof(CopiedVector) * COPIED_VECTORS_INITIAL_SIZE);
+	copiedVectorsLength = COPIED_VECTORS_INITIAL_SIZE;
+	copiedVectorsIndex = 0;
 }
 
-SEXP mkGlobalRef(JNIEnv *env, SEXP obj) {
+void callEnter(JNIEnv *env) {
+	setEnv(env);
+//	printf("callEnter\n");
+}
+
+void callExit(JNIEnv *env) {
+//	printf("callExit\n");
+	int i;
+	for (i = 0; i < copiedVectorsIndex; i++) {
+		CopiedVector cv = copiedVectors[i];
+		switch (cv.type) {
+		    case INTSXP: {
+			    jintArray intArray = (jintArray) cv.jArray;
+			    (*env)->ReleaseIntArrayElements(env, intArray, (jint *)cv.data, 0);
+			    break;
+		    }
+		    default:
+		    	fatalError("copiedVector type");
+		}
+	}
+	copiedVectorsIndex = 0;
+}
+
+void *findCopiedObject(JNIEnv *env, SEXP x) {
+	int i;
+	for (i = 0; i < copiedVectorsIndex; i++) {
+		CopiedVector cv = copiedVectors[i];
+		if ((*env)->IsSameObject(env, cv.obj, x)) {
+			void *data = cv.data;
+#if TRACE_COPIES
+			printf("findCopiedObject(%p): found %p\n", x, data);
+#endif
+			return data;
+		}
+	}
+#if TRACE_COPIES
+	printf("findCopiedObject(%p): not found\n", x);
+#endif
+	return NULL;
+}
+
+void addCopiedObject(JNIEnv *env, SEXP x, SEXPTYPE type, void *jArray, void *data) {
+#if TRACE_COPIES
+	printf("addCopiedObject(%p, %p)\n", x, data);
+#endif
+	if (copiedVectorsIndex >= copiedVectorsLength) {
+		int newLength = 2 * copiedVectorsLength;
+		CopiedVector *newCopiedVectors = malloc(sizeof(CopiedVector) * newLength);
+		if (newCopiedVectors == NULL) {
+			fatalError("malloc failure");
+		}
+		memcpy(newCopiedVectors, copiedVectors, copiedVectorsLength * sizeof(CopiedVector));
+		free(copiedVectors);
+		copiedVectors = newCopiedVectors;
+		copiedVectorsLength = newLength;
+	}
+	copiedVectors[copiedVectorsIndex].obj = x;
+	copiedVectors[copiedVectorsIndex].data = data;
+	copiedVectors[copiedVectorsIndex].type = type;
+	copiedVectors[copiedVectorsIndex].jArray = jArray;
+	copiedVectorsIndex++;
+#if TRACE_COPIES
+	printf("copiedVectorsIndex: %d\n", copiedVectorsIndex);
+#endif
+}
+
+SEXP checkRef(JNIEnv *env, SEXP obj) {
 	SEXP result = checkCachedGlobalRef(env, obj);
 	return result;
 }
@@ -86,11 +173,19 @@ static SEXP checkCachedGlobalRef(JNIEnv *env, SEXP obj) {
     		return ref;
     	}
     }
+#if USE_GLOBAL
     SEXP result = (*env)->NewGlobalRef(env, obj);
-#if DEBUG_CACHE
-	printf("gref: new=%p\n", result);
+#else
+    SEXP result = obj;
 #endif
 	return result;
+}
+
+void validateRef(JNIEnv *env, SEXP x, const char *msg) {
+	jobjectRefType t = (*env)->GetObjectRefType(env, x);
+	if (t == JNIInvalidRefType) {
+		fatalError(msg);
+	}
 }
 
 void validate(SEXP x) {
@@ -126,7 +221,7 @@ jclass checkFindClass(JNIEnv *env, const char *name) {
 		strcat(buf, name);
 		(*env)->FatalError(env, buf);
 	}
-	return mkGlobalRef(env, klass);
+	return (*env)->NewGlobalRef(env, klass);
 }
 
 jmethodID checkGetMethodID(JNIEnv *env, jclass klass, const char *name, const char *sig, int isStatic) {

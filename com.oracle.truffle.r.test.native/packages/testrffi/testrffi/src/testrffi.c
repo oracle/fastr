@@ -27,20 +27,27 @@
 #include <Rdefines.h>
 #include <Rinternals.h>
 
-SEXP add_int(SEXP a, SEXP b) {
+SEXP addInt(SEXP a, SEXP b) {
 	int aInt = INTEGER_VALUE(a);
 	int bInt = INTEGER_VALUE(b);
 	return ScalarInteger(aInt + bInt);
 }
 
-SEXP add_double(SEXP a, SEXP b) {
+SEXP addDouble(SEXP a, SEXP b) {
 	double aDouble = NUMERIC_VALUE(a);
 	double bDouble = NUMERIC_VALUE(b);
 	return ScalarReal(aDouble + bDouble);
 }
 
-SEXP createIntVector(SEXP n) {
-    SEXP v = allocVector(INTSXP, INTEGER_VALUE(n));
+SEXP populateIntVector(SEXP n) {
+    SEXP v;
+    int intN = INTEGER_VALUE(n);
+    PROTECT(v = allocVector(INTSXP, intN));
+    int i;
+    for (i = 0; i < intN; i++) {
+    	INTEGER(v)[i] = i;
+    }
+    UNPROTECT(1);
     return v;
 }
 
@@ -52,6 +59,6 @@ SEXP getExternalPtrAddr(SEXP eptr) {
 	return ScalarInteger((int) R_ExternalPtrAddr(eptr));
 }
 
-SEXP test_TYPEOF(SEXP x) {
+SEXP invoke_TYPEOF(SEXP x) {
 	return ScalarInteger(TYPEOF(x));
 }

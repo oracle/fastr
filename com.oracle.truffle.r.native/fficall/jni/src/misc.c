@@ -29,10 +29,14 @@ void init_misc(JNIEnv *env) {
 }
 
 const char *R_CHAR(SEXP string) {
+	TRACE("%s(%p)", string);
 	// This is nasty:
 	// 1. the resulting character array has to be copied and zero-terminated.
 	// 2. It causes an (inevitable?) memory leak
 	JNIEnv *thisenv = getEnv();
+#if VALIDATE_REFS
+	validateRef(thisenv, string, "R_CHAR");
+#endif
 	jsize len = (*thisenv)->GetStringUTFLength(thisenv, string);
 	const char *stringChars = (*thisenv)->GetStringUTFChars(thisenv, string, NULL);
 	char *copyChars = malloc(len + 1);

@@ -56,39 +56,49 @@ typedef SEXP (*call10func)(SEXP arg1, SEXP arg2, SEXP arg3, SEXP arg4, SEXP arg5
 
 JNIEXPORT jobject JNICALL
 Java_com_oracle_truffle_r_runtime_ffi_jnr_CallRFFIWithJNI_call0(JNIEnv *env, jclass c, jlong address) {
-	setEnv(env);
+	callEnter(env);
 	call0func call0 = (call0func) address;
-	return (*call0)();
+	jobject result = (*call0)();
+	callExit(env);
+	return result;
 }
 
 JNIEXPORT jobject JNICALL
 Java_com_oracle_truffle_r_runtime_ffi_jnr_CallRFFIWithJNI_call1(JNIEnv *env, jclass c, jlong address, jobject arg1) {
-	setEnv(env);
+	callEnter(env);
 	call1func call1 = (call1func) address;
-	return (*call1)(arg1);
+	jobject result = (*call1)(arg1);
+	callExit(env);
+	return result;
 }
 
 JNIEXPORT jobject JNICALL
 Java_com_oracle_truffle_r_runtime_ffi_jnr_CallRFFIWithJNI_call2(JNIEnv *env, jclass c, jlong address, jobject arg1, jobject arg2) {
-	setEnv(env);
+	callEnter(env);
 	call2func call2 = (call2func) address;
-	return (*call2)(arg1, arg2);
+	jobject result = (*call2)(arg1, arg2);
+	callExit(env);
+	return result;
 }
 
 JNIEXPORT jobject JNICALL
 Java_com_oracle_truffle_r_runtime_ffi_jnr_CallRFFIWithJNI_call3(JNIEnv *env, jclass c, jlong address, jobject arg1, jobject arg2,
 		jobject arg3) {
-	setEnv(env);
+	callEnter(env);
 	call3func call3 = (call3func) address;
-	return (*call3)(arg1, arg2, arg3);
+	jobject result = (*call3)(arg1, arg2, arg3);
+	callExit(env);
+	return result;
 }
 
 JNIEXPORT jobject JNICALL
 Java_com_oracle_truffle_r_runtime_ffi_jnr_CallRFFIWithJNI_call4(JNIEnv *env, jclass c, jlong address, jobject arg1, jobject arg2,
 		jobject arg3, jobject arg4) {
-	setEnv(env);
+	callEnter(env);
 	call4func call4 = (call4func) address;
-	return (*call4)(arg1, arg2, arg3, arg4);
+	jobject result = (*call4)(arg1, arg2, arg3, arg4);
+	callExit(env);
+	return result;
 }
 
 JNIEXPORT jobject JNICALL
@@ -96,44 +106,54 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_CallRFFIWithJNI_call5(JNIEnv *env, jcl
 		jobject arg3, jobject arg4, jobject arg5) {
 	setEnv(env);
 	call5func call5 = (call5func) address;
-	return (*call5)(arg1, arg2, arg3, arg4, arg5);
+	jobject result = (*call5)(arg1, arg2, arg3, arg4, arg5);
+	callExit(env);
+	return result;
 }
 
 JNIEXPORT jobject JNICALL
 Java_com_oracle_truffle_r_runtime_ffi_jnr_CallRFFIWithJNI_call6(JNIEnv *env, jclass c, jlong address, jobject arg1, jobject arg2,
 		jobject arg3, jobject arg4, jobject arg5, jobject arg6) {
-	setEnv(env);
+	callEnter(env);
 	call6func call6 = (call6func) address;
-	return (*call6)(arg1, arg2, arg3, arg4, arg5, arg6);
+	jobject result = (*call6)(arg1, arg2, arg3, arg4, arg5, arg6);
+	callExit(env);
+	return result;
 }
 
 JNIEXPORT jobject JNICALL
 Java_com_oracle_truffle_r_runtime_ffi_jnr_CallRFFIWithJNI_call7(JNIEnv *env, jclass c, jlong address, jobject arg1, jobject arg2,
 		jobject arg3, jobject arg4, jobject arg5, jobject arg6, jobject arg7) {
-	setEnv(env);
+	callEnter(env);
 	call7func call7 = (call7func) address;
-	return (*call7)(arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+	jobject result = (*call7)(arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+	callExit(env);
+	return result;
 }
 
 JNIEXPORT jobject JNICALL
 Java_com_oracle_truffle_r_runtime_ffi_jnr_CallRFFIWithJNI_call8(JNIEnv *env, jclass c, jlong address, jobject arg1, jobject arg2,
 		jobject arg3, jobject arg4, jobject arg5, jobject arg6, jobject arg7, jobject arg8) {
-	setEnv(env);
+	callEnter(env);
 	call8func call8 = (call8func) address;
-	return (*call8)(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
+	jobject result = (*call8)(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
+	callExit(env);
+	return result;
 }
 
 JNIEXPORT jobject JNICALL
 Java_com_oracle_truffle_r_runtime_ffi_jnr_CallRFFIWithJNI_call9(JNIEnv *env, jclass c, jlong address, jobject arg1, jobject arg2,
 		jobject arg3, jobject arg4, jobject arg5, jobject arg6, jobject arg7, jobject arg8, jobject arg9) {
-	setEnv(env);
+	callEnter(env);
 	call9func call9 = (call9func) address;
-	return (*call9)(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9);
+	jobject result = (*call9)(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9);
+	callExit(env);
+	return result;
 }
 
 JNIEXPORT jobject JNICALL
 Java_com_oracle_truffle_r_runtime_ffi_jnr_CallRFFIWithJNI_call(JNIEnv *env, jclass c, jlong address, jobjectArray args) {
-	setEnv(env);
+	callEnter(env);
 	jsize len = (*env)->GetArrayLength(env, args);
 	switch (len) {
 	case 10: {
@@ -148,7 +168,9 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_CallRFFIWithJNI_call(JNIEnv *env, jcla
 		jobject arg9 = (*env)->GetObjectArrayElement(env, args, 8);
 		jobject arg10 = (*env)->GetObjectArrayElement(env, args, 9);
 		call10func call10 = (call10func) address;
-		return (*call10)(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10);
+		jobject result = (*call10)(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10);
+		callExit(env);
+		return result;
 	}
 
 	default:
@@ -161,9 +183,10 @@ typedef void (*callVoid1func)(SEXP arg1);
 
 JNIEXPORT void JNICALL
 Java_com_oracle_truffle_r_runtime_ffi_jnr_CallRFFIWithJNI_callVoid1(JNIEnv *env, jclass c, jlong address, jobject arg1) {
-	setEnv(env);
+	callEnter(env);
 	callVoid1func call1 = (callVoid1func) address;
 	(*call1)(arg1);
+	callExit(env);
 }
 
 

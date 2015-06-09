@@ -44,13 +44,13 @@ SEXP TAG(SEXP e) {
 SEXP CAR(SEXP e) {
 	JNIEnv *thisenv = getEnv();
     SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, CAR_MethodID, e);
-    return mkGlobalRef(thisenv, result);
+    return checkRef(thisenv, result);
 }
 
 SEXP CDR(SEXP e) {
 	JNIEnv *thisenv = getEnv();
     SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, CDR_MethodID, e);
-    return mkGlobalRef(thisenv, result);
+    return checkRef(thisenv, result);
 }
 
 SEXP CAAR(SEXP e) {
@@ -64,7 +64,7 @@ SEXP CDAR(SEXP e) {
 SEXP CADR(SEXP e) {
 	JNIEnv *thisenv = getEnv();
 	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, CADR_MethodID, e);
-    return mkGlobalRef(thisenv, result);
+    return checkRef(thisenv, result);
 }
 
 SEXP CDDR(SEXP e) {
@@ -98,13 +98,13 @@ void SET_TAG(SEXP x, SEXP y) {
 SEXP SETCAR(SEXP x, SEXP y) {
 	JNIEnv *thisenv = getEnv();
 	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, SETCAR_MethodID, x, y);
-    return mkGlobalRef(thisenv, result);
+    return checkRef(thisenv, result);
 }
 
 SEXP SETCDR(SEXP x, SEXP y) {
 	JNIEnv *thisenv = getEnv();
 	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, SETCDR_MethodID, x, y);
-    return mkGlobalRef(thisenv, result);
+    return checkRef(thisenv, result);
 }
 
 SEXP SETCADR(SEXP x, SEXP y) {

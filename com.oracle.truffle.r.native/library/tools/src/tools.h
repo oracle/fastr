@@ -43,7 +43,8 @@ SEXP startHTTPD(SEXP sIP, SEXP sPort) { return NULL; }
 SEXP stopHTTPD(void) { return NULL; }
 
 SEXP C_parseLatex(SEXP call, SEXP op, SEXP args, SEXP env) { return NULL; }
-SEXP C_parseRd(SEXP call, SEXP op, SEXP args, SEXP env) { return NULL; }
+//SEXP C_parseRd(SEXP call, SEXP op, SEXP args, SEXP env);
+SEXP C_parseRd(SEXP con, SEXP source, SEXP verbose, SEXP fragment, SEXP basename, SEXP warningcalls);
 SEXP C_deparseRd(SEXP e, SEXP state) { return NULL; }
 
 #endif

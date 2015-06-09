@@ -25,19 +25,22 @@
 static jmethodID Rf_asIntegerMethodID;
 static jmethodID Rf_asRealMethodID;
 static jmethodID Rf_asCharMethodID;
+static jmethodID Rf_asLogicalMethodID;
 static jmethodID Rf_PairToVectorListMethodID;
 
 void init_typecoerce(JNIEnv *env) {
 	Rf_asIntegerMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_asInteger", "(Ljava/lang/Object;)I", 1);
 	Rf_asRealMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_asReal", "(Ljava/lang/Object;)D", 1);
 	Rf_asCharMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_asChar", "(Ljava/lang/Object;)Ljava/lang/String;", 1);
+	Rf_asLogicalMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_asLogical", "(Ljava/lang/Object;)I", 1);
 	Rf_PairToVectorListMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_PairToVectorList", "(Ljava/lang/Object;)Ljava/lang/Object;", 1);
 }
 
 SEXP Rf_asChar(SEXP x){
+	TRACE(TARG1, x);
 	JNIEnv *thisenv = getEnv();
 	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_asCharMethodID, x);
-	return mkGlobalRef(thisenv, result);
+	return checkRef(thisenv, result);
 }
 
 SEXP Rf_coerceVector(SEXP x, SEXPTYPE t){
@@ -47,7 +50,7 @@ SEXP Rf_coerceVector(SEXP x, SEXPTYPE t){
 SEXP Rf_PairToVectorList(SEXP x){
 	JNIEnv *thisenv = getEnv();
 	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_PairToVectorListMethodID, x);
-	return mkGlobalRef(thisenv, result);
+	return checkRef(thisenv, result);
 }
 
 SEXP Rf_VectorToPairList(SEXP x){
@@ -59,15 +62,19 @@ SEXP Rf_asCharacterFactor(SEXP x){
 }
 
 int Rf_asLogical(SEXP x){
-	unimplemented("Rf_asLogical");
+	TRACE(TARG1, x);
+	JNIEnv *thisenv = getEnv();
+	return (*thisenv)->CallStaticIntMethod(thisenv, CallRFFIHelperClass, Rf_asLogicalMethodID, x);
 }
 
 int Rf_asInteger(SEXP x) {
+	TRACE(TARG1, x);
 	JNIEnv *thisenv = getEnv();
 	return (*thisenv)->CallStaticIntMethod(thisenv, CallRFFIHelperClass, Rf_asIntegerMethodID, x);
 }
 
 double Rf_asReal(SEXP x) {
+	TRACE(TARG1, x);
 	JNIEnv *thisenv = getEnv();
 	return (*thisenv)->CallStaticDoubleMethod(thisenv, CallRFFIHelperClass, Rf_asRealMethodID, x);
 }

@@ -34,6 +34,7 @@ endif
 OBJ = lib
 SRC = src
 C_SOURCES := $(wildcard $(SRC)/*.c)
+C_HDRS := $(wildcard $(SRC)/*.h)
 C_LIBNAME := librfficall$(DYLIB_EXT)
 C_OBJECTS := $(subst $(SRC),$(OBJ),$(C_SOURCES:.c=.o))
 C_LIB := $(TOPDIR)/builtinlibs/$(OBJ)/$(C_LIBNAME)
@@ -57,8 +58,11 @@ $(C_LIB): $(OBJ) $(C_OBJECTS)
 $(OBJ):
 	mkdir -p $(OBJ)
 
-$(OBJ)/%.o: $(SRC)/%.c $(TOPDIR)/include/jni/include/Rinternals.h
+$(OBJ)/%.o: $(SRC)/%.c $(TOPDIR)/include/jni/include/Rinternals.h $(C_HDRS)
 	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
+	
+$(OBJ)/%.E: $(SRC)/%.c $(TOPDIR)/include/jni/include/Rinternals.h
+	$(CC) -E $(CFLAGS) $(INCLUDES) -c $< > $@
 
 clean:
 	rm -rf $(OBJ) $(C_LIB)

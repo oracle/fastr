@@ -94,23 +94,22 @@ int SETLEVELS(SEXP x, int v){
 	unimplemented("SETLEVELS");
 }
 
-
-
 int *LOGICAL(SEXP x){
 	unimplemented("LOGICAL");
 }
 
-
 int *INTEGER(SEXP x){
+	TRACE(TARG1, x);
 	// TODO This does not support write access, e.g. INTEGER(x)[i]
 	JNIEnv *thisenv = getEnv();
-	jintArray intarray = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, INTEGER_MethodID, x);
-	int len = (*thisenv)->GetArrayLength(thisenv, intarray);
-	jint *data = (*thisenv)->GetIntArrayElements(thisenv, intarray, NULL);
-	void *result = malloc(len * 4);
-	memcpy(result, data, len * 4);
-	(*thisenv)->ReleaseIntArrayElements(thisenv, intarray, data, JNI_ABORT);
-	return (int *) result;
+	jint *data = (jint *) findCopiedObject(thisenv, x);
+	if (data == NULL) {
+	    jintArray intArray = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, INTEGER_MethodID, x);
+	    int len = (*thisenv)->GetArrayLength(thisenv, intArray);
+	    data = (*thisenv)->GetIntArrayElements(thisenv, intArray, NULL);
+	    addCopiedObject(thisenv, x, INTSXP, intArray, data);
+	}
+	return data;
 }
 
 
@@ -138,16 +137,17 @@ Rcomplex *COMPLEX(SEXP x){
 
 
 SEXP STRING_ELT(SEXP x, R_xlen_t i){
+	TRACE(TARG2d, x, i);
 	JNIEnv *thisenv = getEnv();
     SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, STRING_ELT_MethodID, x, i);
-    return mkGlobalRef(thisenv, result);
+    return checkRef(thisenv, result);
 }
 
 
 SEXP VECTOR_ELT(SEXP x, R_xlen_t i){
 	JNIEnv *thisenv = getEnv();
     SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, VECTOR_ELT_MethodID, x, i);
-    return mkGlobalRef(thisenv, result);
+    return checkRef(thisenv, result);
 }
 
 void SET_INTEGER_ELT(SEXP x, R_xlen_t i, int v) {

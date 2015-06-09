@@ -25,6 +25,7 @@ package com.oracle.truffle.r.runtime.ffi.jnr;
 import java.io.*;
 import java.nio.*;
 import java.util.*;
+import java.util.concurrent.*;
 
 import jnr.constants.platform.*;
 import jnr.ffi.*;
@@ -33,13 +34,17 @@ import jnr.posix.*;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.RContext.ContextState;
+import com.oracle.truffle.r.runtime.conn.*;
+import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.ffi.*;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
 
 /**
  * JNR/JNI-based factory.
  */
-public class JNR_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI, StatsRFFI, RApplRFFI, LapackRFFI, UserRngRFFI, PCRERFFI {
+public class JNR_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI, StatsRFFI, ToolsRFFI, RApplRFFI, LapackRFFI, UserRngRFFI, PCRERFFI {
 
     public JNR_RFFIFactory() {
     }
@@ -48,6 +53,17 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI, Stat
     protected void initialize() {
         // This must load early as package libraries reference symbols in it.
         getCallRFFI();
+    }
+
+    /**
+     * Placeholder class for context-specific native state.
+     */
+    private static class ContextStateImpl implements RContext.ContextState {
+
+    }
+
+    public ContextState newContext(RContext context, Object... objects) {
+        return new ContextStateImpl();
     }
 
     private static byte[] wrapChar(char v) {
@@ -466,6 +482,50 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI, Stat
     @TruffleBoundary
     public int fft_work(double[] a, int nseg, int n, int nspn, int isn, double[] work, int[] iwork) {
         return stats().fft_work(a, wrapInt(nseg), wrapInt(n), wrapInt(nspn), wrapInt(isn), work, iwork);
+    }
+
+    // Tools
+
+    @Override
+    public ToolsRFFI getToolsRFFI() {
+        return this;
+    }
+
+    private static class ToolsProvider {
+        private static ToolsProvider tools;
+        private static DLL.SymbolInfo parseRd;
+
+        @TruffleBoundary
+        private ToolsProvider() {
+            System.load(LibPaths.getPackageLibPath("tools"));
+            parseRd = DLL.findSymbolInfo("C_parseRd", "tools");
+        }
+
+        static ToolsProvider toolsProvider() {
+            if (tools == null) {
+                tools = new ToolsProvider();
+            }
+            return tools;
+        }
+
+        DLL.SymbolInfo getParseRd() {
+            return parseRd;
+        }
+
+    }
+
+    private static final Semaphore parseRdCritical = new Semaphore(1, false);
+
+    public Object parseRd(RConnection con, REnvironment srcfile, RLogicalVector verbose, RLogicalVector fragment, RStringVector basename, RLogicalVector warningCalls) {
+        // The C code is not thread safe.
+        try {
+            parseRdCritical.acquire();
+            return getCallRFFI().invokeCall(ToolsProvider.toolsProvider().getParseRd(), new Object[]{con, srcfile, verbose, fragment, basename, warningCalls});
+        } catch (Throwable ex) {
+            throw RInternalError.shouldNotReachHere();
+        } finally {
+            parseRdCritical.release();
+        }
     }
 
     /*

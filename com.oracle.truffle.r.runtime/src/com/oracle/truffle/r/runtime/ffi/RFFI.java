@@ -31,6 +31,7 @@ package com.oracle.truffle.r.runtime.ffi;
  * <li>{@link LapackRFFI}: the specific, typed, foreign functions required by the built-in
  * {@code Lapack} functions.</li>
  * <li>{@link StatsRFFI}: native functions in the {@code stats} package.</li>
+ * <li>{@link ToolsRFFI}: native functions in the {@code tools} package.</li>
  * <li>{@link RApplRFFI}: the specific, typed, foreign functions required by the built-in
  * {@code Linpack} functions.</li>
  * <li>{@link CRFFI}: {@code .C} and {@code .Fortran} call interface.</li>
@@ -50,6 +51,8 @@ public interface RFFI {
     RApplRFFI getRApplRFFI();
 
     StatsRFFI getStatsRFFI();
+
+    ToolsRFFI getToolsRFFI();
 
     CRFFI getCRFFI();
 

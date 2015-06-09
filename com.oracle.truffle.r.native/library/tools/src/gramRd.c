@@ -2858,22 +2858,18 @@ yyreturn:
   return YYID (yyresult);
 }
 
-
-
-extern void SET_INTEGER_ELT(SEXP x, R_xlen_t  i, int v);
-
 static SEXP xxpushMode(int newmode, int newitem, int neweqn)
 {
     SEXP ans;
     PROTECT(ans = allocVector(INTSXP, 7));
 
-    SET_INTEGER_ELT(ans, 0, parseState.xxmode);		/* Lexer mode */
-    SET_INTEGER_ELT(ans, 1, parseState.xxitemType);	/* What is \item? */
-    SET_INTEGER_ELT(ans, 2, parseState.xxbraceDepth);	/* Brace depth used in RCODE and VERBATIM */
-    SET_INTEGER_ELT(ans, 3, parseState.xxinRString);      /* Quote char that started a string */
-    SET_INTEGER_ELT(ans, 4, parseState.xxQuoteLine);      /* Where the quote was */
-    SET_INTEGER_ELT(ans, 5, parseState.xxQuoteCol);       /*           "         */
-    SET_INTEGER_ELT(ans, 6, parseState.xxinEqn);          /* In the first arg to \eqn or \deqn:  no escapes */
+    INTEGER(ans)[0] = parseState.xxmode;		/* Lexer mode */
+    INTEGER(ans)[1] = parseState.xxitemType;	/* What is \item? */
+    INTEGER(ans)[2] = parseState.xxbraceDepth;	/* Brace depth used in RCODE and VERBATIM */
+    INTEGER(ans)[3] = parseState.xxinRString;      /* Quote char that started a string */
+    INTEGER(ans)[4] = parseState.xxQuoteLine;      /* Where the quote was */
+    INTEGER(ans)[5] = parseState.xxQuoteCol;       /*           "         */
+    INTEGER(ans)[6] = parseState.xxinEqn;          /* In the first arg to \eqn or \deqn:  no escapes */
 
 #if DEBUGMODE
     Rprintf("xxpushMode(%d, %s) pushes %d, %s, %d\n", newmode, yytname[YYTRANSLATE(newitem)],
@@ -3358,13 +3354,13 @@ static SEXP makeSrcref(YYLTYPE *lloc, SEXP srcfile)
     SEXP val;
 
     PROTECT(val = allocVector(INTSXP, 6));
-    SET_INTEGER_ELT(val, 0, lloc->first_line);
-    SET_INTEGER_ELT(val, 1, lloc->first_byte);
-    SET_INTEGER_ELT(val, 2, lloc->last_line);
-    SET_INTEGER_ELT(val, 3, lloc->last_byte);
-    SET_INTEGER_ELT(val, 4, lloc->first_column);
-    SET_INTEGER_ELT(val, 5, lloc->last_column);
-    setAttrib(val, R_SrcfileSymbol, srcfile);
+    INTEGER(val)[0] = lloc->first_line;
+    INTEGER(val)[1] = lloc->first_byte;
+    INTEGER(val)[2] = lloc->last_line;
+    INTEGER(val)[3] = lloc->last_byte;
+    INTEGER(val)[4] = lloc->first_column;
+    INTEGER(val)[5] = lloc->last_column;
+     setAttrib(val, R_SrcfileSymbol, srcfile);
     setAttrib(val, R_ClassSymbol, mkString("srcref"));
     UNPROTECT(1);
     return val;
@@ -3462,8 +3458,9 @@ static int Rconn_fgetc(Rconnection con) {
 	return -1;
 }
 
+extern JNIEnv *getEnv();
+
 static Rconnection con_parse;
-static JNIEnv *jnienv;
 static jmethodID getcMethodID;
 
 /* need to handle incomplete last line */
@@ -3471,17 +3468,17 @@ static int con_getc(void)
 {
     int c;
     static int last=-1000;
-
-    c = (*jnienv)->CallIntMethod(jnienv, con_parse, getcMethodID, con_parse);
+    JNIEnv *env = getEnv();
+    c = (*env)->CallIntMethod(env, con_parse, getcMethodID, con_parse);
     if (c == EOF && last != '\n') c = '\n';
     return (last = c);
 }
 
 static
-SEXP R_ParseRd(JNIEnv *env, Rconnection con, ParseStatus *status, SEXP srcfile, Rboolean fragment)
+SEXP R_ParseRd(Rconnection con, ParseStatus *status, SEXP srcfile, Rboolean fragment)
 {
     con_parse = con;
-    jnienv = env;
+    JNIEnv *env = getEnv();
     jclass klass = (*env)->FindClass(env, "com/oracle/truffle/r/runtime/conn/RConnection");
     getcMethodID = (*env)->GetMethodID(env, klass, "getc", "()I");
     ptr_getc = con_getc;
@@ -4271,12 +4268,13 @@ static void PopState() {
 
  .External2(C_parseRd,file, srcfile, encoding, verbose, basename, warningCalls)
  If there is text then that is read and the other arguments are ignored.
+
+  This is derived fron the function of the same name in the GnuR version.
+  Argument checking has already been performed, however, the types of the
+  arguments are as per the GnuR version, just passed explicitly (.Call style)
+  rather then as a list.
 */
-JNIEXPORT jobject JNICALL
-Java_com_oracle_truffle_r_library_tools_ToolsNative_cParseRdNative(JNIEnv *env, jclass c, jobject con,
-		jobject source, jboolean verbose, jboolean fragment, jstring basename, jboolean warningcalls)
-{
-	setEnv(env);
+SEXP C_parseRd(SEXP con, SEXP source, SEXP verbose, SEXP fragment, SEXP basename, SEXP warningcalls) {
 	SEXP s = R_NilValue;
 	ParseStatus status;
 
@@ -4289,16 +4287,16 @@ Java_com_oracle_truffle_r_library_tools_ToolsNative_cParseRdNative(JNIEnv *env, 
 
 	PushState();
 
-	parseState.xxBasename = basename;
-	wCalls = warningcalls;
+//	parseState.xxDebugTokens = asInteger(verbose);
+	parseState.xxBasename = CHAR(STRING_ELT(basename, 0));
+	wCalls = asLogical(warningcalls);
 
-	s = R_ParseRd(env, con, &status, source, fragment);
+	s = R_ParseRd(con, &status, source, asLogical(fragment));
 	PopState();
 	if (status != PARSE_OK) {
 		// TODO throw an exception
 	}
-
-    return s;
+	return s;
 }
 
 /* "do_deparseRd"

@@ -23,7 +23,7 @@
 package com.oracle.truffle.r.runtime.ffi;
 
 /**
- * Interface to native (C) methods provides by the {@code stats} package.
+ * Interface to native (C) methods provided by the {@code stats} package.
  */
 public interface StatsRFFI {
     // Checkstyle: stop method name
