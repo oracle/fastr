@@ -368,7 +368,7 @@ final class REngine implements RContext.Engine {
     }
 
     private static class PromiseStatement extends RNode implements RSyntaxNode {
-        private final RNode promise;
+        @Child private RNode promise;
 
         PromiseStatement(RNode promise) {
             this.promise = promise;
