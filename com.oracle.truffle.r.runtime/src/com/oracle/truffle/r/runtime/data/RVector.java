@@ -411,9 +411,8 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
     public final RVector makeShared() {
         if (temporary) {
             temporary = false;
-        } else {
-            shared = true;
         }
+        shared = true;
         return this;
     }
 
