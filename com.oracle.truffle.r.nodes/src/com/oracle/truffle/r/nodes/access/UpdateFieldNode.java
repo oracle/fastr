@@ -90,7 +90,7 @@ public abstract class UpdateFieldNode extends UpdateNode implements RSyntaxNode 
     protected Object accessField(VirtualFrame frame, RAbstractContainer container, Object value, String field) {
         if (dcn == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            dcn = insert(new UseMethodInternalNode("$<-", ArgumentsSignature.get("", "", "")));
+            dcn = insert(new UseMethodInternalNode("$<-", ArgumentsSignature.get("", "", ""), true));
         }
         try {
             return dcn.execute(frame, container.getClassHierarchy(), new Object[]{container, field, value});

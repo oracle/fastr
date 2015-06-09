@@ -262,7 +262,7 @@ public abstract class UpdateArrayHelperNode extends UpdateNode implements RSynta
     protected Object updateObjectSubset(VirtualFrame frame, Object v, Object value, Object positions, RAbstractContainer container) {
         if (dcn == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            dcn = insert(new UseMethodInternalNode("[<-", VALUE_SIGNATURE));
+            dcn = insert(new UseMethodInternalNode("[<-", VALUE_SIGNATURE, true));
         }
         try {
             Object inds = positions instanceof Object[] ? new RArgsValuesAndNames((Object[]) positions, ArgumentsSignature.empty(((Object[]) positions).length)) : positions;
@@ -276,7 +276,7 @@ public abstract class UpdateArrayHelperNode extends UpdateNode implements RSynta
     protected Object updateObject(VirtualFrame frame, Object v, Object value, Object positions, RAbstractContainer container) {
         if (dcn == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            dcn = insert(new UseMethodInternalNode("[[<-", VALUE_SIGNATURE));
+            dcn = insert(new UseMethodInternalNode("[[<-", VALUE_SIGNATURE, true));
         }
         try {
             Object inds = positions instanceof Object[] ? new RArgsValuesAndNames((Object[]) positions, ArgumentsSignature.empty(((Object[]) positions).length)) : positions;

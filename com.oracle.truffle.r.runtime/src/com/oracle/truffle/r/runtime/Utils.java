@@ -34,6 +34,7 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.runtime.RContext.ConsoleHandler;
 import com.oracle.truffle.r.runtime.conn.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -743,6 +744,36 @@ public final class Utils {
             // @formatter:on
         }
         return r;
+    }
+
+    public static void transitionState(RShareable shareable, BranchProfile everSeenShared, BranchProfile everSeenTemporary, BranchProfile everSeenNonTemporary) {
+        if (shareable.isShared()) {
+            everSeenShared.enter();
+        } else if (shareable.isTemporary()) {
+            everSeenTemporary.enter();
+            shareable.markNonTemporary();
+        } else {
+            everSeenNonTemporary.enter();
+            shareable.makeShared();
+        }
+    }
+
+    public static void transitionStateSlowPath(Object o) {
+        if (o instanceof RShareable) {
+            RShareable shareable = (RShareable) o;
+            if (shareable.isShared()) {
+            } else if (shareable.isTemporary()) {
+                shareable.markNonTemporary();
+            } else {
+                shareable.makeShared();
+            }
+        }
+    }
+
+    public static void transitionState(Object o, BranchProfile everSeenShared, BranchProfile everSeenTemporary, BranchProfile everSeenNonTemporary) {
+        if (o instanceof RShareable) {
+            transitionState((RShareable) o, everSeenShared, everSeenTemporary, everSeenNonTemporary);
+        }
     }
 
 }

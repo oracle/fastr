@@ -279,7 +279,7 @@ public class InfixEmulationFunctions {
         protected Object getObj(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames inds, RAbstractLogicalVector dropVec) {
             if (dcn == null || noDrop) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                dcn = insert(new UseMethodInternalNode(NAME, SIGNATURE));
+                dcn = insert(new UseMethodInternalNode(NAME, SIGNATURE, true));
                 noDrop = false;
             }
             try {
@@ -298,7 +298,7 @@ public class InfixEmulationFunctions {
         protected Object getObj(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames inds, RMissing dropVec) {
             if (dcn == null || !noDrop) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                dcn = insert(new UseMethodInternalNode(NAME, SIGNATURE_NODROP));
+                dcn = insert(new UseMethodInternalNode(NAME, SIGNATURE_NODROP, true));
                 noDrop = true;
             }
             try {
@@ -406,7 +406,7 @@ public class InfixEmulationFunctions {
             }
             if (dcn == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                dcn = insert(new UseMethodInternalNode(NAME, SIGNATURE));
+                dcn = insert(new UseMethodInternalNode(NAME, SIGNATURE, true));
             }
             try {
                 return dcn.execute(frame, x.getClassHierarchy(), new Object[]{x, inds, exactVec});
@@ -505,7 +505,7 @@ public class InfixEmulationFunctions {
         protected Object updateObj(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames args) {
             if (dcn == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                dcn = insert(new UseMethodInternalNode(NAME, SIGNATURE));
+                dcn = insert(new UseMethodInternalNode(NAME, SIGNATURE, true));
             }
             try {
                 return dcn.execute(frame, x.getClassHierarchy(), new Object[]{x, args});
@@ -540,7 +540,7 @@ public class InfixEmulationFunctions {
         protected Object updateObj(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames args) {
             if (dcn == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                dcn = insert(new UseMethodInternalNode(NAME, ArgumentsSignature.empty(2)));
+                dcn = insert(new UseMethodInternalNode(NAME, ArgumentsSignature.empty(2), true));
             }
             try {
                 return dcn.execute(frame, x.getClassHierarchy(), new Object[]{x, args});
@@ -641,7 +641,7 @@ public class InfixEmulationFunctions {
             }
             if (dcn == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                dcn = insert(new UseMethodInternalNode(NAME, ArgumentsSignature.get("", "")));
+                dcn = insert(new UseMethodInternalNode(NAME, ArgumentsSignature.get("", ""), true));
             }
             try {
                 return dcn.execute(frame, container.getClassHierarchy(), new Object[]{container, field});
@@ -688,7 +688,7 @@ public class InfixEmulationFunctions {
             }
             if (dcn == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                dcn = insert(new UseMethodInternalNode(NAME, ArgumentsSignature.get("", "", "")));
+                dcn = insert(new UseMethodInternalNode(NAME, ArgumentsSignature.get("", "", ""), true));
             }
             try {
                 return dcn.execute(frame, container.getClassHierarchy(), new Object[]{container, field, value});

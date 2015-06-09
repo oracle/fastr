@@ -78,7 +78,7 @@ public abstract class Bind extends RPrecedenceBuiltinNode {
     protected Object allDataFrame(VirtualFrame frame, Object deparseLevel, RArgsValuesAndNames args) {
         if (dcn == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            dcn = insert(new UseMethodInternalNode(getBindType(), SIGNATURE));
+            dcn = insert(new UseMethodInternalNode(getBindType(), SIGNATURE, false));
         }
         try {
             return dcn.execute(frame, ((RDataFrame) args.getArgument(0)).getClassHierarchy(), new Object[]{deparseLevel, args});
