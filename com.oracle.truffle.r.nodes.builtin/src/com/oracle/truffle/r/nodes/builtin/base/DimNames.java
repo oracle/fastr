@@ -71,7 +71,7 @@ public abstract class DimNames extends RBuiltinNode {
         controlVisibility();
         if (dcn == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            dcn = insert(new UseMethodInternalNode(NAME, getSuppliedSignature()));
+            dcn = insert(new UseMethodInternalNode(NAME, ArgumentsSignature.get(""), true));
         }
         try {
             return dcn.execute(frame, container.getClassHierarchy(), new Object[]{container});

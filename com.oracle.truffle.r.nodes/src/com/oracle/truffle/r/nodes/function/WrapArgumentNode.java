@@ -99,17 +99,7 @@ public final class WrapArgumentNode extends RNode implements RSyntaxNode {
             }
 
             if (vector != null) {
-                // mark vector as wrapped only if changing its mode to shared; otherwise make sure
-                // that it can be seen as "truly" shared by marking vector unwrapped
-                if (vector.isShared()) {
-                    everSeenShared.enter();
-                } else if (vector.isTemporary()) {
-                    everSeenTemporary.enter();
-                    vector.markNonTemporary();
-                } else {
-                    everSeenNonTemporary.enter();
-                    vector.makeShared();
-                }
+                Utils.transitionState(vector, everSeenShared, everSeenTemporary, everSeenNonTemporary);
             }
         }
         return result;

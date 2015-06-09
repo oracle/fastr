@@ -54,7 +54,7 @@ public abstract class UpdateLength extends RInvisibleBuiltinNode {
     protected Object updateLengthObject(VirtualFrame frame, RAbstractContainer container, RAbstractIntVector lengthVector) {
         if (dcn == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            dcn = insert(new UseMethodInternalNode("length<-", getSuppliedSignature()));
+            dcn = insert(new UseMethodInternalNode("length<-", getSuppliedSignature(), true));
         }
         try {
             return dcn.execute(frame, container.getClassHierarchy(), new Object[]{container, lengthVector});

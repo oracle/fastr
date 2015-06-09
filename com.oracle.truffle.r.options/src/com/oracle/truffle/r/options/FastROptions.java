@@ -69,6 +69,8 @@ public class FastROptions {
     public static final OptionValue<Boolean> IgnoreVisibility = new OptionValue<>(false);
     @Option(help = "Load R package sources index")
     public static final OptionValue<Boolean> LoadPkgSourcesIndex = new OptionValue<>(true);
+    @Option(help = "Argument writes do not trigger state transitions")
+    public static final OptionValue<Boolean> InvisibleArgs = new OptionValue<>(false);
 
     // Promises optimizations
     @Option(help = "If enabled, overrides all other EagerEval switches (see EagerEvalHelper)")

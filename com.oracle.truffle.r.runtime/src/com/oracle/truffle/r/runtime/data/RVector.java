@@ -22,8 +22,10 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.source.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -411,9 +413,8 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
     public final RVector makeShared() {
         if (temporary) {
             temporary = false;
-        } else {
-            shared = true;
         }
+        shared = true;
         return this;
     }
 
@@ -552,6 +553,7 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
     public final RVector copy() {
         RVector result = internalCopy();
         setAttributes(result);
+        incCopyCount();
         return result;
     }
 
@@ -820,4 +822,41 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
     public final RShareable materializeToShareable() {
         return materialize();
     }
+
+    private static final ConditionProfile statsProfile = ConditionProfile.createBinaryProfile();
+
+    @CompilationFinal private static PerfHandler stats;
+
+    private static void incCopyCount() {
+        if (statsProfile.profile(stats != null)) {
+            stats.record(null);
+        }
+    }
+
+    static {
+        RPerfStats.register(new PerfHandler());
+    }
+
+    private static class PerfHandler implements RPerfStats.Handler {
+
+        private static int count;
+
+        void record(@SuppressWarnings("unused") Object data) {
+            count++;
+        }
+
+        public void initialize(String optionData) {
+            stats = this;
+            count = 0;
+        }
+
+        public String getName() {
+            return "vectorcopies";
+        }
+
+        public void report() {
+            RPerfStats.out().printf("NUMBER OF VECTOR COPIES: %d\n", count);
+        }
+    }
+
 }

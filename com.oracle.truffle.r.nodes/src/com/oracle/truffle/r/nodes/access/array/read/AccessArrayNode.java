@@ -287,13 +287,13 @@ public abstract class AccessArrayNode extends RNode implements RSyntaxNode {
             if (dropDim != RMissing.instance) {
                 if (dcnDrop == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    dcnDrop = insert(new UseMethodInternalNode("[", DROP_SIGNATURE));
+                    dcnDrop = insert(new UseMethodInternalNode("[", DROP_SIGNATURE, true));
                 }
                 return dcnDrop.execute(frame, container.getClassHierarchy(), new Object[]{container, inds, dropDim});
             } else {
                 if (dcn == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    dcn = insert(new UseMethodInternalNode("[", SIGNATURE));
+                    dcn = insert(new UseMethodInternalNode("[", SIGNATURE, true));
                 }
                 return dcn.execute(frame, container.getClassHierarchy(), new Object[]{container, inds});
             }
@@ -306,7 +306,7 @@ public abstract class AccessArrayNode extends RNode implements RSyntaxNode {
     protected Object accessObject(VirtualFrame frame, RAbstractContainer container, Object exact, int recLevel, Object position, Object dropDim) {
         if (dcn == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            dcn = insert(new UseMethodInternalNode("[[", EXACT_SIGNATURE));
+            dcn = insert(new UseMethodInternalNode("[[", EXACT_SIGNATURE, true));
         }
         try {
             Object inds = position instanceof Object[] ? new RArgsValuesAndNames((Object[]) position, ArgumentsSignature.empty(((Object[]) position).length)) : position;

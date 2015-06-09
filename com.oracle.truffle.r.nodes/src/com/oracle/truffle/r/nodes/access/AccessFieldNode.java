@@ -101,7 +101,7 @@ public abstract class AccessFieldNode extends RNode implements RSyntaxNode {
     protected Object accessField(VirtualFrame frame, RAbstractContainer container, String field) {
         if (dcn == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            dcn = insert(new UseMethodInternalNode("$", ArgumentsSignature.get("", "")));
+            dcn = insert(new UseMethodInternalNode("$", ArgumentsSignature.get("", ""), true));
         }
         try {
             return dcn.execute(frame, container.getClassHierarchy(), new Object[]{container, field});

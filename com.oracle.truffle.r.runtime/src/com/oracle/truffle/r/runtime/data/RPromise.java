@@ -173,10 +173,7 @@ public class RPromise extends RLanguageRep implements RTypedValue {
         assert newValue != null;
         this.value = newValue;
 
-        // set NAMED = 2
-        if (newValue instanceof RShareable) {
-            ((RShareable) newValue).makeShared();
-        }
+        Utils.transitionStateSlowPath(newValue);
     }
 
     /**
