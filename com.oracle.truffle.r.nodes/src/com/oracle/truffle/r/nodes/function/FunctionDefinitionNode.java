@@ -197,10 +197,15 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
             } else {
                 return ex.getResult();
             }
-        } catch (RInternalError | UnsupportedSpecializationException | ConversionFailedException | DebugExitException e) {
+        } catch (RInternalError | UnsupportedSpecializationException | ConversionFailedException e) {
             CompilerDirectives.transferToInterpreter();
             runOnExitHandlers = false;
             throw e instanceof RInternalError ? (RInternalError) e : new RInternalError(e, "internal error");
+        } catch (DebugExitException e) {
+            // this must pass through unchanged
+            CompilerDirectives.transferToInterpreter();
+            runOnExitHandlers = false;
+            throw e;
         } finally {
             if (runOnExitHandlers) {
                 RErrorHandling.restoreStacks(handlerStack, restartStack);
