@@ -30,7 +30,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 
 public class DatePOSIXFunctions {
 
-    public static final class POSIXltBuilder {
+    private static final class POSIXltBuilder {
 
         private static final String[] LT_NAMES = new String[]{"sec", "min", "hour", "mday", "mon", "year", "wday", "yday", "isdst"};
         private static final RStringVector LT_NAMES_VEC = RDataFactory.createStringVector(LT_NAMES, RDataFactory.COMPLETE_VECTOR);
@@ -116,6 +116,7 @@ public class DatePOSIXFunctions {
         }
 
         @Specialization
+        @TruffleBoundary
         protected RList doDate2POSIXlt(RDoubleVector x) {
             int xLen = x.getLength();
             TimeZone zone = TimeZone.getTimeZone("UTC");
@@ -152,6 +153,7 @@ public class DatePOSIXFunctions {
         }
 
         @Specialization
+        @TruffleBoundary
         protected RList asPOSIXlt(RDoubleVector x, RAbstractStringVector tz) {
             TimeZone zone;
             String tzone = RRuntime.asString(tz);
@@ -184,6 +186,7 @@ public class DatePOSIXFunctions {
 
     @RBuiltin(name = "as.POSIXct", kind = RBuiltinKind.INTERNAL, parameterNames = {"x", "tz"})
     public abstract static class AsPOSIXct extends RBuiltinNode {
+
         @Specialization
         @TruffleBoundary
         public RDoubleVector asPOSIXct(RList x, RAbstractStringVector tz) {
