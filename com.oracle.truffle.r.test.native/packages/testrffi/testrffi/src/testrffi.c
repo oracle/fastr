@@ -62,3 +62,7 @@ SEXP getExternalPtrAddr(SEXP eptr) {
 SEXP invoke_TYPEOF(SEXP x) {
 	return ScalarInteger(TYPEOF(x));
 }
+
+SEXP invoke_error() {
+	error("invoke_error in testrffi");
+}

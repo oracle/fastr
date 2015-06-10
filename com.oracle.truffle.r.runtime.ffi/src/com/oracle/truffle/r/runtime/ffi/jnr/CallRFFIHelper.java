@@ -165,6 +165,10 @@ public class CallRFFIHelper {
         return pl.toRList();
     }
 
+    static void Rf_error(String msg) {
+        throw RError.error(RError.Message.GENERIC, msg);
+    }
+
     static void Rf_warning(String msg) {
         RError.warning(RError.Message.GENERIC, msg);
     }
@@ -185,12 +189,6 @@ public class CallRFFIHelper {
         xv.setElement(i, v);
     }
 
-    static void SET_INTEGER_ELT(Object x, int i, int v) {
-        // TODO error checks
-        RIntVector xv = (RIntVector) x;
-        xv.setElement(i, v);
-    }
-
     static void SET_VECTOR_ELT(Object x, int i, Object v) {
         // TODO error checks
         RList list = (RList) x;
@@ -206,9 +204,26 @@ public class CallRFFIHelper {
 
     }
 
+    static byte[] LOGICAL(Object x) {
+        if (x instanceof RLogicalVector) {
+            return ((RLogicalVector) x).getDataWithoutCopying();
+        } else {
+            throw RInternalError.unimplemented();
+        }
+
+    }
+
     static int[] INTEGER(Object x) {
         if (x instanceof RIntVector) {
             return ((RIntVector) x).getDataWithoutCopying();
+        } else {
+            throw RInternalError.unimplemented();
+        }
+    }
+
+    static double[] REAL(Object x) {
+        if (x instanceof RDoubleVector) {
+            return ((RDoubleVector) x).getDataWithoutCopying();
         } else {
             throw RInternalError.unimplemented();
         }

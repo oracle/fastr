@@ -23,6 +23,8 @@
 package com.oracle.truffle.r.runtime.ffi.jnr;
 
 import java.lang.invoke.*;
+
+import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.ffi.*;
 
 import jnr.invoke.*;
@@ -37,7 +39,7 @@ public class CRFFI_JNR_Invoke implements CRFFI {
      * array (call by reference for scalars). As we already loaded the library and looked up the
      * symbol address we don't need to use JNR for that.
      */
-    public void invoke(DLL.SymbolInfo symbolInfo, Object[] args) throws Throwable {
+    public void invoke(DLL.SymbolInfo symbolInfo, Object[] args) {
         ParameterType[] parameterTypes = new ParameterType[args.length];
         for (int i = 0; i < args.length; i++) {
             Object arg = args[i];
@@ -53,6 +55,10 @@ public class CRFFI_JNR_Invoke implements CRFFI {
 
         // We already have up the symbol address
         MethodHandle mh = Native.getMethodHandle(sig, new CodeAddress(symbolInfo.address));
-        mh.invokeWithArguments(args);
+        try {
+            mh.invokeWithArguments(args);
+        } catch (Throwable ex) {
+            throw RError.error(RError.Message.GENERIC, ex.getMessage());
+        }
     }
 }

@@ -493,7 +493,6 @@ public final class RError extends RuntimeException {
         NA_NAN_INF_IN_FOREIGN_FUNCTION_CALL("NA/NaN/Inf in foreign function call (arg %d)"),
         INCORRECT_ARG("incorrect arguments to %s"),
         UNIMPLEMENTED_ARG_TYPE("unimplemented argument type (arg %d)"),
-        NATIVE_CALL_FAILED("native call failed: %s"),
         C_SYMBOL_NOT_IN_TABLE("C symbol name \"%s\" not in load table"),
         FORTRAN_SYMBOL_NOT_IN_TABLE("Fortran symbol name \"%s\" not in load table"),
         NOT_THAT_MANY_FRAMES("not that many frames on the stack"),

@@ -21,3 +21,7 @@ rffi.getExternalPtrAddr <- function(eptr) {
 rffi.TYPEOF <- function(x) {
 	.Call("invoke_TYPEOF", x, PACKAGE = "testrffi")
 }
+
+rffi.error <- function() {
+	.Call("invoke_error", PACKAGE = "testrffi")
+}

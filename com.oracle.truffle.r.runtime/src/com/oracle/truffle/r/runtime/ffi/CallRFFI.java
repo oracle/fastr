@@ -33,14 +33,13 @@ public interface CallRFFI {
      *
      * @param symbolInfo identifies the symbol and the defining library
      * @param args arguments
-     * @throws Throwable on any error during the call
      */
-    Object invokeCall(DLL.SymbolInfo symbolInfo, Object[] args) throws Throwable;
+    Object invokeCall(DLL.SymbolInfo symbolInfo, Object[] args);
 
     /**
      * Variant that does not return a result (primarily for library "init" methods.
      */
-    void invokeVoidCall(DLL.SymbolInfo symbolInfo, Object[] args) throws Throwable;
+    void invokeVoidCall(DLL.SymbolInfo symbolInfo, Object[] args);
 
     /**
      * Variant of {@link #invokeCall} for {@code .External}, where args are wrapped up as a single
@@ -48,8 +47,7 @@ public interface CallRFFI {
      *
      * @param symbolInfo
      * @param args
-     * @throws Throwable
      */
-    Object invokeExternal(DLL.SymbolInfo symbolInfo, Object[] args) throws Throwable;
+    Object invokeExternal(DLL.SymbolInfo symbolInfo, Object[] args);
 
 }

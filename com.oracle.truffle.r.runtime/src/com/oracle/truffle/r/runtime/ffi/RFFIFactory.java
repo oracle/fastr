@@ -70,6 +70,10 @@ public abstract class RFFIFactory implements RContext.StateFactory {
         throw missing("Stats");
     }
 
+    public ToolsRFFI getToolsRFFI() {
+        throw missing("Tools");
+    }
+
     public RApplRFFI getRApplRFFI() {
         throw missing("RDerived");
     }

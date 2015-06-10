@@ -25,19 +25,21 @@
 #include <string.h>
 
 jmethodID SET_STRING_ELT_MethodID;
-jmethodID SET_INTEGER_ELT_MethodID;
 jmethodID SET_VECTOR_ELT_MethodID;
 jmethodID RAW_MethodID;
 jmethodID INTEGER_MethodID;
+jmethodID REAL_MethodID;
+jmethodID LOGICAL_MethodID;
 jmethodID STRING_ELT_MethodID;
 jmethodID VECTOR_ELT_MethodID;
 jmethodID LENGTH_MethodID;
 
 void init_vectoraccess(JNIEnv *env) {
 	SET_STRING_ELT_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "SET_STRING_ELT", "(Ljava/lang/Object;ILjava/lang/Object;)V", 1);
-	SET_INTEGER_ELT_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "SET_INTEGER_ELT", "(Ljava/lang/Object;II)V", 1);
 	SET_VECTOR_ELT_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "SET_VECTOR_ELT", "(Ljava/lang/Object;ILjava/lang/Object;)V", 1);
 	RAW_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "RAW", "(Ljava/lang/Object;)[B", 1);
+	REAL_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "REAL", "(Ljava/lang/Object;)[D", 1);
+	LOGICAL_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "LOGICAL", "(Ljava/lang/Object;)[B", 1);
 	INTEGER_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "INTEGER", "(Ljava/lang/Object;)[I", 1);
 	STRING_ELT_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "STRING_ELT", "(Ljava/lang/Object;I)Ljava/lang/String;", 1);
 	VECTOR_ELT_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "VECTOR_ELT", "(Ljava/lang/Object;I)Ljava/lang/Object;", 1);
@@ -46,6 +48,7 @@ void init_vectoraccess(JNIEnv *env) {
 
 
 int LENGTH(SEXP x) {
+	TRACE(TARG1, x);
 	JNIEnv *thisenv = getEnv();
 	return (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, LENGTH_MethodID, x);
 }
@@ -95,12 +98,20 @@ int SETLEVELS(SEXP x, int v){
 }
 
 int *LOGICAL(SEXP x){
-	unimplemented("LOGICAL");
+	TRACE(TARG1, x);
+	JNIEnv *thisenv = getEnv();
+	jbyte *data = (jint *) findCopiedObject(thisenv, x);
+	if (data == NULL) {
+	    jintArray intArray = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, LOGICAL_MethodID, x);
+	    int len = (*thisenv)->GetArrayLength(thisenv, intArray);
+	    data = (*thisenv)->GetByteArrayElements(thisenv, intArray, NULL);
+	    addCopiedObject(thisenv, x, LGLSXP, intArray, data);
+	}
+	return data;
 }
 
 int *INTEGER(SEXP x){
 	TRACE(TARG1, x);
-	// TODO This does not support write access, e.g. INTEGER(x)[i]
 	JNIEnv *thisenv = getEnv();
 	jint *data = (jint *) findCopiedObject(thisenv, x);
 	if (data == NULL) {
@@ -114,20 +125,28 @@ int *INTEGER(SEXP x){
 
 
 Rbyte *RAW(SEXP x){
-	// TODO This does not support write access, e.g. RAW(x)[i]
 	JNIEnv *thisenv = getEnv();
-	jbyteArray bytearray = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, RAW_MethodID, x);
-	int len = (*thisenv)->GetArrayLength(thisenv, bytearray);
-	jbyte *data = (*thisenv)->GetByteArrayElements(thisenv, bytearray, NULL);
-	void *result = malloc(len);
-	memcpy(result, data, len);
-	(*thisenv)->ReleaseByteArrayElements(thisenv, bytearray, data, JNI_ABORT);
-	return (Rbyte *) result;
+	jbyte *data = (jbyte *) findCopiedObject(thisenv, x);
+	if (data == NULL) {
+	    jbyteArray byteArray = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, RAW_MethodID, x);
+	    int len = (*thisenv)->GetArrayLength(thisenv, byteArray);
+	    data = (*thisenv)->GetByteArrayElements(thisenv, byteArray, NULL);
+        addCopiedObject(thisenv, x, RAWSXP, byteArray, data);
+    }
+	return data;
 }
 
 
 double *REAL(SEXP x){
-	unimplemented("REAL");
+	JNIEnv *thisenv = getEnv();
+	jdouble *data = (jdouble *) findCopiedObject(thisenv, x);
+	if (data == NULL) {
+	    jdoubleArray doubleArray = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, REAL_MethodID, x);
+	    int len = (*thisenv)->GetArrayLength(thisenv, doubleArray);
+	    data = (*thisenv)->GetDoubleArrayElements(thisenv, doubleArray, NULL);
+        addCopiedObject(thisenv, x, REALSXP, doubleArray, data);
+    }
+	return data;
 }
 
 
@@ -148,12 +167,6 @@ SEXP VECTOR_ELT(SEXP x, R_xlen_t i){
 	JNIEnv *thisenv = getEnv();
     SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, VECTOR_ELT_MethodID, x, i);
     return checkRef(thisenv, result);
-}
-
-void SET_INTEGER_ELT(SEXP x, R_xlen_t i, int v) {
-	JNIEnv *thisenv = getEnv();
-	(*thisenv)->CallStaticVoidMethod(thisenv, CallRFFIHelperClass, SET_INTEGER_ELT_MethodID, x, i, v);
-
 }
 
 void SET_STRING_ELT(SEXP x, R_xlen_t i, SEXP v){

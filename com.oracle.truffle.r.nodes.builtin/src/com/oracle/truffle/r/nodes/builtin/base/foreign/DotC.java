@@ -125,12 +125,7 @@ public abstract class DotC extends RBuiltinNode {
                 errorProfile.enter();
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.UNIMPLEMENTED_ARG_TYPE, i + 1);
             }
-        }
-        try {
             RFFIFactory.getRFFI().getCRFFI().invoke(symbolInfo, nativeArgs);
-        } catch (Throwable t) {
-            errorProfile.enter();
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.NATIVE_CALL_FAILED, t.getMessage());
         }
         // we have to assume that the native method updated everything
         RStringVector listNames = validateArgNames(argValues.length, getSuppliedSignature());

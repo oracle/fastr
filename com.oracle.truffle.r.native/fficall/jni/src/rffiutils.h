@@ -25,6 +25,7 @@
 
 #include <jni.h>
 #include <Rinternals.h>
+#include <setjmp.h>
 
 #define VALIDATE_REFS 1
 
@@ -49,9 +50,11 @@ SEXP mkNamedGlobalRef(JNIEnv *env, int index, SEXP x);
 void validateRef(JNIEnv *env, SEXP x, const char *msg);
 
 // entering a top-level JNI call
-void callEnter(JNIEnv *env);
+void callEnter(JNIEnv *env, jmp_buf *error_exit);
 // exiting a top-level JNI call
 void callExit(JNIEnv *env);
+
+jmp_buf *getErrorJmpBuf();
 
 // find an object for which we have cached the internal rep
 void *findCopiedObject(JNIEnv *env, SEXP x);

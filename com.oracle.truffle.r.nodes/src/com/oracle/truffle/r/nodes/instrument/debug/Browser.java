@@ -41,6 +41,7 @@ public class Browser {
     }
 
     private static final String BROWSER_SOURCE = "<browser_input>";
+    private static String lastEmptyLineCommand = "n";
 
     @TruffleBoundary
     public static ExitMode interact(MaterializedFrame frame) {
@@ -50,14 +51,12 @@ public class Browser {
         ExitMode exitMode = ExitMode.NEXT;
         try {
             LW: while (true) {
-                String input = ch.readLine();
+                String input = ch.readLine().trim();
                 if (input.length() == 0) {
                     RLogicalVector browserNLdisabledVec = (RLogicalVector) RContext.getROptionsState().getValue("browserNLdisabled");
                     if (!RRuntime.fromLogical(browserNLdisabledVec.getDataAt(0))) {
-                        break;
+                        input = lastEmptyLineCommand;
                     }
-                } else {
-                    input = input.trim();
                 }
                 switch (input) {
                     case "c":
@@ -66,9 +65,11 @@ public class Browser {
                         break LW;
                     case "n":
                         exitMode = ExitMode.NEXT;
+                        lastEmptyLineCommand = "n";
                         break LW;
                     case "s":
                         exitMode = ExitMode.STEP;
+                        lastEmptyLineCommand = "s";
                         break LW;
                     case "f":
                         exitMode = ExitMode.FINISH;

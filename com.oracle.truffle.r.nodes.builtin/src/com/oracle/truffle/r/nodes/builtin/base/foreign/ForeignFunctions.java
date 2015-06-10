@@ -200,12 +200,7 @@ public class ForeignFunctions {
                 errorProfile.enter();
                 throw RError.error(getEncapsulatingSourceSection(), Message.C_SYMBOL_NOT_IN_TABLE, name);
             }
-            try {
-                return RFFIFactory.getRFFI().getCallRFFI().invokeCall(symbolInfo, args.getArguments());
-            } catch (Throwable t) {
-                errorProfile.enter();
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.NATIVE_CALL_FAILED, t.getMessage());
-            }
+            return RFFIFactory.getRFFI().getCallRFFI().invokeCall(symbolInfo, args.getArguments());
         }
 
         @Fallback

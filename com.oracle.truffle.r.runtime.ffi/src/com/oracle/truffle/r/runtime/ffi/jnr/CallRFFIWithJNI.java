@@ -79,7 +79,7 @@ public class CallRFFIWithJNI implements CallRFFI {
 
     private static final Semaphore inCritical = new Semaphore(1, false);
 
-    public Object invokeCall(SymbolInfo symbolInfo, Object[] args) throws Throwable {
+    public Object invokeCall(SymbolInfo symbolInfo, Object[] args) {
         long address = symbolInfo.address;
         try {
             inCritical.acquire();
@@ -99,12 +99,14 @@ public class CallRFFIWithJNI implements CallRFFI {
                 return call(address, args);
                 // @formatter:on
             }
+        } catch (InterruptedException ex) {
+            throw RInternalError.shouldNotReachHere();
         } finally {
             inCritical.release();
         }
     }
 
-    public Object invokeExternal(SymbolInfo symbolInfo, Object[] args) throws Throwable {
+    public Object invokeExternal(SymbolInfo symbolInfo, Object[] args) {
         throw RInternalError.unimplemented(".External");
     }
 
@@ -132,7 +134,7 @@ public class CallRFFIWithJNI implements CallRFFI {
 
     private static native Object call9(long address, Object arg1, Object arg2, Object arg3, Object arg4, Object arg5, Object arg6, Object arg7, Object arg8, Object arg9);
 
-    public void invokeVoidCall(SymbolInfo symbolInfo, Object[] args) throws Throwable {
+    public void invokeVoidCall(SymbolInfo symbolInfo, Object[] args) {
         long address = symbolInfo.address;
         try {
             inCritical.acquire();
@@ -143,6 +145,7 @@ public class CallRFFIWithJNI implements CallRFFI {
                 default:
                     throw RInternalError.shouldNotReachHere();
             }
+        } catch (InterruptedException ex) {
         } finally {
             inCritical.release();
         }

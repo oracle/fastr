@@ -25,9 +25,12 @@
 #include <stdlib.h>
 
 /*
- * All calls pass through one of the call(N) methods, which carry the JNIEnv value,
- * which needs to be saved for reuse in the many R functions such as Rf_allocVector.
- * FastR is not currently multi-threaded so the value can safely be stored in a static.
+ * All calls pass through one of the call(N) methods in rfficall.c, which carry the JNIEnv value,
+ * that needs to be saved for reuse in the many R functions such as Rf_allocVector.
+ * Currently only single threaded access is permitted (via a semaphore in CallRFFIWithJNI)
+ * so we are safe to use static variables. TODO Figure out where to store such state
+ * (portably) for MT use. JNI provides no help. N.B. The MT restriction also precludes
+ * recursive calls.
  */
 jclass CallRFFIHelperClass;
 jclass RDataFactoryClass;
@@ -38,6 +41,7 @@ jmethodID createSymbolMethodID;
 static jmethodID validateMethodID;
 
 JNIEnv *curenv = NULL;
+jmp_buf *callErrorJmpBuf;
 
 #define DEBUG_CACHE 0
 #define TRACE_COPIES 0
@@ -77,9 +81,14 @@ void init_utils(JNIEnv *env) {
 	copiedVectorsIndex = 0;
 }
 
-void callEnter(JNIEnv *env) {
+void callEnter(JNIEnv *env, jmp_buf *jmpbuf) {
 	setEnv(env);
+	callErrorJmpBuf = jmpbuf;
 //	printf("callEnter\n");
+}
+
+jmp_buf *getErrorJmpBuf() {
+	return callErrorJmpBuf;
 }
 
 void callExit(JNIEnv *env) {
@@ -92,6 +101,20 @@ void callExit(JNIEnv *env) {
 			    jintArray intArray = (jintArray) cv.jArray;
 			    (*env)->ReleaseIntArrayElements(env, intArray, (jint *)cv.data, 0);
 			    break;
+		    }
+
+		    case REALSXP: {
+			    jdoubleArray doubleArray = (jdoubleArray) cv.jArray;
+			    (*env)->ReleaseDoubleArrayElements(env, doubleArray, (jdouble *)cv.data, 0);
+			    break;
+
+		    }
+
+		    case LGLSXP: case RAWSXP: {
+			    jbyteArray byteArray = (jbyteArray) cv.jArray;
+			    (*env)->ReleaseByteArrayElements(env, byteArray, (jbyte *)cv.data, 0);
+			    break;
+
 		    }
 		    default:
 		    	fatalError("copiedVector type");
