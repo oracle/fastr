@@ -27,10 +27,8 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.control.*;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
-import com.oracle.truffle.r.runtime.env.*;
 
 @RBuiltin(name = "length", kind = PRIMITIVE, parameterNames = {"x"})
 public abstract class Length extends RBuiltinNode {
@@ -38,24 +36,8 @@ public abstract class Length extends RBuiltinNode {
     public abstract int executeInt(VirtualFrame frame, Object vector);
 
     @Specialization
-    @SuppressWarnings("unused")
-    protected int getLength(RNull vector) {
+    protected int getLength(Object vector, @Cached("create()") RLengthNode lengthNode) {
         controlVisibility();
-        return 0;
-    }
-
-    @Specialization
-    protected int getLength(RAbstractContainer vector) {
-        controlVisibility();
-        return vector.getLength();
-    }
-
-    @Specialization
-    protected int getLength(REnvironment env) {
-        /*
-         * This is a bit wasteful but only in the creation of the RStringVector; all the logic to
-         * decide whether to include a name is still necessary
-         */
-        return env.ls(true, null, false).getLength();
+        return lengthNode.executeInteger(vector);
     }
 }

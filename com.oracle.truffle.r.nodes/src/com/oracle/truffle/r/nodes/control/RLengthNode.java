@@ -27,14 +27,10 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.env.*;
 
 @NodeChild("operand")
 public abstract class RLengthNode extends RNode {
-
-    @Override
-    public final Object execute(VirtualFrame frame) {
-        return executeInteger(frame);
-    }
 
     @Override
     public abstract int executeInteger(VirtualFrame frame);
@@ -47,30 +43,58 @@ public abstract class RLengthNode extends RNode {
 
     @Specialization
     @SuppressWarnings("unused")
-    protected int getLength(RNull operand) {
+    protected int doNull(RNull operand) {
         return 0;
     }
 
     @Specialization
     @SuppressWarnings("unused")
-    protected int getLength(int operand) {
+    protected int doLogical(byte operand) {
         return 1;
     }
 
     @Specialization
     @SuppressWarnings("unused")
-    protected int getLength(double operand) {
+    protected int doInteger(int operand) {
         return 1;
     }
 
     @Specialization
-    protected int getLength(RExpression operand, @Cached("create()") RLengthNode recursiveLength) {
-        return recursiveLength.executeInteger(operand.getList());
+    @SuppressWarnings("unused")
+    protected int doDouble(double operand) {
+        return 1;
     }
 
     @Specialization
-    protected int getLength(RAbstractContainer operand) {
+    @SuppressWarnings("unused")
+    protected int doString(String operand) {
+        return 1;
+    }
+
+    @Specialization(guards = {"cachedClass != null", "cachedClass == operand.getClass()"})
+    protected int doCachedContainer(Object operand, @Cached("getContainerClass(operand)") Class<? extends RAbstractContainer> cachedClass) {
+        return cachedClass.cast(operand).getLength();
+    }
+
+    @Specialization(contains = "doCachedContainer")
+    protected int doContainer(RAbstractContainer operand) {
         return operand.getLength();
+    }
+
+    protected static Class<? extends RAbstractContainer> getContainerClass(Object value) {
+        if (value instanceof RAbstractContainer) {
+            return ((RAbstractContainer) value).getClass();
+        }
+        return null;
+    }
+
+    @Specialization
+    protected int getLength(REnvironment env) {
+        /*
+         * This is a bit wasteful but only in the creation of the RStringVector; all the logic to
+         * decide whether to include a name is still necessary
+         */
+        return env.ls(true, null, false).getLength();
     }
 
 }
