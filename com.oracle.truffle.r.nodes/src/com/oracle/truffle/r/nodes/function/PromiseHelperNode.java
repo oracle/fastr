@@ -116,6 +116,7 @@ public class PromiseHelperNode extends Node {
 
     private final ValueProfile optTypeProfile = ValueProfile.createIdentityProfile();
     private final ValueProfile varArgsOptTypeProfile = ValueProfile.createIdentityProfile();
+    private final ValueProfile isValidAssumptionProfile = ValueProfile.createIdentityProfile();
     private final ValueProfile multiVarArgsOptTypeProfile = ValueProfile.createIdentityProfile();
     private final ValueProfile promiseFrameProfile = ValueProfile.createClassProfile();
     private final BranchProfile varArgProfile = BranchProfile.create();
@@ -226,7 +227,9 @@ public class PromiseHelperNode extends Node {
             // execFrame already materialized, feedback already given. Now we're a
             // plain'n'simple RPromise
             return generateValueDefault(frame, promise, callSrc);
-        } else if (promise.isValid()) {
+        }
+        Assumption eagerAssumption = isValidAssumptionProfile.profile(promise.getIsValidAssumption());
+        if (eagerAssumption.isValid()) {
             if (optType == OptType.EAGER) {
                 return getEagerValue(promise);
             } else {

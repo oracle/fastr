@@ -326,6 +326,10 @@ public class RPromise extends RLanguageRep implements RTypedValue {
             return deoptimized;
         }
 
+        public Assumption getIsValidAssumption() {
+            return notChangedNonLocally;
+        }
+
         public boolean isValid() {
             return notChangedNonLocally.isValid();
         }
