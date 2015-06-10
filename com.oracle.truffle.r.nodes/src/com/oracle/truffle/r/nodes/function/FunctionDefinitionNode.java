@@ -200,7 +200,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         } catch (RInternalError | UnsupportedSpecializationException | ConversionFailedException | DebugExitException e) {
             CompilerDirectives.transferToInterpreter();
             runOnExitHandlers = false;
-            throw e;
+            throw e instanceof RInternalError ? (RInternalError) e : new RInternalError(e, "internal error");
         } finally {
             if (runOnExitHandlers) {
                 RErrorHandling.restoreStacks(handlerStack, restartStack);
