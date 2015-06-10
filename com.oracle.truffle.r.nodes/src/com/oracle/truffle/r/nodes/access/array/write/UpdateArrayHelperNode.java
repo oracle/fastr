@@ -747,7 +747,8 @@ public abstract class UpdateArrayHelperNode extends UpdateNode implements RSynta
         } else if (!val.isTemporary()) {
             valNonTmp.enter();
             val.makeShared();
-        } else if (val.isTemporary()) {
+        } else {
+            assert val.isTemporary();
             valTmp.enter();
             val.markNonTemporary();
         }
