@@ -24,7 +24,6 @@ package com.oracle.truffle.r.repl;
 
 import java.util.*;
 
-import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.instrument.*;
 import com.oracle.truffle.api.source.*;
@@ -51,16 +50,14 @@ public abstract class RREPLHandler extends REPLHandler {
             message.put(REPLMessage.SOURCE_NAME, sourceName);
             message.put(REPLMessage.DEBUG_LEVEL, Integer.toString(serverContext.getLevel()));
 
-            final ExecutionContext context = serverContext.getLanguageContext();
             final Source source = Source.fromText(request.get(REPLMessage.CODE), sourceName);
-            final Visualizer visualizer = context.getVisualizer();
             final MaterializedFrame frame = serverContext.getFrame();
             try {
                 if (frame == null) { // Top Level
                     return finishReplyFailed(message, "no active engine");
                 } else {
                     final Object returnValue = serverContext.getDebugEngine().eval(source, serverContext.getNode(), frame);
-                    return finishReplySucceeded(message, visualizer.displayValue(context, returnValue, 0));
+                    return finishReplySucceeded(message, serverContext.getLanguage().getToolSupport().getVisualizer().displayValue(returnValue, 0));
                 }
             } catch (QuitException ex) {
                 throw ex;
@@ -120,17 +117,17 @@ public abstract class RREPLHandler extends REPLHandler {
             final FrameDebugDescription frameDescription = stack.get(frameNumber);
             final REPLMessage frameMessage = createFrameInfoMessage(serverContext, frameDescription);
             final Frame frame = frameDescription.frameInstance().getFrame(FrameInstance.FrameAccess.READ_ONLY, true);
-            final ExecutionContext context = serverContext.getLanguageContext();
             final FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
+            Visualizer visualizer = serverContext.getLanguage().getToolSupport().getVisualizer();
             try {
                 final StringBuilder sb = new StringBuilder();
                 for (FrameSlot slot : frameDescriptor.getSlots()) {
                     String slotName = slot.getIdentifier().toString();
                     if (!AnonymousFrameVariable.isAnonymous(slotName)) {
-                        sb.append(Integer.toString(slot.getIndex()) + ": " + context.getVisualizer().displayIdentifier(slot) + " = ");
+                        sb.append(Integer.toString(slot.getIndex()) + ": " + visualizer.displayIdentifier(slot) + " = ");
                         try {
                             final Object value = frame.getValue(slot);
-                            sb.append(context.getVisualizer().displayValue(context, value, 0));
+                            sb.append(visualizer.displayValue(value, 0));
                         } catch (Exception ex) {
                             sb.append("???");
                         }

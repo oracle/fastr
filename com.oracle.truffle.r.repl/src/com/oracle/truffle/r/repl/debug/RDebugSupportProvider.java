@@ -22,24 +22,28 @@
  */
 package com.oracle.truffle.r.repl.debug;
 
+import java.io.*;
+
+import com.oracle.truffle.api.debug.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.instrument.*;
+import com.oracle.truffle.api.instrument.impl.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
-import com.oracle.truffle.tools.debug.engine.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RContext.Engine.*;
+import com.oracle.truffle.r.runtime.conn.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.shell.*;
 
 /**
  * Manager for FastR AST execution under RREPL debugging control.
  */
-public final class RSourceExecutionProvider extends SourceExecutionProvider {
+public final class RDebugSupportProvider implements DebugSupportProvider {
 
     @Override
-    public void languageRun(Source source) throws DebugException {
+    public void run(Source source) throws DebugSupportException {
         try {
             boolean runShell = source.getName().equals("<shell>");
             String[] args = new String[runShell ? 1 : 2];
@@ -49,22 +53,22 @@ public final class RSourceExecutionProvider extends SourceExecutionProvider {
             }
             RCommand.main(args);
         } catch (Exception e) {
-            throw new DebugException("Can't run source " + source.getName() + ": " + e.getMessage());
+            throw new DebugSupportException("Can't run source " + source.getName() + ": " + e.getMessage());
         }
     }
 
     @Override
-    public Object languageEval(Source source, Node node, MaterializedFrame frame) {
+    public Object evalInContext(Source source, Node node, MaterializedFrame frame) {
         return RContext.getEngine().parseAndEval(source, frame, false, false);
     }
 
     @Override
-    public AdvancedInstrumentRootFactory languageAdvancedInstrumentRootFactory(String exprText, AdvancedInstrumentResultListener resultListener) throws DebugException {
+    public AdvancedInstrumentRootFactory createAdvancedInstrumentRootFactory(String exprText, AdvancedInstrumentResultListener resultListener) throws DebugSupportException {
         try {
             RNode astNode = parseExpr(exprText);
             return new RToolEvalNodeFactory(astNode);
         } catch (ParseException ex) {
-            throw new DebugException("Unable to parse tool-supplied expression");
+            throw new DebugSupportException("Unable to parse tool-supplied expression");
         }
 
     }
@@ -106,6 +110,60 @@ public final class RSourceExecutionProvider extends SourceExecutionProvider {
             }
             return result;
         }
+
+    }
+
+    public Visualizer getVisualizer() {
+        return new RVisualizer();
+    }
+
+    /**
+     * Helper for the repl debugger.
+     */
+    private final class RVisualizer extends DefaultVisualizer {
+        private TextConnections.InternalStringWriteConnection stringConn;
+
+        private void checkCreated() {
+            if (stringConn == null) {
+                try {
+                    stringConn = new TextConnections.InternalStringWriteConnection();
+                } catch (IOException ex) {
+                    throw RInternalError.shouldNotReachHere();
+                }
+            }
+        }
+
+        /**
+         * A little tricky because R's printing does not "return" Strings as this API requires. So
+         * we have to redirect the output using the a temporary "sink" on the standard output
+         * connection.
+         */
+        @Override
+        public String displayValue(Object value, int trim) {
+            checkCreated();
+            try {
+                StdConnections.pushDivertOut(stringConn, false);
+                RContext.getEngine().printResult(value);
+                return stringConn.getString();
+            } finally {
+                try {
+                    StdConnections.popDivertOut();
+                } catch (IOException ex) {
+                    throw RInternalError.shouldNotReachHere();
+
+                }
+            }
+        }
+
+        @Override
+        public String displayIdentifier(FrameSlot slot) {
+            return slot.getIdentifier().toString();
+        }
+
+    }
+
+    public void enableASTProbing(ASTProber astProber) {
+        // TODO Auto-generated method stub
 
     }
 

@@ -30,7 +30,6 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.instrument.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.runtime.conn.*;
@@ -351,9 +350,9 @@ public final class RContext extends ExecutionContext {
         RootCallTarget makePromiseCallTarget(Object body, String funName);
 
         /**
-         * Returns an R-specific {@link Visualizer} for use by the instrumentation framework.
+         * Used by Truffle debugger; invokes the internal "print" support in R for {@code value}.
          */
-        Visualizer getRVisualizer();
+        void printResult(Object value);
 
     }
 
@@ -593,7 +592,6 @@ public final class RContext extends ExecutionContext {
     public void setEngine(Engine engine) {
         assert this.engine == null;
         this.engine = engine;
-        this.setVisualizer(engine.getRVisualizer());
     }
 
     /**
@@ -835,11 +833,6 @@ public final class RContext extends ExecutionContext {
             throw Utils.fail("no command args set");
         }
         return commandArgs;
-    }
-
-    @Override
-    public String getLanguageShortName() {
-        return "R";
     }
 
     @Override

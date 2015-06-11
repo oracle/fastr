@@ -35,8 +35,6 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.instrument.*;
-import com.oracle.truffle.api.instrument.impl.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.library.graphics.*;
 import com.oracle.truffle.r.nodes.*;
@@ -464,7 +462,7 @@ final class REngine implements RContext.Engine {
     private static final ArgumentsSignature PRINT_INTERNAL_SIGNATURE = ArgumentsSignature.get("x");
 
     @TruffleBoundary
-    private void printResult(Object result) {
+    public void printResult(Object result) {
         Object resultValue = result instanceof RPromise ? PromiseHelperNode.evaluateSlowPath(null, (RPromise) result) : result;
         if (loadBase) {
             Object printMethod = REnvironment.globalEnv().findFunction("print");
@@ -516,55 +514,6 @@ final class REngine implements RContext.Engine {
             consoleHandler.printErrorln(s);
 
         }
-    }
-
-    public Visualizer getRVisualizer() {
-        return new RVisualizer();
-    }
-
-    /**
-     * Helper for the repl debugger.
-     */
-    private final class RVisualizer extends DefaultVisualizer {
-        private TextConnections.InternalStringWriteConnection stringConn;
-
-        private void checkCreated() {
-            if (stringConn == null) {
-                try {
-                    stringConn = new TextConnections.InternalStringWriteConnection();
-                } catch (IOException ex) {
-                    throw RInternalError.shouldNotReachHere();
-                }
-            }
-        }
-
-        /**
-         * A little tricky because R's printing does not "return" Strings as this API requires. So
-         * we have to redirect the output using the a temporary "sink" on the standard output
-         * connection.
-         */
-        @Override
-        public String displayValue(ExecutionContext executionContext, Object value, int trim) {
-            checkCreated();
-            try {
-                StdConnections.pushDivertOut(stringConn, false);
-                printResult(value);
-                return stringConn.getString();
-            } finally {
-                try {
-                    StdConnections.popDivertOut();
-                } catch (IOException ex) {
-                    throw RInternalError.shouldNotReachHere();
-
-                }
-            }
-        }
-
-        @Override
-        public String displayIdentifier(FrameSlot slot) {
-            return slot.getIdentifier().toString();
-        }
-
     }
 
 }

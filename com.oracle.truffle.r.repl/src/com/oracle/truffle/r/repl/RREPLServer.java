@@ -29,9 +29,10 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.instrument.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
-import com.oracle.truffle.tools.debug.engine.*;
-import com.oracle.truffle.r.repl.debug.*;
+import com.oracle.truffle.api.vm.*;
+import com.oracle.truffle.api.vm.TruffleVM.Language;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.tools.debug.engine.*;
 import com.oracle.truffle.tools.debug.shell.*;
 import com.oracle.truffle.tools.debug.shell.client.*;
 import com.oracle.truffle.tools.debug.shell.server.*;
@@ -43,11 +44,11 @@ public final class RREPLServer implements REPLServer {
 
     public static void main(String[] args) {
 
-        // TODO (mlvdv) prototype cheat: start from R, rather than from the client.
+        // Cheating for the prototype: start from R, rather than from the client.
         final RREPLServer server = new RREPLServer();
-        final SimpleREPLClient client = new SimpleREPLClient(server.rContext, server);
+        final SimpleREPLClient client = new SimpleREPLClient(server.language.getShortName(), server);
 
-        // TODO (mlvdv) prototype cheat: allow server access to client for recursive debugging
+        // Cheating for the prototype: allow server access to client for recursive debugging
         server.setClient(client);
 
         try {
@@ -56,37 +57,13 @@ public final class RREPLServer implements REPLServer {
         }
     }
 
-    /**
-     * A fake RContext for startup, since we don't have a real until the R system is running.
-     */
-    static class DelayedRContext extends ExecutionContext {
-        private RContext rContext;
-
-        @Override
-        public String getLanguageShortName() {
-            return "R";
-        }
-
-        ExecutionContext getRContext() {
-            if (rContext == null) {
-                return this;
-            } else {
-                return rContext;
-            }
-        }
-
-        void setRContext(RContext rContext) {
-            this.rContext = rContext;
-        }
-    }
-
+    private final Language language;
     private final String statusPrefix;
     private final DebugEngine debugEngine;
-    private final DelayedRContext rContext;
 
     private final Map<String, REPLHandler> handlerMap = new HashMap<>();
 
-    private RServerContext currentServerContext;
+    private RREPLServerContext currentServerContext;
 
     private SimpleREPLClient client = null;
 
@@ -122,11 +99,13 @@ public final class RREPLServer implements REPLServer {
         add(RREPLHandler.R_FRAME_HANDLER);
         add(RREPLHandler.INFO_HANDLER);
 
-        this.rContext = new DelayedRContext();
-        this.statusPrefix = this.rContext.getLanguageShortName() + " REPL:";
-        final RSourceExecutionProvider rSourceExecution = new RSourceExecutionProvider();
-        final RREPLDebugClient jsDebugClient = new RREPLDebugClient(this.rContext);
-        this.debugEngine = DebugEngine.create(jsDebugClient, rSourceExecution);
+        TruffleVM vm = TruffleVM.newVM().build();
+        this.language = vm.getLanguages().get("application/x-r");
+        assert language != null;
+
+        this.statusPrefix = language.getShortName() + " REPL:";
+        final RREPLDebugClient rDebugClient = new RREPLDebugClient();
+        this.debugEngine = DebugEngine.create(rDebugClient, language);
     }
 
     private void setClient(SimpleREPLClient client) {
@@ -137,11 +116,11 @@ public final class RREPLServer implements REPLServer {
 
         // Complete initialization of instrumentation & debugging contexts.
 
-        this.currentServerContext = new RServerContext(null, null, null);
+        this.currentServerContext = new RREPLServerContext(null, null, null);
 
         final REPLMessage reply = new REPLMessage();
         reply.put(REPLMessage.STATUS, REPLMessage.SUCCEEDED);
-        reply.put(REPLMessage.DISPLAY_MSG, rContext.getLanguageShortName() + " started");
+        reply.put(REPLMessage.DISPLAY_MSG, language.getShortName() + " started");
         return reply;
     }
 
@@ -159,11 +138,11 @@ public final class RREPLServer implements REPLServer {
     /**
      * Execution context of a halted R program.
      */
-    public final class RServerContext extends REPLServerContext {
+    public final class RREPLServerContext extends REPLServerContext {
 
-        private final RServerContext predecessor;
+        private final RREPLServerContext predecessor;
 
-        public RServerContext(RServerContext predecessor, Node astNode, MaterializedFrame frame) {
+        public RREPLServerContext(RREPLServerContext predecessor, Node astNode, MaterializedFrame frame) {
             super(predecessor == null ? 0 : predecessor.getLevel() + 1, astNode, frame);
             this.predecessor = predecessor;
         }
@@ -185,8 +164,8 @@ public final class RREPLServer implements REPLServer {
         }
 
         @Override
-        public RContext getLanguageContext() {
-            return RContext.getInstance();
+        public Language getLanguage() {
+            return language;
         }
 
         @Override
@@ -208,16 +187,13 @@ public final class RREPLServer implements REPLServer {
      */
     private final class RREPLDebugClient implements DebugClient {
 
-        private final DelayedRContext executionContext;
+        private RREPLDebugClient() {
 
-        private RREPLDebugClient(DelayedRContext executionContext) {
-            this.executionContext = executionContext;
         }
 
         public void haltedAt(Node node, MaterializedFrame frame, List<String> warnings) {
-            executionContext.setRContext(RContext.getInstance());
             // Create and push a new debug context where execution is halted
-            currentServerContext = new RServerContext(currentServerContext, node, frame);
+            currentServerContext = new RREPLServerContext(currentServerContext, node, frame);
 
             // Message the client that execution is halted and is in a new debugging context
             final REPLMessage message = new REPLMessage();
@@ -242,8 +218,8 @@ public final class RREPLServer implements REPLServer {
             }
         }
 
-        public ExecutionContext getExecutionContext() {
-            return executionContext.getRContext();
+        public Language getLanguage() {
+            return language;
         }
     }
 
