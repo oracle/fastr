@@ -54,5 +54,11 @@ public abstract class GetOldClass extends RBuiltinNode {
         return RNull.instance;
     }
 
+    @Specialization
+    protected Object getOldClass(@SuppressWarnings("unused") RNull arg) {
+        controlVisibility();
+        return RNull.instance;
+    }
+
     public abstract Object execute(VirtualFrame frame, RAbstractVector o);
 }
