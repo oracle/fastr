@@ -175,6 +175,8 @@ public class ForeignFunctions {
                     return CairoPropsNodeGen.create();
                 case "makeQuartzDefault":
                     return new MakeQuartzDefault();
+                case "menu":
+                    return MenuNodeGen.create();
                 default:
                     return null;
             }
