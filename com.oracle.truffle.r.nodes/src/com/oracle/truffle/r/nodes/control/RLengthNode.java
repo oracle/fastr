@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.control;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.nodes.profile.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
@@ -72,13 +73,15 @@ public abstract class RLengthNode extends RNode {
     }
 
     @Specialization(guards = {"cachedClass != null", "cachedClass == operand.getClass()"})
-    protected int doCachedContainer(Object operand, @Cached("getContainerClass(operand)") Class<? extends RAbstractContainer> cachedClass) {
-        return cachedClass.cast(operand).getLength();
+    protected int doCachedContainer(Object operand, //
+                    @Cached("getContainerClass(operand)") Class<? extends RAbstractContainer> cachedClass, //
+                    @Cached("create()") VectorLengthProfile lengthProfile) {
+        return lengthProfile.profile(cachedClass.cast(operand).getLength());
     }
 
     @Specialization(contains = "doCachedContainer")
-    protected int doContainer(RAbstractContainer operand) {
-        return operand.getLength();
+    protected int doContainer(RAbstractContainer operand, @Cached("create()") VectorLengthProfile lengthProfile) {
+        return lengthProfile.profile(operand.getLength());
     }
 
     protected static Class<? extends RAbstractContainer> getContainerClass(Object value) {
@@ -89,12 +92,12 @@ public abstract class RLengthNode extends RNode {
     }
 
     @Specialization
-    protected int getLength(REnvironment env) {
+    protected int getLength(REnvironment env, @Cached("create()") VectorLengthProfile lengthProfile) {
         /*
          * This is a bit wasteful but only in the creation of the RStringVector; all the logic to
          * decide whether to include a name is still necessary
          */
-        return env.ls(true, null, false).getLength();
+        return lengthProfile.profile(env.ls(true, null, false).getLength());
     }
 
 }
