@@ -125,5 +125,6 @@ public class TestBuiltin_oldClass extends TestBase {
     @Test
     public void testGetClass() {
         assertEval("{ x<-1; oldClass(x) }");
+        assertEval("{ oldClass(NULL) }");
     }
 }

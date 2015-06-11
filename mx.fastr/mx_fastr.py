@@ -37,6 +37,7 @@ def runR(args, className, nonZeroIsFatal=True, extraVmArgs=None, runBench=False,
     vmArgs = ['-cp', mx.classpath(project)]
     vmArgs = vmArgs + ["-Drhome.path=" + _fastr_suite.dir]
 
+
     if runBench == False:
         vmArgs = vmArgs + ['-ea', '-esa']
     if extraVmArgs:
@@ -66,7 +67,7 @@ def rshell(args, nonZeroIsFatal=True, extraVmArgs=None, runBench=False):
     '''run R shell'''
     # Optional args for external use by benchmarks
     graal_vm = _get_graal_vm()
-    return runR(args, "com.oracle.truffle.r.shell.RCommand", nonZeroIsFatal=nonZeroIsFatal, extraVmArgs=extraVmArgs, runBench=False, graal_vm=graal_vm)
+    return runR(args, "com.oracle.truffle.r.shell.RCommand", nonZeroIsFatal=nonZeroIsFatal, extraVmArgs=extraVmArgs, runBench=runBench, graal_vm=graal_vm)
 
 def rscript(args):
     '''run Rscript'''
