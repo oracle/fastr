@@ -66,12 +66,12 @@ def rshell(args, nonZeroIsFatal=True, extraVmArgs=None, runBench=False):
     '''run R shell'''
     # Optional args for external use by benchmarks
     graal_vm = _get_graal_vm()
-    runR(args, "com.oracle.truffle.r.shell.RCommand", nonZeroIsFatal=nonZeroIsFatal, extraVmArgs=extraVmArgs, runBench=False, graal_vm=graal_vm)
+    return runR(args, "com.oracle.truffle.r.shell.RCommand", nonZeroIsFatal=nonZeroIsFatal, extraVmArgs=extraVmArgs, runBench=False, graal_vm=graal_vm)
 
 def rscript(args):
     '''run Rscript'''
     graal_vm = _get_graal_vm()
-    runR(args, "com.oracle.truffle.r.shell.RscriptCommand", graal_vm=graal_vm)
+    return runR(args, "com.oracle.truffle.r.shell.RscriptCommand", graal_vm=graal_vm)
 
 def build(args):
     '''FastR build'''
