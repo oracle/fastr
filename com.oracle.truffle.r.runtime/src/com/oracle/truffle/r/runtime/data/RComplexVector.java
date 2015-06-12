@@ -217,7 +217,7 @@ public final class RComplexVector extends RVector implements RAbstractComplexVec
     }
 
     @Override
-    protected RStringVector getImplicitClassHr() {
+    public RStringVector getImplicitClassHr() {
         return getClassHierarchyHelper(implicitClassHeader, implicitClassHeaderArray, implicitClassHeaderMatrix);
     }
 }

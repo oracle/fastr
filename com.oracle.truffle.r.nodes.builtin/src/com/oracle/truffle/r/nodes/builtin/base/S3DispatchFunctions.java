@@ -95,7 +95,7 @@ public abstract class S3DispatchFunctions extends RBuiltinNode {
                 dispatchedObject = arg;
             }
 
-            RStringVector type = classHierarchyNode.execute(frame, dispatchedObject);
+            RStringVector type = classHierarchyNode.execute(dispatchedObject);
             MaterializedFrame callerFrame = getCallerFrame(frame);
             MaterializedFrame genericDefFrame = RArguments.getEnclosingFrame(frame);
 

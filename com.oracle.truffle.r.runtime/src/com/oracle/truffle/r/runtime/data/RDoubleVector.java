@@ -221,7 +221,7 @@ public final class RDoubleVector extends RVector implements RAbstractDoubleVecto
     }
 
     @Override
-    protected RStringVector getImplicitClassHr() {
+    public RStringVector getImplicitClassHr() {
         return getClassHierarchyHelper(implicitClassHeader, implicitClassHeaderArray, implicitClassHeaderMatrix);
     }
 }

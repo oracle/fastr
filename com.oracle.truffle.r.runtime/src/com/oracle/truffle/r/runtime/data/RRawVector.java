@@ -191,7 +191,7 @@ public final class RRawVector extends RVector implements RAbstractRawVector, RAc
     }
 
     @Override
-    protected RStringVector getImplicitClassHr() {
+    public RStringVector getImplicitClassHr() {
         return getClassHierarchyHelper(implicitClassHeader, implicitClassHeaderArray, implicitClassHeaderMatrix);
     }
 }

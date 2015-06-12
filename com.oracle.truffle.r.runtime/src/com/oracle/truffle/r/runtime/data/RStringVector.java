@@ -187,7 +187,7 @@ public final class RStringVector extends RVector implements RAbstractStringVecto
     }
 
     @Override
-    protected RStringVector getImplicitClassHr() {
+    public RStringVector getImplicitClassHr() {
         return getClassHierarchyHelper(implicitClassHeader, implicitClassHeaderArray, implicitClassHeaderMatrix);
     }
 

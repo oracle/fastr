@@ -23,7 +23,10 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.nodes.*;
+import com.oracle.truffle.api.utilities.*;
+import com.oracle.truffle.r.nodes.builtin.base.ClassHierarchyNodeGen.AttributeAccessNodeGen;
+import com.oracle.truffle.r.nodes.builtin.base.ClassHierarchyNodeGen.VectorClassHierarchyNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.S3DispatchFunctions.UseMethod;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
@@ -37,7 +40,7 @@ import com.oracle.truffle.r.runtime.env.*;
  */
 public abstract class ClassHierarchyNode extends UnaryNode {
 
-    public abstract RStringVector execute(VirtualFrame frame, Object arg);
+    public abstract RStringVector execute(Object arg);
 
     @Specialization
     protected RStringVector getClassHr(@SuppressWarnings("unused") byte arg) {
@@ -62,6 +65,11 @@ public abstract class ClassHierarchyNode extends UnaryNode {
     @Specialization
     protected RStringVector getClassHr(@SuppressWarnings("unused") RComplex arg) {
         return RDataFactory.createStringVector(RType.Complex.getName());
+    }
+
+    @Specialization
+    protected RStringVector getClassHr(@SuppressWarnings("unused") RRaw arg) {
+        return RDataFactory.createStringVector(RType.Raw.getName());
     }
 
     @Specialization
@@ -99,8 +107,91 @@ public abstract class ClassHierarchyNode extends UnaryNode {
         return arg.getClassHierarchy();
     }
 
+    /**
+     * Simple attribute access node that specializes on the position at which the attribute was
+     * found last time.
+     */
+    public abstract static class AttributeAccess extends Node {
+
+        protected final String name;
+
+        protected AttributeAccess(String name) {
+            this.name = name.intern();
+        }
+
+        public abstract Object execute(RAttributes attr);
+
+        protected boolean nameMatches(RAttributes attr, int index) {
+            /*
+             * The length check is against names.length instead of size, so that the check folds
+             * into the array bounds check.
+             */
+            return index != -1 && attr.getNames().length > index && attr.getNames()[index] == name;
+        }
+
+        @Specialization(guards = "nameMatches(attr, index)")
+        protected Object accessCached(RAttributes attr, //
+                        @Cached("attr.find(name)") int index) {
+            return attr.getValues()[index];
+        }
+
+        @Specialization(contains = "accessCached")
+        protected Object access(RAttributes attr) {
+            return attr.get(name);
+        }
+    }
+
+    /**
+     *
+     */
+    public abstract static class VectorClassHierarchyNode extends Node {
+
+        public abstract RStringVector execute(RVector vector);
+
+        @Specialization(guards = "arg.getAttributes() == null")
+        protected RStringVector getImplicitClass(RVector arg, //
+                        @Cached("createClassProfile()") ValueProfile typeProfile) {
+            return typeProfile.profile(arg).getImplicitClassHr();
+        }
+
+        protected AttributeAccess createAccess() {
+            return AttributeAccessNodeGen.create(RRuntime.CLASS_ATTR_KEY);
+        }
+
+        @Specialization
+        protected RStringVector getClass(RVector arg, //
+                        @Cached("createAccess()") AttributeAccess access, //
+                        @Cached("createBinaryProfile()") ConditionProfile isNullProfile, //
+                        @Cached("createClassProfile()") ValueProfile typeProfile) {
+            Object value = access.execute(arg.getAttributes());
+            if (isNullProfile.profile(value == null)) {
+                return typeProfile.profile(arg).getImplicitClassHr();
+            } else {
+                return (RStringVector) value;
+            }
+        }
+    }
+
+    public VectorClassHierarchyNode createVectorClass() {
+        return VectorClassHierarchyNodeGen.create();
+    }
+
     @Specialization
+    protected RStringVector getClassHr(RVector arg, @Cached("createVectorClass()") VectorClassHierarchyNode vectorClass) {
+        return vectorClass.execute(arg);
+    }
+
+    protected static boolean isRVector(Object arg) {
+        return arg instanceof RVector;
+    }
+
+    @Specialization(guards = "!isRVector(arg)")
     protected RStringVector getClassHr(RAbstractContainer arg) {
         return arg.getClassHierarchy();
+    }
+
+    @Fallback
+    protected RStringVector getClassHr(Object obj) {
+        throw RInternalError.shouldNotReachHere("type: " + obj.getClass());
     }
 }

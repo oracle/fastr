@@ -25,7 +25,9 @@ package com.oracle.truffle.r.runtime.data;
 import java.util.*;
 
 import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.*;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.CompilerDirectives.ValueType;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.runtime.*;
 
@@ -92,9 +94,10 @@ public final class RAttributes implements Iterable<RAttributes.RAttribute> {
         }
     }
 
-    private int find(String name) {
+    public int find(String name) {
         for (int i = 0; i < size; i++) {
-            if (names[i] != null && names[i] == name) {
+            assert names[i] != null;
+            if (names[i] == name) {
                 return i;
             }
         }
@@ -134,6 +137,14 @@ public final class RAttributes implements Iterable<RAttributes.RAttribute> {
 
     public int size() {
         return size;
+    }
+
+    public String[] getNames() {
+        return names;
+    }
+
+    public Object[] getValues() {
+        return values;
     }
 
     public boolean isEmpty() {

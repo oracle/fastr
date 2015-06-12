@@ -788,7 +788,7 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
         return getImplicitClassHr();
     }
 
-    protected abstract RStringVector getImplicitClassHr();
+    public abstract RStringVector getImplicitClassHr();
 
     // As shape of the vector may change at run-time we need to compute
     // class hierarchy on the fly.
