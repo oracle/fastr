@@ -93,7 +93,7 @@ public abstract class UpdateFieldNode extends UpdateNode implements RSyntaxNode 
             dcn = insert(new UseMethodInternalNode("$<-", ArgumentsSignature.get("", "", ""), true));
         }
         try {
-            return dcn.execute(frame, container.getClassHierarchy(), new Object[]{container, field, value});
+            return dcn.execute(frame, container, new Object[]{container, field, value});
         } catch (S3FunctionLookupNode.NoGenericMethodException e) {
             return accessRecursive(frame, container, value, field);
         }

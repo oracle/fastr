@@ -283,7 +283,7 @@ public class InfixEmulationFunctions {
                 noDrop = false;
             }
             try {
-                return dcn.execute(frame, x.getClassHierarchy(), new Object[]{x, inds, dropVec});
+                return dcn.execute(frame, x, new Object[]{x, inds, dropVec});
             } catch (S3FunctionLookupNode.NoGenericMethodException e) {
                 return access(frame, x, RRuntime.LOGICAL_FALSE, inds, dropVec, IS_SUBSET);
             }
@@ -302,7 +302,7 @@ public class InfixEmulationFunctions {
                 noDrop = true;
             }
             try {
-                return dcn.execute(frame, x.getClassHierarchy(), new Object[]{x, inds});
+                return dcn.execute(frame, x, new Object[]{x, inds});
             } catch (S3FunctionLookupNode.NoGenericMethodException e) {
                 return access(frame, x, RRuntime.LOGICAL_FALSE, inds, dropVec, IS_SUBSET);
             }
@@ -409,7 +409,7 @@ public class InfixEmulationFunctions {
                 dcn = insert(new UseMethodInternalNode(NAME, SIGNATURE, true));
             }
             try {
-                return dcn.execute(frame, x.getClassHierarchy(), new Object[]{x, inds, exactVec});
+                return dcn.execute(frame, x, new Object[]{x, inds, exactVec});
             } catch (S3FunctionLookupNode.NoGenericMethodException e) {
                 return access(frame, x, exact, inds, RRuntime.LOGICAL_TRUE, IS_SUBSET);
             }
@@ -508,7 +508,7 @@ public class InfixEmulationFunctions {
                 dcn = insert(new UseMethodInternalNode(NAME, SIGNATURE, true));
             }
             try {
-                return dcn.execute(frame, x.getClassHierarchy(), new Object[]{x, args});
+                return dcn.execute(frame, x, new Object[]{x, args});
             } catch (S3FunctionLookupNode.NoGenericMethodException e) {
                 Object value = args.getArgument(args.getLength() - 1);
                 return update(frame, x, args, value, IS_SUBSET);
@@ -543,7 +543,7 @@ public class InfixEmulationFunctions {
                 dcn = insert(new UseMethodInternalNode(NAME, ArgumentsSignature.empty(2), true));
             }
             try {
-                return dcn.execute(frame, x.getClassHierarchy(), new Object[]{x, args});
+                return dcn.execute(frame, x, new Object[]{x, args});
             } catch (S3FunctionLookupNode.NoGenericMethodException e) {
                 Object value = args.getArgument(args.getLength() - 1);
                 return update(frame, x, args, value, IS_SUBSET);
@@ -644,7 +644,7 @@ public class InfixEmulationFunctions {
                 dcn = insert(new UseMethodInternalNode(NAME, ArgumentsSignature.get("", ""), true));
             }
             try {
-                return dcn.execute(frame, container.getClassHierarchy(), new Object[]{container, field});
+                return dcn.execute(frame, container, new Object[]{container, field});
             } catch (S3FunctionLookupNode.NoGenericMethodException e) {
                 return access(frame, container, (String) field);
             }
@@ -691,7 +691,7 @@ public class InfixEmulationFunctions {
                 dcn = insert(new UseMethodInternalNode(NAME, ArgumentsSignature.get("", "", ""), true));
             }
             try {
-                return dcn.execute(frame, container.getClassHierarchy(), new Object[]{container, field, value});
+                return dcn.execute(frame, container, new Object[]{container, field, value});
             } catch (S3FunctionLookupNode.NoGenericMethodException e) {
                 return update(frame, container, value, (String) field);
             }

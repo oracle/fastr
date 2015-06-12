@@ -266,7 +266,7 @@ public abstract class UpdateArrayHelperNode extends UpdateNode implements RSynta
         }
         try {
             Object inds = positions instanceof Object[] ? new RArgsValuesAndNames((Object[]) positions, ArgumentsSignature.empty(((Object[]) positions).length)) : positions;
-            return dcn.execute(frame, container.getClassHierarchy(), new Object[]{container, inds, value});
+            return dcn.execute(frame, container, new Object[]{container, inds, value});
         } catch (S3FunctionLookupNode.NoGenericMethodException e) {
             return updateDelegate(frame, v, value, container, positions);
         }
@@ -280,7 +280,7 @@ public abstract class UpdateArrayHelperNode extends UpdateNode implements RSynta
         }
         try {
             Object inds = positions instanceof Object[] ? new RArgsValuesAndNames((Object[]) positions, ArgumentsSignature.empty(((Object[]) positions).length)) : positions;
-            return dcn.execute(frame, container.getClassHierarchy(), new Object[]{container, inds, value});
+            return dcn.execute(frame, container, new Object[]{container, inds, value});
         } catch (S3FunctionLookupNode.NoGenericMethodException e) {
             return updateDelegate(frame, v, value, container, positions);
         }

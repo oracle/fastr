@@ -104,7 +104,7 @@ public abstract class AccessFieldNode extends RNode implements RSyntaxNode {
             dcn = insert(new UseMethodInternalNode("$", ArgumentsSignature.get("", ""), true));
         }
         try {
-            return dcn.execute(frame, container.getClassHierarchy(), new Object[]{container, field});
+            return dcn.execute(frame, container, new Object[]{container, field});
         } catch (S3FunctionLookupNode.NoGenericMethodException e) {
             return accessRecursive(frame, container, field);
         }

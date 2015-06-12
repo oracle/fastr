@@ -289,7 +289,7 @@ public abstract class AccessArrayNode extends RNode implements RSyntaxNode {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
                     dcnDrop = insert(new UseMethodInternalNode("[", DROP_SIGNATURE, true));
                 }
-                return dcnDrop.execute(frame, container.getClassHierarchy(), new Object[]{container, inds, dropDim});
+                return dcnDrop.execute(frame, container, new Object[]{container, inds, dropDim});
             } else {
                 if (dcn == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -310,7 +310,7 @@ public abstract class AccessArrayNode extends RNode implements RSyntaxNode {
         }
         try {
             Object inds = position instanceof Object[] ? new RArgsValuesAndNames((Object[]) position, ArgumentsSignature.empty(((Object[]) position).length)) : position;
-            return dcn.execute(frame, container.getClassHierarchy(), new Object[]{container, inds, exact});
+            return dcn.execute(frame, container, new Object[]{container, inds, exact});
         } catch (S3FunctionLookupNode.NoGenericMethodException e) {
             return accessRecursive(frame, container, exact, position, recLevel, dropDim);
         }

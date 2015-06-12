@@ -20,14 +20,13 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.builtin.base;
+package com.oracle.truffle.r.nodes.function;
 
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.utilities.*;
-import com.oracle.truffle.r.nodes.builtin.base.ClassHierarchyNodeGen.AttributeAccessNodeGen;
-import com.oracle.truffle.r.nodes.builtin.base.ClassHierarchyNodeGen.VectorClassHierarchyNodeGen;
-import com.oracle.truffle.r.nodes.builtin.base.S3DispatchFunctions.UseMethod;
+import com.oracle.truffle.r.nodes.function.ClassHierarchyNodeGen.AttributeAccessNodeGen;
+import com.oracle.truffle.r.nodes.function.ClassHierarchyNodeGen.VectorClassHierarchyNodeGen;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.conn.*;
@@ -35,9 +34,6 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
 
-/**
- * Refactored out of {@link UseMethod} to avoid Eclipse annotation processor circularity.
- */
 public abstract class ClassHierarchyNode extends UnaryNode {
 
     public abstract RStringVector execute(Object arg);
@@ -158,7 +154,7 @@ public abstract class ClassHierarchyNode extends UnaryNode {
             return AttributeAccessNodeGen.create(RRuntime.CLASS_ATTR_KEY);
         }
 
-        @Specialization
+        @Specialization(guards = "arg.getAttributes() != null")
         protected RStringVector getClass(RVector arg, //
                         @Cached("createAccess()") AttributeAccess access, //
                         @Cached("createBinaryProfile()") ConditionProfile isNullProfile, //

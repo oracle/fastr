@@ -57,7 +57,7 @@ public abstract class UpdateLength extends RInvisibleBuiltinNode {
             dcn = insert(new UseMethodInternalNode("length<-", getSuppliedSignature(), true));
         }
         try {
-            return dcn.execute(frame, container.getClassHierarchy(), new Object[]{container, lengthVector});
+            return dcn.execute(frame, container, new Object[]{container, lengthVector});
         } catch (S3FunctionLookupNode.NoGenericMethodException e) {
             return updateLength(frame, container, lengthVector);
         }

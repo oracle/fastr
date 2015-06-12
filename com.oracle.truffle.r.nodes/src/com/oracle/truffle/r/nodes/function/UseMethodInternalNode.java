@@ -19,9 +19,11 @@ import com.oracle.truffle.r.options.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RArguments.S3Args;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.*;
 
 public final class UseMethodInternalNode extends RNode implements VisibilityController {
 
+    @Child private ClassHierarchyNode classHierarchyNode = ClassHierarchyNodeGen.create(null);
     @Child private S3FunctionLookupNode lookup = S3FunctionLookupNode.create(false, false);
     @Child private CallMatcherNode callMatcher = CallMatcherNode.create(false, false);
 
@@ -54,7 +56,8 @@ public final class UseMethodInternalNode extends RNode implements VisibilityCont
         }
     }
 
-    public Object execute(VirtualFrame frame, RStringVector type, Object[] arguments) {
+    public Object execute(VirtualFrame frame, RAbstractContainer dispatchOn, Object[] arguments) {
+        RStringVector type = classHierarchyNode.execute(dispatchOn);
         controlVisibility();
         Result lookupResult = lookup.execute(frame, generic, type, null, frame.materialize(), null);
         if (wrap) {

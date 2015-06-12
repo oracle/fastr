@@ -81,7 +81,7 @@ public abstract class Bind extends RPrecedenceBuiltinNode {
             dcn = insert(new UseMethodInternalNode(getBindType(), SIGNATURE, false));
         }
         try {
-            return dcn.execute(frame, ((RDataFrame) args.getArgument(0)).getClassHierarchy(), new Object[]{deparseLevel, args});
+            return dcn.execute(frame, (RDataFrame) args.getArgument(0), new Object[]{deparseLevel, args});
         } catch (S3FunctionLookupNode.NoGenericMethodException e) {
             throw RInternalError.shouldNotReachHere();
         }

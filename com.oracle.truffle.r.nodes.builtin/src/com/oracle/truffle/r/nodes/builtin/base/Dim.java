@@ -100,7 +100,7 @@ public abstract class Dim extends RBuiltinNode {
             dcn = insert(new UseMethodInternalNode(NAME, ArgumentsSignature.get(""), true));
         }
         try {
-            return dcn.execute(frame, container.getClassHierarchy(), new Object[]{container});
+            return dcn.execute(frame, container, new Object[]{container});
         } catch (S3FunctionLookupNode.NoGenericMethodException e) {
             return hasDimensions(container) ? dimWithDimensions(frame, container) : RNull.instance;
         }
