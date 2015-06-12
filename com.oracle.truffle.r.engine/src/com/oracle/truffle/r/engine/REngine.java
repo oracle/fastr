@@ -213,6 +213,19 @@ final class REngine implements RContext.Engine {
         return parseAndEval(source, globalFrame, printResult, allowIncompleteSource);
     }
 
+    @Override
+    public Object parseAndEvalTest(Source source, boolean printResult, boolean allowIncompleteSource) {
+        try {
+            return parseAndEvalImpl(source, globalFrame, printResult, allowIncompleteSource);
+        } catch (RInternalError e) {
+            context.getConsoleHandler().printErrorln("FastR internal error: " + e.getMessage());
+            RInternalError.reportError(e);
+            throw e;
+        } catch (RecognitionException e) {
+            throw new RInternalError(e, "recognition exception");
+        }
+    }
+
     private Object parseAndEvalImpl(Source source, MaterializedFrame frame, boolean printResult, boolean allowIncompleteSource) throws RecognitionException {
         RSyntaxNode node;
         try {

@@ -280,6 +280,12 @@ public final class RContext extends ExecutionContext {
          */
         Object parseAndEval(Source sourceDesc, boolean printResult, boolean allowIncompleteSource);
 
+        /**
+         * Variant of {@link #parseAndEval(Source, MaterializedFrame, boolean, boolean)} for test
+         * evaluation in the global frame.
+         */
+        Object parseAndEvalTest(Source sourceDesc, boolean printResult, boolean allowIncompleteSource);
+
         Object INCOMPLETE_SOURCE = new Object();
 
         /**

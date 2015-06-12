@@ -177,7 +177,7 @@ public final class FastRSession implements RSession {
                 try {
                     RContext testContext = createTestContext();
                     try {
-                        testContext.getThisEngine().parseAndEval(Source.fromText(expression, "<test_input>"), true, false);
+                        testContext.getThisEngine().parseAndEvalTest(Source.fromText(expression, "<test_input>"), true, false);
                     } finally {
                         testContext.destroy();
                     }
