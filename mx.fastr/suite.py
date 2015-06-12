@@ -21,9 +21,32 @@
 # questions.
 #
 suite = {
-  "mxversion" : "3.3.0",
+  "mxversion" : "3.4.0",
   "name" : "fastr",
+
+  "imports" : {
+    "suites" : {
+        "list" : [
+            ["graal", "b09503284ac83d46a51128eb6e8ab0fd502838a0", "http://hg.openjdk.java.net/graal/graal"],
+        ],
+      },
+   },
+
+  # distributions that we depend on
   "libraries" : {
+        "TRUFFLE" : {
+            "kind" : "distribution"
+        },
+
+        "GRAAL" : {
+            "kind" : "distribution"
+        },
+
+        "TRUFFLE-DSL-PROCESSOR" : {
+            "kind" : "distribution",
+            "dependencies" : ["TRUFFLE"],
+        },
+
     "GNUR" : {
         "path" : "lib/R-3.1.3.tar.gz",
         "urls" : ["http://cran.rstudio.com/src/base/R-3/R-3.1.3.tar.gz"],
@@ -220,7 +243,7 @@ suite = {
       "checkstyle" : "com.oracle.truffle.r.runtime",
       "javaCompliance" : "1.8",
       "annotationProcessors" : [
-          "com.oracle.truffle.dsl.processor",
+          "TRUFFLE-DSL-PROCESSOR",
       ],
       "workingSets" : "Truffle,FastR",
       "jacoco" : "include",
@@ -229,14 +252,13 @@ suite = {
     "com.oracle.truffle.r.nodes.builtin" : {
       "sourceDirs" : ["src"],
       "dependencies" : [
-        "com.oracle.jvmci.debug",
         "com.oracle.truffle.r.nodes",
         "com.oracle.truffle.r.library",
       ],
       "checkstyle" : "com.oracle.truffle.r.runtime",
       "javaCompliance" : "1.8",
       "annotationProcessors" : [
-        "com.oracle.truffle.dsl.processor",
+        "TRUFFLE-DSL-PROCESSOR",
       ],
       "workingSets" : "Truffle,FastR",
       "jacoco" : "include",
@@ -299,7 +321,7 @@ suite = {
     "com.oracle.truffle.r.runtime" : {
       "sourceDirs" : ["src"],
       "dependencies" : [
-        "com.oracle.truffle.api",
+        "TRUFFLE",
         "com.oracle.truffle.r.options",
         "FINDBUGS",
       ],
@@ -313,8 +335,6 @@ suite = {
       "sourceDirs" : ["src"],
       "dependencies" : [
         "com.oracle.truffle.r.runtime",
-        "com.oracle.nfi",
-        "com.oracle.graal.compiler.common",
         "ASM",
         "ASM_ANALYSIS",
         "JNR_POSIX",

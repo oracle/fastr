@@ -417,7 +417,6 @@ def load_optional_suite(name):
 
 def mx_post_parse_cmd_line(opts):
     # load optional suites, r_apptests first so r_benchmarks can find it
-    load_optional_suite('repl')
     load_optional_suite('r_apptests')
     load_optional_suite('r_benchmarks')
 
