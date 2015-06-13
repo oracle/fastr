@@ -42,6 +42,10 @@ suite = {
             "kind" : "distribution"
         },
 
+        "JVMCI_API" : {
+            "kind" : "distribution"
+        },
+
         "TRUFFLE-DSL-PROCESSOR" : {
             "kind" : "distribution",
             "dependencies" : ["TRUFFLE"],
@@ -335,6 +339,7 @@ suite = {
       "sourceDirs" : ["src"],
       "dependencies" : [
         "com.oracle.truffle.r.runtime",
+        "JVMCI_API",
         "ASM",
         "ASM_ANALYSIS",
         "JNR_POSIX",
