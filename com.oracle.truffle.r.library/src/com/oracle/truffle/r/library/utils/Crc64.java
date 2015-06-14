@@ -28,15 +28,16 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.data.model.*;
 
 public abstract class Crc64 extends RExternalBuiltinNode.Arg1 {
 
     @TruffleBoundary
     @Specialization
-    protected String crc64(String input) {
+    protected String crc64(RAbstractStringVector input) {
         try {
             MessageDigest md = MessageDigest.getInstance("MD5");
-            byte[] digest = md.digest(input.getBytes());
+            byte[] digest = md.digest(input.getDataAt(0).getBytes());
             StringBuffer sb = new StringBuffer();
             for (int i = 0; i < digest.length; i++) {
                 sb.append(Integer.toHexString(digest[i] & 0xFF));
