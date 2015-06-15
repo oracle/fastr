@@ -28,7 +28,6 @@ import java.nio.file.*;
 import java.util.*;
 
 import com.oracle.truffle.api.*;
-import com.oracle.truffle.r.options.*;
 
 /**
  * This class is intended to be used for internal errors that do not correspond to R errors.

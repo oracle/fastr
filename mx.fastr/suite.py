@@ -326,7 +326,6 @@ suite = {
       "sourceDirs" : ["src"],
       "dependencies" : [
         "TRUFFLE",
-        "com.oracle.truffle.r.options",
         "FINDBUGS",
       ],
       "checkstyle" : "com.oracle.truffle.r.runtime",
@@ -370,18 +369,6 @@ suite = {
       ],
       "native" : "true",
       "workingSets" : "FastR",
-    },
-
-    "com.oracle.truffle.r.options" : {
-      "sourceDirs" : ["src"],
-      "dependencies" : [
-        "com.oracle.jvmci.options",
-      ],
-      "annotationProcessors" : ["com.oracle.jvmci.options.processor"],
-      "checkstyle" : "com.oracle.truffle.r.runtime",
-      "javaCompliance" : "1.8",
-      "workingSets" : "FastR",
-      "jacoco" : "include",
     },
 
     "com.oracle.truffle.r.library" : {

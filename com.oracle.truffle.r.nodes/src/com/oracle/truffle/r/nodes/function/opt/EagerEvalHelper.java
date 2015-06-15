@@ -27,7 +27,7 @@ import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.access.variables.*;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode.ReadKind;
 import com.oracle.truffle.r.nodes.function.*;
-import com.oracle.truffle.r.options.*;
+import com.oracle.truffle.r.runtime.*;
 
 /**
  * Provides small helper function for eager evaluation of arguments for the use in

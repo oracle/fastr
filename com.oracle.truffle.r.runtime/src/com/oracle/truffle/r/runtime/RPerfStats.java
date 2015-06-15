@@ -25,8 +25,6 @@ package com.oracle.truffle.r.runtime;
 import java.io.*;
 import java.util.*;
 
-import com.oracle.truffle.r.options.*;
-
 /**
  * Manage the creation/activation of handlers or performance analysis. Enabled by the
  * {@link FastROptions#PerfStats} option.

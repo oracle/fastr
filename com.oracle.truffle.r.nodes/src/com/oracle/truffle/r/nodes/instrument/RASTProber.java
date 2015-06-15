@@ -30,7 +30,6 @@ import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.control.*;
 import com.oracle.truffle.r.nodes.function.*;
-import com.oracle.truffle.r.options.FastROptions;
 import com.oracle.truffle.r.runtime.*;
 
 /**

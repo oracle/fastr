@@ -134,6 +134,10 @@ public class RCmdOptions {
     public static class Option<T> {
         public final OptionType type;
         /**
+         * The plain option name as passed to the constructor.
+         */
+        public final String plainName;
+        /**
          * The option name prefixed by {@code --} or {@code null} if no {@code --} form.
          */
         private final String name;
@@ -180,6 +184,7 @@ public class RCmdOptions {
             this.implemented = implemented;
             this.type = type;
             this.shortName = shortName == null ? null : shortKey(shortName);
+            this.plainName = name;
             this.name = name == null ? null : key(name);
             this.help = help;
             this.defaultValue = defaultValue;

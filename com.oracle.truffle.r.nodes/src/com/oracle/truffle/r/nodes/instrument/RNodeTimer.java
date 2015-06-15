@@ -30,7 +30,6 @@ import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.nodes.instrument.RInstrument.FunctionIdentification;
 import com.oracle.truffle.r.nodes.instrument.RInstrument.NodeId;
-import com.oracle.truffle.r.options.*;
 import com.oracle.truffle.r.runtime.*;
 
 /**

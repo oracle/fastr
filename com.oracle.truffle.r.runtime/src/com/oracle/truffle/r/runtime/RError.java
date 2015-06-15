@@ -14,7 +14,6 @@ package com.oracle.truffle.r.runtime;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.source.*;
-import com.oracle.truffle.r.options.*;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
 
 /**
