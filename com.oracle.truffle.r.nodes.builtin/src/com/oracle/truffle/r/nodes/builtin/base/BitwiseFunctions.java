@@ -29,8 +29,8 @@ public class BitwiseFunctions {
 
         @Child protected CastTypeNode castTypeA = CastTypeNodeGen.create(null, null);
         @Child protected CastTypeNode castTypeB = CastTypeNodeGen.create(null, null);
-        @Child protected TypeofNode typeofA = TypeofNodeGen.create(null);
-        @Child protected TypeofNode typeofB = TypeofNodeGen.create(null);
+        @Child protected TypeofNode typeofA = TypeofNodeGen.create();
+        @Child protected TypeofNode typeofB = TypeofNodeGen.create();
 
         protected enum Operation {
             AND("bitwAnd"),

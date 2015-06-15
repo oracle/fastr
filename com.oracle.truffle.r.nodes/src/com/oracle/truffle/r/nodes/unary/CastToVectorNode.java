@@ -29,8 +29,6 @@ import com.oracle.truffle.r.runtime.data.model.*;
 @NodeField(name = "nonVectorPreserved", type = boolean.class)
 public abstract class CastToVectorNode extends CastNode {
 
-    public abstract Object executeObject(Object value);
-
     public abstract boolean isNonVectorPreserved();
 
     @Specialization
@@ -65,7 +63,6 @@ public abstract class CastToVectorNode extends CastNode {
     protected RList cast(RExpression expression) {
         return expression.getList();
     }
-
     @Specialization
     protected RAbstractVector cast(RDataFrame dataFrame) {
         return dataFrame.getVector();

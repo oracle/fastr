@@ -11,13 +11,10 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.dsl.CreateCast;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.utilities.BinaryConditionProfile;
 import com.oracle.truffle.api.utilities.ConditionProfile;
-import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.unary.CastIntegerNodeGen;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -35,11 +32,9 @@ public abstract class RowSums extends RBuiltinNode {
 
     private final BinaryConditionProfile removeNA = (BinaryConditionProfile) ConditionProfile.createBinaryProfile();
 
-    @CreateCast("arguments")
-    public RNode[] castArguments(RNode[] arguments) {
-        arguments[1] = CastIntegerNodeGen.create(arguments[1], true, false, false);
-        arguments[2] = CastIntegerNodeGen.create(arguments[2], true, false, false);
-        return arguments;
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.toInteger(1).toInteger(2);
     }
 
     @Specialization

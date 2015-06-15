@@ -22,7 +22,7 @@ public abstract class CastTypeNode extends BinaryNode {
 
     protected static final int NUMBER_OF_TYPES = RType.values().length;
 
-    @Child protected TypeofNode typeof = TypeofNodeGen.create(null);
+    @Child protected TypeofNode typeof = TypeofNodeGen.create();
 
     public abstract Object execute(Object value, RType type);
 
@@ -37,7 +37,7 @@ public abstract class CastTypeNode extends BinaryNode {
     protected static Object doCast(RAbstractVector value, RType type, //
                     @Cached("type") RType cachedType, //
                     @Cached("createCast(cachedType)") CastNode cast) {
-        return cast.executeCast(value);
+        return cast.execute(value);
     }
 
     @Specialization
@@ -58,20 +58,20 @@ public abstract class CastTypeNode extends BinaryNode {
     protected static CastNode createCast(RType type) {
         switch (type) {
             case Character:
-                return CastStringNodeGen.create(null, false, false, false, false);
+                return CastStringNodeGen.create(false, false, false, false);
             case Complex:
-                return CastComplexNodeGen.create(null, false, false, false);
+                return CastComplexNodeGen.create(false, false, false);
             case Double:
             case Numeric:
-                return CastDoubleNodeGen.create(null, false, false, false);
+                return CastDoubleNodeGen.create(false, false, false);
             case Integer:
-                return CastIntegerNodeGen.create(null, false, false, false);
+                return CastIntegerNodeGen.create(false, false, false);
             case Logical:
-                return CastLogicalNodeGen.create(null, false, false, false);
+                return CastLogicalNodeGen.create(false, false, false);
             case Raw:
-                return CastRawNodeGen.create(null, false, false, false);
+                return CastRawNodeGen.create(false, false, false);
             case List:
-                return CastListNodeGen.create(null, false, false, false);
+                return CastListNodeGen.create(false, false, false);
             default:
                 return null;
 

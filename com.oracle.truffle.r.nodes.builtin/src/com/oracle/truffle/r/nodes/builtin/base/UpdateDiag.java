@@ -113,7 +113,7 @@ public abstract class UpdateDiag extends RInvisibleBuiltinNode {
     private void initCastDoubleNode() {
         if (castDouble == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castDouble = insert(CastDoubleNodeGen.create(null, false, false, false));
+            castDouble = insert(CastDoubleNodeGen.create(false, false, false));
         }
     }
 }

@@ -36,6 +36,7 @@ import com.oracle.truffle.r.runtime.env.*;
 
 public abstract class ClassHierarchyNode extends UnaryNode {
 
+    @Override
     public abstract RStringVector execute(Object arg);
 
     @Specialization

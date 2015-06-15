@@ -29,7 +29,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-public abstract class CastListNode extends CastNode {
+public abstract class CastListNode extends CastBaseNode {
 
     @Child private CastListNode castListRecursive;
 
@@ -40,7 +40,7 @@ public abstract class CastListNode extends CastNode {
     private RList castList(Object operand) {
         if (castListRecursive == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castListRecursive = insert(CastListNodeGen.create(null, false, false, false));
+            castListRecursive = insert(CastListNodeGen.create(false, false, false));
         }
         return castListRecursive.executeList(operand);
     }
@@ -103,6 +103,6 @@ public abstract class CastListNode extends CastNode {
     }
 
     public static CastListNode create() {
-        return CastListNodeGen.create(null, true, true, true);
+        return CastListNodeGen.create(true, true, true);
     }
 }

@@ -15,9 +15,7 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.utilities.*;
-import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -29,16 +27,10 @@ public abstract class Bincode extends RBuiltinNode {
     private final BranchProfile errorProfile = BranchProfile.create();
     private final NACheck naCheck = NACheck.create();
 
-    @CreateCast("arguments")
-    public RNode[] createCastValue(RNode[] children) {
-        if (children.length != getSuppliedSignature().getLength()) {
-            errorProfile.enter();
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.ARGUMENTS_PASSED, children.length, ".Internal(bincode)", getSuppliedSignature().getLength());
-        }
-        // cast to vector as appropriate to eliminate NULL values
-        children[0] = CastDoubleNodeGen.create(children[0], false, false, false);
-        children[1] = CastDoubleNodeGen.create(children[1], false, false, false);
-        return children;
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.toDouble(0);
+        casts.toDouble(1);
     }
 
     @Specialization

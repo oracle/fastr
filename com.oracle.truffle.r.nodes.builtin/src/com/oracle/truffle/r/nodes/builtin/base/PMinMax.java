@@ -74,15 +74,15 @@ public abstract class PMinMax extends RBuiltinNode {
     private RAbstractVector castVector(Object value) {
         if (castVector == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castVector = insert(CastToVectorNodeGen.create(null, true, true, true, false));
+            castVector = insert(CastToVectorNodeGen.create(false));
         }
-        return ((RAbstractVector) castVector.executeObject(value)).materialize();
+        return ((RAbstractVector) castVector.execute(value)).materialize();
     }
 
     private CastNode getIntegerCastNode() {
         if (castInteger == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castInteger = insert(CastIntegerNodeGen.create(null, true, true, true));
+            castInteger = insert(CastIntegerNodeGen.create(true, true, true));
         }
         return castInteger;
     }
@@ -90,7 +90,7 @@ public abstract class PMinMax extends RBuiltinNode {
     private CastNode getDoubleCastNode() {
         if (castDouble == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castDouble = insert(CastDoubleNodeGen.create(null, true, true, true));
+            castDouble = insert(CastDoubleNodeGen.create(true, true, true));
         }
         return castDouble;
     }
@@ -98,7 +98,7 @@ public abstract class PMinMax extends RBuiltinNode {
     private CastNode getStringCastNode() {
         if (castString == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castString = insert(CastStringNodeGen.create(null, true, true, true, false));
+            castString = insert(CastStringNodeGen.create(true, true, true, false));
         }
         return castString;
     }
@@ -115,7 +115,7 @@ public abstract class PMinMax extends RBuiltinNode {
                 return vecLength;
             }
             length = Math.max(length, vecLength);
-            argValues[i] = castNode.executeCast(v);
+            argValues[i] = castNode.execute(v);
         }
         return length;
     }

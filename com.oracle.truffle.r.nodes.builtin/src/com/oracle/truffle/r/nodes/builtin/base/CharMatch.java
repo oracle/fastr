@@ -13,9 +13,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -23,10 +21,9 @@ import com.oracle.truffle.r.runtime.data.model.*;
 @RBuiltin(name = "charmatch", kind = INTERNAL, parameterNames = {"x", "table", "noMatch"})
 public abstract class CharMatch extends RBuiltinNode {
 
-    @CreateCast("arguments")
-    protected RNode[] castArguments(RNode[] arguments) {
-        arguments[2] = CastIntegerNodeGen.create(arguments[2], true, false, false);
-        return arguments;
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.toInteger(2);
     }
 
     @Specialization

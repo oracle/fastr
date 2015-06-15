@@ -43,9 +43,9 @@ public abstract class Order extends RPrecedenceBuiltinNode {
     private RAbstractVector castVector(Object value) {
         if (castVector == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castVector = insert(CastToVectorNodeGen.create(null, false, false, false, false));
+            castVector = insert(CastToVectorNodeGen.create(false));
         }
-        return (RAbstractVector) castVector.executeObject(value);
+        return (RAbstractVector) castVector.execute(value);
     }
 
     private int cmp(VirtualFrame frame, Object v, int i, int j, byte naLast) {

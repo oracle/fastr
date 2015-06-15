@@ -26,9 +26,7 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.utilities.*;
-import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -38,11 +36,9 @@ public abstract class PMatch extends RBuiltinNode {
 
     private final ConditionProfile nomatchNA = ConditionProfile.createBinaryProfile();
 
-    @CreateCast("arguments")
-    public RNode[] castArguments(RNode[] arguments) {
-        arguments[2] = CastIntegerNodeGen.create(arguments[2], false, false, false);
-        arguments[3] = CastLogicalNodeGen.create(arguments[3], false, false, false);
-        return arguments;
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.toInteger(2).toLogical(3);
     }
 
     @Specialization

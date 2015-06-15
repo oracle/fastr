@@ -16,9 +16,7 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 import java.util.*;
 
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -26,11 +24,9 @@ import com.oracle.truffle.r.runtime.data.model.*;
 @RBuiltin(name = "rep_len", kind = INTERNAL, parameterNames = {"x", "length.out"})
 public abstract class RepeatLength extends RBuiltinNode {
 
-    @CreateCast("arguments")
-    protected RNode[] castStatusArgument(RNode[] arguments) {
-        // length.out is at index 1 of arguments
-        arguments[1] = CastIntegerNodeGen.create(arguments[1], true, false, false);
-        return arguments;
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.toInteger(1);
     }
 
     @Specialization

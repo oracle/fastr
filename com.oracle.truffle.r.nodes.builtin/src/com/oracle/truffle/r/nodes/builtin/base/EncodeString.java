@@ -13,9 +13,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.utilities.*;
-import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -34,12 +32,9 @@ public abstract class EncodeString extends RBuiltinNode {
     private final NACheck na = NACheck.create();
     private final BranchProfile everSeenNA = BranchProfile.create();
 
-    @CreateCast("arguments")
-    public RNode[] castArguments(RNode[] arguments) {
-        arguments[1] = CastIntegerNodeGen.create(arguments[1], true, false, false);
-        arguments[3] = CastIntegerNodeGen.create(arguments[3], true, false, false);
-        arguments[4] = CastLogicalNodeGen.create(arguments[4], true, false, false);
-        return arguments;
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.toInteger(1).toInteger(3).toLogical(4);
     }
 
     private int computeWidth(RAbstractStringVector x, int width, final String quote) {

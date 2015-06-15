@@ -33,7 +33,7 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
-public abstract class CastDoubleNode extends CastNode {
+public abstract class CastDoubleNode extends CastBaseNode {
 
     private final NACheck naCheck = NACheck.create();
     private final NAProfile naProfile = NAProfile.create();
@@ -52,7 +52,7 @@ public abstract class CastDoubleNode extends CastNode {
     private Object castDoubleRecursive(Object o) {
         if (recursiveCastDouble == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            recursiveCastDouble = insert(CastDoubleNodeGen.create(null, isPreserveNames(), isDimensionsPreservation(), isAttrPreservation()));
+            recursiveCastDouble = insert(CastDoubleNodeGen.create(isPreserveNames(), isDimensionsPreservation(), isAttrPreservation()));
         }
         return recursiveCastDouble.executeDouble(o);
     }
@@ -94,7 +94,7 @@ public abstract class CastDoubleNode extends CastNode {
     public double doString(String operand) {
         naCheck.enable(operand);
         double result = naCheck.convertStringToDouble(operand);
-        if (isNA(result)) {
+        if (RRuntime.isNA(result)) {
             warningBranch.enter();
             RError.warning(RError.Message.NA_INTRODUCED_COERCION);
         }
@@ -247,6 +247,6 @@ public abstract class CastDoubleNode extends CastNode {
     }
 
     public static CastDoubleNode create() {
-        return CastDoubleNodeGen.create(null, true, true, true);
+        return CastDoubleNodeGen.create(true, true, true);
     }
 }

@@ -32,7 +32,7 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
-public abstract class CastComplexNode extends CastNode {
+public abstract class CastComplexNode extends CastBaseNode {
 
     private final NACheck naCheck = NACheck.create();
     private final NAProfile naProfile = NAProfile.create();
@@ -154,6 +154,6 @@ public abstract class CastComplexNode extends CastNode {
     }
 
     public static CastComplexNode create() {
-        return CastComplexNodeGen.create(null, true, true, true);
+        return CastComplexNodeGen.create(true, true, true);
     }
 }

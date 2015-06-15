@@ -32,6 +32,7 @@ import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.binary.BinaryBooleanScalarNodeFactory.LogicalScalarCastNodeGen;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode.RCustomBuiltinNode;
+import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -57,8 +58,8 @@ public final class BinaryBooleanScalarNode extends RCustomBuiltinNode {
 
     public BinaryBooleanScalarNode(BooleanOperationFactory factory, RNode[] arguments, RBuiltinFactory builtin, ArgumentsSignature suppliedSignature) {
         super(arguments, builtin, suppliedSignature);
-        arguments[0] = BoxPrimitiveNodeGen.create(arguments[0]);
-        arguments[1] = BoxPrimitiveNodeGen.create(arguments[1]);
+        arguments[0] = new ApplyCastNode(BoxPrimitiveNodeGen.create(), arguments[0]);
+        arguments[1] = new ApplyCastNode(BoxPrimitiveNodeGen.create(), arguments[1]);
         this.factory = factory;
         BooleanOperation booleanLogic = factory.create();
         this.logic = new BinaryMapBooleanFunctionNode(booleanLogic);

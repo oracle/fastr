@@ -22,9 +22,39 @@
  */
 package com.oracle.truffle.r.nodes.unary;
 
-public abstract class CastNode extends UnaryNode {
+import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.nodes.*;
+import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.env.*;
 
-    public static CastIntegerNode toInteger(boolean preserveNames, boolean dimensionsPreservation, boolean attrPreservation) {
-        return CastIntegerNodeGen.create(preserveNames, dimensionsPreservation, attrPreservation);
+@NodeInfo(cost = NodeCost.NONE)
+public final class ApplyCastNode extends RNode implements RSyntaxNode {
+
+    @Child private CastNode cast;
+    @Child private RNode value;
+
+    public ApplyCastNode(CastNode cast, RNode value) {
+        this.cast = cast;
+        this.value = value;
+    }
+
+    @Override
+    public Object execute(VirtualFrame frame) {
+        return cast.execute(value.execute(frame));
+    }
+
+    @Override
+    public void deparse(RDeparse.State state) {
+        ((RSyntaxNode) value).deparse(state);
+    }
+
+    public RSyntaxNode substitute(REnvironment env) {
+        return new ApplyCastNode(NodeUtil.cloneNode(cast), (RNode) ((RSyntaxNode) value).substitute(env));
+    }
+
+    @Override
+    public void serialize(RSerialize.State state) {
+        ((RSyntaxNode) value).serialize(state);
     }
 }

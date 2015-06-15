@@ -10,19 +10,15 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.dsl.CreateCast;
-import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.unary.CastIntegerNodeGen;
+import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
-import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
-import com.oracle.truffle.r.runtime.ops.na.NACheck;
-
-import static com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.ops.*;
+import com.oracle.truffle.r.runtime.ops.na.*;
 
 // Implements .rowMeans
 @RBuiltin(name = "rowMeans", kind = RBuiltinKind.INTERNAL, parameterNames = {"X", "m", "n", "na.rm"})
@@ -31,11 +27,9 @@ public abstract class RowMeans extends RBuiltinNode {
     @Child private BinaryArithmetic add = BinaryArithmetic.ADD.create();
     private final NACheck na = NACheck.create();
 
-    @CreateCast("arguments")
-    public RNode[] castArguments(RNode[] arguments) {
-        arguments[1] = CastIntegerNodeGen.create(arguments[1], true, false, false);
-        arguments[2] = CastIntegerNodeGen.create(arguments[2], true, false, false);
-        return arguments;
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.toInteger(1).toInteger(2);
     }
 
     @Specialization(guards = "!isNaRm(naRm)")

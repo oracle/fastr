@@ -69,7 +69,7 @@ public class IsFiniteFunctions {
         protected Object doIsFiniteOther(Object x) {
             controlVisibility();
             if (typeofNode == null) {
-                typeofNode = insert(TypeofNodeGen.create(null));
+                typeofNode = insert(TypeofNodeGen.create());
             }
             String type = typeofNode.execute(x).getName();
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.DEFAULT_METHOD_NOT_IMPLEMENTED_FOR_TYPE, type);

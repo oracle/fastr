@@ -46,17 +46,17 @@ public abstract class GetText extends RBuiltinNode {
     private Object castString(Object operand) {
         if (castString == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castString = insert(CastStringNodeGen.create(null, false, true, false, false));
+            castString = insert(CastStringNodeGen.create(false, true, false, false));
         }
-        return castString.executeCast(operand);
+        return castString.execute(operand);
     }
 
     private Object castVector(Object value) {
         if (castVector == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castVector = insert(CastToVectorNodeGen.create(null, false, false, false, false));
+            castVector = insert(CastToVectorNodeGen.create(false));
         }
-        return castVector.executeObject(value);
+        return castVector.execute(value);
     }
 
     @Specialization

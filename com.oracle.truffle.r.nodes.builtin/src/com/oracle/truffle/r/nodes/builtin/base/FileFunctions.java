@@ -25,7 +25,6 @@ import java.util.stream.*;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
@@ -43,10 +42,9 @@ public class FileFunctions {
         private static final int WRITE = 2;
         private static final int READ = 4;
 
-        @CreateCast("arguments")
-        public RNode[] castArguments(RNode[] arguments) {
-            arguments[1] = CastIntegerNodeGen.create(arguments[1], false, false, false);
-            return arguments;
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.toInteger(1);
         }
 
         @Specialization
@@ -708,7 +706,7 @@ public class FileFunctions {
         private CastStringNode initCastStringNode() {
             if (castStringNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                castStringNode = insert(CastStringNodeGen.create(null, false, false, false, false));
+                castStringNode = insert(CastStringNodeGen.create(false, false, false, false));
             }
             return castStringNode;
         }
@@ -792,12 +790,9 @@ public class FileFunctions {
     @RBuiltin(name = "file.copy", kind = INTERNAL, parameterNames = {"from", "to", "overwrite", "recursive", "copy.mode", "copy.date"})
     public abstract static class FileCopy extends RBuiltinNode {
 
-        @CreateCast("arguments")
-        public RNode[] castArguments(RNode[] arguments) {
-            for (int i = 2; i < 5; i++) {
-                arguments[i] = CastLogicalNodeGen.create(arguments[i], true, false, false);
-            }
-            return arguments;
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.toLogical(2).toLogical(3).toLogical(4).toLogical(5);
         }
 
         protected boolean checkLogical(byte value, String name) throws RError {
@@ -920,11 +915,10 @@ public class FileFunctions {
 
     @RBuiltin(name = "unlink", kind = INTERNAL, parameterNames = {"x", "recursive", "force"})
     public abstract static class Unlink extends RInvisibleBuiltinNode {
-        @CreateCast("arguments")
-        public RNode[] castArguments(RNode[] arguments) {
-            arguments[1] = CastLogicalNodeGen.create(arguments[1], true, false, false);
-            arguments[2] = CastLogicalNodeGen.create(arguments[2], true, false, false);
-            return arguments;
+
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.toLogical(1).toLogical(2);
         }
 
         protected boolean checkLogical(byte value, String name) throws RError {

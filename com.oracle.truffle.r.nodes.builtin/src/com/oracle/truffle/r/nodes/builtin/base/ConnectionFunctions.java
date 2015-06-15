@@ -25,11 +25,6 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 import static com.oracle.truffle.r.runtime.conn.ConnectionSupport.*;
 import static com.oracle.truffle.r.runtime.conn.StdConnections.*;
-import static com.oracle.truffle.r.runtime.conn.FileConnections.*;
-import static com.oracle.truffle.r.runtime.conn.SocketConnections.*;
-import static com.oracle.truffle.r.runtime.conn.TextConnections.*;
-import static com.oracle.truffle.r.runtime.conn.GZIPConnections.*;
-import static com.oracle.truffle.r.runtime.conn.URLConnections.*;
 
 import java.io.*;
 import java.net.*;
@@ -39,11 +34,15 @@ import java.util.zip.*;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.conn.ConnectionSupport.BaseRConnection;
+import com.oracle.truffle.r.runtime.conn.FileConnections.FileRConnection;
+import com.oracle.truffle.r.runtime.conn.GZIPConnections.GZIPRConnection;
 import com.oracle.truffle.r.runtime.conn.*;
+import com.oracle.truffle.r.runtime.conn.SocketConnections.RSocketConnection;
+import com.oracle.truffle.r.runtime.conn.TextConnections.TextRConnection;
+import com.oracle.truffle.r.runtime.conn.URLConnections.URLRConnection;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
@@ -204,11 +203,11 @@ public abstract class ConnectionFunctions {
 
     @RBuiltin(name = "socketConnection", kind = INTERNAL, parameterNames = {"host", "port", "server", "blocking", "open", "encoding", "timeout"})
     public abstract static class SocketConnection extends RBuiltinNode {
-        @CreateCast("arguments")
-        public RNode[] castArguments(RNode[] arguments) {
-            arguments[1] = CastIntegerNodeGen.create(arguments[1], false, false, false);
-            arguments[6] = CastIntegerNodeGen.create(arguments[6], false, false, false);
-            return arguments;
+
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.toInteger(1);
+            casts.toInteger(6);
         }
 
         @SuppressWarnings("unused")
@@ -457,10 +456,9 @@ public abstract class ConnectionFunctions {
     @RBuiltin(name = "pushBack", kind = INTERNAL, parameterNames = {"data", "connection", "newLine", "type"})
     public abstract static class PushBack extends RBuiltinNode {
 
-        @CreateCast("arguments")
-        protected RNode[] castTimesLength(RNode[] arguments) {
-            arguments[0] = CastToVectorNodeGen.create(CastStringNodeGen.create(arguments[0], false, false, false, false), false, false, false, false);
-            return arguments;
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.toCharacter(0);
         }
 
         @SuppressWarnings("unused")
@@ -619,10 +617,10 @@ public abstract class ConnectionFunctions {
 
     @RBuiltin(name = "readBin", kind = INTERNAL, parameterNames = {"con", "what", "n", "size", "signed", "swap"})
     public abstract static class ReadBin extends InternalCloseHelper {
-        @CreateCast("arguments")
-        public RNode[] castArguments(RNode[] arguments) {
-            arguments[2] = CastIntegerNodeGen.create(arguments[2], false, false, false);
-            return arguments;
+
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.toInteger(2);
         }
 
         @SuppressWarnings("unused")
@@ -916,10 +914,10 @@ public abstract class ConnectionFunctions {
 
     @RBuiltin(name = "getConnection", kind = INTERNAL, parameterNames = {"what"})
     public abstract static class GetConnection extends RBuiltinNode {
-        @CreateCast("arguments")
-        public RNode[] castArguments(RNode[] arguments) {
-            arguments[0] = CastIntegerNodeGen.create(arguments[0], false, false, false);
-            return arguments;
+
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.toInteger(0);
         }
 
         @Specialization

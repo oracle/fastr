@@ -25,22 +25,21 @@ package com.oracle.truffle.r.nodes.unary;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-public abstract class ConvertInt extends UnaryNode {
+public abstract class ConvertInt extends CastNode {
 
     @Child private ConvertInt convertIntRecursive;
 
-    public abstract int executeInteger(VirtualFrame frame, Object operand);
+    public abstract int executeInteger(Object operand);
 
-    private int convertIntRecursive(VirtualFrame frame, Object operand) {
+    private int convertIntRecursive(Object operand) {
         if (convertIntRecursive == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            convertIntRecursive = insert(ConvertIntNodeGen.create(null));
+            convertIntRecursive = insert(ConvertIntNodeGen.create());
         }
-        return executeInteger(frame, operand);
+        return executeInteger(operand);
     }
 
     @Specialization
@@ -59,8 +58,8 @@ public abstract class ConvertInt extends UnaryNode {
     }
 
     @Specialization(guards = "operand.getLength() == 1")
-    protected int doLogical(VirtualFrame frame, RAbstractContainer operand) {
-        return convertIntRecursive(frame, operand.getDataAtAsObject(0));
+    protected int doLogical(RAbstractContainer operand) {
+        return convertIntRecursive(operand.getDataAtAsObject(0));
     }
 
     @Fallback

@@ -23,7 +23,7 @@
 package com.oracle.truffle.r.nodes.binary;
 
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
@@ -31,8 +31,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
  * Boxes all Java primitive values to a class that supports {@link RAbstractVector} and their typed
  * analogies.
  */
-@NodeChild("operand")
-public abstract class BoxPrimitiveNode extends RNode {
+public abstract class BoxPrimitiveNode extends CastNode {
 
     @Specialization
     protected static RAbstractVector doInt(int vector) {
@@ -72,5 +71,4 @@ public abstract class BoxPrimitiveNode extends RNode {
     protected static boolean isPrimitive(Object value) {
         return (value instanceof Integer) || (value instanceof Double) || (value instanceof Byte) || (value instanceof String);
     }
-
 }

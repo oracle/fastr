@@ -181,14 +181,25 @@ public class InfixEmulationFunctions {
         @Child private AccessPositions positions;
         protected final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
+        @Override
         @CreateCast("arguments")
-        public RNode[] castArguments(RNode[] arguments) {
+        protected RNode[] castArguments(RNode[] arguments) {
             for (int i = 0; i < arguments.length; i++) {
                 arguments[i] = PromiseEvaluatorNodeGen.create(arguments[i]);
             }
-            arguments[2] = CastLogicalNodeGen.create(arguments[2], false, false, false);
+            arguments[2] = new ApplyCastNode(CastLogicalNodeGen.create(false, false, false), arguments[2]);
             return arguments;
         }
+
+// @Override
+// protected void createCasts(CastBuilder casts) {
+// casts.evaluatePromise(0);
+// casts.evaluatePromise(1);
+// casts.evaluatePromise(2);
+// casts.evaluatePromise(3);
+// casts.evaluatePromise(4);
+// casts.toLogical(2);
+// }
 
         @ExplodeLoop
         protected Object access(VirtualFrame frame, Object vector, byte exact, RArgsValuesAndNames inds, Object dropDim, boolean isSubset) {
@@ -450,6 +461,7 @@ public class InfixEmulationFunctions {
 
         protected final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
+        @Override
         @CreateCast("arguments")
         public RNode[] castArguments(RNode[] arguments) {
             for (int i = 0; i < arguments.length; i++) {
@@ -457,6 +469,14 @@ public class InfixEmulationFunctions {
             }
             return arguments;
         }
+
+// @Override
+// protected void createCasts(CastBuilder casts) {
+// casts.evaluatePromise(0);
+// casts.evaluatePromise(1);
+// casts.evaluatePromise(2);
+// casts.evaluatePromise(3);
+// }
 
         @ExplodeLoop
         protected Object update(VirtualFrame frame, Object vector, RArgsValuesAndNames args, Object value, boolean isSubset) {

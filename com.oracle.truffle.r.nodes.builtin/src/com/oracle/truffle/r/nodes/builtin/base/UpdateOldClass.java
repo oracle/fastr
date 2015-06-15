@@ -48,14 +48,14 @@ public abstract class UpdateOldClass extends RInvisibleBuiltinNode {
             return setOldClass(arg, RNull.instance);
         }
         initCastStringNode();
-        Object result = castStringNode.executeCast(className);
+        Object result = castStringNode.execute(className);
         return setOldClass(arg, (RStringVector) result);
     }
 
     private void initCastStringNode() {
         if (castStringNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castStringNode = insert(CastStringNodeGen.create(null, false, false, false, false));
+            castStringNode = insert(CastStringNodeGen.create(false, false, false, false));
         }
     }
 

@@ -25,31 +25,27 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.builtin.RBuiltinNode.RWrapperBuiltinNode;
-import com.oracle.truffle.r.nodes.builtin.base.ReFactory.ReNodeGen;
+import com.oracle.truffle.r.nodes.builtin.base.ReNodeGen.ReInternalNodeGen;
+import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
 @RBuiltin(name = "Re", kind = PRIMITIVE, parameterNames = {"z"})
-public final class Re extends RWrapperBuiltinNode {
+public abstract class Re extends RBuiltinNode {
 
-    public Re(RNode[] arguments, RBuiltinFactory builtin, ArgumentsSignature suppliedSignature) {
-        super(arguments, builtin, suppliedSignature);
+    @Child private ReInternalNode re = ReInternalNodeGen.create();
+
+    @Specialization
+    protected Object re(Object value) {
+        return re.execute(value);
     }
 
-    @Override
-    protected RNode createDelegate() {
-        return ReNodeGen.create(getArguments()[0]);
-    }
+    public abstract static class ReInternalNode extends UnaryNode {
 
-    @NodeChild(value = "value", type = RNode.class)
-    public abstract static class ReNode extends RNode {
-
-        public abstract Object executeRDoubleVector(RAbstractComplexVector vector);
+        public abstract RDoubleVector executeRDoubleVector(Object value);
 
         private NACheck check = NACheck.create();
 

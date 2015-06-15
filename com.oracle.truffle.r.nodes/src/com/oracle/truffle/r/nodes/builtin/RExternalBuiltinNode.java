@@ -50,41 +50,41 @@ public abstract class RExternalBuiltinNode extends Node {
     protected byte castLogical(RAbstractVector operand) {
         if (castLogical == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castLogical = insert(CastLogicalNodeGen.create(null, false, false, false));
+            castLogical = insert(CastLogicalNodeGen.create(false, false, false));
         }
-        return ((RAbstractLogicalVector) castLogical.executeCast(operand)).getDataAt(0);
+        return ((RAbstractLogicalVector) castLogical.execute(operand)).getDataAt(0);
     }
 
     protected int castInt(RAbstractVector operand) {
         if (castInt == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castInt = insert(CastIntegerNodeGen.create(null, false, false, false));
+            castInt = insert(CastIntegerNodeGen.create(false, false, false));
         }
-        return ((RAbstractIntVector) castInt.executeCast(operand)).getDataAt(0);
+        return ((RAbstractIntVector) castInt.execute(operand)).getDataAt(0);
     }
 
     protected RAbstractDoubleVector castDouble(RAbstractVector operand) {
         if (castDouble == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castDouble = insert(CastDoubleNodeGen.create(null, false, false, false));
+            castDouble = insert(CastDoubleNodeGen.create(false, false, false));
         }
-        return (RAbstractDoubleVector) castDouble.executeCast(operand);
+        return (RAbstractDoubleVector) castDouble.execute(operand);
     }
 
     protected RComplexVector castComplexVector(Object operand) {
         if (castComplex == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castComplex = insert(CastComplexNodeGen.create(null, true, true, false));
+            castComplex = insert(CastComplexNodeGen.create(true, true, false));
         }
-        return (RComplexVector) castComplex.executeCast(operand);
+        return (RComplexVector) castComplex.execute(operand);
     }
 
     protected RAbstractVector castVector(Object value) {
         if (castVector == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castVector = insert(CastToVectorNodeGen.create(null, false, false, false, false));
+            castVector = insert(CastToVectorNodeGen.create(false));
         }
-        return (RAbstractVector) castVector.executeObject(value);
+        return (RAbstractVector) castVector.execute(value);
     }
 
     protected static String isString(Object arg) {

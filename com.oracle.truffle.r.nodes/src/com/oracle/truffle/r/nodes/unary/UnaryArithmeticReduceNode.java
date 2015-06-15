@@ -24,7 +24,7 @@ package com.oracle.truffle.r.nodes.unary;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
@@ -34,8 +34,10 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.ops.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
-@NodeChild(value = "naRm", type = RNode.class)
-public abstract class UnaryArithmeticReduceNode extends UnaryNode {
+@TypeSystemReference(RTypes.class)
+public abstract class UnaryArithmeticReduceNode extends Node {
+
+    public abstract Object executeReduce(Object value, Object naRm);
 
     @Child private MultiElemStringHandler stringHandler;
 
@@ -62,12 +64,12 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
         this(op.semantics, op.factory);
     }
 
-    private String handleString(VirtualFrame frame, RStringVector operand, byte naRm, int offset) {
+    private String handleString(RStringVector operand, byte naRm, int offset) {
         if (stringHandler == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            stringHandler = insert(MultiElemStringHandlerNodeGen.create(semantics, factory, na, null, null, null));
+            stringHandler = insert(MultiElemStringHandlerNodeGen.create(semantics, factory, na));
         }
-        return stringHandler.executeString(frame, operand, naRm, offset);
+        return stringHandler.executeString(operand, naRm, offset);
     }
 
     private void emptyWarning() {
@@ -357,9 +359,9 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
     }
 
     @Specialization(guards = "operand.getLength() > 1")
-    protected String doStringVector(VirtualFrame frame, RStringVector operand, byte naRm) {
+    protected String doStringVector(RStringVector operand, byte naRm) {
         if (semantics.supportString) {
-            return handleString(frame, operand, naRm, 0);
+            return handleString(operand, naRm, 0);
         } else {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_TYPE_ARGUMENT, "character");
         }
@@ -417,10 +419,10 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
         }
     }
 
-    @NodeChildren({@NodeChild("operand"), @NodeChild("naRm"), @NodeChild("offset")})
-    protected abstract static class MultiElemStringHandler extends RNode {
+    @TypeSystemReference(RTypes.class)
+    protected abstract static class MultiElemStringHandler extends Node {
 
-        public abstract String executeString(VirtualFrame frame, RStringVector operand, byte naRm, int offset);
+        public abstract String executeString(RStringVector operand, byte naRm, int offset);
 
         @Child private MultiElemStringHandler recursiveStringHandler;
         private final ReduceSemantics semantics;
@@ -440,16 +442,16 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
             this(other.semantics, other.factory, other.na);
         }
 
-        private String handleString(VirtualFrame frame, RStringVector operand, byte naRm, int offset) {
+        private String handleString(RStringVector operand, byte naRm, int offset) {
             if (recursiveStringHandler == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                recursiveStringHandler = insert(MultiElemStringHandlerNodeGen.create(semantics, factory, na, null, null, null));
+                recursiveStringHandler = insert(MultiElemStringHandlerNodeGen.create(semantics, factory, na));
             }
-            return recursiveStringHandler.executeString(frame, operand, naRm, offset);
+            return recursiveStringHandler.executeString(operand, naRm, offset);
         }
 
         @Specialization
-        protected String doStringVectorMultiElem(VirtualFrame frame, RStringVector operand, byte naRm, int offset) {
+        protected String doStringVectorMultiElem(RStringVector operand, byte naRm, int offset) {
             boolean profiledNaRm = naRmProfile.profile(naRm == RRuntime.LOGICAL_TRUE);
             na.enable(operand);
             String result = operand.getDataAt(offset);
@@ -460,7 +462,7 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
                         // last element - all other are NAs
                         return doStringVectorEmptyInternal(operand, naRm, semantics, getEncapsulatingSourceSection());
                     } else {
-                        return handleString(frame, operand, naRm, offset + 1);
+                        return handleString(operand, naRm, offset + 1);
                     }
                 }
             } else {
@@ -485,7 +487,5 @@ public abstract class UnaryArithmeticReduceNode extends UnaryNode {
             }
             return result;
         }
-
     }
-
 }

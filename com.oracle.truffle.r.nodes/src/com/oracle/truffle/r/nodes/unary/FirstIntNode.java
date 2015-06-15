@@ -20,19 +20,16 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.builtin.base;
+package com.oracle.truffle.r.nodes.unary;
 
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.utilities.*;
-import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.ConstantNode.ConstantIntegerScalarNode;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-@NodeChild("argument")
 @NodeFields({@NodeField(name = "emptyError", type = RError.Message.class), @NodeField(name = "sizeWarning", type = RError.Message.class), @NodeField(name = "argumentName", type = String.class),
                 @NodeField(name = "defaultValue", type = int.class)})
-abstract class FirstIntNode extends RNode {
+public abstract class FirstIntNode extends CastNode {
 
     protected abstract RError.Message getEmptyError();
 
@@ -66,18 +63,11 @@ abstract class FirstIntNode extends RNode {
         return argument.getDataAt(0);
     }
 
-    public static RNode createWithWarning(RNode value, RError.Message sizeWarning, String argumentName, int defaultValue) {
-        if (value instanceof ConstantIntegerScalarNode) {
-            return value;
-        }
-        return FirstIntNodeGen.create(value, null, sizeWarning, argumentName, defaultValue);
+    public static CastNode createWithWarning(RError.Message sizeWarning, String argumentName, int defaultValue) {
+        return FirstIntNodeGen.create(null, sizeWarning, argumentName, defaultValue);
     }
 
-    public static RNode createWithError(RNode value, RError.Message emptyError, String argumentName) {
-        if (value instanceof ConstantIntegerScalarNode) {
-            return value;
-        }
-        return FirstIntNodeGen.create(value, emptyError, null, argumentName, 0);
+    public static CastNode createWithError(RError.Message emptyError, String argumentName) {
+        return FirstIntNodeGen.create(emptyError, null, argumentName, 0);
     }
-
 }

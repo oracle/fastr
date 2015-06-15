@@ -38,9 +38,9 @@ import com.oracle.truffle.r.runtime.data.model.*;
 @RBuiltin(name = "ngettext", kind = INTERNAL, parameterNames = {"n", "msg1", "msg2", "domain"})
 public abstract class NGetText extends RBuiltinNode {
 
-    @CreateCast("arguments")
-    public RNode[] createCastValue(RNode[] children) {
-        return new RNode[]{CastIntegerNodeGen.create(children[0], false, false, false), children[1], children[2], children[3]};
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.toInteger(0);
     }
 
     @Specialization(guards = "wrongNVector(nVector)")

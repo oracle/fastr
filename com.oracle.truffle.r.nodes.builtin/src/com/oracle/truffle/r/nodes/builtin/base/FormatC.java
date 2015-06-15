@@ -16,7 +16,6 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.utilities.*;
-import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
@@ -33,22 +32,26 @@ public abstract class FormatC extends RBuiltinNode {
     private RStringVector castStringVector(Object o) {
         if (castStringNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castStringNode = insert(CastStringNodeGen.create(null, true, true, true, false));
+            castStringNode = insert(CastStringNodeGen.create(true, true, true, false));
         }
         return (RStringVector) ((RStringVector) castStringNode.executeString(o)).copyDropAttributes();
     }
 
-    @CreateCast("arguments")
-    public RNode[] createCastValue(RNode[] children) {
-        if (children.length != getSuppliedSignature().getLength()) {
-            errorProfile.enter();
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.ARGUMENTS_PASSED, children.length, ".Internal(formatC)", getSuppliedSignature().getLength());
-        }
-        // cast to vector as appropriate to eliminate NULL values
-        children[2] = CastIntegerNodeGen.create(CastToVectorNodeGen.create(children[2], false, false, false, false), false, false, false);
-        children[3] = CastIntegerNodeGen.create(CastToVectorNodeGen.create(children[3], false, false, false, false), false, false, false);
-        children[6] = CastIntegerNodeGen.create(CastToVectorNodeGen.create(children[6], false, false, false, false), false, false, false);
-        return children;
+    @Override
+    protected void createCasts(CastBuilder casts) {
+// if (children.length != getSuppliedSignature().getLength()) {
+// errorProfile.enter();
+// throw RError.error(getEncapsulatingSourceSection(), RError.Message.ARGUMENTS_PASSED,
+// children.length, ".Internal(formatC)", getSuppliedSignature().getLength());
+// }
+// // cast to vector as appropriate to eliminate NULL values
+// children[2] = CastIntegerNodeGen.create(CastToVectorNodeGen.create(children[2], false, false,
+// false, false), false, false, false);
+// children[3] = CastIntegerNodeGen.create(CastToVectorNodeGen.create(children[3], false, false,
+// false, false), false, false, false);
+// children[6] = CastIntegerNodeGen.create(CastToVectorNodeGen.create(children[6], false, false,
+// false, false), false, false, false);
+        casts.toInteger(2).toInteger(3).toInteger(6);
     }
 
     @SuppressWarnings("unused")

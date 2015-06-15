@@ -40,7 +40,7 @@ public abstract class AsComplex extends RBuiltinNode {
     private void initCast() {
         if (castComplexNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castComplexNode = insert(CastComplexNodeGen.create(null, false, false, false));
+            castComplexNode = insert(CastComplexNodeGen.create(false, false, false));
         }
     }
 

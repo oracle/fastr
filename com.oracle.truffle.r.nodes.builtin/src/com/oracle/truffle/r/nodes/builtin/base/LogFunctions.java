@@ -25,9 +25,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
@@ -40,11 +38,11 @@ public class LogFunctions {
             return new Object[]{RMissing.instance, Math.E};
         }
 
-        @CreateCast("arguments")
-        protected static RNode[] castStatusArgument(RNode[] arguments) {
-            // base argument is at index 1, and double
-            arguments[1] = CastDoubleNodeGen.create(arguments[1], true, false, false);
-            return arguments;
+        @Override
+        protected void createCasts(CastBuilder casts) {
+// // base argument is at index 1, and double
+// arguments[1] = CastDoubleNodeGen.create(arguments[1], true, false, false);
+            casts.toDouble(1);
         }
 
         @SuppressWarnings("unused")

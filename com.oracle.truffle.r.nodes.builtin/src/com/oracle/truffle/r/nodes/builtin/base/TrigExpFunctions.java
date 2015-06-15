@@ -25,10 +25,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.utilities.*;
-import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -628,18 +625,9 @@ public class TrigExpFunctions {
     @RBuiltin(name = "atan2", kind = RBuiltinKind.INTERNAL, parameterNames = {"y", "x"})
     public abstract static class Atan2 extends AdapterCall2 {
 
-        private static RNode castArgument(RNode node) {
-            if (!ConstantNode.isMissing(node)) {
-                return CastDoubleNodeGen.create(node, false, false, false);
-            }
-            return node;
-        }
-
-        @CreateCast("arguments")
-        protected static RNode[] castArguments(RNode[] arguments) {
-            arguments[0] = castArgument(arguments[0]);
-            arguments[1] = castArgument(arguments[1]);
-            return arguments;
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.toDouble(0).toDouble(1);
         }
 
         @Specialization

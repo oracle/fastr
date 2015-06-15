@@ -30,7 +30,6 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -81,12 +80,11 @@ public abstract class Repeat extends RBuiltinNode {
         return new Object[]{RMissing.instance, 1, RRuntime.INT_NA, 1};
     }
 
-    @CreateCast("arguments")
-    protected RNode[] castArguments(RNode[] arguments) {
-        arguments[1] = CastNode.toInteger(arguments[1], true, false, false); // times
-        arguments[2] = FirstIntNode.createWithWarning(CastNode.toInteger(arguments[2], false, false, false), RError.Message.FIRST_ELEMENT_USED, "length.out", RRuntime.INT_NA); // length.out
-        arguments[3] = CastNode.toInteger(arguments[3], true, false, false); // each
-        return arguments;
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.toInteger(1);
+        casts.firstIntegerWithWarning(2, RRuntime.INT_NA, "length.out");
+        casts.toInteger(3);
     }
 
     protected boolean hasNames(RAbstractVector x) {

@@ -40,17 +40,17 @@ public abstract class AsLogical extends RBuiltinNode {
     private byte castLogical(Object o) {
         if (castLogicalNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castLogicalNode = insert(CastLogicalNodeGen.create(null, false, false, false));
+            castLogicalNode = insert(CastLogicalNodeGen.create(false, false, false));
         }
-        return (byte) castLogicalNode.executeLogical(o);
+        return (byte) castLogicalNode.execute(o);
     }
 
     private RLogicalVector castLogicalVector(Object o) {
         if (castLogicalNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castLogicalNode = insert(CastLogicalNodeGen.create(null, false, false, false));
+            castLogicalNode = insert(CastLogicalNodeGen.create(false, false, false));
         }
-        return (RLogicalVector) castLogicalNode.executeLogical(o);
+        return (RLogicalVector) castLogicalNode.execute(o);
     }
 
     @Specialization

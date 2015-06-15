@@ -39,55 +39,55 @@ public abstract class RCastingBuiltinNode extends RBuiltinNode {
     protected Object castComplex(Object operand, boolean preserveAllAttr) {
         if (castComplex == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castComplex = insert(CastComplexNodeGen.create(null, true, preserveAllAttr, preserveAllAttr));
+            castComplex = insert(CastComplexNodeGen.create(true, preserveAllAttr, preserveAllAttr));
         }
-        return castComplex.executeCast(operand);
+        return castComplex.execute(operand);
     }
 
     protected Object castDouble(Object operand, boolean preserveAllAttr) {
         if (castDouble == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castDouble = insert(CastDoubleNodeGen.create(null, true, preserveAllAttr, preserveAllAttr));
+            castDouble = insert(CastDoubleNodeGen.create(true, preserveAllAttr, preserveAllAttr));
         }
-        return castDouble.executeCast(operand);
+        return castDouble.execute(operand);
     }
 
     protected Object castInteger(Object operand, boolean preserveAllAttr) {
         if (castInteger == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castInteger = insert(CastIntegerNodeGen.create(null, true, preserveAllAttr, preserveAllAttr));
+            castInteger = insert(CastIntegerNodeGen.create(true, preserveAllAttr, preserveAllAttr));
         }
-        return castInteger.executeCast(operand);
+        return castInteger.execute(operand);
     }
 
     protected Object castLogical(Object operand, boolean preserveAllAttr) {
         if (castLogical == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castLogical = insert(CastLogicalNodeGen.create(null, true, preserveAllAttr, preserveAllAttr));
+            castLogical = insert(CastLogicalNodeGen.create(true, preserveAllAttr, preserveAllAttr));
         }
-        return castLogical.executeCast(operand);
+        return castLogical.execute(operand);
     }
 
     protected Object castString(Object operand, boolean preserveAllAttr) {
         if (castString == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castString = insert(CastStringNodeGen.create(null, false, true, preserveAllAttr, preserveAllAttr));
+            castString = insert(CastStringNodeGen.create(false, true, preserveAllAttr, preserveAllAttr));
         }
-        return castString.executeCast(operand);
+        return castString.execute(operand);
     }
 
     protected Object castRaw(Object operand, boolean preserveAllAttr) {
         if (castRaw == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castRaw = insert(CastRawNodeGen.create(null, true, preserveAllAttr, preserveAllAttr));
+            castRaw = insert(CastRawNodeGen.create(true, preserveAllAttr, preserveAllAttr));
         }
-        return castRaw.executeCast(operand);
+        return castRaw.execute(operand);
     }
 
     protected RList castList(Object operand, boolean preserveAllAttr) {
         if (castList == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castList = insert(CastListNodeGen.create(null, true, preserveAllAttr, preserveAllAttr));
+            castList = insert(CastListNodeGen.create(true, preserveAllAttr, preserveAllAttr));
         }
         return castList.executeList(operand);
     }

@@ -150,7 +150,7 @@ public abstract class CumMax extends RBuiltinNode {
         controlVisibility();
         if (castDouble == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castDouble = insert(CastDoubleNodeGen.create(null, false, false, false));
+            castDouble = insert(CastDoubleNodeGen.create(false, false, false));
         }
         return cummax((RDoubleVector) castDouble.executeDouble(v));
     }

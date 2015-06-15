@@ -31,16 +31,15 @@ import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
-import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.builtin.base.Im.ImNode;
-import com.oracle.truffle.r.nodes.builtin.base.ImFactory.ImNodeGen;
+import com.oracle.truffle.r.nodes.builtin.base.Im.ImInternalNode;
+import com.oracle.truffle.r.nodes.builtin.base.ImNodeGen.ImInternalNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.PrettyPrinterNodeGen.PrettyPrinterSingleListElementNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.PrettyPrinterNodeGen.PrettyPrinterSingleVectorElementNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.PrettyPrinterNodeGen.PrintDimNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.PrettyPrinterNodeGen.PrintVector2DimNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.PrettyPrinterNodeGen.PrintVectorMultiDimNodeGen;
-import com.oracle.truffle.r.nodes.builtin.base.Re.ReNode;
-import com.oracle.truffle.r.nodes.builtin.base.ReFactory.ReNodeGen;
+import com.oracle.truffle.r.nodes.builtin.base.Re.ReInternalNode;
+import com.oracle.truffle.r.nodes.builtin.base.ReNodeGen.ReInternalNodeGen;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
@@ -75,8 +74,8 @@ public abstract class PrettyPrinterNode extends RNode {
     @Child private PrettyPrinterSingleVectorElementNode singleVectorElementPrettyPrinter;
     @Child private PrintVectorMultiDimNode multiDimPrinter;
 
-    @Child private ReNode re;
-    @Child private ImNode im;
+    @Child private ReInternalNode re;
+    @Child private ImInternalNode im;
 
     @Child private IndirectCallNode indirectCall = Truffle.getRuntime().createIndirectCallNode();
 
@@ -877,13 +876,12 @@ public abstract class PrettyPrinterNode extends RNode {
         if (re == null) {
             // the two are allocated side by side; checking for re is sufficient
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            re = insert(ReNodeGen.create(null));
-            im = insert(ImNodeGen.create(null));
+            re = insert(ReInternalNodeGen.create());
+            im = insert(ImInternalNodeGen.create());
         }
 
-        VirtualFrame frame = currentFrame();
-        RDoubleVector realParts = (RDoubleVector) re.executeRDoubleVector(operand);
-        RDoubleVector imaginaryParts = (RDoubleVector) im.executeRDoubleVector(operand);
+        RDoubleVector realParts = re.executeRDoubleVector(operand);
+        RDoubleVector imaginaryParts = im.executeRDoubleVector(operand);
 
         int length = operand.getLength();
         String[] realValues = new String[length];
@@ -1050,7 +1048,7 @@ public abstract class PrettyPrinterNode extends RNode {
         private void initCast() {
             if (castStringNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                castStringNode = insert(CastStringNodeGen.create(null, false, false, false, false));
+                castStringNode = insert(CastStringNodeGen.create(false, false, false, false));
             }
         }
 

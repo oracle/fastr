@@ -14,33 +14,26 @@
 
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.dsl.CreateCast;
-import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.utilities.ConditionProfile;
-import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.unary.CastDoubleNodeGen;
-import com.oracle.truffle.r.nodes.unary.CastIntegerNodeGen;
-import com.oracle.truffle.r.nodes.unary.CastLogicalNodeGen;
+import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.utilities.*;
+import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
-import com.oracle.truffle.r.runtime.rng.RRNG;
-
-import static com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.r.runtime.rng.*;
 
 @RBuiltin(name = "sample", kind = RBuiltinKind.INTERNAL, parameterNames = {"x", "size", "replace", "prob"})
 public abstract class Sample extends RBuiltinNode {
     private final ConditionProfile sampleSizeProfile = ConditionProfile.createBinaryProfile();
 
-    @CreateCast("arguments")
-    public RNode[] castArguments(RNode[] arguments) {
-        arguments[0] = CastIntegerNodeGen.create(arguments[0], true, false, false);
-        arguments[1] = CastIntegerNodeGen.create(arguments[1], true, false, false);
-        arguments[2] = CastLogicalNodeGen.create(arguments[2], true, false, false);
-        arguments[3] = CastDoubleNodeGen.create(arguments[3], true, false, false);
-        return arguments;
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.toInteger(0);
+        casts.toInteger(1);
+        casts.toLogical(2);
+        casts.toDouble(3);
     }
 
     @Specialization(guards = "invalidFirstArgument(x, size)")

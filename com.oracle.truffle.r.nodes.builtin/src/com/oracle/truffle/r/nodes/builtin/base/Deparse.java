@@ -13,9 +13,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -25,13 +23,12 @@ import com.oracle.truffle.r.runtime.data.model.*;
 @RBuiltin(name = "deparse", kind = RBuiltinKind.INTERNAL, parameterNames = {"expr", "width.cutoff", "backtick", "control", "nlines"})
 public abstract class Deparse extends RBuiltinNode {
 
-    @CreateCast("arguments")
-    public RNode[] castArguments(RNode[] arguments) {
-        arguments[1] = CastIntegerNodeGen.create(arguments[1], false, false, false);
-        arguments[2] = CastLogicalNodeGen.create(arguments[2], false, false, false);
-        arguments[3] = CastIntegerNodeGen.create(arguments[3], false, false, false);
-        arguments[4] = CastIntegerNodeGen.create(arguments[4], false, false, false);
-        return arguments;
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.toInteger(1);
+        casts.toLogical(2);
+        casts.toInteger(3);
+        casts.toInteger(4);
     }
 
     @TruffleBoundary
@@ -47,5 +44,4 @@ public abstract class Deparse extends RBuiltinNode {
         String[] data = RDeparse.deparse(expr, widthCutoff, RRuntime.fromLogical(backtick.getDataAt(0)), control, nlines);
         return RDataFactory.createStringVector(data, RDataFactory.COMPLETE_VECTOR);
     }
-
 }

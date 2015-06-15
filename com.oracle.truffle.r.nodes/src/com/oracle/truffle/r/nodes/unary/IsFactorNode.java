@@ -13,29 +13,29 @@ package com.oracle.truffle.r.nodes.unary;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
 public abstract class IsFactorNode extends UnaryNode {
+
     @Child private TypeofNode typeofNode;
     @Child private InheritsNode inheritsNode;
 
-    public abstract byte execute(VirtualFrame frame, Object x);
+    public abstract byte executeIsFactor(Object c);
 
     @Specialization
-    protected byte isFactor(VirtualFrame frame, Object x) {
+    protected byte isFactor(Object x) {
         if (typeofNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            typeofNode = insert(TypeofNodeGen.create(null));
+            typeofNode = insert(TypeofNodeGen.create());
         }
         if (typeofNode.execute(x) != RType.Integer) {
             return RRuntime.LOGICAL_FALSE;
         }
         if (inheritsNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            inheritsNode = insert(InheritsNodeGen.create(null, null));
+            inheritsNode = insert(InheritsNodeGen.create());
         }
-        return inheritsNode.execute(frame, x, RDataFactory.createStringVector(RType.Factor.getName()));
+        return inheritsNode.execute(x, RDataFactory.createStringVector(RType.Factor.getName()));
     }
 }

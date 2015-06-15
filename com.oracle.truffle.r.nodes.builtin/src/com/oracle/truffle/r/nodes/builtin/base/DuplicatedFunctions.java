@@ -16,7 +16,6 @@ import java.util.*;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.binary.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
@@ -110,7 +109,7 @@ public class DuplicatedFunctions {
             if (castTypeNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 castTypeNode = insert(CastTypeNodeGen.create(null, null));
-                typeof = insert(TypeofNodeGen.create(null));
+                typeof = insert(TypeofNodeGen.create());
             }
         }
 
@@ -118,11 +117,10 @@ public class DuplicatedFunctions {
 
     @RBuiltin(name = "duplicated", kind = RBuiltinKind.INTERNAL, parameterNames = {"x", "imcomparables", "fromLast", "nmax"})
     public abstract static class Duplicated extends Adapter {
-        @CreateCast("arguments")
-        protected RNode[] castArguments(RNode[] arguments) {
-            arguments[2] = CastLogicalNodeGen.create(arguments[2], false, false, false);
-            arguments[3] = CastIntegerNodeGen.create(arguments[3], false, false, false);
-            return arguments;
+
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.toLogical(2).toInteger(3);
         }
 
         @TruffleBoundary
@@ -162,10 +160,9 @@ public class DuplicatedFunctions {
     @RBuiltin(name = "anyDuplicated", kind = RBuiltinKind.INTERNAL, parameterNames = {"x", "imcomparables", "fromLast"})
     public abstract static class AnyDuplicated extends Adapter {
 
-        @CreateCast("arguments")
-        public RNode[] castArguments(RNode[] arguments) {
-            arguments[2] = CastLogicalNodeGen.create(arguments[2], true, false, false);
-            return arguments;
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.toLogical(2);
         }
 
         @SuppressWarnings("unused")

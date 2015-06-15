@@ -50,12 +50,9 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
         this.unary = unaryFactory;
     }
 
-    @CreateCast("arguments")
-    protected static RNode[] createBoxNode(RNode[] arguments) {
-        for (int i = 0; i < arguments.length; i++) {
-            arguments[i] = BoxPrimitiveNodeGen.create(arguments[i]);
-        }
-        return arguments;
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.boxPrimitive(0).boxPrimitive(1);
     }
 
     public abstract Object execute(Object left, Object right);
@@ -103,7 +100,7 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
             throw RError.error(getSourceSection(), RError.Message.ARGUMENT_EMPTY, 2);
         } else {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            return UnaryArithmeticNodeGen.create(unary, RError.Message.INVALID_ARG_TYPE_UNARY, null);
+            return UnaryArithmeticNodeGen.create(unary, RError.Message.INVALID_ARG_TYPE_UNARY);
         }
     }
 

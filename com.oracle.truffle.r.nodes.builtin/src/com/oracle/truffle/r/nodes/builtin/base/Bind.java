@@ -60,9 +60,9 @@ public abstract class Bind extends RPrecedenceBuiltinNode {
     protected RAbstractVector castVector(Object value) {
         if (castVector == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castVector = insert(CastToVectorNodeGen.create(null, false, false, false, false));
+            castVector = insert(CastToVectorNodeGen.create(false));
         }
-        return (RAbstractVector) castVector.executeObject(value);
+        return (RAbstractVector) castVector.execute(value);
     }
 
     @SuppressWarnings("unused")
@@ -102,7 +102,7 @@ public abstract class Bind extends RPrecedenceBuiltinNode {
                 vecNames[ind] = signature.getName(i);
                 naCheck.check(vecNames[ind]);
             }
-            Object result = castNode.executeCast(array[i]);
+            Object result = castNode.execute(array[i]);
             RAbstractVector vector;
             if (needsVectorCast) {
                 vector = castVector(result);

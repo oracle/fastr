@@ -77,7 +77,7 @@ public abstract class Combine extends RCastingBuiltinNode {
             Object other = readAndCast(frame, cast, array, i, signatureHasNames);
             current = combineBinary.executeCombine(frame, current, other);
         }
-        reportWork(cachedLength);
+        RNode.reportWork(this, cachedLength);
 
         if (cachedPrecedence == EXPRESSION_PRECEDENCE) {
             return RDataFactory.createExpression((RList) current);
@@ -104,7 +104,7 @@ public abstract class Combine extends RCastingBuiltinNode {
         if (hasNames) {
             value = namesMerge(castVector(value), getSuppliedSignature().getName(index));
         }
-        return castNode.executeCast(value);
+        return castNode.execute(value);
     }
 
     protected RAbstractVector namesMerge(RAbstractVector vector, String name) {
@@ -121,9 +121,9 @@ public abstract class Combine extends RCastingBuiltinNode {
     private RAbstractVector castVector(Object value) {
         if (castVector == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castVector = insert(CastToVectorNodeGen.create(null, false, false, false, false));
+            castVector = insert(CastToVectorNodeGen.create(false));
         }
-        RVector resultVector = ((RAbstractVector) castVector.executeObject(value)).materialize();
+        RVector resultVector = ((RAbstractVector) castVector.execute(value)).materialize();
         // need to copy if vector is shared in case the same variable is used in combine, e.g. :
         // x <- 1:2 ; names(x) <- c("A",NA) ; c(x,test=x)
         if (resultVector.isShared()) {
@@ -176,20 +176,20 @@ public abstract class Combine extends RCastingBuiltinNode {
     protected static CastNode createCast(int precedence) {
         switch (precedence) {
             case COMPLEX_PRECEDENCE:
-                return CastComplexNodeGen.create(null, true, false, false);
+                return CastComplexNodeGen.create(true, false, false);
             case DOUBLE_PRECEDENCE:
-                return CastDoubleNodeGen.create(null, true, false, false);
+                return CastDoubleNodeGen.create(true, false, false);
             case INT_PRECEDENCE:
-                return CastIntegerNodeGen.create(null, true, false, false);
+                return CastIntegerNodeGen.create(true, false, false);
             case LOGICAL_PRECEDENCE:
-                return CastLogicalNodeGen.create(null, true, false, false);
+                return CastLogicalNodeGen.create(true, false, false);
             case STRING_PRECEDENCE:
-                return CastStringNodeGen.create(null, false, true, false, false);
+                return CastStringNodeGen.create(false, true, false, false);
             case RAW_PRECEDENCE:
-                return CastRawNodeGen.create(null, true, false, false);
+                return CastRawNodeGen.create(true, false, false);
             case EXPRESSION_PRECEDENCE:
             case LIST_PRECEDENCE:
-                return CastListNodeGen.create(null, true, false, false);
+                return CastListNodeGen.create(true, false, false);
             case NO_PRECEDENCE:
                 return null;
             default:

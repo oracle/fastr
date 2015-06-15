@@ -31,7 +31,7 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
-public abstract class CastIntegerNode extends CastNode {
+public abstract class CastIntegerNode extends CastBaseNode {
 
     private final NACheck naCheck = NACheck.create();
     private final NAProfile naProfile = NAProfile.create();
@@ -50,7 +50,7 @@ public abstract class CastIntegerNode extends CastNode {
     private Object castIntegerRecursive(Object o) {
         if (recursiveCastInteger == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            recursiveCastInteger = insert(CastIntegerNodeGen.create(null, isPreserveNames(), isDimensionsPreservation(), isAttrPreservation()));
+            recursiveCastInteger = insert(CastIntegerNodeGen.create(isPreserveNames(), isDimensionsPreservation(), isAttrPreservation()));
         }
         return recursiveCastInteger.executeInt(o);
     }
@@ -110,7 +110,7 @@ public abstract class CastIntegerNode extends CastNode {
             return RRuntime.INT_NA;
         }
         int result = naCheck.convertStringToInt(operand);
-        if (isNA(result)) {
+        if (RRuntime.isNA(result)) {
             warningBranch.enter();
             RError.warning(RError.Message.NA_INTRODUCED_COERCION);
         }
@@ -287,6 +287,6 @@ public abstract class CastIntegerNode extends CastNode {
     }
 
     public static CastIntegerNode create() {
-        return CastIntegerNodeGen.create(null, true, true, true);
+        return CastIntegerNodeGen.create(true, true, true);
     }
 }

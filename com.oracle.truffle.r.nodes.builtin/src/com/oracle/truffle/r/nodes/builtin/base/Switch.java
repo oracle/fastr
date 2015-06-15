@@ -130,9 +130,9 @@ public abstract class Switch extends RBuiltinNode {
     protected Object doSwitch(VirtualFrame frame, Object x, RArgsValuesAndNames optionalArgs) {
         if (castIntNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castIntNode = insert(CastIntegerNodeGen.create(null, false, false, false));
+            castIntNode = insert(CastIntegerNodeGen.create(false, false, false));
         }
-        Object objIndex = castIntNode.executeCast(x);
+        Object objIndex = castIntNode.execute(x);
         if (!(objIndex instanceof Integer)) {
             notIntType.enter();
             return null;

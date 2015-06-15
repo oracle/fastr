@@ -58,17 +58,17 @@ public abstract class Match extends RBuiltinNode {
     private String castString(Object operand) {
         if (castString == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castString = insert(CastStringNodeGen.create(null, false, false, false, false));
+            castString = insert(CastStringNodeGen.create(false, false, false, false));
         }
-        return (String) castString.executeCast(operand);
+        return (String) castString.execute(operand);
     }
 
     private int castInt(Object operand) {
         if (castInt == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castInt = insert(CastIntegerNodeGen.create(null, false, false, false));
+            castInt = insert(CastIntegerNodeGen.create(false, false, false));
         }
-        return (int) castInt.executeCast(operand);
+        return (int) castInt.execute(operand);
     }
 
     private RIntVector matchRecursive(VirtualFrame frame, Object x, Object table, Object noMatch, Object incomparables) {

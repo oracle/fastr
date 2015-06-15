@@ -25,13 +25,15 @@ package com.oracle.truffle.r.nodes.unary;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.nodes.*;
+import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
 
-@NodeChildren({@NodeChild("quotes"), @NodeChild("separator")})
-public abstract class ToStringNode extends UnaryNode {
+@TypeSystemReference(RTypes.class)
+public abstract class ToStringNode extends Node {
 
     public static final String DEFAULT_SEPARATOR = ", ";
 
@@ -40,7 +42,7 @@ public abstract class ToStringNode extends UnaryNode {
     private String toStringRecursive(Object o, boolean quotes, String separator) {
         if (recursiveToString == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            recursiveToString = insert(ToStringNodeGen.create(null, null, null));
+            recursiveToString = insert(ToStringNodeGen.create());
         }
         return recursiveToString.executeString(o, quotes, separator);
     }

@@ -25,9 +25,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -47,11 +45,9 @@ public abstract class Round extends RBuiltinNode {
         return new Object[]{RMissing.instance, 0};
     }
 
-    @CreateCast("arguments")
-    protected RNode[] castStatusArgument(RNode[] arguments) {
-        // digits argument is at index 1
-        arguments[1] = CastIntegerNodeGen.create(arguments[1], true, false, false);
-        return arguments;
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.toInteger(1);
     }
 
     @Specialization

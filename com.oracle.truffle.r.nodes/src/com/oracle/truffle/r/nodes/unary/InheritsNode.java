@@ -15,9 +15,9 @@ import java.util.*;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.utilities.*;
-import com.oracle.truffle.r.nodes.binary.*;
+import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.conn.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -27,41 +27,41 @@ import com.oracle.truffle.r.runtime.env.*;
 /**
  * Basic support for "inherits" that is used by the {@code inherits} builtin and others.
  */
-public abstract class InheritsNode extends BinaryNode {
+@TypeSystemReference(RTypes.class)
+public abstract class InheritsNode extends Node {
 
     private final ConditionProfile sizeOneProfile = ConditionProfile.createBinaryProfile();
     protected final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
-    public abstract byte execute(VirtualFrame frame, Object x, Object what);
+    public abstract byte execute(Object x, Object what);
 
-    @SuppressWarnings("unused")
     @Specialization
-    protected Object doesInherit(RNull x, RAbstractStringVector what) {
+    protected byte doesInherit(@SuppressWarnings("unused") RNull x, @SuppressWarnings("unused") RAbstractStringVector what) {
         return RRuntime.LOGICAL_FALSE;
     }
 
     @Specialization
-    protected Object doesInherit(REnvironment x, RAbstractStringVector what) {
+    protected byte doesInherit(REnvironment x, RAbstractStringVector what) {
         return checkDoesInherit(x.getClassAttr(attrProfiles), what);
     }
 
     @Specialization
-    protected Object doesInherit(RSymbol x, RAbstractStringVector what) {
+    protected byte doesInherit(RSymbol x, RAbstractStringVector what) {
         return checkDoesInherit(x.getClassAttr(attrProfiles), what);
     }
 
     @Specialization
-    protected Object doesInherit(RFunction x, RAbstractStringVector what) {
+    protected byte doesInherit(RFunction x, RAbstractStringVector what) {
         return checkDoesInherit(x.getClassAttr(attrProfiles), what);
     }
 
     @Specialization
-    protected Object doesInherit(RAbstractContainer x, RAbstractStringVector what) {
+    protected byte doesInherit(RAbstractContainer x, RAbstractStringVector what) {
         return checkDoesInherit(x.getClassHierarchy(), what);
     }
 
     @Specialization
-    protected Object doesInherit(RConnection x, RAbstractStringVector what) {
+    protected byte doesInherit(RConnection x, RAbstractStringVector what) {
         return checkDoesInherit(x.getClassHierarchy(), what);
     }
 

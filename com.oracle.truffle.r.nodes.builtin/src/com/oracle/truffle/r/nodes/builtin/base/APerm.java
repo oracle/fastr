@@ -15,9 +15,7 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.utilities.*;
-import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -30,9 +28,9 @@ public abstract class APerm extends RBuiltinNode {
     private final BranchProfile emptyPermVector = BranchProfile.create();
     private final ConditionProfile mustResize = ConditionProfile.createBinaryProfile();
 
-    @CreateCast("arguments")
-    public RNode[] createCastValue(RNode[] children) {
-        return new RNode[]{children[0], CastIntegerNodeGen.create(children[1], false, false, false), children[2]};
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.toInteger(1);
     }
 
     private void checkErrorConditions(RAbstractVector vector, byte resize) {

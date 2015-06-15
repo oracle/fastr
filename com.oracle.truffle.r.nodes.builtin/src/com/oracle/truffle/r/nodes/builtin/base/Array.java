@@ -28,7 +28,6 @@ import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -57,10 +56,9 @@ public abstract class Array extends RBuiltinNode {
         updateDimNames.executeRAbstractContainer(container, o);
     }
 
-    @CreateCast({"arguments"})
-    protected RNode[] createCastDimensions(RNode[] children) {
-        RNode dimsVector = CastToVectorNodeGen.create(children[1], false, false, false, false);
-        return new RNode[]{children[0], CastIntegerNodeGen.create(dimsVector, false, false, false), children[2]};
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.toInteger(1);
     }
 
     private int dimDataHelper(RAbstractIntVector dim, int[] dimData) {

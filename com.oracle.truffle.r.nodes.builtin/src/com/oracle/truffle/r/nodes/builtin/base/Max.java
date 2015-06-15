@@ -24,33 +24,31 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
-import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.*;
+import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.builtin.RBuiltinNode.RWrapperBuiltinNode;
-import com.oracle.truffle.r.nodes.unary.UnaryArithmeticReduceNode.ReduceSemantics;
 import com.oracle.truffle.r.nodes.unary.*;
+import com.oracle.truffle.r.nodes.unary.UnaryArithmeticReduceNode.ReduceSemantics;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.ops.*;
 
 @RBuiltin(name = "max", kind = PRIMITIVE, parameterNames = {"...", "na.rm"})
-public final class Max extends RWrapperBuiltinNode {
+public abstract class Max extends RBuiltinNode {
 
-    public Max(RNode[] arguments, RBuiltinFactory builtin, ArgumentsSignature suppliedSignature) {
-        super(arguments, builtin, suppliedSignature);
-    }
+    private static final ReduceSemantics semantics = new ReduceSemantics(RRuntime.INT_MIN_VALUE, Double.NEGATIVE_INFINITY, false, RError.Message.NO_NONMISSING_MAX,
+                    RError.Message.NO_NONMISSING_MAX_NA, false, true);
+
+    @Child private Combine combine = CombineNodeGen.create(null, null, null);
+    @Child private UnaryArithmeticReduceNode reduce = UnaryArithmeticReduceNodeGen.create(semantics, BinaryArithmetic.MAX);
 
     @Override
     public Object[] getDefaultParameterValues() {
         return new Object[]{RArgsValuesAndNames.EMPTY, RRuntime.LOGICAL_FALSE};
     }
 
-    @Override
-    protected RNode createDelegate() {
-        ReduceSemantics semantics = new ReduceSemantics(RRuntime.INT_MIN_VALUE, Double.NEGATIVE_INFINITY, false, RError.Message.NO_NONMISSING_MAX, RError.Message.NO_NONMISSING_MAX_NA, false, true);
-        RNode[] args = getArguments();
-        Combine combine = CombineNodeGen.create(new RNode[]{args[0]}, null, null);
-        return UnaryArithmeticReduceNodeGen.create(semantics, BinaryArithmetic.MAX, combine, args.length > 1 ? args[1] : ConstantNode.create(RRuntime.LOGICAL_FALSE));
+    @Specialization
+    protected Object max(VirtualFrame frame, RArgsValuesAndNames args, byte naRm) {
+        return reduce.executeReduce(combine.executeCombine(frame, args), naRm);
     }
 }

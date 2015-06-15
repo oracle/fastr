@@ -50,12 +50,9 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
         this.factory = factory;
     }
 
-    @CreateCast("arguments")
-    protected static RNode[] createBoxNode(RNode[] arguments) {
-        for (int i = 0; i < arguments.length; i++) {
-            arguments[i] = BoxPrimitiveNodeGen.create(arguments[i]);
-        }
-        return arguments;
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.boxPrimitive(0).boxPrimitive(1);
     }
 
     private static boolean isLogicOp(BooleanOperation op) {

@@ -468,7 +468,7 @@ public class IsTypeFunctions {
         @Override
         public Object[] getDefaultParameterValues() {
             // INTERNAL does not need default parameters
-            return EMPTY_OBJECT_ARRAY;
+            return RNode.EMPTY_OBJECT_ARRAY;
         }
 
         @Specialization

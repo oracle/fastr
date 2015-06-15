@@ -28,9 +28,7 @@ import java.util.function.*;
 
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.utilities.*;
-import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -41,11 +39,9 @@ public abstract class RepeatInternal extends RBuiltinNode {
     private final ConditionProfile timesOneProfile = ConditionProfile.createBinaryProfile();
     private final BranchProfile errorProfile = BranchProfile.create();
 
-    @CreateCast("arguments")
-    protected RNode[] castStatusArgument(RNode[] arguments) {
-        // times argument is at index 1
-        arguments[1] = CastIntegerNodeGen.create(arguments[1], true, false, false);
-        return arguments;
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.toInteger(1);
     }
 
     @FunctionalInterface

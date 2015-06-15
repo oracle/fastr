@@ -200,7 +200,7 @@ public abstract class UpdateFieldNode extends UpdateNode implements RSyntaxNode 
     protected Object updateField(RAbstractVector object, Object value, String field) {
         if (castList == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castList = insert(CastListNodeGen.create(null, true, true, false));
+            castList = insert(CastListNodeGen.create(true, true, false));
         }
         RError.warning(getEncapsulatingSourceSection(), RError.Message.COERCING_LHS_TO_LIST);
         if (nullValueProfile.profile(value == RNull.instance)) {

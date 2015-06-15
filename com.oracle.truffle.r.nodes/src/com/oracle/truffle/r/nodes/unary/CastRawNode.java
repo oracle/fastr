@@ -29,7 +29,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-public abstract class CastRawNode extends CastNode {
+public abstract class CastRawNode extends CastBaseNode {
 
     private final BranchProfile warningBranch = BranchProfile.create();
 
@@ -239,6 +239,6 @@ public abstract class CastRawNode extends CastNode {
     }
 
     public static CastRawNode create() {
-        return CastRawNodeGen.create(null, true, true, true);
+        return CastRawNodeGen.create(true, true, true);
     }
 }

@@ -24,22 +24,21 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
-import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.r.nodes.binary.*;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.builtin.RBuiltinNode.RWrapperBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.ops.*;
 
 @RBuiltin(name = "floor", kind = PRIMITIVE, parameterNames = {"x"})
-public class Floor extends RWrapperBuiltinNode {
+public abstract class Floor extends RBuiltinNode {
 
-    public Floor(RNode[] arguments, RBuiltinFactory builtin, ArgumentsSignature suppliedSignature) {
-        super(arguments, builtin, suppliedSignature);
-    }
+    @Child private BoxPrimitiveNode boxPrimitive = BoxPrimitiveNodeGen.create();
+    @Child private UnaryArithmeticNode floor = UnaryArithmeticNodeGen.create(UnaryArithmetic.FLOOR, RError.Message.NON_NUMERIC_MATH);
 
-    @Override
-    protected RNode createDelegate() {
-        return UnaryArithmeticNodeGen.create(UnaryArithmetic.FLOOR, RError.Message.NON_NUMERIC_MATH, getArguments()[0]);
+    @Specialization
+    protected Object floor(Object value) {
+        return floor.execute(boxPrimitive.execute(value));
     }
 }

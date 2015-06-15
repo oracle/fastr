@@ -23,20 +23,11 @@
 package com.oracle.truffle.r.nodes.unary;
 
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.runtime.*;
 
-@NodeChildren({@NodeChild("operand")})
-public abstract class UnaryNode extends RNode {
+@TypeSystemReference(RTypes.class)
+public abstract class UnaryNode extends Node {
 
-    public abstract RNode getOperand();
-
-    protected static boolean isNA(int operand) {
-        return RRuntime.isNA(operand);
-    }
-
-    protected static boolean isNA(double operand) {
-        return RRuntime.isNA(operand);
-    }
-
+    public abstract Object execute(Object value);
 }

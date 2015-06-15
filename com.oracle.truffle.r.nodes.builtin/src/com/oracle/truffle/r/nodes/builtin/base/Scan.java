@@ -50,9 +50,9 @@ public abstract class Scan extends RBuiltinNode {
     private RAbstractVector castVector(Object value) {
         if (castVector == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castVector = insert(CastToVectorNodeGen.create(null, false, false, false, false));
+            castVector = insert(CastToVectorNodeGen.create(false));
         }
-        return ((RAbstractVector) castVector.executeObject(value)).materialize();
+        return ((RAbstractVector) castVector.execute(value)).materialize();
     }
 
     private static class LocalData {
@@ -76,29 +76,18 @@ public abstract class Scan extends RBuiltinNode {
         boolean skipNull = false;
     }
 
-    @CreateCast({"arguments"})
-    public RNode[] createCastValue(RNode[] children) {
-        RNode file = children[0];
-        RNode what = children[1];
-        RNode nmax = CastIntegerNodeGen.create(children[2], false, false, false);
-        RNode sep = children[3];
-        RNode dec = children[4];
-        RNode quotes = children[5];
-        RNode nskip = CastIntegerNodeGen.create(children[6], false, false, false);
-        RNode nlines = CastIntegerNodeGen.create(children[7], false, false, false);
-        RNode naStrings = children[8];
-        RNode flush = CastLogicalNodeGen.create(children[9], false, false, false);
-        RNode fill = CastLogicalNodeGen.create(children[10], false, false, false);
-        RNode stripWhite = children[11];
-        RNode quiet = CastLogicalNodeGen.create(children[12], false, false, false);
-        RNode blSkip = CastLogicalNodeGen.create(children[13], false, false, false);
-        RNode multiLine = CastLogicalNodeGen.create(children[14], false, false, false);
-        RNode commentChar = children[15];
-        RNode allowEscapes = CastLogicalNodeGen.create(children[16], false, false, false);
-        RNode encoding = children[17];
-        RNode skipNull = CastLogicalNodeGen.create(children[18], false, false, false);
-
-        return new RNode[]{file, what, nmax, sep, dec, quotes, nskip, nlines, naStrings, flush, fill, stripWhite, quiet, blSkip, multiLine, commentChar, allowEscapes, encoding, skipNull};
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.toInteger(2); // nmax
+        casts.toInteger(6); // nskip
+        casts.toInteger(7); // nlines
+        casts.toLogical(9); // flush
+        casts.toLogical(10); // fill
+        casts.toLogical(12); // quiet
+        casts.toLogical(13); // blSkip
+        casts.toLogical(14); // multiLine
+        casts.toLogical(16); // allowEscapes
+        casts.toLogical(18); // skipNull
     }
 
     @Specialization

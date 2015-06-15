@@ -77,7 +77,7 @@ public abstract class Parse extends RBuiltinNode {
     private int castInt(Object n) {
         if (castIntNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castIntNode = insert(CastIntegerNodeGen.create(null, false, false, false));
+            castIntNode = insert(CastIntegerNodeGen.create(false, false, false));
         }
         int result = (int) castIntNode.executeInt(n);
         if (RRuntime.isNA(result)) {
@@ -89,10 +89,10 @@ public abstract class Parse extends RBuiltinNode {
     private RStringVector castString(Object s) {
         if (castStringNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castVectorNode = insert(CastToVectorNodeGen.create(null, false, false, false, false));
-            castStringNode = insert(CastStringNodeGen.create(null, false, false, false, false));
+            castVectorNode = insert(CastToVectorNodeGen.create(false));
+            castStringNode = insert(CastStringNodeGen.create(false, false, false, false));
         }
-        return (RStringVector) castStringNode.executeString(castVectorNode.executeObject(s));
+        return (RStringVector) castStringNode.executeString(castVectorNode.execute(s));
     }
 
     @Specialization

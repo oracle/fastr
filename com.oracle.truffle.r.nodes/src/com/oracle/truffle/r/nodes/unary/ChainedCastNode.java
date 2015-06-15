@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,24 +20,23 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.builtin.base;
+package com.oracle.truffle.r.nodes.unary;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
+import com.oracle.truffle.api.nodes.*;
 
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.control.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
+@NodeInfo(cost = NodeCost.NONE)
+public final class ChainedCastNode extends CastNode {
 
-@RBuiltin(name = "seq_along", kind = PRIMITIVE, parameterNames = {"along.with"})
-public abstract class SeqAlong extends RBuiltinNode {
+    @Child private CastNode firstCast;
+    @Child private CastNode secondCast;
 
-    @Child private RLengthNode length = RLengthNodeGen.create();
+    public ChainedCastNode(CastNode firstCast, CastNode secondCast) {
+        this.firstCast = firstCast;
+        this.secondCast = secondCast;
+    }
 
-    @Specialization
-    protected RIntSequence seq(Object value) {
-        controlVisibility();
-        return RDataFactory.createIntSequence(1, 1, length.executeInteger(value));
+    @Override
+    public Object execute(Object value) {
+        return secondCast.execute(firstCast.execute(value));
     }
 }

@@ -50,7 +50,7 @@ public abstract class AsVector extends RBuiltinNode {
     private RIntVector castInteger(Object operand) {
         if (castInteger == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castInteger = insert(CastIntegerNodeGen.create(null, false, false, false));
+            castInteger = insert(CastIntegerNodeGen.create(false, false, false));
         }
         return (RIntVector) castInteger.executeInt(operand);
     }
@@ -58,7 +58,7 @@ public abstract class AsVector extends RBuiltinNode {
     private RDoubleVector castDouble(Object operand) {
         if (castDouble == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castDouble = insert(CastDoubleNodeGen.create(null, false, false, false));
+            castDouble = insert(CastDoubleNodeGen.create(false, false, false));
         }
         return (RDoubleVector) castDouble.executeDouble(operand);
     }
@@ -66,7 +66,7 @@ public abstract class AsVector extends RBuiltinNode {
     private RComplexVector castComplex(Object operand) {
         if (castComplex == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castComplex = insert(CastComplexNodeGen.create(null, false, false, false));
+            castComplex = insert(CastComplexNodeGen.create(false, false, false));
         }
         return (RComplexVector) castComplex.executeComplex(operand);
     }
@@ -74,15 +74,15 @@ public abstract class AsVector extends RBuiltinNode {
     private RLogicalVector castLogical(Object operand) {
         if (castLogical == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castLogical = insert(CastLogicalNodeGen.create(null, false, false, false));
+            castLogical = insert(CastLogicalNodeGen.create(false, false, false));
         }
-        return (RLogicalVector) castLogical.executeLogical(operand);
+        return (RLogicalVector) castLogical.execute(operand);
     }
 
     private RStringVector castString(Object operand) {
         if (castString == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castString = insert(CastStringNodeGen.create(null, false, false, false, false));
+            castString = insert(CastStringNodeGen.create(false, false, false, false));
         }
         return (RStringVector) castString.executeString(operand);
     }
@@ -90,7 +90,7 @@ public abstract class AsVector extends RBuiltinNode {
     private RSymbol castSymbol(Object operand) {
         if (castSymbol == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castSymbol = insert(CastSymbolNodeGen.create(null, false, false, false));
+            castSymbol = insert(CastSymbolNodeGen.create(false, false, false));
         }
         return (RSymbol) castSymbol.executeSymbol(operand);
     }
@@ -98,7 +98,7 @@ public abstract class AsVector extends RBuiltinNode {
     private RExpression castExpression(Object operand) {
         if (castExpression == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castExpression = insert(CastExpressionNodeGen.create(null, false, false, false));
+            castExpression = insert(CastExpressionNodeGen.create(false, false, false));
         }
         return (RExpression) castExpression.executeExpression(operand);
     }
@@ -106,7 +106,7 @@ public abstract class AsVector extends RBuiltinNode {
     private RRawVector castRaw(Object operand) {
         if (castRaw == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castRaw = insert(CastRawNodeGen.create(null, false, false, false));
+            castRaw = insert(CastRawNodeGen.create(false, false, false));
         }
         return (RRawVector) castRaw.executeRaw(operand);
     }
@@ -114,7 +114,7 @@ public abstract class AsVector extends RBuiltinNode {
     private RList castList(Object operand) {
         if (castList == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castList = insert(CastListNodeGen.create(null, true, false, false));
+            castList = insert(CastListNodeGen.create(true, false, false));
         }
         return castList.executeList(operand);
     }

@@ -147,7 +147,7 @@ public class HiddenInternalFunctions {
         private void initCast() {
             if (castIntNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                castIntNode = insert(CastIntegerNodeGen.create(null, false, false, false));
+                castIntNode = insert(CastIntegerNodeGen.create(false, false, false));
             }
         }
 
@@ -317,10 +317,9 @@ public class HiddenInternalFunctions {
         private static final ArgumentsSignature SIGNATURE = ArgumentsSignature.get("e");
         @Child private CallInlineCacheNode callCache = CallInlineCacheNodeGen.create();
 
-        @CreateCast("arguments")
-        public RNode[] castArguments(RNode[] arguments) {
-            arguments[3] = CastIntegerNodeGen.create(arguments[3], false, false, false);
-            return arguments;
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.toInteger(3);
         }
 
         @Specialization

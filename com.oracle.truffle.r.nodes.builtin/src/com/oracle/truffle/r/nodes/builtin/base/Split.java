@@ -185,7 +185,7 @@ public abstract class Split extends RBuiltinNode {
         if (noStringLevels.profile(!(levels instanceof RStringVector))) {
             if (castString == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                castString = insert(CastStringNodeGen.create(null, false, false, false, false));
+                castString = insert(CastStringNodeGen.create(false, false, false, false));
             }
             RStringVector slevels = (RStringVector) castString.executeString(f.getLevels(attrProfiles));
             return RDataFactory.createStringVector(slevels.getDataWithoutCopying(), RDataFactory.COMPLETE_VECTOR);

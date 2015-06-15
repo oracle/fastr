@@ -30,8 +30,10 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
+import com.oracle.truffle.r.nodes.binary.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.nodes.function.RCallNode.LeafCallNode;
+import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.data.*;
@@ -40,6 +42,107 @@ import com.oracle.truffle.r.runtime.env.frame.*;
 @NodeFields(value = {@NodeField(name = "builtin", type = RBuiltinFactory.class), @NodeField(name = "suppliedSignature", type = ArgumentsSignature.class)})
 @NodeChild(value = "arguments", type = RNode[].class)
 public abstract class RBuiltinNode extends LeafCallNode implements VisibilityController {
+
+    private static final CastNode[] EMPTY_CASTS_ARRAY = new CastNode[0];
+
+    public final class CastBuilder {
+
+        private CastNode[] casts = EMPTY_CASTS_ARRAY;
+
+        private CastBuilder insert(int index, CastNode cast) {
+            if (index >= casts.length) {
+                casts = Arrays.copyOf(casts, index + 1);
+            }
+            if (casts[index] == null) {
+                casts[index] = cast;
+            } else {
+                casts[index] = new ChainedCastNode(casts[index], cast);
+            }
+            return this;
+        }
+
+        public CastBuilder toVector(int index) {
+            return toVector(index, false);
+        }
+
+        public CastBuilder toVector(int index, boolean nonVectorPreserved) {
+            return insert(index, CastToVectorNodeGen.create(nonVectorPreserved));
+        }
+
+        public CastBuilder toInteger(int index) {
+            return toInteger(index, false, false, false);
+        }
+
+        public CastBuilder toInteger(int index, boolean preserveNames, boolean dimensionsPreservation, boolean attrPreservation) {
+            return insert(index, CastIntegerNodeGen.create(preserveNames, dimensionsPreservation, attrPreservation));
+        }
+
+        public CastBuilder toDouble(int index) {
+            return toDouble(index, false, false, false);
+        }
+
+        public CastBuilder toDouble(int index, boolean preserveNames, boolean dimensionsPreservation, boolean attrPreservation) {
+            return insert(index, CastDoubleNodeGen.create(preserveNames, dimensionsPreservation, attrPreservation));
+        }
+
+        public CastBuilder toLogical(int index) {
+            return toLogical(index, false, false, false);
+        }
+
+        public CastBuilder toLogical(int index, boolean preserveNames, boolean dimensionsPreservation, boolean attrPreservation) {
+            return insert(index, CastLogicalNodeGen.create(preserveNames, dimensionsPreservation, attrPreservation));
+        }
+
+        public CastBuilder toCharacter(int index) {
+            return toCharacter(index, false, false, false, false);
+        }
+
+        public CastBuilder toCharacter(int index, boolean preserveNames, boolean dimensionsPreservation, boolean attrPreservation, boolean emptyVectorConvertedToNull) {
+            return insert(index, CastStringNodeGen.create(preserveNames, dimensionsPreservation, attrPreservation, emptyVectorConvertedToNull));
+        }
+
+        public CastBuilder boxPrimitive(int index) {
+            return insert(index, BoxPrimitiveNodeGen.create());
+        }
+
+        public CastBuilder custom(int index, CastNode cast) {
+            return insert(index, cast);
+        }
+
+        public CastBuilder firstIntegerWithWarning(int index, int intNa, String name) {
+            insert(index, CastNode.toInteger(false, false, false));
+            return insert(index, FirstIntNode.createWithWarning(RError.Message.FIRST_ELEMENT_USED, name, intNa));
+        }
+
+        public CastBuilder convertToInteger(int index) {
+            return insert(index, ConvertIntNodeGen.create());
+        }
+
+        public CastBuilder firstIntegerWithError(int index, RError.Message error, String name) {
+            insert(index, CastNode.toInteger(false, false, false));
+            return insert(index, FirstIntNode.createWithError(error, name));
+        }
+    }
+
+    protected void createCasts(@SuppressWarnings("unused") CastBuilder casts) {
+        // nothing to do
+    }
+
+    @CreateCast("arguments")
+    protected RNode[] castArguments(RNode[] arguments) {
+        CastBuilder builder = new CastBuilder();
+        createCasts(builder);
+        if (builder.casts.length == 0) {
+            return arguments;
+        }
+        RNode[] castArguments = arguments.clone();
+        for (int i = 0; i < builder.casts.length; i++) {
+            if (builder.casts[i] != null) {
+                castArguments[i] = new ApplyCastNode(builder.casts[i], castArguments[i]);
+            }
+        }
+        return castArguments;
+    }
 
     public String getSourceCode() {
         throw RInternalError.shouldNotReachHere();

@@ -17,7 +17,6 @@ import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.utilities.*;
-import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
@@ -64,28 +63,20 @@ public abstract class Format extends RBuiltinNode {
     private RAbstractIntVector castInteger(Object operand) {
         if (castInteger == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castInteger = insert(CastIntegerNodeGen.create(null, true, false, false));
+            castInteger = insert(CastIntegerNodeGen.create(true, false, false));
         }
-        return (RAbstractIntVector) castInteger.executeCast(operand);
+        return (RAbstractIntVector) castInteger.execute(operand);
     }
 
-    @CreateCast("arguments")
-    public RNode[] createCastValue(RNode[] children) {
-        if (children.length != getSuppliedSignature().getLength()) {
-            errorProfile.enter();
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.ARGUMENTS_PASSED, children.length, ".Internal(format)", getSuppliedSignature().getLength());
-        }
-        RNode[] newChildren = new RNode[children.length];
-        // cast to vector as appropriate to eliminate NULL values
-        newChildren[0] = children[0];
-        newChildren[1] = CastLogicalNodeGen.create(CastToVectorNodeGen.create(children[1], false, false, false, false), false, false, false);
-        newChildren[2] = CastIntegerNodeGen.create(CastToVectorNodeGen.create(children[2], false, false, false, false), false, false, false);
-        newChildren[3] = CastIntegerNodeGen.create(CastToVectorNodeGen.create(children[3], false, false, false, false), false, false, false);
-        newChildren[4] = CastIntegerNodeGen.create(CastToVectorNodeGen.create(children[4], false, false, false, false), false, false, false);
-        newChildren[5] = CastIntegerNodeGen.create(CastToVectorNodeGen.create(children[5], false, false, false, false), false, false, false);
-        newChildren[6] = CastLogicalNodeGen.create(CastToVectorNodeGen.create(children[6], false, false, false, false), false, false, false);
-        newChildren[7] = CastToVectorNodeGen.create(children[7], false, false, false, false);
-        return newChildren;
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.toVector(1).toLogical(1);
+        casts.toVector(2).toInteger(2);
+        casts.toVector(3).toInteger(3);
+        casts.toVector(4).toInteger(4);
+        casts.toVector(5).toInteger(5);
+        casts.toVector(6).toLogical(6);
+        casts.toVector(7);
     }
 
     // TODO: handling of logical values has been derived from GNU R, with handling of other

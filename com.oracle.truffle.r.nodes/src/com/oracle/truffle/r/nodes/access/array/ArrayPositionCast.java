@@ -289,39 +289,39 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
         private void initIntCast() {
             if (castInteger == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                castInteger = insert(CastIntegerNodeGen.create(null, true, false, false));
+                castInteger = insert(CastIntegerNodeGen.create(true, false, false));
             }
         }
 
         private Object castInteger(double operand) {
             initIntCast();
-            return castInteger.executeCast(operand);
+            return castInteger.execute(operand);
         }
 
         private Object castInteger(byte operand) {
             initIntCast();
-            return castInteger.executeCast(operand);
+            return castInteger.execute(operand);
         }
 
         private Object castInteger(Object operand) {
             initIntCast();
-            return castInteger.executeCast(operand);
+            return castInteger.execute(operand);
         }
 
         private Object castLogical(Object operand) {
             if (castLogical == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                castLogical = insert(CastLogicalNodeGen.create(null, false, false, false));
+                castLogical = insert(CastLogicalNodeGen.create(false, false, false));
             }
-            return castLogical.executeCast(operand);
+            return castLogical.execute(operand);
         }
 
         private Object castVector(Object operand) {
             if (castVector == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                castVector = insert(CastToVectorNodeGen.create(null, false, false, false, false));
+                castVector = insert(CastToVectorNodeGen.create(false));
             }
-            return castVector.executeCast(operand);
+            return castVector.execute(operand);
         }
 
         @Specialization
@@ -474,7 +474,7 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
                     if (dimSizeOneProfile.profile(dimSize == 1)) {
                         /*
                          * e.g. c(7)[-2] vs c(7)[[-2]]
-                         * 
+                         *
                          * only one element to be picked or ultimately an error caused by operand
                          */
                         return isSubset ? 1 : operand;
@@ -1207,9 +1207,9 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
         private Object castString(Object operand) {
             if (castString == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                castString = insert(CastStringNodeGen.create(null, false, true, false, false));
+                castString = insert(CastStringNodeGen.create(false, true, false, false));
             }
-            return castString.executeCast(operand);
+            return castString.execute(operand);
         }
 
         @Specialization(guards = "!isDataFrame(container)")

@@ -58,41 +58,41 @@ public abstract class CoerceVector extends RNode implements RSyntaxNode/* temp *
     private Object castComplex(Object vector) {
         if (castComplex == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castComplex = insert(CastComplexNodeGen.create(null, true, true, true));
+            castComplex = insert(CastComplexNodeGen.create(true, true, true));
         }
-        return castComplex.executeCast(vector);
+        return castComplex.execute(vector);
     }
 
     private Object castDouble(Object vector) {
         if (castDouble == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castDouble = insert(CastDoubleNodeGen.create(null, true, true, true));
+            castDouble = insert(CastDoubleNodeGen.create(true, true, true));
         }
-        return castDouble.executeCast(vector);
+        return castDouble.execute(vector);
     }
 
     private Object castInteger(Object vector) {
         if (castInteger == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castInteger = insert(CastIntegerNodeGen.create(null, true, true, true));
+            castInteger = insert(CastIntegerNodeGen.create(true, true, true));
         }
-        return castInteger.executeCast(vector);
+        return castInteger.execute(vector);
     }
 
     private Object castString(Object vector) {
         if (castString == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castString = insert(CastStringNodeGen.create(null, true, true, true, false));
+            castString = insert(CastStringNodeGen.create(true, true, true, false));
         }
-        return castString.executeCast(vector);
+        return castString.execute(vector);
     }
 
     private Object castList(Object vector) {
         if (castList == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castList = insert(CastListNodeGen.create(null, true, false, true));
+            castList = insert(CastListNodeGen.create(true, false, true));
         }
-        return castList.executeCast(vector);
+        return castList.execute(vector);
     }
 
     @Specialization

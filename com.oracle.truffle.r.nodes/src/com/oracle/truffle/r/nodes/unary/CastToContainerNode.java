@@ -24,12 +24,11 @@ package com.oracle.truffle.r.nodes.unary;
 
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
 
-public abstract class CastToContainerNode extends CastNode implements RSyntaxNode {
+public abstract class CastToContainerNode extends CastBaseNode implements RSyntaxNode {
 
     public abstract Object executeObject(Object value);
 
@@ -87,20 +86,21 @@ public abstract class CastToContainerNode extends CastNode implements RSyntaxNod
     public boolean isBackbone() {
         return true;
     }
-
-    @Override
-    public void deparse(RDeparse.State state) {
-        RSyntaxNode.cast(getOperand()).deparse(state);
-    }
-
-    @Override
-    public void serialize(RSerialize.State state) {
-        RSyntaxNode.cast(getOperand()).serialize(state);
-    }
-
-    @Override
-    public RSyntaxNode substitute(REnvironment env) {
-        return CastToContainerNodeGen.create(RSyntaxNode.cast(getOperand()).substitute(env).asRNode(), false, false, false);
-    }
+//
+// @Override
+// public void deparse(RDeparse.State state) {
+// RSyntaxNode.cast(getOperand()).deparse(state);
+// }
+//
+// @Override
+// public void serialize(RSerialize.State state) {
+// RSyntaxNode.cast(getOperand()).serialize(state);
+// }
+//
+// @Override
+// public RSyntaxNode substitute(REnvironment env) {
+// return CastToContainerNodeGen.create(RSyntaxNode.cast(getOperand()).substitute(env).asRNode(),
+// false, false, false);
+// }
 
 }

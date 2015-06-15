@@ -22,11 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import com.oracle.truffle.api.dsl.CreateCast;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.unary.CastDoubleNodeGen;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
@@ -98,10 +95,9 @@ public class WhichFunctions {
     @RBuiltin(name = "which.max", kind = RBuiltinKind.INTERNAL, parameterNames = {"x"})
     public abstract static class WhichMax extends RBuiltinNode {
 
-        @CreateCast("arguments")
-        public RNode[] castArguments(RNode[] arguments) {
-            arguments[0] = CastDoubleNodeGen.create(arguments[0], true, false, false);
-            return arguments;
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.toDouble(0);
         }
 
         @Specialization
@@ -124,10 +120,9 @@ public class WhichFunctions {
     @RBuiltin(name = "which.min", kind = RBuiltinKind.INTERNAL, parameterNames = {"x"})
     public abstract static class WhichMin extends RBuiltinNode {
 
-        @CreateCast("arguments")
-        public RNode[] castArguments(RNode[] arguments) {
-            arguments[0] = CastDoubleNodeGen.create(arguments[0], true, false, false);
-            return arguments;
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.toDouble(0);
         }
 
         @Specialization

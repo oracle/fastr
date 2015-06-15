@@ -151,7 +151,7 @@ public abstract class CumMin extends RBuiltinNode {
         controlVisibility();
         if (castDouble == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castDouble = insert(CastDoubleNodeGen.create(null, false, false, false));
+            castDouble = insert(CastDoubleNodeGen.create(false, false, false));
         }
         return cummin((RDoubleVector) castDouble.executeDouble(v));
     }

@@ -26,9 +26,7 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
@@ -37,11 +35,9 @@ public abstract class Vector extends RBuiltinNode {
 
     private static final String CACHED_MODES_LIMIT = "3";
 
-    @CreateCast("arguments")
-    protected RNode[] castLength(RNode[] arguments) {
-        // length is at index 1
-        arguments[1] = ConvertIntNodeGen.create(arguments[1]);
-        return arguments;
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.convertToInteger(1);
     }
 
     protected RType modeToType(String mode) {

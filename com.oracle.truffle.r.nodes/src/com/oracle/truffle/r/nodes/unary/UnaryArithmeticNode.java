@@ -24,8 +24,6 @@ package com.oracle.truffle.r.nodes.unary;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.binary.*;
 import com.oracle.truffle.r.nodes.primitive.*;
 import com.oracle.truffle.r.nodes.profile.*;
 import com.oracle.truffle.r.runtime.*;
@@ -42,13 +40,6 @@ public abstract class UnaryArithmeticNode extends UnaryNode {
         this.unary = factory;
         this.error = error;
     }
-
-    @CreateCast("operand")
-    protected static RNode createBoxNode(RNode operand) {
-        return BoxPrimitiveNodeGen.create(operand);
-    }
-
-    public abstract Object execute(Object operand);
 
     @Specialization(guards = {"cachedNode != null", "cachedNode.isSupported(operand)"})
     protected Object doCached(Object operand, @Cached("createCachedFast(operand)") UnaryMapNode cachedNode) {

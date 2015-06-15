@@ -19,9 +19,7 @@ import java.util.*;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -109,15 +107,14 @@ public class DatePOSIXFunctions {
 
         private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
-        @CreateCast("arguments")
-        public RNode[] castArguments(RNode[] arguments) {
-            arguments[0] = CastDoubleNodeGen.create(CastToVectorNodeGen.create(arguments[0], true, false, false, false), true, false, false);
-            return arguments;
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.toVector(0).toDouble(0, true, false, false);
         }
 
         @Specialization
         @TruffleBoundary
-        protected RList doDate2POSIXlt(RDoubleVector x) {
+        protected RList doDate2POSIXlt(RAbstractDoubleVector x) {
             int xLen = x.getLength();
             TimeZone zone = TimeZone.getTimeZone("UTC");
             POSIXltBuilder builder = new POSIXltBuilder(xLen, "UTC");
@@ -146,15 +143,14 @@ public class DatePOSIXFunctions {
 
         private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
-        @CreateCast("arguments")
-        public RNode[] castArguments(RNode[] arguments) {
-            arguments[0] = CastDoubleNodeGen.create(CastToVectorNodeGen.create(arguments[0], true, false, false, false), true, false, false);
-            return arguments;
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.toVector(0).toDouble(0, true, false, false);
         }
 
         @Specialization
         @TruffleBoundary
-        protected RList asPOSIXlt(RDoubleVector x, RAbstractStringVector tz) {
+        protected RList asPOSIXlt(RAbstractDoubleVector x, RAbstractStringVector tz) {
             TimeZone zone;
             String tzone = RRuntime.asString(tz);
             if (tzone.isEmpty()) {

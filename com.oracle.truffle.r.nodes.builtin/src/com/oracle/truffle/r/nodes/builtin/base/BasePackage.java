@@ -105,7 +105,7 @@ public class BasePackage extends RBuiltinPackage {
         add(Call.class, CallNodeGen::create);
         add(CapabilitiesFunctions.Capabilities.class, CapabilitiesFunctionsFactory.CapabilitiesNodeGen::create);
         add(Cat.class, CatNodeGen::create);
-        add(Ceiling.class, Ceiling::new);
+        add(Ceiling.class, CeilingNodeGen::create);
         add(CharMatch.class, CharMatchNodeGen::create);
         add(Col.class, ColNodeGen::create);
         add(ColMeans.class, ColMeansNodeGen::create);
@@ -228,7 +228,7 @@ public class BasePackage extends RBuiltinPackage {
         add(FileFunctions.ListFiles.class, FileFunctionsFactory.ListFilesNodeGen::create);
         add(FileFunctions.ListDirs.class, FileFunctionsFactory.ListDirsNodeGen::create);
         add(FileFunctions.Unlink.class, FileFunctionsFactory.UnlinkNodeGen::create);
-        add(Floor.class, Floor::new);
+        add(Floor.class, FloorNodeGen::create);
         add(DotC.class, DotCNodeGen::create);
         add(ForeignFunctions.DotCall.class, ForeignFunctionsFactory.DotCallNodeGen::create);
         add(ForeignFunctions.DotExternal.class, ForeignFunctionsFactory.DotExternalNodeGen::create);
@@ -271,7 +271,7 @@ public class BasePackage extends RBuiltinPackage {
         add(HiddenInternalFunctions.LazyLoadDBinsertValue.class, HiddenInternalFunctionsFactory.LazyLoadDBinsertValueNodeGen::create);
         add(IConv.class, IConvNodeGen::create);
         add(Identical.class, IdenticalNodeGen::create);
-        add(Im.class, Im::new);
+        add(Im.class, ImNodeGen::create);
         add(InfixEmulationFunctions.AccessArraySubscriptBuiltin.class, InfixEmulationFunctionsFactory.AccessArraySubscriptBuiltinNodeGen::create);
         add(InfixEmulationFunctions.AccessArraySubscriptDefaultBuiltin.class, InfixEmulationFunctionsFactory.AccessArraySubscriptDefaultBuiltinNodeGen::create);
         add(InfixEmulationFunctions.AccessArraySubsetBuiltin.class, InfixEmulationFunctionsFactory.AccessArraySubsetBuiltinNodeGen::create);
@@ -355,9 +355,9 @@ public class BasePackage extends RBuiltinPackage {
         add(Match.class, MatchNodeGen::create);
         add(MatchFun.class, MatchFunNodeGen::create);
         add(Matrix.class, MatrixNodeGen::create);
-        add(Max.class, Max::new);
+        add(Max.class, MaxNodeGen::create);
         add(Mean.class, MeanNodeGen::create);
-        add(Min.class, Min::new);
+        add(Min.class, MinNodeGen::create);
         add(Missing.class, MissingNodeGen::create);
         add(Mod.class, ModNodeGen::create);
         add(NArgs.class, NArgsNodeGen::create);
@@ -394,7 +394,7 @@ public class BasePackage extends RBuiltinPackage {
         add(RVersion.class, RVersionNodeGen::create);
         add(RawFunctions.CharToRaw.class, RawFunctionsFactory.CharToRawNodeGen::create);
         add(RawFunctions.RawToChar.class, RawFunctionsFactory.RawToCharNodeGen::create);
-        add(Re.class, Re::new);
+        add(Re.class, ReNodeGen::create);
         add(ReadDCF.class, ReadDCFNodeGen::create);
         add(ReadREnviron.class, ReadREnvironNodeGen::create);
         add(Recall.class, Recall::new);
@@ -437,7 +437,7 @@ public class BasePackage extends RBuiltinPackage {
         add(Structure.class, StructureNodeGen::create);
         add(Substitute.class, SubstituteNodeGen::create);
         add(Substr.class, SubstrNodeGen::create);
-        add(Sum.class, Sum::new);
+        add(Sum.class, SumNodeGen::create);
         add(Switch.class, SwitchNodeGen::create);
         add(SysFunctions.SysChmod.class, SysFunctionsFactory.SysChmodNodeGen::create);
         add(SysFunctions.SysGetenv.class, SysFunctionsFactory.SysGetenvNodeGen::create);

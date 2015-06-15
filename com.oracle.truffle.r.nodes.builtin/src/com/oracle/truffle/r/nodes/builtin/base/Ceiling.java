@@ -24,22 +24,21 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
-import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.r.nodes.binary.*;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.builtin.RBuiltinNode.RWrapperBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.ops.*;
 
 @RBuiltin(name = "ceiling", kind = PRIMITIVE, parameterNames = {"x"})
-public class Ceiling extends RWrapperBuiltinNode {
+public abstract class Ceiling extends RBuiltinNode {
 
-    public Ceiling(RNode[] arguments, RBuiltinFactory builtin, ArgumentsSignature suppliedSignature) {
-        super(arguments, builtin, suppliedSignature);
-    }
+    @Child private BoxPrimitiveNode boxPrimitive = BoxPrimitiveNodeGen.create();
+    @Child private UnaryArithmeticNode ceiling = UnaryArithmeticNodeGen.create(UnaryArithmetic.CEILING, RError.Message.NON_NUMERIC_MATH);
 
-    @Override
-    protected RNode createDelegate() {
-        return UnaryArithmeticNodeGen.create(UnaryArithmetic.CEILING, RError.Message.NON_NUMERIC_MATH, getArguments()[0]);
+    @Specialization
+    protected Object ceiling(Object value) {
+        return ceiling.execute(boxPrimitive.execute(value));
     }
 }

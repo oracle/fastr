@@ -184,9 +184,9 @@ public abstract class AccessArrayNode extends RNode implements RSyntaxNode {
     private Object castVector(Object value) {
         if (castVector == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castVector = insert(CastToVectorNodeGen.create(null, false, false, false, true));
+            castVector = insert(CastToVectorNodeGen.create(true));
         }
-        return castVector.executeObject(value);
+        return castVector.execute(value);
     }
 
     private Object castPosition(Object vector, Object operand) {

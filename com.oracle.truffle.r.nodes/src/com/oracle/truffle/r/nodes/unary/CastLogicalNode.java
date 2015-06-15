@@ -32,21 +32,19 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
-public abstract class CastLogicalNode extends CastNode {
+public abstract class CastLogicalNode extends CastBaseNode {
 
     private final NACheck naCheck = NACheck.create();
     private final NAProfile naProfile = NAProfile.create();
-
-    public abstract Object executeLogical(Object o);
 
     @Child private CastLogicalNode recursiveCastLogical;
 
     private Object castLogicalRecursive(Object o) {
         if (recursiveCastLogical == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            recursiveCastLogical = insert(CastLogicalNodeGen.create(null, isPreserveNames(), isDimensionsPreservation(), isAttrPreservation()));
+            recursiveCastLogical = insert(CastLogicalNodeGen.create(isPreserveNames(), isDimensionsPreservation(), isAttrPreservation()));
         }
-        return recursiveCastLogical.executeLogical(o);
+        return recursiveCastLogical.execute(o);
     }
 
     @Specialization
@@ -209,6 +207,6 @@ public abstract class CastLogicalNode extends CastNode {
     }
 
     public static CastStringNode create() {
-        return CastStringNodeGen.create(null, false, true, true, true);
+        return CastStringNodeGen.create(false, true, true, true);
     }
 }

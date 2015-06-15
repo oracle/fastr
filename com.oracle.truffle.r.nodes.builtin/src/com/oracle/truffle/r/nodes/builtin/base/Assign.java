@@ -27,9 +27,7 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.utilities.*;
-import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
@@ -66,10 +64,9 @@ public abstract class Assign extends RInvisibleBuiltinNode {
         }
     }
 
-    @CreateCast("arguments")
-    public RNode[] castInherits(RNode[] arguments) {
-        arguments[3] = CastLogicalNodeGen.create(arguments[3], false, false, false);
-        return arguments;
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.toLogical(3);
     }
 
     /**

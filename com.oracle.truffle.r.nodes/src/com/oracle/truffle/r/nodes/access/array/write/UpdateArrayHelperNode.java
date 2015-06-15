@@ -165,9 +165,9 @@ public abstract class UpdateArrayHelperNode extends UpdateNode implements RSynta
         if (needsCastProfile.profile(!(operand instanceof RComplexVector))) {
             if (castComplex == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                castComplex = insert(CastComplexNodeGen.create(null, true, true, false));
+                castComplex = insert(CastComplexNodeGen.create(true, true, false));
             }
-            return (RComplexVector) castComplex.executeCast(operand);
+            return (RComplexVector) castComplex.execute(operand);
         } else {
             return (RComplexVector) operand;
         }
@@ -177,9 +177,9 @@ public abstract class UpdateArrayHelperNode extends UpdateNode implements RSynta
         if (needsCastProfile.profile(!(operand instanceof RDoubleVector))) {
             if (castDouble == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                castDouble = insert(CastDoubleNodeGen.create(null, true, true, false));
+                castDouble = insert(CastDoubleNodeGen.create(true, true, false));
             }
-            return (RDoubleVector) castDouble.executeCast(operand);
+            return (RDoubleVector) castDouble.execute(operand);
         } else {
             return (RDoubleVector) operand;
         }
@@ -189,9 +189,9 @@ public abstract class UpdateArrayHelperNode extends UpdateNode implements RSynta
         if (needsCastProfile.profile(!(operand instanceof RIntVector))) {
             if (castInteger == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                castInteger = insert(CastIntegerNodeGen.create(null, true, true, false));
+                castInteger = insert(CastIntegerNodeGen.create(true, true, false));
             }
-            return (RIntVector) castInteger.executeCast(operand);
+            return (RIntVector) castInteger.execute(operand);
         } else {
             return (RIntVector) operand;
         }
@@ -201,9 +201,9 @@ public abstract class UpdateArrayHelperNode extends UpdateNode implements RSynta
         if (needsCastProfile.profile(!(operand instanceof RStringVector))) {
             if (castString == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                castString = insert(CastStringNodeGen.create(null, true, true, false, true));
+                castString = insert(CastStringNodeGen.create(true, true, false, true));
             }
-            return (RStringVector) castString.executeCast(operand);
+            return (RStringVector) castString.execute(operand);
         } else {
             return (RStringVector) operand;
         }
@@ -253,7 +253,7 @@ public abstract class UpdateArrayHelperNode extends UpdateNode implements RSynta
 
     @CreateCast({"newValue"})
     public RNode createCastValue(RNode child) {
-        return CastToContainerNodeGen.create(child, false, false, false);
+        return new ApplyCastNode(CastToContainerNodeGen.create(false, false, false), child);
     }
 
     private static final ArgumentsSignature VALUE_SIGNATURE = ArgumentsSignature.get("", "", "value");

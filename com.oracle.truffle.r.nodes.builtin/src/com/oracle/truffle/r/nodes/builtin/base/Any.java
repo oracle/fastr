@@ -26,7 +26,6 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
@@ -42,10 +41,9 @@ public abstract class Any extends RBuiltinNode {
 
     public abstract Object execute(Object o);
 
-    @CreateCast("arguments")
-    protected RNode[] castArguments(RNode[] arguments) {
-        arguments[0] = CastLogicalNodeGen.create(arguments[0], true, false, false);
-        return arguments;
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.toLogical(0);
     }
 
     @Specialization
@@ -76,7 +74,7 @@ public abstract class Any extends RBuiltinNode {
     protected byte any(RArgsValuesAndNames args) {
         if (castLogicalNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castLogicalNode = insert(CastLogicalNodeGen.create(null, true, false, false));
+            castLogicalNode = insert(CastLogicalNodeGen.create(true, false, false));
         }
         controlVisibility();
         boolean seenNA = false;
@@ -84,11 +82,11 @@ public abstract class Any extends RBuiltinNode {
         for (Object argValue : argValues) {
             byte result;
             if (argValue instanceof RVector || argValue instanceof RSequence) {
-                result = accumulate((RLogicalVector) castLogicalNode.executeLogical(argValue));
+                result = accumulate((RLogicalVector) castLogicalNode.execute(argValue));
             } else if (argValue == RNull.instance) {
                 result = RRuntime.LOGICAL_FALSE;
             } else {
-                result = (byte) castLogicalNode.executeLogical(argValue);
+                result = (byte) castLogicalNode.execute(argValue);
             }
             if (RRuntime.isNA(result)) {
                 seenNA = true;

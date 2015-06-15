@@ -27,7 +27,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-public abstract class CastExpressionNode extends CastNode {
+public abstract class CastExpressionNode extends CastBaseNode {
 
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 

@@ -36,7 +36,6 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.builtin.base.EnvFunctionsFactory.CopyNodeGen;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseDeoptimizeFrameNode;
-import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -245,10 +244,9 @@ public class EnvFunctions {
     @RBuiltin(name = "new.env", kind = INTERNAL, parameterNames = {"hash", "parent", "size"})
     public abstract static class NewEnv extends RBuiltinNode {
 
-        @CreateCast("arguments")
-        protected RNode[] castArguments(RNode[] arguments) {
-            arguments[2] = CastIntegerNodeGen.create(arguments[2], false, false, false);
-            return arguments;
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.toInteger(2);
         }
 
         @Specialization

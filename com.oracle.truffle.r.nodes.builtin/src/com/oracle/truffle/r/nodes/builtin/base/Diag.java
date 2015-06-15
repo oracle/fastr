@@ -45,9 +45,10 @@ public abstract class Diag extends RBuiltinNode {
         return new Object[]{1, RMissing.instance, RMissing.instance};
     }
 
-    @CreateCast({"arguments"})
-    public RNode[] createCastValue(RNode[] children) {
-        return new RNode[]{children[0], CastIntegerNodeGen.create(children[1], false, false, false), CastIntegerNodeGen.create(children[2], false, false, false)};
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.toInteger(1);
+        casts.toInteger(2);
     }
 
     @Specialization

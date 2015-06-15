@@ -25,9 +25,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -37,11 +35,9 @@ public abstract class Complex extends RBuiltinNode {
 
     private static final RDoubleVector ZERO = RDataFactory.createDoubleVectorFromScalar(0.0);
 
-    @CreateCast("arguments")
-    protected RNode[] castStatusArgument(RNode[] arguments) {
-        // length.out argument is at index 0
-        arguments[0] = CastIntegerNodeGen.create(arguments[0], true, false, false);
-        return arguments;
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.toInteger(0);
     }
 
     @SuppressWarnings("unused")

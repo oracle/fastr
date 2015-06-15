@@ -44,7 +44,7 @@ public abstract class UpdateNames extends RInvisibleBuiltinNode {
     private Object castString(Object o) {
         if (castStringNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castStringNode = insert(CastStringNodeGen.create(null, false, true, false, false));
+            castStringNode = insert(CastStringNodeGen.create(false, true, false, false));
         }
         return castStringNode.executeString(o);
     }

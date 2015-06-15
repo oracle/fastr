@@ -219,7 +219,7 @@ public class UnaryArithmeticNodeTest extends BinaryVectorTest {
     }
 
     private static NodeHandle<UnaryArithmeticNode> create(UnaryArithmeticFactory factory) {
-        return createHandle(UnaryArithmeticNodeGen.create(factory, null, null), //
+        return createHandle(UnaryArithmeticNodeGen.create(factory, null), //
                         (node, args) -> node.execute(args[0]));
     }
 

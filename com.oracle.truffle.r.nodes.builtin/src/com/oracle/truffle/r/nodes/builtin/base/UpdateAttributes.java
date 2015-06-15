@@ -71,23 +71,23 @@ public abstract class UpdateAttributes extends RInvisibleBuiltinNode {
     private RAbstractIntVector castInteger(RAbstractVector vector) {
         if (castInteger == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castInteger = insert(CastIntegerNodeGen.create(null, true, false, false));
+            castInteger = insert(CastIntegerNodeGen.create(true, false, false));
         }
-        return (RAbstractIntVector) castInteger.executeCast(vector);
+        return (RAbstractIntVector) castInteger.execute(vector);
     }
 
     private RAbstractVector castVector(Object value) {
         if (castVector == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castVector = insert(CastToVectorNodeGen.create(null, false, false, false, false));
+            castVector = insert(CastToVectorNodeGen.create(false));
         }
-        return (RAbstractVector) castVector.executeObject(value);
+        return (RAbstractVector) castVector.execute(value);
     }
 
     private RList castList(Object value) {
         if (castList == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castList = insert(CastListNodeGen.create(null, true, false, false));
+            castList = insert(CastListNodeGen.create(true, false, false));
         }
         return castList.executeList(value);
     }

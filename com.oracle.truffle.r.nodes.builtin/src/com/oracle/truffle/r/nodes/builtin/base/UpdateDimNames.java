@@ -42,27 +42,19 @@ public abstract class UpdateDimNames extends RInvisibleBuiltinNode {
     @Child private CastToVectorNode castVectorNode;
 
     private Object castString(Object o) {
-        initCastStringNode();
-        return castStringNode.executeCast(o);
-    }
-
-    private void initCastStringNode() {
         if (castStringNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castStringNode = insert(CastStringNodeGen.create(null, true, true, false, false));
+            castStringNode = insert(CastStringNodeGen.create(true, true, false, false));
         }
+        return castStringNode.execute(o);
     }
 
     private RAbstractVector castVector(Object value) {
-        initCastVectorNode();
-        return ((RAbstractVector) castVectorNode.executeObject(value)).materialize();
-    }
-
-    private void initCastVectorNode() {
         if (castVectorNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castVectorNode = insert(CastToVectorNodeGen.create(null, false, false, false, false));
+            castVectorNode = insert(CastToVectorNodeGen.create(false));
         }
+        return ((RAbstractVector) castVectorNode.execute(value)).materialize();
     }
 
     public abstract RAbstractContainer executeRAbstractContainer(RAbstractContainer container, Object o);

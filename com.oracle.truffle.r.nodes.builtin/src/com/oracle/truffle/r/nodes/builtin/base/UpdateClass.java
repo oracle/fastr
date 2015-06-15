@@ -44,14 +44,14 @@ public abstract class UpdateClass extends RBuiltinNode {
             return setClass(arg, RNull.instance);
         }
         initCastStringNode();
-        Object result = castStringNode.executeCast(className);
+        Object result = castStringNode.execute(className);
         return setClass(arg, (RStringVector) result);
     }
 
     private void initCastStringNode() {
         if (castStringNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castStringNode = insert(CastStringNodeGen.create(null, false, false, false, false));
+            castStringNode = insert(CastStringNodeGen.create(false, false, false, false));
         }
     }
 
@@ -182,7 +182,7 @@ public abstract class UpdateClass extends RBuiltinNode {
     private void initTypeof() {
         if (typeof == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            typeof = insert(TypeofNodeGen.create(null));
+            typeof = insert(TypeofNodeGen.create());
         }
     }
 

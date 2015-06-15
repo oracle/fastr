@@ -41,7 +41,7 @@ public abstract class Typeof extends RBuiltinNode {
     @Specialization
     protected String typeof(Object obj) {
         if (typeofNode == null) {
-            typeofNode = insert(TypeofNodeGen.create(null));
+            typeofNode = insert(TypeofNodeGen.create());
         }
         return typeofNode.execute(obj).getName();
     }

@@ -31,17 +31,17 @@ public abstract class UpdateLevels extends RInvisibleBuiltinNode {
     private RAbstractVector castVector(Object value) {
         if (castVector == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castVector = insert(CastToVectorNodeGen.create(null, false, false, false, false));
+            castVector = insert(CastToVectorNodeGen.create(false));
         }
-        return (RAbstractVector) castVector.executeObject(value);
+        return (RAbstractVector) castVector.execute(value);
     }
 
     private Object castString(Object operand) {
         if (castString == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castString = insert(CastStringNodeGen.create(null, false, true, false, false));
+            castString = insert(CastStringNodeGen.create(false, true, false, false));
         }
-        return castString.executeCast(operand);
+        return castString.execute(operand);
     }
 
     @Specialization

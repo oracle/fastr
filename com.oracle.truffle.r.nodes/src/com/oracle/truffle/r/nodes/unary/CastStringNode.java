@@ -28,9 +28,9 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
 @NodeField(name = "emptyVectorConvertedToNull", type = boolean.class)
-public abstract class CastStringNode extends CastNode {
+public abstract class CastStringNode extends CastBaseNode {
 
-    @Child private ToStringNode toString = ToStringNodeGen.create(null, null, null);
+    @Child private ToStringNode toString = ToStringNodeGen.create();
 
     public abstract Object executeString(int o);
 
@@ -117,6 +117,6 @@ public abstract class CastStringNode extends CastNode {
     }
 
     public static CastStringNode create() {
-        return CastStringNodeGen.create(null, false, true, true, true);
+        return CastStringNodeGen.create(false, true, true, true);
     }
 }

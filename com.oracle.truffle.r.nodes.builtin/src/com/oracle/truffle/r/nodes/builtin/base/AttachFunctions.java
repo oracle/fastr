@@ -26,9 +26,7 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -41,10 +39,9 @@ public class AttachFunctions {
 
         private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
-        @CreateCast("arguments")
-        public RNode[] castArguments(RNode[] arguments) {
-            arguments[1] = CastIntegerNodeGen.create(arguments[1], false, false, false);
-            return arguments;
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.toInteger(1);
         }
 
         @Specialization
@@ -103,10 +100,9 @@ public class AttachFunctions {
     @RBuiltin(name = "detach", kind = INTERNAL, parameterNames = {"pos"})
     public abstract static class Detach extends RInvisibleBuiltinNode {
 
-        @CreateCast("arguments")
-        public RNode[] castArguments(RNode[] arguments) {
-            arguments[0] = CastIntegerNodeGen.create(arguments[0], false, false, false);
-            return arguments;
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.toInteger(0);
         }
 
         @Specialization

@@ -24,12 +24,11 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
-import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.*;
+import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.builtin.RBuiltinNode.RWrapperBuiltinNode;
-import com.oracle.truffle.r.nodes.unary.UnaryArithmeticReduceNode.ReduceSemantics;
 import com.oracle.truffle.r.nodes.unary.*;
+import com.oracle.truffle.r.nodes.unary.UnaryArithmeticReduceNode.ReduceSemantics;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.ops.*;
@@ -38,22 +37,20 @@ import com.oracle.truffle.r.runtime.ops.*;
  * Sum has combine semantics (TBD: exactly?) and uses a reduce operation on the resulting array.
  */
 @RBuiltin(name = "sum", kind = PRIMITIVE, parameterNames = {"...", "na.rm"})
-public final class Sum extends RWrapperBuiltinNode {
+public abstract class Sum extends RBuiltinNode {
 
-    public Sum(RNode[] arguments, RBuiltinFactory builtin, ArgumentsSignature suppliedSignature) {
-        super(arguments, builtin, suppliedSignature);
-    }
+    private static final ReduceSemantics semantics = new ReduceSemantics(0, 0.0, true, null, null, true, false);
+
+    @Child private Combine combine = CombineNodeGen.create(null, null, null);
+    @Child private UnaryArithmeticReduceNode reduce = UnaryArithmeticReduceNodeGen.create(semantics, BinaryArithmetic.ADD);
 
     @Override
     public Object[] getDefaultParameterValues() {
         return new Object[]{RArgsValuesAndNames.EMPTY, RRuntime.LOGICAL_FALSE};
     }
 
-    @Override
-    protected RNode createDelegate() {
-        ReduceSemantics semantics = new ReduceSemantics(0, 0.0, true, null, null, true, false);
-        RNode[] args = getArguments();
-        Combine combine = CombineNodeGen.create(new RNode[]{args[0]}, null, null);
-        return UnaryArithmeticReduceNodeGen.create(semantics, BinaryArithmetic.ADD, combine, args.length > 1 ? args[1] : ConstantNode.create(RRuntime.LOGICAL_FALSE));
+    @Specialization
+    protected Object sum(VirtualFrame frame, RArgsValuesAndNames args, byte naRm) {
+        return reduce.executeReduce(combine.executeCombine(frame, args), naRm);
     }
 }

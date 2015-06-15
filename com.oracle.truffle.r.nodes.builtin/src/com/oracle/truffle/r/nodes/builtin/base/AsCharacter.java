@@ -50,7 +50,7 @@ public abstract class AsCharacter extends RBuiltinNode {
     private void initCast() {
         if (castStringNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castStringNode = insert(CastStringNodeGen.create(null, false, false, false, false));
+            castStringNode = insert(CastStringNodeGen.create(false, false, false, false));
         }
     }
 

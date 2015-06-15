@@ -48,7 +48,7 @@ public abstract class Cat extends RInvisibleBuiltinNode {
     private void ensureToString() {
         if (toString == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            toString = insert(ToStringNodeGen.create(null, null, null));
+            toString = insert(ToStringNodeGen.create());
         }
     }
 

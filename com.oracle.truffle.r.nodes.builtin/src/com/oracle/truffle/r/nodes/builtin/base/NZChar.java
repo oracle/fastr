@@ -40,10 +40,10 @@ public abstract class NZChar extends RBuiltinNode {
     private String coerceContent(Object content) {
         if (convertString == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            convertString = insert(CastStringNodeGen.create(null, false, true, false, false));
+            convertString = insert(CastStringNodeGen.create(false, true, false, false));
         }
         try {
-            return (String) convertString.executeCast(content);
+            return (String) convertString.execute(content);
         } catch (ConversionFailedException e) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.TYPE_EXPECTED, RType.Character.getName());
         }

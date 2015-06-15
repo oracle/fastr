@@ -24,9 +24,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.utilities.*;
-import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -42,11 +40,10 @@ public abstract class ColSums extends RBuiltinNode {
 
     private final BinaryConditionProfile removeNA = (BinaryConditionProfile) ConditionProfile.createBinaryProfile();
 
-    @CreateCast("arguments")
-    protected RNode[] castArguments(RNode[] arguments) {
-        arguments[1] = CastIntegerNodeGen.create(arguments[1], true, false, false);
-        arguments[2] = CastIntegerNodeGen.create(arguments[2], true, false, false);
-        return arguments;
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.toInteger(1);
+        casts.toInteger(2);
     }
 
     @Specialization

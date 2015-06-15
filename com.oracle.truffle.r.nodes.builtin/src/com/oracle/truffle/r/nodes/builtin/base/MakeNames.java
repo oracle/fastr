@@ -28,9 +28,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.utilities.*;
-import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.builtin.base.MakeNamesNodeGen.AllowUnderscoreConverterNodeGen;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -43,9 +41,9 @@ public abstract class MakeNames extends RBuiltinNode {
     private final ConditionProfile namesLengthZero = ConditionProfile.createBinaryProfile();
     private final NACheck dummyCheck = new NACheck(); // never triggered (used for vector update)
 
-    @CreateCast({"arguments"})
-    public RNode[] createCastValue(RNode[] children) {
-        return new RNode[]{children[0], AllowUnderscoreConverterNodeGen.create(children[1])};
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.custom(1, new AllowUnderscoreConverter());
     }
 
     @TruffleBoundary
@@ -183,16 +181,15 @@ public abstract class MakeNames extends RBuiltinNode {
         return allowUnderScoreArg.getLength() == 0 || RRuntime.isNA(allowUnderScoreArg.getDataAt(0));
     }
 
-    @NodeChild("allowUnderScoreArg")
-    protected abstract static class AllowUnderscoreConverter extends RNode {
+    protected static final class AllowUnderscoreConverter extends CastNode {
 
-        @Child private CastLogicalNode castLogical = CastLogicalNodeGen.create(null, false, false, false);
-        @Child private CastToVectorNode castVector = CastToVectorNodeGen.create(null, false, false, false, false);
+        @Child private CastLogicalNode castLogical = CastLogicalNodeGen.create(false, false, false);
+        @Child private CastToVectorNode castVector = CastToVectorNodeGen.create(false);
 
-        @Specialization
-        protected RAbstractLogicalVector convert(Object allowUnderScoreArg) {
+        @Override
+        public RAbstractLogicalVector execute(Object value) {
             try {
-                return (RLogicalVector) castLogical.executeCast(castVector.executeCast(allowUnderScoreArg));
+                return (RAbstractLogicalVector) castLogical.execute(castVector.execute(value));
             } catch (RError x) {
                 throw invalidAllowValue(getEncapsulatingSourceSection());
             }

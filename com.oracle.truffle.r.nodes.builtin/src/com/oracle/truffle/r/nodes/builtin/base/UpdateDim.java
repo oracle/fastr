@@ -25,7 +25,6 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
@@ -40,16 +39,11 @@ public abstract class UpdateDim extends RInvisibleBuiltinNode {
     @Child private CastIntegerNode castInteger;
 
     private RAbstractIntVector castInteger(RAbstractVector vector) {
-        updateCastInteger();
-        return (RAbstractIntVector) castInteger.executeCast(vector);
-    }
-
-    @TruffleBoundary
-    private void updateCastInteger() {
         if (castInteger == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            castInteger = insert(CastIntegerNodeGen.create(null, true, false, false));
+            castInteger = insert(CastIntegerNodeGen.create(true, false, false));
         }
+        return (RAbstractIntVector) castInteger.execute(vector);
     }
 
     @Specialization

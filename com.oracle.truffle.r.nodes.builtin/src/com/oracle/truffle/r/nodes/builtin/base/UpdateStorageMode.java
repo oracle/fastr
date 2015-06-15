@@ -15,7 +15,6 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.binary.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -38,7 +37,7 @@ public abstract class UpdateStorageMode extends RBuiltinNode {
     private final BranchProfile errorProfile = BranchProfile.create();
 
     @Specialization
-    protected Object update(VirtualFrame frame, Object x, String value) {
+    protected Object update(Object x, String value) {
         controlVisibility();
         RType mode = RType.fromMode(modeProfile.profile(value));
         if (mode == RType.DefunctReal || mode == RType.DefunctSingle) {
@@ -51,7 +50,7 @@ public abstract class UpdateStorageMode extends RBuiltinNode {
             return x;
         }
         initFactorNode();
-        if (isFactor.execute(frame, x) == RRuntime.LOGICAL_TRUE) {
+        if (isFactor.executeIsFactor(x) == RRuntime.LOGICAL_TRUE) {
             errorProfile.enter();
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_STORAGE_MODE_UPDATE);
         }
@@ -97,14 +96,14 @@ public abstract class UpdateStorageMode extends RBuiltinNode {
     private void initFactorNode() {
         if (isFactor == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            isFactor = insert(IsFactorNodeGen.create(null));
+            isFactor = insert(IsFactorNodeGen.create());
         }
     }
 
     private void initTypeOfNode() {
         if (typeof == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            typeof = insert(TypeofNodeGen.create(null));
+            typeof = insert(TypeofNodeGen.create());
         }
     }
 

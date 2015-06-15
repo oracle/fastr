@@ -27,9 +27,9 @@ import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-public abstract class CastSymbolNode extends CastNode {
+public abstract class CastSymbolNode extends CastBaseNode {
 
-    @Child private ToStringNode toString = ToStringNodeGen.create(null, null, null);
+    @Child private ToStringNode toString = ToStringNodeGen.create();
 
     public abstract Object executeSymbol(Object o);
 
