@@ -54,8 +54,7 @@ public class TestBuiltin_subset2 extends TestBase {
 
     @Test
     public void testsubset28() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(list(surname = structure('R Core', class = 'AsIs'), nationality = structure(NA_integer_, .Label = c('Australia', 'UK', 'US'), class = 'factor'), deceased = structure(NA_integer_, .Label = c('no', 'yes'), class = 'factor')), .Names = c('surname', 'nationality', 'deceased'), row.names = 7L, class = 'data.frame'), 1L);.subset2(argv[[1]],argv[[2]]);");
+        assertEval("argv <- list(structure(list(surname = structure('R Core', class = 'AsIs'), nationality = structure(NA_integer_, .Label = c('Australia', 'UK', 'US'), class = 'factor'), deceased = structure(NA_integer_, .Label = c('no', 'yes'), class = 'factor')), .Names = c('surname', 'nationality', 'deceased'), row.names = 7L, class = 'data.frame'), 1L);.subset2(argv[[1]],argv[[2]]);");
     }
 
     @Test
@@ -106,8 +105,7 @@ public class TestBuiltin_subset2 extends TestBase {
 
     @Test
     public void testsubset219() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(list(surname = structure(2L, .Label = c('McNeil', 'R Core', 'Ripley', 'Tierney', 'Tukey', 'Venables'), class = 'factor'), nationality = structure(NA_integer_, .Label = c('Australia', 'UK', 'US'), class = 'factor'), deceased = structure(NA_integer_, .Label = c('no', 'yes'), class = 'factor'), title = structure(1L, .Label = c('An Introduction to R', 'Exploratory Data Analysis', 'Interactive Data Analysis', 'LISP-STAT', 'Modern Applied Statistics ...', 'Spatial Statistics', 'Stochastic Simulation'), class = 'factor'), other.author = structure(2L, .Label = c('Ripley', 'Venables & Smith'), class = 'factor')), .Names = c('surname', 'nationality', 'deceased', 'title', 'other.author'), row.names = 1L, class = 'data.frame'), 4L);.subset2(argv[[1]],argv[[2]]);");
+        assertEval("argv <- list(structure(list(surname = structure(2L, .Label = c('McNeil', 'R Core', 'Ripley', 'Tierney', 'Tukey', 'Venables'), class = 'factor'), nationality = structure(NA_integer_, .Label = c('Australia', 'UK', 'US'), class = 'factor'), deceased = structure(NA_integer_, .Label = c('no', 'yes'), class = 'factor'), title = structure(1L, .Label = c('An Introduction to R', 'Exploratory Data Analysis', 'Interactive Data Analysis', 'LISP-STAT', 'Modern Applied Statistics ...', 'Spatial Statistics', 'Stochastic Simulation'), class = 'factor'), other.author = structure(2L, .Label = c('Ripley', 'Venables & Smith'), class = 'factor')), .Names = c('surname', 'nationality', 'deceased', 'title', 'other.author'), row.names = 1L, class = 'data.frame'), 4L);.subset2(argv[[1]],argv[[2]]);");
     }
 
     @Test

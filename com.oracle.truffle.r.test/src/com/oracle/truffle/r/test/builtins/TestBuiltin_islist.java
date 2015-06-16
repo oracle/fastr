@@ -55,8 +55,7 @@ public class TestBuiltin_islist extends TestBase {
 
     @Test
     public void testislist8() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(list(title = structure(1L, .Label = c('An Introduction to R', 'Exploratory Data Analysis', 'Interactive Data Analysis', 'LISP-STAT', 'Modern Applied Statistics ...', 'Spatial Statistics', 'Stochastic Simulation'), class = 'factor'), other.author = structure(2L, .Label = c('Ripley', 'Venables & Smith'), class = 'factor')), .Names = c('title', 'other.author'), row.names = 1L, class = 'data.frame'));is.list(argv[[1]]);");
+        assertEval("argv <- list(structure(list(title = structure(1L, .Label = c('An Introduction to R', 'Exploratory Data Analysis', 'Interactive Data Analysis', 'LISP-STAT', 'Modern Applied Statistics ...', 'Spatial Statistics', 'Stochastic Simulation'), class = 'factor'), other.author = structure(2L, .Label = c('Ripley', 'Venables & Smith'), class = 'factor')), .Names = c('title', 'other.author'), row.names = 1L, class = 'data.frame'));is.list(argv[[1]]);");
     }
 
     @Test
