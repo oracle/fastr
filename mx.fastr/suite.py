@@ -21,14 +21,14 @@
 # questions.
 #
 suite = {
-  "mxversion" : "3.4.1",
+  "mxversion" : "3.4.2",
   "name" : "fastr",
 
   "imports" : {
     "suites" : [
             {
                "name" : "graal",
-               "version" : "b09503284ac83d46a51128eb6e8ab0fd502838a0",
+               "version" : "a6425aa8f70c9bda94aa174447221560cd5381b5",
                "urls" : ["http://hg.openjdk.java.net/graal/graal"]
             },
         ],
