@@ -241,10 +241,6 @@ public abstract class S3DispatchFunctions extends RBuiltinNode {
                 arg = promiseHelper.evaluate(frame, (RPromise) arg);
             }
             RAbstractContainer enclosingArg = (RAbstractContainer) arg;
-            if (!enclosingArg.isObject(attrProfiles)) {
-                errorProfile.enter();
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.OBJECT_NOT_SPECIFIED);
-            }
             return enclosingArg.getClassHierarchy();
         }
     }
