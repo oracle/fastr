@@ -44,7 +44,7 @@ import com.oracle.truffle.r.runtime.env.frame.*;
  * a particular layout of frame descriptors and enclosing environments, and re-specializes in case
  * the layout changes.
  */
-public class ReadVariableNode extends RNode implements RSyntaxNode, VisibilityController {
+public final class ReadVariableNode extends RNode implements RSyntaxNode, VisibilityController {
 
     public static enum ReadKind {
         Normal,
@@ -465,7 +465,7 @@ public class ReadVariableNode extends RNode implements RSyntaxNode, VisibilityCo
                 if (kind == ReadKind.SilentLocal && value == RMissing.instance) {
                     match = false;
                 } else {
-                    match = checkType(frame, value, null);
+                    match = checkTypeSlowPath(frame, value);
                 }
             }
 
@@ -647,6 +647,36 @@ public class ReadVariableNode extends RNode implements RSyntaxNode, VisibilityCo
                     return true;
                 } else {
                     obj = promiseHelper.evaluate(frame, promise);
+                }
+            } else {
+                obj = promise.getValue();
+            }
+        }
+        return RRuntime.checkType(obj, mode);
+    }
+
+    protected boolean checkTypeSlowPath(VirtualFrame frame, Object objArg) {
+        CompilerAsserts.neverPartOfCompilation();
+        Object obj = objArg;
+        if (obj == null) {
+            return false;
+        }
+        if (obj == RMissing.instance) {
+            throw RError.error(RError.Message.ARGUMENT_MISSING, getIdentifier());
+        }
+        if (mode == RType.Any) {
+            return true;
+        }
+        if (obj instanceof RPromise) {
+            RPromise promise = (RPromise) obj;
+
+            if (!promise.isEvaluated()) {
+                if (kind != ReadKind.Forced) {
+                    // since we do not know what type the evaluates to, it may match.
+                    // we recover from a wrong type later
+                    return true;
+                } else {
+                    obj = PromiseHelperNode.evaluateSlowPath(frame, promise);
                 }
             } else {
                 obj = promise.getValue();
