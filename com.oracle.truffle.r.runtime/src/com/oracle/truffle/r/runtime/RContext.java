@@ -323,19 +323,7 @@ public final class RContext extends ExecutionContext {
          */
         Object eval(RLanguage expr, MaterializedFrame frame);
 
-        /**
-         * Evaluate a promise in the given frame, where we can use the {@link MaterializedFrame}) of
-         * the caller directly). This should <b>only</b> be called by the {@link RPromise} class.
-         */
-        Object evalPromise(RPromise expr, MaterializedFrame frame);
-
         Object evalPromise(Closure closure, MaterializedFrame frame);
-
-        /**
-         * Evaluate a promise in the {@link MaterializedFrame} stored with the promise. This should
-         * <b>only</b> be called by the {@link RPromise} class.
-         */
-        Object evalPromise(RPromise expr, SourceSection callSrc);
 
         /**
          * Checks for the existence of {@code .Last/.Last.sys} and if present and bound to a

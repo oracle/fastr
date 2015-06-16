@@ -237,28 +237,73 @@ public class PromiseHelperNode extends Node {
         if (promise.isEvaluated()) {
             return promise.getValue();
         }
+        RPromise current = promise;
+        OptType optType = current.getOptType();
+        if (optType == OptType.VARARG) {
+            current = ((VarargPromise) current).getVararg();
+            optType = current.getOptType();
+            while (optType == OptType.VARARG) {
+                current = ((VarargPromise) current).getVararg();
+                optType = current.getOptType();
+            }
+            if (current.isEvaluated()) {
+                return current.getValue();
+            }
+        }
 
         // Check for dependency cycle
-        if (promise.isUnderEvaluation()) {
+        if (current.isUnderEvaluation()) {
             throw RError.error(RError.Message.PROMISE_CYCLE);
         }
 
-        // Evaluate guarded by underEvaluation
+        Object obj;
+        if (optType == OptType.DEFAULT) {
+            // Evaluate guarded by underEvaluation
+            obj = generateValueDefaultSlowPath(frame, current);
+        } else {
+            assert optType == OptType.EAGER || optType == OptType.PROMISED;
+            obj = generateValueEagerSlowPath(frame, optType, (EagerPromise) current);
+        }
+        current.setValue(obj);
+        return obj;
+    }
+
+    private static Object generateValueDefaultSlowPath(VirtualFrame frame, RPromise promise) {
         try {
             promise.setUnderEvaluation(true);
 
-            Object obj;
             if (promise.isInOriginFrame(frame)) {
-                obj = RContext.getEngine().eval(RDataFactory.createLanguage(promise.getRep()), frame.materialize());
+                return RContext.getEngine().evalPromise(promise.getClosure(), frame.materialize());
             } else {
-                SourceSection callSrc = frame != null ? RArguments.getCallSourceSection(frame) : null;
-                obj = RContext.getEngine().evalPromise(promise, callSrc);
+                Frame promiseFrame = promise.getFrame();
+                assert promiseFrame != null;
+                return RContext.getEngine().evalPromise(promise.getClosure(), promiseFrame.materialize());
             }
-            promise.setValue(obj);
-            return obj;
         } finally {
             promise.setUnderEvaluation(false);
         }
+    }
+
+    private static Object generateValueEagerSlowPath(VirtualFrame frame, OptType optType, EagerPromise promise) {
+        if (!promise.isDeoptimized()) {
+            Assumption eagerAssumption = promise.getIsValidAssumption();
+            if (eagerAssumption.isValid()) {
+                if (optType == OptType.EAGER) {
+                    return promise.getEagerValue();
+                } else {
+                    assert optType == OptType.PROMISED;
+                    RPromise nextPromise = (RPromise) promise.getEagerValue();
+                    return evaluateSlowPath(frame, nextPromise);
+                }
+            } else {
+                promise.notifyFailure();
+
+                // Fallback: eager evaluation failed, now take the slow path
+                promise.materialize();
+            }
+        }
+        // Call
+        return generateValueDefaultSlowPath(frame, promise);
     }
 
     /**

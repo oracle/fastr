@@ -326,21 +326,8 @@ final class REngine implements RContext.Engine {
         return runCall(callTarget, vFrame, false, false);
     }
 
-    public Object evalPromise(RPromise promise, MaterializedFrame frame) {
-        return runCall(promise.getClosure().getCallTarget(), frame, false, false);
-    }
-
     public Object evalPromise(Closure closure, MaterializedFrame frame) {
         return runCall(closure.getCallTarget(), frame, false, false);
-    }
-
-    public Object evalPromise(RPromise promise, SourceSection callSrc) {
-        // have to do the full out eval
-        MaterializedFrame frame = promise.getFrame().materialize();
-        REnvironment env = REnvironment.frameToEnvironment(frame);
-        assert env != null;
-        Closure closure = promise.getClosure();
-        return evalTarget(closure.getCallTarget(), callSrc, env, null, RArguments.getDepth(frame));
     }
 
     /**

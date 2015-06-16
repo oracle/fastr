@@ -16,7 +16,6 @@ import java.util.*;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
 import com.oracle.truffle.r.runtime.gnur.*;
@@ -420,7 +419,7 @@ public class RDeparse {
                 if (promise.isEvaluated()) {
                     deparse2buff(state, promise.getValue());
                 } else {
-                    Object v = RContext.getEngine().evalPromise((RPromise) obj, (SourceSection) null);
+                    Object v = RContext.getEngine().evalPromise(((RPromise) obj).getClosure(), null);
                     deparse2buff(state, v);
                 }
                 break;
