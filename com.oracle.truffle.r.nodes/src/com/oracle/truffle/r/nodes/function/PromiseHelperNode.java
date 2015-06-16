@@ -138,9 +138,7 @@ public class PromiseHelperNode extends Node {
 
     /**
      * Main entry point for proper evaluation of the given Promise; including
-     * {@link RPromise#isEvaluated()}, propagation of CallSrc and dependency cycles. Actual
-     * evaluation is delegated to
-     * {@link #generateValue(VirtualFrame, OptType, RPromise, SourceSection)}.
+     * {@link RPromise#isEvaluated()}, propagation of CallSrc and dependency cycles.
      *
      * @return The value the given Promise evaluates to
      */
@@ -168,26 +166,16 @@ public class PromiseHelperNode extends Node {
             throw RError.error(RError.Message.PROMISE_CYCLE);
         }
 
-        // Evaluate guarded by underEvaluation
-        Object obj = generateValue(frame, optType, current, callSrc);
-        setValue(obj, current);
-        return obj;
-    }
-
-    /**
-     * This method allows subclasses to override the evaluation method easily while maintaining
-     * {@link #isEvaluated(RPromise)} and {@link #isUnderEvaluation(RPromise)} semantics.
-     *
-     * @param frame The {@link VirtualFrame} of the environment the Promise is forced in
-     * @return The value this Promise represents
-     */
-    private Object generateValue(VirtualFrame frame, OptType optType, RPromise promise, SourceSection callSrc) {
+        Object obj;
         if (optType == OptType.DEFAULT) {
-            return generateValueDefault(frame, promise, callSrc);
+            // Evaluate guarded by underEvaluation
+            obj = generateValueDefault(frame, current, callSrc);
         } else {
             assert optType == OptType.EAGER || optType == OptType.PROMISED;
-            return generateValueEager(frame, optType, (EagerPromise) promise, callSrc);
+            obj = generateValueEager(frame, optType, (EagerPromise) current, callSrc);
         }
+        setValue(obj, current);
+        return obj;
     }
 
     private Object generateValueDefault(VirtualFrame frame, RPromise promise, SourceSection callSrc) {
@@ -223,34 +211,26 @@ public class PromiseHelperNode extends Node {
     }
 
     private Object generateValueEager(VirtualFrame frame, OptType optType, EagerPromise promise, SourceSection callSrc) {
-        if (isDeoptimized(promise)) {
-            // execFrame already materialized, feedback already given. Now we're a
-            // plain'n'simple RPromise
-            return generateValueDefault(frame, promise, callSrc);
-        }
-        Assumption eagerAssumption = isValidAssumptionProfile.profile(promise.getIsValidAssumption());
-        if (eagerAssumption.isValid()) {
-            if (optType == OptType.EAGER) {
-                return getEagerValue(promise);
+        if (!isDeoptimized(promise)) {
+            Assumption eagerAssumption = isValidAssumptionProfile.profile(promise.getIsValidAssumption());
+            if (eagerAssumption.isValid()) {
+                if (optType == OptType.EAGER) {
+                    return getEagerValue(promise);
+                } else {
+                    assert optType == OptType.PROMISED;
+                    RPromise nextPromise = (RPromise) promise.getEagerValue();
+                    return checkNextNode().doEvaluate(frame, nextPromise, callSrc);
+                }
             } else {
-                assert optType == OptType.PROMISED;
-                return getPromisedEagerValue(frame, promise, callSrc);
+                fallbackProfile.enter();
+                promise.notifyFailure();
+
+                // Fallback: eager evaluation failed, now take the slow path
+                promise.materialize();
             }
-        } else {
-            fallbackProfile.enter();
-            promise.notifyFailure();
-
-            // Fallback: eager evaluation failed, now take the slow path
-            promise.materialize();
-
-            // Call
-            return generateValueDefault(frame, promise, callSrc);
         }
-    }
-
-    private Object getPromisedEagerValue(VirtualFrame frame, EagerPromise promise, SourceSection callSrc) {
-        RPromise nextPromise = (RPromise) promise.getEagerValue();
-        return checkNextNode().doEvaluate(frame, nextPromise, callSrc);
+        // Call
+        return generateValueDefault(frame, promise, callSrc);
     }
 
     public static Object evaluateSlowPath(VirtualFrame frame, RPromise promise) {
