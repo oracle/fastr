@@ -50,23 +50,17 @@ public class IsTypeFunctions {
         }
     }
 
-    protected abstract static class IsFalseAdapter extends ErrorAdapter {
+    protected abstract static class MissingAdapter extends ErrorAdapter {
 
         @Specialization
         protected byte isType(RMissing value) throws RError {
             controlVisibility();
             throw missingError();
         }
-
-        @Fallback
-        protected byte isType(Object value) {
-            controlVisibility();
-            return RRuntime.LOGICAL_FALSE;
-        }
     }
 
     @RBuiltin(name = "is.array", kind = PRIMITIVE, parameterNames = {"x"})
-    public abstract static class IsArray extends IsFalseAdapter {
+    public abstract static class IsArray extends MissingAdapter {
 
         @Specialization
         protected byte isType(RAbstractVector vector) {
@@ -74,16 +68,16 @@ public class IsTypeFunctions {
             return RRuntime.asLogical(vector.isArray());
         }
 
+        @Specialization(guards = {"!isRMissing(value)", "!isRAbstractVector(value)"})
+        protected byte isType(Object value) {
+            controlVisibility();
+            return RRuntime.LOGICAL_FALSE;
+        }
+
     }
 
     @RBuiltin(name = "is.recursive", kind = PRIMITIVE, parameterNames = {"x"})
-    public abstract static class IsRecursive extends ErrorAdapter {
-
-        @Specialization
-        protected byte isRecursive(RMissing value) throws RError {
-            controlVisibility();
-            throw missingError();
-        }
+    public abstract static class IsRecursive extends MissingAdapter {
 
         @Specialization
         protected byte isRecursive(RNull arg) {
@@ -121,7 +115,7 @@ public class IsTypeFunctions {
     }
 
     @RBuiltin(name = "is.atomic", kind = PRIMITIVE, parameterNames = {"x"})
-    public abstract static class IsAtomic extends IsFalseAdapter {
+    public abstract static class IsAtomic extends MissingAdapter {
 
         @Specialization
         protected byte isAtomic(RNull arg) {
@@ -129,20 +123,10 @@ public class IsTypeFunctions {
             return RRuntime.LOGICAL_TRUE;
         }
 
-        @Specialization(guards = "!isListVector(arg)")
+        @Specialization(guards = "!isRList(arg)")
         protected byte isAtomic(RAbstractVector arg) {
             controlVisibility();
             return RRuntime.LOGICAL_TRUE;
-        }
-
-        @Specialization
-        protected byte isAtomic(RList arg) {
-            controlVisibility();
-            return RRuntime.LOGICAL_FALSE;
-        }
-
-        protected boolean isListVector(RAbstractVector arg) {
-            return arg instanceof RList;
         }
 
         @Specialization
@@ -151,57 +135,75 @@ public class IsTypeFunctions {
             return RRuntime.LOGICAL_TRUE;
         }
 
+        protected static boolean isNonListVector(Object value) {
+            return value instanceof Integer || value instanceof Double || value instanceof RComplex || value instanceof String || value instanceof RRaw ||
+                            (value instanceof RAbstractVector && !(value instanceof RList));
+        }
+
+        @Specialization(guards = {"!isRMissing(value)", "!isRNull(value)", "!isRFactor(value)", "!isNonListVector(value)"})
+        protected byte isType(Object value) {
+            controlVisibility();
+            return RRuntime.LOGICAL_FALSE;
+        }
     }
 
     @RBuiltin(name = "is.call", kind = PRIMITIVE, parameterNames = {"x"})
-    public abstract static class IsCall extends IsFalseAdapter {
+    public abstract static class IsCall extends MissingAdapter {
 
         @Specialization
         protected byte isType(RLanguage lang) {
             return RRuntime.LOGICAL_TRUE;
         }
+
+        @Specialization(guards = {"!isRMissing(value)", "!isRLanguage(value)"})
+        protected byte isType(Object value) {
+            controlVisibility();
+            return RRuntime.LOGICAL_FALSE;
+        }
     }
 
     @RBuiltin(name = "is.character", kind = PRIMITIVE, parameterNames = {"x"})
-    public abstract static class IsCharacter extends IsFalseAdapter {
+    public abstract static class IsCharacter extends MissingAdapter {
 
         @Specialization
-        protected byte isType(String value) {
+        protected byte isType(RAbstractStringVector value) {
             controlVisibility();
             return RRuntime.LOGICAL_TRUE;
         }
 
-        @Specialization
-        protected byte isType(RStringVector value) {
+        protected static boolean isAnyCharacter(Object value) {
+            return value instanceof String || value instanceof RAbstractStringVector;
+        }
+
+        @Specialization(guards = {"!isRMissing(value)", "!isAnyCharacter(value)"})
+        protected byte isType(Object value) {
             controlVisibility();
-            return RRuntime.LOGICAL_TRUE;
+            return RRuntime.LOGICAL_FALSE;
         }
     }
 
     @RBuiltin(name = "is.complex", kind = PRIMITIVE, parameterNames = {"x"})
-    public abstract static class IsComplex extends IsFalseAdapter {
+    public abstract static class IsComplex extends MissingAdapter {
 
         @Specialization
-        protected byte isType(RComplex value) {
+        protected byte isType(RAbstractComplexVector value) {
             controlVisibility();
             return RRuntime.LOGICAL_TRUE;
         }
 
-        @Specialization
-        protected byte isType(RComplexVector value) {
+        protected static boolean isAnyComplex(Object value) {
+            return value instanceof RComplex || value instanceof RAbstractComplexVector;
+        }
+
+        @Specialization(guards = {"!isRMissing(value)", "!isAnyComplex(value)"})
+        protected byte isType(Object value) {
             controlVisibility();
-            return RRuntime.LOGICAL_TRUE;
+            return RRuntime.LOGICAL_FALSE;
         }
     }
 
     @RBuiltin(name = "is.double", kind = PRIMITIVE, parameterNames = {"x"})
-    public abstract static class IsDouble extends IsFalseAdapter {
-
-        @Specialization
-        protected byte isType(double value) {
-            controlVisibility();
-            return RRuntime.LOGICAL_TRUE;
-        }
+    public abstract static class IsDouble extends MissingAdapter {
 
         @Specialization
         protected byte isType(RAbstractDoubleVector value) {
@@ -209,34 +211,49 @@ public class IsTypeFunctions {
             return RRuntime.LOGICAL_TRUE;
         }
 
+        protected static boolean isAnyDouble(Object value) {
+            return value instanceof Double || value instanceof RAbstractDoubleVector;
+        }
+
+        @Specialization(guards = {"!isRMissing(value)", "!isAnyDouble(value)"})
+        protected byte isType(Object value) {
+            controlVisibility();
+            return RRuntime.LOGICAL_FALSE;
+        }
     }
 
     @RBuiltin(name = "is.expression", kind = PRIMITIVE, parameterNames = {"x"})
-    public abstract static class IsExpression extends IsFalseAdapter {
+    public abstract static class IsExpression extends MissingAdapter {
 
         @Specialization
         protected byte isType(RExpression expr) {
             return RRuntime.LOGICAL_TRUE;
         }
+
+        @Specialization(guards = {"!isRMissing(value)", "!isRExpression(value)"})
+        protected byte isType(Object value) {
+            controlVisibility();
+            return RRuntime.LOGICAL_FALSE;
+        }
     }
 
     @RBuiltin(name = "is.function", kind = PRIMITIVE, parameterNames = {"x"})
-    public abstract static class IsFunction extends IsFalseAdapter {
+    public abstract static class IsFunction extends MissingAdapter {
 
         @Specialization
         protected byte isType(RFunction value) {
             return RRuntime.LOGICAL_TRUE;
         }
+
+        @Specialization(guards = {"!isRMissing(value)", "!isRFunction(value)"})
+        protected byte isType(Object value) {
+            controlVisibility();
+            return RRuntime.LOGICAL_FALSE;
+        }
     }
 
     @RBuiltin(name = "is.integer", kind = PRIMITIVE, parameterNames = {"x"})
-    public abstract static class IsInteger extends IsFalseAdapter {
-
-        @Specialization
-        protected byte isType(int value) {
-            controlVisibility();
-            return RRuntime.LOGICAL_TRUE;
-        }
+    public abstract static class IsInteger extends MissingAdapter {
 
         @Specialization
         protected byte isType(RAbstractIntVector value) {
@@ -244,10 +261,19 @@ public class IsTypeFunctions {
             return RRuntime.LOGICAL_TRUE;
         }
 
+        protected static boolean isAnyInteger(Object value) {
+            return value instanceof Integer || value instanceof RAbstractIntVector;
+        }
+
+        @Specialization(guards = {"!isRMissing(value)", "!isAnyInteger(value)"})
+        protected byte isType(Object value) {
+            controlVisibility();
+            return RRuntime.LOGICAL_FALSE;
+        }
     }
 
     @RBuiltin(name = "is.language", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
-    public abstract static class IsLanguage extends IsFalseAdapter {
+    public abstract static class IsLanguage extends MissingAdapter {
         @Specialization
         protected byte isType(RSymbol value) {
             return RRuntime.LOGICAL_TRUE;
@@ -262,13 +288,18 @@ public class IsTypeFunctions {
         protected byte isType(RLanguage value) {
             return RRuntime.LOGICAL_TRUE;
         }
+
+        @Specialization(guards = {"!isRMissing(value)", "!isRSymbol(value)", "!isRExpression(value)", "!isRLanguage(value)"})
+        protected byte isType(Object value) {
+            controlVisibility();
+            return RRuntime.LOGICAL_FALSE;
+        }
     }
 
     @RBuiltin(name = "is.list", kind = PRIMITIVE, parameterNames = {"x"})
-    public abstract static class IsList extends IsFalseAdapter {
+    public abstract static class IsList extends MissingAdapter {
 
-        private final ConditionProfile dataFrameIsListProfile = ConditionProfile.createBinaryProfile();
-        private final ConditionProfile isAbsVectorListProfile = ConditionProfile.createBinaryProfile();
+        private final ConditionProfile isListProfile = ConditionProfile.createBinaryProfile();
 
         @Specialization
         protected byte isType(RList value) {
@@ -279,11 +310,7 @@ public class IsTypeFunctions {
         @Specialization
         protected byte isType(RDataFrame value) {
             controlVisibility();
-            if (dataFrameIsListProfile.profile(isList(value))) {
-                return RRuntime.LOGICAL_TRUE;
-            } else {
-                return RRuntime.LOGICAL_FALSE;
-            }
+            return RRuntime.asLogical(isListProfile.profile(value.getVector() instanceof RList));
         }
 
         @Specialization
@@ -292,115 +319,106 @@ public class IsTypeFunctions {
             return RRuntime.LOGICAL_TRUE;
         }
 
-        protected boolean isList(RAbstractVector vector) {
-            return vector instanceof RList;
-        }
-
-        protected boolean isList(RDataFrame frame) {
-            return isList(frame.getVector());
-        }
-
-        /**
-         * All the subclasses of {@link RAbstractVector} are lists iff the class of the vector
-         * element is {@code Object}.
-         */
-        @Specialization
-        protected byte isType(RAbstractVector value) {
+        @Specialization(guards = {"!isRMissing(value)", "!isRList(value)", "!isRDataFrame(value)", "!isRPairList(value)"})
+        protected byte isType(Object value) {
             controlVisibility();
-            if (isAbsVectorListProfile.profile(isList(value))) {
-                return RRuntime.LOGICAL_TRUE;
-            } else {
-                return RRuntime.LOGICAL_FALSE;
-            }
+            return RRuntime.LOGICAL_FALSE;
         }
-
     }
 
     @RBuiltin(name = "is.logical", kind = PRIMITIVE, parameterNames = {"x"})
-    public abstract static class IsLogical extends IsFalseAdapter {
+    public abstract static class IsLogical extends MissingAdapter {
 
         @Specialization
-        protected byte isType(byte value) {
+        protected byte isType(RAbstractLogicalVector value) {
             controlVisibility();
             return RRuntime.LOGICAL_TRUE;
         }
 
-        @Specialization
-        protected byte isType(RLogicalVector value) {
+        protected static boolean isAnyLogical(Object value) {
+            return value instanceof Byte || value instanceof RAbstractLogicalVector;
+        }
+
+        @Specialization(guards = {"!isRMissing(value)", "!isAnyLogical(value)"})
+        protected byte isType(Object value) {
             controlVisibility();
-            return RRuntime.LOGICAL_TRUE;
+            return RRuntime.LOGICAL_FALSE;
         }
     }
 
     @RBuiltin(name = "is.matrix", kind = PRIMITIVE, parameterNames = {"x"})
-    public abstract static class IsMatrix extends IsFalseAdapter {
+    public abstract static class IsMatrix extends MissingAdapter {
+
+        private final ConditionProfile isMatrixProfile = ConditionProfile.createBinaryProfile();
 
         @Specialization
         protected byte isType(RAbstractVector vector) {
             controlVisibility();
-            return RRuntime.asLogical(vector.isMatrix());
+            return RRuntime.asLogical(isMatrixProfile.profile(vector.isMatrix()));
+        }
+
+        @Specialization(guards = {"!isRMissing(value)", "!isRAbstractVector(value)"})
+        protected byte isType(Object value) {
+            controlVisibility();
+            return RRuntime.LOGICAL_FALSE;
         }
     }
 
     @RBuiltin(name = "is.name", aliases = {"is.symbol"}, kind = PRIMITIVE, parameterNames = {"x"})
-    public abstract static class IsName extends IsFalseAdapter {
+    public abstract static class IsName extends MissingAdapter {
 
         @Specialization
         protected byte isType(RSymbol value) {
             controlVisibility();
             return RRuntime.LOGICAL_TRUE;
         }
+
+        @Specialization(guards = {"!isRMissing(value)", "!isRSymbol(value)"})
+        protected byte isType(Object value) {
+            controlVisibility();
+            return RRuntime.LOGICAL_FALSE;
+        }
     }
 
     @RBuiltin(name = "is.numeric", kind = PRIMITIVE, parameterNames = {"x"})
-    public abstract static class IsNumeric extends IsFalseAdapter {
-
-        public abstract byte execute(VirtualFrame frame, Object value);
+    public abstract static class IsNumeric extends MissingAdapter {
 
         @Specialization
-        protected byte isType(int value) {
+        protected byte isType(RAbstractIntVector value) {
             controlVisibility();
             return RRuntime.LOGICAL_TRUE;
         }
 
         @Specialization
-        protected byte isType(RIntVector value) {
+        protected byte isType(RAbstractDoubleVector value) {
             controlVisibility();
             return RRuntime.LOGICAL_TRUE;
         }
 
-        @Specialization
-        protected byte isType(double value) {
-            controlVisibility();
-            return RRuntime.LOGICAL_TRUE;
+        protected static boolean isAnyNumeric(Object value) {
+            return value instanceof Integer || value instanceof Double || value instanceof RAbstractIntVector || value instanceof RAbstractDoubleVector;
         }
 
-        @Specialization
-        protected byte isType(RDoubleVector value) {
+        @Specialization(guards = {"!isRMissing(value)", "!isAnyNumeric(value)"})
+        protected byte isType(Object value) {
             controlVisibility();
-            return RRuntime.LOGICAL_TRUE;
-        }
-
-        @Specialization
-        protected byte isType(RIntSequence value) {
-            controlVisibility();
-            return RRuntime.LOGICAL_TRUE;
-        }
-
-        @Specialization
-        protected byte isType(RDoubleSequence value) {
-            controlVisibility();
-            return RRuntime.LOGICAL_TRUE;
+            return RRuntime.LOGICAL_FALSE;
         }
     }
 
     @RBuiltin(name = "is.null", kind = PRIMITIVE, parameterNames = {"x"})
-    public abstract static class IsNull extends IsFalseAdapter {
+    public abstract static class IsNull extends MissingAdapter {
 
         @Specialization
         protected byte isType(RNull value) {
             controlVisibility();
             return RRuntime.LOGICAL_TRUE;
+        }
+
+        @Specialization(guards = {"!isRMissing(value)", "!isRNull(value)"})
+        protected byte isType(Object value) {
+            controlVisibility();
+            return RRuntime.LOGICAL_FALSE;
         }
     }
 
@@ -412,7 +430,7 @@ public class IsTypeFunctions {
      * {@code FALSE}.
      */
     @RBuiltin(name = "is.object", kind = PRIMITIVE, parameterNames = {"x"})
-    public abstract static class IsObject extends IsFalseAdapter {
+    public abstract static class IsObject extends MissingAdapter {
 
         private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
@@ -427,10 +445,16 @@ public class IsTypeFunctions {
             // No need to enquire, connections always have a class attribute.
             return RRuntime.LOGICAL_TRUE;
         }
+
+        @Specialization(guards = {"!isRMissing(value)", "!isRAbstractContainer(value)", "!isRConnection(value)"})
+        protected byte isType(Object value) {
+            controlVisibility();
+            return RRuntime.LOGICAL_FALSE;
+        }
     }
 
     @RBuiltin(name = "is.pairlist", kind = PRIMITIVE, parameterNames = {"x"})
-    public abstract static class IsPairList extends IsFalseAdapter {
+    public abstract static class IsPairList extends MissingAdapter {
         @Specialization
         protected byte isType(RNull value) {
             controlVisibility();
@@ -442,21 +466,31 @@ public class IsTypeFunctions {
             controlVisibility();
             return RRuntime.LOGICAL_TRUE;
         }
+
+        @Specialization(guards = {"!isRMissing(value)", "!isRNull(value)", "!isRPairList(value)"})
+        protected byte isType(Object value) {
+            controlVisibility();
+            return RRuntime.LOGICAL_FALSE;
+        }
     }
 
     @RBuiltin(name = "is.raw", kind = PRIMITIVE, parameterNames = {"x"})
-    public abstract static class IsRaw extends IsFalseAdapter {
+    public abstract static class IsRaw extends MissingAdapter {
 
         @Specialization
-        protected byte isType(RRaw value) {
+        protected byte isType(RAbstractRawVector value) {
             controlVisibility();
             return RRuntime.LOGICAL_TRUE;
         }
 
-        @Specialization
-        protected byte isType(RRawVector value) {
+        protected static boolean isAnyRaw(Object value) {
+            return value instanceof RRaw || value instanceof RAbstractRawVector;
+        }
+
+        @Specialization(guards = {"!isRMissing(value)", "!isAnyRaw(value)"})
+        protected byte isType(Object value) {
             controlVisibility();
-            return RRuntime.LOGICAL_TRUE;
+            return RRuntime.LOGICAL_FALSE;
         }
     }
 
