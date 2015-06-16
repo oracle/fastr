@@ -116,7 +116,11 @@ public final class FastRSession implements RSession {
     private FastRSession() {
         consoleHandler = new ConsoleHandler();
         RContextFactory.initialize();
-        main = RContextFactory.createInitial(new String[0], consoleHandler).activate();
+        try {
+            main = RContextFactory.createInitial(new String[0], consoleHandler).activate();
+        } finally {
+            System.out.print(consoleHandler.buffer.toString());
+        }
     }
 
     @SuppressWarnings("deprecation")
