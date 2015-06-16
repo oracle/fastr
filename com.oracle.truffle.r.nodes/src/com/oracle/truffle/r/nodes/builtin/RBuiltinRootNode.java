@@ -24,6 +24,7 @@ package com.oracle.truffle.r.nodes.builtin;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
@@ -57,9 +58,9 @@ public final class RBuiltinRootNode extends RRootNode {
         return builtin.getBuiltin().isAlwaysSplit();
     }
 
-    public RCallNode inline(InlinedArguments args) {
+    public RBuiltinNode inline(InlinedArguments args, SourceSection callSrc) {
         assert builtin.getSuppliedSignature() != null : this;
-        return builtin.inline(args);
+        return builtin.inline(args, callSrc);
     }
 
     public Object getDefaultParameterValue(int index) {
