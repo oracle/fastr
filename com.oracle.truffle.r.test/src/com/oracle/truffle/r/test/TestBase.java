@@ -585,7 +585,12 @@ public class TestBase {
         try {
             result = fastROutputManager.fastRSession.eval(input);
         } catch (Throwable e) {
-            String clazz = e.getClass().getSimpleName();
+            String clazz;
+            if (e instanceof RInternalError && e.getCause() != null) {
+                clazz = e.getCause().getClass().getSimpleName();
+            } else {
+                clazz = e.getClass().getSimpleName();
+            }
             Integer count = exceptionCounts.get(clazz);
             exceptionCounts.put(clazz, count == null ? 1 : count + 1);
             result = e.toString();
