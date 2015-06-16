@@ -21,36 +21,21 @@
 # questions.
 #
 suite = {
-  "mxversion" : "3.4.0",
+  "mxversion" : "3.4.1",
   "name" : "fastr",
 
   "imports" : {
-    "suites" : {
-        "list" : [
-            ["graal", "b09503284ac83d46a51128eb6e8ab0fd502838a0", "http://hg.openjdk.java.net/graal/graal"],
+    "suites" : [
+            {
+               "name" : "graal",
+               "version" : "b09503284ac83d46a51128eb6e8ab0fd502838a0",
+               "urls" : ["http://hg.openjdk.java.net/graal/graal"]
+            },
         ],
-      },
    },
 
   # distributions that we depend on
   "libraries" : {
-        "TRUFFLE" : {
-            "kind" : "distribution"
-        },
-
-        "GRAAL" : {
-            "kind" : "distribution"
-        },
-
-        "JVMCI_API" : {
-            "kind" : "distribution"
-        },
-
-        "TRUFFLE-DSL-PROCESSOR" : {
-            "kind" : "distribution",
-            "dependencies" : ["TRUFFLE"],
-        },
-
     "GNUR" : {
         "path" : "lib/R-3.1.3.tar.gz",
         "urls" : ["http://cran.rstudio.com/src/base/R-3/R-3.1.3.tar.gz"],
@@ -247,7 +232,7 @@ suite = {
       "checkstyle" : "com.oracle.truffle.r.runtime",
       "javaCompliance" : "1.8",
       "annotationProcessors" : [
-          "TRUFFLE-DSL-PROCESSOR",
+          "graal:TRUFFLE-DSL-PROCESSOR",
       ],
       "workingSets" : "Truffle,FastR",
       "jacoco" : "include",
@@ -262,7 +247,7 @@ suite = {
       "checkstyle" : "com.oracle.truffle.r.runtime",
       "javaCompliance" : "1.8",
       "annotationProcessors" : [
-        "TRUFFLE-DSL-PROCESSOR",
+        "graal:TRUFFLE-DSL-PROCESSOR",
       ],
       "workingSets" : "Truffle,FastR",
       "jacoco" : "include",
@@ -325,7 +310,7 @@ suite = {
     "com.oracle.truffle.r.runtime" : {
       "sourceDirs" : ["src"],
       "dependencies" : [
-        "TRUFFLE",
+        "graal:TRUFFLE",
         "FINDBUGS",
       ],
       "checkstyle" : "com.oracle.truffle.r.runtime",
@@ -338,7 +323,7 @@ suite = {
       "sourceDirs" : ["src"],
       "dependencies" : [
         "com.oracle.truffle.r.runtime",
-        "JVMCI_API",
+        "graal:JVMCI_API",
         "ASM",
         "ASM_ANALYSIS",
         "JNR_POSIX",
@@ -410,7 +395,7 @@ suite = {
         "JDK_TOOLS",
         "FINDBUGS",
         "NETLIB",
-         "ASM",
+        "ASM",
         "ASM_UTIL",
         "ASM_TREE",
         "ASM_COMMONS",
