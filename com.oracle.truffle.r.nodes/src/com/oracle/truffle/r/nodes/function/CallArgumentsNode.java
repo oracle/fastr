@@ -45,7 +45,6 @@ import com.oracle.truffle.r.runtime.env.*;
 /**
  * This class denotes a list of {@link #getArguments()} together with their names given to a
  * specific function call. The arguments' order is the same as given at the call.<br/>
- * It additionally holds usage hints ({@link #modeChange}, {@link #modeChangeForAll}).
  * <p>
  * It also acts as {@link ClosureCache} for it's arguments, so there is effectively only ever one
  * {@link RootCallTarget} for every argument.
@@ -70,28 +69,9 @@ public class CallArgumentsNode extends ArgumentsNode {
 
     private final IdentityHashMap<RNode, Closure> closureCache = new IdentityHashMap<>();
 
-    /**
-     * the two flags below are used in cases when we know that either a builtin is not going to
-     * modify the arguments which are not meant to be modified (like in the case of binary
-     * operators) or that its intention is to actually update the argument (as in the case of
-     * replacement forms, such as dim(x)<-1; in these cases the mode change
-     * (temporary->non-temporary->shared) does not need to happen, which is what the first flag (
-     * {@link #modeChange}) determines, with the second ({@link #modeChangeForAll}) flat telling the
-     * runtime if this affects only the first argument (replacement functions) or all arguments
-     * (binary operators).
-     */
-    private final boolean modeChange;
-
-    /**
-     * @see #modeChange
-     */
-    private final boolean modeChangeForAll;
-
-    private CallArgumentsNode(RNode[] arguments, ArgumentsSignature signature, int[] varArgsSymbolIndices, boolean modeChange, boolean modeChangeForAll) {
+    private CallArgumentsNode(RNode[] arguments, ArgumentsSignature signature, int[] varArgsSymbolIndices) {
         super(arguments, signature);
         this.varArgsSymbolIndices = varArgsSymbolIndices;
-        this.modeChange = modeChange;
-        this.modeChangeForAll = modeChangeForAll;
         this.varArgsSlotNode = !containsVarArgsSymbol() ? null : FrameSlotNode.create(ArgumentsSignature.VARARG_NAME);
     }
 
@@ -111,10 +91,18 @@ public class CallArgumentsNode extends ArgumentsNode {
     }
 
     /**
+     * the two flags below are used in cases when we know that either a builtin is not going to
+     * modify the arguments which are not meant to be modified (like in the case of binary
+     * operators) or that its intention is to actually update the argument (as in the case of
+     * replacement forms, such as dim(x)<-1; in these cases the mode change
+     * (temporary->non-temporary->shared) does not need to happen, which is what the first flag
+     * (modeChange) determines, with the second (modeChangeForAll) flat telling the runtime if this
+     * affects only the first argument (replacement functions) or all arguments (binary operators).
+     *
      * @param argsSource the {@link SourceSection} object associated with the arguments (or
      *            {@code null})
-     * @param modeChange {@link #modeChange}
-     * @param modeChangeForAll {@link #modeChangeForAll}
+     * @param modeChange
+     * @param modeChangeForAll
      * @param args {@link #arguments}; new array gets created. Every {@link RNode} (except
      *            <code>null</code>) gets wrapped into a {@link WrapArgumentNode}.
      * @return A fresh {@link CallArgumentsNode}
@@ -145,7 +133,7 @@ public class CallArgumentsNode extends ArgumentsNode {
         for (int i = 0; i < varArgsSymbolIndicesArr.length; i++) {
             varArgsSymbolIndicesArr[i] = varArgsSymbolIndices.get(i);
         }
-        CallArgumentsNode callArgs = new CallArgumentsNode(wrappedArgs, signature, varArgsSymbolIndicesArr, modeChange, modeChangeForAll);
+        CallArgumentsNode callArgs = new CallArgumentsNode(wrappedArgs, signature, varArgsSymbolIndicesArr);
         callArgs.assignSourceSection(src);
         return callArgs;
     }
@@ -381,20 +369,6 @@ public class CallArgumentsNode extends ArgumentsNode {
         return arguments;
     }
 
-    /**
-     * @return {@link #modeChange}
-     */
-    public boolean modeChange() {
-        return modeChange;
-    }
-
-    /**
-     * @return {@link #modeChangeForAll}
-     */
-    public boolean modeChangeForAll() {
-        return modeChangeForAll;
-    }
-
     @TruffleBoundary
     @Override
     public RSyntaxNode substitute(REnvironment env) {
@@ -449,7 +423,5 @@ public class CallArgumentsNode extends ArgumentsNode {
 
     protected CallArgumentsNode() {
         this.varArgsSymbolIndices = null;
-        this.modeChange = false;
-        this.modeChangeForAll = false;
     }
 }
