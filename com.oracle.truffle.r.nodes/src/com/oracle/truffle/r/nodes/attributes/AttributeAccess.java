@@ -24,6 +24,7 @@ package com.oracle.truffle.r.nodes.attributes;
 
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.nodes.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.runtime.data.*;
 
 /**
@@ -52,6 +53,23 @@ public abstract class AttributeAccess extends Node {
     protected Object accessCached(RAttributes attr, //
                     @Cached("attr.find(name)") int index) {
         return attr.getValues()[index];
+    }
+
+    @Specialization(guards = "cachedSize == attr.size()")
+    @ExplodeLoop
+    protected Object accessCachedSize(RAttributes attr, //
+                    @Cached("attr.size()") int cachedSize, //
+                    @Cached("create()") BranchProfile foundProfile, //
+                    @Cached("create()") BranchProfile notFoundProfile) {
+        String[] names = attr.getNames();
+        for (int i = 0; i < cachedSize; i++) {
+            if (names[i] == name) {
+                foundProfile.enter();
+                return attr.getValues()[i];
+            }
+        }
+        notFoundProfile.enter();
+        return null;
     }
 
     @Specialization(contains = "accessCached")
