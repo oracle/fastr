@@ -28,50 +28,37 @@ import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.api.utilities.*;
-import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.nodes.access.variables.*;
+import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode.*;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.builtin.RBuiltinNode.RWrapperBuiltinNode;
-import com.oracle.truffle.r.nodes.builtin.base.RecallFactory.RecallFunctionNodeGen;
 import com.oracle.truffle.r.nodes.function.*;
-import com.oracle.truffle.r.nodes.function.PromiseNode.InlineVarArgsNode;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
 /**
  * The {@code Recall} {@code .Internal}.
  */
-@RBuiltin(name = "Recall", kind = INTERNAL, parameterNames = {"..."})
-public final class Recall extends RWrapperBuiltinNode {
+@RBuiltin(name = "Recall", kind = INTERNAL, parameterNames = {"..."}, nonEvalArgs = {0})
+public abstract class Recall extends RBuiltinNode {
 
-    public Recall(RNode[] arguments, RBuiltinFactory builtin, ArgumentsSignature suppliedSignature) {
-        super(arguments, builtin, suppliedSignature);
-    }
+    private final BranchProfile errorProfile = BranchProfile.create();
 
-    @Override
-    protected RNode createDelegate() {
+    @Child private ReadVariableNode readArgs = ReadVariableNode.create(ArgumentsSignature.VARARG_NAME, RType.Any, ReadKind.SilentLocal);
+    @Child private CallMatcherNode call = CallMatcherNode.create(false, false);
+
+    @Specialization
+    protected Object recall(VirtualFrame frame, @SuppressWarnings("unused") RArgsValuesAndNames args) {
         /*
-         * TODO (chumer) ideally this node would just create an RCallNode and calls execute with
-         * evaluated arguments on it. Until this is possible we use this rather hacky solution.
+         * The args passed to the Recall internal are ignored, they are always "...". Instead, this
+         * builtin looks at the arguments passed to the surrounding function.
          */
-        InlineVarArgsNode inlineVarArgs = (InlineVarArgsNode) getArguments()[0];
-        return RCallNode.createCall(getSourceSection(), RecallFunctionNodeGen.create(),
-                        CallArgumentsNode.create(false, false, new RNode[]{((WrapArgumentNode) inlineVarArgs.getVarargs()[0]).getOperand()}, inlineVarArgs.getSignature()), null);
-    }
-
-    protected abstract static class RecallFunctionNode extends RNode {
-
-        private final BranchProfile errorProfile = BranchProfile.create();
-
-        @Specialization
-        protected RFunction findFunction(VirtualFrame frame) {
-            Frame cframe = Utils.getCallerFrame(frame, FrameAccess.READ_ONLY);
-            RFunction function = RArguments.getFunction(cframe);
-            if (function == null) {
-                errorProfile.enter();
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.RECALL_CALLED_OUTSIDE_CLOSURE);
-            }
-            return function;
+        Frame cframe = Utils.getCallerFrame(frame, FrameAccess.READ_ONLY);
+        RFunction function = RArguments.getFunction(cframe);
+        if (function == null) {
+            errorProfile.enter();
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.RECALL_CALLED_OUTSIDE_CLOSURE);
         }
+        RArgsValuesAndNames actualArgs = (RArgsValuesAndNames) readArgs.execute(frame);
+        return call.execute(frame, actualArgs.getSignature(), actualArgs.getArguments(), function, null);
     }
-
 }
