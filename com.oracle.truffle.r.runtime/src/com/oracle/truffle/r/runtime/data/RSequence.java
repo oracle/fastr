@@ -146,6 +146,10 @@ public abstract class RSequence implements RAbstractVector {
         return false;
     }
 
+    public final RStringVector getClassHierarchy() {
+        return getImplicitClass();
+    }
+
     @Override
     public final RVector materializeNonShared() {
         RVector resultVector = this.materialize();

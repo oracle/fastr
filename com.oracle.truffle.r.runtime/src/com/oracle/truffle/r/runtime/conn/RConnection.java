@@ -36,22 +36,14 @@ import com.oracle.truffle.r.runtime.data.model.*;
  *
  * TODO Refactor the pushBack code into ConnectionsSupport
  */
-public abstract class RConnection implements RClassHierarchy, RAttributable, RTypedValue, AutoCloseable {
+public abstract class RConnection extends RAttributeStorage implements RTypedValue, AutoCloseable {
+
+    @Override
+    public RStringVector getImplicitClass() {
+        throw RInternalError.shouldNotReachHere("no implicit class for connections");
+    }
 
     private LinkedList<String> pushBack;
-
-    /**
-     * Connections always have at least a class attribute.
-     */
-    private RAttributes attributes = RAttributes.create();
-
-    public RAttributes initAttributes() {
-        return attributes;
-    }
-
-    public RAttributes getAttributes() {
-        return attributes;
-    }
 
     public abstract String[] readLinesInternal(int n) throws IOException;
 
@@ -195,11 +187,6 @@ public abstract class RConnection implements RClassHierarchy, RAttributable, RTy
      * i.e., allowing it to be re-opened.
      */
     public abstract void close() throws IOException;
-
-    /**
-     * Implements {@link RClassHierarchy}.
-     */
-    public abstract RStringVector getClassHierarchy();
 
     /**
      * Pushes lines back to the connection.

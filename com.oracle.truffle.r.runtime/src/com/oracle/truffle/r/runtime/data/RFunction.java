@@ -40,7 +40,7 @@ import com.oracle.truffle.r.runtime.*;
  * {@link #enclosingFrame}.
  * </ul>
  */
-public final class RFunction extends RScalar implements RAttributable {
+public final class RFunction extends RAttributeStorage implements RTypedValue {
 
     private String name;
     private final RootCallTarget target;
@@ -48,7 +48,6 @@ public final class RFunction extends RScalar implements RAttributable {
     private final boolean containsDispatch;
 
     private final MaterializedFrame enclosingFrame;
-    private RAttributes attributes;
 
     RFunction(String name, RootCallTarget target, RBuiltinDescriptor builtin, MaterializedFrame enclosingFrame, boolean containsDispatch) {
         this.name = name;
@@ -95,27 +94,11 @@ public final class RFunction extends RScalar implements RAttributable {
         return enclosingFrame;
     }
 
-    public RAttributes initAttributes() {
-        if (attributes == null) {
-            attributes = RAttributes.create();
-        }
-        return attributes;
-    }
-
-    public RAttributes getAttributes() {
-        return attributes;
-    }
-
-    private static final RStringVector FUNCTION = RDataFactory.createStringVectorFromScalar(RType.Function.getName());
+    private static final RStringVector implicitClass = RDataFactory.createStringVectorFromScalar(RType.Function.getName());
 
     @Override
-    public RStringVector getClassAttr(RAttributeProfiles attrProfiles) {
-        RStringVector v = RAttributable.super.getClassAttr(attrProfiles);
-        if (v == null) {
-            return FUNCTION;
-        } else {
-            return v;
-        }
+    public RStringVector getImplicitClass() {
+        return implicitClass;
     }
 
     @Override

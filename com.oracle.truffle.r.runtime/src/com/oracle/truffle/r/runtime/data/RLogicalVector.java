@@ -32,7 +32,7 @@ import com.oracle.truffle.r.runtime.ops.na.*;
 
 public final class RLogicalVector extends RVector implements RAbstractLogicalVector, RAccessibleStore<byte[]> {
 
-    private static final RStringVector implicitClassHeader = RDataFactory.createStringVector(new String[]{RType.Logical.getName()}, true);
+    private static final RStringVector implicitClassHeader = RDataFactory.createStringVectorFromScalar(RType.Logical.getName());
     private static final RStringVector implicitClassHeaderArray = RDataFactory.createStringVector(new String[]{RType.Array.getName(), RType.Logical.getName()}, true);
     private static final RStringVector implicitClassHeaderMatrix = RDataFactory.createStringVector(new String[]{RType.Matrix.getName(), RType.Logical.getName()}, true);
 
@@ -226,7 +226,7 @@ public final class RLogicalVector extends RVector implements RAbstractLogicalVec
     }
 
     @Override
-    public RStringVector getImplicitClassHr() {
+    public RStringVector getImplicitClass() {
         return getClassHierarchyHelper(implicitClassHeader, implicitClassHeaderArray, implicitClassHeaderMatrix);
     }
 }

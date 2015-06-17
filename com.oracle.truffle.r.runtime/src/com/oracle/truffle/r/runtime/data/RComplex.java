@@ -60,11 +60,6 @@ public final class RComplex extends RScalarVector implements RAbstractComplexVec
     }
 
     @Override
-    public RStringVector getClassHierarchy() {
-        return RDataFactory.createStringVector(RRuntime.CLASS_DOUBLE, RDataFactory.COMPLETE_VECTOR);
-    }
-
-    @Override
     public RComplexVector materialize() {
         return RDataFactory.createComplexVectorFromScalar(this);
     }

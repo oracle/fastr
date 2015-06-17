@@ -84,7 +84,14 @@ import com.oracle.truffle.r.runtime.env.frame.*;
  * {@link com.oracle.truffle.r.runtime.RContext.Kind} is encapsulated in the {@link #createContext}
  * method.
  */
-public abstract class REnvironment extends RAttributeStorage implements RAttributable, RTypedValue {
+public abstract class REnvironment extends RAttributeStorage implements RTypedValue {
+
+    private static final RStringVector implicitClass = RDataFactory.createStringVectorFromScalar(RType.Environment.getName());
+
+    @Override
+    public final RStringVector getImplicitClass() {
+        return implicitClass;
+    }
 
     public interface ContextState extends RContext.ContextState {
         MaterializedFrame getGlobalFrame();
@@ -637,18 +644,6 @@ public abstract class REnvironment extends RAttributeStorage implements RAttribu
     }
 
     // END of static methods
-
-    private static final RStringVector ENVIRONMENT = RDataFactory.createStringVectorFromScalar(RType.Environment.getName());
-
-    @Override
-    public RStringVector getClassAttr(RAttributeProfiles attrProfiles) {
-        RStringVector v = RAttributable.super.getClassAttr(attrProfiles);
-        if (v == null) {
-            return ENVIRONMENT;
-        } else {
-            return v;
-        }
-    }
 
     private static final String NAMESPACE_KEY = ".__NAMESPACE__.";
 

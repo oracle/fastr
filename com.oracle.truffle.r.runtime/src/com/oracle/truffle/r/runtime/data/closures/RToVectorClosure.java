@@ -142,6 +142,10 @@ public abstract class RToVectorClosure implements RAbstractVector {
         return vector.getClassHierarchy();
     }
 
+    public RStringVector getImplicitClass() {
+        return vector.getImplicitClass();
+    }
+
     public final boolean isObject(RAttributeProfiles attrProfiles) {
         return vector.isObject(attrProfiles);
     }

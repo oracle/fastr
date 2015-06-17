@@ -100,7 +100,7 @@ public final class RDoubleSequence extends RSequence implements RAbstractDoubleV
     }
 
     @Override
-    public RStringVector getClassHierarchy() {
+    public RStringVector getImplicitClass() {
         return RDoubleVector.implicitClassHeader;
     }
 

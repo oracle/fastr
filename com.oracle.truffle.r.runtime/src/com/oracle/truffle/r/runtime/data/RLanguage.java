@@ -151,6 +151,10 @@ public class RLanguage extends RLanguageRep implements RAbstractContainer, RAttr
         return RDataFactory.createStringVector(RRuntime.CLASS_LANGUAGE);
     }
 
+    public RStringVector getImplicitClass() {
+        return RDataFactory.createStringVector(RRuntime.CLASS_LANGUAGE);
+    }
+
     @Override
     public boolean isObject(RAttributeProfiles attrProfiles) {
         return false;

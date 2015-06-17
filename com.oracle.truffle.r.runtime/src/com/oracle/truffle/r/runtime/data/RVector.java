@@ -452,14 +452,6 @@ public abstract class RVector extends RAttributeStorage implements RShareable, R
         this.dimensions = newDimensions;
     }
 
-    public final RStringVector getClassAttr(RAttributeProfiles attrProfiles) {
-        if (attrProfiles.attrNullProfile(attributes == null)) {
-            return null;
-        } else {
-            return (RStringVector) attributes.get(RRuntime.CLASS_ATTR_KEY);
-        }
-    }
-
     @Override
     public RAbstractContainer setClassAttr(RStringVector classAttr, boolean convertToInt) {
         return setClassAttrInternal(this, classAttr, null, null, convertToInt);
@@ -766,18 +758,6 @@ public abstract class RVector extends RAttributeStorage implements RShareable, R
     public final boolean isObject(RAttributeProfiles attrProfiles) {
         return this.getClassAttr(attrProfiles) != null ? true : false;
     }
-
-    public final RStringVector getClassHierarchy() {
-        if (attributes != null) {
-            Object result = attributes.get(RRuntime.CLASS_ATTR_KEY);
-            if (result != null) {
-                return (RStringVector) result;
-            }
-        }
-        return getImplicitClassHr();
-    }
-
-    public abstract RStringVector getImplicitClassHr();
 
     // As shape of the vector may change at run-time we need to compute
     // class hierarchy on the fly.

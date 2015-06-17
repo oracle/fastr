@@ -218,7 +218,7 @@ public final class RIntVector extends RVector implements RAbstractIntVector, RAc
     }
 
     @Override
-    public RStringVector getImplicitClassHr() {
+    public RStringVector getImplicitClass() {
         return getClassHierarchyHelper(implicitClassHeader, implicitClassHeaderArray, implicitClassHeaderMatrix);
     }
 

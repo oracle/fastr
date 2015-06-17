@@ -295,7 +295,8 @@ public class RPairList extends RAttributeStorage implements RAttributable, RAbst
         throw RInternalError.shouldNotReachHere();
     }
 
-    public RStringVector getClassHierarchy() {
+    @Override
+    public final RStringVector getImplicitClass() {
         return RDataFactory.createStringVector(RType.PairList.getName());
     }
 

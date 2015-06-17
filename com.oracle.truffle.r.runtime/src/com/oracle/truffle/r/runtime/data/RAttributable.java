@@ -46,6 +46,13 @@ public interface RAttributable {
     RAttributes getAttributes();
 
     /**
+     * Returns the value of the {@code class} attribute.
+     */
+    RStringVector getClassHierarchy();
+
+    RStringVector getImplicitClass();
+
+    /**
      * Get the value of an attribute. Returns {@code null} if not set.
      */
     default Object getAttr(RAttributeProfiles profiles, String name) {
@@ -103,5 +110,4 @@ public interface RAttributable {
     default RStringVector getClassAttr(RAttributeProfiles profiles) {
         return (RStringVector) getAttr(profiles, RRuntime.CLASS_ATTR_KEY);
     }
-
 }

@@ -18,11 +18,10 @@ import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.conn.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
-import com.oracle.truffle.r.runtime.env.*;
 
 /**
  * Basic support for "inherits" that is used by the {@code inherits} builtin and others.
@@ -35,46 +34,22 @@ public abstract class InheritsNode extends Node {
 
     public abstract byte execute(Object x, Object what);
 
-    @Specialization
-    protected byte doesInherit(@SuppressWarnings("unused") RNull x, @SuppressWarnings("unused") RAbstractStringVector what) {
-        return RRuntime.LOGICAL_FALSE;
+    protected ClassHierarchyNode createClassHierarchy() {
+        return ClassHierarchyNodeGen.create(true);
     }
 
     @Specialization
-    protected byte doesInherit(REnvironment x, RAbstractStringVector what) {
-        return checkDoesInherit(x.getClassAttr(attrProfiles), what);
-    }
-
-    @Specialization
-    protected byte doesInherit(RSymbol x, RAbstractStringVector what) {
-        return checkDoesInherit(x.getClassAttr(attrProfiles), what);
-    }
-
-    @Specialization
-    protected byte doesInherit(RFunction x, RAbstractStringVector what) {
-        return checkDoesInherit(x.getClassAttr(attrProfiles), what);
-    }
-
-    @Specialization
-    protected byte doesInherit(RAbstractContainer x, RAbstractStringVector what) {
-        return checkDoesInherit(x.getClassHierarchy(), what);
-    }
-
-    @Specialization
-    protected byte doesInherit(RConnection x, RAbstractStringVector what) {
-        return checkDoesInherit(x.getClassHierarchy(), what);
-    }
-
-    private byte checkDoesInherit(RStringVector classHr, RAbstractStringVector what) {
+    protected byte doesInherit(Object x, RAbstractStringVector what, @Cached("createClassHierarchy()") ClassHierarchyNode classHierarchy) {
+        RStringVector hierarchy = classHierarchy.execute(x);
         if (sizeOneProfile.profile(what.getLength() == 1)) {
             String whatString = what.getDataAt(0);
-            for (int i = 0; i < classHr.getLength(); i++) {
-                if (whatString.equals(classHr.getDataAt(i))) {
+            for (int i = 0; i < hierarchy.getLength(); i++) {
+                if (whatString.equals(hierarchy.getDataAt(i))) {
                     return RRuntime.LOGICAL_TRUE;
                 }
             }
         } else {
-            Map<String, Integer> classToPos = initClassToPos(classHr);
+            Map<String, Integer> classToPos = initClassToPos(hierarchy);
             for (int i = 0; i < what.getLength(); i++) {
                 if (classToPos.get(what.getDataAt(i)) != null) {
                     return RRuntime.LOGICAL_TRUE;
@@ -89,7 +64,7 @@ public abstract class InheritsNode extends Node {
     public static HashMap<String, Integer> initClassToPos(RStringVector classHr) {
         // Create a mapping for elements to their respective positions
         // in the vector for faster lookup.
-        HashMap<String, Integer> classToPos = new HashMap<>();
+        HashMap<String, Integer> classToPos = new HashMap<>(classHr.getLength());
         for (int i = 0; i < classHr.getLength(); i++) {
             classToPos.put(classHr.getDataAt(i), i);
         }

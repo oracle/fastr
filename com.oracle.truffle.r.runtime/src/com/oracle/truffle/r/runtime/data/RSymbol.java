@@ -30,7 +30,7 @@ import com.oracle.truffle.r.runtime.*;
  * Truffle sense.
  */
 @ValueType
-public class RSymbol extends RAttributeStorage implements RAttributable, RTypedValue {
+public final class RSymbol extends RAttributeStorage implements RTypedValue {
 
     public static final RSymbol MISSING = RDataFactory.createSymbol("");
 
@@ -53,15 +53,10 @@ public class RSymbol extends RAttributeStorage implements RAttributable, RTypedV
         return name;
     }
 
-    private static final RStringVector SYMBOL = RDataFactory.createStringVectorFromScalar("name");
+    private static final RStringVector implicitClass = RDataFactory.createStringVectorFromScalar(RRuntime.CLASS_SYMBOL);
 
     @Override
-    public RStringVector getClassAttr(RAttributeProfiles attrProfiles) {
-        RStringVector v = RAttributable.super.getClassAttr(attrProfiles);
-        if (v == null) {
-            return SYMBOL;
-        } else {
-            return v;
-        }
+    public RStringVector getImplicitClass() {
+        return implicitClass;
     }
 }

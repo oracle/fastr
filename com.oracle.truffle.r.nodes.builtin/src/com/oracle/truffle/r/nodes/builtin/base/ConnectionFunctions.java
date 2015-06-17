@@ -273,7 +273,7 @@ public abstract class ConnectionFunctions {
             }
             Object[] data = new Object[NAMES.getLength()];
             data[0] = baseCon.getSummaryDescription();
-            data[1] = baseCon.getClassHr().getDataAt(0);
+            data[1] = baseCon.getClassHierarchy().getDataAt(0);
             data[2] = baseCon.getOpenMode().summaryString();
             data[3] = baseCon.getSummaryText();
             data[4] = baseCon.isOpen() ? "opened" : "closed";
