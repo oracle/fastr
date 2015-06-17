@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.source.*;
@@ -47,7 +48,7 @@ import edu.umd.cs.findbugs.annotations.*;
  * - non-shared => shared
  * </pre>
  */
-public abstract class RVector extends RBounded implements RShareable, RAbstractVector, RFFIAccess {
+public abstract class RVector extends RAttributeStorage implements RShareable, RAbstractVector, RFFIAccess {
 
     protected boolean complete; // "complete" means: does not contain NAs
     protected int[] dimensions;
@@ -55,7 +56,6 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
     private RList dimNames;
     // cache rownames for data frames as they are accessed at every data frame access
     private Object rowNames;
-    private RAttributes attributes;
     private boolean shared;
     private boolean temporary = true;
 
@@ -173,13 +173,6 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
             }
         }
         return match;
-    }
-
-    public final RAttributes initAttributes() {
-        if (attributes == null) {
-            attributes = RAttributes.create();
-        }
-        return attributes;
     }
 
     /**
@@ -386,10 +379,6 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
         }
     }
 
-    public final RAttributes getAttributes() {
-        return attributes;
-    }
-
     public final boolean isComplete() {
         return complete;
     }
@@ -457,7 +446,7 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
             removeAttributeMapping(RRuntime.DIM_ATTR_KEY);
             setDimNames(null, sourceSection);
         } else if (newDimensions != null) {
-            verifyDimensions(newDimensions, sourceSection);
+            verifyDimensions(getLength(), newDimensions, sourceSection);
             putAttribute(RRuntime.DIM_ATTR_KEY, RDataFactory.createIntVector(newDimensions, RDataFactory.COMPLETE_VECTOR));
         }
         this.dimensions = newDimensions;
@@ -821,6 +810,24 @@ public abstract class RVector extends RBounded implements RShareable, RAbstractV
     @Override
     public final RShareable materializeToShareable() {
         return materialize();
+    }
+
+    public static void verifyDimensions(int vectorLength, int[] newDimensions, SourceSection sourceSection) {
+        int length = 1;
+        for (int i = 0; i < newDimensions.length; i++) {
+            if (RRuntime.isNA(newDimensions[i])) {
+                CompilerDirectives.transferToInterpreter();
+                throw RError.error(sourceSection, RError.Message.DIMS_CONTAIN_NA);
+            } else if (newDimensions[i] < 0) {
+                CompilerDirectives.transferToInterpreter();
+                throw RError.error(sourceSection, RError.Message.DIMS_CONTAIN_NEGATIVE_VALUES);
+            }
+            length *= newDimensions[i];
+        }
+        if (length != vectorLength && vectorLength > 0) {
+            CompilerDirectives.transferToInterpreter();
+            throw RError.error(RError.Message.DIMS_DONT_MATCH_LENGTH, length, vectorLength);
+        }
     }
 
     private static final ConditionProfile statsProfile = ConditionProfile.createBinaryProfile();

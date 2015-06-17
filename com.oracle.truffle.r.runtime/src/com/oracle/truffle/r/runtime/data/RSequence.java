@@ -25,7 +25,7 @@ package com.oracle.truffle.r.runtime.data;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-public abstract class RSequence extends RBounded implements RAbstractVector {
+public abstract class RSequence implements RAbstractVector {
 
     private final int length;
 

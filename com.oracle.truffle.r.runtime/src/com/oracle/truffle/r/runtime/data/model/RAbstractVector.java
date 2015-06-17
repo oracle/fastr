@@ -22,8 +22,6 @@
  */
 package com.oracle.truffle.r.runtime.data.model;
 
-import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
@@ -47,11 +45,6 @@ public interface RAbstractVector extends RAbstractContainer {
     RVector createEmptySameType(int newLength, boolean newIsComplete);
 
     void transferElementSameType(int toIndex, RAbstractVector fromVector, int fromIndex);
-
-    /**
-     * May throw errors, so needs a {@link VirtualFrame}.
-     */
-    void verifyDimensions(int[] newDimensions, SourceSection sourceSection);
 
     RVector materialize();
 
@@ -77,10 +70,6 @@ public interface RAbstractVector extends RAbstractContainer {
         }
     }
 
-    /**
-     *
-     * @param complete
-     */
     void setComplete(boolean complete);
 
 }

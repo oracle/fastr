@@ -62,7 +62,7 @@ public abstract class UpdateDim extends RInvisibleBuiltinNode {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.LENGTH_ZERO_DIM_INVALID);
         }
         int[] dimsData = castInteger(dimensions).materialize().getDataCopy();
-        vector.verifyDimensions(dimsData, getEncapsulatingSourceSection());
+        RVector.verifyDimensions(vector.getLength(), dimsData, getEncapsulatingSourceSection());
         RVector result = (RVector) vector.materializeNonShared();
         result.resetDimensions(dimsData);
         return result;
