@@ -25,7 +25,6 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
@@ -37,8 +36,6 @@ import com.oracle.truffle.r.runtime.ops.*;
 public abstract class Mean extends RBuiltinNode {
 
     private final BranchProfile emptyProfile = BranchProfile.create();
-
-    public abstract Object executeDouble(VirtualFrame frame, RDoubleVector x);
 
     @Child private BinaryArithmetic add = BinaryArithmetic.ADD.create();
     @Child private BinaryArithmetic div = BinaryArithmetic.DIV.create();
