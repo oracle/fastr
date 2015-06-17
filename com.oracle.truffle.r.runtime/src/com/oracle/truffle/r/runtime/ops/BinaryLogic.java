@@ -32,11 +32,11 @@ public abstract class BinaryLogic extends BooleanOperation {
 
     /* Fake RBuiltins to unify the binary operations */
 
-    @RBuiltin(name = "&&", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", ""})
+    @RBuiltin(name = "&&", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", ""}, nonEvalArgs = {1})
     public static class NonVectorAndBuiltin {
     }
 
-    @RBuiltin(name = "||", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", ""})
+    @RBuiltin(name = "||", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", ""}, nonEvalArgs = {1})
     public static class NonVectorOrBuiltin {
     }
 

@@ -59,8 +59,8 @@ public class BasePackage extends RBuiltinPackage {
         add(BinaryLogic.AndBuiltin.class, (arguments, builtin, signature) -> BinaryBooleanNodeGen.create(BinaryLogic.AND, arguments, builtin, signature));
         add(BinaryLogic.OrBuiltin.class, (arguments, builtin, signature) -> BinaryBooleanNodeGen.create(BinaryLogic.OR, arguments, builtin, signature));
 
-        add(BinaryLogic.NonVectorAndBuiltin.class, (arguments, builtin, signature) -> new BinaryBooleanScalarNode(BinaryLogic.NON_VECTOR_AND, arguments, builtin, signature));
-        add(BinaryLogic.NonVectorOrBuiltin.class, (arguments, builtin, signature) -> new BinaryBooleanScalarNode(BinaryLogic.NON_VECTOR_OR, arguments, builtin, signature));
+        add(BinaryLogic.NonVectorAndBuiltin.class, (arguments, builtin, signature) -> BinaryBooleanScalarNodeGen.create(BinaryLogic.NON_VECTOR_AND, arguments, builtin, signature));
+        add(BinaryLogic.NonVectorOrBuiltin.class, (arguments, builtin, signature) -> BinaryBooleanScalarNodeGen.create(BinaryLogic.NON_VECTOR_OR, arguments, builtin, signature));
 
         // Now load the rest of the builtins in "base"
         add(APerm.class, APermNodeGen::create);
@@ -397,7 +397,7 @@ public class BasePackage extends RBuiltinPackage {
         add(Re.class, ReNodeGen::create);
         add(ReadDCF.class, ReadDCFNodeGen::create);
         add(ReadREnviron.class, ReadREnvironNodeGen::create);
-        add(Recall.class, Recall::new);
+        add(Recall.class, RecallNodeGen::create);
         add(Repeat.class, RepeatNodeGen::create);
         add(RepeatInternal.class, RepeatInternalNodeGen::create);
         add(RepeatLength.class, RepeatLengthNodeGen::create);

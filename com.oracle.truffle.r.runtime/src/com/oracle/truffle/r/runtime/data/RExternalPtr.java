@@ -27,7 +27,7 @@ import com.oracle.truffle.r.runtime.*;
 /**
  * The rarely seen {@code externalptr} type.
  */
-public class RExternalPtr extends RAttributeStorage implements RAttributable, RTypedValue {
+public class RExternalPtr extends RAttributeStorage implements RTypedValue {
     private long addr;
     private Object tag;
     private Object prot;
@@ -66,4 +66,10 @@ public class RExternalPtr extends RAttributeStorage implements RAttributable, RT
         return RType.ExternalPtr;
     }
 
+    private static final RStringVector implicitClass = RDataFactory.createStringVector(RType.ExternalPtr.getName());
+
+    @Override
+    public final RStringVector getImplicitClass() {
+        return implicitClass;
+    }
 }

@@ -28,27 +28,16 @@ import com.oracle.truffle.r.runtime.*;
  * This is a placeholder class for an S4 object (GnuR S4SXP). It has no functionality at present but
  * is needed as such objects are generated when unserializing the "methods" package.
  */
-public class RS4Object implements RAttributable {
+public class RS4Object extends RAttributeStorage {
 
-    private RAttributes attributes;
+    private static final RStringVector implicitClass = RDataFactory.createStringVectorFromScalar("S4");
 
-    RS4Object() {
-
-    }
-
-    public RAttributes initAttributes() {
-        if (attributes == null) {
-            attributes = RAttributes.create();
-        }
-        return attributes;
-    }
-
-    public RAttributes getAttributes() {
-        return attributes;
+    @Override
+    public final RStringVector getImplicitClass() {
+        return implicitClass;
     }
 
     public RType getRType() {
         return RType.S4Object;
     }
-
 }

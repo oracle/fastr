@@ -125,13 +125,13 @@ public final class RBuiltinPackages implements RBuiltinLookup {
     }
 
     @Override
-    public RFunction lookup(String methodName) {
+    public RFunction lookupBuiltin(String methodName) {
         RFunction function = RContext.getCachedBuiltin(methodName);
         if (function != null) {
             return function;
         }
 
-        RBuiltinFactory builtin = lookupBuiltin(methodName);
+        RBuiltinFactory builtin = lookupBuiltinDescriptor(methodName);
         if (builtin == null) {
             return null;
         }
@@ -147,7 +147,8 @@ public final class RBuiltinPackages implements RBuiltinLookup {
         }
     }
 
-    public static RBuiltinFactory lookupBuiltin(String name) {
+    @Override
+    public RBuiltinFactory lookupBuiltinDescriptor(String name) {
         return basePackage.lookupByName(name);
     }
 

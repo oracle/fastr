@@ -24,7 +24,7 @@ package com.oracle.truffle.r.runtime.data.model;
 
 import com.oracle.truffle.r.runtime.data.*;
 
-public interface RAbstractContainer extends RAttributable, RClassHierarchy, RTypedValue {
+public interface RAbstractContainer extends RAttributable, RTypedValue {
 
     boolean isComplete();
 
@@ -60,7 +60,7 @@ public interface RAbstractContainer extends RAttributable, RClassHierarchy, RTyp
 
     /**
      * Returns {@code true} if and only if the value has a {@code class} attribute added explicitly.
-     * When {@code true}, it is possible to call {@link RClassHierarchy#getClassHierarchy()}.
+     * When {@code true}, it is possible to call {@link RAttributable#getClassHierarchy()}.
      */
     boolean isObject(RAttributeProfiles attrProfiles);
 }

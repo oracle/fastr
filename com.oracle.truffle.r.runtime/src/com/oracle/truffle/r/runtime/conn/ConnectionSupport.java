@@ -411,7 +411,7 @@ public class ConnectionSupport implements RContext.StateFactory {
             String[] classes = new String[2];
             classes[0] = conClass.printName;
             classes[1] = "connection";
-            getAttributes().put(RRuntime.CLASS_ATTR_KEY, RDataFactory.createStringVector(classes, RDataFactory.COMPLETE_VECTOR));
+            initAttributes().put(RRuntime.CLASS_ATTR_KEY, RDataFactory.createStringVector(classes, RDataFactory.COMPLETE_VECTOR));
             // For GnuR compatibility we define the "conn_id" attribute
             getAttributes().put("conn_id", RDataFactory.createExternalPtr(0, RDataFactory.createSymbol("connection")));
         }
@@ -590,11 +590,6 @@ public class ConnectionSupport implements RContext.StateFactory {
         }
 
         @Override
-        public RStringVector getClassHierarchy() {
-            return getClassHr();
-        }
-
-        @Override
         public int getc() throws IOException {
             checkOpen();
             return theConnection.getc();
@@ -639,10 +634,6 @@ public class ConnectionSupport implements RContext.StateFactory {
 
         public OpenMode getOpenMode() {
             return openMode;
-        }
-
-        public RStringVector getClassHr() {
-            return (RStringVector) getAttributes().get(RRuntime.CLASS_ATTR_KEY);
         }
 
         public boolean isClosed() {
@@ -808,11 +799,6 @@ public class ConnectionSupport implements RContext.StateFactory {
 
         DelegateRConnection(BaseRConnection base) {
             this.base = base;
-        }
-
-        @Override
-        public RStringVector getClassHierarchy() {
-            return base.getClassHierarchy();
         }
 
         @Override

@@ -22,14 +22,17 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
-import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
 public abstract class RScalarVector extends RScalar implements RAbstractVector {
 
     public abstract boolean isNA();
 
-    public RStringVector getClassHierarchy() {
+    public final RStringVector getClassHierarchy() {
+        return RDataFactory.createStringVector(getRType().getName());
+    }
+
+    public final RStringVector getImplicitClass() {
         return RDataFactory.createStringVector(getRType().getName());
     }
 
@@ -133,10 +136,6 @@ public abstract class RScalarVector extends RScalar implements RAbstractVector {
 
     public void transferElementSameType(int toIndex, RAbstractVector fromVector, int fromIndex) {
         throw new UnsupportedOperationException();
-    }
-
-    public void verifyDimensions(int[] newDimensions, SourceSection sourceSection) {
-        // scalar vectors have no dimensions so nothing to verify
     }
 
     public boolean isMatrix() {

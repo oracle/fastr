@@ -807,10 +807,17 @@ public final class RContext extends ExecutionContext {
 
     /**
      * Return the {@link RFunction} for the builtin {@code name}.
-     *
      */
     public static RFunction lookupBuiltin(String name) {
-        return builtinLookup.lookup(name);
+        return builtinLookup.lookupBuiltin(name);
+    }
+
+    /**
+     * Returns the descriptor for the builtin with the given name. This does not cause an RFunction
+     * to be created.
+     */
+    public static RBuiltinDescriptor lookupBuiltinDescriptor(String name) {
+        return builtinLookup.lookupBuiltinDescriptor(name);
     }
 
     public static RFunction cacheBuiltin(Object key, RFunction function) {

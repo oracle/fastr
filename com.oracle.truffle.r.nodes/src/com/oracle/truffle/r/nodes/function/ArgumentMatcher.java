@@ -51,7 +51,8 @@ import com.oracle.truffle.r.runtime.data.RPromise.RPromiseFactory;
  * {@link #matchArgumentsEvaluated(RFunction, EvaluatedArguments, SourceSection, boolean)} for
  * 'UseMethod' and
  * {@link #matchArgumentsInlined(RFunction, UnmatchedArguments, SourceSection, SourceSection)} for
- * builtins which are implemented in Java ( @see {@link RBuiltinNode#inline(InlinedArguments)}
+ * builtins which are implemented in Java ( @see
+ * {@link RBuiltinNode#inline(ArgumentsSignature, RNode[], SourceSection)}
  * </p>
  *
  * <p>

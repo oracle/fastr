@@ -35,7 +35,7 @@ public final class RList extends RVector implements RAbstractVector, RGPBits {
     private final Object[] data;
     private int gpbits;
 
-    private static final RStringVector implicitClassHeader = RDataFactory.createStringVector(new String[]{RType.List.getName()}, true);
+    private static final RStringVector implicitClassHeader = RDataFactory.createStringVectorFromScalar(RType.List.getName());
     private static final RStringVector implicitClassHeaderArray = RDataFactory.createStringVector(new String[]{RType.Array.getName(), RType.List.getName()}, true);
     private static final RStringVector implicitClassHeaderMatrix = RDataFactory.createStringVector(new String[]{RType.Matrix.getName(), RType.List.getName()}, true);
 
@@ -223,7 +223,7 @@ public final class RList extends RVector implements RAbstractVector, RGPBits {
     }
 
     @Override
-    public RStringVector getImplicitClassHr() {
+    public RStringVector getImplicitClass() {
         return getClassHierarchyHelper(implicitClassHeader, implicitClassHeaderArray, implicitClassHeaderMatrix);
     }
 

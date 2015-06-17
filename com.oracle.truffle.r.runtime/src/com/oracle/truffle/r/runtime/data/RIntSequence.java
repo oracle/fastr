@@ -106,7 +106,7 @@ public final class RIntSequence extends RSequence implements RAbstractIntVector 
         return this.internalCreateVector();
     }
 
-    public RStringVector getClassHierarchy() {
+    public RStringVector getImplicitClass() {
         return RIntVector.implicitClassHeader;
     }
 

@@ -72,7 +72,7 @@ public abstract class S3DispatchFunctions extends RBuiltinNode {
          * ignored and a warning is generated.
          */
 
-        @Child private ClassHierarchyNode classHierarchyNode = ClassHierarchyNodeGen.create();
+        @Child private ClassHierarchyNode classHierarchyNode = ClassHierarchyNodeGen.create(true);
         @Child private PromiseCheckHelperNode promiseCheckHelper;
 
         private final BranchProfile errorProfile = BranchProfile.create();

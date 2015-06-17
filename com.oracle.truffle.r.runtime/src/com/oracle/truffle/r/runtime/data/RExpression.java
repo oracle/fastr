@@ -144,6 +144,10 @@ public class RExpression implements RShareable, RAbstractContainer {
         return data.getClassHierarchy();
     }
 
+    public RStringVector getImplicitClass() {
+        return data.getImplicitClass();
+    }
+
     public boolean isObject(RAttributeProfiles attrProfiles) {
         return false;
     }

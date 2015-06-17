@@ -25,7 +25,7 @@ package com.oracle.truffle.r.runtime.data;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-public abstract class RSequence extends RBounded implements RAbstractVector {
+public abstract class RSequence implements RAbstractVector {
 
     private final int length;
 
@@ -144,6 +144,10 @@ public abstract class RSequence extends RBounded implements RAbstractVector {
     @Override
     public final boolean isObject(RAttributeProfiles attrProfiles) {
         return false;
+    }
+
+    public final RStringVector getClassHierarchy() {
+        return getImplicitClass();
     }
 
     @Override

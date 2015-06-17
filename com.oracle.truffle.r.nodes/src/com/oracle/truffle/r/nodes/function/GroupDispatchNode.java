@@ -22,7 +22,6 @@ import com.oracle.truffle.r.nodes.runtime.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RArguments.S3Args;
 import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.gnur.*;
 
@@ -31,17 +30,15 @@ public final class GroupDispatchNode extends RNode implements RSyntaxNode {
     @Child private CallArgumentsNode callArgsNode;
     @Child private S3FunctionLookupNode functionLookupL;
     @Child private S3FunctionLookupNode functionLookupR;
+    @Child private ClassHierarchyNode classHierarchyL;
+    @Child private ClassHierarchyNode classHierarchyR;
     @Child private CallMatcherNode callMatcher = CallMatcherNode.create(false, true);
 
     private final String fixedGenericName;
     private final RGroupGenerics fixedGroup;
     private final RFunction fixedBuiltinFunction;
 
-    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
     private final ConditionProfile mismatchProfile = ConditionProfile.createBinaryProfile();
-    private final ConditionProfile isObjectProfile = ConditionProfile.createBinaryProfile();
-    private final ValueProfile leftArgTypeProfile = ValueProfile.createClassProfile();
-    private final ValueProfile rightArgTypeProfile = ValueProfile.createClassProfile();
 
     @CompilationFinal private boolean dynamicLookup;
     private final ConditionProfile exactEqualsProfile = ConditionProfile.createBinaryProfile();
@@ -99,14 +96,6 @@ public final class GroupDispatchNode extends RNode implements RSyntaxNode {
         return RSyntaxNode.cast(RASTUtils.createCall(this, (CallArgumentsNode) callArgsNode.substitute(env).asRNode()));
     }
 
-    protected RStringVector getArgClass(Object arg, ValueProfile argTypeProfile) {
-        Object profiledArg = argTypeProfile.profile(arg);
-        if (profiledArg instanceof RAbstractContainer && isObjectProfile.profile(((RAbstractContainer) profiledArg).isObject(attrProfiles))) {
-            return ((RAbstractContainer) profiledArg).getClassHierarchy();
-        }
-        return null;
-    }
-
     @Override
     public Object execute(VirtualFrame frame) {
         RArgsValuesAndNames argAndNames = callArgsNode.evaluateFlatten(frame);
@@ -127,7 +116,11 @@ public final class GroupDispatchNode extends RNode implements RSyntaxNode {
     private Object executeInternal(VirtualFrame frame, RArgsValuesAndNames argAndNames, String genericName, RGroupGenerics group, RFunction builtinFunction) {
         Object[] evaluatedArgs = argAndNames.getArguments();
 
-        RStringVector typeL = evaluatedArgs.length == 0 ? null : getArgClass(evaluatedArgs[0], leftArgTypeProfile);
+        if (classHierarchyL == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            classHierarchyL = insert(ClassHierarchyNodeGen.create(false));
+        }
+        RStringVector typeL = evaluatedArgs.length == 0 ? null : classHierarchyL.execute(evaluatedArgs[0]);
 
         Result resultL = null;
         if (typeL != null) {
@@ -143,7 +136,11 @@ public final class GroupDispatchNode extends RNode implements RSyntaxNode {
         }
         Result resultR = null;
         if (group == RGroupGenerics.Ops && argAndNames.getSignature().getLength() >= 2) {
-            RStringVector typeR = getArgClass(evaluatedArgs[1], rightArgTypeProfile);
+            if (classHierarchyR == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                classHierarchyR = insert(ClassHierarchyNodeGen.create(false));
+            }
+            RStringVector typeR = classHierarchyR.execute(evaluatedArgs[1]);
             if (typeR != null) {
                 try {
                     if (functionLookupR == null) {

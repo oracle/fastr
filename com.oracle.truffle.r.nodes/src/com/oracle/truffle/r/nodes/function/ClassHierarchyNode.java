@@ -22,19 +22,27 @@
  */
 package com.oracle.truffle.r.nodes.function;
 
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.utilities.*;
-import com.oracle.truffle.r.nodes.function.ClassHierarchyNodeGen.AttributeAccessNodeGen;
-import com.oracle.truffle.r.nodes.function.ClassHierarchyNodeGen.VectorClassHierarchyNodeGen;
+import com.oracle.truffle.r.nodes.attributes.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.conn.*;
 import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
-import com.oracle.truffle.r.runtime.env.*;
 
 public abstract class ClassHierarchyNode extends UnaryNode {
+
+    @Child private AttributeAccess access;
+
+    private final boolean withImplicitTypes;
+    private final ConditionProfile noAttributesProfile = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile nullAttributeProfile = ConditionProfile.createBinaryProfile();
+    private final ValueProfile typeProfile;
+
+    protected ClassHierarchyNode(boolean withImplicitTypes) {
+        this.withImplicitTypes = withImplicitTypes;
+        this.typeProfile = withImplicitTypes ? ValueProfile.createClassProfile() : null;
+    }
 
     @Override
     public abstract RStringVector execute(Object arg);
@@ -60,38 +68,8 @@ public abstract class ClassHierarchyNode extends UnaryNode {
     }
 
     @Specialization
-    protected RStringVector getClassHr(@SuppressWarnings("unused") RComplex arg) {
-        return RDataFactory.createStringVector(RType.Complex.getName());
-    }
-
-    @Specialization
-    protected RStringVector getClassHr(@SuppressWarnings("unused") RRaw arg) {
-        return RDataFactory.createStringVector(RType.Raw.getName());
-    }
-
-    @Specialization
-    protected RStringVector getClassHr(@SuppressWarnings("unused") RFunction arg) {
-        return RDataFactory.createStringVector(RType.Function.getName());
-    }
-
-    @Specialization
     protected RStringVector getClassHr(@SuppressWarnings("unused") RNull arg) {
         return RDataFactory.createStringVector(RType.Null.getName());
-    }
-
-    @Specialization
-    protected RStringVector getClassHr(@SuppressWarnings("unused") RSymbol arg) {
-        return RDataFactory.createStringVector(RRuntime.CLASS_SYMBOL);
-    }
-
-    @Specialization
-    protected RStringVector getClassHr(@SuppressWarnings("unused") RExternalPtr arg) {
-        return RDataFactory.createStringVector(RType.ExternalPtr.getName());
-    }
-
-    @Specialization
-    protected RStringVector getClassHr(@SuppressWarnings("unused") REnvironment arg) {
-        return RDataFactory.createStringVector(RType.Environment.getName());
     }
 
     @Specialization
@@ -100,91 +78,26 @@ public abstract class ClassHierarchyNode extends UnaryNode {
     }
 
     @Specialization
-    protected RStringVector getClassHr(RConnection arg) {
-        return arg.getClassHierarchy();
+    protected RStringVector getClassHrStorage(RAttributeStorage arg, //
+                    @Cached("createClassProfile()") ValueProfile argProfile) {
+        return getClassHrAttributable(arg, argProfile);
     }
 
-    /**
-     * Simple attribute access node that specializes on the position at which the attribute was
-     * found last time.
-     */
-    public abstract static class AttributeAccess extends Node {
-
-        protected final String name;
-
-        protected AttributeAccess(String name) {
-            this.name = name.intern();
-        }
-
-        public abstract Object execute(RAttributes attr);
-
-        protected boolean nameMatches(RAttributes attr, int index) {
-            /*
-             * The length check is against names.length instead of size, so that the check folds
-             * into the array bounds check.
-             */
-            return index != -1 && attr.getNames().length > index && attr.getNames()[index] == name;
-        }
-
-        @Specialization(guards = "nameMatches(attr, index)")
-        protected Object accessCached(RAttributes attr, //
-                        @Cached("attr.find(name)") int index) {
-            return attr.getValues()[index];
-        }
-
-        @Specialization(contains = "accessCached")
-        protected Object access(RAttributes attr) {
-            return attr.get(name);
-        }
-    }
-
-    /**
-     *
-     */
-    public abstract static class VectorClassHierarchyNode extends Node {
-
-        public abstract RStringVector execute(RVector vector);
-
-        @Specialization(guards = "arg.getAttributes() == null")
-        protected RStringVector getImplicitClass(RVector arg, //
-                        @Cached("createClassProfile()") ValueProfile typeProfile) {
-            return typeProfile.profile(arg).getImplicitClassHr();
-        }
-
-        protected AttributeAccess createAccess() {
-            return AttributeAccessNodeGen.create(RRuntime.CLASS_ATTR_KEY);
-        }
-
-        @Specialization(guards = "arg.getAttributes() != null")
-        protected RStringVector getClass(RVector arg, //
-                        @Cached("createAccess()") AttributeAccess access, //
-                        @Cached("createBinaryProfile()") ConditionProfile isNullProfile, //
-                        @Cached("createClassProfile()") ValueProfile typeProfile) {
-            Object value = access.execute(arg.getAttributes());
-            if (isNullProfile.profile(value == null)) {
-                return typeProfile.profile(arg).getImplicitClassHr();
-            } else {
-                return (RStringVector) value;
+    @Specialization(contains = "getClassHrStorage")
+    protected RStringVector getClassHrAttributable(RAttributable arg, //
+                    @Cached("createClassProfile()") ValueProfile argProfile) {
+        RAttributes attributes = argProfile.profile(arg).getAttributes();
+        if (noAttributesProfile.profile(attributes != null)) {
+            if (access == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                access = insert(AttributeAccessNodeGen.create(RRuntime.CLASS_ATTR_KEY));
+            }
+            RStringVector classHierarcy = (RStringVector) access.execute(attributes);
+            if (nullAttributeProfile.profile(classHierarcy != null)) {
+                return classHierarcy;
             }
         }
-    }
-
-    public VectorClassHierarchyNode createVectorClass() {
-        return VectorClassHierarchyNodeGen.create();
-    }
-
-    @Specialization
-    protected RStringVector getClassHr(RVector arg, @Cached("createVectorClass()") VectorClassHierarchyNode vectorClass) {
-        return vectorClass.execute(arg);
-    }
-
-    protected static boolean isRVector(Object arg) {
-        return arg instanceof RVector;
-    }
-
-    @Specialization(guards = "!isRVector(arg)")
-    protected RStringVector getClassHr(RAbstractContainer arg) {
-        return arg.getClassHierarchy();
+        return withImplicitTypes ? typeProfile.profile(arg).getImplicitClass() : null;
     }
 
     @Fallback

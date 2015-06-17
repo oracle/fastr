@@ -22,7 +22,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 
 public final class UseMethodInternalNode extends RNode implements VisibilityController {
 
-    @Child private ClassHierarchyNode classHierarchyNode = ClassHierarchyNodeGen.create();
+    @Child private ClassHierarchyNode classHierarchyNode = ClassHierarchyNodeGen.create(true);
     @Child private S3FunctionLookupNode lookup = S3FunctionLookupNode.create(false, false);
     @Child private CallMatcherNode callMatcher = CallMatcherNode.create(false, false);
 

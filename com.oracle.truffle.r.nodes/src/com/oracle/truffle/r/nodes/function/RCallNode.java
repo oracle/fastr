@@ -305,7 +305,7 @@ public abstract class RCallNode extends RNode implements RSyntaxNode {
         return cn;
     }
 
-    private static RBuiltinRootNode findBuiltinRootNode(RootCallTarget callTarget) {
+    public static RBuiltinRootNode findBuiltinRootNode(RootCallTarget callTarget) {
         RootNode root = callTarget.getRootNode();
         if (root instanceof RBuiltinRootNode) {
             return (RBuiltinRootNode) root;
@@ -549,7 +549,7 @@ public abstract class RCallNode extends RNode implements RSyntaxNode {
                     // We inline the given arguments here, as builtins are executed inside the same
                     // frame as they are called.
                     InlinedArguments inlinedArgs = ArgumentMatcher.matchArgumentsInlined(function, args, callSrc, argsSrc);
-                    callNode = root.inline(inlinedArgs);
+                    callNode = new BuiltinCallNode(root.inline(inlinedArgs.getSignature(), inlinedArgs.getArguments(), callSrc));
                 }
             } else {
                 // Now we need to distinguish: Do supplied arguments vary between calls?
@@ -578,6 +578,26 @@ public abstract class RCallNode extends RNode implements RSyntaxNode {
             return NodeUtil.cloneNode(args);
         }
 
+    }
+
+    @NodeInfo(cost = NodeCost.NONE)
+    private static final class BuiltinCallNode extends LeafCallNode {
+
+        @Child private RBuiltinNode builtin;
+
+        BuiltinCallNode(RBuiltinNode builtin) {
+            this.builtin = builtin;
+        }
+
+        @Override
+        public Object execute(VirtualFrame frame) {
+            return builtin.execute(frame);
+        }
+
+        @Override
+        public Object execute(VirtualFrame frame, RFunction currentFunction) {
+            return builtin.execute(frame);
+        }
     }
 
     @NodeInfo(cost = NodeCost.UNINITIALIZED)

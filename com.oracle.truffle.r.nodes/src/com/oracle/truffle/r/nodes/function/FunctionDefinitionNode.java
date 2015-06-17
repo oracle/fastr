@@ -126,8 +126,8 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
                      * to do this. If a function uses lapply anywhere as name then it gets split.
                      * This could get exploited.
                      */
-                    RFunction directBuiltin = RContext.lookupBuiltin(readInternal.getIdentifier());
-                    if (directBuiltin != null && directBuiltin.getRBuiltin().isSplitCaller()) {
+                    RBuiltinDescriptor directBuiltin = RContext.lookupBuiltinDescriptor(readInternal.getIdentifier());
+                    if (directBuiltin != null && directBuiltin.isSplitCaller()) {
                         return true;
                     }
 
@@ -137,8 +137,8 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
                             RCallNode innerCall = (RCallNode) internalFunctionArgument;
                             if (innerCall.getFunctionNode() instanceof ReadVariableNode) {
                                 ReadVariableNode readInnerCall = (ReadVariableNode) innerCall.getFunctionNode();
-                                RFunction builtin = RContext.lookupBuiltin(readInnerCall.getIdentifier());
-                                if (builtin != null && builtin.getRBuiltin().isSplitCaller()) {
+                                RBuiltinDescriptor builtin = RContext.lookupBuiltinDescriptor(readInnerCall.getIdentifier());
+                                if (builtin != null && builtin.isSplitCaller()) {
                                     return true;
                                 }
                             }

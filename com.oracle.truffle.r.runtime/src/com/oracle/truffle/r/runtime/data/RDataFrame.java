@@ -171,6 +171,11 @@ public final class RDataFrame implements RShareable, RAbstractContainer {
     }
 
     @Override
+    public RStringVector getImplicitClass() {
+        return vector.getImplicitClass();
+    }
+
+    @Override
     public boolean isObject(RAttributeProfiles attrProfiles) {
         return true;
     }
