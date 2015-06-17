@@ -28,6 +28,8 @@ public interface RBuiltinLookup {
 
     boolean isPrimitiveBuiltin(String name);
 
-    RFunction lookup(String methodName);
+    RFunction lookupBuiltin(String methodName);
+
+    RBuiltinDescriptor lookupBuiltinDescriptor(String methodName);
 
 }
