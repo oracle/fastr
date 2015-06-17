@@ -58,9 +58,9 @@ public final class RBuiltinRootNode extends RRootNode {
         return builtin.getBuiltin().isAlwaysSplit();
     }
 
-    public RBuiltinNode inline(InlinedArguments args, SourceSection callSrc) {
+    public RBuiltinNode inline(ArgumentsSignature signature, RNode[] args, SourceSection callSrc) {
         assert builtin.getSuppliedSignature() != null : this;
-        return builtin.inline(args, callSrc);
+        return builtin.inline(signature, args, callSrc);
     }
 
     public Object getDefaultParameterValue(int index) {

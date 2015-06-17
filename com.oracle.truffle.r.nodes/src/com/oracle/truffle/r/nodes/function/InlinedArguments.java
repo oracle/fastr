@@ -29,7 +29,7 @@ import com.oracle.truffle.r.runtime.*;
 
 /**
  * Simple container class for holding arguments which are going to be inlined into FastR built-ins
- * (using {@link RBuiltinNode#inline(InlinedArguments, SourceSection)}.
+ * (using {@link RBuiltinNode#inline(ArgumentsSignature, RNode[], SourceSection)}.
  */
 public final class InlinedArguments extends Arguments<RNode> {
 

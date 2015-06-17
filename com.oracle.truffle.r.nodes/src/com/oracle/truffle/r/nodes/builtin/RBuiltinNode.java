@@ -42,6 +42,8 @@ import com.oracle.truffle.r.runtime.env.frame.*;
 @NodeChild(value = "arguments", type = RNode[].class)
 public abstract class RBuiltinNode extends RNode implements RSyntaxNode, VisibilityController {
 
+    public abstract Object execute(VirtualFrame frame, Object... args);
+
     private static final CastNode[] EMPTY_CASTS_ARRAY = new CastNode[0];
 
     public final class CastBuilder {
@@ -129,18 +131,23 @@ public abstract class RBuiltinNode extends RNode implements RSyntaxNode, Visibil
 
     @CreateCast("arguments")
     protected RNode[] castArguments(RNode[] arguments) {
-        CastBuilder builder = new CastBuilder();
-        createCasts(builder);
-        if (builder.casts.length == 0) {
+        CastNode[] casts = getCasts();
+        if (casts.length == 0) {
             return arguments;
         }
         RNode[] castArguments = arguments.clone();
-        for (int i = 0; i < builder.casts.length; i++) {
-            if (builder.casts[i] != null) {
-                castArguments[i] = new ApplyCastNode(builder.casts[i], castArguments[i]);
+        for (int i = 0; i < casts.length; i++) {
+            if (casts[i] != null) {
+                castArguments[i] = new ApplyCastNode(casts[i], castArguments[i]);
             }
         }
         return castArguments;
+    }
+
+    public CastNode[] getCasts() {
+        CastBuilder builder = new CastBuilder();
+        createCasts(builder);
+        return builder.casts;
     }
 
     /**
@@ -203,9 +210,9 @@ public abstract class RBuiltinNode extends RNode implements RSyntaxNode, Visibil
         return Truffle.getRuntime().createCallTarget(root);
     }
 
-    public final RBuiltinNode inline(InlinedArguments args, SourceSection callSrc) {
+    public final RBuiltinNode inline(ArgumentsSignature signature, RNode[] args, SourceSection callSrc) {
         // static number of arguments
-        RBuiltinNode node = createNode(getBuiltin(), args.getArguments(), args.getSignature());
+        RBuiltinNode node = createNode(getBuiltin(), args, signature);
         node.assignSourceSection(callSrc);
         return node;
     }
