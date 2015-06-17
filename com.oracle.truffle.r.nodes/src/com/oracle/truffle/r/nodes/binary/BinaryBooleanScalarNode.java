@@ -28,19 +28,16 @@ import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.utilities.*;
-import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.binary.BinaryBooleanScalarNodeFactory.LogicalScalarCastNodeGen;
+import com.oracle.truffle.r.nodes.binary.BinaryBooleanScalarNodeGen.LogicalScalarCastNodeGen;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.builtin.RBuiltinNode.RCustomBuiltinNode;
-import com.oracle.truffle.r.nodes.unary.*;
+import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseCheckHelperNode;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
-@SuppressWarnings("unused")
-public final class BinaryBooleanScalarNode extends RCustomBuiltinNode {
+public abstract class BinaryBooleanScalarNode extends RBuiltinNode {
 
     /*
      * As the execution of right depends on the left value and the right node might be arbitrarily
@@ -49,38 +46,36 @@ public final class BinaryBooleanScalarNode extends RCustomBuiltinNode {
      */
     private final ConditionProfile profile = ConditionProfile.createCountingProfile();
 
-    private final BooleanOperationFactory factory;
     @Child private BinaryMapBooleanFunctionNode logic;
     @Child private LogicalScalarCastNode leftCast;
+    @Child private BoxPrimitiveNode leftBox;
     @Child private LogicalScalarCastNode rightCast;
+    @Child private BoxPrimitiveNode rightBox;
+    @Child private PromiseCheckHelperNode promiseHelper;
 
-    private final NACheck resultNACheck = NACheck.create();
+    private final BooleanOperation booleanLogic;
 
-    public BinaryBooleanScalarNode(BooleanOperationFactory factory, RNode[] arguments, RBuiltinFactory builtin, ArgumentsSignature suppliedSignature) {
-        super(arguments, builtin, suppliedSignature);
-        arguments[0] = new ApplyCastNode(BoxPrimitiveNodeGen.create(), arguments[0]);
-        arguments[1] = new ApplyCastNode(BoxPrimitiveNodeGen.create(), arguments[1]);
-        this.factory = factory;
-        BooleanOperation booleanLogic = factory.create();
-        this.logic = new BinaryMapBooleanFunctionNode(booleanLogic);
-        String operationName = booleanLogic.opName();
-        this.leftCast = LogicalScalarCastNodeGen.create(operationName, "x", logic.getLeftNACheck());
-        this.rightCast = LogicalScalarCastNodeGen.create(operationName, "y", logic.getRightNACheck());
+    public BinaryBooleanScalarNode(BooleanOperationFactory factory) {
+        this.booleanLogic = factory.create();
     }
 
-    private RNode getRight() {
-        return getArguments()[1];
-    }
-
-    private RNode getLeft() {
-        return getArguments()[0];
-    }
-
-    @Override
-    public Object execute(VirtualFrame frame) {
-        byte left = leftCast.executeCast(getLeft().execute(frame));
+    @Specialization
+    protected byte binary(VirtualFrame frame, Object leftValue, Object rightValue) {
+        if (leftCast == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            logic = insert(new BinaryMapBooleanFunctionNode(booleanLogic));
+            leftCast = insert(LogicalScalarCastNodeGen.create(booleanLogic.opName(), "x", logic.getLeftNACheck()));
+            leftBox = insert(BoxPrimitiveNodeGen.create());
+        }
+        byte left = leftCast.executeCast(leftBox.execute(leftValue));
         if (profile.profile(logic.requiresRightOperand(left))) {
-            byte right = rightCast.executeCast(getRight().execute(frame));
+            if (rightCast == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                rightCast = insert(LogicalScalarCastNodeGen.create(booleanLogic.opName(), "y", logic.getRightNACheck()));
+                rightBox = insert(BoxPrimitiveNodeGen.create());
+                promiseHelper = insert(new PromiseCheckHelperNode());
+            }
+            byte right = rightCast.executeCast(rightBox.execute(promiseHelper.checkEvaluate(frame, rightValue)));
             return logic.applyLogical(left, right);
         }
         return left;
@@ -148,7 +143,7 @@ public final class BinaryBooleanScalarNode extends RCustomBuiltinNode {
         }
 
         @Fallback
-        protected byte doFallback(Object operand) {
+        protected byte doFallback(@SuppressWarnings("unused") Object operand) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_TYPE_IN, argumentName, opName);
         }
     }
