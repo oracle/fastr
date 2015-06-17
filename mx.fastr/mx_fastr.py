@@ -120,17 +120,20 @@ def findbugs(args):
     return exitcode
 
 def _fastr_gate_body(args, tasks):
+    with mx.GateTask('BuildJavaWithJavac', tasks) as t:
+        if t: build([])
     # check that the expected test output file is up to date
-    t = mx.GateTask('UnitTests: ExpectedTestOutput file check')
-    rc1 = junit(['--tests', _all_unit_tests(), '--check-expected-output'])
-    if rc1 != 0:
-        mx.abort('unit tests expected output check failed')
-    tasks.append(t.stop())
-    t = mx.GateTask('UnitTests: gate')
-    rc2 = junit(['--tests', _gate_unit_tests()])
-    if rc2 != 0:
-        mx.abort('unit tests failed')
-    tasks.append(t.stop())
+    with mx.GateTask('UnitTests: ExpectedTestOutput file check', tasks) as t:
+        if t:
+            rc1 = junit(['--tests', _all_unit_tests(), '--check-expected-output'])
+            if rc1 != 0:
+                mx.abort('unit tests expected output check failed')
+
+    with mx.GateTask('UnitTests: gate', tasks) as t:
+        if t:
+            rc2 = junit(['--tests', _gate_unit_tests()])
+            if rc2 != 0:
+                mx.abort('unit tests failed')
 
 def gate(args):
     '''Run the R gate'''
