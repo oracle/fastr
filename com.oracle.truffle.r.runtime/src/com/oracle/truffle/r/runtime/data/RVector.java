@@ -67,26 +67,23 @@ public abstract class RVector extends RAttributeStorage implements RShareable, R
         if (names != null) {
             // since this constructor is for internal use only, the assertion shouldn't fail
             assert names.getLength() == length : "size mismatch: " + names.getLength() + " vs. " + length;
-            if (dimensions == null || dimensions.length != 1) {
-                putAttribute(RRuntime.NAMES_ATTR_KEY, names);
-                if (dimensions != null) {
-                    putAttribute(RRuntime.DIM_ATTR_KEY, RDataFactory.createIntVector(dimensions, true));
-                }
-                this.dimNames = null;
+            if (dimensions == null) {
+                initAttributes(new String[]{RRuntime.NAMES_ATTR_KEY}, new Object[]{names});
             } else {
-                if (dimensions != null) {
-                    putAttribute(RRuntime.DIM_ATTR_KEY, RDataFactory.createIntVector(dimensions, true));
+                RIntVector dimensionsVector = RDataFactory.createIntVector(dimensions, true);
+                if (dimensions.length != 1) {
+                    initAttributes(new String[]{RRuntime.NAMES_ATTR_KEY, RRuntime.DIM_ATTR_KEY}, new Object[]{names, dimensionsVector});
+                } else {
+                    // one-dimensional arrays do not have names, only dimnames with one value
+                    RList newDimNames = RDataFactory.createList(new Object[]{names});
+                    initAttributes(new String[]{RRuntime.DIM_ATTR_KEY, RRuntime.DIMNAMES_ATTR_KEY}, new Object[]{dimensionsVector, newDimNames});
+                    this.dimNames = newDimNames;
                 }
-                // one-dimensional arrays do not have names, only dimnames with one value
-                RList newDimNames = RDataFactory.createList(new Object[]{names});
-                putAttribute(RRuntime.DIMNAMES_ATTR_KEY, newDimNames);
-                this.dimNames = newDimNames;
             }
         } else {
             if (dimensions != null) {
-                putAttribute(RRuntime.DIM_ATTR_KEY, RDataFactory.createIntVector(dimensions, true));
+                initAttributes(new String[]{RRuntime.DIM_ATTR_KEY}, new Object[]{RDataFactory.createIntVector(dimensions, true)});
             }
-            this.dimNames = null;
         }
     }
 

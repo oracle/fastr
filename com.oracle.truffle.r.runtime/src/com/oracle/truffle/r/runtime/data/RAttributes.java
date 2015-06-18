@@ -75,6 +75,10 @@ public final class RAttributes implements Iterable<RAttributes.RAttribute> {
         return new RAttributes();
     }
 
+    public static RAttributes createIniitialized(String[] names, Object[] values) {
+        return new RAttributes(names, values);
+    }
+
     /**
      * The implementation class which is separate to avoid a circularity that would result from the
      * {@code Iterable} in the abstract class.
@@ -92,6 +96,12 @@ public final class RAttributes implements Iterable<RAttributes.RAttribute> {
             names = Arrays.copyOf(attrs.names, size);
             values = Arrays.copyOf(attrs.values, size);
         }
+    }
+
+    private RAttributes(String[] names, Object[] values) {
+        this.names = names;
+        this.values = values;
+        this.size = names.length;
     }
 
     public int find(String name) {

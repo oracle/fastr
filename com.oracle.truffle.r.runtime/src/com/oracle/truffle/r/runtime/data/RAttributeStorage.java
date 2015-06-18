@@ -29,6 +29,7 @@ import com.oracle.truffle.r.runtime.*;
  * don't already inherit from another class, otherwise just cut and paste this code.
  */
 public abstract class RAttributeStorage implements RAttributable {
+
     protected RAttributes attributes;
 
     public final RAttributes getAttributes() {
@@ -40,6 +41,11 @@ public abstract class RAttributeStorage implements RAttributable {
             attributes = RAttributes.create();
         }
         return attributes;
+    }
+
+    public final void initAttributes(String[] names, Object[] values) {
+        assert this.attributes == null;
+        this.attributes = RAttributes.createIniitialized(names, values);
     }
 
     public final Object getAttribute(String name) {
