@@ -22,11 +22,11 @@
  */
 package com.oracle.truffle.r.nodes.primitive;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.nodes.attributes.*;
 import com.oracle.truffle.r.nodes.primitive.BinaryMapNodeFactory.VectorMapBinaryInternalNodeGen;
 import com.oracle.truffle.r.nodes.profile.*;
 import com.oracle.truffle.r.runtime.*;
@@ -44,6 +44,7 @@ public final class BinaryMapNode extends Node {
 
     @Child private VectorMapBinaryInternalNode vectorNode;
     @Child private BinaryMapFunctionNode function;
+    @Child private CopyAttributesNode copyAttributes;
 
     // profiles
     private final Class<? extends RAbstractVector> leftClass;
@@ -51,8 +52,6 @@ public final class BinaryMapNode extends Node {
     private final VectorLengthProfile leftLengthProfile = VectorLengthProfile.create();
     private final VectorLengthProfile rightLengthProfile = VectorLengthProfile.create();
     private final ConditionProfile dimensionsProfile;
-    private final BranchProfile hasAttributesProfile;
-    private final RAttributeProfiles attrProfiles;
     private final BranchProfile seenEmpty = BranchProfile.create();
     private final ConditionProfile shareLeft;
     private final ConditionProfile shareRight;
@@ -65,9 +64,6 @@ public final class BinaryMapNode extends Node {
     private final boolean mayFoldConstantTime;
     private final boolean mayShareLeft;
     private final boolean mayShareRight;
-
-    // config flags
-    private final boolean copyAttributes;
 
     private BinaryMapNode(BinaryMapFunctionNode function, RAbstractVector left, RAbstractVector right, RType argumentType, RType resultType, boolean copyAttributes) {
         this.function = function;
@@ -87,11 +83,9 @@ public final class BinaryMapNode extends Node {
         // lazily create profiles only if needed to avoid unnecessary allocations
         this.shareLeft = mayShareLeft ? ConditionProfile.createBinaryProfile() : null;
         this.shareRight = mayShareRight ? ConditionProfile.createBinaryProfile() : null;
-        this.attrProfiles = mayContainMetadata ? RAttributeProfiles.create() : null;
-        this.hasAttributesProfile = mayContainMetadata ? BranchProfile.create() : null;
         this.dimensionsProfile = mayContainMetadata ? ConditionProfile.createBinaryProfile() : null;
 
-        this.copyAttributes = copyAttributes;
+        this.copyAttributes = mayContainMetadata ? CopyAttributesNodeGen.create(copyAttributes) : null;
     }
 
     public static BinaryMapNode create(BinaryMapFunctionNode function, RAbstractVector left, RAbstractVector right, RType argumentType, RType resultType, boolean copyAttributes) {
@@ -252,7 +246,7 @@ public final class BinaryMapNode extends Node {
             target.setComplete(function.isComplete());
         }
         if (mayContainMetadata) {
-            target = handleMetadata(target, left, leftLength, right, rightLength);
+            target = copyAttributes.execute(target, left, leftLength, right, rightLength);
         }
         return target;
     }
@@ -265,57 +259,6 @@ public final class BinaryMapNode extends Node {
             return right;
         }
         return resultType.create(maxLength, false);
-    }
-
-    private RAbstractVector handleMetadata(RAbstractVector target, RAbstractVector left, int leftLength, RAbstractVector right, int rightLength) {
-        RAbstractVector result = target;
-        if (containsMetadata(left) || containsMetadata(right)) {
-            hasAttributesProfile.enter();
-            result = result.materialize();
-            copyAttributesInternal((RVector) result, left, leftLength, right, rightLength);
-        }
-        return result;
-    }
-
-    private boolean containsMetadata(RAbstractVector vector) {
-        return vector instanceof RVector &&
-                        (vector.hasDimensions() || (copyAttributes && vector.getAttributes() != null) || vector.getNames(attrProfiles) != null || vector.getDimNames(attrProfiles) != null);
-    }
-
-    @TruffleBoundary
-    private void copyAttributesInternal(RVector result, RAbstractVector left, int leftLength, RAbstractVector right, int rightLength) {
-        // TODO this method needs its own specializing node
-        if (leftLength == rightLength) {
-            if (copyAttributes) {
-                if (result != right) {
-                    result.copyRegAttributesFrom(right);
-                }
-                if (result != left) {
-                    result.copyRegAttributesFrom(left);
-                }
-            }
-
-            result.setDimensions(left.hasDimensions() ? left.getDimensions() : right.getDimensions(), getEncapsulatingSourceSection());
-
-            boolean hadNames;
-            if (result == left) {
-                hadNames = result.getNames() != null;
-            } else {
-                hadNames = result.copyNamesFrom(attrProfiles, left);
-            }
-            if (!hadNames && result != right) {
-                result.copyNamesFrom(attrProfiles, right);
-            }
-        } else {
-            RAbstractVector attributeSource = leftLength < rightLength ? right : left;
-            if (copyAttributes && result != attributeSource) {
-                result.copyRegAttributesFrom(attributeSource);
-            }
-            result.setDimensions(left.hasDimensions() ? left.getDimensions() : right.getDimensions(), getEncapsulatingSourceSection());
-            if (attributeSource != result) {
-                result.copyNamesFrom(attrProfiles, attributeSource);
-            }
-        }
     }
 
     private static boolean isStoreCompatible(Object store, RType resultType, int leftLength, int rightLength) {
