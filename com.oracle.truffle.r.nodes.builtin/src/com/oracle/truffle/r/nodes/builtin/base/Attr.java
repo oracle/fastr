@@ -99,7 +99,7 @@ public abstract class Attr extends RBuiltinNode {
         return container;
     }
 
-    @Specialization(guards = "!isRowNamesAttr(container, name)")
+    @Specialization(guards = "!isRowNamesAttr(name)")
     protected Object attr(RAbstractContainer container, String name) {
         controlVisibility();
         return attrRA(container, intern(name));
@@ -115,7 +115,7 @@ public abstract class Attr extends RBuiltinNode {
         }
     }
 
-    @Specialization(guards = "isRowNamesAttr(container,  name)")
+    @Specialization(guards = "isRowNamesAttr(name)")
     protected Object attrRowNames(RAbstractContainer container, @SuppressWarnings("unused") String name) {
         controlVisibility();
         RAttributes attributes = container.getAttributes();
@@ -126,18 +126,18 @@ public abstract class Attr extends RBuiltinNode {
         }
     }
 
-    @Specialization(guards = {"!emptyName(name)", "isRowNamesAttr(container, name)"})
+    @Specialization(guards = {"exactlyOne(name)", "isRowNamesAttr(name)"})
     protected Object attrRowNames(RAbstractContainer container, RStringVector name) {
         return attrRowNames(container, name.getDataAt(0));
     }
 
-    @Specialization(guards = {"!emptyName(name)", "!isRowNamesAttr(container, name)"})
+    @Specialization(guards = {"exactlyOne(name)", "!isRowNamesAttr(name)"})
     protected Object attr(RAbstractContainer container, RStringVector name) {
         return attr(container, name.getDataAt(0));
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = "emptyName(name)")
+    @Specialization(guards = "!exactlyOne(name)")
     protected Object attrEmtpyName(RAbstractContainer container, RStringVector name) {
         controlVisibility();
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.EXACTLY_ONE_WHICH);
@@ -161,15 +161,15 @@ public abstract class Attr extends RBuiltinNode {
         }
     }
 
-    protected boolean isRowNamesAttr(@SuppressWarnings("unused") RAbstractContainer container, String name) {
+    protected static boolean isRowNamesAttr(String name) {
         return name.equals(RRuntime.ROWNAMES_ATTR_KEY);
     }
 
-    protected boolean isRowNamesAttr(RAbstractContainer container, RStringVector name) {
-        return isRowNamesAttr(container, name.getDataAt(0));
+    protected static boolean isRowNamesAttr(RStringVector name) {
+        return isRowNamesAttr(name.getDataAt(0));
     }
 
-    protected boolean emptyName(RStringVector name) {
-        return name.getLength() == 0;
+    protected static boolean exactlyOne(RStringVector name) {
+        return name.getLength() == 1;
     }
 }
