@@ -156,10 +156,11 @@ public final class AccessArgumentNode extends RNode {
             RNode arg = EagerEvalHelper.unfold(defaultArg);
 
             CompilerDirectives.transferToInterpreterAndInvalidate();
+            // TODO: all tests pass without it but perhaps we should "re-wrap" promises here?
             if (isOptimizableDefault(arg)) {
-                optDefaultArgNode = new OptVariableDefaultPromiseNode(factory, (ReadVariableNode) NodeUtil.cloneNode(arg));
+                optDefaultArgNode = new OptVariableDefaultPromiseNode(factory, (ReadVariableNode) NodeUtil.cloneNode(arg), null);
             } else if (isOptimizableConstant(arg)) {
-                optDefaultArgNode = new OptConstantPromiseNode(factory.getType(), (ConstantNode) arg);
+                optDefaultArgNode = new OptConstantPromiseNode(factory.getType(), (ConstantNode) arg, null);
             }
             // else if (isOptimizableExpression(arg)) {
             // System.err.println(" >>> DEF " + arg.getSourceSection().getCode());
@@ -175,8 +176,8 @@ public final class AccessArgumentNode extends RNode {
 
     protected final class OptVariableDefaultPromiseNode extends OptVariablePromiseBaseNode {
 
-        public OptVariableDefaultPromiseNode(RPromiseFactory factory, ReadVariableNode rvn) {
-            super(factory, rvn);
+        public OptVariableDefaultPromiseNode(RPromiseFactory factory, ReadVariableNode rvn, WrapArgumentNode wrapNode) {
+            super(factory, rvn, wrapNode);
         }
 
         public void onSuccess(RPromise promise) {

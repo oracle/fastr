@@ -51,6 +51,8 @@ public class RASTUtils {
     public static Node unwrap(Object node) {
         if (node instanceof WrapArgumentNode) {
             return unwrap(((WrapArgumentNode) node).getOperand());
+        } else if (node instanceof WrapDefaultArgumentNode) {
+            return unwrap(((WrapDefaultArgumentNode) node).getOperand());
         } else if (node instanceof RInstrumentableNode) {
             return ((RInstrumentableNode) node).unwrap();
         } else {

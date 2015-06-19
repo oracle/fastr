@@ -24,7 +24,6 @@ package com.oracle.truffle.r.nodes.function;
 
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
-import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.runtime.*;
@@ -37,38 +36,13 @@ import com.oracle.truffle.r.runtime.env.*;
  * parsing and therefore forms part of the syntactic backbone.
  *
  */
-public final class WrapArgumentNode extends RNode implements RSyntaxNode {
-
-    @Child private RNode operand;
-
-    private final BranchProfile everSeenVector;
-    private final BranchProfile everSeenDataFrame;
-    private final BranchProfile everSeenFactor;
-
-    private final BranchProfile everSeenShared;
-    private final BranchProfile everSeenTemporary;
-    private final BranchProfile everSeenNonTemporary;
+public final class WrapArgumentNode extends WrapArgumentBaseNode {
 
     private final boolean modeChange;
 
     private WrapArgumentNode(RNode operand, boolean modeChange) {
-        this.operand = operand;
+        super(operand, modeChange);
         this.modeChange = modeChange;
-        if (modeChange) {
-            everSeenVector = BranchProfile.create();
-            everSeenDataFrame = BranchProfile.create();
-            everSeenFactor = BranchProfile.create();
-            everSeenShared = BranchProfile.create();
-            everSeenTemporary = BranchProfile.create();
-            everSeenNonTemporary = BranchProfile.create();
-        } else {
-            everSeenVector = null;
-            everSeenDataFrame = null;
-            everSeenFactor = null;
-            everSeenShared = null;
-            everSeenTemporary = null;
-            everSeenNonTemporary = null;
-        }
     }
 
     @Override
@@ -76,29 +50,18 @@ public final class WrapArgumentNode extends RNode implements RSyntaxNode {
         return modeChange ? NodeCost.MONOMORPHIC : NodeCost.NONE;
     }
 
-    public RNode getOperand() {
-        return operand;
-    }
-
     @Override
     public Object execute(VirtualFrame frame) {
+        assert operand != null;
         Object result = operand.execute(frame);
-        if (modeChange) {
-            RVector vector = null;
-            if (result instanceof RVector) {
-                everSeenVector.enter();
-                vector = (RVector) result;
-            } else if (result instanceof RDataFrame) {
-                everSeenDataFrame.enter();
-                vector = ((RDataFrame) result).getVector();
-            } else if (result instanceof RFactor) {
-                everSeenFactor.enter();
-                vector = ((RFactor) result).getVector();
-            } else {
-                return result;
-            }
+        return execute(result);
+    }
 
+    public Object execute(Object result) {
+        if (modeChange) {
+            RVector vector = getVector(result);
             if (vector != null) {
+                shareable.enter();
                 Utils.transitionState(vector, everSeenShared, everSeenTemporary, everSeenNonTemporary);
             }
         }
@@ -130,6 +93,10 @@ public final class WrapArgumentNode extends RNode implements RSyntaxNode {
         return operand.executeNull(frame);
     }
 
+    public static WrapArgumentNode create() {
+        return new WrapArgumentNode(null, true);
+    }
+
     public static RNode create(RNode operand, boolean modeChange) {
         if (operand instanceof WrapArgumentNode || operand instanceof ConstantNode) {
             return operand;
@@ -138,21 +105,6 @@ public final class WrapArgumentNode extends RNode implements RSyntaxNode {
             wan.assignSourceSection(operand.getSourceSection());
             return wan;
         }
-    }
-
-    @Override
-    public boolean isBackbone() {
-        return true;
-    }
-
-    @Override
-    public void deparse(RDeparse.State state) {
-        RSyntaxNode.cast(getOperand()).deparse(state);
-    }
-
-    @Override
-    public void serialize(RSerialize.State state) {
-        RSyntaxNode.cast(getOperand()).serialize(state);
     }
 
     @Override

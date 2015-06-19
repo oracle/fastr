@@ -39,10 +39,13 @@ public final class OptConstantPromiseNode extends RNode {
     private final ConstantNode constantExpr;
     private final Object constantValue;
 
-    public OptConstantPromiseNode(PromiseType type, ConstantNode constantExpr) {
+    @Child private WrapArgumentNode wrapNode;
+
+    public OptConstantPromiseNode(PromiseType type, ConstantNode constantExpr, WrapArgumentNode wrapNode) {
         this.type = type;
         this.constantExpr = constantExpr;
         this.constantValue = constantExpr.getValue();
+        this.wrapNode = wrapNode;
     }
 
     /**
@@ -50,6 +53,9 @@ public final class OptConstantPromiseNode extends RNode {
      */
     @Override
     public Object execute(VirtualFrame frame) {
+        if (wrapNode != null) {
+            wrapNode.execute(constantValue);
+        }
         return RDataFactory.createPromise(type, OptType.DEFAULT, constantExpr, constantValue);
     }
 }

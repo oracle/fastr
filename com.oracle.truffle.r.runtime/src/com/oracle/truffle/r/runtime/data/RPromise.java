@@ -172,8 +172,6 @@ public class RPromise extends RLanguageRep implements RTypedValue {
     public final void setValue(Object newValue) {
         assert newValue != null;
         this.value = newValue;
-
-        Utils.transitionStateSlowPath(newValue);
     }
 
     /**

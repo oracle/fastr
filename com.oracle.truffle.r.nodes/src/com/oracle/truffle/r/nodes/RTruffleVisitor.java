@@ -170,7 +170,10 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
                     RNode defaultValue;
                     ASTNode defaultValNode = arg.getValue();
                     if (defaultValNode != null) {
-                        defaultValue = arg.getValue().accept(this).asRNode();
+                        // default argument initialization is, in a sense, quite similar to local
+                        // variable write and thus should do appropriate state transition and/or
+                        // RShareable copy if need be
+                        defaultValue = WrapDefaultArgumentNode.create(arg.getValue().accept(this).asRNode());
                     } else {
                         defaultValue = null;
                     }

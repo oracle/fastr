@@ -81,6 +81,8 @@ public class RMissingHelper {
         RNode rvnArg = arg;
         if (rvnArg instanceof WrapArgumentNode) {
             rvnArg = ((WrapArgumentNode) rvnArg).getOperand();
+        } else if (rvnArg instanceof WrapDefaultArgumentNode) {
+            rvnArg = ((WrapDefaultArgumentNode) rvnArg).getOperand();
         }
 
         // ReadVariableNode denotes a name
@@ -127,6 +129,9 @@ public class RMissingHelper {
             // Unfold WrapArgumentNode
             if (exprObj instanceof WrapArgumentNode) {
                 exprObj = ((WrapArgumentNode) exprObj).getOperand();
+            }
+            if (exprObj instanceof WrapDefaultArgumentNode) {
+                exprObj = ((WrapDefaultArgumentNode) exprObj).getOperand();
             }
 
             // Check for ReadVariableNode
