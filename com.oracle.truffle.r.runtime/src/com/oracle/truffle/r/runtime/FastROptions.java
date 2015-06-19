@@ -55,7 +55,7 @@ public class FastROptions {
     public static final Option<Boolean> PrintComplexLookups = newBooleanOption("PrintComplexLookups", false, "Print a message for each non-trivial variable lookup");
     public static final Option<Boolean> IgnoreVisibility = newBooleanOption("IgnoreVisibility", false, "Ignore setting of the visibility flag");
     public static final Option<Boolean> LoadPkgSourcesIndex = newBooleanOption("LoadPkgSourcesIndex", true, "Load R package sources index");
-    public static final Option<Boolean> InvisibleArgs = newBooleanOption("InvisibleArgs", false, "Argument writes do not trigger state transitions");
+    public static final Option<Boolean> InvisibleArgs = newBooleanOption("InvisibleArgs", true, "Argument writes do not trigger state transitions");
 
     // Promises optimizations
     public static final Option<Boolean> EagerEval = newBooleanOption("EagerEval", false, "If enabled, overrides all other EagerEval switches (see EagerEvalHelper)");
