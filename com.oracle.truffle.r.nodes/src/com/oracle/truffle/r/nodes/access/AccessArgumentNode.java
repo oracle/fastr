@@ -158,7 +158,7 @@ public final class AccessArgumentNode extends RNode {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             // TODO: all tests pass without it but perhaps we should "re-wrap" promises here?
             if (isOptimizableDefault(arg)) {
-                optDefaultArgNode = new OptVariableDefaultPromiseNode(factory, (ReadVariableNode) NodeUtil.cloneNode(arg), null);
+                optDefaultArgNode = new OptVariableDefaultPromiseNode(factory, (ReadVariableNode) NodeUtil.cloneNode(arg), false);
             } else if (isOptimizableConstant(arg)) {
                 optDefaultArgNode = new OptConstantPromiseNode(factory.getType(), (ConstantNode) arg, null);
             }
@@ -176,8 +176,8 @@ public final class AccessArgumentNode extends RNode {
 
     protected final class OptVariableDefaultPromiseNode extends OptVariablePromiseBaseNode {
 
-        public OptVariableDefaultPromiseNode(RPromiseFactory factory, ReadVariableNode rvn, WrapArgumentNode wrapNode) {
-            super(factory, rvn, wrapNode);
+        public OptVariableDefaultPromiseNode(RPromiseFactory factory, ReadVariableNode rvn, boolean wrap) {
+            super(factory, rvn, wrap);
         }
 
         public void onSuccess(RPromise promise) {

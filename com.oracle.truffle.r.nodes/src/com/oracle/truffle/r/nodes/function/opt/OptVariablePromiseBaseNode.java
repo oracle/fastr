@@ -41,15 +41,15 @@ public abstract class OptVariablePromiseBaseNode extends PromiseNode implements 
     @Child private FrameSlotNode frameSlotNode;
     @Child private RNode fallback = null;
     @Child private ReadVariableNode readNode;
-    @Child private WrapArgumentNode wrapNode;
+    private final boolean wrap;
 
-    public OptVariablePromiseBaseNode(RPromiseFactory factory, ReadVariableNode rvn, WrapArgumentNode wrapNode) {
+    public OptVariablePromiseBaseNode(RPromiseFactory factory, ReadVariableNode rvn, boolean wrap) {
         super(factory);
         assert rvn.getKind() != ReadKind.Forced;  // Should be caught by optimization check
         this.originalRvn = rvn;
         this.frameSlotNode = FrameSlotNode.create(rvn.getIdentifier(), false);
         this.readNode = ReadVariableNode.create(rvn.getIdentifier(), rvn.getMode(), ReadKind.SilentLocal);
-        this.wrapNode = wrapNode;
+        this.wrap = wrap;
     }
 
     @Override
@@ -86,10 +86,7 @@ public abstract class OptVariablePromiseBaseNode extends PromiseNode implements 
         if (result instanceof RPromise) {
             return factory.createPromisedPromise((RPromise) result, notChangedNonLocally, frameId, this);
         } else {
-            if (wrapNode != null) {
-                wrapNode.execute(result);
-            }
-            return factory.createEagerSuppliedPromise(result, notChangedNonLocally, frameId, this);
+            return factory.createEagerSuppliedPromise(result, notChangedNonLocally, frameId, this, wrap);
         }
     }
 

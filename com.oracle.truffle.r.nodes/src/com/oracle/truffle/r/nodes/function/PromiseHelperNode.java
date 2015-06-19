@@ -114,6 +114,9 @@ public class PromiseHelperNode extends Node {
 
     @Child private PromiseHelperNode nextNode = null;
 
+    @Child private WrapArgumentNode wrapNode;
+    private final BranchProfile shouldWrap = BranchProfile.create();
+
     private final ValueProfile optTypeProfile = ValueProfile.createIdentityProfile();
     private final ValueProfile varArgsOptTypeProfile = ValueProfile.createIdentityProfile();
     private final ValueProfile isValidAssumptionProfile = ValueProfile.createIdentityProfile();
@@ -289,7 +292,11 @@ public class PromiseHelperNode extends Node {
             Assumption eagerAssumption = promise.getIsValidAssumption();
             if (eagerAssumption.isValid()) {
                 if (optType == OptType.EAGER) {
-                    return promise.getEagerValue();
+                    Object o = promise.getEagerValue();
+                    if (promise.shouldWrap()) {
+                        Utils.transitionStateSlowPath(o);
+                    }
+                    return o;
                 } else {
                     assert optType == OptType.PROMISED;
                     RPromise nextPromise = (RPromise) promise.getEagerValue();
@@ -380,8 +387,17 @@ public class PromiseHelperNode extends Node {
     /**
      * Returns {@link EagerPromise#getEagerValue()} profiled.
      */
-    public Object getEagerValue(EagerPromise promise) {
-        return eagerValueProfile.profile(promise.getEagerValue());
+    private Object getEagerValue(EagerPromise promise) {
+        Object o = promise.getEagerValue();
+        if (promise.shouldWrap()) {
+            shouldWrap.enter();
+            if (wrapNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                wrapNode = insert(WrapArgumentNode.create());
+            }
+            wrapNode.execute(o);
+        }
+        return eagerValueProfile.profile(o);
     }
 
     /**

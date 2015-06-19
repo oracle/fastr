@@ -280,6 +280,7 @@ public class RPromise extends RLanguageRep implements RTypedValue {
         private final Assumption notChangedNonLocally;
         private final int frameId;
         private final EagerFeedback feedback;
+        private final boolean wrap;
 
         /**
          * Set to <code>true</code> by {@link #deoptimize()}. If this is true, the
@@ -287,13 +288,14 @@ public class RPromise extends RLanguageRep implements RTypedValue {
          */
         private boolean deoptimized = false;
 
-        EagerPromise(PromiseType type, OptType optType, Closure closure, Object eagerValue, Assumption notChangedNonLocally, int nFrameId, EagerFeedback feedback) {
+        EagerPromise(PromiseType type, OptType optType, Closure closure, Object eagerValue, Assumption notChangedNonLocally, int nFrameId, EagerFeedback feedback, boolean wrap) {
             super(type, optType, (MaterializedFrame) null, closure);
             assert type != PromiseType.NO_ARG;
             this.eagerValue = eagerValue;
             this.notChangedNonLocally = notChangedNonLocally;
             this.frameId = nFrameId;
             this.feedback = feedback;
+            this.wrap = wrap;
         }
 
         /**
@@ -338,6 +340,10 @@ public class RPromise extends RLanguageRep implements RTypedValue {
 
         public void notifyFailure() {
             feedback.onFailure(this);
+        }
+
+        public boolean shouldWrap() {
+            return wrap;
         }
     }
 
@@ -413,12 +419,12 @@ public class RPromise extends RLanguageRep implements RTypedValue {
          *            until evaluation
          * @return An {@link EagerPromise}
          */
-        public RPromise createEagerSuppliedPromise(Object eagerValue, Assumption notChangedNonLocally, int nFrameId, EagerFeedback feedback) {
-            return RDataFactory.createEagerPromise(type, OptType.EAGER, exprClosure, eagerValue, notChangedNonLocally, nFrameId, feedback);
+        public RPromise createEagerSuppliedPromise(Object eagerValue, Assumption notChangedNonLocally, int nFrameId, EagerFeedback feedback, boolean wrap) {
+            return RDataFactory.createEagerPromise(type, OptType.EAGER, exprClosure, eagerValue, notChangedNonLocally, nFrameId, feedback, wrap);
         }
 
         public RPromise createPromisedPromise(RPromise promisedPromise, Assumption notChangedNonLocally, int nFrameId, EagerFeedback feedback) {
-            return RDataFactory.createEagerPromise(type, OptType.PROMISED, exprClosure, promisedPromise, notChangedNonLocally, nFrameId, feedback);
+            return RDataFactory.createEagerPromise(type, OptType.PROMISED, exprClosure, promisedPromise, notChangedNonLocally, nFrameId, feedback, false);
         }
 
         public RPromise createVarargPromise(RPromise promisedVararg) {

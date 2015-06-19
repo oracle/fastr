@@ -369,8 +369,9 @@ public final class RDataFactory {
         return traceDataCreated(new RPromise(type, opt, expr, argumentValue));
     }
 
-    public static RPromise createEagerPromise(PromiseType type, OptType eager, Closure exprClosure, Object eagerValue, Assumption notChangedNonLocally, int nFrameId, EagerFeedback feedback) {
-        return traceDataCreated(new RPromise.EagerPromise(type, eager, exprClosure, eagerValue, notChangedNonLocally, nFrameId, feedback));
+    public static RPromise createEagerPromise(PromiseType type, OptType eager, Closure exprClosure, Object eagerValue, Assumption notChangedNonLocally, int nFrameId, EagerFeedback feedback,
+                    boolean wrap) {
+        return traceDataCreated(new RPromise.EagerPromise(type, eager, exprClosure, eagerValue, notChangedNonLocally, nFrameId, feedback, wrap));
     }
 
     public static RPromise createVarargPromise(PromiseType type, RPromise promisedVararg, Closure exprClosure) {

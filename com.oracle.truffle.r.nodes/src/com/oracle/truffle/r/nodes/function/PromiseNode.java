@@ -102,7 +102,7 @@ public abstract class PromiseNode extends RNode {
             } else
 
             if (!isVararg(expr) && !noOpt && isOptimizableVariable(expr)) {
-                pn = new OptVariableSuppliedPromiseNode(factory, (ReadVariableNode) expr, arg == expr ? null : WrapArgumentNode.create());
+                pn = new OptVariableSuppliedPromiseNode(factory, (ReadVariableNode) expr, arg != expr);
             }
 
 // if (isOptimizableExpression(expr)) {
@@ -157,8 +157,8 @@ public abstract class PromiseNode extends RNode {
      */
     private static final class OptVariableSuppliedPromiseNode extends OptVariablePromiseBaseNode {
 
-        public OptVariableSuppliedPromiseNode(RPromiseFactory factory, ReadVariableNode rvn, WrapArgumentNode wrapNode) {
-            super(factory, rvn, wrapNode);
+        public OptVariableSuppliedPromiseNode(RPromiseFactory factory, ReadVariableNode rvn, boolean wrap) {
+            super(factory, rvn, wrap);
         }
 
         @Override
