@@ -44,6 +44,7 @@ public abstract class WrapArgumentBaseNode extends RNode implements RSyntaxNode 
     protected final BranchProfile everSeenNonTemporary;
 
     protected final BranchProfile shareable;
+    protected final BranchProfile nonShareable;
 
     protected WrapArgumentBaseNode(RNode operand, boolean initProfiles) {
         this.operand = operand;
@@ -55,6 +56,7 @@ public abstract class WrapArgumentBaseNode extends RNode implements RSyntaxNode 
             everSeenTemporary = BranchProfile.create();
             everSeenNonTemporary = BranchProfile.create();
             shareable = BranchProfile.create();
+            nonShareable = BranchProfile.create();
         } else {
             everSeenShared = null;
             everSeenTemporary = null;
@@ -63,6 +65,7 @@ public abstract class WrapArgumentBaseNode extends RNode implements RSyntaxNode 
             everSeenDataFrame = null;
             everSeenFactor = null;
             shareable = null;
+            nonShareable = null;
         }
     }
 
@@ -77,6 +80,7 @@ public abstract class WrapArgumentBaseNode extends RNode implements RSyntaxNode 
             everSeenFactor.enter();
             return ((RFactor) result).getVector();
         } else {
+            nonShareable.enter();
             return null;
         }
     }
