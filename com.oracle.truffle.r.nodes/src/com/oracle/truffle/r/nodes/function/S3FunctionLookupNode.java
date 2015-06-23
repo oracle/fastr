@@ -14,13 +14,17 @@ import java.util.*;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.access.variables.*;
+import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode.ReadKind;
+import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseCheckHelperNode;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.env.*;
 
 public abstract class S3FunctionLookupNode extends Node {
     protected static final int MAX_CACHE_DEPTH = 3;
@@ -56,100 +60,135 @@ public abstract class S3FunctionLookupNode extends Node {
         return new UseMethodFunctionLookupUninitializedNode(throwsError, nextMethod);
     }
 
+    @FunctionalInterface
+    private interface LookupOperation {
+        Object read(MaterializedFrame frame, String name, boolean inMethodsTable);
+    }
+
+    @FunctionalInterface
+    private interface GetMethodsTable {
+        Object get();
+    }
+
+    @TruffleBoundary
+    private static Result performLookup(MaterializedFrame callerFrame, String genericName, String groupName, RStringVector type, boolean nextMethod, LookupOperation op, GetMethodsTable getTable) {
+        Result result;
+        // look for a generic function reachable from the caller frame
+        if ((result = lookupClassGenerics(callerFrame, genericName, groupName, type, nextMethod, false, op)) != null) {
+            return result;
+        }
+        Object methodsTable = getTable.get();
+        if (methodsTable instanceof RPromise) {
+            methodsTable = PromiseHelperNode.evaluateSlowPath(null, (RPromise) methodsTable);
+        }
+        MaterializedFrame methodsTableFrame = methodsTable == null ? null : ((REnvironment) methodsTable).getFrame();
+
+        if (methodsTableFrame != null) {
+            // look for a generic function in the methods table
+            if ((result = lookupClassGenerics(methodsTableFrame, genericName, groupName, type, nextMethod, true, op)) != null) {
+                return result;
+            }
+        }
+        // look for the default method
+        String functionName = genericName + RRuntime.RDOT + RRuntime.DEFAULT;
+        RFunction function = checkPromise(op.read(callerFrame, functionName, false));
+        if (function == null && methodsTableFrame != null) {
+            function = checkPromise(op.read(methodsTableFrame, functionName, true));
+        }
+        if (function != null) {
+            return new Result(genericName, function, RNull.instance, functionName, false);
+        }
+        return null;
+    }
+
+    private static Result lookupClassGenerics(MaterializedFrame callerFrame, String genericName, String groupName, RStringVector type, boolean nextMethod, boolean inMethodsTable, LookupOperation op) {
+        Result result = null;
+        for (int i = nextMethod ? 1 : 0; i < type.getLength(); i++) {
+            String clazzName = type.getDataAt(i);
+            boolean groupMatch = false;
+
+            String functionName = genericName + RRuntime.RDOT + type.getDataAt(i);
+            RFunction function = checkPromise(op.read(callerFrame, functionName, inMethodsTable));
+
+            if (function == null && groupName != null) {
+                groupMatch = true;
+                functionName = groupName + RRuntime.RDOT + clazzName;
+                function = checkPromise(op.read(callerFrame, functionName, inMethodsTable));
+            }
+
+            if (function != null) {
+                Object dispatchType;
+                if (i == 0) {
+                    dispatchType = type.copyResized(type.getLength(), false);
+                } else {
+                    RStringVector clazz = RDataFactory.createStringVector(Arrays.copyOfRange(type.getDataWithoutCopying(), i, type.getLength()), true);
+                    clazz.setAttr(RRuntime.PREVIOUS_ATTR_KEY, type.copyResized(type.getLength(), false));
+                    dispatchType = clazz;
+                }
+                result = new Result(genericName, function, dispatchType, functionName, groupMatch);
+                break;
+            }
+        }
+        return result;
+    }
+
+    private static RFunction checkPromise(Object value) {
+        if (value instanceof RPromise) {
+            return (RFunction) PromiseHelperNode.evaluateSlowPath(null, (RPromise) value);
+        } else {
+            return (RFunction) value;
+        }
+    }
+
     public abstract S3FunctionLookupNode.Result execute(VirtualFrame frame, String genericName, RStringVector type, String group, MaterializedFrame callerFrame, MaterializedFrame genericDefFrame);
 
     private static UseMethodFunctionLookupCachedNode specialize(String genericName, RStringVector type, String group, MaterializedFrame callerFrame, MaterializedFrame genericDefFrame,
                     S3FunctionLookupNode next) {
-        // look for a match in the caller frame hierarchy
-        TargetLookupResult result = findTargetFunctionLookup(callerFrame, type, genericName, group, true, next.nextMethod);
-        ReadVariableNode[] unsuccessfulReadsCaller = result.unsuccessfulReads;
-        ReadVariableNode[] unsuccessfulReadsDef = null;
-        if (result.successfulRead == null) {
-            if (genericDefFrame != null) {
-                // look for a match in the generic def frame hierarchy
-                result = findTargetFunctionLookup(genericDefFrame, type, genericName, group, true, next.nextMethod);
-                unsuccessfulReadsDef = result.unsuccessfulReads;
-            }
+        ArrayList<ReadVariableNode> unsuccessfulReadsCaller = new ArrayList<>();
+        ArrayList<ReadVariableNode> unsuccessfulReadsTable = new ArrayList<>();
+        class SuccessfulReads {
+            ReadVariableNode successfulRead;
+            boolean successfulReadIsTable;
+            ReadVariableNode methodsTableRead;
         }
-        RFunction builtin = null;
-        if (next.throwsError && result.successfulRead == null) {
-            builtin = RContext.lookupBuiltin(genericName);
-        }
+        SuccessfulReads reads = new SuccessfulReads();
 
-        UseMethodFunctionLookupCachedNode cachedNode = new UseMethodFunctionLookupCachedNode(next.throwsError, next.nextMethod, genericName, type, group, builtin, unsuccessfulReadsCaller,
-                        unsuccessfulReadsDef, result.successfulRead, result.targetFunction, result.clazz, result.targetFunctionName, result.groupMatch, next);
-        return cachedNode;
-    }
-
-    protected static final class TargetLookupResult {
-        public final ReadVariableNode[] unsuccessfulReads;
-        public final ReadVariableNode successfulRead;
-        public final RFunction targetFunction;
-        public final String targetFunctionName;
-        public final Object clazz;
-        public final boolean groupMatch;
-
-        public TargetLookupResult(ReadVariableNode[] unsuccessfulReads, ReadVariableNode successfulRead, RFunction targetFunction, String targetFunctionName, Object clazz, boolean groupMatch) {
-            this.unsuccessfulReads = unsuccessfulReads;
-            this.successfulRead = successfulRead;
-            this.targetFunction = targetFunction;
-            this.targetFunctionName = targetFunctionName;
-            this.clazz = clazz;
-            this.groupMatch = groupMatch;
-        }
-    }
-
-    protected static TargetLookupResult findTargetFunctionLookup(Frame lookupFrame, RStringVector type, String genericName, String groupName, boolean createReadVariableNodes, boolean nextMethod) {
-        CompilerAsserts.neverPartOfCompilation();
-        ArrayList<ReadVariableNode> unsuccessfulReads = createReadVariableNodes ? new ArrayList<>() : null;
-
-        for (int i = nextMethod ? 1 : 0; i <= type.getLength(); i++) {
-            String clazzName = i == type.getLength() ? RRuntime.DEFAULT : type.getDataAt(i);
-            String functionName = genericName + RRuntime.RDOT + clazzName;
-            TargetLookupResult lookupResult = lookupFunction(lookupFrame, type, createReadVariableNodes, unsuccessfulReads, i, functionName, false);
-            if (lookupResult == null && groupName != null) {
-                functionName = groupName + RRuntime.RDOT + clazzName;
-                lookupResult = lookupFunction(lookupFrame, type, createReadVariableNodes, unsuccessfulReads, i, functionName, true);
-            }
-            if (lookupResult != null) {
-                return lookupResult;
-            }
-        }
-        if (createReadVariableNodes) {
-            return new TargetLookupResult(unsuccessfulReads.toArray(new ReadVariableNode[unsuccessfulReads.size()]), null, null, null, null, false);
-        } else {
-            return null;
-        }
-    }
-
-    private static TargetLookupResult lookupFunction(Frame lookupFrame, RStringVector type, boolean createReadVariableNodes, ArrayList<ReadVariableNode> unsuccessfulReads, int i, String functionName,
-                    boolean groupMatch) {
-        ReadVariableNode rvn;
-        RFunction function;
-        if (createReadVariableNodes) {
-            rvn = ReadVariableNode.createFunctionLookup(null, functionName, false);
-            function = (RFunction) rvn.execute(null, lookupFrame);
-        } else {
-            rvn = null;
-            function = ReadVariableNode.lookupFunction(functionName, lookupFrame);
-        }
-        if (function != null) {
-            ReadVariableNode[] array = createReadVariableNodes ? unsuccessfulReads.toArray(new ReadVariableNode[unsuccessfulReads.size()]) : null;
-            if (i == 0) {
-                return new TargetLookupResult(array, rvn, function, functionName, type.copyResized(type.getLength(), false), groupMatch);
-            } else if (i == type.getLength()) {
-                return new TargetLookupResult(array, rvn, function, functionName, RNull.instance, groupMatch);
+        LookupOperation op = (lookupFrame, name, inMethodsTable) -> {
+            ReadVariableNode read = ReadVariableNode.create(name, RType.Function, inMethodsTable ? ReadKind.SilentLocal : ReadKind.Silent);
+            Object result = read.execute(null, lookupFrame);
+            if (result == null) {
+                (inMethodsTable ? unsuccessfulReadsTable : unsuccessfulReadsCaller).add(read);
             } else {
-                RStringVector clazz = RDataFactory.createStringVector(Arrays.copyOfRange(type.getDataWithoutCopying(), i, type.getLength()), true);
-                clazz.setAttr(RRuntime.PREVIOUS_ATTR_KEY, type.copyResized(type.getLength(), false));
-                return new TargetLookupResult(array, rvn, function, functionName, clazz, groupMatch);
+                reads.successfulRead = read;
+                if (inMethodsTable) {
+                    reads.successfulReadIsTable = true;
+                }
             }
+            return result;
+        };
+
+        GetMethodsTable getTable = () -> {
+            if (genericDefFrame != null) {
+                reads.methodsTableRead = ReadVariableNode.create(RRuntime.RS3MethodsTable, RType.Any, ReadKind.SilentLocal);
+                return reads.methodsTableRead.execute(null, genericDefFrame);
+            } else {
+                return null;
+            }
+        };
+
+        Result result = performLookup(callerFrame, genericName, group, type, next.nextMethod, op, getTable);
+
+        UseMethodFunctionLookupCachedNode cachedNode;
+
+        if (result != null) {
+            cachedNode = new UseMethodFunctionLookupCachedNode(next.throwsError, next.nextMethod, genericName, type, group, null, unsuccessfulReadsCaller, unsuccessfulReadsTable,
+                            reads.methodsTableRead, reads.successfulRead, reads.successfulReadIsTable, result.function, result.clazz, result.targetFunctionName, result.groupMatch, next);
         } else {
-            if (createReadVariableNodes) {
-                unsuccessfulReads.add(rvn);
-            }
-            return null;
+            RFunction builtin = next.throwsError ? builtin = RContext.lookupBuiltin(genericName) : null;
+            cachedNode = new UseMethodFunctionLookupCachedNode(next.throwsError, next.nextMethod, genericName, type, group, builtin, unsuccessfulReadsCaller, unsuccessfulReadsTable,
+                            reads.methodsTableRead, null, false, null, null, null, false, next);
         }
+        return cachedNode;
     }
 
     @NodeInfo(cost = NodeCost.UNINITIALIZED)
@@ -178,6 +217,7 @@ public abstract class S3FunctionLookupNode extends Node {
 
         @CompilationFinal private final String[] cachedTypeContents;
         @Children private final ReadVariableNode[] unsuccessfulReadsCallerFrame;
+        @Child private ReadVariableNode readS3MethodsTable;
         @Children private final ReadVariableNode[] unsuccessfulReadsDefFrame;
         // if unsuccessfulReadsDefFrame != null, then this read will go to the def frame
         @Child private ReadVariableNode successfulRead;
@@ -194,20 +234,23 @@ public abstract class S3FunctionLookupNode extends Node {
         private final BranchProfile notIdentityEqualElements = BranchProfile.create();
         private final String cachedGroup;
         private final RFunction builtin;
+        private final boolean successfulReadIsTable;
 
         public UseMethodFunctionLookupCachedNode(boolean throwsError, boolean nextMethod, String genericName, RStringVector type, String group, RFunction builtin,
-                        ReadVariableNode[] unsuccessfulReadsCaller, ReadVariableNode[] unsuccessfulReadsDef, ReadVariableNode successfulRead, RFunction function, Object clazz,
-                        String targetFunctionName, boolean groupMatch, S3FunctionLookupNode next) {
+                        List<ReadVariableNode> unsuccessfulReadsCaller, List<ReadVariableNode> unsuccessfulReadsDef, ReadVariableNode readS3MethodsTable, ReadVariableNode successfulRead,
+                        boolean successfulReadIsTable, RFunction function, Object clazz, String targetFunctionName, boolean groupMatch, S3FunctionLookupNode next) {
             super(throwsError, nextMethod);
             this.cachedGenericName = genericName;
             this.cachedGroup = group;
             this.builtin = builtin;
+            this.readS3MethodsTable = readS3MethodsTable;
             this.next = next;
             this.cachedType = type;
             this.cachedTypeContents = type.getDataCopy();
-            this.unsuccessfulReadsCallerFrame = unsuccessfulReadsCaller;
-            this.unsuccessfulReadsDefFrame = unsuccessfulReadsDef;
+            this.unsuccessfulReadsCallerFrame = unsuccessfulReadsCaller.toArray(new ReadVariableNode[unsuccessfulReadsCaller.size()]);
+            this.unsuccessfulReadsDefFrame = unsuccessfulReadsDef.toArray(new ReadVariableNode[unsuccessfulReadsDef.size()]);
             this.successfulRead = successfulRead;
+            this.successfulReadIsTable = successfulReadIsTable;
             this.result = new Result(genericName, function != null ? function : builtin, clazz, targetFunctionName, groupMatch);
         }
 
@@ -220,11 +263,13 @@ public abstract class S3FunctionLookupNode extends Node {
                 if (!executeReads(unsuccessfulReadsCallerFrame, callerFrame)) {
                     break;
                 }
-                if (unsuccessfulReadsDefFrame != null && !executeReads(unsuccessfulReadsDefFrame, genericDefFrame)) {
+                REnvironment methodsTable;
+                methodsTable = readS3MethodsTable == null ? null : (REnvironment) readS3MethodsTable.execute(frame, genericDefFrame);
+                if (methodsTable != null && !executeReads(unsuccessfulReadsDefFrame, methodsTable.getFrame())) {
                     break;
                 }
                 if (successfulRead != null) {
-                    Object actualFunction = successfulRead.execute(null, unsuccessfulReadsDefFrame == null ? callerFrame : genericDefFrame);
+                    Object actualFunction = successfulRead.execute(null, successfulReadIsTable ? methodsTable.getFrame() : callerFrame);
                     if (actualFunction != result.function) {
                         break;
                     }
@@ -296,22 +341,36 @@ public abstract class S3FunctionLookupNode extends Node {
 
         @Override
         public Result execute(VirtualFrame frame, String genericName, RStringVector type, String group, MaterializedFrame callerFrame, MaterializedFrame genericDefFrame) {
-            TargetLookupResult lookupResult = findTargetFunctionLookup(callerFrame, type, genericName, group, false, nextMethod);
-            if (lookupResult == null) {
-                lookupResult = findTargetFunctionLookup(genericDefFrame, type, genericName, group, false, nextMethod);
-                if (lookupResult == null) {
-                    if (throwsError) {
-                        RFunction function = RContext.lookupBuiltin(genericName);
-                        if (function != null) {
-                            return new Result(genericName, function, RNull.instance, genericName, false);
-                        }
-                        throw RError.error(getEncapsulatingSourceSection(), RError.Message.UNKNOWN_FUNCTION_USE_METHOD, genericName, RRuntime.toString(type));
-                    } else {
-                        throw S3FunctionLookupNode.NoGenericMethodException.instance;
+            LookupOperation op = (lookupFrame, name, inMethodsTable) -> {
+                return ReadVariableNode.lookupFunction(name, lookupFrame, inMethodsTable);
+            };
+
+            GetMethodsTable getTable = () -> {
+                FrameSlot slot = genericDefFrame == null ? null : genericDefFrame.getFrameDescriptor().findFrameSlot(RRuntime.RS3MethodsTable);
+                if (slot == null) {
+                    return null;
+                }
+                try {
+                    return genericDefFrame.getObject(slot);
+                } catch (FrameSlotTypeException e) {
+                    throw RInternalError.shouldNotReachHere();
+                }
+            };
+
+            Result result = performLookup(callerFrame, genericName, group, type, nextMethod, op, getTable);
+
+            if (result == null) {
+                if (throwsError) {
+                    RFunction function = RContext.lookupBuiltin(genericName);
+                    if (function != null) {
+                        return new Result(genericName, function, RNull.instance, genericName, false);
                     }
+                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.UNKNOWN_FUNCTION_USE_METHOD, genericName, RRuntime.toString(type));
+                } else {
+                    throw S3FunctionLookupNode.NoGenericMethodException.instance;
                 }
             }
-            return new Result(genericName, lookupResult.targetFunction, lookupResult.clazz, lookupResult.targetFunctionName, lookupResult.groupMatch);
+            return result;
         }
     }
 

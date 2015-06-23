@@ -43,7 +43,7 @@ public abstract class Recall extends RBuiltinNode {
 
     private final BranchProfile errorProfile = BranchProfile.create();
 
-    @Child private ReadVariableNode readArgs = ReadVariableNode.create(ArgumentsSignature.VARARG_NAME, RType.Any, ReadKind.SilentLocal);
+    @Child private ReadVariableNode readArgs = ReadVariableNode.create(ArgumentsSignature.VARARG_NAME, RType.Any, ReadKind.UnforcedSilentLocal);
     @Child private CallMatcherNode call = CallMatcherNode.create(false, false);
 
     @Specialization

@@ -135,11 +135,11 @@ public abstract class S3DispatchFunctions extends RBuiltinNode {
     @RBuiltin(name = "NextMethod", kind = SUBSTITUTE, parameterNames = {"generic", "object", "..."})
     public abstract static class NextMethod extends S3DispatchFunctions {
 
-        @Child private ReadVariableNode rvnGroup = ReadVariableNode.create(RRuntime.RDotGroup, RType.Character, ReadKind.SilentLocal);
-        @Child private ReadVariableNode rvnClass = ReadVariableNode.create(RRuntime.RDotClass, RType.Character, ReadKind.SilentLocal);
-        @Child private ReadVariableNode rvnGeneric = ReadVariableNode.create(RRuntime.RDotGeneric, RType.Character, ReadKind.SilentLocal);
-        @Child private ReadVariableNode rvnCall = ReadVariableNode.create(RRuntime.RDotGenericCallEnv, RType.Any, ReadKind.SilentLocal);
-        @Child private ReadVariableNode rvnDef = ReadVariableNode.create(RRuntime.RDotGenericDefEnv, RType.Any, ReadKind.SilentLocal);
+        @Child private ReadVariableNode rvnGroup = ReadVariableNode.create(RRuntime.RDotGroup, RType.Character, ReadKind.UnforcedSilentLocal);
+        @Child private ReadVariableNode rvnClass = ReadVariableNode.create(RRuntime.RDotClass, RType.Character, ReadKind.UnforcedSilentLocal);
+        @Child private ReadVariableNode rvnGeneric = ReadVariableNode.create(RRuntime.RDotGeneric, RType.Character, ReadKind.UnforcedSilentLocal);
+        @Child private ReadVariableNode rvnCall = ReadVariableNode.create(RRuntime.RDotGenericCallEnv, RType.Any, ReadKind.UnforcedSilentLocal);
+        @Child private ReadVariableNode rvnDef = ReadVariableNode.create(RRuntime.RDotGenericDefEnv, RType.Any, ReadKind.UnforcedSilentLocal);
 
         @Child private CombineSignaturesNode combineSignatures;
         @Child private CollectArgumentsNode collectArguments = CollectArgumentsNodeGen.create();

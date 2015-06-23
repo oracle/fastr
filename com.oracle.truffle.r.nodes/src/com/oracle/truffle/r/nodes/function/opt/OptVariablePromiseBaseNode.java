@@ -48,7 +48,7 @@ public abstract class OptVariablePromiseBaseNode extends PromiseNode implements 
         assert rvn.getKind() != ReadKind.Forced;  // Should be caught by optimization check
         this.originalRvn = rvn;
         this.frameSlotNode = FrameSlotNode.create(rvn.getIdentifier(), false);
-        this.readNode = ReadVariableNode.create(rvn.getIdentifier(), rvn.getMode(), ReadKind.SilentLocal);
+        this.readNode = ReadVariableNode.create(rvn.getIdentifier(), rvn.getMode(), ReadKind.UnforcedSilentLocal);
         this.wrap = wrap;
     }
 

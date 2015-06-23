@@ -104,6 +104,8 @@ public class RRuntime {
 
     public static final int LEN_METHOD_NAME = 512;
 
+    public static final String RS3MethodsTable = ".__S3MethodsTable__.";
+
     public static final String RDotGeneric = ".Generic";
 
     public static final String RDotMethod = ".Method";

@@ -262,7 +262,7 @@ public abstract class RCallNode extends RNode implements RSyntaxNode {
     }
 
     public static RCallNode createOpCall(SourceSection src, SourceSection opNameSrc, String function, CallArgumentsNode arguments, ASTNode parserNode) {
-        return RCallNode.createCall(src, ReadVariableNode.createFunctionLookup(opNameSrc, function, true), arguments, parserNode);
+        return RCallNode.createCall(src, ReadVariableNode.createFunctionLookup(opNameSrc, function), arguments, parserNode);
     }
 
     /**

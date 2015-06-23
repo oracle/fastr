@@ -56,6 +56,7 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
         Super,
         // lookup only within the current frame
         SilentLocal,
+        UnforcedSilentLocal,
         // whether a promise should be forced to check its type or not
         Forced;
     }
@@ -79,8 +80,8 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
      * be thrown if the specified function is not found, if throwError is false, a {@code null}
      * value will silently be returned.
      */
-    public static ReadVariableNode createFunctionLookup(SourceSection src, String identifier, boolean throwError) {
-        ReadVariableNode result = new ReadVariableNode(identifier, RType.Function, throwError ? ReadKind.Normal : ReadKind.Silent);
+    public static ReadVariableNode createFunctionLookup(SourceSection src, String identifier) {
+        ReadVariableNode result = new ReadVariableNode(identifier, RType.Function, ReadKind.Normal);
         result.assignSourceSection(src);
         return result;
     }
@@ -206,7 +207,7 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
         if (needsCopying && copyProfile.profile(result instanceof RAbstractVector)) {
             result = ((RAbstractVector) result).copy();
         }
-        if (kind != ReadKind.SilentLocal && isPromiseProfile.profile(result instanceof RPromise)) {
+        if (kind != ReadKind.UnforcedSilentLocal && isPromiseProfile.profile(result instanceof RPromise)) {
             if (promiseHelper == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 promiseHelper = insert(new PromiseHelperNode());
@@ -256,7 +257,7 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
         @Override
         public Object execute(VirtualFrame frame, Frame variableFrame) throws InvalidAssumptionException, LayoutChangedException, FrameSlotTypeException {
             Object value = profiledGetValue(variableFrame, slot);
-            if (kind == ReadKind.SilentLocal && value == RMissing.instance) {
+            if ((kind == ReadKind.UnforcedSilentLocal || kind == ReadKind.SilentLocal) && value == RMissing.instance) {
                 return null;
             }
             if (checkType(frame, value, isNullProfile)) {
@@ -304,7 +305,7 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
         @Override
         public Object execute(VirtualFrame frame, Frame variableFrame) throws LayoutChangedException, FrameSlotTypeException {
             Object value = profiledGetValue(variableFrame, slot);
-            if (kind == ReadKind.SilentLocal && value == RMissing.instance) {
+            if ((kind == ReadKind.UnforcedSilentLocal || kind == ReadKind.SilentLocal) && value == RMissing.instance) {
                 return null;
             }
             if (!checkType(frame, value, isNullProfile)) {
@@ -323,7 +324,7 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
 
         @Override
         public Object execute(VirtualFrame frame) {
-            if (kind == ReadKind.Silent || kind == ReadKind.SilentLocal) {
+            if (kind == ReadKind.Silent || kind == ReadKind.SilentLocal || kind == ReadKind.UnforcedSilentLocal) {
                 return null;
             } else {
                 throw RError.error(mode == RType.Function ? RError.Message.UNKNOWN_FUNCTION : RError.Message.UNKNOWN_OBJECT, identifier);
@@ -462,7 +463,7 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
             if (frameSlot != null) {
                 Object value = getValue(current, frameSlot);
                 valueAssumption = FrameSlotChangeMonitor.getStableValueAssumption(currentDescriptor, frameSlot, value);
-                if (kind == ReadKind.SilentLocal && value == RMissing.instance) {
+                if (kind == ReadKind.UnforcedSilentLocal && value == RMissing.instance) {
                     match = false;
                 } else {
                     match = checkTypeSlowPath(frame, value);
@@ -479,7 +480,7 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
 
             current = next;
             currentDescriptor = nextDescriptor;
-        } while (kind != ReadKind.SilentLocal && current != null && !match);
+        } while (kind != ReadKind.UnforcedSilentLocal && current != null && !match);
 
         FrameLevel lastLevel = null;
 
@@ -544,7 +545,7 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
     }
 
     @TruffleBoundary
-    public static RFunction lookupFunction(String identifier, Frame variableFrame) {
+    public static RFunction lookupFunction(String identifier, Frame variableFrame, boolean localOnly) {
         Frame current = variableFrame;
         do {
             // see if the current frame has a value of the given name
@@ -569,6 +570,9 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
                         return (RFunction) value;
                     }
                 }
+            }
+            if (localOnly) {
+                return null;
             }
             current = RArguments.getEnclosingFrame(current);
         } while (current != null);

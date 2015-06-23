@@ -49,7 +49,7 @@ public abstract class CollectArgumentsNode extends Node {
             if (arg instanceof RPromise && ((RPromise) arg).isDefault()) {
                 reads[i] = ConstantNode.create(RMissing.instance);
             } else {
-                reads[i] = ReadVariableNode.create(signature.getName(i), RType.Any, ReadKind.SilentLocal);
+                reads[i] = ReadVariableNode.create(signature.getName(i), RType.Any, ReadKind.UnforcedSilentLocal);
             }
         }
         return reads;
