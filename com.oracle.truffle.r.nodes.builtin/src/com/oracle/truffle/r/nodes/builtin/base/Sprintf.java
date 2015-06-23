@@ -241,9 +241,9 @@ public abstract class Sprintf extends RBuiltinNode {
                 if (fi.precision != 0 || fi.precisionIsArg) {
                     sb.append('.').append(intString(p));
                 }
+                conversions[fi.numArg - 1] = fi.conversion;
             }
             sb.append(fi.conversion);
-            conversions[fi.numArg - 1] = fi.conversion;
             i = fi.nextChar;
         }
 
@@ -394,7 +394,7 @@ public abstract class Sprintf extends RBuiltinNode {
         }
         fi.conversion = c;
         fi.nextChar = j + 1;
-        if (fi.numArg == 0) {
+        if (fi.numArg == 0 && c != '%') {
             // no arg explicitly given, use args array
             fi.numArg = fi.argc++;
         }
