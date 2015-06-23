@@ -79,6 +79,11 @@ public abstract class DotC extends RBuiltinNode {
         return RDataFactory.createStringVector(listArgNames, RDataFactory.COMPLETE_VECTOR);
     }
 
+    @Specialization
+    protected RList c(RList f, RArgsValuesAndNames args, byte naok, byte dup, RMissing rPackage, RMissing encoding) {
+        return c(RRuntime.asString(f.getDataAt(0)), args, naok, dup, rPackage, encoding);
+    }
+
     @SuppressWarnings("unused")
     @Specialization
     protected RList c(String f, RArgsValuesAndNames args, byte naok, byte dup, RMissing rPackage, RMissing encoding) {
@@ -125,8 +130,8 @@ public abstract class DotC extends RBuiltinNode {
                 errorProfile.enter();
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.UNIMPLEMENTED_ARG_TYPE, i + 1);
             }
-            RFFIFactory.getRFFI().getCRFFI().invoke(symbolInfo, nativeArgs);
         }
+        RFFIFactory.getRFFI().getCRFFI().invoke(symbolInfo, nativeArgs);
         // we have to assume that the native method updated everything
         RStringVector listNames = validateArgNames(argValues.length, getSuppliedSignature());
         Object[] results = new Object[argValues.length];
