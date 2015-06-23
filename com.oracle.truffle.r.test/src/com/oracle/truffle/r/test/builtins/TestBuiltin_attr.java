@@ -76,7 +76,7 @@ public class TestBuiltin_attr extends TestBase {
 
     @Test
     public void testattr13() {
-        assertEval(Ignored.Unknown, "argv <- list(quote(cbind(X, M) ~ 1), 'term.labels');attr(argv[[1]],argv[[2]]);");
+        assertEval("argv <- list(quote(cbind(X, M) ~ 1), 'term.labels');attr(argv[[1]],argv[[2]]);");
     }
 
     @Test
