@@ -33,7 +33,7 @@ import com.oracle.truffle.r.runtime.*;
  *
  * TODO The {@link SourceSection} attribute is suspicious for a runtime value.
  */
-public class RFormula extends RScalar {
+public final class RFormula extends RAttributeStorage implements RTypedValue {
 
     private final SourceSection source;
     private final Object response;
@@ -60,5 +60,10 @@ public class RFormula extends RScalar {
 
     public Object getModel() {
         return model;
+    }
+
+    @Override
+    public RStringVector getImplicitClass() {
+        return RDataFactory.createStringVector(RRuntime.CLASS_LANGUAGE);
     }
 }
