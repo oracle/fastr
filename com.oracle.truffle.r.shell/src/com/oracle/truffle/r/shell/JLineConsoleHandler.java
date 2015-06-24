@@ -55,13 +55,16 @@ public class JLineConsoleHandler implements RContext.ConsoleHandler {
     @TruffleBoundary
     public String readLine() {
         try {
+            console.getTerminal().init();
             String line = console.readLine();
             if (line != null) {
                 line += "\n";
             }
             return line;
-        } catch (IOException ex) {
-            throw Utils.fail("unexpected error reading console input");
+        } catch (UserInterruptException e) {
+            throw e;
+        } catch (Exception ex) {
+            throw Utils.fail("unexpected error reading console input: " + ex);
         }
     }
 
