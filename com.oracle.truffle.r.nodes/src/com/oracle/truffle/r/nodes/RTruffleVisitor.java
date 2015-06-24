@@ -137,9 +137,9 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
                 return GroupDispatchNode.create(functionName, aCallArgNode, callSource);
             }
             SourceSection varSource = ASTNode.adjustedSource(callSource, callSource.getCharIndex(), lhsLength);
-            return RCallNode.createCall(callSource, ReadVariableNode.createForced(varSource, functionName, RType.Function), aCallArgNode, callParam);
+            return RCallNode.createCall(callSource, ReadVariableNode.createForced(varSource, functionName, RType.Function), aCallArgNode);
         } else {
-            return RCallNode.createCall(callSource, lhs.asRNode(), aCallArgNode, callParam);
+            return RCallNode.createCall(callSource, lhs.asRNode(), aCallArgNode);
         }
     }
 
@@ -233,7 +233,7 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
             assert RGroupGenerics.getGroup(functionName) == RGroupGenerics.Ops;
             return GroupDispatchNode.create(functionName, aCallArgNode, op.getSource());
         }
-        return RCallNode.createOpCall(op.getSource(), null, functionName, aCallArgNode, op);
+        return RCallNode.createOpCall(op.getSource(), null, functionName, aCallArgNode);
     }
 
     @Override
@@ -254,7 +254,7 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
             String opName = op.getOperator().getName();
             int charIndex = code.indexOf(opName);
             SourceSection opNameSrc = opSrc.getSource().createSection(opSrc.getIdentifier(), opSrc.getCharIndex() + charIndex, opName.length());
-            return RCallNode.createOpCall(op.getSource(), opNameSrc, functionName, aCallArgNode, op);
+            return RCallNode.createOpCall(op.getSource(), opNameSrc, functionName, aCallArgNode);
         }
     }
 

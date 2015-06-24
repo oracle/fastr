@@ -207,22 +207,22 @@ public class RASTUtils {
             fn = ((ConstantNode) fn).getValue();
         }
         if (fn instanceof String) {
-            return RCallNode.createCall(null, RASTUtils.createReadVariableNode(((String) fn)), callArgsNode, null);
+            return RCallNode.createCall(null, RASTUtils.createReadVariableNode(((String) fn)), callArgsNode);
         } else if (fn instanceof ReadVariableNode) {
-            return RCallNode.createCall(null, (ReadVariableNode) fn, callArgsNode, null);
+            return RCallNode.createCall(null, (ReadVariableNode) fn, callArgsNode);
         } else if (fn instanceof GroupDispatchNode) {
             GroupDispatchNode gdcn = (GroupDispatchNode) fn;
             return GroupDispatchNode.create(gdcn.getGenericName(), callArgsNode, gdcn.getCallSrc());
         } else if (fn instanceof RFunction) {
             RFunction rfn = (RFunction) fn;
-            return RCallNode.createCall(null, ConstantNode.create(rfn), callArgsNode, null);
+            return RCallNode.createCall(null, ConstantNode.create(rfn), callArgsNode);
         } else if (fn instanceof RCallNode) {
-            return RCallNode.createCall(null, (RCallNode) fn, callArgsNode, null);
+            return RCallNode.createCall(null, (RCallNode) fn, callArgsNode);
         } else {
             // this of course would not make much sense if trying to evaluate this call, yet it's
             // syntactically possible, for example as a result of:
             // f<-function(x,y) sys.call(); x<-f(7, 42); x[c(2,3)]
-            return RCallNode.createCall(null, ConstantNode.create(fn), callArgsNode, null);
+            return RCallNode.createCall(null, ConstantNode.create(fn), callArgsNode);
         }
     }
 

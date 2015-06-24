@@ -579,6 +579,24 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
         return null;
     }
 
+    @TruffleBoundary
+    public static RArgsValuesAndNames lookupVarArgs(Frame variableFrame) {
+        Frame current = variableFrame;
+        do {
+            // see if the current frame has a value of the given name
+            FrameSlot frameSlot = current.getFrameDescriptor().findFrameSlot(ArgumentsSignature.VARARG_NAME);
+            if (frameSlot != null) {
+                Object value = current.getValue(frameSlot);
+
+                if (value != null) {
+                    return (RArgsValuesAndNames) value;
+                }
+            }
+            current = RArguments.getEnclosingFrame(current);
+        } while (current != null);
+        throw RError.error(RError.Message.ARGUMENT_MISSING, ArgumentsSignature.VARARG_NAME);
+    }
+
     private Object getValue(Frame variableFrame, FrameSlot frameSlot) {
         Object value = variableFrame.getValue(frameSlot);
         if (variableFrame.isObject(frameSlot)) {
