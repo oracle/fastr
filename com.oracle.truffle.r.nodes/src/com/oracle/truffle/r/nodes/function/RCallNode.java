@@ -160,9 +160,6 @@ public abstract class RCallNode extends RNode implements RSyntaxNode {
     private static final int FUNCTION_INLINE_CACHE_SIZE = 4;
     private static final int VARARGS_INLINE_CACHE_SIZE = 4;
 
-    protected RCallNode() {
-    }
-
     @Override
     public final Object execute(VirtualFrame frame) {
         return execute(frame, executeFunctionNode(frame));
@@ -287,7 +284,7 @@ public abstract class RCallNode extends RNode implements RSyntaxNode {
     }
 
     public static RCallNode createOpCall(SourceSection src, SourceSection opNameSrc, String function, CallArgumentsNode arguments, ASTNode parserNode) {
-        return RCallNode.createCall(src, ReadVariableNode.createFunctionLookup(opNameSrc, function), arguments, parserNode);
+        return createCall(src, ReadVariableNode.createFunctionLookup(opNameSrc, function), arguments, parserNode);
     }
 
     /**
@@ -354,54 +351,6 @@ public abstract class RCallNode extends RNode implements RSyntaxNode {
             return ((RRootNode) root).needsSplitting();
         }
         return false;
-    }
-
-    /**
-     * This is the counterpart of {@link RCallNode}: While that is the base class for all top-level
-     * nodes (C, G, U and GV), this is the base class for all nodes not on the top level of the PIC
-     * (and thus don't need all information, but can rely on their parents to have them).
-     *
-     * @see RCallNode
-     */
-    public abstract static class LeafCallNode extends Node {
-
-        public abstract Object execute(VirtualFrame frame, RFunction function);
-    }
-
-    /**
-     * [C] Extracts the check for function call target identity away from the individual cache
-     * nodes.
-     *
-     * @see RCallNode
-     */
-    public static final class CachedCallNode extends RCallNode {
-
-        @Child private RCallNode nextNode;
-        @Child private LeafCallNode currentNode;
-        private final CallTarget cachedCallTarget;
-
-        public CachedCallNode(RNode function, LeafCallNode current, RCallNode next, RFunction cachedFunction) {
-            super(function, null);  // Relies on the getArguments redirect below
-            this.currentNode = current;
-            this.nextNode = next;
-            this.cachedCallTarget = cachedFunction.getTarget();
-        }
-
-        @Override
-        public Object execute(VirtualFrame frame, RFunction f) {
-            if (cachedCallTarget == f.getTarget()) {
-                return currentNode.execute(frame, f);
-            }
-            return nextNode.execute(frame, f);
-        }
-
-        @Override
-        public CallArgumentsNode getArgumentsNode() {
-            // This relies on the fact that the top level of the cache consists only of Cs
-            // (maintained by UninitializedCallNode.specialize), where it's head is one of U/UV or
-            // G/GV - which are all RootCallNodes, and as such hold their own CallArgumentsNode.
-            return nextNode.getArgumentsNode();
-        }
     }
 
     /**
@@ -506,21 +455,6 @@ public abstract class RCallNode extends RNode implements RSyntaxNode {
 
     }
 
-    @NodeInfo(cost = NodeCost.NONE)
-    private static final class BuiltinCallNode extends LeafCallNode {
-
-        @Child private RBuiltinNode builtin;
-
-        BuiltinCallNode(RBuiltinNode builtin) {
-            this.builtin = builtin;
-        }
-
-        @Override
-        public Object execute(VirtualFrame frame, RFunction currentFunction) {
-            return builtin.execute(frame);
-        }
-    }
-
     @NodeInfo(cost = NodeCost.UNINITIALIZED)
     public static final class UninitializedLazyCallNode extends RCallNode {
 
@@ -555,38 +489,38 @@ public abstract class RCallNode extends RNode implements RSyntaxNode {
     }
 
     /**
-     * [D] A {@link RCallNode} for calls to fixed {@link RFunction}s with fixed arguments (no
-     * varargs).
+     * [C] Extracts the check for function call target identity away from the individual cache
+     * nodes.
      *
      * @see RCallNode
      */
-    private static final class DispatchedCallNode extends LeafCallNode {
+    public static final class CachedCallNode extends RCallNode {
 
-        @Child private DirectCallNode call;
-        @Child private MatchedArgumentsNode matchedArgs;
-        @Child private RArgumentsNode argsNode = RArgumentsNode.create();
+        @Child private RCallNode nextNode;
+        @Child private LeafCallNode currentNode;
+        private final CallTarget cachedCallTarget;
 
-        private final boolean needsCallerFrame;
-        @CompilationFinal private boolean needsSplitting;
-
-        DispatchedCallNode(RFunction function, MatchedArguments matchedArgs) {
-            this.matchedArgs = matchedArgs.createNode();
-            this.call = Truffle.getRuntime().createDirectCallNode(function.getTarget());
-            this.needsCallerFrame = function.containsDispatch();
-            this.needsSplitting = needsSplitting(function);
+        public CachedCallNode(RNode function, LeafCallNode current, RCallNode next, RFunction cachedFunction) {
+            super(function, null);  // Relies on the getArguments redirect below
+            this.currentNode = current;
+            this.nextNode = next;
+            this.cachedCallTarget = cachedFunction.getTarget();
         }
 
         @Override
-        public Object execute(VirtualFrame frame, RFunction currentFunction) {
-            if (needsSplitting) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                needsSplitting = false;
-                call.cloneCallTarget();
+        public Object execute(VirtualFrame frame, RFunction f) {
+            if (cachedCallTarget == f.getTarget()) {
+                return currentNode.execute(frame, f);
             }
-            MaterializedFrame callerFrame = needsCallerFrame ? frame.materialize() : null;
+            return nextNode.execute(frame, f);
+        }
 
-            Object[] argsObject = argsNode.execute(currentFunction, getSourceSection(), callerFrame, RArguments.getDepth(frame) + 1, matchedArgs.executeArray(frame), matchedArgs.getSignature());
-            return call.call(frame, argsObject);
+        @Override
+        public CallArgumentsNode getArgumentsNode() {
+            // This relies on the fact that the top level of the cache consists only of Cs
+            // (maintained by UninitializedCallNode.specialize), where it's head is one of U/UV or
+            // G/GV - which are all RootCallNodes, and as such hold their own CallArgumentsNode.
+            return nextNode.getArgumentsNode();
         }
     }
 
@@ -623,6 +557,95 @@ public abstract class RCallNode extends RNode implements RSyntaxNode {
 
             Object[] argsObject = RArguments.create(currentFunction, getSourceSection(), null, RArguments.getDepth(frame) + 1, matchedArgs.doExecuteArray(frame), matchedArgs.getSignature());
             return indirectCall.call(frame, currentFunction.getTarget(), argsObject);
+        }
+    }
+
+    /**
+     * [GV] {@link RCallNode} in case there is no fixed {@link RFunction} AND varargs...
+     *
+     * @see RCallNode
+     */
+    private static final class GenericVarArgsCallNode extends RCallNode {
+
+        @Child private IndirectCallNode indirectCall = Truffle.getRuntime().createIndirectCallNode();
+
+        GenericVarArgsCallNode(RNode functionNode, CallArgumentsNode args) {
+            super(functionNode, args);
+        }
+
+        @Override
+        public Object execute(VirtualFrame frame, RFunction currentFunction) {
+            CompilerDirectives.transferToInterpreter();
+
+            // Function and arguments may change every call: Flatt'n'Match on SlowPath! :-/
+            UnrolledVariadicArguments argsValuesAndNames = args.executeFlatten(frame);
+            MatchedArguments matchedArgs = ArgumentMatcher.matchArguments(currentFunction, argsValuesAndNames, getSourceSection(), getEncapsulatingSourceSection(), true);
+
+            Object[] argsObject = RArguments.create(currentFunction, getSourceSection(), null, RArguments.getDepth(frame) + 1, matchedArgs.doExecuteArray(frame), matchedArgs.getSignature());
+            return indirectCall.call(frame, currentFunction.getTarget(), argsObject);
+        }
+    }
+
+    /**
+     * This is the counterpart of {@link RCallNode}: While that is the base class for all top-level
+     * nodes (C, G, U and GV), this is the base class for all nodes not on the top level of the PIC
+     * (and thus don't need all information, but can rely on their parents to have them).
+     *
+     * @see RCallNode
+     */
+    public abstract static class LeafCallNode extends Node {
+
+        public abstract Object execute(VirtualFrame frame, RFunction function);
+    }
+
+    @NodeInfo(cost = NodeCost.NONE)
+    private static final class BuiltinCallNode extends LeafCallNode {
+
+        @Child private RBuiltinNode builtin;
+
+        BuiltinCallNode(RBuiltinNode builtin) {
+            this.builtin = builtin;
+        }
+
+        @Override
+        public Object execute(VirtualFrame frame, RFunction currentFunction) {
+            return builtin.execute(frame);
+        }
+    }
+
+    /**
+     * [D] A {@link RCallNode} for calls to fixed {@link RFunction}s with fixed arguments (no
+     * varargs).
+     *
+     * @see RCallNode
+     */
+    private static final class DispatchedCallNode extends LeafCallNode {
+
+        @Child private DirectCallNode call;
+        @Child private MatchedArgumentsNode matchedArgs;
+        @Child private RArgumentsNode argsNode = RArgumentsNode.create();
+
+        private final boolean needsCallerFrame;
+        @CompilationFinal private boolean needsSplitting;
+
+        DispatchedCallNode(RFunction function, MatchedArguments matchedArgs) {
+            this.matchedArgs = matchedArgs.createNode();
+            this.call = Truffle.getRuntime().createDirectCallNode(function.getTarget());
+            this.needsCallerFrame = function.containsDispatch();
+            this.needsSplitting = needsSplitting(function);
+        }
+
+        @Override
+        public Object execute(VirtualFrame frame, RFunction currentFunction) {
+            if (needsSplitting) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                needsSplitting = false;
+                call.cloneCallTarget();
+            }
+            MaterializedFrame callerFrame = needsCallerFrame ? frame.materialize() : null;
+
+            Object[] argsObject = argsNode.execute(currentFunction, getSourceSection(), callerFrame, RArguments.getDepth(frame) + 1, matchedArgs.executeArray(frame), matchedArgs.getSignature());
+            return call.call(frame, argsObject);
         }
     }
 
@@ -796,32 +819,6 @@ public abstract class RCallNode extends RNode implements RSyntaxNode {
             MaterializedFrame callerFrame = needsCallerFrame ? frame.materialize() : null;
             Object[] argsObject = RArguments.create(currentFunction, getSourceSection(), callerFrame, RArguments.getDepth(frame) + 1, matchedArgs.doExecuteArray(frame), matchedArgs.getSignature());
             return call.call(frame, argsObject);
-        }
-    }
-
-    /**
-     * [GV] {@link RCallNode} in case there is no fixed {@link RFunction} AND varargs...
-     *
-     * @see RCallNode
-     */
-    private static final class GenericVarArgsCallNode extends RCallNode {
-
-        @Child private IndirectCallNode indirectCall = Truffle.getRuntime().createIndirectCallNode();
-
-        GenericVarArgsCallNode(RNode functionNode, CallArgumentsNode args) {
-            super(functionNode, args);
-        }
-
-        @Override
-        public Object execute(VirtualFrame frame, RFunction currentFunction) {
-            CompilerDirectives.transferToInterpreter();
-
-            // Function and arguments may change every call: Flatt'n'Match on SlowPath! :-/
-            UnrolledVariadicArguments argsValuesAndNames = args.executeFlatten(frame);
-            MatchedArguments matchedArgs = ArgumentMatcher.matchArguments(currentFunction, argsValuesAndNames, getSourceSection(), getEncapsulatingSourceSection(), true);
-
-            Object[] argsObject = RArguments.create(currentFunction, getSourceSection(), null, RArguments.getDepth(frame) + 1, matchedArgs.doExecuteArray(frame), matchedArgs.getSignature());
-            return indirectCall.call(frame, currentFunction.getTarget(), argsObject);
         }
     }
 }
