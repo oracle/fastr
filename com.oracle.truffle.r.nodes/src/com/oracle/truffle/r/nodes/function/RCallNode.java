@@ -79,13 +79,12 @@ import com.oracle.truffle.r.runtime.gnur.*;
  * <pre>
  *  U = {@link UninitializedCallNode}: Forms the uninitialized end of the function PIC
  *  D = {@link DispatchedCallNode}: Function fixed, no varargs
- *  G = {@link GenericCallNode}: Function arbitrary, no varargs (generic case)
+ *  G = {@link GenericCallNode}: Function arbitrary
  * 
  *  UV = {@link UninitializedCallNode} with varargs,
  *  UVC = {@link UninitializedVarArgsCacheCallNode} with varargs, for varargs cache
  *  DV = {@link DispatchedVarArgsCallNode}: Function fixed, with cached varargs
  *  DGV = {@link DispatchedGenericVarArgsCallNode}: Function fixed, with arbitrary varargs (generic case)
- *  GV = {@link GenericVarArgsCallNode}: Function arbitrary, with arbitrary varargs (generic case)
  * 
  * (RB = {@link RBuiltinNode}: individual functions that are builtins are represented by this node
  * which is not aware of caching). Due to {@link CachedCallNode} (see below) this is transparent to
@@ -399,10 +398,7 @@ public abstract class RCallNode extends RNode implements RSyntaxNode {
                     return new UninitializedCallNode(this);
                 }
             } else {
-                // 2 possible cases: G (Multiple functions, no varargs) or GV (Multiple function
-                // arbitrary varargs)
-                CallArgumentsNode clonedArgs = getClonedArgs();
-                return args.containsVarArgsSymbol() ? new GenericVarArgsCallNode(functionNode, clonedArgs) : new GenericCallNode(functionNode, clonedArgs);
+                return new GenericCallNode(functionNode, getClonedArgs());
             }
         }
 
@@ -525,16 +521,13 @@ public abstract class RCallNode extends RNode implements RSyntaxNode {
     }
 
     /**
-     * [G] A {@link RCallNode} in case there is no fixed {@link RFunction} (and no varargs).
+     * [GV] {@link RCallNode} in case there is no fixed {@link RFunction} AND varargs...
      *
      * @see RCallNode
      */
     private static final class GenericCallNode extends RCallNode {
 
         @Child private IndirectCallNode indirectCall = Truffle.getRuntime().createIndirectCallNode();
-
-        private CallTarget lastCallTarget = null;
-        private MatchedArguments lastMatchedArgs = null;
 
         GenericCallNode(RNode functionNode, CallArgumentsNode args) {
             super(functionNode, args);
@@ -543,40 +536,6 @@ public abstract class RCallNode extends RNode implements RSyntaxNode {
         @Override
         public Object execute(VirtualFrame frame, RFunction currentFunction) {
             CompilerDirectives.transferToInterpreter();
-
-            if (lastCallTarget == currentFunction.getTarget() && lastMatchedArgs != null) {
-                // poor man's caching succeeded - same function: no re-match needed
-                Object[] argsObject = RArguments.create(currentFunction, getSourceSection(), null, RArguments.getDepth(frame) + 1, lastMatchedArgs.doExecuteArray(frame),
-                                lastMatchedArgs.getSignature());
-                return indirectCall.call(frame, currentFunction.getTarget(), argsObject);
-            }
-
-            MatchedArguments matchedArgs = ArgumentMatcher.matchArguments(currentFunction, args, getSourceSection(), args.getEncapsulatingSourceSection(), true);
-            this.lastMatchedArgs = matchedArgs;
-            this.lastCallTarget = currentFunction.getTarget();
-
-            Object[] argsObject = RArguments.create(currentFunction, getSourceSection(), null, RArguments.getDepth(frame) + 1, matchedArgs.doExecuteArray(frame), matchedArgs.getSignature());
-            return indirectCall.call(frame, currentFunction.getTarget(), argsObject);
-        }
-    }
-
-    /**
-     * [GV] {@link RCallNode} in case there is no fixed {@link RFunction} AND varargs...
-     *
-     * @see RCallNode
-     */
-    private static final class GenericVarArgsCallNode extends RCallNode {
-
-        @Child private IndirectCallNode indirectCall = Truffle.getRuntime().createIndirectCallNode();
-
-        GenericVarArgsCallNode(RNode functionNode, CallArgumentsNode args) {
-            super(functionNode, args);
-        }
-
-        @Override
-        public Object execute(VirtualFrame frame, RFunction currentFunction) {
-            CompilerDirectives.transferToInterpreter();
-
             // Function and arguments may change every call: Flatt'n'Match on SlowPath! :-/
             UnrolledVariadicArguments argsValuesAndNames = args.executeFlatten(frame);
             MatchedArguments matchedArgs = ArgumentMatcher.matchArguments(currentFunction, argsValuesAndNames, getSourceSection(), getEncapsulatingSourceSection(), true);
