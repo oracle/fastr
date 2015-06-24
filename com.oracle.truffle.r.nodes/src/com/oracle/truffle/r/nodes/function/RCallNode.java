@@ -164,23 +164,56 @@ public abstract class RCallNode extends RNode implements RSyntaxNode {
     }
 
     @Override
-    public Object execute(VirtualFrame frame) {
-        throw new AssertionError();
+    public final Object execute(VirtualFrame frame) {
+        return execute(frame, executeFunctionNode(frame));
+    }
+
+    @Child protected RNode functionNode;
+    @Child protected CallArgumentsNode args;
+    @Child private PromiseHelperNode promiseHelper;
+    private final ConditionProfile isPromiseProfile = ConditionProfile.createBinaryProfile();
+    private final BranchProfile errorProfile = BranchProfile.create();
+
+    public RCallNode(RNode function, CallArgumentsNode args) {
+        this.functionNode = function;
+        this.args = args;
+    }
+
+    private RFunction executeFunctionNode(VirtualFrame frame) {
+        /**
+         * Expressions such as "pkg:::f" can result in (delayedAssign) promises that must be
+         * explicitly resolved.
+         */
+        Object value = functionNode.execute(frame);
+        if (isPromiseProfile.profile(value instanceof RPromise)) {
+            if (promiseHelper == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                promiseHelper = insert(new PromiseHelperNode());
+            }
+            value = promiseHelper.evaluate(frame, (RPromise) value);
+        }
+        if (value instanceof RFunction) {
+            return (RFunction) value;
+        } else {
+            errorProfile.enter();
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.APPLY_NON_FUNCTION);
+        }
+    }
+
+    public RNode getFunctionNode() {
+        if (functionNode != null) {
+            // Only the very 1. RootCallNode on the top level contains the one-and-only function
+            // node
+            return functionNode;
+        }
+        return getParentCallNode().getFunctionNode();
+    }
+
+    public CallArgumentsNode getArgumentsNode() {
+        return args;
     }
 
     public abstract Object execute(VirtualFrame frame, RFunction function);
-
-    public abstract RNode getFunctionNode();
-
-    public abstract CallArgumentsNode getArgumentsNode();
-
-    /**
-     * A temporary hack to allow promises in {@link PromiseNode.VarArgNode} instances to be reset.
-     * Overridden in the appropriate subclasses.
-     */
-    public MatchedArgumentsNode getMatchedArgumentsNode() {
-        return null;
-    }
 
     @Override
     public void deparse(RDeparse.State state) {
@@ -253,14 +286,6 @@ public abstract class RCallNode extends RNode implements RSyntaxNode {
         return RSyntaxNode.cast(RASTUtils.createCall(functionSub, argsSub));
     }
 
-    public int executeInteger(VirtualFrame frame, RFunction function) throws UnexpectedResultException {
-        return RTypesGen.expectInteger(execute(frame, function));
-    }
-
-    public double executeDouble(VirtualFrame frame, RFunction function) throws UnexpectedResultException {
-        return RTypesGen.expectDouble(execute(frame, function));
-    }
-
     public static RCallNode createOpCall(SourceSection src, SourceSection opNameSrc, String function, CallArgumentsNode arguments, ASTNode parserNode) {
         return RCallNode.createCall(src, ReadVariableNode.createFunctionLookup(opNameSrc, function), arguments, parserNode);
     }
@@ -276,7 +301,7 @@ public abstract class RCallNode extends RNode implements RSyntaxNode {
      * @param function the resolved {@link RFunction}.
      * @param name The name of the function
      */
-    public static RCallNode createInternalCall(VirtualFrame frame, SourceSection src, RCallNode internalCallArg, RFunction function, String name) {
+    public static LeafCallNode createInternalCall(VirtualFrame frame, SourceSection src, RCallNode internalCallArg, RFunction function, String name) {
         CompilerAsserts.neverPartOfCompilation();
         assert internalCallArg instanceof UninitializedCallNode;
         return UninitializedCallNode.createCacheNode(frame, function, ((UninitializedCallNode) internalCallArg).args, src);
@@ -332,93 +357,15 @@ public abstract class RCallNode extends RNode implements RSyntaxNode {
     }
 
     /**
-     * Base class for classes that are on the top of the cache hierarchy.
+     * This is the counterpart of {@link RCallNode}: While that is the base class for all top-level
+     * nodes (C, G, U and GV), this is the base class for all nodes not on the top level of the PIC
+     * (and thus don't need all information, but can rely on their parents to have them).
      *
-     * @see LeafCallNode
+     * @see RCallNode
      */
-    public abstract static class RootCallNode extends RCallNode {
+    public abstract static class LeafCallNode extends Node {
 
-        @Child protected RNode functionNode;
-        @Child protected CallArgumentsNode args;
-        @Child private PromiseHelperNode promiseHelper;
-        private final ConditionProfile isPromiseProfile = ConditionProfile.createBinaryProfile();
-        private final BranchProfile errorProfile = BranchProfile.create();
-
-        public RootCallNode(RNode function, CallArgumentsNode args) {
-            this.functionNode = function;
-            this.args = args;
-        }
-
-        private RFunction executeFunctionNode(VirtualFrame frame) {
-            /**
-             * Expressions such as "pkg:::f" can result in (delayedAssign) promises that must be
-             * explicitly resolved.
-             */
-            Object value = functionNode.execute(frame);
-            if (isPromiseProfile.profile(value instanceof RPromise)) {
-                if (promiseHelper == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    promiseHelper = insert(new PromiseHelperNode());
-                }
-                value = promiseHelper.evaluate(frame, (RPromise) value);
-            }
-            if (value instanceof RFunction) {
-                return (RFunction) value;
-            } else {
-                errorProfile.enter();
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.APPLY_NON_FUNCTION);
-            }
-        }
-
-        @Override
-        public final Object execute(VirtualFrame frame) {
-            return execute(frame, executeFunctionNode(frame));
-        }
-
-        @Override
-        public final int executeInteger(VirtualFrame frame) throws UnexpectedResultException {
-            return executeInteger(frame, executeFunctionNode(frame));
-        }
-
-        @Override
-        public final double executeDouble(VirtualFrame frame) throws UnexpectedResultException {
-            return executeDouble(frame, executeFunctionNode(frame));
-        }
-
-        @Override
-        public RNode getFunctionNode() {
-            if (functionNode != null) {
-                // Only the very 1. RootCallNode on the top level contains the one-and-only function
-                // node
-                return functionNode;
-            }
-            return getParentCallNode().getFunctionNode();
-        }
-
-        @Override
-        public CallArgumentsNode getArgumentsNode() {
-            return args;
-        }
-    }
-
-    /**
-     * This is the counterpart of {@link RootCallNode}: While that is the base class for all
-     * top-level nodes (C, G, U and GV), this is the base class for all nodes not on the top level
-     * of the PIC (and thus don't need all information, but can rely on their parents to have them).
-     *
-     * @see RootCallNode
-     */
-    public abstract static class LeafCallNode extends RCallNode {
-
-        @Override
-        public RNode getFunctionNode() {
-            return getParentCallNode().getFunctionNode();
-        }
-
-        @Override
-        public final CallArgumentsNode getArgumentsNode() {
-            return getParentCallNode().getArgumentsNode();
-        }
+        public abstract Object execute(VirtualFrame frame, RFunction function);
     }
 
     /**
@@ -427,13 +374,13 @@ public abstract class RCallNode extends RNode implements RSyntaxNode {
      *
      * @see RCallNode
      */
-    public static final class CachedCallNode extends RootCallNode {
+    public static final class CachedCallNode extends RCallNode {
 
-        @Child private RootCallNode nextNode;
-        @Child private RCallNode currentNode;
+        @Child private RCallNode nextNode;
+        @Child private LeafCallNode currentNode;
         private final CallTarget cachedCallTarget;
 
-        public CachedCallNode(RNode function, RCallNode current, RootCallNode next, RFunction cachedFunction) {
+        public CachedCallNode(RNode function, LeafCallNode current, RCallNode next, RFunction cachedFunction) {
             super(function, null);  // Relies on the getArguments redirect below
             this.currentNode = current;
             this.nextNode = next;
@@ -449,32 +396,11 @@ public abstract class RCallNode extends RNode implements RSyntaxNode {
         }
 
         @Override
-        public int executeInteger(VirtualFrame frame, RFunction f) throws UnexpectedResultException {
-            if (cachedCallTarget == f.getTarget()) {
-                return currentNode.executeInteger(frame, f);
-            }
-            return nextNode.executeInteger(frame, f);
-        }
-
-        @Override
-        public double executeDouble(VirtualFrame frame, RFunction f) throws UnexpectedResultException {
-            if (cachedCallTarget == f.getTarget()) {
-                return currentNode.executeDouble(frame, f);
-            }
-            return nextNode.executeDouble(frame, f);
-        }
-
-        @Override
         public CallArgumentsNode getArgumentsNode() {
             // This relies on the fact that the top level of the cache consists only of Cs
             // (maintained by UninitializedCallNode.specialize), where it's head is one of U/UV or
             // G/GV - which are all RootCallNodes, and as such hold their own CallArgumentsNode.
             return nextNode.getArgumentsNode();
-        }
-
-        @Override
-        public MatchedArgumentsNode getMatchedArgumentsNode() {
-            return currentNode.getMatchedArgumentsNode();
         }
     }
 
@@ -484,7 +410,7 @@ public abstract class RCallNode extends RNode implements RSyntaxNode {
      * @see RCallNode
      */
     @NodeInfo(cost = NodeCost.UNINITIALIZED)
-    public static final class UninitializedCallNode extends RootCallNode {
+    public static final class UninitializedCallNode extends RCallNode {
 
         private int depth;
         private final ASTNode parserNode;
@@ -509,14 +435,14 @@ public abstract class RCallNode extends RNode implements RSyntaxNode {
         }
 
         private RCallNode specialize(VirtualFrame frame, RFunction function) {
-            RootCallNode next = createNextNode();
-            RCallNode current = createCacheNode(frame, function, next instanceof UninitializedLazyCallNode);
-            RootCallNode cachedNode = new CachedCallNode(this.functionNode, current, next, function);
+            RCallNode next = createNextNode();
+            LeafCallNode current = createCacheNode(frame, function, next instanceof UninitializedLazyCallNode);
+            RCallNode cachedNode = new CachedCallNode(this.functionNode, current, next, function);
             this.replace(cachedNode);
             return cachedNode;
         }
 
-        private RootCallNode createNextNode() {
+        private RCallNode createNextNode() {
             if (depth + 1 < FUNCTION_INLINE_CACHE_SIZE) {
                 if (parserNode != null) {
                     return new UninitializedLazyCallNode(getSourceSection(), depth, parserNode);
@@ -531,7 +457,7 @@ public abstract class RCallNode extends RNode implements RSyntaxNode {
             }
         }
 
-        private static RCallNode createCacheNode(VirtualFrame frame, RFunction function, CallArgumentsNode args, SourceSection callSrc) {
+        private static LeafCallNode createCacheNode(VirtualFrame frame, RFunction function, CallArgumentsNode args, SourceSection callSrc) {
             CompilerDirectives.transferToInterpreter();
             SourceSection argsSrc = args.getEncapsulatingSourceSection();
             for (String name : args.getSignature()) {
@@ -540,7 +466,7 @@ public abstract class RCallNode extends RNode implements RSyntaxNode {
                 }
             }
 
-            RCallNode callNode = null;
+            LeafCallNode callNode = null;
             // Check implementation: If written in Java, handle differently!
             if (function.isBuiltin()) {
                 RootCallTarget callTarget = function.getTarget();
@@ -569,7 +495,7 @@ public abstract class RCallNode extends RNode implements RSyntaxNode {
             return callNode;
         }
 
-        private RCallNode createCacheNode(VirtualFrame frame, RFunction function, boolean reuseArgs) {
+        private LeafCallNode createCacheNode(VirtualFrame frame, RFunction function, boolean reuseArgs) {
             CompilerDirectives.transferToInterpreter();
             return createCacheNode(frame, function, reuseArgs ? args : getClonedArgs(), getSourceSection());
         }
@@ -590,18 +516,13 @@ public abstract class RCallNode extends RNode implements RSyntaxNode {
         }
 
         @Override
-        public Object execute(VirtualFrame frame) {
-            return builtin.execute(frame);
-        }
-
-        @Override
         public Object execute(VirtualFrame frame, RFunction currentFunction) {
             return builtin.execute(frame);
         }
     }
 
     @NodeInfo(cost = NodeCost.UNINITIALIZED)
-    public static final class UninitializedLazyCallNode extends RootCallNode {
+    public static final class UninitializedLazyCallNode extends RCallNode {
 
         private final int depth;
         private final ASTNode parserNode;
@@ -667,11 +588,6 @@ public abstract class RCallNode extends RNode implements RSyntaxNode {
             Object[] argsObject = argsNode.execute(currentFunction, getSourceSection(), callerFrame, RArguments.getDepth(frame) + 1, matchedArgs.executeArray(frame), matchedArgs.getSignature());
             return call.call(frame, argsObject);
         }
-
-        @Override
-        public MatchedArgumentsNode getMatchedArgumentsNode() {
-            return matchedArgs;
-        }
     }
 
     /**
@@ -679,7 +595,7 @@ public abstract class RCallNode extends RNode implements RSyntaxNode {
      *
      * @see RCallNode
      */
-    private static final class GenericCallNode extends RootCallNode {
+    private static final class GenericCallNode extends RCallNode {
 
         @Child private IndirectCallNode indirectCall = Truffle.getRuntime().createIndirectCallNode();
 
@@ -844,11 +760,6 @@ public abstract class RCallNode extends RNode implements RSyntaxNode {
             Object[] argsObject = RArguments.create(currentFunction, getSourceSection(), callerFrame, RArguments.getDepth(frame) + 1, matchedArgs.executeArray(frame), matchedArgs.getSignature());
             return call.call(frame, argsObject);
         }
-
-        @Override
-        public MatchedArgumentsNode getMatchedArgumentsNode() {
-            return matchedArgs;
-        }
     }
 
     /**
@@ -889,11 +800,11 @@ public abstract class RCallNode extends RNode implements RSyntaxNode {
     }
 
     /**
-     * [GV] {@link RootCallNode} in case there is no fixed {@link RFunction} AND varargs...
+     * [GV] {@link RCallNode} in case there is no fixed {@link RFunction} AND varargs...
      *
      * @see RCallNode
      */
-    private static final class GenericVarArgsCallNode extends RootCallNode {
+    private static final class GenericVarArgsCallNode extends RCallNode {
 
         @Child private IndirectCallNode indirectCall = Truffle.getRuntime().createIndirectCallNode();
 

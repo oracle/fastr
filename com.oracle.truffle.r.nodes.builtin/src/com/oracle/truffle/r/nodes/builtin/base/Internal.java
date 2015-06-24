@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
@@ -33,7 +34,7 @@ import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.variables.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.function.*;
-import com.oracle.truffle.r.nodes.function.RCallNode.RootCallNode;
+import com.oracle.truffle.r.nodes.function.RCallNode.LeafCallNode;
 import com.oracle.truffle.r.nodes.instrument.*;
 import com.oracle.truffle.r.nodes.instrument.wrappers.*;
 import com.oracle.truffle.r.runtime.*;
@@ -58,7 +59,8 @@ public abstract class Internal extends RBuiltinNode {
 
     protected final BranchProfile errorProfile = BranchProfile.create();
 
-    @Child private RCallNode builtinCallNode;
+    @Child private LeafCallNode builtinCallNode;
+    @CompilationFinal private RFunction builtinFunction;
 
     @Specialization
     protected Object doInternal(@SuppressWarnings("unused") RMissing x) {
@@ -73,12 +75,12 @@ public abstract class Internal extends RBuiltinNode {
             RNode call = (RNode) x.getRep();
             RNode operand = (RNode) RASTUtils.unwrap(call);
 
-            if (!(operand instanceof RootCallNode)) {
+            if (!(operand instanceof RCallNode)) {
                 errorProfile.enter();
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_INTERNAL);
             }
 
-            RootCallNode callNode = (RootCallNode) operand;
+            RCallNode callNode = (RCallNode) operand;
             RNode func = callNode.getFunctionNode();
             String name = ((ReadVariableNode) func).getIdentifier();
             RFunction function = RContext.lookupBuiltin(name);
@@ -90,8 +92,9 @@ public abstract class Internal extends RBuiltinNode {
             // .Internal function is validated
             CompilerDirectives.transferToInterpreterAndInvalidate();
             builtinCallNode = insert(RCallNode.createInternalCall(frame, call.getSourceSection(), callNode, function, name));
+            builtinFunction = function;
         }
-        return builtinCallNode.execute(frame);
+        return builtinCallNode.execute(frame, builtinFunction);
     }
 
 }
