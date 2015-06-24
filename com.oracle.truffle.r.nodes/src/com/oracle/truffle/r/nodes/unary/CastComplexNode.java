@@ -156,4 +156,8 @@ public abstract class CastComplexNode extends CastBaseNode {
     public static CastComplexNode create() {
         return CastComplexNodeGen.create(true, true, true);
     }
+
+    public static CastComplexNode createNonPreserving() {
+        return CastComplexNodeGen.create(false, false, false);
+    }
 }

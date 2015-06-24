@@ -289,4 +289,8 @@ public abstract class CastIntegerNode extends CastBaseNode {
     public static CastIntegerNode create() {
         return CastIntegerNodeGen.create(true, true, true);
     }
+
+    public static CastIntegerNode createNonPreserving() {
+        return CastIntegerNodeGen.create(false, false, false);
+    }
 }

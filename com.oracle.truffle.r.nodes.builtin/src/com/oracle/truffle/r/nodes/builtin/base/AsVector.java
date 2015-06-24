@@ -24,7 +24,6 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
-import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
@@ -35,88 +34,11 @@ import com.oracle.truffle.r.runtime.data.model.*;
 @RBuiltin(name = "as.vector", kind = INTERNAL, parameterNames = {"x", "mode"})
 public abstract class AsVector extends RBuiltinNode {
 
-    @Child private CastIntegerNode castInteger;
-    @Child private CastDoubleNode castDouble;
-    @Child private CastComplexNode castComplex;
-    @Child private CastLogicalNode castLogical;
-    @Child private CastStringNode castString;
-    @Child private CastRawNode castRaw;
-    @Child private CastListNode castList;
-    @Child private CastSymbolNode castSymbol;
-    @Child private CastExpressionNode castExpression;
-
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
-    private RIntVector castInteger(Object operand) {
-        if (castInteger == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            castInteger = insert(CastIntegerNodeGen.create(false, false, false));
-        }
-        return (RIntVector) castInteger.executeInt(operand);
-    }
-
-    private RDoubleVector castDouble(Object operand) {
-        if (castDouble == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            castDouble = insert(CastDoubleNodeGen.create(false, false, false));
-        }
-        return (RDoubleVector) castDouble.executeDouble(operand);
-    }
-
-    private RComplexVector castComplex(Object operand) {
-        if (castComplex == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            castComplex = insert(CastComplexNodeGen.create(false, false, false));
-        }
-        return (RComplexVector) castComplex.executeComplex(operand);
-    }
-
-    private RLogicalVector castLogical(Object operand) {
-        if (castLogical == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            castLogical = insert(CastLogicalNodeGen.create(false, false, false));
-        }
-        return (RLogicalVector) castLogical.execute(operand);
-    }
-
-    private RStringVector castString(Object operand) {
-        if (castString == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            castString = insert(CastStringNodeGen.create(false, false, false, false));
-        }
-        return (RStringVector) castString.executeString(operand);
-    }
-
-    private RSymbol castSymbol(Object operand) {
-        if (castSymbol == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            castSymbol = insert(CastSymbolNodeGen.create(false, false, false));
-        }
-        return (RSymbol) castSymbol.executeSymbol(operand);
-    }
-
-    private RExpression castExpression(Object operand) {
-        if (castExpression == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            castExpression = insert(CastExpressionNodeGen.create(false, false, false));
-        }
-        return (RExpression) castExpression.executeExpression(operand);
-    }
-
-    private RRawVector castRaw(Object operand) {
-        if (castRaw == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            castRaw = insert(CastRawNodeGen.create(false, false, false));
-        }
-        return (RRawVector) castRaw.executeRaw(operand);
-    }
-
-    private RList castList(Object operand) {
-        if (castList == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            castList = insert(CastListNodeGen.create(true, false, false));
-        }
-        return castList.executeList(operand);
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.firstStringWithError(1, RError.Message.INVALID_ARGUMENT, "mode");
     }
 
     @Specialization
@@ -125,58 +47,77 @@ public abstract class AsVector extends RBuiltinNode {
         return x;
     }
 
-    @Specialization(guards = "castToInt(x, mode)")
-    protected RAbstractVector asVectorInt(RAbstractContainer x, @SuppressWarnings("unused") String mode) {
+    @Specialization(guards = "castToString(mode)")
+    protected Object asVectorString(Object x, @SuppressWarnings("unused") String mode, //
+                    @Cached("create()") AsCharacter asCharacter) {
         controlVisibility();
-        return castInteger(x);
+        return asCharacter.execute(x);
+    }
+
+    @Specialization(guards = "castToInt(x, mode)")
+    protected Object asVectorInt(RAbstractContainer x, @SuppressWarnings("unused") String mode, //
+                    @Cached("createNonPreserving()") CastIntegerNode cast) {
+        controlVisibility();
+        return cast.execute(x);
     }
 
     @Specialization(guards = "castToDouble(x, mode)")
-    protected RAbstractVector asVectorDouble(RAbstractContainer x, @SuppressWarnings("unused") String mode) {
+    protected Object asVectorDouble(RAbstractContainer x, @SuppressWarnings("unused") String mode, //
+                    @Cached("createNonPreserving()") CastDoubleNode cast) {
         controlVisibility();
-        return castDouble(x);
+        return cast.execute(x);
     }
 
     @Specialization(guards = "castToComplex(x, mode)")
-    protected RAbstractVector asVectorComplex(RAbstractContainer x, @SuppressWarnings("unused") String mode) {
+    protected Object asVectorComplex(RAbstractContainer x, @SuppressWarnings("unused") String mode, //
+                    @Cached("createNonPreserving()") CastComplexNode cast) {
         controlVisibility();
-        return castComplex(x);
+        return cast.execute(x);
     }
 
     @Specialization(guards = "castToLogical(x, mode)")
-    protected RAbstractVector asVectorLogical(RAbstractContainer x, @SuppressWarnings("unused") String mode) {
+    protected Object asVectorLogical(RAbstractContainer x, @SuppressWarnings("unused") String mode, //
+                    @Cached("createNonPreserving()") CastLogicalNode cast) {
         controlVisibility();
-        return castLogical(x);
-    }
-
-    @Specialization(guards = "castToString(x, mode)")
-    protected RAbstractVector asVectorString(RAbstractContainer x, @SuppressWarnings("unused") String mode) {
-        controlVisibility();
-        return castString(x);
+        return cast.execute(x);
     }
 
     @Specialization(guards = "castToRaw(x, mode)")
-    protected RAbstractVector asVectorRaw(RAbstractContainer x, @SuppressWarnings("unused") String mode) {
+    protected Object asVectorRaw(RAbstractContainer x, @SuppressWarnings("unused") String mode, //
+                    @Cached("createNonPreserving()") CastRawNode cast) {
         controlVisibility();
-        return castRaw(x);
+        return cast.execute(x);
     }
 
-    @Specialization(guards = "castToList(x, mode)")
-    protected RAbstractVector asVectorList(RAbstractContainer x, @SuppressWarnings("unused") String mode) {
-        controlVisibility();
-        return castList(x);
+    protected static CastListNode createListCast() {
+        return CastListNodeGen.create(true, false, false);
     }
 
-    @Specialization(guards = "castToList(x, mode)")
-    protected RAbstractVector asVectorList(@SuppressWarnings("unused") RNull x, @SuppressWarnings("unused") String mode) {
+    @Specialization(guards = "castToList(mode)")
+    protected Object asVectorList(RAbstractContainer x, @SuppressWarnings("unused") String mode, //
+                    @Cached("createListCast()") CastListNode cast) {
         controlVisibility();
-        return RDataFactory.createList();
+        return cast.execute(x);
     }
 
     @Specialization(guards = "castToSymbol(x, mode)")
-    protected RSymbol asVectorSymbol(RAbstractContainer x, @SuppressWarnings("unused") String mode) {
+    protected Object asVectorSymbol(RAbstractContainer x, @SuppressWarnings("unused") String mode, //
+                    @Cached("createNonPreserving()") CastSymbolNode cast) {
         controlVisibility();
-        return castSymbol(x);
+        return cast.execute(x);
+    }
+
+    @Specialization(guards = "castToExpression(mode)")
+    protected Object asVectorExpression(Object x, @SuppressWarnings("unused") String mode, //
+                    @Cached("createNonPreserving()") CastExpressionNode cast) {
+        controlVisibility();
+        return cast.execute(x);
+    }
+
+    @Specialization(guards = "castToList(mode)")
+    protected RAbstractVector asVectorList(@SuppressWarnings("unused") RNull x, @SuppressWarnings("unused") String mode) {
+        controlVisibility();
+        return RDataFactory.createList();
     }
 
     @Specialization(guards = "isSymbol(x, mode)")
@@ -225,12 +166,6 @@ public abstract class AsVector extends RBuiltinNode {
         }
     }
 
-    @Specialization(guards = "castToExpression(x, mode)")
-    protected RExpression asVectorExpression(Object x, @SuppressWarnings("unused") String mode) {
-        controlVisibility();
-        return castExpression(x);
-    }
-
     @Specialization(guards = "modeIsAnyOrMatches(x, mode)")
     protected RAbstractVector asVector(RAbstractVector x, @SuppressWarnings("unused") String mode) {
         controlVisibility();
@@ -257,6 +192,10 @@ public abstract class AsVector extends RBuiltinNode {
         return x.getElementClass() != RString.class && RType.Character.getName().equals(mode);
     }
 
+    protected boolean castToString(String mode) {
+        return RType.Character.getName().equals(mode);
+    }
+
     protected boolean castToRaw(RAbstractContainer x, String mode) {
         return x.getElementClass() != RRaw.class && RType.Raw.getName().equals(mode);
     }
@@ -265,7 +204,7 @@ public abstract class AsVector extends RBuiltinNode {
         return x.getElementClass() != Object.class && RType.List.getName().equals(mode);
     }
 
-    protected boolean castToList(@SuppressWarnings("unused") Object x, String mode) {
+    protected boolean castToList(String mode) {
         return RType.List.getName().equals(mode);
     }
 
@@ -273,7 +212,7 @@ public abstract class AsVector extends RBuiltinNode {
         return x.getElementClass() != Object.class && RType.Symbol.getName().equals(mode);
     }
 
-    protected boolean castToExpression(@SuppressWarnings("unused") Object x, String mode) {
+    protected boolean castToExpression(String mode) {
         return RType.Expression.getName().equals(mode);
     }
 

@@ -241,4 +241,8 @@ public abstract class CastRawNode extends CastBaseNode {
     public static CastRawNode create() {
         return CastRawNodeGen.create(true, true, true);
     }
+
+    public static CastRawNode createNonPreserving() {
+        return CastRawNodeGen.create(false, false, false);
+    }
 }

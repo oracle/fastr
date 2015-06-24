@@ -26,7 +26,6 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
@@ -38,7 +37,11 @@ public abstract class AsCharacter extends RBuiltinNode {
 
     @Child private CastStringNode castStringNode;
 
-    public abstract Object execute(VirtualFrame frame, Object obj);
+    public abstract Object execute(Object obj);
+
+    public static AsCharacter create() {
+        return AsCharacterNodeGen.create(null, null, null);
+    }
 
     private void initCast() {
         if (castStringNode == null) {
@@ -138,7 +141,7 @@ public abstract class AsCharacter extends RBuiltinNode {
         return RDataFactory.createStringVector(data, complete);
     }
 
-    @Specialization
+    @Specialization(guards = "!isRList(container)")
     protected RStringVector doVector(RAbstractContainer container) {
         controlVisibility();
         return castStringVector(container);
