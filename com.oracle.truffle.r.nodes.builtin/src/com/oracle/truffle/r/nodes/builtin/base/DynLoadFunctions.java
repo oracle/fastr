@@ -120,21 +120,21 @@ public class DynLoadFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected Object getSymbolInfo(String symbol, String packageName, byte withReg) {
+        protected Object getSymbolInfo(RAbstractStringVector symbol, String packageName, byte withReg) {
             controlVisibility();
-            DLL.SymbolInfo symbolInfo = DLL.findSymbolInfo(symbol, packageName);
+            DLL.SymbolInfo symbolInfo = DLL.findSymbolInfo(RRuntime.asString(symbol), packageName);
             return getResult(symbolInfo, withReg);
         }
 
         @Specialization(guards = "isDLLInfo(externalPtr)")
         @TruffleBoundary
-        protected Object getSymbolInfo(String symbol, RExternalPtr externalPtr, byte withReg) {
+        protected Object getSymbolInfo(RAbstractStringVector symbol, RExternalPtr externalPtr, byte withReg) {
             controlVisibility();
             DLL.DLLInfo dllInfo = DLL.getDLLInfoForId((int) externalPtr.getAddr());
             if (dllInfo == null) {
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.REQUIRES_NAME_DLLINFO);
             }
-            DLL.SymbolInfo symbolInfo = DLL.findSymbolInDLL(symbol, dllInfo);
+            DLL.SymbolInfo symbolInfo = DLL.findSymbolInDLL(RRuntime.asString(symbol), dllInfo);
             return getResult(symbolInfo, withReg);
         }
 
