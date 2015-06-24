@@ -419,7 +419,8 @@ public final class Utils {
                     if (value instanceof RAbstractContainer && ((RAbstractContainer) value).getLength() > 32) {
                         str.append('<').append(value.getClass().getSimpleName()).append(" with ").append(((RAbstractContainer) value).getLength()).append(" elements>");
                     } else {
-                        str.append(value);
+                        String text = String.valueOf(value);
+                        str.append(text.length() < 256 ? text : text.substring(0, 256) + "...");
                     }
                 } catch (Throwable t) {
                     // RLanguage values may not react kindly to getLength() calls
