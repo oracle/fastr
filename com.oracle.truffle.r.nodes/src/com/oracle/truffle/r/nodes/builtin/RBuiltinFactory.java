@@ -37,8 +37,9 @@ public final class RBuiltinFactory extends RBuiltinDescriptor {
 
     private final NodeGenFactory constructor;
 
-    public RBuiltinFactory(String name, String[] aliases, RBuiltinKind kind, ArgumentsSignature signature, int[] nonEvalArgs, boolean splitCaller, boolean alwaysSplit, NodeGenFactory constructor) {
-        super(name, aliases, kind, signature, nonEvalArgs, splitCaller, alwaysSplit);
+    public RBuiltinFactory(String name, String[] aliases, RBuiltinKind kind, ArgumentsSignature signature, int[] nonEvalArgs, boolean splitCaller, boolean alwaysSplit, boolean internalDispatch,
+                    NodeGenFactory constructor) {
+        super(name, aliases, kind, signature, nonEvalArgs, splitCaller, alwaysSplit, internalDispatch);
         this.constructor = constructor;
     }
 

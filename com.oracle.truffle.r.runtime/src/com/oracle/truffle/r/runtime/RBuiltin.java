@@ -65,4 +65,6 @@ public @interface RBuiltin {
     boolean splitCaller() default false;
 
     boolean alwaysSplit() default false;
+
+    boolean internalDispatch() default false;
 }
