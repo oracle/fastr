@@ -28,22 +28,15 @@ import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-
-@RBuiltin(name = "as.character", kind = PRIMITIVE, parameterNames = {"x", "..."})
+@RBuiltin(name = "as.character", kind = PRIMITIVE, parameterNames = {"x", "..."}, internalDispatch = true)
 public abstract class AsCharacter extends RBuiltinNode {
 
-    private static final String NAME = "as.character";
-
     @Child private CastStringNode castStringNode;
-    @Child private UseMethodInternalNode dcn;
-    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
     public abstract Object execute(VirtualFrame frame, Object obj);
 
@@ -117,14 +110,14 @@ public abstract class AsCharacter extends RBuiltinNode {
         return RDataFactory.createStringVector(0);
     }
 
-    @Specialization(guards = "!isObject(frame, vector)")
-    protected RStringVector doStringVector(@SuppressWarnings("unused") VirtualFrame frame, RStringVector vector) {
+    @Specialization
+    protected RStringVector doStringVector(RStringVector vector) {
         controlVisibility();
         return RDataFactory.createStringVector(vector.getDataCopy(), vector.isComplete());
     }
 
-    @Specialization(guards = "!isObject(frame, list)")
-    protected RStringVector doList(@SuppressWarnings("unused") VirtualFrame frame, RList list) {
+    @Specialization
+    protected RStringVector doList(RList list) {
         controlVisibility();
         int len = list.getLength();
         boolean complete = RDataFactory.COMPLETE_VECTOR;
@@ -145,28 +138,9 @@ public abstract class AsCharacter extends RBuiltinNode {
         return RDataFactory.createStringVector(data, complete);
     }
 
-    @Specialization(guards = "!isObject(frame, container)")
-    protected RStringVector doVector(@SuppressWarnings("unused") VirtualFrame frame, RAbstractContainer container) {
+    @Specialization
+    protected RStringVector doVector(RAbstractContainer container) {
         controlVisibility();
         return castStringVector(container);
-    }
-
-    @Specialization(guards = "isObject(frame, container)")
-    protected Object doObject(VirtualFrame frame, RAbstractContainer container) {
-        controlVisibility();
-        if (dcn == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            dcn = insert(new UseMethodInternalNode(NAME, ArgumentsSignature.get(""), true));
-        }
-        try {
-            return dcn.execute(frame, container, new Object[]{container});
-        } catch (S3FunctionLookupNode.NoGenericMethodException e) {
-            return castStringVector(container);
-        }
-    }
-
-    @SuppressFBWarnings(value = "ES_COMPARING_STRINGS_WITH_EQ", justification = "generic name is interned in the interpreted code for faster comparison")
-    protected boolean isObject(VirtualFrame frame, RAbstractContainer container) {
-        return container.isObject(attrProfiles) && !(RArguments.getS3Args(frame) != null && RArguments.getS3Args(frame).generic == NAME);
     }
 }
