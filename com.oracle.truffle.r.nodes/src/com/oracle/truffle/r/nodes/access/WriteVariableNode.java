@@ -39,7 +39,7 @@ public abstract class WriteVariableNode extends RNode {
         INVISIBLE
     }
 
-    public abstract String getName();
+    public abstract Object getName();
 
     public abstract RNode getRhs();
 

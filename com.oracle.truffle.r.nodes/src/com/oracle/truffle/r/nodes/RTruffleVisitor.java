@@ -160,6 +160,7 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
             RNode[] defaultValues = new RNode[argumentsList.size()];
             SaveArgumentsNode saveArguments;
             AccessArgumentNode[] argAccessNodes = new AccessArgumentNode[argumentsList.size()];
+            PostProcessArgumentsNode argPostProcess;
             if (!argumentsList.isEmpty()) {
                 RNode[] init = new RNode[argumentsList.size()];
                 int index = 0;
@@ -189,8 +190,14 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
                 }
 
                 saveArguments = new SaveArgumentsNode(init);
+                if (FastROptions.NewStateTransition && !FastROptions.RefCountIncrementOnly) {
+                    argPostProcess = PostProcessArgumentsNode.create(argumentsList.size());
+                } else {
+                    argPostProcess = null;
+                }
             } else {
                 saveArguments = new SaveArgumentsNode(RNode.EMTPY_RNODE_ARRAY);
+                argPostProcess = null;
             }
 
             // Maintain SourceSection
@@ -205,7 +212,7 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
             FrameDescriptor descriptor = new FrameDescriptor();
             FrameSlotChangeMonitor.initializeFunctionFrameDescriptor(descriptor);
             String description = getFunctionDescription(func);
-            FunctionDefinitionNode rootNode = new FunctionDefinitionNode(func.getSource(), descriptor, new FunctionBodyNode(saveArguments, statements), formals, description, false);
+            FunctionDefinitionNode rootNode = new FunctionDefinitionNode(func.getSource(), descriptor, new FunctionBodyNode(saveArguments, statements), formals, description, false, argPostProcess);
             callTarget = Truffle.getRuntime().createCallTarget(rootNode);
             return FunctionExpressionNode.create(func.getSource(), callTarget);
         } catch (Throwable err) {

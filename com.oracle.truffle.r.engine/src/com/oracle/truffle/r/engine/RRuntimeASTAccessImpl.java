@@ -217,7 +217,7 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
                 case 0:
                     return RDataFactory.createSymbol("`<-`");
                 case 1:
-                    return RDataFactory.createSymbol(wvn.getName());
+                    return RDataFactory.createSymbol(wvn.getName().toString());
                 case 2:
                     return RASTUtils.createLanguageElement(wvn.getRhs());
                 default:

@@ -173,6 +173,16 @@ public class RExpression implements RShareable, RAbstractContainer {
     }
 
     @Override
+    public void incRefCount() {
+        data.incRefCount();
+    }
+
+    @Override
+    public void decRefCount() {
+        data.decRefCount();
+    }
+
+    @Override
     public RExpression copy() {
         return RDataFactory.createExpression((RList) data.copy());
     }
