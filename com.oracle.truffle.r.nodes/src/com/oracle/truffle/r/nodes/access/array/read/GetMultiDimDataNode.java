@@ -24,6 +24,7 @@ package com.oracle.truffle.r.nodes.access.array.read;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
@@ -35,8 +36,8 @@ import com.oracle.truffle.r.runtime.ops.na.*;
 @TypeSystemReference(RTypes.class)
 abstract class GetMultiDimDataNode extends Node {
 
-    public abstract Object executeMultiDimDataGet(Object data, RAbstractVector vector, Object[] positions, int currentDimLevel, int srcArrayBase, int dstArrayBase, int accSrcDimensions,
-                    int accDstDimensions);
+    public abstract Object executeMultiDimDataGet(VirtualFrame frame, Object data, RAbstractVector vector, Object[] positions, int currentDimLevel, int srcArrayBase, int dstArrayBase,
+                    int accSrcDimensions, int accDstDimensions);
 
     private final NACheck posNACheck;
     private final NACheck elementNACheck;
@@ -47,13 +48,13 @@ abstract class GetMultiDimDataNode extends Node {
 
     @Child private GetMultiDimDataNode getMultiDimDataRecursive;
 
-    private Object getMultiDimData(Object data, RAbstractVector vector, Object[] positions, int currentDimLevel, int srcArrayBase, int dstArrayBase, int accSrcDimensions, int accDstDimensions,
-                    NACheck posCheck, NACheck elementCheck) {
+    private Object getMultiDimData(VirtualFrame frame, Object data, RAbstractVector vector, Object[] positions, int currentDimLevel, int srcArrayBase, int dstArrayBase, int accSrcDimensions,
+                    int accDstDimensions, NACheck posCheck, NACheck elementCheck) {
         if (getMultiDimDataRecursive == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             getMultiDimDataRecursive = insert(GetMultiDimDataNodeGen.create(posCheck, elementCheck));
         }
-        return getMultiDimDataRecursive.executeMultiDimDataGet(data, vector, positions, currentDimLevel, srcArrayBase, dstArrayBase, accSrcDimensions, accDstDimensions);
+        return getMultiDimDataRecursive.executeMultiDimDataGet(frame, data, vector, positions, currentDimLevel, srcArrayBase, dstArrayBase, accSrcDimensions, accDstDimensions);
     }
 
     protected GetMultiDimDataNode(NACheck posNACheck, NACheck elementNACheck) {
@@ -67,7 +68,7 @@ abstract class GetMultiDimDataNode extends Node {
     }
 
     @Specialization
-    protected RList getData(Object d, RList vector, Object[] positions, int currentDimLevel, int srcArrayBase, int dstArrayBase, int accSrcDimensions, int accDstDimensions) {
+    protected RList getData(VirtualFrame frame, Object d, RList vector, Object[] positions, int currentDimLevel, int srcArrayBase, int dstArrayBase, int accSrcDimensions, int accDstDimensions) {
         Object[] data = (Object[]) d;
         int[] srcDimensions = vector.getDimensions();
         RIntVector p = (RIntVector) positions[currentDimLevel - 1];
@@ -89,14 +90,15 @@ abstract class GetMultiDimDataNode extends Node {
             for (int i = 0; i < p.getLength(); i++) {
                 int newDstArrayBase = dstArrayBase + newAccDstDimensions * i;
                 int newSrcArrayBase = getNewArrayBase(srcArrayBase, p, i, newAccSrcDimensions);
-                getMultiDimData(data, vector, positions, currentDimLevel - 1, newSrcArrayBase, newDstArrayBase, newAccSrcDimensions, newAccDstDimensions, posNACheck, elementNACheck);
+                getMultiDimData(frame, data, vector, positions, currentDimLevel - 1, newSrcArrayBase, newDstArrayBase, newAccSrcDimensions, newAccDstDimensions, posNACheck, elementNACheck);
             }
         }
         return vector;
     }
 
     @Specialization
-    protected RAbstractIntVector getData(Object d, RAbstractIntVector vector, Object[] positions, int currentDimLevel, int srcArrayBase, int dstArrayBase, int accSrcDimensions, int accDstDimensions) {
+    protected RAbstractIntVector getData(VirtualFrame frame, Object d, RAbstractIntVector vector, Object[] positions, int currentDimLevel, int srcArrayBase, int dstArrayBase, int accSrcDimensions,
+                    int accDstDimensions) {
         int[] data = (int[]) d;
         int[] srcDimensions = vector.getDimensions();
         RIntVector p = (RIntVector) positions[currentDimLevel - 1];
@@ -119,15 +121,15 @@ abstract class GetMultiDimDataNode extends Node {
             for (int i = 0; i < p.getLength(); i++) {
                 int newDstArrayBase = dstArrayBase + newAccDstDimensions * i;
                 int newSrcArrayBase = getNewArrayBase(srcArrayBase, p, i, newAccSrcDimensions);
-                getMultiDimData(data, vector, positions, currentDimLevel - 1, newSrcArrayBase, newDstArrayBase, newAccSrcDimensions, newAccDstDimensions, posNACheck, elementNACheck);
+                getMultiDimData(frame, data, vector, positions, currentDimLevel - 1, newSrcArrayBase, newDstArrayBase, newAccSrcDimensions, newAccDstDimensions, posNACheck, elementNACheck);
             }
         }
         return vector;
     }
 
     @Specialization
-    protected RAbstractDoubleVector getData(Object d, RAbstractDoubleVector vector, Object[] positions, int currentDimLevel, int srcArrayBase, int dstArrayBase, int accSrcDimensions,
-                    int accDstDimensions) {
+    protected RAbstractDoubleVector getData(VirtualFrame frame, Object d, RAbstractDoubleVector vector, Object[] positions, int currentDimLevel, int srcArrayBase, int dstArrayBase,
+                    int accSrcDimensions, int accDstDimensions) {
         double[] data = (double[]) d;
         int[] srcDimensions = vector.getDimensions();
         RIntVector p = (RIntVector) positions[currentDimLevel - 1];
@@ -150,15 +152,15 @@ abstract class GetMultiDimDataNode extends Node {
             for (int i = 0; i < p.getLength(); i++) {
                 int newDstArrayBase = dstArrayBase + newAccDstDimensions * i;
                 int newSrcArrayBase = getNewArrayBase(srcArrayBase, p, i, newAccSrcDimensions);
-                getMultiDimData(data, vector, positions, currentDimLevel - 1, newSrcArrayBase, newDstArrayBase, newAccSrcDimensions, newAccDstDimensions, posNACheck, elementNACheck);
+                getMultiDimData(frame, data, vector, positions, currentDimLevel - 1, newSrcArrayBase, newDstArrayBase, newAccSrcDimensions, newAccDstDimensions, posNACheck, elementNACheck);
             }
         }
         return vector;
     }
 
     @Specialization
-    protected RAbstractLogicalVector getData(Object d, RAbstractLogicalVector vector, Object[] positions, int currentDimLevel, int srcArrayBase, int dstArrayBase, int accSrcDimensions,
-                    int accDstDimensions) {
+    protected RAbstractLogicalVector getData(VirtualFrame frame, Object d, RAbstractLogicalVector vector, Object[] positions, int currentDimLevel, int srcArrayBase, int dstArrayBase,
+                    int accSrcDimensions, int accDstDimensions) {
         byte[] data = (byte[]) d;
         int[] srcDimensions = vector.getDimensions();
         RIntVector p = (RIntVector) positions[currentDimLevel - 1];
@@ -181,15 +183,15 @@ abstract class GetMultiDimDataNode extends Node {
             for (int i = 0; i < p.getLength(); i++) {
                 int newDstArrayBase = dstArrayBase + newAccDstDimensions * i;
                 int newSrcArrayBase = getNewArrayBase(srcArrayBase, p, i, newAccSrcDimensions);
-                getMultiDimData(data, vector, positions, currentDimLevel - 1, newSrcArrayBase, newDstArrayBase, newAccSrcDimensions, newAccDstDimensions, posNACheck, elementNACheck);
+                getMultiDimData(frame, data, vector, positions, currentDimLevel - 1, newSrcArrayBase, newDstArrayBase, newAccSrcDimensions, newAccDstDimensions, posNACheck, elementNACheck);
             }
         }
         return vector;
     }
 
     @Specialization
-    protected RAbstractStringVector getData(Object d, RAbstractStringVector vector, Object[] positions, int currentDimLevel, int srcArrayBase, int dstArrayBase, int accSrcDimensions,
-                    int accDstDimensions) {
+    protected RAbstractStringVector getData(VirtualFrame frame, Object d, RAbstractStringVector vector, Object[] positions, int currentDimLevel, int srcArrayBase, int dstArrayBase,
+                    int accSrcDimensions, int accDstDimensions) {
         String[] data = (String[]) d;
         int[] srcDimensions = vector.getDimensions();
         RIntVector p = (RIntVector) positions[currentDimLevel - 1];
@@ -212,15 +214,15 @@ abstract class GetMultiDimDataNode extends Node {
             for (int i = 0; i < p.getLength(); i++) {
                 int newDstArrayBase = dstArrayBase + newAccDstDimensions * i;
                 int newSrcArrayBase = getNewArrayBase(srcArrayBase, p, i, newAccSrcDimensions);
-                getMultiDimData(data, vector, positions, currentDimLevel - 1, newSrcArrayBase, newDstArrayBase, newAccSrcDimensions, newAccDstDimensions, posNACheck, elementNACheck);
+                getMultiDimData(frame, data, vector, positions, currentDimLevel - 1, newSrcArrayBase, newDstArrayBase, newAccSrcDimensions, newAccDstDimensions, posNACheck, elementNACheck);
             }
         }
         return vector;
     }
 
     @Specialization
-    protected RAbstractComplexVector getData(Object d, RAbstractComplexVector vector, Object[] positions, int currentDimLevel, int srcArrayBase, int dstArrayBase, int accSrcDimensions,
-                    int accDstDimensions) {
+    protected RAbstractComplexVector getData(VirtualFrame frame, Object d, RAbstractComplexVector vector, Object[] positions, int currentDimLevel, int srcArrayBase, int dstArrayBase,
+                    int accSrcDimensions, int accDstDimensions) {
         double[] data = (double[]) d;
         int[] srcDimensions = vector.getDimensions();
         RIntVector p = (RIntVector) positions[currentDimLevel - 1];
@@ -245,14 +247,15 @@ abstract class GetMultiDimDataNode extends Node {
             for (int i = 0; i < p.getLength(); i++) {
                 int newDstArrayBase = dstArrayBase + newAccDstDimensions * i;
                 int newSrcArrayBase = getNewArrayBase(srcArrayBase, p, i, newAccSrcDimensions);
-                getMultiDimData(data, vector, positions, currentDimLevel - 1, newSrcArrayBase, newDstArrayBase, newAccSrcDimensions, newAccDstDimensions, posNACheck, elementNACheck);
+                getMultiDimData(frame, data, vector, positions, currentDimLevel - 1, newSrcArrayBase, newDstArrayBase, newAccSrcDimensions, newAccDstDimensions, posNACheck, elementNACheck);
             }
         }
         return vector;
     }
 
     @Specialization
-    protected RAbstractRawVector getData(Object d, RAbstractRawVector vector, Object[] positions, int currentDimLevel, int srcArrayBase, int dstArrayBase, int accSrcDimensions, int accDstDimensions) {
+    protected RAbstractRawVector getData(VirtualFrame frame, Object d, RAbstractRawVector vector, Object[] positions, int currentDimLevel, int srcArrayBase, int dstArrayBase, int accSrcDimensions,
+                    int accDstDimensions) {
         byte[] data = (byte[]) d;
         int[] srcDimensions = vector.getDimensions();
         RIntVector p = (RIntVector) positions[currentDimLevel - 1];
@@ -274,7 +277,7 @@ abstract class GetMultiDimDataNode extends Node {
             for (int i = 0; i < p.getLength(); i++) {
                 int newDstArrayBase = dstArrayBase + newAccDstDimensions * i;
                 int newSrcArrayBase = getNewArrayBase(srcArrayBase, p, i, newAccSrcDimensions);
-                getMultiDimData(data, vector, positions, currentDimLevel - 1, newSrcArrayBase, newDstArrayBase, newAccSrcDimensions, newAccDstDimensions, posNACheck, elementNACheck);
+                getMultiDimData(frame, data, vector, positions, currentDimLevel - 1, newSrcArrayBase, newDstArrayBase, newAccSrcDimensions, newAccDstDimensions, posNACheck, elementNACheck);
             }
         }
         return vector;

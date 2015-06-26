@@ -14,7 +14,6 @@ package com.oracle.truffle.r.nodes.runtime;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RDeparse.*;
@@ -123,17 +122,6 @@ public class RASTDeparse {
                 }
                 state.append(func.op == SQUARE ? "]" : "]]");
 
-                break;
-            case DOLLAR:
-                RSyntaxNode.cast(argValues[0]).deparse(state);
-                state.append(func.op);
-                String fieldName = ConstantNode.getString(argValues[1]);
-                if (fieldName != null) {
-                    state.append(fieldName);
-                } else {
-                    // FIXME: this needs to be handled in RCallNode, not here
-                    RSyntaxNode.cast(argValues[1]).deparse(state);
-                }
                 break;
             default:
                 assert false;

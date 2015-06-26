@@ -25,25 +25,49 @@ package com.oracle.truffle.r.nodes.access;
 import java.util.*;
 
 import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.nodes.control.*;
+import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
-import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
+import com.oracle.truffle.r.runtime.env.REnvironment.*;
+import com.oracle.truffle.r.runtime.gnur.*;
 
 @NodeChildren({@NodeChild(value = "value", type = RNode.class), @NodeChild(value = "object", type = RNode.class), @NodeChild(value = "field", type = RNode.class)})
-public abstract class UpdateFieldNode extends RNode implements RSyntaxNode {
+public abstract class UpdateFieldNode extends UpdateNode implements RSyntaxNode {
 
-    public abstract Object executeUpdate(Object o, Object value, String field);
+    public abstract Object executeUpdate(VirtualFrame frame, Object o, Object value, String field);
+
+    public abstract RNode getObject();
+
+    public abstract RNode getField();
+
+    @Child private UpdateFieldNode accessRecursive;
+    @Child private UseMethodInternalNode dcn;
+    public final boolean forObjects;
 
     protected final ConditionProfile hasNamesProfile = ConditionProfile.createBinaryProfile();
     protected final BranchProfile inexactMatch = BranchProfile.create();
     protected final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+
+    public UpdateFieldNode(boolean forObjects) {
+        this.forObjects = forObjects;
+    }
+
+    private Object accessRecursive(VirtualFrame frame, RAbstractContainer container, Object value, String field) {
+        if (accessRecursive == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            accessRecursive = insert(UpdateFieldNodeGen.create(false, null, null, null));
+        }
+        return accessRecursive.executeUpdate(frame, container, value, field);
+    }
 
     @TruffleBoundary
     public static int getElementIndexByName(RStringVector names, String name) {
@@ -62,7 +86,20 @@ public abstract class UpdateFieldNode extends RNode implements RSyntaxNode {
 
     @Child private CastListNode castList;
 
-    @Specialization(guards = "!isRNull(value)")
+    @Specialization(guards = "isObject(container)")
+    protected Object accessField(VirtualFrame frame, RAbstractContainer container, Object value, String field) {
+        if (dcn == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            dcn = insert(new UseMethodInternalNode("$<-", ArgumentsSignature.get("", "", ""), true));
+        }
+        try {
+            return dcn.execute(frame, container, new Object[]{container, field, value});
+        } catch (S3FunctionLookupNode.NoGenericMethodException e) {
+            return accessRecursive(frame, container, value, field);
+        }
+    }
+
+    @Specialization(guards = "!isNull(value)")
     protected Object updateField(RList object, Object value, String field) {
         RStringVector names = object.getNames(attrProfiles);
         int index = -1;
@@ -100,8 +137,8 @@ public abstract class UpdateFieldNode extends RNode implements RSyntaxNode {
         return result;
     }
 
-    @Specialization
-    protected Object updateFieldNullValue(RList object, @SuppressWarnings("unused") RNull value, String field) {
+    @Specialization(guards = "isNull(value)")
+    protected Object updateFieldNullValue(RList object, @SuppressWarnings("unused") Object value, String field) {
         RStringVector names = object.getNames(attrProfiles);
         int index = -1;
         if (hasNamesProfile.profile(names != null)) {
@@ -159,7 +196,7 @@ public abstract class UpdateFieldNode extends RNode implements RSyntaxNode {
         return env;
     }
 
-    @Specialization(guards = "!isRList(object)")
+    @Specialization
     protected Object updateField(RAbstractVector object, Object value, String field) {
         if (castList == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -167,9 +204,47 @@ public abstract class UpdateFieldNode extends RNode implements RSyntaxNode {
         }
         RError.warning(getEncapsulatingSourceSection(), RError.Message.COERCING_LHS_TO_LIST);
         if (nullValueProfile.profile(value == RNull.instance)) {
-            return updateFieldNullValue(castList.executeList(object), RNull.instance, field);
+            return updateFieldNullValue(castList.executeList(object), value, field);
         } else {
             return updateField(castList.executeList(object), value, field);
         }
+    }
+
+    protected static boolean isNull(Object value) {
+        return value == RNull.instance;
+    }
+
+    @Override
+    public void deparse(RDeparse.State state) {
+        RSyntaxNode.cast(getObject()).deparse(state);
+        state.append('$');
+        RSyntaxNode.cast(getField()).deparse(state);
+        state.append(" <- ");
+        RSyntaxNode.cast(getValue()).deparse(state);
+    }
+
+    @Override
+    public void serialize(RSerialize.State state) {
+        state.setAsBuiltin("<-");
+        state.openPairList(SEXPTYPE.LISTSXP);
+        // field access
+        state.openPairList(SEXPTYPE.LANGSXP);
+        state.setAsBuiltin("$");
+        state.openPairList(SEXPTYPE.LISTSXP);
+        state.serializeNodeSetCar(getObject());
+        state.openPairList(SEXPTYPE.LISTSXP);
+        state.serializeNodeSetCar(getField());
+        state.linkPairList(2);
+        state.setCdr(state.closePairList());
+        // end field access
+        state.setCar(state.closePairList());
+        state.openPairList(SEXPTYPE.LISTSXP);
+        state.serializeNodeSetCar(getValue());
+        state.linkPairList(2);
+        state.setCdr(state.closePairList());
+    }
+
+    protected boolean isObject(RAbstractContainer container) {
+        return container.isObject(attrProfiles) && forObjects;
     }
 }

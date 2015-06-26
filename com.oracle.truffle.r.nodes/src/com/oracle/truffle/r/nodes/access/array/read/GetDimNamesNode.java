@@ -24,6 +24,7 @@ package com.oracle.truffle.r.nodes.access.array.read;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
@@ -35,18 +36,18 @@ import com.oracle.truffle.r.runtime.ops.na.*;
 @TypeSystemReference(RTypes.class)
 abstract class GetDimNamesNode extends Node {
 
-    public abstract Object executeDimNamesGet(RList dstDimNames, RAbstractVector vector, Object[] positions, int currentSrcDimLevel, int currentDstDimLevel);
+    public abstract Object executeDimNamesGet(VirtualFrame frame, RList dstDimNames, RAbstractVector vector, Object[] positions, int currentSrcDimLevel, int currentDstDimLevel);
 
     private final NACheck namesNACheck;
 
     @Child private GetDimNamesNode getDimNamesNodeRecursive;
 
-    private RStringVector getDimNamesRecursive(RList dstDimNames, RAbstractVector vector, Object[] positions, int currentSrcDimLevel, int currentDstDimLevel, NACheck namesCheck) {
+    private RStringVector getDimNamesRecursive(VirtualFrame frame, RList dstDimNames, RAbstractVector vector, Object[] positions, int currentSrcDimLevel, int currentDstDimLevel, NACheck namesCheck) {
         if (getDimNamesNodeRecursive == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             getDimNamesNodeRecursive = insert(GetDimNamesNodeGen.create(namesCheck));
         }
-        return (RStringVector) getDimNamesNodeRecursive.executeDimNamesGet(dstDimNames, vector, positions, currentSrcDimLevel, currentDstDimLevel);
+        return (RStringVector) getDimNamesNodeRecursive.executeDimNamesGet(frame, dstDimNames, vector, positions, currentSrcDimLevel, currentDstDimLevel);
     }
 
     protected GetDimNamesNode(NACheck namesNACheck) {
@@ -64,7 +65,7 @@ abstract class GetDimNamesNode extends Node {
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
     @Specialization
-    protected Object getDimNames(RList dstDimNames, RAbstractVector vector, Object[] positions, int currentSrcDimLevel, int currentDstDimLevel) {
+    protected Object getDimNames(VirtualFrame frame, RList dstDimNames, RAbstractVector vector, Object[] positions, int currentSrcDimLevel, int currentDstDimLevel) {
         if (currentSrcDimLevel == 0) {
             return null;
         }
@@ -92,15 +93,15 @@ abstract class GetDimNamesNode extends Node {
                 RStringVector dstNames = RDataFactory.createStringVector(namesData, namesNACheck.neverSeenNA());
                 dstDimNames.updateDataAt(currentDstDimLevel - 1, dstNames, null);
             }
-            getDimNamesRecursive(dstDimNames, vector, positions, currentSrcDimLevel - 1, currentDstDimLevel - 1, namesNACheck);
+            getDimNamesRecursive(frame, dstDimNames, vector, positions, currentSrcDimLevel - 1, currentDstDimLevel - 1, namesNACheck);
         } else {
             if (emptyPosProfile.profile(p.getDataAt(0) == 0)) {
                 dstDimNames.updateDataAt(currentDstDimLevel - 1, RNull.instance, null);
-                getDimNamesRecursive(dstDimNames, vector, positions, currentSrcDimLevel - 1, currentDstDimLevel - 1, namesNACheck);
+                getDimNamesRecursive(frame, dstDimNames, vector, positions, currentSrcDimLevel - 1, currentDstDimLevel - 1, namesNACheck);
             } else {
                 if (diffDimLenProfile.profile(currentSrcDimLevel > currentDstDimLevel)) {
                     // skip source dimensions
-                    getDimNamesRecursive(dstDimNames, vector, positions, currentSrcDimLevel - 1, currentDstDimLevel, namesNACheck);
+                    getDimNamesRecursive(frame, dstDimNames, vector, positions, currentSrcDimLevel - 1, currentDstDimLevel, namesNACheck);
                 } else {
                     RList srcDimNames = vector.getDimNames(attrProfiles);
                     RStringVector srcNames = srcDimNames == null ? null : (srcDimNames.getDataAt(currentSrcDimLevel - 1) == RNull.instance ? null
@@ -120,7 +121,7 @@ abstract class GetDimNamesNode extends Node {
                         }
                         dstDimNames.updateDataAt(currentDstDimLevel - 1, RDataFactory.createStringVector(new String[]{name}, namesNACheck.neverSeenNA()), null);
                     }
-                    getDimNamesRecursive(dstDimNames, vector, positions, currentSrcDimLevel - 1, currentDstDimLevel - 1, namesNACheck);
+                    getDimNamesRecursive(frame, dstDimNames, vector, positions, currentSrcDimLevel - 1, currentDstDimLevel - 1, namesNACheck);
                 }
             }
         }
