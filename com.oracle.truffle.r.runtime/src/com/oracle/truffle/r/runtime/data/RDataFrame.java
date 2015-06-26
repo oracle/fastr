@@ -90,16 +90,6 @@ public final class RDataFrame implements RShareable, RAbstractContainer {
     }
 
     @Override
-    public void incRefCount() {
-        vector.incRefCount();
-    }
-
-    @Override
-    public void decRefCount() {
-        vector.decRefCount();
-    }
-
-    @Override
     public RDataFrame copy() {
         return RDataFactory.createDataFrame(vector.copy());
     }

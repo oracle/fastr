@@ -58,7 +58,6 @@ public abstract class RVector extends RAttributeStorage implements RShareable, R
     private Object rowNames;
     private boolean shared;
     private boolean temporary = true;
-    private int refCount;
 
     protected RVector(boolean complete, int length, int[] dimensions, RStringVector names) {
         this.complete = complete;
@@ -388,20 +387,12 @@ public abstract class RVector extends RAttributeStorage implements RShareable, R
 
     @Override
     public final boolean isTemporary() {
-        if (FastROptions.NewStateTransition) {
-            return temporary && refCount == 0;
-        } else {
-            return temporary;
-        }
+        return temporary;
     }
 
     @Override
     public final boolean isShared() {
-        if (FastROptions.NewStateTransition) {
-            return shared || (!temporary && refCount > 0);
-        } else {
-            return shared;
-        }
+        return shared;
     }
 
     @Override
@@ -411,17 +402,6 @@ public abstract class RVector extends RAttributeStorage implements RShareable, R
         }
         shared = true;
         return this;
-    }
-
-    @Override
-    public void incRefCount() {
-        refCount++;
-    }
-
-    @Override
-    public void decRefCount() {
-        assert refCount > 0;
-        refCount--;
     }
 
     public final boolean hasDimensions() {

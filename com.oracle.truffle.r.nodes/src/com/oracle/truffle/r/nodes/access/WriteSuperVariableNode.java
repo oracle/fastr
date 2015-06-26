@@ -50,7 +50,7 @@ public class WriteSuperVariableNode extends WriteVariableNodeSyntaxHelper implem
 
     @Override
     @NeedsWrapper
-    public Object getName() {
+    public String getName() {
         return writeSuperFrameVariableNode.getName();
     }
 

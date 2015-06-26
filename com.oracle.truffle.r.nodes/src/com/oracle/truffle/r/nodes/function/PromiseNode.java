@@ -93,7 +93,7 @@ public abstract class PromiseNode extends RNode {
         if (isOptimizableConstant(expr)) {
             // As Constants don't care where they are evaluated, we don't need to
             // distinguish between ARG_DEFAULT and ARG_SUPPLIED
-            pn = new OptConstantPromiseNode(factory.getType(), (ConstantNode) expr, arg == expr ? null : WrapArgumentNode.create(((WrapArgumentNode) arg).getIndex()));
+            pn = new OptConstantPromiseNode(factory.getType(), (ConstantNode) expr, arg == expr ? null : WrapArgumentNode.create());
         } else
 
         if (factory.getType() == PromiseType.ARG_SUPPLIED) {
@@ -102,7 +102,7 @@ public abstract class PromiseNode extends RNode {
             } else
 
             if (!isVararg(expr) && !noOpt && isOptimizableVariable(expr)) {
-                pn = new OptVariableSuppliedPromiseNode(factory, (ReadVariableNode) expr, arg == expr ? ArgumentStatePush.INVALID_INDEX : ((WrapArgumentNode) arg).getIndex());
+                pn = new OptVariableSuppliedPromiseNode(factory, (ReadVariableNode) expr, arg != expr);
             }
 
 // if (isOptimizableExpression(expr)) {
@@ -157,8 +157,8 @@ public abstract class PromiseNode extends RNode {
      */
     private static final class OptVariableSuppliedPromiseNode extends OptVariablePromiseBaseNode {
 
-        public OptVariableSuppliedPromiseNode(RPromiseFactory factory, ReadVariableNode rvn, int wrapIndex) {
-            super(factory, rvn, wrapIndex);
+        public OptVariableSuppliedPromiseNode(RPromiseFactory factory, ReadVariableNode rvn, boolean wrap) {
+            super(factory, rvn, wrap);
         }
 
         @Override

@@ -54,7 +54,7 @@ public final class OptConstantPromiseNode extends RNode {
     @Override
     public Object execute(VirtualFrame frame) {
         if (wrapNode != null) {
-            wrapNode.execute(frame, constantValue);
+            wrapNode.execute(constantValue);
         }
         return RDataFactory.createPromise(type, OptType.DEFAULT, constantExpr, constantValue);
     }

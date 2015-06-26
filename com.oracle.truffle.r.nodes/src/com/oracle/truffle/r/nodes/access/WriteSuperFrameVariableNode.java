@@ -152,7 +152,7 @@ public abstract class WriteSuperFrameVariableNode extends WriteSuperFrameVariabl
         }
 
         @Override
-        public Object getName() {
+        public String getName() {
             return writeNode.getName();
         }
 

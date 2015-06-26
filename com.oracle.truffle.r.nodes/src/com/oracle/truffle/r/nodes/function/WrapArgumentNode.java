@@ -24,9 +24,9 @@ package com.oracle.truffle.r.nodes.function;
 
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
-import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
+import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
 
@@ -39,21 +39,10 @@ import com.oracle.truffle.r.runtime.env.*;
 public final class WrapArgumentNode extends WrapArgumentBaseNode {
 
     private final boolean modeChange;
-    private final int index;
 
-    @Child private ArgumentStatePush argPushStateNode;
-
-    private final BranchProfile refCounted = BranchProfile.create();
-
-    private WrapArgumentNode(RNode operand, boolean modeChange, int index) {
+    private WrapArgumentNode(RNode operand, boolean modeChange) {
         super(operand, modeChange);
         this.modeChange = modeChange;
-        this.index = index;
-        this.argPushStateNode = ArgumentStatePushNodeGen.create(index, null);
-    }
-
-    public int getIndex() {
-        return index;
     }
 
     @Override
@@ -65,18 +54,15 @@ public final class WrapArgumentNode extends WrapArgumentBaseNode {
     public Object execute(VirtualFrame frame) {
         assert operand != null;
         Object result = operand.execute(frame);
-        return execute(frame, result);
+        return execute(result);
     }
 
-    public Object execute(VirtualFrame frame, Object result) {
+    public Object execute(Object result) {
         if (modeChange) {
             RVector vector = getVector(result);
             if (vector != null) {
                 shareable.enter();
-                argPushStateNode.executeObject(frame, vector);
-            } else if (argPushStateNode.refCounted()) {
-                refCounted.enter();
-                argPushStateNode.executeObject(frame, RNull.instance);
+                Utils.transitionState(vector, everSeenShared, everSeenTemporary, everSeenNonTemporary);
             }
         }
         return result;
@@ -107,15 +93,15 @@ public final class WrapArgumentNode extends WrapArgumentBaseNode {
         return operand.executeNull(frame);
     }
 
-    public static WrapArgumentNode create(int index) {
-        return new WrapArgumentNode(null, true, index);
+    public static WrapArgumentNode create() {
+        return new WrapArgumentNode(null, true);
     }
 
-    public static RNode create(RNode operand, boolean modeChange, int index) {
+    public static RNode create(RNode operand, boolean modeChange) {
         if (operand instanceof WrapArgumentNode || operand instanceof ConstantNode) {
             return operand;
         } else {
-            WrapArgumentNode wan = new WrapArgumentNode(operand, modeChange, index);
+            WrapArgumentNode wan = new WrapArgumentNode(operand, modeChange);
             wan.assignSourceSection(operand.getSourceSection());
             return wan;
         }
@@ -127,7 +113,7 @@ public final class WrapArgumentNode extends WrapArgumentBaseNode {
         if (sub instanceof RASTUtils.DotsNode) {
             return (RASTUtils.DotsNode) sub;
         } else {
-            return RSyntaxNode.cast(create(sub, modeChange, index));
+            return RSyntaxNode.cast(create(sub, modeChange));
         }
     }
 }

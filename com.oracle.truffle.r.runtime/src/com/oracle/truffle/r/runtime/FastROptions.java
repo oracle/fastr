@@ -25,8 +25,6 @@ package com.oracle.truffle.r.runtime;
 import java.util.*;
 import java.util.Map.Entry;
 
-import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.r.runtime.RCmdOptions.*;
 
 /**
@@ -58,8 +56,6 @@ public class FastROptions {
     public static final Option<Boolean> IgnoreVisibility = newBooleanOption("IgnoreVisibility", false, "Ignore setting of the visibility flag");
     public static final Option<Boolean> LoadPkgSourcesIndex = newBooleanOption("LoadPkgSourcesIndex", true, "Load R package sources index");
     public static final Option<Boolean> InvisibleArgs = newBooleanOption("InvisibleArgs", true, "Argument writes do not trigger state transitions");
-    public static final Option<Boolean> ExperimentalStateTrans = newBooleanOption("ExperimentalStateTrans", false, "Eperimental state transition implementation");
-    public static final Option<Boolean> RefCountIncOnly = newBooleanOption("RefCountIncOnly", false, "Disable reference count decrements for eperimental state transition implementation");
 
     // Promises optimizations
     public static final Option<Boolean> EagerEval = newBooleanOption("EagerEval", false, "If enabled, overrides all other EagerEval switches (see EagerEvalHelper)");
@@ -68,9 +64,6 @@ public class FastROptions {
     public static final Option<Boolean> EagerEvalDefault = newBooleanOption("EagerEvalDefault", false, "Enables optimistic eager evaluation of single variables reads (for default parameters)");
     public static final Option<Boolean> EagerEvalExpressions = newBooleanOption("EagerEvalExpressions", false, "Enables optimistic eager evaluation of trivial expressions");
     //@formatter:on
-
-    @CompilationFinal public static boolean NewStateTransition;
-    @CompilationFinal public static boolean RefCountIncrementOnly;
 
     private static boolean initialized;
 
@@ -90,7 +83,6 @@ public class FastROptions {
         if (initialized) {
             return;
         }
-        CompilerDirectives.transferToInterpreterAndInvalidate();
         initialized = true;
         for (Entry<Object, Object> entry : System.getProperties().entrySet()) {
             String prop = (String) entry.getKey();
@@ -124,8 +116,6 @@ public class FastROptions {
                 }
             }
         }
-        NewStateTransition = FastROptions.ExperimentalStateTrans.getValue();
-        RefCountIncrementOnly = FastROptions.RefCountIncOnly.getValue();
         // debug();
     }
 

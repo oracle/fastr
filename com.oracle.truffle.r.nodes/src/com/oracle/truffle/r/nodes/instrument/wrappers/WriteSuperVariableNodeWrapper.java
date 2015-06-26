@@ -95,7 +95,7 @@ public final class WriteSuperVariableNodeWrapper extends com.oracle.truffle.r.no
     }
 
     @Override
-    public java.lang.Object getName() {
+    public java.lang.String getName() {
         return child.getName();
     }
 

@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.nodes.function;
 
 import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
@@ -115,8 +114,7 @@ public class PromiseHelperNode extends Node {
 
     @Child private PromiseHelperNode nextNode = null;
 
-    @Children private final WrapArgumentNode[] wrapNodes = new WrapArgumentNode[ArgumentStatePush.MAX_COUNTED_ARGS];
-    @CompilationFinal private final BranchProfile[] wrapIndexes = new BranchProfile[ArgumentStatePush.MAX_COUNTED_ARGS];
+    @Child private WrapArgumentNode wrapNode;
     private final BranchProfile shouldWrap = BranchProfile.create();
 
     private final ValueProfile optTypeProfile = ValueProfile.createIdentityProfile();
@@ -220,7 +218,7 @@ public class PromiseHelperNode extends Node {
             Assumption eagerAssumption = isValidAssumptionProfile.profile(promise.getIsValidAssumption());
             if (eagerAssumption.isValid()) {
                 if (optType == OptType.EAGER) {
-                    return getEagerValue(frame, promise);
+                    return getEagerValue(promise);
                 } else {
                     assert optType == OptType.PROMISED;
                     RPromise nextPromise = (RPromise) promise.getEagerValue();
@@ -295,8 +293,8 @@ public class PromiseHelperNode extends Node {
             if (eagerAssumption.isValid()) {
                 if (optType == OptType.EAGER) {
                     Object o = promise.getEagerValue();
-                    if (promise.wrapIndex() != ArgumentStatePush.INVALID_INDEX) {
-                        ArgumentStatePush.transitionStateSlowPath(o);
+                    if (promise.shouldWrap()) {
+                        Utils.transitionStateSlowPath(o);
                     }
                     return o;
                 } else {
@@ -386,31 +384,18 @@ public class PromiseHelperNode extends Node {
         promise.setValue(valueProfile.profile(newValue));
     }
 
-    public PromiseHelperNode() {
-        for (int i = 0; i < wrapIndexes.length; i++) {
-            wrapIndexes[i] = BranchProfile.create();
-        }
-    }
-
     /**
      * Returns {@link EagerPromise#getEagerValue()} profiled.
      */
-    @ExplodeLoop
-    private Object getEagerValue(VirtualFrame frame, EagerPromise promise) {
+    private Object getEagerValue(EagerPromise promise) {
         Object o = promise.getEagerValue();
-        if (promise.wrapIndex() != ArgumentStatePush.INVALID_INDEX) {
+        if (promise.shouldWrap()) {
             shouldWrap.enter();
-            int wrapIndex = promise.wrapIndex();
-            for (int i = 0; i < ArgumentStatePush.MAX_COUNTED_ARGS; i++) {
-                if (wrapIndex == i) {
-                    wrapIndexes[i].enter();
-                    if (wrapNodes[i] == null) {
-                        CompilerDirectives.transferToInterpreterAndInvalidate();
-                        wrapNodes[i] = insert(WrapArgumentNode.create(i));
-                    }
-                    wrapNodes[i].execute(frame, o);
-                }
+            if (wrapNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                wrapNode = insert(WrapArgumentNode.create());
             }
+            wrapNode.execute(o);
         }
         return eagerValueProfile.profile(o);
     }

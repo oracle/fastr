@@ -84,16 +84,6 @@ public final class RFactor implements RShareable, RAbstractContainer {
     }
 
     @Override
-    public void incRefCount() {
-        vector.incRefCount();
-    }
-
-    @Override
-    public void decRefCount() {
-        vector.decRefCount();
-    }
-
-    @Override
     public RFactor copy() {
         return RDataFactory.createFactor((RIntVector) vector.copy(), ordered);
     }

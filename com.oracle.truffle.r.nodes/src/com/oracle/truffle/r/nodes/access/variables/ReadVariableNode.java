@@ -62,21 +62,17 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
     }
 
     public static ReadVariableNode create(String name, RType mode, ReadKind kind) {
-        return new ReadVariableNode(name, mode, kind, true);
+        return new ReadVariableNode(name, mode, kind);
     }
 
     public static ReadVariableNode create(String name, boolean shouldCopyValue) {
-        return new ReadVariableNode(name, RType.Any, shouldCopyValue ? ReadKind.Copying : ReadKind.Normal, true);
+        return new ReadVariableNode(name, RType.Any, shouldCopyValue ? ReadKind.Copying : ReadKind.Normal);
     }
 
     public static ReadVariableNode create(SourceSection src, String name, boolean shouldCopyValue) {
-        ReadVariableNode rvn = new ReadVariableNode(name, RType.Any, shouldCopyValue ? ReadKind.Copying : ReadKind.Normal, true);
+        ReadVariableNode rvn = new ReadVariableNode(name, RType.Any, shouldCopyValue ? ReadKind.Copying : ReadKind.Normal);
         rvn.assignSourceSection(src);
         return rvn;
-    }
-
-    public static ReadVariableNode createForRefCount(Object name) {
-        return new ReadVariableNode(name, RType.Any, ReadKind.UnforcedSilentLocal, false);
     }
 
     /**
@@ -85,13 +81,13 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
      * value will silently be returned.
      */
     public static ReadVariableNode createFunctionLookup(SourceSection src, String identifier) {
-        ReadVariableNode result = new ReadVariableNode(identifier, RType.Function, ReadKind.Normal, true);
+        ReadVariableNode result = new ReadVariableNode(identifier, RType.Function, ReadKind.Normal);
         result.assignSourceSection(src);
         return result;
     }
 
     public static ReadVariableNode createSuperLookup(SourceSection src, String name) {
-        ReadVariableNode rvn = new ReadVariableNode(name, RType.Any, ReadKind.Super, true);
+        ReadVariableNode rvn = new ReadVariableNode(name, RType.Any, ReadKind.Super);
         rvn.assignSourceSection(src);
         return rvn;
     }
@@ -106,7 +102,7 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
      * @return The appropriate implementation of {@link ReadVariableNode}
      */
     public static ReadVariableNode createForced(SourceSection src, String name, RType mode) {
-        ReadVariableNode result = new ReadVariableNode(name, mode, ReadKind.Forced, true);
+        ReadVariableNode result = new ReadVariableNode(name, mode, ReadKind.Forced);
         if (src != null) {
             result.assignSourceSection(src);
         }
@@ -124,32 +120,26 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
     private final ConditionProfile isNullValueProfile = ConditionProfile.createBinaryProfile();
     private final ValueProfile valueProfile = ValueProfile.createClassProfile();
 
-    private final Object identifier;
-    private final String identifierAsString;
+    private final String identifier;
     private final RType mode;
     private final ReadKind kind;
-    private final boolean visibilityChange;
 
     @CompilationFinal private final boolean[] seenValueKinds = new boolean[FrameSlotKind.values().length];
 
-    private ReadVariableNode(Object identifier, RType mode, ReadKind kind, boolean visibilityChange) {
+    private ReadVariableNode(String identifier, RType mode, ReadKind kind) {
         this.identifier = identifier;
-        this.identifierAsString = identifier.toString();
         this.mode = mode;
         this.kind = kind;
-        this.visibilityChange = visibilityChange;
     }
 
     protected ReadVariableNode() {
         this.identifier = null;
-        this.identifierAsString = null;
         this.mode = null;
         this.kind = null;
-        this.visibilityChange = true;
     }
 
     public String getIdentifier() {
-        return identifierAsString;
+        return identifier;
     }
 
     public RType getMode() {
@@ -166,17 +156,17 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
 
     @Override
     public void deparse(RDeparse.State state) {
-        state.append(identifier.toString());
+        state.append(identifier);
     }
 
     @Override
     public void serialize(RSerialize.State state) {
-        state.setCarAsSymbol(identifier.toString());
+        state.setCarAsSymbol(identifier);
     }
 
     @Override
     public RSyntaxNode substitute(REnvironment env) {
-        RSyntaxNode result = RSyntaxNode.cast(RASTUtils.substituteName(identifier.toString(), env));
+        RSyntaxNode result = RSyntaxNode.cast(RASTUtils.substituteName(identifier, env));
         if (result == null) {
             result = NodeUtil.cloneNode(this);
         }
@@ -193,9 +183,7 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
     }
 
     private Object executeInternal(VirtualFrame frame, Frame variableFrame) {
-        if (visibilityChange) {
-            controlVisibility();
-        }
+        controlVisibility();
 
         Object result;
         if (read == null) {
@@ -434,7 +422,7 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
     }
 
     private FrameLevel initialize(VirtualFrame frame, Frame variableFrame) {
-        if (identifier.toString().isEmpty()) {
+        if (identifier.isEmpty()) {
             throw RError.error(RError.Message.ZERO_LENGTH_VARIABLE);
         }
 
