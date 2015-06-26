@@ -176,13 +176,6 @@ public final class RArguments {
         return args;
     }
 
-    public static Object[] create(RFunction functionObj, SourceSection callSrc, MaterializedFrame callerFrame, int depth, Object[] evaluatedArgs, ArgumentsSignature signature,
-                    MaterializedFrame enclosingFrame, S3Args s3Args) {
-        Object[] args = createInternal(functionObj, callSrc, callerFrame, depth, evaluatedArgs, signature, enclosingFrame);
-        args[INDEX_S3_ARGS] = s3Args;
-        return args;
-    }
-
     public static Object[] createInternal(RFunction functionObj, SourceSection callSrc, MaterializedFrame callerFrame, int depth, Object[] evaluatedArgs, ArgumentsSignature signature,
                     MaterializedFrame enclosingFrame) {
         assert evaluatedArgs != null && signature != null : evaluatedArgs + " " + signature;

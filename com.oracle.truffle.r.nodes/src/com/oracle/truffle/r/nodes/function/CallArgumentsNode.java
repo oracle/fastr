@@ -187,15 +187,25 @@ public class CallArgumentsNode extends ArgumentsNode {
     public RArgsValuesAndNames getVarargsAndNames(VirtualFrame frame) {
         RArgsValuesAndNames varArgsAndNames;
         try {
-            if (!varArgsSlotNode.hasValue(frame)) {
-                CompilerDirectives.transferToInterpreter();
-                RError.error(RError.Message.NO_DOT_DOT_DOT);
-            }
             varArgsAndNames = (RArgsValuesAndNames) frame.getObject(varArgsSlotNode.executeFrameSlot(frame));
         } catch (FrameSlotTypeException | ClassCastException e) {
             throw RInternalError.shouldNotReachHere("'...' should always be represented by RArgsValuesAndNames");
         }
         return varArgsAndNames;
+    }
+
+    public static VarArgsSignature createSignature(RArgsValuesAndNames varArgsAndNames, int times) {
+        // "..." empty?
+        if (varArgsAndNames.isEmpty()) {
+            return VarArgsSignature.NO_VARARGS_GIVEN;
+        } else {
+            // Arguments wrapped into "..."
+            Object[] varArgs = varArgsAndNames.getArguments();
+            Object[] content = new Object[varArgs.length];
+
+            createSignatureLoop(content, varArgs);
+            return VarArgsSignature.create(content, times);
+        }
     }
 
     private static void createSignatureLoop(Object[] content, Object[] varArgs) {
