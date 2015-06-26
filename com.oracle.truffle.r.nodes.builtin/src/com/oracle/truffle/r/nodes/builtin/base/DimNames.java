@@ -24,15 +24,24 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin(name = "dimnames", kind = PRIMITIVE, parameterNames = {"x"}, internalDispatch = true)
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
+@RBuiltin(name = "dimnames", kind = PRIMITIVE, parameterNames = {"x"})
 public abstract class DimNames extends RBuiltinNode {
+
+    private static final String NAME = "dimnames";
+
+    @Child private UseMethodInternalNode dcn;
 
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
     private final ConditionProfile nullProfile = ConditionProfile.createBinaryProfile();
@@ -41,25 +50,53 @@ public abstract class DimNames extends RBuiltinNode {
     private final BranchProfile otherProfile = BranchProfile.create();
 
     @Specialization
-    protected RNull getDimNames(@SuppressWarnings("unused") RNull operand) {
+    protected RNull getDimNames(RNull operand) {
         controlVisibility();
-        return RNull.instance;
+        return operand;
     }
 
-    @Specialization
-    protected Object getDimNames(RAbstractContainer container) {
-        controlVisibility();
-        RList names;
-        if (container instanceof RDataFrame) {
-            dataframeProfile.enter();
-            names = ((RDataFrame) container).getVector().getDimNames();
-        } else if (container instanceof RFactor) {
-            factorProfile.enter();
-            names = ((RFactor) container).getVector().getDimNames();
-        } else {
-            otherProfile.enter();
-            names = container.getDimNames(attrProfiles);
-        }
+    private Object checkNull(RList names) {
         return nullProfile.profile(names == null) ? RNull.instance : names;
+    }
+
+    @Specialization(guards = "!isObject(frame, container)")
+    protected Object getDimNames(@SuppressWarnings("unused") VirtualFrame frame, RAbstractContainer container) {
+        controlVisibility();
+        RList names = container.getDimNames(attrProfiles);
+        return checkNull(names);
+    }
+
+    @Specialization(guards = "isObject(frame, container)")
+    protected Object getDimNamesOnject(VirtualFrame frame, RAbstractContainer container) {
+        controlVisibility();
+        if (dcn == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            dcn = insert(new UseMethodInternalNode(NAME, ArgumentsSignature.get(""), true));
+        }
+        try {
+            return dcn.execute(frame, container, new Object[]{container});
+        } catch (S3FunctionLookupNode.NoGenericMethodException e) {
+            RList names = null;
+            if (container instanceof RDataFrame) {
+                dataframeProfile.enter();
+                names = ((RDataFrame) container).getVector().getDimNames();
+            } else if (container instanceof RFactor) {
+                factorProfile.enter();
+                names = ((RFactor) container).getVector().getDimNames();
+            } else {
+                otherProfile.enter();
+                names = container.getDimNames(attrProfiles);
+            }
+            return checkNull(names);
+        }
+    }
+
+    protected boolean isNull(RAbstractContainer container) {
+        return container.getDimNames(attrProfiles) == null;
+    }
+
+    @SuppressFBWarnings(value = "ES_COMPARING_STRINGS_WITH_EQ", justification = "generic name is interned in the interpreted code for faster comparison")
+    protected boolean isObject(VirtualFrame frame, RAbstractContainer container) {
+        return container.isObject(attrProfiles) && !(RArguments.getS3Args(frame) != null && RArguments.getS3Args(frame).generic == NAME);
     }
 }
