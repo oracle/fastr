@@ -249,8 +249,4 @@ public abstract class CastDoubleNode extends CastBaseNode {
     public static CastDoubleNode create() {
         return CastDoubleNodeGen.create(true, true, true);
     }
-
-    public static CastDoubleNode createNonPreserving() {
-        return CastDoubleNodeGen.create(false, false, false);
-    }
 }
