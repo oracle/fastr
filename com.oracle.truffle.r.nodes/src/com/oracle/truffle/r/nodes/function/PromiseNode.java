@@ -221,20 +221,11 @@ public abstract class PromiseNode extends RNode {
 
         private final BranchProfile isVarArgProfile = BranchProfile.create();
         private final ConditionProfile isPromiseProfile = ConditionProfile.createBinaryProfile();
-        private final ConditionProfile isReadVariableNodeProfile = ConditionProfile.createBinaryProfile();
 
         public InlinedSuppliedArgumentNode(RNode expression, Object defaultValue, boolean unwrap) {
             this.expression = expression;
             this.defaultValue = defaultValue;
             this.unwrap = unwrap;
-        }
-
-        private Object executeExpression(VirtualFrame frame, RNode expr) {
-            if (isReadVariableNodeProfile.profile(expr instanceof ReadVariableNode)) {
-                return ((ReadVariableNode) expr).execute(frame, !unwrap);
-            } else {
-                return expr.execute(frame);
-            }
         }
 
         @Override
@@ -244,9 +235,9 @@ public abstract class PromiseNode extends RNode {
             // builtin implementations)
             Object obj;
             if (unwrap && expression instanceof WrapArgumentNode) {
-                obj = executeExpression(frame, ((WrapArgumentNode) expression).getOperand());
+                obj = ((WrapArgumentNode) expression).getOperand().execute(frame);
             } else {
-                obj = executeExpression(frame, expression);
+                obj = expression.execute(frame);
             }
             if (obj == RMissing.instance) {
                 if (defaultExpressionCache == null) {

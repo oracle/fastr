@@ -175,18 +175,14 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
 
     @Override
     public Object execute(VirtualFrame frame) {
-        return executeInternal(frame, kind == ReadKind.Super ? superEnclosingFrameProfile.profile(RArguments.getEnclosingFrame(frame)) : frame, true);
-    }
-
-    public Object execute(VirtualFrame frame, boolean wrap) {
-        return executeInternal(frame, kind == ReadKind.Super ? superEnclosingFrameProfile.profile(RArguments.getEnclosingFrame(frame)) : frame, wrap);
+        return executeInternal(frame, kind == ReadKind.Super ? superEnclosingFrameProfile.profile(RArguments.getEnclosingFrame(frame)) : frame);
     }
 
     public Object execute(VirtualFrame frame, Frame variableFrame) {
-        return executeInternal(frame, kind == ReadKind.Super ? superEnclosingFrameProfile.profile(RArguments.getEnclosingFrame(variableFrame)) : variableFrame, true);
+        return executeInternal(frame, kind == ReadKind.Super ? superEnclosingFrameProfile.profile(RArguments.getEnclosingFrame(variableFrame)) : variableFrame);
     }
 
-    private Object executeInternal(VirtualFrame frame, Frame variableFrame, boolean wrap) {
+    private Object executeInternal(VirtualFrame frame, Frame variableFrame) {
         controlVisibility();
 
         Object result;
@@ -216,7 +212,7 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 promiseHelper = insert(new PromiseHelperNode());
             }
-            result = promiseHelper.evaluate(frame, (RPromise) result, wrap);
+            result = promiseHelper.evaluate(frame, (RPromise) result);
         }
         return result;
     }
