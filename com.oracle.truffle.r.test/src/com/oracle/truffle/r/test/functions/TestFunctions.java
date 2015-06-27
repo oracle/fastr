@@ -355,4 +355,9 @@ public class TestFunctions extends TestBase {
         assertEval("{ f <- function(x) { y <- match.fun(x) ; y(c(1,2,3)) } ; c(f(\"sum\"),f(\"cumsum\")) }");
         assertEval("{ f <- function(x) { y <- match.fun(x) ; y(3,4) } ; c(f(\"+\"),f(\"*\")) }");
     }
+
+    @Test
+    public void testStateTransitions() {
+        assertEval("{ f<-function(x) { l<-length(x); x[1]<-1 }; y<-c(42,7); f(y); y }");
+    }
 }

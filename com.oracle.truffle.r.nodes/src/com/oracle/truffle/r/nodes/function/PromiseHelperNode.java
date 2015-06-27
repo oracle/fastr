@@ -55,7 +55,7 @@ public class PromiseHelperNode extends Node {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
                     promiseHelper = insert(new PromiseHelperNode());
                 }
-                return promiseHelper.evaluate(frame, (RPromise) obj, true);
+                return promiseHelper.evaluate(frame, (RPromise) obj);
             }
             return obj;
         }
@@ -131,16 +131,12 @@ public class PromiseHelperNode extends Node {
      * @param promise The {@link RPromise} to evaluate
      * @return Evaluates the given {@link RPromise} in the given frame using the given inline cache
      */
-    public Object evaluate(VirtualFrame frame, RPromise promise, boolean wrap) {
+    public Object evaluate(VirtualFrame frame, RPromise promise) {
         SourceSection callSrc = null;
         if (frame != null) {
             callSrc = RArguments.getCallSourceSection(frame);
         }
-        return doEvaluate(frame, promise, callSrc, wrap);
-    }
-
-    public Object evaluate(VirtualFrame frame, RPromise promise) {
-        return evaluate(frame, promise, true);
+        return doEvaluate(frame, promise, callSrc);
     }
 
     /**
@@ -149,7 +145,7 @@ public class PromiseHelperNode extends Node {
      *
      * @return The value the given Promise evaluates to
      */
-    private Object doEvaluate(VirtualFrame frame, RPromise promise, SourceSection callSrc, boolean wrap) {
+    private Object doEvaluate(VirtualFrame frame, RPromise promise, SourceSection callSrc) {
         if (isEvaluated(promise)) {
             return promise.getValue();
         }
@@ -179,7 +175,7 @@ public class PromiseHelperNode extends Node {
             obj = generateValueDefault(frame, current, callSrc);
         } else {
             assert optType == OptType.EAGER || optType == OptType.PROMISED;
-            obj = generateValueEager(frame, optType, (EagerPromise) current, callSrc, wrap);
+            obj = generateValueEager(frame, optType, (EagerPromise) current, callSrc);
         }
         setValue(obj, current);
         return obj;
@@ -217,16 +213,16 @@ public class PromiseHelperNode extends Node {
         }
     }
 
-    private Object generateValueEager(VirtualFrame frame, OptType optType, EagerPromise promise, SourceSection callSrc, boolean wrap) {
+    private Object generateValueEager(VirtualFrame frame, OptType optType, EagerPromise promise, SourceSection callSrc) {
         if (!isDeoptimized(promise)) {
             Assumption eagerAssumption = isValidAssumptionProfile.profile(promise.getIsValidAssumption());
             if (eagerAssumption.isValid()) {
                 if (optType == OptType.EAGER) {
-                    return getEagerValue(promise, wrap);
+                    return getEagerValue(promise);
                 } else {
                     assert optType == OptType.PROMISED;
                     RPromise nextPromise = (RPromise) promise.getEagerValue();
-                    return checkNextNode().doEvaluate(frame, nextPromise, callSrc, wrap);
+                    return checkNextNode().doEvaluate(frame, nextPromise, callSrc);
                 }
             } else {
                 fallbackProfile.enter();
@@ -372,16 +368,6 @@ public class PromiseHelperNode extends Node {
     private final BranchProfile fallbackProfile = BranchProfile.create();
     private final ValueProfile eagerValueProfile = ValueProfile.createClassProfile();
 
-    private final boolean isWrappingHelper;
-
-    public PromiseHelperNode() {
-        this(true);
-    }
-
-    public PromiseHelperNode(boolean isWrappingHelper) {
-        this.isWrappingHelper = isWrappingHelper;
-    }
-
     /**
      * @return The state of the {@link RPromise#isUnderEvaluation()} flag.
      */
@@ -401,9 +387,9 @@ public class PromiseHelperNode extends Node {
     /**
      * Returns {@link EagerPromise#getEagerValue()} profiled.
      */
-    private Object getEagerValue(EagerPromise promise, boolean wrap) {
+    private Object getEagerValue(EagerPromise promise) {
         Object o = promise.getEagerValue();
-        if (isWrappingHelper && wrap && promise.shouldWrap()) {
+        if (promise.shouldWrap()) {
             shouldWrap.enter();
             if (wrapNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
