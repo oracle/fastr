@@ -21,15 +21,15 @@
 # questions.
 #
 suite = {
-  "mxversion" : "3.5.0",
+  "mxversion" : "4.0.0",
   "name" : "fastr",
 
   "imports" : {
     "suites" : [
             {
                "name" : "graal",
-               "version" : "a6425aa8f70c9bda94aa174447221560cd5381b5",
-               "urls" : ["http://hg.openjdk.java.net/graal/graal"]
+               "version" : "81c58d2cebe01c44ab675554357788047f957007",
+               "urls" : [{"url" : "http://bitbucket.org/allr/graal", "kind" : "hg"}]
             },
         ],
    },
@@ -195,7 +195,8 @@ suite = {
       "path" : "lib/jnr-udis86-0.1.jar",
       "urls" : ["http://search.maven.org/remotecontent?filepath=com/github/jnr/jnr-udis86/0.1/jnr-udis86-0.1.jar"],
       "sha1" : "88accfa82203ea74a4a82237061c28ac8b4224af",
-    }
+    },
+
   },
 
   "projects" : {
@@ -226,13 +227,12 @@ suite = {
     "com.oracle.truffle.r.nodes" : {
       "sourceDirs" : ["src"],
       "dependencies" : [
-        "com.oracle.truffle.api.dsl",
         "com.oracle.truffle.r.parser",
       ],
       "checkstyle" : "com.oracle.truffle.r.runtime",
       "javaCompliance" : "1.8",
       "annotationProcessors" : [
-          "graal:TRUFFLE-DSL-PROCESSOR",
+          "truffle:TRUFFLE_DSL_PROCESSOR",
       ],
       "workingSets" : "Truffle,FastR",
       "jacoco" : "include",
@@ -241,13 +241,12 @@ suite = {
     "com.oracle.truffle.r.nodes.builtin" : {
       "sourceDirs" : ["src"],
       "dependencies" : [
-        "com.oracle.truffle.r.nodes",
         "com.oracle.truffle.r.library",
       ],
       "checkstyle" : "com.oracle.truffle.r.runtime",
       "javaCompliance" : "1.8",
       "annotationProcessors" : [
-        "graal:TRUFFLE-DSL-PROCESSOR",
+        "truffle:TRUFFLE_DSL_PROCESSOR",
       ],
       "workingSets" : "Truffle,FastR",
       "jacoco" : "include",
@@ -256,7 +255,6 @@ suite = {
     "com.oracle.truffle.r.nodes.test" : {
       "sourceDirs" : ["src"],
       "dependencies" : [
-        "JUNIT",
         "com.oracle.truffle.r.test",
       ],
       "checkstyle" : "com.oracle.truffle.r.runtime",
@@ -287,7 +285,6 @@ suite = {
       "sourceDirs" : ["src"],
       "dependencies" : [
         "com.oracle.truffle.r.nodes.builtin",
-        "com.oracle.truffle.r.runtime.ffi",
       ],
       "checkstyle" : "com.oracle.truffle.r.runtime",
       "javaCompliance" : "1.8",
@@ -310,8 +307,7 @@ suite = {
     "com.oracle.truffle.r.runtime" : {
       "sourceDirs" : ["src"],
       "dependencies" : [
-        "graal:TRUFFLE",
-        "FINDBUGS",
+        "truffle:TRUFFLE",
       ],
       "checkstyle" : "com.oracle.truffle.r.runtime",
       "javaCompliance" : "1.8",
@@ -324,6 +320,7 @@ suite = {
       "dependencies" : [
         "com.oracle.truffle.r.runtime",
         "graal:JVMCI_API",
+        "graal:GRAAL_TRUFFLE",
         "ASM",
         "ASM_ANALYSIS",
         "JNR_POSIX",
@@ -360,11 +357,10 @@ suite = {
       "sourceDirs" : ["src"],
       "dependencies" : [
         "com.oracle.truffle.r.nodes",
-        "com.oracle.truffle.r.runtime",
         "com.oracle.truffle.r.runtime.ffi",
       ],
       "annotationProcessors" : [
-          "com.oracle.truffle.dsl.processor",
+          "truffle:TRUFFLE_DSL_PROCESSOR",
       ],
       "checkstyle" : "com.oracle.truffle.r.runtime",
       "javaCompliance" : "1.8",
@@ -376,8 +372,7 @@ suite = {
       "com.oracle.truffle.r.repl": {
       "sourceDirs" : ["src"],
       "dependencies" : [
-        "com.oracle.truffle.tools.debug.engine",
-        "com.oracle.truffle.tools.debug.shell",
+        "truffle:TRUFFLE_DEBUG",
         "com.oracle.truffle.r.shell",
         ],
       "checkstyle" : "com.oracle.truffle.r.runtime",
@@ -393,7 +388,6 @@ suite = {
       "dependencies" : ["com.oracle.truffle.r.nodes"],
       "exclude" : [
         "JDK_TOOLS",
-        "FINDBUGS",
         "NETLIB",
         "ASM",
         "ASM_UTIL",

@@ -5,13 +5,11 @@
  *
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
 package com.oracle.truffle.r.runtime;
-
-import edu.umd.cs.findbugs.annotations.*;
 
 // Transcribed from GnuR src/main/platform.c
 

@@ -22,8 +22,6 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.frame.*;
 
-import edu.umd.cs.findbugs.annotations.*;
-
 public class RRuntime {
 
     //@formatter:off

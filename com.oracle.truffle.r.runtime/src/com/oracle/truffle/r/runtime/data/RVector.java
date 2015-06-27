@@ -32,8 +32,6 @@ import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
-import edu.umd.cs.findbugs.annotations.*;
-
 /**
  * Base class for all vectors.
  *
