@@ -43,8 +43,6 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-
 /**
  * Work-around builtins for infix operators that FastR (currently) does not define as functions.
  * These definitions create the illusion that the definitions exist, even if they are not actually
