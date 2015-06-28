@@ -34,8 +34,6 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-
 @RBuiltin(name = "dimnames", kind = PRIMITIVE, parameterNames = {"x"})
 public abstract class DimNames extends RBuiltinNode {
 
