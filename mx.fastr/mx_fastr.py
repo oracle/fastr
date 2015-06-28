@@ -412,7 +412,7 @@ def runRREPL(args, nonZeroIsFatal=True, extraVmArgs=None):
 
 def load_optional_suite(name):
     hg_base = mx.get_env('MX_HG_BASE')
-    urlinfos = None if hg_base is None else [join(hg_base, name)]
+    urlinfos = None if hg_base is None else [mx.SuiteImportURLInfo(join(hg_base, name), 'hg', mx.vc_system('hg'))]
     opt_suite = _fastr_suite.import_suite(name, version=None, urlinfos=urlinfos)
     if opt_suite:
         mx.build_suite(opt_suite)
