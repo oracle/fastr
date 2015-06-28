@@ -34,4 +34,8 @@ public interface RShareable {
 
     RShareable copy();
 
+    void incRefCount();
+
+    void decRefCount();
+
 }

@@ -52,10 +52,6 @@ public abstract class FrameSlotNode extends Node {
         return new UnresolvedFrameSlotNode(name, createIfAbsent);
     }
 
-    public static FrameSlotNode createTemp(Object name, boolean createIfAbsent) {
-        return new UnresolvedFrameSlotNode(name, createIfAbsent);
-    }
-
     public static FrameSlotNode create(RFrameSlot slot, boolean createIfAbsent) {
         return new UnresolvedFrameSlotNode(slot, createIfAbsent);
     }

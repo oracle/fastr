@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.function;
 
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -36,8 +37,15 @@ import com.oracle.truffle.r.runtime.env.*;
  */
 public final class WrapDefaultArgumentNode extends WrapArgumentBaseNode {
 
+    private final BranchProfile everSeenShared;
+    private final BranchProfile everSeenTemporary;
+    private final BranchProfile everSeenNonTemporary;
+
     private WrapDefaultArgumentNode(RNode operand) {
         super(operand, true);
+        everSeenShared = BranchProfile.create();
+        everSeenTemporary = BranchProfile.create();
+        everSeenNonTemporary = BranchProfile.create();
     }
 
     @Override

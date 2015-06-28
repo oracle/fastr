@@ -49,32 +49,32 @@ public abstract class ClassHierarchyNode extends UnaryNode {
 
     @Specialization
     protected RStringVector getClassHr(@SuppressWarnings("unused") byte arg) {
-        return withImplicitTypes ? RDataFactory.createStringVector(RType.Logical.getName()) : null;
+        return RDataFactory.createStringVector(RType.Logical.getName());
     }
 
     @Specialization
     protected RStringVector getClassHr(@SuppressWarnings("unused") String arg) {
-        return withImplicitTypes ? RDataFactory.createStringVector(RType.Character.getName()) : null;
+        return RDataFactory.createStringVector(RType.Character.getName());
     }
 
     @Specialization
     protected RStringVector getClassHr(@SuppressWarnings("unused") int arg) {
-        return withImplicitTypes ? RDataFactory.createStringVector(RType.Integer.getName()) : null;
+        return RDataFactory.createStringVector(RType.Integer.getName());
     }
 
     @Specialization
     protected RStringVector getClassHr(@SuppressWarnings("unused") double arg) {
-        return withImplicitTypes ? RDataFactory.createStringVector(RRuntime.CLASS_DOUBLE, RDataFactory.COMPLETE_VECTOR) : null;
+        return RDataFactory.createStringVector(RRuntime.CLASS_DOUBLE, RDataFactory.COMPLETE_VECTOR);
     }
 
     @Specialization
     protected RStringVector getClassHr(@SuppressWarnings("unused") RNull arg) {
-        return withImplicitTypes ? RDataFactory.createStringVector(RType.Null.getName()) : null;
+        return RDataFactory.createStringVector(RType.Null.getName());
     }
 
     @Specialization
     protected RStringVector getClassHr(@SuppressWarnings("unused") RFormula arg) {
-        return withImplicitTypes ? RDataFactory.createStringVector(RType.Formula.getName()) : null;
+        return RDataFactory.createStringVector(RType.Formula.getName());
     }
 
     @Specialization

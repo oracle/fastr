@@ -62,17 +62,21 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
     }
 
     public static ReadVariableNode create(String name, RType mode, ReadKind kind) {
-        return new ReadVariableNode(name, mode, kind);
+        return new ReadVariableNode(name, mode, kind, true);
     }
 
     public static ReadVariableNode create(String name, boolean shouldCopyValue) {
-        return new ReadVariableNode(name, RType.Any, shouldCopyValue ? ReadKind.Copying : ReadKind.Normal);
+        return new ReadVariableNode(name, RType.Any, shouldCopyValue ? ReadKind.Copying : ReadKind.Normal, true);
     }
 
     public static ReadVariableNode create(SourceSection src, String name, boolean shouldCopyValue) {
-        ReadVariableNode rvn = new ReadVariableNode(name, RType.Any, shouldCopyValue ? ReadKind.Copying : ReadKind.Normal);
+        ReadVariableNode rvn = new ReadVariableNode(name, RType.Any, shouldCopyValue ? ReadKind.Copying : ReadKind.Normal, true);
         rvn.assignSourceSection(src);
         return rvn;
+    }
+
+    public static ReadVariableNode createForRefCount(Object name) {
+        return new ReadVariableNode(name, RType.Any, ReadKind.UnforcedSilentLocal, false);
     }
 
     /**
@@ -81,13 +85,13 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
      * value will silently be returned.
      */
     public static ReadVariableNode createFunctionLookup(SourceSection src, String identifier) {
-        ReadVariableNode result = new ReadVariableNode(identifier, RType.Function, ReadKind.Normal);
+        ReadVariableNode result = new ReadVariableNode(identifier, RType.Function, ReadKind.Normal, true);
         result.assignSourceSection(src);
         return result;
     }
 
     public static ReadVariableNode createSuperLookup(SourceSection src, String name) {
-        ReadVariableNode rvn = new ReadVariableNode(name, RType.Any, ReadKind.Super);
+        ReadVariableNode rvn = new ReadVariableNode(name, RType.Any, ReadKind.Super, true);
         rvn.assignSourceSection(src);
         return rvn;
     }
@@ -102,7 +106,7 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
      * @return The appropriate implementation of {@link ReadVariableNode}
      */
     public static ReadVariableNode createForced(SourceSection src, String name, RType mode) {
-        ReadVariableNode result = new ReadVariableNode(name, mode, ReadKind.Forced);
+        ReadVariableNode result = new ReadVariableNode(name, mode, ReadKind.Forced, true);
         if (src != null) {
             result.assignSourceSection(src);
         }
@@ -120,26 +124,32 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
     private final ConditionProfile isNullValueProfile = ConditionProfile.createBinaryProfile();
     private final ValueProfile valueProfile = ValueProfile.createClassProfile();
 
-    private final String identifier;
+    private final Object identifier;
+    private final String identifierAsString;
     private final RType mode;
     private final ReadKind kind;
+    private final boolean visibilityChange;
 
     @CompilationFinal private final boolean[] seenValueKinds = new boolean[FrameSlotKind.values().length];
 
-    private ReadVariableNode(String identifier, RType mode, ReadKind kind) {
+    private ReadVariableNode(Object identifier, RType mode, ReadKind kind, boolean visibilityChange) {
         this.identifier = identifier;
+        this.identifierAsString = identifier.toString();
         this.mode = mode;
         this.kind = kind;
+        this.visibilityChange = visibilityChange;
     }
 
     protected ReadVariableNode() {
         this.identifier = null;
+        this.identifierAsString = null;
         this.mode = null;
         this.kind = null;
+        this.visibilityChange = true;
     }
 
     public String getIdentifier() {
-        return identifier;
+        return identifierAsString;
     }
 
     public RType getMode() {
@@ -156,17 +166,17 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
 
     @Override
     public void deparse(RDeparse.State state) {
-        state.append(identifier);
+        state.append(identifier.toString());
     }
 
     @Override
     public void serialize(RSerialize.State state) {
-        state.setCarAsSymbol(identifier);
+        state.setCarAsSymbol(identifier.toString());
     }
 
     @Override
     public RSyntaxNode substitute(REnvironment env) {
-        RSyntaxNode result = RSyntaxNode.cast(RASTUtils.substituteName(identifier, env));
+        RSyntaxNode result = RSyntaxNode.cast(RASTUtils.substituteName(identifier.toString(), env));
         if (result == null) {
             result = NodeUtil.cloneNode(this);
         }
@@ -183,7 +193,9 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
     }
 
     private Object executeInternal(VirtualFrame frame, Frame variableFrame) {
-        controlVisibility();
+        if (visibilityChange) {
+            controlVisibility();
+        }
 
         Object result;
         if (read == null) {
@@ -422,7 +434,7 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
     }
 
     private FrameLevel initialize(VirtualFrame frame, Frame variableFrame) {
-        if (identifier.isEmpty()) {
+        if (identifier.toString().isEmpty()) {
             throw RError.error(RError.Message.ZERO_LENGTH_VARIABLE);
         }
 
@@ -577,24 +589,6 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
             current = RArguments.getEnclosingFrame(current);
         } while (current != null);
         return null;
-    }
-
-    @TruffleBoundary
-    public static RArgsValuesAndNames lookupVarArgs(Frame variableFrame) {
-        Frame current = variableFrame;
-        do {
-            // see if the current frame has a value of the given name
-            FrameSlot frameSlot = current.getFrameDescriptor().findFrameSlot(ArgumentsSignature.VARARG_NAME);
-            if (frameSlot != null) {
-                Object value = current.getValue(frameSlot);
-
-                if (value != null) {
-                    return (RArgsValuesAndNames) value;
-                }
-            }
-            current = RArguments.getEnclosingFrame(current);
-        } while (current != null);
-        throw RError.error(RError.Message.ARGUMENT_MISSING, ArgumentsSignature.VARARG_NAME);
     }
 
     private Object getValue(Frame variableFrame, FrameSlot frameSlot) {

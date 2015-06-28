@@ -36,9 +36,6 @@ import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.builtin.base.GetFunctionsFactory.GetNodeGen;
 import com.oracle.truffle.r.nodes.function.*;
-import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseCheckHelperNode;
-import com.oracle.truffle.r.nodes.function.RCallNode.RootCallNode;
-import com.oracle.truffle.r.nodes.function.S3FunctionLookupNode.Result;
 import com.oracle.truffle.r.nodes.function.signature.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -56,11 +53,6 @@ public abstract class DoCall extends RBuiltinNode {
 
     @Child private PromiseHelperNode promiseHelper = new PromiseHelperNode();
     @CompilationFinal private boolean needsCallerFrame;
-
-    @Child private S3FunctionLookupNode dispatchLookup;
-    @Child private PromiseCheckHelperNode hierarchyPromiseHelper;
-    @Child private ClassHierarchyNode classHierarchyNode;
-    @Child private RootCallNode internalDispatchCall;
 
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
     private final BranchProfile errorProfile = BranchProfile.create();
@@ -107,30 +99,20 @@ public abstract class DoCall extends RBuiltinNode {
                 }
             }
         }
-        if (func.isBuiltin() && builtin.isInternalDispatch()) {
-            if (dispatchLookup == null) {
-                dispatchLookup = insert(S3FunctionLookupNode.create(true, false));
-                classHierarchyNode = insert(ClassHierarchyNodeGen.create(true));
-                hierarchyPromiseHelper = insert(new PromiseCheckHelperNode());
-            }
-            RStringVector type = classHierarchyNode.execute(hierarchyPromiseHelper.checkEvaluate(frame, argValues[0]));
-            Result result = dispatchLookup.execute(frame, builtin.getName(), type, null, frame.materialize(), null);
-            if (result != null) {
-                func = result.function;
-            }
-        }
-        if (func.isBuiltin() && builtin.getGroup() != null) {
-            if (groupDispatch == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                groupDispatch = insert(GroupDispatchNode.create(builtin.getName(), null, func, getSourceSection()));
-            }
-            for (int i = 0; i < argValues.length; i++) {
-                Object arg = argValues[i];
-                if (arg instanceof RPromise) {
-                    argValues[i] = promiseHelper.evaluate(frame, (RPromise) arg);
+        if (func.isBuiltin()) {
+            if (builtin.getGroup() != null) {
+                if (groupDispatch == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    groupDispatch = insert(GroupDispatchNode.create(builtin.getName(), null, func, getSourceSection()));
                 }
+                for (int i = 0; i < argValues.length; i++) {
+                    Object arg = argValues[i];
+                    if (arg instanceof RPromise) {
+                        argValues[i] = promiseHelper.evaluate(frame, (RPromise) arg);
+                    }
+                }
+                return groupDispatch.executeDynamic(frame, new RArgsValuesAndNames(argValues, signature), builtin.getName(), builtin.getGroup(), func);
             }
-            return groupDispatch.executeDynamic(frame, new RArgsValuesAndNames(argValues, signature), builtin.getName(), builtin.getGroup(), func);
         }
         EvaluatedArguments evaledArgs = EvaluatedArguments.create(argValues, signature);
         EvaluatedArguments reorderedArgs = ArgumentMatcher.matchArgumentsEvaluated(func, evaledArgs, getEncapsulatingSourceSection(), false);

@@ -137,9 +137,9 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
                 return GroupDispatchNode.create(functionName, aCallArgNode, callSource);
             }
             SourceSection varSource = ASTNode.adjustedSource(callSource, callSource.getCharIndex(), lhsLength);
-            return RCallNode.createCall(callSource, ReadVariableNode.createForced(varSource, functionName, RType.Function), aCallArgNode);
+            return RCallNode.createCall(callSource, ReadVariableNode.createForced(varSource, functionName, RType.Function), aCallArgNode, callParam);
         } else {
-            return RCallNode.createCall(callSource, lhs.asRNode(), aCallArgNode);
+            return RCallNode.createCall(callSource, lhs.asRNode(), aCallArgNode, callParam);
         }
     }
 
@@ -162,6 +162,7 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
             RNode[] defaultValues = new RNode[argumentsList.size()];
             SaveArgumentsNode saveArguments;
             AccessArgumentNode[] argAccessNodes = new AccessArgumentNode[argumentsList.size()];
+            PostProcessArgumentsNode argPostProcess;
             if (!argumentsList.isEmpty()) {
                 RNode[] init = new RNode[argumentsList.size()];
                 int index = 0;
@@ -191,8 +192,14 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
                 }
 
                 saveArguments = new SaveArgumentsNode(init);
+                if (FastROptions.NewStateTransition && !FastROptions.RefCountIncrementOnly) {
+                    argPostProcess = PostProcessArgumentsNode.create(argumentsList.size());
+                } else {
+                    argPostProcess = null;
+                }
             } else {
                 saveArguments = new SaveArgumentsNode(RNode.EMTPY_RNODE_ARRAY);
+                argPostProcess = null;
             }
 
             // Maintain SourceSection
@@ -207,7 +214,7 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
             FrameDescriptor descriptor = new FrameDescriptor();
             FrameSlotChangeMonitor.initializeFunctionFrameDescriptor(descriptor);
             String description = getFunctionDescription(func);
-            FunctionDefinitionNode rootNode = new FunctionDefinitionNode(func.getSource(), descriptor, new FunctionBodyNode(saveArguments, statements), formals, description, false);
+            FunctionDefinitionNode rootNode = new FunctionDefinitionNode(func.getSource(), descriptor, new FunctionBodyNode(saveArguments, statements), formals, description, false, argPostProcess);
             callTarget = Truffle.getRuntime().createCallTarget(rootNode);
             return FunctionExpressionNode.create(func.getSource(), callTarget);
         } catch (Throwable err) {
@@ -233,7 +240,7 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
             assert RGroupGenerics.getGroup(functionName) == RGroupGenerics.Ops;
             return GroupDispatchNode.create(functionName, aCallArgNode, op.getSource());
         }
-        return RCallNode.createOpCall(op.getSource(), null, functionName, aCallArgNode);
+        return RCallNode.createOpCall(op.getSource(), null, functionName, aCallArgNode, op);
     }
 
     @Override
@@ -254,7 +261,7 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
             String opName = op.getOperator().getName();
             int charIndex = code.indexOf(opName);
             SourceSection opNameSrc = opSrc.getSource().createSection(opSrc.getIdentifier(), opSrc.getCharIndex() + charIndex, opName.length());
-            return RCallNode.createOpCall(op.getSource(), opNameSrc, functionName, aCallArgNode);
+            return RCallNode.createOpCall(op.getSource(), opNameSrc, functionName, aCallArgNode, op);
         }
     }
 

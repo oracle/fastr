@@ -123,10 +123,6 @@ public abstract class RBuiltinNode extends RNode implements RSyntaxNode, Visibil
             insert(index, CastNode.toInteger(false, false, false));
             return insert(index, FirstIntNode.createWithError(error, name));
         }
-
-        public CastBuilder firstStringWithError(int index, RError.Message error, String name) {
-            return insert(index, FirstStringNode.createWithError(error, name));
-        }
     }
 
     protected void createCasts(@SuppressWarnings("unused") CastBuilder casts) {

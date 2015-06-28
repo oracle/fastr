@@ -50,7 +50,7 @@ public class WriteCurrentVariableNode extends WriteVariableNodeSyntaxHelper impl
 
     @Override
     @NeedsWrapper
-    public String getName() {
+    public Object getName() {
         return writeLocalFrameVariableNode.getName();
     }
 
@@ -86,7 +86,7 @@ public class WriteCurrentVariableNode extends WriteVariableNodeSyntaxHelper impl
 
     @Override
     public RSyntaxNode substitute(REnvironment env) {
-        String name = getName();
+        String name = getName().toString();
         RNode nameSub = RASTUtils.substituteName(name, env);
         if (nameSub != null) {
             name = RASTUtils.expectName(nameSub);

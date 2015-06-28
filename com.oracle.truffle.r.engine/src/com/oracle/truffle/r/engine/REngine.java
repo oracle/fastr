@@ -387,7 +387,7 @@ final class REngine implements RContext.Engine {
         FunctionBodyNode fbn = new FunctionBodyNode(SaveArgumentsNode.NO_ARGS, new FunctionStatementsNode(null, body));
         FrameDescriptor descriptor = new FrameDescriptor();
         FrameSlotChangeMonitor.initializeFunctionFrameDescriptor(descriptor);
-        FunctionDefinitionNode rootNode = new FunctionDefinitionNode(null, descriptor, fbn, FormalArguments.NO_ARGS, funName, true, true);
+        FunctionDefinitionNode rootNode = new FunctionDefinitionNode(null, descriptor, fbn, FormalArguments.NO_ARGS, funName, true, true, null);
         RootCallTarget callTarget = Truffle.getRuntime().createCallTarget(rootNode);
         return callTarget;
     }
@@ -466,7 +466,13 @@ final class REngine implements RContext.Engine {
         if (loadBase) {
             Object printMethod = REnvironment.globalEnv().findFunction("print");
             RFunction function = (RFunction) (printMethod instanceof RPromise ? PromiseHelperNode.evaluateSlowPath(null, (RPromise) printMethod) : printMethod);
+            if (FastROptions.NewStateTransition && resultValue instanceof RShareable) {
+                ((RShareable) resultValue).incRefCount();
+            }
             function.getTarget().call(RArguments.create(function, null, REnvironment.baseEnv().getFrame(), 1, new Object[]{resultValue, RMissing.instance}, PRINT_SIGNATURE));
+            if (FastROptions.NewStateTransition && resultValue instanceof RShareable) {
+                ((RShareable) resultValue).decRefCount();
+            }
         } else {
             // we only have the .Internal print.default method available
             getPrintInternal().getTarget().call(RArguments.create(printInternal, null, REnvironment.baseEnv().getFrame(), 1, new Object[]{resultValue}, PRINT_INTERNAL_SIGNATURE));

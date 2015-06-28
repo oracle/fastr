@@ -90,6 +90,16 @@ public final class RDataFrame implements RShareable, RAbstractContainer {
     }
 
     @Override
+    public void incRefCount() {
+        vector.incRefCount();
+    }
+
+    @Override
+    public void decRefCount() {
+        vector.decRefCount();
+    }
+
+    @Override
     public RDataFrame copy() {
         return RDataFactory.createDataFrame(vector.copy());
     }
@@ -101,12 +111,14 @@ public final class RDataFrame implements RShareable, RAbstractContainer {
 
     @Override
     public boolean hasDimensions() {
-        return vector.hasDimensions();
+        RInternalError.unimplemented("data frame's dimensions need to be obtained using builtins");
+        return false;
     }
 
     @Override
     public int[] getDimensions() {
-        return vector.getDimensions();
+        RInternalError.unimplemented("data frame's dimensions need to be obtained using builtins");
+        return null;
     }
 
     @Override
