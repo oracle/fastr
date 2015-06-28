@@ -39,6 +39,7 @@ import com.oracle.truffle.r.nodes.access.array.read.*;
 import com.oracle.truffle.r.nodes.control.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.nodes.unary.*;
+import com.oracle.truffle.r.options.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.data.*;
@@ -121,7 +122,9 @@ public abstract class UpdateArrayHelperNode extends UpdateNode implements RSynta
             vectorShared.enter();
             resultVector = (RIntVector) vector.copy();
         }
-        resultVector.markNonTemporary();
+        if (!FastROptions.NewStateTransition || resultVector.isTemporary()) {
+            resultVector.markNonTemporary();
+        }
         int[] srcDimensions = resultVector.getDimensions();
         int numSrcDimensions = srcDimensions.length;
         int srcDimSize = srcDimensions[numSrcDimensions - 1];
@@ -661,7 +664,9 @@ public abstract class UpdateArrayHelperNode extends UpdateNode implements RSynta
         if (vector.isShared()) {
             vectorShared.enter();
             resultVector = (RList) vector.copy();
-            resultVector.markNonTemporary();
+            if (!FastROptions.NewStateTransition || resultVector.isTemporary()) {
+                resultVector.markNonTemporary();
+            }
         }
         int[] srcDimensions = resultVector.getDimensions();
         int numSrcDimensions = srcDimensions.length;
@@ -695,7 +700,9 @@ public abstract class UpdateArrayHelperNode extends UpdateNode implements RSynta
         } else if (resultVector.isShared()) {
             vectorShared.enter();
             resultVector = (RList) vector.copy();
-            resultVector.markNonTemporary();
+            if (!FastROptions.NewStateTransition || resultVector.isTemporary()) {
+                resultVector.markNonTemporary();
+            }
         }
         if (resetDims) {
             vectorNoDims.enter();
@@ -929,6 +936,8 @@ public abstract class UpdateArrayHelperNode extends UpdateNode implements RSynta
         if (list.isShared()) {
             vectorShared.enter();
             list = (RList) vector.copy();
+        }
+        if (!FastROptions.NewStateTransition || list.isTemporary()) {
             list.markNonTemporary();
         }
         int highestPos = getHighestPos(positions);
@@ -1112,7 +1121,9 @@ public abstract class UpdateArrayHelperNode extends UpdateNode implements RSynta
             vectorShared.enter();
             resultVector = (RIntVector) vector.copy();
         }
-        resultVector.markNonTemporary();
+        if (!FastROptions.NewStateTransition || resultVector.isTemporary()) {
+            resultVector.markNonTemporary();
+        }
         return resultVector;
     }
 
@@ -1257,7 +1268,9 @@ public abstract class UpdateArrayHelperNode extends UpdateNode implements RSynta
             vectorShared.enter();
             resultVector = (RDoubleVector) vector.copy();
         }
-        resultVector.markNonTemporary();
+        if (!FastROptions.NewStateTransition || resultVector.isTemporary()) {
+            resultVector.markNonTemporary();
+        }
         int[] srcDimensions = resultVector.getDimensions();
         int numSrcDimensions = srcDimensions.length;
         int srcDimSize = srcDimensions[numSrcDimensions - 1];
@@ -1288,7 +1301,9 @@ public abstract class UpdateArrayHelperNode extends UpdateNode implements RSynta
             vectorShared.enter();
             resultVector = (RDoubleVector) vector.copy();
         }
-        resultVector.markNonTemporary();
+        if (!FastROptions.NewStateTransition || resultVector.isTemporary()) {
+            resultVector.markNonTemporary();
+        }
         return resultVector;
     }
 
@@ -1430,7 +1445,9 @@ public abstract class UpdateArrayHelperNode extends UpdateNode implements RSynta
         if (vector.isShared()) {
             vectorShared.enter();
             resultVector = (RLogicalVector) vector.copy();
-            resultVector.markNonTemporary();
+            if (!FastROptions.NewStateTransition || resultVector.isTemporary()) {
+                resultVector.markNonTemporary();
+            }
         }
         int[] srcDimensions = resultVector.getDimensions();
         int numSrcDimensions = srcDimensions.length;
@@ -1461,7 +1478,9 @@ public abstract class UpdateArrayHelperNode extends UpdateNode implements RSynta
         } else if (vector.isShared()) {
             vectorShared.enter();
             resultVector = (RLogicalVector) vector.copy();
-            resultVector.markNonTemporary();
+            if (!FastROptions.NewStateTransition || resultVector.isTemporary()) {
+                resultVector.markNonTemporary();
+            }
         }
         return resultVector;
     }
@@ -1539,7 +1558,9 @@ public abstract class UpdateArrayHelperNode extends UpdateNode implements RSynta
         if (vector.isShared()) {
             vectorShared.enter();
             resultVector = (RStringVector) vector.copy();
-            resultVector.markNonTemporary();
+            if (!FastROptions.NewStateTransition || resultVector.isTemporary()) {
+                resultVector.markNonTemporary();
+            }
         }
         int[] srcDimensions = resultVector.getDimensions();
         int numSrcDimensions = srcDimensions.length;
@@ -1570,7 +1591,9 @@ public abstract class UpdateArrayHelperNode extends UpdateNode implements RSynta
         } else if (vector.isShared()) {
             vectorShared.enter();
             resultVector = (RStringVector) vector.copy();
-            resultVector.markNonTemporary();
+            if (!FastROptions.NewStateTransition || resultVector.isTemporary()) {
+                resultVector.markNonTemporary();
+            }
         }
         return resultVector;
     }
@@ -1679,7 +1702,9 @@ public abstract class UpdateArrayHelperNode extends UpdateNode implements RSynta
         if (vector.isShared()) {
             vectorShared.enter();
             resultVector = (RComplexVector) vector.copy();
-            resultVector.markNonTemporary();
+            if (!FastROptions.NewStateTransition || resultVector.isTemporary()) {
+                resultVector.markNonTemporary();
+            }
         }
         int[] srcDimensions = resultVector.getDimensions();
         int numSrcDimensions = srcDimensions.length;
@@ -1710,7 +1735,9 @@ public abstract class UpdateArrayHelperNode extends UpdateNode implements RSynta
         } else if (vector.isShared()) {
             vectorShared.enter();
             resultVector = (RComplexVector) vector.copy();
-            resultVector.markNonTemporary();
+            if (!FastROptions.NewStateTransition || resultVector.isTemporary()) {
+                resultVector.markNonTemporary();
+            }
         }
         return resultVector;
     }
@@ -1881,7 +1908,9 @@ public abstract class UpdateArrayHelperNode extends UpdateNode implements RSynta
         if (vector.isShared()) {
             vectorShared.enter();
             resultVector = (RRawVector) vector.copy();
-            resultVector.markNonTemporary();
+            if (!FastROptions.NewStateTransition || resultVector.isTemporary()) {
+                resultVector.markNonTemporary();
+            }
         }
         int[] srcDimensions = resultVector.getDimensions();
         int numSrcDimensions = srcDimensions.length;
@@ -1912,7 +1941,9 @@ public abstract class UpdateArrayHelperNode extends UpdateNode implements RSynta
         } else if (vector.isShared()) {
             vectorShared.enter();
             resultVector = (RRawVector) vector.copy();
-            resultVector.markNonTemporary();
+            if (!FastROptions.NewStateTransition || resultVector.isTemporary()) {
+                resultVector.markNonTemporary();
+            }
         }
         return resultVector;
     }

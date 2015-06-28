@@ -95,7 +95,7 @@ public final class WriteCurrentVariableNodeWrapper extends com.oracle.truffle.r.
     }
 
     @Override
-    public java.lang.String getName() {
+    public java.lang.Object getName() {
         return child.getName();
     }
 

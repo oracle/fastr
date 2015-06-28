@@ -123,7 +123,7 @@ public class CallArgumentsNode extends ArgumentsNode {
                         varArgsSymbolIndices.add(i);
                     }
                 }
-                wrappedArgs[i] = WrapArgumentNode.create(arg, i == 0 || modeChangeForAll ? modeChange : true);
+                wrappedArgs[i] = WrapArgumentNode.create(arg, i == 0 || modeChangeForAll ? modeChange : true, i);
             }
         }
 

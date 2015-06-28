@@ -44,8 +44,12 @@ import com.oracle.truffle.r.runtime.env.frame.*;
  */
 public abstract class WriteLocalFrameVariableNode extends BaseWriteVariableNode {
 
-    static WriteLocalFrameVariableNode create(String name, RNode rhs, Mode mode) {
+    public static WriteLocalFrameVariableNode create(String name, RNode rhs, Mode mode) {
         return UnresolvedWriteLocalFrameVariableNodeGen.create(rhs, name, mode);
+    }
+
+    public static WriteLocalFrameVariableNode createForRefCount(Object name) {
+        return UnresolvedWriteLocalFrameVariableNodeGen.create(null, name, Mode.INVISIBLE);
     }
 
     @NodeField(name = "mode", type = Mode.class)
@@ -80,7 +84,8 @@ public abstract class WriteLocalFrameVariableNode extends BaseWriteVariableNode 
 
         private void resolveAndSet(VirtualFrame frame, Object value, FrameSlotKind initialKind) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            if (getName().isEmpty()) {
+            // it's slow path (unconditional replace) so toStrin() is fine as well
+            if (getName().toString().isEmpty()) {
                 throw RError.error(RError.Message.ZERO_LENGTH_VARIABLE);
             }
             FrameSlot frameSlot = findOrAddFrameSlot(frame.getFrameDescriptor(), getName(), initialKind);
@@ -97,7 +102,7 @@ public abstract class WriteLocalFrameVariableNode extends BaseWriteVariableNode 
 
         public abstract Mode getMode();
 
-        public static ResolvedWriteLocalFrameVariableNode create(RNode rhs, String name, FrameSlot frameSlot, Mode mode) {
+        public static ResolvedWriteLocalFrameVariableNode create(RNode rhs, Object name, FrameSlot frameSlot, Mode mode) {
             return ResolvedWriteLocalFrameVariableNodeGen.create(rhs, name, frameSlot, mode);
         }
 

@@ -28,7 +28,7 @@ import com.oracle.truffle.r.runtime.gnur.*;
 
 abstract class WriteVariableNodeSyntaxHelper extends WriteVariableNode {
     protected void deparseHelper(RDeparse.State state, String op) {
-        state.append(getName());
+        state.append(getName().toString());
         RNode rhs = getRhs();
         if (rhs != null) {
             state.append(op);
@@ -39,11 +39,11 @@ abstract class WriteVariableNodeSyntaxHelper extends WriteVariableNode {
     protected void serializeHelper(RSerialize.State state, String op) {
         RNode rhs = getRhs();
         if (rhs == null) {
-            state.setCarAsSymbol(getName());
+            state.setCarAsSymbol(getName().toString());
         } else {
             state.setAsBuiltin(op);
             state.openPairList(SEXPTYPE.LISTSXP);
-            state.setCarAsSymbol(getName());
+            state.setCarAsSymbol(getName().toString());
             state.openPairList(SEXPTYPE.LISTSXP);
             state.serializeNodeSetCar(getRhs());
             state.linkPairList(2);

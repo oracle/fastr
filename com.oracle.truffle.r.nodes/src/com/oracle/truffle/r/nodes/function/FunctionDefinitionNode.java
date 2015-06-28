@@ -68,6 +68,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
     @Child private FrameSlotNode onExitSlot;
     @Child private InlineCacheNode onExitExpressionCache;
     private final ConditionProfile onExitProfile = ConditionProfile.createBinaryProfile();
+    private final BranchProfile resetArgs = BranchProfile.create();
 
     @CompilationFinal private BranchProfile invalidateFrameSlotProfile;
     @Child private FrameSlotNode dotGenericSlot;
@@ -76,6 +77,8 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
     @Child private FrameSlotNode dotGenericCallEnvSlot;
     @Child private FrameSlotNode dotGenericCallDefSlot;
     @Child private FrameSlotNode dotGroupSlot;
+
+    @Child private PostProcessArgumentsNode argPostProcess;
 
     /**
      * An instance of this node may be called from with the intention to have its execution leave a
@@ -95,13 +98,15 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
      */
     private final BranchProfile returnProfile = BranchProfile.create();
 
-    public FunctionDefinitionNode(SourceSection src, FrameDescriptor frameDesc, RNode body, FormalArguments formals, String description, boolean substituteFrame) {
-        this(src, frameDesc, body, formals, description, substituteFrame, false);
+    public FunctionDefinitionNode(SourceSection src, FrameDescriptor frameDesc, RNode body, FormalArguments formals, String description, boolean substituteFrame,
+                    PostProcessArgumentsNode argPostProcess) {
+        this(src, frameDesc, body, formals, description, substituteFrame, false, argPostProcess);
     }
 
     // TODO skipOnExit: Temporary solution to allow onExit to be switched of; used for
     // REngine.evalPromise
-    public FunctionDefinitionNode(SourceSection src, FrameDescriptor frameDesc, RNode body, FormalArguments formals, String description, boolean substituteFrame, boolean skipExit) {
+    public FunctionDefinitionNode(SourceSection src, FrameDescriptor frameDesc, RNode body, FormalArguments formals, String description, boolean substituteFrame, boolean skipExit,
+                    PostProcessArgumentsNode argPostProcess) {
         super(src, formals, frameDesc);
         this.body = body;
         this.uninitializedBody = body;
@@ -111,6 +116,13 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         this.uuid = FunctionUIDFactory.get().createUID();
         this.checkSingletonFrame = !substituteFrame;
         this.needsSplitting = needsAnyBuiltinSplitting();
+        this.argPostProcess = argPostProcess;
+    }
+
+    @Override
+    public Node deepCopy() {
+        FunctionDefinitionNode copy = (FunctionDefinitionNode) super.deepCopy();
+        return copy;
     }
 
     private boolean needsAnyBuiltinSplitting() {
@@ -169,6 +181,10 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         return (FunctionBodyNode) uninitializedBody;
     }
 
+    public PostProcessArgumentsNode getArgPostProcess() {
+        return argPostProcess;
+    }
+
     /**
      * @see #substituteFrame
      */
@@ -207,6 +223,10 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
             runOnExitHandlers = false;
             throw e;
         } finally {
+            if (argPostProcess != null) {
+                resetArgs.enter();
+                argPostProcess.execute(vf);
+            }
             if (runOnExitHandlers) {
                 RErrorHandling.restoreStacks(handlerStack, restartStack);
                 if (onExitSlot != null && onExitProfile.profile(onExitSlot.hasValue(vf))) {
@@ -310,7 +330,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
 
     @Override
     public RSyntaxNode substitute(REnvironment env) {
-        return new FunctionDefinitionNode(null, new FrameDescriptor(), RSyntaxNode.cast(body).substitute(env).asRNode(), getFormalArguments(), null, substituteFrame);
+        return new FunctionDefinitionNode(null, new FrameDescriptor(), RSyntaxNode.cast(body).substitute(env).asRNode(), getFormalArguments(), null, substituteFrame, argPostProcess);
     }
 
     /**
