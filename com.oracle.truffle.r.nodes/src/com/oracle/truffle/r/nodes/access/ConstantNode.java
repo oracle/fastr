@@ -61,6 +61,13 @@ public abstract class ConstantNode extends RNode implements RSyntaxNode, Visibil
         state.setCar(getValue());
     }
 
+    public static Object getConstant(RNode node) {
+        if (node instanceof ConstantNode) {
+            return ((ConstantNode) node).getValue();
+        }
+        return null;
+    }
+
     public static ConstantNode create(Object value) {
         CompilerAsserts.neverPartOfCompilation();
         if (value instanceof Integer) {
