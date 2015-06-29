@@ -58,7 +58,7 @@ public class FastROptions {
     public static final Option<Boolean> IgnoreVisibility = newBooleanOption("IgnoreVisibility", false, "Ignore setting of the visibility flag");
     public static final Option<Boolean> LoadPkgSourcesIndex = newBooleanOption("LoadPkgSourcesIndex", true, "Load R package sources index");
     public static final Option<Boolean> InvisibleArgs = newBooleanOption("InvisibleArgs", true, "Argument writes do not trigger state transitions");
-    public static final Option<Boolean> ExperimentalStateTrans = newBooleanOption("ExperimentalStateTrans", false, "Eperimental state transition implementation");
+    public static final Option<Boolean> ExperimentalStateTrans = newBooleanOption("ExperimentalStateTrans", true, "Eperimental state transition implementation");
     public static final Option<Boolean> RefCountIncOnly = newBooleanOption("RefCountIncOnly", false, "Disable reference count decrements for eperimental state transition implementation");
 
     // Promises optimizations
