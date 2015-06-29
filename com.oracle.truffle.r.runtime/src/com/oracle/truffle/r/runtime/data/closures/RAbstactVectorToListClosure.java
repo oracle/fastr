@@ -52,7 +52,7 @@ public final class RAbstactVectorToListClosure extends RToVectorClosure implemen
         return materialize().copyWithNewDimensions(newDimensions);
     }
 
-    public final RVector createEmptySameType(int newLength, boolean newIsComplete) {
+    public RVector createEmptySameType(int newLength, boolean newIsComplete) {
         return RDataFactory.createList(new Object[newLength]);
     }
 }

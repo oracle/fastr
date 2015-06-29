@@ -148,9 +148,9 @@ public final class RDataFactory {
     public static RComplexVector createComplexVector(int length, boolean fillNA) {
         double[] data = new double[length << 1];
         if (fillNA) {
-            for (int i = 0; i < data.length;) {
-                data[i++] = RRuntime.COMPLEX_NA_REAL_PART;
-                data[i++] = RRuntime.COMPLEX_NA_IMAGINARY_PART;
+            for (int i = 0; i < data.length; i += 2) {
+                data[i] = RRuntime.COMPLEX_NA_REAL_PART;
+                data[i + 1] = RRuntime.COMPLEX_NA_IMAGINARY_PART;
             }
         }
         return createComplexVector(data, false, null, null);
