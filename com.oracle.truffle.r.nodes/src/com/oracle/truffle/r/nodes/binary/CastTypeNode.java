@@ -55,7 +55,7 @@ public abstract class CastTypeNode extends BinaryNode {
     }
 
     @TruffleBoundary
-    protected static CastNode createCast(RType type) {
+    public static CastNode createCast(RType type) {
         switch (type) {
             case Character:
                 return CastStringNodeGen.create(false, false, false, false);
