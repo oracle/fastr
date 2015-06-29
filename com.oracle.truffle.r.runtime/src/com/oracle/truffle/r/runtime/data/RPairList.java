@@ -25,6 +25,7 @@ package com.oracle.truffle.r.runtime.data;
 import java.util.*;
 
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -85,6 +86,8 @@ public class RPairList extends RAttributeStorage implements RAttributable, RAbst
     /**
      * Convert to a {@link RList}.
      */
+    // TODO (chumer) too complex for a non truffle boundary
+    @TruffleBoundary
     public RList toRList() {
         int len = 1;
         boolean named = false;
