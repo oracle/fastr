@@ -52,13 +52,13 @@ public abstract class Vector extends RBuiltinNode {
     @Specialization(guards = {"mode == cachedMode"}, limit = CACHED_MODES_LIMIT)
     RAbstractVector vectorCached(String mode, int length, @Cached("mode") String cachedMode, @Cached("modeToType(mode)") RType type) {
         controlVisibility();
-        return type.create(length);
+        return type.create(length, false);
     }
 
     @Specialization(contains = "vectorCached")
     @TruffleBoundary
     protected RAbstractVector vector(String mode, int length) {
         controlVisibility();
-        return modeToType(mode).create(length);
+        return modeToType(mode).create(length, false);
     }
 }
