@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.binary;
 
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -32,6 +33,12 @@ import com.oracle.truffle.r.runtime.data.model.*;
  * analogies.
  */
 public abstract class BoxPrimitiveNode extends CastNode {
+
+    @Override
+    public abstract Object execute(Object operand);
+
+    protected BoxPrimitiveNode() {
+    }
 
     @Specialization
     protected static RAbstractVector doInt(int vector) {
@@ -66,6 +73,14 @@ public abstract class BoxPrimitiveNode extends CastNode {
     @Specialization(contains = "doCached", guards = "!isPrimitive(vector)")
     protected static Object doGeneric(Object vector) {
         return vector;
+    }
+
+    public static BoxPrimitiveNode create() {
+        return BoxPrimitiveNodeGen.create();
+    }
+
+    public static ApplyCastNode create(RNode operand) {
+        return new ApplyCastNode(create(), operand);
     }
 
     protected static boolean isPrimitive(Object value) {
