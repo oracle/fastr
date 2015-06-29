@@ -59,6 +59,8 @@ public final class RIntVector extends RVector implements RAbstractIntVector, RAc
                 return RClosures.createIntToComplexVector(this);
             case Character:
                 return RClosures.createIntToStringVector(this);
+            case List:
+                return RClosures.createAbstractVectorToListVector(this);
             default:
                 return null;
         }

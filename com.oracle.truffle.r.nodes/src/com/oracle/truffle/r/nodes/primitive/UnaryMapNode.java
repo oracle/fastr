@@ -146,7 +146,7 @@ public final class UnaryMapNode extends Node {
         if (mayShareOperand && operand.getRType() == resultType && shareOperand.profile(((RShareable) operand).isTemporary())) {
             return operand;
         }
-        return resultType.create(operandLength);
+        return resultType.create(operandLength, false);
     }
 
     private RAbstractVector handleMetadata(RAbstractVector target, RAbstractVector operand) {

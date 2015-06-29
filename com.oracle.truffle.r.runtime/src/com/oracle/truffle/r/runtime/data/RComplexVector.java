@@ -70,6 +70,8 @@ public final class RComplexVector extends RVector implements RAbstractComplexVec
                 return this;
             case Character:
                 return RClosures.createComplexToStringVector(this);
+            case List:
+                return RClosures.createAbstractVectorToListVector(this);
             default:
                 return null;
         }

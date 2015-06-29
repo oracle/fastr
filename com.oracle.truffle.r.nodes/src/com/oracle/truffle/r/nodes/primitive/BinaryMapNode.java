@@ -264,7 +264,7 @@ public final class BinaryMapNode extends Node {
         if (mayShareRight && right.getRType() == resultType && shareRight.profile(rightLength == maxLength && ((RShareable) right).isTemporary())) {
             return right;
         }
-        return resultType.create(maxLength);
+        return resultType.create(maxLength, false);
     }
 
     private RAbstractVector handleMetadata(RAbstractVector target, RAbstractVector left, int leftLength, RAbstractVector right, int rightLength) {

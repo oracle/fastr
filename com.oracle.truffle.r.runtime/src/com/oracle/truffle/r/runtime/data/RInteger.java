@@ -76,6 +76,8 @@ public final class RInteger extends RScalarVector implements RAbstractIntVector 
                 }
             case Character:
                 return RClosures.createIntToStringVector(this);
+            case List:
+                return RClosures.createAbstractVectorToListVector(this);
             default:
                 return null;
         }

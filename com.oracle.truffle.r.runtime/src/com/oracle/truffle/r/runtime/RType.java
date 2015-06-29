@@ -166,6 +166,9 @@ public enum RType {
     }
 
     public static RType maxPrecedence(RType t1, RType t2) {
+        if (t1 == t2) {
+            return t1;
+        }
         if (t1.precedence == NO_PRECEDENCE || t2.precedence == NO_PRECEDENCE) {
             throw new IllegalArgumentException("invalid precedence");
         }
@@ -198,18 +201,18 @@ public enum RType {
         }
     }
 
-    public RAbstractVector create(int length) {
+    public RAbstractVector create(int length, boolean fillNA) {
         switch (this) {
             case Logical:
-                return RDataFactory.createLogicalVector(length);
+                return RDataFactory.createLogicalVector(length, fillNA);
             case Integer:
-                return RDataFactory.createIntVector(length);
+                return RDataFactory.createIntVector(length, fillNA);
             case Double:
-                return RDataFactory.createDoubleVector(length);
+                return RDataFactory.createDoubleVector(length, fillNA);
             case Complex:
-                return RDataFactory.createComplexVector(length);
+                return RDataFactory.createComplexVector(length, fillNA);
             case Character:
-                return RDataFactory.createStringVector(length);
+                return RDataFactory.createStringVector(length, fillNA);
             case List:
                 Object[] data = new Object[length];
                 Arrays.fill(data, RNull.instance);
@@ -219,6 +222,16 @@ public enum RType {
             default:
                 throw RInternalError.shouldNotReachHere();
         }
+    }
+
+    private static final RType[] VECTOR_TYPES = new RType[]{Raw, Logical, Integer, Double, Complex, Character, List};
+
+    public static RType[] getVectorTypes() {
+        return VECTOR_TYPES;
+    }
+
+    public boolean isNull() {
+        return this == Null;
     }
 
 }

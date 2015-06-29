@@ -66,7 +66,15 @@ public final class RDataFactory {
     public static final boolean COMPLETE_VECTOR = true;
 
     public static RIntVector createIntVector(int length) {
-        return createIntVector(new int[length], false);
+        return createIntVector(length, false);
+    }
+
+    public static RIntVector createIntVector(int length, boolean fillNA) {
+        int[] data = new int[length];
+        if (fillNA) {
+            Arrays.fill(data, RRuntime.INT_NA);
+        }
+        return createIntVector(data, false);
     }
 
     public static RIntVector createIntVector(int[] data, boolean complete) {
@@ -86,7 +94,15 @@ public final class RDataFactory {
     }
 
     public static RDoubleVector createDoubleVector(int length) {
-        return createDoubleVector(new double[length], false);
+        return createDoubleVector(length, false);
+    }
+
+    public static RDoubleVector createDoubleVector(int length, boolean fillNA) {
+        double[] data = new double[length];
+        if (fillNA) {
+            Arrays.fill(data, RRuntime.DOUBLE_NA);
+        }
+        return createDoubleVector(data, false);
     }
 
     public static RDoubleVector createDoubleVector(double[] data, boolean complete) {
@@ -126,7 +142,18 @@ public final class RDataFactory {
     }
 
     public static RComplexVector createComplexVector(int length) {
-        return createComplexVector(new double[length << 1], false, null, null);
+        return createComplexVector(length, false);
+    }
+
+    public static RComplexVector createComplexVector(int length, boolean fillNA) {
+        double[] data = new double[length << 1];
+        if (fillNA) {
+            for (int i = 0; i < data.length; i += 2) {
+                data[i] = RRuntime.COMPLEX_NA_REAL_PART;
+                data[i + 1] = RRuntime.COMPLEX_NA_IMAGINARY_PART;
+            }
+        }
+        return createComplexVector(data, false, null, null);
     }
 
     public static RComplexVector createComplexVector(double[] data, boolean complete) {
@@ -151,7 +178,11 @@ public final class RDataFactory {
     }
 
     public static RStringVector createStringVector(int length) {
-        return createStringVector(createAndfillStringVector(length, ""), false, null, null);
+        return createStringVector(length, false);
+    }
+
+    public static RStringVector createStringVector(int length, boolean fillNA) {
+        return createStringVector(createAndfillStringVector(length, fillNA ? RRuntime.STRING_NA : ""), !fillNA, null, null);
     }
 
     private static String[] createAndfillStringVector(int length, String string) {
@@ -179,7 +210,15 @@ public final class RDataFactory {
     }
 
     public static RLogicalVector createLogicalVector(int length) {
-        return createLogicalVector(new byte[length], false, null, null);
+        return createLogicalVector(length, false);
+    }
+
+    public static RLogicalVector createLogicalVector(int length, boolean fillNA) {
+        byte[] data = new byte[length];
+        if (fillNA) {
+            Arrays.fill(data, RRuntime.LOGICAL_NA);
+        }
+        return createLogicalVector(data, false, null, null);
     }
 
     public static RLogicalVector createLogicalVector(byte[] data, boolean complete) {
@@ -199,9 +238,7 @@ public final class RDataFactory {
     }
 
     public static RLogicalVector createNAVector(int length) {
-        byte[] data = new byte[length];
-        Arrays.fill(data, RRuntime.LOGICAL_NA);
-        return createLogicalVector(data, INCOMPLETE_VECTOR);
+        return createLogicalVector(length, true);
     }
 
     public static RIntSequence createAscendingRange(int start, int end) {

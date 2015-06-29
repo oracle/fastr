@@ -20,26 +20,28 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.runtime.data.closures;
+package com.oracle.truffle.r.runtime.data.model;
 
+import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
 
-public class RDoubleToComplexVectorClosure extends RToComplexVectorClosure implements RAbstractComplexVector {
+public interface RAbstractListVector extends RAbstractVector {
 
-    private final RAbstractDoubleVector castVector;
+    @Override
+    Object getDataAtAsObject(int index);
 
-    public RDoubleToComplexVectorClosure(RAbstractDoubleVector vector) {
-        super(vector);
-        this.castVector = vector;
+    RList materialize();
+
+    default boolean checkCompleteness() {
+        return true;
     }
 
-    public RComplex getDataAt(int index) {
-        double real = castVector.getDataAt(index);
-        double imaginary = 0.0;
-        if (Double.isNaN(real)) {
-            return RComplex.NA;
-        }
-        return RDataFactory.createComplex(real, imaginary);
+    default RType getRType() {
+        return RType.List;
     }
+
+    default Class<?> getElementClass() {
+        return Object.class;
+    }
+
 }

@@ -61,6 +61,8 @@ public final class RLogicalVector extends RVector implements RAbstractLogicalVec
                 return RClosures.createLogicalToComplexVector(this);
             case Character:
                 return RClosures.createLogicalToStringVector(this);
+            case List:
+                return RClosures.createAbstractVectorToListVector(this);
             default:
                 return null;
         }
