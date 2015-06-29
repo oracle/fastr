@@ -27,12 +27,15 @@ import com.oracle.truffle.r.runtime.data.model.*;
 
 public class RDoubleToComplexVectorClosure extends RToComplexVectorClosure implements RAbstractComplexVector {
 
+    private final RAbstractDoubleVector castVector;
+
     public RDoubleToComplexVectorClosure(RAbstractDoubleVector vector) {
         super(vector);
+        this.castVector = vector;
     }
 
     public RComplex getDataAt(int index) {
-        double real = ((RAbstractDoubleVector) vector).getDataAt(index);
+        double real = castVector.getDataAt(index);
         double imaginary = 0.0;
         if (Double.isNaN(real)) {
             return RComplex.NA;
