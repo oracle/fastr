@@ -59,6 +59,8 @@ public final class RDoubleVector extends RVector implements RAbstractDoubleVecto
                 return RClosures.createDoubleToComplexVector(this);
             case Character:
                 return RClosures.createDoubleToStringVector(this);
+            case List:
+                return RClosures.createAbstractVectorToListVector(this);
             default:
                 return null;
         }

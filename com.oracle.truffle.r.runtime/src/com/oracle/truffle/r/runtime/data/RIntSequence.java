@@ -55,6 +55,8 @@ public final class RIntSequence extends RSequence implements RAbstractIntVector 
                 return RClosures.createIntToComplexVector(this);
             case Character:
                 return RClosures.createIntToStringVector(this);
+            case List:
+                return RClosures.createAbstractVectorToListVector(this);
             default:
                 return null;
         }

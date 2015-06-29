@@ -45,6 +45,10 @@ public final class RLogical extends RScalarVector implements RAbstractLogicalVec
         return new RLogical(value);
     }
 
+    public static RLogical valueOf(boolean value) {
+        return value ? TRUE : FALSE;
+    }
+
     public byte getValue() {
         return value;
     }
@@ -74,6 +78,8 @@ public final class RLogical extends RScalarVector implements RAbstractLogicalVec
                 }
             case Character:
                 return RClosures.createLogicalToStringVector(this);
+            case List:
+                return RClosures.createAbstractVectorToListVector(this);
             default:
                 return null;
         }

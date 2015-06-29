@@ -54,6 +54,8 @@ public final class RComplex extends RScalarVector implements RAbstractComplexVec
                 return this;
             case Character:
                 return RClosures.createComplexToStringVector(this);
+            case List:
+                return RClosures.createAbstractVectorToListVector(this);
             default:
                 return null;
         }
@@ -113,7 +115,7 @@ public final class RComplex extends RScalarVector implements RAbstractComplexVec
             return false;
         }
         RComplex other = (RComplex) obj;
-        return realPart == other.getRealPart() && imaginaryPart == other.getImaginaryPart();
+        return isNA() && other.isNA() || (realPart == other.getRealPart() && imaginaryPart == other.getImaginaryPart());
     }
 
     @Override

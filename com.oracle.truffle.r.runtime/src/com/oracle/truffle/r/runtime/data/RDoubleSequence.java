@@ -75,6 +75,8 @@ public final class RDoubleSequence extends RSequence implements RAbstractDoubleV
                 return RClosures.createDoubleToComplexVector(this);
             case Character:
                 return RClosures.createDoubleToStringVector(this);
+            case List:
+                return RClosures.createAbstractVectorToListVector(this);
             default:
                 return null;
         }

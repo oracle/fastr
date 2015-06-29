@@ -20,57 +20,39 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.runtime.data;
+package com.oracle.truffle.r.runtime.data.closures;
 
-import com.oracle.truffle.api.CompilerDirectives.ValueType;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.closures.*;
+import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-@ValueType
-public final class RString extends RScalarVector implements RAbstractStringVector {
+/**
+ * In converting complex numbers to integers, this closure discards the imaginary parts.
+ */
+public final class RAbstactVectorToListClosure extends RToVectorClosure implements RAbstractListVector {
 
-    private final String value;
-
-    private RString(String value) {
-        this.value = value;
+    public RAbstactVectorToListClosure(RAbstractVector vector) {
+        super(vector);
     }
 
-    public static RString valueOf(String s) {
-        return new RString(s);
+    public Object getDataAtAsObject(int index) {
+        return vector.getDataAtAsObject(index);
     }
 
-    public String getValue() {
-        return value;
-    }
-
-    public RAbstractVector castSafe(RType type) {
-        switch (type) {
-            case Character:
-                return this;
-            case List:
-                return RClosures.createAbstractVectorToListVector(this);
-            default:
-                return null;
+    public RList materialize() {
+        int length = getLength();
+        Object[] result = new Object[length];
+        for (int i = 0; i < length; i++) {
+            Object data = getDataAtAsObject(i);
+            result[i] = data;
         }
+        return RDataFactory.createList(result);
     }
 
-    @Override
-    public String toString() {
-        return value;
+    public RAbstractVector copyWithNewDimensions(int[] newDimensions) {
+        return materialize().copyWithNewDimensions(newDimensions);
     }
 
-    public String getDataAt(int index) {
-        assert index == 0;
-        return value;
-    }
-
-    public RStringVector materialize() {
-        return RDataFactory.createStringVector(getValue());
-    }
-
-    @Override
-    public boolean isNA() {
-        return false;
+    public final RVector createEmptySameType(int newLength, boolean newIsComplete) {
+        return RDataFactory.createList(new Object[newLength]);
     }
 }

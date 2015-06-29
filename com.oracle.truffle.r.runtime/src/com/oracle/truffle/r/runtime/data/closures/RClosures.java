@@ -101,6 +101,12 @@ public class RClosures {
         return new RComplexToStringVectorClosure(vector);
     }
 
+    // Vector to list
+
+    public static RAbstractListVector createAbstractVectorToListVector(RAbstractVector vector) {
+        return new RAbstactVectorToListClosure(vector);
+    }
+
     // Factor to vector
 
     public static RAbstractVector createFactorToVector(RFactor factor, boolean withNames, RAttributeProfiles attrProfiles) {

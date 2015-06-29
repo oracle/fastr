@@ -63,6 +63,8 @@ public final class RDouble extends RScalarVector implements RAbstractDoubleVecto
                 }
             case Character:
                 return RClosures.createDoubleToStringVector(this);
+            case List:
+                return RClosures.createAbstractVectorToListVector(this);
             default:
                 return null;
         }
