@@ -31,6 +31,7 @@ import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.*;
 
 /**
  * A {@link ArgumentStatePush} is used to bump up state transition for function arguments.
@@ -51,6 +52,7 @@ public abstract class ArgumentStatePush extends RNode {
     public static final int MAX_COUNTED_ARGS = 8;
     public static final int[] INVALID_TRANS_ARGS = new int[0];
     public static final int INVALID_INDEX = -1;
+    public static final int REF_COUNT_SIZE_THRESHOLD = 64;
 
     public ArgumentStatePush(int index) {
         this.index = index;
@@ -65,6 +67,14 @@ public abstract class ArgumentStatePush extends RNode {
         if (!FastROptions.RefCountIncrementOnly) {
             if (mask == 0) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
+                if (shareable instanceof RAbstractContainer) {
+                    if (((RAbstractContainer) shareable).getLength() < REF_COUNT_SIZE_THRESHOLD) {
+                        // don't decrement ref count for small objects - this is pretty conservative
+                        // and can be further finessed
+                        mask = -1;
+                        return;
+                    }
+                }
                 RFunction fun = RArguments.getFunction(frame);
                 if (fun == null) {
                     mask = -1;
