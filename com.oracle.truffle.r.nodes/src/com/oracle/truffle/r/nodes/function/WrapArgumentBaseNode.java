@@ -38,6 +38,7 @@ public abstract class WrapArgumentBaseNode extends RNode implements RSyntaxNode 
     private final BranchProfile everSeenVector;
     private final BranchProfile everSeenDataFrame;
     private final BranchProfile everSeenFactor;
+    private final BranchProfile everSeenLanguage;
 
     protected final BranchProfile shareable;
     protected final BranchProfile nonShareable;
@@ -48,18 +49,20 @@ public abstract class WrapArgumentBaseNode extends RNode implements RSyntaxNode 
             everSeenVector = BranchProfile.create();
             everSeenDataFrame = BranchProfile.create();
             everSeenFactor = BranchProfile.create();
+            everSeenLanguage = BranchProfile.create();
             shareable = BranchProfile.create();
             nonShareable = BranchProfile.create();
         } else {
             everSeenVector = null;
             everSeenDataFrame = null;
             everSeenFactor = null;
+            everSeenLanguage = null;
             shareable = null;
             nonShareable = null;
         }
     }
 
-    protected RVector getVector(Object result) {
+    protected RShareable getShareable(Object result) {
         if (result instanceof RVector) {
             everSeenVector.enter();
             return (RVector) result;
@@ -69,6 +72,9 @@ public abstract class WrapArgumentBaseNode extends RNode implements RSyntaxNode 
         } else if (result instanceof RFactor) {
             everSeenFactor.enter();
             return ((RFactor) result).getVector();
+        } else if (result instanceof RLanguage) {
+            everSeenLanguage.enter();
+            return (RLanguage) result;
         } else {
             nonShareable.enter();
             return null;

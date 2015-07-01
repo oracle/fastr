@@ -70,10 +70,10 @@ public final class WrapArgumentNode extends WrapArgumentBaseNode {
 
     public Object execute(VirtualFrame frame, Object result) {
         if (modeChange) {
-            RVector vector = getVector(result);
-            if (vector != null) {
+            RShareable rShareable = getShareable(result);
+            if (rShareable != null) {
                 shareable.enter();
-                argPushStateNode.executeObject(frame, vector);
+                argPushStateNode.executeObject(frame, rShareable);
             } else if (argPushStateNode.refCounted()) {
                 refCounted.enter();
                 argPushStateNode.executeObject(frame, RNull.instance);
