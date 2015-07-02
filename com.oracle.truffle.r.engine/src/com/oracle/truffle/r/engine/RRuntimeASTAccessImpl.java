@@ -260,6 +260,89 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
         return RDataFactory.createList(data);
     }
 
+    @TruffleBoundary
+    public RStringVector getNames(RLanguage rl) {
+        RNode node = (RNode) rl.getRep();
+        if (node instanceof RCallNode || node instanceof GroupDispatchNode) {
+            CallArgumentsNode args = RASTUtils.findCallArgumentsNode(node);
+            ArgumentsSignature sig = args.getSignature();
+            int count = 0;
+            for (int i = 0; i < sig.getLength(); i++) {
+                if (sig.getName(i) != null) {
+                    count++;
+                }
+            }
+            if (count == 0) {
+                return null;
+            }
+            String[] data = new String[count + 1];
+            count = 0;
+            data[count++] = "";
+            for (int i = 0; i < sig.getLength(); i++) {
+                String name = sig.getName(i);
+                if (name != null) {
+                    data[count++] = name;
+                }
+            }
+            return RDataFactory.createStringVector(data, RDataFactory.COMPLETE_VECTOR);
+        } else {
+            return null;
+        }
+    }
+
+    @TruffleBoundary
+    public void setNames(RLanguage rl, RStringVector names) {
+        RNode node = (RNode) rl.getRep();
+        if (node instanceof RCallNode) {
+            CallArgumentsNode args = RASTUtils.findCallArgumentsNode(node);
+            ArgumentsSignature sig = args.getSignature();
+            String[] newNames = new String[sig.getLength()];
+            int argNamesLength = names.getLength() - 1;
+            if (argNamesLength > sig.getLength()) {
+                throw RError.error(RError.Message.ATTRIBUTE_VECTOR_SAME_LENGTH, "names", names.getLength(), sig.getLength() + 1);
+            }
+            for (int i = 0, j = 1; i < sig.getLength() && j <= argNamesLength; i++, j++) {
+                newNames[i] = names.getDataAt(j);
+            }
+            ArgumentsSignature newSig = ArgumentsSignature.get(newNames);
+            CallArgumentsNode newCallArgs = CallArgumentsNode.create(null, false, args.getArguments(), newSig);
+            // copying is already handled by RShareable
+            rl.setRep(RCallNode.createCall(null, ((RCallNode) node).getFunctionNode(), newCallArgs, null));
+        } else if (node instanceof GroupDispatchNode) {
+            throw RError.nyi(null, "group dispatch names update");
+        } else {
+            throw RInternalError.shouldNotReachHere();
+        }
+    }
+
+    @TruffleBoundary
+    public RLanguage updateField(RLanguage rl, String field, Object value) {
+        /* We keep this here owing to code similarity with getNames */
+        RNode node = (RNode) rl.getRep();
+        if (node instanceof RCallNode) {
+            CallArgumentsNode args = RASTUtils.findCallArgumentsNode(node);
+            ArgumentsSignature sig = args.getSignature();
+            RNode[] argNodes = args.getArguments();
+            boolean match = false;
+            for (int i = 0; i < sig.getLength(); i++) {
+                String name = sig.getName(i);
+                if (name != null && name.equals(field)) {
+                    argNodes[i] = WrapArgumentNode.create(RASTUtils.createNodeForValue(value), false, i);
+                    match = true;
+                    break;
+                }
+            }
+            if (!match) {
+                throw RError.nyi(null, "assignment to non-existent field");
+            }
+            return RDataFactory.createLanguage(RCallNode.createCall(null, ((RCallNode) node).getFunctionNode(), args, null));
+        } else if (node instanceof GroupDispatchNode) {
+            throw RError.nyi(null, "group dispatch field update");
+        } else {
+            throw RInternalError.shouldNotReachHere();
+        }
+    }
+
     @Override
     public void deparse(State state, RLanguage rl) {
         RASTDeparse.deparse(state, rl);

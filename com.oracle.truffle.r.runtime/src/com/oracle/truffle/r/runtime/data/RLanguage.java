@@ -39,10 +39,14 @@ import com.oracle.truffle.r.runtime.data.model.*;
  * consequence is the the implementation of the {@link RAbstractContainer} methods are delegated to
  * a helper class from a project that can access {@code RNode}.
  *
+ * {@link RLanguage} instances are almost completely immutable, <i>except</i> for the ability for
+ * {@code}names} updates which manifests itself as actually transforming the AST. S we do have to
+ * implement the {@link RShareable} interface.
+ *
  *
  */
 @ValueType
-public class RLanguage extends RLanguageRep implements RAbstractContainer, RAttributable {
+public class RLanguage extends RLanguageRep implements RAbstractContainer, RAttributable, RShareable {
 
     private RAttributes attributes;
     /**
@@ -52,6 +56,11 @@ public class RLanguage extends RLanguageRep implements RAbstractContainer, RAttr
 
     RLanguage(Object rep) {
         super(rep);
+    }
+
+    RLanguage(Object rep, int length) {
+        super(rep);
+        this.length = length;
     }
 
     public RType getRType() {
@@ -105,12 +114,21 @@ public class RLanguage extends RLanguageRep implements RAbstractContainer, RAttr
         return RLanguage.class;
     }
 
-    public RVector materializeNonShared() {
-        throw RInternalError.shouldNotReachHere();
+    public RLanguage materializeNonShared() {
+        if (this.isShared()) {
+            RLanguage res = this.copy();
+            res.markNonTemporary();
+            return res;
+        }
+        if (this.isTemporary()) {
+            this.markNonTemporary();
+        }
+        return this;
     }
 
     public RShareable materializeToShareable() {
-        throw RInternalError.shouldNotReachHere();
+        // TODO is copy necessary?
+        return copy();
     }
 
     public Object getDataAtAsObject(int index) {
@@ -119,12 +137,21 @@ public class RLanguage extends RLanguageRep implements RAbstractContainer, RAttr
 
     @Override
     public RStringVector getNames(RAttributeProfiles attrProfiles) {
-        return (RStringVector) getAttr(attrProfiles, RRuntime.NAMES_ATTR_KEY);
+        /*
+         * "names" for a language object is a special case, that is applicable to calls and returns
+         * the names of the actual arguments, if any. E.g. f(x=1, 3) would return c("", "x", "").
+         * GnuR defines it as returning the "tag" values on the pairlist that represents the call.
+         * Well, we don't have a pairlist, (we could get one by serializing the expression), so we
+         * do it by AST walking.
+         */
+        RStringVector names = RContext.getRRuntimeASTAccess().getNames(this);
+        return names;
     }
 
     @Override
     public void setNames(RStringVector newNames) {
-        setAttr(RRuntime.NAMES_ATTR_KEY, newNames);
+        /* See getNames */
+        RContext.getRRuntimeASTAccess().setNames(this, newNames);
     }
 
     @Override
@@ -160,10 +187,57 @@ public class RLanguage extends RLanguageRep implements RAbstractContainer, RAttr
         return false;
     }
 
+    @Override
     public RLanguage copy() {
-        RLanguage l = new RLanguage(getRep());
-        l.attributes = attributes;
+        RLanguage l = new RLanguage(getRep(), this.length);
+        if (this.attributes != null) {
+            l.attributes = attributes.copy();
+        }
         return l;
+    }
+
+    /*
+     * RShareable support. Code is cloned directly from RVector.
+     */
+    private boolean shared;
+    private boolean temporary = true;
+    private int refCount;
+
+    public void markNonTemporary() {
+        temporary = false;
+    }
+
+    public boolean isTemporary() {
+        if (FastROptions.NewStateTransition) {
+            return temporary && refCount == 0;
+        } else {
+            return temporary;
+        }
+    }
+
+    public boolean isShared() {
+        if (FastROptions.NewStateTransition) {
+            return shared || (!temporary && refCount > 0);
+        } else {
+            return shared;
+        }
+    }
+
+    public RShareable makeShared() {
+        if (temporary) {
+            temporary = false;
+        }
+        shared = true;
+        return this;
+    }
+
+    public void incRefCount() {
+        refCount++;
+    }
+
+    public void decRefCount() {
+        assert refCount > 0;
+        refCount--;
     }
 
 }

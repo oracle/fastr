@@ -197,6 +197,11 @@ public abstract class UpdateFieldNode extends UpdateNode implements RSyntaxNode 
     }
 
     @Specialization
+    protected Object updateField(RLanguage rl, Object value, String field) {
+        return RContext.getRRuntimeASTAccess().updateField(rl, field, value);
+    }
+
+    @Specialization
     protected Object updateField(RAbstractVector object, Object value, String field) {
         if (castList == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();

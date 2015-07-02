@@ -50,6 +50,21 @@ public interface RRuntimeASTAccess {
     RList asList(RLanguage rl);
 
     /**
+     * Get the "names" attribute for an {@link RLanguage} object, or {@code null} if none.
+     */
+    RStringVector getNames(RLanguage rl);
+
+    /**
+     * Set the "names" attribute for an {@link RLanguage} object.
+     */
+    void setNames(RLanguage rl, RStringVector names);
+
+    /**
+     * Field update for a language (call) object.
+     */
+    RLanguage updateField(RLanguage rl, String field, Object value);
+
+    /**
      * Deparse {@code rl}.
      */
     void deparse(RDeparse.State state, RLanguage rl);

@@ -202,4 +202,9 @@ public class TestBuiltin_names extends TestBase {
     public void testNames() {
         assertEval("{ x<-c(1,2,3); dim(x)<-3; dimnames(x)<-list(c(11,12,13)); names(x) }");
     }
+
+    @Test
+    public void testLNames() {
+        assertEval("{ x <- quote(plot(x = age, y = weight)); names(x) }");
+    }
 }

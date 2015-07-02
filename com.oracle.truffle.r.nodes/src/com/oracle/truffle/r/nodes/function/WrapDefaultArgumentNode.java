@@ -56,18 +56,18 @@ public final class WrapDefaultArgumentNode extends WrapArgumentBaseNode {
 
     public Object execute(Object o) {
         Object result = o;
-        RVector vector = getVector(result);
-        if (vector != null) {
+        RShareable rShareable = getShareable(result);
+        if (rShareable != null) {
             shareable.enter();
-            if (vector.isShared()) {
+            if (rShareable.isShared()) {
                 everSeenShared.enter();
                 result = ((RShareable) o).copy();
-            } else if (vector.isTemporary()) {
+            } else if (rShareable.isTemporary()) {
                 everSeenTemporary.enter();
-                vector.markNonTemporary();
+                rShareable.markNonTemporary();
             } else {
                 everSeenNonTemporary.enter();
-                vector.makeShared();
+                rShareable.makeShared();
             }
         }
         return result;

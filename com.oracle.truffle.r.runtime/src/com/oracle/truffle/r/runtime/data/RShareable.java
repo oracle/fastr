@@ -30,7 +30,7 @@ public interface RShareable {
 
     boolean isShared();
 
-    RVector makeShared();
+    RShareable makeShared();
 
     RShareable copy();
 

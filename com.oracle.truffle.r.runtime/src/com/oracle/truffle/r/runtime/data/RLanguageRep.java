@@ -32,7 +32,7 @@ package com.oracle.truffle.r.runtime.data;
  */
 public abstract class RLanguageRep {
 
-    private final Object rep;
+    private Object rep;
 
     public RLanguageRep(Object rep) {
         this.rep = rep;
@@ -40,5 +40,9 @@ public abstract class RLanguageRep {
 
     public Object getRep() {
         return rep;
+    }
+
+    public void setRep(Object rep) {
+        this.rep = rep;
     }
 }
