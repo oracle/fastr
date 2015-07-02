@@ -259,7 +259,7 @@ public abstract class CallMatcherNode extends Node {
                 if (source >= 0) {
                     result[i] = arguments[(int) source];
                 } else {
-                    source = -source;
+                    source = -source - 1;
                     result[i] = ((RArgsValuesAndNames) arguments[(int) (source >> 32)]).getArguments()[(int) source];
                 }
             }

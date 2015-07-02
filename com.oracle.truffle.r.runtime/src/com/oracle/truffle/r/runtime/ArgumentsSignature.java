@@ -181,7 +181,7 @@ public final class ArgumentsSignature implements Iterable<String> {
             ArgumentsSignature varArgSignature = varArgSignatures[i];
             if (varArgSignature != null) {
                 for (int j = 0; j < varArgSignature.getLength(); j++) {
-                    preparePermutation[index++] = -((((long) i) << 32) + j);
+                    preparePermutation[index++] = -((((long) i) << 32) + j) - 1;
                 }
             } else {
                 preparePermutation[index++] = i;
