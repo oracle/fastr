@@ -48,7 +48,12 @@ public abstract class Sum extends RBuiltinNode {
         return new Object[]{RArgsValuesAndNames.EMPTY, RRuntime.LOGICAL_FALSE};
     }
 
-    @Specialization
+    @Specialization(guards = "args.getLength() == 1")
+    protected Object sumLengthOne(RArgsValuesAndNames args, byte naRm) {
+        return reduce.executeReduce(args.getArgument(0), naRm);
+    }
+
+    @Specialization(contains = "sumLengthOne")
     protected Object sum(RArgsValuesAndNames args, byte naRm) {
         return reduce.executeReduce(combine.executeCombine(args), naRm);
     }
