@@ -145,6 +145,8 @@ public final class ForNode extends AbstractLoopNode implements VisibilityControl
             this.readLengthNode = ReadVariableNode.createAnonymous(lengthName);
             this.writeIndexNode = WriteVariableNode.createAnonymous(indexName, null, Mode.REGULAR);
             this.loadElement = createIndexedLoad(indexName, rangeName);
+            // pre-initialize the profile so that loop exits to not deoptimize
+            conditionProfile.profile(false);
         }
 
         private static RNode createIndexedLoad(String indexName, String rangeName) {
