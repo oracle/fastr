@@ -68,9 +68,9 @@ public abstract class ArgumentStatePush extends RNode {
             if (mask == 0) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 if (shareable instanceof RAbstractContainer) {
-                    if (((RAbstractContainer) shareable).getLength() < REF_COUNT_SIZE_THRESHOLD) {
-                        // don't decrement ref count for small objects - this is pretty conservative
-                        // and can be further finessed
+                    if (shareable instanceof RLanguage || ((RAbstractContainer) shareable).getLength() < REF_COUNT_SIZE_THRESHOLD) {
+                        // don't decrement ref count for small objects or language objects- this is
+                        // pretty conservative and can be further finessed
                         mask = -1;
                         return;
                     }
