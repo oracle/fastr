@@ -268,7 +268,7 @@ public final class Utils {
     @TruffleBoundary
     public static Frame getStackFrame(FrameAccess fa, int depth) {
         return Truffle.getRuntime().iterateFrames(frameInstance -> {
-            Frame f = frameInstance.getFrame(fa, false);
+            Frame f = RArguments.unwrap(frameInstance.getFrame(fa, false));
             return RArguments.getDepth(f) == depth ? f : null;
         });
     }
@@ -281,14 +281,6 @@ public final class Utils {
     private static boolean isPromiseEvaluationFrame(FrameInstance frameInstance) {
         String desc = frameInstance.getCallTarget().toString();
         return desc == RPromise.CLOSURE_WRAPPER_NAME;
-    }
-
-    /**
-     * An arguments array length of 1 is indicative of a substituted frame. See
-     * {@code FunctionDefinitionNode.substituteFrame}.
-     */
-    private static boolean isSubstitutedFrame(Frame frame) {
-        return frame.getArguments().length == 1;
     }
 
     /**
@@ -312,11 +304,7 @@ public final class Utils {
             // Truffle/R system has started
             return null;
         }
-        Frame frame = frameInstance.getFrame(FrameAccess.MATERIALIZE, true);
-        if (isSubstitutedFrame(frame)) {
-            frame = (Frame) frame.getArguments()[0];
-        }
-        return frame;
+        return RArguments.unwrap(frameInstance.getFrame(FrameAccess.MATERIALIZE, true));
     }
 
     @TruffleBoundary
@@ -356,16 +344,17 @@ public final class Utils {
         if (str.length() > 0) {
             str.append("\n");
         }
-        SourceSection callSrc = RArguments.getCallSourceSection(frame);
+        Frame unwrapped = RArguments.unwrap(frame);
+        SourceSection callSrc = RArguments.getCallSourceSection(unwrapped);
         str.append("Frame: ").append(callTarget).append(isVirtual ? " (virtual)" : "");
         if (callSrc != null) {
             str.append(" (called as: ").append(callSrc.getCode()).append(')');
         }
         if (printFrameSlots) {
-            FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
+            FrameDescriptor frameDescriptor = unwrapped.getFrameDescriptor();
             for (FrameSlot s : frameDescriptor.getSlots()) {
                 str.append("\n      ").append(s.getIdentifier()).append(" = ");
-                Object value = frame.getValue(s);
+                Object value = unwrapped.getValue(s);
                 try {
                     if (value instanceof RAbstractContainer && ((RAbstractContainer) value).getLength() > 32) {
                         str.append('<').append(value.getClass().getSimpleName()).append(" with ").append(((RAbstractContainer) value).getLength()).append(" elements>");

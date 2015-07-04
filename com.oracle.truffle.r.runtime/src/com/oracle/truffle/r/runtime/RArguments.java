@@ -29,7 +29,6 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.source.*;
-import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.env.frame.*;
@@ -123,38 +122,7 @@ public final class RArguments {
      */
     static final int MINIMAL_ARRAY_LENGTH = INDEX_ARGUMENTS;
 
-    private static final ValueProfile materializedFrameProfile = ValueProfile.createClassProfile();
-
     private RArguments() {
-    }
-
-    /**
-     * Get the {@code RArguments} checking for an "eval" frame. An eval can create a pseudo-call
-     * where {@code arguments.length == 1} and the real {@code arguments} are at
-     * {@code arguments[0]}. See {@code REngine}.
-     */
-    private static Object[] getRArgumentsWithEvalCheck(Frame frame) {
-        Object[] arguments = frame.getArguments();
-        if (arguments.length == 1) {
-            return materializedFrameProfile.profile((Frame) arguments[0]).getArguments();
-        } else {
-            return arguments;
-        }
-    }
-
-    /**
-     * Get the {@code arguments} checking for an "eval" frame. An eval can create a pseudo-call
-     * where {@code arguments.length == 1} and the real {@code arguments} are at
-     * {@code arguments[0]}. See {@code REngine}.
-     */
-    public static Object[] getRArgumentsWithEvalCheck(Frame frame, ConditionProfile profile) {
-        CompilerAsserts.compilationConstant(profile);
-        Object[] arguments = frame.getArguments();
-        if (profile.profile(arguments.length == 1)) {
-            return materializedFrameProfile.profile((Frame) arguments[0]).getArguments();
-        } else {
-            return arguments;
-        }
     }
 
     private static int getNArgs(Frame frame) {
@@ -231,24 +199,24 @@ public final class RArguments {
     }
 
     public static MaterializedFrame getCallerFrame(Frame frame) {
-        Object[] args = getRArgumentsWithEvalCheck(frame);
+        Object[] args = frame.getArguments();
         return (MaterializedFrame) args[INDEX_CALLER_FRAME];
     }
 
     public static S3Args getS3Args(Frame frame) {
-        return (S3Args) getRArgumentsWithEvalCheck(frame)[INDEX_S3_ARGS];
+        return (S3Args) frame.getArguments()[INDEX_S3_ARGS];
     }
 
     public static REnvironment getEnvironment(Frame frame) {
-        return (REnvironment) getRArgumentsWithEvalCheck(frame)[INDEX_ENVIRONMENT];
+        return (REnvironment) frame.getArguments()[INDEX_ENVIRONMENT];
     }
 
     public static RFunction getFunction(Frame frame) {
-        return (RFunction) getRArgumentsWithEvalCheck(frame)[INDEX_FUNCTION];
+        return (RFunction) frame.getArguments()[INDEX_FUNCTION];
     }
 
     public static SourceSection getCallSourceSection(Frame frame) {
-        return (SourceSection) getRArgumentsWithEvalCheck(frame)[INDEX_CALL_SRC];
+        return (SourceSection) frame.getArguments()[INDEX_CALL_SRC];
     }
 
     /**
@@ -271,25 +239,25 @@ public final class RArguments {
     }
 
     public static int getDepth(Frame frame) {
-        return (Integer) getRArgumentsWithEvalCheck(frame)[INDEX_DEPTH];
+        return (Integer) frame.getArguments()[INDEX_DEPTH];
     }
 
     public static boolean getIsIrregular(Frame frame) {
-        return (boolean) getRArgumentsWithEvalCheck(frame)[INDEX_IS_IRREGULAR];
+        return (boolean) frame.getArguments()[INDEX_IS_IRREGULAR];
     }
 
     public static Object getArgument(Frame frame, int argIndex) {
         assert (argIndex >= 0 && argIndex < getNArgs(frame));
-        return getRArgumentsWithEvalCheck(frame)[INDEX_ARGUMENTS + argIndex];
+        return frame.getArguments()[INDEX_ARGUMENTS + argIndex];
     }
 
     public static Object[] getArguments(Frame frame) {
-        Object[] args = getRArgumentsWithEvalCheck(frame);
+        Object[] args = frame.getArguments();
         return Arrays.copyOfRange(args, INDEX_ARGUMENTS, INDEX_ARGUMENTS + ((ArgumentsSignature) args[INDEX_SIGNATURE]).getLength());
     }
 
     public static void copyArguments(Frame frame, Object[] dest, int pos) {
-        Object[] args = getRArgumentsWithEvalCheck(frame);
+        Object[] args = frame.getArguments();
         System.arraycopy(args, INDEX_ARGUMENTS, dest, pos, ((ArgumentsSignature) args[INDEX_SIGNATURE]).getLength());
     }
 
@@ -302,7 +270,7 @@ public final class RArguments {
      */
     public static void setArgument(Frame frame, int argIndex, Object newValue) {
         assert (argIndex >= 0 && argIndex < getNArgs(frame));
-        getRArgumentsWithEvalCheck(frame)[INDEX_ARGUMENTS + argIndex] = newValue;
+        frame.getArguments()[INDEX_ARGUMENTS + argIndex] = newValue;
     }
 
     public static int getArgumentsLength(Frame frame) {
@@ -310,34 +278,30 @@ public final class RArguments {
     }
 
     public static MaterializedFrame getEnclosingFrame(Frame frame) {
-        return (MaterializedFrame) getRArgumentsWithEvalCheck(frame)[INDEX_ENCLOSING_FRAME];
-    }
-
-    public static MaterializedFrame getEnclosingFrame(Frame frame, ConditionProfile profile) {
-        return (MaterializedFrame) getRArgumentsWithEvalCheck(frame, profile)[INDEX_ENCLOSING_FRAME];
+        return (MaterializedFrame) frame.getArguments()[INDEX_ENCLOSING_FRAME];
     }
 
     public static ArgumentsSignature getSignature(Frame frame) {
-        return (ArgumentsSignature) getRArgumentsWithEvalCheck(frame)[INDEX_SIGNATURE];
+        return (ArgumentsSignature) frame.getArguments()[INDEX_SIGNATURE];
     }
 
     public static void setEnvironment(Frame frame, REnvironment env) {
-        getRArgumentsWithEvalCheck(frame)[INDEX_ENVIRONMENT] = env;
+        frame.getArguments()[INDEX_ENVIRONMENT] = env;
     }
 
     /**
      * Explicitly set the callSrc. Used by {@code REngine.eval}.
      */
     public static void setCallSourceSection(Frame frame, SourceSection callSrc) {
-        getRArgumentsWithEvalCheck(frame)[INDEX_CALL_SRC] = callSrc;
+        frame.getArguments()[INDEX_CALL_SRC] = callSrc;
     }
 
     public static void setDepth(Frame frame, int depth) {
-        getRArgumentsWithEvalCheck(frame)[INDEX_DEPTH] = depth;
+        frame.getArguments()[INDEX_DEPTH] = depth;
     }
 
     public static void setIsIrregular(Frame frame, boolean isIrregularFrame) {
-        getRArgumentsWithEvalCheck(frame)[INDEX_IS_IRREGULAR] = isIrregularFrame;
+        frame.getArguments()[INDEX_IS_IRREGULAR] = isIrregularFrame;
     }
 
     public static void setIsIrregular(Object[] arguments, boolean isIrregularFrame) {
@@ -347,7 +311,7 @@ public final class RArguments {
 
     public static void setEnclosingFrame(Frame frame, MaterializedFrame encl) {
         CompilerAsserts.neverPartOfCompilation();
-        Object[] arguments = getRArgumentsWithEvalCheck(frame);
+        Object[] arguments = frame.getArguments();
         arguments[INDEX_ENCLOSING_FRAME] = encl;
         FrameSlotChangeMonitor.invalidateEnclosingFrame(frame);
     }
@@ -359,7 +323,7 @@ public final class RArguments {
      */
     public static void attachFrame(Frame frame, MaterializedFrame newEncl) {
         CompilerAsserts.neverPartOfCompilation();
-        Object[] arguments = getRArgumentsWithEvalCheck(frame);
+        Object[] arguments = frame.getArguments();
         MaterializedFrame encl = (MaterializedFrame) arguments[INDEX_ENCLOSING_FRAME];
         Object[] newArguments = newEncl.getArguments();
         newArguments[INDEX_ENCLOSING_FRAME] = encl;
@@ -374,10 +338,19 @@ public final class RArguments {
      */
     public static void detachFrame(Frame frame) {
         CompilerAsserts.neverPartOfCompilation();
-        Object[] arguments = getRArgumentsWithEvalCheck(frame);
+        Object[] arguments = frame.getArguments();
         MaterializedFrame encl = (MaterializedFrame) arguments[INDEX_ENCLOSING_FRAME];
         Object[] enclArguments = encl.getArguments();
         arguments[INDEX_ENCLOSING_FRAME] = enclArguments[INDEX_ENCLOSING_FRAME];
         FrameSlotChangeMonitor.invalidateEnclosingFrame(frame);
+    }
+
+    /**
+     * An arguments array length of 1 is indicative of a substituted frame. See
+     * {@code FunctionDefinitionNode.substituteFrame}.
+     */
+    public static Frame unwrap(Frame frame) {
+        Object[] arguments = frame.getArguments();
+        return arguments.length == 1 ? (Frame) arguments[0] : frame;
     }
 }

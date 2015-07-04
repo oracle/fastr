@@ -374,7 +374,6 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
         private final FrameLevel next;
         private final FrameDescriptor nextDescriptor;
         private final ValueProfile frameProfile = ValueProfile.createClassProfile();
-        private final ConditionProfile isEvalFrame = ConditionProfile.createBinaryProfile();
 
         public NextFrameLevel(FrameLevel next, FrameDescriptor nextDescriptor) {
             this.next = next;
@@ -383,7 +382,7 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
 
         @Override
         public Object execute(VirtualFrame frame, Frame variableFrame) throws InvalidAssumptionException, LayoutChangedException, FrameSlotTypeException {
-            MaterializedFrame nextFrame = frameProfile.profile(RArguments.getEnclosingFrame(variableFrame, isEvalFrame));
+            MaterializedFrame nextFrame = frameProfile.profile(RArguments.getEnclosingFrame(variableFrame));
             if (nextDescriptor == null) {
                 if (nextFrame != null) {
                     throw new LayoutChangedException();

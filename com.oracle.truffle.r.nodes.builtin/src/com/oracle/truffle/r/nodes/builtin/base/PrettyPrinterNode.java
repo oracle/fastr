@@ -86,7 +86,7 @@ public abstract class PrettyPrinterNode extends RNode {
     private static final FrameAccess FRAME_ACCESS = FrameAccess.NONE;
 
     private static VirtualFrame currentFrame() {
-        return (VirtualFrame) Truffle.getRuntime().getCurrentFrame().getFrame(FRAME_ACCESS, true);
+        return (VirtualFrame) Utils.getActualCurrentFrame();
     }
 
     private String prettyPrintAttribute(Object o) {

@@ -116,7 +116,7 @@ public abstract class RREPLHandler extends REPLHandler {
             }
             final FrameDebugDescription frameDescription = stack.get(frameNumber);
             final REPLMessage frameMessage = createFrameInfoMessage(serverContext, frameDescription);
-            final Frame frame = frameDescription.frameInstance().getFrame(FrameInstance.FrameAccess.READ_ONLY, true);
+            final Frame frame = RArguments.unwrap(frameDescription.frameInstance().getFrame(FrameInstance.FrameAccess.READ_ONLY, true));
             final FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
             Visualizer visualizer = serverContext.getLanguage().getToolSupport().getVisualizer();
             try {
