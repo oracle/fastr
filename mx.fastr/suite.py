@@ -21,7 +21,7 @@
 # questions.
 #
 suite = {
-  "mxversion" : "4.0.5",
+  "mxversion" : "4.1.2",
   "name" : "fastr",
 
   "imports" : {
