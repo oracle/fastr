@@ -217,8 +217,11 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
             CompilerDirectives.transferToInterpreter();
             runOnExitHandlers = false;
             throw e instanceof RInternalError ? (RInternalError) e : new RInternalError(e, "internal error");
-        } catch (DebugExitException e) {
-            // this must pass through unchanged
+        } catch (DebugExitException | QuitException e) {
+            /*
+             * These relate to the Truffle debugging support. exitHandlers must be suppressed and
+             * the exceptions must pass through unchanged; they are not errors
+             */
             CompilerDirectives.transferToInterpreter();
             runOnExitHandlers = false;
             throw e;

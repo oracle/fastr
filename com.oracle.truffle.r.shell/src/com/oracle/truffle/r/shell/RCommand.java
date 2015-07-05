@@ -30,6 +30,7 @@ import java.util.*;
 
 import jline.console.*;
 
+import com.oracle.truffle.api.instrument.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.engine.*;
 import com.oracle.truffle.r.nodes.builtin.base.*;
@@ -57,7 +58,14 @@ public class RCommand {
             }
             subMain(result.args);
         } catch (Utils.DebugExitException ex) {
-            // running under in-process debugger, just return
+            /*
+             * This is thrown instead of doing System.exit, when we are running under the in-process
+             * Truffle debugger. We just return to the debugger command loop, possibly to be
+             * re-entered with a new evaluation.
+             */
+            return;
+        } catch (QuitException ex) {
+            /* This is thrown by the Truffle debugger when the user executes the 'q' command. */
             return;
         }
     }

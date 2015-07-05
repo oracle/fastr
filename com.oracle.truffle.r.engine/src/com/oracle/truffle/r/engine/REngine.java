@@ -35,6 +35,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.instrument.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.library.graphics.*;
 import com.oracle.truffle.r.nodes.*;
@@ -188,7 +189,7 @@ final class REngine implements RContext.Engine {
             return parseAndEvalImpl(source, frame, printResult, allowIncompleteSource);
         } catch (ReturnException ex) {
             return ex.getResult();
-        } catch (DebugExitException | BrowserQuitException e) {
+        } catch (DebugExitException | QuitException | BrowserQuitException e) {
             throw e;
         } catch (RError e) {
             // RError prints the correct result on the console during construction
@@ -434,7 +435,7 @@ final class REngine implements RContext.Engine {
             throw cfe;
         } catch (UnsupportedSpecializationException use) {
             throw use;
-        } catch (DebugExitException | BrowserQuitException e) {
+        } catch (DebugExitException | QuitException | BrowserQuitException e) {
             throw e;
         } catch (Throwable e) {
             reportImplementationError(e);
