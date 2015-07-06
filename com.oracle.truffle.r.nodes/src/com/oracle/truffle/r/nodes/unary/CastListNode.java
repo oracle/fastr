@@ -28,6 +28,7 @@ import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.env.*;
 
 public abstract class CastListNode extends CastBaseNode {
 
@@ -100,6 +101,11 @@ public abstract class CastListNode extends CastBaseNode {
     @Specialization
     protected RList doFunction(RFunction func) {
         return RDataFactory.createList(new Object[]{func});
+    }
+
+    @Specialization
+    protected RList doEnvironment(REnvironment env) {
+        return RDataFactory.createList(new Object[]{env});
     }
 
     public static CastListNode create() {

@@ -542,6 +542,9 @@ public class TestBuiltin_c extends TestBase {
         // print output for a function in a list doesn't match GnuR,
         // which seems to invoke deparse, so we just check the c didn't fail.
         assertEval("{ f <- function() { }; length(c(f, 2)) == 2 }");
+
+        assertEval("{ e1 <- new.env(), e2 <- new.env(); c(e1, e2) }");
+        assertEval("{ e1 <- new.env(), c(e1, 3) }");
     }
 
     @Test

@@ -29,6 +29,7 @@ import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.nodes.Node.Child;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.env.*;
 
 @SuppressWarnings("unused")
 @ImportStatic(RRuntime.class)
@@ -125,6 +126,11 @@ public abstract class PrecedenceNode extends Node {
 
     @Specialization
     protected int doFunction(RFunction func, byte recursive) {
+        return LIST_PRECEDENCE;
+    }
+
+    @Specialization
+    protected int doEnvironment(REnvironment env, byte recursive) {
         return LIST_PRECEDENCE;
     }
 
