@@ -397,6 +397,7 @@ public class BasePackage extends RBuiltinPackage {
         add(Re.class, ReNodeGen::create);
         add(ReadDCF.class, ReadDCFNodeGen::create);
         add(ReadREnviron.class, ReadREnvironNodeGen::create);
+        add(Readline.class, ReadlineNodeGen::create);
         add(Recall.class, RecallNodeGen::create);
         add(Repeat.class, RepeatNodeGen::create);
         add(RepeatInternal.class, RepeatInternalNodeGen::create);

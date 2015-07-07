@@ -213,7 +213,7 @@ public abstract class RCallNode extends RNode implements RSyntaxNode {
 
     @Override
     public void deparse(RDeparse.State state) {
-        Object fname = RASTUtils.findFunctionName(this, false);
+        Object fname = RASTUtils.findFunctionName(this);
         if (fname instanceof RSymbol) {
             String sfname = ((RSymbol) fname).getName();
             if (sfname.equals(":::") || sfname.equals("::")) {

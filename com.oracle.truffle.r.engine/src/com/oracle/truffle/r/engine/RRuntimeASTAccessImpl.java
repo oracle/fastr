@@ -145,7 +145,7 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
         if (node instanceof RCallNode || node instanceof GroupDispatchNode) {
             if (index == 0) {
                 if (RASTUtils.isNamedFunctionNode(node)) {
-                    return RASTUtils.findFunctionName(node, true);
+                    return RASTUtils.findFunctionName(node);
                 } else {
                     Object functionNode = RASTUtils.getFunctionNode(node);
                     if (functionNode instanceof ConstantNode && ((ConstantNode) functionNode).getValue() instanceof RSymbol) {
