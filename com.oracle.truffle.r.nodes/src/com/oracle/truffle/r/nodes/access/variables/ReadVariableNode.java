@@ -80,9 +80,7 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
     }
 
     /**
-     * Creates a function lookup for the given identifier. If throwError is true, then an error will
-     * be thrown if the specified function is not found, if throwError is false, a {@code null}
-     * value will silently be returned.
+     * Creates a function lookup for the given identifier.
      */
     public static ReadVariableNode createFunctionLookup(SourceSection src, String identifier) {
         ReadVariableNode result = new ReadVariableNode(identifier, RType.Function, ReadKind.Normal, true);
