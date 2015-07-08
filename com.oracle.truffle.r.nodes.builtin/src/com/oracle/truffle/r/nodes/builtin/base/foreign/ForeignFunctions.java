@@ -217,6 +217,8 @@ public class ForeignFunctions {
         @Override
         protected RExternalBuiltinNode lookupBuiltin(RList f) {
             switch (lookupName(f)) {
+                case "PDF":
+                    return new DevicesCCalls.C_PDF();
                 case "devoff":
                     return new DevicesCCalls.C_DevOff();
                 case "devcur":
