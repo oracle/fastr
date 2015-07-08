@@ -352,16 +352,20 @@ public class RSerialize {
                     REnvironment env;
                     Object hashtab = readItem();
                     if (hashed) {
-                        env = RDataFactory.createNewEnv(enclosing, null, true, ((RList) hashtab).getLength());
-                        RList hashList = (RList) hashtab;
-                        // GnuR sizes its hash tables, empty slots indicated by RNull
-                        for (int i = 0; i < hashList.getLength(); i++) {
-                            Object val = hashList.getDataAt(i);
-                            if (val == RNull.instance) {
-                                continue;
+                        if (hashtab == RNull.instance) {
+                            env = RDataFactory.createNewEnv(enclosing, null);
+                        } else {
+                            env = RDataFactory.createNewEnv(enclosing, null, true, ((RList) hashtab).getLength());
+                            RList hashList = (RList) hashtab;
+                            // GnuR sizes its hash tables, empty slots indicated by RNull
+                            for (int i = 0; i < hashList.getLength(); i++) {
+                                Object val = hashList.getDataAt(i);
+                                if (val == RNull.instance) {
+                                    continue;
+                                }
+                                RPairList pl = (RPairList) val;
+                                env.safePut(((RSymbol) pl.getTag()).getName(), pl.car());
                             }
-                            RPairList pl = (RPairList) val;
-                            env.safePut(((RSymbol) pl.getTag()).getName(), pl.car());
                         }
                     } else {
                         env = RDataFactory.createNewEnv(enclosing, null);
@@ -1186,6 +1190,13 @@ public class RSerialize {
 
         private void writeItem(Object obj) throws IOException {
             SEXPTYPE specialType;
+            Object psn;
+            if ((psn = getPersistentName(obj)) != RNull.instance) {
+                addReadRef(obj);
+                stream.writeInt(SEXPTYPE.PERSISTSXP.code);
+                outStringVec((RStringVector) psn, false);
+                return;
+            }
             if ((specialType = saveSpecialHook(obj)) != null) {
                 stream.writeInt(specialType.code);
                 return;
@@ -1200,8 +1211,8 @@ public class RSerialize {
             } else if (type == SEXPTYPE.ENVSXP) {
                 REnvironment env = (REnvironment) obj;
                 addReadRef(obj);
-                String name = env.getName();
-                if (name.startsWith("package:")) {
+                String name = null;
+                if ((name = env.isPackageEnv()) != null) {
                     RError.warning(RError.Message.PACKAGE_AVAILABLE, name);
                     stream.writeInt(SEXPTYPE.PACKAGESXP.code);
                     stream.writeString(name);
@@ -1436,6 +1447,31 @@ public class RSerialize {
             }
         }
 
+        private Object getPersistentName(Object obj) {
+            if (hook == null) {
+                return RNull.instance;
+            }
+            switch (SEXPTYPE.typeForClass(obj.getClass())) {
+                case WEAKREFSXP:
+                case EXTPTRSXP:
+                    break;
+                case ENVSXP:
+                    REnvironment env = (REnvironment) obj;
+                    if (env == REnvironment.globalEnv() || env == REnvironment.emptyEnv() || env == REnvironment.baseEnv() || env.isNamespaceEnv() || env.isPackageEnv() != null) {
+                        return RNull.instance;
+                    } else {
+                        break;
+                    }
+                default:
+                    return RNull.instance;
+            }
+            Object result = hook.eval(obj);
+            if (result instanceof String) {
+                result = RDataFactory.createStringVectorFromScalar((String) result);
+            }
+            return result;
+        }
+
         private void outStringVec(RStringVector vec, boolean strsxp) throws IOException {
             if (!strsxp) {
                 stream.writeInt(0);
@@ -1475,7 +1511,13 @@ public class RSerialize {
 
         private void writePairListEntry(String name, Object value) throws IOException {
             stream.writeInt(Flags.packFlags(SEXPTYPE.LISTSXP, 0, false, false, true));
-            writeSymbol(RDataFactory.createSymbol(name));
+            RSymbol sym = state.findSymbol(name);
+            int refIndex;
+            if ((refIndex = getRefIndex(sym)) != -1) {
+                outRefIndex(refIndex);
+            } else {
+                writeSymbol(sym);
+            }
             writeItem(value);
         }
 
@@ -1517,6 +1559,7 @@ public class RSerialize {
     public abstract static class State {
 
         protected final Output output;
+        private Map<String, RSymbol> symbolMap = new HashMap<>();
 
         private State(Output output) {
             this.output = output;
@@ -1655,6 +1698,15 @@ public class RSerialize {
             setCdr(closePairList());
         }
 
+        RSymbol findSymbol(String name) {
+            RSymbol symbol = symbolMap.get(name);
+            if (symbol == null) {
+                symbol = RDataFactory.createSymbol(name);
+                symbolMap.put(name, symbol);
+            }
+            return symbol;
+        }
+
     }
 
     /**
@@ -1663,7 +1715,6 @@ public class RSerialize {
     private static class PLState extends State {
         private static final RPairList NULL = RDataFactory.createPairList();
         private Deque<RPairList> active = new LinkedList<>();
-        private Map<String, RSymbol> symbolMap = new HashMap<>();
         private int[] positionsLength = new int[10];
         private int px = 0;
 
@@ -1709,15 +1760,6 @@ public class RSerialize {
         @Override
         public void setCarAsSymbol(String name) {
             active.peekFirst().setCar(findSymbol(name));
-        }
-
-        private RSymbol findSymbol(String name) {
-            RSymbol symbol = symbolMap.get(name);
-            if (symbol == null) {
-                symbol = RDataFactory.createSymbol(name);
-                symbolMap.put(name, symbol);
-            }
-            return symbol;
         }
 
         @Override

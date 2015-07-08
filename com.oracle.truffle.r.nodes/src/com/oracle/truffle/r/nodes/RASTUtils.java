@@ -261,25 +261,17 @@ public class RASTUtils {
     /**
      * Returns the name (as an {@link RSymbol} of the function associated with an {@link RCallNode}
      * or {@link GroupDispatchNode}.
-     *
-     * @param escape Add escape characters to non-standard names
      */
-    public static Object findFunctionName(Node node, boolean escape) {
+    public static Object findFunctionName(Node node) {
         RNode child = (RNode) unwrap(getFunctionNode(node));
         if (child instanceof ConstantNode && ConstantNode.isFunction(child)) {
             return ((ConstantNode) child).getValue();
         } else if (child instanceof ReadVariableNode) {
             String name = ((ReadVariableNode) child).getIdentifier();
-            if (escape) {
-                name = escapeName(name);
-            }
             return RDataFactory.createSymbol(name);
         } else if (child instanceof GroupDispatchNode) {
             GroupDispatchNode groupDispatchNode = (GroupDispatchNode) child;
             String gname = groupDispatchNode.getGenericName();
-            if (escape) {
-                gname = escapeName(gname);
-            }
             return RDataFactory.createSymbol(gname);
         } else if (child instanceof RBuiltinNode) {
             RBuiltinNode builtinNode = (RBuiltinNode) child;

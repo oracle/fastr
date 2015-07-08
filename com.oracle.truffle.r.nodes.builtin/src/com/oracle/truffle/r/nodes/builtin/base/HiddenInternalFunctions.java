@@ -335,18 +335,23 @@ public class HiddenInternalFunctions {
                 }
             };
 
-            byte[] data = RSerialize.serialize(value, RRuntime.fromLogical(asciiL), false, RSerialize.DEFAULT_VERSION, callHook, RArguments.getDepth(frame));
-            byte[] cdata = new byte[data.length + 20];
-            long[] cdatalen = new long[1];
-            cdatalen[0] = cdata.length;
-            int rc = RFFIFactory.getRFFI().getBaseRFFI().compress(cdata, cdatalen, data);
-            if (rc != 0) {
-                throw RError.error(Message.GENERIC, "zlib uncompress error");
+            try {
+                byte[] data = RSerialize.serialize(value, RRuntime.fromLogical(asciiL), false, RSerialize.DEFAULT_VERSION, callHook, RArguments.getDepth(frame));
+                byte[] cdata = new byte[data.length + 20];
+                long[] cdatalen = new long[1];
+                cdatalen[0] = cdata.length;
+                int rc = RFFIFactory.getRFFI().getBaseRFFI().compress(cdata, cdatalen, data);
+                if (rc != 0) {
+                    throw RError.error(Message.GENERIC, "zlib uncompress error");
+                }
+                int[] intData = new int[2];
+                intData[1] = (int) cdatalen[0] + 4; // include outlen
+                intData[0] = appendFile(file.getDataAt(0), cdata, data.length, (int) cdatalen[0]);
+                return RDataFactory.createIntVector(intData, RDataFactory.COMPLETE_VECTOR);
+            } catch (Throwable ex) {
+                // Exceptions have been observed that were masked and very hard to find
+                throw RInternalError.shouldNotReachHere("lazyLoadDBinsertValue exception");
             }
-            int[] intData = new int[2];
-            intData[1] = (int) cdatalen[0] + 4; // include outlen
-            intData[0] = appendFile(file.getDataAt(0), cdata, data.length, (int) cdatalen[0]);
-            return RDataFactory.createIntVector(intData, RDataFactory.COMPLETE_VECTOR);
         }
 
         @SuppressWarnings("unused")

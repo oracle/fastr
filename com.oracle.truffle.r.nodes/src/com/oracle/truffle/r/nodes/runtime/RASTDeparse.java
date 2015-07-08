@@ -56,7 +56,7 @@ public class RASTDeparse {
 
     private static Func isInfixOperatorNode(Node node) {
         if (node instanceof RCallNode || node instanceof GroupDispatchNode) {
-            Object fname = RASTUtils.findFunctionName(node, false);
+            Object fname = RASTUtils.findFunctionName(node);
             return isInfixOperator(fname);
         } else {
             return null;

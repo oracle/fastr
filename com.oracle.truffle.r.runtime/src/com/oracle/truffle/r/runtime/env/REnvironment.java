@@ -663,6 +663,15 @@ public abstract class REnvironment extends RAttributeStorage implements RTypedVa
     }
 
     /**
+     * Returns {@code null} if this environment is not a package environment else the result from
+     * {@link #getName}.
+     */
+    public String isPackageEnv() {
+        String envName = getName();
+        return envName.startsWith("package:") ? envName : null;
+    }
+
+    /**
      * If this is not a "package" environment return "this", otherwise return the associated
      * "namespace" env.
      */
@@ -670,8 +679,8 @@ public abstract class REnvironment extends RAttributeStorage implements RTypedVa
         if (this == RContext.getREnvironmentState().getBaseEnv()) {
             return ((Base) this).namespaceEnv;
         }
-        String envName = getName();
-        if (envName.startsWith("package:")) {
+        String envName;
+        if (((envName = isPackageEnv()) != null)) {
             return REnvironment.getRegisteredNamespace(envName.replace("package:", ""));
         } else {
             return this;
