@@ -94,6 +94,11 @@ public abstract class Attr extends RBuiltinNode {
         }
     }
 
+    @Specialization
+    protected RNull attr(RNull container, @SuppressWarnings("unused") String name) {
+        return container;
+    }
+
     @Specialization(guards = "!isRowNamesAttr(container, name)")
     protected Object attr(RAbstractContainer container, String name) {
         controlVisibility();
