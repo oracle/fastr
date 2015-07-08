@@ -27,10 +27,10 @@ import com.oracle.truffle.r.library.graphics.core.GraphicsDevice;
 import com.oracle.truffle.r.library.graphics.core.geometry.Coordinates;
 import com.oracle.truffle.r.runtime.RRuntime;
 
-public class PdfGraphicsDevice implements GraphicsDevice{
+public class PdfGraphicsDevice implements GraphicsDevice {
     private final Parameters deviceParameters;
 
-    public PdfGraphicsDevice(Parameters deviceParameters){
+    public PdfGraphicsDevice(Parameters deviceParameters) {
         this.deviceParameters = deviceParameters;
     }
 
