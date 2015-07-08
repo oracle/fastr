@@ -846,8 +846,9 @@ public class FileFunctions {
                 for (int i = 0; i < lenFrom; i++) {
                     String from = vecFrom.getDataAt(i % lenFrom);
                     String to = vecTo.getDataAt(i % lenTo);
-                    if (toDir != null && !fileSystem.getPath(Utils.tildeExpand(from, true)).isAbsolute()) {
-                        to = toDir.resolve(from).toString();
+                    Path fromPathKeepRel = fileSystem.getPath(Utils.tildeExpand(from, true));
+                    if (toDir != null && !fromPathKeepRel.isAbsolute()) {
+                        to = toDir.resolve(fromPathKeepRel.getFileName()).toString();
                     }
                     Path fromPath = fileSystem.getPath(Utils.tildeExpand(from));
                     Path toPath = fileSystem.getPath(Utils.tildeExpand(to));
