@@ -162,7 +162,7 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
             IfNode ifNode = (IfNode) node;
             switch (index) {
                 case 0:
-                    return RDataFactory.createSymbol("`if`");
+                    return RDataFactory.createSymbol("if");
                 case 1:
                     return RASTUtils.createLanguageElement(ifNode.getCondition().getOperand());
                 case 2:
@@ -178,7 +178,7 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
             FunctionStatementsNode fsNode = fbn.getStatements();
             int sIndex = hasBrace ? index - 1 : index;
             if (hasBrace && index == 0) {
-                return RDataFactory.createSymbol("`{`");
+                return RDataFactory.createSymbol("{");
             } else {
                 return RASTUtils.createLanguageElement(fsNode.getSequence()[sIndex].unwrap());
             }
@@ -186,7 +186,7 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
             ForNode forNode = (ForNode) node;
             switch (index) {
                 case 0:
-                    return RDataFactory.createSymbol("`for`");
+                    return RDataFactory.createSymbol("for");
                 case 1:
                     return RASTUtils.createLanguageElement(forNode.getCvar());
                 case 2:
@@ -203,7 +203,7 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
             }
             switch (index) {
                 case 0:
-                    return RDataFactory.createSymbol(whileNode.isRepeat() ? "`repeat`" : "`while`");
+                    return RDataFactory.createSymbol(whileNode.isRepeat() ? "repeat" : "while");
                 case 1:
                     return RASTUtils.createLanguageElement(whileNode.getCondition());
                 case 2:
@@ -215,7 +215,7 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
             WriteVariableNode wvn = (WriteVariableNode) node;
             switch (index) {
                 case 0:
-                    return RDataFactory.createSymbol("`<-`");
+                    return RDataFactory.createSymbol("<-");
                 case 1:
                     return RDataFactory.createSymbol(wvn.getName().toString());
                 case 2:
@@ -227,7 +227,7 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
             AccessArrayNode accessArrayNode = (AccessArrayNode) node;
             switch (index) {
                 case 0:
-                    return RDataFactory.createSymbol(accessArrayNode.isSubset ? "`[`" : "`[[`");
+                    return RDataFactory.createSymbol(accessArrayNode.isSubset ? "[" : "[[");
                 case 1:
                     return RASTUtils.createLanguageElement(accessArrayNode.getVector());
                 default:
@@ -237,7 +237,7 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
             AccessFieldNode accessFieldNode = (AccessFieldNode) node;
             switch (index) {
                 case 0:
-                    return RDataFactory.createSymbol("`$`");
+                    return RDataFactory.createSymbol("$");
                 case 1:
                     return RASTUtils.createLanguageElement(accessFieldNode.getObject());
                 case 2:
