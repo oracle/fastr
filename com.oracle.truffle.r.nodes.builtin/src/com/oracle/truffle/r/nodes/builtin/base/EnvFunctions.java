@@ -200,9 +200,7 @@ public class EnvFunctions {
         }
 
         /**
-         * Returns the environment that {@code func} was created in. N.B. In current Truffle we
-         * cannot both have a specialization for {@link RFunction} and one for {@link Object}, but
-         * an object that is not an {@link RFunction} is legal and must return {@code NULL}.
+         * Returns the environment that {@code func} was created in.
          */
         @Specialization
         protected Object environment(RFunction fun) {
