@@ -48,12 +48,11 @@ public @interface RBuiltin {
     String[] aliases() default {};
 
     /**
-     * Some primitives do not evaluate one or more of their arguments. This is either a list of
-     * indices for the non-evaluated arguments (zero based) or {@code -1} to mean none are
-     * evaluated. An empty array means all arguments are evaluated. N.B. The indices identify the
-     * arguments in the order they appear in the specification, i.e., after the re-ordering of named
-     * arguments. N.B. "..." is treated a single argument for this purpose and identified by its
-     * index like any other arg.
+     * Some primitives do not evaluate one or more of their arguments. This is a list of indices for
+     * the non-evaluated arguments (zero based). An empty array means all arguments are evaluated.
+     * N.B. The indices identify the arguments in the order they appear in the specification, i.e.,
+     * after the re-ordering of named arguments. N.B. "..." is treated a single argument for this
+     * purpose and identified by its index like any other arg.
      */
     int[] nonEvalArgs() default {};
 

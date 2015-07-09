@@ -384,8 +384,12 @@ public class ArgumentMatcher {
 
     @TruffleBoundary
     private static RNode wrapUnmatched(FormalArguments formals, RBuiltinDescriptor builtin, int formalIndex, boolean noOpt) {
-        if (builtin != null && !builtin.evaluatesArg(formalIndex)) {
-            // this is a non-evaluated builtin argument, create a proper promise
+        if (builtin != null && !builtin.evaluatesArg(formalIndex) && formals.getDefaultArgument(formalIndex) != null) {
+            /*
+             * this is a non-evaluated builtin argument, create a proper promise (might have been
+             * missing for ~ operator), for which just go with RMissing value (see
+             * InfixEmulationFunctions.tilde).
+             */
             RNode defaultArg = formals.getDefaultArgument(formalIndex);
             Closure defaultClosure = formals.getOrCreateClosure(defaultArg);
             return PromiseNode.create(defaultArg.getSourceSection(), RPromiseFactory.create(PromiseType.ARG_DEFAULT, defaultClosure), noOpt);

@@ -105,7 +105,7 @@ public class RDeparse {
             this.rightassoc = rightassoc;
         }
 
-        PPInfo changePrec(int newPrec) {
+        public PPInfo changePrec(int newPrec) {
             return new PPInfo(kind, newPrec, rightassoc);
         }
 
@@ -1007,7 +1007,7 @@ public class RDeparse {
         return false;
     }
 
-    private static boolean checkPrec(PPInfo mainop, PPInfo arginfo, boolean left) {
+    public static boolean checkPrec(PPInfo mainop, PPInfo arginfo, boolean left) {
         return mainop.prec > arginfo.prec || (mainop.prec == arginfo.prec && left == mainop.rightassoc);
     }
 
