@@ -27,7 +27,7 @@ import mx
 import mx_graal
 import os
 
-_fastr_suite = None
+_fastr_suite = mx.suite('fastr')
 
 def runR(args, className, nonZeroIsFatal=True, extraVmArgs=None, runBench=False, graal_vm='server'):
     # extraVmArgs is not normally necessary as the global --J option can be used running R/RScript
@@ -423,29 +423,27 @@ def mx_post_parse_cmd_line(opts):
     load_optional_suite('r_apptests')
     load_optional_suite('r_benchmarks')
 
-def mx_init(suite):
-    global _fastr_suite
-    _fastr_suite = suite
-    commands = {
-        # new commands
-        'r' : [rshell, '[options]'],
-        'R' : [rshell, '[options]'],
-        'rscript' : [rscript, '[options]'],
-        'Rscript' : [rscript, '[options]'],
-        'rtestgen' : [testgen, ''],
-        # core overrides
-        'bench' : [bench, ''],
-        'build' : [build, ''],
-        'gate' : [gate, ''],
-        'junit' : [junit, ['options']],
-        'junitsimple' : [junit_simple, ['options']],
-        'junitdefault' : [junit_default, ['options']],
-        'junitgate' : [junit_gate, ['options']],
-        'unittest' : [unittest, ['options']],
-        'rbcheck' : [rbcheck, ['options']],
-        'rcmplib' : [rcmplib, ['options']],
-        'findbugs' : [findbugs, ''],
-        'test' : [test, ['options']],
-        'rrepl' : [runRREPL, '[options]'],
+_commands = {
+    # new commands
+    'r' : [rshell, '[options]'],
+    'R' : [rshell, '[options]'],
+    'rscript' : [rscript, '[options]'],
+    'Rscript' : [rscript, '[options]'],
+    'rtestgen' : [testgen, ''],
+    # core overrides
+    'bench' : [bench, ''],
+    'build' : [build, ''],
+    'gate' : [gate, ''],
+    'junit' : [junit, ['options']],
+    'junitsimple' : [junit_simple, ['options']],
+    'junitdefault' : [junit_default, ['options']],
+    'junitgate' : [junit_gate, ['options']],
+    'unittest' : [unittest, ['options']],
+    'rbcheck' : [rbcheck, ['options']],
+    'rcmplib' : [rcmplib, ['options']],
+    'findbugs' : [findbugs, ''],
+    'test' : [test, ['options']],
+    'rrepl' : [runRREPL, '[options]'],
     }
-    mx.update_commands(suite, commands)
+
+mx.update_commands(_fastr_suite, _commands)
