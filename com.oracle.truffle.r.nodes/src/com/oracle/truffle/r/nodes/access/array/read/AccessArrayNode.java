@@ -1844,11 +1844,11 @@ public abstract class AccessArrayNode extends RNode implements RSyntaxNode {
     @SuppressWarnings("unused")
     @Specialization
     protected Object access(VirtualFrame frame, RLanguage lang, Object exact, int recLevel, int position, Object dropDim) {
-        if (position < 1) {
-            error.enter();
-            throw RError.error(Message.SELECT_LESS_1);
+        if (position == 0) {
+            return RNull.instance;
+        } else {
+            return lang.getDataAtAsObject(position - 1);
         }
-        return lang.getDataAtAsObject(position - 1);
     }
 
     private static RNode unwrapToRNode(Object o) {
