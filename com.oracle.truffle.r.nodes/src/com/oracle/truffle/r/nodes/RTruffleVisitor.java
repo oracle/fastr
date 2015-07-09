@@ -88,8 +88,6 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
         }
     }
 
-    private static final RStringVector FORMULA_CLASS = RDataFactory.createStringVectorFromScalar(RRuntime.FORMULA_CLASS);
-
     @Override
     public RSyntaxNode visit(Formula formula) {
         // response may be omitted
@@ -107,14 +105,7 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
         int tildeIndex = formulaCode.indexOf('~');
         SourceSection tildeSrc = ASTNode.adjustedSource(formulaSrc, formulaSrc.getCharIndex() + tildeIndex, 1);
         RCallNode call = RCallNode.createOpCall(formulaSrc, tildeSrc, "~", args, null);
-        RLanguage lang = RDataFactory.createLanguage(call);
-        lang.setClassAttr(FORMULA_CLASS, false);
-        // TODO this is not correct when in a nested function
-        // but we have lost the ability to find the enclosing environment at this point.
-        lang.setAttr(RRuntime.FORMULA_ENV, REnvironment.globalEnv());
-        ConstantNode result = ConstantNode.create(lang);
-        result.assignSourceSection(formulaSrc);
-        return result;
+        return call;
     }
 
     @Override

@@ -29,6 +29,7 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
+import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
@@ -38,6 +39,7 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.builtin.base.InfixEmulationFunctionsFactory.PromiseEvaluatorNodeGen;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.nodes.unary.*;
+import com.oracle.truffle.r.parser.ast.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -744,12 +746,51 @@ public class InfixEmulationFunctions {
         }
     }
 
-    @RBuiltin(name = "~", kind = RBuiltinKind.PRIMITIVE, parameterNames = {})
-    public abstract static class TildeBuiltin extends ErrorAdapter {
-        @SuppressWarnings("unused")
+    /**
+     * This a rather strange function. It is where, in GnuR, that the "formula" class is set and the
+     * ".Environment" attribute on the "call". Unfortunately, in FastR we have lost access to the
+     * {@link RCallNode} that the parser created, so we recreate it and wrap it up an
+     * {@link RLanguage}. object. N.B. the "response" can be missing, which is actually handled by
+     * an evaluated argument of type {@link RMissing}, although it appears as if the "model"
+     * argument is missing, i.e. {@code ~ x} result in {@code `~`(x)}.
+     */
+    @RBuiltin(name = "~", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x", "y"}, nonEvalArgs = {0, 1})
+    public abstract static class TildeBuiltin extends RBuiltinNode {
+        private static final RStringVector FORMULA_CLASS = RDataFactory.createStringVectorFromScalar(RRuntime.FORMULA_CLASS);
+
+        @Override
+        public Object[] getDefaultParameterValues() {
+            return new Object[]{RMissing.instance, RMissing.instance};
+        }
+
         @Specialization
-        protected Object doIt(Object x) {
-            throw nyi();
+        protected RLanguage tilde(VirtualFrame frame, RPromise response, @SuppressWarnings("unused") RMissing model) {
+            return doTilde(frame, null, (RNode) response.getRep());
+        }
+
+        @Specialization
+        protected RLanguage tilde(VirtualFrame frame, RPromise response, RPromise model) {
+            return doTilde(frame, (RNode) response.getRep(), (RNode) model.getRep());
+        }
+
+        private RLanguage doTilde(VirtualFrame frame, RNode response, RNode model) {
+            RNode[] tildeArgs = new RNode[response == null ? 1 : 2];
+            int ix = 0;
+            if (response != null) {
+                tildeArgs[ix++] = response;
+            }
+            tildeArgs[ix++] = model;
+            CallArgumentsNode args = CallArgumentsNode.create(null, false, tildeArgs, ArgumentsSignature.empty(ix));
+            SourceSection formulaSrc = this.getSourceSection();
+            String formulaCode = formulaSrc.getCode();
+            int tildeIndex = formulaCode.indexOf('~');
+            SourceSection tildeSrc = ASTNode.adjustedSource(formulaSrc, formulaSrc.getCharIndex() + tildeIndex, 1);
+            RCallNode call = RCallNode.createOpCall(formulaSrc, tildeSrc, "~", args, null);
+            RLanguage lang = RDataFactory.createLanguage(call);
+            lang.setClassAttr(FORMULA_CLASS, false);
+            REnvironment env = REnvironment.frameToEnvironment(frame.materialize());
+            lang.setAttr(RRuntime.FORMULA_ENV, env);
+            return lang;
         }
     }
 

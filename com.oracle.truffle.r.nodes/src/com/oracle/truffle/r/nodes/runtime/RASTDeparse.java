@@ -87,9 +87,13 @@ public class RASTDeparse {
                 if (parens) {
                     state.append(')');
                 }
-                state.append(' ');
+                if (kind == PP.BINARY) {
+                    state.append(' ');
+                }
                 state.append(func.op);
-                state.append(' ');
+                if (kind == PP.BINARY) {
+                    state.append(' ');
+                }
                 parens = needsParens(func.info, argValues[1], false);
                 if (parens) {
                     state.append('(');
@@ -143,16 +147,15 @@ public class RASTDeparse {
                                 return false;
                             }
                             if (arginfo.prec == RDeparse.PREC_SUM) {
-                                arginfo = new PPInfo(arginfo.kind, RDeparse.PREC_SIGN, arginfo.rightassoc);
+                                arginfo = arginfo.changePrec(RDeparse.PREC_SIGN);
                             }
-                            // CheckStyle: stop case fall through check
+                            break;
                         case 2:
                             break;
-                        // CheckStyle: resume case fall through check
-
                         default:
                             return false;
                     }
+                    return RDeparse.checkPrec(mainop, arginfo, isLeft);
 
                     // CheckStyle: stop case fall through check
                 case UNARY:
