@@ -14,6 +14,7 @@ package com.oracle.truffle.r.nodes.builtin.base.foreign;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.library.grDevices.DevicesCCalls;
+import com.oracle.truffle.r.library.graphics.GraphicsCCalls;
 import com.oracle.truffle.r.library.graphics.GraphicsCCalls.C_Par;
 import com.oracle.truffle.r.library.graphics.GraphicsCCalls.C_PlotXY;
 import com.oracle.truffle.r.library.methods.MethodsListDispatchFactory.R_M_setPrimitiveMethodsNodeGen;
@@ -291,6 +292,8 @@ public class ForeignFunctions {
         @Override
         protected RExternalBuiltinNode lookupBuiltin(RList f) {
             switch (lookupName(f)) {
+                case "C_mtext" :
+                    return new GraphicsCCalls.C_mtext();
                 case "C_plotXY":
                     return new C_PlotXY();
                 default:
