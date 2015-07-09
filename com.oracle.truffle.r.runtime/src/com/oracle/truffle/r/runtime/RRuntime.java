@@ -95,6 +95,9 @@ public class RRuntime {
     public static final String PREVIOUS_ATTR_KEY = "previous";
     public static final String ROWNAMES_ATTR_KEY = "row.names";
 
+    public static final String FORMULA_CLASS = "formula";
+    public static final String FORMULA_ENV = ".Environment";
+
     @CompilationFinal public static final String[] CLASS_INTEGER = new String[]{"integer", "numeric"};
     @CompilationFinal public static final String[] CLASS_DOUBLE = new String[]{"double", "numeric"};
 

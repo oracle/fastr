@@ -54,12 +54,6 @@ public abstract class GetClass extends RBuiltinNode {
     }
 
     @Specialization
-    protected Object getClass(@SuppressWarnings("unused") RFormula arg) {
-        controlVisibility();
-        return RType.Formula.getName();
-    }
-
-    @Specialization
     protected Object getClass(@SuppressWarnings("unused") RNull arg) {
         controlVisibility();
         return RType.Null.getName();
@@ -94,9 +88,14 @@ public abstract class GetClass extends RBuiltinNode {
     }
 
     @Specialization
-    protected Object getClass(@SuppressWarnings("unused") RLanguage arg) {
+    protected Object getClass(RLanguage arg) {
         controlVisibility();
-        return RRuntime.CLASS_LANGUAGE;
+        Object attr = arg.getAttr(attrProfiles, RRuntime.CLASS_ATTR_KEY);
+        if (attr == null) {
+            return RRuntime.CLASS_LANGUAGE;
+        } else {
+            return attr;
+        }
     }
 
     @Specialization

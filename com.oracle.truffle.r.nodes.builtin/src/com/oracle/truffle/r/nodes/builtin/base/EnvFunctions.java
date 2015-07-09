@@ -189,6 +189,7 @@ public class EnvFunctions {
 
         private final ConditionProfile createEnvironmentProfile = ConditionProfile.createBinaryProfile();
         private final PromiseDeoptimizeFrameNode deoptFrameNode = new PromiseDeoptimizeFrameNode();
+        private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
         @Specialization
         protected Object environment(VirtualFrame frame, @SuppressWarnings("unused") RNull fun) {
@@ -214,7 +215,13 @@ public class EnvFunctions {
             }
         }
 
-        @Specialization(guards = {"!isRNull(fun)", "!isRFunction(fun)"})
+        @Specialization(guards = "isRFormula(formula)")
+        protected Object environment(RLanguage formula) {
+            controlVisibility();
+            return formula.getAttr(attrProfiles, RRuntime.FORMULA_ENV);
+        }
+
+        @Specialization(guards = {"!isRNull(fun)", "!isRFunction(fun)", "!isRFormula(fun)"})
         protected Object environment(@SuppressWarnings("unused") Object fun) {
             // Not an error according to GnuR
             controlVisibility();

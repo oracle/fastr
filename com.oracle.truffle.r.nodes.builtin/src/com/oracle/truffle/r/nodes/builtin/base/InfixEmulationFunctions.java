@@ -744,6 +744,15 @@ public class InfixEmulationFunctions {
         }
     }
 
+    @RBuiltin(name = "~", kind = RBuiltinKind.PRIMITIVE, parameterNames = {})
+    public abstract static class TildeBuiltin extends ErrorAdapter {
+        @SuppressWarnings("unused")
+        @Specialization
+        protected Object doIt(Object x) {
+            throw nyi();
+        }
+    }
+
     @RBuiltin(name = "if", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
     public abstract static class IfBuiltin extends ErrorAdapter {
         @SuppressWarnings("unused")

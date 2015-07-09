@@ -74,10 +74,25 @@ public class RDeparse {
         DOLLAR;
     }
 
+    // TODO for consistency make an enum
+    public static final int PREC_FN = 0;
+    public static final int PREC_LEFT = 1;
+    public static final int PREC_EQ = 2;
+    public static final int PREC_RIGHT = 3;
+    public static final int PREC_TILDE = 4;
+    public static final int PREC_OR = 5;
+    public static final int PREC_AND = 6;
+    public static final int PREC_NOT = 7;
+    public static final int PREC_COMPARE = 8;
     public static final int PREC_SUM = 9;
+    public static final int PREC_PROD = 10;
     public static final int PREC_PERCENT = 11;
+    public static final int PREC_COLON = 12;
     public static final int PREC_SIGN = 13;
+    public static final int PREC_POWER = 14;
     public static final int PREC_DOLLAR = 15;
+    public static final int PREC_NS = 16;
+    public static final int PREC_SUBSET = 17;
 
     public static class PPInfo {
         public final PP kind;
@@ -112,45 +127,46 @@ public class RDeparse {
     @CompilationFinal private static final Func[] FUNCTAB = new Func[]{
         new Func("+", new PPInfo(PP.BINARY, PREC_SUM, false)),
         new Func("-", new PPInfo(PP.BINARY, PREC_SUM, false)),
-        new Func("*", new PPInfo(PP.BINARY, 10, false)),
-        new Func("/", new PPInfo(PP.BINARY, 10, false)),
-        new Func("^", new PPInfo(PP.BINARY2, 14, false)),
-        new Func("%%", new PPInfo(PP.BINARY2, 11, false)),
-        new Func("%/%", new PPInfo(PP.BINARY2, 11, false)),
-        new Func("%*%", new PPInfo(PP.BINARY2, 11, false)),
-        new Func("==", new PPInfo(PP.BINARY, 8, false)),
-        new Func("!=", new PPInfo(PP.BINARY, 8, false)),
-        new Func("<", new PPInfo(PP.BINARY, 8, false)),
-        new Func("<=", new PPInfo(PP.BINARY, 8, false)),
-        new Func(">=", new PPInfo(PP.BINARY, 8, false)),
-        new Func(">", new PPInfo(PP.BINARY, 8, false)),
-        new Func("&", new PPInfo(PP.BINARY, 6, false)),
-        new Func("|", new PPInfo(PP.BINARY, 5, false)),
-        new Func("!", new PPInfo(PP.BINARY, 7, false)),
-        new Func("&&", new PPInfo(PP.BINARY, 6, false)),
-        new Func("||", new PPInfo(PP.BINARY, 5, false)),
-        new Func(":", new PPInfo(PP.BINARY2, 12, false)),
+        new Func("*", new PPInfo(PP.BINARY, PREC_PROD, false)),
+        new Func("/", new PPInfo(PP.BINARY, PREC_PROD, false)),
+        new Func("^", new PPInfo(PP.BINARY2, PREC_POWER, false)),
+        new Func("%%", new PPInfo(PP.BINARY2, PREC_PERCENT, false)),
+        new Func("%/%", new PPInfo(PP.BINARY2, PREC_PERCENT, false)),
+        new Func("%*%", new PPInfo(PP.BINARY2, PREC_PERCENT, false)),
+        new Func("==", new PPInfo(PP.BINARY, PREC_COMPARE, false)),
+        new Func("!=", new PPInfo(PP.BINARY, PREC_COMPARE, false)),
+        new Func("<", new PPInfo(PP.BINARY, PREC_COMPARE, false)),
+        new Func("<=", new PPInfo(PP.BINARY, PREC_COMPARE, false)),
+        new Func(">=", new PPInfo(PP.BINARY, PREC_COMPARE, false)),
+        new Func(">", new PPInfo(PP.BINARY, PREC_COMPARE, false)),
+        new Func("&", new PPInfo(PP.BINARY, PREC_AND, false)),
+        new Func("|", new PPInfo(PP.BINARY, PREC_OR, false)),
+        new Func("!", new PPInfo(PP.BINARY, PREC_NOT, false)),
+        new Func("&&", new PPInfo(PP.BINARY, PREC_AND, false)),
+        new Func("||", new PPInfo(PP.BINARY, PREC_OR, false)),
+        new Func(":", new PPInfo(PP.BINARY2, PREC_COLON, false)),
+        new Func("~", new PPInfo(PP.BINARY, PREC_TILDE, false)),
 
-        new Func("if", new PPInfo(PP.IF, 0, true)),
-        new Func("while", new PPInfo(PP.WHILE, 0, false)),
-        new Func("for", new PPInfo(PP.FOR, 0, false)),
-        new Func("repeat", new PPInfo(PP.REPEAT, 0, false)),
-        new Func("break", new PPInfo(PP.BREAK, 0, false)),
-        new Func("next", new PPInfo(PP.NEXT, 0, false)),
-        new Func("return", new PPInfo(PP.RETURN, 0, false)),
-        new Func("function", new PPInfo(PP.FUNCTION, 0, false)),
-        new Func("{", new PPInfo(PP.CURLY, 0, false)),
-        new Func("(", new PPInfo(PP.PAREN, 0, false)),
-        new Func("<-", new PPInfo(PP.ASSIGN, 1, true)),
-        new Func("=", new PPInfo(PP.ASSIGN, 1, true)),
-        new Func("<<-", new PPInfo(PP.ASSIGN, 1, true)),
-        new Func("[", new PPInfo(PP.SUBSET, 17, false)),
-        new Func("[[", new PPInfo(PP.SUBSET, 17, false)),
-        new Func("$", new PPInfo(PP.DOLLAR, 15, false)),
+        new Func("if", new PPInfo(PP.IF, PREC_FN, true)),
+        new Func("while", new PPInfo(PP.WHILE, PREC_FN, false)),
+        new Func("for", new PPInfo(PP.FOR, PREC_FN, false)),
+        new Func("repeat", new PPInfo(PP.REPEAT, PREC_FN, false)),
+        new Func("break", new PPInfo(PP.BREAK, PREC_FN, false)),
+        new Func("next", new PPInfo(PP.NEXT, PREC_FN, false)),
+        new Func("return", new PPInfo(PP.RETURN, PREC_FN, false)),
+        new Func("function", new PPInfo(PP.FUNCTION, PREC_FN, false)),
+        new Func("{", new PPInfo(PP.CURLY, PREC_FN, false)),
+        new Func("(", new PPInfo(PP.PAREN, PREC_FN, false)),
+        new Func("<-", new PPInfo(PP.ASSIGN, PREC_LEFT, true)),
+        new Func("=", new PPInfo(PP.ASSIGN, PREC_LEFT, true)),
+        new Func("<<-", new PPInfo(PP.ASSIGN, PREC_LEFT, true)),
+        new Func("[", new PPInfo(PP.SUBSET, PREC_SUBSET, false)),
+        new Func("[[", new PPInfo(PP.SUBSET, PREC_SUBSET, false)),
+        new Func("$", new PPInfo(PP.DOLLAR, PREC_DOLLAR, false)),
     };
     // @formatter:on
 
-    public static final PPInfo BUILTIN = new PPInfo(PP.FUNCALL, 0, false);
+    public static final PPInfo BUILTIN = new PPInfo(PP.FUNCALL, PREC_FN, false);
     private static final PPInfo USERBINOP = new PPInfo(PP.BINARY2, PREC_PERCENT, false);
 
     public static Func getFunc(String op) {

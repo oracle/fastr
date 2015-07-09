@@ -75,7 +75,7 @@ public final class RAttributes implements Iterable<RAttributes.RAttribute> {
         return new RAttributes();
     }
 
-    public static RAttributes createIniitialized(String[] names, Object[] values) {
+    public static RAttributes createInitialized(String[] names, Object[] values) {
         return new RAttributes(names, values);
     }
 

@@ -14,7 +14,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.utilities.BranchProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
@@ -64,5 +64,21 @@ public abstract class UnClass extends RBuiltinNode {
             resultFactor.markNonTemporary();
         }
         return RVector.setVectorClassAttr(resultFactor.getVector(), null, null, arg);
+    }
+
+    @Specialization
+    protected Object unClass(RLanguage arg) {
+        controlVisibility();
+        if (arg.getClassAttr(attrProfiles) != null) {
+            objectProfile.enter();
+            RLanguage resultLang = arg;
+            if (!resultLang.isTemporary()) {
+                resultLang = resultLang.copy();
+                resultLang.markNonTemporary();
+            }
+            resultLang.removeAttr(attrProfiles, RRuntime.CLASS_ATTR_KEY);
+            return resultLang;
+        }
+        return arg;
     }
 }

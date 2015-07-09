@@ -64,7 +64,7 @@ public abstract class Identical extends RBuiltinNode {
     }
 
     @Specialization
-    protected byte doInternalIdential(String x, String y,
+    protected byte doInternalIdentical(String x, String y,
                     // @formatter:off
                     @SuppressWarnings("unused") byte numEq, @SuppressWarnings("unused") byte singleNA, @SuppressWarnings("unused") byte attribAsSet,
                     @SuppressWarnings("unused") byte ignoreBytecode, @SuppressWarnings("unused") byte ignoreEnvironment) {
@@ -102,12 +102,22 @@ public abstract class Identical extends RBuiltinNode {
                     @SuppressWarnings("unused") byte ignoreBytecode, @SuppressWarnings("unused") byte ignoreEnvironment) {
                     // @formatter:on
         controlVisibility();
-        // reference equality for environments
         return x.getName().equals(y.getName()) ? RRuntime.LOGICAL_TRUE : RRuntime.LOGICAL_FALSE;
     }
 
+    @Specialization
+    protected byte doInternalIdentical(RLanguage x, RLanguage y,
+                    // @formatter:off
+                    @SuppressWarnings("unused") byte numEq, @SuppressWarnings("unused") byte singleNA, @SuppressWarnings("unused") byte attribAsSet,
+                    @SuppressWarnings("unused") byte ignoreBytecode, @SuppressWarnings("unused") byte ignoreEnvironment) {
+                    // @formatter:on
+        controlVisibility();
+        // TODO How to compare ASTs
+        throw RError.nyi(getEncapsulatingSourceSection(), "language objects not supported in 'identical'");
+    }
+
     @Specialization(guards = "!vectorsLists(x, y)")
-    protected byte doInternalIdentialGeneric(RAbstractVector x, RAbstractVector y,
+    protected byte doInternalIdenticalGeneric(RAbstractVector x, RAbstractVector y,
                     // @formatter:off
                     @SuppressWarnings("unused") byte numEq, @SuppressWarnings("unused") byte singleNA, @SuppressWarnings("unused") byte attribAsSet,
                     @SuppressWarnings("unused") byte ignoreBytecode, @SuppressWarnings("unused") byte ignoreEnvironment) {
@@ -126,7 +136,7 @@ public abstract class Identical extends RBuiltinNode {
     }
 
     @Specialization
-    protected byte doInternalIdentialGeneric(@SuppressWarnings("unused") RList x, @SuppressWarnings("unused") RList y,
+    protected byte doInternalIdenticalGeneric(@SuppressWarnings("unused") RList x, @SuppressWarnings("unused") RList y,
                     // @formatter:off
                     @SuppressWarnings("unused") byte numEq, @SuppressWarnings("unused") byte singleNA, @SuppressWarnings("unused") byte attribAsSet,
                     @SuppressWarnings("unused") byte ignoreBytecode, @SuppressWarnings("unused") byte ignoreEnvironment) {
@@ -136,7 +146,7 @@ public abstract class Identical extends RBuiltinNode {
     }
 
     @Specialization
-    protected byte doInternalIdentialGeneric(@SuppressWarnings("unused") RDataFrame x, @SuppressWarnings("unused") RDataFrame y,
+    protected byte doInternalIdenticalGeneric(@SuppressWarnings("unused") RDataFrame x, @SuppressWarnings("unused") RDataFrame y,
                     // @formatter:off
                     @SuppressWarnings("unused") byte numEq, @SuppressWarnings("unused") byte singleNA, @SuppressWarnings("unused") byte attribAsSet,
                     @SuppressWarnings("unused") byte ignoreBytecode, @SuppressWarnings("unused") byte ignoreEnvironment) {
@@ -146,7 +156,7 @@ public abstract class Identical extends RBuiltinNode {
     }
 
     @Specialization
-    protected byte doInternalIdentialGeneric(@SuppressWarnings("unused") RFunction x, @SuppressWarnings("unused") RAbstractContainer y,
+    protected byte doInternalIdenticalGeneric(@SuppressWarnings("unused") RFunction x, @SuppressWarnings("unused") RAbstractContainer y,
                     // @formatter:off
                     @SuppressWarnings("unused") Object numEq, @SuppressWarnings("unused") Object singleNA, @SuppressWarnings("unused") Object attribAsSet,
                     @SuppressWarnings("unused") Object ignoreBytecode, @SuppressWarnings("unused") Object ignoreEnvironment) {
@@ -156,7 +166,17 @@ public abstract class Identical extends RBuiltinNode {
     }
 
     @Specialization
-    protected byte doInternalIdentialGeneric(@SuppressWarnings("unused") RAbstractContainer x, @SuppressWarnings("unused") RFunction y,
+    protected byte doInternalIdenticalGeneric(@SuppressWarnings("unused") RLanguage x, @SuppressWarnings("unused") RAbstractContainer y,
+                    // @formatter:off
+                    @SuppressWarnings("unused") Object numEq, @SuppressWarnings("unused") Object singleNA, @SuppressWarnings("unused") Object attribAsSet,
+                    @SuppressWarnings("unused") Object ignoreBytecode, @SuppressWarnings("unused") Object ignoreEnvironment) {
+                    // @formatter:on
+        controlVisibility();
+        return RRuntime.LOGICAL_FALSE;
+    }
+
+    @Specialization
+    protected byte doInternalIdenticalGeneric(@SuppressWarnings("unused") RAbstractContainer x, @SuppressWarnings("unused") RFunction y,
                     // @formatter:off
                     @SuppressWarnings("unused") Object numEq, @SuppressWarnings("unused") Object singleNA, @SuppressWarnings("unused") Object attribAsSet,
                     @SuppressWarnings("unused") Object ignoreBytecode, @SuppressWarnings("unused") Object ignoreEnvironment) {

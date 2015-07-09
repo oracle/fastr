@@ -41,6 +41,7 @@ import com.oracle.truffle.r.parser.ast.Function;
 import com.oracle.truffle.r.parser.tools.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.env.frame.*;
 
 public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
@@ -87,9 +88,33 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
         }
     }
 
+    private static final RStringVector FORMULA_CLASS = RDataFactory.createStringVectorFromScalar(RRuntime.FORMULA_CLASS);
+
     @Override
     public RSyntaxNode visit(Formula formula) {
-        return ConstantNode.create(RDataFactory.createFormula(formula.getSource(), formula.getResponse().accept(this), formula.getModel().accept(this)));
+        // response may be omitted
+        RSyntaxNode response = formula.getResponse() == null ? null : formula.getResponse().accept(this);
+        RSyntaxNode model = formula.getModel().accept(this);
+        RNode[] tildeArgs = new RNode[response == null ? 1 : 2];
+        int ix = 0;
+        if (response != null) {
+            tildeArgs[ix++] = response.asRNode();
+        }
+        tildeArgs[ix++] = model.asRNode();
+        CallArgumentsNode args = CallArgumentsNode.create(null, false, tildeArgs, ArgumentsSignature.empty(ix));
+        SourceSection formulaSrc = formula.getSource();
+        String formulaCode = formulaSrc.getCode();
+        int tildeIndex = formulaCode.indexOf('~');
+        SourceSection tildeSrc = ASTNode.adjustedSource(formulaSrc, formulaSrc.getCharIndex() + tildeIndex, 1);
+        RCallNode call = RCallNode.createOpCall(formulaSrc, tildeSrc, "~", args, null);
+        RLanguage lang = RDataFactory.createLanguage(call);
+        lang.setClassAttr(FORMULA_CLASS, false);
+        // TODO this is not correct when in a nested function
+        // but we have lost the ability to find the enclosing environment at this point.
+        lang.setAttr(RRuntime.FORMULA_ENV, REnvironment.globalEnv());
+        ConstantNode result = ConstantNode.create(lang);
+        result.assignSourceSection(formulaSrc);
+        return result;
     }
 
     @Override

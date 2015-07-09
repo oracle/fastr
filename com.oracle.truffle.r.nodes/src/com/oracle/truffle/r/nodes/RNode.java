@@ -190,10 +190,6 @@ public abstract class RNode extends Node implements RInstrumentableNode {
         return RTypesGen.expectRPairList(execute(frame));
     }
 
-    public RFormula executeFormula(VirtualFrame frame) throws UnexpectedResultException {
-        return RTypesGen.expectRFormula(execute(frame));
-    }
-
     public RArgsValuesAndNames executeRArgsValuesAndNames(VirtualFrame frame) throws UnexpectedResultException {
         return RTypesGen.expectRArgsValuesAndNames(execute(frame));
     }
@@ -273,6 +269,17 @@ public abstract class RNode extends Node implements RInstrumentableNode {
 
     protected static boolean isRLanguage(Object value) {
         return value instanceof RLanguage;
+    }
+
+    protected static boolean isRFormula(Object value) {
+        if (value instanceof RLanguage) {
+            RAttributes attrs = ((RLanguage) value).getAttributes();
+            if (attrs != null) {
+                RStringVector klass = (RStringVector) attrs.get(RRuntime.CLASS_ATTR_KEY);
+                return klass.getDataAt(0).equals(RRuntime.FORMULA_CLASS);
+            }
+        }
+        return false;
     }
 
     protected static boolean isRExpression(Object value) {

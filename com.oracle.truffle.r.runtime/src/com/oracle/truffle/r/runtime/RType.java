@@ -30,7 +30,6 @@ public enum RType {
     List("list", 6),
     Expression("expression", 7),
     Missing("missing", -1),
-    Formula("formula", -1),
     Function("function", -1),
     Matrix("matrix", -1),
     Array("array", -1),
@@ -124,8 +123,6 @@ public enum RType {
                 return Expression;
             case "missing":
                 return Missing;
-            case "formula":
-                return Formula;
             case "function":
                 return Function;
             case "matrix":

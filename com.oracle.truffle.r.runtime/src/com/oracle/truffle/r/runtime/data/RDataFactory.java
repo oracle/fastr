@@ -373,10 +373,6 @@ public final class RDataFactory {
         return traceDataCreated(new RExpression(list));
     }
 
-    public static RFormula createFormula(SourceSection source, Object response, Object model) {
-        return traceDataCreated(new RFormula(source, response, model));
-    }
-
     public static RFactor createFactor(RIntVector vector, boolean ordered) {
         return traceDataCreated(new RFactor(vector, ordered));
     }

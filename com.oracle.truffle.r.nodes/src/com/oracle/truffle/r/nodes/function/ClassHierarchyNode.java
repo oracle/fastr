@@ -73,11 +73,6 @@ public abstract class ClassHierarchyNode extends UnaryNode {
     }
 
     @Specialization
-    protected RStringVector getClassHr(@SuppressWarnings("unused") RFormula arg) {
-        return RDataFactory.createStringVector(RType.Formula.getName());
-    }
-
-    @Specialization
     protected RStringVector getClassHrStorage(RAttributeStorage arg, //
                     @Cached("createClassProfile()") ValueProfile argProfile) {
         return getClassHrAttributable(arg, argProfile);

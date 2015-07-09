@@ -243,6 +243,11 @@ public class RSerialize {
          * convert embedded instances of {@link SEXPTYPE#LANGSXP} into ASTs.
          */
         private int closureDepth;
+        /**
+         * For formula, the same logic applies as we only want to convert to an RFormula when
+         * langDepth is zero.
+         */
+        private int langDepth;
 
         private Input(RConnection conn, int depth) throws IOException {
             this(conn.getInputStream(), null, depth, null);
@@ -294,6 +299,19 @@ public class RSerialize {
             Object result = readItem(flags);
             assert result != null;
             return result;
+        }
+
+        private void incDepth(SEXPTYPE type) {
+            switch (type) {
+                case CLOSXP:
+                    closureDepth++;
+                    break;
+                case LANGSXP:
+                    langDepth++;
+                    break;
+                default:
+                    break;
+            }
         }
 
         protected Object readItem(int flags) throws IOException {
@@ -401,11 +419,11 @@ public class RSerialize {
                 }
 
                 case CLOSXP:
-                    closureDepth++;
                 case LANGSXP:
                 case LISTSXP:
                 case PROMSXP:
                 case DOTSXP: {
+                    incDepth(type);
                     Object attrItem = RNull.instance;
                     Object tagItem = RNull.instance;
                     if (Flags.hasAttr(flags)) {
@@ -468,21 +486,27 @@ public class RSerialize {
                                 String funcName = RPackageSource.decodeName(source.getName());
                                 func.setName(funcName);
                             }
+                            copyAttributes(func, rpl.getAttributes());
                             result = func;
                         } catch (Throwable ex) {
                             Utils.fail("unserialize - failed to eval deparsed closure");
                         }
                     } else if (type == SEXPTYPE.LANGSXP) {
+                        langDepth--;
                         /*
                          * N.B. LANGSXP values occur within CLOSXP structures, so we only want to
                          * convert them to an AST when they occur outside of a CLOSXP, as in the
-                         * CLOSXP case, the entire structure is deparsed at the end.
+                         * CLOSXP case, the entire structure is deparsed at the end. Ditto for
+                         * LANGSXP when specifying a formula
                          */
-                        if (closureDepth == 0) {
-                            String deparse = RDeparse.deparse((RPairList) result);
+                        if (closureDepth == 0 && langDepth == 0) {
+                            RPairList pl = (RPairList) result;
+                            String deparse = RDeparse.deparse(pl);
                             RExpression expr = parse(deparse, false);
                             assert expr.getLength() == 1;
                             result = expr.getDataAt(0);
+                            RAttributes attrs = pl.getAttributes();
+                            copyAttributes((RAttributable) result, attrs);
                         }
                     } else if (type == SEXPTYPE.PROMSXP) {
                         // @formatter:off
@@ -677,6 +701,17 @@ public class RSerialize {
         private static Object checkResult(Object result) {
             assert result != null;
             return result;
+        }
+
+        private static void copyAttributes(RAttributable obj, RAttributes attrs) {
+            if (attrs == null) {
+                return;
+            }
+            Iterator<RAttribute> iter = attrs.iterator();
+            while (iter.hasNext()) {
+                RAttribute attr = iter.next();
+                obj.setAttr(attr.getName(), attr.getValue());
+            }
         }
 
         private RExpression parse(String deparseRaw, boolean isClosure) throws IOException {
@@ -1431,7 +1466,13 @@ public class RSerialize {
                     }
 
                     case LANGSXP: {
+                        // write attributes first (cf GnuR)
+                        if (attributes != null) {
+                            writeAttributes(attributes);
+                            attributes = null;
+                        }
                         RPairList pl = (RPairList) RContext.getRRuntimeASTAccess().serialize(state, obj);
+                        state.convertUnboundValues(pl);
                         writeItem(pl.car());
                         writeItem(pl.cdr());
                         break;

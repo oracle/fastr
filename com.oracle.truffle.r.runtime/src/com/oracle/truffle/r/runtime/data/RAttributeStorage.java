@@ -45,7 +45,7 @@ public abstract class RAttributeStorage implements RAttributable {
 
     public final void initAttributes(String[] names, Object[] values) {
         assert this.attributes == null;
-        this.attributes = RAttributes.createIniitialized(names, values);
+        this.attributes = RAttributes.createInitialized(names, values);
     }
 
     public final Object getAttribute(String name) {

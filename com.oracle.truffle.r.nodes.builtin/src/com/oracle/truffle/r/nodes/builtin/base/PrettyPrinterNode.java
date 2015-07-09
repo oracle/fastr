@@ -379,12 +379,6 @@ public abstract class PrettyPrinterNode extends RNode {
         return "";
     }
 
-    @TruffleBoundary
-    @Specialization
-    protected String prettyPrintFormula(RFormula formula, Object listElementName, byte quote, byte right) {
-        return formula.getSource().getCode();
-    }
-
     private String printAttributes(RAbstractVector vector, RAttributes attributes) {
         StringBuilder builder = new StringBuilder();
         for (RAttribute attr : attributes) {
