@@ -79,6 +79,7 @@ public class GraphicsCCalls {
         }
     }
 
+    @SuppressWarnings("unused")
     public static final class C_mtext extends RExternalBuiltinNode {
         private Object text;
         private RAbstractDoubleVector side;

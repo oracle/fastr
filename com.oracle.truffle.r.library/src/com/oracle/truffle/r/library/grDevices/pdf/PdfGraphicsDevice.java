@@ -28,7 +28,7 @@ import com.oracle.truffle.r.library.graphics.core.geometry.Coordinates;
 import com.oracle.truffle.r.runtime.RRuntime;
 
 public class PdfGraphicsDevice implements GraphicsDevice {
-    private final Parameters deviceParameters;
+    @SuppressWarnings("unused") private final Parameters deviceParameters;
 
     public PdfGraphicsDevice(Parameters deviceParameters) {
         this.deviceParameters = deviceParameters;

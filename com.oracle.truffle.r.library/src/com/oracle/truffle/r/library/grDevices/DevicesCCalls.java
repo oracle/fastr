@@ -54,11 +54,12 @@ public class DevicesCCalls {
 
     public static final class C_PDF extends RExternalBuiltinNode {
 
+        @SuppressWarnings("unused")
         @Override
         @TruffleBoundary
         public Object call(RArgsValuesAndNames args) {
             new PdfGraphicsDevice(extractParametersFrom(args));
-            //todo implement devices addition
+            // todo implement devices addition
             return RNull.instance;
         }
 
@@ -88,6 +89,7 @@ public class DevicesCCalls {
             return result;
         }
 
+        @SuppressWarnings("static-method")
         private String[] extractFontsFrom(Object inputArgument) {
             return inputArgument == RNull.instance ? new String[0] : ((RStringVector) inputArgument).getDataCopy();
         }

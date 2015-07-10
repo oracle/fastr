@@ -106,7 +106,7 @@ public abstract class Identical extends RBuiltinNode {
     }
 
     @Specialization
-    protected byte doInternalIdentical(RLanguage x, RLanguage y,
+    protected byte doInternalIdentical(@SuppressWarnings("unused") RLanguage x, @SuppressWarnings("unused") RLanguage y,
                     // @formatter:off
                     @SuppressWarnings("unused") byte numEq, @SuppressWarnings("unused") byte singleNA, @SuppressWarnings("unused") byte attribAsSet,
                     @SuppressWarnings("unused") byte ignoreBytecode, @SuppressWarnings("unused") byte ignoreEnvironment) {

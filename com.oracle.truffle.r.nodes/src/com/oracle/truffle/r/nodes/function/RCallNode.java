@@ -246,6 +246,7 @@ public abstract class RCallNode extends RNode implements RSyntaxNode {
         }
     }
 
+    @SuppressWarnings("hiding")
     @Override
     public void serialize(RSerialize.State state) {
         state.setAsLangType();

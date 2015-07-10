@@ -291,10 +291,6 @@ public class RASTUtils {
 
     }
 
-    private static String escapeName(String name) {
-        return RDeparse.quotify(name, RDeparse.BACKTICK);
-    }
-
     /**
      * Unifies {@link RCallNode} and {@link GroupDispatchNode} for accessing (likely) function name.
      */
