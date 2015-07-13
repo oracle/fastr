@@ -420,6 +420,7 @@ final class REngine implements RContext.Engine {
             }
             assert checkResult(result);
             if (printResult) {
+                assert topLevel;
                 if (context.isVisible()) {
                     printResult(result);
                 }
@@ -470,13 +471,13 @@ final class REngine implements RContext.Engine {
             if (FastROptions.NewStateTransition && resultValue instanceof RShareable) {
                 ((RShareable) resultValue).incRefCount();
             }
-            function.getTarget().call(RArguments.create(function, null, REnvironment.baseEnv().getFrame(), 1, new Object[]{resultValue, RMissing.instance}, PRINT_SIGNATURE));
+            function.getTarget().call(RArguments.create(function, null, REnvironment.globalEnv().getFrame(), 1, new Object[]{resultValue, RMissing.instance}, PRINT_SIGNATURE));
             if (FastROptions.NewStateTransition && resultValue instanceof RShareable) {
                 ((RShareable) resultValue).decRefCount();
             }
         } else {
             // we only have the .Internal print.default method available
-            getPrintInternal().getTarget().call(RArguments.create(printInternal, null, REnvironment.baseEnv().getFrame(), 1, new Object[]{resultValue}, PRINT_INTERNAL_SIGNATURE));
+            getPrintInternal().getTarget().call(RArguments.create(printInternal, null, REnvironment.globalEnv().getFrame(), 1, new Object[]{resultValue}, PRINT_INTERNAL_SIGNATURE));
         }
     }
 
