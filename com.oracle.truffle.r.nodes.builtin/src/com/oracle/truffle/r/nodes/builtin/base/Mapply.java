@@ -157,7 +157,7 @@ public abstract class Mapply extends RBuiltinNode {
                 readVectorElementNodes[i] = ReadVariableNode.create(elementNodeArray[i].vectorElementName, false);
             }
             CallArgumentsNode argsNode = CallArgumentsNode.create(false, false, readVectorElementNodes, ArgumentsSignature.empty(readVectorElementNodes.length));
-            return RCallNode.createCall(null, null, argsNode, null);
+            return RCallNode.createCall(null, null, argsNode);
         }
 
         protected ElementNode[] createElementNodeArray(int length) {

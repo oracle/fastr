@@ -49,27 +49,27 @@ public abstract class ClassHierarchyNode extends UnaryNode {
 
     @Specialization
     protected RStringVector getClassHr(@SuppressWarnings("unused") byte arg) {
-        return RDataFactory.createStringVector(RType.Logical.getName());
+        return withImplicitTypes ? RDataFactory.createStringVector(RType.Logical.getName()) : null;
     }
 
     @Specialization
     protected RStringVector getClassHr(@SuppressWarnings("unused") String arg) {
-        return RDataFactory.createStringVector(RType.Character.getName());
+        return withImplicitTypes ? RDataFactory.createStringVector(RType.Character.getName()) : null;
     }
 
     @Specialization
     protected RStringVector getClassHr(@SuppressWarnings("unused") int arg) {
-        return RDataFactory.createStringVector(RType.Integer.getName());
+        return withImplicitTypes ? RDataFactory.createStringVector(RType.Integer.getName()) : null;
     }
 
     @Specialization
     protected RStringVector getClassHr(@SuppressWarnings("unused") double arg) {
-        return RDataFactory.createStringVector(RRuntime.CLASS_DOUBLE, RDataFactory.COMPLETE_VECTOR);
+        return withImplicitTypes ? RDataFactory.createStringVector(RRuntime.CLASS_DOUBLE, RDataFactory.COMPLETE_VECTOR) : null;
     }
 
     @Specialization
     protected RStringVector getClassHr(@SuppressWarnings("unused") RNull arg) {
-        return RDataFactory.createStringVector(RType.Null.getName());
+        return withImplicitTypes ? RDataFactory.createStringVector(RType.Null.getName()) : null;
     }
 
     @Specialization

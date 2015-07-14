@@ -49,7 +49,7 @@ public class TestBuiltin_asvector extends TestBase {
 
     @Test
     public void testasvector7() {
-        assertEval(Ignored.Unknown, "argv <- list(quote(list(ii = 1:10, xx = pi * -3:6)), 'list'); .Internal(as.vector(argv[[1]], argv[[2]]))");
+        assertEval("argv <- list(quote(list(ii = 1:10, xx = pi * -3:6)), 'list'); .Internal(as.vector(argv[[1]], argv[[2]]))");
     }
 
     @Test
@@ -59,7 +59,7 @@ public class TestBuiltin_asvector extends TestBase {
 
     @Test
     public void testasvector9() {
-        assertEval(Ignored.Unknown, "argv <- list(quote(list(x = 1:100, z = 1:100 + rnorm(100, 10))), 'list'); .Internal(as.vector(argv[[1]], argv[[2]]))");
+        assertEval("argv <- list(quote(list(x = 1:100, z = 1:100 + rnorm(100, 10))), 'list'); .Internal(as.vector(argv[[1]], argv[[2]]))");
     }
 
     @Test
@@ -177,7 +177,7 @@ public class TestBuiltin_asvector extends TestBase {
 
     @Test
     public void testasvector32() {
-        assertEval(Ignored.Unknown, "argv <- list(quote(list(x = c(2:3, NA), y = c(3:4, NA))), 'list'); .Internal(as.vector(argv[[1]], argv[[2]]))");
+        assertEval("argv <- list(quote(list(x = c(2:3, NA), y = c(3:4, NA))), 'list'); .Internal(as.vector(argv[[1]], argv[[2]]))");
     }
 
     @Test
@@ -187,7 +187,7 @@ public class TestBuiltin_asvector extends TestBase {
 
     @Test
     public void testasvector34() {
-        assertEval(Ignored.Unknown, "argv <- list(quote(list(a = I('abc'), b = I('def\\\'gh'))), 'list'); .Internal(as.vector(argv[[1]], argv[[2]]))");
+        assertEval("argv <- list(quote(list(a = I('abc'), b = I('def\\\'gh'))), 'list'); .Internal(as.vector(argv[[1]], argv[[2]]))");
     }
 
     @Test
@@ -233,7 +233,7 @@ public class TestBuiltin_asvector extends TestBase {
 
     @Test
     public void testasvector43() {
-        assertEval(Ignored.Unknown, "argv <- list(list('GRID.VP.12'), 'list'); .Internal(as.vector(argv[[1]], argv[[2]]))");
+        assertEval("argv <- list(list('GRID.VP.12'), 'list'); .Internal(as.vector(argv[[1]], argv[[2]]))");
     }
 
     @Test
@@ -337,7 +337,7 @@ public class TestBuiltin_asvector extends TestBase {
 
     @Test
     public void testasvector67() {
-        assertEval(Ignored.Unknown, "argv <- list(quote(list(a = 1:3, b = letters[1:3])), 'list'); .Internal(as.vector(argv[[1]], argv[[2]]))");
+        assertEval("argv <- list(quote(list(a = 1:3, b = letters[1:3])), 'list'); .Internal(as.vector(argv[[1]], argv[[2]]))");
     }
 
     @Test

@@ -26,53 +26,23 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin(name = "length<-", kind = PRIMITIVE, parameterNames = {"x", ""})
+@RBuiltin(name = "length<-", kind = PRIMITIVE, parameterNames = {"x", ""}, internalDispatch = true)
 // 2nd parameter is "value", but should not be matched against, so ""
 public abstract class UpdateLength extends RInvisibleBuiltinNode {
-
-    @Child private UseMethodInternalNode dcn;
-
-    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
     @Override
     protected void createCasts(CastBuilder casts) {
         casts.toInteger(1, true, false, false);
     }
 
-    @Specialization(guards = {"isLengthOne(lengthVector)", "isObject(frame, container)"})
-    protected Object updateLengthObject(VirtualFrame frame, RAbstractContainer container, RAbstractIntVector lengthVector) {
-        if (dcn == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            dcn = insert(new UseMethodInternalNode("length<-", getSuppliedSignature(), true));
-        }
-        try {
-            return dcn.execute(frame, container, new Object[]{container, lengthVector});
-        } catch (S3FunctionLookupNode.NoGenericMethodException e) {
-            return updateLength(frame, container, lengthVector);
-        }
-
-    }
-
-    @Specialization(guards = {"isLengthOne(lengthVector)", "!isObject(frame, container)"})
-    protected RAbstractContainer updateLength(@SuppressWarnings("unused") VirtualFrame frame, RAbstractContainer container, RAbstractIntVector lengthVector) {
+    @Specialization(guards = "isLengthOne(lengthVector)")
+    protected RAbstractContainer updateLength(RAbstractContainer container, RAbstractIntVector lengthVector) {
         controlVisibility();
-        int length = lengthVector.getDataAt(0);
-        return container.resize(length);
-    }
-
-    @SuppressWarnings("unused")
-    @Specialization(guards = "!isLengthOne(lengthVector)")
-    protected RAbstractContainer updateLengthError(RAbstractContainer container, RAbstractIntVector lengthVector) {
-        controlVisibility();
-        CompilerDirectives.transferToInterpreter();
-        throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.INVALID_UNNAMED_VALUE);
+        return container.resize(lengthVector.getDataAt(0));
     }
 
     @SuppressWarnings("unused")
@@ -86,10 +56,4 @@ public abstract class UpdateLength extends RInvisibleBuiltinNode {
     protected static boolean isLengthOne(RAbstractIntVector length) {
         return length.getLength() == 1;
     }
-
-    protected boolean isObject(VirtualFrame frame, RAbstractContainer container) {
-        // if execution got here via S3 dispatch, treat objects as non-objects
-        return container.isObject(attrProfiles) && RArguments.getS3Args(frame) == null;
-    }
-
 }

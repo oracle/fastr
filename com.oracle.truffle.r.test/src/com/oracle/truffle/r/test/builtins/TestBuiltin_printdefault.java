@@ -36,8 +36,7 @@ public class TestBuiltin_printdefault extends TestBase {
 
     @Test
     public void testprintdefault4() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(quote(~a + b:c + d + e + e:d), NULL, TRUE, NULL, NULL, FALSE, NULL, TRUE, TRUE); .Internal(print.default(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]], argv[[9]]))");
+        assertEval("argv <- list(quote(~a + b:c + d + e + e:d), NULL, TRUE, NULL, NULL, FALSE, NULL, TRUE, TRUE); .Internal(print.default(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]], argv[[9]]))");
     }
 
     @Test

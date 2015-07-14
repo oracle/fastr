@@ -82,8 +82,7 @@ public class TestBuiltin_identical extends TestBase {
 
     @Test
     public void testidentical13() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(NA_complex_, NA_complex_, TRUE, TRUE, TRUE, TRUE, FALSE); .Internal(identical(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+        assertEval("argv <- list(NA_complex_, NA_complex_, TRUE, TRUE, TRUE, TRUE, FALSE); .Internal(identical(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test

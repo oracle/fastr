@@ -91,4 +91,8 @@ public abstract class CastExpressionNode extends CastBaseNode {
     private static RExpression create(Object[] objArray) {
         return RDataFactory.createExpression(RDataFactory.createList(objArray));
     }
+
+    public static CastExpressionNode createNonPreserving() {
+        return CastExpressionNodeGen.create(false, false, false);
+    }
 }

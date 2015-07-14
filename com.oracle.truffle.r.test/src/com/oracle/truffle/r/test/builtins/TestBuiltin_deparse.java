@@ -191,7 +191,7 @@ public class TestBuiltin_deparse extends TestBase {
 
     @Test
     public void testdeparse34() {
-        assertEval(Ignored.Unknown, "argv <- list(quote(lm(formula = y ~ x1 + x2 + x3)), 60L, TRUE, 69, -1L); .Internal(deparse(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
+        assertEval("argv <- list(quote(lm(formula = y ~ x1 + x2 + x3)), 60L, TRUE, 69, -1L); .Internal(deparse(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
     }
 
     @Test
@@ -255,7 +255,7 @@ public class TestBuiltin_deparse extends TestBase {
 
     @Test
     public void testdeparse46() {
-        assertEval(Ignored.Unknown, "argv <- list(quote(Fr ~ (Hair + Eye + Sex)^2), 60L, TRUE, 69, -1L); .Internal(deparse(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
+        assertEval("argv <- list(quote(Fr ~ (Hair + Eye + Sex)^2), 60L, TRUE, 69, -1L); .Internal(deparse(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
     }
 
     @Test

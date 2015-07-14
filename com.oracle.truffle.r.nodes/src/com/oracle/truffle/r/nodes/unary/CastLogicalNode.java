@@ -206,7 +206,11 @@ public abstract class CastLogicalNode extends CastBaseNode {
         throw new ConversionFailedException(operand.getClass().getName());
     }
 
-    public static CastStringNode create() {
-        return CastStringNodeGen.create(false, true, true, true);
+    public static CastLogicalNode create() {
+        return CastLogicalNodeGen.create(true, true, true);
+    }
+
+    public static CastLogicalNode createNonPreserving() {
+        return CastLogicalNodeGen.create(false, false, false);
     }
 }
