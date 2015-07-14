@@ -41,6 +41,9 @@ import com.oracle.truffle.r.runtime.env.*;
  */
 public class RErrorHandling implements RContext.StateFactory {
 
+    private static final int IN_HANDLER = 3;
+    private static final RStringVector RESTART_CLASS = RDataFactory.createStringVectorFromScalar("restart");
+
     public static class Warnings {
         private static ArrayList<Warning> list = new ArrayList<>();
 
@@ -61,45 +64,70 @@ public class RErrorHandling implements RContext.StateFactory {
         }
     }
 
+    /**
+     * Holds all the context-specific state that is relevant for error/warnings. Simple value class
+     * for which geterrs/setters are unnecessary.
+     */
     private static class ContextStateImpl implements RContext.ContextState {
-        /*
-         * These values are either NULL or an RPairList.
+        /**
+         * Values is either NULL or an RPairList, for {@code restarts}.
          */
         private Object restartStack = RNull.instance;
+        /**
+         * Values is either NULL or an RPairList, for {@code conditions}.
+         */
         private Object handlerStack = RNull.instance;
+        /**
+         * Current list of (deferred) warnings.
+         */
         private Warnings warnings = new Warnings();
+        /**
+         * Max warnings accumulated.
+         */
         private int maxWarnings = 50;
+        /**
+         * Set/get by seterrmessage/geterrmessage builtins.
+         */
+        private String errMsg;
+        /**
+         * {@code true} if we are already processing an error.
+         */
+        private int inError;
+        /**
+         * {@code true} if we are already processing a warning.
+         */
+        private boolean inWarning;
+        /**
+         * {@code true} if the warning should be output immediately.
+         */
+        private boolean immediateWarning;
+        /**
+         * {@code true} if the warning should be output on one line.
+         */
+        @SuppressWarnings("unused") private boolean noBreakWarning;
+        /**
+         * {@code true} if in {@link #printWarnings}.
+         */
+        private boolean inPrintWarning;
 
-        public Object getRestartStack() {
-            return restartStack;
+        /**
+         * {@code .signalSimpleWarning} in "conditions.R".
+         */
+        private RFunction dotSignalSimpleWarning;
+
+        /**
+         * Initialize and return the value of {@link #dotSignalSimpleWarning}. This is lazy because
+         * when this instance is created, the {@link REnvironment} context state has not been set
+         * up, so we can't look up anything in the base env.
+         */
+        RFunction getDotSignalSimpleWarning() {
+            if (dotSignalSimpleWarning == null) {
+                Object f = REnvironment.baseEnv().findFunction(".signalSimpleWarning");
+                dotSignalSimpleWarning = (RFunction) RContext.getRRuntimeASTAccess().forcePromise(f);
+            }
+            return dotSignalSimpleWarning;
         }
 
-        public void setRestartStack(Object restartStack) {
-            this.restartStack = restartStack;
-
-        }
-
-        public Object getHandlerStack() {
-            return handlerStack;
-        }
-
-        public void setHandlerStack(Object handlerStack) {
-            this.handlerStack = handlerStack;
-
-        }
-
-        public Warnings getWarnings() {
-            return warnings;
-        }
-
-        public int getMaxwarnings() {
-            return maxWarnings;
-        }
-
-        @SuppressWarnings("unused")
-        public void setMaxWarnings(int max) {
-            maxWarnings = max;
-        }
     }
 
     /**
@@ -118,28 +146,6 @@ public class RErrorHandling implements RContext.StateFactory {
 
     private static final Object RESTART_TOKEN = new Object();
 
-    /**
-     * The R error handling framework, mostly written in R, expects to be able to get hold of the
-     * "current" error message in a context free manner through the {@code geterrmessage .Internal}.
-     * There are some other state variables used during processing. To support future multi-threaded
-     * behavior, we use a {@link ThreadLocal}.
-     */
-
-    private static class ErrorState {
-        String errMsg;
-        boolean inError;
-        boolean inWarning;
-        boolean immediateWarning;
-        boolean inPrintWarning;
-    }
-
-    private static final ThreadLocal<ErrorState> errorState = new ThreadLocal<ErrorState>() {
-        @Override
-        protected ErrorState initialValue() {
-            return new ErrorState();
-        }
-    };
-
     public RContext.ContextState newContext(RContext context, Object... objects) {
         return new ContextStateImpl();
     }
@@ -149,16 +155,17 @@ public class RErrorHandling implements RContext.StateFactory {
     }
 
     public static Object getHandlerStack() {
-        return getRErrorHandlingState().getHandlerStack();
+        return getRErrorHandlingState().handlerStack;
     }
 
     public static Object getRestartStack() {
-        return getRErrorHandlingState().getRestartStack();
+        return getRErrorHandlingState().restartStack;
     }
 
     public static void restoreStacks(Object savedHandlerStack, Object savedRestartStack) {
-        getRErrorHandlingState().setHandlerStack(savedHandlerStack);
-        getRErrorHandlingState().setRestartStack(savedRestartStack);
+        ContextStateImpl errorHandlingState = getRErrorHandlingState();
+        errorHandlingState.handlerStack = savedHandlerStack;
+        errorHandlingState.restartStack = savedRestartStack;
     }
 
     public static Object createHandlers(RStringVector classes, RList handlers, REnvironment parentEnv, Object target, byte calling) {
@@ -172,7 +179,7 @@ public class RErrorHandling implements RContext.StateFactory {
             RList entry = mkHandlerEntry(klass, parentEnv, handler, target, result, calling);
             newStack = RDataFactory.createPairList(entry, newStack);
         }
-        getRErrorHandlingState().setHandlerStack(newStack);
+        getRErrorHandlingState().handlerStack = newStack;
         return oldStack;
     }
 
@@ -205,41 +212,90 @@ public class RErrorHandling implements RContext.StateFactory {
 
     @TruffleBoundary
     public static String geterrmessage() {
-        return errorState.get().errMsg;
+        return getRErrorHandlingState().errMsg;
     }
 
     @TruffleBoundary
     public static void seterrmessage(String msg) {
-        errorState.get().errMsg = msg;
+        getRErrorHandlingState().errMsg = msg;
     }
 
     @TruffleBoundary
     public static void addRestart(RList restart) {
-        getRErrorHandlingState().setRestartStack(RDataFactory.createPairList(restart, getRestartStack()));
+        assert restartExit(restart) instanceof String;
+        getRErrorHandlingState().restartStack = RDataFactory.createPairList(restart, getRestartStack());
+    }
+
+    private static Object restartExit(RList restart) {
+        return restart.getDataAt(0);
+    }
+
+    private static MaterializedFrame restartFrame(RList restart) {
+        return ((REnvironment) restart.getDataAt(1)).getFrame();
+    }
+
+    public static Object getRestart(int index) {
+        Object list = getRestartStack();
+        int i = index;
+        while (list != RNull.instance && i > 1) {
+            RPairList pList = (RPairList) list;
+            list = pList.cdr();
+            i--;
+        }
+        if (list != RNull.instance) {
+            return ((RPairList) list).car();
+        } else if (i == 1) {
+            Object[] data = new Object[]{"abort", RNull.instance};
+            RList result = RDataFactory.createList(data);
+            result.setClassAttr(RESTART_CLASS, false);
+            return result;
+        } else {
+            return RNull.instance;
+        }
+    }
+
+    public static Object invokeRestart(RList restart, Object args) {
+        ContextStateImpl errorHandlingState = getRErrorHandlingState();
+        Object exit = restartExit(restart);
+        if (exit == RNull.instance) {
+            errorHandlingState.restartStack = RNull.instance;
+            // jump to top top level
+            throw RInternalError.unimplemented();
+        } else {
+            while (errorHandlingState.restartStack != RNull.instance) {
+                RPairList pList = (RPairList) errorHandlingState.restartStack;
+                RList car = (RList) pList.car();
+                if (exit.equals(restartExit(car))) {
+                    errorHandlingState.restartStack = pList.cdr();
+                    throw new ReturnException(args, restartFrame(restart));
+                }
+                errorHandlingState.restartStack = pList.cdr();
+            }
+            return null;
+        }
     }
 
     @TruffleBoundary
     public static void signalCondition(RList cond, String msg, Object call) {
-        Object oldStack = getHandlerStack();
+        ContextStateImpl errorHandlingState = getRErrorHandlingState();
+        Object oldStack = errorHandlingState.handlerStack;
         RPairList pList;
         while ((pList = findConditionHandler(cond)) != null) {
             RList entry = (RList) pList.car();
-            getRErrorHandlingState().setHandlerStack(pList.cdr());
+            errorHandlingState.handlerStack = pList.cdr();
             if (isCallingEntry(entry)) {
                 Object h = entry.getDataAt(ENTRY_HANDLER);
                 if (h == RESTART_TOKEN) {
                     errorcallDflt(fromCall(call), Message.GENERIC, msg);
                 } else {
-                    // TODO: temporary workaround just to prevent suppressMessages from failing -
-                    // what we really need to do is to evaluate the handler with proper arguments
-                    Utils.warn("condition signalling not fully supported");
-                    break;
+                    RFunction hf = (RFunction) h;
+                    RContext.getEngine().evalFunction(hf, cond);
                 }
             } else {
                 throw gotoExitingHandler(cond, call, entry);
             }
         }
-        getRErrorHandlingState().setHandlerStack(oldStack);
+        errorHandlingState.handlerStack = oldStack;
     }
 
     /**
@@ -248,25 +304,26 @@ public class RErrorHandling implements RContext.StateFactory {
     static void signalError(SourceSection callSrcArg, Message msg, Object... args) {
         SourceSection callSrc = checkNullSourceSection(callSrcArg);
         String fMsg = formatMessage(msg, args);
-        Object oldStack = getHandlerStack();
+        ContextStateImpl errorHandlingState = getRErrorHandlingState();
+        Object oldStack = errorHandlingState.handlerStack;
         RPairList pList;
         while ((pList = findSimpleErrorHandler()) != null) {
             RList entry = (RList) pList.car();
-            getRErrorHandlingState().setHandlerStack(pList.cdr());
-            errorState.get().errMsg = fMsg;
+            errorHandlingState.handlerStack = pList.cdr();
+            errorHandlingState.errMsg = fMsg;
             if (isCallingEntry(entry)) {
                 if (entry.getDataAt(ENTRY_HANDLER) == RESTART_TOKEN) {
                     return;
                 } else {
                     RFunction handler = (RFunction) entry.getDataAt(2);
                     RStringVector errorMsgVec = RDataFactory.createStringVectorFromScalar(fMsg);
-                    RContext.getRRuntimeASTAccess().handleSimpleError(handler, errorMsgVec, createCall(callSrc), RArguments.getDepth(safeCurrentFrame()));
+                    RContext.getRRuntimeASTAccess().callback(handler, new Object[]{errorMsgVec, createCall(callSrc)});
                 }
             } else {
                 throw gotoExitingHandler(RNull.instance, createCall(callSrc), entry);
             }
         }
-        getRErrorHandlingState().setHandlerStack(oldStack);
+        errorHandlingState.handlerStack = oldStack;
     }
 
     private static ReturnException gotoExitingHandler(Object cond, Object call, RList entry) throws ReturnException {
@@ -384,9 +441,24 @@ public class RErrorHandling implements RContext.StateFactory {
         SourceSection call = checkNullSourceSection(callArg);
 
         String errorMessage = createErrorMessage(call, fmsg);
+
+        ContextStateImpl errorHandlingState = getRErrorHandlingState();
+        if (errorHandlingState.inError > 0) {
+            // recursive error
+            if (errorHandlingState.inError == IN_HANDLER) {
+                Utils.writeStderr("Error during wrapup: ", false);
+                Utils.writeStderr(errorMessage, true);
+            }
+            if (errorHandlingState.warnings.size() > 0) {
+                errorHandlingState.warnings.clear();
+                Utils.writeStderr("Lost warning messages", true);
+            }
+            throw new RError(errorMessage);
+        }
+
         Utils.writeStderr(errorMessage, true);
 
-        if (getRErrorHandlingState().getWarnings().size() > 0) {
+        if (getRErrorHandlingState().warnings.size() > 0) {
             Utils.writeStderr("In addition: ", false);
             printWarnings(false);
         }
@@ -394,31 +466,37 @@ public class RErrorHandling implements RContext.StateFactory {
         // we are not quite done - need to check for options(error=expr)
         Object errorExpr = RContext.getROptionsState().getValue("error");
         if (errorExpr != RNull.instance) {
-            MaterializedFrame materializedFrame = safeCurrentFrame();
-            // type already checked in ROptions
-            if (errorExpr instanceof RFunction) {
-                // Called with no arguments, but defaults will be applied
-                RFunction errorFunction = (RFunction) errorExpr;
-                ArgumentsSignature argsSig = RContext.getRRuntimeASTAccess().getArgumentsSignature(errorFunction);
-                Object[] evaluatedArgs;
-                if (errorFunction.isBuiltin()) {
-                    evaluatedArgs = RContext.getRRuntimeASTAccess().getBuiltinDefaultParameterValues(errorFunction);
-                } else {
-                    evaluatedArgs = new Object[argsSig.getLength()];
-                    for (int i = 0; i < evaluatedArgs.length; i++) {
-                        evaluatedArgs[i] = RMissing.instance;
+            int oldInError = errorHandlingState.inError;
+            try {
+                errorHandlingState.inError = IN_HANDLER;
+                MaterializedFrame materializedFrame = safeCurrentFrame();
+                // type already checked in ROptions
+                if (errorExpr instanceof RFunction) {
+                    // Called with no arguments, but defaults will be applied
+                    RFunction errorFunction = (RFunction) errorExpr;
+                    ArgumentsSignature argsSig = RContext.getRRuntimeASTAccess().getArgumentsSignature(errorFunction);
+                    Object[] evaluatedArgs;
+                    if (errorFunction.isBuiltin()) {
+                        evaluatedArgs = RContext.getRRuntimeASTAccess().getBuiltinDefaultParameterValues(errorFunction);
+                    } else {
+                        evaluatedArgs = new Object[argsSig.getLength()];
+                        for (int i = 0; i < evaluatedArgs.length; i++) {
+                            evaluatedArgs[i] = RMissing.instance;
+                        }
                     }
+                    RContext.getEngine().evalFunction(errorFunction, evaluatedArgs);
+                } else if (errorExpr instanceof RLanguage || errorExpr instanceof RExpression) {
+                    if (errorExpr instanceof RLanguage) {
+                        RContext.getEngine().eval((RLanguage) errorExpr, materializedFrame);
+                    } else if (errorExpr instanceof RExpression) {
+                        RContext.getEngine().eval((RExpression) errorExpr, materializedFrame);
+                    }
+                } else {
+                    // Checked when set
+                    throw RInternalError.shouldNotReachHere();
                 }
-                errorFunction.getTarget().call(RArguments.create(errorFunction, call, materializedFrame, RArguments.getDepth(materializedFrame) + 1, evaluatedArgs, argsSig));
-            } else if (errorExpr instanceof RLanguage || errorExpr instanceof RExpression) {
-                if (errorExpr instanceof RLanguage) {
-                    RContext.getEngine().eval((RLanguage) errorExpr, materializedFrame);
-                } else if (errorExpr instanceof RExpression) {
-                    RContext.getEngine().eval((RExpression) errorExpr, materializedFrame);
-                }
-            } else {
-                // Checked when set
-                throw RInternalError.shouldNotReachHere();
+            } finally {
+                errorHandlingState.inError = oldInError;
             }
         }
         throw new RError(errorMessage);
@@ -429,7 +507,29 @@ public class RErrorHandling implements RContext.StateFactory {
         return frame == null ? REnvironment.globalEnv().getFrame() : frame.materialize();
     }
 
+    /**
+     * Entry point for the {@code warning} {@code .Internal}.
+     *
+     * @param call {@null} if call not to be included in message, else {@link SourceSection}
+     *            of call.
+     * @param message the message
+     * @param immediate {@code true} iff the output should be immediate
+     * @param noBreakWarning TODO
+     */
+    public static void warningcallInternal(SourceSection call, String message, boolean immediate, boolean noBreakWarning) {
+        // TODO handle noBreakWarning
+        ContextStateImpl errorHandlingState = getRErrorHandlingState();
+        boolean immediateWarningSave = errorHandlingState.immediateWarning;
+        try {
+            errorHandlingState.immediateWarning = immediate;
+            warningcall(call, RError.Message.GENERIC, message);
+        } finally {
+            errorHandlingState.immediateWarning = immediateWarningSave;
+        }
+    }
+
     static void warningcall(SourceSection src, Message msg, Object... args) {
+        ContextStateImpl errorHandlingState = getRErrorHandlingState();
         Object call = createCall(src);
         RStringVector warningMessage = RDataFactory.createStringVectorFromScalar(formatMessage(msg, args));
         /*
@@ -439,7 +539,8 @@ public class RErrorHandling implements RContext.StateFactory {
          */
         boolean visibility = RContext.getInstance().isVisible();
         try {
-            RContext.getRRuntimeASTAccess().signalSimpleWarning(warningMessage, call, RArguments.getDepth(safeCurrentFrame()));
+            RFunction f = errorHandlingState.getDotSignalSimpleWarning();
+            RContext.getRRuntimeASTAccess().callback(f, new Object[]{warningMessage, call});
         } finally {
             RContext.getInstance().setVisible(visibility);
         }
@@ -450,8 +551,8 @@ public class RErrorHandling implements RContext.StateFactory {
     }
 
     static void vwarningcallDflt(SourceSection call, Message msg, Object... args) {
-        ErrorState myErrorState = errorState.get();
-        if (myErrorState.inWarning) {
+        ContextStateImpl errorHandlingState = getRErrorHandlingState();
+        if (errorHandlingState.inWarning) {
             return;
         }
         Object s = RContext.getROptionsState().getValue("warning.expression");
@@ -467,11 +568,11 @@ public class RErrorHandling implements RContext.StateFactory {
         if (w == RRuntime.INT_NA) {
             w = 0;
         }
-        if (w <= 0 && myErrorState.immediateWarning) {
+        if (w <= 0 && errorHandlingState.immediateWarning) {
             w = 1;
         }
 
-        if (w < 0 || myErrorState.inWarning || errorState.get().inError) {
+        if (w < 0 || errorHandlingState.inWarning || errorHandlingState.inError > 0) {
             /*
              * ignore if w<0 or already in here
              */
@@ -479,7 +580,7 @@ public class RErrorHandling implements RContext.StateFactory {
         }
 
         try {
-            myErrorState.inWarning = true;
+            errorHandlingState.inWarning = true;
             String fmsg = formatMessage(msg, args);
             String message = createWarningMessage(call, fmsg);
             if (w >= 2) {
@@ -487,25 +588,26 @@ public class RErrorHandling implements RContext.StateFactory {
             } else if (w == 1) {
                 Utils.writeStderr(message, true);
             } else if (w == 0) {
-                getRErrorHandlingState().getWarnings().add(new Warning(fmsg, createCall(call)));
+                errorHandlingState.warnings.add(new Warning(fmsg, createCall(call)));
             }
         } finally {
-            myErrorState.inWarning = false;
+            errorHandlingState.inWarning = false;
         }
     }
 
     @TruffleBoundary
     public static void printWarnings(boolean suppress) {
-        Warnings warnings = getRErrorHandlingState().getWarnings();
+        ContextStateImpl errorHandlingState = getRErrorHandlingState();
+        Warnings warnings = errorHandlingState.warnings;
         if (suppress) {
             warnings.clear();
             return;
         }
-        int nWarnings = getRErrorHandlingState().getWarnings().size();
+        int nWarnings = warnings.size();
         if (nWarnings == 0) {
             return;
         }
-        if (errorState.get().inPrintWarning) {
+        if (errorHandlingState.inPrintWarning) {
             if (nWarnings > 0) {
                 warnings.clear();
                 Utils.writeStderr("Lost warning messages", true);
@@ -513,7 +615,7 @@ public class RErrorHandling implements RContext.StateFactory {
             return;
         }
         try {
-            errorState.get().inPrintWarning = true;
+            errorHandlingState.inPrintWarning = true;
             if (nWarnings == 1) {
                 Utils.writeStderr("Warning message:", true);
                 Warning warning = warnings.get(0);
@@ -540,10 +642,10 @@ public class RErrorHandling implements RContext.StateFactory {
                     Utils.writeStderr("  " + warnings.get(i).message, true);
                 }
             } else {
-                if (nWarnings < getRErrorHandlingState().getMaxwarnings()) {
+                if (nWarnings < errorHandlingState.maxWarnings) {
                     Utils.writeStderr(String.format("There were %d warnings (use warnings() to see them)", nWarnings), true);
                 } else {
-                    Utils.writeStderr(String.format("There were %d or more warnings (use warnings() to see the first %d)", nWarnings, getRErrorHandlingState().getMaxwarnings()), true);
+                    Utils.writeStderr(String.format("There were %d or more warnings (use warnings() to see the first %d)", nWarnings, errorHandlingState.maxWarnings), true);
                 }
             }
             Object[] wData = new Object[nWarnings];
@@ -555,13 +657,13 @@ public class RErrorHandling implements RContext.StateFactory {
             RList lw = RDataFactory.createList(wData, RDataFactory.createStringVector(names, RDataFactory.COMPLETE_VECTOR));
             REnvironment.baseEnv().safePut("last.warning", lw);
         } finally {
-            errorState.get().inPrintWarning = false;
+            errorHandlingState.inPrintWarning = false;
             warnings.clear();
         }
     }
 
     public static void printDeferredWarnings() {
-        if (getRErrorHandlingState().getWarnings().size() > 0) {
+        if (getRErrorHandlingState().warnings.size() > 0) {
             Utils.writeStderr("In addition: ", false);
             printWarnings(false);
         }

@@ -79,35 +79,64 @@ public class ConditionFunctions {
         }
     }
 
+    public abstract static class RestartAdapter extends Adapter {
+        public static boolean lengthok(Object restart) {
+            return (restart instanceof RList) && ((RList) restart).getLength() >= 2;
+        }
+
+        protected RError badRestart() throws RError {
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.BAD_RESTART);
+        }
+    }
+
     @RBuiltin(name = ".addRestart", kind = RBuiltinKind.INTERNAL, parameterNames = "restart")
-    public abstract static class AddRestart extends Adapter {
+    public abstract static class AddRestart extends RestartAdapter {
         @Specialization
         protected Object addRestart(RList restart) {
             controlVisibility();
             RErrorHandling.addRestart(restart);
             return RNull.instance;
         }
+
+        @Specialization(guards = "lengthok(restart)")
+        protected Object addRestart(@SuppressWarnings("unused") Object restart) {
+            controlVisibility();
+            throw badRestart();
+        }
     }
 
     @RBuiltin(name = ".getRestart", kind = RBuiltinKind.INTERNAL, parameterNames = "restart")
     public abstract static class GetRestart extends Adapter {
-        @SuppressWarnings("unused")
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.toInteger(0);
+        }
+
         @Specialization
-        protected int getRestart(Object index) {
+        protected Object getRestart(int index) {
             controlVisibility();
-            // TODO
-            throw RInternalError.unimplemented();
+            Object result = RErrorHandling.getRestart(index);
+            return result;
         }
     }
 
     @RBuiltin(name = ".invokeRestart", kind = RBuiltinKind.INTERNAL, parameterNames = {"restart", "args"})
-    public abstract static class InvokeRestart extends Adapter {
-        @SuppressWarnings("unused")
-        @Specialization
-        protected Object getRestart(Object restart, Object args) {
+    public abstract static class InvokeRestart extends RestartAdapter {
+        @Specialization(guards = "lengthok(restart)")
+        protected RNull invokeRestart(RList restart, Object args) {
             controlVisibility();
-            // TODO
-            throw RInternalError.unimplemented();
+            if (RErrorHandling.invokeRestart(restart, args) == null) {
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.RESTART_NOT_ON_STACK);
+            } else {
+                return RNull.instance; // not reached
+            }
+        }
+
+        @SuppressWarnings("unused")
+        @Fallback
+        protected Object invokeRestart(Object restart, Object args) {
+            controlVisibility();
+            throw badRestart();
         }
     }
 

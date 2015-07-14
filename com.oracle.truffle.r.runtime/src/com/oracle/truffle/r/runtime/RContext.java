@@ -34,7 +34,6 @@ import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.runtime.conn.*;
 import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.env.frame.*;
 import com.oracle.truffle.r.runtime.env.REnvironment.*;
@@ -323,7 +322,18 @@ public final class RContext extends ExecutionContext {
          */
         Object eval(RLanguage expr, MaterializedFrame frame);
 
-        Object evalPromise(Closure closure, MaterializedFrame frame);
+        /**
+         * Variant of {@link #eval(RLanguage, MaterializedFrame)} where we already have the
+         * {@link RFunction} and the evaluated arguments, but do not have a frame available, and we
+         * are behind a {@link TruffleBoundary}, so call inlining is not an issue. This is primarily
+         * used for R callbacks from {@link RErrorHandling} and {@link RSerialize}.
+         */
+        Object evalFunction(RFunction func, Object... args);
+
+        /**
+         * Evaluates an {@link com.oracle.truffle.r.runtime.data.RPromise.Closure} in {@code frame}.
+         */
+        Object evalPromise(RPromise.Closure closure, MaterializedFrame frame);
 
         /**
          * Checks for the existence of {@code .Last/.Last.sys} and if present and bound to a
@@ -345,6 +355,8 @@ public final class RContext extends ExecutionContext {
 
         /**
          * Used by Truffle debugger; invokes the internal "print" support in R for {@code value}.
+         * Essentially this is equivalent to {@link #evalFunction} using the {@code "print"}
+         * function.
          */
         void printResult(Object value);
 
@@ -363,7 +375,8 @@ public final class RContext extends ExecutionContext {
         StdConnections(StdConnections.class, true),
         RNG(RRNG.class, false),
         FrameSlotChangeMonitor(FrameSlotChangeMonitor.class, false),
-        RFFI(RFFIContextStateFactory.class, false);
+        RFFI(RFFIContextStateFactory.class, false),
+        RSerialize(RSerialize.class, false);
 
         private final Class<? extends StateFactory> klass;
         private StateFactory factory;

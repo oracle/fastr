@@ -571,6 +571,8 @@ public final class RError extends RuntimeException {
         DIR_CANNOT_CREATE("cannot create dir '%s'"),
         IMPOSSIBLE_SUBSTITUTE("substitute result cannot be represented"),
         PACKAGE_AVAILABLE("'%s' may not be available when loading"),
+        BAD_RESTART("bad restart"),
+        RESTART_NOT_ON_STACK("restart not on stack"),
         PERFORMANCE("performance problem: %s");
 
         public final String message;

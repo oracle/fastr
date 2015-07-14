@@ -353,75 +353,24 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
         RASTDeparse.deparse(state, f);
     }
 
-    /*
-     * Support for calling out to R functions from within FastR when not in a Truffle context.
-     */
-
-    private static RCallNode getCallNode(Source source) {
-        try {
-            return (RCallNode) ((RLanguage) RContext.getEngine().parse(source).getDataAt(0)).getRep();
-        } catch (ParseException ex) {
-            // most unexpected
-            throw RInternalError.shouldNotReachHere();
-        }
-    }
-
-    /**
-     * TODO replace with more efficient implementation.
-     */
-    private static Object callOut(RCallNode callNode, int depth, Object... args) {
-        RNode[] argNodes = new RNode[args.length];
-        for (int i = 0; i < args.length; i++) {
-            argNodes[i] = ConstantNode.create(args[i]);
-        }
-        RCallNode call = RCallNode.createCloneReplacingArgs(callNode, argNodes);
-        /*
-         * It's important to disable/enable debugging across this call as it isn't really part of
-         * the user execution.
-         */
+    public Object callback(RFunction f, Object[] args) {
         boolean gd = DebugHandling.globalDisable(true);
         try {
-            return RContext.getEngine().eval(RDataFactory.createLanguage(call), REnvironment.globalEnv(), depth + 1);
+            return RContext.getEngine().evalFunction(f, args);
         } catch (ReturnException ex) {
             // cannot throw return exceptions further up.
             return ex.getResult();
-        } catch (PutException ex) {
-            throw RInternalError.shouldNotReachHere("callOut");
         } finally {
             DebugHandling.globalDisable(gd);
         }
     }
 
-    private static final Source GET_NAMESPACE_SOURCE = Source.fromText("..getNamespace(name)", "<..getNamespace>");
-    private static RCallNode getNamespaceCall;
-
-    @Override
-    public REnvironment findNamespace(RStringVector name, int depth) {
-        if (getNamespaceCall == null) {
-            getNamespaceCall = getCallNode(GET_NAMESPACE_SOURCE);
+    public Object forcePromise(Object val) {
+        if (val instanceof RPromise) {
+            return PromiseHelperNode.evaluateSlowPath(null, (RPromise) val);
+        } else {
+            return val;
         }
-        return (REnvironment) callOut(getNamespaceCall, depth, name);
-    }
-
-    private static final Source HANDLE_SIMPLE_ERROR_SOURCE = Source.fromText(".handleSimpleError(h, msg, call)", "<.handleSimpleError>");
-    private static RCallNode handleSimpleErrorCall;
-
-    @Override
-    public void handleSimpleError(RFunction f, RStringVector msg, Object call, int depth) {
-        if (handleSimpleErrorCall == null) {
-            handleSimpleErrorCall = getCallNode(HANDLE_SIMPLE_ERROR_SOURCE);
-        }
-        callOut(handleSimpleErrorCall, depth, f, msg, call);
-    }
-
-    private static final Source SIGNAL_SIMPLE_WARNING_SOURCE = Source.fromText(".signalSimpleWarning(call, msg)", "<.signalSimpleWarning>");
-    private static RCallNode signalSimpleWarningCall;
-
-    public void signalSimpleWarning(RStringVector msg, Object call, int depth) {
-        if (signalSimpleWarningCall == null) {
-            signalSimpleWarningCall = getCallNode(SIGNAL_SIMPLE_WARNING_SOURCE);
-        }
-        callOut(signalSimpleWarningCall, depth, msg, call);
     }
 
     @Override

@@ -16,6 +16,7 @@ import java.util.*;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.source.*;
+import com.oracle.truffle.r.runtime.RContext.ContextState;
 import com.oracle.truffle.r.runtime.conn.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
@@ -46,7 +47,7 @@ import com.oracle.truffle.r.runtime.instrument.*;
  *
  */
 // Checkstyle: stop final class check
-public class RSerialize {
+public class RSerialize implements RContext.StateFactory {
 
     private static class Flags {
         static final int IS_OBJECT_BIT_MASK = 1 << 8;
@@ -119,6 +120,37 @@ public class RSerialize {
         Object eval(Object arg);
     }
 
+    private static class ContextStateImpl implements RContext.ContextState {
+        /**
+         * {@code true} iff we are saving the source from the deparse of an unserialized function
+         * (for debugging later).
+         */
+        private boolean saveDeparse;
+
+        /**
+         * {@code ...getNamespace} in "namespace.R", used to callback to handle a
+         * {@link SEXPTYPE#NAMESPACESXP} item.
+         */
+        private RFunction dotDotFindNamespace;
+
+        /**
+         * Initialize and return the value of {@link #dotDotFindNamespace}. This is lazy because
+         * when this instance is created, the {@link REnvironment} context state has not been set
+         * up, so we can't look up anything in the base env.
+         */
+        RFunction getDotDotFindNamespace() {
+            if (dotDotFindNamespace == null) {
+                Object f = REnvironment.baseEnv().findFunction("..getNamespace");
+                dotDotFindNamespace = (RFunction) RContext.getRRuntimeASTAccess().forcePromise(f);
+            }
+            return dotDotFindNamespace;
+        }
+    }
+
+    public ContextState newContext(RContext context, Object... objects) {
+        return new ContextStateImpl();
+    }
+
     private static final int MAX_PACKED_INDEX = Integer.MAX_VALUE >> 8;
 
     private static int packRefIndex(int i) {
@@ -136,10 +168,12 @@ public class RSerialize {
         protected int refTableIndex;
         protected final CallHook hook;
         protected final int frameDepth;
+        protected final ContextStateImpl contextState;
 
         protected Common(CallHook hook, int frameDepth) {
             this.hook = hook;
             this.frameDepth = frameDepth;
+            this.contextState = getContextState();
         }
 
         protected static IOException formatError(byte format, boolean ok) throws IOException {
@@ -197,13 +231,16 @@ public class RSerialize {
         return FastROptions.debugMatches("unserialize");
     }
 
-    private static boolean saveDeparse;
+    private static ContextStateImpl getContextState() {
+        return (ContextStateImpl) RContext.getContextState(RContext.ClassStateKind.RSerialize);
+    }
 
     /**
      * Supports the saving of deparsed lazily loaded package functions for instrumentation access.
      */
     public static void setSaveDeparse(boolean status) {
-        saveDeparse = status;
+        ContextStateImpl serializeContextState = getContextState();
+        serializeContextState.saveDeparse = status;
     }
 
     @TruffleBoundary
@@ -344,7 +381,14 @@ public class RSerialize {
 
                 case NAMESPACESXP: {
                     RStringVector s = inStringVec(false);
-                    return checkResult(addReadRef(RContext.getRRuntimeASTAccess().findNamespace(s, frameDepth)));
+// Object r = RContext.getRRuntimeASTAccess().findNamespace(s, frameDepth);
+                    /*
+                     * TODO we do not record "lastname", which is passed as second argument, but
+                     * only used in a warning message in the unlikely event that the namespace
+                     * cannot be found.
+                     */
+                    Object r = RContext.getEngine().evalFunction(contextState.getDotDotFindNamespace(), s, "");
+                    return checkResult(addReadRef(r));
                 }
 
                 case PERSISTSXP: {
@@ -724,7 +768,7 @@ public class RSerialize {
                      * header line
                      */
                     deparse = "# deparsed from package: " + packageName + "\n" + deparse;
-                    if (saveDeparse) {
+                    if (contextState.saveDeparse) {
                         saveDeparseResult(deparse, false);
                     } else {
                         sourcePath = RPackageSource.lookup(deparse);
@@ -743,7 +787,7 @@ public class RSerialize {
                  * special case where we are just saving package sources.
                  */
                 saveDeparseResult(deparseRaw, true);
-                if (!saveDeparse) {
+                if (!contextState.saveDeparse) {
                     throw Utils.fail("internal deparse error - see file DEPARSE_ERROR");
                 } else {
                     return null;
@@ -751,8 +795,8 @@ public class RSerialize {
             }
         }
 
-        private static void saveDeparseResult(String deparse, boolean isError) throws IOException {
-            if (saveDeparse) {
+        private void saveDeparseResult(String deparse, boolean isError) throws IOException {
+            if (contextState.saveDeparse) {
                 RPackageSource.deparsed(deparse, isError);
             } else if (isError) {
                 try (FileWriter wr = new FileWriter(new File(new File(REnvVars.rHome()), "DEPARSE" + (isError ? "_ERROR" : "")))) {

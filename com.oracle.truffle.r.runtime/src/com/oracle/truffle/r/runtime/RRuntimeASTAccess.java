@@ -86,19 +86,16 @@ public interface RRuntimeASTAccess {
     void serializeNode(RSerialize.State state, Object node);
 
     /**
-     * Call out to R to find a namespace during unserialization.
+     * Callback to an R function from the internal implementation. Since this is part of the
+     * implementation and not part of the user-visible execution debug handling is disabled across
+     * the call.
      */
-    REnvironment findNamespace(RStringVector name, int depth);
+    Object callback(RFunction f, Object[] args);
 
     /**
-     * Call out to R to .handleSimpleError.
+     * Force a promise by slow-path evaluation.
      */
-    void handleSimpleError(RFunction f, RStringVector msg, Object call, int depth);
-
-    /**
-     * Call out to R to .signalSimpleWarning.
-     */
-    void signalSimpleWarning(RStringVector msg, Object call, int depth);
+    Object forcePromise(Object val);
 
     /**
      * {@code RASTUtils.createNodeForValue}.

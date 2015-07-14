@@ -299,6 +299,13 @@ final class REngine implements RContext.Engine {
         return runCall(callTarget, frame, false, false);
     }
 
+    public Object evalFunction(RFunction func, Object... args) {
+        ArgumentsSignature argsSig = ((RRootNode) func.getRootNode()).getSignature();
+        MaterializedFrame frame = Utils.getActualCurrentFrame().materialize();
+        Object[] rArgs = RArguments.create(func, RArguments.getCallSourceSection(frame), frame, frame == null ? 1 : RArguments.getDepth(frame) + 1, args, argsSig);
+        return func.getTarget().call(rArgs);
+    }
+
     /**
      * @return @see
      *         {@link #evalTarget(RootCallTarget, SourceSection, REnvironment, REnvironment, int)}

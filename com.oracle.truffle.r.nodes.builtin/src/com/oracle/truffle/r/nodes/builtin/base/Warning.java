@@ -22,19 +22,35 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
-import com.oracle.truffle.r.runtime.RBuiltin;
-import com.oracle.truffle.r.runtime.RBuiltinKind;
+import com.oracle.truffle.r.nodes.unary.*;
+import com.oracle.truffle.r.runtime.*;
 
 @RBuiltin(name = "warning", kind = RBuiltinKind.INTERNAL, parameterNames = {"call", "immediate", "nobreaks", "message"})
 public abstract class Warning extends RInvisibleBuiltinNode {
-    @SuppressWarnings("unused")
+    @Child private CastStringNode castString;
+
+    private Object castString(Object operand) {
+        if (castString == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            castString = insert(CastStringNodeGen.create(false, true, false, false));
+        }
+        return castString.execute(operand);
+    }
+
     @Specialization
     @TruffleBoundary
-    public String warning(byte call, byte immediate, byte noBreaks, Object message) {
+    public String warning(byte callL, byte immediateL, byte noBreakWarningL, Object messageObj) {
+        // TODO supposed to coerce call/immediate/noBreaks to logical
+        String message = RRuntime.asString(castString(messageObj));
+        boolean call = RRuntime.fromLogical(callL);
+        boolean immediate = RRuntime.fromLogical(immediateL);
+        boolean noBreakWarning = RRuntime.fromLogical(noBreakWarningL);
+        RErrorHandling.warningcallInternal(call ? getEncapsulatingSourceSection() : null, message, immediate, noBreakWarning);
         controlVisibility();
-        return "";
+        return message;
     }
 }

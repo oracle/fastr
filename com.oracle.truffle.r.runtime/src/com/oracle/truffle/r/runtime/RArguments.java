@@ -325,7 +325,7 @@ public final class RArguments {
     }
 
     public static void setIsIrregular(Object[] arguments, boolean isIrregularFrame) {
-        assert arguments.length > INDEX_ARGUMENTS;
+        assert arguments.length >= INDEX_ARGUMENTS;
         arguments[INDEX_IS_IRREGULAR] = isIrregularFrame;
     }
 
