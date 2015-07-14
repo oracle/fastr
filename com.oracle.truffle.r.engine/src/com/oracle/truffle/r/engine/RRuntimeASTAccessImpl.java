@@ -285,7 +285,7 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
             ArgumentsSignature newSig = ArgumentsSignature.get(newNames);
             CallArgumentsNode newCallArgs = CallArgumentsNode.create(null, false, args.getArguments(), newSig);
             // copying is already handled by RShareable
-            rl.setRep(RCallNode.createCall(null, ((RCallNode) node).getFunctionNode(), newCallArgs, null));
+            rl.setRep(RCallNode.createCall(null, ((RCallNode) node).getFunctionNode(), newCallArgs));
         } else if (node instanceof GroupDispatchNode) {
             throw RError.nyi(null, "group dispatch names update");
         } else {
@@ -313,7 +313,7 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
             if (!match) {
                 throw RError.nyi(null, "assignment to non-existent field");
             }
-            return RDataFactory.createLanguage(RCallNode.createCall(null, ((RCallNode) node).getFunctionNode(), args, null));
+            return RDataFactory.createLanguage(RCallNode.createCall(null, ((RCallNode) node).getFunctionNode(), args));
         } else if (node instanceof GroupDispatchNode) {
             throw RError.nyi(null, "group dispatch field update");
         } else {

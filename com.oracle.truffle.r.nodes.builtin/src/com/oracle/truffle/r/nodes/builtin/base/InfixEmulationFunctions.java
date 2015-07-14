@@ -37,11 +37,7 @@ import com.oracle.truffle.r.nodes.access.array.write.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.builtin.base.InfixEmulationFunctionsFactory.PromiseEvaluatorNodeGen;
 import com.oracle.truffle.r.nodes.function.*;
-<<<<<<< local
-import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.parser.ast.*;
-=======
->>>>>>> other
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -526,7 +522,7 @@ public class InfixEmulationFunctions {
             String formulaCode = formulaSrc.getCode();
             int tildeIndex = formulaCode.indexOf('~');
             SourceSection tildeSrc = ASTNode.adjustedSource(formulaSrc, formulaSrc.getCharIndex() + tildeIndex, 1);
-            RCallNode call = RCallNode.createOpCall(formulaSrc, tildeSrc, "~", args, null);
+            RCallNode call = RCallNode.createOpCall(formulaSrc, tildeSrc, "~", args);
             RLanguage lang = RDataFactory.createLanguage(call);
             lang.setClassAttr(FORMULA_CLASS, false);
             REnvironment env = REnvironment.frameToEnvironment(frame.materialize());

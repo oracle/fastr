@@ -102,7 +102,7 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
         String formulaCode = formulaSrc.getCode();
         int tildeIndex = formulaCode.indexOf('~');
         SourceSection tildeSrc = ASTNode.adjustedSource(formulaSrc, formulaSrc.getCharIndex() + tildeIndex, 1);
-        RCallNode call = RCallNode.createOpCall(formulaSrc, tildeSrc, "~", args, null);
+        RCallNode call = RCallNode.createOpCall(formulaSrc, tildeSrc, "~", args);
         return call;
     }
 
