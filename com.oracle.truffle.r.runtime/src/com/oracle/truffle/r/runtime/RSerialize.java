@@ -381,7 +381,6 @@ public class RSerialize implements RContext.StateFactory {
 
                 case NAMESPACESXP: {
                     RStringVector s = inStringVec(false);
-// Object r = RContext.getRRuntimeASTAccess().findNamespace(s, frameDepth);
                     /*
                      * TODO we do not record "lastname", which is passed as second argument, but
                      * only used in a warning message in the unlikely event that the namespace
