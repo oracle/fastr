@@ -16,7 +16,6 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.binary.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
@@ -30,11 +29,12 @@ import com.oracle.truffle.r.runtime.env.*;
 // 2nd parameter is "value", but should not be matched against, so ""
 public abstract class UpdateClass extends RBuiltinNode {
 
+    protected static final int CACHE_LIMIT = 2;
+
     @Child private CastTypeNode castTypeNode;
     @Child private CastStringNode castStringNode;
     @Child private TypeofNode typeof;
 
-    private final ValueProfile modeProfile = ValueProfile.createIdentityProfile();
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
     @Specialization(guards = "!isStringVector(className)")
@@ -64,20 +64,31 @@ public abstract class UpdateClass extends RBuiltinNode {
         return result.setClassAttr(null, false);
     }
 
-    @Specialization
+    @Specialization(limit = "CACHE_LIMIT", guards = "cachedClassName == className")
+    protected Object setClassCached(RAbstractContainer arg, @SuppressWarnings("unused") String className, //
+                    @Cached("className") String cachedClassName, //
+                    @Cached("fromMode(className)") RType cachedMode) {
+        return setClassInternal(arg, cachedClassName, cachedMode);
+    }
+
+    @Specialization(contains = "setClassCached")
     protected Object setClass(RAbstractContainer arg, String className) {
         controlVisibility();
-        initTypeof();
+        RType mode = RType.fromMode(className);
+        return setClassInternal(arg, className, mode);
+    }
+
+    private Object setClassInternal(RAbstractContainer arg, String className, RType mode) {
         if (!arg.isObject(attrProfiles)) {
-            RType argType = this.typeof.execute(arg);
-            if (argType.equals(className) || (RType.Numeric.getName().equals(className) && (argType == RType.Integer || argType == RType.Double))) {
+            initTypeof();
+            RType argType = typeof.execute(arg);
+            if (argType.equals(className) || (mode == RType.Numeric && (argType == RType.Integer || argType == RType.Double))) {
                 // "explicit" attribute might have been set (e.g. by oldClass<-)
                 return setClass(arg, RNull.instance);
             }
         }
-        initCastTypeNode();
-        RType mode = RType.fromMode(modeProfile.profile(className));
         if (mode != null) {
+            initCastTypeNode();
             Object result = castTypeNode.execute(arg, mode);
             if (result != null) {
                 return setClass((RAbstractVector) result, RNull.instance);
@@ -90,17 +101,15 @@ public abstract class UpdateClass extends RBuiltinNode {
                 if (resultVector.isMatrix()) {
                     return setClass(resultVector, RNull.instance);
                 }
-                final int[] dimensions = resultVector.getDimensions();
-                int dimLength = 0;
-                if (dimensions != null) {
-                    dimLength = dimensions.length;
-                }
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.NOT_A_MATRIX_UPDATE_CLASS, dimLength);
+                CompilerDirectives.transferToInterpreter();
+                int[] dimensions = resultVector.getDimensions();
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.NOT_A_MATRIX_UPDATE_CLASS, dimensions == null ? 0 : dimensions.length);
             }
             if (RType.Array.getName().equals(className)) {
                 if (resultVector.isArray()) {
                     return setClass(resultVector, RNull.instance);
                 }
+                CompilerDirectives.transferToInterpreter();
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.NOT_ARRAY_UPDATE_CLASS);
             }
         }
