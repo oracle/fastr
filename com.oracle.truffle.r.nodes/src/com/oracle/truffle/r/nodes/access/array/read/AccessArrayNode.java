@@ -25,7 +25,6 @@ package com.oracle.truffle.r.nodes.access.array.read;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
@@ -40,15 +39,13 @@ import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
-import com.oracle.truffle.r.runtime.gnur.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
 @NodeChildren({@NodeChild(value = "vector", type = RNode.class), @NodeChild(value = "exact", type = RNode.class), @NodeChild(value = "recursionLevel", type = RNode.class),
                 @NodeChild(value = "positions", type = PositionsArrayNode.class, executeWith = {"vector", "exact"}), @NodeChild(value = "dropDim", type = RNode.class)})
-public abstract class AccessArrayNode extends RNode implements RSyntaxNode {
+public abstract class AccessArrayNode extends RNode {
 
     public final boolean isSubset;
-    public final boolean forObjects;
     public final boolean exactInSource;
     public final boolean dropInSource;
 
@@ -76,109 +73,22 @@ public abstract class AccessArrayNode extends RNode implements RSyntaxNode {
     @Child private GetNamesNode getNamesNode;
     @Child private GetDimNamesNode getDimNamesNode;
 
-    @Child private UseMethodInternalNode dcn;
-    @Child private UseMethodInternalNode dcnDrop;
+    public abstract Object executeAccess(Object vector, Object exact, int recLevel, Object operand, Object dropDim);
 
-    public abstract RNode getVector();
-
-    protected abstract RNode getPositions();
-
-    protected abstract RNode getExact();
-
-    protected abstract RNode getDropDim();
-
-    protected abstract RNode getRecursionLevel();
-
-    public abstract Object executeAccess(VirtualFrame frame, Object vector, Object exact, int recLevel, Object operand, Object dropDim);
-
-    @Override
-    public void deparse(RDeparse.State state) {
-        RSyntaxNode.cast(getVector()).deparse(state);
-        state.append(isSubset ? "[" : "[[");
-        RSyntaxNode.cast(getPositions()).deparse(state);
-        if (exactInSource) {
-            state.append(", exact = ");
-            RSyntaxNode.cast(getExact()).deparse(state);
-        }
-        if (dropInSource) {
-            state.append(", drop = ");
-            RSyntaxNode.cast(getDropDim()).deparse(state);
-        }
-        state.append(isSubset ? "]" : "]]");
-    }
-
-    @Override
-    public void serialize(RSerialize.State state) {
-        /*
-         * Since in R this is a function, the vector, the positions and the optional exact, drop are
-         * all "arguments" and hang off the same list. Unfortunately the positions are in a
-         * sub-node, so this is a bit complicated to handle. In particular MISSINGSXP is only set if
-         * everything is missing.
-         */
-        state.setAsBuiltin(isSubset ? "[" : "[[");
-        state.openPairList(SEXPTYPE.LISTSXP);
-        state.serializeNodeSetCar(getVector());
-        state.openPairList(SEXPTYPE.LISTSXP);
-        RSyntaxNode.cast(getPositions()).serialize(state);
-        // N.B. The above call left the result unlinked so we can add exact/drop
-        int posCount = state.getPositionsLength();
-        if (posCount == 0 && !(exactInSource || dropInSource)) {
-            state.setCarMissing();
-            state.setCdr(state.closePairList());
-        } else {
-            if (exactInSource) {
-                if (posCount > 0) {
-                    state.openPairList();
-                }
-                state.setTagAsSymbol("exact");
-                state.setCar(RRuntime.asLogical(exactInSource));
-                posCount++;
-            }
-            if (dropInSource) {
-                if (posCount > 0) {
-                    state.openPairList();
-                }
-                state.setTagAsSymbol("drop");
-                state.setCar(RRuntime.asLogical(dropInSource));
-                posCount++;
-            }
-            state.linkPairList(posCount + 1); // the vector counts as well
-        }
-        // set CDR of LANGSXP
-        state.setCdr(state.closePairList());
-    }
-
-    @Override
-    public RSyntaxNode substitute(REnvironment env) {
-        RNode vector = RSyntaxNode.cast(getVector()).substitute(env).asRNode();
-        PositionsArrayNode positions = (PositionsArrayNode) RSyntaxNode.cast(getPositions()).substitute(env);
-        RNode exact = RSyntaxNode.cast(getExact()).substitute(env).asRNode();
-        RNode dropDim = RSyntaxNode.cast(getDropDim()).substitute(env).asRNode();
-        return AccessArrayNodeGen.create(isSubset, forObjects, true, true, vector, exact, getRecursionLevel(), positions, dropDim);
-    }
-
-    public AccessArrayNode(boolean isSubset, boolean forObjects, boolean exactInSource, boolean dropInSource) {
+    public AccessArrayNode(boolean isSubset, boolean exactInSource, boolean dropInSource) {
         this.isSubset = isSubset;
-        this.forObjects = forObjects;
         this.exactInSource = exactInSource;
         this.dropInSource = dropInSource;
     }
 
-    public AccessArrayNode(AccessArrayNode other) {
-        this.isSubset = other.isSubset;
-        this.forObjects = other.forObjects;
-        this.exactInSource = other.exactInSource;
-        this.dropInSource = other.dropInSource;
-    }
-
-    private Object accessRecursive(VirtualFrame frame, Object vector, Object exact, Object operand, int recLevel, Object dropDim) {
+    private Object accessRecursive(Object vector, Object exact, Object operand, int recLevel, Object dropDim) {
         // for data frames, recursive update is the same as for lists but as if the [[]] operator
         // was used
         if (accessRecursive == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            accessRecursive = insert(AccessArrayNodeGen.create(isSubset, false, false, false, null, null, null, null, null));
+            accessRecursive = insert(AccessArrayNodeGen.create(isSubset, false, false, null, null, null, null, null));
         }
-        return accessRecursive.executeAccess(frame, vector, exact, recLevel, operand, dropDim);
+        return accessRecursive.executeAccess(vector, exact, recLevel, operand, dropDim);
     }
 
     private Object castVector(Object value) {
@@ -214,29 +124,29 @@ public abstract class AccessArrayNode extends RNode implements RSyntaxNode {
         return operatorConverter.executeConvert(vector, operand, exact);
     }
 
-    private Object getMultiDimData(VirtualFrame frame, Object data, RAbstractVector vector, Object[] positions, int currentDimLevel, int srcArrayBase, int dstArrayBase, int accSrcDimensions,
-                    int accDstDimensions, NACheck posCheck, NACheck elementCheck) {
+    private Object getMultiDimData(Object data, RAbstractVector vector, Object[] positions, int currentDimLevel, int srcArrayBase, int dstArrayBase, int accSrcDimensions, int accDstDimensions,
+                    NACheck posCheck, NACheck elementCheck) {
         if (getMultiDimData == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             getMultiDimData = insert(GetMultiDimDataNodeGen.create(posCheck, elementCheck));
         }
-        return getMultiDimData.executeMultiDimDataGet(frame, data, vector, positions, currentDimLevel, srcArrayBase, dstArrayBase, accSrcDimensions, accDstDimensions);
+        return getMultiDimData.executeMultiDimDataGet(data, vector, positions, currentDimLevel, srcArrayBase, dstArrayBase, accSrcDimensions, accDstDimensions);
     }
 
-    private RStringVector getNames(VirtualFrame frame, RAbstractVector vector, Object[] positions, int currentDimLevel, NACheck namesCheck) {
+    private RStringVector getNames(RAbstractVector vector, Object[] positions, int currentDimLevel, NACheck namesCheck) {
         if (getNamesNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             getNamesNode = insert(GetNamesNodeGen.create(namesCheck));
         }
-        return getNamesNode.executeNamesGet(frame, vector, positions, currentDimLevel, RNull.instance);
+        return getNamesNode.executeNamesGet(vector, positions, currentDimLevel, RNull.instance);
     }
 
-    private RStringVector getDimNames(VirtualFrame frame, RList dstDimNames, RAbstractVector vector, Object[] positions, int currentSrcDimLevel, int currentDstDimLevel, NACheck namesCheck) {
+    private RStringVector getDimNames(RList dstDimNames, RAbstractVector vector, Object[] positions, int currentSrcDimLevel, int currentDstDimLevel, NACheck namesCheck) {
         if (getDimNamesNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             getDimNamesNode = insert(GetDimNamesNodeGen.create(namesCheck));
         }
-        return (RStringVector) getDimNamesNode.executeDimNamesGet(frame, dstDimNames, vector, positions, currentSrcDimLevel, currentDstDimLevel);
+        return (RStringVector) getDimNamesNode.executeDimNamesGet(dstDimNames, vector, positions, currentSrcDimLevel, currentDstDimLevel);
     }
 
     public static RIntVector popHead(RIntVector p, NACheck posNACheck) {
@@ -276,54 +186,14 @@ public abstract class AccessArrayNode extends RNode implements RSyntaxNode {
         return RDataFactory.createStringVector(namesData, namesNACheck.neverSeenNA());
     }
 
-    private static final ArgumentsSignature SIGNATURE = ArgumentsSignature.get("", "");
-    private static final ArgumentsSignature DROP_SIGNATURE = ArgumentsSignature.get("", "", "drop");
-    private static final ArgumentsSignature EXACT_SIGNATURE = ArgumentsSignature.get("", "", "exact");
-
-    @Specialization(guards = {"isObject(container)", "isSubset()"})
-    protected Object accessObjectSubset(VirtualFrame frame, RAbstractContainer container, Object exact, int recLevel, Object position, Object dropDim) {
-        Object inds = position instanceof Object[] ? new RArgsValuesAndNames((Object[]) position, ArgumentsSignature.empty(((Object[]) position).length)) : position;
-        try {
-            if (dropDim != RMissing.instance) {
-                if (dcnDrop == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    dcnDrop = insert(new UseMethodInternalNode("[", DROP_SIGNATURE, true));
-                }
-                return dcnDrop.execute(frame, container, new Object[]{container, inds, dropDim});
-            } else {
-                if (dcn == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    dcn = insert(new UseMethodInternalNode("[", SIGNATURE, true));
-                }
-                return dcn.execute(frame, container.getClassHierarchy(), new Object[]{container, inds});
-            }
-        } catch (S3FunctionLookupNode.NoGenericMethodException e) {
-            return accessRecursive(frame, container, exact, position, recLevel, dropDim);
-        }
+    @Specialization
+    protected Object accessFactor(RFactor factor, Object exact, int recLevel, Object position, Object dropDim) {
+        return accessRecursive(factor.getVector(), exact, position, recLevel, dropDim);
     }
 
-    @Specialization(guards = {"isObject(container)", "!isSubset()"})
-    protected Object accessObject(VirtualFrame frame, RAbstractContainer container, Object exact, int recLevel, Object position, Object dropDim) {
-        if (dcn == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            dcn = insert(new UseMethodInternalNode("[[", EXACT_SIGNATURE, true));
-        }
-        try {
-            Object inds = position instanceof Object[] ? new RArgsValuesAndNames((Object[]) position, ArgumentsSignature.empty(((Object[]) position).length)) : position;
-            return dcn.execute(frame, container, new Object[]{container, inds, exact});
-        } catch (S3FunctionLookupNode.NoGenericMethodException e) {
-            return accessRecursive(frame, container, exact, position, recLevel, dropDim);
-        }
-    }
-
-    @Specialization(guards = "!isObject(factor)")
-    protected Object accessFactor(VirtualFrame frame, RFactor factor, Object exact, int recLevel, Object position, Object dropDim) {
-        return accessRecursive(frame, factor.getVector(), exact, position, recLevel, dropDim);
-    }
-
-    @Specialization(guards = "!isObject(dataFrame)")
-    protected Object accessFactor(VirtualFrame frame, RDataFrame dataFrame, Object exact, int recLevel, Object position, Object dropDim) {
-        return accessRecursive(frame, dataFrame.getVector(), exact, position, recLevel, dropDim);
+    @Specialization
+    protected Object accessFactor(RDataFrame dataFrame, Object exact, int recLevel, Object position, Object dropDim) {
+        return accessRecursive(dataFrame.getVector(), exact, position, recLevel, dropDim);
     }
 
     @SuppressWarnings("unused")
@@ -375,7 +245,7 @@ public abstract class AccessArrayNode extends RNode implements RSyntaxNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = "!isObject(container)")
+    @Specialization
     protected RNull access(RAbstractContainer container, Object exact, int recLevel, RNull positions, Object dropDim) {
         // this is a special case (see ArrayPositionCast) - RNull can only appear to represent the
         // x[NA] case which has to return null and not a null vector
@@ -383,7 +253,7 @@ public abstract class AccessArrayNode extends RNode implements RSyntaxNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = "!isObject(container)")
+    @Specialization
     protected Object access(RAbstractContainer container, Object exact, int recLevel, RMissing positions, Object dropDim) {
         if (!isSubset) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "symbol");
@@ -393,13 +263,13 @@ public abstract class AccessArrayNode extends RNode implements RSyntaxNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"!isObject(container)", "wrongDimensions(container, positions)"})
+    @Specialization(guards = {"wrongDimensions(container, positions)"})
     protected Object access(RAbstractVector container, Object exact, int recLevel, Object[] positions, Object dropDim) {
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.INCORRECT_DIMENSIONS);
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"!isObject(container)", "isPositionNA(position)", "!isSubset()"})
+    @Specialization(guards = {"isPositionNA(position)", "!isSubset()"})
     protected RIntVector accessNA(RAbstractContainer container, Object exact, int recLevel, int position, Object dropDim) {
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.SUBSCRIPT_BOUNDS);
     }
@@ -488,7 +358,7 @@ public abstract class AccessArrayNode extends RNode implements RSyntaxNode {
         }
     }
 
-    protected Object[] accessInternal(VirtualFrame frame, DimsAndResultLength res, RList vector, Object[] positions) {
+    protected Object[] accessInternal(DimsAndResultLength res, RList vector, Object[] positions) {
         int resLength = res.resLength;
         int[] srcDimensions = vector.getDimensions();
         int numSrcDimensions = srcDimensions.length;
@@ -507,33 +377,33 @@ public abstract class AccessArrayNode extends RNode implements RSyntaxNode {
                 int dstArrayBase = accDstDimensions * i;
                 int pos = p.getDataAt(i);
                 int srcArrayBase = getSrcArrayBase(pos, accSrcDimensions);
-                getMultiDimData(frame, data, vector, positions, numSrcDimensions - 1, srcArrayBase, dstArrayBase, accSrcDimensions, accDstDimensions, posNACheck, elementNACheck);
+                getMultiDimData(data, vector, positions, numSrcDimensions - 1, srcArrayBase, dstArrayBase, accSrcDimensions, accDstDimensions, posNACheck, elementNACheck);
             }
         }
         return data;
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"!isObject(vector)", "hasDimNames(vector)"})
-    protected RList accessNames(VirtualFrame frame, RList vector, Object exact, int recLevel, Object[] positions, RMissing dropDim) {
-        return accessNamesInternal(frame, vector, exact, recLevel, positions, RRuntime.LOGICAL_TRUE);
+    @Specialization(guards = {"hasDimNames(vector)"})
+    protected RList accessNames(RList vector, Object exact, int recLevel, Object[] positions, RMissing dropDim) {
+        return accessNamesInternal(vector, exact, recLevel, positions, RRuntime.LOGICAL_TRUE);
     }
 
-    @Specialization(guards = {"!isObject(vector)", "hasDimNames(vector)"})
-    protected RList accessNames(VirtualFrame frame, RList vector, Object exact, int recLevel, Object[] positions, RAbstractLogicalVector dropDim) {
-        return accessNamesInternal(frame, vector, exact, recLevel, positions, dropDim.getLength() == 0 ? RRuntime.LOGICAL_TRUE : dropDim.getDataAt(0));
+    @Specialization(guards = {"hasDimNames(vector)"})
+    protected RList accessNames(RList vector, Object exact, int recLevel, Object[] positions, RAbstractLogicalVector dropDim) {
+        return accessNamesInternal(vector, exact, recLevel, positions, dropDim.getLength() == 0 ? RRuntime.LOGICAL_TRUE : dropDim.getDataAt(0));
     }
 
     @SuppressWarnings("unused")
-    protected RList accessNamesInternal(VirtualFrame frame, RList vector, Object exact, int recLevel, Object[] positions, byte dropDim) {
+    protected RList accessNamesInternal(RList vector, Object exact, int recLevel, Object[] positions, byte dropDim) {
         DimsAndResultLength res = getDimsAndResultLength(positions, dropDim);
         int[] dimensions = res.dimensions;
         int[] srcDimensions = vector.getDimensions();
         int numSrcDimensions = srcDimensions.length;
-        Object[] data = accessInternal(frame, res, vector, positions);
+        Object[] data = accessInternal(res, vector, positions);
         if (dimensionsIsNullProfile.profile(dimensions == null)) {
             // construct names
-            RStringVector names = getNames(frame, vector, positions, numSrcDimensions, namesNACheck);
+            RStringVector names = getNames(vector, positions, numSrcDimensions, namesNACheck);
             return RDataFactory.createList(data, dimensions, names);
         } else {
             // construct dimnames
@@ -541,25 +411,25 @@ public abstract class AccessArrayNode extends RNode implements RSyntaxNode {
             RList resultVector = RDataFactory.createList(data, dimensions);
             int numDstDimensions = dimLength;
             RList dstDimNames = RDataFactory.createList(new Object[dimLength]);
-            getDimNames(frame, dstDimNames, vector, positions, numSrcDimensions, numDstDimensions, namesNACheck);
+            getDimNames(dstDimNames, vector, positions, numSrcDimensions, numDstDimensions, namesNACheck);
             resultVector.setDimNames(dstDimNames);
             return resultVector;
         }
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"!isObject(vector)", "!hasDimNames(vector)"})
-    protected RList access(VirtualFrame frame, RList vector, Object exact, int recLevel, Object[] positions, RMissing dropDim) {
+    @Specialization(guards = {"!hasDimNames(vector)"})
+    protected RList access(RList vector, Object exact, int recLevel, Object[] positions, RMissing dropDim) {
         DimsAndResultLength res = getDimsAndResultLength(positions, RRuntime.LOGICAL_TRUE);
-        Object[] data = accessInternal(frame, res, vector, positions);
+        Object[] data = accessInternal(res, vector, positions);
         return RDataFactory.createList(data, res.dimensions);
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"!isObject(vector)", "!hasDimNames(vector)"})
-    protected RList access(VirtualFrame frame, RList vector, Object exact, int recLevel, Object[] positions, RAbstractLogicalVector dropDim) {
+    @Specialization(guards = {"!hasDimNames(vector)"})
+    protected RList access(RList vector, Object exact, int recLevel, Object[] positions, RAbstractLogicalVector dropDim) {
         DimsAndResultLength res = getDimsAndResultLength(positions, dropDim.getLength() == 0 ? RRuntime.LOGICAL_TRUE : dropDim.getDataAt(0));
-        Object[] data = accessInternal(frame, res, vector, positions);
+        Object[] data = accessInternal(res, vector, positions);
         return RDataFactory.createList(data, res.dimensions);
     }
 
@@ -580,7 +450,7 @@ public abstract class AccessArrayNode extends RNode implements RSyntaxNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"!isObject(vector)", "isSubset()", "hasNames(vector)"})
+    @Specialization(guards = {"isSubset()", "hasNames(vector)"})
     protected RList accessSubsetNames(RList vector, Object exact, int recLevel, RIntVector p, Object dropDim) {
         Object[] data = accessSubsetInternal(vector, p);
         RStringVector names = getNamesVector(vector.getNames(attrProfiles), p, p.getLength(), namesNACheck);
@@ -588,7 +458,7 @@ public abstract class AccessArrayNode extends RNode implements RSyntaxNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"!isObject(vector)", "isSubset()", "!hasNames(vector)"})
+    @Specialization(guards = {"isSubset()", "!hasNames(vector)"})
     protected RList accessSubset(RList vector, Object exact, int recLevel, RIntVector p, Object dropDim) {
         Object[] data = accessSubsetInternal(vector, p);
         return RDataFactory.createList(data);
@@ -618,28 +488,28 @@ public abstract class AccessArrayNode extends RNode implements RSyntaxNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"!isObject(vector)", "!hasNames(vector)"})
+    @Specialization(guards = {"!hasNames(vector)"})
     protected RList accessStringNoNames(RList vector, Object exact, int recLevel, RStringVector p, Object dropDim) {
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.NO_SUCH_INDEX, 1);
     }
 
-    @Specialization(guards = {"!isObject(vector)", "hasNames(vector)", "!isSubset()", "twoPosition(p)"})
-    protected Object accessStringTwoPosRec(VirtualFrame frame, RList vector, Object exact, int recLevel, RStringVector p, Object dropDim) {
+    @Specialization(guards = {"hasNames(vector)", "!isSubset()", "twoPosition(p)"})
+    protected Object accessStringTwoPosRec(RList vector, Object exact, int recLevel, RStringVector p, Object dropDim) {
         int position = getPositionInRecursion(vector, p.getDataAt(0), recLevel, getEncapsulatingSourceSection(), error, attrProfiles);
         Object newVector = castVector(vector.getDataAt(position - 1));
         Object newPosition = castPosition(newVector, convertOperand(newVector, p.getDataAt(1), exact));
-        return accessRecursive(frame, newVector, exact, newPosition, recLevel + 1, dropDim);
+        return accessRecursive(newVector, exact, newPosition, recLevel + 1, dropDim);
     }
 
-    @Specialization(guards = {"!isObject(vector)", "hasNames(vector)", "!isSubset()", "!twoPosition(p)"})
-    protected Object accessString(VirtualFrame frame, RList vector, Object exact, int recLevel, RStringVector p, Object dropDim) {
+    @Specialization(guards = {"hasNames(vector)", "!isSubset()", "!twoPosition(p)"})
+    protected Object accessString(RList vector, Object exact, int recLevel, RStringVector p, Object dropDim) {
         int position = getPositionInRecursion(vector, p.getDataAt(0), recLevel, getEncapsulatingSourceSection(), error, attrProfiles);
         RStringVector newP = popHead(p, posNACheck);
-        return accessRecursive(frame, vector.getDataAt(position - 1), exact, newP, recLevel + 1, dropDim);
+        return accessRecursive(vector.getDataAt(position - 1), exact, newP, recLevel + 1, dropDim);
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"!isObject(vector)", "!isSubset()", "onePosition(p)", "!inRecursion(recLevel)"})
+    @Specialization(guards = {"!isSubset()", "onePosition(p)", "!inRecursion(recLevel)"})
     protected Object accessOnePos(RList vector, Object exact, int recLevel, RIntVector p, Object dropDim) {
         int position = p.getDataAt(0);
         if (RRuntime.isNA(position)) {
@@ -659,7 +529,7 @@ public abstract class AccessArrayNode extends RNode implements RSyntaxNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"!isObject(vector)", "!isSubset()", "noPosition(positions)"})
+    @Specialization(guards = {"!isSubset()", "noPosition(positions)"})
     protected Object accessNoPos(RList vector, Object exact, int recLevel, RIntVector positions, Object dropDim) {
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
     }
@@ -695,32 +565,32 @@ public abstract class AccessArrayNode extends RNode implements RSyntaxNode {
         return position;
     }
 
-    @Specialization(guards = {"!isObject(vector)", "!isSubset()", "onePosition(positions)", "inRecursion(recLevel)"})
+    @Specialization(guards = {"!isSubset()", "onePosition(positions)", "inRecursion(recLevel)"})
     protected Object accessSubscript(RList vector, @SuppressWarnings("unused") Object exact, int recLevel, RIntVector positions, @SuppressWarnings("unused") Object dropDim) {
         int position = positions.getDataAt(0);
         position = getPositionInRecursion(vector, position, recLevel);
         return vector.getDataAt(position - 1);
     }
 
-    @Specialization(guards = {"!isObject(vector)", "!isSubset()", "twoPosition(positions)"})
-    protected Object accessTwoPosRec(VirtualFrame frame, RList vector, Object exact, int recLevel, RIntVector positions, Object dropDim) {
+    @Specialization(guards = {"!isSubset()", "twoPosition(positions)"})
+    protected Object accessTwoPosRec(RList vector, Object exact, int recLevel, RIntVector positions, Object dropDim) {
         int position = positions.getDataAt(0);
         position = getPositionInRecursion(vector, position, recLevel);
         Object newVector = castVector(vector.getDataAt(position - 1));
         Object newPosition = castPosition(newVector, convertOperand(newVector, positions.getDataAt(1), exact));
-        return accessRecursive(frame, newVector, exact, newPosition, recLevel + 1, dropDim);
+        return accessRecursive(newVector, exact, newPosition, recLevel + 1, dropDim);
     }
 
-    @Specialization(guards = {"!isObject(vector)", "!isSubset()", "multiPos(positions)"})
-    protected Object access(VirtualFrame frame, RList vector, Object exact, int recLevel, RIntVector positions, Object dropDim) {
+    @Specialization(guards = {"!isSubset()", "multiPos(positions)"})
+    protected Object access(RList vector, Object exact, int recLevel, RIntVector positions, Object dropDim) {
         int position = positions.getDataAt(0);
         position = getPositionInRecursion(vector, position, recLevel);
         RIntVector newP = popHead(positions, posNACheck);
-        return accessRecursive(frame, vector.getDataAt(position - 1), exact, newP, recLevel + 1, dropDim);
+        return accessRecursive(vector.getDataAt(position - 1), exact, newP, recLevel + 1, dropDim);
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"!isObject(vector)", "isPositionNA(position)", "isSubset()"})
+    @Specialization(guards = {"isPositionNA(position)", "isSubset()"})
     protected RList accessNA(RList vector, Object exact, int recLevel, int position, Object dropDim) {
         if (vector.getNames(attrProfiles) == null) {
             return RDataFactory.createList(new Object[]{RNull.instance});
@@ -730,58 +600,56 @@ public abstract class AccessArrayNode extends RNode implements RSyntaxNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"!isObject(container)", "!isPositionNA(position)", "isPositionNegative(position)", "!outOfBoundsNegative(container, position)"})
+    @Specialization(guards = {"!isPositionNA(position)", "isPositionNegative(position)", "!outOfBoundsNegative(container, position)"})
     protected RList accessNegativeInBounds(RAbstractContainer container, Object exact, int recLevel, int position, Object dropDim) {
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_MORE_1);
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"!isObject(container)", "!isPositionNA(position)", "isPositionNegative(position)", "outOfBoundsNegative(container, position)", "oneElemVector(container)"})
+    @Specialization(guards = {"!isPositionNA(position)", "isPositionNegative(position)", "outOfBoundsNegative(container, position)", "oneElemVector(container)"})
     protected RList accessNegativeOutOfBoundsOneElemVector(RAbstractContainer container, Object exact, int recLevel, int position, Object dropDim) {
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"!isObject(container)", "!isPositionNA(position)", "isPositionNegative(position)", "outOfBoundsNegative(container, position)", "!oneElemVector(container)"})
+    @Specialization(guards = {"!isPositionNA(position)", "isPositionNegative(position)", "outOfBoundsNegative(container, position)", "!oneElemVector(container)"})
     protected RList accessNegativeOutOfBounds(RAbstractContainer container, Object exact, int recLevel, int position, Object dropDim) {
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_MORE_1);
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"!isObject(vector)", "!isPositionZero(position)", "hasNames(vector)", "isSubset()", "!isPositionNA(position)", "!isPositionNegative(position)"})
+    @Specialization(guards = {"!isPositionZero(position)", "hasNames(vector)", "isSubset()", "!isPositionNA(position)", "!isPositionNegative(position)"})
     protected RList accessNamesSubset(RList vector, Object exact, int recLevel, int position, Object dropDim) {
         Object val = vector.getDataAt(position - 1);
         return RDataFactory.createList(new Object[]{val}, getName(vector, position));
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"!isObject(vector)", "!isPositionZero(position)", "hasNames(vector)", "!isSubset()", "!isPositionNA(position)", "!isPositionNegative(position)",
-                    "!outOfBounds(vector, position)"})
+    @Specialization(guards = {"!isPositionZero(position)", "hasNames(vector)", "!isSubset()", "!isPositionNA(position)", "!isPositionNegative(position)", "!outOfBounds(vector, position)"})
     protected Object accessNames(RList vector, Object exact, int recLevel, int position, Object dropDim) {
         return vector.getDataAt(position - 1);
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"!isObject(vector)", "!isPositionZero(position)", "!hasNames(vector)", "isSubset()", "!isPositionNA(position)", "!isPositionNegative(position)"})
+    @Specialization(guards = {"!isPositionZero(position)", "!hasNames(vector)", "isSubset()", "!isPositionNA(position)", "!isPositionNegative(position)"})
     protected RList accessSubset(RList vector, Object exact, int recLevel, int position, Object dropDim) {
         return RDataFactory.createList(new Object[]{vector.getDataAt(position - 1)});
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"!isObject(vector)", "!isPositionZero(position)", "!hasNames(vector)", "!isSubset()", "!isPositionNA(position)", "!isPositionNegative(position)",
-                    "!outOfBounds(vector, position)"})
+    @Specialization(guards = {"!isPositionZero(position)", "!hasNames(vector)", "!isSubset()", "!isPositionNA(position)", "!isPositionNegative(position)", "!outOfBounds(vector, position)"})
     protected Object access(RList vector, Object exact, int recLevel, int position, Object dropDim) {
         return vector.getDataAt(position - 1);
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"!isObject(vector)", "!isSubset()", "outOfBounds(vector, position)"})
+    @Specialization(guards = {"!isSubset()", "outOfBounds(vector, position)"})
     protected Object accessOutOfBounds(RList vector, Object exact, int recLevel, int position, Object dropDim) {
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.SUBSCRIPT_BOUNDS);
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"!isObject(vector)", "isPositionZero(position)"})
+    @Specialization(guards = {"isPositionZero(position)"})
     protected RList accessPosZero(RList vector, Object exact, int recLevel, int position, Object dropDim) {
         if (!isSubset) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
@@ -794,18 +662,18 @@ public abstract class AccessArrayNode extends RNode implements RSyntaxNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"!isObject(container)", "!isSubset()", "inRecursion(recLevel)", "multiPos(positions)", "!isVectorList(container)"})
+    @Specialization(guards = {"!isSubset()", "inRecursion(recLevel)", "multiPos(positions)", "!isVectorList(container)"})
     protected Object accessRecFailedRec(RAbstractContainer container, Object exact, int recLevel, RIntVector positions, Object dropDim) {
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.RECURSIVE_INDEXING_FAILED, recLevel + 1);
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"!isObject(container)", "!isSubset()", "!inRecursion(recLevel)", "multiPos(positions)", "!isVectorList(container)"})
+    @Specialization(guards = {"!isSubset()", "!inRecursion(recLevel)", "multiPos(positions)", "!isVectorList(container)"})
     protected Object accessRecFailed(RAbstractContainer container, Object exact, int recLevel, RIntVector positions, Object dropDim) {
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_MORE_1);
     }
 
-    protected int[] accessInternal(VirtualFrame frame, DimsAndResultLength res, RAbstractIntVector vector, Object[] positions) {
+    protected int[] accessInternal(DimsAndResultLength res, RAbstractIntVector vector, Object[] positions) {
         int resLength = res.resLength;
         int[] srcDimensions = vector.getDimensions();
         int numSrcDimensions = srcDimensions.length;
@@ -825,32 +693,32 @@ public abstract class AccessArrayNode extends RNode implements RSyntaxNode {
                 int dstArrayBase = accDstDimensions * i;
                 int pos = p.getDataAt(i);
                 int srcArrayBase = getSrcArrayBase(pos, accSrcDimensions);
-                getMultiDimData(frame, data, vector, positions, numSrcDimensions - 1, srcArrayBase, dstArrayBase, accSrcDimensions, accDstDimensions, posNACheck, elementNACheck);
+                getMultiDimData(data, vector, positions, numSrcDimensions - 1, srcArrayBase, dstArrayBase, accSrcDimensions, accDstDimensions, posNACheck, elementNACheck);
             }
         }
         return data;
     }
 
-    @Specialization(guards = {"!isObject(vector)", "hasDimNames(vector)"})
-    protected RIntVector accessNames(VirtualFrame frame, RAbstractIntVector vector, Object exact, int recLevel, Object[] positions, @SuppressWarnings("unused") RMissing dropDim) {
-        return accessNamesInternal(frame, vector, exact, recLevel, positions, RRuntime.LOGICAL_TRUE);
+    @Specialization(guards = {"hasDimNames(vector)"})
+    protected RIntVector accessNames(RAbstractIntVector vector, Object exact, int recLevel, Object[] positions, @SuppressWarnings("unused") RMissing dropDim) {
+        return accessNamesInternal(vector, exact, recLevel, positions, RRuntime.LOGICAL_TRUE);
     }
 
-    @Specialization(guards = {"!isObject(vector)", "hasDimNames(vector)"})
-    protected RIntVector accessNames(VirtualFrame frame, RAbstractIntVector vector, Object exact, int recLevel, Object[] positions, RAbstractLogicalVector dropDim) {
-        return accessNamesInternal(frame, vector, exact, recLevel, positions, dropDim.getLength() == 0 ? RRuntime.LOGICAL_TRUE : dropDim.getDataAt(0));
+    @Specialization(guards = {"hasDimNames(vector)"})
+    protected RIntVector accessNames(RAbstractIntVector vector, Object exact, int recLevel, Object[] positions, RAbstractLogicalVector dropDim) {
+        return accessNamesInternal(vector, exact, recLevel, positions, dropDim.getLength() == 0 ? RRuntime.LOGICAL_TRUE : dropDim.getDataAt(0));
     }
 
     @SuppressWarnings("unused")
-    protected RIntVector accessNamesInternal(VirtualFrame frame, RAbstractIntVector vector, Object exact, int recLevel, Object[] positions, byte dropDim) {
+    protected RIntVector accessNamesInternal(RAbstractIntVector vector, Object exact, int recLevel, Object[] positions, byte dropDim) {
         DimsAndResultLength res = getDimsAndResultLength(positions, dropDim);
         int[] dimensions = res.dimensions;
         int[] srcDimensions = vector.getDimensions();
         int numSrcDimensions = srcDimensions.length;
-        int[] data = accessInternal(frame, res, vector, positions);
+        int[] data = accessInternal(res, vector, positions);
         if (dimensionsIsNullProfile.profile(dimensions == null)) {
             // construct names
-            RStringVector names = getNames(frame, vector, positions, numSrcDimensions, namesNACheck);
+            RStringVector names = getNames(vector, positions, numSrcDimensions, namesNACheck);
             return RDataFactory.createIntVector(data, elementNACheck.neverSeenNA(), dimensions, names);
         } else {
             // construct dimnames
@@ -858,25 +726,24 @@ public abstract class AccessArrayNode extends RNode implements RSyntaxNode {
             RIntVector resultVector = RDataFactory.createIntVector(data, elementNACheck.neverSeenNA(), dimensions);
             int numDstDimensions = dimLength;
             RList dstDimNames = RDataFactory.createList(new Object[dimLength]);
-            getDimNames(frame, dstDimNames, vector, positions, numSrcDimensions, numDstDimensions, namesNACheck);
+            getDimNames(dstDimNames, vector, positions, numSrcDimensions, numDstDimensions, namesNACheck);
             resultVector.setDimNames(dstDimNames);
             return resultVector;
         }
     }
 
-    @Specialization(guards = {"!isObject(vector)", "!hasDimNames(vector)"})
-    protected RIntVector access(VirtualFrame frame, RAbstractIntVector vector, @SuppressWarnings("unused") Object exact, @SuppressWarnings("unused") int recLevel, Object[] positions,
+    @Specialization(guards = {"!hasDimNames(vector)"})
+    protected RIntVector access(RAbstractIntVector vector, @SuppressWarnings("unused") Object exact, @SuppressWarnings("unused") int recLevel, Object[] positions,
                     @SuppressWarnings("unused") RMissing dropDim) {
         DimsAndResultLength res = getDimsAndResultLength(positions, RRuntime.LOGICAL_TRUE);
-        int[] data = accessInternal(frame, res, vector, positions);
+        int[] data = accessInternal(res, vector, positions);
         return RDataFactory.createIntVector(data, elementNACheck.neverSeenNA(), res.dimensions);
     }
 
-    @Specialization(guards = {"!isObject(vector)", "!hasDimNames(vector)"})
-    protected RIntVector access(VirtualFrame frame, RAbstractIntVector vector, @SuppressWarnings("unused") Object exact, @SuppressWarnings("unused") int recLevel, Object[] positions,
-                    RAbstractLogicalVector dropDim) {
+    @Specialization(guards = {"!hasDimNames(vector)"})
+    protected RIntVector access(RAbstractIntVector vector, @SuppressWarnings("unused") Object exact, @SuppressWarnings("unused") int recLevel, Object[] positions, RAbstractLogicalVector dropDim) {
         DimsAndResultLength res = getDimsAndResultLength(positions, dropDim.getLength() == 0 ? RRuntime.LOGICAL_TRUE : dropDim.getDataAt(0));
-        int[] data = accessInternal(frame, res, vector, positions);
+        int[] data = accessInternal(res, vector, positions);
         return RDataFactory.createIntVector(data, elementNACheck.neverSeenNA(), res.dimensions);
     }
 
@@ -899,7 +766,7 @@ public abstract class AccessArrayNode extends RNode implements RSyntaxNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"!isObject(vector)", "hasNames(vector)"})
+    @Specialization(guards = {"hasNames(vector)"})
     protected RIntVector accessNames(RAbstractIntVector vector, Object exact, int recLevel, RIntVector p, Object dropDim) {
         int[] data = accessInternal(vector, p);
         RStringVector names = getNamesVector(vector.getNames(attrProfiles), p, p.getLength(), namesNACheck);
@@ -907,14 +774,14 @@ public abstract class AccessArrayNode extends RNode implements RSyntaxNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"!isObject(vector)", "!hasNames(vector)"})
+    @Specialization(guards = {"!hasNames(vector)"})
     protected RIntVector access(RAbstractIntVector vector, Object exact, int recLevel, RIntVector p, Object dropDim) {
         int[] data = accessInternal(vector, p);
         return RDataFactory.createIntVector(data, elementNACheck.neverSeenNA());
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"!isObject(vector)", "isPositionNA(position)", "isSubset()"})
+    @Specialization(guards = {"isPositionNA(position)", "isSubset()"})
     protected RIntVector accessNA(RAbstractIntVector vector, Object exact, int recLevel, int position, Object dropDim) {
         if (vector.getNames(attrProfiles) == null) {
             return RDataFactory.createIntVector(new int[]{RRuntime.INT_NA}, RDataFactory.INCOMPLETE_VECTOR);
@@ -924,7 +791,7 @@ public abstract class AccessArrayNode extends RNode implements RSyntaxNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"!isObject(vector)", "!isPositionZero(position)", "!isPositionNA(position)", "!isPositionNegative(position)", "hasNames(vector)", "isSubset()"})
+    @Specialization(guards = {"!isPositionZero(position)", "!isPositionNA(position)", "!isPositionNegative(position)", "hasNames(vector)", "isSubset()"})
     protected RIntVector accessNames(RAbstractIntVector vector, Object exact, int recLevel, int position, Object dropDim) {
         int val = vector.getDataAt(position - 1);
         elementNACheck.check(val);
@@ -932,25 +799,25 @@ public abstract class AccessArrayNode extends RNode implements RSyntaxNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"!isObject(vector)", "!isPositionZero(position)", "!isPositionNA(position)", "!isPositionNegative(position)", "hasNames(vector)", "!isSubset()"})
+    @Specialization(guards = {"!isPositionZero(position)", "!isPositionNA(position)", "!isPositionNegative(position)", "hasNames(vector)", "!isSubset()"})
     protected int accessNoSubset(RAbstractIntVector vector, Object exact, int recLevel, int position, Object dropDim) {
         return vector.getDataAt(position - 1);
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"!isObject(vector)", "!isPositionZero(position)", "!isPositionNA(position)", "!isPositionNegative(position)", "!hasNames(vector)"})
+    @Specialization(guards = {"!isPositionZero(position)", "!isPositionNA(position)", "!isPositionNegative(position)", "!hasNames(vector)"})
     protected int accessNoNames(RAbstractIntVector vector, Object exact, int recLevel, int position, Object dropDim) {
         return vector.getDataAt(position - 1);
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"!isObject(vector)", "!isPositionZero(position)", "!isPositionNA(position)", "!isPositionNegative(position)"})
+    @Specialization(guards = {"!isPositionZero(position)", "!isPositionNA(position)", "!isPositionNegative(position)"})
     protected int access(RAbstractIntVector vector, Object exact, int recLevel, int position, Object dropDim) {
         return vector.getDataAt(position - 1);
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"!isObject(vector)", "isPositionZero(position)"})
+    @Specialization(guards = {"isPositionZero(position)"})
     protected RIntVector accessPosZero(RAbstractIntVector vector, Object exact, int recLevel, int position, Object dropDim) {
         if (!isSubset) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
@@ -962,7 +829,7 @@ public abstract class AccessArrayNode extends RNode implements RSyntaxNode {
         }
     }
 
-    protected double[] accessInternal(VirtualFrame frame, DimsAndResultLength res, RAbstractDoubleVector vector, Object[] positions) {
+    protected double[] accessInternal(DimsAndResultLength res, RAbstractDoubleVector vector, Object[] positions) {
         int resLength = res.resLength;
         int[] srcDimensions = vector.getDimensions();
         int numSrcDimensions = srcDimensions.length;
@@ -982,32 +849,32 @@ public abstract class AccessArrayNode extends RNode implements RSyntaxNode {
                 int dstArrayBase = accDstDimensions * i;
                 int pos = p.getDataAt(i);
                 int srcArrayBase = getSrcArrayBase(pos, accSrcDimensions);
-                getMultiDimData(frame, data, vector, positions, numSrcDimensions - 1, srcArrayBase, dstArrayBase, accSrcDimensions, accDstDimensions, posNACheck, elementNACheck);
+                getMultiDimData(data, vector, positions, numSrcDimensions - 1, srcArrayBase, dstArrayBase, accSrcDimensions, accDstDimensions, posNACheck, elementNACheck);
             }
         }
         return data;
     }
 
-    @Specialization(guards = {"!isObject(vector)", "hasDimNames(vector)"})
-    protected RDoubleVector accessNames(VirtualFrame frame, RAbstractDoubleVector vector, Object exact, int recLevel, Object[] positions, @SuppressWarnings("unused") RMissing dropDim) {
-        return accessNamesInternal(frame, vector, exact, recLevel, positions, RRuntime.LOGICAL_TRUE);
+    @Specialization(guards = {"hasDimNames(vector)"})
+    protected RDoubleVector accessNames(RAbstractDoubleVector vector, Object exact, int recLevel, Object[] positions, @SuppressWarnings("unused") RMissing dropDim) {
+        return accessNamesInternal(vector, exact, recLevel, positions, RRuntime.LOGICAL_TRUE);
     }
 
-    @Specialization(guards = {"!isObject(vector)", "hasDimNames(vector)"})
-    protected RDoubleVector accessNames(VirtualFrame frame, RAbstractDoubleVector vector, Object exact, int recLevel, Object[] positions, RAbstractLogicalVector dropDim) {
-        return accessNamesInternal(frame, vector, exact, recLevel, positions, dropDim.getLength() == 0 ? RRuntime.LOGICAL_TRUE : dropDim.getDataAt(0));
+    @Specialization(guards = {"hasDimNames(vector)"})
+    protected RDoubleVector accessNames(RAbstractDoubleVector vector, Object exact, int recLevel, Object[] positions, RAbstractLogicalVector dropDim) {
+        return accessNamesInternal(vector, exact, recLevel, positions, dropDim.getLength() == 0 ? RRuntime.LOGICAL_TRUE : dropDim.getDataAt(0));
     }
 
     @SuppressWarnings("unused")
-    protected RDoubleVector accessNamesInternal(VirtualFrame frame, RAbstractDoubleVector vector, Object exact, int recLevel, Object[] positions, byte dropDim) {
+    protected RDoubleVector accessNamesInternal(RAbstractDoubleVector vector, Object exact, int recLevel, Object[] positions, byte dropDim) {
         DimsAndResultLength res = getDimsAndResultLength(positions, dropDim);
         int[] dimensions = res.dimensions;
         int[] srcDimensions = vector.getDimensions();
         int numSrcDimensions = srcDimensions.length;
-        double[] data = accessInternal(frame, res, vector, positions);
+        double[] data = accessInternal(res, vector, positions);
         if (dimensionsIsNullProfile.profile(dimensions == null)) {
             // construct names
-            RStringVector names = getNames(frame, vector, positions, numSrcDimensions, namesNACheck);
+            RStringVector names = getNames(vector, positions, numSrcDimensions, namesNACheck);
             return RDataFactory.createDoubleVector(data, elementNACheck.neverSeenNA(), dimensions, names);
         } else {
             // construct dimnames
@@ -1015,25 +882,24 @@ public abstract class AccessArrayNode extends RNode implements RSyntaxNode {
             RDoubleVector resultVector = RDataFactory.createDoubleVector(data, elementNACheck.neverSeenNA(), dimensions);
             int numDstDimensions = dimLength;
             RList dstDimNames = RDataFactory.createList(new Object[dimLength]);
-            getDimNames(frame, dstDimNames, vector, positions, numSrcDimensions, numDstDimensions, namesNACheck);
+            getDimNames(dstDimNames, vector, positions, numSrcDimensions, numDstDimensions, namesNACheck);
             resultVector.setDimNames(dstDimNames);
             return resultVector;
         }
     }
 
-    @Specialization(guards = {"!isObject(vector)", "!hasDimNames(vector)"})
-    protected RDoubleVector access(VirtualFrame frame, RAbstractDoubleVector vector, @SuppressWarnings("unused") Object exact, @SuppressWarnings("unused") int recLevel, Object[] positions,
+    @Specialization(guards = {"!hasDimNames(vector)"})
+    protected RDoubleVector access(RAbstractDoubleVector vector, @SuppressWarnings("unused") Object exact, @SuppressWarnings("unused") int recLevel, Object[] positions,
                     @SuppressWarnings("unused") RMissing dropDim) {
         DimsAndResultLength res = getDimsAndResultLength(positions, RRuntime.LOGICAL_TRUE);
-        double[] data = accessInternal(frame, res, vector, positions);
+        double[] data = accessInternal(res, vector, positions);
         return RDataFactory.createDoubleVector(data, elementNACheck.neverSeenNA(), res.dimensions);
     }
 
-    @Specialization(guards = {"!isObject(vector)", "!hasDimNames(vector)"})
-    protected RDoubleVector access(VirtualFrame frame, RAbstractDoubleVector vector, @SuppressWarnings("unused") Object exact, @SuppressWarnings("unused") int recLevel, Object[] positions,
-                    RAbstractLogicalVector dropDim) {
+    @Specialization(guards = {"!hasDimNames(vector)"})
+    protected RDoubleVector access(RAbstractDoubleVector vector, @SuppressWarnings("unused") Object exact, @SuppressWarnings("unused") int recLevel, Object[] positions, RAbstractLogicalVector dropDim) {
         DimsAndResultLength res = getDimsAndResultLength(positions, dropDim.getLength() == 0 ? RRuntime.LOGICAL_TRUE : dropDim.getDataAt(0));
-        double[] data = accessInternal(frame, res, vector, positions);
+        double[] data = accessInternal(res, vector, positions);
         return RDataFactory.createDoubleVector(data, elementNACheck.neverSeenNA(), res.dimensions);
     }
 
@@ -1062,7 +928,7 @@ public abstract class AccessArrayNode extends RNode implements RSyntaxNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"!isObject(vector)", "hasNames(vector)"})
+    @Specialization(guards = {"hasNames(vector)"})
     protected RDoubleVector accessNames(RDoubleVector vector, Object exact, int recLevel, RIntVector p, Object dropDim) {
         double[] data = accessInternal(vector, p);
         RStringVector names = getNamesVector(vector.getNames(attrProfiles), p, p.getLength(), namesNACheck);
@@ -1070,7 +936,7 @@ public abstract class AccessArrayNode extends RNode implements RSyntaxNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"!isObject(vector)", "!hasNames(vector)"})
+    @Specialization(guards = {"!hasNames(vector)"})
     protected RDoubleVector access(RDoubleVector vector, Object exact, int recLevel, RIntVector p, Object dropDim) {
         double[] data = accessInternal(vector, p);
         return RDataFactory.createDoubleVector(data, elementNACheck.neverSeenNA());
@@ -1095,7 +961,7 @@ public abstract class AccessArrayNode extends RNode implements RSyntaxNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"!isObject(vector)", "hasNames(vector)"})
+    @Specialization(guards = {"hasNames(vector)"})
     protected RDoubleVector accessNames(RAbstractDoubleVector vector, Object exact, int recLevel, RIntVector p, Object dropDim) {
         double[] data = accessInternal(vector, p);
         RStringVector names = getNamesVector(vector.getNames(attrProfiles), p, p.getLength(), namesNACheck);
@@ -1103,14 +969,14 @@ public abstract class AccessArrayNode extends RNode implements RSyntaxNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"!isObject(vector)", "!hasNames(vector)"})
+    @Specialization(guards = {"!hasNames(vector)"})
     protected RDoubleVector access(RAbstractDoubleVector vector, Object exact, int recLevel, RIntVector p, Object dropDim) {
         double[] data = accessInternal(vector, p);
         return RDataFactory.createDoubleVector(data, elementNACheck.neverSeenNA());
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"!isObject(vector)", "isPositionNA(position)", "isSubset()"})
+    @Specialization(guards = {"isPositionNA(position)", "isSubset()"})
     protected RDoubleVector accessNA(RAbstractDoubleVector vector, Object exact, int recLevel, int position, Object dropDim) {
         if (vector.getNames(attrProfiles) == null) {
             return RDataFactory.createDoubleVector(new double[]{RRuntime.DOUBLE_NA}, RDataFactory.INCOMPLETE_VECTOR);
@@ -1120,7 +986,7 @@ public abstract class AccessArrayNode extends RNode implements RSyntaxNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"!isObject(vector)", "!isPositionZero(position)", "!isPositionNA(position)", "!isPositionNegative(position)", "hasNames(vector)", "isSubset()"})
+    @Specialization(guards = {"!isPositionZero(position)", "!isPositionNA(position)", "!isPositionNegative(position)", "hasNames(vector)", "isSubset()"})
     protected RDoubleVector accessNames(RAbstractDoubleVector vector, Object exact, int recLevel, int position, Object dropDim) {
         double val = vector.getDataAt(position - 1);
         elementNACheck.check(val);
@@ -1128,25 +994,25 @@ public abstract class AccessArrayNode extends RNode implements RSyntaxNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"!isObject(vector)", "!isPositionZero(position)", "!isPositionNA(position)", "!isPositionNegative(position)", "hasNames(vector)", "!isSubset()"})
+    @Specialization(guards = {"!isPositionZero(position)", "!isPositionNA(position)", "!isPositionNegative(position)", "hasNames(vector)", "!isSubset()"})
     protected double accessNoSubset(RAbstractDoubleVector vector, Object exact, int recLevel, int position, Object dropDim) {
         return vector.getDataAt(position - 1);
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"!isObject(vector)", "!isPositionZero(position)", "!isPositionNA(position)", "!isPositionNegative(position)", "!hasNames(vector)"})
+    @Specialization(guards = {"!isPositionZero(position)", "!isPositionNA(position)", "!isPositionNegative(position)", "!hasNames(vector)"})
     protected double accessNoNames(RAbstractDoubleVector vector, Object exact, int recLevel, int position, Object dropDim) {
         return vector.getDataAt(position - 1);
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"!isObject(vector)", "!isPositionZero(position)", "!isPositionNA(position)", "!isPositionNegative(position)"})
+    @Specialization(guards = {"!isPositionZero(position)", "!isPositionNA(position)", "!isPositionNegative(position)"})
     protected double access(RAbstractDoubleVector vector, Object exact, int recLevel, int position, Object dropDim) {
         return vector.getDataAt(position - 1);
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"!isObject(vector)", "isPositionZero(position)"})
+    @Specialization(guards = {"isPositionZero(position)"})
     protected RDoubleVector accessPosZero(RAbstractDoubleVector vector, Object exact, int recLevel, int position, Object dropDim) {
         if (!isSubset) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
@@ -1158,7 +1024,7 @@ public abstract class AccessArrayNode extends RNode implements RSyntaxNode {
         }
     }
 
-    protected byte[] accessInternal(VirtualFrame frame, DimsAndResultLength res, RLogicalVector vector, Object[] positions) {
+    protected byte[] accessInternal(DimsAndResultLength res, RLogicalVector vector, Object[] positions) {
         int resLength = res.resLength;
         int[] srcDimensions = vector.getDimensions();
         int numSrcDimensions = srcDimensions.length;
@@ -1178,32 +1044,32 @@ public abstract class AccessArrayNode extends RNode implements RSyntaxNode {
                 int dstArrayBase = accDstDimensions * i;
                 int pos = p.getDataAt(i);
                 int srcArrayBase = getSrcArrayBase(pos, accSrcDimensions);
-                getMultiDimData(frame, data, vector, positions, numSrcDimensions - 1, srcArrayBase, dstArrayBase, accSrcDimensions, accDstDimensions, posNACheck, elementNACheck);
+                getMultiDimData(data, vector, positions, numSrcDimensions - 1, srcArrayBase, dstArrayBase, accSrcDimensions, accDstDimensions, posNACheck, elementNACheck);
             }
         }
         return data;
     }
 
-    @Specialization(guards = {"!isObject(vector)", "hasDimNames(vector)"})
-    protected RLogicalVector accessNames(VirtualFrame frame, RLogicalVector vector, Object exact, int recLevel, Object[] positions, @SuppressWarnings("unused") RMissing dropDim) {
-        return accessNamesInternal(frame, vector, exact, recLevel, positions, RRuntime.LOGICAL_TRUE);
+    @Specialization(guards = {"hasDimNames(vector)"})
+    protected RLogicalVector accessNames(RLogicalVector vector, Object exact, int recLevel, Object[] positions, @SuppressWarnings("unused") RMissing dropDim) {
+        return accessNamesInternal(vector, exact, recLevel, positions, RRuntime.LOGICAL_TRUE);
     }
 
-    @Specialization(guards = {"!isObject(vector)", "hasDimNames(vector)"})
-    protected RLogicalVector accessNames(VirtualFrame frame, RLogicalVector vector, Object exact, int recLevel, Object[] positions, RAbstractLogicalVector dropDim) {
-        return accessNamesInternal(frame, vector, exact, recLevel, positions, dropDim.getLength() == 0 ? RRuntime.LOGICAL_TRUE : dropDim.getDataAt(0));
+    @Specialization(guards = {"hasDimNames(vector)"})
+    protected RLogicalVector accessNames(RLogicalVector vector, Object exact, int recLevel, Object[] positions, RAbstractLogicalVector dropDim) {
+        return accessNamesInternal(vector, exact, recLevel, positions, dropDim.getLength() == 0 ? RRuntime.LOGICAL_TRUE : dropDim.getDataAt(0));
     }
 
     @SuppressWarnings("unused")
-    protected RLogicalVector accessNamesInternal(VirtualFrame frame, RLogicalVector vector, Object exact, int recLevel, Object[] positions, byte dropDim) {
+    protected RLogicalVector accessNamesInternal(RLogicalVector vector, Object exact, int recLevel, Object[] positions, byte dropDim) {
         DimsAndResultLength res = getDimsAndResultLength(positions, dropDim);
         int[] dimensions = res.dimensions;
         int[] srcDimensions = vector.getDimensions();
         int numSrcDimensions = srcDimensions.length;
-        byte[] data = accessInternal(frame, res, vector, positions);
+        byte[] data = accessInternal(res, vector, positions);
         if (dimensionsIsNullProfile.profile(dimensions == null)) {
             // construct names
-            RStringVector names = getNames(frame, vector, positions, numSrcDimensions, namesNACheck);
+            RStringVector names = getNames(vector, positions, numSrcDimensions, namesNACheck);
             return RDataFactory.createLogicalVector(data, elementNACheck.neverSeenNA(), dimensions, names);
         } else {
             // construct dimnames
@@ -1211,25 +1077,25 @@ public abstract class AccessArrayNode extends RNode implements RSyntaxNode {
             RLogicalVector resultVector = RDataFactory.createLogicalVector(data, elementNACheck.neverSeenNA(), dimensions);
             int numDstDimensions = dimLength;
             RList dstDimNames = RDataFactory.createList(new Object[dimLength]);
-            getDimNames(frame, dstDimNames, vector, positions, numSrcDimensions, numDstDimensions, namesNACheck);
+            getDimNames(dstDimNames, vector, positions, numSrcDimensions, numDstDimensions, namesNACheck);
             resultVector.setDimNames(dstDimNames);
             return resultVector;
         }
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"!isObject(vector)", "!hasDimNames(vector)"})
-    protected RLogicalVector access(VirtualFrame frame, RLogicalVector vector, Object exact, int recLevel, Object[] positions, RMissing dropDim) {
+    @Specialization(guards = {"!hasDimNames(vector)"})
+    protected RLogicalVector access(RLogicalVector vector, Object exact, int recLevel, Object[] positions, RMissing dropDim) {
         DimsAndResultLength res = getDimsAndResultLength(positions, RRuntime.LOGICAL_TRUE);
-        byte[] data = accessInternal(frame, res, vector, positions);
+        byte[] data = accessInternal(res, vector, positions);
         return RDataFactory.createLogicalVector(data, elementNACheck.neverSeenNA(), res.dimensions);
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"!isObject(vector)", "!hasDimNames(vector)"})
-    protected RLogicalVector access(VirtualFrame frame, RLogicalVector vector, Object exact, int recLevel, Object[] positions, RAbstractLogicalVector dropDim) {
+    @Specialization(guards = {"!hasDimNames(vector)"})
+    protected RLogicalVector access(RLogicalVector vector, Object exact, int recLevel, Object[] positions, RAbstractLogicalVector dropDim) {
         DimsAndResultLength res = getDimsAndResultLength(positions, dropDim.getLength() == 0 ? RRuntime.LOGICAL_TRUE : dropDim.getDataAt(0));
-        byte[] data = accessInternal(frame, res, vector, positions);
+        byte[] data = accessInternal(res, vector, positions);
         return RDataFactory.createLogicalVector(data, elementNACheck.neverSeenNA(), res.dimensions);
     }
 
@@ -1252,7 +1118,7 @@ public abstract class AccessArrayNode extends RNode implements RSyntaxNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"!isObject(vector)", "hasNames(vector)"})
+    @Specialization(guards = {"hasNames(vector)"})
     protected RLogicalVector accessNames(RLogicalVector vector, Object exact, int recLevel, RIntVector p, Object dropDim) {
         byte[] data = accessInternal(vector, p);
         RStringVector names = getNamesVector(vector.getNames(attrProfiles), p, p.getLength(), namesNACheck);
@@ -1260,14 +1126,14 @@ public abstract class AccessArrayNode extends RNode implements RSyntaxNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"!isObject(vector)", "!hasNames(vector)"})
+    @Specialization(guards = {"!hasNames(vector)"})
     protected RLogicalVector access(RLogicalVector vector, Object exact, int recLevel, RIntVector p, Object dropDim) {
         byte[] data = accessInternal(vector, p);
         return RDataFactory.createLogicalVector(data, elementNACheck.neverSeenNA());
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"!isObject(vector)", "isPositionNA(position)", "isSubset()"})
+    @Specialization(guards = {"isPositionNA(position)", "isSubset()"})
     protected RLogicalVector accessNA(RLogicalVector vector, Object exact, int recLevel, int position, Object dropDim) {
         if (vector.getNames(attrProfiles) == null) {
             return RDataFactory.createLogicalVector(new byte[]{RRuntime.LOGICAL_NA}, RDataFactory.INCOMPLETE_VECTOR);
@@ -1277,7 +1143,7 @@ public abstract class AccessArrayNode extends RNode implements RSyntaxNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"!isObject(vector)", "!isPositionZero(position)", "!isPositionNA(position)", "!isPositionNegative(position)", "hasNames(vector)", "isSubset()"})
+    @Specialization(guards = {"!isPositionZero(position)", "!isPositionNA(position)", "!isPositionNegative(position)", "hasNames(vector)", "isSubset()"})
     protected RLogicalVector accessNames(RAbstractLogicalVector vector, Object exact, int recLevel, int position, Object dropDim) {
         byte val = vector.getDataAt(position - 1);
         elementNACheck.check(val);
@@ -1285,25 +1151,25 @@ public abstract class AccessArrayNode extends RNode implements RSyntaxNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"!isObject(vector)", "!isPositionZero(position)", "!isPositionNA(position)", "!isPositionNegative(position)", "hasNames(vector)", "!isSubset()"})
+    @Specialization(guards = {"!isPositionZero(position)", "!isPositionNA(position)", "!isPositionNegative(position)", "hasNames(vector)", "!isSubset()"})
     protected byte accessNoSubset(RLogicalVector vector, Object exact, int recLevel, int position, Object dropDim) {
         return vector.getDataAt(position - 1);
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"!isObject(vector)", "!isPositionZero(position)", "!isPositionNA(position)", "!isPositionNegative(position)", "!hasNames(vector)"})
+    @Specialization(guards = {"!isPositionZero(position)", "!isPositionNA(position)", "!isPositionNegative(position)", "!hasNames(vector)"})
     protected byte accessNoNames(RLogicalVector vector, Object exact, int recLevel, int position, Object dropDim) {
         return vector.getDataAt(position - 1);
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"!isObject(vector)", "!isPositionZero(position)", "!isPositionNA(position)", "!isPositionNegative(position)"})
+    @Specialization(guards = {"!isPositionZero(position)", "!isPositionNA(position)", "!isPositionNegative(position)"})
     protected byte access(RLogicalVector vector, Object exact, int recLevel, int position, Object dropDim) {
         return vector.getDataAt(position - 1);
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"!isObject(vector)", "isPositionZero(position)"})
+    @Specialization(guards = {"isPositionZero(position)"})
     protected RLogicalVector accessPosZero(RLogicalVector vector, Object exact, int recLevel, int position, Object dropDim) {
         if (!isSubset) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
@@ -1315,7 +1181,7 @@ public abstract class AccessArrayNode extends RNode implements RSyntaxNode {
         }
     }
 
-    protected String[] accessInternal(VirtualFrame frame, DimsAndResultLength res, RStringVector vector, Object[] positions) {
+    protected String[] accessInternal(DimsAndResultLength res, RStringVector vector, Object[] positions) {
         int resLength = res.resLength;
         int[] srcDimensions = vector.getDimensions();
         int numSrcDimensions = srcDimensions.length;
@@ -1335,32 +1201,32 @@ public abstract class AccessArrayNode extends RNode implements RSyntaxNode {
                 int dstArrayBase = accDstDimensions * i;
                 int pos = p.getDataAt(i);
                 int srcArrayBase = getSrcArrayBase(pos, accSrcDimensions);
-                getMultiDimData(frame, data, vector, positions, numSrcDimensions - 1, srcArrayBase, dstArrayBase, accSrcDimensions, accDstDimensions, posNACheck, elementNACheck);
+                getMultiDimData(data, vector, positions, numSrcDimensions - 1, srcArrayBase, dstArrayBase, accSrcDimensions, accDstDimensions, posNACheck, elementNACheck);
             }
         }
         return data;
     }
 
-    @Specialization(guards = {"!isObject(vector)", "hasDimNames(vector)"})
-    protected RStringVector accessNames(VirtualFrame frame, RStringVector vector, Object exact, int recLevel, Object[] positions, @SuppressWarnings("unused") RMissing dropDim) {
-        return accessNamesInternal(frame, vector, exact, recLevel, positions, RRuntime.LOGICAL_TRUE);
+    @Specialization(guards = {"hasDimNames(vector)"})
+    protected RStringVector accessNames(RStringVector vector, Object exact, int recLevel, Object[] positions, @SuppressWarnings("unused") RMissing dropDim) {
+        return accessNamesInternal(vector, exact, recLevel, positions, RRuntime.LOGICAL_TRUE);
     }
 
-    @Specialization(guards = {"!isObject(vector)", "hasDimNames(vector)"})
-    protected RStringVector accessNames(VirtualFrame frame, RStringVector vector, Object exact, int recLevel, Object[] positions, RAbstractLogicalVector dropDim) {
-        return accessNamesInternal(frame, vector, exact, recLevel, positions, dropDim.getLength() == 0 ? RRuntime.LOGICAL_TRUE : dropDim.getDataAt(0));
+    @Specialization(guards = {"hasDimNames(vector)"})
+    protected RStringVector accessNames(RStringVector vector, Object exact, int recLevel, Object[] positions, RAbstractLogicalVector dropDim) {
+        return accessNamesInternal(vector, exact, recLevel, positions, dropDim.getLength() == 0 ? RRuntime.LOGICAL_TRUE : dropDim.getDataAt(0));
     }
 
     @SuppressWarnings("unused")
-    protected RStringVector accessNamesInternal(VirtualFrame frame, RStringVector vector, Object exact, int recLevel, Object[] positions, byte dropDim) {
+    protected RStringVector accessNamesInternal(RStringVector vector, Object exact, int recLevel, Object[] positions, byte dropDim) {
         DimsAndResultLength res = getDimsAndResultLength(positions, dropDim);
         int[] dimensions = res.dimensions;
         int[] srcDimensions = vector.getDimensions();
         int numSrcDimensions = srcDimensions.length;
-        String[] data = accessInternal(frame, res, vector, positions);
+        String[] data = accessInternal(res, vector, positions);
         if (dimensionsIsNullProfile.profile(dimensions == null)) {
             // construct names
-            RStringVector names = getNames(frame, vector, positions, numSrcDimensions, namesNACheck);
+            RStringVector names = getNames(vector, positions, numSrcDimensions, namesNACheck);
             return RDataFactory.createStringVector(data, elementNACheck.neverSeenNA(), dimensions, names);
         } else {
             // construct dimnames
@@ -1368,25 +1234,25 @@ public abstract class AccessArrayNode extends RNode implements RSyntaxNode {
             RStringVector resultVector = RDataFactory.createStringVector(data, elementNACheck.neverSeenNA(), dimensions);
             int numDstDimensions = dimLength;
             RList dstDimNames = RDataFactory.createList(new Object[dimLength]);
-            getDimNames(frame, dstDimNames, vector, positions, numSrcDimensions, numDstDimensions, namesNACheck);
+            getDimNames(dstDimNames, vector, positions, numSrcDimensions, numDstDimensions, namesNACheck);
             resultVector.setDimNames(dstDimNames);
             return resultVector;
         }
     }
 
-    @Specialization(guards = {"!isObject(vector)", "!hasDimNames(vector)"})
-    protected RStringVector access(VirtualFrame frame, RStringVector vector, @SuppressWarnings("unused") Object exact, @SuppressWarnings("unused") int recLevel, Object[] positions,
+    @Specialization(guards = {"!hasDimNames(vector)"})
+    protected RStringVector access(RStringVector vector, @SuppressWarnings("unused") Object exact, @SuppressWarnings("unused") int recLevel, Object[] positions,
                     @SuppressWarnings("unused") RMissing dropDim) {
         DimsAndResultLength res = getDimsAndResultLength(positions, RRuntime.LOGICAL_TRUE);
-        String[] data = accessInternal(frame, res, vector, positions);
+        String[] data = accessInternal(res, vector, positions);
         return RDataFactory.createStringVector(data, elementNACheck.neverSeenNA(), res.dimensions);
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"!isObject(vector)", "!hasDimNames(vector)"})
-    protected RStringVector access(VirtualFrame frame, RStringVector vector, Object exact, int recLevel, Object[] positions, RAbstractLogicalVector dropDim) {
+    @Specialization(guards = {"!hasDimNames(vector)"})
+    protected RStringVector access(RStringVector vector, Object exact, int recLevel, Object[] positions, RAbstractLogicalVector dropDim) {
         DimsAndResultLength res = getDimsAndResultLength(positions, dropDim.getLength() == 0 ? RRuntime.LOGICAL_TRUE : dropDim.getDataAt(0));
-        String[] data = accessInternal(frame, res, vector, positions);
+        String[] data = accessInternal(res, vector, positions);
         return RDataFactory.createStringVector(data, elementNACheck.neverSeenNA(), res.dimensions);
     }
 
@@ -1409,7 +1275,7 @@ public abstract class AccessArrayNode extends RNode implements RSyntaxNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"!isObject(vector)", "hasNames(vector)"})
+    @Specialization(guards = {"hasNames(vector)"})
     protected RStringVector accessNames(RStringVector vector, Object exact, int recLevel, RIntVector p, Object dropDim) {
         String[] data = accessInternal(vector, p);
         RStringVector names = getNamesVector(vector.getNames(attrProfiles), p, p.getLength(), namesNACheck);
@@ -1417,14 +1283,14 @@ public abstract class AccessArrayNode extends RNode implements RSyntaxNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"!isObject(vector)", "!hasNames(vector)"})
+    @Specialization(guards = {"!hasNames(vector)"})
     protected RStringVector access(RStringVector vector, Object exact, int recLevel, RIntVector p, Object dropDim) {
         String[] data = accessInternal(vector, p);
         return RDataFactory.createStringVector(data, elementNACheck.neverSeenNA());
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"!isObject(vector)", "isPositionNA(position)", "isSubset()"})
+    @Specialization(guards = {"isPositionNA(position)", "isSubset()"})
     protected RStringVector accessNA(RStringVector vector, Object exact, int recLevel, int position, Object dropDim) {
         if (vector.getNames(attrProfiles) == null) {
             return RDataFactory.createNAStringVector();
@@ -1434,7 +1300,7 @@ public abstract class AccessArrayNode extends RNode implements RSyntaxNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"!isObject(vector)", "!isPositionZero(position)", "!isPositionNA(position)", "!isPositionNegative(position)", "hasNames(vector)", "isSubset()"})
+    @Specialization(guards = {"!isPositionZero(position)", "!isPositionNA(position)", "!isPositionNegative(position)", "hasNames(vector)", "isSubset()"})
     protected RStringVector accessNames(RAbstractStringVector vector, Object exact, int recLevel, int position, Object dropDim) {
         String val = vector.getDataAt(position - 1);
         elementNACheck.check(val);
@@ -1442,25 +1308,25 @@ public abstract class AccessArrayNode extends RNode implements RSyntaxNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"!isObject(vector)", "!isPositionZero(position)", "!isPositionNA(position)", "!isPositionNegative(position)", "hasNames(vector)", "!isSubset()"})
+    @Specialization(guards = {"!isPositionZero(position)", "!isPositionNA(position)", "!isPositionNegative(position)", "hasNames(vector)", "!isSubset()"})
     protected String accessNoSubset(RStringVector vector, Object exact, int recLevel, int position, Object dropDim) {
         return vector.getDataAt(position - 1);
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"!isObject(vector)", "!isPositionZero(position)", "!isPositionNA(position)", "!isPositionNegative(position)", "!hasNames(vector)"})
+    @Specialization(guards = {"!isPositionZero(position)", "!isPositionNA(position)", "!isPositionNegative(position)", "!hasNames(vector)"})
     protected String accessNoNames(RStringVector vector, Object exact, int recLevel, int position, Object dropDim) {
         return vector.getDataAt(position - 1);
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"!isObject(vector)", "!isPositionZero(position)", "!isPositionNA(position)", "!isPositionNegative(position)"})
+    @Specialization(guards = {"!isPositionZero(position)", "!isPositionNA(position)", "!isPositionNegative(position)"})
     protected String access(RStringVector vector, Object exact, int recLevel, int position, Object dropDim) {
         return vector.getDataAt(position - 1);
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"!isObject(vector)", "isPositionZero(position)"})
+    @Specialization(guards = {"isPositionZero(position)"})
     protected RStringVector accessPosZero(RStringVector vector, Object exact, int recLevel, int position, Object dropDim) {
         if (!isSubset) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
@@ -1472,7 +1338,7 @@ public abstract class AccessArrayNode extends RNode implements RSyntaxNode {
         }
     }
 
-    protected double[] accessInternal(VirtualFrame frame, DimsAndResultLength res, RComplexVector vector, Object[] positions) {
+    protected double[] accessInternal(DimsAndResultLength res, RComplexVector vector, Object[] positions) {
         int resLength = res.resLength;
         int[] srcDimensions = vector.getDimensions();
         int numSrcDimensions = srcDimensions.length;
@@ -1492,32 +1358,32 @@ public abstract class AccessArrayNode extends RNode implements RSyntaxNode {
                 int dstArrayBase = accDstDimensions * i;
                 int pos = p.getDataAt(i);
                 int srcArrayBase = getSrcArrayBase(pos, accSrcDimensions);
-                getMultiDimData(frame, data, vector, positions, numSrcDimensions - 1, srcArrayBase, dstArrayBase, accSrcDimensions, accDstDimensions, posNACheck, elementNACheck);
+                getMultiDimData(data, vector, positions, numSrcDimensions - 1, srcArrayBase, dstArrayBase, accSrcDimensions, accDstDimensions, posNACheck, elementNACheck);
             }
         }
         return data;
     }
 
-    @Specialization(guards = {"!isObject(vector)", "hasDimNames(vector)"})
-    protected RComplexVector accessNames(VirtualFrame frame, RComplexVector vector, Object exact, int recLevel, Object[] positions, @SuppressWarnings("unused") RMissing dropDim) {
-        return accessNamesInternal(frame, vector, exact, recLevel, positions, RRuntime.LOGICAL_TRUE);
+    @Specialization(guards = {"hasDimNames(vector)"})
+    protected RComplexVector accessNames(RComplexVector vector, Object exact, int recLevel, Object[] positions, @SuppressWarnings("unused") RMissing dropDim) {
+        return accessNamesInternal(vector, exact, recLevel, positions, RRuntime.LOGICAL_TRUE);
     }
 
-    @Specialization(guards = {"!isObject(vector)", "hasDimNames(vector)"})
-    protected RComplexVector accessNames(VirtualFrame frame, RComplexVector vector, Object exact, int recLevel, Object[] positions, RAbstractLogicalVector dropDim) {
-        return accessNamesInternal(frame, vector, exact, recLevel, positions, dropDim.getLength() == 0 ? RRuntime.LOGICAL_TRUE : dropDim.getDataAt(0));
+    @Specialization(guards = {"hasDimNames(vector)"})
+    protected RComplexVector accessNames(RComplexVector vector, Object exact, int recLevel, Object[] positions, RAbstractLogicalVector dropDim) {
+        return accessNamesInternal(vector, exact, recLevel, positions, dropDim.getLength() == 0 ? RRuntime.LOGICAL_TRUE : dropDim.getDataAt(0));
     }
 
     @SuppressWarnings("unused")
-    protected RComplexVector accessNamesInternal(VirtualFrame frame, RComplexVector vector, Object exact, int recLevel, Object[] positions, byte dropDim) {
+    protected RComplexVector accessNamesInternal(RComplexVector vector, Object exact, int recLevel, Object[] positions, byte dropDim) {
         DimsAndResultLength res = getDimsAndResultLength(positions, dropDim);
         int[] dimensions = res.dimensions;
         int[] srcDimensions = vector.getDimensions();
         int numSrcDimensions = srcDimensions.length;
-        double[] data = accessInternal(frame, res, vector, positions);
+        double[] data = accessInternal(res, vector, positions);
         if (dimensionsIsNullProfile.profile(dimensions == null)) {
             // construct names
-            RStringVector names = getNames(frame, vector, positions, numSrcDimensions, namesNACheck);
+            RStringVector names = getNames(vector, positions, numSrcDimensions, namesNACheck);
             return RDataFactory.createComplexVector(data, elementNACheck.neverSeenNA(), dimensions, names);
         } else {
             // construct dimnames
@@ -1525,25 +1391,25 @@ public abstract class AccessArrayNode extends RNode implements RSyntaxNode {
             RComplexVector resultVector = RDataFactory.createComplexVector(data, elementNACheck.neverSeenNA(), dimensions);
             int numDstDimensions = dimLength;
             RList dstDimNames = RDataFactory.createList(new Object[dimLength]);
-            getDimNames(frame, dstDimNames, vector, positions, numSrcDimensions, numDstDimensions, namesNACheck);
+            getDimNames(dstDimNames, vector, positions, numSrcDimensions, numDstDimensions, namesNACheck);
             resultVector.setDimNames(dstDimNames);
             return resultVector;
         }
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"!isObject(vector)", "!hasDimNames(vector)"})
-    protected RComplexVector access(VirtualFrame frame, RComplexVector vector, Object exact, int recLevel, Object[] positions, RMissing dropDim) {
+    @Specialization(guards = {"!hasDimNames(vector)"})
+    protected RComplexVector access(RComplexVector vector, Object exact, int recLevel, Object[] positions, RMissing dropDim) {
         DimsAndResultLength res = getDimsAndResultLength(positions, RRuntime.LOGICAL_TRUE);
-        double[] data = accessInternal(frame, res, vector, positions);
+        double[] data = accessInternal(res, vector, positions);
         return RDataFactory.createComplexVector(data, elementNACheck.neverSeenNA(), res.dimensions);
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"!isObject(vector)", "!hasDimNames(vector)"})
-    protected RComplexVector access(VirtualFrame frame, RComplexVector vector, Object exact, int recLevel, Object[] positions, RAbstractLogicalVector dropDim) {
+    @Specialization(guards = {"!hasDimNames(vector)"})
+    protected RComplexVector access(RComplexVector vector, Object exact, int recLevel, Object[] positions, RAbstractLogicalVector dropDim) {
         DimsAndResultLength res = getDimsAndResultLength(positions, dropDim.getLength() == 0 ? RRuntime.LOGICAL_TRUE : dropDim.getDataAt(0));
-        double[] data = accessInternal(frame, res, vector, positions);
+        double[] data = accessInternal(res, vector, positions);
         return RDataFactory.createComplexVector(data, elementNACheck.neverSeenNA(), res.dimensions);
     }
 
@@ -1570,7 +1436,7 @@ public abstract class AccessArrayNode extends RNode implements RSyntaxNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"!isObject(vector)", "hasNames(vector)"})
+    @Specialization(guards = {"hasNames(vector)"})
     protected RComplexVector accessNames(RComplexVector vector, Object exact, int recLevel, RIntVector p, Object dropDim) {
         double[] data = accessInternal(vector, p);
         RStringVector names = getNamesVector(vector.getNames(attrProfiles), p, p.getLength(), namesNACheck);
@@ -1578,14 +1444,14 @@ public abstract class AccessArrayNode extends RNode implements RSyntaxNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"!isObject(vector)", "!hasNames(vector)"})
+    @Specialization(guards = {"!hasNames(vector)"})
     protected RComplexVector access(RComplexVector vector, Object exact, int recLevel, RIntVector p, Object dropDim) {
         double[] data = accessInternal(vector, p);
         return RDataFactory.createComplexVector(data, elementNACheck.neverSeenNA());
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"!isObject(vector)", "isPositionNA(position)", "isSubset()"})
+    @Specialization(guards = {"isPositionNA(position)", "isSubset()"})
     protected RComplexVector accessNA(RComplexVector vector, Object exact, int recLevel, int position, Object dropDim) {
         if (vector.getNames(attrProfiles) == null) {
             return RDataFactory.createComplexVector(new double[]{RRuntime.COMPLEX_NA_REAL_PART, RRuntime.COMPLEX_NA_IMAGINARY_PART}, RDataFactory.INCOMPLETE_VECTOR);
@@ -1596,7 +1462,7 @@ public abstract class AccessArrayNode extends RNode implements RSyntaxNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"!isObject(vector)", "!isPositionZero(position)", "!isPositionNA(position)", "!isPositionNegative(position)", "hasNames(vector)", "isSubset()"})
+    @Specialization(guards = {"!isPositionZero(position)", "!isPositionNA(position)", "!isPositionNegative(position)", "hasNames(vector)", "isSubset()"})
     protected RComplexVector accessNames(RAbstractComplexVector vector, Object exact, int recLevel, int position, Object dropDim) {
         RComplex val = vector.getDataAt(position - 1);
         elementNACheck.check(val);
@@ -1604,25 +1470,25 @@ public abstract class AccessArrayNode extends RNode implements RSyntaxNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"!isObject(vector)", "!isPositionZero(position)", "!isPositionNA(position)", "!isPositionNegative(position)", "hasNames(vector)", "!isSubset()"})
+    @Specialization(guards = {"!isPositionZero(position)", "!isPositionNA(position)", "!isPositionNegative(position)", "hasNames(vector)", "!isSubset()"})
     protected RComplex accessNoSubset(RComplexVector vector, Object exact, int recLevel, int position, Object dropDim) {
         return vector.getDataAt(position - 1);
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"!isObject(vector)", "!isPositionZero(position)", "!isPositionNA(position)", "!isPositionNegative(position)", "!hasNames(vector)"})
+    @Specialization(guards = {"!isPositionZero(position)", "!isPositionNA(position)", "!isPositionNegative(position)", "!hasNames(vector)"})
     protected RComplex accessNoNames(RComplexVector vector, Object exact, int recLevel, int position, Object dropDim) {
         return vector.getDataAt(position - 1);
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"!isObject(vector)", "!isPositionZero(position)", "!isPositionNA(position)", "!isPositionNegative(position)"})
+    @Specialization(guards = {"!isPositionZero(position)", "!isPositionNA(position)", "!isPositionNegative(position)"})
     protected RComplex access(RComplexVector vector, Object exact, int recLevel, int position, Object dropDim) {
         return vector.getDataAt(position - 1);
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"!isObject(vector)", "isPositionZero(position)"})
+    @Specialization(guards = {"isPositionZero(position)"})
     protected RComplexVector accessPosZero(RComplexVector vector, Object exact, int recLevel, int position, Object dropDim) {
         if (!isSubset) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
@@ -1634,7 +1500,7 @@ public abstract class AccessArrayNode extends RNode implements RSyntaxNode {
         }
     }
 
-    protected byte[] accessInternal(VirtualFrame frame, DimsAndResultLength res, RRawVector vector, Object[] positions) {
+    protected byte[] accessInternal(DimsAndResultLength res, RRawVector vector, Object[] positions) {
         int resLength = res.resLength;
         int[] srcDimensions = vector.getDimensions();
         int numSrcDimensions = srcDimensions.length;
@@ -1653,32 +1519,32 @@ public abstract class AccessArrayNode extends RNode implements RSyntaxNode {
                 int dstArrayBase = accDstDimensions * i;
                 int pos = p.getDataAt(i);
                 int srcArrayBase = getSrcArrayBase(pos, accSrcDimensions);
-                getMultiDimData(frame, data, vector, positions, numSrcDimensions - 1, srcArrayBase, dstArrayBase, accSrcDimensions, accDstDimensions, posNACheck, elementNACheck);
+                getMultiDimData(data, vector, positions, numSrcDimensions - 1, srcArrayBase, dstArrayBase, accSrcDimensions, accDstDimensions, posNACheck, elementNACheck);
             }
         }
         return data;
     }
 
-    @Specialization(guards = {"!isObject(vector)", "hasDimNames(vector)"})
-    protected RRawVector accessNames(VirtualFrame frame, RRawVector vector, Object exact, int recLevel, Object[] positions, @SuppressWarnings("unused") RMissing dropDim) {
-        return accessNamesInternal(frame, vector, exact, recLevel, positions, RRuntime.LOGICAL_TRUE);
+    @Specialization(guards = {"hasDimNames(vector)"})
+    protected RRawVector accessNames(RRawVector vector, Object exact, int recLevel, Object[] positions, @SuppressWarnings("unused") RMissing dropDim) {
+        return accessNamesInternal(vector, exact, recLevel, positions, RRuntime.LOGICAL_TRUE);
     }
 
-    @Specialization(guards = {"!isObject(vector)", "hasDimNames(vector)"})
-    protected RRawVector accessNames(VirtualFrame frame, RRawVector vector, Object exact, int recLevel, Object[] positions, RAbstractLogicalVector dropDim) {
-        return accessNamesInternal(frame, vector, exact, recLevel, positions, dropDim.getLength() == 0 ? RRuntime.LOGICAL_TRUE : dropDim.getDataAt(0));
+    @Specialization(guards = {"hasDimNames(vector)"})
+    protected RRawVector accessNames(RRawVector vector, Object exact, int recLevel, Object[] positions, RAbstractLogicalVector dropDim) {
+        return accessNamesInternal(vector, exact, recLevel, positions, dropDim.getLength() == 0 ? RRuntime.LOGICAL_TRUE : dropDim.getDataAt(0));
     }
 
     @SuppressWarnings("unused")
-    protected RRawVector accessNamesInternal(VirtualFrame frame, RRawVector vector, Object exact, int recLevel, Object[] positions, byte dropDim) {
+    protected RRawVector accessNamesInternal(RRawVector vector, Object exact, int recLevel, Object[] positions, byte dropDim) {
         DimsAndResultLength res = getDimsAndResultLength(positions, dropDim);
         int[] dimensions = res.dimensions;
         int[] srcDimensions = vector.getDimensions();
         int numSrcDimensions = srcDimensions.length;
-        byte[] data = accessInternal(frame, res, vector, positions);
+        byte[] data = accessInternal(res, vector, positions);
         if (dimensionsIsNullProfile.profile(dimensions == null)) {
             // construct names
-            RStringVector names = getNames(frame, vector, positions, numSrcDimensions, namesNACheck);
+            RStringVector names = getNames(vector, positions, numSrcDimensions, namesNACheck);
             return RDataFactory.createRawVector(data, dimensions, names);
         } else {
             // construct dimnames
@@ -1686,25 +1552,23 @@ public abstract class AccessArrayNode extends RNode implements RSyntaxNode {
             RRawVector resultVector = RDataFactory.createRawVector(data, dimensions);
             int numDstDimensions = dimLength;
             RList dstDimNames = RDataFactory.createList(new Object[dimLength]);
-            getDimNames(frame, dstDimNames, vector, positions, numSrcDimensions, numDstDimensions, namesNACheck);
+            getDimNames(dstDimNames, vector, positions, numSrcDimensions, numDstDimensions, namesNACheck);
             resultVector.setDimNames(dstDimNames);
             return resultVector;
         }
     }
 
-    @Specialization(guards = {"!isObject(vector)", "!hasDimNames(vector)"})
-    protected RRawVector access(VirtualFrame frame, RRawVector vector, @SuppressWarnings("unused") Object exact, @SuppressWarnings("unused") int recLevel, Object[] positions,
-                    @SuppressWarnings("unused") RMissing dropDim) {
+    @Specialization(guards = {"!hasDimNames(vector)"})
+    protected RRawVector access(RRawVector vector, @SuppressWarnings("unused") Object exact, @SuppressWarnings("unused") int recLevel, Object[] positions, @SuppressWarnings("unused") RMissing dropDim) {
         DimsAndResultLength res = getDimsAndResultLength(positions, RRuntime.LOGICAL_TRUE);
-        byte[] data = accessInternal(frame, res, vector, positions);
+        byte[] data = accessInternal(res, vector, positions);
         return RDataFactory.createRawVector(data, res.dimensions);
     }
 
-    @Specialization(guards = {"!isObject(vector)", "!hasDimNames(vector)"})
-    protected RRawVector access(VirtualFrame frame, RRawVector vector, @SuppressWarnings("unused") Object exact, @SuppressWarnings("unused") int recLevel, Object[] positions,
-                    RAbstractLogicalVector dropDim) {
+    @Specialization(guards = {"!hasDimNames(vector)"})
+    protected RRawVector access(RRawVector vector, @SuppressWarnings("unused") Object exact, @SuppressWarnings("unused") int recLevel, Object[] positions, RAbstractLogicalVector dropDim) {
         DimsAndResultLength res = getDimsAndResultLength(positions, dropDim.getLength() == 0 ? RRuntime.LOGICAL_TRUE : dropDim.getDataAt(0));
-        byte[] data = accessInternal(frame, res, vector, positions);
+        byte[] data = accessInternal(res, vector, positions);
         return RDataFactory.createRawVector(data, res.dimensions);
     }
 
@@ -1725,7 +1589,7 @@ public abstract class AccessArrayNode extends RNode implements RSyntaxNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"!isObject(vector)", "hasNames(vector)"})
+    @Specialization(guards = {"hasNames(vector)"})
     protected RRawVector accessNames(RRawVector vector, Object exact, int recLevel, RIntVector p, Object dropDim) {
         byte[] data = accessInternal(vector, p);
         RStringVector names = getNamesVector(vector.getNames(attrProfiles), p, p.getLength(), namesNACheck);
@@ -1733,14 +1597,14 @@ public abstract class AccessArrayNode extends RNode implements RSyntaxNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"!isObject(vector)", "!hasNames(vector)"})
+    @Specialization(guards = {"!hasNames(vector)"})
     protected RRawVector access(RRawVector vector, Object exact, int recLevel, RIntVector p, Object dropDim) {
         byte[] data = accessInternal(vector, p);
         return RDataFactory.createRawVector(data);
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"!isObject(vector)", "isPositionNA(position)", "isSubset()"})
+    @Specialization(guards = {"isPositionNA(position)", "isSubset()"})
     protected RRawVector accessNA(RRawVector vector, Object exact, int recLevel, int position, Object dropDim) {
         if (vector.getNames(attrProfiles) == null) {
             return RDataFactory.createRawVector(new byte[]{0});
@@ -1750,32 +1614,32 @@ public abstract class AccessArrayNode extends RNode implements RSyntaxNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"!isObject(vector)", "!isPositionZero(position)", "!isPositionNA(position)", "!isPositionNegative(position)", "hasNames(vector)", "isSubset()"})
+    @Specialization(guards = {"!isPositionZero(position)", "!isPositionNA(position)", "!isPositionNegative(position)", "hasNames(vector)", "isSubset()"})
     protected RRawVector accessNames(RAbstractRawVector vector, Object exact, int recLevel, int position, Object dropDim) {
         RRaw val = vector.getDataAt(position - 1);
         return RDataFactory.createRawVector(new byte[]{val.getValue()}, getName(vector, position));
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"!isObject(vector)", "!isPositionZero(position)", "!isPositionNA(position)", "!isPositionNegative(position)", "hasNames(vector)", "!isSubset()"})
+    @Specialization(guards = {"!isPositionZero(position)", "!isPositionNA(position)", "!isPositionNegative(position)", "hasNames(vector)", "!isSubset()"})
     protected RRaw accessNoSubset(RRawVector vector, Object exact, int recLevel, int position, Object dropDim) {
         return vector.getDataAt(position - 1);
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"!isObject(vector)", "!isPositionZero(position)", "!isPositionNA(position)", "!isPositionNegative(position)", "!hasNames(vector)"})
+    @Specialization(guards = {"!isPositionZero(position)", "!isPositionNA(position)", "!isPositionNegative(position)", "!hasNames(vector)"})
     protected RRaw accessNoNames(RRawVector vector, Object exact, int recLevel, int position, Object dropDim) {
         return vector.getDataAt(position - 1);
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"!isObject(vector)", "!isPositionZero(position)", "!isPositionNA(position)", "!isPositionNegative(position)"})
+    @Specialization(guards = {"!isPositionZero(position)", "!isPositionNA(position)", "!isPositionNegative(position)"})
     protected RRaw access(RRawVector vector, Object exact, int recLevel, int position, Object dropDim) {
         return vector.getDataAt(position - 1);
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"!isObject(vector)", "isPositionZero(position)"})
+    @Specialization(guards = {"isPositionZero(position)"})
     protected RRawVector accessPosZero(RRawVector vector, Object exact, int recLevel, int position, Object dropDim) {
         if (!isSubset) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
@@ -1788,7 +1652,7 @@ public abstract class AccessArrayNode extends RNode implements RSyntaxNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"!isObject(container)", "noPosition(positions)"})
+    @Specialization(guards = {"noPosition(positions)"})
     protected Object accessListEmptyPos(RAbstractContainer container, Object exact, int recLevel, RList positions, Object dropDim) {
         if (!isSubset) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
@@ -1798,19 +1662,19 @@ public abstract class AccessArrayNode extends RNode implements RSyntaxNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"!isObject(container)", "onePosition(positions)"})
+    @Specialization(guards = {"onePosition(positions)"})
     protected Object accessListOnePos(RAbstractContainer container, Object exact, int recLevel, RList positions, Object dropDim) {
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"!isObject(vector)", "multiPos(positions)"})
+    @Specialization(guards = {"multiPos(positions)"})
     protected Object accessListMultiPosList(RList vector, Object exact, int recLevel, RList positions, Object dropDim) {
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"!isObject(container)", "multiPos(positions)", "!isVectorList(container)"})
+    @Specialization(guards = {"multiPos(positions)", "!isVectorList(container)"})
     protected Object accessListMultiPos(RAbstractContainer container, Object exact, int recLevel, RList positions, Object dropDim) {
         if (!isSubset) {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_MORE_1);
@@ -1820,20 +1684,20 @@ public abstract class AccessArrayNode extends RNode implements RSyntaxNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = "!isObject(container)")
+    @Specialization
     protected Object accessListMultiPos(RAbstractContainer container, Object exact, int recLevel, RComplex positions, Object dropDim) {
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "complex");
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = "!isObject(container)")
+    @Specialization
     protected Object accessListMultiPos(RAbstractContainer container, Object exact, int recLevel, RRaw positions, Object dropDim) {
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "raw");
     }
 
     @SuppressWarnings("unused")
     @Specialization
-    protected Object access(VirtualFrame frame, RExpression expression, Object exact, int recLevel, int position, Object dropDim) {
+    protected Object access(RExpression expression, Object exact, int recLevel, int position, Object dropDim) {
         if (position < 1) {
             error.enter();
             throw RError.error(Message.SELECT_LESS_1);
@@ -1843,7 +1707,7 @@ public abstract class AccessArrayNode extends RNode implements RSyntaxNode {
 
     @SuppressWarnings("unused")
     @Specialization
-    protected Object access(VirtualFrame frame, RLanguage lang, Object exact, int recLevel, int position, Object dropDim) {
+    protected Object access(RLanguage lang, Object exact, int recLevel, int position, Object dropDim) {
         if (position == 0) {
             return RNull.instance;
         } else {
@@ -1862,7 +1726,7 @@ public abstract class AccessArrayNode extends RNode implements RSyntaxNode {
 
     @SuppressWarnings("unused")
     @Specialization
-    protected Object access(VirtualFrame frame, RLanguage lang, Object exact, int recLevel, RIntVector position, Object dropDim) {
+    protected Object access(RLanguage lang, Object exact, int recLevel, RIntVector position, Object dropDim) {
         int resLength = position.getLength();
         CallArgumentsNode args = null;
         RNode fn = unwrapToRNode(lang.getDataAtAsObject(position.getDataAt(0) - 1));
@@ -1973,13 +1837,4 @@ public abstract class AccessArrayNode extends RNode implements RSyntaxNode {
     protected static boolean isPositionNA(int position) {
         return RRuntime.isNA(position);
     }
-
-    protected boolean isObject(RAbstractContainer container) {
-        return container.isObject(attrProfiles) && forObjects;
-    }
-
-    public static AccessArrayNode create(boolean isSubset, boolean forObjects, boolean exactInSource, boolean dropInSource, RNode vector, RNode exact, PositionsArrayNode positions, RNode dropDim) {
-        return AccessArrayNodeGen.create(isSubset, forObjects, exactInSource, dropInSource, vector, exact, ConstantNode.create(0), positions, dropDim);
-    }
-
 }

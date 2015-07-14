@@ -25,7 +25,6 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import java.util.*;
 
 import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
@@ -38,8 +37,11 @@ import com.oracle.truffle.r.nodes.access.array.write.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.builtin.base.InfixEmulationFunctionsFactory.PromiseEvaluatorNodeGen;
 import com.oracle.truffle.r.nodes.function.*;
+<<<<<<< local
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.parser.ast.*;
+=======
+>>>>>>> other
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -64,7 +66,7 @@ public class InfixEmulationFunctions {
         }
     }
 
-    private static class AccessPositions extends PositionsArrayConversionNodeMultiDimAdapter {
+    private static final class AccessPositions extends PositionsArrayConversionNodeMultiDimAdapter {
 
         public AccessPositions(boolean isSubset, int length) {
             super(isSubset, length);
@@ -177,189 +179,109 @@ public class InfixEmulationFunctions {
     }
 
     public abstract static class AccessArrayBuiltin extends RBuiltinNode {
+
         @Child private AccessArrayNode accessNode;
         @Child private AccessPositions positions;
-        protected final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
         @Override
-        @CreateCast("arguments")
-        protected RNode[] castArguments(RNode[] arguments) {
-            for (int i = 0; i < arguments.length; i++) {
-                arguments[i] = PromiseEvaluatorNodeGen.create(arguments[i]);
-            }
-            arguments[2] = new ApplyCastNode(CastLogicalNodeGen.create(false, false, false), arguments[2]);
-            return arguments;
+        protected void createCasts(CastBuilder casts) {
+            casts.toLogical(2);
         }
 
-// @Override
-// protected void createCasts(CastBuilder casts) {
-// casts.evaluatePromise(0);
-// casts.evaluatePromise(1);
-// casts.evaluatePromise(2);
-// casts.evaluatePromise(3);
-// casts.evaluatePromise(4);
-// casts.toLogical(2);
-// }
+        protected abstract boolean isSubset();
 
-        @ExplodeLoop
-        protected Object access(VirtualFrame frame, Object vector, byte exact, RArgsValuesAndNames inds, Object dropDim, boolean isSubset) {
+        protected Object access(Object vector, byte exact, RArgsValuesAndNames inds, Object dropDim) {
             if (accessNode == null || positions.getLength() != inds.getLength()) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 if (accessNode == null) {
-                    accessNode = insert(AccessArrayNodeGen.create(isSubset, false, false, false, null, null, null, null, null));
+                    accessNode = insert(AccessArrayNodeGen.create(isSubset(), false, false, null, null, null, null, null));
                 }
                 int len = inds.getLength();
-                positions = insert(AccessPositions.create(isSubset, len));
+                positions = insert(AccessPositions.create(isSubset(), len));
             }
             Object[] pos = inds.getArguments();
-            return accessNode.executeAccess(frame, vector, exact, 0, positions.execute(vector, pos, exact, pos), dropDim);
+            return accessNode.executeAccess(vector, exact, 0, positions.execute(vector, pos, exact, pos), dropDim);
         }
 
         protected boolean noInd(RArgsValuesAndNames inds) {
             return inds.isEmpty();
         }
-
     }
 
-    public abstract static class AccessArraySubsetBuiltinBase extends AccessArrayBuiltin {
+    @RBuiltin(name = "[", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x", "...", "drop"}, internalDispatch = true)
+    public abstract static class AccessArraySubsetBuiltin extends AccessArrayBuiltin {
 
-        protected static final boolean IS_SUBSET = true;
-
-        protected final ConditionProfile multiIndexProfile = ConditionProfile.createBinaryProfile();
-
-        protected Object getInternal(VirtualFrame frame, Object x, RArgsValuesAndNames inds, RAbstractLogicalVector dropVec) {
-            return access(frame, x, RRuntime.LOGICAL_TRUE, inds, dropVec, IS_SUBSET);
+        @Override
+        protected boolean isSubset() {
+            return true;
         }
 
-        protected Object getInternal(VirtualFrame frame, Object x, RArgsValuesAndNames inds, RMissing dropVec) {
-            return access(frame, x, RRuntime.LOGICAL_TRUE, inds, dropVec, IS_SUBSET);
+        protected Object getInternal(Object x, RArgsValuesAndNames inds, Object dropVec) {
+            return access(x, RRuntime.LOGICAL_TRUE, inds, dropVec);
         }
 
         @SuppressWarnings("unused")
         @Specialization
-        protected RNull getNoInd(RNull x, Object inds, Object dropVec) {
+        protected RNull get(RNull x, Object inds, Object dropVec) {
             return x;
-        }
-
-        @Specialization
-        protected Object get(VirtualFrame frame, REnvironment x, RArgsValuesAndNames inds, RAbstractLogicalVector dropVec) {
-            return getInternal(frame, x, inds, dropVec);
-        }
-
-        @Specialization
-        protected Object get(VirtualFrame frame, REnvironment x, RArgsValuesAndNames inds, RMissing dropVec) {
-            return getInternal(frame, x, inds, dropVec);
-        }
-
-        @Specialization
-        protected Object get(VirtualFrame frame, RFunction x, RArgsValuesAndNames inds, RAbstractLogicalVector dropVec) {
-            return getInternal(frame, x, inds, dropVec);
-        }
-
-        @Specialization
-        protected Object get(VirtualFrame frame, RFunction x, RArgsValuesAndNames inds, RMissing dropVec) {
-            return getInternal(frame, x, inds, dropVec);
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = "noInd(inds)")
-        protected Object getNoInd(RAbstractContainer x, RArgsValuesAndNames inds, Object dropVec) {
+        protected Object getNoInd(Object x, RArgsValuesAndNames inds, Object dropVec) {
             return x;
         }
 
         @SuppressWarnings("unused")
         @Specialization
-        protected Object get(RAbstractContainer x, RMissing inds, Object dropVec) {
+        protected Object get(Object x, RMissing inds, Object dropVec) {
             return x;
         }
 
-    }
-
-    @RBuiltin(name = "[", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x", "...", "drop"})
-    public abstract static class AccessArraySubsetBuiltin extends AccessArraySubsetBuiltinBase {
-
-        private static final ArgumentsSignature SIGNATURE = ArgumentsSignature.get("", "", "drop");
-        private static final ArgumentsSignature SIGNATURE_NODROP = ArgumentsSignature.get("", "");
-
-        private static final String NAME = "[";
-
-        @Child private UseMethodInternalNode dcn;
-        @CompilationFinal boolean noDrop;
-
-        @Specialization(guards = {"!noInd(inds)", "isObject(frame, x)"})
-        protected Object getObj(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames inds, RAbstractLogicalVector dropVec) {
-            if (dcn == null || noDrop) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                dcn = insert(new UseMethodInternalNode(NAME, SIGNATURE, true));
-                noDrop = false;
-            }
-            try {
-                return dcn.execute(frame, x, new Object[]{x, inds, dropVec});
-            } catch (S3FunctionLookupNode.NoGenericMethodException e) {
-                return access(frame, x, RRuntime.LOGICAL_FALSE, inds, dropVec, IS_SUBSET);
-            }
+        @Specialization(guards = "!noInd(inds)")
+        protected Object get(RAbstractContainer x, RArgsValuesAndNames inds, Object dropVec) {
+            return getInternal(x, inds, dropVec);
         }
 
-        @Specialization(guards = {"!noInd(inds)", "!isObject(frame, x)"})
-        protected Object get(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames inds, RAbstractLogicalVector dropVec) {
-            return super.getInternal(frame, x, inds, dropVec);
+        @Specialization(guards = "!noInd(inds)")
+        protected Object get(REnvironment x, RArgsValuesAndNames inds, Object dropVec) {
+            return getInternal(x, inds, dropVec);
         }
 
-        @Specialization(guards = {"!noInd(inds)", "isObject(frame, x)"})
-        protected Object getObj(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames inds, RMissing dropVec) {
-            if (dcn == null || !noDrop) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                dcn = insert(new UseMethodInternalNode(NAME, SIGNATURE_NODROP, true));
-                noDrop = true;
-            }
-            try {
-                return dcn.execute(frame, x, new Object[]{x, inds});
-            } catch (S3FunctionLookupNode.NoGenericMethodException e) {
-                return access(frame, x, RRuntime.LOGICAL_FALSE, inds, dropVec, IS_SUBSET);
-            }
+        @Specialization(guards = "!noInd(inds)")
+        protected Object get(RFunction x, RArgsValuesAndNames inds, Object dropVec) {
+            return getInternal(x, inds, dropVec);
         }
-
-        @Specialization(guards = {"!noInd(inds)", "!isObject(frame, x)"})
-        protected Object get(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames inds, RMissing dropVec) {
-            return super.getInternal(frame, x, inds, dropVec);
-        }
-
-        @SuppressFBWarnings(value = "ES_COMPARING_STRINGS_WITH_EQ", justification = "generic name is interned in the interpreted code for faster comparison")
-        protected boolean isObject(VirtualFrame frame, RAbstractContainer x) {
-            // treat as non-object if we got here through S3 dispatch on the object of the same type
-            return x.isObject(attrProfiles) && !(RArguments.getS3Args(frame) != null && RArguments.getS3Args(frame).generic == NAME && RArguments.getArgument(frame, 0).getClass() == x.getClass());
-        }
-
     }
 
     @RBuiltin(name = ".subset", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", "...", "drop"})
-    public abstract static class AccessArraySubsetDefaultBuiltin extends AccessArraySubsetBuiltinBase {
+    public abstract static class AccessArraySubsetDefaultBuiltin {
 
-        @Specialization(guards = "!noInd(inds)")
-        protected Object get(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames inds, RAbstractLogicalVector dropVec) {
-            return super.getInternal(frame, x, inds, dropVec);
-        }
-
-        @Specialization(guards = "!noInd(inds)")
-        protected Object get(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames inds, RMissing dropVec) {
-            return super.getInternal(frame, x, inds, dropVec);
-        }
     }
 
-    public abstract static class AccessArraySubscriptBuiltinBase extends AccessArrayBuiltin {
+    @RBuiltin(name = "[[", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", "...", "exact", "drop"}, internalDispatch = true)
+    public abstract static class AccessArraySubscriptBuiltin extends AccessArrayBuiltin {
 
-        protected static final boolean IS_SUBSET = false;
+        @Override
+        protected boolean isSubset() {
+            return false;
+        }
 
         protected final ConditionProfile emptyExactProfile = ConditionProfile.createBinaryProfile();
 
-        protected Object getInternal(VirtualFrame frame, Object x, RArgsValuesAndNames inds, RAbstractLogicalVector exactVec) {
+        @Override
+        public Object[] getDefaultParameterValues() {
+            return new Object[]{RMissing.instance, RArgsValuesAndNames.EMPTY, RRuntime.LOGICAL_TRUE, RRuntime.LOGICAL_TRUE};
+        }
+
+        protected Object getInternal(Object x, RArgsValuesAndNames inds, RAbstractLogicalVector exactVec) {
             byte exact;
             if (emptyExactProfile.profile(exactVec.getLength() == 0)) {
                 exact = RRuntime.LOGICAL_FALSE;
             } else {
                 exact = exactVec.getDataAt(0);
             }
-            return access(frame, x, exact, inds, RRuntime.LOGICAL_TRUE, IS_SUBSET);
+            return access(x, exact, inds, RRuntime.LOGICAL_TRUE);
         }
 
         @SuppressWarnings("unused")
@@ -368,130 +290,60 @@ public class InfixEmulationFunctions {
             return x;
         }
 
-        @Specialization
-        protected Object getNoInd(VirtualFrame frame, REnvironment x, RArgsValuesAndNames inds, RAbstractLogicalVector exactVec, @SuppressWarnings("unused") RAbstractLogicalVector dropVec) {
-            return getInternal(frame, x, inds, exactVec);
-        }
-
-        @Specialization
-        protected Object getNoInd(VirtualFrame frame, RFunction x, RArgsValuesAndNames inds, RAbstractLogicalVector exactVec, @SuppressWarnings("unused") RAbstractLogicalVector dropVec) {
-            return getInternal(frame, x, inds, exactVec);
-        }
-
         @SuppressWarnings("unused")
         @Specialization(guards = "noInd(inds)")
-        protected Object getNoInd(RAbstractContainer x, RArgsValuesAndNames inds, RAbstractLogicalVector exactVec, RAbstractLogicalVector dropVec) {
+        protected Object getNoInd(Object x, RArgsValuesAndNames inds, RAbstractLogicalVector exactVec, RAbstractLogicalVector dropVec) {
             throw RError.error(RError.Message.NO_INDEX);
         }
 
         @SuppressWarnings("unused")
         @Specialization
-        protected Object get(RAbstractContainer x, RMissing inds, RAbstractLogicalVector exactVec, RAbstractLogicalVector dropVec) {
+        protected Object get(Object x, RMissing inds, RAbstractLogicalVector exactVec, RAbstractLogicalVector dropVec) {
             throw RError.error(RError.Message.NO_INDEX);
-        }
-    }
-
-    @RBuiltin(name = "[[", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", "...", "exact", "drop"})
-    public abstract static class AccessArraySubscriptBuiltin extends AccessArraySubscriptBuiltinBase {
-
-        private static final ArgumentsSignature SIGNATURE = ArgumentsSignature.get("", "", "exact");
-
-        private static final String NAME = "[[";
-
-        public abstract Object execute(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames inds, RAbstractLogicalVector exactVec, RAbstractLogicalVector dropVec);
-
-        @Child private UseMethodInternalNode dcn;
-
-        @Override
-        public Object[] getDefaultParameterValues() {
-            return new Object[]{RMissing.instance, RArgsValuesAndNames.EMPTY, RRuntime.LOGICAL_TRUE, RRuntime.LOGICAL_TRUE};
-        }
-
-        @Specialization(guards = {"!noInd(inds)", "isObject(frame, x)"})
-        protected Object getObj(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames inds, RAbstractLogicalVector exactVec, @SuppressWarnings("unused") RAbstractLogicalVector dropVec) {
-            byte exact;
-            if (emptyExactProfile.profile(exactVec.getLength() == 0)) {
-                exact = RRuntime.LOGICAL_FALSE;
-            } else {
-                exact = exactVec.getDataAt(0);
-            }
-            if (dcn == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                dcn = insert(new UseMethodInternalNode(NAME, SIGNATURE, true));
-            }
-            try {
-                return dcn.execute(frame, x, new Object[]{x, inds, exactVec});
-            } catch (S3FunctionLookupNode.NoGenericMethodException e) {
-                return access(frame, x, exact, inds, RRuntime.LOGICAL_TRUE, IS_SUBSET);
-            }
-        }
-
-        @Specialization(guards = {"!noInd(inds)", "!isObject(frame, x)"})
-        protected Object get(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames inds, RAbstractLogicalVector exactVec, @SuppressWarnings("unused") RAbstractLogicalVector dropVec) {
-            return super.getInternal(frame, x, inds, exactVec);
-        }
-
-        @SuppressFBWarnings(value = "ES_COMPARING_STRINGS_WITH_EQ", justification = "generic name is interned in the interpreted code for faster comparison")
-        protected boolean isObject(VirtualFrame frame, RAbstractContainer x) {
-            // treat as non-object if we got here through S3 dispatch on the object of the same type
-            return x.isObject(attrProfiles) && !(RArguments.getS3Args(frame) != null && RArguments.getS3Args(frame).generic == NAME && RArguments.getArgument(frame, 0).getClass() == x.getClass());
-        }
-
-    }
-
-    @RBuiltin(name = ".subset2", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x", "...", "exact", "drop"})
-    public abstract static class AccessArraySubscriptDefaultBuiltin extends AccessArraySubscriptBuiltinBase {
-
-        @Override
-        public Object[] getDefaultParameterValues() {
-            return new Object[]{RMissing.instance, RArgsValuesAndNames.EMPTY, RRuntime.LOGICAL_TRUE, RRuntime.LOGICAL_TRUE};
         }
 
         @Specialization(guards = "!noInd(inds)")
-        protected Object get(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames inds, RAbstractLogicalVector exactVec, @SuppressWarnings("unused") RAbstractLogicalVector dropVec) {
-            return super.getInternal(frame, x, inds, exactVec);
+        protected Object get(RAbstractContainer x, RArgsValuesAndNames inds, RAbstractLogicalVector exactVec, @SuppressWarnings("unused") RAbstractLogicalVector dropVec) {
+            return getInternal(x, inds, exactVec);
         }
 
+        @Specialization(guards = "!noInd(inds)")
+        protected Object getNoInd(REnvironment x, RArgsValuesAndNames inds, RAbstractLogicalVector exactVec, @SuppressWarnings("unused") RAbstractLogicalVector dropVec) {
+            return getInternal(x, inds, exactVec);
+        }
+
+        @Specialization(guards = "!noInd(inds)")
+        protected Object getNoInd(RFunction x, RArgsValuesAndNames inds, RAbstractLogicalVector exactVec, @SuppressWarnings("unused") RAbstractLogicalVector dropVec) {
+            return getInternal(x, inds, exactVec);
+        }
+    }
+
+    @RBuiltin(name = ".subset2", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x", "...", "exact", "drop"})
+    public abstract static class AccessArraySubscriptDefaultBuiltin {
     }
 
     public abstract static class UpdateArrayBuiltin extends RBuiltinNode {
+
         @Child private UpdateArrayHelperNode updateNode;
         @Child private UpdatePositions positions;
         @Child private CoerceVector coerceVector;
 
-        protected final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+        private final ConditionProfile argsLengthOneProfile = ConditionProfile.createBinaryProfile();
+        private final ConditionProfile argsLengthLargerThanOneProfile = ConditionProfile.createBinaryProfile();
 
-        @Override
-        @CreateCast("arguments")
-        public RNode[] castArguments(RNode[] arguments) {
-            for (int i = 0; i < arguments.length; i++) {
-                arguments[i] = PromiseEvaluatorNodeGen.create(arguments[i]);
-            }
-            return arguments;
-        }
-
-// @Override
-// protected void createCasts(CastBuilder casts) {
-// casts.evaluatePromise(0);
-// casts.evaluatePromise(1);
-// casts.evaluatePromise(2);
-// casts.evaluatePromise(3);
-// }
-
-        @ExplodeLoop
         protected Object update(VirtualFrame frame, Object vector, RArgsValuesAndNames args, Object value, boolean isSubset) {
-            int len = args.getLength() == 1 ? 1 : args.getLength() - 1;
+            int len = argsLengthOneProfile.profile(args.getLength() == 1) ? 1 : args.getLength() - 1;
 
             if (updateNode == null || positions.getLength() != len) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 if (updateNode == null) {
-                    updateNode = insert(UpdateArrayHelperNodeGen.create(isSubset, false, 0, null, null, null, null));
+                    updateNode = insert(UpdateArrayHelperNodeGen.create(isSubset, 0, null, null, null, null));
                 }
                 positions = insert(UpdatePositions.create(isSubset, len));
                 coerceVector = insert(CoerceVectorNodeGen.create(null, null, null));
             }
             Object[] pos;
-            if (args.getLength() > 1) {
+            if (argsLengthLargerThanOneProfile.profile(args.getLength() > 1)) {
                 pos = Arrays.copyOf(args.getArguments(), args.getLength() - 1);
             } else {
                 pos = new Object[]{RMissing.instance};
@@ -502,7 +354,7 @@ public class InfixEmulationFunctions {
 
         @SuppressWarnings("unused")
         @Specialization(guards = "noInd(args)")
-        protected Object getNoInd(RAbstractContainer x, RArgsValuesAndNames args) {
+        protected Object getNoInd(Object x, RArgsValuesAndNames args) {
             throw RError.error(RError.Message.INVALID_ARG_NUMBER, "SubAssignArgs");
         }
 
@@ -511,77 +363,28 @@ public class InfixEmulationFunctions {
         }
     }
 
-    @RBuiltin(name = "[<-", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", "..."})
+    @RBuiltin(name = "[<-", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", "..."}, internalDispatch = true)
     public abstract static class UpdateArraySubsetBuiltin extends UpdateArrayBuiltin {
 
-        private static final ArgumentsSignature SIGNATURE = ArgumentsSignature.get("", "");
-
-        private static final String NAME = "[<-";
         private static final boolean IS_SUBSET = true;
 
-        @Child private UseMethodInternalNode dcn;
-
-        @Specialization(guards = {"!noInd(args)", "isObject(frame, x)"})
-        protected Object updateObj(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames args) {
-            if (dcn == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                dcn = insert(new UseMethodInternalNode(NAME, SIGNATURE, true));
-            }
-            try {
-                return dcn.execute(frame, x, new Object[]{x, args});
-            } catch (S3FunctionLookupNode.NoGenericMethodException e) {
-                Object value = args.getArgument(args.getLength() - 1);
-                return update(frame, x, args, value, IS_SUBSET);
-            }
-        }
-
-        @Specialization(guards = {"!noInd(args)", "!isObject(frame, x)"})
-        protected Object update(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames args) {
+        @Specialization(guards = "!noInd(args)")
+        protected Object update(VirtualFrame frame, Object x, RArgsValuesAndNames args) {
             Object value = args.getArgument(args.getLength() - 1);
             return update(frame, x, args, value, IS_SUBSET);
-        }
-
-        @SuppressFBWarnings(value = "ES_COMPARING_STRINGS_WITH_EQ", justification = "generic name is interned in the interpreted code for faster comparison")
-        protected boolean isObject(VirtualFrame frame, RAbstractContainer x) {
-            // treat as non-object if we got here through S3 dispatch on the object of the same type
-            return x.isObject(attrProfiles) && !(RArguments.getS3Args(frame) != null && RArguments.getS3Args(frame).generic == NAME && RArguments.getArgument(frame, 0).getClass() == x.getClass());
         }
     }
 
-    @RBuiltin(name = "[[<-", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", "..."})
+    @RBuiltin(name = "[[<-", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", "..."}, internalDispatch = true)
     public abstract static class UpdateArrayNodeSubscriptBuiltin extends UpdateArrayBuiltin {
 
-        private static final String NAME = "[[<-";
         private static final boolean IS_SUBSET = false;
 
-        @Child private UseMethodInternalNode dcn;
-
-        @Specialization(guards = {"!noInd(args)", "isObject(frame, x)"})
-        protected Object updateObj(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames args) {
-            if (dcn == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                dcn = insert(new UseMethodInternalNode(NAME, ArgumentsSignature.empty(2), true));
-            }
-            try {
-                return dcn.execute(frame, x, new Object[]{x, args});
-            } catch (S3FunctionLookupNode.NoGenericMethodException e) {
-                Object value = args.getArgument(args.getLength() - 1);
-                return update(frame, x, args, value, IS_SUBSET);
-            }
-        }
-
-        @Specialization(guards = {"!noInd(args)", "!isObject(frame, x)"})
-        protected Object update(VirtualFrame frame, RAbstractContainer x, RArgsValuesAndNames args) {
+        @Specialization(guards = "!noInd(args)")
+        protected Object update(VirtualFrame frame, Object x, RArgsValuesAndNames args) {
             Object value = args.getArgument(args.getLength() - 1);
             return update(frame, x, args, value, IS_SUBSET);
         }
-
-        @SuppressFBWarnings(value = "ES_COMPARING_STRINGS_WITH_EQ", justification = "generic name is interned in the interpreted code for faster comparison")
-        protected boolean isObject(VirtualFrame frame, RAbstractContainer x) {
-            // treat as non-object if we got here through S3 dispatch on the object of the same type
-            return x.isObject(attrProfiles) && !(RArguments.getS3Args(frame) != null && RArguments.getS3Args(frame).generic == NAME && RArguments.getArgument(frame, 0).getClass() == x.getClass());
-        }
-
     }
 
     @RBuiltin(name = "<-", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x", "i"})
@@ -611,112 +414,50 @@ public class InfixEmulationFunctions {
         }
     }
 
-    public abstract static class FieldBuiltinBase extends RBuiltinNode {
-        @Child protected UseMethodInternalNode dcn;
-        protected final ConditionProfile nonStringFieldProfile = ConditionProfile.createBinaryProfile();
-        protected final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
-
-        @SuppressFBWarnings(value = "ES_COMPARING_STRINGS_WITH_EQ", justification = "generic name is interned in the interpreted code for faster comparison")
-        protected boolean isObject(VirtualFrame frame, RAbstractContainer x, String builtinName) {
-            // treat as non-object if we got here through S3 dispatch on the object of the same type
-            return x.isObject(attrProfiles) &&
-                            !(RArguments.getS3Args(frame) != null && RArguments.getS3Args(frame).generic == builtinName && RArguments.getArgument(frame, 0).getClass() == x.getClass());
-        }
-
-    }
-
-    @RBuiltin(name = "$", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", ""})
-    public abstract static class AccessFieldBuiltin extends FieldBuiltinBase {
-
-        protected static final String NAME = "$";
+    @RBuiltin(name = "$", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", ""}, internalDispatch = true)
+    public abstract static class AccessFieldBuiltin extends RBuiltinNode {
 
         @Child private AccessFieldNode accessNode;
+        private final BranchProfile errorProfile = BranchProfile.create();
 
-        protected Object access(VirtualFrame frame, Object x, String name) {
-            if (accessNode == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
+        @Specialization
+        protected Object accessField(Object container, Object field) {
+            if (field instanceof String) {
                 if (accessNode == null) {
-                    accessNode = insert(AccessFieldNodeGen.create(false, null, null));
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    accessNode = insert(AccessFieldNodeGen.create(null, null));
                 }
-            }
-            return accessNode.executeAccess(frame, x, name);
-        }
-
-        @Specialization(guards = "!isObject(frame, container, NAME)")
-        protected Object accessField(VirtualFrame frame, RAbstractContainer container, Object field) {
-            if (nonStringFieldProfile.profile(!(field instanceof String))) {
+                return accessNode.executeAccess(container, (String) field);
+            } else {
+                errorProfile.enter();
                 // TODO: the error message is not quite correct for all types;
                 // for example: x<-list(a=7); `$<-`(x, c("a"), 42);)
                 throw RError.error(RError.Message.INVALID_SUBSCRIPT_TYPE, RRuntime.classToString(field.getClass()));
             }
-            return access(frame, container, (String) field);
         }
-
-        @Specialization(guards = "isObject(frame, container, NAME)")
-        protected Object accessFieldObject(VirtualFrame frame, RAbstractContainer container, Object field) {
-            if (nonStringFieldProfile.profile(!(field instanceof String))) {
-                // TODO: the error message is not quite correct for all types;
-                // for example: x<-list(a=7); `$<-`(x, c("a"), 42);)
-                throw RError.error(RError.Message.INVALID_SUBSCRIPT_TYPE, RRuntime.classToString(field.getClass()));
-            }
-            if (dcn == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                dcn = insert(new UseMethodInternalNode(NAME, ArgumentsSignature.get("", ""), true));
-            }
-            try {
-                return dcn.execute(frame, container, new Object[]{container, field});
-            } catch (S3FunctionLookupNode.NoGenericMethodException e) {
-                return access(frame, container, (String) field);
-            }
-        }
-
     }
 
-    @RBuiltin(name = "$<-", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", "", ""})
-    public abstract static class UpdateFieldBuiltin extends FieldBuiltinBase {
-
-        protected static final String NAME = "$<-";
+    @RBuiltin(name = "$<-", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", "", ""}, internalDispatch = true)
+    public abstract static class UpdateFieldBuiltin extends RBuiltinNode {
 
         @Child private UpdateFieldNode updateNode;
+        private final BranchProfile errorProfile = BranchProfile.create();
 
-        protected Object update(VirtualFrame frame, Object x, Object value, String name) {
-            if (updateNode == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
+        @Specialization
+        protected Object accessField(Object container, Object field, Object value) {
+            if (field instanceof String) {
                 if (updateNode == null) {
-                    updateNode = insert(UpdateFieldNodeGen.create(false, null, null, null));
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    updateNode = insert(UpdateFieldNodeGen.create(null, null, null));
                 }
-            }
-            return updateNode.executeUpdate(frame, x, value, name);
-        }
-
-        @Specialization(guards = "!isObject(frame, container, NAME)")
-        protected Object accessField(VirtualFrame frame, RAbstractContainer container, Object field, Object value) {
-            if (nonStringFieldProfile.profile(!(field instanceof String))) {
+                return updateNode.executeUpdate(container, value, (String) field);
+            } else {
+                errorProfile.enter();
                 // TODO: the error message is not quite correct for all types;
                 // for example: x<-list(a=7); `$<-`(x, c("a"), 42);)
                 throw RError.error(RError.Message.INVALID_SUBSCRIPT_TYPE, RRuntime.classToString(field.getClass()));
             }
-            return update(frame, container, value, (String) field);
         }
-
-        @Specialization(guards = "isObject(frame, container, NAME)")
-        protected Object accessFieldObject(VirtualFrame frame, RAbstractContainer container, Object field, Object value) {
-            if (nonStringFieldProfile.profile(!(field instanceof String))) {
-                // TODO: the error message is not quite correct for all types;
-                // for example: x<-list(a=7); `$<-`(x, c("a"), 42);)
-                throw RError.error(RError.Message.INVALID_SUBSCRIPT_TYPE, RRuntime.classToString(field.getClass()));
-            }
-            if (dcn == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                dcn = insert(new UseMethodInternalNode(NAME, ArgumentsSignature.get("", "", ""), true));
-            }
-            try {
-                return dcn.execute(frame, container, new Object[]{container, field, value});
-            } catch (S3FunctionLookupNode.NoGenericMethodException e) {
-                return update(frame, container, value, (String) field);
-            }
-        }
-
     }
 
     @RBuiltin(name = ":", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"from", "to"})

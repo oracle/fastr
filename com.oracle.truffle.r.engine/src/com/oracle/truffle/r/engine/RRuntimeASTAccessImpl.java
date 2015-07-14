@@ -223,28 +223,6 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
                 default:
                     assert false;
             }
-        } else if (node instanceof AccessArrayNode) {
-            AccessArrayNode accessArrayNode = (AccessArrayNode) node;
-            switch (index) {
-                case 0:
-                    return RDataFactory.createSymbol(accessArrayNode.isSubset ? "[" : "[[");
-                case 1:
-                    return RASTUtils.createLanguageElement(accessArrayNode.getVector());
-                default:
-                    assert false;
-            }
-        } else if (node instanceof AccessFieldNode) {
-            AccessFieldNode accessFieldNode = (AccessFieldNode) node;
-            switch (index) {
-                case 0:
-                    return RDataFactory.createSymbol("$");
-                case 1:
-                    return RASTUtils.createLanguageElement(accessFieldNode.getObject());
-                case 2:
-                    return RASTUtils.createLanguageElement(accessFieldNode.getField());
-                default:
-                    assert false;
-            }
         } else {
             // TODO fill out
             assert false;
