@@ -87,4 +87,8 @@ public abstract class CastSymbolNode extends CastBaseNode {
     private static RSymbol backQuote(String s) {
         return RDataFactory.createSymbol("`" + s + "`");
     }
+
+    public static CastSymbolNode createNonPreserving() {
+        return CastSymbolNodeGen.create(false, false, false);
+    }
 }

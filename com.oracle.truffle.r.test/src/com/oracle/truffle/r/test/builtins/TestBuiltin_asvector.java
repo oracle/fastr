@@ -233,7 +233,7 @@ public class TestBuiltin_asvector extends TestBase {
 
     @Test
     public void testasvector43() {
-        assertEval(Ignored.Unknown, "argv <- list(list('GRID.VP.12'), 'list'); .Internal(as.vector(argv[[1]], argv[[2]]))");
+        assertEval("argv <- list(list('GRID.VP.12'), 'list'); .Internal(as.vector(argv[[1]], argv[[2]]))");
     }
 
     @Test
