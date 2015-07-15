@@ -24,8 +24,7 @@ public class TestBuiltin_cat extends TestBase {
 
     @Test
     public void testcat2() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(list('Loading required package: splines\\n'), structure(2L, class = c('terminal', 'connection')), '', FALSE, NULL, FALSE); .Internal(cat(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]]))");
+        assertEval("argv <- list(list('Loading required package: splines\\n'), structure(2L, class = c('terminal', 'connection')), '', FALSE, NULL, FALSE); .Internal(cat(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]]))");
     }
 
     @Test
@@ -77,7 +76,8 @@ public class TestBuiltin_cat extends TestBase {
         assertEval("{ cat(\"hi\",integer(0),\"hello\",sep=\"-\") }");
         assertEval("{ cat(\"a\", \"b\", \"c\", sep=c(\"-\", \"+\")) }");
 
-        assertEval(Ignored.Unknown, "{ cat(c(\"a\", \"b\", \"c\"), \"d\", sep=c(\"-\", \"+\")) }");
+        assertEval("{ cat(c(\"a\", \"b\", \"c\"), \"d\", sep=c(\"-\", \"+\")) }");
+        assertEval("{ cat(paste(letters, 100* 1:26), fill = TRUE, labels = paste0(\"{\", 1:10, \"}:\"))}");
     }
 
     @Test
