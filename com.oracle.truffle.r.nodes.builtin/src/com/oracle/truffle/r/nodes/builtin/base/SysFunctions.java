@@ -58,7 +58,7 @@ public class SysFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected Object sysGetEnv(RAbstractStringVector x, String unset) {
+        protected Object sysGetEnv(RAbstractStringVector x, RAbstractStringVector unset) {
             controlVisibility();
             Map<String, String> envMap = REnvVars.getMap();
             int len = x.getLength();
@@ -80,8 +80,8 @@ public class SysFunctions {
                     if (value != null) {
                         data[i] = value;
                     } else {
-                        data[i] = unset;
-                        if (RRuntime.isNA(unset)) {
+                        data[i] = unset.getDataAt(0);
+                        if (RRuntime.isNA(unset.getDataAt(0))) {
                             complete = RDataFactory.INCOMPLETE_VECTOR;
                         }
                     }

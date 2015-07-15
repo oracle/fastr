@@ -111,14 +111,12 @@ public final class RDataFrame implements RShareable, RAbstractContainer {
 
     @Override
     public boolean hasDimensions() {
-        RInternalError.unimplemented("data frame's dimensions need to be obtained using builtins");
-        return false;
+        return vector.hasDimensions();
     }
 
     @Override
     public int[] getDimensions() {
-        RInternalError.unimplemented("data frame's dimensions need to be obtained using builtins");
-        return null;
+        return vector.getDimensions();
     }
 
     @Override

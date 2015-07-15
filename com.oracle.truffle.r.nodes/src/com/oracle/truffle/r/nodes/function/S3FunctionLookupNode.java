@@ -231,6 +231,7 @@ public abstract class S3FunctionLookupNode extends Node {
         private final BranchProfile nullTypeProfile = BranchProfile.create();
         private final BranchProfile lengthMismatch = BranchProfile.create();
         private final BranchProfile notIdentityEqualElements = BranchProfile.create();
+        private final ValueProfile methodsTableProfile = ValueProfile.createIdentityProfile();
         private final String cachedGroup;
         private final RFunction builtin;
         private final boolean successfulReadIsTable;
@@ -263,9 +264,13 @@ public abstract class S3FunctionLookupNode extends Node {
                     break;
                 }
                 REnvironment methodsTable;
-                methodsTable = readS3MethodsTable == null ? null : (REnvironment) readS3MethodsTable.execute(frame, genericDefFrame);
-                if (methodsTable != null && !executeReads(unsuccessfulReadsDefFrame, methodsTable.getFrame())) {
-                    break;
+                if (readS3MethodsTable == null) {
+                    methodsTable = null;
+                } else {
+                    methodsTable = (REnvironment) methodsTableProfile.profile(readS3MethodsTable.execute(frame, genericDefFrame));
+                    if (methodsTable != null && !executeReads(unsuccessfulReadsDefFrame, methodsTable.getFrame())) {
+                        break;
+                    }
                 }
                 if (successfulRead != null) {
                     Object actualFunction = successfulRead.execute(null, successfulReadIsTable ? methodsTable.getFrame() : callerFrame);

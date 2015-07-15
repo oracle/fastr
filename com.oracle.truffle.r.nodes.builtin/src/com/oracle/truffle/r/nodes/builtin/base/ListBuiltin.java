@@ -104,7 +104,7 @@ public abstract class ListBuiltin extends RBuiltinNode {
     @Specialization(guards = "missing(args)")
     protected RList listMissing(@SuppressWarnings("unused") RArgsValuesAndNames args) {
         controlVisibility();
-        return list(new Object[0]);
+        return RDataFactory.createList(new Object[]{});
     }
 
     @Specialization

@@ -223,28 +223,6 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
                 default:
                     assert false;
             }
-        } else if (node instanceof AccessArrayNode) {
-            AccessArrayNode accessArrayNode = (AccessArrayNode) node;
-            switch (index) {
-                case 0:
-                    return RDataFactory.createSymbol(accessArrayNode.isSubset ? "[" : "[[");
-                case 1:
-                    return RASTUtils.createLanguageElement(accessArrayNode.getVector());
-                default:
-                    assert false;
-            }
-        } else if (node instanceof AccessFieldNode) {
-            AccessFieldNode accessFieldNode = (AccessFieldNode) node;
-            switch (index) {
-                case 0:
-                    return RDataFactory.createSymbol("$");
-                case 1:
-                    return RASTUtils.createLanguageElement(accessFieldNode.getObject());
-                case 2:
-                    return RASTUtils.createLanguageElement(accessFieldNode.getField());
-                default:
-                    assert false;
-            }
         } else {
             // TODO fill out
             assert false;
@@ -307,7 +285,7 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
             ArgumentsSignature newSig = ArgumentsSignature.get(newNames);
             CallArgumentsNode newCallArgs = CallArgumentsNode.create(null, false, args.getArguments(), newSig);
             // copying is already handled by RShareable
-            rl.setRep(RCallNode.createCall(null, ((RCallNode) node).getFunctionNode(), newCallArgs, null));
+            rl.setRep(RCallNode.createCall(null, ((RCallNode) node).getFunctionNode(), newCallArgs));
         } else if (node instanceof GroupDispatchNode) {
             throw RError.nyi(null, "group dispatch names update");
         } else {
@@ -335,7 +313,7 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
             if (!match) {
                 throw RError.nyi(null, "assignment to non-existent field");
             }
-            return RDataFactory.createLanguage(RCallNode.createCall(null, ((RCallNode) node).getFunctionNode(), args, null));
+            return RDataFactory.createLanguage(RCallNode.createCall(null, ((RCallNode) node).getFunctionNode(), args));
         } else if (node instanceof GroupDispatchNode) {
             throw RError.nyi(null, "group dispatch field update");
         } else {

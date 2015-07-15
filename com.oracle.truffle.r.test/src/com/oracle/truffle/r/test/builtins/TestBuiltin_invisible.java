@@ -123,7 +123,7 @@ public class TestBuiltin_invisible extends TestBase {
 
     @Test
     public void testinvisible21() {
-        assertEval(Ignored.Unknown, "argv <- list(quote(~a + b:c + d + e + e:d));invisible(argv[[1]]);");
+        assertEval("argv <- list(quote(~a + b:c + d + e + e:d));invisible(argv[[1]]);");
     }
 
     @Test

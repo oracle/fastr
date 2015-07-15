@@ -51,7 +51,7 @@ public abstract class MultiDimPosConverterValueNode extends RNode {
 
     private static RError.Message getErrorForValueSize(Object value, RError.Message sizeOneMessage) {
         RError.Message message;
-        int size = value instanceof RNull ? 0 : ((RAbstractVector) value).getLength();
+        int size = value instanceof RNull ? 0 : ((RAbstractVector) RRuntime.asAbstractVector(value)).getLength();
         if (size == 0) {
             message = RError.Message.REPLACEMENT_0;
         } else if (size == 1) {

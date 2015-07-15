@@ -139,7 +139,7 @@ public class TestBuiltin_iscall extends TestBase {
 
     @Test
     public void testiscall26() {
-        assertEval(Ignored.Unknown, "argv <- list(quote(cbind(X, M) ~ M.user + Temp + M.user:Temp));is.call(argv[[1]]);");
+        assertEval("argv <- list(quote(cbind(X, M) ~ M.user + Temp + M.user:Temp));is.call(argv[[1]]);");
     }
 
     @Test

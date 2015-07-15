@@ -138,7 +138,7 @@ public class TestBuiltin_unclass extends TestBase {
 
     @Test
     public void testunclass23() {
-        assertEval(Ignored.Unknown, "argv <- list(quote(y ~ a + b:c + d + e + e:d));unclass(argv[[1]]);");
+        assertEval("argv <- list(quote(y ~ a + b:c + d + e + e:d));unclass(argv[[1]]);");
     }
 
     @Test
@@ -181,7 +181,7 @@ public class TestBuiltin_unclass extends TestBase {
 
     @Test
     public void testunclass32() {
-        assertEval(Ignored.Unknown, "argv <- list(quote(breaks ~ (wool + tension)^2));unclass(argv[[1]]);");
+        assertEval("argv <- list(quote(breaks ~ (wool + tension)^2));unclass(argv[[1]]);");
     }
 
     @Test
@@ -197,8 +197,7 @@ public class TestBuiltin_unclass extends TestBase {
 
     @Test
     public void testunclass35() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(list(group = structure(c(1L, 1L), .Label = c('Ctl', 'Trt'), class = 'factor')), .Names = 'group', row.names = 1:2, terms = quote(~group)));unclass(argv[[1]]);");
+        assertEval("argv <- list(structure(list(group = structure(c(1L, 1L), .Label = c('Ctl', 'Trt'), class = 'factor')), .Names = 'group', row.names = 1:2, terms = quote(~group)));unclass(argv[[1]]);");
     }
 
     @Test

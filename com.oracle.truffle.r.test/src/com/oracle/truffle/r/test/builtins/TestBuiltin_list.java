@@ -60,7 +60,7 @@ public class TestBuiltin_list extends TestBase {
 
     @Test
     public void testlist8() {
-        assertEval(Ignored.Unknown, "argv <- list(upper = quote(~M.user * Temp * Soft));list(argv[[1]]);");
+        assertEval("argv <- list(upper = quote(~M.user * Temp * Soft));list(argv[[1]]);");
     }
 
     @Test
