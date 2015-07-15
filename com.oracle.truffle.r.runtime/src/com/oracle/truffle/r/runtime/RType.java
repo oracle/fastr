@@ -46,7 +46,8 @@ public enum RType {
     DefunctReal("real", -1),
     DefunctSingle("single", -1),
     ExternalPtr("externalptr", -1),
-    S4Object("s4object", -1);
+    S4Object("s4object", -1),
+    Connection("connection", -1);
 
     public static final int NO_PRECEDENCE = -1;
     public static final int NUMBER_OF_PRECEDENCES = 9;
@@ -157,6 +158,8 @@ public enum RType {
                 return ExternalPtr;
             case "s4object":
                 return S4Object;
+            case "connection":
+                return Connection;
             default:
                 return null;
         }

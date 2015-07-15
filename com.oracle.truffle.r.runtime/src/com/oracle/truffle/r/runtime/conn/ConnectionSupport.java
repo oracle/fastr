@@ -325,6 +325,21 @@ public class ConnectionSupport implements RContext.StateFactory {
         }
     }
 
+    /**
+     * In GnuR a connection is just an numeric vector and can be created by setting the class, even
+     * if the result isn't actually a valid connection, e.g.
+     * {@code structure(2, class=c("terminal","connection"))}.
+     */
+    public static RConnection fromVector(RVector vector, @SuppressWarnings("unused") RStringVector classAttr) {
+        int index = RRuntime.asInteger(vector);
+        RConnection result = RContext.getRConnectionState().getConnection(index);
+        if (result == null) {
+            // non-existent connection, still legal according to GnuR
+            throw RError.nyi(null, "coerce to non-existent connection");
+        }
+        return result;
+    }
+
     // TODO implement all open modes
 
     /**
@@ -639,6 +654,7 @@ public class ConnectionSupport implements RContext.StateFactory {
         public boolean isClosed() {
             return closed;
         }
+
     }
 
     public static BaseRConnection getBaseConnection(RConnection conn) {

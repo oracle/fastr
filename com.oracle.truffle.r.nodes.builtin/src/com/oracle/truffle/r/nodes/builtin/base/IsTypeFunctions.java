@@ -440,13 +440,7 @@ public class IsTypeFunctions {
             return arg.isObject(attrProfiles) ? RRuntime.LOGICAL_TRUE : RRuntime.LOGICAL_FALSE;
         }
 
-        @Specialization
-        protected byte isObject(RConnection conn) {
-            // No need to enquire, connections always have a class attribute.
-            return RRuntime.LOGICAL_TRUE;
-        }
-
-        @Specialization(guards = {"!isRMissing(value)", "!isRAbstractContainer(value)", "!isRConnection(value)"})
+        @Specialization(guards = {"!isRMissing(value)", "!isRAbstractContainer(value)"})
         protected byte isType(Object value) {
             controlVisibility();
             return RRuntime.LOGICAL_FALSE;

@@ -36,7 +36,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
  *
  * TODO Refactor the pushBack code into ConnectionsSupport
  */
-public abstract class RConnection extends RAttributeStorage implements RTypedValue, AutoCloseable {
+public abstract class RConnection extends RAttributeStorage implements RTypedValue, AutoCloseable, RAbstractContainer {
 
     @Override
     public RStringVector getImplicitClass() {
@@ -315,5 +315,74 @@ public abstract class RConnection extends RAttributeStorage implements RTypedVal
      * Returns {@code true} iff this connection is open.
      */
     public abstract boolean isOpen();
+
+    /*
+     * Methods from the RAbstractContainer interface, which is implemented to allow an RVector to
+     * transform to an RConnection via a class update.
+     */
+
+    public boolean isComplete() {
+        return true;
+    }
+
+    public int getLength() {
+        return 1;
+    }
+
+    public RAbstractContainer resize(int size) {
+        return this;
+    }
+
+    public boolean hasDimensions() {
+        return false;
+    }
+
+    public int[] getDimensions() {
+        return null;
+    }
+
+    public void setDimensions(int[] newDimensions) {
+    }
+
+    public Class<?> getElementClass() {
+        return RInteger.class;
+    }
+
+    public RAbstractContainer materializeNonShared() {
+        return this;
+    }
+
+    public RShareable materializeToShareable() {
+        throw RInternalError.shouldNotReachHere();
+    }
+
+    public Object getDataAtAsObject(int index) {
+        return getDescriptor();
+    }
+
+    public RStringVector getNames(RAttributeProfiles attrProfiles) {
+        return null;
+    }
+
+    public void setNames(RStringVector newNames) {
+    }
+
+    public RList getDimNames(RAttributeProfiles attrProfiles) {
+        return null;
+    }
+
+    public void setDimNames(RList newDimNames) {
+    }
+
+    public Object getRowNames(RAttributeProfiles attrProfiles) {
+        return null;
+    }
+
+    public void setRowNames(RAbstractVector rowNames) {
+    }
+
+    public boolean isObject(RAttributeProfiles attrProfiles) {
+        return true;
+    }
 
 }

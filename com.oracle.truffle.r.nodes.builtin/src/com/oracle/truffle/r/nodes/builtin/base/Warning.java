@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,7 +24,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
@@ -41,10 +41,16 @@ public abstract class Warning extends RInvisibleBuiltinNode {
         return castString.execute(operand);
     }
 
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.toLogical(0);
+        casts.toLogical(1);
+        casts.toLogical(2);
+    }
+
     @Specialization
     @TruffleBoundary
     public String warning(byte callL, byte immediateL, byte noBreakWarningL, Object messageObj) {
-        // TODO supposed to coerce call/immediate/noBreaks to logical
         String message = RRuntime.asString(castString(messageObj));
         boolean call = RRuntime.fromLogical(callL);
         boolean immediate = RRuntime.fromLogical(immediateL);
@@ -52,5 +58,11 @@ public abstract class Warning extends RInvisibleBuiltinNode {
         RErrorHandling.warningcallInternal(call ? getEncapsulatingSourceSection() : null, message, immediate, noBreakWarning);
         controlVisibility();
         return message;
+    }
+
+    @SuppressWarnings("unused")
+    @Fallback
+    public String warning(Object callL, Object immediateL, Object noBreakWarningL, Object message) {
+        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
     }
 }

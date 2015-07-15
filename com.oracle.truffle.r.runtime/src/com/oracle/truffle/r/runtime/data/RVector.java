@@ -28,6 +28,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.conn.*;
 import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
@@ -528,6 +529,9 @@ public abstract class RVector extends RAttributeStorage implements RShareable, R
                         // it's a factor now
                         return RDataFactory.createFactor(resVector, ordered);
                     }
+                } else if (RType.Connection.getName().equals(attr)) {
+                    // convert to RConnection
+                    return ConnectionSupport.fromVector(vector, classAttr);
                 }
             }
             vector.putAttribute(RRuntime.CLASS_ATTR_KEY, classAttr);
