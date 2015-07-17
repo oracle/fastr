@@ -32,7 +32,7 @@ import com.oracle.truffle.r.runtime.*;
  * Base class that represents a list of argument/name pairs with some convenience methods. Semantics
  * of {@link #arguments} and the signature have to be defined by subclasses!
  */
-public abstract class ArgumentsNode extends RNode implements RSyntaxNode, UnmatchedArguments {
+public abstract class ArgumentsNode extends RNode implements UnmatchedArguments {
 
     /**
      * A list of arguments. Single arguments may be <code>null</code>; semantics have to be
@@ -57,52 +57,6 @@ public abstract class ArgumentsNode extends RNode implements RSyntaxNode, Unmatc
     @NeedsWrapper
     public ArgumentsSignature getSignature() {
         return signature;
-    }
-
-    @Override
-    public void deparse(RDeparse.State state) {
-        state.append('(');
-        for (int i = 0; i < arguments.length; i++) {
-            RNode argument = arguments[i];
-            String name = signature.getName(i);
-            if (name != null) {
-                state.append(name);
-                state.append(" = ");
-            }
-            if (argument != null) {
-                // e.g. not f(, foo)
-                RSyntaxNode.cast(argument).deparse(state);
-            }
-            if (i != arguments.length - 1) {
-                state.append(", ");
-            }
-        }
-        state.append(')');
-    }
-
-    @Override
-    public void serialize(RSerialize.State state) {
-        if (arguments.length == 0) {
-            state.setNull();
-        } else {
-            for (int i = 0; i < arguments.length; i++) {
-                RNode argument = arguments[i];
-                String name = signature.getName(i);
-                if (name != null) {
-                    state.setTagAsSymbol(name);
-                }
-                if (argument == null) {
-                    state.setCarMissing();
-                } else {
-                    state.serializeNodeSetCar(argument);
-                }
-                if (i != arguments.length - 1) {
-                    state.openPairList();
-                }
-
-            }
-            state.linkPairList(arguments.length);
-        }
     }
 
     /**

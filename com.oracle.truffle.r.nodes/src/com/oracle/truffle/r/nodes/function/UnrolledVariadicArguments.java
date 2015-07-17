@@ -24,14 +24,14 @@ package com.oracle.truffle.r.nodes.function;
 
 import java.util.*;
 
+import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 
 /**
  * This is a simple container class for arguments whose "..." have been unrolled and inserted into
- * the original arguments, as it happens in
- * {@link CallArgumentsNode#executeFlatten(com.oracle.truffle.api.frame.VirtualFrame)}.
+ * the original arguments, as it happens in {@link CallArgumentsNode#executeFlatten(VirtualFrame)}.
  */
 public final class UnrolledVariadicArguments extends Arguments<RNode> implements UnmatchedArguments {
 

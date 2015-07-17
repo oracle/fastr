@@ -65,8 +65,8 @@ public class RASTDeparse {
     }
 
     public static void deparseInfixOperator(RDeparse.State state, Node node, RDeparse.Func func) {
-        CallArgumentsNode args = RASTUtils.findCallArgumentsNode(node);
-        RNode[] argValues = args.getArguments();
+        Arguments<RSyntaxNode> args = RASTUtils.findCallArguments(node);
+        RSyntaxNode[] argValues = args.getArguments();
         PP kind = func.info.kind;
         if (kind == PP.BINARY && argValues.length == 1) {
             kind = PP.UNARY;
@@ -74,7 +74,7 @@ public class RASTDeparse {
         switch (kind) {
             case UNARY:
                 state.append(func.op);
-                RSyntaxNode.cast(argValues[0]).deparse(state);
+                argValues[0].deparse(state);
                 break;
 
             case BINARY:
@@ -84,7 +84,7 @@ public class RASTDeparse {
                 if (parens) {
                     state.append('(');
                 }
-                RSyntaxNode.cast(argValues[0]).deparse(state);
+                argValues[0].deparse(state);
                 if (parens) {
                     state.append(')');
                 }
@@ -99,19 +99,19 @@ public class RASTDeparse {
                 if (parens) {
                     state.append('(');
                 }
-                RSyntaxNode.cast(argValues[1]).deparse(state);
+                argValues[1].deparse(state);
                 if (parens) {
                     state.append(')');
                 }
                 break;
 
             case SUBSET:
-                RSyntaxNode.cast(argValues[0]).deparse(state);
+                argValues[0].deparse(state);
                 state.append(func.op == SQUARE ? "[" : "[[");
                 ArgumentsSignature signature = args.getSignature();
                 // similar to ArgumentsNode.deparse()
                 for (int i = 1; i < argValues.length; i++) {
-                    RNode argument = argValues[i];
+                    RSyntaxNode argument = argValues[i];
                     String name = signature.getName(i);
                     if (name != null) {
                         state.append(name);
@@ -119,7 +119,7 @@ public class RASTDeparse {
                     }
                     if (argument != null) {
                         // e.g. not f(, foo)
-                        RSyntaxNode.cast(argument).deparse(state);
+                        argument.deparse(state);
                     }
                     if (i != argValues.length - 1) {
                         state.append(", ");
@@ -129,14 +129,14 @@ public class RASTDeparse {
 
                 break;
             case DOLLAR:
-                RSyntaxNode.cast(argValues[0]).deparse(state);
+                argValues[0].deparse(state);
                 state.append(func.op);
                 String fieldName = ConstantNode.getString(argValues[1]);
                 if (fieldName != null) {
                     state.append(fieldName);
                 } else {
                     // FIXME: this needs to be handled in RCallNode, not here
-                    RSyntaxNode.cast(argValues[1]).deparse(state);
+                    argValues[1].deparse(state);
                 }
                 break;
             default:
@@ -144,11 +144,11 @@ public class RASTDeparse {
         }
     }
 
-    private static boolean needsParens(PPInfo mainop, Node arg, boolean isLeft) {
+    private static boolean needsParens(PPInfo mainop, RSyntaxNode arg, boolean isLeft) {
         Node node = RASTUtils.unwrap(arg);
         Func func = isInfixOperatorNode(node);
         if (func != null) {
-            CallArgumentsNode args = RASTUtils.findCallArgumentsNode(node);
+            Arguments<RSyntaxNode> args = RASTUtils.findCallArguments(node);
             PPInfo arginfo = func.info;
             switch (arginfo.kind) {
                 case BINARY:

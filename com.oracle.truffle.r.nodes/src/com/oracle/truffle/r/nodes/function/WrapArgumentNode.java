@@ -111,9 +111,9 @@ public final class WrapArgumentNode extends WrapArgumentBaseNode {
         return new WrapArgumentNode(null, true, index);
     }
 
-    public static RNode create(RNode operand, boolean modeChange, int index) {
+    public static RSyntaxNode create(RNode operand, boolean modeChange, int index) {
         if (operand instanceof WrapArgumentNode || operand instanceof ConstantNode) {
-            return operand;
+            return (RSyntaxNode) operand;
         } else {
             WrapArgumentNode wan = new WrapArgumentNode(operand, modeChange, index);
             wan.assignSourceSection(operand.getEncapsulatingSourceSection());
@@ -127,7 +127,7 @@ public final class WrapArgumentNode extends WrapArgumentBaseNode {
         if (sub instanceof RASTUtils.DotsNode) {
             return (RASTUtils.DotsNode) sub;
         } else {
-            return RSyntaxNode.cast(create(sub, modeChange, index));
+            return create(sub, modeChange, index);
         }
     }
 }

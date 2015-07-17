@@ -130,20 +130,20 @@ public abstract class Lapply extends RBuiltinNode {
 
             // The remaining parameters are passed from {@code ...}. The call node will take
             // care of matching.
-            RNode[] args;
+            RSyntaxNode[] args;
             String[] names;
             if (additionalArguments.isEmpty()) {    // == null || (varArgs.length() == 1 &&
                 // varArgs.getValue(0)
                 // == RMissing.instance)) {
-                args = new RNode[]{readVector};
+                args = new RSyntaxNode[]{readVector};
                 names = new String[]{readVectorElementName};
             } else {
                 // Insert expressions found inside "..." as arguments
-                args = new RNode[additionalArguments.getLength() + 1];
+                args = new RSyntaxNode[additionalArguments.getLength() + 1];
                 args[0] = readVector;
                 Object[] varArgsValues = additionalArguments.getArguments();
                 for (int i = 0; i < additionalArguments.getLength(); i++) {
-                    args[i + 1] = CallArgumentsNode.wrapVarArgValue(varArgsValues[i], i);
+                    args[i + 1] = (RSyntaxNode) CallArgumentsNode.wrapVarArgValue(varArgsValues[i], i);
 
                 }
                 names = new String[additionalArguments.getLength() + 1];
@@ -156,9 +156,7 @@ public abstract class Lapply extends RBuiltinNode {
                     }
                 }
             }
-            ArgumentsSignature callSignature = ArgumentsSignature.get(names);
-            CallArgumentsNode argsNode = CallArgumentsNode.create(false, false, args, callSignature);
-            return RCallNode.createCall(null, null, argsNode);
+            return RCallNode.createCall(null, null, ArgumentsSignature.get(names), args);
         }
 
     }

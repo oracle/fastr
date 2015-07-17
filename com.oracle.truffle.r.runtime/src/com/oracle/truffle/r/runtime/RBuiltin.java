@@ -65,5 +65,5 @@ public @interface RBuiltin {
 
     boolean alwaysSplit() default false;
 
-    boolean internalDispatch() default false;
+    RDispatch dispatch() default RDispatch.DEFAULT;
 }

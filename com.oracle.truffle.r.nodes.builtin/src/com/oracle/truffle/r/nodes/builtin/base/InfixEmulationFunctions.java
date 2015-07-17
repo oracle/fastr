@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.runtime.RDispatch.*;
+
 import java.util.*;
 
 import com.oracle.truffle.api.*;
@@ -204,7 +206,7 @@ public class InfixEmulationFunctions {
         }
     }
 
-    @RBuiltin(name = "[", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x", "...", "drop"}, internalDispatch = true)
+    @RBuiltin(name = "[", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x", "...", "drop"}, dispatch = INTERNAL_GENERIC)
     public abstract static class AccessArraySubsetBuiltin extends AccessArrayBuiltin {
 
         @Override
@@ -255,7 +257,7 @@ public class InfixEmulationFunctions {
 
     }
 
-    @RBuiltin(name = "[[", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", "...", "exact", "drop"}, internalDispatch = true)
+    @RBuiltin(name = "[[", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", "...", "exact", "drop"}, dispatch = INTERNAL_GENERIC)
     public abstract static class AccessArraySubscriptBuiltin extends AccessArrayBuiltin {
 
         @Override
@@ -327,7 +329,7 @@ public class InfixEmulationFunctions {
         private final ConditionProfile argsLengthOneProfile = ConditionProfile.createBinaryProfile();
         private final ConditionProfile argsLengthLargerThanOneProfile = ConditionProfile.createBinaryProfile();
 
-        protected Object update(VirtualFrame frame, Object vector, RArgsValuesAndNames args, Object value, boolean isSubset) {
+        protected Object update(Object vector, RArgsValuesAndNames args, Object value, boolean isSubset) {
             int len = argsLengthOneProfile.profile(args.getLength() == 1) ? 1 : args.getLength() - 1;
 
             if (updateNode == null || positions.getLength() != len) {
@@ -345,7 +347,7 @@ public class InfixEmulationFunctions {
                 pos = new Object[]{RMissing.instance};
             }
             Object newPositions = positions.execute(vector, pos, pos, value);
-            return updateNode.executeUpdate(frame, vector, value, newPositions, coerceVector.executeEvaluated(value, vector, newPositions));
+            return updateNode.executeUpdate(vector, value, newPositions, coerceVector.executeEvaluated(value, vector, newPositions));
         }
 
         @SuppressWarnings("unused")
@@ -359,27 +361,27 @@ public class InfixEmulationFunctions {
         }
     }
 
-    @RBuiltin(name = "[<-", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", "..."}, internalDispatch = true)
+    @RBuiltin(name = "[<-", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", "..."}, dispatch = INTERNAL_GENERIC)
     public abstract static class UpdateArraySubsetBuiltin extends UpdateArrayBuiltin {
 
         private static final boolean IS_SUBSET = true;
 
         @Specialization(guards = "!noInd(args)")
-        protected Object update(VirtualFrame frame, Object x, RArgsValuesAndNames args) {
+        protected Object update(Object x, RArgsValuesAndNames args) {
             Object value = args.getArgument(args.getLength() - 1);
-            return update(frame, x, args, value, IS_SUBSET);
+            return update(x, args, value, IS_SUBSET);
         }
     }
 
-    @RBuiltin(name = "[[<-", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", "..."}, internalDispatch = true)
+    @RBuiltin(name = "[[<-", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", "..."}, dispatch = INTERNAL_GENERIC)
     public abstract static class UpdateArrayNodeSubscriptBuiltin extends UpdateArrayBuiltin {
 
         private static final boolean IS_SUBSET = false;
 
         @Specialization(guards = "!noInd(args)")
-        protected Object update(VirtualFrame frame, Object x, RArgsValuesAndNames args) {
+        protected Object update(Object x, RArgsValuesAndNames args) {
             Object value = args.getArgument(args.getLength() - 1);
-            return update(frame, x, args, value, IS_SUBSET);
+            return update(x, args, value, IS_SUBSET);
         }
     }
 
@@ -410,7 +412,7 @@ public class InfixEmulationFunctions {
         }
     }
 
-    @RBuiltin(name = "$", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", ""}, internalDispatch = true)
+    @RBuiltin(name = "$", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", ""}, dispatch = INTERNAL_GENERIC)
     public abstract static class AccessFieldBuiltin extends RBuiltinNode {
 
         @Child private AccessFieldNode accessNode;
@@ -433,7 +435,7 @@ public class InfixEmulationFunctions {
         }
     }
 
-    @RBuiltin(name = "$<-", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", "", ""}, internalDispatch = true)
+    @RBuiltin(name = "$<-", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", "", ""}, dispatch = INTERNAL_GENERIC)
     public abstract static class UpdateFieldBuiltin extends RBuiltinNode {
 
         @Child private UpdateFieldNode updateNode;
@@ -502,27 +504,26 @@ public class InfixEmulationFunctions {
 
         @Specialization
         protected RLanguage tilde(VirtualFrame frame, RPromise response, @SuppressWarnings("unused") RMissing model) {
-            return doTilde(frame, null, (RNode) response.getRep());
+            return doTilde(frame, null, (RSyntaxNode) response.getRep());
         }
 
         @Specialization
         protected RLanguage tilde(VirtualFrame frame, RPromise response, RPromise model) {
-            return doTilde(frame, (RNode) response.getRep(), (RNode) model.getRep());
+            return doTilde(frame, (RSyntaxNode) response.getRep(), (RSyntaxNode) model.getRep());
         }
 
-        private RLanguage doTilde(VirtualFrame frame, RNode response, RNode model) {
-            RNode[] tildeArgs = new RNode[response == null ? 1 : 2];
+        private RLanguage doTilde(VirtualFrame frame, RSyntaxNode response, RSyntaxNode model) {
+            RSyntaxNode[] tildeArgs = new RSyntaxNode[response == null ? 1 : 2];
             int ix = 0;
             if (response != null) {
                 tildeArgs[ix++] = response;
             }
             tildeArgs[ix++] = model;
-            CallArgumentsNode args = CallArgumentsNode.create(null, false, tildeArgs, ArgumentsSignature.empty(ix));
             SourceSection formulaSrc = this.getSourceSection();
             String formulaCode = formulaSrc.getCode();
             int tildeIndex = formulaCode.indexOf('~');
             SourceSection tildeSrc = ASTNode.adjustedSource(formulaSrc, formulaSrc.getCharIndex() + tildeIndex, 1);
-            RCallNode call = RCallNode.createOpCall(formulaSrc, tildeSrc, "~", args);
+            RCallNode call = RCallNode.createOpCall(formulaSrc, tildeSrc, "~", tildeArgs);
             RLanguage lang = RDataFactory.createLanguage(call);
             lang.setClassAttr(FORMULA_CLASS, false);
             REnvironment env = REnvironment.frameToEnvironment(frame.materialize());

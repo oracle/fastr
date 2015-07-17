@@ -28,19 +28,14 @@ import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.instrument.*;
 import com.oracle.truffle.api.nodes.*;
-import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.access.variables.*;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseCheckHelperNode;
-import com.oracle.truffle.r.nodes.instrument.*;
-import com.oracle.truffle.r.nodes.instrument.wrappers.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
-import com.oracle.truffle.r.runtime.env.*;
 
 /**
  * This class denotes a list of {@link #getArguments()} together with their names given to a
@@ -50,7 +45,6 @@ import com.oracle.truffle.r.runtime.env.*;
  * {@link RootCallTarget} for every argument.
  * </p>
  */
-@NeedsWrapper
 public class CallArgumentsNode extends ArgumentsNode {
 
     @Child private FrameSlotNode varArgsSlotNode;
@@ -69,25 +63,10 @@ public class CallArgumentsNode extends ArgumentsNode {
 
     private final IdentityHashMap<RNode, Closure> closureCache = new IdentityHashMap<>();
 
-    private CallArgumentsNode(RNode[] arguments, ArgumentsSignature signature, int[] varArgsSymbolIndices) {
+    CallArgumentsNode(RNode[] arguments, ArgumentsSignature signature, int[] varArgsSymbolIndices) {
         super(arguments, signature);
         this.varArgsSymbolIndices = varArgsSymbolIndices;
         this.varArgsSlotNode = !containsVarArgsSymbol() ? null : FrameSlotNode.create(ArgumentsSignature.VARARG_NAME);
-    }
-
-    public static CallArgumentsNode createUnnamed(boolean modeChange, boolean modeChangeForAll, RNode... args) {
-        return create(modeChange, modeChangeForAll, args, ArgumentsSignature.empty(args.length));
-    }
-
-    /**
-     * Called only from the parser.
-     */
-    public static CallArgumentsNode create(SourceSection argsSource, boolean modeChange, RNode[] args, ArgumentsSignature signature) {
-        return create(argsSource, modeChange, false, args, signature);
-    }
-
-    public static CallArgumentsNode create(boolean modeChange, boolean modeChangeForAll, RNode[] args, ArgumentsSignature signature) {
-        return create(null, modeChange, modeChangeForAll, args, signature);
     }
 
     /**
@@ -99,15 +78,13 @@ public class CallArgumentsNode extends ArgumentsNode {
      * (modeChange) determines, with the second (modeChangeForAll) flat telling the runtime if this
      * affects only the first argument (replacement functions) or all arguments (binary operators).
      *
-     * @param argsSource the {@link SourceSection} object associated with the arguments (or
-     *            {@code null})
      * @param modeChange
      * @param modeChangeForAll
      * @param args {@link #arguments}; new array gets created. Every {@link RNode} (except
      *            <code>null</code>) gets wrapped into a {@link WrapArgumentNode}.
      * @return A fresh {@link CallArgumentsNode}
      */
-    private static CallArgumentsNode create(SourceSection argsSource, boolean modeChange, boolean modeChangeForAll, RNode[] args, ArgumentsSignature signature) {
+    public static CallArgumentsNode create(boolean modeChange, boolean modeChangeForAll, RNode[] args, ArgumentsSignature signature) {
         // Prepare arguments: wrap in WrapArgumentNode
         RNode[] wrappedArgs = new RNode[args.length];
         List<Integer> varArgsSymbolIndices = new ArrayList<>();
@@ -123,19 +100,16 @@ public class CallArgumentsNode extends ArgumentsNode {
                         varArgsSymbolIndices.add(i);
                     }
                 }
-                wrappedArgs[i] = WrapArgumentNode.create(arg, i == 0 || modeChangeForAll ? modeChange : true, i);
+                wrappedArgs[i] = WrapArgumentNode.create(arg, i == 0 || modeChangeForAll ? modeChange : true, i).asRNode();
             }
         }
 
         // Setup and return
-        SourceSection src = Utils.sourceBoundingBox(argsSource, wrappedArgs);
         int[] varArgsSymbolIndicesArr = new int[varArgsSymbolIndices.size()];
         for (int i = 0; i < varArgsSymbolIndicesArr.length; i++) {
             varArgsSymbolIndicesArr[i] = varArgsSymbolIndices.get(i);
         }
-        CallArgumentsNode callArgs = new CallArgumentsNode(wrappedArgs, signature, varArgsSymbolIndicesArr);
-        callArgs.assignSourceSection(src);
-        return callArgs;
+        return new CallArgumentsNode(wrappedArgs, signature, varArgsSymbolIndicesArr);
     }
 
     @Override
@@ -153,14 +127,14 @@ public class CallArgumentsNode extends ArgumentsNode {
      * @return The {@link VarArgsSignature} of these arguments, or
      *         {@link VarArgsSignature#TAKES_NO_VARARGS} if ! {@link #containsVarArgsSymbol()}
      */
-    public VarArgsSignature createSignature(VirtualFrame frame) {
+    public VarArgsSignature createSignature(VirtualFrame frame, boolean slowPath) {
         if (!containsVarArgsSymbol()) {
             return VarArgsSignature.TAKES_NO_VARARGS;
         }
 
         // Unroll "..."s and insert their arguments into VarArgsSignature
         int times = varArgsSymbolIndices.length;
-        RArgsValuesAndNames varArgsAndNames = getVarargsAndNames(frame);
+        RArgsValuesAndNames varArgsAndNames = getVarargsAndNames(frame, slowPath);
 
         // "..." empty?
         if (varArgsAndNames.isEmpty()) {
@@ -184,14 +158,24 @@ public class CallArgumentsNode extends ArgumentsNode {
         }
     }
 
-    public RArgsValuesAndNames getVarargsAndNames(VirtualFrame frame) {
+    public RArgsValuesAndNames getVarargsAndNames(VirtualFrame frame, boolean slowPath) {
         RArgsValuesAndNames varArgsAndNames;
         try {
-            if (!varArgsSlotNode.hasValue(frame)) {
-                CompilerDirectives.transferToInterpreter();
-                RError.error(RError.Message.NO_DOT_DOT_DOT);
+            FrameSlot slot;
+            if (slowPath) {
+                slot = frame.getFrameDescriptor().findFrameSlot(ArgumentsSignature.VARARG_NAME);
+                if (slot == null) {
+                    CompilerDirectives.transferToInterpreter();
+                    RError.error(RError.Message.NO_DOT_DOT_DOT);
+                }
+            } else {
+                if (!varArgsSlotNode.hasValue(frame)) {
+                    CompilerDirectives.transferToInterpreter();
+                    RError.error(RError.Message.NO_DOT_DOT_DOT);
+                }
+                slot = varArgsSlotNode.executeFrameSlot(frame);
             }
-            varArgsAndNames = (RArgsValuesAndNames) frame.getObject(varArgsSlotNode.executeFrameSlot(frame));
+            varArgsAndNames = (RArgsValuesAndNames) frame.getObject(slot);
         } catch (FrameSlotTypeException | ClassCastException e) {
             throw RInternalError.shouldNotReachHere("'...' should always be represented by RArgsValuesAndNames");
         }
@@ -226,8 +210,8 @@ public class CallArgumentsNode extends ArgumentsNode {
         }
     }
 
-    @ExplodeLoop
     public UnrolledVariadicArguments executeFlatten(VirtualFrame frame) {
+        CompilerAsserts.neverPartOfCompilation();
         if (!containsVarArgsSymbol()) {
             return UnrolledVariadicArguments.create(getArguments(), getSignature(), this);
         } else {
@@ -242,7 +226,7 @@ public class CallArgumentsNode extends ArgumentsNode {
                     // reason for this whole method: Before argument matching, we have to unroll
                     // passed "..." every time, as their content might change per call site each
                     // call!
-                    RArgsValuesAndNames varArgInfo = getVarargsAndNames(frame);
+                    RArgsValuesAndNames varArgInfo = getVarargsAndNames(frame, true);
                     if (varArgInfo.isEmpty()) {
                         // An empty "..." vanishes
                         values = Utils.resizeArray(values, values.length - 1);
@@ -284,7 +268,7 @@ public class CallArgumentsNode extends ArgumentsNode {
         ArgumentsSignature resultSignature = null;
         String[] names = null;
         if (containsVarArgsSymbol()) {
-            varArgInfo = getVarargsAndNames(frame);
+            varArgInfo = getVarargsAndNames(frame, false);
             size += (varArgInfo.getLength() - 1) * varArgsSymbolIndices.length;
             names = new String[size];
         } else {
@@ -335,9 +319,6 @@ public class CallArgumentsNode extends ArgumentsNode {
         }
     }
 
-    /**
-     * @return {@link #containsVarArgsSymbol}
-     */
     public boolean containsVarArgsSymbol() {
         return varArgsSymbolIndices.length > 0;
     }
@@ -360,59 +341,7 @@ public class CallArgumentsNode extends ArgumentsNode {
         return arguments;
     }
 
-    @TruffleBoundary
-    @Override
-    public RSyntaxNode substitute(REnvironment env) {
-        RNode[] argNodesNew = new RNode[arguments.length];
-        boolean layoutChanged = false;
-        boolean contentChanged = false;
-        int size = arguments.length;
-        for (int i = 0; i < arguments.length; i++) {
-            RNode argNodeSubs = RSyntaxNode.cast(arguments[i]).substitute(env).asRNode();
-            argNodesNew[i] = argNodeSubs;
-            if (argNodeSubs instanceof RASTUtils.MissingDotsNode) {
-                // in this case we remove the argument altogether
-                layoutChanged = true;
-                size--;
-            } else if (argNodeSubs instanceof RASTUtils.ExpandedDotsNode) {
-                layoutChanged = true;
-                size += ((RASTUtils.ExpandedDotsNode) argNodeSubs).nodes.length - 1;
-            } else {
-                contentChanged |= arguments[i] != argNodeSubs;
-            }
-        }
-        if (!layoutChanged) {
-            if (contentChanged) {
-                return CallArgumentsNode.create(false, false, argNodesNew, signature);
-            } else {
-                return this;
-            }
-        }
-        String[] names = new String[size];
-        RNode[] argNodesFinal = new RNode[size];
-        int pos = 0;
-        for (int i = 0; i < arguments.length; i++) {
-            RNode argNodeSubs = argNodesNew[i];
-            if (argNodeSubs instanceof RASTUtils.MissingDotsNode) {
-                // nothing to do
-            } else if (argNodeSubs instanceof RASTUtils.ExpandedDotsNode) {
-                RASTUtils.ExpandedDotsNode expandedDotsNode = (RASTUtils.ExpandedDotsNode) argNodeSubs;
-                System.arraycopy(expandedDotsNode.nodes, 0, argNodesFinal, pos, expandedDotsNode.nodes.length);
-                pos += expandedDotsNode.nodes.length;
-            } else {
-                names[pos] = signature.getName(i);
-                argNodesFinal[pos++] = argNodesNew[i];
-            }
-        }
-        return CallArgumentsNode.create(false, false, argNodesFinal, ArgumentsSignature.get(names));
-    }
-
-    @Override
-    public ProbeNode.WrapperNode createWrapperNode() {
-        return new CallArgumentsNodeWrapper(this);
-    }
-
-    protected CallArgumentsNode() {
-        this.varArgsSymbolIndices = null;
+    public RSyntaxNode[] getSyntaxArguments() {
+        return Arrays.copyOf(arguments, arguments.length, RSyntaxNode[].class);
     }
 }

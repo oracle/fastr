@@ -35,11 +35,11 @@ public abstract class RBuiltinDescriptor {
     private final int[] nonEvalArgs;
     private final boolean splitCaller;
     private final boolean alwaysSplit;
-    private final boolean internalDispatch;
+    private final RDispatch dispatch;
     private final RGroupGenerics group;
     @CompilationFinal private final boolean[] evaluatesArgument;
 
-    public RBuiltinDescriptor(String name, String[] aliases, RBuiltinKind kind, ArgumentsSignature signature, int[] nonEvalArgs, boolean splitCaller, boolean alwaysSplit, boolean internalDispatch) {
+    public RBuiltinDescriptor(String name, String[] aliases, RBuiltinKind kind, ArgumentsSignature signature, int[] nonEvalArgs, boolean splitCaller, boolean alwaysSplit, RDispatch dispatch) {
         this.name = name;
         this.aliases = aliases;
         this.kind = kind;
@@ -47,7 +47,7 @@ public abstract class RBuiltinDescriptor {
         this.nonEvalArgs = nonEvalArgs;
         this.splitCaller = splitCaller;
         this.alwaysSplit = alwaysSplit;
-        this.internalDispatch = internalDispatch;
+        this.dispatch = dispatch;
         this.group = RGroupGenerics.getGroup(name);
 
         evaluatesArgument = new boolean[signature.getLength()];
@@ -86,8 +86,8 @@ public abstract class RBuiltinDescriptor {
         return splitCaller;
     }
 
-    public boolean isInternalDispatch() {
-        return internalDispatch;
+    public RDispatch getDispatch() {
+        return dispatch;
     }
 
     public RGroupGenerics getGroup() {

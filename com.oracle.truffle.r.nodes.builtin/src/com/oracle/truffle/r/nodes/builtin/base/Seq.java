@@ -22,26 +22,18 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
+
 import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.nodes.Node.*;
+import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.ConstantNode;
-import com.oracle.truffle.r.nodes.access.array.read.*;
-import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.closures.*;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
-
-import static com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import static com.oracle.truffle.r.runtime.RBuiltinKind.SUBSTITUTE;
 
 @RBuiltin(name = "seq", aliases = {"seq.int"}, kind = SUBSTITUTE, parameterNames = {"from", "to", "by", "length.out", "along.with"})
 // Implement in R, but seq.int is PRIMITIVE (and may have to contain most, if not all, of the code
@@ -54,14 +46,14 @@ public abstract class Seq extends RBuiltinNode {
 
     @Child private Seq seqRecursive;
 
-    protected abstract Object execute(VirtualFrame frame, Object start, Object to, Object stride, Object lengthOut, Object alongWith);
+    protected abstract Object execute(Object start, Object to, Object stride, Object lengthOut, Object alongWith);
 
-    private Object seqRecursive(VirtualFrame frame, Object start, Object to, Object stride, Object lengthOut, Object alongWith) {
+    private Object seqRecursive(Object start, Object to, Object stride, Object lengthOut, Object alongWith) {
         if (seqRecursive == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             seqRecursive = insert(SeqNodeGen.create(new RNode[5], null, null));
         }
-        return seqRecursive.execute(frame, start, to, stride, lengthOut, alongWith);
+        return seqRecursive.execute(start, to, stride, lengthOut, alongWith);
     }
 
     private void validateParam(int v, String vName) {
@@ -218,7 +210,7 @@ public abstract class Seq extends RBuiltinNode {
     // int vector start, int vector to
 
     @Specialization(guards = {"startLengthOne(start)", "toLengthOne(to)", "zero(start, to)"})
-    protected int seqZero(VirtualFrame frame, RAbstractIntVector start, RAbstractIntVector to, Object stride, RMissing lengthOut, RMissing alongWith) {
+    protected int seqZero(RAbstractIntVector start, RAbstractIntVector to, Object stride, RMissing lengthOut, RMissing alongWith) {
         controlVisibility();
         return 0;
     }
@@ -289,7 +281,7 @@ public abstract class Seq extends RBuiltinNode {
     // int vector start, double vector to
 
     @Specialization(guards = {"startLengthOne(start)", "toLengthOne(to)", "zero(start, to)"})
-    protected int seqZero(VirtualFrame frame, RAbstractIntVector start, RAbstractDoubleVector to, Object stride, RMissing lengthOut, RMissing alongWith) {
+    protected int seqZero(RAbstractIntVector start, RAbstractDoubleVector to, Object stride, RMissing lengthOut, RMissing alongWith) {
         controlVisibility();
         return 0;
     }
@@ -535,28 +527,28 @@ public abstract class Seq extends RBuiltinNode {
     private final NACheck naCheck = NACheck.create();
 
     @Specialization
-    protected Object seq(VirtualFrame frame, RAbstractLogicalVector start, RAbstractLogicalVector to, Object stride, Object lengthOut, Object alongWith) {
-        return seqRecursive(frame, RClosures.createLogicalToDoubleVector(start), RClosures.createLogicalToDoubleVector(to), stride, lengthOut, alongWith);
+    protected Object seq(RAbstractLogicalVector start, RAbstractLogicalVector to, Object stride, Object lengthOut, Object alongWith) {
+        return seqRecursive(RClosures.createLogicalToDoubleVector(start), RClosures.createLogicalToDoubleVector(to), stride, lengthOut, alongWith);
     }
 
     @Specialization(guards = "!isLogical(to)")
-    protected Object seq(VirtualFrame frame, RAbstractLogicalVector start, RAbstractVector to, Object stride, Object lengthOut, Object alongWith) {
-        return seqRecursive(frame, RClosures.createLogicalToDoubleVector(start), to, stride, lengthOut, alongWith);
+    protected Object seq(RAbstractLogicalVector start, RAbstractVector to, Object stride, Object lengthOut, Object alongWith) {
+        return seqRecursive(RClosures.createLogicalToDoubleVector(start), to, stride, lengthOut, alongWith);
     }
 
     @Specialization(guards = "!isLogical(start)")
-    protected Object seq(VirtualFrame frame, RAbstractVector start, RAbstractLogicalVector to, Object stride, Object lengthOut, Object alongWith) {
-        return seqRecursive(frame, start, RClosures.createLogicalToDoubleVector(to), stride, lengthOut, alongWith);
+    protected Object seq(RAbstractVector start, RAbstractLogicalVector to, Object stride, Object lengthOut, Object alongWith) {
+        return seqRecursive(start, RClosures.createLogicalToDoubleVector(to), stride, lengthOut, alongWith);
     }
 
     @Specialization
-    protected Object seq(VirtualFrame frame, RAbstractLogicalVector start, RMissing to, Object stride, Object lengthOut, Object alongWith) {
-        return seqRecursive(frame, RClosures.createLogicalToDoubleVector(start), to, stride, lengthOut, alongWith);
+    protected Object seq(RAbstractLogicalVector start, RMissing to, Object stride, Object lengthOut, Object alongWith) {
+        return seqRecursive(RClosures.createLogicalToDoubleVector(start), to, stride, lengthOut, alongWith);
     }
 
     @Specialization
-    protected Object seq(VirtualFrame frame, RMissing start, RAbstractLogicalVector to, Object stride, Object lengthOut, Object alongWith) {
-        return seqRecursive(frame, start, RClosures.createLogicalToDoubleVector(to), stride, lengthOut, alongWith);
+    protected Object seq(RMissing start, RAbstractLogicalVector to, Object stride, Object lengthOut, Object alongWith) {
+        return seqRecursive(start, RClosures.createLogicalToDoubleVector(to), stride, lengthOut, alongWith);
     }
 
     protected boolean isLogical(RAbstractVector v) {
@@ -680,9 +672,9 @@ public abstract class Seq extends RBuiltinNode {
     }
 
     @Specialization(guards = "toLengthOne(to)")
-    protected Object seq(VirtualFrame frame, RMissing start, RAbstractVector to, Object stride, RMissing lengthOut, RMissing alongWith) {
+    protected Object seq(RMissing start, RAbstractVector to, Object stride, RMissing lengthOut, RMissing alongWith) {
         controlVisibility();
-        return seqRecursive(frame, 1.0, to, stride, lengthOut, alongWith);
+        return seqRecursive(1.0, to, stride, lengthOut, alongWith);
     }
 
     protected static boolean ascending(RAbstractIntVector start, RAbstractIntVector to) {

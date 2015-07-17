@@ -205,27 +205,26 @@ public class RRNG implements RContext.StateFactory {
     /**
      * Set the seed and optionally the RNG kind and norm kind.
      *
-     * @param frame frame associated with {@code set.seed} function (our caller)
      * @param seed {@link #RESET_SEED} to reset, else new seed
      * @param kindAsInt {@link #NO_KIND_CHANGE} for no change, else ordinal value of new
      *            {@link Kind}.
      * @param normKindAsInt {@link #NO_KIND_CHANGE} for no change, else ordinal value of new
      *            {@link NormKind}.
      */
-    public static void doSetSeed(VirtualFrame frame, Integer seed, int kindAsInt, int normKindAsInt) throws RNGException {
+    public static void doSetSeed(Integer seed, int kindAsInt, int normKindAsInt) throws RNGException {
         int newSeed = seed == RESET_SEED ? timeToSeed() : seed;
         changeKindsAndInitGenerator(newSeed, kindAsInt, normKindAsInt);
-        updateDotRandomSeed(frame);
+        updateDotRandomSeed();
     }
 
     /**
      * Set the kind and optionally the norm kind, called from R builtin {@code RNGkind}. GnuR
      * chooses the new seed from the previous RNG.
      */
-    public static void doRNGKind(VirtualFrame frame, int kindAsInt, int normKindAsInt) throws RNGException {
+    public static void doRNGKind(int kindAsInt, int normKindAsInt) throws RNGException {
         int newSeed = (int) (unifRand() * UINT_MAX);
         changeKindsAndInitGenerator(newSeed, kindAsInt, normKindAsInt);
-        updateDotRandomSeed(frame);
+        updateDotRandomSeed();
     }
 
     @TruffleBoundary
@@ -303,7 +302,7 @@ public class RRNG implements RContext.StateFactory {
         throw RInternalError.unimplemented("getDotRandomSeed");
     }
 
-    private static void updateDotRandomSeed(@SuppressWarnings("unused") VirtualFrame frame) {
+    private static void updateDotRandomSeed() {
         int[] seeds = currentKind().generator.getSeeds();
         if (seeds == null) {
             seeds = NO_SEEDS;

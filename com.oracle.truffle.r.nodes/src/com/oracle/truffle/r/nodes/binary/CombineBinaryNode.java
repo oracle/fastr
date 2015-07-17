@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.nodes.binary;
 
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -35,7 +34,7 @@ public abstract class CombineBinaryNode extends BinaryNode {
     private final BranchProfile hasNamesProfile = BranchProfile.create();
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
-    public abstract Object executeCombine(VirtualFrame frame, Object left, Object right);
+    public abstract Object executeCombine(Object left, Object right);
 
     protected RStringVector combineNames(RAbstractVector orgVector, boolean prependEmpty) {
         if (orgVector.getNames(attrProfiles) == null) {

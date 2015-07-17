@@ -25,7 +25,6 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
@@ -40,89 +39,88 @@ import com.oracle.truffle.r.runtime.env.*;
 public abstract class ListBuiltin extends RBuiltinNode {
 
     private final ConditionProfile namesNull = ConditionProfile.createBinaryProfile();
+    private final BranchProfile shareable = BranchProfile.create();
 
-    protected abstract Object executeObject(VirtualFrame frame, Object arg);
+    private RList listArgs(ArgumentsSignature suppliedSignature, Object[] args) {
+        controlVisibility();
+        for (int i = 0; i < args.length; i++) {
+            Object value = args[i];
+            if (value instanceof RShareable) {
+                shareable.enter();
+                ((RShareable) value).makeShared();
+            }
+        }
+        return RDataFactory.createList(args, argNameVector(suppliedSignature));
+    }
 
-    private RList list(Object[] args) {
-        return RDataFactory.createList(args, argNameVector(getSuppliedSignature()));
+    private RList listArgs(Object... args) {
+        return listArgs(getSuppliedSignature(), args);
+    }
+
+    @Specialization(guards = "!missing(args)")
+    protected RList list(RArgsValuesAndNames args) {
+        return listArgs(args.getSignature(), args.getArguments());
     }
 
     @Specialization
     protected RList list(@SuppressWarnings("unused") RMissing missing) {
         controlVisibility();
-        return list(new Object[0]);
-    }
-
-    @Specialization
-    protected RList list(byte value) {
-        controlVisibility();
-        return list(new Object[]{value});
-    }
-
-    @Specialization
-    protected RList list(int value) {
-        controlVisibility();
-        return list(new Object[]{value});
-    }
-
-    @Specialization
-    protected RList list(double value) {
-        controlVisibility();
-        return list(new Object[]{value});
-    }
-
-    @Specialization
-    protected RList list(RRaw value) {
-        controlVisibility();
-        return list(new Object[]{value});
-    }
-
-    @Specialization
-    protected RList list(RComplex value) {
-        controlVisibility();
-        return list(new Object[]{value});
-    }
-
-    @Specialization
-    protected RList list(String value) {
-        controlVisibility();
-        return list(new Object[]{value});
-    }
-
-    @Specialization
-    protected RList list(RAbstractVector value) {
-        controlVisibility();
-        return list(new Object[]{value});
-    }
-
-    @Specialization(guards = "!missing(args)")
-    protected RList list(RArgsValuesAndNames args) {
-        controlVisibility();
-        return RDataFactory.createList(args.getArguments(), argNameVector(args.getSignature()));
-    }
-
-    @Specialization(guards = "missing(args)")
-    protected RList listMissing(@SuppressWarnings("unused") RArgsValuesAndNames args) {
-        controlVisibility();
         return RDataFactory.createList(new Object[]{});
     }
 
     @Specialization
+    protected RList list(byte value) {
+        return listArgs(value);
+    }
+
+    @Specialization
+    protected RList list(int value) {
+        return listArgs(value);
+    }
+
+    @Specialization
+    protected RList list(double value) {
+        return listArgs(value);
+    }
+
+    @Specialization
+    protected RList list(RRaw value) {
+        return listArgs(value);
+    }
+
+    @Specialization
+    protected RList list(RComplex value) {
+        return listArgs(value);
+    }
+
+    @Specialization
+    protected RList list(String value) {
+        return listArgs(value);
+    }
+
+    @Specialization
+    protected RList list(RAbstractVector value) {
+        return listArgs(value);
+    }
+
+    @Specialization(guards = "missing(args)")
+    protected RList listMissing(@SuppressWarnings("unused") RArgsValuesAndNames args) {
+        return list(RMissing.instance);
+    }
+
+    @Specialization
     protected RList list(RNull value) {
-        controlVisibility();
-        return RDataFactory.createList(new Object[]{value}, argNameVector(getSuppliedSignature()));
+        return listArgs(value);
     }
 
     @Specialization
     protected RList list(REnvironment value) {
-        controlVisibility();
-        return RDataFactory.createList(new Object[]{value}, argNameVector(getSuppliedSignature()));
+        return listArgs(value);
     }
 
     @Specialization
     protected RList list(RFunction value) {
-        controlVisibility();
-        return RDataFactory.createList(new Object[]{value}, argNameVector(getSuppliedSignature()));
+        return listArgs(value);
     }
 
     private RStringVector argNameVector(ArgumentsSignature signature) {
@@ -138,11 +136,6 @@ public abstract class ListBuiltin extends RBuiltinNode {
     }
 
     protected boolean missing(RArgsValuesAndNames args) {
-        return args.isEmpty();    // .length() == 1 && args.getValue(0) == RMissing.instance;
+        return args.isEmpty();
     }
-
-    protected boolean oneElement(RArgsValuesAndNames args) {
-        return args.getLength() == 1;
-    }
-
 }

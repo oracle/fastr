@@ -26,7 +26,6 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
@@ -53,9 +52,8 @@ public abstract class NZChar extends RBuiltinNode {
         return s.length() > 0 ? RRuntime.LOGICAL_TRUE : RRuntime.LOGICAL_FALSE;
     }
 
-    @SuppressWarnings("unused")
     @Specialization
-    protected RLogicalVector rev(VirtualFrame frame, RNull value) {
+    protected RLogicalVector rev(@SuppressWarnings("unused") RNull value) {
         controlVisibility();
         return RDataFactory.createEmptyLogicalVector();
     }

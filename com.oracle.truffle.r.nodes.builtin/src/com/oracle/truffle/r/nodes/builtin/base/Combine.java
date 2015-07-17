@@ -28,7 +28,6 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.binary.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -51,10 +50,10 @@ public abstract class Combine extends RCastingBuiltinNode {
 
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
-    public abstract Object executeCombine(VirtualFrame frame, Object value);
+    public abstract Object executeCombine(Object value);
 
     @Specialization(limit = "1", guards = {"args.getLength() == cachedLength", "cachedPrecedence == precedence(args, cachedLength)"})
-    protected Object combineLengthCached(VirtualFrame frame, RArgsValuesAndNames args, //
+    protected Object combineLengthCached(RArgsValuesAndNames args, //
                     @Cached("args.getLength()") int cachedLength, //
                     @Cached("precedence( args, cachedLength)") int cachedPrecedence, //
                     @Cached("createCast(cachedPrecedence)") CastNode cast, //
@@ -72,10 +71,10 @@ public abstract class Combine extends RCastingBuiltinNode {
 
         Object[] array = args.getArguments();
 
-        Object current = readAndCast(frame, cast, array, 0, signatureHasNames);
+        Object current = readAndCast(cast, array, 0, signatureHasNames);
         for (int i = 1; i < cachedLength; i++) {
-            Object other = readAndCast(frame, cast, array, i, signatureHasNames);
-            current = combineBinary.executeCombine(frame, current, other);
+            Object other = readAndCast(cast, array, i, signatureHasNames);
+            current = combineBinary.executeCombine(current, other);
         }
         RNode.reportWork(this, cachedLength);
 
@@ -87,20 +86,20 @@ public abstract class Combine extends RCastingBuiltinNode {
     }
 
     @Specialization(contains = "combineLengthCached", limit = "COMBINE_CACHED_LIMIT", guards = {"cachedPrecedence == precedence(args, args.getLength())"})
-    protected Object combineCached(VirtualFrame frame, RArgsValuesAndNames args, //
+    protected Object combineCached(RArgsValuesAndNames args, //
                     @Cached("precedence(args, args.getLength())") int cachedPrecedence, //
                     @Cached("createCast(cachedPrecedence)") CastNode cast, //
                     @Cached("createFold(cachedPrecedence)") CombineBinaryNode combineBinary) {
-        return combineLengthCached(frame, args, args.getLength(), cachedPrecedence, cast, combineBinary);
+        return combineLengthCached(args, args.getLength(), cachedPrecedence, cast, combineBinary);
     }
 
     @Specialization(guards = "!isArguments(args)")
-    protected Object nonArguments(VirtualFrame frame, Object args, @Cached("createRecursive()") Combine combine) {
-        return combine.executeCombine(frame, new RArgsValuesAndNames(new Object[]{args}, EMPTY_SIGNATURE));
+    protected Object nonArguments(Object args, @Cached("createRecursive()") Combine combine) {
+        return combine.executeCombine(new RArgsValuesAndNames(new Object[]{args}, EMPTY_SIGNATURE));
     }
 
-    private Object readAndCast(VirtualFrame frame, CastNode castNode, Object[] values, int index, boolean hasNames) {
-        Object value = inputCast.execute(frame, values[index]);
+    private Object readAndCast(CastNode castNode, Object[] values, int index, boolean hasNames) {
+        Object value = inputCast.execute(values[index]);
         if (hasNames) {
             value = namesMerge(castVector(value), getSuppliedSignature().getName(index));
         }
@@ -253,7 +252,7 @@ public abstract class Combine extends RCastingBuiltinNode {
 
         private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
-        public abstract Object execute(VirtualFrame frame, Object operand);
+        public abstract Object execute(Object operand);
 
         @Specialization(guards = "!isVector(operand)")
         public Object pass(Object operand) {

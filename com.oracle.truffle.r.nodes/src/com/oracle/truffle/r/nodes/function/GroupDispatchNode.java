@@ -10,6 +10,8 @@
  */
 package com.oracle.truffle.r.nodes.function;
 
+import java.util.*;
+
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.*;
@@ -23,7 +25,6 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RArguments.S3Args;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
-import com.oracle.truffle.r.runtime.gnur.*;
 
 public final class GroupDispatchNode extends RNode implements RSyntaxNode {
 
@@ -50,7 +51,8 @@ public final class GroupDispatchNode extends RNode implements RSyntaxNode {
         this.fixedBuiltinFunction = builtinFunction;
     }
 
-    public static GroupDispatchNode create(String genericName, CallArgumentsNode callArgNode, SourceSection callSrc) {
+    public static GroupDispatchNode create(String genericName, SourceSection callSrc, ArgumentsSignature signature, RSyntaxNode... arguments) {
+        CallArgumentsNode callArgNode = CallArgumentsNode.create(false, true, Arrays.copyOf(arguments, arguments.length, RNode[].class), signature);
         GroupDispatchNode gdcn = new GroupDispatchNode(genericName, callArgNode, RContext.lookupBuiltin(genericName));
         gdcn.assignSourceSection(callSrc);
         return gdcn;
@@ -60,6 +62,10 @@ public final class GroupDispatchNode extends RNode implements RSyntaxNode {
         GroupDispatchNode gdcn = new GroupDispatchNode(genericName, callArgNode, builtinFunction);
         gdcn.assignSourceSection(callSrc);
         return gdcn;
+    }
+
+    public Arguments<RSyntaxNode> getArguments() {
+        return new Arguments<>(callArgsNode.getSyntaxArguments(), callArgsNode.getSignature());
     }
 
     public String getGenericName() {
@@ -79,7 +85,7 @@ public final class GroupDispatchNode extends RNode implements RSyntaxNode {
             RASTDeparse.deparseInfixOperator(state, this, func);
         } else {
             state.append(name);
-            callArgsNode.deparse(state);
+            RCallNode.deparseArguments(state, callArgsNode.getSyntaxArguments(), callArgsNode.signature);
         }
     }
 
@@ -87,13 +93,14 @@ public final class GroupDispatchNode extends RNode implements RSyntaxNode {
     public void serialize(RSerialize.State state) {
         String name = getGenericName();
         state.setAsBuiltin(name);
-        state.serializeNodeSetCdr(callArgsNode, SEXPTYPE.LISTSXP);
+        RCallNode.serializeArguments(state, callArgsNode.getSyntaxArguments(), callArgsNode.signature);
     }
 
     @Override
     public RSyntaxNode substitute(REnvironment env) {
         // TODO substitute aDispatchNode
-        return RSyntaxNode.cast(RASTUtils.createCall(this, (CallArgumentsNode) callArgsNode.substitute(env).asRNode()));
+        Arguments<RSyntaxNode> substituteArguments = RCallNode.substituteArguments(env, callArgsNode.getSyntaxArguments(), callArgsNode.signature);
+        return RSyntaxNode.cast(RASTUtils.createCall(this, substituteArguments.getSignature(), substituteArguments.getArguments()));
     }
 
     @Override

@@ -94,7 +94,7 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
         int result = 1;
         if (node instanceof RCallNode || node instanceof GroupDispatchNode) {
             // 1 + number of args
-            CallArgumentsNode args = RASTUtils.findCallArgumentsNode(node);
+            Arguments<RSyntaxNode> args = RASTUtils.findCallArguments(node);
             result += args.getArguments().length;
         } else if (node instanceof IfNode) {
             // 3 or 4 with else part
@@ -155,7 +155,7 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
                     }
                 }
             } else {
-                CallArgumentsNode args = RASTUtils.findCallArgumentsNode(node);
+                Arguments<RSyntaxNode> args = RASTUtils.findCallArguments(node);
                 return RASTUtils.createLanguageElement(args, index - 1);
             }
         } else if (node instanceof IfNode) {
@@ -242,7 +242,7 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
     public RStringVector getNames(RLanguage rl) {
         RNode node = (RNode) rl.getRep();
         if (node instanceof RCallNode || node instanceof GroupDispatchNode) {
-            CallArgumentsNode args = RASTUtils.findCallArgumentsNode(node);
+            Arguments<RSyntaxNode> args = RASTUtils.findCallArguments(node);
             ArgumentsSignature sig = args.getSignature();
             int count = 0;
             for (int i = 0; i < sig.getLength(); i++) {
@@ -272,7 +272,7 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
     public void setNames(RLanguage rl, RStringVector names) {
         RNode node = (RNode) rl.getRep();
         if (node instanceof RCallNode) {
-            CallArgumentsNode args = RASTUtils.findCallArgumentsNode(node);
+            Arguments<RSyntaxNode> args = RASTUtils.findCallArguments(node);
             ArgumentsSignature sig = args.getSignature();
             String[] newNames = new String[sig.getLength()];
             int argNamesLength = names.getLength() - 1;
@@ -282,10 +282,8 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
             for (int i = 0, j = 1; i < sig.getLength() && j <= argNamesLength; i++, j++) {
                 newNames[i] = names.getDataAt(j);
             }
-            ArgumentsSignature newSig = ArgumentsSignature.get(newNames);
-            CallArgumentsNode newCallArgs = CallArgumentsNode.create(null, false, args.getArguments(), newSig);
             // copying is already handled by RShareable
-            rl.setRep(RCallNode.createCall(null, ((RCallNode) node).getFunctionNode(), newCallArgs));
+            rl.setRep(RCallNode.createCall(null, ((RCallNode) node).getFunctionNode(), ArgumentsSignature.get(newNames), args.getArguments()));
         } else if (node instanceof GroupDispatchNode) {
             throw RError.nyi(null, "group dispatch names update");
         } else {
@@ -298,13 +296,13 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
         /* We keep this here owing to code similarity with getNames */
         RNode node = (RNode) rl.getRep();
         if (node instanceof RCallNode) {
-            CallArgumentsNode args = RASTUtils.findCallArgumentsNode(node);
+            Arguments<RSyntaxNode> args = RASTUtils.findCallArguments(node);
             ArgumentsSignature sig = args.getSignature();
-            RNode[] argNodes = args.getArguments();
+            RSyntaxNode[] argNodes = args.getArguments();
             boolean match = false;
             for (int i = 0; i < sig.getLength(); i++) {
                 String name = sig.getName(i);
-                if (name != null && name.equals(field)) {
+                if (field.equals(name)) {
                     argNodes[i] = WrapArgumentNode.create(RASTUtils.createNodeForValue(value), false, i);
                     match = true;
                     break;
@@ -313,7 +311,7 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
             if (!match) {
                 throw RError.nyi(null, "assignment to non-existent field");
             }
-            return RDataFactory.createLanguage(RCallNode.createCall(null, ((RCallNode) node).getFunctionNode(), args));
+            return RDataFactory.createLanguage(RCallNode.createCall(null, ((RCallNode) node).getFunctionNode(), args.getSignature(), args.getArguments()));
         } else if (node instanceof GroupDispatchNode) {
             throw RError.nyi(null, "group dispatch field update");
         } else {
@@ -348,7 +346,7 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
      * TODO replace with more efficient implementation.
      */
     private static Object callOut(RCallNode callNode, int depth, Object... args) {
-        RNode[] argNodes = new RNode[args.length];
+        RSyntaxNode[] argNodes = new RSyntaxNode[args.length];
         for (int i = 0; i < args.length; i++) {
             argNodes[i] = ConstantNode.create(args[i]);
         }
