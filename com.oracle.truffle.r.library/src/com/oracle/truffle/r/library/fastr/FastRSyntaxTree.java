@@ -30,43 +30,64 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-public abstract class FastRSyntaxTree extends RExternalBuiltinNode.Arg2 {
+public abstract class FastRSyntaxTree extends RExternalBuiltinNode.Arg3 {
     @Specialization
-    protected RNull printTree(RFunction function, byte source) {
-        boolean showSource = RRuntime.fromLogical(source);
+    protected RNull printTree(RFunction function, byte source, byte visitAll) {
+        boolean printSource = RRuntime.fromLogical(source);
         Node root = function.getTarget().getRootNode();
-        RSyntaxNode.accept(root, 0, new RSyntaxNodeVisitor() {
+        if (RRuntime.fromLogical(visitAll)) {
+            root.accept(new NodeVisitor() {
 
-            public boolean visit(RSyntaxNode node, int depth) {
-                for (int i = 0; i < depth; i++) {
-                    System.out.print(' ');
-                }
-                System.out.print(node.getClass().getSimpleName());
-                SourceSection ss = ((Node) node).getSourceSection();
-                // All syntax nodes should have source sections
-                if (ss == null) {
-                    System.out.print(" *** null source section");
-                } else {
-                    if (showSource) {
-                        String code = ss.getCode();
-                        if (code.length() > 20) {
-                            code = code.substring(0, 20) + " ....";
+                public boolean visit(Node node) {
+                    if (node instanceof RSyntaxNode) {
+                        SourceSection ss = node.getSourceSection();
+                        // All syntax nodes should have source sections
+                        if (ss == null) {
+                            System.out.printf("*** %s has null source section%n", node.getClass().getSimpleName());
                         }
-                        code = code.replace("\n", "\\n ");
-                        System.out.print(" : ");
-                        System.out.print(code.length() == 0 ? "<EMPTY>" : code);
                     }
+                    return true;
                 }
-                System.out.println();
-                return true;
-            }
-        });
+
+            });
+        } else {
+            RSyntaxNode.accept(root, 0, new RSyntaxNodeVisitor() {
+
+                public boolean visit(RSyntaxNode node, int depth) {
+                    for (int i = 0; i < depth; i++) {
+                        System.out.print(' ');
+                    }
+                    System.out.print(node.getClass().getSimpleName());
+                    SourceSection ss = ((Node) node).getSourceSection();
+                    // All syntax nodes should have source sections
+                    if (ss == null) {
+                        System.out.print(" *** null source section");
+                    } else {
+                        if (printSource) {
+                            printSourceCode(ss);
+                        }
+                    }
+                    System.out.println();
+                    return true;
+                }
+            });
+        }
         return RNull.instance;
+    }
+
+    private static void printSourceCode(SourceSection ss) {
+        String code = ss.getCode();
+        if (code.length() > 20) {
+            code = code.substring(0, 20) + " ....";
+        }
+        code = code.replace("\n", "\\n ");
+        System.out.print(" : ");
+        System.out.print(code.length() == 0 ? "<EMPTY>" : code);
     }
 
     @SuppressWarnings("unused")
     @Fallback
-    protected Object fallback(Object a1, Object a2) {
+    protected Object fallback(Object a1, Object a2, Object a3) {
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
     }
 
