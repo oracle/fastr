@@ -116,7 +116,7 @@ public final class WrapArgumentNode extends WrapArgumentBaseNode {
             return operand;
         } else {
             WrapArgumentNode wan = new WrapArgumentNode(operand, modeChange, index);
-            wan.assignSourceSection(operand.getSourceSection());
+            wan.assignSourceSection(operand.getEncapsulatingSourceSection());
             return wan;
         }
     }

@@ -29,6 +29,7 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.instrument.ProbeNode.*;
 import com.oracle.truffle.r.nodes.instrument.NeedsWrapper;
 import com.oracle.truffle.api.nodes.*;
+import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.instrument.*;
 import com.oracle.truffle.r.nodes.instrument.wrappers.*;
 import com.oracle.truffle.r.runtime.*;
@@ -318,26 +319,42 @@ public abstract class RNode extends Node implements RInstrumentableNode {
         return value == RNull.instance;
     }
 
-    /**
-     * Returns the {@link RSyntaxNode} associated with this node. In the case that this does not
-     * implement {@link RSyntaxNode} the assumption is that this is a child of one that can be
-     * retrieved by following the parent chain.
-     */
-    protected RSyntaxNode getRSyntaxNode() {
+    @Override
+    public SourceSection getSourceSection() {
         if (this instanceof RSyntaxNode) {
-            return (RSyntaxNode) this;
+            return super.getSourceSection();
         } else {
-            Node current = this;
-            while (current != null) {
-                if (current instanceof RSyntaxNode) {
-                    return (RSyntaxNode) current;
-                }
-                current = current.getParent();
-                if (current instanceof WrapperNode) {
-                    current = current.getParent();
-                }
-            }
-            throw RInternalError.shouldNotReachHere("getRSynaxNode");
+            throw RInternalError.shouldNotReachHere("getSourceSection on non-syntax node");
         }
     }
+
+    @Override
+    public void assignSourceSection(SourceSection section) {
+        if (this instanceof RSyntaxNode) {
+            super.assignSourceSection(section);
+        } else {
+            throw RInternalError.shouldNotReachHere("assignSourceSection on non-syntax node");
+        }
+    }
+
+    @Override
+    /**
+     * Returns the {@link SourceSection} for this node, by locating the associated {@link RSyntaxNode}.
+     * I.e., this method must be stable in the face of AST transformations.
+     *
+     * N.B. This default implementation may be incorrect unless this node is always a child of the
+     * original {@link RSyntaxNode}. In cases where the structure is more complex, e.g. an inline
+     * cache, the node should override {@link #getEncapsulatingSourceSection()} with a node-specific
+     * implementation. There are basically three approaches:
+     * <ol>
+     * <li>Store the {@link SourceSection} as field in the node and override this method to return it. This may seem odd since currently
+     * every {@link Node} can store a {@link SourceSection}, but that could change, plus it is necessary owing to the check in {@link #assignSourceSection}</li>
+     * <li>Store the original {@link RSyntaxNode} and override this method to call its {@link getSourceSection}</li>
+     * <li>Follow the node-specific data structure to locate the original {@link RSyntaxNode} and call its {@link getSourceSection}</li>
+     * </ol>
+     */
+    public SourceSection getEncapsulatingSourceSection() {
+        return super.getEncapsulatingSourceSection();
+    }
+
 }

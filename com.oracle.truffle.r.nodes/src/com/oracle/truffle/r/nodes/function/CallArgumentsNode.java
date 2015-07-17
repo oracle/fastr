@@ -328,7 +328,8 @@ public class CallArgumentsNode extends ArgumentsNode {
     @TruffleBoundary
     public static RNode wrapVarArgValue(Object varArgValue, int varArgIndex) {
         if (varArgValue instanceof RPromise) {
-            return PromiseNode.createVarArg(varArgIndex);
+            RNode repNode = (RNode) ((RPromise) varArgValue).getRep();
+            return PromiseNode.createVarArg(varArgIndex, repNode.getEncapsulatingSourceSection());
         } else {
             return ConstantNode.create(varArgValue);
         }

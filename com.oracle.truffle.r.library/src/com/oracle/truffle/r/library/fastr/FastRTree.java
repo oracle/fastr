@@ -32,11 +32,9 @@ public abstract class FastRTree extends RExternalBuiltinNode.Arg2 {
     @Specialization
     protected String printTree(RFunction function, byte verbose) {
         RootNode root = function.getTarget().getRootNode();
-        if (verbose == RRuntime.LOGICAL_TRUE) {
-            return NodeUtil.printTreeToString(root);
-        } else {
-            return NodeUtil.printCompactTreeToString(root);
-        }
+        String printedTree = verbose == RRuntime.LOGICAL_TRUE ? NodeUtil.printTreeToString(root) : NodeUtil.printCompactTreeToString(root);
+        System.out.println(printedTree);
+        return printedTree;
     }
 
     @SuppressWarnings("unused")

@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.function.opt;
 
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.function.*;
@@ -57,5 +58,10 @@ public final class OptConstantPromiseNode extends RNode {
             wrapNode.execute(frame, constantValue);
         }
         return RDataFactory.createPromise(type, OptType.DEFAULT, constantExpr, constantValue);
+    }
+
+    @Override
+    public SourceSection getEncapsulatingSourceSection() {
+        return constantExpr.getSourceSection();
     }
 }

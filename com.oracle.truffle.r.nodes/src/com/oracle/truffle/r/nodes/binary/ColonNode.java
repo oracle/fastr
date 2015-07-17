@@ -45,7 +45,7 @@ public abstract class ColonNode extends RNode implements RSyntaxNode, Visibility
     @CreateCast({"left", "right"})
     protected RNode createCast(RNode child) {
         ColonCastNode ccn = ColonCastNodeGen.create(child);
-        ccn.assignSourceSection(getSourceSection());
+        ccn.assignSourceSection(child.getSourceSection());
         return ccn;
     }
 
