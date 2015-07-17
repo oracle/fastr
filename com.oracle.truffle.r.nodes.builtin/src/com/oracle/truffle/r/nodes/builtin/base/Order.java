@@ -32,6 +32,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
     public abstract RIntVector executeRIntVector(byte naLast, byte dec, RArgsValuesAndNames args);
 
     @Child private CastToVectorNode castVector;
+    @Child private CastToVectorNode castVector2;
     @Child private CmpNode cmpNode;
 
     private final BranchProfile error = BranchProfile.create();
@@ -45,6 +46,14 @@ public abstract class Order extends RPrecedenceBuiltinNode {
             castVector = insert(CastToVectorNodeGen.create(false));
         }
         return (RAbstractVector) castVector.execute(value);
+    }
+
+    private RAbstractVector castVector2(Object value) {
+        if (castVector2 == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            castVector2 = insert(CastToVectorNodeGen.create(false));
+        }
+        return (RAbstractVector) castVector2.execute(value);
     }
 
     private int cmp(Object v, int i, int j, byte naLast) {
@@ -180,13 +189,14 @@ public abstract class Order extends RPrecedenceBuiltinNode {
         return RDataFactory.createIntVector(indx, RDataFactory.COMPLETE_VECTOR);
     }
 
-    private int preprocessVectors(RArgsValuesAndNames args) {
+    private int preprocessVectors(RArgsValuesAndNames args, ValueProfile lengthProfile) {
         Object[] vectors = args.getArguments();
         RAbstractVector v = castVector(vectors[0]);
         int n = v.getLength();
         vectors[0] = v;
-        for (int i = 1; i < vectors.length; i++) {
-            v = castVector(vectors[i]);
+        int length = lengthProfile.profile(vectors.length);
+        for (int i = 1; i < length; i++) {
+            v = castVector2(vectors[i]);
             if (n != v.getLength()) {
                 error.enter();
                 throw RError.error(RError.Message.ARGUMENT_LENGTHS_DIFFER);
@@ -197,8 +207,9 @@ public abstract class Order extends RPrecedenceBuiltinNode {
     }
 
     @Specialization(guards = {"!oneVec(args)", "!noVec(args)"})
-    Object orderMulti(RAbstractLogicalVector naLastVec, RAbstractLogicalVector decVec, RArgsValuesAndNames args) {
-        int n = preprocessVectors(args);
+    Object orderMulti(RAbstractLogicalVector naLastVec, RAbstractLogicalVector decVec, RArgsValuesAndNames args, //
+                    @Cached("createPrimitiveProfile()") PrimitiveValueProfile lengthProfile) {
+        int n = preprocessVectors(args, lengthProfile);
 
         byte naLast = RRuntime.LOGICAL_TRUE;
         boolean dec = true;
@@ -214,7 +225,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
         for (int i = 0; i < indx.length; i++) {
             indx[i] = i;
         }
-        orderVector(indx, args, naLast, dec);
+        orderVector(indx, args.getArguments(), naLast, dec);
         for (int i = 0; i < indx.length; i++) {
             indx[i] = indx[i] + 1;
         }
@@ -222,10 +233,9 @@ public abstract class Order extends RPrecedenceBuiltinNode {
         return RDataFactory.createIntVector(indx, RDataFactory.COMPLETE_VECTOR);
     }
 
-    private boolean greaterSub(int i, int j, RArgsValuesAndNames args, byte naLast, boolean dec) {
-        Object[] vectors = args.getArguments();
+    private boolean greaterSub(int i, int j, Object[] vectors, byte naLast, boolean dec) {
         int c = -1;
-        for (int k = 0; k < args.getLength(); k++) {
+        for (int k = 0; k < vectors.length; k++) {
             RAbstractVector v = (RAbstractVector) vectors[k];
             c = cmp(v, i, j, naLast);
             if (dec) {
@@ -241,7 +251,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
         return (c == 0 && i < j) ? false : true;
     }
 
-    private void orderVector(int[] indx, RArgsValuesAndNames args, byte naLast, boolean dec) {
+    private void orderVector(int[] indx, Object[] vectors, byte naLast, boolean dec) {
         if (indx.length > 1) {
 
             int t = 0;
@@ -251,7 +261,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
                 for (int i = h; i < indx.length; i++) {
                     int itmp = indx[i];
                     int j = i;
-                    while (j >= h && greaterSub(indx[j - h], itmp, args, naLast, dec)) {
+                    while (j >= h && greaterSub(indx[j - h], itmp, vectors, naLast, dec)) {
                         indx[j] = indx[j - h];
                         j -= h;
                     }
