@@ -87,6 +87,38 @@ public abstract class RVector extends RAttributeStorage implements RShareable, R
         }
     }
 
+    public final int[] getInternalDimensions() {
+        return dimensions;
+    }
+
+    public final void setInternalDimensions(int[] newDimensions) {
+        dimensions = newDimensions;
+    }
+
+    public final RStringVector getInternalNames() {
+        return names;
+    }
+
+    public final void setInternalNames(RStringVector newNames) {
+        names = newNames;
+    }
+
+    public final RList getInternalDimNames() {
+        return dimNames;
+    }
+
+    public final void setInternalDimNames(RList newDimNames) {
+        dimNames = newDimNames;
+    }
+
+    public final Object getInternalRowNames() {
+        return rowNames;
+    }
+
+    public final void setInternalRowNames(Object newRowNames) {
+        rowNames = newRowNames;
+    }
+
     public final void setComplete(boolean complete) {
         this.complete = complete;
         assert verify();
@@ -541,7 +573,7 @@ public abstract class RVector extends RAttributeStorage implements RShareable, R
         return vector;
     }
 
-    protected final void setAttributes(RVector result) {
+    public final void setAttributes(RVector result) {
         result.names = this.names;
         result.dimNames = this.dimNames;
         result.rowNames = this.rowNames;
