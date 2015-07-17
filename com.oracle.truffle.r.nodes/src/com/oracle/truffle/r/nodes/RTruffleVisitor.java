@@ -91,18 +91,17 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
         // response may be omitted
         RSyntaxNode response = formula.getResponse() == null ? null : formula.getResponse().accept(this);
         RSyntaxNode model = formula.getModel().accept(this);
-        RNode[] tildeArgs = new RNode[response == null ? 1 : 2];
+        RSyntaxNode[] tildeArgs = new RSyntaxNode[response == null ? 1 : 2];
         int ix = 0;
         if (response != null) {
-            tildeArgs[ix++] = response.asRNode();
+            tildeArgs[ix++] = response;
         }
-        tildeArgs[ix++] = model.asRNode();
-        CallArgumentsNode args = CallArgumentsNode.create(false, tildeArgs, ArgumentsSignature.empty(ix));
+        tildeArgs[ix++] = model;
         SourceSection formulaSrc = formula.getSource();
         String formulaCode = formulaSrc.getCode();
         int tildeIndex = formulaCode.indexOf('~');
         SourceSection tildeSrc = ASTNode.adjustedSource(formulaSrc, formulaSrc.getCharIndex() + tildeIndex, 1);
-        RCallNode call = RCallNode.createOpCall(formulaSrc, tildeSrc, "~", args);
+        RCallNode call = RCallNode.createOpCall(formulaSrc, tildeSrc, "~", tildeArgs);
         return call;
     }
 
@@ -113,40 +112,25 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
 
     @Override
     public RSyntaxNode visit(FunctionCall call) {
-        String callName = call.isSymbol() ? call.getName() : null;
         SourceSection callSource = call.getSource();
-        int index = 0;
-        String[] argumentNames = new String[call.getArguments().size()];
-        RNode[] nodes = new RNode[call.getArguments().size()];
-        for (ArgNode e : call.getArguments()) {
-            argumentNames[index] = e.getName();
-            ASTNode val = e.getValue();
-            if (val != null) {
-                nodes[index] = val.accept(this).asRNode();
-            }
-            index++;
-        }
+        List<ArgNode> arguments = call.getArguments();
 
-        RSyntaxNode lhs = null;
-        int lhsLength;
-        if (callName != null) {
-            lhsLength = callName.length();
-        } else {
-            lhs = call.getLhsNode().accept(this);
-            lhsLength = lhs.getSourceSection().getCharLength();
-        }
-        CallArgumentsNode aCallArgNode = CallArgumentsNode.create(!call.isReplacement(), nodes, ArgumentsSignature.get(argumentNames));
+        String[] argumentNames = arguments.stream().map(arg -> arg.getName()).toArray(String[]::new);
+        ArgumentsSignature signature = ArgumentsSignature.get(argumentNames);
+        RSyntaxNode[] nodes = arguments.stream().map(arg -> arg.getValue() == null ? null : arg.getValue().accept(this)).toArray(RSyntaxNode[]::new);
 
-        if (callName != null) {
-            String functionName = callName;
-            if (RGroupGenerics.isGroupGeneric(functionName)) {
-                return GroupDispatchNode.create(functionName, aCallArgNode, callSource);
+        RNode lhs;
+        if (call.isSymbol()) {
+            String callName = call.getName();
+            if (RGroupGenerics.isGroupGeneric(callName)) {
+                return GroupDispatchNode.create(callName, callSource, signature, nodes);
             }
-            SourceSection varSource = ASTNode.adjustedSource(callSource, callSource.getCharIndex(), lhsLength);
-            return RCallNode.createCall(callSource, ReadVariableNode.createForced(varSource, functionName, RType.Function), aCallArgNode);
+            SourceSection varSource = ASTNode.adjustedSource(callSource, callSource.getCharIndex(), callName.length());
+            lhs = ReadVariableNode.createForced(varSource, callName, RType.Function);
         } else {
-            return RCallNode.createCall(callSource, lhs.asRNode(), aCallArgNode);
+            lhs = call.getLhsNode().accept(this).asRNode();
         }
+        return RCallNode.createCall(callSource, lhs, signature, nodes);
     }
 
     @Override
@@ -239,25 +223,23 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
 
     @Override
     public RSyntaxNode visit(UnaryOperation op) {
-        RNode operand = op.getLHS().accept(this).asRNode();
         String functionName = op.getOperator().getName();
-        CallArgumentsNode aCallArgNode = CallArgumentsNode.createUnnamed(false, true, operand);
-        assert RGroupGenerics.isGroupGeneric(functionName);
-        assert RGroupGenerics.getGroup(functionName) == RGroupGenerics.Ops;
-        return GroupDispatchNode.create(functionName, aCallArgNode, op.getSource());
+        assert RGroupGenerics.getGroup(functionName) == RGroupGenerics.Ops : "unexpected group: " + RGroupGenerics.getGroup(functionName) + "(" + functionName + ")";
+
+        RSyntaxNode operand = op.getLHS().accept(this);
+        return GroupDispatchNode.create(functionName, op.getSource(), ArgumentsSignature.empty(1), operand);
     }
 
     @Override
     public RSyntaxNode visit(BinaryOperation op) {
-        RNode left = op.getLHS().accept(this).asRNode();
-        RNode right = op.getRHS().accept(this).asRNode();
+        RSyntaxNode left = op.getLHS().accept(this);
+        RSyntaxNode right = op.getRHS().accept(this);
         if (op.getOperator() == Operator.COLON) {
-            return ColonNode.create(op.getSource(), left, right);
+            return ColonNode.create(op.getSource(), left.asRNode(), right.asRNode());
         } else {
             String functionName = op.getOperator().getName();
-            CallArgumentsNode aCallArgNode = CallArgumentsNode.createUnnamed(false, true, left, right);
             if (RGroupGenerics.isGroupGeneric(functionName)) {
-                return GroupDispatchNode.create(functionName, aCallArgNode, op.getSource());
+                return GroupDispatchNode.create(functionName, op.getSource(), ArgumentsSignature.empty(2), left, right);
             }
             // create a SourceSection for the operator
             SourceSection opSrc = op.getSource();
@@ -265,7 +247,7 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
             String opName = op.getOperator().getName();
             int charIndex = code.indexOf(opName);
             SourceSection opNameSrc = opSrc.getSource().createSection(opSrc.getIdentifier(), opSrc.getCharIndex() + charIndex, opName.length());
-            return RCallNode.createOpCall(op.getSource(), opNameSrc, functionName, aCallArgNode);
+            return RCallNode.createOpCall(op.getSource(), opNameSrc, functionName, left, right);
         }
     }
 
@@ -290,8 +272,8 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
         return n.getValue().accept(this);
     }
 
-    private RCallNode createArrayUpdate(List<ArgNode> argList, int argLength, boolean isSubset, RNode vector, RNode rhs) {
-        RNode[] nodes = new RNode[Math.max(1, argLength) + 2];
+    private RCallNode createArrayUpdate(List<ArgNode> argList, int argLength, boolean isSubset, RSyntaxNode vector, RSyntaxNode rhs) {
+        RSyntaxNode[] nodes = new RSyntaxNode[Math.max(1, argLength) + 2];
         String[] names = new String[nodes.length];
         nodes[0] = vector;
         if (argLength == 0) {
@@ -302,14 +284,13 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
                 if (node.getName() != null) {
                     names[i + 1] = node.getName();
                 }
-                nodes[i + 1] = node == null ? ConstantNode.create(REmpty.instance) : node.getValue().accept(this).asRNode();
+                nodes[i + 1] = node == null ? ConstantNode.create(REmpty.instance) : node.getValue().accept(this);
             }
         }
         nodes[nodes.length - 1] = rhs;
         names[nodes.length - 1] = "value";
 
-        CallArgumentsNode aCallArgNode = CallArgumentsNode.create(false, nodes, ArgumentsSignature.get(names));
-        return RCallNode.createCall(null, ReadVariableNode.createForced(null, isSubset ? "[<-" : "[[<-", RType.Function), aCallArgNode);
+        return RCallNode.createCall(null, ReadVariableNode.createForced(null, isSubset ? "[<-" : "[[<-", RType.Function), ArgumentsSignature.get(names), nodes);
     }
 
     private static String createTempName() {
@@ -321,8 +302,8 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
         return new Object().toString();
     }
 
-    private static ReplacementNode constructReplacementSuffix(RNode rhs, RNode v, boolean copyRhs, RNode assignFromTemp, String tmpSymbol, String rhsSymbol, SourceSection source) {
-        return new ReplacementNode(source, rhs, v, copyRhs, assignFromTemp, tmpSymbol, rhsSymbol);
+    private static ReplacementNode constructReplacementSuffix(RSyntaxNode rhs, RSyntaxNode v, boolean copyRhs, RNode assignFromTemp, String tmpSymbol, String rhsSymbol, SourceSection source) {
+        return new ReplacementNode(source, rhs.asRNode(), v.asRNode(), copyRhs, assignFromTemp, tmpSymbol, rhsSymbol);
     }
 
     @Override
@@ -330,7 +311,7 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
         AccessVector a = u.getVector();
         int argLength = a.getIndexes().size() - 1;
         // If recursive no need to set syntaxAST as already handled at top-level
-        return doReplacementLeftHandSide(a.getVector(), true, u.getRHS().accept(this).asRNode(), u.isSuper(), u.getSource(), (receiver, rhsAccess) -> {
+        return doReplacementLeftHandSide(a.getVector(), true, u.getRHS().accept(this), u.isSuper(), u.getSource(), (receiver, rhsAccess) -> {
             return createArrayUpdate(a.getIndexes(), argLength, a.isSubset(), receiver, rhsAccess);
         });
     }
@@ -380,18 +361,18 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
     public RSyntaxNode visit(Replacement replacement) {
         // preparations
         ASTNode rhsAst = replacement.getExpr();
-        RNode rhs = rhsAst.accept(this).asRNode();
+        RSyntaxNode rhs = rhsAst.accept(this);
         FunctionCall fAst = replacement.getReplacementFunctionCall();
         // fAst has the function name as "x<-" already; we don't want that in the syntaxAST
         fAst.tempSuppressReplacementSuffix(true);
         RNode f = fAst.accept(this).asRNode();
         fAst.tempSuppressReplacementSuffix(false);
-        RSyntaxNode syntaxAST = new WriteReplacementNode((RCallNode) f, rhs);
+        RSyntaxNode syntaxAST = new WriteReplacementNode((RCallNode) f, rhs.asRNode());
         List<ArgNode> args = fAst.getArguments();
         ASTNode val = args.get(0).getValue();
         String tmpSymbol = createTempName();
         RNode assignFromTemp;
-        RNode replacementArg;
+        RSyntaxNode replacementArg;
         String rhsSymbol = createTempName();
 
         if (val instanceof SimpleAccessVariable) {
@@ -402,7 +383,7 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
             assignFromTemp = WriteLocalFrameVariableNode.createAnonymous(vSymbol, replacementCall, WriteVariableNode.Mode.INVISIBLE, replacement.isSuper());
         } else if (val instanceof AccessVector) {
             AccessVector callArgAst = (AccessVector) val;
-            replacementArg = callArgAst.accept(this).asRNode();
+            replacementArg = callArgAst.accept(this);
             RCallNode replacementCall = prepareReplacementCall(fAst, args, tmpSymbol, rhsSymbol, false);
             // see AssignVariable.writeVector (number of args must match)
             callArgAst.getArguments().add(ArgNode.create(rhsAst.getSource(), "value", rhsAst));
@@ -412,7 +393,7 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
             assignFromTemp = update.asRNode();
         } else {
             FieldAccess callArgAst = (FieldAccess) val;
-            replacementArg = callArgAst.accept(this).asRNode();
+            replacementArg = callArgAst.accept(this);
             RCallNode replacementCall = prepareReplacementCall(fAst, args, tmpSymbol, rhsSymbol, false);
             assignFromTemp = doReplacementLeftHandSide(callArgAst.getLhs(), true, replacementCall, replacement.isSuper(), replacement.getSource(), (receiver, rhsAccess) -> {
                 return createFieldUpdate(null, receiver, rhsAccess, callArgAst.getFieldName());
@@ -496,27 +477,20 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
     @Override
     public RSyntaxNode visit(FieldAccess access) {
         SourceSection callSource = access.getSource();
-        RNode[] nodes = new RNode[2];
-        nodes[0] = access.getLhs().accept(this).asRNode();
-        nodes[1] = ConstantNode.create(callSource, access.getFieldName());
-
-        CallArgumentsNode aCallArgNode = CallArgumentsNode.create(true, nodes, ArgumentsSignature.empty(2));
-        return RCallNode.createCall(callSource, ReadVariableNode.createForced(callSource, "$", RType.Function), aCallArgNode);
+        RSyntaxNode lhs = access.getLhs().accept(this);
+        ReadVariableNode function = ReadVariableNode.createForced(callSource, "$", RType.Function);
+        return RCallNode.createCall(callSource, function, ArgumentsSignature.empty(2), lhs, ConstantNode.create(callSource, access.getFieldName()));
     }
 
-    private static RCallNode createFieldUpdate(SourceSection source, RNode receiver, RNode rhs, String fieldName) {
-        RNode[] nodes = new RNode[3];
-        nodes[0] = receiver;
-        nodes[1] = ConstantNode.create(source, fieldName);
-        nodes[2] = rhs;
-
-        CallArgumentsNode aCallArgNode = CallArgumentsNode.create(false, nodes, ArgumentsSignature.empty(nodes.length));
-        return RCallNode.createCall(source, ReadVariableNode.createForced(source, "$<-", RType.Function), aCallArgNode);
+    private static RCallNode createFieldUpdate(SourceSection source, RSyntaxNode receiver, RSyntaxNode rhs, String fieldName) {
+        ReadVariableNode function = ReadVariableNode.createForced(source, "$<-", RType.Function);
+        return RCallNode.createCall(source, function, ArgumentsSignature.empty(3), receiver, ConstantNode.create(source, fieldName), rhs);
     }
 
-    private RSyntaxNode doReplacementLeftHandSide(ASTNode receiver, boolean needsSyntaxAST, RNode rhs, boolean isSuper, SourceSection source, BiFunction<RNode, RNode, RCallNode> updateFunction) {
+    private RSyntaxNode doReplacementLeftHandSide(ASTNode receiver, boolean needsSyntaxAST, RSyntaxNode rhs, boolean isSuper, SourceSection source,
+                    BiFunction<RSyntaxNode, RSyntaxNode, RCallNode> updateFunction) {
         if (receiver.getClass() == FunctionCall.class) {
-            return updateFunction.apply(receiver.accept(this).asRNode(), rhs);
+            return updateFunction.apply(receiver.accept(this), rhs);
         } else {
             RSyntaxNode result;
             if (receiver instanceof SimpleAccessVariable) {
@@ -534,14 +508,14 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
                 result = constructReplacementSuffix(rhs, v, false, assignFromTemp, tmpSymbol, rhsSymbol, source);
             } else if (receiver instanceof AccessVector) {
                 AccessVector vecAST = (AccessVector) receiver;
-                RCallNode updateOp = updateFunction.apply(vecAST.accept(this).asRNode(), rhs);
+                RCallNode updateOp = updateFunction.apply(vecAST.accept(this), rhs);
                 updateOp.assignSourceSection(source);
                 result = doReplacementLeftHandSide(vecAST.getVector(), false, updateOp, isSuper, source, (receiver1, rhsAccess1) -> {
                     return createArrayUpdate(vecAST.getIndexes(), vecAST.getIndexes().size(), vecAST.isSubset(), receiver1, rhsAccess1);
                 });
             } else if (receiver instanceof FieldAccess) {
                 FieldAccess accessAST = (FieldAccess) receiver;
-                RCallNode updateOp = updateFunction.apply(accessAST.accept(this).asRNode(), rhs);
+                RCallNode updateOp = updateFunction.apply(accessAST.accept(this), rhs);
                 updateOp.assignSourceSection(source);
                 result = doReplacementLeftHandSide(accessAST.getLhs(), false, updateOp, isSuper, source, (receiver1, rhsAccess1) -> {
                     return createFieldUpdate(null, receiver1, rhsAccess1, accessAST.getFieldName());
@@ -550,7 +524,7 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
                 throw RInternalError.unimplemented();
             }
             if (needsSyntaxAST && result instanceof ReplacementNode) {
-                RSyntaxNode syntaxAST = updateFunction.apply(receiver.accept(this).asRNode(), rhs);
+                RSyntaxNode syntaxAST = updateFunction.apply(receiver.accept(this), rhs);
                 syntaxAST.asRNode().assignSourceSection(source);
                 ((ReplacementNode) result).setSyntaxAST(syntaxAST);
             }
@@ -562,7 +536,7 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
     public RSyntaxNode visit(UpdateField u) {
         FieldAccess a = u.getVector();
         RSyntaxNode rhs = u.getRHS().accept(this);
-        return doReplacementLeftHandSide(a.getLhs(), true, rhs.asRNode(), u.isSuper(), u.getSource(), (receiver, rhsAccess) -> {
+        return doReplacementLeftHandSide(a.getLhs(), true, rhs, u.isSuper(), u.getSource(), (receiver, rhsAccess) -> {
             return createFieldUpdate(u.getSource(), receiver, rhsAccess, a.getFieldName());
         });
     }

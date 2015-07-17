@@ -1730,15 +1730,12 @@ public abstract class AccessArrayNode extends RNode {
         int resLength = position.getLength();
         CallArgumentsNode args = null;
         RNode fn = unwrapToRNode(lang.getDataAtAsObject(position.getDataAt(0) - 1));
-        RNode[] data = new RNode[resLength - 1];
-        if (resLength > 1) {
-            for (int i = 1; i < resLength; i++) {
-                Object o = lang.getDataAtAsObject(position.getDataAt(i) - 1);
-                data[i - 1] = unwrapToRNode(o);
-            }
-            args = CallArgumentsNode.createUnnamed(true, true, data);
+        RSyntaxNode[] arguments = new RSyntaxNode[resLength - 1];
+        for (int i = 1; i < resLength; i++) {
+            Object o = lang.getDataAtAsObject(position.getDataAt(i) - 1);
+            arguments[i - 1] = (RSyntaxNode) unwrapToRNode(o);
         }
-        return RDataFactory.createLanguage(RASTUtils.createCall(fn, args));
+        return RDataFactory.createLanguage(RASTUtils.createCall(fn, ArgumentsSignature.empty(arguments.length), arguments));
     }
 
     @SuppressWarnings("unused")

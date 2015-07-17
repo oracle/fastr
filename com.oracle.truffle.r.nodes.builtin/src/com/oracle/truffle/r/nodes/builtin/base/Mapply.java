@@ -152,12 +152,11 @@ public abstract class Mapply extends RBuiltinNode {
             @SuppressWarnings("unused")
             FormalArguments formalArgs = ((RRootNode) callTarget.getRootNode()).getFormalArguments();
 
-            ReadVariableNode[] readVectorElementNodes = new ReadVariableNode[elementNodeArray.length];
+            RSyntaxNode[] readVectorElementNodes = new RSyntaxNode[elementNodeArray.length];
             for (int i = 0; i < readVectorElementNodes.length; i++) {
                 readVectorElementNodes[i] = ReadVariableNode.create(elementNodeArray[i].vectorElementName, false);
             }
-            CallArgumentsNode argsNode = CallArgumentsNode.create(false, readVectorElementNodes, ArgumentsSignature.empty(readVectorElementNodes.length));
-            return RCallNode.createCall(null, null, argsNode);
+            return RCallNode.createCall(null, null, ArgumentsSignature.empty(readVectorElementNodes.length), readVectorElementNodes);
         }
 
         protected ElementNode[] createElementNodeArray(int length) {

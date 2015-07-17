@@ -504,27 +504,26 @@ public class InfixEmulationFunctions {
 
         @Specialization
         protected RLanguage tilde(VirtualFrame frame, RPromise response, @SuppressWarnings("unused") RMissing model) {
-            return doTilde(frame, null, (RNode) response.getRep());
+            return doTilde(frame, null, (RSyntaxNode) response.getRep());
         }
 
         @Specialization
         protected RLanguage tilde(VirtualFrame frame, RPromise response, RPromise model) {
-            return doTilde(frame, (RNode) response.getRep(), (RNode) model.getRep());
+            return doTilde(frame, (RSyntaxNode) response.getRep(), (RSyntaxNode) model.getRep());
         }
 
-        private RLanguage doTilde(VirtualFrame frame, RNode response, RNode model) {
-            RNode[] tildeArgs = new RNode[response == null ? 1 : 2];
+        private RLanguage doTilde(VirtualFrame frame, RSyntaxNode response, RSyntaxNode model) {
+            RSyntaxNode[] tildeArgs = new RSyntaxNode[response == null ? 1 : 2];
             int ix = 0;
             if (response != null) {
                 tildeArgs[ix++] = response;
             }
             tildeArgs[ix++] = model;
-            CallArgumentsNode args = CallArgumentsNode.create(false, tildeArgs, ArgumentsSignature.empty(ix));
             SourceSection formulaSrc = this.getSourceSection();
             String formulaCode = formulaSrc.getCode();
             int tildeIndex = formulaCode.indexOf('~');
             SourceSection tildeSrc = ASTNode.adjustedSource(formulaSrc, formulaSrc.getCharIndex() + tildeIndex, 1);
-            RCallNode call = RCallNode.createOpCall(formulaSrc, tildeSrc, "~", args);
+            RCallNode call = RCallNode.createOpCall(formulaSrc, tildeSrc, "~", tildeArgs);
             RLanguage lang = RDataFactory.createLanguage(call);
             lang.setClassAttr(FORMULA_CLASS, false);
             REnvironment env = REnvironment.frameToEnvironment(frame.materialize());

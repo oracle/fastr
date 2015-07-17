@@ -41,7 +41,7 @@ public abstract class ConstantNode extends RNode implements RSyntaxNode, Visibil
         return node instanceof ConstantObjectNode && ((ConstantObjectNode) node).value == RMissing.instance;
     }
 
-    public static String getString(RNode node) {
+    public static String getString(RSyntaxNode node) {
         if (node instanceof ConstantObjectNode) {
             Object value = ((ConstantObjectNode) node).value;
             return RRuntime.asString(value);

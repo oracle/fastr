@@ -82,7 +82,7 @@ public class RASTUtils {
      * Creates a language element for the {@code index}'th element of {@code args}.
      */
     @TruffleBoundary
-    public static Object createLanguageElement(CallArgumentsNode args, int index) {
+    public static Object createLanguageElement(Arguments<RSyntaxNode> args, int index) {
         Node argNode = unwrap(args.getArguments()[index]);
         return RASTUtils.createLanguageElement(argNode);
     }
@@ -201,62 +201,42 @@ public class RASTUtils {
      * </ul>
      */
     @TruffleBoundary
-    public static RNode createCall(Object fna, CallArgumentsNode callArgsNode) {
+    public static RNode createCall(Object fna, ArgumentsSignature signature, RSyntaxNode... arguments) {
         Object fn = fna;
         if (fn instanceof ConstantNode) {
             fn = ((ConstantNode) fn).getValue();
         }
         if (fn instanceof String) {
-            return RCallNode.createCall(null, RASTUtils.createReadVariableNode(((String) fn)), callArgsNode);
+            return RCallNode.createCall(null, RASTUtils.createReadVariableNode(((String) fn)), signature, arguments);
         } else if (fn instanceof ReadVariableNode) {
-            return RCallNode.createCall(null, (ReadVariableNode) fn, callArgsNode);
+            return RCallNode.createCall(null, (ReadVariableNode) fn, signature, arguments);
         } else if (fn instanceof GroupDispatchNode) {
             GroupDispatchNode gdcn = (GroupDispatchNode) fn;
-            return GroupDispatchNode.create(gdcn.getGenericName(), callArgsNode, gdcn.getCallSrc());
+            return GroupDispatchNode.create(gdcn.getGenericName(), gdcn.getCallSrc(), signature, arguments);
         } else if (fn instanceof RFunction) {
             RFunction rfn = (RFunction) fn;
-            return RCallNode.createCall(null, ConstantNode.create(rfn), callArgsNode);
+            return RCallNode.createCall(null, ConstantNode.create(rfn), signature, arguments);
         } else if (fn instanceof RCallNode) {
-            return RCallNode.createCall(null, (RCallNode) fn, callArgsNode);
+            return RCallNode.createCall(null, (RCallNode) fn, signature, arguments);
         } else {
             // this of course would not make much sense if trying to evaluate this call, yet it's
             // syntactically possible, for example as a result of:
             // f<-function(x,y) sys.call(); x<-f(7, 42); x[c(2,3)]
-            return RCallNode.createCall(null, ConstantNode.create(fn), callArgsNode);
+            return RCallNode.createCall(null, ConstantNode.create(fn), signature, arguments);
         }
-    }
-
-    /**
-     * Really should not be necessary, but things like '+' ({@link GroupDispatchNode}) have a
-     * different AST structure from normal calls.
-     */
-    private static class CallArgsNodeFinder implements NodeVisitor {
-        CallArgumentsNode callArgumentsNode;
-
-        @TruffleBoundary
-        public boolean visit(Node node) {
-            if (node instanceof CallArgumentsNode) {
-                callArgumentsNode = (CallArgumentsNode) node;
-                return false;
-            }
-            return true;
-        }
-
     }
 
     /**
      * Find the {@link CallArgumentsNode} that is the child of {@code node}. N.B. Does not copy.
      */
-    public static CallArgumentsNode findCallArgumentsNode(Node node) {
+    public static Arguments<RSyntaxNode> findCallArguments(Node node) {
         if (node instanceof RCallNode) {
-            return ((RCallNode) node).getArgumentsNode();
+            return ((RCallNode) node).getArguments();
+        } else if (node instanceof GroupDispatchNode) {
+            return ((GroupDispatchNode) node).getArguments();
         }
-        node.accept(callArgsNodeFinder);
-        assert callArgsNodeFinder.callArgumentsNode != null;
-        return callArgsNodeFinder.callArgumentsNode;
+        throw RInternalError.shouldNotReachHere();
     }
-
-    private static final CallArgsNodeFinder callArgsNodeFinder = new CallArgsNodeFinder();
 
     /**
      * Returns the name (as an {@link RSymbol} of the function associated with an {@link RCallNode}
@@ -318,7 +298,7 @@ public class RASTUtils {
     }
 
     @TruffleBoundary
-    public static RNode substituteName(String name, REnvironment env) {
+    public static RSyntaxNode substituteName(String name, REnvironment env) {
         Object val = env.get(name);
         if (val == null) {
             // not bound in env,
@@ -327,9 +307,9 @@ public class RASTUtils {
             // strange special case, mimics GnuR behavior
             return RASTUtils.createReadVariableNode("");
         } else if (val instanceof RPromise) {
-            return (RNode) RASTUtils.unwrap(((RPromise) val).getRep());
+            return (RSyntaxNode) RASTUtils.unwrap(((RPromise) val).getRep());
         } else if (val instanceof RLanguage) {
-            return (RNode) ((RLanguage) val).getRep();
+            return (RSyntaxNode) ((RLanguage) val).getRep();
         } else if (val instanceof RArgsValuesAndNames) {
             // this is '...'
             RArgsValuesAndNames rva = (RArgsValuesAndNames) val;
@@ -337,7 +317,7 @@ public class RASTUtils {
                 return new MissingDotsNode();
             }
             Object[] values = rva.getArguments();
-            RNode[] expandedNodes = new RNode[values.length];
+            RSyntaxNode[] expandedNodes = new RSyntaxNode[values.length];
             for (int i = 0; i < values.length; i++) {
                 Object argval = values[i];
                 while (argval instanceof RPromise) {
@@ -356,7 +336,7 @@ public class RASTUtils {
                 }
                 if (argval instanceof RPromise) {
                     RPromise promise = (RPromise) argval;
-                    expandedNodes[i] = (RNode) RASTUtils.unwrap(promise.getRep());
+                    expandedNodes[i] = (RSyntaxNode) RASTUtils.unwrap(promise.getRep());
                 } else {
                     expandedNodes[i] = ConstantNode.create(argval);
                 }
@@ -400,9 +380,9 @@ public class RASTUtils {
      */
     public static class ExpandedDotsNode extends DotsNode {
 
-        public final RNode[] nodes;
+        public final RSyntaxNode[] nodes;
 
-        ExpandedDotsNode(RNode[] nodes) {
+        ExpandedDotsNode(RSyntaxNode[] nodes) {
             this.nodes = nodes;
         }
 

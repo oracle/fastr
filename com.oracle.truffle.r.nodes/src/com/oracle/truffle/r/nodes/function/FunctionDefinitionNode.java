@@ -144,7 +144,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
                     }
 
                     if (readInternal.getIdentifier().equals(".Internal")) {
-                        Node internalFunctionArgument = RASTUtils.unwrap(internalCall.getArgumentsNode().getArguments()[0]);
+                        Node internalFunctionArgument = RASTUtils.unwrap(internalCall.getArguments().getArguments()[0]);
                         if (internalFunctionArgument instanceof RCallNode) {
                             RCallNode innerCall = (RCallNode) internalFunctionArgument;
                             if (innerCall.getFunctionNode() instanceof ReadVariableNode) {

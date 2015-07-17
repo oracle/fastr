@@ -87,9 +87,9 @@ public class WriteCurrentVariableNode extends WriteVariableNodeSyntaxHelper impl
     @Override
     public RSyntaxNode substitute(REnvironment env) {
         String name = getName().toString();
-        RNode nameSub = RASTUtils.substituteName(name, env);
+        RSyntaxNode nameSub = RASTUtils.substituteName(name, env);
         if (nameSub != null) {
-            name = RASTUtils.expectName(nameSub);
+            name = RASTUtils.expectName(nameSub.asRNode());
         }
         RNode rhsSub = null;
         if (getRhs() != null) {
