@@ -27,7 +27,6 @@ import java.util.*;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.instrument.*;
 import com.oracle.truffle.api.nodes.*;
@@ -37,8 +36,8 @@ import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.access.variables.*;
+import com.oracle.truffle.r.nodes.control.*;
 import com.oracle.truffle.r.nodes.instrument.*;
-import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RArguments.S3Args;
 import com.oracle.truffle.r.runtime.Utils.DebugExitException;
@@ -54,9 +53,9 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
      * This exists for debugging purposes. It is set initially when the function is defined to
      * either:
      * <ul>
-     * <li>The name of the variable that the function degfinition is assigned to, e.g,
+     * <li>The name of the variable that the function definition is assigned to, e.g,
      * {@code f <- function}.
-     * <li>The first several characters of the function definitioin for anyonmous functions.
+     * <li>The first several characters of the function definition for anonymous functions.
      * </ul>
      * It can be updated later by calling {@link #setDescription}, which is useful for functions
      * lazily loaded from packages, where at the point of definition any assignee variable is
@@ -69,6 +68,9 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
     @Child private InlineCacheNode onExitExpressionCache;
     private final ConditionProfile onExitProfile = ConditionProfile.createBinaryProfile();
     private final BranchProfile resetArgs = BranchProfile.create();
+    private final BranchProfile normalExit = BranchProfile.create();
+    private final BranchProfile breakProfile = BranchProfile.create();
+    private final BranchProfile nextProfile = BranchProfile.create();
 
     @CompilationFinal private BranchProfile invalidateFrameSlotProfile;
     @Child private FrameSlotNode dotGenericSlot;
@@ -192,7 +194,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
     public Object execute(VirtualFrame frame) {
         VirtualFrame vf = substituteFrame ? new SubstituteVirtualFrame((MaterializedFrame) frame.getArguments()[0]) : frame;
         /*
-         * It might be possibel to only record this iff a handler is installed, by using the
+         * It might be possible to only record this iff a handler is installed, by using the
          * RArguments array.
          */
         Object handlerStack = RErrorHandling.getHandlerStack();
@@ -201,22 +203,26 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         try {
             verifyEnclosingAssumptions(vf);
             setupS3Slots(vf);
-            return body.execute(vf);
-        } catch (NullPointerException | ArrayIndexOutOfBoundsException | AssertionError e) {
-            CompilerDirectives.transferToInterpreter();
-            throw new RInternalError(e, "internal error");
+            Object result = body.execute(vf);
+            normalExit.enter();
+            return result;
         } catch (ReturnException ex) {
             returnProfile.enter();
-            MaterializedFrame returnFrame = ex.getReturnFrame();
-            if (returnFrame != null && returnFrame != vf.materialize()) {
+            int depth = ex.getDepth();
+            if (depth != -1 && RArguments.getDepth(vf) != depth) {
                 throw ex;
             } else {
                 return ex.getResult();
             }
-        } catch (RInternalError | UnsupportedSpecializationException | ConversionFailedException e) {
+        } catch (BreakException e) {
+            breakProfile.enter();
+            throw e;
+        } catch (NextException e) {
+            nextProfile.enter();
+            throw e;
+        } catch (RError e) {
             CompilerDirectives.transferToInterpreter();
-            runOnExitHandlers = false;
-            throw e instanceof RInternalError ? (RInternalError) e : new RInternalError(e, "internal error");
+            throw e;
         } catch (DebugExitException | QuitException e) {
             /*
              * These relate to the Truffle debugging support. exitHandlers must be suppressed and
@@ -225,6 +231,10 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
             CompilerDirectives.transferToInterpreter();
             runOnExitHandlers = false;
             throw e;
+        } catch (Throwable e) {
+            CompilerDirectives.transferToInterpreter();
+            runOnExitHandlers = false;
+            throw e instanceof RInternalError ? (RInternalError) e : new RInternalError(e, e.toString());
         } finally {
             if (argPostProcess != null) {
                 resetArgs.enter();

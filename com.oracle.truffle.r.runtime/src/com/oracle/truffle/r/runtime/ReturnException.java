@@ -22,25 +22,34 @@
  */
 package com.oracle.truffle.r.runtime;
 
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 
 @SuppressWarnings("serial")
 public final class ReturnException extends ControlFlowException {
 
     private final Object result;
-    private final MaterializedFrame returnFrame;
+    private final int depth;
 
     /**
      * Support for the "return" builtin.
      *
      * @param result the value to return
-     * @param returnFrame if not {@code null}, the frame of the function that the return should go
-     *            to, skipping intermediate frames.
+     * @param depth if not -1, the depth of the frame of the function that the return should go to,
+     *            skipping intermediate frames.
      */
-    public ReturnException(Object result, MaterializedFrame returnFrame) {
+    public ReturnException(Object result, int depth) {
         this.result = result;
-        this.returnFrame = returnFrame;
+        this.depth = depth;
+    }
+
+    /**
+     * Support for the "return" builtin.
+     *
+     * @param result the value to return
+     */
+    public ReturnException(Object result) {
+        this.result = result;
+        this.depth = -1;
     }
 
     /**
@@ -50,7 +59,7 @@ public final class ReturnException extends ControlFlowException {
         return result;
     }
 
-    public MaterializedFrame getReturnFrame() {
-        return returnFrame;
+    public int getDepth() {
+        return depth;
     }
 }

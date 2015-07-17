@@ -102,7 +102,7 @@ public abstract class S3DispatchFunctions extends RBuiltinNode {
             ArgumentsSignature suppliedSignature = RArguments.getSignature(frame);
             Object[] suppliedArguments = RArguments.getArguments(frame);
             Object result = dispatch(frame, generic, type, null, callerFrame, genericDefFrame, suppliedSignature, suppliedArguments);
-            throw new ReturnException(result, null);
+            throw new ReturnException(result);
         }
 
         /**

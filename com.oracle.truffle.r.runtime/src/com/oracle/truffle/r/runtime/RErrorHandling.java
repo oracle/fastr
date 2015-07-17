@@ -267,7 +267,7 @@ public class RErrorHandling implements RContext.StateFactory {
                 RList car = (RList) pList.car();
                 if (exit.equals(restartExit(car))) {
                     errorHandlingState.restartStack = pList.cdr();
-                    throw new ReturnException(args, restartFrame(restart));
+                    throw new ReturnException(args, RArguments.getDepth(restartFrame(restart)));
                 }
                 errorHandlingState.restartStack = pList.cdr();
             }
@@ -333,7 +333,7 @@ public class RErrorHandling implements RContext.StateFactory {
         resultData[RESULT_COND] = cond;
         resultData[RESULT_CALL] = call;
         resultData[RESULT_HANDLER] = entry.getDataAt(ENTRY_HANDLER);
-        throw new ReturnException(result, rho.getFrame());
+        throw new ReturnException(result, RArguments.getDepth(rho.getFrame()));
     }
 
     private static RPairList findSimpleErrorHandler() {

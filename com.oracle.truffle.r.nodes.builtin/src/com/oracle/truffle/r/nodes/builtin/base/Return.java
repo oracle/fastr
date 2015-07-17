@@ -52,12 +52,12 @@ public abstract class Return extends RBuiltinNode {
 
     @Specialization
     protected Object returnFunction(@SuppressWarnings("unused") RMissing arg) {
-        throw new ReturnException(RNull.instance, null);
+        throw new ReturnException(RNull.instance);
     }
 
     @Specialization
     protected Object returnFunction(RNull arg) {
-        throw new ReturnException(arg, null);
+        throw new ReturnException(arg);
     }
 
     @Specialization
@@ -70,6 +70,6 @@ public abstract class Return extends RBuiltinNode {
          * case "frame" identifies the function to return from, so we pass it in the
          * ReturnException, to be checked in FunctionDefinitionNode.execute.
          */
-        throw new ReturnException(value, frame.materialize());
+        throw new ReturnException(value, RArguments.getDepth(frame));
     }
 }
