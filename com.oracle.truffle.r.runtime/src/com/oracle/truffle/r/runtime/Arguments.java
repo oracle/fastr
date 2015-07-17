@@ -31,7 +31,7 @@ import com.oracle.truffle.api.nodes.*;
  *
  * @param <T> The type of {@link #values}
  */
-public abstract class Arguments<T> {
+public class Arguments<T> {
 
     /**
      * Array of arguments; semantics have to be specified by child classes.
@@ -43,7 +43,7 @@ public abstract class Arguments<T> {
      */
     private final ArgumentsSignature signature;
 
-    protected Arguments(T[] arguments, ArgumentsSignature signature) {
+    public Arguments(T[] arguments, ArgumentsSignature signature) {
         this.values = arguments;
         this.signature = signature;
     }

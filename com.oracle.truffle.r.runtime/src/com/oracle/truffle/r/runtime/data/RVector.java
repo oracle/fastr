@@ -382,13 +382,14 @@ public abstract class RVector extends RAttributeStorage implements RShareable, R
 
     @Override
     public final void markNonTemporary() {
+        assert !FastROptions.NewStateTransition;
         temporary = false;
     }
 
     @Override
     public final boolean isTemporary() {
         if (FastROptions.NewStateTransition) {
-            return temporary && refCount == 0;
+            return refCount == 0;
         } else {
             return temporary;
         }
@@ -397,7 +398,7 @@ public abstract class RVector extends RAttributeStorage implements RShareable, R
     @Override
     public final boolean isShared() {
         if (FastROptions.NewStateTransition) {
-            return shared || (!temporary && refCount > 0);
+            return refCount > 1;
         } else {
             return shared;
         }
@@ -405,6 +406,7 @@ public abstract class RVector extends RAttributeStorage implements RShareable, R
 
     @Override
     public final RVector makeShared() {
+        assert !FastROptions.NewStateTransition;
         if (temporary) {
             temporary = false;
         }
@@ -720,7 +722,11 @@ public abstract class RVector extends RAttributeStorage implements RShareable, R
         RStringVector oldNames = res.names;
         res = copyResized(size, true);
         if (this.isShared()) {
-            res.markNonTemporary();
+            if (FastROptions.NewStateTransition) {
+                res.incRefCount();
+            } else {
+                res.markNonTemporary();
+            }
         }
         if (resetAll) {
             resetAllAttributes(oldNames == null);
@@ -794,14 +800,22 @@ public abstract class RVector extends RAttributeStorage implements RShareable, R
     public final RVector materializeNonShared() {
         if (this.isShared()) {
             RVector res = this.copy();
-            res.markNonTemporary();
+            if (FastROptions.NewStateTransition) {
+                res.incRefCount();
+            } else {
+                res.markNonTemporary();
+            }
             return res;
         }
         if (this.isTemporary()) {
             // this is needed for primitive values coerced to vector - they need to be marked as
             // non-temp, otherwise the following code will not work:
             // x<-1; attributes(x) <- list(my = 1); y<-x; attributes(y)<-list(his = 2); x
-            this.markNonTemporary();
+            if (FastROptions.NewStateTransition) {
+                this.incRefCount();
+            } else {
+                this.markNonTemporary();
+            }
         }
         return this;
     }

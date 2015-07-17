@@ -35,7 +35,11 @@ public abstract class UnClass extends RBuiltinNode {
             RVector resultVector = arg.materialize();
             if (!resultVector.isTemporary()) {
                 resultVector = resultVector.copy();
-                resultVector.markNonTemporary();
+                if (FastROptions.NewStateTransition) {
+                    resultVector.incRefCount();
+                } else {
+                    resultVector.markNonTemporary();
+                }
             }
             return RVector.setVectorClassAttr(resultVector, null, null, null);
         }
@@ -49,7 +53,11 @@ public abstract class UnClass extends RBuiltinNode {
         RDataFrame resultFrame = arg;
         if (!resultFrame.isTemporary()) {
             resultFrame = resultFrame.copy();
-            resultFrame.markNonTemporary();
+            if (FastROptions.NewStateTransition) {
+                resultFrame.incRefCount();
+            } else {
+                resultFrame.markNonTemporary();
+            }
         }
         return RVector.setVectorClassAttr(resultFrame.getVector(), null, arg, null);
     }
@@ -61,7 +69,11 @@ public abstract class UnClass extends RBuiltinNode {
         RFactor resultFactor = arg;
         if (!resultFactor.isTemporary()) {
             resultFactor = resultFactor.copy();
-            resultFactor.markNonTemporary();
+            if (FastROptions.NewStateTransition) {
+                resultFactor.incRefCount();
+            } else {
+                resultFactor.markNonTemporary();
+            }
         }
         return RVector.setVectorClassAttr(resultFactor.getVector(), null, null, arg);
     }
@@ -74,7 +86,11 @@ public abstract class UnClass extends RBuiltinNode {
             RLanguage resultLang = arg;
             if (!resultLang.isTemporary()) {
                 resultLang = resultLang.copy();
-                resultLang.markNonTemporary();
+                if (FastROptions.NewStateTransition) {
+                    resultLang.incRefCount();
+                } else {
+                    resultLang.markNonTemporary();
+                }
             }
             resultLang.removeAttr(attrProfiles, RRuntime.CLASS_ATTR_KEY);
             return resultLang;

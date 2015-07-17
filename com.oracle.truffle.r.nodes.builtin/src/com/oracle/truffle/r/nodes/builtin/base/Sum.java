@@ -25,7 +25,6 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.nodes.unary.UnaryArithmeticReduceNode.ReduceSemantics;
@@ -50,7 +49,7 @@ public abstract class Sum extends RBuiltinNode {
     }
 
     @Specialization
-    protected Object sum(VirtualFrame frame, RArgsValuesAndNames args, byte naRm) {
-        return reduce.executeReduce(combine.executeCombine(frame, args), naRm);
+    protected Object sum(RArgsValuesAndNames args, byte naRm) {
+        return reduce.executeReduce(combine.executeCombine(args), naRm);
     }
 }

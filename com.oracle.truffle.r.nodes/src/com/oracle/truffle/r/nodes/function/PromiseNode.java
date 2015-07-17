@@ -204,7 +204,7 @@ public abstract class PromiseNode extends RNode {
             return factory.createVarargPromise(varargNode.executeNonEvaluated(frame));
         }
 
-        public RNode substitute(REnvironment env) {
+        public RSyntaxNode substitute(REnvironment env) {
             // TODO Since VarargPromiseNode is not an RSyntaxNode this is suspicious
             return varargNode.substitute(env);
         }
@@ -306,7 +306,7 @@ public abstract class PromiseNode extends RNode {
      * of RPromise, only needed for varargs in FastR TODO Move to separate package together with
      * other varargs classes)
      */
-    public static final class VarArgNode extends RNode {
+    public static final class VarArgNode extends RNode implements RSyntaxNode {
 
         @Child private FrameSlotNode varArgsSlotNode;
         @Child private PromiseHelperNode promiseHelper;
@@ -350,9 +350,9 @@ public abstract class PromiseNode extends RNode {
             return (RPromise) getVarargsAndNames(frame).getArgument(index);
         }
 
-        public RNode substitute(REnvironment env) {
+        public RSyntaxNode substitute(REnvironment env) {
             Object obj = ((RArgsValuesAndNames) env.get("...")).getArgument(index);
-            return obj instanceof RPromise ? (RNode) ((RPromise) obj).getRep() : ConstantNode.create(obj);
+            return obj instanceof RPromise ? (RSyntaxNode) ((RPromise) obj).getRep() : ConstantNode.create(obj);
         }
 
         public int getIndex() {
@@ -412,7 +412,7 @@ public abstract class PromiseNode extends RNode {
     }
 
     @TruffleBoundary
-    public static RNode createVarArgsAsSyntax(RNode[] nodes, ArgumentsSignature signature, ClosureCache closureCache) {
+    public static RSyntaxNode createVarArgsAsSyntax(RNode[] nodes, ArgumentsSignature signature, ClosureCache closureCache) {
         return new VArgsPromiseNodeAsSyntax(new VarArgsPromiseNode(nodes, signature, closureCache));
     }
 

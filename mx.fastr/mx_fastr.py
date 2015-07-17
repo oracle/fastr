@@ -35,13 +35,14 @@ def runR(args, className, nonZeroIsFatal=True, extraVmArgs=None, runBench=False,
     setREnvironment(graal_vm)
     project = className.rpartition(".")[0]
     vmArgs = ['-cp', mx.classpath(project)]
-    vmArgs = vmArgs + ["-Drhome.path=" + _fastr_suite.dir]
+    vmArgs += ["-Drhome.path=" + _fastr_suite.dir]
 
+    vmArgs += ['-G:InliningDepthError=500']
 
     if runBench == False:
-        vmArgs = vmArgs + ['-ea', '-esa']
+        vmArgs += ['-ea', '-esa']
     if extraVmArgs:
-        vmArgs = vmArgs + extraVmArgs
+        vmArgs += extraVmArgs
     return mx_graal.vm(vmArgs + [className] + args, vm=graal_vm, nonZeroIsFatal=nonZeroIsFatal)
 
 def setREnvironment(graal_vm):
@@ -227,6 +228,8 @@ def _junit_r_harness(args, vmArgs, junitArgs):
 
     # suppress Truffle compilation by using a high threshold
     vmArgs += ['-G:TruffleCompilationThreshold=100000']
+
+    vmArgs += ['-G:InliningDepthError=500']
 
     graal_vm = _get_graal_vm()
     setREnvironment(graal_vm)

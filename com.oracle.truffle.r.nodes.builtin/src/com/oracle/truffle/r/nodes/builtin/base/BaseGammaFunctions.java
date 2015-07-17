@@ -16,9 +16,8 @@ import static com.oracle.truffle.r.library.stats.StatsUtil.*;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.*;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.library.stats.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -94,16 +93,16 @@ public class BaseGammaFunctions {
 
         private final NACheck naValCheck = NACheck.create();
 
-        private double dpsiFnCalc(VirtualFrame frame, double x, int n, int kode, double ans) {
+        private double dpsiFnCalc(double x, int n, int kode, double ans) {
             if (dpsiFnCalc == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 dpsiFnCalc = insert(DpsiFnCalcNodeGen.create(null, null, null, null));
             }
-            return dpsiFnCalc.executeDouble(frame, x, n, kode, ans);
+            return dpsiFnCalc.executeDouble(x, n, kode, ans);
         }
 
         @Specialization
-        protected RDoubleVector digamma(VirtualFrame frame, RAbstractDoubleVector x) {
+        protected RDoubleVector digamma(RAbstractDoubleVector x) {
             controlVisibility();
             naValCheck.enable(x);
             double[] result = new double[x.getLength()];
@@ -113,7 +112,7 @@ public class BaseGammaFunctions {
                 if (naValCheck.check(xv)) {
                     result[i] = xv;
                 } else {
-                    double val = dpsiFnCalc(frame, xv, 0, 1, 0);
+                    double val = dpsiFnCalc(xv, 0, 1, 0);
                     if (Double.isNaN(val)) {
                         result[i] = val;
                         warnNaN = true;
@@ -129,13 +128,13 @@ public class BaseGammaFunctions {
         }
 
         @Specialization
-        protected RDoubleVector digamma(VirtualFrame frame, RAbstractIntVector x) {
-            return digamma(frame, RClosures.createIntToDoubleVector(x));
+        protected RDoubleVector digamma(RAbstractIntVector x) {
+            return digamma(RClosures.createIntToDoubleVector(x));
         }
 
         @Specialization
-        protected RDoubleVector digamma(VirtualFrame frame, RAbstractLogicalVector x) {
-            return digamma(frame, RClosures.createLogicalToDoubleVector(x));
+        protected RDoubleVector digamma(RAbstractLogicalVector x) {
+            return digamma(RClosures.createLogicalToDoubleVector(x));
         }
 
         @Specialization
@@ -155,7 +154,7 @@ public class BaseGammaFunctions {
 
         // the following is transcribed from polygamma.c
 
-        public abstract double executeDouble(VirtualFrame frame, double x, int n, int kode, double ans);
+        public abstract double executeDouble(double x, int n, int kode, double ans);
 
         @Child private DpsiFnCalc dpsiFnCalc;
 
@@ -170,17 +169,17 @@ public class BaseGammaFunctions {
         // only if a the first element of the array is accessed at all times
         private static final int m = 1;
 
-        private double dpsiFnCalc(VirtualFrame frame, double x, int n, int kode, double ans) {
+        private double dpsiFnCalc(double x, int n, int kode, double ans) {
             if (dpsiFnCalc == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 dpsiFnCalc = insert(DpsiFnCalcNodeGen.create(null, null, null, null));
             }
-            return dpsiFnCalc.executeDouble(frame, x, n, kode, ans);
+            return dpsiFnCalc.executeDouble(x, n, kode, ans);
         }
 
         // TODO: it's recursive - turn into AST recursion
         @Specialization
-        double dpsifn(VirtualFrame frame, double xOld, int n, int kode, double ansOld) {
+        double dpsifn(double xOld, int n, int kode, double ansOld) {
 
             double x = xOld;
             double ans = ansOld;
@@ -236,7 +235,7 @@ public class BaseGammaFunctions {
                     return ans;
                 }
                 /* This could cancel badly */
-                ans = dpsiFnCalc(frame, 1. - x, n, /* kode = */1, ans);
+                ans = dpsiFnCalc(1. - x, n, /* kode = */1, ans);
                 /*
                  * ans[j] == (-1)^(k+1) / gamma(k+1) * psi(k, 1 - x) for j = 0:(m-1) , k = n + j
                  */

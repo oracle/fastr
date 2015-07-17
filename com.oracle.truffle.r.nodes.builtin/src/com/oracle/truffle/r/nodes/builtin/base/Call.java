@@ -28,7 +28,6 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -69,26 +68,23 @@ public abstract class Call extends RBuiltinNode {
         return makeCall0(function, args);
     }
 
-    @TruffleBoundary
     /**
      *
      * @param fn an {@link RFunction} or {@link String}
      * @param argsAndNames if not {@code null} the argument values and (optional) names
      * @return the {@link RLanguage} instance denoting the call
      */
+    @TruffleBoundary
     private static RLanguage makeCall0(Object fn, RArgsValuesAndNames argsAndNames) {
         int argLength = argsAndNames == null ? 0 : argsAndNames.getLength();
-        RNode[] args = new RNode[argLength];
+        RSyntaxNode[] args = new RSyntaxNode[argLength];
         Object[] values = argsAndNames == null ? null : argsAndNames.getArguments();
         ArgumentsSignature signature = argsAndNames == null ? ArgumentsSignature.empty(0) : argsAndNames.getSignature();
 
         for (int i = 0; i < argLength; i++) {
-            args[i] = RASTUtils.createNodeForValue(values[i]);
+            args[i] = (RSyntaxNode) RASTUtils.createNodeForValue(values[i]);
         }
 
-        // TODO: handle replacement calls
-        boolean isReplacement = false;
-        final CallArgumentsNode callArgsNode = CallArgumentsNode.create(!isReplacement, false, args, signature);
-        return RDataFactory.createLanguage(RASTUtils.createCall(fn, callArgsNode));
+        return RDataFactory.createLanguage(RASTUtils.createCall(fn, signature, args));
     }
 }

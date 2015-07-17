@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
+import static com.oracle.truffle.r.runtime.RDispatch.*;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
@@ -30,7 +31,7 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin(name = "length<-", kind = PRIMITIVE, parameterNames = {"x", ""}, internalDispatch = true)
+@RBuiltin(name = "length<-", kind = PRIMITIVE, parameterNames = {"x", ""}, dispatch = INTERNAL_GENERIC)
 // 2nd parameter is "value", but should not be matched against, so ""
 public abstract class UpdateLength extends RInvisibleBuiltinNode {
 

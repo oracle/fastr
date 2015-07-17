@@ -245,7 +245,8 @@ public abstract class RBuiltinNode extends RNode implements RSyntaxNode, Visibil
         state.append(".Internal(");
         state.append(getBuiltin().getName());
         // arguments; there is no CallArgumentsNode, so we create one to reuse the deparse code
-        CallArgumentsNode.createUnnamed(false, false, getArguments()).deparse(state);
+        RSyntaxNode[] args = Arrays.copyOf(getArguments(), getArguments().length, RSyntaxNode[].class);
+        RCallNode.deparseArguments(state, args, getSuppliedSignature());
         state.append(')');
     }
 

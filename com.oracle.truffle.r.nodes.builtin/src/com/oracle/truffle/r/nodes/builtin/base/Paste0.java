@@ -26,7 +26,6 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
@@ -41,17 +40,17 @@ public abstract class Paste0 extends RBuiltinNode {
 
     @Child private Paste pasteNode;
 
-    private Object paste(VirtualFrame frame, RList values, Object collapse) {
+    private Object paste(RList values, Object collapse) {
         if (pasteNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             pasteNode = insert(PasteNodeGen.create(new RNode[3], null, null));
         }
-        return pasteNode.executeList(frame, values, "", collapse);
+        return pasteNode.executeList(values, "", collapse);
     }
 
     @Specialization
-    protected Object paste0(VirtualFrame frame, RList values, Object collapse) {
+    protected Object paste0(RList values, Object collapse) {
         controlVisibility();
-        return paste(frame, values, collapse);
+        return paste(values, collapse);
     }
 }

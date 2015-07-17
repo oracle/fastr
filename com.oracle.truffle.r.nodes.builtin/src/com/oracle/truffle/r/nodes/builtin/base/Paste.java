@@ -27,7 +27,6 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -40,7 +39,7 @@ public abstract class Paste extends RBuiltinNode {
 
     private static final String[] ONE_EMPTY_STRING = new String[]{""};
 
-    public abstract Object executeList(VirtualFrame frame, RList value, String sep, Object collapse);
+    public abstract Object executeList(RList value, String sep, Object collapse);
 
     /**
      * {@code paste} is specified to convert its arguments using {@code as.character}.
@@ -53,12 +52,12 @@ public abstract class Paste extends RBuiltinNode {
     private final ConditionProfile noCollapse = ConditionProfile.createBinaryProfile();
     private final ConditionProfile reusedResultProfile = ConditionProfile.createBinaryProfile();
 
-    private RStringVector castCharacter(VirtualFrame frame, Object o) {
+    private RStringVector castCharacter(Object o) {
         if (asCharacterNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             asCharacterNode = insert(AsCharacterNodeGen.create(new RNode[1], null, null));
         }
-        Object ret = asCharacterNode.execute(frame, o);
+        Object ret = asCharacterNode.execute(o);
         if (ret instanceof String) {
             return RDataFactory.createStringVector((String) ret);
         } else {
@@ -85,12 +84,12 @@ public abstract class Paste extends RBuiltinNode {
     }
 
     @Specialization
-    protected RStringVector pasteList(VirtualFrame frame, RList values, String sep, RNull collapse) {
-        return pasteList(frame, values, sep, (Object) collapse);
+    protected RStringVector pasteList(RList values, String sep, RNull collapse) {
+        return pasteList(values, sep, (Object) collapse);
     }
 
     @Specialization
-    protected RStringVector pasteList(VirtualFrame frame, RList values, String sep, Object collapse) {
+    protected RStringVector pasteList(RList values, String sep, Object collapse) {
         controlVisibility();
         if (emptyOrNull.profile(isEmptyOrNull(values))) {
             return RDataFactory.createEmptyStringVector();
@@ -104,7 +103,7 @@ public abstract class Paste extends RBuiltinNode {
             if (vectorOrSequence.profile(element instanceof RVector || element instanceof RSequence)) {
                 array = castCharacterVector(element).getDataWithoutCopying();
             } else {
-                array = castCharacter(frame, element).getDataWithoutCopying();
+                array = castCharacter(element).getDataWithoutCopying();
             }
             maxLength = Math.max(maxLength, array.length);
             converted[i] = array.length == 0 ? ONE_EMPTY_STRING : array;

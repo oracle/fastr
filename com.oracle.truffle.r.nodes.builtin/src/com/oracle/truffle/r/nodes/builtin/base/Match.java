@@ -28,7 +28,6 @@ import java.util.*;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -44,7 +43,7 @@ public abstract class Match extends RBuiltinNode {
 
     private static final int TABLE_SIZE_FACTOR = 10;
 
-    protected abstract RIntVector executeRIntVector(VirtualFrame frame, Object x, Object table, Object noMatch, Object incomparables);
+    protected abstract RIntVector executeRIntVector(Object x, Object table, Object noMatch, Object incomparables);
 
     @Child private CastStringNode castString;
     @Child private CastIntegerNode castInt;
@@ -71,45 +70,45 @@ public abstract class Match extends RBuiltinNode {
         return (int) castInt.execute(operand);
     }
 
-    private RIntVector matchRecursive(VirtualFrame frame, Object x, Object table, Object noMatch, Object incomparables) {
+    private RIntVector matchRecursive(Object x, Object table, Object noMatch, Object incomparables) {
         if (matchRecursive == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             matchRecursive = insert(MatchNodeGen.create(new RNode[4], null, null));
         }
-        return matchRecursive.executeRIntVector(frame, x, table, noMatch, incomparables);
+        return matchRecursive.executeRIntVector(x, table, noMatch, incomparables);
     }
 
     // FIXME deal incomparables parameter
 
     @Specialization
     @SuppressWarnings("unused")
-    protected RIntVector match(VirtualFrame frame, RNull x, RAbstractVector table, Object nomatchObj, Object incomparables) {
+    protected RIntVector match(RNull x, RAbstractVector table, Object nomatchObj, Object incomparables) {
         return RDataFactory.createIntVector(0);
     }
 
     @Specialization
     @SuppressWarnings("unused")
-    protected RIntVector match(VirtualFrame frame, RAbstractVector x, RNull table, Object nomatchObj, Object incomparables) {
+    protected RIntVector match(RAbstractVector x, RNull table, Object nomatchObj, Object incomparables) {
         return RDataFactory.createIntVector(x.getLength());
     }
 
     @Specialization
-    protected RIntVector match(VirtualFrame frame, RFactor x, RFactor table, Object nomatchObj, Object incomparables) {
+    protected RIntVector match(RFactor x, RFactor table, Object nomatchObj, Object incomparables) {
         naCheck.enable(x.getVector());
         naCheck.enable(table.getVector());
-        return matchRecursive(frame, RClosures.createFactorToVector(x, true, attrProfiles), RClosures.createFactorToVector(table, true, attrProfiles), nomatchObj, incomparables);
+        return matchRecursive(RClosures.createFactorToVector(x, true, attrProfiles), RClosures.createFactorToVector(table, true, attrProfiles), nomatchObj, incomparables);
     }
 
     @Specialization
-    protected RIntVector match(VirtualFrame frame, RFactor x, RAbstractVector table, Object nomatchObj, Object incomparables) {
+    protected RIntVector match(RFactor x, RAbstractVector table, Object nomatchObj, Object incomparables) {
         naCheck.enable(x.getVector());
-        return matchRecursive(frame, RClosures.createFactorToVector(x, true, attrProfiles), table, nomatchObj, incomparables);
+        return matchRecursive(RClosures.createFactorToVector(x, true, attrProfiles), table, nomatchObj, incomparables);
     }
 
     @Specialization
-    protected RIntVector match(VirtualFrame frame, RAbstractVector x, RFactor table, Object nomatchObj, Object incomparables) {
+    protected RIntVector match(RAbstractVector x, RFactor table, Object nomatchObj, Object incomparables) {
         naCheck.enable(table.getVector());
-        return matchRecursive(frame, x, RClosures.createFactorToVector(table, true, attrProfiles), nomatchObj, incomparables);
+        return matchRecursive(x, RClosures.createFactorToVector(table, true, attrProfiles), nomatchObj, incomparables);
     }
 
     @Specialization

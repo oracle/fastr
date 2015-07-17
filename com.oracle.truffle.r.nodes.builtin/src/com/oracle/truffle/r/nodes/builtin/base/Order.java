@@ -16,7 +16,6 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -30,7 +29,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 @RBuiltin(name = "order", kind = INTERNAL, parameterNames = {"na.last", "decreasing", "..."})
 public abstract class Order extends RPrecedenceBuiltinNode {
 
-    public abstract RIntVector executeRIntVector(VirtualFrame frame, byte naLast, byte dec, RArgsValuesAndNames args);
+    public abstract RIntVector executeRIntVector(byte naLast, byte dec, RArgsValuesAndNames args);
 
     @Child private CastToVectorNode castVector;
     @Child private CmpNode cmpNode;
@@ -48,17 +47,17 @@ public abstract class Order extends RPrecedenceBuiltinNode {
         return (RAbstractVector) castVector.execute(value);
     }
 
-    private int cmp(VirtualFrame frame, Object v, int i, int j, byte naLast) {
+    private int cmp(Object v, int i, int j, byte naLast) {
         if (cmpNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             cmpNode = insert(CmpNodeGen.create(null, null, null, null));
         }
-        return cmpNode.executeInt(frame, v, i, j, naLast);
+        return cmpNode.executeInt(v, i, j, naLast);
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = "noVec(args)")
-    Object orderEmpty(VirtualFrame frame, RAbstractLogicalVector naLastVec, RAbstractLogicalVector decVec, RArgsValuesAndNames args) {
+    Object orderEmpty(RAbstractLogicalVector naLastVec, RAbstractLogicalVector decVec, RArgsValuesAndNames args) {
         return RNull.instance;
     }
 
@@ -198,7 +197,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
     }
 
     @Specialization(guards = {"!oneVec(args)", "!noVec(args)"})
-    Object orderMulti(VirtualFrame frame, RAbstractLogicalVector naLastVec, RAbstractLogicalVector decVec, RArgsValuesAndNames args) {
+    Object orderMulti(RAbstractLogicalVector naLastVec, RAbstractLogicalVector decVec, RArgsValuesAndNames args) {
         int n = preprocessVectors(args);
 
         byte naLast = RRuntime.LOGICAL_TRUE;
@@ -215,7 +214,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
         for (int i = 0; i < indx.length; i++) {
             indx[i] = i;
         }
-        orderVector(frame, indx, args, naLast, dec);
+        orderVector(indx, args, naLast, dec);
         for (int i = 0; i < indx.length; i++) {
             indx[i] = indx[i] + 1;
         }
@@ -223,12 +222,12 @@ public abstract class Order extends RPrecedenceBuiltinNode {
         return RDataFactory.createIntVector(indx, RDataFactory.COMPLETE_VECTOR);
     }
 
-    private boolean greaterSub(VirtualFrame frame, int i, int j, RArgsValuesAndNames args, byte naLast, boolean dec) {
+    private boolean greaterSub(int i, int j, RArgsValuesAndNames args, byte naLast, boolean dec) {
         Object[] vectors = args.getArguments();
         int c = -1;
         for (int k = 0; k < args.getLength(); k++) {
             RAbstractVector v = (RAbstractVector) vectors[k];
-            c = cmp(frame, v, i, j, naLast);
+            c = cmp(v, i, j, naLast);
             if (dec) {
                 c = -c;
             }
@@ -242,7 +241,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
         return (c == 0 && i < j) ? false : true;
     }
 
-    private void orderVector(VirtualFrame frame, int[] indx, RArgsValuesAndNames args, byte naLast, boolean dec) {
+    private void orderVector(int[] indx, RArgsValuesAndNames args, byte naLast, boolean dec) {
         if (indx.length > 1) {
 
             int t = 0;
@@ -252,7 +251,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
                 for (int i = h; i < indx.length; i++) {
                     int itmp = indx[i];
                     int j = i;
-                    while (j >= h && greaterSub(frame, indx[j - h], itmp, args, naLast, dec)) {
+                    while (j >= h && greaterSub(indx[j - h], itmp, args, naLast, dec)) {
                         indx[j] = indx[j - h];
                         j -= h;
                     }
@@ -573,7 +572,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
     @NodeChildren({@NodeChild("v"), @NodeChild("i"), @NodeChild("j"), @NodeChild("naLast")})
     protected abstract static class CmpNode extends RNode {
 
-        public abstract int executeInt(VirtualFrame frame, Object v, int i, int j, byte naLast);
+        public abstract int executeInt(Object v, int i, int j, byte naLast);
 
         @Specialization
         protected int lcmp(RAbstractLogicalVector v, int i, int j, byte naLast) {

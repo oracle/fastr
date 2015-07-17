@@ -153,10 +153,16 @@ public abstract class ArgumentStatePush extends RNode {
         // bother with the reference count
         if (o instanceof RShareable) {
             RShareable shareable = (RShareable) o;
-            if (shareable.isTemporary()) {
-                shareable.markNonTemporary();
-            } else if (!shareable.isShared()) {
-                shareable.makeShared();
+            if (FastROptions.NewStateTransition) {
+                if (!shareable.isShared()) {
+                    shareable.incRefCount();
+                }
+            } else {
+                if (shareable.isTemporary()) {
+                    shareable.markNonTemporary();
+                } else if (!shareable.isShared()) {
+                    shareable.makeShared();
+                }
             }
         }
     }

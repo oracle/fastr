@@ -174,7 +174,7 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
 
     @Override
     public RSyntaxNode substitute(REnvironment env) {
-        RSyntaxNode result = RSyntaxNode.cast(RASTUtils.substituteName(identifier.toString(), env));
+        RSyntaxNode result = RASTUtils.substituteName(identifier.toString(), env);
         if (result == null) {
             result = NodeUtil.cloneNode(this);
         }
