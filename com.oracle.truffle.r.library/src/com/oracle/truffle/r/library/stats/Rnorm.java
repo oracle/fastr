@@ -12,6 +12,7 @@
 package com.oracle.truffle.r.library.stats;
 
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.rng.*;
@@ -20,6 +21,8 @@ import com.oracle.truffle.r.runtime.rng.*;
  * TODO GnuR checks/updates {@code .Random.seed} across this call. TODO Honor min/max.
  */
 public abstract class Rnorm extends RExternalBuiltinNode.Arg3 {
+
+    private static final double BIG = 134217728;
 
     // from GNUR: rnorm.c
     private static double generateNorm(double mean, double standardd) {
@@ -30,18 +33,17 @@ public abstract class Rnorm extends RExternalBuiltinNode.Arg3 {
     private static double normRand() {
         double u1;
 
-        // case INVERSION:
-        double big = 134217728; /* 2^27 */
         /* unif_rand() alone is not of high enough precision */
         u1 = RRNG.unifRand();
-        u1 = (int) (big * u1) + RRNG.unifRand();
-        return Random2.qnorm5(u1 / big, 0.0, 1.0, true, false);
+        u1 = (int) (BIG * u1) + RRNG.unifRand();
+        return Random2.qnorm5(u1 / BIG, 0.0, 1.0, true, false);
     }
 
     @Specialization
     protected Object doRnorm(Object n, double mean, double standardd) {
         // TODO full error checks
         int nInt = castInt(castVector(n));
+        RNode.reportWork(this, nInt);
 
         double[] result = new double[nInt];
         for (int i = 0; i < nInt; i++) {

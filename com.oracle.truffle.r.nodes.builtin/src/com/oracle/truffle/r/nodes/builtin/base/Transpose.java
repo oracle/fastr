@@ -17,6 +17,7 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.utilities.*;
+import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -79,6 +80,8 @@ public abstract class Transpose extends RBuiltinNode {
         int secondDim = dim[1];
         int[] result = new int[vector.getLength()];
         int j = 0;
+
+        RNode.reportWork(this, vector.getLength());
         for (int i = 0; i < result.length; i++, j += firstDim) {
             if (j > (result.length - 1)) {
                 j -= (result.length - 1);
@@ -105,6 +108,8 @@ public abstract class Transpose extends RBuiltinNode {
         int secondDim = dim[1];
         double[] result = new double[vector.getLength()];
         int j = 0;
+
+        RNode.reportWork(this, vector.getLength());
         for (int i = 0; i < result.length; i++, j += firstDim) {
             if (j > (result.length - 1)) {
                 j -= (result.length - 1);
@@ -131,6 +136,8 @@ public abstract class Transpose extends RBuiltinNode {
         int secondDim = dim[1];
         String[] result = new String[vector.getLength()];
         int j = 0;
+
+        RNode.reportWork(this, vector.getLength());
         for (int i = 0; i < result.length; i++, j += firstDim) {
             if (j > (result.length - 1)) {
                 j -= (result.length - 1);
