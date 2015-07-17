@@ -40,6 +40,7 @@ public abstract class ListBuiltin extends RBuiltinNode {
 
     private final ConditionProfile namesNull = ConditionProfile.createBinaryProfile();
     private final BranchProfile shareable = BranchProfile.create();
+    private final BranchProfile temporary = BranchProfile.create();
 
     private RList listArgs(ArgumentsSignature suppliedSignature, Object[] args) {
         controlVisibility();
@@ -47,7 +48,14 @@ public abstract class ListBuiltin extends RBuiltinNode {
             Object value = args[i];
             if (value instanceof RShareable) {
                 shareable.enter();
-                ((RShareable) value).makeShared();
+                if (FastROptions.NewStateTransition) {
+                    if (((RShareable) value).isTemporary()) {
+                        temporary.enter();
+                        ((RShareable) value).incRefCount();
+                    }
+                } else {
+                    ((RShareable) value).makeShared();
+                }
             }
         }
         return RDataFactory.createList(args, argNameVector(suppliedSignature));
