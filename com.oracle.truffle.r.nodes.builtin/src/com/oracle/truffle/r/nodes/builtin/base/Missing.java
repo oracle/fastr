@@ -105,24 +105,33 @@ public abstract class Missing extends RBuiltinNode {
                 if (level > 0 && promiseHelper.isEvaluated(promise)) {
                     return RRuntime.LOGICAL_FALSE;
                 }
-                if (recursive == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    recursive = insert(createRepCache(level + 1));
-                }
                 // Check: If there is a cycle, return true. (This is done like in GNU R)
                 if (promiseHelper.isUnderEvaluation(promise)) {
                     return RRuntime.LOGICAL_TRUE;
                 }
-                promiseHelper.materialize(promise); // Ensure that promise holds a frame
                 String symbol = RMissingHelper.unwrapName((RNode) promise.getRep());
                 if (isSymbolNullProfile.profile(symbol == null)) {
                     return RRuntime.LOGICAL_FALSE;
                 } else {
-                    if (recursiveDesc != promise.getFrame().getFrameDescriptor()) {
-                        return RRuntime.asLogical(RMissingHelper.isMissingName(promise));
+                    if (recursiveDesc != null) {
+                        promiseHelper.materialize(promise); // Ensure that promise holds a frame
+                    }
+                    if (recursiveDesc == null || recursiveDesc != promise.getFrame().getFrameDescriptor()) {
+                        if (promiseHelper.isEvaluated(promise)) {
+                            return RRuntime.LOGICAL_FALSE;
+                        } else {
+                            return RRuntime.asLogical(RMissingHelper.isMissingName(promise));
+                        }
                     } else {
+                        if (recursiveDesc == null) {
+                            promiseHelper.materialize(promise); // Ensure that promise holds a frame
+                        }
                         try {
                             promise.setUnderEvaluation(true);
+                            if (recursive == null) {
+                                CompilerDirectives.transferToInterpreterAndInvalidate();
+                                recursive = insert(createRepCache(level + 1));
+                            }
                             return recursive.execute(promise.getFrame(), symbol);
                         } finally {
                             promise.setUnderEvaluation(false);

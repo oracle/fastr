@@ -120,40 +120,41 @@ public class RMissingHelper {
      */
     @TruffleBoundary
     public static boolean isMissingName(RPromise promise) {
-        boolean result = false;
         // Missing RPromises throw an error on evaluation, so this might only be checked if it has
         // not been evaluated yet.
-        if (!promise.isEvaluated()) {
-            Object exprObj = promise.getRep();
+        if (promise.isEvaluated()) {
+            return false;
+        }
+        boolean result = false;
+        Object exprObj = promise.getRep();
 
-            // Unfold WrapArgumentNode
-            if (exprObj instanceof WrapArgumentNode) {
-                exprObj = ((WrapArgumentNode) exprObj).getOperand();
+        // Unfold WrapArgumentNode
+        if (exprObj instanceof WrapArgumentNode) {
+            exprObj = ((WrapArgumentNode) exprObj).getOperand();
+        }
+        if (exprObj instanceof WrapDefaultArgumentNode) {
+            exprObj = ((WrapDefaultArgumentNode) exprObj).getOperand();
+        }
+
+        // Check for ReadVariableNode
+        if (exprObj instanceof ReadVariableNode) {
+            ReadVariableNode rvn = (ReadVariableNode) exprObj;
+
+            // Check: If there is a cycle, return true. (This is done like in GNU R)
+            if (promise.isUnderEvaluation()) {
+                return true;
             }
-            if (exprObj instanceof WrapDefaultArgumentNode) {
-                exprObj = ((WrapDefaultArgumentNode) exprObj).getOperand();
-            }
 
-            // Check for ReadVariableNode
-            if (exprObj instanceof ReadVariableNode) {
-                ReadVariableNode rvn = (ReadVariableNode) exprObj;
-
-                // Check: If there is a cycle, return true. (This is done like in GNU R)
-                if (promise.isUnderEvaluation()) {
-                    return true;
+            try {
+                // TODO Profile necessary here???
+                if (promise instanceof EagerPromise) {
+                    ((EagerPromise) promise).materialize();
                 }
-
-                try {
-                    // TODO Profile necessary here???
-                    if (promise instanceof EagerPromise) {
-                        ((EagerPromise) promise).materialize();
-                    }
-                    // promise.materialize(globalMissingPromiseProfile);
-                    promise.setUnderEvaluation(true);
-                    result = isMissingArgument(promise.getFrame(), rvn.getIdentifier());
-                } finally {
-                    promise.setUnderEvaluation(false);
-                }
+                // promise.materialize(globalMissingPromiseProfile);
+                promise.setUnderEvaluation(true);
+                result = isMissingArgument(promise.getFrame(), rvn.getIdentifier());
+            } finally {
+                promise.setUnderEvaluation(false);
             }
         }
         return result;
