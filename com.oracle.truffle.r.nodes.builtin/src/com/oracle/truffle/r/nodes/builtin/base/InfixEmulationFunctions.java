@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.runtime.RDispatch.*;
+
 import java.util.*;
 
 import com.oracle.truffle.api.*;
@@ -204,7 +206,7 @@ public class InfixEmulationFunctions {
         }
     }
 
-    @RBuiltin(name = "[", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x", "...", "drop"}, internalDispatch = true)
+    @RBuiltin(name = "[", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x", "...", "drop"}, dispatch = INTERNAL_GENERIC)
     public abstract static class AccessArraySubsetBuiltin extends AccessArrayBuiltin {
 
         @Override
@@ -255,7 +257,7 @@ public class InfixEmulationFunctions {
 
     }
 
-    @RBuiltin(name = "[[", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", "...", "exact", "drop"}, internalDispatch = true)
+    @RBuiltin(name = "[[", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", "...", "exact", "drop"}, dispatch = INTERNAL_GENERIC)
     public abstract static class AccessArraySubscriptBuiltin extends AccessArrayBuiltin {
 
         @Override
@@ -359,7 +361,7 @@ public class InfixEmulationFunctions {
         }
     }
 
-    @RBuiltin(name = "[<-", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", "..."}, internalDispatch = true)
+    @RBuiltin(name = "[<-", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", "..."}, dispatch = INTERNAL_GENERIC)
     public abstract static class UpdateArraySubsetBuiltin extends UpdateArrayBuiltin {
 
         private static final boolean IS_SUBSET = true;
@@ -371,7 +373,7 @@ public class InfixEmulationFunctions {
         }
     }
 
-    @RBuiltin(name = "[[<-", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", "..."}, internalDispatch = true)
+    @RBuiltin(name = "[[<-", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", "..."}, dispatch = INTERNAL_GENERIC)
     public abstract static class UpdateArrayNodeSubscriptBuiltin extends UpdateArrayBuiltin {
 
         private static final boolean IS_SUBSET = false;
@@ -410,7 +412,7 @@ public class InfixEmulationFunctions {
         }
     }
 
-    @RBuiltin(name = "$", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", ""}, internalDispatch = true)
+    @RBuiltin(name = "$", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", ""}, dispatch = INTERNAL_GENERIC)
     public abstract static class AccessFieldBuiltin extends RBuiltinNode {
 
         @Child private AccessFieldNode accessNode;
@@ -433,7 +435,7 @@ public class InfixEmulationFunctions {
         }
     }
 
-    @RBuiltin(name = "$<-", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", "", ""}, internalDispatch = true)
+    @RBuiltin(name = "$<-", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", "", ""}, dispatch = INTERNAL_GENERIC)
     public abstract static class UpdateFieldBuiltin extends RBuiltinNode {
 
         @Child private UpdateFieldNode updateNode;

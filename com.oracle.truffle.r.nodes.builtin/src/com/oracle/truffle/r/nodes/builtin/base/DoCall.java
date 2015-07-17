@@ -107,7 +107,7 @@ public abstract class DoCall extends RBuiltinNode {
                 }
             }
         }
-        if (func.isBuiltin() && builtin.isInternalDispatch()) {
+        if (func.isBuiltin() && builtin.getDispatch() == RDispatch.INTERNAL_GENERIC) {
             if (dispatchLookup == null) {
                 dispatchLookup = insert(S3FunctionLookupNode.create(true, false));
                 classHierarchyNode = insert(ClassHierarchyNodeGen.create(true));
