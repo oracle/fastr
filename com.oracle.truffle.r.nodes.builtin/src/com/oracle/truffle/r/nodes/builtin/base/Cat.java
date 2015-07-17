@@ -137,8 +137,14 @@ public abstract class Cat extends RInvisibleBuiltinNode {
                 stringVecs.add((String) obj);
             } else if (obj instanceof RAbstractContainer) {
                 RAbstractContainer objVec = (RAbstractContainer) obj;
-                for (int j = 0; j < objVec.getLength(); j++) {
-                    stringVecs.add(toString.executeString(objVec.getDataAtAsObject(j), false, ""));
+                // Empty containers produce no output, but they participate
+                // in the sense that the sep value is appended
+                if (objVec.getLength() == 0) {
+                    stringVecs.add("");
+                } else {
+                    for (int j = 0; j < objVec.getLength(); j++) {
+                        stringVecs.add(toString.executeString(objVec.getDataAtAsObject(j), false, ""));
+                    }
                 }
             } else {
                 stringVecs.add(toString.executeString(obj, false, ""));
@@ -158,7 +164,7 @@ public abstract class Cat extends RInvisibleBuiltinNode {
             if (str != null) {
                 String sep = sepVec.getDataAt(i % sepLength);
                 int thisLength = str.length() + sep.length() + (lineStart && labelsLength > 0 ? labels.getDataAt(lineCount % labelsLength).length() + 1 : 0);
-                if (filling && fillCount + thisLength >= fillWidth) {
+                if (filling && fillCount + thisLength > fillWidth) {
                     sb.append('\n');
                     fillCount = 0;
                     lineStart = true;
