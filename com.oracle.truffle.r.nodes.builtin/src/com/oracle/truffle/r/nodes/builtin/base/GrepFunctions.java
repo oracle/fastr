@@ -298,6 +298,16 @@ public class GrepFunctions {
                     return allStringNAResult(len);
                 }
 
+                assert !(perl && fixed);
+
+                if (!fixed && isSimpleReplacement(pattern, replacement)) {
+                    perl = false;
+                    fixed = true;
+                }
+                if (perl && isSimpleRegex(pattern, replacement)) {
+                    perl = false;
+                }
+
                 PCRERFFI.Result pcre = null;
                 if (fixed) {
                     // TODO case
@@ -381,6 +391,81 @@ public class GrepFunctions {
                 CompilerDirectives.transferToInterpreter();
                 throw new RInternalError(e, "internal error: %s", e.getMessage());
             }
+        }
+
+        private static final int SIMPLE_PATTERN_MAX_LENGTH = 5;
+
+        private static boolean isSimpleReplacement(String pattern, @SuppressWarnings("unused") String replacement) {
+            if (pattern.length() > SIMPLE_PATTERN_MAX_LENGTH) {
+                return false;
+            }
+            for (int i = 0; i < pattern.length(); i++) {
+                switch (pattern.charAt(i)) {
+                    case '.':
+                    case '^':
+                    case '$':
+                    case '*':
+                    case '+':
+                    case '?':
+                    case '(':
+                    case ')':
+                    case '[':
+                    case '{':
+                    case '\\':
+                    case '|':
+                        return false;
+                    default:
+                        break;
+                }
+            }
+            // TODO: since no groups were captured, do we need to check special chars in
+            // replacement?
+            return true;
+        }
+
+        private static boolean isSimpleRegex(String pattern, @SuppressWarnings("unused") String replacement) {
+            int i = 0;
+            // perl behaves differently for nullable regexes
+            boolean nonEmpty = false;
+            boolean lastNonEmpty = false;
+            loop: while (i < pattern.length()) {
+                switch (pattern.charAt(i)) {
+                    case '\\':
+                        i++;
+                        if (i < pattern.length()) {
+                            switch (pattern.charAt(i)) {
+                                case 'n':
+                                case 't':
+                                case '\\':
+                                case '.':
+                                case '*':
+                                case '+':
+                                    i++;
+                                    continue loop;
+                            }
+                        }
+                        return false;
+                    case '^':
+                    case '$':
+                    case '(':
+                    case ')':
+                    case '[':
+                    case '{':
+                        return false;
+                    case '*':
+                    case '?':
+                        lastNonEmpty = false;
+                        break;
+                    default:
+                        nonEmpty |= lastNonEmpty;
+                        lastNonEmpty = true;
+                        break;
+                }
+                i++;
+            }
+            // TODO: since no groups were captured, do we need to check special chars in
+            // replacement?
+            return nonEmpty;
         }
 
         private static void pcreStringAdj(StringBuffer sb, String input, String repl, int[] ovector) {
