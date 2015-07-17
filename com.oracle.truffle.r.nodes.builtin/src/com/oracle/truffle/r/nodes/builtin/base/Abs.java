@@ -24,7 +24,9 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.r.nodes.attributes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -34,6 +36,8 @@ import com.oracle.truffle.r.runtime.ops.na.*;
 
 @RBuiltin(name = "abs", kind = PRIMITIVE, parameterNames = {"x"})
 public abstract class Abs extends RBuiltinNode {
+
+    @Child private CopyOfRegAttributesNode copyAttributes;
 
     private final NACheck check = NACheck.create();
     protected final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
@@ -103,6 +107,14 @@ public abstract class Abs extends RBuiltinNode {
         return doAbs(vector);
     }
 
+    private void copyRegAttributes(RAbstractVector source, RVector target) {
+        if (copyAttributes == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            copyAttributes = insert(CopyOfRegAttributesNodeGen.create());
+        }
+        copyAttributes.execute(source, target);
+    }
+
     private RIntVector doAbs(RAbstractIntVector vector) {
         check.enable(vector);
         int[] intVector = new int[vector.getLength()];
@@ -110,7 +122,7 @@ public abstract class Abs extends RBuiltinNode {
             intVector[i] = performInt(vector.getDataAt(i));
         }
         RIntVector res = RDataFactory.createIntVector(intVector, check.neverSeenNA(), vector.getDimensions(), vector.getNames(attrProfiles));
-        res.copyRegAttributesFrom(vector);
+        copyRegAttributes(vector, res);
         return res;
     }
 
@@ -123,7 +135,7 @@ public abstract class Abs extends RBuiltinNode {
             doubleVector[i] = performDouble(vector.getDataAt(i));
         }
         RDoubleVector res = RDataFactory.createDoubleVector(doubleVector, check.neverSeenNA(), vector.getDimensions(), vector.getNames(attrProfiles));
-        res.copyRegAttributesFrom(vector);
+        copyRegAttributes(vector, res);
         return res;
     }
 
@@ -136,7 +148,7 @@ public abstract class Abs extends RBuiltinNode {
             doubleVector[i] = performComplex(vector.getDataAt(i));
         }
         RDoubleVector res = RDataFactory.createDoubleVector(doubleVector, check.neverSeenNA(), vector.getDimensions(), vector.getNames(attrProfiles));
-        res.copyRegAttributesFrom(vector);
+        copyRegAttributes(vector, res);
         return res;
     }
 
