@@ -157,7 +157,11 @@ public abstract class RSequence implements RAbstractVector {
         // marking non-temp must be consistent with what RVector does, otherwise the following code
         // will not work:
         // x<-1:3 ; attr(x, "myatt")<-2:4 ; y <- x; attr(x, "myatt1")<-"hello" ; attributes(y)
-        resultVector.markNonTemporary();
+        if (FastROptions.NewStateTransition) {
+            resultVector.incRefCount();
+        } else {
+            resultVector.markNonTemporary();
+        }
         return resultVector;
     }
 

@@ -81,12 +81,20 @@ abstract class BaseWriteVariableNode extends WriteVariableNode {
                         RShareable shareableCopy = rShareable.copy();
                         newValue = shareableCopy;
                     } else {
-                        rShareable.markNonTemporary();
+                        if (FastROptions.NewStateTransition) {
+                            rShareable.incRefCount();
+                        } else {
+                            rShareable.markNonTemporary();
+                        }
                     }
                 } else if (isSharedProfile.profile(rShareable.isShared())) {
                     RShareable shareableCopy = rShareable.copy();
                     if (mode != Mode.COPY) {
-                        shareableCopy.markNonTemporary();
+                        if (FastROptions.NewStateTransition) {
+                            shareableCopy.incRefCount();
+                        } else {
+                            shareableCopy.markNonTemporary();
+                        }
                     }
                     newValue = shareableCopy;
                 } else {
@@ -94,7 +102,11 @@ abstract class BaseWriteVariableNode extends WriteVariableNode {
                         RShareable shareableCopy = rShareable.copy();
                         newValue = shareableCopy;
                     } else {
-                        rShareable.makeShared();
+                        if (FastROptions.NewStateTransition) {
+                            rShareable.incRefCount();
+                        } else {
+                            rShareable.makeShared();
+                        }
                     }
                 }
             }

@@ -26,6 +26,7 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
+import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
 
@@ -40,6 +41,7 @@ public final class WrapDefaultArgumentNode extends WrapArgumentBaseNode {
     private final BranchProfile everSeenShared;
     private final BranchProfile everSeenTemporary;
     private final BranchProfile everSeenNonTemporary;
+    private final ConditionProfile isShared = ConditionProfile.createBinaryProfile();
 
     private WrapDefaultArgumentNode(RNode operand) {
         super(operand, true);
@@ -59,15 +61,23 @@ public final class WrapDefaultArgumentNode extends WrapArgumentBaseNode {
         RShareable rShareable = getShareable(result);
         if (rShareable != null) {
             shareable.enter();
-            if (rShareable.isShared()) {
-                everSeenShared.enter();
-                result = ((RShareable) o).copy();
-            } else if (rShareable.isTemporary()) {
-                everSeenTemporary.enter();
-                rShareable.markNonTemporary();
+            if (FastROptions.NewStateTransition) {
+                if (isShared.profile(rShareable.isShared())) {
+                    result = ((RShareable) o).copy();
+                } else {
+                    ((RShareable) o).incRefCount();
+                }
             } else {
-                everSeenNonTemporary.enter();
-                rShareable.makeShared();
+                if (rShareable.isShared()) {
+                    everSeenShared.enter();
+                    result = ((RShareable) o).copy();
+                } else if (rShareable.isTemporary()) {
+                    everSeenTemporary.enter();
+                    rShareable.markNonTemporary();
+                } else {
+                    everSeenNonTemporary.enter();
+                    rShareable.makeShared();
+                }
             }
         }
         return result;

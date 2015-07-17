@@ -205,10 +205,18 @@ public class BinaryArithmeticNodeTest extends BinaryVectorTest {
         RAbstractVector a = aOrig.copy();
         RAbstractVector b = bOrig.copy();
         if (a instanceof RShareable) {
-            ((RShareable) a).markNonTemporary();
+            if (FastROptions.NewStateTransition) {
+                ((RShareable) a).incRefCount();
+            } else {
+                ((RShareable) a).markNonTemporary();
+            }
         }
         if (b instanceof RShareable) {
-            ((RShareable) b).markNonTemporary();
+            if (FastROptions.NewStateTransition) {
+                ((RShareable) b).incRefCount();
+            } else {
+                ((RShareable) b).markNonTemporary();
+            }
         }
 
         RVector aMaterialized = a.copy().materialize();

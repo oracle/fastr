@@ -120,7 +120,11 @@ public class UnaryArithmeticNodeTest extends BinaryVectorTest {
         // we have to e careful not to change mutable vectors
         RAbstractVector a = operand.copy();
         if (a instanceof RShareable) {
-            ((RShareable) a).markNonTemporary();
+            if (FastROptions.NewStateTransition) {
+                ((RShareable) a).incRefCount();
+            } else {
+                ((RShareable) a).markNonTemporary();
+            }
         }
 
         RVector aMaterialized = a.copy().materialize();
