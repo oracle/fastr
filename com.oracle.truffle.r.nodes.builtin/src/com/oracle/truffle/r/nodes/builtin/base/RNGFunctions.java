@@ -24,9 +24,8 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
-import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -40,25 +39,25 @@ public class RNGFunctions {
 
         @SuppressWarnings("unused")
         @Specialization
-        protected RNull setSeed(VirtualFrame frame, double seed, RNull kind, RNull normKind) {
+        protected RNull setSeed(double seed, RNull kind, RNull normKind) {
             controlVisibility();
-            doSetSeed(frame, (int) seed, RRNG.NO_KIND_CHANGE, RRNG.NO_KIND_CHANGE);
+            doSetSeed((int) seed, RRNG.NO_KIND_CHANGE, RRNG.NO_KIND_CHANGE);
             return RNull.instance;
         }
 
         @SuppressWarnings("unused")
         @Specialization
-        protected RNull setSeed(VirtualFrame frame, double seed, RAbstractIntVector kind, RNull normKind) {
+        protected RNull setSeed(double seed, RAbstractIntVector kind, RNull normKind) {
             controlVisibility();
-            doSetSeed(frame, (int) seed, kind.getDataAt(0), RRNG.NO_KIND_CHANGE);
+            doSetSeed((int) seed, kind.getDataAt(0), RRNG.NO_KIND_CHANGE);
             return RNull.instance;
         }
 
         @SuppressWarnings("unused")
         @Specialization
-        protected RNull setSeed(VirtualFrame frame, RNull seed, RNull kind, RNull normKind) {
+        protected RNull setSeed(RNull seed, RNull kind, RNull normKind) {
             controlVisibility();
-            doSetSeed(frame, RRNG.RESET_SEED, RRNG.NO_KIND_CHANGE, RRNG.NO_KIND_CHANGE);
+            doSetSeed(RRNG.RESET_SEED, RRNG.NO_KIND_CHANGE, RRNG.NO_KIND_CHANGE);
             return RNull.instance;
         }
 
@@ -70,9 +69,9 @@ public class RNGFunctions {
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.SEED_NOT_VALID_INT);
         }
 
-        private void doSetSeed(VirtualFrame frame, Integer newSeed, int kind, int normKind) {
+        private void doSetSeed(Integer newSeed, int kind, int normKind) {
             try {
-                RRNG.doSetSeed(frame, newSeed, kind, normKind);
+                RRNG.doSetSeed(newSeed, kind, normKind);
             } catch (RNGException ex) {
                 if (ex.isError()) {
                     throw RError.error(getEncapsulatingSourceSection(), ex);
@@ -88,13 +87,13 @@ public class RNGFunctions {
     public abstract static class RNGkind extends RBuiltinNode {
 
         @Specialization
-        protected RIntVector doRNGkind(VirtualFrame frame, Object kind, Object normKind) {
+        protected RIntVector doRNGkind(Object kind, Object normKind) {
             controlVisibility();
             RIntVector result = getCurrent();
             int kindChange = checkType(kind, "kind");
             int normKindChange = checkType(normKind, "normkind");
             try {
-                RRNG.doRNGKind(frame, kindChange, normKindChange);
+                RRNG.doRNGKind(kindChange, normKindChange);
             } catch (RNGException ex) {
                 if (ex.isError()) {
                     throw RError.error(getEncapsulatingSourceSection(), ex);

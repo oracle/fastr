@@ -327,7 +327,7 @@ public class InfixEmulationFunctions {
         private final ConditionProfile argsLengthOneProfile = ConditionProfile.createBinaryProfile();
         private final ConditionProfile argsLengthLargerThanOneProfile = ConditionProfile.createBinaryProfile();
 
-        protected Object update(VirtualFrame frame, Object vector, RArgsValuesAndNames args, Object value, boolean isSubset) {
+        protected Object update(Object vector, RArgsValuesAndNames args, Object value, boolean isSubset) {
             int len = argsLengthOneProfile.profile(args.getLength() == 1) ? 1 : args.getLength() - 1;
 
             if (updateNode == null || positions.getLength() != len) {
@@ -345,7 +345,7 @@ public class InfixEmulationFunctions {
                 pos = new Object[]{RMissing.instance};
             }
             Object newPositions = positions.execute(vector, pos, pos, value);
-            return updateNode.executeUpdate(frame, vector, value, newPositions, coerceVector.executeEvaluated(value, vector, newPositions));
+            return updateNode.executeUpdate(vector, value, newPositions, coerceVector.executeEvaluated(value, vector, newPositions));
         }
 
         @SuppressWarnings("unused")
@@ -365,9 +365,9 @@ public class InfixEmulationFunctions {
         private static final boolean IS_SUBSET = true;
 
         @Specialization(guards = "!noInd(args)")
-        protected Object update(VirtualFrame frame, Object x, RArgsValuesAndNames args) {
+        protected Object update(Object x, RArgsValuesAndNames args) {
             Object value = args.getArgument(args.getLength() - 1);
-            return update(frame, x, args, value, IS_SUBSET);
+            return update(x, args, value, IS_SUBSET);
         }
     }
 
@@ -377,9 +377,9 @@ public class InfixEmulationFunctions {
         private static final boolean IS_SUBSET = false;
 
         @Specialization(guards = "!noInd(args)")
-        protected Object update(VirtualFrame frame, Object x, RArgsValuesAndNames args) {
+        protected Object update(Object x, RArgsValuesAndNames args) {
             Object value = args.getArgument(args.getLength() - 1);
-            return update(frame, x, args, value, IS_SUBSET);
+            return update(x, args, value, IS_SUBSET);
         }
     }
 

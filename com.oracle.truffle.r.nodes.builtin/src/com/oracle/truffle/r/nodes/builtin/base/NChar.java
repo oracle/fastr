@@ -26,7 +26,6 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
@@ -55,7 +54,7 @@ public abstract class NChar extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization
-    protected RIntVector nchar(VirtualFrame frame, RNull value, String type, byte allowNA) {
+    protected RIntVector nchar(RNull value, String type, byte allowNA) {
         controlVisibility();
         return RDataFactory.createEmptyIntVector();
     }

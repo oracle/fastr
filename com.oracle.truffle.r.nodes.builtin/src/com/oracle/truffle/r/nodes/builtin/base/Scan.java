@@ -20,11 +20,7 @@ import java.util.*;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.nodes.Node.*;
 import com.oracle.truffle.api.utilities.*;
-import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
@@ -91,8 +87,8 @@ public abstract class Scan extends RBuiltinNode {
     }
 
     @Specialization
-    Object doScan(VirtualFrame frame, RConnection file, RAbstractVector what, RAbstractIntVector nmaxVec, RAbstractVector sepVec, RAbstractVector decVec, RAbstractVector quotesVec,
-                    RAbstractIntVector nskipVec, RAbstractIntVector nlinesVec, RAbstractVector naStringsVec, RAbstractLogicalVector flushVec, RAbstractLogicalVector fillVec, RAbstractVector stripVec,
+    protected Object doScan(RConnection file, RAbstractVector what, RAbstractIntVector nmaxVec, RAbstractVector sepVec, RAbstractVector decVec, RAbstractVector quotesVec, RAbstractIntVector nskipVec,
+                    RAbstractIntVector nlinesVec, RAbstractVector naStringsVec, RAbstractLogicalVector flushVec, RAbstractLogicalVector fillVec, RAbstractVector stripVec,
                     RAbstractLogicalVector dataQuietVec, RAbstractLogicalVector blSkipVec, RAbstractLogicalVector multiLineVec, RAbstractVector commentCharVec, RAbstractLogicalVector escapesVec,
                     RAbstractVector encodingVec, RAbstractLogicalVector skipNullVec) {
 
@@ -232,7 +228,7 @@ public abstract class Scan extends RBuiltinNode {
                 data.con.readLines(nskip);
             }
             if (what instanceof RList) {
-                return scanFrame(frame, (RList) what, nmax, nlines, flush == RRuntime.LOGICAL_TRUE, fill == RRuntime.LOGICAL_TRUE, strip == RRuntime.LOGICAL_TRUE, blSkip == RRuntime.LOGICAL_TRUE,
+                return scanFrame((RList) what, nmax, nlines, flush == RRuntime.LOGICAL_TRUE, fill == RRuntime.LOGICAL_TRUE, strip == RRuntime.LOGICAL_TRUE, blSkip == RRuntime.LOGICAL_TRUE,
                                 multiLine == RRuntime.LOGICAL_TRUE, data);
             } else {
                 return scanVector(what, nmax, nlines, flush == RRuntime.LOGICAL_TRUE, strip == RRuntime.LOGICAL_TRUE, blSkip == RRuntime.LOGICAL_TRUE, data);
@@ -354,8 +350,7 @@ public abstract class Scan extends RBuiltinNode {
         }
     }
 
-    private RVector scanFrame(VirtualFrame frame, RList what, int maxRecords, int maxLines, boolean flush, boolean fill, boolean stripWhite, boolean blSkip, boolean multiLine, LocalData data)
-                    throws IOException {
+    private RVector scanFrame(RList what, int maxRecords, int maxLines, boolean flush, boolean fill, boolean stripWhite, boolean blSkip, boolean multiLine, LocalData data) throws IOException {
 
         int nc = what.getLength();
         if (nc == 0) {

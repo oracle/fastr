@@ -24,7 +24,6 @@ package com.oracle.truffle.r.nodes.access.array.write;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
@@ -36,8 +35,8 @@ import com.oracle.truffle.r.runtime.ops.na.*;
 @TypeSystemReference(RTypes.class)
 abstract class SetMultiDimDataNode extends Node {
 
-    public abstract Object executeMultiDimDataSet(VirtualFrame frame, RAbstractContainer value, RAbstractVector vector, Object[] positions, int currentDimLevel, int srcArrayBase, int dstArrayBase,
-                    int accSrcDimensions, int accDstDimensions);
+    public abstract Object executeMultiDimDataSet(RAbstractContainer value, RAbstractVector vector, Object[] positions, int currentDimLevel, int srcArrayBase, int dstArrayBase, int accSrcDimensions,
+                    int accDstDimensions);
 
     private final NACheck posNACheck;
     private final NACheck elementNACheck;
@@ -46,13 +45,13 @@ abstract class SetMultiDimDataNode extends Node {
 
     @Child private SetMultiDimDataNode setMultiDimDataRecursive;
 
-    private Object setMultiDimData(VirtualFrame frame, RAbstractVector value, RAbstractVector vector, Object[] positions, int currentDimLevel, int srcArrayBase, int dstArrayBase,
-                    int accSrcDimensions, int accDstDimensions, NACheck posCheck, NACheck elementCheck) {
+    private Object setMultiDimData(RAbstractVector value, RAbstractVector vector, Object[] positions, int currentDimLevel, int srcArrayBase, int dstArrayBase, int accSrcDimensions,
+                    int accDstDimensions, NACheck posCheck, NACheck elementCheck) {
         if (setMultiDimDataRecursive == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             setMultiDimDataRecursive = insert(SetMultiDimDataNodeGen.create(posCheck, elementCheck, this.isSubset));
         }
-        return setMultiDimDataRecursive.executeMultiDimDataSet(frame, value, vector, positions, currentDimLevel, srcArrayBase, dstArrayBase, accSrcDimensions, accDstDimensions);
+        return setMultiDimDataRecursive.executeMultiDimDataSet(value, vector, positions, currentDimLevel, srcArrayBase, dstArrayBase, accSrcDimensions, accDstDimensions);
     }
 
     protected SetMultiDimDataNode(NACheck posNACheck, NACheck elementNACheck, boolean isSubset) {
@@ -90,8 +89,8 @@ abstract class SetMultiDimDataNode extends Node {
         void apply(VectorT vector, ValueT value, int srcIndex, int destIndex, NACheck elementNACheck);
     }
 
-    private <ValueT extends RAbstractVector, VectorT extends RVector> VectorT setDataInternal(VirtualFrame frame, ValueT value, VectorT vector, Object[] positions, int currentDimLevel,
-                    int srcArrayBase, int dstArrayBase, int accSrcDimensions, int accDstDimensions, UpdateFunction<ValueT, VectorT> update) {
+    private <ValueT extends RAbstractVector, VectorT extends RVector> VectorT setDataInternal(ValueT value, VectorT vector, Object[] positions, int currentDimLevel, int srcArrayBase,
+                    int dstArrayBase, int accSrcDimensions, int accDstDimensions, UpdateFunction<ValueT, VectorT> update) {
         int[] srcDimensions = vector.getDimensions();
         RIntVector p = (RIntVector) positions[currentDimLevel - 1];
         int srcDimSize = srcDimensions[currentDimLevel - 1];
@@ -119,64 +118,61 @@ abstract class SetMultiDimDataNode extends Node {
                 }
                 int newDstArrayBase = dstArrayBase + newAccDstDimensions * i;
                 int newSrcArrayBase = getNewArrayBase(srcArrayBase, pos, newAccSrcDimensions);
-                setMultiDimData(frame, value, vector, positions, currentDimLevel - 1, newSrcArrayBase, newDstArrayBase, newAccSrcDimensions, newAccDstDimensions, posNACheck, elementNACheck);
+                setMultiDimData(value, vector, positions, currentDimLevel - 1, newSrcArrayBase, newDstArrayBase, newAccSrcDimensions, newAccDstDimensions, posNACheck, elementNACheck);
             }
         }
         return vector;
     }
 
     @Specialization
-    protected RList setData(VirtualFrame frame, RAbstractVector value, RList vector, Object[] positions, int currentDimLevel, int srcArrayBase, int dstArrayBase, int accSrcDimensions,
-                    int accDstDimensions) {
-        return setDataInternal(frame, value, vector, positions, currentDimLevel, srcArrayBase, dstArrayBase, accSrcDimensions, accDstDimensions, (vec, val, src, dest, na) -> {
+    protected RList setData(RAbstractVector value, RList vector, Object[] positions, int currentDimLevel, int srcArrayBase, int dstArrayBase, int accSrcDimensions, int accDstDimensions) {
+        return setDataInternal(value, vector, positions, currentDimLevel, srcArrayBase, dstArrayBase, accSrcDimensions, accDstDimensions, (vec, val, src, dest, na) -> {
             vec.updateDataAt(src, val.getDataAtAsObject(dest % val.getLength()), na);
         });
     }
 
     @Specialization
-    protected RIntVector setData(VirtualFrame frame, RAbstractIntVector value, RIntVector vector, Object[] positions, int currentDimLevel, int srcArrayBase, int dstArrayBase, int accSrcDimensions,
+    protected RIntVector setData(RAbstractIntVector value, RIntVector vector, Object[] positions, int currentDimLevel, int srcArrayBase, int dstArrayBase, int accSrcDimensions, int accDstDimensions) {
+        return setDataInternal(value, vector, positions, currentDimLevel, srcArrayBase, dstArrayBase, accSrcDimensions, accDstDimensions, (vec, val, src, dest, na) -> {
+            vec.updateDataAt(src, val.getDataAt(dest % val.getLength()), na);
+        });
+    }
+
+    @Specialization
+    protected RDoubleVector setData(RAbstractDoubleVector value, RDoubleVector vector, Object[] positions, int currentDimLevel, int srcArrayBase, int dstArrayBase, int accSrcDimensions,
                     int accDstDimensions) {
-        return setDataInternal(frame, value, vector, positions, currentDimLevel, srcArrayBase, dstArrayBase, accSrcDimensions, accDstDimensions, (vec, val, src, dest, na) -> {
+        return setDataInternal(value, vector, positions, currentDimLevel, srcArrayBase, dstArrayBase, accSrcDimensions, accDstDimensions, (vec, val, src, dest, na) -> {
             vec.updateDataAt(src, val.getDataAt(dest % val.getLength()), na);
         });
     }
 
     @Specialization
-    protected RDoubleVector setData(VirtualFrame frame, RAbstractDoubleVector value, RDoubleVector vector, Object[] positions, int currentDimLevel, int srcArrayBase, int dstArrayBase,
-                    int accSrcDimensions, int accDstDimensions) {
-        return setDataInternal(frame, value, vector, positions, currentDimLevel, srcArrayBase, dstArrayBase, accSrcDimensions, accDstDimensions, (vec, val, src, dest, na) -> {
-            vec.updateDataAt(src, val.getDataAt(dest % val.getLength()), na);
-        });
-    }
-
-    @Specialization
-    protected RLogicalVector setData(VirtualFrame frame, RAbstractLogicalVector value, RLogicalVector vector, Object[] positions, int currentDimLevel, int srcArrayBase, int dstArrayBase,
-                    int accSrcDimensions, int accDstDimensions) {
-        return setDataInternal(frame, value, vector, positions, currentDimLevel, srcArrayBase, dstArrayBase, accSrcDimensions, accDstDimensions, (vec, val, src, dest, na) -> {
-            vec.updateDataAt(src, val.getDataAt(dest % val.getLength()), na);
-        });
-    }
-
-    @Specialization
-    protected RStringVector setData(VirtualFrame frame, RAbstractStringVector value, RStringVector vector, Object[] positions, int currentDimLevel, int srcArrayBase, int dstArrayBase,
-                    int accSrcDimensions, int accDstDimensions) {
-        return setDataInternal(frame, value, vector, positions, currentDimLevel, srcArrayBase, dstArrayBase, accSrcDimensions, accDstDimensions, (vec, val, src, dest, na) -> {
-            vec.updateDataAt(src, val.getDataAt(dest % val.getLength()), na);
-        });
-    }
-
-    @Specialization
-    protected RComplexVector setData(VirtualFrame frame, RAbstractComplexVector value, RComplexVector vector, Object[] positions, int currentDimLevel, int srcArrayBase, int dstArrayBase,
-                    int accSrcDimensions, int accDstDimensions) {
-        return setDataInternal(frame, value, vector, positions, currentDimLevel, srcArrayBase, dstArrayBase, accSrcDimensions, accDstDimensions, (vec, val, src, dest, na) -> {
-            vec.updateDataAt(src, val.getDataAt(dest % val.getLength()), na);
-        });
-    }
-
-    @Specialization
-    protected RRawVector setData(VirtualFrame frame, RAbstractRawVector value, RRawVector vector, Object[] positions, int currentDimLevel, int srcArrayBase, int dstArrayBase, int accSrcDimensions,
+    protected RLogicalVector setData(RAbstractLogicalVector value, RLogicalVector vector, Object[] positions, int currentDimLevel, int srcArrayBase, int dstArrayBase, int accSrcDimensions,
                     int accDstDimensions) {
-        return setDataInternal(frame, value, vector, positions, currentDimLevel, srcArrayBase, dstArrayBase, accSrcDimensions, accDstDimensions, (vec, val, src, dest, na) -> {
+        return setDataInternal(value, vector, positions, currentDimLevel, srcArrayBase, dstArrayBase, accSrcDimensions, accDstDimensions, (vec, val, src, dest, na) -> {
+            vec.updateDataAt(src, val.getDataAt(dest % val.getLength()), na);
+        });
+    }
+
+    @Specialization
+    protected RStringVector setData(RAbstractStringVector value, RStringVector vector, Object[] positions, int currentDimLevel, int srcArrayBase, int dstArrayBase, int accSrcDimensions,
+                    int accDstDimensions) {
+        return setDataInternal(value, vector, positions, currentDimLevel, srcArrayBase, dstArrayBase, accSrcDimensions, accDstDimensions, (vec, val, src, dest, na) -> {
+            vec.updateDataAt(src, val.getDataAt(dest % val.getLength()), na);
+        });
+    }
+
+    @Specialization
+    protected RComplexVector setData(RAbstractComplexVector value, RComplexVector vector, Object[] positions, int currentDimLevel, int srcArrayBase, int dstArrayBase, int accSrcDimensions,
+                    int accDstDimensions) {
+        return setDataInternal(value, vector, positions, currentDimLevel, srcArrayBase, dstArrayBase, accSrcDimensions, accDstDimensions, (vec, val, src, dest, na) -> {
+            vec.updateDataAt(src, val.getDataAt(dest % val.getLength()), na);
+        });
+    }
+
+    @Specialization
+    protected RRawVector setData(RAbstractRawVector value, RRawVector vector, Object[] positions, int currentDimLevel, int srcArrayBase, int dstArrayBase, int accSrcDimensions, int accDstDimensions) {
+        return setDataInternal(value, vector, positions, currentDimLevel, srcArrayBase, dstArrayBase, accSrcDimensions, accDstDimensions, (vec, val, src, dest, na) -> {
             vec.updateDataAt(src, val.getDataAt(dest % val.getLength()));
         });
     }
