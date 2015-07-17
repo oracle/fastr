@@ -65,11 +65,10 @@ public abstract class PromiseNode extends RNode {
         this.factory = factory;
     }
 
-    public static RNode createInlined(SourceSection src, RNode expression, Object defaultValue, boolean unwrap) {
+    public static RNode createInlined(RNode expression, Object defaultValue, boolean unwrap) {
         CompilerAsserts.neverPartOfCompilation();
         RNode clonedExpression = NodeUtil.cloneNode(expression);
         RNode pn = clonedExpression instanceof ConstantNode ? clonedExpression : new InlinedSuppliedArgumentNode(clonedExpression, defaultValue, unwrap);
-        pn.assignSourceSection(src);
         return pn;
     }
 
@@ -78,6 +77,8 @@ public abstract class PromiseNode extends RNode {
      * @param factory {@link #factory}
      * @return Depending on {@link RPromiseFactory#getType()}, the proper {@link PromiseNode}
      *         implementation
+     *
+     *         TODO remove SourceSection arg
      */
     @TruffleBoundary
     public static RNode create(SourceSection src, RPromiseFactory factory, boolean noOpt) {
@@ -111,10 +112,9 @@ public abstract class PromiseNode extends RNode {
         }
 
         if (pn == null) {
-            pn = new PromisedNode(factory);
+            pn = new PromisedNode(factory, src);
         }
 
-        pn.assignSourceSection(src);
         return pn;
     }
 
@@ -132,23 +132,30 @@ public abstract class PromiseNode extends RNode {
     /**
      * @return Creates a {@link VarArgNode} for the given
      */
-    public static VarArgNode createVarArg(int varArgIndex) {
-        return new VarArgNode(varArgIndex);
+    public static VarArgNode createVarArg(int varArgIndex, SourceSection src) {
+        return new VarArgNode(varArgIndex, src);
     }
 
     /**
      * A {@link PromiseNode} for supplied arguments.
      */
     private static final class PromisedNode extends PromiseNode {
+        private final SourceSection src;
 
-        private PromisedNode(RPromiseFactory factory) {
+        private PromisedNode(RPromiseFactory factory, SourceSection src) {
             super(factory);
+            this.src = src;
         }
 
         @Override
         public Object execute(VirtualFrame frame) {
             MaterializedFrame execFrame = factory.getType() == PromiseType.ARG_SUPPLIED ? frame.materialize() : null;
             return factory.createPromise(execFrame);
+        }
+
+        @Override
+        public SourceSection getEncapsulatingSourceSection() {
+            return src;
         }
     }
 
@@ -163,7 +170,7 @@ public abstract class PromiseNode extends RNode {
 
         @Override
         protected RNode createFallback() {
-            return new PromisedNode(factory);
+            return new PromisedNode(factory, originalRvn.getSourceSection());
         }
 
 // @TruffleBoundary
@@ -198,11 +205,17 @@ public abstract class PromiseNode extends RNode {
         }
 
         public RNode substitute(REnvironment env) {
+            // TODO Since VarargPromiseNode is not an RSyntaxNode this is suspicious
             return varargNode.substitute(env);
         }
 
         public VarArgNode getVarArgNode() {
             return varargNode;
+        }
+
+        @Override
+        public SourceSection getEncapsulatingSourceSection() {
+            return varargNode.getEncapsulatingSourceSection();
         }
     }
 
@@ -223,6 +236,7 @@ public abstract class PromiseNode extends RNode {
         private final ConditionProfile isPromiseProfile = ConditionProfile.createBinaryProfile();
 
         public InlinedSuppliedArgumentNode(RNode expression, Object defaultValue, boolean unwrap) {
+            // TODO assert RSyntaxNode?
             this.expression = expression;
             this.defaultValue = defaultValue;
             this.unwrap = unwrap;
@@ -278,6 +292,11 @@ public abstract class PromiseNode extends RNode {
             return new RArgsValuesAndNames(newValues, args.getSignature());
         }
 
+        @Override
+        public SourceSection getEncapsulatingSourceSection() {
+            return expression.getSourceSection();
+        }
+
     }
 
     /**
@@ -291,11 +310,13 @@ public abstract class PromiseNode extends RNode {
 
         @Child private FrameSlotNode varArgsSlotNode;
         @Child private PromiseHelperNode promiseHelper;
+        private final SourceSection src;
 
         private final int index;
 
-        private VarArgNode(int index) {
+        private VarArgNode(int index, SourceSection src) {
             this.index = index;
+            this.src = src;
         }
 
         public RArgsValuesAndNames getVarargsAndNames(VirtualFrame frame) {
@@ -336,6 +357,11 @@ public abstract class PromiseNode extends RNode {
 
         public int getIndex() {
             return index;
+        }
+
+        @Override
+        public SourceSection getEncapsulatingSourceSection() {
+            return src;
         }
     }
 

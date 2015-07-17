@@ -81,12 +81,12 @@ import com.oracle.truffle.r.runtime.gnur.*;
  *  U = {@link UninitializedCallNode}: Forms the uninitialized end of the function PIC
  *  D = {@link DispatchedCallNode}: Function fixed, no varargs
  *  G = {@link GenericCallNode}: Function arbitrary
- *
+ * 
  *  UV = {@link UninitializedCallNode} with varargs,
  *  UVC = {@link UninitializedVarArgsCacheCallNode} with varargs, for varargs cache
  *  DV = {@link DispatchedVarArgsCallNode}: Function fixed, with cached varargs
  *  DGV = {@link DispatchedGenericVarArgsCallNode}: Function fixed, with arbitrary varargs (generic case)
- *
+ * 
  * (RB = {@link RBuiltinNode}: individual functions that are builtins are represented by this node
  * which is not aware of caching). Due to {@link CachedCallNode} (see below) this is transparent to
  * the cache and just behaves like a D/DGV)
@@ -99,11 +99,11 @@ import com.oracle.truffle.r.runtime.gnur.*;
  * non varargs, max depth:
  * |
  * D-D-D-U
- *
+ * 
  * no varargs, generic (if max depth is exceeded):
  * |
  * D-D-D-D-G
- *
+ * 
  * varargs:
  * |
  * DV-DV-UV         <- function call target identity level cache
@@ -111,7 +111,7 @@ import com.oracle.truffle.r.runtime.gnur.*;
  *    DV
  *    |
  *    UVC           <- varargs signature level cache
- *
+ * 
  * varargs, max varargs depth exceeded:
  * |
  * DV-DV-UV
@@ -123,7 +123,7 @@ import com.oracle.truffle.r.runtime.gnur.*;
  *    DV
  *    |
  *    DGV
- *
+ * 
  * varargs, max function depth exceeded:
  * |
  * DV-DV-DV-DV-GV
@@ -432,9 +432,16 @@ public final class RCallNode extends RNode implements RSyntaxNode {
     public static final class GetTempNode extends RNode {
 
         @Child private FrameSlotNode slot;
+        private final SourceSection source;
 
-        public GetTempNode(Object identifier) {
+        public GetTempNode(Object identifier, SourceSection source) {
             slot = FrameSlotNode.createTemp(identifier, false);
+            this.source = source;
+        }
+
+        @Override
+        public SourceSection getEncapsulatingSourceSection() {
+            return source;
         }
 
         @Override
@@ -479,8 +486,7 @@ public final class RCallNode extends RNode implements RSyntaxNode {
         private CallArgumentsNode adapt(CallArgumentsNode arguments) {
             if (dispatchTempIdentifier != null) {
                 SourceSection source = arguments.arguments[0].getSourceSection();
-                arguments.arguments[0] = new GetTempNode(dispatchTempIdentifier);
-                arguments.arguments[0].assignSourceSection(source);
+                arguments.arguments[0] = new GetTempNode(dispatchTempIdentifier, source);
             }
             return arguments;
         }
