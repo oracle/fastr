@@ -129,7 +129,7 @@ public class FrameFunctions {
                             }
                         }
                         RNode varArgs = PromiseNode.createVarArgsAsSyntax(listArgs, temp.getSignature(), this);
-                        CallArgumentsNode callArgsNode = CallArgumentsNode.create(false, false, new RNode[]{varArgs}, signature);
+                        CallArgumentsNode callArgsNode = CallArgumentsNode.create(false, new RNode[]{varArgs}, signature);
                         values = new Object[]{RASTUtils.createCall("list", callArgsNode)};
                         call = RDataFactory.createLanguage(RASTUtils.createCall(functionName, callArgsNode));
                     }

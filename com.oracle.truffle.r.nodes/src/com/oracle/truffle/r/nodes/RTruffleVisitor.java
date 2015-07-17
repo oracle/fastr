@@ -97,7 +97,7 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
             tildeArgs[ix++] = response.asRNode();
         }
         tildeArgs[ix++] = model.asRNode();
-        CallArgumentsNode args = CallArgumentsNode.create(null, false, tildeArgs, ArgumentsSignature.empty(ix));
+        CallArgumentsNode args = CallArgumentsNode.create(false, tildeArgs, ArgumentsSignature.empty(ix));
         SourceSection formulaSrc = formula.getSource();
         String formulaCode = formulaSrc.getCode();
         int tildeIndex = formulaCode.indexOf('~');
@@ -115,7 +115,6 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
     public RSyntaxNode visit(FunctionCall call) {
         String callName = call.isSymbol() ? call.getName() : null;
         SourceSection callSource = call.getSource();
-        int argsCharLength = 0;
         int index = 0;
         String[] argumentNames = new String[call.getArguments().size()];
         RNode[] nodes = new RNode[call.getArguments().size()];
@@ -124,11 +123,6 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
             ASTNode val = e.getValue();
             if (val != null) {
                 nodes[index] = val.accept(this).asRNode();
-            }
-            if (e.getSource() != null) {
-                argsCharLength += e.getSource().getCharLength();
-            } else {
-                // happens for Replacement FIXME
             }
             index++;
         }
@@ -141,8 +135,7 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
             lhs = call.getLhsNode().accept(this);
             lhsLength = lhs.getSourceSection().getCharLength();
         }
-        SourceSection argsSource = ASTNode.adjustedSource(callSource, callSource.getCharIndex() + lhsLength, argsCharLength);
-        CallArgumentsNode aCallArgNode = CallArgumentsNode.create(argsSource, !call.isReplacement(), nodes, ArgumentsSignature.get(argumentNames));
+        CallArgumentsNode aCallArgNode = CallArgumentsNode.create(!call.isReplacement(), nodes, ArgumentsSignature.get(argumentNames));
 
         if (callName != null) {
             String functionName = callName;
@@ -249,11 +242,9 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
         RNode operand = op.getLHS().accept(this).asRNode();
         String functionName = op.getOperator().getName();
         CallArgumentsNode aCallArgNode = CallArgumentsNode.createUnnamed(false, true, operand);
-        if (RGroupGenerics.isGroupGeneric(functionName)) {
-            assert RGroupGenerics.getGroup(functionName) == RGroupGenerics.Ops;
-            return GroupDispatchNode.create(functionName, aCallArgNode, op.getSource());
-        }
-        return RCallNode.createOpCall(op.getSource(), null, functionName, aCallArgNode);
+        assert RGroupGenerics.isGroupGeneric(functionName);
+        assert RGroupGenerics.getGroup(functionName) == RGroupGenerics.Ops;
+        return GroupDispatchNode.create(functionName, aCallArgNode, op.getSource());
     }
 
     @Override
@@ -317,7 +308,7 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
         nodes[nodes.length - 1] = rhs;
         names[nodes.length - 1] = "value";
 
-        CallArgumentsNode aCallArgNode = CallArgumentsNode.create(null, false, nodes, ArgumentsSignature.get(names));
+        CallArgumentsNode aCallArgNode = CallArgumentsNode.create(false, nodes, ArgumentsSignature.get(names));
         return RCallNode.createCall(null, ReadVariableNode.createForced(null, isSubset ? "[<-" : "[[<-", RType.Function), aCallArgNode);
     }
 
@@ -509,7 +500,7 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
         nodes[0] = access.getLhs().accept(this).asRNode();
         nodes[1] = ConstantNode.create(callSource, access.getFieldName());
 
-        CallArgumentsNode aCallArgNode = CallArgumentsNode.create(callSource, true, nodes, ArgumentsSignature.empty(2));
+        CallArgumentsNode aCallArgNode = CallArgumentsNode.create(true, nodes, ArgumentsSignature.empty(2));
         return RCallNode.createCall(callSource, ReadVariableNode.createForced(callSource, "$", RType.Function), aCallArgNode);
     }
 
@@ -519,7 +510,7 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
         nodes[1] = ConstantNode.create(source, fieldName);
         nodes[2] = rhs;
 
-        CallArgumentsNode aCallArgNode = CallArgumentsNode.create(source, false, nodes, ArgumentsSignature.empty(nodes.length));
+        CallArgumentsNode aCallArgNode = CallArgumentsNode.create(false, nodes, ArgumentsSignature.empty(nodes.length));
         return RCallNode.createCall(source, ReadVariableNode.createForced(source, "$<-", RType.Function), aCallArgNode);
     }
 

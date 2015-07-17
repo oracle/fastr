@@ -517,7 +517,7 @@ public class InfixEmulationFunctions {
                 tildeArgs[ix++] = response;
             }
             tildeArgs[ix++] = model;
-            CallArgumentsNode args = CallArgumentsNode.create(null, false, tildeArgs, ArgumentsSignature.empty(ix));
+            CallArgumentsNode args = CallArgumentsNode.create(false, tildeArgs, ArgumentsSignature.empty(ix));
             SourceSection formulaSrc = this.getSourceSection();
             String formulaCode = formulaSrc.getCode();
             int tildeIndex = formulaCode.indexOf('~');

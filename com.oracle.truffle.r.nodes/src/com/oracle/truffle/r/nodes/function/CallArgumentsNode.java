@@ -82,12 +82,8 @@ public class CallArgumentsNode extends ArgumentsNode {
     /**
      * Called only from the parser.
      */
-    public static CallArgumentsNode create(SourceSection argsSource, boolean modeChange, RNode[] args, ArgumentsSignature signature) {
-        return create(argsSource, modeChange, false, args, signature);
-    }
-
-    public static CallArgumentsNode create(boolean modeChange, boolean modeChangeForAll, RNode[] args, ArgumentsSignature signature) {
-        return create(null, modeChange, modeChangeForAll, args, signature);
+    public static CallArgumentsNode create(boolean modeChange, RNode[] args, ArgumentsSignature signature) {
+        return create(modeChange, false, args, signature);
     }
 
     /**
@@ -99,15 +95,13 @@ public class CallArgumentsNode extends ArgumentsNode {
      * (modeChange) determines, with the second (modeChangeForAll) flat telling the runtime if this
      * affects only the first argument (replacement functions) or all arguments (binary operators).
      *
-     * @param argsSource the {@link SourceSection} object associated with the arguments (or
-     *            {@code null})
      * @param modeChange
      * @param modeChangeForAll
      * @param args {@link #arguments}; new array gets created. Every {@link RNode} (except
      *            <code>null</code>) gets wrapped into a {@link WrapArgumentNode}.
      * @return A fresh {@link CallArgumentsNode}
      */
-    private static CallArgumentsNode create(SourceSection argsSource, boolean modeChange, boolean modeChangeForAll, RNode[] args, ArgumentsSignature signature) {
+    private static CallArgumentsNode create(boolean modeChange, boolean modeChangeForAll, RNode[] args, ArgumentsSignature signature) {
         // Prepare arguments: wrap in WrapArgumentNode
         RNode[] wrappedArgs = new RNode[args.length];
         List<Integer> varArgsSymbolIndices = new ArrayList<>();
@@ -128,14 +122,11 @@ public class CallArgumentsNode extends ArgumentsNode {
         }
 
         // Setup and return
-        SourceSection src = Utils.sourceBoundingBox(argsSource, wrappedArgs);
         int[] varArgsSymbolIndicesArr = new int[varArgsSymbolIndices.size()];
         for (int i = 0; i < varArgsSymbolIndicesArr.length; i++) {
             varArgsSymbolIndicesArr[i] = varArgsSymbolIndices.get(i);
         }
-        CallArgumentsNode callArgs = new CallArgumentsNode(wrappedArgs, signature, varArgsSymbolIndicesArr);
-        callArgs.assignSourceSection(src);
-        return callArgs;
+        return new CallArgumentsNode(wrappedArgs, signature, varArgsSymbolIndicesArr);
     }
 
     @Override
@@ -382,7 +373,7 @@ public class CallArgumentsNode extends ArgumentsNode {
         }
         if (!layoutChanged) {
             if (contentChanged) {
-                return CallArgumentsNode.create(false, false, argNodesNew, signature);
+                return CallArgumentsNode.create(false, argNodesNew, signature);
             } else {
                 return this;
             }
@@ -403,7 +394,7 @@ public class CallArgumentsNode extends ArgumentsNode {
                 argNodesFinal[pos++] = argNodesNew[i];
             }
         }
-        return CallArgumentsNode.create(false, false, argNodesFinal, ArgumentsSignature.get(names));
+        return CallArgumentsNode.create(false, argNodesFinal, ArgumentsSignature.get(names));
     }
 
     @Override

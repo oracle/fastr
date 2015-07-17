@@ -283,7 +283,7 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
                 newNames[i] = names.getDataAt(j);
             }
             ArgumentsSignature newSig = ArgumentsSignature.get(newNames);
-            CallArgumentsNode newCallArgs = CallArgumentsNode.create(null, false, args.getArguments(), newSig);
+            CallArgumentsNode newCallArgs = CallArgumentsNode.create(false, args.getArguments(), newSig);
             // copying is already handled by RShareable
             rl.setRep(RCallNode.createCall(null, ((RCallNode) node).getFunctionNode(), newCallArgs));
         } else if (node instanceof GroupDispatchNode) {

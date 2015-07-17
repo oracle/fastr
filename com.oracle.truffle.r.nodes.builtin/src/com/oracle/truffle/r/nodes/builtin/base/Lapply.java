@@ -157,7 +157,7 @@ public abstract class Lapply extends RBuiltinNode {
                 }
             }
             ArgumentsSignature callSignature = ArgumentsSignature.get(names);
-            CallArgumentsNode argsNode = CallArgumentsNode.create(false, false, args, callSignature);
+            CallArgumentsNode argsNode = CallArgumentsNode.create(false, args, callSignature);
             return RCallNode.createCall(null, null, argsNode);
         }
 

@@ -57,54 +57,6 @@ public final class Utils {
         return result;
     }
 
-    public static SourceSection sourceBoundingBox(SourceSection argsSrc, Node[] nodes) {
-        if (nodes == null || nodes.length == 0) {
-            return argsSrc;
-        }
-
-        int minLine = Integer.MAX_VALUE;
-        int minLineColumn = Integer.MAX_VALUE;
-        int minCharIndex = Integer.MAX_VALUE;
-        int maxCharIndex = Integer.MIN_VALUE;
-        boolean gotSection = false;
-        Source s = null;
-
-        for (Node n : nodes) {
-            if (n == null) {
-                continue;
-            }
-            SourceSection src = n.getSourceSection();
-            if (src == null || src.getSource() == null) {
-                continue;
-            }
-
-            gotSection = true;
-            if (s == null) {
-                s = src.getSource();
-            } else if (s != src.getSource()) {
-                // this can happen, for example, if actual parameters are specified in the REPL and
-                // formal parameters default values come from unserialized version of the function
-                gotSection = false;
-                break;
-            }
-
-            if (src.getStartLine() < minLine) {
-                minLine = src.getStartLine();
-                if (src.getStartColumn() < minLineColumn) {
-                    minLineColumn = src.getStartColumn();
-                }
-            }
-            if (src.getCharIndex() < minCharIndex) {
-                minCharIndex = src.getCharIndex();
-            }
-            if (src.getCharEndIndex() > maxCharIndex) {
-                maxCharIndex = src.getCharEndIndex();
-            }
-        }
-
-        return gotSection ? s.createSection("<bounding box>", minLine, minLineColumn, minCharIndex, maxCharIndex - minCharIndex) : null;
-    }
-
     public static void dumpFunction(String groupName, RFunction function) {
         GraphPrintVisitor graphPrinter = new GraphPrintVisitor();
         RootCallTarget callTarget = function.getTarget();

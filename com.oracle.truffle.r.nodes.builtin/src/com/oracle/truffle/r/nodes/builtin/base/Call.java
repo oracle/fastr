@@ -88,7 +88,7 @@ public abstract class Call extends RBuiltinNode {
 
         // TODO: handle replacement calls
         boolean isReplacement = false;
-        final CallArgumentsNode callArgsNode = CallArgumentsNode.create(!isReplacement, false, args, signature);
+        final CallArgumentsNode callArgsNode = CallArgumentsNode.create(!isReplacement, args, signature);
         return RDataFactory.createLanguage(RASTUtils.createCall(fn, callArgsNode));
     }
 }
