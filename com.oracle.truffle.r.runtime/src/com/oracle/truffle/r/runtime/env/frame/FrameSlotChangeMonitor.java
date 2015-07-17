@@ -157,14 +157,16 @@ public final class FrameSlotChangeMonitor implements RContext.StateFactory {
     private static void checkAndInvalidate(Frame curFrame, FrameSlot slot, boolean isNonLocal, BranchProfile invalidateProfile) {
         assert curFrame.getFrameDescriptor() == slot.getFrameDescriptor();
 
-        // Check whether current frame is used outside a regular stack
-        if (isNonLocal || RArguments.getIsIrregular(curFrame)) {
-            // False positive: Also invalidates a slot in the current active frame if that one is
-            // used inside eval or the like, but this cost is definitely negligible.
-            if (invalidateProfile != null) {
-                invalidateProfile.enter();
+        if (getNotChangedNonLocallyAssumption(slot).isValid()) {
+            // Check whether current frame is used outside a regular stack
+            if (isNonLocal || RArguments.getIsIrregular(curFrame)) {
+                // False positive: Also invalidates a slot in the current active frame if that one
+                // is used inside eval or the like, but this cost is definitely negligible.
+                if (invalidateProfile != null) {
+                    invalidateProfile.enter();
+                }
+                getNotChangedNonLocallyAssumption(slot).invalidate();
             }
-            getNotChangedNonLocallyAssumption(slot).invalidate();
         }
     }
 
