@@ -38,16 +38,13 @@ import com.oracle.truffle.r.runtime.env.*;
  */
 public final class WrapDefaultArgumentNode extends WrapArgumentBaseNode {
 
-    private final BranchProfile everSeenShared;
-    private final BranchProfile everSeenTemporary;
-    private final BranchProfile everSeenNonTemporary;
+    private final BranchProfile everSeenShared = BranchProfile.create();
+    private final BranchProfile everSeenTemporary = BranchProfile.create();
+    private final BranchProfile everSeenNonTemporary = BranchProfile.create();
     private final ConditionProfile isShared = ConditionProfile.createBinaryProfile();
 
     private WrapDefaultArgumentNode(RNode operand) {
         super(operand, true);
-        everSeenShared = BranchProfile.create();
-        everSeenTemporary = BranchProfile.create();
-        everSeenNonTemporary = BranchProfile.create();
     }
 
     @Override

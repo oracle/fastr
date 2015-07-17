@@ -28,7 +28,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
 /**
- * {@link WrapArgumentBaseNode} is a super class of wrappers handling functino arguments.
+ * {@link WrapArgumentBaseNode} is a super class of wrappers handling function arguments.
  *
  */
 public abstract class WrapArgumentBaseNode extends RNode implements RSyntaxNode {
@@ -99,5 +99,4 @@ public abstract class WrapArgumentBaseNode extends RNode implements RSyntaxNode 
     public void serialize(RSerialize.State state) {
         RSyntaxNode.cast(getOperand()).serialize(state);
     }
-
 }

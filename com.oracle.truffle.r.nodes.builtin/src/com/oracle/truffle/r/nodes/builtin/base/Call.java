@@ -69,13 +69,13 @@ public abstract class Call extends RBuiltinNode {
         return makeCall0(function, args);
     }
 
-    @TruffleBoundary
     /**
      *
      * @param fn an {@link RFunction} or {@link String}
      * @param argsAndNames if not {@code null} the argument values and (optional) names
      * @return the {@link RLanguage} instance denoting the call
      */
+    @TruffleBoundary
     private static RLanguage makeCall0(Object fn, RArgsValuesAndNames argsAndNames) {
         int argLength = argsAndNames == null ? 0 : argsAndNames.getLength();
         RNode[] args = new RNode[argLength];
