@@ -145,6 +145,10 @@ public abstract class WriteSuperFrameVariableNode extends WriteSuperFrameVariabl
         @Child private WriteSuperFrameVariableNodeHelper nextNode;
         @Child private RNode rhs;
 
+        private final ValueProfile enclosingFrameProfile = ValueProfile.createClassProfile();
+        private final ConditionProfile hasValueProfile = ConditionProfile.createBinaryProfile();
+        private final ConditionProfile nullSuperFrameProfile = ConditionProfile.createBinaryProfile();
+
         WriteSuperFrameVariableConditionalNode(WriteSuperFrameVariableNode writeNode, WriteSuperFrameVariableNodeHelper nextNode, RNode rhs) {
             this.writeNode = writeNode;
             this.nextNode = nextNode;
@@ -163,11 +167,12 @@ public abstract class WriteSuperFrameVariableNode extends WriteSuperFrameVariabl
 
         @Override
         public void execute(VirtualFrame frame, Object value, MaterializedFrame enclosingFrame) {
-            if (writeNode.getFrameSlotNode().hasValue(enclosingFrame)) {
-                writeNode.execute(frame, value, enclosingFrame);
+            MaterializedFrame profiledEnclosingFrame = enclosingFrameProfile.profile(enclosingFrame);
+            if (hasValueProfile.profile(writeNode.getFrameSlotNode().hasValue(profiledEnclosingFrame))) {
+                writeNode.execute(frame, value, profiledEnclosingFrame);
             } else {
-                MaterializedFrame superFrame = RArguments.getEnclosingFrame(enclosingFrame);
-                if (superFrame == null) {
+                MaterializedFrame superFrame = RArguments.getEnclosingFrame(profiledEnclosingFrame);
+                if (nullSuperFrameProfile.profile(superFrame == null)) {
                     // Might be the case if "{ x <<- 42 }": This is in globalEnv!
                     superFrame = REnvironment.globalEnv().getFrame();
                 }
@@ -181,5 +186,4 @@ public abstract class WriteSuperFrameVariableNode extends WriteSuperFrameVariabl
             execute(frame, value, RArguments.getEnclosingFrame(frame));
         }
     }
-
 }
