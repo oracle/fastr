@@ -164,7 +164,7 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
 
     @Override
     public void deparse(RDeparse.State state) {
-        state.append(identifier.toString());
+        state.append(RDeparse.quotify(identifier.toString(), state));
     }
 
     @Override

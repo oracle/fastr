@@ -38,6 +38,7 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseDeoptimizeFrameNode;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.RContext.Engine.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.RPromise.*;
 import com.oracle.truffle.r.runtime.env.*;
@@ -201,10 +202,11 @@ public class FrameFunctions {
                 return callSource.substring(0, index);
             }
         }
+
     }
 
     @RBuiltin(name = "sys.call", kind = INTERNAL, parameterNames = {"which"})
-    public abstract static class SysCall extends CallHelper {
+    public abstract static class SysCall extends FrameHelper {
 
         @Override
         protected final FrameAccess frameAccess() {
@@ -212,20 +214,38 @@ public class FrameFunctions {
         }
 
         @Specialization
-        protected RLanguage sysCall(VirtualFrame frame, int which) {
+        protected Object sysCall(VirtualFrame frame, int which) {
             /*
-             * sys.call preserves provided names but does not create them, unlike match.call The
-             * generated call has the same number of arguments as provided, modulo ... processing.
-             * ... is always expanded.
+             * sys.call preserves provided names but does not create them, unlike match.call.
              */
             controlVisibility();
             Frame cframe = getFrame(frame, which);
-            return createCall(cframe, true, true);
+            if (RArguments.getFunction(cframe) == null) {
+                return RNull.instance;
+            }
+            return createCall(cframe);
         }
 
         @Specialization
-        protected RLanguage sysCall(VirtualFrame frame, double which) {
+        protected Object sysCall(VirtualFrame frame, double which) {
             return sysCall(frame, (int) which);
+        }
+
+        @TruffleBoundary
+        protected RLanguage createCall(Frame cframe) {
+            // TODO we really want the AST for the call in RArguments.
+            // For now we reparse it.
+            SourceSection callSource = RArguments.getCallSourceSection(cframe);
+            RLanguage callAST;
+            try {
+                RExpression call = RContext.getEngine().parse(Source.fromText(callSource.getCode(), "<call source>"));
+                // TODO need argument permutation (cf match.call) when named
+                // args provided out of order wrt formals
+                callAST = (RLanguage) call.getDataAt(0);
+            } catch (ParseException ex) {
+                throw RInternalError.shouldNotReachHere("parse call source");
+            }
+            return callAST;
         }
 
     }
@@ -242,13 +262,21 @@ public class FrameFunctions {
         }
 
         @Specialization
+        protected RLanguage matchCall(VirtualFrame frame, RNull definition, RExpression expr, byte expandDots) {
+            return matchCall(frame, definition, (RLanguage) expr.getDataAt(0), expandDots);
+        }
+
+        @Specialization
         protected RLanguage matchCall(VirtualFrame frame, @SuppressWarnings("unused") RNull definition, @SuppressWarnings("unused") RLanguage call, byte expandDots) {
-            // TODO handle an explicitly provided call (default from R closure is
-            // sys.call(sys.parent())
+            // N.B. rewrite in progress along similar lines to sys.call
+            // More complicated because of parameter naming/...
             controlVisibility();
             RPromise callArg = (RPromise) RArguments.getArgument(frame, 1);
             if (callArg.isDefault()) {
                 Frame cframe = Utils.getCallerFrame(frame, FrameAccess.READ_ONLY);
+                if (RArguments.getFunction(cframe) == null) {
+                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.MATCH_CALL_CALLED_OUTSIDE_FUNCTION);
+                }
                 return createCall(cframe, false, RRuntime.fromLogical(expandDots));
             } else {
                 throw RError.nyi(getEncapsulatingSourceSection(), "explicit call argument");

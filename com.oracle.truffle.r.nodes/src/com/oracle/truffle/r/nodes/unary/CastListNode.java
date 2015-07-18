@@ -22,11 +22,14 @@
  */
 package com.oracle.truffle.r.nodes.unary;
 
+import java.util.*;
+
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
 
@@ -83,7 +86,19 @@ public abstract class CastListNode extends CastBaseNode {
     @Specialization
     protected RList doLanguage(RLanguage operand) {
         RList result = RContext.getRRuntimeASTAccess().asList(operand);
-        result.copyAttributesFrom(attrProfiles, operand);
+        RAttributes operandAttrs = operand.getAttributes();
+        if (operandAttrs != null) {
+            // result may already have names, so can't call RVector.copyAttributesFrom
+            Iterator<RAttribute> iter = operandAttrs.iterator();
+            while (iter.hasNext()) {
+                RAttribute attr = iter.next();
+                if (attr.getName().equals(RRuntime.CLASS_ATTR_KEY)) {
+                    result.setClassAttr((RStringVector) attr.getValue(), false);
+                } else {
+                    result.setAttr(attr.getName(), attr.getValue());
+                }
+            }
+        }
         return result;
     }
 

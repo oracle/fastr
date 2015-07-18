@@ -24,7 +24,6 @@ package com.oracle.truffle.r.engine;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.nodes.*;
-import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.access.array.read.*;
@@ -38,12 +37,10 @@ import com.oracle.truffle.r.nodes.runtime.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RContext.ConsoleHandler;
 import com.oracle.truffle.r.runtime.RContext.Engine;
-import com.oracle.truffle.r.runtime.RContext.Engine.*;
 import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
-import com.oracle.truffle.r.runtime.env.REnvironment.*;
 import com.oracle.truffle.r.runtime.gnur.*;
 
 /**
@@ -235,7 +232,13 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
         for (int i = 0; i < data.length; i++) {
             data[i] = getDataAtAsObject(rl, i);
         }
-        return RDataFactory.createList(data);
+        RStringVector names = getNames(rl);
+        if (names == null) {
+            return RDataFactory.createList(data);
+        } else {
+            return RDataFactory.createList(data, names);
+        }
+
     }
 
     @TruffleBoundary
@@ -243,24 +246,27 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
         RNode node = (RNode) rl.getRep();
         if (node instanceof RCallNode || node instanceof GroupDispatchNode) {
             Arguments<RSyntaxNode> args = RASTUtils.findCallArguments(node);
+            /*
+             * If any argument has a name, then all arguments (and the function) are given names,
+             * with unnamed arguments getting "". However, if no arguments have names, the result is
+             * NULL (null)
+             */
             ArgumentsSignature sig = args.getSignature();
-            int count = 0;
+            boolean hasName = false;
             for (int i = 0; i < sig.getLength(); i++) {
                 if (sig.getName(i) != null) {
-                    count++;
+                    hasName = true;
+                    break;
                 }
             }
-            if (count == 0) {
+            if (!hasName) {
                 return null;
             }
-            String[] data = new String[count + 1];
-            count = 0;
-            data[count++] = "";
+            String[] data = new String[sig.getLength() + 1];
+            data[0] = ""; // function
             for (int i = 0; i < sig.getLength(); i++) {
                 String name = sig.getName(i);
-                if (name != null) {
-                    data[count++] = name;
-                }
+                data[i + 1] = name == null ? "" : name;
             }
             return RDataFactory.createStringVector(data, RDataFactory.COMPLETE_VECTOR);
         } else {

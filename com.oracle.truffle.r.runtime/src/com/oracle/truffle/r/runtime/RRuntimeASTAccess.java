@@ -25,7 +25,6 @@ package com.oracle.truffle.r.runtime;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.runtime.RContext.*;
 import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.env.*;
 
 /**
  * A collection of methods that need access to the AST types, needed by code that resides in the

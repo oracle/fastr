@@ -27,6 +27,7 @@ import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.instrument.ProbeNode.*;
+import com.oracle.truffle.r.nodes.control.*;
 import com.oracle.truffle.r.nodes.instrument.NeedsWrapper;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
@@ -322,6 +323,13 @@ public abstract class RNode extends Node implements RInstrumentableNode {
     @Override
     public SourceSection getSourceSection() {
         if (this instanceof RSyntaxNode) {
+            if (this instanceof ReplacementNode) {
+                return super.getSourceSection();
+            }
+            ReplacementNode node = checkReplacementChild();
+            if (node != null) {
+                return node.getSourceSection();
+            }
             return super.getSourceSection();
         } else {
             throw RInternalError.shouldNotReachHere("getSourceSection on non-syntax node");
@@ -354,7 +362,34 @@ public abstract class RNode extends Node implements RInstrumentableNode {
      * </ol>
      */
     public SourceSection getEncapsulatingSourceSection() {
+        ReplacementNode node = checkReplacementChild();
+        if (node != null) {
+            return node.getSourceSection();
+        }
         return super.getEncapsulatingSourceSection();
+    }
+
+    /**
+     * This is rather nasty, but then that applies to {@link ReplacementNode} in general. Since a
+     * auto-generated child of a {@link ReplacementNode} may have a {@link SourceSection}, we might
+     * return it using the normal logic, but that would be wrong, we really need to return the the
+     * {@link SourceSection} of the {@link ReplacementNode} itself. This is a case where we can't
+     * use {@link #getEncapsulatingSourceSection} as a workaround (unless we created a completely
+     * parallel set of node classes) because the {@code ReplacementNode} child nodes are just
+     * standard {@link RSyntaxNode}s.
+     *
+     * @return {@code null} if not a child of a {@link ReplacementNode}, otherwise the
+     *         {@link ReplacementNode}.
+     */
+    private ReplacementNode checkReplacementChild() {
+        Node node = this;
+        while (node != null) {
+            if (node instanceof ReplacementNode) {
+                return (ReplacementNode) node;
+            }
+            node = node.getParent();
+        }
+        return null;
     }
 
 }

@@ -84,12 +84,6 @@ public abstract class Substitute extends RBuiltinNode {
      * language element). E.g. {@link IfNode} is a special case because it is not (currently)
      * represented as a function, as are several other nodes.
      *
-     * We clear the {@link SourceSection} on the substituted tree as it would need to be modified
-     * anyway and GnuR appears to. E.g. {@code c(z+2)} when substituted prints as {@code z + 2}.
-     *
-     * As per {@code deparse}, it might make sense to have each node handle its own substitution
-     * through an appropriate interface.
-     *
      * @param frame
      * @param expr
      * @param envArg {@code null} if the {@code env} argument was {@code RMissing} to avoid always
@@ -121,16 +115,30 @@ public abstract class Substitute extends RBuiltinNode {
         Node node = RASTUtils.unwrap(expr.getRep());
         // substitution is destructive so clone the tree
         RSyntaxNode rNode = (RSyntaxNode) NodeUtil.cloneNode(node);
-        // NodeUtil.printTree(System.out, node);
-        return RASTUtils.createLanguageElement(clearSourceSection(rNode.substitute(env).asRNode()));
+        RSyntaxNode subRNode = rNode.substitute(env);
+        // remove old source sections
+        clearSourceSection(subRNode.asRNode());
+        // create source for entire tree
+        RDeparse.State state = RDeparse.State.createPrintableState();
+        subRNode.deparse(state);
+        String subString = state.toString();
+        if (subString.length() > 0) {
+            // Bug prevents assigning empty source (very special case!)
+            Source subSource = Source.fromText(subString, "<substitute>");
+            /*
+             * now it gets difficult as each individual node should get a node-specific
+             * SourceSection. For now we only assign the root, which is ok for simple cases
+             */
+            subRNode.asRNode().assignSourceSection(subSource.createSection("", 0, subString.length()));
+        }
+        return RASTUtils.createLanguageElement(subRNode.asRNode());
     }
 
-    private static Node clearSourceSection(Node node) {
+    private static void clearSourceSection(Node node) {
         node.accept(n -> {
             n.clearSourceSection();
             return true;
         });
-        return node;
     }
 
 }

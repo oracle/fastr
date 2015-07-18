@@ -504,6 +504,15 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
                 ReadVariableNode tmpVarAccess = ReadVariableNode.create(tmpSymbol, false);
 
                 RSyntaxNode updateOp = updateFunction.apply(tmpVarAccess, rhsAccess);
+                if (updateOp.getSourceSection() == null) {
+                    // must have a source section in case sys.call is called
+                    RDeparse.State state = RDeparse.State.createPrintableState(true);
+                    updateOp.deparse(state);
+                    String updateOpSource = state.toString();
+                    Source fakeSource = Source.fromText(updateOpSource, "<replacement update>");
+                    updateOp.asRNode().assignSourceSection(fakeSource.createSection("", 0, updateOpSource.length()));
+                }
+
                 RNode assignFromTemp = WriteVariableNode.createAnonymous(vSymbol, updateOp.asRNode(), WriteVariableNode.Mode.INVISIBLE, isSuper);
                 result = constructReplacementSuffix(rhs, v, false, assignFromTemp, tmpSymbol, rhsSymbol, source);
             } else if (receiver instanceof AccessVector) {

@@ -293,6 +293,7 @@ public final class RError extends RuntimeException {
         LENGTH_ZERO_DIM_INVALID("length-0 dimension vector is invalid"),
         ATTRIBUTES_LIST_OR_NULL("attributes must be a list or NULL"),
         RECALL_CALLED_OUTSIDE_CLOSURE("'Recall' called from outside a closure"),
+        MATCH_CALL_CALLED_OUTSIDE_FUNCTION("match.call() was called from outside a function"),
         NOT_NUMERIC_VECTOR("argument is not a numeric vector"),
         UNSUPPORTED_PARTIAL("unsupported options for partial sorting"),
         INDEX_RETURN_REMOVE_NA("'index.return' only for 'na.last(NA'"),

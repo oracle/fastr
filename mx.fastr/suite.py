@@ -28,7 +28,7 @@ suite = {
     "suites" : [
             {
                "name" : "graal",
-               "version" : "7d25fdb519509a1dfc4c746cee6243856865a736",
+               "version" : "15a6332253bae50440e079d84aec17469559f891",
                "urls" : [{"url" : "https://bitbucket.org/allr/graal", "kind" : "hg"}]
             },
         ],

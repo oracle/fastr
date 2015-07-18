@@ -225,7 +225,11 @@ public class RDeparse {
         }
 
         public static State createPrintableState() {
-            return new RDeparse.State(RDeparse.MAX_Cutoff, false, -1, 0, false);
+            return createPrintableState(false);
+        }
+
+        public static State createPrintableState(boolean backTick) {
+            return new RDeparse.State(RDeparse.MAX_Cutoff, backTick, -1, 0, false);
         }
 
         private void preAppend() {
@@ -841,6 +845,7 @@ public class RDeparse {
             case FASTR_DOUBLE:
             case FASTR_INT:
             case FASTR_BYTE:
+            case FASTR_COMPLEX:
                 vecElement2buff(state, SEXPTYPE.convertFastRScalarType(type), obj);
                 break;
 
@@ -1272,6 +1277,10 @@ public class RDeparse {
 
     private static boolean withinSimpleRealRange(double d) {
         return (d > 0.0001 || d < -0.0001) && d < 100000 && d > -100000;
+    }
+
+    public static String quotify(String name, State state) {
+        return quotify(name, state.backtick ? BACKTICK : DQUOTE);
     }
 
     public static String quotify(String name, char qc) {

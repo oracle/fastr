@@ -25,6 +25,7 @@ package com.oracle.truffle.r.test.rpackages;
 import java.io.*;
 import java.nio.charset.*;
 import java.nio.file.*;
+import java.nio.file.attribute.*;
 import java.util.*;
 
 import org.junit.*;
@@ -57,9 +58,33 @@ public class TestRPackages extends TestBase {
         private PackagePaths() {
             Path rpackages = Paths.get(REnvVars.rHome(), "com.oracle.truffle.r.test", "rpackages");
             rpackagesLibs = TestBase.relativize(rpackages.resolve("testrlibs_user"));
-            if (!rpackagesLibs.toFile().exists()) {
-                rpackagesLibs.toFile().mkdir();
+            // Empty it in case of failure that didn't clean up
+            try {
+                Files.walkFileTree(rpackagesLibs, new SimpleFileVisitor<Path>() {
+
+                    @Override
+                    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                        Files.delete(file);
+                        return FileVisitResult.CONTINUE;
+                    }
+
+                    @Override
+                    public FileVisitResult postVisitDirectory(Path dir, IOException e) throws IOException {
+                        if (e == null) {
+                            Files.delete(dir);
+                            return FileVisitResult.CONTINUE;
+                        } else {
+                            // directory iteration failed
+                            throw e;
+                        }
+                    }
+
+                });
+            } catch (IOException e) {
+                assert false;
             }
+
+            rpackagesLibs.toFile().mkdir();
             rpackagesDists = Paths.get(REnvVars.rHome(), "com.oracle.truffle.r.test.native", "packages");
         }
 

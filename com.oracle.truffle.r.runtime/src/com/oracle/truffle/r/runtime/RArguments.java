@@ -188,6 +188,7 @@ public final class RArguments {
         assert evaluatedArgs != null && signature != null : evaluatedArgs + " " + signature;
         assert evaluatedArgs.length == signature.getLength() : Arrays.toString(evaluatedArgs) + " " + signature;
         assert signature == getSignature(functionObj) : signature + " vs. " + getSignature(functionObj);
+        checkCallSrc(functionObj, callSrc);
 
         Object[] a = new Object[MINIMAL_ARRAY_LENGTH + evaluatedArgs.length];
         a[INDEX_ENVIRONMENT] = null;
@@ -206,6 +207,14 @@ public final class RArguments {
     @SuppressWarnings("unused")
     private static boolean envFunctionInvariant(Object[] a) {
         return a[INDEX_ENVIRONMENT] != null || a[INDEX_FUNCTION] != null;
+    }
+
+    private static void checkCallSrc(RFunction functionObj, SourceSection callSrc) {
+        if (callSrc == null) {
+            if (FastROptions.debugMatches("nullcallsrc")) {
+                System.out.printf("callsrc null for %s%n", functionObj.getRootNode().toString());
+            }
+        }
     }
 
     /**

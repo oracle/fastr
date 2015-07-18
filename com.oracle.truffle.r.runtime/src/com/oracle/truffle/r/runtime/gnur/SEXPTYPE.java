@@ -197,6 +197,8 @@ public enum SEXPTYPE {
                 return SEXPTYPE.INTSXP;
             case FASTR_BYTE:
                 return SEXPTYPE.LGLSXP;
+            case FASTR_COMPLEX:
+                return SEXPTYPE.CPLXSXP;
             default:
                 assert false;
                 return null;

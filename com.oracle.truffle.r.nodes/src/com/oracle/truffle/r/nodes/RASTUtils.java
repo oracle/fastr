@@ -92,7 +92,9 @@ public class RASTUtils {
      */
     @TruffleBoundary
     public static Object createLanguageElement(Node argNode) {
-        if (argNode instanceof ConstantNode) {
+        if (argNode == null) {
+            return RSymbol.MISSING;
+        } else if (argNode instanceof ConstantNode) {
             Object value = ((ConstantNode) argNode).getValue();
             if (value == RMissing.instance) {
                 // special case which GnuR handles as an unnamed symbol

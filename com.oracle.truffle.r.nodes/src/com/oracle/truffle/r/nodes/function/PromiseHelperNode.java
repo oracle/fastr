@@ -183,7 +183,7 @@ public class PromiseHelperNode extends Node {
         return obj;
     }
 
-    private Object generateValueDefault(VirtualFrame frame, RPromise promise, SourceSection callSrc) {
+    private Object generateValueDefault(VirtualFrame frame, RPromise promise, @SuppressWarnings("unused") SourceSection callSrc) {
         try {
             promise.setUnderEvaluation(true);
 
@@ -198,7 +198,11 @@ public class PromiseHelperNode extends Node {
                 assert promiseFrame != null;
                 SourceSection oldCallSource = RArguments.getCallSourceSection(promiseFrame);
                 try {
-                    RArguments.setCallSourceSection(promiseFrame, callSrc);
+                    // With this call in, sys.call sometimes gets the wrong call,
+                    // without it, at least one unit test reports the wrong caller.
+                    // This should be addressed in a complete reworking of how
+                    // the caller for errors is determined.
+                    // RArguments.setCallSourceSection(promiseFrame, callSrc);
 
                     if (promiseClosureCache == null) {
                         CompilerDirectives.transferToInterpreterAndInvalidate();
