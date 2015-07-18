@@ -59,29 +59,31 @@ public class TestRPackages extends TestBase {
             Path rpackages = Paths.get(REnvVars.rHome(), "com.oracle.truffle.r.test", "rpackages");
             rpackagesLibs = TestBase.relativize(rpackages.resolve("testrlibs_user"));
             // Empty it in case of failure that didn't clean up
-            try {
-                Files.walkFileTree(rpackagesLibs, new SimpleFileVisitor<Path>() {
+            if (rpackagesLibs.toFile().exists()) {
+                try {
+                    Files.walkFileTree(rpackagesLibs, new SimpleFileVisitor<Path>() {
 
-                    @Override
-                    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                        Files.delete(file);
-                        return FileVisitResult.CONTINUE;
-                    }
-
-                    @Override
-                    public FileVisitResult postVisitDirectory(Path dir, IOException e) throws IOException {
-                        if (e == null) {
-                            Files.delete(dir);
+                        @Override
+                        public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                            Files.delete(file);
                             return FileVisitResult.CONTINUE;
-                        } else {
-                            // directory iteration failed
-                            throw e;
                         }
-                    }
 
-                });
-            } catch (IOException e) {
-                assert false;
+                        @Override
+                        public FileVisitResult postVisitDirectory(Path dir, IOException e) throws IOException {
+                            if (e == null) {
+                                Files.delete(dir);
+                                return FileVisitResult.CONTINUE;
+                            } else {
+                                // directory iteration failed
+                                throw e;
+                            }
+                        }
+
+                    });
+                } catch (IOException e) {
+                    assert false;
+                }
             }
 
             rpackagesLibs.toFile().mkdir();
