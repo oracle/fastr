@@ -32,19 +32,6 @@ import com.oracle.truffle.r.runtime.*;
 @RBuiltin(name = "warning", kind = RBuiltinKind.INTERNAL, parameterNames = {"call", "immediate", "nobreaks", "message"})
 public abstract class Warning extends RInvisibleBuiltinNode {
 
-    // TODO remove once spurious warning due to sys.call bug is fixed
-    private static final String[] TEMP_IGNORE = new String[]{"named arguments other than 'exact' are discouraged", "named arguments other than 'drop' are discouraged",
-                    "named arguments are discouraged"};
-
-    private static boolean ignore(String message) {
-        for (String s : TEMP_IGNORE) {
-            if (s.equals(message)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
     @Child private CastStringNode castString;
 
     private Object castString(Object operand) {
@@ -66,12 +53,10 @@ public abstract class Warning extends RInvisibleBuiltinNode {
     @TruffleBoundary
     public String warning(byte callL, byte immediateL, byte noBreakWarningL, Object messageObj) {
         String message = RRuntime.asString(castString(messageObj));
-        if (!ignore(message)) {
-            boolean call = RRuntime.fromLogical(callL);
-            boolean immediate = RRuntime.fromLogical(immediateL);
-            boolean noBreakWarning = RRuntime.fromLogical(noBreakWarningL);
-            RErrorHandling.warningcallInternal(call ? getEncapsulatingSourceSection() : null, message, immediate, noBreakWarning);
-        }
+        boolean call = RRuntime.fromLogical(callL);
+        boolean immediate = RRuntime.fromLogical(immediateL);
+        boolean noBreakWarning = RRuntime.fromLogical(noBreakWarningL);
+        RErrorHandling.warningcallInternal(call ? getEncapsulatingSourceSection() : null, message, immediate, noBreakWarning);
         controlVisibility();
         return message;
     }
