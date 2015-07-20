@@ -97,7 +97,7 @@ public final class RIntSequence extends RSequence implements RAbstractIntVector 
     @Override
     public String toString() {
         CompilerAsserts.neverPartOfCompilation();
-        return internalCreateVector().toString();
+        return "[" + start + " - " + getEnd() + "]";
     }
 
     public int getEnd() {

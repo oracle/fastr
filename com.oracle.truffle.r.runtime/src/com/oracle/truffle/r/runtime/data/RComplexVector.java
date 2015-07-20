@@ -24,7 +24,6 @@ package com.oracle.truffle.r.runtime.data;
 
 import java.util.*;
 
-import com.oracle.truffle.api.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.closures.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -77,16 +76,7 @@ public final class RComplexVector extends RVector implements RAbstractComplexVec
 
     @Override
     public String toString() {
-        CompilerAsserts.neverPartOfCompilation();
-        StringBuilder str = new StringBuilder();
-        str.append('[');
-        for (int i = 0; i < getLength(); i++) {
-            if (i > 0) {
-                str.append(", ");
-            }
-            str.append(RRuntime.complexToString(getDataAt(i)));
-        }
-        return str.append(']').toString();
+        return toString(i -> RRuntime.complexToString(getDataAt(i)));
     }
 
     @Override

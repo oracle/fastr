@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
+import java.util.function.*;
+
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -914,4 +916,22 @@ public abstract class RVector extends RAttributeStorage implements RShareable, R
         }
     }
 
+    private static final int MAX_TOSTRING_LENGTH = 100;
+
+    protected String toString(Function<Integer, String> element) {
+        CompilerAsserts.neverPartOfCompilation();
+        StringBuilder str = new StringBuilder("[");
+        for (int i = 0; i < getLength(); i++) {
+            if (i > 0) {
+                str.append(", ");
+            }
+            str.append(element.apply(i));
+            if (str.length() > MAX_TOSTRING_LENGTH - 1) {
+                str.setLength(MAX_TOSTRING_LENGTH - 4);
+                str.append("...");
+                break;
+            }
+        }
+        return str.append(']').toString();
+    }
 }

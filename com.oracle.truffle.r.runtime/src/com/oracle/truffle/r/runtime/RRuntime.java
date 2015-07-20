@@ -628,7 +628,7 @@ public class RRuntime {
             return logicalToString((byte) object);
         }
 
-        return object.toString();
+        return String.valueOf(object);
     }
 
     @TruffleBoundary

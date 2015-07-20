@@ -47,8 +47,7 @@ public abstract class RListBase extends RVector implements RAbstractVector {
 
     @Override
     public String toString() {
-        CompilerAsserts.neverPartOfCompilation();
-        return Arrays.toString(data);
+        return toString(i -> RRuntime.toString(getDataAt(i)));
     }
 
     @Override

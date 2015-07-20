@@ -183,5 +183,4 @@ public abstract class RSequence implements RAbstractVector {
         result.setDimensions(newDimensions);
         return result;
     }
-
 }

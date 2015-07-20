@@ -63,6 +63,10 @@ public final class RDoubleSequence extends RSequence implements RAbstractDoubleV
         return getStride();
     }
 
+    public double getEnd() {
+        return start + (getLength() - 1) * stride;
+    }
+
     public RAbstractVector castSafe(RType type) {
         // TODO might be possible to implement some of these without closures
         switch (type) {
@@ -122,6 +126,6 @@ public final class RDoubleSequence extends RSequence implements RAbstractDoubleV
     @Override
     public String toString() {
         CompilerAsserts.neverPartOfCompilation();
-        return internalCreateVector().toString();
+        return "[" + start + " - " + getEnd() + "]";
     }
 }

@@ -24,7 +24,6 @@ package com.oracle.truffle.r.runtime.data;
 
 import java.util.*;
 
-import com.oracle.truffle.api.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.closures.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -83,8 +82,7 @@ public final class RRawVector extends RVector implements RAbstractRawVector, RAc
 
     @Override
     public String toString() {
-        CompilerAsserts.neverPartOfCompilation();
-        return Arrays.toString(data);
+        return toString(i -> RRuntime.rawToString(getDataAt(i)));
     }
 
     @Override

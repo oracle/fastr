@@ -24,7 +24,6 @@ package com.oracle.truffle.r.runtime.data;
 
 import java.util.*;
 
-import com.oracle.truffle.api.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
@@ -92,8 +91,7 @@ public final class RStringVector extends RVector implements RAbstractStringVecto
 
     @Override
     public String toString() {
-        CompilerAsserts.neverPartOfCompilation();
-        return Arrays.toString(data);
+        return toString(i -> getDataAt(i));
     }
 
     @Override
