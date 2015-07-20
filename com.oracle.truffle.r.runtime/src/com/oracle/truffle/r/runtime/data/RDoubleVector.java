@@ -32,11 +32,9 @@ import com.oracle.truffle.r.runtime.ops.na.*;
 
 public final class RDoubleVector extends RVector implements RAbstractDoubleVector, RAccessibleStore<double[]> {
 
-    private final double[] data;
+    public static final RStringVector implicitClassHeader = RDataFactory.createStringVectorFromScalar(RType.Numeric.getName());
 
-    static final RStringVector implicitClassHeader = RDataFactory.createStringVector(new String[]{RType.Double.getName(), RType.Numeric.getName()}, true);
-    private static final RStringVector implicitClassHeaderArray = RDataFactory.createStringVector(new String[]{RType.Array.getName(), RType.Double.getName(), RType.Numeric.getName()}, true);
-    private static final RStringVector implicitClassHeaderMatrix = RDataFactory.createStringVector(new String[]{RType.Matrix.getName(), RType.Double.getName(), RType.Numeric.getName()}, true);
+    private final double[] data;
 
     RDoubleVector(double[] data, boolean complete, int[] dims, RStringVector names) {
         super(complete, data.length, dims, names);
@@ -224,6 +222,6 @@ public final class RDoubleVector extends RVector implements RAbstractDoubleVecto
 
     @Override
     public RStringVector getImplicitClass() {
-        return getClassHierarchyHelper(implicitClassHeader, implicitClassHeaderArray, implicitClassHeaderMatrix);
+        return getClassHierarchyHelper(implicitClassHeader);
     }
 }

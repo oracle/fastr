@@ -26,6 +26,8 @@ import com.oracle.truffle.r.runtime.*;
 
 public final class RNull extends RScalar {
 
+    public static final RStringVector implicitClassHeader = RDataFactory.createStringVectorFromScalar(RType.Null.getName());
+
     public static final RNull instance = new RNull();
 
     private RNull() {

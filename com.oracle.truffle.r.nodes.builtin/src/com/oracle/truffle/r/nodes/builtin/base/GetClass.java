@@ -13,114 +13,19 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.conn.*;
-import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
-import com.oracle.truffle.r.runtime.env.*;
 
 @RBuiltin(name = "class", kind = PRIMITIVE, parameterNames = {"x"})
 public abstract class GetClass extends RBuiltinNode {
 
-    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
-
-    @Specialization(guards = {"isObject(arg)", "!isLanguage(arg)", "!isExpression(arg)"})
-    protected Object getClassForObject(RAbstractContainer arg) {
-        controlVisibility();
-        return arg.getClassHierarchy();
-    }
-
-    @Specialization(guards = {"!isObject(arg)", "!isLanguage(arg)", "!isExpression(arg)"})
-    protected Object getClass(RAbstractContainer arg) {
-        controlVisibility();
-        final String klass = arg.getClassHierarchy().getDataAt(0);
-        if (klass.equals(RType.Double.getName())) {
-            return RType.Numeric.getName();
-        }
-        return klass;
-    }
+    @Child private ClassHierarchyNode classHierarchy = ClassHierarchyNodeGen.create(true);
 
     @Specialization
-    protected Object getClass(RFunction arg) {
+    protected RAbstractStringVector getClass(Object x) {
         controlVisibility();
-        Object attr = arg.getAttr(attrProfiles, RRuntime.CLASS_ATTR_KEY);
-        if (attr == null) {
-            return RType.Function.getName();
-        } else {
-            return attr;
-        }
+        return classHierarchy.execute(x);
     }
-
-    @Specialization
-    protected Object getClass(@SuppressWarnings("unused") RNull arg) {
-        controlVisibility();
-        return RType.Null.getName();
-    }
-
-    @Specialization
-    protected Object getClass(@SuppressWarnings("unused") RSymbol arg) {
-        controlVisibility();
-        return RRuntime.CLASS_SYMBOL;
-    }
-
-    @Specialization
-    protected Object getClass(REnvironment arg) {
-        controlVisibility();
-        Object attr = arg.getAttr(attrProfiles, RRuntime.CLASS_ATTR_KEY);
-        if (attr == null) {
-            return RType.Environment.getName();
-        } else {
-            return attr;
-        }
-    }
-
-    @Specialization
-    protected Object getClass(RPairList arg) {
-        controlVisibility();
-        Object attr = arg.getAttr(attrProfiles, RRuntime.CLASS_ATTR_KEY);
-        if (attr == null) {
-            return RType.PairList.getName();
-        } else {
-            return attr;
-        }
-    }
-
-    @Specialization
-    protected Object getClass(RLanguage arg) {
-        controlVisibility();
-        Object attr = arg.getAttr(attrProfiles, RRuntime.CLASS_ATTR_KEY);
-        if (attr == null) {
-            return RRuntime.CLASS_LANGUAGE;
-        } else {
-            return attr;
-        }
-    }
-
-    @Specialization
-    protected Object getClass(@SuppressWarnings("unused") RExpression arg) {
-        controlVisibility();
-        return RRuntime.CLASS_EXPRESSION;
-    }
-
-    @Specialization
-    protected Object getClass(RConnection arg) {
-        controlVisibility();
-        return arg.getClassHierarchy();
-    }
-
-    protected boolean isExpression(RAbstractContainer arg) {
-        return arg.getElementClass() == RExpression.class;
-    }
-
-    protected boolean isLanguage(RAbstractContainer arg) {
-        return arg.getElementClass() == RLanguage.class;
-    }
-
-    protected boolean isObject(RAbstractContainer arg) {
-        return arg.isObject(attrProfiles);
-    }
-
-    public abstract Object execute(VirtualFrame frame, RAbstractVector o);
 }

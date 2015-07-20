@@ -27,7 +27,9 @@ import com.oracle.truffle.r.runtime.data.model.*;
 
 public class RExpression implements RShareable, RAbstractContainer {
 
-    private RList data;
+    public static final RStringVector implicitClassHeader = RDataFactory.createStringVectorFromScalar(RType.Expression.getName());
+
+    private final RList data;
 
     public RExpression(RList data) {
         this.data = data;
@@ -140,12 +142,17 @@ public class RExpression implements RShareable, RAbstractContainer {
         data.setRowNames(rowNames);
     }
 
-    public RStringVector getClassHierarchy() {
-        return data.getClassHierarchy();
+    public final RStringVector getClassHierarchy() {
+        RStringVector v = (RStringVector) data.getAttribute(RRuntime.CLASS_ATTR_KEY);
+        if (v == null) {
+            return getImplicitClass();
+        } else {
+            return v;
+        }
     }
 
     public RStringVector getImplicitClass() {
-        return data.getImplicitClass();
+        return implicitClassHeader;
     }
 
     public boolean isObject(RAttributeProfiles attrProfiles) {

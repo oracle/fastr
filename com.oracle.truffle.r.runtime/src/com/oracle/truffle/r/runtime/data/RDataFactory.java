@@ -361,7 +361,7 @@ public final class RDataFactory {
     }
 
     public static RList createList(Object[] data, int[] newDimensions, RStringVector names) {
-        return traceDataCreated(new RList(data, false, newDimensions, names));
+        return traceDataCreated(new RList(data, newDimensions, names));
     }
 
     public static RDataFrame createDataFrame(RVector vector) {

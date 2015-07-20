@@ -98,9 +98,6 @@ public class RRuntime {
     public static final String FORMULA_CLASS = "formula";
     public static final String FORMULA_ENV = ".Environment";
 
-    @CompilationFinal public static final String[] CLASS_INTEGER = new String[]{"integer", "numeric"};
-    @CompilationFinal public static final String[] CLASS_DOUBLE = new String[]{"double", "numeric"};
-
     public static final String CLASS_ORDERED = "ordered";
 
     public static final int LEN_METHOD_NAME = 512;

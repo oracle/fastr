@@ -32,9 +32,7 @@ import com.oracle.truffle.r.runtime.ops.na.*;
 
 public final class RIntVector extends RVector implements RAbstractIntVector, RAccessibleStore<int[]> {
 
-    static final RStringVector implicitClassHeader = RDataFactory.createStringVector(new String[]{RType.Integer.getName(), RType.Numeric.getName()}, true);
-    private static final RStringVector implicitClassHeaderArray = RDataFactory.createStringVector(new String[]{RType.Array.getName(), RType.Integer.getName(), RType.Numeric.getName()}, true);
-    private static final RStringVector implicitClassHeaderMatrix = RDataFactory.createStringVector(new String[]{RType.Matrix.getName(), RType.Integer.getName(), RType.Numeric.getName()}, true);
+    public static final RStringVector implicitClassHeader = RDataFactory.createStringVectorFromScalar(RType.Integer.getName());
 
     private final int[] data;
 
@@ -221,12 +219,11 @@ public final class RIntVector extends RVector implements RAbstractIntVector, RAc
 
     @Override
     public RStringVector getImplicitClass() {
-        return getClassHierarchyHelper(implicitClassHeader, implicitClassHeaderArray, implicitClassHeaderMatrix);
+        return getClassHierarchyHelper(implicitClassHeader);
     }
 
     @Override
     public void setElement(int i, Object value) {
         data[i] = (int) value;
     }
-
 }

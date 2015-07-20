@@ -49,27 +49,32 @@ public abstract class ClassHierarchyNode extends UnaryNode {
 
     @Specialization
     protected RStringVector getClassHr(@SuppressWarnings("unused") byte arg) {
-        return withImplicitTypes ? RDataFactory.createStringVector(RType.Logical.getName()) : null;
+        return withImplicitTypes ? RLogicalVector.implicitClassHeader : null;
     }
 
     @Specialization
     protected RStringVector getClassHr(@SuppressWarnings("unused") String arg) {
-        return withImplicitTypes ? RDataFactory.createStringVector(RType.Character.getName()) : null;
+        return withImplicitTypes ? RStringVector.implicitClassHeader : null;
     }
 
     @Specialization
     protected RStringVector getClassHr(@SuppressWarnings("unused") int arg) {
-        return withImplicitTypes ? RDataFactory.createStringVector(RType.Integer.getName()) : null;
+        return withImplicitTypes ? RIntVector.implicitClassHeader : null;
     }
 
     @Specialization
     protected RStringVector getClassHr(@SuppressWarnings("unused") double arg) {
-        return withImplicitTypes ? RDataFactory.createStringVector(RRuntime.CLASS_DOUBLE, RDataFactory.COMPLETE_VECTOR) : null;
+        return withImplicitTypes ? RDoubleVector.implicitClassHeader : null;
+    }
+
+    @Specialization
+    protected RStringVector getClassHr(@SuppressWarnings("unused") RComplex arg) {
+        return withImplicitTypes ? RComplexVector.implicitClassHeader : null;
     }
 
     @Specialization
     protected RStringVector getClassHr(@SuppressWarnings("unused") RNull arg) {
-        return withImplicitTypes ? RDataFactory.createStringVector(RType.Null.getName()) : null;
+        return withImplicitTypes ? RNull.implicitClassHeader : null;
     }
 
     @Specialization

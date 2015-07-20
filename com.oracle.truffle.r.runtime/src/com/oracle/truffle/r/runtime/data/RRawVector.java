@@ -32,9 +32,7 @@ import com.oracle.truffle.r.runtime.ops.na.*;
 
 public final class RRawVector extends RVector implements RAbstractRawVector, RAccessibleStore<byte[]> {
 
-    private static final RStringVector implicitClassHeader = RDataFactory.createStringVectorFromScalar(RType.Raw.getName());
-    private static final RStringVector implicitClassHeaderArray = RDataFactory.createStringVector(new String[]{RType.Array.getName(), RType.Raw.getName()}, true);
-    private static final RStringVector implicitClassHeaderMatrix = RDataFactory.createStringVector(new String[]{RType.Matrix.getName(), RType.Raw.getName()}, true);
+    public static final RStringVector implicitClassHeader = RDataFactory.createStringVectorFromScalar(RType.Raw.getName());
 
     private final byte[] data;
 
@@ -192,6 +190,6 @@ public final class RRawVector extends RVector implements RAbstractRawVector, RAc
 
     @Override
     public RStringVector getImplicitClass() {
-        return getClassHierarchyHelper(implicitClassHeader, implicitClassHeaderArray, implicitClassHeaderMatrix);
+        return getClassHierarchyHelper(implicitClassHeader);
     }
 }

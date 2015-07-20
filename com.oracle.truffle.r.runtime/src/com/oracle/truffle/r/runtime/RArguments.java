@@ -177,14 +177,6 @@ public final class RArguments {
         return a[INDEX_ENVIRONMENT] != null || a[INDEX_FUNCTION] != null;
     }
 
-    private static void checkCallSrc(RFunction functionObj, SourceSection callSrc) {
-        if (callSrc == null) {
-            if (FastROptions.debugMatches("nullcallsrc")) {
-                System.out.printf("callsrc null for %s%n", functionObj.getRootNode().toString());
-            }
-        }
-    }
-
     /**
      * A method for creating an uninitialized array, used only in very special situations as it
      * temporarily violates {@link #envFunctionInvariant}.

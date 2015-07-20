@@ -31,9 +31,7 @@ import com.oracle.truffle.r.runtime.ops.na.*;
 
 public final class RStringVector extends RVector implements RAbstractStringVector {
 
-    private static final RStringVector implicitClassHeader = RDataFactory.createStringVectorFromScalar(RType.Character.getName());
-    private static final RStringVector implicitClassHeaderArray = RDataFactory.createStringVector(new String[]{RType.Array.getName(), RType.Character.getName()}, true);
-    private static final RStringVector implicitClassHeaderMatrix = RDataFactory.createStringVector(new String[]{RType.Matrix.getName(), RType.Character.getName()}, true);
+    public static final RStringVector implicitClassHeader = RDataFactory.createStringVectorFromScalar(RType.Character.getName());
 
     private final String[] data;
 
@@ -188,7 +186,7 @@ public final class RStringVector extends RVector implements RAbstractStringVecto
 
     @Override
     public RStringVector getImplicitClass() {
-        return getClassHierarchyHelper(implicitClassHeader, implicitClassHeaderArray, implicitClassHeaderMatrix);
+        return getClassHierarchyHelper(implicitClassHeader);
     }
 
     @Override

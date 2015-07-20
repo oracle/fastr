@@ -49,6 +49,9 @@ import com.oracle.truffle.r.runtime.ops.na.*;
  */
 public abstract class RVector extends RAttributeStorage implements RShareable, RAbstractVector, RFFIAccess {
 
+    private static final RStringVector implicitClassHeaderArray = RDataFactory.createStringVector(new String[]{RType.Array.getName()}, true);
+    private static final RStringVector implicitClassHeaderMatrix = RDataFactory.createStringVector(new String[]{RType.Matrix.getName()}, true);
+
     protected boolean complete; // "complete" means: does not contain NAs
     protected int[] dimensions;
     protected RStringVector names;
@@ -818,7 +821,7 @@ public abstract class RVector extends RAttributeStorage implements RShareable, R
 
     // As shape of the vector may change at run-time we need to compute
     // class hierarchy on the fly.
-    protected final RStringVector getClassHierarchyHelper(RStringVector implicitClassHeader, RStringVector implicitClassHeaderArray, RStringVector implicitClassHeaderMatrix) {
+    protected final RStringVector getClassHierarchyHelper(RStringVector implicitClassHeader) {
         if (isMatrix()) {
             return implicitClassHeaderMatrix;
         }
