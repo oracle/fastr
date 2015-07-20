@@ -20,7 +20,6 @@ public class TestBuiltin_interactive extends TestBase {
 
     @Test
     public void testinteractive1() {
-        assertEval(Ignored.Unknown, "argv <- list();do.call('interactive', argv)");
+        assertEval("argv <- list();do.call('interactive', argv)");
     }
-
 }

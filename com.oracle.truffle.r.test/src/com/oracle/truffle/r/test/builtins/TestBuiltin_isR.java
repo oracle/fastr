@@ -20,7 +20,6 @@ public class TestBuiltin_isR extends TestBase {
 
     @Test
     public void testisR1() {
-        assertEval(Ignored.Unknown, "argv <- list();do.call('is.R', argv)");
+        assertEval("argv <- list();do.call('is.R', argv)");
     }
-
 }

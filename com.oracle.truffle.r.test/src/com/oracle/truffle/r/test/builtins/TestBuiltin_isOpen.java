@@ -19,7 +19,7 @@ public class TestBuiltin_isOpen extends TestBase {
 
     @Test
     public void testisOpen1() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(2L, class = c('terminal', 'connection')), 0L); .Internal(isOpen(argv[[1]], argv[[2]]))");
+        assertEval("argv <- list(structure(2L, class = c('terminal', 'connection')), 0L); .Internal(isOpen(argv[[1]], argv[[2]]))");
     }
 
     @Test

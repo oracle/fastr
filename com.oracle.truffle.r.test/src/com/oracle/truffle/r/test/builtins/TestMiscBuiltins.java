@@ -280,9 +280,9 @@ public class TestMiscBuiltins extends TestBase {
         assertEval("{ f <- function(x) sys.call() ; typeof(f(x = 2)[[1]]) }");
         assertEval("{ f <- function(x) sys.call() ; typeof(f(x = 2)[[2]]) }");
 
-        // TODO these fail because the argument name "x" is wrongly always output
-        assertEval(Ignored.Unknown, "{ f <- function(x) sys.call() ; f(2) }");
-        assertEval(Ignored.Unknown, "{ f <- function(x) sys.call() ; g <- function() 23 ; f(g()) }");
+        assertEval("{ f <- function(x) sys.call() ; f(2) }");
+        assertEval("{ f <- function(x) sys.call() ; g <- function() 23 ; f(g()) }");
+
         // fails because can't parse out the "name"
         assertEval(Ignored.Unknown, "{ (function() sys.call())() }");
     }

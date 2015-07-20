@@ -90,8 +90,6 @@ public class TestSimpleLists extends TestBase {
 
     @Test
     public void testListArgumentEvaluation() {
-        // lazy evaluation...
-        assertEval(Ignored.Unknown, "{ a <- c(0,0,0) ; f <- function() { g <- function() { a[2] <<- 9 } ; g() } ; u <- function() { a <- c(1,1,1) ; f() ; a } ; list(a,u()) }");
+        assertEval("{ a <- c(0,0,0) ; f <- function() { g <- function() { a[2] <<- 9 } ; g() } ; u <- function() { a <- c(1,1,1) ; f() ; a } ; list(a,u()) }");
     }
-
 }

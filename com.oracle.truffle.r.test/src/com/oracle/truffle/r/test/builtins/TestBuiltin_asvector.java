@@ -293,8 +293,7 @@ public class TestBuiltin_asvector extends TestBase {
 
     @Test
     public void testasvector56() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(quote(list(expand.grid(Hair = lab$Hair, Eye = lab$Eye, Sex = lab$Sex, stringsAsFactors = TRUE), Fr = as.vector(HairEyeColor))), 'list'); .Internal(as.vector(argv[[1]], argv[[2]]))");
+        assertEval("argv <- list(quote(list(expand.grid(Hair = lab$Hair, Eye = lab$Eye, Sex = lab$Sex, stringsAsFactors = TRUE), Fr = as.vector(HairEyeColor))), 'list'); .Internal(as.vector(argv[[1]], argv[[2]]))");
     }
 
     @Test
