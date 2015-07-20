@@ -37,7 +37,7 @@ def runR(args, className, nonZeroIsFatal=True, extraVmArgs=None, runBench=False,
     vmArgs = ['-cp', mx.classpath(project)]
     vmArgs += ["-Drhome.path=" + _fastr_suite.dir]
 
-    vmArgs += ['-G:InliningDepthError=500']
+    vmArgs += ['-G:InliningDepthError=500', '-XX:JVMCINMethodSizeLimit=1000000']
 
     if runBench == False:
         vmArgs += ['-ea', '-esa']
@@ -229,7 +229,7 @@ def _junit_r_harness(args, vmArgs, junitArgs):
     # suppress Truffle compilation by using a high threshold
     vmArgs += ['-G:TruffleCompilationThreshold=100000']
 
-    vmArgs += ['-G:InliningDepthError=500']
+    vmArgs += ['-G:InliningDepthError=500', '-XX:JVMCINMethodSizeLimit=1000000']
 
     graal_vm = _get_graal_vm()
     setREnvironment(graal_vm)
