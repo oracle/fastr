@@ -239,8 +239,6 @@ public class FrameFunctions {
             RLanguage callAST;
             try {
                 RExpression call = RContext.getEngine().parse(Source.fromText(callSource.getCode(), "<call source>"));
-                // TODO need argument permutation (cf match.call) when named
-                // args provided out of order wrt formals
                 callAST = (RLanguage) call.getDataAt(0);
             } catch (ParseException ex) {
                 throw RInternalError.shouldNotReachHere("parse call source");
