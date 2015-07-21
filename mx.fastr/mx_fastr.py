@@ -132,7 +132,13 @@ def _fastr_gate_body(args, tasks):
 
     with mx.GateTask('UnitTests: gate', tasks) as t:
         if t:
-            rc2 = junit(['--tests', _gate_unit_tests()])
+            rc2 = junit(['--J', '@-DR:+ExperimentalStateTrans', '--tests', _gate_unit_tests()])
+            if rc2 != 0:
+                mx.abort('unit tests failed')
+
+    with mx.GateTask('UnitTests: gate', tasks) as t:
+        if t:
+            rc2 = junit(['--J', '@-DR:-ExperimentalStateTrans', '--tests', _gate_unit_tests()])
             if rc2 != 0:
                 mx.abort('unit tests failed')
 
