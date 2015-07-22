@@ -49,13 +49,13 @@ public abstract class AttributeAccess extends Node {
         return index != -1 && attr.getNames().length > index && attr.getNames()[index] == name;
     }
 
-    @Specialization(guards = "nameMatches(attr, index)")
+    @Specialization(limit = "1", guards = "nameMatches(attr, index)")
     protected Object accessCached(RAttributes attr, //
                     @Cached("attr.find(name)") int index) {
         return attr.getValues()[index];
     }
 
-    @Specialization(guards = "cachedSize == attr.size()")
+    @Specialization(limit = "1", guards = "cachedSize == attr.size()")
     @ExplodeLoop
     protected Object accessCachedSize(RAttributes attr, //
                     @Cached("attr.size()") int cachedSize, //
@@ -72,7 +72,7 @@ public abstract class AttributeAccess extends Node {
         return null;
     }
 
-    @Specialization(contains = "accessCached")
+    @Specialization(contains = {"accessCached", "accessCachedSize"})
     protected Object access(RAttributes attr) {
         return attr.get(name);
     }
