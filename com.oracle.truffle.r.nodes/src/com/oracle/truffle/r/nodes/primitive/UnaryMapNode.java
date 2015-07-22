@@ -91,7 +91,6 @@ public final class UnaryMapNode extends Node {
         assert isSupported(originalOperand);
         RAbstractVector operand = operandClass.cast(originalOperand);
 
-        int operandLength = operandLengthProfile.profile(operand.getLength());
         RAbstractVector operandCast = operand.castSafe(getArgumentType());
 
         scalarNode.enable(operandCast);
@@ -99,6 +98,7 @@ public final class UnaryMapNode extends Node {
             assert operand.getLength() == 1;
             return scalarOperation(operandCast);
         } else {
+            int operandLength = operandLengthProfile.profile(operand.getLength());
             return vectorOperation(operand, operandCast, operandLength);
         }
     }

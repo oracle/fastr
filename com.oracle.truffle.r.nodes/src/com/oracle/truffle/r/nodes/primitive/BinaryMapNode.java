@@ -101,9 +101,6 @@ public final class BinaryMapNode extends Node {
         RAbstractVector left = leftClass.cast(originalLeft);
         RAbstractVector right = rightClass.cast(originalRight);
 
-        int leftLength = leftLengthProfile.profile(left.getLength());
-        int rightLength = rightLengthProfile.profile(right.getLength());
-
         RAbstractVector leftCast = left.castSafe(argumentType);
         RAbstractVector rightCast = right.castSafe(argumentType);
 
@@ -117,6 +114,8 @@ public final class BinaryMapNode extends Node {
             assert right.getLength() == 1;
             return applyScalar(leftCast, rightCast);
         } else {
+            int leftLength = leftLengthProfile.profile(left.getLength());
+            int rightLength = rightLengthProfile.profile(right.getLength());
             return applyVectorized(left, leftCast, leftLength, right, rightCast, rightLength);
         }
     }
