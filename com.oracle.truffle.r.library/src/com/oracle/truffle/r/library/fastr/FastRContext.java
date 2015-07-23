@@ -48,7 +48,11 @@ public class FastRContext {
 
     public abstract static class Print extends RExternalBuiltinNode.Arg1 {
         @Specialization
-        protected RNull print(int contextId) {
+        protected RNull print(RAbstractIntVector ctxt) {
+            if (ctxt.getLength() != 1) {
+                throw RError.error(RError.Message.INVALID_ARGUMENT, "context");
+            }
+            int contextId = ctxt.getDataAt(0);
             @SuppressWarnings("unused")
             RContext context = checkContext(contextId);
             try {

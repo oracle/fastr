@@ -61,16 +61,16 @@ public final class PostProcessArgumentsNode extends RNode {
     @Override
     @ExplodeLoop
     public Object execute(VirtualFrame frame) {
-        if (transArgsBitSet != 0) {
+        if (transArgsBitSet > 0) {
             for (int i = 0; i < sequence.length; i++) {
                 int mask = 1 << i;
                 if ((transArgsBitSet & mask) == mask) {
                     RShareable s = (RShareable) sequence[i].execute(frame);
                     if (s == null) {
-                        // it happens rarely in compiled code, but it does happen; reset the bitset
-                        // and re-initialize
+                        // it happens rarely in compiled code, but if it does happen, stop
+                        // decrementing reference counts
                         CompilerDirectives.transferToInterpreterAndInvalidate();
-                        transArgsBitSet = 0;
+                        transArgsBitSet = ArgumentStatePush.INVALID_INDEX;
                         break;
                     }
                     s.decRefCount();

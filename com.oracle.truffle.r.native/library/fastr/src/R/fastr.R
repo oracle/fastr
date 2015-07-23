@@ -82,9 +82,9 @@ fastr.context.create <- function(args="", kind="SHARE_NOTHING") {
     context
 }
 
-print.fastr_context <- function(context, ...) {
-	.FastR(.NAME="context.print", context)
-	invisible(context)
+print.fastr_context <- function(x, ...) {
+	.FastR(.NAME="context.print", x)
+	invisible(x)
 }
 
 fastr.context.eval <- function(contexts, exprs, par=FALSE) {
