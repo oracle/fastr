@@ -184,9 +184,14 @@ public class FrameFunctions {
                     throw RError.error(getEncapsulatingSourceSection(), RError.Message.MATCH_CALL_CALLED_OUTSIDE_FUNCTION);
                 }
             }
+            return doMatchCall(cframe, definition, call, expandDots);
+        }
+
+        @TruffleBoundary
+        private static RLanguage doMatchCall(Frame cframe, RFunction definition, RLanguage call, boolean expandDots) {
             /*
-             * Now we have to ensure that all parameters are named, in the correct order, and deal
-             * with "...". This process has a lot in common with MatchArguments, which we use as a
+             * We have to ensure that all parameters are named, in the correct order, and deal with
+             * "...". This process has a lot in common with MatchArguments, which we use as a
              * starting point
              */
             RCallNode callNode = (RCallNode) RASTUtils.unwrap(call.getRep());
