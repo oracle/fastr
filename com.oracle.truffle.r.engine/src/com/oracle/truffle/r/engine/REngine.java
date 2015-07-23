@@ -39,6 +39,7 @@ import com.oracle.truffle.api.instrument.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.library.graphics.*;
 import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.control.*;
 import com.oracle.truffle.r.nodes.function.*;
@@ -295,6 +296,11 @@ final class REngine implements RContext.Engine {
 
     public Object eval(RLanguage expr, MaterializedFrame frame) {
         RSyntaxNode n = (RSyntaxNode) expr.getRep();
+        // TODO Doing this to avoid problems with zero length source sections on RMissing
+        // but perhaps it ought to be being checked earlier
+        if (n instanceof ConstantNode) {
+            return ((ConstantNode) n).getValue();
+        }
         RootCallTarget callTarget = doMakeCallTarget(n, EVAL_FUNCTION_NAME);
         return runCall(callTarget, frame, false, false);
     }
@@ -388,16 +394,30 @@ final class REngine implements RContext.Engine {
 
     /**
      * Creates an anonymous function, with no arguments, whose {@link FunctionStatementsNode} is
-     * {@code body}.
+     * {@code body}. It's important that the {@link FunctionBodyNode} has a {@link SourceSection},
+     * for instrumentation, although the anonymous {@link FunctionDefinitionNode} itself does not
+     * need one.
      */
     @TruffleBoundary
     private static RootCallTarget doMakeCallTarget(RSyntaxNode body, String funName) {
-        FunctionBodyNode fbn = new FunctionBodyNode(SaveArgumentsNode.NO_ARGS, new FunctionStatementsNode(null, body));
+        ensureSourceSection(body);
+        FunctionBodyNode fbn = new FunctionBodyNode(SaveArgumentsNode.NO_ARGS, new FunctionStatementsNode(body.getSourceSection(), body));
         FrameDescriptor descriptor = new FrameDescriptor();
         FrameSlotChangeMonitor.initializeFunctionFrameDescriptor(descriptor);
         FunctionDefinitionNode rootNode = new FunctionDefinitionNode(null, descriptor, fbn, FormalArguments.NO_ARGS, funName, true, true, null);
         RootCallTarget callTarget = Truffle.getRuntime().createCallTarget(rootNode);
         return callTarget;
+    }
+
+    private static void ensureSourceSection(RSyntaxNode body) {
+        SourceSection ss = body.getSourceSection();
+        if (ss == null) {
+            RDeparse.State state = RDeparse.State.createPrintableState();
+            body.deparse(state);
+            String bodyString = state.toString();
+            Source source = Source.fromText(bodyString, "makeCallTarget");
+            body.asRNode().assignSourceSection(source.createSection("", 0, bodyString.length()));
+        }
     }
 
     /**

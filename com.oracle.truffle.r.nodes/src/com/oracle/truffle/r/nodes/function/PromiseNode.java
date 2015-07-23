@@ -319,19 +319,20 @@ public abstract class PromiseNode extends RNode {
      * wrapped into a "..." after unrolling.<br/>
      * In a certain sense this is the class corresponding class for GNU R's PROMSXP (AST equivalent
      * of RPromise, only needed for varargs in FastR TODO Move to separate package together with
-     * other varargs classes)
+     * other varargs classes) N.B. This implements {@link RSyntaxNode} because it can be stored as
+     * an argument in a {@link RCallNode} where the arguments are statically typed as
+     * {@link RSyntaxNode}.
      */
     public static final class VarArgNode extends RNode implements RSyntaxNode {
 
         @Child private FrameSlotNode varArgsSlotNode;
         @Child private PromiseHelperNode promiseHelper;
-        private final SourceSection src;
 
         private final int index;
 
         private VarArgNode(int index, SourceSection src) {
             this.index = index;
-            this.src = src;
+            assignSourceSection(src);
         }
 
         public RArgsValuesAndNames getVarargsAndNames(VirtualFrame frame) {
@@ -375,9 +376,10 @@ public abstract class PromiseNode extends RNode {
         }
 
         @Override
-        public SourceSection getEncapsulatingSourceSection() {
-            return src;
+        public void deparse(RDeparse.State state) {
+            state.append(getSourceSection().getCode());
         }
+
     }
 
     @TruffleBoundary
