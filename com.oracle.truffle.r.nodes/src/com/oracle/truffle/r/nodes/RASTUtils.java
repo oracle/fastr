@@ -30,13 +30,10 @@ import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.access.variables.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.function.*;
-import com.oracle.truffle.r.nodes.function.PromiseNode.VArgsPromiseNodeAsSyntax;
 import com.oracle.truffle.r.nodes.function.PromiseNode.VarArgNode;
-import com.oracle.truffle.r.nodes.function.PromiseNode.VarArgsPromiseNode;
 import com.oracle.truffle.r.nodes.instrument.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 import com.oracle.truffle.r.runtime.env.*;
 
 /**
@@ -103,26 +100,6 @@ public class RASTUtils {
             return value;
         } else if (argNode instanceof ReadVariableNode) {
             return RASTUtils.createRSymbol(argNode);
-        } else if (argNode instanceof VArgsPromiseNodeAsSyntax) {
-            /*
-             * This is mighty tedious, but GnuR represents this as a pairlist and we do have to
-             * convert it into either an RPairList or an RList for compatibility.
-             */
-            VarArgsPromiseNode vapn = ((VArgsPromiseNodeAsSyntax) argNode).getVarArgsPromiseNode();
-            Closure[] closures = vapn.getClosures();
-            ArgumentsSignature signature = vapn.getSignature();
-            RPairList prev = null;
-            RPairList result = null;
-            for (int i = 0; i < closures.length; i++) {
-                RPairList pl = RDataFactory.createPairList(createLanguageElement(unwrap(closures[i].getExpr())), RNull.instance, RNull.toRNull((signature.getName(i))));
-                if (prev != null) {
-                    prev.setCdr(pl);
-                } else {
-                    result = pl;
-                }
-                prev = pl;
-            }
-            return result;
         } else {
             assert !(argNode instanceof VarArgNode);
             return RDataFactory.createLanguage(argNode);
@@ -165,19 +142,19 @@ public class RASTUtils {
             return (RNode) NodeUtil.cloneNode((Node) l.getRep());
         } else if (value instanceof RPromise) {
             RPromise promise = (RPromise) value;
-            RNode promiseRep = ((RNode) ((RPromise) value).getRep()).unwrap();
+            RNode promiseRep = (RNode) unwrap(((RPromise) value).getRep());
             if (promiseRep instanceof VarArgNode) {
                 VarArgNode varArgNode = (VarArgNode) promiseRep;
                 RPromise varArgPromise = varArgNode.executeNonEvaluated((VirtualFrame) promise.getFrame());
                 Node unwrappedRep = unwrap(varArgPromise.getRep());
-                if (unwrappedRep instanceof RCallNode) {
+                if (unwrappedRep instanceof ConstantNode) {
+                    return (ConstantNode) unwrappedRep;
+                } else {
                     // this is for the return value is supposed to be of the form "..N" to represent
                     // unexpanded component of ..., as for example in:
                     // f1<-function(...) match.call(expand.dots=FALSE);
-                    // f2<-function(...) f1(...); f2(c("a"))
+                    // f2<-function(...) f1(...); f2(a)
                     return null;
-                } else {
-                    return createNodeForValue(varArgPromise);
                 }
             }
             return NodeUtil.cloneNode(promiseRep);

@@ -34,7 +34,7 @@ import com.oracle.truffle.r.runtime.data.RPromise.PromiseType;
 /**
  * A optimizing {@link PromiseNode}: It evaluates a constant directly.
  */
-public final class OptConstantPromiseNode extends RNode {
+public final class OptConstantPromiseNode extends PromiseNode {
 
     private final PromiseType type;
     private final ConstantNode constantExpr;
@@ -43,6 +43,7 @@ public final class OptConstantPromiseNode extends RNode {
     @Child private WrapArgumentNode wrapNode;
 
     public OptConstantPromiseNode(PromiseType type, ConstantNode constantExpr, WrapArgumentNode wrapNode) {
+        super(null);
         this.type = type;
         this.constantExpr = constantExpr;
         this.constantValue = constantExpr.getValue();
@@ -63,5 +64,10 @@ public final class OptConstantPromiseNode extends RNode {
     @Override
     public SourceSection getEncapsulatingSourceSection() {
         return constantExpr.getSourceSection();
+    }
+
+    @Override
+    public RSyntaxNode getPromiseExpr() {
+        return constantExpr;
     }
 }

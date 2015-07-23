@@ -31,7 +31,6 @@ import com.oracle.truffle.r.nodes.access.variables.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.control.*;
 import com.oracle.truffle.r.nodes.function.*;
-import com.oracle.truffle.r.nodes.function.PromiseNode.VArgsPromiseNodeAsSyntax;
 import com.oracle.truffle.r.nodes.instrument.debug.*;
 import com.oracle.truffle.r.nodes.runtime.*;
 import com.oracle.truffle.r.runtime.*;
@@ -124,8 +123,6 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
             return baseResult;
         } else if (node instanceof AccessFieldNode) {
             return 3;
-        } else if (node instanceof VArgsPromiseNodeAsSyntax) {
-            return ((VArgsPromiseNodeAsSyntax) node).getVarArgsPromiseNode().getClosures().length;
         } else {
             // TODO fill out
             assert false : node;

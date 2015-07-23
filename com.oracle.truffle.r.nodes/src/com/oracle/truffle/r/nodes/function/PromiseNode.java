@@ -65,6 +65,11 @@ public abstract class PromiseNode extends RNode {
         this.factory = factory;
     }
 
+    /**
+     * Returns the {@link RSyntaxNode} that is the expression associated with the promise.
+     */
+    public abstract RSyntaxNode getPromiseExpr();
+
     public static RNode createInlined(RNode expression, Object defaultValue, boolean unwrap) {
         CompilerAsserts.neverPartOfCompilation();
         RNode clonedExpression = NodeUtil.cloneNode(expression);
@@ -157,6 +162,11 @@ public abstract class PromiseNode extends RNode {
         public SourceSection getEncapsulatingSourceSection() {
             return src;
         }
+
+        @Override
+        public RSyntaxNode getPromiseExpr() {
+            return (RSyntaxNode) factory.getExpr();
+        }
     }
 
     /**
@@ -216,6 +226,11 @@ public abstract class PromiseNode extends RNode {
         @Override
         public SourceSection getEncapsulatingSourceSection() {
             return varargNode.getEncapsulatingSourceSection();
+        }
+
+        @Override
+        public RSyntaxNode getPromiseExpr() {
+            return (RSyntaxNode) factory.getExpr();
         }
     }
 
@@ -408,52 +423,6 @@ public abstract class PromiseNode extends RNode {
 
         public ArgumentsSignature getSignature() {
             return signature;
-        }
-    }
-
-    @TruffleBoundary
-    public static RSyntaxNode createVarArgsAsSyntax(RNode[] nodes, ArgumentsSignature signature, ClosureCache closureCache) {
-        return new VArgsPromiseNodeAsSyntax(new VarArgsPromiseNode(nodes, signature, closureCache));
-    }
-
-    /**
-     * A fake piece of syntax that allows a {@link VarArgsPromiseNode} to be deparsed.
-     */
-    public static final class VArgsPromiseNodeAsSyntax extends RNode implements RSyntaxNode {
-        private final VarArgsPromiseNode vapNode;
-
-        public VArgsPromiseNodeAsSyntax(VarArgsPromiseNode vapNode) {
-            this.vapNode = vapNode;
-        }
-
-        public VarArgsPromiseNode getVarArgsPromiseNode() {
-            return vapNode;
-        }
-
-        @Override
-        public Object execute(VirtualFrame frame) {
-            return vapNode.execute(frame);
-        }
-
-        @Override
-        public void deparse(RDeparse.State state) {
-            // In support of match.call(expand.dots=FALSE)
-            // GnuR represents this with a pairlist and deparses it as "list(a,b,..)"
-            state.append("list(");
-            Closure[] closures = vapNode.getClosures();
-            ArgumentsSignature signature = vapNode.getSignature();
-            for (int i = 0; i < closures.length; i++) {
-                String name = signature.getName(i);
-                if (name != null) {
-                    state.append(name);
-                    state.append(" = ");
-                }
-                ((RSyntaxNode) closures[i].getExpr()).deparse(state);
-                if (i < closures.length - 1) {
-                    state.append(", ");
-                }
-            }
-            state.append(')');
         }
     }
 
