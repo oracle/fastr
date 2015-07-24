@@ -114,7 +114,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         this.uninitializedBody = body;
         this.description = description;
         this.substituteFrame = substituteFrame;
-        this.onExitSlot = skipExit ? null : FrameSlotNode.create(RFrameSlot.OnExit, false);
+        this.onExitSlot = skipExit ? null : FrameSlotNode.createInitialized(frameDesc, RFrameSlot.OnExit, false);
         this.uuid = FunctionUIDFactory.get().createUID();
         this.checkSingletonFrame = !substituteFrame;
         this.needsSplitting = needsAnyBuiltinSplitting();
@@ -275,12 +275,13 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
             CompilerDirectives.transferToInterpreterAndInvalidate();
             assert invalidateFrameSlotProfile == null && dotMethodSlot == null && dotClassSlot == null && dotGenericCallEnvSlot == null && dotGenericCallDefSlot == null && dotGroupSlot == null;
             invalidateFrameSlotProfile = BranchProfile.create();
-            dotGenericSlot = insert(FrameSlotNode.create(RRuntime.RDotGeneric, true));
-            dotMethodSlot = insert(FrameSlotNode.create(RRuntime.RDotMethod, true));
-            dotClassSlot = insert(FrameSlotNode.create(RRuntime.RDotClass, true));
-            dotGenericCallEnvSlot = insert(FrameSlotNode.create(RRuntime.RDotGenericCallEnv, true));
-            dotGenericCallDefSlot = insert(FrameSlotNode.create(RRuntime.RDotGenericDefEnv, true));
-            dotGroupSlot = insert(FrameSlotNode.create(RRuntime.RDotGroup, true));
+            FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
+            dotGenericSlot = insert(FrameSlotNode.createInitialized(frameDescriptor, RRuntime.RDotGeneric, true));
+            dotMethodSlot = insert(FrameSlotNode.createInitialized(frameDescriptor, RRuntime.RDotMethod, true));
+            dotClassSlot = insert(FrameSlotNode.createInitialized(frameDescriptor, RRuntime.RDotClass, true));
+            dotGenericCallEnvSlot = insert(FrameSlotNode.createInitialized(frameDescriptor, RRuntime.RDotGenericCallEnv, true));
+            dotGenericCallDefSlot = insert(FrameSlotNode.createInitialized(frameDescriptor, RRuntime.RDotGenericDefEnv, true));
+            dotGroupSlot = insert(FrameSlotNode.createInitialized(frameDescriptor, RRuntime.RDotGroup, true));
         }
         FrameSlotChangeMonitor.setObjectAndInvalidate(frame, dotGenericSlot.executeFrameSlot(frame), args.generic, false, invalidateFrameSlotProfile);
         FrameSlotChangeMonitor.setObjectAndInvalidate(frame, dotMethodSlot.executeFrameSlot(frame), args.method, false, invalidateFrameSlotProfile);
