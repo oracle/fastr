@@ -24,13 +24,13 @@ package com.oracle.truffle.r.repl;
 
 import java.util.*;
 
+import com.oracle.truffle.api.debug.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.instrument.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.vm.*;
 import com.oracle.truffle.api.vm.TruffleVM.Language;
-import com.oracle.truffle.tools.debug.engine.*;
 import com.oracle.truffle.tools.debug.shell.*;
 import com.oracle.truffle.tools.debug.shell.client.*;
 import com.oracle.truffle.tools.debug.shell.server.*;
@@ -38,7 +38,7 @@ import com.oracle.truffle.tools.debug.shell.server.*;
 /**
  * A first cut at a REPL server for the FastR implementation.
  */
-public final class RREPLServer implements REPLServer {
+public final class RREPLServer extends REPLServer {
 
     public static void main(String[] args) {
 
@@ -56,13 +56,11 @@ public final class RREPLServer implements REPLServer {
     }
 
     private final Language language;
+    private TruffleVM vm;
+    private Debugger db;
     private final String statusPrefix;
-    private final DebugEngine debugEngine;
-
     private final Map<String, REPLHandler> handlerMap = new HashMap<>();
-
     private RREPLServerContext currentServerContext;
-
     private SimpleREPLClient client = null;
 
     private void add(REPLHandler fileHandler) {
@@ -94,27 +92,42 @@ public final class RREPLServer implements REPLServer {
         add(RREPLHandler.BACKTRACE_HANDLER);
         add(RREPLHandler.EVAL_HANDLER);
         add(RREPLHandler.LOAD_RUN_FILE_HANDLER);
-        add(RREPLHandler.R_FRAME_HANDLER);
+// add(RREPLHandler.R_FRAME_HANDLER);
+        add(RREPLHandler.FRAME_HANDLER);
         add(RREPLHandler.INFO_HANDLER);
 
-        TruffleVM vm = TruffleVM.newVM().build();
+        EventConsumer<SuspendedEvent> onHalted = new EventConsumer<SuspendedEvent>(SuspendedEvent.class) {
+            @Override
+            protected void on(SuspendedEvent ev) {
+                RREPLServer.this.haltedAt(ev);
+            }
+        };
+        EventConsumer<ExecutionEvent> onExec = new EventConsumer<ExecutionEvent>(ExecutionEvent.class) {
+            @Override
+            protected void on(ExecutionEvent event) {
+                event.prepareStepInto();
+                db = event.getDebugger();
+            }
+        };
+
+        this.vm = TruffleVM.newVM().onEvent(onHalted).onEvent(onExec).build();
+        assert vm != null;
         this.language = vm.getLanguages().get("application/x-r");
         assert language != null;
 
         this.statusPrefix = language.getShortName() + " REPL:";
-        final RREPLDebugClient rDebugClient = new RREPLDebugClient();
-        this.debugEngine = DebugEngine.create(rDebugClient, language);
     }
 
     private void setClient(SimpleREPLClient client) {
         this.client = client;
     }
 
+    @Override
     public REPLMessage start() {
 
         // Complete initialization of instrumentation & debugging contexts.
 
-        this.currentServerContext = new RREPLServerContext(null, null, null);
+        this.currentServerContext = new RREPLServerContext(null, null);
 
         final REPLMessage reply = new REPLMessage();
         reply.put(REPLMessage.STATUS, REPLMessage.SUCCEEDED);
@@ -122,6 +135,7 @@ public final class RREPLServer implements REPLServer {
         return reply;
     }
 
+    @Override
     public REPLMessage[] receive(REPLMessage request) {
         if (currentServerContext == null) {
             final REPLMessage message = new REPLMessage();
@@ -140,8 +154,8 @@ public final class RREPLServer implements REPLServer {
 
         private final RREPLServerContext predecessor;
 
-        public RREPLServerContext(RREPLServerContext predecessor, Node astNode, MaterializedFrame frame) {
-            super(predecessor == null ? 0 : predecessor.getLevel() + 1, astNode, frame);
+        public RREPLServerContext(RREPLServerContext predecessor, SuspendedEvent event) {
+            super(predecessor == null ? 0 : predecessor.getLevel() + 1, event);
             this.predecessor = predecessor;
         }
 
@@ -167,57 +181,58 @@ public final class RREPLServer implements REPLServer {
         }
 
         @Override
-        public DebugEngine getDebugEngine() {
-            return debugEngine;
+        public TruffleVM vm() {
+            return vm;
+        }
+
+        @Override
+        protected Debugger db() {
+            // TODO Auto-generated method stub
+            return db;
+        }
+
+        @Override
+        public void registerBreakpoint(Breakpoint breakpoint) {
+            RREPLServer.this.registerBreakpoint(breakpoint);
+
+        }
+
+        @Override
+        public Breakpoint findBreakpoint(int id) {
+            return RREPLServer.this.findBreakpoint(id);
+        }
+
+        @Override
+        public int getBreakpointID(Breakpoint breakpoint) {
+            return RREPLServer.this.getBreakpointID(breakpoint);
         }
 
     }
 
-    /**
-     * Specialize the standard R debug context by notifying the REPL client when execution is
-     * halted, e.g. at a breakpoint.
-     * <p>
-     * Before notification, the server creates a new context at the halted location, in which
-     * subsequent evaluations take place until such time as the client says to "continue".
-     * <p>
-     * This implementation "cheats" the intended asynchronous architecture by calling back directly
-     * to the client with the notification.
-     */
-    private final class RREPLDebugClient implements DebugClient {
+    void haltedAt(SuspendedEvent event) {
+        // Create and push a new debug context where execution is halted
+        currentServerContext = new RREPLServerContext(currentServerContext, event);
 
-        private RREPLDebugClient() {
+        // Message the client that execution is halted and is in a new debugging context
+        final REPLMessage message = new REPLMessage();
+        message.put(REPLMessage.OP, REPLMessage.STOPPED);
+        final SourceSection src = event.getNode().getSourceSection();
+        final Source source = src.getSource();
+        message.put(REPLMessage.SOURCE_NAME, source.getName());
+        message.put(REPLMessage.FILE_PATH, source.getPath());
+        message.put(REPLMessage.LINE_NUMBER, Integer.toString(src.getStartLine()));
+        message.put(REPLMessage.STATUS, REPLMessage.SUCCEEDED);
+        message.put(REPLMessage.DEBUG_LEVEL, Integer.toString(currentServerContext.getLevel()));
 
-        }
+        try {
+            // Cheat with synchrony: call client directly about entering a nested debugging
+            // context.
+            client.halted(message);
+        } finally {
+            // Returns when "continue" is called in the new debugging context
 
-        public void haltedAt(Node node, MaterializedFrame frame, List<String> warnings) {
-            // Create and push a new debug context where execution is halted
-            currentServerContext = new RREPLServerContext(currentServerContext, node, frame);
-
-            // Message the client that execution is halted and is in a new debugging context
-            final REPLMessage message = new REPLMessage();
-            message.put(REPLMessage.OP, REPLMessage.STOPPED);
-            final SourceSection src = node.getSourceSection();
-            final Source source = src.getSource();
-            message.put(REPLMessage.SOURCE_NAME, source.getName());
-            message.put(REPLMessage.FILE_PATH, source.getPath());
-            message.put(REPLMessage.LINE_NUMBER, Integer.toString(src.getStartLine()));
-            message.put(REPLMessage.STATUS, REPLMessage.SUCCEEDED);
-            message.put(REPLMessage.DEBUG_LEVEL, Integer.toString(currentServerContext.getLevel()));
-
-            try {
-                // Cheat with synchrony: call client directly about entering a nested debugging
-                // context.
-                client.halted(message);
-            } finally {
-                // Returns when "continue" is called in the new debugging context
-
-                // Pop the debug context, and return so that the old context will continue
-                currentServerContext = currentServerContext.predecessor;
-            }
-        }
-
-        public Language getLanguage() {
-            return language;
+            // Pop the debug context, and return so that the old context will continue
+            currentServerContext = currentServerContext.predecessor;
         }
     }
 

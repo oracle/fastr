@@ -22,18 +22,24 @@
  */
 package com.oracle.truffle.r.repl;
 
+import java.io.*;
 import java.util.*;
 
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.instrument.*;
 import com.oracle.truffle.api.source.*;
+import com.oracle.truffle.api.vm.*;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.tools.debug.engine.*;
 import com.oracle.truffle.tools.debug.shell.*;
+import com.oracle.truffle.tools.debug.shell.client.*;
 import com.oracle.truffle.tools.debug.shell.server.*;
 
 /**
- * Request handlers for the {@link RREPLServer}; these should be stateless.
+ * Instantiation of the "server handler" part of the "REPL*" debugger for R.
+ * <p>
+ * These handlers implement debugging commands that require language-specific support.
+ *
+ * @see SimpleREPLClient
  */
 public abstract class RREPLHandler extends REPLHandler {
 
@@ -49,16 +55,19 @@ public abstract class RREPLHandler extends REPLHandler {
             final REPLMessage message = new REPLMessage(REPLMessage.OP, REPLMessage.EVAL);
             message.put(REPLMessage.SOURCE_NAME, sourceName);
             message.put(REPLMessage.DEBUG_LEVEL, Integer.toString(serverContext.getLevel()));
+            final Visualizer visualizer = serverContext.getVisualizer();
 
-            final Source source = Source.fromText(request.get(REPLMessage.CODE), sourceName);
-            final MaterializedFrame frame = serverContext.getFrame();
+            final String source = request.get(REPLMessage.CODE);
+            MaterializedFrame frame = null;
+            final Integer frameNumber = request.getIntValue(REPLMessage.FRAME_NUMBER);
             try {
+                Object returnValue;
                 if (frame == null) { // Top Level
-                    return finishReplyFailed(message, "no active engine");
+                    returnValue = serverContext.vm().eval("application/javascript", source);
                 } else {
-                    final Object returnValue = serverContext.getDebugEngine().eval(source, serverContext.getNode(), frame);
-                    return finishReplySucceeded(message, serverContext.getLanguage().getToolSupport().getVisualizer().displayValue(returnValue, 0));
+                    returnValue = serverContext.vm().eval("application/r", source);
                 }
+                return finishReplySucceeded(message, visualizer.displayValue(returnValue, 0));
             } catch (QuitException ex) {
                 throw ex;
             } catch (KillException ex) {
@@ -101,67 +110,49 @@ public abstract class RREPLHandler extends REPLHandler {
      * Returns a general description of the frame, plus a textual summary of the slot values: one
      * per line. Custiom version for FastR that does not show anonymous frame slots.
      */
-    public static final REPLHandler R_FRAME_HANDLER = new REPLHandler(REPLMessage.FRAME) {
-
-        @Override
-        public REPLMessage[] receive(REPLMessage request, REPLServerContext serverContext) {
-            final REPLMessage reply = createReply();
-            final Integer frameNumber = request.getIntValue(REPLMessage.FRAME_NUMBER);
-            if (frameNumber == null) {
-                return finishReplyFailed(reply, "no frame number specified");
-            }
-            final List<FrameDebugDescription> stack = serverContext.getDebugEngine().getStack();
-            if (frameNumber < 0 || frameNumber >= stack.size()) {
-                return finishReplyFailed(reply, "frame number " + frameNumber + " out of range");
-            }
-            final FrameDebugDescription frameDescription = stack.get(frameNumber);
-            final REPLMessage frameMessage = createFrameInfoMessage(serverContext, frameDescription);
-            final Frame frame = RArguments.unwrap(frameDescription.frameInstance().getFrame(FrameInstance.FrameAccess.READ_ONLY, true));
-            final FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
-            Visualizer visualizer = serverContext.getLanguage().getToolSupport().getVisualizer();
-            try {
-                final StringBuilder sb = new StringBuilder();
-                for (FrameSlot slot : frameDescriptor.getSlots()) {
-                    String slotName = slot.getIdentifier().toString();
-                    if (!AnonymousFrameVariable.isAnonymous(slotName)) {
-                        sb.append(Integer.toString(slot.getIndex()) + ": " + visualizer.displayIdentifier(slot) + " = ");
-                        try {
-                            final Object value = frame.getValue(slot);
-                            sb.append(visualizer.displayValue(value, 0));
-                        } catch (Exception ex) {
-                            sb.append("???");
-                        }
-                        sb.append("\n");
-                    }
-                }
-                return finishReplySucceeded(frameMessage, sb.toString());
-            } catch (Exception ex) {
-                return finishReplyFailed(frameMessage, ex.toString());
-            }
-        }
-    };
+    /*
+     * public static final REPLHandler R_FRAME_HANDLER = new REPLHandler(REPLMessage.FRAME) {
+     * 
+     * @Override public REPLMessage[] receive(REPLMessage request, REPLServerContext serverContext)
+     * { final REPLMessage reply = createReply(); final Integer frameNumber =
+     * request.getIntValue(REPLMessage.FRAME_NUMBER); if (frameNumber == null) { return
+     * finishReplyFailed(reply, "no frame number specified"); } final List<FrameDebugDescription>
+     * stack = serverContext.getDebugEngine().getStack(); if (frameNumber < 0 || frameNumber >=
+     * stack.size()) { return finishReplyFailed(reply, "frame number " + frameNumber +
+     * " out of range"); } final FrameDebugDescription frameDescription = stack.get(frameNumber);
+     * final REPLMessage frameMessage = createFrameInfoMessage(serverContext, frameDescription);
+     * final Frame frame =
+     * RArguments.unwrap(frameDescription.frameInstance().getFrame(FrameInstance.
+     * FrameAccess.READ_ONLY, true)); final FrameDescriptor frameDescriptor =
+     * frame.getFrameDescriptor(); Visualizer visualizer =
+     * serverContext.getLanguage().getToolSupport().getVisualizer(); try { final StringBuilder sb =
+     * new StringBuilder(); for (FrameSlot slot : frameDescriptor.getSlots()) { String slotName =
+     * slot.getIdentifier().toString(); if (!AnonymousFrameVariable.isAnonymous(slotName)) {
+     * sb.append(Integer.toString(slot.getIndex()) + ": " + visualizer.displayIdentifier(slot) +
+     * " = "); try { final Object value = frame.getValue(slot);
+     * sb.append(visualizer.displayValue(value, 0)); } catch (Exception ex) { sb.append("???"); }
+     * sb.append("\n"); } } return finishReplySucceeded(frameMessage, sb.toString()); } catch
+     * (Exception ex) { return finishReplyFailed(frameMessage, ex.toString()); } } };
+     */
 
     public static final RREPLHandler LOAD_RUN_FILE_HANDLER = new RREPLHandler(REPLMessage.LOAD_RUN) {
 
         @Override
         public REPLMessage[] receive(REPLMessage request, REPLServerContext serverContext) {
+            final REPLMessage reply = new REPLMessage(REPLMessage.OP, REPLMessage.LOAD_RUN);
             final REPLMessage message = new REPLMessage(REPLMessage.OP, REPLMessage.LOAD_RUN);
             final String fileName = request.get(REPLMessage.SOURCE_NAME);
 
             try {
-                Source source = null;
-                if (fileName.endsWith("rshell")) {
-                    // workaround as there is no "shell" command
-                    source = Source.fromText("", "<shell>");
-                } else {
-                    source = Source.fromFileName(fileName, true);
-                    if (source == null) {
-                        return finishReplyFailed(message, "can't find file \"" + fileName + "\"");
-                    }
+                final File file = new File(fileName);
+                if (!file.canRead()) {
+                    return finishReplyFailed(reply, "can't find file \"" + fileName + "\"");
                 }
-                serverContext.getDebugEngine().run(source, false);
-                message.put(REPLMessage.FILE_PATH, source.getPath());
-                return finishReplySucceeded(message, source.getName() + "  exited");
+                final TruffleVM vm = serverContext.vm();
+                vm.eval(file.toURI());
+                final String path = file.getCanonicalPath();
+                message.put(REPLMessage.FILE_PATH, path);
+                return finishReplySucceeded(message, fileName + "  exited");
             } catch (QuitException ex) {
                 throw ex;
             } catch (KillException ex) {

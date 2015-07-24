@@ -20,11 +20,13 @@
 # or visit www.oracle.com if you need additional information or have any
 # questions.
 #
-import tempfile, shutil, platform, zipfile, sys, subprocess
-from os.path import join, sep, exists
+import tempfile, platform, subprocess
+from os.path import join, sep
 from argparse import ArgumentParser
 import mx
+import mx_gate
 import mx_graal
+import mx_jvmci
 import os
 
 _fastr_suite = mx.suite('fastr')
@@ -43,7 +45,15 @@ def runR(args, className, nonZeroIsFatal=True, extraVmArgs=None, runBench=False,
         vmArgs += ['-ea', '-esa']
     if extraVmArgs:
         vmArgs += extraVmArgs
+    vmArgs += _add_truffle_jar()
     return mx_graal.vm(vmArgs + [className] + args, vm=graal_vm, nonZeroIsFatal=nonZeroIsFatal)
+
+def _add_truffle_jar():
+    # Unconditionally prepend truffle.jar to the boot class path.
+    # This used to be done by the VM itself but was removed to
+    # separate the VM from Truffle.
+    truffle_jar = mx.distribution('truffle:TRUFFLE').path
+    return ['-Xbootclasspath/p:' + truffle_jar]
 
 def setREnvironment(graal_vm):
     osname = platform.system()
@@ -60,9 +70,9 @@ def setREnvironment(graal_vm):
 
 def _get_graal_vm():
     '''
-    Check for the --vm global mx argument by checking mx.graal._vm.
+    Check for the --vm global mx argument by checking mx.jvmci._vm.
     '''
-    return "server" if mx_graal._vm is None else mx_graal._vm
+    return "server" if mx_jvmci._vm is None else mx_jvmci._vm
 
 def rshell(args, nonZeroIsFatal=True, extraVmArgs=None, runBench=False):
     '''run R shell'''
@@ -85,85 +95,39 @@ def build(args):
         os.environ['COMPILER_WARNINGS_FATAL'] = 'false'
         os.environ['USE_CLANG'] = 'true'
         os.environ['LFLAGS'] = '-Xlinker -lstdc++'
-    mx_graal.build(args, vm=graal_vm) # this calls mx.build
+    mx_jvmci.build(args, vm=graal_vm) # this calls mx.build
 
-def findbugs(args):
-    '''run FindBugs against non-test Java projects'''
-    findBugsHome = mx.get_env('FINDBUGS_HOME', None)
-    if findBugsHome:
-        findbugsJar = join(findBugsHome, 'lib', 'findbugs.jar')
-    else:
-        findbugsLib = join(_fastr_suite.dir, 'lib', 'findbugs-3.0.0')
-        if not exists(findbugsLib):
-            tmp = tempfile.mkdtemp(prefix='findbugs-download-tmp', dir=_fastr_suite.dir)
-            try:
-                findbugsDist = join(tmp, 'findbugs.zip')
-                mx.download(findbugsDist, ['http://lafo.ssw.uni-linz.ac.at/graal-external-deps/findbugs-3.0.0.zip', 'http://sourceforge.net/projects/findbugs/files/findbugs/3.0.0/findbugs-3.0.0.zip'])
-                with zipfile.ZipFile(findbugsDist) as zf:
-                    candidates = [e for e in zf.namelist() if e.endswith('/lib/findbugs.jar')]
-                    assert len(candidates) == 1, candidates
-                    libDirInZip = os.path.dirname(candidates[0])
-                    zf.extractall(tmp)
-                shutil.copytree(join(tmp, libDirInZip), findbugsLib)
-            finally:
-                shutil.rmtree(tmp)
-        findbugsJar = join(findbugsLib, 'findbugs.jar')
-    assert exists(findbugsJar)
-    nonTestProjects = [p for p in _fastr_suite.projects if not p.name.endswith('.test') and not p.name.endswith('.processor') and not p.native]
-    outputDirs = [p.output_dir() for p in nonTestProjects]
-    findbugsResults = join(_fastr_suite.dir, 'findbugs.html')
+def _fastr_gate_runner(args, tasks):
+    # Until fixed, we call Checkstyle here and limit to primary
+    with mx_gate.Task('Checkstyle check', tasks) as t:
+        if mx.checkstyle(['--primary']) != 0:
+            t.abort('Checkstyle warnings were found')
 
-    cmd = ['-jar', findbugsJar, '-low', '-maxRank', '15', '-exclude', join(_fastr_suite.mxDir, 'findbugs-exclude.xml'), '-html']
-    if sys.stdout.isatty():
-        cmd.append('-progress')
-    cmd = cmd + ['-auxclasspath', mx.classpath([p.name for p in nonTestProjects]), '-output', findbugsResults, '-exitcode'] + args + outputDirs
-    exitcode = mx.run_java(cmd, nonZeroIsFatal=False)
-    return exitcode
+    # FastR has custom copyright check
+    with mx_gate.Task('Copyright check', tasks) as t:
+        if mx.checkcopyrights(['--primary']) != 0:
+            t.abort('copyright errors')
 
-def _fastr_gate_body(args, tasks):
-    with mx.GateTask('BuildJavaWithJavac', tasks) as t:
-        if t: build([])
     # check that the expected test output file is up to date
-    with mx.GateTask('UnitTests: ExpectedTestOutput file check', tasks) as t:
+    with mx_gate.Task('UnitTests: ExpectedTestOutput file check', tasks) as t:
         if t:
             rc1 = junit(['--tests', _all_unit_tests(), '--check-expected-output'])
             if rc1 != 0:
                 mx.abort('unit tests expected output check failed')
 
-    with mx.GateTask('UnitTests: gate', tasks) as t:
+    with mx_gate.Task('UnitTests: gate', tasks) as t:
         if t:
             rc2 = junit(['--tests', _gate_unit_tests()])
             if rc2 != 0:
                 mx.abort('unit tests failed')
 
+mx_gate.add_gate_runner(_fastr_suite, _fastr_gate_runner)
+
 def gate(args):
     '''Run the R gate'''
-    # suppress the download meter
-    mx._opts.no_download_progress = True
 
-    # FastR has custom copyright check
-
-    t = mx.GateTask('Copyright check')
-    rc = mx.checkcopyrights(['--primary'])
-    t.stop()
-    if rc != 0:
-        mx.abort('copyright errors')
-
-    # Enforce checkstyle (not dedfault task in mx.gate)
-    t = mx.GateTask('Checkstyle check')
-    rc = mx.checkstyle(['--primary'])
-    t.stop()
-    if rc != 0:
-        mx.abort('checkstyle errors')
-
-# temp disable due to non-determinism
-#    t = mx.GateTask('FindBugs')
-#    rc = findbugs([])
-#    t.stop()
-#    if rc != 0:
-#        mx.abort('FindBugs warnings were found')
-
-    mx.gate(args, _fastr_gate_body)
+    # exclude findbugs until compliant
+    mx_gate.gate(args + ['-x', '-t', 'FindBugs,Checkheaders,Checkstyle'])
 
 def _test_harness_body(args, vmArgs):
     '''the callback from mx.bench'''
@@ -233,6 +197,7 @@ def _junit_r_harness(args, vmArgs, junitArgs):
 
     graal_vm = _get_graal_vm()
     setREnvironment(graal_vm)
+    vmArgs += _add_truffle_jar()
 
     return mx_graal.vm(vmArgs + junitArgs, vm=graal_vm, nonZeroIsFatal=False)
 
@@ -444,7 +409,6 @@ _commands = {
     'unittest' : [unittest, ['options']],
     'rbcheck' : [rbcheck, ['options']],
     'rcmplib' : [rcmplib, ['options']],
-    'findbugs' : [findbugs, ''],
     'test' : [test, ['options']],
     'rrepl' : [runRREPL, '[options]'],
     }

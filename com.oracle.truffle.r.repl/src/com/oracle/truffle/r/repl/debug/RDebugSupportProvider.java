@@ -43,21 +43,6 @@ import com.oracle.truffle.r.shell.*;
 public final class RDebugSupportProvider implements DebugSupportProvider {
 
     @Override
-    public void run(Source source) throws DebugSupportException {
-        try {
-            boolean runShell = source.getName().equals("<shell>");
-            String[] args = new String[runShell ? 1 : 2];
-            args[0] = "--debugger=rrepl";
-            if (!runShell) {
-                args[1] = "--file=" + source.getPath();
-            }
-            RCommand.main(args);
-        } catch (Exception e) {
-            throw new DebugSupportException("Can't run source " + source.getName() + ": " + e.getMessage());
-        }
-    }
-
-    @Override
     public Object evalInContext(Source source, Node node, MaterializedFrame frame) {
         return RContext.getEngine().parseAndEval(source, frame, false, false);
     }

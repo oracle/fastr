@@ -30,6 +30,7 @@ import com.oracle.truffle.api.instrument.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.repl.debug.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.shell.*;
 
 @TruffleLanguage.Registration(name = "R", version = "3.1.3", mimeType = "application/x-r")
 public class TruffleRLanguage extends TruffleLanguage {
@@ -42,7 +43,14 @@ public class TruffleRLanguage extends TruffleLanguage {
 
     @Override
     protected Object eval(Source code) throws IOException {
-        throw RInternalError.unimplemented();
+        boolean runShell = code.getName().equals("rshell.R");
+        String[] args = new String[runShell ? 1 : 2];
+        args[0] = "--debugger=rrepl";
+        if (!runShell) {
+            args[1] = "--file=" + code.getPath();
+        }
+        RCommand.main(args);
+        return null;
     }
 
     @Override

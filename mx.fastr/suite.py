@@ -21,15 +21,15 @@
 # questions.
 #
 suite = {
-  "mxversion" : "4.3.5",
+  "mxversion" : "5.0.0",
   "name" : "fastr",
 
   "imports" : {
     "suites" : [
             {
                "name" : "graal",
-               "version" : "15a6332253bae50440e079d84aec17469559f891",
-               "urls" : [{"url" : "https://bitbucket.org/allr/graal", "kind" : "hg"}]
+               "version" : "472a3cc01577ab6010563e2f44c88bde968cd345",
+               "urls" : [{"url" : "https://lafo.ssw.uni-linz.ac.at/hg/graal-compiler", "kind" : "hg"}]
             },
         ],
    },
@@ -220,7 +220,7 @@ suite = {
       ],
       "checkstyle" : "com.oracle.truffle.r.runtime",
       "javaCompliance" : "1.8",
-      "annotationProcessors" : ["com.oracle.truffle.r.parser.processor"],
+      "annotationProcessors" : ["TRUFFLE_R_PARSER_PROCESSOR"],
       "workingSets" : "Truffle,FastR",
     },
 
@@ -266,7 +266,7 @@ suite = {
     "com.oracle.truffle.r.test" : {
       "sourceDirs" : ["src"],
       "dependencies" : [
-        "JUNIT",
+        "mx:JUNIT",
         "com.oracle.truffle.r.engine",
       ],
       "checkstyle" : "com.oracle.truffle.r.runtime",
@@ -277,6 +277,7 @@ suite = {
 
     "com.oracle.truffle.r.test.native" : {
       "sourceDirs" : [],
+      "dependencies" : ["com.oracle.truffle.r.native"],
       "native" : "true",
       "workingSets" : "FastR",
     },
@@ -319,7 +320,7 @@ suite = {
       "sourceDirs" : ["src"],
       "dependencies" : [
         "com.oracle.truffle.r.runtime",
-        "graal:JVMCI_API",
+        "jvmci:JVMCI_API",
         "graal:GRAAL_TRUFFLE",
         "ASM",
         "ASM_ANALYSIS",
@@ -375,6 +376,9 @@ suite = {
         "truffle:TRUFFLE_DEBUG",
         "com.oracle.truffle.r.shell",
         ],
+      "annotationProcessors" : [
+          "truffle:TRUFFLE_DSL_PROCESSOR",
+      ],
       "checkstyle" : "com.oracle.truffle.r.runtime",
       "javaCompliance" : "1.8",
       "workingSets" : "Truffle,FastR",
@@ -382,6 +386,13 @@ suite = {
   },
 
   "distributions" : {
+    "TRUFFLE_R_PARSER_PROCESSOR" : {
+      "path" : "truffle-r-parser-processor.jar",
+      "subDir" : "truffle",
+      "sourcesPath" : "truffle-r-parser-processor.src.zip",
+      "dependencies" : ["com.oracle.truffle.r.parser.processor"],
+    },
+
     "FASTR" : {
       "path" : "fastr.jar",
       "sourcesPath" : "fastr-sources.jar",
@@ -410,8 +421,8 @@ suite = {
         "GNU_ICONV",
       ],
       "distDependencies" : [
-        "TRUFFLE",
-        "GRAAL",
+        "truffle:TRUFFLE",
+        "graal:GRAAL",
       ],
     }
   },
