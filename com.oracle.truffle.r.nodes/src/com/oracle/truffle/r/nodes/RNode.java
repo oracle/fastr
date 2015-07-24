@@ -248,6 +248,22 @@ public abstract class RNode extends Node implements RInstrumentableNode {
         return value instanceof RAbstractVector;
     }
 
+    protected static boolean isRAbstractDoubleVector(Object value) {
+        return value instanceof RAbstractDoubleVector;
+    }
+
+    protected static boolean isRAbstractIntVector(Object value) {
+        return value instanceof RAbstractIntVector;
+    }
+
+    protected static boolean isRAbstractComplexVector(Object value) {
+        return value instanceof RAbstractComplexVector;
+    }
+
+    protected static boolean isRAbstractLogicalVector(Object value) {
+        return value instanceof RAbstractLogicalVector;
+    }
+
     /*
      * No isXyz functions for abstract vector classes (RAbstractIntVector, etc.), because they do
      * not honor implicit casts and can thus lead to unexpected behavior.
