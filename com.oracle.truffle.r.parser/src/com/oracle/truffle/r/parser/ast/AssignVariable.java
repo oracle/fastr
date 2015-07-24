@@ -58,7 +58,7 @@ public abstract class AssignVariable extends ASTNode {
             String value = c.getValues()[0];
             return writeVariable(src, isSuper, value, rhs);
         }
-        throw RInternalError.unimplemented();
+        throw RInternalError.unimplemented("unexpected lhs type: " + lhs.getClass());
     }
 
     private static ASTNode writeVariable(SourceSection src, boolean isSuper, String name, ASTNode rhs) {
@@ -116,7 +116,7 @@ public abstract class AssignVariable extends ASTNode {
                 return new Replacement(src, isSuper, lhs, rhs);
             } else {
                 // TODO here we need to flatten complex assignments
-                throw RInternalError.unimplemented();
+                throw RInternalError.unimplemented("flatten complex assignment: " + (src == null ? "" : src.getCode()));
             }
         }
         return lhs;
