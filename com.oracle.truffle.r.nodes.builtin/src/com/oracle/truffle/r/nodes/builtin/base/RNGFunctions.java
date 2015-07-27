@@ -76,7 +76,7 @@ public class RNGFunctions {
                 if (ex.isError()) {
                     throw RError.error(getEncapsulatingSourceSection(), ex);
                 } else {
-                    RError.warning(RError.Message.GENERIC, ex.getMessage());
+                    RError.warning(getEncapsulatingSourceSection(), RError.Message.GENERIC, ex.getMessage());
                 }
             }
         }
@@ -98,7 +98,7 @@ public class RNGFunctions {
                 if (ex.isError()) {
                     throw RError.error(getEncapsulatingSourceSection(), ex);
                 } else {
-                    RError.warning(RError.Message.GENERIC, ex.getMessage());
+                    RError.warning(getEncapsulatingSourceSection(), RError.Message.GENERIC, ex.getMessage());
                 }
             }
             return result;

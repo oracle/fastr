@@ -34,6 +34,21 @@ public class RASTDeparse {
 
     private static final String SQUARE = "[";
 
+    /**
+     * Ensure that {@code node} has a {@link SourceSection} by deparsing if necessary.
+     */
+    public static void ensureSourceSection(RSyntaxNode nodeIn) {
+        SourceSection ss = nodeIn.getSourceSection();
+        if (ss == null) {
+            RSyntaxNode node = RASTUtils.unwrap(nodeIn).asRSyntaxNode();
+            RDeparse.State state = RDeparse.State.createPrintableState();
+            node.deparse(state);
+            String sourceString = state.toString();
+            Source source = Source.fromText(sourceString, "ensureSource");
+            node.asRNode().assignSourceSection(source.createSection("", 0, sourceString.length()));
+        }
+    }
+
     public static void deparse(State state, RLanguage rl) {
         RSyntaxNode node = (RSyntaxNode) rl.getRep();
         node.deparse(state);

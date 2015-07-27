@@ -126,7 +126,7 @@ public abstract class Lapply extends RBuiltinNode {
                 readVectorElementName = null;
             }
 
-            ReadVariableNode readVector = ReadVariableNode.create(VECTOR_ELEMENT, false);
+            ReadVariableNode readVector = ReadVariableNode.createAnonymous(VECTOR_ELEMENT);
 
             // The remaining parameters are passed from {@code ...}. The call node will take
             // care of matching.
@@ -156,9 +156,30 @@ public abstract class Lapply extends RBuiltinNode {
                     }
                 }
             }
-            return RCallNode.createCall(null, null, ArgumentsSignature.get(names), args);
+            ArgumentsSignature argsSig = ArgumentsSignature.get(names);
+            // TODO will eventually go away, but for now give this call a SourceSection
+            SourceSection ss = createCallSourceSection(callTarget, argsSig, args);
+            return RCallNode.createCall(ss, null, argsSig, args);
         }
 
+    }
+
+    static SourceSection createCallSourceSection(RootCallTarget callTarget, ArgumentsSignature argsSig, RSyntaxNode[] args) {
+        RDeparse.State state = RDeparse.State.createPrintableState();
+        RCallNode.deparseArguments(state, args, argsSig);
+        // The call is (function)(args)
+        String callName;
+        RRootNode rrn = (RRootNode) callTarget.getRootNode();
+        if (rrn instanceof RBuiltinRootNode) {
+            RBuiltinRootNode rbrn = (RBuiltinRootNode) rrn;
+            callName = rbrn.getBuiltin().getBuiltin().getName();
+        } else {
+            callName = "(" + rrn.getSourceCode() + ")";
+        }
+        String callString = callName + state.toString();
+        Source callSource = Source.fromText(callString, "lapply");
+        SourceSection ss = callSource.createSection("", 0, callString.length());
+        return ss;
     }
 
 }

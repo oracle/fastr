@@ -141,8 +141,8 @@ public final class ForNode extends AbstractLoopNode implements VisibilityControl
             this.writeElementNode = cvar;
             this.body = body;
 
-            this.readIndexNode = ReadVariableNode.create(indexName, false);
-            this.readLengthNode = ReadVariableNode.create(lengthName, false);
+            this.readIndexNode = ReadVariableNode.createAnonymous(indexName);
+            this.readLengthNode = ReadVariableNode.createAnonymous(lengthName);
             this.writeIndexNode = WriteVariableNode.createAnonymous(indexName, null, Mode.REGULAR);
             this.loadElement = createIndexedLoad(indexName, rangeName);
         }
@@ -155,8 +155,8 @@ public final class ForNode extends AbstractLoopNode implements VisibilityControl
                 throw RInternalError.shouldNotReachHere();
             }
             REnvironment env = RDataFactory.createInternalEnv();
-            env.safePut("i", RDataFactory.createLanguage(ReadVariableNode.create(indexName, false)));
-            env.safePut("x", RDataFactory.createLanguage(ReadVariableNode.create(rangeName, false)));
+            env.safePut("i", RDataFactory.createLanguage(ReadVariableNode.createAnonymous(indexName)));
+            env.safePut("x", RDataFactory.createLanguage(ReadVariableNode.createAnonymous(rangeName)));
             return indexNode.substitute(env).asRNode();
         }
 

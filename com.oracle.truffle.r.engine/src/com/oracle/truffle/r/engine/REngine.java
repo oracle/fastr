@@ -44,6 +44,7 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.control.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.nodes.instrument.*;
+import com.oracle.truffle.r.nodes.runtime.*;
 import com.oracle.truffle.r.parser.*;
 import com.oracle.truffle.r.parser.ast.*;
 import com.oracle.truffle.r.runtime.*;
@@ -305,10 +306,19 @@ final class REngine implements RContext.Engine {
         return runCall(callTarget, frame, false, false);
     }
 
-    public Object evalFunction(RFunction func, Object... args) {
+    private static final Source EMPTY_SRC = Source.fromText("", "<empty>");
+    private static final SourceSection EMPTY_CALLSRC = EMPTY_SRC.createSection("", 0);
+
+    public Object evalFunction(RFunction func, RLanguage caller, Object... args) {
         ArgumentsSignature argsSig = ((RRootNode) func.getRootNode()).getSignature();
         MaterializedFrame frame = Utils.getActualCurrentFrame().materialize();
-        Object[] rArgs = RArguments.create(func, RArguments.getCallSourceSection(frame), frame, frame == null ? 1 : RArguments.getDepth(frame) + 1, args, argsSig);
+        SourceSection ss;
+        if (caller == null) {
+            ss = EMPTY_CALLSRC;
+        } else {
+            ss = ((RSyntaxNode) caller.getRep()).getSourceSection();
+        }
+        Object[] rArgs = RArguments.create(func, ss, frame, frame == null ? 1 : RArguments.getDepth(frame) + 1, args, argsSig);
         return func.getTarget().call(rArgs);
     }
 
@@ -400,24 +410,13 @@ final class REngine implements RContext.Engine {
      */
     @TruffleBoundary
     private static RootCallTarget doMakeCallTarget(RSyntaxNode body, String funName) {
-        ensureSourceSection(body);
+        RASTDeparse.ensureSourceSection(body);
         FunctionBodyNode fbn = new FunctionBodyNode(SaveArgumentsNode.NO_ARGS, new FunctionStatementsNode(body.getSourceSection(), body));
         FrameDescriptor descriptor = new FrameDescriptor();
         FrameSlotChangeMonitor.initializeFunctionFrameDescriptor(descriptor);
         FunctionDefinitionNode rootNode = new FunctionDefinitionNode(null, descriptor, fbn, FormalArguments.NO_ARGS, funName, true, true, null);
         RootCallTarget callTarget = Truffle.getRuntime().createCallTarget(rootNode);
         return callTarget;
-    }
-
-    private static void ensureSourceSection(RSyntaxNode body) {
-        SourceSection ss = body.getSourceSection();
-        if (ss == null) {
-            RDeparse.State state = RDeparse.State.createPrintableState();
-            body.deparse(state);
-            String bodyString = state.toString();
-            Source source = Source.fromText(bodyString, "makeCallTarget");
-            body.asRNode().assignSourceSection(source.createSection("", 0, bodyString.length()));
-        }
     }
 
     /**
@@ -488,6 +487,8 @@ final class REngine implements RContext.Engine {
 
     private static final ArgumentsSignature PRINT_SIGNATURE = ArgumentsSignature.get("x", "...");
     private static final ArgumentsSignature PRINT_INTERNAL_SIGNATURE = ArgumentsSignature.get("x");
+    private static final Source PRINT_SOURCE = Source.fromText("print(x)", "");
+    private static final SourceSection PRINT_CALLSRC = PRINT_SOURCE.createSection("", 0, PRINT_SOURCE.getLength());
 
     @TruffleBoundary
     public void printResult(Object result) {
@@ -498,13 +499,13 @@ final class REngine implements RContext.Engine {
             if (FastROptions.NewStateTransition && resultValue instanceof RShareable) {
                 ((RShareable) resultValue).incRefCount();
             }
-            function.getTarget().call(RArguments.create(function, null, REnvironment.globalEnv().getFrame(), 1, new Object[]{resultValue, RMissing.instance}, PRINT_SIGNATURE));
+            function.getTarget().call(RArguments.create(function, PRINT_CALLSRC, REnvironment.globalEnv().getFrame(), 1, new Object[]{resultValue, RMissing.instance}, PRINT_SIGNATURE));
             if (FastROptions.NewStateTransition && resultValue instanceof RShareable) {
                 ((RShareable) resultValue).decRefCount();
             }
         } else {
             // we only have the .Internal print.default method available
-            getPrintInternal().getTarget().call(RArguments.create(printInternal, null, REnvironment.globalEnv().getFrame(), 1, new Object[]{resultValue}, PRINT_INTERNAL_SIGNATURE));
+            getPrintInternal().getTarget().call(RArguments.create(printInternal, PRINT_CALLSRC, REnvironment.globalEnv().getFrame(), 1, new Object[]{resultValue}, PRINT_INTERNAL_SIGNATURE));
         }
     }
 

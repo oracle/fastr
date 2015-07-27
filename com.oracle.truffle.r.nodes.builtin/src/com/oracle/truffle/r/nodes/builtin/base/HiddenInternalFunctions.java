@@ -26,6 +26,7 @@ import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.builtin.base.EvalFunctions.Eval;
 import com.oracle.truffle.r.nodes.function.*;
+import com.oracle.truffle.r.nodes.runtime.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RError.Message;
@@ -84,6 +85,8 @@ public class HiddenInternalFunctions {
                 ConstantNode vecNode = ConstantNode.create(intVec);
                 RCallNode expr0 = RCallNode.createCloneReplacingArgs(callNode, vecNode);
                 try {
+                    // We want this call to have a SourceSection
+                    RASTDeparse.ensureSourceSection(expr0);
                     aenv.put(name, RDataFactory.createPromise(expr0, eenv));
                 } catch (PutException ex) {
                     //
@@ -168,8 +171,14 @@ public class HiddenInternalFunctions {
 
         private static final ArgumentsSignature SIGNATURE = ArgumentsSignature.get("n");
 
+        private static void bpt() {
+        }
+
         @TruffleBoundary
         public Object lazyLoadDBFetchInternal(MaterializedFrame frame, RIntVector key, RStringVector datafile, int compression, RFunction envhook) {
+            if (getSourceSection() == null) {
+                bpt();
+            }
             String dbPath = datafile.getDataAt(0);
             File dbPathFile = new File(dbPath);
             byte[] dbData = dbCache.get(dbPath);

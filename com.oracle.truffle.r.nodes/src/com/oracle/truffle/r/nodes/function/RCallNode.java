@@ -83,12 +83,12 @@ import com.oracle.truffle.r.runtime.gnur.*;
  *  U = {@link UninitializedCallNode}: Forms the uninitialized end of the function PIC
  *  D = {@link DispatchedCallNode}: Function fixed, no varargs
  *  G = {@link GenericCallNode}: Function arbitrary
- *
+ * 
  *  UV = {@link UninitializedCallNode} with varargs,
  *  UVC = {@link UninitializedVarArgsCacheCallNode} with varargs, for varargs cache
  *  DV = {@link DispatchedVarArgsCallNode}: Function fixed, with cached varargs
  *  DGV = {@link DispatchedGenericVarArgsCallNode}: Function fixed, with arbitrary varargs (generic case)
- *
+ * 
  * (RB = {@link RBuiltinNode}: individual functions that are builtins are represented by this node
  * which is not aware of caching). Due to {@link CachedCallNode} (see below) this is transparent to
  * the cache and just behaves like a D/DGV)
@@ -101,11 +101,11 @@ import com.oracle.truffle.r.runtime.gnur.*;
  * non varargs, max depth:
  * |
  * D-D-D-U
- *
+ * 
  * no varargs, generic (if max depth is exceeded):
  * |
  * D-D-D-D-G
- *
+ * 
  * varargs:
  * |
  * DV-DV-UV         <- function call target identity level cache
@@ -113,7 +113,7 @@ import com.oracle.truffle.r.runtime.gnur.*;
  *    DV
  *    |
  *    UVC           <- varargs signature level cache
- *
+ * 
  * varargs, max varargs depth exceeded:
  * |
  * DV-DV-UV
@@ -125,7 +125,7 @@ import com.oracle.truffle.r.runtime.gnur.*;
  *    DV
  *    |
  *    DGV
- *
+ * 
  * varargs, max function depth exceeded:
  * |
  * DV-DV-DV-DV-GV
@@ -278,8 +278,7 @@ public final class RCallNode extends RNode implements RSyntaxNode {
         RNode[] args = new RNode[arguments.length];
         for (int i = 0; i < arguments.length; i++) {
             if (i == 0 && dispatchTempIdentifier != null) {
-                SourceSection source = arguments[0].getSourceSection();
-                args[0] = new GetTempNode(dispatchTempIdentifier, source);
+                args[0] = new GetTempNode(dispatchTempIdentifier, arguments[0]);
             } else {
                 args[i] = arguments[i] == null ? null : NodeUtil.cloneNode(arguments[i].asRNode());
             }
@@ -512,16 +511,21 @@ public final class RCallNode extends RNode implements RSyntaxNode {
     public static final class GetTempNode extends RNode {
 
         @Child private FrameSlotNode slot;
-        private final SourceSection source;
+        private final RSyntaxNode arg;
 
-        public GetTempNode(Object identifier, SourceSection source) {
+        public GetTempNode(Object identifier, RSyntaxNode arg) {
             slot = FrameSlotNode.createTemp(identifier, false);
-            this.source = source;
+            this.arg = arg;
         }
 
         @Override
         public SourceSection getEncapsulatingSourceSection() {
-            return source;
+            return arg.getSourceSection();
+        }
+
+        @Override
+        protected RSyntaxNode getRSyntaxNode() {
+            return arg;
         }
 
         @Override

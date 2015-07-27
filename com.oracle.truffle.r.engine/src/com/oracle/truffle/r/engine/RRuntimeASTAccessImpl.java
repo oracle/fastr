@@ -332,10 +332,10 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
         RASTDeparse.deparse(state, f);
     }
 
-    public Object callback(RFunction f, Object[] args) {
+    public Object callback(RFunction f, RLanguage caller, Object[] args) {
         boolean gd = DebugHandling.globalDisable(true);
         try {
-            return RContext.getEngine().evalFunction(f, args);
+            return RContext.getEngine().evalFunction(f, caller, args);
         } catch (ReturnException ex) {
             // cannot throw return exceptions further up.
             return ex.getResult();

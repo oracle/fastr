@@ -53,6 +53,7 @@ public class TestBase {
         Unstable("tests that produce inconsistent results in GNUR"),
         OutputFormatting("tests that fail because of problems with output formatting"),
         ParserErrorFormatting("tests that fail because of the formatting of parser error messages"),
+        WrongCaller("tests that fail because the caller source is wrong in an error or warning"),
         ParserError("tests that fail because of bugs in the parser"),
         SideEffects("tests that are ignored because they would interfere with other tests"),
         MissingWarning("tests that fail because of missing warnings"),

@@ -85,7 +85,7 @@ public abstract class CastComplexNode extends CastBaseNode {
         RComplex result = naCheck.convertStringToComplex(operand);
         if (RRuntime.isNA(result)) {
             warningBranch.enter();
-            RError.warning(RError.Message.NA_INTRODUCED_COERCION);
+            RError.warning(getEncapsulatingSourceSection(), RError.Message.NA_INTRODUCED_COERCION);
         }
         return result;
     }
@@ -131,7 +131,7 @@ public abstract class CastComplexNode extends CastBaseNode {
             RComplex complexValue = naCheck.convertStringToComplex(value);
             if (RRuntime.isNA(complexValue)) {
                 warningBranch.enter();
-                RError.warning(RError.Message.NA_INTRODUCED_COERCION);
+                RError.warning(getEncapsulatingSourceSection(), RError.Message.NA_INTRODUCED_COERCION);
             }
             return complexValue;
         });

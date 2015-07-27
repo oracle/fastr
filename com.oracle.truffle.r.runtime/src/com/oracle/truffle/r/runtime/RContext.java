@@ -326,9 +326,10 @@ public final class RContext extends ExecutionContext {
          * Variant of {@link #eval(RLanguage, MaterializedFrame)} where we already have the
          * {@link RFunction} and the evaluated arguments, but do not have a frame available, and we
          * are behind a {@link TruffleBoundary}, so call inlining is not an issue. This is primarily
-         * used for R callbacks from {@link RErrorHandling} and {@link RSerialize}.
+         * used for R callbacks from {@link RErrorHandling} and {@link RSerialize}. The "R" calling
+         * function is passed explicitly, and may be {@code null} e.g. a top-level call.
          */
-        Object evalFunction(RFunction func, Object... args);
+        Object evalFunction(RFunction func, RLanguage caller, Object... args);
 
         /**
          * Evaluates an {@link com.oracle.truffle.r.runtime.data.RPromise.Closure} in {@code frame}.

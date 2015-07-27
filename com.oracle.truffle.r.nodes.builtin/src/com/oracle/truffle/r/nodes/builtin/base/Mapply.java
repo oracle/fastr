@@ -29,6 +29,7 @@ import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
+import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.access.WriteVariableNode.Mode;
@@ -138,7 +139,7 @@ public abstract class Mapply extends RBuiltinNode {
 
         @SuppressWarnings("unused")
         @Specialization(contains = "cachedMApply")
-        protected Object[] genericLApply(Object vector, RFunction function, RArgsValuesAndNames additionalArguments) {
+        protected Object[] genericMApply(Object vector, RFunction function, RArgsValuesAndNames additionalArguments) {
             throw RError.nyi(getSourceSection(), "generic mApply");
         }
 
@@ -156,7 +157,9 @@ public abstract class Mapply extends RBuiltinNode {
             for (int i = 0; i < readVectorElementNodes.length; i++) {
                 readVectorElementNodes[i] = ReadVariableNode.create(elementNodeArray[i].vectorElementName, false);
             }
-            return RCallNode.createCall(null, null, ArgumentsSignature.empty(readVectorElementNodes.length), readVectorElementNodes);
+            ArgumentsSignature argsSig = ArgumentsSignature.empty(readVectorElementNodes.length);
+            SourceSection ss = Lapply.createCallSourceSection(callTarget, argsSig, readVectorElementNodes);
+            return RCallNode.createCall(ss, null, argsSig, readVectorElementNodes);
         }
 
         protected ElementNode[] createElementNodeArray(int length) {

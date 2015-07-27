@@ -118,7 +118,7 @@ public abstract class ConnectionFunctions {
             try {
                 return new FileRConnection(path, open);
             } catch (IOException ex) {
-                RError.warning(RError.Message.CANNOT_OPEN_FILE, description.getDataAt(0), ex.getMessage());
+                RError.warning(getEncapsulatingSourceSection(), RError.Message.CANNOT_OPEN_FILE, description.getDataAt(0), ex.getMessage());
                 throw RError.error(getEncapsulatingSourceSection(), RError.Message.CANNOT_OPEN_CONNECTION);
             }
         }
@@ -158,7 +158,7 @@ public abstract class ConnectionFunctions {
         }
 
         private RError reportError(String path, IOException ex) throws RError {
-            RError.warning(RError.Message.CANNOT_OPEN_FILE, path, ex.getMessage());
+            RError.warning(getEncapsulatingSourceSection(), RError.Message.CANNOT_OPEN_FILE, path, ex.getMessage());
             throw RError.error(getEncapsulatingSourceSection(), RError.Message.CANNOT_OPEN_CONNECTION);
         }
     }
