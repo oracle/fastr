@@ -285,7 +285,7 @@ public class SysFunctions {
         @TruffleBoundary
         protected double sysTime() {
             controlVisibility();
-            return Math.floor(((double) System.currentTimeMillis()) / 1000);
+            return ((double) System.currentTimeMillis()) / 1000;
         }
 
     }
