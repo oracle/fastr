@@ -59,10 +59,6 @@ public abstract class PMinMax extends RBuiltinNode {
         this.op = factory.create();
     }
 
-    public PMinMax(PMinMax other) {
-        this(other.semantics, other.factory);
-    }
-
     private byte handleString(Object[] argValues, byte naRm, int offset, int ind, int maxLength, byte warning, Object data) {
         if (stringHandler == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -120,12 +116,17 @@ public abstract class PMinMax extends RBuiltinNode {
         return length;
     }
 
-    @Specialization(guards = {"isIntegerPrecedence(args)", "oneVector(args)"})
+    @Specialization(guards = {"isIntegerPrecedence(args)", "args.getLength() == 0"})
+    protected Object pMinMaxNoneVecInt(@SuppressWarnings("unused") byte naRm, @SuppressWarnings("unused") RArgsValuesAndNames args) {
+        return RDataFactory.createEmptyIntVector();
+    }
+
+    @Specialization(guards = {"isIntegerPrecedence(args)", "args.getLength() == 1"})
     protected Object pMinMaxOneVecInt(@SuppressWarnings("unused") byte naRm, RArgsValuesAndNames args) {
         return args.getArgument(0);
     }
 
-    @Specialization(guards = {"isIntegerPrecedence(args)", "!oneVector(args)"})
+    @Specialization(guards = {"isIntegerPrecedence(args)", "args.getLength() > 1"})
     protected RIntVector pMinMaxInt(byte naRm, RArgsValuesAndNames args) {
         int maxLength = convertToVectorAndEnableNACheck(args, getIntegerCastNode());
         if (lengthProfile.profile(maxLength == 0)) {
@@ -162,41 +163,99 @@ public abstract class PMinMax extends RBuiltinNode {
         }
     }
 
-    @Specialization(guards = {"isLogicalPrecedence(args)", "oneVector(args)"})
+    @Specialization(guards = {"isLogicalPrecedence(args)", "args.getLength() == 1"})
     protected Object pMinMaxOneVecLogical(@SuppressWarnings("unused") byte naRm, RArgsValuesAndNames args) {
         return args.getArgument(0);
     }
 
-    @Specialization(guards = {"isLogicalPrecedence(args)", "!oneVector(args)"})
+    @Specialization(guards = {"isLogicalPrecedence(args)", "args.getLength() != 1"})
     protected RIntVector pMinMaxLogical(byte naRm, RArgsValuesAndNames args) {
         return pMinMaxInt(naRm, args);
     }
 
-    @Specialization(guards = {"isDoublePrecedence(args)", "oneVector(args)"})
+    @Specialization(guards = {"isDoublePrecedence(args)", "args.getLength() == 0"})
+    @SuppressWarnings("unused")
+    protected Object pMinMaxNoneVecDouble(byte naRm, RArgsValuesAndNames args) {
+        return RDataFactory.createEmptyDoubleVector();
+    }
+
+    @Specialization(guards = {"isDoublePrecedence(args)", "args.getLength() == 1"})
     @SuppressWarnings("unused")
     protected Object pMinMaxOneVecDouble(byte naRm, RArgsValuesAndNames args) {
         return args.getArgument(0);
     }
 
-    @Specialization(guards = {"isDoublePrecedence(args)", "!oneVector(args)"})
+    @Specialization(guards = {"isDoublePrecedence(args)", "args.getLength() ==2"})
+    protected RDoubleVector pMinMaxTwoDouble(byte naRm, RArgsValuesAndNames args, //
+                    @Cached("create()") NACheck naCheckX, //
+                    @Cached("create()") NACheck naCheckY, //
+                    @Cached("create()") CastDoubleNode castX, //
+                    @Cached("create()") CastDoubleNode castY, //
+                    @Cached("create()") CastToVectorNode castVectorX, //
+                    @Cached("create()") CastToVectorNode castVectorY) {
+        Object[] argValues = args.getArguments();
+        RAbstractDoubleVector x = (RAbstractDoubleVector) castVectorX.execute(castX.execute(argValues[0]));
+        RAbstractDoubleVector y = (RAbstractDoubleVector) castVectorY.execute(castY.execute(argValues[1]));
+        int xLength = x.getLength();
+        int yLength = y.getLength();
+        int maxLength = Math.max(xLength, yLength);
+        if (lengthProfile.profile(xLength == 0 || yLength == 0)) {
+            return RDataFactory.createEmptyDoubleVector();
+        } else {
+            naCheckX.enable(x);
+            naCheckY.enable(y);
+            if ((xLength > 1 && xLength < maxLength) || (yLength > 1 && yLength < maxLength)) {
+                RError.warning(RError.Message.ARG_RECYCYLED);
+            }
+            boolean profiledNaRm = naRmProfile.profile(naRm == RRuntime.LOGICAL_TRUE);
+            double[] data = new double[maxLength];
+            int xOffset = 0;
+            int yOffset = 0;
+            for (int i = 0; i < maxLength; i++, xOffset++, yOffset++) {
+                if (xOffset == xLength) {
+                    xOffset = 0;
+                }
+                if (yOffset == yLength) {
+                    yOffset = 0;
+                }
+                double xValue = x.getDataAt(xOffset);
+                double yValue = y.getDataAt(yOffset);
+                double result;
+                if (naCheckX.check(xValue)) {
+                    result = profiledNaRm ? yValue : RRuntime.DOUBLE_NA;
+                } else if (naCheckY.check(yValue)) {
+                    result = profiledNaRm ? xValue : RRuntime.DOUBLE_NA;
+                } else {
+                    result = op.op(xValue, yValue);
+                }
+                data[i] = result;
+            }
+            return RDataFactory.createDoubleVector(data, (naCheckX.neverSeenNA() && naCheckY.neverSeenNA()) || profiledNaRm);
+        }
+    }
+
+    @Specialization(guards = {"isDoublePrecedence(args)", "args.getLength() > 2"})
     protected RDoubleVector pMinMaxDouble(byte naRm, RArgsValuesAndNames args) {
         int maxLength = convertToVectorAndEnableNACheck(args, getDoubleCastNode());
         if (lengthProfile.profile(maxLength == 0)) {
             return RDataFactory.createEmptyDoubleVector();
         } else {
-            boolean profiledNaRm = naRmProfile.profile(naRm == RRuntime.LOGICAL_TRUE);
-            double[] data = new double[maxLength];
             Object[] argValues = args.getArguments();
             boolean warningAdded = false;
+            for (int j = 0; j < argValues.length; j++) {
+                RAbstractDoubleVector vec = (RAbstractDoubleVector) argValues[j];
+                na.enable(vec);
+                if (vec.getLength() > 1 && vec.getLength() < maxLength && !warningAdded) {
+                    RError.warning(RError.Message.ARG_RECYCYLED);
+                    warningAdded = true;
+                }
+            }
+            boolean profiledNaRm = naRmProfile.profile(naRm == RRuntime.LOGICAL_TRUE);
+            double[] data = new double[maxLength];
             for (int i = 0; i < maxLength; i++) {
                 double result = semantics.getDoubleStart();
                 for (int j = 0; j < argValues.length; j++) {
                     RAbstractDoubleVector vec = (RAbstractDoubleVector) argValues[j];
-                    na.enable(vec);
-                    if (vec.getLength() > 1 && vec.getLength() < maxLength && !warningAdded) {
-                        RError.warning(getEncapsulatingSourceSection(), RError.Message.ARG_RECYCYLED);
-                        warningAdded = true;
-                    }
                     double v = vec.getDataAt(i % vec.getLength());
                     if (na.check(v)) {
                         if (profiledNaRm) {
@@ -215,13 +274,13 @@ public abstract class PMinMax extends RBuiltinNode {
         }
     }
 
-    @Specialization(guards = {"isStringPrecedence(args)", "oneVector(args)"})
+    @Specialization(guards = {"isStringPrecedence(args)", "args.getLength() == 1"})
     @SuppressWarnings("unused")
     protected Object pMinMaxOneVecString(byte naRm, RArgsValuesAndNames args) {
         return args.getArgument(0);
     }
 
-    @Specialization(guards = {"isStringPrecedence(args)", "!oneVector(args)"})
+    @Specialization(guards = {"isStringPrecedence(args)", "args.getLength() != 1"})
     protected RStringVector pMinMaxString(byte naRm, RArgsValuesAndNames args) {
         int maxLength = convertToVectorAndEnableNACheck(args, getStringCastNode());
         if (lengthProfile.profile(maxLength == 0)) {
