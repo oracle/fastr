@@ -82,6 +82,7 @@ public abstract class Cat extends RInvisibleBuiltinNode {
     }
 
     @Specialization
+    @TruffleBoundary
     protected RNull cat(RList args, RConnection conn, RAbstractStringVector sepVec, RAbstractLogicalVector fill, Object labels, byte append) {
         checkFillLength(fill);
         int fillWidth = -1;
@@ -92,6 +93,7 @@ public abstract class Cat extends RInvisibleBuiltinNode {
     }
 
     @Specialization(guards = "numericFill(fill)")
+    @TruffleBoundary
     protected RNull cat(RList args, RConnection conn, RAbstractStringVector sepVec, RAbstractVector fill, Object labels, byte append) {
         checkFillLength(fill);
         int fillWidth = -1;
@@ -106,6 +108,7 @@ public abstract class Cat extends RInvisibleBuiltinNode {
 
     @SuppressWarnings("unused")
     @Fallback
+    @TruffleBoundary
     protected RNull cat(Object args, Object conn, Object sepVec, Object fillObj, Object labels, Object append) {
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
     }
