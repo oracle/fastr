@@ -332,6 +332,9 @@ public abstract class PromiseNode extends RNode {
 
         private VarArgNode(int index, SourceSection src) {
             this.index = index;
+            if (src == null) {
+                throw RInternalError.shouldNotReachHere();
+            }
             assignSourceSection(src);
         }
 

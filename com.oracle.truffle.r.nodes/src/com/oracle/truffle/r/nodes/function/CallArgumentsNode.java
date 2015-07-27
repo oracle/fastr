@@ -313,6 +313,9 @@ public class CallArgumentsNode extends ArgumentsNode {
     public static RNode wrapVarArgValue(Object varArgValue, int varArgIndex) {
         if (varArgValue instanceof RPromise) {
             RNode repNode = (RNode) ((RPromise) varArgValue).getRep();
+            if (repNode instanceof ConstantNode) {
+                return repNode;
+            }
             return PromiseNode.createVarArg(varArgIndex, repNode.getEncapsulatingSourceSection());
         } else {
             return ConstantNode.create(varArgValue);

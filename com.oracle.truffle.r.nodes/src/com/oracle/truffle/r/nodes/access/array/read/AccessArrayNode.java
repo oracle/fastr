@@ -1717,7 +1717,7 @@ public abstract class AccessArrayNode extends RNode {
 
     private static RNode unwrapToRNode(Object o) {
         if (o instanceof RLanguage) {
-            return (RNode) RASTUtils.unwrap(((RLanguage) o).getRep());
+            return RASTUtils.unwrap(((RLanguage) o).getRep());
         } else {
             // o is RSymbol or a primitive value
             return ConstantNode.create(o);

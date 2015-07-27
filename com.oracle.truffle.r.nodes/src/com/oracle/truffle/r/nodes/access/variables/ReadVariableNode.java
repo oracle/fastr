@@ -79,6 +79,10 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
         return new ReadVariableNode(name, RType.Any, ReadKind.UnforcedSilentLocal, false);
     }
 
+    public static ReadVariableNode createAnonymous(String name) {
+        return new ReadVariableNode(name, RType.Any, ReadKind.Normal, true);
+    }
+
     /**
      * Creates a function lookup for the given identifier.
      */
@@ -170,6 +174,11 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
     @Override
     public void serialize(RSerialize.State state) {
         state.setCarAsSymbol(identifier.toString());
+    }
+
+    @Override
+    public boolean isSyntax() {
+        return identifier instanceof String && !AnonymousFrameVariable.isAnonymous(identifierAsString);
     }
 
     @Override

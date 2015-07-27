@@ -29,10 +29,10 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
-import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.control.*;
+import com.oracle.truffle.r.nodes.runtime.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
@@ -119,18 +119,7 @@ public abstract class Substitute extends RBuiltinNode {
         // remove old source sections
         clearSourceSection(subRNode.asRNode());
         // create source for entire tree
-        RDeparse.State state = RDeparse.State.createPrintableState();
-        subRNode.deparse(state);
-        String subString = state.toString();
-        if (subString.length() > 0) {
-            // Bug prevents assigning empty source (very special case!)
-            Source subSource = Source.fromText(subString, "<substitute>");
-            /*
-             * now it gets difficult as each individual node should get a node-specific
-             * SourceSection. For now we only assign the root, which is ok for simple cases
-             */
-            subRNode.asRNode().assignSourceSection(subSource.createSection("", 0, subString.length()));
-        }
+        RASTDeparse.ensureSourceSection(subRNode);
         return RASTUtils.createLanguageElement(subRNode.asRNode());
     }
 

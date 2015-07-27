@@ -424,7 +424,7 @@ public abstract class Bind extends RPrecedenceBuiltinNode {
                         }
 
                         if (k != 0) {
-                            RError.warning(RError.Message.ROWS_NOT_MULTIPLE, i + 1);
+                            RError.warning(getEncapsulatingSourceSection(), RError.Message.ROWS_NOT_MULTIPLE, i + 1);
                         }
                     }
                 }
@@ -501,7 +501,7 @@ public abstract class Bind extends RPrecedenceBuiltinNode {
                         }
 
                         if (k != 0) {
-                            RError.warning(RError.Message.COLUMNS_NOT_MULTIPLE, i + 1);
+                            RError.warning(getEncapsulatingSourceSection(), RError.Message.COLUMNS_NOT_MULTIPLE, i + 1);
                         }
                     }
                 }

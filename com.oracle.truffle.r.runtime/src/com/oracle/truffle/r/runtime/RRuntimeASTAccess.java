@@ -89,7 +89,7 @@ public interface RRuntimeASTAccess {
      * implementation and not part of the user-visible execution debug handling is disabled across
      * the call.
      */
-    Object callback(RFunction f, Object[] args);
+    Object callback(RFunction f, RLanguage caller, Object[] args);
 
     /**
      * Force a promise by slow-path evaluation.

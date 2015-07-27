@@ -362,6 +362,19 @@ public abstract class RNode extends Node implements RInstrumentableNode {
     }
 
     @Override
+    public void clearSourceSection() {
+        if (this instanceof RSyntaxNode) {
+            super.clearSourceSection();
+        } else {
+            /*
+             * Eventually this should be an error but currently "substitute" walks the entire tree
+             * calling this method.
+             */
+            super.clearSourceSection();
+        }
+    }
+
+    @Override
     /**
      * Returns the {@link SourceSection} for this node, by locating the associated {@link RSyntaxNode}.
      * I.e., this method must be stable in the face of AST transformations.
@@ -406,6 +419,21 @@ public abstract class RNode extends Node implements RInstrumentableNode {
             node = node.getParent();
         }
         return null;
+    }
+
+    /**
+     * Handles the discovery of the {@link RSyntaxNode} that this node is derived from.
+     */
+    public RSyntaxNode asRSyntaxNode() {
+        if (this instanceof RSyntaxNode) {
+            return (RSyntaxNode) this;
+        } else {
+            return getRSyntaxNode();
+        }
+    }
+
+    protected RSyntaxNode getRSyntaxNode() {
+        throw RInternalError.unimplemented("getRSyntaxNode");
     }
 
 }

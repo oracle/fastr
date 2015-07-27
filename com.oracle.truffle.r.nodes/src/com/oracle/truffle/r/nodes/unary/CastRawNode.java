@@ -49,7 +49,7 @@ public abstract class CastRawNode extends CastBaseNode {
     private RRaw checkOutOfRange(int operand, int intResult) {
         if (intResult != operand) {
             warningBranch.enter();
-            RError.warning(RError.Message.OUT_OF_RANGE);
+            RError.warning(getEncapsulatingSourceSection(), RError.Message.OUT_OF_RANGE);
             return RDataFactory.createRaw((byte) 0);
         }
         return RDataFactory.createRaw((byte) intResult);
@@ -72,7 +72,7 @@ public abstract class CastRawNode extends CastBaseNode {
         int intResult = RRuntime.complex2rawIntValue(operand);
         if (operand.getImaginaryPart() != 0) {
             warningBranch.enter();
-            RError.warning(RError.Message.IMAGINARY_PARTS_DISCARDED_IN_COERCION);
+            RError.warning(getEncapsulatingSourceSection(), RError.Message.IMAGINARY_PARTS_DISCARDED_IN_COERCION);
         }
         return checkOutOfRange((int) operand.getRealPart(), intResult);
     }
@@ -95,7 +95,7 @@ public abstract class CastRawNode extends CastBaseNode {
         int intVal = RRuntime.string2int(operand);
         if (RRuntime.isNA(intVal)) {
             warningBranch.enter();
-            RError.warning(RError.Message.NA_INTRODUCED_COERCION);
+            RError.warning(getEncapsulatingSourceSection(), RError.Message.NA_INTRODUCED_COERCION);
         }
         return doInt(intVal);
     }
@@ -125,7 +125,7 @@ public abstract class CastRawNode extends CastBaseNode {
             bdata[i] = (byte) intRawValue;
         }
         if (warning) {
-            RError.warning(RError.Message.OUT_OF_RANGE);
+            RError.warning(getEncapsulatingSourceSection(), RError.Message.OUT_OF_RANGE);
         }
         return createResultVector(operand, bdata);
     }
@@ -145,7 +145,7 @@ public abstract class CastRawNode extends CastBaseNode {
             bdata[i] = (byte) intRawValue;
         }
         if (warning) {
-            RError.warning(RError.Message.OUT_OF_RANGE);
+            RError.warning(getEncapsulatingSourceSection(), RError.Message.OUT_OF_RANGE);
         }
         return createResultVector(operand, bdata);
     }
@@ -170,10 +170,10 @@ public abstract class CastRawNode extends CastBaseNode {
             bdata[i] = (byte) intRawValue;
         }
         if (naCoercionWarning) {
-            RError.warning(RError.Message.NA_INTRODUCED_COERCION);
+            RError.warning(getEncapsulatingSourceSection(), RError.Message.NA_INTRODUCED_COERCION);
         }
         if (outOfRangeWarning) {
-            RError.warning(RError.Message.OUT_OF_RANGE);
+            RError.warning(getEncapsulatingSourceSection(), RError.Message.OUT_OF_RANGE);
         }
         return createResultVector(operand, bdata);
     }
@@ -198,10 +198,10 @@ public abstract class CastRawNode extends CastBaseNode {
             bdata[i] = (byte) intRawValue;
         }
         if (imaginaryDiscardedWarning) {
-            RError.warning(RError.Message.IMAGINARY_PARTS_DISCARDED_IN_COERCION);
+            RError.warning(getEncapsulatingSourceSection(), RError.Message.IMAGINARY_PARTS_DISCARDED_IN_COERCION);
         }
         if (outOfRangeWarning) {
-            RError.warning(RError.Message.OUT_OF_RANGE);
+            RError.warning(getEncapsulatingSourceSection(), RError.Message.OUT_OF_RANGE);
         }
         return createResultVector(operand, bdata);
     }
@@ -222,7 +222,7 @@ public abstract class CastRawNode extends CastBaseNode {
             bdata[i] = (byte) intRawValue;
         }
         if (warning) {
-            RError.warning(RError.Message.OUT_OF_RANGE);
+            RError.warning(getEncapsulatingSourceSection(), RError.Message.OUT_OF_RANGE);
         }
         return createResultVector(operand, bdata);
     }

@@ -289,7 +289,7 @@ public class RErrorHandling implements RContext.StateFactory {
                     errorcallDflt(fromCall(call), Message.GENERIC, msg);
                 } else {
                     RFunction hf = (RFunction) h;
-                    RContext.getEngine().evalFunction(hf, cond);
+                    RContext.getEngine().evalFunction(hf, callAsRLanguage(call), cond);
                 }
             } else {
                 throw gotoExitingHandler(cond, call, entry);
@@ -317,7 +317,7 @@ public class RErrorHandling implements RContext.StateFactory {
                 } else {
                     RFunction handler = (RFunction) entry.getDataAt(2);
                     RStringVector errorMsgVec = RDataFactory.createStringVectorFromScalar(fMsg);
-                    RContext.getRRuntimeASTAccess().callback(handler, new Object[]{errorMsgVec, createCall(callSrc)});
+                    RContext.getRRuntimeASTAccess().callback(handler, callAsRLanguage(createCall(callSrc)), new Object[]{errorMsgVec, createCall(callSrc)});
                 }
             } else {
                 throw gotoExitingHandler(RNull.instance, createCall(callSrc), entry);
@@ -379,6 +379,14 @@ public class RErrorHandling implements RContext.StateFactory {
         warningcallDflt(fromCall(call), Message.GENERIC, msg);
     }
 
+    private static RLanguage callAsRLanguage(Object call) {
+        if (call == RNull.instance) {
+            return null;
+        } else {
+            return (RLanguage) call;
+        }
+    }
+
     /**
      * Convert a {@code call} value back into a {@link SourceSection}.
      *
@@ -436,11 +444,11 @@ public class RErrorHandling implements RContext.StateFactory {
      * The default error handler. This is where all the error message formatting is done and the
      * output.
      */
-    static RError errorcallDflt(SourceSection callArg, Message msg, Object... objects) throws RError {
+    static RError errorcallDflt(SourceSection callSrcArg, Message msg, Object... objects) throws RError {
         String fmsg = formatMessage(msg, objects);
-        SourceSection call = checkNullSourceSection(callArg);
+        SourceSection callSrc = checkNullSourceSection(callSrcArg);
 
-        String errorMessage = createErrorMessage(call, fmsg);
+        String errorMessage = createErrorMessage(callSrc, fmsg);
 
         ContextStateImpl errorHandlingState = getRErrorHandlingState();
         if (errorHandlingState.inError > 0) {
@@ -484,7 +492,7 @@ public class RErrorHandling implements RContext.StateFactory {
                             evaluatedArgs[i] = RMissing.instance;
                         }
                     }
-                    RContext.getEngine().evalFunction(errorFunction, evaluatedArgs);
+                    RContext.getEngine().evalFunction(errorFunction, callAsRLanguage(createCall(callSrcArg)), evaluatedArgs);
                 } else if (errorExpr instanceof RLanguage || errorExpr instanceof RExpression) {
                     if (errorExpr instanceof RLanguage) {
                         RContext.getEngine().eval((RLanguage) errorExpr, materializedFrame);
@@ -540,7 +548,7 @@ public class RErrorHandling implements RContext.StateFactory {
         boolean visibility = RContext.getInstance().isVisible();
         try {
             RFunction f = errorHandlingState.getDotSignalSimpleWarning();
-            RContext.getRRuntimeASTAccess().callback(f, new Object[]{warningMessage, call});
+            RContext.getRRuntimeASTAccess().callback(f, callAsRLanguage(call), new Object[]{warningMessage, call});
         } finally {
             RContext.getInstance().setVisible(visibility);
         }

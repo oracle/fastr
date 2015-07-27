@@ -33,6 +33,7 @@ import com.oracle.truffle.r.nodes.access.variables.*;
 import com.oracle.truffle.r.nodes.binary.*;
 import com.oracle.truffle.r.nodes.control.*;
 import com.oracle.truffle.r.nodes.function.*;
+import com.oracle.truffle.r.nodes.runtime.*;
 import com.oracle.truffle.r.parser.ast.*;
 import com.oracle.truffle.r.parser.ast.Constant.ConstantType;
 import com.oracle.truffle.r.parser.ast.Operation.Operator;
@@ -500,18 +501,11 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
 
                 String tmpSymbol = createTempName();
                 String rhsSymbol = createTempName();
-                ReadVariableNode rhsAccess = ReadVariableNode.create(rhsSymbol, false);
-                ReadVariableNode tmpVarAccess = ReadVariableNode.create(tmpSymbol, false);
+                ReadVariableNode rhsAccess = ReadVariableNode.createAnonymous(rhsSymbol);
+                ReadVariableNode tmpVarAccess = ReadVariableNode.createAnonymous(tmpSymbol);
 
                 RSyntaxNode updateOp = updateFunction.apply(tmpVarAccess, rhsAccess);
-                if (updateOp.getSourceSection() == null) {
-                    // must have a source section in case sys.call is called
-                    RDeparse.State state = RDeparse.State.createPrintableState(true);
-                    updateOp.deparse(state);
-                    String updateOpSource = state.toString();
-                    Source fakeSource = Source.fromText(updateOpSource, "<replacement update>");
-                    updateOp.asRNode().assignSourceSection(fakeSource.createSection("", 0, updateOpSource.length()));
-                }
+                RASTDeparse.ensureSourceSection(updateOp);
 
                 RNode assignFromTemp = WriteVariableNode.createAnonymous(vSymbol, updateOp.asRNode(), WriteVariableNode.Mode.INVISIBLE, isSuper);
                 result = constructReplacementSuffix(rhs, v, false, assignFromTemp, tmpSymbol, rhsSymbol, source);

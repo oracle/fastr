@@ -164,7 +164,7 @@ public abstract class UnaryArithmeticReduceNode extends Node {
             if (naRmProfile.profile(naRm == RRuntime.LOGICAL_TRUE)) {
                 if (na.check(operand)) {
                     if (semantics.getEmptyWarning() != null) {
-                        RError.warning(semantics.emptyWarningCharacter);
+                        RError.warning(getEncapsulatingSourceSection(), semantics.emptyWarningCharacter);
                     }
                     return semantics.getStringStart();
                 } else {
@@ -328,7 +328,7 @@ public abstract class UnaryArithmeticReduceNode extends Node {
     private static String doStringVectorEmptyInternal(RStringVector operand, byte naRm, ReduceSemantics semantics, SourceSection sourceSection) {
         if (semantics.supportString) {
             if (semantics.getEmptyWarning() != null) {
-                RError.warning(semantics.emptyWarningCharacter);
+                RError.warning(sourceSection, semantics.emptyWarningCharacter);
             }
             return semantics.getStringStart();
         } else {

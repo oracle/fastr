@@ -156,7 +156,7 @@ public final class RArguments {
         assert evaluatedArgs != null && signature != null : evaluatedArgs + " " + signature;
         assert evaluatedArgs.length == signature.getLength() : Arrays.toString(evaluatedArgs) + " " + signature;
         assert signature == getSignature(functionObj) : signature + " vs. " + getSignature(functionObj);
-// checkCallSrc(functionObj, callSrc); // debugging
+        assert callSrc != null;
 
         Object[] a = new Object[MINIMAL_ARRAY_LENGTH + evaluatedArgs.length];
         a[INDEX_ENVIRONMENT] = null;

@@ -62,7 +62,7 @@ public class TestBuiltin_asdouble extends TestBase {
 
     @Test
     public void testasdouble9() {
-        assertEval("argv <- list(c('-.1', ' 2.7 ', 'B'));as.double(argv[[1]]);");
+        assertEval(Ignored.WrongCaller, "argv <- list(c('-.1', ' 2.7 ', 'B'));as.double(argv[[1]]);");
     }
 
     @Test

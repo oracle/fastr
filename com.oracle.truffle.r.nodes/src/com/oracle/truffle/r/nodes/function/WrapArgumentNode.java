@@ -28,12 +28,10 @@ import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.env.*;
 
 /**
  * A {@link WrapArgumentNode} is used to wrap all arguments to function calls to implement correct
- * copy semantics for vectors. As such it is not really a syntax node, but it is created during
- * parsing and therefore forms part of the syntactic backbone.
+ * copy semantics for vectors.
  *
  */
 public final class WrapArgumentNode extends WrapArgumentBaseNode {
@@ -116,18 +114,12 @@ public final class WrapArgumentNode extends WrapArgumentBaseNode {
             return (RSyntaxNode) operand;
         } else {
             WrapArgumentNode wan = new WrapArgumentNode(operand, modeChange, index);
-            wan.assignSourceSection(operand.getEncapsulatingSourceSection());
             return wan;
         }
     }
 
     @Override
-    public RSyntaxNode substitute(REnvironment env) {
-        RNode sub = RSyntaxNode.cast(getOperand()).substitute(env).asRNode();
-        if (sub instanceof RASTUtils.DotsNode) {
-            return (RASTUtils.DotsNode) sub;
-        } else {
-            return create(sub, modeChange, index);
-        }
+    protected RSyntaxNode createSubstitute(RNode sub) {
+        return create(sub, modeChange, index);
     }
 }

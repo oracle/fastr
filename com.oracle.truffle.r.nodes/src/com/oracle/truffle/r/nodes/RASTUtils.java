@@ -45,15 +45,13 @@ public class RASTUtils {
      * Removes any {@link WrapArgumentNode} or {@link WrapperNode}.
      */
     @TruffleBoundary
-    public static Node unwrap(Object node) {
-        if (node instanceof WrapArgumentNode) {
-            return unwrap(((WrapArgumentNode) node).getOperand());
-        } else if (node instanceof WrapDefaultArgumentNode) {
-            return unwrap(((WrapDefaultArgumentNode) node).getOperand());
+    public static RNode unwrap(Object node) {
+        if (node instanceof WrapArgumentBaseNode) {
+            return unwrap(((WrapArgumentBaseNode) node).getOperand());
         } else if (node instanceof RInstrumentableNode) {
             return ((RInstrumentableNode) node).unwrap();
         } else {
-            return (Node) node;
+            return (RNode) node;
         }
     }
 
@@ -142,7 +140,7 @@ public class RASTUtils {
             return (RNode) NodeUtil.cloneNode((Node) l.getRep());
         } else if (value instanceof RPromise) {
             RPromise promise = (RPromise) value;
-            RNode promiseRep = (RNode) unwrap(((RPromise) value).getRep());
+            RNode promiseRep = unwrap(((RPromise) value).getRep());
             if (promiseRep instanceof VarArgNode) {
                 VarArgNode varArgNode = (VarArgNode) promiseRep;
                 RPromise varArgPromise = varArgNode.executeNonEvaluated((VirtualFrame) promise.getFrame());
@@ -222,7 +220,7 @@ public class RASTUtils {
      * or {@link GroupDispatchNode}.
      */
     public static Object findFunctionName(Node node) {
-        RNode child = (RNode) unwrap(getFunctionNode(node));
+        RNode child = unwrap(getFunctionNode(node));
         if (child instanceof ConstantNode && ConstantNode.isFunction(child)) {
             return ((ConstantNode) child).getValue();
         } else if (child instanceof ReadVariableNode) {
@@ -245,7 +243,7 @@ public class RASTUtils {
     }
 
     public static boolean isNamedFunctionNode(Node aCallNode) {
-        RNode n = (RNode) unwrap(getFunctionNode(aCallNode));
+        RNode n = unwrap(getFunctionNode(aCallNode));
         return (n instanceof ReadVariableNode || n instanceof GroupDispatchNode || n instanceof RBuiltinNode || ConstantNode.isFunction(n));
 
     }
@@ -277,6 +275,14 @@ public class RASTUtils {
     }
 
     @TruffleBoundary
+    /**
+     * The heart of the {@code substitute} function, where we look up the
+     * value of {@code name} in {@code env} and, if bound, return whatever
+     * value it had (as an {@link RSyntaxNode},or {@code null} if not bound.
+     *
+     * N.B. It is <b>very</b> important that the result is cloned or created
+     * as otherwise we risk accidental sharing between ASTs.
+     */
     public static RSyntaxNode substituteName(String name, REnvironment env) {
         Object val = env.get(name);
         if (val == null) {
@@ -286,9 +292,9 @@ public class RASTUtils {
             // strange special case, mimics GnuR behavior
             return RASTUtils.createReadVariableNode("");
         } else if (val instanceof RPromise) {
-            return (RSyntaxNode) RASTUtils.unwrap(((RPromise) val).getRep());
+            return (RSyntaxNode) NodeUtil.cloneNode(RASTUtils.unwrap(((RPromise) val).getRep()));
         } else if (val instanceof RLanguage) {
-            return (RSyntaxNode) ((RLanguage) val).getRep();
+            return (RSyntaxNode) NodeUtil.cloneNode((RNode) ((RLanguage) val).getRep());
         } else if (val instanceof RArgsValuesAndNames) {
             // this is '...'
             RArgsValuesAndNames rva = (RArgsValuesAndNames) val;
@@ -315,7 +321,7 @@ public class RASTUtils {
                 }
                 if (argval instanceof RPromise) {
                     RPromise promise = (RPromise) argval;
-                    expandedNodes[i] = (RSyntaxNode) RASTUtils.unwrap(promise.getRep());
+                    expandedNodes[i] = (RSyntaxNode) NodeUtil.cloneNode(RASTUtils.unwrap(promise.getRep()));
                 } else {
                     expandedNodes[i] = ConstantNode.create(argval);
                 }

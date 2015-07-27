@@ -28,11 +28,10 @@ import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.env.*;
 
 /**
  * A {@link WrapDefaultArgumentNode} is used to wrap default function arguments as they are
- * essentially local variable writes and should be treated as such with respect to state transtions
+ * essentially local variable writes and should be treated as such with respect to state transitions
  * of {@link RShareable}s.
  *
  */
@@ -81,6 +80,8 @@ public final class WrapDefaultArgumentNode extends WrapArgumentBaseNode {
 
     }
 
+    public static RNode debugOperand;
+
     public static RNode create(RNode operand) {
         if (operand instanceof WrapArgumentNode || operand instanceof ConstantNode) {
             return operand;
@@ -90,13 +91,8 @@ public final class WrapDefaultArgumentNode extends WrapArgumentBaseNode {
     }
 
     @Override
-    public RSyntaxNode substitute(REnvironment env) {
-        RNode sub = RSyntaxNode.cast(getOperand()).substitute(env).asRNode();
-        if (sub instanceof RASTUtils.DotsNode) {
-            return (RASTUtils.DotsNode) sub;
-        } else {
-            return RSyntaxNode.cast(create(sub));
-        }
+    protected RSyntaxNode createSubstitute(RNode sub) {
+        return RSyntaxNode.cast(create(sub));
     }
 
 }

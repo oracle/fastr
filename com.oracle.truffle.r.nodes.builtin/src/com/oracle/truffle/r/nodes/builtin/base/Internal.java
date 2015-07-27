@@ -73,7 +73,7 @@ public abstract class Internal extends RBuiltinNode {
         controlVisibility();
         if (builtinCallNode == null) {
             RNode call = (RNode) x.getRep();
-            RNode operand = (RNode) RASTUtils.unwrap(call);
+            RNode operand = RASTUtils.unwrap(call);
 
             if (!(operand instanceof RCallNode)) {
                 errorProfile.enter();

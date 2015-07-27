@@ -44,6 +44,14 @@ import com.oracle.truffle.r.runtime.env.*;
  * transformation is seen in the {@code ReplacementNode} that implements a lowering of the so-called
  * <i>replacement</i> logic into a sequence of lower-level nodes that nonetheless implement this
  * interface.
+ *
+ * A more subtle issue is the general use of syntax nodes in rewrites of the AST where the nodes do
+ * not correspond to nodes in the original source. Examples are anonymous variables created as a
+ * {code ReadVariableNode}. Evidently such nodes, and the larger structures that contain them,
+ * cannot be given meaningful {@link SourceSection} information. Ideally such nodes would be
+ * refactored in such a way that such nodes did not implement this interface. However, as a
+ * workaround, the {@link #isSyntax} method can be overridden in such nodes, using some contextual
+ * information, to return {@code false}.
  */
 public interface RSyntaxNode {
     /**
@@ -61,6 +69,14 @@ public interface RSyntaxNode {
      */
     default boolean isBackbone() {
         return false;
+    }
+
+    /**
+     * If overridden to return {@code false}, denotes a node that is being used in a non-syntactic
+     * situation.
+     */
+    default boolean isSyntax() {
+        return true;
     }
 
     /**

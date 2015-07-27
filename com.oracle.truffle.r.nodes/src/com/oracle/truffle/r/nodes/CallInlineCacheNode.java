@@ -26,6 +26,7 @@ import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
+import com.oracle.truffle.api.source.*;
 
 /**
  * This node reifies a runtime object into the AST by creating nodes for frequently encountered
@@ -53,5 +54,11 @@ public abstract class CallInlineCacheNode extends Node {
     @Specialization
     protected Object call(VirtualFrame frame, CallTarget target, Object[] arguments, @Cached("createIndirectCallNode()") IndirectCallNode callNode) {
         return callNode.call(frame, target, arguments);
+    }
+
+    @Override
+    public SourceSection getSourceSection() {
+        // not a syntax node so..
+        return getEncapsulatingSourceSection();
     }
 }
