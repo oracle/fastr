@@ -34,14 +34,17 @@ import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
+import com.oracle.truffle.r.nodes.access.variables.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseDeoptimizeFrameNode;
+import com.oracle.truffle.r.nodes.function.PromiseNode.VarArgsPromiseNode;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RContext.Engine.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.RPromise.*;
 import com.oracle.truffle.r.runtime.env.*;
+import com.oracle.truffle.r.runtime.gnur.*;
 
 /**
  * sys.R. See <a
@@ -92,119 +95,6 @@ public class FrameFunctions {
         }
     }
 
-    private abstract static class CallHelper extends FrameHelper implements ClosureCache {
-
-        private final IdentityHashMap<RNode, Closure> closureCache = new IdentityHashMap<>();
-
-        public IdentityHashMap<RNode, Closure> getContent() {
-            return closureCache;
-        }
-
-        @TruffleBoundary
-        protected RLanguage createCall(Frame cframe, @SuppressWarnings("unused") boolean sysCall, boolean expandDots) {
-            SourceSection callSource = RArguments.getCallSourceSection(cframe);
-            String functionName = extractFunctionName(callSource.getCode());
-            RLanguage call = null;
-            RArgsValuesAndNames argsValuesAndNames = null;
-            int argsLength = RArguments.getArgumentsLength(cframe);
-
-            if (argsLength > 0) {
-                Object[] values;
-                ArgumentsSignature signature;
-                Object arg1 = RArguments.getArgument(cframe, 0);
-                if (arg1 instanceof RArgsValuesAndNames) {
-                    // ...
-                    RArgsValuesAndNames temp = ((RArgsValuesAndNames) arg1);
-                    if (expandDots || temp.isEmpty()) {
-                        values = temp.getArguments();
-                        signature = temp.getSignature();
-                    } else {
-                        signature = ArgumentsSignature.VARARG_SIGNATURE;
-                        RNode[] listArgs = new RNode[temp.getArguments().length];
-                        for (int i = 0; i < listArgs.length; i++) {
-                            listArgs[i] = RASTUtils.createNodeForValue(temp.getArgument(i));
-                            if (listArgs[i] == null) {
-                                StringBuffer sb = new StringBuffer((i + 1) < 10 ? ".." : ".");
-                                sb.append(i + 1);
-                                listArgs[i] = ConstantNode.create(RDataFactory.createSymbol(sb.toString()));
-                            }
-                        }
-                        RSyntaxNode varArgs = PromiseNode.createVarArgsAsSyntax(listArgs, temp.getSignature(), this);
-                        values = new Object[]{RASTUtils.createCall("list", signature, varArgs)};
-                        call = RDataFactory.createLanguage(RASTUtils.createCall(functionName, signature, varArgs));
-                    }
-                } else {
-                    /*
-                     * There is a bug in that RArguments names are filled (from the formals)
-                     * regardless of whether they were used in the call. I.e. can't distinguish g(x)
-                     * and g(a=x)
-                     */
-
-                    int count = 0;
-                    for (int i = 0; i < argsLength; i++) {
-                        Object arg = RArguments.getArgument(cframe, i);
-                        if (!(arg instanceof RMissing)) {
-                            count++;
-                        }
-                    }
-                    ArgumentsSignature argSignature = RArguments.getSignature(cframe);
-                    String[] names = new String[count];
-                    values = new Object[count];
-                    int index = 0;
-                    for (int i = 0; i < argsLength; i++) {
-                        Object arg = RArguments.getArgument(cframe, i);
-                        if (!(arg instanceof RMissing)) {
-                            values[index] = arg;
-                            names[index] = argSignature.getName(i);
-                            index++;
-                        }
-                    }
-                    signature = ArgumentsSignature.get(names);
-                }
-
-                argsValuesAndNames = new RArgsValuesAndNames(values, signature);
-            } else {
-                // Call.makeCall treats argsValuesAndNames == null as zero
-            }
-
-            if (call == null) {
-                call = Call.makeCall(functionName, argsValuesAndNames);
-            }
-            /*
-             * the "names" are set as the "names" attribute, unless they were all unset. N.B. The
-             * names are attributing the AST (as a list) and the function name counts and has a null
-             * "name"!
-             */
-            if (argsValuesAndNames != null && argsValuesAndNames.getSignature().getNonNullCount() > 0) {
-                String[] attrNames = new String[1 + argsValuesAndNames.getSignature().getLength()];
-                attrNames[0] = "";
-                for (int i = 1; i < attrNames.length; i++) {
-                    attrNames[i] = argsValuesAndNames.getSignature().getName(i - 1);
-                }
-                call.setAttr(RRuntime.NAMES_ATTR_KEY, RDataFactory.createStringVector(attrNames, RDataFactory.COMPLETE_VECTOR));
-            }
-            return call;
-        }
-
-        @TruffleBoundary
-        private static String extractFunctionName(String callSource) {
-            // TODO in the general case we need to parse this into an AST
-            if (callSource.startsWith("[[<-")) {
-                return "[[<-";
-            } else if (callSource.startsWith("[<-")) {
-                return "[<-";
-            } else if (callSource.startsWith("[[")) {
-                return "[[";
-            } else if (callSource.startsWith("[")) {
-                return "[";
-            } else {
-                int index = callSource.indexOf('(');
-                return callSource.substring(0, index);
-            }
-        }
-
-    }
-
     @RBuiltin(name = "sys.call", kind = INTERNAL, parameterNames = {"which"})
     public abstract static class SysCall extends FrameHelper {
 
@@ -239,22 +129,29 @@ public class FrameFunctions {
             RLanguage callAST;
             try {
                 RExpression call = RContext.getEngine().parse(Source.fromText(callSource.getCode(), "<call source>"));
-                // TODO need argument permutation (cf match.call) when named
-                // args provided out of order wrt formals
                 callAST = (RLanguage) call.getDataAt(0);
             } catch (ParseException ex) {
                 throw RInternalError.shouldNotReachHere("parse call source");
             }
             return callAST;
         }
-
     }
 
     /**
-     * Generate a call object in which all of the arguments are fully qualified.
+     * Generate a call object in which all of the arguments are fully qualified. Unlike
+     * {@code sys.call}, named arguments are re-ordered to match the order in the signature. Plus,
+     * unlike, {@code sys.call}, the {@code call} argument can be provided by the caller. "..." is a
+     * significant complication for two reasons:
+     * <ol>
+     * <li>If {@code expand.dots} is {@code false} the "..." args are wrapped in a {@code pairlist}</li>
+     * <li>One of the args might itself be "..." in which case the values have to be retrieved from
+     * the environment associated with caller of the function containing {@code match.call}.</li>
+     * </ol>
+     * In summary, although the simple cases are indeed simple, there are many possible variants
+     * using "..." that make the code a lot more complex that it seems it ought to be.
      */
     @RBuiltin(name = "match.call", kind = INTERNAL, parameterNames = {"definition", "call", "expand.dots"})
-    public abstract static class MatchCall extends CallHelper {
+    public abstract static class MatchCall extends FrameHelper {
 
         @Override
         protected final FrameAccess frameAccess() {
@@ -262,32 +159,264 @@ public class FrameFunctions {
         }
 
         @Specialization
-        protected RLanguage matchCall(VirtualFrame frame, RNull definition, RExpression expr, byte expandDots) {
-            return matchCall(frame, definition, (RLanguage) expr.getDataAt(0), expandDots);
+        protected RLanguage matchCall(VirtualFrame frame, @SuppressWarnings("unused") RNull definition, Object callObj, byte expandDots) {
+            return matchCall(frame, (RFunction) null, callObj, expandDots);
         }
 
         @Specialization
-        protected RLanguage matchCall(VirtualFrame frame, @SuppressWarnings("unused") RNull definition, @SuppressWarnings("unused") RLanguage call, byte expandDots) {
-            // N.B. rewrite in progress along similar lines to sys.call
-            // More complicated because of parameter naming/...
+        protected RLanguage matchCall(VirtualFrame frame, RFunction definitionArg, Object callObj, byte expandDotsL) {
+            /*
+             * definition==null in the standard (default) case, in which case we get the RFunction
+             * from the calling frame
+             */
             controlVisibility();
-            RPromise callArg = (RPromise) RArguments.getArgument(frame, 1);
-            if (callArg.isDefault()) {
-                Frame cframe = Utils.getCallerFrame(frame, FrameAccess.READ_ONLY);
-                if (RArguments.getFunction(cframe) == null) {
+            RLanguage call = checkCall(callObj);
+            if (expandDotsL == RRuntime.LOGICAL_NA) {
+                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "expand.dots");
+            }
+            boolean expandDots = RRuntime.fromLogical(expandDotsL);
+
+            Frame cframe = Utils.getCallerFrame(frame, FrameAccess.READ_ONLY);
+            RFunction definition = definitionArg;
+            if (definition == null) {
+                definition = RArguments.getFunction(cframe);
+                if (definition == null) {
                     throw RError.error(getEncapsulatingSourceSection(), RError.Message.MATCH_CALL_CALLED_OUTSIDE_FUNCTION);
                 }
-                return createCall(cframe, false, RRuntime.fromLogical(expandDots));
-            } else {
-                throw RError.nyi(getEncapsulatingSourceSection(), "explicit call argument");
             }
+            return doMatchCall(cframe, definition, call, expandDots);
+        }
+
+        @TruffleBoundary
+        private static RLanguage doMatchCall(Frame cframe, RFunction definition, RLanguage call, boolean expandDots) {
+            /*
+             * We have to ensure that all parameters are named, in the correct order, and deal with
+             * "...". This process has a lot in common with MatchArguments, which we use as a
+             * starting point
+             */
+            RCallNode callNode = (RCallNode) RASTUtils.unwrap(call.getRep());
+            CallArgumentsNode callArgs = callNode.createArguments(null, false, false);
+            MatchedArguments matchedArgs = ArgumentMatcher.matchArguments(definition, callArgs, null, null, true);
+            ArgumentsSignature sig = matchedArgs.getSignature();
+            RNode[] matchedArgNodes = matchedArgs.getArguments();
+            // expand any varargs
+            ExpandedVarArgs expandedVarArgs = processVarArgs(cframe, matchedArgNodes);
+            int[] argsLength = newArgsLength(matchedArgNodes, expandDots, expandedVarArgs);
+            int newCallArgsLength = argsLength[0];
+            int listArgsLength = expandDots ? -1 : argsLength[1];
+            String[] listNames = null;
+            if (sig.getVarArgCount() > 0) {
+                if (!expandDots) {
+                    if (sig.getNonNullCount() > 1) {
+                        // some named arguments as well as ...
+                        String[] names = new String[newCallArgsLength];
+                        listNames = new String[listArgsLength];
+                        int i = 0;
+                        int j = 0;
+                        for (RNode node : matchedArgNodes) {
+                            if (node instanceof VarArgsPromiseNode) {
+                                assignVarArgsNames(expandedVarArgs, listNames, 0);
+                                names[i++] = ArgumentsSignature.VARARG_NAME;
+                            } else if (!isMissing(node)) {
+                                names[i++] = sig.getName(j);
+                            }
+                            j++;
+                        }
+                        sig = ArgumentsSignature.get(names);
+                    } else {
+                        listNames = new String[listArgsLength];
+                        for (RNode node : matchedArgNodes) {
+                            if (node instanceof VarArgsPromiseNode) {
+                                assignVarArgsNames(expandedVarArgs, listNames, 0);
+                            }
+                        }
+                        sig = ArgumentsSignature.get(ArgumentsSignature.VARARG_NAME);
+                    }
+                } else {
+                    String[] names = new String[newCallArgsLength];
+                    int i = 0;
+                    int j = 0;
+                    for (RNode node : matchedArgNodes) {
+                        if (node instanceof VarArgsPromiseNode) {
+                            assignVarArgsNames(expandedVarArgs, names, i);
+                            i += expandedVarArgs.nodes.size();
+                        } else if (!isMissing(node)) {
+                            names[i++] = sig.getName(j);
+                        }
+                        j++;
+                    }
+                    sig = ArgumentsSignature.get(names);
+                }
+            }
+
+            RSyntaxNode[] newArgs = new RSyntaxNode[newCallArgsLength];
+            int newArgsIndex = 0;
+            for (RNode node : matchedArgNodes) {
+                if (isMissing(node)) {
+                    continue;
+                } else if (node instanceof VarArgsPromiseNode) {
+                    if (expandedVarArgs.nodes.size() > 0) {
+                        if (expandDots) {
+                            for (int v = 0; v < expandedVarArgs.nodes.size(); v++) {
+                                newArgs[newArgsIndex++] = (RSyntaxNode) expandedVarArgs.nodes.get(v);
+                            }
+                        } else {
+                            // GnuR appears to create a pairlist rather than a list
+                            RPairList head = RDataFactory.createPairList();
+                            head.setType(SEXPTYPE.LISTSXP);
+                            RPairList pl = head;
+                            RPairList prev = null;
+                            int pls = expandedVarArgs.nodes.size();
+                            for (int v = 0; v < pls; v++) {
+                                RNode n = (RNode) RASTUtils.unwrap(expandedVarArgs.nodes.get(v));
+                                Object listValue;
+                                if (n instanceof ConstantNode) {
+                                    listValue = ((ConstantNode) n).getValue();
+                                } else if (n instanceof ReadVariableNode) {
+                                    listValue = RDataFactory.createSymbol(((ReadVariableNode) n).getIdentifier());
+                                } else {
+                                    throw RInternalError.shouldNotReachHere();
+                                }
+                                pl.setCar(listValue);
+                                if (listNames[v] != null) {
+                                    pl.setTag(RDataFactory.createSymbol(listNames[v]));
+                                }
+                                if (prev != null) {
+                                    prev.setCdr(pl);
+                                }
+                                prev = pl;
+                                if (v != pls - 1) {
+                                    pl = RDataFactory.createPairList();
+                                    pl.setType(SEXPTYPE.LISTSXP);
+                                }
+                            }
+                            newArgs[newArgsIndex++] = ConstantNode.create(head);
+                        }
+                    }
+                } else {
+                    PromiseNode pn = (PromiseNode) node;
+                    RSyntaxNode pnExpr = pn.getPromiseExpr();
+                    newArgs[newArgsIndex++] = pnExpr;
+                }
+            }
+
+            RNode modCallNode = RASTUtils.createCall(callNode.getFunctionNode(), sig, newArgs);
+            return RDataFactory.createLanguage(modCallNode);
+        }
+
+        /**
+         * Computes the total number of arguments in the resulting call, handling whether "..." is
+         * expanded or not. Returns the total in index 0 and the number of varargs args in index 1.
+         */
+        private static int[] newArgsLength(RNode[] matchedArgNodes, boolean expandDots, ExpandedVarArgs expandedVarArgs) {
+            int totalArgs = 0;
+            int varArgs = 0;
+            for (RNode node : matchedArgNodes) {
+                if (ConstantNode.isMissing(node) || isEmptyVarArg(node)) {
+                    continue;
+                } else if (node instanceof VarArgsPromiseNode) {
+                    varArgs = expandedVarArgs.nodes.size();
+                    if (expandDots) {
+                        totalArgs += varArgs;
+                    } else {
+                        if (varArgs > 0) {
+                            totalArgs++;
+                        }
+                    }
+                } else {
+                    totalArgs++;
+                }
+            }
+            return new int[]{totalArgs, varArgs};
+        }
+
+        private static boolean isMissing(RNode node) {
+            return ConstantNode.isMissing(node) || isEmptyVarArg(node);
+        }
+
+        private static boolean isEmptyVarArg(RNode node) {
+            if (node instanceof ConstantNode && ((ConstantNode) node).getValue() instanceof RArgsValuesAndNames) {
+                RArgsValuesAndNames rvn = (RArgsValuesAndNames) ((ConstantNode) node).getValue();
+                return rvn.getLength() == 0;
+            }
+            return false;
+        }
+
+        private static boolean isDots(Object expr) {
+            RSyntaxNode arg = (RSyntaxNode) RASTUtils.unwrap(expr);
+            return arg instanceof ReadVariableNode && ((ReadVariableNode) arg).getIdentifier().equals(ArgumentsSignature.VARARG_NAME);
+        }
+
+        private static void assignVarArgsNames(ExpandedVarArgs expandedVarArgs, String[] names, int index) {
+            for (int c = 0; c < expandedVarArgs.names.size(); c++) {
+                if (expandedVarArgs.names.get(c) != null) {
+                    names[index + c] = expandedVarArgs.names.get(c);
+                }
+            }
+        }
+
+        private static final class ExpandedVarArgs {
+            private final ArrayList<RNode> nodes = new ArrayList<>();
+            private final ArrayList<String> names = new ArrayList<>();
+        }
+
+        /**
+         * Processes any "..." args, retrieving their values using cframe if any of them are
+         * themselves "...".
+         */
+        private static ExpandedVarArgs processVarArgs(Frame cframe, RNode[] matchedArgNodes) {
+            ExpandedVarArgs result = new ExpandedVarArgs();
+            for (RNode node : matchedArgNodes) {
+                if (node instanceof VarArgsPromiseNode) {
+                    VarArgsPromiseNode vpn = (VarArgsPromiseNode) node;
+                    ArgumentsSignature vpnArgsSig = vpn.getSignature();
+                    RPromise.Closure[] closures = ((VarArgsPromiseNode) node).getClosures();
+                    for (int i = 0; i < closures.length; i++) {
+                        Closure cl = closures[i];
+                        if (isDots(cl.getExpr())) {
+                            // expand this using cframe
+                            RArgsValuesAndNames rvn = (RArgsValuesAndNames) RArguments.getArgument(cframe, 0);
+                            int vn = 1;
+                            for (int v = i; v < rvn.getLength(); v++) {
+                                RNode narg = RASTUtils.createNodeForValue(rvn.getArgument(v));
+                                if (narg == null) {
+                                    StringBuilder sb = new StringBuilder((vn) < 10 ? ".." : ".");
+                                    sb.append(vn);
+                                    narg = ConstantNode.create(RDataFactory.createSymbol(sb.toString()));
+                                }
+                                result.nodes.add(narg);
+                                result.names.add(rvn.getSignature().getName(v));
+                                vn++;
+                            }
+                        } else {
+                            result.nodes.add((RNode) cl.getExpr());
+                            result.names.add(vpnArgsSig.getName(i));
+                        }
+                    }
+                }
+            }
+            return result;
         }
 
         @Specialization
         @SuppressWarnings("unused")
-        protected RLanguage matchCall(RFunction definition, RLanguage call, byte expandDots) {
+        protected RLanguage matchCall(Object definition, Object call, Object expandDots) {
             controlVisibility();
-            throw RInternalError.unimplemented();
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
+        }
+
+        private RLanguage checkCall(Object callObj) throws RError {
+            if (callObj instanceof RExpression) {
+                return checkCall(((RExpression) callObj).getDataAt(0));
+            }
+            if (callObj instanceof RLanguage) {
+                RLanguage call = (RLanguage) callObj;
+                RNode node = (RNode) RASTUtils.unwrap(call.getRep());
+                if (node instanceof RCallNode || node instanceof GroupDispatchNode) {
+                    return call;
+                }
+            }
+            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "call");
         }
 
     }

@@ -40,8 +40,8 @@ public abstract class FrameSlotNode extends Node {
 
     public abstract FrameSlot executeFrameSlot(VirtualFrame frame);
 
-    private static Assumption getAssumption(Frame frame, Object identifier) {
-        return frame.getFrameDescriptor().getNotInFrameAssumption(identifier);
+    private static Assumption getAssumption(FrameDescriptor frameDescriptor, Object identifier) {
+        return frameDescriptor.getNotInFrameAssumption(identifier);
     }
 
     public static FrameSlotNode create(String name) {
@@ -58,6 +58,22 @@ public abstract class FrameSlotNode extends Node {
 
     public static FrameSlotNode create(RFrameSlot slot, boolean createIfAbsent) {
         return new UnresolvedFrameSlotNode(slot, createIfAbsent);
+    }
+
+    public static FrameSlotNode createInitialized(FrameDescriptor frameDescriptor, Object identifier, boolean createIfAbsent) {
+        FrameSlotNode newNode;
+        FrameSlot frameSlot;
+        if (createIfAbsent) {
+            frameSlot = findOrAddFrameSlot(frameDescriptor, identifier);
+        } else {
+            frameSlot = frameDescriptor.findFrameSlot(identifier);
+        }
+        if (frameSlot != null) {
+            newNode = new PresentFrameSlotNode(frameSlot);
+        } else {
+            newNode = new AbsentFrameSlotNode(getAssumption(frameDescriptor, identifier), identifier);
+        }
+        return newNode;
     }
 
     public static FrameSlotNode create(FrameSlot slot) {
@@ -90,18 +106,7 @@ public abstract class FrameSlotNode extends Node {
         private FrameSlotNode resolveFrameSlot(Frame frame) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
-            FrameSlotNode newNode;
-            FrameSlot frameSlot;
-            if (createIfAbsent) {
-                frameSlot = findOrAddFrameSlot(frameDescriptor, identifier);
-            } else {
-                frameSlot = frameDescriptor.findFrameSlot(identifier);
-            }
-            if (frameSlot != null) {
-                newNode = new PresentFrameSlotNode(frameSlot);
-            } else {
-                newNode = new AbsentFrameSlotNode(getAssumption(frame, identifier), identifier);
-            }
+            FrameSlotNode newNode = createInitialized(frameDescriptor, identifier, createIfAbsent);
             return replace(newNode);
         }
     }

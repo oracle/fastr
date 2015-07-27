@@ -90,7 +90,7 @@ public class FastROptions {
         if (initialized) {
             return;
         }
-        CompilerDirectives.transferToInterpreterAndInvalidate();
+        CompilerAsserts.neverPartOfCompilation();
         initialized = true;
         for (Entry<Object, Object> entry : System.getProperties().entrySet()) {
             String prop = (String) entry.getKey();

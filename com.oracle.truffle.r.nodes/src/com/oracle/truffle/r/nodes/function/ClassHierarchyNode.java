@@ -37,11 +37,9 @@ public abstract class ClassHierarchyNode extends UnaryNode {
     private final boolean withImplicitTypes;
     private final ConditionProfile noAttributesProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile nullAttributeProfile = ConditionProfile.createBinaryProfile();
-    private final ValueProfile typeProfile;
 
     protected ClassHierarchyNode(boolean withImplicitTypes) {
         this.withImplicitTypes = withImplicitTypes;
-        this.typeProfile = withImplicitTypes ? ValueProfile.createClassProfile() : null;
     }
 
     @Override
@@ -86,7 +84,8 @@ public abstract class ClassHierarchyNode extends UnaryNode {
     @Specialization(contains = "getClassHrStorage")
     protected RStringVector getClassHrAttributable(RAttributable arg, //
                     @Cached("createClassProfile()") ValueProfile argProfile) {
-        RAttributes attributes = argProfile.profile(arg).getAttributes();
+        RAttributable profiledArg = argProfile.profile(arg);
+        RAttributes attributes = profiledArg.getAttributes();
         if (noAttributesProfile.profile(attributes != null)) {
             if (access == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -97,7 +96,7 @@ public abstract class ClassHierarchyNode extends UnaryNode {
                 return classHierarcy;
             }
         }
-        return withImplicitTypes ? typeProfile.profile(arg).getImplicitClass() : null;
+        return withImplicitTypes ? profiledArg.getImplicitClass() : null;
     }
 
     @Fallback

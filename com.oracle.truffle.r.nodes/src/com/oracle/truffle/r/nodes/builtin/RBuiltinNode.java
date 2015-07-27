@@ -111,7 +111,7 @@ public abstract class RBuiltinNode extends RNode implements RSyntaxNode, Visibil
         }
 
         public CastBuilder firstIntegerWithWarning(int index, int intNa, String name) {
-            insert(index, CastNode.toInteger(false, false, false));
+            insert(index, CastIntegerNodeGen.create(false, false, false));
             return insert(index, FirstIntNode.createWithWarning(RError.Message.FIRST_ELEMENT_USED, name, intNa));
         }
 
@@ -120,7 +120,7 @@ public abstract class RBuiltinNode extends RNode implements RSyntaxNode, Visibil
         }
 
         public CastBuilder firstIntegerWithError(int index, RError.Message error, String name) {
-            insert(index, CastNode.toInteger(false, false, false));
+            insert(index, CastIntegerNodeGen.create(false, false, false));
             return insert(index, FirstIntNode.createWithError(error, name));
         }
 

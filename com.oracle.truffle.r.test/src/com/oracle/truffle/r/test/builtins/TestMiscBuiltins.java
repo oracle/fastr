@@ -283,6 +283,12 @@ public class TestMiscBuiltins extends TestBase {
         assertEval("{ f <- function(x) sys.call() ; f(2) }");
         assertEval("{ f <- function(x) sys.call() ; g <- function() 23 ; f(g()) }");
 
+        assertEval("{ f <- function(x, y) sys.call() ; f(1, 2) }");
+        assertEval("{ f <- function(x, y) sys.call() ; f(x=1, 2) }");
+        assertEval("{ f <- function(x, y) sys.call() ; f(1, y=2) }");
+        assertEval("{ f <- function(x, y) sys.call() ; f(y=1, 2) }");
+        assertEval("{ f <- function(x, y) sys.call() ; f(y=1, x=2) }");
+
         // fails because can't parse out the "name"
         assertEval(Ignored.Unknown, "{ (function() sys.call())() }");
     }

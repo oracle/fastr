@@ -352,7 +352,7 @@ public abstract class RVector extends RAttributeStorage implements RShareable, R
     public final void setDimNames(RList newDimNames, SourceSection sourceSection) {
         if (attributes != null && newDimNames == null) {
             removeAttributeMapping(RRuntime.DIMNAMES_ATTR_KEY);
-            this.dimNames = newDimNames;
+            this.dimNames = null;
         } else if (newDimNames != null) {
             if (dimensions == null) {
                 throw RError.error(sourceSection, RError.Message.DIMNAMES_NONARRAY);

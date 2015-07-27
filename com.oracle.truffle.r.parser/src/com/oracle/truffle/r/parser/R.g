@@ -456,7 +456,7 @@ power_expr returns [ASTNode v]
     }
     : l=basic_expr { $v = $l.v; }
       (
-        ((power_operator)=>op=power_operator n_ r=power_expr { hasPowerOp = true; $v = BinaryOperation.create(sourceSection("power_expr/pow", $op.start, $r.stop), $op.v, $l.v, $r.v); } )
+        ((power_operator)=>op=power_operator n_ r=unary_expression { hasPowerOp = true; $v = BinaryOperation.create(sourceSection("power_expr/pow", $op.start, $r.stop), $op.v, $l.v, $r.v); } )
       |
       )
     ;
@@ -738,6 +738,7 @@ fragment ESCAPE [StringBuilder buf]
       | '"' { buf.append('\"'); }
       | '`' { buf.append('`'); }
       | '\'' { buf.append('\''); }
+      | ' ' { buf.append(' '); }
       | '\\' { buf.append('\\'); }
       | a = OCT_DIGIT b = OCT_DIGIT c = OCT_DIGIT { buf.append(ParseUtil.octChar($a.text, $b.text, $c.text)); }
       | a = OCT_DIGIT b = OCT_DIGIT { buf.append(ParseUtil.octChar($a.text, $b.text)); }

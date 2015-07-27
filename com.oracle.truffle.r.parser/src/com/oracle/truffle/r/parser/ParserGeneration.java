@@ -66,6 +66,8 @@ public class ParserGeneration {
         "allow unary ! in normal expressions",
         "added \\a, \\v and \\` escape sequences",
         "added octal escape sequences for strings",
-        "handles escapes in `xxx` form"
+        "handles escapes in `xxx` form",
+        "added \\  escape sequence",
+        "allow -/+/! after ^"
     };
 }

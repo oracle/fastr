@@ -50,7 +50,6 @@ public abstract class ArgumentStatePush extends RNode {
     @Child WriteLocalFrameVariableNode writeArgNode;
 
     public static final int MAX_COUNTED_ARGS = 8;
-    public static final int[] INVALID_TRANS_ARGS = new int[0];
     public static final int INVALID_INDEX = -1;
     public static final int REF_COUNT_SIZE_THRESHOLD = 64;
 

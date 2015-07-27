@@ -100,13 +100,15 @@ def build(args):
 def _fastr_gate_runner(args, tasks):
     # Until fixed, we call Checkstyle here and limit to primary
     with mx_gate.Task('Checkstyle check', tasks) as t:
-        if mx.checkstyle(['--primary']) != 0:
-            t.abort('Checkstyle warnings were found')
+        if t:
+            if mx.checkstyle(['--primary']) != 0:
+                t.abort('Checkstyle warnings were found')
 
     # FastR has custom copyright check
     with mx_gate.Task('Copyright check', tasks) as t:
-        if mx.checkcopyrights(['--primary']) != 0:
-            t.abort('copyright errors')
+        if t:
+            if mx.checkcopyrights(['--primary']) != 0:
+                t.abort('copyright errors')
 
     # build the native projects (GnuR/VM)
     with mx_gate.Task('BuildNative', tasks):
@@ -115,15 +117,18 @@ def _fastr_gate_runner(args, tasks):
     # check that the expected test output file is up to date
     with mx_gate.Task('UnitTests: ExpectedTestOutput file check', tasks) as t:
         if t:
-            rc1 = junit(['--tests', _all_unit_tests(), '--check-expected-output'])
-            if rc1 != 0:
-                mx.abort('unit tests expected output check failed')
+           if junit(['--tests', _all_unit_tests(), '--check-expected-output']) != 0:
+                t.abort('unit tests expected output check failed')
 
-    with mx_gate.Task('UnitTests: gate', tasks) as t:
+    with mx_gate.Task('UnitTests: +EST', tasks) as t:
         if t:
-            rc2 = junit(['--tests', _gate_unit_tests()])
-            if rc2 != 0:
-                mx.abort('unit tests failed')
+            if junit(['--J', '@-DR:+ExperimentalStateTrans', '--tests', _gate_unit_tests()]) != 0:
+                t.abort('unit tests failed')
+
+    with mx_gate.Task('UnitTests: -EST', tasks) as t:
+        if t:
+            if junit(['--J', '@-DR:-ExperimentalStateTrans', '--tests', _gate_unit_tests()]) != 0:
+                t.abort('unit tests failed')
 
 mx_gate.add_gate_runner(_fastr_suite, _fastr_gate_runner)
 

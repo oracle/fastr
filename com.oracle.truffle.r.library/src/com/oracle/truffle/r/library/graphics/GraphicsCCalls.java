@@ -82,15 +82,15 @@ public class GraphicsCCalls {
     @SuppressWarnings("unused")
     public static final class C_mtext extends RExternalBuiltinNode {
         private Object text;
-        private RAbstractDoubleVector side;
-        private RAbstractDoubleVector line;
-        private RAbstractDoubleVector outer;
-        private RAbstractDoubleVector adj;
-        private RAbstractDoubleVector at;
-        private RAbstractDoubleVector padj;
-        private RAbstractDoubleVector cex;
-        private RAbstractDoubleVector col;
-        private RAbstractDoubleVector font;
+        private double side = 3.;
+        private double line = 0.;
+        private boolean outer = true;
+        private double adj = RRuntime.DOUBLE_NA;
+        private double at = RRuntime.DOUBLE_NA;
+        private double padj = RRuntime.DOUBLE_NA;
+        private double cex = RRuntime.DOUBLE_NA;
+        private double col = RRuntime.DOUBLE_NA;
+        private double font = RRuntime.DOUBLE_NA;
 
         @Override
         @TruffleBoundary
@@ -100,21 +100,20 @@ public class GraphicsCCalls {
         }
 
         private void extractArgumentsFrom(RArgsValuesAndNames args) {
-            text = args.getArgument(0); // postpone for now
-            side = extractDoubleVectorFrom(args.getArgument(1));
-            line = extractDoubleVectorFrom(args.getArgument(2));
-            outer = extractDoubleVectorFrom(args.getArgument(3));
-            at = extractDoubleVectorFrom(args.getArgument(4));
-            adj = extractDoubleVectorFrom(args.getArgument(5));
-            padj = extractDoubleVectorFrom(args.getArgument(6));
-            cex = extractDoubleVectorFrom(args.getArgument(7));
-            col = extractDoubleVectorFrom(args.getArgument(8));
-            font = extractDoubleVectorFrom(args.getArgument(9));
+//            text = args.getArgument(0); // postpone for now
+            side = extractFirstDoubleValueFrom(args.getArgument(1));
+            line = extractFirstDoubleValueFrom(args.getArgument(2));
+//            outer = extractFirstDoubleValueFrom(args.getArgument(3));
+            at = extractFirstDoubleValueFrom(args.getArgument(4));
+            adj = extractFirstDoubleValueFrom(args.getArgument(5));
+            padj = extractFirstDoubleValueFrom(args.getArgument(6));
+            cex = extractFirstDoubleValueFrom(args.getArgument(7));
+//            col = extractFirstDoubleValueFrom(args.getArgument(8));
+            font = extractFirstDoubleValueFrom(args.getArgument(9));
         }
 
-        private RAbstractDoubleVector extractDoubleVectorFrom(Object arg) {
-            boolean isNA = arg instanceof Byte && RRuntime.isNA((byte) arg);
-            return isNA || arg == RNull.instance ? null : castDouble(castVector(arg));
+        private double extractFirstDoubleValueFrom(Object arg) {
+            return castDouble(castVector(arg)).getDataAt(0);
         }
     }
 }

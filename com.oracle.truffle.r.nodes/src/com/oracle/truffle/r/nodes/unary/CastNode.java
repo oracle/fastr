@@ -22,9 +22,10 @@
  */
 package com.oracle.truffle.r.nodes.unary;
 
+/**
+ * Cast nodes behave like unary nodes, but in many cases it is useful to have a specific type for
+ * casts.
+ */
 public abstract class CastNode extends UnaryNode {
 
-    public static CastIntegerNode toInteger(boolean preserveNames, boolean dimensionsPreservation, boolean attrPreservation) {
-        return CastIntegerNodeGen.create(preserveNames, dimensionsPreservation, attrPreservation);
-    }
 }

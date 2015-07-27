@@ -54,6 +54,11 @@ public abstract class OptVariablePromiseBaseNode extends PromiseNode implements 
     }
 
     @Override
+    public RSyntaxNode getPromiseExpr() {
+        return originalRvn;
+    }
+
+    @Override
     public Object execute(VirtualFrame frame) {
         // If the frame slot we're looking for is not present yet, wait for it!
         if (!frameSlotNode.hasValue(frame)) {

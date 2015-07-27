@@ -497,7 +497,7 @@ public class RDeparse {
                 RPairList s = (RPairList) obj;
                 RPairList t = s;
                 while (t != null && t.cdr() != RNull.instance) {
-                    if (t.getTag() != null) {
+                    if (t.getTag() != null && !t.isNullTag()) {
                         deparse2buff(state, t.getTag());
                         state.append(" = ");
                     }
@@ -505,7 +505,7 @@ public class RDeparse {
                     state.append(", ");
                     t = next(t);
                 }
-                if (t.getTag() != null) {
+                if (t.getTag() != null && !t.isNullTag()) {
                     deparse2buff(state, t.getTag());
                     state.append(" = ");
                 }
