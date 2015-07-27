@@ -27,9 +27,7 @@ import java.util.*;
 
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.instrument.*;
-import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.vm.*;
-import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.tools.debug.shell.*;
 import com.oracle.truffle.tools.debug.shell.client.*;
 import com.oracle.truffle.tools.debug.shell.server.*;
@@ -112,7 +110,7 @@ public abstract class RREPLHandler extends REPLHandler {
      */
     /*
      * public static final REPLHandler R_FRAME_HANDLER = new REPLHandler(REPLMessage.FRAME) {
-     * 
+     *
      * @Override public REPLMessage[] receive(REPLMessage request, REPLServerContext serverContext)
      * { final REPLMessage reply = createReply(); final Integer frameNumber =
      * request.getIntValue(REPLMessage.FRAME_NUMBER); if (frameNumber == null) { return

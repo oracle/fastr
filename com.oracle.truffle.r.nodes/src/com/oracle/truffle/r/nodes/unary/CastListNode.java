@@ -37,8 +37,6 @@ public abstract class CastListNode extends CastBaseNode {
 
     @Child private CastListNode castListRecursive;
 
-    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
-
     public abstract RList executeList(Object o);
 
     private RList castList(Object operand) {
