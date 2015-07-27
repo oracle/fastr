@@ -283,4 +283,8 @@ public final class RAttributes implements Iterable<RAttributes.RAttribute> {
         }
 
     }
+
+    public void setSize(int size) {
+        this.size = size;
+    }
 }

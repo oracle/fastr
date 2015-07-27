@@ -100,8 +100,10 @@ public abstract class CopyAttributesNode extends Node {
 
     @Specialization(guards = {"leftLength == rightLength", "containsMetadata(left, attrLeftProfiles) || containsMetadata(right, attrRightProfiles)"})
     public RAbstractVector copySameLength(RAbstractVector target, RAbstractVector left, @SuppressWarnings("unused") int leftLength, RAbstractVector right, @SuppressWarnings("unused") int rightLength, //
-                    @Cached("createCopyOfReg()") CopyOfRegAttributesNode copyOfRegLeft, //
-                    @Cached("createCopyOfReg()") CopyOfRegAttributesNode copyOfRegRight, //
+                    @Cached("create()") CopyOfRegAttributesNode copyOfRegLeft, //
+                    @Cached("create()") CopyOfRegAttributesNode copyOfRegRight, //
+                    @Cached("createDim()") RemoveAttributeNode removeDim, //
+                    @Cached("createDimNames()") RemoveAttributeNode removeDimNames, //
                     @Cached("create()") BranchProfile leftHasDimensions, //
                     @Cached("create()") BranchProfile rightHasDimensions, //
                     @Cached("create()") BranchProfile noDimensions, //
@@ -127,9 +129,10 @@ public abstract class CopyAttributesNode extends Node {
             newDimensions = right.getDimensions();
             if (newDimensions == null) {
                 noDimensions.enter();
-                if (result.getAttributes() != null) {
-                    result.getAttributes().remove(RRuntime.DIM_ATTR_KEY);
-                    result.getAttributes().remove(RRuntime.DIMNAMES_ATTR_KEY);
+                RAttributes attributes = result.getAttributes();
+                if (attributes != null) {
+                    removeDim.execute(attributes);
+                    removeDimNames.execute(attributes);
                     result.setInternalDimNames(null);
                 }
                 result.setInternalDimensions(null);
@@ -220,13 +223,9 @@ public abstract class CopyAttributesNode extends Node {
         return result;
     }
 
-    protected static CopyOfRegAttributesNode createCopyOfReg() {
-        return CopyOfRegAttributesNodeGen.create();
-    }
-
     @Specialization(guards = {"leftLength > rightLength", "containsMetadata(left, attrLeftProfiles) || containsMetadata(right, attrRightProfiles)"})
     public RAbstractVector copyLonger(RAbstractVector target, RAbstractVector left, @SuppressWarnings("unused") int leftLength, RAbstractVector right, @SuppressWarnings("unused") int rightLength, //
-                    @Cached("createCopyOfReg()") CopyOfRegAttributesNode copyOfReg, //
+                    @Cached("create()") CopyOfRegAttributesNode copyOfReg, //
                     @Cached("create()") BranchProfile leftHasDimensions, //
                     @Cached("create()") BranchProfile rightHasDimensions, //
                     @Cached("create()") BranchProfile noDimensions, //

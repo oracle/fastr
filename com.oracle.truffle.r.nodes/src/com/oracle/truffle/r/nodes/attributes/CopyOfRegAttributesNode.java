@@ -37,6 +37,10 @@ public abstract class CopyOfRegAttributesNode extends Node {
 
     public abstract void execute(RAbstractVector source, RVector target);
 
+    public static CopyOfRegAttributesNode create() {
+        return CopyOfRegAttributesNodeGen.create();
+    }
+
     @SuppressWarnings("unused")
     @Specialization(guards = "source.getAttributes() == null")
     protected void copyNoAttributes(RAbstractVector source, RVector target) {
