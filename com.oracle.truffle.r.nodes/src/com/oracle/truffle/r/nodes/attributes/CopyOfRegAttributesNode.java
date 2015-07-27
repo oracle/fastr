@@ -69,6 +69,17 @@ public abstract class CopyOfRegAttributesNode extends Node {
         // nothing to do
     }
 
+    protected static final boolean onlyNamesAttribute(RAbstractVector source) {
+        RAttributes attributes = source.getAttributes();
+        return attributes != null && attributes.size() == 1 && attributes.getNames()[0] == RRuntime.NAMES_ATTR_KEY;
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization(guards = "onlyNamesAttribute(source)")
+    protected void copyNamesOnly(RAbstractVector source, RVector target) {
+        // nothing to do
+    }
+
     protected static final boolean onlyClassAttribute(RAbstractVector source) {
         RAttributes attributes = source.getAttributes();
         return attributes != null && attributes.size() == 1 && attributes.getNames()[0] == RRuntime.CLASS_ATTR_KEY;
@@ -76,7 +87,7 @@ public abstract class CopyOfRegAttributesNode extends Node {
 
     @Specialization(guards = "onlyClassAttribute(source)")
     protected void copyClassOnly(RAbstractVector source, RVector target) {
-        target.initAttributes(new String[]{RRuntime.CLASS_ATTR_KEY}, new Object[]{source.getAttributes().getValues()[0]});
+        target.initAttributes(RAttributes.createInitialized(new String[]{RRuntime.CLASS_ATTR_KEY}, new Object[]{source.getAttributes().getValues()[0]}));
     }
 
     @Specialization

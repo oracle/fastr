@@ -118,17 +118,21 @@ public final class RAttributes implements Iterable<RAttributes.RAttribute> {
         assert isInterned(name);
         int pos = find(name);
         if (pos == -1) {
-            if (size == names.length) {
-                names = Arrays.copyOf(names, (size + 1) * 2);
-                values = Arrays.copyOf(values, (size + 1) * 2);
-                assert names.length == values.length;
-            }
+            ensureFreeSpace();
             pos = size++;
             names[pos] = name;
         }
         values[pos] = value;
         if (statsProfile.profile(stats != null)) {
             stats.update(this);
+        }
+    }
+
+    public void ensureFreeSpace() {
+        if (size == names.length) {
+            names = Arrays.copyOf(names, (size + 1) * 2);
+            values = Arrays.copyOf(values, (size + 1) * 2);
+            assert names.length == values.length;
         }
     }
 

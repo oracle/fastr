@@ -47,10 +47,6 @@ public abstract class CopyAttributesNode extends Node {
 
     public abstract RAbstractVector execute(RAbstractVector target, RAbstractVector left, int leftLength, RAbstractVector right, int rightLength);
 
-    protected static boolean isRVector(RAbstractVector vector) {
-        return vector instanceof RVector;
-    }
-
     protected boolean containsMetadata(RAbstractVector vector, RAttributeProfiles attrProfiles) {
         return vector instanceof RVector && vector.hasDimensions() || (copyAllAttributes && vector.getAttributes() != null) || vector.getNames(attrProfiles) != null ||
                         vector.getDimNames(attrProfiles) != null;
@@ -104,6 +100,9 @@ public abstract class CopyAttributesNode extends Node {
                     @Cached("create()") CopyOfRegAttributesNode copyOfRegRight, //
                     @Cached("createDim()") RemoveAttributeNode removeDim, //
                     @Cached("createDimNames()") RemoveAttributeNode removeDimNames, //
+                    @Cached("create()") InitAttributesNode initAttributes, //
+                    @Cached("createNames()") PutAttributeNode putNames, //
+                    @Cached("createDim()") PutAttributeNode putDim, //
                     @Cached("create()") BranchProfile leftHasDimensions, //
                     @Cached("create()") BranchProfile rightHasDimensions, //
                     @Cached("create()") BranchProfile noDimensions, //
@@ -117,10 +116,10 @@ public abstract class CopyAttributesNode extends Node {
         RVector result = target.materialize();
         if (copyAllAttributes) {
             if (result != right) {
-                copyOfRegLeft.execute(right, result);
+                copyOfRegRight.execute(right, result);
             }
             if (result != left) {
-                copyOfRegRight.execute(left, result);
+                copyOfRegLeft.execute(left, result);
             }
         }
 
@@ -140,7 +139,7 @@ public abstract class CopyAttributesNode extends Node {
                 if (result != left) {
                     RStringVector vecNames = left.getNames(attrLeftProfiles);
                     if (hasNamesLeft.profile(vecNames != null)) {
-                        result.initAttributes().put(RRuntime.NAMES_ATTR_KEY, vecNames);
+                        putNames.execute(initAttributes.execute(result), vecNames);
                         result.setInternalNames(vecNames);
                         return result;
                     }
@@ -148,7 +147,7 @@ public abstract class CopyAttributesNode extends Node {
                 if (result != right) {
                     RStringVector vecNames = right.getNames(attrRightProfiles);
                     if (hasNamesRight.profile(vecNames != null)) {
-                        result.initAttributes().put(RRuntime.NAMES_ATTR_KEY, vecNames);
+                        putNames.execute(initAttributes.execute(result), vecNames);
                         result.setInternalNames(vecNames);
                     }
                 }
@@ -160,7 +159,7 @@ public abstract class CopyAttributesNode extends Node {
             leftHasDimensions.enter();
         }
 
-        result.initAttributes().put(RRuntime.DIM_ATTR_KEY, RDataFactory.createIntVector(newDimensions, RDataFactory.COMPLETE_VECTOR));
+        putDim.execute(initAttributes.execute(result), RDataFactory.createIntVector(newDimensions, RDataFactory.COMPLETE_VECTOR));
         result.setInternalDimensions(newDimensions);
 
         if (result != left) {
@@ -229,6 +228,9 @@ public abstract class CopyAttributesNode extends Node {
                     @Cached("create()") BranchProfile leftHasDimensions, //
                     @Cached("create()") BranchProfile rightHasDimensions, //
                     @Cached("create()") BranchProfile noDimensions, //
+                    @Cached("createNames()") PutAttributeNode putNames, //
+                    @Cached("createDim()") PutAttributeNode putDim, //
+                    @Cached("create()") InitAttributesNode initAttributes, //
                     @Cached("createBinaryProfile()") ConditionProfile hasNames, //
                     @Cached("createBinaryProfile()") ConditionProfile hasDimNames) {
         if (LOG) {
@@ -247,7 +249,7 @@ public abstract class CopyAttributesNode extends Node {
                 if (left != result) {
                     RStringVector vecNames = left.getNames(attrLeftProfiles);
                     if (hasNames.profile(vecNames != null)) {
-                        result.initAttributes().put(RRuntime.NAMES_ATTR_KEY, vecNames);
+                        putNames.execute(initAttributes.execute(result), vecNames);
                         result.setInternalNames(vecNames);
                     }
                 }
@@ -258,7 +260,7 @@ public abstract class CopyAttributesNode extends Node {
         } else {
             leftHasDimensions.enter();
         }
-        result.initAttributes().put(RRuntime.DIM_ATTR_KEY, RDataFactory.createIntVector(newDimensions, RDataFactory.COMPLETE_VECTOR));
+        putDim.execute(initAttributes.execute(result), RDataFactory.createIntVector(newDimensions, RDataFactory.COMPLETE_VECTOR));
         result.setInternalDimensions(newDimensions);
         if (left != result) {
             RList newDimNames = left.getDimNames(attrLeftProfiles);

@@ -73,21 +73,21 @@ public abstract class RVector extends RAttributeStorage implements RShareable, R
             // since this constructor is for internal use only, the assertion shouldn't fail
             assert names.getLength() == length : "size mismatch: " + names.getLength() + " vs. " + length;
             if (dimensions == null) {
-                initAttributes(new String[]{RRuntime.NAMES_ATTR_KEY}, new Object[]{names});
+                initAttributes(RAttributes.createInitialized(new String[]{RRuntime.NAMES_ATTR_KEY}, new Object[]{names}));
             } else {
                 RIntVector dimensionsVector = RDataFactory.createIntVector(dimensions, true);
                 if (dimensions.length != 1) {
-                    initAttributes(new String[]{RRuntime.NAMES_ATTR_KEY, RRuntime.DIM_ATTR_KEY}, new Object[]{names, dimensionsVector});
+                    initAttributes(RAttributes.createInitialized(new String[]{RRuntime.NAMES_ATTR_KEY, RRuntime.DIM_ATTR_KEY}, new Object[]{names, dimensionsVector}));
                 } else {
                     // one-dimensional arrays do not have names, only dimnames with one value
                     RList newDimNames = RDataFactory.createList(new Object[]{names});
-                    initAttributes(new String[]{RRuntime.DIM_ATTR_KEY, RRuntime.DIMNAMES_ATTR_KEY}, new Object[]{dimensionsVector, newDimNames});
+                    initAttributes(RAttributes.createInitialized(new String[]{RRuntime.DIM_ATTR_KEY, RRuntime.DIMNAMES_ATTR_KEY}, new Object[]{dimensionsVector, newDimNames}));
                     this.dimNames = newDimNames;
                 }
             }
         } else {
             if (dimensions != null) {
-                initAttributes(new String[]{RRuntime.DIM_ATTR_KEY}, new Object[]{RDataFactory.createIntVector(dimensions, true)});
+                initAttributes(RAttributes.createInitialized(new String[]{RRuntime.DIM_ATTR_KEY}, new Object[]{RDataFactory.createIntVector(dimensions, true)}));
             }
         }
     }
