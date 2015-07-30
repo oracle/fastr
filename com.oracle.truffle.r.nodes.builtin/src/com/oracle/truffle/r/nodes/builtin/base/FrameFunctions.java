@@ -225,12 +225,16 @@ public class FrameFunctions {
                         sig = ArgumentsSignature.get(names);
                     } else {
                         listNames = new String[listArgsLength];
-                        for (RNode node : matchedArgNodes) {
-                            if (node instanceof VarArgsPromiseNode) {
-                                assignVarArgsNames(expandedVarArgs, listNames, 0);
+                        if (listArgsLength > 0) {
+                            for (RNode node : matchedArgNodes) {
+                                if (node instanceof VarArgsPromiseNode) {
+                                    assignVarArgsNames(expandedVarArgs, listNames, 0);
+                                }
                             }
+                            sig = ArgumentsSignature.get(ArgumentsSignature.VARARG_NAME);
+                        } else {
+                            sig = ArgumentsSignature.empty(0);
                         }
-                        sig = ArgumentsSignature.get(ArgumentsSignature.VARARG_NAME);
                     }
                 } else {
                     String[] names = new String[newCallArgsLength];
@@ -268,7 +272,7 @@ public class FrameFunctions {
                             RPairList prev = null;
                             int pls = expandedVarArgs.nodes.size();
                             for (int v = 0; v < pls; v++) {
-                                RNode n = (RNode) RASTUtils.unwrap(expandedVarArgs.nodes.get(v));
+                                RNode n = RASTUtils.unwrap(expandedVarArgs.nodes.get(v));
                                 Object listValue;
                                 if (n instanceof ConstantNode) {
                                     listValue = ((ConstantNode) n).getValue();
@@ -411,7 +415,7 @@ public class FrameFunctions {
             }
             if (callObj instanceof RLanguage) {
                 RLanguage call = (RLanguage) callObj;
-                RNode node = (RNode) RASTUtils.unwrap(call.getRep());
+                RNode node = RASTUtils.unwrap(call.getRep());
                 if (node instanceof RCallNode || node instanceof GroupDispatchNode) {
                     return call;
                 }
