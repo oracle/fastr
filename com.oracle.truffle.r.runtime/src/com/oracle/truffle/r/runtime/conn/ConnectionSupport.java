@@ -335,12 +335,136 @@ public class ConnectionSupport implements RContext.StateFactory {
         RConnection result = RContext.getRConnectionState().getConnection(index);
         if (result == null) {
             // non-existent connection, still legal according to GnuR
-            throw RError.nyi(null, "coerce to non-existent connection");
+            // we cannot throw an error here as this can be used by parallel packages - do it lazily
+            return InvalidConnection.instance;
         }
         return result;
     }
 
     // TODO implement all open modes
+
+    public static class InvalidConnection extends RConnection {
+
+        public static final InvalidConnection instance = new InvalidConnection();
+
+        private static final int INVALID_DESCRIPTOR = -1;
+
+        @Override
+        public String[] readLinesInternal(int n) throws IOException {
+            throw RInternalError.shouldNotReachHere("INVALID CONNECTION");
+        }
+
+        @Override
+        public String[] readLines(int n) throws IOException {
+            throw RInternalError.shouldNotReachHere("INVALID CONNECTION");
+        }
+
+        @Override
+        public InputStream getInputStream() throws IOException {
+            throw RInternalError.shouldNotReachHere("INVALID CONNECTION");
+        }
+
+        @Override
+        public OutputStream getOutputStream() throws IOException {
+            throw RInternalError.shouldNotReachHere("INVALID CONNECTION");
+        }
+
+        @Override
+        public void closeAndDestroy() throws IOException {
+            throw RInternalError.shouldNotReachHere("INVALID CONNECTION");
+        }
+
+        @Override
+        public boolean canRead() {
+            throw RInternalError.shouldNotReachHere("INVALID CONNECTION");
+        }
+
+        @Override
+        public boolean canWrite() {
+            throw RInternalError.shouldNotReachHere("INVALID CONNECTION");
+        }
+
+        @Override
+        public RConnection forceOpen(String modeString) throws IOException {
+            throw RInternalError.shouldNotReachHere("INVALID CONNECTION");
+        }
+
+        @Override
+        public void close() throws IOException {
+            throw RInternalError.shouldNotReachHere("INVALID CONNECTION");
+        }
+
+        @Override
+        public boolean isSeekable() {
+            throw RInternalError.shouldNotReachHere("INVALID CONNECTION");
+        }
+
+        @Override
+        public long seek(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
+            throw RInternalError.shouldNotReachHere("INVALID CONNECTION");
+        }
+
+        @Override
+        public int getc() throws IOException {
+            throw RInternalError.shouldNotReachHere("INVALID CONNECTION");
+        }
+
+        @Override
+        public void writeLines(RAbstractStringVector lines, String sep, boolean useBytes) throws IOException {
+            throw RInternalError.shouldNotReachHere("INVALID CONNECTION");
+        }
+
+        @Override
+        public void flush() throws IOException {
+            throw RInternalError.shouldNotReachHere("INVALID CONNECTION");
+        }
+
+        @Override
+        public int getDescriptor() {
+            return INVALID_DESCRIPTOR;
+        }
+
+        @Override
+        public void writeString(String s, boolean nl) throws IOException {
+            throw RInternalError.shouldNotReachHere("INVALID CONNECTION");
+        }
+
+        @Override
+        public void writeChar(String s, int pad, String eos, boolean useBytes) throws IOException {
+            throw RInternalError.shouldNotReachHere("INVALID CONNECTION");
+        }
+
+        @Override
+        public String readChar(int nchars, boolean useBytes) throws IOException {
+            throw RInternalError.shouldNotReachHere("INVALID CONNECTION");
+        }
+
+        @Override
+        public void writeBin(ByteBuffer buffer) throws IOException {
+            throw RInternalError.shouldNotReachHere("INVALID CONNECTION");
+        }
+
+        @Override
+        public int readBin(ByteBuffer buffer) throws IOException {
+            throw RInternalError.shouldNotReachHere("INVALID CONNECTION");
+        }
+
+        @Override
+        public byte[] readBinChars() throws IOException {
+            throw RInternalError.shouldNotReachHere("INVALID CONNECTION");
+        }
+
+        @Override
+        public boolean isTextMode() {
+            throw RInternalError.shouldNotReachHere("INVALID CONNECTION");
+        }
+
+        @Override
+        public boolean isOpen() {
+            throw RInternalError.shouldNotReachHere("INVALID CONNECTION");
+        }
+
+    }
 
     /**
      * Class that holds common state for all {@link RConnection} instances. It supports lazy
