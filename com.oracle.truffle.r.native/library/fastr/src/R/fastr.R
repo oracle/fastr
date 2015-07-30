@@ -87,6 +87,11 @@ print.fastr_context <- function(x, ...) {
 	invisible(x)
 }
 
+fastr.context.spawn <- function(contexts, exprs) {
+	.FastR(.NAME="context.spawn", contexts, exprs)
+	invisible(NULL)
+}
+
 fastr.context.eval <- function(contexts, exprs, par=FALSE) {
 	.FastR(.NAME="context.eval", contexts, exprs, par)
 	invisible(NULL)

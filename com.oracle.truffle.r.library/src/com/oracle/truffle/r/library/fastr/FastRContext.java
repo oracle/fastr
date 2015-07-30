@@ -64,6 +64,21 @@ public class FastRContext {
         }
     }
 
+    public abstract static class Spawn extends RExternalBuiltinNode.Arg2 {
+        @Specialization
+        protected RNull eval(RIntVector contexts, RAbstractStringVector exprs) {
+            RContext.EvalThread[] threads = new RContext.EvalThread[contexts.getLength()];
+            for (int i = 0; i < threads.length; i++) {
+                RContext context = checkContext(contexts.getDataAt(i));
+                threads[i] = new RContext.EvalThread(context, Source.fromText(exprs.getDataAt(i % threads.length), "<context_eval>"));
+            }
+            for (int i = 0; i < threads.length; i++) {
+                threads[i].start();
+            }
+            return RNull.instance;
+        }
+    }
+
     public abstract static class Eval extends RExternalBuiltinNode.Arg3 {
         @Specialization
         protected RNull eval(RIntVector contexts, RAbstractStringVector exprs, byte par) {
