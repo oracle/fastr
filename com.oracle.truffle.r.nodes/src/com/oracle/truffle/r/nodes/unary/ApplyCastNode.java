@@ -25,12 +25,9 @@ package com.oracle.truffle.r.nodes.unary;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.env.*;
 
-// TODO This is NOT an RSyntaxNode; certainly does not have a SourceSection
 @NodeInfo(cost = NodeCost.NONE)
-public final class ApplyCastNode extends RNode implements RSyntaxNode {
+public final class ApplyCastNode extends RNode {
 
     @Child private CastNode cast;
     @Child private RNode value;
@@ -45,17 +42,4 @@ public final class ApplyCastNode extends RNode implements RSyntaxNode {
         return cast.execute(value.execute(frame));
     }
 
-    @Override
-    public void deparse(RDeparse.State state) {
-        ((RSyntaxNode) value).deparse(state);
-    }
-
-    public RSyntaxNode substitute(REnvironment env) {
-        return new ApplyCastNode(NodeUtil.cloneNode(cast), (RNode) ((RSyntaxNode) value).substitute(env));
-    }
-
-    @Override
-    public void serialize(RSerialize.State state) {
-        ((RSyntaxNode) value).serialize(state);
-    }
 }
