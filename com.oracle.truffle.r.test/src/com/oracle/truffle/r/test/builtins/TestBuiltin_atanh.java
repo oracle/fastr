@@ -19,7 +19,7 @@ public class TestBuiltin_atanh extends TestBase {
 
     @Test
     public void testatanh1() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(numeric(0), .Dim = c(0L, 0L)));atanh(argv[[1]]);");
+        assertEval("argv <- list(structure(numeric(0), .Dim = c(0L, 0L)));atanh(argv[[1]]);");
     }
 
     @Test
