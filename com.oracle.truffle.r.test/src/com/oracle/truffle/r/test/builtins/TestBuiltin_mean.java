@@ -120,7 +120,7 @@ public class TestBuiltin_mean extends TestBase {
 
     @Test
     public void testmean22() {
-        assertEval(Ignored.Unknown, "argv <- structure(list(x = structure(c(2L, 1L, 2L, 2L), .Label = c('FALSE',     'TRUE'), class = 'factor')), .Names = 'x');do.call('mean', argv)");
+        assertEval(Output.ContainsWarning, "argv <- structure(list(x = structure(c(2L, 1L, 2L, 2L), .Label = c('FALSE',     'TRUE'), class = 'factor')), .Names = 'x');do.call('mean', argv)");
     }
 
     @Test
