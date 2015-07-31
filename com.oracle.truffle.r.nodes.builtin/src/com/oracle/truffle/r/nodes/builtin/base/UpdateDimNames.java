@@ -35,7 +35,6 @@ import com.oracle.truffle.r.runtime.data.model.*;
 
 @RBuiltin(name = "dimnames<-", kind = PRIMITIVE, parameterNames = {"x", ""})
 // 2nd parameter is "value", but should not be matched against, so ""
-@SuppressWarnings("unused")
 public abstract class UpdateDimNames extends RInvisibleBuiltinNode {
 
     @Child private CastStringNode castStringNode;
@@ -76,23 +75,20 @@ public abstract class UpdateDimNames extends RInvisibleBuiltinNode {
 
     @Specialization
     @TruffleBoundary
-    protected RAbstractContainer updateDimnames(RAbstractContainer container, RNull list) {
+    protected RAbstractContainer updateDimnamesNull(RAbstractContainer container, @SuppressWarnings("unused") RNull list) {
         RAbstractContainer result = container.materializeNonShared();
         result.setDimNames(null);
         controlVisibility();
         return result;
     }
 
-    @Specialization(guards = "isZeroLength(list)")
+    @Specialization(guards = "list.getLength() == 0")
     @TruffleBoundary
-    protected RAbstractContainer updateDimnamesEmpty(RAbstractContainer container, RList list) {
-        RAbstractContainer result = container.materializeNonShared();
-        result.setDimNames(null);
-        controlVisibility();
-        return result;
+    protected RAbstractContainer updateDimnamesEmpty(RAbstractContainer container, @SuppressWarnings("unused") RList list) {
+        return updateDimnamesNull(container, RNull.instance);
     }
 
-    @Specialization(guards = "!isZeroLength(list)")
+    @Specialization(guards = "list.getLength() > 0")
     protected RAbstractContainer updateDimnames(RAbstractContainer container, RList list) {
         RAbstractContainer result = container.materializeNonShared();
         result.setDimNames(convertToListOfStrings(list));
@@ -100,25 +96,11 @@ public abstract class UpdateDimNames extends RInvisibleBuiltinNode {
         return result;
     }
 
-    @Specialization(guards = "!isContainerList(c)")
-    protected RAbstractContainer updateDimnamesError(RAbstractContainer container, RAbstractContainer c) {
+    @Specialization(guards = "!isRList(c)")
+    @SuppressWarnings("unused")
+    protected RAbstractContainer updateDimnamesError(RAbstractContainer container, Object c) {
         controlVisibility();
         CompilerDirectives.transferToInterpreter();
         throw RError.error(getEncapsulatingSourceSection(), RError.Message.DIMNAMES_LIST);
-    }
-
-    @Specialization
-    protected RAbstractContainer updateDimnamesError(RAbstractContainer container, RFunction v) {
-        controlVisibility();
-        CompilerDirectives.transferToInterpreter();
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.DIMNAMES_LIST);
-    }
-
-    protected boolean isContainerList(RAbstractContainer c) {
-        return c instanceof RList;
-    }
-
-    protected boolean isZeroLength(RList list) {
-        return list.getLength() == 0;
     }
 }
