@@ -281,13 +281,6 @@ public final class RArguments {
         frame.getArguments()[INDEX_ENVIRONMENT] = env;
     }
 
-    /**
-     * Explicitly set the callSrc. Used by {@code REngine.eval}.
-     */
-    public static void setCallSourceSection(Frame frame, SourceSection callSrc) {
-        frame.getArguments()[INDEX_CALL_SRC] = callSrc;
-    }
-
     public static void setDepth(Frame frame, int depth) {
         frame.getArguments()[INDEX_DEPTH] = depth;
     }

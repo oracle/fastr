@@ -196,23 +196,20 @@ public class PromiseHelperNode extends Node {
             } else {
                 Frame promiseFrame = promiseFrameProfile.profile(promise.getFrame());
                 assert promiseFrame != null;
-                SourceSection oldCallSource = RArguments.getCallSourceSection(promiseFrame);
-                try {
-                    // With this call in, sys.call sometimes gets the wrong call,
-                    // without it, at least one unit test reports the wrong caller.
-                    // This should be addressed in a complete reworking of how
-                    // the caller for errors is determined.
-                    // RArguments.setCallSourceSection(promiseFrame, callSrc);
+                // With this call in, sys.call sometimes gets the wrong call,
+                // without it, at least one unit test reports the wrong caller.
+                // This should be addressed in a complete reworking of how
+                // the caller for errors is determined.
+                // RArguments.setCallSourceSection(promiseFrame, callSrc);
+                // (if this call is re-enabled, the old source section needs to be saved and
+                // restored.)
 
-                    if (promiseClosureCache == null) {
-                        CompilerDirectives.transferToInterpreterAndInvalidate();
-                        promiseClosureCache = insert(InlineCacheNode.createPromise(3));
-                    }
-
-                    return promiseClosureCache.execute(promiseFrame, promise.getClosure());
-                } finally {
-                    RArguments.setCallSourceSection(promiseFrame, oldCallSource);
+                if (promiseClosureCache == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    promiseClosureCache = insert(InlineCacheNode.createPromise(3));
                 }
+
+                return promiseClosureCache.execute(promiseFrame, promise.getClosure());
             }
         } finally {
             promise.setUnderEvaluation(false);
