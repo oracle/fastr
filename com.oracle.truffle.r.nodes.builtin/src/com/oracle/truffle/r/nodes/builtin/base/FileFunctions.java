@@ -51,7 +51,7 @@ public class FileFunctions {
         @TruffleBoundary
         public Object fileAccess(RAbstractStringVector names, int mode) {
             if (mode == RRuntime.INT_NA || mode < 0 || mode > 7) {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "mode");
+                throw RError.error(this, RError.Message.INVALID_ARGUMENT, "mode");
             }
             int[] data = new int[names.getLength()];
             for (int i = 0; i < data.length; i++) {
@@ -91,7 +91,7 @@ public class FileFunctions {
             int len1 = file1Vec.getLength();
             int len2 = file2Vec.getLength();
             if (len1 < 1) {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.FILE_APPEND_TO);
+                throw RError.error(this, RError.Message.FILE_APPEND_TO);
             }
             if (len2 < 1) {
                 return RDataFactory.createEmptyLogicalVector();
@@ -156,7 +156,7 @@ public class FileFunctions {
                     out.write(buf);
                     return true;
                 } catch (IOException ex) {
-                    RError.warning(getEncapsulatingSourceSection(), RError.Message.FILE_APPEND_WRITE);
+                    RError.warning(this, RError.Message.FILE_APPEND_WRITE);
                     return false;
                 }
             }
@@ -183,7 +183,7 @@ public class FileFunctions {
                     } catch (IOException ex) {
                         ok = false;
                         if (showWarnings == RRuntime.LOGICAL_TRUE) {
-                            RError.warning(getEncapsulatingSourceSection(), RError.Message.FILE_CANNOT_CREATE, path);
+                            RError.warning(this, RError.Message.FILE_CANNOT_CREATE, path);
                         }
                     }
                     status[i] = RRuntime.asLogical(ok);
@@ -196,7 +196,7 @@ public class FileFunctions {
         @TruffleBoundary
         protected Object doFileCreate(@SuppressWarnings("unused") Object x, @SuppressWarnings("unused") Object y) {
             controlVisibility();
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "file");
+            throw RError.error(this, RError.Message.INVALID_ARGUMENT, "file");
         }
     }
 
@@ -355,7 +355,7 @@ public class FileFunctions {
             int lenFrom = vecFrom.getLength();
             int lenTo = vecTo.getLength();
             if (lenFrom < 1) {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.NOTHING_TO_LINK);
+                throw RError.error(this, RError.Message.NOTHING_TO_LINK);
             }
             if (lenTo < 1) {
                 return RDataFactory.createLogicalVector(0);
@@ -380,7 +380,7 @@ public class FileFunctions {
                         }
                     } catch (UnsupportedOperationException | IOException ex) {
                         status[i] = RRuntime.LOGICAL_FALSE;
-                        RError.warning(getEncapsulatingSourceSection(), RError.Message.FILE_CANNOT_LINK, from, to, ex.getMessage());
+                        RError.warning(this, RError.Message.FILE_CANNOT_LINK, from, to, ex.getMessage());
                     }
                 }
             }
@@ -401,7 +401,7 @@ public class FileFunctions {
         @TruffleBoundary
         protected Object doFileLink(@SuppressWarnings("unused") Object from, @SuppressWarnings("unused") Object to) {
             controlVisibility();
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "file");
+            throw RError.error(this, RError.Message.INVALID_ARGUMENT, "file");
         }
     }
 
@@ -418,7 +418,7 @@ public class FileFunctions {
         @TruffleBoundary
         protected Object doFileSymLink(@SuppressWarnings("unused") Object from, @SuppressWarnings("unused") Object to) {
             controlVisibility();
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "file");
+            throw RError.error(this, RError.Message.INVALID_ARGUMENT, "file");
         }
     }
 
@@ -439,7 +439,7 @@ public class FileFunctions {
                     boolean ok = f.delete();
                     status[i] = RRuntime.asLogical(ok);
                     if (!ok) {
-                        RError.warning(getEncapsulatingSourceSection(), RError.Message.FILE_CANNOT_REMOVE, path);
+                        RError.warning(this, RError.Message.FILE_CANNOT_REMOVE, path);
                     }
                 }
             }
@@ -450,7 +450,7 @@ public class FileFunctions {
         @TruffleBoundary
         protected Object doFileRemove(@SuppressWarnings("unused") Object x) {
             controlVisibility();
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "file");
+            throw RError.error(this, RError.Message.INVALID_ARGUMENT, "file");
         }
     }
 
@@ -462,7 +462,7 @@ public class FileFunctions {
             controlVisibility();
             int len = vecFrom.getLength();
             if (len != vecTo.getLength()) {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.FROM_TO_DIFFERENT);
+                throw RError.error(this, RError.Message.FROM_TO_DIFFERENT);
             }
             byte[] status = new byte[len];
             for (int i = 0; i < len; i++) {
@@ -476,7 +476,7 @@ public class FileFunctions {
                     boolean ok = new File(Utils.tildeExpand(from)).renameTo(new File(Utils.tildeExpand(to)));
                     status[i] = RRuntime.asLogical(ok);
                     if (!ok) {
-                        RError.warning(getEncapsulatingSourceSection(), RError.Message.FILE_CANNOT_RENAME, from, to);
+                        RError.warning(this, RError.Message.FILE_CANNOT_RENAME, from, to);
                     }
                 }
             }
@@ -487,7 +487,7 @@ public class FileFunctions {
         @TruffleBoundary
         protected Object doFileRename(@SuppressWarnings("unused") Object from, @SuppressWarnings("unused") Object to) {
             controlVisibility();
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "file");
+            throw RError.error(this, RError.Message.INVALID_ARGUMENT, "file");
         }
     }
 
@@ -515,7 +515,7 @@ public class FileFunctions {
         @Fallback
         protected Object doFileExists(@SuppressWarnings("unused") Object vec) {
             controlVisibility();
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "file");
+            throw RError.error(this, RError.Message.INVALID_ARGUMENT, "file");
         }
 
     }
@@ -616,7 +616,7 @@ public class FileFunctions {
         private boolean check(byte valueLogical, String argName) {
             boolean value = RRuntime.fromLogical(valueLogical);
             if (value) {
-                RError.warning(getEncapsulatingSourceSection(), RError.Message.GENERIC, "'" + argName + "'" + " is not implemented");
+                RError.warning(this, RError.Message.GENERIC, "'" + argName + "'" + " is not implemented");
             }
             return value;
         }
@@ -797,7 +797,7 @@ public class FileFunctions {
 
         protected boolean checkLogical(byte value, String name) throws RError {
             if (RRuntime.isNA(value)) {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, name);
+                throw RError.error(this, RError.Message.INVALID_ARGUMENT, name);
             } else {
                 return RRuntime.fromLogical(value);
             }
@@ -811,7 +811,7 @@ public class FileFunctions {
             if (lenFrom > 0) {
                 int lenTo = vecTo.getLength();
                 if (lenTo != 1) {
-                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "to");
+                    throw RError.error(this, RError.Message.INVALID_ARGUMENT, "to");
                 }
                 boolean overWrite = checkLogical(overwriteArg, "overwrite");
                 boolean recursive = checkLogical(recursiveArg, "recursive");
@@ -819,7 +819,7 @@ public class FileFunctions {
                 boolean copyDate = checkLogical(copyDateArg, "copy.dates");
 
                 if (recursive) {
-                    throw RError.nyi(getEncapsulatingSourceSection(), "'recursive' option");
+                    throw RError.nyi(this, "'recursive' option");
                 }
                 // Java cannot distinguish copy.mode and copy.dates
                 CopyOption[] copyOptions;
@@ -859,7 +859,7 @@ public class FileFunctions {
                         }
                     } catch (UnsupportedOperationException | IOException ex) {
                         status[i] = RRuntime.LOGICAL_FALSE;
-                        RError.warning(getEncapsulatingSourceSection(), RError.Message.FILE_CANNOT_COPY, from, to, ex.getMessage());
+                        RError.warning(this, RError.Message.FILE_CANNOT_COPY, from, to, ex.getMessage());
                     }
                 }
             }
@@ -924,7 +924,7 @@ public class FileFunctions {
 
         protected boolean checkLogical(byte value, String name) throws RError {
             if (RRuntime.isNA(value)) {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, name);
+                throw RError.error(this, RError.Message.INVALID_ARGUMENT, name);
             } else {
                 return RRuntime.fromLogical(value);
             }
@@ -944,7 +944,7 @@ public class FileFunctions {
                     continue;
                 }
                 if (containsGlobChar(pathPattern) >= 0) {
-                    throw RError.nyi(getEncapsulatingSourceSection(), "wildcards");
+                    throw RError.nyi(this, "wildcards");
                 }
                 Path path = fileSystem.getPath(pathPattern);
                 if (Files.isDirectory(path)) {
@@ -995,7 +995,7 @@ public class FileFunctions {
         @SuppressWarnings("unused")
         @Fallback
         protected int doUnlink(Object vec, Object recursive, Object force) {
-            throw RError.nyi(getEncapsulatingSourceSection(), "unlink");
+            throw RError.nyi(this, "unlink");
         }
 
         public static boolean simpleArgs(@SuppressWarnings("unused") RAbstractStringVector vec, byte recursive, byte force) {
@@ -1011,7 +1011,7 @@ public class FileFunctions {
             controlVisibility();
             boolean ok = true;
             if (pathVec.getLength() != 1) {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "path");
+                throw RError.error(this, RError.Message.INVALID_ARGUMENT, "path");
             }
             String path = Utils.tildeExpand(pathVec.getDataAt(0));
             if (RRuntime.fromLogical(recursive)) {
@@ -1043,7 +1043,7 @@ public class FileFunctions {
                 return true;
             } catch (IOException ex) {
                 if (RRuntime.fromLogical(showWarnings)) {
-                    RError.warning(getEncapsulatingSourceSection(), RError.Message.DIR_CANNOT_CREATE, path);
+                    RError.warning(this, RError.Message.DIR_CANNOT_CREATE, path);
                 }
                 return false;
             }

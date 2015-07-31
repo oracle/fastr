@@ -68,6 +68,7 @@ public class ParserGeneration {
         "added octal escape sequences for strings",
         "handles escapes in `xxx` form",
         "added \\  escape sequence",
-        "allow -/+/! after ^"
+        "allow -/+/! after ^",
+        "adapt to RError API change"
     };
 }

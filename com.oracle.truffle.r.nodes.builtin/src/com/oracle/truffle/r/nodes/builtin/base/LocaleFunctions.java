@@ -98,7 +98,7 @@ public class LocaleFunctions {
         @Specialization
         protected Object localeconv() {
             controlVisibility();
-            RError.nyi(getEncapsulatingSourceSection(), "localeconv");
+            RError.nyi(this, "localeconv");
             return RNull.instance;
         }
     }

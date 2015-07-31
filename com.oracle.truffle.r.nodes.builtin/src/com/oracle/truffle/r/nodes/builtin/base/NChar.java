@@ -48,7 +48,7 @@ public abstract class NChar extends RBuiltinNode {
         try {
             return (String) convertString.executeString(content);
         } catch (ConversionFailedException e) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.TYPE_EXPECTED, RType.Character.getName());
+            throw RError.error(this, RError.Message.TYPE_EXPECTED, RType.Character.getName());
         }
     }
 
@@ -111,7 +111,7 @@ public abstract class NChar extends RBuiltinNode {
     protected RIntVector nchar(Object obj, Object type, Object allowNA) {
         controlVisibility();
         if (obj instanceof RFactor) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.REQUIRES_CHAR_VECTOR, "nchar");
+            throw RError.error(this, RError.Message.REQUIRES_CHAR_VECTOR, "nchar");
         }
         if (obj instanceof RAbstractVector) {
             RAbstractVector vector = (RAbstractVector) obj;
@@ -122,7 +122,7 @@ public abstract class NChar extends RBuiltinNode {
             }
             return RDataFactory.createIntVector(result, vector.isComplete(), vector.getNames(attrProfiles));
         } else {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.CANNOT_COERCE, RRuntime.classToString(obj.getClass(), false), "character");
+            throw RError.error(this, RError.Message.CANNOT_COERCE, RRuntime.classToString(obj.getClass(), false), "character");
         }
     }
 

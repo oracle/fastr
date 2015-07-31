@@ -50,9 +50,9 @@ public class GetFunctions {
         protected void unknownObject(String x, RType modeType, String modeString) throws RError {
             unknownObjectErrorProfile.enter();
             if (modeType == RType.Any) {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.UNKNOWN_OBJECT, x);
+                throw RError.error(this, RError.Message.UNKNOWN_OBJECT, x);
             } else {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.UNKNOWN_OBJECT_MODE, x, modeType == null ? modeString : modeType.getName());
+                throw RError.error(this, RError.Message.UNKNOWN_OBJECT_MODE, x, modeType == null ? modeString : modeType.getName());
             }
         }
 
@@ -171,11 +171,11 @@ public class GetFunctions {
             State state = new State(xv, mode, ifNotFound);
             if (!(state.modeLength == 1 || state.modeLength == state.svLength)) {
                 wrongLengthErrorProfile.enter();
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.WRONG_LENGTH_ARG, "mode");
+                throw RError.error(this, RError.Message.WRONG_LENGTH_ARG, "mode");
             }
             if (!(state.ifNotFoundLength == 1 || state.ifNotFoundLength == state.svLength)) {
                 wrongLengthErrorProfile.enter();
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.WRONG_LENGTH_ARG, "ifnotfound");
+                throw RError.error(this, RError.Message.WRONG_LENGTH_ARG, "ifnotfound");
             }
             return state;
 
@@ -244,7 +244,7 @@ public class GetFunctions {
                 needsCallerFrame = true;
             }
             MaterializedFrame callerFrame = needsCallerFrame ? frame.materialize() : null;
-            Object[] callArgs = RArguments.create(ifnFunc, callCache.getSourceSection(), callerFrame, RArguments.getDepth(frame) + 1, new Object[]{x}, ArgumentsSignature.empty(1));
+            Object[] callArgs = RArguments.create(ifnFunc, RDataFactory.createCaller(this), callerFrame, RArguments.getDepth(frame) + 1, new Object[]{x}, ArgumentsSignature.empty(1));
             return callCache.execute(frame, ifnFunc.getTarget(), callArgs);
         }
 

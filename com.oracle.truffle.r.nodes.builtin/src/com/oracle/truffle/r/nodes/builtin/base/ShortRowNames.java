@@ -61,7 +61,7 @@ public abstract class ShortRowNames extends RBuiltinNode {
     protected RNull getNamesInvalidType(RAbstractContainer operand, RAbstractIntVector type) {
         controlVisibility();
         CompilerDirectives.transferToInterpreter();
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "type");
+        throw RError.error(this, RError.Message.INVALID_ARGUMENT, "type");
     }
 
     @SuppressWarnings("unused")

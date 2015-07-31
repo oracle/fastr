@@ -40,7 +40,7 @@ public class RComplexToIntVectorClosure extends RToIntVectorClosure implements R
         if (!vector.isComplete() && RRuntime.isNA(right)) {
             return RRuntime.INT_NA;
         }
-        RError.warning(RError.Message.IMAGINARY_PARTS_DISCARDED_IN_COERCION);
+        RError.warning(RError.NO_NODE, RError.Message.IMAGINARY_PARTS_DISCARDED_IN_COERCION);
         return RRuntime.complex2intNoCheck(right);
     }
 }

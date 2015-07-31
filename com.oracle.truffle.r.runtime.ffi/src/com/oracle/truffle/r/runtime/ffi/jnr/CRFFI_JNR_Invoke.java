@@ -58,7 +58,7 @@ public class CRFFI_JNR_Invoke implements CRFFI {
         try {
             mh.invokeWithArguments(args);
         } catch (Throwable ex) {
-            throw RError.error(RError.Message.GENERIC, ex.getMessage());
+            throw RError.error(RError.NO_NODE, RError.Message.GENERIC, ex.getMessage());
         }
     }
 }

@@ -27,7 +27,7 @@ import java.util.function.*;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.source.*;
+import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.conn.*;
@@ -297,7 +297,7 @@ public abstract class RVector extends RAttributeStorage implements RShareable, R
     }
 
     @TruffleBoundary
-    public final void setNames(RStringVector newNames, SourceSection sourceSection) {
+    public final void setNames(RStringVector newNames, Node invokingNode) {
         if (attributes != null && newNames == null) {
             // whether it's one dimensional array or not, assigning null always removes the "names"
             // attribute
@@ -305,7 +305,7 @@ public abstract class RVector extends RAttributeStorage implements RShareable, R
             this.names = null;
         } else if (newNames != null) {
             if (newNames.getLength() > this.getLength()) {
-                throw RError.error(sourceSection, RError.Message.ATTRIBUTE_VECTOR_SAME_LENGTH, RRuntime.NAMES_ATTR_KEY, newNames.getLength(), this.getLength());
+                throw RError.error(invokingNode, RError.Message.ATTRIBUTE_VECTOR_SAME_LENGTH, RRuntime.NAMES_ATTR_KEY, newNames.getLength(), this.getLength());
             }
             if (this.dimensions != null && dimensions.length == 1) {
                 // for one dimensional array, "names" is really "dimnames[[1]]" (see R documentation
@@ -349,31 +349,31 @@ public abstract class RVector extends RAttributeStorage implements RShareable, R
     }
 
     @TruffleBoundary
-    public final void setDimNames(RList newDimNames, SourceSection sourceSection) {
+    public final void setDimNames(RList newDimNames, Node invokingNode) {
         if (attributes != null && newDimNames == null) {
             removeAttributeMapping(RRuntime.DIMNAMES_ATTR_KEY);
             this.dimNames = null;
         } else if (newDimNames != null) {
             if (dimensions == null) {
-                throw RError.error(sourceSection, RError.Message.DIMNAMES_NONARRAY);
+                throw RError.error(invokingNode, RError.Message.DIMNAMES_NONARRAY);
             }
             int newDimNamesLength = newDimNames.getLength();
             if (newDimNamesLength > dimensions.length) {
-                throw RError.error(sourceSection, RError.Message.DIMNAMES_DONT_MATCH_DIMS, newDimNamesLength, dimensions.length);
+                throw RError.error(invokingNode, RError.Message.DIMNAMES_DONT_MATCH_DIMS, newDimNamesLength, dimensions.length);
             }
             for (int i = 0; i < newDimNamesLength; i++) {
                 Object dimObject = newDimNames.getDataAt(i);
                 if (dimObject != RNull.instance) {
                     if (dimObject instanceof String) {
                         if (dimensions[i] != 1) {
-                            throw RError.error(sourceSection, RError.Message.DIMNAMES_DONT_MATCH_EXTENT, i + 1);
+                            throw RError.error(invokingNode, RError.Message.DIMNAMES_DONT_MATCH_EXTENT, i + 1);
                         }
                     } else {
                         RStringVector dimVector = (RStringVector) dimObject;
                         if (dimVector.getLength() == 0) {
                             newDimNames.updateDataAt(i, RNull.instance, null);
                         } else if (dimVector.getLength() != dimensions[i]) {
-                            throw RError.error(sourceSection, RError.Message.DIMNAMES_DONT_MATCH_EXTENT, i + 1);
+                            throw RError.error(invokingNode, RError.Message.DIMNAMES_DONT_MATCH_EXTENT, i + 1);
                         }
                     }
                 }
@@ -496,12 +496,12 @@ public abstract class RVector extends RAttributeStorage implements RShareable, R
         setDimensions(newDimensions, null);
     }
 
-    public final void setDimensions(int[] newDimensions, SourceSection sourceSection) {
+    public final void setDimensions(int[] newDimensions, Node invokingNode) {
         if (attributes != null && newDimensions == null) {
             removeAttributeMapping(RRuntime.DIM_ATTR_KEY);
-            setDimNames(null, sourceSection);
+            setDimNames(null, invokingNode);
         } else if (newDimensions != null) {
-            verifyDimensions(getLength(), newDimensions, sourceSection);
+            verifyDimensions(getLength(), newDimensions, invokingNode);
             putAttribute(RRuntime.DIM_ATTR_KEY, RDataFactory.createIntVector(newDimensions, RDataFactory.COMPLETE_VECTOR));
         }
         this.dimensions = newDimensions;
@@ -694,7 +694,7 @@ public abstract class RVector extends RAttributeStorage implements RShareable, R
         }
     }
 
-    public final void copyNamesDimsDimNamesFrom(RAttributeProfiles attrProfiles, RAbstractVector vector, SourceSection sourceSection) {
+    public final void copyNamesDimsDimNamesFrom(RAttributeProfiles attrProfiles, RAbstractVector vector, Node invokingNode) {
         // it's meant to be used on a "fresh" vector with only dimensions potentially set
         assert (this.names == null);
         assert (this.dimNames == null);
@@ -704,10 +704,10 @@ public abstract class RVector extends RAttributeStorage implements RShareable, R
         if (vector.getDimensions() == null || vector.getDimensions().length != 1) {
             // only assign name attribute if it's not represented as dimnames (as is the case for
             // one-dimensional arrasy)
-            this.setNames(vector.getNames(attrProfiles), sourceSection);
+            this.setNames(vector.getNames(attrProfiles), invokingNode);
         }
-        this.setDimensions(vector.getDimensions(), sourceSection);
-        this.setDimNames(vector.getDimNames(attrProfiles), sourceSection);
+        this.setDimensions(vector.getDimensions(), invokingNode);
+        this.setDimNames(vector.getDimNames(attrProfiles), invokingNode);
     }
 
     public final boolean copyNamesFrom(RAttributeProfiles attrProfiles, RAbstractVector vector) {
@@ -862,21 +862,21 @@ public abstract class RVector extends RAttributeStorage implements RShareable, R
         return materialize();
     }
 
-    public static void verifyDimensions(int vectorLength, int[] newDimensions, SourceSection sourceSection) {
+    public static void verifyDimensions(int vectorLength, int[] newDimensions, Node invokingNode) {
         int length = 1;
         for (int i = 0; i < newDimensions.length; i++) {
             if (RRuntime.isNA(newDimensions[i])) {
                 CompilerDirectives.transferToInterpreter();
-                throw RError.error(sourceSection, RError.Message.DIMS_CONTAIN_NA);
+                throw RError.error(invokingNode, RError.Message.DIMS_CONTAIN_NA);
             } else if (newDimensions[i] < 0) {
                 CompilerDirectives.transferToInterpreter();
-                throw RError.error(sourceSection, RError.Message.DIMS_CONTAIN_NEGATIVE_VALUES);
+                throw RError.error(invokingNode, RError.Message.DIMS_CONTAIN_NEGATIVE_VALUES);
             }
             length *= newDimensions[i];
         }
         if (length != vectorLength && vectorLength > 0) {
             CompilerDirectives.transferToInterpreter();
-            throw RError.error(RError.Message.DIMS_DONT_MATCH_LENGTH, length, vectorLength);
+            throw RError.error(invokingNode, RError.Message.DIMS_DONT_MATCH_LENGTH, length, vectorLength);
         }
     }
 

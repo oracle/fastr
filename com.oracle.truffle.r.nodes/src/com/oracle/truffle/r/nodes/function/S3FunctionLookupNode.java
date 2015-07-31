@@ -283,7 +283,7 @@ public abstract class S3FunctionLookupNode extends Node {
                     if (builtin != null) {
                         return result;
                     }
-                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.UNKNOWN_FUNCTION_USE_METHOD, genericName, type);
+                    throw RError.error(this, RError.Message.UNKNOWN_FUNCTION_USE_METHOD, genericName, type);
                 } else {
                     throw S3FunctionLookupNode.NoGenericMethodException.instance;
                 }
@@ -369,7 +369,7 @@ public abstract class S3FunctionLookupNode extends Node {
                     if (function != null) {
                         return new Result(genericName, function, RNull.instance, genericName, false);
                     }
-                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.UNKNOWN_FUNCTION_USE_METHOD, genericName, RRuntime.toString(type));
+                    throw RError.error(this, RError.Message.UNKNOWN_FUNCTION_USE_METHOD, genericName, RRuntime.toString(type));
                 } else {
                     throw S3FunctionLookupNode.NoGenericMethodException.instance;
                 }

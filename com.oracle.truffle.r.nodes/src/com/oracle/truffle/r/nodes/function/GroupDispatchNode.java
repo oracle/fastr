@@ -117,7 +117,7 @@ public final class GroupDispatchNode extends RNode implements RSyntaxNode {
                 FrameSlot slot;
                 if (!varArgsSlotNode.hasValue(frame)) {
                     CompilerDirectives.transferToInterpreter();
-                    RError.error(RError.Message.NO_DOT_DOT_DOT);
+                    RError.error(this, RError.Message.NO_DOT_DOT_DOT);
                 }
                 slot = varArgsSlotNode.executeFrameSlot(frame);
                 varArgs = (RArgsValuesAndNames) frame.getObject(slot);
@@ -197,7 +197,7 @@ public final class GroupDispatchNode extends RNode implements RSyntaxNode {
                 dotMethod = RDataFactory.createStringVector(new String[]{result.targetFunctionName, ""}, true);
             } else {
                 if (mismatchProfile.profile(resultL.function != resultR.function)) {
-                    RError.warning(getSourceSection(), RError.Message.INCOMPATIBLE_METHODS, resultL.targetFunctionName, resultR.targetFunctionName, genericName);
+                    RError.warning(this, RError.Message.INCOMPATIBLE_METHODS, resultL.targetFunctionName, resultR.targetFunctionName, genericName);
                     result = null;
                     dotMethod = null;
                 } else {
@@ -218,7 +218,7 @@ public final class GroupDispatchNode extends RNode implements RSyntaxNode {
         }
         if (function == null) {
             CompilerDirectives.transferToInterpreter();
-            throw RError.nyi(getEncapsulatingSourceSection(), "missing builtin function");
+            throw RError.nyi(this, "missing builtin function");
         }
         return callMatcher.execute(frame, signature, evaluatedArgs, function, s3Args);
     }

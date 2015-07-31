@@ -28,6 +28,7 @@ import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.env.*;
 
+// TODO This is NOT an RSyntaxNode; certainly does not have a SourceSection
 @NodeInfo(cost = NodeCost.NONE)
 public final class ApplyCastNode extends RNode implements RSyntaxNode {
 

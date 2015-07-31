@@ -85,11 +85,41 @@ public interface RRuntimeASTAccess {
     void serializeNode(RSerialize.State state, Object node);
 
     /**
+     * Returns the real caller associated with {@code rl}, by locating the {@code RSyntaxNode}
+     * associated with the node stored with {@code rl}.
+     */
+    RLanguage getSyntaxCaller(RCaller rl);
+
+    /**
+     * Returns a string for a call as represented by {@code rl}, returned originally by
+     * {@link #getSyntaxCaller}.
+     */
+    String getCallerSource(RLanguage rl);
+
+    /**
+     * Used by error/warning handling to try to find the call that provoked the error/warning.
+     *
+     * If there is no caller, return {@link RNull#instance}, e.g. "call" of a builtin from the
+     * global env, otherwise return an {@code RLanguage} instance that represents the call.
+     *
+     * @param call may be {@code null} or it may be the {@link Node} that was executing when the
+     *            error.warning was generated (builtin or associated node).
+     */
+    Object findCaller(Node call);
+
+    /**
+     * Convenience method for {@code getCallerSource(getSyntaxCaller(caller))}.
+     */
+    default String getCallerSource(RCaller caller) {
+        return getCallerSource(getSyntaxCaller(caller));
+    }
+
+    /**
      * Callback to an R function from the internal implementation. Since this is part of the
      * implementation and not part of the user-visible execution debug handling is disabled across
      * the call.
      */
-    Object callback(RFunction f, RLanguage caller, Object[] args);
+    Object callback(RFunction f, Object[] args);
 
     /**
      * Force a promise by slow-path evaluation.

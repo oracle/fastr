@@ -43,7 +43,7 @@ public abstract class Vector extends RBuiltinNode {
     protected RType modeToType(String mode) {
         RType type = RType.fromMode(mode);
         if (!type.isVector()) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.CANNOT_MAKE_VECTOR_OF_MODE, mode);
+            throw RError.error(this, RError.Message.CANNOT_MAKE_VECTOR_OF_MODE, mode);
         }
         return type;
     }

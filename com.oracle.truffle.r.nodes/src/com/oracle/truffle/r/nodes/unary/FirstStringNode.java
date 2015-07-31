@@ -46,14 +46,14 @@ public abstract class FirstStringNode extends CastNode {
     protected String firstVector(RAbstractStringVector argument) {
         if (!lengthOneProfile.profile(argument.getLength() == 1)) {
             errorProfile.enter();
-            throw RError.error(getEncapsulatingSourceSection(), getEmptyError(), getArgumentName());
+            throw RError.error(this, getEmptyError(), getArgumentName());
         }
         return argument.getDataAt(0);
     }
 
     @Fallback
     protected String firstVectorFallback(@SuppressWarnings("unused") Object argument) {
-        throw RError.error(getEncapsulatingSourceSection(), getEmptyError(), getArgumentName());
+        throw RError.error(this, getEmptyError(), getArgumentName());
     }
 
     public static CastNode createWithError(RError.Message emptyError, String argumentName) {

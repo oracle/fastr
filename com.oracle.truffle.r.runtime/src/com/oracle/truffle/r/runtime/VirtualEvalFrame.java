@@ -26,7 +26,6 @@ import java.util.*;
 
 import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.runtime.data.*;
 
 /**
@@ -37,17 +36,17 @@ public final class VirtualEvalFrame implements VirtualFrame, MaterializedFrame {
     private final MaterializedFrame originalFrame;
     @CompilationFinal private final Object[] arguments;
 
-    private VirtualEvalFrame(MaterializedFrame originalFrame, RFunction function, SourceSection callSrc, int depth) {
+    private VirtualEvalFrame(MaterializedFrame originalFrame, RFunction function, RCaller call, int depth) {
         this.originalFrame = originalFrame;
         this.arguments = Arrays.copyOf(originalFrame.getArguments(), originalFrame.getArguments().length);
         this.arguments[RArguments.INDEX_DEPTH] = depth;
         this.arguments[RArguments.INDEX_IS_IRREGULAR] = true;
         this.arguments[RArguments.INDEX_FUNCTION] = function;
-        this.arguments[RArguments.INDEX_CALL_SRC] = callSrc;
+        this.arguments[RArguments.INDEX_CALL] = call;
     }
 
-    public static VirtualEvalFrame create(MaterializedFrame originalFrame, RFunction function, SourceSection callSrc, int depth) {
-        return new VirtualEvalFrame(originalFrame, function, callSrc, depth);
+    public static VirtualEvalFrame create(MaterializedFrame originalFrame, RFunction function, RCaller call, int depth) {
+        return new VirtualEvalFrame(originalFrame, function, call, depth);
     }
 
     public FrameDescriptor getFrameDescriptor() {

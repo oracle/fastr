@@ -30,7 +30,7 @@ public final class ReadTableHead extends RExternalBuiltinNode {
             return RDataFactory.createStringVector(openConn.readLines(nlines), RDataFactory.COMPLETE_VECTOR);
         } catch (IOException ex) {
             errorProfile.enter();
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.ERROR_READING_CONNECTION, ex.getMessage());
+            throw RError.error(this, RError.Message.ERROR_READING_CONNECTION, ex.getMessage());
         }
     }
 }

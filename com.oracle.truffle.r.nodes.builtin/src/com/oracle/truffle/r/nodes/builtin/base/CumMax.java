@@ -158,7 +158,7 @@ public abstract class CumMax extends RBuiltinNode {
     @Specialization
     protected RComplexVector cummax(@SuppressWarnings("unused") RComplexVector v) {
         controlVisibility();
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.CUMMAX_UNDEFINED_FOR_COMPLEX);
+        throw RError.error(this, RError.Message.CUMMAX_UNDEFINED_FOR_COMPLEX);
     }
 
 }

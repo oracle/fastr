@@ -60,7 +60,7 @@ public class InfixEmulationFunctions {
 
     public abstract static class ErrorAdapter extends RBuiltinNode {
         protected RError nyi() throws RError {
-            throw RError.nyi(getEncapsulatingSourceSection(), String.valueOf(getBuiltin()));
+            throw RError.nyi(this, String.valueOf(getBuiltin()));
         }
     }
 
@@ -291,13 +291,13 @@ public class InfixEmulationFunctions {
         @SuppressWarnings("unused")
         @Specialization(guards = "noInd(inds)")
         protected Object getNoInd(Object x, RArgsValuesAndNames inds, RAbstractLogicalVector exactVec, RAbstractLogicalVector dropVec) {
-            throw RError.error(RError.Message.NO_INDEX);
+            throw RError.error(this, RError.Message.NO_INDEX);
         }
 
         @SuppressWarnings("unused")
         @Specialization
         protected Object get(Object x, RMissing inds, RAbstractLogicalVector exactVec, RAbstractLogicalVector dropVec) {
-            throw RError.error(RError.Message.NO_INDEX);
+            throw RError.error(this, RError.Message.NO_INDEX);
         }
 
         @Specialization(guards = "!noInd(inds)")
@@ -353,7 +353,7 @@ public class InfixEmulationFunctions {
         @SuppressWarnings("unused")
         @Specialization(guards = "noInd(args)")
         protected Object getNoInd(Object x, RArgsValuesAndNames args) {
-            throw RError.error(RError.Message.INVALID_ARG_NUMBER, "SubAssignArgs");
+            throw RError.error(this, RError.Message.INVALID_ARG_NUMBER, "SubAssignArgs");
         }
 
         protected boolean noInd(RArgsValuesAndNames args) {
@@ -430,7 +430,7 @@ public class InfixEmulationFunctions {
                 errorProfile.enter();
                 // TODO: the error message is not quite correct for all types;
                 // for example: x<-list(a=7); `$<-`(x, c("a"), 42);)
-                throw RError.error(RError.Message.INVALID_SUBSCRIPT_TYPE, RRuntime.classToString(field.getClass()));
+                throw RError.error(this, RError.Message.INVALID_SUBSCRIPT_TYPE, RRuntime.classToString(field.getClass()));
             }
         }
     }
@@ -453,7 +453,7 @@ public class InfixEmulationFunctions {
                 errorProfile.enter();
                 // TODO: the error message is not quite correct for all types;
                 // for example: x<-list(a=7); `$<-`(x, c("a"), 42);)
-                throw RError.error(RError.Message.INVALID_SUBSCRIPT_TYPE, RRuntime.classToString(field.getClass()));
+                throw RError.error(this, RError.Message.INVALID_SUBSCRIPT_TYPE, RRuntime.classToString(field.getClass()));
             }
         }
     }

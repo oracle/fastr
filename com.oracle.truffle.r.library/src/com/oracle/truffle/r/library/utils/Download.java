@@ -57,14 +57,14 @@ public final class Download extends RExternalBuiltinNode {
         byte cacheOK = castLogical(castVector(argValues[4]));
         if (url == null || destFile == null || mode == null) {
             errorProfile.enter();
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_UNNAMED_ARGUMENTS);
+            throw RError.error(this, RError.Message.INVALID_UNNAMED_ARGUMENTS);
         }
         try {
             Download.download(url, destFile, RRuntime.fromLogical(quiet), mode, RRuntime.fromLogical(cacheOK));
             return 0;
         } catch (IOException ex) {
             errorProfile.enter();
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, ex.getMessage());
+            throw RError.error(this, RError.Message.GENERIC, ex.getMessage());
         }
     }
 }

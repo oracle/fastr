@@ -45,7 +45,7 @@ public abstract class NGetText extends RBuiltinNode {
 
     @Specialization(guards = "wrongNVector(nVector)")
     protected String getTextEmpty(RAbstractIntVector nVector, String msg1, String msg2, Object domain) {
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "n");
+        throw RError.error(this, RError.Message.INVALID_ARGUMENT, "n");
     }
 
     @Specialization(guards = "!wrongNVector(nVector)")
@@ -56,32 +56,32 @@ public abstract class NGetText extends RBuiltinNode {
 
     @Specialization(guards = "!wrongNVector(nVector)")
     protected String getTextMsg1Null(RAbstractIntVector nVector, RNull msg1, RNull msg2, Object domain) {
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.MUST_BE_STRING, "msg1");
+        throw RError.error(this, RError.Message.MUST_BE_STRING, "msg1");
     }
 
     @Specialization(guards = "!wrongNVector(nVector)")
     protected String getTextMsg1Null(RAbstractIntVector nVector, RNull msg1, RAbstractVector msg2, Object domain) {
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.MUST_BE_STRING, "msg1");
+        throw RError.error(this, RError.Message.MUST_BE_STRING, "msg1");
     }
 
     @Specialization(guards = {"!wrongNVector(nVector)", "!msgStringVectorOneElem(msg1)"})
     protected String getTextMsg1WrongMsg2Null(RAbstractIntVector nVector, RAbstractVector msg1, RNull msg2, Object domain) {
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.MUST_BE_STRING, "msg1");
+        throw RError.error(this, RError.Message.MUST_BE_STRING, "msg1");
     }
 
     @Specialization(guards = {"!wrongNVector(nVector)", "!msgStringVectorOneElem(msg1)"})
     protected String getTextMsg1Wrong(RAbstractIntVector nVector, RAbstractVector msg1, RAbstractVector msg2, Object domain) {
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.MUST_BE_STRING, "msg1");
+        throw RError.error(this, RError.Message.MUST_BE_STRING, "msg1");
     }
 
     @Specialization(guards = {"!wrongNVector(nVector)", "msgStringVectorOneElem(msg1)"})
     protected String getTextMsg1(RAbstractIntVector nVector, RAbstractVector msg1, RNull msg2, Object domain) {
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.MUST_BE_STRING, "msg2");
+        throw RError.error(this, RError.Message.MUST_BE_STRING, "msg2");
     }
 
     @Specialization(guards = {"!wrongNVector(nVector)", "msgStringVectorOneElem(msg1)", "!msgStringVectorOneElem(msg2)"})
     protected String getTextMsg2Wrong(RAbstractIntVector nVector, RAbstractVector msg1, RAbstractVector msg2, Object domain) {
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.MUST_BE_STRING, "msg2");
+        throw RError.error(this, RError.Message.MUST_BE_STRING, "msg2");
     }
 
     @Specialization(guards = {"!wrongNVector(nVector)", "msgStringVectorOneElem(msg1)", "msgStringVectorOneElem(msg2)"})

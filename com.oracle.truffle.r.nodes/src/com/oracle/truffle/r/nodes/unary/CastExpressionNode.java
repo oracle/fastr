@@ -60,7 +60,7 @@ public abstract class CastExpressionNode extends CastBaseNode {
 
     @Specialization
     protected RExpression doFunction(RFunction value) {
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.CANNOT_COERCE, value.isBuiltin() ? "builtin" : "closure", "expression");
+        throw RError.error(this, RError.Message.CANNOT_COERCE, value.isBuiltin() ? "builtin" : "closure", "expression");
     }
 
     @Specialization

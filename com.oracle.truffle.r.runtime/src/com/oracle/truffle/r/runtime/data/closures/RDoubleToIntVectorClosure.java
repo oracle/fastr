@@ -38,7 +38,7 @@ public class RDoubleToIntVectorClosure extends RToIntVectorClosure implements RA
         }
         int result = (int) value;
         if (result == Integer.MIN_VALUE || value > Integer.MAX_VALUE) {
-            RError.warning(RError.Message.NA_INTRODUCED_COERCION);
+            RError.warning(RError.NO_NODE, RError.Message.NA_INTRODUCED_COERCION);
             return RRuntime.INT_NA;
         }
         return result;

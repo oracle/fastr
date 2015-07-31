@@ -39,7 +39,7 @@ public abstract class Stop extends RBuiltinNode {
         controlVisibility();
         assert msgVec.getLength() == 1;
         CompilerDirectives.transferToInterpreter();
-        throw RError.error(RRuntime.fromLogical(call) ? getEncapsulatingSourceSection() : null, RError.Message.GENERIC, msgVec.getDataAt(0));
+        throw RError.stop(RRuntime.fromLogical(call), this, RError.Message.GENERIC, msgVec.getDataAt(0));
     }
 
 }

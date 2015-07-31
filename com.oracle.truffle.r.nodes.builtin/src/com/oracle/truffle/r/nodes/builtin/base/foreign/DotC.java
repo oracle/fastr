@@ -51,7 +51,7 @@ public abstract class DotC extends RBuiltinNode {
         for (int i = 0; i < data.length; i++) {
             if (RRuntime.isNA(data[i])) {
                 errorProfile.enter();
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.NA_IN_FOREIGN_FUNCTION_CALL, argIndex);
+                throw RError.error(this, RError.Message.NA_IN_FOREIGN_FUNCTION_CALL, argIndex);
             }
         }
         return data;
@@ -61,7 +61,7 @@ public abstract class DotC extends RBuiltinNode {
         for (int i = 0; i < data.length; i++) {
             if (!RRuntime.isFinite(data[i])) {
                 errorProfile.enter();
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.NA_NAN_INF_IN_FOREIGN_FUNCTION_CALL, argIndex);
+                throw RError.error(this, RError.Message.NA_NAN_INF_IN_FOREIGN_FUNCTION_CALL, argIndex);
             }
         }
         return data;
@@ -92,7 +92,7 @@ public abstract class DotC extends RBuiltinNode {
         SymbolInfo symbolInfo = DLL.findSymbolInfo(f, null);
         if (symbolInfo == null) {
             errorProfile.enter();
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.C_SYMBOL_NOT_IN_TABLE, f);
+            throw RError.error(this, RError.Message.C_SYMBOL_NOT_IN_TABLE, f);
         }
         boolean dupArgs = RRuntime.fromLogical(dup);
         boolean checkNA = RRuntime.fromLogical(naok);
@@ -128,7 +128,7 @@ public abstract class DotC extends RBuiltinNode {
                 nativeArgs[i] = checkNAs(i + 1, new int[]{RRuntime.isNA((byte) arg) ? RRuntime.INT_NA : (byte) arg});
             } else {
                 errorProfile.enter();
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.UNIMPLEMENTED_ARG_TYPE, i + 1);
+                throw RError.error(this, RError.Message.UNIMPLEMENTED_ARG_TYPE, i + 1);
             }
         }
         RFFIFactory.getRFFI().getCRFFI().invoke(symbolInfo, nativeArgs);

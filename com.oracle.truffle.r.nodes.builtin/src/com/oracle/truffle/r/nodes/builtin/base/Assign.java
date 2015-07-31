@@ -56,10 +56,10 @@ public abstract class Assign extends RInvisibleBuiltinNode {
             return xVec.getDataAt(0);
         } else if (len == 0) {
             errorProfile.enter();
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_FIRST_ARGUMENT);
+            throw RError.error(this, RError.Message.INVALID_FIRST_ARGUMENT);
         } else {
             warningProfile.enter();
-            RError.warning(getEncapsulatingSourceSection(), RError.Message.ONLY_FIRST_VARIABLE_NAME);
+            RError.warning(this, RError.Message.ONLY_FIRST_VARIABLE_NAME);
             return xVec.getDataAt(0);
         }
     }
@@ -91,7 +91,7 @@ public abstract class Assign extends RInvisibleBuiltinNode {
             }
         } catch (PutException ex) {
             errorProfile.enter();
-            throw RError.error(getEncapsulatingSourceSection(), ex);
+            throw RError.error(this, ex);
         }
         return value;
     }
@@ -103,13 +103,13 @@ public abstract class Assign extends RInvisibleBuiltinNode {
         controlVisibility();
         if (envir == REnvironment.emptyEnv()) {
             errorProfile.enter();
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.CANNOT_ASSIGN_IN_EMPTY_ENV);
+            throw RError.error(this, RError.Message.CANNOT_ASSIGN_IN_EMPTY_ENV);
         }
         try {
             envir.put(x, value);
         } catch (PutException ex) {
             errorProfile.enter();
-            throw RError.error(getEncapsulatingSourceSection(), ex);
+            throw RError.error(this, ex);
         }
         return value;
     }
@@ -119,11 +119,11 @@ public abstract class Assign extends RInvisibleBuiltinNode {
     protected Object assignFallback(Object xVec, Object value, Object envir, Object inherits) {
         errorProfile.enter();
         if (RRuntime.asString(xVec) == null) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_FIRST_ARGUMENT);
+            throw RError.error(this, RError.Message.INVALID_FIRST_ARGUMENT);
         } else if (!(envir instanceof REnvironment)) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "pos");
+            throw RError.error(this, RError.Message.INVALID_ARGUMENT, "pos");
         } else {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "inherits");
+            throw RError.error(this, RError.Message.INVALID_ARGUMENT, "inherits");
         }
     }
 

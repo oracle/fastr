@@ -261,7 +261,7 @@ public final class RCallNode extends RNode implements RSyntaxNode {
             return (RFunction) value;
         } else {
             errorProfile.enter();
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.APPLY_NON_FUNCTION);
+            throw RError.error(this, RError.Message.APPLY_NON_FUNCTION);
         }
     }
 
@@ -320,6 +320,9 @@ public final class RCallNode extends RNode implements RSyntaxNode {
                             state.append('=');
                         }
                         arguments[i].deparse(state);
+                        if (i != arguments.length - 2) {
+                            state.append(", ");
+                        }
                     }
                     state.append(isSubset ? "]" : "]]");
                     state.append(" <- ");
@@ -453,7 +456,7 @@ public final class RCallNode extends RNode implements RSyntaxNode {
      */
     public static LeafCallNode createInternalCall(VirtualFrame frame, SourceSection src, RCallNode internalCallArg, RFunction function, String name) {
         CompilerAsserts.neverPartOfCompilation();
-        return UninitializedCallNode.createCacheNode(frame, internalCallArg.createArguments(null, false, true), internalCallArg.getSourceSection(), function);
+        return UninitializedCallNode.createCacheNode(frame, internalCallArg.createArguments(null, false, true), internalCallArg, function);
     }
 
     /**
@@ -470,9 +473,27 @@ public final class RCallNode extends RNode implements RSyntaxNode {
         return new RCallNode(NodeUtil.cloneNode(call.functionNode), args, call.signature);
     }
 
+    /**
+     * The standard way to create a call to {@code function} with given arguments. If
+     * {@code src == null} we create one to meet the invariant that all {@link RSyntaxNode}s have a
+     * valid {@link SourceSection}.
+     */
     public static RCallNode createCall(SourceSection src, RNode function, ArgumentsSignature signature, RSyntaxNode... arguments) {
         RCallNode call = new RCallNode(function, arguments, signature);
-        call.assignSourceSection(src);
+        if (src == null) {
+            RASTDeparse.ensureSourceSection(call);
+        } else {
+            call.assignSourceSection(src);
+        }
+        return call;
+    }
+
+    /**
+     * A variant of {@link #createCall} that does not require a {@link SourceSection}, because it is
+     * part of a {@code ReplacementNode} structure.
+     */
+    public static RCallNode createCallNotSyntax(RNode function, ArgumentsSignature signature, RSyntaxNode... arguments) {
+        RCallNode call = new RCallNode(function, arguments, signature);
         return call;
     }
 
@@ -524,7 +545,7 @@ public final class RCallNode extends RNode implements RSyntaxNode {
         }
 
         @Override
-        protected RSyntaxNode getRSyntaxNode() {
+        protected RSyntaxNode getSyntaxNode() {
             return arg;
         }
 
@@ -567,19 +588,23 @@ public final class RCallNode extends RNode implements RSyntaxNode {
                 modeChange = false;
             }
 
-            LeafCallNode current = createCacheNode(frame, call.createArguments(dispatchTempIdentifier, modeChange, true), call.getSourceSection(), function);
+            LeafCallNode current = createCacheNode(frame, call.createArguments(dispatchTempIdentifier, modeChange, true), call, function);
             RootCallNode cachedNode = new CachedCallNode(current, next, function);
             this.replace(cachedNode);
             return cachedNode.execute(frame, function, s3Args);
         }
 
-        private static LeafCallNode createCacheNode(VirtualFrame frame, CallArgumentsNode args, SourceSection callSrc, RFunction function) {
+        private static LeafCallNode createCacheNode(VirtualFrame frame, CallArgumentsNode args, RCallNode creator, RFunction function) {
             CompilerDirectives.transferToInterpreter();
             SourceSection argsSrc = args.getEncapsulatingSourceSection();
 
             for (String name : args.getSignature()) {
                 if (name != null && name.isEmpty()) {
-                    throw RError.error(RError.Message.ZERO_LENGTH_VARIABLE);
+                    /*
+                     * In GnuR this is, evidently output by the parser, so very early, and never
+                     * with a caller in the message.
+                     */
+                    throw RError.error(RError.NO_CALLER, RError.Message.ZERO_LENGTH_VARIABLE);
                 }
             }
 
@@ -592,23 +617,22 @@ public final class RCallNode extends RNode implements RSyntaxNode {
 
                 // We inline the given arguments here, as builtins are executed inside the same
                 // frame as they are called.
-                InlinedArguments inlinedArgs = ArgumentMatcher.matchArgumentsInlined(function, args, callSrc, argsSrc);
-                callNode = new BuiltinCallNode(root.inline(inlinedArgs.getSignature(), inlinedArgs.getArguments(), callSrc));
+                InlinedArguments inlinedArgs = ArgumentMatcher.matchArgumentsInlined(function, args, creator, argsSrc);
+                callNode = new BuiltinCallNode(root.inline(inlinedArgs.getSignature(), inlinedArgs.getArguments(), creator.getSourceSection()));
             } else {
                 // Now we need to distinguish: Do supplied arguments vary between calls?
                 if (args.containsVarArgsSymbol()) {
                     // Yes, maybe.
-                    VarArgsCacheCallNode nextNode = new UninitializedVarArgsCacheCallNode(args, callSrc);
+                    VarArgsCacheCallNode nextNode = new UninitializedVarArgsCacheCallNode(args, creator);
                     ArgumentsSignature varArgsSignature = CallArgumentsNode.getVarargsAndNames(frame).getSignature();
-                    callNode = DispatchedVarArgsCallNode.create(frame, args, nextNode, callSrc, function, varArgsSignature);
+                    callNode = DispatchedVarArgsCallNode.create(frame, args, nextNode, creator, function, varArgsSignature);
                 } else {
                     // Nope! (peeewh)
-                    MatchedArguments matchedArgs = ArgumentMatcher.matchArguments(function, args, callSrc, argsSrc, false);
+                    MatchedArguments matchedArgs = ArgumentMatcher.matchArguments(function, args, creator, argsSrc, false);
                     callNode = new DispatchedCallNode(function, matchedArgs);
                 }
             }
 
-            callNode.assignSourceSection(callSrc);
             return callNode;
         }
     }
@@ -661,9 +685,10 @@ public final class RCallNode extends RNode implements RSyntaxNode {
             CompilerDirectives.transferToInterpreter();
             // Function and arguments may change every call: Flatt'n'Match on SlowPath! :-/
             UnrolledVariadicArguments argsValuesAndNames = arguments.executeFlatten(frame);
-            MatchedArguments matchedArgs = ArgumentMatcher.matchArguments(currentFunction, argsValuesAndNames, getSourceSection(), getEncapsulatingSourceSection(), true);
+            MatchedArguments matchedArgs = ArgumentMatcher.matchArguments(currentFunction, argsValuesAndNames, this, getEncapsulatingSourceSection(), true);
 
-            Object[] argsObject = RArguments.create(currentFunction, getSourceSection(), null, RArguments.getDepth(frame) + 1, matchedArgs.doExecuteArray(frame), matchedArgs.getSignature(), s3Args);
+            Object[] argsObject = RArguments.create(currentFunction, RDataFactory.createCaller(this), null, RArguments.getDepth(frame) + 1, matchedArgs.doExecuteArray(frame),
+                            matchedArgs.getSignature(), s3Args);
             return indirectCall.call(frame, currentFunction.getTarget(), argsObject);
         }
     }
@@ -726,8 +751,8 @@ public final class RCallNode extends RNode implements RSyntaxNode {
             }
             MaterializedFrame callerFrame = needsCallerFrame ? frame.materialize() : null;
 
-            Object[] argsObject = argsNode.execute(currentFunction, getSourceSection(), callerFrame, RArguments.getDepth(frame) + 1, matchedArgs.executeArray(frame), matchedArgs.getSignature(),
-                            s3Args);
+            Object[] argsObject = argsNode.execute(currentFunction, RDataFactory.createCaller(this), callerFrame, RArguments.getDepth(frame) + 1, matchedArgs.executeArray(frame),
+                            matchedArgs.getSignature(), s3Args);
             return call.call(frame, argsObject);
         }
     }
@@ -752,7 +777,7 @@ public final class RCallNode extends RNode implements RSyntaxNode {
                 FrameSlot slot;
                 if (!varArgsSlotNode.hasValue(frame)) {
                     CompilerDirectives.transferToInterpreter();
-                    RError.error(RError.Message.NO_DOT_DOT_DOT);
+                    RError.error(this, RError.Message.NO_DOT_DOT_DOT);
                 }
                 slot = varArgsSlotNode.executeFrameSlot(frame);
                 varArgsAndNames = (RArgsValuesAndNames) frame.getObject(slot);
@@ -776,9 +801,8 @@ public final class RCallNode extends RNode implements RSyntaxNode {
         @Child private CallArgumentsNode args;
         private int depth = 1;  // varargs cached is started with a [DV] DispatchedVarArgsCallNode
 
-        public UninitializedVarArgsCacheCallNode(CallArgumentsNode args, SourceSection callSrc) {
+        public UninitializedVarArgsCacheCallNode(CallArgumentsNode args, @SuppressWarnings("unused") RCallNode creator) {
             this.args = args;
-            assignSourceSection(callSrc);
         }
 
         @Override
@@ -789,7 +813,7 @@ public final class RCallNode extends RNode implements RSyntaxNode {
             this.depth += 1;
             CallArgumentsNode clonedArgs = NodeUtil.cloneNode(args);
             VarArgsCacheCallNode next = createNextNode(function, getSourceSection());
-            DispatchedVarArgsCallNode newCallNode = DispatchedVarArgsCallNode.create(frame, clonedArgs, next, getSourceSection(), function, varArgsSignature);
+            DispatchedVarArgsCallNode newCallNode = DispatchedVarArgsCallNode.create(frame, clonedArgs, next, this, function, varArgsSignature);
             return replace(newCallNode).execute(frame, function, varArgsSignature, s3Args);
         }
 
@@ -832,10 +856,9 @@ public final class RCallNode extends RNode implements RSyntaxNode {
             this.needsSplitting = needsSplitting(function);
         }
 
-        protected static DispatchedVarArgsCallNode create(VirtualFrame frame, CallArgumentsNode args, VarArgsCacheCallNode next, SourceSection callSrc, RFunction function,
-                        ArgumentsSignature varArgsSignature) {
+        protected static DispatchedVarArgsCallNode create(VirtualFrame frame, CallArgumentsNode args, VarArgsCacheCallNode next, Node creator, RFunction function, ArgumentsSignature varArgsSignature) {
             UnrolledVariadicArguments unrolledArguments = args.executeFlatten(frame);
-            MatchedArguments matchedArgs = ArgumentMatcher.matchArguments(function, unrolledArguments, callSrc, args.getEncapsulatingSourceSection(), false);
+            MatchedArguments matchedArgs = ArgumentMatcher.matchArguments(function, unrolledArguments, creator, args.getEncapsulatingSourceSection(), false);
             return new DispatchedVarArgsCallNode(args, next, function, varArgsSignature, matchedArgs);
         }
 
@@ -857,8 +880,8 @@ public final class RCallNode extends RNode implements RSyntaxNode {
                 call.cloneCallTarget();
             }
             MaterializedFrame callerFrame = needsCallerFrame ? frame.materialize() : null;
-            Object[] argsObject = RArguments.create(currentFunction, getSourceSection(), callerFrame, RArguments.getDepth(frame) + 1, matchedArgs.executeArray(frame), matchedArgs.getSignature(),
-                            s3Args);
+            Object[] argsObject = RArguments.create(currentFunction, RDataFactory.createCaller(this), callerFrame, RArguments.getDepth(frame) + 1, matchedArgs.executeArray(frame),
+                            matchedArgs.getSignature(), s3Args);
             return call.call(frame, argsObject);
         }
     }
@@ -888,15 +911,15 @@ public final class RCallNode extends RNode implements RSyntaxNode {
 
             // Arguments may change every call: Flatt'n'Match on SlowPath! :-/
             UnrolledVariadicArguments argsValuesAndNames = suppliedArgs.executeFlatten(frame);
-            MatchedArguments matchedArgs = ArgumentMatcher.matchArguments(currentFunction, argsValuesAndNames, getSourceSection(), getEncapsulatingSourceSection(), true);
+            MatchedArguments matchedArgs = ArgumentMatcher.matchArguments(currentFunction, argsValuesAndNames, this, getEncapsulatingSourceSection(), true);
 
             if (!needsCallerFrame && currentFunction.containsDispatch()) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 needsCallerFrame = true;
             }
             MaterializedFrame callerFrame = needsCallerFrame ? frame.materialize() : null;
-            Object[] argsObject = RArguments.create(currentFunction, getSourceSection(), callerFrame, RArguments.getDepth(frame) + 1, matchedArgs.doExecuteArray(frame), matchedArgs.getSignature(),
-                            s3Args);
+            Object[] argsObject = RArguments.create(currentFunction, RDataFactory.createCaller(this), callerFrame, RArguments.getDepth(frame) + 1, matchedArgs.doExecuteArray(frame),
+                            matchedArgs.getSignature(), s3Args);
             return call.call(frame, argsObject);
         }
     }

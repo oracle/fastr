@@ -34,14 +34,14 @@ public class DebugFunctions {
     protected abstract static class ErrorAdapter extends RInvisibleBuiltinNode {
 
         protected RError arg1Closure() throws RError {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.ARG_MUST_BE_CLOSURE);
+            throw RError.error(this, RError.Message.ARG_MUST_BE_CLOSURE);
         }
 
         protected void doDebug(RFunction fun, Object text, Object condition, boolean once) throws RError {
             // GnuR does not generate an error for builtins, but debug (obviously) has no effect
             if (!fun.isBuiltin()) {
                 if (!DebugHandling.enableDebug(fun, text, condition, once)) {
-                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, "failed to attach debug handler (not instrumented?)");
+                    throw RError.error(this, RError.Message.GENERIC, "failed to attach debug handler (not instrumented?)");
                 }
             }
         }
@@ -100,7 +100,7 @@ public class DebugFunctions {
         protected RNull undebug(RFunction func) {
             controlVisibility();
             if (!DebugHandling.undebug(func)) {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.NOT_DEBUGGED);
+                throw RError.error(this, RError.Message.NOT_DEBUGGED);
             }
             return RNull.instance;
         }

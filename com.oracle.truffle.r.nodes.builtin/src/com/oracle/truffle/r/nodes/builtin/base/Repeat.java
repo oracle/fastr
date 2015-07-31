@@ -91,7 +91,7 @@ public abstract class Repeat extends RBuiltinNode {
     }
 
     private RError invalidTimes() {
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "times");
+        throw RError.error(this, RError.Message.INVALID_ARGUMENT, "times");
     }
 
     @Specialization(guards = {"each > 1", "!hasNames(x)"})

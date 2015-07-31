@@ -93,13 +93,13 @@ public abstract class ConnectionFunctions {
         protected Object file(RAbstractStringVector description, RAbstractStringVector openVec, byte blocking, RAbstractStringVector encoding, byte raw) {
             controlVisibility();
             if (!RRuntime.fromLogical(blocking)) {
-                throw RError.nyi(getEncapsulatingSourceSection(), "non-blocking mode not supported");
+                throw RError.nyi(this, "non-blocking mode not supported");
             }
             if (description.getLength() > 1) {
-                RError.warning(getEncapsulatingSourceSection(), RError.Message.ARGUMENT_ONLY_FIRST_1, "description");
+                RError.warning(this, RError.Message.ARGUMENT_ONLY_FIRST_1, "description");
             }
             if (openVec.getLength() > 1) {
-                throw RError.error(RError.Message.INVALID_ARGUMENT, "open");
+                throw RError.error(this, RError.Message.INVALID_ARGUMENT, "open");
             }
             // TODO handle http/ftp prefixes and redirect
             String path = removeFileURLPrefix(description.getDataAt(0));
@@ -111,15 +111,15 @@ public abstract class ConnectionFunctions {
                 } else {
                     if (!(open.equals("w+") || open.equals("w+b"))) {
                         open = "w+";
-                        RError.warning(getEncapsulatingSourceSection(), RError.Message.FILE_OPEN_TMP);
+                        RError.warning(this, RError.Message.FILE_OPEN_TMP);
                     }
                 }
             }
             try {
                 return new FileRConnection(path, open);
             } catch (IOException ex) {
-                RError.warning(getEncapsulatingSourceSection(), RError.Message.CANNOT_OPEN_FILE, description.getDataAt(0), ex.getMessage());
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.CANNOT_OPEN_CONNECTION);
+                RError.warning(this, RError.Message.CANNOT_OPEN_FILE, description.getDataAt(0), ex.getMessage());
+                throw RError.error(this, RError.Message.CANNOT_OPEN_CONNECTION);
             }
         }
 
@@ -127,7 +127,7 @@ public abstract class ConnectionFunctions {
         @Fallback
         protected Object file(Object description, Object open, Object blocking, Object encoding, Object raw) {
             controlVisibility();
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_UNNAMED_ARGUMENTS);
+            throw RError.error(this, RError.Message.INVALID_UNNAMED_ARGUMENTS);
         }
     }
 
@@ -158,8 +158,8 @@ public abstract class ConnectionFunctions {
         }
 
         private RError reportError(String path, IOException ex) throws RError {
-            RError.warning(getEncapsulatingSourceSection(), RError.Message.CANNOT_OPEN_FILE, path, ex.getMessage());
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.CANNOT_OPEN_CONNECTION);
+            RError.warning(this, RError.Message.CANNOT_OPEN_FILE, path, ex.getMessage());
+            throw RError.error(this, RError.Message.CANNOT_OPEN_CONNECTION);
         }
     }
 
@@ -170,7 +170,7 @@ public abstract class ConnectionFunctions {
         protected Object textConnection(RAbstractStringVector nm, RAbstractStringVector object, RAbstractStringVector open, REnvironment env, @SuppressWarnings("unused") RIntVector encoding) {
             controlVisibility();
             if (nm.getLength() != 1) {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "description");
+                throw RError.error(this, RError.Message.INVALID_ARGUMENT, "description");
             }
             // TODO more error checking as per GnuR
             try {
@@ -183,7 +183,7 @@ public abstract class ConnectionFunctions {
         @SuppressWarnings("unused")
         @Fallback
         protected Object textConnection(Object nm, Object object, Object open, Object env, Object encoding) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
+            throw RError.error(this, RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
         }
     }
 
@@ -196,7 +196,7 @@ public abstract class ConnectionFunctions {
             if (conn instanceof TextRConnection) {
                 return RDataFactory.createStringVector(((TextRConnection) conn).getValue(), RDataFactory.COMPLETE_VECTOR);
             } else {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.NOT_A_TEXT_CONNECTION);
+                throw RError.error(this, RError.Message.NOT_A_TEXT_CONNECTION);
             }
         }
     }
@@ -223,7 +223,7 @@ public abstract class ConnectionFunctions {
                     return new RSocketConnection(modeString, false, host.getDataAt(0), port, RRuntime.fromLogical(blocking), timeout);
                 }
             } catch (IOException ex) {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.CANNOT_OPEN_CONNECTION);
+                throw RError.error(this, RError.Message.CANNOT_OPEN_CONNECTION);
             }
         }
     }
@@ -237,9 +237,9 @@ public abstract class ConnectionFunctions {
             try {
                 return new URLRConnection(url.getDataAt(0), open.getDataAt(0));
             } catch (MalformedURLException ex) {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.UNSUPPORTED_URL_SCHEME);
+                throw RError.error(this, RError.Message.UNSUPPORTED_URL_SCHEME);
             } catch (IOException ex) {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.CANNOT_OPEN_CONNECTION);
+                throw RError.error(this, RError.Message.CANNOT_OPEN_CONNECTION);
             }
         }
     }
@@ -247,7 +247,7 @@ public abstract class ConnectionFunctions {
     private abstract static class CheckIsConnAdapter extends RBuiltinNode {
         protected RConnection checkIsConnection(Object con) throws RError {
             if (!(con instanceof RConnection)) {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.NOT_CONNECTION, "con");
+                throw RError.error(this, RError.Message.NOT_CONNECTION, "con");
             } else {
                 return (RConnection) con;
             }
@@ -292,15 +292,15 @@ public abstract class ConnectionFunctions {
             try {
                 BaseRConnection baseConn = getBaseConnection(con);
                 if (baseConn.isClosed()) {
-                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_CONNECTION);
+                    throw RError.error(this, RError.Message.INVALID_CONNECTION);
                 }
                 if (baseConn.isOpen()) {
-                    RError.warning(getEncapsulatingSourceSection(), RError.Message.ALREADY_OPEN_CONNECTION);
+                    RError.warning(this, RError.Message.ALREADY_OPEN_CONNECTION);
                     return RNull.instance;
                 }
                 baseConn.open(open.getDataAt(0));
             } catch (IOException ex) {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, ex.getMessage());
+                throw RError.error(this, RError.Message.GENERIC, ex.getMessage());
             }
             return RNull.instance;
         }
@@ -310,7 +310,7 @@ public abstract class ConnectionFunctions {
         @TruffleBoundary
         protected Object open(Object con, Object open, Object blocking) {
             checkIsConnection(con);
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARG_TYPE);
+            throw RError.error(this, RError.Message.INVALID_ARG_TYPE);
         }
     }
 
@@ -332,7 +332,7 @@ public abstract class ConnectionFunctions {
                     result &= baseCon.canWrite();
                     break;
                 default:
-                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.UNKNOWN_VALUE, "rw");
+                    throw RError.error(this, RError.Message.UNKNOWN_VALUE, "rw");
             }
             return RDataFactory.createLogicalVectorFromScalar(result);
         }
@@ -341,7 +341,7 @@ public abstract class ConnectionFunctions {
         @TruffleBoundary
         protected Object isOpen(Object con, @SuppressWarnings("unused") Object rw) {
             checkIsConnection(con);
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARG_TYPE);
+            throw RError.error(this, RError.Message.INVALID_ARG_TYPE);
         }
 
     }
@@ -355,7 +355,7 @@ public abstract class ConnectionFunctions {
             try {
                 con.closeAndDestroy();
             } catch (IOException ex) {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, ex.getMessage());
+                throw RError.error(this, RError.Message.GENERIC, ex.getMessage());
             }
             return RNull.instance;
         }
@@ -364,7 +364,7 @@ public abstract class ConnectionFunctions {
         @TruffleBoundary
         protected Object close(Object con) {
             checkIsConnection(con);
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARG_TYPE);
+            throw RError.error(this, RError.Message.INVALID_ARG_TYPE);
         }
     }
 
@@ -378,7 +378,7 @@ public abstract class ConnectionFunctions {
                 BaseRConnection baseConn = getBaseConnection(con);
                 baseConn.close();
             } catch (IOException ex) {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, ex.getMessage());
+                throw RError.error(this, RError.Message.GENERIC, ex.getMessage());
             }
         }
 
@@ -394,11 +394,11 @@ public abstract class ConnectionFunctions {
             try (RConnection openConn = con.forceOpen("rt")) {
                 String[] lines = openConn.readLines(n);
                 if (n > 0 && lines.length < n && ok == RRuntime.LOGICAL_FALSE) {
-                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.TOO_FEW_LINES_READ_LINES);
+                    throw RError.error(this, RError.Message.TOO_FEW_LINES_READ_LINES);
                 }
                 return RDataFactory.createStringVector(lines, RDataFactory.COMPLETE_VECTOR);
             } catch (IOException x) {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.ERROR_READING_CONNECTION, x.getMessage());
+                throw RError.error(this, RError.Message.ERROR_READING_CONNECTION, x.getMessage());
             }
         }
 
@@ -412,7 +412,7 @@ public abstract class ConnectionFunctions {
         @Fallback
         protected Object readLines(Object con, Object n, Object ok, Object warn, Object encoding, Object skipNul) {
             controlVisibility();
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_UNNAMED_ARGUMENTS);
+            throw RError.error(this, RError.Message.INVALID_UNNAMED_ARGUMENTS);
         }
     }
 
@@ -424,7 +424,7 @@ public abstract class ConnectionFunctions {
             try (RConnection openConn = con.forceOpen("wt")) {
                 openConn.writeLines(text, sep.getDataAt(0), RRuntime.fromLogical(useBytes));
             } catch (IOException x) {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.ERROR_WRITING_CONNECTION, x.getMessage());
+                throw RError.error(this, RError.Message.ERROR_WRITING_CONNECTION, x.getMessage());
             }
             forceVisibility(false);
             return RNull.instance;
@@ -434,7 +434,7 @@ public abstract class ConnectionFunctions {
         @Fallback
         protected RNull writeLines(Object text, Object con, Object sep, Object useBytes) {
             controlVisibility();
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_UNNAMED_ARGUMENTS);
+            throw RError.error(this, RError.Message.INVALID_UNNAMED_ARGUMENTS);
         }
     }
 
@@ -447,7 +447,7 @@ public abstract class ConnectionFunctions {
             try {
                 con.flush();
             } catch (IOException x) {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.ERROR_FLUSHING_CONNECTION, x.getMessage());
+                throw RError.error(this, RError.Message.ERROR_FLUSHING_CONNECTION, x.getMessage());
             }
             return RNull.instance;
         }
@@ -466,7 +466,7 @@ public abstract class ConnectionFunctions {
         protected RNull pushBack(RAbstractStringVector data, RConnection connection, RAbstractLogicalVector newLine, RAbstractIntVector type) {
             controlVisibility();
             if (newLine.getLength() == 0) {
-                throw RError.error(RError.Message.INVALID_ARGUMENT, "newLine");
+                throw RError.error(this, RError.Message.INVALID_ARGUMENT, "newLine");
             }
             connection.pushBack(data, newLine.getDataAt(0) == RRuntime.LOGICAL_TRUE);
             return RNull.instance;
@@ -476,21 +476,21 @@ public abstract class ConnectionFunctions {
         @Specialization
         protected Object pushBack(RAbstractStringVector data, RConnection connection, RNull newLine, RAbstractIntVector type) {
             controlVisibility();
-            throw RError.error(RError.Message.INVALID_ARGUMENT, "newLine");
+            throw RError.error(this, RError.Message.INVALID_ARGUMENT, "newLine");
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = "!newLineIsLogical(newLine)")
         protected Object pushBack(RAbstractStringVector data, RConnection connection, RAbstractVector newLine, RAbstractIntVector type) {
             controlVisibility();
-            throw RError.error(RError.Message.INVALID_ARGUMENT, "newLine");
+            throw RError.error(this, RError.Message.INVALID_ARGUMENT, "newLine");
         }
 
         @SuppressWarnings("unused")
         @Fallback
         protected Object pushBack(Object data, Object connection, Object newLine, Object encoding) {
             controlVisibility();
-            throw RError.error(RError.Message.INVALID_CONNECTION);
+            throw RError.error(this, RError.Message.INVALID_CONNECTION);
         }
 
         protected boolean newLineIsLogical(RAbstractVector newLine) {
@@ -511,7 +511,7 @@ public abstract class ConnectionFunctions {
         @Fallback
         protected Object pushBacklLength(@SuppressWarnings("unused") Object connection) {
             controlVisibility();
-            throw RError.error(RError.Message.INVALID_CONNECTION);
+            throw RError.error(this, RError.Message.INVALID_CONNECTION);
         }
 
     }
@@ -529,7 +529,7 @@ public abstract class ConnectionFunctions {
         @Fallback
         protected Object pushBackClear(@SuppressWarnings("unused") Object connection) {
             controlVisibility();
-            throw RError.error(RError.Message.INVALID_CONNECTION);
+            throw RError.error(this, RError.Message.INVALID_CONNECTION);
         }
 
     }
@@ -548,7 +548,7 @@ public abstract class ConnectionFunctions {
         @Specialization(guards = "useBytesEmpty(useBytes)")
         protected RStringVector readCharUseBytesEmpty(RConnection con, RAbstractIntVector nchars, RAbstractLogicalVector useBytes) {
             controlVisibility();
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "useBytes");
+            throw RError.error(this, RError.Message.INVALID_ARGUMENT, "useBytes");
         }
 
         @Specialization(guards = {"!ncharsEmpty(nchars)", "!useBytesEmpty(useBytes)"})
@@ -562,7 +562,7 @@ public abstract class ConnectionFunctions {
                 }
                 return RDataFactory.createStringVector(data, RDataFactory.COMPLETE_VECTOR);
             } catch (IOException x) {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.ERROR_READING_CONNECTION, x.getMessage());
+                throw RError.error(this, RError.Message.ERROR_READING_CONNECTION, x.getMessage());
             }
         }
 
@@ -589,12 +589,12 @@ public abstract class ConnectionFunctions {
                     int nc = nchars.getDataAt(i % length);
                     int pad = nc - s.length();
                     if (pad > 0) {
-                        RError.warning(getEncapsulatingSourceSection(), RError.Message.MORE_CHARACTERS);
+                        RError.warning(this, RError.Message.MORE_CHARACTERS);
                     }
                     openConn.writeChar(s, pad, eos.getDataAt(i % length), RRuntime.fromLogical(useBytes));
                 }
             } catch (IOException x) {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.ERROR_WRITING_CONNECTION, x.getMessage());
+                throw RError.error(this, RError.Message.ERROR_WRITING_CONNECTION, x.getMessage());
             }
             forceVisibility(false);
             return RNull.instance;
@@ -632,7 +632,7 @@ public abstract class ConnectionFunctions {
             int n = nVec.getDataAt(0);
             try (RConnection openConn = con.forceOpen("rb")) {
                 if (getBaseConnection(openConn).getOpenMode().isText()) {
-                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.ONLY_READ_BINARY_CONNECTION);
+                    throw RError.error(this, RError.Message.ONLY_READ_BINARY_CONNECTION);
                 }
                 String what = whatVec.getDataAt(0);
                 switch (what) {
@@ -660,7 +660,7 @@ public abstract class ConnectionFunctions {
                         throw RInternalError.shouldNotReachHere();
                 }
             } catch (IOException x) {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.ERROR_READING_CONNECTION, x.getMessage());
+                throw RError.error(this, RError.Message.ERROR_READING_CONNECTION, x.getMessage());
             }
             return result;
         }
@@ -795,7 +795,7 @@ public abstract class ConnectionFunctions {
             if (object.getLength() > 0) {
                 try (RConnection openConn = con.forceOpen("wb")) {
                     if (getBaseConnection(openConn).isTextMode()) {
-                        throw RError.error(getEncapsulatingSourceSection(), RError.Message.ONLY_WRITE_BINARY_CONNECTION);
+                        throw RError.error(this, RError.Message.ONLY_WRITE_BINARY_CONNECTION);
                     }
                     if (object instanceof RAbstractIntVector) {
                         writeInteger((RAbstractIntVector) object, con, size, swap);
@@ -810,10 +810,10 @@ public abstract class ConnectionFunctions {
                     } else if (object instanceof RRawVector) {
                         writeRaw((RAbstractRawVector) object, con, size, swap);
                     } else {
-                        throw RError.nyi(getEncapsulatingSourceSection(), "vector type");
+                        throw RError.nyi(this, "vector type");
                     }
                 } catch (IOException x) {
-                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.ERROR_WRITING_CONNECTION, x.getMessage());
+                    throw RError.error(this, RError.Message.ERROR_WRITING_CONNECTION, x.getMessage());
                 }
             }
             forceVisibility(false);
@@ -926,7 +926,7 @@ public abstract class ConnectionFunctions {
             controlVisibility();
             BaseRConnection con = RContext.getRConnectionState().getConnection(what);
             if (con == null) {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.NO_SUCH_CONNECTION, what);
+                throw RError.error(this, RError.Message.NO_SUCH_CONNECTION, what);
             } else {
                 return con;
             }
@@ -961,7 +961,7 @@ public abstract class ConnectionFunctions {
             try {
                 return con.seek(offset, RConnection.SeekMode.values()[origin.getDataAt(0)], RConnection.SeekRWMode.values()[rw.getDataAt(0)]);
             } catch (IOException x) {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, x.getMessage());
+                throw RError.error(this, RError.Message.GENERIC, x.getMessage());
             }
         }
     }

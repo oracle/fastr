@@ -89,7 +89,7 @@ public abstract class CastComplexNode extends CastBaseNode {
         RComplex result = RRuntime.string2complexNoCheck(operand);
         if (RRuntime.isNA(result)) {
             warningBranch.enter();
-            RError.warning(getEncapsulatingSourceSection(), RError.Message.NA_INTRODUCED_COERCION);
+            RError.warning(this, RError.Message.NA_INTRODUCED_COERCION);
         }
         return result;
     }
@@ -156,7 +156,7 @@ public abstract class CastComplexNode extends CastBaseNode {
             ddata[index + 1] = complexValue.getImaginaryPart();
         }
         if (warning) {
-            RError.warning(getEncapsulatingSourceSection(), RError.Message.NA_INTRODUCED_COERCION);
+            RError.warning(this, RError.Message.NA_INTRODUCED_COERCION);
         }
         RComplexVector ret = RDataFactory.createComplexVector(ddata, !seenNA, getPreservedDimensions(operand), getPreservedNames(operand));
         preserveDimensionNames(operand, ret);

@@ -444,13 +444,13 @@ public abstract class Match extends RBuiltinNode {
     @Specialization
     @SuppressWarnings("unused")
     protected RIntVector match(RFunction x, Object table, Object nomatchObj, Object incomparables) {
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.MATCH_VECTOR_ARGS);
+        throw RError.error(this, RError.Message.MATCH_VECTOR_ARGS);
     }
 
     @Specialization
     @SuppressWarnings("unused")
     protected RIntVector match(Object x, RFunction table, Object nomatchObj, Object incomparables) {
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.MATCH_VECTOR_ARGS);
+        throw RError.error(this, RError.Message.MATCH_VECTOR_ARGS);
     }
 
     protected boolean isStringVectorTable(RAbstractVector table) {

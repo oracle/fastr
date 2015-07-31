@@ -162,7 +162,7 @@ public abstract class AsVector extends RBuiltinNode {
         if (x.getLength() == 0) {
             return RNull.instance;
         } else {
-            throw RError.nyi(getEncapsulatingSourceSection(), "non-empty lists");
+            throw RError.nyi(this, "non-empty lists");
         }
     }
 
@@ -238,6 +238,6 @@ public abstract class AsVector extends RBuiltinNode {
     @Fallback
     protected RAbstractVector asVectorWrongMode(Object x, Object mode) {
         controlVisibility();
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "mode");
+        throw RError.error(this, RError.Message.INVALID_ARGUMENT, "mode");
     }
 }

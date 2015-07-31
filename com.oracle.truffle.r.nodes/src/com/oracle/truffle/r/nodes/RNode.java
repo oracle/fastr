@@ -421,19 +421,4 @@ public abstract class RNode extends Node implements RInstrumentableNode {
         return null;
     }
 
-    /**
-     * Handles the discovery of the {@link RSyntaxNode} that this node is derived from.
-     */
-    public RSyntaxNode asRSyntaxNode() {
-        if (this instanceof RSyntaxNode) {
-            return (RSyntaxNode) this;
-        } else {
-            return getRSyntaxNode();
-        }
-    }
-
-    protected RSyntaxNode getRSyntaxNode() {
-        throw RInternalError.unimplemented("getRSyntaxNode");
-    }
-
 }

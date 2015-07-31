@@ -51,7 +51,7 @@ public abstract class CastRawNode extends CastBaseNode {
     private RRaw checkOutOfRange(int operand, int intResult) {
         if (intResult != operand) {
             warningBranch.enter();
-            RError.warning(getEncapsulatingSourceSection(), RError.Message.OUT_OF_RANGE);
+            RError.warning(this, RError.Message.OUT_OF_RANGE);
             return RDataFactory.createRaw((byte) 0);
         }
         return RDataFactory.createRaw((byte) intResult);
@@ -74,7 +74,7 @@ public abstract class CastRawNode extends CastBaseNode {
         int intResult = RRuntime.complex2rawIntValue(operand);
         if (operand.getImaginaryPart() != 0) {
             warningBranch.enter();
-            RError.warning(getEncapsulatingSourceSection(), RError.Message.IMAGINARY_PARTS_DISCARDED_IN_COERCION);
+            RError.warning(this, RError.Message.IMAGINARY_PARTS_DISCARDED_IN_COERCION);
         }
         return checkOutOfRange((int) operand.getRealPart(), intResult);
     }
@@ -102,13 +102,13 @@ public abstract class CastRawNode extends CastBaseNode {
             intValue = RRuntime.string2intNoCheck(operand);
             if (RRuntime.isNA(intValue)) {
                 warningBranch.enter();
-                RError.warning(getEncapsulatingSourceSection(), RError.Message.NA_INTRODUCED_COERCION);
+                RError.warning(this, RError.Message.NA_INTRODUCED_COERCION);
             }
         }
         int intRawValue = RRuntime.int2rawIntValue(intValue);
         if (intRawValue != intValue) {
             warningBranch.enter();
-            RError.warning(getEncapsulatingSourceSection(), RError.Message.OUT_OF_RANGE);
+            RError.warning(this, RError.Message.OUT_OF_RANGE);
         }
         return RRaw.valueOf((byte) intRawValue);
     }
@@ -138,7 +138,7 @@ public abstract class CastRawNode extends CastBaseNode {
             bdata[i] = (byte) intRawValue;
         }
         if (warning) {
-            RError.warning(getEncapsulatingSourceSection(), RError.Message.OUT_OF_RANGE);
+            RError.warning(this, RError.Message.OUT_OF_RANGE);
         }
         return createResultVector(operand, bdata);
     }
@@ -158,7 +158,7 @@ public abstract class CastRawNode extends CastBaseNode {
             bdata[i] = (byte) intRawValue;
         }
         if (warning) {
-            RError.warning(getEncapsulatingSourceSection(), RError.Message.OUT_OF_RANGE);
+            RError.warning(this, RError.Message.OUT_OF_RANGE);
         }
         return createResultVector(operand, bdata);
     }
@@ -195,10 +195,10 @@ public abstract class CastRawNode extends CastBaseNode {
             bdata[i] = (byte) intValue;
         }
         if (naCoercionWarning) {
-            RError.warning(getEncapsulatingSourceSection(), RError.Message.NA_INTRODUCED_COERCION);
+            RError.warning(this, RError.Message.NA_INTRODUCED_COERCION);
         }
         if (outOfRangeWarning) {
-            RError.warning(getEncapsulatingSourceSection(), RError.Message.OUT_OF_RANGE);
+            RError.warning(this, RError.Message.OUT_OF_RANGE);
         }
         return createResultVector(operand, bdata);
     }
@@ -223,10 +223,10 @@ public abstract class CastRawNode extends CastBaseNode {
             bdata[i] = (byte) intRawValue;
         }
         if (imaginaryDiscardedWarning) {
-            RError.warning(getEncapsulatingSourceSection(), RError.Message.IMAGINARY_PARTS_DISCARDED_IN_COERCION);
+            RError.warning(this, RError.Message.IMAGINARY_PARTS_DISCARDED_IN_COERCION);
         }
         if (outOfRangeWarning) {
-            RError.warning(getEncapsulatingSourceSection(), RError.Message.OUT_OF_RANGE);
+            RError.warning(this, RError.Message.OUT_OF_RANGE);
         }
         return createResultVector(operand, bdata);
     }
@@ -247,7 +247,7 @@ public abstract class CastRawNode extends CastBaseNode {
             bdata[i] = (byte) intRawValue;
         }
         if (warning) {
-            RError.warning(getEncapsulatingSourceSection(), RError.Message.OUT_OF_RANGE);
+            RError.warning(this, RError.Message.OUT_OF_RANGE);
         }
         return createResultVector(operand, bdata);
     }

@@ -71,7 +71,7 @@ public abstract class MultiDimPosConverterValueNode extends RNode {
             return positions;
         } else {
             errorProfile.enter();
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
+            throw RError.error(this, RError.Message.MORE_SUPPLIED_REPLACE);
         }
     }
 
@@ -81,7 +81,7 @@ public abstract class MultiDimPosConverterValueNode extends RNode {
             return positions;
         } else {
             errorProfile.enter();
-            throw RError.error(getEncapsulatingSourceSection(), isEmpty(value) ? RError.Message.SELECT_MORE_1 : RError.Message.MORE_SUPPLIED_REPLACE);
+            throw RError.error(this, isEmpty(value) ? RError.Message.SELECT_MORE_1 : RError.Message.MORE_SUPPLIED_REPLACE);
         }
     }
 
@@ -93,11 +93,11 @@ public abstract class MultiDimPosConverterValueNode extends RNode {
     protected RAbstractIntVector doIntVector(RNull vector, RAbstractVector value, RAbstractIntVector positions) {
         if (singlePosNegative(positions)) {
             errorProfile.enter();
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_MORE_1);
+            throw RError.error(this, RError.Message.SELECT_MORE_1);
         }
         if (!isSubset && positions.getLength() > 1) {
             errorProfile.enter();
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_MORE_1);
+            throw RError.error(this, RError.Message.SELECT_MORE_1);
         }
         return positions;
     }
@@ -105,7 +105,7 @@ public abstract class MultiDimPosConverterValueNode extends RNode {
     @Specialization(guards = {"emptyValue(value)", "!isPosVectorInt(positions)"})
     protected RAbstractVector doIntVectorEmptyValue(RNull vector, RAbstractVector value, RAbstractVector positions) {
         if (!isSubset) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.REPLACEMENT_0);
+            throw RError.error(this, RError.Message.REPLACEMENT_0);
         } else {
             return positions;
         }
@@ -123,9 +123,9 @@ public abstract class MultiDimPosConverterValueNode extends RNode {
             } else {
                 message = value instanceof RNull ? RError.Message.MORE_SUPPLIED_REPLACE : getErrorForValueSize(value, RError.Message.INVALID_SUBSCRIPT_TYPE);
             }
-            throw RError.error(getEncapsulatingSourceSection(), message, "complex");
+            throw RError.error(this, message, "complex");
         } else {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "complex");
+            throw RError.error(this, RError.Message.INVALID_SUBSCRIPT_TYPE, "complex");
         }
     }
 
@@ -141,9 +141,9 @@ public abstract class MultiDimPosConverterValueNode extends RNode {
             } else {
                 message = value instanceof RNull ? RError.Message.MORE_SUPPLIED_REPLACE : getErrorForValueSize(value, RError.Message.INVALID_SUBSCRIPT_TYPE);
             }
-            throw RError.error(getEncapsulatingSourceSection(), message, "raw");
+            throw RError.error(this, message, "raw");
         } else {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "raw");
+            throw RError.error(this, RError.Message.INVALID_SUBSCRIPT_TYPE, "raw");
         }
     }
 
@@ -156,10 +156,10 @@ public abstract class MultiDimPosConverterValueNode extends RNode {
             } else {
                 message = getErrorForValueSize(value, RError.Message.SELECT_LESS_1);
             }
-            throw RError.error(getEncapsulatingSourceSection(), message);
+            throw RError.error(this, message);
         } else if (positions instanceof RList) {
             errorProfile.enter();
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
+            throw RError.error(this, RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
         } else {
             return positions;
         }
@@ -170,7 +170,7 @@ public abstract class MultiDimPosConverterValueNode extends RNode {
         if (!isSubset) {
             if (positions.getDataAt(0) == 0) {
                 errorProfile.enter();
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
+                throw RError.error(this, RError.Message.SELECT_LESS_1);
             }
         }
         return positions;
@@ -181,7 +181,7 @@ public abstract class MultiDimPosConverterValueNode extends RNode {
         if (!isSubset) {
             if (positions.getDataAt(0) == 0) {
                 errorProfile.enter();
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
+                throw RError.error(this, RError.Message.SELECT_LESS_1);
             }
         }
         return positions;
@@ -190,7 +190,7 @@ public abstract class MultiDimPosConverterValueNode extends RNode {
     @Specialization(guards = {"onePosition(positions)", "emptyValue(value)", "!isContainerList(container)"})
     protected RAbstractVector accessListOnePosEmptyValue(RAbstractContainer container, RAbstractVector value, RAbstractIntVector positions) {
         if (!isSubset) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.REPLACEMENT_0);
+            throw RError.error(this, RError.Message.REPLACEMENT_0);
         } else {
             return positions;
         }
@@ -201,7 +201,7 @@ public abstract class MultiDimPosConverterValueNode extends RNode {
         if (!isSubset) {
             if (positions.getDataAt(0) == 0) {
                 errorProfile.enter();
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
+                throw RError.error(this, RError.Message.SELECT_LESS_1);
             }
         }
         return positions;
@@ -210,7 +210,7 @@ public abstract class MultiDimPosConverterValueNode extends RNode {
     @Specialization(guards = {"onePosition(positions)", "valueLongerThanOne(value)", "!isContainerList(container)"})
     protected RAbstractVector accessListOnePosValueLongerThanOne(RAbstractContainer container, RAbstractVector value, RAbstractIntVector positions) {
         if (!isSubset) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
+            throw RError.error(this, RError.Message.MORE_SUPPLIED_REPLACE);
         } else {
             return positions;
         }
@@ -219,7 +219,7 @@ public abstract class MultiDimPosConverterValueNode extends RNode {
     @Specialization(guards = {"onePosition(positions)", "!isContainerList(container)"})
     protected RAbstractVector accessListOnePosValueLongerThanOne(RAbstractContainer container, RNull value, RAbstractIntVector positions) {
         if (!isSubset) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
+            throw RError.error(this, RError.Message.MORE_SUPPLIED_REPLACE);
         } else {
             return positions;
         }
@@ -229,7 +229,7 @@ public abstract class MultiDimPosConverterValueNode extends RNode {
     protected RAbstractVector accessListOnePosEmptyValueList(RList vector, RAbstractVector value, RAbstractVector positions) {
         if (positions instanceof RList) {
             errorProfile.enter();
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
+            throw RError.error(this, RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
         } else {
             return positions;
         }
@@ -239,7 +239,7 @@ public abstract class MultiDimPosConverterValueNode extends RNode {
     protected RAbstractVector accessListOnePosEmptyValueList(RList vector, RNull value, RAbstractVector positions) {
         if (positions instanceof RList) {
             errorProfile.enter();
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
+            throw RError.error(this, RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
         } else {
             return positions;
         }
@@ -249,10 +249,10 @@ public abstract class MultiDimPosConverterValueNode extends RNode {
     protected RAbstractVector accessListOnePosEmptyValue(RAbstractContainer container, RAbstractVector value, RAbstractVector positions) {
         if (!isSubset) {
             errorProfile.enter();
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.REPLACEMENT_0);
+            throw RError.error(this, RError.Message.REPLACEMENT_0);
         } else if (positions instanceof RList) {
             errorProfile.enter();
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
+            throw RError.error(this, RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
         } else {
             return positions;
         }
@@ -262,7 +262,7 @@ public abstract class MultiDimPosConverterValueNode extends RNode {
     protected RAbstractVector accessListOnePosValueLengthOne(RAbstractContainer container, RAbstractVector value, RAbstractVector positions) {
         if (positions instanceof RList) {
             errorProfile.enter();
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
+            throw RError.error(this, RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
         } else {
             return positions;
         }
@@ -272,7 +272,7 @@ public abstract class MultiDimPosConverterValueNode extends RNode {
     protected RAbstractVector accessListOnePosValueLongerThanOneList(RList vector, RAbstractVector value, RAbstractVector positions) {
         if (positions instanceof RList) {
             errorProfile.enter();
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
+            throw RError.error(this, RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
         } else {
             return positions;
         }
@@ -281,9 +281,9 @@ public abstract class MultiDimPosConverterValueNode extends RNode {
     @Specialization(guards = {"onePosition(positions)", "valueLongerThanOne(value)", "!isPosVectorInt(positions)", "!isContainerList(container)"})
     protected RAbstractVector accessListOnePosValueLongerThanOne(RAbstractContainer container, RAbstractVector value, RAbstractVector positions) {
         if (!isSubset) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
+            throw RError.error(this, RError.Message.MORE_SUPPLIED_REPLACE);
         } else if (positions instanceof RList) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
+            throw RError.error(this, RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
         } else {
             return positions;
         }
@@ -292,10 +292,10 @@ public abstract class MultiDimPosConverterValueNode extends RNode {
     @Specialization(guards = {"onePosition(positions)", "!isContainerList(container)", "!isPosVectorInt(positions)"})
     protected RAbstractVector accessListOnePosValueLongerThanOne(RAbstractContainer container, RNull value, RAbstractVector positions) {
         if (!isSubset) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.MORE_SUPPLIED_REPLACE);
+            throw RError.error(this, RError.Message.MORE_SUPPLIED_REPLACE);
         } else if (positions instanceof RList) {
             errorProfile.enter();
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
+            throw RError.error(this, RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
         } else {
             return positions;
         }
@@ -310,10 +310,10 @@ public abstract class MultiDimPosConverterValueNode extends RNode {
             } else {
                 message = getErrorForValueSize(value, RError.Message.SELECT_MORE_1);
             }
-            throw RError.error(getEncapsulatingSourceSection(), message);
+            throw RError.error(this, message);
         } else if (positions instanceof RList) {
             errorProfile.enter();
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
+            throw RError.error(this, RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
         } else {
             return positions;
         }

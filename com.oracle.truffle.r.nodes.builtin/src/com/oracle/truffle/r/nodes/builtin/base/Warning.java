@@ -56,7 +56,7 @@ public abstract class Warning extends RInvisibleBuiltinNode {
         boolean call = RRuntime.fromLogical(callL);
         boolean immediate = RRuntime.fromLogical(immediateL);
         boolean noBreakWarning = RRuntime.fromLogical(noBreakWarningL);
-        RErrorHandling.warningcallInternal(call ? getEncapsulatingSourceSection() : null, message, immediate, noBreakWarning);
+        RErrorHandling.warningcallInternal(call, this, message, immediate, noBreakWarning);
         controlVisibility();
         return message;
     }
@@ -64,6 +64,6 @@ public abstract class Warning extends RInvisibleBuiltinNode {
     @SuppressWarnings("unused")
     @Fallback
     public String warning(Object callL, Object immediateL, Object noBreakWarningL, Object message) {
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
+        throw RError.error(this, RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
     }
 }

@@ -41,7 +41,7 @@ public class EncodingFunctions {
         @SuppressWarnings("unused")
         @Fallback
         protected RStringVector encoding(Object x) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.CHAR_VEC_ARGUMENT);
+            throw RError.error(this, RError.Message.CHAR_VEC_ARGUMENT);
         }
     }
 
@@ -56,7 +56,7 @@ public class EncodingFunctions {
         @SuppressWarnings("unused")
         @Fallback
         protected RStringVector setEncoding(Object x) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.CHAR_VEC_ARGUMENT);
+            throw RError.error(this, RError.Message.CHAR_VEC_ARGUMENT);
         }
     }
 

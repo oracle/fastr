@@ -91,7 +91,7 @@ public class HiddenInternalFunctions {
                 } catch (PutException ex) {
                     //
                     if (!loadingBase) {
-                        throw RError.error(getEncapsulatingSourceSection(), ex);
+                        throw RError.error(this, ex);
                     }
                 }
             }
@@ -113,7 +113,7 @@ public class HiddenInternalFunctions {
             controlVisibility();
             int length = impNames.getLength();
             if (length != expNames.getLength()) {
-                throw RError.error(getEncapsulatingSourceSection(), Message.IMP_EXP_NAMES_MATCH);
+                throw RError.error(this, Message.IMP_EXP_NAMES_MATCH);
             }
             for (int i = 0; i < length; i++) {
                 String impsym = impNames.getDataAt(i);
@@ -130,7 +130,7 @@ public class HiddenInternalFunctions {
                 try {
                     impEnv.put(impsym, binding);
                 } catch (PutException ex) {
-                    throw RError.error(getEncapsulatingSourceSection(), ex);
+                    throw RError.error(this, ex);
                 }
 
             }
@@ -189,7 +189,7 @@ public class HiddenInternalFunctions {
                     bs.read(dbData);
                 } catch (IOException ex) {
                     // unexpected
-                    throw RError.error(Message.GENERIC, ex.getMessage());
+                    throw RError.error(this, Message.GENERIC, ex.getMessage());
                 }
                 dbCache.put(dbPath, dbData);
             }
@@ -212,12 +212,12 @@ public class HiddenInternalFunctions {
                 destlen[0] = udata.length;
                 int rc = RFFIFactory.getRFFI().getBaseRFFI().uncompress(udata, destlen, data);
                 if (rc != 0) {
-                    throw RError.error(Message.GENERIC, "zlib uncompress error");
+                    throw RError.error(this, Message.GENERIC, "zlib uncompress error");
                 }
                 try {
                     RSerialize.CallHook callHook = new RSerialize.CallHook() {
                         public Object eval(Object arg) {
-                            Object[] callArgs = RArguments.create(envhook, callCache.getSourceSection(), null, RArguments.getDepth(frame) + 1, new Object[]{arg}, SIGNATURE);
+                            Object[] callArgs = RArguments.create(envhook, RDataFactory.createCaller(this), null, RArguments.getDepth(frame) + 1, new Object[]{arg}, SIGNATURE);
                             return callCache.execute(new SubstituteVirtualFrame(frame), envhook.getTarget(), callArgs);
                         }
                     };
@@ -225,10 +225,10 @@ public class HiddenInternalFunctions {
                     return result;
                 } catch (IOException ex) {
                     // unexpected
-                    throw RError.error(Message.GENERIC, ex.getMessage());
+                    throw RError.error(this, Message.GENERIC, ex.getMessage());
                 }
             } else {
-                throw RError.error(Message.GENERIC, "unsupported compression");
+                throw RError.error(this, Message.GENERIC, "unsupported compression");
             }
         }
 
@@ -246,7 +246,7 @@ public class HiddenInternalFunctions {
 
         @Specialization
         protected RList getRegisteredRoutines(@SuppressWarnings("unused") RNull info) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.NULL_DLLINFO);
+            throw RError.error(this, RError.Message.NULL_DLLINFO);
         }
 
         @Specialization(guards = "isDLLInfo(externalPtr)")
@@ -278,7 +278,7 @@ public class HiddenInternalFunctions {
 
         @Fallback
         protected RList getRegisteredRoutines(@SuppressWarnings("unused") Object info) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.REQUIRES_DLLINFO);
+            throw RError.error(this, RError.Message.REQUIRES_DLLINFO);
         }
 
         public static boolean isDLLInfo(RExternalPtr externalPtr) {
@@ -299,7 +299,7 @@ public class HiddenInternalFunctions {
                 String var = varsVec.getDataAt(i);
                 Object value = env.get(var);
                 if (value == null) {
-                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.UNKNOWN_OBJECT, var);
+                    throw RError.error(this, RError.Message.UNKNOWN_OBJECT, var);
                 }
                 if (force && value instanceof RPromise) {
                     if (promiseHelper == null) {
@@ -316,7 +316,7 @@ public class HiddenInternalFunctions {
         @SuppressWarnings("unused")
         @Fallback
         protected RList getVarsFromFrame(Object varsVec, Object env, Object forceArg) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
+            throw RError.error(this, RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
         }
     }
 
@@ -334,12 +334,12 @@ public class HiddenInternalFunctions {
         @Specialization
         protected RIntVector lazyLoadDBinsertValue(VirtualFrame frame, Object value, RAbstractStringVector file, byte asciiL, int compression, RFunction hook) {
             if (compression != 1) {
-                throw RError.error(Message.GENERIC, "unsupported compression");
+                throw RError.error(this, Message.GENERIC, "unsupported compression");
             }
 
             RSerialize.CallHook callHook = new RSerialize.CallHook() {
                 public Object eval(Object arg) {
-                    Object[] callArgs = RArguments.create(hook, callCache.getSourceSection(), null, RArguments.getDepth(frame) + 1, new Object[]{arg}, SIGNATURE);
+                    Object[] callArgs = RArguments.create(hook, RDataFactory.createCaller(this), null, RArguments.getDepth(frame) + 1, new Object[]{arg}, SIGNATURE);
                     return callCache.execute(new SubstituteVirtualFrame(frame.materialize()), hook.getTarget(), callArgs);
                 }
             };
@@ -351,7 +351,7 @@ public class HiddenInternalFunctions {
                 cdatalen[0] = cdata.length;
                 int rc = RFFIFactory.getRFFI().getBaseRFFI().compress(cdata, cdatalen, data);
                 if (rc != 0) {
-                    throw RError.error(Message.GENERIC, "zlib uncompress error");
+                    throw RError.error(this, Message.GENERIC, "zlib uncompress error");
                 }
                 int[] intData = new int[2];
                 intData[1] = (int) cdatalen[0] + 4; // include outlen
@@ -366,7 +366,7 @@ public class HiddenInternalFunctions {
         @SuppressWarnings("unused")
         @Fallback
         protected Object lazyLoadDBinsertValue(Object value, Object file, Object ascii, Object compsxp, Object hook) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
+            throw RError.error(this, RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
         }
 
         /**
@@ -392,7 +392,7 @@ public class HiddenInternalFunctions {
                 out.write(data, 0, len);
                 return result;
             } catch (IOException ex) {
-                throw RError.error(getEncapsulatingSourceSection(), Message.GENERIC, "lazyLoadDBinsertValue file append error");
+                throw RError.error(this, Message.GENERIC, "lazyLoadDBinsertValue file append error");
             }
         }
 

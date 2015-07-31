@@ -49,9 +49,9 @@ public abstract class SeqLen extends RBuiltinNode {
         boolean zeroLength = length.getLength() == 0;
         if (zeroLength || length.getLength() > 1) {
             lengthProblem.enter();
-            RError.warning(getEncapsulatingSourceSection(), RError.Message.FIRST_ELEMENT_USED, "length.out");
+            RError.warning(this, RError.Message.FIRST_ELEMENT_USED, "length.out");
             if (zeroLength) {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.MUST_BE_COERCIBLE_INTEGER);
+                throw RError.error(this, RError.Message.MUST_BE_COERCIBLE_INTEGER);
             }
         }
         controlVisibility();

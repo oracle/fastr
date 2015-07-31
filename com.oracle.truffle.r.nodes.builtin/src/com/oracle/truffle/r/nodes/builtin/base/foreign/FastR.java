@@ -51,7 +51,7 @@ public abstract class FastR extends RBuiltinNode {
     @SuppressWarnings("unused")
     @Fallback
     protected Object doFastR(Object name, Object args) {
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
+        throw RError.error(this, RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
     }
 
     protected RExternalBuiltinNode lookupName(RAbstractStringVector name) {

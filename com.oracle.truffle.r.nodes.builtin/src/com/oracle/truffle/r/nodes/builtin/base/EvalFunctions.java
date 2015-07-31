@@ -55,7 +55,7 @@ public class EvalFunctions {
                     }
                     return result;
                 } catch (PutException ex) {
-                    throw RError.error(getEncapsulatingSourceSection(), ex);
+                    throw RError.error(this, ex);
                 }
             } else {
                 // just return value
@@ -85,7 +85,7 @@ public class EvalFunctions {
         @Fallback
         @TruffleBoundary
         protected Object doEval(Object expr, Object envir, Object enclos) {
-            throw RError.nyi(getEncapsulatingSourceSection(), "eval arg type");
+            throw RError.nyi(this, "eval arg type");
         }
     }
 

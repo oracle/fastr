@@ -154,7 +154,7 @@ public abstract class UpdateFieldNode extends RNode implements RSyntaxNode {
         try {
             env.put(field, value);
         } catch (PutException ex) {
-            throw RError.error(getEncapsulatingSourceSection(), ex);
+            throw RError.error(this, ex);
         }
         return env;
     }
@@ -170,7 +170,7 @@ public abstract class UpdateFieldNode extends RNode implements RSyntaxNode {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castList = insert(CastListNodeGen.create(true, true, false));
         }
-        RError.warning(getEncapsulatingSourceSection(), RError.Message.COERCING_LHS_TO_LIST);
+        RError.warning(this, RError.Message.COERCING_LHS_TO_LIST);
         if (nullValueProfile.profile(value == RNull.instance)) {
             return updateFieldNullValue(castList.executeList(object), RNull.instance, field);
         } else {

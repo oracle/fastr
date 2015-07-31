@@ -29,7 +29,7 @@ import java.nio.*;
 import java.util.zip.*;
 
 import com.oracle.truffle.api.CompilerDirectives.*;
-import com.oracle.truffle.api.source.*;
+import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
@@ -77,7 +77,7 @@ public class FileConnections {
                     delegate = new FileReadWriteConnection(this);
                     break;
                 default:
-                    throw RError.nyi((SourceSection) null, "open mode: " + getOpenMode());
+                    throw RError.nyi((Node) null, "open mode: " + getOpenMode());
             }
             setDelegate(delegate);
         }
@@ -111,12 +111,12 @@ public class FileConnections {
 
         @Override
         public int readBin(ByteBuffer buffer) throws IOException {
-            throw RError.error(RError.Message.ONLY_READ_BINARY_CONNECTION);
+            throw RError.error(RError.NO_NODE, RError.Message.ONLY_READ_BINARY_CONNECTION);
         }
 
         @Override
         public byte[] readBinChars() throws IOException {
-            throw RError.error(RError.Message.ONLY_READ_BINARY_CONNECTION);
+            throw RError.error(RError.NO_NODE, RError.Message.ONLY_READ_BINARY_CONNECTION);
         }
 
         @TruffleBoundary
@@ -163,7 +163,7 @@ public class FileConnections {
 
         @Override
         public void writeBin(ByteBuffer buffer) throws IOException {
-            throw RError.error(RError.Message.ONLY_WRITE_BINARY_CONNECTION);
+            throw RError.error(RError.NO_NODE, RError.Message.ONLY_WRITE_BINARY_CONNECTION);
         }
 
         @Override

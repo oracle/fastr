@@ -49,7 +49,7 @@ public abstract class PathExpand extends RBuiltinNode {
     @Specialization
     protected Object doPathExpandGeneric(@SuppressWarnings("unused") Object path) {
         controlVisibility();
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "path");
+        throw RError.error(this, RError.Message.INVALID_ARGUMENT, "path");
     }
 
 }

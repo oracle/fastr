@@ -42,7 +42,7 @@ public class LoadFunctions {
                 if (s.equals("RDA2\n") || s.equals("RDB2\n") || s.equals("RDX2\n")) {
                     Object o = RSerialize.unserialize(con, RArguments.getDepth(frame));
                     if (!(o instanceof RPairList)) {
-                        throw RError.error(RError.Message.GENERIC, "loaded data is not in pair list form");
+                        throw RError.error(this, RError.Message.GENERIC, "loaded data is not in pair list form");
                     }
                     RPairList vars = (RPairList) o;
 
@@ -66,13 +66,13 @@ public class LoadFunctions {
                     return RDataFactory.createStringVector(data, naCheck.neverSeenNA());
 
                 } else {
-                    throw RError.error(RError.Message.GENERIC, "the input does not start with a magic number compatible with loading from a connection");
+                    throw RError.error(this, RError.Message.GENERIC, "the input does not start with a magic number compatible with loading from a connection");
                 }
 
             } catch (IOException iox) {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.ERROR_READING_CONNECTION, iox.getMessage());
+                throw RError.error(this, RError.Message.ERROR_READING_CONNECTION, iox.getMessage());
             } catch (PutException px) {
-                throw RError.error(this.getEncapsulatingSourceSection(), px);
+                throw RError.error(this, px);
             }
 
         }

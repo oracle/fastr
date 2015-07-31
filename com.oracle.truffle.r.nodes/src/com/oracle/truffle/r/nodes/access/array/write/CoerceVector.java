@@ -134,7 +134,7 @@ public abstract class CoerceVector extends RNode implements RSyntaxNode/* temp *
 
     @Specialization
     protected RIntVector coerce(RAbstractIntVector value, RAbstractRawVector vector, Object operand) {
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.SUBASSIGN_TYPE_FIX, "integer", "raw");
+        throw RError.error(this, RError.Message.SUBASSIGN_TYPE_FIX, "integer", "raw");
     }
 
     @Specialization(guards = "isVectorListOrDataFrame(vector)")
@@ -171,7 +171,7 @@ public abstract class CoerceVector extends RNode implements RSyntaxNode/* temp *
 
     @Specialization
     protected RDoubleVector coerce(RAbstractDoubleVector value, RAbstractRawVector vector, Object operand) {
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.SUBASSIGN_TYPE_FIX, "double", "raw");
+        throw RError.error(this, RError.Message.SUBASSIGN_TYPE_FIX, "double", "raw");
     }
 
     @Specialization
@@ -208,7 +208,7 @@ public abstract class CoerceVector extends RNode implements RSyntaxNode/* temp *
 
     @Specialization
     protected RLogicalVector coerce(RAbstractLogicalVector value, RAbstractRawVector vector, Object operand) {
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.SUBASSIGN_TYPE_FIX, "logical", "raw");
+        throw RError.error(this, RError.Message.SUBASSIGN_TYPE_FIX, "logical", "raw");
     }
 
     @Specialization(guards = "isVectorListOrDataFrame(vector)")
@@ -245,7 +245,7 @@ public abstract class CoerceVector extends RNode implements RSyntaxNode/* temp *
 
     @Specialization
     protected RStringVector coerce(RAbstractStringVector value, RAbstractRawVector vector, Object operand) {
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.SUBASSIGN_TYPE_FIX, "character", "raw");
+        throw RError.error(this, RError.Message.SUBASSIGN_TYPE_FIX, "character", "raw");
     }
 
     @Specialization(guards = "isVectorListOrDataFrame(vector)")
@@ -282,7 +282,7 @@ public abstract class CoerceVector extends RNode implements RSyntaxNode/* temp *
 
     @Specialization
     protected RComplexVector coerce(RAbstractComplexVector value, RAbstractRawVector vector, Object operand) {
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.SUBASSIGN_TYPE_FIX, "complex", "raw");
+        throw RError.error(this, RError.Message.SUBASSIGN_TYPE_FIX, "complex", "raw");
     }
 
     @Specialization(guards = "isVectorListOrDataFrame(vector)")
@@ -299,7 +299,7 @@ public abstract class CoerceVector extends RNode implements RSyntaxNode/* temp *
 
     @Specialization(guards = "!isVectorList(vector)")
     protected RRawVector coerce(RAbstractRawVector value, RAbstractVector vector, Object operand) {
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.SUBASSIGN_TYPE_FIX, "raw", RRuntime.classToString(vector.getElementClass(), false));
+        throw RError.error(this, RError.Message.SUBASSIGN_TYPE_FIX, "raw", RRuntime.classToString(vector.getElementClass(), false));
     }
 
     @Specialization(guards = "isVectorListOrDataFrame(vector)")
@@ -337,7 +337,7 @@ public abstract class CoerceVector extends RNode implements RSyntaxNode/* temp *
 
     @Specialization
     protected RFunction coerce(RFunction value, RAbstractContainer vector, Object operand) {
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.SUBASSIGN_TYPE_FIX, "closure", RRuntime.classToString(vector.getElementClass(), false));
+        throw RError.error(this, RError.Message.SUBASSIGN_TYPE_FIX, "closure", RRuntime.classToString(vector.getElementClass(), false));
     }
 
     // in all other cases, simply return the vector (no coercion)

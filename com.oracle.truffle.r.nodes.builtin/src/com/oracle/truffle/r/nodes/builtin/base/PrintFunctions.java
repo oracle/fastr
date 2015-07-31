@@ -41,7 +41,7 @@ public class PrintFunctions {
             try {
                 StdConnections.getStdout().writeString(string, true);
             } catch (IOException ex) {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, ex.getMessage());
+                throw RError.error(this, RError.Message.GENERIC, ex.getMessage());
             }
         }
 

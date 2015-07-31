@@ -140,7 +140,7 @@ public abstract class Attr extends RBuiltinNode {
     @Specialization(guards = "!exactlyOne(name)")
     protected Object attrEmtpyName(RAbstractContainer container, RStringVector name) {
         controlVisibility();
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.EXACTLY_ONE_WHICH);
+        throw RError.error(this, RError.Message.EXACTLY_ONE_WHICH);
     }
 
     /**
@@ -151,13 +151,13 @@ public abstract class Attr extends RBuiltinNode {
         controlVisibility();
         String sname = RRuntime.asString(name);
         if (sname == null) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.MUST_BE_CHARACTER, "which");
+            throw RError.error(this, RError.Message.MUST_BE_CHARACTER, "which");
         }
         if (object instanceof RAttributable) {
             return attrRA((RAttributable) object, intern(sname));
         } else {
             errorProfile.enter();
-            throw RError.nyi(getEncapsulatingSourceSection(), "object cannot be attributed");
+            throw RError.nyi(this, "object cannot be attributed");
         }
     }
 

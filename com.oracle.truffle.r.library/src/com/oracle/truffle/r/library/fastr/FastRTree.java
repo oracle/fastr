@@ -40,7 +40,7 @@ public abstract class FastRTree extends RExternalBuiltinNode.Arg2 {
     @SuppressWarnings("unused")
     @Fallback
     protected Object fallback(Object a1, Object a2) {
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
+        throw RError.error(this, RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
     }
 
 }

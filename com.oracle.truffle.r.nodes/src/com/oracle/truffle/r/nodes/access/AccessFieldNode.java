@@ -81,7 +81,7 @@ public abstract class AccessFieldNode extends RNode {
 
     @Specialization
     protected Object accessField(@SuppressWarnings("unused") RAbstractVector objec, @SuppressWarnings("unused") String field) {
-        throw RError.error(RError.Message.DOLLAR_ATOMIC_VECTORS);
+        throw RError.error(this, RError.Message.DOLLAR_ATOMIC_VECTORS);
     }
 
     @Specialization

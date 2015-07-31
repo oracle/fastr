@@ -45,7 +45,7 @@ public abstract class Structure extends RBuiltinNode {
     @Specialization
     protected Object structure(RMissing obj, RMissing args) {
         CompilerDirectives.transferToInterpreter();
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.ARGUMENT_MISSING, ".Data");
+        throw RError.error(this, RError.Message.ARGUMENT_MISSING, ".Data");
     }
 
     @Specialization
@@ -113,7 +113,7 @@ public abstract class Structure extends RBuiltinNode {
     private void validateArgNames(ArgumentsSignature signature) {
         int containerIndex = 0;
         if (findNullIn(signature, containerIndex + 1)) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.ATTRIBUTES_NAMED);
+            throw RError.error(this, RError.Message.ATTRIBUTES_NAMED);
         }
     }
 

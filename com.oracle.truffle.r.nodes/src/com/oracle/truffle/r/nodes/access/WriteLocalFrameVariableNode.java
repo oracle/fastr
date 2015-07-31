@@ -86,7 +86,7 @@ public abstract class WriteLocalFrameVariableNode extends BaseWriteVariableNode 
             CompilerDirectives.transferToInterpreterAndInvalidate();
             // it's slow path (unconditional replace) so toStrin() is fine as well
             if (getName().toString().isEmpty()) {
-                throw RError.error(RError.Message.ZERO_LENGTH_VARIABLE);
+                throw RError.error(this, RError.Message.ZERO_LENGTH_VARIABLE);
             }
             FrameSlot frameSlot = findOrAddFrameSlot(frame.getFrameDescriptor(), getName(), initialKind);
             replace(ResolvedWriteLocalFrameVariableNode.create(getRhs(), getName(), frameSlot, getMode())).execute(frame, value);

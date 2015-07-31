@@ -296,31 +296,31 @@ public abstract class EncodeString extends RBuiltinNode {
     @SuppressWarnings("unused")
     @Specialization(guards = "!isString(x)")
     protected RStringVector encodeStringInvalidFirstArgument(Object x, int width, RAbstractStringVector quote, RAbstractIntVector justify, byte encodeNA) {
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.CHAR_VEC_ARGUMENT);
+        throw RError.error(this, RError.Message.CHAR_VEC_ARGUMENT);
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = "!isValidWidth(width)")
     protected RStringVector encodeStringInvalidWidth(RAbstractStringVector x, int width, RAbstractStringVector quote, RAbstractIntVector justify, byte encodeNA) {
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_VALUE, "width");
+        throw RError.error(this, RError.Message.INVALID_VALUE, "width");
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = "!isValidQuote(quote)")
     protected RStringVector encodeStringInvalidQuote(RAbstractStringVector x, int width, Object quote, RAbstractIntVector justify, byte encodeNA) {
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_VALUE, "quote");
+        throw RError.error(this, RError.Message.INVALID_VALUE, "quote");
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = "!isValidJustify(justify)")
     protected RStringVector encodeStringInvalidJustify(RAbstractStringVector x, int width, RAbstractStringVector quote, RAbstractIntVector justify, byte encodeNA) {
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_VALUE, "justify");
+        throw RError.error(this, RError.Message.INVALID_VALUE, "justify");
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = "!isValidEncodeNA(encodeNA)")
     protected RStringVector encodeStringInvalidEncodeNA(RAbstractStringVector x, int width, RAbstractStringVector quote, RAbstractIntVector justify, byte encodeNA) {
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_VALUE, "na.encode");
+        throw RError.error(this, RError.Message.INVALID_VALUE, "na.encode");
     }
 
     protected boolean isString(Object x) {

@@ -46,7 +46,7 @@ public class TrigExpFunctions {
         protected byte isType(@SuppressWarnings("unused") RMissing value) {
             controlVisibility();
             CompilerDirectives.transferToInterpreter();
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.ARGUMENTS_PASSED_0_1, getRBuiltin().name());
+            throw RError.error(this, RError.Message.ARGUMENTS_PASSED_0_1, getRBuiltin().name());
         }
 
         protected double op(@SuppressWarnings("unused") double x) {
@@ -397,9 +397,9 @@ public class TrigExpFunctions {
         @TruffleBoundary
         protected Object atan2(Object x, Object y) {
             if (x instanceof RMissing) {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.ARGUMENT_MISSING, getRBuiltin().parameterNames()[0]);
+                throw RError.error(this, RError.Message.ARGUMENT_MISSING, getRBuiltin().parameterNames()[0]);
             } else if (y instanceof RMissing) {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.ARGUMENT_MISSING, getRBuiltin().parameterNames()[1]);
+                throw RError.error(this, RError.Message.ARGUMENT_MISSING, getRBuiltin().parameterNames()[1]);
             }
             throw RInternalError.unimplemented();
         }

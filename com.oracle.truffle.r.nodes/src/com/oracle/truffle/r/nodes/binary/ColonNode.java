@@ -52,7 +52,7 @@ public abstract class ColonNode extends RNode implements RSyntaxNode, Visibility
     private void naCheck(boolean na) {
         if (na) {
             naCheckErrorProfile.enter();
-            throw RError.error(getSourceSection(), RError.Message.NA_OR_NAN);
+            throw RError.error(this, RError.Message.NA_OR_NAN);
         }
     }
 
@@ -165,7 +165,7 @@ public abstract class ColonNode extends RNode implements RSyntaxNode, Visibility
         @Specialization
         protected int doSequence(RIntSequence sequence) {
             if (lengthGreaterOne.profile(sequence.getLength() > 1)) {
-                RError.warning(getEncapsulatingSourceSection(), RError.Message.ONLY_FIRST_USED, sequence.getLength());
+                RError.warning(this, RError.Message.ONLY_FIRST_USED, sequence.getLength());
             }
             return sequence.getStart();
         }
@@ -173,7 +173,7 @@ public abstract class ColonNode extends RNode implements RSyntaxNode, Visibility
         @Specialization
         protected int doSequence(RIntVector vector) {
             if (lengthGreaterOne.profile(vector.getLength() > 1)) {
-                RError.warning(getEncapsulatingSourceSection(), RError.Message.ONLY_FIRST_USED, vector.getLength());
+                RError.warning(this, RError.Message.ONLY_FIRST_USED, vector.getLength());
             }
             return vector.getDataAt(0);
         }
@@ -181,7 +181,7 @@ public abstract class ColonNode extends RNode implements RSyntaxNode, Visibility
         @Specialization(guards = "isFirstIntValue(vector)")
         protected int doDoubleVectorFirstIntValue(RDoubleVector vector) {
             if (lengthGreaterOne.profile(vector.getLength() > 1)) {
-                RError.warning(getEncapsulatingSourceSection(), RError.Message.ONLY_FIRST_USED, vector.getLength());
+                RError.warning(this, RError.Message.ONLY_FIRST_USED, vector.getLength());
             }
             return (int) vector.getDataAt(0);
         }
@@ -189,7 +189,7 @@ public abstract class ColonNode extends RNode implements RSyntaxNode, Visibility
         @Specialization(guards = "!isFirstIntValue(vector)")
         protected double doDoubleVector(RDoubleVector vector) {
             if (lengthGreaterOne.profile(vector.getLength() > 1)) {
-                RError.warning(getEncapsulatingSourceSection(), RError.Message.ONLY_FIRST_USED, vector.getLength());
+                RError.warning(this, RError.Message.ONLY_FIRST_USED, vector.getLength());
             }
             return vector.getDataAt(0);
         }

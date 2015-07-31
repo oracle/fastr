@@ -80,7 +80,7 @@ public abstract class UnaryArithmeticNode extends UnaryNode {
 
     @Fallback
     protected Object invalidArgType(@SuppressWarnings("unused") Object operand) {
-        throw RError.error(getEncapsulatingSourceSection(), error);
+        throw RError.error(this, error);
     }
 
     protected static final class GenericNumericVectorNode extends TruffleBoundaryNode {

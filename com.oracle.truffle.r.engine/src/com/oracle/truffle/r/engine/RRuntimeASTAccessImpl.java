@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.engine;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
@@ -240,7 +241,7 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
 
     @TruffleBoundary
     public RStringVector getNames(RLanguage rl) {
-        RNode node = (RNode) rl.getRep();
+        Node node = (Node) rl.getRep();
         if (node instanceof RCallNode || node instanceof GroupDispatchNode) {
             Arguments<RSyntaxNode> args = RASTUtils.findCallArguments(node);
             /*
@@ -280,7 +281,7 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
             String[] newNames = new String[sig.getLength()];
             int argNamesLength = names.getLength() - 1;
             if (argNamesLength > sig.getLength()) {
-                throw RError.error(RError.Message.ATTRIBUTE_VECTOR_SAME_LENGTH, "names", names.getLength(), sig.getLength() + 1);
+                throw RError.error(RError.NO_NODE, RError.Message.ATTRIBUTE_VECTOR_SAME_LENGTH, "names", names.getLength(), sig.getLength() + 1);
             }
             for (int i = 0, j = 1; i < sig.getLength() && j <= argNamesLength; i++, j++) {
                 newNames[i] = names.getDataAt(j);
@@ -332,10 +333,10 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
         RASTDeparse.deparse(state, f);
     }
 
-    public Object callback(RFunction f, RLanguage caller, Object[] args) {
+    public Object callback(RFunction f, Object[] args) {
         boolean gd = DebugHandling.globalDisable(true);
         try {
-            return RContext.getEngine().evalFunction(f, caller, args);
+            return RContext.getEngine().evalFunction(f, args);
         } catch (ReturnException ex) {
             // cannot throw return exceptions further up.
             return ex.getResult();
@@ -401,6 +402,68 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
 
     public Engine createEngine(RContext context) {
         return REngine.create(context);
+    }
+
+    public RLanguage getSyntaxCaller(RCaller rl) {
+        RSyntaxNode sn = (RSyntaxNode) RASTUtils.unwrap(rl.getRep()).asSyntaxNode();
+        return RDataFactory.createLanguage(sn);
+    }
+
+    public String getCallerSource(RLanguage rl) {
+        RSyntaxNode sn = (RSyntaxNode) rl.getRep();
+        return sn.getSourceSection().getCode();
+    }
+
+    private static Node isBuiltin(Node node) {
+        Node n = node;
+        while (n != null) {
+            if (n instanceof RBuiltinNode) {
+                return n;
+            }
+            n = n.getParent();
+        }
+        return null;
+    }
+
+    /*
+     * This is where all the complexity in locating the caller for an error/warning is located. When
+     * "call == null", it's pretty simple as we just back off to the frame, where the call will have
+     * been stored. However, if "call != null", we have to deal with the myriad ways in which the
+     * internal implementation can generate an error/warning and locate the node.
+     */
+    public Object findCaller(Node call) {
+        RCaller caller;
+        if (call != null) {
+            if (call == RError.NO_CALLER) {
+                return RNull.instance;
+            }
+            Node builtIn = isBuiltin(call);
+            /*
+             * Currently builtins called through do.call do not have a (meaningful) source section.
+             * Also we see some RSyntaxNodes with null SourceSections (which should never happen)
+             */
+            if (builtIn != null && builtIn.getSourceSection() != null) {
+                return RDataFactory.createLanguage(builtIn);
+            } else if (call instanceof RSyntaxNode && call.getSourceSection() != null) {
+                return RDataFactory.createLanguage(call);
+            }
+            // else drop through to frame case
+        }
+        Frame frame = Utils.getActualCurrentFrame();
+        if (frame == null) {
+            // parser error
+            return RNull.instance;
+        }
+        caller = RArguments.getCall(frame);
+        if (caller == null) {
+            return RNull.instance;
+        }
+
+        /*
+         * This is where we need to ensure that we have an RLanguage object with a rep that is an
+         * RSyntaxNode.
+         */
+        return getSyntaxCaller(caller);
     }
 
 }

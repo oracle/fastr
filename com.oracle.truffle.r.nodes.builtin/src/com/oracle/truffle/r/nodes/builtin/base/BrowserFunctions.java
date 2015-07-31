@@ -65,7 +65,8 @@ public class BrowserFunctions {
                 try {
                     helperState.add(new HelperState(text, condition));
                     MaterializedFrame mFrame = frame.materialize();
-                    RContext.getInstance().getConsoleHandler().printf("Called from: %s%n", REnvironment.isGlobalEnvFrame(frame) ? "top level" : RArguments.safeGetCallSourceString(mFrame));
+                    String callString = RContext.getRRuntimeASTAccess().getCallerSource(RArguments.getCall(mFrame));
+                    RContext.getInstance().getConsoleHandler().printf("Called from: %s%n", REnvironment.isGlobalEnvFrame(frame) ? "top level" : callString);
                     Browser.interact(mFrame);
                 } finally {
                     helperState.remove(helperState.size() - 1);
@@ -83,7 +84,7 @@ public class BrowserFunctions {
          */
         protected HelperState getHelperState(int n) {
             if (n <= 0) {
-                throw RError.error(getEncapsulatingSourceSection(), Message.POSITIVE_CONTEXTS);
+                throw RError.error(this, Message.POSITIVE_CONTEXTS);
             }
             int nn = n;
             if (nn > helperState.size()) {

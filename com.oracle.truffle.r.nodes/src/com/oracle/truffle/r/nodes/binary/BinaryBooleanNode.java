@@ -153,7 +153,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
         } else {
             warning = getFactorWarning((RFactor) right);
         }
-        RError.warning(getSourceSection(), warning, factory.create().opName());
+        RError.warning(this, warning, factory.create().opName());
         return RDataFactory.createNAVector(Math.max(lengthNode.executeInteger(left), lengthNode.executeInteger(right)));
     }
 
@@ -189,7 +189,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
     @SuppressWarnings("unused")
     @Fallback
     protected Object doInvalidType(Object left, Object right) {
-        throw RError.error(getSourceSection(), Message.OPERATIONS_NUMERIC_LOGICAL_COMPLEX);
+        throw RError.error(this, Message.OPERATIONS_NUMERIC_LOGICAL_COMPLEX);
     }
 
     protected static BinaryMapNode createCached(BooleanOperation operation, Object left, Object right) {

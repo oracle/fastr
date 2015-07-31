@@ -33,7 +33,6 @@ import com.oracle.truffle.r.nodes.access.variables.*;
 import com.oracle.truffle.r.nodes.binary.*;
 import com.oracle.truffle.r.nodes.control.*;
 import com.oracle.truffle.r.nodes.function.*;
-import com.oracle.truffle.r.nodes.runtime.*;
 import com.oracle.truffle.r.parser.ast.*;
 import com.oracle.truffle.r.parser.ast.Constant.ConstantType;
 import com.oracle.truffle.r.parser.ast.Operation.Operator;
@@ -291,7 +290,7 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
         nodes[nodes.length - 1] = rhs;
         names[nodes.length - 1] = "value";
 
-        return RCallNode.createCall(null, ReadVariableNode.createForced(null, isSubset ? "[<-" : "[[<-", RType.Function), ArgumentsSignature.get(names), nodes);
+        return RCallNode.createCallNotSyntax(ReadVariableNode.createForced(null, isSubset ? "[<-" : "[[<-", RType.Function), ArgumentsSignature.get(names), nodes);
     }
 
     private static String createTempName() {
@@ -427,7 +426,7 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
     @Override
     public RSyntaxNode visit(SimpleAccessVariadicComponent n) {
         int ind = n.getIndex();
-        return new ReadVariadicComponentNode(ind > 0 ? ind - 1 : ind);
+        return new ReadVariadicComponentNode(n.getSource(), ind > 0 ? ind - 1 : ind);
     }
 
     @Override
@@ -505,21 +504,19 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
                 ReadVariableNode tmpVarAccess = ReadVariableNode.createAnonymous(tmpSymbol);
 
                 RSyntaxNode updateOp = updateFunction.apply(tmpVarAccess, rhsAccess);
-                RASTDeparse.ensureSourceSection(updateOp);
-
                 RNode assignFromTemp = WriteVariableNode.createAnonymous(vSymbol, updateOp.asRNode(), WriteVariableNode.Mode.INVISIBLE, isSuper);
                 result = constructReplacementSuffix(rhs, v, false, assignFromTemp, tmpSymbol, rhsSymbol, source);
             } else if (receiver instanceof AccessVector) {
                 AccessVector vecAST = (AccessVector) receiver;
                 RCallNode updateOp = updateFunction.apply(vecAST.accept(this), rhs);
-                updateOp.assignSourceSection(source);
+                checkAssignSourceSection(updateOp, source);
                 result = doReplacementLeftHandSide(vecAST.getVector(), false, updateOp, isSuper, source, (receiver1, rhsAccess1) -> {
                     return createArrayUpdate(vecAST.getIndexes(), vecAST.getIndexes().size(), vecAST.isSubset(), receiver1, rhsAccess1);
                 });
             } else if (receiver instanceof FieldAccess) {
                 FieldAccess accessAST = (FieldAccess) receiver;
                 RCallNode updateOp = updateFunction.apply(accessAST.accept(this), rhs);
-                updateOp.assignSourceSection(source);
+                checkAssignSourceSection(updateOp, source);
                 result = doReplacementLeftHandSide(accessAST.getLhs(), false, updateOp, isSuper, source, (receiver1, rhsAccess1) -> {
                     return createFieldUpdate(null, receiver1, rhsAccess1, accessAST.getFieldName());
                 });
@@ -528,11 +525,20 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
             }
             if (needsSyntaxAST && result instanceof ReplacementNode) {
                 RSyntaxNode syntaxAST = updateFunction.apply(receiver.accept(this), rhs);
-                syntaxAST.asRNode().assignSourceSection(source);
+                checkAssignSourceSection(syntaxAST, source);
                 ((ReplacementNode) result).setSyntaxAST(syntaxAST);
             }
             return result;
         }
+    }
+
+    /**
+     * In some cases syntaxAST has acquired a SourceSection during the pre-processing, so we need to
+     * clear it before assigning the "syntactic" source section.
+     */
+    private static void checkAssignSourceSection(RSyntaxNode node, SourceSection source) {
+        node.asRNode().clearSourceSection();
+        node.asRNode().assignSourceSection(source);
     }
 
     @Override

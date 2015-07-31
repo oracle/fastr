@@ -46,7 +46,7 @@ public class IsTypeFunctions {
 
         protected RError missingError() throws RError {
             errorProfile.enter();
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.ARGUMENT_MISSING, "x");
+            throw RError.error(this, RError.Message.ARGUMENT_MISSING, "x");
         }
     }
 

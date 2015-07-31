@@ -48,7 +48,7 @@ public class DynLoadFunctions {
             controlVisibility();
             // Length checked by GnuR
             if (libVec.getLength() > 1) {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.TYPE_EXPECTED, RType.Character.getName());
+                throw RError.error(this, RError.Message.TYPE_EXPECTED, RType.Character.getName());
             }
             String lib = libVec.getDataAt(0);
             // Length not checked by GnuR
@@ -57,7 +57,7 @@ public class DynLoadFunctions {
                 DLLInfo dllInfo = DLL.loadPackageDLL(lib, asBoolean(local), asBoolean(now));
                 return dllInfo.toRList();
             } catch (DLLException ex) {
-                throw RError.error(getEncapsulatingSourceSection(), ex);
+                throw RError.error(this, ex);
             }
         }
 
@@ -75,7 +75,7 @@ public class DynLoadFunctions {
             try {
                 DLL.unload(lib);
             } catch (DLLException ex) {
-                throw RError.error(getEncapsulatingSourceSection(), ex);
+                throw RError.error(this, ex);
             }
             return RNull.instance;
         }
@@ -132,7 +132,7 @@ public class DynLoadFunctions {
             controlVisibility();
             DLL.DLLInfo dllInfo = DLL.getDLLInfoForId((int) externalPtr.getAddr());
             if (dllInfo == null) {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.REQUIRES_NAME_DLLINFO);
+                throw RError.error(this, RError.Message.REQUIRES_NAME_DLLINFO);
             }
             DLL.SymbolInfo symbolInfo = DLL.findSymbolInDLL(RRuntime.asString(symbol), dllInfo);
             return getResult(symbolInfo, withReg);
@@ -149,7 +149,7 @@ public class DynLoadFunctions {
         @SuppressWarnings("unused")
         @Fallback
         protected Object getSymbolInfo(Object symbol, Object packageName, Object withReg) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.REQUIRES_NAME_DLLINFO);
+            throw RError.error(this, RError.Message.REQUIRES_NAME_DLLINFO);
         }
 
         public static boolean isDLLInfo(RExternalPtr externalPtr) {

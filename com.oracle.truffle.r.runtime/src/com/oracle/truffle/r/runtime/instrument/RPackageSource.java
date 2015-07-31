@@ -135,7 +135,8 @@ public class RPackageSource {
                  * multiple names in the same package, or the same (likely trivial) body is assigned
                  * to several unrelated functions. These are annoying but essentially benign.
                  */
-                RError.warning(RError.Message.GENERIC, "two package functions with same fingerprint, prev: '" + qualName(prev.pkg, prev.sourceName) + "', this '" + qualName(pkg, fname) + "'");
+                RError.warning(RError.NO_NODE, RError.Message.GENERIC, "two package functions with same fingerprint, prev: '" + qualName(prev.pkg, prev.sourceName) + "', this '" +
+                                qualName(pkg, fname) + "'");
                 return;
             }
             indexMap.put(fingerprint, new FunctionInfo(fname, pkg, dirPath().resolve(pkg).relativize(sourcePath).toString()));
@@ -194,7 +195,7 @@ public class RPackageSource {
             String qualName = qualName(pkg, fname);
             if (deparseResult != null) {
                 if (deparseError) {
-                    RError.warning(RError.Message.GENERIC, "the function '" + qualName + "' did not deparse successfully");
+                    RError.warning(RError.NO_NODE, RError.Message.GENERIC, "the function '" + qualName + "' did not deparse successfully");
                     // write the file anyway
                 }
                 try {
@@ -204,10 +205,10 @@ public class RPackageSource {
                     }
                     register(fname, pkg, target);
                 } catch (IOException ex) {
-                    throw RError.error(RError.Message.GENERIC, ex.getMessage());
+                    throw RError.error(RError.NO_NODE, RError.Message.GENERIC, ex.getMessage());
                 }
             } else {
-                RError.warning(RError.Message.GENERIC, "the function '" + qualName + "' has already been unserialized");
+                RError.warning(RError.NO_NODE, RError.Message.GENERIC, "the function '" + qualName + "' has already been unserialized");
             }
         }
     }

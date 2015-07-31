@@ -187,7 +187,7 @@ public abstract class RowMeans extends RBuiltinNode {
     protected RDoubleVector rowMeans(RAbstractStringVector x, int rowNum, int colNum, byte naRm) {
         controlVisibility();
         CompilerDirectives.transferToInterpreter();
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.X_NUMERIC);
+        throw RError.error(this, RError.Message.X_NUMERIC);
     }
 
     protected boolean isNaRm(byte naRm) {

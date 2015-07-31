@@ -126,7 +126,7 @@ public class ConnectionSupport implements RContext.StateFactory {
                     return setConnection(i, con);
                 }
             }
-            throw RError.error(RError.Message.ALL_CONNECTIONS_IN_USE);
+            throw RError.error(RError.NO_NODE, RError.Message.ALL_CONNECTIONS_IN_USE);
         }
 
         private void beforeDestroy() {
@@ -151,7 +151,7 @@ public class ConnectionSupport implements RContext.StateFactory {
                 }
                 BaseRConnection con = ref.get();
                 if (con instanceof TextConnections.TextRConnection) {
-                    RError.warning(RError.Message.UNUSED_TEXTCONN, con.descriptor, ((TextConnections.TextRConnection) con).description);
+                    RError.warning(RError.NO_NODE, RError.Message.UNUSED_TEXTCONN, con.descriptor, ((TextConnections.TextRConnection) con).description);
                 }
                 int index = con.descriptor;
                 closeAndDestroy(con);
@@ -968,7 +968,7 @@ public class ConnectionSupport implements RContext.StateFactory {
 
         @Override
         public long seek(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
-            throw RError.error(RError.Message.UNSEEKABLE_CONNECTION);
+            throw RError.error(RError.NO_NODE, RError.Message.UNSEEKABLE_CONNECTION);
         }
 
     }

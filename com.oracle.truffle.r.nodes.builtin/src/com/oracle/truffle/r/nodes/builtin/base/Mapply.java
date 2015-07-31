@@ -69,7 +69,7 @@ public abstract class Mapply extends RBuiltinNode {
     @Specialization
     protected Object mApply(VirtualFrame frame, RFunction fun, RList dots, RList moreArgs) {
         if (moreArgs.getLength() > 0) {
-            throw RError.nyi(getEncapsulatingSourceSection(), "moreArgs");
+            throw RError.nyi(this, "moreArgs");
         }
         Object[] result = mapply.execute(frame, dots, fun, moreArgs);
         // set here else it gets overridden by the iterator evaluation
@@ -140,7 +140,7 @@ public abstract class Mapply extends RBuiltinNode {
         @SuppressWarnings("unused")
         @Specialization(contains = "cachedMApply")
         protected Object[] genericMApply(Object vector, RFunction function, RArgsValuesAndNames additionalArguments) {
-            throw RError.nyi(getSourceSection(), "generic mApply");
+            throw RError.nyi(this, "generic mApply");
         }
 
         /**

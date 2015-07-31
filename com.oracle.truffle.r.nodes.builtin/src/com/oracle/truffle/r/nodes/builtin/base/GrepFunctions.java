@@ -66,13 +66,13 @@ public class GrepFunctions {
 
         protected void checkCaseFixed(boolean ignoreCase, boolean fixed) {
             if (ignoreCase && fixed) {
-                RError.warning(getEncapsulatingSourceSection(), RError.Message.ARGUMENT_IGNORED, "ignore.case = TRUE");
+                RError.warning(this, RError.Message.ARGUMENT_IGNORED, "ignore.case = TRUE");
             }
         }
 
         protected boolean checkPerlFixed(boolean perl, boolean fixed) {
             if (fixed && perl) {
-                RError.warning(getEncapsulatingSourceSection(), RError.Message.ARGUMENT_IGNORED, "perl = TRUE");
+                RError.warning(this, RError.Message.ARGUMENT_IGNORED, "perl = TRUE");
                 return false;
             } else {
                 return perl;
@@ -81,9 +81,9 @@ public class GrepFunctions {
 
         protected String checkLength(RAbstractStringVector arg, String name) {
             if (arg.getLength() < 1) {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, name);
+                throw RError.error(this, RError.Message.INVALID_ARGUMENT, name);
             } else if (arg.getLength() > 1) {
-                RError.warning(getEncapsulatingSourceSection(), RError.Message.ARGUMENT_ONLY_FIRST, name);
+                RError.warning(this, RError.Message.ARGUMENT_ONLY_FIRST, name);
             }
             return arg.getDataAt(0);
         }
@@ -96,13 +96,13 @@ public class GrepFunctions {
          */
         protected void valueCheck(byte value) {
             if (RRuntime.fromLogical(value)) {
-                throw RError.nyi(getEncapsulatingSourceSection(), "value == true");
+                throw RError.nyi(this, "value == true");
             }
         }
 
         protected void checkNotImplemented(boolean condition, String arg, boolean b) {
             if (condition) {
-                throw RError.nyi(getEncapsulatingSourceSection(), arg + " == " + b);
+                throw RError.nyi(this, arg + " == " + b);
             }
         }
 
@@ -174,7 +174,7 @@ public class GrepFunctions {
                 PCRERFFI.Result pcre = RFFIFactory.getRFFI().getPCRERFFI().compile(pattern, cflags, tables);
                 if (pcre.result == 0) {
                     // TODO output warning if pcre.errorMessage not NULL
-                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_REGEXP, pattern);
+                    throw RError.error(this, RError.Message.INVALID_REGEXP, pattern);
                 }
                 // TODO pcre_study for vectors > 10 ? (cf GnuR)
                 int[] ovector = new int[30];
@@ -317,7 +317,7 @@ public class GrepFunctions {
                     pcre = RFFIFactory.getRFFI().getPCRERFFI().compile(pattern, cflags, tables);
                     if (pcre.result == 0) {
                         // TODO output warning if pcre.errorMessage not NULL
-                        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_REGEXP, pattern);
+                        throw RError.error(this, RError.Message.INVALID_REGEXP, pattern);
                     }
                     // TODO pcre_study for vectors > 10 ? (cf GnuR)
                 } else {
@@ -768,7 +768,7 @@ public class GrepFunctions {
                         pcreSplits[i] = RFFIFactory.getRFFI().getPCRERFFI().compile(currentSplit, 0, pcreTables);
                         if (pcreSplits[i].result == 0) {
                             // TODO output warning if pcre.errorMessage not NULL
-                            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_REGEXP, currentSplit);
+                            throw RError.error(this, RError.Message.INVALID_REGEXP, currentSplit);
                         }
                         // TODO pcre_study for vectors > 10 ? (cf GnuR)
                     }

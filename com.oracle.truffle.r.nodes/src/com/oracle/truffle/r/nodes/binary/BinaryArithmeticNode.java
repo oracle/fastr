@@ -97,7 +97,7 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
 
     protected final UnaryArithmeticNode createUnaryArithmeticNode() {
         if (unary == null) {
-            throw RError.error(getSourceSection(), RError.Message.ARGUMENT_EMPTY, 2);
+            throw RError.error(this, RError.Message.ARGUMENT_EMPTY, 2);
         } else {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             return UnaryArithmeticNodeGen.create(unary, RError.Message.INVALID_ARG_TYPE_UNARY);
@@ -117,7 +117,7 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
         } else {
             warning = getFactorWarning((RFactor) right);
         }
-        RError.warning(getSourceSection(), warning, binary.create().opName());
+        RError.warning(this, warning, binary.create().opName());
         return RDataFactory.createNAVector(Math.max(lengthNode.executeInteger(left), lengthNode.executeInteger(right)));
     }
 
@@ -150,7 +150,7 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
     @SuppressWarnings("unused")
     @Fallback
     protected Object doInvalidType(Object left, Object right) {
-        throw RError.error(getSourceSection(), Message.NON_NUMERIC_BINARY);
+        throw RError.error(this, Message.NON_NUMERIC_BINARY);
     }
 
     protected static BinaryMapNode createCached(BinaryArithmetic innerArithmetic, Object left, Object right) {

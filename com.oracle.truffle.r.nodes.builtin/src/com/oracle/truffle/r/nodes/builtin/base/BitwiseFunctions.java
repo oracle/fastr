@@ -137,7 +137,7 @@ public class BitwiseFunctions {
                 return;
             } else {
                 errorProfile.enter();
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.SAME_TYPE, "a", "b");
+                throw RError.error(this, RError.Message.SAME_TYPE, "a", "b");
             }
         }
 
@@ -145,7 +145,7 @@ public class BitwiseFunctions {
             if (!(a instanceof RAbstractIntVector) && !(a instanceof RAbstractDoubleVector)) {
                 errorProfile.enter();
                 String type = typeofA.execute(a).getName();
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.UNIMPLEMENTED_TYPE_IN_FUNCTION, type, op.name);
+                throw RError.error(this, RError.Message.UNIMPLEMENTED_TYPE_IN_FUNCTION, type, op.name);
             }
         }
 

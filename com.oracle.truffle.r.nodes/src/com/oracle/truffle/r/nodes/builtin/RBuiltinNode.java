@@ -217,6 +217,9 @@ public abstract class RBuiltinNode extends RNode implements RSyntaxNode, Visibil
     public final RBuiltinNode inline(ArgumentsSignature signature, RNode[] args, SourceSection callSrc) {
         // static number of arguments
         RBuiltinNode node = createNode(getBuiltin(), args, signature);
+        if (callSrc == null) {
+            System.err.printf("null callSrc in %s%n", getBuiltin().getName());
+        }
         node.assignSourceSection(callSrc);
         return node;
     }

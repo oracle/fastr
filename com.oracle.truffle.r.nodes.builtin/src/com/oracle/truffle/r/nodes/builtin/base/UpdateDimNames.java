@@ -101,6 +101,6 @@ public abstract class UpdateDimNames extends RInvisibleBuiltinNode {
     protected RAbstractContainer updateDimnamesError(RAbstractContainer container, Object c) {
         controlVisibility();
         CompilerDirectives.transferToInterpreter();
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.DIMNAMES_LIST);
+        throw RError.error(this, RError.Message.DIMNAMES_LIST);
     }
 }

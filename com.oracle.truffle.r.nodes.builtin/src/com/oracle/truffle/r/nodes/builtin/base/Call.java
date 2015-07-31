@@ -51,7 +51,7 @@ public abstract class Call extends RBuiltinNode {
     @Fallback
     @SuppressWarnings("unused")
     protected RLanguage call(Object name, Object args) {
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.FIRST_ARG_MUST_BE_STRING);
+        throw RError.error(this, RError.Message.FIRST_ARG_MUST_BE_STRING);
     }
 
     protected boolean isEmptyName(RAbstractStringVector name) {

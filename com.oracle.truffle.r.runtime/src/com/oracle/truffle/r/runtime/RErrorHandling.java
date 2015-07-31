@@ -17,7 +17,6 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
-import com.oracle.truffle.r.runtime.RContext.Engine.ParseException;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
@@ -286,10 +285,10 @@ public class RErrorHandling implements RContext.StateFactory {
             if (isCallingEntry(entry)) {
                 Object h = entry.getDataAt(ENTRY_HANDLER);
                 if (h == RESTART_TOKEN) {
-                    errorcallDflt(fromCall(call), Message.GENERIC, msg);
+                    errorcallDfltWithCall(fromCall(call), Message.GENERIC, msg);
                 } else {
                     RFunction hf = (RFunction) h;
-                    RContext.getEngine().evalFunction(hf, callAsRLanguage(call), cond);
+                    RContext.getEngine().evalFunction(hf, cond);
                 }
             } else {
                 throw gotoExitingHandler(cond, call, entry);
@@ -300,9 +299,10 @@ public class RErrorHandling implements RContext.StateFactory {
 
     /**
      * Called from {@link RError} to initiate the condition handling logic.
+     *
      */
-    static void signalError(SourceSection callSrcArg, Message msg, Object... args) {
-        SourceSection callSrc = checkNullSourceSection(callSrcArg);
+    static void signalError(Node callObj, Message msg, Object... args) {
+        Object call = findCaller(callObj);
         String fMsg = formatMessage(msg, args);
         ContextStateImpl errorHandlingState = getRErrorHandlingState();
         Object oldStack = errorHandlingState.handlerStack;
@@ -317,10 +317,10 @@ public class RErrorHandling implements RContext.StateFactory {
                 } else {
                     RFunction handler = (RFunction) entry.getDataAt(2);
                     RStringVector errorMsgVec = RDataFactory.createStringVectorFromScalar(fMsg);
-                    RContext.getRRuntimeASTAccess().callback(handler, callAsRLanguage(createCall(callSrc)), new Object[]{errorMsgVec, createCall(callSrc)});
+                    RContext.getRRuntimeASTAccess().callback(handler, new Object[]{errorMsgVec, call});
                 }
             } else {
-                throw gotoExitingHandler(RNull.instance, createCall(callSrc), entry);
+                throw gotoExitingHandler(RNull.instance, call, entry);
             }
         }
         errorHandlingState.handlerStack = oldStack;
@@ -371,84 +371,47 @@ public class RErrorHandling implements RContext.StateFactory {
 
     @TruffleBoundary
     public static void dfltStop(String msg, Object call) {
-        errorcallDflt(fromCall(call), Message.GENERIC, msg);
+        errorcallDfltWithCall(fromCall(call), Message.GENERIC, msg);
     }
 
     @TruffleBoundary
     public static void dfltWarn(String msg, Object call) {
-        warningcallDflt(fromCall(call), Message.GENERIC, msg);
-    }
-
-    private static RLanguage callAsRLanguage(Object call) {
-        if (call == RNull.instance) {
-            return null;
-        } else {
-            return (RLanguage) call;
-        }
+        warningcallDfltWithCall(fromCall(call), Message.GENERIC, msg);
     }
 
     /**
-     * Convert a {@code call} value back into a {@link SourceSection}.
+     * Check a {@code call} value.
      *
-     * @param call Either {@link RNull#instance} or an {@link RPairList}.
-     * @return a {@link SourceSection} which may be null iff {@code call == RNull.instance}.
+     * @param call Either {@link RNull#instance} or an {@link RLanguage}.
+     * @return {@code null} iff {@code call == RNull.instance} else cast to {@link RLanguage}.
      */
-    private static SourceSection fromCall(Object call) {
-        if (call == RNull.instance) {
-            return null;
-        } else if (call instanceof RLanguage) {
-            Node callNode = (Node) ((RLanguage) call).getRep();
-            return callNode.getEncapsulatingSourceSection();
-        } else {
+    private static Object fromCall(Object call) {
+        if (!(call == RNull.instance || call instanceof RLanguage)) {
             throw RInternalError.shouldNotReachHere();
         }
-    }
-
-    /**
-     * Create an {@link RLanguage} object to carry a {@link SourceSection} for callback to R. The
-     * input value may be {@code null} (but really should never be).
-     *
-     * The only was we can do this is to reparse the source. This is ridiculous, of course, as we
-     * must have had an AST to start with - we just can't get access to it. Unfortunately, fixing
-     * this would require a complete overhaul of a lot of code.
-     *
-     */
-    private static Object createCall(SourceSection src) {
-        if (src == null) {
-            return RNull.instance;
-        }
-        try {
-            String callSource = src.getCode();
-            RExpression call = RContext.getEngine().parse(Source.fromText(callSource, "<error call source>"));
-            return call.getDataAt(0);
-        } catch (ParseException ex) {
-            throw RInternalError.shouldNotReachHere("parse call source");
-        }
-    }
-
-    /**
-     * Check {@code source} for {@code null} and if so, try to find it in the current frame.
-     * Eventually it should be an error if we cannot find a valid value.
-     */
-    private static SourceSection checkNullSourceSection(SourceSection call) {
-        if (call == null) {
-            Frame frame = Utils.getActualCurrentFrame();
-            if (frame != null) {
-                return RArguments.getCallSourceSection(frame);
-            }
-        }
         return call;
+    }
+
+    private static Object findCaller(Node callObj) {
+        return RContext.getRRuntimeASTAccess().findCaller(callObj);
+    }
+
+    static RError errorcallDflt(boolean showCall, Node callObj, Message msg, Object... objects) throws RError {
+        return errorcallDfltWithCall(showCall ? findCaller(callObj) : RNull.instance, msg, objects);
+    }
+
+    static RError errorcallDflt(Node callObj, Message msg, Object... objects) throws RError {
+        return errorcallDfltWithCall(findCaller(callObj), msg, objects);
     }
 
     /**
      * The default error handler. This is where all the error message formatting is done and the
      * output.
      */
-    static RError errorcallDflt(SourceSection callSrcArg, Message msg, Object... objects) throws RError {
+    static RError errorcallDfltWithCall(Object call, Message msg, Object... objects) throws RError {
         String fmsg = formatMessage(msg, objects);
-        SourceSection callSrc = checkNullSourceSection(callSrcArg);
 
-        String errorMessage = createErrorMessage(callSrc, fmsg);
+        String errorMessage = createErrorMessage(call, fmsg);
 
         ContextStateImpl errorHandlingState = getRErrorHandlingState();
         if (errorHandlingState.inError > 0) {
@@ -492,7 +455,7 @@ public class RErrorHandling implements RContext.StateFactory {
                             evaluatedArgs[i] = RMissing.instance;
                         }
                     }
-                    RContext.getEngine().evalFunction(errorFunction, callAsRLanguage(createCall(callSrcArg)), evaluatedArgs);
+                    RContext.getEngine().evalFunction(errorFunction, evaluatedArgs);
                 } else if (errorExpr instanceof RLanguage || errorExpr instanceof RExpression) {
                     if (errorExpr instanceof RLanguage) {
                         RContext.getEngine().eval((RLanguage) errorExpr, materializedFrame);
@@ -518,27 +481,26 @@ public class RErrorHandling implements RContext.StateFactory {
     /**
      * Entry point for the {@code warning} {@code .Internal}.
      *
-     * @param call {@null} if call not to be included in message, else {@link SourceSection}
-     *            of call.
+     * @param showCall {@true} iff call to be included in message
      * @param message the message
      * @param immediate {@code true} iff the output should be immediate
-     * @param noBreakWarning TODO
+     * @param noBreakWarning TODOx
      */
-    public static void warningcallInternal(SourceSection call, String message, boolean immediate, boolean noBreakWarning) {
+    public static void warningcallInternal(boolean showCall, Node callObj, String message, boolean immediate, boolean noBreakWarning) {
         // TODO handle noBreakWarning
         ContextStateImpl errorHandlingState = getRErrorHandlingState();
         boolean immediateWarningSave = errorHandlingState.immediateWarning;
         try {
             errorHandlingState.immediateWarning = immediate;
-            warningcall(call, RError.Message.GENERIC, message);
+            warningcall(showCall, callObj, RError.Message.GENERIC, message);
         } finally {
             errorHandlingState.immediateWarning = immediateWarningSave;
         }
     }
 
-    static void warningcall(SourceSection src, Message msg, Object... args) {
+    static void warningcall(boolean showCall, Node callObj, Message msg, Object... args) {
         ContextStateImpl errorHandlingState = getRErrorHandlingState();
-        Object call = createCall(src);
+        Object call = showCall ? findCaller(callObj) : RNull.instance;
         RStringVector warningMessage = RDataFactory.createStringVectorFromScalar(formatMessage(msg, args));
         /*
          * Warnings generally do not prevent results being printed. However, this call into R will
@@ -548,17 +510,17 @@ public class RErrorHandling implements RContext.StateFactory {
         boolean visibility = RContext.getInstance().isVisible();
         try {
             RFunction f = errorHandlingState.getDotSignalSimpleWarning();
-            RContext.getRRuntimeASTAccess().callback(f, callAsRLanguage(call), new Object[]{warningMessage, call});
+            RContext.getRRuntimeASTAccess().callback(f, new Object[]{warningMessage, call});
         } finally {
             RContext.getInstance().setVisible(visibility);
         }
     }
 
-    static void warningcallDflt(SourceSection call, Message msg, Object... args) {
-        vwarningcallDflt(call, msg, args);
+    static void warningcallDflt(Message msg, Object... args) {
+        warningcallDfltWithCall(findCaller(null), msg, args);
     }
 
-    static void vwarningcallDflt(SourceSection call, Message msg, Object... args) {
+    static void warningcallDfltWithCall(Object call, Message msg, Object... args) {
         ContextStateImpl errorHandlingState = getRErrorHandlingState();
         if (errorHandlingState.inWarning) {
             return;
@@ -596,7 +558,7 @@ public class RErrorHandling implements RContext.StateFactory {
             } else if (w == 1) {
                 Utils.writeStderr(message, true);
             } else if (w == 0) {
-                errorHandlingState.warnings.add(new Warning(fmsg, createCall(call)));
+                errorHandlingState.warnings.add(new Warning(fmsg, call));
             }
         } finally {
             errorHandlingState.inWarning = false;
@@ -630,17 +592,7 @@ public class RErrorHandling implements RContext.StateFactory {
                 if (warning.call == RNull.instance) {
                     Utils.writeStderr(warning.message, true);
                 } else {
-                    RLanguage callRL = (RLanguage) warning.call;
-                    Node callNode = (Node) callRL.getRep();
-                    SourceSection ss = callNode.getSourceSection();
-                    String callSource;
-                    if (ss == null) {
-                        RDeparse.State state = RDeparse.State.createPrintableState();
-                        RContext.getRRuntimeASTAccess().deparse(state, callRL);
-                        callSource = state.toString();
-                    } else {
-                        callSource = ss.getCode();
-                    }
+                    String callSource = RContext.getRRuntimeASTAccess().getCallerSource((RLanguage) warning.call);
                     Utils.writeStderr(String.format("In %s : %s", callSource, warning.message), true);
                 }
             } else if (nWarnings <= 10) {
@@ -695,27 +647,28 @@ public class RErrorHandling implements RContext.StateFactory {
         }
     }
 
-    static String createErrorMessage(SourceSection src, String formattedMsg) {
-        return createKindMessage("Error", src, formattedMsg);
+    static String createErrorMessage(Object call, String formattedMsg) {
+        return createKindMessage("Error", call, formattedMsg);
     }
 
-    static String createWarningMessage(SourceSection src, String formattedMsg) {
-        return createKindMessage("Warning", src, formattedMsg);
+    static String createWarningMessage(Object call, String formattedMsg) {
+        return createKindMessage("Warning", call, formattedMsg);
     }
 
     /**
      * Creates an error message suitable for output to the user, taking into account {@code src},
      * which may be {@code null}.
      */
-    static String createKindMessage(String kind, SourceSection src, String formattedMsg) {
+    static String createKindMessage(String kind, Object call, String formattedMsg) {
         String preamble = kind;
         String errorMsg = null;
-        if (src == null) {
+        if (call == RNull.instance) {
             // generally means top-level of shell or similar
             preamble += ": ";
             errorMsg = preamble + formattedMsg;
         } else {
-            preamble += " in " + src.getCode() + " :";
+            RLanguage rl = (RLanguage) call;
+            preamble += " in " + RContext.getRRuntimeASTAccess().getCallerSource(rl) + " :";
             errorMsg = wrapMessage(preamble, formattedMsg);
         }
         return errorMsg;

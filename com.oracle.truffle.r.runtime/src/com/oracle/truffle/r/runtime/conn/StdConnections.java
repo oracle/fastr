@@ -154,7 +154,7 @@ public class StdConnections implements RContext.StateFactory {
 
         @Override
         public long seek(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
-            throw RError.error(RError.Message.UNSEEKABLE_CONNECTION);
+            throw RError.error(RError.NO_NODE, RError.Message.UNSEEKABLE_CONNECTION);
         }
 
     }

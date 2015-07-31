@@ -199,7 +199,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
             v = castVector2(vectors[i]);
             if (n != v.getLength()) {
                 error.enter();
-                throw RError.error(RError.Message.ARGUMENT_LENGTHS_DIFFER);
+                throw RError.error(this, RError.Message.ARGUMENT_LENGTHS_DIFFER);
             }
             vectors[i] = v;
         }

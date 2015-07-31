@@ -36,7 +36,7 @@ public abstract class DirChmod extends RExternalBuiltinNode.Arg2 {
     @Specialization
     protected RNull dirChmod(RAbstractStringVector dir, Object gws) {
         if (dir.getLength() != 1) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "dir");
+            throw RError.error(this, RError.Message.INVALID_ARGUMENT, "dir");
         }
         String pathName = ((RStringVector) dir).getDataAt(0);
         boolean setGroupWrite = RRuntime.fromLogical(castLogical(castVector(gws)));
@@ -67,6 +67,6 @@ public abstract class DirChmod extends RExternalBuiltinNode.Arg2 {
     @SuppressWarnings("unused")
     @Fallback
     protected Object fallback(Object dir, Object gws) {
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "dir");
+        throw RError.error(this, RError.Message.INVALID_ARGUMENT, "dir");
     }
 }

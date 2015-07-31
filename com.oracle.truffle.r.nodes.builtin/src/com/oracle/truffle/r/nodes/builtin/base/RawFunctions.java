@@ -38,7 +38,7 @@ public class RawFunctions {
         @Specialization
         protected RRawVector charToRaw(RAbstractStringVector x) {
             if (x.getLength() > 1) {
-                RError.warning(getEncapsulatingSourceSection(), RError.Message.ARG_SHOULD_BE_CHARACTER_VECTOR_LENGTH_ONE);
+                RError.warning(this, RError.Message.ARG_SHOULD_BE_CHARACTER_VECTOR_LENGTH_ONE);
             }
             String s = x.getDataAt(0);
             byte[] data = new byte[s.length()];
@@ -50,7 +50,7 @@ public class RawFunctions {
 
         @Fallback
         protected Object charToRaw(@SuppressWarnings("unused") Object x) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.ARG_MUST_BE_CHARACTER_VECTOR_LENGTH_ONE);
+            throw RError.error(this, RError.Message.ARG_MUST_BE_CHARACTER_VECTOR_LENGTH_ONE);
         }
 
     }
@@ -60,7 +60,7 @@ public class RawFunctions {
         @Specialization
         protected RStringVector rawToChar(RAbstractRawVector x, byte multiple) {
             if (RRuntime.isNA(multiple)) {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_LOGICAL, "multiple");
+                throw RError.error(this, RError.Message.INVALID_LOGICAL, "multiple");
             }
             RStringVector result;
             if (RRuntime.fromLogical(multiple)) {
@@ -86,7 +86,7 @@ public class RawFunctions {
         @SuppressWarnings("unused")
         @Fallback
         protected Object rawToChar(Object x, Object multiple) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.ARGUMENT_MUST_BE_RAW_VECTOR, "x");
+            throw RError.error(this, RError.Message.ARGUMENT_MUST_BE_RAW_VECTOR, "x");
         }
 
     }

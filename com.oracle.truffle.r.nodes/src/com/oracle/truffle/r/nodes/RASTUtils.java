@@ -45,13 +45,13 @@ public class RASTUtils {
      * Removes any {@link WrapArgumentNode} or {@link WrapperNode}.
      */
     @TruffleBoundary
-    public static RNode unwrap(Object node) {
+    public static Node unwrap(Object node) {
         if (node instanceof WrapArgumentBaseNode) {
             return unwrap(((WrapArgumentBaseNode) node).getOperand());
         } else if (node instanceof RInstrumentableNode) {
             return ((RInstrumentableNode) node).unwrap();
         } else {
-            return (RNode) node;
+            return (Node) node;
         }
     }
 
@@ -140,7 +140,7 @@ public class RASTUtils {
             return (RNode) NodeUtil.cloneNode((Node) l.getRep());
         } else if (value instanceof RPromise) {
             RPromise promise = (RPromise) value;
-            RNode promiseRep = unwrap(((RPromise) value).getRep());
+            RNode promiseRep = (RNode) unwrap(((RPromise) value).getRep());
             if (promiseRep instanceof VarArgNode) {
                 VarArgNode varArgNode = (VarArgNode) promiseRep;
                 RPromise varArgPromise = (RPromise) varArgNode.execute((VirtualFrame) promise.getFrame());
@@ -220,7 +220,7 @@ public class RASTUtils {
      * or {@link GroupDispatchNode}.
      */
     public static Object findFunctionName(Node node) {
-        RNode child = unwrap(getFunctionNode(node));
+        RNode child = (RNode) unwrap(getFunctionNode(node));
         if (child instanceof ConstantNode && ConstantNode.isFunction(child)) {
             return ((ConstantNode) child).getValue();
         } else if (child instanceof ReadVariableNode) {
@@ -243,7 +243,7 @@ public class RASTUtils {
     }
 
     public static boolean isNamedFunctionNode(Node aCallNode) {
-        RNode n = unwrap(getFunctionNode(aCallNode));
+        RNode n = (RNode) unwrap(getFunctionNode(aCallNode));
         return (n instanceof ReadVariableNode || n instanceof GroupDispatchNode || n instanceof RBuiltinNode || ConstantNode.isFunction(n));
 
     }

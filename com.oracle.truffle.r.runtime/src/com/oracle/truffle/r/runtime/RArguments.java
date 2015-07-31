@@ -28,7 +28,6 @@ import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.env.frame.*;
@@ -107,7 +106,7 @@ public final class RArguments {
 
     static final int INDEX_ENVIRONMENT = 0;
     static final int INDEX_FUNCTION = 1;
-    static final int INDEX_CALL_SRC = 2;
+    static final int INDEX_CALL = 2;
     static final int INDEX_CALLER_FRAME = 3;
     static final int INDEX_ENCLOSING_FRAME = 4;
     static final int INDEX_S3_ARGS = 5;
@@ -133,35 +132,36 @@ public final class RArguments {
         return ((HasSignature) function.getRootNode()).getSignature();
     }
 
-    public static Object[] create(RFunction functionObj, SourceSection callSrc, MaterializedFrame callerFrame, int depth, Object[] evaluatedArgs, ArgumentsSignature signature) {
+    public static Object[] create(RFunction functionObj, RCaller call, MaterializedFrame callerFrame, int depth, Object[] evaluatedArgs, ArgumentsSignature signature) {
         MaterializedFrame enclosingFrame = functionObj.getEnclosingFrame();
-        return createInternal(functionObj, callSrc, callerFrame, depth, evaluatedArgs, signature, enclosingFrame);
+        return createInternal(functionObj, call, callerFrame, depth, evaluatedArgs, signature, enclosingFrame);
     }
 
-    public static Object[] create(RFunction functionObj, SourceSection callSrc, MaterializedFrame callerFrame, int depth, Object[] evaluatedArgs, ArgumentsSignature signature, S3Args s3Args) {
-        Object[] args = create(functionObj, callSrc, callerFrame, depth, evaluatedArgs, signature);
+    public static Object[] create(RFunction functionObj, RCaller call, MaterializedFrame callerFrame, int depth, Object[] evaluatedArgs, ArgumentsSignature signature, S3Args s3Args) {
+        Object[] args = create(functionObj, call, callerFrame, depth, evaluatedArgs, signature);
         args[INDEX_S3_ARGS] = s3Args;
         return args;
     }
 
-    public static Object[] create(RFunction functionObj, SourceSection callSrc, MaterializedFrame callerFrame, int depth, Object[] evaluatedArgs, ArgumentsSignature signature,
+    public static Object[] create(RFunction functionObj, RCaller call, MaterializedFrame callerFrame, int depth, Object[] evaluatedArgs, ArgumentsSignature signature,
                     MaterializedFrame enclosingFrame, S3Args s3Args) {
-        Object[] args = createInternal(functionObj, callSrc, callerFrame, depth, evaluatedArgs, signature, enclosingFrame);
+        Object[] args = createInternal(functionObj, call, callerFrame, depth, evaluatedArgs, signature, enclosingFrame);
         args[INDEX_S3_ARGS] = s3Args;
         return args;
     }
 
-    public static Object[] createInternal(RFunction functionObj, SourceSection callSrc, MaterializedFrame callerFrame, int depth, Object[] evaluatedArgs, ArgumentsSignature signature,
+    public static Object[] createInternal(RFunction functionObj, RCaller call, MaterializedFrame callerFrame, int depth, Object[] evaluatedArgs, ArgumentsSignature signature,
                     MaterializedFrame enclosingFrame) {
         assert evaluatedArgs != null && signature != null : evaluatedArgs + " " + signature;
         assert evaluatedArgs.length == signature.getLength() : Arrays.toString(evaluatedArgs) + " " + signature;
         assert signature == getSignature(functionObj) : signature + " vs. " + getSignature(functionObj);
-        assert callSrc != null;
+        // Eventually we want to have this invariant
+        // assert call != null || REnvironment.isGlobalEnvFrame(callerFrame);
 
         Object[] a = new Object[MINIMAL_ARRAY_LENGTH + evaluatedArgs.length];
         a[INDEX_ENVIRONMENT] = null;
         a[INDEX_FUNCTION] = functionObj;
-        a[INDEX_CALL_SRC] = callSrc;
+        a[INDEX_CALL] = call;
         a[INDEX_CALLER_FRAME] = callerFrame;
         a[INDEX_ENCLOSING_FRAME] = enclosingFrame;
         a[INDEX_DEPTH] = depth;
@@ -207,27 +207,8 @@ public final class RArguments {
         return (RFunction) frame.getArguments()[INDEX_FUNCTION];
     }
 
-    public static SourceSection getCallSourceSection(Frame frame) {
-        return (SourceSection) frame.getArguments()[INDEX_CALL_SRC];
-    }
-
-    /**
-     * Return a string describing the call that resulted in this frame. Ideally
-     * {@link #getCallSourceSection(Frame)} never returns {@code null}, but this method handles the
-     * case when it does (e.g. UseMethod dispatch).
-     */
-    public static String safeGetCallSourceString(Frame frame) {
-        SourceSection ss = getCallSourceSection(frame);
-        if (ss != null) {
-            return ss.getCode();
-        } else {
-            RFunction function = getFunction(frame);
-            if (function != null) {
-                return function.getTarget().toString();
-            } else {
-                return "<unknown call>";
-            }
-        }
+    public static RCaller getCall(Frame frame) {
+        return (RCaller) frame.getArguments()[INDEX_CALL];
     }
 
     public static int getDepth(Frame frame) {

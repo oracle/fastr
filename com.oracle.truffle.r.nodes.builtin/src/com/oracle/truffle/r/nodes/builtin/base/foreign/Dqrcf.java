@@ -58,7 +58,7 @@ public final class Dqrcf extends RExternalBuiltinNode {
 
         } catch (ClassCastException | ArrayIndexOutOfBoundsException ex) {
             errorProfile.enter();
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INCORRECT_ARG, "dqrcf");
+            throw RError.error(this, RError.Message.INCORRECT_ARG, "dqrcf");
         }
     }
 }

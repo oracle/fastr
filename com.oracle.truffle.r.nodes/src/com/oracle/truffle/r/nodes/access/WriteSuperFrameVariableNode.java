@@ -108,7 +108,7 @@ public abstract class WriteSuperFrameVariableNode extends WriteSuperFrameVariabl
         public void execute(VirtualFrame frame, Object value, MaterializedFrame enclosingFrame) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             if (getName().isEmpty()) {
-                throw RError.error(RError.Message.ZERO_LENGTH_VARIABLE);
+                throw RError.error(this, RError.Message.ZERO_LENGTH_VARIABLE);
             }
             final WriteSuperFrameVariableNodeHelper writeNode;
             if (REnvironment.isGlobalEnvFrame(enclosingFrame)) {

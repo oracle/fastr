@@ -69,7 +69,7 @@ abstract class SetMultiDimDataNode extends Node {
     private int getNewArrayBase(int srcArrayBase, int pos, int newAccSrcDimensions) {
         int newSrcArrayBase;
         if (posNACheck.check(pos)) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.NA_SUBSCRIPTED);
+            throw RError.error(this, RError.Message.NA_SUBSCRIPTED);
         } else {
             newSrcArrayBase = srcArrayBase + newAccSrcDimensions * (pos - 1);
         }
@@ -78,7 +78,7 @@ abstract class SetMultiDimDataNode extends Node {
 
     private int getSrcIndex(int srcArrayBase, int pos, int newAccSrcDimensions) {
         if (posNACheck.check(pos)) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.NA_SUBSCRIPTED);
+            throw RError.error(this, RError.Message.NA_SUBSCRIPTED);
         } else {
             return srcArrayBase + newAccSrcDimensions * (pos - 1);
         }
@@ -102,7 +102,7 @@ abstract class SetMultiDimDataNode extends Node {
             for (int i = 0; i < p.getLength(); i++) {
                 int pos = p.getDataAt(i);
                 if (posNACheck.check(pos)) {
-                    UpdateArrayHelperNode.handleNaMultiDim(value, false, isSubset, getEncapsulatingSourceSection());
+                    UpdateArrayHelperNode.handleNaMultiDim(value, false, isSubset, this);
                     continue;
                 }
                 int dstIndex = dstArrayBase + newAccDstDimensions * i;
@@ -113,7 +113,7 @@ abstract class SetMultiDimDataNode extends Node {
             for (int i = 0; i < p.getLength(); i++) {
                 int pos = p.getDataAt(i);
                 if (posNACheck.check(pos)) {
-                    UpdateArrayHelperNode.handleNaMultiDim(value, false, isSubset, getEncapsulatingSourceSection());
+                    UpdateArrayHelperNode.handleNaMultiDim(value, false, isSubset, this);
                     continue;
                 }
                 int newDstArrayBase = dstArrayBase + newAccDstDimensions * i;

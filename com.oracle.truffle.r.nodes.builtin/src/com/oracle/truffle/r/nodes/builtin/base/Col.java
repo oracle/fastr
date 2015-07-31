@@ -37,7 +37,7 @@ public abstract class Col extends RBuiltinNode {
     @Specialization
     protected RIntVector col(@SuppressWarnings("unused") RNull x) {
         controlVisibility();
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.MATRIX_LIKE_REQUIRED, "col");
+        throw RError.error(this, RError.Message.MATRIX_LIKE_REQUIRED, "col");
     }
 
     @Specialization

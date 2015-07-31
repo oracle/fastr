@@ -148,7 +148,7 @@ public class SortFunctions {
         @SuppressWarnings("unused")
         @Fallback
         protected Object sort(Object vec, Object decreasing) {
-            throw RError.nyi(getEncapsulatingSourceSection(), ".Internal(sort)");
+            throw RError.nyi(this, ".Internal(sort)");
         }
 
     }
@@ -197,7 +197,7 @@ public class SortFunctions {
         @SuppressWarnings("unused")
         @Fallback
         protected Object sort(Object x, Object partial) {
-            throw RError.nyi(getEncapsulatingSourceSection(), ".Internal(psort)");
+            throw RError.nyi(this, ".Internal(psort)");
         }
     }
 
@@ -206,7 +206,7 @@ public class SortFunctions {
         @SuppressWarnings("unused")
         @Specialization
         protected Object radixSort(Object zz, Object naLast, Object decreasing) {
-            throw RError.nyi(getEncapsulatingSourceSection(), ".Internal(raxdixsort)");
+            throw RError.nyi(this, ".Internal(raxdixsort)");
         }
     }
 

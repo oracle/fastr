@@ -34,7 +34,7 @@ public class BaseGammaFunctions {
     public abstract static class Gamma extends RBuiltinNode {
         @Specialization
         protected RDoubleVector lgamma(@SuppressWarnings("unused") RAbstractDoubleVector x) {
-            throw RError.nyi(getEncapsulatingSourceSection(), "gamma");
+            throw RError.nyi(this, "gamma");
         }
     }
 
@@ -42,7 +42,7 @@ public class BaseGammaFunctions {
     public abstract static class TriGamma extends RBuiltinNode {
         @Specialization
         protected RDoubleVector trigamma(@SuppressWarnings("unused") RAbstractDoubleVector x) {
-            throw RError.nyi(getEncapsulatingSourceSection(), "trigamma");
+            throw RError.nyi(this, "trigamma");
         }
     }
 
@@ -76,12 +76,12 @@ public class BaseGammaFunctions {
 
         @Specialization
         protected Object lgamma(@SuppressWarnings("unused") RAbstractComplexVector x) {
-            return RError.error(RError.Message.UNIMPLEMENTED_COMPLEX_FUN);
+            return RError.error(this, RError.Message.UNIMPLEMENTED_COMPLEX_FUN);
         }
 
         @Fallback
         protected Object lgamma(@SuppressWarnings("unused") Object x) {
-            throw RError.error(RError.Message.NON_NUMERIC_MATH);
+            throw RError.error(this, RError.Message.NON_NUMERIC_MATH);
         }
 
     }
@@ -122,7 +122,7 @@ public class BaseGammaFunctions {
                 }
             }
             if (warnNaN) {
-                RError.warning(getEncapsulatingSourceSection(), RError.Message.NAN_PRODUCED);
+                RError.warning(this, RError.Message.NAN_PRODUCED);
             }
             return RDataFactory.createDoubleVector(result, naValCheck.neverSeenNA());
         }
@@ -139,12 +139,12 @@ public class BaseGammaFunctions {
 
         @Specialization
         protected Object digamma(@SuppressWarnings("unused") RAbstractComplexVector x) {
-            return RError.error(RError.Message.UNIMPLEMENTED_COMPLEX_FUN);
+            return RError.error(this, RError.Message.UNIMPLEMENTED_COMPLEX_FUN);
         }
 
         @Fallback
         protected Object digamma(@SuppressWarnings("unused") Object x) {
-            throw RError.error(RError.Message.NON_NUMERIC_MATH);
+            throw RError.error(this, RError.Message.NON_NUMERIC_MATH);
         }
 
     }

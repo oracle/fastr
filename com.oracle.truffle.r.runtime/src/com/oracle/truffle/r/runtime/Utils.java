@@ -345,10 +345,12 @@ public final class Utils {
             str.append("\n");
         }
         Frame unwrapped = RArguments.unwrap(frame);
-        SourceSection callSrc = RArguments.getCallSourceSection(unwrapped);
-        str.append("Frame: ").append(callTarget).append(isVirtual ? " (virtual)" : "");
-        if (callSrc != null) {
-            str.append(" (called as: ").append(callSrc.getCode()).append(')');
+        RCaller call = RArguments.getCall(unwrapped);
+        if (call != null) {
+            RRuntimeASTAccess rASTAccess = RContext.getRRuntimeASTAccess();
+            String callSrc = rASTAccess.getCallerSource(rASTAccess.getSyntaxCaller(call));
+            str.append("Frame: ").append(callTarget).append(isVirtual ? " (virtual)" : "");
+            str.append(" (called as: ").append(callSrc).append(')');
         }
         if (printFrameSlots) {
             FrameDescriptor frameDescriptor = unwrapped.getFrameDescriptor();

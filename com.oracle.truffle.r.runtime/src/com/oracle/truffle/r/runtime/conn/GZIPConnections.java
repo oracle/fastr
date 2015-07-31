@@ -28,7 +28,7 @@ import java.io.*;
 import java.nio.*;
 import java.util.zip.*;
 
-import com.oracle.truffle.api.source.*;
+import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
@@ -61,7 +61,7 @@ public class GZIPConnections {
                     delegate = new GZIPOutputRConnection(this);
                     break;
                 default:
-                    throw RError.nyi((SourceSection) null, "open mode: " + getOpenMode());
+                    throw RError.nyi((Node) null, "open mode: " + getOpenMode());
             }
             setDelegate(delegate);
         }

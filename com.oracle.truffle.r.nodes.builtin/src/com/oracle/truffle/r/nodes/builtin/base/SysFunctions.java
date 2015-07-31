@@ -94,7 +94,7 @@ public class SysFunctions {
         protected Object sysGetEnvGeneric(@SuppressWarnings("unused") Object x, @SuppressWarnings("unused") Object unset) {
             controlVisibility();
             CompilerDirectives.transferToInterpreter();
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.WRONG_TYPE);
+            throw RError.error(this, RError.Message.WRONG_TYPE);
         }
 
     }
@@ -166,7 +166,7 @@ public class SysFunctions {
         @TruffleBoundary
         protected Object sysSleep(@SuppressWarnings("unused") Object arg) {
             controlVisibility();
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_VALUE, "time");
+            throw RError.error(this, RError.Message.INVALID_VALUE, "time");
         }
 
         private static long convertToMillis(double d) {
@@ -177,7 +177,7 @@ public class SysFunctions {
             try {
                 return Double.parseDouble(s);
             } catch (NumberFormatException ex) {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_VALUE, "time");
+                throw RError.error(this, RError.Message.INVALID_VALUE, "time");
             }
         }
 
@@ -241,7 +241,7 @@ public class SysFunctions {
         protected Object sysReadlinkGeneric(@SuppressWarnings("unused") Object path) {
             controlVisibility();
             CompilerDirectives.transferToInterpreter();
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "paths");
+            throw RError.error(this, RError.Message.INVALID_ARGUMENT, "paths");
         }
     }
 
@@ -274,7 +274,7 @@ public class SysFunctions {
         @TruffleBoundary
         protected Object sysChmod(Object octmode) {
             controlVisibility();
-            throw RError.nyi(getEncapsulatingSourceSection(), "Sys.umask");
+            throw RError.nyi(this, "Sys.umask");
         }
 
     }

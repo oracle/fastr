@@ -34,7 +34,7 @@ public final class RBuiltinRootNode extends RRootNode {
     @Child private RBuiltinNode builtin;
 
     public RBuiltinRootNode(RBuiltinNode builtin, FormalArguments formalArguments, FrameDescriptor frameDescriptor) {
-        super(builtin.getSourceSection(), formalArguments, frameDescriptor);
+        super(null, formalArguments, frameDescriptor);
         this.builtin = builtin;
     }
 

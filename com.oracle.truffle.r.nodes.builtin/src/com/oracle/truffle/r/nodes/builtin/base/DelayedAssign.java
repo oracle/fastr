@@ -46,7 +46,7 @@ public abstract class DelayedAssign extends RInvisibleBuiltinNode {
             return RNull.instance;
         } catch (PutException ex) {
             errorProfile.enter();
-            throw RError.error(getEncapsulatingSourceSection(), ex);
+            throw RError.error(this, ex);
         }
     }
 

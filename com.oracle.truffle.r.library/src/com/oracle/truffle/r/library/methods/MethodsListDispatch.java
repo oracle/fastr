@@ -62,7 +62,7 @@ public class MethodsListDispatch {
                     return value;
                 }
             } else {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARG_TYPE);
+                throw RError.error(this, RError.Message.INVALID_ARG_TYPE);
             }
         }
     }

@@ -37,7 +37,7 @@ public abstract class Deparse extends RBuiltinNode {
         controlVisibility();
         int widthCutoff = widthCutoffArg;
         if (widthCutoff == RRuntime.INT_NA || widthCutoff < RDeparse.MIN_Cutoff || widthCutoff > RDeparse.MAX_Cutoff) {
-            RError.warning(getEncapsulatingSourceSection(), RError.Message.DEPARSE_INVALID_CUTOFF);
+            RError.warning(this, RError.Message.DEPARSE_INVALID_CUTOFF);
             widthCutoff = RDeparse.DEFAULT_Cutoff;
         }
 

@@ -25,6 +25,7 @@ package com.oracle.truffle.r.library.fastr;
 import java.io.*;
 
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
@@ -50,16 +51,16 @@ public class FastRContext {
         @Specialization
         protected RNull print(RAbstractIntVector ctxt) {
             if (ctxt.getLength() != 1) {
-                throw RError.error(RError.Message.INVALID_ARGUMENT, "context");
+                throw RError.error(this, RError.Message.INVALID_ARGUMENT, "context");
             }
             int contextId = ctxt.getDataAt(0);
             @SuppressWarnings("unused")
-            RContext context = checkContext(contextId);
+            RContext context = checkContext(contextId, this);
             try {
                 StdConnections.getStdout().writeString("context: " + contextId, true);
                 return RNull.instance;
             } catch (IOException ex) {
-                throw RError.error(RError.Message.GENERIC, ex.getMessage());
+                throw RError.error(this, RError.Message.GENERIC, ex.getMessage());
             }
         }
     }
@@ -69,7 +70,7 @@ public class FastRContext {
         protected RNull eval(RIntVector contexts, RAbstractStringVector exprs) {
             RContext.EvalThread[] threads = new RContext.EvalThread[contexts.getLength()];
             for (int i = 0; i < threads.length; i++) {
-                RContext context = checkContext(contexts.getDataAt(i));
+                RContext context = checkContext(contexts.getDataAt(i), this);
                 threads[i] = new RContext.EvalThread(context, Source.fromText(exprs.getDataAt(i % threads.length), "<context_eval>"));
             }
             for (int i = 0; i < threads.length; i++) {
@@ -85,7 +86,7 @@ public class FastRContext {
             if (RRuntime.fromLogical(par)) {
                 RContext.EvalThread[] threads = new RContext.EvalThread[contexts.getLength()];
                 for (int i = 0; i < threads.length; i++) {
-                    RContext context = checkContext(contexts.getDataAt(i));
+                    RContext context = checkContext(contexts.getDataAt(i), this);
                     threads[i] = new RContext.EvalThread(context, Source.fromText(exprs.getDataAt(i % threads.length), "<context_eval>"));
                 }
                 for (int i = 0; i < threads.length; i++) {
@@ -100,7 +101,7 @@ public class FastRContext {
                 }
             } else {
                 for (int i = 0; i < contexts.getLength(); i++) {
-                    RContext context = checkContext(contexts.getDataAt(i));
+                    RContext context = checkContext(contexts.getDataAt(i), this);
                     try {
                         context.activate();
                         context.getThisEngine().parseAndEval(Source.fromText(exprs.getDataAt(i), "<context_eval>"), true, false);
@@ -113,10 +114,10 @@ public class FastRContext {
         }
     }
 
-    private static RContext checkContext(int contextId) throws RError {
+    private static RContext checkContext(int contextId, Node invokingNode) throws RError {
         RContext context = RContext.find(contextId);
         if (context == null) {
-            throw RError.error(RError.Message.GENERIC, "no context: " + contextId);
+            throw RError.error(invokingNode, RError.Message.GENERIC, "no context: " + contextId);
         } else {
             return context;
         }

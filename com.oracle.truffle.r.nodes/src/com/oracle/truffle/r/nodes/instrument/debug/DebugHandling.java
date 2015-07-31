@@ -393,7 +393,8 @@ public class DebugHandling {
         }
 
         private static void printCall(VirtualFrame frame) {
-            RContext.getInstance().getConsoleHandler().println(RArguments.safeGetCallSourceString(frame));
+            String callString = RContext.getRRuntimeASTAccess().getCallerSource(RArguments.getCall(frame));
+            RContext.getInstance().getConsoleHandler().println(callString);
         }
 
     }

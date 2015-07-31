@@ -97,14 +97,14 @@ public abstract class MakeUnique extends RBuiltinNode {
     @Specialization(guards = "!sepIsString(sep)")
     protected RAbstractStringVector makeUniqueWrongSep(RAbstractStringVector names, RAbstractVector sep) {
         controlVisibility();
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.MUST_BE_STRING, "sep");
+        throw RError.error(this, RError.Message.MUST_BE_STRING, "sep");
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = "!namesIsStringVector(names)")
     protected RAbstractStringVector makeUnique(RAbstractVector names, Object sep) {
         controlVisibility();
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.NOT_CHARACTER_VECTOR, "names");
+        throw RError.error(this, RError.Message.NOT_CHARACTER_VECTOR, "names");
     }
 
     protected boolean namesIsStringVector(RAbstractVector names) {

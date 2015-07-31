@@ -40,7 +40,7 @@ public class RASTDeparse {
     public static void ensureSourceSection(RSyntaxNode nodeIn) {
         SourceSection ss = nodeIn.getSourceSection();
         if (ss == null) {
-            RSyntaxNode node = RASTUtils.unwrap(nodeIn).asRSyntaxNode();
+            RSyntaxNode node = (RSyntaxNode) RASTUtils.unwrap(nodeIn).asSyntaxNode();
             RDeparse.State state = RDeparse.State.createPrintableState();
             node.deparse(state);
             String sourceString = state.toString();

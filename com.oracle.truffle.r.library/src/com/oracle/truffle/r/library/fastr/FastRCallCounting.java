@@ -58,7 +58,7 @@ public class FastRCallCounting {
         @SuppressWarnings("unused")
         @Fallback
         protected Object fallback(Object a1) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "func");
+            throw RError.error(this, RError.Message.INVALID_ARGUMENT, "func");
         }
     }
 
@@ -79,7 +79,7 @@ public class FastRCallCounting {
         @SuppressWarnings("unused")
         @Fallback
         protected Object fallback(Object a1) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "func");
+            throw RError.error(this, RError.Message.INVALID_ARGUMENT, "func");
         }
     }
 

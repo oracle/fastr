@@ -137,7 +137,7 @@ public abstract class MatMult extends RBuiltinNode {
                     int bColStride, boolean mirrored) {
         if (aCols != bRows) {
             errorProfile.enter();
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.NON_CONFORMABLE_ARGS);
+            throw RError.error(this, RError.Message.NON_CONFORMABLE_ARGS);
         }
         double[] dataA = a.materialize().getDataWithoutCopying();
         double[] dataB = b.materialize().getDataWithoutCopying();
@@ -220,7 +220,7 @@ public abstract class MatMult extends RBuiltinNode {
         controlVisibility();
         if (a.getLength() != b.getLength()) {
             errorProfile.enter();
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.NON_CONFORMABLE_ARGS);
+            throw RError.error(this, RError.Message.NON_CONFORMABLE_ARGS);
         }
         double result = 0.0;
         na.enable(a);
@@ -279,7 +279,7 @@ public abstract class MatMult extends RBuiltinNode {
         final int bRows = b.getDimensions()[0];
         if (aCols != bRows) {
             errorProfile.enter();
-            throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.NON_CONFORMABLE_ARGS);
+            throw RError.error(this, RError.Message.NON_CONFORMABLE_ARGS);
         }
         final int aRows = a.getDimensions()[0];
         final int bCols = b.getDimensions()[1];
@@ -306,7 +306,7 @@ public abstract class MatMult extends RBuiltinNode {
         controlVisibility();
         if (a.getLength() != b.getLength()) {
             errorProfile.enter();
-            throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.NON_CONFORMABLE_ARGS);
+            throw RError.error(this, RError.Message.NON_CONFORMABLE_ARGS);
         }
         RComplex result = RDataFactory.createComplexZero();
         na.enable(a);
@@ -325,7 +325,7 @@ public abstract class MatMult extends RBuiltinNode {
         final int aRows = a.getDimensions()[0];
         if (aCols != 1 && aCols != b.getLength()) {
             errorProfile.enter();
-            throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.NON_CONFORMABLE_ARGS);
+            throw RError.error(this, RError.Message.NON_CONFORMABLE_ARGS);
         }
         na.enable(a);
         na.enable(b);
@@ -362,7 +362,7 @@ public abstract class MatMult extends RBuiltinNode {
         final int bCols = b.getDimensions()[1];
         if (bRows != 1 && bRows != a.getLength()) {
             errorProfile.enter();
-            throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.NON_CONFORMABLE_ARGS);
+            throw RError.error(this, RError.Message.NON_CONFORMABLE_ARGS);
         }
         na.enable(a);
         na.enable(b);
@@ -401,7 +401,7 @@ public abstract class MatMult extends RBuiltinNode {
         final int bRows = b.getDimensions()[0];
         if (aCols != bRows) {
             errorProfile.enter();
-            throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.NON_CONFORMABLE_ARGS);
+            throw RError.error(this, RError.Message.NON_CONFORMABLE_ARGS);
         }
         final int aRows = a.getDimensions()[0];
         final int bCols = b.getDimensions()[1];
@@ -426,7 +426,7 @@ public abstract class MatMult extends RBuiltinNode {
         controlVisibility();
         if (a.getLength() != b.getLength()) {
             errorProfile.enter();
-            throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.NON_CONFORMABLE_ARGS);
+            throw RError.error(this, RError.Message.NON_CONFORMABLE_ARGS);
         }
         int result = 0;
         na.enable(result);
@@ -444,7 +444,7 @@ public abstract class MatMult extends RBuiltinNode {
         final int aRows = a.getDimensions()[0];
         if (aCols != 1 && aCols != b.getLength()) {
             errorProfile.enter();
-            throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.NON_CONFORMABLE_ARGS);
+            throw RError.error(this, RError.Message.NON_CONFORMABLE_ARGS);
         }
         na.enable(a);
         na.enable(b);
@@ -479,7 +479,7 @@ public abstract class MatMult extends RBuiltinNode {
         final int bRows = b.getDimensions()[0];
         if (bRows != 1 && bRows != a.getLength()) {
             errorProfile.enter();
-            throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.NON_CONFORMABLE_ARGS);
+            throw RError.error(this, RError.Message.NON_CONFORMABLE_ARGS);
         }
         na.enable(a);
         na.enable(b);
@@ -780,25 +780,25 @@ public abstract class MatMult extends RBuiltinNode {
     @SuppressWarnings("unused")
     @Specialization
     protected RDoubleVector doRaw(RAbstractRawVector a, Object b) {
-        throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.NUMERIC_COMPLEX_MATRIX_VECTOR);
+        throw RError.error(this, RError.Message.NUMERIC_COMPLEX_MATRIX_VECTOR);
     }
 
     @SuppressWarnings("unused")
     @Specialization
     protected RDoubleVector doRaw(Object a, RAbstractRawVector b) {
-        throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.NUMERIC_COMPLEX_MATRIX_VECTOR);
+        throw RError.error(this, RError.Message.NUMERIC_COMPLEX_MATRIX_VECTOR);
     }
 
     @SuppressWarnings("unused")
     @Specialization
     protected RDoubleVector doString(RAbstractStringVector a, Object b) {
-        throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.NUMERIC_COMPLEX_MATRIX_VECTOR);
+        throw RError.error(this, RError.Message.NUMERIC_COMPLEX_MATRIX_VECTOR);
     }
 
     @SuppressWarnings("unused")
     @Specialization
     protected RDoubleVector doString(Object a, RAbstractStringVector b) {
-        throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.NUMERIC_COMPLEX_MATRIX_VECTOR);
+        throw RError.error(this, RError.Message.NUMERIC_COMPLEX_MATRIX_VECTOR);
     }
 
     // guards

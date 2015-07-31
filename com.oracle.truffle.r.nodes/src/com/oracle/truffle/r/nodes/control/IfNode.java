@@ -79,7 +79,7 @@ public final class IfNode extends RNode implements RSyntaxNode, VisibilityContro
         if (cond == RRuntime.LOGICAL_NA) {
             // NA is the only remaining option
             CompilerDirectives.transferToInterpreter();
-            throw RError.error(getSourceSection(), RError.Message.NA_UNEXP);
+            throw RError.error(this, RError.Message.NA_UNEXP);
         }
 
         if (conditionProfile.profile(cond == RRuntime.LOGICAL_TRUE)) {

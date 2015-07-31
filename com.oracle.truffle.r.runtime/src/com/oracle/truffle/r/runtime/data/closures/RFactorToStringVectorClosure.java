@@ -39,7 +39,7 @@ public class RFactorToStringVectorClosure extends RToStringVectorClosure impleme
         this.levels = levels;
         this.withNames = withNames;
         if (this.levels == null) {
-            RError.warning(RError.Message.IS_NA_TO_NON_VECTOR, "NULL");
+            RError.warning(RError.NO_NODE, RError.Message.IS_NA_TO_NON_VECTOR, "NULL");
         }
     }
 

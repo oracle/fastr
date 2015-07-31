@@ -386,7 +386,7 @@ public class RSerialize implements RContext.StateFactory {
                      * only used in a warning message in the unlikely event that the namespace
                      * cannot be found.
                      */
-                    Object r = RContext.getEngine().evalFunction(contextState.getDotDotFindNamespace(), null, s, "");
+                    Object r = RContext.getEngine().evalFunction(contextState.getDotDotFindNamespace(), s, "");
                     return checkResult(addReadRef(r));
                 }
 
@@ -1291,7 +1291,7 @@ public class RSerialize implements RContext.StateFactory {
                 addReadRef(obj);
                 String name = null;
                 if ((name = env.isPackageEnv()) != null) {
-                    RError.warning(RError.Message.PACKAGE_AVAILABLE, name);
+                    RError.warning(RError.NO_NODE, RError.Message.PACKAGE_AVAILABLE, name);
                     stream.writeInt(SEXPTYPE.PACKAGESXP.code);
                     stream.writeString(name);
                 } else if (env.isNamespaceEnv()) {

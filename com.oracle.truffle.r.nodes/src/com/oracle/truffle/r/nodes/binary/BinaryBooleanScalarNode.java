@@ -144,7 +144,7 @@ public abstract class BinaryBooleanScalarNode extends RBuiltinNode {
 
         @Fallback
         protected byte doFallback(@SuppressWarnings("unused") Object operand) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_TYPE_IN, argumentName, opName);
+            throw RError.error(this, RError.Message.INVALID_TYPE_IN, argumentName, opName);
         }
     }
 }

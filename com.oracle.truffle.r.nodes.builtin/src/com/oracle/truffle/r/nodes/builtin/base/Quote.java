@@ -42,7 +42,7 @@ public abstract class Quote extends RBuiltinNode {
 
     @Specialization
     protected RLanguage doQuote(@SuppressWarnings("unused") RMissing arg) {
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.ARGUMENTS_PASSED_0_1, getRBuiltin().name());
+        throw RError.error(this, RError.Message.ARGUMENTS_PASSED_0_1, getRBuiltin().name());
     }
 
     @Specialization
@@ -50,7 +50,7 @@ public abstract class Quote extends RBuiltinNode {
         controlVisibility();
         // GnuR creates symbols for simple variables and actual values for constants
         RNode node = (RNode) expr.getRep();
-        RNode unode = RASTUtils.unwrap(node);
+        RNode unode = (RNode) RASTUtils.unwrap(node);
         if (rvn.profile(unode instanceof ReadVariableNode)) {
             return RASTUtils.createRSymbol(unode);
         } else if (cn.profile(unode instanceof ConstantNode)) {

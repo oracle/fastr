@@ -82,7 +82,7 @@ public class AttachFunctions {
         @SuppressWarnings("unused")
         @Fallback
         protected REnvironment doAttach(Object what, Object pos, Object name) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.ATTACH_BAD_TYPE);
+            throw RError.error(this, RError.Message.ATTACH_BAD_TYPE);
         }
 
         @TruffleBoundary
@@ -111,7 +111,7 @@ public class AttachFunctions {
             try {
                 return REnvironment.detach(pos.getDataAt(0));
             } catch (DetachException ex) {
-                throw RError.error(getEncapsulatingSourceSection(), ex);
+                throw RError.error(this, ex);
             }
         }
     }

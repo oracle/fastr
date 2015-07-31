@@ -59,7 +59,7 @@ public abstract class Cat extends RInvisibleBuiltinNode {
 
     private void checkFillLength(RAbstractVector fill) throws RError {
         if (fill.getLength() > 1) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "fill");
+            throw RError.error(this, RError.Message.INVALID_ARGUMENT, "fill");
         }
     }
 
@@ -72,7 +72,7 @@ public abstract class Cat extends RInvisibleBuiltinNode {
             } else if (labels instanceof RStringVector) {
                 return (RStringVector) labels;
             } else {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "labels");
+                throw RError.error(this, RError.Message.INVALID_ARGUMENT, "labels");
             }
         }
     }
@@ -99,7 +99,7 @@ public abstract class Cat extends RInvisibleBuiltinNode {
         int fillWidth = -1;
         int givenFillWidth = RRuntime.asInteger(fill);
         if (givenFillWidth < 1) {
-            RError.warning(getEncapsulatingSourceSection(), RError.Message.NON_POSITIVE_FILL);
+            RError.warning(this, RError.Message.NON_POSITIVE_FILL);
         } else {
             fillWidth = givenFillWidth;
         }
@@ -110,7 +110,7 @@ public abstract class Cat extends RInvisibleBuiltinNode {
     @Fallback
     @TruffleBoundary
     protected RNull cat(Object args, Object conn, Object sepVec, Object fillObj, Object labels, Object append) {
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
+        throw RError.error(this, RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
     }
 
     @TruffleBoundary
@@ -118,7 +118,7 @@ public abstract class Cat extends RInvisibleBuiltinNode {
         boolean filling = fillWidth > 0;
         // append is interpreted in the calling closure, but GnuR still checks for NA
         if (RRuntime.isNA(append)) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "append");
+            throw RError.error(this, RError.Message.INVALID_ARGUMENT, "append");
         }
         ensureToString();
         /*
@@ -196,7 +196,7 @@ public abstract class Cat extends RInvisibleBuiltinNode {
         try (RConnection openConn = conn.forceOpen("wt")) {
             openConn.writeLines(RDataFactory.createStringVectorFromScalar(data), "", false);
         } catch (IOException ex) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, ex.getMessage());
+            throw RError.error(this, RError.Message.GENERIC, ex.getMessage());
         }
 
         controlVisibility();

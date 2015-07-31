@@ -39,13 +39,13 @@ public abstract class Bincode extends RBuiltinNode {
         int nb = breaks.getLength();
         if (rightVec.getLength() == 0) {
             errorProfile.enter();
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "right");
+            throw RError.error(this, RError.Message.INVALID_ARGUMENT, "right");
         }
         boolean right = RRuntime.fromLogical(rightVec.getDataAt(0));
 
         if (includeLowestVec.getLength() == 0) {
             errorProfile.enter();
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "include.lowest");
+            throw RError.error(this, RError.Message.INVALID_ARGUMENT, "include.lowest");
         }
         boolean includeBorder = RRuntime.fromLogical(includeLowestVec.getDataAt(0));
 
@@ -59,7 +59,7 @@ public abstract class Bincode extends RBuiltinNode {
         /* This relies on breaks being sorted, so wise to check that */
         for (int i = 1; i < nb; i++) {
             if (breaks.getDataAt(i - 1) > breaks.getDataAt(i)) {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, "'breaks' is not sorted");
+                throw RError.error(this, RError.Message.GENERIC, "'breaks' is not sorted");
             }
         }
 

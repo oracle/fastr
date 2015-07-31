@@ -30,6 +30,6 @@ import com.oracle.truffle.r.runtime.*;
 public abstract class Sign extends RBuiltinNode {
     @Specialization
     protected Object sign(@SuppressWarnings("unused") Object x) {
-        throw RError.nyi(getEncapsulatingSourceSection(), "sign");
+        throw RError.nyi(this, "sign");
     }
 }

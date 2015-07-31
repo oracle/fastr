@@ -56,7 +56,7 @@ public abstract class Recall extends RBuiltinNode {
         RFunction function = RArguments.getFunction(cframe);
         if (function == null) {
             errorProfile.enter();
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.RECALL_CALLED_OUTSIDE_CLOSURE);
+            throw RError.error(this, RError.Message.RECALL_CALLED_OUTSIDE_CLOSURE);
         }
         RArgsValuesAndNames actualArgs = (RArgsValuesAndNames) readArgs.execute(frame);
         return call.execute(frame, actualArgs.getSignature(), actualArgs.getArguments(), function, null);

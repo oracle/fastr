@@ -30,7 +30,6 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
-import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
@@ -41,7 +40,6 @@ import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseDeoptimizeFr
 import com.oracle.truffle.r.nodes.function.PromiseNode.VarArgNode;
 import com.oracle.truffle.r.nodes.function.PromiseNode.VarArgsPromiseNode;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.RContext.Engine.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.RPromise.*;
 import com.oracle.truffle.r.runtime.env.*;
@@ -77,7 +75,7 @@ public class FrameFunctions {
             if (n > 0) {
                 if (n > depth) {
                     errorProfile.enter();
-                    throw RError.error(RError.Message.NOT_THAT_MANY_FRAMES);
+                    throw RError.error(this, RError.Message.NOT_THAT_MANY_FRAMES);
                 }
                 actualFrame = n;
             } else {
@@ -89,7 +87,7 @@ public class FrameFunctions {
                 Frame callerFrame = Utils.getStackFrame(frameAccess(), actualFrame);
                 if (callerFrame == null) {
                     errorProfile.enter();
-                    throw RError.error(RError.Message.NOT_THAT_MANY_FRAMES);
+                    throw RError.error(this, RError.Message.NOT_THAT_MANY_FRAMES);
                 }
                 return callerFrame;
             }
@@ -124,17 +122,9 @@ public class FrameFunctions {
 
         @TruffleBoundary
         protected RLanguage createCall(Frame cframe) {
-            // TODO we really want the AST for the call in RArguments.
-            // For now we reparse it.
-            SourceSection callSource = RArguments.getCallSourceSection(cframe);
-            RLanguage callAST;
-            try {
-                RExpression call = RContext.getEngine().parse(Source.fromText(callSource.getCode(), "<call source>"));
-                callAST = (RLanguage) call.getDataAt(0);
-            } catch (ParseException ex) {
-                throw RInternalError.shouldNotReachHere("parse call source");
-            }
-            return callAST;
+            RCaller caller = RArguments.getCall(cframe);
+            assert caller != null;
+            return RContext.getRRuntimeASTAccess().getSyntaxCaller(caller);
         }
     }
 
@@ -173,7 +163,7 @@ public class FrameFunctions {
             controlVisibility();
             RLanguage call = checkCall(callObj);
             if (expandDotsL == RRuntime.LOGICAL_NA) {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "expand.dots");
+                throw RError.error(this, RError.Message.INVALID_ARGUMENT, "expand.dots");
             }
             boolean expandDots = RRuntime.fromLogical(expandDotsL);
 
@@ -183,7 +173,7 @@ public class FrameFunctions {
                 Frame defFrame = Utils.getStackFrame(FrameAccess.READ_ONLY, RArguments.getDepth(frame) - 1);
                 definition = RArguments.getFunction(defFrame);
                 if (definition == null) {
-                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.MATCH_CALL_CALLED_OUTSIDE_FUNCTION);
+                    throw RError.error(this, RError.Message.MATCH_CALL_CALLED_OUTSIDE_FUNCTION);
                 }
             }
             return doMatchCall(cframe, definition, call, expandDots);
@@ -224,7 +214,7 @@ public class FrameFunctions {
                     RNode[] varArgNodes = new RNode[varArgSignature.getLength()];
                     for (int i2 = 0; i2 < varArgNodes.length; i2++) {
                         Closure cl = closures[i2];
-                        RNode n = RASTUtils.unwrap(cl.getExpr());
+                        RNode n = (RNode) RASTUtils.unwrap(cl.getExpr());
                         n = checkForVarArgNode(varArgParameter, n);
 
                         if (n instanceof PromiseNode) {
@@ -293,7 +283,7 @@ public class FrameFunctions {
             if (arg instanceof VarArgNode) {
                 Object argument = varArgParameter.getArgument(((VarArgNode) arg).getIndex());
                 if (argument instanceof RPromise) {
-                    RNode unwrapped = RASTUtils.unwrap(((RPromise) argument).getRep());
+                    RNode unwrapped = (RNode) RASTUtils.unwrap(((RPromise) argument).getRep());
                     return unwrapped instanceof ConstantNode ? unwrapped : ConstantNode.create(createVarArgSymbol((VarArgNode) arg));
                 } else {
                     return ConstantNode.create(argument);
@@ -323,7 +313,7 @@ public class FrameFunctions {
         @SuppressWarnings("unused")
         protected RLanguage matchCall(Object definition, Object call, Object expandDots) {
             controlVisibility();
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
+            throw RError.error(this, RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
         }
 
         private RLanguage checkCall(Object callObj) throws RError {
@@ -332,12 +322,12 @@ public class FrameFunctions {
             }
             if (callObj instanceof RLanguage) {
                 RLanguage call = (RLanguage) callObj;
-                RNode node = RASTUtils.unwrap(call.getRep());
+                RNode node = (RNode) RASTUtils.unwrap(call.getRep());
                 if (node instanceof RCallNode || node instanceof GroupDispatchNode) {
                     return call;
                 }
             }
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "call");
+            throw RError.error(this, RError.Message.INVALID_ARGUMENT, "call");
         }
 
     }
@@ -485,7 +475,7 @@ public class FrameFunctions {
             controlVisibility();
             if (n == 0) {
                 errorProfile.enter();
-                throw RError.error(RError.Message.INVALID_ARGUMENT, RRuntime.intToString(n));
+                throw RError.error(this, RError.Message.INVALID_ARGUMENT, RRuntime.intToString(n));
             }
             int p = RArguments.getDepth(frame) - n - 1;
             Frame callerFrame = Utils.getStackFrame(FrameAccess.MATERIALIZE, p);

@@ -246,7 +246,7 @@ final class REngine implements RContext.Engine {
         try {
             return runCall(callTarget, frame, printResult, true);
         } catch (BreakException | NextException cfe) {
-            throw RError.error(RError.Message.NO_LOOP_FOR_BREAK_NEXT);
+            throw RError.error(RError.NO_NODE, RError.Message.NO_LOOP_FOR_BREAK_NEXT);
         }
     }
 
@@ -306,30 +306,17 @@ final class REngine implements RContext.Engine {
         return runCall(callTarget, frame, false, false);
     }
 
-    private static final Source EMPTY_SRC = Source.fromText("", "<empty>");
-    private static final SourceSection EMPTY_CALLSRC = EMPTY_SRC.createSection("", 0);
-
-    public Object evalFunction(RFunction func, RLanguage caller, Object... args) {
+    public Object evalFunction(RFunction func, Object... args) {
         ArgumentsSignature argsSig = ((RRootNode) func.getRootNode()).getSignature();
         MaterializedFrame frame = Utils.getActualCurrentFrame().materialize();
-        SourceSection ss;
-        if (caller == null) {
-            ss = EMPTY_CALLSRC;
-        } else {
-            ss = ((RSyntaxNode) caller.getRep()).getSourceSection();
-        }
-        Object[] rArgs = RArguments.create(func, ss, frame, frame == null ? 1 : RArguments.getDepth(frame) + 1, args, argsSig);
+        Object[] rArgs = RArguments.create(func, frame == null ? null : RArguments.getCall(frame), frame, frame == null ? 1 : RArguments.getDepth(frame) + 1, args, argsSig);
         return func.getTarget().call(rArgs);
     }
 
-    /**
-     * @return @see
-     *         {@link #evalTarget(RootCallTarget, SourceSection, REnvironment, REnvironment, int)}
-     */
     private Object evalNode(RSyntaxNode exprRep, REnvironment envir, REnvironment enclos, int depth) {
         RootCallTarget callTarget = doMakeCallTarget(exprRep, EVAL_FUNCTION_NAME);
-        SourceSection callSrc = RArguments.getCallSourceSection(envir.getFrame());
-        return evalTarget(callTarget, callSrc, envir, enclos, depth);
+        RCaller call = RArguments.getCall(envir.getFrame());
+        return evalTarget(callTarget, call, envir, enclos, depth);
     }
 
     /**
@@ -342,11 +329,11 @@ final class REngine implements RContext.Engine {
      * inefficient. In particular, in the case where a {@link VirtualFrame} is available, then the
      * {@code eval} methods that take such a {@link VirtualFrame} should be used in preference.
      */
-    private Object evalTarget(RootCallTarget callTarget, SourceSection callSrc, REnvironment envir, @SuppressWarnings("unused") REnvironment enclos, int depth) {
+    private Object evalTarget(RootCallTarget callTarget, RCaller call, REnvironment envir, @SuppressWarnings("unused") REnvironment enclos, int depth) {
         MaterializedFrame envFrame = envir.getFrame();
         // Here we create fake frame that wraps the original frame's context and has an only
         // slightly changed arguments array (function and callSrc).
-        MaterializedFrame vFrame = VirtualEvalFrame.create(envFrame, (RFunction) null, callSrc, depth);
+        MaterializedFrame vFrame = VirtualEvalFrame.create(envFrame, (RFunction) null, call, depth);
         return runCall(callTarget, vFrame, false, false);
     }
 
@@ -487,8 +474,6 @@ final class REngine implements RContext.Engine {
 
     private static final ArgumentsSignature PRINT_SIGNATURE = ArgumentsSignature.get("x", "...");
     private static final ArgumentsSignature PRINT_INTERNAL_SIGNATURE = ArgumentsSignature.get("x");
-    private static final Source PRINT_SOURCE = Source.fromText("print(x)", "");
-    private static final SourceSection PRINT_CALLSRC = PRINT_SOURCE.createSection("", 0, PRINT_SOURCE.getLength());
 
     @TruffleBoundary
     public void printResult(Object result) {
@@ -499,13 +484,13 @@ final class REngine implements RContext.Engine {
             if (FastROptions.NewStateTransition && resultValue instanceof RShareable) {
                 ((RShareable) resultValue).incRefCount();
             }
-            function.getTarget().call(RArguments.create(function, PRINT_CALLSRC, REnvironment.globalEnv().getFrame(), 1, new Object[]{resultValue, RMissing.instance}, PRINT_SIGNATURE));
+            function.getTarget().call(RArguments.create(function, null, REnvironment.globalEnv().getFrame(), 1, new Object[]{resultValue, RMissing.instance}, PRINT_SIGNATURE));
             if (FastROptions.NewStateTransition && resultValue instanceof RShareable) {
                 ((RShareable) resultValue).decRefCount();
             }
         } else {
             // we only have the .Internal print.default method available
-            getPrintInternal().getTarget().call(RArguments.create(printInternal, PRINT_CALLSRC, REnvironment.globalEnv().getFrame(), 1, new Object[]{resultValue}, PRINT_INTERNAL_SIGNATURE));
+            getPrintInternal().getTarget().call(RArguments.create(printInternal, null, REnvironment.globalEnv().getFrame(), 1, new Object[]{resultValue}, PRINT_INTERNAL_SIGNATURE));
         }
     }
 

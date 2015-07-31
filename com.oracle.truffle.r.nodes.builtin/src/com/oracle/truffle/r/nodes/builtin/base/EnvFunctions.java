@@ -29,7 +29,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
-import com.oracle.truffle.api.source.*;
+import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -75,7 +75,7 @@ public class EnvFunctions {
                 Frame callerFrame = Utils.getCallerFrame(frame, FrameAccess.MATERIALIZE);
                 if (callerFrame == null) {
                     errorProfile.enter();
-                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.NO_ENCLOSING_ENVIRONMENT);
+                    throw RError.error(this, RError.Message.NO_ENCLOSING_ENVIRONMENT);
                 } else {
                     return REnvironment.frameToEnvironment(callerFrame.materialize());
                 }
@@ -87,7 +87,7 @@ public class EnvFunctions {
                 return REnvironment.emptyEnv();
             } else if ((pos <= 0) || (pos > searchPath.length + 1)) {
                 errorProfile.enter();
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "pos");
+                throw RError.error(this, RError.Message.INVALID_ARGUMENT, "pos");
             } else {
                 return REnvironment.lookupOnSearchPath(searchPath[pos - 1]);
             }
@@ -104,7 +104,7 @@ public class EnvFunctions {
                 }
             }
             errorProfile.enter();
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.NO_ITEM_NAMED, name);
+            throw RError.error(this, RError.Message.NO_ITEM_NAMED, name);
         }
 
     }
@@ -150,7 +150,7 @@ public class EnvFunctions {
             controlVisibility();
             if (env == REnvironment.emptyEnv()) {
                 errorProfile.enter();
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.EMPTY_NO_PARENT);
+                throw RError.error(this, RError.Message.EMPTY_NO_PARENT);
             }
             return env.getParent();
         }
@@ -166,7 +166,7 @@ public class EnvFunctions {
             controlVisibility();
             if (env == REnvironment.emptyEnv()) {
                 errorProfile.enter();
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.CANNOT_SET_PARENT);
+                throw RError.error(this, RError.Message.CANNOT_SET_PARENT);
             }
             env.setParent(parent);
             return env;
@@ -296,12 +296,12 @@ public class EnvFunctions {
 
     }
 
-    private static RuntimeException typeError(SourceSection source, Object sym, Object env) {
+    private static RuntimeException typeError(Node invokingNode, Object sym, Object env) {
         if (!(sym instanceof RSymbol)) {
-            throw RError.error(source, RError.Message.NOT_A_SYMBOL);
+            throw RError.error(invokingNode, RError.Message.NOT_A_SYMBOL);
         } else {
             assert !(env instanceof REnvironment);
-            throw RError.error(source, RError.Message.NOT_AN_ENVIRONMENT);
+            throw RError.error(invokingNode, RError.Message.NOT_AN_ENVIRONMENT);
         }
     }
 
@@ -316,7 +316,7 @@ public class EnvFunctions {
 
         @Fallback
         protected Object lockBinding(Object sym, Object env) {
-            throw typeError(getEncapsulatingSourceSection(), sym, env);
+            throw typeError(this, sym, env);
         }
     }
 
@@ -331,7 +331,7 @@ public class EnvFunctions {
 
         @Fallback
         protected Object unlockBindings(Object sym, Object env) {
-            throw typeError(getEncapsulatingSourceSection(), sym, env);
+            throw typeError(this, sym, env);
         }
     }
 
@@ -345,7 +345,7 @@ public class EnvFunctions {
 
         @Fallback
         protected Object bindingIsLocked(Object sym, Object env) {
-            throw typeError(getEncapsulatingSourceSection(), sym, env);
+            throw typeError(this, sym, env);
         }
     }
 
@@ -356,7 +356,7 @@ public class EnvFunctions {
         protected Object makeActiveBinding(Object sym, Object fun, Object env) {
             // TODO implement
             controlVisibility();
-            throw RError.nyi(getEncapsulatingSourceSection(), "makeActiveBinding");
+            throw RError.nyi(this, "makeActiveBinding");
         }
     }
 
@@ -367,7 +367,7 @@ public class EnvFunctions {
         protected Object bindingIsActive(Object sym, Object fun, Object env) {
             // TODO implement
             controlVisibility();
-            throw RError.nyi(getEncapsulatingSourceSection(), "bindingIsActive");
+            throw RError.nyi(this, "bindingIsActive");
         }
     }
 

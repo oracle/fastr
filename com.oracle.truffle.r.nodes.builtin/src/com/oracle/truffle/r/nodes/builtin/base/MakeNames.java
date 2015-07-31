@@ -26,7 +26,7 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.source.*;
+import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
@@ -174,7 +174,7 @@ public abstract class MakeNames extends RBuiltinNode {
     @SuppressWarnings("unused")
     @Specialization(guards = "wrongAllowUnderscore(allowUnderScoreArg)")
     protected RAbstractStringVector makeNamesWrongUnderscoreEmpty(RAbstractStringVector names, RAbstractLogicalVector allowUnderScoreArg) {
-        throw invalidAllowValue(getEncapsulatingSourceSection());
+        throw invalidAllowValue(this);
     }
 
     protected static boolean wrongAllowUnderscore(RAbstractLogicalVector allowUnderScoreArg) {
@@ -189,14 +189,15 @@ public abstract class MakeNames extends RBuiltinNode {
         @Override
         public RAbstractLogicalVector execute(Object value) {
             try {
+                // TODO Catching RError!
                 return (RAbstractLogicalVector) castLogical.execute(castVector.execute(value));
             } catch (RError x) {
-                throw invalidAllowValue(getEncapsulatingSourceSection());
+                throw invalidAllowValue(this);
             }
         }
     }
 
-    private static RError invalidAllowValue(SourceSection src) throws RError {
-        throw RError.error(src, RError.Message.INVALID_VALUE, "allow_");
+    private static RError invalidAllowValue(Node invokingNode) throws RError {
+        throw RError.error(invokingNode, RError.Message.INVALID_VALUE, "allow_");
     }
 }

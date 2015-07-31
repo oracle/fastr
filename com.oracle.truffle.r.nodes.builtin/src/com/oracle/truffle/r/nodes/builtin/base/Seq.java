@@ -59,14 +59,14 @@ public abstract class Seq extends RBuiltinNode {
     private void validateParam(int v, String vName) {
         if (RRuntime.isNA(v)) {
             error.enter();
-            throw RError.error(RError.Message.CANNOT_BE_INVALID, vName);
+            throw RError.error(this, RError.Message.CANNOT_BE_INVALID, vName);
         }
     }
 
     private void validateParam(double v, String vName) {
         if (RRuntime.isNAorNaN(v) || Double.isInfinite(v)) {
             error.enter();
-            throw RError.error(RError.Message.CANNOT_BE_INVALID, vName);
+            throw RError.error(this, RError.Message.CANNOT_BE_INVALID, vName);
         }
     }
 
@@ -723,14 +723,14 @@ public abstract class Seq extends RBuiltinNode {
 
     protected boolean startLengthOne(RAbstractVector start) {
         if (start.getLength() != 1) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.MUST_BE_SCALAR, "from");
+            throw RError.error(this, RError.Message.MUST_BE_SCALAR, "from");
         }
         return true;
     }
 
     protected boolean toLengthOne(RAbstractVector to) {
         if (to.getLength() != 1) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.MUST_BE_SCALAR, "to");
+            throw RError.error(this, RError.Message.MUST_BE_SCALAR, "to");
         }
         return true;
     }
@@ -749,14 +749,14 @@ public abstract class Seq extends RBuiltinNode {
 
     protected boolean positiveLengthOut(int lengthOut) {
         if (lengthOut < 0) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.MUST_BE_POSITIVE, "length.out");
+            throw RError.error(this, RError.Message.MUST_BE_POSITIVE, "length.out");
         }
         return true;
     }
 
     protected boolean positiveLengthOut(double lengthOut) {
         if (lengthOut < 0) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.MUST_BE_POSITIVE, "length.out");
+            throw RError.error(this, RError.Message.MUST_BE_POSITIVE, "length.out");
         }
         return true;
     }

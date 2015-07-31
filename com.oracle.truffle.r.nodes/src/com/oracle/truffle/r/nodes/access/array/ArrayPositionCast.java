@@ -97,15 +97,15 @@ abstract class ArrayPositionsCastBase extends RNode {
         if (assignment) {
             if (isSubset) {
                 if (numDimensions == 2) {
-                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.INCORRECT_SUBSCRIPTS_MATRIX);
+                    throw RError.error(this, RError.Message.INCORRECT_SUBSCRIPTS_MATRIX);
                 } else {
-                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.INCORRECT_SUBSCRIPTS);
+                    throw RError.error(this, RError.Message.INCORRECT_SUBSCRIPTS);
                 }
             } else {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.IMPROPER_SUBSCRIPT);
+                throw RError.error(this, RError.Message.IMPROPER_SUBSCRIPT);
             }
         } else {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INCORRECT_DIMENSIONS);
+            throw RError.error(this, RError.Message.INCORRECT_DIMENSIONS);
         }
     }
 
@@ -157,7 +157,7 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
         if (operand.getName().length() == 0) {
             return doMissingVector(container, RMissing.instance);
         } else {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "symbol");
+            throw RError.error(this, RError.Message.INVALID_SUBSCRIPT_TYPE, "symbol");
         }
     }
 
@@ -350,7 +350,7 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
 
         @Specialization
         protected RMissing doFuncOp(RAbstractContainer container, RFunction operand, Object exact) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "closure");
+            throw RError.error(this, RError.Message.INVALID_SUBSCRIPT_TYPE, "closure");
         }
 
         @Specialization
@@ -358,7 +358,7 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
             if (operand.getName().length() == 0) {
                 return doMissingDimLengthOne(container, RMissing.instance, exact);
             } else {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "symbol");
+                throw RError.error(this, RError.Message.INVALID_SUBSCRIPT_TYPE, "symbol");
             }
         }
 
@@ -370,9 +370,9 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
             }
             if (!isSubset) {
                 if (assignment) {
-                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.MISSING_SUBSCRIPT);
+                    throw RError.error(this, RError.Message.MISSING_SUBSCRIPT);
                 } else {
-                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "symbol");
+                    throw RError.error(this, RError.Message.INVALID_SUBSCRIPT_TYPE, "symbol");
                 }
             }
             if (dimSizeOneProfile.profile(getDimensionSize(container) == 1)) {
@@ -387,7 +387,7 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
             if (isSubset) {
                 return 0;
             } else {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
+                throw RError.error(this, RError.Message.SELECT_LESS_1);
             }
         }
 
@@ -452,7 +452,7 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
                 // let assignment handle it as it depends on the value
                 return RRuntime.INT_NA;
             } else {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.SUBSCRIPT_BOUNDS);
+                throw RError.error(this, RError.Message.SUBSCRIPT_BOUNDS);
             }
         }
 
@@ -464,7 +464,7 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
                 outOfBoundsPositive.enter();
                 if (numDimensions != 1 || (!isSubset && !assignment)) {
                     error.enter();
-                    throw RError.error(assignment ? getEncapsulatingSourceSection() : null, RError.Message.SUBSCRIPT_BOUNDS);
+                    throw RError.error(this, RError.Message.SUBSCRIPT_BOUNDS);
                 } else {
                     return assignment ? operand : RRuntime.INT_NA;
                 }
@@ -474,7 +474,7 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
                     if (dimSizeOneProfile.profile(dimSize == 1)) {
                         /*
                          * e.g. c(7)[-2] vs c(7)[[-2]]
-                         *
+                         * 
                          * only one element to be picked or ultimately an error caused by operand
                          */
                         return isSubset ? 1 : operand;
@@ -617,7 +617,7 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
                 return RRuntime.INT_NA;
             } else {
                 error.enter();
-                throw RError.error(isSubset ? null : getEncapsulatingSourceSection(), RError.Message.SUBSCRIPT_BOUNDS);
+                throw RError.error(this, RError.Message.SUBSCRIPT_BOUNDS);
             }
         }
 
@@ -668,7 +668,7 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
                     return convertOperatorRecursive(container, RRuntime.INT_NA, exact);
                 }
             } else {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.SUBSCRIPT_BOUNDS);
+                throw RError.error(this, RError.Message.SUBSCRIPT_BOUNDS);
             }
         }
 
@@ -699,7 +699,7 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
                         return RNull.instance;
                     } else {
                         error.enter();
-                        throw RError.error(getEncapsulatingSourceSection(), RError.Message.SUBSCRIPT_BOUNDS);
+                        throw RError.error(this, RError.Message.SUBSCRIPT_BOUNDS);
                     }
                 }
             }
@@ -716,9 +716,9 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
             } else {
                 error.enter();
                 if (isSubset || container instanceof RList) {
-                    throw RError.error(RError.Message.NO_ARRAY_DIMNAMES);
+                    throw RError.error(this, RError.Message.NO_ARRAY_DIMNAMES);
                 } else {
-                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.SUBSCRIPT_BOUNDS);
+                    throw RError.error(this, RError.Message.SUBSCRIPT_BOUNDS);
                 }
 
             }
@@ -755,7 +755,7 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
                     if (listProfile.profile(container instanceof RList)) {
                         // container is a list
                         error.enter();
-                        throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
+                        throw RError.error(this, RError.Message.SELECT_LESS_1);
                     } else {
                         return 0;
                     }
@@ -785,7 +785,7 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
                 if (isSubset) {
                     if ((operand.getLength() > getDimensionSize(container)) && numDimensions != 1) {
                         error.enter();
-                        throw RError.error(getEncapsulatingSourceSection(), RError.Message.LOGICAL_SUBSCRIPT_LONG);
+                        throw RError.error(this, RError.Message.LOGICAL_SUBSCRIPT_LONG);
                     }
                     return doLogicalVectorInternal(container, operand);
 
@@ -855,14 +855,14 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
                 error.enter();
                 if (operand.getLength() == 0 && !isSubset) {
                     if (container instanceof RList) {
-                        throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
+                        throw RError.error(this, RError.Message.SELECT_LESS_1);
                     } else {
                         return 0;
                     }
                 } else if (isSubset || operand.getLength() == 2) {
-                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, typeName);
+                    throw RError.error(this, RError.Message.INVALID_SUBSCRIPT_TYPE, typeName);
                 } else {
-                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_MORE_1);
+                    throw RError.error(this, RError.Message.SELECT_MORE_1);
                 }
             }
         }
@@ -896,7 +896,7 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
                         hasSeenNA = true;
                     } else {
                         error.enter();
-                        throw RError.error(RError.Message.SUBSCRIPT_BOUNDS);
+                        throw RError.error(this, RError.Message.SUBSCRIPT_BOUNDS);
                     }
                 }
             }
@@ -1002,13 +1002,13 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
                             }
                         } else {
                             error.enter();
-                            throw RError.error(RError.Message.SUBSCRIPT_BOUNDS);
+                            throw RError.error(this, RError.Message.SUBSCRIPT_BOUNDS);
                         }
                     }
                 } else {
                     if (numDimensions != 1 || container.getElementClass() != Object.class) {
                         error.enter();
-                        throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_MORE_1);
+                        throw RError.error(this, RError.Message.SELECT_MORE_1);
                     }
 
                     // for recursive access
@@ -1063,14 +1063,14 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
                 } else if (pos > 0) {
                     if (numDimensions != 1 && pos > dimLength) {
                         error.enter();
-                        throw RError.error(RError.Message.SUBSCRIPT_BOUNDS);
+                        throw RError.error(this, RError.Message.SUBSCRIPT_BOUNDS);
                     }
                     if (numDimensions == 1 && pos > container.getLength()) {
                         if (isSubset) {
                             outOfBounds = true;
                         } else {
                             error.enter();
-                            throw RError.error(getEncapsulatingSourceSection(), RError.Message.SUBSCRIPT_BOUNDS);
+                            throw RError.error(this, RError.Message.SUBSCRIPT_BOUNDS);
                         }
                     }
                     seenPositive.enter();
@@ -1078,7 +1078,7 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
                 } else if (pos == 0) {
                     if (!isSubset) {
                         error.enter();
-                        throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
+                        throw RError.error(this, RError.Message.SELECT_LESS_1);
                     }
                     seenZero.enter();
                     hasSeenZero = true;
@@ -1091,7 +1091,7 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
             if (hasSeenPositive || hasSeenNA) {
                 if (hasSeenNegative) {
                     error.enter();
-                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.ONLY_0_MIXED);
+                    throw RError.error(this, RError.Message.ONLY_0_MIXED);
                 } else if (hasSeenZero || (outOfBounds && numDimensions == 1)) {
                     // eliminate 0-s and handle out-of-bounds for single-subscript accesses
                     int[] data = eliminateZeros(container, positions, zeroCount);
@@ -1112,7 +1112,7 @@ public abstract class ArrayPositionCast extends ArrayPositionsCastBase {
             } else if (hasSeenNegative) {
                 if (hasSeenNA) {
                     error.enter();
-                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.ONLY_0_MIXED);
+                    throw RError.error(this, RError.Message.ONLY_0_MIXED);
                 }
                 boolean[] excludedPositions = new boolean[dimLength];
                 int allPositionsNum = dimLength;

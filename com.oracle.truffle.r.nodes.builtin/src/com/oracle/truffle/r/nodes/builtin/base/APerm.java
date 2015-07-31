@@ -36,11 +36,11 @@ public abstract class APerm extends RBuiltinNode {
     private void checkErrorConditions(RAbstractVector vector, byte resize) {
         if (!vector.isArray()) {
             errorProfile.enter();
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.FIRST_ARG_MUST_BE_ARRAY);
+            throw RError.error(this, RError.Message.FIRST_ARG_MUST_BE_ARRAY);
         }
         if (resize == RRuntime.LOGICAL_NA) {
             errorProfile.enter();
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_LOGICAL, "resize");
+            throw RError.error(this, RError.Message.INVALID_LOGICAL, "resize");
         }
     }
 
@@ -131,13 +131,13 @@ public abstract class APerm extends RBuiltinNode {
                 int pos = perm.getDataAt(i) - 1; // Adjust to zero based permute.
                 if (pos >= perm.getLength() || pos < 0) {
                     errorProfile.enter();
-                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.VALUE_OUT_OF_RANGE, "perm");
+                    throw RError.error(this, RError.Message.VALUE_OUT_OF_RANGE, "perm");
                 }
                 arrayPerm[i] = pos;
                 if (visited[pos]) {
                     // Duplicate dimension mapping in permute
                     errorProfile.enter();
-                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "perm");
+                    throw RError.error(this, RError.Message.INVALID_ARGUMENT, "perm");
                 }
                 visited[pos] = true;
             }
@@ -145,7 +145,7 @@ public abstract class APerm extends RBuiltinNode {
         } else {
             // perm size error
             errorProfile.enter();
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.IS_OF_WRONG_LENGTH, "perm", perm.getLength(), dim.length);
+            throw RError.error(this, RError.Message.IS_OF_WRONG_LENGTH, "perm", perm.getLength(), dim.length);
         }
     }
 

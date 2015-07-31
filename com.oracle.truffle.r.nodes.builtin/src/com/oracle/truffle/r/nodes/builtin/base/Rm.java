@@ -64,7 +64,7 @@ public abstract class Rm extends RInvisibleBuiltinNode {
                 }
             }
         } catch (PutException ex) {
-            throw RError.error(getEncapsulatingSourceSection(), ex);
+            throw RError.error(this, ex);
         }
         return RNull.instance;
     }
@@ -80,7 +80,7 @@ public abstract class Rm extends RInvisibleBuiltinNode {
             }
         }
         if (fs == null) {
-            RError.warning(this.getEncapsulatingSourceSection(), RError.Message.UNKNOWN_OBJECT, x);
+            RError.warning(this, RError.Message.UNKNOWN_OBJECT, x);
         } else {
             // use null (not an R value) to represent "undefined"
             FrameSlotChangeMonitor.setObjectAndInvalidate(frame, fs, null, false, invalidateProfile);

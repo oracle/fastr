@@ -112,7 +112,7 @@ public abstract class S3DispatchFunctions extends RBuiltinNode {
         private Object getEnclosingArg(VirtualFrame frame, String generic) {
             if (RArguments.getArgumentsLength(frame) == 0 || RArguments.getArgument(frame, 0) == null) {
                 errorProfile.enter();
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.UNKNOWN_FUNCTION_USE_METHOD, generic, RRuntime.toString(RNull.instance));
+                throw RError.error(this, RError.Message.UNKNOWN_FUNCTION_USE_METHOD, generic, RRuntime.toString(RNull.instance));
             }
             Object enclosingArg = RArguments.getArgument(frame, 0);
             if (argsValueAndNamesProfile.profile(enclosingArg instanceof RArgsValuesAndNames)) {
@@ -120,7 +120,7 @@ public abstract class S3DispatchFunctions extends RBuiltinNode {
                 RArgsValuesAndNames varArgs = (RArgsValuesAndNames) enclosingArg;
                 if (varArgs.isEmpty()) {
                     errorProfile.enter();
-                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.UNKNOWN_FUNCTION_USE_METHOD, generic, RRuntime.toString(RNull.instance));
+                    throw RError.error(this, RError.Message.UNKNOWN_FUNCTION_USE_METHOD, generic, RRuntime.toString(RNull.instance));
                 }
                 enclosingArg = varArgs.getArgument(0);
             }
@@ -169,7 +169,7 @@ public abstract class S3DispatchFunctions extends RBuiltinNode {
             String generic = (String) rvnGeneric.execute(frame);
             if (generic == null || generic.isEmpty()) {
                 errorProfile.enter();
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.GEN_FUNCTION_NOT_SPECIFIED);
+                throw RError.error(this, RError.Message.GEN_FUNCTION_NOT_SPECIFIED);
             }
             return nextMethod(frame, generic, obj, args);
         }
@@ -234,7 +234,7 @@ public abstract class S3DispatchFunctions extends RBuiltinNode {
             if (RArguments.getArgumentsLength(frame) == 0 || RArguments.getArgument(frame, 0) == null ||
                             (!(RArguments.getArgument(frame, 0) instanceof RAbstractContainer) && !(RArguments.getArgument(frame, 0) instanceof RPromise))) {
                 errorProfile.enter();
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.OBJECT_NOT_SPECIFIED);
+                throw RError.error(this, RError.Message.OBJECT_NOT_SPECIFIED);
             }
             Object arg = RArguments.getArgument(frame, 0);
             if (arg instanceof RPromise) {

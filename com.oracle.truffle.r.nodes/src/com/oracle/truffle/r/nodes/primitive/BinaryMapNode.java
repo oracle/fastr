@@ -207,7 +207,7 @@ public final class BinaryMapNode extends Node {
     private Object applyVectorized(RAbstractVector left, RAbstractVector leftCast, int leftLength, RAbstractVector right, RAbstractVector rightCast, int rightLength) {
         if (mayContainMetadata && (dimensionsProfile.profile(left.hasDimensions() && right.hasDimensions()))) {
             if (differentDimensions(left, right)) {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.NON_CONFORMABLE_ARRAYS);
+                throw RError.error(this, RError.Message.NON_CONFORMABLE_ARRAYS);
             }
         }
 
@@ -480,7 +480,7 @@ public final class BinaryMapNode extends Node {
                 j = Utils.incMod(j, leftLength);
                 k = Utils.incMod(k, rightLength);
             }
-            RError.warning(getEncapsulatingSourceSection(), RError.Message.LENGTH_NOT_MULTI);
+            RError.warning(this, RError.Message.LENGTH_NOT_MULTI);
         }
 
         private interface MapBinaryIndexedAction<A, V extends RAbstractVector> {

@@ -121,7 +121,7 @@ public abstract class Options extends RBuiltinNode {
                             names = newNames;
                         }
                     } else {
-                        throw RError.error(getEncapsulatingSourceSection(), Message.INVALID_UNNAMED_ARGUMENT);
+                        throw RError.error(this, Message.INVALID_UNNAMED_ARGUMENT);
                     }
                     Object optionVal = options.getValue(optionName);
                     data[i] = optionVal == null ? RNull.instance : optionVal;
@@ -138,7 +138,7 @@ public abstract class Options extends RBuiltinNode {
             }
             return RDataFactory.createList(data, RDataFactory.createStringVector(names, RDataFactory.COMPLETE_VECTOR));
         } catch (OptionsException ex) {
-            throw RError.error(getEncapsulatingSourceSection(), ex);
+            throw RError.error(this, ex);
         }
     }
 

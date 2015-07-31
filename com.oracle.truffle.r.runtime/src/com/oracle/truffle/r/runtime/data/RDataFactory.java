@@ -384,6 +384,10 @@ public final class RDataFactory {
         return traceDataCreated(new RLanguage(rep));
     }
 
+    public static RCaller createCaller(Object rep) {
+        return traceDataCreated(new RCaller(rep));
+    }
+
     public static RPromise createPromise(PromiseType type, MaterializedFrame execFrame, Closure closure) {
         assert closure != null;
         assert closure.getExpr() != null;

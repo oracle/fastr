@@ -51,13 +51,13 @@ public abstract class FirstIntNode extends CastNode {
     protected int firstVector(RAbstractIntVector argument) {
         if (!lengthOneProfile.profile(argument.getLength() == 1)) {
             if (getSizeWarning() != null) {
-                RError.warning(getEncapsulatingSourceSection(), getSizeWarning(), getArgumentName());
+                RError.warning(this, getSizeWarning(), getArgumentName());
                 if (argument.getLength() == 0) {
                     return getDefaultValue();
                 }
             } else if (getEmptyError() != null && argument.getLength() == 0) {
                 errorProfile.enter();
-                throw RError.error(getEncapsulatingSourceSection(), getEmptyError(), getArgumentName());
+                throw RError.error(this, getEmptyError(), getArgumentName());
             }
         }
         return argument.getDataAt(0);

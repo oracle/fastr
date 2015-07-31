@@ -39,7 +39,7 @@ public abstract class CastSymbolNode extends CastBaseNode {
 
     @Specialization
     protected RSymbol doNull(@SuppressWarnings("unused") RNull value) {
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_TYPE_LENGTH, "symbol", 0);
+        throw RError.error(this, RError.Message.INVALID_TYPE_LENGTH, "symbol", 0);
     }
 
     @Specialization

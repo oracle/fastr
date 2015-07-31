@@ -50,7 +50,7 @@ public class SplineFunctions {
     private static RList splineCoef(int method, RDoubleVector x, RDoubleVector y) {
         final int n = x.getLength();
         if (y.getLength() != n) {
-            throw RError.error(RError.Message.INPUTS_DIFFERENT_LENGTHS);
+            throw RError.error(RError.NO_NODE, RError.Message.INPUTS_DIFFERENT_LENGTHS);
         }
 
         double[] b = new double[n];

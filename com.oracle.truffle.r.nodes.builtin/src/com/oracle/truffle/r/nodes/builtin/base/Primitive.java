@@ -39,7 +39,7 @@ public abstract class Primitive extends RBuiltinNode {
         RFunction function = RContext.lookupBuiltin(name);
         if (function == null || function.getRBuiltin() != null && function.getRBuiltin().getKind() != RBuiltinKind.PRIMITIVE) {
             errorProfile.enter();
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.NO_SUCH_PRIMITIVE, name);
+            throw RError.error(this, RError.Message.NO_SUCH_PRIMITIVE, name);
         }
 
         // .Primitive function is validated
@@ -48,6 +48,6 @@ public abstract class Primitive extends RBuiltinNode {
 
     @Fallback
     protected RFunction primitive(@SuppressWarnings("unused") Object name) {
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.STRING_ARGUMENT_REQUIRED);
+        throw RError.error(this, RError.Message.STRING_ARGUMENT_REQUIRED);
     }
 }

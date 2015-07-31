@@ -79,7 +79,7 @@ public abstract class CastDoubleNode extends CastBaseNode {
         double result = naCheck.convertComplexToDouble(operand, false);
         if (operand.getImaginaryPart() != 0.0) {
             warningBranch.enter();
-            RError.warning(getEncapsulatingSourceSection(), RError.Message.IMAGINARY_PARTS_DISCARDED_IN_COERCION);
+            RError.warning(this, RError.Message.IMAGINARY_PARTS_DISCARDED_IN_COERCION);
         }
         return result;
     }
@@ -99,7 +99,7 @@ public abstract class CastDoubleNode extends CastBaseNode {
         double result = RRuntime.string2doubleNoCheck(operand);
         if (RRuntime.isNA(result)) {
             warningBranch.enter();
-            RError.warning(getEncapsulatingSourceSection(), RError.Message.NA_INTRODUCED_COERCION);
+            RError.warning(this, RError.Message.NA_INTRODUCED_COERCION);
         }
         return result;
     }
@@ -171,7 +171,7 @@ public abstract class CastDoubleNode extends CastBaseNode {
             ddata[i] = doubleValue;
         }
         if (warning) {
-            RError.warning(getEncapsulatingSourceSection(), RError.Message.NA_INTRODUCED_COERCION);
+            RError.warning(this, RError.Message.NA_INTRODUCED_COERCION);
         }
         RDoubleVector ret = RDataFactory.createDoubleVector(ddata, !seenNA, getPreservedDimensions(operand), getPreservedNames(operand));
         preserveDimensionNames(operand, ret);
@@ -195,7 +195,7 @@ public abstract class CastDoubleNode extends CastBaseNode {
         }
         if (warning) {
             warningBranch.enter();
-            RError.warning(getEncapsulatingSourceSection(), RError.Message.IMAGINARY_PARTS_DISCARDED_IN_COERCION);
+            RError.warning(this, RError.Message.IMAGINARY_PARTS_DISCARDED_IN_COERCION);
         }
         return createResultVector(operand, ddata);
     }

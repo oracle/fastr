@@ -24,6 +24,7 @@ package com.oracle.truffle.r.nodes.access;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.variables.*;
@@ -46,8 +47,9 @@ public class ReadVariadicComponentNode extends RNode implements RSyntaxNode {
     private final BranchProfile errorBranch = BranchProfile.create();
     private final BranchProfile promiseBranch = BranchProfile.create();
 
-    public ReadVariadicComponentNode(int index) {
+    public ReadVariadicComponentNode(SourceSection src, int index) {
         this.index = index;
+        assignSourceSection(src);
     }
 
     @Override
@@ -55,17 +57,17 @@ public class ReadVariadicComponentNode extends RNode implements RSyntaxNode {
         Object args = lookup.execute(frame);
         if (args == null) {
             errorBranch.enter();
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.NO_DOT_DOT, index + 1);
+            throw RError.error(this, RError.Message.NO_DOT_DOT, index + 1);
         }
         RArgsValuesAndNames argsValuesAndNames = (RArgsValuesAndNames) args;
         if (argsValuesAndNames.isEmpty()) {
             errorBranch.enter();
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.NO_LIST_FOR_CDR);
+            throw RError.error(this, RError.Message.NO_LIST_FOR_CDR);
         }
 
         if (argsValuesAndNames.getLength() <= index) {
             errorBranch.enter();
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.DOT_DOT_SHORT, index + 1);
+            throw RError.error(this, RError.Message.DOT_DOT_SHORT, index + 1);
         }
         Object ret = argsValuesAndNames.getArgument(index);
         if (ret instanceof RPromise) {

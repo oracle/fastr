@@ -132,7 +132,7 @@ public abstract class RowSums extends RBuiltinNode {
     protected RDoubleVector rowSums(RAbstractStringVector x, int rowNum, int colNum, byte naRm) {
         controlVisibility();
         CompilerDirectives.transferToInterpreter();
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.X_NUMERIC);
+        throw RError.error(this, RError.Message.X_NUMERIC);
     }
 
 }

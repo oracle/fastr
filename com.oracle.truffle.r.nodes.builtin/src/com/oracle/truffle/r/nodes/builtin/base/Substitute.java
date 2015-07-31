@@ -56,7 +56,7 @@ public abstract class Substitute extends RBuiltinNode {
     @SuppressWarnings("unused")
     @Fallback
     protected Object doSubstitute(Object expr, Object x) {
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ENVIRONMENT);
+        throw RError.error(this, RError.Message.INVALID_ENVIRONMENT);
     }
 
     @Specialization

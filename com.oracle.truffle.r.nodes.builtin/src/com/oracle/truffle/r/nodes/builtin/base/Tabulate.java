@@ -51,12 +51,12 @@ public abstract class Tabulate extends RBuiltinNode {
     @Specialization
     public RIntVector tabulate(Object bin, int nBins) {
         CompilerDirectives.transferToInterpreter();
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_INPUT);
+        throw RError.error(this, RError.Message.INVALID_INPUT);
     }
 
     protected boolean isValidNBin(int nBins) {
         if (RRuntime.isNA(nBins) || nBins < 0) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "nbin");
+            throw RError.error(this, RError.Message.INVALID_ARGUMENT, "nbin");
         }
         return true;
     }

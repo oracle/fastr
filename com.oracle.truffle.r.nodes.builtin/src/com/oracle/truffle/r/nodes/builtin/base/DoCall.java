@@ -80,7 +80,7 @@ public abstract class DoCall extends RBuiltinNode {
             func = (RFunction) getNode.execute(frame, what, env, RType.Function.getName(), RRuntime.LOGICAL_TRUE);
         } else {
             errorProfile.enter();
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.MUST_BE_STRING_OR_FUNCTION, "what");
+            throw RError.error(this, RError.Message.MUST_BE_STRING_OR_FUNCTION, "what");
         }
 
         Object[] argValues = argsAsList.getDataCopy();
@@ -133,7 +133,7 @@ public abstract class DoCall extends RBuiltinNode {
             return groupDispatch.executeDynamic(frame, new RArgsValuesAndNames(argValues, signature), builtin.getName(), builtin.getGroup(), func);
         }
         EvaluatedArguments evaledArgs = EvaluatedArguments.create(argValues, signature);
-        EvaluatedArguments reorderedArgs = ArgumentMatcher.matchArgumentsEvaluated(func, evaledArgs, getEncapsulatingSourceSection(), false);
+        EvaluatedArguments reorderedArgs = ArgumentMatcher.matchArgumentsEvaluated(func, evaledArgs, this, false);
         if (func.isBuiltin()) {
             Object[] argArray = reorderedArgs.getArguments();
             for (int i = 0; i < argArray.length; i++) {
@@ -162,7 +162,7 @@ public abstract class DoCall extends RBuiltinNode {
             needsCallerFrame = true;
         }
         callerFrame = needsCallerFrame ? getCallerFrame(frame, callerFrame) : null;
-        Object[] callArgs = RArguments.create(func, callCache.getSourceSection(), callerFrame, RArguments.getDepth(frame) + 1, reorderedArgs.getArguments(), reorderedArgs.getSignature());
+        Object[] callArgs = RArguments.create(func, RDataFactory.createCaller(this), callerFrame, RArguments.getDepth(frame) + 1, reorderedArgs.getArguments(), reorderedArgs.getSignature());
         RArguments.setIsIrregular(callArgs, true);
         return callCache.execute(frame, func.getTarget(), callArgs);
     }

@@ -40,7 +40,7 @@ public abstract class FastRDebug extends RExternalBuiltinNode.Arg1 {
     @SuppressWarnings("unused")
     @Fallback
     protected Object fallback(Object a1) {
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "element");
+        throw RError.error(this, RError.Message.INVALID_ARGUMENT, "element");
     }
 
 }

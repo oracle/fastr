@@ -297,7 +297,7 @@ public final class CountFields extends RExternalBuiltinNode {
         String commentCharArg = isString(argValues[5]);
         char comChar;
         if (!(commentCharArg != null && commentCharArg.length() == 1)) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "comment.char");
+            throw RError.error(this, RError.Message.INVALID_ARGUMENT, "comment.char");
         } else {
             comChar = commentCharArg.charAt(0);
         }
@@ -314,7 +314,7 @@ public final class CountFields extends RExternalBuiltinNode {
         } else {
             String s = isString(sepArg);
             if (s == null) {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "sep");
+                throw RError.error(this, RError.Message.INVALID_ARGUMENT, "sep");
             } else {
                 if (s.length() == 0) {
                     sepChar = 0;
@@ -329,7 +329,7 @@ public final class CountFields extends RExternalBuiltinNode {
         } else {
             String s = isString(quoteArg);
             if (s == null) {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, "invalid quote symbol set");
+                throw RError.error(this, RError.Message.GENERIC, "invalid quote symbol set");
             } else {
                 quoteSet = s;
             }
@@ -338,7 +338,7 @@ public final class CountFields extends RExternalBuiltinNode {
             return countFields(openConn, sepChar, quoteSet, nskip, RRuntime.fromLogical(blskip), comChar);
         } catch (IllegalStateException | IOException ex) {
             errorProfile.enter();
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, ex.getMessage());
+            throw RError.error(this, RError.Message.GENERIC, ex.getMessage());
         }
     }
 }

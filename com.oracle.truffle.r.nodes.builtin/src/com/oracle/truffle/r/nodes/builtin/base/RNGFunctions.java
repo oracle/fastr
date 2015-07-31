@@ -66,7 +66,7 @@ public class RNGFunctions {
         protected RNull setSeed(byte seed, RNull kind, RNull normKind) {
             controlVisibility();
             CompilerDirectives.transferToInterpreter();
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.SEED_NOT_VALID_INT);
+            throw RError.error(this, RError.Message.SEED_NOT_VALID_INT);
         }
 
         private void doSetSeed(Integer newSeed, int kind, int normKind) {
@@ -74,9 +74,9 @@ public class RNGFunctions {
                 RRNG.doSetSeed(newSeed, kind, normKind);
             } catch (RNGException ex) {
                 if (ex.isError()) {
-                    throw RError.error(getEncapsulatingSourceSection(), ex);
+                    throw RError.error(this, ex);
                 } else {
-                    RError.warning(getEncapsulatingSourceSection(), RError.Message.GENERIC, ex.getMessage());
+                    RError.warning(this, RError.Message.GENERIC, ex.getMessage());
                 }
             }
         }
@@ -96,9 +96,9 @@ public class RNGFunctions {
                 RRNG.doRNGKind(kindChange, normKindChange);
             } catch (RNGException ex) {
                 if (ex.isError()) {
-                    throw RError.error(getEncapsulatingSourceSection(), ex);
+                    throw RError.error(this, ex);
                 } else {
-                    RError.warning(getEncapsulatingSourceSection(), RError.Message.GENERIC, ex.getMessage());
+                    RError.warning(this, RError.Message.GENERIC, ex.getMessage());
                 }
             }
             return result;
@@ -106,7 +106,7 @@ public class RNGFunctions {
 
         private int checkType(Object kind, String name) {
             if (!(kind == RNull.instance || kind instanceof RIntVector || kind instanceof Integer)) {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, name);
+                throw RError.error(this, RError.Message.INVALID_ARGUMENT, name);
             }
             return kind == RNull.instance ? RRNG.NO_KIND_CHANGE : kind instanceof Integer ? (Integer) kind : ((RAbstractIntVector) kind).getDataAt(0);
         }

@@ -40,7 +40,7 @@ public final class Fft extends RExternalBuiltinNode {
                 RFFIFactory.getRFFI().getStatsRFFI().fft_factor(n, maxf, maxp);
                 if (maxf[0] == 0) {
                     errorProfile.enter();
-                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.FFT_FACTORIZATION);
+                    throw RError.error(this, RError.Message.FFT_FACTORIZATION);
                 }
                 double[] work = new double[4 * maxf[0]];
                 int[] iwork = new int[maxp[0]];
@@ -56,7 +56,7 @@ public final class Fft extends RExternalBuiltinNode {
                         RFFIFactory.getRFFI().getStatsRFFI().fft_factor(d[i], maxf, maxp);
                         if (maxf[0] == 0) {
                             errorProfile.enter();
-                            throw RError.error(getEncapsulatingSourceSection(), RError.Message.FFT_FACTORIZATION);
+                            throw RError.error(this, RError.Message.FFT_FACTORIZATION);
                         }
                         if (maxf[0] > maxmaxf) {
                             maxmaxf = maxf[0];

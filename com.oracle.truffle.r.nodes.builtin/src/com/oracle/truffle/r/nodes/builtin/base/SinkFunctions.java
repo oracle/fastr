@@ -53,7 +53,7 @@ public class SinkFunctions {
             try {
                 StdConnections.popDivertOut();
             } catch (IOException ex) {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, ex.getMessage());
+                throw RError.error(this, RError.Message.GENERIC, ex.getMessage());
             }
             controlVisibility();
             return RNull.instance;
@@ -62,7 +62,7 @@ public class SinkFunctions {
         @SuppressWarnings("unused")
         @Fallback
         protected RNull sink(Object conn, Object closeOnExit, Object isMessage, Object split) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_UNNAMED_ARGUMENTS);
+            throw RError.error(this, RError.Message.INVALID_UNNAMED_ARGUMENTS);
         }
     }
 
@@ -81,7 +81,7 @@ public class SinkFunctions {
         @SuppressWarnings("unused")
         @Fallback
         protected RNull sinkNumbner(Object type) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT);
+            throw RError.error(this, RError.Message.INVALID_ARGUMENT);
         }
     }
 }

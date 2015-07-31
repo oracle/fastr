@@ -64,7 +64,7 @@ public abstract class Switch extends RBuiltinNode {
                 continue;
             } else if (suppliedArgName.length() == 0) {
                 suppliedArgNameIsEmpty.enter();
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.ZERO_LENGTH_VARIABLE);
+                throw RError.error(this, RError.Message.ZERO_LENGTH_VARIABLE);
             } else if (xStr.equals(suppliedArgName)) {
                 // match, evaluate the associated arg
                 Object optionalArgValue = promiseHelper.checkEvaluate(frame, optionalArgValues[i]);
@@ -95,7 +95,7 @@ public abstract class Switch extends RBuiltinNode {
                 suppliedArgNameIsNull.enter();
                 Object optionalArg = optionalArgValues[i];
                 if (currentDefaultProfile.profile(currentDefault != null)) {
-                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.DUPLICATE_SWITCH_DEFAULT, deparseDefault(currentDefault), deparseDefault(optionalArg));
+                    throw RError.error(this, RError.Message.DUPLICATE_SWITCH_DEFAULT, deparseDefault(currentDefault), deparseDefault(optionalArg));
                 } else {
                     currentDefault = optionalArg;
                 }
@@ -144,7 +144,7 @@ public abstract class Switch extends RBuiltinNode {
     @Specialization
     protected Object doSwitch(RMissing x, RMissing optionalArgs) {
         CompilerDirectives.transferToInterpreter();
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.EXPR_MISSING);
+        throw RError.error(this, RError.Message.EXPR_MISSING);
     }
 
     private Object doSwitchInt(VirtualFrame frame, int index, RArgsValuesAndNames optionalArgs) {
@@ -154,7 +154,7 @@ public abstract class Switch extends RBuiltinNode {
             if (value != null) {
                 return value;
             }
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.NO_ALTERNATIVE_IN_SWITCH);
+            throw RError.error(this, RError.Message.NO_ALTERNATIVE_IN_SWITCH);
         }
         return null;
     }

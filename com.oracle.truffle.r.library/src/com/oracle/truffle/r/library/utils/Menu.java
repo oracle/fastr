@@ -51,6 +51,6 @@ public abstract class Menu extends RExternalBuiltinNode.Arg1 {
     @Fallback
     @TruffleBoundary
     protected int menu(@SuppressWarnings("unused") Object choices) {
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "choices");
+        throw RError.error(this, RError.Message.INVALID_ARGUMENT, "choices");
     }
 }

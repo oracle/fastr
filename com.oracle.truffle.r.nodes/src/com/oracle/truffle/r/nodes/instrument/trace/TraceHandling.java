@@ -123,7 +123,8 @@ public class TraceHandling {
                 for (int i = 0; i < indent; i++) {
                     RContext.getInstance().getConsoleHandler().print(" ");
                 }
-                RContext.getInstance().getConsoleHandler().printf("trace: %s%n", RArguments.safeGetCallSourceString(frame));
+                String callString = RContext.getRRuntimeASTAccess().getCallerSource(RArguments.getCall(frame));
+                RContext.getInstance().getConsoleHandler().printf("trace: %s%n", callString);
                 indent += INDENT;
             }
         }

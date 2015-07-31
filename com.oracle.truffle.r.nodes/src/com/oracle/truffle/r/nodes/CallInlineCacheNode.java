@@ -56,6 +56,7 @@ public abstract class CallInlineCacheNode extends Node {
         return callNode.call(frame, target, arguments);
     }
 
+    // FIXME remove this
     @Override
     public SourceSection getSourceSection() {
         // not a syntax node so..

@@ -105,7 +105,7 @@ public abstract class UpdateAttributes extends RInvisibleBuiltinNode {
         controlVisibility();
         Object listNamesObject = list.getNames(attrProfiles);
         if (listNamesObject == null || listNamesObject == RNull.instance) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.ATTRIBUTES_NAMED);
+            throw RError.error(this, RError.Message.ATTRIBUTES_NAMED);
         }
         RStringVector listNames = (RStringVector) listNamesObject;
         RAbstractContainer result = container.materializeNonShared();
@@ -120,7 +120,7 @@ public abstract class UpdateAttributes extends RInvisibleBuiltinNode {
             }
             // has to be reported if no other name is undefined
             if (listNames.getDataAt(0).equals(RRuntime.NAMES_ATTR_EMPTY_VALUE)) {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.ZERO_LENGTH_VARIABLE);
+                throw RError.error(this, RError.Message.ZERO_LENGTH_VARIABLE);
             }
             // set the dim attribute first
             setDimAttribute(result, list);
@@ -139,7 +139,7 @@ public abstract class UpdateAttributes extends RInvisibleBuiltinNode {
         for (int i = 1; i < length; i++) {
             String attrName = listNames.getDataAt(i);
             if (attrName.equals(RRuntime.NAMES_ATTR_EMPTY_VALUE)) {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.ALL_ATTRIBUTES_NAMES, i + 1);
+                throw RError.error(this, RError.Message.ALL_ATTRIBUTES_NAMES, i + 1);
             }
         }
     }
@@ -158,7 +158,7 @@ public abstract class UpdateAttributes extends RInvisibleBuiltinNode {
                 } else {
                     RAbstractIntVector dimsVector = castInteger(castVector(value));
                     if (dimsVector.getLength() == 0) {
-                        throw RError.error(getEncapsulatingSourceSection(), RError.Message.LENGTH_ZERO_DIM_INVALID);
+                        throw RError.error(this, RError.Message.LENGTH_ZERO_DIM_INVALID);
                     }
                     result.setDimensions(dimsVector.materialize().getDataCopy());
                 }
@@ -216,17 +216,17 @@ public abstract class UpdateAttributes extends RInvisibleBuiltinNode {
                 RList list = (RList) operand;
                 RStringVector listNames = list.getNames(attrProfiles);
                 if (listNames == null) {
-                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.ATTRIBUTES_NAMED);
+                    throw RError.error(this, RError.Message.ATTRIBUTES_NAMED);
                 }
                 for (int i = 0; i < list.getLength(); i++) {
                     String attrName = listNames.getDataAt(i);
                     if (attrName == null) {
-                        throw RError.error(getEncapsulatingSourceSection(), RError.Message.ATTRIBUTES_NAMED);
+                        throw RError.error(this, RError.Message.ATTRIBUTES_NAMED);
                     }
                     if (attrName.equals(RRuntime.CLASS_ATTR_KEY)) {
                         Object attrValue = RRuntime.asString(list.getDataAt(i));
                         if (attrValue == null) {
-                            throw RError.error(getEncapsulatingSourceSection(), RError.Message.SET_INVALID_CLASS_ATTR);
+                            throw RError.error(this, RError.Message.SET_INVALID_CLASS_ATTR);
                         }
                         attrObj.setClassAttr(RDataFactory.createStringVectorFromScalar((String) attrValue), false);
                     } else {
@@ -234,10 +234,10 @@ public abstract class UpdateAttributes extends RInvisibleBuiltinNode {
                     }
                 }
             } else {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.ATTRIBUTES_LIST_OR_NULL);
+                throw RError.error(this, RError.Message.ATTRIBUTES_LIST_OR_NULL);
             }
         } else {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
+            throw RError.error(this, RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
         }
         return obj;
     }

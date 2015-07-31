@@ -38,7 +38,7 @@ public abstract class C_ParseRd extends RExternalBuiltinNode.Arg7 {
     @Specialization
     protected Object parseRd(RConnection con, REnvironment srcfile, @SuppressWarnings("unused") String encoding, byte verboseL, RAbstractStringVector basename, byte fragmentL, byte warningCallsL) {
         if (RRuntime.isNA(warningCallsL)) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "warningCalls");
+            throw RError.error(this, RError.Message.INVALID_ARGUMENT, "warningCalls");
         }
 
         try (RConnection openConn = con.forceOpen("r")) {
@@ -50,16 +50,16 @@ public abstract class C_ParseRd extends RExternalBuiltinNode.Arg7 {
                             RDataFactory.createLogicalVectorFromScalar(warningCallsL));
             // @formatter:on
         } catch (IOException ex) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, ex.getMessage());
+            throw RError.error(this, RError.Message.GENERIC, ex.getMessage());
         } catch (Throwable ex) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, ex.getMessage());
+            throw RError.error(this, RError.Message.GENERIC, ex.getMessage());
         }
     }
 
     @SuppressWarnings("unused")
     @Fallback
     public Object parseRd(Object con, Object srcfile, Object encoding, Object verbose, Object basename, Object fragment, Object warningCalls) {
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
+        throw RError.error(this, RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
     }
 
 }

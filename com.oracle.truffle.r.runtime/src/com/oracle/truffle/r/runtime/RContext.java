@@ -326,10 +326,9 @@ public final class RContext extends ExecutionContext {
          * Variant of {@link #eval(RLanguage, MaterializedFrame)} where we already have the
          * {@link RFunction} and the evaluated arguments, but do not have a frame available, and we
          * are behind a {@link TruffleBoundary}, so call inlining is not an issue. This is primarily
-         * used for R callbacks from {@link RErrorHandling} and {@link RSerialize}. The "R" calling
-         * function is passed explicitly, and may be {@code null} e.g. a top-level call.
+         * used for R callbacks from {@link RErrorHandling} and {@link RSerialize}.
          */
-        Object evalFunction(RFunction func, RLanguage caller, Object... args);
+        Object evalFunction(RFunction func, Object... args);
 
         /**
          * Evaluates an {@link com.oracle.truffle.r.runtime.data.RPromise.Closure} in {@code frame}.
@@ -551,7 +550,7 @@ public final class RContext extends ExecutionContext {
     private RContext(Kind kind, RContext parent, String[] commandArgs, ConsoleHandler consoleHandler) {
         if (kind == Kind.SHARE_PARENT_RW) {
             if (parent.sharedChild != null) {
-                throw RError.error(RError.Message.GENERIC, "can't have multiple active SHARED_PARENT_RW contexts");
+                throw RError.error(RError.NO_NODE, RError.Message.GENERIC, "can't have multiple active SHARED_PARENT_RW contexts");
             }
             parent.sharedChild = this;
         }

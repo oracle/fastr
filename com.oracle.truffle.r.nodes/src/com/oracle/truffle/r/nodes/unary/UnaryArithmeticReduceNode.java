@@ -25,7 +25,6 @@ package com.oracle.truffle.r.nodes.unary;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.nodes.*;
-import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.unary.UnaryArithmeticReduceNodeGen.MultiElemStringHandlerNodeGen;
@@ -75,7 +74,7 @@ public abstract class UnaryArithmeticReduceNode extends Node {
     private void emptyWarning() {
         if (semantics.getEmptyWarning() != null) {
             warningProfile.enter();
-            RError.warning(semantics.emptyWarning);
+            RError.warning(this, semantics.emptyWarning);
         }
     }
 
@@ -153,7 +152,7 @@ public abstract class UnaryArithmeticReduceNode extends Node {
                 return na.check(operand) ? RRuntime.createComplexNA() : operand;
             }
         } else {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_TYPE_ARGUMENT, "complex");
+            throw RError.error(this, RError.Message.INVALID_TYPE_ARGUMENT, "complex");
         }
     }
 
@@ -164,7 +163,7 @@ public abstract class UnaryArithmeticReduceNode extends Node {
             if (naRmProfile.profile(naRm == RRuntime.LOGICAL_TRUE)) {
                 if (na.check(operand)) {
                     if (semantics.getEmptyWarning() != null) {
-                        RError.warning(getEncapsulatingSourceSection(), semantics.emptyWarningCharacter);
+                        RError.warning(this, semantics.emptyWarningCharacter);
                     }
                     return semantics.getStringStart();
                 } else {
@@ -174,14 +173,14 @@ public abstract class UnaryArithmeticReduceNode extends Node {
                 return na.check(operand) ? RRuntime.STRING_NA : operand;
             }
         } else {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_TYPE_ARGUMENT, "character");
+            throw RError.error(this, RError.Message.INVALID_TYPE_ARGUMENT, "character");
         }
     }
 
     @SuppressWarnings("unused")
     @Specialization
     protected RRaw doString(RRaw operand, byte naRm) {
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_TYPE_ARGUMENT, "raw");
+        throw RError.error(this, RError.Message.INVALID_TYPE_ARGUMENT, "raw");
     }
 
     @Specialization
@@ -315,7 +314,7 @@ public abstract class UnaryArithmeticReduceNode extends Node {
             }
             return result;
         } else {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_TYPE_ARGUMENT, "complex");
+            throw RError.error(this, RError.Message.INVALID_TYPE_ARGUMENT, "complex");
 
         }
     }
@@ -325,20 +324,20 @@ public abstract class UnaryArithmeticReduceNode extends Node {
     // "largest" String for the implementation of max function
 
     @SuppressWarnings("unused")
-    private static String doStringVectorEmptyInternal(RStringVector operand, byte naRm, ReduceSemantics semantics, SourceSection sourceSection) {
+    private static String doStringVectorEmptyInternal(RStringVector operand, byte naRm, ReduceSemantics semantics, Node invokingNode) {
         if (semantics.supportString) {
             if (semantics.getEmptyWarning() != null) {
-                RError.warning(sourceSection, semantics.emptyWarningCharacter);
+                RError.warning(invokingNode, semantics.emptyWarningCharacter);
             }
             return semantics.getStringStart();
         } else {
-            throw RError.error(sourceSection, RError.Message.INVALID_TYPE_ARGUMENT, "character");
+            throw RError.error(invokingNode, RError.Message.INVALID_TYPE_ARGUMENT, "character");
         }
     }
 
     @Specialization(guards = "operand.getLength() == 0")
     protected String doStringVectorEmpty(RStringVector operand, byte naRm) {
-        return doStringVectorEmptyInternal(operand, naRm, semantics, getEncapsulatingSourceSection());
+        return doStringVectorEmptyInternal(operand, naRm, semantics, this);
     }
 
     @Specialization(guards = "operand.getLength() == 1")
@@ -354,7 +353,7 @@ public abstract class UnaryArithmeticReduceNode extends Node {
             }
             return result;
         } else {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_TYPE_ARGUMENT, "character");
+            throw RError.error(this, RError.Message.INVALID_TYPE_ARGUMENT, "character");
         }
     }
 
@@ -363,14 +362,14 @@ public abstract class UnaryArithmeticReduceNode extends Node {
         if (semantics.supportString) {
             return handleString(operand, naRm, 0);
         } else {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_TYPE_ARGUMENT, "character");
+            throw RError.error(this, RError.Message.INVALID_TYPE_ARGUMENT, "character");
         }
     }
 
     @SuppressWarnings("unused")
     @Specialization
     protected RRaw doString(RRawVector operand, byte naRm) {
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_TYPE_ARGUMENT, "raw");
+        throw RError.error(this, RError.Message.INVALID_TYPE_ARGUMENT, "raw");
     }
 
     public static final class ReduceSemantics {
@@ -460,7 +459,7 @@ public abstract class UnaryArithmeticReduceNode extends Node {
                     // the following is meant to eliminate leading NA-s
                     if (offset == operand.getLength() - 1) {
                         // last element - all other are NAs
-                        return doStringVectorEmptyInternal(operand, naRm, semantics, getEncapsulatingSourceSection());
+                        return doStringVectorEmptyInternal(operand, naRm, semantics, this);
                     } else {
                         return handleString(operand, naRm, offset + 1);
                     }

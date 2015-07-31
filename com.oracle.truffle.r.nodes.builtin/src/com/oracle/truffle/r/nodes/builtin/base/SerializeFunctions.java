@@ -43,12 +43,12 @@ public class SerializeFunctions {
             controlVisibility();
             try (RConnection openConn = conn.forceOpen("rb")) {
                 if (!openConn.canRead()) {
-                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.CONNECTION_NOT_OPEN_READ);
+                    throw RError.error(this, RError.Message.CONNECTION_NOT_OPEN_READ);
                 }
                 Object result = RSerialize.unserialize(openConn, depth);
                 return result;
             } catch (IOException ex) {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, ex.getMessage());
+                throw RError.error(this, RError.Message.GENERIC, ex.getMessage());
             }
         }
 
@@ -60,15 +60,15 @@ public class SerializeFunctions {
             // xdr is only relevant if ascii is false
             try (RConnection openConn = conn.forceOpen(ascii ? "wt" : "wb")) {
                 if (!openConn.canWrite()) {
-                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.CONNECTION_NOT_OPEN_WRITE);
+                    throw RError.error(this, RError.Message.CONNECTION_NOT_OPEN_WRITE);
                 }
                 if (!ascii && openConn.isTextMode()) {
-                    throw RError.error(getEncapsulatingSourceSection(), RError.Message.BINARY_CONNECTION_REQUIRED);
+                    throw RError.error(this, RError.Message.BINARY_CONNECTION_REQUIRED);
                 }
                 RSerialize.serialize(openConn, object, ascii, RRuntime.fromLogical(xdrLogical), RSerialize.DEFAULT_VERSION, null, depth);
                 return RNull.instance;
             } catch (IOException ex) {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, ex.getMessage());
+                throw RError.error(this, RError.Message.GENERIC, ex.getMessage());
             }
         }
     }
@@ -122,7 +122,7 @@ public class SerializeFunctions {
         @SuppressWarnings("unused")
         @Fallback
         protected Object serialize(VirtualFrame frame, Object object, Object conn, Object asciiLogical, Object version, Object refhook) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
+            throw RError.error(this, RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
         }
     }
 
@@ -131,7 +131,7 @@ public class SerializeFunctions {
         @Specialization
         protected Object serializeB(VirtualFrame frame, Object object, RConnection conn, byte xdrLogical, RNull version, RNull refhook) {
             if (!RRuntime.fromLogical(xdrLogical)) {
-                throw RError.nyi(getEncapsulatingSourceSection(), "xdr==FALSE");
+                throw RError.nyi(this, "xdr==FALSE");
             }
             return doSerializeToConn(object, conn, RRuntime.LOGICAL_FALSE, xdrLogical, version, refhook, RArguments.getDepth(frame));
         }

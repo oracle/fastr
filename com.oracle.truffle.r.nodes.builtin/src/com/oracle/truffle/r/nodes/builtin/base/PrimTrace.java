@@ -40,7 +40,7 @@ public abstract class PrimTrace extends RInvisibleBuiltinNode {
     protected RNull primTrace(RFunction func) {
         if (!func.isBuiltin()) {
             if (!TraceHandling.enableTrace(func)) {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, "failed to attach trace handler (not instrumented?)");
+                throw RError.error(this, RError.Message.GENERIC, "failed to attach trace handler (not instrumented?)");
             }
         }
         return RNull.instance;

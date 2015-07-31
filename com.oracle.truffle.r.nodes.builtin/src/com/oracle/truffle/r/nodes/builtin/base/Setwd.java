@@ -43,14 +43,14 @@ public abstract class Setwd extends RInvisibleBuiltinNode {
         controlVisibility();
         if (path.getLength() == 0) {
             errorProfile.enter();
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.CHAR_ARGUMENT);
+            throw RError.error(this, RError.Message.CHAR_ARGUMENT);
         }
         String owd = RFFIFactory.getRFFI().getBaseRFFI().getwd();
         String nwd = Utils.tildeExpand(path.getDataAt(0));
         int rc = RFFIFactory.getRFFI().getBaseRFFI().setwd(nwd);
         if (rc != 0) {
             errorProfile.enter();
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.CANNOT_CHANGE_DIRECTORY);
+            throw RError.error(this, RError.Message.CANNOT_CHANGE_DIRECTORY);
         } else {
             String nwdAbs = RFFIFactory.getRFFI().getBaseRFFI().getwd();
             Utils.updateCurwd(nwdAbs);
@@ -60,6 +60,6 @@ public abstract class Setwd extends RInvisibleBuiltinNode {
 
     @Fallback
     protected Object setwd(@SuppressWarnings("unused") Object path) {
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.CHAR_ARGUMENT);
+        throw RError.error(this, RError.Message.CHAR_ARGUMENT);
     }
 }

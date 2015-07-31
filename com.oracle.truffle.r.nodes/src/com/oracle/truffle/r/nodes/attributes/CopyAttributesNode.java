@@ -201,7 +201,7 @@ public abstract class CopyAttributesNode extends Node {
         }
         assert result.getDimensions() == null || newDimensions != null;
         if (newDimensions != null) {
-            RVector.verifyDimensions(result.getLength(), newDimensions, getEncapsulatingSourceSection());
+            RVector.verifyDimensions(result.getLength(), newDimensions, this);
             result.initAttributes().put(RRuntime.DIM_ATTR_KEY, RDataFactory.createIntVector(newDimensions, RDataFactory.COMPLETE_VECTOR));
             result.setInternalDimensions(newDimensions);
             if (rightNotResult) {

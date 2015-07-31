@@ -45,7 +45,7 @@ public abstract class CastBaseNode extends CastNode {
 
     protected RError throwCannotCoerceListError(String type) {
         listCoercionErrorBranch.enter();
-        throw RError.error(getSourceSection(), RError.Message.LIST_COERCION, type);
+        throw RError.error(this, RError.Message.LIST_COERCION, type);
     }
 
     protected int[] getPreservedDimensions(RAbstractContainer operand) {

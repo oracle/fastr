@@ -60,7 +60,7 @@ public class ConditionFunctions {
             RList handlers;
             if (!(classesObj instanceof RStringVector && handlersObj instanceof RList && ((RStringVector) classesObj).getLength() == ((RList) handlersObj).getLength())) {
                 errorProfile.enter();
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.BAD_HANDLER_DATA);
+                throw RError.error(this, RError.Message.BAD_HANDLER_DATA);
             } else {
                 return RErrorHandling.createHandlers((RStringVector) classesObj, (RList) handlersObj, parentEnv, target, calling);
             }
@@ -85,7 +85,7 @@ public class ConditionFunctions {
         }
 
         protected RError badRestart() throws RError {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.BAD_RESTART);
+            throw RError.error(this, RError.Message.BAD_RESTART);
         }
     }
 
@@ -126,7 +126,7 @@ public class ConditionFunctions {
         protected RNull invokeRestart(RList restart, Object args) {
             controlVisibility();
             if (RErrorHandling.invokeRestart(restart, args) == null) {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.RESTART_NOT_ON_STACK);
+                throw RError.error(this, RError.Message.RESTART_NOT_ON_STACK);
             } else {
                 return RNull.instance; // not reached
             }

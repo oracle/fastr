@@ -75,7 +75,7 @@ public abstract class VApply extends RCastingBuiltinNode {
         Object funValueObj = RRuntime.asAbstractVector(funValueArg);
         if (!(funValueObj instanceof RAbstractVector)) {
             errorProfile.enter();
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.MUST_BE_VECTOR, "FUN.VALUE");
+            throw RError.error(this, RError.Message.MUST_BE_VECTOR, "FUN.VALUE");
         }
         RAbstractVector funValueVec = funValueProfile.profile((RAbstractVector) funValueObj);
         int funValueVecLen = funValueVec.getLength();

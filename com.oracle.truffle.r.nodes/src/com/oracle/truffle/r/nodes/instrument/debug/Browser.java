@@ -80,7 +80,8 @@ public class Browser {
                         int ix = RArguments.getDepth(frame);
                         Frame stackFrame = frame;
                         do {
-                            ch.println(RArguments.safeGetCallSourceString(stackFrame));
+                            String callString = RContext.getRRuntimeASTAccess().getCallerSource(RArguments.getCall(stackFrame));
+                            ch.println(callString);
                             ix--;
                         } while (ix > 0 && (stackFrame = Utils.getStackFrame(FrameInstance.FrameAccess.READ_ONLY, ix)) != null);
                         ch.println("");

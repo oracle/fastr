@@ -126,7 +126,7 @@ public abstract class TempFile extends RBuiltinNode {
         } else if (obj instanceof String) {
             return RDataFactory.createStringVector((String) obj);
         }
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, msg);
+        throw RError.error(this, RError.Message.GENERIC, msg);
     }
 
 }

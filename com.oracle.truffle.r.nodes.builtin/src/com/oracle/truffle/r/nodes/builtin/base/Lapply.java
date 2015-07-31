@@ -94,7 +94,7 @@ public abstract class Lapply extends RBuiltinNode {
              * It might be rather straight forward to implement as soon as RCallNode supports
              * executing with an evaluated RArgsValuesAndNames. This should be implemented first.
              */
-            throw RError.nyi(getSourceSection(), "generic lApply");
+            throw RError.nyi(this, "generic lApply");
         }
 
         private static RNode createIndexedLoad() {

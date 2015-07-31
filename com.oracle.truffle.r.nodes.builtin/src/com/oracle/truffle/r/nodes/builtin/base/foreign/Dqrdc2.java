@@ -53,7 +53,7 @@ public final class Dqrdc2 extends RExternalBuiltinNode {
             return RDataFactory.createList(data, DQRDC2_NAMES);
         } catch (ClassCastException | ArrayIndexOutOfBoundsException ex) {
             errorProfile.enter();
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INCORRECT_ARG, "dqrdc2");
+            throw RError.error(this, RError.Message.INCORRECT_ARG, "dqrdc2");
         }
     }
 }

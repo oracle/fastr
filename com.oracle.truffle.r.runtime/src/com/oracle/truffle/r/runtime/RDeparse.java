@@ -849,6 +849,11 @@ public class RDeparse {
                 vecElement2buff(state, SEXPTYPE.convertFastRScalarType(type), obj);
                 break;
 
+            case FASTR_CONNECTION:
+                // TODO GnuR deparses this as a structure
+                state.append("NULL");
+                break;
+
             default:
                 assert false;
         }

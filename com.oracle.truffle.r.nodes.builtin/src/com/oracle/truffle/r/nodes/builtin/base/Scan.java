@@ -100,13 +100,13 @@ public abstract class Scan extends RBuiltinNode {
             data.sepchar = null;
         } else if (sepVec.getElementClass() != RString.class) {
             errorProfile.enter();
-            throw RError.error(RError.Message.INVALID_ARGUMENT, "sep");
+            throw RError.error(this, RError.Message.INVALID_ARGUMENT, "sep");
         }
         // TODO: some sort of character translation happens here?
         String sep = ((RAbstractStringVector) sepVec).getDataAt(0);
         if (sep.length() > 1) {
             errorProfile.enter();
-            throw RError.error(RError.Message.MUST_BE_ONE_BYTE, "'sep' value");
+            throw RError.error(this, RError.Message.MUST_BE_ONE_BYTE, "'sep' value");
         }
         data.sepchar = sep.length() == 0 ? null : sep.substring(0, 1);
 
@@ -114,12 +114,12 @@ public abstract class Scan extends RBuiltinNode {
             data.decchar = '.';
         } else if (decVec.getElementClass() != RString.class) {
             errorProfile.enter();
-            throw RError.error(RError.Message.INVALID_DECIMAL_SEP);
+            throw RError.error(this, RError.Message.INVALID_DECIMAL_SEP);
         }
         // TODO: some sort of character translation happens here?
         String dec = ((RAbstractStringVector) decVec).getDataAt(0);
         if (dec.length() > 1) {
-            throw RError.error(RError.Message.MUST_BE_ONE_BYTE, "decimal separator");
+            throw RError.error(this, RError.Message.MUST_BE_ONE_BYTE, "decimal separator");
         }
         data.decchar = dec.charAt(0);
 
@@ -127,7 +127,7 @@ public abstract class Scan extends RBuiltinNode {
             data.quoteset = "";
         } else if (quotesVec.getElementClass() != RString.class) {
             errorProfile.enter();
-            throw RError.error(RError.Message.INVALID_QUOTE_SYMBOL);
+            throw RError.error(this, RError.Message.INVALID_QUOTE_SYMBOL);
         }
         // TODO: some sort of character translation happens here?
         data.quoteset = ((RAbstractStringVector) quotesVec).getDataAt(0);
@@ -138,7 +138,7 @@ public abstract class Scan extends RBuiltinNode {
 
         if (naStringsVec.getElementClass() != RString.class) {
             errorProfile.enter();
-            throw RError.error(RError.Message.INVALID_ARGUMENT, "na.strings");
+            throw RError.error(this, RError.Message.INVALID_ARGUMENT, "na.strings");
         }
         data.naStrings = (RAbstractStringVector) naStringsVec;
 
@@ -148,11 +148,11 @@ public abstract class Scan extends RBuiltinNode {
 
         if (stripVec.getElementClass() != RLogical.class) {
             errorProfile.enter();
-            throw RError.error(RError.Message.INVALID_ARGUMENT, "strip.white");
+            throw RError.error(this, RError.Message.INVALID_ARGUMENT, "strip.white");
         }
         if (stripVec.getLength() != 1 && stripVec.getLength() != what.getLength()) {
             errorProfile.enter();
-            throw RError.error(RError.Message.INVALID_LENGTH, "strip.white");
+            throw RError.error(this, RError.Message.INVALID_LENGTH, "strip.white");
         }
         byte strip = ((RAbstractLogicalVector) stripVec).getDataAt(0);
 
@@ -164,13 +164,13 @@ public abstract class Scan extends RBuiltinNode {
 
         if (commentCharVec.getElementClass() != RString.class || commentCharVec.getLength() != 1) {
             errorProfile.enter();
-            throw RError.error(RError.Message.INVALID_ARGUMENT, "comment.char");
+            throw RError.error(this, RError.Message.INVALID_ARGUMENT, "comment.char");
         }
         String commentChar = ((RAbstractStringVector) commentCharVec).getDataAt(0);
         data.comchar = NO_COMCHAR;
         if (commentChar.length() > 1) {
             errorProfile.enter();
-            throw RError.error(RError.Message.INVALID_ARGUMENT, "comment.char");
+            throw RError.error(this, RError.Message.INVALID_ARGUMENT, "comment.char");
         } else if (commentChar.length() == 1) {
             data.comchar = commentChar.charAt(0);
         }
@@ -178,13 +178,13 @@ public abstract class Scan extends RBuiltinNode {
         byte escapes = firstElementOrNA(escapesVec);
         if (RRuntime.isNA(escapes)) {
             errorProfile.enter();
-            throw RError.error(RError.Message.INVALID_ARGUMENT, "allowEscapes");
+            throw RError.error(this, RError.Message.INVALID_ARGUMENT, "allowEscapes");
         }
         data.escapes = escapes != RRuntime.LOGICAL_FALSE;
 
         if (encodingVec.getElementClass() != RString.class || encodingVec.getLength() != 1) {
             errorProfile.enter();
-            throw RError.error(RError.Message.INVALID_ARGUMENT, "encoding");
+            throw RError.error(this, RError.Message.INVALID_ARGUMENT, "encoding");
         }
         String encoding = ((RAbstractStringVector) encodingVec).getDataAt(0);
         if (encoding.equals("latin1")) {
@@ -197,7 +197,7 @@ public abstract class Scan extends RBuiltinNode {
         byte skipNull = firstElementOrNA(skipNullVec);
         if (RRuntime.isNA(skipNull)) {
             errorProfile.enter();
-            throw RError.error(RError.Message.INVALID_ARGUMENT, "skipNull");
+            throw RError.error(this, RError.Message.INVALID_ARGUMENT, "skipNull");
         }
         data.skipNull = skipNull != RRuntime.LOGICAL_FALSE;
 
@@ -235,7 +235,7 @@ public abstract class Scan extends RBuiltinNode {
             }
 
         } catch (IOException x) {
-            throw RError.error(RError.Message.CANNOT_READ_CONNECTION);
+            throw RError.error(this, RError.Message.CANNOT_READ_CONNECTION);
         }
     }
 
@@ -354,7 +354,7 @@ public abstract class Scan extends RBuiltinNode {
 
         int nc = what.getLength();
         if (nc == 0) {
-            throw RError.error(RError.Message.EMPTY_WHAT);
+            throw RError.error(this, RError.Message.EMPTY_WHAT);
         }
         int blockSize = maxRecords > 0 ? maxRecords : (maxLines > 0 ? maxLines : SCAN_BLOCKSIZE);
 
@@ -362,7 +362,7 @@ public abstract class Scan extends RBuiltinNode {
         for (int i = 0; i < nc; i++) {
             if (what.getDataAt(i) == RNull.instance) {
                 errorProfile.enter();
-                throw RError.error(RError.Message.INVALID_ARGUMENT, "what");
+                throw RError.error(this, RError.Message.INVALID_ARGUMENT, "what");
             } else {
                 RAbstractVector vec = castVector(what.getDataAt(i));
                 list.updateDataAt(i, vec.createEmptySameType(blockSize, RDataFactory.COMPLETE_VECTOR), null);
@@ -399,7 +399,7 @@ public abstract class Scan extends RBuiltinNode {
                         n = 0;
                         break;
                     } else if (!multiLine) {
-                        throw RError.error(getEncapsulatingSourceSection(), RError.Message.LINE_ELEMENTS, lines + 1, nc);
+                        throw RError.error(this, RError.Message.LINE_ELEMENTS, lines + 1, nc);
                     } else {
                         strItems = getItems(data, blSkip);
                         // Checkstyle: stop modified control variable check
@@ -450,7 +450,7 @@ public abstract class Scan extends RBuiltinNode {
 
         if (n > 0 && n < nc) {
             if (!fill) {
-                RError.warning(getEncapsulatingSourceSection(), RError.Message.ITEMS_NOT_MULTIPLE);
+                RError.warning(this, RError.Message.ITEMS_NOT_MULTIPLE);
             }
             fillEmpty(n, nc, records, list, data);
             records++;

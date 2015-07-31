@@ -45,13 +45,12 @@ import com.oracle.truffle.r.runtime.data.RPromise.RPromiseFactory;
  * <p>
  * {@link ArgumentMatcher} serves the purpose of matching {@link CallArgumentsNode} to
  * {@link FormalArguments} of a specific function, see
- * {@link #matchArguments(RFunction, UnmatchedArguments, SourceSection, SourceSection, boolean)} .
- * The other match functions are used for special cases, where builtins make it necessary to
- * re-match parameters, e.g.:
- * {@link #matchArgumentsEvaluated(RFunction, EvaluatedArguments, SourceSection, boolean)} for
- * 'UseMethod' and
- * {@link #matchArgumentsInlined(RFunction, UnmatchedArguments, SourceSection, SourceSection)} for
- * builtins which are implemented in Java ( @see
+ * {@link #matchArguments(RFunction, UnmatchedArguments, Node, SourceSection, boolean)} . The other
+ * match functions are used for special cases, where builtins make it necessary to re-match
+ * parameters, e.g.: {@link #matchArgumentsEvaluated(RFunction, EvaluatedArguments, Node, boolean)}
+ * for 'UseMethod' and
+ * {@link #matchArgumentsInlined(RFunction, UnmatchedArguments, Node, SourceSection)} for builtins
+ * which are implemented in Java ( @see
  * {@link RBuiltinNode#inline(ArgumentsSignature, RNode[], SourceSection)}
  * </p>
  *
@@ -114,14 +113,14 @@ public class ArgumentMatcher {
      *
      * @param function The function which is to be called
      * @param suppliedArgs The arguments supplied to the call
-     * @param callSrc The source of the function call currently executed
+     * @param callingNode The {@link Node} invoking the match
      * @param argsSrc The source code encapsulating the arguments, for debugging purposes
      *
      * @return A fresh {@link MatchedArguments} containing the arguments in correct order and
      *         wrapped in {@link PromiseNode}s
      */
-    public static MatchedArguments matchArguments(RFunction function, UnmatchedArguments suppliedArgs, SourceSection callSrc, SourceSection argsSrc, boolean noOpt) {
-        RNode[] wrappedArgs = matchNodes(function, suppliedArgs.getArguments(), suppliedArgs.getSignature(), callSrc, argsSrc, suppliedArgs, noOpt);
+    public static MatchedArguments matchArguments(RFunction function, UnmatchedArguments suppliedArgs, Node callingNode, SourceSection argsSrc, boolean noOpt) {
+        RNode[] wrappedArgs = matchNodes(function, suppliedArgs.getArguments(), suppliedArgs.getSignature(), callingNode, argsSrc, suppliedArgs, noOpt);
         FormalArguments formals = ((RRootNode) function.getTarget().getRootNode()).getFormalArguments();
         return MatchedArguments.create(wrappedArgs, formals.getSignature());
     }
@@ -133,20 +132,20 @@ public class ArgumentMatcher {
      *
      * @param function The function which is to be called
      * @param suppliedArgs The arguments supplied to the call
-     * @param callSrc The source of the function call currently executed
+     * @param callingNode The {@link Node} invoking the match
      * @param argsSrc The source code encapsulating the arguments, for debugging purposes
      *
      * @return A fresh {@link InlinedArguments} containing the arguments in correct order and
      *         wrapped in special {@link PromiseNode}s
      */
-    public static InlinedArguments matchArgumentsInlined(RFunction function, UnmatchedArguments suppliedArgs, SourceSection callSrc, SourceSection argsSrc) {
-        RNode[] wrappedArgs = matchNodes(function, suppliedArgs.getArguments(), suppliedArgs.getSignature(), callSrc, argsSrc, suppliedArgs, false);
+    public static InlinedArguments matchArgumentsInlined(RFunction function, UnmatchedArguments suppliedArgs, Node callingNode, SourceSection argsSrc) {
+        RNode[] wrappedArgs = matchNodes(function, suppliedArgs.getArguments(), suppliedArgs.getSignature(), callingNode, argsSrc, suppliedArgs, false);
         return new InlinedArguments(wrappedArgs, suppliedArgs.getSignature());
     }
 
-    public static MatchPermutation matchArguments(ArgumentsSignature suppliedSignature, ArgumentsSignature formalSignature, SourceSection callSrc, boolean forNextMethod, RBuiltinDescriptor builtin) {
+    public static MatchPermutation matchArguments(ArgumentsSignature suppliedSignature, ArgumentsSignature formalSignature, Node callingNode, boolean forNextMethod, RBuiltinDescriptor builtin) {
         CompilerAsserts.neverPartOfCompilation();
-        MatchPermutation match = permuteArguments(suppliedSignature, formalSignature, callSrc, null, forNextMethod, index -> {
+        MatchPermutation match = permuteArguments(suppliedSignature, formalSignature, callingNode, null, forNextMethod, index -> {
             throw RInternalError.unimplemented("S3Dispatch should not have arg length mismatch");
         }, index -> suppliedSignature.getName(index), builtin);
         return match;
@@ -203,16 +202,16 @@ public class ArgumentMatcher {
      * @param function The 'Method' which is going to be 'Use'd
      * @param evaluatedArgs The arguments which are already in evaluated form (as they are directly
      *            taken from the stack)
-     * @param callSrc The source code of the call
+     * @param callingNode The {@link Node} invoking the match
      * @param forNextMethod matching when evaluating NextMethod
      *
      * @return A Fresh {@link EvaluatedArguments} containing the arguments rearranged and stuffed
      *         with default values (in the form of {@link RPromise}s where needed)
      */
-    public static EvaluatedArguments matchArgumentsEvaluated(RFunction function, EvaluatedArguments evaluatedArgs, SourceSection callSrc, boolean forNextMethod) {
+    public static EvaluatedArguments matchArgumentsEvaluated(RFunction function, EvaluatedArguments evaluatedArgs, Node callingNode, boolean forNextMethod) {
         RRootNode rootNode = (RRootNode) function.getTarget().getRootNode();
         FormalArguments formals = rootNode.getFormalArguments();
-        MatchPermutation match = permuteArguments(evaluatedArgs.getSignature(), formals.getSignature(), callSrc, null, forNextMethod, index -> {
+        MatchPermutation match = permuteArguments(evaluatedArgs.getSignature(), formals.getSignature(), callingNode, null, forNextMethod, index -> {
             throw RInternalError.unimplemented("S3Dispatch should not have arg length mismatch");
         }, index -> evaluatedArgs.getSignature().getName(index), null);
 
@@ -272,21 +271,20 @@ public class ArgumentMatcher {
      * @param function The function which is to be called
      * @param suppliedArgs The arguments supplied to the call
      * @param suppliedSignature The names for the arguments supplied to the call
-     * @param callSrc The source of the function call currently executed
+     * @param callingNode The {@link Node} initiating the match
      * @param argsSrc The source code encapsulating the arguments, for debugging purposes
      * @param closureCache The {@link ClosureCache} for the supplied arguments
      *
      * @return A list of {@link RNode}s which consist of the given arguments in the correct order
      *         and wrapped into the proper {@link PromiseNode}s
      */
-    private static RNode[] matchNodes(RFunction function, RNode[] suppliedArgs, ArgumentsSignature suppliedSignature, SourceSection callSrc, SourceSection argsSrc, ClosureCache closureCache,
-                    boolean noOpt) {
+    private static RNode[] matchNodes(RFunction function, RNode[] suppliedArgs, ArgumentsSignature suppliedSignature, Node callingNode, SourceSection argsSrc, ClosureCache closureCache, boolean noOpt) {
         assert suppliedArgs.length == suppliedSignature.getLength();
 
         FormalArguments formals = ((RRootNode) function.getTarget().getRootNode()).getFormalArguments();
 
         // Rearrange arguments
-        MatchPermutation match = permuteArguments(suppliedSignature, formals.getSignature(), callSrc, argsSrc, false,
+        MatchPermutation match = permuteArguments(suppliedSignature, formals.getSignature(), callingNode, argsSrc, false,
                         index -> ArgumentsSignature.VARARG_NAME.equals(RMissingHelper.unwrapName(suppliedArgs[index])), index -> getErrorForArgument(suppliedArgs, suppliedSignature, index),
                         function.getRBuiltin());
 
@@ -435,7 +433,7 @@ public class ArgumentMatcher {
      *
      * @param signature The signature (==names) of the supplied arguments
      * @param formalSignature The signature (==names) of the formal arguments
-     * @param callSrc The source of the function call currently executed
+     * @param callingNode The {@link Node} invoking the match
      * @param argsSrc The source code encapsulating the arguments, for debugging purposes
      * @param forNextMethod matching when evaluating NextMethod
      * @param builtin builtin function descriptor (or null if not a builtin)
@@ -443,7 +441,7 @@ public class ArgumentMatcher {
      * @return An array of type <T> with the supplied arguments in the correct order
      */
     @TruffleBoundary
-    private static MatchPermutation permuteArguments(ArgumentsSignature signature, ArgumentsSignature formalSignature, SourceSection callSrc, SourceSection argsSrc, boolean forNextMethod,
+    private static MatchPermutation permuteArguments(ArgumentsSignature signature, ArgumentsSignature formalSignature, Node callingNode, SourceSection argsSrc, boolean forNextMethod,
                     IntPredicate isVarSuppliedVarargs, IntFunction<String> errorString, RBuiltinDescriptor builtin) {
         // assert Arrays.stream(suppliedNames).allMatch(name -> name == null || !name.isEmpty());
 
@@ -462,8 +460,8 @@ public class ArgumentMatcher {
             }
 
             // Search for argument name inside formal arguments
-            int formalIndex = findParameterPosition(formalSignature, signature.getName(suppliedIndex), resultPermutation, suppliedIndex, hasVarArgs, callSrc, argsSrc, varArgIndex, forNextMethod,
-                            errorString, builtin);
+            int formalIndex = findParameterPosition(formalSignature, signature.getName(suppliedIndex), resultPermutation, suppliedIndex, hasVarArgs, callingNode, varArgIndex, forNextMethod, errorString,
+                            builtin);
             if (formalIndex != MatchPermutation.UNMATCHED) {
                 resultPermutation[formalIndex] = suppliedIndex;
                 matchedSuppliedArgs[suppliedIndex] = true;
@@ -543,7 +541,7 @@ public class ArgumentMatcher {
 
                     // one unused argument
                     CompilerDirectives.transferToInterpreter();
-                    throw RError.error(callSrc, RError.Message.UNUSED_ARGUMENT, errorString.apply(suppliedIndex));
+                    throw RError.error(callingNode, RError.Message.UNUSED_ARGUMENT, errorString.apply(suppliedIndex));
                 }
 
                 CompilerDirectives.transferToInterpreter();
@@ -558,7 +556,7 @@ public class ArgumentMatcher {
                         str.append(errorString.apply(suppliedIndex));
                     }
                 }
-                throw RError.error(callSrc, RError.Message.UNUSED_ARGUMENTS, str);
+                throw RError.error(callingNode, RError.Message.UNUSED_ARGUMENTS, str);
             }
             return new MatchPermutation(resultPermutation, null, null);
         }
@@ -580,8 +578,8 @@ public class ArgumentMatcher {
      * @return The position of the given suppliedName inside the formalNames. Throws errors if the
      *         argument has been matched before
      */
-    private static <T> int findParameterPosition(ArgumentsSignature formalsSignature, String suppliedName, int[] resultPermutation, int suppliedIndex, boolean hasVarArgs, SourceSection callSrc,
-                    SourceSection argsSrc, int varArgIndex, boolean forNextMethod, IntFunction<String> errorString, RBuiltinDescriptor builtin) {
+    private static <T> int findParameterPosition(ArgumentsSignature formalsSignature, String suppliedName, int[] resultPermutation, int suppliedIndex, boolean hasVarArgs, Node callingNode,
+                    int varArgIndex, boolean forNextMethod, IntFunction<String> errorString, RBuiltinDescriptor builtin) {
         int found = MatchPermutation.UNMATCHED;
         for (int i = 0; i < formalsSignature.getLength(); i++) {
             String formalName = formalsSignature.getName(i);
@@ -599,7 +597,7 @@ public class ArgumentMatcher {
                         found = MatchPermutation.UNMATCHED;
                     } else {
                         // Has already been matched: Error!
-                        throw RError.error(argsSrc, RError.Message.FORMAL_MATCHED_MULTIPLE, formalName);
+                        throw RError.error(callingNode, RError.Message.FORMAL_MATCHED_MULTIPLE, formalName);
                     }
                 }
                 break;
@@ -607,17 +605,17 @@ public class ArgumentMatcher {
                             ((varArgIndex != ArgumentsSignature.NO_VARARG && i < varArgIndex) || varArgIndex == ArgumentsSignature.NO_VARARG)) {
                 // partial-match only if the formal argument is positioned before ...
                 if (found >= 0) {
-                    throw RError.error(argsSrc, RError.Message.ARGUMENT_MATCHES_MULTIPLE, 1 + suppliedIndex);
+                    throw RError.error(callingNode, RError.Message.ARGUMENT_MATCHES_MULTIPLE, 1 + suppliedIndex);
                 }
                 found = i;
                 if (resultPermutation[found] != MatchPermutation.UNMATCHED) {
-                    throw RError.error(argsSrc, RError.Message.FORMAL_MATCHED_MULTIPLE, formalName);
+                    throw RError.error(callingNode, RError.Message.FORMAL_MATCHED_MULTIPLE, formalName);
                 }
             }
         }
         if (found >= 0 || hasVarArgs || forNextMethod) {
             return found;
         }
-        throw RError.error(callSrc, RError.Message.UNUSED_ARGUMENT, errorString.apply(suppliedIndex));
+        throw RError.error(callingNode, RError.Message.UNUSED_ARGUMENT, errorString.apply(suppliedIndex));
     }
 }

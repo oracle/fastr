@@ -25,7 +25,7 @@ package com.oracle.truffle.r.runtime.ffi.jnr;
 import java.util.concurrent.*;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.source.*;
+import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
@@ -71,7 +71,7 @@ public class CallRFFIWithJNI implements CallRFFI {
         try {
             DLL.load(librffiPath, ForceRTLDGlobal, false);
         } catch (DLLException ex) {
-            throw RError.error((SourceSection) null, ex);
+            throw RError.error((Node) null, ex);
         }
         System.load(librffiPath);
         initialize(INITIALIZE_VALUES);

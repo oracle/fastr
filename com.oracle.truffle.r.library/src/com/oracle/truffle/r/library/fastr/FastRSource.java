@@ -54,7 +54,7 @@ public abstract class FastRSource extends RExternalBuiltinNode.Arg1 {
     @SuppressWarnings("unused")
     @Fallback
     protected Object fallback(Object a1) {
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "func");
+        throw RError.error(this, RError.Message.INVALID_ARGUMENT, "func");
     }
 
     private static void appendChildrenSource(Node parent, StringBuilder sb, int indentationLevel) {

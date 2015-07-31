@@ -117,12 +117,12 @@ public abstract class Parse extends RBuiltinNode {
         String[] lines;
         if (textVec == RNull.instance) {
             if (conn == StdConnections.getStdin()) {
-                throw RError.nyi(getEncapsulatingSourceSection(), "parse from stdin not implemented");
+                throw RError.nyi(this, "parse from stdin not implemented");
             }
             try (RConnection openConn = conn.forceOpen("r")) {
                 lines = openConn.readLines(0);
             } catch (IOException ex) {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.PARSE_ERROR);
+                throw RError.error(this, RError.Message.PARSE_ERROR);
             }
         } else {
             lines = ((RStringVector) textVec).getDataWithoutCopying();
@@ -147,7 +147,7 @@ public abstract class Parse extends RBuiltinNode {
             }
             return exprs;
         } catch (ParseException ex) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.PARSE_ERROR);
+            throw RError.error(this, RError.Message.PARSE_ERROR);
         }
     }
 

@@ -54,10 +54,10 @@ public abstract class ReadDCF extends RBuiltinNode {
             }
             dcf = DCF.read(conn.readLines(0), keepWhiteSet);
         } catch (IOException ex) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.ERROR_READING_CONNECTION, ex.getMessage());
+            throw RError.error(this, RError.Message.ERROR_READING_CONNECTION, ex.getMessage());
         }
         if (dcf == null) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_CONNECTION);
+            throw RError.error(this, RError.Message.INVALID_CONNECTION);
         }
         List<DCF.Fields> records = dcf.getRecords();
         int nRecords = records.size();
@@ -118,7 +118,7 @@ public abstract class ReadDCF extends RBuiltinNode {
     @SuppressWarnings("unused")
     @Fallback
     protected RStringVector doReadDCF(Object conn, Object fields, Object keepWhite) {
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
+        throw RError.error(this, RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
     }
 
 }

@@ -72,9 +72,9 @@ public abstract class Array extends RBuiltinNode {
             totalLength *= dimData[i];
         }
         if (seenNegative == dim.getLength() && seenNegative != 0) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.DIMS_CONTAIN_NEGATIVE_VALUES);
+            throw RError.error(this, RError.Message.DIMS_CONTAIN_NEGATIVE_VALUES);
         } else if (seenNegative > 0) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.NEGATIVE_LENGTH_VECTORS_NOT_ALLOWED);
+            throw RError.error(this, RError.Message.NEGATIVE_LENGTH_VECTORS_NOT_ALLOWED);
         }
         return totalLength;
     }

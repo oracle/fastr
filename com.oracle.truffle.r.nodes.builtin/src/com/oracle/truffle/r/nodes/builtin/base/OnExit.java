@@ -63,7 +63,7 @@ public abstract class OnExit extends RInvisibleBuiltinNode {
         controlVisibility();
 
         if (na.isNA(add)) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "add");
+            throw RError.error(this, RError.Message.INVALID_ARGUMENT, "add");
         }
 
         // the empty (RNull.instance) expression is used to clear on.exit

@@ -13,7 +13,8 @@ package com.oracle.truffle.r.runtime;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.source.*;
+import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
 
 /**
@@ -25,6 +26,17 @@ import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
  *
  * The details of the error handling, which is complicated by support for condition handling and the
  * ability to invoke arbitrary code, typically {@code browser}, is in {@link RErrorHandling}.
+ *
+ * In the event that an error is not "handled" or a warning is actually generated (they may be
+ * delayed) it is necessary to construct a string that represents the "context", (using the GnuR
+ * term) where the error occurred. GnuR maintains a physical {@code Context} objects to denote this,
+ * but FastR does not, Instead we have information on which "builtin" reported the error/warning, by
+ * way of a {@link Node} value (which may be indirectly related to the actual builtin due to AST
+ * transformations) and the Truffle {@link Frame} stack. Mostly the {@link Node} value and
+ * {@link Frame} are sufficient to reconstruct the context, but there are some special cases that
+ * require more information to disambiguate. Rather than create a new class to carry that, we simply
+ * create an instance of a {@link Node} subclass with the additional state.
+ *
  */
 @SuppressWarnings("serial")
 public final class RError extends RuntimeException {
@@ -34,8 +46,8 @@ public final class RError extends RuntimeException {
     /**
      * This exception should be subclassed by subsystems that need to throw subsystem-specific
      * exceptions to be caught by builtin implementations, which can then invoke
-     * {@link RError#error(SourceSection, RErrorException)}, which access the stored {@link Message}
-     * object and any arguments. E.g. see {@link PutException}.
+     * {@link RError#error(Node, RErrorException)}, which access the stored {@link Message} object
+     * and any arguments. E.g. see {@link PutException}.
      */
     public abstract static class RErrorException extends Exception {
         private static final long serialVersionUID = 1L;
@@ -58,6 +70,18 @@ public final class RError extends RuntimeException {
     }
 
     /**
+     * This calls out a call to {@code error} or {@code warning} will a {@code null} value for
+     * {@link Node}. Ideally this never happens, so we make it explicit.
+     */
+    public static final Node NO_NODE = null;
+
+    /**
+     * A very special case that ensures that no caller is output in the error/warning message.
+     */
+    public static final Node NO_CALLER = new Node() {
+    };
+
+    /**
      * TODO the string is not really needed as all output is performed prior to the throw.
      */
     RError(String msg) {
@@ -75,13 +99,13 @@ public final class RError extends RuntimeException {
     }
 
     @TruffleBoundary
-    public static RError error(SourceSection src, Message msg, Object... args) {
-        throw error0(src, msg, args);
+    public static RError error(Node node, Message msg, Object... args) {
+        throw error0(node, msg, args);
     }
 
     @TruffleBoundary
-    public static RError error(SourceSection src, Message msg) {
-        throw error0(src, msg, (Object[]) null);
+    public static RError error(Node node, Message msg) {
+        throw error0(node, msg, (Object[]) null);
     }
 
     /**
@@ -94,53 +118,27 @@ public final class RError extends RuntimeException {
      * to condition handlers, the error will not actually be thrown.
      *
      *
-     * @param srcCandidate source of the code throwing the error, or {@code null} if not available.
-     *            If {@code null} an attempt will be made to identify the call context from the
-     *            currently active frame
+     * @param node {@code RNode} of the code throwing the error, or {@link #NO_NODE} if not
+     *            available. If {@code NO_NODE} an attempt will be made to identify the call context
+     *            from the currently active frame.
      * @param msg a {@link Message} instance specifying the error
      * @param args arguments for format specifiers in the message string
      */
-    private static RError error0(SourceSection srcCandidate, Message msg, Object... args) {
-        /*
-         * First we call RErrorHandling.signalError to check for handlers and if that returns, then
-         * call RErrorHandling.errorcallDflt. This follows GnuR, which also has a "hook" mechanism
-         * between the two calls.
-         */
-        RErrorHandling.signalError(srcCandidate, msg, args);
-        return RErrorHandling.errorcallDflt(srcCandidate, msg, args);
+    @TruffleBoundary
+    private static RError error0(Node node, Message msg, Object... args) {
+        // thrown from a builtin specified by "node"
+        RErrorHandling.signalError(node, msg, args);
+        return RErrorHandling.errorcallDflt(node, msg, args);
     }
 
     /**
-     * Convenience variant of {@link #error(SourceSection, Message, Object...)} where no source
-     * section can be provide. Ideally, this would never happen.
+     * Convenience variant of {@link #error(Node, Message, Object...)} where only one argument to
+     * the message is given. This avoids object array creation caller, which may be
+     * Truffle-compiled.
      */
     @TruffleBoundary
-    public static RError error(Message msg, Object... args) {
-        throw error(null, msg, args);
-    }
-
-    @TruffleBoundary
-    public static RError error(Message msg) {
-        throw error(null, msg, (Object[]) null);
-    }
-
-    /**
-     * Convenience variant of {@link #error(SourceSection, Message, Object...)} where only one
-     * argument to the message is given. This avoids object array creation in the (probably
-     * fast-path) caller.
-     */
-    @TruffleBoundary
-    public static RError error(SourceSection src, Message msg, Object arg) {
-        throw error(src, msg, new Object[]{arg});
-    }
-
-    /**
-     * Convenience variant of {@link #error(Message, Object...)} where only one argument to the
-     * message is given. This avoids object array creation in the (probably fast-path) caller.
-     */
-    @TruffleBoundary
-    public static RError error(Message msg, Object arg) {
-        throw error(msg, new Object[]{arg});
+    public static RError error(Node node, Message msg, Object arg) {
+        throw error(node, msg, new Object[]{arg});
     }
 
     /**
@@ -148,8 +146,8 @@ public final class RError extends RuntimeException {
      * report the error. The error information is propagated using the {@link RErrorException}.
      */
     @TruffleBoundary
-    public static RError error(SourceSection src, RErrorException ex) {
-        throw error(src, ex.msg, ex.args);
+    public static RError error(Node node, RErrorException ex) {
+        throw error(node, ex.msg, ex.args);
     }
 
     /**
@@ -157,24 +155,25 @@ public final class RError extends RuntimeException {
      * {@link Utils#fatalError(String)} would be inappropriate.
      */
     @TruffleBoundary
-    public static RError nyi(SourceSection src, String msg) {
-        throw error(src, RError.Message.NYI, msg);
+    public static RError nyi(Node node, String msg) {
+        throw error(node, RError.Message.NYI, msg);
     }
 
     @TruffleBoundary
-    public static void warning(Message msg, Object... args) {
-        warning(null, msg, args);
+    public static void warning(Node node, Message msg, Object... args) {
+        RErrorHandling.warningcall(true, node, msg, args);
     }
 
     @TruffleBoundary
-    public static void warning(SourceSection src, Message msg, Object... args) {
-        RErrorHandling.warningcall(src, msg, args);
+    public static RError stop(boolean showCall, Node node, Message msg, Object arg) {
+        RErrorHandling.signalError(node, msg, arg);
+        return RErrorHandling.errorcallDflt(showCall, node, msg, arg);
     }
 
     @TruffleBoundary
     public static void performanceWarning(String string) {
         if (FastROptions.PerformanceWarnings.getValue()) {
-            warning(Message.PERFORMANCE, string);
+            warning(RError.NO_NODE, Message.PERFORMANCE, string);
         }
     }
 

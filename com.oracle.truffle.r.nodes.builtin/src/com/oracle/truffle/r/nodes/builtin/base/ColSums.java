@@ -147,6 +147,6 @@ public abstract class ColSums extends RBuiltinNode {
     @Specialization
     protected RDoubleVector colSums(RAbstractStringVector x, int rowNum, int colNum, byte naRm) {
         controlVisibility();
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.X_NUMERIC);
+        throw RError.error(this, RError.Message.X_NUMERIC);
     }
 }

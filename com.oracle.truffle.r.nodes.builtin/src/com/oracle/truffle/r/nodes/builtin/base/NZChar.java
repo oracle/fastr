@@ -44,7 +44,7 @@ public abstract class NZChar extends RBuiltinNode {
         try {
             return (String) convertString.execute(content);
         } catch (ConversionFailedException e) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.TYPE_EXPECTED, RType.Character.getName());
+            throw RError.error(this, RError.Message.TYPE_EXPECTED, RType.Character.getName());
         }
     }
 

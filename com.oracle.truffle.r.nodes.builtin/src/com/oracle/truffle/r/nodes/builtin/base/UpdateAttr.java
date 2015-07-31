@@ -145,7 +145,7 @@ public abstract class UpdateAttr extends RInvisibleBuiltinNode {
         } else if (value instanceof String) {
             return RDataFactory.createStringVector((String) value);
         } else {
-            throw RError.error(RError.Message.SET_INVALID_CLASS_ATTR);
+            throw RError.error(RError.NO_NODE, RError.Message.SET_INVALID_CLASS_ATTR);
         }
     }
 
@@ -159,7 +159,7 @@ public abstract class UpdateAttr extends RInvisibleBuiltinNode {
             RAbstractIntVector dimsVector = castInteger(castVector(value));
             if (dimsVector.getLength() == 0) {
                 errorProfile.enter();
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.LENGTH_ZERO_DIM_INVALID);
+                throw RError.error(this, RError.Message.LENGTH_ZERO_DIM_INVALID);
             }
             result.setDimensions(dimsVector.materialize().getDataCopy());
         } else if (internedName == RRuntime.NAMES_ATTR_KEY) {
@@ -199,7 +199,7 @@ public abstract class UpdateAttr extends RInvisibleBuiltinNode {
         String sname = RRuntime.asString(name);
         if (sname == null) {
             errorProfile.enter();
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.MUST_BE_NONNULL_STRING, "name");
+            throw RError.error(this, RError.Message.MUST_BE_NONNULL_STRING, "name");
         }
         String internedName = intern(sname);
         if (object instanceof RAttributable) {
@@ -212,7 +212,7 @@ public abstract class UpdateAttr extends RInvisibleBuiltinNode {
             return object;
         } else {
             errorProfile.enter();
-            throw RError.nyi(getEncapsulatingSourceSection(), "object cannot be attributed");
+            throw RError.nyi(this, "object cannot be attributed");
         }
     }
 }

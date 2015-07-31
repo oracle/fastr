@@ -49,7 +49,7 @@ public class LogFunctions {
         @Specialization
         protected RNull log(RNull x, RNull base) {
             controlVisibility();
-            throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.NON_NUMERIC_ARGUMENT_FUNCTION);
+            throw RError.error(this, RError.Message.NON_NUMERIC_ARGUMENT_FUNCTION);
         }
 
         @Specialization
@@ -107,7 +107,7 @@ public class LogFunctions {
         @Specialization
         protected RNull log(RNull x) {
             controlVisibility();
-            throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.NON_NUMERIC_ARGUMENT_FUNCTION);
+            throw RError.error(this, RError.Message.NON_NUMERIC_ARGUMENT_FUNCTION);
         }
 
         @Specialization
@@ -165,7 +165,7 @@ public class LogFunctions {
         @Specialization
         protected RNull log(RNull x) {
             controlVisibility();
-            throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.NON_NUMERIC_ARGUMENT_FUNCTION);
+            throw RError.error(this, RError.Message.NON_NUMERIC_ARGUMENT_FUNCTION);
         }
 
         @Specialization
@@ -216,7 +216,7 @@ public class LogFunctions {
         @SuppressWarnings("unused")
         @Specialization
         protected Object log1p(Object x) {
-            throw RError.nyi(getEncapsulatingSourceSection(), "log1p");
+            throw RError.nyi(this, "log1p");
         }
     }
 

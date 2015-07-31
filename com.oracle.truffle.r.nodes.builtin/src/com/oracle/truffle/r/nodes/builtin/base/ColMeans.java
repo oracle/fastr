@@ -179,7 +179,7 @@ public abstract class ColMeans extends RBuiltinNode {
     @Specialization
     protected RDoubleVector colMeans(RAbstractStringVector x, int rowNum, int colNum, byte naRm) {
         controlVisibility();
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.X_NUMERIC);
+        throw RError.error(this, RError.Message.X_NUMERIC);
     }
 
     protected boolean isNaRm(byte naRm) {

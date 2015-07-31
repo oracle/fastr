@@ -33,12 +33,12 @@ public abstract class AsFunction extends RBuiltinNode {
     @SuppressWarnings("unused")
     @Specialization
     protected RFunction asFunction(RList x, REnvironment envir) {
-        throw RError.nyi(getEncapsulatingSourceSection(), "as.function.default");
+        throw RError.nyi(this, "as.function.default");
     }
 
     @SuppressWarnings("unused")
     @Fallback
     protected RFunction asFunction(Object x, Object envir) {
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.TYPE_EXPECTED, RType.List.getName());
+        throw RError.error(this, RError.Message.TYPE_EXPECTED, RType.List.getName());
     }
 }

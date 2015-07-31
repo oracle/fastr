@@ -72,7 +72,7 @@ public class IsFiniteFunctions {
                 typeofNode = insert(TypeofNodeGen.create());
             }
             String type = typeofNode.execute(x).getName();
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.DEFAULT_METHOD_NOT_IMPLEMENTED_FOR_TYPE, type);
+            throw RError.error(this, RError.Message.DEFAULT_METHOD_NOT_IMPLEMENTED_FOR_TYPE, type);
         }
 
         protected RLogicalVector doFunConstant(RAbstractVector x, byte value) {

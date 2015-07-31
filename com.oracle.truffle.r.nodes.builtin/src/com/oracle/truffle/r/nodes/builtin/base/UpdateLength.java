@@ -51,7 +51,7 @@ public abstract class UpdateLength extends RInvisibleBuiltinNode {
     protected Object updateLengthError(Object vector, Object lengthVector) {
         controlVisibility();
         CompilerDirectives.transferToInterpreter();
-        throw RError.error(this.getEncapsulatingSourceSection(), RError.Message.INVALID_UNNAMED_VALUE);
+        throw RError.error(this, RError.Message.INVALID_UNNAMED_VALUE);
     }
 
     protected static boolean isLengthOne(RAbstractIntVector length) {

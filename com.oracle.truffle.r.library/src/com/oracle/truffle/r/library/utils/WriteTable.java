@@ -228,7 +228,7 @@ public final class WriteTable extends RExternalBuiltinNode {
 
     private void invalidArgument(String name) throws RError {
         errorProfile.enter();
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, name);
+        throw RError.error(this, RError.Message.INVALID_ARGUMENT, name);
     }
 
     // Transcribed from GnuR, library/utils/src/io.c
@@ -239,7 +239,7 @@ public final class WriteTable extends RExternalBuiltinNode {
         RConnection conn;
         if (!(conArg instanceof RConnection)) {
             errorProfile.enter();
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, "'file' is not a connection");
+            throw RError.error(this, RError.Message.GENERIC, "'file' is not a connection");
         } else {
             conn = (RConnection) conArg;
         }
@@ -286,7 +286,7 @@ public final class WriteTable extends RExternalBuiltinNode {
         }
         if (cdec.length() != 1) {
             errorProfile.enter();
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, "'dec' must be a single character");
+            throw RError.error(this, RError.Message.GENERIC, "'dec' must be a single character");
         }
         boolean[] quoteCol = new boolean[nc];
         boolean quoteRn = false;
@@ -304,7 +304,7 @@ public final class WriteTable extends RExternalBuiltinNode {
             execute(openConn, argValues[0], nr, nc, rnamesArg, csep, ceol, cna, cdec.charAt(0), RRuntime.fromLogical(qmethod), quoteCol, quoteRn);
         } catch (IOException | IllegalArgumentException ex) {
             errorProfile.enter();
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, ex.getMessage());
+            throw RError.error(this, RError.Message.GENERIC, ex.getMessage());
         }
         return RNull.instance;
     }

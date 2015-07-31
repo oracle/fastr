@@ -76,7 +76,7 @@ public abstract class FastRCompile extends RExternalBuiltinNode.Arg2 {
                     return RRuntime.LOGICAL_TRUE;
                 }
             } catch (InvocationTargetException | IllegalAccessException e) {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, e.toString());
+                throw RError.error(this, RError.Message.GENERIC, e.toString());
             }
         }
         return RRuntime.LOGICAL_FALSE;
@@ -85,7 +85,7 @@ public abstract class FastRCompile extends RExternalBuiltinNode.Arg2 {
     @SuppressWarnings("unused")
     @Fallback
     protected Object fallback(Object a1, Object a2) {
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
+        throw RError.error(this, RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
     }
 
 }

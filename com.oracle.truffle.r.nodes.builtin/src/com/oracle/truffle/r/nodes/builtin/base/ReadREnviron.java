@@ -44,17 +44,17 @@ public abstract class ReadREnviron extends RInvisibleBuiltinNode {
         try {
             REnvVars.readEnvironFile(path);
         } catch (FileNotFoundException ex) {
-            RError.warning(getEncapsulatingSourceSection(), RError.Message.GENERIC, ex.getMessage());
+            RError.warning(this, RError.Message.GENERIC, ex.getMessage());
             result = RRuntime.LOGICAL_FALSE;
         } catch (IOException ex) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, ex.getMessage());
+            throw RError.error(this, RError.Message.GENERIC, ex.getMessage());
         }
         return result;
     }
 
     @Fallback
     protected Object doReadEnviron(@SuppressWarnings("unused") Object vec) {
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.ARGUMENT_MUST_BE_STRING, "x");
+        throw RError.error(this, RError.Message.ARGUMENT_MUST_BE_STRING, "x");
     }
 
     public static boolean lengthOneCVector(RAbstractStringVector vec) {

@@ -11,7 +11,7 @@
  */
 package com.oracle.truffle.r.library.stats;
 
-import com.oracle.truffle.api.source.*;
+import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
@@ -34,17 +34,17 @@ public final class Covcor extends RExternalBuiltinNode {
     public Object call(RArgsValuesAndNames args) {
         Object[] argValues = args.getArguments();
         if (argValues[0] == RNull.instance) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.IS_NULL, "x");
+            throw RError.error(this, RError.Message.IS_NULL, "x");
         }
         // TODO error checks/coercions
         RAbstractDoubleVector x = (RAbstractDoubleVector) argValues[0];
         RAbstractDoubleVector y = argValues[1] == RNull.instance ? null : (RAbstractDoubleVector) argValues[1];
         int method = ((RAbstractIntVector) argValues[2]).getDataAt(0);
         if (method != 4) {
-            throw RError.nyi(getEncapsulatingSourceSection(), "method");
+            throw RError.nyi(this, "method");
         }
         boolean iskendall = RRuntime.fromLogical(castLogical(castVector(argValues[3])));
-        return corcov(x.materialize(), y != null ? y.materialize() : null, method, iskendall, getEncapsulatingSourceSection());
+        return corcov(x.materialize(), y != null ? y.materialize() : null, method, iskendall, this);
     }
 
     private final NACheck check = new NACheck();
@@ -59,7 +59,7 @@ public final class Covcor extends RExternalBuiltinNode {
     private final BranchProfile error = BranchProfile.create();
     private final BranchProfile warning = BranchProfile.create();
 
-    public RDoubleVector corcov(RDoubleVector x, RDoubleVector y, @SuppressWarnings("unused") int method, boolean iskendall, SourceSection src) throws RError {
+    public RDoubleVector corcov(RDoubleVector x, RDoubleVector y, @SuppressWarnings("unused") int method, boolean iskendall, Node invokingNode) throws RError {
         boolean ansmat;
         boolean naFail;
         boolean everything;
@@ -135,7 +135,7 @@ public final class Covcor extends RExternalBuiltinNode {
 
         if (sd0) { /* only in cor() */
             warning.enter();
-            RError.warning(src, RError.Message.SD_ZERO);
+            RError.warning(invokingNode, RError.Message.SD_ZERO);
         }
 
         boolean seenNA = false;

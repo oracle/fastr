@@ -65,7 +65,7 @@ public abstract class Internal extends RBuiltinNode {
     @Specialization
     protected Object doInternal(@SuppressWarnings("unused") RMissing x) {
         errorProfile.enter();
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.ARGUMENTS_PASSED_0_1, getRBuiltin().name());
+        throw RError.error(this, RError.Message.ARGUMENTS_PASSED_0_1, getRBuiltin().name());
     }
 
     @Specialization
@@ -73,11 +73,11 @@ public abstract class Internal extends RBuiltinNode {
         controlVisibility();
         if (builtinCallNode == null) {
             RNode call = (RNode) x.getRep();
-            RNode operand = RASTUtils.unwrap(call);
+            RNode operand = (RNode) RASTUtils.unwrap(call);
 
             if (!(operand instanceof RCallNode)) {
                 errorProfile.enter();
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_INTERNAL);
+                throw RError.error(this, RError.Message.INVALID_INTERNAL);
             }
 
             RCallNode callNode = (RCallNode) operand;
@@ -86,7 +86,7 @@ public abstract class Internal extends RBuiltinNode {
             RFunction function = RContext.lookupBuiltin(name);
             if (function == null || function.isBuiltin() && function.getRBuiltin().getKind() != RBuiltinKind.INTERNAL) {
                 errorProfile.enter();
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.NO_SUCH_INTERNAL, name);
+                throw RError.error(this, RError.Message.NO_SUCH_INTERNAL, name);
             }
 
             // .Internal function is validated

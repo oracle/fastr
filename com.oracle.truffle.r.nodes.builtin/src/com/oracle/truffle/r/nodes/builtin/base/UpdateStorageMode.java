@@ -42,7 +42,7 @@ public abstract class UpdateStorageMode extends RBuiltinNode {
         RType mode = RType.fromMode(modeProfile.profile(value));
         if (mode == RType.DefunctReal || mode == RType.DefunctSingle) {
             errorProfile.enter();
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.USE_DEFUNCT, mode.getName(), mode == RType.DefunctSingle ? "mode<-" : "double");
+            throw RError.error(this, RError.Message.USE_DEFUNCT, mode.getName(), mode == RType.DefunctSingle ? "mode<-" : "double");
         }
         initTypeOfNode();
         RType typeX = typeof.execute(x);
@@ -52,7 +52,7 @@ public abstract class UpdateStorageMode extends RBuiltinNode {
         initFactorNode();
         if (isFactor.executeIsFactor(x) == RRuntime.LOGICAL_TRUE) {
             errorProfile.enter();
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_STORAGE_MODE_UPDATE);
+            throw RError.error(this, RError.Message.INVALID_STORAGE_MODE_UPDATE);
         }
         initCastTypeNode();
         if (mode != null) {
@@ -83,7 +83,7 @@ public abstract class UpdateStorageMode extends RBuiltinNode {
             }
         }
         errorProfile.enter();
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_UNNAMED_VALUE);
+        throw RError.error(this, RError.Message.INVALID_UNNAMED_VALUE);
     }
 
     private void initCastTypeNode() {
@@ -112,6 +112,6 @@ public abstract class UpdateStorageMode extends RBuiltinNode {
     protected Object update(Object x, Object value) {
         controlVisibility();
         CompilerDirectives.transferToInterpreter();
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.NULL_VALUE);
+        throw RError.error(this, RError.Message.NULL_VALUE);
     }
 }

@@ -113,7 +113,7 @@ public abstract class Identical extends RBuiltinNode {
                     // @formatter:on
         controlVisibility();
         // TODO How to compare ASTs
-        throw RError.nyi(getEncapsulatingSourceSection(), "language objects not supported in 'identical'");
+        throw RError.nyi(this, "language objects not supported in 'identical'");
     }
 
     @Specialization(guards = "!vectorsLists(x, y)")
@@ -142,7 +142,7 @@ public abstract class Identical extends RBuiltinNode {
                     @SuppressWarnings("unused") byte ignoreBytecode, @SuppressWarnings("unused") byte ignoreEnvironment) {
                     // @formatter:on
         controlVisibility();
-        throw RError.nyi(getEncapsulatingSourceSection(), "lists not supported in 'identical'");
+        throw RError.nyi(this, "lists not supported in 'identical'");
     }
 
     @Specialization
@@ -152,7 +152,7 @@ public abstract class Identical extends RBuiltinNode {
                     @SuppressWarnings("unused") byte ignoreBytecode, @SuppressWarnings("unused") byte ignoreEnvironment) {
                     // @formatter:on
         controlVisibility();
-        throw RError.nyi(getEncapsulatingSourceSection(), "data frames not supported in 'identical'");
+        throw RError.nyi(this, "data frames not supported in 'identical'");
     }
 
     @Specialization

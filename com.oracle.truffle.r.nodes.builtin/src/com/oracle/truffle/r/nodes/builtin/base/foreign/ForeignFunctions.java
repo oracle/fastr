@@ -81,7 +81,7 @@ public class ForeignFunctions {
                     throw RInternalError.shouldNotReachHere("fallback reached for " + getRBuiltin().name() + " " + name);
                 }
             }
-            throw RError.nyi(getEncapsulatingSourceSection(), getRBuiltin().name() + " specialization failure: " + (name == null ? "<unknown>" : name));
+            throw RError.nyi(this, getRBuiltin().name() + " specialization failure: " + (name == null ? "<unknown>" : name));
         }
     }
 
@@ -201,7 +201,7 @@ public class ForeignFunctions {
             SymbolInfo symbolInfo = DLL.findSymbolInfo(name, packageName);
             if (symbolInfo == null) {
                 errorProfile.enter();
-                throw RError.error(getEncapsulatingSourceSection(), Message.C_SYMBOL_NOT_IN_TABLE, name);
+                throw RError.error(this, Message.C_SYMBOL_NOT_IN_TABLE, name);
             }
             return RFFIFactory.getRFFI().getCallRFFI().invokeCall(symbolInfo, args.getArguments());
         }
@@ -292,7 +292,7 @@ public class ForeignFunctions {
         @Override
         protected RExternalBuiltinNode lookupBuiltin(RList f) {
             switch (lookupName(f)) {
-                case "C_mtext" :
+                case "C_mtext":
                     return new GraphicsCCalls.C_mtext();
                 case "C_plotXY":
                     return new C_PlotXY();

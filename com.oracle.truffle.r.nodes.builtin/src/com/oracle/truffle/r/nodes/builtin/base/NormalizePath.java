@@ -68,10 +68,10 @@ public abstract class NormalizePath extends RBuiltinNode {
                         msg = Message.GENERIC;
                     }
                     if (mustWork == RRuntime.LOGICAL_TRUE) {
-                        throw RError.error(getEncapsulatingSourceSection(), msg, errorArgs);
+                        throw RError.error(this, msg, errorArgs);
                     } else {
                         // NA means warning
-                        RError.warning(getEncapsulatingSourceSection(), msg, errorArgs);
+                        RError.warning(this, msg, errorArgs);
                     }
                 }
             }
@@ -84,6 +84,6 @@ public abstract class NormalizePath extends RBuiltinNode {
     @Specialization
     protected Object doNormalizePath(Object path, Object winslash, Object mustWork) {
         controlVisibility();
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.WRONG_TYPE);
+        throw RError.error(this, RError.Message.WRONG_TYPE);
     }
 }

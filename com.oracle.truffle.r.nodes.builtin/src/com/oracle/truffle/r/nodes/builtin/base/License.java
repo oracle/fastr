@@ -41,7 +41,7 @@ public abstract class License extends RInvisibleBuiltinNode {
         try {
             StdConnections.getStdout().writeString(RRuntime.LICENSE, true);
         } catch (IOException ex) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.GENERIC, ex.getMessage());
+            throw RError.error(this, RError.Message.GENERIC, ex.getMessage());
         }
         return RNull.instance;
     }

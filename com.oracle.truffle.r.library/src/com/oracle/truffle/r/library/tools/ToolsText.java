@@ -64,7 +64,7 @@ public class ToolsText {
         @Specialization
         protected Object codeFilesAppend(RAbstractStringVector file1Vector, RAbstractStringVector file2) {
             if (file1Vector.getLength() != 1) {
-                throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARGUMENT, "file1");
+                throw RError.error(this, RError.Message.INVALID_ARGUMENT, "file1");
             }
             if (file2.getLength() < 1) {
                 return RDataFactory.createEmptyLogicalVector();
@@ -93,7 +93,7 @@ public class ToolsText {
                             }
                             data[i] = RRuntime.LOGICAL_TRUE;
                         } catch (IOException ex) {
-                            RError.warning(RError.Message.GENERIC, "write error during file append");
+                            RError.warning(this, RError.Message.GENERIC, "write error during file append");
                             // shouldn't happen, just continue with false result
                         }
 

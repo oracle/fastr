@@ -27,12 +27,10 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
-import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.RPromise.VarargPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.*;
 
 /**
@@ -134,20 +132,16 @@ public class PromiseHelperNode extends Node {
      * @return Evaluates the given {@link RPromise} in the given frame using the given inline cache
      */
     public Object evaluate(VirtualFrame frame, RPromise promise) {
-        SourceSection callSrc = null;
-        if (frame != null) {
-            callSrc = RArguments.getCallSourceSection(frame);
-        }
-        return doEvaluate(frame, promise, callSrc);
+        return doEvaluate(frame, promise);
     }
 
     /**
      * Main entry point for proper evaluation of the given Promise; including
-     * {@link RPromise#isEvaluated()}, propagation of CallSrc and dependency cycles.
+     * {@link RPromise#isEvaluated()}, dependency cycles.
      *
      * @return The value the given Promise evaluates to
      */
-    private Object doEvaluate(VirtualFrame frame, RPromise promise, SourceSection callSrc) {
+    private Object doEvaluate(VirtualFrame frame, RPromise promise) {
         if (isEvaluated(promise)) {
             return promise.getValue();
         }
@@ -168,22 +162,22 @@ public class PromiseHelperNode extends Node {
 
         // Check for dependency cycle
         if (isUnderEvaluation(current)) {
-            throw RError.error(RError.Message.PROMISE_CYCLE);
+            throw RError.error(this, RError.Message.PROMISE_CYCLE);
         }
 
         Object obj;
         if (optType == OptType.DEFAULT) {
             // Evaluate guarded by underEvaluation
-            obj = generateValueDefault(frame, current, callSrc);
+            obj = generateValueDefault(frame, current);
         } else {
             assert optType == OptType.EAGER || optType == OptType.PROMISED;
-            obj = generateValueEager(frame, optType, (EagerPromise) current, callSrc);
+            obj = generateValueEager(frame, optType, (EagerPromise) current);
         }
         setValue(obj, current);
         return obj;
     }
 
-    private Object generateValueDefault(VirtualFrame frame, RPromise promise, @SuppressWarnings("unused") SourceSection callSrc) {
+    private Object generateValueDefault(VirtualFrame frame, RPromise promise) {
         try {
             promise.setUnderEvaluation(true);
 
@@ -216,7 +210,7 @@ public class PromiseHelperNode extends Node {
         }
     }
 
-    private Object generateValueEager(VirtualFrame frame, OptType optType, EagerPromise promise, SourceSection callSrc) {
+    private Object generateValueEager(VirtualFrame frame, OptType optType, EagerPromise promise) {
         if (!isDeoptimized(promise)) {
             Assumption eagerAssumption = isValidAssumptionProfile.profile(promise.getIsValidAssumption());
             if (eagerAssumption.isValid()) {
@@ -225,7 +219,7 @@ public class PromiseHelperNode extends Node {
                 } else {
                     assert optType == OptType.PROMISED;
                     RPromise nextPromise = (RPromise) promise.getEagerValue();
-                    return checkNextNode().doEvaluate(frame, nextPromise, callSrc);
+                    return checkNextNode().doEvaluate(frame, nextPromise);
                 }
             } else {
                 fallbackProfile.enter();
@@ -236,7 +230,7 @@ public class PromiseHelperNode extends Node {
             }
         }
         // Call
-        return generateValueDefault(frame, promise, callSrc);
+        return generateValueDefault(frame, promise);
     }
 
     public static Object evaluateSlowPath(VirtualFrame frame, RPromise promise) {
@@ -259,7 +253,7 @@ public class PromiseHelperNode extends Node {
 
         // Check for dependency cycle
         if (current.isUnderEvaluation()) {
-            throw RError.error(RError.Message.PROMISE_CYCLE);
+            throw RError.error(RError.NO_NODE, RError.Message.PROMISE_CYCLE);
         }
 
         Object obj;

@@ -108,7 +108,7 @@ public abstract class UnaryNotNode extends RBuiltinNode {
             }
         }
         RLogicalVector resultVector = RDataFactory.createLogicalVector(result, na.neverSeenNA());
-        resultVector.copyNamesDimsDimNamesFrom(attrProfiles, vector, getSourceSection());
+        resultVector.copyNamesDimsDimNamesFrom(attrProfiles, vector, this);
         return resultVector;
     }
 
@@ -127,7 +127,7 @@ public abstract class UnaryNotNode extends RBuiltinNode {
             }
         }
         RLogicalVector resultVector = RDataFactory.createLogicalVector(result, na.neverSeenNA());
-        resultVector.copyNamesDimsDimNamesFrom(attrProfiles, vector, getSourceSection());
+        resultVector.copyNamesDimsDimNamesFrom(attrProfiles, vector, this);
         return resultVector;
     }
 
@@ -165,6 +165,6 @@ public abstract class UnaryNotNode extends RBuiltinNode {
 
     @Fallback
     protected Object invalidArgType(@SuppressWarnings("unused") Object operand) {
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_ARG_TYPE);
+        throw RError.error(this, RError.Message.INVALID_ARG_TYPE);
     }
 }

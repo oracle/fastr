@@ -53,7 +53,7 @@ public abstract class MultiDimPosConverterNode extends RNode {
         if (isSubset) {
             return positions;
         } else {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_MORE_1);
+            throw RError.error(this, RError.Message.SELECT_MORE_1);
         }
     }
 
@@ -62,52 +62,52 @@ public abstract class MultiDimPosConverterNode extends RNode {
         if (isSubset || vector == RNull.instance) {
             return positions;
         } else {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.SUBSCRIPT_BOUNDS);
+            throw RError.error(this, RError.Message.SUBSCRIPT_BOUNDS);
         }
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = {"singleOpNegative(positions)", "!singleOpNA(positions)"})
     protected RAbstractIntVector doIntVectorNegative(Object vector, RAbstractIntVector positions) {
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_MORE_1);
+        throw RError.error(this, RError.Message.SELECT_MORE_1);
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = "noPosition(positions)")
     protected Object accessListEmptyPos(RAbstractVector vector, RList positions) {
         if (!isSubset) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_LESS_1);
+            throw RError.error(this, RError.Message.SELECT_LESS_1);
         } else {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
+            throw RError.error(this, RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
         }
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = "onePosition(positions)")
     protected Object accessListOnePos(RAbstractVector vector, RList positions) {
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
+        throw RError.error(this, RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = "multiPos(positions)")
     protected Object accessListMultiPos(RAbstractVector vector, RList positions) {
         if (!isSubset) {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.SELECT_MORE_1);
+            throw RError.error(this, RError.Message.SELECT_MORE_1);
         } else {
-            throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
+            throw RError.error(this, RError.Message.INVALID_SUBSCRIPT_TYPE, "list");
         }
     }
 
     @SuppressWarnings("unused")
     @Specialization
     protected Object accessListOnePos(RAbstractVector vector, RComplex positions) {
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "complex");
+        throw RError.error(this, RError.Message.INVALID_SUBSCRIPT_TYPE, "complex");
     }
 
     @SuppressWarnings("unused")
     @Specialization
     protected Object accessListOnePos(RAbstractVector vector, RRaw positions) {
-        throw RError.error(getEncapsulatingSourceSection(), RError.Message.INVALID_SUBSCRIPT_TYPE, "raw");
+        throw RError.error(this, RError.Message.INVALID_SUBSCRIPT_TYPE, "raw");
     }
 
     protected static boolean singleOpNegative(RAbstractIntVector p) {

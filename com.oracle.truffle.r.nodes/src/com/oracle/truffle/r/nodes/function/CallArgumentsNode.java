@@ -123,7 +123,7 @@ public class CallArgumentsNode extends ArgumentsNode {
             FrameSlot slot;
             slot = frame.getFrameDescriptor().findFrameSlot(ArgumentsSignature.VARARG_NAME);
             if (slot == null) {
-                RError.error(RError.Message.NO_DOT_DOT_DOT);
+                RError.error(RError.NO_NODE, RError.Message.NO_DOT_DOT_DOT);
             }
             varArgsAndNames = (RArgsValuesAndNames) frame.getObject(slot);
         } catch (FrameSlotTypeException | ClassCastException e) {
