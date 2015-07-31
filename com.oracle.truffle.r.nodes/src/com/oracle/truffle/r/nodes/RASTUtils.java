@@ -143,7 +143,7 @@ public class RASTUtils {
             RNode promiseRep = unwrap(((RPromise) value).getRep());
             if (promiseRep instanceof VarArgNode) {
                 VarArgNode varArgNode = (VarArgNode) promiseRep;
-                RPromise varArgPromise = varArgNode.executeNonEvaluated((VirtualFrame) promise.getFrame());
+                RPromise varArgPromise = (RPromise) varArgNode.execute((VirtualFrame) promise.getFrame());
                 Node unwrappedRep = unwrap(varArgPromise.getRep());
                 if (unwrappedRep instanceof ConstantNode) {
                     return (ConstantNode) unwrappedRep;

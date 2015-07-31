@@ -73,6 +73,9 @@ public class TestBuiltin_matchcall extends TestBase {
 
         assertEval("{ f1<-function(...) { match.call(expand.dots=FALSE)$... }; f1() }");
 
+        assertEval("fn3 <- function(...) { (function(...) match.call(cat, call(\"cat\", \"abc\", p=3,as.symbol(\"...\")), expand.dots = FALSE))(...) }; fn3(sep=x,lab=\"b\",fill=13)");
+        assertEval("fn3 <- function(...) { (function(...) match.call(cat, call(\"cat\", \"abc\", p=3,as.symbol(\"...\")), expand.dots = TRUE))(...) }; fn3(sep=x,lab=\"b\",fill=13)");
+
         // TODO add tests that pass "definition" and "call" explicitly
     }
 }

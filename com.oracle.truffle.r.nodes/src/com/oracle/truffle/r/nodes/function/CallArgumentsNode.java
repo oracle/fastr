@@ -26,7 +26,6 @@ import java.util.*;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.*;
@@ -133,6 +132,10 @@ public class CallArgumentsNode extends ArgumentsNode {
         return varArgsAndNames;
     }
 
+    /**
+     * This methods unrolls all "..." in the argument list. The result varies if the number of
+     * arguments in the varargs or their names change.
+     */
     public UnrolledVariadicArguments executeFlatten(Frame frame) {
         CompilerAsserts.neverPartOfCompilation();
         if (!containsVarArgsSymbol()) {
@@ -145,10 +148,6 @@ public class CallArgumentsNode extends ArgumentsNode {
             int index = 0;
             for (int i = 0; i < arguments.length; i++) {
                 if (vargsSymbolsIndex < varArgsSymbolIndices.length && varArgsSymbolIndices[vargsSymbolsIndex] == i) {
-                    // Vararg "..." argument. "execute" to retrieve RArgsValuesAndNames. This is the
-                    // reason for this whole method: Before argument matching, we have to unroll
-                    // passed "..." every time, as their content might change per call site each
-                    // call!
                     RArgsValuesAndNames varArgInfo = getVarargsAndNames(frame);
                     if (varArgInfo.isEmpty()) {
                         // An empty "..." vanishes
@@ -157,18 +156,11 @@ public class CallArgumentsNode extends ArgumentsNode {
                         continue;
                     }
 
-                    // length == 0 cannot happen, in that case RMissing is caught above
                     values = Utils.resizeArray(values, values.length + varArgInfo.getLength() - 1);
                     newNames = Utils.resizeArray(newNames, newNames.length + varArgInfo.getLength() - 1);
                     for (int j = 0; j < varArgInfo.getLength(); j++) {
-                        // TODO SourceSection necessary here?
-                        // VarArgInfo may contain two types of values here: RPromises and
-                        // RMissing.instance. Both need to be wrapped into ConstantNodes, so
-                        // they might get wrapped into new promises later on
-                        Object varArgValue = varArgInfo.getArgument(j);
-                        values[index] = wrapVarArgValue(varArgValue, j);
-                        String newName = varArgInfo.getSignature().getName(j);
-                        newNames[index] = newName;
+                        values[index] = PromiseNode.createVarArg(j);
+                        newNames[index] = varArgInfo.getSignature().getName(j);
                         index++;
                     }
                     vargsSymbolsIndex++;
@@ -179,8 +171,7 @@ public class CallArgumentsNode extends ArgumentsNode {
                 }
             }
 
-            ArgumentsSignature newSignature = ArgumentsSignature.get(newNames);
-            return UnrolledVariadicArguments.create(values, newSignature, this);
+            return UnrolledVariadicArguments.create(values, ArgumentsSignature.get(newNames), this);
         }
     }
 
@@ -228,19 +219,6 @@ public class CallArgumentsNode extends ArgumentsNode {
             index++;
         }
         return index;
-    }
-
-    @TruffleBoundary
-    public static RNode wrapVarArgValue(Object varArgValue, int varArgIndex) {
-        if (varArgValue instanceof RPromise) {
-            RNode repNode = (RNode) ((RPromise) varArgValue).getRep();
-            if (repNode instanceof ConstantNode) {
-                return repNode;
-            }
-            return PromiseNode.createVarArg(varArgIndex, repNode.getEncapsulatingSourceSection());
-        } else {
-            return ConstantNode.create(varArgValue);
-        }
     }
 
     public boolean containsVarArgsSymbol() {

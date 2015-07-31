@@ -143,7 +143,7 @@ public abstract class Lapply extends RBuiltinNode {
                 args[0] = readVector;
                 Object[] varArgsValues = additionalArguments.getArguments();
                 for (int i = 0; i < additionalArguments.getLength(); i++) {
-                    args[i + 1] = (RSyntaxNode) CallArgumentsNode.wrapVarArgValue(varArgsValues[i], i);
+                    args[i + 1] = (RSyntaxNode) wrapVarArgValue(varArgsValues[i], i);
 
                 }
                 names = new String[additionalArguments.getLength() + 1];
@@ -182,4 +182,11 @@ public abstract class Lapply extends RBuiltinNode {
         return ss;
     }
 
+    private static RNode wrapVarArgValue(Object varArgValue, int varArgIndex) {
+        if (varArgValue instanceof RPromise) {
+            return PromiseNode.createVarArg(varArgIndex);
+        } else {
+            return ConstantNode.create(varArgValue);
+        }
+    }
 }

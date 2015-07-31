@@ -38,6 +38,7 @@ import com.oracle.truffle.r.nodes.access.variables.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseDeoptimizeFrameNode;
+import com.oracle.truffle.r.nodes.function.PromiseNode.VarArgNode;
 import com.oracle.truffle.r.nodes.function.PromiseNode.VarArgsPromiseNode;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RContext.Engine.*;
@@ -176,10 +177,11 @@ public class FrameFunctions {
             }
             boolean expandDots = RRuntime.fromLogical(expandDotsL);
 
-            Frame cframe = Utils.getCallerFrame(frame, FrameAccess.READ_ONLY);
+            Frame cframe = Utils.getStackFrame(FrameAccess.READ_ONLY, RArguments.getDepth(frame) - 2);
             RFunction definition = definitionArg;
             if (definition == null) {
-                definition = RArguments.getFunction(cframe);
+                Frame defFrame = Utils.getStackFrame(FrameAccess.READ_ONLY, RArguments.getDepth(frame) - 1);
+                definition = RArguments.getFunction(defFrame);
                 if (definition == null) {
                     throw RError.error(getEncapsulatingSourceSection(), RError.Message.MATCH_CALL_CALLED_OUTSIDE_FUNCTION);
                 }
@@ -196,142 +198,108 @@ public class FrameFunctions {
              */
             RCallNode callNode = (RCallNode) RASTUtils.unwrap(call.getRep());
             CallArgumentsNode callArgs = callNode.createArguments(null, false, false);
-            MatchedArguments matchedArgs = ArgumentMatcher.matchArguments(definition, callArgs, null, null, true);
+            UnrolledVariadicArguments executeFlatten = callArgs.executeFlatten(cframe);
+            MatchedArguments matchedArgs = ArgumentMatcher.matchArguments(definition, executeFlatten, null, null, true);
             ArgumentsSignature sig = matchedArgs.getSignature();
             RNode[] matchedArgNodes = matchedArgs.getArguments();
             // expand any varargs
-            ExpandedVarArgs expandedVarArgs = processVarArgs(cframe, matchedArgNodes);
-            int[] argsLength = newArgsLength(matchedArgNodes, expandDots, expandedVarArgs);
-            int newCallArgsLength = argsLength[0];
-            int listArgsLength = expandDots ? -1 : argsLength[1];
-            String[] listNames = null;
-            if (sig.getVarArgCount() > 0) {
-                if (!expandDots) {
-                    if (sig.getNonNullCount() > 1) {
-                        // some named arguments as well as ...
-                        String[] names = new String[newCallArgsLength];
-                        listNames = new String[listArgsLength];
-                        int i = 0;
-                        int j = 0;
-                        for (RNode node : matchedArgNodes) {
-                            if (node instanceof VarArgsPromiseNode) {
-                                assignVarArgsNames(expandedVarArgs, listNames, 0);
-                                names[i++] = ArgumentsSignature.VARARG_NAME;
-                            } else if (!isMissing(node)) {
-                                names[i++] = sig.getName(j);
-                            }
-                            j++;
-                        }
-                        sig = ArgumentsSignature.get(names);
-                    } else {
-                        listNames = new String[listArgsLength];
-                        if (listArgsLength > 0) {
-                            for (RNode node : matchedArgNodes) {
-                                if (node instanceof VarArgsPromiseNode) {
-                                    assignVarArgsNames(expandedVarArgs, listNames, 0);
-                                }
-                            }
-                            sig = ArgumentsSignature.get(ArgumentsSignature.VARARG_NAME);
-                        } else {
-                            sig = ArgumentsSignature.empty(0);
-                        }
-                    }
-                } else {
-                    String[] names = new String[newCallArgsLength];
-                    int i = 0;
-                    int j = 0;
-                    for (RNode node : matchedArgNodes) {
-                        if (node instanceof VarArgsPromiseNode) {
-                            assignVarArgsNames(expandedVarArgs, names, i);
-                            i += expandedVarArgs.nodes.size();
-                        } else if (!isMissing(node)) {
-                            names[i++] = sig.getName(j);
-                        }
-                        j++;
-                    }
-                    sig = ArgumentsSignature.get(names);
-                }
-            }
+            ArrayList<RNode> nodes = new ArrayList<>();
+            ArrayList<String> names = new ArrayList<>();
 
-            RSyntaxNode[] newArgs = new RSyntaxNode[newCallArgsLength];
-            int newArgsIndex = 0;
-            for (RNode node : matchedArgNodes) {
-                if (isMissing(node)) {
-                    continue;
-                } else if (node instanceof VarArgsPromiseNode) {
-                    if (expandedVarArgs.nodes.size() > 0) {
-                        if (expandDots) {
-                            for (int v = 0; v < expandedVarArgs.nodes.size(); v++) {
-                                newArgs[newArgsIndex++] = (RSyntaxNode) expandedVarArgs.nodes.get(v);
-                            }
+            FrameSlot varArgSlot = cframe.getFrameDescriptor().findFrameSlot(ArgumentsSignature.VARARG_NAME);
+            RArgsValuesAndNames varArgParameter = varArgSlot == null ? null : (RArgsValuesAndNames) cframe.getValue(varArgSlot);
+
+            for (int i = 0; i < sig.getLength(); i++) {
+                RNode arg = matchedArgNodes[i];
+                arg = checkForVarArgNode(varArgParameter, arg);
+
+                if (isMissing(arg)) {
+                    // nothing to do
+                } else if (arg instanceof VarArgsPromiseNode) {
+                    VarArgsPromiseNode vararg = (VarArgsPromiseNode) arg;
+
+                    ArgumentsSignature varArgSignature = vararg.getSignature();
+                    RPromise.Closure[] closures = vararg.getClosures();
+
+                    RNode[] varArgNodes = new RNode[varArgSignature.getLength()];
+                    for (int i2 = 0; i2 < varArgNodes.length; i2++) {
+                        Closure cl = closures[i2];
+                        RNode n = RASTUtils.unwrap(cl.getExpr());
+                        n = checkForVarArgNode(varArgParameter, n);
+
+                        if (n instanceof PromiseNode) {
+                            varArgNodes[i2] = ((PromiseNode) n).getPromiseExpr().asRNode();
                         } else {
-                            // GnuR appears to create a pairlist rather than a list
-                            RPairList head = RDataFactory.createPairList();
-                            head.setType(SEXPTYPE.LISTSXP);
-                            RPairList pl = head;
-                            RPairList prev = null;
-                            int pls = expandedVarArgs.nodes.size();
-                            for (int v = 0; v < pls; v++) {
-                                RNode n = RASTUtils.unwrap(expandedVarArgs.nodes.get(v));
-                                Object listValue;
-                                if (n instanceof ConstantNode) {
-                                    listValue = ((ConstantNode) n).getValue();
-                                } else if (n instanceof ReadVariableNode) {
-                                    listValue = RDataFactory.createSymbol(((ReadVariableNode) n).getIdentifier());
-                                } else {
-                                    throw RInternalError.shouldNotReachHere();
-                                }
-                                pl.setCar(listValue);
-                                if (listNames[v] != null) {
-                                    pl.setTag(RDataFactory.createSymbol(listNames[v]));
-                                }
-                                if (prev != null) {
-                                    prev.setCdr(pl);
-                                }
-                                prev = pl;
-                                if (v != pls - 1) {
-                                    pl = RDataFactory.createPairList();
-                                    pl.setType(SEXPTYPE.LISTSXP);
-                                }
-                            }
-                            newArgs[newArgsIndex++] = ConstantNode.create(head);
+                            varArgNodes[i2] = n;
                         }
                     }
+
+                    if (expandDots) {
+                        for (int i2 = 0; i2 < varArgNodes.length; i2++) {
+                            nodes.add(varArgNodes[i2]);
+                            names.add(varArgSignature.getName(i2));
+                        }
+                    } else {
+                        // GnuR appears to create a pairlist rather than a list
+                        RPairList head = RDataFactory.createPairList();
+                        head.setType(SEXPTYPE.LISTSXP);
+                        RPairList pl = head;
+                        RPairList prev = null;
+                        for (int i2 = 0; i2 < varArgNodes.length; i2++) {
+                            RNode n = varArgNodes[i2];
+                            Object listValue;
+                            if (n instanceof ConstantNode) {
+                                listValue = ((ConstantNode) n).getValue();
+                            } else if (n instanceof ReadVariableNode) {
+                                listValue = RDataFactory.createSymbol(((ReadVariableNode) n).getIdentifier());
+                            } else if (n instanceof VarArgNode) {
+                                listValue = createVarArgSymbol((VarArgNode) n);
+                            } else {
+                                throw RInternalError.shouldNotReachHere("node: " + n + " at " + i2);
+                            }
+                            pl.setCar(listValue);
+                            if (varArgSignature.getName(i2) != null) {
+                                pl.setTag(RDataFactory.createSymbol(varArgSignature.getName(i2)));
+                            }
+                            if (prev != null) {
+                                prev.setCdr(pl);
+                            }
+                            prev = pl;
+                            if (i2 != varArgSignature.getLength() - 1) {
+                                pl = RDataFactory.createPairList();
+                                pl.setType(SEXPTYPE.LISTSXP);
+                            }
+                        }
+                        nodes.add(ConstantNode.create(head));
+                        names.add(ArgumentsSignature.VARARG_NAME);
+                    }
+
+                } else if (arg instanceof PromiseNode) {
+                    nodes.add(((PromiseNode) arg).getPromiseExpr().asRNode());
+                    names.add(sig.getName(i));
                 } else {
-                    PromiseNode pn = (PromiseNode) node;
-                    RSyntaxNode pnExpr = pn.getPromiseExpr();
-                    newArgs[newArgsIndex++] = pnExpr;
+                    nodes.add(arg);
+                    names.add(sig.getName(i));
                 }
             }
+            sig = ArgumentsSignature.get(names.toArray(new String[names.size()]));
+            RSyntaxNode[] newArgs = nodes.toArray(new RSyntaxNode[nodes.size()]);
 
             RNode modCallNode = RASTUtils.createCall(callNode.getFunctionNode(), sig, newArgs);
             return RDataFactory.createLanguage(modCallNode);
         }
 
-        /**
-         * Computes the total number of arguments in the resulting call, handling whether "..." is
-         * expanded or not. Returns the total in index 0 and the number of varargs args in index 1.
-         */
-        private static int[] newArgsLength(RNode[] matchedArgNodes, boolean expandDots, ExpandedVarArgs expandedVarArgs) {
-            int totalArgs = 0;
-            int varArgs = 0;
-            for (RNode node : matchedArgNodes) {
-                if (ConstantNode.isMissing(node) || isEmptyVarArg(node)) {
-                    continue;
-                } else if (node instanceof VarArgsPromiseNode) {
-                    varArgs = expandedVarArgs.nodes.size();
-                    if (expandDots) {
-                        totalArgs += varArgs;
-                    } else {
-                        if (varArgs > 0) {
-                            totalArgs++;
-                        }
-                    }
+        private static RNode checkForVarArgNode(RArgsValuesAndNames varArgParameter, RNode arg) {
+            if (arg instanceof VarArgNode) {
+                Object argument = varArgParameter.getArgument(((VarArgNode) arg).getIndex());
+                if (argument instanceof RPromise) {
+                    RNode unwrapped = RASTUtils.unwrap(((RPromise) argument).getRep());
+                    return unwrapped instanceof ConstantNode ? unwrapped : ConstantNode.create(createVarArgSymbol((VarArgNode) arg));
                 } else {
-                    totalArgs++;
+                    return ConstantNode.create(argument);
                 }
             }
-            return new int[]{totalArgs, varArgs};
+            return arg;
         }
 
         private static boolean isMissing(RNode node) {
@@ -346,60 +314,9 @@ public class FrameFunctions {
             return false;
         }
 
-        private static boolean isDots(Object expr) {
-            RSyntaxNode arg = (RSyntaxNode) RASTUtils.unwrap(expr);
-            return arg instanceof ReadVariableNode && ((ReadVariableNode) arg).getIdentifier().equals(ArgumentsSignature.VARARG_NAME);
-        }
-
-        private static void assignVarArgsNames(ExpandedVarArgs expandedVarArgs, String[] names, int index) {
-            for (int c = 0; c < expandedVarArgs.names.size(); c++) {
-                if (expandedVarArgs.names.get(c) != null) {
-                    names[index + c] = expandedVarArgs.names.get(c);
-                }
-            }
-        }
-
-        private static final class ExpandedVarArgs {
-            private final ArrayList<RNode> nodes = new ArrayList<>();
-            private final ArrayList<String> names = new ArrayList<>();
-        }
-
-        /**
-         * Processes any "..." args, retrieving their values using cframe if any of them are
-         * themselves "...".
-         */
-        private static ExpandedVarArgs processVarArgs(Frame cframe, RNode[] matchedArgNodes) {
-            ExpandedVarArgs result = new ExpandedVarArgs();
-            for (RNode node : matchedArgNodes) {
-                if (node instanceof VarArgsPromiseNode) {
-                    VarArgsPromiseNode vpn = (VarArgsPromiseNode) node;
-                    ArgumentsSignature vpnArgsSig = vpn.getSignature();
-                    RPromise.Closure[] closures = ((VarArgsPromiseNode) node).getClosures();
-                    for (int i = 0; i < closures.length; i++) {
-                        Closure cl = closures[i];
-                        if (isDots(cl.getExpr())) {
-                            // expand this using cframe
-                            RArgsValuesAndNames rvn = (RArgsValuesAndNames) RArguments.getArgument(cframe, 0);
-                            int vn = 1;
-                            for (int v = i; v < rvn.getLength(); v++) {
-                                RNode narg = RASTUtils.createNodeForValue(rvn.getArgument(v));
-                                if (narg == null) {
-                                    StringBuilder sb = new StringBuilder((vn) < 10 ? ".." : ".");
-                                    sb.append(vn);
-                                    narg = ConstantNode.create(RDataFactory.createSymbol(sb.toString()));
-                                }
-                                result.nodes.add(narg);
-                                result.names.add(rvn.getSignature().getName(v));
-                                vn++;
-                            }
-                        } else {
-                            result.nodes.add((RNode) cl.getExpr());
-                            result.names.add(vpnArgsSig.getName(i));
-                        }
-                    }
-                }
-            }
-            return result;
+        private static RSymbol createVarArgSymbol(VarArgNode varArgNode) {
+            int vn = varArgNode.getIndex() + 1;
+            return RDataFactory.createSymbol((vn < 10 ? ".." : ".") + vn);
         }
 
         @Specialization
