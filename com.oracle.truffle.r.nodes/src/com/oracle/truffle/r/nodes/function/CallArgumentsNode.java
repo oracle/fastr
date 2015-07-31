@@ -56,11 +56,6 @@ public class CallArgumentsNode extends ArgumentsNode {
      */
     @CompilationFinal private final int[] varArgsSymbolIndices;
 
-    private static final int UNINITIALIZED = -1;
-    private static final int VARIABLE = -2;
-
-    @CompilationFinal private int cachedSignatureLength = UNINITIALIZED;
-
     private final IdentityHashMap<RNode, Closure> closureCache = new IdentityHashMap<>();
 
     CallArgumentsNode(RNode[] arguments, ArgumentsSignature signature, int[] varArgsSymbolIndices) {
@@ -122,92 +117,20 @@ public class CallArgumentsNode extends ArgumentsNode {
         throw RInternalError.shouldNotReachHere("Execute has not semantic meaning for CallArgumentsNode");
     }
 
-    /**
-     * @param frame
-     * @return The {@link VarArgsSignature} of these arguments, or
-     *         {@link VarArgsSignature#TAKES_NO_VARARGS} if ! {@link #containsVarArgsSymbol()}
-     */
-    public VarArgsSignature createSignature(VirtualFrame frame, boolean slowPath) {
-        if (!containsVarArgsSymbol()) {
-            return VarArgsSignature.TAKES_NO_VARARGS;
-        }
-
-        // Unroll "..."s and insert their arguments into VarArgsSignature
-        int times = varArgsSymbolIndices.length;
-        RArgsValuesAndNames varArgsAndNames = getVarargsAndNames(frame, slowPath);
-
-        // "..." empty?
-        if (varArgsAndNames.isEmpty()) {
-            return VarArgsSignature.NO_VARARGS_GIVEN;
-        } else {
-            // Arguments wrapped into "..."
-            Object[] varArgs = varArgsAndNames.getArguments();
-            Object[] content;
-            if (cachedSignatureLength != VARIABLE && cachedSignatureLength != varArgs.length) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                cachedSignatureLength = cachedSignatureLength == UNINITIALIZED ? varArgs.length : VARIABLE;
-            }
-            if (cachedSignatureLength == VARIABLE) {
-                content = new Object[varArgs.length];
-                createSignatureLoop(content, varArgs);
-            } else {
-                content = new Object[cachedSignatureLength];
-                createSignatureLoopUnrolled(content, varArgs, cachedSignatureLength);
-            }
-            return VarArgsSignature.create(content, times);
-        }
-    }
-
-    public RArgsValuesAndNames getVarargsAndNames(Frame frame, boolean slowPath) {
+    public static RArgsValuesAndNames getVarargsAndNames(Frame frame) {
+        CompilerAsserts.neverPartOfCompilation();
         RArgsValuesAndNames varArgsAndNames;
         try {
             FrameSlot slot;
-            if (slowPath) {
-                slot = frame.getFrameDescriptor().findFrameSlot(ArgumentsSignature.VARARG_NAME);
-                if (slot == null) {
-                    CompilerDirectives.transferToInterpreter();
-                    RError.error(RError.Message.NO_DOT_DOT_DOT);
-                }
-            } else {
-                if (!varArgsSlotNode.hasValue(frame)) {
-                    CompilerDirectives.transferToInterpreter();
-                    RError.error(RError.Message.NO_DOT_DOT_DOT);
-                }
-                slot = varArgsSlotNode.executeFrameSlot(frame);
+            slot = frame.getFrameDescriptor().findFrameSlot(ArgumentsSignature.VARARG_NAME);
+            if (slot == null) {
+                RError.error(RError.Message.NO_DOT_DOT_DOT);
             }
             varArgsAndNames = (RArgsValuesAndNames) frame.getObject(slot);
         } catch (FrameSlotTypeException | ClassCastException e) {
             throw RInternalError.shouldNotReachHere("'...' should always be represented by RArgsValuesAndNames");
         }
         return varArgsAndNames;
-    }
-
-    private static void createSignatureLoop(Object[] content, Object[] varArgs) {
-        // As we want to check on expression identity later on:
-        for (int i = 0; i < varArgs.length; i++) {
-            createSignatureLoopContents(content, varArgs, i);
-        }
-    }
-
-    @ExplodeLoop
-    private static void createSignatureLoopUnrolled(Object[] content, Object[] varArgs, int length) {
-        // As we want to check on expression identity later on:
-        for (int i = 0; i < length; i++) {
-            createSignatureLoopContents(content, varArgs, i);
-        }
-    }
-
-    private static void createSignatureLoopContents(Object[] content, Object[] varArgs, int i) {
-        Object varArg = varArgs[i];
-        if (varArg instanceof RPromise) {
-            // Unwrap expression (one instance per argument/call site)
-            content[i] = ((RPromise) varArg).getRep();
-        } else if (RMissingHelper.isMissing(varArg)) {
-            // Use static symbol for "missing" instead of ConstantNode.create
-            content[i] = VarArgsSignature.NO_VARARGS;
-        } else {
-            content[i] = varArg;
-        }
     }
 
     public UnrolledVariadicArguments executeFlatten(Frame frame) {
@@ -226,7 +149,7 @@ public class CallArgumentsNode extends ArgumentsNode {
                     // reason for this whole method: Before argument matching, we have to unroll
                     // passed "..." every time, as their content might change per call site each
                     // call!
-                    RArgsValuesAndNames varArgInfo = getVarargsAndNames(frame, true);
+                    RArgsValuesAndNames varArgInfo = getVarargsAndNames(frame);
                     if (varArgInfo.isEmpty()) {
                         // An empty "..." vanishes
                         values = Utils.resizeArray(values, values.length - 1);
@@ -262,13 +185,11 @@ public class CallArgumentsNode extends ArgumentsNode {
     }
 
     @ExplodeLoop
-    public RArgsValuesAndNames evaluateFlatten(VirtualFrame frame) {
+    public RArgsValuesAndNames evaluateFlatten(VirtualFrame frame, RArgsValuesAndNames varArgInfo) {
         int size = arguments.length;
-        RArgsValuesAndNames varArgInfo = null;
         ArgumentsSignature resultSignature = null;
         String[] names = null;
         if (containsVarArgsSymbol()) {
-            varArgInfo = getVarargsAndNames(frame, false);
             size += (varArgInfo.getLength() - 1) * varArgsSymbolIndices.length;
             names = new String[size];
         } else {

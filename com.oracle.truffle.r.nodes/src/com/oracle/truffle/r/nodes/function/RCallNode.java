@@ -599,8 +599,8 @@ public final class RCallNode extends RNode implements RSyntaxNode {
                 if (args.containsVarArgsSymbol()) {
                     // Yes, maybe.
                     VarArgsCacheCallNode nextNode = new UninitializedVarArgsCacheCallNode(args, callSrc);
-                    VarArgsSignature varArgsSignature = args.createSignature(frame, true);
-                    callNode = DispatchedVarArgsCallNode.create(frame, args, nextNode, callSrc, function, varArgsSignature, true);
+                    ArgumentsSignature varArgsSignature = CallArgumentsNode.getVarargsAndNames(frame).getSignature();
+                    callNode = DispatchedVarArgsCallNode.create(frame, args, nextNode, callSrc, function, varArgsSignature);
                 } else {
                     // Nope! (peeewh)
                     MatchedArguments matchedArgs = ArgumentMatcher.matchArguments(function, args, callSrc, argsSrc, false);
@@ -743,12 +743,27 @@ public final class RCallNode extends RNode implements RSyntaxNode {
      */
     private abstract static class VarArgsCacheCallNode extends LeafCallNode {
 
+        @Child private FrameSlotNode varArgsSlotNode = FrameSlotNode.create(ArgumentsSignature.VARARG_NAME);
+
         @Override
         public final Object execute(VirtualFrame frame, RFunction function, S3Args s3Args) {
-            return execute(frame, function, null, s3Args);
+            RArgsValuesAndNames varArgsAndNames;
+            try {
+                FrameSlot slot;
+                if (!varArgsSlotNode.hasValue(frame)) {
+                    CompilerDirectives.transferToInterpreter();
+                    RError.error(RError.Message.NO_DOT_DOT_DOT);
+                }
+                slot = varArgsSlotNode.executeFrameSlot(frame);
+                varArgsAndNames = (RArgsValuesAndNames) frame.getObject(slot);
+            } catch (FrameSlotTypeException | ClassCastException e) {
+                throw RInternalError.shouldNotReachHere("'...' should always be represented by RArgsValuesAndNames");
+            }
+
+            return execute(frame, function, varArgsAndNames.getSignature(), s3Args);
         }
 
-        protected abstract Object execute(VirtualFrame frame, RFunction function, VarArgsSignature varArgsSignature, S3Args s3Args);
+        protected abstract Object execute(VirtualFrame frame, RFunction function, ArgumentsSignature varArgsSignature, S3Args s3Args);
     }
 
     /**
@@ -767,14 +782,14 @@ public final class RCallNode extends RNode implements RSyntaxNode {
         }
 
         @Override
-        public Object execute(VirtualFrame frame, RFunction function, VarArgsSignature varArgsSignature, S3Args s3Args) {
+        public Object execute(VirtualFrame frame, RFunction function, ArgumentsSignature varArgsSignature, S3Args s3Args) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
 
             // Extend cache
             this.depth += 1;
             CallArgumentsNode clonedArgs = NodeUtil.cloneNode(args);
             VarArgsCacheCallNode next = createNextNode(function, getSourceSection());
-            DispatchedVarArgsCallNode newCallNode = DispatchedVarArgsCallNode.create(frame, clonedArgs, next, getSourceSection(), function, varArgsSignature, false);
+            DispatchedVarArgsCallNode newCallNode = DispatchedVarArgsCallNode.create(frame, clonedArgs, next, getSourceSection(), function, varArgsSignature);
             return replace(newCallNode).execute(frame, function, varArgsSignature, s3Args);
         }
 
@@ -799,28 +814,16 @@ public final class RCallNode extends RNode implements RSyntaxNode {
         @Child private VarArgsCacheCallNode next;
         @Child private MatchedArgumentsNode matchedArgs;
 
-        private final VarArgsSignature cachedSignature;
+        private final ArgumentsSignature cachedSignature;
         private final boolean needsCallerFrame;
         @CompilationFinal private boolean needsSplitting;
 
-        /**
-         * Whether this [DV] node is the root of the varargs sub-cache (cmp. {@link RCallNode})
-         */
-        private final boolean isVarArgsRoot;
-
-        /**
-         * Used to profile on constant {@link #isVarArgsRoot}.
-         */
-        private final ConditionProfile isRootProfile = ConditionProfile.createBinaryProfile();
-
-        protected DispatchedVarArgsCallNode(CallArgumentsNode args, VarArgsCacheCallNode next, RFunction function, VarArgsSignature varArgsSignature, MatchedArguments matchedArgs,
-                        boolean isVarArgsRoot) {
+        protected DispatchedVarArgsCallNode(CallArgumentsNode args, VarArgsCacheCallNode next, RFunction function, ArgumentsSignature varArgsSignature, MatchedArguments matchedArgs) {
             this.call = Truffle.getRuntime().createDirectCallNode(function.getTarget());
             this.args = args;
             this.next = next;
             this.cachedSignature = varArgsSignature;
             this.matchedArgs = matchedArgs.createNode();
-            this.isVarArgsRoot = isVarArgsRoot;
             this.needsCallerFrame = function.containsDispatch();
             /*
              * this is a simple heuristic - methods that need a caller frame should have call site -
@@ -830,26 +833,20 @@ public final class RCallNode extends RNode implements RSyntaxNode {
         }
 
         protected static DispatchedVarArgsCallNode create(VirtualFrame frame, CallArgumentsNode args, VarArgsCacheCallNode next, SourceSection callSrc, RFunction function,
-                        VarArgsSignature varArgsSignature, boolean isVarArgsRoot) {
+                        ArgumentsSignature varArgsSignature) {
             UnrolledVariadicArguments unrolledArguments = args.executeFlatten(frame);
             MatchedArguments matchedArgs = ArgumentMatcher.matchArguments(function, unrolledArguments, callSrc, args.getEncapsulatingSourceSection(), false);
-            return new DispatchedVarArgsCallNode(args, next, function, varArgsSignature, matchedArgs, isVarArgsRoot);
+            return new DispatchedVarArgsCallNode(args, next, function, varArgsSignature, matchedArgs);
         }
 
         @Override
-        public Object execute(VirtualFrame frame, RFunction currentFunction, VarArgsSignature varArgsSignature, S3Args s3Args) {
+        public Object execute(VirtualFrame frame, RFunction currentFunction, ArgumentsSignature varArgsSignature, S3Args s3Args) {
             // If this is the root of the varargs sub-cache: The signature needs to be created
             // once
-            VarArgsSignature currentSignature;
-            if (isRootProfile.profile(isVarArgsRoot)) {
-                currentSignature = args.createSignature(frame, false);
-            } else {
-                currentSignature = varArgsSignature;
-            }
 
             // If the signature does not match: delegate to next node!
-            if (!cachedSignature.isEqualTo(currentSignature)) {
-                return next.execute(frame, currentFunction, currentSignature, s3Args);
+            if (cachedSignature != varArgsSignature) {
+                return next.execute(frame, currentFunction, varArgsSignature, s3Args);
             }
 
             // Our cached function and matched arguments do match, simply execute!
@@ -886,7 +883,7 @@ public final class RCallNode extends RNode implements RSyntaxNode {
         }
 
         @Override
-        protected Object execute(VirtualFrame frame, RFunction currentFunction, VarArgsSignature varArgsSignature, S3Args s3Args) {
+        protected Object execute(VirtualFrame frame, RFunction currentFunction, ArgumentsSignature varArgsSignature, S3Args s3Args) {
             CompilerDirectives.transferToInterpreter();
 
             // Arguments may change every call: Flatt'n'Match on SlowPath! :-/

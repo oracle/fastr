@@ -18,6 +18,7 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.function.S3FunctionLookupNode.NoGenericMethodException;
 import com.oracle.truffle.r.nodes.function.S3FunctionLookupNode.Result;
 import com.oracle.truffle.r.nodes.runtime.*;
@@ -34,6 +35,7 @@ public final class GroupDispatchNode extends RNode implements RSyntaxNode {
     @Child private ClassHierarchyNode classHierarchyL;
     @Child private ClassHierarchyNode classHierarchyR;
     @Child private CallMatcherNode callMatcher = CallMatcherNode.create(false, true);
+    @Child private FrameSlotNode varArgsSlotNode;
 
     private final String fixedGenericName;
     private final RGroupGenerics fixedGroup;
@@ -105,7 +107,25 @@ public final class GroupDispatchNode extends RNode implements RSyntaxNode {
 
     @Override
     public Object execute(VirtualFrame frame) {
-        RArgsValuesAndNames argAndNames = callArgsNode.evaluateFlatten(frame);
+        RArgsValuesAndNames varArgs = null;
+        if (callArgsNode.containsVarArgsSymbol()) {
+            if (varArgsSlotNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                varArgsSlotNode = insert(FrameSlotNode.create(ArgumentsSignature.VARARG_NAME));
+            }
+            try {
+                FrameSlot slot;
+                if (!varArgsSlotNode.hasValue(frame)) {
+                    CompilerDirectives.transferToInterpreter();
+                    RError.error(RError.Message.NO_DOT_DOT_DOT);
+                }
+                slot = varArgsSlotNode.executeFrameSlot(frame);
+                varArgs = (RArgsValuesAndNames) frame.getObject(slot);
+            } catch (FrameSlotTypeException | ClassCastException e) {
+                throw RInternalError.shouldNotReachHere("'...' should always be represented by RArgsValuesAndNames");
+            }
+        }
+        RArgsValuesAndNames argAndNames = callArgsNode.evaluateFlatten(frame, varArgs);
         return executeInternal(frame, argAndNames, fixedGenericName, fixedGroup, fixedBuiltinFunction);
     }
 
