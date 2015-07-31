@@ -53,7 +53,7 @@ import com.oracle.truffle.r.runtime.env.*;
  * workaround, the {@link #isSyntax} method can be overridden in such nodes, using some contextual
  * information, to return {@code false}.
  */
-public interface RSyntaxNode extends SyntaxNode {
+public interface RSyntaxNode {
     /**
      * A convenience method that captures the fact that, while the notion of a syntax node is
      * described in this interface, in practice all {@link RSyntaxNode} instances are also

@@ -27,13 +27,14 @@ import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.nodes.Node.Child;
+import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
 
 @SuppressWarnings("unused")
 @ImportStatic(RRuntime.class)
-public abstract class PrecedenceNode extends Node {
+public abstract class PrecedenceNode extends NodeSA {
 
     public static final int NO_PRECEDENCE = -1;
     public static final int RAW_PRECEDENCE = 0;

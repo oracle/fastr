@@ -28,6 +28,7 @@ import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.utilities.*;
+import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.binary.BinaryBooleanScalarNodeGen.LogicalScalarCastNodeGen;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseCheckHelperNode;
@@ -81,7 +82,7 @@ public abstract class BinaryBooleanScalarNode extends RBuiltinNode {
         return left;
     }
 
-    protected abstract static class LogicalScalarCastNode extends Node {
+    protected abstract static class LogicalScalarCastNode extends NodeSA {
 
         protected static final int CACHE_LIMIT = 3;
 

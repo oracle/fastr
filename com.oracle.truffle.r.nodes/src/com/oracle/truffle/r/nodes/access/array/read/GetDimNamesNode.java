@@ -33,7 +33,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
 @TypeSystemReference(RTypes.class)
-abstract class GetDimNamesNode extends Node {
+abstract class GetDimNamesNode extends NodeSA {
 
     public abstract Object executeDimNamesGet(RList dstDimNames, RAbstractVector vector, Object[] positions, int currentSrcDimLevel, int currentDstDimLevel);
 

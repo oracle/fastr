@@ -24,10 +24,11 @@ package com.oracle.truffle.r.nodes.attributes;
 
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.utilities.*;
+import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.data.*;
 
 @NodeInfo(cost = NodeCost.NONE)
-public final class InitAttributesNode extends Node {
+public final class InitAttributesNode extends NodeSA {
 
     private final ConditionProfile hasAttributes = ConditionProfile.createBinaryProfile();
 

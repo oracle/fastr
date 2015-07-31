@@ -121,7 +121,7 @@ public final class ForNode extends AbstractLoopNode implements VisibilityControl
         return (ForRepeatingNode) loopNode.getRepeatingNode();
     }
 
-    private static final class ForRepeatingNode extends Node implements RepeatingNode {
+    private static final class ForRepeatingNode extends NodeSA implements RepeatingNode {
 
         private static final Source ACCESS_ARRAY_SOURCE = Source.fromText("x[[i]]", "<lfor_array_access>");
 

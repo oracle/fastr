@@ -26,12 +26,13 @@ import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.utilities.*;
+import com.oracle.truffle.r.nodes.*;
 
 /**
  * This is a node abstraction for the functionality defined in
  * {@link RMissingHelper#getMissingValue(Frame,String)}.
  */
-public abstract class GetMissingValueNode extends Node {
+public abstract class GetMissingValueNode extends NodeSA {
 
     public static GetMissingValueNode create(String name) {
         return new UninitializedGetMissingValueNode(name);

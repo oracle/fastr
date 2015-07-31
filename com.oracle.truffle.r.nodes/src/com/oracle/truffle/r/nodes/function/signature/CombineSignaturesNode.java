@@ -24,10 +24,10 @@ package com.oracle.truffle.r.nodes.function.signature;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.nodes.*;
+import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.*;
 
-public abstract class CombineSignaturesNode extends Node {
+public abstract class CombineSignaturesNode extends NodeSA {
 
     protected static final int CACHE_LIMIT = 3;
 

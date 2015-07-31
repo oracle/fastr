@@ -40,7 +40,7 @@ import com.oracle.truffle.r.runtime.*;
  */
 public final class MatchedArguments extends Arguments<RNode> {
 
-    public static final class MatchedArgumentsNode extends Node {
+    public static final class MatchedArgumentsNode extends NodeSA {
         @Children private final RNode[] arguments;
         private final ArgumentsSignature signature;
 

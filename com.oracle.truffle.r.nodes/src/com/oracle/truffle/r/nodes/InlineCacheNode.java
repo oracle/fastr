@@ -39,7 +39,7 @@ import com.oracle.truffle.r.runtime.data.RPromise.Closure;
  * This node reifies a runtime object into the AST by creating nodes for frequently encountered
  * values. This can be used to bridge the gap between code as runtime data and executed code.
  */
-public abstract class InlineCacheNode extends Node {
+public abstract class InlineCacheNode extends NodeSA {
 
     protected final int maxPicDepth;
     private final Function<Object, RNode> reify;

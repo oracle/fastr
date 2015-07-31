@@ -33,7 +33,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
 @TypeSystemReference(RTypes.class)
-abstract class GetMultiDimDataNode extends Node {
+abstract class GetMultiDimDataNode extends NodeSA {
 
     public abstract Object executeMultiDimDataGet(Object data, RAbstractVector vector, Object[] positions, int currentDimLevel, int srcArrayBase, int dstArrayBase, int accSrcDimensions,
                     int accDstDimensions);

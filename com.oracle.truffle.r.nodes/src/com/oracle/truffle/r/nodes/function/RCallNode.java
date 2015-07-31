@@ -545,7 +545,7 @@ public final class RCallNode extends RNode implements RSyntaxNode {
         }
 
         @Override
-        protected RSyntaxNode getSyntaxNode() {
+        protected RSyntaxNode getRSyntaxNode() {
             return arg;
         }
 
@@ -700,7 +700,7 @@ public final class RCallNode extends RNode implements RSyntaxNode {
      *
      * @see RCallNode
      */
-    public abstract static class LeafCallNode extends Node {
+    public abstract static class LeafCallNode extends NodeSA {
 
         public abstract Object execute(VirtualFrame frame, RFunction function, S3Args s3Args);
     }
@@ -812,17 +812,17 @@ public final class RCallNode extends RNode implements RSyntaxNode {
             // Extend cache
             this.depth += 1;
             CallArgumentsNode clonedArgs = NodeUtil.cloneNode(args);
-            VarArgsCacheCallNode next = createNextNode(function, getSourceSection());
+            VarArgsCacheCallNode next = createNextNode(function);
             DispatchedVarArgsCallNode newCallNode = DispatchedVarArgsCallNode.create(frame, clonedArgs, next, this, function, varArgsSignature);
             return replace(newCallNode).execute(frame, function, varArgsSignature, s3Args);
         }
 
-        private VarArgsCacheCallNode createNextNode(RFunction function, SourceSection callSrc) {
+        private VarArgsCacheCallNode createNextNode(RFunction function) {
             if (depth < VARARGS_INLINE_CACHE_SIZE) {
                 return this;
             } else {
                 CallArgumentsNode clonedArgs = NodeUtil.cloneNode(args);
-                return new DispatchedGenericVarArgsCallNode(function, clonedArgs, callSrc);
+                return new DispatchedGenericVarArgsCallNode(function, clonedArgs);
             }
         }
     }
@@ -899,10 +899,9 @@ public final class RCallNode extends RNode implements RSyntaxNode {
 
         @CompilationFinal private boolean needsCallerFrame;
 
-        DispatchedGenericVarArgsCallNode(RFunction function, CallArgumentsNode suppliedArgs, SourceSection callSrc) {
+        DispatchedGenericVarArgsCallNode(RFunction function, CallArgumentsNode suppliedArgs) {
             this.call = Truffle.getRuntime().createDirectCallNode(function.getTarget());
             this.suppliedArgs = suppliedArgs;
-            assignSourceSection(callSrc);
         }
 
         @Override

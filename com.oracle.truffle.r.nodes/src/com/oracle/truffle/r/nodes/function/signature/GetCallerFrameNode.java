@@ -28,9 +28,10 @@ import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.utilities.*;
+import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.*;
 
-public final class GetCallerFrameNode extends Node {
+public final class GetCallerFrameNode extends NodeSA {
 
     @CompilationFinal private boolean slowPathSeen;
     private final BranchProfile topLevelProfile = BranchProfile.create();

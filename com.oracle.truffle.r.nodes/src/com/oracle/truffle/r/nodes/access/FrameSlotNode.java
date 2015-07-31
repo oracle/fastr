@@ -34,7 +34,7 @@ import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.env.frame.*;
 
 @TypeSystemReference(RTypes.class)
-public abstract class FrameSlotNode extends Node {
+public abstract class FrameSlotNode extends NodeSA {
 
     public abstract boolean hasValue(Frame frame);
 

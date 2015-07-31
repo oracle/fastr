@@ -27,10 +27,8 @@ import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.instrument.ProbeNode.*;
-import com.oracle.truffle.r.nodes.control.*;
 import com.oracle.truffle.r.nodes.instrument.NeedsWrapper;
 import com.oracle.truffle.api.nodes.*;
-import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.instrument.*;
 import com.oracle.truffle.r.nodes.instrument.wrappers.*;
 import com.oracle.truffle.r.runtime.*;
@@ -41,7 +39,7 @@ import com.oracle.truffle.r.runtime.env.*;
 
 @TypeSystemReference(RTypes.class)
 @NeedsWrapper
-public abstract class RNode extends Node implements RInstrumentableNode {
+public abstract class RNode extends NodeSA implements RInstrumentableNode {
 
     @CompilationFinal public static final RNode[] EMTPY_RNODE_ARRAY = new RNode[0];
     @CompilationFinal protected static final Object[] EMPTY_OBJECT_ARRAY = new Object[0];
@@ -334,91 +332,6 @@ public abstract class RNode extends Node implements RInstrumentableNode {
 
     protected static boolean isRNull(Object value) {
         return value == RNull.instance;
-    }
-
-    @Override
-    public SourceSection getSourceSection() {
-        if (this instanceof RSyntaxNode) {
-            if (this instanceof ReplacementNode) {
-                return super.getSourceSection();
-            }
-            ReplacementNode node = checkReplacementChild();
-            if (node != null) {
-                return node.getSourceSection();
-            }
-            return super.getSourceSection();
-        } else {
-            throw RInternalError.shouldNotReachHere("getSourceSection on non-syntax node");
-        }
-    }
-
-    @Override
-    public void assignSourceSection(SourceSection section) {
-        if (this instanceof RSyntaxNode) {
-            super.assignSourceSection(section);
-        } else {
-            throw RInternalError.shouldNotReachHere("assignSourceSection on non-syntax node");
-        }
-    }
-
-    @Override
-    public void clearSourceSection() {
-        if (this instanceof RSyntaxNode) {
-            super.clearSourceSection();
-        } else {
-            /*
-             * Eventually this should be an error but currently "substitute" walks the entire tree
-             * calling this method.
-             */
-            super.clearSourceSection();
-        }
-    }
-
-    @Override
-    /**
-     * Returns the {@link SourceSection} for this node, by locating the associated {@link RSyntaxNode}.
-     * I.e., this method must be stable in the face of AST transformations.
-     *
-     * N.B. This default implementation may be incorrect unless this node is always a child of the
-     * original {@link RSyntaxNode}. In cases where the structure is more complex, e.g. an inline
-     * cache, the node should override {@link #getEncapsulatingSourceSection()} with a node-specific
-     * implementation. There are basically three approaches:
-     * <ol>
-     * <li>Store the {@link SourceSection} as field in the node and override this method to return it. This may seem odd since currently
-     * every {@link Node} can store a {@link SourceSection}, but that could change, plus it is necessary owing to the check in {@link #assignSourceSection}</li>
-     * <li>Store the original {@link RSyntaxNode} and override this method to call its {@link getSourceSection}</li>
-     * <li>Follow the node-specific data structure to locate the original {@link RSyntaxNode} and call its {@link getSourceSection}</li>
-     * </ol>
-     */
-    public SourceSection getEncapsulatingSourceSection() {
-        ReplacementNode node = checkReplacementChild();
-        if (node != null) {
-            return node.getSourceSection();
-        }
-        return super.getEncapsulatingSourceSection();
-    }
-
-    /**
-     * This is rather nasty, but then that applies to {@link ReplacementNode} in general. Since a
-     * auto-generated child of a {@link ReplacementNode} may have a {@link SourceSection}, we might
-     * return it using the normal logic, but that would be wrong, we really need to return the the
-     * {@link SourceSection} of the {@link ReplacementNode} itself. This is a case where we can't
-     * use {@link #getEncapsulatingSourceSection} as a workaround (unless we created a completely
-     * parallel set of node classes) because the {@code ReplacementNode} child nodes are just
-     * standard {@link RSyntaxNode}s.
-     *
-     * @return {@code null} if not a child of a {@link ReplacementNode}, otherwise the
-     *         {@link ReplacementNode}.
-     */
-    private ReplacementNode checkReplacementChild() {
-        Node node = this;
-        while (node != null) {
-            if (node instanceof ReplacementNode) {
-                return (ReplacementNode) node;
-            }
-            node = node.getParent();
-        }
-        return null;
     }
 
 }

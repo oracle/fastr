@@ -40,7 +40,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
  *
  * The implementation tries to share input vectors if they are implementing {@link RShareable}.
  */
-public final class BinaryMapNode extends Node {
+public final class BinaryMapNode extends NodeSA {
 
     @Child private VectorMapBinaryInternalNode vectorNode;
     @Child private BinaryMapFunctionNode function;
@@ -286,7 +286,7 @@ public final class BinaryMapNode extends Node {
         }
     }
 
-    protected abstract static class VectorMapBinaryInternalNode extends Node {
+    protected abstract static class VectorMapBinaryInternalNode extends NodeSA {
 
         private static final MapBinaryIndexedAction<byte[], RAbstractLogicalVector> LOGICAL_LOGICAL = //
         (arithmetic, result, resultIndex, left, leftIndex, right, rightIndex) -> {

@@ -26,13 +26,12 @@ import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
-import com.oracle.truffle.api.source.*;
 
 /**
  * This node reifies a runtime object into the AST by creating nodes for frequently encountered
  * values. This can be used to bridge the gap between code as runtime data and executed code.
  */
-public abstract class CallInlineCacheNode extends Node {
+public abstract class CallInlineCacheNode extends NodeSA {
 
     protected static final int CACHE_LIMIT = 2;
 
@@ -56,10 +55,4 @@ public abstract class CallInlineCacheNode extends Node {
         return callNode.call(frame, target, arguments);
     }
 
-    // FIXME remove this
-    @Override
-    public SourceSection getSourceSection() {
-        // not a syntax node so..
-        return getEncapsulatingSourceSection();
-    }
 }

@@ -110,7 +110,7 @@ public final class WhileNode extends AbstractLoopNode implements RSyntaxNode, Vi
         return create(getCondition().substitute(env), RSyntaxNode.cast(getBody()).substitute(env), isRepeat);
     }
 
-    private static final class WhileRepeatingNode extends Node implements RepeatingNode {
+    private static final class WhileRepeatingNode extends NodeSA implements RepeatingNode {
 
         @Child private ConvertBooleanNode condition;
         @Child private RNode body;

@@ -405,7 +405,7 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
     }
 
     public RLanguage getSyntaxCaller(RCaller rl) {
-        RSyntaxNode sn = (RSyntaxNode) RASTUtils.unwrap(rl.getRep()).asSyntaxNode();
+        RSyntaxNode sn = ((NodeSA) RASTUtils.unwrap(rl.getRep())).asRSyntaxNode();
         return RDataFactory.createLanguage(sn);
     }
 
