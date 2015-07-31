@@ -113,11 +113,11 @@ public class TestBuiltin_any extends TestBase {
 
         assertEval("{ any(TRUE, TRUE, NA,  na.rm=TRUE) }");
         assertEval("{ any(TRUE, FALSE, NA,  na.rm=TRUE) }");
+        assertEval("{ any(FALSE, NA,  na.rm=TRUE) }");
         assertEval("{ any(FALSE, NA,  na.rm=FALSE) }");
 
         assertEval("{ any(NULL); }");
 
-        assertEval(Ignored.Unknown, "{ any(FALSE, NA,  na.rm=TRUE) }");
         // FIXME coercion warning missing
         assertEval(Ignored.Unknown, Output.ContainsWarning, "{ any(1) }");
         // FIXME coercion warning missing

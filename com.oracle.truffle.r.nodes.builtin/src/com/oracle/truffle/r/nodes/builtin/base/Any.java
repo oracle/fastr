@@ -26,88 +26,107 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.nodes.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
 @RBuiltin(name = "any", kind = PRIMITIVE, parameterNames = {"...", "na.rm"})
 public abstract class Any extends RBuiltinNode {
 
+    protected static final int MAX_CACHED_LENGTH = 10;
+
     private final NACheck naCheck = NACheck.create();
+    private final ConditionProfile naRmProfile = ConditionProfile.createBinaryProfile();
+    private final BranchProfile trueBranch = BranchProfile.create();
+    private final BranchProfile falseBranch = BranchProfile.create();
 
-    @Child private CastLogicalNode castLogicalNode;
+    @Children private final CastLogicalNode[] castLogicalNode = new CastLogicalNode[MAX_CACHED_LENGTH];
 
-    public abstract Object execute(Object o);
+    @Override
+    public Object[] getDefaultParameterValues() {
+        return new Object[]{RArgsValuesAndNames.EMPTY, RRuntime.LOGICAL_FALSE};
+    }
 
     @Override
     protected void createCasts(CastBuilder casts) {
-        casts.toLogical(0);
+        casts.toLogical(1);
     }
 
-    @Specialization
-    protected byte any(byte value) {
+    @Specialization(limit = "1", guards = {"cachedLength == args.getLength()", "cachedLength < MAX_CACHED_LENGTH"})
+    @ExplodeLoop
+    protected byte anyCachedLength(RArgsValuesAndNames args, byte naRm, //
+                    @Cached("args.getLength()") int cachedLength) {
         controlVisibility();
-        return value;
-    }
+        boolean profiledNaRm = naRmProfile.profile(naRm != RRuntime.LOGICAL_FALSE);
+        Object[] arguments = args.getArguments();
 
-    @Specialization
-    protected byte any(RLogicalVector vector) {
-        controlVisibility();
-        return accumulate(vector);
-    }
-
-    @Specialization
-    protected byte any(@SuppressWarnings("unused") RNull vector) {
-        controlVisibility();
-        return RRuntime.LOGICAL_FALSE;
-    }
-
-    @Specialization
-    protected byte any(@SuppressWarnings("unused") RMissing vector) {
-        controlVisibility();
-        return RRuntime.LOGICAL_FALSE;
-    }
-
-    @Specialization
-    protected byte any(RArgsValuesAndNames args) {
-        if (castLogicalNode == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            castLogicalNode = insert(CastLogicalNodeGen.create(true, false, false));
+        byte result = RRuntime.LOGICAL_FALSE;
+        for (int i = 0; i < cachedLength; i++) {
+            Object argValue = arguments[i];
+            byte v = processArgument(argValue, i, profiledNaRm);
+            if (v == RRuntime.LOGICAL_TRUE) {
+                return RRuntime.LOGICAL_TRUE;
+            } else if (v == RRuntime.LOGICAL_NA) {
+                result = RRuntime.LOGICAL_NA;
+            }
         }
+        return result;
+    }
+
+    @Specialization(contains = "anyCachedLength")
+    protected byte any(RArgsValuesAndNames args, byte naRm) {
         controlVisibility();
-        boolean seenNA = false;
-        Object[] argValues = args.getArguments();
-        for (Object argValue : argValues) {
-            byte result;
-            if (argValue instanceof RVector || argValue instanceof RSequence) {
-                result = accumulate((RLogicalVector) castLogicalNode.execute(argValue));
-            } else if (argValue == RNull.instance) {
-                result = RRuntime.LOGICAL_FALSE;
+        boolean profiledNaRm = naRmProfile.profile(naRm != RRuntime.LOGICAL_FALSE);
+
+        byte result = RRuntime.LOGICAL_FALSE;
+        for (Object argValue : args.getArguments()) {
+            byte v = processArgument(argValue, 0, profiledNaRm);
+            if (v == RRuntime.LOGICAL_TRUE) {
+                return RRuntime.LOGICAL_TRUE;
+            } else if (v == RRuntime.LOGICAL_NA) {
+                result = RRuntime.LOGICAL_NA;
+            }
+        }
+        return result;
+    }
+
+    private byte processArgument(Object argValue, int index, boolean profiledNaRm) {
+        byte result = RRuntime.LOGICAL_FALSE;
+        if (argValue != RNull.instance) {
+            if (castLogicalNode[index] == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                castLogicalNode[index] = insert(CastLogicalNodeGen.create(true, false, false));
+            }
+            Object castValue = castLogicalNode[index].execute(argValue);
+            if (castValue instanceof RAbstractLogicalVector) {
+                RAbstractLogicalVector vector = (RAbstractLogicalVector) castValue;
+                naCheck.enable(vector);
+                for (int i = 0; i < vector.getLength(); i++) {
+                    byte b = vector.getDataAt(i);
+                    if (!profiledNaRm && naCheck.check(b)) {
+                        result = RRuntime.LOGICAL_NA;
+                    } else if (b == RRuntime.LOGICAL_TRUE) {
+                        trueBranch.enter();
+                        return RRuntime.LOGICAL_TRUE;
+                    }
+                }
             } else {
-                result = (byte) castLogicalNode.execute(argValue);
-            }
-            if (RRuntime.isNA(result)) {
-                seenNA = true;
-            } else if (result == RRuntime.LOGICAL_TRUE) {
-                return RRuntime.LOGICAL_TRUE;
-            }
-        }
-        return seenNA ? RRuntime.LOGICAL_NA : RRuntime.LOGICAL_FALSE;
-    }
-
-    private byte accumulate(RLogicalVector vector) {
-        naCheck.enable(vector);
-        boolean seenNA = false;
-        for (int i = 0; i < vector.getLength(); i++) {
-            byte b = vector.getDataAt(i);
-            if (naCheck.check(b)) {
-                seenNA = true;
-            } else if (b == RRuntime.LOGICAL_TRUE) {
-                return RRuntime.LOGICAL_TRUE;
+                byte b = (byte) castValue;
+                naCheck.enable(true);
+                if (!profiledNaRm && naCheck.check(b)) {
+                    result = RRuntime.LOGICAL_NA;
+                } else if (b == RRuntime.LOGICAL_TRUE) {
+                    trueBranch.enter();
+                    return RRuntime.LOGICAL_TRUE;
+                }
             }
         }
-        return seenNA ? RRuntime.LOGICAL_NA : RRuntime.LOGICAL_FALSE;
+        falseBranch.enter();
+        return result;
     }
 }

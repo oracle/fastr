@@ -22,31 +22,134 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.ops.na.*;
 
-@RBuiltin(name = "anyNA", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x", "recursive"})
+@RBuiltin(name = "anyNA", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"}, dispatch = RDispatch.INTERNAL_GENERIC)
 public abstract class AnyNA extends RBuiltinNode {
 
-    @Child private IsNA isna = IsNANodeGen.create(new RNode[1], null, null);
-    @Child private Any any = AnyNodeGen.create(new RNode[1], null, null);
+    protected static final int MAX_CACHED_LENGTH = 10;
 
-    @Override
-    public Object[] getDefaultParameterValues() {
-        return new Object[]{RMissing.instance, RRuntime.LOGICAL_FALSE};
+    private final NACheck naCheck = NACheck.create();
+
+    public abstract byte execute(Object value);
+
+    private byte doScalar(boolean isNA) {
+        controlVisibility();
+        return RRuntime.asLogical(isNA);
+    }
+
+    @FunctionalInterface
+    private interface VectorIndexPredicate<T extends RAbstractVector> {
+        boolean apply(T vector, int index);
+    }
+
+    private <T extends RAbstractVector> byte doVector(T vector, VectorIndexPredicate<T> predicate) {
+        controlVisibility();
+        naCheck.enable(vector);
+        for (int i = 0; i < vector.getLength(); i++) {
+            if (predicate.apply(vector, i)) {
+                return RRuntime.LOGICAL_TRUE;
+            }
+        }
+        return RRuntime.LOGICAL_FALSE;
     }
 
     @Specialization
-    // TODO recursive == TRUE
-    protected Object anyNA(Object x, byte recursive) {
-        if (RRuntime.fromLogical(recursive)) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.nyi(getEncapsulatingSourceSection(), "recursive = TRUE");
+    protected byte isNA(byte value) {
+        return doScalar(RRuntime.isNA(value));
+    }
+
+    @Specialization
+    protected byte isNA(int value) {
+        return doScalar(RRuntime.isNA(value));
+    }
+
+    @Specialization
+    protected byte isNA(double value) {
+        return doScalar(RRuntime.isNAorNaN(value));
+    }
+
+    @Specialization
+    protected byte isNA(RComplex value) {
+        return doScalar(RRuntime.isNA(value));
+    }
+
+    @Specialization
+    protected byte isNA(String value) {
+        return doScalar(RRuntime.isNA(value));
+    }
+
+    @Specialization
+    protected byte isNA(@SuppressWarnings("unused") RRaw value) {
+        return doScalar(false);
+    }
+
+    @Specialization
+    protected byte isNA(@SuppressWarnings("unused") RNull value) {
+        return doScalar(false);
+    }
+
+    @Specialization
+    protected byte isNA(RAbstractIntVector vector) {
+        return doVector(vector, (v, i) -> naCheck.check(v.getDataAt(i)));
+    }
+
+    @Specialization
+    protected byte isNA(RAbstractDoubleVector vector) {
+        // since
+        return doVector(vector, (v, i) -> naCheck.checkNAorNaN(v.getDataAt(i)));
+    }
+
+    @Specialization
+    protected byte isNA(RAbstractComplexVector vector) {
+        return doVector(vector, (v, i) -> naCheck.check(v.getDataAt(i)));
+    }
+
+    @Specialization
+    protected byte isNA(RAbstractStringVector vector) {
+        return doVector(vector, (v, i) -> naCheck.check(v.getDataAt(i)));
+    }
+
+    @Specialization
+    protected byte isNA(RAbstractLogicalVector vector) {
+        return doVector(vector, (v, i) -> naCheck.check(v.getDataAt(i)));
+    }
+
+    @Specialization
+    protected byte isNA(@SuppressWarnings("unused") RAbstractRawVector vector) {
+        return doScalar(false);
+    }
+
+    @Specialization
+    protected byte isNA(RFactor value) {
+        return doVector(value.getVector(), (v, i) -> naCheck.check(v.getDataAt(i)));
+    }
+
+    protected AnyNA createRecursive() {
+        return AnyNANodeGen.create(null, null, null);
+    }
+
+    @Specialization
+    protected byte isNA(RList list, //
+                    @Cached("createRecursive()") AnyNA recursive, //
+                    @Cached("createClassProfile()") ValueProfile elementProfile) {
+        controlVisibility();
+        for (int i = 0; i < list.getLength(); i++) {
+            Object value = elementProfile.profile(list.getDataAt(i));
+            if (value instanceof Byte || value instanceof Integer || value instanceof Double || value instanceof RComplex || value instanceof RScalar ||
+                            (value instanceof RAbstractContainer && ((RAbstractContainer) value).getLength() == 1)) {
+                byte result = recursive.execute(value);
+                if (result == RRuntime.LOGICAL_TRUE) {
+                    return RRuntime.LOGICAL_TRUE;
+                }
+            }
         }
-        return any.execute(isna.execute(x));
+        return RRuntime.LOGICAL_FALSE;
     }
 }
