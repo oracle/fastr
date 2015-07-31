@@ -160,11 +160,8 @@ public final class AccessArgumentNode extends RNode {
             if (isOptimizableDefault(arg)) {
                 optDefaultArgNode = new OptVariableDefaultPromiseNode(factory, (ReadVariableNode) NodeUtil.cloneNode(arg), ArgumentStatePush.INVALID_INDEX);
             } else if (isOptimizableConstant(arg)) {
-                optDefaultArgNode = new OptConstantPromiseNode(factory.getType(), (ConstantNode) arg, null);
+                optDefaultArgNode = new OptConstantPromiseNode(factory.getType(), (ConstantNode) arg);
             }
-            // else if (isOptimizableExpression(arg)) {
-            // System.err.println(" >>> DEF " + arg.getSourceSection().getCode());
-            // }
             if (optDefaultArgNode == null) {
                 // No success: Rewrite to default
                 return false;
