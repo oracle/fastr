@@ -26,6 +26,7 @@ import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.utilities.*;
+import com.oracle.truffle.r.nodes.attributes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -33,16 +34,13 @@ import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
-/**
- * TODO complex specializations, runtime type checks on arguments.
- *
- */
 public class TrigExpFunctions {
     public abstract static class AdapterCall1 extends RBuiltinNode {
 
         private final BranchProfile notCompleteIntValueMet = BranchProfile.create();
         private final BranchProfile notCompleteDoubleValueMet = BranchProfile.create();
-        private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+
+        @Child private UnaryCopyAttributesNode copyAttributes = UnaryCopyAttributesNodeGen.create(true);
 
         @Specialization
         protected byte isType(@SuppressWarnings("unused") RMissing value) {
@@ -84,7 +82,7 @@ public class TrigExpFunctions {
         }
 
         @Specialization
-        protected RDoubleVector trigOp(RIntVector vector) {
+        protected RAbstractVector trigOp(RIntVector vector) {
             controlVisibility();
             int length = vector.getLength();
             double[] resultVector = new double[length];
@@ -95,7 +93,7 @@ public class TrigExpFunctions {
         }
 
         @Specialization
-        protected RDoubleVector trigOp(RDoubleVector vector) {
+        protected RAbstractVector trigOp(RDoubleVector vector) {
             controlVisibility();
             int length = vector.getLength();
             double[] resultVector = new double[length];
@@ -105,10 +103,9 @@ public class TrigExpFunctions {
             return createDoubleVectorBasedOnOrigin(resultVector, vector);
         }
 
-        private RDoubleVector createDoubleVectorBasedOnOrigin(double[] values, RAbstractVector originVector) {
+        private RAbstractVector createDoubleVectorBasedOnOrigin(double[] values, RAbstractVector originVector) {
             RDoubleVector result = RDataFactory.createDoubleVector(values, originVector.isComplete());
-            result.copyAttributesFrom(attrProfiles, originVector);
-            return result;
+            return copyAttributes.execute(result, originVector);
         }
     }
 
