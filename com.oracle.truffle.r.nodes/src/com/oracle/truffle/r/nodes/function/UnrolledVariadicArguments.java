@@ -31,7 +31,7 @@ import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 
 /**
  * This is a simple container class for arguments whose "..." have been unrolled and inserted into
- * the original arguments, as it happens in {@link CallArgumentsNode#executeFlatten(VirtualFrame)}.
+ * the original arguments, as it happens in {@link CallArgumentsNode#executeFlatten(Frame)}.
  */
 public final class UnrolledVariadicArguments extends Arguments<RNode> implements UnmatchedArguments {
 

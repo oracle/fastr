@@ -71,8 +71,8 @@ import com.oracle.truffle.r.runtime.gnur.*;
  * well, which involves the creation of nodes and thus must happen on the {@link TruffleBoundary}.<br/>
  * Problem 2 is not that easy, too: It is solved by reading the values associated with "..." (which
  * are Promises) and wrapping them in newly created {@link RNode}s. These nodes get inserted into
- * the arguments list ({@link CallArgumentsNode#executeFlatten(VirtualFrame)}) - which needs to be
- * be matched against the formal parameters again, as theses arguments may carry names as well which
+ * the arguments list ({@link CallArgumentsNode#executeFlatten(Frame)}) - which needs to be be
+ * matched against the formal parameters again, as theses arguments may carry names as well which
  * may have an impact on argument order. As matching involves node creation, it has to happen on the
  * {@link TruffleBoundary}.
  * </p>

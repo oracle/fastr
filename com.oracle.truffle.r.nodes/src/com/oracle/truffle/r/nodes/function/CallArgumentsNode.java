@@ -158,7 +158,7 @@ public class CallArgumentsNode extends ArgumentsNode {
         }
     }
 
-    public RArgsValuesAndNames getVarargsAndNames(VirtualFrame frame, boolean slowPath) {
+    public RArgsValuesAndNames getVarargsAndNames(Frame frame, boolean slowPath) {
         RArgsValuesAndNames varArgsAndNames;
         try {
             FrameSlot slot;
@@ -210,7 +210,7 @@ public class CallArgumentsNode extends ArgumentsNode {
         }
     }
 
-    public UnrolledVariadicArguments executeFlatten(VirtualFrame frame) {
+    public UnrolledVariadicArguments executeFlatten(Frame frame) {
         CompilerAsserts.neverPartOfCompilation();
         if (!containsVarArgsSymbol()) {
             return UnrolledVariadicArguments.create(getArguments(), getSignature(), this);

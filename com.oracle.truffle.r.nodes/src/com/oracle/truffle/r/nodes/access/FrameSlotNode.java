@@ -38,7 +38,7 @@ public abstract class FrameSlotNode extends Node {
 
     public abstract boolean hasValue(Frame frame);
 
-    public abstract FrameSlot executeFrameSlot(VirtualFrame frame);
+    public abstract FrameSlot executeFrameSlot(Frame frame);
 
     private static Assumption getAssumption(FrameDescriptor frameDescriptor, Object identifier) {
         return frameDescriptor.getNotInFrameAssumption(identifier);
@@ -98,7 +98,7 @@ public abstract class FrameSlotNode extends Node {
         }
 
         @Override
-        public FrameSlot executeFrameSlot(VirtualFrame frame) {
+        public FrameSlot executeFrameSlot(Frame frame) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             return resolveFrameSlot(frame).executeFrameSlot(frame);
         }
@@ -123,7 +123,7 @@ public abstract class FrameSlotNode extends Node {
         }
 
         @Override
-        public FrameSlot executeFrameSlot(VirtualFrame frame) {
+        public FrameSlot executeFrameSlot(Frame frame) {
             throw new UnsupportedOperationException();
         }
 
@@ -156,7 +156,7 @@ public abstract class FrameSlotNode extends Node {
         }
 
         @Override
-        public FrameSlot executeFrameSlot(VirtualFrame frame) {
+        public FrameSlot executeFrameSlot(Frame frame) {
             return frameSlot;
         }
 
