@@ -22,6 +22,9 @@
  */
 package com.oracle.truffle.r.nodes.attributes;
 
+import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.utilities.*;
@@ -33,7 +36,10 @@ import com.oracle.truffle.r.runtime.data.*;
  */
 public abstract class AttributeAccess extends Node {
 
+    private static final int MAX_SIZE_BOUND = 10;
+
     protected final String name;
+    @CompilationFinal private int maximumSize = 2;
 
     protected AttributeAccess(String name) {
         this.name = name.intern();
@@ -55,7 +61,7 @@ public abstract class AttributeAccess extends Node {
         return attr.getValues()[index];
     }
 
-    @Specialization(limit = "1", guards = "cachedSize == attr.size()")
+    @Specialization(limit = "1", guards = "cachedSize == attr.size()", contains = "accessCached")
     @ExplodeLoop
     protected Object accessCachedSize(RAttributes attr, //
                     @Cached("attr.size()") int cachedSize, //
@@ -72,8 +78,37 @@ public abstract class AttributeAccess extends Node {
         return null;
     }
 
-    @Specialization(contains = {"accessCached", "accessCachedSize"})
+    @Specialization(contains = {"accessCached", "accessCachedSize"}, rewriteOn = IndexOutOfBoundsException.class)
+    @ExplodeLoop
+    protected Object accessCachedMaximumSize(RAttributes attr, //
+                    @Cached("create()") BranchProfile foundProfile, //
+                    @Cached("create()") BranchProfile notFoundProfile) {
+        int size = attr.size();
+        if (size > maximumSize) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            if (size > MAX_SIZE_BOUND) {
+                throw new IndexOutOfBoundsException();
+            }
+            maximumSize = size;
+        }
+        String[] names = attr.getNames();
+        for (int i = 0; i < maximumSize; i++) {
+            if (i >= size) {
+                break;
+            }
+            if (names[i] == name) {
+                foundProfile.enter();
+                return attr.getValues()[i];
+            }
+        }
+        notFoundProfile.enter();
+        return null;
+    }
+
+    @Specialization(contains = {"accessCached", "accessCachedSize", "accessCachedMaximumSize"})
+    @TruffleBoundary
     protected Object access(RAttributes attr) {
         return attr.get(name);
     }
+
 }
