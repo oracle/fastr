@@ -91,9 +91,12 @@ public abstract class CastDoubleNode extends CastBaseNode {
     }
 
     @Specialization
-    public double doString(String operand) {
-        naCheck.enable(operand);
-        double result = naCheck.convertStringToDouble(operand);
+    public double doString(String operand, //
+                    @Cached("createBinaryProfile()") ConditionProfile emptyStringProfile) {
+        if (naProfile.isNA(operand) || emptyStringProfile.profile(operand.isEmpty())) {
+            return RRuntime.DOUBLE_NA;
+        }
+        double result = RRuntime.string2doubleNoCheck(operand);
         if (RRuntime.isNA(result)) {
             warningBranch.enter();
             RError.warning(getEncapsulatingSourceSection(), RError.Message.NA_INTRODUCED_COERCION);
@@ -143,19 +146,31 @@ public abstract class CastDoubleNode extends CastBaseNode {
     }
 
     @Specialization
-    protected RDoubleVector doStringVector(RStringVector operand) {
+    protected RDoubleVector doStringVector(RStringVector operand, //
+                    @Cached("createBinaryProfile()") ConditionProfile emptyStringProfile) {
         naCheck.enable(operand);
         double[] ddata = new double[operand.getLength()];
         boolean seenNA = false;
+        boolean warning = false;
         for (int i = 0; i < operand.getLength(); i++) {
             String value = operand.getDataAt(i);
-            ddata[i] = naCheck.convertStringToDouble(value);
-            if (RRuntime.isNA(ddata[i])) {
+            double doubleValue;
+            if (naCheck.check(value) || emptyStringProfile.profile(value.isEmpty())) {
+                doubleValue = RRuntime.DOUBLE_NA;
                 seenNA = true;
+            } else {
+                doubleValue = RRuntime.string2doubleNoCheck(value);
+                if (naProfile.isNA(doubleValue)) {
+                    seenNA = true;
+                    if (!value.isEmpty()) {
+                        warningBranch.enter();
+                        warning = true;
+                    }
+                }
             }
+            ddata[i] = doubleValue;
         }
-        if (seenNA) {
-            warningBranch.enter();
+        if (warning) {
             RError.warning(getEncapsulatingSourceSection(), RError.Message.NA_INTRODUCED_COERCION);
         }
         RDoubleVector ret = RDataFactory.createDoubleVector(ddata, !seenNA, getPreservedDimensions(operand), getPreservedNames(operand));

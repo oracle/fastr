@@ -80,9 +80,13 @@ public abstract class CastComplexNode extends CastBaseNode {
     }
 
     @Specialization
-    protected RComplex doCharacter(String operand) {
+    protected RComplex doCharacter(String operand, //
+                    @Cached("createBinaryProfile()") ConditionProfile emptyStringProfile) {
         naCheck.enable(operand);
-        RComplex result = naCheck.convertStringToComplex(operand);
+        if (naCheck.check(operand) || emptyStringProfile.profile(operand.isEmpty())) {
+            return RComplex.NA;
+        }
+        RComplex result = RRuntime.string2complexNoCheck(operand);
         if (RRuntime.isNA(result)) {
             warningBranch.enter();
             RError.warning(getEncapsulatingSourceSection(), RError.Message.NA_INTRODUCED_COERCION);
@@ -125,16 +129,41 @@ public abstract class CastComplexNode extends CastBaseNode {
     }
 
     @Specialization
-    protected RComplexVector doStringVector(RStringVector operand) {
-        return createResultVector(operand, index -> {
-            String value = operand.getDataAt(index);
-            RComplex complexValue = naCheck.convertStringToComplex(value);
-            if (RRuntime.isNA(complexValue)) {
-                warningBranch.enter();
-                RError.warning(getEncapsulatingSourceSection(), RError.Message.NA_INTRODUCED_COERCION);
+    protected RComplexVector doStringVector(RStringVector operand, //
+                    @Cached("createBinaryProfile()") ConditionProfile emptyStringProfile) {
+        naCheck.enable(operand);
+        double[] ddata = new double[operand.getLength() << 1];
+        boolean seenNA = false;
+        boolean warning = false;
+        for (int i = 0; i < operand.getLength(); i++) {
+            String value = operand.getDataAt(i);
+            RComplex complexValue;
+            if (naCheck.check(value) || emptyStringProfile.profile(value.isEmpty())) {
+                complexValue = RComplex.NA;
+                seenNA = true;
+            } else {
+                complexValue = RRuntime.string2complexNoCheck(value);
+                if (naProfile.isNA(complexValue)) {
+                    seenNA = true;
+                    if (!value.isEmpty()) {
+                        warningBranch.enter();
+                        warning = true;
+                    }
+                }
             }
-            return complexValue;
-        });
+            int index = i << 1;
+            ddata[index] = complexValue.getRealPart();
+            ddata[index + 1] = complexValue.getImaginaryPart();
+        }
+        if (warning) {
+            RError.warning(getEncapsulatingSourceSection(), RError.Message.NA_INTRODUCED_COERCION);
+        }
+        RComplexVector ret = RDataFactory.createComplexVector(ddata, !seenNA, getPreservedDimensions(operand), getPreservedNames(operand));
+        preserveDimensionNames(operand, ret);
+        if (isAttrPreservation()) {
+            ret.copyRegAttributesFrom(operand);
+        }
+        return ret;
     }
 
     @Specialization

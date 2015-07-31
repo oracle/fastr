@@ -104,12 +104,13 @@ public abstract class CastIntegerNode extends CastBaseNode {
     }
 
     @Specialization
-    protected int doCharacter(String operand) {
+    protected int doCharacter(String operand, //
+                    @Cached("createBinaryProfile()") ConditionProfile emptyStringProfile) {
         naCheck.enable(operand);
-        if (operand.length() == 0 || naCheck.check(operand)) {
+        if (naCheck.check(operand) || emptyStringProfile.profile(operand.isEmpty())) {
             return RRuntime.INT_NA;
         }
-        int result = naCheck.convertStringToInt(operand);
+        int result = RRuntime.string2intNoCheck(operand);
         if (RRuntime.isNA(result)) {
             warningBranch.enter();
             RError.warning(getEncapsulatingSourceSection(), RError.Message.NA_INTRODUCED_COERCION);
@@ -180,28 +181,34 @@ public abstract class CastIntegerNode extends CastBaseNode {
     }
 
     @Specialization
-    protected RIntVector doStringVector(RStringVector operand) {
+    protected RIntVector doStringVector(RStringVector operand, //
+                    @Cached("createBinaryProfile()") ConditionProfile emptyStringProfile) {
         naCheck.enable(operand);
         int[] idata = new int[operand.getLength()];
         boolean seenNA = false;
-        boolean seenNANoWarn = false;
+        boolean warning = false;
         for (int i = 0; i < operand.getLength(); i++) {
             String value = operand.getDataAt(i);
-            if (value.length() == 0 || naCheck.check(value)) {
-                idata[i] = RRuntime.INT_NA;
-                seenNANoWarn = true;
+            int intValue;
+            if (naCheck.check(value) || emptyStringProfile.profile(value.isEmpty())) {
+                intValue = RRuntime.INT_NA;
+                seenNA = true;
             } else {
-                idata[i] = naCheck.convertStringToInt(value);
-                if (RRuntime.isNA(idata[i])) {
+                intValue = RRuntime.string2intNoCheck(value);
+                if (naProfile.isNA(intValue)) {
                     seenNA = true;
+                    if (!value.isEmpty()) {
+                        warningBranch.enter();
+                        warning = true;
+                    }
                 }
             }
+            idata[i] = intValue;
         }
-        if (seenNA) {
-            warningBranch.enter();
+        if (warning) {
             RError.warning(getEncapsulatingSourceSection(), RError.Message.NA_INTRODUCED_COERCION);
         }
-        RIntVector ret = RDataFactory.createIntVector(idata, !seenNA && !seenNANoWarn, getPreservedDimensions(operand), getPreservedNames(operand));
+        RIntVector ret = RDataFactory.createIntVector(idata, !seenNA, getPreservedDimensions(operand), getPreservedNames(operand));
         preserveDimensionNames(operand, ret);
         if (isAttrPreservation()) {
             ret.copyRegAttributesFrom(operand);

@@ -24,7 +24,7 @@ public class TestBuiltin_asdouble extends TestBase {
 
     @Test
     public void testasdouble2() {
-        assertEval(Ignored.Unknown, "argv <- list(c('10', '2.7404', '0.27404', ''));as.double(argv[[1]]);");
+        assertEval("argv <- list(c('10', '2.7404', '0.27404', ''));as.double(argv[[1]]);");
     }
 
     @Test
@@ -62,7 +62,7 @@ public class TestBuiltin_asdouble extends TestBase {
 
     @Test
     public void testasdouble9() {
-        assertEval(Ignored.WrongCaller, "argv <- list(c('-.1', ' 2.7 ', 'B'));as.double(argv[[1]]);");
+        assertEval(Output.ContainsWarning, "argv <- list(c('-.1', ' 2.7 ', 'B'));as.double(argv[[1]]);");
     }
 
     @Test
@@ -72,7 +72,7 @@ public class TestBuiltin_asdouble extends TestBase {
 
     @Test
     public void testasdouble11() {
-        assertEval(Ignored.Unknown, "argv <- list(c(NA, '0.0021'));as.double(argv[[1]]);");
+        assertEval("argv <- list(c(NA, '0.0021'));as.double(argv[[1]]);");
     }
 
     @Test

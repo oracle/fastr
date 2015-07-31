@@ -41,7 +41,7 @@ public class TestMiscBuiltins extends TestBase {
     public void testCasts() {
         // shortcuts in views (only some combinations)
         assertEval("{ as.complex(as.character(c(1+1i,1+1i))) }");
-        assertEval(Ignored.WrongCaller, "{ as.complex(as.integer(c(1+1i,1+1i))) }");
+        assertEval(Output.ContainsWarning, "{ as.complex(as.integer(c(1+1i,1+1i))) }");
         assertEval("{ as.complex(as.logical(c(1+1i,1+1i))) }");
 
         assertEval("{ as.double(as.logical(c(10,10))) }");
@@ -98,8 +98,8 @@ public class TestMiscBuiltins extends TestBase {
         assertEval("{ x <- 1:3; z <- as.matrix(x); x }");
         assertEval("{ x <- 1:3 ; attr(x,\"my\") <- 10 ; attributes(as.matrix(x)) }");
 
-        assertEval(Ignored.WrongCaller, "{ as.complex(as.double(c(1+1i,1+1i))) }");
-        assertEval(Ignored.WrongCaller, "{ as.complex(as.raw(c(1+1i,1+1i))) }");
+        assertEval(Output.ContainsWarning, "{ as.complex(as.double(c(1+1i,1+1i))) }");
+        assertEval(Output.ContainsWarning, "{ as.complex(as.raw(c(1+1i,1+1i))) }");
     }
 
     @Test

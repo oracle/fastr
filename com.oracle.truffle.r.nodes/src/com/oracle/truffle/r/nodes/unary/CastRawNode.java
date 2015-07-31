@@ -28,9 +28,11 @@ import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.ops.na.*;
 
 public abstract class CastRawNode extends CastBaseNode {
 
+    private final NACheck naCheck = NACheck.create();
     private final BranchProfile warningBranch = BranchProfile.create();
 
     public abstract Object executeRaw(int o);
@@ -90,14 +92,25 @@ public abstract class CastRawNode extends CastBaseNode {
     }
 
     @Specialization
-    protected RRaw doString(String operand) {
-        // need to cast to int to catch conversion warnings
-        int intVal = RRuntime.string2int(operand);
-        if (RRuntime.isNA(intVal)) {
-            warningBranch.enter();
-            RError.warning(getEncapsulatingSourceSection(), RError.Message.NA_INTRODUCED_COERCION);
+    public RRaw doString(String operand, //
+                    @Cached("create()") NAProfile naProfile, //
+                    @Cached("createBinaryProfile()") ConditionProfile emptyStringProfile) {
+        int intValue;
+        if (naProfile.isNA(operand) || emptyStringProfile.profile(operand.isEmpty())) {
+            intValue = 0;
+        } else {
+            intValue = RRuntime.string2intNoCheck(operand);
+            if (RRuntime.isNA(intValue)) {
+                warningBranch.enter();
+                RError.warning(getEncapsulatingSourceSection(), RError.Message.NA_INTRODUCED_COERCION);
+            }
         }
-        return doInt(intVal);
+        int intRawValue = RRuntime.int2rawIntValue(intValue);
+        if (intRawValue != intValue) {
+            warningBranch.enter();
+            RError.warning(getEncapsulatingSourceSection(), RError.Message.OUT_OF_RANGE);
+        }
+        return RRaw.valueOf((byte) intRawValue);
     }
 
     private RRawVector createResultVector(RAbstractVector operand, byte[] bdata) {
@@ -151,23 +164,35 @@ public abstract class CastRawNode extends CastBaseNode {
     }
 
     @Specialization
-    protected RRawVector doStringVector(RStringVector operand) {
+    protected RRawVector doStringVector(RStringVector operand, //
+                    @Cached("createBinaryProfile()") ConditionProfile emptyStringProfile, //
+                    @Cached("create()") NAProfile naProfile) {
+        naCheck.enable(operand);
         byte[] bdata = new byte[operand.getLength()];
+
         boolean naCoercionWarning = false;
         boolean outOfRangeWarning = false;
         for (int i = 0; i < operand.getLength(); i++) {
-            int intVal = RRuntime.string2int(operand.getDataAt(i));
-            int intRawValue = RRuntime.int2rawIntValue(intVal);
-            if (RRuntime.isNA(intVal)) {
-                warningBranch.enter();
-                naCoercionWarning = true;
+            String value = operand.getDataAt(i);
+            int intValue;
+            if (naCheck.check(value) || emptyStringProfile.profile(value.isEmpty())) {
+                intValue = RRuntime.INT_NA;
+            } else {
+                intValue = RRuntime.string2intNoCheck(value);
+                if (naProfile.isNA(intValue)) {
+                    if (!value.isEmpty()) {
+                        warningBranch.enter();
+                        naCoercionWarning = true;
+                    }
+                }
+                int intRawValue = RRuntime.int2rawIntValue(intValue);
+                if (intValue != intRawValue) {
+                    warningBranch.enter();
+                    outOfRangeWarning = true;
+                    intRawValue = 0;
+                }
             }
-            if (intVal != intRawValue) {
-                warningBranch.enter();
-                outOfRangeWarning = true;
-                intRawValue = 0;
-            }
-            bdata[i] = (byte) intRawValue;
+            bdata[i] = (byte) intValue;
         }
         if (naCoercionWarning) {
             RError.warning(getEncapsulatingSourceSection(), RError.Message.NA_INTRODUCED_COERCION);
