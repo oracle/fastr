@@ -176,6 +176,8 @@ public final class RCallNode extends RNode implements RSyntaxNode {
     private final RSyntaxNode[] arguments;
     private final ArgumentsSignature signature;
 
+    private final Object tempIdentifier = new Object();
+
     private final ValueProfile builtinProfile = ValueProfile.createIdentityProfile();
     private final ConditionProfile implicitTypeProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile resultIsBuiltinProfile = ConditionProfile.createBinaryProfile();
@@ -204,8 +206,7 @@ public final class RCallNode extends RNode implements RSyntaxNode {
             if (builtin.getDispatch() == RDispatch.INTERNAL_GENERIC) {
                 if (internalDispatchCall == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    Object tempIdentifier = new Object();
-                    dispatchTempSlot = insert(FrameSlotNode.createTemp(tempIdentifier, true));
+                    dispatchTempSlot = insert(FrameSlotNode.createInitialized(frame.getFrameDescriptor(), tempIdentifier, true));
                     internalDispatchCall = insert(new UninitializedCallNode(this, tempIdentifier));
                     dispatchArgument = insert(NodeUtil.cloneNode(arguments[0].asRNode()));
                     dispatchLookup = insert(S3FunctionLookupNode.create(true, false));
