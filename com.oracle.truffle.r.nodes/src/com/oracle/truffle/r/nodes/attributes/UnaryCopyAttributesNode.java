@@ -34,7 +34,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
  * Simple attribute access node that specializes on the position at which the attribute was found
  * last time.
  */
-public abstract class UnaryCopyAttributesNode extends NodeSA {
+public abstract class UnaryCopyAttributesNode extends BaseRNode {
 
     protected final boolean copyAllAttributes;
 

@@ -34,8 +34,8 @@ import com.oracle.truffle.r.nodes.binary.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.env.frame.*;
 
 @NodeFields(value = {@NodeField(name = "builtin", type = RBuiltinFactory.class), @NodeField(name = "suppliedSignature", type = ArgumentsSignature.class)})
@@ -217,9 +217,7 @@ public abstract class RBuiltinNode extends RNode implements RSyntaxNode, Visibil
     public final RBuiltinNode inline(ArgumentsSignature signature, RNode[] args, SourceSection callSrc) {
         // static number of arguments
         RBuiltinNode node = createNode(getBuiltin(), args, signature);
-        if (callSrc == null) {
-            System.err.printf("null callSrc in %s%n", getBuiltin().getName());
-        }
+        // TODO src is (very) occasionally null, which should not happen
         node.assignSourceSection(callSrc);
         return node;
     }
@@ -243,7 +241,7 @@ public abstract class RBuiltinNode extends RNode implements RSyntaxNode, Visibil
     }
 
     @Override
-    public void deparse(State state) {
+    public void deparseImpl(RDeparse.State state) {
         assert getBuiltin().getKind() == RBuiltinKind.INTERNAL;
         state.append(".Internal(");
         state.append(getBuiltin().getName());
@@ -251,6 +249,16 @@ public abstract class RBuiltinNode extends RNode implements RSyntaxNode, Visibil
         RSyntaxNode[] args = Arrays.copyOf(getArguments(), getArguments().length, RSyntaxNode[].class);
         RCallNode.deparseArguments(state, args, getSuppliedSignature());
         state.append(')');
+    }
+
+    @Override
+    public void serializeImpl(RSerialize.State state) {
+        throw RInternalError.unimplemented();
+    }
+
+    @Override
+    public RSyntaxNode substituteImpl(REnvironment env) {
+        throw RInternalError.unimplemented();
     }
 
     @Override

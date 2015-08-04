@@ -252,12 +252,12 @@ public class ArgumentMatcher {
                 // TODO: this error handling code takes many assumptions about the argument types
                 RArgsValuesAndNames varArg = (RArgsValuesAndNames) frame.getObject(frame.getFrameDescriptor().findFrameSlot("..."));
                 RPromise promise = (RPromise) varArg.getArguments()[((VarArgNode) node).getIndex()];
-                return ((Node) promise.getRep()).getSourceSection().getCode();
+                return ((RSyntaxNodeAdapter) promise.getRep()).asRSyntaxNode().getSourceSection().getCode();
             } catch (FrameSlotTypeException | ClassCastException e) {
                 throw RInternalError.shouldNotReachHere();
             }
         } else {
-            String code = node.getSourceSection().getCode();
+            String code = node.asRSyntaxNode().getSourceSection().getCode();
             String name = suppliedSignature.getName(index);
             return name == null ? code : name + " = " + code;
         }
@@ -390,7 +390,7 @@ public class ArgumentMatcher {
              */
             RNode defaultArg = formals.getDefaultArgument(formalIndex);
             Closure defaultClosure = formals.getOrCreateClosure(defaultArg);
-            return PromiseNode.create(defaultArg.getSourceSection(), RPromiseFactory.create(PromiseType.ARG_DEFAULT, defaultClosure), noOpt);
+            return PromiseNode.create(RPromiseFactory.create(PromiseType.ARG_DEFAULT, defaultClosure), noOpt);
         }
         return ConstantNode.create(formals.getInternalDefaultArgumentAt(formalIndex));
     }
@@ -408,7 +408,7 @@ public class ArgumentMatcher {
             return PromiseNode.createInlined(suppliedArg, formals.getInternalDefaultArgumentAt(formalIndex), builtin.getKind() == RBuiltinKind.PRIMITIVE);
         } else {
             Closure closure = closureCache.getOrCreateClosure(suppliedArg);
-            return PromiseNode.create(suppliedArg.getEncapsulatingSourceSection(), RPromiseFactory.create(PromiseType.ARG_SUPPLIED, closure), noOpt);
+            return PromiseNode.create(RPromiseFactory.create(PromiseType.ARG_SUPPLIED, closure), noOpt);
         }
     }
 
@@ -460,8 +460,8 @@ public class ArgumentMatcher {
             }
 
             // Search for argument name inside formal arguments
-            int formalIndex = findParameterPosition(formalSignature, signature.getName(suppliedIndex), resultPermutation, suppliedIndex, hasVarArgs, callingNode, varArgIndex, forNextMethod, errorString,
-                            builtin);
+            int formalIndex = findParameterPosition(formalSignature, signature.getName(suppliedIndex), resultPermutation, suppliedIndex, hasVarArgs, callingNode, varArgIndex, forNextMethod,
+                            errorString, builtin);
             if (formalIndex != MatchPermutation.UNMATCHED) {
                 resultPermutation[formalIndex] = suppliedIndex;
                 matchedSuppliedArgs[suppliedIndex] = true;

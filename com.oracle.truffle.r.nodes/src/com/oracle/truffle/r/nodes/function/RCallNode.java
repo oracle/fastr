@@ -83,12 +83,12 @@ import com.oracle.truffle.r.runtime.gnur.*;
  *  U = {@link UninitializedCallNode}: Forms the uninitialized end of the function PIC
  *  D = {@link DispatchedCallNode}: Function fixed, no varargs
  *  G = {@link GenericCallNode}: Function arbitrary
- * 
+ *
  *  UV = {@link UninitializedCallNode} with varargs,
  *  UVC = {@link UninitializedVarArgsCacheCallNode} with varargs, for varargs cache
  *  DV = {@link DispatchedVarArgsCallNode}: Function fixed, with cached varargs
  *  DGV = {@link DispatchedGenericVarArgsCallNode}: Function fixed, with arbitrary varargs (generic case)
- * 
+ *
  * (RB = {@link RBuiltinNode}: individual functions that are builtins are represented by this node
  * which is not aware of caching). Due to {@link CachedCallNode} (see below) this is transparent to
  * the cache and just behaves like a D/DGV)
@@ -101,11 +101,11 @@ import com.oracle.truffle.r.runtime.gnur.*;
  * non varargs, max depth:
  * |
  * D-D-D-U
- * 
+ *
  * no varargs, generic (if max depth is exceeded):
  * |
  * D-D-D-D-G
- * 
+ *
  * varargs:
  * |
  * DV-DV-UV         <- function call target identity level cache
@@ -113,7 +113,7 @@ import com.oracle.truffle.r.runtime.gnur.*;
  *    DV
  *    |
  *    UVC           <- varargs signature level cache
- * 
+ *
  * varargs, max varargs depth exceeded:
  * |
  * DV-DV-UV
@@ -125,7 +125,7 @@ import com.oracle.truffle.r.runtime.gnur.*;
  *    DV
  *    |
  *    DGV
- * 
+ *
  * varargs, max function depth exceeded:
  * |
  * DV-DV-DV-DV-GV
@@ -287,7 +287,7 @@ public final class RCallNode extends RNode implements RSyntaxNode {
     }
 
     @Override
-    public void deparse(RDeparse.State state) {
+    public void deparseImpl(RDeparse.State state) {
         Object fname = RASTUtils.findFunctionName(this);
         Func func = RASTDeparse.isInfixOperator(fname);
         if (func != null) {
@@ -304,33 +304,33 @@ public final class RCallNode extends RNode implements RSyntaxNode {
                     } else {
                         argValues = arguments;
                     }
-                    argValues[0].deparse(state);
+                    argValues[0].deparseImpl(state);
                     state.append(sfname);
-                    argValues[1].deparse(state);
+                    argValues[1].deparseImpl(state);
                     if (!(fn instanceof RCallNode)) {
                         return;
                     }
                 } else if (sfname.equals("[<-") || sfname.equals("[[<-")) {
                     boolean isSubset = sfname.equals("[<-");
-                    arguments[0].deparse(state);
+                    arguments[0].deparseImpl(state);
                     state.append(isSubset ? "[" : "[[");
                     for (int i = 1; i < arguments.length - 1; i++) {
                         if (signature.getName(i) != null && !signature.getName(i).isEmpty()) {
                             state.append(signature.getName(i));
                             state.append('=');
                         }
-                        arguments[i].deparse(state);
+                        arguments[i].deparseImpl(state);
                         if (i != arguments.length - 2) {
                             state.append(", ");
                         }
                     }
                     state.append(isSubset ? "]" : "]]");
                     state.append(" <- ");
-                    arguments[arguments.length - 1].deparse(state);
+                    arguments[arguments.length - 1].deparseImpl(state);
                     return;
                 }
             }
-            RSyntaxNode.cast(getFunctionNode()).deparse(state);
+            getFunctionNode().deparse(state);
 
             deparseArguments(state, arguments, signature);
         }
@@ -347,7 +347,7 @@ public final class RCallNode extends RNode implements RSyntaxNode {
             }
             if (argument != null) {
                 // e.g. not f(, foo)
-                argument.deparse(state);
+                argument.deparseImpl(state);
             }
             if (i != arguments.length - 1) {
                 state.append(", ");
@@ -357,7 +357,7 @@ public final class RCallNode extends RNode implements RSyntaxNode {
     }
 
     @Override
-    public void serialize(RSerialize.State state) {
+    public void serializeImpl(RSerialize.State state) {
         state.setAsLangType();
         state.serializeNodeSetCar(functionNode);
         if (isColon(functionNode)) {
@@ -409,8 +409,8 @@ public final class RCallNode extends RNode implements RSyntaxNode {
     }
 
     @Override
-    public RSyntaxNode substitute(REnvironment env) {
-        RNode functionSub = RSyntaxNode.cast(getFunctionNode()).substitute(env).asRNode();
+    public RSyntaxNode substituteImpl(REnvironment env) {
+        RNode functionSub = getFunctionNode().substitute(env).asRNode();
 
         Arguments<RSyntaxNode> argsSub = substituteArguments(env, arguments, signature);
         return RSyntaxNode.cast(RASTUtils.createCall(functionSub, argsSub.getSignature(), argsSub.getArguments()));
@@ -420,7 +420,7 @@ public final class RCallNode extends RNode implements RSyntaxNode {
         ArrayList<RSyntaxNode> newArguments = new ArrayList<>();
         ArrayList<String> newNames = new ArrayList<>();
         for (int i = 0; i < arguments.length; i++) {
-            RSyntaxNode argNodeSubs = arguments[i].substitute(env);
+            RSyntaxNode argNodeSubs = arguments[i].substituteImpl(env);
             if (argNodeSubs instanceof RASTUtils.MissingDotsNode) {
                 // nothing to do
             } else if (argNodeSubs instanceof RASTUtils.ExpandedDotsNode) {
@@ -700,7 +700,7 @@ public final class RCallNode extends RNode implements RSyntaxNode {
      *
      * @see RCallNode
      */
-    public abstract static class LeafCallNode extends NodeSA {
+    public abstract static class LeafCallNode extends BaseRNode {
 
         public abstract Object execute(VirtualFrame frame, RFunction function, S3Args s3Args);
     }

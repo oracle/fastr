@@ -4,15 +4,21 @@ import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.control.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.RDeparse.*;
+import com.oracle.truffle.r.runtime.env.*;
 
 /**
  * This is an adapter class, "Syntax Adapter" that is used to enforce some invariants regarding the
  * use of {@link SourceSection} attributes and provide a mechanism to locate the {@link RSyntaxNode}
- * for an {@link NodeSA}.
+ * for an {@link RSyntaxNodeAdapter}.
  *
- * All FastR subclasses of {@link Node} should instead subclass this class.
+ * This class also defines the generic support methods for {@code deparse}, {@code substitute} and
+ * {@code serialize}. The implementations use {@link #getRSyntaxNode()} to locate the correct
+ * {@link RSyntaxNode} and then invoke the corresponding {@code xxxImpl} method. The intention being
+ * that the AST may be rewritten in arbitrary ways but it is always possible to locate the
+ * {@link RSyntaxNode} that a rewritten node derives from.
  */
-public abstract class NodeSA extends Node {
+public abstract class RSyntaxNodeAdapter extends Node {
     /**
      * Handles the discovery of the {@link RSyntaxNode} that this node is derived from.
      */
@@ -41,6 +47,22 @@ public abstract class NodeSA extends Node {
             current = current.getParent();
         }
         throw RInternalError.shouldNotReachHere("getRSyntaxNode");
+    }
+
+    public void deparse(State state) {
+        RSyntaxNode syntaxNode = getRSyntaxNode();
+        syntaxNode.deparseImpl(state);
+
+    }
+
+    public RSyntaxNode substitute(REnvironment env) {
+        RSyntaxNode syntaxNode = getRSyntaxNode();
+        return syntaxNode.substituteImpl(env);
+    }
+
+    public void serialize(RSerialize.State state) {
+        RSyntaxNode syntaxNode = getRSyntaxNode();
+        syntaxNode.serializeImpl(state);
     }
 
     @Override

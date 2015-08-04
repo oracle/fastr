@@ -119,14 +119,14 @@ public abstract class ColonNode extends RNode implements RSyntaxNode, Visibility
     }
 
     @Override
-    public void deparse(RDeparse.State state) {
-        RSyntaxNode.cast(getLeft()).deparse(state);
+    public void deparseImpl(RDeparse.State state) {
+        getLeft().deparse(state);
         state.append(':');
-        RSyntaxNode.cast(getRight()).deparse(state);
+        getRight().deparse(state);
     }
 
     @Override
-    public void serialize(RSerialize.State state) {
+    public void serializeImpl(RSerialize.State state) {
         state.setAsBuiltin(":");
         state.openPairList(SEXPTYPE.LISTSXP);
         state.serializeNodeSetCar(getLeft());
@@ -137,8 +137,8 @@ public abstract class ColonNode extends RNode implements RSyntaxNode, Visibility
     }
 
     @Override
-    public RSyntaxNode substitute(REnvironment env) {
-        return create(null, RSyntaxNode.cast(getLeft()).substitute(env).asRNode(), RSyntaxNode.cast(getRight()).substitute(env).asRNode());
+    public RSyntaxNode substituteImpl(REnvironment env) {
+        return create(null, getLeft().substitute(env).asRNode(), getRight().substitute(env).asRNode());
     }
 
     protected static double asDouble(int intValue) {
@@ -213,18 +213,18 @@ public abstract class ColonNode extends RNode implements RSyntaxNode, Visibility
         }
 
         @Override
-        public void deparse(State state) {
-            RSyntaxNode.cast(getOperand()).deparse(state);
+        public void deparseImpl(State state) {
+            getOperand().deparse(state);
         }
 
         @Override
-        public void serialize(RSerialize.State state) {
-            RSyntaxNode.cast(getOperand()).serialize(state);
+        public void serializeImpl(RSerialize.State state) {
+            getOperand().serialize(state);
         }
 
         @Override
-        public RSyntaxNode substitute(REnvironment env) {
-            return RSyntaxNode.cast(getOperand()).substitute(env);
+        public RSyntaxNode substituteImpl(REnvironment env) {
+            return getOperand().substitute(env);
         }
     }
 }

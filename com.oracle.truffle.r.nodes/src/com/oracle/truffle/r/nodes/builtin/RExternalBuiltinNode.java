@@ -33,7 +33,7 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
 @TypeSystemReference(RTypes.class)
-public abstract class RExternalBuiltinNode extends NodeSA {
+public abstract class RExternalBuiltinNode extends BaseRNode {
 
     public abstract Object call(RArgsValuesAndNames args);
 

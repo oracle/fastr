@@ -49,6 +49,7 @@ import com.oracle.truffle.r.parser.*;
 import com.oracle.truffle.r.parser.ast.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RContext.ConsoleHandler;
+import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.Utils.DebugExitException;
 import com.oracle.truffle.r.runtime.conn.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -269,7 +270,7 @@ final class REngine implements RContext.Engine {
         for (int i = 0; i < exprs.getLength(); i++) {
             Object obj = RASTUtils.checkForRSymbol(exprs.getDataAt(i));
             if (obj instanceof RLanguage) {
-                result = evalNode((RSyntaxNode) ((RLanguage) obj).getRep(), envir, enclos, depth);
+                result = evalNode((RNode) ((RLanguage) obj).getRep(), envir, enclos, depth);
             } else {
                 result = obj;
             }
@@ -278,7 +279,7 @@ final class REngine implements RContext.Engine {
     }
 
     public Object eval(RLanguage expr, REnvironment envir, REnvironment enclos, int depth) throws PutException {
-        return evalNode((RSyntaxNode) expr.getRep(), envir, enclos, depth);
+        return evalNode((RNode) expr.getRep(), envir, enclos, depth);
     }
 
     public Object eval(RExpression expr, MaterializedFrame frame) {
@@ -296,13 +297,15 @@ final class REngine implements RContext.Engine {
     private static final String EVAL_FUNCTION_NAME = "<eval wrapper>";
 
     public Object eval(RLanguage expr, MaterializedFrame frame) {
-        RSyntaxNode n = (RSyntaxNode) expr.getRep();
-        // TODO Doing this to avoid problems with zero length source sections on RMissing
-        // but perhaps it ought to be being checked earlier
+        RNode n = (RNode) expr.getRep();
+        // TODO perhaps this ought to be being checked earlier
         if (n instanceof ConstantNode) {
             return ((ConstantNode) n).getValue();
         }
-        RootCallTarget callTarget = doMakeCallTarget(n, EVAL_FUNCTION_NAME);
+        if (!(n instanceof RSyntaxNode)) {
+            n = new WrapStatement(n);
+        }
+        RootCallTarget callTarget = doMakeCallTarget((RSyntaxNode) n, EVAL_FUNCTION_NAME);
         return runCall(callTarget, frame, false, false);
     }
 
@@ -313,8 +316,12 @@ final class REngine implements RContext.Engine {
         return func.getTarget().call(rArgs);
     }
 
-    private Object evalNode(RSyntaxNode exprRep, REnvironment envir, REnvironment enclos, int depth) {
-        RootCallTarget callTarget = doMakeCallTarget(exprRep, EVAL_FUNCTION_NAME);
+    private Object evalNode(RNode exprRep, REnvironment envir, REnvironment enclos, int depth) {
+        RNode n = exprRep;
+        if (!(n instanceof RSyntaxNode)) {
+            n = new WrapStatement(n);
+        }
+        RootCallTarget callTarget = doMakeCallTarget((RSyntaxNode) n, EVAL_FUNCTION_NAME);
         RCaller call = RArguments.getCall(envir.getFrame());
         return evalTarget(callTarget, call, envir, enclos, depth);
     }
@@ -370,21 +377,41 @@ final class REngine implements RContext.Engine {
         RNode body = (RNode) bodyArg;
         if (!(body instanceof RSyntaxNode)) {
             // some (promise) that is not a syntax node
-            body = new PromiseStatement(body);
+            body = new WrapStatement(body);
         }
         return doMakeCallTarget((RSyntaxNode) body, funName);
     }
 
-    private static class PromiseStatement extends RNode implements RSyntaxNode {
-        @Child private RNode promise;
+    /**
+     * Finesses the case where we want to eval an {@link RNode} that is not an {@link RSyntaxNode}.
+     * TODO find a way for {@code doMakeCallTarget} to work with an {@link RNode}.
+     *
+     */
+    private static class WrapStatement extends RNode implements RSyntaxNode {
+        @Child private RNode wrappee;
 
-        PromiseStatement(RNode promise) {
-            this.promise = promise;
+        WrapStatement(RNode wrappee) {
+            this.wrappee = wrappee;
+            RSyntaxNode sn = wrappee.asRSyntaxNode();
+            assignSourceSection(sn.getSourceSection());
         }
 
         @Override
         public Object execute(VirtualFrame frame) {
-            return promise.execute(frame);
+            return wrappee.execute(frame);
+        }
+
+        public void deparseImpl(State state) {
+            wrappee.deparse(state);
+
+        }
+
+        public RSyntaxNode substituteImpl(REnvironment env) {
+            throw RInternalError.unimplemented("substituteImpl");
+        }
+
+        public void serializeImpl(com.oracle.truffle.r.runtime.RSerialize.State state) {
+            throw RInternalError.unimplemented("serializeImpl");
         }
 
     }

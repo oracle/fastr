@@ -504,12 +504,12 @@ public class InfixEmulationFunctions {
 
         @Specialization
         protected RLanguage tilde(VirtualFrame frame, RPromise response, @SuppressWarnings("unused") RMissing model) {
-            return doTilde(frame, null, (RSyntaxNode) response.getRep());
+            return doTilde(frame, null, ((RNode) response.getRep()).asRSyntaxNode());
         }
 
         @Specialization
         protected RLanguage tilde(VirtualFrame frame, RPromise response, RPromise model) {
-            return doTilde(frame, (RSyntaxNode) response.getRep(), (RSyntaxNode) model.getRep());
+            return doTilde(frame, ((RNode) response.getRep()).asRSyntaxNode(), ((RNode) model.getRep()).asRSyntaxNode());
         }
 
         private RLanguage doTilde(VirtualFrame frame, RSyntaxNode response, RSyntaxNode model) {

@@ -33,6 +33,7 @@ import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.nodes.function.PromiseNode.VarArgNode;
 import com.oracle.truffle.r.nodes.instrument.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
 
@@ -45,13 +46,13 @@ public class RASTUtils {
      * Removes any {@link WrapArgumentNode} or {@link WrapperNode}.
      */
     @TruffleBoundary
-    public static Node unwrap(Object node) {
+    public static BaseRNode unwrap(Object node) {
         if (node instanceof WrapArgumentBaseNode) {
             return unwrap(((WrapArgumentBaseNode) node).getOperand());
         } else if (node instanceof RInstrumentableNode) {
             return ((RInstrumentableNode) node).unwrap();
         } else {
-            return (Node) node;
+            return (BaseRNode) node;
         }
     }
 
@@ -237,7 +238,7 @@ public class RASTUtils {
             // TODO This should really fail in some way as (clearly) this is not a "name"
             // some more complicated expression, just deparse it
             RDeparse.State state = RDeparse.State.createPrintableState();
-            RSyntaxNode.cast(child).deparse(state);
+            child.deparse(state);
             return RDataFactory.createSymbol(state.toString());
         }
     }
@@ -356,12 +357,24 @@ public class RASTUtils {
      * Marker class for special '...' handling.
      */
     public abstract static class DotsNode extends RNode implements RSyntaxNode {
+        public void deparseImpl(State state) {
+            throw RInternalError.unimplemented();
+        }
+
+        public RSyntaxNode substituteImpl(REnvironment env) {
+            throw RInternalError.unimplemented();
+        }
+
+        public void serializeImpl(com.oracle.truffle.r.runtime.RSerialize.State state) {
+            throw RInternalError.unimplemented();
+        }
+
     }
 
     /**
      * A temporary {@link RNode} type that exists only during substitution to hold the expanded
-     * array of values from processing '...'. Allows {@link RSyntaxNode#substitute} to always return
-     * a single node.
+     * array of values from processing '...'. Allows {@link RSyntaxNode#substituteImpl} to always
+     * return a single node.
      */
     public static class ExpandedDotsNode extends DotsNode {
 

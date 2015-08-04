@@ -33,6 +33,7 @@ import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.env.*;
 
 /**
  * An {@link RNode} that handles accesses to components of the variadic argument (..1, ..2, etc.).
@@ -84,8 +85,16 @@ public class ReadVariadicComponentNode extends RNode implements RSyntaxNode {
     }
 
     @Override
-    public void deparse(State state) {
+    public void deparseImpl(State state) {
         state.append("..");
         state.append(Integer.toString(index + 1));
+    }
+
+    public RSyntaxNode substituteImpl(REnvironment env) {
+        throw RInternalError.unimplemented();
+    }
+
+    public void serializeImpl(com.oracle.truffle.r.runtime.RSerialize.State state) {
+        throw RInternalError.unimplemented();
     }
 }

@@ -32,12 +32,11 @@ import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
-import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
 @NeedsWrapper
 @NodeChildren({@NodeChild("operand")})
-public abstract class ConvertBooleanNode extends RNode implements RSyntaxNode {
+public abstract class ConvertBooleanNode extends RNode {
 
     private final NAProfile naProfile = NAProfile.create();
     private final BranchProfile invalidElementCountBranch = BranchProfile.create();
@@ -159,28 +158,12 @@ public abstract class ConvertBooleanNode extends RNode implements RSyntaxNode {
             return (ConvertBooleanNode) node;
         }
         ConvertBooleanNode result = ConvertBooleanNodeGen.create(node.asRNode());
-        result.assignSourceSection(node.getSourceSection());
         return result;
     }
 
     @Override
-    public boolean isBackbone() {
-        return true;
-    }
-
-    @Override
-    public void deparse(RDeparse.State state) {
-        RSyntaxNode.cast(getOperand()).deparse(state);
-    }
-
-    @Override
-    public void serialize(RSerialize.State state) {
-        RSyntaxNode.cast(getOperand()).serialize(state);
-    }
-
-    @Override
-    public RSyntaxNode substitute(REnvironment env) {
-        return ConvertBooleanNodeGen.create(RSyntaxNode.cast(getOperand()).substitute(env));
+    public RSyntaxNode getRSyntaxNode() {
+        return getOperand().asRSyntaxNode();
     }
 
     @Override

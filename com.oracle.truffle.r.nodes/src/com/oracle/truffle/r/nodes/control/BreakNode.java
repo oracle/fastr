@@ -26,6 +26,7 @@ import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.env.*;
 
 public final class BreakNode extends RNode implements RSyntaxNode, VisibilityController {
 
@@ -34,12 +35,12 @@ public final class BreakNode extends RNode implements RSyntaxNode, VisibilityCon
     }
 
     @Override
-    public void deparse(RDeparse.State state) {
+    public void deparseImpl(RDeparse.State state) {
         state.append("break");
     }
 
     @Override
-    public void serialize(RSerialize.State state) {
+    public void serializeImpl(RSerialize.State state) {
         state.setAsBuiltin("break");
     }
 
@@ -47,5 +48,9 @@ public final class BreakNode extends RNode implements RSyntaxNode, VisibilityCon
     public Object execute(VirtualFrame frame) {
         forceVisibility(false);
         throw BreakException.instance;
+    }
+
+    public RSyntaxNode substituteImpl(REnvironment env) {
+        return this;
     }
 }

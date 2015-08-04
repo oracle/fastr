@@ -29,7 +29,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RArguments.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-public abstract class RArgumentsNode extends NodeSA {
+public abstract class RArgumentsNode extends BaseRNode {
 
     /*
      * This inline cache is not implemented using Truffle DSL because of null values provided for

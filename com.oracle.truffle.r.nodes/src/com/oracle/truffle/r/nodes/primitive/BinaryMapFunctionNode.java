@@ -33,7 +33,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
  * used argumentType and resultType in {@link BinaryMapNode}.
  */
 @SuppressWarnings("unused")
-public abstract class BinaryMapFunctionNode extends NodeSA {
+public abstract class BinaryMapFunctionNode extends BaseRNode {
 
     public byte applyLogical(byte left, byte right) {
         throw RInternalError.shouldNotReachHere();

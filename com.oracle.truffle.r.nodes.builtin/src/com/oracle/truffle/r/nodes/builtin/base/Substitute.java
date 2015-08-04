@@ -115,7 +115,7 @@ public abstract class Substitute extends RBuiltinNode {
         Node node = RASTUtils.unwrap(expr.getRep());
         // substitution is destructive so clone the tree
         RSyntaxNode rNode = (RSyntaxNode) NodeUtil.cloneNode(node);
-        RSyntaxNode subRNode = rNode.substitute(env);
+        RSyntaxNode subRNode = rNode.substituteImpl(env);
         // remove old source sections
         clearSourceSection(subRNode.asRNode());
         // create source for entire tree

@@ -74,22 +74,22 @@ public class FunctionBodyNode extends RNode implements RSyntaxNode {
     }
 
     @Override
-    public RSyntaxNode substitute(REnvironment env) {
+    public RSyntaxNode substituteImpl(REnvironment env) {
         // TODO what about saveArgs ?
-        RNode statementsSub = RSyntaxNode.cast(statements).substitute(env).asRNode();
+        RNode statementsSub = statements.substitute(env).asRNode();
         return new FunctionBodyNode(saveArgs, statementsSub);
     }
 
     @Override
-    public void deparse(RDeparse.State state) {
+    public void deparseImpl(RDeparse.State state) {
         // Don't deparse the argument saving nodes
-        RSyntaxNode.cast(statements).deparse(state);
+        statements.deparse(state);
     }
 
     @Override
-    public void serialize(RSerialize.State state) {
+    public void serializeImpl(RSerialize.State state) {
         // Don't serialize the argument saving nodes
-        RSyntaxNode.cast(statements).serialize(state);
+        statements.serialize(state);
     }
 
 }

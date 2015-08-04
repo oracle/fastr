@@ -33,7 +33,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-public final class UnaryMapNode extends NodeSA {
+public final class UnaryMapNode extends BaseRNode {
 
     @Child private UnaryMapFunctionNode scalarNode;
     @Child private MapUnaryVectorInternalNode vectorNode;
@@ -171,7 +171,7 @@ public final class UnaryMapNode extends NodeSA {
     }
 
     @SuppressWarnings("unused")
-    protected abstract static class MapUnaryVectorInternalNode extends NodeSA {
+    protected abstract static class MapUnaryVectorInternalNode extends BaseRNode {
 
         private static final MapIndexedAction<byte[], RAbstractLogicalVector> LOGICAL = //
         (arithmetic, result, resultIndex, left, leftIndex) -> {

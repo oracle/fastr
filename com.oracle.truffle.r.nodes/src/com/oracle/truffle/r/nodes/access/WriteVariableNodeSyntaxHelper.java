@@ -32,7 +32,7 @@ abstract class WriteVariableNodeSyntaxHelper extends WriteVariableNode {
         RNode rhs = getRhs();
         if (rhs != null) {
             state.append(op);
-            RSyntaxNode.cast(getRhs()).deparse(state);
+            getRhs().deparse(state);
         }
     }
 

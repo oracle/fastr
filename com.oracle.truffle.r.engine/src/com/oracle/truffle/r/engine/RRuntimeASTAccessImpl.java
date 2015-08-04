@@ -307,7 +307,8 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
             for (int i = 0; i < sig.getLength(); i++) {
                 String name = sig.getName(i);
                 if (field.equals(name)) {
-                    argNodes[i] = WrapArgumentNode.create(RASTUtils.createNodeForValue(value), false, i);
+                    RNode valueNode = RASTUtils.createNodeForValue(value);
+                    argNodes[i] = valueNode.asRSyntaxNode();
                     match = true;
                     break;
                 }
@@ -360,13 +361,13 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
             FunctionDefinitionNode fdn = (FunctionDefinitionNode) f.getRootNode();
             REnvironment env = REnvironment.frameToEnvironment(f.getEnclosingFrame());
             state.openPairList().setTag(env);
-            fdn.serialize(state);
+            fdn.serializeImpl(state);
             return state.closePairList();
         } else if (obj instanceof RLanguage) {
             RLanguage lang = (RLanguage) obj;
             RSyntaxNode node = (RSyntaxNode) lang.getRep();
             state.openPairList(SEXPTYPE.LANGSXP);
-            node.serialize(state);
+            node.serializeImpl(state);
             return state.closePairList();
         } else {
             throw RInternalError.unimplemented("serialize");
@@ -375,7 +376,7 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
 
     @Override
     public void serializeNode(RSerialize.State state, Object node) {
-        RSyntaxNode.cast((RNode) node).serialize(state);
+        ((RSyntaxNodeAdapter) node).serialize(state);
     }
 
     public Object createNodeForValue(Object value) {
@@ -405,7 +406,7 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
     }
 
     public RLanguage getSyntaxCaller(RCaller rl) {
-        RSyntaxNode sn = ((NodeSA) RASTUtils.unwrap(rl.getRep())).asRSyntaxNode();
+        RSyntaxNode sn = ((RSyntaxNodeAdapter) RASTUtils.unwrap(rl.getRep())).asRSyntaxNode();
         return RDataFactory.createLanguage(sn);
     }
 

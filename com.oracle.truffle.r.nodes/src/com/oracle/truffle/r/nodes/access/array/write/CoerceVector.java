@@ -34,7 +34,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 
 @SuppressWarnings("unused")
 @NodeChildren({@NodeChild(value = "newValue", type = RNode.class), @NodeChild(value = "vector", type = RNode.class), @NodeChild(value = "operand", type = RNode.class)})
-public abstract class CoerceVector extends RNode implements RSyntaxNode/* temp */{
+public abstract class CoerceVector extends RNode {
 
     public abstract Object executeEvaluated(Object value, Object vector, Object operand);
 
@@ -370,18 +370,9 @@ public abstract class CoerceVector extends RNode implements RSyntaxNode/* temp *
         return vector instanceof RList || vector.getElementClass() == RDataFrame.class;
     }
 
-    /**
-     * N.B. The only reason that these are required is that the {@link UpdateArrayHelperNode} in the
-     * "syntaxAST" form of the {@link ReplacementNode} still takes a {@link CoerceVector}, even
-     * though no coercion happens in the syntax.
-     */
     @Override
-    public void deparse(RDeparse.State state) {
-        RSyntaxNode.cast(getVector()).deparse(state);
+    public RSyntaxNode getRSyntaxNode() {
+        return getVector().asRSyntaxNode();
     }
 
-    @Override
-    public void serialize(RSerialize.State state) {
-        RSyntaxNode.cast(getVector()).serialize(state);
-    }
 }

@@ -27,7 +27,7 @@ import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.*;
 
-public abstract class CombineSignaturesNode extends NodeSA {
+public abstract class CombineSignaturesNode extends BaseRNode {
 
     protected static final int CACHE_LIMIT = 3;
 

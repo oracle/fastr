@@ -34,7 +34,7 @@ import com.oracle.truffle.r.runtime.data.*;
  * Simple attribute access node that specializes on the position at which the attribute was found
  * last time.
  */
-public abstract class PutAttributeNode extends NodeSA {
+public abstract class PutAttributeNode extends BaseRNode {
 
     protected final String name;
 

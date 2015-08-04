@@ -22,21 +22,14 @@
  */
 package com.oracle.truffle.r.nodes.function;
 
-import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.env.*;
 
 /**
- * {@link WrapArgumentBaseNode} is a super class of wrappers handling function arguments. As such it
- * is not really a syntax node, but it is created during parsing and therefore forms part of the
- * syntactic backbone. There are some internal uses also that are not syntactic in nature. As a
- * backbone node, it does not store a {@link SourceSection} attribute but overrides
- * {@code getSourceSection} to retrieve the info from the operand.
+ * {@link WrapArgumentBaseNode} is a super class of wrappers handling function arguments.
  */
-public abstract class WrapArgumentBaseNode extends RNode implements RSyntaxNode {
+public abstract class WrapArgumentBaseNode extends RNode {
 
     @Child protected RNode operand;
 
@@ -91,40 +84,8 @@ public abstract class WrapArgumentBaseNode extends RNode implements RSyntaxNode 
     }
 
     @Override
-    public boolean isBackbone() {
-        return true;
+    public RSyntaxNode getRSyntaxNode() {
+        return getOperand().asRSyntaxNode();
     }
 
-    @Override
-    public SourceSection getSourceSection() {
-        // operand may not be an RSyntaxNode
-        return getOperand().getEncapsulatingSourceSection();
-    }
-
-    @Override
-    public SourceSection getEncapsulatingSourceSection() {
-        return getOperand().getEncapsulatingSourceSection();
-    }
-
-    @Override
-    public void deparse(RDeparse.State state) {
-        RSyntaxNode.cast(getOperand()).deparse(state);
-    }
-
-    @Override
-    public void serialize(RSerialize.State state) {
-        RSyntaxNode.cast(getOperand()).serialize(state);
-    }
-
-    protected abstract RSyntaxNode createSubstitute(RNode sub);
-
-    @Override
-    public RSyntaxNode substitute(REnvironment env) {
-        RNode sub = RSyntaxNode.cast(getOperand()).substitute(env).asRNode();
-        if (sub instanceof RASTUtils.DotsNode) {
-            return (RASTUtils.DotsNode) sub;
-        } else {
-            return createSubstitute(sub);
-        }
-    }
 }

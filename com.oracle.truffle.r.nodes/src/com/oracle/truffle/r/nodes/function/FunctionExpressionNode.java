@@ -126,12 +126,12 @@ public final class FunctionExpressionNode extends RNode implements RSyntaxNode {
     }
 
     @Override
-    public void deparse(RDeparse.State state) {
-        ((FunctionDefinitionNode) callTarget.getRootNode()).deparse(state);
+    public void deparseImpl(RDeparse.State state) {
+        ((FunctionDefinitionNode) callTarget.getRootNode()).deparseImpl(state);
     }
 
     @Override
-    public void serialize(RSerialize.State state) {
+    public void serializeImpl(RSerialize.State state) {
         state.setAsBuiltin("function");
         state.openPairList(SEXPTYPE.LISTSXP);
         FunctionDefinitionNode fdn = (FunctionDefinitionNode) callTarget.getRootNode();
@@ -152,9 +152,9 @@ public final class FunctionExpressionNode extends RNode implements RSyntaxNode {
     }
 
     @Override
-    public RSyntaxNode substitute(REnvironment env) {
+    public RSyntaxNode substituteImpl(REnvironment env) {
         FunctionDefinitionNode thisFdn = (FunctionDefinitionNode) callTarget.getRootNode();
-        FunctionDefinitionNode fdn = (FunctionDefinitionNode) thisFdn.substitute(env);
+        FunctionDefinitionNode fdn = (FunctionDefinitionNode) thisFdn.substituteImpl(env);
         return new FunctionExpressionNode(null, Truffle.getRuntime().createCallTarget(fdn));
     }
 }

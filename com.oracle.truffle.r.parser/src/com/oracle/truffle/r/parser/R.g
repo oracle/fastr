@@ -167,7 +167,7 @@ script returns [ASTNode v]
         SourceSection src = sourceSection("script", $start, $stop);
         if ($stop == null) {
             String code = src.getCode();
-            RError.error(null, RError.Message.UNEXPECTED, code, code);
+            RError.error(RError.NO_CALLER, RError.Message.UNEXPECTED, code, code);
         }
         $v = Sequence.create(src, stmts);
     }

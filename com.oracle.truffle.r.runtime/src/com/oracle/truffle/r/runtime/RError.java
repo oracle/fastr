@@ -73,7 +73,8 @@ public final class RError extends RuntimeException {
      * This calls out a call to {@code error} or {@code warning} will a {@code null} value for
      * {@link Node}. Ideally this never happens, so we make it explicit.
      */
-    public static final Node NO_NODE = null;
+    public static final Node NO_NODE = new Node() {
+    };
 
     /**
      * A very special case that ensures that no caller is output in the error/warning message.
@@ -126,6 +127,7 @@ public final class RError extends RuntimeException {
      */
     @TruffleBoundary
     private static RError error0(Node node, Message msg, Object... args) {
+        assert node != null;
         // thrown from a builtin specified by "node"
         RErrorHandling.signalError(node, msg, args);
         return RErrorHandling.errorcallDflt(node, msg, args);
@@ -161,11 +163,13 @@ public final class RError extends RuntimeException {
 
     @TruffleBoundary
     public static void warning(Node node, Message msg, Object... args) {
+        assert node != null;
         RErrorHandling.warningcall(true, node, msg, args);
     }
 
     @TruffleBoundary
     public static RError stop(boolean showCall, Node node, Message msg, Object arg) {
+        assert node != null;
         RErrorHandling.signalError(node, msg, arg);
         return RErrorHandling.errorcallDflt(showCall, node, msg, arg);
     }

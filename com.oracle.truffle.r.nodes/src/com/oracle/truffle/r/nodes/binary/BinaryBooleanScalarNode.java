@@ -82,7 +82,7 @@ public abstract class BinaryBooleanScalarNode extends RBuiltinNode {
         return left;
     }
 
-    protected abstract static class LogicalScalarCastNode extends NodeSA {
+    protected abstract static class LogicalScalarCastNode extends BaseRNode {
 
         protected static final int CACHE_LIMIT = 3;
 

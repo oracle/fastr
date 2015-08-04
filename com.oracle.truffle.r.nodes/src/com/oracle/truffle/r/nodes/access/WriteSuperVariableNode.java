@@ -31,6 +31,7 @@ import com.oracle.truffle.r.nodes.instrument.*;
 import com.oracle.truffle.r.nodes.instrument.wrappers.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RDeparse.*;
+import com.oracle.truffle.r.runtime.env.*;
 
 /**
  * The "syntax" variant corresponding to {@code x <<- y} in the source.
@@ -75,18 +76,22 @@ public class WriteSuperVariableNode extends WriteVariableNodeSyntaxHelper implem
     }
 
     @Override
-    public void deparse(State state) {
+    public void deparseImpl(State state) {
         deparseHelper(state, " <<- ");
     }
 
     @Override
-    public void serialize(RSerialize.State state) {
+    public void serializeImpl(RSerialize.State state) {
         serializeHelper(state, "<<-");
     }
 
     @Override
     public ProbeNode.WrapperNode createWrapperNode() {
         return new WriteSuperVariableNodeWrapper(this);
+    }
+
+    public RSyntaxNode substituteImpl(REnvironment env) {
+        throw RInternalError.unimplemented();
     }
 
 }

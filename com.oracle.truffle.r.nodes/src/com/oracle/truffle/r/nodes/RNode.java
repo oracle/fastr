@@ -39,7 +39,7 @@ import com.oracle.truffle.r.runtime.env.*;
 
 @TypeSystemReference(RTypes.class)
 @NeedsWrapper
-public abstract class RNode extends NodeSA implements RInstrumentableNode {
+public abstract class RNode extends BaseRNode implements RInstrumentableNode {
 
     @CompilationFinal public static final RNode[] EMTPY_RNODE_ARRAY = new RNode[0];
     @CompilationFinal protected static final Object[] EMPTY_OBJECT_ARRAY = new Object[0];

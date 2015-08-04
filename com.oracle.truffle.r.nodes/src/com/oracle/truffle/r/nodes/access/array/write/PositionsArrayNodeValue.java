@@ -30,6 +30,7 @@ import com.oracle.truffle.r.nodes.access.array.*;
 import com.oracle.truffle.r.nodes.access.array.read.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.env.*;
 
 public class PositionsArrayNodeValue extends RNode implements RSyntaxNode {
 
@@ -92,12 +93,16 @@ public class PositionsArrayNodeValue extends RNode implements RSyntaxNode {
     }
 
     @Override
-    public void deparse(RDeparse.State state) {
+    public void deparseImpl(RDeparse.State state) {
         positionsAdapter.deparse(state);
     }
 
     @Override
-    public void serialize(RSerialize.State state) {
+    public void serializeImpl(RSerialize.State state) {
         positionsAdapter.serialize(state);
+    }
+
+    public RSyntaxNode substituteImpl(REnvironment env) {
+        throw RInternalError.unimplemented();
     }
 }

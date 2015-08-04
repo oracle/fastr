@@ -108,23 +108,23 @@ public final class IfNode extends RNode implements RSyntaxNode, VisibilityContro
     }
 
     @Override
-    public void deparse(RDeparse.State state) {
+    public void deparseImpl(RDeparse.State state) {
         state.append("if (");
         condition.deparse(state);
         state.append(") ");
         state.writeOpenCurlyNLIncIndent();
-        RSyntaxNode.cast(thenPart).deparse(state);
+        thenPart.deparse(state);
         state.decIndentWriteCloseCurly();
         if (elsePart != null) {
             state.append(" else ");
             state.writeOpenCurlyNLIncIndent();
-            RSyntaxNode.cast(elsePart).deparse(state);
+            elsePart.deparse(state);
             state.decIndentWriteCloseCurly();
         }
     }
 
     @Override
-    public void serialize(RSerialize.State state) {
+    public void serializeImpl(RSerialize.State state) {
         state.setAsBuiltin("if");
         state.openPairList(SEXPTYPE.LISTSXP);
         // condition
@@ -145,7 +145,7 @@ public final class IfNode extends RNode implements RSyntaxNode, VisibilityContro
     }
 
     @Override
-    public RSyntaxNode substitute(REnvironment env) {
-        return create(null, RSyntaxNode.cast(condition).substitute(env), RSyntaxNode.cast(thenPart).substitute(env), RSyntaxNode.cast(elsePart).substitute(env));
+    public RSyntaxNode substituteImpl(REnvironment env) {
+        return create(null, condition.substitute(env), thenPart.substitute(env), elsePart.substitute(env));
     }
 }

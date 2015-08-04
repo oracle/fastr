@@ -36,6 +36,7 @@ import com.oracle.truffle.r.nodes.access.variables.*;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseCheckHelperNode;
 import com.oracle.truffle.r.nodes.function.opt.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.RSerialize.State;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseType;
@@ -77,23 +78,17 @@ public abstract class PromiseNode extends RNode {
     }
 
     /**
-     * @param src The {@link SourceSection} of the argument for debugging purposes
      * @param factory {@link #factory}
      * @return Depending on {@link RPromiseFactory#getType()}, the proper {@link PromiseNode}
      *         implementation
-     *
-     *         TODO remove SourceSection arg
      */
     @TruffleBoundary
-    public static RNode create(SourceSection src, RPromiseFactory factory, boolean noOpt) {
+    public static RNode create(RPromiseFactory factory, boolean noOpt) {
         assert factory.getType() != PromiseType.NO_ARG;
 
         // For ARG_DEFAULT, expr == defaultExpr!
         RNode arg = (RNode) factory.getExpr();
-        RNode expr = arg;
-        if (arg instanceof WrapArgumentNode) {
-            expr = ((WrapArgumentNode) arg).getOperand();
-        }
+        RNode expr = (RNode) RASTUtils.unwrap(arg);
         if (isOptimizableConstant(expr)) {
             // As Constants don't care where they are evaluated, we don't need to
             // distinguish between ARG_DEFAULT and ARG_SUPPLIED
@@ -105,7 +100,7 @@ public abstract class PromiseNode extends RNode {
                 return new OptVariableSuppliedPromiseNode(factory, (ReadVariableNode) expr, arg == expr ? ArgumentStatePush.INVALID_INDEX : ((WrapArgumentNode) arg).getIndex());
             }
         }
-        return new PromisedNode(factory, src);
+        return new PromisedNode(factory);
     }
 
     /**
@@ -130,11 +125,8 @@ public abstract class PromiseNode extends RNode {
      * A {@link PromiseNode} for supplied arguments.
      */
     private static final class PromisedNode extends PromiseNode {
-        private final SourceSection src;
-
-        private PromisedNode(RPromiseFactory factory, SourceSection src) {
+        private PromisedNode(RPromiseFactory factory) {
             super(factory);
-            this.src = src;
         }
 
         @Override
@@ -144,13 +136,13 @@ public abstract class PromiseNode extends RNode {
         }
 
         @Override
-        public SourceSection getEncapsulatingSourceSection() {
-            return src;
+        public RSyntaxNode getRSyntaxNode() {
+            return getPromiseExpr();
         }
 
         @Override
         public RSyntaxNode getPromiseExpr() {
-            return (RSyntaxNode) factory.getExpr();
+            return ((RNode) factory.getExpr()).asRSyntaxNode();
         }
     }
 
@@ -165,7 +157,7 @@ public abstract class PromiseNode extends RNode {
 
         @Override
         protected RNode createFallback() {
-            return new PromisedNode(factory, originalRvn.getSourceSection());
+            return new PromisedNode(factory);
         }
 
 // @TruffleBoundary
@@ -299,7 +291,8 @@ public abstract class PromiseNode extends RNode {
             return getVarargsAndNames(frame).getArgument(index);
         }
 
-        public RSyntaxNode substitute(REnvironment env) {
+        @Override
+        public RSyntaxNode substituteImpl(REnvironment env) {
             Object obj = ((RArgsValuesAndNames) env.get("...")).getArgument(index);
             return obj instanceof RPromise ? (RSyntaxNode) ((RPromise) obj).getRep() : ConstantNode.create(obj);
         }
@@ -309,9 +302,13 @@ public abstract class PromiseNode extends RNode {
         }
 
         @Override
-        public void deparse(RDeparse.State state) {
+        public void deparseImpl(RDeparse.State state) {
             int num = index + 1;
             state.append((num < 10 ? ".." : ".") + num);
+        }
+
+        public void serializeImpl(State state) {
+            throw RInternalError.unimplemented();
         }
     }
 
@@ -339,7 +336,7 @@ public abstract class PromiseNode extends RNode {
             for (int i = 0; i < nodes.length; i++) {
                 Closure closure = closureCache.getOrCreateClosure(nodes[i]);
                 this.closures[i] = closure;
-                this.promised[i] = PromisedNode.create(nodes[i].getSourceSection(), RPromiseFactory.create(PromiseType.ARG_SUPPLIED, closure), false);
+                this.promised[i] = PromisedNode.create(RPromiseFactory.create(PromiseType.ARG_SUPPLIED, closure), false);
             }
             this.signature = signature;
         }

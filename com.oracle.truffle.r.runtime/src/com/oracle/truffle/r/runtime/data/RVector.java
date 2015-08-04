@@ -293,7 +293,8 @@ public abstract class RVector extends RAttributeStorage implements RShareable, R
     }
 
     public final void setNames(RStringVector newNames) {
-        setNames(newNames, null);
+        // TODO pass invoking Node
+        setNames(newNames, RError.NO_NODE);
     }
 
     @TruffleBoundary
@@ -345,7 +346,8 @@ public abstract class RVector extends RAttributeStorage implements RShareable, R
     }
 
     public final void setDimNames(RList newDimNames) {
-        setDimNames(newDimNames, null);
+        // TODO pass invoking node
+        setDimNames(newDimNames, RError.NO_NODE);
     }
 
     @TruffleBoundary
@@ -559,8 +561,8 @@ public abstract class RVector extends RAttributeStorage implements RShareable, R
                                 resVector = RDataFactory.createIntVector(data, sourceVector.isComplete());
                                 resVector.copyAttributesFrom(sourceVector);
                             } else {
-                                // TODO: add source section
-                                throw RError.error(null, RError.Message.ADDING_INVALID_CLASS, "factor");
+                                // TODO: add invoking node
+                                throw RError.error(RError.NO_NODE, RError.Message.ADDING_INVALID_CLASS, "factor");
                             }
                         } else {
                             resVector = (RIntVector) vector;

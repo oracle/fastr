@@ -177,4 +177,20 @@ public abstract class UpdateFieldNode extends RNode implements RSyntaxNode {
             return updateField(castList.executeList(object), value, field);
         }
     }
+
+    @Override
+    public void deparseImpl(RDeparse.State state) {
+        throw RInternalError.unimplemented("deparseImpl");
+    }
+
+    @Override
+    public RSyntaxNode substituteImpl(REnvironment env) {
+        throw RInternalError.unimplemented("substituteImpl");
+    }
+
+    @Override
+    public void serializeImpl(RSerialize.State state) {
+        throw RInternalError.unimplemented("serializeImpl");
+    }
+
 }

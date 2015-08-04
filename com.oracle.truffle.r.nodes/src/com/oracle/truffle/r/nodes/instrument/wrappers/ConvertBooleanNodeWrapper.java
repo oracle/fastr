@@ -32,7 +32,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
 @NodeInfo(cost = NodeCost.NONE)
-public final class ConvertBooleanNodeWrapper extends com.oracle.truffle.r.nodes.unary.ConvertBooleanNode implements WrapperNode, RSyntaxNode {
+public final class ConvertBooleanNodeWrapper extends com.oracle.truffle.r.nodes.unary.ConvertBooleanNode implements WrapperNode {
     @Child com.oracle.truffle.r.nodes.unary.ConvertBooleanNode child;
     @Child private ProbeNode probeNode;
 
@@ -98,13 +98,8 @@ public final class ConvertBooleanNodeWrapper extends com.oracle.truffle.r.nodes.
     }
 
     @Override
-    public void deparse(RDeparse.State state) {
-        RSyntaxNode.cast(child).deparse(state);
-    }
-
-    @Override
-    public void serialize(RSerialize.State state) {
-        RSyntaxNode.cast(child).serialize(state);
+    public RSyntaxNode getRSyntaxNode() {
+        return child.asRSyntaxNode();
     }
 
     @Override
@@ -112,15 +107,4 @@ public final class ConvertBooleanNodeWrapper extends com.oracle.truffle.r.nodes.
         return false;
     }
 
-    @Override
-    public boolean isBackbone() {
-        return true;
-    }
-
-    @Override
-    public RSyntaxNode substitute(REnvironment env) {
-        ConvertBooleanNodeWrapper wrapperSub = new ConvertBooleanNodeWrapper((com.oracle.truffle.r.nodes.unary.ConvertBooleanNode) RSyntaxNode.cast(child).substitute(env).asRNode());
-        ProbeNode.insertProbe(wrapperSub);
-        return wrapperSub;
-    }
 }

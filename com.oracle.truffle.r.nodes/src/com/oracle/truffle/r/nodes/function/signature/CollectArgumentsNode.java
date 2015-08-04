@@ -34,7 +34,7 @@ import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode.ReadKind;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-public abstract class CollectArgumentsNode extends NodeSA {
+public abstract class CollectArgumentsNode extends BaseRNode {
 
     protected static final int CACHE_LIMIT = 3;
 

@@ -27,11 +27,12 @@ import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
-abstract class GetNamesNode extends NodeSA {
+abstract class GetNamesNode extends BaseRNode {
 
     public abstract RStringVector executeNamesGet(RAbstractVector vector, Object[] positions, int currentDimLevel, Object names);
 

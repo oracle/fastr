@@ -34,7 +34,7 @@ import com.oracle.truffle.r.runtime.env.*;
 
 @SuppressWarnings("unused")
 @ImportStatic(RRuntime.class)
-public abstract class PrecedenceNode extends NodeSA {
+public abstract class PrecedenceNode extends BaseRNode {
 
     public static final int NO_PRECEDENCE = -1;
     public static final int RAW_PRECEDENCE = 0;

@@ -359,6 +359,7 @@ public class HiddenInternalFunctions {
                 return RDataFactory.createIntVector(intData, RDataFactory.COMPLETE_VECTOR);
             } catch (Throwable ex) {
                 // Exceptions have been observed that were masked and very hard to find
+                ex.printStackTrace();
                 throw RInternalError.shouldNotReachHere("lazyLoadDBinsertValue exception");
             }
         }

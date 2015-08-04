@@ -75,17 +75,17 @@ public class WriteCurrentVariableNode extends WriteVariableNodeSyntaxHelper impl
     }
 
     @Override
-    public void deparse(State state) {
+    public void deparseImpl(State state) {
         deparseHelper(state, " <- ");
     }
 
     @Override
-    public void serialize(RSerialize.State state) {
+    public void serializeImpl(RSerialize.State state) {
         serializeHelper(state, "<-");
     }
 
     @Override
-    public RSyntaxNode substitute(REnvironment env) {
+    public RSyntaxNode substituteImpl(REnvironment env) {
         String name = getName().toString();
         RSyntaxNode nameSub = RASTUtils.substituteName(name, env);
         if (nameSub != null) {
@@ -93,7 +93,7 @@ public class WriteCurrentVariableNode extends WriteVariableNodeSyntaxHelper impl
         }
         RNode rhsSub = null;
         if (getRhs() != null) {
-            rhsSub = RSyntaxNode.cast(getRhs()).substitute(env).asRNode();
+            rhsSub = getRhs().substitute(env).asRNode();
         }
         return RSyntaxNode.cast(create(null, name, rhsSub));
     }

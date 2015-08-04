@@ -34,7 +34,7 @@ import com.oracle.truffle.r.runtime.ops.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
 @TypeSystemReference(RTypes.class)
-public abstract class UnaryArithmeticReduceNode extends NodeSA {
+public abstract class UnaryArithmeticReduceNode extends BaseRNode {
 
     public abstract Object executeReduce(Object value, Object naRm);
 
@@ -419,7 +419,7 @@ public abstract class UnaryArithmeticReduceNode extends NodeSA {
     }
 
     @TypeSystemReference(RTypes.class)
-    protected abstract static class MultiElemStringHandler extends NodeSA {
+    protected abstract static class MultiElemStringHandler extends BaseRNode {
 
         public abstract String executeString(RStringVector operand, byte naRm, int offset);
 

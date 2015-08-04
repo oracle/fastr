@@ -79,7 +79,7 @@ public final class GroupDispatchNode extends RNode implements RSyntaxNode {
     }
 
     @Override
-    public void deparse(RDeparse.State state) {
+    public void deparseImpl(RDeparse.State state) {
         String name = getGenericName();
         RDeparse.Func func = RDeparse.getFunc(name);
         if (func != null) {
@@ -92,14 +92,14 @@ public final class GroupDispatchNode extends RNode implements RSyntaxNode {
     }
 
     @Override
-    public void serialize(RSerialize.State state) {
+    public void serializeImpl(RSerialize.State state) {
         String name = getGenericName();
         state.setAsBuiltin(name);
         RCallNode.serializeArguments(state, callArgsNode.getSyntaxArguments(), callArgsNode.signature);
     }
 
     @Override
-    public RSyntaxNode substitute(REnvironment env) {
+    public RSyntaxNode substituteImpl(REnvironment env) {
         // TODO substitute aDispatchNode
         Arguments<RSyntaxNode> substituteArguments = RCallNode.substituteArguments(env, callArgsNode.getSyntaxArguments(), callArgsNode.signature);
         return RSyntaxNode.cast(RASTUtils.createCall(this, substituteArguments.getSignature(), substituteArguments.getArguments()));

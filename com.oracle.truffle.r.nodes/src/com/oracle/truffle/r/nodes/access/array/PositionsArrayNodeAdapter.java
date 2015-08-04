@@ -52,9 +52,9 @@ public class PositionsArrayNodeAdapter extends RNode implements RSyntaxNode {
     }
 
     @Override
-    public void deparse(RDeparse.State state) {
+    public void deparseImpl(RDeparse.State state) {
         for (int i = 0; i < positions.length; i++) {
-            RSyntaxNode.cast(positions[i]).deparse(state);
+            positions[i].deparse(state);
             if (i != positions.length - 1) {
                 state.append(", ");
             }
@@ -62,7 +62,7 @@ public class PositionsArrayNodeAdapter extends RNode implements RSyntaxNode {
     }
 
     @Override
-    public void serialize(RSerialize.State state) {
+    public void serializeImpl(RSerialize.State state) {
         if (positions.length == 0 || (positions.length == 1 && ConstantNode.isMissing(positions[0]))) {
             state.setPositionsLength(0);
         } else {
@@ -83,12 +83,16 @@ public class PositionsArrayNodeAdapter extends RNode implements RSyntaxNode {
     public RNode[] substitutePositions(REnvironment env) {
         RNode[] subPositions = new RNode[positions.length];
         for (int i = 0; i < positions.length; i++) {
-            subPositions[i] = RSyntaxNode.cast(positions[i]).substitute(env).asRNode();
+            subPositions[i] = positions[i].substitute(env).asRNode();
         }
         return subPositions;
     }
 
     public PositionsArrayNodeAdapter(RNode[] positions) {
         this.positions = insert(positions);
+    }
+
+    public RSyntaxNode substituteImpl(REnvironment env) {
+        throw RInternalError.unimplemented();
     }
 }

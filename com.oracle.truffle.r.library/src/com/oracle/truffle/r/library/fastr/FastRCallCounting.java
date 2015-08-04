@@ -45,7 +45,7 @@ public class FastRCallCounting {
                 if (REntryCounters.findCounter(uuid) == null) {
                     Probe probe = RInstrument.findSingleProbe(uuid, RSyntaxTag.FUNCTION_BODY);
                     if (probe == null) {
-                        throw RError.error(null, RError.Message.GENERIC, "failed to apply counter, instrumention disabled?");
+                        throw RError.error(this, RError.Message.GENERIC, "failed to apply counter, instrumention disabled?");
                     } else {
                         REntryCounters.Function counter = new REntryCounters.Function(uuid);
                         probe.attach(counter.instrument);
@@ -69,7 +69,7 @@ public class FastRCallCounting {
                 FunctionDefinitionNode fdn = (FunctionDefinitionNode) function.getRootNode();
                 REntryCounters.Function counter = (REntryCounters.Function) REntryCounters.findCounter(fdn.getUID());
                 if (counter == null) {
-                    throw RError.error(null, RError.Message.GENERIC, "no associated counter");
+                    throw RError.error(this, RError.Message.GENERIC, "no associated counter");
                 }
                 return counter.getEnterCount();
             }

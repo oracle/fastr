@@ -94,7 +94,7 @@ public class CallArgumentsNode extends ArgumentsNode {
                         varArgsSymbolIndices.add(i);
                     }
                 }
-                wrappedArgs[i] = WrapArgumentNode.create(arg, i == 0 || modeChangeForAll ? modeChange : true, i).asRNode();
+                wrappedArgs[i] = WrapArgumentNode.create(arg, i == 0 || modeChangeForAll ? modeChange : true, i);
             }
         }
 
@@ -244,6 +244,11 @@ public class CallArgumentsNode extends ArgumentsNode {
     }
 
     public RSyntaxNode[] getSyntaxArguments() {
-        return Arrays.copyOf(arguments, arguments.length, RSyntaxNode[].class);
+        RSyntaxNode[] result = new RSyntaxNode[arguments.length];
+        for (int i = 0; i < result.length; i++) {
+            RNode argument = arguments[i];
+            result[i] = argument.asRSyntaxNode();
+        }
+        return result;
     }
 }

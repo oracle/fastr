@@ -109,17 +109,13 @@ public final class WrapArgumentNode extends WrapArgumentBaseNode {
         return new WrapArgumentNode(null, true, index);
     }
 
-    public static RSyntaxNode create(RNode operand, boolean modeChange, int index) {
+    public static RNode create(RNode operand, boolean modeChange, int index) {
         if (operand instanceof WrapArgumentNode || operand instanceof ConstantNode) {
-            return (RSyntaxNode) operand;
+            return operand;
         } else {
             WrapArgumentNode wan = new WrapArgumentNode(operand, modeChange, index);
             return wan;
         }
     }
 
-    @Override
-    protected RSyntaxNode createSubstitute(RNode sub) {
-        return create(sub, modeChange, index);
-    }
 }

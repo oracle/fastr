@@ -33,7 +33,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
 
 @TypeSystemReference(RTypes.class)
-public abstract class ToStringNode extends NodeSA {
+public abstract class ToStringNode extends BaseRNode {
 
     public static final String DEFAULT_SEPARATOR = ", ";
 

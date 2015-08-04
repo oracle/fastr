@@ -32,7 +32,7 @@ import com.oracle.truffle.r.nodes.*;
  * This is a node abstraction for the functionality defined in
  * {@link RMissingHelper#getMissingValue(Frame,String)}.
  */
-public abstract class GetMissingValueNode extends NodeSA {
+public abstract class GetMissingValueNode extends BaseRNode {
 
     public static GetMissingValueNode create(String name) {
         return new UninitializedGetMissingValueNode(name);

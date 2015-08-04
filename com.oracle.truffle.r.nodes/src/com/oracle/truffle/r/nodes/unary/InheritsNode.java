@@ -26,7 +26,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
  * Basic support for "inherits" that is used by the {@code inherits} builtin and others.
  */
 @TypeSystemReference(RTypes.class)
-public abstract class InheritsNode extends NodeSA {
+public abstract class InheritsNode extends RSyntaxNodeAdapter {
 
     private final ConditionProfile sizeOneProfile = ConditionProfile.createBinaryProfile();
     protected final RAttributeProfiles attrProfiles = RAttributeProfiles.create();

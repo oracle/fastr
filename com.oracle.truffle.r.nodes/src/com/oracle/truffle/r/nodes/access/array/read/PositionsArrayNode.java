@@ -145,17 +145,17 @@ public class PositionsArrayNode extends RNode implements RSyntaxNode {
     }
 
     @Override
-    public RSyntaxNode substitute(REnvironment env) {
+    public RSyntaxNode substituteImpl(REnvironment env) {
         return new PositionsArrayNode(conversionAdapter.isSubset(), positionsAdapter.substitutePositions(env), hasVarArg);
     }
 
     @Override
-    public void deparse(RDeparse.State state) {
+    public void deparseImpl(RDeparse.State state) {
         positionsAdapter.deparse(state);
     }
 
     @Override
-    public void serialize(RSerialize.State state) {
+    public void serializeImpl(RSerialize.State state) {
         positionsAdapter.serialize(state);
     }
 }

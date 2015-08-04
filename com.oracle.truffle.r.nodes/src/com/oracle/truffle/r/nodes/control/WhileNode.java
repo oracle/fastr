@@ -76,7 +76,7 @@ public final class WhileNode extends AbstractLoopNode implements RSyntaxNode, Vi
     }
 
     @Override
-    public void deparse(RDeparse.State state) {
+    public void deparseImpl(RDeparse.State state) {
         if (isRepeat) {
             state.append("repeat ");
         } else {
@@ -85,12 +85,12 @@ public final class WhileNode extends AbstractLoopNode implements RSyntaxNode, Vi
             state.append(") ");
         }
         state.writeOpenCurlyNLIncIndent();
-        RSyntaxNode.cast(getBody()).deparse(state);
+        getBody().deparse(state);
         state.decIndentWriteCloseCurly();
     }
 
     @Override
-    public void serialize(RSerialize.State state) {
+    public void serializeImpl(RSerialize.State state) {
         state.setAsBuiltin(isRepeat ? "repeat" : "while");
         if (!isRepeat) {
             state.openPairList(SEXPTYPE.LISTSXP);
@@ -106,11 +106,11 @@ public final class WhileNode extends AbstractLoopNode implements RSyntaxNode, Vi
     }
 
     @Override
-    public RSyntaxNode substitute(REnvironment env) {
-        return create(getCondition().substitute(env), RSyntaxNode.cast(getBody()).substitute(env), isRepeat);
+    public RSyntaxNode substituteImpl(REnvironment env) {
+        return create(getCondition().substitute(env), getBody().substitute(env), isRepeat);
     }
 
-    private static final class WhileRepeatingNode extends NodeSA implements RepeatingNode {
+    private static final class WhileRepeatingNode extends BaseRNode implements RepeatingNode {
 
         @Child private ConvertBooleanNode condition;
         @Child private RNode body;

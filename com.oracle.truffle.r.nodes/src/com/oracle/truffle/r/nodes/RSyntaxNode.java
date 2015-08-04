@@ -22,13 +22,9 @@
  */
 package com.oracle.truffle.r.nodes;
 
-import com.oracle.truffle.api.instrument.ProbeNode.WrapperNode;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.control.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.RDeparse.*;
-import com.oracle.truffle.r.runtime.env.*;
 
 /**
  * An interface that identifies an AST node as being part of the syntactic structure of the
@@ -52,8 +48,13 @@ import com.oracle.truffle.r.runtime.env.*;
  * refactored in such a way that such nodes did not implement this interface. However, as a
  * workaround, the {@link #isSyntax} method can be overridden in such nodes, using some contextual
  * information, to return {@code false}.
+ *
+ * Every implementor of this interface must provide an implementation of the {@link #deparseImpl},
+ * {@link #serializeImpl} and {@link #substituteImpl} methods. These are invoked by the
+ * corresponding methods on {@link RSyntaxNodeAdapter} after the correct {@link RSyntaxNode} is
+ * located.
  */
-public interface RSyntaxNode {
+public interface RSyntaxNode extends RSyntaxNodeSPI {
     /**
      * A convenience method that captures the fact that, while the notion of a syntax node is
      * described in this interface, in practice all {@link RSyntaxNode} instances are also
@@ -65,7 +66,7 @@ public interface RSyntaxNode {
 
     /**
      * Denotes that this node is part of the "backbone" of the AST, but carries no useful syntactic
-     * information. A classic case is a {@link WrapperNode} inserted for instrumentation purposes.
+     * information.
      */
     default boolean isBackbone() {
         return false;
@@ -80,35 +81,10 @@ public interface RSyntaxNode {
     }
 
     /**
-     * A placeholder. Eventually this method should appear on a Truffle super-interface and will
-     * disappear from the {@link Node} class.
+     * Convenience method.
      */
     default SourceSection getSourceSection() {
         return (asRNode().getSourceSection());
-    }
-
-    /**
-     * Support for the {@code deparse} builtin function.
-     */
-    default void deparse(@SuppressWarnings("unused") State state) {
-        throw RInternalError.unimplemented("deparse not implemented in " + getClass());
-    }
-
-    /**
-     * Support for the {@code substitute} builtin function. Assert: {this.isSyntax() == true}. N.B.
-     * this method only needs to operate on pristine (uninitialized) ASTs. The AST is cloned prior
-     * to the substitution; therefore there is no need to create a new node if it can be determined
-     * that no changes were made.
-     */
-    default RSyntaxNode substitute(@SuppressWarnings("unused") REnvironment env) {
-        throw RInternalError.unimplemented("substitute not implemented in " + getClass());
-    }
-
-    /**
-     * Support for serializing closures.
-     */
-    default void serialize(@SuppressWarnings("unused") RSerialize.State state) {
-        throw RInternalError.unimplemented("serialize not implemented in " + getClass());
     }
 
     static RSyntaxNode cast(RNode node) {
@@ -147,4 +123,5 @@ public interface RSyntaxNode {
             }
         }
     }
+
 }

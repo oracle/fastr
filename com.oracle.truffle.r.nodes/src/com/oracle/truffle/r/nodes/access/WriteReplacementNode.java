@@ -27,6 +27,7 @@ import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.control.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.gnur.*;
 
 /**
@@ -57,14 +58,14 @@ public class WriteReplacementNode extends RNode implements RSyntaxNode {
     }
 
     @Override
-    public void deparse(RDeparse.State state) {
-        RSyntaxNode.cast(getReplacementCall()).deparse(state);
+    public void deparseImpl(RDeparse.State state) {
+        getReplacementCall().deparse(state);
         state.append(" <- ");
-        RSyntaxNode.cast(getRhs()).deparse(state);
+        getRhs().deparse(state);
     }
 
     @Override
-    public void serialize(RSerialize.State state) {
+    public void serializeImpl(RSerialize.State state) {
         state.setAsBuiltin("<-");
         state.openPairList(SEXPTYPE.LISTSXP);
         state.serializeNodeSetCar(getReplacementCall());
@@ -72,6 +73,10 @@ public class WriteReplacementNode extends RNode implements RSyntaxNode {
         state.serializeNodeSetCar(getRhs());
         state.linkPairList(2);
         state.setCdr(state.closePairList());
+    }
+
+    public RSyntaxNode substituteImpl(REnvironment env) {
+        throw RInternalError.unimplemented();
     }
 
 }

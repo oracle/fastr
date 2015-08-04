@@ -27,11 +27,9 @@ import com.oracle.truffle.api.instrument.ProbeNode;
 import com.oracle.truffle.api.instrument.ProbeNode.WrapperNode;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.RSyntaxNode;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.env.REnvironment;
 
 @NodeInfo(cost = NodeCost.NONE)
-public final class RNodeWrapper extends com.oracle.truffle.r.nodes.RNode implements WrapperNode, RSyntaxNode {
+public final class RNodeWrapper extends com.oracle.truffle.r.nodes.RNode implements WrapperNode {
     @Child com.oracle.truffle.r.nodes.RNode child;
     @Child private ProbeNode probeNode;
 
@@ -77,13 +75,8 @@ public final class RNodeWrapper extends com.oracle.truffle.r.nodes.RNode impleme
     }
 
     @Override
-    public void deparse(RDeparse.State state) {
-        RSyntaxNode.cast(child).deparse(state);
-    }
-
-    @Override
-    public void serialize(RSerialize.State state) {
-        RSyntaxNode.cast(child).serialize(state);
+    public RSyntaxNode getRSyntaxNode() {
+        return child.asRSyntaxNode();
     }
 
     @Override
@@ -91,15 +84,4 @@ public final class RNodeWrapper extends com.oracle.truffle.r.nodes.RNode impleme
         return false;
     }
 
-    @Override
-    public boolean isBackbone() {
-        return true;
-    }
-
-    @Override
-    public RSyntaxNode substitute(REnvironment env) {
-        RNodeWrapper wrapperSub = new RNodeWrapper(RSyntaxNode.cast(child).substitute(env).asRNode());
-        ProbeNode.insertProbe(wrapperSub);
-        return wrapperSub;
-    }
 }

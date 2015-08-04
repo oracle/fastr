@@ -30,7 +30,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
 @SuppressWarnings("unused")
-public abstract class UnaryMapFunctionNode extends NodeSA {
+public abstract class UnaryMapFunctionNode extends BaseRNode {
 
     public boolean mayFoldConstantTime(Class<? extends RAbstractVector> operandClass) {
         return false;

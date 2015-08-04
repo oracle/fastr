@@ -26,7 +26,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
 
-public abstract class S3FunctionLookupNode extends NodeSA {
+public abstract class S3FunctionLookupNode extends BaseRNode {
     protected static final int MAX_CACHE_DEPTH = 3;
 
     protected final boolean throwsError;

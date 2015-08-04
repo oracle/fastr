@@ -83,19 +83,19 @@ public final class ForNode extends AbstractLoopNode implements VisibilityControl
     }
 
     @Override
-    public void deparse(RDeparse.State state) {
+    public void deparseImpl(RDeparse.State state) {
         state.append("for (");
-        RSyntaxNode.cast(getCvar()).deparse(state);
+        getCvar().deparse(state);
         state.append(" in ");
-        RSyntaxNode.cast(getRange()).deparse(state);
+        getRange().deparse(state);
         state.append(") ");
         state.writeOpenCurlyNLIncIndent();
-        RSyntaxNode.cast(getBody()).deparse(state);
+        getBody().deparse(state);
         state.decIndentWriteCloseCurly();
     }
 
     @Override
-    public void serialize(RSerialize.State state) {
+    public void serializeImpl(RSerialize.State state) {
         state.setAsBuiltin("for");
         state.openPairList(SEXPTYPE.LISTSXP);
         // variable
@@ -113,15 +113,15 @@ public final class ForNode extends AbstractLoopNode implements VisibilityControl
     }
 
     @Override
-    public RSyntaxNode substitute(REnvironment env) {
-        return create((WriteVariableNode) RSyntaxNode.cast(getCvar()).substitute(env), RSyntaxNode.cast(getRange()).substitute(env), RSyntaxNode.cast(getBody()).substitute(env));
+    public RSyntaxNode substituteImpl(REnvironment env) {
+        return create((WriteVariableNode) getCvar().substitute(env), getRange().substitute(env), getBody().substitute(env));
     }
 
     private ForRepeatingNode getForRepeatingNode() {
         return (ForRepeatingNode) loopNode.getRepeatingNode();
     }
 
-    private static final class ForRepeatingNode extends NodeSA implements RepeatingNode {
+    private static final class ForRepeatingNode extends BaseRNode implements RepeatingNode {
 
         private static final Source ACCESS_ARRAY_SOURCE = Source.fromText("x[[i]]", "<lfor_array_access>");
 

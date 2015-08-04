@@ -55,17 +55,17 @@ public abstract class ConstantNode extends RNode implements RSyntaxNode, Visibil
 
     @Override
     @TruffleBoundary
-    public void deparse(RDeparse.State state) {
+    public void deparseImpl(RDeparse.State state) {
         RDeparse.deparse2buff(state, getValue());
     }
 
     @Override
-    public RSyntaxNode substitute(REnvironment env) {
+    public RSyntaxNode substituteImpl(REnvironment env) {
         return this;
     }
 
     @Override
-    public void serialize(RSerialize.State state) {
+    public void serializeImpl(RSerialize.State state) {
         state.setCar(getValue());
     }
 
@@ -189,7 +189,7 @@ public abstract class ConstantNode extends RNode implements RSyntaxNode, Visibil
 
         @Override
         @TruffleBoundary
-        public void deparse(RDeparse.State state) {
+        public void deparseImpl(RDeparse.State state) {
             if (value == RMissing.instance) {
                 // nothing to do
             } else if (value instanceof RArgsValuesAndNames) {
@@ -203,9 +203,9 @@ public abstract class ConstantNode extends RNode implements RSyntaxNode, Visibil
                     }
                     Object argValue = values[i];
                     if (argValue instanceof RSyntaxNode) {
-                        ((RSyntaxNode) argValue).deparse(state);
+                        ((RSyntaxNode) argValue).deparseImpl(state);
                     } else if (argValue instanceof RPromise) {
-                        ((RSyntaxNode) RASTUtils.unwrap(((RPromise) argValue).getRep())).deparse(state);
+                        ((RSyntaxNodeAdapter) RASTUtils.unwrap(((RPromise) argValue).getRep())).deparse(state);
                     } else {
                         RInternalError.shouldNotReachHere();
                     }
@@ -214,16 +214,16 @@ public abstract class ConstantNode extends RNode implements RSyntaxNode, Visibil
                     }
                 }
             } else {
-                super.deparse(state);
+                super.deparseImpl(state);
             }
         }
 
         @Override
-        public void serialize(RSerialize.State state) {
+        public void serializeImpl(RSerialize.State state) {
             if (value == RMissing.instance) {
                 state.setCar(RMissing.instance);
             } else {
-                super.serialize(state);
+                super.serializeImpl(state);
             }
         }
     }

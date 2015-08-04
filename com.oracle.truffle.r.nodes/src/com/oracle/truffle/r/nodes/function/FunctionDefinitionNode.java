@@ -319,7 +319,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
      * serialize, since we do not distinguish them in other nodes at the present time.
      */
 
-    public void deparse(RDeparse.State state) {
+    public void deparseImpl(RDeparse.State state) {
         // TODO linebreaks
         state.append("function (");
         FormalArguments formals = getFormalArguments();
@@ -329,7 +329,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
             state.append(formals.getSignature().getName(i));
             if (defaultArg != null) {
                 state.append(" = ");
-                RSyntaxNode.cast(defaultArg).deparse(state);
+                defaultArg.deparse(state);
             }
             if (i != formalsLength - 1) {
                 state.append(", ");
@@ -338,13 +338,13 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         state.append(") ");
         state.writeNLOpenCurlyIncIndent();
         state.writeline();
-        RSyntaxNode.cast(body).deparse(state);
+        body.deparse(state);
         state.decIndentWriteCloseCurly();
     }
 
     @Override
-    public RSyntaxNode substitute(REnvironment env) {
-        return new FunctionDefinitionNode(null, new FrameDescriptor(), RSyntaxNode.cast(body).substitute(env).asRNode(), getFormalArguments(), null, substituteFrame, argPostProcess);
+    public RSyntaxNode substituteImpl(REnvironment env) {
+        return new FunctionDefinitionNode(null, new FrameDescriptor(), body.substitute(env).asRNode(), getFormalArguments(), null, substituteFrame, argPostProcess);
     }
 
     /**
@@ -363,7 +363,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
      *
      */
     @Override
-    public void serialize(RSerialize.State state) {
+    public void serializeImpl(RSerialize.State state) {
         serializeFormals(state);
         boolean hasBraces = checkOpenBrace(state);
 
@@ -377,7 +377,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
      */
     public void serializeBody(RSerialize.State state) {
         state.openPairList();
-        RSyntaxNode.cast(body).serialize(state);
+        body.serialize(state);
         state.setCdr(state.closePairList());
     }
 

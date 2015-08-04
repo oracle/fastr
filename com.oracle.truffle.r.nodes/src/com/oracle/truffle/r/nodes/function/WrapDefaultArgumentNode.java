@@ -90,9 +90,4 @@ public final class WrapDefaultArgumentNode extends WrapArgumentBaseNode {
         }
     }
 
-    @Override
-    protected RSyntaxNode createSubstitute(RNode sub) {
-        return RSyntaxNode.cast(create(sub));
-    }
-
 }

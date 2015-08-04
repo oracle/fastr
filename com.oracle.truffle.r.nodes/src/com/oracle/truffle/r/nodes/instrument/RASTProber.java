@@ -61,7 +61,7 @@ public final class RASTProber implements ASTProber {
             // Can't instrument AST (bodies) without a SourceSection
             if (FastROptions.debugMatches("RASTProberNoSource")) {
                 RDeparse.State state = RDeparse.State.createPrintableState();
-                fdn.deparse(state);
+                fdn.deparseImpl(state);
                 System.out.printf("No source sections for %s, can't instrument%n", fdn);
                 System.out.println(state.toString());
             }

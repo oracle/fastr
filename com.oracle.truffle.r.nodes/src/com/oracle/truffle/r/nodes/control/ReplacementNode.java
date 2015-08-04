@@ -72,17 +72,23 @@ public final class ReplacementNode extends RNode implements RSyntaxNode {
     }
 
     @Override
-    public void deparse(RDeparse.State state) {
-        syntaxAST.deparse(state);
+    public void deparseImpl(RDeparse.State state) {
+        syntaxAST.deparseImpl(state);
+    }
+
+    private static ReplacementNode current;
+
+    @Override
+    public void serializeImpl(RSerialize.State state) {
+        if (this == current) {
+            throw RInternalError.shouldNotReachHere("replacement recursion");
+        }
+        current = this;
+        syntaxAST.serializeImpl(state);
     }
 
     @Override
-    public void serialize(RSerialize.State state) {
-        syntaxAST.serialize(state);
-    }
-
-    @Override
-    public RSyntaxNode substitute(REnvironment env) {
-        return syntaxAST.substitute(env);
+    public RSyntaxNode substituteImpl(REnvironment env) {
+        return syntaxAST.substituteImpl(env);
     }
 }

@@ -27,11 +27,9 @@ import com.oracle.truffle.api.instrument.ProbeNode;
 import com.oracle.truffle.api.instrument.ProbeNode.WrapperNode;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.RSyntaxNode;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.env.REnvironment;
 
 @NodeInfo(cost = NodeCost.NONE)
-public final class WriteSuperVariableNodeWrapper extends com.oracle.truffle.r.nodes.access.WriteSuperVariableNode implements WrapperNode, RSyntaxNode {
+public final class WriteSuperVariableNodeWrapper extends com.oracle.truffle.r.nodes.access.WriteSuperVariableNode implements WrapperNode {
     @Child com.oracle.truffle.r.nodes.access.WriteSuperVariableNode child;
     @Child private ProbeNode probeNode;
 
@@ -100,13 +98,8 @@ public final class WriteSuperVariableNodeWrapper extends com.oracle.truffle.r.no
     }
 
     @Override
-    public void deparse(RDeparse.State state) {
-        RSyntaxNode.cast(child).deparse(state);
-    }
-
-    @Override
-    public void serialize(RSerialize.State state) {
-        RSyntaxNode.cast(child).serialize(state);
+    public RSyntaxNode getRSyntaxNode() {
+        return child.asRSyntaxNode();
     }
 
     @Override
@@ -114,15 +107,4 @@ public final class WriteSuperVariableNodeWrapper extends com.oracle.truffle.r.no
         return false;
     }
 
-    @Override
-    public boolean isBackbone() {
-        return true;
-    }
-
-    @Override
-    public RSyntaxNode substitute(REnvironment env) {
-        WriteSuperVariableNodeWrapper wrapperSub = new WriteSuperVariableNodeWrapper((com.oracle.truffle.r.nodes.access.WriteSuperVariableNode) RSyntaxNode.cast(child).substitute(env).asRNode());
-        ProbeNode.insertProbe(wrapperSub);
-        return wrapperSub;
-    }
 }

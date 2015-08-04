@@ -26,6 +26,7 @@ import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.runtime.*;
 
 /**
  * Base class for nodes that are solely executed behind a {@link TruffleBoundary} to ensure that
@@ -33,7 +34,7 @@ import com.oracle.truffle.r.nodes.*;
  *
  * TODO this is a candidate for Truffle standardization in the future.
  */
-public abstract class TruffleBoundaryNode extends NodeSA implements ReplaceObserver {
+public abstract class TruffleBoundaryNode extends BaseRNode implements ReplaceObserver {
 
     @Override
     public final boolean nodeReplaced(Node oldNode, Node newNode, CharSequence reason) {

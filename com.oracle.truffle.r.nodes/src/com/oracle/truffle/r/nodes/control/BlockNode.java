@@ -68,10 +68,10 @@ public class BlockNode extends SequenceNode implements RSyntaxNode {
 
     @TruffleBoundary
     @Override
-    public void deparse(RDeparse.State state) {
+    public void deparseImpl(RDeparse.State state) {
         for (int i = 0; i < sequence.length; i++) {
             state.mark();
-            ((RSyntaxNode) sequence[i]).deparse(state);
+            sequence[i].deparse(state);
             if (state.changed()) {
                 // not all nodes will produce output
                 state.writeline();
@@ -81,7 +81,7 @@ public class BlockNode extends SequenceNode implements RSyntaxNode {
     }
 
     @Override
-    public void serialize(RSerialize.State state) {
+    public void serializeImpl(RSerialize.State state) {
         /*
          * In GnuR there are no empty statement sequences, because "{" is really a function in R, so
          * it is represented as a LANGSXP with symbol "{" and a NULL cdr, representing the empty
@@ -109,10 +109,10 @@ public class BlockNode extends SequenceNode implements RSyntaxNode {
 
     @TruffleBoundary
     @Override
-    public RSyntaxNode substitute(REnvironment env) {
+    public RSyntaxNode substituteImpl(REnvironment env) {
         RNode[] sequenceSubs = new RNode[sequence.length];
         for (int i = 0; i < sequence.length; i++) {
-            sequenceSubs[i] = ((RSyntaxNode) sequence[i]).substitute(env).asRNode();
+            sequenceSubs[i] = sequence[i].substitute(env).asRNode();
         }
         return new BlockNode(null, sequenceSubs);
     }
