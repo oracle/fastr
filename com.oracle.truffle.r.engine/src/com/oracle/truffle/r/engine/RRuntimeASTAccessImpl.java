@@ -42,6 +42,7 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.gnur.*;
+import com.oracle.truffle.r.runtime.nodes.*;
 
 /**
  * Implementation of {@link RRuntimeASTAccess}.
@@ -376,7 +377,7 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
 
     @Override
     public void serializeNode(RSerialize.State state, Object node) {
-        ((RSyntaxNodeAdapter) node).serialize(state);
+        ((RBaseNode) node).serialize(state);
     }
 
     public Object createNodeForValue(Object value) {
@@ -406,7 +407,7 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
     }
 
     public RLanguage getSyntaxCaller(RCaller rl) {
-        RSyntaxNode sn = ((RSyntaxNodeAdapter) RASTUtils.unwrap(rl.getRep())).asRSyntaxNode();
+        RSyntaxNode sn = RASTUtils.unwrap(rl.getRep()).asRSyntaxNode();
         return RDataFactory.createLanguage(sn);
     }
 
@@ -465,6 +466,10 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
          * RSyntaxNode.
          */
         return getSyntaxCaller(caller);
+    }
+
+    public boolean isReplacementNode(Node node) {
+        return node instanceof ReplacementNode;
     }
 
 }

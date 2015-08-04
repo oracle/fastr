@@ -58,6 +58,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
 import com.oracle.truffle.r.runtime.env.frame.*;
+import com.oracle.truffle.r.runtime.nodes.*;
 
 /**
  * The engine for the FastR implementation. Handles parsing and evaluation. There is one instance of

@@ -38,6 +38,7 @@ import com.oracle.truffle.r.nodes.access.BaseWriteVariableNode.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.env.frame.*;
+import com.oracle.truffle.r.runtime.nodes.*;
 
 /**
  * {@link WriteSuperFrameVariableNode} captures a write to a variable in some parent frame.

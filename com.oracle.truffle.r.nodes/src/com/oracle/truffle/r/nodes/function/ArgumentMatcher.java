@@ -40,6 +40,7 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseType;
 import com.oracle.truffle.r.runtime.data.RPromise.RPromiseFactory;
+import com.oracle.truffle.r.runtime.nodes.*;
 
 /**
  * <p>
@@ -252,7 +253,7 @@ public class ArgumentMatcher {
                 // TODO: this error handling code takes many assumptions about the argument types
                 RArgsValuesAndNames varArg = (RArgsValuesAndNames) frame.getObject(frame.getFrameDescriptor().findFrameSlot("..."));
                 RPromise promise = (RPromise) varArg.getArguments()[((VarArgNode) node).getIndex()];
-                return ((RSyntaxNodeAdapter) promise.getRep()).asRSyntaxNode().getSourceSection().getCode();
+                return ((RBaseNode) promise.getRep()).asRSyntaxNode().getSourceSection().getCode();
             } catch (FrameSlotTypeException | ClassCastException e) {
                 throw RInternalError.shouldNotReachHere();
             }

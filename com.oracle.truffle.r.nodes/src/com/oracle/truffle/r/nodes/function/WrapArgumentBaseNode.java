@@ -23,8 +23,8 @@
 package com.oracle.truffle.r.nodes.function;
 
 import com.oracle.truffle.api.utilities.*;
-import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.nodes.*;
 
 /**
  * {@link WrapArgumentBaseNode} is a super class of wrappers handling function arguments.

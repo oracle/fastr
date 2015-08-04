@@ -26,13 +26,13 @@ import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
-import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.nodes.*;
 
 /**
  * This node reifies a runtime object into the AST by creating nodes for frequently encountered
  * values. This can be used to bridge the gap between code as runtime data and executed code.
  */
-public abstract class CallInlineCacheNode extends BaseRNode {
+public abstract class CallInlineCacheNode extends RBaseNode {
 
     protected static final int CACHE_LIMIT = 2;
 

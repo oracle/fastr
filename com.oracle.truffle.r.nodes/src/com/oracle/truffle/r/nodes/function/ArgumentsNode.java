@@ -24,9 +24,8 @@ package com.oracle.truffle.r.nodes.function;
 
 import java.util.*;
 
-import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.instrument.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.nodes.*;
 
 /**
  * Base class that represents a list of argument/name pairs with some convenience methods. Semantics

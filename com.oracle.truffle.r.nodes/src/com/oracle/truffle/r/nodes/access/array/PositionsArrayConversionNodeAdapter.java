@@ -23,10 +23,10 @@
 package com.oracle.truffle.r.nodes.access.array;
 
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.array.ArrayPositionCast.*;
 import com.oracle.truffle.r.nodes.access.array.ArrayPositionCastNodeGen.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.nodes.*;
 
 public abstract class PositionsArrayConversionNodeAdapter extends RNode {
 

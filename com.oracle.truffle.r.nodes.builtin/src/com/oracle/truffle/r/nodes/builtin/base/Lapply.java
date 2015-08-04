@@ -30,6 +30,7 @@ import com.oracle.truffle.r.runtime.RContext.Engine.ParseException;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
+import com.oracle.truffle.r.runtime.nodes.*;
 
 /**
  * The {@code lapply} builtin. {@code lapply} is an important implicit iterator in R. This

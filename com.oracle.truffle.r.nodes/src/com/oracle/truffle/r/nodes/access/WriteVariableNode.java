@@ -24,8 +24,8 @@ package com.oracle.truffle.r.nodes.access;
 
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.source.*;
-import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.nodes.*;
 
 /**
  * The base of the {@code WriteVariableNode} type hierarchy. There are several variants for

@@ -38,6 +38,7 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.env.frame.*;
+import com.oracle.truffle.r.runtime.nodes.*;
 
 /**
  * This node is used to read a variable from the local or enclosing environments. It specializes to

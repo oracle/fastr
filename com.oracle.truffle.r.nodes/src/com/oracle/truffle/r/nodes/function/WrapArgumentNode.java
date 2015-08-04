@@ -25,9 +25,9 @@ package com.oracle.truffle.r.nodes.function;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.utilities.*;
-import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.nodes.*;
 
 /**
  * A {@link WrapArgumentNode} is used to wrap all arguments to function calls to implement correct

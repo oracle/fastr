@@ -20,17 +20,14 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes;
+package com.oracle.truffle.r.runtime.nodes;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.instrument.ProbeNode.*;
-import com.oracle.truffle.r.nodes.instrument.NeedsWrapper;
 import com.oracle.truffle.api.nodes.*;
-import com.oracle.truffle.r.nodes.instrument.*;
-import com.oracle.truffle.r.nodes.instrument.wrappers.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.conn.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -39,7 +36,7 @@ import com.oracle.truffle.r.runtime.env.*;
 
 @TypeSystemReference(RTypes.class)
 @NeedsWrapper
-public abstract class RNode extends BaseRNode implements RInstrumentableNode {
+public abstract class RNode extends RBaseNode implements RInstrumentableNode {
 
     @CompilationFinal public static final RNode[] EMTPY_RNODE_ARRAY = new RNode[0];
     @CompilationFinal protected static final Object[] EMPTY_OBJECT_ARRAY = new Object[0];

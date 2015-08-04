@@ -35,10 +35,9 @@ import com.oracle.truffle.r.nodes.access.variables.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.nodes.function.RCallNode.LeafCallNode;
-import com.oracle.truffle.r.nodes.instrument.*;
-import com.oracle.truffle.r.nodes.instrument.wrappers.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.nodes.*;
 
 /**
  * The {@code .Internal} builtin. In {@code .Internal(func(args))} we have an AST where the

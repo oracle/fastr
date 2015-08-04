@@ -23,9 +23,9 @@
 package com.oracle.truffle.r.nodes.function;
 
 import com.oracle.truffle.api.source.SourceSection;
-import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.control.*;
 import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.nodes.*;
 
 /**
  * Encapsulates the sequence of statements (expressions) of a function, i.e. the function body. Has

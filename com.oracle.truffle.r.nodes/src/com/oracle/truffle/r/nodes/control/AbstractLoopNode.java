@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.control;
 
-import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.runtime.nodes.*;
 
 /** Marker class for loops. */
 public abstract class AbstractLoopNode extends RNode {

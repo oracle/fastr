@@ -24,8 +24,8 @@ package com.oracle.truffle.r.nodes.control;
 
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
-import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.nodes.*;
 
 /**
  * A sequence of {@link RNode}s. A {@link SequenceNode} is not a syntactic construct per se, but is

@@ -26,6 +26,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RArguments.S3Args;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
+import com.oracle.truffle.r.runtime.nodes.*;
 
 public final class GroupDispatchNode extends RNode implements RSyntaxNode {
 
@@ -102,7 +103,7 @@ public final class GroupDispatchNode extends RNode implements RSyntaxNode {
     public RSyntaxNode substituteImpl(REnvironment env) {
         // TODO substitute aDispatchNode
         Arguments<RSyntaxNode> substituteArguments = RCallNode.substituteArguments(env, callArgsNode.getSyntaxArguments(), callArgsNode.signature);
-        return RSyntaxNode.cast(RASTUtils.createCall(this, substituteArguments.getSignature(), substituteArguments.getArguments()));
+        return RASTUtils.createCall(this, substituteArguments.getSignature(), substituteArguments.getArguments());
     }
 
     @Override

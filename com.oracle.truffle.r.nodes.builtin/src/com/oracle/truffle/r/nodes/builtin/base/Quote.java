@@ -31,6 +31,7 @@ import com.oracle.truffle.r.nodes.access.variables.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.nodes.*;
 
 @RBuiltin(name = "quote", nonEvalArgs = 0, kind = RBuiltinKind.PRIMITIVE, parameterNames = {"expr"})
 public abstract class Quote extends RBuiltinNode {

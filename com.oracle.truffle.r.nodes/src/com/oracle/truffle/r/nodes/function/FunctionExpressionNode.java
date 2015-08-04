@@ -28,7 +28,6 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.nodes.NodeUtil.NodeCountFilter;
 import com.oracle.truffle.api.source.*;
-import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.variables.*;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode.*;
 import com.oracle.truffle.r.nodes.function.opt.*;
@@ -38,6 +37,7 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.env.frame.*;
 import com.oracle.truffle.r.runtime.gnur.*;
+import com.oracle.truffle.r.runtime.nodes.*;
 
 public final class FunctionExpressionNode extends RNode implements RSyntaxNode {
 

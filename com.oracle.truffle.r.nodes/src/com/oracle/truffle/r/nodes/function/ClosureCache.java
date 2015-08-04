@@ -25,8 +25,8 @@ package com.oracle.truffle.r.nodes.function;
 import java.util.*;
 
 import com.oracle.truffle.api.CompilerDirectives.*;
-import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
+import com.oracle.truffle.r.runtime.nodes.*;
 
 /**
  * A trait that enables the caching of {@link Closure}s for certain expressions ({@link RNode}s).

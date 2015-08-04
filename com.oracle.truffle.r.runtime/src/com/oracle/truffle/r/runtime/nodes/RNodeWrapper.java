@@ -20,20 +20,19 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.instrument.wrappers;
+package com.oracle.truffle.r.runtime.nodes;
 
 import com.oracle.truffle.api.instrument.Probe;
 import com.oracle.truffle.api.instrument.ProbeNode;
 import com.oracle.truffle.api.instrument.ProbeNode.WrapperNode;
 import com.oracle.truffle.api.nodes.*;
-import com.oracle.truffle.r.nodes.RSyntaxNode;
 
 @NodeInfo(cost = NodeCost.NONE)
-public final class RNodeWrapper extends com.oracle.truffle.r.nodes.RNode implements WrapperNode {
-    @Child com.oracle.truffle.r.nodes.RNode child;
+public final class RNodeWrapper extends com.oracle.truffle.r.runtime.nodes.RNode implements WrapperNode {
+    @Child com.oracle.truffle.r.runtime.nodes.RNode child;
     @Child private ProbeNode probeNode;
 
-    public RNodeWrapper(com.oracle.truffle.r.nodes.RNode child) {
+    public RNodeWrapper(com.oracle.truffle.r.runtime.nodes.RNode child) {
         assert child != null;
         assert !(child instanceof RNodeWrapper);
         this.child = child;

@@ -1,4 +1,4 @@
-package com.oracle.truffle.r.nodes;
+package com.oracle.truffle.r.runtime.nodes;
 
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RDeparse.*;
@@ -7,7 +7,7 @@ import com.oracle.truffle.r.runtime.env.*;
 /**
  * The following methods must be implemented by all implementors of {@link RSyntaxNode}. However,
  * they should not, in general, be called, unless it is statically known that the node is an
- * {@link RSyntaxNode}. Instead the generic methods on {@link RSyntaxNodeAdapter} should be called.
+ * {@link RSyntaxNode}. Instead the generic methods on {@link RBaseNode} should be called.
  *
  */
 public interface RSyntaxNodeSPI {

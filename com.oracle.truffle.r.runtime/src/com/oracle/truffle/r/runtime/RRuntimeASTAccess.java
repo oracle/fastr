@@ -152,4 +152,10 @@ public interface RRuntimeASTAccess {
 
     RContext.Engine createEngine(RContext context);
 
+    /**
+     * Returns {@code true} iff {@code node} is an instance of {@code ReplacementNode}, which is not
+     * visible from {@code runtime}, or {@code false} otherwise.
+     */
+    boolean isReplacementNode(Node node);
+
 }

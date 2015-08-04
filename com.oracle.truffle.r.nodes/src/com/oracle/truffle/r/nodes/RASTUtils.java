@@ -31,11 +31,11 @@ import com.oracle.truffle.r.nodes.access.variables.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.nodes.function.PromiseNode.VarArgNode;
-import com.oracle.truffle.r.nodes.instrument.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
+import com.oracle.truffle.r.runtime.nodes.*;
 
 /**
  * A collection of useful methods for working with {@code AST} instances.
@@ -46,13 +46,13 @@ public class RASTUtils {
      * Removes any {@link WrapArgumentNode} or {@link WrapperNode}.
      */
     @TruffleBoundary
-    public static BaseRNode unwrap(Object node) {
+    public static RBaseNode unwrap(Object node) {
         if (node instanceof WrapArgumentBaseNode) {
             return unwrap(((WrapArgumentBaseNode) node).getOperand());
         } else if (node instanceof RInstrumentableNode) {
             return ((RInstrumentableNode) node).unwrap();
         } else {
-            return (BaseRNode) node;
+            return (RBaseNode) node;
         }
     }
 
@@ -179,7 +179,7 @@ public class RASTUtils {
      * </ul>
      */
     @TruffleBoundary
-    public static RNode createCall(Object fna, ArgumentsSignature signature, RSyntaxNode... arguments) {
+    public static RSyntaxNode createCall(Object fna, ArgumentsSignature signature, RSyntaxNode... arguments) {
         Object fn = fna;
         if (fn instanceof ConstantNode) {
             fn = ((ConstantNode) fn).getValue();

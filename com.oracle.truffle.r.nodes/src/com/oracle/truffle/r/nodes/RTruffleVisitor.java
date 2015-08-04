@@ -42,6 +42,7 @@ import com.oracle.truffle.r.parser.tools.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.frame.*;
+import com.oracle.truffle.r.runtime.nodes.*;
 
 public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
 

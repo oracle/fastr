@@ -17,7 +17,6 @@ import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.utilities.*;
-import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseCheckHelperNode;
 import com.oracle.truffle.r.nodes.function.*;
@@ -26,6 +25,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.nodes.*;
 
 /**
  * The {@code switch} builtin. When called directly, the "..." arguments are not evaluated before
@@ -112,7 +112,7 @@ public abstract class Switch extends RBuiltinNode {
         if (arg instanceof RPromise) {
             // We do not want to evaluate the promise,just display the rep
             RPromise p = (RPromise) arg;
-            RSyntaxNodeAdapter node = (RSyntaxNodeAdapter) p.getRep();
+            RBaseNode node = (RBaseNode) p.getRep();
             State state = State.createPrintableState();
             node.deparse(state);
             return state.toString();

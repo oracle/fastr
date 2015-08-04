@@ -1,24 +1,56 @@
-package com.oracle.truffle.r.nodes;
+/*
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ *
+ * This code is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 2 only, as
+ * published by the Free Software Foundation.
+ *
+ * This code is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * version 2 for more details (a copy is included in the LICENSE file that
+ * accompanied this code).
+ *
+ * You should have received a copy of the GNU General Public License version
+ * 2 along with this work; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+ *
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
+ */
+package com.oracle.truffle.r.runtime.nodes;
 
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
-import com.oracle.truffle.r.nodes.control.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RDeparse.*;
 import com.oracle.truffle.r.runtime.env.*;
 
 /**
- * This is an adapter class, "Syntax Adapter" that is used to enforce some invariants regarding the
- * use of {@link SourceSection} attributes and provide a mechanism to locate the {@link RSyntaxNode}
- * for an {@link RSyntaxNodeAdapter}.
+ * This class should be used as the superclass for all instances of nodes in the FastR AST in
+ * preference to {@link Node}. Its basic function is to provide access to the {@link RSyntaxNode}
+ * after replace transformations have taken place that replace the {@link RSyntaxNode} with a
+ * subclass of this class. The mechanism for locating the original {@link RSyntaxNode} is
+ * subclass-specific, specified by the {@link #getRSyntaxNode()} method, the implementation of which
+ * defaults to a hierarchical search, since many replacement strategies fit that structure.
  *
- * This class also defines the generic support methods for {@code deparse}, {@code substitute} and
- * {@code serialize}. The implementations use {@link #getRSyntaxNode()} to locate the correct
- * {@link RSyntaxNode} and then invoke the corresponding {@code xxxImpl} method. The intention being
- * that the AST may be rewritten in arbitrary ways but it is always possible to locate the
- * {@link RSyntaxNode} that a rewritten node derives from.
+ * It also overrides the implementations of {@link #getSourceSection()},
+ * {@link #assignSourceSection}, {@link #clearSourceSection()} and
+ * {@link #getEncapsulatingSourceSection()} to enforce the FastR invariant that <b>only</b>nodes
+ * that implement {@link #getRSyntaxNode()} should have a {@link SourceSection} attribute.
+ *
+ * Is it ever acceptable to subclass {@link Node} directly? The answer is yes, with the following
+ * caveats:
+ * <ul>
+ * <li>The code in the subclass does not invoke methods in the {@link RError} class <b>or</b>takes
+ * the responsibility to locate the appropriate {@link RBaseNode} to pass</li>
+ * <li>An instance of the subclass is never used to {@link #replace} an instance of
+ * {@link RBaseNode}.</li>
+ * </ul>
  */
-public abstract class RSyntaxNodeAdapter extends Node {
+public abstract class RBaseNode extends Node {
     /**
      * Handles the discovery of the {@link RSyntaxNode} that this node is derived from.
      */
@@ -35,7 +67,7 @@ public abstract class RSyntaxNodeAdapter extends Node {
      * found by following the parent chain, which is therefore the default implementation.
      */
     protected RSyntaxNode getRSyntaxNode() {
-        ReplacementNode node = checkReplacementChild();
+        RSyntaxNode node = checkReplacementChild();
         if (node != null) {
             return node;
         }
@@ -68,10 +100,10 @@ public abstract class RSyntaxNodeAdapter extends Node {
     @Override
     public SourceSection getSourceSection() {
         if (this instanceof RSyntaxNode) {
-            if (this instanceof ReplacementNode) {
+            if (RContext.getRRuntimeASTAccess().isReplacementNode(this)) {
                 return super.getSourceSection();
             }
-            ReplacementNode node = checkReplacementChild();
+            RSyntaxNode node = checkReplacementChild();
             if (node != null) {
                 return node.getSourceSection();
             }
@@ -120,7 +152,7 @@ public abstract class RSyntaxNodeAdapter extends Node {
      * </ol>
      */
     public SourceSection getEncapsulatingSourceSection() {
-        ReplacementNode node = checkReplacementChild();
+        RSyntaxNode node = checkReplacementChild();
         if (node != null) {
             return node.getSourceSection();
         }
@@ -128,22 +160,22 @@ public abstract class RSyntaxNodeAdapter extends Node {
     }
 
     /**
-     * This is rather nasty, but then that applies to {@link ReplacementNode} in general. Since a
-     * auto-generated child of a {@link ReplacementNode} may have a {@link SourceSection}, we might
+     * This is rather nasty, but then that applies to {@code ReplacementNode} in general. Since a
+     * auto-generated child of a {@code ReplacementNode} may have a {@link SourceSection}, we might
      * return it using the normal logic, but that would be wrong, we really need to return the the
-     * {@link SourceSection} of the {@link ReplacementNode} itself. This is a case where we can't
+     * {@link SourceSection} of the {@code ReplacementNode} itself. This is a case where we can't
      * use {@link #getEncapsulatingSourceSection} as a workaround (unless we created a completely
      * parallel set of node classes) because the {@code ReplacementNode} child nodes are just
      * standard {@link RSyntaxNode}s.
      *
-     * @return {@code null} if not a child of a {@link ReplacementNode}, otherwise the
-     *         {@link ReplacementNode}.
+     * @return {@code null} if not a child of a {@code ReplacementNode}, otherwise the
+     *         {@code ReplacementNode}.
      */
-    private ReplacementNode checkReplacementChild() {
+    private RSyntaxNode checkReplacementChild() {
         Node node = this;
         while (node != null) {
-            if (node instanceof ReplacementNode) {
-                return (ReplacementNode) node;
+            if (RContext.getRRuntimeASTAccess().isReplacementNode(node)) {
+                return (RSyntaxNode) node;
             }
             node = node.getParent();
         }

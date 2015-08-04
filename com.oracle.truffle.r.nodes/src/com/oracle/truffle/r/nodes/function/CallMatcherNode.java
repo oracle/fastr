@@ -24,8 +24,9 @@ import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RArguments.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.nodes.*;
 
-public abstract class CallMatcherNode extends BaseRNode {
+public abstract class CallMatcherNode extends RBaseNode {
 
     protected final boolean forNextMethod;
     protected final boolean argsAreEvaluated;

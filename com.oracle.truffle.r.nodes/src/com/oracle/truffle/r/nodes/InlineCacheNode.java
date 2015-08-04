@@ -34,12 +34,13 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RContext.Engine;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
+import com.oracle.truffle.r.runtime.nodes.*;
 
 /**
  * This node reifies a runtime object into the AST by creating nodes for frequently encountered
  * values. This can be used to bridge the gap between code as runtime data and executed code.
  */
-public abstract class InlineCacheNode extends BaseRNode {
+public abstract class InlineCacheNode extends RBaseNode {
 
     protected final int maxPicDepth;
     private final Function<Object, RNode> reify;

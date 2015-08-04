@@ -26,7 +26,7 @@ import com.oracle.truffle.api.instrument.Probe;
 import com.oracle.truffle.api.instrument.ProbeNode;
 import com.oracle.truffle.api.instrument.ProbeNode.WrapperNode;
 import com.oracle.truffle.api.nodes.*;
-import com.oracle.truffle.r.nodes.RSyntaxNode;
+import com.oracle.truffle.r.runtime.nodes.*;
 
 @NodeInfo(cost = NodeCost.NONE)
 public final class WriteSuperVariableNodeWrapper extends com.oracle.truffle.r.nodes.access.WriteSuperVariableNode implements WrapperNode {
@@ -60,7 +60,7 @@ public final class WriteSuperVariableNodeWrapper extends com.oracle.truffle.r.no
     }
 
     @Override
-    public com.oracle.truffle.r.nodes.RNode getRhs() {
+    public com.oracle.truffle.r.runtime.nodes.RNode getRhs() {
         return child.getRhs();
     }
 

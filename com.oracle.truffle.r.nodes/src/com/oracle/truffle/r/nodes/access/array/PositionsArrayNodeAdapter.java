@@ -23,11 +23,11 @@
 package com.oracle.truffle.r.nodes.access.array;
 
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.access.array.write.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.env.*;
+import com.oracle.truffle.r.runtime.nodes.*;
 
 /**
  * This is a helper child of {@link PositionsArrayNodeValue}. It is, therefore, not truly

@@ -24,8 +24,8 @@ package com.oracle.truffle.r.nodes.function;
 
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
-import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.nodes.*;
 
 /**
  * <p>
@@ -40,7 +40,7 @@ import com.oracle.truffle.r.runtime.*;
  */
 public final class MatchedArguments extends Arguments<RNode> {
 
-    public static final class MatchedArgumentsNode extends BaseRNode {
+    public static final class MatchedArgumentsNode extends RBaseNode {
         @Children private final RNode[] arguments;
         private final ArgumentsSignature signature;
 

@@ -28,6 +28,7 @@ import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.nodes.*;
 
 @SuppressWarnings("unused")
 @NodeChildren({@NodeChild(value = "vectorD", type = RNode.class), @NodeChild(value = "valueD", type = RNode.class), @NodeChild(value = "positionsD", type = RNode.class)})

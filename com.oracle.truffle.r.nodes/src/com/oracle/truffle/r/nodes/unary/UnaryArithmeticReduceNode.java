@@ -26,15 +26,15 @@ import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.utilities.*;
-import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.unary.UnaryArithmeticReduceNodeGen.MultiElemStringHandlerNodeGen;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.nodes.*;
 import com.oracle.truffle.r.runtime.ops.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
 @TypeSystemReference(RTypes.class)
-public abstract class UnaryArithmeticReduceNode extends BaseRNode {
+public abstract class UnaryArithmeticReduceNode extends RBaseNode {
 
     public abstract Object executeReduce(Object value, Object naRm);
 
@@ -419,7 +419,7 @@ public abstract class UnaryArithmeticReduceNode extends BaseRNode {
     }
 
     @TypeSystemReference(RTypes.class)
-    protected abstract static class MultiElemStringHandler extends BaseRNode {
+    protected abstract static class MultiElemStringHandler extends RBaseNode {
 
         public abstract String executeString(RStringVector operand, byte naRm, int offset);
 

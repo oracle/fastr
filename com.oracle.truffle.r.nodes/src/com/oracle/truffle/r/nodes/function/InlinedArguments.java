@@ -23,9 +23,9 @@
 package com.oracle.truffle.r.nodes.function;
 
 import com.oracle.truffle.api.source.*;
-import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.nodes.*;
 
 /**
  * Simple container class for holding arguments which are going to be inlined into FastR built-ins

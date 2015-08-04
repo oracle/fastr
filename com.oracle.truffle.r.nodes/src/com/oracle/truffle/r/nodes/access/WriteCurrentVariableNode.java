@@ -27,11 +27,11 @@ import com.oracle.truffle.api.instrument.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.instrument.*;
 import com.oracle.truffle.r.nodes.instrument.wrappers.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RDeparse.*;
 import com.oracle.truffle.r.runtime.env.*;
+import com.oracle.truffle.r.runtime.nodes.*;
 
 /**
  * The "syntax" variant corresponding to {@code x <- y} in the source.
@@ -95,7 +95,7 @@ public class WriteCurrentVariableNode extends WriteVariableNodeSyntaxHelper impl
         if (getRhs() != null) {
             rhsSub = getRhs().substitute(env).asRNode();
         }
-        return RSyntaxNode.cast(create(null, name, rhsSub));
+        return create(null, name, rhsSub);
     }
 
     @Override

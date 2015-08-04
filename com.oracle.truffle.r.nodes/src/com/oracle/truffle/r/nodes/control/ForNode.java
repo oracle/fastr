@@ -37,6 +37,7 @@ import com.oracle.truffle.r.runtime.RContext.Engine.ParseException;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.gnur.*;
+import com.oracle.truffle.r.runtime.nodes.*;
 
 public final class ForNode extends AbstractLoopNode implements VisibilityController, RSyntaxNode {
 
@@ -121,7 +122,7 @@ public final class ForNode extends AbstractLoopNode implements VisibilityControl
         return (ForRepeatingNode) loopNode.getRepeatingNode();
     }
 
-    private static final class ForRepeatingNode extends BaseRNode implements RepeatingNode {
+    private static final class ForRepeatingNode extends RBaseNode implements RepeatingNode {
 
         private static final Source ACCESS_ARRAY_SOURCE = Source.fromText("x[[i]]", "<lfor_array_access>");
 

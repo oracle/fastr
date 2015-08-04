@@ -20,11 +20,11 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes;
+package com.oracle.truffle.r.runtime.nodes;
 
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
-import com.oracle.truffle.r.nodes.control.*;
+import com.oracle.truffle.r.runtime.*;
 
 /**
  * An interface that identifies an AST node as being part of the syntactic structure of the
@@ -51,8 +51,7 @@ import com.oracle.truffle.r.nodes.control.*;
  *
  * Every implementor of this interface must provide an implementation of the {@link #deparseImpl},
  * {@link #serializeImpl} and {@link #substituteImpl} methods. These are invoked by the
- * corresponding methods on {@link RSyntaxNodeAdapter} after the correct {@link RSyntaxNode} is
- * located.
+ * corresponding methods on {@link RBaseNode} after the correct {@link RSyntaxNode} is located.
  */
 public interface RSyntaxNode extends RSyntaxNodeSPI {
     /**
@@ -87,33 +86,30 @@ public interface RSyntaxNode extends RSyntaxNodeSPI {
         return (asRNode().getSourceSection());
     }
 
-    static RSyntaxNode cast(RNode node) {
-        return (RSyntaxNode) node;
-    }
-
     /**
      * Traverses the entire tree but only invokes the {@code visit} method for nodes that return
-     * {@code true} to {@code instanceof RSyntaxNode}. Similar therefore to {@code Node#accept}.
-     * Note that AST transformations can change the shape of the tree in drastic ways; in particular
-     * one cannot truncate the walk on encountering a non-syntax node, as the related
-     * {@link RSyntaxNode} may be have been transformed into a child of a non-syntax node. We visit
-     * but do not call the {@code nodeVisitor} on {@link RSyntaxNode}s that return {@code true} to
-     * {@link #isBackbone()}.
+     * {@code true} to {@code instanceof RSyntaxNode} and {@link #isSyntax()}. Similar therefore to
+     * {@code Node#accept}. Note that AST transformations can change the shape of the tree in
+     * drastic ways; in particular one cannot truncate the walk on encountering a non-syntax node,
+     * as the related {@link RSyntaxNode} may be have been transformed into a child of a non-syntax
+     * node. We visit but do not call the {@code nodeVisitor} on {@link RSyntaxNode}s that return
+     * {@code true} to {@link #isBackbone()}.
      *
-     * N.B. A {@link ReplacementNode} is a very special case. Its children are {@link RSyntaxNode}s,
-     * but we do not want to visit them at all. Hopefully this node will be retired eventually.
+     * N.B. A {@code ReplacementNode} is a very special case. Its children are {@link RSyntaxNode}s,
+     * but we do not want to visit them at all. TODO perhaps we should visit the associated
+     * {@code syntaxAST}.
      */
     static void accept(Node node, int depth, RSyntaxNodeVisitor nodeVisitor) {
         boolean visitChildren = true;
         int incDepth = 0;
-        if (node instanceof RSyntaxNode) {
+        if (node instanceof RSyntaxNode && ((RSyntaxNode) node).isSyntax()) {
             RSyntaxNode syntaxNode = (RSyntaxNode) node;
             if (!syntaxNode.isBackbone()) {
                 visitChildren = nodeVisitor.visit(syntaxNode, depth);
             }
             incDepth = 1;
         }
-        if (!(node instanceof ReplacementNode)) {
+        if (RContext.getRRuntimeASTAccess().isReplacementNode(node)) {
             if (visitChildren) {
                 for (Node child : node.getChildren()) {
                     if (child != null) {

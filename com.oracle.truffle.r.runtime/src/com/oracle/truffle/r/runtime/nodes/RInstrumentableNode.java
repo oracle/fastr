@@ -20,11 +20,10 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.instrument;
+package com.oracle.truffle.r.runtime.nodes;
 
 import com.oracle.truffle.api.instrument.ProbeNode.WrapperNode;
 import com.oracle.truffle.api.nodes.*;
-import com.oracle.truffle.r.nodes.*;
 
 /**
  * Some additional support for instrumentable node.

@@ -16,17 +16,17 @@ import java.util.*;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.utilities.*;
-import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.nodes.*;
 
 /**
  * Basic support for "inherits" that is used by the {@code inherits} builtin and others.
  */
 @TypeSystemReference(RTypes.class)
-public abstract class InheritsNode extends RSyntaxNodeAdapter {
+public abstract class InheritsNode extends RBaseNode {
 
     private final ConditionProfile sizeOneProfile = ConditionProfile.createBinaryProfile();
     protected final RAttributeProfiles attrProfiles = RAttributeProfiles.create();

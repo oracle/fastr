@@ -22,8 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.function;
 
-import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.nodes.*;
 
 /**
  * An interface all arguments that are going to be matched need to implement.

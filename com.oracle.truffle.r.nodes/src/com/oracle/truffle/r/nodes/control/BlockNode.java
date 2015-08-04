@@ -24,9 +24,9 @@ package com.oracle.truffle.r.nodes.control;
 
 import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.source.*;
-import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.env.*;
+import com.oracle.truffle.r.runtime.nodes.*;
 
 /**
  * A {@link BlockNode} represents a sequence of statements such as the body of a {@code while} loop.

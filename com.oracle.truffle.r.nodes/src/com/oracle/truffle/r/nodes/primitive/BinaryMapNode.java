@@ -23,15 +23,14 @@
 package com.oracle.truffle.r.nodes.primitive;
 
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.utilities.*;
-import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.attributes.*;
 import com.oracle.truffle.r.nodes.primitive.BinaryMapNodeFactory.VectorMapBinaryInternalNodeGen;
 import com.oracle.truffle.r.nodes.profile.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.nodes.*;
 
 /**
  * Implements a binary map operation that maps two vectors into a single result vector of the
@@ -40,7 +39,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
  *
  * The implementation tries to share input vectors if they are implementing {@link RShareable}.
  */
-public final class BinaryMapNode extends BaseRNode {
+public final class BinaryMapNode extends RBaseNode {
 
     @Child private VectorMapBinaryInternalNode vectorNode;
     @Child private BinaryMapFunctionNode function;
@@ -286,7 +285,7 @@ public final class BinaryMapNode extends BaseRNode {
         }
     }
 
-    protected abstract static class VectorMapBinaryInternalNode extends BaseRNode {
+    protected abstract static class VectorMapBinaryInternalNode extends RBaseNode {
 
         private static final MapBinaryIndexedAction<byte[], RAbstractLogicalVector> LOGICAL_LOGICAL = //
         (arithmetic, result, resultIndex, left, leftIndex, right, rightIndex) -> {

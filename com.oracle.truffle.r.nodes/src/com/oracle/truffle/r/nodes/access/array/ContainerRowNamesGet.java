@@ -24,10 +24,10 @@ package com.oracle.truffle.r.nodes.access.array;
 
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.utilities.*;
-import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.nodes.*;
 
 // TODO: this should not be necessary once data frame access operators are implemented in R
 // which likely makes potential refactoring of this code redundant

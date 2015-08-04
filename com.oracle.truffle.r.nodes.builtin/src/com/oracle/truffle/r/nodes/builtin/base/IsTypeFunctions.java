@@ -34,6 +34,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.conn.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.nodes.*;
 
 /**
  * Handles all builtin functions of the form {@code is.xxx}, where is {@code xxx} is a "type".

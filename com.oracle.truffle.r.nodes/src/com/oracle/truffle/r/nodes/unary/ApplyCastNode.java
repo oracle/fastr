@@ -24,7 +24,7 @@ package com.oracle.truffle.r.nodes.unary;
 
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
-import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.runtime.nodes.*;
 
 @NodeInfo(cost = NodeCost.NONE)
 public final class ApplyCastNode extends RNode {

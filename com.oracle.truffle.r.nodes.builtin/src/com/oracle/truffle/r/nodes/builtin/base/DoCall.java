@@ -44,6 +44,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
+import com.oracle.truffle.r.runtime.nodes.*;
 
 // TODO Implement properly, this is a simple implementation that works when the environment doesn't matter
 @RBuiltin(name = "do.call", kind = INTERNAL, parameterNames = {"what", "args", "envir"})

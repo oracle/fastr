@@ -30,6 +30,7 @@ import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
+import com.oracle.truffle.r.runtime.nodes.*;
 
 public abstract class ConstantNode extends RNode implements RSyntaxNode, VisibilityController {
 
@@ -205,7 +206,7 @@ public abstract class ConstantNode extends RNode implements RSyntaxNode, Visibil
                     if (argValue instanceof RSyntaxNode) {
                         ((RSyntaxNode) argValue).deparseImpl(state);
                     } else if (argValue instanceof RPromise) {
-                        ((RSyntaxNodeAdapter) RASTUtils.unwrap(((RPromise) argValue).getRep())).deparse(state);
+                        RASTUtils.unwrap(((RPromise) argValue).getRep()).deparse(state);
                     } else {
                         RInternalError.shouldNotReachHere();
                     }

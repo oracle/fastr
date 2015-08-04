@@ -27,10 +27,10 @@ import static com.oracle.truffle.api.instrument.StandardSyntaxTag.*;
 import com.oracle.truffle.api.instrument.*;
 import com.oracle.truffle.api.instrument.ProbeNode.WrapperNode;
 import com.oracle.truffle.api.nodes.*;
-import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.control.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.nodes.*;
 
 /**
  * A visitor which traverses a completely parsed R AST (presumed not yet executed) and attaches
@@ -92,7 +92,7 @@ public final class RASTProber implements ASTProber {
                 BlockNode sequenceNode = (BlockNode) node;
                 RNode[] block = sequenceNode.getSequence();
                 for (int i = 0; i < block.length; i++) {
-                    RSyntaxNode n = RSyntaxNode.cast(block[i].unwrap());
+                    RSyntaxNode n = block[i].unwrap().asRSyntaxNode();
                     if (n.getSourceSection() != null) {
                         if (!callback(n)) {
                             return false;

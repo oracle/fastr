@@ -33,6 +33,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.gnur.*;
+import com.oracle.truffle.r.runtime.nodes.*;
 
 public final class WhileNode extends AbstractLoopNode implements RSyntaxNode, VisibilityController {
 
@@ -110,7 +111,7 @@ public final class WhileNode extends AbstractLoopNode implements RSyntaxNode, Vi
         return create(getCondition().substitute(env), getBody().substitute(env), isRepeat);
     }
 
-    private static final class WhileRepeatingNode extends BaseRNode implements RepeatingNode {
+    private static final class WhileRepeatingNode extends RBaseNode implements RepeatingNode {
 
         @Child private ConvertBooleanNode condition;
         @Child private RNode body;

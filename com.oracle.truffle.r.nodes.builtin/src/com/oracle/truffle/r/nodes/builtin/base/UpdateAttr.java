@@ -36,6 +36,7 @@ import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.nodes.*;
 
 @RBuiltin(name = "attr<-", kind = PRIMITIVE, parameterNames = {"x", "which", ""})
 // 2nd parameter is "value", but should not be matched against, so ""

@@ -24,16 +24,15 @@ package com.oracle.truffle.r.nodes.primitive;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.utilities.*;
-import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.primitive.UnaryMapNodeFactory.MapUnaryVectorInternalNodeGen;
 import com.oracle.truffle.r.nodes.profile.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.nodes.*;
 
-public final class UnaryMapNode extends BaseRNode {
+public final class UnaryMapNode extends RBaseNode {
 
     @Child private UnaryMapFunctionNode scalarNode;
     @Child private MapUnaryVectorInternalNode vectorNode;
@@ -171,7 +170,7 @@ public final class UnaryMapNode extends BaseRNode {
     }
 
     @SuppressWarnings("unused")
-    protected abstract static class MapUnaryVectorInternalNode extends BaseRNode {
+    protected abstract static class MapUnaryVectorInternalNode extends RBaseNode {
 
         private static final MapIndexedAction<byte[], RAbstractLogicalVector> LOGICAL = //
         (arithmetic, result, resultIndex, left, leftIndex) -> {

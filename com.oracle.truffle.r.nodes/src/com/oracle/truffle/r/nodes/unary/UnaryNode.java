@@ -23,11 +23,11 @@
 package com.oracle.truffle.r.nodes.unary;
 
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.nodes.*;
 
 @TypeSystemReference(RTypes.class)
-public abstract class UnaryNode extends BaseRNode {
+public abstract class UnaryNode extends RBaseNode {
 
     public abstract Object execute(Object value);
 }

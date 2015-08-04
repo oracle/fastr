@@ -312,6 +312,9 @@ suite = {
       ],
       "checkstyle" : "com.oracle.truffle.r.runtime",
       "javaCompliance" : "1.8",
+      "annotationProcessors" : [
+          "truffle:TRUFFLE_DSL_PROCESSOR",
+      ],
       "workingSets" : "Truffle,FastR",
       "jacoco" : "include",
     },

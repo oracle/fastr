@@ -24,12 +24,12 @@ package com.oracle.truffle.r.nodes.function.signature;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RArguments.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.nodes.*;
 
-public abstract class RArgumentsNode extends BaseRNode {
+public abstract class RArgumentsNode extends RBaseNode {
 
     /*
      * This inline cache is not implemented using Truffle DSL because of null values provided for

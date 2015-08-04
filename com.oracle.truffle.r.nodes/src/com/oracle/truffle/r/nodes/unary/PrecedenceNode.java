@@ -31,10 +31,11 @@ import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
+import com.oracle.truffle.r.runtime.nodes.*;
 
 @SuppressWarnings("unused")
 @ImportStatic(RRuntime.class)
-public abstract class PrecedenceNode extends BaseRNode {
+public abstract class PrecedenceNode extends RBaseNode {
 
     public static final int NO_PRECEDENCE = -1;
     public static final int RAW_PRECEDENCE = 0;

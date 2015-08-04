@@ -25,10 +25,10 @@ package com.oracle.truffle.r.library.fastr;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
-import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.nodes.*;
 
 public abstract class FastRSyntaxTree extends RExternalBuiltinNode.Arg3 {
     @Specialization

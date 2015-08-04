@@ -26,15 +26,15 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.utilities.*;
-import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.nodes.*;
 
 /**
  * Simple attribute access node that specializes on the position at which the attribute was found
  * last time.
  */
-public abstract class PutAttributeNode extends BaseRNode {
+public abstract class PutAttributeNode extends RBaseNode {
 
     protected final String name;
 

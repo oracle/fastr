@@ -31,6 +31,7 @@ import com.oracle.truffle.r.nodes.access.RemoveAndAnswerNodeFactory.RemoveAndAns
 import com.oracle.truffle.r.parser.ast.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.env.frame.*;
+import com.oracle.truffle.r.runtime.nodes.*;
 
 /**
  * This node removes a slot from the current frame (i.e., sets it to {@code null} to allow fast-path

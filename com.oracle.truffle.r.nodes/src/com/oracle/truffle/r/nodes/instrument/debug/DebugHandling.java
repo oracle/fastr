@@ -31,12 +31,12 @@ import com.oracle.truffle.api.instrument.*;
 import com.oracle.truffle.api.instrument.ProbeNode.WrapperNode;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.utilities.*;
-import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.control.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.nodes.instrument.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.nodes.*;
 
 /**
  * The implementation of the R debug functions.
@@ -402,7 +402,7 @@ public class DebugHandling {
     private static void printNode(Node node, boolean curly) {
         RContext.ConsoleHandler consoleHandler = RContext.getInstance().getConsoleHandler();
         RDeparse.State state = RDeparse.State.createPrintableState();
-        ((RSyntaxNodeAdapter) node).deparse(state);
+        ((RBaseNode) node).deparse(state);
         consoleHandler.print("debug: ");
         if (curly) {
             consoleHandler.println("{");

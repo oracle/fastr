@@ -19,6 +19,7 @@ import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RDeparse.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.nodes.*;
 
 /**
  * Deparse support for AST instances.
@@ -40,7 +41,7 @@ public class RASTDeparse {
     public static void ensureSourceSection(RSyntaxNode nodeIn) {
         SourceSection ss = nodeIn.getSourceSection();
         if (ss == null) {
-            RSyntaxNodeAdapter node = (RSyntaxNodeAdapter) RASTUtils.unwrap(nodeIn);
+            RBaseNode node = RASTUtils.unwrap(nodeIn);
             RDeparse.State state = RDeparse.State.createPrintableState();
             node.deparse(state);
             String sourceString = state.toString();
@@ -50,7 +51,7 @@ public class RASTDeparse {
     }
 
     public static void deparse(State state, RLanguage rl) {
-        RSyntaxNodeAdapter node = (RSyntaxNodeAdapter) rl.getRep();
+        RBaseNode node = (RBaseNode) rl.getRep();
         node.deparse(state);
     }
 

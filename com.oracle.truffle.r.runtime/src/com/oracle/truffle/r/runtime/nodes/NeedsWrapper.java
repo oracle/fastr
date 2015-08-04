@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.instrument;
+package com.oracle.truffle.r.runtime.nodes;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -29,7 +29,6 @@ import java.lang.annotation.Target;
 
 import com.oracle.truffle.api.instrument.ProbeNode.WrapperNode;
 import com.oracle.truffle.api.nodes.Node.Child;
-import com.oracle.truffle.r.nodes.*;
 
 /**
  * Denotes that a class requires a custom {@link WrapperNode} because a {@link Child} node typed as
