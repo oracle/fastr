@@ -575,7 +575,8 @@ public final class RError extends RuntimeException {
         PACKAGE_AVAILABLE("'%s' may not be available when loading"),
         BAD_RESTART("bad restart"),
         RESTART_NOT_ON_STACK("restart not on stack"),
-        PERFORMANCE("performance problem: %s");
+        PERFORMANCE("performance problem: %s"),
+        MUST_BE_SMALL_INT("argument '%s' must be a small integer");
 
         public final String message;
         final boolean hasArgs;
