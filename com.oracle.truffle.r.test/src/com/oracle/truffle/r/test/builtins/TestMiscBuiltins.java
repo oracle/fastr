@@ -339,4 +339,9 @@ public class TestMiscBuiltins extends TestBase {
         assertEval("{ a <- gl(2, 4, 8) ; print(a) }");
         assertEval("{ b <- gl(2, 2, 8, labels = c(\"ctrl\", \"treat\")) ; print(b) }");
     }
+
+    @Test
+    public void testTypeConvert() {
+        assertEval("{ x<-as.character(list(a=\"0\", b=\"0\", c=\"0.3\")); type.convert(x, as.is=FALSE) }");
+    }
 }
