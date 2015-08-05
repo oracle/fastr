@@ -23,6 +23,7 @@ public abstract class UnaryArithmetic extends Operation {
     public static final UnaryArithmeticFactory NEGATE = Negate::new;
     public static final UnaryArithmeticFactory ROUND = Round::new;
     public static final UnaryArithmeticFactory FLOOR = Floor::new;
+    public static final UnaryArithmeticFactory TRUNC = Trunc::new;
     public static final UnaryArithmeticFactory CEILING = Ceiling::new;
     public static final UnaryArithmeticFactory PLUS = Plus::new;
     public static final UnaryArithmeticFactory[] ALL = new UnaryArithmeticFactory[]{NEGATE, ROUND, FLOOR, CEILING, PLUS};
@@ -294,6 +295,18 @@ public abstract class UnaryArithmetic extends Operation {
         @Override
         public double op(double op) {
             return Math.floor(op);
+        }
+    }
+
+    public static class Trunc extends Round {
+
+        @Override
+        public double op(double op) {
+            if (op > 0) {
+                return Math.floor(op);
+            } else {
+                return Math.ceil(op);
+            }
         }
     }
 
