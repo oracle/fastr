@@ -38,13 +38,8 @@ C_LIBNAME := libosextras$(DYLIB_EXT)
 C_OBJECTS := $(subst $(SRC),$(OBJ),$(C_SOURCES:.c=.o))
 C_LIB := $(TOPDIR)/builtinlibs/$(OBJ)/$(C_LIBNAME)
 CFLAGS := $(CFLAGS) -DFASTR
-ifeq ($(OS_DIR),sunos)
-OS_INCLUDE := solaris
-else
-OS_INCLUDE := $(OS_DIR)
-endif
 
-JNI_INCLUDES = -I $(JAVA_HOME)/include -I $(JAVA_HOME)/include/$(OS_INCLUDE)
+JNI_INCLUDES = -I $(JAVA_HOME)/include -I $(JAVA_HOME)/include/$(JDK_OS_DIR)
 
 INCLUDES := $(JNI_INCLUDES)
 

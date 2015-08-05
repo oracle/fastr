@@ -42,7 +42,7 @@ ifeq ($(FASTR_INSTALL), GNUR)
     endif
     LDFLAGS :=  $(LDFLAGS) $(FRAMEWORKFLAGS)
 else
-    INCLUDES := -I $(NATIVE_PROJECT)/include/jni -I $(FASTR_JAVA_HOME)/include -I $(FASTR_JAVA_HOME)/include/$(OS_DIR)
+    INCLUDES := -I $(NATIVE_PROJECT)/include/jni -I $(FASTR_JAVA_HOME)/include -I $(FASTR_JAVA_HOME)/include/$(JDK_OS_DIR)
 endif
 
 
