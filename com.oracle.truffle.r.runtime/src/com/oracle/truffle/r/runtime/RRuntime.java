@@ -735,9 +735,7 @@ public class RRuntime {
     }
 
     public static FrameSlotKind getSlotKind(Object value) {
-        if (value == null) {
-            return FrameSlotKind.Illegal;
-        }
+        assert value != null;
         if (value instanceof Byte) {
             return FrameSlotKind.Byte;
         } else if (value instanceof Integer) {

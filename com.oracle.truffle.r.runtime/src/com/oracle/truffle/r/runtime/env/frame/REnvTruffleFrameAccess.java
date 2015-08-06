@@ -82,11 +82,11 @@ public final class REnvTruffleFrameAccess extends REnvFrameAccess {
 
         // Handle all other values
         if (slot == null) {
-            if (valueSlotKind != FrameSlotKind.Illegal) {
-                slot = FrameSlotChangeMonitor.addFrameSlot(fd, key, valueSlotKind);
-            }
+            slot = FrameSlotChangeMonitor.addFrameSlot(fd, key, valueSlotKind);
         } else {
-            if (valueSlotKind != FrameSlotKind.Illegal && valueSlotKind != slot.getKind()) {
+            if (valueSlotKind != slot.getKind()) {
+                // we must not toggle between slot kinds, so go to Object
+                valueSlotKind = FrameSlotKind.Object;
                 slot.setKind(valueSlotKind);
             }
         }
