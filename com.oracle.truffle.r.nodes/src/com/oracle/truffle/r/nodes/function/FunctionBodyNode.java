@@ -37,20 +37,19 @@ import com.oracle.truffle.r.runtime.nodes.*;
  * The {@link SourceSection} is that of the {@link FunctionStatementsNode} as the
  * {@link SaveArgumentsNode} is not part of the syntax.
  */
-public class FunctionBodyNode extends RNode implements RSyntaxNode {
+public class FunctionBodyNode extends BodyNode implements RSyntaxNode {
 
     @Child private RNode saveArgs;
-    @Child private RNode statements;
 
     public FunctionBodyNode(SaveArgumentsNode saveArgs, FunctionStatementsNode statements) {
+        super(statements);
         this.saveArgs = saveArgs;
-        this.statements = statements;
         assignSourceSection(statements.getSourceSection());
     }
 
     private FunctionBodyNode(RNode saveArgs, RNode statements) {
+        super(statements);
         this.saveArgs = saveArgs;
-        this.statements = statements;
         assignSourceSection(statements.getSourceSection());
     }
 

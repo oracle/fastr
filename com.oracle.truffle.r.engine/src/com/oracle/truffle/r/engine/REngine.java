@@ -49,7 +49,6 @@ import com.oracle.truffle.r.parser.*;
 import com.oracle.truffle.r.parser.ast.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RContext.ConsoleHandler;
-import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.Utils.DebugExitException;
 import com.oracle.truffle.r.runtime.conn.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -244,7 +243,7 @@ final class REngine implements RContext.Engine {
             writeStderr(source.getLineCount() == 1 ? message : (message + " (line " + e.line + ")"), true);
             return null;
         }
-        RootCallTarget callTarget = doMakeCallTarget(node, "<repl wrapper>");
+        RootCallTarget callTarget = doMakeCallTarget(node.asRNode(), "<repl wrapper>");
         try {
             return runCall(callTarget, frame, printResult, true);
         } catch (BreakException | NextException cfe) {
@@ -258,7 +257,7 @@ final class REngine implements RContext.Engine {
             ASTNode[] exprs = seq.getExpressions();
             Object[] data = new Object[exprs.length];
             for (int i = 0; i < exprs.length; i++) {
-                data[i] = RDataFactory.createLanguage(transform(exprs[i]));
+                data[i] = RDataFactory.createLanguage(transform(exprs[i]).asRNode());
             }
             return RDataFactory.createExpression(RDataFactory.createList(data));
         } catch (RecognitionException ex) {
@@ -303,10 +302,7 @@ final class REngine implements RContext.Engine {
         if (n instanceof ConstantNode) {
             return ((ConstantNode) n).getValue();
         }
-        if (!(n instanceof RSyntaxNode)) {
-            n = new WrapStatement(n);
-        }
-        RootCallTarget callTarget = doMakeCallTarget((RSyntaxNode) n, EVAL_FUNCTION_NAME);
+        RootCallTarget callTarget = doMakeCallTarget(n, EVAL_FUNCTION_NAME);
         return runCall(callTarget, frame, false, false);
     }
 
@@ -319,10 +315,7 @@ final class REngine implements RContext.Engine {
 
     private Object evalNode(RNode exprRep, REnvironment envir, REnvironment enclos, int depth) {
         RNode n = exprRep;
-        if (!(n instanceof RSyntaxNode)) {
-            n = new WrapStatement(n);
-        }
-        RootCallTarget callTarget = doMakeCallTarget((RSyntaxNode) n, EVAL_FUNCTION_NAME);
+        RootCallTarget callTarget = doMakeCallTarget(n, EVAL_FUNCTION_NAME);
         RCaller call = RArguments.getCall(envir.getFrame());
         return evalTarget(callTarget, call, envir, enclos, depth);
     }
@@ -376,60 +369,28 @@ final class REngine implements RContext.Engine {
     @Override
     public RootCallTarget makePromiseCallTarget(Object bodyArg, String funName) {
         RNode body = (RNode) bodyArg;
-        if (!(body instanceof RSyntaxNode)) {
-            // some (promise) that is not a syntax node
-            body = new WrapStatement(body);
-        }
-        return doMakeCallTarget((RSyntaxNode) body, funName);
+        return doMakeCallTarget(body, funName);
     }
 
     /**
-     * Finesses the case where we want to eval an {@link RNode} that is not an {@link RSyntaxNode}.
-     * TODO find a way for {@code doMakeCallTarget} to work with an {@link RNode}.
-     *
+     * Creates an anonymous function, with no arguments to evaluate {@code body}. If {@body}
+     * is a not a syntax node, uses a simple {@link BodyNode} with no source information. Otherwise
+     * creates a {@link FunctionStatementsNode} using {@code body}. and ensures that the
+     * {@link FunctionBodyNode} has a {@link SourceSection}, for instrumentation, although the
+     * anonymous {@link FunctionDefinitionNode} itself does not need one.
      */
-    private static class WrapStatement extends RNode implements RSyntaxNode {
-        @Child private RNode wrappee;
-
-        WrapStatement(RNode wrappee) {
-            this.wrappee = wrappee;
-            RSyntaxNode sn = wrappee.asRSyntaxNode();
-            assignSourceSection(sn.getSourceSection());
+    private static RootCallTarget doMakeCallTarget(RNode body, String description) {
+        BodyNode fbn;
+        if (RBaseNode.isRSyntaxNode(body)) {
+            RSyntaxNode synBody = (RSyntaxNode) body;
+            RASTDeparse.ensureSourceSection(synBody);
+            fbn = new FunctionBodyNode(SaveArgumentsNode.NO_ARGS, new FunctionStatementsNode(synBody.getSourceSection(), synBody));
+        } else {
+            fbn = new BodyNode(body);
         }
-
-        @Override
-        public Object execute(VirtualFrame frame) {
-            return wrappee.execute(frame);
-        }
-
-        public void deparseImpl(State state) {
-            wrappee.deparse(state);
-
-        }
-
-        public RSyntaxNode substituteImpl(REnvironment env) {
-            throw RInternalError.unimplemented("substituteImpl");
-        }
-
-        public void serializeImpl(com.oracle.truffle.r.runtime.RSerialize.State state) {
-            throw RInternalError.unimplemented("serializeImpl");
-        }
-
-    }
-
-    /**
-     * Creates an anonymous function, with no arguments, whose {@link FunctionStatementsNode} is
-     * {@code body}. It's important that the {@link FunctionBodyNode} has a {@link SourceSection},
-     * for instrumentation, although the anonymous {@link FunctionDefinitionNode} itself does not
-     * need one.
-     */
-    @TruffleBoundary
-    private static RootCallTarget doMakeCallTarget(RSyntaxNode body, String funName) {
-        RASTDeparse.ensureSourceSection(body);
-        FunctionBodyNode fbn = new FunctionBodyNode(SaveArgumentsNode.NO_ARGS, new FunctionStatementsNode(body.getSourceSection(), body));
         FrameDescriptor descriptor = new FrameDescriptor();
         FrameSlotChangeMonitor.initializeFunctionFrameDescriptor(descriptor);
-        FunctionDefinitionNode rootNode = new FunctionDefinitionNode(null, descriptor, fbn, FormalArguments.NO_ARGS, funName, true, true, null);
+        FunctionDefinitionNode rootNode = new FunctionDefinitionNode(null, descriptor, fbn, FormalArguments.NO_ARGS, description, true, true, null);
         RootCallTarget callTarget = Truffle.getRuntime().createCallTarget(rootNode);
         return callTarget;
     }
@@ -443,7 +404,7 @@ final class REngine implements RContext.Engine {
      * will continue using {@code frame}.
      *
      * TODO This method is perhaps too generic for the different cases it handles, e.g. promise
-     * evaluation, so the exception handling in particular is overly complex.. It should be
+     * evaluation, so the exception handling in particular is overly complex. Maybe it should be
      * refactored into separate methods to reflect the usages more precisely.
      */
     private Object runCall(RootCallTarget callTarget, MaterializedFrame frame, boolean printResult, boolean topLevel) {

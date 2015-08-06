@@ -31,6 +31,7 @@ import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.nodes.*;
 import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.env.REnvironment.*;
 
@@ -96,7 +97,8 @@ public class EvalFunctions {
         @Specialization
         protected RList withVisible(VirtualFrame frame, RPromise expr) {
             controlVisibility();
-            Object result = doEvalBody(RArguments.getDepth(frame) + 1, RDataFactory.createLanguage(expr.getRep()), REnvironment.frameToEnvironment(frame.materialize()), REnvironment.emptyEnv());
+            Object result = doEvalBody(RArguments.getDepth(frame) + 1, RDataFactory.createLanguage((RNode) expr.getRep()), REnvironment.frameToEnvironment(frame.materialize()),
+                            REnvironment.emptyEnv());
             Object[] data = new Object[]{result, RRuntime.asLogical(RContext.getInstance().isVisible())};
             // Visibility is changed by the evaluation (else this code would not work),
             // so we have to force it back on.

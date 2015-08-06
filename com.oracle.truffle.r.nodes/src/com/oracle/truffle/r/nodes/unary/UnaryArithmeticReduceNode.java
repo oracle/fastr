@@ -24,7 +24,6 @@ package com.oracle.truffle.r.nodes.unary;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.unary.UnaryArithmeticReduceNodeGen.MultiElemStringHandlerNodeGen;
 import com.oracle.truffle.r.runtime.*;
@@ -324,7 +323,7 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
     // "largest" String for the implementation of max function
 
     @SuppressWarnings("unused")
-    private static String doStringVectorEmptyInternal(RStringVector operand, byte naRm, ReduceSemantics semantics, Node invokingNode) {
+    private static String doStringVectorEmptyInternal(RStringVector operand, byte naRm, ReduceSemantics semantics, RBaseNode invokingNode) {
         if (semantics.supportString) {
             if (semantics.getEmptyWarning() != null) {
                 RError.warning(invokingNode, semantics.emptyWarningCharacter);

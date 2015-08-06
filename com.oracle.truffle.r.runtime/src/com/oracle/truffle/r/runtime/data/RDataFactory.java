@@ -37,6 +37,7 @@ import com.oracle.truffle.r.runtime.data.RPromise.PromiseType;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.gnur.*;
+import com.oracle.truffle.r.runtime.nodes.*;
 
 public final class RDataFactory {
 
@@ -380,7 +381,7 @@ public final class RDataFactory {
         return traceDataCreated(new RSymbol(name));
     }
 
-    public static RLanguage createLanguage(Object rep) {
+    public static RLanguage createLanguage(RNode rep) {
         return traceDataCreated(new RLanguage(rep));
     }
 
@@ -395,7 +396,7 @@ public final class RDataFactory {
     }
 
     @TruffleBoundary
-    public static RPromise createPromise(Object rep, REnvironment env) {
+    public static RPromise createPromise(RBaseNode rep, REnvironment env) {
         // TODO Cache closures? Maybe in the callers of this function?
         Closure closure = Closure.create(rep);
         return traceDataCreated(new RPromise(PromiseType.NO_ARG, OptType.DEFAULT, env.getFrame(), closure));

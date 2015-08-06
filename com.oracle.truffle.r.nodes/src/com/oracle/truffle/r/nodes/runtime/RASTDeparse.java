@@ -51,7 +51,7 @@ public class RASTDeparse {
     }
 
     public static void deparse(State state, RLanguage rl) {
-        RBaseNode node = (RBaseNode) rl.getRep();
+        RBaseNode node = rl.getRep();
         node.deparse(state);
     }
 

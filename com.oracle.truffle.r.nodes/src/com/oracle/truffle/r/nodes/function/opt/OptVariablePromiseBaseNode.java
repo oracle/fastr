@@ -25,7 +25,6 @@ package com.oracle.truffle.r.nodes.function.opt;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
-import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.access.variables.*;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode.ReadKind;
@@ -121,8 +120,8 @@ public abstract class OptVariablePromiseBaseNode extends PromiseNode implements 
     }
 
     @Override
-    public SourceSection getEncapsulatingSourceSection() {
-        return originalRvn.getSourceSection();
+    public RSyntaxNode getRSyntaxNode() {
+        return originalRvn;
     }
 
 }

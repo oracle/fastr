@@ -27,13 +27,13 @@ import java.util.function.*;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.conn.*;
 import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
+import com.oracle.truffle.r.runtime.nodes.*;
 
 /**
  * Base class for all vectors.
@@ -298,7 +298,7 @@ public abstract class RVector extends RAttributeStorage implements RShareable, R
     }
 
     @TruffleBoundary
-    public final void setNames(RStringVector newNames, Node invokingNode) {
+    public final void setNames(RStringVector newNames, RBaseNode invokingNode) {
         if (attributes != null && newNames == null) {
             // whether it's one dimensional array or not, assigning null always removes the "names"
             // attribute
@@ -351,7 +351,7 @@ public abstract class RVector extends RAttributeStorage implements RShareable, R
     }
 
     @TruffleBoundary
-    public final void setDimNames(RList newDimNames, Node invokingNode) {
+    public final void setDimNames(RList newDimNames, RBaseNode invokingNode) {
         if (attributes != null && newDimNames == null) {
             removeAttributeMapping(RRuntime.DIMNAMES_ATTR_KEY);
             this.dimNames = null;
@@ -498,7 +498,7 @@ public abstract class RVector extends RAttributeStorage implements RShareable, R
         setDimensions(newDimensions, null);
     }
 
-    public final void setDimensions(int[] newDimensions, Node invokingNode) {
+    public final void setDimensions(int[] newDimensions, RBaseNode invokingNode) {
         if (attributes != null && newDimensions == null) {
             removeAttributeMapping(RRuntime.DIM_ATTR_KEY);
             setDimNames(null, invokingNode);
@@ -696,7 +696,7 @@ public abstract class RVector extends RAttributeStorage implements RShareable, R
         }
     }
 
-    public final void copyNamesDimsDimNamesFrom(RAttributeProfiles attrProfiles, RAbstractVector vector, Node invokingNode) {
+    public final void copyNamesDimsDimNamesFrom(RAttributeProfiles attrProfiles, RAbstractVector vector, RBaseNode invokingNode) {
         // it's meant to be used on a "fresh" vector with only dimensions potentially set
         assert (this.names == null);
         assert (this.dimNames == null);
@@ -864,7 +864,7 @@ public abstract class RVector extends RAttributeStorage implements RShareable, R
         return materialize();
     }
 
-    public static void verifyDimensions(int vectorLength, int[] newDimensions, Node invokingNode) {
+    public static void verifyDimensions(int vectorLength, int[] newDimensions, RBaseNode invokingNode) {
         int length = 1;
         for (int i = 0; i < newDimensions.length; i++) {
             if (RRuntime.isNA(newDimensions[i])) {

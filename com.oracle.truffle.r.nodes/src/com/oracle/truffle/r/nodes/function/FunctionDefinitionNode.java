@@ -101,14 +101,14 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
      */
     private final BranchProfile returnProfile = BranchProfile.create();
 
-    public FunctionDefinitionNode(SourceSection src, FrameDescriptor frameDesc, RNode body, FormalArguments formals, String description, boolean substituteFrame,
+    public FunctionDefinitionNode(SourceSection src, FrameDescriptor frameDesc, BodyNode body, FormalArguments formals, String description, boolean substituteFrame,
                     PostProcessArgumentsNode argPostProcess) {
         this(src, frameDesc, body, formals, description, substituteFrame, false, argPostProcess);
     }
 
     // TODO skipOnExit: Temporary solution to allow onExit to be switched of; used for
     // REngine.evalPromise
-    public FunctionDefinitionNode(SourceSection src, FrameDescriptor frameDesc, RNode body, FormalArguments formals, String description, boolean substituteFrame, boolean skipExit,
+    public FunctionDefinitionNode(SourceSection src, FrameDescriptor frameDesc, BodyNode body, FormalArguments formals, String description, boolean substituteFrame, boolean skipExit,
                     PostProcessArgumentsNode argPostProcess) {
         super(src, formals, frameDesc);
         this.body = body;
@@ -345,7 +345,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
 
     @Override
     public RSyntaxNode substituteImpl(REnvironment env) {
-        return new FunctionDefinitionNode(null, new FrameDescriptor(), body.substitute(env).asRNode(), getFormalArguments(), null, substituteFrame, argPostProcess);
+        return new FunctionDefinitionNode(null, new FrameDescriptor(), (BodyNode) body.substitute(env).asRNode(), getFormalArguments(), null, substituteFrame, argPostProcess);
     }
 
     /**
@@ -442,7 +442,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
 
     @Override
     public void applyInstrumentation() {
-        if (RInstrument.instrumentingEnabled() && !instrumentationApplied) {
+        if (RInstrument.instrumentingEnabled() && !instrumentationApplied && body instanceof FunctionBodyNode) {
             Probe.applyASTProbers(body);
             instrumentationApplied = true;
         }
@@ -456,7 +456,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
     public boolean hasBraces() {
         SourceSection src = getSourceSection();
         if (src == null) {
-            return true; // statistcally probable (must be a substituted function)
+            return true; // statistically probable
         }
         String s = src.getCode();
         int ix = s.indexOf('(') + 1;

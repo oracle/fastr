@@ -25,13 +25,13 @@ package com.oracle.truffle.r.library.fastr;
 import java.io.*;
 
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.conn.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.nodes.*;
 
 public class FastRContext {
 
@@ -114,7 +114,7 @@ public class FastRContext {
         }
     }
 
-    private static RContext checkContext(int contextId, Node invokingNode) throws RError {
+    private static RContext checkContext(int contextId, RBaseNode invokingNode) throws RError {
         RContext context = RContext.find(contextId);
         if (context == null) {
             throw RError.error(invokingNode, RError.Message.GENERIC, "no context: " + contextId);

@@ -25,6 +25,7 @@ package com.oracle.truffle.r.runtime.data;
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.nodes.*;
 
 /**
  * Denotes an (unevaluated) R language element. It is equivalent to a LANGSXP value in GnuR. It
@@ -54,11 +55,11 @@ public class RLanguage extends RLanguageRep implements RAbstractContainer, RAttr
      */
     private int length = -1;
 
-    RLanguage(Object rep) {
+    RLanguage(RNode rep) {
         super(rep);
     }
 
-    RLanguage(Object rep, int length) {
+    RLanguage(RNode rep, int length) {
         super(rep);
         this.length = length;
     }
@@ -189,7 +190,7 @@ public class RLanguage extends RLanguageRep implements RAbstractContainer, RAttr
 
     @Override
     public RLanguage copy() {
-        RLanguage l = new RLanguage(getRep(), this.length);
+        RLanguage l = new RLanguage((RNode) getRep(), this.length);
         if (this.attributes != null) {
             l.attributes = attributes.copy();
         }

@@ -29,7 +29,6 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
-import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.builtin.base.EnvFunctionsFactory.CopyNodeGen;
@@ -296,7 +295,7 @@ public class EnvFunctions {
 
     }
 
-    private static RuntimeException typeError(Node invokingNode, Object sym, Object env) {
+    private static RuntimeException typeError(RBaseNode invokingNode, Object sym, Object env) {
         if (!(sym instanceof RSymbol)) {
             throw RError.error(invokingNode, RError.Message.NOT_A_SYMBOL);
         } else {

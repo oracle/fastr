@@ -90,7 +90,7 @@ public abstract class Internal extends RBuiltinNode {
 
             // .Internal function is validated
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            builtinCallNode = insert(RCallNode.createInternalCall(frame, operand.getSourceSection(), callNode, function, name));
+            builtinCallNode = insert(RCallNode.createInternalCall(frame, operand.asRSyntaxNode().getSourceSection(), callNode, function, name));
             builtinFunction = function;
         }
         return builtinCallNode.execute(frame, builtinFunction, null);

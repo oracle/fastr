@@ -41,6 +41,11 @@ import com.oracle.truffle.r.runtime.env.*;
  * {@link #getEncapsulatingSourceSection()} to enforce the FastR invariant that <b>only</b>nodes
  * that implement {@link #getRSyntaxNode()} should have a {@link SourceSection} attribute.
  *
+ * The {@code ReplacementNode} class is give special handling because its child nodes are
+ * necessarily syntax nodes but we never want to return them as results. TODO find a low-cost,
+ * minimally invasive way, of finessing this, as it also applies to any AST transformation that
+ * rewrites user code.
+ *
  * Is it ever acceptable to subclass {@link Node} directly? The answer is yes, with the following
  * caveats:
  * <ul>
@@ -51,11 +56,28 @@ import com.oracle.truffle.r.runtime.env.*;
  * </ul>
  */
 public abstract class RBaseNode extends Node {
+
+    /**
+     * Since {@link RSyntaxNode}s are sometimes used (for convenience) in non-syntax contexts, this
+     * function also checks the {@link RSyntaxNode#isSyntax()} method. This method should always be
+     * used in preference to {@code instanceof RSyntaxNode}.
+     */
+    public boolean isRSyntaxNode() {
+        return this instanceof RSyntaxNode && ((RSyntaxNode) this).isSyntax();
+    }
+
+    /**
+     * Convenience method for working with {@link Node}, e.g. in {@link NodeVisitor}.
+     */
+    public static boolean isRSyntaxNode(Node node) {
+        return node instanceof RSyntaxNode && ((RSyntaxNode) node).isSyntax();
+    }
+
     /**
      * Handles the discovery of the {@link RSyntaxNode} that this node is derived from.
      */
     public RSyntaxNode asRSyntaxNode() {
-        if (this instanceof RSyntaxNode) {
+        if (isRSyntaxNode()) {
             return (RSyntaxNode) this;
         } else {
             return getRSyntaxNode();
@@ -73,7 +95,7 @@ public abstract class RBaseNode extends Node {
         }
         Node current = this;
         while (current != null) {
-            if (current instanceof RSyntaxNode) {
+            if (current instanceof RSyntaxNode && ((RSyntaxNode) current).isSyntax()) {
                 return (RSyntaxNode) current;
             }
             current = current.getParent();
@@ -115,7 +137,7 @@ public abstract class RBaseNode extends Node {
 
     @Override
     public void assignSourceSection(SourceSection section) {
-        if (this instanceof RSyntaxNode) {
+        if (isRSyntaxNode()) {
             super.assignSourceSection(section);
         } else {
             throw RInternalError.shouldNotReachHere("assignSourceSection on non-syntax node");
@@ -124,7 +146,7 @@ public abstract class RBaseNode extends Node {
 
     @Override
     public void clearSourceSection() {
-        if (this instanceof RSyntaxNode) {
+        if (isRSyntaxNode()) {
             super.clearSourceSection();
         } else {
             /*
@@ -138,25 +160,11 @@ public abstract class RBaseNode extends Node {
     @Override
     /**
      * Returns the {@link SourceSection} for this node, by locating the associated {@link RSyntaxNode}.
-     * I.e., this method must be stable in the face of AST transformations.
-     *
-     * N.B. This default implementation may be incorrect unless this node is always a child of the
-     * original {@link RSyntaxNode}. In cases where the structure is more complex, e.g. an inline
-     * cache, the node should override {@link #getEncapsulatingSourceSection()} with a node-specific
-     * implementation. There are basically three approaches:
-     * <ol>
-     * <li>Store the {@link SourceSection} as field in the node and override this method to return it. This may seem odd since currently
-     * every {@link Node} can store a {@link SourceSection}, but that could change, plus it is necessary owing to the check in {@link #assignSourceSection}</li>
-     * <li>Store the original {@link RSyntaxNode} and override this method to call its {@link getSourceSection}</li>
-     * <li>Follow the node-specific data structure to locate the original {@link RSyntaxNode} and call its {@link getSourceSection}</li>
-     * </ol>
+     * We do not want any code in FastR calling this method as it is subsumed by {@link #getRSyntaxNode}.
+     * However, tools code may call it, so we simply delegate the call.
      */
     public SourceSection getEncapsulatingSourceSection() {
-        RSyntaxNode node = checkReplacementChild();
-        if (node != null) {
-            return node.getSourceSection();
-        }
-        return super.getEncapsulatingSourceSection();
+        return getRSyntaxNode().getSourceSection();
     }
 
     /**
@@ -164,9 +172,8 @@ public abstract class RBaseNode extends Node {
      * auto-generated child of a {@code ReplacementNode} may have a {@link SourceSection}, we might
      * return it using the normal logic, but that would be wrong, we really need to return the the
      * {@link SourceSection} of the {@code ReplacementNode} itself. This is a case where we can't
-     * use {@link #getEncapsulatingSourceSection} as a workaround (unless we created a completely
-     * parallel set of node classes) because the {@code ReplacementNode} child nodes are just
-     * standard {@link RSyntaxNode}s.
+     * use {@link #getRSyntaxNode} as a workaround because the {@code ReplacementNode} child nodes
+     * are just standard {@link RSyntaxNode}s.
      *
      * @return {@code null} if not a child of a {@code ReplacementNode}, otherwise the
      *         {@code ReplacementNode}.

@@ -22,9 +22,9 @@
  */
 package com.oracle.truffle.r.runtime.ops;
 
-import com.oracle.truffle.api.nodes.*;
+import com.oracle.truffle.r.runtime.nodes.*;
 
-public class Operation extends Node {
+public class Operation extends RBaseNode {
 
     private final boolean commutative;
     private final boolean associative;

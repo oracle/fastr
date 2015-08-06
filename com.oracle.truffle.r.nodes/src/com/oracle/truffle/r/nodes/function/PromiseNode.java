@@ -28,7 +28,6 @@ import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
-import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
@@ -247,8 +246,8 @@ public abstract class PromiseNode extends RNode {
         }
 
         @Override
-        public SourceSection getEncapsulatingSourceSection() {
-            return expression.getSourceSection();
+        public RSyntaxNode getRSyntaxNode() {
+            return expression.asRSyntaxNode();
         }
 
     }

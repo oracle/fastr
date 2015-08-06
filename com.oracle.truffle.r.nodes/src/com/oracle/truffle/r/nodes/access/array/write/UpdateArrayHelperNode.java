@@ -1127,7 +1127,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         }
     }
 
-    protected static void handleNaMultiDim(RAbstractContainer value, boolean isList, boolean isSubset, Node invokingNode) {
+    protected static void handleNaMultiDim(RAbstractContainer value, boolean isList, boolean isSubset, RBaseNode invokingNode) {
         if (value.getLength() == 1) {
             if (!isSubset) {
                 throw RError.error(invokingNode, RError.Message.SUBSCRIPT_BOUNDS_SUB);

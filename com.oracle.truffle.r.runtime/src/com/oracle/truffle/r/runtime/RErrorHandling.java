@@ -15,11 +15,11 @@ import java.util.*;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
+import com.oracle.truffle.r.runtime.nodes.*;
 
 /**
  * The details of error handling, including condition handling. Derived from GnUR src/main/errors.c.
@@ -301,7 +301,7 @@ public class RErrorHandling implements RContext.StateFactory {
      * Called from {@link RError} to initiate the condition handling logic.
      *
      */
-    static void signalError(Node callObj, Message msg, Object... args) {
+    static void signalError(RBaseNode callObj, Message msg, Object... args) {
         Object call = findCaller(callObj);
         String fMsg = formatMessage(msg, args);
         ContextStateImpl errorHandlingState = getRErrorHandlingState();
@@ -392,15 +392,15 @@ public class RErrorHandling implements RContext.StateFactory {
         return call;
     }
 
-    private static Object findCaller(Node callObj) {
+    private static Object findCaller(RBaseNode callObj) {
         return RContext.getRRuntimeASTAccess().findCaller(callObj);
     }
 
-    static RError errorcallDflt(boolean showCall, Node callObj, Message msg, Object... objects) throws RError {
+    static RError errorcallDflt(boolean showCall, RBaseNode callObj, Message msg, Object... objects) throws RError {
         return errorcallDfltWithCall(showCall ? findCaller(callObj) : RNull.instance, msg, objects);
     }
 
-    static RError errorcallDflt(Node callObj, Message msg, Object... objects) throws RError {
+    static RError errorcallDflt(RBaseNode callObj, Message msg, Object... objects) throws RError {
         return errorcallDfltWithCall(findCaller(callObj), msg, objects);
     }
 
@@ -486,7 +486,7 @@ public class RErrorHandling implements RContext.StateFactory {
      * @param immediate {@code true} iff the output should be immediate
      * @param noBreakWarning TODOx
      */
-    public static void warningcallInternal(boolean showCall, Node callObj, String message, boolean immediate, boolean noBreakWarning) {
+    public static void warningcallInternal(boolean showCall, RBaseNode callObj, String message, boolean immediate, boolean noBreakWarning) {
         // TODO handle noBreakWarning
         ContextStateImpl errorHandlingState = getRErrorHandlingState();
         boolean immediateWarningSave = errorHandlingState.immediateWarning;
@@ -498,7 +498,7 @@ public class RErrorHandling implements RContext.StateFactory {
         }
     }
 
-    static void warningcall(boolean showCall, Node callObj, Message msg, Object... args) {
+    static void warningcall(boolean showCall, RBaseNode callObj, Message msg, Object... args) {
         ContextStateImpl errorHandlingState = getRErrorHandlingState();
         Object call = showCall ? findCaller(callObj) : RNull.instance;
         RStringVector warningMessage = RDataFactory.createStringVectorFromScalar(formatMessage(msg, args));

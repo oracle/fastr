@@ -11,12 +11,12 @@
  */
 package com.oracle.truffle.r.library.stats;
 
-import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.nodes.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
 /*
@@ -59,7 +59,7 @@ public final class Covcor extends RExternalBuiltinNode {
     private final BranchProfile error = BranchProfile.create();
     private final BranchProfile warning = BranchProfile.create();
 
-    public RDoubleVector corcov(RDoubleVector x, RDoubleVector y, @SuppressWarnings("unused") int method, boolean iskendall, Node invokingNode) throws RError {
+    public RDoubleVector corcov(RDoubleVector x, RDoubleVector y, @SuppressWarnings("unused") int method, boolean iskendall, RBaseNode invokingNode) throws RError {
         boolean ansmat;
         boolean naFail;
         boolean everything;

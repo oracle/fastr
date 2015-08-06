@@ -159,6 +159,7 @@ public abstract class Mapply extends RBuiltinNode {
                 readVectorElementNodes[i] = ReadVariableNode.create(elementNodeArray[i].vectorElementName, false);
             }
             ArgumentsSignature argsSig = ArgumentsSignature.empty(readVectorElementNodes.length);
+            // Errors can be thrown from the modified call so a SourceSection is required
             SourceSection ss = Lapply.createCallSourceSection(callTarget, argsSig, readVectorElementNodes);
             return RCallNode.createCall(ss, null, argsSig, readVectorElementNodes);
         }

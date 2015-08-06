@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.runtime.ffi.jnr;
 
-import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -103,7 +102,7 @@ public class CallRFFIHelper {
         try {
             env.put(name.getName(), value);
         } catch (PutException ex) {
-            throw RError.error((Node) null, ex);
+            throw RError.error(RError.NO_NODE, ex);
         }
     }
 

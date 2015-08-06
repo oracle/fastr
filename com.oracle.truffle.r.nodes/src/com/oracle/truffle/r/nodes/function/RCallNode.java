@@ -490,12 +490,24 @@ public final class RCallNode extends RNode implements RSyntaxNode {
     }
 
     /**
-     * A variant of {@link #createCall} that does not require a {@link SourceSection}, because it is
-     * part of a {@code ReplacementNode} structure.
+     * A variant of {@link #createCall} that does not require a {@link SourceSection}, because, e.g,
+     * it is part of a {@code ReplacementNode} structure or some other internal rewrite (e.g.
+     * {@code LApply}).
      */
     public static RCallNode createCallNotSyntax(RNode function, ArgumentsSignature signature, RSyntaxNode... arguments) {
         RCallNode call = new RCallNode(function, arguments, signature);
         return call;
+    }
+
+    /**
+     * Since the {@link #arguments} field is not a Child, it it not cloned by
+     * {@link NodeUtil#cloneNode(Node)} and this is necessary in the creation of "syntaxAST" for a
+     * {@code ReplacementNode}.
+     */
+    public static void updateClonedArguments(RCallNode call, RSyntaxNode[] clonedArguments) {
+        for (int i = 0; i < call.arguments.length; i++) {
+            call.arguments[i] = clonedArguments[i];
+        }
     }
 
     public static RBuiltinRootNode findBuiltinRootNode(RootCallTarget callTarget) {
@@ -538,11 +550,6 @@ public final class RCallNode extends RNode implements RSyntaxNode {
         public GetTempNode(Object identifier, RSyntaxNode arg) {
             slot = FrameSlotNode.createTemp(identifier, false);
             this.arg = arg;
-        }
-
-        @Override
-        public SourceSection getEncapsulatingSourceSection() {
-            return arg.getSourceSection();
         }
 
         @Override
@@ -597,7 +604,6 @@ public final class RCallNode extends RNode implements RSyntaxNode {
 
         private static LeafCallNode createCacheNode(VirtualFrame frame, CallArgumentsNode args, RCallNode creator, RFunction function) {
             CompilerDirectives.transferToInterpreter();
-            SourceSection argsSrc = args.getEncapsulatingSourceSection();
 
             for (String name : args.getSignature()) {
                 if (name != null && name.isEmpty()) {
@@ -618,7 +624,7 @@ public final class RCallNode extends RNode implements RSyntaxNode {
 
                 // We inline the given arguments here, as builtins are executed inside the same
                 // frame as they are called.
-                InlinedArguments inlinedArgs = ArgumentMatcher.matchArgumentsInlined(function, args, creator, argsSrc);
+                InlinedArguments inlinedArgs = ArgumentMatcher.matchArgumentsInlined(function, args, creator);
                 callNode = new BuiltinCallNode(root.inline(inlinedArgs.getSignature(), inlinedArgs.getArguments(), creator.getSourceSection()));
             } else {
                 // Now we need to distinguish: Do supplied arguments vary between calls?
@@ -629,7 +635,7 @@ public final class RCallNode extends RNode implements RSyntaxNode {
                     callNode = DispatchedVarArgsCallNode.create(frame, args, nextNode, creator, function, varArgsSignature);
                 } else {
                     // Nope! (peeewh)
-                    MatchedArguments matchedArgs = ArgumentMatcher.matchArguments(function, args, creator, argsSrc, false);
+                    MatchedArguments matchedArgs = ArgumentMatcher.matchArguments(function, args, creator, false);
                     callNode = new DispatchedCallNode(function, matchedArgs);
                 }
             }
@@ -686,7 +692,7 @@ public final class RCallNode extends RNode implements RSyntaxNode {
             CompilerDirectives.transferToInterpreter();
             // Function and arguments may change every call: Flatt'n'Match on SlowPath! :-/
             UnrolledVariadicArguments argsValuesAndNames = arguments.executeFlatten(frame);
-            MatchedArguments matchedArgs = ArgumentMatcher.matchArguments(currentFunction, argsValuesAndNames, this, getEncapsulatingSourceSection(), true);
+            MatchedArguments matchedArgs = ArgumentMatcher.matchArguments(currentFunction, argsValuesAndNames, RError.ROOTNODE, true);
 
             Object[] argsObject = RArguments.create(currentFunction, RDataFactory.createCaller(this), null, RArguments.getDepth(frame) + 1, matchedArgs.doExecuteArray(frame),
                             matchedArgs.getSignature(), s3Args);
@@ -857,9 +863,10 @@ public final class RCallNode extends RNode implements RSyntaxNode {
             this.needsSplitting = needsSplitting(function);
         }
 
-        protected static DispatchedVarArgsCallNode create(VirtualFrame frame, CallArgumentsNode args, VarArgsCacheCallNode next, Node creator, RFunction function, ArgumentsSignature varArgsSignature) {
+        protected static DispatchedVarArgsCallNode create(VirtualFrame frame, CallArgumentsNode args, VarArgsCacheCallNode next, RBaseNode creator, RFunction function,
+                        ArgumentsSignature varArgsSignature) {
             UnrolledVariadicArguments unrolledArguments = args.executeFlatten(frame);
-            MatchedArguments matchedArgs = ArgumentMatcher.matchArguments(function, unrolledArguments, creator, args.getEncapsulatingSourceSection(), false);
+            MatchedArguments matchedArgs = ArgumentMatcher.matchArguments(function, unrolledArguments, creator, false);
             return new DispatchedVarArgsCallNode(args, next, function, varArgsSignature, matchedArgs);
         }
 
@@ -911,7 +918,7 @@ public final class RCallNode extends RNode implements RSyntaxNode {
 
             // Arguments may change every call: Flatt'n'Match on SlowPath! :-/
             UnrolledVariadicArguments argsValuesAndNames = suppliedArgs.executeFlatten(frame);
-            MatchedArguments matchedArgs = ArgumentMatcher.matchArguments(currentFunction, argsValuesAndNames, this, getEncapsulatingSourceSection(), true);
+            MatchedArguments matchedArgs = ArgumentMatcher.matchArguments(currentFunction, argsValuesAndNames, this, true);
 
             if (!needsCallerFrame && currentFunction.containsDispatch()) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();

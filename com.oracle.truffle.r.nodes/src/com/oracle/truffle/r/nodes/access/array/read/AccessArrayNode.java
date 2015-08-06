@@ -25,7 +25,6 @@ package com.oracle.truffle.r.nodes.access.array.read;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
@@ -468,7 +467,7 @@ public abstract class AccessArrayNode extends RNode {
     // lists require special handling for one-dimensional "subscript", that is [[]], accesses due to
     // support for recursive access
 
-    public static int getPositionInRecursion(RList vector, String position, int recLevel, Node invokingNode, final BranchProfile error, final RAttributeProfiles attrProfiles) {
+    public static int getPositionInRecursion(RList vector, String position, int recLevel, RBaseNode invokingNode, final BranchProfile error, final RAttributeProfiles attrProfiles) {
         if (vector.getNames(attrProfiles) == null) {
             error.enter();
             throw RError.error(invokingNode, RError.Message.NO_SUCH_INDEX, recLevel + 1);
@@ -535,7 +534,7 @@ public abstract class AccessArrayNode extends RNode {
         throw RError.error(this, RError.Message.SELECT_LESS_1);
     }
 
-    public static int getPositionFromNegative(RList vector, int position, Node invokingNode, final BranchProfile error) {
+    public static int getPositionFromNegative(RList vector, int position, RBaseNode invokingNode, final BranchProfile error) {
         if (vector.getLength() == 1 && position == -1) {
             // x<-c(1); x[-1] <==> x[0]
             error.enter();
@@ -1736,7 +1735,7 @@ public abstract class AccessArrayNode extends RNode {
             Object o = lang.getDataAtAsObject(position.getDataAt(i) - 1);
             arguments[i - 1] = (RSyntaxNode) unwrapToRNode(o);
         }
-        return RDataFactory.createLanguage(RASTUtils.createCall(fn, ArgumentsSignature.empty(arguments.length), arguments));
+        return RDataFactory.createLanguage(RASTUtils.createCall(fn, ArgumentsSignature.empty(arguments.length), arguments).asRNode());
     }
 
     @SuppressWarnings("unused")

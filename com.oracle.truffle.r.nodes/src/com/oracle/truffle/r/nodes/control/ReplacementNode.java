@@ -59,7 +59,11 @@ public final class ReplacementNode extends RNode implements RSyntaxNode {
     }
 
     public void setSyntaxAST(RSyntaxNode syntaxAST) {
-        this.syntaxAST = syntaxAST;
+        if (!(syntaxAST instanceof WriteReplacementNode)) {
+            this.syntaxAST = WriteReplacementNode.updateCallNodes(syntaxAST);
+        } else {
+            this.syntaxAST = syntaxAST;
+        }
     }
 
     @Override

@@ -26,13 +26,13 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.nodes.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
 @RBuiltin(name = "make.names", kind = INTERNAL, parameterNames = {"names", "allow_"})
@@ -197,7 +197,7 @@ public abstract class MakeNames extends RBuiltinNode {
         }
     }
 
-    private static RError invalidAllowValue(Node invokingNode) throws RError {
+    private static RError invalidAllowValue(RBaseNode invokingNode) throws RError {
         throw RError.error(invokingNode, RError.Message.INVALID_VALUE, "allow_");
     }
 }

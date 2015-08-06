@@ -172,14 +172,8 @@ public class HiddenInternalFunctions {
 
         private static final ArgumentsSignature SIGNATURE = ArgumentsSignature.get("n");
 
-        private static void bpt() {
-        }
-
         @TruffleBoundary
         public Object lazyLoadDBFetchInternal(MaterializedFrame frame, RIntVector key, RStringVector datafile, int compression, RFunction envhook) {
-            if (getSourceSection() == null) {
-                bpt();
-            }
             String dbPath = datafile.getDataAt(0);
             File dbPathFile = new File(dbPath);
             byte[] dbData = dbCache.get(dbPath);

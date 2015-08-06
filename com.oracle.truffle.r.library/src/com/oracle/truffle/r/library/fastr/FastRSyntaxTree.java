@@ -39,7 +39,7 @@ public abstract class FastRSyntaxTree extends RExternalBuiltinNode.Arg3 {
             root.accept(new NodeVisitor() {
 
                 public boolean visit(Node node) {
-                    if (node instanceof RSyntaxNode) {
+                    if (RBaseNode.isRSyntaxNode(node)) {
                         SourceSection ss = node.getSourceSection();
                         // All syntax nodes should have source sections
                         if (ss == null) {

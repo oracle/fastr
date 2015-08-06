@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,42 +20,25 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.function.opt;
+package com.oracle.truffle.r.nodes.function;
 
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.r.nodes.access.*;
-import com.oracle.truffle.r.nodes.function.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.RPromise.OptType;
-import com.oracle.truffle.r.runtime.data.RPromise.PromiseType;
 import com.oracle.truffle.r.runtime.nodes.*;
 
 /**
- * A optimizing {@link PromiseNode}: It evaluates a constant directly.
+ * Base class for child of {@link FunctionBodyNode} that is used to evaluate promises and other
+ * non-syntax bodies.
  */
-public final class OptConstantPromiseNode extends PromiseNode {
+public class BodyNode extends RNode {
+    @Child protected RNode statements;
 
-    private final PromiseType type;
-    private final ConstantNode constantExpr;
-    private final Object constantValue;
-
-    public OptConstantPromiseNode(PromiseType type, ConstantNode constantExpr) {
-        super(null);
-        this.type = type;
-        this.constantExpr = constantExpr;
-        this.constantValue = constantExpr.getValue();
+    public BodyNode(RNode statements) {
+        this.statements = statements;
     }
 
-    /**
-     * Creates a new {@link RPromise} every time.
-     */
     @Override
     public Object execute(VirtualFrame frame) {
-        return RDataFactory.createPromise(type, OptType.DEFAULT, constantExpr, constantValue);
+        return statements.execute(frame);
     }
 
-    @Override
-    public RSyntaxNode getPromiseExpr() {
-        return constantExpr;
-    }
 }

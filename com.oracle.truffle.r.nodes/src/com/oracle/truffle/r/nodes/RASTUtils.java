@@ -80,14 +80,14 @@ public class RASTUtils {
     @TruffleBoundary
     public static Object createLanguageElement(Arguments<RSyntaxNode> args, int index) {
         Node argNode = unwrap(args.getArguments()[index]);
-        return RASTUtils.createLanguageElement(argNode);
+        return RASTUtils.createLanguageElement((RNode) argNode);
     }
 
     /**
      * Handles constants and symbols as special cases as required by R.
      */
     @TruffleBoundary
-    public static Object createLanguageElement(Node argNode) {
+    public static Object createLanguageElement(RBaseNode argNode) {
         if (argNode == null) {
             return RSymbol.MISSING;
         } else if (argNode instanceof ConstantNode) {
@@ -101,7 +101,7 @@ public class RASTUtils {
             return RASTUtils.createRSymbol(argNode);
         } else {
             assert !(argNode instanceof VarArgNode);
-            return RDataFactory.createLanguage(argNode);
+            return RDataFactory.createLanguage((RNode) argNode);
         }
     }
 

@@ -28,6 +28,7 @@ import com.oracle.truffle.api.CompilerDirectives.ValueType;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.nodes.*;
 
 /**
  * Denotes an R {@code promise}. Its child classes - namely {@link EagerPromise} and
@@ -110,7 +111,7 @@ public class RPromise extends RLanguageRep implements RTypedValue {
      * This creates a new tuple (expr, env, closure, value=null), which may later be evaluated.
      */
     RPromise(PromiseType type, OptType optType, MaterializedFrame execFrame, Closure closure) {
-        super(closure.getExpr());
+        super((RBaseNode) closure.getExpr());
         assert type != PromiseType.ARG_DEFAULT || execFrame != null;
         this.type = type;
         this.optType = optType;
@@ -122,7 +123,7 @@ public class RPromise extends RLanguageRep implements RTypedValue {
      * This creates a new tuple (expr, null, null, value), which is already evaluated.
      */
     RPromise(PromiseType type, OptType optType, Object expr, Object value) {
-        super(expr);
+        super((RBaseNode) expr);
         assert value != null;
         this.type = type;
         this.optType = optType;
@@ -137,7 +138,7 @@ public class RPromise extends RLanguageRep implements RTypedValue {
      * called via {@link VarargPromise#VarargPromise(PromiseType, RPromise, Closure)} only!
      */
     private RPromise(PromiseType type, OptType optType, Object expr) {
-        super(expr);
+        super((RBaseNode) expr);
         this.type = type;
         this.optType = optType;
         // Not needed as already evaluated:
@@ -195,7 +196,7 @@ public class RPromise extends RLanguageRep implements RTypedValue {
      *         is provided!
      */
     @Override
-    public final Object getRep() {
+    public final RBaseNode getRep() {
         return super.getRep();
     }
 

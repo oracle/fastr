@@ -27,7 +27,6 @@ import java.util.function.*;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.access.variables.*;
@@ -369,8 +368,7 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
         fAst.tempSuppressReplacementSuffix(true);
         RNode f = fAst.accept(this).asRNode();
         fAst.tempSuppressReplacementSuffix(false);
-        // No sharing between the syntaxAST and the ReplacementNode children (recursion in deparse)
-        RSyntaxNode syntaxAST = new WriteReplacementNode((RCallNode) NodeUtil.cloneNode(f), NodeUtil.cloneNode(rhs.asRNode()));
+        RSyntaxNode syntaxAST = new WriteReplacementNode((RCallNode) f, rhs);
         List<ArgNode> args = fAst.getArguments();
         ASTNode val = args.get(0).getValue();
         String tmpSymbol = createTempName();
@@ -527,7 +525,8 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
                 throw RInternalError.unimplemented();
             }
             if (needsSyntaxAST && result instanceof ReplacementNode) {
-                RSyntaxNode syntaxAST = NodeUtil.cloneNode(updateFunction.apply(receiver.accept(this), rhs));
+                RCallNode update = updateFunction.apply(receiver.accept(this), rhs);
+                RSyntaxNode syntaxAST = update;
                 checkAssignSourceSection(syntaxAST, source);
                 ((ReplacementNode) result).setSyntaxAST(syntaxAST);
             }

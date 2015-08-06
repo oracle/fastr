@@ -158,7 +158,7 @@ public abstract class Lapply extends RBuiltinNode {
                 }
             }
             ArgumentsSignature argsSig = ArgumentsSignature.get(names);
-            // TODO will eventually go away, but for now give this call a SourceSection
+            // Errors can be thrown from the modified call so a SourceSection is required
             SourceSection ss = createCallSourceSection(callTarget, argsSig, args);
             return RCallNode.createCall(ss, null, argsSig, args);
         }

@@ -28,7 +28,6 @@ import java.io.*;
 import java.net.*;
 import java.nio.*;
 
-import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.runtime.*;
 
 public class URLConnections {
@@ -53,7 +52,7 @@ public class URLConnections {
                     delegate = new URLReadRConnection(this);
                     break;
                 default:
-                    throw RError.nyi((Node) null, "open mode: " + getOpenMode());
+                    throw RError.nyi(RError.NO_NODE, "open mode: " + getOpenMode());
             }
             setDelegate(delegate);
         }

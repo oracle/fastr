@@ -29,7 +29,6 @@ import java.io.*;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
@@ -39,6 +38,7 @@ import com.oracle.truffle.r.runtime.conn.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
+import com.oracle.truffle.r.runtime.nodes.*;
 
 /**
  * Internal component of the {@code parse} base package function.
@@ -214,8 +214,8 @@ public abstract class Parse extends RBuiltinNode {
     private static void addAttributes(RExpression exprs, Source source, REnvironment srcFile) {
         Object[] srcrefData = new Object[exprs.getLength()];
         for (int i = 0; i < srcrefData.length; i++) {
-            Node node = (Node) ((RLanguage) exprs.getDataAt(i)).getRep();
-            SourceSection ss = node.getSourceSection();
+            RBaseNode node = ((RLanguage) exprs.getDataAt(i)).getRep();
+            SourceSection ss = node.asRSyntaxNode().getSourceSection();
             int[] llocData = new int[8];
             int startLine = ss.getStartLine();
             int startColumn = ss.getStartColumn();

@@ -143,7 +143,7 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
                 if (RASTUtils.isNamedFunctionNode(node)) {
                     return RASTUtils.findFunctionName(node);
                 } else {
-                    Object functionNode = RASTUtils.getFunctionNode(node);
+                    RNode functionNode = RASTUtils.getFunctionNode(node);
                     if (functionNode instanceof ConstantNode && ((ConstantNode) functionNode).getValue() instanceof RSymbol) {
                         return ((ConstantNode) functionNode).getValue();
                     } else {
@@ -242,7 +242,7 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
 
     @TruffleBoundary
     public RStringVector getNames(RLanguage rl) {
-        Node node = (Node) rl.getRep();
+        RBaseNode node = rl.getRep();
         if (node instanceof RCallNode || node instanceof GroupDispatchNode) {
             Arguments<RSyntaxNode> args = RASTUtils.findCallArguments(node);
             /*
@@ -408,7 +408,7 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
 
     public RLanguage getSyntaxCaller(RCaller rl) {
         RSyntaxNode sn = RASTUtils.unwrap(rl.getRep()).asRSyntaxNode();
-        return RDataFactory.createLanguage(sn);
+        return RDataFactory.createLanguage(sn.asRNode());
     }
 
     public String getCallerSource(RLanguage rl) {
@@ -416,11 +416,11 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
         return sn.getSourceSection().getCode();
     }
 
-    private static Node isBuiltin(Node node) {
+    private static RNode isBuiltin(Node node) {
         Node n = node;
         while (n != null) {
             if (n instanceof RBuiltinNode) {
-                return n;
+                return (RBuiltinNode) n;
             }
             n = n.getParent();
         }
@@ -439,7 +439,7 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
             if (call == RError.NO_CALLER) {
                 return RNull.instance;
             }
-            Node builtIn = isBuiltin(call);
+            RNode builtIn = isBuiltin(call);
             /*
              * Currently builtins called through do.call do not have a (meaningful) source section.
              * Also we see some RSyntaxNodes with null SourceSections (which should never happen)
@@ -447,7 +447,7 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
             if (builtIn != null && builtIn.getSourceSection() != null) {
                 return RDataFactory.createLanguage(builtIn);
             } else if (call instanceof RSyntaxNode && call.getSourceSection() != null) {
-                return RDataFactory.createLanguage(call);
+                return RDataFactory.createLanguage((RNode) call);
             }
             // else drop through to frame case
         }

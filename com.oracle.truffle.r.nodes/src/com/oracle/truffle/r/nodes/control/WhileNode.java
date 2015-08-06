@@ -157,7 +157,7 @@ public final class WhileNode extends AbstractLoopNode implements RSyntaxNode, Vi
             if (rootNode instanceof RRootNode) {
                 function = rootNode.toString();
             }
-            SourceSection sourceSection = getEncapsulatingSourceSection();
+            SourceSection sourceSection = getRSyntaxNode().getSourceSection();
             int startLine = -1;
             String shortDescription = "?";
             if (sourceSection != null) {

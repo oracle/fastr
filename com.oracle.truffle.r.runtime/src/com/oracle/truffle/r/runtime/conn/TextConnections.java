@@ -26,7 +26,6 @@ import java.io.*;
 import java.nio.*;
 import java.util.*;
 
-import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -64,7 +63,7 @@ public class TextConnections {
                     delegate = new TextWriteRConnection(this);
                     break;
                 default:
-                    throw RError.nyi((Node) null, "open mode: " + getOpenMode().modeString);
+                    throw RError.nyi(RError.NO_NODE, "open mode: " + getOpenMode().modeString);
             }
             setDelegate(delegate);
         }
@@ -162,7 +161,7 @@ public class TextConnections {
                 textVec = v;
                 textBase.env.put(idName, textVec);
             } catch (PutException ex) {
-                throw RError.error((Node) null, ex);
+                throw RError.error(RError.NO_NODE, ex);
             }
             // lock the binding
             textBase.env.lockBinding(idName);

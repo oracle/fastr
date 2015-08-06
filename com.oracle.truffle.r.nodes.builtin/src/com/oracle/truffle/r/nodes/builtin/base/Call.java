@@ -86,6 +86,6 @@ public abstract class Call extends RBuiltinNode {
             args[i] = (RSyntaxNode) RASTUtils.createNodeForValue(values[i]);
         }
 
-        return RDataFactory.createLanguage(RASTUtils.createCall(fn, signature, args));
+        return RDataFactory.createLanguage(RASTUtils.createCall(fn, signature, args).asRNode());
     }
 }

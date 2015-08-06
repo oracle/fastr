@@ -190,7 +190,7 @@ public class FrameFunctions {
             RCallNode callNode = (RCallNode) RASTUtils.unwrap(call.getRep());
             CallArgumentsNode callArgs = callNode.createArguments(null, false, false);
             UnrolledVariadicArguments executeFlatten = callArgs.executeFlatten(cframe);
-            MatchedArguments matchedArgs = ArgumentMatcher.matchArguments(definition, executeFlatten, null, null, true);
+            MatchedArguments matchedArgs = ArgumentMatcher.matchArguments(definition, executeFlatten, null, true);
             ArgumentsSignature sig = matchedArgs.getSignature();
             RNode[] matchedArgNodes = matchedArgs.getArguments();
             // expand any varargs
@@ -277,7 +277,7 @@ public class FrameFunctions {
             RSyntaxNode[] newArgs = nodes.toArray(new RSyntaxNode[nodes.size()]);
 
             RSyntaxNode modCallNode = RASTUtils.createCall(callNode.getFunctionNode(), sig, newArgs);
-            return RDataFactory.createLanguage(modCallNode);
+            return RDataFactory.createLanguage(modCallNode.asRNode());
         }
 
         private static RNode checkForVarArgNode(RArgsValuesAndNames varArgParameter, RNode arg) {

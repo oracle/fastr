@@ -22,27 +22,27 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
+import com.oracle.truffle.r.runtime.nodes.*;
+
 /**
- * Denotes an (unevaluated) element of the R language. The representation is not disclosed here,
- * owing partly to import circularities, but it will typically be an {@code RNode} that captures the
- * (unevaluated) AST for the element.
+ * Denotes an (unevaluated) element of the R language.
  *
  * This type is not part of the {@code TypeSystem} but it used as a superclass by {@link RLanguage}
  * and {@link RPromise}.
  */
 public abstract class RLanguageRep {
 
-    private Object rep;
+    private RBaseNode rep;
 
-    public RLanguageRep(Object rep) {
+    public RLanguageRep(RBaseNode rep) {
         this.rep = rep;
     }
 
-    public Object getRep() {
+    public RBaseNode getRep() {
         return rep;
     }
 
-    public void setRep(Object rep) {
+    public void setRep(RBaseNode rep) {
         this.rep = rep;
     }
 }

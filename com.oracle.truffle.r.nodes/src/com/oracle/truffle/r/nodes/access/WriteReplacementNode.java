@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.access;
 
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.control.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
@@ -31,24 +32,30 @@ import com.oracle.truffle.r.runtime.gnur.*;
 import com.oracle.truffle.r.runtime.nodes.*;
 
 /**
- * A node that current only exists as the "syntaxAST" argument of a {@link ReplacementNode}, for
- * assignments of the form {@code f(a) <- rhs}.
+ * A node that current only exists as the {@code syntaxAST} argument of a {@link ReplacementNode},
+ * for assignments of the form {@code f(a) <- rhs}.
+ *
+ * There must be no sharing of nodes between the {@code syntaxAST} and the child nodes of the
+ * ReplacementNode as this will cause runaway recursion due to the check for a node being a child of
+ * a {@link ReplacementNode} in {@link RBaseNode#getRSyntaxNode}. We can't simply
+ * {@link NodeUtil#cloneNode} the syntaxAST as the sharing can occur in the arguments, which are not
+ * children (just as the fields of this node are not children either).
  */
 public class WriteReplacementNode extends RNode implements RSyntaxNode {
 
     private final RCallNode replacementCall;
-    private final RNode rhs;
+    private final RSyntaxNode rhs;
 
     public RNode getReplacementCall() {
         return replacementCall;
     }
 
-    public WriteReplacementNode(RCallNode replacementCall, RNode rhs) {
-        this.replacementCall = replacementCall;
-        this.rhs = rhs;
+    public WriteReplacementNode(RCallNode replacementCall, RSyntaxNode rhs) {
+        this.replacementCall = (RCallNode) updateCallNodes(replacementCall);
+        this.rhs = updateCallNodes(rhs);
     }
 
-    public RNode getRhs() {
+    public RSyntaxNode getRhs() {
         return rhs;
     }
 
@@ -61,7 +68,7 @@ public class WriteReplacementNode extends RNode implements RSyntaxNode {
     public void deparseImpl(RDeparse.State state) {
         getReplacementCall().deparse(state);
         state.append(" <- ");
-        getRhs().deparse(state);
+        getRhs().deparseImpl(state);
     }
 
     @Override
@@ -77,6 +84,34 @@ public class WriteReplacementNode extends RNode implements RSyntaxNode {
 
     public RSyntaxNode substituteImpl(REnvironment env) {
         throw RInternalError.unimplemented();
+    }
+
+    private static class CheckCallNodes implements NodeVisitor {
+        public boolean visit(Node node) {
+            if (node instanceof RCallNode) {
+                // The arguments were not cloned
+                RCallNode callNode = (RCallNode) node;
+                Arguments<RSyntaxNode> args = callNode.getArguments();
+                RSyntaxNode[] argNodes = args.getArguments();
+                RSyntaxNode[] clonedArgNodes = new RSyntaxNode[args.getLength()];
+                for (int i = 0; i < argNodes.length; i++) {
+                    if (argNodes[i] instanceof RCallNode) {
+                        clonedArgNodes[i] = updateCallNodes(argNodes[i]);
+                    } else {
+                        clonedArgNodes[i] = (RSyntaxNode) NodeUtil.cloneNode(argNodes[i].asRNode());
+                    }
+                }
+                RCallNode.updateClonedArguments(callNode, clonedArgNodes);
+            }
+            return true;
+        }
+
+    }
+
+    public static RSyntaxNode updateCallNodes(RSyntaxNode node) {
+        RNode result = NodeUtil.cloneNode(node.asRNode());
+        result.accept(new CheckCallNodes());
+        return (RSyntaxNode) result;
     }
 
 }

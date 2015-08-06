@@ -335,7 +335,7 @@ public abstract class PrettyPrinterNode extends RNode {
 
     private static String prettyPrintPromise(RPromise promise) {
         RNode node = (RNode) promise.getRep();
-        SourceSection ss = node.getSourceSection();
+        SourceSection ss = node.asRSyntaxNode().getSourceSection();
         if (ss == null) {
             return "<no source available>";
         } else {

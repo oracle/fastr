@@ -102,7 +102,7 @@ public interface RSyntaxNode extends RSyntaxNodeSPI {
     static void accept(Node node, int depth, RSyntaxNodeVisitor nodeVisitor) {
         boolean visitChildren = true;
         int incDepth = 0;
-        if (node instanceof RSyntaxNode && ((RSyntaxNode) node).isSyntax()) {
+        if (RBaseNode.isRSyntaxNode(node)) {
             RSyntaxNode syntaxNode = (RSyntaxNode) node;
             if (!syntaxNode.isBackbone()) {
                 visitChildren = nodeVisitor.visit(syntaxNode, depth);

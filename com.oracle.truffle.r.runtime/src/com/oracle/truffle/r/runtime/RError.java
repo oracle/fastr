@@ -16,6 +16,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
+import com.oracle.truffle.r.runtime.nodes.*;
 
 /**
  * A facade for handling errors. This class extends {@link RuntimeException} so that it can be
@@ -34,8 +35,9 @@ import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
  * way of a {@link Node} value (which may be indirectly related to the actual builtin due to AST
  * transformations) and the Truffle {@link Frame} stack. Mostly the {@link Node} value and
  * {@link Frame} are sufficient to reconstruct the context, but there are some special cases that
- * require more information to disambiguate. Rather than create a new class to carry that, we simply
- * create an instance of a {@link Node} subclass with the additional state.
+ * might require more information to disambiguate. Rather than create a new class to carry that, we
+ * would simply create an instance of a {@link RBaseNode} subclass with the additional state.
+ * Currently,there are no such cases.
  *
  */
 @SuppressWarnings("serial")
@@ -46,8 +48,8 @@ public final class RError extends RuntimeException {
     /**
      * This exception should be subclassed by subsystems that need to throw subsystem-specific
      * exceptions to be caught by builtin implementations, which can then invoke
-     * {@link RError#error(Node, RErrorException)}, which access the stored {@link Message} object
-     * and any arguments. E.g. see {@link PutException}.
+     * {@link RError#error(RBaseNode, RErrorException)}, which access the stored {@link Message}
+     * object and any arguments. E.g. see {@link PutException}.
      */
     public abstract static class RErrorException extends Exception {
         private static final long serialVersionUID = 1L;
@@ -70,16 +72,24 @@ public final class RError extends RuntimeException {
     }
 
     /**
-     * This calls out a call to {@code error} or {@code warning} will a {@code null} value for
-     * {@link Node}. Ideally this never happens, so we make it explicit.
+     * This flags a call to {@code error} or {@code warning} will no value for {@link Node}. Ideally
+     * this never happens, so we make it explicit.
      */
-    public static final Node NO_NODE = new Node() {
+    public static final RBaseNode NO_NODE = new RBaseNode() {
     };
 
     /**
-     * A very special case that ensures that no caller is output in the error/warning message.
+     * A very special case that ensures that no caller is output in the error/warning message. This
+     * is needed where, even if there is a caller, GnuR does not show it.
      */
-    public static final Node NO_CALLER = new Node() {
+    public static final RBaseNode NO_CALLER = new RBaseNode() {
+    };
+
+    /**
+     * This is a workaround for a case in {@code RCallNode} where an error might be thrown while
+     * executing a {@code RootNode}, which is not a subclass of {@link RBaseNode}.
+     */
+    public static final RBaseNode ROOTNODE = new RBaseNode() {
     };
 
     /**
@@ -100,12 +110,12 @@ public final class RError extends RuntimeException {
     }
 
     @TruffleBoundary
-    public static RError error(Node node, Message msg, Object... args) {
+    public static RError error(RBaseNode node, Message msg, Object... args) {
         throw error0(node, msg, args);
     }
 
     @TruffleBoundary
-    public static RError error(Node node, Message msg) {
+    public static RError error(RBaseNode node, Message msg) {
         throw error0(node, msg, (Object[]) null);
     }
 
@@ -126,7 +136,7 @@ public final class RError extends RuntimeException {
      * @param args arguments for format specifiers in the message string
      */
     @TruffleBoundary
-    private static RError error0(Node node, Message msg, Object... args) {
+    private static RError error0(RBaseNode node, Message msg, Object... args) {
         assert node != null;
         // thrown from a builtin specified by "node"
         RErrorHandling.signalError(node, msg, args);
@@ -134,12 +144,12 @@ public final class RError extends RuntimeException {
     }
 
     /**
-     * Convenience variant of {@link #error(Node, Message, Object...)} where only one argument to
-     * the message is given. This avoids object array creation caller, which may be
+     * Convenience variant of {@link #error(RBaseNode, Message, Object...)} where only one argument
+     * to the message is given. This avoids object array creation caller, which may be
      * Truffle-compiled.
      */
     @TruffleBoundary
-    public static RError error(Node node, Message msg, Object arg) {
+    public static RError error(RBaseNode node, Message msg, Object arg) {
         throw error(node, msg, new Object[]{arg});
     }
 
@@ -148,7 +158,7 @@ public final class RError extends RuntimeException {
      * report the error. The error information is propagated using the {@link RErrorException}.
      */
     @TruffleBoundary
-    public static RError error(Node node, RErrorException ex) {
+    public static RError error(RBaseNode node, RErrorException ex) {
         throw error(node, ex.msg, ex.args);
     }
 
@@ -157,18 +167,18 @@ public final class RError extends RuntimeException {
      * {@link Utils#fatalError(String)} would be inappropriate.
      */
     @TruffleBoundary
-    public static RError nyi(Node node, String msg) {
+    public static RError nyi(RBaseNode node, String msg) {
         throw error(node, RError.Message.NYI, msg);
     }
 
     @TruffleBoundary
-    public static void warning(Node node, Message msg, Object... args) {
+    public static void warning(RBaseNode node, Message msg, Object... args) {
         assert node != null;
         RErrorHandling.warningcall(true, node, msg, args);
     }
 
     @TruffleBoundary
-    public static RError stop(boolean showCall, Node node, Message msg, Object arg) {
+    public static RError stop(boolean showCall, RBaseNode node, Message msg, Object arg) {
         assert node != null;
         RErrorHandling.signalError(node, msg, arg);
         return RErrorHandling.errorcallDflt(showCall, node, msg, arg);

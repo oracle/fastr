@@ -191,7 +191,7 @@ public abstract class CallMatcherNode extends RBaseNode {
             this.formals = ((RRootNode) cachedFunction.getRootNode()).getFormalArguments();
             if (function.isBuiltin()) {
                 RBuiltinRootNode builtinRoot = RCallNode.findBuiltinRootNode(function.getTarget());
-                this.builtin = builtinRoot.inline(formals.getSignature(), null, specializer.getEncapsulatingSourceSection());
+                this.builtin = builtinRoot.inline(formals.getSignature(), null, specializer.getRSyntaxNode().getSourceSection());
                 this.builtinArgumentCasts = builtin.getCasts();
             } else {
                 this.call = Truffle.getRuntime().createDirectCallNode(function.getTarget());
