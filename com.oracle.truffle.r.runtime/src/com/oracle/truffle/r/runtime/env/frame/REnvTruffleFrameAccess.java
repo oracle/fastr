@@ -26,6 +26,8 @@ import java.util.*;
 import java.util.regex.*;
 import java.util.stream.*;
 
+import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RError.Message;
@@ -36,9 +38,14 @@ import com.oracle.truffle.r.runtime.env.REnvironment.*;
 /**
  * Variant of {@link REnvFrameAccess} that provides access to an actual Truffle execution frame.
  */
-public class REnvTruffleFrameAccess extends REnvFrameAccessBindingsAdapter {
+public final class REnvTruffleFrameAccess extends REnvFrameAccess {
 
     private final MaterializedFrame frame;
+    /**
+     * Records which bindings are locked. In normal use we don't expect any bindings to be locked so
+     * this set is allocated lazily.
+     */
+    private Set<String> lockedBindings;
 
     public REnvTruffleFrameAccess(MaterializedFrame frame) {
         this.frame = frame;
@@ -62,22 +69,15 @@ public class REnvTruffleFrameAccess extends REnvFrameAccessBindingsAdapter {
 
     @Override
     public void put(String key, Object value) throws PutException {
-        // check locking, handled in superclass
-        super.put(key, value);
+        CompilerAsserts.neverPartOfCompilation();
+        assert key != null;
+        assert value != null;
+        if (lockedBindings != null && lockedBindings.contains(key)) {
+            throw new PutException(RError.Message.ENV_CHANGE_BINDING, key);
+        }
         FrameDescriptor fd = frame.getFrameDescriptor();
         FrameSlot slot = fd.findFrameSlot(key);
 
-        // Handle RPromise: It cannot be cast to a int/double/byte!
-        if (value instanceof RPromise) {
-            if (slot == null) {
-                slot = FrameSlotChangeMonitor.addFrameSlot(fd, key, FrameSlotKind.Object);
-            }
-            // Overwrites former FrameSlotKind
-            FrameSlotChangeMonitor.setObjectAndInvalidate(frame, slot, value, false, null);
-            return;
-        }
-
-        // TODO what should really happen if valueSlotKind == FrameSlotKind.Illegal?
         FrameSlotKind valueSlotKind = RRuntime.getSlotKind(value);
 
         // Handle all other values
@@ -111,8 +111,25 @@ public class REnvTruffleFrameAccess extends REnvFrameAccessBindingsAdapter {
     }
 
     @Override
-    public void rm(String key) {
-        super.rm(key);
+    public void rm(String key) throws PutException {
+        CompilerAsserts.neverPartOfCompilation();
+        assert key != null;
+        if (lockedBindings != null) {
+            lockedBindings.remove(key);
+        }
+        FrameDescriptor fd = frame.getFrameDescriptor();
+        FrameSlot slot = fd.findFrameSlot(key);
+
+        // Handle all other values
+        if (slot == null) {
+            // TODO: also throw this error when slot contains "null" value
+            throw new PutException(RError.Message.UNKNOWN_OBJECT, key);
+        } else {
+            if (slot.getKind() != FrameSlotKind.Object) {
+                slot.setKind(FrameSlotKind.Object);
+            }
+            FrameSlotChangeMonitor.setObjectAndInvalidate(frame, slot, null, false, null);
+        }
     }
 
     @Override
@@ -138,8 +155,34 @@ public class REnvTruffleFrameAccess extends REnvFrameAccessBindingsAdapter {
     }
 
     @Override
-    protected Set<Object> getBindingsForLock() {
-        return frame.getFrameDescriptor().getIdentifiers();
+    public boolean bindingIsLocked(String key) {
+        return lockedBindings != null && lockedBindings.contains(key);
+    }
+
+    @Override
+    @TruffleBoundary
+    public void lockBindings() {
+        for (Object binding : frame.getFrameDescriptor().getIdentifiers()) {
+            if (binding instanceof String) {
+                lockBinding((String) binding);
+            }
+        }
+    }
+
+    @Override
+    @TruffleBoundary
+    public void lockBinding(String key) {
+        if (lockedBindings == null) {
+            lockedBindings = new HashSet<>();
+        }
+        lockedBindings.add(key);
+    }
+
+    @Override
+    public void unlockBinding(String key) {
+        if (lockedBindings != null) {
+            lockedBindings.remove(key);
+        }
     }
 
     private static String[] getStringIdentifiers(FrameDescriptor fd) {

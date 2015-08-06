@@ -532,7 +532,7 @@ public class RSerialize implements RContext.StateFactory {
                             copyAttributes(func, rpl.getAttributes());
                             result = func;
                         } catch (Throwable ex) {
-                            Utils.fail("unserialize - failed to eval deparsed closure");
+                            throw new RInternalError(ex, "unserialize - failed to eval deparsed closure");
                         }
                     } else if (type == SEXPTYPE.LANGSXP) {
                         langDepth--;

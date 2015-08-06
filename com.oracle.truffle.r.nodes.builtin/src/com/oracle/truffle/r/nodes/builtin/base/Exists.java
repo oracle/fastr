@@ -45,7 +45,7 @@ public abstract class Exists extends RBuiltinNode {
         if (inherits == RRuntime.LOGICAL_FALSE) {
             return RRuntime.asLogical(env.get(name) != null);
         }
-        for (REnvironment e = env; e != null; e = e.getParent()) {
+        for (REnvironment e = env; e != REnvironment.emptyEnv(); e = e.getParent()) {
             if (e.get(name) != null) {
                 return RRuntime.LOGICAL_TRUE;
             }

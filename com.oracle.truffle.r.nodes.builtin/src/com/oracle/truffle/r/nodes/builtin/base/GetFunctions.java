@@ -90,9 +90,9 @@ public class GetFunctions {
                 String x = xv.getDataAt(0);
                 RType modeType = RType.fromMode(mode);
                 REnvironment env = envir;
-                while (env != null) {
+                while (env != REnvironment.emptyEnv()) {
                     env = env.getParent();
-                    if (env != null) {
+                    if (env != REnvironment.emptyEnv()) {
                         r = checkPromise(frame, env.get(x));
                         if (r != null && RRuntime.checkType(r, modeType)) {
                             break;
@@ -211,9 +211,9 @@ public class GetFunctions {
                 if (r == null || !RRuntime.checkType(r, modeType)) {
                     inheritsProfile.enter();
                     REnvironment env = envir;
-                    while (env != null) {
+                    while (env != REnvironment.emptyEnv()) {
                         env = env.getParent();
-                        if (env != null) {
+                        if (env != REnvironment.emptyEnv()) {
                             r = checkPromise(frame, env.get(x));
                             if (r != null && RRuntime.checkType(r, modeType)) {
                                 break;

@@ -212,9 +212,7 @@ public abstract class REnvironment extends RAttributeStorage implements RTypedVa
 
     }
 
-    private static final REnvFrameAccess defaultFrameAccess = new REnvFrameAccessBindingsAdapter();
-
-    private static final String UNNAMED = new String("");
+    public static final String UNNAMED = new String("");
     private static final String NAME_ATTR_KEY = "name";
 
     private static final Empty emptyEnv = new Empty();
@@ -575,9 +573,6 @@ public abstract class REnvironment extends RAttributeStorage implements RTypedVa
         searchPath.remove(bpos);
         MaterializedFrame aboveFrame = envAbove.frameAccess.getFrame();
         RArguments.detachFrame(aboveFrame);
-        if (envToRemove.frameAccess instanceof REnvMapFrameAccess) {
-            ((REnvMapFrameAccess) envToRemove.frameAccess).detach();
-        }
         return envToRemove;
     }
 
@@ -721,6 +716,7 @@ public abstract class REnvironment extends RAttributeStorage implements RTypedVa
      */
     private REnvironment(REnvironment parent, String name, MaterializedFrame frame) {
         this(parent, name, new REnvTruffleFrameAccess(frame));
+
         // Associate frame with the environment
         RArguments.setEnvironment(frame, this);
     }
@@ -786,30 +782,7 @@ public abstract class REnvironment extends RAttributeStorage implements RTypedVa
      * there is none in the case of {@link NewEnv} environments.
      */
     public MaterializedFrame getFrame() {
-        MaterializedFrame envFrame = frameAccess.getFrame();
-        if (envFrame == null) {
-            envFrame = getMaterializedFrame(this);
-        }
-        return envFrame;
-    }
-
-    /**
-     * Ensures that {@code env} and all its parents have a {@link MaterializedFrame}. Used for
-     * {@link NewEnv} environments that only need frames when they are used in {@code eval} etc.
-     */
-    @TruffleBoundary
-    private static MaterializedFrame getMaterializedFrame(REnvironment env) {
-        MaterializedFrame envFrame = env.frameAccess.getFrame();
-        if (envFrame == null && env.parent != null) {
-            MaterializedFrame parentFrame = getMaterializedFrame(env.parent);
-            envFrame = new REnvMaterializedFrame((UsesREnvMap) env);
-            RArguments.setEnclosingFrame(envFrame, parentFrame);
-            if (parentFrame == null) {
-                assert env.parent == emptyEnv;
-                parentFrame = globalEnv().getFrame();
-            }
-        }
-        return envFrame;
+        return frameAccess.getFrame();
     }
 
     public void lock(boolean bindings) {
@@ -893,9 +866,9 @@ public abstract class REnvironment extends RAttributeStorage implements RTypedVa
     }
 
     private static final class BaseNamespace extends REnvironment {
-        private BaseNamespace(REnvironment parent, String name, REnvFrameAccess frameAccess) {
-            super(parent, name, frameAccess);
-            RArguments.setEnvironment(frameAccess.getFrame(), this);
+        private BaseNamespace(REnvironment parent, String name, MaterializedFrame frame) {
+            super(parent, name, frame);
+            RArguments.setEnvironment(frame, this);
         }
 
         @Override
@@ -913,8 +886,8 @@ public abstract class REnvironment extends RAttributeStorage implements RTypedVa
              * We create the NSBaseMaterializedFrame using globalFrame as the enclosing frame. The
              * namespaceEnv parent field will change to globalEnv after the latter is created
              */
-            REnvFrameAccess baseFrameAccess = new REnvTruffleFrameAccess(new NSBaseMaterializedFrame(baseFrame, globalFrame));
-            this.namespaceEnv = new BaseNamespace(emptyEnv, "base", baseFrameAccess);
+            NSBaseMaterializedFrame frame = new NSBaseMaterializedFrame(baseFrame, globalFrame);
+            this.namespaceEnv = new BaseNamespace(emptyEnv, "base", frame);
         }
 
         @Override
@@ -981,10 +954,6 @@ public abstract class REnvironment extends RAttributeStorage implements RTypedVa
         }
     }
 
-    public interface UsesREnvMap {
-        REnvMapFrameAccess getFrameAccess();
-    }
-
     /**
      * An environment explicitly created with, typically, {@code new.env}, but also used internally.
      * Such environments are always {@link #UNNAMED} but can later be given a name as an attribute.
@@ -1020,21 +989,6 @@ public abstract class REnvironment extends RAttributeStorage implements RTypedVa
     }
 
     /**
-     * A temporary environment used to perform internal operations, e.g. {@code substitute}. Such an
-     * environment must never escape into the R world as it does not support {@code eval}.
-     */
-    public static final class NewInternalEnv extends REnvironment implements UsesREnvMap {
-
-        public NewInternalEnv() {
-            super(null, UNNAMED, new REnvMapFrameAccess(0));
-        }
-
-        public REnvMapFrameAccess getFrameAccess() {
-            return (REnvMapFrameAccess) frameAccess;
-        }
-    }
-
-    /**
      * Helper function for implementations of {@link REnvFrameAccess#ls}.
      */
     public static boolean includeName(String nameToMatch, boolean allNames, Pattern pattern) {
@@ -1057,7 +1011,7 @@ public abstract class REnvironment extends RAttributeStorage implements RTypedVa
     private static final class Empty extends REnvironment {
 
         private Empty() {
-            super(null, "R_EmptyEnv", defaultFrameAccess);
+            super(null, "R_EmptyEnv", new REnvEmptyFrameAccess());
         }
 
         @Override

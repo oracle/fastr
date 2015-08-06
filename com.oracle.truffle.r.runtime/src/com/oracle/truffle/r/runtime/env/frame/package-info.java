@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,10 +24,8 @@
  * This package contains all the code related to the "frame" access aspect of an {@link com.oracle.truffle.r.runtime.env.REnvironment}.
  * The basic interface assumed by {@link com.oracle.truffle.r.runtime.env.REnvironment} is defined in
  * {@link com.oracle.truffle.r.runtime.env.frame.REnvFrameAccess}, which provides default implementations, most of which fail.
- * The subclass {@link com.oracle.truffle.r.runtime.env.frame.REnvFrameAccessBindingsAdapter} handles the common code
- * for locking/unlocking bindings. The leaf classes {@link com.oracle.truffle.r.runtime.env.frame.REnvTruffleFrameAccess}
- * and {@link com.oracle.truffle.r.runtime.env.frame.REnvMapFrameAccess} handle Truffle frames and frames associated with
- * the {@code new.env} style of environment.
+ * The subclass  {@link com.oracle.truffle.r.runtime.env.frame.REnvTruffleFrameAccess} handles Truffle
+ * frames and locking/unlocking bindings.
  */
 package com.oracle.truffle.r.runtime.env.frame;
 
