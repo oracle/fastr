@@ -40,7 +40,7 @@ public abstract class RBuiltinDescriptor {
     @CompilationFinal private final boolean[] evaluatesArgument;
 
     public RBuiltinDescriptor(String name, String[] aliases, RBuiltinKind kind, ArgumentsSignature signature, int[] nonEvalArgs, boolean splitCaller, boolean alwaysSplit, RDispatch dispatch) {
-        this.name = name;
+        this.name = name.intern();
         this.aliases = aliases;
         this.kind = kind;
         this.signature = signature;
