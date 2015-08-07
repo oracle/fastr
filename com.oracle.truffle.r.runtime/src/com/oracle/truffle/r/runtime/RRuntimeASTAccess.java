@@ -158,4 +158,10 @@ public interface RRuntimeASTAccess {
      */
     boolean isReplacementNode(Node node);
 
+    /**
+     * Returns {@code true} iff {@code node} is an instance of {@code FunctionDefinitionNode}, which
+     * is not visible from {@code runtime}, or {@code false} otherwise.
+     */
+    boolean isFunctionDefinitionNode(Node node);
+
 }

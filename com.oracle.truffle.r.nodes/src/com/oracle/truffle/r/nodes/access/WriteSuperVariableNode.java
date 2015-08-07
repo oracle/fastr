@@ -76,7 +76,9 @@ public class WriteSuperVariableNode extends WriteVariableNodeSyntaxHelper implem
 
     @Override
     public void deparseImpl(State state) {
+        state.startNodeDeparse(this);
         deparseHelper(state, " <<- ");
+        state.endNodeDeparse(this);
     }
 
     @Override

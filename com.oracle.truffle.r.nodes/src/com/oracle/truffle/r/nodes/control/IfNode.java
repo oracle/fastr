@@ -109,6 +109,7 @@ public final class IfNode extends RNode implements RSyntaxNode, VisibilityContro
 
     @Override
     public void deparseImpl(RDeparse.State state) {
+        state.startNodeDeparse(this);
         state.append("if (");
         condition.deparse(state);
         state.append(") ");
@@ -121,6 +122,7 @@ public final class IfNode extends RNode implements RSyntaxNode, VisibilityContro
             elsePart.deparse(state);
             state.decIndentWriteCloseCurly();
         }
+        state.endNodeDeparse(this);
     }
 
     @Override

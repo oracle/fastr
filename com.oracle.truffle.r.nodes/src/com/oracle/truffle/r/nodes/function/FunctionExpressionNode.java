@@ -127,7 +127,9 @@ public final class FunctionExpressionNode extends RNode implements RSyntaxNode {
 
     @Override
     public void deparseImpl(RDeparse.State state) {
+        state.startNodeDeparse(this);
         ((FunctionDefinitionNode) callTarget.getRootNode()).deparseImpl(state);
+        state.endNodeDeparse(this);
     }
 
     @Override

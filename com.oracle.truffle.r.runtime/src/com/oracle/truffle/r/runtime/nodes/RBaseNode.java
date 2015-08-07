@@ -121,6 +121,7 @@ public abstract class RBaseNode extends Node {
 
     @Override
     public SourceSection getSourceSection() {
+        /* Explicitly allow on a node for which isSyntax() == false */
         if (this instanceof RSyntaxNode) {
             if (RContext.getRRuntimeASTAccess().isReplacementNode(this)) {
                 return super.getSourceSection();
@@ -137,7 +138,8 @@ public abstract class RBaseNode extends Node {
 
     @Override
     public void assignSourceSection(SourceSection section) {
-        if (isRSyntaxNode()) {
+        /* Explicitly allow on a node for which isSyntax() == false */
+        if (this instanceof RSyntaxNode) {
             super.assignSourceSection(section);
         } else {
             throw RInternalError.shouldNotReachHere("assignSourceSection on non-syntax node");
@@ -146,7 +148,8 @@ public abstract class RBaseNode extends Node {
 
     @Override
     public void clearSourceSection() {
-        if (isRSyntaxNode()) {
+        /* Explicitly allow on a node for which isSyntax() == false */
+        if (this instanceof RSyntaxNode) {
             super.clearSourceSection();
         } else {
             /*

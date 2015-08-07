@@ -57,7 +57,9 @@ public abstract class ConstantNode extends RNode implements RSyntaxNode, Visibil
     @Override
     @TruffleBoundary
     public void deparseImpl(RDeparse.State state) {
+        state.startNodeDeparse(this);
         RDeparse.deparse2buff(state, getValue());
+        state.endNodeDeparse(this);
     }
 
     @Override
@@ -191,29 +193,33 @@ public abstract class ConstantNode extends RNode implements RSyntaxNode, Visibil
         @Override
         @TruffleBoundary
         public void deparseImpl(RDeparse.State state) {
-            if (value == RMissing.instance) {
-                // nothing to do
-            } else if (value instanceof RArgsValuesAndNames) {
-                RArgsValuesAndNames args = (RArgsValuesAndNames) value;
-                Object[] values = args.getArguments();
-                for (int i = 0; i < values.length; i++) {
-                    String name = args.getSignature().getName(i);
-                    if (name != null) {
-                        state.append(name);
-                        state.append(" = ");
-                    }
-                    Object argValue = values[i];
-                    if (argValue instanceof RSyntaxNode) {
-                        ((RSyntaxNode) argValue).deparseImpl(state);
-                    } else if (argValue instanceof RPromise) {
-                        RASTUtils.unwrap(((RPromise) argValue).getRep()).deparse(state);
-                    } else {
-                        RInternalError.shouldNotReachHere();
-                    }
-                    if (i < values.length - 1) {
-                        state.append(", ");
+            if (value == RMissing.instance || value instanceof RArgsValuesAndNames) {
+                state.startNodeDeparse(this);
+                if (value == RMissing.instance) {
+                    // nothing to do
+                } else if (value instanceof RArgsValuesAndNames) {
+                    RArgsValuesAndNames args = (RArgsValuesAndNames) value;
+                    Object[] values = args.getArguments();
+                    for (int i = 0; i < values.length; i++) {
+                        String name = args.getSignature().getName(i);
+                        if (name != null) {
+                            state.append(name);
+                            state.append(" = ");
+                        }
+                        Object argValue = values[i];
+                        if (argValue instanceof RSyntaxNode) {
+                            ((RSyntaxNode) argValue).deparseImpl(state);
+                        } else if (argValue instanceof RPromise) {
+                            RASTUtils.unwrap(((RPromise) argValue).getRep()).deparse(state);
+                        } else {
+                            RInternalError.shouldNotReachHere();
+                        }
+                        if (i < values.length - 1) {
+                            state.append(", ");
+                        }
                     }
                 }
+                state.endNodeDeparse(this);
             } else {
                 super.deparseImpl(state);
             }

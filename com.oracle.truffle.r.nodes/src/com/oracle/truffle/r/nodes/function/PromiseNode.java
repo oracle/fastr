@@ -304,7 +304,9 @@ public abstract class PromiseNode extends RNode {
         @Override
         public void deparseImpl(RDeparse.State state) {
             int num = index + 1;
+            state.startNodeDeparse(this);
             state.append((num < 10 ? ".." : ".") + num);
+            state.endNodeDeparse(this);
         }
 
         public void serializeImpl(State state) {

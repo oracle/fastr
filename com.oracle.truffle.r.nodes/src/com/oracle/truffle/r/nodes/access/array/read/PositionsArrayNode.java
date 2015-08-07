@@ -151,7 +151,9 @@ public class PositionsArrayNode extends RNode implements RSyntaxNode {
 
     @Override
     public void deparseImpl(RDeparse.State state) {
+        state.startNodeDeparse(this);
         positionsAdapter.deparse(state);
+        state.endNodeDeparse(this);
     }
 
     @Override

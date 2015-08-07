@@ -37,9 +37,7 @@ import com.oracle.truffle.r.runtime.nodes.*;
  *
  * There must be no sharing of nodes between the {@code syntaxAST} and the child nodes of the
  * ReplacementNode as this will cause runaway recursion due to the check for a node being a child of
- * a {@link ReplacementNode} in {@link RBaseNode#getRSyntaxNode}. We can't simply
- * {@link NodeUtil#cloneNode} the syntaxAST as the sharing can occur in the arguments, which are not
- * children (just as the fields of this node are not children either).
+ * a {@link ReplacementNode} in {@link RBaseNode#getRSyntaxNode}.
  */
 public class WriteReplacementNode extends RNode implements RSyntaxNode {
 
@@ -51,8 +49,8 @@ public class WriteReplacementNode extends RNode implements RSyntaxNode {
     }
 
     public WriteReplacementNode(RCallNode replacementCall, RSyntaxNode rhs) {
-        this.replacementCall = (RCallNode) updateCallNodes(replacementCall);
-        this.rhs = updateCallNodes(rhs);
+        this.replacementCall = NodeUtil.cloneNode(replacementCall);
+        this.rhs = (RSyntaxNode) NodeUtil.cloneNode(rhs.asNode());
     }
 
     public RSyntaxNode getRhs() {
@@ -66,9 +64,11 @@ public class WriteReplacementNode extends RNode implements RSyntaxNode {
 
     @Override
     public void deparseImpl(RDeparse.State state) {
+        state.startNodeDeparse(this);
         getReplacementCall().deparse(state);
         state.append(" <- ");
         getRhs().deparseImpl(state);
+        state.endNodeDeparse(this);
     }
 
     @Override
@@ -84,34 +84,6 @@ public class WriteReplacementNode extends RNode implements RSyntaxNode {
 
     public RSyntaxNode substituteImpl(REnvironment env) {
         throw RInternalError.unimplemented();
-    }
-
-    private static class CheckCallNodes implements NodeVisitor {
-        public boolean visit(Node node) {
-            if (node instanceof RCallNode) {
-                // The arguments were not cloned
-                RCallNode callNode = (RCallNode) node;
-                Arguments<RSyntaxNode> args = callNode.getArguments();
-                RSyntaxNode[] argNodes = args.getArguments();
-                RSyntaxNode[] clonedArgNodes = new RSyntaxNode[args.getLength()];
-                for (int i = 0; i < argNodes.length; i++) {
-                    if (argNodes[i] instanceof RCallNode) {
-                        clonedArgNodes[i] = updateCallNodes(argNodes[i]);
-                    } else {
-                        clonedArgNodes[i] = (RSyntaxNode) NodeUtil.cloneNode(argNodes[i].asRNode());
-                    }
-                }
-                RCallNode.updateClonedArguments(callNode, clonedArgNodes);
-            }
-            return true;
-        }
-
-    }
-
-    public static RSyntaxNode updateCallNodes(RSyntaxNode node) {
-        RNode result = NodeUtil.cloneNode(node.asRNode());
-        result.accept(new CheckCallNodes());
-        return (RSyntaxNode) result;
     }
 
 }

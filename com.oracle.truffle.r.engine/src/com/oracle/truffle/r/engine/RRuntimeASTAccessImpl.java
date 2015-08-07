@@ -472,4 +472,8 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
         return node instanceof ReplacementNode;
     }
 
+    public boolean isFunctionDefinitionNode(Node node) {
+        return node instanceof FunctionDefinitionNode;
+    }
+
 }

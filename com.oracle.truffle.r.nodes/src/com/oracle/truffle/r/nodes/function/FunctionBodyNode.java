@@ -82,7 +82,9 @@ public class FunctionBodyNode extends BodyNode implements RSyntaxNode {
     @Override
     public void deparseImpl(RDeparse.State state) {
         // Don't deparse the argument saving nodes
+        state.startNodeDeparse(this);
         statements.deparse(state);
+        state.endNodeDeparse(this);
     }
 
     @Override

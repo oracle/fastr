@@ -53,12 +53,14 @@ public class PositionsArrayNodeAdapter extends RNode implements RSyntaxNode {
 
     @Override
     public void deparseImpl(RDeparse.State state) {
+        state.startNodeDeparse(this);
         for (int i = 0; i < positions.length; i++) {
             positions[i].deparse(state);
             if (i != positions.length - 1) {
                 state.append(", ");
             }
         }
+        state.startNodeDeparse(this);
     }
 
     @Override

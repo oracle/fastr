@@ -120,9 +120,11 @@ public abstract class ColonNode extends RNode implements RSyntaxNode, Visibility
 
     @Override
     public void deparseImpl(RDeparse.State state) {
+        state.startNodeDeparse(this);
         getLeft().deparse(state);
         state.append(':');
         getRight().deparse(state);
+        state.endNodeDeparse(this);
     }
 
     @Override
@@ -214,7 +216,9 @@ public abstract class ColonNode extends RNode implements RSyntaxNode, Visibility
 
         @Override
         public void deparseImpl(State state) {
+            state.startNodeDeparse(this);
             getOperand().deparse(state);
+            state.endNodeDeparse(this);
         }
 
         @Override

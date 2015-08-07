@@ -76,7 +76,9 @@ public class WriteCurrentVariableNode extends WriteVariableNodeSyntaxHelper impl
 
     @Override
     public void deparseImpl(State state) {
+        state.startNodeDeparse(this);
         deparseHelper(state, " <- ");
+        state.endNodeDeparse(this);
     }
 
     @Override

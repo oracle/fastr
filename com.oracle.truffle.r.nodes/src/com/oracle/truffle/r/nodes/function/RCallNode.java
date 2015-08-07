@@ -174,7 +174,31 @@ public final class RCallNode extends RNode implements RSyntaxNode {
     @Child private ClassHierarchyNode classHierarchyNode;
     @Child private GroupDispatchNode groupDispatchNode;
 
-    private final RSyntaxNode[] arguments;
+    /**
+     * The {@link #arguments} field must be cloned by {@link NodeUtil#cloneNode(Node)}.
+     */
+    private static class SyntaxArguments extends NodeCloneable {
+        private final RSyntaxNode[] v;
+
+        SyntaxArguments(RSyntaxNode[] arguments) {
+            this.v = arguments;
+        }
+
+        @Override
+        protected Object clone() {
+            SyntaxArguments sa = new SyntaxArguments(new RSyntaxNode[v.length]);
+            for (int i = 0; i < v.length; i++) {
+                if (v[i] != null) {
+                    RSyntaxNode viClone = (RSyntaxNode) NodeUtil.cloneNode(v[i].asRNode());
+                    sa.v[i] = viClone;
+                }
+            }
+            return sa;
+        }
+
+    }
+
+    private final SyntaxArguments arguments;
     private final ArgumentsSignature signature;
 
     private final ValueProfile builtinProfile = ValueProfile.createIdentityProfile();
@@ -186,12 +210,12 @@ public final class RCallNode extends RNode implements RSyntaxNode {
 
     public RCallNode(RNode function, RSyntaxNode[] arguments, ArgumentsSignature signature) {
         this.functionNode = function;
-        this.arguments = arguments;
+        this.arguments = new SyntaxArguments(arguments);
         this.signature = signature;
     }
 
     public Arguments<RSyntaxNode> getArguments() {
-        return new Arguments<>(arguments, signature);
+        return new Arguments<>(arguments.v, signature);
     }
 
     @Override
@@ -208,7 +232,7 @@ public final class RCallNode extends RNode implements RSyntaxNode {
                     Object tempIdentifier = new Object();
                     dispatchTempSlot = insert(FrameSlotNode.createTemp(tempIdentifier, true));
                     internalDispatchCall = insert(new UninitializedCallNode(this, tempIdentifier));
-                    dispatchArgument = insert(NodeUtil.cloneNode(arguments[0].asRNode()));
+                    dispatchArgument = insert(NodeUtil.cloneNode(arguments.v[0].asRNode()));
                     dispatchLookup = insert(S3FunctionLookupNode.create(true, false));
                     classHierarchyNode = insert(ClassHierarchyNodeGen.create(false));
                 }
@@ -276,12 +300,12 @@ public final class RCallNode extends RNode implements RSyntaxNode {
     }
 
     public CallArgumentsNode createArguments(Object dispatchTempIdentifier, boolean modeChange, boolean modeChangeAppliesToAll) {
-        RNode[] args = new RNode[arguments.length];
-        for (int i = 0; i < arguments.length; i++) {
+        RNode[] args = new RNode[arguments.v.length];
+        for (int i = 0; i < arguments.v.length; i++) {
             if (i == 0 && dispatchTempIdentifier != null) {
-                args[0] = new GetTempNode(dispatchTempIdentifier, arguments[0]);
+                args[0] = new GetTempNode(dispatchTempIdentifier, arguments.v[0]);
             } else {
-                args[i] = arguments[i] == null ? null : NodeUtil.cloneNode(arguments[i].asRNode());
+                args[i] = arguments.v[i] == null ? null : NodeUtil.cloneNode(arguments.v[i].asRNode());
             }
         }
         return CallArgumentsNode.create(modeChange, modeChangeAppliesToAll, args, signature);
@@ -291,49 +315,54 @@ public final class RCallNode extends RNode implements RSyntaxNode {
     public void deparseImpl(RDeparse.State state) {
         Object fname = RASTUtils.findFunctionName(this);
         Func func = RASTDeparse.isInfixOperator(fname);
-        if (func != null) {
-            RASTDeparse.deparseInfixOperator(state, this, func);
-        } else {
-            if (fname instanceof RSymbol) {
-                String sfname = ((RSymbol) fname).getName();
-                if (sfname.equals(":::") || sfname.equals("::")) {
-                    // special infix, could be a:::b() or a:::b
-                    RNode fn = getFunctionNode().unwrap();
-                    RSyntaxNode[] argValues;
-                    if (fn instanceof RCallNode) {
-                        argValues = ((RCallNode) fn).arguments;
-                    } else {
-                        argValues = arguments;
-                    }
-                    argValues[0].deparseImpl(state);
-                    state.append(sfname);
-                    argValues[1].deparseImpl(state);
-                    if (!(fn instanceof RCallNode)) {
+        try {
+            state.startNodeDeparse(this);
+            if (func != null) {
+                RASTDeparse.deparseInfixOperator(state, this, func);
+            } else {
+                if (fname instanceof RSymbol) {
+                    String sfname = ((RSymbol) fname).getName();
+                    if (sfname.equals(":::") || sfname.equals("::")) {
+                        // special infix, could be a:::b() or a:::b
+                        RNode fn = getFunctionNode().unwrap();
+                        RSyntaxNode[] argValues;
+                        if (fn instanceof RCallNode) {
+                            argValues = ((RCallNode) fn).arguments.v;
+                        } else {
+                            argValues = arguments.v;
+                        }
+                        argValues[0].deparseImpl(state);
+                        state.append(sfname);
+                        argValues[1].deparseImpl(state);
+                        if (!(fn instanceof RCallNode)) {
+                            return;
+                        }
+                    } else if (sfname.equals("[<-") || sfname.equals("[[<-")) {
+                        boolean isSubset = sfname.equals("[<-");
+                        arguments.v[0].deparseImpl(state);
+                        state.append(isSubset ? "[" : "[[");
+                        for (int i = 1; i < arguments.v.length - 1; i++) {
+                            if (signature.getName(i) != null && !signature.getName(i).isEmpty()) {
+                                state.append(signature.getName(i));
+                                state.append('=');
+                            }
+                            arguments.v[i].deparseImpl(state);
+                            if (i != arguments.v.length - 2) {
+                                state.append(", ");
+                            }
+                        }
+                        state.append(isSubset ? "]" : "]]");
+                        state.append(" <- ");
+                        arguments.v[arguments.v.length - 1].deparseImpl(state);
                         return;
                     }
-                } else if (sfname.equals("[<-") || sfname.equals("[[<-")) {
-                    boolean isSubset = sfname.equals("[<-");
-                    arguments[0].deparseImpl(state);
-                    state.append(isSubset ? "[" : "[[");
-                    for (int i = 1; i < arguments.length - 1; i++) {
-                        if (signature.getName(i) != null && !signature.getName(i).isEmpty()) {
-                            state.append(signature.getName(i));
-                            state.append('=');
-                        }
-                        arguments[i].deparseImpl(state);
-                        if (i != arguments.length - 2) {
-                            state.append(", ");
-                        }
-                    }
-                    state.append(isSubset ? "]" : "]]");
-                    state.append(" <- ");
-                    arguments[arguments.length - 1].deparseImpl(state);
-                    return;
                 }
-            }
-            getFunctionNode().deparse(state);
+                getFunctionNode().deparse(state);
 
-            deparseArguments(state, arguments, signature);
+                deparseArguments(state, arguments.v, signature);
+            }
+        } finally {
+            state.endNodeDeparse(this);
         }
     }
 
@@ -364,13 +393,13 @@ public final class RCallNode extends RNode implements RSyntaxNode {
         if (isColon(functionNode)) {
             // special case, have to translate Strings to Symbols
             state.openPairList();
-            state.setCarAsSymbol((String) ((ConstantNode) arguments[0]).getValue());
+            state.setCarAsSymbol((String) ((ConstantNode) arguments.v[0]).getValue());
             state.openPairList();
-            state.setCarAsSymbol((String) ((ConstantNode) arguments[1]).getValue());
+            state.setCarAsSymbol((String) ((ConstantNode) arguments.v[1]).getValue());
             state.linkPairList(2);
             state.setCdr(state.closePairList());
         } else {
-            serializeArguments(state, arguments, signature);
+            serializeArguments(state, arguments.v, signature);
         }
     }
 
@@ -413,7 +442,7 @@ public final class RCallNode extends RNode implements RSyntaxNode {
     public RSyntaxNode substituteImpl(REnvironment env) {
         RNode functionSub = getFunctionNode().substitute(env).asRNode();
 
-        Arguments<RSyntaxNode> argsSub = substituteArguments(env, arguments, signature);
+        Arguments<RSyntaxNode> argsSub = substituteArguments(env, arguments.v, signature);
         return RASTUtils.createCall(functionSub, argsSub.getSignature(), argsSub.getArguments());
     }
 
@@ -467,9 +496,9 @@ public final class RCallNode extends RNode implements RSyntaxNode {
      */
     @TruffleBoundary
     public static RCallNode createCloneReplacingArgs(RCallNode call, RSyntaxNode... replacementArgs) {
-        RSyntaxNode[] args = new RSyntaxNode[call.arguments.length];
+        RSyntaxNode[] args = new RSyntaxNode[call.arguments.v.length];
         for (int i = 0; i < args.length; i++) {
-            args[i] = i < replacementArgs.length ? replacementArgs[i] : call.arguments[i];
+            args[i] = i < replacementArgs.length ? replacementArgs[i] : call.arguments.v[i];
         }
         return new RCallNode(NodeUtil.cloneNode(call.functionNode), args, call.signature);
     }
@@ -505,8 +534,8 @@ public final class RCallNode extends RNode implements RSyntaxNode {
      * {@code ReplacementNode}.
      */
     public static void updateClonedArguments(RCallNode call, RSyntaxNode[] clonedArguments) {
-        for (int i = 0; i < call.arguments.length; i++) {
-            call.arguments[i] = clonedArguments[i];
+        for (int i = 0; i < call.arguments.v.length; i++) {
+            call.arguments.v[i] = clonedArguments[i];
         }
     }
 

@@ -38,15 +38,12 @@ public class RASTDeparse {
     /**
      * Ensure that {@code node} has a {@link SourceSection} by deparsing if necessary.
      */
-    public static void ensureSourceSection(RSyntaxNode nodeIn) {
-        SourceSection ss = nodeIn.getSourceSection();
+    public static void ensureSourceSection(RSyntaxNode node) {
+        SourceSection ss = node.getSourceSection();
         if (ss == null) {
-            RBaseNode node = RASTUtils.unwrap(nodeIn);
-            RDeparse.State state = RDeparse.State.createPrintableState();
-            node.deparse(state);
-            String sourceString = state.toString();
-            Source source = Source.fromText(sourceString, "ensureSource");
-            nodeIn.asRNode().assignSourceSection(source.createSection("", 0, sourceString.length()));
+            RDeparse.State state = RDeparse.State.createPrintableStateWithSource();
+            node.deparseImpl(state);
+            state.assignSourceSections();
         }
     }
 

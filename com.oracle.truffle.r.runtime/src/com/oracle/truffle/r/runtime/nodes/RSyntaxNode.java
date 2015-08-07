@@ -64,6 +64,13 @@ public interface RSyntaxNode extends RSyntaxNodeSPI {
     }
 
     /**
+     * Similar but handles {@code FunctionDefinitionNode}.
+     */
+    default Node asNode() {
+        return (Node) this;
+    }
+
+    /**
      * Denotes that this node is part of the "backbone" of the AST, but carries no useful syntactic
      * information.
      */
@@ -79,11 +86,21 @@ public interface RSyntaxNode extends RSyntaxNodeSPI {
         return true;
     }
 
-    /**
-     * Convenience method.
+    /*
+     * Convenience methods that also handle the fact that an {@code FunctionDefinitionNode} is not
+     * an {@code RNode}.
      */
+
     default SourceSection getSourceSection() {
-        return (asRNode().getSourceSection());
+        return (asNode().getSourceSection());
+    }
+
+    default void clearSourceSection() {
+        asNode().clearSourceSection();
+    }
+
+    default void assignSourceSection(SourceSection section) {
+        asNode().assignSourceSection(section);
     }
 
     /**

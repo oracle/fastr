@@ -86,8 +86,10 @@ public class ReadVariadicComponentNode extends RNode implements RSyntaxNode {
 
     @Override
     public void deparseImpl(State state) {
+        state.startNodeDeparse(this);
         state.append("..");
         state.append(Integer.toString(index + 1));
+        state.endNodeDeparse(this);
     }
 
     public RSyntaxNode substituteImpl(REnvironment env) {

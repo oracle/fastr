@@ -242,6 +242,7 @@ public abstract class RBuiltinNode extends RNode implements RSyntaxNode, Visibil
 
     @Override
     public void deparseImpl(RDeparse.State state) {
+        state.startNodeDeparse(this);
         assert getBuiltin().getKind() == RBuiltinKind.INTERNAL;
         state.append(".Internal(");
         state.append(getBuiltin().getName());
@@ -249,6 +250,7 @@ public abstract class RBuiltinNode extends RNode implements RSyntaxNode, Visibil
         RSyntaxNode[] args = Arrays.copyOf(getArguments(), getArguments().length, RSyntaxNode[].class);
         RCallNode.deparseArguments(state, args, getSuppliedSignature());
         state.append(')');
+        state.endNodeDeparse(this);
     }
 
     @Override

@@ -322,6 +322,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
 
     public void deparseImpl(RDeparse.State state) {
         // TODO linebreaks
+        state.startNodeDeparse(this);
         state.append("function (");
         FormalArguments formals = getFormalArguments();
         int formalsLength = formals.getSignature().getLength();
@@ -341,6 +342,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         state.writeline();
         body.deparse(state);
         state.decIndentWriteCloseCurly();
+        state.endNodeDeparse(this);
     }
 
     @Override

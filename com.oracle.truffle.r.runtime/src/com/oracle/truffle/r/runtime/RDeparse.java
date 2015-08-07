@@ -16,9 +16,11 @@ import java.util.*;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
 import com.oracle.truffle.r.runtime.gnur.*;
+import com.oracle.truffle.r.runtime.nodes.*;
 
 /**
  * Deparsing R objects.
@@ -216,6 +218,20 @@ public class RDeparse {
         @SuppressWarnings("unused") private int isS4;
         private boolean changed;
 
+        private static class NodeSourceInfo {
+            private final int startCharIndex;
+            private int endCharIndex;
+
+            NodeSourceInfo(int startCharIndex) {
+                this.startCharIndex = startCharIndex;
+            }
+        }
+
+        /**
+         * Used when generating {@link SourceSection}s during deparse.
+         */
+        private HashMap<RSyntaxNode, NodeSourceInfo> nodeMap;
+
         private State(int widthCutOff, boolean backtick, int maxlines, int opts, boolean needVector) {
             this.cutoff = widthCutOff;
             this.backtick = backtick;
@@ -225,11 +241,13 @@ public class RDeparse {
         }
 
         public static State createPrintableState() {
-            return createPrintableState(false);
+            return new RDeparse.State(RDeparse.MAX_Cutoff, false, -1, 0, false);
         }
 
-        public static State createPrintableState(boolean backTick) {
-            return new RDeparse.State(RDeparse.MAX_Cutoff, backTick, -1, 0, false);
+        public static State createPrintableStateWithSource() {
+            State result = new RDeparse.State(RDeparse.MAX_Cutoff, false, -1, 0, false);
+            result.nodeMap = new HashMap<>();
+            return result;
         }
 
         private void preAppend() {
@@ -341,6 +359,57 @@ public class RDeparse {
 
         boolean showAttributes() {
             return (opts & SHOWATTRIBUTES) != 0;
+        }
+
+        private int dIndent = 0;
+
+        private void dIndent() {
+            for (int i = 0; i < dIndent; i++) {
+                System.out.print(' ');
+            }
+        }
+
+        @SuppressWarnings("unused")
+        private void trace(boolean enter, RSyntaxNode node) {
+            String ms;
+            if (enter) {
+                ms = "start";
+                dIndent();
+                dIndent += 2;
+            } else {
+                ms = "end";
+                dIndent -= 2;
+                dIndent();
+            }
+            System.out.printf("%sNodeDeparse (%d): %s%n", ms, +sb.length(), node);
+        }
+
+        public void startNodeDeparse(RSyntaxNode node) {
+            if (nodeMap != null) {
+                // trace(true, node);
+                nodeMap.put(node, new NodeSourceInfo(sb.length()));
+            }
+        }
+
+        public void endNodeDeparse(RSyntaxNode node) {
+            if (nodeMap != null) {
+                // trace(false, node);
+                NodeSourceInfo nsi = nodeMap.get(node);
+                nsi.endCharIndex = sb.length();
+            }
+        }
+
+        public void assignSourceSections() {
+            assert nodeMap != null;
+            String sourceString = toString();
+            Source source = Source.fromText(sourceString, "deparse");
+            for (Map.Entry<RSyntaxNode, NodeSourceInfo> entry : nodeMap.entrySet()) {
+                RSyntaxNode node = entry.getKey();
+                NodeSourceInfo nsi = entry.getValue();
+                // may have had one initially
+                node.asNode().clearSourceSection();
+                node.asNode().assignSourceSection(source.createSection("", nsi.startCharIndex, nsi.endCharIndex - nsi.startCharIndex));
+            }
         }
     }
 

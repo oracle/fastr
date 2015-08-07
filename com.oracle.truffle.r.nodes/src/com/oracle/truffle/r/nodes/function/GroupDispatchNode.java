@@ -83,6 +83,7 @@ public final class GroupDispatchNode extends RNode implements RSyntaxNode {
     public void deparseImpl(RDeparse.State state) {
         String name = getGenericName();
         RDeparse.Func func = RDeparse.getFunc(name);
+        state.startNodeDeparse(this);
         if (func != null) {
             // infix operator
             RASTDeparse.deparseInfixOperator(state, this, func);
@@ -90,6 +91,7 @@ public final class GroupDispatchNode extends RNode implements RSyntaxNode {
             state.append(name);
             RCallNode.deparseArguments(state, callArgsNode.getSyntaxArguments(), callArgsNode.signature);
         }
+        state.endNodeDeparse(this);
     }
 
     @Override

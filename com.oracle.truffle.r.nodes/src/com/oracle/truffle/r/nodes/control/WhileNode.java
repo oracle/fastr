@@ -78,6 +78,7 @@ public final class WhileNode extends AbstractLoopNode implements RSyntaxNode, Vi
 
     @Override
     public void deparseImpl(RDeparse.State state) {
+        state.startNodeDeparse(this);
         if (isRepeat) {
             state.append("repeat ");
         } else {
@@ -88,6 +89,7 @@ public final class WhileNode extends AbstractLoopNode implements RSyntaxNode, Vi
         state.writeOpenCurlyNLIncIndent();
         getBody().deparse(state);
         state.decIndentWriteCloseCurly();
+        state.endNodeDeparse(this);
     }
 
     @Override

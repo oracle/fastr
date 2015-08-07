@@ -24,6 +24,7 @@ package com.oracle.truffle.r.nodes.control;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.runtime.*;
@@ -59,10 +60,12 @@ public final class ReplacementNode extends RNode implements RSyntaxNode {
     }
 
     public void setSyntaxAST(RSyntaxNode syntaxAST) {
-        if (!(syntaxAST instanceof WriteReplacementNode)) {
-            this.syntaxAST = WriteReplacementNode.updateCallNodes(syntaxAST);
-        } else {
+        // No sharing between syntaxAST and child nodes
+        if (syntaxAST instanceof WriteReplacementNode) {
+            // already taken care of
             this.syntaxAST = syntaxAST;
+        } else {
+            this.syntaxAST = (RSyntaxNode) NodeUtil.cloneNode(syntaxAST.asNode());
         }
     }
 
@@ -77,7 +80,9 @@ public final class ReplacementNode extends RNode implements RSyntaxNode {
 
     @Override
     public void deparseImpl(RDeparse.State state) {
+        state.startNodeDeparse(this);
         syntaxAST.deparseImpl(state);
+        state.endNodeDeparse(this);
     }
 
     private static ReplacementNode current;

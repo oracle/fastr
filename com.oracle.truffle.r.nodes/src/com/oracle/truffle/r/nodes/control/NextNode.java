@@ -42,7 +42,9 @@ public final class NextNode extends RNode implements RSyntaxNode, VisibilityCont
 
     @Override
     public void deparseImpl(RDeparse.State state) {
+        state.startNodeDeparse(this);
         state.append("next");
+        state.endNodeDeparse(this);
     }
 
     @Override

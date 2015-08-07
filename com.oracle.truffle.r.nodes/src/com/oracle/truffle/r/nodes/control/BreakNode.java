@@ -36,7 +36,9 @@ public final class BreakNode extends RNode implements RSyntaxNode, VisibilityCon
 
     @Override
     public void deparseImpl(RDeparse.State state) {
+        state.startNodeDeparse(this);
         state.append("break");
+        state.endNodeDeparse(this);
     }
 
     @Override

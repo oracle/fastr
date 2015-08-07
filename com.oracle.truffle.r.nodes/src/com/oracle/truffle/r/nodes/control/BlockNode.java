@@ -69,6 +69,7 @@ public class BlockNode extends SequenceNode implements RSyntaxNode {
     @TruffleBoundary
     @Override
     public void deparseImpl(RDeparse.State state) {
+        state.startNodeDeparse(this);
         for (int i = 0; i < sequence.length; i++) {
             state.mark();
             sequence[i].deparse(state);
@@ -78,6 +79,7 @@ public class BlockNode extends SequenceNode implements RSyntaxNode {
                 state.mark(); // in case last
             }
         }
+        state.endNodeDeparse(this);
     }
 
     @Override

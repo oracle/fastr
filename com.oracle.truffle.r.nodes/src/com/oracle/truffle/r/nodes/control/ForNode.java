@@ -85,6 +85,7 @@ public final class ForNode extends AbstractLoopNode implements VisibilityControl
 
     @Override
     public void deparseImpl(RDeparse.State state) {
+        state.startNodeDeparse(this);
         state.append("for (");
         getCvar().deparse(state);
         state.append(" in ");
@@ -93,6 +94,7 @@ public final class ForNode extends AbstractLoopNode implements VisibilityControl
         state.writeOpenCurlyNLIncIndent();
         getBody().deparse(state);
         state.decIndentWriteCloseCurly();
+        state.endNodeDeparse(this);
     }
 
     @Override
