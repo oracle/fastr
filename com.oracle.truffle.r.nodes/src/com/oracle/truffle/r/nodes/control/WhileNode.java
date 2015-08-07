@@ -125,6 +125,8 @@ public final class WhileNode extends AbstractLoopNode implements RSyntaxNode, Vi
         public WhileRepeatingNode(ConvertBooleanNode condition, RNode body) {
             this.condition = condition;
             this.body = body;
+            // pre-initialize the profile so that loop exits to not deoptimize
+            conditionProfile.profile(false);
         }
 
         public RNode getBody() {

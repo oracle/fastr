@@ -121,11 +121,14 @@ public class HiddenInternalFunctions {
                 String expsym = expNames.getDataAt(i);
                 Object binding = null;
                 // TODO name translation, and a bunch of other special cases
-                for (REnvironment env = expEnv; env != REnvironment.emptyEnv() && binding == null; env = env.getParent()) {
+                for (REnvironment env = expEnv; env != REnvironment.emptyEnv(); env = env.getParent()) {
                     if (env == REnvironment.baseNamespaceEnv()) {
                         assert false;
                     } else {
                         binding = env.get(expsym);
+                        if (binding != null) {
+                            break;
+                        }
                     }
                 }
                 try {

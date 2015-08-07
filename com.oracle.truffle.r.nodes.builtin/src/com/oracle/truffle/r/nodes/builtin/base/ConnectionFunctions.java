@@ -35,6 +35,7 @@ import java.util.zip.*;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.builtin.base.ConnectionFunctionsFactory.WriteDataNodeGen;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.BaseRConnection;
 import com.oracle.truffle.r.runtime.conn.FileConnections.FileRConnection;
@@ -46,6 +47,7 @@ import com.oracle.truffle.r.runtime.conn.URLConnections.URLRConnection;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
+import com.oracle.truffle.r.runtime.nodes.*;
 
 /**
  * The builtins for connections.
@@ -785,85 +787,59 @@ public abstract class ConnectionFunctions {
         }
     }
 
-    @RBuiltin(name = "writeBin", kind = INTERNAL, parameterNames = {"object", "con", "size", "swap", "useBytes"})
-    public abstract static class WriteBin extends InternalCloseHelper {
-        @TruffleBoundary
-        @Specialization
-        protected Object writeBin(RAbstractVector object, RConnection con, int size, byte swapArg, byte useBytesArg) {
-            boolean swap = RRuntime.fromLogical(swapArg);
-            boolean useBytes = RRuntime.fromLogical(useBytesArg);
-            if (object.getLength() > 0) {
-                try (RConnection openConn = con.forceOpen("wb")) {
-                    if (getBaseConnection(openConn).isTextMode()) {
-                        throw RError.error(this, RError.Message.ONLY_WRITE_BINARY_CONNECTION);
-                    }
-                    if (object instanceof RAbstractIntVector) {
-                        writeInteger((RAbstractIntVector) object, con, size, swap);
-                    } else if (object instanceof RAbstractDoubleVector) {
-                        writeDouble((RAbstractDoubleVector) object, con, size, swap);
-                    } else if (object instanceof RAbstractComplexVector) {
-                        writeComplex((RAbstractComplexVector) object, con, size, swap);
-                    } else if (object instanceof RAbstractStringVector) {
-                        writeString((RAbstractStringVector) object, con, size, swap, useBytes);
-                    } else if (object instanceof RAbstractStringVector) {
-                        writeLogical((RAbstractLogicalVector) object, con, size, swap);
-                    } else if (object instanceof RRawVector) {
-                        writeRaw((RAbstractRawVector) object, con, size, swap);
-                    } else {
-                        throw RError.nyi(this, "vector type");
-                    }
-                } catch (IOException x) {
-                    throw RError.error(this, RError.Message.ERROR_WRITING_CONNECTION, x.getMessage());
-                }
-            }
-            forceVisibility(false);
-            return RNull.instance;
+    @TypeSystemReference(RTypes.class)
+    public abstract static class WriteDataNode extends RBaseNode {
+
+        public abstract ByteBuffer execute(Object value, int size, boolean swap, boolean useBytes);
+
+        public static WriteDataNode create() {
+            return WriteDataNodeGen.create();
         }
 
-        @SuppressWarnings("unused")
-        private static void writeInteger(RAbstractIntVector object, RConnection con, int size, boolean swap) throws IOException {
+        private static ByteBuffer allocate(int capacity, boolean swap) {
+            ByteBuffer buffer = ByteBuffer.allocate(capacity);
+            checkOrder(buffer, swap);
+            return buffer;
+        }
+
+        @Specialization
+        protected ByteBuffer writeInteger(RAbstractIntVector object, @SuppressWarnings("unused") int size, boolean swap, @SuppressWarnings("unused") boolean useBytes) {
             int length = object.getLength();
-            ByteBuffer buffer = ByteBuffer.allocate(4 * length);
-            IntBuffer intBuffer = checkOrder(buffer, swap).asIntBuffer();
+            ByteBuffer buffer = allocate(4 * length, swap);
             for (int i = 0; i < length; i++) {
                 int value = object.getDataAt(i);
-                intBuffer.put(value);
+                buffer.putInt(value);
             }
-            // The underlying buffer offset/position is independent of IntBuffer, so no flip
-            con.writeBin(buffer);
+            return buffer;
         }
 
-        @SuppressWarnings("unused")
-        private static void writeDouble(RAbstractDoubleVector object, RConnection con, int size, boolean swap) throws IOException {
+        @Specialization
+        protected ByteBuffer writeDouble(RAbstractDoubleVector object, @SuppressWarnings("unused") int size, boolean swap, @SuppressWarnings("unused") boolean useBytes) {
             int length = object.getLength();
-            ByteBuffer buffer = ByteBuffer.allocate(8 * length);
-            DoubleBuffer doubleBuffer = checkOrder(buffer, swap).asDoubleBuffer();
+            ByteBuffer buffer = allocate(8 * length, swap);
             for (int i = 0; i < length; i++) {
                 double value = object.getDataAt(i);
-                doubleBuffer.put(value);
+                buffer.putDouble(value);
             }
-            // The underlying buffer offset/position is independent of DoubleBuffer, so no flip
-            con.writeBin(buffer);
+            return buffer;
         }
 
-        @SuppressWarnings("unused")
-        private static void writeComplex(RAbstractComplexVector object, RConnection con, int size, boolean swap) throws IOException {
+        @Specialization
+        protected ByteBuffer writeComplex(RAbstractComplexVector object, @SuppressWarnings("unused") int size, boolean swap, @SuppressWarnings("unused") boolean useBytes) {
             int length = object.getLength();
-            ByteBuffer buffer = ByteBuffer.allocate(16 * length);
-            DoubleBuffer doubleBuffer = checkOrder(buffer, swap).asDoubleBuffer();
+            ByteBuffer buffer = allocate(16 * length, swap);
             for (int i = 0; i < length; i++) {
                 RComplex complex = object.getDataAt(i);
                 double re = complex.getRealPart();
                 double im = complex.getImaginaryPart();
-                doubleBuffer.put(re);
-                doubleBuffer.put(im);
+                buffer.putDouble(re);
+                buffer.putDouble(im);
             }
-            // The underlying buffer offset/position is independent of DoubleBuffer, so no flip
-            con.writeBin(buffer);
+            return buffer;
         }
 
-        @SuppressWarnings("unused")
-        private static void writeString(RAbstractStringVector object, RConnection con, int size, boolean swap, boolean useBytes) throws IOException {
+        @Specialization
+        protected ByteBuffer writeString(RAbstractStringVector object, @SuppressWarnings("unused") int size, boolean swap, @SuppressWarnings("unused") boolean useBytes) {
             int length = object.getLength();
             byte[][] data = new byte[length][];
             int totalLength = 0;
@@ -874,41 +850,84 @@ public abstract class ConnectionFunctions {
                 totalLength = totalLength + data[i].length + 1; // zero pad
             }
 
-            ByteBuffer buffer = ByteBuffer.allocate(totalLength);
+            ByteBuffer buffer = allocate(totalLength, swap);
             for (int i = 0; i < length; i++) {
                 buffer.put(data[i]);
                 buffer.put((byte) 0);
             }
-            buffer.flip();
-            con.writeBin(buffer);
+            return buffer;
         }
 
-        @SuppressWarnings("unused")
-        private static void writeLogical(RAbstractLogicalVector object, RConnection con, int size, boolean swap) throws IOException {
+        @Specialization
+        protected ByteBuffer writeLogical(RAbstractLogicalVector object, @SuppressWarnings("unused") int size, boolean swap, @SuppressWarnings("unused") boolean useBytes) {
             // encoded as ints, with FALSE=0, TRUE=1, NA=Integer_NA_
             int length = object.getLength();
-            ByteBuffer buffer = ByteBuffer.allocate(length * 4);
-            IntBuffer intBuffer = checkOrder(buffer, swap).asIntBuffer();
+            ByteBuffer buffer = allocate(4 * length, swap);
             for (int i = 0; i < length; i++) {
                 byte value = object.getDataAt(i);
                 int encoded = RRuntime.isNA(value) ? RRuntime.INT_NA : value == RRuntime.LOGICAL_FALSE ? 0 : 1;
-                intBuffer.put(encoded);
+                buffer.putInt(encoded);
             }
-            con.writeBin(buffer);
-
+            return buffer;
         }
 
-        @SuppressWarnings("unused")
-        private static void writeRaw(RAbstractRawVector object, RConnection con, int size, boolean swap) throws IOException {
+        @Specialization
+        protected ByteBuffer writeRaw(RAbstractRawVector object, @SuppressWarnings("unused") int size, boolean swap, @SuppressWarnings("unused") boolean useBytes) {
             int length = object.getLength();
-            ByteBuffer buffer = ByteBuffer.allocate(length);
+            ByteBuffer buffer = allocate(length, swap);
             for (int i = 0; i < length; i++) {
                 RRaw value = object.getDataAt(i);
                 buffer.put(value.getValue());
             }
-            buffer.flip();
-            con.writeBin(buffer);
+            return buffer;
+        }
 
+        @SuppressWarnings("unused")
+        @Fallback
+        protected ByteBuffer fallback(Object value, int size, boolean swap, boolean useBytes) {
+            throw RError.nyi(this, "vector type");
+        }
+    }
+
+    @RBuiltin(name = "writeBin", kind = INTERNAL, parameterNames = {"object", "con", "size", "swap", "useBytes"})
+    public abstract static class WriteBin extends InternalCloseHelper {
+
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.firstIntegerWithError(2, null, null);
+        }
+
+        @TruffleBoundary
+        @Specialization
+        protected Object writeBin(RAbstractVector object, RConnection con, int size, byte swapArg, byte useBytesArg, //
+                        @Cached("create()") WriteDataNode writeData) {
+            boolean swap = RRuntime.fromLogical(swapArg);
+            boolean useBytes = RRuntime.fromLogical(useBytesArg);
+            if (object.getLength() > 0) {
+                try (RConnection openConn = con.forceOpen("wb")) {
+                    if (getBaseConnection(openConn).isTextMode()) {
+                        throw RError.error(this, RError.Message.ONLY_WRITE_BINARY_CONNECTION);
+                    }
+                    ByteBuffer buffer = writeData.execute(object, size, swap, useBytes);
+                    buffer.flip();
+                    con.writeBin(buffer);
+                } catch (IOException x) {
+                    throw RError.error(this, RError.Message.ERROR_WRITING_CONNECTION, x.getMessage());
+                }
+            }
+            forceVisibility(false);
+            return RNull.instance;
+        }
+
+        @Specialization
+        protected RRawVector writeBin(RAbstractVector object, @SuppressWarnings("unused") RAbstractRawVector con, int size, byte swapArg, byte useBytesArg, //
+                        @Cached("create()") WriteDataNode writeData) {
+            boolean swap = RRuntime.fromLogical(swapArg);
+            boolean useBytes = RRuntime.fromLogical(useBytesArg);
+            ByteBuffer buffer = writeData.execute(object, size, swap, useBytes);
+            buffer.flip();
+            forceVisibility(false);
+            return RDataFactory.createRawVector(buffer.array());
         }
     }
 

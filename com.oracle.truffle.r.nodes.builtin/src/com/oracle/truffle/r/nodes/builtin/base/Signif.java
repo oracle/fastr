@@ -26,6 +26,7 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import java.math.*;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -66,20 +67,27 @@ public abstract class Signif extends RBuiltinNode {
         naCheck.enable(x);
         for (int i = 0; i < x.getLength(); i++) {
             double val = x.getDataAt(i);
+            double result;
             if (naCheck.check(val)) {
-                data[i] = RRuntime.DOUBLE_NA;
+                result = RRuntime.DOUBLE_NA;
             } else {
                 if (infProfile.profile(Double.isInfinite(val))) {
-                    data[i] = Double.POSITIVE_INFINITY;
+                    result = Double.POSITIVE_INFINITY;
                 } else {
-                    BigDecimal bigDecimalVal = new BigDecimal(val, new MathContext(digits, RoundingMode.HALF_UP));
-                    data[i] = bigDecimalVal.doubleValue();
+                    result = bigIntegerSignif(digits, val);
                 }
             }
+            data[i] = result;
         }
         RDoubleVector ret = RDataFactory.createDoubleVector(data, naCheck.neverSeenNA());
         ret.copyAttributesFrom(attrProfiles, x);
         return ret;
+    }
+
+    @TruffleBoundary
+    private static double bigIntegerSignif(int digits, double val) {
+        BigDecimal bigDecimalVal = new BigDecimal(val, new MathContext(digits, RoundingMode.HALF_UP));
+        return bigDecimalVal.doubleValue();
     }
 
     @Specialization(guards = "digits.getLength() == 1")

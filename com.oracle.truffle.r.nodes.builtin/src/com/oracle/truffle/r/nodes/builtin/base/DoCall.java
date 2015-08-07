@@ -131,7 +131,7 @@ public abstract class DoCall extends RBuiltinNode {
                     argValues[i] = promiseHelper.evaluate(frame, (RPromise) arg);
                 }
             }
-            return groupDispatch.executeDynamic(frame, new RArgsValuesAndNames(argValues, signature), builtin.getName(), builtin.getGroup(), func);
+            return groupDispatch.executeDynamic(frame, new RArgsValuesAndNames(argValues, signature), builtin.getName().intern(), builtin.getGroup(), func);
         }
         EvaluatedArguments evaledArgs = EvaluatedArguments.create(argValues, signature);
         EvaluatedArguments reorderedArgs = ArgumentMatcher.matchArgumentsEvaluated(func, evaledArgs, this, false);

@@ -23,13 +23,20 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.r.nodes.binary.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.ops.*;
 
-@RBuiltin(name = "trunc", kind = RBuiltinKind.PRIMITIVE, parameterNames = {})
+@RBuiltin(name = "trunc", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x"})
 public abstract class Trunc extends RBuiltinNode {
+
+    @Child private BoxPrimitiveNode boxPrimitive = BoxPrimitiveNodeGen.create();
+    @Child private UnaryArithmeticNode trunc = UnaryArithmeticNodeGen.create(UnaryArithmetic.TRUNC, RError.Message.NON_NUMERIC_MATH);
+
     @Specialization
-    protected Object trunc(@SuppressWarnings("unused") Object x) {
-        throw RError.nyi(this, "trunc");
+    protected Object trunc(Object value) {
+        return trunc.execute(boxPrimitive.execute(value));
     }
 }

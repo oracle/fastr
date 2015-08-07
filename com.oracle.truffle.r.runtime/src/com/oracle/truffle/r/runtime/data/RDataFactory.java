@@ -440,7 +440,7 @@ public final class RDataFactory {
     }
 
     public static REnvironment createInternalEnv() {
-        return traceDataCreated(new REnvironment.NewInternalEnv());
+        return traceDataCreated(new REnvironment.NewEnv(null, RRuntime.createNonFunctionFrame().materialize(), REnvironment.UNNAMED, false, 0));
     }
 
     public static REnvironment createNewEnv(REnvironment parent, String name) {

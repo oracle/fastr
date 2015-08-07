@@ -137,7 +137,7 @@ public abstract class FrameSlotNode extends RBaseNode {
                 if (frameSlot != null) {
                     return replace(new PresentFrameSlotNode(frameSlot)).hasValue(frame);
                 } else {
-                    assumption = frame.getFrameDescriptor().getVersion();
+                    assumption = getAssumption(frame.getFrameDescriptor(), identifier);
                 }
             }
             return false;

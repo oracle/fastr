@@ -395,6 +395,7 @@ public class BasePackage extends RBuiltinPackage {
         add(RVersion.class, RVersionNodeGen::create);
         add(RawFunctions.CharToRaw.class, RawFunctionsFactory.CharToRawNodeGen::create);
         add(RawFunctions.RawToChar.class, RawFunctionsFactory.RawToCharNodeGen::create);
+        add(RawFunctions.RawShift.class, RawFunctionsFactory.RawShiftNodeGen::create);
         add(Re.class, ReNodeGen::create);
         add(ReadDCF.class, ReadDCFNodeGen::create);
         add(ReadREnviron.class, ReadREnvironNodeGen::create);

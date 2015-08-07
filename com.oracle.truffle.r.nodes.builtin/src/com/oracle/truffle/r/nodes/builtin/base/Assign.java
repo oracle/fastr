@@ -77,14 +77,14 @@ public abstract class Assign extends RInvisibleBuiltinNode {
         controlVisibility();
         String x = checkVariable(xVec);
         REnvironment env = envir;
-        while (env != null) {
+        while (env != REnvironment.emptyEnv()) {
             if (env.get(x) != null) {
                 break;
             }
             env = env.getParent();
         }
         try {
-            if (env != null) {
+            if (env != REnvironment.emptyEnv()) {
                 env.put(x, value);
             } else {
                 REnvironment.globalEnv().put(x, value);

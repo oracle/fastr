@@ -35,10 +35,22 @@ import com.oracle.truffle.r.runtime.data.model.*;
 
 public class StdConnections implements RContext.StateFactory {
 
+    private static class Diversion {
+        final RConnection conn;
+        final boolean closeOnExit;
+
+        Diversion(RConnection conn, boolean closeOnExit) {
+            this.conn = conn;
+            this.closeOnExit = closeOnExit;
+        }
+    }
+
     private static class ContextStateImpl implements RContext.ContextState {
         private final StdinConnection stdin;
         private final StdoutConnection stdout;
         private final StderrConnection stderr;
+        private final Diversion[] diversions = new Diversion[20];
+        private int top = -1;
 
         ContextStateImpl(StdinConnection stdin, StdoutConnection stdout, StderrConnection stderr) {
             this.stdin = stdin;
@@ -231,27 +243,12 @@ public class StdConnections implements RContext.StateFactory {
 
     private static class StdoutConnection extends StdoutputAdapter {
 
-        private static class Diversion {
-            final RConnection conn;
-            final boolean closeOnExit;
-
-            Diversion(RConnection conn, boolean closeOnExit) {
-                this.conn = conn;
-                this.closeOnExit = closeOnExit;
-            }
-
-        }
-
-        private static final Diversion[] diversions = new Diversion[20];
-
-        private static int top = -1;
-
         StdoutConnection(ConsoleHandler consoleHandler) throws IOException {
             super(1, consoleHandler);
         }
 
         int numDiversions() {
-            return top + 1;
+            return getContextState().top + 1;
         }
 
         @Override
@@ -261,10 +258,11 @@ public class StdConnections implements RContext.StateFactory {
 
         @Override
         public void flush() throws IOException {
-            if (top < 0) {
+            ContextStateImpl state = getContextState();
+            if (state.top < 0) {
                 // no API to flush console
             } else {
-                diversions[top].conn.flush();
+                state.diversions[state.top].conn.flush();
             }
         }
 
@@ -273,34 +271,37 @@ public class StdConnections implements RContext.StateFactory {
             /*
              * It is more efficient to test for diversion, as this is the most common entry point.
              */
-            if (top < 0) {
+            ContextStateImpl state = getContextState();
+            if (state.top < 0) {
                 for (int i = 0; i < lines.getLength(); i++) {
                     String line = lines.getDataAt(i);
                     writeString(line, false);
                     writeString(sep, false);
                 }
             } else {
-                diversions[top].conn.writeLines(lines, sep, useBytes);
+                getContextState().diversions[state.top].conn.writeLines(lines, sep, useBytes);
             }
         }
 
         @Override
         public void writeString(String s, boolean nl) throws IOException {
-            if (top < 0) {
+            ContextStateImpl state = getContextState();
+            if (state.top < 0) {
                 if (nl) {
                     consoleHandler.println(s);
                 } else {
                     consoleHandler.print(s);
                 }
             } else {
-                diversions[top].conn.writeString(s, nl);
+                getContextState().diversions[state.top].conn.writeString(s, nl);
             }
         }
 
         boolean pushDivert(RConnection conn, boolean closeOnExit) {
-            if (top < diversions.length - 1) {
-                top++;
-                diversions[top] = new Diversion(conn, closeOnExit);
+            ContextStateImpl state = getContextState();
+            if (state.top < state.diversions.length - 1) {
+                state.top++;
+                state.diversions[state.top] = new Diversion(conn, closeOnExit);
             } else {
                 return false;
             }
@@ -308,11 +309,12 @@ public class StdConnections implements RContext.StateFactory {
         }
 
         void popDivert() throws IOException {
-            if (top >= 0) {
-                int ctop = top;
-                top--;
-                if (diversions[ctop].closeOnExit) {
-                    diversions[ctop].conn.closeAndDestroy();
+            ContextStateImpl state = getContextState();
+            if (state.top >= 0) {
+                int ctop = state.top;
+                state.top--;
+                if (state.diversions[ctop].closeOnExit) {
+                    state.diversions[ctop].conn.closeAndDestroy();
                 }
             }
         }

@@ -27,6 +27,8 @@ import com.oracle.truffle.api.CompilerDirectives.*;
 
 public final class VectorLengthProfile {
 
+    private static final int MAX_PROFILED_LENGTH = 4;
+
     private static final int UNINITIALIZED_LENGTH = -2;
     private static final int GENERIC_LENGTH = -1;
 
@@ -44,7 +46,7 @@ public final class VectorLengthProfile {
             return cachedLength;
         } else {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            if (cachedLength == UNINITIALIZED_LENGTH) {
+            if (cachedLength == UNINITIALIZED_LENGTH && length < MAX_PROFILED_LENGTH) {
                 cachedLength = length;
             } else {
                 cachedLength = GENERIC_LENGTH;

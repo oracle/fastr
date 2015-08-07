@@ -33,13 +33,11 @@ import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
  * Access to the frame component, handled by delegation in {@link REnvironment}. The default
  * implementation throws an exception for all calls.
  */
-public class REnvFrameAccess {
+public abstract class REnvFrameAccess {
     /**
      * Return the value of object named {@code name} or {@code null} if not found.
      */
-    public Object get(@SuppressWarnings("unused") String key) {
-        throw notImplemented("get");
-    }
+    public abstract Object get(String key);
 
     /**
      * Set the value of object named {@code name} to {@code value}. if {@code value == null},
@@ -47,17 +45,12 @@ public class REnvFrameAccess {
      *
      * @throws PutException if the binding is locked
      */
-    @SuppressWarnings("unused")
-    public void put(String key, Object value) throws REnvironment.PutException {
-        throw notImplemented("put");
-    }
+    public abstract void put(String key, Object value) throws REnvironment.PutException;
 
     /**
      * Remove binding.
      */
-    public void rm(@SuppressWarnings("unused") String key) {
-        throw notImplemented("rm");
-    }
+    public abstract void rm(String key) throws PutException;
 
     /**
      * Return the names in the environment that match {@code pattern}.
@@ -66,38 +59,22 @@ public class REnvFrameAccess {
      * @param pattern if not {@code null} only include names matching {@code pattern}.
      * @param sorted TODO
      */
-    public RStringVector ls(boolean allNames, Pattern pattern, boolean sorted) {
-        throw notImplemented("ls");
-    }
+    public abstract RStringVector ls(boolean allNames, Pattern pattern, boolean sorted);
 
-    public void lockBindings() {
-        throw notImplemented("lockBindings");
-    }
+    public abstract void lockBindings();
 
     /**
      * Disallow updates to {@code key}.
      */
-    public void lockBinding(@SuppressWarnings("unused") String key) {
-        throw notImplemented("lockBinding");
-    }
+    public abstract void lockBinding(String key);
 
     /**
      * Allow updates to (previously locked) {@code key}.
      */
-    public void unlockBinding(@SuppressWarnings("unused") String key) {
-        throw notImplemented("unlockBinding");
-    }
+    public abstract void unlockBinding(String key);
 
-    public boolean bindingIsLocked(@SuppressWarnings("unused") String key) {
-        throw notImplemented("bindingIsLocked");
-    }
+    public abstract boolean bindingIsLocked(String key);
 
-    public MaterializedFrame getFrame() {
-        throw notImplemented("getFrame");
-    }
-
-    private static RuntimeException notImplemented(String methodName) {
-        return new RuntimeException("FrameAccess method '" + methodName + "' not implemented");
-    }
+    public abstract MaterializedFrame getFrame();
 
 }

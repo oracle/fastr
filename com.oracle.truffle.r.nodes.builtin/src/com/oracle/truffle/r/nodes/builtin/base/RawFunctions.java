@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -89,6 +90,41 @@ public class RawFunctions {
             throw RError.error(this, RError.Message.ARGUMENT_MUST_BE_RAW_VECTOR, "x");
         }
 
+    }
+
+    @RBuiltin(name = "rawShift", kind = RBuiltinKind.INTERNAL, parameterNames = {"x", "n"})
+    public abstract static class RawShift extends RBuiltinNode {
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.firstIntegerWithError(1, null, null);
+        }
+
+        @Specialization
+        protected RRawVector rawShift(RAbstractRawVector x, int n, //
+                        @Cached("createBinaryProfile()") ConditionProfile negativeShiftProfile, //
+                        @Cached("create()") BranchProfile errorProfile) {
+            if (n < -8 || n > 8) {
+                errorProfile.enter();
+                throw RError.error(this, RError.Message.MUST_BE_SMALL_INT, "shift");
+            }
+            byte[] data = new byte[x.getLength()];
+            if (negativeShiftProfile.profile(n < 0)) {
+                for (int i = 0; i < data.length; i++) {
+                    data[i] = (byte) ((x.getDataAt(i).getValue() & 0xff) >> (-n));
+                }
+            } else {
+                for (int i = 0; i < data.length; i++) {
+                    data[i] = (byte) (x.getDataAt(i).getValue() << n);
+                }
+            }
+            return RDataFactory.createRawVector(data);
+        }
+
+        @SuppressWarnings("unused")
+        @Fallback
+        protected Object charToRaw(Object x, Object n) {
+            throw RError.error(this, RError.Message.ARG_MUST_BE_CHARACTER_VECTOR_LENGTH_ONE);
+        }
     }
 
     // TODO the rest of the functions

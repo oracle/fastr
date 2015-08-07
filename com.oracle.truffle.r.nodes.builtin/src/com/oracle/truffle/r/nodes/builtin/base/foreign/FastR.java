@@ -64,8 +64,6 @@ public abstract class FastR extends RBuiltinNode {
                 return FastRCompileNodeGen.create();
             case "dumptrees":
                 return FastRDumpTreesNodeGen.create();
-            case "source":
-                return FastRSourceNodeGen.create();
             case "syntaxtree":
                 return FastRSyntaxTreeNodeGen.create();
             case "tree":

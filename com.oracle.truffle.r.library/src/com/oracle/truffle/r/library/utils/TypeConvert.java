@@ -95,11 +95,7 @@ public abstract class TypeConvert extends RExternalBuiltinNode.Arg5 {
         String s = x.getDataAt(i);
         try {
             int intVal = RRuntime.string2intNoCheck(s, true);
-            try {
-                return readIntVector(x, i, intVal, naStrings);
-            } catch (NumberFormatException lx) {
-                // fall through
-            }
+            return readIntVector(x, i, intVal, naStrings);
         } catch (NumberFormatException ix) {
             try {
                 double doubleVal = RRuntime.string2doubleNoCheck(s, true);

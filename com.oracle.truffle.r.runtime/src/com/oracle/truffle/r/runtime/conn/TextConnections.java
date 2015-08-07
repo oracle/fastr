@@ -212,8 +212,11 @@ public class TextConnections {
                     System.arraycopy(existingData, 0, updateData, 0, existingData.length);
                     System.arraycopy(appendedData, 0, updateData, existingData.length, appendedData.length);
                 }
-                // TODO: not thread safe
                 TextRConnection textBase = (TextRConnection) base;
+                /*
+                 * N.B. This assumes one thread per RContext else another thread could be calling
+                 * lockBinding
+                 */
                 textBase.env.unlockBinding(idName);
                 // TODO: is vector really complete?
                 initTextVec(RDataFactory.createStringVector(updateData, RDataFactory.COMPLETE_VECTOR), textBase);

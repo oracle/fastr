@@ -532,7 +532,7 @@ public class RSerialize implements RContext.StateFactory {
                             copyAttributes(func, rpl.getAttributes());
                             result = func;
                         } catch (Throwable ex) {
-                            Utils.fail("unserialize - failed to eval deparsed closure");
+                            throw new RInternalError(ex, "unserialize - failed to eval deparsed closure");
                         }
                     } else if (type == SEXPTYPE.LANGSXP) {
                         langDepth--;
@@ -1004,6 +1004,8 @@ public class RSerialize implements RContext.StateFactory {
 
     private static final class XdrInputFormat extends PInputStream {
 
+        private static final int READ_BUFFER_SIZE = 32 * 1024;
+
         private final byte[] buf;
         private int size;
         private int offset;
@@ -1017,7 +1019,7 @@ public class RSerialize implements RContext.StateFactory {
                 size = pbis.getData().length;
                 offset = pbis.pos();
             } else {
-                buf = new byte[8192];
+                buf = new byte[READ_BUFFER_SIZE];
                 size = 0;
                 offset = 0;
             }
@@ -1050,11 +1052,8 @@ public class RSerialize implements RContext.StateFactory {
                 int readOffset = 0;
                 if (offset != size) {
                     // copy end piece to beginning
-                    int i = 0;
-                    while (offset != size) {
-                        buf[i++] = buf[offset++];
-                    }
-                    readOffset = i;
+                    readOffset = size - offset;
+                    System.arraycopy(buf, offset, buf, 0, readOffset);
                 }
                 offset = 0;
                 // read some more data

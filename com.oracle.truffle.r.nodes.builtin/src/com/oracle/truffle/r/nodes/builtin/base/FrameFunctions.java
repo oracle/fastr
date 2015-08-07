@@ -317,9 +317,10 @@ public class FrameFunctions {
             throw RError.error(this, RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
         }
 
-        private RLanguage checkCall(Object callObj) throws RError {
-            if (callObj instanceof RExpression) {
-                return checkCall(((RExpression) callObj).getDataAt(0));
+        private RLanguage checkCall(Object obj) throws RError {
+            Object callObj = obj;
+            while (callObj instanceof RExpression) {
+                callObj = ((RExpression) callObj).getDataAt(0);
             }
             if (callObj instanceof RLanguage) {
                 RLanguage call = (RLanguage) callObj;
