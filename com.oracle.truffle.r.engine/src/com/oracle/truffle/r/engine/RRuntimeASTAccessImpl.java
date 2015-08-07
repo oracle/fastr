@@ -416,56 +416,78 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
         return sn.getSourceSection().getCode();
     }
 
-    private static RNode isBuiltin(Node node) {
+    private static RBuiltinNode isBuiltin(Node node) {
         Node n = node;
         while (n != null) {
             if (n instanceof RBuiltinNode) {
-                return (RBuiltinNode) n;
+                RBuiltinNode result = (RBuiltinNode) n;
+                /* Sometimes builtins are used a children of other builtins */
+                if (result.getBuiltin() != null) {
+                    return result;
+                }
             }
             n = n.getParent();
         }
         return null;
     }
 
-    /*
+    /**
      * This is where all the complexity in locating the caller for an error/warning is located. When
-     * "call == null", it's pretty simple as we just back off to the frame, where the call will have
-     * been stored. However, if "call != null", we have to deal with the myriad ways in which the
-     * internal implementation can generate an error/warning and locate the node.
+     * {@code call == null}, it's pretty simple as we just back off to the frame, where the call
+     * will have been stored. Otherwise, we have to deal with the different ways in which the
+     * internal implementation can generate an error/warning and locate the correct node, and try to
+     * maych the behavior of GnuR regarding {@code .Internal} (TODO).
      */
     public Object findCaller(Node call) {
-        RCaller caller;
+        Frame frame = Utils.getActualCurrentFrame();
         if (call != null) {
             if (call == RError.NO_CALLER) {
                 return RNull.instance;
             }
-            RNode builtIn = isBuiltin(call);
-            /*
-             * Currently builtins called through do.call do not have a (meaningful) source section.
-             * Also we see some RSyntaxNodes with null SourceSections (which should never happen)
-             */
-            if (builtIn != null && builtIn.getSourceSection() != null) {
-                return RDataFactory.createLanguage(builtIn);
+            RBuiltinNode builtIn = isBuiltin(call);
+            if (builtIn != null) {
+                // .Internal at outer level?
+                if (builtIn.getBuiltin().getKind() == RBuiltinKind.INTERNAL && getCallerFromFrame(frame) == RNull.instance) {
+                    return RNull.instance;
+                }
+                /*
+                 * Currently builtins called through do.call do not have a (meaningful) source
+                 * section.
+                 */
+                if (builtIn.getSourceSection() != null) {
+                    return RDataFactory.createLanguage(builtIn);
+                }
+                // We see some RSyntaxNodes with null SourceSections (which should never happen)
             } else if (call instanceof RSyntaxNode && call.getSourceSection() != null) {
                 return RDataFactory.createLanguage((RNode) call);
             }
-            // else drop through to frame case
         }
-        Frame frame = Utils.getActualCurrentFrame();
+        // else drop through to frame case
+        return findCallerFromFrame(frame);
+    }
+
+    private static Object getCallerFromFrame(Frame frame) {
         if (frame == null) {
             // parser error
             return RNull.instance;
         }
-        caller = RArguments.getCall(frame);
+        RCaller caller = RArguments.getCall(frame);
         if (caller == null) {
             return RNull.instance;
         }
+        return caller;
+    }
 
+    private Object findCallerFromFrame(Frame frame) {
+        Object caller = getCallerFromFrame(frame);
+        if (caller == RNull.instance) {
+            return caller;
+        }
         /*
          * This is where we need to ensure that we have an RLanguage object with a rep that is an
          * RSyntaxNode.
          */
-        return getSyntaxCaller(caller);
+        return getSyntaxCaller((RCaller) caller);
     }
 
     public boolean isReplacementNode(Node node) {
