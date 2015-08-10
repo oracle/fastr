@@ -122,4 +122,56 @@ public class FastRContext {
             return context;
         }
     }
+
+    private static void validateChannelArg(RBaseNode baseNode, RAbstractVector arg) {
+        if (!(arg instanceof RAbstractIntVector)) {
+            throw RError.error(baseNode, RError.Message.INVALID_ARG_TYPE);
+        }
+        if (arg.getLength() != 1) {
+            throw RError.error(baseNode, RError.Message.WRONG_LENGTH_ARG, "key");
+        }
+    }
+
+    public abstract static class CreateChannel extends RExternalBuiltinNode.Arg1 {
+        @Specialization
+        protected int createChannel(RAbstractVector key) {
+            validateChannelArg(this, key);
+            return RChannel.createChannel(((RAbstractIntVector) key).getDataAt(0));
+        }
+    }
+
+    public abstract static class GetChannel extends RExternalBuiltinNode.Arg1 {
+        @Specialization
+        protected int getChannel(RAbstractVector key) {
+            validateChannelArg(this, key);
+            return RChannel.getChannel(((RAbstractIntVector) key).getDataAt(0));
+        }
+    }
+
+    public abstract static class CloseChannel extends RExternalBuiltinNode.Arg1 {
+        @Specialization
+        protected RNull getChannel(RAbstractVector id) {
+            validateChannelArg(this, id);
+            RChannel.closeChannel(((RAbstractIntVector) id).getDataAt(0));
+            return RNull.instance;
+        }
+    }
+
+    public abstract static class ChannelSend extends RExternalBuiltinNode.Arg2 {
+        @Specialization
+        protected RNull send(RAbstractVector id, Object data) {
+            validateChannelArg(this, id);
+            RChannel.send(((RAbstractIntVector) id).getDataAt(0), data);
+            return RNull.instance;
+        }
+    }
+
+    public abstract static class ChannelReceive extends RExternalBuiltinNode.Arg1 {
+        @Specialization
+        protected Object receive(RAbstractVector id) {
+            validateChannelArg(this, id);
+            return RChannel.receive(((RAbstractIntVector) id).getDataAt(0));
+        }
+    }
+
 }

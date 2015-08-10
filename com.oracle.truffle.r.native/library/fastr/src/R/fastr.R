@@ -99,5 +99,24 @@ fastr.context.pareval <- function(contexts, exprs) {
 	fastr.context.eval(contexts, exprs, par=TRUE)
 }
 
+fastr.channel.create <- function(key) {
+	.FastR(.NAME="fastr.channel.create", key)
+}
 
+fastr.channel.get <- function(key) {
+	.FastR(.NAME="fastr.channel.get", key)
+}
 
+fastr.channel.close <- function(id) {
+	.FastR(.NAME="fastr.channel.close", id)
+	invisible(NULL)
+}
+
+fastr.channel.send <- function(id, data) {
+	.FastR(.NAME="fastr.channel.send", id, data)
+	invisible(NULL)
+}
+
+fastr.channel.receive <- function(id) {
+	.FastR(.NAME="fastr.channel.receive", id)
+}

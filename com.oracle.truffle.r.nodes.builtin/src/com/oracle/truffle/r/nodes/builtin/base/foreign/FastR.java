@@ -90,6 +90,16 @@ public abstract class FastR extends RBuiltinNode {
                 return FastRContextFactory.SpawnNodeGen.create();
             case "context.eval":
                 return FastRContextFactory.EvalNodeGen.create();
+            case "fastr.channel.create":
+                return FastRContextFactory.CreateChannelNodeGen.create();
+            case "fastr.channel.get":
+                return FastRContextFactory.GetChannelNodeGen.create();
+            case "fastr.channel.close":
+                return FastRContextFactory.CloseChannelNodeGen.create();
+            case "fastr.channel.send":
+                return FastRContextFactory.ChannelSendNodeGen.create();
+            case "fastr.channel.receive":
+                return FastRContextFactory.ChannelReceiveNodeGen.create();
 
             default:
                 return null;
