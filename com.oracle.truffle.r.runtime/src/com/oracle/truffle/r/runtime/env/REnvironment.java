@@ -795,10 +795,12 @@ public abstract class REnvironment extends RAttributeStorage implements RTypedVa
         return locked;
     }
 
+    @TruffleBoundary
     public Object get(String key) {
         return frameAccess.get(key);
     }
 
+    @TruffleBoundary
     public void put(String key, Object value) throws PutException {
         if (locked) {
             // if the binding exists already, can try to update it
