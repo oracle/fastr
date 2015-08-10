@@ -54,7 +54,7 @@ public final class ForNode extends AbstractLoopNode implements VisibilityControl
         this.writeIndexNode = WriteVariableNode.createAnonymous(indexName, null, Mode.REGULAR);
         this.writeRangeNode = WriteVariableNode.createAnonymous(rangeName, range, Mode.REGULAR);
         this.writeLengthNode = WriteVariableNode.createAnonymous(lengthName, RLengthNodeGen.create(ReadVariableNode.create(rangeName, false)), Mode.REGULAR);
-        this.loopNode = Truffle.getRuntime().createLoopNode(new ForRepeatingNode(cvar, body, indexName, lengthName, rangeName));
+        this.loopNode = Truffle.getRuntime().createLoopNode(new ForRepeatingNode(this, cvar, body, indexName, lengthName, rangeName));
     }
 
     public static ForNode create(WriteVariableNode cvar, RSyntaxNode range, RSyntaxNode body) {
@@ -140,7 +140,11 @@ public final class ForNode extends AbstractLoopNode implements VisibilityControl
         @Child private WriteVariableNode writeIndexNode;
         @Child private RNode loadElement;
 
-        public ForRepeatingNode(WriteVariableNode cvar, RNode body, String indexName, String lengthName, String rangeName) {
+        // used as RSyntaxNode
+        private final ForNode forNode;
+
+        public ForRepeatingNode(ForNode forNode, WriteVariableNode cvar, RNode body, String indexName, String lengthName, String rangeName) {
+            this.forNode = forNode;
             this.writeElementNode = cvar;
             this.body = body;
 
@@ -191,6 +195,11 @@ public final class ForNode extends AbstractLoopNode implements VisibilityControl
             } finally {
                 writeIndexNode.execute(frame, index + 1);
             }
+        }
+
+        @Override
+        protected RSyntaxNode getRSyntaxNode() {
+            return forNode;
         }
 
         @Override
