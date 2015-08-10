@@ -32,9 +32,9 @@ import com.oracle.truffle.r.runtime.data.*;
  */
 public class RChannel {
 
-    private final static int INITIAL_CHANNEL_NUM = 4;
-    private final static int CHANNEL_NUM_GROW_FACTOR = 2;
-    private final static int QUEUE_CAPACITY = 1;
+    private static final int INITIAL_CHANNEL_NUM = 4;
+    private static final int CHANNEL_NUM_GROW_FACTOR = 2;
+    private static final int QUEUE_CAPACITY = 1;
 
     private static int[] keys = new int[INITIAL_CHANNEL_NUM];
     private static RChannel[] channels = new RChannel[INITIAL_CHANNEL_NUM];
@@ -42,7 +42,7 @@ public class RChannel {
     /*
      * Used to mediate access to the semaphore instances
      */
-    private final static Semaphore create = new Semaphore(1, true);
+    private static final Semaphore create = new Semaphore(1, true);
 
     private final ArrayBlockingQueue<Object> masterToClient = new ArrayBlockingQueue<>(QUEUE_CAPACITY);
     private final ArrayBlockingQueue<Object> clientToMaster = new ArrayBlockingQueue<>(QUEUE_CAPACITY);
