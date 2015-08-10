@@ -94,10 +94,10 @@ public final class RBuiltinPackages implements RBuiltinLookup {
         }
         // Any RBuiltinKind.SUBSTITUTE functions installed above should not be overridden
         try {
-            HiddenInternalFunctions.MakeLazy.loadingBase = true;
+            RContext.getInstance().setLoadingBase(true);
             RContext.getEngine().parseAndEval(baseSource, frame, false, false);
         } finally {
-            HiddenInternalFunctions.MakeLazy.loadingBase = false;
+            RContext.getInstance().setLoadingBase(false);
         }
         pkg.loadOverrides(frame);
     }

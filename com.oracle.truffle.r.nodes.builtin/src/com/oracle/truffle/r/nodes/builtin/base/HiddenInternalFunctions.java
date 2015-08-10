@@ -47,13 +47,6 @@ public class HiddenInternalFunctions {
      */
     @RBuiltin(name = "makeLazy", kind = RBuiltinKind.INTERNAL, parameterNames = {"names", "values", "expr", "eenv", "aenv"})
     public abstract static class MakeLazy extends RBuiltinNode {
-        /**
-         * When loading the {@code base} package we may encounter a locked binding that holds an
-         * {@link RBuiltin} that is a {@link RBuiltinKind#SUBSTITUTE}. This is not an error, but is
-         * used as an override mechanism.
-         */
-        public static boolean loadingBase;
-
         @Child private Eval eval;
 
         private void initEval() {
@@ -90,8 +83,12 @@ public class HiddenInternalFunctions {
                     RASTDeparse.ensureSourceSection(expr0);
                     aenv.put(name, RDataFactory.createPromise(expr0, eenv));
                 } catch (PutException ex) {
-                    //
-                    if (!loadingBase) {
+                    /*
+                     * When loading the {@code base} package we may encounter a locked binding that
+                     * holds an {@link RBuiltin} that is a {@link RBuiltinKind#SUBSTITUTE}. This is
+                     * not an error, but is used as an override mechanism.
+                     */
+                    if (!RContext.getInstance().getLoadingBase()) {
                         throw RError.error(this, ex);
                     }
                 }

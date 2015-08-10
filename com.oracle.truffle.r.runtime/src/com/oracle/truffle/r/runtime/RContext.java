@@ -459,6 +459,12 @@ public final class RContext extends ExecutionContext {
     private boolean resultVisible = true;
 
     /**
+     * A context-specific value that is checked in {@code HiddenInternalFunctions} to avoid an error
+     * report on a {@code SUBSTITUTE} builtin. Not worth promoting to a {@link ContextState}.
+     */
+    private boolean loadingBase;
+
+    /**
      * Denote whether the FastR instance is running in 'interactive' mode. This can be set in a
      * number of ways and is <b>not</> simply equivalent to taking input from a file. However, it is
      * final once set.
@@ -877,6 +883,14 @@ public final class RContext extends ExecutionContext {
 
     public static ConnectionSupport.ContextState getRConnectionState() {
         return (ConnectionSupport.ContextState) getInstance().contextState[ClassStateKind.RConnection.ordinal()];
+    }
+
+    public void setLoadingBase(boolean b) {
+        loadingBase = b;
+    }
+
+    public boolean getLoadingBase() {
+        return loadingBase;
     }
 
 }
