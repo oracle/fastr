@@ -29,7 +29,6 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.RContext.ContextState;
 import com.oracle.truffle.r.runtime.data.*;
 
 /**
@@ -41,7 +40,7 @@ import com.oracle.truffle.r.runtime.data.*;
  * cheap as possible, it checks only local reads - which is fast - and does a more costly check on
  * "<<-" but invalidates the assumption as soon as "eval" and the like comes into play.<br/>
  */
-public final class FrameSlotChangeMonitor implements RContext.StateFactory {
+public final class FrameSlotChangeMonitor {
 
     public static final FrameDescriptor NAMESPACE_BASE_MARKER_FRAME_DESCRIPTOR = new FrameDescriptor();
 
@@ -100,14 +99,11 @@ public final class FrameSlotChangeMonitor implements RContext.StateFactory {
         }
     }
 
-    private static final class ContextStateImpl implements ContextState {
-        private final WeakHashMap<FrameDescriptor, StableValue<MaterializedFrame>> descriptorEnclosingFrameAssumptions = new WeakHashMap<>();
-        private final WeakHashMap<FrameDescriptor, Boolean> descriptorSingletonAssumptions = new WeakHashMap<>();
-        private final WeakHashMap<FrameDescriptor, StableValue<FrameDescriptor>> descriptorEnclosingDescriptorAssumptions = new WeakHashMap<>();
+    private static final WeakHashMap<FrameDescriptor, StableValue<MaterializedFrame>> descriptorEnclosingFrameAssumptions = new WeakHashMap<>();
+    private static final WeakHashMap<FrameDescriptor, Boolean> descriptorSingletonAssumptions = new WeakHashMap<>();
+    private static final WeakHashMap<FrameDescriptor, StableValue<FrameDescriptor>> descriptorEnclosingDescriptorAssumptions = new WeakHashMap<>();
 
-        private int rewriteFrameDescriptorAssumptionsCount;
-
-    }
+    private static int rewriteFrameDescriptorAssumptionsCount;
 
     /**
      * Retrieves the not-changed-locally {@link Assumption} for the given frame slot.
@@ -130,7 +126,7 @@ public final class FrameSlotChangeMonitor implements RContext.StateFactory {
     // method for creating new frame slots
 
     public static FrameSlot addFrameSlot(FrameDescriptor fd, Object identifier, FrameSlotKind kind) {
-        boolean isSingletonFrame = getFrameSlotChangeMonitorState().descriptorSingletonAssumptions.containsKey(fd);
+        boolean isSingletonFrame = descriptorSingletonAssumptions.containsKey(fd);
         return fd.addFrameSlot(identifier, new FrameSlotInfoImpl(isSingletonFrame, identifier), kind);
     }
 
@@ -224,26 +220,24 @@ public final class FrameSlotChangeMonitor implements RContext.StateFactory {
      */
     public static synchronized void initializeNonFunctionFrameDescriptor(FrameDescriptor originalFrameDescriptor, boolean isNamespaceBase) {
         FrameDescriptor frameDescriptor = isNamespaceBase ? NAMESPACE_BASE_MARKER_FRAME_DESCRIPTOR : originalFrameDescriptor;
-        getFrameSlotChangeMonitorState().descriptorEnclosingFrameAssumptions.put(frameDescriptor, StableValue.invalidated());
-        ContextStateImpl contextState = getFrameSlotChangeMonitorState();
-        contextState.descriptorEnclosingDescriptorAssumptions.put(frameDescriptor, StableValue.invalidated());
+        descriptorEnclosingFrameAssumptions.put(frameDescriptor, StableValue.invalidated());
+        descriptorEnclosingDescriptorAssumptions.put(frameDescriptor, StableValue.invalidated());
         if (!isNamespaceBase) {
-            contextState.descriptorSingletonAssumptions.put(originalFrameDescriptor, Boolean.FALSE);
+            descriptorSingletonAssumptions.put(originalFrameDescriptor, Boolean.FALSE);
         }
     }
 
     public static synchronized void initializeFunctionFrameDescriptor(FrameDescriptor frameDescriptor) {
-        ContextStateImpl contextState = getFrameSlotChangeMonitorState();
-        contextState.descriptorEnclosingFrameAssumptions.put(frameDescriptor, StableValue.invalidated());
-        contextState.descriptorEnclosingDescriptorAssumptions.put(frameDescriptor, StableValue.invalidated());
+        descriptorEnclosingFrameAssumptions.put(frameDescriptor, StableValue.invalidated());
+        descriptorEnclosingDescriptorAssumptions.put(frameDescriptor, StableValue.invalidated());
     }
 
     public static synchronized StableValue<MaterializedFrame> getEnclosingFrameAssumption(FrameDescriptor descriptor) {
-        return getFrameSlotChangeMonitorState().descriptorEnclosingFrameAssumptions.get(descriptor);
+        return descriptorEnclosingFrameAssumptions.get(descriptor);
     }
 
     public static synchronized StableValue<FrameDescriptor> getEnclosingFrameDescriptorAssumption(FrameDescriptor descriptor) {
-        return getFrameSlotChangeMonitorState().descriptorEnclosingDescriptorAssumptions.get(descriptor);
+        return descriptorEnclosingDescriptorAssumptions.get(descriptor);
     }
 
     /**
@@ -260,8 +254,7 @@ public final class FrameSlotChangeMonitor implements RContext.StateFactory {
         if (value != null) {
             value.getAssumption().invalidate();
         }
-        ContextStateImpl contextState = getFrameSlotChangeMonitorState();
-        StableValue<FrameDescriptor> currentValue = contextState.descriptorEnclosingDescriptorAssumptions.get(frameDescriptor);
+        StableValue<FrameDescriptor> currentValue = descriptorEnclosingDescriptorAssumptions.get(frameDescriptor);
         if (currentValue.getAssumption().isValid()) {
             if (currentValue.getValue() == newValue) {
                 return currentValue;
@@ -270,9 +263,9 @@ public final class FrameSlotChangeMonitor implements RContext.StateFactory {
             }
         }
         currentValue = new StableValue<>(newValue, "enclosing frame descriptor");
-        contextState.descriptorEnclosingDescriptorAssumptions.put(frameDescriptor, currentValue);
+        descriptorEnclosingDescriptorAssumptions.put(frameDescriptor, currentValue);
         if (value != null && value != StableValue.<FrameDescriptor> invalidated()) {
-            assert contextState.rewriteFrameDescriptorAssumptionsCount++ < 100;
+            assert rewriteFrameDescriptorAssumptionsCount++ < 100;
         }
         return currentValue;
     }
@@ -284,8 +277,7 @@ public final class FrameSlotChangeMonitor implements RContext.StateFactory {
         if (value != null) {
             value.getAssumption().invalidate();
         }
-        ContextStateImpl contextState = getFrameSlotChangeMonitorState();
-        StableValue<MaterializedFrame> currentValue = contextState.descriptorEnclosingFrameAssumptions.get(frameDescriptor);
+        StableValue<MaterializedFrame> currentValue = descriptorEnclosingFrameAssumptions.get(frameDescriptor);
         if (currentValue == null) {
             return null;
         }
@@ -298,10 +290,10 @@ public final class FrameSlotChangeMonitor implements RContext.StateFactory {
         }
         if (currentValue == StableValue.<MaterializedFrame> invalidated()) {
             currentValue = new StableValue<>(newValue, "enclosing frame");
-            contextState.descriptorEnclosingFrameAssumptions.put(frameDescriptor, currentValue);
+            descriptorEnclosingFrameAssumptions.put(frameDescriptor, currentValue);
             return currentValue;
         } else {
-            contextState.descriptorEnclosingFrameAssumptions.remove(frameDescriptor);
+            descriptorEnclosingFrameAssumptions.remove(frameDescriptor);
             return null;
         }
     }
@@ -312,13 +304,12 @@ public final class FrameSlotChangeMonitor implements RContext.StateFactory {
     }
 
     private static synchronized boolean checkSingletonFrameInternal(VirtualFrame vf) {
-        ContextStateImpl contextState = getFrameSlotChangeMonitorState();
-        Boolean value = contextState.descriptorSingletonAssumptions.get(vf.getFrameDescriptor());
+        Boolean value = descriptorSingletonAssumptions.get(vf.getFrameDescriptor());
         if (value == null) {
             return false;
         } else if (value == Boolean.FALSE) {
             out("marking frame descriptor %s as singleton", vf.getFrameDescriptor());
-            contextState.descriptorSingletonAssumptions.put(vf.getFrameDescriptor(), Boolean.TRUE);
+            descriptorSingletonAssumptions.put(vf.getFrameDescriptor(), Boolean.TRUE);
             return true;
         } else {
             out("marking frame descriptor %s as non-singleton", vf.getFrameDescriptor());
@@ -328,7 +319,7 @@ public final class FrameSlotChangeMonitor implements RContext.StateFactory {
                     out("  invalidating singleton slot %s", slot.getIdentifier());
                 }
             }
-            contextState.descriptorSingletonAssumptions.remove(vf.getFrameDescriptor());
+            descriptorSingletonAssumptions.remove(vf.getFrameDescriptor());
             return false;
         }
     }
@@ -337,7 +328,7 @@ public final class FrameSlotChangeMonitor implements RContext.StateFactory {
         CompilerAsserts.neverPartOfCompilation();
         StableValue<Object> stableValue = getFrameSlotInfo(frameSlot).getStableValue();
         if (stableValue != null) {
-            assert getFrameSlotChangeMonitorState().descriptorSingletonAssumptions.containsKey(descriptor) : "single frame slot within non-singleton descriptor";
+            assert descriptorSingletonAssumptions.containsKey(descriptor) : "single frame slot within non-singleton descriptor";
             assert stableValue.getValue() == value || (stableValue.getValue() != null && (stableValue.getValue().equals(value) || !stableValue.getAssumption().isValid())) : stableValue.getValue() +
                             " vs. " + value;
         }
@@ -349,17 +340,5 @@ public final class FrameSlotChangeMonitor implements RContext.StateFactory {
         if (info.needsInvalidation()) {
             info.setValue(value);
         }
-    }
-
-    public ContextState newContext(RContext context, Object... objects) {
-        if (context.getKind() == RContext.Kind.SHARE_PARENT_RW) {
-            return context.getParent().getThisContextState(RContext.ClassStateKind.FrameSlotChangeMonitor);
-        } else {
-            return new ContextStateImpl();
-        }
-    }
-
-    private static ContextStateImpl getFrameSlotChangeMonitorState() {
-        return (ContextStateImpl) RContext.getContextState(RContext.ClassStateKind.FrameSlotChangeMonitor);
     }
 }

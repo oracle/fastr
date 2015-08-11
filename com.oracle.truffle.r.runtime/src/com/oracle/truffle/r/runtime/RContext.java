@@ -379,7 +379,6 @@ public final class RContext extends ExecutionContext {
         RConnection(ConnectionSupport.class, false),
         StdConnections(StdConnections.class, true),
         RNG(RRNG.class, false),
-        FrameSlotChangeMonitor(FrameSlotChangeMonitor.class, false),
         RFFI(RFFIContextStateFactory.class, false),
         RSerialize(RSerialize.class, false);
 
