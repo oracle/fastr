@@ -20,9 +20,9 @@
 # or visit www.oracle.com if you need additional information or have any
 # questions.
 #
-import tempfile, platform, subprocess
+import tempfile, platform, subprocess, shlex
 from os.path import join, sep
-from argparse import ArgumentParser
+from argparse import ArgumentParser, REMAINDER
 import mx
 import mx_gate
 import mx_graal
@@ -30,6 +30,12 @@ import mx_jvmci
 import os
 
 _fastr_suite = mx.suite('fastr')
+
+def RcommandClass():
+    return "com.oracle.truffle.r.shell.RCommand"
+
+def RscriptCommandClass():
+    return "com.oracle.truffle.r.shell.RscriptCommand"
 
 def runR(args, className, nonZeroIsFatal=True, extraVmArgs=None, runBench=False, graal_vm='server'):
     # extraVmArgs is not normally necessary as the global --J option can be used running R/RScript
@@ -46,7 +52,6 @@ def runR(args, className, nonZeroIsFatal=True, extraVmArgs=None, runBench=False,
     if extraVmArgs:
         vmArgs += extraVmArgs
     vmArgs += _add_truffle_jar()
-    vmArgs += ['-XX:-UseJVMCIClassLoader']
     return mx_graal.vm(vmArgs + [className] + args, vm=graal_vm, nonZeroIsFatal=nonZeroIsFatal)
 
 def _add_truffle_jar():
@@ -54,7 +59,7 @@ def _add_truffle_jar():
     # This used to be done by the VM itself but was removed to
     # separate the VM from Truffle.
     truffle_jar = mx.distribution('truffle:TRUFFLE_API').path
-    return ['-Xbootclasspath/p:' + truffle_jar]
+    return ['-XX:-UseJVMCIClassLoader', '-Xbootclasspath/p:' + truffle_jar]
 
 def setREnvironment(graal_vm):
     osname = platform.system()
@@ -75,16 +80,21 @@ def _get_graal_vm():
     '''
     return "server" if mx_jvmci._vm is None else mx_jvmci._vm
 
-def rshell(args, nonZeroIsFatal=True, extraVmArgs=None, runBench=False):
-    '''run R shell'''
-    # Optional args for external use by benchmarks
+def rcommon(args, command, klass):
+    parser = ArgumentParser(prog='mx ' + command)
+    parser.add_argument('--J', dest='extraVmArgs', help='extra Java VM arguments', metavar='@<args>')
+    ns, rargs = parser.parse_known_args(args)
+    extraVmArgs = shlex.split(ns.extraVmArgs.lstrip('@')) if ns.extraVmArgs else []
     graal_vm = _get_graal_vm()
-    return runR(args, "com.oracle.truffle.r.shell.RCommand", nonZeroIsFatal=nonZeroIsFatal, extraVmArgs=extraVmArgs, runBench=runBench, graal_vm=graal_vm)
+    return runR(rargs, klass, extraVmArgs=extraVmArgs, graal_vm=graal_vm)
+
+def rshell(args):
+    '''run R shell'''
+    return rcommon(args, 'R', RcommandClass())
 
 def rscript(args):
     '''run Rscript'''
-    graal_vm = _get_graal_vm()
-    return runR(args, "com.oracle.truffle.r.shell.RscriptCommand", graal_vm=graal_vm)
+    return rcommon(args, 'Rscript', RscriptCommandClass())
 
 def build(args):
     '''FastR build'''
