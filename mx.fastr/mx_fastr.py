@@ -82,9 +82,12 @@ def _get_graal_vm():
 
 def rcommon(args, command, klass):
     parser = ArgumentParser(prog='mx ' + command)
-    parser.add_argument('--J', dest='extraVmArgs', help='extra Java VM arguments', metavar='@<args>')
+    parser.add_argument('--J', dest='extraVmArgsList', action='append', help='extra Java VM arguments', metavar='@<args>')
     ns, rargs = parser.parse_known_args(args)
-    extraVmArgs = shlex.split(ns.extraVmArgs.lstrip('@')) if ns.extraVmArgs else []
+    extraVmArgs = []
+    if ns.extraVmArgsList:
+        for e in ns.extraVmArgsList:
+            extraVmArgs += [x for x in shlex.split(e.lstrip('@'))]
     graal_vm = _get_graal_vm()
     return runR(rargs, klass, extraVmArgs=extraVmArgs, graal_vm=graal_vm)
 
