@@ -22,7 +22,7 @@
 #
 import tempfile, platform, subprocess, shlex
 from os.path import join, sep
-from argparse import ArgumentParser, REMAINDER
+from argparse import ArgumentParser
 import mx
 import mx_gate
 import mx_graal
@@ -31,10 +31,10 @@ import os
 
 _fastr_suite = mx.suite('fastr')
 
-def RcommandClass():
+def r_command_class():
     return "com.oracle.truffle.r.shell.RCommand"
 
-def RscriptCommandClass():
+def rscript_command_class():
     return "com.oracle.truffle.r.shell.RscriptCommand"
 
 def runR(args, className, nonZeroIsFatal=True, extraVmArgs=None, runBench=False, graal_vm='server'):
@@ -90,11 +90,11 @@ def rcommon(args, command, klass):
 
 def rshell(args):
     '''run R shell'''
-    return rcommon(args, 'R', RcommandClass())
+    return rcommon(args, 'R', r_command_class())
 
 def rscript(args):
     '''run Rscript'''
-    return rcommon(args, 'Rscript', RscriptCommandClass())
+    return rcommon(args, 'Rscript', rscript_command_class())
 
 def build(args):
     '''FastR build'''
