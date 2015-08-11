@@ -47,6 +47,10 @@ public class RCommand {
     // CheckStyle: stop system..print check
 
     public static void main(String[] args) {
+        internalMain(args, true);
+    }
+
+    public static RContext internalMain(String[] args, boolean eval) {
         try {
             RCmdOptionsParser.Result result = RCmdOptionsParser.parseArguments(RCmdOptions.Client.R, args);
             if (HELP.getValue()) {
@@ -56,24 +60,32 @@ public class RCommand {
             } else if (RHOME.getValue()) {
                 printRHomeAndExit();
             }
-            subMain(result.args);
+            return subMainInit(result.args, eval);
         } catch (Utils.DebugExitException ex) {
             /*
              * This is thrown instead of doing System.exit, when we are running under the in-process
              * Truffle debugger. We just return to the debugger command loop, possibly to be
              * re-entered with a new evaluation.
              */
-            return;
+            return null;
         } catch (QuitException ex) {
             /* This is thrown by the Truffle debugger when the user executes the 'q' command. */
-            return;
+            return null;
         }
+    }
+
+    public static RContext mainForTruffleVM(String[] args) {
+        return internalMain(args, false);
     }
 
     /**
      * Entry point for {@link RscriptCommand} avoiding re-parsing.
      */
-    public static void subMain(String[] args) {
+    public static void rscriptMain(String[] args) {
+        subMainInit(args, true);
+    }
+
+    public static RContext subMainInit(String[] args, boolean eval) {
 
         if (SLAVE.getValue()) {
             QUIET.setValue(true);
@@ -153,9 +165,14 @@ public class RCommand {
             // long start = System.currentTimeMillis();
             consoleHandler = new JLineConsoleHandler(isInteractive, consoleReader);
         }
-        // never returns
-        readEvalPrint(consoleHandler, args, filePath);
-        assert false;
+        RContext context = RContextFactory.createInitial(args, consoleHandler).activate();
+        if (eval) {
+            // never returns
+            readEvalPrint(consoleHandler, context, filePath);
+            throw RInternalError.shouldNotReachHere();
+        } else {
+            return context;
+        }
     }
 
     private static void printVersionAndExit() {
@@ -183,10 +200,9 @@ public class RCommand {
      * In case 2, we must implicitly execute a {@code quit("default, 0L, TRUE} command before
      * exiting. So,in either case, we never return.
      */
-    private static void readEvalPrint(ConsoleHandler consoleHandler, String[] commandArgs, String filePath) {
+    private static void readEvalPrint(ConsoleHandler consoleHandler, RContext context, String filePath) {
         String inputDescription = filePath == null ? "<shell_input>" : filePath;
         Source source = Source.fromNamedAppendableText(inputDescription);
-        RContext context = RContextFactory.createInitial(commandArgs, consoleHandler).activate();
         try {
             // console.println("initialize time: " + (System.currentTimeMillis() - start));
             for (;;) {

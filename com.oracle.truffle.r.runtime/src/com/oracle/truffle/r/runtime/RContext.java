@@ -261,6 +261,11 @@ public final class RContext extends ExecutionContext {
         RExpression parse(Source source) throws ParseException;
 
         /**
+         * A (perhaps temporary) interface to support {@link TruffleLanguage}.
+         */
+        CallTarget parseToCallTarget(Source source);
+
+        /**
          * Parse and evaluate {@code rscript} in {@code frame}. {@code printResult == true}, the
          * result of the evaluation is printed to the console.
          *

@@ -28,7 +28,7 @@ suite = {
     "suites" : [
             {
                "name" : "graal",
-               "version" : "1825ca1a694a6d75ba341a9affa0bd074fb87900",
+               "version" : "440c505123b49cb68ad133da8d407ce4dffd31f7",
                "urls" : [{"url" : "http://lafo.ssw.uni-linz.ac.at/hg/graal-compiler", "kind" : "hg"}]
             },
         ],
@@ -308,7 +308,7 @@ suite = {
     "com.oracle.truffle.r.runtime" : {
       "sourceDirs" : ["src"],
       "dependencies" : [
-        "truffle:TRUFFLE",
+        "truffle:TRUFFLE_API",
       ],
       "checkstyle" : "com.oracle.truffle.r.runtime",
       "javaCompliance" : "1.8",
@@ -424,7 +424,7 @@ suite = {
         "GNU_ICONV",
       ],
       "distDependencies" : [
-        "truffle:TRUFFLE",
+        "truffle:TRUFFLE_API",
         "graal:GRAAL",
       ],
     }

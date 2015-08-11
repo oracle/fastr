@@ -36,6 +36,7 @@ import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.instrument.*;
+import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.library.graphics.*;
 import com.oracle.truffle.r.nodes.*;
@@ -262,6 +263,33 @@ final class REngine implements RContext.Engine {
             return RDataFactory.createExpression(RDataFactory.createList(data));
         } catch (RecognitionException ex) {
             throw new RContext.Engine.ParseException(ex, ex.getMessage());
+        }
+    }
+
+    public CallTarget parseToCallTarget(Source source) {
+        RSyntaxNode node;
+        try {
+            node = parseToRNode(source);
+            return new TVMCallTarget(doMakeCallTarget(node.asRNode(), "<tl parse>"));
+        } catch (RecognitionException ex) {
+            return null;
+        }
+    }
+
+    private class TVMCallTarget implements RootCallTarget {
+        private RootCallTarget delegate;
+
+        TVMCallTarget(RootCallTarget delegate) {
+            this.delegate = delegate;
+        }
+
+        @Override
+        public Object call(Object... arguments) {
+            return runCall(delegate, globalFrame, true, true);
+        }
+
+        public RootNode getRootNode() {
+            return delegate.getRootNode();
         }
     }
 

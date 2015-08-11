@@ -46,13 +46,14 @@ def runR(args, className, nonZeroIsFatal=True, extraVmArgs=None, runBench=False,
     if extraVmArgs:
         vmArgs += extraVmArgs
     vmArgs += _add_truffle_jar()
+    vmArgs += ['-XX:-UseJVMCIClassLoader']
     return mx_graal.vm(vmArgs + [className] + args, vm=graal_vm, nonZeroIsFatal=nonZeroIsFatal)
 
 def _add_truffle_jar():
     # Unconditionally prepend truffle.jar to the boot class path.
     # This used to be done by the VM itself but was removed to
     # separate the VM from Truffle.
-    truffle_jar = mx.distribution('truffle:TRUFFLE').path
+    truffle_jar = mx.distribution('truffle:TRUFFLE_API').path
     return ['-Xbootclasspath/p:' + truffle_jar]
 
 def setREnvironment(graal_vm):

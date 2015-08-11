@@ -27,40 +27,24 @@ import java.io.*;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.debug.*;
 import com.oracle.truffle.api.instrument.*;
+import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.repl.debug.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.shell.*;
 
+/**
+ * Only does the minimum for running under the debugger. It is not completely clear how to correctly
+ * integrate the R startup in {@code RCommand} with this API.
+ */
 @TruffleLanguage.Registration(name = "R", version = "3.1.3", mimeType = "application/x-r")
-public class TruffleRLanguage extends TruffleLanguage {
+public final class TruffleRLanguage extends TruffleLanguage<RContext> {
 
     private DebugSupportProvider debugSupport;
 
-    public TruffleRLanguage(Env env) {
-        super(env);
-    }
+    public static final TruffleRLanguage INSTANCE = new TruffleRLanguage();
 
-    @Override
-    protected Object eval(Source code) throws IOException {
-        boolean runShell = code.getName().equals("rshell.R");
-        String[] args = new String[runShell ? 1 : 2];
-        args[0] = "--debugger=rrepl";
-        if (!runShell) {
-            args[1] = "--file=" + code.getPath();
-        }
-        RCommand.main(args);
-        return null;
-    }
-
-    @Override
-    protected Object findExportedSymbol(String globalName, boolean onlyExplicit) {
-        throw RInternalError.unimplemented();
-    }
-
-    @Override
-    protected Object getLanguageGlobal() {
-        throw RInternalError.unimplemented();
+    private TruffleRLanguage() {
     }
 
     @Override
@@ -79,6 +63,42 @@ public class TruffleRLanguage extends TruffleLanguage {
             debugSupport = new RDebugSupportProvider();
         }
         return debugSupport;
+    }
+
+    @Override
+    protected RContext createContext(Env env) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    protected CallTarget parse(Source source, Node context, String... argumentNames) throws IOException {
+        /*
+         * When running under the debugger the loadrun command eventually arrives here with a
+         * FileSource. However, the FastR system may not be initialized at that point. Also, FastR
+         * has a custom mechanism for executing a (Root)CallTarget that TruffleVM does not know
+         * about, so we have to use a delegation mechanism.
+         */
+        boolean runShell = source.getName().endsWith("rshell");
+        String[] args = new String[runShell ? 1 : 2];
+        args[0] = "--debugger=rrepl";
+        if (!runShell) {
+            args[1] = "--file=" + source.getPath();
+        }
+        RCommand.mainForTruffleVM(args);
+        return RContext.getEngine().parseToCallTarget(source);
+    }
+
+    @Override
+    protected Object findExportedSymbol(RContext context, String globalName, boolean onlyExplicit) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    protected Object getLanguageGlobal(RContext context) {
+        // TODO Auto-generated method stub
+        return null;
     }
 
 }

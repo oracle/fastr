@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.nodes;
 
+import com.oracle.truffle.api.instrument.ProbeNode.WrapperNode;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.runtime.*;
@@ -54,6 +55,11 @@ import com.oracle.truffle.r.runtime.env.*;
  * <li>An instance of the subclass is never used to {@link #replace} an instance of
  * {@link RBaseNode}.</li>
  * </ul>
+ *
+ * N.B. When a {@link WrapperNode} replaces a node for instrumentation, the {@link SourceSection} is
+ * propagated to the wrapper node by code in {@link Node#replace}. We can't do anything about this
+ * other than special case it, even though FastR does not treat a {@link WrapperNode} as a
+ * {@link RSyntaxNode}.
  */
 public abstract class RBaseNode extends Node {
 
@@ -121,6 +127,9 @@ public abstract class RBaseNode extends Node {
 
     @Override
     public SourceSection getSourceSection() {
+        if (this instanceof WrapperNode) {
+            return super.getSourceSection();
+        }
         /* Explicitly allow on a node for which isSyntax() == false */
         if (this instanceof RSyntaxNode) {
             if (RContext.getRRuntimeASTAccess().isReplacementNode(this)) {
@@ -138,6 +147,10 @@ public abstract class RBaseNode extends Node {
 
     @Override
     public void assignSourceSection(SourceSection section) {
+        if (this instanceof WrapperNode) {
+            super.assignSourceSection(section);
+            return;
+        }
         /* Explicitly allow on a node for which isSyntax() == false */
         if (this instanceof RSyntaxNode) {
             super.assignSourceSection(section);

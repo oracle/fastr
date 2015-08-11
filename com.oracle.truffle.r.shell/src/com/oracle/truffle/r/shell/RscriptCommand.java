@@ -86,7 +86,7 @@ public class RscriptCommand {
         }
         String[] adjArgsArray = new String[adjArgs.size()];
         adjArgs.toArray(adjArgsArray);
-        RCommand.subMain(adjArgsArray);
+        RCommand.rscriptMain(adjArgsArray);
     }
 
     private static void printVersionAndExit() {
