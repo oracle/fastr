@@ -214,16 +214,19 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
         try {
             result = read.execute(frame, variableFrame);
         } catch (InvalidAssumptionException | LayoutChangedException | FrameSlotTypeException e) {
-            initializeRead(frame, variableFrame);
-            try {
-                result = read.execute(frame, variableFrame);
-            } catch (InvalidAssumptionException | LayoutChangedException | FrameSlotTypeException e2) {
-                /*
-                 * This could be written a bit simpler using a loop, but partial evaluation will not
-                 * see that it never actually loops in compiled code, and thus create suboptimal
-                 * code.
-                 */
-                throw RInternalError.shouldNotReachHere("read initialization problem");
+            int iterations = 0;
+            while (true) {
+                iterations++;
+                initializeRead(frame, variableFrame);
+                try {
+                    result = read.execute(frame, variableFrame);
+                } catch (InvalidAssumptionException | LayoutChangedException | FrameSlotTypeException e2) {
+                    if (iterations > 10) {
+                        throw new RInternalError("too many iterations during RVN initialization");
+                    }
+                    continue;
+                }
+                break;
             }
         }
         if (needsCopying && copyProfile.profile(result instanceof RAbstractVector)) {
