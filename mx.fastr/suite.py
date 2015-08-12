@@ -286,18 +286,11 @@ suite = {
       "sourceDirs" : ["src"],
       "dependencies" : [
         "com.oracle.truffle.r.nodes.builtin",
-      ],
-      "checkstyle" : "com.oracle.truffle.r.runtime",
-      "javaCompliance" : "1.8",
-      "workingSets" : "Truffle,FastR",
-      "jacoco" : "include",
-    },
-
-    "com.oracle.truffle.r.shell" : {
-      "sourceDirs" : ["src"],
-      "dependencies" : [
-        "com.oracle.truffle.r.engine",
         "JLINE",
+        "truffle:TRUFFLE_DEBUG",
+      ],
+      "annotationProcessors" : [
+          "truffle:TRUFFLE_DSL_PROCESSOR",
       ],
       "checkstyle" : "com.oracle.truffle.r.runtime",
       "javaCompliance" : "1.8",
@@ -373,19 +366,6 @@ suite = {
 
     },
 
-      "com.oracle.truffle.r.repl": {
-      "sourceDirs" : ["src"],
-      "dependencies" : [
-        "truffle:TRUFFLE_DEBUG",
-        "com.oracle.truffle.r.shell",
-        ],
-      "annotationProcessors" : [
-          "truffle:TRUFFLE_DSL_PROCESSOR",
-      ],
-      "checkstyle" : "com.oracle.truffle.r.runtime",
-      "javaCompliance" : "1.8",
-      "workingSets" : "Truffle,FastR",
-    },
   },
 
   "distributions" : {

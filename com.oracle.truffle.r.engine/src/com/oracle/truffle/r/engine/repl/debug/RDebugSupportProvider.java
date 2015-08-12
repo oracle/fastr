@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.repl.debug;
+package com.oracle.truffle.r.engine.repl.debug;
 
 import java.io.*;
 

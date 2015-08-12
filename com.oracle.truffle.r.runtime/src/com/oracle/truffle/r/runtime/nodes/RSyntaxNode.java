@@ -126,7 +126,7 @@ public interface RSyntaxNode extends RSyntaxNodeSPI {
             }
             incDepth = 1;
         }
-        if (RContext.getRRuntimeASTAccess().isReplacementNode(node)) {
+        if (!RContext.getRRuntimeASTAccess().isReplacementNode(node)) {
             if (visitChildren) {
                 for (Node child : node.getChildren()) {
                     if (child != null) {

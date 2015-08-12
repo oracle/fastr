@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.shell;
+package com.oracle.truffle.r.engine.shell;
 
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RCmdOptions.Client;

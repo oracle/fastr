@@ -31,18 +31,20 @@ import os
 
 _fastr_suite = mx.suite('fastr')
 
+def r_command_project():
+    return "com.oracle.truffle.r.engine"
+
 def r_command_class():
-    return "com.oracle.truffle.r.shell.RCommand"
+    return r_command_project() + ".shell.RCommand"
 
 def rscript_command_class():
-    return "com.oracle.truffle.r.shell.RscriptCommand"
+    return r_command_project() + ".shell.RscriptCommand"
 
 def runR(args, className, nonZeroIsFatal=True, extraVmArgs=None, runBench=False, graal_vm='server'):
     # extraVmArgs is not normally necessary as the global --J option can be used running R/RScript
     # However, the bench command invokes other Java VMs along the way, so it must use extraVmArgs
     setREnvironment(graal_vm)
-    project = className.rpartition(".")[0]
-    vmArgs = ['-cp', mx.classpath(project)]
+    vmArgs = ['-cp', mx.classpath(r_command_project())]
     vmArgs += ["-Drhome.path=" + _fastr_suite.dir]
 
     vmArgs += ['-G:InliningDepthError=500', '-XX:JVMCINMethodSizeLimit=1000000']
@@ -395,7 +397,7 @@ def bench(args):
     mx.abort("no benchmarks available")
 
 def _rREPLClass():
-    return "com.oracle.truffle.r.repl.RREPLServer"
+    return "com.oracle.truffle.r.engine.repl.RREPLServer"
 
 def runRREPL(args, nonZeroIsFatal=True, extraVmArgs=None):
     '''run R repl'''

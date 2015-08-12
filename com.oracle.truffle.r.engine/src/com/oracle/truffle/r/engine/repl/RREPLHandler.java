@@ -20,14 +20,16 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.repl;
+package com.oracle.truffle.r.engine.repl;
 
 import java.io.*;
 import java.util.*;
 
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.frame.FrameInstance.*;
 import com.oracle.truffle.api.instrument.*;
 import com.oracle.truffle.api.vm.*;
+import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.tools.debug.shell.*;
 import com.oracle.truffle.tools.debug.shell.client.*;
 import com.oracle.truffle.tools.debug.shell.server.*;
@@ -56,14 +58,23 @@ public abstract class RREPLHandler extends REPLHandler {
             final Visualizer visualizer = serverContext.getVisualizer();
 
             final String source = request.get(REPLMessage.CODE);
-            MaterializedFrame frame = null;
+            MaterializedFrame mFrame = null;
             final Integer frameNumber = request.getIntValue(REPLMessage.FRAME_NUMBER);
+            if (frameNumber != null) {
+                final List<FrameDebugDescription> stack = serverContext.getStack();
+                if (frameNumber < 0 || frameNumber >= stack.size()) {
+                    return finishReplyFailed(message, "invalid frame number");
+                }
+                final FrameDebugDescription frameDescription = stack.get(frameNumber);
+                mFrame = (MaterializedFrame) frameDescription.frameInstance().getFrame(FrameAccess.MATERIALIZE, true);
+            }
             try {
                 Object returnValue;
-                if (frame == null) { // Top Level
-                    returnValue = serverContext.vm().eval("application/javascript", source);
+                // This doesn't work because no way to communicate mFrame
+                if (mFrame == null) { // Top Level
+                    returnValue = serverContext.vm().eval("application/x-r", source);
                 } else {
-                    returnValue = serverContext.vm().eval("application/r", source);
+                    returnValue = serverContext.vm().eval("application/x-r", source);
                 }
                 return finishReplySucceeded(message, visualizer.displayValue(returnValue, 0));
             } catch (QuitException ex) {
@@ -106,32 +117,49 @@ public abstract class RREPLHandler extends REPLHandler {
 
     /**
      * Returns a general description of the frame, plus a textual summary of the slot values: one
-     * per line. Custiom version for FastR that does not show anonymous frame slots.
+     * per line. Custom version for FastR that does not show anonymous frame slots.
      */
-    /*
-     * public static final REPLHandler R_FRAME_HANDLER = new REPLHandler(REPLMessage.FRAME) {
-     *
-     * @Override public REPLMessage[] receive(REPLMessage request, REPLServerContext serverContext)
-     * { final REPLMessage reply = createReply(); final Integer frameNumber =
-     * request.getIntValue(REPLMessage.FRAME_NUMBER); if (frameNumber == null) { return
-     * finishReplyFailed(reply, "no frame number specified"); } final List<FrameDebugDescription>
-     * stack = serverContext.getDebugEngine().getStack(); if (frameNumber < 0 || frameNumber >=
-     * stack.size()) { return finishReplyFailed(reply, "frame number " + frameNumber +
-     * " out of range"); } final FrameDebugDescription frameDescription = stack.get(frameNumber);
-     * final REPLMessage frameMessage = createFrameInfoMessage(serverContext, frameDescription);
-     * final Frame frame =
-     * RArguments.unwrap(frameDescription.frameInstance().getFrame(FrameInstance.
-     * FrameAccess.READ_ONLY, true)); final FrameDescriptor frameDescriptor =
-     * frame.getFrameDescriptor(); Visualizer visualizer =
-     * serverContext.getLanguage().getToolSupport().getVisualizer(); try { final StringBuilder sb =
-     * new StringBuilder(); for (FrameSlot slot : frameDescriptor.getSlots()) { String slotName =
-     * slot.getIdentifier().toString(); if (!AnonymousFrameVariable.isAnonymous(slotName)) {
-     * sb.append(Integer.toString(slot.getIndex()) + ": " + visualizer.displayIdentifier(slot) +
-     * " = "); try { final Object value = frame.getValue(slot);
-     * sb.append(visualizer.displayValue(value, 0)); } catch (Exception ex) { sb.append("???"); }
-     * sb.append("\n"); } } return finishReplySucceeded(frameMessage, sb.toString()); } catch
-     * (Exception ex) { return finishReplyFailed(frameMessage, ex.toString()); } } };
-     */
+    public static final REPLHandler R_FRAME_HANDLER = new REPLHandler(REPLMessage.FRAME) {
+
+        @Override
+        public REPLMessage[] receive(REPLMessage request, REPLServerContext serverContext) {
+            final REPLMessage reply = createReply();
+            final Integer frameNumber = request.getIntValue(REPLMessage.FRAME_NUMBER);
+            if (frameNumber == null) {
+                return finishReplyFailed(reply, "no frame number specified");
+            }
+            final List<FrameDebugDescription> stack = serverContext.getStack();
+            if (frameNumber < 0 || frameNumber >= stack.size()) {
+                return finishReplyFailed(reply, "frame number " + frameNumber + " out of range");
+            }
+            final FrameDebugDescription frameDescription = stack.get(frameNumber);
+            final REPLMessage frameMessage = createFrameInfoMessage(serverContext, frameDescription);
+            final Frame frame = RArguments.unwrap(frameDescription.frameInstance().getFrame(FrameInstance.FrameAccess.READ_ONLY, true));
+            final FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
+            Visualizer visualizer = serverContext.getVisualizer();
+            try {
+                final StringBuilder sb = new StringBuilder();
+                for (FrameSlot slot : frameDescriptor.getSlots()) {
+                    if (slot.getIdentifier() instanceof String) {
+                        String slotName = slot.getIdentifier().toString();
+                        if (!AnonymousFrameVariable.isAnonymous(slotName)) {
+                            sb.append(Integer.toString(slot.getIndex()) + ": " + visualizer.displayIdentifier(slot) + " = ");
+                            try {
+                                final Object value = frame.getValue(slot);
+                                sb.append(visualizer.displayValue(value, 0));
+                            } catch (Exception ex) {
+                                sb.append("???");
+                            }
+                            sb.append("\n");
+                        }
+                    }
+                }
+                return finishReplySucceeded(frameMessage, sb.toString());
+            } catch (Exception ex) {
+                return finishReplyFailed(frameMessage, ex.toString());
+            }
+        }
+    };
 
     public static final RREPLHandler LOAD_RUN_FILE_HANDLER = new RREPLHandler(REPLMessage.LOAD_RUN) {
 

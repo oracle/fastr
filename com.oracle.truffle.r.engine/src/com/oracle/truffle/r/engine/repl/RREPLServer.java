@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.repl;
+package com.oracle.truffle.r.engine.repl;
 
 import java.util.*;
 
@@ -29,6 +29,8 @@ import com.oracle.truffle.api.instrument.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.vm.*;
 import com.oracle.truffle.api.vm.TruffleVM.Language;
+import com.oracle.truffle.r.engine.shell.*;
+import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.tools.debug.shell.*;
 import com.oracle.truffle.tools.debug.shell.client.*;
 import com.oracle.truffle.tools.debug.shell.server.*;
@@ -41,7 +43,7 @@ public final class RREPLServer extends REPLServer {
     public static void main(String[] args) {
 
         // Cheating for the prototype: start from R, rather than from the client.
-        final RREPLServer server = new RREPLServer();
+        final RREPLServer server = new RREPLServer(args);
         final SimpleREPLClient client = new SimpleREPLClient(server.language.getShortName(), server);
 
         // Cheating for the prototype: allow server access to client for recursive debugging
@@ -65,7 +67,7 @@ public final class RREPLServer extends REPLServer {
         handlerMap.put(fileHandler.getOp(), fileHandler);
     }
 
-    public RREPLServer() {
+    public RREPLServer(String[] args) {
         // default handlers
         add(REPLHandler.BREAK_AT_LINE_HANDLER);
         add(REPLHandler.BREAK_AT_LINE_ONCE_HANDLER);
@@ -90,8 +92,7 @@ public final class RREPLServer extends REPLServer {
         add(RREPLHandler.BACKTRACE_HANDLER);
         add(RREPLHandler.EVAL_HANDLER);
         add(RREPLHandler.LOAD_RUN_FILE_HANDLER);
-// add(RREPLHandler.R_FRAME_HANDLER);
-        add(RREPLHandler.FRAME_HANDLER);
+        add(RREPLHandler.R_FRAME_HANDLER);
         add(RREPLHandler.INFO_HANDLER);
 
         EventConsumer<SuspendedEvent> onHalted = new EventConsumer<SuspendedEvent>(SuspendedEvent.class) {
@@ -108,7 +109,20 @@ public final class RREPLServer extends REPLServer {
             }
         };
 
-        this.vm = TruffleVM.newVM().onEvent(onHalted).onEvent(onExec).build();
+        /*
+         * We call a special RCommand entry point that does most of the normal initialization but
+         * returns the initial RContext which has not yet been activated, which means that the
+         * TruffleVM has not yet been built, but the TruffleVM.Builder has been created.
+         */
+
+        String[] debugArgs = new String[args.length + 1];
+        debugArgs[0] = "--debugger=rrepl";
+        System.arraycopy(args, 0, debugArgs, 1, args.length);
+        RContext initialContext = RCommand.debuggerMain(debugArgs);
+        initialContext.getThisEngine().getTruffleVMBuilder().onEvent(onHalted).onEvent(onExec);
+        // This actually "builds" the TruffleVM
+        initialContext.activate();
+        this.vm = initialContext.getThisEngine().getTruffleVM();
         assert vm != null;
         this.language = vm.getLanguages().get("application/x-r");
         assert language != null;
@@ -185,7 +199,6 @@ public final class RREPLServer extends REPLServer {
 
         @Override
         protected Debugger db() {
-            // TODO Auto-generated method stub
             return db;
         }
 

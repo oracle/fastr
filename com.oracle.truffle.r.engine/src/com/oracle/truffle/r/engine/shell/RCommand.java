@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.shell;
+package com.oracle.truffle.r.engine.shell;
 
 import static com.oracle.truffle.r.runtime.RCmdOptions.*;
 
@@ -74,7 +74,7 @@ public class RCommand {
         }
     }
 
-    public static RContext mainForTruffleVM(String[] args) {
+    public static RContext debuggerMain(String[] args) {
         return internalMain(args, false);
     }
 
@@ -165,9 +165,10 @@ public class RCommand {
             // long start = System.currentTimeMillis();
             consoleHandler = new JLineConsoleHandler(isInteractive, consoleReader);
         }
-        RContext context = RContextFactory.createInitial(args, consoleHandler).activate();
+        RContext context = RContextFactory.createInitial(args, consoleHandler);
         if (eval) {
             // never returns
+            context.activate();
             readEvalPrint(consoleHandler, context, filePath);
             throw RInternalError.shouldNotReachHere();
         } else {

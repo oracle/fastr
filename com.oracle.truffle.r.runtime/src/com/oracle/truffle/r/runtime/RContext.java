@@ -32,10 +32,10 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
+import com.oracle.truffle.api.vm.*;
 import com.oracle.truffle.r.runtime.conn.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
-import com.oracle.truffle.r.runtime.env.frame.*;
 import com.oracle.truffle.r.runtime.env.REnvironment.*;
 import com.oracle.truffle.r.runtime.ffi.*;
 import com.oracle.truffle.r.runtime.rng.*;
@@ -232,6 +232,17 @@ public final class RContext extends ExecutionContext {
          * Make the engine ready for evaluations.
          */
         void activate();
+
+        /**
+         * Return the {@link TruffleVM} instance associated with this engine.
+         */
+        TruffleVM getTruffleVM();
+
+        /**
+         * Return the {@link com.oracle.truffle.api.vm.TruffleVM.Builder} instance associated with
+         * this engine. This is only used by the command line debugger.
+         */
+        TruffleVM.Builder getTruffleVMBuilder();
 
         /**
          * Elapsed time of runtime.
@@ -598,17 +609,6 @@ public final class RContext extends ExecutionContext {
         for (ClassStateKind classStateKind : ClassStateKind.VALUES) {
             classStateKind.factory.systemInitialized(this, contextState[classStateKind.ordinal()]);
         }
-    }
-
-    /**
-     * The {@link RContext} and the {@link Engine} are bi-directionally linked hence an explicit
-     * method to establish one half of the link.
-     *
-     * @param engine an {@link Engine} that manages parsing and evaluation, aka the <i>evaluator</i>
-     */
-    public void setEngine(Engine engine) {
-        assert this.engine == null;
-        this.engine = engine;
     }
 
     /**

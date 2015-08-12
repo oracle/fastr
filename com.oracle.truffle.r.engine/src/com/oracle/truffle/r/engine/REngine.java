@@ -38,6 +38,7 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.instrument.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
+import com.oracle.truffle.api.vm.*;
 import com.oracle.truffle.r.library.graphics.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
@@ -87,6 +88,14 @@ final class REngine implements RContext.Engine {
     private final RContext context;
 
     /**
+     * Every engine has an associated {@link TruffleVM}. The actual {@link TruffleVM} instance is
+     * not "built" until the {@link #activate} method is invoked.
+     */
+    private final TruffleVM.Builder truffleVMBuilder;
+
+    @CompilationFinal private TruffleVM truffleVM;
+
+    /**
      * The unique frame for the global environment for this engine.
      */
     @CompilationFinal private MaterializedFrame globalFrame;
@@ -107,6 +116,7 @@ final class REngine implements RContext.Engine {
     }
 
     private REngine(RContext context) {
+        this.truffleVMBuilder = TruffleVM.newVM();
         this.context = context;
         this.childTimes = new long[]{0, 0};
     }
@@ -117,6 +127,7 @@ final class REngine implements RContext.Engine {
     }
 
     public void activate() {
+        truffleVM = truffleVMBuilder.build();
         this.globalFrame = RRuntime.createNonFunctionFrame().materialize();
         this.startTime = System.nanoTime();
         context.installCustomClassState(RContext.ClassStateKind.REnvironment, new REnvironment.ClassStateFactory().newContext(context, globalFrame));
@@ -185,6 +196,15 @@ final class REngine implements RContext.Engine {
 
     public long[] childTimesInNanos() {
         return childTimes;
+    }
+
+    public TruffleVM getTruffleVM() {
+        assert truffleVM != null;
+        return truffleVM;
+    }
+
+    public TruffleVM.Builder getTruffleVMBuilder() {
+        return truffleVMBuilder;
     }
 
     @Override
