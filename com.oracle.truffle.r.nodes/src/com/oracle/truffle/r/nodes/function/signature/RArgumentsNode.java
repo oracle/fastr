@@ -24,6 +24,7 @@ package com.oracle.truffle.r.nodes.function.signature;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RArguments.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -40,6 +41,11 @@ public abstract class RArgumentsNode extends RBaseNode {
 
     public static RArgumentsNode create() {
         return new RArgumentsUninitializedNode();
+    }
+
+    @Override
+    public NodeCost getCost() {
+        return NodeCost.NONE;
     }
 
     private static final class RArgumentsUninitializedNode extends RArgumentsNode {

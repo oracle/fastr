@@ -132,26 +132,13 @@ public final class RArguments {
         return ((HasSignature) function.getRootNode()).getSignature();
     }
 
-    public static Object[] create(RFunction functionObj, RCaller call, MaterializedFrame callerFrame, int depth, Object[] evaluatedArgs, ArgumentsSignature signature) {
-        MaterializedFrame enclosingFrame = functionObj.getEnclosingFrame();
-        return createInternal(functionObj, call, callerFrame, depth, evaluatedArgs, signature, enclosingFrame);
-    }
-
     public static Object[] create(RFunction functionObj, RCaller call, MaterializedFrame callerFrame, int depth, Object[] evaluatedArgs, ArgumentsSignature signature, S3Args s3Args) {
-        Object[] args = create(functionObj, call, callerFrame, depth, evaluatedArgs, signature);
-        args[INDEX_S3_ARGS] = s3Args;
-        return args;
+        CompilerAsserts.neverPartOfCompilation();
+        return create(functionObj, call, callerFrame, depth, evaluatedArgs, signature, functionObj.getEnclosingFrame(), s3Args);
     }
 
     public static Object[] create(RFunction functionObj, RCaller call, MaterializedFrame callerFrame, int depth, Object[] evaluatedArgs, ArgumentsSignature signature,
                     MaterializedFrame enclosingFrame, S3Args s3Args) {
-        Object[] args = createInternal(functionObj, call, callerFrame, depth, evaluatedArgs, signature, enclosingFrame);
-        args[INDEX_S3_ARGS] = s3Args;
-        return args;
-    }
-
-    public static Object[] createInternal(RFunction functionObj, RCaller call, MaterializedFrame callerFrame, int depth, Object[] evaluatedArgs, ArgumentsSignature signature,
-                    MaterializedFrame enclosingFrame) {
         assert evaluatedArgs != null && signature != null : evaluatedArgs + " " + signature;
         assert evaluatedArgs.length == signature.getLength() : Arrays.toString(evaluatedArgs) + " " + signature;
         assert signature == getSignature(functionObj) : signature + " vs. " + getSignature(functionObj);
@@ -164,6 +151,7 @@ public final class RArguments {
         a[INDEX_CALL] = call;
         a[INDEX_CALLER_FRAME] = callerFrame;
         a[INDEX_ENCLOSING_FRAME] = enclosingFrame;
+        a[INDEX_S3_ARGS] = s3Args;
         a[INDEX_DEPTH] = depth;
         a[INDEX_IS_IRREGULAR] = false;
         a[INDEX_SIGNATURE] = signature;

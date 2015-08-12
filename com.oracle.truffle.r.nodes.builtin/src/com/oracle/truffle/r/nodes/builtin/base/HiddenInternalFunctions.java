@@ -212,7 +212,7 @@ public class HiddenInternalFunctions {
                 try {
                     RSerialize.CallHook callHook = new RSerialize.CallHook() {
                         public Object eval(Object arg) {
-                            Object[] callArgs = RArguments.create(envhook, RDataFactory.createCaller(this), null, RArguments.getDepth(frame) + 1, new Object[]{arg}, SIGNATURE);
+                            Object[] callArgs = RArguments.create(envhook, RDataFactory.createCaller(this), null, RArguments.getDepth(frame) + 1, new Object[]{arg}, SIGNATURE, null);
                             return callCache.execute(new SubstituteVirtualFrame(frame), envhook.getTarget(), callArgs);
                         }
                     };
@@ -328,14 +328,19 @@ public class HiddenInternalFunctions {
 
         @Specialization
         protected RIntVector lazyLoadDBinsertValue(VirtualFrame frame, Object value, RAbstractStringVector file, byte asciiL, int compression, RFunction hook) {
+            return lazyLoadDBinsertValueInternal(frame.materialize(), value, file, asciiL, compression, hook);
+        }
+
+        @TruffleBoundary
+        private RIntVector lazyLoadDBinsertValueInternal(MaterializedFrame frame, Object value, RAbstractStringVector file, byte asciiL, int compression, RFunction hook) {
             if (compression != 1) {
                 throw RError.error(this, Message.GENERIC, "unsupported compression");
             }
 
             RSerialize.CallHook callHook = new RSerialize.CallHook() {
                 public Object eval(Object arg) {
-                    Object[] callArgs = RArguments.create(hook, RDataFactory.createCaller(this), null, RArguments.getDepth(frame) + 1, new Object[]{arg}, SIGNATURE);
-                    return callCache.execute(new SubstituteVirtualFrame(frame.materialize()), hook.getTarget(), callArgs);
+                    Object[] callArgs = RArguments.create(hook, RDataFactory.createCaller(this), null, RArguments.getDepth(frame) + 1, new Object[]{arg}, SIGNATURE, null);
+                    return callCache.execute(new SubstituteVirtualFrame(frame), hook.getTarget(), callArgs);
                 }
             };
 

@@ -20,9 +20,10 @@ import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.function.ArgumentMatcher.MatchPermutation;
+import com.oracle.truffle.r.nodes.function.signature.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.RArguments.*;
+import com.oracle.truffle.r.runtime.RArguments.S3Args;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.nodes.*;
 
@@ -32,6 +33,7 @@ public abstract class CallMatcherNode extends RBaseNode {
     protected final boolean argsAreEvaluated;
 
     @Child private PromiseHelperNode promiseHelper;
+    @Child private RArgumentsNode argsNode = RArgumentsNode.create();
 
     protected final ConditionProfile missingArgProfile = ConditionProfile.createBinaryProfile();
     protected final ConditionProfile emptyArgProfile = ConditionProfile.createBinaryProfile();
@@ -88,14 +90,14 @@ public abstract class CallMatcherNode extends RBaseNode {
         return new CallMatcherCachedNode(suppliedSignature, varArgSignatures, function, preparePermutation, permutation, specializer, forNextMethod, argsAreEvaluated, next);
     }
 
-    protected static final Object[] prepareArguments(VirtualFrame frame, Object[] reorderedArgs, ArgumentsSignature reorderedSignature, RFunction function, S3Args s3Args) {
+    protected Object[] prepareArguments(VirtualFrame frame, Object[] reorderedArgs, ArgumentsSignature reorderedSignature, RFunction function, S3Args s3Args) {
         RCaller caller = RArguments.getCall(frame);
         MaterializedFrame callerFrame = RArguments.getCallerFrame(frame);
         if (caller == null && callerFrame == null) {
             callerFrame = RArguments.getEnvironment(frame).getFrame();
             assert callerFrame != null;
         }
-        return RArguments.create(function, caller, callerFrame, RArguments.getDepth(frame) + 1, reorderedArgs, reorderedSignature, s3Args);
+        return argsNode.execute(function, caller, callerFrame, RArguments.getDepth(frame) + 1, reorderedArgs, reorderedSignature, s3Args);
     }
 
     protected final void evaluatePromises(VirtualFrame frame, RFunction function, Object[] args, int varArgIndex) {

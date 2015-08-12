@@ -63,6 +63,8 @@ public abstract class DoCall extends RBuiltinNode {
     @Child private ClassHierarchyNode classHierarchyNode;
     @Child private RootCallNode internalDispatchCall;
 
+    @Child private RArgumentsNode argsNode = RArgumentsNode.create();
+
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
     private final BranchProfile errorProfile = BranchProfile.create();
     private final BranchProfile containsRLanguageProfile = BranchProfile.create();
@@ -163,7 +165,7 @@ public abstract class DoCall extends RBuiltinNode {
             needsCallerFrame = true;
         }
         callerFrame = needsCallerFrame ? getCallerFrame(frame, callerFrame) : null;
-        Object[] callArgs = RArguments.create(func, RDataFactory.createCaller(this), callerFrame, RArguments.getDepth(frame) + 1, reorderedArgs.getArguments(), reorderedArgs.getSignature());
+        Object[] callArgs = argsNode.execute(func, RDataFactory.createCaller(this), callerFrame, RArguments.getDepth(frame) + 1, reorderedArgs.getArguments(), reorderedArgs.getSignature(), null);
         RArguments.setIsIrregular(callArgs, true);
         return callCache.execute(frame, func.getTarget(), callArgs);
     }

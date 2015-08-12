@@ -32,6 +32,7 @@ import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.function.*;
+import com.oracle.truffle.r.nodes.function.signature.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -126,6 +127,7 @@ public class GetFunctions {
         private final BranchProfile wrongLengthErrorProfile = BranchProfile.create();
 
         @Child private CallInlineCacheNode callCache = CallInlineCacheNodeGen.create();
+        @Child private RArgumentsNode argsNode;
 
         @CompilationFinal private boolean needsCallerFrame;
 
@@ -243,8 +245,12 @@ public class GetFunctions {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 needsCallerFrame = true;
             }
+            if (argsNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                argsNode = insert(RArgumentsNode.create());
+            }
             MaterializedFrame callerFrame = needsCallerFrame ? frame.materialize() : null;
-            Object[] callArgs = RArguments.create(ifnFunc, RDataFactory.createCaller(this), callerFrame, RArguments.getDepth(frame) + 1, new Object[]{x}, ArgumentsSignature.empty(1));
+            Object[] callArgs = argsNode.execute(ifnFunc, RDataFactory.createCaller(this), callerFrame, RArguments.getDepth(frame) + 1, new Object[]{x}, ArgumentsSignature.empty(1), null);
             return callCache.execute(frame, ifnFunc.getTarget(), callArgs);
         }
 
