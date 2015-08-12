@@ -96,6 +96,8 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
 
     private final boolean needsSplitting;
 
+    private final boolean containsDispatch;
+
     /**
      * Profiling for catching {@link ReturnException}s.
      */
@@ -119,7 +121,23 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         this.uuid = FunctionUIDFactory.get().createUID();
         this.checkSingletonFrame = !substituteFrame;
         this.needsSplitting = needsAnyBuiltinSplitting();
+        this.containsDispatch = containsAnyDispatch(body);
         this.argPostProcess = argPostProcess;
+    }
+
+    private static boolean containsAnyDispatch(BodyNode body) {
+        NodeCountFilter dispatchingMethodsFilter = node -> {
+            if (node instanceof ReadVariableNode) {
+                String identifier = ((ReadVariableNode) node).getIdentifier();
+                return "UseMethod".equals(identifier) /* || "NextMethod".equals(identifier) */;
+            }
+            return false;
+        };
+        return NodeUtil.countNodes(body, dispatchingMethodsFilter) > 0;
+    }
+
+    public boolean containsDispatch() {
+        return containsDispatch;
     }
 
     @Override

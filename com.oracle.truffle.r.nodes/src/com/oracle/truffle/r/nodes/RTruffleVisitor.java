@@ -49,6 +49,11 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
         return ast.accept(this);
     }
 
+    public RFunction transformFunction(String name, Function func, MaterializedFrame enclosingFrame) {
+        RootCallTarget callTarget = createFunctionCallTarget(func);
+        return RDataFactory.createFunction(name, callTarget, null, enclosingFrame, ((FunctionDefinitionNode) callTarget.getRootNode()).containsDispatch());
+    }
+
     @Override
     public RSyntaxNode visit(Constant c) {
         SourceSection src = c.getSource();
@@ -138,79 +143,83 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
     public RSyntaxNode visit(Function func) {
         RootCallTarget callTarget = null;
         try {
-            // Parse function statements
-            ASTNode astBody = func.getBody();
-            FunctionStatementsNode statements;
-            if (astBody != null) {
-                statements = new FunctionStatementsNode(astBody.getSource(), astBody.accept(this));
-            } else {
-                statements = new FunctionStatementsNode();
-            }
-
-            // Parse argument list
-            List<ArgNode> argumentsList = func.getSignature();
-            String[] argumentNames = new String[argumentsList.size()];
-            RNode[] defaultValues = new RNode[argumentsList.size()];
-            SaveArgumentsNode saveArguments;
-            AccessArgumentNode[] argAccessNodes = new AccessArgumentNode[argumentsList.size()];
-            PostProcessArgumentsNode argPostProcess;
-            if (!argumentsList.isEmpty()) {
-                RNode[] init = new RNode[argumentsList.size()];
-                int index = 0;
-                for (ArgNode arg : argumentsList) {
-                    // Parse argument's default value
-                    RNode defaultValue;
-                    ASTNode defaultValNode = arg.getValue();
-                    if (defaultValNode != null) {
-                        // default argument initialization is, in a sense, quite similar to local
-                        // variable write and thus should do appropriate state transition and/or
-                        // RShareable copy if need be
-                        defaultValue = WrapDefaultArgumentNode.create(arg.getValue().accept(this).asRNode());
-                    } else {
-                        defaultValue = null;
-                    }
-
-                    // Create an initialization statement
-                    AccessArgumentNode accessArg = AccessArgumentNode.create(index);
-                    argAccessNodes[index] = accessArg;
-                    init[index] = WriteVariableNode.createArgSave(arg.getName(), accessArg);
-
-                    // Store formal arguments
-                    argumentNames[index] = arg.getName();
-                    defaultValues[index] = defaultValue;
-
-                    index++;
-                }
-
-                saveArguments = new SaveArgumentsNode(init);
-                if (FastROptions.NewStateTransition && !FastROptions.RefCountIncrementOnly) {
-                    argPostProcess = PostProcessArgumentsNode.create(argumentsList.size());
-                } else {
-                    argPostProcess = null;
-                }
-            } else {
-                saveArguments = new SaveArgumentsNode(RNode.EMTPY_RNODE_ARRAY);
-                argPostProcess = null;
-            }
-
-            // Maintain SourceSection
-            if (astBody != null && statements.getSourceSection() == null) {
-                statements.assignSourceSection(astBody.getSource());
-            }
-            FormalArguments formals = FormalArguments.createForFunction(defaultValues, ArgumentsSignature.get(argumentNames));
-            for (AccessArgumentNode access : argAccessNodes) {
-                access.setFormals(formals);
-            }
-
-            FrameDescriptor descriptor = new FrameDescriptor();
-            FrameSlotChangeMonitor.initializeFunctionFrameDescriptor(descriptor);
-            String description = getFunctionDescription(func);
-            FunctionDefinitionNode rootNode = new FunctionDefinitionNode(func.getSource(), descriptor, new FunctionBodyNode(saveArguments, statements), formals, description, false, argPostProcess);
-            callTarget = Truffle.getRuntime().createCallTarget(rootNode);
+            callTarget = createFunctionCallTarget(func);
             return FunctionExpressionNode.create(func.getSource(), callTarget);
         } catch (Throwable err) {
             throw new RInternalError(err, "visit(Function)");
         }
+    }
+
+    private RootCallTarget createFunctionCallTarget(Function func) {
+        // Parse function statements
+        ASTNode astBody = func.getBody();
+        FunctionStatementsNode statements;
+        if (astBody != null) {
+            statements = new FunctionStatementsNode(astBody.getSource(), astBody.accept(this));
+        } else {
+            statements = new FunctionStatementsNode();
+        }
+
+        // Parse argument list
+        List<ArgNode> argumentsList = func.getSignature();
+        String[] argumentNames = new String[argumentsList.size()];
+        RNode[] defaultValues = new RNode[argumentsList.size()];
+        SaveArgumentsNode saveArguments;
+        AccessArgumentNode[] argAccessNodes = new AccessArgumentNode[argumentsList.size()];
+        PostProcessArgumentsNode argPostProcess;
+        if (!argumentsList.isEmpty()) {
+            RNode[] init = new RNode[argumentsList.size()];
+            int index = 0;
+            for (ArgNode arg : argumentsList) {
+                // Parse argument's default value
+                RNode defaultValue;
+                ASTNode defaultValNode = arg.getValue();
+                if (defaultValNode != null) {
+                    // default argument initialization is, in a sense, quite similar to local
+                    // variable write and thus should do appropriate state transition and/or
+                    // RShareable copy if need be
+                    defaultValue = WrapDefaultArgumentNode.create(arg.getValue().accept(this).asRNode());
+                } else {
+                    defaultValue = null;
+                }
+
+                // Create an initialization statement
+                AccessArgumentNode accessArg = AccessArgumentNode.create(index);
+                argAccessNodes[index] = accessArg;
+                init[index] = WriteVariableNode.createArgSave(arg.getName(), accessArg);
+
+                // Store formal arguments
+                argumentNames[index] = arg.getName();
+                defaultValues[index] = defaultValue;
+
+                index++;
+            }
+
+            saveArguments = new SaveArgumentsNode(init);
+            if (FastROptions.NewStateTransition && !FastROptions.RefCountIncrementOnly) {
+                argPostProcess = PostProcessArgumentsNode.create(argumentsList.size());
+            } else {
+                argPostProcess = null;
+            }
+        } else {
+            saveArguments = new SaveArgumentsNode(RNode.EMTPY_RNODE_ARRAY);
+            argPostProcess = null;
+        }
+
+        // Maintain SourceSection
+        if (astBody != null && statements.getSourceSection() == null) {
+            statements.assignSourceSection(astBody.getSource());
+        }
+        FormalArguments formals = FormalArguments.createForFunction(defaultValues, ArgumentsSignature.get(argumentNames));
+        for (AccessArgumentNode access : argAccessNodes) {
+            access.setFormals(formals);
+        }
+
+        FrameDescriptor descriptor = new FrameDescriptor();
+        FrameSlotChangeMonitor.initializeFunctionFrameDescriptor(descriptor);
+        String description = getFunctionDescription(func);
+        FunctionDefinitionNode rootNode = new FunctionDefinitionNode(func.getSource(), descriptor, new FunctionBodyNode(saveArguments, statements), formals, description, false, argPostProcess);
+        return Truffle.getRuntime().createCallTarget(rootNode);
     }
 
     private static String getFunctionDescription(Function func) {

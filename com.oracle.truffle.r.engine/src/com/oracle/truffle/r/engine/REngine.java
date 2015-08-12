@@ -286,6 +286,18 @@ final class REngine implements RContext.Engine {
         }
     }
 
+    public RFunction parseFunction(String name, Source source, MaterializedFrame enclosingFrame) throws RContext.Engine.ParseException {
+        try {
+            Sequence seq = (Sequence) ParseUtil.parseAST(new ANTLRStringStream(source.getCode()), source);
+            ASTNode[] exprs = seq.getExpressions();
+            assert exprs.length == 1;
+
+            return new RTruffleVisitor().transformFunction(name, (Function) exprs[0], enclosingFrame);
+        } catch (RecognitionException ex) {
+            throw new RContext.Engine.ParseException(ex, ex.getMessage());
+        }
+    }
+
     public CallTarget parseToCallTarget(Source source) {
         RSyntaxNode node;
         try {
@@ -409,9 +421,7 @@ final class REngine implements RContext.Engine {
      * @return the root node of the Truffle AST
      */
     private static RSyntaxNode transform(ASTNode astNode) {
-        RTruffleVisitor transform = new RTruffleVisitor();
-        RSyntaxNode result = transform.transform(astNode);
-        return result;
+        return new RTruffleVisitor().transform(astNode);
     }
 
     @Override

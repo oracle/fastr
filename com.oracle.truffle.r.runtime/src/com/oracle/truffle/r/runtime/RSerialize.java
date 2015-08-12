@@ -15,8 +15,10 @@ import java.io.*;
 import java.util.*;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.runtime.RContext.ContextState;
+import com.oracle.truffle.r.runtime.RContext.Engine.ParseException;
 import com.oracle.truffle.r.runtime.conn.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
@@ -167,12 +169,10 @@ public class RSerialize implements RContext.StateFactory {
         protected Object[] refTable = new Object[128];
         protected int refTableIndex;
         protected final CallHook hook;
-        protected final int frameDepth;
         protected final ContextStateImpl contextState;
 
-        protected Common(CallHook hook, int frameDepth) {
+        protected Common(CallHook hook) {
             this.hook = hook;
-            this.frameDepth = frameDepth;
             this.contextState = getContextState();
         }
 
@@ -244,8 +244,8 @@ public class RSerialize implements RContext.StateFactory {
     }
 
     @TruffleBoundary
-    public static Object unserialize(RConnection conn, int frameDepth) throws IOException {
-        Input instance = trace() ? new TracingInput(conn, frameDepth) : new Input(conn, frameDepth);
+    public static Object unserialize(RConnection conn) throws IOException {
+        Input instance = trace() ? new TracingInput(conn) : new Input(conn);
         Object result = instance.unserialize();
         return result;
     }
@@ -258,9 +258,9 @@ public class RSerialize implements RContext.StateFactory {
      * @param packageName the name of the package that the lozyLoad is from
      */
     @TruffleBoundary
-    public static Object unserialize(byte[] data, CallHook hook, int frameDepth, String packageName) throws IOException {
+    public static Object unserialize(byte[] data, CallHook hook, String packageName) throws IOException {
         InputStream is = new PByteArrayInputStream(data);
-        Input instance = trace() ? new TracingInput(is, hook, frameDepth, packageName) : new Input(is, hook, frameDepth, packageName);
+        Input instance = trace() ? new TracingInput(is, hook, packageName) : new Input(is, hook, packageName);
         Object result = instance.unserialize();
         return result;
     }
@@ -286,12 +286,12 @@ public class RSerialize implements RContext.StateFactory {
          */
         private int langDepth;
 
-        private Input(RConnection conn, int depth) throws IOException {
-            this(conn.getInputStream(), null, depth, null);
+        private Input(RConnection conn) throws IOException {
+            this(conn.getInputStream(), null, null);
         }
 
-        private Input(InputStream is, CallHook hook, int depth, String packageName) throws IOException {
-            super(hook, depth);
+        private Input(InputStream is, CallHook hook, String packageName) throws IOException {
+            super(hook);
             this.packageName = packageName;
             this.closureDepth = 0;
             byte[] buf = new byte[2];
@@ -502,33 +502,15 @@ public class RSerialize implements RContext.StateFactory {
                         }
                         String deparse = RDeparse.deparse(rpl);
                         try {
-                            RExpression expr = parse(deparse, true);
-                            if (expr == null) {
-                                /*
-                                 * The source did not deparse, either due to an error in the deparse
-                                 * logic or an error in the FastR parser. Rather than fail, we
-                                 * return a function that, if invoked, reports this as an R error.
-                                 */
-                                expr = createFailedDeparseExpression();
-                            }
                             /*
                              * The tag of result is the enclosing environment (from NAMESPACESEXP)
                              * for the function. However the namespace is locked, so can't just eval
                              * there (and overwrite the promise), so we fix the enclosing frame up
                              * on return.
                              */
-                            RFunction func = (RFunction) RContext.getEngine().eval(expr, RDataFactory.createNewEnv(REnvironment.emptyEnv(), null), frameDepth + 1);
-                            // copy the function with a different enclosing frame
-                            func = RDataFactory.createFunction(func.getName(), func.getTarget(), func.getRBuiltin(), ((REnvironment) rpl.getTag()).getFrame(), func.containsDispatch());
-                            Source source = func.getRootNode().getSourceSection().getSource();
-                            if (!source.getName().startsWith(UNKNOWN_PACKAGE_SOURCE_PREFIX)) {
-                                /*
-                                 * Located a function source file from which we can retrieve the
-                                 * function name
-                                 */
-                                String funcName = RPackageSource.decodeName(source.getName());
-                                func.setName(funcName);
-                            }
+                            MaterializedFrame enclosingFrame = ((REnvironment) rpl.getTag()).getFrame();
+                            RFunction func = parseFunction(deparse, enclosingFrame);
+
                             copyAttributes(func, rpl.getAttributes());
                             result = func;
                         } catch (Throwable ex) {
@@ -545,7 +527,7 @@ public class RSerialize implements RContext.StateFactory {
                         if (closureDepth == 0 && langDepth == 0) {
                             RPairList pl = (RPairList) result;
                             String deparse = RDeparse.deparse(pl);
-                            RExpression expr = parse(deparse, false);
+                            RExpression expr = parse(deparse);
                             assert expr.getLength() == 1;
                             result = expr.getDataAt(0);
                             RAttributes attrs = pl.getAttributes();
@@ -757,28 +739,9 @@ public class RSerialize implements RContext.StateFactory {
             }
         }
 
-        private RExpression parse(String deparseRaw, boolean isClosure) throws IOException {
+        private RExpression parse(String deparseRaw) throws IOException {
             try {
-                String sourcePath = null;
-                String deparse = deparseRaw;
-                if (isClosure) {
-                    /*
-                     * To disambiguate identical saved deparsed files in different packages add a
-                     * header line
-                     */
-                    deparse = "# deparsed from package: " + packageName + "\n" + deparse;
-                    if (contextState.saveDeparse) {
-                        saveDeparseResult(deparse, false);
-                    } else {
-                        sourcePath = RPackageSource.lookup(deparse);
-                    }
-                }
-                Source source;
-                if (sourcePath == null) {
-                    source = Source.fromText(deparse, UNKNOWN_PACKAGE_SOURCE_PREFIX + packageName + " deparse>");
-                } else {
-                    source = Source.fromNamedText(deparse, sourcePath);
-                }
+                Source source = Source.fromText(deparseRaw, UNKNOWN_PACKAGE_SOURCE_PREFIX + packageName + " deparse>");
                 return RContext.getEngine().parse(source);
             } catch (Throwable ex) {
                 /*
@@ -790,6 +753,49 @@ public class RSerialize implements RContext.StateFactory {
                     throw Utils.fail("internal deparse error - see file DEPARSE_ERROR");
                 } else {
                     return null;
+                }
+            }
+        }
+
+        private RFunction parseFunction(String deparseRaw, MaterializedFrame enclosingFrame) throws IOException {
+            try {
+                String sourcePath = null;
+                String deparse = deparseRaw;
+                /*
+                 * To disambiguate identical saved deparsed files in different packages add a header
+                 * line
+                 */
+                deparse = "# deparsed from package: " + packageName + "\n" + deparse;
+                if (contextState.saveDeparse) {
+                    saveDeparseResult(deparse, false);
+                } else {
+                    sourcePath = RPackageSource.lookup(deparse);
+                }
+                Source source;
+                String name;
+                if (sourcePath == null) {
+                    source = Source.fromText(deparse, UNKNOWN_PACKAGE_SOURCE_PREFIX + packageName + " deparse>");
+                    name = "";
+                } else {
+                    source = Source.fromNamedText(deparse, sourcePath);
+                    // Located a function source file from which we can retrieve the function name
+                    name = RPackageSource.decodeName(sourcePath);
+                }
+                return RContext.getEngine().parseFunction(name, source, enclosingFrame);
+            } catch (Throwable ex) {
+                /*
+                 * Denotes a deparse/eval error, which is an unrecoverable bug, except in the
+                 * special case where we are just saving package sources.
+                 */
+                saveDeparseResult(deparseRaw, true);
+                if (!contextState.saveDeparse) {
+                    throw Utils.fail("internal deparse error - see file DEPARSE_ERROR");
+                } else {
+                    try {
+                        return RContext.getEngine().parseFunction("", FAILED_DEPARSE_FUNCTION_SOURCE, enclosingFrame);
+                    } catch (ParseException e) {
+                        throw RInternalError.shouldNotReachHere();
+                    }
                 }
             }
         }
@@ -806,18 +812,6 @@ public class RSerialize implements RContext.StateFactory {
 
         private static final String FAILED_DEPARSE_FUNCTION = "function(...) stop(\"FastR error: proxy for lazily loaded function that did not deparse/parse\")";
         private static final Source FAILED_DEPARSE_FUNCTION_SOURCE = Source.fromText(FAILED_DEPARSE_FUNCTION, UNKNOWN_PACKAGE_SOURCE_PREFIX + "deparse_error>");
-        private static RExpression failedDeparseExpression;
-
-        private static RExpression createFailedDeparseExpression() {
-            if (failedDeparseExpression == null) {
-                try {
-                    failedDeparseExpression = RContext.getEngine().parse(FAILED_DEPARSE_FUNCTION_SOURCE);
-                } catch (Throwable ex) {
-                    throw RInternalError.shouldNotReachHere();
-                }
-            }
-            return failedDeparseExpression;
-        }
 
         /**
          * GnuR uses a pairlist to represent attributes, whereas FastR uses the abstract RAttributes
@@ -1078,12 +1072,12 @@ public class RSerialize implements RContext.StateFactory {
     private static final class TracingInput extends Input {
         private int nesting;
 
-        private TracingInput(RConnection conn, int depth) throws IOException {
-            this(conn.getInputStream(), null, depth, null);
+        private TracingInput(RConnection conn) throws IOException {
+            this(conn.getInputStream(), null, null);
         }
 
-        private TracingInput(InputStream is, CallHook hook, int depth, String packageName) throws IOException {
-            super(is, hook, depth, packageName);
+        private TracingInput(InputStream is, CallHook hook, String packageName) throws IOException {
+            super(is, hook, packageName);
         }
 
         @Override
@@ -1210,12 +1204,12 @@ public class RSerialize implements RContext.StateFactory {
         protected final POutputStream stream;
         private int version;
 
-        private Output(RConnection conn, char format, int version, CallHook hook, int depth) throws IOException {
-            this(conn.getOutputStream(), format, version, hook, depth);
+        private Output(RConnection conn, char format, int version, CallHook hook) throws IOException {
+            this(conn.getOutputStream(), format, version, hook);
         }
 
-        private Output(OutputStream os, char format, int version, CallHook hook, int depth) throws IOException {
-            super(hook, depth);
+        private Output(OutputStream os, char format, int version, CallHook hook) throws IOException {
+            super(hook);
             this.version = version;
             switch (format) {
                 case 'A':
@@ -1967,10 +1961,10 @@ public class RSerialize implements RContext.StateFactory {
      * For {@code lazyLoadDBinsertValue}.
      */
     @TruffleBoundary
-    public static byte[] serialize(Object obj, boolean ascii, @SuppressWarnings("unused") boolean xdr, int version, Object refhook, int depth) {
+    public static byte[] serialize(Object obj, boolean ascii, @SuppressWarnings("unused") boolean xdr, int version, Object refhook) {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         try {
-            Output output = new Output(out, ascii ? 'A' : 'X', version, (CallHook) refhook, depth);
+            Output output = new Output(out, ascii ? 'A' : 'X', version, (CallHook) refhook);
             State state = new PLState(output);
             output.serialize(state, obj);
             return out.toByteArray();
@@ -1980,8 +1974,8 @@ public class RSerialize implements RContext.StateFactory {
     }
 
     @TruffleBoundary
-    public static void serialize(RConnection conn, Object obj, boolean ascii, @SuppressWarnings("unused") boolean xdr, int version, Object refhook, int depth) throws IOException {
-        Output output = new Output(conn, ascii ? 'A' : 'X', version, (CallHook) refhook, depth);
+    public static void serialize(RConnection conn, Object obj, boolean ascii, @SuppressWarnings("unused") boolean xdr, int version, Object refhook) throws IOException {
+        Output output = new Output(conn, ascii ? 'A' : 'X', version, (CallHook) refhook);
         State state = new PLState(output);
         output.serialize(state, obj);
     }
@@ -2052,5 +2046,4 @@ public class RSerialize implements RContext.StateFactory {
             out.write('\n');
         }
     }
-
 }

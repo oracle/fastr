@@ -28,7 +28,6 @@ import java.io.*;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.conn.*;
@@ -39,13 +38,13 @@ public class SerializeFunctions {
 
     public abstract static class Adapter extends RInvisibleBuiltinNode {
         @TruffleBoundary
-        protected Object doUnserializeFromConn(RConnection conn, @SuppressWarnings("unused") REnvironment refhook, int depth) {
+        protected Object doUnserializeFromConnBase(RConnection conn, @SuppressWarnings("unused") REnvironment refhook) {
             controlVisibility();
             try (RConnection openConn = conn.forceOpen("rb")) {
                 if (!openConn.canRead()) {
                     throw RError.error(this, RError.Message.CONNECTION_NOT_OPEN_READ);
                 }
-                Object result = RSerialize.unserialize(openConn, depth);
+                Object result = RSerialize.unserialize(openConn);
                 return result;
             } catch (IOException ex) {
                 throw RError.error(this, RError.Message.GENERIC, ex.getMessage());
@@ -53,8 +52,7 @@ public class SerializeFunctions {
         }
 
         @TruffleBoundary
-        protected Object doSerializeToConn(Object object, RConnection conn, byte asciiLogical, byte xdrLogical, @SuppressWarnings("unused") RNull version, @SuppressWarnings("unused") RNull refhook,
-                        int depth) {
+        protected Object doSerializeToConnBase(Object object, RConnection conn, byte asciiLogical, byte xdrLogical, @SuppressWarnings("unused") RNull version, @SuppressWarnings("unused") RNull refhook) {
             controlVisibility();
             boolean ascii = RRuntime.fromLogical(asciiLogical);
             // xdr is only relevant if ascii is false
@@ -65,7 +63,7 @@ public class SerializeFunctions {
                 if (!ascii && openConn.isTextMode()) {
                     throw RError.error(this, RError.Message.BINARY_CONNECTION_REQUIRED);
                 }
-                RSerialize.serialize(openConn, object, ascii, RRuntime.fromLogical(xdrLogical), RSerialize.DEFAULT_VERSION, null, depth);
+                RSerialize.serialize(openConn, object, ascii, RRuntime.fromLogical(xdrLogical), RSerialize.DEFAULT_VERSION, null);
                 return RNull.instance;
             } catch (IOException ex) {
                 throw RError.error(this, RError.Message.GENERIC, ex.getMessage());
@@ -76,22 +74,22 @@ public class SerializeFunctions {
     @RBuiltin(name = "unserializeFromConn", kind = INTERNAL, parameterNames = {"conn", "refhook"})
     public abstract static class UnserializeFromConn extends Adapter {
         @Specialization
-        protected Object doUnserializeFromConn(VirtualFrame frame, RConnection conn, @SuppressWarnings("unused") RNull refhook) {
-            return doUnserializeFromConn(conn, null, RArguments.getDepth(frame));
+        protected Object doUnserializeFromConn(RConnection conn, @SuppressWarnings("unused") RNull refhook) {
+            return doUnserializeFromConnBase(conn, null);
         }
 
         @Specialization
-        protected Object doUnserializeFromConn(VirtualFrame frame, RConnection conn, @SuppressWarnings("unused") REnvironment refhook) {
+        protected Object doUnserializeFromConn(RConnection conn, @SuppressWarnings("unused") REnvironment refhook) {
             // TODO figure out what this really means?
-            return doUnserializeFromConn(frame, conn, RNull.instance);
+            return doUnserializeFromConnBase(conn, null);
         }
     }
 
     @RBuiltin(name = "serializeToConn", kind = INTERNAL, parameterNames = {"object", "conn", "ascii", "version", "refhook"})
     public abstract static class SerializeToConn extends Adapter {
         @Specialization
-        protected Object doSerializeToConn(VirtualFrame frame, Object object, RConnection conn, byte asciiLogical, RNull version, RNull refhook) {
-            return doSerializeToConn(object, conn, asciiLogical, RRuntime.LOGICAL_NA, version, refhook, RArguments.getDepth(frame));
+        protected Object doSerializeToConn(Object object, RConnection conn, byte asciiLogical, RNull version, RNull refhook) {
+            return doSerializeToConnBase(object, conn, asciiLogical, RRuntime.LOGICAL_NA, version, refhook);
         }
 
     }
@@ -100,28 +98,28 @@ public class SerializeFunctions {
     public abstract static class Unserialize extends Adapter {
         @SuppressWarnings("unused")
         @Specialization
-        protected Object unSerialize(VirtualFrame frame, RConnection conn, RNull refhook) {
-            return doUnserializeFromConn(conn, null, RArguments.getDepth(frame));
+        protected Object unSerialize(RConnection conn, RNull refhook) {
+            return doUnserializeFromConnBase(conn, null);
         }
     }
 
     @RBuiltin(name = "serialize", kind = INTERNAL, parameterNames = {"object", "conn", "ascii", "version", "refhook"})
     public abstract static class Serialize extends Adapter {
         @Specialization
-        protected Object serialize(VirtualFrame frame, Object object, RConnection conn, byte asciiLogical, RNull version, RNull refhook) {
-            return doSerializeToConn(object, conn, asciiLogical, RRuntime.LOGICAL_NA, version, refhook, RArguments.getDepth(frame));
+        protected Object serialize(Object object, RConnection conn, byte asciiLogical, RNull version, RNull refhook) {
+            return doSerializeToConnBase(object, conn, asciiLogical, RRuntime.LOGICAL_NA, version, refhook);
         }
 
         @SuppressWarnings("unused")
         @Specialization
-        protected Object serialize(VirtualFrame frame, Object object, RNull conn, byte asciiLogical, RNull version, RNull refhook) {
-            byte[] data = RSerialize.serialize(object, RRuntime.fromLogical(asciiLogical), false, RSerialize.DEFAULT_VERSION, null, RArguments.getDepth(frame));
+        protected Object serialize(Object object, RNull conn, byte asciiLogical, RNull version, RNull refhook) {
+            byte[] data = RSerialize.serialize(object, RRuntime.fromLogical(asciiLogical), false, RSerialize.DEFAULT_VERSION, null);
             return RDataFactory.createRawVector(data);
         }
 
         @SuppressWarnings("unused")
         @Fallback
-        protected Object serialize(VirtualFrame frame, Object object, Object conn, Object asciiLogical, Object version, Object refhook) {
+        protected Object serialize(Object object, Object conn, Object asciiLogical, Object version, Object refhook) {
             throw RError.error(this, RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
         }
     }
@@ -129,11 +127,11 @@ public class SerializeFunctions {
     @RBuiltin(name = "serializeb", kind = INTERNAL, parameterNames = {"object", "conn", "xdr", "version", "refhook"})
     public abstract static class SerializeB extends Adapter {
         @Specialization
-        protected Object serializeB(VirtualFrame frame, Object object, RConnection conn, byte xdrLogical, RNull version, RNull refhook) {
+        protected Object serializeB(Object object, RConnection conn, byte xdrLogical, RNull version, RNull refhook) {
             if (!RRuntime.fromLogical(xdrLogical)) {
                 throw RError.nyi(this, "xdr==FALSE");
             }
-            return doSerializeToConn(object, conn, RRuntime.LOGICAL_FALSE, xdrLogical, version, refhook, RArguments.getDepth(frame));
+            return doSerializeToConnBase(object, conn, RRuntime.LOGICAL_FALSE, xdrLogical, version, refhook);
         }
     }
 }

@@ -376,6 +376,8 @@ public final class RContext extends ExecutionContext {
          */
         void printResult(Object value);
 
+        RFunction parseFunction(String name, Source source, MaterializedFrame enclosingFrame) throws ParseException;
+
     }
 
     /**

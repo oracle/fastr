@@ -216,7 +216,7 @@ public class HiddenInternalFunctions {
                             return callCache.execute(new SubstituteVirtualFrame(frame), envhook.getTarget(), callArgs);
                         }
                     };
-                    Object result = RSerialize.unserialize(udata, callHook, RArguments.getDepth(frame), packageName);
+                    Object result = RSerialize.unserialize(udata, callHook, packageName);
                     return result;
                 } catch (IOException ex) {
                     // unexpected
@@ -345,7 +345,7 @@ public class HiddenInternalFunctions {
             };
 
             try {
-                byte[] data = RSerialize.serialize(value, RRuntime.fromLogical(asciiL), false, RSerialize.DEFAULT_VERSION, callHook, RArguments.getDepth(frame));
+                byte[] data = RSerialize.serialize(value, RRuntime.fromLogical(asciiL), false, RSerialize.DEFAULT_VERSION, callHook);
                 byte[] cdata = new byte[data.length + 20];
                 long[] cdatalen = new long[1];
                 cdatalen[0] = cdata.length;

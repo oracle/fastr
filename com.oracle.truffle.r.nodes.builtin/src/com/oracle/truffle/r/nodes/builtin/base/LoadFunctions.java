@@ -14,8 +14,8 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import java.io.*;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.conn.*;
@@ -35,12 +35,13 @@ public class LoadFunctions {
         // from src/main/saveload.c
 
         @Specialization
-        protected RStringVector load(VirtualFrame frame, RConnection con, REnvironment envir, @SuppressWarnings("unused") RAbstractLogicalVector verbose) {
+        @TruffleBoundary
+        protected RStringVector load(RConnection con, REnvironment envir, @SuppressWarnings("unused") RAbstractLogicalVector verbose) {
             controlVisibility();
             try (RConnection openConn = con.forceOpen("r")) {
                 String s = openConn.readChar(5, true);
                 if (s.equals("RDA2\n") || s.equals("RDB2\n") || s.equals("RDX2\n")) {
-                    Object o = RSerialize.unserialize(con, RArguments.getDepth(frame));
+                    Object o = RSerialize.unserialize(con);
                     if (!(o instanceof RPairList)) {
                         throw RError.error(this, RError.Message.GENERIC, "loaded data is not in pair list form");
                     }
@@ -68,14 +69,11 @@ public class LoadFunctions {
                 } else {
                     throw RError.error(this, RError.Message.GENERIC, "the input does not start with a magic number compatible with loading from a connection");
                 }
-
             } catch (IOException iox) {
                 throw RError.error(this, RError.Message.ERROR_READING_CONNECTION, iox.getMessage());
             } catch (PutException px) {
                 throw RError.error(this, px);
             }
-
         }
     }
-
 }
