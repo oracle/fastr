@@ -99,8 +99,8 @@ public final class FunctionExpressionNode extends RNode implements RSyntaxNode {
                 FrameDescriptor enclosingFrameDescriptor = enclosingFrame.getFrameDescriptor();
                 if (enclosingFrameDescriptorAssumption.getValue() != enclosingFrameDescriptor) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    enclosingFrameDescriptorAssumption = FrameSlotChangeMonitor.getOrInitializeEnclosingFrameDescriptorAssumption(null, descriptor, enclosingFrameDescriptorAssumption,
-                                    enclosingFrameDescriptor);
+                    enclosingFrameDescriptorAssumption.getAssumption().invalidate();
+                    enclosingFrameDescriptorAssumption = FrameSlotChangeMonitor.getOrInitializeEnclosingFrameDescriptorAssumption(null, descriptor, enclosingFrameDescriptor);
                 }
             }
         }

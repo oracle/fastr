@@ -498,7 +498,7 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
             MaterializedFrame next = RArguments.getEnclosingFrame(current);
             FrameDescriptor nextDescriptor = next == null ? null : next.getFrameDescriptor();
             StableValue<MaterializedFrame> enclosingFrameAssumption = FrameSlotChangeMonitor.getOrInitializeEnclosingFrameAssumption(current, currentDescriptor, null, next);
-            StableValue<FrameDescriptor> enclosingDescriptorAssumption = FrameSlotChangeMonitor.getOrInitializeEnclosingFrameDescriptorAssumption(current, currentDescriptor, null, nextDescriptor);
+            StableValue<FrameDescriptor> enclosingDescriptorAssumption = FrameSlotChangeMonitor.getOrInitializeEnclosingFrameDescriptorAssumption(current, currentDescriptor, nextDescriptor);
 
             levels.add(new ReadVariableLevel(currentDescriptor, frameSlot, valueAssumption, enclosingDescriptorAssumption, enclosingFrameAssumption, next));
 

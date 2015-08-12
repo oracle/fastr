@@ -38,16 +38,24 @@ public final class NSBaseMaterializedFrame implements MaterializedFrame {
     private final MaterializedFrame packageBaseFrame;
     @CompilationFinal private final Object[] arguments;
 
+    // this frame descriptor is only used for lookups in FrameSlotChangeMonitor
+    private final FrameDescriptor markerFrameDescriptor;
+
     public NSBaseMaterializedFrame(MaterializedFrame packageBaseFrame, MaterializedFrame globalFrame) {
         this.packageBaseFrame = packageBaseFrame;
         this.arguments = Arrays.copyOf(packageBaseFrame.getArguments(), packageBaseFrame.getArguments().length);
-        FrameSlotChangeMonitor.initializeNonFunctionFrameDescriptor(getFrameDescriptor(), true);
+        this.markerFrameDescriptor = FrameDescriptor.create();
+        FrameSlotChangeMonitor.initializeNonFunctionFrameDescriptor(markerFrameDescriptor, true);
         RArguments.setEnclosingFrame(this, globalFrame);
     }
 
     public void updateGlobalFrame(MaterializedFrame globalFrame) {
         RArguments.setEnclosingFrame(this, globalFrame);
         FrameSlotChangeMonitor.invalidateEnclosingFrame(this);
+    }
+
+    public FrameDescriptor getMarkerFrameDescriptor() {
+        return markerFrameDescriptor;
     }
 
     @Override

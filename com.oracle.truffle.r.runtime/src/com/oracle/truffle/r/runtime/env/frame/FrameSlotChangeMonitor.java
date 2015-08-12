@@ -42,8 +42,6 @@ import com.oracle.truffle.r.runtime.data.*;
  */
 public final class FrameSlotChangeMonitor {
 
-    public static final FrameDescriptor NAMESPACE_BASE_MARKER_FRAME_DESCRIPTOR = new FrameDescriptor();
-
     private static final int MAX_FUNCTION_INVALIDATION_COUNT = 2;
     private static final int MAX_INVALIDATION_COUNT = 1;
 
@@ -102,8 +100,6 @@ public final class FrameSlotChangeMonitor {
     private static final WeakHashMap<FrameDescriptor, StableValue<MaterializedFrame>> descriptorEnclosingFrameAssumptions = new WeakHashMap<>();
     private static final WeakHashMap<FrameDescriptor, Boolean> descriptorSingletonAssumptions = new WeakHashMap<>();
     private static final WeakHashMap<FrameDescriptor, StableValue<FrameDescriptor>> descriptorEnclosingDescriptorAssumptions = new WeakHashMap<>();
-
-    private static int rewriteFrameDescriptorAssumptionsCount;
 
     /**
      * Retrieves the not-changed-locally {@link Assumption} for the given frame slot.
@@ -208,7 +204,7 @@ public final class FrameSlotChangeMonitor {
         CompilerAsserts.neverPartOfCompilation();
         MaterializedFrame enclosingFrame = RArguments.getEnclosingFrame(frame);
         getOrInitializeEnclosingFrameAssumption(frame, frame.getFrameDescriptor(), null, enclosingFrame);
-        getOrInitializeEnclosingFrameDescriptorAssumption(frame, frame.getFrameDescriptor(), null, enclosingFrame == null ? null : enclosingFrame.getFrameDescriptor());
+        getOrInitializeEnclosingFrameDescriptorAssumption(frame, frame.getFrameDescriptor(), enclosingFrame == null ? null : enclosingFrame.getFrameDescriptor());
     }
 
     /**
@@ -218,12 +214,11 @@ public final class FrameSlotChangeMonitor {
      * The namespace:base environment needs to be handled specially, because it shares a frame (and
      * thus, also a frame descriptor) with the package:base environment.
      */
-    public static synchronized void initializeNonFunctionFrameDescriptor(FrameDescriptor originalFrameDescriptor, boolean isNamespaceBase) {
-        FrameDescriptor frameDescriptor = isNamespaceBase ? NAMESPACE_BASE_MARKER_FRAME_DESCRIPTOR : originalFrameDescriptor;
+    public static synchronized void initializeNonFunctionFrameDescriptor(FrameDescriptor frameDescriptor, boolean isNamespaceBase) {
         descriptorEnclosingFrameAssumptions.put(frameDescriptor, StableValue.invalidated());
         descriptorEnclosingDescriptorAssumptions.put(frameDescriptor, StableValue.invalidated());
         if (!isNamespaceBase) {
-            descriptorSingletonAssumptions.put(originalFrameDescriptor, Boolean.FALSE);
+            descriptorSingletonAssumptions.put(frameDescriptor, Boolean.FALSE);
         }
     }
 
@@ -244,16 +239,12 @@ public final class FrameSlotChangeMonitor {
      * Special handling (return a marker frame) for the namespace:base environment.
      */
     private static FrameDescriptor handleBaseNamespaceEnv(Frame frame, FrameDescriptor originalFrameDescriptor) {
-        return frame instanceof NSBaseMaterializedFrame ? NAMESPACE_BASE_MARKER_FRAME_DESCRIPTOR : originalFrameDescriptor;
+        return frame instanceof NSBaseMaterializedFrame ? ((NSBaseMaterializedFrame) frame).getMarkerFrameDescriptor() : originalFrameDescriptor;
     }
 
-    public static synchronized StableValue<FrameDescriptor> getOrInitializeEnclosingFrameDescriptorAssumption(Frame frame, FrameDescriptor originalFrameDescriptor, StableValue<FrameDescriptor> value,
-                    FrameDescriptor newValue) {
+    public static synchronized StableValue<FrameDescriptor> getOrInitializeEnclosingFrameDescriptorAssumption(Frame frame, FrameDescriptor originalFrameDescriptor, FrameDescriptor newValue) {
         CompilerAsserts.neverPartOfCompilation();
         FrameDescriptor frameDescriptor = handleBaseNamespaceEnv(frame, originalFrameDescriptor);
-        if (value != null) {
-            value.getAssumption().invalidate();
-        }
         StableValue<FrameDescriptor> currentValue = descriptorEnclosingDescriptorAssumptions.get(frameDescriptor);
         if (currentValue.getAssumption().isValid()) {
             if (currentValue.getValue() == newValue) {
@@ -264,9 +255,6 @@ public final class FrameSlotChangeMonitor {
         }
         currentValue = new StableValue<>(newValue, "enclosing frame descriptor");
         descriptorEnclosingDescriptorAssumptions.put(frameDescriptor, currentValue);
-        if (value != null && value != StableValue.<FrameDescriptor> invalidated()) {
-            assert rewriteFrameDescriptorAssumptionsCount++ < 100;
-        }
         return currentValue;
     }
 
