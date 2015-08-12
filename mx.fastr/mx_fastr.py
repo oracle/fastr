@@ -41,8 +41,6 @@ def rscript_command_class():
     return r_command_project() + ".shell.RscriptCommand"
 
 def runR(args, className, nonZeroIsFatal=True, extraVmArgs=None, runBench=False, graal_vm='server'):
-    # extraVmArgs is not normally necessary as the global --J option can be used running R/RScript
-    # However, the bench command invokes other Java VMs along the way, so it must use extraVmArgs
     setREnvironment(graal_vm)
     vmArgs = ['-cp', mx.classpath(r_command_project())]
     vmArgs += ["-Drhome.path=" + _fastr_suite.dir]
