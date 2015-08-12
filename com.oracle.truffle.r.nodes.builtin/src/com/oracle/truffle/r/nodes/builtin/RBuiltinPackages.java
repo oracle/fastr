@@ -126,6 +126,7 @@ public final class RBuiltinPackages implements RBuiltinLookup {
 
     @Override
     public RFunction lookupBuiltin(String methodName) {
+        CompilerAsserts.neverPartOfCompilation();
         RFunction function = RContext.getCachedBuiltin(methodName);
         if (function != null) {
             return function;
@@ -149,6 +150,7 @@ public final class RBuiltinPackages implements RBuiltinLookup {
 
     @Override
     public RBuiltinFactory lookupBuiltinDescriptor(String name) {
+        CompilerAsserts.neverPartOfCompilation();
         return basePackage.lookupByName(name);
     }
 

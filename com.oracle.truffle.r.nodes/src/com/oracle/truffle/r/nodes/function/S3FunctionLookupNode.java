@@ -346,6 +346,11 @@ public abstract class S3FunctionLookupNode extends RBaseNode {
 
         @Override
         public Result execute(VirtualFrame frame, String genericName, RStringVector type, String group, MaterializedFrame callerFrame, MaterializedFrame genericDefFrame) {
+            return executeInternal(genericName, type, group, callerFrame, genericDefFrame);
+        }
+
+        @TruffleBoundary
+        private Result executeInternal(String genericName, RStringVector type, String group, MaterializedFrame callerFrame, MaterializedFrame genericDefFrame) {
             LookupOperation op = (lookupFrame, name, inMethodsTable) -> {
                 return ReadVariableNode.lookupFunction(name, lookupFrame, inMethodsTable);
             };
