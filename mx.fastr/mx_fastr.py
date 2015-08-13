@@ -157,8 +157,8 @@ def _test_harness_body(args, vmArgs):
     print "placeholder for mx test"
 
 def test(args):
-    vm = mx_graal.VM('server' if mx_graal._vm is None else mx_graal._vm)
-    with vm:
+    vm = _get_graal_vm()
+    with mx_jvmci.VM(vm):
         mx.test(args, harness=_test_harness_body)
 
 def _test_srcdir():

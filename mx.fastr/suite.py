@@ -21,14 +21,14 @@
 # questions.
 #
 suite = {
-  "mxversion" : "5.2.1",
+  "mxversion" : "5.4.1",
   "name" : "fastr",
 
   "imports" : {
     "suites" : [
             {
                "name" : "graal",
-               "version" : "4369b936c52001d16254ded0211134f3020ba78c",
+               "version" : "21baeafdf6a53ff96fedc6d98c2db398f3d92d0a",
                "urls" : [{"url" : "http://lafo.ssw.uni-linz.ac.at/hg/graal-compiler", "kind" : "hg"}]
             },
         ],
