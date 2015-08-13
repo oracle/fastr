@@ -152,6 +152,12 @@ public abstract class ConvertBooleanNode extends RNode {
         return doRaw(value.getDataAt(0));
     }
 
+    @Specialization
+    protected byte doRawVector(RList value) {
+        checkLength(value);
+        throw RError.error(this, RError.Message.ARGUMENT_NOT_INTERPRETABLE_LOGICAL);
+    }
+
     public static ConvertBooleanNode create(RSyntaxNode node) {
         if (node instanceof ConvertBooleanNode) {
             return (ConvertBooleanNode) node;
