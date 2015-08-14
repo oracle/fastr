@@ -83,7 +83,7 @@ public class FileFunctions {
              * There are two simple (non-trivial) cases and one tricky 1. 1. Append one or more
              * files to a single file (len1 == 1, len2 >= 1) 2. Append one file to one file for
              * several files (len1 == len2)
-             *
+             * 
              * The tricky case is when len1 > 1 && len2 > len1. E.g. f1,f2 <- g1,g2,g3 In this case,
              * this is really f1,f2,f1 <- g1,g2,g3
              */
@@ -221,7 +221,7 @@ public class FileFunctions {
              * the information. The R closure that called the .Internal turns the result into a
              * dataframe and sets the row.names attributes to the paths in vec. It also updates the
              * mtime, ctime, atime fields using .POSIXct.
-             *
+             * 
              * We try to use the JDK classes, even though they provide a more abstract interface
              * than R. In particular there seems to be no way to get the uid/gid values. We might be
              * better off justing using a native call.
@@ -818,9 +818,6 @@ public class FileFunctions {
                 boolean copyMode = checkLogical(copyModeArg, "copy.mode");
                 boolean copyDate = checkLogical(copyDateArg, "copy.dates");
 
-                if (recursive) {
-                    throw RError.nyi(this, "'recursive' option");
-                }
                 // Java cannot distinguish copy.mode and copy.dates
                 CopyOption[] copyOptions;
                 if (copyMode || copyDate) {
@@ -842,6 +839,12 @@ public class FileFunctions {
                         toDir = vecTo0Path;
                     }
                 }
+                if (recursive) {
+                    if (toDir == null) {
+                        RError.warning(this, RError.Message.FILE_COPY_RECURSIVE_IGNORED);
+                        recursive = false;
+                    }
+                }
 
                 for (int i = 0; i < lenFrom; i++) {
                     String from = vecFrom.getDataAt(i % lenFrom);
@@ -854,8 +857,16 @@ public class FileFunctions {
                     Path toPath = fileSystem.getPath(Utils.tildeExpand(to));
                     status[i] = RRuntime.LOGICAL_TRUE;
                     try {
-                        if (!Files.exists(toPath) || overWrite) {
-                            Files.copy(fromPath, toPath, copyOptions);
+                        if (recursive && Files.isDirectory(fromPath)) {
+                            // to is just one dir (checked above)
+                            boolean copyError = copyDir(fromPath, toPath, copyOptions);
+                            if (copyError) {
+                                status[i] = RRuntime.LOGICAL_FALSE;
+                            }
+                        } else {
+                            if (!Files.exists(toPath) || overWrite) {
+                                Files.copy(fromPath, toPath, copyOptions);
+                            }
                         }
                     } catch (UnsupportedOperationException | IOException ex) {
                         status[i] = RRuntime.LOGICAL_FALSE;
@@ -864,6 +875,47 @@ public class FileFunctions {
                 }
             }
             return RDataFactory.createLogicalVector(status, RDataFactory.COMPLETE_VECTOR);
+        }
+
+        private static final class DirCopy extends SimpleFileVisitor<Path> {
+            private final Path fromDir;
+            private final Path toDir;
+            private final CopyOption[] copyOptions;
+            private boolean error;
+
+            private DirCopy(Path fromDir, Path toDir, CopyOption[] copyOptions) {
+                this.fromDir = fromDir;
+                this.toDir = toDir;
+                this.copyOptions = copyOptions;
+            }
+
+            @Override
+            public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
+                Path newDir = toDir.resolve(fromDir.relativize(fromDir));
+                try {
+                    Files.copy(dir, newDir, copyOptions);
+                } catch (FileAlreadyExistsException x) {
+                    // ok
+                } catch (IOException ex) {
+                    error = true;
+                    return FileVisitResult.SKIP_SUBTREE;
+                }
+                return FileVisitResult.CONTINUE;
+            }
+
+            @Override
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                Path newFile = toDir.resolve(fromDir.relativize(file));
+                Files.copy(file, newFile, copyOptions);
+                return FileVisitResult.CONTINUE;
+            }
+        }
+
+        @SuppressWarnings("static-method")
+        private boolean copyDir(Path fromDir, Path toDir, CopyOption[] copyOptions) throws IOException {
+            DirCopy dirCopy = new DirCopy(fromDir, toDir, copyOptions);
+            Files.walkFileTree(fromDir, dirCopy);
+            return dirCopy.error;
         }
     }
 
