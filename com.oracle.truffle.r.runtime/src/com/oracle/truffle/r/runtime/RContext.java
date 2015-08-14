@@ -576,7 +576,7 @@ public final class RContext extends ExecutionContext {
     }
 
     /**
-     * Waits for the associated EvalThread to finish
+     * Waits for the associated EvalThread to finish.
      *
      * @throws InterruptedException
      */
