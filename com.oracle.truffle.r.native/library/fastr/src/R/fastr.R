@@ -90,6 +90,11 @@ fastr.context.spawn <- function(contexts, exprs) {
 	invisible(NULL)
 }
 
+fastr.context.join <- function(contexts) {
+	.FastR(.NAME="context.join", contexts)
+	invisible(NULL)
+}
+
 fastr.context.eval <- function(contexts, exprs, par=FALSE) {
 	.FastR(.NAME="context.eval", contexts, exprs, par)
 	invisible(NULL)
