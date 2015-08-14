@@ -121,7 +121,19 @@ public abstract class Mapply extends RBuiltinNode {
             for (int i = 0; i < maxLength; i++) {
                 /* Evaluate and store the arguments */
                 for (int listIndex = 0; listIndex < dotsLength; listIndex++) {
-                    RAbstractContainer vec = (RAbstractContainer) dots.getDataAt(listIndex);
+                    Object listElem = dots.getDataAt(listIndex);
+                    RAbstractContainer vec = null;
+                    if (listElem instanceof RAbstractContainer) {
+                        vec = (RAbstractContainer) listElem;
+                    } else {
+                        // TODO scalar types are a nuisance!
+                        if (listElem instanceof String) {
+                            vec = RDataFactory.createStringVectorFromScalar((String) listElem);
+                        } else {
+                            throw RInternalError.unimplemented();
+                        }
+                    }
+
                     int adjIndex = i % lengths[listIndex];
                     RArgsValuesAndNames indexArg;
                     if (adjIndex < INDEX_CACHE.length) {

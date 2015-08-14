@@ -153,9 +153,11 @@ public class ConnectionSupport implements RContext.StateFactory {
                 if (con instanceof TextConnections.TextRConnection) {
                     RError.warning(RError.NO_NODE, RError.Message.UNUSED_TEXTCONN, con.descriptor, ((TextConnections.TextRConnection) con).description);
                 }
-                int index = con.descriptor;
-                closeAndDestroy(con);
-                allConnections.set(index, null);
+                if (con != null) {
+                    int index = con.descriptor;
+                    closeAndDestroy(con);
+                    allConnections.set(index, null);
+                }
             }
         }
 

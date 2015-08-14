@@ -139,6 +139,13 @@ public abstract class Unlist extends RBuiltinNode {
         return RNull.instance;
     }
 
+    @SuppressWarnings("unused")
+    @Specialization(guards = "isOneNull(list)")
+    protected RNull unlistOneNullList(VirtualFrame frame, RList list, byte recursive, byte useNames) {
+        controlVisibility();
+        return RNull.instance;
+    }
+
     // TODO: initially unlist was on the slow path - hence initial recursive implementation is on
     // the slow path as well; ultimately we may consider (non-recursive) optimization
     @Specialization(guards = "!isEmpty(list)")
@@ -276,6 +283,7 @@ public abstract class Unlist extends RBuiltinNode {
                 }
                 return RDataFactory.createList(result, namesInfo != null && namesInfo.namesAssigned ? RDataFactory.createStringVector(namesData, RDataFactory.INCOMPLETE_VECTOR) : null);
             }
+
             default:
                 throw RInternalError.unimplemented();
         }
@@ -692,5 +700,9 @@ public abstract class Unlist extends RBuiltinNode {
 
     public static boolean isEmpty(RAbstractVector vector) {
         return vector.getLength() == 0;
+    }
+
+    public static boolean isOneNull(RList list) {
+        return list.getLength() == 1 && list.getDataAt(0) == RNull.instance;
     }
 }
