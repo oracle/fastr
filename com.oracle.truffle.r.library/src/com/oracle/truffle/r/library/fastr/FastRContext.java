@@ -80,6 +80,27 @@ public class FastRContext {
         }
     }
 
+    public abstract static class Join extends RExternalBuiltinNode.Arg1 {
+        @Specialization
+        protected RNull eval(RIntVector contexts) {
+            try {
+                for (int i = 0; i < contexts.getLength(); i++) {
+                    RContext context = RContext.find(contexts.getDataAt(i));
+                    if (context == null) {
+                        // already done
+                        continue;
+                    } else {
+                        context.joinThread();
+                    }
+                }
+            } catch (InterruptedException ex) {
+                throw RError.error(this, RError.Message.GENERIC, "error finishing eval thread");
+
+            }
+            return RNull.instance;
+        }
+    }
+
     public abstract static class Eval extends RExternalBuiltinNode.Arg3 {
         @Specialization
         protected RNull eval(RIntVector contexts, RAbstractStringVector exprs, byte par) {
@@ -97,7 +118,7 @@ public class FastRContext {
                         threads[i].join();
                     }
                 } catch (InterruptedException ex) {
-
+                    throw RError.error(this, RError.Message.GENERIC, "error finishing eval thread");
                 }
             } else {
                 for (int i = 0; i < contexts.getLength(); i++) {

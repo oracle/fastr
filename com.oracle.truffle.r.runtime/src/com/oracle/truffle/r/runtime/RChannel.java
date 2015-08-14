@@ -22,15 +22,19 @@
  */
 package com.oracle.truffle.r.runtime;
 
+import java.io.*;
 import java.util.concurrent.*;
 
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.*;
 
 /**
  * Implementation of a channel abstraction used for communication between parallel contexts in
  * shared memory space.
  */
 public class RChannel {
+
+    // TODO: cheaper way of serializing data (re-usable buffer?)
 
     private static final int INITIAL_CHANNEL_NUM = 4;
     private static final int CHANNEL_NUM_GROW_FACTOR = 2;
@@ -135,19 +139,23 @@ public class RChannel {
     }
 
     public static void send(int id, Object data) {
+        Object msg = data;
         RChannel channel = getChannelFromId(id);
-        if (data instanceof RShareable) {
-            // make sure that what's passed through the channel will be copied on the first update
-            RShareable shareable = (RShareable) data;
+        if ((msg instanceof RAbstractVector && !(msg instanceof RList)) || msg instanceof RDataFrame || msg instanceof RFactor) {
+            // make sure that what's passed through the channel will be copied on the first
+            // update
+            RShareable shareable = (RShareable) msg;
             if (FastROptions.NewStateTransition) {
                 shareable.incRefCount();
                 shareable.incRefCount();
             } else {
                 shareable.makeShared();
             }
+        } else {
+            msg = RSerialize.serialize(msg, false, true, RSerialize.DEFAULT_VERSION, null);
         }
         try {
-            (id > 0 ? channel.masterToClient : channel.clientToMaster).put(data);
+            (id > 0 ? channel.masterToClient : channel.clientToMaster).put(msg);
         } catch (InterruptedException x) {
             throw RError.error(RError.NO_NODE, RError.Message.GENERIC, "error sending through the channel");
         }
@@ -156,10 +164,16 @@ public class RChannel {
     public static Object receive(int id) {
         RChannel channel = getChannelFromId(id);
         try {
-            return (id < 0 ? channel.masterToClient : channel.clientToMaster).take();
+            Object msg = (id < 0 ? channel.masterToClient : channel.clientToMaster).take();
+            if (msg instanceof byte[]) {
+                return RSerialize.unserialize((byte[]) msg, null, null);
+            } else {
+                return msg;
+            }
         } catch (InterruptedException x) {
             throw RError.error(RError.NO_NODE, RError.Message.GENERIC, "error receiving from the channel");
+        } catch (IOException x) {
+            throw RError.error(RError.NO_NODE, RError.Message.GENERIC, "error unserializing msg from the channel");
         }
     }
-
 }

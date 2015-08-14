@@ -448,6 +448,7 @@ public final class RContext extends ExecutionContext {
         public EvalThread(RContext context, Source source) {
             super(context);
             this.source = source;
+            context.evalThread = this;
         }
 
         @Override
@@ -510,6 +511,11 @@ public final class RContext extends ExecutionContext {
     private RContext sharedChild;
 
     /**
+     * Back pointer to the evalThread.
+     */
+    private EvalThread evalThread;
+
+    /**
      * Typically there is a 1-1 relationship between an {@link RContext} and the thread that is
      * performing the evaluation, so we can store the {@link RContext} in a {@link ThreadLocal}.
      *
@@ -534,6 +540,8 @@ public final class RContext extends ExecutionContext {
     private boolean active;
 
     private static final Deque<RContext> allContexts = new ConcurrentLinkedDeque<>();
+
+    private static final Semaphore allContextsSemaphore = new Semaphore(1, true);
 
     /**
      * A (hopefully) temporary workaround to ignore the setting of {@link #resultVisible} for
@@ -568,6 +576,20 @@ public final class RContext extends ExecutionContext {
         }
     }
 
+    /**
+     * Waits for the associated EvalThread to finish.
+     *
+     * @throws InterruptedException
+     */
+    public void joinThread() throws InterruptedException {
+        EvalThread t = this.evalThread;
+        if (t == null) {
+            throw RError.error(RError.NO_NODE, RError.Message.GENERIC, "no eval thread in a given context");
+        }
+        this.evalThread = null;
+        t.join();
+    }
+
     private static final Assumption singleContextAssumption = Truffle.getRuntime().createAssumption("single RContext");
     @CompilationFinal private static RContext singleContext;
 
@@ -587,7 +609,13 @@ public final class RContext extends ExecutionContext {
         }
         this.consoleHandler = consoleHandler;
         this.interactive = consoleHandler.isInteractive();
-        allContexts.add(this);
+        try {
+            allContextsSemaphore.acquire();
+            allContexts.add(this);
+            allContextsSemaphore.release();
+        } catch (InterruptedException x) {
+            throw RError.error(RError.NO_NODE, RError.Message.GENERIC, "error destroying context");
+        }
 
         if (singleContextAssumption.isValid()) {
             if (singleContext == null) {
@@ -700,7 +728,13 @@ public final class RContext extends ExecutionContext {
             parent.sharedChild = null;
         }
         engine = null;
-        allContexts.remove(this);
+        try {
+            allContextsSemaphore.acquire();
+            allContexts.remove(this);
+            allContextsSemaphore.release();
+        } catch (InterruptedException x) {
+            throw RError.error(RError.NO_NODE, RError.Message.GENERIC, "error destroying context");
+        }
         if (parent == null) {
             threadLocalContext.set(null);
         } else {
@@ -721,10 +755,17 @@ public final class RContext extends ExecutionContext {
     }
 
     public static RContext find(int id) {
-        for (RContext context : allContexts) {
-            if (context.id == id) {
-                return context;
+        try {
+            allContextsSemaphore.acquire();
+            for (RContext context : allContexts) {
+                if (context.id == id) {
+                    allContextsSemaphore.release();
+                    return context;
+                }
             }
+            allContextsSemaphore.release();
+        } catch (InterruptedException x) {
+            throw RError.error(RError.NO_NODE, RError.Message.GENERIC, "error destroying context");
         }
         return null;
     }
