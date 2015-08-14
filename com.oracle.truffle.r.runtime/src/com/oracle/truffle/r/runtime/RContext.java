@@ -393,7 +393,8 @@ public final class RContext extends ExecutionContext {
         StdConnections(StdConnections.class, true),
         RNG(RRNG.class, false),
         RFFI(RFFIContextStateFactory.class, false),
-        RSerialize(RSerialize.class, false);
+        RSerialize(RSerialize.class, false),
+        REnvVars(REnvVars.class, false);
 
         private final Class<? extends StateFactory> klass;
         private StateFactory factory;
