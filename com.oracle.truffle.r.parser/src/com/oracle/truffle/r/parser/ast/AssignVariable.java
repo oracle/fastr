@@ -106,13 +106,13 @@ public abstract class AssignVariable extends ASTNode {
             String builtinName = lhs.getName() + "<-";
             lhs.setSymbol(builtinName);
         } else {
-            assert false;
+            throw RInternalError.unimplemented();
         }
         lhs.setAssignment(true);
         lhs.setSuper(isSuper);
         if (lhs.getArguments().size() > 0) {
             ASTNode first = lhs.getArguments().get(0).getValue();
-            if (first instanceof SimpleAccessVariable || first instanceof AccessVector || first instanceof FieldAccess) {
+            if (first instanceof SimpleAccessVariable || first instanceof AccessVector || first instanceof FieldAccess || first instanceof FunctionCall) {
                 return new Replacement(src, isSuper, lhs, rhs);
             } else {
                 // TODO here we need to flatten complex assignments

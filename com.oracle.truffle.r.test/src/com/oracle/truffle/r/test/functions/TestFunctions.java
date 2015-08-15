@@ -100,6 +100,7 @@ public class TestFunctions extends TestBase {
 
         // replacement function
         assertEval("{ 'my<-' <- function(x, value) { attr(x, \"myattr\") <- value ; x } ; z <- 1; my(z) <- \"hello\" ; z }");
+        assertEval("{ x<-matrix(1:4, ncol=2); y<-list(x=c(\"a\", \"b\"), y=c(\"c\", \"d\")); dimnames(x)<-y; names(dimnames(x))<-c(\"m\", \"n\"); dimnames(x) }");
 
         assertEval("{ x <- function(a,b) { a^b } ; f <- function() { x <- \"sum\" ; sapply(1, x, 2) } ; f() }");
         assertEval("{ x <- function(a,b) { a^b } ; g <- function() { x <- \"sum\" ; f <- function() { sapply(1, x, 2) } ; f() }  ; g() }");
