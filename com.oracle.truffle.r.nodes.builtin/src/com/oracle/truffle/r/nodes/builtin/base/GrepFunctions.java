@@ -803,6 +803,17 @@ public class GrepFunctions {
             return ret;
         }
 
+        @SuppressWarnings("unused")
+        @TruffleBoundary
+        @Fallback
+        protected RList split(Object x, Object splitArg, Object fixedLogical, Object perlLogical, Object useBytes) {
+            if (!(x instanceof RAbstractStringVector)) {
+                throw RError.error(this, RError.Message.NON_CHARACTER);
+            } else {
+                throw RError.error(this, RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
+            }
+        }
+
         private static RStringVector splitIntl(String input, String separator) {
             assert !RRuntime.isNA(input);
             return RDataFactory.createStringVector(input.split(separator), true);

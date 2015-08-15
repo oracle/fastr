@@ -241,6 +241,7 @@ public final class RError extends RuntimeException {
         ITEMS_NOT_MULTIPLE("number of items read is not a multiple of the number of columns"),
         // below: GNU R gives also expression for the argument
         NOT_FUNCTION("argument is not a function, character or symbol"),
+        NON_CHARACTER("non-character argument"),
         NON_NUMERIC_MATH("non-numeric argument to mathematical function"),
         NAN_PRODUCED("NaNs produced"),
         NUMERIC_COMPLEX_MATRIX_VECTOR("requires numeric/complex matrix/vector arguments"),
