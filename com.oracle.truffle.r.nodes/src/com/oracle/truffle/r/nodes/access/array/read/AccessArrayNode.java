@@ -1303,6 +1303,7 @@ public abstract class AccessArrayNode extends RNode {
     @Specialization(guards = {"!isPositionZero(position)", "!isPositionNA(position)", "!isPositionNegative(position)", "hasNames(vector)", "isSubset()"})
     protected RStringVector accessNames(RAbstractStringVector vector, Object exact, int recLevel, int position, Object dropDim) {
         String val = vector.getDataAt(position - 1);
+        elementNACheck.enable(val);
         elementNACheck.check(val);
         return RDataFactory.createStringVector(new String[]{val}, elementNACheck.neverSeenNA(), getName(vector, position));
     }
