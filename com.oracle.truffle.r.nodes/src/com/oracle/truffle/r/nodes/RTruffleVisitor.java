@@ -397,10 +397,17 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
             RCallNode replacementCall = prepareReplacementCall(fAst, args, tmpSymbol, rhsSymbol, false);
             // see AssignVariable.writeVector (number of args must match)
             callArgAst.getArguments().add(ArgNode.create(rhsAst.getSource(), "value", rhsAst));
-            RSyntaxNode update = doReplacementLeftHandSide(callArgAst.getVector(), !false, replacementCall, replacement.isSuper(), replacement.getSource(), (receiver, rhsAccess) -> {
+            RSyntaxNode update = doReplacementLeftHandSide(callArgAst.getVector(), true, replacementCall, replacement.isSuper(), replacement.getSource(), (receiver, rhsAccess) -> {
                 return createArrayUpdate(callArgAst.getIndexes(), callArgAst.getIndexes().size() - 1, callArgAst.isSubset(), receiver, rhsAccess);
             });
             assignFromTemp = update.asRNode();
+        } else if (val instanceof FunctionCall) {
+            FunctionCall callArgAst = (FunctionCall) val;
+            replacementArg = callArgAst.accept(this);
+            RCallNode replacementCall = prepareReplacementCall(fAst, args, tmpSymbol, rhsSymbol, false);
+            assignFromTemp = doReplacementLeftHandSide(callArgAst.getArguments().get(0).getValue(), true, replacementCall, replacement.isSuper(), replacement.getSource(), (receiver, rhsAccess) -> {
+                return createFunctionUpdate(rhsAccess, callArgAst);
+            }).asRNode();
         } else {
             FieldAccess callArgAst = (FieldAccess) val;
             replacementArg = callArgAst.accept(this);
@@ -495,6 +502,18 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
     private static RCallNode createFieldUpdate(SourceSection source, RSyntaxNode receiver, RSyntaxNode rhs, String fieldName) {
         ReadVariableNode function = ReadVariableNode.createForced(source, "$<-", RType.Function);
         return RCallNode.createCall(source, function, ArgumentsSignature.empty(3), receiver, ConstantNode.create(source, fieldName), rhs);
+    }
+
+    private RCallNode createFunctionUpdate(RSyntaxNode rhs, FunctionCall fun) {
+        String funName = null;
+        if (fun.isSymbol()) {
+            funName = fun.getName() + "<-";
+        } else {
+            throw RInternalError.unimplemented();
+        }
+        assert fun.getArguments().size() == 1;
+        ReadVariableNode function = ReadVariableNode.createForced(null, funName, RType.Function);
+        return RCallNode.createCall(null, function, ArgumentsSignature.empty(2), this.visit(fun.getArguments().get(0)), rhs);
     }
 
     private RSyntaxNode doReplacementLeftHandSide(ASTNode receiver, boolean needsSyntaxAST, RSyntaxNode rhs, boolean isSuper, SourceSection source,
