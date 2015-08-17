@@ -502,5 +502,6 @@ public class BasePackage extends RBuiltinPackage {
         add(WhichFunctions.Which.class, WhichFunctionsFactory.WhichNodeGen::create);
         add(WhichFunctions.WhichMax.class, WhichFunctionsFactory.WhichMaxNodeGen::create);
         add(WhichFunctions.WhichMin.class, WhichFunctionsFactory.WhichMinNodeGen::create);
+        add(Xtfrm.class, XtfrmNodeGen::create);
     }
 }

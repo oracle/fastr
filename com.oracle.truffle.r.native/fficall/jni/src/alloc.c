@@ -12,10 +12,43 @@
 #include "rffiutils.h"
 #include <stdlib.h>
 
+#define T_MEM_TABLE_INITIAL_SIZE 0
+// The table of transient objects that have been allocated dur the current FFI call
+static void **tMemTable;
+// hwm of tMemTable
+static int tMemTableIndex;
+static int tMemTableLength;
 void init_alloc(JNIEnv *env) {
-
+	tMemTable = malloc(sizeof(void*) * T_MEM_TABLE_INITIAL_SIZE);
+    tMemTableLength = T_MEM_TABLE_INITIAL_SIZE;
+    tMemTableIndex = 0;
 }
 
+
+// Memory that is auto-reclaimed across FFI calls
+char *R_alloc(size_t n, int size) {
+	void *p = R_chk_alloc(n, size);
+	if (tMemTableIndex >= tMemTableLength) {
+		int newLength = 2 * tMemTableLength;
+		void *newtMemTable = malloc(sizeof(void*) * newLength);
+		if (newtMemTable == NULL) {
+			fatalError("malloc failure");
+		}
+		memcpy(newtMemTable, tMemTable, tMemTableLength * sizeof(void*));
+		free(tMemTable);
+		tMemTable = newtMemTable;
+		tMemTableLength = newLength;
+	}
+	tMemTable[tMemTableIndex] = p;
+	return (char*) p;
+}
+
+void allocExit() {
+	int i;
+	for (i = 0; i < tMemTableIndex; i++) {
+		free(tMemTable[i]);
+	}
+}
 
 void *R_chk_calloc(size_t nelem, size_t elsize) {
 	    void *p;

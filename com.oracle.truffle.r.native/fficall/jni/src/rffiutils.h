@@ -53,6 +53,8 @@ void validateRef(JNIEnv *env, SEXP x, const char *msg);
 void callEnter(JNIEnv *env, jmp_buf *error_exit);
 // exiting a top-level JNI call
 void callExit(JNIEnv *env);
+// called by callExit to deallocate transient memory
+void allocExit();
 
 jmp_buf *getErrorJmpBuf();
 
@@ -68,6 +70,8 @@ void init_externalptr(JNIEnv *env);
 void init_typecoerce(JNIEnv *env);
 void init_attrib(JNIEnv *env);
 void init_misc(JNIEnv *env);
+void init_rng(JNIEnv *env);
+void init_optim(JNIEnv *env);
 void init_vectoraccess(JNIEnv *env);
 void init_listaccess(JNIEnv *env);
 void init_utils(JNIEnv *env);

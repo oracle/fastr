@@ -44,6 +44,8 @@ static jmethodID Rf_isNullMethodID;
 static jmethodID Rf_warningMethodID;
 static jmethodID Rf_errorMethodID;
 static jmethodID Rf_NewHashedEnvMethodID;
+static jmethodID Rf_rPsortMethodID;
+static jmethodID Rf_iPsortMethodID;
 
 void init_rf_functions(JNIEnv *env) {
 	Rf_ScalarIntegerMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_ScalarInteger", "(I)Lcom/oracle/truffle/r/runtime/data/RIntVector;", 1);
@@ -64,6 +66,8 @@ void init_rf_functions(JNIEnv *env) {
 	createListMethodID = checkGetMethodID(env, RDataFactoryClass, "createList", "(I)Lcom/oracle/truffle/r/runtime/data/RList;", 1);
 	Rf_duplicateMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_duplicate", "(Ljava/lang/Object;)Ljava/lang/Object;", 1);
 	Rf_NewHashedEnvMethodID = checkGetMethodID(env, RDataFactoryClass, "createNewEnv", "(Lcom/oracle/truffle/r/runtime/env/REnvironment;Ljava/lang/String;ZI)Lcom/oracle/truffle/r/runtime/env/REnvironment;", 1);
+//	Rf_rPsortMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_rPsort", "(Lcom/oracle/truffle/r/runtime/data/RDoubleVector;II)", 1);
+//	Rf_iPsortMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_iPsort", "(Lcom/oracle/truffle/r/runtime/data/RIntVector;II)", 1);
 }
 
 SEXP Rf_ScalarInteger(int value) {
@@ -210,7 +214,7 @@ void Rf_error(const char *msg, ...) {
 	// and, if it finds any, does not return, but throws a different exception than RError.
 	// We definitely need to exit the FFI call and we certainly cannot return to our caller.
 	// So we call CallRFFIHelper.Rf_error to throw the RError exception. When the pending
-	// exception (whatever it is) is observed by JNI, he call to Rf_error will return where we do a
+	// exception (whatever it is) is observed by JNI, the call to Rf_error will return where we do a
 	// non-local transfer of control back to the entry point (which will cleanup).
 	JNIEnv *thisenv = getEnv();
 	jstring string = (*thisenv)->NewStringUTF(thisenv, msg);
@@ -245,4 +249,15 @@ SEXP R_NewHashedEnv(SEXP parent, SEXP size) {
 	int sizeAsInt = Rf_asInteger(size);
 	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, RDataFactoryClass, Rf_NewHashedEnvMethodID, parent, NULL, JNI_TRUE, sizeAsInt);
 	return checkRef(thisenv, result);
+}
+
+void Rf_iPsort(int *x, int n, int k)
+{
+	JNIEnv *thisenv = getEnv();
+	unimplemented("Rf_iPsort");
+}
+
+void Rf_rPsort(double *x, int n, int k) {
+	JNIEnv *thisenv = getEnv();
+	unimplemented("Rf_rPsort");
 }

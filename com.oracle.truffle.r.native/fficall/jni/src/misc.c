@@ -45,3 +45,14 @@ const char *R_CHAR(SEXP string) {
 	return copyChars;
 }
 
+void R_isort(int *x, int n) {
+	unimplemented("R_isort");
+}
+
+void R_rsort(double *x, int n) {
+	unimplemented("R_rsort");
+}
+
+void R_CheckUserInterrupt() {
+// TODO (we don't even do this in the Java code)
+}

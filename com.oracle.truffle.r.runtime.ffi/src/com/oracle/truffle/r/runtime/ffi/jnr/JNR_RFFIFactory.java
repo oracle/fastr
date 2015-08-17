@@ -53,6 +53,12 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI, Stat
     protected void initialize() {
         // This must load early as package libraries reference symbols in it.
         getCallRFFI();
+        /*
+         * Some package C code calls these functions and, therefore, expects the linpack symbols to
+         * be available, which will not be the case unless one of the functions has already been
+         * called from R code. So we eagerly load the library to define the symbols.
+         */
+        linpack();
     }
 
     /**
