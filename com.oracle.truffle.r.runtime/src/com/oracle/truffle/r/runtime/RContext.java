@@ -380,6 +380,8 @@ public final class RContext extends ExecutionContext {
 
         RFunction parseFunction(String name, Source source, MaterializedFrame enclosingFrame) throws ParseException;
 
+        ForeignAccess getForeignAccess(RTypedValue value);
+
     }
 
     /**

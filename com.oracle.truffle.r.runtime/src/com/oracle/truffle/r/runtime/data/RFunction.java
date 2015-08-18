@@ -24,6 +24,7 @@ package com.oracle.truffle.r.runtime.data;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.interop.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.runtime.*;
 
@@ -40,7 +41,7 @@ import com.oracle.truffle.r.runtime.*;
  * {@link #enclosingFrame}.
  * </ul>
  */
-public final class RFunction extends RAttributeStorage implements RTypedValue {
+public final class RFunction extends RAttributeStorage implements RTypedValue, TruffleObject {
 
     private String name;
     private final RootCallTarget target;
@@ -110,5 +111,9 @@ public final class RFunction extends RAttributeStorage implements RTypedValue {
         assert !isBuiltin();
         this.name = name;
         RContext.getRRuntimeASTAccess().setFunctionName(getRootNode(), name);
+    }
+
+    public ForeignAccess getForeignAccess() {
+        return RContext.getEngine().getForeignAccess(this);
     }
 }

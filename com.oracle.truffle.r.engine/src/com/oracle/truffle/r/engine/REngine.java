@@ -36,9 +36,11 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.instrument.*;
+import com.oracle.truffle.api.interop.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.vm.*;
+import com.oracle.truffle.r.engine.interop.*;
 import com.oracle.truffle.r.library.graphics.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
@@ -563,6 +565,16 @@ final class REngine implements RContext.Engine {
             // We don't call writeStdErr as that may exercise the (broken) implementation
             context.getConsoleHandler().printErrorln(out.toString());
             Utils.exit(2);
+        }
+    }
+
+    public ForeignAccess getForeignAccess(RTypedValue value) {
+        if (value instanceof RAbstractVector) {
+            return ForeignAccess.create(RAbstractVector.class, new RAbstractVectorAccessFactory());
+        } else if (value instanceof RFunction) {
+            return ForeignAccess.create(RFunction.class, new RFunctionAccessFactory());
+        } else {
+            throw RInternalError.shouldNotReachHere("cannot create ForeignAccess for " + value);
         }
     }
 }
