@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.engine;
 
-import static com.oracle.truffle.r.runtime.RCmdOptions.NO_RESTORE;
+import static com.oracle.truffle.r.runtime.RCmdOptions.*;
 
 import java.io.*;
 import java.util.*;
@@ -30,9 +30,9 @@ import java.util.stream.*;
 
 import org.antlr.runtime.*;
 
+import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.instrument.*;
@@ -50,9 +50,7 @@ import com.oracle.truffle.r.nodes.runtime.*;
 import com.oracle.truffle.r.parser.*;
 import com.oracle.truffle.r.parser.ast.*;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.RContext.ConsoleHandler;
 import com.oracle.truffle.r.runtime.Utils.DebugExitException;
-import com.oracle.truffle.r.runtime.conn.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -238,19 +236,11 @@ final class REngine implements RContext.Engine {
     }
 
     @Override
-    public Object parseAndEvalTest(Source source, boolean printResult, boolean allowIncompleteSource) {
-        try {
-            return parseAndEvalImpl(source, globalFrame, printResult, allowIncompleteSource);
-        } catch (RInternalError e) {
-            context.getConsoleHandler().printErrorln("FastR internal error: " + e.getMessage());
-            RInternalError.reportError(e);
-            throw e;
-        } catch (RecognitionException e) {
-            throw new RInternalError(e, "recognition exception");
-        }
+    public Object parseAndEvalDirect(Source source, boolean printResult, boolean allowIncompleteSource) {
+        return parseAndEvalImpl(source, globalFrame, printResult, allowIncompleteSource);
     }
 
-    private Object parseAndEvalImpl(Source source, MaterializedFrame frame, boolean printResult, boolean allowIncompleteSource) throws RecognitionException {
+    private Object parseAndEvalImpl(Source source, MaterializedFrame frame, boolean printResult, boolean allowIncompleteSource) {
         RSyntaxNode node;
         try {
             node = parseToRNode(source);
@@ -260,9 +250,14 @@ final class REngine implements RContext.Engine {
                 return INCOMPLETE_SOURCE;
             }
             String line = source.getCode(e.line);
-            String message = "Error: unexpected '" + e.token.getText() + "' in \"" + line.substring(0, Math.min(line.length(), e.charPositionInLine + 1)) + "\"";
-            writeStderr(source.getLineCount() == 1 ? message : (message + " (line " + e.line + ")"), true);
-            return null;
+            String substring = line.substring(0, Math.min(line.length(), e.charPositionInLine + 1));
+            if (source.getLineCount() == 1) {
+                throw RError.error(RError.NO_CALLER, RError.Message.UNEXPECTED, e.token.getText(), substring);
+            } else {
+                throw RError.error(RError.NO_CALLER, RError.Message.UNEXPECTED_LINE, e.token.getText(), substring, e.line);
+            }
+        } catch (RecognitionException e) {
+            throw new RInternalError(e, "recognition exception");
         }
         RootCallTarget callTarget = doMakeCallTarget(node.asRNode(), "<repl wrapper>");
         try {
@@ -570,17 +565,4 @@ final class REngine implements RContext.Engine {
             Utils.exit(2);
         }
     }
-
-    private void writeStderr(String s, boolean nl) {
-        try {
-            StdConnections.getStderr().writeString(s, nl);
-        } catch (IOException ex) {
-            // Very unlikely
-            ConsoleHandler consoleHandler = context.getConsoleHandler();
-            consoleHandler.printErrorln("Error writing to stderr: " + ex.getMessage());
-            consoleHandler.printErrorln(s);
-
-        }
-    }
-
 }

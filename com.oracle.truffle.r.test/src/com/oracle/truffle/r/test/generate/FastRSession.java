@@ -38,7 +38,7 @@ public final class FastRSession implements RSession {
      * A (virtual) console handler that collects the output in a {@link StringBuilder} for
      * comparison. It does not separate error output as the test analysis doesn't need it.
      */
-    private static class ConsoleHandler implements RContext.ConsoleHandler {
+    public static class ConsoleHandler implements RContext.ConsoleHandler {
         private final StringBuilder buffer = new StringBuilder();
 
         @TruffleBoundary
@@ -181,7 +181,7 @@ public final class FastRSession implements RSession {
                 try {
                     RContext testContext = createTestContext();
                     try {
-                        testContext.getThisEngine().parseAndEvalTest(Source.fromText(expression, "<test_input>"), true, false);
+                        testContext.getThisEngine().parseAndEvalDirect(Source.fromText(expression, "<test_input>"), true, false);
                     } finally {
                         testContext.destroy();
                     }

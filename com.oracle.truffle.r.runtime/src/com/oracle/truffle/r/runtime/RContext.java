@@ -296,10 +296,10 @@ public final class RContext extends ExecutionContext {
         Object parseAndEval(Source sourceDesc, boolean printResult, boolean allowIncompleteSource);
 
         /**
-         * Variant of {@link #parseAndEval(Source, MaterializedFrame, boolean, boolean)} for test
-         * evaluation in the global frame.
+         * Variant of {@link #parseAndEval(Source, MaterializedFrame, boolean, boolean)} that does
+         * not intercept errors.
          */
-        Object parseAndEvalTest(Source sourceDesc, boolean printResult, boolean allowIncompleteSource);
+        Object parseAndEvalDirect(Source sourceDesc, boolean printResult, boolean allowIncompleteSource);
 
         Object INCOMPLETE_SOURCE = new Object();
 
@@ -690,13 +690,13 @@ public final class RContext extends ExecutionContext {
     }
 
     /**
-     * Active the context by attaching the current thread and initializing the {@link StateFactory}
-     * objects. Note that we attach the thread before creating the new context state. This means
-     * that code that accesses the state through this interface will receive a {@code null} value.
-     * Access to the parent state is available through the {@link RContext} argument passed to the
-     * {@link StateFactory#newContext(RContext, Object...)} method. It might be better to attach the
-     * thread after state creation but it is a finely balanced decision and risks incorrectly
-     * accessing the parent state.
+     * Activate the context by attaching the current thread and initializing the
+     * {@link StateFactory} objects. Note that we attach the thread before creating the new context
+     * state. This means that code that accesses the state through this interface will receive a
+     * {@code null} value. Access to the parent state is available through the {@link RContext}
+     * argument passed to the {@link StateFactory#newContext(RContext, Object...)} method. It might
+     * be better to attach the thread after state creation but it is a finely balanced decision and
+     * risks incorrectly accessing the parent state.
      */
     public RContext activate() {
         assert !active;
