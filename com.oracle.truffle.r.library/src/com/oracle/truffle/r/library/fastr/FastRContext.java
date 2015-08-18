@@ -92,12 +92,12 @@ public class FastRContext {
         protected RNull eval(RIntVector contexts) {
             try {
                 for (int i = 0; i < contexts.getLength(); i++) {
-                    RContext context = RContext.find(contexts.getDataAt(i));
-                    if (context == null) {
+                    Thread thread = RContext.EvalThread.threads.get(contexts.getDataAt(i));
+                    if (thread == null) {
                         // already done
                         continue;
                     } else {
-                        context.joinThread();
+                        thread.join();
                     }
                 }
             } catch (InterruptedException ex) {

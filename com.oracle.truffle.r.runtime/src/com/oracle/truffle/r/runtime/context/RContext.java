@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.runtime.context;
 
 import java.util.*;
+import java.util.concurrent.*;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
@@ -145,17 +146,19 @@ public final class RContext extends ExecutionContext {
         private final Source source;
         private final ContextInfo info;
 
+        public static final Map<Integer, Thread> threads = new ConcurrentHashMap<>();
+
         public EvalThread(ContextInfo info, Source source) {
             super(null);
             this.info = info;
             this.source = source;
+            threads.put(info.getId(), this);
         }
 
         @Override
         public void run() {
             TruffleVM vm = info.newContext();
             setContext(truffleVMContexts.get(vm));
-            context.evalThread = this;
             try {
                 try {
                     context.engine.parseAndEval(source, true);
@@ -164,6 +167,7 @@ public final class RContext extends ExecutionContext {
                 }
             } finally {
                 context.destroy();
+                threads.remove(info.getId());
             }
         }
     }
