@@ -87,12 +87,11 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
 
     @Override
     protected Object findExportedSymbol(RContext context, String globalName, boolean onlyExplicit) {
-        throw RInternalError.unimplemented("findExportedSymbol");
+        return context.getExportedSymbols().get(globalName);
     }
 
     @Override
     protected Object getLanguageGlobal(RContext context) {
         throw RInternalError.unimplemented("getLanguageGlobal");
     }
-
 }

@@ -21,6 +21,10 @@
 # questions.
 #
 
+Interop.import <- function(name) invisible(.FastR(.NAME="Interop.import", name))
+
+Interop.export <- function(name, value) invisible(.FastR(.NAME="Interop.export", name, value))
+
 fastr.createcc <- function(func) invisible(.FastR(.NAME="createcc", func))
 
 fastr.getcc <- function(func) .FastR(.NAME="getcc", func)

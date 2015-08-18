@@ -108,7 +108,7 @@ public final class FastRSession implements RSession {
 
     public RContext createTestContext() {
         create();
-        RContext context = RContextFactory.createShareParentReadWrite(main, new String[0], consoleHandler).activate();
+        RContext context = RContextFactory.createShareParentReadWrite(main, new String[0], consoleHandler, null).activate();
         context.setSystemTimeZone(TimeZone.getTimeZone("CET"));
         return context;
     }
@@ -117,7 +117,7 @@ public final class FastRSession implements RSession {
         consoleHandler = new ConsoleHandler();
         RContextFactory.initialize();
         try {
-            main = RContextFactory.createInitial(new String[0], consoleHandler).activate();
+            main = RContextFactory.createInitial(new String[0], consoleHandler, null).activate();
         } finally {
             System.out.print(consoleHandler.buffer.toString());
         }

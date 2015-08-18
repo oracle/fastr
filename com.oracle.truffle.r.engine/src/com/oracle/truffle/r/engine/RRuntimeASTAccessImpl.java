@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.engine;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.TruffleLanguage.Env;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.*;
@@ -398,8 +399,8 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
 
     }
 
-    public RContext create(RContext parent, RContext.Kind kind, String[] commandArgs, ConsoleHandler consoleHandler) {
-        return RContextFactory.create(parent, kind, commandArgs, consoleHandler);
+    public RContext create(RContext parent, RContext.Kind kind, String[] commandArgs, ConsoleHandler consoleHandler, Env env) {
+        return RContextFactory.create(parent, kind, commandArgs, consoleHandler, env);
     }
 
     public Engine createEngine(RContext context) {

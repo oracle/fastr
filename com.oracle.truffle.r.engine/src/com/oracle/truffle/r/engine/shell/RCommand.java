@@ -165,7 +165,7 @@ public class RCommand {
             // long start = System.currentTimeMillis();
             consoleHandler = new JLineConsoleHandler(isInteractive, consoleReader);
         }
-        RContext context = RContextFactory.createInitial(args, consoleHandler);
+        RContext context = RContextFactory.createInitial(args, consoleHandler, null);
         if (eval) {
             // never returns
             context.activate();

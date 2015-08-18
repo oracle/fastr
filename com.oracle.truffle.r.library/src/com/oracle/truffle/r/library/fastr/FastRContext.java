@@ -42,7 +42,7 @@ public class FastRContext {
             RContext current = RContext.getInstance();
             RContext.ConsoleHandler consoleHandler = current.getConsoleHandler();
             RContext.Kind kind = RContext.Kind.values()[kindVec.getDataAt(0) - 1];
-            RContext newContext = RContext.getRRuntimeASTAccess().create(current, kind, argsArray, consoleHandler);
+            RContext newContext = RContext.getRRuntimeASTAccess().create(current, kind, argsArray, consoleHandler, current.getEnv());
             return (int) newContext.getId();
         }
     }

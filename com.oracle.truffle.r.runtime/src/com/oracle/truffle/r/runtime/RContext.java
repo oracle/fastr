@@ -26,17 +26,19 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
 
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.TruffleLanguage.Env;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.interop.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.vm.*;
 import com.oracle.truffle.r.runtime.conn.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
-import com.oracle.truffle.r.runtime.env.REnvironment.*;
+import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
 import com.oracle.truffle.r.runtime.ffi.*;
 import com.oracle.truffle.r.runtime.rng.*;
 
@@ -54,8 +56,8 @@ import com.oracle.truffle.r.runtime.rng.*;
  *
  * The life-cycle of a {@link RContext} is:
  * <ol>
- * <li>created: {@link #createShareNothing(RContext, String[], ConsoleHandler)} or
- * {@link #createShareParentReadOnly(RContext, String[], ConsoleHandler)}</li>
+ * <li>created: {@link #createShareNothing(RContext, String[], ConsoleHandler, Env)} or
+ * {@link #createShareParentReadOnly(RContext, String[], ConsoleHandler, Env)}</li>
  * <li>activated: {@link #activate()}</li>
  * <li>destroyed: {@link #destroy()}</li>
  * </ol>
@@ -593,7 +595,11 @@ public final class RContext extends ExecutionContext {
     private static final Assumption singleContextAssumption = Truffle.getRuntime().createAssumption("single RContext");
     @CompilationFinal private static RContext singleContext;
 
-    private RContext(Kind kind, RContext parent, String[] commandArgs, ConsoleHandler consoleHandler) {
+    private final Env env;
+    private final HashMap<String, TruffleObject> exportedSymbols = new HashMap<>();
+
+    private RContext(Kind kind, RContext parent, String[] commandArgs, ConsoleHandler consoleHandler, Env env) {
+        this.env = env;
         if (kind == Kind.SHARE_PARENT_RW) {
             if (parent.sharedChild != null) {
                 throw RError.error(RError.NO_NODE, RError.Message.GENERIC, "can't have multiple active SHARED_PARENT_RW contexts");
@@ -648,9 +654,10 @@ public final class RContext extends ExecutionContext {
      * @param parent if non-null {@code null} the parent creating the context
      * @param commandArgs the command line arguments passed this R session
      * @param consoleHandler a {@link ConsoleHandler} for output
+     * @param env the TruffleVM environment
      */
-    public static RContext createShareNothing(RContext parent, String[] commandArgs, ConsoleHandler consoleHandler) {
-        RContext result = create(parent, Kind.SHARE_NOTHING, commandArgs, consoleHandler);
+    public static RContext createShareNothing(RContext parent, String[] commandArgs, ConsoleHandler consoleHandler, Env env) {
+        RContext result = create(parent, Kind.SHARE_NOTHING, commandArgs, consoleHandler, env);
         return result;
     }
 
@@ -660,9 +667,10 @@ public final class RContext extends ExecutionContext {
      * @param parent parent context with which to shgre
      * @param commandArgs the command line arguments passed this R session
      * @param consoleHandler a {@link ConsoleHandler} for output
+     * @param env the TruffleVM environment
      */
-    public static RContext createShareParentReadOnly(RContext parent, String[] commandArgs, ConsoleHandler consoleHandler) {
-        RContext result = create(parent, Kind.SHARE_PARENT_RO, commandArgs, consoleHandler);
+    public static RContext createShareParentReadOnly(RContext parent, String[] commandArgs, ConsoleHandler consoleHandler, Env env) {
+        RContext result = create(parent, Kind.SHARE_PARENT_RO, commandArgs, consoleHandler, env);
         return result;
 
     }
@@ -670,12 +678,13 @@ public final class RContext extends ExecutionContext {
     /**
      * Create a {@link Kind#SHARE_PARENT_RW} {@link RContext}.
      *
-     * @param parent parent context with which to shgre
+     * @param parent parent context with which to share
      * @param commandArgs the command line arguments passed this R session
      * @param consoleHandler a {@link ConsoleHandler} for output
+     * @param env the TruffleVM environment
      */
-    public static RContext createShareParentReadWrite(RContext parent, String[] commandArgs, ConsoleHandler consoleHandler) {
-        RContext result = create(parent, Kind.SHARE_PARENT_RW, commandArgs, consoleHandler);
+    public static RContext createShareParentReadWrite(RContext parent, String[] commandArgs, ConsoleHandler consoleHandler, Env env) {
+        RContext result = create(parent, Kind.SHARE_PARENT_RW, commandArgs, consoleHandler, env);
         return result;
 
     }
@@ -683,8 +692,8 @@ public final class RContext extends ExecutionContext {
     /**
      * Create a context of a given kind.
      */
-    public static RContext create(RContext parent, Kind kind, String[] commandArgs, ConsoleHandler consoleHandler) {
-        RContext result = new RContext(kind, parent, commandArgs, consoleHandler);
+    public static RContext create(RContext parent, Kind kind, String[] commandArgs, ConsoleHandler consoleHandler, Env env) {
+        RContext result = new RContext(kind, parent, commandArgs, consoleHandler, env);
         result.engine = RContext.getRRuntimeASTAccess().createEngine(result);
         return result;
     }
@@ -744,6 +753,10 @@ public final class RContext extends ExecutionContext {
 
     public RContext getParent() {
         return parent;
+    }
+
+    public Env getEnv() {
+        return env;
     }
 
     public Kind getKind() {
@@ -939,6 +952,10 @@ public final class RContext extends ExecutionContext {
 
     public boolean getLoadingBase() {
         return loadingBase;
+    }
+
+    public Map<String, TruffleObject> getExportedSymbols() {
+        return exportedSymbols;
     }
 
 }

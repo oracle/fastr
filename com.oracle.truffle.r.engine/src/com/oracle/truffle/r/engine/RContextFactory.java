@@ -24,6 +24,7 @@ package com.oracle.truffle.r.engine;
 
 import java.util.*;
 
+import com.oracle.truffle.api.TruffleLanguage.Env;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.instrument.*;
 import com.oracle.truffle.r.runtime.*;
@@ -65,29 +66,29 @@ public class RContextFactory {
         }
     }
 
-    public static RContext createShareParentReadWrite(RContext parent, String[] commandArgs, ConsoleHandler consoleHandler) {
-        RContext context = RContext.createShareParentReadWrite(parent, commandArgs, consoleHandler);
+    public static RContext createShareParentReadWrite(RContext parent, String[] commandArgs, ConsoleHandler consoleHandler, Env env) {
+        RContext context = RContext.createShareParentReadWrite(parent, commandArgs, consoleHandler, env);
         return context;
     }
 
-    public static RContext createShareParentReadOnly(RContext parent, String[] commandArgs, ConsoleHandler consoleHandler) {
-        RContext context = RContext.createShareParentReadOnly(parent, commandArgs, consoleHandler);
+    public static RContext createShareParentReadOnly(RContext parent, String[] commandArgs, ConsoleHandler consoleHandler, Env env) {
+        RContext context = RContext.createShareParentReadOnly(parent, commandArgs, consoleHandler, env);
         return context;
     }
 
     /**
      * Create the initial context with no parent.
      */
-    public static RContext createInitial(String[] commandArgs, ConsoleHandler consoleHandler) {
-        RContext context = RContext.createShareNothing(null, commandArgs, consoleHandler);
+    public static RContext createInitial(String[] commandArgs, ConsoleHandler consoleHandler, Env env) {
+        RContext context = RContext.createShareNothing(null, commandArgs, consoleHandler, env);
         return context;
     }
 
     /**
      * Create a context of given kind.
      */
-    public static RContext create(RContext parent, Kind kind, String[] commandArgs, ConsoleHandler consoleHandler) {
-        RContext context = RContext.create(parent, kind, commandArgs, consoleHandler);
+    public static RContext create(RContext parent, Kind kind, String[] commandArgs, ConsoleHandler consoleHandler, Env env) {
+        RContext context = RContext.create(parent, kind, commandArgs, consoleHandler, env);
         return context;
     }
 }
