@@ -28,6 +28,7 @@ import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.interop.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.utilities.*;
@@ -209,6 +210,11 @@ public final class RCallNode extends RNode implements RSyntaxNode {
     private final ConditionProfile isPromiseProfile = ConditionProfile.createBinaryProfile();
     private final BranchProfile normalDispatchProfile = BranchProfile.create();
     private final BranchProfile errorProfile = BranchProfile.create();
+    private final ConditionProfile isRFunctionProfile = ConditionProfile.createBinaryProfile();
+
+    @Child private Node foreignCall;
+    @CompilationFinal private int foreignCallArgCount;
+    @Child private CallArgumentsNode foreignCallArguments;
 
     public RCallNode(RNode function, RSyntaxNode[] arguments, ArgumentsSignature signature) {
         this.functionNode = function;
@@ -225,7 +231,28 @@ public final class RCallNode extends RNode implements RSyntaxNode {
         return execute(frame, executeFunctionNode(frame));
     }
 
-    public Object execute(VirtualFrame frame, RFunction function) {
+    public Object execute(VirtualFrame frame, Object functionObject) {
+        RFunction function;
+        if (isRFunctionProfile.profile(functionObject instanceof RFunction)) {
+            function = (RFunction) functionObject;
+            // fall through
+        } else if (functionObject instanceof TruffleObject && !(functionObject instanceof RTypedValue)) {
+            if (foreignCallArguments == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                foreignCallArguments = insert(createArguments(null, true, true));
+            }
+            Object[] argumentsArray = foreignCallArguments.evaluateFlattenObjects(frame);
+            if (foreignCall == null || foreignCallArgCount != argumentsArray.length) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                foreignCall = insert(Message.createExecute(argumentsArray.length).createNode());
+                foreignCallArgCount = argumentsArray.length;
+            }
+            return ForeignAccess.execute(foreignCall, frame, (TruffleObject) functionObject, argumentsArray);
+        } else {
+            errorProfile.enter();
+            throw RError.error(this, RError.Message.APPLY_NON_FUNCTION);
+        }
+
         if (!signature.isEmpty() && function.getRBuiltin() != null) {
             RBuiltinDescriptor builtin = builtinProfile.profile(function.getRBuiltin());
             if (builtin.getDispatch() == RDispatch.INTERNAL_GENERIC) {
@@ -270,7 +297,7 @@ public final class RCallNode extends RNode implements RSyntaxNode {
         return call.execute(frame, function, null);
     }
 
-    private RFunction executeFunctionNode(VirtualFrame frame) {
+    private Object executeFunctionNode(VirtualFrame frame) {
         /**
          * Expressions such as "pkg:::f" can result in (delayedAssign) promises that must be
          * explicitly resolved.
@@ -283,12 +310,7 @@ public final class RCallNode extends RNode implements RSyntaxNode {
             }
             value = promiseHelper.evaluate(frame, (RPromise) value);
         }
-        if (value instanceof RFunction) {
-            return (RFunction) value;
-        } else {
-            errorProfile.enter();
-            throw RError.error(this, RError.Message.APPLY_NON_FUNCTION);
-        }
+        return value;
     }
 
     public RNode getFunctionNode() {
