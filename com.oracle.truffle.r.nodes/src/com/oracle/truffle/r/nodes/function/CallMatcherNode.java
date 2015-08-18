@@ -91,13 +91,7 @@ public abstract class CallMatcherNode extends RBaseNode {
     }
 
     protected Object[] prepareArguments(VirtualFrame frame, Object[] reorderedArgs, ArgumentsSignature reorderedSignature, RFunction function, S3Args s3Args) {
-        RCaller caller = RArguments.getCall(frame);
-        MaterializedFrame callerFrame = RArguments.getCallerFrame(frame);
-        if (caller == null && callerFrame == null) {
-            callerFrame = RArguments.getEnvironment(frame).getFrame();
-            assert callerFrame != null;
-        }
-        return argsNode.execute(function, caller, callerFrame, RArguments.getDepth(frame) + 1, reorderedArgs, reorderedSignature, s3Args);
+        return argsNode.execute(function, RDataFactory.createCaller(this), null, RArguments.getDepth(frame) + 1, reorderedArgs, reorderedSignature, s3Args);
     }
 
     protected final void evaluatePromises(VirtualFrame frame, RFunction function, Object[] args, int varArgIndex) {
