@@ -100,11 +100,12 @@ public final class FastRSession implements RSession {
         }
     }
 
-    private static TestConsoleHandler consoleHandler;
     private static FastRSession singleton;
 
-    private EvalThread evalThread;
+    private final TestConsoleHandler consoleHandler;
     private final TruffleVM main;
+
+    private EvalThread evalThread;
 
     public static FastRSession create() {
         if (singleton == null) {

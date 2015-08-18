@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.control;
 
 import com.oracle.truffle.api.CompilerDirectives.*;
+import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.env.*;
@@ -32,7 +33,7 @@ import com.oracle.truffle.r.runtime.nodes.*;
  * A {@link BlockNode} represents a sequence of statements such as the body of a {@code while} loop.
  *
  */
-public class BlockNode extends SequenceNode implements RSyntaxNode {
+public class BlockNode extends SequenceNode implements RSyntaxNode, VisibilityController {
     public static final RNode[] EMPTY_BLOCK = new RNode[0];
 
     public BlockNode(SourceSection src, RNode[] sequence) {
@@ -45,6 +46,12 @@ public class BlockNode extends SequenceNode implements RSyntaxNode {
      */
     public BlockNode(SourceSection src, RSyntaxNode node) {
         this(src, convert(node));
+    }
+
+    @Override
+    public Object execute(VirtualFrame frame) {
+        controlVisibility();
+        return super.execute(frame);
     }
 
     /**
@@ -89,7 +96,7 @@ public class BlockNode extends SequenceNode implements RSyntaxNode {
          * it is represented as a LANGSXP with symbol "{" and a NULL cdr, representing the empty
          * sequence. This is an unpleasant special case in FastR that we can only detect by
          * re-examining the original source.
-         * 
+         *
          * A sequence of length 1, i.e. a single statement, is represented as itself, e.g. a SYMSXP
          * for "x" or a LANGSXP for a function call. Otherwise, the representation is a LISTSXP
          * pairlist, where the car is the statement and the cdr is either NILSXP or a LISTSXP for
