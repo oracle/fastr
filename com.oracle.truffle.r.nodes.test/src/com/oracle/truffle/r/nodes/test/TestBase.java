@@ -24,21 +24,21 @@ package com.oracle.truffle.r.nodes.test;
 
 import org.junit.*;
 
+import com.oracle.truffle.api.vm.*;
 import com.oracle.truffle.r.runtime.context.*;
 import com.oracle.truffle.r.test.generate.*;
 
 public class TestBase {
 
-    private static RContext testContext;
+    private static TruffleVM testVM;
 
     @BeforeClass
     public static void setupClass() {
-        testContext = FastRSession.create().createTestContext();
+        testVM = FastRSession.create().createTestContext();
     }
 
     @AfterClass
     public static void finishClass() {
-        testContext.destroy();
+        RContext.destroyContext(testVM);
     }
-
 }

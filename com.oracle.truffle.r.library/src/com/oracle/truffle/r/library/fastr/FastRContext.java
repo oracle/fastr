@@ -27,6 +27,7 @@ import java.io.*;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.source.*;
+import com.oracle.truffle.api.vm.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RCmdOptions.Client;
@@ -130,11 +131,13 @@ public class FastRContext {
             } else {
                 for (int i = 0; i < contexts.getLength(); i++) {
                     ContextInfo info = checkContext(contexts.getDataAt(i), this);
-                    RContext context = info.newContext();
+                    TruffleVM vm = info.newContext();
                     try {
-                        context.getThisEngine().parseAndEval(Source.fromText(exprs.getDataAt(i), "<context_eval>"), true, false);
+                        vm.eval("application/x-r", exprs.getDataAt(i));
+                    } catch (IOException e) {
+                        throw RInternalError.shouldNotReachHere(e);
                     } finally {
-                        context.destroy();
+                        RContext.destroyContext(vm);
                     }
                 }
             }

@@ -39,10 +39,8 @@ import com.oracle.truffle.r.runtime.context.*;
  */
 public class RscriptCommand {
     // CheckStyle: stop system..print check
-    public static void main(String[] args) {
-        // Since many of the options are shared parse them from an RSCRIPT perspective.
-        // Handle --help and --version specially, as they exit.
-        RCmdOptions options = RCmdOptions.parseArguments(RCmdOptions.Client.RSCRIPT, args);
+
+    private static void preprocessRScriptOptions(RCmdOptions options) {
         String[] arguments = options.getArguments();
         int resultArgsLength = arguments.length;
         int firstNonOptionArgIndex = options.getFirstNonOptionArgIndex();
@@ -53,7 +51,6 @@ public class RscriptCommand {
             printVersionAndExit();
         }
         // Now reformat the args, setting --slave and --no-restore as per the spec
-        // and invoke RCommand.subMain
         ArrayList<String> adjArgs = new ArrayList<>(resultArgsLength + 1);
         adjArgs.add(arguments[0]);
         adjArgs.add("--slave");
@@ -88,10 +85,16 @@ public class RscriptCommand {
             }
         }
         options.setArguments(adjArgs.toArray(new String[adjArgs.size()]));
+    }
+
+    public static void main(String[] args) {
+        // Since many of the options are shared parse them from an RSCRIPT perspective.
+        // Handle --help and --version specially, as they exit.
+        RCmdOptions options = RCmdOptions.parseArguments(RCmdOptions.Client.RSCRIPT, args);
+        preprocessRScriptOptions(options);
         ContextInfo info = RCommand.createContextInfoFromCommandLine(options);
-        RContext context = info.newContext();
         try {
-            RCommand.readEvalPrint(context);
+            RCommand.readEvalPrint(info);
         } catch (Utils.DebugExitException ex) {
             /*
              * This is thrown instead of doing System.exit, when we are running under the in-process
@@ -108,5 +111,4 @@ public class RscriptCommand {
         System.out.println(RVersionNumber.FULL);
         Utils.exit(0);
     }
-
 }

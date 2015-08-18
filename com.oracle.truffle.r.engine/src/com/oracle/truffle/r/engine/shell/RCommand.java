@@ -31,12 +31,15 @@ import java.util.*;
 import jline.console.*;
 
 import com.oracle.truffle.api.source.*;
+import com.oracle.truffle.api.vm.*;
 import com.oracle.truffle.r.engine.*;
 import com.oracle.truffle.r.nodes.builtin.base.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.context.*;
+import com.oracle.truffle.r.runtime.context.Engine.IncompleteSourceException;
 import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.*;
 
 /**
  * Emulates the (Gnu)R command as precisely as possible.
@@ -49,9 +52,8 @@ public class RCommand {
         RCmdOptions options = RCmdOptions.parseArguments(RCmdOptions.Client.R, args);
         options.printHelpAndVersion();
         ContextInfo info = createContextInfoFromCommandLine(options);
-        RContext context = RContextFactory.create(info, null);
         // never returns
-        readEvalPrint(context);
+        readEvalPrint(info);
         throw RInternalError.shouldNotReachHere();
     }
 
@@ -135,7 +137,8 @@ public class RCommand {
         return ContextInfo.create(options, ContextKind.SHARE_NOTHING, null, consoleHandler);
     }
 
-    private static final Source QUIT_EOF = Source.fromText("quit(\"default\", 0L, TRUE)", "<quit_file>");
+    private static final String GET_ECHO = "getOption('echo')";
+    private static final String QUIT_EOF = "quit(\"default\", 0L, TRUE)";
 
     /**
      * The read-eval-print loop, which can take input from a console, command line expression or a
@@ -148,13 +151,14 @@ public class RCommand {
      * In case 2, we must implicitly execute a {@code quit("default, 0L, TRUE} command before
      * exiting. So,in either case, we never return.
      */
-    public static void readEvalPrint(RContext context) {
-        ConsoleHandler consoleHandler = context.getConsoleHandler();
+    public static void readEvalPrint(ContextInfo info) {
+        TruffleVM vm = RContextFactory.create(info);
+        ConsoleHandler consoleHandler = info.getConsoleHandler();
         Source source = Source.fromNamedAppendableText(consoleHandler.getInputDescription());
         try {
             // console.println("initialize time: " + (System.currentTimeMillis() - start));
             for (;;) {
-                boolean doEcho = doEcho(context);
+                boolean doEcho = doEcho(vm);
                 consoleHandler.setPrompt(doEcho ? "> " : null);
                 try {
                     String input = consoleHandler.readLine();
@@ -174,7 +178,15 @@ public class RCommand {
                     try {
                         String continuePrompt = getContinuePrompt();
                         Source subSource = Source.subSource(source, startLength);
-                        while (context.getThisEngine().parseAndEval(subSource, true, true) == Engine.INCOMPLETE_SOURCE) {
+                        while (true) {
+                            try {
+                                // TODO: how to pass subSource to TruffleVM?
+                                // how to pass "printResult" and "incompleteSource" to TruffleVM?
+                                vm.eval(TruffleRLanguage.MIME, subSource.getCode());
+                                break;
+                            } catch (IOException e) {
+                                assert e instanceof IncompleteSourceException;
+                            }
                             consoleHandler.setPrompt(doEcho ? continuePrompt : null);
                             String additionalInput = consoleHandler.readLine();
                             if (additionalInput == null) {
@@ -193,18 +205,30 @@ public class RCommand {
         } catch (BrowserQuitException e) {
             // can happen if user profile invokes browser
         } catch (EOFException ex) {
-            context.getThisEngine().parseAndEval(QUIT_EOF, false, false);
+            try {
+                vm.eval(TruffleRLanguage.MIME, QUIT_EOF);
+            } catch (IOException e) {
+                throw RInternalError.shouldNotReachHere(e);
+            }
         } finally {
-            context.destroy();
+            RContext.destroyContext(vm);
         }
     }
 
-    private static boolean doEcho(RContext context) {
-        if (context.getOptions().getBoolean(SLAVE)) {
-            return false;
+    private static boolean doEcho(TruffleVM vm) {
+        Object echo;
+        try {
+            echo = vm.eval(TruffleRLanguage.MIME, GET_ECHO);
+        } catch (IOException e) {
+            throw RInternalError.shouldNotReachHere(e);
         }
-        RLogicalVector echo = (RLogicalVector) RRuntime.asAbstractVector(context.stateROptions.getValue("echo"));
-        return RRuntime.fromLogical(echo.getDataAt(0));
+        if (echo instanceof Byte) {
+            return RRuntime.fromLogical((Byte) echo);
+        } else if (echo instanceof RAbstractLogicalVector) {
+            return RRuntime.fromLogical(((RAbstractLogicalVector) echo).getDataAt(0));
+        } else {
+            throw RInternalError.shouldNotReachHere();
+        }
     }
 
     private static String getContinuePrompt() {

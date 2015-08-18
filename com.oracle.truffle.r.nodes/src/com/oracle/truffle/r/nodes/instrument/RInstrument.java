@@ -236,10 +236,7 @@ public class RInstrument {
      * features that need it are also enabled.
      */
     public static void initialize() {
-        // @formatter:off
-        instrumentingEnabled = FastROptions.Instrument || FastROptions.TraceCalls || FastROptions.Rdebug != null ||
-                        REntryCounters.Function.enabled() || RNodeTimer.Statement.enabled();
-        // @formatter:on
+        instrumentingEnabled = FastROptions.Instrument || FastROptions.TraceCalls || FastROptions.Rdebug != null || REntryCounters.Function.enabled() || RNodeTimer.Statement.enabled();
         if (instrumentingEnabled) {
             Probe.registerASTProber(RASTProber.getRASTProber());
             Probe.addProbeListener(new RProbeListener());

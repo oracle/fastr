@@ -96,7 +96,7 @@ public final class RCmdOptions {
         DEFAULT_PACKAGES(RCmdOptionType.STRING, Client.RSCRIPT, false, null, "default-packages=list", null, "Where 'list' is a comma-separated set\nof package names, or 'NULL'");
 
         private final RCmdOptionType type;
-        private final Client client;
+        @SuppressWarnings("unused") private final Client client;
         // Whether this option is actually implemented in FastR
         private final boolean implemented;
         // The short option name prefixed by {@code -} or {@code null} if no {@code -} form.

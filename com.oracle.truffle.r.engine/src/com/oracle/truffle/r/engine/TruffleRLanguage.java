@@ -44,6 +44,8 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
 
     public static final TruffleRLanguage INSTANCE = new TruffleRLanguage();
 
+    public static final String MIME = "application/x-r";
+
     private TruffleRLanguage() {
     }
 
@@ -67,12 +69,7 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
 
     @Override
     protected RContext createContext(Env env) {
-        /*
-         * TODO we assume here that the initial context has already been created, which is certainly
-         * true by fiat when running under the debugger, but may not be in general.
-         */
-        RContext result = RContext.getInstance();
-        return result;
+        return RContext.create(env);
     }
 
     @Override

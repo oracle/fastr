@@ -31,6 +31,7 @@ import com.oracle.truffle.api.TruffleLanguage.Env;
 import com.oracle.truffle.api.interop.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
+import com.oracle.truffle.api.vm.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.conn.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -52,7 +53,7 @@ import com.oracle.truffle.r.runtime.rng.*;
  *
  * The life-cycle of a {@link RContext} is:
  * <ol>
- * <li>created: {@link #create(ContextInfo, Env)}</li>
+ * <li>created: {@link #create(Env)}</li>
  * <li>destroyed: {@link #destroy()}</li>
  * </ol>
  *
@@ -151,7 +152,8 @@ public final class RContext extends ExecutionContext {
 
         @Override
         public void run() {
-            setContext(info.newContext());
+            TruffleVM vm = info.newContext();
+            setContext(truffleVMContexts.get(vm));
             context.evalThread = this;
             try {
                 context.engine.parseAndEval(source, true, false);
@@ -283,8 +285,11 @@ public final class RContext extends ExecutionContext {
         return new ContextState[]{stateREnvVars, stateRProfile, stateROptions, stateREnvironment, stateRErrorHandling, stateRConnection, stateStdConnections, stateRNG, stateRFFI, stateRSerialize};
     }
 
-    private RContext(ContextInfo info, Env env) {
-        this.info = info;
+    private RContext(Env env) {
+        assert tempInitializingContextInfo != null;
+        this.info = tempInitializingContextInfo;
+        lastContext = this;
+
         this.env = env;
         if (info.getConsoleHandler() == null) {
             throw Utils.fail("no console handler set");
@@ -338,8 +343,8 @@ public final class RContext extends ExecutionContext {
     /**
      * Create a context with the given configuration.
      */
-    public static RContext create(ContextInfo info, Env env) {
-        return new RContext(info, env);
+    public static RContext create(Env env) {
+        return new RContext(env);
     }
 
     /**
@@ -441,16 +446,6 @@ public final class RContext extends ExecutionContext {
         return info.getConsoleHandler();
     }
 
-    private TimeZone timeZone = TimeZone.getDefault();
-
-    public TimeZone getSystemTimeZone() {
-        return timeZone;
-    }
-
-    public void setSystemTimeZone(TimeZone timeZone) {
-        this.timeZone = timeZone;
-    }
-
     /**
      * This is a static property of the implementation and not context-specific.
      */
@@ -517,5 +512,33 @@ public final class RContext extends ExecutionContext {
 
     public Map<String, TruffleObject> getExportedSymbols() {
         return exportedSymbols;
+    }
+
+    public TimeZone getSystemTimeZone() {
+        return info.getSystemTimeZone();
+    }
+
+    /*
+     * TODO: this fields are used to convey initialization information from outside TruffleVM to
+     * RContext. need to be replaced with a mechanism provided by TruffleVM once this is available.
+     */
+    public static ContextInfo tempInitializingContextInfo;
+    private static RContext lastContext;
+    private static final Map<TruffleVM, RContext> truffleVMContexts = new HashMap<>();
+
+    // TODO: destroying a TruffleVM should be handled in TruffleVM itself
+    public static void destroyContext(TruffleVM vm) {
+        truffleVMContexts.get(vm).destroy();
+    }
+
+    public static void associate(TruffleVM vm) {
+        assert lastContext != null;
+        truffleVMContexts.put(vm, lastContext);
+        lastContext = null;
+        tempInitializingContextInfo = null;
+    }
+
+    public static RContext fromTruffleVM(TruffleVM vm) {
+        return truffleVMContexts.get(vm);
     }
 }

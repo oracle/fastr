@@ -24,6 +24,7 @@ package com.oracle.truffle.r.runtime;
 
 import com.oracle.truffle.api.TruffleLanguage.Env;
 import com.oracle.truffle.api.nodes.*;
+import com.oracle.truffle.api.vm.*;
 import com.oracle.truffle.r.runtime.context.*;
 import com.oracle.truffle.r.runtime.data.*;
 
@@ -149,7 +150,7 @@ public interface RRuntimeASTAccess {
      */
     void setFunctionName(RootNode node, String name);
 
-    RContext create(ContextInfo info, Env env);
+    TruffleVM create(ContextInfo info);
 
     Engine createEngine(RContext context);
 

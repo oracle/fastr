@@ -22,9 +22,12 @@
  */
 package com.oracle.truffle.r.engine;
 
+import java.io.*;
 import java.util.*;
+import java.util.function.*;
 
-import com.oracle.truffle.api.TruffleLanguage.Env;
+import com.oracle.truffle.api.vm.*;
+import com.oracle.truffle.api.vm.TruffleVM.Builder;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.instrument.*;
 import com.oracle.truffle.r.runtime.*;
@@ -55,7 +58,26 @@ public class RContextFactory {
     /**
      * Create a context of given kind.
      */
-    public static RContext create(ContextInfo info, Env env) {
-        return RContext.create(info, env);
+    public static TruffleVM create(ContextInfo info, Consumer<TruffleVM.Builder> setup) {
+        RContext.tempInitializingContextInfo = info;
+        Builder builder = TruffleVM.newVM();
+        if (setup != null) {
+            setup.accept(builder);
+        }
+        TruffleVM vm = builder.build();
+        try {
+            vm.eval(TruffleRLanguage.MIME, "1");
+        } catch (IOException e) {
+            throw RInternalError.shouldNotReachHere(e);
+        }
+        RContext.associate(vm);
+        return vm;
+    }
+
+    /**
+     * Create a context of given kind.
+     */
+    public static TruffleVM create(ContextInfo info) {
+        return create(info, null);
     }
 }

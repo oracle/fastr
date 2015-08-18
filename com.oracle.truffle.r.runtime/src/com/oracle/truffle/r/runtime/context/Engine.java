@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.runtime.context;
 
+import java.io.*;
+
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.*;
@@ -34,6 +36,23 @@ import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
 
 public interface Engine {
+
+    public static class ParseException extends IOException {
+        private static final long serialVersionUID = 1L;
+
+        public ParseException(Throwable cause, String msg) {
+            super(msg, cause);
+        }
+    }
+
+    public static final class IncompleteSourceException extends ParseException {
+        private static final long serialVersionUID = -6688699706193438722L;
+
+        public IncompleteSourceException(Throwable cause, String msg) {
+            super(cause, msg);
+        }
+    }
+
     /**
      * Make the engine ready for evaluations.
      */
@@ -63,24 +82,16 @@ public interface Engine {
      */
     long[] childTimesInNanos();
 
-    public static class ParseException extends Exception {
-        private static final long serialVersionUID = 1L;
-
-        public ParseException(Throwable cause, String msg) {
-            super(msg, cause);
-        }
-    }
-
     /**
      * Parse an R expression and return an {@link RExpression} object representing the Truffle ASTs
      * for the components.
      */
-    RExpression parse(Source source) throws Engine.ParseException;
+    RExpression parse(Source source) throws ParseException;
 
     /**
      * A (perhaps temporary) interface to support {@link TruffleLanguage}.
      */
-    CallTarget parseToCallTarget(Source source);
+    CallTarget parseToCallTarget(Source source) throws ParseException;
 
     /**
      * Parse and evaluate {@code rscript} in {@code frame}. {@code printResult == true}, the result
@@ -181,7 +192,7 @@ public interface Engine {
      */
     void printResult(Object value);
 
-    RFunction parseFunction(String name, Source source, MaterializedFrame enclosingFrame) throws Engine.ParseException;
+    RFunction parseFunction(String name, Source source, MaterializedFrame enclosingFrame) throws ParseException;
 
     ForeignAccess getForeignAccess(RTypedValue value);
 

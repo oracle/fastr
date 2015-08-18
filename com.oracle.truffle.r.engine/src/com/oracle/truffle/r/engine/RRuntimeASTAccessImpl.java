@@ -26,6 +26,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleLanguage.Env;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
+import com.oracle.truffle.api.vm.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.access.array.read.*;
@@ -397,8 +398,8 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
         ((FunctionDefinitionNode) node).setDescription(name);
     }
 
-    public RContext create(ContextInfo info, Env env) {
-        return RContextFactory.create(info, env);
+    public TruffleVM create(ContextInfo info) {
+        return RContextFactory.create(info);
     }
 
     public Engine createEngine(RContext context) {

@@ -22,9 +22,11 @@
  */
 package com.oracle.truffle.r.runtime.context;
 
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
 
+import com.oracle.truffle.api.vm.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
 
@@ -34,6 +36,7 @@ public final class ContextInfo {
 
     private final RCmdOptions options;
     private final RContext.ContextKind kind;
+    private final TimeZone systemTimeZone;
 
     /**
      * Any context created by another has a parent. When such a context is destroyed we must reset
@@ -43,17 +46,18 @@ public final class ContextInfo {
     private final ConsoleHandler consoleHandler;
     private final int id;
 
-    private ContextInfo(RCmdOptions options, ContextKind kind, RContext parent, ConsoleHandler consoleHandler, int id) {
+    private ContextInfo(RCmdOptions options, ContextKind kind, RContext parent, ConsoleHandler consoleHandler, TimeZone systemTimeZone, int id) {
         this.options = options;
         this.kind = kind;
         this.parent = parent;
         this.consoleHandler = consoleHandler;
+        this.systemTimeZone = systemTimeZone;
         this.id = id;
     }
 
-    public RContext newContext() {
+    public TruffleVM newContext() {
         contextInfos.remove(id);
-        return RContext.getRRuntimeASTAccess().create(this, parent.getEnv());
+        return RContext.getRRuntimeASTAccess().create(this);
     }
 
     /**
@@ -64,14 +68,19 @@ public final class ContextInfo {
      *            with its parent
      * @param options the command line arguments passed this R session
      * @param consoleHandler a {@link ConsoleHandler} for output
+     * @param systemTimeZone the system's time zone
      */
-    public static ContextInfo create(RCmdOptions options, ContextKind kind, RContext parent, ConsoleHandler consoleHandler) {
+    public static ContextInfo create(RCmdOptions options, ContextKind kind, RContext parent, ConsoleHandler consoleHandler, TimeZone systemTimeZone) {
         int id = contextInfoIds.incrementAndGet();
-        return new ContextInfo(options, kind, parent, consoleHandler, id);
+        return new ContextInfo(options, kind, parent, consoleHandler, systemTimeZone, id);
+    }
+
+    public static ContextInfo create(RCmdOptions options, ContextKind kind, RContext parent, ConsoleHandler consoleHandler) {
+        return create(options, kind, parent, consoleHandler, TimeZone.getDefault());
     }
 
     public static int createDeferred(RCmdOptions options, ContextKind kind, RContext parent, ConsoleHandler consoleHandler) {
-        ContextInfo info = create(options, kind, parent, consoleHandler);
+        ContextInfo info = create(options, kind, parent, consoleHandler, TimeZone.getDefault());
         contextInfos.put(info.id, info);
         return info.id;
     }
@@ -94,6 +103,10 @@ public final class ContextInfo {
 
     public ConsoleHandler getConsoleHandler() {
         return consoleHandler;
+    }
+
+    public TimeZone getSystemTimeZone() {
+        return systemTimeZone;
     }
 
     public int getId() {

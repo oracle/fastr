@@ -26,7 +26,7 @@ import java.util.*;
 import java.util.concurrent.*;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.source.*;
+import com.oracle.truffle.api.vm.*;
 import com.oracle.truffle.r.engine.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RCmdOptions.Client;
@@ -103,7 +103,7 @@ public final class FastRSession implements RSession {
     private static FastRSession singleton;
 
     private EvalThread evalThread;
-    private final RContext main;
+    private final TruffleVM main;
 
     public static FastRSession create() {
         if (singleton == null) {
@@ -112,13 +112,11 @@ public final class FastRSession implements RSession {
         return singleton;
     }
 
-    public RContext createTestContext() {
+    public TruffleVM createTestContext() {
         create();
         RCmdOptions options = RCmdOptions.parseArguments(Client.RSCRIPT, new String[0]);
-        ContextInfo info = ContextInfo.create(options, ContextKind.SHARE_PARENT_RW, main, consoleHandler);
-        RContext context = RContextFactory.create(info, null);
-        context.setSystemTimeZone(TimeZone.getTimeZone("CET"));
-        return context;
+        ContextInfo info = ContextInfo.create(options, ContextKind.SHARE_PARENT_RW, RContext.fromTruffleVM(main), consoleHandler, TimeZone.getTimeZone("CET"));
+        return RContextFactory.create(info);
     }
 
     private FastRSession() {
@@ -126,7 +124,7 @@ public final class FastRSession implements RSession {
         try {
             RCmdOptions options = RCmdOptions.parseArguments(Client.RSCRIPT, new String[0]);
             ContextInfo info = ContextInfo.create(options, ContextKind.SHARE_NOTHING, null, consoleHandler);
-            main = RContextFactory.create(info, null);
+            main = RContextFactory.create(info);
         } finally {
             System.out.print(consoleHandler.buffer.toString());
         }
@@ -188,16 +186,18 @@ public final class FastRSession implements RSession {
                     break;
                 }
                 try {
-                    RContext testContext = createTestContext();
+                    TruffleVM vm = createTestContext();
                     try {
-                        testContext.getThisEngine().parseAndEvalDirect(Source.fromText(expression, "<test_input>"), true, false);
+                        vm.eval(TruffleRLanguage.MIME, expression);
                     } finally {
-                        testContext.destroy();
+                        RContext.destroyContext(vm);
                     }
-                } catch (RError e) {
-                    // nothing to do
                 } catch (Throwable t) {
-                    killedByException = t;
+                    if (t.getCause() instanceof RError) {
+                        // nothing to do
+                    } else {
+                        killedByException = t;
+                    }
                 } finally {
                     exit.release();
                 }

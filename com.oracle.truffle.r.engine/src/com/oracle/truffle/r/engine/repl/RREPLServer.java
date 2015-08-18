@@ -122,12 +122,9 @@ public final class RREPLServer extends REPLServer {
         System.arraycopy(args, 0, debugArgs, 1, args.length);
         RCmdOptions options = RCmdOptions.parseArguments(RCmdOptions.Client.R, args);
         ContextInfo info = RCommand.createContextInfoFromCommandLine(options);
-        RContext context = RContextFactory.create(info, null);
-        context.getThisEngine().getTruffleVMBuilder().onEvent(onHalted).onEvent(onExec);
-        // This actually "builds" the TruffleVM
-        this.vm = context.getThisEngine().getTruffleVM();
-        assert vm != null;
-        this.language = vm.getLanguages().get("application/x-r");
+        RContext.tempInitializingContextInfo = info;
+        this.vm = RContextFactory.create(info, builder -> builder.onEvent(onHalted).onEvent(onExec));
+        this.language = vm.getLanguages().get(TruffleRLanguage.MIME);
         assert language != null;
 
         this.statusPrefix = language.getShortName() + " REPL:";
