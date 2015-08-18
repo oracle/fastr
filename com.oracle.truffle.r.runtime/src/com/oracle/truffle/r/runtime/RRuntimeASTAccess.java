@@ -152,7 +152,7 @@ public interface RRuntimeASTAccess {
 
     RContext create(RContext parent, ContextKind kind, RCmdOptions options, ConsoleHandler consoleHandler, Env env);
 
-    RContext.Engine createEngine(RContext context);
+    Engine createEngine(RContext context);
 
     /**
      * Returns {@code true} iff {@code node} is an instance of {@code ReplacementNode}, which is not

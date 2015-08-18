@@ -65,7 +65,7 @@ import com.oracle.truffle.r.runtime.nodes.*;
  * The engine for the FastR implementation. Handles parsing and evaluation. There is one instance of
  * this class per {@link RContext}.
  */
-final class REngine implements RContext.Engine {
+final class REngine implements Engine {
 
     /**
      * Controls the behavior when an implementation errors occurs. In normal use this is fatal as
@@ -267,7 +267,7 @@ final class REngine implements RContext.Engine {
         }
     }
 
-    public RExpression parse(Source source) throws RContext.Engine.ParseException {
+    public RExpression parse(Source source) throws Engine.ParseException {
         try {
             Sequence seq = (Sequence) ParseUtil.parseAST(new ANTLRStringStream(source.getCode()), source);
             ASTNode[] exprs = seq.getExpressions();
@@ -277,11 +277,11 @@ final class REngine implements RContext.Engine {
             }
             return RDataFactory.createExpression(RDataFactory.createList(data));
         } catch (RecognitionException ex) {
-            throw new RContext.Engine.ParseException(ex, ex.getMessage());
+            throw new Engine.ParseException(ex, ex.getMessage());
         }
     }
 
-    public RFunction parseFunction(String name, Source source, MaterializedFrame enclosingFrame) throws RContext.Engine.ParseException {
+    public RFunction parseFunction(String name, Source source, MaterializedFrame enclosingFrame) throws Engine.ParseException {
         try {
             Sequence seq = (Sequence) ParseUtil.parseAST(new ANTLRStringStream(source.getCode()), source);
             ASTNode[] exprs = seq.getExpressions();
@@ -289,7 +289,7 @@ final class REngine implements RContext.Engine {
 
             return new RTruffleVisitor().transformFunction(name, (Function) exprs[0], enclosingFrame);
         } catch (RecognitionException ex) {
-            throw new RContext.Engine.ParseException(ex, ex.getMessage());
+            throw new Engine.ParseException(ex, ex.getMessage());
         }
     }
 
@@ -552,7 +552,7 @@ final class REngine implements RContext.Engine {
             try {
                 RExpression funDef = parse(INTERNAL_PRINT);
                 printInternal = (RFunction) eval(funDef, REnvironment.baseEnv().getFrame());
-            } catch (RContext.Engine.ParseException ex) {
+            } catch (Engine.ParseException ex) {
                 Utils.fail("failed to parse print.internal");
             }
         }
