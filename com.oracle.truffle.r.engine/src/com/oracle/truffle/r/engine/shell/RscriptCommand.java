@@ -26,7 +26,9 @@ import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.*;
 
 import java.util.*;
 
+import com.oracle.truffle.api.instrument.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.context.*;
 
 /**
  * Emulates the (Gnu)Rscript command as precisely as possible. in GnuR, Rscript is a genuine wrapper
@@ -86,7 +88,19 @@ public class RscriptCommand {
             }
         }
         options.setArguments(adjArgs.toArray(new String[adjArgs.size()]));
-        RCommand.rscriptMain(options);
+        ContextInfo info = RCommand.createContextInfoFromCommandLine(options);
+        RContext context = info.newContext();
+        try {
+            RCommand.readEvalPrint(context);
+        } catch (Utils.DebugExitException ex) {
+            /*
+             * This is thrown instead of doing System.exit, when we are running under the in-process
+             * Truffle debugger. We just return to the debugger command loop, possibly to be
+             * re-entered with a new evaluation.
+             */
+        } catch (QuitException ex) {
+            /* This is thrown by the Truffle debugger when the user executes the 'q' command. */
+        }
     }
 
     private static void printVersionAndExit() {

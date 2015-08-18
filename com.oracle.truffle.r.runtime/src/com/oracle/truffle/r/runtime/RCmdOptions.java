@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.runtime;
 
+import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.*;
+
 import java.util.*;
 
 /**
@@ -334,6 +336,28 @@ public final class RCmdOptions {
         return new RCmdOptions(options, xargs, firstNonOptionArgIndex + 1);
     }
 
+    public String[] getArguments() {
+        return arguments;
+    }
+
+    public int getFirstNonOptionArgIndex() {
+        return firstNonOptionArgIndex;
+    }
+
+    public void setArguments(String[] arguments) {
+        this.arguments = arguments;
+    }
+
+    public void printHelpAndVersion() {
+        if (getBoolean(HELP)) {
+            RCmdOptions.printHelp(RCmdOptions.Client.R, 0);
+        } else if (getBoolean(VERSION)) {
+            printVersionAndExit();
+        } else if (getBoolean(RHOME)) {
+            printRHomeAndExit();
+        }
+    }
+
     public static void printHelp(Client client, int exitCode) {
         System.out.println(client.usage());
         System.out.println("Options:");
@@ -346,15 +370,15 @@ public final class RCmdOptions {
         }
     }
 
-    public String[] getArguments() {
-        return arguments;
+    private static void printVersionAndExit() {
+        System.out.print("FastR version ");
+        System.out.println(RVersionNumber.FULL);
+        System.out.println(RRuntime.LICENSE);
+        Utils.exit(0);
     }
 
-    public int getFirstNonOptionArgIndex() {
-        return firstNonOptionArgIndex;
-    }
-
-    public void setArguments(String[] arguments) {
-        this.arguments = arguments;
+    private static void printRHomeAndExit() {
+        System.out.println(REnvVars.rHome());
+        throw Utils.exit(0);
     }
 }

@@ -94,6 +94,9 @@ public final class FastRSession implements RSession {
             return RContext.CONSOLE_WIDTH;
         }
 
+        public String getInputDescription() {
+            return "<test input>";
+        }
     }
 
     private static TestConsoleHandler consoleHandler;

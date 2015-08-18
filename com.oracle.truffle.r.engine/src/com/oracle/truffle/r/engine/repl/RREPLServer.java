@@ -29,7 +29,9 @@ import com.oracle.truffle.api.instrument.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.vm.*;
 import com.oracle.truffle.api.vm.TruffleVM.Language;
+import com.oracle.truffle.r.engine.*;
 import com.oracle.truffle.r.engine.shell.*;
+import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.context.*;
 import com.oracle.truffle.tools.debug.shell.*;
 import com.oracle.truffle.tools.debug.shell.client.*;
@@ -118,10 +120,12 @@ public final class RREPLServer extends REPLServer {
         String[] debugArgs = new String[args.length + 1];
         debugArgs[0] = "--debugger=rrepl";
         System.arraycopy(args, 0, debugArgs, 1, args.length);
-        RContext initialContext = RCommand.debuggerMain(debugArgs);
-        initialContext.getThisEngine().getTruffleVMBuilder().onEvent(onHalted).onEvent(onExec);
+        RCmdOptions options = RCmdOptions.parseArguments(RCmdOptions.Client.R, args);
+        ContextInfo info = RCommand.createContextInfoFromCommandLine(options);
+        RContext context = RContextFactory.create(info, null);
+        context.getThisEngine().getTruffleVMBuilder().onEvent(onHalted).onEvent(onExec);
         // This actually "builds" the TruffleVM
-        this.vm = initialContext.getThisEngine().getTruffleVM();
+        this.vm = context.getThisEngine().getTruffleVM();
         assert vm != null;
         this.language = vm.getLanguages().get("application/x-r");
         assert language != null;

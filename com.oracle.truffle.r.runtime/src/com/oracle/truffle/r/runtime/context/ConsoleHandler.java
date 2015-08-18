@@ -104,4 +104,6 @@ public interface ConsoleHandler {
      */
     @TruffleBoundary
     int getWidth();
+
+    String getInputDescription();
 }

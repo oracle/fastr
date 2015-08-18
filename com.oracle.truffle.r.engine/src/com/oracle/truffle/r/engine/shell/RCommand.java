@@ -30,13 +30,12 @@ import java.util.*;
 
 import jline.console.*;
 
-import com.oracle.truffle.api.instrument.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.engine.*;
 import com.oracle.truffle.r.nodes.builtin.base.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.context.*;
-import com.oracle.truffle.r.runtime.context.RContext.*;
+import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
 import com.oracle.truffle.r.runtime.data.*;
 
 /**
@@ -47,46 +46,16 @@ public class RCommand {
     // CheckStyle: stop system..print check
 
     public static void main(String[] args) {
-        internalMain(args, true);
+        RCmdOptions options = RCmdOptions.parseArguments(RCmdOptions.Client.R, args);
+        options.printHelpAndVersion();
+        ContextInfo info = createContextInfoFromCommandLine(options);
+        RContext context = RContextFactory.create(info, null);
+        // never returns
+        readEvalPrint(context);
+        throw RInternalError.shouldNotReachHere();
     }
 
-    public static RContext internalMain(String[] args, boolean eval) {
-        try {
-            RCmdOptions options = RCmdOptions.parseArguments(RCmdOptions.Client.R, args);
-            if (options.getBoolean(HELP)) {
-                RCmdOptions.printHelp(RCmdOptions.Client.R, 0);
-            } else if (options.getBoolean(VERSION)) {
-                printVersionAndExit();
-            } else if (options.getBoolean(RHOME)) {
-                printRHomeAndExit();
-            }
-            return subMainInit(options, eval);
-        } catch (Utils.DebugExitException ex) {
-            /*
-             * This is thrown instead of doing System.exit, when we are running under the in-process
-             * Truffle debugger. We just return to the debugger command loop, possibly to be
-             * re-entered with a new evaluation.
-             */
-            return null;
-        } catch (QuitException ex) {
-            /* This is thrown by the Truffle debugger when the user executes the 'q' command. */
-            return null;
-        }
-    }
-
-    public static RContext debuggerMain(String[] args) {
-        return internalMain(args, false);
-    }
-
-    /**
-     * Entry point for {@link RscriptCommand} avoiding re-parsing.
-     */
-    public static void rscriptMain(RCmdOptions options) {
-        subMainInit(options, true);
-    }
-
-    public static RContext subMainInit(RCmdOptions options, boolean eval) {
-
+    public static ContextInfo createContextInfoFromCommandLine(RCmdOptions options) {
         if (options.getBoolean(SLAVE)) {
             options.setValue(QUIET, true);
             options.setValue(NO_SAVE, true);
@@ -124,9 +93,9 @@ public class RCommand {
         ConsoleHandler consoleHandler;
         InputStream consoleInput = System.in;
         OutputStream consoleOutput = System.out;
-        String filePath = null;
         if (fileArg != null) {
             List<String> lines;
+            String filePath;
             try {
                 File file = new File(fileArg);
                 lines = Files.readAllLines(file.toPath());
@@ -134,13 +103,13 @@ public class RCommand {
             } catch (IOException e) {
                 throw Utils.fatalError("cannot open file '" + fileArg + "': " + e.getMessage());
             }
-            consoleHandler = new StringConsoleHandler(lines, System.out);
+            consoleHandler = new StringConsoleHandler(lines, System.out, filePath);
         } else if (options.getStringList(EXPR) != null) {
             List<String> exprs = options.getStringList(EXPR);
             if (!options.getBoolean(SLAVE)) {
                 options.setValue(NO_SAVE, true);
             }
-            consoleHandler = new StringConsoleHandler(exprs, System.out);
+            consoleHandler = new StringConsoleHandler(exprs, System.out, "<expression input>");
         } else {
             /*
              * GnuR behavior differs from the manual entry for {@code interactive} in that {@code
@@ -163,27 +132,7 @@ public class RCommand {
             // long start = System.currentTimeMillis();
             consoleHandler = new JLineConsoleHandler(isInteractive, consoleReader);
         }
-        ContextInfo info = ContextInfo.create(options, ContextKind.SHARE_NOTHING, null, consoleHandler);
-        RContext context = RContextFactory.create(info, null);
-        if (eval) {
-            // never returns
-            readEvalPrint(consoleHandler, context, filePath);
-            throw RInternalError.shouldNotReachHere();
-        } else {
-            return context;
-        }
-    }
-
-    private static void printVersionAndExit() {
-        System.out.print("FastR version ");
-        System.out.println(RVersionNumber.FULL);
-        System.out.println(RRuntime.LICENSE);
-        Utils.exit(0);
-    }
-
-    private static void printRHomeAndExit() {
-        System.out.println(REnvVars.rHome());
-        throw Utils.exit(0);
+        return ContextInfo.create(options, ContextKind.SHARE_NOTHING, null, consoleHandler);
     }
 
     private static final Source QUIT_EOF = Source.fromText("quit(\"default\", 0L, TRUE)", "<quit_file>");
@@ -199,9 +148,9 @@ public class RCommand {
      * In case 2, we must implicitly execute a {@code quit("default, 0L, TRUE} command before
      * exiting. So,in either case, we never return.
      */
-    private static void readEvalPrint(ConsoleHandler consoleHandler, RContext context, String filePath) {
-        String inputDescription = filePath == null ? "<shell_input>" : filePath;
-        Source source = Source.fromNamedAppendableText(inputDescription);
+    public static void readEvalPrint(RContext context) {
+        ConsoleHandler consoleHandler = context.getConsoleHandler();
+        Source source = Source.fromNamedAppendableText(consoleHandler.getInputDescription());
         try {
             // console.println("initialize time: " + (System.currentTimeMillis() - start));
             for (;;) {
