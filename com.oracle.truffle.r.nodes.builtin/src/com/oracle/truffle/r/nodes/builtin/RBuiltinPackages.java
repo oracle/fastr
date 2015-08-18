@@ -103,7 +103,7 @@ public final class RBuiltinPackages implements RBuiltinLookup {
     }
 
     public static void loadDefaultPackageOverrides() {
-        Object defaultPackages = RContext.getROptionsState().getValue("defaultPackages");
+        Object defaultPackages = RContext.getInstance().stateROptions.getValue("defaultPackages");
         if (defaultPackages instanceof RAbstractStringVector) {
             RAbstractStringVector defPkgs = (RAbstractStringVector) defaultPackages;
             for (int i = 0; i < defPkgs.getLength(); i++) {

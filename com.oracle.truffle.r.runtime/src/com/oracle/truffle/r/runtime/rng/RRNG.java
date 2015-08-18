@@ -11,10 +11,10 @@
  */
 package com.oracle.truffle.r.runtime.rng;
 
-import com.oracle.truffle.api.CompilerDirectives.*;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.RContext.ContextState;
 import com.oracle.truffle.r.runtime.RError.RErrorException;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
@@ -35,7 +35,7 @@ import com.oracle.truffle.r.runtime.rng.user.*;
  * we do create/update it when the seed/kind is changed, primarily as a debugging aid. N.B. GnuR
  * updates it on <i>every</i> random number generation!
  */
-public class RRNG implements RContext.StateFactory {
+public class RRNG {
     /**
      * The standard kinds provided by GnuR, where the ordinal value corresponds to the argument to
      * {@link RRNG#doSetSeed}.
@@ -146,7 +146,7 @@ public class RRNG implements RContext.StateFactory {
         }
     }
 
-    private static final class ContextStateImpl implements RContext.ContextState {
+    public static final class ContextStateImpl implements RContext.ContextState {
         private Kind currentKind;
         private NormKind currentNormKind;
 
@@ -159,24 +159,23 @@ public class RRNG implements RContext.StateFactory {
             currentKind = kind;
         }
 
-        @SuppressWarnings("unused")
         void updateCurrentNormKind(NormKind normKind) {
             currentNormKind = normKind;
         }
-    }
 
-    public ContextState newContext(RContext context, Object... objects) {
-        int seed = timeToSeed();
-        try {
-            initGenerator(DEFAULT_KIND.setGenerator(), seed);
-        } catch (RNGException ex) {
-            Utils.fail("failed to initialize default random number generator");
+        public static ContextStateImpl newContext(@SuppressWarnings("unused") RContext context) {
+            int seed = timeToSeed();
+            try {
+                initGenerator(DEFAULT_KIND.setGenerator(), seed);
+            } catch (RNGException ex) {
+                Utils.fail("failed to initialize default random number generator");
+            }
+            return new ContextStateImpl(DEFAULT_KIND, DEFAULT_NORM_KIND);
         }
-        return new ContextStateImpl(DEFAULT_KIND, DEFAULT_NORM_KIND);
     }
 
     private static ContextStateImpl getContextState() {
-        return (ContextStateImpl) RContext.getContextState(RContext.ClassStateKind.RNG);
+        return RContext.getInstance().stateRNG;
     }
 
     public static int currentKindAsInt() {

@@ -22,8 +22,6 @@
  */
 package com.oracle.truffle.r.engine;
 
-import static com.oracle.truffle.r.runtime.RCmdOptions.*;
-
 import java.io.*;
 import java.util.*;
 import java.util.stream.*;
@@ -52,6 +50,7 @@ import com.oracle.truffle.r.nodes.runtime.*;
 import com.oracle.truffle.r.parser.*;
 import com.oracle.truffle.r.parser.ast.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption;
 import com.oracle.truffle.r.runtime.Utils.DebugExitException;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
@@ -126,12 +125,11 @@ final class REngine implements RContext.Engine {
         return engine;
     }
 
-    public void activate() {
+    public void activate(REnvironment.ContextStateImpl stateREnvironment) {
         truffleVM = truffleVMBuilder.build();
-        this.globalFrame = RRuntime.createNonFunctionFrame().materialize();
+        this.globalFrame = stateREnvironment.getGlobalFrame();
         this.startTime = System.nanoTime();
-        context.installCustomClassState(RContext.ClassStateKind.REnvironment, new REnvironment.ClassStateFactory().newContext(context, globalFrame));
-        if (context.getKind() == RContext.Kind.SHARE_NOTHING) {
+        if (context.getKind() == RContext.ContextKind.SHARE_NOTHING) {
             initializeShared();
         }
     }
@@ -140,7 +138,7 @@ final class REngine implements RContext.Engine {
         suppressWarnings = true;
         MaterializedFrame baseFrame = RRuntime.createNonFunctionFrame().materialize();
         REnvironment.baseInitialize(baseFrame, globalFrame);
-        loadBase = FastROptions.LoadBase.getValue();
+        loadBase = FastROptions.LoadBase;
         RBuiltinPackages.loadBase(baseFrame, loadBase);
         RGraphics.initialize();
         if (loadBase) {
@@ -152,15 +150,15 @@ final class REngine implements RContext.Engine {
             checkAndRunStartupFunction(".OptRequireMethods");
 
             suppressWarnings = false;
-            Source siteProfile = RProfile.siteProfile();
+            Source siteProfile = context.stateRProfile.siteProfile();
             if (siteProfile != null) {
                 parseAndEval(siteProfile, baseFrame, false, false);
             }
-            Source userProfile = RProfile.userProfile();
+            Source userProfile = context.stateRProfile.userProfile();
             if (userProfile != null) {
                 parseAndEval(userProfile, globalFrame, false, false);
             }
-            if (!NO_RESTORE.getValue()) {
+            if (!context.getOptions().getBoolean(RCmdOption.NO_RESTORE)) {
                 /*
                  * TODO This is where we would load any saved user data
                  */
@@ -169,7 +167,6 @@ final class REngine implements RContext.Engine {
             checkAndRunStartupFunction(".First.sys");
             RBuiltinPackages.loadDefaultPackageOverrides();
         }
-        context.systemInitialized();
     }
 
     private void checkAndRunStartupFunction(String name) {
@@ -479,6 +476,7 @@ final class REngine implements RContext.Engine {
             if (printResult && result != null) {
                 assert topLevel;
                 if (context.isVisible()) {
+                    // this supports printing of non-R values (via toString for now)
                     if (result instanceof TruffleObject && !(result instanceof RTypedValue)) {
                         RContext.getInstance().getConsoleHandler().println(String.valueOf(result));
                     } else if (result instanceof CharSequence && !(result instanceof String)) {
@@ -516,7 +514,7 @@ final class REngine implements RContext.Engine {
 
     @TruffleBoundary
     private static boolean checkResult(Object result) {
-        if (FastROptions.CheckResultCompleteness.getValue() && result instanceof RAbstractVector && ((RAbstractVector) result).isComplete()) {
+        if (FastROptions.CheckResultCompleteness && result instanceof RAbstractVector && ((RAbstractVector) result).isComplete()) {
             assert ((RAbstractVector) result).checkCompleteness() : "vector: " + result + " is not complete, but isComplete flag is true";
         }
         return true;

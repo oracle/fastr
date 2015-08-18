@@ -52,43 +52,28 @@ public class RContextFactory {
      */
     public static void initialize() {
         if (!initialized) {
-            FastROptions.initialize();
-            REnvVars.initialize();
             RInstrument.initialize();
             RPerfStats.initialize();
             Locale.setDefault(Locale.ROOT);
             RAccuracyInfo.initialize();
             RVersionInfo.initialize();
             TempPathName.initialize();
-            RProfile.initialize();
-            RContext.initialize(new RRuntimeASTAccessImpl(), RBuiltinPackages.getInstance(), FastROptions.IgnoreVisibility.getValue());
+            RContext.initialize(new RRuntimeASTAccessImpl(), RBuiltinPackages.getInstance(), FastROptions.IgnoreVisibility);
             initialized = true;
         }
-    }
-
-    public static RContext createShareParentReadWrite(RContext parent, String[] commandArgs, ConsoleHandler consoleHandler, Env env) {
-        RContext context = RContext.createShareParentReadWrite(parent, commandArgs, consoleHandler, env);
-        return context;
-    }
-
-    public static RContext createShareParentReadOnly(RContext parent, String[] commandArgs, ConsoleHandler consoleHandler, Env env) {
-        RContext context = RContext.createShareParentReadOnly(parent, commandArgs, consoleHandler, env);
-        return context;
     }
 
     /**
      * Create the initial context with no parent.
      */
-    public static RContext createInitial(String[] commandArgs, ConsoleHandler consoleHandler, Env env) {
-        RContext context = RContext.createShareNothing(null, commandArgs, consoleHandler, env);
-        return context;
+    public static RContext createInitial(RCmdOptions options, ConsoleHandler consoleHandler, Env env) {
+        return RContext.create(null, ContextKind.SHARE_NOTHING, options, consoleHandler, env);
     }
 
     /**
      * Create a context of given kind.
      */
-    public static RContext create(RContext parent, Kind kind, String[] commandArgs, ConsoleHandler consoleHandler, Env env) {
-        RContext context = RContext.create(parent, kind, commandArgs, consoleHandler, env);
-        return context;
+    public static RContext create(RContext parent, ContextKind kind, RCmdOptions options, ConsoleHandler consoleHandler, Env env) {
+        return RContext.create(parent, kind, options, consoleHandler, env);
     }
 }

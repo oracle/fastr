@@ -28,6 +28,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption;
 import com.oracle.truffle.r.runtime.data.*;
 
 @RBuiltin(name = "quit", kind = INTERNAL, parameterNames = {"save", "status", "runLast"})
@@ -40,13 +41,13 @@ public abstract class Quit extends RInvisibleBuiltinNode {
 
     @Specialization
     @TruffleBoundary
-    protected Object doQuit(final String saveArg, int status, byte runLast) {
+    protected Object doQuit(String saveArg, int status, byte runLast) {
         controlVisibility();
         String save = saveArg;
         // Quit does not divert its output to sink
         RContext.ConsoleHandler consoleHandler = RContext.getInstance().getConsoleHandler();
         if (save.equals("default")) {
-            if (RCmdOptions.NO_SAVE.getValue()) {
+            if (RContext.getInstance().getOptions().getBoolean(RCmdOption.NO_SAVE)) {
                 save = "no";
             } else {
                 if (consoleHandler.isInteractive()) {
@@ -97,5 +98,4 @@ public abstract class Quit extends RInvisibleBuiltinNode {
         Utils.exit(status);
         return null;
     }
-
 }

@@ -48,7 +48,7 @@ public abstract class Options extends RBuiltinNode {
     @Specialization
     protected RList options(@SuppressWarnings("unused") RMissing x) {
         controlVisibility();
-        Set<Map.Entry<String, Object>> optionSettings = RContext.getROptionsState().getValues();
+        Set<Map.Entry<String, Object>> optionSettings = RContext.getInstance().stateROptions.getValues();
         Object[] data = new Object[optionSettings.size()];
         String[] names = new String[data.length];
         int i = 0;
@@ -69,7 +69,7 @@ public abstract class Options extends RBuiltinNode {
     @TruffleBoundary
     protected Object options(RArgsValuesAndNames args) {
         try {
-            ROptions.ContextState options = RContext.getROptionsState();
+            ROptions.ContextStateImpl options = RContext.getInstance().stateROptions;
             Object[] values = args.getArguments();
             ArgumentsSignature signature = args.getSignature();
             Object[] data = new Object[values.length];

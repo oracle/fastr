@@ -149,7 +149,7 @@ public interface RRuntimeASTAccess {
      */
     void setFunctionName(RootNode node, String name);
 
-    RContext create(RContext parent, Kind kind, String[] commandArgs, ConsoleHandler consoleHandler, Env env);
+    RContext create(RContext parent, ContextKind kind, RCmdOptions options, ConsoleHandler consoleHandler, Env env);
 
     RContext.Engine createEngine(RContext context);
 

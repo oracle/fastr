@@ -35,20 +35,14 @@ import com.oracle.truffle.r.runtime.data.model.*;
 /**
  * Basic support classes and methods for the connection implementations.
  */
-public class ConnectionSupport implements RContext.StateFactory {
-
-    public interface ContextState extends RContext.ContextState {
-        BaseRConnection getConnection(int index);
-
-        RIntVector getAllConnections();
-    }
+public class ConnectionSupport {
 
     /**
      * The context specific state, which is the set of active connections. We stored these as weak
      * references to detect when they become unused whuch, when detected, results in them being
      * closed if still open.
      */
-    private static final class ContextStateImpl implements ContextState {
+    public static final class ContextStateImpl implements RContext.ContextState {
         private static final int MAX_CONNECTIONS = 128;
         /**
          * Records all connections. The index in the array is the "descriptor" used in
@@ -129,7 +123,8 @@ public class ConnectionSupport implements RContext.StateFactory {
             throw RError.error(RError.NO_NODE, RError.Message.ALL_CONNECTIONS_IN_USE);
         }
 
-        private void beforeDestroy() {
+        @Override
+        public void beforeDestroy(RContext context) {
             // close all open connections
             for (int i = 3; i <= hwm; i++) {
                 WeakReference<BaseRConnection> ref = allConnections.get(i);
@@ -170,20 +165,14 @@ public class ConnectionSupport implements RContext.StateFactory {
                 }
             }
         }
+
+        public static ContextStateImpl newContext(@SuppressWarnings("unused") RContext context) {
+            return new ContextStateImpl();
+        }
     }
 
     private static ContextStateImpl getContextStateImpl() {
-        return (ContextStateImpl) RContext.getRConnectionState();
-    }
-
-    @Override
-    public ContextState newContext(RContext context, Object... objects) {
-        return new ContextStateImpl();
-    }
-
-    @Override
-    public void beforeDestroy(RContext context, RContext.ContextState state) {
-        ((ContextStateImpl) state).beforeDestroy();
+        return RContext.getInstance().stateRConnection;
     }
 
     private static final class ModeException extends IOException {
@@ -334,7 +323,7 @@ public class ConnectionSupport implements RContext.StateFactory {
      */
     public static RConnection fromVector(RVector vector, @SuppressWarnings("unused") RStringVector classAttr) {
         int index = RRuntime.asInteger(vector);
-        RConnection result = RContext.getRConnectionState().getConnection(index);
+        RConnection result = RContext.getInstance().stateRConnection.getConnection(index);
         if (result == null) {
             // non-existent connection, still legal according to GnuR
             // we cannot throw an error here as this can be used by parallel packages - do it lazily

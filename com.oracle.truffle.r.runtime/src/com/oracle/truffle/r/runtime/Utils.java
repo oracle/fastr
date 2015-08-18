@@ -25,6 +25,7 @@ package com.oracle.truffle.r.runtime;
 import java.io.*;
 import java.net.*;
 import java.nio.file.*;
+import java.nio.file.FileSystem;
 import java.nio.file.attribute.*;
 import java.util.*;
 
@@ -34,6 +35,7 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
+import com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption;
 import com.oracle.truffle.r.runtime.RContext.ConsoleHandler;
 import com.oracle.truffle.r.runtime.conn.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -124,7 +126,7 @@ public final class Utils {
      */
     public static RuntimeException exit(int status) {
         RPerfStats.report();
-        if (RCmdOptions.DEBUGGER.getValue() != null) {
+        if (RContext.getInstance().getOptions().getString(RCmdOption.DEBUGGER) != null) {
             throw new DebugExitException();
         } else {
             System.exit(status);

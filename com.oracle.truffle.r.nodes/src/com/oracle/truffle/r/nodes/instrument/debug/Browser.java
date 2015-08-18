@@ -53,7 +53,7 @@ public class Browser {
             LW: while (true) {
                 String input = ch.readLine().trim();
                 if (input.length() == 0) {
-                    RLogicalVector browserNLdisabledVec = (RLogicalVector) RContext.getROptionsState().getValue("browserNLdisabled");
+                    RLogicalVector browserNLdisabledVec = (RLogicalVector) RContext.getInstance().stateROptions.getValue("browserNLdisabled");
                     if (!RRuntime.fromLogical(browserNLdisabledVec.getDataAt(0))) {
                         input = lastEmptyLineCommand;
                     }

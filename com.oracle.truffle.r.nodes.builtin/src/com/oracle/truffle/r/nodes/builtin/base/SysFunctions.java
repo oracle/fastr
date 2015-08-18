@@ -60,7 +60,7 @@ public class SysFunctions {
         @TruffleBoundary
         protected Object sysGetEnv(RAbstractStringVector x, RAbstractStringVector unset) {
             controlVisibility();
-            Map<String, String> envMap = REnvVars.getMap();
+            Map<String, String> envMap = RContext.getInstance().stateREnvVars.getMap();
             int len = x.getLength();
             if (zeroLengthProfile.profile(len == 0)) {
                 String[] data = new String[envMap.size()];
@@ -102,12 +102,13 @@ public class SysFunctions {
     @RBuiltin(name = "Sys.setenv", kind = INTERNAL, parameterNames = {"nm", "values"})
     public abstract static class SysSetEnv extends RInvisibleBuiltinNode {
 
-        @Specialization()
+        @Specialization
         @TruffleBoundary
         protected RLogicalVector doSysSetEnv(RStringVector names, RStringVector values) {
             byte[] data = new byte[names.getLength()];
+            REnvVars stateREnvVars = RContext.getInstance().stateREnvVars;
             for (int i = 0; i < data.length; i++) {
-                REnvVars.put(names.getDataAt(i), values.getDataAt(i));
+                stateREnvVars.put(names.getDataAt(i), values.getDataAt(i));
                 data[i] = RRuntime.LOGICAL_TRUE;
             }
             return RDataFactory.createLogicalVector(data, RDataFactory.COMPLETE_VECTOR);
@@ -122,8 +123,9 @@ public class SysFunctions {
         @TruffleBoundary
         protected RLogicalVector doSysSetEnv(RAbstractStringVector argVec) {
             byte[] data = new byte[argVec.getLength()];
+            REnvVars stateREnvVars = RContext.getInstance().stateREnvVars;
             for (int i = 0; i < data.length; i++) {
-                data[i] = RRuntime.asLogical(REnvVars.unset(argVec.getDataAt(i)));
+                data[i] = RRuntime.asLogical(stateREnvVars.unset(argVec.getDataAt(i)));
             }
             return RDataFactory.createLogicalVector(data, RDataFactory.COMPLETE_VECTOR);
         }

@@ -29,6 +29,8 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.engine.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.RCmdOptions.Client;
+import com.oracle.truffle.r.runtime.RContext.*;
 
 public final class FastRSession implements RSession {
 
@@ -108,7 +110,8 @@ public final class FastRSession implements RSession {
 
     public RContext createTestContext() {
         create();
-        RContext context = RContextFactory.createShareParentReadWrite(main, new String[0], consoleHandler, null).activate();
+        RCmdOptions options = RCmdOptions.parseArguments(Client.RSCRIPT, new String[0]);
+        RContext context = RContextFactory.create(main, ContextKind.SHARE_PARENT_RW, options, consoleHandler, null);
         context.setSystemTimeZone(TimeZone.getTimeZone("CET"));
         return context;
     }
@@ -117,7 +120,8 @@ public final class FastRSession implements RSession {
         consoleHandler = new TestConsoleHandler();
         RContextFactory.initialize();
         try {
-            main = RContextFactory.createInitial(new String[0], consoleHandler, null).activate();
+            RCmdOptions options = RCmdOptions.parseArguments(Client.RSCRIPT, new String[0]);
+            main = RContextFactory.createInitial(options, consoleHandler, null);
         } finally {
             System.out.print(consoleHandler.buffer.toString());
         }

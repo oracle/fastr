@@ -186,7 +186,7 @@ public final class RError extends RuntimeException {
 
     @TruffleBoundary
     public static void performanceWarning(String string) {
-        if (FastROptions.PerformanceWarnings.getValue()) {
+        if (FastROptions.PerformanceWarnings) {
             warning(RError.NO_NODE, Message.PERFORMANCE, string);
         }
     }

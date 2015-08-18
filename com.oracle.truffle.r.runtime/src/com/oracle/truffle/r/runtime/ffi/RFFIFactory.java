@@ -26,17 +26,17 @@ import java.io.*;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.RContext.*;
 
 /**
  * Factory class for the different possible implementations of the {@link RFFI} interface. The
  * choice of factory is made by the R engine and set here by the call to {@link #setRFFIFactory}.
  *
  * The RFFI may need to do special things in the case of multiple contexts, hence any given factory
- * must support the {@link com.oracle.truffle.r.runtime.RContext.StateFactory} interface. However,
- * since we don't know exactly which factory will be used, {@link RContext} references the
- * {@link RFFIContextStateFactory} class.
+ * must support the {@link #newContext(RContext)} method. However, since we don't know exactly which
+ * factory will be used, {@link RContext} references the {@link RFFIContextStateFactory} class.
  */
-public abstract class RFFIFactory implements RContext.StateFactory {
+public abstract class RFFIFactory {
 
     protected static RFFI theRFFI;
 
@@ -103,4 +103,5 @@ public abstract class RFFIFactory implements RContext.StateFactory {
         throw new IOException(errMsg);
     }
 
+    public abstract ContextState newContext(RContext context);
 }

@@ -136,12 +136,12 @@ def _fastr_gate_runner(args, tasks):
 
     with mx_gate.Task('UnitTests: +EST', tasks) as t:
         if t:
-            if junit(['--J', '@-DR:+ExperimentalStateTrans', '--tests', _gate_unit_tests()]) != 0:
+            if junit(['--J', '@-DR:+NewStateTransition', '--tests', _gate_unit_tests()]) != 0:
                 t.abort('unit tests failed')
 
     with mx_gate.Task('UnitTests: -EST', tasks) as t:
         if t:
-            if junit(['--J', '@-DR:-ExperimentalStateTrans', '--tests', _gate_unit_tests()]) != 0:
+            if junit(['--J', '@-DR:-NewStateTransition', '--tests', _gate_unit_tests()]) != 0:
                 t.abort('unit tests failed')
 
 mx_gate.add_gate_runner(_fastr_suite, _fastr_gate_runner)

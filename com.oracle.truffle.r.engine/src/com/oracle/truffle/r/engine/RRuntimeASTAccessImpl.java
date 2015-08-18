@@ -399,8 +399,8 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
 
     }
 
-    public RContext create(RContext parent, RContext.Kind kind, String[] commandArgs, ConsoleHandler consoleHandler, Env env) {
-        return RContextFactory.create(parent, kind, commandArgs, consoleHandler, env);
+    public RContext create(RContext parent, RContext.ContextKind kind, RCmdOptions options, ConsoleHandler consoleHandler, Env env) {
+        return RContextFactory.create(parent, kind, options, consoleHandler, env);
     }
 
     public Engine createEngine(RContext context) {
@@ -437,7 +437,7 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
      * {@code call == null}, it's pretty simple as we just back off to the frame, where the call
      * will have been stored. Otherwise, we have to deal with the different ways in which the
      * internal implementation can generate an error/warning and locate the correct node, and try to
-     * maych the behavior of GnuR regarding {@code .Internal} (TODO).
+     * match the behavior of GnuR regarding {@code .Internal} (TODO).
      */
     public Object findCaller(Node call) {
         Frame frame = Utils.getActualCurrentFrame();

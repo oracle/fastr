@@ -121,7 +121,6 @@ public final class RREPLServer extends REPLServer {
         RContext initialContext = RCommand.debuggerMain(debugArgs);
         initialContext.getThisEngine().getTruffleVMBuilder().onEvent(onHalted).onEvent(onExec);
         // This actually "builds" the TruffleVM
-        initialContext.activate();
         this.vm = initialContext.getThisEngine().getTruffleVM();
         assert vm != null;
         this.language = vm.getLanguages().get("application/x-r");

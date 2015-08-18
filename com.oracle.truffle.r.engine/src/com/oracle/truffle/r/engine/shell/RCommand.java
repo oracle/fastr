@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.engine.shell;
 
-import static com.oracle.truffle.r.runtime.RCmdOptions.*;
+import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.*;
 
 import java.io.*;
 import java.nio.file.*;
@@ -52,15 +52,15 @@ public class RCommand {
 
     public static RContext internalMain(String[] args, boolean eval) {
         try {
-            RCmdOptionsParser.Result result = RCmdOptionsParser.parseArguments(RCmdOptions.Client.R, args);
-            if (HELP.getValue()) {
-                RCmdOptionsParser.printHelp(RCmdOptions.Client.R, 0);
-            } else if (VERSION.getValue()) {
+            RCmdOptions options = RCmdOptions.parseArguments(RCmdOptions.Client.R, args);
+            if (options.getBoolean(HELP)) {
+                RCmdOptions.printHelp(RCmdOptions.Client.R, 0);
+            } else if (options.getBoolean(VERSION)) {
                 printVersionAndExit();
-            } else if (RHOME.getValue()) {
+            } else if (options.getBoolean(RHOME)) {
                 printRHomeAndExit();
             }
-            return subMainInit(result.args, eval);
+            return subMainInit(options, eval);
         } catch (Utils.DebugExitException ex) {
             /*
              * This is thrown instead of doing System.exit, when we are running under the in-process
@@ -81,31 +81,31 @@ public class RCommand {
     /**
      * Entry point for {@link RscriptCommand} avoiding re-parsing.
      */
-    public static void rscriptMain(String[] args) {
-        subMainInit(args, true);
+    public static void rscriptMain(RCmdOptions options) {
+        subMainInit(options, true);
     }
 
-    public static RContext subMainInit(String[] args, boolean eval) {
+    public static RContext subMainInit(RCmdOptions options, boolean eval) {
 
-        if (SLAVE.getValue()) {
-            QUIET.setValue(true);
-            NO_SAVE.setValue(true);
+        if (options.getBoolean(SLAVE)) {
+            options.setValue(QUIET, true);
+            options.setValue(NO_SAVE, true);
         }
 
-        if (VANILLA.getValue()) {
-            NO_SAVE.setValue(true);
-            NO_ENVIRON.setValue(true);
-            NO_INIT_FILE.setValue(true);
-            NO_RESTORE.setValue(true);
+        if (options.getBoolean(VANILLA)) {
+            options.setValue(NO_SAVE, true);
+            options.setValue(NO_ENVIRON, true);
+            options.setValue(NO_INIT_FILE, true);
+            options.setValue(NO_RESTORE, true);
         }
 
-        String fileArg = FILE.getValue();
+        String fileArg = options.getString(FILE);
         if (fileArg != null) {
-            if (EXPR.getValue() != null) {
+            if (options.getStringList(EXPR) != null) {
                 Utils.fatalError("cannot use -e with -f or --file");
             }
-            if (!SAVE.getValue()) {
-                NO_SAVE.setValue(true);
+            if (!options.getBoolean(SLAVE)) {
+                options.setValue(NO_SAVE, true);
             }
             if (fileArg.equals("-")) {
                 // means stdin, but still implies NO_SAVE
@@ -115,7 +115,7 @@ public class RCommand {
 
         RContextFactory.initialize();
 
-        if (!(QUIET.getValue() || SILENT.getValue())) {
+        if (!(options.getBoolean(QUIET) || options.getBoolean(SILENT))) {
             System.out.println(RRuntime.WELCOME_MESSAGE);
         }
         /*
@@ -137,10 +137,10 @@ public class RCommand {
                 throw Utils.fatalError("cannot open file '" + fileArg + "': " + e.getMessage());
             }
             consoleHandler = new StringConsoleHandler(lines, System.out);
-        } else if (EXPR.getValue() != null) {
-            List<String> exprs = EXPR.getValue();
-            if (!SAVE.getValue()) {
-                NO_SAVE.setValue(true);
+        } else if (options.getStringList(EXPR) != null) {
+            List<String> exprs = options.getStringList(EXPR);
+            if (!options.getBoolean(SLAVE)) {
+                options.setValue(NO_SAVE, true);
             }
             consoleHandler = new StringConsoleHandler(exprs, System.out);
         } else {
@@ -158,17 +158,16 @@ public class RCommand {
             } catch (IOException ex) {
                 throw Utils.fail("unexpected error opening console reader");
             }
-            boolean isInteractive = INTERACTIVE.getValue() || sysConsole != null;
-            if (!isInteractive && !SAVE.getValue() && !NO_SAVE.getValue() && !VANILLA.getValue()) {
+            boolean isInteractive = options.getBoolean(INTERACTIVE) || sysConsole != null;
+            if (!isInteractive && !options.getBoolean(SAVE) && !options.getBoolean(NO_SAVE) && !options.getBoolean(VANILLA)) {
                 throw Utils.fatalError("you must specify '--save', '--no-save' or '--vanilla'");
             }
             // long start = System.currentTimeMillis();
             consoleHandler = new JLineConsoleHandler(isInteractive, consoleReader);
         }
-        RContext context = RContextFactory.createInitial(args, consoleHandler, null);
+        RContext context = RContextFactory.createInitial(options, consoleHandler, null);
         if (eval) {
             // never returns
-            context.activate();
             readEvalPrint(consoleHandler, context, filePath);
             throw RInternalError.shouldNotReachHere();
         } else {
@@ -207,7 +206,7 @@ public class RCommand {
         try {
             // console.println("initialize time: " + (System.currentTimeMillis() - start));
             for (;;) {
-                boolean doEcho = doEcho();
+                boolean doEcho = doEcho(context);
                 consoleHandler.setPrompt(doEcho ? "> " : null);
                 try {
                     String input = consoleHandler.readLine();
@@ -252,16 +251,16 @@ public class RCommand {
         }
     }
 
-    private static boolean doEcho() {
-        if (SLAVE.getValue()) {
+    private static boolean doEcho(RContext context) {
+        if (context.getOptions().getBoolean(SLAVE)) {
             return false;
         }
-        RLogicalVector echo = (RLogicalVector) RRuntime.asAbstractVector(RContext.getROptionsState().getValue("echo"));
+        RLogicalVector echo = (RLogicalVector) RRuntime.asAbstractVector(context.stateROptions.getValue("echo"));
         return RRuntime.fromLogical(echo.getDataAt(0));
     }
 
     private static String getContinuePrompt() {
-        RStringVector continuePrompt = (RStringVector) RRuntime.asAbstractVector(RContext.getROptionsState().getValue("continue"));
+        RStringVector continuePrompt = (RStringVector) RRuntime.asAbstractVector(RContext.getInstance().stateROptions.getValue("continue"));
         return continuePrompt.getDataAt(0);
     }
 

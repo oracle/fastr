@@ -28,34 +28,29 @@ import java.nio.file.FileSystem;
 import java.util.*;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption;
 import com.oracle.truffle.r.runtime.ffi.*;
 
 /**
  * Repository for environment variables, including those set by FastR itself, e.g.
  * {@code R_LIBS_USER}.
  */
-public class REnvVars {
+public final class REnvVars implements RContext.ContextState {
 
-    private static Map<String, String> envVars;
+    private final Map<String, String> envVars = new HashMap<>(System.getenv());
 
-    private static Map<String, String> getEnvVars() {
-        if (envVars == null) {
-            envVars = new HashMap<>(System.getenv());
-        }
-        return envVars;
-    }
-
-    private static Map<String, String> checkEnvVars() {
-        if (envVars == null) {
-            throw Utils.fail("envVars not initialized");
-        }
-        return envVars;
-    }
-
-    public static void initialize() {
-        getEnvVars();
+    private REnvVars(RContext context) {
         // set the standard vars defined by R
         String rHome = rHome();
+
+        // Check any external setting is consistent
+        String envRHomePath = envVars.get("R_HOME");
+        if (envRHomePath != null) {
+            new File(envRHomePath).getAbsolutePath();
+            if (!envRHomePath.equals(rHomePath)) {
+                Utils.fail("R_HOME set to unexpected value in the environment");
+            }
+        }
         envVars.put("R_HOME", rHome);
         // Always read the system file
         FileSystem fileSystem = FileSystems.getDefault();
@@ -75,7 +70,7 @@ public class REnvVars {
             // This gets expanded by R code in the system profile
         }
 
-        if (!RCmdOptions.NO_ENVIRON.getValue()) {
+        if (!context.getOptions().getBoolean(RCmdOption.NO_ENVIRON)) {
             String siteFile = envVars.get("R_ENVIRON");
             if (siteFile == null) {
                 siteFile = fileSystem.getPath(rHome, "etc", "Renviron.site").toString();
@@ -112,13 +107,13 @@ public class REnvVars {
         }
     }
 
-    private static String getEitherCase(String var) {
+    public static REnvVars newContext(RContext context) {
+        return new REnvVars(context);
+    }
+
+    private String getEitherCase(String var) {
         String val = envVars.get(var);
-        if (val != null) {
-            return val;
-        } else {
-            return envVars.get(var.toUpperCase());
-        }
+        return val != null ? val : envVars.get(var.toUpperCase());
     }
 
     private static String rHomePath;
@@ -145,40 +140,31 @@ public class REnvVars {
                     Utils.fail("cannot find a valid R_HOME");
                 }
             }
-            // Check any external setting is consistent
-            String envRHomePath = getEnvVars().get("R_HOME");
-            if (envRHomePath != null) {
-                new File(envRHomePath).getAbsolutePath();
-                if (!envRHomePath.equals(rHomePath)) {
-                    Utils.fail("R_HOME set to unexpected value in the environment");
-                }
-            }
         }
         return rHomePath;
     }
 
-    public static String put(String key, String value) {
+    public String put(String key, String value) {
         // TODO need to set value for sub-processes
-        return checkEnvVars().put(key, value);
+        return envVars.put(key, value);
     }
 
-    public static String get(String key) {
-        return checkEnvVars().get(key);
+    public String get(String key) {
+        return envVars.get(key);
     }
 
-    public static boolean unset(String key) {
+    public boolean unset(String key) {
         // TODO remove at the system level
-        checkEnvVars().remove(key);
+        envVars.remove(key);
         return true;
     }
 
-    public static Map<String, String> getMap() {
-        return checkEnvVars();
+    public Map<String, String> getMap() {
+        return envVars;
     }
 
-    public static void readEnvironFile(String path) throws IOException {
+    public void readEnvironFile(String path) throws IOException {
         try (BufferedReader r = new BufferedReader(new FileReader(path))) {
-            checkEnvVars();
             String line = null;
             while ((line = r.readLine()) != null) {
                 if (line.startsWith("#") || line.length() == 0) {
@@ -197,11 +183,10 @@ public class REnvVars {
         }
     }
 
-    protected static String expandParameters(String value) {
+    protected String expandParameters(String value) {
         StringBuffer result = new StringBuffer();
         int x = 0;
         int paramStart = value.indexOf("${", x);
-        checkEnvVars();
         while (paramStart >= 0) {
             result.append(value.substring(x, paramStart));
             int paramEnd = value.lastIndexOf('}');
@@ -230,7 +215,7 @@ public class REnvVars {
         throw new IOException("   File " + path + " contains invalid line(s)\n      " + line + "\n   They were ignored\n");
     }
 
-    public static void safeReadEnvironFile(String path) {
+    public void safeReadEnvironFile(String path) {
         try {
             readEnvironFile(path);
         } catch (IOException ex) {

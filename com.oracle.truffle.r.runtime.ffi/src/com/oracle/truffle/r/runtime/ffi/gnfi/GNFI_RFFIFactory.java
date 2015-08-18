@@ -207,8 +207,8 @@ public class GNFI_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI {
         throw Utils.fail("glob not implemented");
     }
 
-    public ContextState newContext(RContext context, Object... objects) {
+    @Override
+    public ContextState newContext(RContext context) {
         throw RInternalError.unimplemented();
     }
-
 }

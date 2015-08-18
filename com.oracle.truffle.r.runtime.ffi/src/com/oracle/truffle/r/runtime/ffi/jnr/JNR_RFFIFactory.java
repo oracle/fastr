@@ -68,7 +68,8 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI, Stat
 
     }
 
-    public ContextState newContext(RContext context, Object... objects) {
+    @Override
+    public ContextState newContext(RContext context) {
         return new ContextStateImpl();
     }
 
@@ -449,7 +450,7 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI, Stat
     public interface Stats {
         /*
          * TODO add @In/@Out to any arrays that are known to be either @In or @Out (default is
-         * 
+         *
          * @Inout)
          */
 

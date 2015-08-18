@@ -22,24 +22,29 @@
  */
 package com.oracle.truffle.r.runtime;
 
+import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.*;
+
 import java.io.*;
 import java.nio.file.*;
+import java.nio.file.FileSystem;
 
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.runtime.ffi.*;
 
 /**
- * Handles the setup of system, site and user profile code. N.B. {@link #initialize()} only reads
- * the files and leaves the evaluation to the caller, using {@link #siteProfile()} and
- * {@link #userProfile()}.
+ * Handles the setup of system, site and user profile code. N.B. this class only reads the files and
+ * leaves the evaluation to the caller, using {@link #siteProfile()} and {@link #userProfile()}.
  */
-public class RProfile {
-    public static void initialize() {
+public final class RProfile implements RContext.ContextState {
+
+    private RProfile(RContext context, REnvVars envVars) {
         String rHome = REnvVars.rHome();
         FileSystem fileSystem = FileSystems.getDefault();
+        Source newSiteProfile = null;
+        Source newUserProfile = null;
 
-        if (!RCmdOptions.NO_SITE_FILE.getValue()) {
-            String siteProfilePath = REnvVars.get("R_PROFILE");
+        if (!context.getOptions().getBoolean(NO_SITE_FILE)) {
+            String siteProfilePath = envVars.get("R_PROFILE");
             if (siteProfilePath == null) {
                 siteProfilePath = fileSystem.getPath(rHome, "etc", "Rprofile.site").toString();
             } else {
@@ -47,12 +52,12 @@ public class RProfile {
             }
             File siteProfileFile = new File(siteProfilePath);
             if (siteProfileFile.exists()) {
-                siteProfile = getProfile(siteProfilePath);
+                newSiteProfile = getProfile(siteProfilePath);
             }
         }
 
-        if (!RCmdOptions.NO_INIT_FILE.getValue()) {
-            String userProfilePath = REnvVars.get("R_PROFILE_USER");
+        if (!context.getOptions().getBoolean(NO_INIT_FILE)) {
+            String userProfilePath = envVars.get("R_PROFILE_USER");
             if (userProfilePath == null) {
                 String dotRenviron = ".Rprofile";
                 userProfilePath = fileSystem.getPath(RFFIFactory.getRFFI().getBaseRFFI().getwd(), dotRenviron).toString();
@@ -65,15 +70,16 @@ public class RProfile {
             if (userProfilePath != null) {
                 File userProfileFile = new File(userProfilePath);
                 if (userProfileFile.exists()) {
-                    userProfile = getProfile(userProfilePath);
+                    newUserProfile = getProfile(userProfilePath);
                 }
             }
-
         }
+        siteProfile = newSiteProfile;
+        userProfile = newUserProfile;
     }
 
-    private static Source siteProfile;
-    private static Source userProfile;
+    private final Source siteProfile;
+    private final Source userProfile;
 
     public static Source systemProfile() {
         Path path = FileSystems.getDefault().getPath(REnvVars.rHome(), "library", "base", "R", "Rprofile");
@@ -84,11 +90,11 @@ public class RProfile {
         return source;
     }
 
-    public static Source siteProfile() {
+    public Source siteProfile() {
         return siteProfile;
     }
 
-    public static Source userProfile() {
+    public Source userProfile() {
         return userProfile;
     }
 
@@ -101,4 +107,7 @@ public class RProfile {
         }
     }
 
+    public static RProfile newContext(RContext context, REnvVars envVars) {
+        return new RProfile(context, envVars);
+    }
 }

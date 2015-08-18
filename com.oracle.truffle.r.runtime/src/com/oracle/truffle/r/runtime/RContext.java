@@ -56,9 +56,7 @@ import com.oracle.truffle.r.runtime.rng.*;
  *
  * The life-cycle of a {@link RContext} is:
  * <ol>
- * <li>created: {@link #createShareNothing(RContext, String[], ConsoleHandler, Env)} or
- * {@link #createShareParentReadOnly(RContext, String[], ConsoleHandler, Env)}</li>
- * <li>activated: {@link #activate()}</li>
+ * <li>created: {@link #create(RContext, ContextKind, RCmdOptions, ConsoleHandler, Env)}</li>
  * <li>destroyed: {@link #destroy()}</li>
  * </ol>
  *
@@ -149,7 +147,7 @@ public final class RContext extends ExecutionContext {
         int getWidth();
     }
 
-    public enum Kind {
+    public enum ContextKind {
         /**
          * Essentially a clean restart, modulo the basic VM-wide initialization. which does include,
          * for example, reading the external environment variables. I.e., it is not a goal to create
@@ -187,53 +185,25 @@ public final class RContext extends ExecutionContext {
     }
 
     /**
-     * Denotes a class that has context-specific state, e.g. {@link REnvironment}. Such a class must
-     * implement the {@link #newContext} method.
+     * Tagging interface denoting a class that carries the context-specific state for a class that
+     * has context-specific state. The class specific state must implement this interface.
      */
-    public interface StateFactory {
-        /**
-         * Create the class-specific state for a new context.
-         *
-         * @param context the context
-         * @param objects additional arguments for custom initialization, typically empty
-         */
-        ContextState newContext(RContext context, Object... objects);
-
-        /**
-         * A state factory may want to snapshot the state of the context just after the basic system
-         * is initialized, in which case they can override this method. N.B. This is only invoked
-         * for {@link Kind#SHARE_NOTHING} contexts. The definition of "system initialized" is that
-         * the default packages have been loaded, profiles evaluated and {@code .First, First.Sys}
-         * executed.
-         */
-        @SuppressWarnings("unused")
-        default void systemInitialized(RContext context, ContextState state) {
-
-        }
-
+    public interface ContextState {
         /**
          * Called in response to the {@link RContext#destroy} method. Provides a hook for finalizing
          * any state before the context is destroyed.
          */
         @SuppressWarnings("unused")
-        default void beforeDestroy(RContext context, ContextState state) {
-
+        default void beforeDestroy(RContext context) {
+            // default empty implementation
         }
-    }
-
-    /**
-     * Tagging interface denoting a class that carries the context-specific state for a class that
-     * implements {@link StateFactory}. The class specific state must implement this interface.
-     */
-    public interface ContextState {
-
     }
 
     public interface Engine {
         /**
          * Make the engine ready for evaluations.
          */
-        void activate();
+        void activate(REnvironment.ContextStateImpl stateREnvironment);
 
         /**
          * Return the {@link TruffleVM} instance associated with this engine.
@@ -387,44 +357,6 @@ public final class RContext extends ExecutionContext {
     }
 
     /**
-     * The set of classes for which the context manages context-specific state, and their state. We
-     * could do this more dynamically with a registration process, perhaps driven by an annotation
-     * processor, but the set is relatively small, so we just enumerate them here.
-     */
-    public static enum ClassStateKind {
-        ROptions(ROptions.class, false),
-        REnvironment(REnvironment.ClassStateFactory.class, true),
-        RErrorHandling(RErrorHandling.class, false),
-        RConnection(ConnectionSupport.class, false),
-        StdConnections(StdConnections.class, true),
-        RNG(RRNG.class, false),
-        RFFI(RFFIContextStateFactory.class, false),
-        RSerialize(RSerialize.class, false);
-
-        private final Class<? extends StateFactory> klass;
-        private StateFactory factory;
-        private final boolean customCreate;
-
-        private ClassStateKind(Class<? extends StateFactory> klass, boolean customCreate) {
-            this.klass = klass;
-            this.customCreate = customCreate;
-        }
-
-        private static final ClassStateKind[] VALUES = values();
-        // Avoid reflection at runtime (AOT VM).
-        static {
-            for (ClassStateKind css : VALUES) {
-                try {
-                    css.factory = css.klass.newInstance();
-                } catch (IllegalAccessException | InstantiationException ex) {
-                    throw Utils.fail("failed to instantiate ClassStateFactory: " + css.klass.getSimpleName());
-                }
-            }
-        }
-
-    }
-
-    /**
      * A thread that is explicitly associated with a context for efficient lookup.
      */
     public static class ContextThread extends Thread {
@@ -441,7 +373,6 @@ public final class RContext extends ExecutionContext {
         public void setContext(RContext context) {
             this.context = context;
         }
-
     }
 
     /**
@@ -449,17 +380,19 @@ public final class RContext extends ExecutionContext {
      */
     public static class EvalThread extends ContextThread {
         private final Source source;
+        private final ContextInfo info;
 
-        public EvalThread(RContext context, Source source) {
-            super(context);
+        public EvalThread(ContextInfo info, Source source) {
+            super(null);
+            this.info = info;
             this.source = source;
-            context.evalThread = this;
         }
 
         @Override
         public void run() {
+            setContext(info.newContext());
+            context.evalThread = this;
             try {
-                context.activate();
                 context.engine.parseAndEval(source, true, false);
             } finally {
                 context.destroy();
@@ -473,7 +406,7 @@ public final class RContext extends ExecutionContext {
      */
     private static final HashMap<Object, RFunction> cachedBuiltinFunctions = new HashMap<>();
 
-    private final Kind kind;
+    private final ContextKind kind;
 
     private final GlobalAssumptions globalAssumptions = new GlobalAssumptions();
 
@@ -496,13 +429,8 @@ public final class RContext extends ExecutionContext {
     @CompilationFinal private boolean interactive;
 
     @CompilationFinal private ConsoleHandler consoleHandler;
-    @CompilationFinal private String[] commandArgs;
+    private final RCmdOptions options;
     @CompilationFinal private Engine engine;
-
-    /**
-     * The array is indexed by {@link ClassStateKind#ordinal()}.
-     */
-    @CompilationFinal private ContextState[] contextState;
 
     /**
      * Any context created by another has a parent. When such a context is destroyed we must reset
@@ -525,8 +453,7 @@ public final class RContext extends ExecutionContext {
      * performing the evaluation, so we can store the {@link RContext} in a {@link ThreadLocal}.
      *
      * When a context is first created no threads are attached, to allow contexts to be used as
-     * values in the experimental {@code fastr.createcontext} function. The {@link #engine} must
-     * call the {@link #activate} method once the context becomes active. Additional threads can be
+     * values in the experimental {@code fastr.createcontext} function. Additional threads can be
      * added by the {@link #attachThread} method.
      */
     @CompilationFinal private static final ThreadLocal<RContext> threadLocalContext = new ThreadLocal<>();
@@ -543,10 +470,6 @@ public final class RContext extends ExecutionContext {
     private static final AtomicLong ID = new AtomicLong();
     @CompilationFinal private long id;
     private boolean active;
-
-    private static final Deque<RContext> allContexts = new ConcurrentLinkedDeque<>();
-
-    private static final Semaphore allContextsSemaphore = new Semaphore(1, true);
 
     /**
      * A (hopefully) temporary workaround to ignore the setting of {@link #resultVisible} for
@@ -601,30 +524,37 @@ public final class RContext extends ExecutionContext {
     private final Env env;
     private final HashMap<String, TruffleObject> exportedSymbols = new HashMap<>();
 
-    private RContext(Kind kind, RContext parent, String[] commandArgs, ConsoleHandler consoleHandler, Env env) {
+    /**
+     * The set of classes for which the context manages context-specific state, and their state. We
+     * could do this more dynamically with a registration process, perhaps driven by an annotation
+     * processor, but the set is relatively small, so we just enumerate them here.
+     */
+    public final REnvVars stateREnvVars;
+    public final RProfile stateRProfile;
+    public final ROptions.ContextStateImpl stateROptions;
+    public final REnvironment.ContextStateImpl stateREnvironment;
+    public final RErrorHandling.ContextStateImpl stateRErrorHandling;
+    public final ConnectionSupport.ContextStateImpl stateRConnection;
+    public final StdConnections.ContextStateImpl stateStdConnections;
+    public final RRNG.ContextStateImpl stateRNG;
+    public final ContextState stateRFFI;
+    public final RSerialize.ContextStateImpl stateRSerialize;
+
+    private ContextState[] contextStates() {
+        return new ContextState[]{stateREnvVars, stateRProfile, stateROptions, stateREnvironment, stateRErrorHandling, stateRConnection, stateStdConnections, stateRNG, stateRFFI, stateRSerialize};
+    }
+
+    private RContext(ContextKind kind, RContext parent, RCmdOptions options, ConsoleHandler consoleHandler, Env env) {
         this.env = env;
-        if (kind == Kind.SHARE_PARENT_RW) {
-            if (parent.sharedChild != null) {
-                throw RError.error(RError.NO_NODE, RError.Message.GENERIC, "can't have multiple active SHARED_PARENT_RW contexts");
-            }
-            parent.sharedChild = this;
-        }
         this.kind = kind;
         this.parent = parent;
         this.id = ID.getAndIncrement();
-        this.commandArgs = commandArgs;
+        this.options = options;
         if (consoleHandler == null) {
             throw Utils.fail("no console handler set");
         }
         this.consoleHandler = consoleHandler;
         this.interactive = consoleHandler.isInteractive();
-        try {
-            allContextsSemaphore.acquire();
-            allContexts.add(this);
-            allContextsSemaphore.release();
-        } catch (InterruptedException x) {
-            throw RError.error(RError.NO_NODE, RError.Message.GENERIC, "error destroying context");
-        }
 
         if (singleContextAssumption.isValid()) {
             if (singleContext == null) {
@@ -634,119 +564,68 @@ public final class RContext extends ExecutionContext {
                 singleContextAssumption.invalidate();
             }
         }
-    }
+        engine = RContext.getRRuntimeASTAccess().createEngine(this);
 
-    public void installCustomClassState(ClassStateKind classStateKind, ContextState state) {
-        assert classStateKind.customCreate;
-        assert contextState[classStateKind.ordinal()] == null;
-        contextState[classStateKind.ordinal()] = state;
-    }
+        /*
+         * Activate the context by attaching the current thread and initializing the {@link
+         * ContextState} objects. Note that we attach the thread before creating the new context
+         * state. This means that code that accesses the state through this interface will receive a
+         * {@code null} value. Access to the parent state is available through the {@link RContext}
+         * argument passed to the newContext methods. It might be better to attach the thread after
+         * state creation but it is a finely balanced decision and risks incorrectly accessing the
+         * parent state.
+         */
+        assert !active;
+        active = true;
+        attachThread();
+        stateREnvVars = REnvVars.newContext(this);
+        stateRProfile = RProfile.newContext(this, stateREnvVars);
+        stateROptions = ROptions.ContextStateImpl.newContext(this, stateREnvVars);
+        stateREnvironment = REnvironment.ContextStateImpl.newContext(this);
+        stateRErrorHandling = RErrorHandling.ContextStateImpl.newContext(this);
+        stateRConnection = ConnectionSupport.ContextStateImpl.newContext(this);
+        stateStdConnections = StdConnections.ContextStateImpl.newContext(this);
+        stateRNG = RRNG.ContextStateImpl.newContext(this);
+        stateRFFI = RFFIContextStateFactory.newContext(this);
+        stateRSerialize = RSerialize.ContextStateImpl.newContext(this);
+        engine.activate(stateREnvironment);
 
-    /**
-     * Inform state factories that the system is initialized.
-     */
-    public void systemInitialized() {
-        for (ClassStateKind classStateKind : ClassStateKind.VALUES) {
-            classStateKind.factory.systemInitialized(this, contextState[classStateKind.ordinal()]);
+        if (kind == ContextKind.SHARE_PARENT_RW) {
+            if (parent.sharedChild != null) {
+                throw RError.error(RError.NO_NODE, RError.Message.GENERIC, "can't have multiple active SHARED_PARENT_RW contexts");
+            }
+            parent.sharedChild = this;
         }
-    }
-
-    /**
-     * Create a {@link Kind#SHARE_NOTHING} {@link RContext}.
-     *
-     * @param parent if non-null {@code null} the parent creating the context
-     * @param commandArgs the command line arguments passed this R session
-     * @param consoleHandler a {@link ConsoleHandler} for output
-     * @param env the TruffleVM environment
-     */
-    public static RContext createShareNothing(RContext parent, String[] commandArgs, ConsoleHandler consoleHandler, Env env) {
-        RContext result = create(parent, Kind.SHARE_NOTHING, commandArgs, consoleHandler, env);
-        return result;
-    }
-
-    /**
-     * Create a {@link Kind#SHARE_PARENT_RO} {@link RContext}.
-     *
-     * @param parent parent context with which to shgre
-     * @param commandArgs the command line arguments passed this R session
-     * @param consoleHandler a {@link ConsoleHandler} for output
-     * @param env the TruffleVM environment
-     */
-    public static RContext createShareParentReadOnly(RContext parent, String[] commandArgs, ConsoleHandler consoleHandler, Env env) {
-        RContext result = create(parent, Kind.SHARE_PARENT_RO, commandArgs, consoleHandler, env);
-        return result;
-
-    }
-
-    /**
-     * Create a {@link Kind#SHARE_PARENT_RW} {@link RContext}.
-     *
-     * @param parent parent context with which to share
-     * @param commandArgs the command line arguments passed this R session
-     * @param consoleHandler a {@link ConsoleHandler} for output
-     * @param env the TruffleVM environment
-     */
-    public static RContext createShareParentReadWrite(RContext parent, String[] commandArgs, ConsoleHandler consoleHandler, Env env) {
-        RContext result = create(parent, Kind.SHARE_PARENT_RW, commandArgs, consoleHandler, env);
-        return result;
-
+        for (ContextState state : contextStates()) {
+            assert state != null;
+        }
     }
 
     /**
      * Create a context of a given kind.
+     *
+     * @param parent if non-null {@code null}, the parent creating the context
+     * @param kind defines the degree to which this context shares base and package environments
+     *            with its parent
+     * @param options the command line arguments passed this R session
+     * @param consoleHandler a {@link ConsoleHandler} for output
+     * @param env the TruffleVM environment
      */
-    public static RContext create(RContext parent, Kind kind, String[] commandArgs, ConsoleHandler consoleHandler, Env env) {
-        RContext result = new RContext(kind, parent, commandArgs, consoleHandler, env);
-        result.engine = RContext.getRRuntimeASTAccess().createEngine(result);
-        return result;
-    }
-
-    /**
-     * Activate the context by attaching the current thread and initializing the
-     * {@link StateFactory} objects. Note that we attach the thread before creating the new context
-     * state. This means that code that accesses the state through this interface will receive a
-     * {@code null} value. Access to the parent state is available through the {@link RContext}
-     * argument passed to the {@link StateFactory#newContext(RContext, Object...)} method. It might
-     * be better to attach the thread after state creation but it is a finely balanced decision and
-     * risks incorrectly accessing the parent state.
-     */
-    public RContext activate() {
-        assert !active;
-        active = true;
-        attachThread();
-        contextState = new ContextState[ClassStateKind.VALUES.length];
-        for (ClassStateKind classStateKind : ClassStateKind.VALUES) {
-            if (!classStateKind.customCreate) {
-                contextState[classStateKind.ordinal()] = classStateKind.factory.newContext(this);
-            }
-        }
-        installCustomClassState(ClassStateKind.StdConnections, new StdConnections().newContext(this, consoleHandler));
-        if (kind == Kind.SHARE_PARENT_RW) {
-            parent.sharedChild = this;
-        }
-        // The environment state installation is handled by the engine
-        engine.activate();
-        return this;
+    public static RContext create(RContext parent, ContextKind kind, RCmdOptions options, ConsoleHandler consoleHandler, Env env) {
+        return new RContext(kind, parent, options, consoleHandler, env);
     }
 
     /**
      * Destroy this context.
      */
     public void destroy() {
-        for (ClassStateKind classStateKind : ClassStateKind.VALUES) {
-            classStateKind.factory.beforeDestroy(this, contextState[classStateKind.ordinal()]);
+        for (ContextState state : contextStates()) {
+            state.beforeDestroy(this);
         }
-        if (kind == Kind.SHARE_PARENT_RW) {
+        if (kind == ContextKind.SHARE_PARENT_RW) {
             parent.sharedChild = null;
         }
         engine = null;
-        try {
-            allContextsSemaphore.acquire();
-            allContexts.remove(this);
-            allContextsSemaphore.release();
-        } catch (InterruptedException x) {
-            throw RError.error(RError.NO_NODE, RError.Message.GENERIC, "error destroying context");
-        }
         if (parent == null) {
             threadLocalContext.set(null);
         } else {
@@ -762,28 +641,8 @@ public final class RContext extends ExecutionContext {
         return env;
     }
 
-    public Kind getKind() {
+    public ContextKind getKind() {
         return kind;
-    }
-
-    public long getId() {
-        return id;
-    }
-
-    public static RContext find(int id) {
-        try {
-            allContextsSemaphore.acquire();
-            for (RContext context : allContexts) {
-                if (context.id == id) {
-                    allContextsSemaphore.release();
-                    return context;
-                }
-            }
-            allContextsSemaphore.release();
-        } catch (InterruptedException x) {
-            throw RError.error(RError.NO_NODE, RError.Message.GENERIC, "error destroying context");
-        }
-        return null;
     }
 
     public GlobalAssumptions getAssumptions() {
@@ -826,14 +685,6 @@ public final class RContext extends ExecutionContext {
      */
     public Engine getThisEngine() {
         return engine;
-    }
-
-    /**
-     * Access to the {@link ContextState}, when an {@link RContext} object is available, and/or when
-     * {@code this} context is not active.
-     */
-    public ContextState getThisContextState(ClassStateKind classStateKind) {
-        return contextState[classStateKind.ordinal()];
     }
 
     public boolean isVisible() {
@@ -912,11 +763,8 @@ public final class RContext extends ExecutionContext {
         return cachedBuiltinFunctions.get(key);
     }
 
-    public String[] getCommandArgs() {
-        if (commandArgs == null) {
-            throw Utils.fail("no command args set");
-        }
-        return commandArgs;
+    public RCmdOptions getOptions() {
+        return options;
     }
 
     @Override
@@ -933,22 +781,6 @@ public final class RContext extends ExecutionContext {
         return RContext.getInstance().engine;
     }
 
-    public static ContextState getContextState(ClassStateKind kind) {
-        return getInstance().contextState[kind.ordinal()];
-    }
-
-    public static REnvironment.ContextState getREnvironmentState() {
-        return (REnvironment.ContextState) getInstance().contextState[ClassStateKind.REnvironment.ordinal()];
-    }
-
-    public static ROptions.ContextState getROptionsState() {
-        return (ROptions.ContextState) getInstance().contextState[ClassStateKind.ROptions.ordinal()];
-    }
-
-    public static ConnectionSupport.ContextState getRConnectionState() {
-        return (ConnectionSupport.ContextState) getInstance().contextState[ClassStateKind.RConnection.ordinal()];
-    }
-
     public void setLoadingBase(boolean b) {
         loadingBase = b;
     }
@@ -961,4 +793,36 @@ public final class RContext extends ExecutionContext {
         return exportedSymbols;
     }
 
+    public static final class ContextInfo {
+        private static final ConcurrentHashMap<Integer, ContextInfo> contextInfos = new ConcurrentHashMap<>();
+        private static final AtomicInteger contextInfoIds = new AtomicInteger();
+
+        private final RCmdOptions options;
+        private final RContext.ContextKind kind;
+        private final RContext parent;
+
+        public ContextInfo(RCmdOptions options, ContextKind kind, RContext parent) {
+            this.options = options;
+            this.kind = kind;
+            this.parent = parent;
+        }
+
+        public RContext newContext() {
+            return RContext.getRRuntimeASTAccess().create(parent, kind, options, parent.getConsoleHandler(), parent.getEnv());
+        }
+
+        public static int create(RCmdOptions options, ContextKind kind, RContext parent) {
+            int id = contextInfoIds.incrementAndGet();
+            contextInfos.put(id, new ContextInfo(options, kind, parent));
+            return id;
+        }
+
+        public static ContextInfo remove(int id) {
+            return contextInfos.remove(id);
+        }
+
+        public static ContextInfo get(int id) {
+            return contextInfos.get(id);
+        }
+    }
 }
