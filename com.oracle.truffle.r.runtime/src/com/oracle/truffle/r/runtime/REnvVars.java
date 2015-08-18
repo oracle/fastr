@@ -27,79 +27,42 @@ import java.nio.file.*;
 import java.nio.file.FileSystem;
 import java.util.*;
 
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.ffi.*;
 
 /**
  * Repository for environment variables, including those set by FastR itself, e.g.
  * {@code R_LIBS_USER}.
- *
- * Environment variables are context specific and, certainly there is one case in package loading
- * where R uses an environment variable as a global variable to detect recursion.
- *
- * On startup, before we have any contexts created, we have to support access to the environment
- * variables inherited from the OS environment, e.g., for {@code R_PROFILE}. Additional variable are
- * set during the package loading and these are captured in {@link #systemInitEnvVars}. All
- * subsequent contexts inherit that set and may modify it further.
  */
-public class REnvVars implements RContext.StateFactory {
+public class REnvVars {
 
-    private static Map<String, String> initialEnvVars;
-    private static HashMap<String, String> systemInitEnvVars;
-    @CompilationFinal private static boolean initialized;
-
-    private static class ContextStateImpl implements RContext.ContextState {
-        private Map<String, String> envVars = new HashMap<>();
-
-    }
-
-    public RContext.ContextState newContext(RContext context, Object... objects) {
-        ContextStateImpl result = new ContextStateImpl();
-        result.envVars.putAll(systemInitEnvVars == null ? initialEnvVars : systemInitEnvVars);
-        if (!initialized) {
-            initialized = true;
-        }
-        return result;
-    }
-
-    @Override
-    public void systemInitialized(RContext context, RContext.ContextState state) {
-        ContextStateImpl optionsState = (ContextStateImpl) state;
-        systemInitEnvVars = new HashMap<>(optionsState.envVars.size());
-        systemInitEnvVars.putAll(optionsState.envVars);
-    }
-
-    private static ContextStateImpl getState() {
-        return (ContextStateImpl) RContext.getContextState(RContext.ClassStateKind.REnvVars);
-    }
-
-    private static Map<String, String> getInitialEnvVars() {
-        if (initialEnvVars == null) {
-            initialEnvVars = new HashMap<>(System.getenv());
-        }
-        return initialEnvVars;
-    }
+    private static Map<String, String> envVars;
 
     private static Map<String, String> getEnvVars() {
-        if (initialized) {
-            return getState().envVars;
-        } else {
-            return initialEnvVars;
+        if (envVars == null) {
+            envVars = new HashMap<>(System.getenv());
         }
+        return envVars;
+    }
+
+    private static Map<String, String> checkEnvVars() {
+        if (envVars == null) {
+            throw Utils.fail("envVars not initialized");
+        }
+        return envVars;
     }
 
     public static void initialize() {
-        getInitialEnvVars();
+        getEnvVars();
         // set the standard vars defined by R
         String rHome = rHome();
-        initialEnvVars.put("R_HOME", rHome);
+        envVars.put("R_HOME", rHome);
         // Always read the system file
         FileSystem fileSystem = FileSystems.getDefault();
         safeReadEnvironFile(fileSystem.getPath(rHome, "etc", "Renviron").toString());
-        getEnvVars().put("R_DOC_DIR", fileSystem.getPath(rHome, "doc").toString());
-        getEnvVars().put("R_INCLUDE_DIR", fileSystem.getPath(rHome, "include").toString());
-        getEnvVars().put("R_SHARE_DIR", fileSystem.getPath(rHome, "share").toString());
+        envVars.put("R_DOC_DIR", fileSystem.getPath(rHome, "doc").toString());
+        envVars.put("R_INCLUDE_DIR", fileSystem.getPath(rHome, "include").toString());
+        envVars.put("R_SHARE_DIR", fileSystem.getPath(rHome, "share").toString());
         String rLibsUserProperty = System.getenv("R_LIBS_USER");
         if (rLibsUserProperty == null) {
             String os = System.getProperty("os.name");
@@ -108,19 +71,19 @@ public class REnvVars implements RContext.StateFactory {
             } else {
                 rLibsUserProperty = "~/R/%p-library/%v";
             }
-            getEnvVars().put("R_LIBS_USER", rLibsUserProperty);
+            envVars.put("R_LIBS_USER", rLibsUserProperty);
             // This gets expanded by R code in the system profile
         }
 
         if (!RCmdOptions.NO_ENVIRON.getValue()) {
-            String siteFile = getEnvVars().get("R_ENVIRON");
+            String siteFile = envVars.get("R_ENVIRON");
             if (siteFile == null) {
                 siteFile = fileSystem.getPath(rHome, "etc", "Renviron.site").toString();
             }
             if (new File(siteFile).exists()) {
                 safeReadEnvironFile(siteFile);
             }
-            String userFile = getEnvVars().get("R_ENVIRON_USER");
+            String userFile = envVars.get("R_ENVIRON_USER");
             if (userFile == null) {
                 String dotRenviron = ".Renviron";
                 userFile = fileSystem.getPath(RFFIFactory.getRFFI().getBaseRFFI().getwd(), dotRenviron).toString();
@@ -150,11 +113,11 @@ public class REnvVars implements RContext.StateFactory {
     }
 
     private static String getEitherCase(String var) {
-        String val = getEnvVars().get(var);
+        String val = envVars.get(var);
         if (val != null) {
             return val;
         } else {
-            return getEnvVars().get(var.toUpperCase());
+            return envVars.get(var.toUpperCase());
         }
     }
 
@@ -183,7 +146,7 @@ public class REnvVars implements RContext.StateFactory {
                 }
             }
             // Check any external setting is consistent
-            String envRHomePath = getInitialEnvVars().get("R_HOME");
+            String envRHomePath = getEnvVars().get("R_HOME");
             if (envRHomePath != null) {
                 new File(envRHomePath).getAbsolutePath();
                 if (!envRHomePath.equals(rHomePath)) {
@@ -196,25 +159,26 @@ public class REnvVars implements RContext.StateFactory {
 
     public static String put(String key, String value) {
         // TODO need to set value for sub-processes
-        return getEnvVars().put(key, value);
+        return checkEnvVars().put(key, value);
     }
 
     public static String get(String key) {
-        return getEnvVars().get(key);
+        return checkEnvVars().get(key);
     }
 
     public static boolean unset(String key) {
         // TODO remove at the system level
-        getEnvVars().remove(key);
+        checkEnvVars().remove(key);
         return true;
     }
 
     public static Map<String, String> getMap() {
-        return getEnvVars();
+        return checkEnvVars();
     }
 
     public static void readEnvironFile(String path) throws IOException {
         try (BufferedReader r = new BufferedReader(new FileReader(path))) {
+            checkEnvVars();
             String line = null;
             while ((line = r.readLine()) != null) {
                 if (line.startsWith("#") || line.length() == 0) {
@@ -228,7 +192,7 @@ public class REnvVars implements RContext.StateFactory {
                 String var = line.substring(0, ix);
                 String value = expandParameters(line.substring(ix + 1)).trim();
                 // GnuR does not seem to remove quotes, although the spec says it should
-                getEnvVars().put(var, value);
+                envVars.put(var, value);
             }
         }
     }
@@ -237,6 +201,7 @@ public class REnvVars implements RContext.StateFactory {
         StringBuffer result = new StringBuffer();
         int x = 0;
         int paramStart = value.indexOf("${", x);
+        checkEnvVars();
         while (paramStart >= 0) {
             result.append(value.substring(x, paramStart));
             int paramEnd = value.lastIndexOf('}');
@@ -248,7 +213,7 @@ public class REnvVars implements RContext.StateFactory {
                 paramName = param.substring(0, dx);
                 paramDefault = expandParameters(param.substring(dx + 1));
             }
-            String paramValue = getEnvVars().get(paramName);
+            String paramValue = envVars.get(paramName);
             if (paramValue == null || paramValue.length() == 0) {
                 paramValue = paramDefault;
             }
