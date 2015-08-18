@@ -31,7 +31,6 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.AbstractOpenMode;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.BaseRConnection;
 import com.oracle.truffle.r.runtime.context.*;
-import com.oracle.truffle.r.runtime.context.RContext.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
 public class StdConnections {

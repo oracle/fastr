@@ -29,7 +29,7 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.instrument.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.context.*;
-import com.oracle.truffle.r.runtime.context.RContext.*;
+import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
 import com.oracle.truffle.r.runtime.ffi.*;
 
 /**

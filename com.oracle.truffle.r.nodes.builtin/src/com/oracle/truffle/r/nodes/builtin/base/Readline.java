@@ -35,7 +35,7 @@ public abstract class Readline extends RBuiltinNode {
         if (!RContext.getInstance().isInteractive()) {
             return "";
         }
-        RContext.ConsoleHandler consoleHandler = RContext.getInstance().getConsoleHandler();
+        ConsoleHandler consoleHandler = RContext.getInstance().getConsoleHandler();
         String savedPrompt = consoleHandler.getPrompt();
         consoleHandler.setPrompt(prompt.getDataAt(0));
         String input = consoleHandler.readLine();

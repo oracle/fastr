@@ -31,7 +31,7 @@ import com.oracle.truffle.r.engine.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RCmdOptions.Client;
 import com.oracle.truffle.r.runtime.context.*;
-import com.oracle.truffle.r.runtime.context.RContext.*;
+import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
 
 public final class FastRSession implements RSession {
 
@@ -41,7 +41,7 @@ public final class FastRSession implements RSession {
      * A (virtual) console handler that collects the output in a {@link StringBuilder} for
      * comparison. It does not separate error output as the test analysis doesn't need it.
      */
-    public static class TestConsoleHandler implements RContext.ConsoleHandler {
+    public static class TestConsoleHandler implements ConsoleHandler {
         private final StringBuilder buffer = new StringBuilder();
 
         @TruffleBoundary

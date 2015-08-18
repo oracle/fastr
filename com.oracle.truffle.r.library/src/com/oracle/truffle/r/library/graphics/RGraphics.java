@@ -16,7 +16,6 @@ package com.oracle.truffle.r.library.graphics;
 
 import com.oracle.truffle.r.library.graphics.core.*;
 import com.oracle.truffle.r.runtime.context.*;
-import com.oracle.truffle.r.runtime.context.RContext.ConsoleHandler;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
 

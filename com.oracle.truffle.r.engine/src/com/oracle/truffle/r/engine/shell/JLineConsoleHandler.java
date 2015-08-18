@@ -30,7 +30,7 @@ import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.context.*;
 
-public class JLineConsoleHandler implements RContext.ConsoleHandler {
+public class JLineConsoleHandler implements ConsoleHandler {
     private final ConsoleReader console;
     private final boolean isInteractive;
     private final PrintWriter printWriter;

@@ -25,7 +25,7 @@ package com.oracle.truffle.r.runtime;
 import com.oracle.truffle.api.TruffleLanguage.Env;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.runtime.context.*;
-import com.oracle.truffle.r.runtime.context.RContext.*;
+import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
 import com.oracle.truffle.r.runtime.data.*;
 
 /**

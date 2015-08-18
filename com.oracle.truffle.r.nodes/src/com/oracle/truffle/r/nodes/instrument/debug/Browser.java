@@ -46,7 +46,7 @@ public class Browser {
 
     @TruffleBoundary
     public static ExitMode interact(MaterializedFrame frame) {
-        RContext.ConsoleHandler ch = RContext.getInstance().getConsoleHandler();
+        ConsoleHandler ch = RContext.getInstance().getConsoleHandler();
         String savedPrompt = ch.getPrompt();
         ch.setPrompt(browserPrompt(RArguments.getDepth(frame)));
         ExitMode exitMode = ExitMode.NEXT;
