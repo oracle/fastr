@@ -345,29 +345,33 @@ public final class Utils {
             str.append("\n");
         }
         Frame unwrapped = RArguments.unwrap(frame);
-        RCaller call = RArguments.getCall(unwrapped);
-        if (call != null) {
-            RRuntimeASTAccess rASTAccess = RContext.getRRuntimeASTAccess();
-            String callSrc = rASTAccess.getCallerSource(rASTAccess.getSyntaxCaller(call));
-            str.append("Frame: ").append(callTarget).append(isVirtual ? " (virtual)" : "");
-            str.append(" (called as: ").append(callSrc).append(')');
-        }
-        if (printFrameSlots) {
-            FrameDescriptor frameDescriptor = unwrapped.getFrameDescriptor();
-            for (FrameSlot s : frameDescriptor.getSlots()) {
-                str.append("\n      ").append(s.getIdentifier()).append(" = ");
-                Object value = unwrapped.getValue(s);
-                try {
-                    if (value instanceof RAbstractContainer && ((RAbstractContainer) value).getLength() > 32) {
-                        str.append('<').append(value.getClass().getSimpleName()).append(" with ").append(((RAbstractContainer) value).getLength()).append(" elements>");
-                    } else {
-                        String text = String.valueOf(value);
-                        str.append(text.length() < 256 ? text : text.substring(0, 256) + "...");
+        if (!RArguments.isRFrame(frame)) {
+            str.append("<unknown frame>");
+        } else {
+            RCaller call = RArguments.getCall(unwrapped);
+            if (call != null) {
+                RRuntimeASTAccess rASTAccess = RContext.getRRuntimeASTAccess();
+                String callSrc = rASTAccess.getCallerSource(rASTAccess.getSyntaxCaller(call));
+                str.append("Frame: ").append(callTarget).append(isVirtual ? " (virtual)" : "");
+                str.append(" (called as: ").append(callSrc).append(')');
+            }
+            if (printFrameSlots) {
+                FrameDescriptor frameDescriptor = unwrapped.getFrameDescriptor();
+                for (FrameSlot s : frameDescriptor.getSlots()) {
+                    str.append("\n      ").append(s.getIdentifier()).append(" = ");
+                    Object value = unwrapped.getValue(s);
+                    try {
+                        if (value instanceof RAbstractContainer && ((RAbstractContainer) value).getLength() > 32) {
+                            str.append('<').append(value.getClass().getSimpleName()).append(" with ").append(((RAbstractContainer) value).getLength()).append(" elements>");
+                        } else {
+                            String text = String.valueOf(value);
+                            str.append(text.length() < 256 ? text : text.substring(0, 256) + "...");
+                        }
+                    } catch (Throwable t) {
+                        // RLanguage values may not react kindly to getLength() calls
+                        str.append("<exception ").append(t.getClass().getSimpleName()).append(" while printing value of type ").append(value == null ? "null" : value.getClass().getSimpleName()).append(
+                                        '>');
                     }
-                } catch (Throwable t) {
-                    // RLanguage values may not react kindly to getLength() calls
-                    str.append("<exception ").append(t.getClass().getSimpleName()).append(" while printing value of type ").append(value == null ? "null" : value.getClass().getSimpleName()).append(
-                                    '>');
                 }
             }
         }

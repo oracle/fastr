@@ -305,6 +305,11 @@ public final class RArguments {
      */
     public static Frame unwrap(Frame frame) {
         Object[] arguments = frame.getArguments();
-        return arguments.length == 1 ? (Frame) arguments[0] : frame;
+        return arguments.length == 1 && arguments[0] instanceof Frame ? (Frame) arguments[0] : frame;
+    }
+
+    public static boolean isRFrame(Frame frame) {
+        Object[] arguments = frame.getArguments();
+        return arguments.length >= MINIMAL_ARRAY_LENGTH && (arguments[INDEX_ENVIRONMENT] instanceof REnvironment || arguments[INDEX_FUNCTION] instanceof RFunction);
     }
 }
