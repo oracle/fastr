@@ -34,8 +34,9 @@ import jnr.posix.*;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.RContext.ContextState;
 import com.oracle.truffle.r.runtime.conn.*;
+import com.oracle.truffle.r.runtime.context.*;
+import com.oracle.truffle.r.runtime.context.RContext.ContextState;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.ffi.*;
@@ -450,7 +451,7 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI, Stat
     public interface Stats {
         /*
          * TODO add @In/@Out to any arrays that are known to be either @In or @Out (default is
-         *
+         * 
          * @Inout)
          */
 

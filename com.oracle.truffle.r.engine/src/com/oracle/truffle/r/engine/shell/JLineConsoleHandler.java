@@ -28,6 +28,7 @@ import jline.console.*;
 
 import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.context.*;
 
 public class JLineConsoleHandler implements RContext.ConsoleHandler {
     private final ConsoleReader console;

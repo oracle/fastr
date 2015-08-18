@@ -29,6 +29,7 @@ import java.util.*;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption;
+import com.oracle.truffle.r.runtime.context.*;
 import com.oracle.truffle.r.runtime.ffi.*;
 
 /**

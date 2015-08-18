@@ -33,6 +33,7 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.ROptions.OptionsException;
+import com.oracle.truffle.r.runtime.context.*;
 import com.oracle.truffle.r.runtime.data.*;
 
 @RBuiltin(name = "options", kind = INTERNAL, parameterNames = {"..."})

@@ -30,6 +30,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RError.RErrorException;
+import com.oracle.truffle.r.runtime.context.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.frame.*;
 
@@ -80,7 +81,7 @@ import com.oracle.truffle.r.runtime.env.frame.*;
  * Multi-tenancy (multiple {@link RContext}s).
  * <p>
  * The logic for implementing the three different forms of
- * {@link com.oracle.truffle.r.runtime.RContext.ContextKind} is encapsulated in the
+ * {@link com.oracle.truffle.r.runtime.context.RContext.ContextKind} is encapsulated in the
  * {@link #createContext} method.
  */
 public abstract class REnvironment extends RAttributeStorage implements RTypedValue {

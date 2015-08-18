@@ -26,7 +26,8 @@ import java.io.*;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.RContext.*;
+import com.oracle.truffle.r.runtime.context.*;
+import com.oracle.truffle.r.runtime.context.RContext.*;
 
 /**
  * Factory class for the different possible implementations of the {@link RFFI} interface. The

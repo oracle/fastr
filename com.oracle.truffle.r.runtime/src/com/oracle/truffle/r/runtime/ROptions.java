@@ -15,7 +15,8 @@ import java.util.*;
 import java.util.Map.Entry;
 
 import com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption;
-import com.oracle.truffle.r.runtime.RContext.ContextKind;
+import com.oracle.truffle.r.runtime.context.*;
+import com.oracle.truffle.r.runtime.context.RContext.*;
 import com.oracle.truffle.r.runtime.data.*;
 
 /**

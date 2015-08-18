@@ -24,7 +24,7 @@ package com.oracle.truffle.r.nodes.test;
 
 import org.junit.*;
 
-import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.context.*;
 import com.oracle.truffle.r.test.generate.*;
 
 public class TestBase {

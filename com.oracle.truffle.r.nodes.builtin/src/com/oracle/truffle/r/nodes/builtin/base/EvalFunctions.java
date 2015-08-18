@@ -24,16 +24,17 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
-import com.oracle.truffle.api.CompilerDirectives.*;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.context.*;
 import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.nodes.*;
 import com.oracle.truffle.r.runtime.env.*;
-import com.oracle.truffle.r.runtime.env.REnvironment.*;
+import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
+import com.oracle.truffle.r.runtime.nodes.*;
 
 /**
  * The {@code eval} {@code .Internal} and the {@code withVisible} {@code .Primitive}.

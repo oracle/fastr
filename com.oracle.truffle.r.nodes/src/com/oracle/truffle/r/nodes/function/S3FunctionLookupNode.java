@@ -22,6 +22,7 @@ import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.access.variables.*;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode.ReadKind;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.context.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.nodes.*;

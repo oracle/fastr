@@ -22,8 +22,8 @@
  */
 package com.oracle.truffle.r.runtime.ffi;
 
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.RContext.*;
+import com.oracle.truffle.r.runtime.context.*;
+import com.oracle.truffle.r.runtime.context.RContext.ContextState;
 
 /**
  * This is the factory-independent class referenced by {@link RContext} that manages the

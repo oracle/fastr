@@ -27,6 +27,7 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.interop.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.context.*;
 
 /**
  * An instance of {@link RFunction} represents a function defined in R. The properties of a function

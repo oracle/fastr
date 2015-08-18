@@ -30,7 +30,8 @@ import java.util.*;
 import com.oracle.nfi.*;
 import com.oracle.nfi.api.*;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.RContext.ContextState;
+import com.oracle.truffle.r.runtime.context.*;
+import com.oracle.truffle.r.runtime.context.RContext.ContextState;
 import com.oracle.truffle.r.runtime.ffi.*;
 
 /**

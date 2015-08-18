@@ -31,6 +31,7 @@ import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.engine.repl.debug.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.context.*;
 
 /**
  * Only does the minimum for running under the debugger. It is not completely clear how to correctly

@@ -28,7 +28,8 @@ import com.oracle.truffle.api.TruffleLanguage.Env;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.instrument.*;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.RContext.*;
+import com.oracle.truffle.r.runtime.context.*;
+import com.oracle.truffle.r.runtime.context.RContext.*;
 import com.oracle.truffle.r.runtime.ffi.*;
 
 /**

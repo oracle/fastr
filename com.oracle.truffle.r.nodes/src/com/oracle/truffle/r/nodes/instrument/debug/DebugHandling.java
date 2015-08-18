@@ -35,6 +35,7 @@ import com.oracle.truffle.r.nodes.control.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.nodes.instrument.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.context.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.nodes.*;
 

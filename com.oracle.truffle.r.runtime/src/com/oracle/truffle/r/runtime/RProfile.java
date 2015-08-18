@@ -29,6 +29,7 @@ import java.nio.file.*;
 import java.nio.file.FileSystem;
 
 import com.oracle.truffle.api.source.*;
+import com.oracle.truffle.r.runtime.context.*;
 import com.oracle.truffle.r.runtime.ffi.*;
 
 /**

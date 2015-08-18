@@ -26,7 +26,7 @@ import java.io.*;
 import java.util.*;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.context.*;
 
 public class StringConsoleHandler implements RContext.ConsoleHandler {
     private final PrintStream output;

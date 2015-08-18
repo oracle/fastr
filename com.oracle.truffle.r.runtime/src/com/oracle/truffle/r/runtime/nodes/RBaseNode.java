@@ -27,6 +27,7 @@ import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RDeparse.*;
+import com.oracle.truffle.r.runtime.context.*;
 import com.oracle.truffle.r.runtime.env.*;
 
 /**

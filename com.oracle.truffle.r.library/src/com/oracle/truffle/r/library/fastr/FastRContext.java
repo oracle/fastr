@@ -30,8 +30,8 @@ import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RCmdOptions.Client;
-import com.oracle.truffle.r.runtime.RContext.ContextInfo;
 import com.oracle.truffle.r.runtime.conn.*;
+import com.oracle.truffle.r.runtime.context.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.nodes.*;
@@ -42,9 +42,9 @@ public class FastRContext {
         @Specialization
         @TruffleBoundary
         protected int create(RAbstractStringVector args, RIntVector kindVec) {
-            RContext.ContextKind kind = RContext.ContextKind.values()[kindVec.getDataAt(0) - 1];
+            RContext.ContextKind kind = RContext.ContextKind.VALUES[kindVec.getDataAt(0) - 1];
             RCmdOptions options = RCmdOptions.parseArguments(Client.RSCRIPT, args.materialize().getDataCopy());
-            return RContext.ContextInfo.create(options, kind, RContext.getInstance());
+            return ContextInfo.create(options, kind, RContext.getInstance());
         }
     }
 
@@ -56,7 +56,7 @@ public class FastRContext {
                 throw RError.error(this, RError.Message.INVALID_ARGUMENT, "context");
             }
             int contextId = ctxt.getDataAt(0);
-            ContextInfo info = RContext.ContextInfo.remove(contextId);
+            ContextInfo info = ContextInfo.get(contextId);
             try {
                 if (info == null) {
                     StdConnections.getStdout().writeString("obsolete context: " + contextId, true);
@@ -143,7 +143,7 @@ public class FastRContext {
     }
 
     private static ContextInfo checkContext(int contextId, RBaseNode invokingNode) throws RError {
-        ContextInfo info = RContext.ContextInfo.remove(contextId);
+        ContextInfo info = ContextInfo.get(contextId);
         if (info == null) {
             throw RError.error(invokingNode, RError.Message.GENERIC, "no context: " + contextId);
         } else {

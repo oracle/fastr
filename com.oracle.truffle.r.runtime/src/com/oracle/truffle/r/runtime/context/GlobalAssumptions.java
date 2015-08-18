@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.runtime;
+package com.oracle.truffle.r.runtime.context;
 
 import com.oracle.truffle.api.*;
 

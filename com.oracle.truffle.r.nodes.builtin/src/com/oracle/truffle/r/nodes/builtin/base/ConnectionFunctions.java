@@ -44,6 +44,7 @@ import com.oracle.truffle.r.runtime.conn.*;
 import com.oracle.truffle.r.runtime.conn.SocketConnections.RSocketConnection;
 import com.oracle.truffle.r.runtime.conn.TextConnections.TextRConnection;
 import com.oracle.truffle.r.runtime.conn.URLConnections.URLRConnection;
+import com.oracle.truffle.r.runtime.context.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;

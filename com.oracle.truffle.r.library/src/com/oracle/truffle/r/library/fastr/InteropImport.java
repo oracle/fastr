@@ -22,10 +22,11 @@
  */
 package com.oracle.truffle.r.library.fastr;
 
-import com.oracle.truffle.api.CompilerDirectives.*;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.context.*;
 
 public abstract class InteropImport extends RExternalBuiltinNode.Arg1 {
 

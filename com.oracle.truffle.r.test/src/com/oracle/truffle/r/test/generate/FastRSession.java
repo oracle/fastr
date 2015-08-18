@@ -30,7 +30,8 @@ import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.engine.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RCmdOptions.Client;
-import com.oracle.truffle.r.runtime.RContext.*;
+import com.oracle.truffle.r.runtime.context.*;
+import com.oracle.truffle.r.runtime.context.RContext.*;
 
 public final class FastRSession implements RSession {
 

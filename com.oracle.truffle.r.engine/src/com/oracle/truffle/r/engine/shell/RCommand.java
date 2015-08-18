@@ -35,8 +35,8 @@ import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.engine.*;
 import com.oracle.truffle.r.nodes.builtin.base.*;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.RContext.ConsoleHandler;
-import com.oracle.truffle.r.runtime.RContext.Engine;
+import com.oracle.truffle.r.runtime.context.*;
+import com.oracle.truffle.r.runtime.context.RContext.*;
 import com.oracle.truffle.r.runtime.data.*;
 
 /**

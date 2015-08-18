@@ -36,8 +36,9 @@ import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption;
-import com.oracle.truffle.r.runtime.RContext.ConsoleHandler;
 import com.oracle.truffle.r.runtime.conn.*;
+import com.oracle.truffle.r.runtime.context.*;
+import com.oracle.truffle.r.runtime.context.RContext.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 

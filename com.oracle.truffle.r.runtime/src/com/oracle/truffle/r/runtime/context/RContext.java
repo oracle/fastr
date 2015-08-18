@@ -20,10 +20,9 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.runtime;
+package com.oracle.truffle.r.runtime.context;
 
 import java.util.*;
-import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
 
 import com.oracle.truffle.api.*;
@@ -35,6 +34,7 @@ import com.oracle.truffle.api.interop.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.vm.*;
+import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.conn.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
@@ -181,7 +181,9 @@ public final class RContext extends ExecutionContext {
          * shallow copy of the environments associated with the default packages of the parent
          * context at the time the context is created.
          */
-        SHARE_PARENT_RO,
+        SHARE_PARENT_RO;
+
+        public static final ContextKind[] VALUES = values();
     }
 
     /**
@@ -791,38 +793,5 @@ public final class RContext extends ExecutionContext {
 
     public Map<String, TruffleObject> getExportedSymbols() {
         return exportedSymbols;
-    }
-
-    public static final class ContextInfo {
-        private static final ConcurrentHashMap<Integer, ContextInfo> contextInfos = new ConcurrentHashMap<>();
-        private static final AtomicInteger contextInfoIds = new AtomicInteger();
-
-        private final RCmdOptions options;
-        private final RContext.ContextKind kind;
-        private final RContext parent;
-
-        public ContextInfo(RCmdOptions options, ContextKind kind, RContext parent) {
-            this.options = options;
-            this.kind = kind;
-            this.parent = parent;
-        }
-
-        public RContext newContext() {
-            return RContext.getRRuntimeASTAccess().create(parent, kind, options, parent.getConsoleHandler(), parent.getEnv());
-        }
-
-        public static int create(RCmdOptions options, ContextKind kind, RContext parent) {
-            int id = contextInfoIds.incrementAndGet();
-            contextInfos.put(id, new ContextInfo(options, kind, parent));
-            return id;
-        }
-
-        public static ContextInfo remove(int id) {
-            return contextInfos.remove(id);
-        }
-
-        public static ContextInfo get(int id) {
-            return contextInfos.get(id);
-        }
     }
 }

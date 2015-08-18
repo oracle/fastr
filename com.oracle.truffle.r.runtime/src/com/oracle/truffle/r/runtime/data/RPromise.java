@@ -28,6 +28,7 @@ import com.oracle.truffle.api.CompilerDirectives.ValueType;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.context.*;
 import com.oracle.truffle.r.runtime.nodes.*;
 
 /**

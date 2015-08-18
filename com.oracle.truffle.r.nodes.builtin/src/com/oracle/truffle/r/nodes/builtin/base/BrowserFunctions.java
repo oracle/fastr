@@ -31,6 +31,7 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.instrument.debug.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RError.Message;
+import com.oracle.truffle.r.runtime.context.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
 

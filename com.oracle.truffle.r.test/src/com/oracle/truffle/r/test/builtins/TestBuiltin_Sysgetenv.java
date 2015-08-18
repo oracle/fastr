@@ -12,7 +12,6 @@ package com.oracle.truffle.r.test.builtins;
 
 import org.junit.*;
 
-import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.test.*;
 
 // Checkstyle: stop line length check

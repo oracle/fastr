@@ -52,6 +52,7 @@ import com.oracle.truffle.r.parser.ast.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption;
 import com.oracle.truffle.r.runtime.Utils.DebugExitException;
+import com.oracle.truffle.r.runtime.context.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 import com.oracle.truffle.r.runtime.data.model.*;

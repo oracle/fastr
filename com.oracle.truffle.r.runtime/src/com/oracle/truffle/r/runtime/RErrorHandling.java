@@ -17,6 +17,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.runtime.RError.Message;
+import com.oracle.truffle.r.runtime.context.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.nodes.*;
@@ -67,7 +68,7 @@ public class RErrorHandling {
      * Holds all the context-specific state that is relevant for error/warnings. Simple value class
      * for which geterrs/setters are unnecessary.
      */
-    static class ContextStateImpl implements RContext.ContextState {
+    public static class ContextStateImpl implements RContext.ContextState {
         /**
          * Values is either NULL or an RPairList, for {@code restarts}.
          */
