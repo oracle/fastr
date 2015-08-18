@@ -555,6 +555,10 @@ final class REngine implements RContext.Engine {
 
     }
 
+    public Class<? extends TruffleLanguage<RContext>> getTruffleLanguage() {
+        return TruffleRLanguage.class;
+    }
+
     @TruffleBoundary
     private void reportImplementationError(Throwable e) {
         // R suicide, unless, e.g., we are running units tests.

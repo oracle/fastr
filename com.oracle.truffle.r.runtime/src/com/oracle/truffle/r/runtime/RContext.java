@@ -382,6 +382,8 @@ public final class RContext extends ExecutionContext {
 
         ForeignAccess getForeignAccess(RTypedValue value);
 
+        Class<? extends TruffleLanguage<RContext>> getTruffleLanguage();
+
     }
 
     /**
