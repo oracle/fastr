@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.runtime.context;
 
 import java.util.*;
-import java.util.concurrent.atomic.*;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
@@ -53,7 +52,7 @@ import com.oracle.truffle.r.runtime.rng.*;
  *
  * The life-cycle of a {@link RContext} is:
  * <ol>
- * <li>created: {@link #create(RContext, ContextKind, RCmdOptions, ConsoleHandler, Env)}</li>
+ * <li>created: {@link #create(ContextInfo, Env)}</li>
  * <li>destroyed: {@link #destroy()}</li>
  * </ol>
  *
@@ -160,7 +159,6 @@ public final class RContext extends ExecutionContext {
                 context.destroy();
             }
         }
-
     }
 
     /**
@@ -168,15 +166,8 @@ public final class RContext extends ExecutionContext {
      */
     private static final HashMap<Object, RFunction> cachedBuiltinFunctions = new HashMap<>();
 
-    /**
-     * Any context created by another has a parent. When such a context is destroyed we must reset
-     * the {@link #threadLocalContext} to the parent.
-     */
-    private final RContext parent;
-    private final ConsoleHandler consoleHandler;
-    private final RCmdOptions options;
+    private final ContextInfo info;
     private final Engine engine;
-    private final ContextKind kind;
 
     private final GlobalAssumptions globalAssumptions = new GlobalAssumptions();
 
@@ -190,13 +181,6 @@ public final class RContext extends ExecutionContext {
      * report on a {@code SUBSTITUTE} builtin. Not worth promoting to a {@link ContextState}.
      */
     private boolean loadingBase;
-
-    /**
-     * Denote whether the FastR instance is running in 'interactive' mode. This can be set in a
-     * number of ways and is <b>not</> simply equivalent to taking input from a file. However, it is
-     * final once set.
-     */
-    @CompilationFinal private boolean interactive;
 
     /**
      * At most one shared child.
@@ -299,17 +283,12 @@ public final class RContext extends ExecutionContext {
         return new ContextState[]{stateREnvVars, stateRProfile, stateROptions, stateREnvironment, stateRErrorHandling, stateRConnection, stateStdConnections, stateRNG, stateRFFI, stateRSerialize};
     }
 
-    private RContext(ContextKind kind, RContext parent, RCmdOptions options, ConsoleHandler consoleHandler, Env env) {
+    private RContext(ContextInfo info, Env env) {
+        this.info = info;
         this.env = env;
-        this.kind = kind;
-        this.parent = parent;
-        this.id = ID.getAndIncrement();
-        this.options = options;
-        if (consoleHandler == null) {
+        if (info.getConsoleHandler() == null) {
             throw Utils.fail("no console handler set");
         }
-        this.consoleHandler = consoleHandler;
-        this.interactive = consoleHandler.isInteractive();
 
         if (singleContextAssumption.isValid()) {
             if (singleContext == null) {
@@ -345,11 +324,11 @@ public final class RContext extends ExecutionContext {
         stateRSerialize = RSerialize.ContextStateImpl.newContext(this);
         engine.activate(stateREnvironment);
 
-        if (kind == ContextKind.SHARE_PARENT_RW) {
-            if (parent.sharedChild != null) {
+        if (info.getKind() == ContextKind.SHARE_PARENT_RW) {
+            if (info.getParent().sharedChild != null) {
                 throw RError.error(RError.NO_NODE, RError.Message.GENERIC, "can't have multiple active SHARED_PARENT_RW contexts");
             }
-            parent.sharedChild = this;
+            info.getParent().sharedChild = this;
         }
         for (ContextState state : contextStates()) {
             assert state != null;
@@ -357,17 +336,10 @@ public final class RContext extends ExecutionContext {
     }
 
     /**
-     * Create a context of a given kind.
-     *
-     * @param parent if non-null {@code null}, the parent creating the context
-     * @param kind defines the degree to which this context shares base and package environments
-     *            with its parent
-     * @param options the command line arguments passed this R session
-     * @param consoleHandler a {@link ConsoleHandler} for output
-     * @param env the TruffleVM environment
+     * Create a context with the given configuration.
      */
-    public static RContext create(RContext parent, ContextKind kind, RCmdOptions options, ConsoleHandler consoleHandler, Env env) {
-        return new RContext(kind, parent, options, consoleHandler, env);
+    public static RContext create(ContextInfo info, Env env) {
+        return new RContext(info, env);
     }
 
     /**
@@ -377,18 +349,18 @@ public final class RContext extends ExecutionContext {
         for (ContextState state : contextStates()) {
             state.beforeDestroy(this);
         }
-        if (kind == ContextKind.SHARE_PARENT_RW) {
-            parent.sharedChild = null;
+        if (info.getKind() == ContextKind.SHARE_PARENT_RW) {
+            info.getParent().sharedChild = null;
         }
-        if (parent == null) {
+        if (info.getParent() == null) {
             threadLocalContext.set(null);
         } else {
-            threadLocalContext.set(parent);
+            threadLocalContext.set(info.getParent());
         }
     }
 
     public RContext getParent() {
-        return parent;
+        return info.getParent();
     }
 
     public Env getEnv() {
@@ -396,7 +368,7 @@ public final class RContext extends ExecutionContext {
     }
 
     public ContextKind getKind() {
-        return kind;
+        return info.getKind();
     }
 
     public GlobalAssumptions getAssumptions() {
@@ -458,7 +430,7 @@ public final class RContext extends ExecutionContext {
     }
 
     public boolean isInteractive() {
-        return interactive;
+        return info.getConsoleHandler().isInteractive();
     }
 
     public static boolean isIgnoringVisibility() {
@@ -466,7 +438,7 @@ public final class RContext extends ExecutionContext {
     }
 
     public ConsoleHandler getConsoleHandler() {
-        return consoleHandler;
+        return info.getConsoleHandler();
     }
 
     private TimeZone timeZone = TimeZone.getDefault();
@@ -518,12 +490,12 @@ public final class RContext extends ExecutionContext {
     }
 
     public RCmdOptions getOptions() {
-        return options;
+        return info.getOptions();
     }
 
     @Override
     public String toString() {
-        return "context: " + id;
+        return "context: " + info.getId();
     }
 
     /*

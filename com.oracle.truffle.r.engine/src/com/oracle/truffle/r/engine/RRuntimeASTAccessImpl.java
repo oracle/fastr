@@ -395,11 +395,10 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
 
     public void setFunctionName(RootNode node, String name) {
         ((FunctionDefinitionNode) node).setDescription(name);
-
     }
 
-    public RContext create(RContext parent, RContext.ContextKind kind, RCmdOptions options, ConsoleHandler consoleHandler, Env env) {
-        return RContextFactory.create(parent, kind, options, consoleHandler, env);
+    public RContext create(ContextInfo info, Env env) {
+        return RContextFactory.create(info, env);
     }
 
     public Engine createEngine(RContext context) {

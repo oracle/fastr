@@ -74,7 +74,9 @@ public interface ConsoleHandler {
     String readLine();
 
     /**
-     * Return {@code true} if and only if this console is interactive.
+     * Denote whether the FastR instance is running in 'interactive' mode. This can be set in a
+     * number of ways and is <b>not</> simply equivalent to taking input from a file. However, it is
+     * final once set.
      */
     @TruffleBoundary
     boolean isInteractive();

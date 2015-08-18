@@ -112,17 +112,18 @@ public final class FastRSession implements RSession {
     public RContext createTestContext() {
         create();
         RCmdOptions options = RCmdOptions.parseArguments(Client.RSCRIPT, new String[0]);
-        RContext context = RContextFactory.create(main, ContextKind.SHARE_PARENT_RW, options, consoleHandler, null);
+        ContextInfo info = ContextInfo.create(options, ContextKind.SHARE_PARENT_RW, main, consoleHandler);
+        RContext context = RContextFactory.create(info, null);
         context.setSystemTimeZone(TimeZone.getTimeZone("CET"));
         return context;
     }
 
     private FastRSession() {
         consoleHandler = new TestConsoleHandler();
-        RContextFactory.initialize();
         try {
             RCmdOptions options = RCmdOptions.parseArguments(Client.RSCRIPT, new String[0]);
-            main = RContextFactory.createInitial(options, consoleHandler, null);
+            ContextInfo info = ContextInfo.create(options, ContextKind.SHARE_NOTHING, null, consoleHandler);
+            main = RContextFactory.create(info, null);
         } finally {
             System.out.print(consoleHandler.buffer.toString());
         }

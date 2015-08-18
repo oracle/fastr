@@ -29,7 +29,6 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.instrument.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.context.*;
-import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
 import com.oracle.truffle.r.runtime.ffi.*;
 
 /**
@@ -44,37 +43,19 @@ public class RContextFactory {
      */
     static {
         Load_RFFIFactory.initialize();
-    }
-
-    private static boolean initialized;
-
-    /**
-     * Initialize all the context-independent aspects of the system.
-     */
-    public static void initialize() {
-        if (!initialized) {
-            RInstrument.initialize();
-            RPerfStats.initialize();
-            Locale.setDefault(Locale.ROOT);
-            RAccuracyInfo.initialize();
-            RVersionInfo.initialize();
-            TempPathName.initialize();
-            RContext.initialize(new RRuntimeASTAccessImpl(), RBuiltinPackages.getInstance(), FastROptions.IgnoreVisibility);
-            initialized = true;
-        }
-    }
-
-    /**
-     * Create the initial context with no parent.
-     */
-    public static RContext createInitial(RCmdOptions options, ConsoleHandler consoleHandler, Env env) {
-        return RContext.create(null, ContextKind.SHARE_NOTHING, options, consoleHandler, env);
+        RInstrument.initialize();
+        RPerfStats.initialize();
+        Locale.setDefault(Locale.ROOT);
+        RAccuracyInfo.initialize();
+        RVersionInfo.initialize();
+        TempPathName.initialize();
+        RContext.initialize(new RRuntimeASTAccessImpl(), RBuiltinPackages.getInstance(), FastROptions.IgnoreVisibility);
     }
 
     /**
      * Create a context of given kind.
      */
-    public static RContext create(RContext parent, ContextKind kind, RCmdOptions options, ConsoleHandler consoleHandler, Env env) {
-        return RContext.create(parent, kind, options, consoleHandler, env);
+    public static RContext create(ContextInfo info, Env env) {
+        return RContext.create(info, env);
     }
 }

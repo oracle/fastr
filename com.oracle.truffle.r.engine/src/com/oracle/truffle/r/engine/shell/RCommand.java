@@ -36,6 +36,7 @@ import com.oracle.truffle.r.engine.*;
 import com.oracle.truffle.r.nodes.builtin.base.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.context.*;
+import com.oracle.truffle.r.runtime.context.RContext.*;
 import com.oracle.truffle.r.runtime.data.*;
 
 /**
@@ -112,8 +113,6 @@ public class RCommand {
             }
         }
 
-        RContextFactory.initialize();
-
         if (!(options.getBoolean(QUIET) || options.getBoolean(SILENT))) {
             System.out.println(RRuntime.WELCOME_MESSAGE);
         }
@@ -164,7 +163,8 @@ public class RCommand {
             // long start = System.currentTimeMillis();
             consoleHandler = new JLineConsoleHandler(isInteractive, consoleReader);
         }
-        RContext context = RContextFactory.createInitial(options, consoleHandler, null);
+        ContextInfo info = ContextInfo.create(options, ContextKind.SHARE_NOTHING, null, consoleHandler);
+        RContext context = RContextFactory.create(info, null);
         if (eval) {
             // never returns
             readEvalPrint(consoleHandler, context, filePath);

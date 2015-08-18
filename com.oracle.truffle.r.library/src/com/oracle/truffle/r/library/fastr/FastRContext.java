@@ -44,7 +44,7 @@ public class FastRContext {
         protected int create(RAbstractStringVector args, RIntVector kindVec) {
             RContext.ContextKind kind = RContext.ContextKind.VALUES[kindVec.getDataAt(0) - 1];
             RCmdOptions options = RCmdOptions.parseArguments(Client.RSCRIPT, args.materialize().getDataCopy());
-            return ContextInfo.create(options, kind, RContext.getInstance());
+            return ContextInfo.createDeferred(options, kind, RContext.getInstance(), RContext.getInstance().getConsoleHandler());
         }
     }
 
