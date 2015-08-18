@@ -36,7 +36,7 @@ import com.oracle.truffle.r.runtime.*;
  * Only does the minimum for running under the debugger. It is not completely clear how to correctly
  * integrate the R startup in {@code RCommand} with this API.
  */
-@TruffleLanguage.Registration(name = "R", version = "3.1.3", mimeType = "application/x-r")
+@TruffleLanguage.Registration(name = "R", version = "0.1", mimeType = {"application/x-r", "text/x-r"})
 public final class TruffleRLanguage extends TruffleLanguage<RContext> {
 
     private DebugSupportProvider debugSupport;
