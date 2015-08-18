@@ -44,7 +44,11 @@ public final class RDebugSupportProvider implements DebugSupportProvider {
 
     @Override
     public Object evalInContext(Source source, Node node, MaterializedFrame frame) {
-        return RContext.getEngine().parseAndEval(source, frame, false, false);
+        try {
+            return RContext.getEngine().parseAndEval(source, frame, false);
+        } catch (ParseException e) {
+            throw new RInternalError(e, "error while parsing debug statement from %s", source.getName());
+        }
     }
 
     @Override

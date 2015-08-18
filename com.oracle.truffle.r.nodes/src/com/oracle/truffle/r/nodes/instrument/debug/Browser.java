@@ -27,6 +27,7 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.context.*;
+import com.oracle.truffle.r.runtime.context.Engine.ParseException;
 import com.oracle.truffle.r.runtime.data.*;
 
 /**
@@ -90,7 +91,14 @@ public class Browser {
                     }
 
                     default:
-                        RContext.getEngine().parseAndEval(Source.fromText(input, BROWSER_SOURCE), frame, true, false);
+                        try {
+                            RContext.getEngine().parseAndEval(Source.fromText(input, BROWSER_SOURCE), frame, true);
+                        } catch (ReturnException e) {
+                            exitMode = ExitMode.NEXT;
+                            break LW;
+                        } catch (ParseException e) {
+                            throw e.throwAsRError();
+                        }
                         break;
                 }
             }

@@ -33,7 +33,6 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.context.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
-import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
 import com.oracle.truffle.r.runtime.nodes.*;
 
 /**
@@ -47,18 +46,10 @@ public class EvalFunctions {
         protected Object doEvalBody(int depth, Object exprArg, REnvironment envir, REnvironment enclos) {
             Object expr = RASTUtils.checkForRSymbol(exprArg);
 
-            if (RASTUtils.isLanguageOrExpression(expr)) {
-                try {
-                    Object result;
-                    if (expr instanceof RExpression) {
-                        result = RContext.getEngine().eval((RExpression) expr, envir, enclos, depth);
-                    } else {
-                        result = RContext.getEngine().eval((RLanguage) expr, envir, enclos, depth);
-                    }
-                    return result;
-                } catch (PutException ex) {
-                    throw RError.error(this, ex);
-                }
+            if (expr instanceof RExpression) {
+                return RContext.getEngine().eval((RExpression) expr, envir, enclos, depth);
+            } else if (expr instanceof RLanguage) {
+                return RContext.getEngine().eval((RLanguage) expr, envir, enclos, depth);
             } else {
                 // just return value
                 return expr;

@@ -594,7 +594,8 @@ public final class RError extends RuntimeException {
         PERFORMANCE("performance problem: %s"),
         MUST_BE_SMALL_INT("argument '%s' must be a small integer"),
         NO_INTEROP("'%s' is not an object that supports interoperability (class %s)"),
-        NO_IMPORT_OBJECT("'%s' is not an exported object");
+        NO_IMPORT_OBJECT("'%s' is not an exported object"),
+        NO_FUNCTION_RETURN("no function to return from, jumping to top level");
 
         public final String message;
         final boolean hasArgs;

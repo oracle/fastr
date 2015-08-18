@@ -37,6 +37,7 @@ import com.oracle.truffle.r.nodes.builtin.base.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.context.*;
 import com.oracle.truffle.r.runtime.context.Engine.IncompleteSourceException;
+import com.oracle.truffle.r.runtime.context.Engine.ParseException;
 import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -137,7 +138,7 @@ public class RCommand {
         return ContextInfo.create(options, ContextKind.SHARE_NOTHING, null, consoleHandler);
     }
 
-    private static final String GET_ECHO = "getOption('echo')";
+    private static final String GET_ECHO = "invisible(getOption('echo'))";
     private static final String QUIT_EOF = "quit(\"default\", 0L, TRUE)";
 
     /**
@@ -157,7 +158,7 @@ public class RCommand {
         Source source = Source.fromNamedAppendableText(consoleHandler.getInputDescription());
         try {
             // console.println("initialize time: " + (System.currentTimeMillis() - start));
-            for (;;) {
+            REPL: for (;;) {
                 boolean doEcho = doEcho(vm);
                 consoleHandler.setPrompt(doEcho ? "> " : null);
                 try {
@@ -181,11 +182,24 @@ public class RCommand {
                         while (true) {
                             try {
                                 // TODO: how to pass subSource to TruffleVM?
-                                // how to pass "printResult" and "incompleteSource" to TruffleVM?
                                 vm.eval(TruffleRLanguage.MIME, subSource.getCode());
-                                break;
+                                continue REPL;
+                            } catch (IncompleteSourceException e) {
+                                // read another line of input
+                            } catch (ParseException e) {
+                                try {
+                                    throw e.throwAsRError();
+                                } catch (RError e2) {
+                                    // this error is expected
+                                }
+                                continue REPL;
                             } catch (IOException e) {
-                                assert e instanceof IncompleteSourceException;
+                                if (e.getCause() instanceof RError) {
+                                    // nothing to do
+                                } else {
+                                    RInternalError.reportError(e);
+                                }
+                                continue REPL;
                             }
                             consoleHandler.setPrompt(doEcho ? continuePrompt : null);
                             String additionalInput = consoleHandler.readLine();

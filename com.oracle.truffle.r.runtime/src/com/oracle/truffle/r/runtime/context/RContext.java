@@ -34,6 +34,7 @@ import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.vm.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.conn.*;
+import com.oracle.truffle.r.runtime.context.Engine.ParseException;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.ffi.*;
@@ -156,7 +157,11 @@ public final class RContext extends ExecutionContext {
             setContext(truffleVMContexts.get(vm));
             context.evalThread = this;
             try {
-                context.engine.parseAndEval(source, true, false);
+                try {
+                    context.engine.parseAndEval(source, true);
+                } catch (ParseException e) {
+                    throw e.throwAsRError();
+                }
             } finally {
                 context.destroy();
             }
@@ -170,8 +175,6 @@ public final class RContext extends ExecutionContext {
 
     private final ContextInfo info;
     private final Engine engine;
-
-    private final GlobalAssumptions globalAssumptions = new GlobalAssumptions();
 
     /**
      * Denote whether the result of an expression should be printed in the shell or not.
@@ -374,10 +377,6 @@ public final class RContext extends ExecutionContext {
 
     public ContextKind getKind() {
         return info.getKind();
-    }
-
-    public GlobalAssumptions getAssumptions() {
-        return globalAssumptions;
     }
 
     @TruffleBoundary

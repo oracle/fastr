@@ -30,6 +30,7 @@ import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinFactory.NodeGenFactory;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.context.*;
+import com.oracle.truffle.r.runtime.context.Engine.ParseException;
 import com.oracle.truffle.r.runtime.env.*;
 
 /**
@@ -140,7 +141,11 @@ public abstract class RBuiltinPackage {
         ArrayList<Source> sources = rSources.get(getName());
         if (sources != null) {
             for (Source source : sources) {
-                RContext.getEngine().parseAndEval(source, frame, false, false);
+                try {
+                    RContext.getEngine().parseAndEval(source, frame, false);
+                } catch (ParseException e) {
+                    throw new RInternalError(e, "error while parsing overrides from %s", source.getName());
+                }
             }
         }
     }

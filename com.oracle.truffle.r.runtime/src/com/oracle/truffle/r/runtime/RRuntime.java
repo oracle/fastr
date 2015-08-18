@@ -19,7 +19,6 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.interop.*;
-import com.oracle.truffle.r.runtime.context.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.frame.*;
@@ -293,8 +292,6 @@ public class RRuntime {
         } catch (NumberFormatException e) {
             if (exceptionOnFail) {
                 throw e;
-            } else {
-                RContext.getInstance().getAssumptions().naIntroduced.invalidate();
             }
         }
         return INT_NA;
@@ -331,8 +328,6 @@ public class RRuntime {
             }
             if (exceptionOnFail) {
                 throw e;
-            } else {
-                RContext.getInstance().getAssumptions().naIntroduced.invalidate();
             }
         }
         return DOUBLE_NA;
@@ -367,8 +362,6 @@ public class RRuntime {
             default:
                 if (exceptionOnFail) {
                     throw new NumberFormatException();
-                } else {
-                    RContext.getInstance().getAssumptions().naIntroduced.invalidate();
                 }
                 return LOGICAL_NA;
         }

@@ -80,7 +80,7 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
          * TruffleVM does not know about, we have to use a delegation mechanism via a wrapper
          * CallTarget class, using a special REngine entry point.
          */
-        return RContext.getEngine().parseToCallTarget(source);
+        return RContext.getEngine().parseToCallTarget(source, true);
     }
 
     @Override

@@ -32,6 +32,7 @@ import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.builtin.base.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.context.*;
+import com.oracle.truffle.r.runtime.context.Engine.ParseException;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
@@ -96,7 +97,11 @@ public final class RBuiltinPackages implements RBuiltinLookup {
         // Any RBuiltinKind.SUBSTITUTE functions installed above should not be overridden
         try {
             RContext.getInstance().setLoadingBase(true);
-            RContext.getEngine().parseAndEval(baseSource, frame, false, false);
+            try {
+                RContext.getEngine().parseAndEval(baseSource, frame, false);
+            } catch (ParseException e) {
+                throw new RInternalError(e, "error while parsing base source from %s", baseSource.getName());
+            }
         } finally {
             RContext.getInstance().setLoadingBase(false);
         }
@@ -119,7 +124,11 @@ public final class RBuiltinPackages implements RBuiltinLookup {
                  */
                 REnvironment env = REnvironment.baseEnv();
                 for (Source source : componentList) {
-                    RContext.getEngine().parseAndEval(source, env.getFrame(), false, false);
+                    try {
+                        RContext.getEngine().parseAndEval(source, env.getFrame(), false);
+                    } catch (ParseException e) {
+                        throw new RInternalError(e, "error while parsing default package override from %s", source.getName());
+                    }
                 }
             }
         }

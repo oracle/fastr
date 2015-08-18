@@ -37,7 +37,6 @@ import com.oracle.truffle.api.instrument.*;
 import com.oracle.truffle.api.interop.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
-import com.oracle.truffle.api.vm.*;
 import com.oracle.truffle.r.engine.interop.*;
 import com.oracle.truffle.r.library.graphics.*;
 import com.oracle.truffle.r.nodes.*;
@@ -57,7 +56,6 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
-import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
 import com.oracle.truffle.r.runtime.env.frame.*;
 import com.oracle.truffle.r.runtime.nodes.*;
 
@@ -88,14 +86,6 @@ final class REngine implements Engine {
     private final RContext context;
 
     /**
-     * Every engine has an associated {@link TruffleVM}. The actual {@link TruffleVM} instance is
-     * not "built" until the {@link #activate} method is invoked.
-     */
-    private final TruffleVM.Builder truffleVMBuilder;
-
-    @CompilationFinal private TruffleVM truffleVM;
-
-    /**
      * The unique frame for the global environment for this engine.
      */
     @CompilationFinal private MaterializedFrame globalFrame;
@@ -116,7 +106,6 @@ final class REngine implements Engine {
     }
 
     private REngine(RContext context) {
-        this.truffleVMBuilder = TruffleVM.newVM();
         this.context = context;
         this.childTimes = new long[]{0, 0};
     }
@@ -127,7 +116,6 @@ final class REngine implements Engine {
     }
 
     public void activate(REnvironment.ContextStateImpl stateREnvironment) {
-        truffleVM = truffleVMBuilder.build();
         this.globalFrame = stateREnvironment.getGlobalFrame();
         this.startTime = System.nanoTime();
         if (context.getKind() == RContext.ContextKind.SHARE_NOTHING) {
@@ -147,17 +135,29 @@ final class REngine implements Engine {
              * eval the system/site/user profiles. Experimentally GnuR does not report warnings
              * during system profile evaluation, but does for the site/user profiles.
              */
-            parseAndEval(RProfile.systemProfile(), baseFrame, false, false);
+            try {
+                parseAndEval(RProfile.systemProfile(), baseFrame, false);
+            } catch (ParseException e) {
+                throw new RInternalError(e, "error while parsing system profile from %s", RProfile.systemProfile().getName());
+            }
             checkAndRunStartupFunction(".OptRequireMethods");
 
             suppressWarnings = false;
             Source siteProfile = context.stateRProfile.siteProfile();
             if (siteProfile != null) {
-                parseAndEval(siteProfile, baseFrame, false, false);
+                try {
+                    parseAndEval(siteProfile, baseFrame, false);
+                } catch (ParseException e) {
+                    throw new RInternalError(e, "error while parsing site profile from %s", siteProfile.getName());
+                }
             }
             Source userProfile = context.stateRProfile.userProfile();
             if (userProfile != null) {
-                parseAndEval(userProfile, globalFrame, false, false);
+                try {
+                    parseAndEval(userProfile, globalFrame, false);
+                } catch (ParseException e) {
+                    throw new RInternalError(e, "error while parsing user profile from %s", userProfile.getName());
+                }
             }
             if (!context.getOptions().getBoolean(RCmdOption.NO_RESTORE)) {
                 /*
@@ -180,7 +180,11 @@ final class REngine implements Engine {
             RInstrument.checkDebugRequested(name, (RFunction) func);
             String call = name + "()";
             // Should this print the result?
-            parseAndEval(Source.fromText(call, "<startup>"), globalFrame, false, false);
+            try {
+                parseAndEval(Source.fromText(call, "<startup>"), globalFrame, false);
+            } catch (ParseException e) {
+                throw new RInternalError(e, "error while parsing startup function");
+            }
         }
     }
 
@@ -196,19 +200,11 @@ final class REngine implements Engine {
         return childTimes;
     }
 
-    public TruffleVM getTruffleVM() {
-        assert truffleVM != null;
-        return truffleVM;
-    }
-
-    public TruffleVM.Builder getTruffleVMBuilder() {
-        return truffleVMBuilder;
-    }
-
     @Override
-    public Object parseAndEval(Source source, MaterializedFrame frame, boolean printResult, boolean allowIncompleteSource) {
+    public Object parseAndEval(Source source, MaterializedFrame frame, boolean printResult) throws ParseException {
+        RootCallTarget callTarget = parseToRCallTarget(source);
         try {
-            return parseAndEvalImpl(source, frame, printResult, allowIncompleteSource);
+            return runCall(callTarget, frame, printResult, true);
         } catch (ReturnException ex) {
             return ex.getResult();
         } catch (DebugExitException | QuitException | BrowserQuitException e) {
@@ -231,88 +227,63 @@ final class REngine implements Engine {
     }
 
     @Override
-    public Object parseAndEval(Source source, boolean printResult, boolean allowIncompleteSource) {
-        return parseAndEval(source, globalFrame, printResult, allowIncompleteSource);
+    public Object parseAndEval(Source source, boolean printResult) throws ParseException {
+        return parseAndEval(source, globalFrame, printResult);
+    }
+
+    private static ASTNode parseImpl(Source source) throws ParseException {
+        try {
+            return ParseUtil.parseAST(new ANTLRStringStream(source.getCode()), source);
+        } catch (RecognitionException e) {
+            String line = e.line <= source.getLineCount() ? source.getCode(e.line) : "";
+            String substring = line.substring(0, Math.min(line.length(), e.charPositionInLine + 1));
+            String token = e.token.getText();
+            if (e.token.getType() == Token.EOF && (e instanceof NoViableAltException || e instanceof MismatchedTokenException)) {
+                // the parser got stuck at the eof, request another line
+                throw new IncompleteSourceException(e, source, token, substring, e.line);
+            } else {
+                throw new ParseException(e, source, token, substring, e.line);
+            }
+        }
+    }
+
+    private static RootCallTarget parseToRCallTarget(Source source) throws ParseException {
+        RSyntaxNode node = transform(parseImpl(source));
+        return doMakeCallTarget(node.asRNode(), "<repl wrapper>");
+    }
+
+    public RExpression parse(Source source) throws ParseException {
+        Sequence seq = (Sequence) parseImpl(source);
+        Object[] data = Arrays.stream(seq.getExpressions()).map(expr -> RDataFactory.createLanguage(transform(expr).asRNode())).toArray();
+        return RDataFactory.createExpression(RDataFactory.createList(data));
+    }
+
+    public RFunction parseFunction(String name, Source source, MaterializedFrame enclosingFrame) throws ParseException {
+        Sequence seq = (Sequence) parseImpl(source);
+        ASTNode[] exprs = seq.getExpressions();
+        assert exprs.length == 1;
+
+        return new RTruffleVisitor().transformFunction(name, (Function) exprs[0], enclosingFrame);
     }
 
     @Override
-    public Object parseAndEvalDirect(Source source, boolean printResult, boolean allowIncompleteSource) {
-        return parseAndEvalImpl(source, globalFrame, printResult, allowIncompleteSource);
-    }
-
-    private Object parseAndEvalImpl(Source source, MaterializedFrame frame, boolean printResult, boolean allowIncompleteSource) {
-        RSyntaxNode node;
-        try {
-            node = parseToRNode(source);
-        } catch (NoViableAltException | MismatchedTokenException e) {
-            if (e.token.getType() == Token.EOF && allowIncompleteSource) {
-                // the parser got stuck at the eof, request another line
-                return INCOMPLETE_SOURCE;
-            }
-            String line = source.getCode(e.line);
-            String substring = line.substring(0, Math.min(line.length(), e.charPositionInLine + 1));
-            if (source.getLineCount() == 1) {
-                throw RError.error(RError.NO_CALLER, RError.Message.UNEXPECTED, e.token.getText(), substring);
-            } else {
-                throw RError.error(RError.NO_CALLER, RError.Message.UNEXPECTED_LINE, e.token.getText(), substring, e.line);
-            }
-        } catch (RecognitionException e) {
-            throw new RInternalError(e, "recognition exception");
-        }
-        RootCallTarget callTarget = doMakeCallTarget(node.asRNode(), "<repl wrapper>");
-        try {
-            return runCall(callTarget, frame, printResult, true);
-        } catch (BreakException | NextException cfe) {
-            throw RError.error(RError.NO_NODE, RError.Message.NO_LOOP_FOR_BREAK_NEXT);
-        }
-    }
-
-    public RExpression parse(Source source) throws Engine.ParseException {
-        try {
-            Sequence seq = (Sequence) ParseUtil.parseAST(new ANTLRStringStream(source.getCode()), source);
-            ASTNode[] exprs = seq.getExpressions();
-            Object[] data = new Object[exprs.length];
-            for (int i = 0; i < exprs.length; i++) {
-                data[i] = RDataFactory.createLanguage(transform(exprs[i]).asRNode());
-            }
-            return RDataFactory.createExpression(RDataFactory.createList(data));
-        } catch (RecognitionException ex) {
-            throw new Engine.ParseException(ex, ex.getMessage());
-        }
-    }
-
-    public RFunction parseFunction(String name, Source source, MaterializedFrame enclosingFrame) throws Engine.ParseException {
-        try {
-            Sequence seq = (Sequence) ParseUtil.parseAST(new ANTLRStringStream(source.getCode()), source);
-            ASTNode[] exprs = seq.getExpressions();
-            assert exprs.length == 1;
-
-            return new RTruffleVisitor().transformFunction(name, (Function) exprs[0], enclosingFrame);
-        } catch (RecognitionException ex) {
-            throw new Engine.ParseException(ex, ex.getMessage());
-        }
-    }
-
-    public CallTarget parseToCallTarget(Source source) {
-        RSyntaxNode node;
-        try {
-            node = parseToRNode(source);
-            return new TVMCallTarget(doMakeCallTarget(node.asRNode(), "<tl parse>"));
-        } catch (RecognitionException ex) {
-            return null;
-        }
+    public CallTarget parseToCallTarget(Source source, boolean printResult) throws ParseException {
+        RootCallTarget callTarget = parseToRCallTarget(source);
+        return new TVMCallTarget(callTarget, printResult);
     }
 
     private class TVMCallTarget implements RootCallTarget {
-        private RootCallTarget delegate;
+        private final RootCallTarget delegate;
+        private final boolean printResult;
 
-        TVMCallTarget(RootCallTarget delegate) {
+        TVMCallTarget(RootCallTarget delegate, boolean printResult) {
             this.delegate = delegate;
+            this.printResult = printResult;
         }
 
         @Override
         public Object call(Object... arguments) {
-            return runCall(delegate, globalFrame, true, true);
+            return runCall(delegate, globalFrame, printResult, true);
         }
 
         public RootNode getRootNode() {
@@ -320,7 +291,7 @@ final class REngine implements Engine {
         }
     }
 
-    public Object eval(RExpression exprs, REnvironment envir, REnvironment enclos, int depth) throws PutException {
+    public Object eval(RExpression exprs, REnvironment envir, REnvironment enclos, int depth) {
         Object result = RNull.instance;
         for (int i = 0; i < exprs.getLength(); i++) {
             Object obj = RASTUtils.checkForRSymbol(exprs.getDataAt(i));
@@ -333,7 +304,7 @@ final class REngine implements Engine {
         return result;
     }
 
-    public Object eval(RLanguage expr, REnvironment envir, REnvironment enclos, int depth) throws PutException {
+    public Object eval(RLanguage expr, REnvironment envir, REnvironment enclos, int depth) {
         return evalNode((RNode) expr.getRep(), envir, enclos, depth);
     }
 
@@ -398,18 +369,6 @@ final class REngine implements Engine {
     }
 
     /**
-     * Parses a text stream into a Truffle AST.
-     *
-     * @return the root node of the Truffle AST
-     * @throws RecognitionException on parse error
-     */
-    private static RSyntaxNode parseToRNode(Source source) throws RecognitionException {
-        String code = source.getCode();
-        RSyntaxNode result = transform(ParseUtil.parseAST(new ANTLRStringStream(code), source));
-        return result;
-    }
-
-    /**
      * Transforms an AST produced by the parser into a Truffle AST.
      *
      * @param astNode parser AST instance
@@ -463,28 +422,13 @@ final class REngine implements Engine {
     private Object runCall(RootCallTarget callTarget, MaterializedFrame frame, boolean printResult, boolean topLevel) {
         Object result = null;
         try {
-            try {
-                // FIXME: callTargets should only be called via Direct/IndirectCallNode
-                result = callTarget.call(frame);
-            } catch (ReturnException ex) {
-                // condition handling can cause a "return" that needs to skip over this call
-                throw ex;
-            } catch (BreakException | NextException cfe) {
-                // there can be an outer loop
-                throw cfe;
-            }
+            // FIXME: callTargets should only be called via Direct/IndirectCallNode
+            result = callTarget.call(frame);
             assert checkResult(result);
             if (printResult && result != null) {
                 assert topLevel;
                 if (context.isVisible()) {
-                    // this supports printing of non-R values (via toString for now)
-                    if (result instanceof TruffleObject && !(result instanceof RTypedValue)) {
-                        RContext.getInstance().getConsoleHandler().println(String.valueOf(result));
-                    } else if (result instanceof CharSequence && !(result instanceof String)) {
-                        RContext.getInstance().getConsoleHandler().println("\"" + String.valueOf(result) + "\"");
-                    } else {
-                        printResult(result);
-                    }
+                    printResult(result);
                 }
             }
             if (topLevel) {
@@ -493,9 +437,15 @@ final class REngine implements Engine {
         } catch (RError e) {
             throw e;
         } catch (ReturnException ex) {
+            // condition handling can cause a "return" that needs to skip over this call
             throw ex;
         } catch (BreakException | NextException cfe) {
-            throw cfe;
+            if (topLevel) {
+                throw RError.error(RError.NO_NODE, RError.Message.NO_LOOP_FOR_BREAK_NEXT);
+            } else {
+                // there can be an outer loop
+                throw cfe;
+            }
         } catch (UnsupportedSpecializationException use) {
             throw use;
         } catch (DebugExitException | QuitException | BrowserQuitException e) {
@@ -526,20 +476,27 @@ final class REngine implements Engine {
 
     @TruffleBoundary
     public void printResult(Object result) {
-        Object resultValue = result instanceof RPromise ? PromiseHelperNode.evaluateSlowPath(null, (RPromise) result) : result;
-        if (loadBase) {
-            Object printMethod = REnvironment.globalEnv().findFunction("print");
-            RFunction function = (RFunction) (printMethod instanceof RPromise ? PromiseHelperNode.evaluateSlowPath(null, (RPromise) printMethod) : printMethod);
-            if (FastROptions.NewStateTransition && resultValue instanceof RShareable) {
-                ((RShareable) resultValue).incRefCount();
-            }
-            function.getTarget().call(RArguments.create(function, null, REnvironment.globalEnv().getFrame(), 1, new Object[]{resultValue, RMissing.instance}, PRINT_SIGNATURE, null));
-            if (FastROptions.NewStateTransition && resultValue instanceof RShareable) {
-                ((RShareable) resultValue).decRefCount();
-            }
+        // this supports printing of non-R values (via toString for now)
+        if (result instanceof TruffleObject && !(result instanceof RTypedValue)) {
+            RContext.getInstance().getConsoleHandler().println(String.valueOf(result));
+        } else if (result instanceof CharSequence && !(result instanceof String)) {
+            RContext.getInstance().getConsoleHandler().println("\"" + String.valueOf(result) + "\"");
         } else {
-            // we only have the .Internal print.default method available
-            getPrintInternal().getTarget().call(RArguments.create(printInternal, null, REnvironment.globalEnv().getFrame(), 1, new Object[]{resultValue}, PRINT_INTERNAL_SIGNATURE, null));
+            Object resultValue = result instanceof RPromise ? PromiseHelperNode.evaluateSlowPath(null, (RPromise) result) : result;
+            if (loadBase) {
+                Object printMethod = REnvironment.globalEnv().findFunction("print");
+                RFunction function = (RFunction) (printMethod instanceof RPromise ? PromiseHelperNode.evaluateSlowPath(null, (RPromise) printMethod) : printMethod);
+                if (FastROptions.NewStateTransition && resultValue instanceof RShareable) {
+                    ((RShareable) resultValue).incRefCount();
+                }
+                function.getTarget().call(RArguments.create(function, null, REnvironment.globalEnv().getFrame(), 1, new Object[]{resultValue, RMissing.instance}, PRINT_SIGNATURE, null));
+                if (FastROptions.NewStateTransition && resultValue instanceof RShareable) {
+                    ((RShareable) resultValue).decRefCount();
+                }
+            } else {
+                // we only have the .Internal print.default method available
+                getPrintInternal().getTarget().call(RArguments.create(printInternal, null, REnvironment.globalEnv().getFrame(), 1, new Object[]{resultValue}, PRINT_INTERNAL_SIGNATURE, null));
+            }
         }
     }
 

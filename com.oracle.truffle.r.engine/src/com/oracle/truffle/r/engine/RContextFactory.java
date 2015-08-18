@@ -66,7 +66,7 @@ public class RContextFactory {
         }
         TruffleVM vm = builder.build();
         try {
-            vm.eval(TruffleRLanguage.MIME, "1");
+            vm.eval(TruffleRLanguage.MIME, "invisible(1)");
         } catch (IOException e) {
             throw RInternalError.shouldNotReachHere(e);
         }

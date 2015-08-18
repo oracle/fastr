@@ -29,27 +29,52 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.interop.*;
 import com.oracle.truffle.api.source.*;
-import com.oracle.truffle.api.vm.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
-import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
 
 public interface Engine {
 
     public static class ParseException extends IOException {
         private static final long serialVersionUID = 1L;
 
-        public ParseException(Throwable cause, String msg) {
-            super(msg, cause);
+        private final Source source;
+        private final String token;
+        private final String substring;
+        private final int line;
+
+        public ParseException(Throwable cause, Source source, String token, String substring, int line) {
+            super("parse exception", cause);
+            this.source = source;
+            this.token = token;
+            this.substring = substring;
+            this.line = line;
+        }
+
+        public RError throwAsRError() {
+            if (source.getLineCount() == 1) {
+                throw RError.error(RError.NO_CALLER, RError.Message.UNEXPECTED, token, substring);
+            } else {
+                throw RError.error(RError.NO_CALLER, RError.Message.UNEXPECTED_LINE, token, substring, line);
+            }
+        }
+
+        public void report(ConsoleHandler consoleHandler) {
+            String msg;
+            if (source.getLineCount() == 1) {
+                msg = String.format(RError.Message.UNEXPECTED.message, token, substring);
+            } else {
+                msg = String.format(RError.Message.UNEXPECTED_LINE.message, token, substring, line);
+            }
+            consoleHandler.println("Error: " + msg);
         }
     }
 
     public static final class IncompleteSourceException extends ParseException {
         private static final long serialVersionUID = -6688699706193438722L;
 
-        public IncompleteSourceException(Throwable cause, String msg) {
-            super(cause, msg);
+        public IncompleteSourceException(Throwable cause, Source source, String token, String substring, int line) {
+            super(cause, source, token, substring, line);
         }
     }
 
@@ -57,17 +82,6 @@ public interface Engine {
      * Make the engine ready for evaluations.
      */
     void activate(REnvironment.ContextStateImpl stateREnvironment);
-
-    /**
-     * Return the {@link TruffleVM} instance associated with this engine.
-     */
-    TruffleVM getTruffleVM();
-
-    /**
-     * Return the {@link com.oracle.truffle.api.vm.TruffleVM.Builder} instance associated with this
-     * engine. This is only used by the command line debugger.
-     */
-    TruffleVM.Builder getTruffleVMBuilder();
 
     /**
      * Elapsed time of runtime.
@@ -91,7 +105,7 @@ public interface Engine {
     /**
      * A (perhaps temporary) interface to support {@link TruffleLanguage}.
      */
-    CallTarget parseToCallTarget(Source source) throws ParseException;
+    CallTarget parseToCallTarget(Source source, boolean printResult) throws ParseException;
 
     /**
      * Parse and evaluate {@code rscript} in {@code frame}. {@code printResult == true}, the result
@@ -101,34 +115,25 @@ public interface Engine {
      * @param frame the frame in which to evaluate the input
      * @param printResult {@code true} iff the result of the evaluation should be printed to the
      *            console
-     * @param allowIncompleteSource {@code true} if partial input is acceptable
      * @return the object returned by the evaluation or {@code null} if an error occurred.
      */
-    Object parseAndEval(Source sourceDesc, MaterializedFrame frame, boolean printResult, boolean allowIncompleteSource);
+    Object parseAndEval(Source sourceDesc, MaterializedFrame frame, boolean printResult) throws ParseException;
 
     /**
-     * Variant of {@link #parseAndEval(Source, MaterializedFrame, boolean, boolean)} for evaluation
-     * in the global frame.
+     * Variant of {@link #parseAndEval(Source, MaterializedFrame, boolean)} for evaluation in the
+     * global frame.
      */
-    Object parseAndEval(Source sourceDesc, boolean printResult, boolean allowIncompleteSource);
-
-    /**
-     * Variant of {@link #parseAndEval(Source, MaterializedFrame, boolean, boolean)} that does not
-     * intercept errors.
-     */
-    Object parseAndEvalDirect(Source sourceDesc, boolean printResult, boolean allowIncompleteSource);
-
-    Object INCOMPLETE_SOURCE = new Object();
+    Object parseAndEval(Source sourceDesc, boolean printResult) throws ParseException;
 
     /**
      * Support for the {@code eval} {@code .Internal}.
      */
-    Object eval(RExpression expr, REnvironment envir, REnvironment enclos, int depth) throws PutException;
+    Object eval(RExpression expr, REnvironment envir, REnvironment enclos, int depth);
 
     /**
      * Convenience method for common case.
      */
-    default Object eval(RExpression expr, REnvironment envir, int depth) throws PutException {
+    default Object eval(RExpression expr, REnvironment envir, int depth) {
         return eval(expr, envir, null, depth);
     }
 
@@ -136,12 +141,12 @@ public interface Engine {
      * Variant of {@link #eval(RExpression, REnvironment, REnvironment, int)} for a single language
      * element.
      */
-    Object eval(RLanguage expr, REnvironment envir, REnvironment enclos, int depth) throws PutException;
+    Object eval(RLanguage expr, REnvironment envir, REnvironment enclos, int depth);
 
     /**
      * Convenience method for common case.
      */
-    default Object eval(RLanguage expr, REnvironment envir, int depth) throws PutException {
+    default Object eval(RLanguage expr, REnvironment envir, int depth) {
         return eval(expr, envir, null, depth);
     }
 

@@ -31,6 +31,7 @@ import com.oracle.truffle.r.engine.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RCmdOptions.Client;
 import com.oracle.truffle.r.runtime.context.*;
+import com.oracle.truffle.r.runtime.context.Engine.ParseException;
 import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
 
 public final class FastRSession implements RSession {
@@ -192,6 +193,10 @@ public final class FastRSession implements RSession {
                     } finally {
                         RContext.destroyContext(vm);
                     }
+                } catch (ParseException e) {
+                    e.report(consoleHandler);
+                } catch (RError e) {
+                    // nothing to do
                 } catch (Throwable t) {
                     if (t.getCause() instanceof RError) {
                         // nothing to do
