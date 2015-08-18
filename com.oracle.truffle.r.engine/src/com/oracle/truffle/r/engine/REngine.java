@@ -476,10 +476,16 @@ final class REngine implements RContext.Engine {
                 throw cfe;
             }
             assert checkResult(result);
-            if (printResult) {
+            if (printResult && result != null) {
                 assert topLevel;
                 if (context.isVisible()) {
-                    printResult(result);
+                    if (result instanceof TruffleObject && !(result instanceof RTypedValue)) {
+                        RContext.getInstance().getConsoleHandler().println(String.valueOf(result));
+                    } else if (result instanceof CharSequence && !(result instanceof String)) {
+                        RContext.getInstance().getConsoleHandler().println("\"" + String.valueOf(result) + "\"");
+                    } else {
+                        printResult(result);
+                    }
                 }
             }
             if (topLevel) {
