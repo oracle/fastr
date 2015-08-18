@@ -168,11 +168,6 @@ public final class RContext extends ExecutionContext {
         }
     }
 
-    /**
-     * Builtin cache. Valid across all contexts.
-     */
-    private static final HashMap<Object, RFunction> cachedBuiltinFunctions = new HashMap<>();
-
     private final ContextInfo info;
     private final Engine engine;
 
@@ -472,15 +467,6 @@ public final class RContext extends ExecutionContext {
      */
     public static RBuiltinDescriptor lookupBuiltinDescriptor(String name) {
         return builtinLookup.lookupBuiltinDescriptor(name);
-    }
-
-    public static RFunction cacheBuiltin(Object key, RFunction function) {
-        cachedBuiltinFunctions.put(key, function);
-        return function;
-    }
-
-    public static RFunction getCachedBuiltin(Object key) {
-        return cachedBuiltinFunctions.get(key);
     }
 
     public RCmdOptions getOptions() {

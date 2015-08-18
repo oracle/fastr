@@ -134,10 +134,15 @@ public final class RBuiltinPackages implements RBuiltinLookup {
         }
     }
 
+    /**
+     * Global builtin cache.
+     */
+    private static final HashMap<Object, RFunction> cachedBuiltinFunctions = new HashMap<>();
+
     @Override
     public RFunction lookupBuiltin(String methodName) {
         CompilerAsserts.neverPartOfCompilation();
-        RFunction function = RContext.getCachedBuiltin(methodName);
+        RFunction function = cachedBuiltinFunctions.get(methodName);
         if (function != null) {
             return function;
         }
@@ -152,7 +157,9 @@ public final class RBuiltinPackages implements RBuiltinLookup {
     private static RFunction createFunction(RBuiltinFactory builtinFactory, String methodName) {
         try {
             RootCallTarget callTarget = RBuiltinNode.createArgumentsCallTarget(builtinFactory);
-            return RContext.cacheBuiltin(methodName, RDataFactory.createFunction(builtinFactory.getName(), callTarget, builtinFactory, REnvironment.baseEnv().getFrame(), false));
+            RFunction function = RDataFactory.createFunction(builtinFactory.getName(), callTarget, builtinFactory, REnvironment.baseEnv().getFrame(), false);
+            cachedBuiltinFunctions.put(methodName, function);
+            return function;
         } catch (Throwable t) {
             throw new RuntimeException("error while creating builtin " + methodName + " / " + builtinFactory, t);
         }
