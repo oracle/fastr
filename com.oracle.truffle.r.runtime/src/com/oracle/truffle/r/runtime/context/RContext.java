@@ -168,6 +168,14 @@ public final class RContext extends ExecutionContext {
      */
     private static final HashMap<Object, RFunction> cachedBuiltinFunctions = new HashMap<>();
 
+    /**
+     * Any context created by another has a parent. When such a context is destroyed we must reset
+     * the {@link #threadLocalContext} to the parent.
+     */
+    private final RContext parent;
+    private final ConsoleHandler consoleHandler;
+    private final RCmdOptions options;
+    private final Engine engine;
     private final ContextKind kind;
 
     private final GlobalAssumptions globalAssumptions = new GlobalAssumptions();
@@ -189,16 +197,6 @@ public final class RContext extends ExecutionContext {
      * final once set.
      */
     @CompilationFinal private boolean interactive;
-
-    @CompilationFinal private ConsoleHandler consoleHandler;
-    private final RCmdOptions options;
-    @CompilationFinal private Engine engine;
-
-    /**
-     * Any context created by another has a parent. When such a context is destroyed we must reset
-     * the {@link #threadLocalContext} to the parent.
-     */
-    private final RContext parent;
 
     /**
      * At most one shared child.
@@ -226,11 +224,6 @@ public final class RContext extends ExecutionContext {
 
     private boolean methodTableDispatchOn = true;
 
-    /*
-     * Primarily for debugging.
-     */
-    private static final AtomicLong ID = new AtomicLong();
-    @CompilationFinal private long id;
     private boolean active;
 
     /**
@@ -387,7 +380,6 @@ public final class RContext extends ExecutionContext {
         if (kind == ContextKind.SHARE_PARENT_RW) {
             parent.sharedChild = null;
         }
-        engine = null;
         if (parent == null) {
             threadLocalContext.set(null);
         } else {
