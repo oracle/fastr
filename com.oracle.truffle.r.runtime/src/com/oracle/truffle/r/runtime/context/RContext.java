@@ -34,6 +34,7 @@ import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.vm.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.RCmdOptions.Client;
 import com.oracle.truffle.r.runtime.conn.*;
 import com.oracle.truffle.r.runtime.context.Engine.ParseException;
 import com.oracle.truffle.r.runtime.data.*;
@@ -288,9 +289,12 @@ public final class RContext extends ExecutionContext {
     }
 
     private RContext(Env env) {
-        assert tempInitializingContextInfo != null;
-        this.info = tempInitializingContextInfo;
-        lastContext = this;
+        if (tempInitializingContextInfo == null) {
+            this.info = ContextInfo.create(RCmdOptions.parseArguments(Client.R, new String[0]), ContextKind.SHARE_NOTHING, null, new DefaultConsoleHandler(env));
+        } else {
+            this.info = tempInitializingContextInfo;
+            lastContext = this;
+        }
 
         this.env = env;
         if (info.getConsoleHandler() == null) {
