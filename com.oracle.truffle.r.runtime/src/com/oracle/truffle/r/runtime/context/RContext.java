@@ -205,7 +205,7 @@ public final class RContext extends ExecutionContext {
      * values in the experimental {@code fastr.createcontext} function. Additional threads can be
      * added by the {@link #attachThread} method.
      */
-    private static final ThreadLocal<RContext> threadLocalContext = new ThreadLocal<>();
+    public static final ThreadLocal<RContext> threadLocalContext = new ThreadLocal<>();
 
     /**
      * Used by the MethodListDispatch class.
@@ -409,7 +409,6 @@ public final class RContext extends ExecutionContext {
         } else {
             return getInstanceInternal();
         }
-
     }
 
     /**

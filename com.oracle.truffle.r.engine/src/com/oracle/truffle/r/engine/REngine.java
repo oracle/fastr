@@ -33,9 +33,11 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.impl.*;
 import com.oracle.truffle.api.instrument.*;
 import com.oracle.truffle.api.interop.*;
 import com.oracle.truffle.api.nodes.*;
+import com.oracle.truffle.api.nodes.Node.Child;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.engine.interop.*;
 import com.oracle.truffle.r.library.graphics.*;
@@ -202,7 +204,8 @@ final class REngine implements Engine {
 
     @Override
     public Object parseAndEval(Source source, MaterializedFrame frame, boolean printResult) throws ParseException {
-        RootCallTarget callTarget = parseToRCallTarget(source);
+        RSyntaxNode node = transform(parseImpl(source));
+        RootCallTarget callTarget = doMakeCallTarget(node.asRNode(), "<repl wrapper>");
         try {
             return runCall(callTarget, frame, printResult, true);
         } catch (ReturnException ex) {
@@ -247,11 +250,6 @@ final class REngine implements Engine {
         }
     }
 
-    private static RootCallTarget parseToRCallTarget(Source source) throws ParseException {
-        RSyntaxNode node = transform(parseImpl(source));
-        return doMakeCallTarget(node.asRNode(), "<repl wrapper>");
-    }
-
     public RExpression parse(Source source) throws ParseException {
         Sequence seq = (Sequence) parseImpl(source);
         Object[] data = Arrays.stream(seq.getExpressions()).map(expr -> RDataFactory.createLanguage(transform(expr).asRNode())).toArray();
@@ -268,26 +266,39 @@ final class REngine implements Engine {
 
     @Override
     public CallTarget parseToCallTarget(Source source, boolean printResult) throws ParseException {
-        RootCallTarget callTarget = parseToRCallTarget(source);
-        return new TVMCallTarget(callTarget, printResult);
+        ASTNode ast = parseImpl(source);
+        return new TVMCallTarget(ast, printResult);
     }
 
-    private class TVMCallTarget implements RootCallTarget {
-        private final RootCallTarget delegate;
+    private static class TVMCallTarget implements RootCallTarget {
+
+        private final ASTNode ast;
         private final boolean printResult;
 
-        TVMCallTarget(RootCallTarget delegate, boolean printResult) {
-            this.delegate = delegate;
+        @SuppressWarnings("unchecked") @Child private FindContextNode<RContext> findContext = (FindContextNode<RContext>) TruffleRLanguage.INSTANCE.actuallyCreateFindContextNode();
+
+        TVMCallTarget(ASTNode ast, boolean printResult) {
+            this.ast = ast;
             this.printResult = printResult;
         }
 
         @Override
         public Object call(Object... arguments) {
-            return runCall(delegate, globalFrame, printResult, true);
+            RSyntaxNode node = transform(ast);
+            RootCallTarget callTarget = doMakeCallTarget(node.asRNode(), "<repl wrapper>");
+
+            RContext oldContext = RContext.threadLocalContext.get();
+            RContext context = findContext.executeFindContext();
+            RContext.threadLocalContext.set(context);
+            try {
+                return ((REngine) context.getThisEngine()).runCall(callTarget, context.stateREnvironment.getGlobalFrame(), printResult, true);
+            } finally {
+                RContext.threadLocalContext.set(oldContext);
+            }
         }
 
         public RootNode getRootNode() {
-            return delegate.getRootNode();
+            return null;
         }
     }
 

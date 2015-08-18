@@ -267,6 +267,7 @@ suite = {
       "sourceDirs" : ["src"],
       "dependencies" : [
         "mx:JUNIT",
+        "truffle:TRUFFLE_TCK",
         "com.oracle.truffle.r.engine",
       ],
       "checkstyle" : "com.oracle.truffle.r.runtime",

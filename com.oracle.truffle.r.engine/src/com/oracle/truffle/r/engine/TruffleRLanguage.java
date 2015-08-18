@@ -30,7 +30,6 @@ import com.oracle.truffle.api.instrument.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.engine.repl.debug.*;
-import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.context.*;
 
 /**
@@ -90,6 +89,12 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
 
     @Override
     protected Object getLanguageGlobal(RContext context) {
-        throw RInternalError.unimplemented("getLanguageGlobal");
+        // TODO: what's the meaning of "language global" for R?
+        return null;
+    }
+
+    // TODO: why isn't the original method public?
+    public Node actuallyCreateFindContextNode() {
+        return createFindContextNode();
     }
 }

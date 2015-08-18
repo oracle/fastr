@@ -279,8 +279,11 @@ def _ser_unit_tests():
 def _app_unit_tests():
     return _test_subpackage('apps')
 
+def _tck_unit_tests():
+    return _test_subpackage('tck')
+
 def _gate_unit_tests():
-    return ','.join((_library_unit_tests(), _rffi_unit_tests(), _rpackages_unit_tests(), _builtins_unit_tests(), _functions_unit_tests(), _ser_unit_tests(), _app_unit_tests(), _nodes_unit_tests()))
+    return ','.join((_library_unit_tests(), _rffi_unit_tests(), _rpackages_unit_tests(), _builtins_unit_tests(), _functions_unit_tests(), _ser_unit_tests(), _app_unit_tests(), _nodes_unit_tests(), _tck_unit_tests()))
 
 def _all_unit_tests():
     return _gate_unit_tests()
