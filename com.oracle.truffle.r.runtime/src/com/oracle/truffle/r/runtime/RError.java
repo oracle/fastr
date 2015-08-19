@@ -115,8 +115,29 @@ public final class RError extends RuntimeException {
     }
 
     @TruffleBoundary
+    public static RError error(Node node, Message msg, Object... args) {
+        throw error0(findParentRBase(node), msg, args);
+    }
+
+    @TruffleBoundary
     public static RError error(RBaseNode node, Message msg) {
         throw error0(node, msg, (Object[]) null);
+    }
+
+    @TruffleBoundary
+    public static RError error(Node node, Message msg) {
+        throw error0(findParentRBase(node), msg, (Object[]) null);
+    }
+
+    private static RBaseNode findParentRBase(Node node) {
+        Node current = node;
+        while (current != null) {
+            if (current instanceof RBaseNode) {
+                return (RBaseNode) current;
+            }
+            current = current.getParent();
+        }
+        throw new AssertionError("Could not find RBaseNode for given Node. Is it not adopted in the AST?");
     }
 
     /**
@@ -175,6 +196,12 @@ public final class RError extends RuntimeException {
     public static void warning(RBaseNode node, Message msg, Object... args) {
         assert node != null;
         RErrorHandling.warningcall(true, node, msg, args);
+    }
+
+    @TruffleBoundary
+    public static void warning(Node node, Message msg, Object... args) {
+        assert node != null;
+        warning(findParentRBase(node), msg, args);
     }
 
     @TruffleBoundary
