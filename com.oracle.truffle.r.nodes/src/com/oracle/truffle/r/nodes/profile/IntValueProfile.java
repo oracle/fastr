@@ -32,8 +32,7 @@ public final class IntValueProfile {
     private static final byte GENERIC = 2;
 
     @CompilationFinal private int cachedValue;
-
-    private byte state = 0;
+    @CompilationFinal private byte state = 0;
 
     private IntValueProfile() {
     }
