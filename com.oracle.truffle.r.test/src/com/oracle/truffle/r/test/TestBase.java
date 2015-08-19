@@ -354,6 +354,11 @@ public class TestBase {
         // empty
     }
 
+    // support testing of FastR-only functionality (equivalent GNU R output provided separately)
+    protected void assertEvalFastR(String input, String gnuROutput) {
+        evalAndCompare(new String[]{"if (length(grep(\"FastR\", R.Version()$version.string)) != 1) { " + gnuROutput + " } else " + input});
+    }
+
     /*
      * implementation support methods
      */
