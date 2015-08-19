@@ -415,8 +415,7 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI, Stat
         @TruffleBoundary
         private static Linpack createAndLoadLib() {
             // need to load blas lib as Fortran functions in appl lib need it
-            LibraryLoader.create(Linpack.class).load("Rblas");
-            return LibraryLoader.create(Linpack.class).load("appl");
+            return LibraryLoader.create(Linpack.class).library("Rblas").library("appl").load();
         }
 
         static Linpack linpack() {
@@ -451,7 +450,7 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI, Stat
     public interface Stats {
         /*
          * TODO add @In/@Out to any arrays that are known to be either @In or @Out (default is
-         * 
+         *
          * @Inout)
          */
 
