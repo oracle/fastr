@@ -464,6 +464,7 @@ public final class RContext extends ExecutionContext {
     /**
      * Return the {@link RFunction} for the builtin {@code name}.
      */
+    @TruffleBoundary
     public static RFunction lookupBuiltin(String name) {
         return builtinLookup.lookupBuiltin(name);
     }
