@@ -19,6 +19,7 @@ import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.context.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.nodes.*;
 
@@ -223,6 +224,18 @@ public class RErrorHandling {
     public static void addRestart(RList restart) {
         assert restartExit(restart) instanceof String;
         getRErrorHandlingState().restartStack = RDataFactory.createPairList(restart, getRestartStack());
+    }
+
+    private static String castString(Object value) {
+        if (value instanceof String) {
+            return (String) value;
+        } else if (value instanceof RAbstractStringVector) {
+            RAbstractStringVector c = (RAbstractStringVector) value;
+            if (c.getLength() > 0) {
+                return c.getDataAt(0);
+            }
+        }
+        return null;
     }
 
     private static Object restartExit(RList restart) {
@@ -535,7 +548,11 @@ public class RErrorHandling {
 
         // ensured in ROptions
 
-        int w = ((RIntVector) RContext.getInstance().stateROptions.getValue("warn")).getDataAt(0);
+        Object value = RContext.getInstance().stateROptions.getValue("warn");
+        int w = 0;
+        if (value != RNull.instance) {
+            w = ((RAbstractIntVector) value).getDataAt(0);
+        }
         if (w == RRuntime.INT_NA) {
             w = 0;
         }
