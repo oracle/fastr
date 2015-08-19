@@ -77,7 +77,7 @@ public final class NACheck {
         }
     }
 
-    public void enable(RAbstractVector value) {
+    public void enable(RAbstractContainer value) {
         if (state == NO_CHECK) {
             enable(!value.isComplete());
         }
@@ -111,6 +111,13 @@ public final class NACheck {
         return false;
     }
 
+    public void seenNA() {
+        if (state != CHECK) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            state = CHECK;
+        }
+    }
+
     public boolean check(int value) {
         if (state != NO_CHECK && isNA(value)) {
             if (state == CHECK_DEOPT) {
@@ -135,6 +142,17 @@ public final class NACheck {
 
     public boolean check(byte value) {
         if (state != NO_CHECK && isNA(value)) {
+            if (state == CHECK_DEOPT) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                state = CHECK;
+            }
+            return true;
+        }
+        return false;
+    }
+
+    public boolean checkListElement(Object value) {
+        if (state != NO_CHECK && value == RNull.instance) {
             if (state == CHECK_DEOPT) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 state = CHECK;
@@ -181,8 +199,13 @@ public final class NACheck {
         return RDataFactory.createComplex(value, 0);
     }
 
+    public boolean isEnabled() {
+        return state != NO_CHECK;
+    }
+
     public boolean neverSeenNA() {
-        // need to check for both NA and NaN (the latter used for double to int conversions)
+        // need to check for both NA and NaN (the latter used for double to int
+        // conversions)
         return state != CHECK && !seenNaN;
     }
 
@@ -302,7 +325,7 @@ public final class NACheck {
         return result;
     }
 
-    public int[] convertDoubleVectorToIntData(RDoubleVector vector) {
+    public int[] convertDoubleVectorToIntData(RAbstractDoubleVector vector) {
         int length = vector.getLength();
         int[] result = new int[length];
         boolean warning = false;

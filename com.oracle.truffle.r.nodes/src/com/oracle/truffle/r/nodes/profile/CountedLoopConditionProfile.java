@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,41 +20,33 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.runtime.data.model;
+package com.oracle.truffle.r.nodes.profile;
 
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.*;
 
-public interface RAbstractListVector extends RAbstractVector {
+public final class CountedLoopConditionProfile {
 
-    @Override
-    Object getDataAtAsObject(int index);
+    @CompilationFinal private int count;
+    @CompilationFinal private int sum;
 
-    default Object getDataAtAsObject(Object store, int i) {
-        return getDataAtAsObject(i);
+    public void profileLength(int length) {
+        if (CompilerDirectives.inInterpreter()) {
+            sum += length;
+            count++;
+        }
     }
 
-    RList materialize();
-
-    default boolean checkCompleteness() {
-        return true;
+    public boolean inject(boolean condition) {
+        if (CompilerDirectives.inCompiledCode()) {
+            double averageLength = (double) sum / (double) count;
+            return CompilerDirectives.injectBranchProbability(averageLength / (averageLength + 1.0), condition);
+        } else {
+            return condition;
+        }
     }
 
-    default RType getRType() {
-        return RType.List;
+    public static CountedLoopConditionProfile create() {
+        return new CountedLoopConditionProfile();
     }
-
-    default Class<?> getElementClass() {
-        return Object.class;
-    }
-
-    @SuppressWarnings("unused")
-    default void setDataAt(Object store, int index, Object value) {
-        throw new UnsupportedOperationException();
-    }
-
-    default void setNA(Object store, int index) {
-        setDataAt(store, index, RNull.instance);
-    }
-
 }

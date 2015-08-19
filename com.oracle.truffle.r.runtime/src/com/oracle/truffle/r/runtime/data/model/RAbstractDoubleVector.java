@@ -32,7 +32,20 @@ public interface RAbstractDoubleVector extends RAbstractVector {
         return getDataAt(index);
     }
 
+    default double getDataAt(@SuppressWarnings("unused") Object store, int index) {
+        return getDataAt(index);
+    }
+
     double getDataAt(int index);
+
+    @SuppressWarnings("unused")
+    default void setDataAt(Object store, int index, double value) {
+        throw new UnsupportedOperationException();
+    }
+
+    default void setNA(Object store, int index) {
+        setDataAt(store, index, RRuntime.DOUBLE_NA);
+    }
 
     RDoubleVector materialize();
 

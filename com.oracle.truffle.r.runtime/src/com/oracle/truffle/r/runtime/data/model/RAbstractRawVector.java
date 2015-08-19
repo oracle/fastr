@@ -32,6 +32,18 @@ public interface RAbstractRawVector extends RAbstractVector {
         return getDataAt(index);
     }
 
+    default byte getRawDataAt(@SuppressWarnings("unused") Object store, int index) {
+        return getRawDataAt(index);
+    }
+
+    @SuppressWarnings("unused")
+    default void setRawDataAt(Object store, int index, byte value) {
+        throw new UnsupportedOperationException();
+    }
+
+    default void setNA(Object store, int index) {
+    }
+
     RRaw getDataAt(int index);
 
     byte getRawDataAt(int index);

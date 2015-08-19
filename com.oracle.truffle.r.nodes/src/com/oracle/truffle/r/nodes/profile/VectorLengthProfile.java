@@ -55,6 +55,10 @@ public final class VectorLengthProfile {
         }
     }
 
+    public int getCachedLength() {
+        return cachedLength;
+    }
+
     public static VectorLengthProfile create() {
         return new VectorLengthProfile();
     }

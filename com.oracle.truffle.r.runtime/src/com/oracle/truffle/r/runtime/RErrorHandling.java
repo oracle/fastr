@@ -226,18 +226,6 @@ public class RErrorHandling {
         getRErrorHandlingState().restartStack = RDataFactory.createPairList(restart, getRestartStack());
     }
 
-    private static String castString(Object value) {
-        if (value instanceof String) {
-            return (String) value;
-        } else if (value instanceof RAbstractStringVector) {
-            RAbstractStringVector c = (RAbstractStringVector) value;
-            if (c.getLength() > 0) {
-                return c.getDataAt(0);
-            }
-        }
-        return null;
-    }
-
     private static Object restartExit(RList restart) {
         return restart.getDataAt(0);
     }

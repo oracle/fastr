@@ -125,6 +125,8 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
             return baseResult;
         } else if (node instanceof AccessFieldNode) {
             return 3;
+        } else if (node instanceof ReplacementNode) {
+            return 3;
         } else {
             // TODO fill out
             assert false : node;
@@ -219,11 +221,38 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
                 default:
                     assert false;
             }
+        } else if (node instanceof ReplacementNode) {
+            return RNull.instance;
         } else {
             // TODO fill out
             assert false;
         }
         return null;
+    }
+
+    public Object fromList(RAbstractVector list) {
+        int length = list.getLength();
+        if (length == 0) {
+            return RNull.instance;
+        } else if (length == 1) {
+            return list.getDataAtAsObject(0);
+        } else {
+            RNode fn = unwrapToRNode(list.getDataAtAsObject(0));
+            RSyntaxNode[] arguments = new RSyntaxNode[length - 1];
+            for (int i = 1; i < length; i++) {
+                arguments[i - 1] = (RSyntaxNode) unwrapToRNode(list.getDataAtAsObject(i));
+            }
+            return RDataFactory.createLanguage(RASTUtils.createCall(fn, ArgumentsSignature.empty(arguments.length), arguments).asRNode());
+        }
+    }
+
+    private static RNode unwrapToRNode(Object o) {
+        if (o instanceof RLanguage) {
+            return (RNode) RASTUtils.unwrap(((RLanguage) o).getRep());
+        } else {
+            // o is RSymbol or a primitive value
+            return ConstantNode.create(o);
+        }
     }
 
     public RList asList(RLanguage rl) {

@@ -66,11 +66,11 @@ public final class RString extends RScalarVector implements RAbstractStringVecto
     }
 
     public RStringVector materialize() {
-        return RDataFactory.createStringVector(getValue());
+        return RDataFactory.createStringVector(new String[]{getValue()}, isComplete());
     }
 
     @Override
     public boolean isNA() {
-        return false;
+        return !RRuntime.isComplete(value);
     }
 }

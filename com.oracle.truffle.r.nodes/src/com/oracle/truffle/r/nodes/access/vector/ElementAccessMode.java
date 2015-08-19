@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,41 +20,22 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.runtime.data.model;
+package com.oracle.truffle.r.nodes.access.vector;
 
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
+public enum ElementAccessMode {
 
-public interface RAbstractListVector extends RAbstractVector {
+    /* x[[a]] */
+    SUBSCRIPT,
 
-    @Override
-    Object getDataAtAsObject(int index);
+    /* x[a] */
+    SUBSET;
 
-    default Object getDataAtAsObject(Object store, int i) {
-        return getDataAtAsObject(i);
+    public boolean isSubset() {
+        return this == SUBSET;
     }
 
-    RList materialize();
-
-    default boolean checkCompleteness() {
-        return true;
-    }
-
-    default RType getRType() {
-        return RType.List;
-    }
-
-    default Class<?> getElementClass() {
-        return Object.class;
-    }
-
-    @SuppressWarnings("unused")
-    default void setDataAt(Object store, int index, Object value) {
-        throw new UnsupportedOperationException();
-    }
-
-    default void setNA(Object store, int index) {
-        setDataAt(store, index, RNull.instance);
+    public boolean isSubscript() {
+        return this == SUBSCRIPT;
     }
 
 }

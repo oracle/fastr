@@ -242,4 +242,9 @@ public class RLanguage extends RLanguageRep implements RAbstractContainer, RAttr
         refCount--;
     }
 
+    @Override
+    public String toString() {
+        return String.format("RLanguage(rep=%s)", getRep());
+    }
+
 }

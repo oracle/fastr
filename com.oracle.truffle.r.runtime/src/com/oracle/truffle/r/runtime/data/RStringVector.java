@@ -25,6 +25,7 @@ package com.oracle.truffle.r.runtime.data;
 import java.util.*;
 
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.data.closures.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
@@ -42,6 +43,33 @@ public final class RStringVector extends RVector implements RAbstractStringVecto
 
     private RStringVector(String[] data, boolean complete, int[] dims) {
         this(data, complete, dims, null);
+    }
+
+    public RAbstractVector castSafe(RType type) {
+        switch (type) {
+            case Character:
+                return this;
+            case List:
+                return RClosures.createAbstractVectorToListVector(this);
+            default:
+                return null;
+        }
+    }
+
+    public String[] getInternalStore() {
+        return data;
+    }
+
+    @Override
+    public void setDataAt(Object store, int index, String value) {
+        assert data == store;
+        ((String[]) store)[index] = value;
+    }
+
+    @Override
+    public String getDataAt(Object store, int index) {
+        assert data == store;
+        return ((String[]) store)[index];
     }
 
     @Override
@@ -96,7 +124,13 @@ public final class RStringVector extends RVector implements RAbstractStringVecto
 
     @Override
     protected boolean internalVerify() {
-        // TODO: Implement String + NA
+        if (isComplete()) {
+            for (String b : data) {
+                if (b == RRuntime.STRING_NA) {
+                    return false;
+                }
+            }
+        }
         return true;
     }
 
@@ -153,7 +187,7 @@ public final class RStringVector extends RVector implements RAbstractStringVecto
         return RDataFactory.createStringVector(copyResizedData(size, fillNA ? RRuntime.STRING_NA : null), isComplete);
     }
 
-    RStringVector resizeWithEmpty(int size) {
+    public RStringVector resizeWithEmpty(int size) {
         return RDataFactory.createStringVector(createResizedData(size, RRuntime.NAMES_ATTR_EMPTY_VALUE), isComplete());
     }
 

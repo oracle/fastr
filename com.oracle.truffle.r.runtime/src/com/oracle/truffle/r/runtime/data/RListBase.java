@@ -29,7 +29,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
-public abstract class RListBase extends RVector implements RAbstractVector {
+public abstract class RListBase extends RVector implements RAbstractListVector {
 
     protected final Object[] data;
 
@@ -42,6 +42,22 @@ public abstract class RListBase extends RVector implements RAbstractVector {
     @Override
     public final int getLength() {
         return data.length;
+    }
+
+    public Object[] getInternalStore() {
+        return data;
+    }
+
+    @Override
+    public Object getDataAtAsObject(Object store, int index) {
+        assert store == data;
+        return ((Object[]) store)[index];
+    }
+
+    @Override
+    public void setDataAt(Object store, int index, Object value) {
+        assert store == data;
+        ((Object[]) store)[index] = value;
     }
 
     @Override
@@ -136,11 +152,6 @@ public abstract class RListBase extends RVector implements RAbstractVector {
         } else {
             return "[[" + Integer.toString(index + 1) + "]]";
         }
-    }
-
-    @Override
-    public final RVector materialize() {
-        return this;
     }
 
     @Override

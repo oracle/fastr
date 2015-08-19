@@ -46,6 +46,14 @@ public interface RAbstractContainer extends RAttributable, RTypedValue {
 
     Object getDataAtAsObject(int index);
 
+    default Object getDataAtAsObject(@SuppressWarnings("unused") Object store, int index) {
+        return getDataAtAsObject(index);
+    }
+
+    default Object getInternalStore() {
+        return null;
+    }
+
     RStringVector getNames(RAttributeProfiles attrProfiles);
 
     void setNames(RStringVector newNames);

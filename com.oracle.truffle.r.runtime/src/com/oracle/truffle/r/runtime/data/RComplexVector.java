@@ -29,7 +29,7 @@ import com.oracle.truffle.r.runtime.data.closures.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
-public final class RComplexVector extends RVector implements RAbstractComplexVector, RAccessibleStore<double[]> {
+public final class RComplexVector extends RVector implements RAbstractComplexVector {
 
     public static final RStringVector implicitClassHeader = RDataFactory.createStringVectorFromScalar(RType.Complex.getName());
 
@@ -74,6 +74,24 @@ public final class RComplexVector extends RVector implements RAbstractComplexVec
         }
     }
 
+    public void setDataAt(Object store, int index, RComplex value) {
+        assert data == store;
+        double[] array = (double[]) store;
+        array[index << 1] = value.getRealPart();
+        array[(index << 1) + 1] = value.getImaginaryPart();
+    }
+
+    public RComplex getDataAt(Object store, int i) {
+        assert data == store;
+        double[] doubleStore = (double[]) store;
+        int index = i << 1;
+        return RDataFactory.createComplex(doubleStore[index], doubleStore[index + 1]);
+    }
+
+    public RComplex getDataAt(int i) {
+        return getDataAt(data, i);
+    }
+
     @Override
     public String toString() {
         return toString(i -> RRuntime.complexToString(getDataAt(i)));
@@ -89,17 +107,6 @@ public final class RComplexVector extends RVector implements RAbstractComplexVec
             }
         }
         return true;
-    }
-
-    public RAbstractVector setDataAt(int index, RComplex value) {
-        data[index << 1] = value.getRealPart();
-        data[(index << 1) + 1] = value.getImaginaryPart();
-        return this;
-    }
-
-    public RComplex getDataAt(int i) {
-        int index = i << 1;
-        return RDataFactory.createComplex(data[index], data[index + 1]);
     }
 
     public double[] getDataCopy() {

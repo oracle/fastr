@@ -74,6 +74,8 @@ public interface RAbstractVector extends RAbstractContainer, TruffleObject {
 
     void setComplete(boolean complete);
 
+    void setNA(Object store, int index);
+
     default ForeignAccess getForeignAccess() {
         return RContext.getEngine().getForeignAccess(this);
     }

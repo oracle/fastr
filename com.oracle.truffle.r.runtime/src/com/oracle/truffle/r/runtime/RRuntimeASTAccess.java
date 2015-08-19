@@ -26,6 +26,7 @@ import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.vm.*;
 import com.oracle.truffle.r.runtime.context.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.*;
 
 /**
  * A collection of methods that need access to the AST types, needed by code that resides in the
@@ -48,6 +49,8 @@ public interface RRuntimeASTAccess {
      * Converts {@code rl} to a {@link RList}.
      */
     RList asList(RLanguage rl);
+
+    Object fromList(RAbstractVector list);
 
     /**
      * Get the "names" attribute for an {@link RLanguage} object, or {@code null} if none.

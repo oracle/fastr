@@ -32,6 +32,19 @@ public interface RAbstractStringVector extends RAbstractVector {
         return getDataAt(index);
     }
 
+    default String getDataAt(@SuppressWarnings("unused") Object store, int index) {
+        return getDataAt(index);
+    }
+
+    @SuppressWarnings("unused")
+    default void setDataAt(Object store, int index, String value) {
+        throw new UnsupportedOperationException();
+    }
+
+    default void setNA(Object store, int index) {
+        setDataAt(store, index, RRuntime.STRING_NA);
+    }
+
     String getDataAt(int index);
 
     RStringVector materialize();

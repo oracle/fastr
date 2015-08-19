@@ -38,6 +38,10 @@ public abstract class RToVectorClosure implements RAbstractVector {
         return vector.getLength();
     }
 
+    public Void getInternalStore() {
+        return null;
+    }
+
     @Override
     public final RAbstractContainer resize(int size) {
         return vector.resize(size);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,15 +20,12 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.runtime.data.model;
+package com.oracle.truffle.r.nodes.access.vector;
 
-/**
- * Marks a vectors internal store to be accessible. As the internal store depends on the
- * implementation of the vector, users of this method are discouraged to use this interface unless
- * it is really necessary. One reason might be to avoid store field lookups when traversing vectors.
- */
-public interface RAccessibleStore<T> {
+import com.oracle.truffle.api.nodes.*;
 
-    T getInternalStore();
+final class RecursiveIndexNotFoundError extends ControlFlowException {
+
+    private static final long serialVersionUID = 1L;
 
 }

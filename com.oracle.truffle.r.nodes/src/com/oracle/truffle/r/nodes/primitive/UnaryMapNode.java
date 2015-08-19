@@ -124,12 +124,7 @@ public final class UnaryMapNode extends RBaseNode {
         }
         if (target == null) {
             target = createOrShareVector(operandLength, operand);
-            Object store;
-            if (target instanceof RAccessibleStore) {
-                store = ((RAccessibleStore<?>) target).getInternalStore();
-            } else {
-                throw RInternalError.shouldNotReachHere();
-            }
+            Object store = target.getInternalStore();
             vectorNode.apply(scalarNode, store, operandCast, operandLength);
             RNode.reportWork(this, operandLength);
             target.setComplete(scalarNode.isComplete());
