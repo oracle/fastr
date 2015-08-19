@@ -312,7 +312,7 @@ public class TestBase {
     protected static final String ERROR = "Error";
     protected static final String WARNING = "Warning message";
 
-    private static boolean IGNORE_ERROR_COMPARISON = true;
+    private static final boolean IGNORE_ERROR_COMPARISON = false;
 
     /**
      * If this is set to {@code true}, {@link Output#ContainsError} will compare the full output
@@ -489,6 +489,7 @@ public class TestBase {
 
     }
 
+    @SuppressWarnings("unused")
     private CheckResult checkResult(WhiteList[] whiteLists, String input, String originalExpected, String originalResult, boolean containsWarning, boolean mayContainWarning, boolean containsError,
                     boolean mayContainError) {
         boolean ok;

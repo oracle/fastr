@@ -40,7 +40,7 @@ public abstract class ReplaceVectorNode extends Node {
     /*
      * TODO remove this as soon as the new vector access nodes are the default.
      */
-    public static final boolean USE_NODE = true;
+    public static final boolean USE_NODE = System.getProperty("newVectorAccess") != null ? System.getProperty("newVectorAccess").equals("true") : false;
 
     protected static final int CACHE_LIMIT = 5;
 
