@@ -194,7 +194,7 @@ public class InfixEmulationFunctions {
 
         protected Object access(Object vector, byte exact, RArgsValuesAndNames inds, Object dropDim) {
             Object result;
-            if (ExtractVectorNode.USE_NODE) {
+            if (FastROptions.UseNewVectorNodes) {
                 if (extractNode == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
                     extractNode = insert(ExtractVectorNode.create(isSubset() ? ElementAccessMode.SUBSET : ElementAccessMode.SUBSCRIPT));
@@ -351,7 +351,7 @@ public class InfixEmulationFunctions {
 
         protected Object update(Object vector, RArgsValuesAndNames args, Object value, boolean isSubset) {
             Object result;
-            if (ReplaceVectorNode.USE_NODE) {
+            if (FastROptions.UseNewVectorNodes) {
                 if (replaceNode == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
                     replaceNode = insert(ReplaceVectorNode.create(isSubset ? ElementAccessMode.SUBSET : ElementAccessMode.SUBSCRIPT));

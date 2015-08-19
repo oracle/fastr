@@ -64,6 +64,7 @@ public class FastROptions {
     public static final boolean InvisibleArgs = parseBooleanOption("InvisibleArgs", true, "Argument writes do not trigger state transitions");
     public static final boolean NewStateTransition = parseBooleanOption("NewStateTransition", true, "Eperimental state transition implementation");
     public static final boolean RefCountIncrementOnly = parseBooleanOption("RefCountIncrementOnly", false, "Disable reference count decrements for eperimental state transition implementation");
+    public static final boolean UseNewVectorNodes = parseBooleanOption("UseNewVectorNodes", false, "temporary option");
 
     // Promises optimizations
     public static final boolean EagerEval = parseBooleanOption("EagerEval", false, "If enabled, overrides all other EagerEval switches (see EagerEvalHelper)");

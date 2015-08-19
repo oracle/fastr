@@ -494,7 +494,6 @@ public class TestBase {
 
     }
 
-    @SuppressWarnings("unused")
     private CheckResult checkResult(WhiteList[] whiteLists, String input, String originalExpected, String originalResult, boolean containsWarning, boolean mayContainWarning, boolean containsError,
                     boolean mayContainError) {
         boolean ok;

@@ -33,11 +33,6 @@ import com.oracle.truffle.r.runtime.data.model.*;
 
 public abstract class ExtractVectorNode extends Node {
 
-    /*
-     * TODO remove this as soon as the new vector access nodes are the default.
-     */
-    public static final boolean USE_NODE = ReplaceVectorNode.USE_NODE;
-
     protected static final int CACHE_LIMIT = 5;
 
     protected final ElementAccessMode mode;
