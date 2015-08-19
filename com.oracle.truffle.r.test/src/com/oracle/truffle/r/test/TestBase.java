@@ -312,7 +312,7 @@ public class TestBase {
     protected static final String ERROR = "Error";
     protected static final String WARNING = "Warning message";
 
-    private static boolean IGNORE_ERROR_COMPARISON = false;
+    private static boolean IGNORE_ERROR_COMPARISON = true;
 
     /**
      * If this is set to {@code true}, {@link Output#ContainsError} will compare the full output
