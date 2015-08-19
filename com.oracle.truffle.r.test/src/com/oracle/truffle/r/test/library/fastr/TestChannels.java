@@ -32,6 +32,7 @@ public class TestChannels extends TestBase {
     public void testChannels() {
         assertEvalFastR("{ ch <- fastr.channel.create(1L); cx <- fastr.context.create(\"SHARED_NOTHING\"); fastr.context.spawn(cx, \"ch <- fastr.channel.get(1L); x<-fastr.channel.receive(ch); x[1]<-7; fastr.channel.send(ch, x)\"); y<-c(42); fastr.channel.send(ch, y); x<-fastr.channel.receive(ch); fastr.context.join(cx); fastr.channel.close(ch); print(c(x,y)) }",
                         "print(c(7L, 42L))");
+        assertEvalFastR("{ ch <- fastr.channel.create(1L); cx <- fastr.context.create(\"SHARED_NOTHING\"); fastr.context.spawn(cx, \"ch <- fastr.channel.get(1L); x<-fastr.channel.receive(ch); x[1][1]<-7; fastr.channel.send(ch, x)\"); y<-list(c(42)); fastr.channel.send(ch, y); x<-fastr.channel.receive(ch); fastr.context.join(cx); fastr.channel.close(ch); print(c(x,y)) }",
+                        "print(list(7L, 42L))");
     }
-
 }
