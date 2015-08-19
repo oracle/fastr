@@ -312,6 +312,8 @@ public class TestBase {
     protected static final String ERROR = "Error";
     protected static final String WARNING = "Warning message";
 
+    private static boolean IGNORE_ERROR_COMPARISON = false;
+
     /**
      * If this is set to {@code true}, {@link Output#ContainsError} will compare the full output
      * instead of truncating leading "Error" strings and such. This means it will behave like
@@ -425,27 +427,12 @@ public class TestBase {
             } else {
                 String result = fastREval(input);
 
-                boolean ok;
-                if (expected.equals(result) || searchWhiteLists(whiteLists, input, expected, result)) {
-                    ok = true;
-                } else {
-                    if (containsWarning || (mayContainWarning && expected.contains(WARNING))) {
-                        String resultWarning = getWarningMessage(result);
-                        String expectedWarning = getWarningMessage(expected);
-                        ok = resultWarning.equals(expectedWarning);
-                        result = getOutputWithoutWarning(result);
-                        expected = getOutputWithoutWarning(expected);
-                    } else {
-                        ok = true;
-                    }
-                    if (ok) {
-                        if (containsError || (mayContainError && expected.startsWith(ERROR))) {
-                            ok = result.startsWith(ERROR) && checkMessageStripped(expected, result);
-                        } else {
-                            ok = expected.equals(result);
-                        }
-                    }
-                }
+                CheckResult checkResult = checkResult(whiteLists, input, expected, result, containsWarning, mayContainWarning, containsError, mayContainError);
+
+                result = checkResult.result;
+                expected = checkResult.expected;
+                boolean ok = checkResult.ok;
+
                 if (ProcessFailedTests) {
                     if (ok) {
                         unexpectedSuccessfulMicroTests.add(getTestContext() + ": " + input);
@@ -488,15 +475,63 @@ public class TestBase {
         }
     }
 
-    private static boolean searchWhiteLists(WhiteList[] whiteLists, String input, String expected, String result) {
+    private static class CheckResult {
+
+        public final boolean ok;
+        public final String result;
+        public final String expected;
+
+        public CheckResult(boolean ok, String result, String expected) {
+            this.ok = ok;
+            this.result = result;
+            this.expected = expected;
+        }
+
+    }
+
+    private CheckResult checkResult(WhiteList[] whiteLists, String input, String originalExpected, String originalResult, boolean containsWarning, boolean mayContainWarning, boolean containsError,
+                    boolean mayContainError) {
+        boolean ok;
+        String result = originalResult;
+        String expected = originalExpected;
+        if (expected.equals(result) || searchWhiteLists(whiteLists, input, expected, result, containsWarning, mayContainWarning, containsError, mayContainError)) {
+            ok = true;
+        } else {
+            if (containsWarning || (mayContainWarning && expected.contains(WARNING))) {
+                String resultWarning = getWarningMessage(result);
+                String expectedWarning = getWarningMessage(expected);
+                ok = resultWarning.equals(expectedWarning);
+                result = getOutputWithoutWarning(result);
+                expected = getOutputWithoutWarning(expected);
+            } else {
+                ok = true;
+            }
+            if (ok) {
+                if (containsError || (mayContainError && expected.startsWith(ERROR))) {
+                    ok = result.startsWith(ERROR) && (IGNORE_ERROR_COMPARISON || checkMessageStripped(expected, result));
+                } else {
+                    ok = expected.equals(result);
+                }
+            }
+        }
+        return new CheckResult(ok, result, expected);
+    }
+
+    private boolean searchWhiteLists(WhiteList[] whiteLists, String input, String expected, String result, boolean containsWarning, boolean mayContainWarning, boolean containsError,
+                    boolean mayContainError) {
+        if (whiteLists == null) {
+            return false;
+        }
         for (WhiteList list : whiteLists) {
             WhiteList.Results wlr = list.get(input);
             if (wlr != null) {
-                if (!wlr.expected.equals(expected)) {
+                CheckResult checkedResult = checkResult(null, input, wlr.expected, expected, containsWarning, mayContainWarning, containsError, mayContainError);
+                if (!checkedResult.ok) {
                     System.out.println("expected output does not match: " + wlr.expected + " vs. " + expected);
                     return false;
                 }
-                if (wlr.fastR.equals(result)) {
+                CheckResult fastRResult = checkResult(null, input, wlr.fastR, result, containsWarning, mayContainWarning, containsError, mayContainError);
+                if (fastRResult.ok) {
                     list.markUsed(input);
                     return true;
                 }
@@ -559,22 +594,9 @@ public class TestBase {
         if (cxr < 0 || cxe < 0) {
             return false;
         }
-        String resultStripped = stripWhitespace(result, cxr + 1);
-        String expectedStripped = stripWhitespace(expected, cxe + 1);
+        String resultStripped = result.substring(cxr + 1).trim();
+        String expectedStripped = expected.substring(cxe + 1).trim();
         return resultStripped.equals(expectedStripped);
-    }
-
-    private static String stripWhitespace(String r, int ix) {
-        int x = ix;
-        int rl = r.length();
-        char ch = r.charAt(x);
-        if (Character.isWhitespace(ch)) {
-            while (Character.isWhitespace(ch) && x < rl) {
-                ch = r.charAt(x++);
-            }
-            x--;
-        }
-        return r.substring(x);
     }
 
     /**
