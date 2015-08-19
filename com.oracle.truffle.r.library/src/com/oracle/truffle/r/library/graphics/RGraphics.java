@@ -5,7 +5,7 @@
  *
  * Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
  * Copyright (C) 1998 Ross Ihaka
- * Copyright (c) 1998--2011, The R Core Team
+ * Copyright (c) 1998--2014, The R Core Team
  * Copyright (c) 2002--2010, The R Foundation
  * Copyright (C) 2005--2006, Morten Welinder
  * Copyright (c) 2014, 2015, Oracle and/or its affiliates
@@ -47,6 +47,7 @@ public class RGraphics {
         try {
             getGraphicsEngine().registerGraphicsSystem(new BaseGraphicsSystem());
         } catch (Exception e) {
+            e.printStackTrace();
             ConsoleHandler consoleHandler = RContext.getInstance().getConsoleHandler();
             consoleHandler.println("Unable to register base graphics system");
         }
