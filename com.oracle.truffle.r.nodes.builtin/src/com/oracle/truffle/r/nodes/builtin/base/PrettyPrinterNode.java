@@ -612,7 +612,7 @@ public abstract class PrettyPrinterNode extends RNode {
         if (rowHeaderUsesIndices(dimNames)) {
             return concat("[", intString(c), ",]");
         } else {
-            RStringVector dimNamesVector = (RStringVector) dimNames.getDataAt(0);
+            RAbstractStringVector dimNamesVector = (RAbstractStringVector) getDimNamesAt(dimNames, 1);
             String dimId = dimNamesVector.getDataAt(c - 1);
             if (RRuntime.isNA(dimId)) {
                 dimId = RRuntime.NA_HEADER;
@@ -631,13 +631,21 @@ public abstract class PrettyPrinterNode extends RNode {
     private static String getDimId(RAbstractVector vector, int dimLevel, int dimInd, RAttributeProfiles attrProfiles) {
         String dimId;
         RList dimNames = vector.getDimNames(attrProfiles);
-        if (dimNames == null || dimNames.getDataAt(dimLevel - 1) == RNull.instance) {
+        if (dimNames == null || getDimNamesAt(dimNames, dimLevel) == RNull.instance) {
             dimId = intString(dimInd + 1);
         } else {
-            RStringVector dimNamesVector = (RStringVector) dimNames.getDataAt(dimLevel - 1);
+            RAbstractStringVector dimNamesVector = (RAbstractStringVector) getDimNamesAt(dimNames, dimLevel);
             dimId = dimNamesVector.getDataAt(dimInd);
         }
         return dimId;
+    }
+
+    private static Object getDimNamesAt(RList dimNames, int dimLevel) {
+        Object result = dimNames.getDataAt(dimLevel - 1);
+        if (result instanceof String) {
+            return RString.valueOf((String) result);
+        }
+        return result;
     }
 
     private static double calcRoundFactor(double input, long maxFactor) {
