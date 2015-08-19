@@ -47,6 +47,7 @@ public final class IntValueProfile {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             if (state == UNINITIALIZED) {
                 this.cachedValue = value;
+                this.state = SPECIALIZED;
             } else {
                 this.state = GENERIC;
             }
