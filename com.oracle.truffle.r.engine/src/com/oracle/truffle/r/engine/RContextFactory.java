@@ -24,6 +24,7 @@ package com.oracle.truffle.r.engine;
 
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.*;
 import java.util.function.*;
 
 import com.oracle.truffle.api.vm.*;
@@ -55,23 +56,32 @@ public class RContextFactory {
         RContext.initialize(new RRuntimeASTAccessImpl(), RBuiltinPackages.getInstance(), FastROptions.IgnoreVisibility);
     }
 
+    private static final Semaphore createSemaphore = new Semaphore(1, true);
+
     /**
      * Create a context of given kind.
      */
     public static TruffleVM create(ContextInfo info, Consumer<TruffleVM.Builder> setup) {
-        RContext.tempInitializingContextInfo = info;
-        Builder builder = TruffleVM.newVM();
-        if (setup != null) {
-            setup.accept(builder);
-        }
-        TruffleVM vm = builder.build();
         try {
-            vm.eval(TruffleRLanguage.MIME, "invisible(1)");
-        } catch (IOException e) {
-            throw RInternalError.shouldNotReachHere(e);
+            createSemaphore.acquire();
+            RContext.tempInitializingContextInfo = info;
+            Builder builder = TruffleVM.newVM();
+            if (setup != null) {
+                setup.accept(builder);
+            }
+            TruffleVM vm = builder.build();
+            try {
+                vm.eval(TruffleRLanguage.MIME, "invisible(1)");
+            } catch (IOException e) {
+                createSemaphore.release();
+                throw RInternalError.shouldNotReachHere(e);
+            }
+            RContext.associate(vm);
+            createSemaphore.release();
+            return vm;
+        } catch (InterruptedException x) {
+            throw RError.error(RError.NO_NODE, RError.Message.GENERIC, "Error creating parallel R runtime instance");
         }
-        RContext.associate(vm);
-        return vm;
     }
 
     /**
