@@ -23,7 +23,7 @@
 
 .PHONY: all clean libdir make_subdirs clean_subdirs
 
-SUBDIRS = base compiler datasets utils grDevices graphics stats methods tools fastr
+SUBDIRS = base compiler datasets utils grDevices graphics grid stats methods tools fastr
 export FASTR_LIBDIR = $(TOPDIR)/../library
 
 all: libdir make_subdirs

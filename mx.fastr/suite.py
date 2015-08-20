@@ -267,6 +267,7 @@ suite = {
       "sourceDirs" : ["src"],
       "dependencies" : [
         "mx:JUNIT",
+        "truffle:TRUFFLE_TCK",
         "com.oracle.truffle.r.engine",
       ],
       "checkstyle" : "com.oracle.truffle.r.runtime",
@@ -279,6 +280,12 @@ suite = {
       "sourceDirs" : [],
       "dependencies" : ["com.oracle.truffle.r.native"],
       "native" : "true",
+      "workingSets" : "FastR",
+    },
+
+    "com.oracle.truffle.r.test.cran" : {
+      "sourceDirs" : ["r"],
+      "javaCompliance" : "1.8",
       "workingSets" : "FastR",
     },
 

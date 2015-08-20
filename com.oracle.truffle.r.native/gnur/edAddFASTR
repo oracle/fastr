@@ -1,7 +1,3 @@
 /^CFLAGS/s/$/ -DFASTR/
-/LIBINTL=/
-d
-/LIBR =/
-d
 w
 q

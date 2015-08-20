@@ -136,12 +136,12 @@ def _fastr_gate_runner(args, tasks):
 
     with mx_gate.Task('UnitTests: +EST', tasks) as t:
         if t:
-            if junit(['--J', '@-DR:+ExperimentalStateTrans', '--tests', _gate_unit_tests()]) != 0:
+            if junit(['--J', '@-DR:+NewStateTransition', '--tests', _gate_unit_tests()]) != 0:
                 t.abort('unit tests failed')
 
     with mx_gate.Task('UnitTests: -EST', tasks) as t:
         if t:
-            if junit(['--J', '@-DR:-ExperimentalStateTrans', '--tests', _gate_unit_tests()]) != 0:
+            if junit(['--J', '@-DR:-NewStateTransition', '--tests', _gate_unit_tests()]) != 0:
                 t.abort('unit tests failed')
 
 mx_gate.add_gate_runner(_fastr_suite, _fastr_gate_runner)
@@ -279,8 +279,11 @@ def _ser_unit_tests():
 def _app_unit_tests():
     return _test_subpackage('apps')
 
+def _tck_unit_tests():
+    return _test_subpackage('tck')
+
 def _gate_unit_tests():
-    return ','.join((_library_unit_tests(), _rffi_unit_tests(), _rpackages_unit_tests(), _builtins_unit_tests(), _functions_unit_tests(), _ser_unit_tests(), _app_unit_tests(), _nodes_unit_tests()))
+    return ','.join((_library_unit_tests(), _rffi_unit_tests(), _rpackages_unit_tests(), _builtins_unit_tests(), _functions_unit_tests(), _ser_unit_tests(), _app_unit_tests(), _nodes_unit_tests(), _tck_unit_tests()))
 
 def _all_unit_tests():
     return _gate_unit_tests()
@@ -401,6 +404,11 @@ def runRREPL(args, nonZeroIsFatal=True, extraVmArgs=None):
     '''run R repl'''
     return runR(args, _rREPLClass(), nonZeroIsFatal=nonZeroIsFatal, extraVmArgs=['-DR:+Instrument'])
 
+def installcran(args):
+    cran = 'com.oracle.truffle.r.test.cran'
+    join(mx.project(cran).dir, 'r', 'install.cran.packages.R')
+    return runR(args, rscript_command_class())
+
 def load_optional_suite(name):
     hg_base = mx.get_env('MX_HG_BASE')
     urlinfos = None if hg_base is None else [mx.SuiteImportURLInfo(join(hg_base, name), 'hg', mx.vc_system('hg'))]
@@ -434,6 +442,7 @@ _commands = {
     'rcmplib' : [rcmplib, ['options']],
     'test' : [test, ['options']],
     'rrepl' : [runRREPL, '[options]'],
+    'installcran' : [installcran, '[options]']
     }
 
 mx.update_commands(_fastr_suite, _commands)

@@ -48,14 +48,56 @@ public class CallRFFIWithJNI implements CallRFFI {
 
     private static final boolean ForceRTLDGlobal = false;
 
-    // The order must match that expected in rfficall.c
-    // @formatter:off
-    private static final Object[] INITIALIZE_VALUES = new Object[]{
-        REnvironment.emptyEnv(),
-        RNull.instance, RUnboundValue.instance, RMissing.instance,
-        RDataFactory.createSymbol("class")
-    };
-    // @formatter:on
+    public enum RVariables {
+        R_NilValue(RNull.instance),
+        R_UnboundValue(RUnboundValue.instance),
+        R_MissingArg(RMissing.instance),
+        R_GlobalEnv(null),
+        R_EmptyEnv(REnvironment.emptyEnv()),
+        R_BaseEnv(null),
+        R_BaseNamespace(null),
+        R_NamespaceRegistry(null),
+        R_Srcref(null),
+        R_Bracket2Symbol(null),
+        R_BracketSymbol(null),
+        R_BraceSymbol(null),
+        R_ClassSymbol(RDataFactory.createSymbol("class")),
+        R_DeviceSymbol(null),
+        R_DimNamesSymbol(RDataFactory.createStringVectorFromScalar(RRuntime.DIMNAMES_ATTR_KEY)),
+        R_DimSymbol(RDataFactory.createStringVectorFromScalar(RRuntime.DIM_ATTR_KEY)),
+        R_DollarSymbol(null),
+        R_DotsSymbol(null),
+        R_DropSymbol(null),
+        R_LastvalueSymbol(null),
+        R_LevelsSymbol(null),
+        R_ModeSymbol(null),
+        R_NameSymbol(null),
+        R_NamesSymbol(null),
+        R_NaRmSymbol(null),
+        R_PackageSymbol(null),
+        R_QuoteSymbol(null),
+        R_RowNamesSymbol(null),
+        R_SeedsSymbol(null),
+        R_SourceSymbol(null),
+        R_TspSymbol(null),
+        R_dot_defined(null),
+        R_dot_Method(null),
+        R_dot_target(null),
+        R_SrcrefSymbol(RDataFactory.createSymbol("srcref")),
+        R_SrcfileSymbol(RDataFactory.createSymbol("srcfile")),
+        R_NaString(RDataFactory.createStringVectorFromScalar(RRuntime.STRING_NA)),
+        R_BlankString(RDataFactory.createStringVectorFromScalar(""));
+
+        private Object value;
+
+        RVariables(Object value) {
+            this.value = value;
+        }
+
+        public Object getValue() {
+            return value;
+        }
+    }
 
     /**
      * Load the {@code librfficall} library. N.B. this library defines some non-JNI global symbols
@@ -73,7 +115,7 @@ public class CallRFFIWithJNI implements CallRFFI {
             throw RError.error(RError.NO_NODE, ex);
         }
         System.load(librffiPath);
-        initialize(INITIALIZE_VALUES);
+        initialize(RVariables.values());
     }
 
     private static final Semaphore inCritical = new Semaphore(1, false);
@@ -109,7 +151,7 @@ public class CallRFFIWithJNI implements CallRFFI {
         throw RInternalError.unimplemented(".External");
     }
 
-    private static native void initialize(Object[] initialValues);
+    private static native void initialize(RVariables[] variables);
 
     private static native Object call(long address, Object[] args);
 

@@ -9,4 +9,54 @@ typedef jobject SEXP;
 a
 #endif
 .
+/The "global" environment/
+i
+#ifdef FASTR
+#define R_GlobalEnv FASTR_GlobalEnv()
+#else
+.
++1
+a
+#endif
+.
+/R_GlobalEnv/
+i
+#ifdef FASTR
+#define R_GlobalEnv FASTR_GlobalEnv()
+#else
+.
++1
+a
+#endif
+.
+/R_BaseEnv/
+i
+#ifdef FASTR
+#define R_BaseEnv FASTR_BaseEnv()
+#else
+.
++1
+a
+#endif
+.
+/R_BaseNamespace/
+i
+#ifdef FASTR
+#define R_BaseNamespace FASTR_BaseNamespace()
+#else
+.
++1
+a
+#endif
+.
+/R_NamespaceRegistry/
+i
+#ifdef FASTR
+#define R_NamespaceRegistry FASTR_NamespaceRegistry()
+#else
+.
++1
+a
+#endif
+.
 w include/Rinternals.h

@@ -99,6 +99,8 @@ public abstract class REnvironment extends RAttributeStorage implements RTypedVa
 
         Base getBaseEnv();
 
+        REnvironment getBaseNamespace();
+
         REnvironment getNamespaceRegistry();
 
         REnvironment.SearchPath getSearchPath();
@@ -137,6 +139,10 @@ public abstract class REnvironment extends RAttributeStorage implements RTypedVa
 
         public Base getBaseEnv() {
             return baseEnv;
+        }
+
+        public REnvironment getBaseNamespace() {
+            return baseEnv.getNamespace();
         }
 
         public REnvironment getNamespaceRegistry() {

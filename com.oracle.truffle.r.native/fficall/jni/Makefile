@@ -38,7 +38,7 @@ C_HDRS := $(wildcard $(SRC)/*.h)
 C_LIBNAME := librfficall$(DYLIB_EXT)
 C_OBJECTS := $(subst $(SRC),$(OBJ),$(C_SOURCES:.c=.o))
 C_LIB := $(TOPDIR)/builtinlibs/$(OBJ)/$(C_LIBNAME)
-CFLAGS := $(CFLAGS) -DFASTR
+#CFLAGS := $(CFLAGS) -DFASTR
 
 JNI_INCLUDES = -I $(JAVA_HOME)/include -I $(JAVA_HOME)/include/$(JDK_OS_DIR)
 FFI_INCLUDES = -I$(TOPDIR)/include/jni/include -I$(TOPDIR)/include/jni/include/R_ext

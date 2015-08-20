@@ -25,46 +25,11 @@
 // Everything here must be a JNI Global Reference, and must be canonical because
 // C code compares then with "==" (a JNI no-no really).
 
+#include <string.h>
 #include <jni.h>
 #include <Rinternals.h>
 #include "rffiutils.h"
 
-static int R_NilValue_Index = 0;
-static int R_UnboundValue_Index = 1;
-static int R_MissingArg_Index = 2;
-static int R_GlobalEnv_Index = 3;
-static int R_EmptyEnv_Index = 4;
-static int R_BaseEnv_Index = 5;
-static int R_BaseNamespace_Index = 6;
-static int R_NamespaceRegistry_Index = 7;
-static int R_Srcref_Index = 8;
-static int R_Bracket2Symbol_Index = 8;
-static int R_BracketSymbol_Index = 10;
-static int R_BraceSymbol_Index = 11;
-static int R_ClassSymbol_Index = 12;
-static int R_DeviceSymbol_Index = 12;
-static int R_DimNamesSymbol_Index = 14;
-static int R_DimSymbol_Index = 15;
-static int R_DollarSymbol_Index = 16;
-static int R_DotsSymbol_Index = 17;
-static int R_DropSymbol_Index = 18;
-static int R_LastvalueSymbol_Index = 19;
-static int R_LevelsSymbol_Index = 20;
-static int R_ModeSymbol_Index = 21;
-static int R_NameSymbol_Index = 22;
-static int R_NamesSymbol_Index = 23;
-static int R_NaRmSymbol_Index = 24;
-static int R_PackageSymbol_Index = 25;
-static int R_QuoteSymbol_Index = 26;
-static int R_RowNamesSymbol_Index = 27;
-static int R_SeedsSymbol_Index = 28;
-static int R_SourceSymbol_Index = 29;
-static int R_TspSymbol_Index = 30;
-static int R_dot_defined_Index = 31;
-static int R_dot_Method_Index = 32;
-static int R_dot_target_Index = 33;
-static int R_SrcrefSymbol_Index = 34;
-static int R_SrcfileSymbol_Index = 35;
 
 /* Evaluation Environment */
 //SEXP R_GlobalEnv;
@@ -86,8 +51,8 @@ SEXP R_MissingArg;
 //SEXP R_BraceSymbol;      /* "{" */
 SEXP R_ClassSymbol;     /* "class" */
 //SEXP R_DeviceSymbol;     /* ".Device" */
-//SEXP R_DimNamesSymbol;   /* "dimnames" */
-//SEXP R_DimSymbol;     /* "dim" */
+SEXP R_DimNamesSymbol;   /* "dimnames" */
+SEXP R_DimSymbol;     /* "dim" */
 //SEXP R_DollarSymbol;     /* "$" */
 //SEXP R_DotsSymbol;     /* "..." */
 //SEXP R_DropSymbol;     /* "drop" */
@@ -107,20 +72,82 @@ SEXP R_ClassSymbol;     /* "class" */
 //SEXP  R_dot_defined;      /* ".defined" */
 //SEXP  R_dot_Method;       /* ".Method" */
 //SEXP  R_dot_target;       /* ".target" */
+SEXP	R_NaString;	    /* NA_STRING as a CHARSXP */
+SEXP	R_BlankString;	    /* "" as a CHARSXP */
 
 // Symbols not part of public API but used in FastR tools implementation
 SEXP R_SrcrefSymbol;
 SEXP R_SrcfileSymbol;
 
+jmethodID getGlobalEnvMethodID;
+jmethodID getBaseEnvMethodID;
+jmethodID getBaseNamespaceMethodID;
+jmethodID getNamespaceRegistryMethodID;
+
+// R_GlobalEnv et al are not a variables in FASTR as they are RContext specific
+SEXP FASTR_GlobalEnv() {
+	JNIEnv *env = getEnv();
+	(*env)->CallStaticObjectMethod(env, CallRFFIHelperClass, getGlobalEnvMethodID);
+}
+
+SEXP FASTR_BaseEnv() {
+	JNIEnv *env = getEnv();
+	(*env)->CallStaticObjectMethod(env, CallRFFIHelperClass, getBaseEnvMethodID);
+}
+
+SEXP FASTR_BaseNamespace() {
+	JNIEnv *env = getEnv();
+	(*env)->CallStaticObjectMethod(env, CallRFFIHelperClass, getBaseNamespaceMethodID);
+}
+
+SEXP FASTR_NamespaceRegistry() {
+	JNIEnv *env = getEnv();
+	(*env)->CallStaticObjectMethod(env, CallRFFIHelperClass, getNamespaceRegistryMethodID);
+}
+
+
 void init_variables(JNIEnv *env, jobjectArray initialValues) {
-	R_EmptyEnv = mkNamedGlobalRef(env, R_EmptyEnv_Index, (*env)->GetObjectArrayElement(env, initialValues, 0));
-    R_NilValue = mkNamedGlobalRef(env, R_NilValue_Index, (*env)->GetObjectArrayElement(env, initialValues, 1));
-    R_UnboundValue = mkNamedGlobalRef(env, R_UnboundValue_Index, (*env)->GetObjectArrayElement(env, initialValues, 2));
-    R_MissingArg = mkNamedGlobalRef(env, R_MissingArg_Index, (*env)->GetObjectArrayElement(env, initialValues, 3));
-    R_ClassSymbol = mkNamedGlobalRef(env, R_ClassSymbol_Index, (*env)->GetObjectArrayElement(env, initialValues, 4));
-	jstring name = (*env)->NewStringUTF(env, "srcfile");
-	R_SrcfileSymbol = mkNamedGlobalRef(env, R_SrcfileSymbol_Index, (*env)->CallStaticObjectMethod(env, CallRFFIHelperClass, createSymbolMethodID, name));
-	name = (*env)->NewStringUTF(env, "srcref");
-	R_SrcrefSymbol = mkNamedGlobalRef(env, R_SrcrefSymbol_Index, (*env)->CallStaticObjectMethod(env, CallRFFIHelperClass, createSymbolMethodID, name));
+	// initialValues is an array of enums
+	jclass enumClass = (*env)->GetObjectClass(env, (*env)->GetObjectArrayElement(env, initialValues, 0));
+	jmethodID nameID = checkGetMethodID(env, enumClass, "name", "()Ljava/lang/String;", 0);
+	jmethodID ordinalID = checkGetMethodID(env, enumClass, "ordinal", "()I", 0);
+	jmethodID getValueID = checkGetMethodID(env, enumClass, "getValue", "()Ljava/lang/Object;", 0);
+
+	getGlobalEnvMethodID = checkGetMethodID(env, CallRFFIHelperClass, "getGlobalEnv", "()Ljava/lang/Object;", 1);
+	getBaseEnvMethodID = checkGetMethodID(env, CallRFFIHelperClass, "getBaseEnv", "()Ljava/lang/Object;", 1);
+	getBaseNamespaceMethodID = checkGetMethodID(env, CallRFFIHelperClass, "getBaseNamespace", "()Ljava/lang/Object;", 1);
+	getNamespaceRegistryMethodID = checkGetMethodID(env, CallRFFIHelperClass, "getNamespaceRegistry", "()Ljava/lang/Object;", 1);
+
+	int length = (*env)->GetArrayLength(env, initialValues);
+	int index;
+	for (index = 0; index < length; index++) {
+		jobject variable = (*env)->GetObjectArrayElement(env, initialValues, index);
+		jstring nameString = (*env)->CallObjectMethod(env, variable, nameID);
+		const char *nameChars = (*env)->GetStringUTFChars(env, nameString, NULL);
+		jobject value = (*env)->CallObjectMethod(env, variable, getValueID);
+		if (value != NULL) {
+			SEXP ref = mkNamedGlobalRef(env, index, value);
+			if (strcmp(nameChars, "R_EmptyEnv") == 0) {
+				R_EmptyEnv = ref;
+			} else if (strcmp(nameChars, "R_NilValue") == 0) {
+				R_NilValue = ref;
+			} else if (strcmp(nameChars, "R_UnboundValue") == 0) {
+				R_UnboundValue = ref;
+			} else if (strcmp(nameChars, "R_MissingArg") == 0) {
+				R_MissingArg = ref;
+			} else if (strcmp(nameChars, "R_ClassSymbol") == 0) {
+				R_ClassSymbol = ref;
+			} else if (strcmp(nameChars, "R_SrcfileSymbol") == 0) {
+				R_SrcfileSymbol = ref;
+			} else if (strcmp(nameChars, "R_SrcrefSymbol") == 0) {
+				R_SrcrefSymbol = ref;
+			} else if (strcmp(nameChars, "R_DimSymbol") == 0) {
+				R_DimSymbol = ref;
+			} else if (strcmp(nameChars, "R_DimNamesSymbol") == 0) {
+				R_DimNamesSymbol = ref;
+			}
+		}
+	}
+
 }
 

@@ -52,6 +52,8 @@ C_OBJECTS := $(subst $(SRC),$(OBJ),$(C_SOURCES:.c=.o))
 
 H_SOURCES := $(wildcard $(SRC)/*.h)
 
+CFLAGS := $(CFLAGS) -DFASTR
+
 LIBDIR := $(OBJ)
 
 # packages seem to use .so even on Mac OS X and no "lib"

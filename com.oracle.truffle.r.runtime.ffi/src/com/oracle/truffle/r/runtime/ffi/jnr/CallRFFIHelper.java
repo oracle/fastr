@@ -306,4 +306,21 @@ public class CallRFFIHelper {
     static Object validate(Object x) {
         return x;
     }
+
+    static Object getGlobalEnv() {
+        return RContext.getREnvironmentState().getGlobalEnv();
+    }
+
+    static Object getBaseEnv() {
+        return RContext.getREnvironmentState().getBaseEnv();
+    }
+
+    static Object getBaseNamespace() {
+        return RContext.getREnvironmentState().getBaseNamespace();
+    }
+
+    static Object getNamespaceRegistry() {
+        return RContext.getREnvironmentState().getNamespaceRegistry();
+    }
+
 }
