@@ -85,14 +85,8 @@ public final class ReplacementNode extends RNode implements RSyntaxNode {
         state.endNodeDeparse(this);
     }
 
-    private static ReplacementNode current;
-
     @Override
     public void serializeImpl(RSerialize.State state) {
-        if (this == current) {
-            throw RInternalError.shouldNotReachHere("replacement recursion");
-        }
-        current = this;
         syntaxAST.serializeImpl(state);
     }
 
