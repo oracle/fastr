@@ -28,6 +28,7 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
+import com.oracle.truffle.r.runtime.gnur.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
 /**
@@ -171,6 +172,54 @@ public class CallRFFIHelper {
 
     static void Rf_warning(String msg) {
         RError.warning(RError.NO_NODE, RError.Message.GENERIC, msg);
+    }
+
+    static Object Rf_allocateVector(int mode, int n) {
+        SEXPTYPE type = SEXPTYPE.mapInt(mode);
+        if (n < 0) {
+            throw RError.error(RError.NO_NODE, RError.Message.NEGATIVE_LENGTH_VECTORS_NOT_ALLOWED);
+            // TODO check long vector
+        }
+        switch (type) {
+            case INTSXP:
+                return RDataFactory.createIntVector(new int[n], RDataFactory.COMPLETE_VECTOR);
+            case REALSXP:
+                return RDataFactory.createDoubleVector(new double[n], RDataFactory.COMPLETE_VECTOR);
+            case LGLSXP:
+                return RDataFactory.createLogicalVector(new byte[n], RDataFactory.COMPLETE_VECTOR);
+            case CHARSXP:
+                return RDataFactory.createStringVector(new String[n], RDataFactory.COMPLETE_VECTOR);
+            case CPLXSXP:
+                return RDataFactory.createComplexVector(new double[2 * n], RDataFactory.COMPLETE_VECTOR);
+            case VECSXP:
+                return RDataFactory.createList(n);
+            default:
+                throw RInternalError.unimplemented();
+        }
+
+    }
+
+    static Object Rf_allocateMatrix(int mode, int ncol, int nrow) {
+        SEXPTYPE type = SEXPTYPE.mapInt(mode);
+        if (nrow < 0 || ncol < 0) {
+            throw RError.error(RError.NO_NODE, RError.Message.NEGATIVE_EXTENTS_TO_MATRIX);
+        }
+        // TODO check long vector
+        int[] dims = new int[]{nrow, ncol};
+        switch (type) {
+            case INTSXP:
+                return RDataFactory.createIntVector(new int[nrow * ncol], RDataFactory.COMPLETE_VECTOR, dims);
+            case REALSXP:
+                return RDataFactory.createDoubleVector(new double[nrow * ncol], RDataFactory.COMPLETE_VECTOR, dims);
+            case LGLSXP:
+                return RDataFactory.createLogicalVector(new byte[nrow * ncol], RDataFactory.COMPLETE_VECTOR, dims);
+            case CHARSXP:
+                return RDataFactory.createStringVector(new String[nrow * ncol], RDataFactory.COMPLETE_VECTOR, dims);
+            case CPLXSXP:
+                return RDataFactory.createComplexVector(new double[2 * (nrow * ncol)], RDataFactory.COMPLETE_VECTOR, dims);
+            default:
+                throw RInternalError.unimplemented();
+        }
     }
 
     static int LENGTH(Object x) {

@@ -3,7 +3,9 @@
 	<name>mx.fastr</name>
 	<comment></comment>
 	<projects>
-		<project>mxtool</project>
+		<project>mx</project>
+		<project>mx.graal</project>
+		<project>mx.jvmci</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

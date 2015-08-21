@@ -57,7 +57,8 @@ public class DynLoadFunctions {
                 DLLInfo dllInfo = DLL.loadPackageDLL(lib, asBoolean(local), asBoolean(now));
                 return dllInfo.toRList();
             } catch (DLLException ex) {
-                throw RError.error(this, ex);
+                // This is not a recoverable error
+                throw RInternalError.shouldNotReachHere(ex);
             }
         }
 
