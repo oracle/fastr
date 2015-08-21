@@ -1,0 +1,11 @@
+/R_Interactive/
+i
+#ifdef FASTR
+#define R_Interactive FASTR_Interactive()
+#else
+.
++1
+a
+#endif
+.
+w include/Rinterface.h

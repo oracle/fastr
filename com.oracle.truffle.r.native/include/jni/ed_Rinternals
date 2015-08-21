@@ -1,18 +1,7 @@
 /typedef struct SEXPREC \*SEXP;/
 i
 #ifdef FASTR
-#include <jni.h>
-typedef jobject SEXP;
-#else
-.
-+1
-a
-#endif
-.
-/The "global" environment/
-i
-#ifdef FASTR
-#define R_GlobalEnv FASTR_GlobalEnv()
+typedef void *SEXP;
 #else
 .
 +1

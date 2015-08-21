@@ -21,42 +21,4 @@
 # questions.
 #
 
-ifeq ($(TOPDIR),)
-    TOPDIR = $(abspath ../..)
-endif
-
-ifneq ($(MAKECMDGOALS),clean)
-include $(TOPDIR)/platform.mk
-endif
-
-.PHONY: all clean
-
-OBJ = lib
-SRC = src
-C_SOURCES := $(wildcard $(SRC)/*.c)
-C_HDRS := $(wildcard $(SRC)/*.h)
-C_LIBNAME := librfficall$(DYLIB_EXT)
-C_OBJECTS := $(subst $(SRC),$(OBJ),$(C_SOURCES:.c=.o))
-C_LIB := $(TOPDIR)/builtinlibs/$(OBJ)/$(C_LIBNAME)
-
-JNI_INCLUDES = -I $(JAVA_HOME)/include -I $(JAVA_HOME)/include/$(JDK_OS_DIR)
-FFI_INCLUDES = -I$(TOPDIR)/include/jni/include -I$(TOPDIR)/include/jni/include/R_ext
-
-INCLUDES := $(JNI_INCLUDES) $(FFI_INCLUDES)
-
-all: $(C_LIB)
-
-$(C_LIB): $(OBJ) $(C_OBJECTS)
-	$(DYLIB_LD) $(DYLIB_LDFLAGS) -o $(C_LIB) $(C_OBJECTS)
-
-$(OBJ):
-	mkdir -p $(OBJ)
-
-$(OBJ)/%.o: $(SRC)/%.c $(TOPDIR)/include/jni/include/Rinternals.h $(C_HDRS)
-	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
-	
-$(OBJ)/%.E: $(SRC)/%.c $(TOPDIR)/include/jni/include/Rinternals.h
-	$(CC) -E $(CFLAGS) $(INCLUDES) -c $< > $@
-
-clean:
-	rm -rf $(OBJ) $(C_LIB)
+include ../lib.mk

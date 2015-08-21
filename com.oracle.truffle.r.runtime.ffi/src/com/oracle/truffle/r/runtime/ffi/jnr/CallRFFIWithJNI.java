@@ -86,6 +86,11 @@ public class CallRFFIWithJNI implements CallRFFI {
         R_SrcrefSymbol(RDataFactory.createSymbol("srcref")),
         R_SrcfileSymbol(RDataFactory.createSymbol("srcfile")),
         R_NaString(RDataFactory.createStringVectorFromScalar(RRuntime.STRING_NA)),
+        R_NaN(Double.NaN),
+        R_PosInf(Double.POSITIVE_INFINITY),
+        R_NegInf(Double.NEGATIVE_INFINITY),
+        R_NaReal(RRuntime.DOUBLE_NA),
+        R_NaInt(RRuntime.INT_NA),
         R_BlankString(RDataFactory.createStringVectorFromScalar(""));
 
         private Object value;

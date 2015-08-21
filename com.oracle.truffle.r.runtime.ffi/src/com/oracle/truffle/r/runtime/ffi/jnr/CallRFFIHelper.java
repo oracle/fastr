@@ -323,4 +323,8 @@ public class CallRFFIHelper {
         return RContext.getREnvironmentState().getNamespaceRegistry();
     }
 
+    static int isInteractive() {
+        return RContext.getInstance().isInteractive() ? 1 : 0;
+    }
+
 }
