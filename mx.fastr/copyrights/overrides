@@ -39,22 +39,22 @@ com.oracle.truffle.r.native/library/tools/src/init.c,no.copyright
 com.oracle.truffle.r.native/library/tools/src/tools.h,no.copyright
 com.oracle.truffle.r.native/library/utils/src/init.c,no.copyright
 com.oracle.truffle.r.native/library/utils/src/utils.h,no.copyright
-com.oracle.truffle.r.native/library/grid/src/gpar.c no.copyright
-com.oracle.truffle.r.native/library/grid/src/grid.c no.copyright
-com.oracle.truffle.r.native/library/grid/src/grid.h no.copyright
-com.oracle.truffle.r.native/library/grid/src/just.c no.copyright
-com.oracle.truffle.r.native/library/grid/src/layout.c no.copyright
-com.oracle.truffle.r.native/library/grid/src/matrix.c no.copyright
-com.oracle.truffle.r.native/library/grid/src/register.c no.copyright
-com.oracle.truffle.r.native/library/grid/src/state.c no.copyright
-com.oracle.truffle.r.native/library/grid/src/unit.c no.copyright
-com.oracle.truffle.r.native/library/grid/src/util.c no.copyright
-com.oracle.truffle.r.native/library/grid/src/viewport.c no.copyright
-com.oracle.truffle.r.native/library/parallel/src/glpi.h has missing copyright
-com.oracle.truffle.r.native/library/parallel/src/init.c no.copyright
-com.oracle.truffle.r.native/library/parallel/src/parallel.h no.copyright
-com.oracle.truffle.r.native/library/parallel/src/rngstream.c no.copyright
-com.oracle.truffle.r.native/library/splines/src/splines.c no.copyright
+com.oracle.truffle.r.native/library/grid/src/gpar.c,no.copyright
+com.oracle.truffle.r.native/library/grid/src/grid.c,no.copyright
+com.oracle.truffle.r.native/library/grid/src/grid.h,no.copyright
+com.oracle.truffle.r.native/library/grid/src/just.c,no.copyright
+com.oracle.truffle.r.native/library/grid/src/layout.c,no.copyright
+com.oracle.truffle.r.native/library/grid/src/matrix.c,no.copyright
+com.oracle.truffle.r.native/library/grid/src/register.c,no.copyright
+com.oracle.truffle.r.native/library/grid/src/state.c,no.copyright
+com.oracle.truffle.r.native/library/grid/src/unit.c,no.copyright
+com.oracle.truffle.r.native/library/grid/src/util.c,no.copyright
+com.oracle.truffle.r.native/library/grid/src/viewport.c,no.copyright
+com.oracle.truffle.r.native/library/parallel/src/glpi.h,no.copyright
+com.oracle.truffle.r.native/library/parallel/src/init.c,no.copyright
+com.oracle.truffle.r.native/library/parallel/src/parallel.h,no.copyright
+com.oracle.truffle.r.native/library/parallel/src/rngstream.c,no.copyright
+com.oracle.truffle.r.native/library/splines/src/splines.c,no.copyright
 com.oracle.truffle.r.native/run/R.sh,oracle_bash.copyright
 com.oracle.truffle.r.native/run/Rscript_exec.sh,oracle_bash.copyright
 com.oracle.truffle.r.native/run/Rscript.sh,oracle_bash.copyright
