@@ -32,8 +32,7 @@ public final class IntValueProfile {
     private static final byte GENERIC = 2;
 
     @CompilationFinal private int cachedValue;
-
-    private byte state = 0;
+    @CompilationFinal private byte state = 0;
 
     private IntValueProfile() {
     }
@@ -47,6 +46,7 @@ public final class IntValueProfile {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             if (state == UNINITIALIZED) {
                 this.cachedValue = value;
+                this.state = SPECIALIZED;
             } else {
                 this.state = GENERIC;
             }

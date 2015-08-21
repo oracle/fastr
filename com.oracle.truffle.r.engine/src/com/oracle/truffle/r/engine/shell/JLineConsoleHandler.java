@@ -26,10 +26,11 @@ import java.io.*;
 
 import jline.console.*;
 
-import com.oracle.truffle.api.CompilerDirectives.*;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.context.*;
 
-public class JLineConsoleHandler implements RContext.ConsoleHandler {
+public class JLineConsoleHandler implements ConsoleHandler {
     private final ConsoleReader console;
     private final boolean isInteractive;
     private final PrintWriter printWriter;
@@ -97,5 +98,9 @@ public class JLineConsoleHandler implements RContext.ConsoleHandler {
 
     public int getWidth() {
         return RContext.CONSOLE_WIDTH;
+    }
+
+    public String getInputDescription() {
+        return "<shell_input>";
     }
 }

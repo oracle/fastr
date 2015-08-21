@@ -22,12 +22,17 @@
  */
 package com.oracle.truffle.r.engine;
 
+import java.io.*;
 import java.util.*;
+import java.util.concurrent.*;
+import java.util.function.*;
 
+import com.oracle.truffle.api.vm.*;
+import com.oracle.truffle.api.vm.TruffleVM.Builder;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.instrument.*;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.RContext.*;
+import com.oracle.truffle.r.runtime.context.*;
 import com.oracle.truffle.r.runtime.ffi.*;
 
 /**
@@ -42,52 +47,47 @@ public class RContextFactory {
      */
     static {
         Load_RFFIFactory.initialize();
+        RInstrument.initialize();
+        RPerfStats.initialize();
+        Locale.setDefault(Locale.ROOT);
+        RAccuracyInfo.initialize();
+        RVersionInfo.initialize();
+        TempPathName.initialize();
+        RContext.initialize(new RRuntimeASTAccessImpl(), RBuiltinPackages.getInstance(), FastROptions.IgnoreVisibility);
     }
 
-    private static boolean initialized;
+    private static final Semaphore createSemaphore = new Semaphore(1, true);
 
     /**
-     * Initialize all the context-independent aspects of the system.
+     * Create a context of given kind.
      */
-    public static void initialize() {
-        if (!initialized) {
-            FastROptions.initialize();
-            REnvVars.initialize();
-            RInstrument.initialize();
-            RPerfStats.initialize();
-            Locale.setDefault(Locale.ROOT);
-            RAccuracyInfo.initialize();
-            RVersionInfo.initialize();
-            TempPathName.initialize();
-            RProfile.initialize();
-            RContext.initialize(new RRuntimeASTAccessImpl(), RBuiltinPackages.getInstance(), FastROptions.IgnoreVisibility.getValue());
-            initialized = true;
+    public static TruffleVM create(ContextInfo info, Consumer<TruffleVM.Builder> setup) {
+        try {
+            createSemaphore.acquire();
+            RContext.tempInitializingContextInfo = info;
+            Builder builder = TruffleVM.newVM();
+            if (setup != null) {
+                setup.accept(builder);
+            }
+            TruffleVM vm = builder.build();
+            try {
+                vm.eval(TruffleRLanguage.MIME, "invisible(1)");
+            } catch (IOException e) {
+                createSemaphore.release();
+                throw RInternalError.shouldNotReachHere(e);
+            }
+            RContext.associate(vm);
+            createSemaphore.release();
+            return vm;
+        } catch (InterruptedException x) {
+            throw RError.error(RError.NO_NODE, RError.Message.GENERIC, "Error creating parallel R runtime instance");
         }
-    }
-
-    public static RContext createShareParentReadWrite(RContext parent, String[] commandArgs, ConsoleHandler consoleHandler) {
-        RContext context = RContext.createShareParentReadWrite(parent, commandArgs, consoleHandler);
-        return context;
-    }
-
-    public static RContext createShareParentReadOnly(RContext parent, String[] commandArgs, ConsoleHandler consoleHandler) {
-        RContext context = RContext.createShareParentReadOnly(parent, commandArgs, consoleHandler);
-        return context;
-    }
-
-    /**
-     * Create the initial context with no parent.
-     */
-    public static RContext createInitial(String[] commandArgs, ConsoleHandler consoleHandler) {
-        RContext context = RContext.createShareNothing(null, commandArgs, consoleHandler);
-        return context;
     }
 
     /**
      * Create a context of given kind.
      */
-    public static RContext create(RContext parent, Kind kind, String[] commandArgs, ConsoleHandler consoleHandler) {
-        RContext context = RContext.create(parent, kind, commandArgs, consoleHandler);
-        return context;
+    public static TruffleVM create(ContextInfo info) {
+        return create(info, null);
     }
 }

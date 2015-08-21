@@ -115,8 +115,29 @@ public final class RError extends RuntimeException {
     }
 
     @TruffleBoundary
+    public static RError error(Node node, Message msg, Object... args) {
+        throw error0(findParentRBase(node), msg, args);
+    }
+
+    @TruffleBoundary
     public static RError error(RBaseNode node, Message msg) {
         throw error0(node, msg, (Object[]) null);
+    }
+
+    @TruffleBoundary
+    public static RError error(Node node, Message msg) {
+        throw error0(findParentRBase(node), msg, (Object[]) null);
+    }
+
+    private static RBaseNode findParentRBase(Node node) {
+        Node current = node;
+        while (current != null) {
+            if (current instanceof RBaseNode) {
+                return (RBaseNode) current;
+            }
+            current = current.getParent();
+        }
+        throw new AssertionError("Could not find RBaseNode for given Node. Is it not adopted in the AST?");
     }
 
     /**
@@ -178,6 +199,12 @@ public final class RError extends RuntimeException {
     }
 
     @TruffleBoundary
+    public static void warning(Node node, Message msg, Object... args) {
+        assert node != null;
+        warning(findParentRBase(node), msg, args);
+    }
+
+    @TruffleBoundary
     public static RError stop(boolean showCall, RBaseNode node, Message msg, Object arg) {
         assert node != null;
         RErrorHandling.signalError(node, msg, arg);
@@ -186,7 +213,7 @@ public final class RError extends RuntimeException {
 
     @TruffleBoundary
     public static void performanceWarning(String string) {
-        if (FastROptions.PerformanceWarnings.getValue()) {
+        if (FastROptions.PerformanceWarnings) {
             warning(RError.NO_NODE, Message.PERFORMANCE, string);
         }
     }
@@ -545,6 +572,7 @@ public final class RError extends RuntimeException {
         CHAR_VEC_ARGUMENT("a character vector argument expected"),
         QUOTE_G_ONE("only the first character of 'quote' will be used"),
         UNEXPECTED("unexpected '%s' in \"%s\""),
+        UNEXPECTED_LINE("unexpected '%s' in \"%s\" (line %d)"),
         FIRST_ELEMENT_USED("first element used of '%s' argument"),
         MUST_BE_COERCIBLE_INTEGER("argument must be coercible to non-negative integer"),
         DEFAULT_METHOD_NOT_IMPLEMENTED_FOR_TYPE("default method not implemented for type '%s'"),
@@ -591,7 +619,10 @@ public final class RError extends RuntimeException {
         BAD_RESTART("bad restart"),
         RESTART_NOT_ON_STACK("restart not on stack"),
         PERFORMANCE("performance problem: %s"),
-        MUST_BE_SMALL_INT("argument '%s' must be a small integer");
+        MUST_BE_SMALL_INT("argument '%s' must be a small integer"),
+        NO_INTEROP("'%s' is not an object that supports interoperability (class %s)"),
+        NO_IMPORT_OBJECT("'%s' is not an exported object"),
+        NO_FUNCTION_RETURN("no function to return from, jumping to top level");
 
         public final String message;
         final boolean hasArgs;

@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.runtime.ffi.jnr;
 
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.context.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
@@ -308,19 +309,19 @@ public class CallRFFIHelper {
     }
 
     static Object getGlobalEnv() {
-        return RContext.getREnvironmentState().getGlobalEnv();
+        return RContext.getInstance().stateREnvironment.getGlobalEnv();
     }
 
     static Object getBaseEnv() {
-        return RContext.getREnvironmentState().getBaseEnv();
+        return RContext.getInstance().stateREnvironment.getBaseEnv();
     }
 
     static Object getBaseNamespace() {
-        return RContext.getREnvironmentState().getBaseNamespace();
+        return RContext.getInstance().stateREnvironment.getBaseNamespace();
     }
 
     static Object getNamespaceRegistry() {
-        return RContext.getREnvironmentState().getNamespaceRegistry();
+        return RContext.getInstance().stateREnvironment.getNamespaceRegistry();
     }
 
     static int isInteractive() {

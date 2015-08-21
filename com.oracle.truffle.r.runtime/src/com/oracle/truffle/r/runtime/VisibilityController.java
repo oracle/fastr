@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.runtime;
 
+import com.oracle.truffle.r.runtime.context.*;
+
 /**
  * This interface must be implemented by all nodes in the FastR implementation that control the
  * visibility of results in the shell. All specializations or, if no specializations exist,

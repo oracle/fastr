@@ -62,7 +62,7 @@ public abstract class WriteVariableNode extends RNode {
      * Variant for saving function arguments, i.e. from {@link RArguments} into the frame.
      */
     public static WriteVariableNode createArgSave(String name, RNode rhs) {
-        if (FastROptions.InvisibleArgs.getValue()) {
+        if (FastROptions.InvisibleArgs) {
             return WriteLocalFrameVariableNode.create(name, rhs, Mode.INVISIBLE);
         } else {
             return WriteLocalFrameVariableNode.create(name, rhs, Mode.REGULAR);

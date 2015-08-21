@@ -154,8 +154,7 @@ public final class RDataFrame implements RShareable, RAbstractContainer {
 
     @Override
     public RList getDimNames(RAttributeProfiles attrProfiles) {
-        RInternalError.unimplemented("data frame's dimnames needs to be obtained using builtins");
-        return null;
+        return vector.getDimNames(attrProfiles);
     }
 
     @Override
@@ -224,6 +223,11 @@ public final class RDataFrame implements RShareable, RAbstractContainer {
     @Override
     public RAbstractContainer setClassAttr(RStringVector classAttr, boolean convertToInt) {
         return vector.setClassAttr(classAttr, convertToInt);
+    }
+
+    @Override
+    public String toString() {
+        return "RDataFrame [vector=" + vector + ", length=" + length + "]";
     }
 
 }

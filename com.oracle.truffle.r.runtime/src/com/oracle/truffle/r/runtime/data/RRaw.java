@@ -78,6 +78,19 @@ public final class RRaw extends RScalarVector implements RAbstractRawVector {
     }
 
     @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof RRaw) {
+            return value == ((RRaw) obj).value;
+        }
+        return super.equals(obj);
+    }
+
+    @Override
+    public int hashCode() {
+        return value;
+    }
+
+    @Override
     public String toString() {
         CompilerAsserts.neverPartOfCompilation();
         return String.format("%02x", value);

@@ -204,4 +204,9 @@ public class RExpression implements RShareable, RAbstractContainer {
         return data.setClassAttr(classAttr, convertToInt);
     }
 
+    @Override
+    public String toString() {
+        return String.format("RExpression(data=%s)", data);
+    }
+
 }

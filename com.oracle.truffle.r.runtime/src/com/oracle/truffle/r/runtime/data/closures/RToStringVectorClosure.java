@@ -42,7 +42,7 @@ public abstract class RToStringVectorClosure extends RToVectorClosure implements
             String data = getDataAt(i);
             result[i] = data;
         }
-        return RDataFactory.createStringVector(result, vector.isComplete());
+        return RDataFactory.createStringVector(result, vector.isComplete(), getDimensions(), getNames(null));
     }
 
     @Override

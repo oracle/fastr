@@ -30,6 +30,10 @@ public interface RAbstractListVector extends RAbstractVector {
     @Override
     Object getDataAtAsObject(int index);
 
+    default Object getDataAtAsObject(Object store, int i) {
+        return getDataAtAsObject(i);
+    }
+
     RList materialize();
 
     default boolean checkCompleteness() {
@@ -42,6 +46,15 @@ public interface RAbstractListVector extends RAbstractVector {
 
     default Class<?> getElementClass() {
         return Object.class;
+    }
+
+    @SuppressWarnings("unused")
+    default void setDataAt(Object store, int index, Object value) {
+        throw new UnsupportedOperationException();
+    }
+
+    default void setNA(Object store, int index) {
+        setDataAt(store, index, RNull.instance);
     }
 
 }

@@ -29,7 +29,7 @@ import com.oracle.truffle.r.runtime.data.closures.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
-public final class RDoubleVector extends RVector implements RAbstractDoubleVector, RAccessibleStore<double[]> {
+public final class RDoubleVector extends RVector implements RAbstractDoubleVector {
 
     public static final RStringVector implicitClassHeader = RDataFactory.createStringVectorFromScalar(RType.Numeric.getName());
 
@@ -71,6 +71,16 @@ public final class RDoubleVector extends RVector implements RAbstractDoubleVecto
     @Override
     public double[] getInternalStore() {
         return data;
+    }
+
+    public void setDataAt(Object store, int index, double value) {
+        assert data == store;
+        ((double[]) store)[index] = value;
+    }
+
+    public double getDataAt(Object store, int index) {
+        assert data == store;
+        return ((double[]) store)[index];
     }
 
     public RDoubleVector copyResetData(double[] newData) {

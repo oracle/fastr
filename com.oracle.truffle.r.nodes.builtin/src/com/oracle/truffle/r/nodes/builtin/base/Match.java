@@ -348,6 +348,18 @@ public abstract class Match extends RBuiltinNode {
     }
 
     @Specialization
+    protected RIntVector match(RAbstractIntVector x, RAbstractStringVector table, Object nomatchObj, Object incomparables) {
+        naCheck.enable(x);
+        return match(RClosures.createIntToStringVector(x), table, nomatchObj, incomparables);
+    }
+
+    @Specialization
+    protected RIntVector match(RAbstractDoubleVector x, RAbstractStringVector table, Object nomatchObj, Object incomparables) {
+        naCheck.enable(x);
+        return match(RClosures.createDoubleToStringVector(x), table, nomatchObj, incomparables);
+    }
+
+    @Specialization
     @SuppressWarnings("unused")
     protected RIntVector match(RAbstractLogicalVector x, RAbstractLogicalVector table, Object nomatchObj, Object incomparables) {
         controlVisibility();

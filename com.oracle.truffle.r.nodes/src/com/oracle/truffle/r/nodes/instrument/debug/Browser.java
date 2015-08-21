@@ -26,6 +26,8 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.context.*;
+import com.oracle.truffle.r.runtime.context.Engine.ParseException;
 import com.oracle.truffle.r.runtime.data.*;
 
 /**
@@ -45,7 +47,7 @@ public class Browser {
 
     @TruffleBoundary
     public static ExitMode interact(MaterializedFrame frame) {
-        RContext.ConsoleHandler ch = RContext.getInstance().getConsoleHandler();
+        ConsoleHandler ch = RContext.getInstance().getConsoleHandler();
         String savedPrompt = ch.getPrompt();
         ch.setPrompt(browserPrompt(RArguments.getDepth(frame)));
         ExitMode exitMode = ExitMode.NEXT;
@@ -53,7 +55,7 @@ public class Browser {
             LW: while (true) {
                 String input = ch.readLine().trim();
                 if (input.length() == 0) {
-                    RLogicalVector browserNLdisabledVec = (RLogicalVector) RContext.getROptionsState().getValue("browserNLdisabled");
+                    RLogicalVector browserNLdisabledVec = (RLogicalVector) RContext.getInstance().stateROptions.getValue("browserNLdisabled");
                     if (!RRuntime.fromLogical(browserNLdisabledVec.getDataAt(0))) {
                         input = lastEmptyLineCommand;
                     }
@@ -89,7 +91,14 @@ public class Browser {
                     }
 
                     default:
-                        RContext.getEngine().parseAndEval(Source.fromText(input, BROWSER_SOURCE), frame, true, false);
+                        try {
+                            RContext.getEngine().parseAndEval(Source.fromText(input, BROWSER_SOURCE), frame, true);
+                        } catch (ReturnException e) {
+                            exitMode = ExitMode.NEXT;
+                            break LW;
+                        } catch (ParseException e) {
+                            throw e.throwAsRError();
+                        }
                         break;
                 }
             }

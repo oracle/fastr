@@ -31,6 +31,8 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.builtin.base.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.context.*;
+import com.oracle.truffle.r.runtime.context.Engine.ParseException;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
@@ -95,7 +97,11 @@ public final class RBuiltinPackages implements RBuiltinLookup {
         // Any RBuiltinKind.SUBSTITUTE functions installed above should not be overridden
         try {
             RContext.getInstance().setLoadingBase(true);
-            RContext.getEngine().parseAndEval(baseSource, frame, false, false);
+            try {
+                RContext.getEngine().parseAndEval(baseSource, frame, false);
+            } catch (ParseException e) {
+                throw new RInternalError(e, "error while parsing base source from %s", baseSource.getName());
+            }
         } finally {
             RContext.getInstance().setLoadingBase(false);
         }
@@ -103,7 +109,7 @@ public final class RBuiltinPackages implements RBuiltinLookup {
     }
 
     public static void loadDefaultPackageOverrides() {
-        Object defaultPackages = RContext.getROptionsState().getValue("defaultPackages");
+        Object defaultPackages = RContext.getInstance().stateROptions.getValue("defaultPackages");
         if (defaultPackages instanceof RAbstractStringVector) {
             RAbstractStringVector defPkgs = (RAbstractStringVector) defaultPackages;
             for (int i = 0; i < defPkgs.getLength(); i++) {
@@ -118,16 +124,25 @@ public final class RBuiltinPackages implements RBuiltinLookup {
                  */
                 REnvironment env = REnvironment.baseEnv();
                 for (Source source : componentList) {
-                    RContext.getEngine().parseAndEval(source, env.getFrame(), false, false);
+                    try {
+                        RContext.getEngine().parseAndEval(source, env.getFrame(), false);
+                    } catch (ParseException e) {
+                        throw new RInternalError(e, "error while parsing default package override from %s", source.getName());
+                    }
                 }
             }
         }
     }
 
+    /**
+     * Global builtin cache.
+     */
+    private static final HashMap<Object, RFunction> cachedBuiltinFunctions = new HashMap<>();
+
     @Override
     public RFunction lookupBuiltin(String methodName) {
         CompilerAsserts.neverPartOfCompilation();
-        RFunction function = RContext.getCachedBuiltin(methodName);
+        RFunction function = cachedBuiltinFunctions.get(methodName);
         if (function != null) {
             return function;
         }
@@ -142,7 +157,9 @@ public final class RBuiltinPackages implements RBuiltinLookup {
     private static RFunction createFunction(RBuiltinFactory builtinFactory, String methodName) {
         try {
             RootCallTarget callTarget = RBuiltinNode.createArgumentsCallTarget(builtinFactory);
-            return RContext.cacheBuiltin(methodName, RDataFactory.createFunction(builtinFactory.getName(), callTarget, builtinFactory, REnvironment.baseEnv().getFrame(), false));
+            RFunction function = RDataFactory.createFunction(builtinFactory.getName(), callTarget, builtinFactory, REnvironment.baseEnv().getFrame(), false);
+            cachedBuiltinFunctions.put(methodName, function);
+            return function;
         } catch (Throwable t) {
             throw new RuntimeException("error while creating builtin " + methodName + " / " + builtinFactory, t);
         }

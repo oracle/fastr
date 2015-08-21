@@ -30,6 +30,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.context.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
 @RBuiltin(name = "readRenviron", kind = INTERNAL, parameterNames = "path")
@@ -42,7 +43,7 @@ public abstract class ReadREnviron extends RInvisibleBuiltinNode {
         String path = Utils.tildeExpand(vec.getDataAt(0));
         byte result = RRuntime.LOGICAL_TRUE;
         try {
-            REnvVars.readEnvironFile(path);
+            RContext.getInstance().stateREnvVars.readEnvironFile(path);
         } catch (FileNotFoundException ex) {
             RError.warning(this, RError.Message.GENERIC, ex.getMessage());
             result = RRuntime.LOGICAL_FALSE;

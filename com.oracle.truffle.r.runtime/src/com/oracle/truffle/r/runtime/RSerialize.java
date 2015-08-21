@@ -17,9 +17,9 @@ import java.util.*;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.source.*;
-import com.oracle.truffle.r.runtime.RContext.ContextState;
-import com.oracle.truffle.r.runtime.RContext.Engine.ParseException;
 import com.oracle.truffle.r.runtime.conn.*;
+import com.oracle.truffle.r.runtime.context.Engine.ParseException;
+import com.oracle.truffle.r.runtime.context.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -49,7 +49,7 @@ import com.oracle.truffle.r.runtime.instrument.*;
  *
  */
 // Checkstyle: stop final class check
-public class RSerialize implements RContext.StateFactory {
+public class RSerialize {
 
     private static class Flags {
         static final int IS_OBJECT_BIT_MASK = 1 << 8;
@@ -122,7 +122,7 @@ public class RSerialize implements RContext.StateFactory {
         Object eval(Object arg);
     }
 
-    private static class ContextStateImpl implements RContext.ContextState {
+    public static final class ContextStateImpl implements RContext.ContextState {
         /**
          * {@code true} iff we are saving the source from the deparse of an unserialized function
          * (for debugging later).
@@ -147,10 +147,10 @@ public class RSerialize implements RContext.StateFactory {
             }
             return dotDotFindNamespace;
         }
-    }
 
-    public ContextState newContext(RContext context, Object... objects) {
-        return new ContextStateImpl();
+        public static ContextStateImpl newContext(@SuppressWarnings("unused") RContext context) {
+            return new ContextStateImpl();
+        }
     }
 
     private static final int MAX_PACKED_INDEX = Integer.MAX_VALUE >> 8;
@@ -232,7 +232,7 @@ public class RSerialize implements RContext.StateFactory {
     }
 
     private static ContextStateImpl getContextState() {
-        return (ContextStateImpl) RContext.getContextState(RContext.ClassStateKind.RSerialize);
+        return RContext.getInstance().stateRSerialize;
     }
 
     /**

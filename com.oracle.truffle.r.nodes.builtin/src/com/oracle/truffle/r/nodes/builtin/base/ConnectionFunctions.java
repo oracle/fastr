@@ -44,6 +44,7 @@ import com.oracle.truffle.r.runtime.conn.*;
 import com.oracle.truffle.r.runtime.conn.SocketConnections.RSocketConnection;
 import com.oracle.truffle.r.runtime.conn.TextConnections.TextRConnection;
 import com.oracle.truffle.r.runtime.conn.URLConnections.URLRConnection;
+import com.oracle.truffle.r.runtime.context.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
@@ -266,9 +267,9 @@ public abstract class ConnectionFunctions {
         protected RList summary(Object object) {
             BaseRConnection baseCon;
             if (object instanceof Integer) {
-                baseCon = RContext.getRConnectionState().getConnection((int) object);
+                baseCon = RContext.getInstance().stateRConnection.getConnection((int) object);
             } else if (object instanceof Double) {
-                baseCon = RContext.getRConnectionState().getConnection((int) Math.floor((Double) object));
+                baseCon = RContext.getInstance().stateRConnection.getConnection((int) Math.floor((Double) object));
             } else {
                 RConnection con = checkIsConnection(object);
                 baseCon = getBaseConnection(con);
@@ -943,7 +944,7 @@ public abstract class ConnectionFunctions {
         @TruffleBoundary
         protected RConnection getConnection(int what) {
             controlVisibility();
-            BaseRConnection con = RContext.getRConnectionState().getConnection(what);
+            BaseRConnection con = RContext.getInstance().stateRConnection.getConnection(what);
             if (con == null) {
                 throw RError.error(this, RError.Message.NO_SUCH_CONNECTION, what);
             } else {
@@ -958,7 +959,7 @@ public abstract class ConnectionFunctions {
         @TruffleBoundary
         protected RIntVector getAllConnections() {
             controlVisibility();
-            return RContext.getRConnectionState().getAllConnections();
+            return RContext.getInstance().stateRConnection.getAllConnections();
         }
     }
 

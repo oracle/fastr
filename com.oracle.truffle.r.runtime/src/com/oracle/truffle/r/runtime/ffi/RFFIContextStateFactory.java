@@ -22,31 +22,22 @@
  */
 package com.oracle.truffle.r.runtime.ffi;
 
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.RContext.*;
+import com.oracle.truffle.r.runtime.context.*;
+import com.oracle.truffle.r.runtime.context.RContext.ContextState;
 
 /**
  * This is the factory-independent class referenced by {@link RContext} that manages the
  * context-specific state for any given {@link RFFIFactory}. It simply forwards the calls to the
  * actual factory.
  */
-public class RFFIContextStateFactory implements StateFactory {
+public class RFFIContextStateFactory {
     private static RFFIFactory theFactory;
 
     public static void registerFactory(RFFIFactory factory) {
         theFactory = factory;
     }
 
-    public ContextState newContext(RContext context, Object... objects) {
-        return theFactory.newContext(context, objects);
+    public static ContextState newContext(RContext context) {
+        return theFactory.newContext(context);
     }
-
-    public void systemInitialized(RContext context, ContextState state) {
-        theFactory.systemInitialized(context, state);
-    }
-
-    public void beforeDestroy(RContext context, ContextState state) {
-        theFactory.beforeDestroy(context, state);
-    }
-
 }

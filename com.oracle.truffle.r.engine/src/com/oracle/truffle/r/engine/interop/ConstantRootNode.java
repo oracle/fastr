@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,15 +20,24 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.runtime.data.model;
+package com.oracle.truffle.r.engine.interop;
 
-/**
- * Marks a vectors internal store to be accessible. As the internal store depends on the
- * implementation of the vector, users of this method are discouraged to use this interface unless
- * it is really necessary. One reason might be to avoid store field lookups when traversing vectors.
- */
-public interface RAccessibleStore<T> {
+import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.nodes.*;
+import com.oracle.truffle.r.engine.*;
+import com.oracle.truffle.r.nodes.access.*;
 
-    T getInternalStore();
+public class ConstantRootNode extends RootNode {
 
+    @Child private ConstantNode constant;
+
+    public ConstantRootNode(ConstantNode constant) {
+        super(TruffleRLanguage.class, null, null);
+        this.constant = constant;
+    }
+
+    @Override
+    public Object execute(VirtualFrame frame) {
+        return constant.execute(frame);
+    }
 }

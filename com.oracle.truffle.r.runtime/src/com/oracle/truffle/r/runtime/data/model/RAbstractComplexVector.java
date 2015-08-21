@@ -34,7 +34,20 @@ public interface RAbstractComplexVector extends RAbstractVector {
 
     RComplex getDataAt(int index);
 
+    default RComplex getDataAt(@SuppressWarnings("unused") Object store, int index) {
+        return getDataAt(index);
+    }
+
     RComplexVector materialize();
+
+    @SuppressWarnings("unused")
+    default void setDataAt(Object store, int index, RComplex value) {
+        throw new UnsupportedOperationException();
+    }
+
+    default void setNA(Object store, int index) {
+        setDataAt(store, index, RComplex.NA);
+    }
 
     default boolean checkCompleteness() {
         for (int i = 0; i < getLength(); i++) {

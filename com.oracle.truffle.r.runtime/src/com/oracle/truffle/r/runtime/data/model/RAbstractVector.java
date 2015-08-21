@@ -22,10 +22,12 @@
  */
 package com.oracle.truffle.r.runtime.data.model;
 
+import com.oracle.truffle.api.interop.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.context.*;
 import com.oracle.truffle.r.runtime.data.*;
 
-public interface RAbstractVector extends RAbstractContainer {
+public interface RAbstractVector extends RAbstractContainer, TruffleObject {
 
     /**
      * Creates a copy of the vector. This copies all of the contained data as well. If the data in
@@ -72,4 +74,9 @@ public interface RAbstractVector extends RAbstractContainer {
 
     void setComplete(boolean complete);
 
+    void setNA(Object store, int index);
+
+    default ForeignAccess getForeignAccess() {
+        return RContext.getEngine().getForeignAccess(this);
+    }
 }

@@ -56,6 +56,10 @@ public abstract class FastR extends RBuiltinNode {
 
     protected RExternalBuiltinNode lookupName(RAbstractStringVector name) {
         switch (name.getDataAt(0)) {
+            case "Interop.import":
+                return InteropImportNodeGen.create();
+            case "Interop.export":
+                return InteropExportNodeGen.create();
             case "createcc":
                 return FastRCallCountingFactory.CreateCallCounterNodeGen.create();
             case "getcc":
@@ -102,7 +106,6 @@ public abstract class FastR extends RBuiltinNode {
                 return FastRContextFactory.ChannelSendNodeGen.create();
             case "fastr.channel.receive":
                 return FastRContextFactory.ChannelReceiveNodeGen.create();
-
             default:
                 return null;
         }

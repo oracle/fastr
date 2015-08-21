@@ -24,16 +24,16 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
-import com.oracle.truffle.api.CompilerDirectives.*;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.context.*;
 import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.nodes.*;
 import com.oracle.truffle.r.runtime.env.*;
-import com.oracle.truffle.r.runtime.env.REnvironment.*;
+import com.oracle.truffle.r.runtime.nodes.*;
 
 /**
  * The {@code eval} {@code .Internal} and the {@code withVisible} {@code .Primitive}.
@@ -46,18 +46,10 @@ public class EvalFunctions {
         protected Object doEvalBody(int depth, Object exprArg, REnvironment envir, REnvironment enclos) {
             Object expr = RASTUtils.checkForRSymbol(exprArg);
 
-            if (RASTUtils.isLanguageOrExpression(expr)) {
-                try {
-                    Object result;
-                    if (expr instanceof RExpression) {
-                        result = RContext.getEngine().eval((RExpression) expr, envir, enclos, depth);
-                    } else {
-                        result = RContext.getEngine().eval((RLanguage) expr, envir, enclos, depth);
-                    }
-                    return result;
-                } catch (PutException ex) {
-                    throw RError.error(this, ex);
-                }
+            if (expr instanceof RExpression) {
+                return RContext.getEngine().eval((RExpression) expr, envir, enclos, depth);
+            } else if (expr instanceof RLanguage) {
+                return RContext.getEngine().eval((RLanguage) expr, envir, enclos, depth);
             } else {
                 // just return value
                 return expr;

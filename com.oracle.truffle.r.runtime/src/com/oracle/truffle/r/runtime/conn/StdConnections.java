@@ -26,14 +26,14 @@ import java.io.*;
 import java.nio.*;
 import java.util.*;
 
-import com.oracle.truffle.api.CompilerDirectives.*;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.RContext.ContextState;
-import com.oracle.truffle.r.runtime.RContext.ConsoleHandler;
-import com.oracle.truffle.r.runtime.conn.ConnectionSupport.*;
+import com.oracle.truffle.r.runtime.conn.ConnectionSupport.AbstractOpenMode;
+import com.oracle.truffle.r.runtime.conn.ConnectionSupport.BaseRConnection;
+import com.oracle.truffle.r.runtime.context.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-public class StdConnections implements RContext.StateFactory {
+public class StdConnections {
 
     private static class Diversion {
         final RConnection conn;
@@ -45,32 +45,31 @@ public class StdConnections implements RContext.StateFactory {
         }
     }
 
-    private static class ContextStateImpl implements RContext.ContextState {
+    public static final class ContextStateImpl implements RContext.ContextState {
         private final StdinConnection stdin;
         private final StdoutConnection stdout;
         private final StderrConnection stderr;
         private final Diversion[] diversions = new Diversion[20];
         private int top = -1;
 
-        ContextStateImpl(StdinConnection stdin, StdoutConnection stdout, StderrConnection stderr) {
+        private ContextStateImpl(StdinConnection stdin, StdoutConnection stdout, StderrConnection stderr) {
             this.stdin = stdin;
             this.stdout = stdout;
             this.stderr = stderr;
         }
 
-    }
-
-    public ContextState newContext(RContext context, Object... objects) {
-        ConsoleHandler consoleHandler = (ConsoleHandler) objects[0];
-        try {
-            return new ContextStateImpl(new StdinConnection(), new StdoutConnection(consoleHandler), new StderrConnection(consoleHandler));
-        } catch (IOException ex) {
-            throw Utils.fail("failed to open stdconnections:");
+        public static ContextStateImpl newContext(RContext context) {
+            ConsoleHandler consoleHandler = context.getConsoleHandler();
+            try {
+                return new ContextStateImpl(new StdinConnection(), new StdoutConnection(consoleHandler), new StderrConnection(consoleHandler));
+            } catch (IOException ex) {
+                throw Utils.fail("failed to open stdconnections:");
+            }
         }
     }
 
     private static ContextStateImpl getContextState() {
-        return (ContextStateImpl) RContext.getContextState(RContext.ClassStateKind.StdConnections);
+        return RContext.getInstance().stateStdConnections;
     }
 
     public static RConnection getStdin() {

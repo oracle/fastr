@@ -25,9 +25,8 @@ package com.oracle.truffle.r.runtime.data;
 import java.util.*;
 
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.model.*;
 
-public final class RList extends RListBase implements RAbstractVector, RGPBits {
+public final class RList extends RListBase implements RGPBits {
 
     private static final RStringVector implicitClassHeader = RDataFactory.createStringVectorFromScalar(RType.List.getName());
 
@@ -38,8 +37,9 @@ public final class RList extends RListBase implements RAbstractVector, RGPBits {
         super(data, dims, names);
     }
 
-    public RType getRType() {
-        return RType.List;
+    @Override
+    public RList materialize() {
+        return this;
     }
 
     @Override

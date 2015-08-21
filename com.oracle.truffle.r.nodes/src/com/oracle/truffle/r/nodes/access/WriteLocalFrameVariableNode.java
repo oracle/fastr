@@ -91,7 +91,6 @@ public abstract class WriteLocalFrameVariableNode extends BaseWriteVariableNode 
             FrameSlot frameSlot = findOrAddFrameSlot(frame.getFrameDescriptor(), getName(), initialKind);
             replace(ResolvedWriteLocalFrameVariableNode.create(getRhs(), getName(), frameSlot, getMode())).execute(frame, value);
         }
-
     }
 
     @NodeFields({@NodeField(name = "frameSlot", type = FrameSlot.class), @NodeField(name = "mode", type = Mode.class)})

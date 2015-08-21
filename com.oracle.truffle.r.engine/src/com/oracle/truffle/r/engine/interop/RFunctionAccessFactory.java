@@ -1,0 +1,76 @@
+/*
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ *
+ * This code is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 2 only, as
+ * published by the Free Software Foundation.
+ *
+ * This code is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * version 2 for more details (a copy is included in the LICENSE file that
+ * accompanied this code).
+ *
+ * You should have received a copy of the GNU General Public License version
+ * 2 along with this work; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+ *
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
+ */
+package com.oracle.truffle.r.engine.interop;
+
+import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.interop.ForeignAccess.Factory10;
+import com.oracle.truffle.api.interop.*;
+import com.oracle.truffle.r.nodes.access.*;
+import com.oracle.truffle.r.runtime.*;
+
+public final class RFunctionAccessFactory implements Factory10 {
+
+    public CallTarget accessIsNull() {
+        throw RInternalError.shouldNotReachHere("message: accessIsNull");
+    }
+
+    public CallTarget accessIsExecutable() {
+        return Truffle.getRuntime().createCallTarget(new ConstantRootNode(ConstantNode.create(true)));
+    }
+
+    public CallTarget accessIsBoxed() {
+        throw RInternalError.shouldNotReachHere("message: accessIsBoxed");
+    }
+
+    public CallTarget accessHasSize() {
+        return Truffle.getRuntime().createCallTarget(new ConstantRootNode(ConstantNode.create(false)));
+    }
+
+    public CallTarget accessGetSize() {
+        throw RInternalError.shouldNotReachHere("message: accessIsBoxed");
+    }
+
+    public CallTarget accessUnbox() {
+        throw RInternalError.shouldNotReachHere("message: accessUnbox");
+    }
+
+    public CallTarget accessRead() {
+        throw RInternalError.shouldNotReachHere("message: accessIsBoxed");
+    }
+
+    public CallTarget accessWrite() {
+        throw RInternalError.shouldNotReachHere("message: accessWrite");
+    }
+
+    public CallTarget accessExecute(int argumentsLength) {
+        return Truffle.getRuntime().createCallTarget(new RInteropExecuteNode(argumentsLength));
+    }
+
+    public CallTarget accessInvoke(int argumentsLength) {
+        throw RInternalError.shouldNotReachHere("message: accessInvoke");
+    }
+
+    public CallTarget accessMessage(Message unknown) {
+        throw RInternalError.shouldNotReachHere("message: " + unknown);
+    }
+}

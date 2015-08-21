@@ -30,6 +30,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RError.RErrorException;
+import com.oracle.truffle.r.runtime.context.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.frame.*;
 
@@ -80,8 +81,8 @@ import com.oracle.truffle.r.runtime.env.frame.*;
  * Multi-tenancy (multiple {@link RContext}s).
  * <p>
  * The logic for implementing the three different forms of
- * {@link com.oracle.truffle.r.runtime.RContext.Kind} is encapsulated in the {@link #createContext}
- * method.
+ * {@link com.oracle.truffle.r.runtime.context.RContext.ContextKind} is encapsulated in the
+ * {@link #createContext} method.
  */
 public abstract class REnvironment extends RAttributeStorage implements RTypedValue {
 
@@ -92,22 +93,7 @@ public abstract class REnvironment extends RAttributeStorage implements RTypedVa
         return implicitClass;
     }
 
-    public interface ContextState extends RContext.ContextState {
-        MaterializedFrame getGlobalFrame();
-
-        REnvironment getGlobalEnv();
-
-        Base getBaseEnv();
-
-        REnvironment getBaseNamespace();
-
-        REnvironment getNamespaceRegistry();
-
-        REnvironment.SearchPath getSearchPath();
-
-    }
-
-    private static class ContextStateImpl implements ContextState {
+    public static class ContextStateImpl implements RContext.ContextState {
         private SearchPath searchPath;
         private final MaterializedFrame globalFrame;
         private Base baseEnv;
@@ -161,21 +147,13 @@ public abstract class REnvironment extends RAttributeStorage implements RTypedVa
             this.namespaceRegistry = namespaceRegistry;
         }
 
-    }
-
-    /**
-     * Since {@REnvironment} is a Truffle value and already has non-zero-arg
-     * constructors, we define this class as the mechanism for creating the context-specific state.
-     */
-    public static class ClassStateFactory implements RContext.StateFactory {
         @Override
-        public ContextState newContext(RContext context, Object... objects) {
-            return createContext(context, (MaterializedFrame) objects[0]);
+        public void beforeDestroy(RContext context) {
+            beforeDestroyContext(context, this);
         }
 
-        @Override
-        public void beforeDestroy(RContext context, RContext.ContextState state) {
-            beforeDestroyContext(context, state);
+        public static ContextStateImpl newContext(RContext context) {
+            return createContext(context, RRuntime.createNonFunctionFrame().materialize());
         }
     }
 
@@ -247,7 +225,7 @@ public abstract class REnvironment extends RAttributeStorage implements RTypedVa
      * Value returned by {@code globalenv()}.
      */
     public static REnvironment globalEnv() {
-        return RContext.getREnvironmentState().getGlobalEnv();
+        return RContext.getInstance().stateREnvironment.getGlobalEnv();
     }
 
     /**
@@ -265,14 +243,14 @@ public abstract class REnvironment extends RAttributeStorage implements RTypedVa
      * Check whether the given frame is indeed the frame stored in the global environment.
      */
     public static boolean isGlobalEnvFrame(Frame frame) {
-        return isFrameForEnv(frame, RContext.getREnvironmentState().getGlobalEnv());
+        return isFrameForEnv(frame, RContext.getInstance().stateREnvironment.getGlobalEnv());
     }
 
     /**
      * Value returned by {@code baseenv()}. This is the "package:base" environment.
      */
     public static REnvironment baseEnv() {
-        Base baseEnv = RContext.getREnvironmentState().getBaseEnv();
+        Base baseEnv = RContext.getInstance().stateREnvironment.getBaseEnv();
         assert baseEnv != null;
         return baseEnv;
     }
@@ -281,7 +259,7 @@ public abstract class REnvironment extends RAttributeStorage implements RTypedVa
      * Value set in {@code .baseNameSpaceEnv} variable. This is the "namespace:base" environment.
      */
     public static REnvironment baseNamespaceEnv() {
-        Base baseEnv = RContext.getREnvironmentState().getBaseEnv();
+        Base baseEnv = RContext.getInstance().stateREnvironment.getBaseEnv();
         assert baseEnv != null;
         return baseEnv.getNamespace();
     }
@@ -301,7 +279,7 @@ public abstract class REnvironment extends RAttributeStorage implements RTypedVa
     public static void baseInitialize(MaterializedFrame baseFrame, MaterializedFrame initialGlobalFrame) {
         // TODO if namespaceRegistry is ever used in an eval an internal env won't suffice.
         REnvironment namespaceRegistry = RDataFactory.createInternalEnv();
-        ContextStateImpl state = (ContextStateImpl) RContext.getREnvironmentState();
+        ContextStateImpl state = RContext.getInstance().stateREnvironment;
         state.setNamespaceRegistry(namespaceRegistry);
         Base baseEnv = new Base(baseFrame, initialGlobalFrame);
         namespaceRegistry.safePut("base", baseEnv.namespaceEnv);
@@ -319,10 +297,10 @@ public abstract class REnvironment extends RAttributeStorage implements RTypedVa
      * path, just replacing the {@code globalenv} component. For a {@code SHARE_PARENT_RO} context
      * we make shallow copies of the package environments.
      *
-     * N.B.Calling {@link RContext#getREnvironmentState()} accesses the new, as yet uninitialized
+     * N.B. {@link RContext#stateREnvironment} accesses the new, as yet uninitialized
      * {@link ContextStateImpl} object
      */
-    private static ContextState createContext(RContext context, MaterializedFrame globalFrame) {
+    private static ContextStateImpl createContext(RContext context, MaterializedFrame globalFrame) {
         switch (context.getKind()) {
             case SHARE_PARENT_RW: {
                 /*
@@ -330,7 +308,7 @@ public abstract class REnvironment extends RAttributeStorage implements RTypedVa
                  * parent of the previous global env. Then we create a copy of the SearchPath and
                  * patch the global entry.
                  */
-                ContextStateImpl parentState = (ContextStateImpl) context.getParent().getThisContextState(RContext.ClassStateKind.REnvironment);
+                ContextStateImpl parentState = context.getParent().stateREnvironment;
                 Base parentBaseEnv = parentState.getBaseEnv();
                 NSBaseMaterializedFrame nsBaseFrame = (NSBaseMaterializedFrame) parentBaseEnv.namespaceEnv.frameAccess.getFrame();
                 MaterializedFrame prevGlobalFrame = RArguments.getEnclosingFrame(nsBaseFrame);
@@ -348,7 +326,7 @@ public abstract class REnvironment extends RAttributeStorage implements RTypedVa
 
             case SHARE_PARENT_RO: {
                 /* We make shallow copies of all the default package environments in the parent */
-                ContextStateImpl parentState = (ContextStateImpl) context.getParent().getThisContextState(RContext.ClassStateKind.REnvironment);
+                ContextStateImpl parentState = context.getParent().stateREnvironment;
                 SearchPath parentSearchPath = parentState.getSearchPath();
                 // clone all the environments below global from the parent
                 REnvironment e = parentSearchPath.get(1).cloneEnv(globalFrame);
@@ -390,7 +368,7 @@ public abstract class REnvironment extends RAttributeStorage implements RTypedVa
                  */
                 MaterializedFrame parentGlobalFrame = ((ContextStateImpl) state).parentGlobalFrame;
                 Global parentGlobalEnv = (Global) RArguments.getEnvironment(parentGlobalFrame);
-                ContextStateImpl parentState = (ContextStateImpl) context.getParent().getThisContextState(RContext.ClassStateKind.REnvironment);
+                ContextStateImpl parentState = context.getParent().stateREnvironment;
                 NSBaseMaterializedFrame nsBaseFrame = (NSBaseMaterializedFrame) parentState.baseEnv.namespaceEnv.frameAccess.getFrame();
                 nsBaseFrame.updateGlobalFrame(parentGlobalFrame);
                 parentState.baseEnv.safePut(".GlobalEnv", parentGlobalEnv);
@@ -464,7 +442,7 @@ public abstract class REnvironment extends RAttributeStorage implements RTypedVa
      * Data for the {@code search} function.
      */
     public static String[] searchPath() {
-        SearchPath searchPath = RContext.getREnvironmentState().getSearchPath();
+        SearchPath searchPath = RContext.getInstance().stateREnvironment.getSearchPath();
         String[] result = new String[searchPath.size()];
         for (int i = 0; i < searchPath.size(); i++) {
             REnvironment env = searchPath.get(i);
@@ -480,7 +458,7 @@ public abstract class REnvironment extends RAttributeStorage implements RTypedVa
      * @return the environment or {@code null} if not found.
      */
     public static REnvironment lookupOnSearchPath(String name) {
-        SearchPath searchPath = RContext.getREnvironmentState().getSearchPath();
+        SearchPath searchPath = RContext.getInstance().stateREnvironment.getSearchPath();
         int i = lookupIndexOnSearchPath(name);
         return i <= 0 ? null : searchPath.get(i - 1);
     }
@@ -492,7 +470,7 @@ public abstract class REnvironment extends RAttributeStorage implements RTypedVa
      * @return the index (1-based) or {@code 0} if not found.
      */
     public static int lookupIndexOnSearchPath(String name) {
-        SearchPath searchPath = RContext.getREnvironmentState().getSearchPath();
+        SearchPath searchPath = RContext.getInstance().stateREnvironment.getSearchPath();
         for (int i = 0; i < searchPath.size(); i++) {
             REnvironment env = searchPath.get(i);
             String searchName = env.getSearchName();
@@ -504,11 +482,11 @@ public abstract class REnvironment extends RAttributeStorage implements RTypedVa
     }
 
     public static REnvironment getNamespaceRegistry() {
-        return RContext.getREnvironmentState().getNamespaceRegistry();
+        return RContext.getInstance().stateREnvironment.getNamespaceRegistry();
     }
 
     public static void registerNamespace(String name, REnvironment env) {
-        RContext.getREnvironmentState().getNamespaceRegistry().safePut(name, env);
+        RContext.getInstance().stateREnvironment.getNamespaceRegistry().safePut(name, env);
     }
 
     /**
@@ -517,7 +495,7 @@ public abstract class REnvironment extends RAttributeStorage implements RTypedVa
      * namespace.
      */
     public static REnvironment getRegisteredNamespace(String name) {
-        return (REnvironment) RContext.getREnvironmentState().getNamespaceRegistry().get(name);
+        return (REnvironment) RContext.getInstance().stateREnvironment.getNamespaceRegistry().get(name);
     }
 
     /**
@@ -531,7 +509,7 @@ public abstract class REnvironment extends RAttributeStorage implements RTypedVa
         assert pos >= 2;
         // N.B. pos is 1-based
         int bpos = pos - 1;
-        SearchPath searchPath = RContext.getREnvironmentState().getSearchPath();
+        SearchPath searchPath = RContext.getInstance().stateREnvironment.getSearchPath();
         if (bpos > searchPath.size() - 1) {
             bpos = searchPath.size() - 1;
         }
@@ -562,7 +540,7 @@ public abstract class REnvironment extends RAttributeStorage implements RTypedVa
      * @return the {@link REnvironment} that was detached.
      */
     public static REnvironment detach(int pos) throws DetachException {
-        SearchPath searchPath = RContext.getREnvironmentState().getSearchPath();
+        SearchPath searchPath = RContext.getInstance().stateREnvironment.getSearchPath();
         if (pos == searchPath.size()) {
             detachException(RError.Message.ENV_DETACH_BASE);
         }
@@ -676,7 +654,7 @@ public abstract class REnvironment extends RAttributeStorage implements RTypedVa
      * "namespace" env.
      */
     public REnvironment getPackageNamespaceEnv() {
-        if (this == RContext.getREnvironmentState().getBaseEnv()) {
+        if (this == RContext.getInstance().stateREnvironment.getBaseEnv()) {
             return ((Base) this).namespaceEnv;
         }
         String envName;

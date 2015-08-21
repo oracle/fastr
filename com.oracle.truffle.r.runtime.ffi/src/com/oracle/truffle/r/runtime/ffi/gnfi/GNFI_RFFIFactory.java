@@ -30,7 +30,8 @@ import java.util.*;
 import com.oracle.nfi.*;
 import com.oracle.nfi.api.*;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.RContext.ContextState;
+import com.oracle.truffle.r.runtime.context.*;
+import com.oracle.truffle.r.runtime.context.RContext.ContextState;
 import com.oracle.truffle.r.runtime.ffi.*;
 
 /**
@@ -207,8 +208,8 @@ public class GNFI_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI {
         throw Utils.fail("glob not implemented");
     }
 
-    public ContextState newContext(RContext context, Object... objects) {
+    @Override
+    public ContextState newContext(RContext context) {
         throw RInternalError.unimplemented();
     }
-
 }

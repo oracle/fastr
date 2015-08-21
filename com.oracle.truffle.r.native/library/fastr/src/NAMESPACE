@@ -1,4 +1,6 @@
 ## exported functions
+export(Interop.import)
+export(Interop.export)
 export(fastr.createcc)
 export(fastr.getcc)
 export(fastr.compile)

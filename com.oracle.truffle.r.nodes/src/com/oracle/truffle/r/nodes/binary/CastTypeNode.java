@@ -56,22 +56,27 @@ public abstract class CastTypeNode extends BinaryNode {
 
     @TruffleBoundary
     public static CastNode createCast(RType type) {
+        return createCast(type, false, false, false);
+    }
+
+    @TruffleBoundary
+    public static CastNode createCast(RType type, boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
         switch (type) {
             case Character:
-                return CastStringNodeGen.create(false, false, false, false);
+                return CastStringNodeGen.create(preserveNames, preserveDimensions, preserveAttributes, false);
             case Complex:
-                return CastComplexNodeGen.create(false, false, false);
+                return CastComplexNodeGen.create(preserveNames, preserveDimensions, preserveAttributes);
             case Double:
             case Numeric:
-                return CastDoubleNodeGen.create(false, false, false);
+                return CastDoubleNodeGen.create(preserveNames, preserveDimensions, preserveAttributes);
             case Integer:
-                return CastIntegerNodeGen.create(false, false, false);
+                return CastIntegerNodeGen.create(preserveNames, preserveDimensions, preserveAttributes);
             case Logical:
-                return CastLogicalNodeGen.create(false, false, false);
+                return CastLogicalNodeGen.create(preserveNames, preserveDimensions, preserveAttributes);
             case Raw:
-                return CastRawNodeGen.create(false, false, false);
+                return CastRawNodeGen.create(preserveNames, preserveDimensions, preserveAttributes);
             case List:
-                return CastListNodeGen.create(false, false, false);
+                return CastListNodeGen.create(preserveNames, preserveDimensions, preserveAttributes);
             default:
                 return null;
 

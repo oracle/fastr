@@ -22,14 +22,16 @@
  */
 package com.oracle.truffle.r.runtime;
 
+import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.*;
+
 import java.util.*;
 
 /**
  * (Abstract) definition of the standard R command line options. The setting of the values from the
  * environment is handled in some other class.
  */
-public class RCmdOptions {
-    public enum Client {
+public final class RCmdOptions {
+    public static enum Client {
         R {
             @Override
             public String usage() {
@@ -56,177 +58,98 @@ public class RCmdOptions {
         public abstract String usage();
     }
 
-    private static List<Option<?>> optionList = new ArrayList<>();
-    public static final Option<Boolean> HELP = newBooleanOption(true, "h", "help", false, "Print short help message and exit");
-    public static final Option<Boolean> VERSION = newBooleanOption(true, "version", false, "Print version info and exit");
-    public static final Option<String> ENCODING = newStringOption(false, null, "encoding=ENC", null, "Specify encoding to be used for stdin");
-    public static final Option<Boolean> RHOME = newBooleanOption(true, null, "RHOME", false, "Print path to R home directory and exit");
-    public static final Option<Boolean> SAVE = newBooleanOption(false, null, "save", false, "Do save workspace at the end of the session");
-    public static final Option<Boolean> NO_SAVE = newBooleanOption(true, null, "no-save", false, "Don't save it");
-    public static final Option<Boolean> NO_ENVIRON = newBooleanOption(false, null, "no-environ", false, "Don't read the site and user environment files");
-    public static final Option<Boolean> NO_SITE_FILE = newBooleanOption(false, null, "no-site-file", false, "Don't read the site-wide Rprofile");
-    public static final Option<Boolean> NO_INIT_FILE = newBooleanOption(false, null, "no-init-file", false, "Don't read the user R profile");
-    public static final Option<Boolean> RESTORE = newBooleanOption(false, null, "restore", true, "Do restore previously saved objects at startup");
-    public static final Option<Boolean> NO_RESTORE_DATA = newBooleanOption(false, null, "no-restore-data", false, "Don't restore previously saved objects");
-    public static final Option<Boolean> NO_RESTORE_HISTORY = newBooleanOption(false, null, "no-restore-history", false, "Don't restore the R history file");
-    public static final Option<Boolean> NO_RESTORE = newBooleanOption(true, null, "no-restore", false, "Don't restore anything");
-    public static final Option<Boolean> VANILLA = newBooleanOption(true, null, "vanilla", false, "Combine --no-save, --no-restore, --no-site-file,\n"
-                    + "                          --no-init-file and --no-environ");
-    public static final Option<Boolean> NO_READLINE = newBooleanOption(false, null, "no-readline", false, "Don't use readline for command-line editing");
-    public static final Option<String> MAX_PPSIZE = newStringOption(false, null, "max-ppsize", null, "Set max size of protect stack to N");
-    public static final Option<Boolean> QUIET = newBooleanOption(true, "q", "quiet", false, "Don't print startup message");
-    public static final Option<Boolean> SILENT = newBooleanOption(true, "silent", false, "Same as --quiet");
-    public static final Option<Boolean> SLAVE = newBooleanOption(true, "slave", false, "Make R run as quietly as possible");
-    public static final Option<Boolean> INTERACTIVE = newBooleanOption(false, "interactive", false, "Force an interactive session");
-    public static final Option<Boolean> VERBOSE = newBooleanOption(false, "verbose", false, "Print more information about progress");
-    public static final Option<String> DEBUGGER = newStringOption(true, "d", "debugger=NAME", null, "Run R through debugger NAME");
-    public static final Option<String> DEBUGGER_ARGS = newStringOption(false, null, "debugger-args=ARGS", null, "Pass ARGS as arguments to the debugger");
-    public static final Option<String> GUI = newStringOption(false, "g TYPE", "gui=TYPE", null, "Use TYPE as GUI; possible values are 'X11' (default)\n" + "                          and 'Tk'.");
-    public static final Option<String> ARCH = newStringOption(false, null, "arch=NAME", null, "Specify a sub-architecture");
-    public static final Option<Boolean> ARGS = newBooleanOption(true, "args", false, "Skip the rest of the command line");
-    public static final Option<String> FILE = newStringOption(true, "f FILE", "file=FILE", null, "Take input from 'FILE'");
-    public static final Option<List<String>> EXPR = newStringListOption(true, "e EXPR", null, null, "Execute 'EXPR' and exit");
-    public static final Option<String> DEFAULT_PACKAGES = newStringOption(Client.RSCRIPT, false, null, "default-packages=list", null, "Where 'list' is a comma-separated set\n"
-                    + "                          of package names, or 'NULL'");
-
-    public static Option<Boolean> newBooleanOption(boolean implemented, String name, boolean defaultValue, String help) {
-        return newBooleanOption(implemented, null, name, defaultValue, help);
-    }
-
-    public static Option<Boolean> newBooleanOption(boolean implemented, String shortName, String name, boolean defaultValue, String help) {
-        Option<Boolean> option = new Option<>(implemented, OptionType.BOOLEAN, shortName, name, help, defaultValue);
-        optionList.add(option);
-        return option;
-    }
-
-    public static Option<String> newStringOption(boolean implemented, String shortName, String name, String defaultValue, String help) {
-        return newStringOption(Client.EITHER, implemented, shortName, name, defaultValue, help);
-    }
-
-    public static Option<String> newStringOption(Client client, boolean implemented, String shortName, String name, String defaultValue, String help) {
-        Option<String> option = new Option<>(client, implemented, OptionType.STRING, shortName, name, help, defaultValue);
-        optionList.add(option);
-        return option;
-    }
-
-    public static Option<List<String>> newStringListOption(boolean implemented, String shortName, String name, List<String> defaultValue, String help) {
-        Option<List<String>> option = new Option<>(Client.EITHER, implemented, OptionType.REPEATED_STRING, shortName, name, help, defaultValue);
-        optionList.add(option);
-        return option;
-    }
-
-    public static List<Option<?>> optionList() {
-        return optionList;
-    }
-
-    public static void reset() {
-        for (Option<?> option : optionList) {
-            option.reset();
-        }
-    }
-
-    public static enum OptionType {
+    public static enum RCmdOptionType {
         BOOLEAN,
         STRING,
         REPEATED_STRING
     }
 
-    public static class Option<T> {
-        public final OptionType type;
-        /**
-         * The plain option name as passed to the constructor.
-         */
-        public final String plainName;
-        /**
-         * The option name prefixed by {@code --} or {@code null} if no {@code --} form.
-         */
-        private final String name;
-        /**
-         * The short option name prefixed by {@code -} or {@code null} if no {@code -} form.
-         */
+    public static enum RCmdOption {
+        HELP(RCmdOptionType.BOOLEAN, true, "h", "help", false, "Print short help message and exit"),
+        VERSION(RCmdOptionType.BOOLEAN, true, "version", false, "Print version info and exit"),
+        ENCODING(RCmdOptionType.STRING, false, "encoding=ENC", null, "Specify encoding to be used for stdin"),
+        RHOME(RCmdOptionType.BOOLEAN, true, "RHOME", false, "Print path to R home directory and exit"),
+        SAVE(RCmdOptionType.BOOLEAN, false, "save", false, "Do save workspace at the end of the session"),
+        NO_SAVE(RCmdOptionType.BOOLEAN, true, "no-save", false, "Don't save it"),
+        NO_ENVIRON(RCmdOptionType.BOOLEAN, false, "no-environ", false, "Don't read the site and user environment files"),
+        NO_SITE_FILE(RCmdOptionType.BOOLEAN, false, "no-site-file", false, "Don't read the site-wide Rprofile"),
+        NO_INIT_FILE(RCmdOptionType.BOOLEAN, false, "no-init-file", false, "Don't read the user R profile"),
+        RESTORE(RCmdOptionType.BOOLEAN, false, "restore", true, "Do restore previously saved objects at startup"),
+        NO_RESTORE_DATA(RCmdOptionType.BOOLEAN, false, "no-restore-data", false, "Don't restore previously saved objects"),
+        NO_RESTORE_HISTORY(RCmdOptionType.BOOLEAN, false, "no-restore-history", false, "Don't restore the R history file"),
+        NO_RESTORE(RCmdOptionType.BOOLEAN, true, "no-restore", false, "Don't restore anything"),
+        VANILLA(RCmdOptionType.BOOLEAN, true, "vanilla", false, "Combine --no-save, --no-restore, --no-site-file,\n--no-init-file and --no-environ"),
+        NO_READLINE(RCmdOptionType.BOOLEAN, false, "no-readline", false, "Don't use readline for command-line editing"),
+        MAX_PPSIZE(RCmdOptionType.STRING, false, "max-ppsize", null, "Set max size of protect stack to N"),
+        QUIET(RCmdOptionType.BOOLEAN, true, "q", "quiet", false, "Don't print startup message"),
+        SILENT(RCmdOptionType.BOOLEAN, true, "silent", false, "Same as --quiet"),
+        SLAVE(RCmdOptionType.BOOLEAN, true, "slave", false, "Make R run as quietly as possible"),
+        INTERACTIVE(RCmdOptionType.BOOLEAN, false, "interactive", false, "Force an interactive session"),
+        VERBOSE(RCmdOptionType.BOOLEAN, false, "verbose", false, "Print more information about progress"),
+        DEBUGGER(RCmdOptionType.STRING, true, "d", "debugger=NAME", null, "Run R through debugger NAME"),
+        DEBUGGER_ARGS(RCmdOptionType.STRING, false, "debugger-args=ARGS", null, "Pass ARGS as arguments to the debugger"),
+        GUI(RCmdOptionType.STRING, false, "g TYPE", "gui=TYPE", null, "Use TYPE as GUI; possible values are 'X11' (default)\nand 'Tk'."),
+        ARCH(RCmdOptionType.STRING, false, "arch=NAME", null, "Specify a sub-architecture"),
+        ARGS(RCmdOptionType.BOOLEAN, true, "args", false, "Skip the rest of the command line"),
+        FILE(RCmdOptionType.STRING, true, "f FILE", "file=FILE", null, "Take input from 'FILE'"),
+        EXPR(RCmdOptionType.REPEATED_STRING, true, "e EXPR", null, null, "Execute 'EXPR' and exit"),
+        DEFAULT_PACKAGES(RCmdOptionType.STRING, Client.RSCRIPT, false, null, "default-packages=list", null, "Where 'list' is a comma-separated set\nof package names, or 'NULL'");
+
+        private final RCmdOptionType type;
+        @SuppressWarnings("unused") private final Client client;
+        // Whether this option is actually implemented in FastR
+        private final boolean implemented;
+        // The short option name prefixed by {@code -} or {@code null} if no {@code -} form.
         private final String shortName;
-        /**
-         * The '=' separated suffix, e.g. {@code --file=FILE}.
-         */
-        private String suffix;
-        /**
-         * The space separated suffix, e.g. {@code -g TYPE}.
-         */
-        private String shortSuffix;
-        /**
-         * The help text.
-         */
-        public final String help;
+        // The option name prefixed by {@code --} or {@code null} if no {@code --} form.
+        private final String name;
+        // The plain option name as passed to the constructor.
+        public final String plainName;
+        // The '=' separated suffix, e.g. {@code --file=FILE}.
+        private final String suffix;
+        // The space separated suffix, e.g. {@code -g TYPE}.
+        private final String shortSuffix;
+        private final Object defaultValue;
+        private final String help;
 
-        /** The default value. */
-        private final T defaultValue;
-        /**
-         * The value, either from the default or set on the command line.
-         */
-
-        private T value;
-        /**
-         * Set {@code true} iff the short form of a {@code OptionType.STRING} option matched.
-         */
-        private boolean matchedShort;
-        /**
-         * Temporary field indicating not implemented.
-         */
-        public final boolean implemented;
-
-        /**
-         * Option specificity.
-         */
-        public final Client client;
-
-        Option(Client client, boolean implemented, OptionType type, String shortName, String name, String help, T defaultValue) {
+        private RCmdOption(RCmdOptionType type, Client client, boolean implemented, String shortName, String name, Object defaultValue, String help) {
+            this.type = type;
             this.client = client;
             this.implemented = implemented;
-            this.type = type;
-            this.shortName = shortName == null ? null : shortKey(shortName);
+            if (shortName == null) {
+                this.shortName = null;
+                this.shortSuffix = null;
+            } else {
+                int spx = shortName.indexOf(' ');
+                this.shortName = "-" + (spx > 0 ? shortName.substring(0, spx) : shortName);
+                this.shortSuffix = spx > 0 ? shortName.substring(spx) : null;
+            }
             this.plainName = name;
-            this.name = name == null ? null : key(name);
-            this.help = help;
+            if (name == null) {
+                this.name = null;
+                this.suffix = null;
+            } else {
+                int eqx = noPrefix(name) ? -1 : name.indexOf('=');
+                this.name = "--" + (eqx > 0 ? name.substring(0, eqx) : name);
+                this.suffix = eqx > 0 ? name.substring(eqx) : null;
+            }
             this.defaultValue = defaultValue;
-            this.value = defaultValue;
+            this.help = help.replace("\n", "\n                          ");
         }
 
-        Option(boolean implemented, OptionType type, String shortName, String name, String help, T defaultValue) {
-            this(Client.EITHER, implemented, type, shortName, name, help, defaultValue);
+        private RCmdOption(RCmdOptionType type, boolean implemented, String shortName, String name, Object defaultValue, String help) {
+            this(type, Client.EITHER, implemented, shortName, name, defaultValue, help);
+        }
+
+        private RCmdOption(RCmdOptionType type, boolean implemented, String name, Object defaultValue, String help) {
+            this(type, Client.EITHER, implemented, null, name, defaultValue, help);
         }
 
         private static boolean noPrefix(String arg) {
             return arg.equals("RHOME") || arg.equals("CMD");
         }
 
-        private String key(String keyName) {
-            if (noPrefix(keyName)) {
-                return keyName;
-            }
-            String xName = keyName;
-            int eqx = keyName.indexOf('=');
-            if (eqx > 0) {
-                xName = keyName.substring(0, eqx);
-                suffix = keyName.substring(eqx);
-            }
-            return "--" + xName;
-        }
-
-        private String shortKey(String keyName) {
-            String xName = keyName;
-            int spx = keyName.indexOf(' ');
-            if (spx > 0) {
-                xName = keyName.substring(0, spx);
-                shortSuffix = keyName.substring(spx);
-            }
-            return "-" + xName;
-        }
-
-        public T getValue() {
-            return value;
-        }
-
-        boolean matches(String arg) {
+        private boolean matches(String arg) {
             if (shortName != null && arg.equals(shortName)) {
                 return true;
             }
@@ -236,28 +159,7 @@ public class RCmdOptions {
             return false;
         }
 
-        @SuppressWarnings("unchecked")
-        public void setValue(boolean value) {
-            this.value = (T) new Boolean(value);
-        }
-
-        public void reset() {
-            this.value = defaultValue;
-        }
-
-        @SuppressWarnings("unchecked")
-        public void setValue(String value) {
-            if (type == OptionType.REPEATED_STRING) {
-                if (this.value == null) {
-                    this.value = (T) new ArrayList<String>();
-                }
-                ((List<String>) this.value).add(value);
-            } else {
-                this.value = (T) value;
-            }
-        }
-
-        public String getHelpName() {
+        private String getHelpName() {
             String result = "";
             if (shortName != null) {
                 result = shortName;
@@ -276,30 +178,207 @@ public class RCmdOptions {
             }
             return result;
         }
+    }
 
-        public boolean matchedShort() {
-            return matchedShort;
+    private final EnumMap<RCmdOption, Object> optionValues;
+    /**
+     * The original {@code args} array, with element zero set to "FastR".
+     */
+    private String[] arguments;
+    /**
+     * Index in {@code args} of the first non-option argument or {@code args.length} if none.
+     */
+    private final int firstNonOptionArgIndex;
+
+    private RCmdOptions(EnumMap<RCmdOption, Object> optionValues, String[] args, int firstNonOptionArgIndex) {
+        this.optionValues = optionValues;
+        this.arguments = args;
+        this.firstNonOptionArgIndex = firstNonOptionArgIndex;
+    }
+
+    private static void setValue(EnumMap<RCmdOption, Object> optionValues, RCmdOption option, boolean value) {
+        assert option.type == RCmdOptionType.BOOLEAN;
+        optionValues.put(option, value);
+    }
+
+    private static void setValue(EnumMap<RCmdOption, Object> optionValues, RCmdOption option, String value) {
+        if (option.type == RCmdOptionType.REPEATED_STRING) {
+            @SuppressWarnings("unchecked")
+            ArrayList<String> list = (ArrayList<String>) optionValues.get(option);
+            if (list == null) {
+                optionValues.put(option, list = new ArrayList<>());
+            }
+            list.add(value);
+        } else {
+            assert option.type == RCmdOptionType.STRING;
+            optionValues.put(option, value);
         }
     }
 
-    public static Option<?> matchOption(String arg) {
-        for (Option<?> option : optionList) {
-            if (option.type == OptionType.BOOLEAN) {
+    public void setValue(RCmdOption option, boolean value) {
+        setValue(optionValues, option, value);
+    }
+
+    public void setValue(RCmdOption option, String value) {
+        setValue(optionValues, option, value);
+    }
+
+    public boolean getBoolean(RCmdOption option) {
+        assert option.type == RCmdOptionType.BOOLEAN;
+        Object value = optionValues.get(option);
+        return value == null ? (Boolean) option.defaultValue : (Boolean) value;
+    }
+
+    public String getString(RCmdOption option) {
+        assert option.type == RCmdOptionType.STRING;
+        Object value = optionValues.get(option);
+        return value == null ? (String) option.defaultValue : (String) value;
+    }
+
+    @SuppressWarnings("unchecked")
+    public List<String> getStringList(RCmdOption option) {
+        assert option.type == RCmdOptionType.REPEATED_STRING;
+        Object value = optionValues.get(option);
+        return value == null ? (List<String>) option.defaultValue : (List<String>) value;
+    }
+
+    private static final class MatchResult {
+        private final RCmdOption option;
+        private final boolean matchedShort;
+
+        public MatchResult(RCmdOption option, boolean matchedShort) {
+            this.option = option;
+            this.matchedShort = matchedShort;
+        }
+    }
+
+    private static MatchResult matchOption(String arg) {
+        for (RCmdOption option : RCmdOption.values()) {
+            if (option.type == RCmdOptionType.BOOLEAN) {
                 // these must match exactly
                 if (option.matches(arg)) {
-                    return option;
+                    return new MatchResult(option, false);
                 }
-            } else if (option.type == OptionType.STRING || option.type == OptionType.REPEATED_STRING) {
+            } else if (option.type == RCmdOptionType.STRING || option.type == RCmdOptionType.REPEATED_STRING) {
                 // short forms must match exactly (and consume next argument)
                 if (option.shortName != null && option.shortName.equals(arg)) {
-                    option.matchedShort = true;
-                    return option;
+                    return new MatchResult(option, true);
                 } else if (arg.indexOf('=') > 0 && option.name != null && arg.startsWith(option.name)) {
-                    return option;
+                    return new MatchResult(option, false);
                 }
             }
         }
         return null;
     }
 
+    /**
+     * Parse the arguments from the standard R/Rscript command line syntax, setting the
+     * corresponding values.
+     *
+     * R supports {@code --arg=value} or {@code -arg value} for string-valued options.
+     *
+     * The spec for {@code commandArgs()} states that it returns the executable by which R was
+     * invoked in element 0, which is consistent with the C {@code main} function, but defines the
+     * exact form to be platform independent. Java does not provide the executable (for obvious
+     * reasons) so we use "FastR".
+     */
+    public static RCmdOptions parseArguments(Client client, String[] args) {
+        EnumMap<RCmdOption, Object> options = new EnumMap<>(RCmdOption.class);
+        int i = 0;
+        int firstNonOptionArgIndex = args.length;
+        while (i < args.length) {
+            final String arg = args[i];
+            MatchResult result = matchOption(arg);
+            if (result == null) {
+                // for Rscript, this means we are done
+                if (client == Client.RSCRIPT) {
+                    firstNonOptionArgIndex = i;
+                    break;
+                }
+                // GnuR does not abort, simply issues a warning
+                System.out.printf("WARNING: unknown option '%s'%n", arg);
+                i++;
+                continue;
+            } else {
+                RCmdOption option = result.option;
+                if (result.matchedShort && i == args.length - 1) {
+                    System.out.println("usage:");
+                    printHelp(client, 1);
+                }
+                // check implemented
+                if (!option.implemented) {
+                    System.out.println("WARNING: option: " + arg + " is not implemented");
+                }
+                if (result.matchedShort) {
+                    i++;
+                    setValue(options, option, args[i]);
+                } else {
+                    if (option.type == RCmdOptionType.BOOLEAN) {
+                        setValue(options, option, true);
+                    } else if (option.type == RCmdOptionType.STRING) {
+                        int eqx = arg.indexOf('=');
+                        setValue(options, option, arg.substring(eqx + 1));
+                    }
+                }
+                i++;
+                // check for --args, in which case stop parsing
+                if (option == RCmdOption.ARGS) {
+                    firstNonOptionArgIndex = i;
+                    break;
+                }
+            }
+        }
+        String[] xargs = new String[args.length + 1];
+        xargs[0] = "FastR";
+        System.arraycopy(args, 0, xargs, 1, args.length);
+
+        // adjust for inserted executable name
+        return new RCmdOptions(options, xargs, firstNonOptionArgIndex + 1);
+    }
+
+    public String[] getArguments() {
+        return arguments;
+    }
+
+    public int getFirstNonOptionArgIndex() {
+        return firstNonOptionArgIndex;
+    }
+
+    public void setArguments(String[] arguments) {
+        this.arguments = arguments;
+    }
+
+    public void printHelpAndVersion() {
+        if (getBoolean(HELP)) {
+            RCmdOptions.printHelp(RCmdOptions.Client.R, 0);
+        } else if (getBoolean(VERSION)) {
+            printVersionAndExit();
+        } else if (getBoolean(RHOME)) {
+            printRHomeAndExit();
+        }
+    }
+
+    public static void printHelp(Client client, int exitCode) {
+        System.out.println(client.usage());
+        System.out.println("Options:");
+        for (RCmdOption option : RCmdOption.values()) {
+            System.out.printf("  %-22s  %s%n", option.getHelpName(), option.help);
+        }
+        System.out.println("\nFILE may contain spaces but not shell metacharacters.\n");
+        if (exitCode >= 0) {
+            System.exit(exitCode);
+        }
+    }
+
+    private static void printVersionAndExit() {
+        System.out.print("FastR version ");
+        System.out.println(RVersionNumber.FULL);
+        System.out.println(RRuntime.LICENSE);
+        Utils.exit(0);
+    }
+
+    private static void printRHomeAndExit() {
+        System.out.println(REnvVars.rHome());
+        throw Utils.exit(0);
+    }
 }

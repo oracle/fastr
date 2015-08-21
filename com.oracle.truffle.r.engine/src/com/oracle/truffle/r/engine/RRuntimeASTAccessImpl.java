@@ -25,6 +25,7 @@ package com.oracle.truffle.r.engine;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
+import com.oracle.truffle.api.vm.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.access.array.read.*;
@@ -35,9 +36,8 @@ import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.nodes.instrument.debug.*;
 import com.oracle.truffle.r.nodes.runtime.*;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.RContext.ConsoleHandler;
-import com.oracle.truffle.r.runtime.RContext.Engine;
 import com.oracle.truffle.r.runtime.RDeparse.State;
+import com.oracle.truffle.r.runtime.context.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
@@ -124,6 +124,8 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
             }
             return baseResult;
         } else if (node instanceof AccessFieldNode) {
+            return 3;
+        } else if (node instanceof ReplacementNode) {
             return 3;
         } else {
             // TODO fill out
@@ -219,11 +221,38 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
                 default:
                     assert false;
             }
+        } else if (node instanceof ReplacementNode) {
+            return RNull.instance;
         } else {
             // TODO fill out
             assert false;
         }
         return null;
+    }
+
+    public Object fromList(RAbstractVector list) {
+        int length = list.getLength();
+        if (length == 0) {
+            return RNull.instance;
+        } else if (length == 1) {
+            return list.getDataAtAsObject(0);
+        } else {
+            RNode fn = unwrapToRNode(list.getDataAtAsObject(0));
+            RSyntaxNode[] arguments = new RSyntaxNode[length - 1];
+            for (int i = 1; i < length; i++) {
+                arguments[i - 1] = (RSyntaxNode) unwrapToRNode(list.getDataAtAsObject(i));
+            }
+            return RDataFactory.createLanguage(RASTUtils.createCall(fn, ArgumentsSignature.empty(arguments.length), arguments).asRNode());
+        }
+    }
+
+    private static RNode unwrapToRNode(Object o) {
+        if (o instanceof RLanguage) {
+            return (RNode) RASTUtils.unwrap(((RLanguage) o).getRep());
+        } else {
+            // o is RSymbol or a primitive value
+            return ConstantNode.create(o);
+        }
     }
 
     public RList asList(RLanguage rl) {
@@ -395,11 +424,10 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
 
     public void setFunctionName(RootNode node, String name) {
         ((FunctionDefinitionNode) node).setDescription(name);
-
     }
 
-    public RContext create(RContext parent, RContext.Kind kind, String[] commandArgs, ConsoleHandler consoleHandler) {
-        return RContextFactory.create(parent, kind, commandArgs, consoleHandler);
+    public TruffleVM create(ContextInfo info) {
+        return RContextFactory.create(info);
     }
 
     public Engine createEngine(RContext context) {
@@ -436,7 +464,7 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
      * {@code call == null}, it's pretty simple as we just back off to the frame, where the call
      * will have been stored. Otherwise, we have to deal with the different ways in which the
      * internal implementation can generate an error/warning and locate the correct node, and try to
-     * maych the behavior of GnuR regarding {@code .Internal} (TODO).
+     * match the behavior of GnuR regarding {@code .Internal} (TODO).
      */
     public Object findCaller(Node call) {
         Frame frame = Utils.getActualCurrentFrame();

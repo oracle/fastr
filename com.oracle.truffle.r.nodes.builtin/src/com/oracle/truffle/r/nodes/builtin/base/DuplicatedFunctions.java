@@ -191,5 +191,11 @@ public class DuplicatedFunctions {
         protected int anyDuplicatedEmpty(RAbstractContainer x, RAbstractContainer incomparables, byte fromLast) {
             return 0;
         }
+
+        @SuppressWarnings("unused")
+        @Specialization
+        protected int anyDuplicatedNull(RNull x, RAbstractContainer incomparables, byte fromLast) {
+            return 0;
+        }
     }
 }

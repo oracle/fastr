@@ -77,12 +77,12 @@ public abstract class CastIntegerNode extends CastBaseNode {
     }
 
     @Specialization
-    protected RIntVector doIntVector(RIntVector operand) {
+    protected RIntSequence doIntSequence(RIntSequence operand) {
         return operand;
     }
 
     @Specialization
-    protected RIntSequence doIntSequence(RIntSequence operand) {
+    protected RAbstractIntVector doIntVector(RAbstractIntVector operand) {
         return operand;
     }
 
@@ -161,7 +161,7 @@ public abstract class CastIntegerNode extends CastBaseNode {
     }
 
     @Specialization
-    protected RIntVector doComplexVector(RComplexVector operand) {
+    protected RIntVector doComplexVector(RAbstractComplexVector operand) {
         naCheck.enable(operand);
         int length = operand.getLength();
         int[] idata = new int[length];
@@ -181,7 +181,7 @@ public abstract class CastIntegerNode extends CastBaseNode {
     }
 
     @Specialization
-    protected RIntVector doStringVector(RStringVector operand, //
+    protected RIntVector doStringVector(RAbstractStringVector operand, //
                     @Cached("createBinaryProfile()") ConditionProfile emptyStringProfile) {
         naCheck.enable(operand);
         int[] idata = new int[operand.getLength()];
@@ -217,28 +217,28 @@ public abstract class CastIntegerNode extends CastBaseNode {
     }
 
     @Specialization
-    public RIntVector doLogicalVector(RLogicalVector operand) {
+    public RIntVector doLogicalVector(RAbstractLogicalVector operand) {
         return createResultVector(operand, index -> naCheck.convertLogicalToInt(operand.getDataAt(index)));
     }
 
     @Specialization
-    protected RIntVector doDoubleVector(RDoubleVector operand) {
+    protected RIntVector doDoubleVector(RAbstractDoubleVector operand) {
         naCheck.enable(operand);
         return createResultVector(operand, naCheck.convertDoubleVectorToIntData(operand));
     }
 
     @Specialization
-    protected RIntVector doRawVector(RRawVector operand) {
+    protected RIntVector doRawVector(RAbstractRawVector operand) {
         return createResultVector(operand, index -> RRuntime.raw2int(operand.getDataAt(index)));
     }
 
     @Specialization
-    protected RIntVector doList(RList list) {
+    protected RIntVector doList(RAbstractListVector list) {
         int length = list.getLength();
         int[] result = new int[length];
         boolean seenNA = false;
         for (int i = 0; i < length; i++) {
-            Object entry = list.getDataAt(i);
+            Object entry = list.getDataAtAsObject(i);
             if (entry instanceof RList) {
                 result[i] = RRuntime.INT_NA;
                 seenNA = true;

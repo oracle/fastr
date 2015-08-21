@@ -29,7 +29,7 @@ import com.oracle.truffle.r.runtime.data.closures.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
-public final class RRawVector extends RVector implements RAbstractRawVector, RAccessibleStore<byte[]> {
+public final class RRawVector extends RVector implements RAbstractRawVector {
 
     public static final RStringVector implicitClassHeader = RDataFactory.createStringVectorFromScalar(RType.Raw.getName());
 
@@ -66,8 +66,20 @@ public final class RRawVector extends RVector implements RAbstractRawVector, RAc
         return data[index];
     }
 
+    @Override
+    public byte getRawDataAt(Object store, int index) {
+        assert data == store;
+        return ((byte[]) store)[index];
+    }
+
     public byte[] getInternalStore() {
         return data;
+    }
+
+    @Override
+    public void setRawDataAt(Object store, int index, byte value) {
+        assert data == store;
+        ((byte[]) store)[index] = value;
     }
 
     @Override

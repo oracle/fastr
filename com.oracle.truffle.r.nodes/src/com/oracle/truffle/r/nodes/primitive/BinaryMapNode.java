@@ -226,12 +226,7 @@ public final class BinaryMapNode extends RBaseNode {
         if (target == null) {
             int maxLength = Math.max(leftLength, rightLength);
             target = createOrShareVector(leftLength, left, rightLength, right, maxLength);
-            Object store;
-            if (target instanceof RAccessibleStore) {
-                store = ((RAccessibleStore<?>) target).getInternalStore();
-            } else {
-                throw RInternalError.shouldNotReachHere();
-            }
+            Object store = target.getInternalStore();
 
             assert left.getLength() == leftLength;
             assert right.getLength() == rightLength;

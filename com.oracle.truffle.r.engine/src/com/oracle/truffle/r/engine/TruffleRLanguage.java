@@ -30,18 +30,20 @@ import com.oracle.truffle.api.instrument.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.engine.repl.debug.*;
-import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.context.*;
 
 /**
  * Only does the minimum for running under the debugger. It is not completely clear how to correctly
  * integrate the R startup in {@code RCommand} with this API.
  */
-@TruffleLanguage.Registration(name = "R", version = "3.1.3", mimeType = "application/x-r")
+@TruffleLanguage.Registration(name = "R", version = "0.1", mimeType = {"application/x-r", "text/x-r"})
 public final class TruffleRLanguage extends TruffleLanguage<RContext> {
 
     private DebugSupportProvider debugSupport;
 
     public static final TruffleRLanguage INSTANCE = new TruffleRLanguage();
+
+    public static final String MIME = "application/x-r";
 
     private TruffleRLanguage() {
     }
@@ -66,12 +68,7 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
 
     @Override
     protected RContext createContext(Env env) {
-        /*
-         * TODO we assume here that the initial context has already been created, which is certainly
-         * true by fiat when running under the debugger, but may not be in general.
-         */
-        RContext result = RContext.getInstance();
-        return result;
+        return RContext.create(env);
     }
 
     @Override
@@ -82,17 +79,22 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
          * TruffleVM does not know about, we have to use a delegation mechanism via a wrapper
          * CallTarget class, using a special REngine entry point.
          */
-        return RContext.getEngine().parseToCallTarget(source);
+        return RContext.getEngine().parseToCallTarget(source, true);
     }
 
     @Override
     protected Object findExportedSymbol(RContext context, String globalName, boolean onlyExplicit) {
-        throw RInternalError.unimplemented("findExportedSymbol");
+        return context.getExportedSymbols().get(globalName);
     }
 
     @Override
     protected Object getLanguageGlobal(RContext context) {
-        throw RInternalError.unimplemented("getLanguageGlobal");
+        // TODO: what's the meaning of "language global" for R?
+        return null;
     }
 
+    // TODO: why isn't the original method public?
+    public Node actuallyCreateFindContextNode() {
+        return createFindContextNode();
+    }
 }

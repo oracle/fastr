@@ -25,6 +25,7 @@ package com.oracle.truffle.r.library.fastr;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.context.*;
 import com.oracle.truffle.r.runtime.data.*;
 
 public abstract class FastRStackTrace extends RExternalBuiltinNode.Arg1 {

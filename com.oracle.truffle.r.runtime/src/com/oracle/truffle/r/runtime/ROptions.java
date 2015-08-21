@@ -11,11 +11,12 @@
  */
 package com.oracle.truffle.r.runtime;
 
-import static com.oracle.truffle.r.runtime.RCmdOptions.*;
-
 import java.util.*;
 import java.util.Map.Entry;
 
+import com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption;
+import com.oracle.truffle.r.runtime.context.*;
+import com.oracle.truffle.r.runtime.context.RContext.*;
 import com.oracle.truffle.r.runtime.data.*;
 
 /**
@@ -24,23 +25,14 @@ import com.oracle.truffle.r.runtime.data.*;
  *
  * An unset option does not appear in the map but is represented as the value {@link RNull#instance}
  * . Setting with {@link RNull#instance} removes the option from the map and, therefore, from being
- * visible in a call to {@code options()}. N.B. An option in the {@link #CHECKED_OPTIONS} set can
- * never be removed and this is handled by checking the value passed on update, where
+ * visible in a call to {@code options()}. N.B. An option in the {@link #CHECKED_OPTIONS_SET} set
+ * can never be removed and this is handled by checking the value passed on update, where
  * {@link RNull#instance} is illegal.
  *
  */
-public class ROptions implements RContext.StateFactory {
-    public interface ContextState extends RContext.ContextState {
-        Set<Map.Entry<String, Object>> getValues();
+public class ROptions {
 
-        Object getValue(String name);
-
-        Object setValueNoCheck(String name, Object value);
-
-        Object setValue(String name, Object value) throws OptionsException;
-    }
-
-    private static class ContextStateImpl implements ContextState {
+    public static final class ContextStateImpl implements RContext.ContextState {
         /**
          * The current values for a given context.
          */
@@ -87,6 +79,15 @@ public class ROptions implements RContext.StateFactory {
             return setValueNoCheck(name, coercedValue);
         }
 
+        public static ContextStateImpl newContext(RContext context, REnvVars envVars) {
+            HashMap<String, Object> map = new HashMap<>();
+            if (context.getKind() == ContextKind.SHARE_NOTHING) {
+                applyDefaults(map, context.getOptions(), envVars);
+            } else {
+                map.putAll(context.getParent().stateROptions.map);
+            }
+            return new ContextStateImpl(map);
+        }
     }
 
     @SuppressWarnings("serial")
@@ -100,64 +101,36 @@ public class ROptions implements RContext.StateFactory {
         }
     }
 
-    private static final String[] CHECKED_OPTIONS = new String[]{"width", "deparse.cutoff", "digits", "expressions", "keep.source", "editor", "continue", "prompt", "contrasts", "check.bounds",
-                    "warn", "warning.length", "warning.expression", "max.print", "nwarnings", "error", "show.error.messages", "echo", "OutDec", "max.contour.segments", "rl_word_breaks",
-                    "warnPartialMatchDollar", "warnPartialMatchArgs", "warnPartialMatchAttr", "showWarnCalls", "showErrorCalls", "showNCalls", "par.ask.default", "browserNLdisabled", "CBoundsCheck"};
+    private static final Set<String> CHECKED_OPTIONS_SET = new HashSet<>(Arrays.asList("width", "deparse.cutoff", "digits", "expressions", "keep.source", "editor", "continue", "prompt", "contrasts",
+                    "check.bounds", "warn", "warning.length", "warning.expression", "max.print", "nwarnings", "error", "show.error.messages", "echo", "OutDec", "max.contour.segments",
+                    "rl_word_breaks", "warnPartialMatchDollar", "warnPartialMatchArgs", "warnPartialMatchAttr", "showWarnCalls", "showErrorCalls", "showNCalls", "par.ask.default",
+                    "browserNLdisabled", "CBoundsCheck"));
 
-    private static final Set<String> CHECKED_OPTIONS_SET = new HashSet<>();
-
-    /**
-     * Holds the default values on startup of an {@link RContext}.
-     */
-    private static final HashMap<String, Object> defaultsMap = new HashMap<>();
-    private static HashMap<String, Object> systemInitMap;
-
-    private static void initDefaults() {
-        for (String s : CHECKED_OPTIONS) {
-            CHECKED_OPTIONS_SET.add(s);
-        }
-        defaultsMap.put("add.smooth", RDataFactory.createLogicalVectorFromScalar(true));
-        defaultsMap.put("check.bounds", RDataFactory.createLogicalVectorFromScalar(false));
-        defaultsMap.put("continue", RDataFactory.createStringVector("+ "));
-        defaultsMap.put("deparse.cutoff", RDataFactory.createIntVectorFromScalar(60));
-        defaultsMap.put("digits", RDataFactory.createIntVectorFromScalar(7));
-        defaultsMap.put("echo", RDataFactory.createLogicalVectorFromScalar(SLAVE.getValue() ? false : true));
-        defaultsMap.put("encoding", RDataFactory.createStringVector("native.enc"));
-        defaultsMap.put("expressions", RDataFactory.createIntVectorFromScalar(5000));
-        boolean keepPkgSource = optionFromEnvVar("R_KEEP_PKG_SOURCE");
-        defaultsMap.put("keep.source", RDataFactory.createLogicalVectorFromScalar(keepPkgSource));
-        defaultsMap.put("keep.source.pkgs", RDataFactory.createLogicalVectorFromScalar(keepPkgSource));
-        defaultsMap.put("OutDec", RDataFactory.createStringVector("."));
-        defaultsMap.put("prompt", RDataFactory.createStringVector("> "));
-        defaultsMap.put("verbose", RDataFactory.createLogicalVectorFromScalar(false));
-        defaultsMap.put("nwarnings", RDataFactory.createIntVectorFromScalar(50));
-        defaultsMap.put("warning.length", RDataFactory.createIntVectorFromScalar(1000));
-        defaultsMap.put("width", RDataFactory.createIntVectorFromScalar(80));
-        defaultsMap.put("browserNLdisabled", RDataFactory.createLogicalVectorFromScalar(false));
-        boolean cBoundsCheck = optionFromEnvVar("R_C_BOUNDS_CHECK");
-        defaultsMap.put("CBoundsCheck", RDataFactory.createLogicalVectorFromScalar(cBoundsCheck));
+    private static void applyDefaults(HashMap<String, Object> map, RCmdOptions options, REnvVars envVars) {
+        map.put("add.smooth", RDataFactory.createLogicalVectorFromScalar(true));
+        map.put("check.bounds", RDataFactory.createLogicalVectorFromScalar(false));
+        map.put("continue", RDataFactory.createStringVector("+ "));
+        map.put("deparse.cutoff", RDataFactory.createIntVectorFromScalar(60));
+        map.put("digits", RDataFactory.createIntVectorFromScalar(7));
+        map.put("echo", RDataFactory.createLogicalVectorFromScalar(options.getBoolean(RCmdOption.SLAVE) ? false : true));
+        map.put("encoding", RDataFactory.createStringVector("native.enc"));
+        map.put("expressions", RDataFactory.createIntVectorFromScalar(5000));
+        boolean keepPkgSource = optionFromEnvVar("R_KEEP_PKG_SOURCE", envVars);
+        map.put("keep.source", RDataFactory.createLogicalVectorFromScalar(keepPkgSource));
+        map.put("keep.source.pkgs", RDataFactory.createLogicalVectorFromScalar(keepPkgSource));
+        map.put("OutDec", RDataFactory.createStringVector("."));
+        map.put("prompt", RDataFactory.createStringVector("> "));
+        map.put("verbose", RDataFactory.createLogicalVectorFromScalar(false));
+        map.put("nwarnings", RDataFactory.createIntVectorFromScalar(50));
+        map.put("warning.length", RDataFactory.createIntVectorFromScalar(1000));
+        map.put("width", RDataFactory.createIntVectorFromScalar(80));
+        map.put("browserNLdisabled", RDataFactory.createLogicalVectorFromScalar(false));
+        boolean cBoundsCheck = optionFromEnvVar("R_C_BOUNDS_CHECK", envVars);
+        map.put("CBoundsCheck", RDataFactory.createLogicalVectorFromScalar(cBoundsCheck));
     }
 
-    public ContextState newContext(RContext context, Object... objects) {
-        if (defaultsMap.isEmpty()) {
-            initDefaults();
-        }
-        HashMap<String, Object> map = new HashMap<>();
-        map.putAll(systemInitMap == null ? defaultsMap : systemInitMap);
-        return new ContextStateImpl(map);
-    }
-
-    @Override
-    public void systemInitialized(RContext context, RContext.ContextState state) {
-        ContextStateImpl optionsState = (ContextStateImpl) state;
-        systemInitMap = new HashMap<>(optionsState.map.size());
-        systemInitMap.putAll(optionsState.map);
-    }
-
-    private static boolean optionFromEnvVar(String envVar) {
-        String envValue = REnvVars.get(envVar);
-        return envValue != null && envValue.equals("yes");
-
+    private static boolean optionFromEnvVar(String envVar, REnvVars envVars) {
+        return "yes".equals(envVars.get(envVar));
     }
 
     private static Object check(String name, Object value) throws OptionsException {

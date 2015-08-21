@@ -23,13 +23,14 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import java.io.*;
-import java.lang.ProcessBuilder.*;
+import java.lang.ProcessBuilder.Redirect;
 import java.util.*;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.context.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
@@ -40,7 +41,7 @@ public abstract class SystemFunction extends RBuiltinNode {
     public Object system(RAbstractStringVector command, byte internLogical) {
         Object result;
         boolean intern = RRuntime.fromLogical(internLogical);
-        String shell = REnvVars.get("SHELL");
+        String shell = RContext.getInstance().stateREnvVars.get("SHELL");
         if (shell == null) {
             shell = "/bin/sh";
         }
@@ -93,7 +94,7 @@ public abstract class SystemFunction extends RBuiltinNode {
 
     private static void updateEnvironment(ProcessBuilder pb) {
         Map<String, String> pEnv = pb.environment();
-        Map<String, String> rEnv = REnvVars.getMap();
+        Map<String, String> rEnv = RContext.getInstance().stateREnvVars.getMap();
         for (Map.Entry<String, String> entry : rEnv.entrySet()) {
             String name = entry.getKey();
             String value = entry.getValue();

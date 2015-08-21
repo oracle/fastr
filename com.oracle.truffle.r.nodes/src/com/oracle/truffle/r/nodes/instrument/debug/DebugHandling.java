@@ -35,6 +35,7 @@ import com.oracle.truffle.r.nodes.control.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.nodes.instrument.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.context.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.nodes.*;
 
@@ -400,7 +401,7 @@ public class DebugHandling {
     }
 
     private static void printNode(Node node, boolean curly) {
-        RContext.ConsoleHandler consoleHandler = RContext.getInstance().getConsoleHandler();
+        ConsoleHandler consoleHandler = RContext.getInstance().getConsoleHandler();
         RDeparse.State state = RDeparse.State.createPrintableState();
         ((RBaseNode) node).deparse(state);
         consoleHandler.print("debug: ");

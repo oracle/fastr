@@ -32,7 +32,20 @@ public interface RAbstractIntVector extends RAbstractVector {
         return getDataAt(index);
     }
 
+    default int getDataAt(@SuppressWarnings("unused") Object store, int index) {
+        return getDataAt(index);
+    }
+
     int getDataAt(int index);
+
+    @SuppressWarnings("unused")
+    default void setDataAt(Object store, int index, int value) {
+        throw new UnsupportedOperationException();
+    }
+
+    default void setNA(Object store, int index) {
+        setDataAt(store, index, RRuntime.INT_NA);
+    }
 
     RIntVector materialize();
 

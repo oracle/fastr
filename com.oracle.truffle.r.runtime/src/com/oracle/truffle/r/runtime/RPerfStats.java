@@ -188,7 +188,7 @@ public class RPerfStats {
             return;
         }
         reporting = true;
-        String file = FastROptions.PerfStatsFile.getValue();
+        String file = FastROptions.PerfStatsFile;
         if (file != null) {
             try {
                 out = new PrintStream(new FileOutputStream(file));

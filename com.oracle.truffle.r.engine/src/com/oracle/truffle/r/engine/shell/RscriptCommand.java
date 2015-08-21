@@ -22,11 +22,13 @@
  */
 package com.oracle.truffle.r.engine.shell;
 
-import static com.oracle.truffle.r.runtime.RCmdOptions.*;
+import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.*;
 
 import java.util.*;
 
+import com.oracle.truffle.api.instrument.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.context.*;
 
 /**
  * Emulates the (Gnu)Rscript command as precisely as possible. in GnuR, Rscript is a genuine wrapper
@@ -37,43 +39,41 @@ import com.oracle.truffle.r.runtime.*;
  */
 public class RscriptCommand {
     // CheckStyle: stop system..print check
-    public static void main(String[] args) {
-        // Since many of the options are shared parse them from an RSCRIPT perspective.
-        // Handle --help and --version specially, as they exit.
-        RCmdOptionsParser.Result result = RCmdOptionsParser.parseArguments(RCmdOptions.Client.RSCRIPT, args);
-        int resultArgsLength = result.args.length;
-        int firstNonOptionArgIndex = result.firstNonOptionArgIndex;
-        if (HELP.getValue()) {
-            RCmdOptionsParser.printHelp(RCmdOptions.Client.RSCRIPT, 0);
+
+    private static void preprocessRScriptOptions(RCmdOptions options) {
+        String[] arguments = options.getArguments();
+        int resultArgsLength = arguments.length;
+        int firstNonOptionArgIndex = options.getFirstNonOptionArgIndex();
+        if (options.getBoolean(HELP)) {
+            RCmdOptions.printHelp(RCmdOptions.Client.RSCRIPT, 0);
             Utils.exit(0);
-        } else if (VERSION.getValue()) {
+        } else if (options.getBoolean(VERSION)) {
             printVersionAndExit();
         }
         // Now reformat the args, setting --slave and --no-restore as per the spec
-        // and invoke RCommand.subMain
         ArrayList<String> adjArgs = new ArrayList<>(resultArgsLength + 1);
-        adjArgs.add(result.args[0]);
+        adjArgs.add(arguments[0]);
         adjArgs.add("--slave");
-        SLAVE.setValue(true);
+        options.setValue(SLAVE, true);
         adjArgs.add("--no-restore");
-        NO_RESTORE.setValue(true);
+        options.setValue(NO_RESTORE, true);
         // Either -e options are set or first non-option arg is a file
-        if (EXPR.getValue() == null) {
+        if (options.getStringList(EXPR) == null) {
             if (firstNonOptionArgIndex == resultArgsLength) {
                 System.err.println("filename is missing");
                 Utils.exit(2);
             } else {
-                FILE.setValue(result.args[firstNonOptionArgIndex]);
+                options.setValue(FILE, arguments[firstNonOptionArgIndex]);
             }
         }
         // copy up to non-option args
         int rx = 1;
         while (rx < firstNonOptionArgIndex) {
-            adjArgs.add(result.args[rx]);
+            adjArgs.add(arguments[rx]);
             rx++;
         }
-        if (FILE.getValue() != null) {
-            adjArgs.add("--file=" + FILE.getValue());
+        if (options.getString(FILE) != null) {
+            adjArgs.add("--file=" + options.getString(FILE));
             rx++; // skip over file arg
             firstNonOptionArgIndex++;
         }
@@ -81,12 +81,29 @@ public class RscriptCommand {
         if (firstNonOptionArgIndex < resultArgsLength) {
             adjArgs.add("--args");
             while (rx < resultArgsLength) {
-                adjArgs.add(result.args[rx++]);
+                adjArgs.add(arguments[rx++]);
             }
         }
-        String[] adjArgsArray = new String[adjArgs.size()];
-        adjArgs.toArray(adjArgsArray);
-        RCommand.rscriptMain(adjArgsArray);
+        options.setArguments(adjArgs.toArray(new String[adjArgs.size()]));
+    }
+
+    public static void main(String[] args) {
+        // Since many of the options are shared parse them from an RSCRIPT perspective.
+        // Handle --help and --version specially, as they exit.
+        RCmdOptions options = RCmdOptions.parseArguments(RCmdOptions.Client.RSCRIPT, args);
+        preprocessRScriptOptions(options);
+        ContextInfo info = RCommand.createContextInfoFromCommandLine(options);
+        try {
+            RCommand.readEvalPrint(info);
+        } catch (Utils.DebugExitException ex) {
+            /*
+             * This is thrown instead of doing System.exit, when we are running under the in-process
+             * Truffle debugger. We just return to the debugger command loop, possibly to be
+             * re-entered with a new evaluation.
+             */
+        } catch (QuitException ex) {
+            /* This is thrown by the Truffle debugger when the user executes the 'q' command. */
+        }
     }
 
     private static void printVersionAndExit() {
@@ -94,5 +111,4 @@ public class RscriptCommand {
         System.out.println(RVersionNumber.FULL);
         Utils.exit(0);
     }
-
 }

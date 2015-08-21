@@ -17,7 +17,9 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.runtime.RError.Message;
+import com.oracle.truffle.r.runtime.context.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.nodes.*;
 
@@ -38,7 +40,7 @@ import com.oracle.truffle.r.runtime.nodes.*;
  * <p>
  * TODO Consider using an {@link RLanguage} object to denote the call (somehow).
  */
-public class RErrorHandling implements RContext.StateFactory {
+public class RErrorHandling {
 
     private static final int IN_HANDLER = 3;
     private static final RStringVector RESTART_CLASS = RDataFactory.createStringVectorFromScalar("restart");
@@ -67,7 +69,7 @@ public class RErrorHandling implements RContext.StateFactory {
      * Holds all the context-specific state that is relevant for error/warnings. Simple value class
      * for which geterrs/setters are unnecessary.
      */
-    private static class ContextStateImpl implements RContext.ContextState {
+    public static class ContextStateImpl implements RContext.ContextState {
         /**
          * Values is either NULL or an RPairList, for {@code restarts}.
          */
@@ -127,6 +129,9 @@ public class RErrorHandling implements RContext.StateFactory {
             return dotSignalSimpleWarning;
         }
 
+        public static ContextStateImpl newContext(@SuppressWarnings("unused") RContext context) {
+            return new ContextStateImpl();
+        }
     }
 
     /**
@@ -145,12 +150,8 @@ public class RErrorHandling implements RContext.StateFactory {
 
     private static final Object RESTART_TOKEN = new Object();
 
-    public RContext.ContextState newContext(RContext context, Object... objects) {
-        return new ContextStateImpl();
-    }
-
     private static ContextStateImpl getRErrorHandlingState() {
-        return (ContextStateImpl) RContext.getContextState(RContext.ClassStateKind.RErrorHandling);
+        return RContext.getInstance().stateRErrorHandling;
     }
 
     public static Object getHandlerStack() {
@@ -435,7 +436,7 @@ public class RErrorHandling implements RContext.StateFactory {
         }
 
         // we are not quite done - need to check for options(error=expr)
-        Object errorExpr = RContext.getROptionsState().getValue("error");
+        Object errorExpr = RContext.getInstance().stateROptions.getValue("error");
         if (errorExpr != RNull.instance) {
             int oldInError = errorHandlingState.inError;
             try {
@@ -525,7 +526,7 @@ public class RErrorHandling implements RContext.StateFactory {
         if (errorHandlingState.inWarning) {
             return;
         }
-        Object s = RContext.getROptionsState().getValue("warning.expression");
+        Object s = RContext.getInstance().stateROptions.getValue("warning.expression");
         if (s != RNull.instance) {
             if (!(s instanceof RLanguage || s instanceof RExpression)) {
                 // TODO
@@ -534,7 +535,12 @@ public class RErrorHandling implements RContext.StateFactory {
         }
 
         // ensured in ROptions
-        int w = ((RIntVector) RContext.getROptionsState().getValue("warn")).getDataAt(0);
+
+        Object value = RContext.getInstance().stateROptions.getValue("warn");
+        int w = 0;
+        if (value != RNull.instance) {
+            w = ((RAbstractIntVector) value).getDataAt(0);
+        }
         if (w == RRuntime.INT_NA) {
             w = 0;
         }

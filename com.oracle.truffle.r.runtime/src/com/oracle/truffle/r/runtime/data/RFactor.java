@@ -36,6 +36,10 @@ public final class RFactor implements RShareable, RAbstractContainer {
         this.ordered = ordered;
     }
 
+    public int[] getInternalStore() {
+        return vector.getInternalStore();
+    }
+
     public RType getRType() {
         return RType.Integer;
     }
@@ -221,4 +225,5 @@ public final class RFactor implements RShareable, RAbstractContainer {
         RVector levels = getLevels(attrProfiles);
         return levels == null ? 0 : levels.getLength();
     }
+
 }

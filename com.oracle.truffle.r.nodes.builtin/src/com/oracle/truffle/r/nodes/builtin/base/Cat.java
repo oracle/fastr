@@ -34,6 +34,7 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.conn.*;
+import com.oracle.truffle.r.runtime.context.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
@@ -87,7 +88,7 @@ public abstract class Cat extends RInvisibleBuiltinNode {
         checkFillLength(fill);
         int fillWidth = -1;
         if (RRuntime.fromLogical(fill.getDataAt(0))) {
-            fillWidth = ((RIntVector) RContext.getROptionsState().getValue("width")).getDataAt(0);
+            fillWidth = ((RIntVector) RContext.getInstance().stateROptions.getValue("width")).getDataAt(0);
         }
         return output(args, conn, sepVec, fillWidth, checkLabels(labels), append);
     }

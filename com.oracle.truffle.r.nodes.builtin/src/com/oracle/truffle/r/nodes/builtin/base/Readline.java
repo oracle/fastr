@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.context.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
 @RBuiltin(name = "readline", kind = RBuiltinKind.INTERNAL, parameterNames = "prompt")
@@ -34,7 +35,7 @@ public abstract class Readline extends RBuiltinNode {
         if (!RContext.getInstance().isInteractive()) {
             return "";
         }
-        RContext.ConsoleHandler consoleHandler = RContext.getInstance().getConsoleHandler();
+        ConsoleHandler consoleHandler = RContext.getInstance().getConsoleHandler();
         String savedPrompt = consoleHandler.getPrompt();
         consoleHandler.setPrompt(prompt.getDataAt(0));
         String input = consoleHandler.readLine();

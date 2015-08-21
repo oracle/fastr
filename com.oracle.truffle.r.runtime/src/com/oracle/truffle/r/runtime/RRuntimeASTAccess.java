@@ -23,8 +23,10 @@
 package com.oracle.truffle.r.runtime;
 
 import com.oracle.truffle.api.nodes.*;
-import com.oracle.truffle.r.runtime.RContext.*;
+import com.oracle.truffle.api.vm.*;
+import com.oracle.truffle.r.runtime.context.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.*;
 
 /**
  * A collection of methods that need access to the AST types, needed by code that resides in the
@@ -47,6 +49,8 @@ public interface RRuntimeASTAccess {
      * Converts {@code rl} to a {@link RList}.
      */
     RList asList(RLanguage rl);
+
+    Object fromList(RAbstractVector list);
 
     /**
      * Get the "names" attribute for an {@link RLanguage} object, or {@code null} if none.
@@ -148,9 +152,9 @@ public interface RRuntimeASTAccess {
      */
     void setFunctionName(RootNode node, String name);
 
-    RContext create(RContext parent, Kind kind, String[] commandArgs, ConsoleHandler consoleHandler);
+    TruffleVM create(ContextInfo info);
 
-    RContext.Engine createEngine(RContext context);
+    Engine createEngine(RContext context);
 
     /**
      * Returns {@code true} iff {@code node} is an instance of {@code ReplacementNode}, which is not

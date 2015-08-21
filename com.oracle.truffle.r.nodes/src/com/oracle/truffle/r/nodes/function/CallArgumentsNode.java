@@ -207,6 +207,29 @@ public class CallArgumentsNode extends ArgumentsNode {
         return new RArgsValuesAndNames(values, resultSignature);
     }
 
+    @ExplodeLoop
+    public Object[] evaluateFlattenObjects(VirtualFrame frame) {
+        int size = arguments.length;
+        RArgsValuesAndNames varArgInfo = null;
+        if (containsVarArgsSymbol()) {
+            varArgInfo = getVarargsAndNames(frame);
+            size += (varArgInfo.getLength() - 1) * varArgsSymbolIndices.length;
+        }
+        Object[] values = new Object[size];
+        int vargsSymbolsIndex = 0;
+        int index = 0;
+        for (int i = 0; i < arguments.length; i++) {
+            if (vargsSymbolsIndex < varArgsSymbolIndices.length && varArgsSymbolIndices[vargsSymbolsIndex] == i) {
+                index = flattenVarArgsObject(frame, varArgInfo, values, index);
+                vargsSymbolsIndex++;
+            } else {
+                values[index] = arguments[i] == null ? RMissing.instance : arguments[i].execute(frame);
+                index++;
+            }
+        }
+        return values;
+    }
+
     private int flattenVarArgs(VirtualFrame frame, RArgsValuesAndNames varArgInfo, String[] names, Object[] values, int startIndex) {
         int index = startIndex;
         for (int j = 0; j < varArgInfo.getLength(); j++) {
@@ -250,5 +273,18 @@ public class CallArgumentsNode extends ArgumentsNode {
             result[i] = argument.asRSyntaxNode();
         }
         return result;
+    }
+
+    private int flattenVarArgsObject(VirtualFrame frame, RArgsValuesAndNames varArgInfo, Object[] values, int startIndex) {
+        int index = startIndex;
+        for (int j = 0; j < varArgInfo.getLength(); j++) {
+            if (promiseHelper == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                promiseHelper = insert(new PromiseCheckHelperNode());
+            }
+            values[index] = promiseHelper.checkEvaluate(frame, varArgInfo.getArgument(j));
+            index++;
+        }
+        return index;
     }
 }

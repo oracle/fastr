@@ -32,7 +32,20 @@ public interface RAbstractLogicalVector extends RAbstractVector {
         return getDataAt(index);
     }
 
+    default byte getDataAt(@SuppressWarnings("unused") Object store, int index) {
+        return getDataAt(index);
+    }
+
     byte getDataAt(int index);
+
+    @SuppressWarnings("unused")
+    default void setDataAt(Object store, int index, byte value) {
+        throw new UnsupportedOperationException();
+    }
+
+    default void setNA(Object store, int index) {
+        setDataAt(store, index, RRuntime.LOGICAL_NA);
+    }
 
     RLogicalVector materialize();
 

@@ -39,28 +39,28 @@ public class EagerEvalHelper {
      * @return Whether to use optimizations for constants
      */
     public static boolean optConsts() {
-        return FastROptions.EagerEval.getValue() || FastROptions.EagerEvalConstants.getValue();
+        return FastROptions.EagerEval || FastROptions.EagerEvalConstants;
     }
 
     /**
      * @return Whether to use optimizations for single variables
      */
     public static boolean optVars() {
-        return FastROptions.EagerEval.getValue() || FastROptions.EagerEvalVariables.getValue();
+        return FastROptions.EagerEval || FastROptions.EagerEvalVariables;
     }
 
     /**
      * @return Whether to use optimizations for single variables
      */
     public static boolean optDefault() {
-        return FastROptions.EagerEval.getValue() || FastROptions.EagerEvalDefault.getValue();
+        return FastROptions.EagerEval || FastROptions.EagerEvalDefault;
     }
 
     /**
      * @return Whether to use optimizations for arbitrary expressions
      */
     public static boolean optExprs() {
-        return FastROptions.EagerEval.getValue() || FastROptions.EagerEvalExpressions.getValue();
+        return FastROptions.EagerEval || FastROptions.EagerEvalExpressions;
     }
 
     public static boolean isOptimizableConstant(RNode expr) {

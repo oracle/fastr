@@ -35,6 +35,7 @@ import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.access.array.read.*;
 import com.oracle.truffle.r.nodes.access.array.write.*;
+import com.oracle.truffle.r.nodes.access.vector.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.builtin.base.InfixEmulationFunctionsFactory.PromiseEvaluatorNodeGen;
 import com.oracle.truffle.r.nodes.function.*;
@@ -178,8 +179,11 @@ public class InfixEmulationFunctions {
 
     public abstract static class AccessArrayBuiltin extends RBuiltinNode {
 
+        // old
         @Child private AccessArrayNode accessNode;
         @Child private AccessPositions positions;
+        // new
+        @Child private ExtractVectorNode extractNode;
 
         @Override
         protected void createCasts(CastBuilder casts) {
@@ -189,16 +193,27 @@ public class InfixEmulationFunctions {
         protected abstract boolean isSubset();
 
         protected Object access(Object vector, byte exact, RArgsValuesAndNames inds, Object dropDim) {
-            if (accessNode == null || positions.getLength() != inds.getLength()) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                if (accessNode == null) {
-                    accessNode = insert(AccessArrayNodeGen.create(isSubset(), false, false, null, null, null, null, null));
+            Object result;
+            if (ExtractVectorNode.USE_NODE) {
+                if (extractNode == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    extractNode = insert(ExtractVectorNode.create(isSubset() ? ElementAccessMode.SUBSET : ElementAccessMode.SUBSCRIPT));
                 }
-                int len = inds.getLength();
-                positions = insert(AccessPositions.create(isSubset(), len));
+                result = extractNode.apply(vector, inds.getArguments(), RLogical.valueOf(exact), dropDim);
+            } else {
+                if (accessNode == null || positions.getLength() != inds.getLength()) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    if (accessNode == null) {
+                        accessNode = insert(AccessArrayNodeGen.create(isSubset(), false, false, null, null, null, null, null));
+                    }
+                    int len = inds.getLength();
+                    positions = insert(AccessPositions.create(isSubset(), len));
+                }
+                Object[] pos = inds.getArguments();
+                result = accessNode.executeAccess(vector, exact, 0, positions.execute(vector, pos, exact, pos), dropDim);
             }
-            Object[] pos = inds.getArguments();
-            return accessNode.executeAccess(vector, exact, 0, positions.execute(vector, pos, exact, pos), dropDim);
+            return result;
+
         }
 
         protected boolean noInd(RArgsValuesAndNames inds) {
@@ -273,6 +288,10 @@ public class InfixEmulationFunctions {
         }
 
         protected Object getInternal(Object x, RArgsValuesAndNames inds, RAbstractLogicalVector exactVec) {
+            /*
+             * TODO this should not be handled here. The new vector access nodes handle this, remove
+             * this check as soon as its the default and the old implementation is gone.
+             */
             byte exact;
             if (emptyExactProfile.profile(exactVec.getLength() == 0)) {
                 exact = RRuntime.LOGICAL_FALSE;
@@ -323,6 +342,7 @@ public class InfixEmulationFunctions {
     public abstract static class UpdateArrayBuiltin extends RBuiltinNode {
 
         @Child private UpdateArrayHelperNode updateNode;
+        @Child private ReplaceVectorNode replaceNode;
         @Child private UpdatePositions positions;
         @Child private CoerceVector coerceVector;
 
@@ -330,24 +350,40 @@ public class InfixEmulationFunctions {
         private final ConditionProfile argsLengthLargerThanOneProfile = ConditionProfile.createBinaryProfile();
 
         protected Object update(Object vector, RArgsValuesAndNames args, Object value, boolean isSubset) {
-            int len = argsLengthOneProfile.profile(args.getLength() == 1) ? 1 : args.getLength() - 1;
-
-            if (updateNode == null || positions.getLength() != len) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                if (updateNode == null) {
-                    updateNode = insert(UpdateArrayHelperNodeGen.create(isSubset, 0, null, null, null, null));
+            Object result;
+            if (ReplaceVectorNode.USE_NODE) {
+                if (replaceNode == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    replaceNode = insert(ReplaceVectorNode.create(isSubset ? ElementAccessMode.SUBSET : ElementAccessMode.SUBSCRIPT));
                 }
-                positions = insert(UpdatePositions.create(isSubset, len));
-                coerceVector = insert(CoerceVectorNodeGen.create(null, null, null));
-            }
-            Object[] pos;
-            if (argsLengthLargerThanOneProfile.profile(args.getLength() > 1)) {
-                pos = Arrays.copyOf(args.getArguments(), args.getLength() - 1);
+                Object[] pos;
+                if (argsLengthLargerThanOneProfile.profile(args.getLength() > 1)) {
+                    pos = Arrays.copyOf(args.getArguments(), args.getLength() - 1);
+                } else {
+                    pos = new Object[]{RMissing.instance};
+                }
+                result = replaceNode.apply(vector, pos, value);
             } else {
-                pos = new Object[]{RMissing.instance};
+                int len = argsLengthOneProfile.profile(args.getLength() == 1) ? 1 : args.getLength() - 1;
+
+                if (updateNode == null || positions.getLength() != len) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    if (updateNode == null) {
+                        updateNode = insert(UpdateArrayHelperNodeGen.create(isSubset, 0, null, null, null, null));
+                    }
+                    positions = insert(UpdatePositions.create(isSubset, len));
+                    coerceVector = insert(CoerceVectorNodeGen.create(null, null, null));
+                }
+                Object[] pos;
+                if (argsLengthLargerThanOneProfile.profile(args.getLength() > 1)) {
+                    pos = Arrays.copyOf(args.getArguments(), args.getLength() - 1);
+                } else {
+                    pos = new Object[]{RMissing.instance};
+                }
+                Object newPositions = positions.execute(vector, pos, pos, value);
+                result = updateNode.executeUpdate(vector, value, newPositions, coerceVector.executeEvaluated(value, vector, newPositions));
             }
-            Object newPositions = positions.execute(vector, pos, pos, value);
-            return updateNode.executeUpdate(vector, value, newPositions, coerceVector.executeEvaluated(value, vector, newPositions));
+            return result;
         }
 
         @SuppressWarnings("unused")

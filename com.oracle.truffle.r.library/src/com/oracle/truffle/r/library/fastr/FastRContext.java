@@ -24,11 +24,15 @@ package com.oracle.truffle.r.library.fastr;
 
 import java.io.*;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.source.*;
+import com.oracle.truffle.api.vm.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.RCmdOptions.Client;
 import com.oracle.truffle.r.runtime.conn.*;
+import com.oracle.truffle.r.runtime.context.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.nodes.*;
@@ -37,27 +41,29 @@ public class FastRContext {
 
     public abstract static class Create extends RExternalBuiltinNode.Arg2 {
         @Specialization
+        @TruffleBoundary
         protected int create(RAbstractStringVector args, RIntVector kindVec) {
-            String[] argsArray = args.getLength() == 1 ? new String[]{args.getDataAt(0)} : ((RStringVector) args).getDataCopy();
-            RContext current = RContext.getInstance();
-            RContext.ConsoleHandler consoleHandler = current.getConsoleHandler();
-            RContext.Kind kind = RContext.Kind.values()[kindVec.getDataAt(0) - 1];
-            RContext newContext = RContext.getRRuntimeASTAccess().create(current, kind, argsArray, consoleHandler);
-            return (int) newContext.getId();
+            RContext.ContextKind kind = RContext.ContextKind.VALUES[kindVec.getDataAt(0) - 1];
+            RCmdOptions options = RCmdOptions.parseArguments(Client.RSCRIPT, args.materialize().getDataCopy());
+            return ContextInfo.createDeferred(options, kind, RContext.getInstance(), RContext.getInstance().getConsoleHandler());
         }
     }
 
     public abstract static class Print extends RExternalBuiltinNode.Arg1 {
         @Specialization
+        @TruffleBoundary
         protected RNull print(RAbstractIntVector ctxt) {
             if (ctxt.getLength() != 1) {
                 throw RError.error(this, RError.Message.INVALID_ARGUMENT, "context");
             }
             int contextId = ctxt.getDataAt(0);
-            @SuppressWarnings("unused")
-            RContext context = checkContext(contextId, this);
+            ContextInfo info = ContextInfo.get(contextId);
             try {
-                StdConnections.getStdout().writeString("context: " + contextId, true);
+                if (info == null) {
+                    StdConnections.getStdout().writeString("obsolete context: " + contextId, true);
+                } else {
+                    StdConnections.getStdout().writeString("context: " + contextId, true);
+                }
                 return RNull.instance;
             } catch (IOException ex) {
                 throw RError.error(this, RError.Message.GENERIC, ex.getMessage());
@@ -67,11 +73,12 @@ public class FastRContext {
 
     public abstract static class Spawn extends RExternalBuiltinNode.Arg2 {
         @Specialization
+        @TruffleBoundary
         protected RNull eval(RIntVector contexts, RAbstractStringVector exprs) {
             RContext.EvalThread[] threads = new RContext.EvalThread[contexts.getLength()];
             for (int i = 0; i < threads.length; i++) {
-                RContext context = checkContext(contexts.getDataAt(i), this);
-                threads[i] = new RContext.EvalThread(context, Source.fromText(exprs.getDataAt(i % threads.length), "<context_eval>"));
+                ContextInfo info = checkContext(contexts.getDataAt(i), this);
+                threads[i] = new RContext.EvalThread(info, Source.fromText(exprs.getDataAt(i % threads.length), "<context_eval>"));
             }
             for (int i = 0; i < threads.length; i++) {
                 threads[i].start();
@@ -85,12 +92,12 @@ public class FastRContext {
         protected RNull eval(RIntVector contexts) {
             try {
                 for (int i = 0; i < contexts.getLength(); i++) {
-                    RContext context = RContext.find(contexts.getDataAt(i));
-                    if (context == null) {
+                    Thread thread = RContext.EvalThread.threads.get(contexts.getDataAt(i));
+                    if (thread == null) {
                         // already done
                         continue;
                     } else {
-                        context.joinThread();
+                        thread.join();
                     }
                 }
             } catch (InterruptedException ex) {
@@ -103,12 +110,13 @@ public class FastRContext {
 
     public abstract static class Eval extends RExternalBuiltinNode.Arg3 {
         @Specialization
+        @TruffleBoundary
         protected RNull eval(RIntVector contexts, RAbstractStringVector exprs, byte par) {
             if (RRuntime.fromLogical(par)) {
                 RContext.EvalThread[] threads = new RContext.EvalThread[contexts.getLength()];
                 for (int i = 0; i < threads.length; i++) {
-                    RContext context = checkContext(contexts.getDataAt(i), this);
-                    threads[i] = new RContext.EvalThread(context, Source.fromText(exprs.getDataAt(i % threads.length), "<context_eval>"));
+                    ContextInfo info = checkContext(contexts.getDataAt(i), this);
+                    threads[i] = new RContext.EvalThread(info, Source.fromText(exprs.getDataAt(i % threads.length), "<context_eval>"));
                 }
                 for (int i = 0; i < threads.length; i++) {
                     threads[i].start();
@@ -122,12 +130,14 @@ public class FastRContext {
                 }
             } else {
                 for (int i = 0; i < contexts.getLength(); i++) {
-                    RContext context = checkContext(contexts.getDataAt(i), this);
+                    ContextInfo info = checkContext(contexts.getDataAt(i), this);
+                    TruffleVM vm = info.newContext();
                     try {
-                        context.activate();
-                        context.getThisEngine().parseAndEval(Source.fromText(exprs.getDataAt(i), "<context_eval>"), true, false);
+                        vm.eval("application/x-r", exprs.getDataAt(i));
+                    } catch (IOException e) {
+                        throw RInternalError.shouldNotReachHere(e);
                     } finally {
-                        context.destroy();
+                        RContext.destroyContext(vm);
                     }
                 }
             }
@@ -135,12 +145,12 @@ public class FastRContext {
         }
     }
 
-    private static RContext checkContext(int contextId, RBaseNode invokingNode) throws RError {
-        RContext context = RContext.find(contextId);
-        if (context == null) {
+    private static ContextInfo checkContext(int contextId, RBaseNode invokingNode) throws RError {
+        ContextInfo info = ContextInfo.get(contextId);
+        if (info == null) {
             throw RError.error(invokingNode, RError.Message.GENERIC, "no context: " + contextId);
         } else {
-            return context;
+            return info;
         }
     }
 
@@ -155,6 +165,7 @@ public class FastRContext {
 
     public abstract static class CreateChannel extends RExternalBuiltinNode.Arg1 {
         @Specialization
+        @TruffleBoundary
         protected int createChannel(RAbstractVector key) {
             validateChannelArg(this, key);
             return RChannel.createChannel(((RAbstractIntVector) key).getDataAt(0));
@@ -163,6 +174,7 @@ public class FastRContext {
 
     public abstract static class GetChannel extends RExternalBuiltinNode.Arg1 {
         @Specialization
+        @TruffleBoundary
         protected int getChannel(RAbstractVector key) {
             validateChannelArg(this, key);
             return RChannel.getChannel(((RAbstractIntVector) key).getDataAt(0));
@@ -171,6 +183,7 @@ public class FastRContext {
 
     public abstract static class CloseChannel extends RExternalBuiltinNode.Arg1 {
         @Specialization
+        @TruffleBoundary
         protected RNull getChannel(RAbstractVector id) {
             validateChannelArg(this, id);
             RChannel.closeChannel(((RAbstractIntVector) id).getDataAt(0));
@@ -180,6 +193,7 @@ public class FastRContext {
 
     public abstract static class ChannelSend extends RExternalBuiltinNode.Arg2 {
         @Specialization
+        @TruffleBoundary
         protected RNull send(RAbstractVector id, Object data) {
             validateChannelArg(this, id);
             RChannel.send(((RAbstractIntVector) id).getDataAt(0), data);
@@ -189,6 +203,7 @@ public class FastRContext {
 
     public abstract static class ChannelReceive extends RExternalBuiltinNode.Arg1 {
         @Specialization
+        @TruffleBoundary
         protected Object receive(RAbstractVector id) {
             validateChannelArg(this, id);
             return RChannel.receive(((RAbstractIntVector) id).getDataAt(0));

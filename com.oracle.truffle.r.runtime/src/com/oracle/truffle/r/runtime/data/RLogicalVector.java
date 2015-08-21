@@ -29,7 +29,7 @@ import com.oracle.truffle.r.runtime.data.closures.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
-public final class RLogicalVector extends RVector implements RAbstractLogicalVector, RAccessibleStore<byte[]> {
+public final class RLogicalVector extends RVector implements RAbstractLogicalVector {
 
     public static final RStringVector implicitClassHeader = RDataFactory.createStringVectorFromScalar(RType.Logical.getName());
 
@@ -68,6 +68,18 @@ public final class RLogicalVector extends RVector implements RAbstractLogicalVec
     @Override
     public byte[] getInternalStore() {
         return data;
+    }
+
+    @Override
+    public void setDataAt(Object store, int index, byte value) {
+        assert data == store;
+        ((byte[]) store)[index] = value;
+    }
+
+    @Override
+    public byte getDataAt(Object store, int index) {
+        assert data == store;
+        return ((byte[]) store)[index];
     }
 
     @Override

@@ -25,126 +25,103 @@ package com.oracle.truffle.r.runtime;
 import java.util.*;
 import java.util.Map.Entry;
 
-import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.r.runtime.RCmdOptions.*;
-
 /**
  * Options to control the behavior of the FastR system, that relate to the implementation, i.e., are
- * <b>not</b> part of the standard set of R options or command line options.
- *
- * Currently it is not possible to include the FastR options in Graal as FastR is not part of Graal.
- * Someday it may be possible to register such options with the Graal VM, but in the interim, we
- * override the implementation to use system properties. The syntax follows that for Graal options
- * except that a {@code D} (for setting system property) must be the first character,e.g.
- * {@code -DR:+OptionName} to set a boolean valued option to {@code true}.
+ * <b>not</b> part of the standard set of R options or command line options. The syntax follows that
+ * for Graal options except that a {@code D} (for setting system property) must be the first
+ * character,e.g. {@code -DR:+OptionName} to set a boolean valued option to {@code true}.
  */
 public class FastROptions {
-    private static final List<Option<?>> optionsList = new ArrayList<>();
 
-    //@formatter:off
-    public static final Option<Boolean> PrintErrorStacktraces = newBooleanOption("PrintErrorStacktraces", false, "Prints Java and R stack traces for all errors");
-    public static final Option<Boolean> PrintErrorStacktracesToFile = newBooleanOption("PrintErrorStacktracesToFile", true, "Dumps Java and R stack traces to file for all errors");
-    public static final Option<Boolean> CheckResultCompleteness = newBooleanOption("CheckResultCompleteness", true, "Assert completeness of results vectors after evaluating unit tests and R shell commands");
-    public static final Option<String>  Debug = newStringOption("Debug", null, "Debug=name1,name2,...; Turn on debugging output for 'name1', 'name2', etc.");
-    public static final Option<Boolean> Instrument = newBooleanOption("Instrument", false, "Enable Instrumentation");
-    public static final Option<Boolean> TraceCalls = newBooleanOption("TraceCalls", false, "Trace all R function calls (implies +Instrument)");
-    public static final Option<String>  PerfStats = newStringOption("PerfStats", null, "PerfStats=p1,p2,...; Collect performance stats identified by p1, etc.");
-    public static final Option<String>  PerfStatsFile = newStringOption("PerfStatsFile", null, "PerfStatsFile=file; Send performance stats to 'file', default stdout");
-    public static final Option<String>  Rdebug = newStringOption("Rdebug", null, "Rdebug=f1,f2.,,,; list of R function to call debug on (implies +Instrument)");
-    public static final Option<Boolean> PerformanceWarnings = newBooleanOption("PerformanceWarnings", false, "Print FastR performance warning");
-    public static final Option<Boolean> LoadBase = newBooleanOption("LoadBase", true, "Load base package");
-    public static final Option<Boolean> PrintComplexLookups = newBooleanOption("PrintComplexLookups", false, "Print a message for each non-trivial variable lookup");
-    public static final Option<Boolean> IgnoreVisibility = newBooleanOption("IgnoreVisibility", false, "Ignore setting of the visibility flag");
-    public static final Option<Boolean> LoadPkgSourcesIndex = newBooleanOption("LoadPkgSourcesIndex", true, "Load R package sources index");
-    public static final Option<Boolean> InvisibleArgs = newBooleanOption("InvisibleArgs", true, "Argument writes do not trigger state transitions");
-    public static final Option<Boolean> ExperimentalStateTrans = newBooleanOption("ExperimentalStateTrans", true, "Eperimental state transition implementation");
-    public static final Option<Boolean> RefCountIncOnly = newBooleanOption("RefCountIncOnly", false, "Disable reference count decrements for eperimental state transition implementation");
-
-    // Promises optimizations
-    public static final Option<Boolean> EagerEval = newBooleanOption("EagerEval", false, "If enabled, overrides all other EagerEval switches (see EagerEvalHelper)");
-    public static final Option<Boolean> EagerEvalConstants = newBooleanOption("EagerEvalConstants", true, "Unconditionally evaluates constants before creating Promises");
-    public static final Option<Boolean> EagerEvalVariables = newBooleanOption("EagerEvalVariables", true, "Enables optimistic eager evaluation of single variables reads");
-    public static final Option<Boolean> EagerEvalDefault = newBooleanOption("EagerEvalDefault", false, "Enables optimistic eager evaluation of single variables reads (for default parameters)");
-    public static final Option<Boolean> EagerEvalExpressions = newBooleanOption("EagerEvalExpressions", false, "Enables optimistic eager evaluation of trivial expressions");
-    //@formatter:on
-
-    @CompilationFinal public static boolean NewStateTransition;
-    @CompilationFinal public static boolean RefCountIncrementOnly;
-
-    private static boolean initialized;
-
-    public static Option<Boolean> newBooleanOption(String name, boolean defaultValue, String help) {
-        Option<Boolean> option = new Option<>(true, OptionType.BOOLEAN, null, name, help, defaultValue);
-        optionsList.add(option);
-        return option;
-    }
-
-    public static Option<String> newStringOption(String name, String defaultValue, String help) {
-        Option<String> option = new Option<>(null, true, OptionType.STRING, null, name, help, defaultValue);
-        optionsList.add(option);
-        return option;
-    }
-
-    public static void initialize() {
-        if (initialized) {
-            return;
-        }
-        CompilerAsserts.neverPartOfCompilation();
-        initialized = true;
+    private static Map<String, String> options = new HashMap<>();
+    private static boolean printHelp;
+    static {
         for (Entry<Object, Object> entry : System.getProperties().entrySet()) {
             String prop = (String) entry.getKey();
             if (prop.equals("R")) {
-                printHelp();
-                Utils.exit(0);
+                printHelp = true;
             }
             if (prop.startsWith("R:")) {
-                String optName = optionName(prop);
-                Option<?> option = findOption(optName);
-                if (option == null) {
-                    System.err.println(prop + " is not a valid FastR option");
-                    System.exit(2);
-                } else {
-                    switch (option.type) {
-                        case BOOLEAN: {
-                            boolean value = booleanOptionValue(prop);
-                            option.setValue(value);
-                            break;
-                        }
+                options.put(optionName(prop), prop);
+            }
+        }
+    }
 
-                        case STRING: {
-                            String value = (String) entry.getValue();
-                            option.setValue(value);
-                            break;
-                        }
+    public static final boolean PrintErrorStacktraces = parseBooleanOption("PrintErrorStacktraces", false, "Prints Java and R stack traces for all errors");
+    public static final boolean PrintErrorStacktracesToFile = parseBooleanOption("PrintErrorStacktracesToFile", true, "Dumps Java and R stack traces to file for all errors");
+    public static final boolean CheckResultCompleteness = parseBooleanOption("CheckResultCompleteness", true, "Assert completeness of results vectors after evaluating unit tests and R shell commands");
+    public static String Debug = parseStringOption("Debug", null, "Debug=name1,name2,...; Turn on debugging output for 'name1', 'name2', etc.");
+    public static final boolean Instrument = parseBooleanOption("Instrument", false, "Enable Instrumentation");
+    public static final boolean TraceCalls = parseBooleanOption("TraceCalls", false, "Trace all R function calls (implies +Instrument)");
+    public static final String PerfStats = parseStringOption("PerfStats", null, "PerfStats=p1,p2,...; Collect performance stats identified by p1, etc.");
+    public static final String PerfStatsFile = parseStringOption("PerfStatsFile", null, "PerfStatsFile=file; Send performance stats to 'file', default stdout");
+    public static final String Rdebug = parseStringOption("Rdebug", null, "Rdebug=f1,f2.,,,; list of R function to call debug on (implies +Instrument)");
+    public static final boolean PerformanceWarnings = parseBooleanOption("PerformanceWarnings", false, "Print FastR performance warning");
+    public static final boolean LoadBase = parseBooleanOption("LoadBase", true, "Load base package");
+    public static final boolean PrintComplexLookups = parseBooleanOption("PrintComplexLookups", false, "Print a message for each non-trivial variable lookup");
+    public static final boolean IgnoreVisibility = parseBooleanOption("IgnoreVisibility", false, "Ignore setting of the visibility flag");
+    public static final boolean LoadPkgSourcesIndex = parseBooleanOption("LoadPkgSourcesIndex", true, "Load R package sources index");
+    public static final boolean InvisibleArgs = parseBooleanOption("InvisibleArgs", true, "Argument writes do not trigger state transitions");
+    public static final boolean NewStateTransition = parseBooleanOption("NewStateTransition", true, "Eperimental state transition implementation");
+    public static final boolean RefCountIncrementOnly = parseBooleanOption("RefCountIncrementOnly", false, "Disable reference count decrements for eperimental state transition implementation");
 
-                        default:
-                            throw RInternalError.shouldNotReachHere();
-                    }
+    // Promises optimizations
+    public static final boolean EagerEval = parseBooleanOption("EagerEval", false, "If enabled, overrides all other EagerEval switches (see EagerEvalHelper)");
+    public static final boolean EagerEvalConstants = parseBooleanOption("EagerEvalConstants", true, "Unconditionally evaluates constants before creating Promises");
+    public static final boolean EagerEvalVariables = parseBooleanOption("EagerEvalVariables", true, "Enables optimistic eager evaluation of single variables reads");
+    public static final boolean EagerEvalDefault = parseBooleanOption("EagerEvalDefault", false, "Enables optimistic eager evaluation of single variables reads (for default parameters)");
+    public static final boolean EagerEvalExpressions = parseBooleanOption("EagerEvalExpressions", false, "Enables optimistic eager evaluation of trivial expressions");
+
+    static {
+        if (options != null && !options.isEmpty()) {
+            System.err.println(options.keySet() + " are not valid FastR options");
+            System.exit(2);
+        }
+        if (printHelp) {
+            System.exit(0);
+        }
+    }
+
+    public static boolean parseBooleanOption(String name, boolean defaultValue, String help) {
+        if (printHelp) {
+            System.out.printf("%35s %s (default: %b)\n", "-DR:" + name, help, defaultValue);
+            return false;
+        } else {
+            String optionValue = options.remove(name);
+            if (optionValue == null) {
+                return defaultValue;
+            } else {
+                switch (optionValue.charAt(2)) {
+                    case '+':
+                        return true;
+                    case '-':
+                        return false;
+                    default:
+                        System.out.println("-DR:[+-]" + name + " expected");
+                        System.exit(2);
+                        return false;
                 }
             }
         }
-        NewStateTransition = FastROptions.ExperimentalStateTrans.getValue();
-        RefCountIncrementOnly = FastROptions.RefCountIncOnly.getValue();
-        // debug();
     }
 
-    private static void printHelp() {
-        for (Option<?> option : optionsList) {
-            String helpName = option.plainName;
-            System.out.printf("    -DR:%s", helpName);
-            int spaces;
-            int optLength = helpName.length() + 8;
-            if (optLength >= 22) {
-                System.out.println();
-                spaces = 22;
+    public static String parseStringOption(String name, String defaultValue, String help) {
+        if (printHelp) {
+            System.out.printf("%35s %s (default: %b)\n", "-DR:" + name, help, defaultValue);
+            return "";
+        } else {
+            String optionValue = options.remove(name);
+            if (optionValue == null) {
+                return defaultValue;
             } else {
-                spaces = 22 - optLength;
+                int equals = optionValue.indexOf('=');
+                if (equals == -1) {
+                    System.out.println("-DR:" + name + "=value expected");
+                    System.exit(2);
+                    return null;
+                }
+                return optionValue.substring(equals + 1);
             }
-            for (int i = 0; i < spaces; i++) {
-                System.out.print(' ');
-            }
-            System.out.println(option.help);
         }
     }
 
@@ -174,18 +151,16 @@ public class FastROptions {
      * @return {@code ""} if the option is set with no {@code =value} component, the element if
      *         {@code element} matches an element, {@code null} otherwise.
      */
-    public static String matchesElement(String element, Option<String> stringOption) {
-        initialize();
-        String s = stringOption.getValue();
-        if (s == null) {
+    public static String matchesElement(String element, String option) {
+        if (option == null) {
             return null;
-        } else if (s.length() == 0) {
-            return s;
+        } else if (option.length() == 0) {
+            return option;
         } else {
-            String[] parts = s.split(",");
+            String[] parts = option.split(",");
             for (String part : parts) {
                 if (part.startsWith(element)) {
-                    return s;
+                    return option;
                 }
             }
         }
@@ -197,7 +172,7 @@ public class FastROptions {
      * use-case.
      */
     public static void debugUpdate(String element) {
-        String s = Debug.getValue();
+        String s = Debug;
         if (s == null) {
             // nothing was set
             s = element;
@@ -213,16 +188,7 @@ public class FastROptions {
             }
             s = s + "," + element;
         }
-        Debug.setValue(s);
-    }
-
-    private static Option<?> findOption(String key) {
-        for (Option<?> option : optionsList) {
-            if (option.plainName.equals(key)) {
-                return option;
-            }
-        }
-        return null;
+        Debug = s;
     }
 
     private static String optionName(String key) {
@@ -235,17 +201,4 @@ public class FastROptions {
             return s;
         }
     }
-
-    private static boolean booleanOptionValue(String option) {
-        return option.charAt(2) == '+';
-    }
-
-    @SuppressWarnings("unused")
-    private static void debug() {
-        for (Option<?> option : optionsList) {
-            System.out.printf("%s: ", option.plainName);
-            System.out.println(option.getValue());
-        }
-    }
-
 }

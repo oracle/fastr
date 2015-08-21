@@ -26,9 +26,13 @@ import java.util.*;
 import java.util.concurrent.*;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.source.*;
+import com.oracle.truffle.api.vm.*;
 import com.oracle.truffle.r.engine.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.RCmdOptions.Client;
+import com.oracle.truffle.r.runtime.context.*;
+import com.oracle.truffle.r.runtime.context.Engine.ParseException;
+import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
 
 public final class FastRSession implements RSession {
 
@@ -38,7 +42,7 @@ public final class FastRSession implements RSession {
      * A (virtual) console handler that collects the output in a {@link StringBuilder} for
      * comparison. It does not separate error output as the test analysis doesn't need it.
      */
-    private static class ConsoleHandler implements RContext.ConsoleHandler {
+    public static class TestConsoleHandler implements ConsoleHandler {
         private final StringBuilder buffer = new StringBuilder();
 
         @TruffleBoundary
@@ -91,13 +95,17 @@ public final class FastRSession implements RSession {
             return RContext.CONSOLE_WIDTH;
         }
 
+        public String getInputDescription() {
+            return "<test input>";
+        }
     }
 
-    private static ConsoleHandler consoleHandler;
     private static FastRSession singleton;
 
+    private final TestConsoleHandler consoleHandler;
+    private final TruffleVM main;
+
     private EvalThread evalThread;
-    private final RContext main;
 
     public static FastRSession create() {
         if (singleton == null) {
@@ -106,18 +114,19 @@ public final class FastRSession implements RSession {
         return singleton;
     }
 
-    public RContext createTestContext() {
+    public TruffleVM createTestContext() {
         create();
-        RContext context = RContextFactory.createShareParentReadWrite(main, new String[0], consoleHandler).activate();
-        context.setSystemTimeZone(TimeZone.getTimeZone("CET"));
-        return context;
+        RCmdOptions options = RCmdOptions.parseArguments(Client.RSCRIPT, new String[0]);
+        ContextInfo info = ContextInfo.create(options, ContextKind.SHARE_PARENT_RW, RContext.fromTruffleVM(main), consoleHandler, TimeZone.getTimeZone("CET"));
+        return RContextFactory.create(info);
     }
 
     private FastRSession() {
-        consoleHandler = new ConsoleHandler();
-        RContextFactory.initialize();
+        consoleHandler = new TestConsoleHandler();
         try {
-            main = RContextFactory.createInitial(new String[0], consoleHandler).activate();
+            RCmdOptions options = RCmdOptions.parseArguments(Client.RSCRIPT, new String[0]);
+            ContextInfo info = ContextInfo.create(options, ContextKind.SHARE_NOTHING, null, consoleHandler);
+            main = RContextFactory.create(info);
         } finally {
             System.out.print(consoleHandler.buffer.toString());
         }
@@ -179,16 +188,22 @@ public final class FastRSession implements RSession {
                     break;
                 }
                 try {
-                    RContext testContext = createTestContext();
+                    TruffleVM vm = createTestContext();
                     try {
-                        testContext.getThisEngine().parseAndEvalTest(Source.fromText(expression, "<test_input>"), true, false);
+                        vm.eval(TruffleRLanguage.MIME, expression);
                     } finally {
-                        testContext.destroy();
+                        RContext.destroyContext(vm);
                     }
+                } catch (ParseException e) {
+                    e.report(consoleHandler);
                 } catch (RError e) {
                     // nothing to do
                 } catch (Throwable t) {
-                    killedByException = t;
+                    if (t.getCause() instanceof RError) {
+                        // nothing to do
+                    } else {
+                        killedByException = t;
+                    }
                 } finally {
                     exit.release();
                 }
