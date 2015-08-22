@@ -238,7 +238,9 @@ public final class RREPLServer extends REPLServer {
         try {
             // Cheat with synchrony: call client directly about entering a nested debugging
             // context.
-            client.halted(message);
+            if (client != null) {
+                client.halted(message);
+            }
         } finally {
             // Returns when "continue" is called in the new debugging context
 
