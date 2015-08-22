@@ -77,6 +77,9 @@ public class BlockNode extends SequenceNode implements RSyntaxNode, VisibilityCo
     @Override
     public void deparseImpl(RDeparse.State state) {
         state.startNodeDeparse(this);
+        if (sequence.length > 1) {
+            state.writeOpenCurlyNLIncIndent();
+        }
         for (int i = 0; i < sequence.length; i++) {
             state.mark();
             sequence[i].deparse(state);
@@ -85,6 +88,9 @@ public class BlockNode extends SequenceNode implements RSyntaxNode, VisibilityCo
                 state.writeline();
                 state.mark(); // in case last
             }
+        }
+        if (sequence.length > 1) {
+            state.decIndentWriteCloseCurly();
         }
         state.endNodeDeparse(this);
     }
@@ -96,7 +102,7 @@ public class BlockNode extends SequenceNode implements RSyntaxNode, VisibilityCo
          * it is represented as a LANGSXP with symbol "{" and a NULL cdr, representing the empty
          * sequence. This is an unpleasant special case in FastR that we can only detect by
          * re-examining the original source.
-         *
+         * 
          * A sequence of length 1, i.e. a single statement, is represented as itself, e.g. a SYMSXP
          * for "x" or a LANGSXP for a function call. Otherwise, the representation is a LISTSXP
          * pairlist, where the car is the statement and the cdr is either NILSXP or a LISTSXP for

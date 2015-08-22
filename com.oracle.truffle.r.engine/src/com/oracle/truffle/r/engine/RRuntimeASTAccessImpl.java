@@ -127,9 +127,17 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
             return 3;
         } else if (node instanceof ReplacementNode) {
             return 3;
+        } else if (node instanceof BlockNode) {
+            /*
+             * We can't get this completely compatible with GnuR without knowing if the source had a
+             * "{" or not. However, semantically what really matters is that if the length is > 1,
+             * there *must* have been a "{", so we fabricate it.
+             */
+            int len = ((BlockNode) node).getSequence().length;
+            return len == 1 ? 1 : len + 1;
         } else {
             // TODO fill out
-            assert false : node;
+            throw RInternalError.unimplemented(node.toString());
         }
         return result;
     }
@@ -221,11 +229,24 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
                 default:
                     assert false;
             }
+        } else if (node instanceof BlockNode) {
+            /* See related comments in getLength. */
+            RNode[] seq = ((BlockNode) node).getSequence();
+            if (seq.length > 1) {
+                switch (index) {
+                    case 0:
+                        return RDataFactory.createSymbol("{");
+                    default:
+                        return RASTUtils.createLanguageElement(seq[index - 1]);
+                }
+            } else {
+                return RASTUtils.createLanguageElement(seq[0]);
+            }
         } else if (node instanceof ReplacementNode) {
             return RNull.instance;
         } else {
             // TODO fill out
-            assert false;
+            throw RInternalError.unimplemented(node.toString());
         }
         return null;
     }
