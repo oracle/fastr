@@ -84,11 +84,14 @@ public class ReadVariadicComponentNode extends RNode implements RSyntaxNode {
         return ret == null ? RMissing.instance : ret;
     }
 
+    public String getPrintForm() {
+        return ".." + Integer.toString(index + 1);
+    }
+
     @Override
     public void deparseImpl(State state) {
         state.startNodeDeparse(this);
-        state.append("..");
-        state.append(Integer.toString(index + 1));
+        state.append(getPrintForm());
         state.endNodeDeparse(this);
     }
 
@@ -97,6 +100,6 @@ public class ReadVariadicComponentNode extends RNode implements RSyntaxNode {
     }
 
     public void serializeImpl(com.oracle.truffle.r.runtime.RSerialize.State state) {
-        throw RInternalError.unimplemented();
+        state.setCarAsSymbol(getPrintForm());
     }
 }

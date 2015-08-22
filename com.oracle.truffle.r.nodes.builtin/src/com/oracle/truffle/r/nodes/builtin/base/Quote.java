@@ -39,6 +39,7 @@ public abstract class Quote extends RBuiltinNode {
     public abstract Object execute(VirtualFrame frame, RPromise expr);
 
     private final ConditionProfile rvn = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile rvcn = ConditionProfile.createBinaryProfile();
     private final ConditionProfile cn = ConditionProfile.createBinaryProfile();
 
     @Specialization
@@ -57,6 +58,8 @@ public abstract class Quote extends RBuiltinNode {
         } else if (cn.profile(unode instanceof ConstantNode)) {
             ConstantNode cnode = (ConstantNode) unode;
             return cnode.getValue();
+        } else if (rvcn.profile(unode instanceof ReadVariadicComponentNode)) {
+            return RASTUtils.createRSymbol(unode);
         } else {
             return RDataFactory.createLanguage(unode);
         }

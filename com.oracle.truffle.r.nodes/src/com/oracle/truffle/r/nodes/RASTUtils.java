@@ -106,11 +106,17 @@ public class RASTUtils {
     }
 
     /**
-     * Creates an {@link RSymbol} from a {@link ReadVariableNode}.
+     * Creates an {@link RSymbol} from a {@link ReadVariableNode} o
+     * {@link ReadVariadicComponentNode}.
      */
     @TruffleBoundary
     public static RSymbol createRSymbol(Node readVariableNode) {
-        return RDataFactory.createSymbol(((ReadVariableNode) readVariableNode).getIdentifier());
+        if (readVariableNode instanceof ReadVariadicComponentNode) {
+            ReadVariadicComponentNode rvcn = (ReadVariadicComponentNode) readVariableNode;
+            return RDataFactory.createSymbol(rvcn.getPrintForm());
+        } else {
+            return RDataFactory.createSymbol(((ReadVariableNode) readVariableNode).getIdentifier());
+        }
     }
 
     /**
