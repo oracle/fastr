@@ -261,6 +261,7 @@ public final class RError extends RuntimeException {
         BY_TOO_SMALL("'by' argument is much too small"),
         INCORRECT_SUBSCRIPTS("incorrect number of subscripts"),
         INCORRECT_SUBSCRIPTS_MATRIX("incorrect number of subscripts on matrix"),
+        NEGATIVE_EXTENTS_TO_MATRIX("negative extents to matrix"),
         INVALID_SEP("invalid 'sep' specification"),
         INVALID_LENGTH("invalid '%s' length"),
         EMPTY_WHAT("empty 'what' specified"),

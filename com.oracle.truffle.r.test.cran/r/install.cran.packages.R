@@ -61,7 +61,7 @@ create.blacklist.iter <- function(blacklist) {
 }
 
 # known to be uninstallable
-initial.blacklist <- c("Rcpp", "grid", "splines", "parallel")
+initial.blacklist <- c("Rcpp")
 
 create.blacklist <- function() {
 	create.blacklist.iter(initial.blacklist)

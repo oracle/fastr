@@ -29,10 +29,8 @@
 static jmethodID Rf_ScalarIntegerMethodID;
 static jmethodID Rf_ScalarDoubleMethodID;
 static jmethodID Rf_ScalarStringMethodID;
-static jmethodID createIntArrayMethodID;
-static jmethodID createDoubleArrayMethodID;
-static jmethodID createStringArrayMethodID;
-static jmethodID createListMethodID;
+static jmethodID Rf_allocateVectorMethodID;
+static jmethodID Rf_allocateMatrixMethodID;
 static jmethodID Rf_duplicateMethodID;
 static jmethodID Rf_consMethodID;
 static jmethodID Rf_defineVarMethodID;
@@ -60,10 +58,8 @@ void init_rf_functions(JNIEnv *env) {
 	Rf_isNullMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_isNull", "(Ljava/lang/Object;)I", 1);
 	Rf_warningMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_warning", "(Ljava/lang/String;)V", 1);
 	Rf_errorMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_error", "(Ljava/lang/String;)V", 1);
-	createIntArrayMethodID = checkGetMethodID(env, RDataFactoryClass, "createIntVector", "(I)Lcom/oracle/truffle/r/runtime/data/RIntVector;", 1);
-	createDoubleArrayMethodID = checkGetMethodID(env, RDataFactoryClass, "createDoubleVector", "(I)Lcom/oracle/truffle/r/runtime/data/RDoubleVector;", 1);
-	createStringArrayMethodID = checkGetMethodID(env, RDataFactoryClass, "createStringVector", "(I)Lcom/oracle/truffle/r/runtime/data/RStringVector;", 1);
-	createListMethodID = checkGetMethodID(env, RDataFactoryClass, "createList", "(I)Lcom/oracle/truffle/r/runtime/data/RList;", 1);
+	Rf_allocateVectorMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_allocateVector", "(II)Ljava/lang/Object;", 1);
+	Rf_allocateMatrixMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_allocateMatrix", "(III)Ljava/lang/Object;", 1);
 	Rf_duplicateMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_duplicate", "(Ljava/lang/Object;)Ljava/lang/Object;", 1);
 	Rf_NewHashedEnvMethodID = checkGetMethodID(env, RDataFactoryClass, "createNewEnv", "(Lcom/oracle/truffle/r/runtime/env/REnvironment;Ljava/lang/String;ZI)Lcom/oracle/truffle/r/runtime/env/REnvironment;", 1);
 //	Rf_rPsortMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_rPsort", "(Lcom/oracle/truffle/r/runtime/data/RDoubleVector;II)", 1);
@@ -93,29 +89,14 @@ SEXP Rf_ScalarString(SEXP value) {
 SEXP Rf_allocVector(SEXPTYPE t, R_xlen_t len) {
 	TRACE(TARG2d, t, len);
 	JNIEnv *thisenv = getEnv();
-	SEXP result;
-	switch (t) {
-	case INTSXP: {
-		result = (*thisenv)->CallStaticObjectMethod(thisenv, RDataFactoryClass, createIntArrayMethodID, len);
-		break;
-	}
-	case REALSXP: {
-		result = (*thisenv)->CallStaticObjectMethod(thisenv, RDataFactoryClass, createDoubleArrayMethodID, len);
-		break;
-	}
-	case STRSXP: {
-		result = (*thisenv)->CallStaticObjectMethod(thisenv, RDataFactoryClass, createStringArrayMethodID, len);
-		break;
-	}
-	case VECSXP: {
-		result = (*thisenv)->CallStaticObjectMethod(thisenv, RDataFactoryClass, createListMethodID, len);
-		break;
-	}
-	default:
-		printf("t=%d\n", t);
-		unimplemented("vector type not handled");
-		return NULL;
-	}
+	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_allocateVectorMethodID, t, len);
+	return checkRef(thisenv, result);
+}
+
+SEXP Rf_allocMatrix(SEXPTYPE mode, int nrow, int ncol) {
+	TRACE(TARG2d, t, len);
+	JNIEnv *thisenv = getEnv();
+	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_allocateMatrixMethodID, mode, nrow, ncol);
 	return checkRef(thisenv, result);
 }
 
@@ -196,7 +177,7 @@ SEXP Rf_mkString(const char *s) {
 }
 
 SEXP Rf_protect(SEXP x) {
-	// TODO perhaps we can use this
+	return x;
 }
 
 void Rf_unprotect(int x) {
