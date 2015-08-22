@@ -58,6 +58,7 @@ LIB_RDUMMY := $(LIBDIR)/libR$(DYLIB_EXT)
 libr: $(LIB_RDUMMY)
 $(LIB_RDUMMY): $(OBJ)/rdummy.o
 	mkdir -p $(LIBDIR)
+	mkdir -p $(OBJ)
 	$(DYLIB_LD) $(DYLIB_LDFLAGS) -o $(LIB_RDUMMY) -current_version $(R_VERSION) -compatibility_version $(R_VERSION) $(OBJ)/rdummy.o
 
 cleanlibr:
