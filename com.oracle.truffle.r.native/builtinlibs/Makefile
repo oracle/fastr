@@ -51,15 +51,20 @@ $(LIB_APPL): $(C_OBJECTS) $(F_OBJECTS)
 	mkdir -p $(LIBDIR)
 	$(DYLIB_LD) $(DYLIB_LDFLAGS)  -o $(LIB_APPL) $(C_OBJECTS) $(F_OBJECTS) $(LIBS)
 
+$(C_OBJECTS): | $(OBJ)
+
 # On Darwin we need to create a dummy libR.dylib
 ifeq ($(OS_NAME), Darwin)
 LIB_RDUMMY := $(LIBDIR)/libR$(DYLIB_EXT)
 
 libr: $(LIB_RDUMMY)
+
 $(LIB_RDUMMY): $(OBJ)/rdummy.o
 	mkdir -p $(LIBDIR)
-	mkdir -p $(OBJ)
 	$(DYLIB_LD) $(DYLIB_LDFLAGS) -o $(LIB_RDUMMY) -current_version $(R_VERSION) -compatibility_version $(R_VERSION) $(OBJ)/rdummy.o
+
+$(OBJ):
+	mkdir -p $(OBJ)
 
 cleanlibr:
 	rm -f $(LIB_RDUMMY)
