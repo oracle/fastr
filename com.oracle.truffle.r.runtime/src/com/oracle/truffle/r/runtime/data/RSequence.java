@@ -129,6 +129,11 @@ public abstract class RSequence implements RAbstractVector {
     }
 
     @Override
+    public final void initAttributes(RAttributes newAttributes) {
+        throw RInternalError.shouldNotReachHere();
+    }
+
+    @Override
     public final RAttributes getAttributes() {
         return null;
     }

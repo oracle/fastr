@@ -39,6 +39,8 @@ public interface RAttributable {
      */
     RAttributes initAttributes();
 
+    void initAttributes(RAttributes newAttributes);
+
     /**
      * Access all the attributes. Use {@code for (RAttribute a : getAttributes) ... }. Returns
      * {@code null} if not initialized.

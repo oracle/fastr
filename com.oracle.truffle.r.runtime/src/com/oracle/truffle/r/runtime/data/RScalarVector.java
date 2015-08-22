@@ -110,6 +110,10 @@ public abstract class RScalarVector extends RScalar implements RAbstractVector {
         throw new UnsupportedOperationException();
     }
 
+    public final void initAttributes(RAttributes newAttributes) {
+        throw new UnsupportedOperationException();
+    }
+
     public RAttributes getAttributes() {
         return null;
     }

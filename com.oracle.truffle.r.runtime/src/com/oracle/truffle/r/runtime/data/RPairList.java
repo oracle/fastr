@@ -36,7 +36,7 @@ import com.oracle.truffle.r.runtime.gnur.*;
  *
  * {@code null} is never allowed as a value for the tag, car or cdr, only the type.
  */
-public class RPairList extends RAttributeStorage implements RAttributable, RAbstractContainer {
+public class RPairList extends RAttributeStorage implements RAbstractContainer {
     private Object car = RNull.instance;
     private Object cdr = RNull.instance;
     /**

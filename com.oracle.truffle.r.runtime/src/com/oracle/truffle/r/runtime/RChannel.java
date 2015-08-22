@@ -28,6 +28,8 @@ import java.util.concurrent.*;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.conn.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
+import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
 
 /**
@@ -165,19 +167,68 @@ public class RChannel {
         }
     }
 
+    @TruffleBoundary
+    private static Object convertListAttributesToPrivate(RList l, Object shareableList) throws IOException {
+        RAttributes attr = l.getAttributes();
+        RAttributes newAttr = createShareableSlow(attr);
+        if (newAttr != attr) {
+            RList newList;
+            if (shareableList == l) {
+                // need to create a copy due to different attributes
+                newList = (RList) l.copy();
+            } else {
+                newList = ((SerializedList) shareableList).getList();
+            }
+            // it's OK to use initAttributes() as the shape of the list (that
+            // could have otherwise been modified by setting attributes, such as dim
+            // attribute) is already set correctly by the copy operation
+            newList.initAttributes(newAttr);
+            return newList;
+        } else {
+            // shareable attributes are the same - no need for any changes
+            return shareableList;
+        }
+    }
+
+    @TruffleBoundary
+    private static Object convertObjectAttributesToPrivate(Object msg) throws IOException {
+        RAttributable attributable = (RAttributable) msg;
+        RAttributes attr = attributable.getAttributes();
+        RAttributes newAttr = createShareableSlow(attr);
+        if (attributable instanceof RAbstractVector) {
+            attributable = ((RAbstractVector) msg).copy();
+        }
+        // see convertListAttributesToPrivate() why it is OK to use initAttributes() here
+        attributable.initAttributes(newAttr);
+        return attributable;
+    }
+
+    private static Object convertPrivateList(Object msg) throws IOException {
+        RList l = (RList) msg;
+        Object newMsg = createShareable(l);
+        if (l.getAttributes() != null) {
+            return convertListAttributesToPrivate(l, newMsg);
+        } else {
+            return newMsg;
+        }
+
+    }
+
     private static Object convertPrivate(Object o) throws IOException {
         if (o instanceof RList) {
-            RList list = (RList) o;
-            return createShareable(list);
-        } else if (!(o instanceof RFunction || o instanceof REnvironment || o instanceof RConnection || o instanceof RLanguage)) {
+            return convertPrivateList(o);
+        } else if (!(o instanceof REnvironment || o instanceof RConnection || o instanceof RLanguage)) {
             // TODO: should we make internal values shareable?
-            return o;
+            if (o instanceof RAttributable && ((RAttributable) o).getAttributes() != null) {
+                return convertObjectAttributesToPrivate(o);
+            } else {
+                return o;
+            }
         } else {
             return RSerialize.serialize(o, false, true, RSerialize.DEFAULT_VERSION, null);
         }
     }
 
-    @TruffleBoundary
     private static Object createShareable(RList list) throws IOException {
         RList newList = list;
         for (int i = 0; i < list.getLength(); i++) {
@@ -195,19 +246,53 @@ public class RChannel {
         return list == newList ? list : new SerializedList(newList);
     }
 
+    /*
+     * To break recursion within Truffle boundary
+     */
+    @TruffleBoundary
+    private static Object createShareableSlow(RList list) throws IOException {
+        return createShareable(list);
+    }
+
+    @TruffleBoundary
+    private static RAttributes createShareableSlow(RAttributes attr) throws IOException {
+        RAttributes newAttr = attr;
+        for (RAttribute a : attr) {
+            Object val = a.getValue();
+            Object newVal = convertPrivate(val);
+            if (val != newVal) {
+                // conversion happened update element
+                if (attr == newAttr) {
+                    // create a shallow copy
+                    newAttr = attr.copy();
+                }
+                newAttr.put(a.getName(), newVal);
+            }
+        }
+
+        return newAttr;
+    }
+
     public static void send(int id, Object data) {
         Object msg = data;
         RChannel channel = getChannelFromId(id);
         if (msg instanceof RList) {
             try {
-                msg = createShareable((RList) msg);
+                msg = convertPrivateList(msg);
             } catch (IOException x) {
                 throw RError.error(RError.NO_NODE, RError.Message.GENERIC, "error creating shareable list");
             }
-        } else if (!(msg instanceof RFunction || msg instanceof REnvironment || msg instanceof RConnection || msg instanceof RLanguage)) {
+        } else if (!(msg instanceof REnvironment || msg instanceof RConnection || msg instanceof RLanguage)) {
             // make sure that what's passed through the channel will be copied on the first
             // update
             makeShared(msg);
+            try {
+                if (msg instanceof RAttributable && ((RAttributable) msg).getAttributes() != null) {
+                    msg = convertObjectAttributesToPrivate(msg);
+                }
+            } catch (IOException x) {
+                throw RError.error(RError.NO_NODE, RError.Message.GENERIC, "error creating channel message");
+            }
         } else {
             msg = RSerialize.serialize(msg, false, true, RSerialize.DEFAULT_VERSION, null);
         }
@@ -218,16 +303,43 @@ public class RChannel {
         }
     }
 
+    private static Object unserializeObject(Object el) throws IOException {
+        Object ret;
+        if (el instanceof SerializedList) {
+            RList elList = ((SerializedList) el).getList();
+            unserializeList(elList);
+            ret = elList;
+        } else if (el instanceof byte[]) {
+            ret = RSerialize.unserialize((byte[]) el, null, null);
+        } else {
+            ret = el;
+        }
+        if (ret instanceof RAttributable && ((RAttributable) ret).getAttributes() != null) {
+            unserializeAttributes(((RAttributable) ret).getAttributes());
+        }
+        return ret;
+    }
+
     @TruffleBoundary
     private static void unserializeList(RList list) throws IOException {
         for (int i = 0; i < list.getLength(); i++) {
             Object el = list.getDataAt(i);
-            if (el instanceof SerializedList) {
-                RList elList = ((SerializedList) el).getList();
-                unserializeList(elList);
-                list.updateDataAtAsObject(i, elList, null);
-            } else if (el instanceof byte[]) {
-                list.updateDataAt(i, RSerialize.unserialize((byte[]) el, null, null), null);
+            Object newEl = unserializeObject(el);
+            if (newEl != el) {
+                list.updateDataAt(i, newEl, null);
+            }
+        }
+    }
+
+    @TruffleBoundary
+    private static void unserializeAttributes(RAttributes attr) throws IOException {
+        for (RAttribute a : attr) {
+            Object val = a.getValue();
+            Object newVal = unserializeObject(val);
+            if (newVal != val) {
+                // TODO: this is a bit brittle as it relies on the iterator to work correctly in the
+                // face of updates (which it does under current implementation of attributes)
+                attr.put(a.getName(), newVal);
             }
         }
     }
@@ -238,12 +350,19 @@ public class RChannel {
             Object msg = (id < 0 ? channel.masterToClient : channel.clientToMaster).take();
             if (msg instanceof SerializedList) {
                 RList list = ((SerializedList) msg).getList();
-                // list is already private (a shallow copy - do the appropriate changes in place)
+                // list and attributes are already private (shallow copies - do the appropriate
+                // changes in place)
                 unserializeList(list);
+                if (list.getAttributes() != null) {
+                    unserializeAttributes(list.getAttributes());
+                }
                 return list;
             } else if (msg instanceof byte[]) {
                 return RSerialize.unserialize((byte[]) msg, null, null);
             } else {
+                if (msg instanceof RAttributable && ((RAttributable) msg).getAttributes() != null) {
+                    unserializeAttributes(((RAttributable) msg).getAttributes());
+                }
                 return msg;
             }
         } catch (InterruptedException x) {

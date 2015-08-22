@@ -80,6 +80,10 @@ public class RLanguage extends RLanguageRep implements RAbstractContainer, RAttr
         return attributes;
     }
 
+    public final void initAttributes(RAttributes newAttributes) {
+        attributes = newAttributes;
+    }
+
     public boolean isComplete() {
         return true;
     }

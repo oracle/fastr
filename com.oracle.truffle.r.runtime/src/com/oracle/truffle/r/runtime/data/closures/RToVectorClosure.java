@@ -106,6 +106,11 @@ public abstract class RToVectorClosure implements RAbstractVector {
     }
 
     @Override
+    public final void initAttributes(RAttributes newAttributes) {
+        vector.initAttributes(newAttributes);
+    }
+
+    @Override
     public final RAttributes getAttributes() {
         return vector.getAttributes();
     }
