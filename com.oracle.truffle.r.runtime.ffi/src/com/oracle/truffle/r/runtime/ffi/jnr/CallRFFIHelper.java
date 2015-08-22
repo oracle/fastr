@@ -187,7 +187,7 @@ public class CallRFFIHelper {
                 return RDataFactory.createDoubleVector(new double[n], RDataFactory.COMPLETE_VECTOR);
             case LGLSXP:
                 return RDataFactory.createLogicalVector(new byte[n], RDataFactory.COMPLETE_VECTOR);
-            case CHARSXP:
+            case STRSXP:
                 return RDataFactory.createStringVector(new String[n], RDataFactory.COMPLETE_VECTOR);
             case CPLXSXP:
                 return RDataFactory.createComplexVector(new double[2 * n], RDataFactory.COMPLETE_VECTOR);
