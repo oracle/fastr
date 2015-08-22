@@ -51,7 +51,7 @@ public class GenerateRParserProcessor extends AbstractProcessor {
                 File srcGenDir = getSrcGenDir(filer);
                 File suiteRoot = srcGenDir.getParentFile().getParentFile();
                 // path to ANTLR jar
-                File antlr = join(suiteRoot, "lib", ANTLRC);
+                File antlr = join(suiteRoot, "libdownloads", ANTLRC);
                 // Our src directory
                 File parserSrcDir = join(srcGenDir.getParentFile(), "src", pkg.replace('.', File.separatorChar));
                 antlrGenDir = mkTmpDir(null);

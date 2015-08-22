@@ -27,7 +27,7 @@ ifneq ($(MAKECMDGOALS),clean)
 include $(TOPDIR)/platform.mk
 endif
 
-TARGET_DIR := $(TOPDIR)/builtinlibs/lib
+TARGET_DIR := $(TOPDIR)/../lib
 BLAS_TARGET := $(TARGET_DIR)/libRblas$(DYLIB_EXT)
 LAPACK_TARGET := $(TARGET_DIR)/libRlapack$(DYLIB_EXT)
 PCRE_TARGET := $(TARGET_DIR)/libpcre$(DYLIB_EXT)

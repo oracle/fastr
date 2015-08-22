@@ -36,7 +36,7 @@ SRC = src
 C_SOURCES := $(wildcard $(SRC)/*.c)
 C_LIBNAME := libosextras$(DYLIB_EXT)
 C_OBJECTS := $(subst $(SRC),$(OBJ),$(C_SOURCES:.c=.o))
-C_LIB := $(TOPDIR)/builtinlibs/$(OBJ)/$(C_LIBNAME)
+C_LIB := $(TOPDIR)/../lib/$(C_LIBNAME)
 #CFLAGS := $(CFLAGS) -DFASTR
 
 JNI_INCLUDES = -I $(JAVA_HOME)/include -I $(JAVA_HOME)/include/$(JDK_OS_DIR)

@@ -35,9 +35,8 @@ public class LibPaths {
      */
     public static String getBuiltinLibPath(String libName) {
         String rHome = REnvVars.rHome();
-        String packageName = "com.oracle.truffle.r.native";
         OSInfo osInfo = RPlatform.getOSInfo();
-        Path path = FileSystems.getDefault().getPath(rHome, packageName, "builtinlibs", "lib", "lib" + libName + "." + osInfo.libExt);
+        Path path = FileSystems.getDefault().getPath(rHome, "lib", "lib" + libName + "." + osInfo.libExt);
         return path.toString();
     }
 

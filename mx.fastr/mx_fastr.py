@@ -63,7 +63,7 @@ def _add_truffle_jar():
 
 def setREnvironment(graal_vm):
     osname = platform.system()
-    lib_base = join(_fastr_suite.dir, 'com.oracle.truffle.r.native', 'builtinlibs', 'lib')
+    lib_base = join(_fastr_suite.dir, 'lib')
     lib_value = lib_base
     if osname == 'Darwin':
         lib_env = 'DYLD_FALLBACK_LIBRARY_PATH'

@@ -36,14 +36,14 @@ endif
 
 SRC = src
 OBJ = lib
+LIBDIR = $(TOPDIR)/../lib
 
 C_SOURCES := $(wildcard $(SRC)/*.c)
 
 C_OBJECTS := $(subst $(SRC),$(OBJ),$(C_SOURCES:.c=.o))
 F_OBJECTS := $(wildcard $(GNUR_HOME)/src/appl/d*.o)
 
-LIBDIR := $(OBJ)
-LIB_APPL := $(OBJ)/libappl$(DYLIB_EXT)
+LIB_APPL := $(LIBDIR)/libappl$(DYLIB_EXT)
 
 all: $(LIB_APPL) libr
 
@@ -53,7 +53,7 @@ $(LIB_APPL): $(C_OBJECTS) $(F_OBJECTS)
 
 # On Darwin we need to create a dummy libR.dylib
 ifeq ($(OS_NAME), Darwin)
-LIB_RDUMMY := $(OBJ)/libR$(DYLIB_EXT)
+LIB_RDUMMY := $(LIBDIR)/libR$(DYLIB_EXT)
 
 libr: $(LIB_RDUMMY)
 $(LIB_RDUMMY): $(OBJ)/rdummy.o
@@ -79,4 +79,4 @@ cleanlib:
 clean: cleanobj cleanlibr
 
 cleanobj:
-	rm -f $(LIBDIR)/*.o
+	rm -f $(OBJ)/*.o

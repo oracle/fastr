@@ -52,7 +52,7 @@ endif
 all: Makefile $(GNUR_HOME) iconv config build
 
 $(GNUR_HOME): 
-	tar xf $(TOPDIR)/../lib/R-$(R_VERSION).tar.gz
+	tar xf $(TOPDIR)/../libdownloads/R-$(R_VERSION).tar.gz
 
 ifeq ($(OSNAME), SunOS)
 #

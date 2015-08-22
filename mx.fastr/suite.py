@@ -37,13 +37,13 @@ suite = {
   # distributions that we depend on
   "libraries" : {
     "GNUR" : {
-        "path" : "lib/R-3.1.3.tar.gz",
+        "path" : "libdownloads/R-3.1.3.tar.gz",
         "urls" : ["http://cran.rstudio.com/src/base/R-3/R-3.1.3.tar.gz"],
         "sha1" : "2c9165060b91e45ac73d8cb7507ee9e52816f8b3"
     },
 
     "GNU_ICONV" : {
-        "path" : "lib/libiconv-1.14.tar.gz",
+        "path" : "libdownloads/libiconv-1.14.tar.gz",
         "urls" : ["http://ftp.gnu.org/pub/gnu/libiconv/libiconv-1.14.tar.gz"],
         "sha1" : "be7d67e50d72ff067b2c0291311bc283add36965"
     },
@@ -54,25 +54,25 @@ suite = {
     },
 
     "ANTLR" : {
-      "path" : "lib/antlr-runtime-3.5.jar",
+      "path" : "libdownloads/antlr-runtime-3.5.jar",
       "urls" : ["http://central.maven.org/maven2/org/antlr/antlr-runtime/3.5/antlr-runtime-3.5.jar"],
       "sha1" : "0baa82bff19059401e90e1b90020beb9c96305d7",
     },
 
     "NETLIB" : {
-      "path" : "lib/netlib-java-0.9.3.jar",
+      "path" : "libdownloads/netlib-java-0.9.3.jar",
       "urls" : ["http://central.maven.org/maven2/com/googlecode/netlib-java/netlib-java/0.9.3/netlib-java-0.9.3.jar"],
       "sha1" : "1d41b60e5180f6bcb7db15e7353dde7147cd3928",
     },
 
     "ANTLR-C" : {
-      "path" : "lib/antlr-complete-3.5.1.jar",
+      "path" : "libdownloads/antlr-complete-3.5.1.jar",
       "urls" : ["http://central.maven.org/maven2/org/antlr/antlr-complete/3.5.1/antlr-complete-3.5.1.jar"],
       "sha1" : "ebb4b995fd67a9b291ea5b19379509160f56e154",
     },
 
     "JLINE" : {
-      "path" : "lib/jline-2.11.jar",
+      "path" : "libdownloads/jline-2.11.jar",
       "urls" : [
         "http://lafo.ssw.uni-linz.ac.at/graal-external-deps/jline-2.11.jar",
         "https://search.maven.org/remotecontent?filepath=jline/jline/2.11/jline-2.11.jar",
@@ -81,7 +81,7 @@ suite = {
     },
 
     "JNR_POSIX" : {
-      "path" : "lib/jnr-posix-3.0.10.jar",
+      "path" : "libdownloads/jnr-posix-3.0.10.jar",
       "urls" : [
         "http://lafo.ssw.uni-linz.ac.at/graal-external-deps/jnr-posix-3.0.10.jar",
         "https://search.maven.org/remotecontent?filepath=com/github/jnr/jnr-posix/3.0.10/jnr-posix-3.0.10.jar",
@@ -90,7 +90,7 @@ suite = {
     },
 
     "JNR_CONSTANTS" : {
-      "path" : "lib/jnr-constants-0.8.6.jar",
+      "path" : "libdownloads/jnr-constants-0.8.6.jar",
       "urls" : [
         "http://lafo.ssw.uni-linz.ac.at/graal-external-deps/jnr-constants-0.8.6.jar",
         "https://search.maven.org/remotecontent?filepath=com/github/jnr/jnr-constants/0.8.6/jnr-constants-0.8.6.jar",
@@ -99,7 +99,7 @@ suite = {
     },
 
     "JNR_FFI" : {
-      "path" : "lib/jnr-ffi-2.0.2.jar",
+      "path" : "libdownloads/jnr-ffi-2.0.2.jar",
       "urls" : [
         "http://lafo.ssw.uni-linz.ac.at/graal-external-deps/jnr-ffi-2.0.2.jar",
         "https://search.maven.org/remotecontent?filepath=com/github/jnr/jnr-ffi/2.0.2/jnr-ffi-2.0.2.jar",
@@ -108,7 +108,7 @@ suite = {
     },
 
     "JFFI" : {
-      "path" : "lib/jffi-1.2.8.jar",
+      "path" : "libdownloads/jffi-1.2.8.jar",
       "urls" : [
         "http://lafo.ssw.uni-linz.ac.at/graal-external-deps/jffi-1.2.8.jar",
         "https://search.maven.org/remotecontent?filepath=com/github/jnr/jffi/1.2.8/jffi-1.2.8.jar",
@@ -117,7 +117,7 @@ suite = {
     },
 
     "JFFI_NATIVE" : {
-      "path" : "lib/jffi-1.2.8-native.jar",
+      "path" : "libdownloads/jffi-1.2.8-native.jar",
       "urls" : [
         "http://lafo.ssw.uni-linz.ac.at/graal-external-deps/jffi-1.2.8-native.jar",
         "https://search.maven.org/remotecontent?filepath=com/github/jnr/jffi/1.2.8/jffi-1.2.8-native.jar",
@@ -126,13 +126,13 @@ suite = {
     },
 
     "ASM" : {
-      "path" : "lib/asm-5.0.3.jar",
+      "path" : "libdownloads/asm-5.0.3.jar",
       "urls" : [
         "http://lafo.ssw.uni-linz.ac.at/graal-external-deps/asm-5.0.3.jar",
         "https://search.maven.org/remotecontent?filepath=org/ow2/asm/asm/5.0.3/asm-5.0.3.jar",
       ],
       "sha1" : "dcc2193db20e19e1feca8b1240dbbc4e190824fa",
-      "sourcePath" : "lib/asm-5.0.3-sources.jar",
+      "sourcePath" : "libdownloads/asm-5.0.3-sources.jar",
       "sourceSha1" : "f0f24f6666c1a15c7e202e91610476bd4ce59368",
       "sourceUrls" : [
         "http://lafo.ssw.uni-linz.ac.at/graal-external-deps/asm-5.0.3-sources.jar",
@@ -141,7 +141,7 @@ suite = {
     },
 
     "JNR_X86ASM" : {
-      "path" : "lib/jnr-x86asm-1.0.2.jar",
+      "path" : "libdownloads/jnr-x86asm-1.0.2.jar",
       "urls" : [
         "http://lafo.ssw.uni-linz.ac.at/graal-external-deps/jnr-x86asm-1.0.2.jar",
         "https://search.maven.org/remotecontent?filepath=com/github/jnr/jnr-x86asm/1.0.2/jnr-x86asm-1.0.2.jar",
@@ -150,7 +150,7 @@ suite = {
     },
 
     "ASM_ANALYSIS" : {
-      "path" : "lib/asm-analysis-4.0.jar",
+      "path" : "libdownloads/asm-analysis-4.0.jar",
       "urls" : [
         "http://lafo.ssw.uni-linz.ac.at/graal-external-deps/asm-analysis-4.0.jar",
         "https://search.maven.org/remotecontent?filepath=org/ow2/asm/asm-analysis/4.0/asm-analysis-4.0.jar",
@@ -159,7 +159,7 @@ suite = {
     },
 
     "ASM_COMMONS" : {
-      "path" : "lib/asm-commons-4.0.jar",
+      "path" : "libdownloads/asm-commons-4.0.jar",
       "urls" : [
         "http://lafo.ssw.uni-linz.ac.at/graal-external-deps/asm-commons-4.0.jar",
         "https://search.maven.org/remotecontent?filepath=org/ow2/asm/asm-commons/4.0/asm-commons-4.0.jar",
@@ -168,7 +168,7 @@ suite = {
     },
 
     "ASM_TREE" : {
-      "path" : "lib/asm-tree-4.0.jar",
+      "path" : "libdownloads/asm-tree-4.0.jar",
       "urls" : [
         "http://lafo.ssw.uni-linz.ac.at/graal-external-deps/asm-tree-4.0.jar",
         "https://search.maven.org/remotecontent?filepath=org/ow2/asm/asm-tree/4.0/asm-tree-4.0.jar",
@@ -177,7 +177,7 @@ suite = {
     },
 
     "ASM_UTIL" : {
-      "path" : "lib/asm-util-4.0.jar",
+      "path" : "libdownloads/asm-util-4.0.jar",
       "urls" : [
         "http://lafo.ssw.uni-linz.ac.at/graal-external-deps/asm-util-4.0.jar",
         "https://search.maven.org/remotecontent?filepath=org/ow2/asm/asm-util/4.0/asm-util-4.0.jar",
@@ -186,13 +186,13 @@ suite = {
     },
 
     "JNR_INVOKE" : {
-      "path" : "lib/jnr-invoke-0.1.jar",
+      "path" : "libdownloads/jnr-invoke-0.1.jar",
       "urls" : ["http://search.maven.org/remotecontent?filepath=com/github/jnr/jnr-invoke/0.1/jnr-invoke-0.1.jar"],
       "sha1" : "d0f846c3d3cb98dfd5e2bbd3cca236337fb0afa1",
     },
 
     "JNR_UDIS86" : {
-      "path" : "lib/jnr-udis86-0.1.jar",
+      "path" : "libdownloads/jnr-udis86-0.1.jar",
       "urls" : ["http://search.maven.org/remotecontent?filepath=com/github/jnr/jnr-udis86/0.1/jnr-udis86-0.1.jar"],
       "sha1" : "88accfa82203ea74a4a82237061c28ac8b4224af",
     },
