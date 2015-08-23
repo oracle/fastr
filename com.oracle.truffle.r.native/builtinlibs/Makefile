@@ -53,6 +53,9 @@ $(LIB_APPL): $(C_OBJECTS) $(F_OBJECTS)
 
 $(C_OBJECTS): | $(OBJ)
 
+$(OBJ):
+	mkdir -p $(OBJ)
+
 # On Darwin we need to create a dummy libR.dylib
 ifeq ($(OS_NAME), Darwin)
 LIB_RDUMMY := $(LIBDIR)/libR$(DYLIB_EXT)
@@ -62,9 +65,6 @@ libr: $(LIB_RDUMMY)
 $(LIB_RDUMMY): $(OBJ)/rdummy.o
 	mkdir -p $(LIBDIR)
 	$(DYLIB_LD) $(DYLIB_LDFLAGS) -o $(LIB_RDUMMY) -current_version $(R_VERSION) -compatibility_version $(R_VERSION) $(OBJ)/rdummy.o
-
-$(OBJ):
-	mkdir -p $(OBJ)
 
 cleanlibr:
 	rm -f $(LIB_RDUMMY)
