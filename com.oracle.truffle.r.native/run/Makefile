@@ -80,6 +80,7 @@ $(FASTR_BIN_DIR)/R: Makefile R.sh Rscript.sh Rscript_exec.sh
 	cp examples-header.R examples-footer.R $(FASTR_SHARE_DIR)/R
 
 includedir: Makefile $(TOPDIR)/include/jni/include/Rinternals.h
+	mkdir -p $(FASTR_R_HOME)/include
 	cp -r $(TOPDIR)/include/jni/include/* $(FASTR_R_HOME)/include
 
 clean:
