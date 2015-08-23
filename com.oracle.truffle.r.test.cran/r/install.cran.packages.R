@@ -61,7 +61,11 @@ create.blacklist.iter <- function(blacklist) {
 }
 
 # known to be uninstallable
-initial.blacklist <- c("Rcpp")
+cplusplus <- c("Rcpp")
+parserbug <- c("lattice")
+lapplydotbug <- c("ABCoptim")
+trufflevisitor.nyi <- c("colorspace")
+initial.blacklist <- c(cplusplus, parserbug, lapplydotbug, trufflevisitor.nyi)
 
 create.blacklist <- function() {
 	create.blacklist.iter(initial.blacklist)
