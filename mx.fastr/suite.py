@@ -382,11 +382,11 @@ suite = {
       "sourcesPath" : "truffle-r-parser-processor.src.zip",
       "dependencies" : ["com.oracle.truffle.r.parser.processor"],
     },
-
     "FASTR" : {
       "path" : "fastr.jar",
       "sourcesPath" : "fastr-sources.jar",
-      "dependencies" : ["com.oracle.truffle.r.nodes"],
+      "dependencies" : ["com.oracle.truffle.r.engine", "com.oracle.truffle.r.runtime.ffi"],
+      "mainClass" : "com.oracle.truffle.r.engine.shell.RCommand",
       "exclude" : [
         "JDK_TOOLS",
         "NETLIB",
@@ -414,7 +414,7 @@ suite = {
         "truffle:TRUFFLE_API",
 	    "graal:GRAAL_TRUFFLE_HOTSPOT",
       ],
-    }
+    },
   },
 
 }
