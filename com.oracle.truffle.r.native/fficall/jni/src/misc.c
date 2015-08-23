@@ -24,8 +24,12 @@
 #include <stdlib.h>
 #include <string.h>
 
+jmethodID iS4ObjectMethodID;
+jmethodID isFiniteMethodID;
 
 void init_misc(JNIEnv *env) {
+	iS4ObjectMethodID = checkGetMethodID(env, CallRFFIHelperClass, "isS4Object", "(Ljava/lang/Object;)I", 1);
+	isFiniteMethodID = checkGetMethodID(env, RRuntimeClass, "isFinite", "(D)Z", 1);
 }
 
 const char *R_CHAR(SEXP string) {
@@ -53,6 +57,27 @@ void R_rsort(double *x, int n) {
 	unimplemented("R_rsort");
 }
 
+void R_qsort_int_I(int *iv, int *II, int i, int j) {
+	unimplemented("R_qsort_int_I");
+}
+
 void R_CheckUserInterrupt() {
 // TODO (we don't even do this in the Java code)
+}
+
+int R_finite(double x) {
+	JNIEnv *env = getEnv();
+	jboolean r = (*env)->CallStaticBooleanMethod(env, RRuntimeClass, isFiniteMethodID, x);
+}
+
+int IS_S4_OBJECT(SEXP x) {
+	JNIEnv *env = getEnv();
+	return 	(*env)->CallStaticIntMethod(env, CallRFFIHelperClass, iS4ObjectMethodID, x);
+}
+
+void SET_S4_OBJECT(SEXP x) {
+	unimplemented("SET_S4_OBJECT");
+}
+void UNSET_S4_OBJECT(SEXP x) {
+	unimplemented("UNSET_S4_OBJECT");
 }

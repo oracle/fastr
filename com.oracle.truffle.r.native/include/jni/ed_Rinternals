@@ -11,6 +11,7 @@ a
 /R_GlobalEnv/
 i
 #ifdef FASTR
+LibExtern SEXP FASTR_GlobalEnv();
 #define R_GlobalEnv FASTR_GlobalEnv()
 #else
 .
@@ -21,6 +22,7 @@ a
 /R_BaseEnv/
 i
 #ifdef FASTR
+LibExtern SEXP FASTR_BaseEnv();
 #define R_BaseEnv FASTR_BaseEnv()
 #else
 .
@@ -31,6 +33,7 @@ a
 /R_BaseNamespace/
 i
 #ifdef FASTR
+LibExtern SEXP FASTR_BaseNamespace();
 #define R_BaseNamespace FASTR_BaseNamespace()
 #else
 .
@@ -41,6 +44,7 @@ a
 /R_NamespaceRegistry/
 i
 #ifdef FASTR
+LibExtern SEXP FASTR_R_NamespaceRegistry();
 #define R_NamespaceRegistry FASTR_NamespaceRegistry()
 #else
 .

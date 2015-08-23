@@ -79,8 +79,8 @@ $(FASTR_BIN_DIR)/R: Makefile R.sh Rscript.sh Rscript_exec.sh
 	# overrides
 	cp examples-header.R examples-footer.R $(FASTR_SHARE_DIR)/R
 
-includedir: Makefile $(TOPDIR)/include/jni/include/R.h
-	cp -r $(TOPDIR)/include/jni/include $(FASTR_R_HOME)/include
+includedir: Makefile $(TOPDIR)/include/jni/include/Rinternals.h
+	cp -r $(TOPDIR)/include/jni/include/* $(FASTR_R_HOME)/include
 
 clean:
 	rm -rf $(FASTR_BIN_DIR)

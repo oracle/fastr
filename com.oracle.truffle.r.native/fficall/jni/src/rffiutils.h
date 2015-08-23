@@ -78,6 +78,7 @@ void init_utils(JNIEnv *env);
 
 extern jclass RDataFactoryClass;
 extern jclass CallRFFIHelperClass;
+extern jclass RRuntimeClass;
 
 #define TRACE_UPCALLS 0
 

@@ -46,6 +46,10 @@ public class CallRFFIHelper {
         return RDataFactory.createIntVectorFromScalar(value);
     }
 
+    static RLogicalVector Rf_ScalarLogical(int value) {
+        return RDataFactory.createLogicalVectorFromScalar(value != 0);
+    }
+
     static RDoubleVector Rf_ScalarDouble(double value) {
         return RDataFactory.createDoubleVectorFromScalar(value);
     }
@@ -196,6 +200,21 @@ public class CallRFFIHelper {
             default:
                 throw RInternalError.unimplemented();
         }
+
+    }
+
+    static Object Rf_allocateArray(int mode, Object dimsObj) {
+        RIntVector dims = (RIntVector) dimsObj;
+        int n = 1;
+        int[] newDims = new int[dims.getLength()];
+        // TODO check long vector
+        for (int i = 0; i < newDims.length; i++) {
+            newDims[i] = dims.getDataAt(i);
+            n *= newDims[i];
+        }
+        RAbstractVector result = (RAbstractVector) Rf_allocateVector(mode, n);
+        result.setDimensions(newDims);
+        return result;
 
     }
 
@@ -377,4 +396,7 @@ public class CallRFFIHelper {
         return RContext.getInstance().isInteractive() ? 1 : 0;
     }
 
+    static int isS4Object(Object x) {
+        return x instanceof RS4Object ? 1 : 0;
+    }
 }

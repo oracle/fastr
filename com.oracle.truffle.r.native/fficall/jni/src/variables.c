@@ -46,32 +46,32 @@ SEXP R_UnboundValue;
 SEXP R_MissingArg;
 
 /* Symbol Table Shortcuts */
-//SEXP R_Bracket2Symbol;   /* "[[" */
-//SEXP R_BracketSymbol;    /* "[" */
-//SEXP R_BraceSymbol;      /* "{" */
+SEXP R_Bracket2Symbol;   /* "[[" */
+SEXP R_BracketSymbol;    /* "[" */
+SEXP R_BraceSymbol;      /* "{" */
 SEXP R_ClassSymbol;     /* "class" */
-//SEXP R_DeviceSymbol;     /* ".Device" */
+SEXP R_DeviceSymbol;     /* ".Device" */
 SEXP R_DimNamesSymbol;   /* "dimnames" */
 SEXP R_DimSymbol;     /* "dim" */
-//SEXP R_DollarSymbol;     /* "$" */
-//SEXP R_DotsSymbol;     /* "..." */
-//SEXP R_DropSymbol;     /* "drop" */
-//SEXP R_LastvalueSymbol;  /* ".Last.value" */
-//SEXP R_LevelsSymbol;     /* "levels" */
-//SEXP R_ModeSymbol;     /* "mode" */
-//SEXP R_NameSymbol;     /* "name" */
-//SEXP R_NamesSymbol;     /* "names" */
-//SEXP R_NaRmSymbol;     /* "na.rm" */
-//SEXP R_PackageSymbol;    /* "package" */
-//SEXP R_QuoteSymbol;     /* "quote" */
-//SEXP R_RowNamesSymbol;   /* "row.names" */
-//SEXP R_SeedsSymbol;     /* ".Random.seed" */
-//SEXP R_SourceSymbol;     /* "source" */
-//SEXP R_TspSymbol;     /* "tsp" */
+SEXP R_DollarSymbol;     /* "$" */
+SEXP R_DotsSymbol;     /* "..." */
+SEXP R_DropSymbol;     /* "drop" */
+SEXP R_LastvalueSymbol;  /* ".Last.value" */
+SEXP R_LevelsSymbol;     /* "levels" */
+SEXP R_ModeSymbol;     /* "mode" */
+SEXP R_NameSymbol;     /* "name" */
+SEXP R_NamesSymbol;     /* "names" */
+SEXP R_NaRmSymbol;     /* "na.rm" */
+SEXP R_PackageSymbol;    /* "package" */
+SEXP R_QuoteSymbol;     /* "quote" */
+SEXP R_RowNamesSymbol;   /* "row.names" */
+SEXP R_SeedsSymbol;     /* ".Random.seed" */
+SEXP R_SourceSymbol;     /* "source" */
+SEXP R_TspSymbol;     /* "tsp" */
 
-//SEXP  R_dot_defined;      /* ".defined" */
-//SEXP  R_dot_Method;       /* ".Method" */
-//SEXP  R_dot_target;       /* ".target" */
+SEXP  R_dot_defined;      /* ".defined" */
+SEXP  R_dot_Method;       /* ".Method" */
+SEXP  R_dot_target;       /* ".target" */
 SEXP	R_NaString;	    /* NA_STRING as a CHARSXP */
 SEXP	R_BlankString;	    /* "" as a CHARSXP */
 
@@ -166,8 +166,56 @@ void init_variables(JNIEnv *env, jobjectArray initialValues) {
 					R_UnboundValue = ref;
 				} else if (strcmp(nameChars, "R_MissingArg") == 0) {
 					R_MissingArg = ref;
+				} else if (strcmp(nameChars, "R_Bracket2Symbol") == 0) {
+					R_Bracket2Symbol = ref;
+				} else if (strcmp(nameChars, "R_BracketSymbol") == 0) {
+					R_BracketSymbol = ref;
+				} else if (strcmp(nameChars, "R_BraceSymbol") == 0) {
+					R_BraceSymbol = ref;
 				} else if (strcmp(nameChars, "R_ClassSymbol") == 0) {
 					R_ClassSymbol = ref;
+				} else if (strcmp(nameChars, "R_DeviceSymbol") == 0) {
+					R_DeviceSymbol = ref;
+				} else if (strcmp(nameChars, "R_DimNamesSymbol") == 0) {
+					R_DimNamesSymbol = ref;
+				} else if (strcmp(nameChars, "R_DimSymbol") == 0) {
+					R_DimSymbol = ref;
+				} else if (strcmp(nameChars, "R_DollarSymbol") == 0) {
+					R_DollarSymbol = ref;
+				} else if (strcmp(nameChars, "R_DotsSymbol") == 0) {
+					R_DotsSymbol = ref;
+				} else if (strcmp(nameChars, "R_DropSymbol") == 0) {
+					R_DropSymbol = ref;
+				} else if (strcmp(nameChars, "R_LastvalueSymbol") == 0) {
+					R_LastvalueSymbol = ref;
+				} else if (strcmp(nameChars, "R_LevelsSymbol") == 0) {
+					R_LevelsSymbol = ref;
+				} else if (strcmp(nameChars, "R_ModeSymbol") == 0) {
+					R_ModeSymbol = ref;
+				} else if (strcmp(nameChars, "R_NameSymbol") == 0) {
+					R_NameSymbol = ref;
+				} else if (strcmp(nameChars, "R_NamesSymbol") == 0) {
+					R_NamesSymbol = ref;
+				} else if (strcmp(nameChars, "R_NaRmSymbol") == 0) {
+					R_NaRmSymbol = ref;
+				} else if (strcmp(nameChars, "R_PackageSymbol") == 0) {
+					R_PackageSymbol = ref;
+				} else if (strcmp(nameChars, "R_QuoteSymbol") == 0) {
+					R_QuoteSymbol = ref;
+				} else if (strcmp(nameChars, "R_RowNamesSymbol") == 0) {
+					R_RowNamesSymbol = ref;
+				} else if (strcmp(nameChars, "R_SeedsSymbol") == 0) {
+					R_SeedsSymbol = ref;
+				} else if (strcmp(nameChars, "R_SourceSymbol") == 0) {
+					R_SourceSymbol = ref;
+				} else if (strcmp(nameChars, "R_TspSymbol") == 0) {
+					R_TspSymbol = ref;
+				} else if (strcmp(nameChars, "R_dot_defined") == 0) {
+					R_dot_defined = ref;
+				} else if (strcmp(nameChars, "R_dot_Method") == 0) {
+					R_dot_Method = ref;
+				} else if (strcmp(nameChars, "R_dot_target") == 0) {
+					R_dot_target = ref;
 				} else if (strcmp(nameChars, "R_SrcfileSymbol") == 0) {
 					R_SrcfileSymbol = ref;
 				} else if (strcmp(nameChars, "R_SrcrefSymbol") == 0) {

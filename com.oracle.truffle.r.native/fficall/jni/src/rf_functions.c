@@ -29,7 +29,9 @@
 static jmethodID Rf_ScalarIntegerMethodID;
 static jmethodID Rf_ScalarDoubleMethodID;
 static jmethodID Rf_ScalarStringMethodID;
+static jmethodID Rf_ScalarLogicalMethodID;
 static jmethodID Rf_allocateVectorMethodID;
+static jmethodID Rf_allocateArrayMethodID;
 static jmethodID Rf_allocateMatrixMethodID;
 static jmethodID Rf_duplicateMethodID;
 static jmethodID Rf_consMethodID;
@@ -49,6 +51,7 @@ void init_rf_functions(JNIEnv *env) {
 	Rf_ScalarIntegerMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_ScalarInteger", "(I)Lcom/oracle/truffle/r/runtime/data/RIntVector;", 1);
 	Rf_ScalarDoubleMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_ScalarDouble", "(D)Lcom/oracle/truffle/r/runtime/data/RDoubleVector;", 1);
 	Rf_ScalarStringMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_ScalarString", "(Ljava/lang/String;)Lcom/oracle/truffle/r/runtime/data/RStringVector;", 1);
+	Rf_ScalarLogicalMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_ScalarLogical", "(I)Lcom/oracle/truffle/r/runtime/data/RLogicalVector;", 1);
 	Rf_consMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_cons", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", 1);
 	Rf_defineVarMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_defineVar", "(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)V", 1);
 	Rf_findVarMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_findVar", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", 1);
@@ -60,6 +63,7 @@ void init_rf_functions(JNIEnv *env) {
 	Rf_errorMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_error", "(Ljava/lang/String;)V", 1);
 	Rf_allocateVectorMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_allocateVector", "(II)Ljava/lang/Object;", 1);
 	Rf_allocateMatrixMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_allocateMatrix", "(III)Ljava/lang/Object;", 1);
+	Rf_allocateArrayMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_allocateArray", "(ILjava/lang/Object;)Ljava/lang/Object;", 1);
 	Rf_duplicateMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_duplicate", "(Ljava/lang/Object;)Ljava/lang/Object;", 1);
 	Rf_NewHashedEnvMethodID = checkGetMethodID(env, RDataFactoryClass, "createNewEnv", "(Lcom/oracle/truffle/r/runtime/env/REnvironment;Ljava/lang/String;ZI)Lcom/oracle/truffle/r/runtime/env/REnvironment;", 1);
 //	Rf_rPsortMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_rPsort", "(Lcom/oracle/truffle/r/runtime/data/RDoubleVector;II)", 1);
@@ -86,10 +90,24 @@ SEXP Rf_ScalarString(SEXP value) {
     return checkRef(thisenv, result);
 }
 
+SEXP Rf_ScalarLogical(int value) {
+	TRACE(TARG1, value);
+	JNIEnv *thisenv = getEnv();
+	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_ScalarLogicalMethodID, value);
+    return checkRef(thisenv, result);
+}
+
 SEXP Rf_allocVector(SEXPTYPE t, R_xlen_t len) {
 	TRACE(TARG2d, t, len);
 	JNIEnv *thisenv = getEnv();
 	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_allocateVectorMethodID, t, len);
+	return checkRef(thisenv, result);
+}
+
+SEXP Rf_allocArray(SEXPTYPE t, SEXP dims) {
+	TRACE(TARG2d, t, len);
+	JNIEnv *thisenv = getEnv();
+	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_allocateArrayMethodID, t, dims);
 	return checkRef(thisenv, result);
 }
 
@@ -109,6 +127,10 @@ SEXP Rf_cons(SEXP car, SEXP cdr) {
 void Rf_defineVar(SEXP symbol, SEXP value, SEXP rho) {
 	JNIEnv *thisenv = getEnv();
 	(*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_defineVarMethodID, symbol, value, rho);
+}
+
+SEXP Rf_eval(SEXP expr, SEXP env) {
+	unimplemented("Rf_eval)");
 }
 
 SEXP Rf_findVar(SEXP symbol, SEXP rho) {
@@ -135,6 +157,94 @@ SEXP Rf_duplicate(SEXP x) {
 	return checkRef(thisenv, result);
 }
 
+Rboolean Rf_inherits(SEXP x, const char * klass) {
+	unimplemented("Rf_inherits)");
+}
+
+Rboolean Rf_isFunction(SEXP x) {
+	unimplemented("Rf_isFunction)");
+}
+
+Rboolean Rf_isArray(SEXP x) {
+    unimplemented("Rf_isArray");
+}
+
+Rboolean Rf_isFactor(SEXP x) {
+    unimplemented("Rf_isFactor");
+}
+
+Rboolean Rf_isFrame(SEXP x) {
+    unimplemented("Rf_isFrame");
+}
+
+Rboolean Rf_isInteger(SEXP x) {
+    unimplemented("Rf_isInteger");
+}
+
+Rboolean Rf_isLanguage(SEXP x) {
+    unimplemented("Rf_isLanguage");
+}
+
+Rboolean Rf_isList(SEXP x) {
+    unimplemented("Rf_isList");
+}
+
+Rboolean Rf_isMatrix(SEXP x) {
+    unimplemented("Rf_isMatrix");
+}
+
+Rboolean Rf_isNewList(SEXP x) {
+    unimplemented("Rf_isNewList");
+}
+
+Rboolean Rf_isNumber(SEXP x) {
+    unimplemented("Rf_isNumber");
+}
+
+Rboolean Rf_isNumeric(SEXP x) {
+    unimplemented("Rf_isNumeric");
+}
+
+Rboolean Rf_isPairList(SEXP x) {
+    unimplemented("Rf_isPairList");
+}
+
+Rboolean Rf_isPrimitive(SEXP x) {
+    unimplemented("Rf_isPrimitive");
+}
+
+Rboolean Rf_isTs(SEXP x) {
+    unimplemented("Rf_isTs");
+}
+
+Rboolean Rf_isUserBinop(SEXP x) {
+    unimplemented("Rf_isUserBinop");
+}
+
+Rboolean Rf_isValidString(SEXP x) {
+    unimplemented("Rf_isValidString");
+}
+
+Rboolean Rf_isValidStringF(SEXP x) {
+    unimplemented("Rf_isValidStringF");
+}
+
+Rboolean Rf_isVector(SEXP x) {
+    unimplemented("Rf_isVector");
+}
+
+Rboolean Rf_isVectorAtomic(SEXP x) {
+    unimplemented("Rf_isVectorAtomic");
+}
+
+Rboolean Rf_isVectorList(SEXP x) {
+    unimplemented("Rf_isVectorList");
+}
+
+Rboolean Rf_isVectorizable(SEXP x) {
+    unimplemented("Rf_isVectorizable");
+}
+
 SEXP Rf_install(const char *name) {
 	JNIEnv *thisenv = getEnv();
 	jstring string = (*thisenv)->NewStringUTF(thisenv, name);
@@ -152,6 +262,11 @@ Rboolean Rf_isString(SEXP s) {
 	return (*thisenv)->CallStaticIntMethod(thisenv, CallRFFIHelperClass, Rf_isStringMethodID, s);
 
 }
+
+SEXP Rf_lcons(SEXP x, SEXP y) {
+	unimplemented("Rf_lcons");
+}
+
 
 SEXP Rf_mkChar(const char *x) {
 	JNIEnv *thisenv = getEnv();

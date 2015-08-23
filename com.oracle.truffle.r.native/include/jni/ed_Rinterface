@@ -1,6 +1,7 @@
 /R_Interactive/
 i
 #ifdef FASTR
+LibExtern Rboolean FASTR_Interactive();
 #define R_Interactive FASTR_Interactive()
 #else
 .
