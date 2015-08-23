@@ -128,27 +128,12 @@ public interface Engine {
     /**
      * Support for the {@code eval} {@code .Internal}.
      */
-    Object eval(RExpression expr, REnvironment envir, REnvironment enclos, int depth);
+    Object eval(RExpression expr, REnvironment envir, int depth);
 
     /**
-     * Convenience method for common case.
+     * Variant of {@link #eval(RExpression, REnvironment, int)} for a single language element.
      */
-    default Object eval(RExpression expr, REnvironment envir, int depth) {
-        return eval(expr, envir, null, depth);
-    }
-
-    /**
-     * Variant of {@link #eval(RExpression, REnvironment, REnvironment, int)} for a single language
-     * element.
-     */
-    Object eval(RLanguage expr, REnvironment envir, REnvironment enclos, int depth);
-
-    /**
-     * Convenience method for common case.
-     */
-    default Object eval(RLanguage expr, REnvironment envir, int depth) {
-        return eval(expr, envir, null, depth);
-    }
+    Object eval(RLanguage expr, REnvironment envir, int depth);
 
     /**
      * Evaluate {@code expr} in {@code frame}.

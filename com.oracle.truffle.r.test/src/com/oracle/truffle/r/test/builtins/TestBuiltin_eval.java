@@ -43,5 +43,8 @@ public class TestBuiltin_eval extends TestBase {
 
         // should print two values, xx^2 and xx
         assertEval(Ignored.Unknown, "eval({ xx <- pi; xx^2}) ; xx");
+
+        // lists
+        assertEval("{ l <- list(a=1, b=2); eval(quote(a), l)}");
     }
 }

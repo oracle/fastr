@@ -302,12 +302,12 @@ final class REngine implements Engine {
         }
     }
 
-    public Object eval(RExpression exprs, REnvironment envir, REnvironment enclos, int depth) {
+    public Object eval(RExpression exprs, REnvironment envir, int depth) {
         Object result = RNull.instance;
         for (int i = 0; i < exprs.getLength(); i++) {
             Object obj = RASTUtils.checkForRSymbol(exprs.getDataAt(i));
             if (obj instanceof RLanguage) {
-                result = evalNode((RNode) ((RLanguage) obj).getRep(), envir, enclos, depth);
+                result = evalNode((RNode) ((RLanguage) obj).getRep(), envir, depth);
             } else {
                 result = obj;
             }
@@ -315,8 +315,8 @@ final class REngine implements Engine {
         return result;
     }
 
-    public Object eval(RLanguage expr, REnvironment envir, REnvironment enclos, int depth) {
-        return evalNode((RNode) expr.getRep(), envir, enclos, depth);
+    public Object eval(RLanguage expr, REnvironment envir, int depth) {
+        return evalNode((RNode) expr.getRep(), envir, depth);
     }
 
     public Object eval(RExpression expr, MaterializedFrame frame) {
@@ -350,11 +350,11 @@ final class REngine implements Engine {
         return func.getTarget().call(rArgs);
     }
 
-    private Object evalNode(RNode exprRep, REnvironment envir, REnvironment enclos, int depth) {
+    private Object evalNode(RNode exprRep, REnvironment envir, int depth) {
         RNode n = exprRep;
         RootCallTarget callTarget = doMakeCallTarget(n, EVAL_FUNCTION_NAME);
         RCaller call = RArguments.getCall(envir.getFrame());
-        return evalTarget(callTarget, call, envir, enclos, depth);
+        return evalTarget(callTarget, call, envir, depth);
     }
 
     /**
@@ -367,7 +367,7 @@ final class REngine implements Engine {
      * inefficient. In particular, in the case where a {@link VirtualFrame} is available, then the
      * {@code eval} methods that take such a {@link VirtualFrame} should be used in preference.
      */
-    private Object evalTarget(RootCallTarget callTarget, RCaller call, REnvironment envir, @SuppressWarnings("unused") REnvironment enclos, int depth) {
+    private Object evalTarget(RootCallTarget callTarget, RCaller call, REnvironment envir, int depth) {
         MaterializedFrame envFrame = envir.getFrame();
         // Here we create fake frame that wraps the original frame's context and has an only
         // slightly changed arguments array (function and callSrc).

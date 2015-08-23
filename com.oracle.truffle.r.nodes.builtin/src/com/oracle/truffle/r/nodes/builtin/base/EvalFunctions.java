@@ -37,19 +37,17 @@ import com.oracle.truffle.r.runtime.nodes.*;
 
 /**
  * The {@code eval} {@code .Internal} and the {@code withVisible} {@code .Primitive}.
- *
- * TODO the {@code list} variants and the interpretation of the {@code enclos} argument.
  */
 public class EvalFunctions {
     public abstract static class EvalAdapter extends RBuiltinNode {
         @TruffleBoundary
-        protected Object doEvalBody(int depth, Object exprArg, REnvironment envir, REnvironment enclos) {
+        protected Object doEvalBody(int depth, Object exprArg, REnvironment envir) {
             Object expr = RASTUtils.checkForRSymbol(exprArg);
 
             if (expr instanceof RExpression) {
-                return RContext.getEngine().eval((RExpression) expr, envir, enclos, depth);
+                return RContext.getEngine().eval((RExpression) expr, envir, depth);
             } else if (expr instanceof RLanguage) {
-                return RContext.getEngine().eval((RLanguage) expr, envir, enclos, depth);
+                return RContext.getEngine().eval((RLanguage) expr, envir, depth);
             } else {
                 // just return value
                 return expr;
@@ -62,23 +60,45 @@ public class EvalFunctions {
 
         public abstract Object execute(VirtualFrame frame, Object expr, REnvironment envir, REnvironment enclos);
 
+        private final RAttributeProfiles attributeProfiles = RAttributeProfiles.create();
+
         @Specialization
-        protected Object doEval(VirtualFrame frame, Object expr, REnvironment envir, REnvironment enclos) {
+        protected Object doEval(VirtualFrame frame, Object expr, REnvironment envir, @SuppressWarnings("unused") REnvironment enclos) {
             controlVisibility();
-            return doEvalBody(RArguments.getDepth(frame) + 1, expr, envir, enclos);
+            return doEvalBody(RArguments.getDepth(frame) + 1, expr, envir);
         }
 
         @Specialization
         protected Object doEval(VirtualFrame frame, Object expr, @SuppressWarnings("unused") RNull envir, REnvironment enclos) {
             controlVisibility();
-            return doEvalBody(RArguments.getDepth(frame) + 1, expr, REnvironment.emptyEnv(), enclos);
+            return doEvalBody(RArguments.getDepth(frame) + 1, expr, enclos);
+        }
+
+        @Specialization
+        protected Object doEval(VirtualFrame frame, Object expr, RList list, REnvironment enclos) {
+            return doEvalBody(RArguments.getDepth(frame) + 1, expr, REnvironment.createFromList(attributeProfiles, list, enclos));
+        }
+
+        @Specialization
+        protected Object doEval(VirtualFrame frame, Object expr, RPairList list, REnvironment enclos) {
+            return doEvalBody(RArguments.getDepth(frame) + 1, expr, REnvironment.createFromList(attributeProfiles, list.toRList(), enclos));
+        }
+
+        @Specialization
+        protected Object doEval(VirtualFrame frame, Object expr, RDataFrame dataFrame, REnvironment enclos) {
+            RVector vector = dataFrame.getVector();
+            if (vector instanceof RList) {
+                return doEvalBody(RArguments.getDepth(frame) + 1, expr, REnvironment.createFromList(attributeProfiles, (RList) vector, enclos));
+            } else {
+                throw RError.nyi(this, "eval on non-list dataframe");
+            }
         }
 
         @SuppressWarnings("unused")
         @Fallback
         @TruffleBoundary
         protected Object doEval(Object expr, Object envir, Object enclos) {
-            throw RError.nyi(this, "eval arg type");
+            throw RError.error(this, RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
         }
     }
 
@@ -89,8 +109,7 @@ public class EvalFunctions {
         @Specialization
         protected RList withVisible(VirtualFrame frame, RPromise expr) {
             controlVisibility();
-            Object result = doEvalBody(RArguments.getDepth(frame) + 1, RDataFactory.createLanguage((RNode) expr.getRep()), REnvironment.frameToEnvironment(frame.materialize()),
-                            REnvironment.emptyEnv());
+            Object result = doEvalBody(RArguments.getDepth(frame) + 1, RDataFactory.createLanguage((RNode) expr.getRep()), REnvironment.frameToEnvironment(frame.materialize()));
             Object[] data = new Object[]{result, RRuntime.asLogical(RContext.getInstance().isVisible())};
             // Visibility is changed by the evaluation (else this code would not work),
             // so we have to force it back on.
