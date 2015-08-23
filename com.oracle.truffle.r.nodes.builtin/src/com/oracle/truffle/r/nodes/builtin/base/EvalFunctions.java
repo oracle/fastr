@@ -76,16 +76,19 @@ public class EvalFunctions {
 
         @Specialization
         protected Object doEval(VirtualFrame frame, Object expr, RList list, REnvironment enclos) {
+            controlVisibility();
             return doEvalBody(RArguments.getDepth(frame) + 1, expr, REnvironment.createFromList(attributeProfiles, list, enclos));
         }
 
         @Specialization
         protected Object doEval(VirtualFrame frame, Object expr, RPairList list, REnvironment enclos) {
+            controlVisibility();
             return doEvalBody(RArguments.getDepth(frame) + 1, expr, REnvironment.createFromList(attributeProfiles, list.toRList(), enclos));
         }
 
         @Specialization
         protected Object doEval(VirtualFrame frame, Object expr, RDataFrame dataFrame, REnvironment enclos) {
+            controlVisibility();
             RVector vector = dataFrame.getVector();
             if (vector instanceof RList) {
                 return doEvalBody(RArguments.getDepth(frame) + 1, expr, REnvironment.createFromList(attributeProfiles, (RList) vector, enclos));
