@@ -120,8 +120,8 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
     @CompilationFinal private FrameLevel read;
     @CompilationFinal private boolean needsCopying;
 
-    private final ConditionProfile isPromiseProfile = ConditionProfile.createBinaryProfile();
-    private final ConditionProfile copyProfile = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile isPromiseProfile;
+    private final ConditionProfile copyProfile;
     private final BranchProfile unexpectedMissingProfile = BranchProfile.create();
     private final ValueProfile superEnclosingFrameProfile = ValueProfile.createClassProfile();
     private final ConditionProfile isNullValueProfile = ConditionProfile.createBinaryProfile();
@@ -141,14 +141,9 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
         this.mode = mode;
         this.kind = kind;
         this.visibilityChange = visibilityChange;
-    }
 
-    protected ReadVariableNode() {
-        this.identifier = null;
-        this.identifierAsString = null;
-        this.mode = null;
-        this.kind = null;
-        this.visibilityChange = true;
+        isPromiseProfile = kind == ReadKind.UnforcedSilentLocal && mode == RType.Any ? null : ConditionProfile.createBinaryProfile();
+        copyProfile = kind != ReadKind.Copying ? null : ConditionProfile.createBinaryProfile();
     }
 
     public String getIdentifier() {
