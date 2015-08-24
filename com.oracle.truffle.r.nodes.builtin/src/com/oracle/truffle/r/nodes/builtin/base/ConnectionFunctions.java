@@ -170,7 +170,7 @@ public abstract class ConnectionFunctions {
     public abstract static class TextConnection extends RBuiltinNode {
         @Specialization
         @TruffleBoundary
-        protected Object textConnection(RAbstractStringVector nm, RAbstractStringVector object, RAbstractStringVector open, REnvironment env, @SuppressWarnings("unused") RIntVector encoding) {
+        protected Object textConnection(RAbstractStringVector nm, RAbstractStringVector object, RAbstractStringVector open, REnvironment env, @SuppressWarnings("unused") RAbstractIntVector encoding) {
             controlVisibility();
             if (nm.getLength() != 1) {
                 throw RError.error(this, RError.Message.INVALID_ARGUMENT, "description");
