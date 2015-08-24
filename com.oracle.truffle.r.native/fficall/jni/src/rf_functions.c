@@ -133,6 +133,11 @@ SEXP Rf_eval(SEXP expr, SEXP env) {
 	unimplemented("Rf_eval)");
 }
 
+SEXP Rf_findFun(SEXP symbol, SEXP rho) {
+	JNIEnv *thisenv = getEnv();
+	unimplemented("Rf_eval)");
+}
+
 SEXP Rf_findVar(SEXP symbol, SEXP rho) {
 	JNIEnv *thisenv = getEnv();
 	SEXP result =(*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_findVarMethodID, symbol, rho);
@@ -179,6 +184,18 @@ Rboolean Rf_isFrame(SEXP x) {
 
 Rboolean Rf_isInteger(SEXP x) {
     unimplemented("Rf_isInteger");
+}
+
+Rboolean Rf_isReal(SEXP x) {
+    unimplemented("Rf_isReal");
+}
+
+Rboolean Rf_isSymbol(SEXP x) {
+    unimplemented("Rf_isSymbol");
+}
+
+Rboolean Rf_isExpression(SEXP x) {
+    unimplemented("Rf_isExpression");
 }
 
 Rboolean Rf_isLanguage(SEXP x) {
@@ -263,10 +280,37 @@ Rboolean Rf_isString(SEXP s) {
 
 }
 
+SEXP Rf_lang1(SEXP a) {
+    unimplemented("Rf_lang1");
+}
+
+SEXP Rf_lang2(SEXP a, SEXP b) {
+    unimplemented("Rf_lang2");
+}
+
+SEXP Rf_lang3(SEXP a, SEXP b, SEXP c) {
+    unimplemented("Rf_lang3");
+}
+
+SEXP Rf_lang4(SEXP a, SEXP b, SEXP c, SEXP d) {
+    unimplemented("Rf_lang2");
+}
+
+SEXP Rf_lang5(SEXP a, SEXP b, SEXP c, SEXP d, SEXP e) {
+    unimplemented("Rf_lang5");
+}
+
+SEXP Rf_lang6(SEXP a, SEXP b, SEXP c, SEXP d, SEXP e, SEXP f) {
+    unimplemented("Rf_lang6");
+}
+
 SEXP Rf_lcons(SEXP x, SEXP y) {
 	unimplemented("Rf_lcons");
 }
 
+cetype_t Rf_getCharCE(SEXP x) {
+	unimplemented("Rf_getCharCE");
+}
 
 SEXP Rf_mkChar(const char *x) {
 	JNIEnv *thisenv = getEnv();
@@ -357,3 +401,16 @@ void Rf_rPsort(double *x, int n, int k) {
 	JNIEnv *thisenv = getEnv();
 	unimplemented("Rf_rPsort");
 }
+
+SEXP Rf_classgets(SEXP x, SEXP y) {
+	unimplemented("Rf_classgets");
+}
+
+double Rf_fmax2(double x, double y) {
+	unimplemented("Rf_fmax2");
+}
+
+double Rf_fmin2(double x, double y) {
+	unimplemented("Rf_fmin2");
+}
+

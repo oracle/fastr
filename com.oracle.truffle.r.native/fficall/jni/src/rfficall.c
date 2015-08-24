@@ -40,6 +40,8 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_CallRFFIWithJNI_initialize(JNIEnv *env
 	init_optim(env);
 	init_vectoraccess(env);
 	init_listaccess(env);
+	init_graphicsengine(env);
+	init_graphicsdevices(env);
 }
 
 static jmp_buf error_jmpbuf;

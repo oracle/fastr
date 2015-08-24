@@ -75,6 +75,10 @@ public abstract class RFFIFactory {
         throw missing("Tools");
     }
 
+    public GridRFFI getGridRFFI() {
+        throw missing("Grid");
+    }
+
     public RApplRFFI getRApplRFFI() {
         throw missing("RDerived");
     }

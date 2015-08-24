@@ -54,6 +54,8 @@ public interface RFFI {
 
     ToolsRFFI getToolsRFFI();
 
+    GridRFFI getGridRFFI();
+
     CRFFI getCRFFI();
 
     CallRFFI getCallRFFI();

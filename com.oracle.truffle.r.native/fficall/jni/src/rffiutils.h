@@ -37,7 +37,7 @@ jmethodID checkGetMethodID(JNIEnv *env, jclass klass, const char *name, const ch
 extern jmethodID createSymbolMethodID;
 
 // use for an unimplemented API function
-void unimplemented(char *msg);
+void *unimplemented(char *msg);
 // use for any fatal error
 void fatalError(char *msg);
 // makes a call to the VM with x as an argument (for debugger validation)

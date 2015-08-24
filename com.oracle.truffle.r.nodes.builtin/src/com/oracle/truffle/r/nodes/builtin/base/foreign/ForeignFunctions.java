@@ -17,6 +17,7 @@ import com.oracle.truffle.r.library.grDevices.DevicesCCalls;
 import com.oracle.truffle.r.library.graphics.GraphicsCCalls;
 import com.oracle.truffle.r.library.graphics.GraphicsCCalls.C_Par;
 import com.oracle.truffle.r.library.graphics.GraphicsCCalls.C_PlotXY;
+import com.oracle.truffle.r.library.grid.GridFunctionsFactory.InitGridNodeGen;
 import com.oracle.truffle.r.library.methods.MethodsListDispatchFactory.R_M_setPrimitiveMethodsNodeGen;
 import com.oracle.truffle.r.library.methods.MethodsListDispatchFactory.R_getClassFromCacheNodeGen;
 import com.oracle.truffle.r.library.methods.MethodsListDispatchFactory.R_initMethodDispatchNodeGen;
@@ -178,6 +179,8 @@ public class ForeignFunctions {
                     return new MakeQuartzDefault();
                 case "menu":
                     return MenuNodeGen.create();
+                case "L_initGrid":
+                    return InitGridNodeGen.create();
                 default:
                     return null;
             }

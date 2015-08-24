@@ -70,3 +70,20 @@ void *R_chk_realloc(void *p, size_t size) {
 void R_chk_free(void *p) {
 	unimplemented("R_chk_free");
 }
+
+void* vmaxget(void) {
+    unimplemented("vmaxget");
+}
+
+void vmaxset(const void * x) {
+    unimplemented("vmaxget");
+}
+
+
+void R_gc(void) {
+    unimplemented("R_gc");
+}
+
+int	R_gc_running() {
+    unimplemented("R_gc_running");
+}

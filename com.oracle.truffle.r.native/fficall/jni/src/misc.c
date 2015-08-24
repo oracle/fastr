@@ -32,6 +32,10 @@ void init_misc(JNIEnv *env) {
 	isFiniteMethodID = checkGetMethodID(env, RRuntimeClass, "isFinite", "(D)Z", 1);
 }
 
+char *dgettext(const char *domainname, const char *msgid) {
+	unimplemented("dgettext");
+}
+
 const char *R_CHAR(SEXP string) {
 	TRACE("%s(%p)", string);
 	// This is nasty:

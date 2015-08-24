@@ -45,7 +45,7 @@ import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
 /**
  * JNR/JNI-based factory.
  */
-public class JNR_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI, StatsRFFI, ToolsRFFI, RApplRFFI, LapackRFFI, UserRngRFFI, PCRERFFI {
+public class JNR_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI, StatsRFFI, ToolsRFFI, GridRFFI, RApplRFFI, LapackRFFI, UserRngRFFI, PCRERFFI {
 
     public JNR_RFFIFactory() {
     }
@@ -450,7 +450,7 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI, Stat
     public interface Stats {
         /*
          * TODO add @In/@Out to any arrays that are known to be either @In or @Out (default is
-         *
+         * 
          * @Inout)
          */
 
@@ -533,6 +533,50 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI, Stat
         } finally {
             parseRdCritical.release();
         }
+    }
+
+    // Grid
+
+    @Override
+    public GridRFFI getGridRFFI() {
+        return this;
+    }
+
+    private static class GridProvider {
+        private static GridProvider grid;
+        private static DLL.SymbolInfo initGrid;
+        private static DLL.SymbolInfo killGrid;
+
+        @TruffleBoundary
+        private GridProvider() {
+            System.load(LibPaths.getPackageLibPath("grid"));
+            initGrid = DLL.findSymbolInfo("L_initGrid", "grid");
+            killGrid = DLL.findSymbolInfo("L_killGrid", "grid");
+        }
+
+        static GridProvider gridProvider() {
+            if (grid == null) {
+                grid = new GridProvider();
+            }
+            return grid;
+        }
+
+        DLL.SymbolInfo getInitGrid() {
+            return initGrid;
+        }
+
+        DLL.SymbolInfo getKillGrid() {
+            return killGrid;
+        }
+
+    }
+
+    public Object initGrid(REnvironment gridEvalEnv) {
+        return getCallRFFI().invokeCall(GridProvider.gridProvider().getInitGrid(), new Object[]{gridEvalEnv});
+    }
+
+    public Object killGrid() {
+        return getCallRFFI().invokeCall(GridProvider.gridProvider().getKillGrid(), new Object[0]);
     }
 
     /*

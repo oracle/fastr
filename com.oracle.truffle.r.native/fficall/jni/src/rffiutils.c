@@ -227,9 +227,11 @@ void setEnv(JNIEnv *env) {
 	curenv = env;
 }
 
-void unimplemented(char *msg) {
+void *unimplemented(char *msg) {
 	JNIEnv *thisenv = getEnv();
 	(*thisenv)->FatalError(thisenv, msg);
+	// to keep compiler happy
+	return NULL;
 }
 
 void fatalError(char *msg) {

@@ -137,7 +137,7 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
             return len == 1 ? 1 : len + 1;
         } else {
             // TODO fill out
-            throw RInternalError.unimplemented(node.toString());
+            assert false : node;
         }
         return result;
     }
@@ -246,7 +246,7 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
             return RNull.instance;
         } else {
             // TODO fill out
-            throw RInternalError.unimplemented(node.toString());
+            assert false : node;
         }
         return null;
     }
