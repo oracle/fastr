@@ -298,6 +298,8 @@ final class CachedExtractVectorNode extends CachedVectorNode {
         return dimCount;
     }
 
+    private final ConditionProfile newNamesProfile = ConditionProfile.createBinaryProfile();
+
     @ExplodeLoop
     private RAbstractStringVector translateDimNamesToNames(PositionProfile[] positionProfile, RList originalDimNames, int newVectorLength, Object[] positions) {
         RAbstractStringVector foundNames = null;
@@ -314,7 +316,7 @@ final class CachedExtractVectorNode extends CachedVectorNode {
                 Object newNames = extractNames((RAbstractStringVector) srcNames, new Object[]{position}, new PositionProfile[]{profile}, currentDimIndex, RLogical.valueOf(true),
                                 RLogical.valueOf(dropDimensions));
                 if (newNames != RNull.instance) {
-                    if (newNames instanceof String) {
+                    if (newNamesProfile.profile(newNames instanceof String)) {
                         newNames = RDataFactory.createStringVector((String) newNames);
                     }
                     RAbstractStringVector castFoundNames = (RAbstractStringVector) newNames;

@@ -187,9 +187,7 @@ public final class RDataFactory {
 
     private static String[] createAndfillStringVector(int length, String string) {
         String[] strings = new String[length];
-        for (int i = 0; i < length; i++) {
-            strings[i] = string;
-        }
+        Arrays.fill(strings, string);
         return strings;
     }
 
