@@ -12,6 +12,7 @@
 package com.oracle.truffle.r.runtime;
 
 import java.io.*;
+import java.nio.charset.*;
 import java.util.*;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -1033,27 +1034,51 @@ public class RSerialize {
             return Double.longBitsToDouble(val);
         }
 
+        @SuppressWarnings("deprecation")
         @Override
         String readString(int len) throws IOException {
             ensureData(len);
-            String s = new String(buf, offset, len);
+            /*
+             * This fast path uses a cheaper String constructor if all incoming bytes are in the
+             * 0-127 range.
+             */
+            boolean fastEncode = true;
+            for (int i = 0; i < len; i++) {
+                byte b = buf[offset + i];
+                if (b < 0) {
+                    fastEncode = false;
+                    break;
+                }
+            }
+            String result;
+            if (fastEncode) {
+                result = new String(buf, 0, offset, len);
+            } else {
+                result = new String(buf, offset, len, StandardCharsets.UTF_8);
+            }
             offset += len;
-            return s;
+            return result;
         }
 
         private void ensureData(int n) throws IOException {
+            if (n > buf.length) {
+                throw RInternalError.unimplemented("dynamically enlarge buffer");
+            }
             if (offset + n > size) {
-                int readOffset = 0;
                 if (offset != size) {
                     // copy end piece to beginning
-                    readOffset = size - offset;
-                    System.arraycopy(buf, offset, buf, 0, readOffset);
+                    System.arraycopy(buf, offset, buf, 0, size - offset);
                 }
+                size -= offset;
                 offset = 0;
-                // read some more data
-                int nread = is.read(buf, readOffset, buf.length - readOffset);
-                assert nread > 0;
-                size = nread + readOffset;
+                while (size < n) {
+                    // read some more data
+                    int nread = is.read(buf, size, buf.length - size);
+                    if (nread <= 0) {
+                        throw RInternalError.unimplemented("handle unexpected eof");
+                    }
+                    size += nread;
+                }
             }
         }
 
