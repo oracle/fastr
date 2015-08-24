@@ -224,6 +224,8 @@ abstract class PositionCheckSubsetNode extends PositionCheckNode {
         return doIntegerProfiled(profile, dimensionLength, position, positionLength, hasSeenPositive, hasSeenNegative, hasSeenNA, outOfBoundsCount, zeroCount, maxOutOfBoundsIndex);
     }
 
+    private final BranchProfile noZeroes = BranchProfile.create();
+
     private RAbstractVector doIntegerProfiled(PositionProfile profile, int dimensionLength, RAbstractIntVector intPosition, int positionLength, boolean hasSeenPositive, boolean hasSeenNegative,
                     boolean hasSeenNA, int outOfBoundsCount, int zeroCount, int maxOutOfBoundsIndex) {
         if (hasSeenPositive || hasSeenNA) {
@@ -244,6 +246,7 @@ abstract class PositionCheckSubsetNode extends PositionCheckNode {
                 // fast path (most common expected behavior)
                 return intPosition;
             } else {
+                noZeroes.enter();
                 return eliminateZerosAndOutOfBounds(intPosition, positionLength, dimensionLength, outOfBoundsCount, zeroCount, hasSeenNA);
             }
         } else if (hasSeenNegative) {

@@ -134,7 +134,7 @@ final class CachedExtractVectorNode extends CachedVectorNode {
         }
 
         int extractedVectorLength = positionsCheckNode.getSelectedPositionsCount(positionProfiles);
-        final RAbstractVector extractedVector;
+        final RVector extractedVector;
         switch (vectorType) {
             case Language:
             case DataFrame:
@@ -245,9 +245,10 @@ final class CachedExtractVectorNode extends CachedVectorNode {
     }
 
     private final NullProfile dimNamesNull = NullProfile.create();
+    private final ValueProfile foundDimNamesProfile = ValueProfile.createClassProfile();
 
     @ExplodeLoop
-    private void applyDimensions(RAbstractContainer originalTarget, RAbstractVector extractedTarget, int extractedTargetLength, PositionProfile[] positionProfile, Object[] positions) {
+    private void applyDimensions(RAbstractContainer originalTarget, RVector extractedTarget, int extractedTargetLength, PositionProfile[] positionProfile, Object[] positions) {
         // TODO speculate on the number of counted dimensions
         int dimCount = countDimensions(positionProfile);
 
@@ -279,9 +280,12 @@ final class CachedExtractVectorNode extends CachedVectorNode {
             }
         } else if (originalDimNames != null && originalDimNames.getLength() > 0) {
             RAbstractStringVector foundNames = translateDimNamesToNames(positionProfile, originalDimNames, extractedTargetLength, positions);
-            if (foundNames != null && foundNames.getLength() > 0) {
-                metadataApplied.enter();
-                setNames(extractedTarget, foundNames);
+            if (foundNames != null) {
+                foundNames = foundDimNamesProfile.profile(foundNames);
+                if (foundNames.getLength() > 0) {
+                    metadataApplied.enter();
+                    setNames(extractedTarget, foundNames);
+                }
             }
         }
     }
@@ -350,7 +354,7 @@ final class CachedExtractVectorNode extends CachedVectorNode {
         return newNames;
     }
 
-    private void setNames(RAbstractContainer vector, Object newNames) {
+    private void setNames(RVector vector, Object newNames) {
         if (setNamesNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             setNamesNode = insert(SetNamesNodeGen.create());
@@ -360,23 +364,28 @@ final class CachedExtractVectorNode extends CachedVectorNode {
 
     protected abstract static class SetNamesNode extends Node {
 
-        public abstract void execute(RAbstractContainer container, Object newNames);
+        public abstract void execute(RVector container, Object newNames);
 
         @Specialization
-        protected void setNames(RAbstractContainer container, RAbstractStringVector newNames) {
-            container.setNames(newNames.materialize());
+        protected void setNames(RVector container, RAbstractStringVector newNames) {
+            RStringVector newNames1 = newNames.materialize();
+            assert newNames1.getLength() <= container.getLength();
+            assert container.getInternalDimensions() == null;
+            assert container.getAttributes() == null;
+            container.initAttributes(RAttributes.createInitialized(new String[]{RRuntime.NAMES_ATTR_KEY}, new Object[]{newNames1}));
+            container.setInternalNames(newNames1);
         }
 
         @Specialization
-        protected void setNames(RAbstractContainer container, String newNames) {
-            container.setNames(RString.valueOf(newNames).materialize());
+        protected void setNames(RVector container, String newNames) {
+            // TODO: why materialize()?
+            setNames(container, RString.valueOf(newNames).materialize());
         }
 
         @Specialization
-        protected void setNames(RAbstractContainer container, @SuppressWarnings("unused") RNull newNames) {
-            container.setNames(null);
+        protected void setNames(RVector container, @SuppressWarnings("unused") RNull newNames) {
+            assert container.getAttributes() == null;
         }
-
     }
 
     private static class ExtractDimNamesNode extends Node {

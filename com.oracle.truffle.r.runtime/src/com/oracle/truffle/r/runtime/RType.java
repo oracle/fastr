@@ -14,7 +14,6 @@ package com.oracle.truffle.r.runtime;
 import java.util.*;
 
 import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
 
 public enum RType {
     Any("any", -1),
@@ -179,7 +178,7 @@ public enum RType {
         }
     }
 
-    public RAbstractVector getEmpty() {
+    public RVector getEmpty() {
         switch (this) {
             case Numeric:
             case Double:
@@ -201,7 +200,7 @@ public enum RType {
         }
     }
 
-    public RAbstractVector create(int length, boolean fillNA) {
+    public RVector create(int length, boolean fillNA) {
         switch (this) {
             case Logical:
                 return RDataFactory.createLogicalVector(length, fillNA);

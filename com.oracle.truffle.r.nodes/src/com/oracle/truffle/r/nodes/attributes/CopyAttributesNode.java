@@ -180,10 +180,18 @@ public abstract class CopyAttributesNode extends RBaseNode {
         return result;
     }
 
-    @TruffleBoundary
     @Specialization(guards = {"leftLength < rightLength", "containsMetadata(left, attrLeftProfiles) || containsMetadata(right, attrRightProfiles)"})
     public RAbstractVector copyShorter(RAbstractVector target, RAbstractVector left, @SuppressWarnings("unused") int leftLength, RAbstractVector right, @SuppressWarnings("unused") int rightLength, //
-                    @Cached("createBinaryProfile()") ConditionProfile rightNotResultProfile) {
+                    @Cached("create()") CopyOfRegAttributesNode copyOfReg, //
+                    @Cached("createBinaryProfile()") ConditionProfile rightNotResultProfile, //
+                    @Cached("create()") BranchProfile leftHasDimensions, //
+                    @Cached("create()") BranchProfile rightHasDimensions, //
+                    @Cached("create()") BranchProfile noDimensions, //
+                    @Cached("createNames()") PutAttributeNode putNames, //
+                    @Cached("createDim()") PutAttributeNode putDim, //
+                    @Cached("create()") InitAttributesNode initAttributes, //
+                    @Cached("createBinaryProfile()") ConditionProfile hasNames, //
+                    @Cached("createBinaryProfile()") ConditionProfile hasDimNames) {
         if (LOG) {
             log("copyAttributes: <");
             countSmaller++;
@@ -191,32 +199,36 @@ public abstract class CopyAttributesNode extends RBaseNode {
         boolean rightNotResult = rightNotResultProfile.profile(right != target);
         RVector result = target.materialize();
         if (copyAllAttributes && rightNotResult) {
-            result.copyRegAttributesFrom(right);
+            copyOfReg.execute(right, result);
         }
-        int[] newDimensions;
-        if (left.hasDimensions()) {
-            newDimensions = left.getDimensions();
-        } else {
+
+        int[] newDimensions = left.getDimensions();
+        if (newDimensions == null) {
             newDimensions = right.getDimensions();
-        }
-        assert result.getDimensions() == null || newDimensions != null;
-        if (newDimensions != null) {
-            RVector.verifyDimensions(result.getLength(), newDimensions, this);
-            result.initAttributes().put(RRuntime.DIM_ATTR_KEY, RDataFactory.createIntVector(newDimensions, RDataFactory.COMPLETE_VECTOR));
-            result.setInternalDimensions(newDimensions);
-            if (rightNotResult) {
-                if (right.getDimNames(attrRightProfiles) != null) {
-                    result.setDimNames(right.getDimNames(attrRightProfiles));
+            if (newDimensions == null) {
+                noDimensions.enter();
+                if (rightNotResult) {
+                    RStringVector vecNames = right.getNames(attrRightProfiles);
+                    if (hasNames.profile(vecNames != null)) {
+                        putNames.execute(initAttributes.execute(result), vecNames);
+                        result.setInternalNames(vecNames);
+                    }
                 }
-                result.copyNamesFrom(attrRightProfiles, right);
+                return result;
+            } else {
+                rightHasDimensions.enter();
             }
         } else {
-            if (rightNotResult) {
-                RStringVector vecNames = right.getNames(attrRightProfiles);
-                if (vecNames != null) {
-                    result.setNames(vecNames);
-                }
-                result.copyNamesFrom(attrRightProfiles, right);
+            leftHasDimensions.enter();
+        }
+
+        RVector.verifyDimensions(result.getLength(), newDimensions, this);
+        putDim.execute(initAttributes.execute(result), RDataFactory.createIntVector(newDimensions, RDataFactory.COMPLETE_VECTOR));
+        result.setInternalDimensions(newDimensions);
+        if (rightNotResult) {
+            RList newDimNames = right.getDimNames(attrRightProfiles);
+            if (hasDimNames.profile(newDimNames != null)) {
+                result.setDimNames(newDimNames);
             }
         }
         return result;
