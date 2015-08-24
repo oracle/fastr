@@ -489,6 +489,7 @@ public class BasePackage extends RBuiltinPackage {
         add(UpdateDiag.class, UpdateDiagNodeGen::create);
         add(UpdateDim.class, UpdateDimNodeGen::create);
         add(UpdateDimNames.class, UpdateDimNamesNodeGen::create);
+        add(EnvFunctions.UpdateEnvironment.class, EnvFunctionsFactory.UpdateEnvironmentNodeGen::create);
         add(UpdateLength.class, UpdateLengthNodeGen::create);
         add(UpdateLevels.class, UpdateLevelsNodeGen::create);
         add(UpdateNames.class, UpdateNamesNodeGen::create);

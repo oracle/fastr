@@ -19,6 +19,10 @@ public class TestBuiltin_environmentassign extends TestBase {
 
     @Test
     public void testenvironmentassign1() {
-        assertEval(Ignored.Unknown, "argv <- list(NULL, NULL);`environment<-`(argv[[1]],argv[[2]]);");
+        assertEval("{ e1 <- new.env(); environment(e1) <- NULL }");
+        assertEval("{ e1 <- new.env(); e2 <- new.env(); environment(e1) <- e2 }");
+        assertEval(Output.ContainsError, "{ e1 <- new.env(); environment(e1) <- 3 }");
+
+        assertEval("{ f <- function() {}; e1 <- new.env(); environment(f) <- e1 }");
     }
 }

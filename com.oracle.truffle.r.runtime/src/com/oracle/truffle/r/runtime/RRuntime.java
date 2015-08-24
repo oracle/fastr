@@ -97,7 +97,7 @@ public class RRuntime {
     public static final String ROWNAMES_ATTR_KEY = "row.names";
 
     public static final String FORMULA_CLASS = "formula";
-    public static final String FORMULA_ENV = ".Environment";
+    public static final String DOT_ENVIRONMENT = ".Environment";
 
     public static final String CLASS_ORDERED = "ordered";
 

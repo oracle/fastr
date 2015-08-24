@@ -563,7 +563,7 @@ public class InfixEmulationFunctions {
             RLanguage lang = RDataFactory.createLanguage(call);
             lang.setClassAttr(FORMULA_CLASS, false);
             REnvironment env = REnvironment.frameToEnvironment(frame.materialize());
-            lang.setAttr(RRuntime.FORMULA_ENV, env);
+            lang.setAttr(RRuntime.DOT_ENVIRONMENT, env);
             return lang;
         }
     }

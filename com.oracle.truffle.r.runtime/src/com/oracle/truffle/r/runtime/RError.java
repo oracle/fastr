@@ -323,6 +323,8 @@ public final class RError extends RuntimeException {
         INVALID_FIRST_ARGUMENT("invalid first argument"),
         NO_ENCLOSING_ENVIRONMENT("no enclosing environment"),
         ASSIGN_EMPTY("cannot assign values in the empty environment"),
+        USE_NULL_ENV_DEFUNCT("use of NULL environment is defunct"),
+        REPLACEMENT_NOT_ENVIRONMENT("replacement object is not an environment"),
         ARGUMENT_NOT_MATRIX("argument is not a matrix"),
         DOLLAR_ATOMIC_VECTORS("$ operator is invalid for atomic vectors"),
         COERCING_LHS_TO_LIST("Coercing LHS to a list"),

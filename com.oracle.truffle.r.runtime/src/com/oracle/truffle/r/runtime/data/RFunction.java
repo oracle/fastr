@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.runtime.data;
 
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.interop.*;
 import com.oracle.truffle.api.nodes.*;
@@ -49,18 +50,14 @@ public final class RFunction extends RAttributeStorage implements RTypedValue, T
     private final RBuiltinDescriptor builtin;
     private final boolean containsDispatch;
 
-    private final MaterializedFrame enclosingFrame;
+    @CompilationFinal private MaterializedFrame enclosingFrame;
 
     RFunction(String name, RootCallTarget target, RBuiltinDescriptor builtin, MaterializedFrame enclosingFrame, boolean containsDispatch) {
         this.name = name;
         this.target = target;
         this.builtin = builtin;
         this.containsDispatch = containsDispatch;
-        if (enclosingFrame instanceof VirtualEvalFrame) {
-            this.enclosingFrame = ((VirtualEvalFrame) enclosingFrame).getOriginalFrame();
-        } else {
-            this.enclosingFrame = enclosingFrame;
-        }
+        setEnclosingFrame(enclosingFrame);
     }
 
     @Override
@@ -94,6 +91,24 @@ public final class RFunction extends RAttributeStorage implements RTypedValue, T
 
     public MaterializedFrame getEnclosingFrame() {
         return enclosingFrame;
+    }
+
+    /**
+     * Used by the {@code environment<-} builtin.
+     */
+    public void setEnclosingFrame(MaterializedFrame enclosingFrame) {
+        if (enclosingFrame instanceof VirtualEvalFrame) {
+            this.enclosingFrame = ((VirtualEvalFrame) enclosingFrame).getOriginalFrame();
+        } else {
+            this.enclosingFrame = enclosingFrame;
+        }
+        /*
+         * TODO Is any invalidation necessary? If the CallTarget has been optimized, presumably yes,
+         * but there is no accessible API for that. N.B. in GnuR if the environment is updated while
+         * the function is active, it does not appear to have an effect during that execution or
+         * subsequent ones.
+         */
+
     }
 
     private static final RStringVector implicitClass = RDataFactory.createStringVectorFromScalar(RType.Function.getName());

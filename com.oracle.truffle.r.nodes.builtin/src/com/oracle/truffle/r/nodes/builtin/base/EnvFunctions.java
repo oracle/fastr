@@ -217,7 +217,7 @@ public class EnvFunctions {
         @Specialization(guards = "isRFormula(formula)")
         protected Object environment(RLanguage formula) {
             controlVisibility();
-            return formula.getAttr(attrProfiles, RRuntime.FORMULA_ENV);
+            return formula.getAttr(attrProfiles, RRuntime.DOT_ENVIRONMENT);
         }
 
         @Specialization(guards = {"!isRNull(fun)", "!isRFunction(fun)", "!isRFormula(fun)"})
@@ -225,6 +225,44 @@ public class EnvFunctions {
             // Not an error according to GnuR
             controlVisibility();
             return RNull.instance;
+        }
+    }
+
+    @RBuiltin(name = "environment<-", kind = PRIMITIVE, parameterNames = {"env", ""})
+    // 2nd parameter is "value", but should not be matched to so it's empty
+    public abstract static class UpdateEnvironment extends RBuiltinNode {
+
+        private static RAttributeProfiles attributeProfile = RAttributeProfiles.create();
+
+        @Specialization
+        protected Object updateEnvironment(RFunction fun, REnvironment env) {
+            fun.setEnclosingFrame(env.getFrame());
+            return fun;
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization
+        protected Object updateEnvironment(RFunction fun, RNull env) {
+            throw RError.error(this, RError.Message.USE_NULL_ENV_DEFUNCT);
+        }
+
+        @Fallback
+        protected Object updateEnvironment(Object obj, Object env) {
+            if (env == RNull.instance || env instanceof REnvironment) {
+                if (obj instanceof RAttributable) {
+                    RAttributable attributable = (RAttributable) obj;
+                    if (env == RNull.instance) {
+                        attributable.removeAttr(attributeProfile, RRuntime.DOT_ENVIRONMENT);
+                    } else {
+                        attributable.setAttr(RRuntime.DOT_ENVIRONMENT, env);
+                    }
+                    return obj;
+                } else {
+                    throw RInternalError.shouldNotReachHere("environment<- called on non-attributable object");
+                }
+            } else {
+                throw RError.error(this, RError.Message.REPLACEMENT_NOT_ENVIRONMENT);
+            }
         }
     }
 
