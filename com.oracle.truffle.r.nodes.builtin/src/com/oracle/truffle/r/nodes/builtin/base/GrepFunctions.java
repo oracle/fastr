@@ -151,7 +151,6 @@ public class GrepFunctions {
             boolean invert = RRuntime.fromLogical(invertLogical);
             boolean perl = RRuntime.fromLogical(perlLogical);
             boolean ignoreCase = RRuntime.fromLogical(ignoreCaseLogical);
-            checkNotImplemented(!perl && ignoreCase, "ignoreCase", true);
             boolean fixed = RRuntime.fromLogical(fixedLogical);
             perl = checkPerlFixed(RRuntime.fromLogical(perlLogical), fixed);
             checkCaseFixed(ignoreCase, fixed);
@@ -167,7 +166,7 @@ public class GrepFunctions {
                 if (!fixed) {
                     pattern = RegExp.checkPreDefinedClasses(pattern);
                 }
-                findAllMatches(matches, pattern, vector, fixed);
+                findAllMatches(matches, pattern, vector, fixed, ignoreCase);
             } else {
                 int cflags = ignoreCase ? PCRERFFI.CASELESS : 0;
                 long tables = RFFIFactory.getRFFI().getPCRERFFI().maketables();
@@ -236,21 +235,21 @@ public class GrepFunctions {
             }
         }
 
-        protected void findAllMatches(boolean[] result, String pattern, RAbstractStringVector vector, boolean fixed) {
+        protected void findAllMatches(boolean[] result, String pattern, RAbstractStringVector vector, boolean fixed, boolean ignoreCase) {
             for (int i = 0; i < result.length; i++) {
                 String text = vector.getDataAt(i);
                 if (!RRuntime.isNA(text)) {
                     if (fixed) {
                         result[i] = text.contains(pattern);
                     } else {
-                        result[i] = findMatch(pattern, text);
+                        result[i] = findMatch(pattern, text, ignoreCase);
                     }
                 }
             }
         }
 
-        protected static boolean findMatch(String pattern, String text) {
-            Matcher m = Regexp.getPatternMatcher(pattern, text);
+        protected static boolean findMatch(String pattern, String text, boolean ignoreCase) {
+            Matcher m = Regexp.getPatternMatcher(pattern, text, ignoreCase);
             return m.find();
         }
 
@@ -559,19 +558,20 @@ public class GrepFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected Object regexp(RAbstractStringVector patternArg, RAbstractStringVector vector, byte ignoreCase, byte perl, byte fixed, byte useBytes) {
+        protected Object regexp(RAbstractStringVector patternArg, RAbstractStringVector vector, byte ignoreCaseL, byte perlL, byte fixedL, byte useBytesL) {
             controlVisibility();
-            checkExtraArgs(ignoreCase, perl, fixed, useBytes, RRuntime.LOGICAL_FALSE);
+            checkExtraArgs(RRuntime.LOGICAL_FALSE, perlL, fixedL, useBytesL, RRuntime.LOGICAL_FALSE);
+            boolean ignoreCase = RRuntime.fromLogical(ignoreCaseL);
             String pattern = RegExp.checkPreDefinedClasses(patternArg.getDataAt(0));
             int[] result = new int[vector.getLength()];
             for (int i = 0; i < vector.getLength(); i++) {
-                result[i] = findIndex(pattern, vector.getDataAt(i)).get(0);
+                result[i] = findIndex(pattern, vector.getDataAt(i), ignoreCase).get(0);
             }
             return RDataFactory.createIntVector(result, RDataFactory.COMPLETE_VECTOR);
         }
 
-        protected static List<Integer> findIndex(String pattern, String text) {
-            Matcher m = getPatternMatcher(pattern, text);
+        protected static List<Integer> findIndex(String pattern, String text, boolean ignoreCase) {
+            Matcher m = getPatternMatcher(pattern, text, ignoreCase);
             List<Integer> list = new ArrayList<>();
             while (m.find()) {
                 // R starts counting at index 1
@@ -585,8 +585,8 @@ public class GrepFunctions {
         }
 
         @TruffleBoundary
-        public static Matcher getPatternMatcher(String pattern, String text) {
-            return Pattern.compile(pattern).matcher(text);
+        public static Matcher getPatternMatcher(String pattern, String text, boolean ignoreCase) {
+            return Pattern.compile(pattern, ignoreCase ? Pattern.CASE_INSENSITIVE : 0).matcher(text);
         }
     }
 
@@ -596,13 +596,14 @@ public class GrepFunctions {
         @Specialization
         @TruffleBoundary
         @Override
-        protected Object regexp(RAbstractStringVector patternArg, RAbstractStringVector vector, byte ignoreCase, byte perl, byte fixed, byte useBytes) {
+        protected Object regexp(RAbstractStringVector patternArg, RAbstractStringVector vector, byte ignoreCaseL, byte perlL, byte fixedL, byte useBytesL) {
             controlVisibility();
-            checkExtraArgs(ignoreCase, perl, fixed, useBytes, RRuntime.LOGICAL_FALSE);
+            checkExtraArgs(RRuntime.LOGICAL_FALSE, perlL, fixedL, useBytesL, RRuntime.LOGICAL_FALSE);
+            boolean ignoreCase = RRuntime.fromLogical(ignoreCaseL);
             String pattern = RegExp.checkPreDefinedClasses(patternArg.getDataAt(0));
             Object[] result = new Object[vector.getLength()];
             for (int i = 0; i < vector.getLength(); i++) {
-                int[] data = toIntArray(findIndex(pattern, vector.getDataAt(i)));
+                int[] data = toIntArray(findIndex(pattern, vector.getDataAt(i), ignoreCase));
                 result[i] = RDataFactory.createIntVector(data, RDataFactory.COMPLETE_VECTOR);
             }
             return RDataFactory.createList(result);
