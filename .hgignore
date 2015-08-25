@@ -20,6 +20,7 @@
 ^java/
 ^lib/
 ^libdownloads/
+^lib.install.cran/
 ^jdk1.(7|8).0
 ^java64/
 ^work/

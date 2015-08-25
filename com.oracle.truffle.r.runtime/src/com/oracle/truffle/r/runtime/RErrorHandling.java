@@ -499,15 +499,26 @@ public class RErrorHandling {
         }
     }
 
+    /**
+     * Entry point for Rf_warningCall from RFFI.
+     */
+    public static void warningcallRFFI(Object call, String message) {
+        warningCallInvoke(call, RDataFactory.createStringVectorFromScalar(message));
+    }
+
     static void warningcall(boolean showCall, RBaseNode callObj, Message msg, Object... args) {
-        ContextStateImpl errorHandlingState = getRErrorHandlingState();
         Object call = showCall ? findCaller(callObj) : RNull.instance;
         RStringVector warningMessage = RDataFactory.createStringVectorFromScalar(formatMessage(msg, args));
+        warningCallInvoke(call, warningMessage);
+    }
+
+    private static void warningCallInvoke(Object call, RStringVector warningMessage) {
         /*
          * Warnings generally do not prevent results being printed. However, this call into R will
          * destroy any visibility setting made by the calling builtin prior to this call. So we save
          * and restore it across the call.
          */
+        ContextStateImpl errorHandlingState = getRErrorHandlingState();
         boolean visibility = RContext.getInstance().isVisible();
         try {
             RFunction f = errorHandlingState.getDotSignalSimpleWarning();

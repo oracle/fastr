@@ -41,6 +41,7 @@ static jmethodID Rf_getAttribMethodID;
 static jmethodID Rf_setAttribMethodID;
 static jmethodID Rf_isStringMethodID;
 static jmethodID Rf_isNullMethodID;
+static jmethodID Rf_warningcallMethodID;
 static jmethodID Rf_warningMethodID;
 static jmethodID Rf_errorMethodID;
 static jmethodID Rf_NewHashedEnvMethodID;
@@ -60,6 +61,7 @@ void init_rf_functions(JNIEnv *env) {
 	Rf_isStringMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_isString", "(Ljava/lang/Object;)I", 1);
 	Rf_isNullMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_isNull", "(Ljava/lang/Object;)I", 1);
 	Rf_warningMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_warning", "(Ljava/lang/String;)V", 1);
+	Rf_warningcallMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_warningcall", "(Ljava/lang/Object;Ljava/lang/String;)V", 1);
 	Rf_errorMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_error", "(Ljava/lang/String;)V", 1);
 	Rf_allocateVectorMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_allocateVector", "(II)Ljava/lang/Object;", 1);
 	Rf_allocateMatrixMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_allocateMatrix", "(III)Ljava/lang/Object;", 1);
@@ -347,8 +349,18 @@ void Rf_unprotect_ptr(SEXP x) {
 	// TODO perhaps we can use this
 }
 
-void Rf_error(const char *msg, ...) {
-	// TODO if msg is a format string how do we get the args given the number is determined by the format?
+#define BUFSIZE 8192
+
+static int Rvsnprintf(char *buf, size_t size, const char  *format, va_list ap)
+{
+    int val;
+    val = vsnprintf(buf, size, format, ap);
+    buf[size-1] = '\0';
+    return val;
+}
+
+
+void Rf_error(const char *format, ...) {
 	// This is a bit tricky. The usual error handling model in Java is "throw RError.error(...)" but
 	// RError.error does quite a lot of stuff including potentially searching for R condition handlers
 	// and, if it finds any, does not return, but throws a different exception than RError.
@@ -356,8 +368,13 @@ void Rf_error(const char *msg, ...) {
 	// So we call CallRFFIHelper.Rf_error to throw the RError exception. When the pending
 	// exception (whatever it is) is observed by JNI, the call to Rf_error will return where we do a
 	// non-local transfer of control back to the entry point (which will cleanup).
+	char buf[8192];
+	va_list(ap);
+	va_start(ap,format);
+	Rvsnprintf(buf, BUFSIZE - 1, format, ap);
+	va_end(ap);
 	JNIEnv *thisenv = getEnv();
-	jstring string = (*thisenv)->NewStringUTF(thisenv, msg);
+	jstring string = (*thisenv)->NewStringUTF(thisenv, buf);
 	// This will set a pending exception
 	(*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_errorMethodID, string);
 	// just transfer back which will cleanup and exit the entire JNI call
@@ -365,14 +382,25 @@ void Rf_error(const char *msg, ...) {
 
 }
 
-void Rf_warningcall(SEXP x, const char *msg, ...) {
-	unimplemented("Rf_warningcall");
+void Rf_warningcall(SEXP x, const char *format, ...) {
+	char buf[8192];
+	va_list(ap);
+	va_start(ap,format);
+	Rvsnprintf(buf, BUFSIZE - 1, format, ap);
+	va_end(ap);
+	JNIEnv *thisenv = getEnv();
+	jstring string = (*thisenv)->NewStringUTF(thisenv, buf);
+	(*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_warningcallMethodID, x, string);
 }
 
-void Rf_warning(const char *msg, ...) {
-	// TODO if msg is a format string how do we get the args given the number is determined by the format?
+void Rf_warning(const char *format, ...) {
+	char buf[8192];
+	va_list(ap);
+	va_start(ap,format);
+	Rvsnprintf(buf, BUFSIZE - 1, format, ap);
+	va_end(ap);
 	JNIEnv *thisenv = getEnv();
-	jstring string = (*thisenv)->NewStringUTF(thisenv, msg);
+	jstring string = (*thisenv)->NewStringUTF(thisenv, buf);
 	(*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_warningMethodID, string);
 }
 

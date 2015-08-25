@@ -178,6 +178,10 @@ public class CallRFFIHelper {
         RError.warning(RError.NO_NODE, RError.Message.GENERIC, msg);
     }
 
+    static void Rf_warningcall(Object call, String msg) {
+        RErrorHandling.warningcallRFFI(call, msg);
+    }
+
     static Object Rf_allocateVector(int mode, int n) {
         SEXPTYPE type = SEXPTYPE.mapInt(mode);
         if (n < 0) {

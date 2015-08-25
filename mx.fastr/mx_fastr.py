@@ -406,8 +406,8 @@ def runRREPL(args, nonZeroIsFatal=True, extraVmArgs=None):
 
 def installcran(args):
     cran = 'com.oracle.truffle.r.test.cran'
-    join(mx.project(cran).dir, 'r', 'install.cran.packages.R')
-    return runR(args, rscript_command_class())
+    script = join(mx.project(cran).dir, 'r', 'install.cran.packages.R')
+    return runR([script] + args, rscript_command_class())
 
 def load_optional_suite(name):
     hg_base = mx.get_env('MX_HG_BASE')

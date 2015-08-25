@@ -6,30 +6,37 @@
 args <- commandArgs(TRUE)
 
 usage <- function() {
-	cat("usage: Rscript [--contriburl url] [--verbose | -v] [-dryrun] [--save-blacklist file] [--blacklist file] [package-pattern\n")
+	cat("usage: Rscript [--contriburl url] [--verbose | -v] [-V] [--dryrun] [ --no-install | -n] [--save-blacklist] [-read-blacklist] [--blacklist-file file] [package-pattern\n")
 	quit(status=1)
 }
 
 # blacklist is a vector of package (names) that are known to be bad, i.e. uninstallable.
 # the result is a vector of new packages that depend/import/suggest/linkto any package on blacklist
-create.blacklist.with <- function(blacklist) {
+create.blacklist.with <- function(blacklist, iter) {
 	this.blacklist <- vector()
 
 	trim <- function (x) gsub("^\\s+|\\s+$", "", x)
 
 	strip.version <- function(x) gsub("\\s+\\(.*\\)$", "", x)
 
+	if (very.verbose) {
+		cat("Iteration: ", iter, "\n\n")
+	}
 	for (i in (1:length(rownames(avail.pkgs)))) {
 		pkg <- avail.pkgs[i, ]
-		if (!(pkg["Package"] %in% blacklist)) {
+		pkgName <- pkg["Package"]
+		if (!(pkgName %in% blacklist)) {
+			if (very.verbose) {
+				cat("Processing: ", pkgName, "\n")
+			}
 			all.deps <- vector()
 			for (dep in c("Depends", "Imports", "LinkingTo")) {
 				deps <- pkg[dep]
 				if (!is.na(dep)) {
 					if (very.verbose) {
-						cat(dep, " deps for: ", pkg["Package"], " ", deps, "\n")
+						cat(dep, " deps for: ", pkgName, " ", deps, "\n")
 					}
-					all.deps <-  append(all.deps, strip.version(trim(unlist(strsplit(deps, fixed=T, ", ")))))
+					all.deps <-  append(all.deps, strip.version(trim(unlist(strsplit(deps, fixed=T, ",")))))
 				}
 			}
 
@@ -38,7 +45,7 @@ create.blacklist.with <- function(blacklist) {
 			if (any(in.result)) {
 				if (verbose) {
 					names(all.deps) <- NULL
-					cat("adding: ", pkg["Package"], " to blacklist (", all.deps[match.result], ")\n")
+					cat("adding: ", pkg["Package"], "to blacklist (", all.deps[match.result], ")\n")
 				}
 				this.blacklist <- append(this.blacklist, pkg["Package"])
 			}
@@ -53,9 +60,11 @@ create.blacklist.with <- function(blacklist) {
 create.blacklist.iter <- function(blacklist) {
 	v <-blacklist
 	result <-v
+	iter <- 1
 	while (length(v) > 0) {
-		v <- create.blacklist.with(result)
+		v <- create.blacklist.with(result, iter)
 		result <- append(result, v)
+		iter <- iter + 1
 	}
 	result
 }
@@ -65,7 +74,8 @@ cplusplus <- c("Rcpp")
 parserbug <- c("lattice")
 lapplydotbug <- c("ABCoptim")
 trufflevisitor.nyi <- c("colorspace")
-initial.blacklist <- c(cplusplus, parserbug, lapplydotbug, trufflevisitor.nyi)
+nativeinstall <- c("Rglpk")
+initial.blacklist <- c(cplusplus, parserbug, lapplydotbug, trufflevisitor.nyi, nativeinstall)
 
 create.blacklist <- function() {
 	create.blacklist.iter(initial.blacklist)
@@ -107,16 +117,18 @@ do.install <- function() {
 		}
 	}
 
-	pkgnames <- rownames(toinstall.pkgs)
-	for (pkgname in pkgnames) {
-		if (pkgname %in% blacklist) {
-			cat("not installing: ", pkgname, " - blacklisted\n")
-		} else {
-			if (dry.run) {
-				cat("would install: ", pkgname, "\n")
+	if (install) {
+		pkgnames <- rownames(toinstall.pkgs)
+		for (pkgname in pkgnames) {
+			if (pkgname %in% blacklist) {
+				cat("not installing: ", pkgname, " - blacklisted\n")
 			} else {
-				cat("installing: ", pkgname, "\n")
-				install.packages(pkgname, contriburl=contriburl, type="source", INSTALL_opts="--install-tests")
+				if (dry.run) {
+					cat("would install: ", pkgname, "\n")
+				} else {
+					cat("installing: ", pkgname, "\n")
+					install.packages(pkgname, contriburl=contriburl, type="source", INSTALL_opts="--install-tests")
+				}
 			}
 		}
 	}
@@ -139,14 +151,16 @@ parse.args <- function() {
 			verbose <<- T
 		} else if (a == "-V") {
 			verbose <<- T
-			very.verbose <- T
+			very.verbose <<- T
+		} else if (a == "--no-install" || a == "-n") {
+			install <<- F
 		} else if (a == "--dryrun") {
 			dry.run <<- T
 		} else if (a == "--save-blacklist") {
 			save.blacklist <<- T
 		} else if (a == "--read-blacklist") {
 			read.blacklist <<- T
-		} else if (a == "--blacklist") {
+		} else if (a == "--blacklist-file") {
 			if (length(args) >= 2L) {
 				blacklist.file <<- args[2L]
 				args <<- args[-1L]
@@ -172,6 +186,7 @@ blacklist.file <- Sys.getenv("PACKAGE_BLACKLIST", unset=NA)
 pkg.pattern <- "^.*"
 verbose <- F
 very.verbose <- F
+install <- T
 dry.run <- F
 avail.pkgs <- NULL
 toinstall.pkgs <- NULL
