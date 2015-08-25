@@ -20,29 +20,42 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.library.grid;
+package com.oracle.truffle.r.nodes.builtin.base;
 
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
-import com.oracle.truffle.r.runtime.ffi.*;
 
-/**
- * The .Call support for the grid package.
- */
-public class GridFunctions {
-    public abstract static class InitGrid extends RExternalBuiltinNode.Arg1 {
-        @Specialization
-        protected Object initGrid(REnvironment gridEvalEnv) {
-            return RFFIFactory.getRFFI().getGridRFFI().initGrid(gridEvalEnv);
-        }
+@RBuiltin(name = "reg.finalizer", kind = RBuiltinKind.INTERNAL, parameterNames = {"e", "f", "onexit"})
+public abstract class RegFinalizer extends RBuiltinNode {
+    @Specialization
+    protected RNull doRegFinalizer(RExternalPtr ext, RFunction fun, byte onexit) {
+        return doRegFinalizerEither(ext, fun, onexit);
     }
 
-    public static final class KillGrid extends RExternalBuiltinNode {
-        @Override
-        public Object call(RArgsValuesAndNames args) {
-            return RFFIFactory.getRFFI().getGridRFFI().killGrid();
-        }
+    @Specialization
+    protected RNull doRegFinalizer(REnvironment env, RFunction fun, byte onexit) {
+        return doRegFinalizerEither(env, fun, onexit);
     }
+
+    @SuppressWarnings("unused")
+    private RNull doRegFinalizerEither(Object env, RFunction fun, byte onexit) {
+        if (onexit == RRuntime.LOGICAL_NA) {
+            throw RError.error(this, RError.Message.REG_FINALIZER_THIRD);
+        }
+        // TODO the actual work
+        return RNull.instance;
+    }
+
+    @SuppressWarnings("unused")
+    @Fallback
+    protected RNull doRegFinalizer(Object env, Object fun, byte onexit) {
+        if (fun instanceof RFunction) {
+            throw RError.error(this, RError.Message.REG_FINALIZER_FIRST);
+        }
+        throw RError.error(this, RError.Message.REG_FINALIZER_SECOND);
+    }
+
 }
