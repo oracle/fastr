@@ -115,7 +115,7 @@ public final class RBuiltinPackages implements RBuiltinLookup {
             for (int i = 0; i < defPkgs.getLength(); i++) {
                 String pkgName = defPkgs.getDataAt(i);
                 ArrayList<Source> componentList = RBuiltinPackage.getRFiles(pkgName);
-                if (componentList == null) {
+                if (componentList.size() == 0) {
                     continue;
                 }
                 /*

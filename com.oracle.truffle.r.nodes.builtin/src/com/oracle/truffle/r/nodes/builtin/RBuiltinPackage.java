@@ -97,29 +97,30 @@ public abstract class RBuiltinPackage {
         return name;
     }
 
+    /**
+     * Get a list of R override files for package {@code pkgName}, from the {@code pkgName/R}
+     * subdirectory.
+     */
     public static ArrayList<Source> getRFiles(String pkgName) {
+        ArrayList<Source> componentList = new ArrayList<>();
         try {
             InputStream is = ResourceHandlerFactory.getHandler().getResourceAsStream(RBuiltinPackage.class, pkgName + "/R");
-            if (is == null) {
-                return null;
-            }
-            ArrayList<Source> componentList = new ArrayList<>();
-            try (BufferedReader r = new BufferedReader(new InputStreamReader(is))) {
-                String line;
-                while ((line = r.readLine()) != null) {
-                    if (line.endsWith(".r") || line.endsWith(".R")) {
-                        final String rResource = pkgName + "/R/" + line.trim();
-                        Source content = Utils.getResourceAsSource(RBuiltinPackage.class, rResource);
-                        componentList.add(content);
+            if (is != null) {
+                try (BufferedReader r = new BufferedReader(new InputStreamReader(is))) {
+                    String line;
+                    while ((line = r.readLine()) != null) {
+                        if (line.endsWith(".r") || line.endsWith(".R")) {
+                            final String rResource = pkgName + "/R/" + line.trim();
+                            Source content = Utils.getResourceAsSource(RBuiltinPackage.class, rResource);
+                            componentList.add(content);
+                        }
                     }
                 }
             }
-            return componentList;
         } catch (IOException ex) {
             Utils.fail("error loading R code from " + pkgName + " : " + ex);
-            return null;
         }
-
+        return componentList;
     }
 
     public RBuiltinFactory lookupByName(String methodName) {
