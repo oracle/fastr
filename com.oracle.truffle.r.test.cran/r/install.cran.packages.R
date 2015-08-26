@@ -70,12 +70,20 @@ create.blacklist.iter <- function(blacklist) {
 }
 
 # known to be uninstallable
-cplusplus <- c("Rcpp")
+# uses ++
+cplusplus <- c("Rcpp", "Segmentor3IsBack", "QUIC", "kernlab", "adaptivetau", "geepack", "caTools", "amap", "rgenoud", "stringi", "rjson", "ars",
+		"e1071", "aylmer")
+# parser bugs
 parserbug <- c("lattice")
+# ... lappy bug
 lapplydotbug <- c("ABCoptim")
-trufflevisitor.nyi <- c("colorspace")
+# e.g. complex replacement assignments
+trufflevisitor.nyi <- c("colorspace", "R.methodsS3")
+# problems with native code
 nativeinstall <- c("Rglpk")
-initial.blacklist <- c(cplusplus, parserbug, lapplydotbug, trufflevisitor.nyi, nativeinstall)
+# S4 anything using S4 objects
+s4 <- c("matrixStats")
+initial.blacklist <- c(cplusplus, parserbug, lapplydotbug, trufflevisitor.nyi, nativeinstall, s4)
 
 create.blacklist <- function() {
 	create.blacklist.iter(initial.blacklist)
