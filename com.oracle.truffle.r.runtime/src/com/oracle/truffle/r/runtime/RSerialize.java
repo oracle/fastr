@@ -775,7 +775,7 @@ public class RSerialize {
                 String name;
                 if (sourcePath == null) {
                     source = Source.fromText(deparse, UNKNOWN_PACKAGE_SOURCE_PREFIX + packageName + " deparse>");
-                    name = "";
+                    name = RFunction.NO_NAME;
                 } else {
                     source = Source.fromNamedText(deparse, sourcePath);
                     // Located a function source file from which we can retrieve the function name

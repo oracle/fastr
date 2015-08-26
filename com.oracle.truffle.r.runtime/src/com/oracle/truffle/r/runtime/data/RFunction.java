@@ -34,8 +34,7 @@ import com.oracle.truffle.r.runtime.context.*;
  * An instance of {@link RFunction} represents a function defined in R. The properties of a function
  * are as follows:
  * <ul>
- * <li>The {@link #name} is optional. It is only set initially for builtins (required) but (for
- * debugging) may be set later by {@link #setName}.
+ * <li>The {@link #name} is optional. It is only set initially for builtins (required).
  * <li>The {@link #target} represents the actually callable entry point to the function.
  * <li>Functions may represent builtins; this is indicated by the {@link #builtin} flag set to the
  * associated {@link RBuiltin} instance.
@@ -45,6 +44,7 @@ import com.oracle.truffle.r.runtime.context.*;
  */
 public final class RFunction extends RAttributeStorage implements RTypedValue, TruffleObject {
 
+    public static final String NO_NAME = new String("");
     private String name;
     private final RootCallTarget target;
     private final RBuiltinDescriptor builtin;
@@ -53,9 +53,13 @@ public final class RFunction extends RAttributeStorage implements RTypedValue, T
     @CompilationFinal private MaterializedFrame enclosingFrame;
 
     RFunction(String name, RootCallTarget target, RBuiltinDescriptor builtin, MaterializedFrame enclosingFrame, boolean containsDispatch) {
-        this.name = name;
         this.target = target;
         this.builtin = builtin;
+        this.name = name;
+        if (!isBuiltin() && name != NO_NAME) {
+            // If we have a name, propagate it to the rootnode
+            RContext.getRRuntimeASTAccess().setFunctionName(getRootNode(), name);
+        }
         this.containsDispatch = containsDispatch;
         setEnclosingFrame(enclosingFrame);
     }
@@ -121,12 +125,6 @@ public final class RFunction extends RAttributeStorage implements RTypedValue, T
     @Override
     public String toString() {
         return target.toString();
-    }
-
-    public void setName(String name) {
-        assert !isBuiltin();
-        this.name = name;
-        RContext.getRRuntimeASTAccess().setFunctionName(getRootNode(), name);
     }
 
     public ForeignAccess getForeignAccess() {
