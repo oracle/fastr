@@ -69,6 +69,13 @@ public abstract class Sprintf extends RBuiltinNode {
         return sprintf(fmt.getDataAt(0), x);
     }
 
+    @Specialization(guards = "fmtLengthOne(fmt)")
+    @TruffleBoundary
+    protected String sprintf(RAbstractStringVector fmt, byte x) {
+        controlVisibility();
+        return format(fmt.getDataAt(0), x);
+    }
+
     @Specialization
     @TruffleBoundary
     protected RStringVector sprintf(String fmt, RAbstractIntVector x) {
@@ -296,6 +303,11 @@ public abstract class Sprintf extends RBuiltinNode {
             if (conversions[i] == 'd') {
                 if (args[i] instanceof Double) {
                     args[i] = ((Double) args[i]).intValue();
+                }
+            }
+            if (conversions[i] == 's') {
+                if (args[i] instanceof Byte) {
+                    args[i] = RRuntime.logicalToString((Byte) args[i]);
                 }
             }
         }
