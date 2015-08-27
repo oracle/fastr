@@ -160,11 +160,59 @@ public abstract class Sprintf extends RBuiltinNode {
         return sprintf(fmt.getDataAt(0), x);
     }
 
+    private static int maxLengthAndConvertToScalar(Object[] values) {
+        int length = 0;
+        for (int i = 0; i < values.length; i++) {
+            if (values[i] instanceof RAbstractVector) {
+                int vecLength = ((RAbstractVector) values[i]).getLength();
+                if (vecLength == 0) {
+                    // result will be empty character vector in this case, as in:
+                    // sprintf("%d %d", as.integer(c(7,42)), integer())
+                    return 0;
+                } else {
+                    if (vecLength == 1) {
+                        values[i] = ((RAbstractVector) values[i]).getDataAtAsObject(0);
+                    }
+                    length = Math.max(vecLength, length);
+                }
+            } else {
+                length = Math.max(1, length);
+            }
+        }
+        return length;
+    }
+
+    private static Object[] createSprintfArgs(Object[] values, int index, int maxLength) {
+        Object[] sprintfArgs = new Object[values.length];
+        for (int i = 0; i < sprintfArgs.length; i++) {
+            if (values[i] instanceof RAbstractVector) {
+                sprintfArgs[i] = ((RAbstractVector) values[i]).getDataAtAsObject(index % maxLength);
+            } else {
+                sprintfArgs[i] = values[i];
+            }
+        }
+        return sprintfArgs;
+    }
+
     @Specialization(guards = "!oneElement(args)")
     @TruffleBoundary
-    protected String sprintf(String fmt, RArgsValuesAndNames args) {
+    protected RStringVector sprintf(String fmt, RArgsValuesAndNames args) {
         controlVisibility();
-        return format(fmt, args.getArguments());
+        Object[] values = args.getArguments();
+        int maxLength = maxLengthAndConvertToScalar(values);
+        if (maxLength == 0) {
+            return RDataFactory.createEmptyStringVector();
+        } else if (maxLength == 1) {
+            return RDataFactory.createStringVector(format(fmt, values));
+        } else {
+            String[] r = new String[maxLength];
+            for (int k = 0; k < r.length; k++) {
+                Object[] sprintfArgs = createSprintfArgs(values, k, maxLength);
+                r[k] = format(fmt, sprintfArgs);
+            }
+            return RDataFactory.createStringVector(r, RDataFactory.COMPLETE_VECTOR);
+
+        }
     }
 
     @Specialization(guards = "oneElement(args)")
@@ -179,7 +227,7 @@ public abstract class Sprintf extends RBuiltinNode {
 
     @Specialization(guards = {"!oneElement(args)", "fmtLengthOne(fmt)"})
     @TruffleBoundary
-    protected String sprintf(RAbstractStringVector fmt, RArgsValuesAndNames args) {
+    protected RStringVector sprintf(RAbstractStringVector fmt, RArgsValuesAndNames args) {
         return sprintf(fmt.getDataAt(0), args);
     }
 
