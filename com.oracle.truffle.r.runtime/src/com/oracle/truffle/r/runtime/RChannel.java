@@ -217,7 +217,7 @@ public class RChannel {
     private static Object convertPrivate(Object o) throws IOException {
         if (o instanceof RList) {
             return convertPrivateList(o);
-        } else if (!(o instanceof REnvironment || o instanceof RConnection || o instanceof RLanguage)) {
+        } else if (!(o instanceof RFunction || o instanceof REnvironment || o instanceof RConnection || o instanceof RLanguage)) {
             // TODO: should we make internal values shareable?
             if (o instanceof RAttributable && ((RAttributable) o).getAttributes() != null) {
                 return convertObjectAttributesToPrivate(o);
@@ -282,7 +282,7 @@ public class RChannel {
             } catch (IOException x) {
                 throw RError.error(RError.NO_NODE, RError.Message.GENERIC, "error creating shareable list");
             }
-        } else if (!(msg instanceof REnvironment || msg instanceof RConnection || msg instanceof RLanguage)) {
+        } else if (!(msg instanceof RFunction || msg instanceof REnvironment || msg instanceof RConnection || msg instanceof RLanguage)) {
             // make sure that what's passed through the channel will be copied on the first
             // update
             makeShared(msg);
