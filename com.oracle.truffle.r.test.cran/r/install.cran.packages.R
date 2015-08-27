@@ -76,11 +76,11 @@ cplusplus <- c("Rcpp", "Segmentor3IsBack", "QUIC", "kernlab", "adaptivetau", "ge
 # parser bugs
 parserbug <- c("lattice")
 # ... lappy bug
-lapplydotbug <- c("ABCoptim", "acm4r", "MASS")
+lapplydotbug <- c("ABCoptim", "acm4r", "MASS", "combinat")
 # e.g. complex replacement assignments
-trufflevisitor.nyi <- c("colorspace", "R.methodsS3")
+trufflevisitor.nyi <- c("colorspace", "R.methodsS3", "ade4")
 # problems with native code
-nativeinstall <- c("Rglpk", "overlap")
+nativeinstall <- c("Rglpk", "overlap", "adimpro")
 # S4 anything using S4 objects
 s4 <- c("matrixStats")
 # graphics

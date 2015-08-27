@@ -56,18 +56,19 @@ $(C_OBJECTS): | $(OBJ)
 $(OBJ):
 	mkdir -p $(OBJ)
 
-# On Darwin we need to create a dummy libR.dylib
+# On Darwin we need to create a libR.dylib in which xerbla goes (for now)
+# as the libRlapack library has a dependency on libR (why I am not sure)
 ifeq ($(OS_NAME), Darwin)
-LIB_RDUMMY := $(LIBDIR)/libR$(DYLIB_EXT)
+LIB_R := $(LIBDIR)/libR$(DYLIB_EXT)
 
-libr: $(LIB_RDUMMY)
+libr: $(LIB_R)
 
-$(LIB_RDUMMY): $(OBJ)/rdummy.o
+$(LIB_R): $(OBJ)/xerbla.o
 	mkdir -p $(LIBDIR)
-	$(DYLIB_LD) $(DYLIB_LDFLAGS) -o $(LIB_RDUMMY) -current_version $(R_VERSION) -compatibility_version $(R_VERSION) $(OBJ)/rdummy.o
+	$(DYLIB_LD) $(DYLIB_LDFLAGS) -o $(LIB_R) -current_version $(R_VERSION) -compatibility_version $(R_VERSION) $(OBJ)/xerbla.o
 
 cleanlibr:
-	rm -f $(LIB_RDUMMY)
+	rm -f $(LIB_R)
 
 else
 libr: 
@@ -76,8 +77,10 @@ cleanlibr:
 
 endif
 
+FFI_INCLUDES = -I$(TOPDIR)/include/jni/include -I$(TOPDIR)/include/jni/include/R_ext
+
 $(OBJ)/%.o: $(SRC)/%.c
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) $(FFI_INCLUDES) -c $< -o $@
 
 cleanlib:
 	rm -f $(LIBDIR)/libappl.*
