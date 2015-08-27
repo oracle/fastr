@@ -216,9 +216,11 @@ public abstract class ConnectionFunctions {
         @SuppressWarnings("unused")
         @TruffleBoundary
         @Specialization
-        protected Object socketConnection(RAbstractStringVector host, RAbstractIntVector portVec, byte server, byte blocking, RAbstractStringVector open, RAbstractStringVector encoding, int timeout) {
+        protected Object socketConnection(RAbstractStringVector host, RAbstractIntVector portVec, byte server, byte blocking, RAbstractStringVector open, RAbstractStringVector encoding,
+                        RAbstractIntVector timeoutVec) {
             int port = portVec.getDataAt(0);
             String modeString = open.getDataAt(0);
+            int timeout = timeoutVec.getDataAt(0);
             try {
                 if (RRuntime.fromLogical(server)) {
                     return new RSocketConnection(modeString, true, host.getDataAt(0), port, RRuntime.fromLogical(blocking), timeout);
