@@ -28,6 +28,8 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.utilities.*;
+import com.oracle.truffle.r.nodes.attributes.*;
 import com.oracle.truffle.r.nodes.binary.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.builtin.base.CombineNodeGen.CombineInputCastNodeGen;
@@ -264,9 +266,23 @@ public abstract class Combine extends RCastingBuiltinNode {
         }
 
         @Specialization(guards = "needsCopy(vector)")
-        public RAbstractVector noCopy(RAbstractVector vector) {
-            RVector result = vector.materialize().copyDropAttributes();
-            result.copyNamesFrom(attrProfiles, vector);
+        public RAbstractVector noCopy(RAbstractVector vector, //
+                        @Cached("createBinaryProfile()") ConditionProfile hasNamesProfile, //
+                        @Cached("createBinaryProfile()") ConditionProfile hasDimNamesProfile) {
+            RVector materialized = vector.materialize();
+            RVector result = materialized.copyDropAttributes();
+
+            RStringVector vecNames = materialized.getInternalNames();
+            if (hasNamesProfile.profile(vecNames != null)) {
+                result.initAttributes(RAttributes.createInitialized(new String[]{RRuntime.NAMES_ATTR_KEY}, new Object[]{vecNames}));
+                result.setInternalNames(vecNames);
+            } else {
+                RList dimNames = materialized.getInternalDimNames();
+                if (hasDimNamesProfile.profile(dimNames != null)) {
+                    result.initAttributes(RAttributes.createInitialized(new String[]{RRuntime.DIMNAMES_ATTR_KEY}, new Object[]{dimNames}));
+                    result.setInternalDimNames(dimNames);
+                }
+            }
             return result;
         }
 
