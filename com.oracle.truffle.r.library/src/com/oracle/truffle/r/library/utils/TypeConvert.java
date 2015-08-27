@@ -33,6 +33,10 @@ import com.oracle.truffle.r.runtime.data.model.*;
 public abstract class TypeConvert extends RExternalBuiltinNode.Arg5 {
 
     private static boolean isNA(String s, RAbstractStringVector naStrings) {
+        // naStrings are in addition to NA_character_
+        if (RRuntime.isNA(s)) {
+            return true;
+        }
         for (int i = 0; i < naStrings.getLength(); i++) {
             if (s.equals(naStrings.getDataAt(i))) {
                 return true;
@@ -41,37 +45,51 @@ public abstract class TypeConvert extends RExternalBuiltinNode.Arg5 {
         return false;
     }
 
+    /*
+     * In the next three methods, firstPos is the index of the first element in the vector that is
+     * not isNA(elem, naStrings). However, there may be isNA values after that.
+     */
+
     private static RIntVector readIntVector(RAbstractStringVector x, int firstPos, int firstVal, RAbstractStringVector naStrings) {
         int[] data = new int[x.getLength()];
         Arrays.fill(data, 0, firstPos, RRuntime.INT_NA);
+        boolean complete = RDataFactory.COMPLETE_VECTOR;
         data[firstPos] = firstVal;
         for (int i = firstPos + 1; i < data.length; i++) {
             String s = x.getDataAt(i);
-            data[i] = isNA(s, naStrings) ? RRuntime.INT_NA : RRuntime.string2intNoCheck(s, true);
+            boolean isNA = isNA(s, naStrings);
+            data[i] = isNA ? RRuntime.INT_NA : RRuntime.string2intNoCheck(s, true);
+            complete = complete && !isNA;
         }
-        return RDataFactory.createIntVector(data, firstPos > 0 ? RDataFactory.INCOMPLETE_VECTOR : RDataFactory.COMPLETE_VECTOR);
+        return RDataFactory.createIntVector(data, complete);
     }
 
     private static RDoubleVector readDoubleVector(RAbstractStringVector x, int firstPos, double firstVal, RAbstractStringVector naStrings) {
         double[] data = new double[x.getLength()];
         Arrays.fill(data, 0, firstPos, RRuntime.DOUBLE_NA);
+        boolean complete = RDataFactory.COMPLETE_VECTOR;
         data[firstPos] = firstVal;
         for (int i = firstPos + 1; i < data.length; i++) {
             String s = x.getDataAt(i);
-            data[i] = isNA(s, naStrings) ? RRuntime.DOUBLE_NA : RRuntime.string2doubleNoCheck(s, true);
+            boolean isNA = isNA(s, naStrings);
+            data[i] = isNA ? RRuntime.DOUBLE_NA : RRuntime.string2doubleNoCheck(s, true);
+            complete = complete && !isNA;
         }
-        return RDataFactory.createDoubleVector(data, firstPos > 0 ? RDataFactory.INCOMPLETE_VECTOR : RDataFactory.COMPLETE_VECTOR);
+        return RDataFactory.createDoubleVector(data, complete);
     }
 
     private static RLogicalVector readLogicalVector(RAbstractStringVector x, int firstPos, byte firstVal, RAbstractStringVector naStrings) {
         byte[] data = new byte[x.getLength()];
         Arrays.fill(data, 0, firstPos, RRuntime.LOGICAL_NA);
+        boolean complete = RDataFactory.COMPLETE_VECTOR;
         data[firstPos] = firstVal;
         for (int i = firstPos + 1; i < data.length; i++) {
             String s = x.getDataAt(i);
-            data[i] = isNA(s, naStrings) ? RRuntime.LOGICAL_NA : RRuntime.string2logicalNoCheck(s, true);
+            boolean isNA = isNA(s, naStrings);
+            data[i] = isNA ? RRuntime.LOGICAL_NA : RRuntime.string2logicalNoCheck(s, true);
+            complete = complete && !isNA;
         }
-        return RDataFactory.createLogicalVector(data, firstPos > 0 ? RDataFactory.INCOMPLETE_VECTOR : RDataFactory.COMPLETE_VECTOR);
+        return RDataFactory.createLogicalVector(data, complete);
     }
 
     @Specialization
