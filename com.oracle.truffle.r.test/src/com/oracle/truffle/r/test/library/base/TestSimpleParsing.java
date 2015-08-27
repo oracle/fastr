@@ -58,4 +58,16 @@ public class TestSimpleParsing extends TestBase {
         assertEval(" \"\\111\\413\\36f \7 \" ");
         assertEval(" '\\a\\b\\f \\v \\t \\r \\n\\' \\\"\\`\\011\\013\\036' ");
     }
+
+    @Test
+    public void testSemicolons() {
+        assertEval("{;}");
+        assertEval("{;;;;;}");
+        assertEval("{1;;;;;}");
+        assertEval("{invisible(1);;;;;}");
+        assertEval("{;;4;;;}");
+        assertEval(Output.ContainsError, ";");
+        assertEval(Output.ContainsError, ";1");
+        assertEval(Output.ContainsError, ";1;;");
+    }
 }

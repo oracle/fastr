@@ -41,7 +41,7 @@ public class TestParser extends TestBase {
         assertEval("10^1.5");
         assertEval("10^(1+1)");
         assertEval("10^1+1");
-        assertEval("10^2^3");
+        assertEval("10^2^2");
     }
 
     @Test

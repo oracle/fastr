@@ -187,11 +187,7 @@ public class RCommand {
                             } catch (IncompleteSourceException e) {
                                 // read another line of input
                             } catch (ParseException e) {
-                                try {
-                                    throw e.throwAsRError();
-                                } catch (RError e2) {
-                                    // this error is expected
-                                }
+                                e.report(consoleHandler);
                                 continue REPL;
                             } catch (IOException e) {
                                 if (e.getCause() instanceof RError) {

@@ -69,6 +69,7 @@ public class ParserGeneration {
         "handles escapes in `xxx` form",
         "added \\  escape sequence",
         "allow -/+/! after ^",
-        "adapt to RError API change"
+        "adapt to RError API change",
+        "allow multiple semicolons in {}"
     };
 }

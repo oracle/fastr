@@ -255,35 +255,14 @@ def _test_package():
 def _test_subpackage(name):
     return '.'.join((_test_package(), name))
 
+def _library_unit_tests():
+    return ','.join(map(_test_subpackage, ['library.base', 'library.stats', 'library.utils']))
+
 def _nodes_unit_tests():
     return 'com.oracle.truffle.r.nodes.test'
 
-def _library_unit_tests():
-    return ','.join((_test_subpackage('library.base'), _test_subpackage('library.stats'), _test_subpackage('library.utils')))
-
-def _builtins_unit_tests():
-    return _test_subpackage('builtins')
-
-def _functions_unit_tests():
-    return _test_subpackage('functions')
-
-def _rffi_unit_tests():
-    return _test_subpackage('rffi')
-
-def _rpackages_unit_tests():
-    return _test_subpackage('rpackages')
-
-def _ser_unit_tests():
-    return _test_subpackage('ser')
-
-def _app_unit_tests():
-    return _test_subpackage('apps')
-
-def _tck_unit_tests():
-    return _test_subpackage('tck')
-
 def _gate_unit_tests():
-    return ','.join((_library_unit_tests(), _rffi_unit_tests(), _rpackages_unit_tests(), _builtins_unit_tests(), _functions_unit_tests(), _ser_unit_tests(), _app_unit_tests(), _nodes_unit_tests(), _tck_unit_tests()))
+    return ','.join([_library_unit_tests(), _nodes_unit_tests()] + map(_test_subpackage, ['rffi', 'rpackages', 'builtins', 'functions', 'ser', 'apps', 'tck', 'parser']))
 
 def _all_unit_tests():
     return _gate_unit_tests()

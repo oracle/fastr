@@ -125,6 +125,12 @@ package com.oracle.truffle.r.parser;
     public int[] next_tokens(){
         return state.following[state._fsp].toArray();
     }
+
+	// without this override, the parser will not throw exceptions if it can recover    
+    @Override
+    protected Object recoverFromMismatchedToken(IntStream input, int expected, BitSet follow) throws RecognitionException {
+        throw new MismatchedTokenException(expected, input);
+    }
 }
 
 @lexer::members {
@@ -164,14 +170,13 @@ package com.oracle.truffle.r.parser;
 script returns [ASTNode v]
     @init  { ArrayList<ASTNode> stmts = new ArrayList<ASTNode>(); }
     @after {
-        SourceSection src = sourceSection("script", $start, $stop);
-        if ($stop == null) {
-            String code = src.getCode();
-            RError.error(RError.NO_CALLER, RError.Message.UNEXPECTED, code, code);
+        if (input.LT(1).getType() != EOF) {
+        	throw new RecognitionException(input); 
         }
+        SourceSection src = sourceSection("script", $start, $stop);
         $v = Sequence.create(src, stmts);
     }
-    : n_ (s=statement { stmts.add(s); })*
+    : n_ ( s=statement { stmts.add(s); })*
     ;
 
 interactive returns [ASTNode v]
@@ -192,11 +197,12 @@ interactive returns [ASTNode v]
     ;
 
 statement returns [ASTNode v]
-    : e=expr_or_assign n { $v = $e.v; }
+    : e=expr_or_assign n_one { $v = $e.v; }
     ;
 
 n_ : (NEWLINE | COMMENT)*;
-n  : (NEWLINE | COMMENT)+ | EOF | SEMICOLON n_;
+n_one  : (NEWLINE | COMMENT)+ | EOF | SEMICOLON n_;
+n_multi  : (NEWLINE | COMMENT | SEMICOLON)+ | EOF;
 
 expr_or_assign returns [ASTNode v]
     : a=alter_assign { $v = $a.v; }
@@ -219,7 +225,7 @@ expr_wo_assign returns [ASTNode v]
 sequence returns [ASTNode v]
     @init  { ArrayList<ASTNode> stmts = new ArrayList<ASTNode>(); }
     @after { $v = Sequence.create(sourceSection("sequence", $start, $stop), stmts); }
-    : LBRACE n_ (e=expr_or_assign { stmts.add($e.v); } (n e=expr_or_assign { stmts.add($e.v); })* n?)? RBRACE
+    : LBRACE n_multi? (e=expr_or_assign { stmts.add($e.v); } (n_multi e=expr_or_assign { stmts.add($e.v); })* n_multi?)? RBRACE
     ;
 
 assign returns [ASTNode v]
