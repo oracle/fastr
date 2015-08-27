@@ -24,8 +24,12 @@ package com.oracle.truffle.r.runtime.data;
 
 import com.oracle.truffle.api.utilities.*;
 
-public class RAttributeProfiles {
+public final class RAttributeProfiles {
     private final ConditionProfile attrNullProfile = ConditionProfile.createBinaryProfile();
+
+    private RAttributeProfiles() {
+        // private constructor
+    }
 
     public boolean attrNullProfile(boolean cond) {
         return attrNullProfile.profile(cond);
@@ -34,5 +38,4 @@ public class RAttributeProfiles {
     public static RAttributeProfiles create() {
         return new RAttributeProfiles();
     }
-
 }
