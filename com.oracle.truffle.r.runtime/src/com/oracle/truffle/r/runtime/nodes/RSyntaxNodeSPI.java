@@ -24,6 +24,7 @@ package com.oracle.truffle.r.runtime.nodes;
 
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RDeparse.*;
+import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
 
 /**
@@ -52,5 +53,30 @@ public interface RSyntaxNodeSPI {
      * create the virtual pairlist for this node,
      */
     void serializeImpl(RSerialize.State state);
+
+    /* Methods to support access on an RLanguage object, e.g. length(quote(f(a,b,c)))) */
+
+    /**
+     * Return the "length" of this node in the R sense.
+     */
+    default int getRlengthImpl() {
+        throw RInternalError.unimplemented("getRlengthImpl");
+    }
+
+    /**
+     * Return a value (usually an {@link RLanguage} instance) for the element of this node at
+     * {@code index}.
+     */
+    default Object getRelementImpl(@SuppressWarnings("unused") int index) {
+        throw RInternalError.unimplemented("getRelementImpl");
+    }
+
+    /**
+     * Return {@code true} iff this node "equals" {@code other} in the R sense. (Used for
+     * {@code identical} builtin).
+     */
+    default boolean getRequalsImpl(@SuppressWarnings("unused") RSyntaxNode other) {
+        throw RInternalError.unimplemented("getRequalsImpl");
+    }
 
 }
