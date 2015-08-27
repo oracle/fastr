@@ -37,6 +37,7 @@ static jmethodID Rf_duplicateMethodID;
 static jmethodID Rf_consMethodID;
 static jmethodID Rf_defineVarMethodID;
 static jmethodID Rf_findVarMethodID;
+static jmethodID Rf_findVarInFrameMethodID;
 static jmethodID Rf_getAttribMethodID;
 static jmethodID Rf_setAttribMethodID;
 static jmethodID Rf_isStringMethodID;
@@ -56,6 +57,7 @@ void init_rf_functions(JNIEnv *env) {
 	Rf_consMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_cons", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", 1);
 	Rf_defineVarMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_defineVar", "(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)V", 1);
 	Rf_findVarMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_findVar", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", 1);
+	Rf_findVarInFrameMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_findVarInFrame", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", 1);
 	Rf_getAttribMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_getAttrib", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", 1);
 	Rf_setAttribMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_setAttrib", "(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)V", 1);
 	Rf_isStringMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_isString", "(Ljava/lang/Object;)I", 1);
@@ -143,6 +145,12 @@ SEXP Rf_findFun(SEXP symbol, SEXP rho) {
 SEXP Rf_findVar(SEXP symbol, SEXP rho) {
 	JNIEnv *thisenv = getEnv();
 	SEXP result =(*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_findVarMethodID, symbol, rho);
+    return checkRef(thisenv, result);
+}
+
+SEXP Rf_findVarInFrame(SEXP symbol, SEXP rho) {
+	JNIEnv *thisenv = getEnv();
+	SEXP result =(*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_findVarInFrameMethodID, symbol, rho);
     return checkRef(thisenv, result);
 }
 
@@ -336,6 +344,15 @@ SEXP Rf_mkString(const char *s) {
 	jstring string = (*thisenv)->NewStringUTF(thisenv, s);
 	return ScalarString(string);
 }
+
+int Rf_ncols(SEXP x) {
+	unimplemented("Rf_ncols");
+}
+
+int Rf_nrows(SEXP x) {
+	unimplemented("Rf_nrows");
+}
+
 
 SEXP Rf_protect(SEXP x) {
 	return x;

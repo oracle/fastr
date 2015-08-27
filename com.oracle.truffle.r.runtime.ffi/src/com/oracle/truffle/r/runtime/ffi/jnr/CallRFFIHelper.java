@@ -113,10 +113,34 @@ public class CallRFFIHelper {
     }
 
     static Object Rf_findVar(Object symbolArg, Object envArg) {
-        REnvironment env = (REnvironment) envArg;
+        return findVarInFrameHelper(symbolArg, envArg, true);
+    }
+
+    static Object Rf_findVarInFrame(Object symbolArg, Object envArg) {
+        return findVarInFrameHelper(symbolArg, envArg, false);
+    }
+
+    private static Object findVarInFrameHelper(Object symbolArg, Object envArg, boolean inherits) {
+        if (envArg == RNull.instance) {
+            throw RError.error(RError.NO_NODE, RError.Message.USE_NULL_ENV_DEFUNCT);
+        }
+        if (!(envArg instanceof REnvironment)) {
+            throw RError.error(RError.NO_NODE, RError.Message.ARG_NOT_AN_ENVIRONMENT, inherits ? "findVar" : "findVarInFrame");
+        }
         RSymbol name = (RSymbol) symbolArg;
-        Object value = env.get(name.getName());
-        return value == null ? RUnboundValue.instance : value;
+        REnvironment env = (REnvironment) envArg;
+        while (env != REnvironment.emptyEnv()) {
+            Object value = env.get(name.getName());
+            if (value != null) {
+                return value;
+            }
+            if (!inherits) {
+                break;
+            }
+            env = env.getParent();
+        }
+        return RUnboundValue.instance;
+
     }
 
     static Object Rf_getAttrib(Object obj, Object name) {

@@ -76,14 +76,18 @@ cplusplus <- c("Rcpp", "Segmentor3IsBack", "QUIC", "kernlab", "adaptivetau", "ge
 # parser bugs
 parserbug <- c("lattice")
 # ... lappy bug
-lapplydotbug <- c("ABCoptim")
+lapplydotbug <- c("ABCoptim", "acm4r", "MASS")
 # e.g. complex replacement assignments
 trufflevisitor.nyi <- c("colorspace", "R.methodsS3")
 # problems with native code
-nativeinstall <- c("Rglpk")
+nativeinstall <- c("Rglpk", "overlap")
 # S4 anything using S4 objects
 s4 <- c("matrixStats")
-initial.blacklist <- c(cplusplus, parserbug, lapplydotbug, trufflevisitor.nyi, nativeinstall, s4)
+# graphics
+graphics <- c("Cairo")
+# serialize
+serialize <- c("actuar", "spam")
+initial.blacklist <- c(cplusplus, parserbug, lapplydotbug, trufflevisitor.nyi, nativeinstall, s4, graphics, serialize)
 
 create.blacklist <- function() {
 	create.blacklist.iter(initial.blacklist)
@@ -94,7 +98,7 @@ abort <- function(msg) {
 	quit("no", 1)
 }
 
-# find the available packages from contriburl and macth those against pkg.pattern
+# find the available packages from contriburl and match those against pkg.pattern
 # sets global variables avail.pkgs and toinstall.pkgs
 get.pkgs <- function() {
 	avail.pkgs <<- available.packages(contriburl=contriburl, type="source")

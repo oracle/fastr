@@ -12,6 +12,7 @@
 package com.oracle.truffle.r.library.tools;
 
 import java.io.*;
+import java.nio.file.*;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
@@ -73,27 +74,24 @@ public class ToolsText {
             int n2 = file2.getLength();
             byte[] data = new byte[n2];
             if (!RRuntime.isNA(file1)) {
-                try (BufferedWriter out = new BufferedWriter(new FileWriter(file1, true))) {
+                try (BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(file1, true))) {
                     for (int i = 0; i < file2.getLength(); i++) {
-                        String path2 = file2.getDataAt(i);
-                        if (RRuntime.isNA(path2)) {
+                        String file2e = file2.getDataAt(i);
+                        if (RRuntime.isNA(file2e)) {
                             continue;
                         }
-                        File path2File = new File(path2);
-                        if (!(path2File.exists() && path2File.canRead())) {
-                            continue;
-                        }
-                        char[] path2Data = new char[(int) path2File.length()];
-                        try (BufferedReader in = new BufferedReader(new FileReader(path2File))) {
-                            out.write("#line 1 \"" + path2 + "\"\n");
-                            in.read(path2Data);
+                        Path path2 = FileSystems.getDefault().getPath(file2e);
+                        try {
+                            byte[] path2Data = Files.readAllBytes(path2);
+                            byte[] header = ("#line 1 \"" + file2e + "\"\n").getBytes();
+                            out.write(header);
                             out.write(path2Data);
                             if (!(path2Data.length > 0 && path2Data[path2Data.length - 1] == '\n')) {
                                 out.write('\n');
                             }
                             data[i] = RRuntime.LOGICAL_TRUE;
                         } catch (IOException ex) {
-                            RError.warning(this, RError.Message.GENERIC, "write error during file append");
+                            RError.warning(this, RError.Message.GENERIC, "IO error during file append");
                             // shouldn't happen, just continue with false result
                         }
 

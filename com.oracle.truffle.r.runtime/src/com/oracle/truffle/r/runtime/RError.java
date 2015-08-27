@@ -528,6 +528,7 @@ public final class RError extends RuntimeException {
         NO_ITEM_NAMED("no item named '%s' on the search list"),
         INVALID_OBJECT("invalid object for 'as.environment'"),
         EMPTY_NO_PARENT("the empty environment has no parent"),
+        ARG_NOT_AN_ENVIRONMENT("argument to '%s' is not an environment"),
         NOT_AN_ENVIRONMENT("not an environment"),
         NOT_A_SYMBOL("not a symbol"),
         CANNOT_SET_PARENT("cannot set the parent of the empty environment"),
