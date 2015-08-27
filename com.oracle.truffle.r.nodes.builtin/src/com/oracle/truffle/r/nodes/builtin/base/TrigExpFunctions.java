@@ -28,6 +28,7 @@ import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.attributes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.profile.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -82,22 +83,26 @@ public class TrigExpFunctions {
         }
 
         @Specialization
-        protected RAbstractVector trigOp(RIntVector vector) {
+        protected RAbstractVector trigOp(RIntVector vector, //
+                        @Cached("create()") CountedLoopConditionProfile profile) {
             controlVisibility();
             int length = vector.getLength();
             double[] resultVector = new double[length];
-            for (int i = 0; i < length; i++) {
+            profile.profileLength(length);
+            for (int i = 0; profile.inject(i < length); i++) {
                 resultVector[i] = doFunInt(vector.getDataAt(i));
             }
             return createDoubleVectorBasedOnOrigin(resultVector, vector);
         }
 
         @Specialization
-        protected RAbstractVector trigOp(RDoubleVector vector) {
+        protected RAbstractVector trigOp(RDoubleVector vector, //
+                        @Cached("create()") CountedLoopConditionProfile profile) {
             controlVisibility();
             int length = vector.getLength();
             double[] resultVector = new double[length];
-            for (int i = 0; i < length; i++) {
+            profile.profileLength(length);
+            for (int i = 0; profile.inject(i < length); i++) {
                 resultVector[i] = doFunDouble(vector.getDataAt(i));
             }
             return createDoubleVectorBasedOnOrigin(resultVector, vector);
@@ -134,11 +139,13 @@ public class TrigExpFunctions {
         }
 
         @Specialization
-        protected RComplexVector exp(RComplexVector powersVector) {
+        protected RComplexVector exp(RComplexVector powersVector, //
+                        @Cached("create()") CountedLoopConditionProfile profile) {
             controlVisibility();
-            int argumentsLength = powersVector.getLength();
-            double[] result = new double[argumentsLength * 2];
-            for (int i = 0; i < argumentsLength; i++) {
+            int length = powersVector.getLength();
+            double[] result = new double[length * 2];
+            profile.profileLength(length);
+            for (int i = 0; profile.inject(i < length); i++) {
                 RComplex rComplexResult = complexOp(powersVector.getDataAt(i));
                 result[2 * i] = rComplexResult.getRealPart();
                 result[2 * i + 1] = rComplexResult.getImaginaryPart();
@@ -349,10 +356,12 @@ public class TrigExpFunctions {
             double apply(int i);
         }
 
-        protected RDoubleVector doFun(int length, IntDoubleFunction yFun, IntDoubleFunction xFun) {
+        protected RDoubleVector doFun(int length, IntDoubleFunction yFun, IntDoubleFunction xFun, //
+                        @Cached("create()") CountedLoopConditionProfile profile) {
             controlVisibility();
             double[] resultVector = new double[length];
-            for (int i = 0; i < length; i++) {
+            profile.profileLength(length);
+            for (int i = 0; profile.inject(i < length); i++) {
                 double y = yFun.apply(i);
                 double x = xFun.apply(i);
                 if (xNACheck.check(y) || yNACheck.check(x)) {
@@ -371,26 +380,29 @@ public class TrigExpFunctions {
         }
 
         @Specialization
-        protected RDoubleVector atan2(double y, RAbstractDoubleVector x) {
+        protected RDoubleVector atan2(double y, RAbstractDoubleVector x, //
+                        @Cached("create()") CountedLoopConditionProfile profile) {
             yNACheck.enable(y);
             xNACheck.enable(x);
-            return doFun(x.getLength(), i -> y, i -> x.getDataAt(i));
+            return doFun(x.getLength(), i -> y, i -> x.getDataAt(i), profile);
         }
 
         @Specialization
-        protected RDoubleVector atan2(RAbstractDoubleVector y, double x) {
+        protected RDoubleVector atan2(RAbstractDoubleVector y, double x, //
+                        @Cached("create()") CountedLoopConditionProfile profile) {
             yNACheck.enable(y);
             xNACheck.enable(x);
-            return doFun(y.getLength(), i -> y.getDataAt(i), i -> x);
+            return doFun(y.getLength(), i -> y.getDataAt(i), i -> x, profile);
         }
 
         @Specialization
-        protected RDoubleVector atan2(RAbstractDoubleVector y, RAbstractDoubleVector x) {
+        protected RDoubleVector atan2(RAbstractDoubleVector y, RAbstractDoubleVector x, //
+                        @Cached("create()") CountedLoopConditionProfile profile) {
             int yLength = y.getLength();
             int xLength = x.getLength();
             yNACheck.enable(y);
             xNACheck.enable(x);
-            return doFun(Math.max(yLength, xLength), i -> y.getDataAt(i % yLength), i -> x.getDataAt(i % xLength));
+            return doFun(Math.max(yLength, xLength), i -> y.getDataAt(i % yLength), i -> x.getDataAt(i % xLength), profile);
         }
 
         @Fallback
