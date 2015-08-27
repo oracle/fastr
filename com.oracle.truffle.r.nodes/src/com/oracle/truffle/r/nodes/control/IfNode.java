@@ -59,22 +59,12 @@ public final class IfNode extends RNode implements RSyntaxNode, VisibilityContro
      * instance, the expression {@code if (FALSE) 23} will evaluate to {@code NULL}, but the result
      * will not be printed in the shell. Conversely, {@code NULL} will be printed for
      * {@code if (FALSE) 23 else NULL} because the else branch is given.
-     *
-     * This means that we need to take care of visibility in this class, and do a double check of
-     * the condition and the presence of an else branch below in {@link #execute}.
      */
-    private boolean isVisible = true;
-
-    @Override
-    public boolean getVisibility() {
-        return isVisible;
-    }
 
     @Override
     public Object execute(VirtualFrame frame) {
         byte cond = condition.executeByte(frame);
-        isVisible = cond == RRuntime.LOGICAL_TRUE || elsePart != null;
-        controlVisibility();
+        forceVisibility(elsePart != null || cond == RRuntime.LOGICAL_TRUE);
 
         if (cond == RRuntime.LOGICAL_NA) {
             // NA is the only remaining option
