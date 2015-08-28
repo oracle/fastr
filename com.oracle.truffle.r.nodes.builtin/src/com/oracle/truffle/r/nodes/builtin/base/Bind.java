@@ -50,6 +50,8 @@ public abstract class Bind extends RPrecedenceBuiltinNode {
     private final BranchProfile nonNullNames = BranchProfile.create();
     private final NACheck naCheck = NACheck.create();
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+    protected final ValueProfile resultProfile = ValueProfile.createClassProfile();
+    protected final ValueProfile vectorProfile = ValueProfile.createClassProfile();
 
     protected String getBindType() {
         // this method should be abstract but due to annotation processor problem it does not work
@@ -386,7 +388,7 @@ public abstract class Bind extends RPrecedenceBuiltinNode {
             int[] resultDimensions = new int[2];
             int[] secondDims = new int[vectors.length];
             boolean notEqualRows = getResultDimensions(vectors, resultDimensions, secondDims, true);
-            RVector result = vectors[0].createEmptySameType(resultDimensions[0] * resultDimensions[1], complete);
+            RVector result = resultProfile.profile(vectors[0].createEmptySameType(resultDimensions[0] * resultDimensions[1], complete));
 
             int ind = 0;
             Object rowDimResultNames = RNull.instance;
@@ -394,7 +396,7 @@ public abstract class Bind extends RPrecedenceBuiltinNode {
             int colInd = 0;
             boolean allColDimNamesNull = true;
             for (int i = 0; i < vectors.length; i++) {
-                RAbstractVector vec = vectors[i];
+                RAbstractVector vec = vectorProfile.profile(vectors[i]);
                 if (rowDimResultNames == RNull.instance) {
                     // get the first valid names value
                     rowDimResultNames = getDimResultNamesFromElements(vec, resultDimensions[0], 0);
@@ -459,7 +461,7 @@ public abstract class Bind extends RPrecedenceBuiltinNode {
             int[] resultDimensions = new int[2];
             int[] firstDims = new int[vectors.length];
             boolean notEqualColumns = getResultDimensions(vectors, resultDimensions, firstDims, false);
-            RVector result = vectors[0].createEmptySameType(resultDimensions[0] * resultDimensions[1], complete);
+            RVector result = resultProfile.profile(vectors[0].createEmptySameType(resultDimensions[0] * resultDimensions[1], complete));
 
             Object colDimResultNames = RNull.instance;
             String[] rowDimNamesArray = new String[resultDimensions[0]];
@@ -467,7 +469,7 @@ public abstract class Bind extends RPrecedenceBuiltinNode {
             boolean allRowDimNamesNull = true;
             int dstRowInd = 0;
             for (int i = 0; i < vectors.length; i++) {
-                RAbstractVector vec = vectors[i];
+                RAbstractVector vec = vectorProfile.profile(vectors[i]);
                 if (colDimResultNames == RNull.instance) {
                     // get the first valid names value
                     colDimResultNames = getDimResultNamesFromElements(vec, resultDimensions[1], 1);
