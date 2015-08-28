@@ -73,4 +73,9 @@ public final class RFunctionAccessFactory implements Factory10 {
     public CallTarget accessMessage(Message unknown) {
         throw RInternalError.shouldNotReachHere("message: " + unknown);
     }
+
+    @SuppressWarnings("all")
+    public CallTarget accessNew(int argumentsLength) {
+        return null;
+    }
 }
