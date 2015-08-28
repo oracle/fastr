@@ -22,9 +22,12 @@
  */
 package com.oracle.truffle.r.nodes.test;
 
+import java.io.*;
+
 import org.junit.*;
 
 import com.oracle.truffle.api.vm.*;
+import com.oracle.truffle.r.engine.*;
 import com.oracle.truffle.r.runtime.context.*;
 import com.oracle.truffle.r.test.generate.*;
 
@@ -38,7 +41,9 @@ public class TestBase {
     }
 
     @AfterClass
-    public static void finishClass() {
+    public static void finishClass() throws IOException {
+        // clear out warnings (which are stored in shared base env)
+        testVM.eval(TruffleRLanguage.MIME, "assign('last.warning', NULL, envir = baseenv())");
         RContext.destroyContext(testVM);
     }
 }
