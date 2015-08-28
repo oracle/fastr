@@ -805,7 +805,16 @@ public class ConnectionSupport {
                 }
                 boolean lineEnd = false;
                 if (ch < 0) {
-                    // N.B. This means data may be discarded if no line-end
+                    if (totalRead > 0) {
+                        /*
+                         * TODO GnuR says keep data and output a warning if blocking, otherwise
+                         * silently push back. FastR doesn't support non-blocking yet, so we keep
+                         * the data. Some refactoring is needed to be able to reliably access the
+                         * "name" for the warning.
+                         */
+                        lines.add(new String(buffer, 0, totalRead));
+                        RError.warning(RError.NO_NODE, RError.Message.INCOMPLETE_FINAL_LINE, "TODO: connection path");
+                    }
                     break;
                 }
                 if (ch == '\n') {
