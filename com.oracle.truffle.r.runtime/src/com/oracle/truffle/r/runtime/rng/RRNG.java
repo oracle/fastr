@@ -191,6 +191,10 @@ public class RRNG {
         return getContextState().currentKind;
     }
 
+    static GeneratorPrivate currentGenerator() {
+        return getContextState().currentKind.generator;
+    }
+
     private static NormKind currentNormKind() {
         return getContextState().currentNormKind;
     }
@@ -199,7 +203,7 @@ public class RRNG {
      * Ask the current generator for a random double. (cf. {@code unif_rand} in RNG.c.
      */
     public static double unifRand() {
-        return currentKind().generator.genrandDouble();
+        return currentGenerator().genrandDouble();
     }
 
     /**
