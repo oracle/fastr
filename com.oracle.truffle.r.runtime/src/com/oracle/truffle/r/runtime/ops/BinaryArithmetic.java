@@ -15,6 +15,7 @@ package com.oracle.truffle.r.runtime.ops;
 import static com.oracle.truffle.r.runtime.RRuntime.*;
 
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.utilities.*;
@@ -496,9 +497,9 @@ public abstract class BinaryArithmetic extends Operation {
 
     public static class Pow extends BinaryArithmetic {
 
-        private final BranchProfile everSeenExponentOtherThanTwo = BranchProfile.create();
-        private final BranchProfile everSeenNonIntegralExponent = BranchProfile.create();
-        private final BranchProfile everSeenNegativeExponent = BranchProfile.create();
+        private final ConditionProfile pow2Profile = ConditionProfile.createBinaryProfile();
+        private final ConditionProfile powIntegerProfile = ConditionProfile.createBinaryProfile();
+        private final ConditionProfile powIntegerPositiveProfile = ConditionProfile.createBinaryProfile();
 
         public Pow() {
             super(false, false, false);
@@ -519,23 +520,21 @@ public abstract class BinaryArithmetic extends Operation {
             int castExponent = (int) b;
 
             // Special case with exponent always two.
-            if (castExponent == 2) {
+            if (pow2Profile.profile(b == 2)) {
                 return a * a;
             }
-            everSeenExponentOtherThanTwo.enter();
 
             // Special case with exponent always integer.
-            if (castExponent == b) {
-                if (castExponent >= 0) {
+            if (powIntegerProfile.profile(castExponent == b)) {
+                if (powIntegerPositiveProfile.profile(castExponent >= 0)) {
                     return positivePow(a, castExponent);
+                } else {
+                    if (powIntegerPositiveProfile.profile(a == 0.0)) {
+                        return Double.POSITIVE_INFINITY;
+                    }
+                    return 1 / positivePow(a, -castExponent);
                 }
-                everSeenNegativeExponent.enter();
-                if (a == 0.0) {
-                    return Double.POSITIVE_INFINITY;
-                }
-                return 1 / positivePow(a, -castExponent);
             }
-            everSeenNonIntegralExponent.enter();
 
             // Generic case with double exponent.
             if (isFinite(a) && isFinite(b)) {
