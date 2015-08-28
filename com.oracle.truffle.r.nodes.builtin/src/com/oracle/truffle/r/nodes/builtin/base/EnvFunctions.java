@@ -235,6 +235,7 @@ public class EnvFunctions {
         private static RAttributeProfiles attributeProfile = RAttributeProfiles.create();
 
         @Specialization
+        @TruffleBoundary
         protected Object updateEnvironment(RFunction fun, REnvironment env) {
             fun.setEnclosingFrame(env.getFrame());
             return fun;
@@ -242,11 +243,13 @@ public class EnvFunctions {
 
         @SuppressWarnings("unused")
         @Specialization
+        @TruffleBoundary
         protected Object updateEnvironment(RFunction fun, RNull env) {
             throw RError.error(this, RError.Message.USE_NULL_ENV_DEFUNCT);
         }
 
         @Fallback
+        @TruffleBoundary
         protected Object updateEnvironment(Object obj, Object env) {
             if (env == RNull.instance || env instanceof REnvironment) {
                 if (obj instanceof RAttributable) {

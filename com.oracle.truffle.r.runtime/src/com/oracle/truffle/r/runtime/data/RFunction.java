@@ -29,6 +29,7 @@ import com.oracle.truffle.api.interop.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.context.*;
+import com.oracle.truffle.r.runtime.env.frame.*;
 
 /**
  * An instance of {@link RFunction} represents a function defined in R. The properties of a function
@@ -106,13 +107,9 @@ public final class RFunction extends RAttributeStorage implements RTypedValue, T
         } else {
             this.enclosingFrame = enclosingFrame;
         }
-        /*
-         * TODO Is any invalidation necessary? If the CallTarget has been optimized, presumably yes,
-         * but there is no accessible API for that. N.B. in GnuR if the environment is updated while
-         * the function is active, it does not appear to have an effect during that execution or
-         * subsequent ones.
-         */
-
+        FrameDescriptor descriptor = target.getRootNode().getFrameDescriptor();
+        FrameSlotChangeMonitor.getOrInitializeEnclosingFrameAssumption(null, descriptor, null, enclosingFrame);
+        FrameSlotChangeMonitor.getOrInitializeEnclosingFrameDescriptorAssumption(null, descriptor, enclosingFrame.getFrameDescriptor());
     }
 
     private static final RStringVector implicitClass = RDataFactory.createStringVectorFromScalar(RType.Function.getName());
