@@ -19,7 +19,7 @@ public class TestBuiltin_xtfrm extends TestBase {
 
     @Test
     public void testxtfrm1() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(c(4L, 5L, 3L, 2L, 1L), .Label = c('McNeil', 'Ripley', 'Tierney', 'Tukey', 'Venables'), class = 'factor'));xtfrm(argv[[1]]);");
+        assertEval("argv <- list(structure(c(4L, 5L, 3L, 2L, 1L), .Label = c('McNeil', 'Ripley', 'Tierney', 'Tukey', 'Venables'), class = 'factor'));xtfrm(argv[[1]]);");
     }
 
     @Test
@@ -44,24 +44,22 @@ public class TestBuiltin_xtfrm extends TestBase {
 
     @Test
     public void testxtfrm6() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(c(11354, 11382, 11413), class = 'Date'));xtfrm(argv[[1]]);");
+        assertEval("argv <- list(structure(c(11354, 11382, 11413), class = 'Date'));xtfrm(argv[[1]]);");
     }
 
     @Test
     public void testxtfrm7() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(1:3, id = 'An Example', class = structure('numWithId', package = '.GlobalEnv')));xtfrm(argv[[1]]);");
+        assertEval("argv <- list(structure(1:3, id = 'An Example', class = structure('numWithId', package = '.GlobalEnv')));xtfrm(argv[[1]]);");
     }
 
     @Test
     public void testxtfrm8() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(1:48, .Label = c('1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23', '24', '25', '26', '27', '28', '29', '30', '31', '32', '33', '34', '35', '36', '37', '38', '39', '40', '41', '42', '43', '44', '45', '46', '47', '48'), class = 'factor'));xtfrm(argv[[1]]);");
+        assertEval("argv <- list(structure(1:48, .Label = c('1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23', '24', '25', '26', '27', '28', '29', '30', '31', '32', '33', '34', '35', '36', '37', '38', '39', '40', '41', '42', '43', '44', '45', '46', '47', '48'), class = 'factor'));xtfrm(argv[[1]]);");
     }
 
     @Test
     public void testxtfrm9() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(c(0.00318983494910604, -0.0111499005186203, -0.00684577108225438, -0.0259425874127965, 0.0236273472621072, 0.0160653568112268, 0.0169512728197135, -0.0108668370208327, 0.0075620519889718, 0.000382355180538597, 0.0147085004994818, -0.0237528559595188, -0.00450253418485462, -0.00933970368616398, -0.00295998622541489, -0.0142621134100646, 0.0149334478604598, 0.0102146485133766, 0.00423575454949581, -0.00284331639280456, 0.0113535382887161, -0.00395897382574548, -0.00413390950862867, -0.0165713012838917, -0.018012405938438, 0.00225076128639717, 0.00786949110453678, 0.00890171601854386, 0.0241231688586559, 0.0104325796748375, 0.0267124035293778, -0.0242586202225146, 0.011564413201586, -0.00791916545648325, -0.020000071186273, -0.0160024870044187, 0.00243365269147765, 0.000371702019451462, 0.00543854321166064), .Names = c('1962.25', '1962.5', '1962.75', '1963', '1963.25', '1963.5', '1963.75', '1964', '1964.25', '1964.5', '1964.75', '1965', '1965.25', '1965.5', '1965.75', '1966', '1966.25', '1966.5', '1966.75', '1967', '1967.25', '1967.5', '1967.75', '1968', '1968.25', '1968.5', '1968.75', '1969', '1969.25', '1969.5', '1969.75', '1970', '1970.25', '1970.5', '1970.75', '1971', '1971.25', '1971.5', '1971.75')));xtfrm(argv[[1]]);");
+        assertEval("argv <- list(structure(c(0.00318983494910604, -0.0111499005186203, -0.00684577108225438, -0.0259425874127965, 0.0236273472621072, 0.0160653568112268, 0.0169512728197135, -0.0108668370208327, 0.0075620519889718, 0.000382355180538597, 0.0147085004994818, -0.0237528559595188, -0.00450253418485462, -0.00933970368616398, -0.00295998622541489, -0.0142621134100646, 0.0149334478604598, 0.0102146485133766, 0.00423575454949581, -0.00284331639280456, 0.0113535382887161, -0.00395897382574548, -0.00413390950862867, -0.0165713012838917, -0.018012405938438, 0.00225076128639717, 0.00786949110453678, 0.00890171601854386, 0.0241231688586559, 0.0104325796748375, 0.0267124035293778, -0.0242586202225146, 0.011564413201586, -0.00791916545648325, -0.020000071186273, -0.0160024870044187, 0.00243365269147765, 0.000371702019451462, 0.00543854321166064), .Names = c('1962.25', '1962.5', '1962.75', '1963', '1963.25', '1963.5', '1963.75', '1964', '1964.25', '1964.5', '1964.75', '1965', '1965.25', '1965.5', '1965.75', '1966', '1966.25', '1966.5', '1966.75', '1967', '1967.25', '1967.5', '1967.75', '1968', '1968.25', '1968.5', '1968.75', '1969', '1969.25', '1969.5', '1969.75', '1970', '1970.25', '1970.5', '1970.75', '1971', '1971.25', '1971.5', '1971.75')));xtfrm(argv[[1]]);");
     }
 
     @Test
@@ -72,13 +70,12 @@ public class TestBuiltin_xtfrm extends TestBase {
 
     @Test
     public void testxtfrm11() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(list(c(2L, 10L, 0L), c(2L, 10L, 1L), c(2L, 10L, 1L, 1L), c(2L, 11L, 0L), c(2L, 11L, 1L), c(2L, 11L, 1L, 1L), c(2L, 12L, 0L), c(2L, 12L, 1L), c(2L, 12L, 2L), c(2L, 12L, 2L, 1L), c(2L, 13L, 0L), c(2L, 13L, 1L), c(2L, 13L, 2L), c(2L, 14L, 0L), c(2L, 14L, 1L), c(2L, 14L, 2L), c(2L, 15L, 0L), c(2L, 15L, 1L), c(2L, 15L, 2L), c(2L, 15L, 3L), c(3L, 0L, 0L), c(3L, 0L, 1L)), class = 'numeric_version'));xtfrm(argv[[1]]);");
+        assertEval("argv <- list(structure(list(c(2L, 10L, 0L), c(2L, 10L, 1L), c(2L, 10L, 1L, 1L), c(2L, 11L, 0L), c(2L, 11L, 1L), c(2L, 11L, 1L, 1L), c(2L, 12L, 0L), c(2L, 12L, 1L), c(2L, 12L, 2L), c(2L, 12L, 2L, 1L), c(2L, 13L, 0L), c(2L, 13L, 1L), c(2L, 13L, 2L), c(2L, 14L, 0L), c(2L, 14L, 1L), c(2L, 14L, 2L), c(2L, 15L, 0L), c(2L, 15L, 1L), c(2L, 15L, 2L), c(2L, 15L, 3L), c(3L, 0L, 0L), c(3L, 0L, 1L)), class = 'numeric_version'));xtfrm(argv[[1]]);");
     }
 
     @Test
     public void testxtfrm12() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(list(c(2L, 11L, 0L)), class = 'numeric_version'));xtfrm(argv[[1]]);");
+        assertEval("argv <- list(structure(list(c(2L, 11L, 0L)), class = 'numeric_version'));xtfrm(argv[[1]]);");
     }
 
     @Test
@@ -89,7 +86,7 @@ public class TestBuiltin_xtfrm extends TestBase {
 
     @Test
     public void testxtfrm15() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(1:3, id = 'An Example', class = structure('numWithId',     package = '.GlobalEnv')));do.call('xtfrm', argv)");
+        assertEval("argv <- list(structure(1:3, id = 'An Example', class = structure('numWithId',     package = '.GlobalEnv')));do.call('xtfrm', argv)");
     }
 
 }

@@ -69,7 +69,7 @@ public class TestBuiltin_grepl extends TestBase {
 
     @Test
     public void testgrepl12() {
-        assertEval(Ignored.Unknown, "argv <- structure(list(pattern = 'length', x = 'Lengths: 0, 1',     ignore.case = TRUE), .Names = c('pattern', 'x', 'ignore.case'));do.call('grepl', argv)");
+        assertEval("argv <- structure(list(pattern = 'length', x = 'Lengths: 0, 1',     ignore.case = TRUE), .Names = c('pattern', 'x', 'ignore.case'));do.call('grepl', argv)");
     }
 
     @Test

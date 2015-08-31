@@ -193,7 +193,7 @@ public final class RDataFrame implements RShareable, RAbstractContainer {
     }
 
     @Override
-    public final void initAttributes(RAttributes newAttributes) {
+    public void initAttributes(RAttributes newAttributes) {
         vector.initAttributes(newAttributes);
     }
 

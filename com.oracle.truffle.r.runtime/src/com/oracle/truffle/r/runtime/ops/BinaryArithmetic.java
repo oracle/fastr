@@ -15,7 +15,6 @@ package com.oracle.truffle.r.runtime.ops;
 import static com.oracle.truffle.r.runtime.RRuntime.*;
 
 import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.utilities.*;

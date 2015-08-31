@@ -102,9 +102,8 @@ public class TestBuiltin_sort extends TestBase {
 
     @Test
     public void testsort18() {
-        assertEval(Ignored.Unknown,
-                        "argv <- structure(list(x = structure(c(8092, 8092, 8048, 8093,     8066), origin = structure(c(1, 1, 1970), .Names = c('month',     'day', 'year')), class = c('dates', 'times'))), .Names = 'x');"
-                                        + "do.call('sort', argv)");
+        assertEval("argv <- structure(list(x = structure(c(8092, 8092, 8048, 8093,     8066), origin = structure(c(1, 1, 1970), .Names = c('month',     'day', 'year')), class = c('dates', 'times'))), .Names = 'x');"
+                        + "do.call('sort', argv)");
     }
 
     @Test

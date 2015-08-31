@@ -189,7 +189,7 @@ public final class RFactor implements RShareable, RAbstractContainer {
     }
 
     @Override
-    public final void initAttributes(RAttributes newAttributes) {
+    public void initAttributes(RAttributes newAttributes) {
         vector.initAttributes(newAttributes);
     }
 
