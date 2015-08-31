@@ -40,8 +40,12 @@ public abstract class Sum extends RBuiltinNode {
 
     private static final ReduceSemantics semantics = new ReduceSemantics(0, 0.0, true, null, null, true, false);
 
-    @Child private Combine combine = CombineNodeGen.create(null, null, null);
     @Child private UnaryArithmeticReduceNode reduce = UnaryArithmeticReduceNodeGen.create(semantics, BinaryArithmetic.ADD);
+
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.firstBoolean(1);
+    }
 
     @Override
     public Object[] getDefaultParameterValues() {
@@ -49,12 +53,13 @@ public abstract class Sum extends RBuiltinNode {
     }
 
     @Specialization(guards = "args.getLength() == 1")
-    protected Object sumLengthOne(RArgsValuesAndNames args, byte naRm) {
-        return reduce.executeReduce(args.getArgument(0), naRm);
+    protected Object sumLengthOne(RArgsValuesAndNames args, boolean naRm) {
+        return reduce.executeReduce(args.getArgument(0), naRm, false);
     }
 
     @Specialization(contains = "sumLengthOne")
-    protected Object sum(RArgsValuesAndNames args, byte naRm) {
-        return reduce.executeReduce(combine.executeCombine(args), naRm);
+    protected Object sum(RArgsValuesAndNames args, boolean naRm, //
+                    @Cached("create()") Combine combine) {
+        return reduce.executeReduce(combine.executeCombine(args), naRm, false);
     }
 }

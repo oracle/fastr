@@ -41,6 +41,10 @@ import com.oracle.truffle.r.runtime.nodes.*;
 @RBuiltin(name = "c", kind = PRIMITIVE, parameterNames = {"..."})
 public abstract class Combine extends RCastingBuiltinNode {
 
+    public static Combine create() {
+        return CombineNodeGen.create(null, null, null);
+    }
+
     private static final ArgumentsSignature EMPTY_SIGNATURE = ArgumentsSignature.empty(1);
 
     protected static final int COMBINE_CACHED_LIMIT = PrecedenceNode.NUMBER_OF_PRECEDENCES;

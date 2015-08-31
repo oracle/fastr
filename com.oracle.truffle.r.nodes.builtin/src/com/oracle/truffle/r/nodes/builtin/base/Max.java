@@ -38,16 +38,26 @@ public abstract class Max extends RBuiltinNode {
     private static final ReduceSemantics semantics = new ReduceSemantics(RRuntime.INT_MIN_VALUE, Double.NEGATIVE_INFINITY, false, RError.Message.NO_NONMISSING_MAX,
                     RError.Message.NO_NONMISSING_MAX_NA, false, true);
 
-    @Child private Combine combine = CombineNodeGen.create(null, null, null);
     @Child private UnaryArithmeticReduceNode reduce = UnaryArithmeticReduceNodeGen.create(semantics, BinaryArithmetic.MAX);
+
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.firstBoolean(1);
+    }
 
     @Override
     public Object[] getDefaultParameterValues() {
         return new Object[]{RArgsValuesAndNames.EMPTY, RRuntime.LOGICAL_FALSE};
     }
 
-    @Specialization
-    protected Object max(RArgsValuesAndNames args, byte naRm) {
-        return reduce.executeReduce(combine.executeCombine(args), naRm);
+    @Specialization(guards = "args.getLength() == 1")
+    protected Object maxLengthOne(RArgsValuesAndNames args, boolean naRm) {
+        return reduce.executeReduce(args.getArgument(0), naRm, false);
+    }
+
+    @Specialization(contains = "maxLengthOne")
+    protected Object max(RArgsValuesAndNames args, boolean naRm, //
+                    @Cached("create()") Combine combine) {
+        return reduce.executeReduce(combine.executeCombine(args), naRm, false);
     }
 }

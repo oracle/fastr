@@ -38,16 +38,26 @@ public abstract class Min extends RBuiltinNode {
     private static final ReduceSemantics semantics = new ReduceSemantics(RRuntime.INT_MAX_VALUE, Double.POSITIVE_INFINITY, false, RError.Message.NO_NONMISSING_MIN,
                     RError.Message.NO_NONMISSING_MIN_NA, false, true);
 
-    @Child private Combine combine = CombineNodeGen.create(null, null, null);
     @Child private UnaryArithmeticReduceNode reduce = UnaryArithmeticReduceNodeGen.create(semantics, BinaryArithmetic.MIN);
+
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.firstBoolean(1);
+    }
 
     @Override
     public Object[] getDefaultParameterValues() {
         return new Object[]{RArgsValuesAndNames.EMPTY, RRuntime.LOGICAL_FALSE};
     }
 
-    @Specialization
-    protected Object min(RArgsValuesAndNames args, byte naRm) {
-        return reduce.executeReduce(combine.executeCombine(args), naRm);
+    @Specialization(guards = "args.getLength() == 1")
+    protected Object minLengthOne(RArgsValuesAndNames args, boolean naRm) {
+        return reduce.executeReduce(args.getArgument(0), naRm, false);
+    }
+
+    @Specialization(contains = "minLengthOne")
+    protected Object min(RArgsValuesAndNames args, boolean naRm, //
+                    @Cached("create()") Combine combine) {
+        return reduce.executeReduce(combine.executeCombine(args), naRm, false);
     }
 }

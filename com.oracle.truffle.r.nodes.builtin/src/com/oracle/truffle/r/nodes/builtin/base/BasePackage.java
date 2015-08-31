@@ -390,6 +390,7 @@ public class BasePackage extends RBuiltinPackage {
         add(Prod.class, ProdNodeGen::create);
         add(Quit.class, QuitNodeGen::create);
         add(Quote.class, QuoteNodeGen::create);
+        add(Range.class, RangeNodeGen::create);
         add(RNGFunctions.RNGkind.class, RNGFunctionsFactory.RNGkindNodeGen::create);
         add(RNGFunctions.SetSeed.class, RNGFunctionsFactory.SetSeedNodeGen::create);
         add(RVersion.class, RVersionNodeGen::create);

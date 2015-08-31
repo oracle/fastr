@@ -127,6 +127,10 @@ public abstract class RBuiltinNode extends RNode implements RSyntaxNode, Visibil
         public CastBuilder firstStringWithError(int index, RError.Message error, String name) {
             return insert(index, FirstStringNode.createWithError(error, name));
         }
+
+        public CastBuilder firstBoolean(int index) {
+            return insert(index, FirstBooleanNodeGen.create());
+        }
     }
 
     protected void createCasts(@SuppressWarnings("unused") CastBuilder casts) {

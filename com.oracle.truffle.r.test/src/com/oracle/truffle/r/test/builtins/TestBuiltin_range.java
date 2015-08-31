@@ -25,12 +25,12 @@ public class TestBuiltin_range extends TestBase {
 
     @Test
     public void testrange2() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(c(52L, 52L), .Names = c('y', 'x')), na.rm = FALSE);range(argv[[1]],argv[[2]]);");
+        assertEval("argv <- list(structure(c(52L, 52L), .Names = c('y', 'x')), na.rm = FALSE);range(argv[[1]],argv[[2]]);");
     }
 
     @Test
     public void testrange3() {
-        assertEval(Ignored.Unknown, "argv <- list(c(-2.92498527625946, 2.46253591019012), na.rm = FALSE);range(argv[[1]],argv[[2]]);");
+        assertEval("argv <- list(c(-2.92498527625946, 2.46253591019012), na.rm = FALSE);range(argv[[1]],argv[[2]]);");
     }
 
     @Test
@@ -41,18 +41,17 @@ public class TestBuiltin_range extends TestBase {
 
     @Test
     public void testrange5() {
-        assertEval(Ignored.Unknown, "argv <- list(1:3, finite = TRUE, na.rm = FALSE);range(argv[[1]],argv[[2]],argv[[3]]);");
+        assertEval("argv <- list(1:3, finite = TRUE, na.rm = FALSE);range(argv[[1]],argv[[2]],argv[[3]]);");
     }
 
     @Test
     public void testrange6() {
-        assertEval(Ignored.Unknown, "argv <- list(c(1L, 3L, 7L, 14L, 21L, 20L, 19L, 9L, 4L, 2L), 0, na.rm = FALSE);range(argv[[1]],argv[[2]],argv[[3]]);");
+        assertEval("argv <- list(c(1L, 3L, 7L, 14L, 21L, 20L, 19L, 9L, 4L, 2L), 0, na.rm = FALSE);range(argv[[1]],argv[[2]],argv[[3]]);");
     }
 
     @Test
     public void testrange7() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(c(8.2, 9.7, 12.25, 16.5, 21.5, 14.5, 20, 23.45, 25.8, 27.3, 22.4, 24.5, 25.95, 27.3, 30.9), numeric(0), NULL, na.rm = FALSE);range(argv[[1]],argv[[2]],argv[[3]],argv[[4]]);");
+        assertEval("argv <- list(c(8.2, 9.7, 12.25, 16.5, 21.5, 14.5, 20, 23.45, 25.8, 27.3, 22.4, 24.5, 25.95, 27.3, 30.9), numeric(0), NULL, na.rm = FALSE);range(argv[[1]],argv[[2]],argv[[3]],argv[[4]]);");
     }
 
     @Test
@@ -86,17 +85,17 @@ public class TestBuiltin_range extends TestBase {
 
     @Test
     public void testrange13() {
-        assertEval(Ignored.Unknown, "argv <- list(c(NA, 1, 2, 3, -Inf, NaN, Inf), na.rm = FALSE);range(argv[[1]],argv[[2]]);");
+        assertEval("argv <- list(c(NA, 1, 2, 3, -Inf, NaN, Inf), na.rm = FALSE);range(argv[[1]],argv[[2]]);");
     }
 
     @Test
     public void testrange14() {
-        assertEval(Ignored.Unknown, "argv <- list(c(14.43333, 65.7667), finite = TRUE, na.rm = FALSE);range(argv[[1]],argv[[2]],argv[[3]]);");
+        assertEval("argv <- list(c(14.43333, 65.7667), finite = TRUE, na.rm = FALSE);range(argv[[1]],argv[[2]],argv[[3]]);");
     }
 
     @Test
     public void testrange15() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(c(1, 13, 31), .Dim = 3L, .Dimnames = list(c('1st', '2nd', '3rd'))), finite = TRUE, na.rm = FALSE);range(argv[[1]],argv[[2]],argv[[3]]);");
+        assertEval("argv <- list(structure(c(1, 13, 31), .Dim = 3L, .Dimnames = list(c('1st', '2nd', '3rd'))), finite = TRUE, na.rm = FALSE);range(argv[[1]],argv[[2]],argv[[3]]);");
     }
 
     @Test
@@ -111,12 +110,12 @@ public class TestBuiltin_range extends TestBase {
 
     @Test
     public void testrange18() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(numeric(0), .Dim = c(0L, 0L)), na.rm = FALSE);range(argv[[1]],argv[[2]]);");
+        assertEval("argv <- list(structure(numeric(0), .Dim = c(0L, 0L)), na.rm = FALSE);range(argv[[1]],argv[[2]]);");
     }
 
     @Test
     public void testrange19() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(logical(0), .Dim = c(0L, 0L), .Dimnames = list(NULL, NULL)), na.rm = FALSE);range(argv[[1]],argv[[2]]);");
+        assertEval("argv <- list(structure(logical(0), .Dim = c(0L, 0L), .Dimnames = list(NULL, NULL)), na.rm = FALSE);range(argv[[1]],argv[[2]]);");
     }
 
     @Test
@@ -132,8 +131,7 @@ public class TestBuiltin_range extends TestBase {
 
     @Test
     public void testrange22() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(c(1L, 1L, 2L, 1L, 2L, 2L, 2L, 2L, 2L, 1L, 1L, 1L, 2L, 1L, 1L, 2L, 2L, 1L, 1L, 2L, 1L, 2L, 1L, 1L, 1L, 1L, 2L, 2L, 1L, 2L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 2L, 1L, 2L, 2L, 2L, 2L, 2L, 1L, 2L, 2L, 2L, 2L, 1L, 2L, 2L, 2L, 1L, 2L, 1L, 1L, 1L, 1L, 2L, 1L, 1L, 2L, 2L, 1L, 2L, 1L, NA, 1L, 1L, 2L, 1L, 1L, NA, 2L, 2L, 2L, 1L, 1L, 2L, 2L, 2L, 1L, 2L, 1L, NA, 2L, 2L, 1L, NA, 2L, 2L, NA, 1L, 2L, 1L, 2L, 2L, 2L, 2L, 2L, 1L, 1L, 1L, 1L, 1L, 1L, 2L, 1L, 1L, 2L, 2L, 1L, 2L, 1L), .Dim = c(20L, 6L), .Dimnames = list(c('ant', 'bee', 'cat', 'cpl', 'chi', 'cow', 'duc', 'eag', 'ele', 'fly', 'fro', 'her', 'lio', 'liz', 'lob', 'man', 'rab', 'sal', 'spi', 'wha'), c('war', 'fly', 'ver', 'end', 'gro', 'hai'))), na.rm = TRUE);range(argv[[1]],argv[[2]]);");
+        assertEval("argv <- list(structure(c(1L, 1L, 2L, 1L, 2L, 2L, 2L, 2L, 2L, 1L, 1L, 1L, 2L, 1L, 1L, 2L, 2L, 1L, 1L, 2L, 1L, 2L, 1L, 1L, 1L, 1L, 2L, 2L, 1L, 2L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 2L, 1L, 2L, 2L, 2L, 2L, 2L, 1L, 2L, 2L, 2L, 2L, 1L, 2L, 2L, 2L, 1L, 2L, 1L, 1L, 1L, 1L, 2L, 1L, 1L, 2L, 2L, 1L, 2L, 1L, NA, 1L, 1L, 2L, 1L, 1L, NA, 2L, 2L, 2L, 1L, 1L, 2L, 2L, 2L, 1L, 2L, 1L, NA, 2L, 2L, 1L, NA, 2L, 2L, NA, 1L, 2L, 1L, 2L, 2L, 2L, 2L, 2L, 1L, 1L, 1L, 1L, 1L, 1L, 2L, 1L, 1L, 2L, 2L, 1L, 2L, 1L), .Dim = c(20L, 6L), .Dimnames = list(c('ant', 'bee', 'cat', 'cpl', 'chi', 'cow', 'duc', 'eag', 'ele', 'fly', 'fro', 'her', 'lio', 'liz', 'lob', 'man', 'rab', 'sal', 'spi', 'wha'), c('war', 'fly', 'ver', 'end', 'gro', 'hai'))), na.rm = TRUE);range(argv[[1]],argv[[2]]);");
     }
 
     @Test
@@ -143,7 +141,7 @@ public class TestBuiltin_range extends TestBase {
 
     @Test
     public void testrange24() {
-        assertEval(Ignored.Unknown, "range( );");
+        assertEval(Output.ContainsWarning, "range( );");
     }
 
     @Test
@@ -160,8 +158,7 @@ public class TestBuiltin_range extends TestBase {
 
     @Test
     public void testrange27() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(c(-11.3814849918875, -11.9361690778798, 0.562602893455921, 11.5126028934559, 76.2209544348296, -8.66448499188751, -6.94502893455923, -5.28148499188751, -35.7665182531098, 6.35497106544077, -9.20908119253651, -0.898484991887508, -5.59380090589508, -6.12730922120065, -13.3061334505138, 58.6278831800973, -15.1098009058951, -8.29625696322337, -4.07211681990265, 3.7096551514332, 2.60151500811249, 6.24733923742563, -1.33911681990266, -2.14157287723094, -10.5984849918875, -8.12802893455923, 1.30028697944835, -15.7450289345592, 7.20569077879935, -12.6484849918875, 25.1810423201731, -4.42680090589508, -1.90886979448351), .Names = c('Craig Dunain', 'Ben Rha', 'Ben Lomond', 'Goatfell', 'Bens of Jura', 'Cairnpapple', 'Scolty', 'Traprain', 'Lairig Ghru', 'Dollar', 'Lomonds', 'Cairn Table', 'Eildon Two', 'Cairngorm', 'Seven Hills', 'Knock Hill', 'Black Hill', 'Creag Beag', 'Kildcon Hill', 'Meall Ant-Suidhe', 'Half Ben Nevis', 'Cow Hill', 'N Berwick Law', 'Creag Dubh', 'Burnswark', 'Largo Law', 'Criffel', 'Acmony', 'Ben Nevis', 'Knockfarrel', 'Two Breweries', 'Cockleroi', 'Moffat Chase')), na.rm = TRUE);range(argv[[1]],argv[[2]]);");
+        assertEval("argv <- list(structure(c(-11.3814849918875, -11.9361690778798, 0.562602893455921, 11.5126028934559, 76.2209544348296, -8.66448499188751, -6.94502893455923, -5.28148499188751, -35.7665182531098, 6.35497106544077, -9.20908119253651, -0.898484991887508, -5.59380090589508, -6.12730922120065, -13.3061334505138, 58.6278831800973, -15.1098009058951, -8.29625696322337, -4.07211681990265, 3.7096551514332, 2.60151500811249, 6.24733923742563, -1.33911681990266, -2.14157287723094, -10.5984849918875, -8.12802893455923, 1.30028697944835, -15.7450289345592, 7.20569077879935, -12.6484849918875, 25.1810423201731, -4.42680090589508, -1.90886979448351), .Names = c('Craig Dunain', 'Ben Rha', 'Ben Lomond', 'Goatfell', 'Bens of Jura', 'Cairnpapple', 'Scolty', 'Traprain', 'Lairig Ghru', 'Dollar', 'Lomonds', 'Cairn Table', 'Eildon Two', 'Cairngorm', 'Seven Hills', 'Knock Hill', 'Black Hill', 'Creag Beag', 'Kildcon Hill', 'Meall Ant-Suidhe', 'Half Ben Nevis', 'Cow Hill', 'N Berwick Law', 'Creag Dubh', 'Burnswark', 'Largo Law', 'Criffel', 'Acmony', 'Ben Nevis', 'Knockfarrel', 'Two Breweries', 'Cockleroi', 'Moffat Chase')), na.rm = TRUE);range(argv[[1]],argv[[2]]);");
     }
 
     @Test
