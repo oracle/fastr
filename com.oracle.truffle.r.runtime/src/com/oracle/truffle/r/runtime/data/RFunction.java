@@ -62,7 +62,7 @@ public final class RFunction extends RAttributeStorage implements RTypedValue, T
             RContext.getRRuntimeASTAccess().setFunctionName(getRootNode(), name);
         }
         this.containsDispatch = containsDispatch;
-        setEnclosingFrame(enclosingFrame);
+        this.enclosingFrame = enclosingFrame instanceof VirtualEvalFrame ? ((VirtualEvalFrame) enclosingFrame).getOriginalFrame() : enclosingFrame;
     }
 
     @Override
@@ -102,11 +102,8 @@ public final class RFunction extends RAttributeStorage implements RTypedValue, T
      * Used by the {@code environment<-} builtin.
      */
     public void setEnclosingFrame(MaterializedFrame enclosingFrame) {
-        if (enclosingFrame instanceof VirtualEvalFrame) {
-            this.enclosingFrame = ((VirtualEvalFrame) enclosingFrame).getOriginalFrame();
-        } else {
-            this.enclosingFrame = enclosingFrame;
-        }
+        assert !(enclosingFrame instanceof VirtualEvalFrame);
+        this.enclosingFrame = enclosingFrame;
         FrameDescriptor descriptor = target.getRootNode().getFrameDescriptor();
         FrameSlotChangeMonitor.getOrInitializeEnclosingFrameAssumption(null, descriptor, null, enclosingFrame);
         FrameSlotChangeMonitor.getOrInitializeEnclosingFrameDescriptorAssumption(null, descriptor, enclosingFrame.getFrameDescriptor());
