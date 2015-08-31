@@ -123,7 +123,7 @@ public class RawFunctions {
         @SuppressWarnings("unused")
         @Fallback
         protected Object charToRaw(Object x, Object n) {
-            throw RError.error(this, RError.Message.ARG_MUST_BE_CHARACTER_VECTOR_LENGTH_ONE);
+            throw RError.error(this, RError.Message.ARGUMENT_MUST_BE_RAW_VECTOR);
         }
     }
 
