@@ -191,7 +191,7 @@ public class RCommand {
                                 continue REPL;
                             } catch (IOException e) {
                                 if (e.getCause() instanceof RError) {
-                                    // nothing to do
+                                    RInternalError.reportError(e.getCause());
                                 } else {
                                     RInternalError.reportError(e);
                                 }
