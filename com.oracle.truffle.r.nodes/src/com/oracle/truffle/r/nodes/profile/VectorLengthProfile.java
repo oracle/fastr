@@ -42,17 +42,16 @@ public final class VectorLengthProfile {
         assert length >= 0;
         if (cachedLength == GENERIC_LENGTH) {
             return length;
+        } else if (cachedLength == UNINITIALIZED_LENGTH) {
+            // check the uninitialized case first - this way an uninitialized profile will deopt
+            cachedLength = length <= MAX_PROFILED_LENGTH ? length : GENERIC_LENGTH;
         } else if (cachedLength == length) {
             return cachedLength;
         } else {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            if (cachedLength == UNINITIALIZED_LENGTH && length < MAX_PROFILED_LENGTH) {
-                cachedLength = length;
-            } else {
-                cachedLength = GENERIC_LENGTH;
-            }
-            return length;
+            cachedLength = GENERIC_LENGTH;
         }
+        return length;
     }
 
     public int getCachedLength() {

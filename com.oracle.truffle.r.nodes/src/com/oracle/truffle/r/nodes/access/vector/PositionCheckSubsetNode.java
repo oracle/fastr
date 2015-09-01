@@ -27,6 +27,7 @@ import java.util.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.access.vector.PositionsCheckNode.PositionProfile;
+import com.oracle.truffle.r.nodes.profile.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -48,12 +49,14 @@ abstract class PositionCheckSubsetNode extends PositionCheckNode {
     }
 
     @Specialization(guards = {"isMultiplesOf(dimensionLength, positionLength)", "positionLength <= dimensionLength"})
-    protected RAbstractVector doLogicalMultiplesInBounds(PositionProfile statistics, int dimensionLength, RAbstractLogicalVector position, int positionLength) {
+    protected RAbstractVector doLogicalMultiplesInBounds(PositionProfile statistics, int dimensionLength, RAbstractLogicalVector position, int positionLength, //
+                    @Cached("create()") CountedLoopConditionProfile lengthProfile) {
         assert positionLength > 0;
         positionNACheck.enable(position);
         int elementCount = 0;
         boolean hasSeenNA = false;
-        for (int i = 0; i < positionLength; i++) {
+        lengthProfile.profileLength(positionLength);
+        for (int i = 0; lengthProfile.inject(i < positionLength); i++) {
             byte positionValue = position.getDataAt(i);
             if (positionNACheck.check(positionValue)) {
                 hasSeenNA = true;
@@ -75,7 +78,8 @@ abstract class PositionCheckSubsetNode extends PositionCheckNode {
 
     @Specialization(contains = "doLogicalMultiplesInBounds")
     protected RAbstractVector doLogicalGenericInBounds(PositionProfile statistics,  //
-                    int dimensionLength, RAbstractLogicalVector position, int positionLength, @Cached("create()") BranchProfile outOfBoundsProfile) {
+                    int dimensionLength, RAbstractLogicalVector position, int positionLength, @Cached("create()") BranchProfile outOfBoundsProfile, //
+                    @Cached("create()") CountedLoopConditionProfile lengthProfile) {
         positionNACheck.enable(position);
         int positionIndex = 0;
         int elementCount = 0;
@@ -90,7 +94,8 @@ abstract class PositionCheckSubsetNode extends PositionCheckNode {
                 }
                 length = positionLength;
             }
-            for (int i = 0; i < length; i++) {
+            lengthProfile.profileLength(length);
+            for (int i = 0; lengthProfile.inject(i < length); i++) {
                 byte positionValue = position.getDataAt(positionIndex);
                 // boolean outOfBounds = outOfBoundsProfile.isVisited() && i >= dimensionLength;
                 if (positionNACheck.check(positionValue)) {
@@ -117,7 +122,8 @@ abstract class PositionCheckSubsetNode extends PositionCheckNode {
                     @Cached("create()") BranchProfile seenPositiveProfile, //
                     @Cached("create()") BranchProfile seenNegativeProfile, //
                     @Cached("create()") BranchProfile seenOutOfBounds, //
-                    @Cached("create()") NullProfile hasNamesProfile) {
+                    @Cached("create()") NullProfile hasNamesProfile, //
+                    @Cached("create()") CountedLoopConditionProfile lengthProfile) {
         RAbstractIntVector intPosition = RDataFactory.createIntVector(positionLength);
         // requires names preservation
         RStringVector names = hasNamesProfile.profile(position.getNames(attrProfiles));
@@ -133,7 +139,8 @@ abstract class PositionCheckSubsetNode extends PositionCheckNode {
         int outOfBoundsCount = 0;
         int zeroCount = 0;
         int maxOutOfBoundsIndex = 0;
-        for (int i = 0; i < positionLength; i++) {
+        lengthProfile.profileLength(positionLength);
+        for (int i = 0; lengthProfile.inject(i < positionLength); i++) {
             double positionValue = position.getDataAt(i);
             if (positionValue >= 1) {
                 seenPositiveProfile.enter();
@@ -185,7 +192,8 @@ abstract class PositionCheckSubsetNode extends PositionCheckNode {
                     @Cached("create()") BranchProfile seenZeroProfile, //
                     @Cached("create()") BranchProfile seenPositiveProfile, //
                     @Cached("create()") BranchProfile seenNegativeProfile, //
-                    @Cached("create()") BranchProfile seenOutOfBounds) {
+                    @Cached("create()") BranchProfile seenOutOfBounds, //
+                    @Cached("create()") CountedLoopConditionProfile lengthProfile) {
 
         positionNACheck.enable(position);
         boolean hasSeenPositive = false;
@@ -194,7 +202,8 @@ abstract class PositionCheckSubsetNode extends PositionCheckNode {
         int outOfBoundsCount = 0;
         int zeroCount = 0;
         int maxOutOfBoundsIndex = 0;
-        for (int i = 0; i < positionLength; i++) {
+        lengthProfile.profileLength(positionLength);
+        for (int i = 0; lengthProfile.inject(i < positionLength); i++) {
             int positionValue = position.getDataAt(i);
             if (positionValue > 0) {
                 seenPositiveProfile.enter();

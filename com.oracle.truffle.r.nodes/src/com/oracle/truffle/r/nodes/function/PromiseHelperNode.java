@@ -120,7 +120,7 @@ public class PromiseHelperNode extends RBaseNode {
 
     @Children private final WrapArgumentNode[] wrapNodes = new WrapArgumentNode[ArgumentStatePush.MAX_COUNTED_ARGS];
     @CompilationFinal private final BranchProfile[] wrapIndexes = new BranchProfile[ArgumentStatePush.MAX_COUNTED_ARGS];
-    private final BranchProfile shouldWrap = BranchProfile.create();
+    private final ConditionProfile shouldWrap = ConditionProfile.createBinaryProfile();
 
     private final ValueProfile optTypeProfile = ValueProfile.createIdentityProfile();
     private final ValueProfile varArgsOptTypeProfile = ValueProfile.createIdentityProfile();
@@ -398,8 +398,7 @@ public class PromiseHelperNode extends RBaseNode {
     @ExplodeLoop
     private Object getEagerValue(VirtualFrame frame, EagerPromise promise) {
         Object o = promise.getEagerValue();
-        if (promise.wrapIndex() != ArgumentStatePush.INVALID_INDEX) {
-            shouldWrap.enter();
+        if (shouldWrap.profile(promise.wrapIndex() != ArgumentStatePush.INVALID_INDEX)) {
             int wrapIndex = promise.wrapIndex();
             for (int i = 0; i < ArgumentStatePush.MAX_COUNTED_ARGS; i++) {
                 if (wrapIndex == i) {

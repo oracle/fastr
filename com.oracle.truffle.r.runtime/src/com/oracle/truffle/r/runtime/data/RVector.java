@@ -143,7 +143,7 @@ public abstract class RVector extends RAttributeStorage implements RShareable, R
         if (attrProfiles.attrNullProfile(attributes == null)) {
             return null;
         } else {
-            if (names == null) {
+            if (attrProfiles.attrNullNamesProfile(names == null)) {
                 if (dimNames != null && dimNames.getLength() == 1) {
                     return (RStringVector) dimNames.getDataAt(0);
                 } else {

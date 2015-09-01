@@ -292,14 +292,18 @@ final class CachedExtractVectorNode extends CachedVectorNode {
 
     @ExplodeLoop
     private int countDimensions(PositionProfile[] boundsProfile) {
-        int dimCount = 0;
-        for (int i = 0; i < numberOfDimensions; i++) {
-            int selectedPositionsCount = boundsProfile[i].selectedPositionsCount;
-            if (selectedPositionsCount != 1 || !dropDimensions) {
-                dimCount++;
+        if (dropDimensions) {
+            int dimCount = 0;
+            for (int i = 0; i < numberOfDimensions; i++) {
+                int selectedPositionsCount = boundsProfile[i].selectedPositionsCount;
+                if (selectedPositionsCount != 1) {
+                    dimCount++;
+                }
             }
+            return dimCount;
+        } else {
+            return numberOfDimensions;
         }
-        return dimCount;
     }
 
     private final ConditionProfile newNamesProfile = ConditionProfile.createBinaryProfile();

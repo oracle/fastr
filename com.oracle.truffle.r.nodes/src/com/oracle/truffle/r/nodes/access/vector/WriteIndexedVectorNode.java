@@ -127,6 +127,8 @@ abstract class WriteIndexedVectorNode extends Node {
                         right, rightStore, 0, rightLength, false);
     }
 
+    private final ConditionProfile positionMatchesTargetDimensionsProfile = ConditionProfile.createBinaryProfile();
+
     private int applyImpl(//
                     RAbstractVector left, Object leftStore, int leftBase, int leftLength, Object targetDimensions, int targetDimension, //
                     Object[] positions, int positionOffset, //
@@ -136,7 +138,7 @@ abstract class WriteIndexedVectorNode extends Node {
 
         int positionLength = getPositionLength(position);
         int newPositionOffset;
-        if (positionOffset == targetDimension) {
+        if (positionMatchesTargetDimensionsProfile.profile(positionOffset == targetDimension)) {
             newPositionOffset = 1;
         } else {
             newPositionOffset = positionOffsetProfile.profile(positionOffset / targetDimension);
@@ -249,12 +251,13 @@ abstract class WriteIndexedVectorNode extends Node {
     @Specialization(contains = "doIntegerSequencePosition")
     protected int doIntegerPosition(RAbstractVector left, Object leftStore, int leftBase, int leftLength, Object targetDimensions, @SuppressWarnings("unused") int targetDimension, //
                     Object[] positions, RAbstractIntVector position, int positionOffset, int positionLength, //
-                    RAbstractContainer right, Object rightStore, int rightBase, int rightLength, boolean parentNA //
-    ) {
+                    RAbstractContainer right, Object rightStore, int rightBase, int rightLength, boolean parentNA, //
+                    @Cached("create()") CountedLoopConditionProfile lengthProfile) {
         positionNACheck.enable(position);
         int rightIndex = rightBase;
 
-        for (int i = 0; i < positionLength; i++) {
+        lengthProfile.profileLength(positionLength);
+        for (int i = 0; lengthProfile.inject(i < positionLength); i++) {
             int positionValue = position.getDataAt(i);
             boolean isNA = positionNACheck.check(positionValue);
             if (isNA) {
