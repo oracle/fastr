@@ -33,16 +33,29 @@ import java.util.Map.Entry;
  */
 public class FastROptions {
 
-    private static Map<String, String> options = new HashMap<>();
+    private static Map<String, Object> options = new HashMap<>();
     private static boolean printHelp;
     static {
         for (Entry<Object, Object> entry : System.getProperties().entrySet()) {
             String prop = (String) entry.getKey();
-            if (prop.equals("R")) {
-                printHelp = true;
-            }
             if (prop.startsWith("R:")) {
-                options.put(optionName(prop), prop);
+                if (prop.equals("R:")) {
+                    printHelp = true;
+                } else if (prop.startsWith("R:+") || prop.startsWith("R:-")) {
+                    String name = prop.substring(3);
+                    if (!"".equals(entry.getValue())) {
+                        System.out.println("-DR:[+-]" + name + " expected");
+                        System.exit(2);
+                    }
+                    options.put(name, prop.startsWith("R:+"));
+                } else {
+                    String name = prop.substring(2);
+                    if (entry.getValue() == null) {
+                        System.out.println("-DR:" + name + "=value expected");
+                        System.exit(2);
+                    }
+                    options.put(name, entry.getValue());
+                }
             }
         }
     }
@@ -88,20 +101,15 @@ public class FastROptions {
             System.out.printf("%35s %s (default: %b)\n", "-DR:" + name, help, defaultValue);
             return false;
         } else {
-            String optionValue = options.remove(name);
+            Object optionValue = options.remove(name);
             if (optionValue == null) {
                 return defaultValue;
             } else {
-                switch (optionValue.charAt(2)) {
-                    case '+':
-                        return true;
-                    case '-':
-                        return false;
-                    default:
-                        System.out.println("-DR:[+-]" + name + " expected");
-                        System.exit(2);
-                        return false;
+                if (!(optionValue instanceof Boolean)) {
+                    System.out.println("-DR:[+-]" + name + " expected");
+                    System.exit(2);
                 }
+                return (Boolean) optionValue;
             }
         }
     }
@@ -111,17 +119,16 @@ public class FastROptions {
             System.out.printf("%35s %s (default: %b)\n", "-DR:" + name, help, defaultValue);
             return "";
         } else {
-            String optionValue = options.remove(name);
+            Object optionValue = options.remove(name);
             if (optionValue == null) {
                 return defaultValue;
             } else {
-                int equals = optionValue.indexOf('=');
-                if (equals == -1) {
+                if (!(optionValue instanceof String)) {
                     System.out.println("-DR:" + name + "=value expected");
                     System.exit(2);
                     return null;
                 }
-                return optionValue.substring(equals + 1);
+                return (String) optionValue;
             }
         }
     }
