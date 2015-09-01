@@ -480,13 +480,13 @@ public final class RDataFactory {
         @TruffleBoundary
         void record(Object data) {
             Class<?> klass = data.getClass();
-            boolean isBounded = data instanceof RAbstractContainer;
+            boolean isBounded = data instanceof RAbstractVector;
             RPerfStats.Histogram hist = histMap.get(klass);
             if (hist == null) {
                 hist = new RPerfStats.Histogram(isBounded ? 10 : 1);
                 histMap.put(klass, hist);
             }
-            int length = isBounded ? ((RAbstractContainer) data).getLength() : 0;
+            int length = isBounded ? ((RAbstractVector) data).getLength() : 0;
             hist.inc(length);
         }
 
