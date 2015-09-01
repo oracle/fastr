@@ -41,8 +41,8 @@ abstract class BaseWriteVariableNode extends WriteVariableNode {
 
     private final ConditionProfile isCurrentProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile isShareableProfile = ConditionProfile.createBinaryProfile();
-    private final ConditionProfile isTemporaryProfile = ConditionProfile.createBinaryProfile();
-    private final ConditionProfile isSharedProfile = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile isTemporaryProfile = FastROptions.NewStateTransition ? null : ConditionProfile.createBinaryProfile();
+    private final ConditionProfile isSharedProfile = FastROptions.NewStateTransition ? null : ConditionProfile.createBinaryProfile();
 
     private final BranchProfile initialSetKindProfile = BranchProfile.create();
 
@@ -76,34 +76,16 @@ abstract class BaseWriteVariableNode extends WriteVariableNode {
         if ((mode != Mode.INVISIBLE || isSuper) && !isCurrentProfile.profile(isCurrentValue(frame, frameSlot, value))) {
             if (isShareableProfile.profile(value instanceof RShareable)) {
                 RShareable rShareable = (RShareable) value;
-                if (isTemporaryProfile.profile(rShareable.isTemporary())) {
-                    if (mode == Mode.COPY) {
-                        RShareable shareableCopy = rShareable.copy();
-                        newValue = shareableCopy;
-                    } else {
-                        if (FastROptions.NewStateTransition) {
-                            rShareable.incRefCount();
-                        } else {
-                            rShareable.markNonTemporary();
-                        }
-                    }
-                } else if (isSharedProfile.profile(rShareable.isShared())) {
-                    RShareable shareableCopy = rShareable.copy();
-                    if (mode != Mode.COPY) {
-                        if (FastROptions.NewStateTransition) {
-                            shareableCopy.incRefCount();
-                        } else {
-                            shareableCopy.markNonTemporary();
-                        }
-                    }
-                    newValue = shareableCopy;
+                if (mode == Mode.COPY) {
+                    newValue = rShareable.copy();
                 } else {
-                    if (mode == Mode.COPY) {
-                        RShareable shareableCopy = rShareable.copy();
-                        newValue = shareableCopy;
+                    if (FastROptions.NewStateTransition) {
+                        rShareable.incRefCount();
                     } else {
-                        if (FastROptions.NewStateTransition) {
-                            rShareable.incRefCount();
+                        if (isTemporaryProfile.profile(rShareable.isTemporary())) {
+                            rShareable.markNonTemporary();
+                        } else if (isSharedProfile.profile(rShareable.isShared())) {
+                            rShareable.markNonTemporary();
                         } else {
                             rShareable.makeShared();
                         }
