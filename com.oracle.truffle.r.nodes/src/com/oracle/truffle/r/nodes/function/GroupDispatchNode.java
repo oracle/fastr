@@ -222,7 +222,7 @@ public final class GroupDispatchNode extends RNode implements RSyntaxNode {
         }
         if (function == null) {
             CompilerDirectives.transferToInterpreter();
-            throw RError.nyi(this, "missing builtin function");
+            throw RError.nyi(this, "missing builtin function '" + genericName + "'");
         }
         return callMatcher.execute(frame, signature, evaluatedArgs, function, s3Args);
     }

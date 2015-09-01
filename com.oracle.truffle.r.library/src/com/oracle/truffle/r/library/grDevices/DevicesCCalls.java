@@ -15,12 +15,10 @@
 package com.oracle.truffle.r.library.grDevices;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.r.library.grDevices.pdf.PdfGraphicsDevice;
-import com.oracle.truffle.r.library.graphics.core.GraphicsEngineImpl;
-import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
-import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
-import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.library.grDevices.pdf.*;
+import com.oracle.truffle.r.library.graphics.core.*;
+import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.runtime.data.*;
 
 public class DevicesCCalls {
     public static final class C_DevOff extends RExternalBuiltinNode {
