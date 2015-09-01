@@ -751,7 +751,7 @@ public class RSerialize {
                  */
                 saveDeparseResult(deparseRaw, true);
                 if (!contextState.saveDeparse) {
-                    throw Utils.fail("internal deparse error - see file DEPARSE_ERROR");
+                    throw new RInternalError(ex, "internal deparse error - see file DEPARSE_ERROR");
                 } else {
                     return null;
                 }
@@ -790,7 +790,7 @@ public class RSerialize {
                  */
                 saveDeparseResult(deparseRaw, true);
                 if (!contextState.saveDeparse) {
-                    throw Utils.fail("internal deparse error - see file DEPARSE_ERROR");
+                    throw new RInternalError(ex, "internal deparse error - see file DEPARSE_ERROR");
                 } else {
                     try {
                         return RContext.getEngine().parseFunction("", FAILED_DEPARSE_FUNCTION_SOURCE, enclosingFrame);
