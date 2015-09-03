@@ -61,12 +61,22 @@ public abstract class Call extends RBuiltinNode {
 
     @TruffleBoundary
     protected static RLanguage makeCall(String name, RArgsValuesAndNames args) {
-        return makeCall0(name, args);
+        return makeCall0(name, false, args);
     }
 
     @TruffleBoundary
     protected static RLanguage makeCall(RFunction function, RArgsValuesAndNames args) {
-        return makeCall0(function, args);
+        return makeCall0(function, false, args);
+    }
+
+    @TruffleBoundary
+    protected static RLanguage makeCallSourceUnavailable(String name, RArgsValuesAndNames args) {
+        return makeCall0(name, true, args);
+    }
+
+    @TruffleBoundary
+    protected static RLanguage makeCallSourceUnavailable(RFunction function, RArgsValuesAndNames args) {
+        return makeCall0(function, true, args);
     }
 
     /**
@@ -76,7 +86,7 @@ public abstract class Call extends RBuiltinNode {
      * @return the {@link RLanguage} instance denoting the call
      */
     @TruffleBoundary
-    private static RLanguage makeCall0(Object fn, RArgsValuesAndNames argsAndNames) {
+    private static RLanguage makeCall0(Object fn, boolean sourceUnavailable, RArgsValuesAndNames argsAndNames) {
         int argLength = argsAndNames == null ? 0 : argsAndNames.getLength();
         RSyntaxNode[] args = new RSyntaxNode[argLength];
         Object[] values = argsAndNames == null ? null : argsAndNames.getArguments();
@@ -86,6 +96,6 @@ public abstract class Call extends RBuiltinNode {
             args[i] = (RSyntaxNode) RASTUtils.createNodeForValue(values[i]);
         }
 
-        return RDataFactory.createLanguage(RASTUtils.createCall(fn, signature, args).asRNode());
+        return RDataFactory.createLanguage(RASTUtils.createCall(fn, sourceUnavailable, signature, args).asRNode());
     }
 }

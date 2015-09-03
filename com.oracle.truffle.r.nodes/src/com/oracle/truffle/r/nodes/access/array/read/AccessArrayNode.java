@@ -1736,7 +1736,7 @@ public abstract class AccessArrayNode extends RNode {
             Object o = lang.getDataAtAsObject(position.getDataAt(i) - 1);
             arguments[i - 1] = (RSyntaxNode) unwrapToRNode(o);
         }
-        return RDataFactory.createLanguage(RASTUtils.createCall(fn, ArgumentsSignature.empty(arguments.length), arguments).asRNode());
+        return RDataFactory.createLanguage(RASTUtils.createCall(fn, false, ArgumentsSignature.empty(arguments.length), arguments).asRNode());
     }
 
     @SuppressWarnings("unused")

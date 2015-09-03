@@ -106,7 +106,7 @@ public final class GroupDispatchNode extends RNode implements RSyntaxNode {
     public RSyntaxNode substituteImpl(REnvironment env) {
         // TODO substitute aDispatchNode
         Arguments<RSyntaxNode> substituteArguments = RCallNode.substituteArguments(env, callArgsNode.getSyntaxArguments(), callArgsNode.signature);
-        return RASTUtils.createCall(this, substituteArguments.getSignature(), substituteArguments.getArguments());
+        return RASTUtils.createCall(this, false, substituteArguments.getSignature(), substituteArguments.getArguments());
     }
 
     @Override

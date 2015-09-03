@@ -263,7 +263,7 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
             for (int i = 1; i < length; i++) {
                 arguments[i - 1] = (RSyntaxNode) unwrapToRNode(list.getDataAtAsObject(i));
             }
-            return RDataFactory.createLanguage(RASTUtils.createCall(fn, ArgumentsSignature.empty(arguments.length), arguments).asRNode());
+            return RDataFactory.createLanguage(RASTUtils.createCall(fn, false, ArgumentsSignature.empty(arguments.length), arguments).asRNode());
         }
     }
 

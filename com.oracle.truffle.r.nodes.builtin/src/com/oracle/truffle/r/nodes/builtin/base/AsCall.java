@@ -43,9 +43,9 @@ public abstract class AsCall extends RBuiltinNode {
         // TODO error checks
         RArgsValuesAndNames avn = makeNamesAndValues(x);
         if (x.getDataAt(0) instanceof RSymbol) {
-            return Call.makeCall(((RSymbol) x.getDataAt(0)).getName(), avn);
+            return Call.makeCallSourceUnavailable(((RSymbol) x.getDataAt(0)).getName(), avn);
         } else {
-            return Call.makeCall((RFunction) x.getDataAt(0), avn);
+            return Call.makeCallSourceUnavailable((RFunction) x.getDataAt(0), avn);
         }
     }
 
@@ -59,7 +59,7 @@ public abstract class AsCall extends RBuiltinNode {
             RLanguage l = (RLanguage) x.getDataAt(0);
             f = ((ReadVariableNode) RASTUtils.unwrap(l.getRep())).getIdentifier();
         }
-        return Call.makeCall(f, makeNamesAndValues(x.getList()));
+        return Call.makeCallSourceUnavailable(f, makeNamesAndValues(x.getList()));
     }
 
     private RArgsValuesAndNames makeNamesAndValues(RList x) {
