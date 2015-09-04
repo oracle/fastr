@@ -210,12 +210,13 @@ public class RLanguage extends RLanguageRep implements RAbstractContainer, RAttr
     private int refCount;
 
     public void markNonTemporary() {
+        assert !FastROptions.NewStateTransition;
         temporary = false;
     }
 
     public boolean isTemporary() {
         if (FastROptions.NewStateTransition) {
-            return temporary && refCount == 0;
+            return refCount == 0;
         } else {
             return temporary;
         }
@@ -223,13 +224,14 @@ public class RLanguage extends RLanguageRep implements RAbstractContainer, RAttr
 
     public boolean isShared() {
         if (FastROptions.NewStateTransition) {
-            return shared || (!temporary && refCount > 0);
+            return refCount > 1;
         } else {
             return shared;
         }
     }
 
     public RShareable makeShared() {
+        assert !FastROptions.NewStateTransition;
         if (temporary) {
             temporary = false;
         }
