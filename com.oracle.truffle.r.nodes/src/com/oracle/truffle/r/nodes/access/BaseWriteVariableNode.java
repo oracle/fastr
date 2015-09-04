@@ -43,6 +43,7 @@ abstract class BaseWriteVariableNode extends WriteVariableNode {
     private final ConditionProfile isShareableProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile isTemporaryProfile = FastROptions.NewStateTransition ? null : ConditionProfile.createBinaryProfile();
     private final ConditionProfile isSharedProfile = FastROptions.NewStateTransition ? null : ConditionProfile.createBinaryProfile();
+    private final ConditionProfile isRefCountUpdateable = FastROptions.NewStateTransition ? ConditionProfile.createBinaryProfile() : null;
 
     private final BranchProfile initialSetKindProfile = BranchProfile.create();
 
@@ -58,7 +59,7 @@ abstract class BaseWriteVariableNode extends WriteVariableNode {
      * replacement forms of vector updates where a vector is assigned to a temporary (visible)
      * variable and then, again, to the original variable (which would cause the vector to be copied
      * each time); (non-Javadoc)
-     *
+     * 
      * @see
      * com.oracle.truffle.r.nodes.access.AbstractWriteVariableNode#shareObjectValue(com.oracle.truffle
      * .api.frame.Frame, com.oracle.truffle.api.frame.FrameSlot, java.lang.Object,
@@ -80,7 +81,9 @@ abstract class BaseWriteVariableNode extends WriteVariableNode {
                     newValue = rShareable.copy();
                 } else {
                     if (FastROptions.NewStateTransition) {
-                        rShareable.incRefCount();
+                        if (isRefCountUpdateable.profile(!rShareable.isSharedPermanent())) {
+                            rShareable.incRefCount();
+                        }
                     } else {
                         if (isTemporaryProfile.profile(rShareable.isTemporary())) {
                             rShareable.markNonTemporary();

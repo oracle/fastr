@@ -98,6 +98,16 @@ public final class RFactor implements RShareable, RAbstractContainer {
     }
 
     @Override
+    public boolean isSharedPermanent() {
+        return vector.isSharedPermanent();
+    }
+
+    @Override
+    public void makeSharedPermanent() {
+        vector.makeSharedPermanent();
+    }
+
+    @Override
     public RFactor copy() {
         return RDataFactory.createFactor((RIntVector) vector.copy(), ordered);
     }

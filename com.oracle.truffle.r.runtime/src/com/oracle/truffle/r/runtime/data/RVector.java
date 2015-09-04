@@ -464,6 +464,21 @@ public abstract class RVector extends RAttributeStorage implements RShareable, R
         refCount--;
     }
 
+    @Override
+    public boolean isSharedPermanent() {
+        return refCount == SHARED_PERMANENT_VAL;
+    }
+
+    @Override
+    public void makeSharedPermanent() {
+        if (FastROptions.NewStateTransition) {
+            refCount = SHARED_PERMANENT_VAL;
+        } else {
+            // old scheme never reverts states
+            makeShared();
+        }
+    }
+
     public final boolean hasDimensions() {
         return dimensions != null;
     }
@@ -762,6 +777,7 @@ public abstract class RVector extends RAttributeStorage implements RShareable, R
         res = copyResized(size, true);
         if (this.isShared()) {
             if (FastROptions.NewStateTransition) {
+                assert res.isTemporary();
                 res.incRefCount();
             } else {
                 res.markNonTemporary();
@@ -840,6 +856,7 @@ public abstract class RVector extends RAttributeStorage implements RShareable, R
         if (this.isShared()) {
             RVector res = this.copy();
             if (FastROptions.NewStateTransition) {
+                assert res.isTemporary();
                 res.incRefCount();
             } else {
                 res.markNonTemporary();

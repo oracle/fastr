@@ -24,6 +24,12 @@ package com.oracle.truffle.r.runtime.data;
 
 public interface RShareable {
 
+    // SHARED_PERMANENT_VAL describes both overflow value and a value that can be set to prevent
+    // further updates to ref count (for sharing between different threads) - can potentially be
+    // made smaller
+    // TODO: a better placement for this constant?
+    public static final int SHARED_PERMANENT_VAL = Integer.MAX_VALUE;
+
     void markNonTemporary();
 
     boolean isTemporary();
@@ -37,5 +43,9 @@ public interface RShareable {
     void incRefCount();
 
     void decRefCount();
+
+    boolean isSharedPermanent();
+
+    void makeSharedPermanent();
 
 }

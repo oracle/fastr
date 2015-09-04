@@ -44,6 +44,7 @@ public abstract class ArgumentStatePush extends RNode {
     private final BranchProfile everSeenShared = BranchProfile.create();
     private final BranchProfile everSeenTemporary = BranchProfile.create();
     private final BranchProfile everSeenNonTemporary = BranchProfile.create();
+    private final ConditionProfile isRefCountUpdateable = ConditionProfile.createBinaryProfile();
 
     private final int index;
     @CompilationFinal private int mask = 0;
@@ -62,7 +63,9 @@ public abstract class ArgumentStatePush extends RNode {
     }
 
     private void transitionStateExp(VirtualFrame frame, RShareable shareable) {
-        shareable.incRefCount();
+        if (isRefCountUpdateable.profile(!shareable.isSharedPermanent())) {
+            shareable.incRefCount();
+        }
         if (!FastROptions.RefCountIncrementOnly) {
             if (mask == 0) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -148,11 +151,11 @@ public abstract class ArgumentStatePush extends RNode {
     }
 
     public static void transitionStateSlowPath(Object o) {
-        // this is expected to be used in rare cases where no RNode is easily available so we don't
-        // bother with the reference count
+        // this is expected to be used in rare cases where no RNode is easily available
         if (o instanceof RShareable) {
             RShareable shareable = (RShareable) o;
             if (FastROptions.NewStateTransition) {
+                // it's never decremented so no point in incrementing past shared state
                 if (!shareable.isShared()) {
                     shareable.incRefCount();
                 }

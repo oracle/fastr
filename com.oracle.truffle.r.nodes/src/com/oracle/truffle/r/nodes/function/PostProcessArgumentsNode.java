@@ -26,6 +26,7 @@ import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
+import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.access.variables.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.nodes.*;
@@ -39,6 +40,7 @@ public final class PostProcessArgumentsNode extends RNode {
     @Children protected final ReadVariableNode[] sequence;
     @Child private PostProcessArgumentsNode nextOptPostProccessArgNode;
     @CompilationFinal public int transArgsBitSet;
+    private final ConditionProfile isRefCountUpdateable = ConditionProfile.createBinaryProfile();
 
     private PostProcessArgumentsNode(ReadVariableNode[] sequence) {
         this.sequence = sequence;
@@ -73,7 +75,9 @@ public final class PostProcessArgumentsNode extends RNode {
                         transArgsBitSet = ArgumentStatePush.INVALID_INDEX;
                         break;
                     }
-                    s.decRefCount();
+                    if (isRefCountUpdateable.profile(!s.isSharedPermanent())) {
+                        s.decRefCount();
+                    }
                 }
             }
         }

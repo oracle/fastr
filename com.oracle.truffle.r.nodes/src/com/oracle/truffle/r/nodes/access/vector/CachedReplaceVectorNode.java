@@ -386,6 +386,7 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
                 shareable = (RShareable) returnVector.copy();
                 returnVector = (RAbstractVector) shareable;
                 if (FastROptions.NewStateTransition) {
+                    assert shareable.isTemporary();
                     shareable.incRefCount();
                 } else if (shareable.isTemporary()) {
                     shareable.markNonTemporary();

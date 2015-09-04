@@ -100,6 +100,16 @@ public final class RDataFrame implements RShareable, RAbstractContainer {
     }
 
     @Override
+    public boolean isSharedPermanent() {
+        return vector.isSharedPermanent();
+    }
+
+    @Override
+    public void makeSharedPermanent() {
+        vector.makeSharedPermanent();
+    }
+
+    @Override
     public RDataFrame copy() {
         return RDataFactory.createDataFrame(vector.copy());
     }

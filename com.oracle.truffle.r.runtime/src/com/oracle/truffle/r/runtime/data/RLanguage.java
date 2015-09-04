@@ -249,6 +249,21 @@ public class RLanguage extends RLanguageRep implements RAbstractContainer, RAttr
     }
 
     @Override
+    public boolean isSharedPermanent() {
+        return refCount == SHARED_PERMANENT_VAL;
+    }
+
+    @Override
+    public void makeSharedPermanent() {
+        if (FastROptions.NewStateTransition) {
+            refCount = SHARED_PERMANENT_VAL;
+        } else {
+            // old scheme never reverts states
+            makeShared();
+        }
+    }
+
+    @Override
     public String toString() {
         return String.format("RLanguage(rep=%s)", getRep());
     }

@@ -497,11 +497,11 @@ final class REngine implements Engine {
             if (loadBase) {
                 Object printMethod = REnvironment.globalEnv().findFunction("print");
                 RFunction function = (RFunction) (printMethod instanceof RPromise ? PromiseHelperNode.evaluateSlowPath(null, (RPromise) printMethod) : printMethod);
-                if (FastROptions.NewStateTransition && resultValue instanceof RShareable) {
+                if (FastROptions.NewStateTransition && resultValue instanceof RShareable && !((RShareable) resultValue).isSharedPermanent()) {
                     ((RShareable) resultValue).incRefCount();
                 }
                 function.getTarget().call(RArguments.create(function, null, REnvironment.globalEnv().getFrame(), 1, new Object[]{resultValue, RMissing.instance}, PRINT_SIGNATURE, null));
-                if (FastROptions.NewStateTransition && resultValue instanceof RShareable) {
+                if (FastROptions.NewStateTransition && resultValue instanceof RShareable && !((RShareable) resultValue).isSharedPermanent()) {
                     ((RShareable) resultValue).decRefCount();
                 }
             } else {

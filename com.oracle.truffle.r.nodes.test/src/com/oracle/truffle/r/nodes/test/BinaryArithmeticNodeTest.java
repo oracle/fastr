@@ -206,6 +206,7 @@ public class BinaryArithmeticNodeTest extends BinaryVectorTest {
         RAbstractVector b = bOrig.copy();
         if (a instanceof RShareable) {
             if (FastROptions.NewStateTransition) {
+                assert ((RShareable) a).isTemporary();
                 ((RShareable) a).incRefCount();
             } else {
                 ((RShareable) a).markNonTemporary();
@@ -213,6 +214,7 @@ public class BinaryArithmeticNodeTest extends BinaryVectorTest {
         }
         if (b instanceof RShareable) {
             if (FastROptions.NewStateTransition) {
+                assert ((RShareable) b).isTemporary();
                 ((RShareable) b).incRefCount();
             } else {
                 ((RShareable) b).markNonTemporary();

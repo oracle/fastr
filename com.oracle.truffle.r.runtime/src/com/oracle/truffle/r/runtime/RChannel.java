@@ -155,15 +155,10 @@ public class RChannel {
         }
     }
 
-    public static void makeShared(Object o) {
+    private static void makeShared(Object o) {
         if (o instanceof RShareable) {
             RShareable shareable = (RShareable) o;
-            if (FastROptions.NewStateTransition) {
-                shareable.incRefCount();
-                shareable.incRefCount();
-            } else {
-                shareable.makeShared();
-            }
+            shareable.makeSharedPermanent();
         }
     }
 
@@ -218,7 +213,9 @@ public class RChannel {
         if (o instanceof RList) {
             return convertPrivateList(o);
         } else if (!(o instanceof RFunction || o instanceof REnvironment || o instanceof RConnection || o instanceof RLanguage)) {
-            // TODO: should we make internal values shareable?
+            // we need to make internal values (permanently) shared to avoid updates to ref count
+            // by different threads
+            makeShared(o);
             if (o instanceof RAttributable && ((RAttributable) o).getAttributes() != null) {
                 return convertObjectAttributesToPrivate(o);
             } else {

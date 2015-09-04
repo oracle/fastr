@@ -36,6 +36,7 @@ public abstract class UnClass extends RBuiltinNode {
             if (!resultVector.isTemporary()) {
                 resultVector = resultVector.copy();
                 if (FastROptions.NewStateTransition) {
+                    assert resultVector.isTemporary();
                     resultVector.incRefCount();
                 } else {
                     resultVector.markNonTemporary();
@@ -54,6 +55,7 @@ public abstract class UnClass extends RBuiltinNode {
         if (!resultFrame.isTemporary()) {
             resultFrame = resultFrame.copy();
             if (FastROptions.NewStateTransition) {
+                assert resultFrame.isTemporary();
                 resultFrame.incRefCount();
             } else {
                 resultFrame.markNonTemporary();
@@ -70,6 +72,7 @@ public abstract class UnClass extends RBuiltinNode {
         if (!resultFactor.isTemporary()) {
             resultFactor = resultFactor.copy();
             if (FastROptions.NewStateTransition) {
+                assert resultFactor.isTemporary();
                 resultFactor.incRefCount();
             } else {
                 resultFactor.markNonTemporary();
@@ -87,6 +90,7 @@ public abstract class UnClass extends RBuiltinNode {
             if (!resultLang.isTemporary()) {
                 resultLang = resultLang.copy();
                 if (FastROptions.NewStateTransition) {
+                    resultLang.isTemporary();
                     resultLang.incRefCount();
                 } else {
                     resultLang.markNonTemporary();
