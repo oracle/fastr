@@ -198,15 +198,4 @@ public class FastROptions {
         }
         Debug = s;
     }
-
-    private static String optionName(String key) {
-        String s = key.substring(2);
-        if (s.charAt(0) == '+' || s.charAt(0) == '-') {
-            return s.substring(1);
-        } else if (s.indexOf('=') > 0) {
-            return s.substring(0, s.indexOf('='));
-        } else {
-            return s;
-        }
-    }
 }
