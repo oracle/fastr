@@ -53,10 +53,9 @@ public final class RBuiltinPackages implements RBuiltinLookup {
         return instance;
     }
 
-    public static void loadBase(MaterializedFrame frame, boolean loadPackage) {
+    public static void loadBase(MaterializedFrame baseFrame, boolean loadPackage) {
         RBuiltinPackage pkg = basePackage;
         REnvironment baseEnv = REnvironment.baseEnv();
-        pkg.setEnv(baseEnv);
         BaseVariables.initialize(baseEnv);
         /*
          * All the RBuiltin PRIMITIVE methods that were created earlier need to be added to the
@@ -98,14 +97,14 @@ public final class RBuiltinPackages implements RBuiltinLookup {
         try {
             RContext.getInstance().setLoadingBase(true);
             try {
-                RContext.getEngine().parseAndEval(baseSource, frame, false);
+                RContext.getEngine().parseAndEval(baseSource, baseFrame, false);
             } catch (ParseException e) {
                 throw new RInternalError(e, "error while parsing base source from %s", baseSource.getName());
             }
         } finally {
             RContext.getInstance().setLoadingBase(false);
         }
-        pkg.loadOverrides(frame);
+        pkg.loadOverrides(baseFrame);
     }
 
     public static void loadDefaultPackageOverrides() {

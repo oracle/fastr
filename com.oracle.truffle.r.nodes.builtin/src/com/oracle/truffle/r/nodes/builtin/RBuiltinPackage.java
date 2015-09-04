@@ -81,8 +81,6 @@ public abstract class RBuiltinPackage {
         builtins.put(builtinName, factory);
     }
 
-    protected REnvironment env;
-
     protected RBuiltinPackage(String name) {
         this.name = name;
 
@@ -131,19 +129,15 @@ public abstract class RBuiltinPackage {
         return builtins;
     }
 
-    void setEnv(REnvironment env) {
-        this.env = env;
-    }
-
     /**
      * Runtime component of the package initialization process.
      */
-    public void loadOverrides(MaterializedFrame frame) {
+    public void loadOverrides(MaterializedFrame baseFrame) {
         ArrayList<Source> sources = rSources.get(getName());
         if (sources != null) {
             for (Source source : sources) {
                 try {
-                    RContext.getEngine().parseAndEval(source, frame, false);
+                    RContext.getEngine().parseAndEval(source, baseFrame, false);
                 } catch (ParseException e) {
                     throw new RInternalError(e, "error while parsing overrides from %s", source.getName());
                 }
