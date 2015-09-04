@@ -28,8 +28,8 @@ package com.oracle.truffle.r.runtime;
  * in case or error or warning. A value of this type never appears in a Truffle execution.
  *
  */
-public class RCaller {
-    private Object rep;
+public final class RCaller {
+    private final Object rep;
 
     public RCaller(Object rep) {
         this.rep = rep;
@@ -38,5 +38,4 @@ public class RCaller {
     public Object getRep() {
         return rep;
     }
-
 }

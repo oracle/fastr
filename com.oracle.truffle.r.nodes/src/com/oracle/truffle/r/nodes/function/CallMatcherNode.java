@@ -29,6 +29,7 @@ import com.oracle.truffle.r.runtime.nodes.*;
 
 public abstract class CallMatcherNode extends RBaseNode {
 
+    private final RCaller caller = RDataFactory.createCaller(this);
     protected final boolean forNextMethod;
     protected final boolean argsAreEvaluated;
 
@@ -91,7 +92,7 @@ public abstract class CallMatcherNode extends RBaseNode {
     }
 
     protected Object[] prepareArguments(VirtualFrame frame, Object[] reorderedArgs, ArgumentsSignature reorderedSignature, RFunction function, S3Args s3Args) {
-        return argsNode.execute(function, RDataFactory.createCaller(this), null, RArguments.getDepth(frame) + 1, reorderedArgs, reorderedSignature, s3Args);
+        return argsNode.execute(function, caller, null, RArguments.getDepth(frame) + 1, reorderedArgs, reorderedSignature, s3Args);
     }
 
     protected final void evaluatePromises(VirtualFrame frame, RFunction function, Object[] args, int varArgIndex) {

@@ -734,6 +734,8 @@ public final class RCallNode extends RNode implements RSyntaxNode {
         @Child private IndirectCallNode indirectCall = Truffle.getRuntime().createIndirectCallNode();
         @Child private CallArgumentsNode arguments;
 
+        private final RCaller caller = RDataFactory.createCaller(this);
+
         GenericCallNode(CallArgumentsNode arguments) {
             // here, it's safe to reuse the arguments - it's the final use
             this.arguments = arguments;
@@ -746,7 +748,7 @@ public final class RCallNode extends RNode implements RSyntaxNode {
             UnrolledVariadicArguments argsValuesAndNames = arguments.executeFlatten(frame);
             MatchedArguments matchedArgs = ArgumentMatcher.matchArguments(currentFunction, argsValuesAndNames, RError.ROOTNODE, true);
 
-            Object[] argsObject = RArguments.create(currentFunction, RDataFactory.createCaller(this), null, RArguments.getDepth(frame) + 1, matchedArgs.doExecuteArray(frame),
+            Object[] argsObject = RArguments.create(currentFunction, caller, null, RArguments.getDepth(frame) + 1, matchedArgs.doExecuteArray(frame),
                             matchedArgs.getSignature(), s3Args);
             return indirectCall.call(frame, currentFunction.getTarget(), argsObject);
         }
@@ -791,6 +793,7 @@ public final class RCallNode extends RNode implements RSyntaxNode {
         @Child private MatchedArgumentsNode matchedArgs;
         @Child private RArgumentsNode argsNode = RArgumentsNode.create();
 
+        private final RCaller caller = RDataFactory.createCaller(this);
         private final boolean needsCallerFrame;
         @CompilationFinal private boolean needsSplitting;
 
@@ -810,7 +813,7 @@ public final class RCallNode extends RNode implements RSyntaxNode {
             }
             MaterializedFrame callerFrame = needsCallerFrame ? frame.materialize() : null;
 
-            Object[] argsObject = argsNode.execute(currentFunction, RDataFactory.createCaller(this), callerFrame, RArguments.getDepth(frame) + 1, matchedArgs.executeArray(frame),
+            Object[] argsObject = argsNode.execute(currentFunction, caller, callerFrame, RArguments.getDepth(frame) + 1, matchedArgs.executeArray(frame),
                             matchedArgs.getSignature(), s3Args);
             return call.call(frame, argsObject);
         }
@@ -898,6 +901,7 @@ public final class RCallNode extends RNode implements RSyntaxNode {
         @Child private MatchedArgumentsNode matchedArgs;
         @Child private RArgumentsNode argsNode = RArgumentsNode.create();
 
+        private final RCaller caller = RDataFactory.createCaller(this);
         private final ArgumentsSignature cachedSignature;
         private final boolean needsCallerFrame;
         @CompilationFinal private boolean needsSplitting;
@@ -941,7 +945,7 @@ public final class RCallNode extends RNode implements RSyntaxNode {
                 call.cloneCallTarget();
             }
             MaterializedFrame callerFrame = needsCallerFrame ? frame.materialize() : null;
-            Object[] argsObject = argsNode.execute(currentFunction, RDataFactory.createCaller(this), callerFrame, RArguments.getDepth(frame) + 1, matchedArgs.executeArray(frame),
+            Object[] argsObject = argsNode.execute(currentFunction, caller, callerFrame, RArguments.getDepth(frame) + 1, matchedArgs.executeArray(frame),
                             matchedArgs.getSignature(), s3Args);
             return call.call(frame, argsObject);
         }
@@ -958,6 +962,7 @@ public final class RCallNode extends RNode implements RSyntaxNode {
         @Child private DirectCallNode call;
         @Child private CallArgumentsNode suppliedArgs;
 
+        private final RCaller caller = RDataFactory.createCaller(this);
         @CompilationFinal private boolean needsCallerFrame;
 
         DispatchedGenericVarArgsCallNode(RFunction function, CallArgumentsNode suppliedArgs) {
@@ -978,7 +983,7 @@ public final class RCallNode extends RNode implements RSyntaxNode {
                 needsCallerFrame = true;
             }
             MaterializedFrame callerFrame = needsCallerFrame ? frame.materialize() : null;
-            Object[] argsObject = RArguments.create(currentFunction, RDataFactory.createCaller(this), callerFrame, RArguments.getDepth(frame) + 1, matchedArgs.doExecuteArray(frame),
+            Object[] argsObject = RArguments.create(currentFunction, caller, callerFrame, RArguments.getDepth(frame) + 1, matchedArgs.doExecuteArray(frame),
                             matchedArgs.getSignature(), s3Args);
             return call.call(frame, argsObject);
         }

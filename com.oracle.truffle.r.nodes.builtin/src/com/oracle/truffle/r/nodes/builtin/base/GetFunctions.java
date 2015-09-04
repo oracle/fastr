@@ -124,6 +124,8 @@ public class GetFunctions {
 
     @RBuiltin(name = "mget", kind = INTERNAL, parameterNames = {"x", "envir", "mode", "ifnotfound", "inherits"})
     public abstract static class MGet extends Adapter {
+
+        private final RCaller caller = RDataFactory.createCaller(this);
         private final BranchProfile wrongLengthErrorProfile = BranchProfile.create();
 
         @Child private CallInlineCacheNode callCache = CallInlineCacheNodeGen.create();
@@ -250,7 +252,7 @@ public class GetFunctions {
                 argsNode = insert(RArgumentsNode.create());
             }
             MaterializedFrame callerFrame = needsCallerFrame ? frame.materialize() : null;
-            Object[] callArgs = argsNode.execute(ifnFunc, RDataFactory.createCaller(this), callerFrame, RArguments.getDepth(frame) + 1, new Object[]{x}, ArgumentsSignature.empty(1), null);
+            Object[] callArgs = argsNode.execute(ifnFunc, caller, callerFrame, RArguments.getDepth(frame) + 1, new Object[]{x}, ArgumentsSignature.empty(1), null);
             return callCache.execute(frame, ifnFunc.getTarget(), callArgs);
         }
 

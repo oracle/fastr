@@ -149,6 +149,8 @@ public class HiddenInternalFunctions {
         @Child private CallInlineCacheNode callCache = CallInlineCacheNodeGen.create();
         @Child private CastIntegerNode castIntNode;
 
+        private final RCaller caller = RDataFactory.createCaller(this);
+
         private void initCast() {
             if (castIntNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -213,7 +215,7 @@ public class HiddenInternalFunctions {
                 try {
                     RSerialize.CallHook callHook = new RSerialize.CallHook() {
                         public Object eval(Object arg) {
-                            Object[] callArgs = RArguments.create(envhook, RDataFactory.createCaller(this), null, RArguments.getDepth(frame) + 1, new Object[]{arg}, SIGNATURE, null);
+                            Object[] callArgs = RArguments.create(envhook, caller, null, RArguments.getDepth(frame) + 1, new Object[]{arg}, SIGNATURE, null);
                             return callCache.execute(new SubstituteVirtualFrame(frame), envhook.getTarget(), callArgs);
                         }
                     };
@@ -322,6 +324,8 @@ public class HiddenInternalFunctions {
         private static final ArgumentsSignature SIGNATURE = ArgumentsSignature.get("e");
         @Child private CallInlineCacheNode callCache = CallInlineCacheNodeGen.create();
 
+        private final RCaller caller = RDataFactory.createCaller(this);
+
         @Override
         protected void createCasts(CastBuilder casts) {
             casts.toInteger(3);
@@ -340,7 +344,7 @@ public class HiddenInternalFunctions {
 
             RSerialize.CallHook callHook = new RSerialize.CallHook() {
                 public Object eval(Object arg) {
-                    Object[] callArgs = RArguments.create(hook, RDataFactory.createCaller(this), null, RArguments.getDepth(frame) + 1, new Object[]{arg}, SIGNATURE, null);
+                    Object[] callArgs = RArguments.create(hook, caller, null, RArguments.getDepth(frame) + 1, new Object[]{arg}, SIGNATURE, null);
                     return callCache.execute(new SubstituteVirtualFrame(frame), hook.getTarget(), callArgs);
                 }
             };
