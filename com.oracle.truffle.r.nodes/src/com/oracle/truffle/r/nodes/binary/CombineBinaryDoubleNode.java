@@ -26,6 +26,7 @@ import java.util.*;
 
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.r.nodes.profile.CountedLoopConditionProfile;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -55,29 +56,33 @@ public abstract class CombineBinaryDoubleNode extends CombineBinaryNode {
     }
 
     @Specialization
-    protected RDoubleVector combine(RAbstractDoubleVector left, double right) {
+    protected RDoubleVector combine(RAbstractDoubleVector left, double right, //
+                    @Cached("create()") CountedLoopConditionProfile profile) {
         int dataLength = left.getLength();
         double[] result = new double[dataLength + 1];
         for (int i = 0; i < dataLength; i++) {
             result[i] = left.getDataAt(i);
         }
         result[dataLength] = right;
-        return RDataFactory.createDoubleVector(result, left.isComplete() && RRuntime.isComplete(right), combineNames(left, false));
+        return RDataFactory.createDoubleVector(result, left.isComplete() && RRuntime.isComplete(right), combineNames(left, false, profile));
     }
 
     @Specialization
-    protected RDoubleVector combine(double left, RAbstractDoubleVector right) {
+    protected RDoubleVector combine(double left, RAbstractDoubleVector right, //
+                    @Cached("create()") CountedLoopConditionProfile profile) {
         int dataLength = right.getLength();
         double[] result = new double[dataLength + 1];
         result[0] = left;
         for (int i = 0; i < dataLength; i++) {
             result[i + 1] = right.getDataAt(i);
         }
-        return RDataFactory.createDoubleVector(result, RRuntime.isComplete(left) && right.isComplete(), combineNames(right, true));
+        return RDataFactory.createDoubleVector(result, RRuntime.isComplete(left) && right.isComplete(), combineNames(right, true, profile));
     }
 
     @Specialization
-    protected RDoubleVector combine(RAbstractDoubleVector left, RAbstractDoubleVector right) {
+    protected RDoubleVector combine(RAbstractDoubleVector left, RAbstractDoubleVector right, //
+                    @Cached("create()") CountedLoopConditionProfile profileLeft, //
+                    @Cached("create()") CountedLoopConditionProfile profileRight) {
         int leftLength = left.getLength();
         int rightLength = right.getLength();
         double[] result = new double[leftLength + rightLength];
@@ -88,7 +93,7 @@ public abstract class CombineBinaryDoubleNode extends CombineBinaryNode {
         for (; i < leftLength + rightLength; i++) {
             result[i] = right.getDataAt(i - leftLength);
         }
-        return RDataFactory.createDoubleVector(result, left.isComplete() && right.isComplete(), combineNames(left, right));
+        return RDataFactory.createDoubleVector(result, left.isComplete() && right.isComplete(), combineNames(left, right, profileLeft, profileRight));
     }
 
 }

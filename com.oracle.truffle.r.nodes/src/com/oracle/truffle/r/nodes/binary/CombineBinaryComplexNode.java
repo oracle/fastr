@@ -26,6 +26,7 @@ import java.util.*;
 
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.r.nodes.profile.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
@@ -64,10 +65,12 @@ public abstract class CombineBinaryComplexNode extends CombineBinaryNode {
     }
 
     @Specialization
-    protected RComplexVector combine(RComplexVector left, RComplex right) {
+    protected RComplexVector combine(RComplexVector left, RComplex right, //
+                    @Cached("create()") CountedLoopConditionProfile profile) {
         int dataLength = left.getLength();
         double[] result = new double[(dataLength + 1) << 1];
-        for (int i = 0; i < dataLength; i++) {
+        profile.profileLength(dataLength);
+        for (int i = 0; profile.inject(i < dataLength); i++) {
             RComplex leftValue = left.getDataAt(i);
             int index = i << 1;
             result[index] = leftValue.getRealPart();
@@ -75,26 +78,30 @@ public abstract class CombineBinaryComplexNode extends CombineBinaryNode {
         }
         result[dataLength << 1] = right.getRealPart();
         result[(dataLength << 1) + 1] = right.getImaginaryPart();
-        return RDataFactory.createComplexVector(result, left.isComplete() && !right.isNA(), combineNames(left, false));
+        return RDataFactory.createComplexVector(result, left.isComplete() && !right.isNA(), combineNames(left, false, profile));
     }
 
     @Specialization
-    protected RComplexVector combine(RComplex left, RComplexVector right) {
+    protected RComplexVector combine(RComplex left, RComplexVector right, //
+                    @Cached("create()") CountedLoopConditionProfile profile) {
         int dataLength = right.getLength();
         double[] result = new double[(1 + dataLength) << 1];
         result[0] = left.getRealPart();
         result[1] = left.getImaginaryPart();
-        for (int i = 0; i < dataLength; i++) {
+        profile.profileLength(dataLength);
+        for (int i = 0; profile.inject(i < dataLength); i++) {
             int index = (i + 1) << 1;
             RComplex rightValue = right.getDataAt(i);
             result[index] = rightValue.getRealPart();
             result[index + 1] = rightValue.getImaginaryPart();
         }
-        return RDataFactory.createComplexVector(result, (!left.isNA()) && right.isComplete(), combineNames(right, true));
+        return RDataFactory.createComplexVector(result, (!left.isNA()) && right.isComplete(), combineNames(right, true, profile));
     }
 
     @Specialization
-    protected RComplexVector combine(RComplexVector left, RComplexVector right) {
-        return (RComplexVector) genericCombine(left, right);
+    protected RComplexVector combine(RComplexVector left, RComplexVector right, //
+                    @Cached("create()") CountedLoopConditionProfile profileLeft, //
+                    @Cached("create()") CountedLoopConditionProfile profileRight) {
+        return (RComplexVector) genericCombine(left, right, profileLeft, profileRight);
     }
 }

@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.binary;
 
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.r.nodes.profile.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -52,39 +53,47 @@ public abstract class CombineBinaryIntegerNode extends CombineBinaryNode {
     }
 
     @Specialization
-    protected RIntVector performAbstractIntVectorInt(RAbstractIntVector left, int right) {
+    protected RIntVector performAbstractIntVectorInt(RAbstractIntVector left, int right, //
+                    @Cached("create()") CountedLoopConditionProfile profile) {
         int dataLength = left.getLength();
         int[] result = new int[dataLength + 1];
-        for (int i = 0; i < dataLength; i++) {
+        profile.profileLength(dataLength);
+        for (int i = 0; profile.inject(i < dataLength); i++) {
             result[i] = left.getDataAt(i);
         }
         result[dataLength] = right;
-        return RDataFactory.createIntVector(result, left.isComplete() && RRuntime.isComplete(right), combineNames(left, false));
+        return RDataFactory.createIntVector(result, left.isComplete() && RRuntime.isComplete(right), combineNames(left, false, profile));
     }
 
     @Specialization
-    protected RIntVector performIntAbstractIntVector(int left, RAbstractIntVector right) {
+    protected RIntVector performIntAbstractIntVector(int left, RAbstractIntVector right, //
+                    @Cached("create()") CountedLoopConditionProfile profile) {
         int dataLength = right.getLength();
         int[] result = new int[dataLength + 1];
-        for (int i = 0; i < dataLength; i++) {
+        profile.profileLength(dataLength);
+        for (int i = 0; profile.inject(i < dataLength); i++) {
             result[i + 1] = right.getDataAt(i);
         }
         result[0] = left;
-        return RDataFactory.createIntVector(result, RRuntime.isComplete(left) && right.isComplete(), combineNames(right, true));
+        return RDataFactory.createIntVector(result, RRuntime.isComplete(left) && right.isComplete(), combineNames(right, true, profile));
     }
 
     @Specialization
-    protected RIntVector combine(RAbstractIntVector left, RAbstractIntVector right) {
+    protected RIntVector combine(RAbstractIntVector left, RAbstractIntVector right, //
+                    @Cached("create()") CountedLoopConditionProfile leftProfile, //
+                    @Cached("create()") CountedLoopConditionProfile rightProfile) {
         int leftLength = left.getLength();
         int rightLength = right.getLength();
         int[] result = new int[leftLength + rightLength];
         int i = 0;
-        for (; i < leftLength; i++) {
+        leftProfile.profileLength(leftLength);
+        for (; leftProfile.inject(i < leftLength); i++) {
             result[i] = left.getDataAt(i);
         }
-        for (; i < leftLength + rightLength; i++) {
+        rightProfile.profileLength(rightLength);
+        for (; rightProfile.inject(i < leftLength + rightLength); i++) {
             result[i] = right.getDataAt(i - leftLength);
         }
-        return RDataFactory.createIntVector(result, left.isComplete() && right.isComplete(), combineNames(left, right));
+        return RDataFactory.createIntVector(result, left.isComplete() && right.isComplete(), combineNames(left, right, leftProfile, rightProfile));
     }
 }

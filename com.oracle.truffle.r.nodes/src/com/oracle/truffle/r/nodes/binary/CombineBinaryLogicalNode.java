@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.binary;
 
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.r.nodes.profile.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
@@ -63,39 +64,45 @@ public abstract class CombineBinaryLogicalNode extends CombineBinaryNode {
     }
 
     @Specialization
-    protected RLogicalVector combine(RLogicalVector left, byte right) {
+    protected RLogicalVector combine(RLogicalVector left, byte right, //
+                    @Cached("create()") CountedLoopConditionProfile profile) {
         check.enable(left);
         check.enable(right);
         int dataLength = left.getLength();
         byte[] result = new byte[dataLength + 1];
-        for (int i = 0; i < dataLength; i++) {
+        profile.profileLength(dataLength);
+        for (int i = 0; profile.inject(i < dataLength); i++) {
             byte value = left.getDataAt(i);
             check.check(value);
             result[i] = value;
         }
         result[dataLength] = right;
         check.check(right);
-        return RDataFactory.createLogicalVector(result, check.neverSeenNA(), combineNames(left, false));
+        return RDataFactory.createLogicalVector(result, check.neverSeenNA(), combineNames(left, false, profile));
     }
 
     @Specialization
-    protected RLogicalVector combine(byte left, RLogicalVector right) {
+    protected RLogicalVector combine(byte left, RLogicalVector right, //
+                    @Cached("create()") CountedLoopConditionProfile profile) {
         check.enable(right);
         check.enable(left);
         int dataLength = right.getLength();
         byte[] result = new byte[dataLength + 1];
-        for (int i = 0; i < dataLength; i++) {
+        profile.profileLength(dataLength);
+        for (int i = 0; profile.inject(i < dataLength); i++) {
             byte value = right.getDataAt(i);
             check.check(value);
             result[i + 1] = value;
         }
         result[0] = left;
         check.check(left);
-        return RDataFactory.createLogicalVector(result, check.neverSeenNA(), combineNames(right, true));
+        return RDataFactory.createLogicalVector(result, check.neverSeenNA(), combineNames(right, true, profile));
     }
 
     @Specialization
-    protected RLogicalVector combine(RLogicalVector left, RLogicalVector right) {
-        return (RLogicalVector) genericCombine(left, right);
+    protected RLogicalVector combine(RLogicalVector left, RLogicalVector right, //
+                    @Cached("create()") CountedLoopConditionProfile profileLeft, //
+                    @Cached("create()") CountedLoopConditionProfile profileRight) {
+        return (RLogicalVector) genericCombine(left, right, profileLeft, profileRight);
     }
 }

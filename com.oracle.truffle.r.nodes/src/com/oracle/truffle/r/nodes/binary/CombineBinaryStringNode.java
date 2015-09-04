@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.binary;
 import java.util.*;
 
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.r.nodes.profile.*;
 import com.oracle.truffle.r.runtime.data.*;
 
 @SuppressWarnings("unused")
@@ -61,30 +62,36 @@ public abstract class CombineBinaryStringNode extends CombineBinaryNode {
     }
 
     @Specialization
-    protected RStringVector combine(RStringVector left, String right) {
+    protected RStringVector combine(RStringVector left, String right, //
+                    @Cached("create()") CountedLoopConditionProfile profile) {
         int dataLength = left.getLength();
         String[] result = new String[dataLength + 1];
-        for (int i = 0; i < dataLength; i++) {
+        profile.profileLength(dataLength);
+        for (int i = 0; profile.inject(i < dataLength); i++) {
             result[i] = left.getDataAt(i);
         }
         result[dataLength] = right;
-        return RDataFactory.createStringVector(result, RDataFactory.INCOMPLETE_VECTOR, combineNames(left, false));
+        return RDataFactory.createStringVector(result, RDataFactory.INCOMPLETE_VECTOR, combineNames(left, false, profile));
     }
 
     @Specialization
-    protected RStringVector combine(String left, RStringVector right) {
+    protected RStringVector combine(String left, RStringVector right, //
+                    @Cached("create()") CountedLoopConditionProfile profile) {
         int dataLength = right.getLength();
         String[] result = new String[dataLength + 1];
-        for (int i = 0; i < dataLength; i++) {
+        profile.profileLength(dataLength);
+        for (int i = 0; profile.inject(i < dataLength); i++) {
             result[i + 1] = right.getDataAt(i);
         }
         result[0] = left;
-        return RDataFactory.createStringVector(result, RDataFactory.INCOMPLETE_VECTOR, combineNames(right, true));
+        return RDataFactory.createStringVector(result, RDataFactory.INCOMPLETE_VECTOR, combineNames(right, true, profile));
     }
 
     @Specialization
-    protected RStringVector combine(RStringVector left, RStringVector right) {
-        return (RStringVector) genericCombine(left, right);
+    protected RStringVector combine(RStringVector left, RStringVector right, //
+                    @Cached("create()") CountedLoopConditionProfile profileLeft, //
+                    @Cached("create()") CountedLoopConditionProfile profileRight) {
+        return (RStringVector) genericCombine(left, right, profileLeft, profileRight);
     }
 
 }

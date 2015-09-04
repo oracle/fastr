@@ -23,32 +23,40 @@
 package com.oracle.truffle.r.nodes.binary;
 
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.r.nodes.profile.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
 public abstract class CombineBinaryListNode extends CombineBinaryNode {
 
     @Specialization
-    protected RList combine(RList left, double right) {
-        return extend(left, right);
+    protected RList combine(RList left, double right, //
+                    @Cached("create()") CountedLoopConditionProfile profile) {
+        return extend(left, right, profile);
     }
 
     @Specialization
-    protected RList combine(RList left, RAbstractVector right) {
+    protected RList combine(RList left, RAbstractVector right, //
+                    @Cached("create()") CountedLoopConditionProfile profileLeft, //
+                    @Cached("create()") CountedLoopConditionProfile profileRight) {
         Object[] data = left.getDataWithoutCopying();
         Object[] result = new Object[data.length + right.getLength()];
-        System.arraycopy(data, 0, result, 0, data.length);
-        for (int i = 0; i < right.getLength(); i++) {
+        profileLeft.profileLength(data.length);
+        for (int i = 0; profileLeft.inject(i < data.length); i++) {
+            result[i] = data[i];
+        }
+        profileRight.profileLength(right.getLength());
+        for (int i = 0; profileRight.inject(i < right.getLength()); i++) {
             result[i + data.length] = right.getDataAtAsObject(i);
         }
-        return RDataFactory.createList(result, combineNames(left, right));
+        return RDataFactory.createList(result, combineNames(left, right, profileLeft, profileRight));
     }
 
-    private RList extend(RList list, Object x) {
+    private RList extend(RList list, Object x, CountedLoopConditionProfile profile) {
         final int ll = list.getLength();
         Object[] result = new Object[ll + 1];
         System.arraycopy(list.getDataWithoutCopying(), 0, result, 0, ll);
         result[ll] = x;
-        return RDataFactory.createList(result, combineNames(list, false));
+        return RDataFactory.createList(result, combineNames(list, false, profile));
     }
 }

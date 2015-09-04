@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.binary;
 
 import com.oracle.truffle.api.utilities.*;
+import com.oracle.truffle.r.nodes.profile.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -36,7 +37,8 @@ public abstract class CombineBinaryNode extends BinaryNode {
 
     public abstract Object executeCombine(Object left, Object right);
 
-    protected RStringVector combineNames(RAbstractVector orgVector, boolean prependEmpty) {
+    protected RStringVector combineNames(RAbstractVector orgVector, boolean prependEmpty, CountedLoopConditionProfile profile) {
+        // no profileLength calls in here - the profiles are already initialized
         if (orgVector.getNames(attrProfiles) == null) {
             return null;
         }
@@ -51,7 +53,7 @@ public abstract class CombineBinaryNode extends BinaryNode {
             to++;
         }
         naCheck.enable(orgNames);
-        for (int j = 0; i < to; i++, j++) {
+        for (int j = 0; profile.inject(i < to); i++, j++) {
             namesData[i] = orgNames.getDataAt(j);
             naCheck.check(namesData[i]);
         }
@@ -61,7 +63,8 @@ public abstract class CombineBinaryNode extends BinaryNode {
         return RDataFactory.createStringVector(namesData, naCheck.neverSeenNA());
     }
 
-    protected RStringVector combineNames(RAbstractVector left, RAbstractVector right) {
+    protected RStringVector combineNames(RAbstractVector left, RAbstractVector right, CountedLoopConditionProfile profileLeft, CountedLoopConditionProfile profileRight) {
+        // no profileLength calls in here - the profiles are already initialized
         Object leftNames = left.getNames(attrProfiles);
         Object rightNames = right.getNames(attrProfiles);
         if ((leftNames == null || leftNames == RNull.instance) && (rightNames == null || rightNames == RNull.instance)) {
@@ -74,21 +77,21 @@ public abstract class CombineBinaryNode extends BinaryNode {
         naCheck.enable((leftNames != null && leftNames != RNull.instance && !((RStringVector) leftNames).isComplete()) ||
                         (rightNames != null && rightNames != RNull.instance && !((RStringVector) rightNames).isComplete()));
         if (leftNames == null || leftNames == RNull.instance) {
-            for (int i = 0; i < leftLength; i++) {
+            for (int i = 0; profileLeft.inject(i < leftLength); i++) {
                 namesData[i] = RRuntime.NAMES_ATTR_EMPTY_VALUE;
             }
         } else {
-            for (int i = 0; i < leftLength; i++) {
+            for (int i = 0; profileLeft.inject(i < leftLength); i++) {
                 namesData[i] = ((RStringVector) leftNames).getDataAt(i);
                 naCheck.check(namesData[i]);
             }
         }
         if (rightNames == null || rightNames == RNull.instance) {
-            for (int i = 0, j = leftLength; i < rightLength; ++i, ++j) {
+            for (int i = 0, j = leftLength; profileRight.inject(i < rightLength); ++i, ++j) {
                 namesData[j] = RRuntime.NAMES_ATTR_EMPTY_VALUE;
             }
         } else {
-            for (int i = 0, j = leftLength; i < rightLength; ++i, ++j) {
+            for (int i = 0, j = leftLength; profileRight.inject(i < rightLength); ++i, ++j) {
                 namesData[j] = ((RStringVector) rightNames).getDataAt(i);
                 naCheck.check(namesData[j]);
             }
@@ -96,18 +99,20 @@ public abstract class CombineBinaryNode extends BinaryNode {
         return RDataFactory.createStringVector(namesData, naCheck.neverSeenNA());
     }
 
-    protected RVector genericCombine(RVector left, RVector right) {
+    protected RVector genericCombine(RVector left, RVector right, CountedLoopConditionProfile profileLeft, CountedLoopConditionProfile profileRight) {
         int leftLength = left.getLength();
         int rightLength = right.getLength();
         RVector result = left.createEmptySameType(leftLength + rightLength, left.isComplete() && right.isComplete());
         int i = 0;
-        for (; i < leftLength; i++) {
+        profileLeft.profileLength(leftLength);
+        for (; profileLeft.inject(i < leftLength); i++) {
             result.transferElementSameType(i, left, i);
         }
-        for (; i < leftLength + rightLength; i++) {
+        profileRight.profileLength(rightLength);
+        for (; profileRight.inject(i < leftLength + rightLength); i++) {
             result.transferElementSameType(i, right, i - leftLength);
         }
-        RStringVector names = combineNames(left, right);
+        RStringVector names = combineNames(left, right, profileLeft, profileRight);
         if (names != null) {
             result.setNames(names);
         }
