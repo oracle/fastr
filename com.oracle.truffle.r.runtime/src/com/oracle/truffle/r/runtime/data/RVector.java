@@ -60,15 +60,19 @@ public abstract class RVector extends RAttributeStorage implements RShareable, R
     private RList dimNames;
     // cache rownames for data frames as they are accessed at every data frame access
     private Object rowNames;
-    private boolean shared;
-    private boolean temporary = true;
     private int refCount;
+
+    private static final int TEMPORARY = 0x1;
+    private static final int SHARED = 0x2;
 
     protected RVector(boolean complete, int length, int[] dimensions, RStringVector names) {
         this.complete = complete;
         this.dimensions = dimensions;
         this.names = names;
         this.rowNames = RNull.instance;
+        if (!FastROptions.NewStateTransition) {
+            refCount = TEMPORARY;
+        }
         if (names != null) {
             // since this constructor is for internal use only, the assertion shouldn't fail
             assert names.getLength() == length : "size mismatch: " + names.getLength() + " vs. " + length;
@@ -422,7 +426,7 @@ public abstract class RVector extends RAttributeStorage implements RShareable, R
     @Override
     public final void markNonTemporary() {
         assert !FastROptions.NewStateTransition;
-        temporary = false;
+        refCount &= ~TEMPORARY;
     }
 
     @Override
@@ -430,7 +434,7 @@ public abstract class RVector extends RAttributeStorage implements RShareable, R
         if (FastROptions.NewStateTransition) {
             return refCount == 0;
         } else {
-            return temporary;
+            return (refCount & TEMPORARY) != 0;
         }
     }
 
@@ -439,17 +443,14 @@ public abstract class RVector extends RAttributeStorage implements RShareable, R
         if (FastROptions.NewStateTransition) {
             return refCount > 1;
         } else {
-            return shared;
+            return (refCount & SHARED) != 0;
         }
     }
 
     @Override
     public final RVector makeShared() {
         assert !FastROptions.NewStateTransition;
-        if (temporary) {
-            temporary = false;
-        }
-        shared = true;
+        refCount = SHARED;
         return this;
     }
 
