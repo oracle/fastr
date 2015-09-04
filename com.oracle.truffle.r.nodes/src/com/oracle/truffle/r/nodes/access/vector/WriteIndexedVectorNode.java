@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.access.vector;
 
+import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.utilities.*;
@@ -164,8 +166,9 @@ abstract class WriteIndexedVectorNode extends Node {
     @Specialization
     protected int doMissing(RAbstractVector left, Object leftStore, int leftBase, int leftLength, Object targetDimensions, int targetDimension, //
                     Object[] positions, RMissing position, int positionOffset, int positionLength, //
-                    RAbstractContainer right, Object rightStore, int rightBase, int rightLength, boolean parentNA//
-    ) {
+                    RAbstractContainer right, Object rightStore, int rightBase, int rightLength, boolean parentNA) {
+        initRightIndexCheck(rightBase, targetDimension, leftLength, rightLength);
+
         int rightIndex = rightBase;
         for (int positionValue = 0; positionValue < targetDimension; positionValue += 1) {
             rightIndex = applyInner(//
@@ -191,6 +194,9 @@ abstract class WriteIndexedVectorNode extends Node {
 
         int rightIndex = rightBase;
         if (positionLength > 0) {
+
+            initRightIndexCheck(rightBase, length, leftLength, rightLength);
+
             int positionIndex = 0;
             for (int i = 0; i < length; i++) {
                 byte positionValue = position.getDataAt(positionIndex);
@@ -210,6 +216,8 @@ abstract class WriteIndexedVectorNode extends Node {
         }
         return rightIndex;
     }
+
+    @CompilationFinal private boolean needsRightIndexCheck = false;
 
     /**
      * For integer sequences we need to make sure that start and stride is profiled.
@@ -233,6 +241,8 @@ abstract class WriteIndexedVectorNode extends Node {
             throw new SlowPathException("rewrite to doIntegerPosition");
         }
 
+        initRightIndexCheck(rightBase, positionLength, leftLength, rightLength);
+
         boolean ascending = conditionProfile.profile(start < end);
         for (int positionValue = start; ascending ? positionValue < end : positionValue > end; positionValue += stride) {
             rightIndex = applyInner(//
@@ -241,6 +251,17 @@ abstract class WriteIndexedVectorNode extends Node {
                             right, rightStore, rightLength, rightIndex, parentNA);
         }
         return rightIndex;
+    }
+
+    private void initRightIndexCheck(int rightBase, int positionLength, int leftLength, int rightLength) {
+        if (!needsRightIndexCheck) {
+            int actionRightMod = positionsApplyToRight ? leftLength : rightLength;
+            if (rightBase + positionLength > actionRightMod) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                System.out.println("needs right index check");
+                needsRightIndexCheck = true;
+            }
+        }
     }
 
     /**
@@ -255,6 +276,8 @@ abstract class WriteIndexedVectorNode extends Node {
                     @Cached("create()") CountedLoopConditionProfile lengthProfile) {
         positionNACheck.enable(position);
         int rightIndex = rightBase;
+
+        initRightIndexCheck(rightBase, positionLength, leftLength, rightLength);
 
         lengthProfile.profileLength(positionLength);
         for (int i = 0; lengthProfile.inject(i < positionLength); i++) {
@@ -301,7 +324,11 @@ abstract class WriteIndexedVectorNode extends Node {
                 scalarNode.apply(left, leftStore, actionLeftIndex, right, rightStore, actionRightIndex);
             }
 
-            return Utils.incMod(rightIndex, actionRightMod);
+            int result = rightIndex + 1;
+            if (needsRightIndexCheck && result == actionRightMod) {
+                return 0;
+            }
+            return result;
         } else {
             // generate another for-loop for other dimensions
             int nextTargetDimension = innerVectorNode.dimensionValueProfile.profile(((int[]) targetDimensions)[innerVectorNode.dimensionIndex]);
