@@ -47,6 +47,8 @@ abstract class BaseWriteVariableNode extends WriteVariableNode {
 
     private final BranchProfile initialSetKindProfile = BranchProfile.create();
 
+    private final ValueProfile shareableProfile = ValueProfile.createClassProfile();
+
     /*
      * setting value of the mode parameter to COPY is meant to induce creation of a copy of the RHS;
      * this needed for the implementation of the replacement forms of builtin functions whose last
@@ -76,7 +78,7 @@ abstract class BaseWriteVariableNode extends WriteVariableNode {
         // x<-c(1); f<-function() { x[[1]]<<-x[[1]] + 1; x }; a<-f(); b<-f(); c(a,b)
         if ((mode != Mode.INVISIBLE || isSuper) && !isCurrentProfile.profile(isCurrentValue(frame, frameSlot, value))) {
             if (isShareableProfile.profile(value instanceof RShareable)) {
-                RShareable rShareable = (RShareable) value;
+                RShareable rShareable = (RShareable) shareableProfile.profile(value);
                 if (mode == Mode.COPY) {
                     newValue = rShareable.copy();
                 } else {

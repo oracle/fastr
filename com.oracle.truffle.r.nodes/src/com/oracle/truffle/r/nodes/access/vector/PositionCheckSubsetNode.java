@@ -192,6 +192,9 @@ abstract class PositionCheckSubsetNode extends PositionCheckNode {
                     @Cached("create()") BranchProfile seenZeroProfile, //
                     @Cached("create()") BranchProfile seenPositiveProfile, //
                     @Cached("create()") BranchProfile seenNegativeProfile, //
+                    @Cached("createBinaryProfile()") ConditionProfile seenNAFlagProfile, //
+                    @Cached("createBinaryProfile()") ConditionProfile seenPositiveFlagProfile, //
+                    @Cached("createBinaryProfile()") ConditionProfile seenNegativeFlagProfile, //
                     @Cached("create()") BranchProfile seenOutOfBounds, //
                     @Cached("create()") CountedLoopConditionProfile lengthProfile) {
 
@@ -230,7 +233,8 @@ abstract class PositionCheckSubsetNode extends PositionCheckNode {
             }
         }
 
-        return doIntegerProfiled(profile, dimensionLength, position, positionLength, hasSeenPositive, hasSeenNegative, hasSeenNA, outOfBoundsCount, zeroCount, maxOutOfBoundsIndex);
+        return doIntegerProfiled(profile, dimensionLength, position, positionLength, seenPositiveFlagProfile.profile(hasSeenPositive), seenNegativeFlagProfile.profile(hasSeenNegative),
+                        seenNAFlagProfile.profile(hasSeenNA), outOfBoundsCount, zeroCount, maxOutOfBoundsIndex);
     }
 
     private final BranchProfile noZeroes = BranchProfile.create();
