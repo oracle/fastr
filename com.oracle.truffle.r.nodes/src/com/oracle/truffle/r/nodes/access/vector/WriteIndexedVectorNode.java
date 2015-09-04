@@ -166,11 +166,13 @@ abstract class WriteIndexedVectorNode extends Node {
     @Specialization
     protected int doMissing(RAbstractVector left, Object leftStore, int leftBase, int leftLength, Object targetDimensions, int targetDimension, //
                     Object[] positions, RMissing position, int positionOffset, int positionLength, //
-                    RAbstractContainer right, Object rightStore, int rightBase, int rightLength, boolean parentNA) {
+                    RAbstractContainer right, Object rightStore, int rightBase, int rightLength, boolean parentNA, //
+                    @Cached("create()") CountedLoopConditionProfile profile) {
         initRightIndexCheck(rightBase, targetDimension, leftLength, rightLength);
 
         int rightIndex = rightBase;
-        for (int positionValue = 0; positionValue < targetDimension; positionValue += 1) {
+        profile.profileLength(targetDimension);
+        for (int positionValue = 0; profile.inject(positionValue < targetDimension); positionValue += 1) {
             rightIndex = applyInner(//
                             left, leftStore, leftBase, leftLength, targetDimensions, //
                             positions, positionOffset, positionValue, //
@@ -183,7 +185,8 @@ abstract class WriteIndexedVectorNode extends Node {
     protected int doLogicalPosition(RAbstractVector left, Object leftStore, int leftBase, int leftLength, Object targetDimensions, int targetDimension, //
                     Object[] positions, RAbstractLogicalVector position, int positionOffset, int positionLength, //
                     RAbstractContainer right, Object rightStore, int rightBase, int rightLength, boolean parentNA, //
-                    @Cached("create()") BranchProfile wasTrue, @Cached("create()") BranchProfile outOfBounds) {
+                    @Cached("create()") BranchProfile wasTrue, @Cached("create()") BranchProfile outOfBounds, //
+                    @Cached("create()") CountedLoopConditionProfile profile) {
         positionNACheck.enable(!skipNA && !position.isComplete());
 
         int length = targetDimension;
@@ -198,7 +201,8 @@ abstract class WriteIndexedVectorNode extends Node {
             initRightIndexCheck(rightBase, length, leftLength, rightLength);
 
             int positionIndex = 0;
-            for (int i = 0; i < length; i++) {
+            profile.profileLength(length);
+            for (int i = 0; profile.inject(i < length); i++) {
                 byte positionValue = position.getDataAt(positionIndex);
                 boolean isNA = positionNACheck.check(positionValue);
                 if (isNA || positionValue == RRuntime.LOGICAL_TRUE) {
@@ -230,7 +234,8 @@ abstract class WriteIndexedVectorNode extends Node {
                     RAbstractContainer right, Object rightStore, int rightBase, int rightLength, boolean parentNA, //
                     @Cached("create()") IntValueProfile startProfile, //
                     @Cached("create()") IntValueProfile strideProfile, //
-                    @Cached("createBinaryProfile()") ConditionProfile conditionProfile) throws SlowPathException {
+                    @Cached("createBinaryProfile()") ConditionProfile conditionProfile, //
+                    @Cached("create()") CountedLoopConditionProfile profile) throws SlowPathException {
         // skip NA check. sequences never contain NA values.
         int rightIndex = rightBase;
         int start = startProfile.profile(position.getStart() - 1);
@@ -244,7 +249,8 @@ abstract class WriteIndexedVectorNode extends Node {
         initRightIndexCheck(rightBase, positionLength, leftLength, rightLength);
 
         boolean ascending = conditionProfile.profile(start < end);
-        for (int positionValue = start; ascending ? positionValue < end : positionValue > end; positionValue += stride) {
+        profile.profileLength(positionLength);
+        for (int positionValue = start; profile.inject(ascending ? positionValue < end : positionValue > end); positionValue += stride) {
             rightIndex = applyInner(//
                             left, leftStore, leftBase, leftLength, targetDimensions, //
                             positions, positionOffset, positionValue, //
