@@ -21,14 +21,14 @@
 # questions.
 #
 suite = {
-  "mxversion" : "5.4.2",
+  "mxversion" : "5.5.1",
   "name" : "fastr",
 
   "imports" : {
     "suites" : [
             {
                "name" : "graal",
-               "version" : "c9410ab830e0f7730a6ffb2e53c77d23e0789ee2",
+               "version" : "8c984ddcc7c9d3e40fe4211b2df992ed0def5dc0",
                "urls" : [{"url" : "http://lafo.ssw.uni-linz.ac.at/hg/graal-compiler", "kind" : "hg"}]
             },
         ],
@@ -72,9 +72,9 @@ suite = {
     },
 
     "JLINE" : {
-      "path" : "libdownloads/jline-2.11.jar",
+      "path" : "lib/jline-2.11.jar",
       "urls" : [
-        "http://lafo.ssw.uni-linz.ac.at/graal-external-deps/jline-2.11.jar",
+        "https://lafo.ssw.uni-linz.ac.at/pub/graal-external-deps/jline-2.11.jar",
         "https://search.maven.org/remotecontent?filepath=jline/jline/2.11/jline-2.11.jar",
       ],
       "sha1" : "9504d5e2da5d78237239c5226e8200ec21182040",
@@ -83,7 +83,7 @@ suite = {
     "JNR_POSIX" : {
       "path" : "libdownloads/jnr-posix-3.0.10.jar",
       "urls" : [
-        "http://lafo.ssw.uni-linz.ac.at/graal-external-deps/jnr-posix-3.0.10.jar",
+        "https://lafo.ssw.uni-linz.ac.at/pub/graal-external-deps/jnr-posix-3.0.10.jar",
         "https://search.maven.org/remotecontent?filepath=com/github/jnr/jnr-posix/3.0.10/jnr-posix-3.0.10.jar",
       ],
       "sha1" : "3354732f2922db2b33342345b059381161b8d85f",
@@ -92,7 +92,7 @@ suite = {
     "JNR_CONSTANTS" : {
       "path" : "libdownloads/jnr-constants-0.8.6.jar",
       "urls" : [
-        "http://lafo.ssw.uni-linz.ac.at/graal-external-deps/jnr-constants-0.8.6.jar",
+        "https://lafo.ssw.uni-linz.ac.at/pub/graal-external-deps/jnr-constants-0.8.6.jar",
         "https://search.maven.org/remotecontent?filepath=com/github/jnr/jnr-constants/0.8.6/jnr-constants-0.8.6.jar",
       ],
       "sha1" : "692b0031a2854988431f57581e4058bf5cee7c8b",
@@ -101,7 +101,7 @@ suite = {
     "JNR_FFI" : {
       "path" : "libdownloads/jnr-ffi-2.0.2.jar",
       "urls" : [
-        "http://lafo.ssw.uni-linz.ac.at/graal-external-deps/jnr-ffi-2.0.2.jar",
+        "https://lafo.ssw.uni-linz.ac.at/pub/graal-external-deps/jnr-ffi-2.0.2.jar",
         "https://search.maven.org/remotecontent?filepath=com/github/jnr/jnr-ffi/2.0.2/jnr-ffi-2.0.2.jar",
       ],
       "sha1" : "9161bdb3007cdff94d7b2843bdb5d0e8fb209bf1",
@@ -110,7 +110,7 @@ suite = {
     "JFFI" : {
       "path" : "libdownloads/jffi-1.2.8.jar",
       "urls" : [
-        "http://lafo.ssw.uni-linz.ac.at/graal-external-deps/jffi-1.2.8.jar",
+        "https://lafo.ssw.uni-linz.ac.at/pub/graal-external-deps/jffi-1.2.8.jar",
         "https://search.maven.org/remotecontent?filepath=com/github/jnr/jffi/1.2.8/jffi-1.2.8.jar",
       ],
       "sha1" : "bb04c5cf07c114dfdb96a807a92e209edc884822",
@@ -119,7 +119,7 @@ suite = {
     "JFFI_NATIVE" : {
       "path" : "libdownloads/jffi-1.2.8-native.jar",
       "urls" : [
-        "http://lafo.ssw.uni-linz.ac.at/graal-external-deps/jffi-1.2.8-native.jar",
+        "https://lafo.ssw.uni-linz.ac.at/pub/graal-external-deps/jffi-1.2.8-native.jar",
         "https://search.maven.org/remotecontent?filepath=com/github/jnr/jffi/1.2.8/jffi-1.2.8-native.jar",
       ],
       "sha1" : "043462be96ce1dd3105b928c0271b056dbe4d75d",
@@ -128,14 +128,14 @@ suite = {
     "ASM" : {
       "path" : "libdownloads/asm-5.0.3.jar",
       "urls" : [
-        "http://lafo.ssw.uni-linz.ac.at/graal-external-deps/asm-5.0.3.jar",
+        "https://lafo.ssw.uni-linz.ac.at/pub/graal-external-deps/asm-5.0.3.jar",
         "https://search.maven.org/remotecontent?filepath=org/ow2/asm/asm/5.0.3/asm-5.0.3.jar",
       ],
       "sha1" : "dcc2193db20e19e1feca8b1240dbbc4e190824fa",
       "sourcePath" : "libdownloads/asm-5.0.3-sources.jar",
       "sourceSha1" : "f0f24f6666c1a15c7e202e91610476bd4ce59368",
       "sourceUrls" : [
-        "http://lafo.ssw.uni-linz.ac.at/graal-external-deps/asm-5.0.3-sources.jar",
+        "https://lafo.ssw.uni-linz.ac.at/pub/graal-external-deps/asm-5.0.3-sources.jar",
         "https://search.maven.org/remotecontent?filepath=org/ow2/asm/asm/5.0.3/asm-5.0.3-sources.jar",
       ],
     },
@@ -143,7 +143,7 @@ suite = {
     "JNR_X86ASM" : {
       "path" : "libdownloads/jnr-x86asm-1.0.2.jar",
       "urls" : [
-        "http://lafo.ssw.uni-linz.ac.at/graal-external-deps/jnr-x86asm-1.0.2.jar",
+        "https://lafo.ssw.uni-linz.ac.at/pub/graal-external-deps/jnr-x86asm-1.0.2.jar",
         "https://search.maven.org/remotecontent?filepath=com/github/jnr/jnr-x86asm/1.0.2/jnr-x86asm-1.0.2.jar",
       ],
       "sha1" : "006936bbd6c5b235665d87bd450f5e13b52d4b48",
@@ -152,7 +152,7 @@ suite = {
     "ASM_ANALYSIS" : {
       "path" : "libdownloads/asm-analysis-4.0.jar",
       "urls" : [
-        "http://lafo.ssw.uni-linz.ac.at/graal-external-deps/asm-analysis-4.0.jar",
+        "https://lafo.ssw.uni-linz.ac.at/pub/graal-external-deps/asm-analysis-4.0.jar",
         "https://search.maven.org/remotecontent?filepath=org/ow2/asm/asm-analysis/4.0/asm-analysis-4.0.jar",
       ],
       "sha1" : "1c45d52b6f6c638db13cf3ac12adeb56b254cdd7",
@@ -161,7 +161,7 @@ suite = {
     "ASM_COMMONS" : {
       "path" : "libdownloads/asm-commons-4.0.jar",
       "urls" : [
-        "http://lafo.ssw.uni-linz.ac.at/graal-external-deps/asm-commons-4.0.jar",
+        "https://lafo.ssw.uni-linz.ac.at/pub/graal-external-deps/asm-commons-4.0.jar",
         "https://search.maven.org/remotecontent?filepath=org/ow2/asm/asm-commons/4.0/asm-commons-4.0.jar",
       ],
       "sha1" : "a839ec6737d2b5ba7d1878e1a596b8f58aa545d9",
@@ -170,7 +170,7 @@ suite = {
     "ASM_TREE" : {
       "path" : "libdownloads/asm-tree-4.0.jar",
       "urls" : [
-        "http://lafo.ssw.uni-linz.ac.at/graal-external-deps/asm-tree-4.0.jar",
+        "https://lafo.ssw.uni-linz.ac.at/pub/graal-external-deps/asm-tree-4.0.jar",
         "https://search.maven.org/remotecontent?filepath=org/ow2/asm/asm-tree/4.0/asm-tree-4.0.jar",
       ],
       "sha1" : "67bd266cd17adcee486b76952ece4cc85fe248b8",
@@ -179,7 +179,7 @@ suite = {
     "ASM_UTIL" : {
       "path" : "libdownloads/asm-util-4.0.jar",
       "urls" : [
-        "http://lafo.ssw.uni-linz.ac.at/graal-external-deps/asm-util-4.0.jar",
+        "https://lafo.ssw.uni-linz.ac.at/pub/graal-external-deps/asm-util-4.0.jar",
         "https://search.maven.org/remotecontent?filepath=org/ow2/asm/asm-util/4.0/asm-util-4.0.jar",
       ],
       "sha1" : "d7a65f54cda284f9706a750c23d64830bb740c39",
