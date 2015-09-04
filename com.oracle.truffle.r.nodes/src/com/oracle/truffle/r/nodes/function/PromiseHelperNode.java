@@ -392,6 +392,10 @@ public class PromiseHelperNode extends RBaseNode {
         promise.setValue(valueProfile.profile(newValue));
     }
 
+    private static final int UNINITIALIZED = -1;
+    private static final int GENERIC = -2;
+    @CompilationFinal private int cachedWrapIndex = UNINITIALIZED;
+
     /**
      * Returns {@link EagerPromise#getEagerValue()} profiled.
      */
@@ -400,14 +404,33 @@ public class PromiseHelperNode extends RBaseNode {
         Object o = promise.getEagerValue();
         if (shouldWrap.profile(promise.wrapIndex() != ArgumentStatePush.INVALID_INDEX)) {
             int wrapIndex = promise.wrapIndex();
-            for (int i = 0; i < ArgumentStatePush.MAX_COUNTED_ARGS; i++) {
-                if (wrapIndex == i) {
-                    wrapIndexes[i].enter();
-                    if (wrapNodes[i] == null) {
+            if (cachedWrapIndex == UNINITIALIZED) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                cachedWrapIndex = wrapIndex;
+            }
+            if (wrapIndex != cachedWrapIndex) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                cachedWrapIndex = GENERIC;
+            }
+            if (cachedWrapIndex != GENERIC) {
+                if (cachedWrapIndex < ArgumentStatePush.MAX_COUNTED_ARGS) {
+                    wrapIndexes[cachedWrapIndex].enter();
+                    if (wrapNodes[cachedWrapIndex] == null) {
                         CompilerDirectives.transferToInterpreterAndInvalidate();
-                        wrapNodes[i] = insert(WrapArgumentNode.create(i));
+                        wrapNodes[cachedWrapIndex] = insert(WrapArgumentNode.create(cachedWrapIndex));
                     }
-                    wrapNodes[i].execute(frame, o);
+                    wrapNodes[cachedWrapIndex].execute(frame, o);
+                }
+            } else {
+                for (int i = 0; i < ArgumentStatePush.MAX_COUNTED_ARGS; i++) {
+                    if (wrapIndex == i) {
+                        wrapIndexes[i].enter();
+                        if (wrapNodes[i] == null) {
+                            CompilerDirectives.transferToInterpreterAndInvalidate();
+                            wrapNodes[i] = insert(WrapArgumentNode.create(i));
+                        }
+                        wrapNodes[i].execute(frame, o);
+                    }
                 }
             }
         }
