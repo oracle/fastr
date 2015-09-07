@@ -28,7 +28,9 @@ import java.util.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.frame.FrameInstance.*;
 import com.oracle.truffle.api.instrument.*;
+import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.vm.*;
+import com.oracle.truffle.r.engine.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.tools.debug.shell.*;
 import com.oracle.truffle.tools.debug.shell.client.*;
@@ -57,7 +59,7 @@ public abstract class RREPLHandler extends REPLHandler {
             message.put(REPLMessage.DEBUG_LEVEL, Integer.toString(serverContext.getLevel()));
             final Visualizer visualizer = serverContext.getVisualizer();
 
-            final String source = request.get(REPLMessage.CODE);
+            Source source = Source.fromText(request.get(REPLMessage.CODE), "<REPL>").withMimeType(TruffleRLanguage.MIME);
             MaterializedFrame mFrame = null;
             final Integer frameNumber = request.getIntValue(REPLMessage.FRAME_NUMBER);
             if (frameNumber != null) {
@@ -72,9 +74,9 @@ public abstract class RREPLHandler extends REPLHandler {
                 Object returnValue;
                 // This doesn't work because no way to communicate mFrame
                 if (mFrame == null) { // Top Level
-                    returnValue = serverContext.vm().eval("application/x-r", source);
+                    returnValue = serverContext.vm().eval(source).get();
                 } else {
-                    returnValue = serverContext.vm().eval("application/x-r", source);
+                    returnValue = serverContext.vm().eval(source).get();
                 }
                 return finishReplySucceeded(message, visualizer.displayValue(returnValue, 0));
             } catch (QuitException ex) {
@@ -175,7 +177,8 @@ public abstract class RREPLHandler extends REPLHandler {
                     return finishReplyFailed(reply, "can't find file \"" + fileName + "\"");
                 }
                 final TruffleVM vm = serverContext.vm();
-                vm.eval(file.toURI());
+                Source source = Source.fromURL(file.toURI().toURL(), "<REPL_file>").withMimeType(TruffleRLanguage.MIME);
+                vm.eval(source);
                 final String path = file.getCanonicalPath();
                 message.put(REPLMessage.FILE_PATH, path);
                 return finishReplySucceeded(message, fileName + "  exited");

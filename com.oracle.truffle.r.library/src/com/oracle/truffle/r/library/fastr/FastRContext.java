@@ -133,7 +133,8 @@ public class FastRContext {
                     ContextInfo info = checkContext(contexts.getDataAt(i), this);
                     TruffleVM vm = info.newContext();
                     try {
-                        vm.eval("application/x-r", exprs.getDataAt(i));
+                        Source source = Source.fromText(exprs.getDataAt(i), "<eval>").withMimeType("application/x-r");
+                        vm.eval(source);
                     } catch (IOException e) {
                         throw RInternalError.shouldNotReachHere(e);
                     } finally {

@@ -27,6 +27,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.*;
 
+import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.vm.*;
 import com.oracle.truffle.api.vm.TruffleVM.Builder;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -57,6 +58,7 @@ public class RContextFactory {
     }
 
     private static final Semaphore createSemaphore = new Semaphore(1, true);
+    private static final Source INITIALIZATION_STATEMENT = Source.fromText("invisible(1)", "initialization").withMimeType(TruffleRLanguage.MIME);
 
     /**
      * Create a context of given kind.
@@ -71,7 +73,7 @@ public class RContextFactory {
             }
             TruffleVM vm = builder.build();
             try {
-                vm.eval(TruffleRLanguage.MIME, "invisible(1)");
+                vm.eval(INITIALIZATION_STATEMENT);
             } catch (IOException e) {
                 createSemaphore.release();
                 throw RInternalError.shouldNotReachHere(e);

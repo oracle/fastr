@@ -26,6 +26,7 @@ import java.util.*;
 import java.util.concurrent.*;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.vm.*;
 import com.oracle.truffle.r.engine.*;
 import com.oracle.truffle.r.runtime.*;
@@ -190,7 +191,8 @@ public final class FastRSession implements RSession {
                 try {
                     TruffleVM vm = createTestContext();
                     try {
-                        vm.eval(TruffleRLanguage.MIME, expression);
+                        Source source = Source.fromText(expression, "<eval>").withMimeType(TruffleRLanguage.MIME);
+                        vm.eval(source);
                     } finally {
                         RContext.destroyContext(vm);
                     }

@@ -138,8 +138,8 @@ public class RCommand {
         return ContextInfo.create(options, ContextKind.SHARE_NOTHING, null, consoleHandler);
     }
 
-    private static final String GET_ECHO = "invisible(getOption('echo'))";
-    private static final String QUIT_EOF = "quit(\"default\", 0L, TRUE)";
+    private static final Source GET_ECHO = Source.fromText("invisible(getOption('echo'))", "<get_echo>").withMimeType(TruffleRLanguage.MIME);
+    private static final Source QUIT_EOF = Source.fromText("quit(\"default\", 0L, TRUE)", "<quit_eof>").withMimeType(TruffleRLanguage.MIME);
 
     /**
      * The read-eval-print loop, which can take input from a console, command line expression or a
@@ -178,11 +178,10 @@ public class RCommand {
 
                     try {
                         String continuePrompt = getContinuePrompt();
-                        Source subSource = Source.subSource(source, startLength);
+                        Source subSource = Source.subSource(source, startLength).withMimeType(TruffleRLanguage.MIME);
                         while (true) {
                             try {
-                                // TODO: how to pass subSource to TruffleVM?
-                                vm.eval(TruffleRLanguage.MIME, subSource.getCode());
+                                vm.eval(subSource);
                                 continue REPL;
                             } catch (IncompleteSourceException e) {
                                 // read another line of input
@@ -193,6 +192,7 @@ public class RCommand {
                                 if (e.getCause() instanceof RError) {
                                     RInternalError.reportError(e.getCause());
                                 } else {
+                                    consoleHandler.println("unexpected internal error (" + e.getClass().getSimpleName() + "); " + e.getMessage());
                                     RInternalError.reportError(e);
                                 }
                                 continue REPL;
@@ -203,7 +203,7 @@ public class RCommand {
                                 throw new EOFException();
                             }
                             source.appendCode(additionalInput);
-                            subSource = Source.subSource(source, startLength);
+                            subSource = Source.subSource(source, startLength).withMimeType(TruffleRLanguage.MIME);
                         }
                     } catch (BrowserQuitException ex) {
                         // Q in browser, which continues the repl
@@ -216,7 +216,7 @@ public class RCommand {
             // can happen if user profile invokes browser
         } catch (EOFException ex) {
             try {
-                vm.eval(TruffleRLanguage.MIME, QUIT_EOF);
+                vm.eval(QUIT_EOF);
             } catch (IOException e) {
                 throw RInternalError.shouldNotReachHere(e);
             }
@@ -228,7 +228,7 @@ public class RCommand {
     private static boolean doEcho(TruffleVM vm) {
         Object echo;
         try {
-            echo = vm.eval(TruffleRLanguage.MIME, GET_ECHO);
+            echo = vm.eval(GET_ECHO).get();
         } catch (IOException e) {
             throw RInternalError.shouldNotReachHere(e);
         }

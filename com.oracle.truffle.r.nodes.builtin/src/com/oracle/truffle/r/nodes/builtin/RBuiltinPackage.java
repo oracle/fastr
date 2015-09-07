@@ -22,16 +22,25 @@
  */
 package com.oracle.truffle.r.nodes.builtin;
 
-import java.io.*;
-import java.util.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.TreeMap;
 
-import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.source.*;
+import com.oracle.truffle.api.frame.MaterializedFrame;
+import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinFactory.NodeGenFactory;
-import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.ResourceHandlerFactory;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.Engine.ParseException;
-import com.oracle.truffle.r.runtime.context.*;
-import com.oracle.truffle.r.runtime.env.*;
+import com.oracle.truffle.r.runtime.context.RContext;
 
 /**
  * Denotes an R package that is (partially) built-in to the implementation. Historically, several of

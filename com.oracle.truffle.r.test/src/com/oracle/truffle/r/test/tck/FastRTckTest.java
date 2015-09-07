@@ -22,7 +22,9 @@
  */
 package com.oracle.truffle.r.test.tck;
 
+import com.oracle.truffle.r.engine.TruffleRLanguage;
 import com.oracle.truffle.tck.TruffleTCK;
+import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.vm.TruffleVM;
 
 import static org.junit.Assert.*;
@@ -36,34 +38,37 @@ public class FastRTckTest extends TruffleTCK {
         assertTrue("Our language is present", vm.getLanguages().containsKey("text/x-r"));
     }
 
+    // @formatter:off
+    private static final Source INITIALIZATION = Source.fromText(
+        "fourtyTwo <- function() {\n" +
+        "  42L\n" +
+        "}\n" +
+        "Interop.export('fourtyTwo', fourtyTwo)\n" +
+        "plus <- function(a, b) {\n" +
+        "  a + b\n" +
+        "}\n" +
+        "Interop.export('plus', plus)\n" +
+        "apply <- function(f) {\n" +
+        "  f(18L, 32L) + 10L\n" +
+        "}\n" +
+        "Interop.export('apply', apply)\n" +
+        "null <- function() {\n" +
+        "  NULL\n" +
+        "}\n" +
+        "Interop.export('null', null)\n" +
+        "counter <- 0L\n" +
+        "count <- function() {\n" +
+        "  counter <<- counter + 1L\n" +
+        "}\n" +
+        "Interop.export('count', count)\n",
+        "<initialization>"
+    ).withMimeType(TruffleRLanguage.MIME);
+    // @formatter:on
+
     @Override
     protected TruffleVM prepareVM() throws Exception {
         TruffleVM vm = TruffleVM.newVM().build();
-        // @formatter:off
-        vm.eval("text/x-r",
-            "fourtyTwo <- function() {\n" +
-            "  42L\n" +
-            "}\n" +
-            "Interop.export('fourtyTwo', fourtyTwo)\n" +
-            "plus <- function(a, b) {\n" +
-            "  a + b\n" +
-            "}\n" +
-            "Interop.export('plus', plus)\n" +
-            "apply <- function(f) {\n" +
-            "  f(18L, 32L) + 10L\n" +
-            "}\n" +
-            "Interop.export('apply', apply)\n" +
-            "null <- function() {\n" +
-            "  NULL\n" +
-            "}\n" +
-            "Interop.export('null', null)\n" +
-            "counter <- 0L\n" +
-            "count <- function() {\n" +
-            "  counter <<- counter + 1L\n" +
-            "}\n" +
-            "Interop.export('count', count)\n"
-        );
-        // @formatter:on
+        vm.eval(INITIALIZATION);
         return vm;
     }
 

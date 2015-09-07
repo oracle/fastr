@@ -26,6 +26,7 @@ import java.io.*;
 
 import org.junit.*;
 
+import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.vm.*;
 import com.oracle.truffle.r.engine.*;
 import com.oracle.truffle.r.runtime.context.*;
@@ -40,10 +41,12 @@ public class TestBase {
         testVM = FastRSession.create().createTestContext();
     }
 
+    // clear out warnings (which are stored in shared base env)
+    private static final Source CLEAR_WARNINGS = Source.fromText("assign('last.warning', NULL, envir = baseenv())", "<clear_warnings>").withMimeType(TruffleRLanguage.MIME);
+
     @AfterClass
     public static void finishClass() throws IOException {
-        // clear out warnings (which are stored in shared base env)
-        testVM.eval(TruffleRLanguage.MIME, "assign('last.warning', NULL, envir = baseenv())");
+        testVM.eval(CLEAR_WARNINGS);
         RContext.destroyContext(testVM);
     }
 }
