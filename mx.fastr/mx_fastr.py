@@ -52,7 +52,7 @@ def runR(args, className, nonZeroIsFatal=True, extraVmArgs=None, runBench=False,
     if extraVmArgs:
         vmArgs += extraVmArgs
     vmArgs += _add_truffle_jar()
-    return mx_graal.vm(vmArgs + [className] + args, vm=graal_vm, nonZeroIsFatal=nonZeroIsFatal)
+    return mx_graal.run_vm(vmArgs + [className] + args, vm=graal_vm, nonZeroIsFatal=nonZeroIsFatal)
 
 def _add_truffle_jar():
     # Unconditionally prepend truffle.jar to the boot class path.
@@ -222,7 +222,7 @@ def _junit_r_harness(args, vmArgs, junitArgs):
     setREnvironment(graal_vm)
     vmArgs += _add_truffle_jar()
 
-    return mx_graal.vm(vmArgs + junitArgs, vm=graal_vm, nonZeroIsFatal=False)
+    return mx_graal.run_vm(vmArgs + junitArgs, vm=graal_vm, nonZeroIsFatal=False)
 
 def junit(args):
     '''run R Junit tests'''
