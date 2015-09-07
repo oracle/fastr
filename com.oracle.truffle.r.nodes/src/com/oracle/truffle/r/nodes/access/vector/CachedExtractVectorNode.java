@@ -113,8 +113,11 @@ final class CachedExtractVectorNode extends CachedVectorNode {
                     vector = ((RFactor) castVector).getVector();
                     break;
                 }
+                vector = (RAbstractContainer) castVector;
+                break;
             default:
                 vector = (RAbstractContainer) castVector;
+                break;
         }
 
         int vectorLength = vectorLengthProfile.profile(vector.getLength());
