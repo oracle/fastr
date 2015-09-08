@@ -40,6 +40,7 @@ public abstract class ReadDCF extends RBuiltinNode {
 
     @Specialization
     @TruffleBoundary
+    @SuppressWarnings("try")
     protected RStringVector doReadDCF(RConnection conn, Object fieldsObj, Object keepWhiteObj) {
         RAbstractStringVector fields = fieldsObj == RNull.instance ? null : (RAbstractStringVector) RRuntime.asAbstractVector(fieldsObj);
         RAbstractStringVector keepWhite = keepWhiteObj == RNull.instance ? null : (RAbstractStringVector) RRuntime.asAbstractVector(keepWhiteObj);

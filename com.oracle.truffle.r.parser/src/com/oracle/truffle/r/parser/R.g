@@ -12,7 +12,6 @@ grammar R;
 
 options {
     language = Java;
-    memoize = true;
 }
 
 @header {

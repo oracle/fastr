@@ -721,7 +721,7 @@ public abstract class REnvironment extends RAttributeStorage implements RTypedVa
      * {@code environmentName} function.
      */
     public String getName() {
-        String attrName = attributes == null ? null : (String) RRuntime.asString(attributes.get(NAME_ATTR_KEY));
+        String attrName = attributes == null ? null : RRuntime.asString(attributes.get(NAME_ATTR_KEY));
         return attrName != null ? attrName : name;
     }
 
