@@ -147,7 +147,7 @@ public class GenerateRParserProcessor extends AbstractProcessor {
      */
     private static File getSrcGenDir(Filer filer) throws IOException {
         // The tmp file is not actually created because we don't create a stream to it.
-        return new File(filer.createSourceFile("tmp").toUri().getPath()).getParentFile();
+        return new File(filer.createResource(StandardLocation.SOURCE_OUTPUT, "", "tmp").toUri().getPath()).getParentFile();
     }
 
 }
