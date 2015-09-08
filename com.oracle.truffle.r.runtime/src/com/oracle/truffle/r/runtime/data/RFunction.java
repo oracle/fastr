@@ -51,6 +51,8 @@ public final class RFunction extends RAttributeStorage implements RTypedValue, T
     private final RBuiltinDescriptor builtin;
     private final boolean containsDispatch;
 
+    private FastPathFactory fastPath;
+
     @CompilationFinal private MaterializedFrame enclosingFrame;
 
     RFunction(String name, RootCallTarget target, RBuiltinDescriptor builtin, MaterializedFrame enclosingFrame, boolean containsDispatch) {
@@ -123,5 +125,13 @@ public final class RFunction extends RAttributeStorage implements RTypedValue, T
 
     public ForeignAccess getForeignAccess() {
         return RContext.getEngine().getForeignAccess(this);
+    }
+
+    public FastPathFactory getFastPath() {
+        return fastPath;
+    }
+
+    public void setFastPath(FastPathFactory fastPath) {
+        this.fastPath = fastPath;
     }
 }

@@ -299,6 +299,7 @@ public class ArgumentMatcher {
 
         // Check whether this is a builtin
         RBuiltinDescriptor builtin = function.getRBuiltin();
+        FastPathFactory fastPath = function.getFastPath();
 
         // int logicalIndex = 0; As our builtin's 'evalsArgs' is meant for FastR arguments (which
         // take "..." as one), we don't need a logicalIndex
@@ -348,7 +349,7 @@ public class ArgumentMatcher {
                 }
 
                 ArgumentsSignature signature = ArgumentsSignature.get(newNames);
-                if (shouldInlineArgument(builtin, formalIndex)) {
+                if (shouldInlineArgument(builtin, formalIndex, fastPath)) {
                     resArgs[formalIndex] = PromiseNode.createVarArgsInlined(newVarArgs, signature);
                 } else {
                     resArgs[formalIndex] = PromiseNode.createVarArgs(newVarArgs, signature, closureCache);
@@ -356,7 +357,7 @@ public class ArgumentMatcher {
             } else if (suppliedIndex == MatchPermutation.UNMATCHED || suppliedArgs[suppliedIndex] == null) {
                 resArgs[formalIndex] = wrapUnmatched(formals, builtin, formalIndex, noOpt);
             } else {
-                resArgs[formalIndex] = wrapMatched(formals, builtin, closureCache, suppliedArgs[suppliedIndex], formalIndex, noOpt);
+                resArgs[formalIndex] = wrapMatched(formals, builtin, closureCache, suppliedArgs[suppliedIndex], formalIndex, noOpt, fastPath);
             }
         }
         return resArgs;
@@ -365,10 +366,15 @@ public class ArgumentMatcher {
     /**
      * @param builtin The {@link RBuiltinDescriptor} of the function
      * @param formalIndex The formalIndex of this argument
+     * @param fastPath
      * @return A single suppliedArg and its corresponding defaultValue wrapped up into a
      *         {@link PromiseNode}
      */
-    private static boolean shouldInlineArgument(RBuiltinDescriptor builtin, int formalIndex) {
+    private static boolean shouldInlineArgument(RBuiltinDescriptor builtin, int formalIndex, FastPathFactory fastPath) {
+        if (fastPath != null) {
+// System.out.println("fast path arg matching");
+            return true;
+        }
         // This is for actual function calls. However, if the arguments are meant for a
         // builtin, we have to consider whether they should be forced or not!
         return builtin != null && builtin.evaluatesArg(formalIndex);
@@ -390,7 +396,7 @@ public class ArgumentMatcher {
     }
 
     @TruffleBoundary
-    private static RNode wrapMatched(FormalArguments formals, RBuiltinDescriptor builtin, ClosureCache closureCache, RNode suppliedArg, int formalIndex, boolean noOpt) {
+    private static RNode wrapMatched(FormalArguments formals, RBuiltinDescriptor builtin, ClosureCache closureCache, RNode suppliedArg, int formalIndex, boolean noOpt, FastPathFactory fastPath) {
         // Create promise, unless it's the empty value
         if (suppliedArg instanceof ConstantNode) {
             ConstantNode a = (ConstantNode) suppliedArg;
@@ -398,8 +404,8 @@ public class ArgumentMatcher {
                 return a;
             }
         }
-        if (shouldInlineArgument(builtin, formalIndex)) {
-            return PromiseNode.createInlined(suppliedArg, formals.getInternalDefaultArgumentAt(formalIndex), builtin.getKind() == RBuiltinKind.PRIMITIVE);
+        if (shouldInlineArgument(builtin, formalIndex, fastPath)) {
+            return PromiseNode.createInlined(suppliedArg, formals.getInternalDefaultArgumentAt(formalIndex), builtin == null || builtin.getKind() == RBuiltinKind.PRIMITIVE);
         } else {
             Closure closure = closureCache.getOrCreateClosure(suppliedArg);
             return PromiseNode.create(RPromiseFactory.create(PromiseType.ARG_SUPPLIED, closure), noOpt);

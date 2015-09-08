@@ -22,10 +22,16 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.r.nodes.access.variables.*;
 import com.oracle.truffle.r.nodes.binary.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.builtin.base.fastpaths.*;
+import com.oracle.truffle.r.nodes.builtin.base.fastpaths.VectorFastPathsFactory.DoubleFastPathNodeGen;
+import com.oracle.truffle.r.nodes.builtin.base.fastpaths.VectorFastPathsFactory.IntegerFastPathNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.foreign.*;
 import com.oracle.truffle.r.nodes.unary.*;
+import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.ops.*;
 
 public class BasePackage extends RBuiltinPackage {
@@ -506,5 +512,22 @@ public class BasePackage extends RBuiltinPackage {
         add(WhichFunctions.WhichMax.class, WhichFunctionsFactory.WhichMaxNodeGen::create);
         add(WhichFunctions.WhichMin.class, WhichFunctionsFactory.WhichMinNodeGen::create);
         add(Xtfrm.class, XtfrmNodeGen::create);
+    }
+
+    private static void addFastPath(MaterializedFrame baseFrame, String name, FastPathFactory factory) {
+        RFunction function = ReadVariableNode.lookupFunction(name, baseFrame, false);
+        function.setFastPath(factory);
+    }
+
+    @Override
+    public void loadOverrides(MaterializedFrame baseFrame) {
+        super.loadOverrides(baseFrame);
+        addFastPath(baseFrame, "setdiff", () -> SetDiffFastPathNodeGen.create(null));
+        addFastPath(baseFrame, "is.element", () -> IsElementFastPathNodeGen.create(null));
+        addFastPath(baseFrame, "integer", () -> IntegerFastPathNodeGen.create(null));
+        addFastPath(baseFrame, "numeric", () -> DoubleFastPathNodeGen.create(null));
+        addFastPath(baseFrame, "double", () -> DoubleFastPathNodeGen.create(null));
+        addFastPath(baseFrame, "pmax", FastPathFactory.DUMMY);
+        addFastPath(baseFrame, "pmin", FastPathFactory.DUMMY);
     }
 }

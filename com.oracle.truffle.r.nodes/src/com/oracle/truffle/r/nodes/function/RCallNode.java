@@ -800,20 +800,40 @@ public final class RCallNode extends RNode implements RSyntaxNode {
         @Child private DirectCallNode call;
         @Child private MatchedArgumentsNode matchedArgs;
         @Child private RArgumentsNode argsNode = RArgumentsNode.create();
+        @Child private RFastPathNode fastPath;
 
         private final RCaller caller = RDataFactory.createCaller(this);
         private final boolean needsCallerFrame;
+        private final RootCallTarget callTarget;
         @CompilationFinal private boolean needsSplitting;
 
         DispatchedCallNode(RFunction function, MatchedArguments matchedArgs) {
             this.matchedArgs = matchedArgs.createNode();
-            this.call = Truffle.getRuntime().createDirectCallNode(function.getTarget());
             this.needsCallerFrame = function.containsDispatch();
             this.needsSplitting = needsSplitting(function);
+            this.callTarget = function.getTarget();
+
+            this.fastPath = function.getFastPath() == null ? null : function.getFastPath().create();
+            if (fastPath == null) {
+                this.call = Truffle.getRuntime().createDirectCallNode(function.getTarget());
+            } else {
+// System.out.println("created fast path " + fastPath);
+            }
         }
 
         @Override
         public Object execute(VirtualFrame frame, RFunction currentFunction, S3Args s3Args) {
+            if (fastPath != null) {
+                Object result = fastPath.execute(frame, matchedArgs.executeArray(frame));
+                if (result != null) {
+                    return result;
+                }
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                fastPath = null;
+// System.out.println("falling back to method execution");
+                call = insert(Truffle.getRuntime().createDirectCallNode(callTarget));
+            }
+
             if (needsSplitting) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 needsSplitting = false;
