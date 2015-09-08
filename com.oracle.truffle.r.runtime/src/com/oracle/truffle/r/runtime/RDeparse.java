@@ -20,6 +20,7 @@ import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.runtime.context.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
+import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.gnur.*;
 import com.oracle.truffle.r.runtime.nodes.*;
 
@@ -939,7 +940,7 @@ public class RDeparse {
         }
     }
 
-    private static RVector checkScalarVector(Object obj) {
+    private static RAbstractVector checkScalarVector(Object obj) {
         if (obj instanceof String) {
             return RDataFactory.createStringVectorFromScalar((String) obj);
         } else if (obj instanceof Byte) {
@@ -951,7 +952,7 @@ public class RDeparse {
         } else if (obj instanceof RComplex) {
             return RDataFactory.createComplexVectorFromScalar((RComplex) obj);
         } else {
-            return (RVector) obj;
+            return (RAbstractVector) obj;
         }
     }
 
@@ -1167,7 +1168,7 @@ public class RDeparse {
     }
 
     @TruffleBoundary
-    private static State vector2buff(State state, RVector vec) {
+    private static State vector2buff(State state, RAbstractVector vec) {
         SEXPTYPE type = SEXPTYPE.typeForClass(vec.getClass());
         boolean surround = false;
         int len = vec.getLength();

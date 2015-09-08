@@ -29,6 +29,7 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.utilities.*;
+import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.variables.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.function.*;
@@ -153,14 +154,17 @@ public final class AccessArgumentNode extends RNode {
     private boolean checkInsertOptDefaultArg() {
         if (optDefaultArgNode == null) {
             RNode defaultArg = formals.getDefaultArgument(index);
-            RNode arg = EagerEvalHelper.unfold(defaultArg);
+            RNode arg = (RNode) RASTUtils.unwrap(defaultArg);
 
             CompilerDirectives.transferToInterpreterAndInvalidate();
             // TODO: all tests pass without it but perhaps we should "re-wrap" promises here?
             if (isOptimizableDefault(arg)) {
                 optDefaultArgNode = new OptVariableDefaultPromiseNode(factory, (ReadVariableNode) NodeUtil.cloneNode(arg), ArgumentStatePush.INVALID_INDEX);
-            } else if (isOptimizableConstant(arg)) {
-                optDefaultArgNode = new OptConstantPromiseNode(factory.getType(), (ConstantNode) arg);
+            } else {
+                Object optimizableConstant = getOptimizableConstant(arg);
+                if (optimizableConstant != null) {
+                    optDefaultArgNode = new OptConstantPromiseNode(factory.getType(), arg, optimizableConstant);
+                }
             }
             if (optDefaultArgNode == null) {
                 // No success: Rewrite to default

@@ -400,7 +400,7 @@ public final class RDataFactory {
         return traceDataCreated(new RPromise(PromiseType.NO_ARG, OptType.DEFAULT, env.getFrame(), closure));
     }
 
-    public static RPromise createPromise(PromiseType type, OptType opt, Object expr, Object argumentValue) {
+    public static RPromise createPromise(PromiseType type, OptType opt, RBaseNode expr, Object argumentValue) {
         return traceDataCreated(new RPromise(type, opt, expr, argumentValue));
     }
 

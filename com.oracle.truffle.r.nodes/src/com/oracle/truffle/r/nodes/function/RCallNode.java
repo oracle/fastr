@@ -226,6 +226,14 @@ public final class RCallNode extends RNode implements RSyntaxNode {
         return new Arguments<>(arguments.v, signature);
     }
 
+    public int getArgumentCount() {
+        return arguments.v.length;
+    }
+
+    public RSyntaxNode getArgument(int index) {
+        return arguments.v[index];
+    }
+
     @Override
     public Object execute(VirtualFrame frame) {
         return execute(frame, executeFunctionNode(frame));

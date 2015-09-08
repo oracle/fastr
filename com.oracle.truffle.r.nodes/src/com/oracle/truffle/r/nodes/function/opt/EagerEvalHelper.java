@@ -27,6 +27,7 @@ import com.oracle.truffle.r.nodes.access.variables.*;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode.ReadKind;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.nodes.*;
 
 /**
@@ -63,8 +64,42 @@ public class EagerEvalHelper {
         return FastROptions.EagerEval || FastROptions.EagerEvalExpressions;
     }
 
-    public static boolean isOptimizableConstant(RNode expr) {
-        return optConsts() && isConstantArgument(expr);
+    /**
+     * This methods checks if an argument is a {@link ConstantNode}. Thanks to "..." unrolling, this
+     * does not need to handle "..." as special case (which might result in a {@link ConstantNode}
+     * of RMissing.instance if empty).
+     *
+     * @param expr
+     * @return Whether the given {@link RNode} is a {@link ConstantNode}
+     */
+    public static Object getOptimizableConstant(RNode expr) {
+        if (!optConsts()) {
+            return null;
+        }
+        if (expr instanceof RCallNode) {
+            RCallNode call = (RCallNode) expr;
+            if (call.getFunctionNode() instanceof ReadVariableNode) {
+                String functionName = ((ReadVariableNode) call.getFunctionNode()).getIdentifier();
+                switch (functionName) {
+                    case "character":
+                        if (call.getArgumentCount() == 0) {
+                            return RDataFactory.createEmptyStringVector();
+                        } else if (call.getArgumentCount() == 1) {
+                            RSyntaxNode argument = call.getArgument(0);
+                            Integer value = ConstantNode.asIntConstant(argument, true);
+                            if (value != null) {
+                                RStringVector vector = RDataFactory.createStringVector(value);
+                                ArgumentStatePush.transitionStateSlowPath(vector);
+                                return vector;
+                            }
+                        }
+                        break;
+                }
+            }
+        } else if (expr instanceof ConstantNode) {
+            return ((ConstantNode) expr).getValue();
+        }
+        return null;
     }
 
     public static boolean isOptimizableVariable(RNode expr) {
@@ -80,53 +115,18 @@ public class EagerEvalHelper {
     }
 
     /**
-     * Unwraps the operand of a {@link WrapArgumentNode} if present.
-     *
-     * @param argObj
-     * @return The operand of a {@link WrapArgumentNode}, else the {@link RNode} itself
-     */
-    public static RNode unfold(Object argObj) {
-        RNode arg = (RNode) argObj;
-        if (arg instanceof WrapArgumentNode) {
-            return ((WrapArgumentNode) arg).getOperand();
-        }
-        return arg;
-    }
-
-    /**
-     * Use {@link #unfold(Object)} first!!!
-     *
-     * This methods checks if an argument is a {@link ConstantNode}. Thanks to "..." unrolling, this
-     * does not need to handle "..." as special case (which might result in a {@link ConstantNode}
-     * of RMissing.instance if empty).
-     *
-     * @param expr
-     * @return Whether the given {@link RNode} is a {@link ConstantNode}
-     */
-    public static boolean isConstantArgument(RNode expr) {
-        return expr instanceof ConstantNode;
-    }
-
-    /**
-     * Use {@link #unfold(Object)} first!!!
-     *
-     * @param expr
      * @return Whether the given {@link RNode} is a {@link ReadVariableNode}
      *
      * @see FastROptions#EagerEvalVariables
      */
-    public static boolean isVariableArgument(RNode expr) {
+    public static boolean isVariableArgument(RBaseNode expr) {
         // Do NOT try to optimize anything that might force a Promise, as this might be arbitrary
         // complex (time and space)!
         return expr instanceof ReadVariableNode && ((ReadVariableNode) expr).getKind() != ReadKind.Forced;
     }
 
-    /**
-     * @param expr
-     * @return TODO comment
-     */
-    private static boolean isCheapExpressionArgument(RNode expr) {
-        // TODO Implement cheap eagerness analysis =)
+    private static boolean isCheapExpressionArgument(@SuppressWarnings("unused") RNode expr) {
+        // TODO Implement cheap eagerness analysis
         return false;
     }
 }

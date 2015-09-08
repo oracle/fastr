@@ -50,8 +50,12 @@ public abstract class ConstantNode extends RNode implements RSyntaxNode, Visibil
         return null;
     }
 
-    public final Object getValue() {
-        return execute(null);
+    public abstract Object getValue();
+
+    @Override
+    public final Object execute(VirtualFrame frame) {
+        controlVisibility();
+        return getValue();
     }
 
     @Override
@@ -117,8 +121,7 @@ public abstract class ConstantNode extends RNode implements RSyntaxNode, Visibil
         }
 
         @Override
-        public Object execute(VirtualFrame frame) {
-            controlVisibility();
+        public Object getValue() {
             return objectValue;
         }
 
@@ -140,8 +143,7 @@ public abstract class ConstantNode extends RNode implements RSyntaxNode, Visibil
         }
 
         @Override
-        public Object execute(VirtualFrame frame) {
-            controlVisibility();
+        public Object getValue() {
             return objectValue;
         }
 
@@ -163,8 +165,7 @@ public abstract class ConstantNode extends RNode implements RSyntaxNode, Visibil
         }
 
         @Override
-        public Object execute(VirtualFrame frame) {
-            controlVisibility();
+        public Object getValue() {
             return objectValue;
         }
 
@@ -185,8 +186,7 @@ public abstract class ConstantNode extends RNode implements RSyntaxNode, Visibil
         }
 
         @Override
-        public Object execute(VirtualFrame frame) {
-            controlVisibility();
+        public Object getValue() {
             return value;
         }
 
@@ -233,5 +233,17 @@ public abstract class ConstantNode extends RNode implements RSyntaxNode, Visibil
                 super.serializeImpl(state);
             }
         }
+    }
+
+    public static Integer asIntConstant(RSyntaxNode argument, boolean castFromDouble) {
+        if (argument instanceof ConstantNode) {
+            Object value = ((ConstantNode) argument).getValue();
+            if (value instanceof Integer) {
+                return (int) value;
+            } else if (castFromDouble && value instanceof Double) {
+                return (int) (double) value;
+            }
+        }
+        return null;
     }
 }

@@ -112,7 +112,7 @@ public class RPromise extends RLanguageRep implements RTypedValue {
      * This creates a new tuple (expr, env, closure, value=null), which may later be evaluated.
      */
     RPromise(PromiseType type, OptType optType, MaterializedFrame execFrame, Closure closure) {
-        super((RBaseNode) closure.getExpr());
+        super(closure.getExpr());
         assert type != PromiseType.ARG_DEFAULT || execFrame != null;
         this.type = type;
         this.optType = optType;
@@ -123,8 +123,8 @@ public class RPromise extends RLanguageRep implements RTypedValue {
     /**
      * This creates a new tuple (expr, null, null, value), which is already evaluated.
      */
-    RPromise(PromiseType type, OptType optType, Object expr, Object value) {
-        super((RBaseNode) expr);
+    RPromise(PromiseType type, OptType optType, RBaseNode expr, Object value) {
+        super(expr);
         assert value != null;
         this.type = type;
         this.optType = optType;
@@ -138,8 +138,8 @@ public class RPromise extends RLanguageRep implements RTypedValue {
      * This creates a new tuple (isEvaluated=false, expr, null, null, value=null). Meant to be
      * called via {@link VarargPromise#VarargPromise(PromiseType, RPromise, Closure)} only!
      */
-    private RPromise(PromiseType type, OptType optType, Object expr) {
-        super((RBaseNode) expr);
+    private RPromise(PromiseType type, OptType optType, RBaseNode expr) {
+        super(expr);
         this.type = type;
         this.optType = optType;
         // Not needed as already evaluated:
@@ -447,13 +447,13 @@ public class RPromise extends RLanguageRep implements RTypedValue {
 
     public static final class Closure {
         private RootCallTarget callTarget;
-        private final Object expr;
+        private final RBaseNode expr;
 
-        private Closure(Object expr) {
+        private Closure(RBaseNode expr) {
             this.expr = expr;
         }
 
-        public static Closure create(Object expr) {
+        public static Closure create(RBaseNode expr) {
             return new Closure(expr);
         }
 
@@ -470,7 +470,7 @@ public class RPromise extends RLanguageRep implements RTypedValue {
             return RContext.getEngine().makePromiseCallTarget(expr, CLOSURE_WRAPPER_NAME);
         }
 
-        public Object getExpr() {
+        public RBaseNode getExpr() {
             return expr;
         }
     }

@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.nodes.function.opt;
 
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.RPromise.OptType;
@@ -36,14 +35,14 @@ import com.oracle.truffle.r.runtime.nodes.*;
 public final class OptConstantPromiseNode extends PromiseNode {
 
     private final PromiseType type;
-    private final ConstantNode constantExpr;
+    private final RBaseNode constantExpression;
     private final Object constantValue;
 
-    public OptConstantPromiseNode(PromiseType type, ConstantNode constantExpr) {
+    public OptConstantPromiseNode(PromiseType type, RBaseNode constantExpression, Object constantValue) {
         super(null);
         this.type = type;
-        this.constantExpr = constantExpr;
-        this.constantValue = constantExpr.getValue();
+        this.constantExpression = constantExpression;
+        this.constantValue = constantValue;
     }
 
     /**
@@ -51,11 +50,11 @@ public final class OptConstantPromiseNode extends PromiseNode {
      */
     @Override
     public Object execute(VirtualFrame frame) {
-        return RDataFactory.createPromise(type, OptType.DEFAULT, constantExpr, constantValue);
+        return RDataFactory.createPromise(type, OptType.DEFAULT, constantExpression, constantValue);
     }
 
     @Override
     public RSyntaxNode getPromiseExpr() {
-        return constantExpr;
+        return (RSyntaxNode) constantExpression;
     }
 }

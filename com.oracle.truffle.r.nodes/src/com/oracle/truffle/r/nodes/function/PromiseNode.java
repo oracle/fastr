@@ -89,10 +89,12 @@ public abstract class PromiseNode extends RNode {
         // For ARG_DEFAULT, expr == defaultExpr!
         RNode arg = (RNode) factory.getExpr();
         RNode expr = (RNode) RASTUtils.unwrap(arg);
-        if (isOptimizableConstant(expr)) {
+        Object optimizableConstant = getOptimizableConstant(expr);
+
+        if (optimizableConstant != null) {
             // As Constants don't care where they are evaluated, we don't need to
             // distinguish between ARG_DEFAULT and ARG_SUPPLIED
-            return new OptConstantPromiseNode(factory.getType(), (ConstantNode) expr);
+            return new OptConstantPromiseNode(factory.getType(), expr, optimizableConstant);
         } else if (factory.getType() == PromiseType.ARG_SUPPLIED) {
             if (isVararg(expr)) {
                 return expr;
