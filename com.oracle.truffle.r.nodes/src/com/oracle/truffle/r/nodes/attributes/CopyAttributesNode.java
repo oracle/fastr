@@ -48,8 +48,8 @@ public abstract class CopyAttributesNode extends RBaseNode {
     public abstract RAbstractVector execute(RAbstractVector target, RAbstractVector left, int leftLength, RAbstractVector right, int rightLength);
 
     protected boolean containsMetadata(RAbstractVector vector, RAttributeProfiles attrProfiles) {
-        return vector instanceof RVector && vector.hasDimensions() || (copyAllAttributes && vector.getAttributes() != null) || vector.getNames(attrProfiles) != null ||
-                        vector.getDimNames(attrProfiles) != null;
+        return vector instanceof RVector && vector.hasDimensions() || (copyAllAttributes && vector.getAttributes() != null) || vector.getDimNames(attrProfiles) != null ||
+                        vector.getNames(attrProfiles) != null;
     }
 
     private static int countNo;
