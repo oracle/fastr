@@ -60,7 +60,8 @@ public abstract class CombineBinaryDoubleNode extends CombineBinaryNode {
                     @Cached("create()") CountedLoopConditionProfile profile) {
         int dataLength = left.getLength();
         double[] result = new double[dataLength + 1];
-        for (int i = 0; i < dataLength; i++) {
+        profile.profileLength(dataLength);
+        for (int i = 0; profile.inject(i < dataLength); i++) {
             result[i] = left.getDataAt(i);
         }
         result[dataLength] = right;
@@ -73,7 +74,8 @@ public abstract class CombineBinaryDoubleNode extends CombineBinaryNode {
         int dataLength = right.getLength();
         double[] result = new double[dataLength + 1];
         result[0] = left;
-        for (int i = 0; i < dataLength; i++) {
+        profile.profileLength(dataLength);
+        for (int i = 0; profile.inject(i < dataLength); i++) {
             result[i + 1] = right.getDataAt(i);
         }
         return RDataFactory.createDoubleVector(result, RRuntime.isComplete(left) && right.isComplete(), combineNames(right, true, profile));
@@ -87,10 +89,12 @@ public abstract class CombineBinaryDoubleNode extends CombineBinaryNode {
         int rightLength = right.getLength();
         double[] result = new double[leftLength + rightLength];
         int i = 0;
-        for (; i < leftLength; i++) {
+        profileLeft.profileLength(leftLength);
+        for (; profileLeft.inject(i < leftLength); i++) {
             result[i] = left.getDataAt(i);
         }
-        for (; i < leftLength + rightLength; i++) {
+        profileRight.profileLength(rightLength);
+        for (; profileRight.inject(i < leftLength + rightLength); i++) {
             result[i] = right.getDataAt(i - leftLength);
         }
         return RDataFactory.createDoubleVector(result, left.isComplete() && right.isComplete(), combineNames(left, right, profileLeft, profileRight));
