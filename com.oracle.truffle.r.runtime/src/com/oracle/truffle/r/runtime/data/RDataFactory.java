@@ -74,7 +74,7 @@ public final class RDataFactory {
         if (fillNA) {
             Arrays.fill(data, RRuntime.INT_NA);
         }
-        return createIntVector(data, false);
+        return createIntVector(data, !fillNA);
     }
 
     public static RIntVector createIntVector(int[] data, boolean complete) {
@@ -102,7 +102,7 @@ public final class RDataFactory {
         if (fillNA) {
             Arrays.fill(data, RRuntime.DOUBLE_NA);
         }
-        return createDoubleVector(data, false);
+        return createDoubleVector(data, !fillNA);
     }
 
     public static RDoubleVector createDoubleVector(double[] data, boolean complete) {
