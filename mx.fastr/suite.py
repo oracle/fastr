@@ -125,7 +125,7 @@ suite = {
       "sha1" : "043462be96ce1dd3105b928c0271b056dbe4d75d",
     },
 
-    "ASM" : {
+    "FASTR_ASM" : {
       "path" : "libdownloads/asm-5.0.3.jar",
       "urls" : [
         "https://lafo.ssw.uni-linz.ac.at/pub/graal-external-deps/asm-5.0.3.jar",
@@ -149,7 +149,7 @@ suite = {
       "sha1" : "006936bbd6c5b235665d87bd450f5e13b52d4b48",
     },
 
-    "ASM_ANALYSIS" : {
+    "FASTR_ASM_ANALYSIS" : {
       "path" : "libdownloads/asm-analysis-4.0.jar",
       "urls" : [
         "https://lafo.ssw.uni-linz.ac.at/pub/graal-external-deps/asm-analysis-4.0.jar",
@@ -158,7 +158,7 @@ suite = {
       "sha1" : "1c45d52b6f6c638db13cf3ac12adeb56b254cdd7",
     },
 
-    "ASM_COMMONS" : {
+    "FASTR_ASM_COMMONS" : {
       "path" : "libdownloads/asm-commons-4.0.jar",
       "urls" : [
         "https://lafo.ssw.uni-linz.ac.at/pub/graal-external-deps/asm-commons-4.0.jar",
@@ -167,7 +167,7 @@ suite = {
       "sha1" : "a839ec6737d2b5ba7d1878e1a596b8f58aa545d9",
     },
 
-    "ASM_TREE" : {
+    "FASTR_ASM_TREE" : {
       "path" : "libdownloads/asm-tree-4.0.jar",
       "urls" : [
         "https://lafo.ssw.uni-linz.ac.at/pub/graal-external-deps/asm-tree-4.0.jar",
@@ -176,7 +176,7 @@ suite = {
       "sha1" : "67bd266cd17adcee486b76952ece4cc85fe248b8",
     },
 
-    "ASM_UTIL" : {
+    "FASTR_ASM_UTIL" : {
       "path" : "libdownloads/asm-util-4.0.jar",
       "urls" : [
         "https://lafo.ssw.uni-linz.ac.at/pub/graal-external-deps/asm-util-4.0.jar",
@@ -325,10 +325,10 @@ suite = {
         "com.oracle.truffle.r.runtime",
         "jvmci:JVMCI_API",
         "graal:GRAAL_TRUFFLE_HOTSPOT",
-        "ASM",
-        "ASM_ANALYSIS",
+        "FASTR_ASM",
+        "FASTR_ASM_ANALYSIS",
         "JNR_POSIX",
-        "ASM_UTIL",
+        "FASTR_ASM_UTIL",
         "JFFI",
         "JNR_FFI",
         "NETLIB",
@@ -336,9 +336,9 @@ suite = {
         "JFFI_NATIVE",
         "JNR_INVOKE",
         "JNR_UDIS86",
-        "ASM",
-        "ASM_TREE",
-        "ASM_COMMONS",
+        "FASTR_ASM",
+        "FASTR_ASM_TREE",
+        "FASTR_ASM_COMMONS",
         "JNR_X86ASM",
       ],
       "checkstyle" : "com.oracle.truffle.r.runtime",
@@ -390,12 +390,12 @@ suite = {
       "exclude" : [
         "JDK_TOOLS",
         "NETLIB",
-        "ASM",
-        "ASM_UTIL",
-        "ASM_TREE",
-        "ASM_COMMONS",
-        "ASM_ANALYSIS",
-        "ASM",
+        "FASTR_ASM",
+        "FASTR_ASM_UTIL",
+        "FASTR_ASM_TREE",
+        "FASTR_ASM_COMMONS",
+        "FASTR_ASM_ANALYSIS",
+        "FASTR_ASM",
         "JNR_X86ASM",
         "JFFI_NATIVE",
         "JFFI",
