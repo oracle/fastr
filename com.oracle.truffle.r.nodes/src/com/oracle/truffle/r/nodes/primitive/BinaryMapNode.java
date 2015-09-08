@@ -51,6 +51,7 @@ public final class BinaryMapNode extends RBaseNode {
     private final VectorLengthProfile leftLengthProfile = VectorLengthProfile.create();
     private final VectorLengthProfile rightLengthProfile = VectorLengthProfile.create();
     private final ConditionProfile dimensionsProfile;
+    private final ConditionProfile maxLengthProfile;
     private final BranchProfile seenEmpty = BranchProfile.create();
     private final ConditionProfile shareLeft;
     private final ConditionProfile shareRight;
@@ -78,6 +79,7 @@ public final class BinaryMapNode extends RBaseNode {
         this.mayShareRight = right.getRType() == resultType && rightVectorImpl;
         this.argumentType = argumentType;
         this.resultType = resultType;
+        this.maxLengthProfile = ConditionProfile.createBinaryProfile();
 
         // lazily create profiles only if needed to avoid unnecessary allocations
         this.shareLeft = mayShareLeft ? ConditionProfile.createBinaryProfile() : null;
@@ -224,7 +226,7 @@ public final class BinaryMapNode extends RBaseNode {
             target = function.tryFoldConstantTime(leftCast, leftLength, rightCast, rightLength);
         }
         if (target == null) {
-            int maxLength = Math.max(leftLength, rightLength);
+            int maxLength = maxLengthProfile.profile(leftLength >= rightLength) ? leftLength : rightLength;
             target = createOrShareVector(leftLength, left, rightLength, right, maxLength);
             Object store = target.getInternalStore();
 

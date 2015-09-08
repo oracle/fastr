@@ -902,7 +902,6 @@ public abstract class BinaryArithmetic extends Operation {
                 return powc(leftReal, leftImag, rightReal, rightImag);
             }
         }
-
     }
 
     private static class Max extends BinaryArithmetic {
@@ -923,7 +922,14 @@ public abstract class BinaryArithmetic extends Operation {
 
         @Override
         public double op(double left, double right) {
-            return Math.max(left, right);
+            // explicit checks, since Math.max uses a non-final static field
+            if (left != left) {
+                return left;
+            } else if (left == 0.0d && right == 0.0d && Double.doubleToRawLongBits(left) == Double.doubleToRawLongBits(-0.0d)) {
+                return right;
+            } else {
+                return left >= right ? left : right;
+            }
         }
 
         @Override
@@ -957,7 +963,14 @@ public abstract class BinaryArithmetic extends Operation {
 
         @Override
         public double op(double left, double right) {
-            return Math.min(left, right);
+            // explicit checks, since Math.max uses a non-final static field
+            if (left != left) {
+                return left;
+            } else if (left == 0.0d && right == 0.0d && Double.doubleToRawLongBits(right) == Double.doubleToRawLongBits(-0.0d)) {
+                return right;
+            } else {
+                return left <= right ? left : right;
+            }
         }
 
         @Override
