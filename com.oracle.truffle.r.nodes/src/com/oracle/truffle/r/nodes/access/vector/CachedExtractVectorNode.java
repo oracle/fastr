@@ -91,6 +91,9 @@ final class CachedExtractVectorNode extends CachedVectorNode {
         return false;
     }
 
+    private final ConditionProfile extractedLengthGTZeroProfile = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile oneDimensionProfile = ConditionProfile.createBinaryProfile();
+
     public Object apply(Object originalVector, Object[] originalPositions, PositionProfile[] originalProfiles, Object originalExact, Object originalDropDimensions) {
         final Object[] positions = filterPositions(originalPositions);
 
@@ -151,13 +154,13 @@ final class CachedExtractVectorNode extends CachedVectorNode {
         }
 
         if (mode.isSubset()) {
-            if (extractedVectorLength > 0) {
+            if (extractedLengthGTZeroProfile.profile(extractedVectorLength > 0)) {
                 writeVectorNode.enableValueNACheck(vector);
                 writeVectorNode.apply(extractedVector, extractedVectorLength, positions, vector, vectorLength, dimensions);
                 extractedVector.setComplete(writeVectorNode.neverSeenNAInValue());
                 RNode.reportWork(this, extractedVectorLength);
             }
-            if (numberOfDimensions == 1) {
+            if (oneDimensionProfile.profile(numberOfDimensions == 1)) {
                 // names only need to be considered for single dimensional accesses
                 RStringVector originalNames = vector.getNames(vectorNamesProfile);
                 if (originalNames != null) {
@@ -293,14 +296,17 @@ final class CachedExtractVectorNode extends CachedVectorNode {
         }
     }
 
+    private final BranchProfile droppedDimensionProfile = BranchProfile.create();
+
     @ExplodeLoop
     private int countDimensions(PositionProfile[] boundsProfile) {
         if (dropDimensions) {
-            int dimCount = 0;
+            int dimCount = numberOfDimensions;
             for (int i = 0; i < numberOfDimensions; i++) {
                 int selectedPositionsCount = boundsProfile[i].selectedPositionsCount;
-                if (selectedPositionsCount != 1) {
-                    dimCount++;
+                if (selectedPositionsCount == 1) {
+                    droppedDimensionProfile.enter();
+                    dimCount--;
                 }
             }
             return dimCount;
