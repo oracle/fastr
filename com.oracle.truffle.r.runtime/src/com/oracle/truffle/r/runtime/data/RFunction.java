@@ -55,10 +55,11 @@ public final class RFunction extends RAttributeStorage implements RTypedValue, T
 
     @CompilationFinal private MaterializedFrame enclosingFrame;
 
-    RFunction(String name, RootCallTarget target, RBuiltinDescriptor builtin, MaterializedFrame enclosingFrame, boolean containsDispatch) {
+    RFunction(String name, RootCallTarget target, RBuiltinDescriptor builtin, MaterializedFrame enclosingFrame, FastPathFactory fastPath, boolean containsDispatch) {
         this.target = target;
         this.builtin = builtin;
         this.name = name;
+        this.fastPath = fastPath;
         if (!isBuiltin() && name != NO_NAME) {
             // If we have a name, propagate it to the rootnode
             RContext.getRRuntimeASTAccess().setFunctionName(getRootNode(), name);

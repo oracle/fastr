@@ -51,7 +51,8 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
 
     public RFunction transformFunction(String name, Function func, MaterializedFrame enclosingFrame) {
         RootCallTarget callTarget = createFunctionCallTarget(func);
-        return RDataFactory.createFunction(name, callTarget, null, enclosingFrame, ((FunctionDefinitionNode) callTarget.getRootNode()).containsDispatch());
+        FastPathFactory fastPath = EvaluatedArgumentsVisitor.process(func);
+        return RDataFactory.createFunction(name, callTarget, null, enclosingFrame, fastPath, ((FunctionDefinitionNode) callTarget.getRootNode()).containsDispatch());
     }
 
     @Override
@@ -141,10 +142,20 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
 
     @Override
     public RSyntaxNode visit(Function func) {
+// FastPathFactory f = EvaluatedArgumentsVisitor.process(func);
+// if (f != null) {
+// System.out.println("////////////////////////////////");
+// if (func.getDebugName() != null) {
+// System.out.println("// " + func.getDebugName());
+// }
+// System.out.println(func.getSource().getCode());
+// System.out.println("names: " + f + "\n");
+// }
         RootCallTarget callTarget = null;
         try {
             callTarget = createFunctionCallTarget(func);
-            return FunctionExpressionNode.create(func.getSource(), callTarget);
+            FastPathFactory fastPath = EvaluatedArgumentsVisitor.process(func);
+            return FunctionExpressionNode.create(func.getSource(), callTarget, fastPath);
         } catch (Throwable err) {
             throw new RInternalError(err, "visit(Function)");
         }

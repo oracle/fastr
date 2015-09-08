@@ -71,7 +71,7 @@ public abstract class Args extends RBuiltinNode {
         FunctionBodyNode newBody = new FunctionBodyNode(SaveArgumentsNode.NO_ARGS, nullBody);
         String newDesc = "args(" + rootNode.getDescription() + ")";
         FunctionDefinitionNode newNode = new FunctionDefinitionNode(null, rootNode.getFrameDescriptor(), newBody, formals, newDesc, false, null);
-        return RDataFactory.createFunction(newDesc, Truffle.getRuntime().createCallTarget(newNode), null, REnvironment.globalEnv().getFrame(), false);
+        return RDataFactory.createFunction(newDesc, Truffle.getRuntime().createCallTarget(newNode), null, REnvironment.globalEnv().getFrame(), null, false);
     }
 
     @Fallback

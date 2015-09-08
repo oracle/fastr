@@ -424,8 +424,8 @@ public final class RDataFactory {
         return traceDataCreated(new RPairList(car, cdr, tag, type));
     }
 
-    public static RFunction createFunction(String name, RootCallTarget target, RBuiltinDescriptor builtin, MaterializedFrame enclosingFrame, boolean containsDispatch) {
-        return traceDataCreated(new RFunction(name, target, builtin, enclosingFrame, containsDispatch));
+    public static RFunction createFunction(String name, RootCallTarget target, RBuiltinDescriptor builtin, MaterializedFrame enclosingFrame, FastPathFactory fastPath, boolean containsDispatch) {
+        return traceDataCreated(new RFunction(name, target, builtin, enclosingFrame, fastPath, containsDispatch));
     }
 
     public static REnvironment createInternalEnv() {

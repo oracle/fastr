@@ -83,26 +83,30 @@ public abstract class PromiseNode extends RNode {
      *         implementation
      */
     @TruffleBoundary
-    public static RNode create(RPromiseFactory factory, boolean noOpt) {
+    public static RNode create(RPromiseFactory factory, boolean noOpt, boolean forcedEager) {
         assert factory.getType() != PromiseType.NO_ARG;
 
         // For ARG_DEFAULT, expr == defaultExpr!
         RNode arg = (RNode) factory.getExpr();
         RNode expr = (RNode) RASTUtils.unwrap(arg);
-        Object optimizableConstant = getOptimizableConstant(expr);
-
-        if (optimizableConstant != null) {
-            // As Constants don't care where they are evaluated, we don't need to
-            // distinguish between ARG_DEFAULT and ARG_SUPPLIED
-            return new OptConstantPromiseNode(factory.getType(), expr, optimizableConstant);
-        } else if (factory.getType() == PromiseType.ARG_SUPPLIED) {
-            if (isVararg(expr)) {
-                return expr;
-            } else if (!noOpt && isOptimizableVariable(expr)) {
-                return new OptVariableSuppliedPromiseNode(factory, (ReadVariableNode) expr, arg == expr ? ArgumentStatePush.INVALID_INDEX : ((WrapArgumentNode) arg).getIndex());
+        int wrapIndex = arg == expr ? ArgumentStatePush.INVALID_INDEX : ((WrapArgumentNode) arg).getIndex();
+        if (forcedEager) {
+            return new OptForcedEagerPromiseNode(factory, wrapIndex);
+        } else {
+            Object optimizableConstant = getOptimizableConstant(expr);
+            if (optimizableConstant != null) {
+                // As Constants don't care where they are evaluated, we don't need to
+                // distinguish between ARG_DEFAULT and ARG_SUPPLIED
+                return new OptConstantPromiseNode(factory.getType(), expr, optimizableConstant);
+            } else if (factory.getType() == PromiseType.ARG_SUPPLIED) {
+                if (isVararg(expr)) {
+                    return expr;
+                } else if (!noOpt && isOptimizableVariable(expr)) {
+                    return new OptVariableSuppliedPromiseNode(factory, (ReadVariableNode) expr, wrapIndex);
+                }
             }
+            return new PromisedNode(factory);
         }
-        return new PromisedNode(factory);
     }
 
     /**
@@ -322,8 +326,8 @@ public abstract class PromiseNode extends RNode {
     }
 
     @TruffleBoundary
-    public static RNode createVarArgs(RNode[] nodes, ArgumentsSignature signature, ClosureCache closureCache) {
-        return new VarArgsPromiseNode(nodes, signature, closureCache);
+    public static RNode createVarArgs(RNode[] nodes, ArgumentsSignature signature, ClosureCache closureCache, boolean forcedEager) {
+        return new VarArgsPromiseNode(nodes, signature, closureCache, forcedEager);
     }
 
     /**
@@ -334,13 +338,13 @@ public abstract class PromiseNode extends RNode {
         private final Closure[] closures;
         private final ArgumentsSignature signature;
 
-        public VarArgsPromiseNode(RNode[] nodes, ArgumentsSignature signature, ClosureCache closureCache) {
+        public VarArgsPromiseNode(RNode[] nodes, ArgumentsSignature signature, ClosureCache closureCache, boolean forcedEager) {
             this.promised = new RNode[nodes.length];
             this.closures = new Closure[nodes.length];
             for (int i = 0; i < nodes.length; i++) {
                 Closure closure = closureCache.getOrCreateClosure(nodes[i]);
                 this.closures[i] = closure;
-                this.promised[i] = PromisedNode.create(RPromiseFactory.create(PromiseType.ARG_SUPPLIED, closure), false);
+                this.promised[i] = PromisedNode.create(RPromiseFactory.create(PromiseType.ARG_SUPPLIED, closure), false, forcedEager);
             }
             this.signature = signature;
         }

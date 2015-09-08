@@ -482,7 +482,7 @@ public class EnvFunctions {
 
         @Specialization
         RFunction copy(RFunction f) {
-            return RDataFactory.createFunction(f.getName(), f.getTarget(), f.getRBuiltin(), f.getEnclosingFrame(), f.containsDispatch());
+            return RDataFactory.createFunction(f.getName(), f.getTarget(), f.getRBuiltin(), f.getEnclosingFrame(), f.getFastPath(), f.containsDispatch());
         }
 
         @Specialization

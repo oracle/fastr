@@ -30,8 +30,30 @@ import com.oracle.truffle.r.runtime.nodes.*;
 @FunctionalInterface
 public interface FastPathFactory {
 
-    FastPathFactory DUMMY = () -> null;
+    FastPathFactory EVALUATE_ARGS = () -> null;
+
+    FastPathFactory FORCED_EAGER_ARGS = new FastPathFactory() {
+
+        public RFastPathNode create() {
+            return null;
+        }
+
+        public boolean evaluatesArgument(int index) {
+            return false;
+        }
+
+        public boolean forcedEagerPromise(int index) {
+            return true;
+        }
+    };
 
     RFastPathNode create();
 
+    default boolean evaluatesArgument(@SuppressWarnings("unused") int index) {
+        return true;
+    }
+
+    default boolean forcedEagerPromise(@SuppressWarnings("unused") int index) {
+        return false;
+    }
 }

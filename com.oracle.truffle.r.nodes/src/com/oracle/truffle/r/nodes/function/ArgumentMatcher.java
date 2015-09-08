@@ -352,7 +352,8 @@ public class ArgumentMatcher {
                 if (shouldInlineArgument(builtin, formalIndex, fastPath)) {
                     resArgs[formalIndex] = PromiseNode.createVarArgsInlined(newVarArgs, signature);
                 } else {
-                    resArgs[formalIndex] = PromiseNode.createVarArgs(newVarArgs, signature, closureCache);
+                    boolean forcedEager = fastPath != null && fastPath.forcedEagerPromise(formalIndex);
+                    resArgs[formalIndex] = PromiseNode.createVarArgs(newVarArgs, signature, closureCache, forcedEager);
                 }
             } else if (suppliedIndex == MatchPermutation.UNMATCHED || suppliedArgs[suppliedIndex] == null) {
                 resArgs[formalIndex] = wrapUnmatched(formals, builtin, formalIndex, noOpt);
@@ -371,8 +372,7 @@ public class ArgumentMatcher {
      *         {@link PromiseNode}
      */
     private static boolean shouldInlineArgument(RBuiltinDescriptor builtin, int formalIndex, FastPathFactory fastPath) {
-        if (fastPath != null) {
-// System.out.println("fast path arg matching");
+        if (fastPath != null && fastPath.evaluatesArgument(formalIndex)) {
             return true;
         }
         // This is for actual function calls. However, if the arguments are meant for a
@@ -390,7 +390,7 @@ public class ArgumentMatcher {
              */
             RNode defaultArg = formals.getDefaultArgument(formalIndex);
             Closure defaultClosure = formals.getOrCreateClosure(defaultArg);
-            return PromiseNode.create(RPromiseFactory.create(PromiseType.ARG_DEFAULT, defaultClosure), noOpt);
+            return PromiseNode.create(RPromiseFactory.create(PromiseType.ARG_DEFAULT, defaultClosure), noOpt, false);
         }
         return ConstantNode.create(formals.getInternalDefaultArgumentAt(formalIndex));
     }
@@ -408,7 +408,8 @@ public class ArgumentMatcher {
             return PromiseNode.createInlined(suppliedArg, formals.getInternalDefaultArgumentAt(formalIndex), builtin == null || builtin.getKind() == RBuiltinKind.PRIMITIVE);
         } else {
             Closure closure = closureCache.getOrCreateClosure(suppliedArg);
-            return PromiseNode.create(RPromiseFactory.create(PromiseType.ARG_SUPPLIED, closure), noOpt);
+            boolean forcedEager = fastPath != null && fastPath.forcedEagerPromise(formalIndex);
+            return PromiseNode.create(RPromiseFactory.create(PromiseType.ARG_SUPPLIED, closure), noOpt, forcedEager);
         }
     }
 

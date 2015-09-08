@@ -39,17 +39,19 @@ import com.oracle.truffle.r.runtime.nodes.*;
 
 public final class FunctionExpressionNode extends RNode implements RSyntaxNode {
 
-    public static FunctionExpressionNode create(SourceSection src, RootCallTarget callTarget) {
-        return new FunctionExpressionNode(src, callTarget);
+    public static FunctionExpressionNode create(SourceSection src, RootCallTarget callTarget, FastPathFactory fastPath) {
+        return new FunctionExpressionNode(src, callTarget, fastPath);
     }
 
     private final RootCallTarget callTarget;
     private final PromiseDeoptimizeFrameNode deoptFrameNode;
+    private final FastPathFactory fastPath;
 
     @CompilationFinal private StableValue<MaterializedFrame> enclosingFrameAssumption;
     @CompilationFinal private StableValue<FrameDescriptor> enclosingFrameDescriptorAssumption;
 
-    private FunctionExpressionNode(SourceSection src, RootCallTarget callTarget) {
+    private FunctionExpressionNode(SourceSection src, RootCallTarget callTarget, FastPathFactory fastPath) {
+        this.fastPath = fastPath;
         assignSourceSection(src);
         this.callTarget = callTarget;
         this.deoptFrameNode = EagerEvalHelper.optExprs() || EagerEvalHelper.optVars() || EagerEvalHelper.optDefault() ? new PromiseDeoptimizeFrameNode() : null;
@@ -103,7 +105,7 @@ public final class FunctionExpressionNode extends RNode implements RSyntaxNode {
         }
         verifyEnclosingAssumptions(frame, callTarget.getRootNode().getFrameDescriptor());
         boolean containsDispatch = ((FunctionDefinitionNode) callTarget.getRootNode()).containsDispatch();
-        RFunction func = RDataFactory.createFunction(RFunction.NO_NAME, callTarget, null, matFrame, containsDispatch);
+        RFunction func = RDataFactory.createFunction(RFunction.NO_NAME, callTarget, null, matFrame, fastPath, containsDispatch);
         if (RInstrument.instrumentingEnabled()) {
             RInstrument.checkDebugRequested(callTarget.toString(), func);
         }
@@ -146,6 +148,6 @@ public final class FunctionExpressionNode extends RNode implements RSyntaxNode {
     public RSyntaxNode substituteImpl(REnvironment env) {
         FunctionDefinitionNode thisFdn = (FunctionDefinitionNode) callTarget.getRootNode();
         FunctionDefinitionNode fdn = (FunctionDefinitionNode) thisFdn.substituteImpl(env);
-        return new FunctionExpressionNode(null, Truffle.getRuntime().createCallTarget(fdn));
+        return new FunctionExpressionNode(null, Truffle.getRuntime().createCallTarget(fdn), fastPath);
     }
 }
