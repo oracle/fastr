@@ -163,15 +163,15 @@ public class BinaryArithmeticNodeTest extends BinaryVectorTest {
     @Theory
     public void testRNullConstantResult(BinaryArithmeticFactory factory, RAbstractVector originalVector) {
         RAbstractVector vector = originalVector.copy();
-        RAbstractVector result = vector.getRType() == RType.Complex ? createEmptyComplexVector() : createEmptyDoubleVector();
 
-        assertThat(executeArithmetic(factory, vector, RNull.instance), is(result));
-        assertThat(executeArithmetic(factory, RNull.instance, vector), is(result));
+        RType type = vector.getRType() == RType.Complex ? RType.Complex : RType.Double;
+        assertThat(executeArithmetic(factory, vector, RNull.instance), isEmptyVectorOf(type));
+        assertThat(executeArithmetic(factory, RNull.instance, vector), isEmptyVectorOf(type));
     }
 
     @Theory
     public void testBothNull(BinaryArithmeticFactory factory) {
-        assertThat(executeArithmetic(factory, RNull.instance, RNull.instance), is(createEmptyDoubleVector()));
+        assertThat(executeArithmetic(factory, RNull.instance, RNull.instance), isEmptyVectorOf(RType.Double));
     }
 
     @Theory
@@ -310,9 +310,9 @@ public class BinaryArithmeticNodeTest extends BinaryVectorTest {
     }
 
     private void testEmptyArray(BinaryArithmeticFactory factory, RAbstractVector vector, RAbstractVector empty) {
-        assertThat(executeArithmetic(factory, vector, empty), is(getResultType(factory, vector, empty).getEmpty()));
-        assertThat(executeArithmetic(factory, empty, vector), is(getResultType(factory, empty, vector).getEmpty()));
-        assertThat(executeArithmetic(factory, empty, empty), is(getResultType(factory, empty, empty).getEmpty()));
+        assertThat(executeArithmetic(factory, vector, empty), isEmptyVectorOf(getResultType(factory, vector, empty)));
+        assertThat(executeArithmetic(factory, empty, vector), isEmptyVectorOf(getResultType(factory, empty, vector)));
+        assertThat(executeArithmetic(factory, empty, empty), isEmptyVectorOf(getResultType(factory, empty, empty)));
     }
 
     private static RType getArgumentType(RAbstractVector a, RAbstractVector b) {

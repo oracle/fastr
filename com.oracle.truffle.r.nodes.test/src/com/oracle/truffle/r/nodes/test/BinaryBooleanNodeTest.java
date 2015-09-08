@@ -241,9 +241,9 @@ public class BinaryBooleanNodeTest extends BinaryVectorTest {
     }
 
     private void testEmptyArray(BooleanOperationFactory factory, RAbstractVector vector, RAbstractVector empty) {
-        assertThat(executeArithmetic(factory, vector, empty), is(getResultType(factory, vector, empty).getEmpty()));
-        assertThat(executeArithmetic(factory, empty, vector), is(getResultType(factory, empty, vector).getEmpty()));
-        assertThat(executeArithmetic(factory, empty, empty), is(getResultType(factory, empty, empty).getEmpty()));
+        assertThat(executeArithmetic(factory, vector, empty), isEmptyVectorOf(getResultType(factory, vector, empty)));
+        assertThat(executeArithmetic(factory, empty, vector), isEmptyVectorOf(getResultType(factory, empty, vector)));
+        assertThat(executeArithmetic(factory, empty, empty), isEmptyVectorOf(getResultType(factory, empty, empty)));
     }
 
     private static boolean isPrimitive(Object result) {

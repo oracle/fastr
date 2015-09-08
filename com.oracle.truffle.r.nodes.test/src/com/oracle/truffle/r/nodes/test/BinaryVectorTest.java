@@ -24,6 +24,7 @@ package com.oracle.truffle.r.nodes.test;
 
 import static com.oracle.truffle.r.runtime.data.RDataFactory.*;
 
+import org.hamcrest.*;
 import org.junit.experimental.theories.*;
 
 import com.oracle.truffle.r.runtime.*;
@@ -68,4 +69,11 @@ public class BinaryVectorTest extends TestBase {
                     PRIMITIVE_COMPLEX, EMPTY_LOGICAL, EMPTY_INTEGER, EMPTY_DOUBLE, EMPTY_COMPLEX, SEQUENCE_INT, SEQUENCE_DOUBLE, FOUR_LOGICAL, FOUR_INT, //
                     FOUR_COMPLEX, NOT_COMPLETE_LOGICAL, NOT_COMPLETE_INT, NOT_COMPLETE_DOUBLE, NOT_COMPLETE_COMPLEX, ONE, TWO, THREE, FIVE};
 
+    protected Matcher<Object> isEmptyVectorOf(RType type) {
+        return new CustomMatcher<Object>("empty vector of type " + type) {
+            public boolean matches(Object item) {
+                return item instanceof RAbstractVector && ((RAbstractVector) item).getLength() == 0 && ((RAbstractVector) item).getRType() == type;
+            }
+        };
+    }
 }

@@ -53,15 +53,6 @@ public final class RDataFactory {
      */
     private static final ConditionProfile statsProfile = ConditionProfile.createBinaryProfile();
 
-    private static final RIntVector EMPTY_INT_VECTOR = createIntVector(EMPTY_INTEGER_ARRAY, true);
-    private static final RDoubleVector EMPTY_DOUBLE_VECTOR = createDoubleVector(EMPTY_DOUBLE_ARRAY, true);
-    private static final RLogicalVector EMPTY_LOGICAL_VECTOR = createLogicalVector(EMPTY_LOGICAL_ARRAY, true);
-    private static final RStringVector EMPTY_STRING_VECTOR = createStringVector(EMPTY_STRING_ARRAY, true);
-    private static final RComplexVector EMPTY_COMPLEX_VECTOR = createComplexVector(EMPTY_COMPLEX_ARRAY, true);
-    private static final RRawVector EMPTY_RAW_VECTOR = createRawVector(EMPTY_RAW_ARRAY);
-
-    private static final RStringVector NA_STRING_VECTOR = createStringVector(new String[]{RRuntime.STRING_NA}, false);
-
     public static final boolean INCOMPLETE_VECTOR = false;
     public static final boolean COMPLETE_VECTOR = true;
 
@@ -268,31 +259,31 @@ public final class RDataFactory {
     }
 
     public static RIntVector createEmptyIntVector() {
-        return EMPTY_INT_VECTOR;
+        return createIntVector(EMPTY_INTEGER_ARRAY, true);
     }
 
     public static RDoubleVector createEmptyDoubleVector() {
-        return EMPTY_DOUBLE_VECTOR;
+        return createDoubleVector(EMPTY_DOUBLE_ARRAY, true);
     }
 
     public static RStringVector createEmptyStringVector() {
-        return EMPTY_STRING_VECTOR;
+        return createStringVector(EMPTY_STRING_ARRAY, true);
     }
 
     public static RStringVector createNAStringVector() {
-        return NA_STRING_VECTOR;
+        return createStringVector(new String[]{RRuntime.STRING_NA}, false);
     }
 
     public static RComplexVector createEmptyComplexVector() {
-        return EMPTY_COMPLEX_VECTOR;
+        return createComplexVector(EMPTY_COMPLEX_ARRAY, true);
     }
 
     public static RLogicalVector createEmptyLogicalVector() {
-        return EMPTY_LOGICAL_VECTOR;
+        return createLogicalVector(EMPTY_LOGICAL_ARRAY, true);
     }
 
     public static RRawVector createEmptyRawVector() {
-        return EMPTY_RAW_VECTOR;
+        return createRawVector(EMPTY_RAW_ARRAY);
     }
 
     public static RComplex createComplex(double realPart, double imaginaryPart) {
