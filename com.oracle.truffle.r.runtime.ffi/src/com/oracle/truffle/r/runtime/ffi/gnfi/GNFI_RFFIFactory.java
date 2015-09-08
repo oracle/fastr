@@ -27,6 +27,9 @@ import static jdk.internal.jvmci.common.UnsafeAccess.*;
 import java.io.*;
 import java.util.*;
 
+import jdk.internal.jvmci.common.UnsafeAccess;
+import jdk.internal.jvmci.common.UnsafeUtil;
+
 import com.oracle.nfi.*;
 import com.oracle.nfi.api.*;
 import com.oracle.truffle.r.runtime.*;
@@ -74,7 +77,7 @@ public class GNFI_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI {
     private static class CString extends AutoMemory {
 
         CString(String s) {
-            super(createCString(s));
+            super(UnsafeUtil.createCString(UnsafeAccess.unsafe, s));
         }
 
         static String create(final long nativeAddress, final int length, final boolean lookForZero) {
