@@ -182,7 +182,7 @@ public final class FastRSession implements RSession {
 
         @Override
         public void run() {
-            while (true) {
+            while (killedByException == null) {
                 try {
                     entry.acquire();
                 } catch (InterruptedException e) {
@@ -198,10 +198,8 @@ public final class FastRSession implements RSession {
                     }
                 } catch (ParseException e) {
                     e.report(consoleHandler);
-                } catch (RError e) {
-                    // nothing to do
                 } catch (Throwable t) {
-                    if (t.getCause() instanceof RError) {
+                    if (t instanceof RError || t.getCause() instanceof RError) {
                         // nothing to do
                     } else {
                         killedByException = t;

@@ -75,14 +75,14 @@ public class RContextFactory {
             try {
                 vm.eval(INITIALIZATION_STATEMENT);
             } catch (IOException e) {
-                createSemaphore.release();
                 throw RInternalError.shouldNotReachHere(e);
             }
             RContext.associate(vm);
-            createSemaphore.release();
             return vm;
         } catch (InterruptedException x) {
-            throw RError.error(RError.NO_NODE, RError.Message.GENERIC, "Error creating parallel R runtime instance");
+            throw RError.error(RError.NO_NODE, RError.Message.GENERIC, "Error creating R runtime instance");
+        } finally {
+            createSemaphore.release();
         }
     }
 
