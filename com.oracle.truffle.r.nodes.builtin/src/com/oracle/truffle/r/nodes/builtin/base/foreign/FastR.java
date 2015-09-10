@@ -74,6 +74,8 @@ public abstract class FastR extends RBuiltinNode {
                 return FastRTreeNodeGen.create();
             case "typeof":
                 return FastRTypeofNodeGen.create();
+            case "identity":
+                return FastRIdentityNodeGen.create();
             case "stacktrace":
                 return FastRStackTraceNodeGen.create();
             case "debug":

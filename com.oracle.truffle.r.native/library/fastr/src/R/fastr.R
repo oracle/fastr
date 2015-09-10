@@ -39,6 +39,8 @@ fastr.tree <- function(func, verbose=FALSE) invisible(.FastR(.NAME="tree", func,
 
 fastr.typeof <- function(x) .FastR(.NAME="typeof", x)
 
+fastr.identity <- function(x) .FastR(.NAME="identity", x)
+
 fastr.stacktrace <- function(print.frame.contents=TRUE) invisible(.FastR(.NAME="stacktrace", print.frame.contents=FALSE))
 
 fastr.debug <- function(element) invisible(.FastR(.NAME="debug", element))
