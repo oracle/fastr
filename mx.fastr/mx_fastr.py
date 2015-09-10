@@ -216,7 +216,7 @@ def _junit_r_harness(args, vmArgs, junitArgs):
     # suppress Truffle compilation by using a high threshold
     vmArgs += ['-G:TruffleCompilationThreshold=100000']
 
-    vmArgs += ['-G:InliningDepthError=500', '-XX:JVMCINMethodSizeLimit=1000000']
+    vmArgs += ['-G:InliningDepthError=500', '-XX:JVMCINMethodSizeLimit=1000000', '-Xmx4G']
 
     graal_vm = _get_graal_vm()
     setREnvironment(graal_vm)
