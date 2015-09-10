@@ -67,7 +67,6 @@ public class RChannel {
                 // value
                 for (int i = 1; i < keys.length; i++) {
                     if (keys[i] == key) {
-                        create.release();
                         throw RError.error(RError.NO_NODE, RError.Message.GENERIC, "channel with specified key already exists");
                     }
                     if (keys[i] == 0 && freeSlot == -1) {
@@ -78,7 +77,6 @@ public class RChannel {
                 if (freeSlot != -1) {
                     keys[freeSlot] = key;
                     channels[freeSlot] = new RChannel();
-                    create.release();
                     return freeSlot;
                 } else {
                     int[] keysTmp = new int[keys.length * CHANNEL_NUM_GROW_FACTOR];
@@ -93,7 +91,10 @@ public class RChannel {
             }
         } catch (InterruptedException x) {
             throw RError.error(RError.NO_NODE, RError.Message.GENERIC, "error creating a channel");
+        } finally {
+            create.release();
         }
+
     }
 
     public static int getChannel(int key) {
@@ -101,13 +102,13 @@ public class RChannel {
             create.acquire();
             for (int i = 1; i < keys.length; i++) {
                 if (keys[i] == key) {
-                    create.release();
                     return -i;
                 }
             }
-            create.release();
         } catch (InterruptedException x) {
             throw RError.error(RError.NO_NODE, RError.Message.GENERIC, "error accessing channel");
+        } finally {
+            create.release();
         }
         throw RError.error(RError.NO_NODE, RError.Message.GENERIC, "channel does not exist");
     }
@@ -121,9 +122,10 @@ public class RChannel {
             }
             keys[actualId] = 0;
             channels[actualId] = null;
-            create.release();
         } catch (InterruptedException x) {
             throw RError.error(RError.NO_NODE, RError.Message.GENERIC, "error closing channel");
+        } finally {
+            create.release();
         }
     }
 
@@ -135,10 +137,11 @@ public class RChannel {
                 throw RError.error(RError.NO_NODE, RError.Message.GENERIC, "channel with specified id does not exist");
             }
             RChannel channel = channels[actualId];
-            create.release();
             return channel;
         } catch (InterruptedException x) {
             throw RError.error(RError.NO_NODE, RError.Message.GENERIC, "error transmitting through channel");
+        } finally {
+            create.release();
         }
     }
 
