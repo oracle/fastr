@@ -22,20 +22,22 @@
  */
 package com.oracle.truffle.r.runtime.ffi.gnfi;
 
-import static jdk.internal.jvmci.common.UnsafeAccess.*;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
 
-import java.io.*;
-import java.util.*;
-
-import jdk.internal.jvmci.common.UnsafeAccess;
 import jdk.internal.jvmci.common.UnsafeUtil;
 
-import com.oracle.nfi.*;
-import com.oracle.nfi.api.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.context.*;
+import com.oracle.nfi.NativeFunctionInterfaceRuntime;
+import com.oracle.nfi.api.NativeFunctionHandle;
+import com.oracle.nfi.api.NativeFunctionInterface;
+import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextState;
-import com.oracle.truffle.r.runtime.ffi.*;
+import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
+import com.oracle.truffle.r.runtime.ffi.RFFI;
+import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 
 /**
  * BaseRFFI using the Graal Native Function Interface (GNFI). N.B. Pointers, e.g. {@code char*} are
@@ -77,7 +79,7 @@ public class GNFI_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI {
     private static class CString extends AutoMemory {
 
         CString(String s) {
-            super(UnsafeUtil.createCString(UnsafeAccess.unsafe, s));
+            super(UnsafeUtil.createCString(UnsafeAccess.UNSAFE, s));
         }
 
         static String create(final long nativeAddress, final int length, final boolean lookForZero) {
@@ -85,7 +87,7 @@ public class GNFI_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI {
             long buf = nativeAddress;
             int elength = length;
             for (int i = 0; i < length; i++) {
-                byte b = unsafe.getByte(buf++);
+                byte b = UnsafeAccess.UNSAFE.getByte(buf++);
                 if (lookForZero && b == 0) {
                     elength = i;
                     break;
