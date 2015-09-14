@@ -24,6 +24,7 @@ package com.oracle.truffle.r.nodes.function;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.attributes.*;
 import com.oracle.truffle.r.nodes.unary.*;
@@ -31,6 +32,8 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 
 public abstract class ClassHierarchyNode extends UnaryNode {
+
+    public static final RStringVector truffleObjectClassHeader = RDataFactory.createStringVectorFromScalar("truffle.object");
 
     @Child private AttributeAccess access;
 
@@ -97,6 +100,15 @@ public abstract class ClassHierarchyNode extends UnaryNode {
             }
         }
         return withImplicitTypes ? profiledArg.getImplicitClass() : null;
+    }
+
+    protected static boolean isRTypedValue(Object obj) {
+        return obj instanceof RTypedValue;
+    }
+
+    @Specialization(guards = "!isRTypedValue(object)")
+    protected RStringVector getClassHrTruffleObject(@SuppressWarnings("unused") TruffleObject object) {
+        return truffleObjectClassHeader;
     }
 
     @Fallback

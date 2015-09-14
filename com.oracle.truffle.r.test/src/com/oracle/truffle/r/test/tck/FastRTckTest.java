@@ -48,6 +48,10 @@ public class FastRTckTest extends TruffleTCK {
         "  a + b\n" +
         "}\n" +
         "Interop.export('plus', plus)\n" +
+        "identity <- function(a) {\n" +
+        "  a\n" +
+        "}\n" +
+        "Interop.export('identity', identity)\n" +
         "apply <- function(f) {\n" +
         "  f(18L, 32L) + 10L\n" +
         "}\n" +
@@ -85,6 +89,11 @@ public class FastRTckTest extends TruffleTCK {
     @Override
     protected String plusInt() {
         return "plus";
+    }
+
+    @Override
+    protected String identity() {
+        return "identity";
     }
 
     @Override
@@ -148,4 +157,33 @@ public class FastRTckTest extends TruffleTCK {
         // TODO support this test case.
     }
 
+    @Override
+    public void testPlusWithFloat() throws Exception {
+        // no floats in FastR
+    }
+
+    @Override
+    public void testPrimitiveReturnTypeFloat() throws Exception {
+        // no floats in FastR
+    }
+
+    @Override
+    public void testPlusWithLong() throws Exception {
+        // no longs in FastR
+    }
+
+    @Override
+    public void testPrimitiveReturnTypeLong() throws Exception {
+        // no longs in FastR
+    }
+
+    @Override
+    public void testPlusWithShort() throws Exception {
+        // no shorts in FastR
+    }
+
+    @Override
+    public void testPrimitiveReturnTypeShort() throws Exception {
+        // no shorts in FastR
+    }
 }
