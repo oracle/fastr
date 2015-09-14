@@ -118,18 +118,11 @@ public class CallArgumentsNode extends ArgumentsNode {
 
     public static RArgsValuesAndNames getVarargsAndNames(Frame frame) {
         CompilerAsserts.neverPartOfCompilation();
-        RArgsValuesAndNames varArgsAndNames;
-        try {
-            FrameSlot slot;
-            slot = frame.getFrameDescriptor().findFrameSlot(ArgumentsSignature.VARARG_NAME);
-            if (slot == null) {
-                RError.error(RError.NO_NODE, RError.Message.NO_DOT_DOT_DOT);
-            }
-            varArgsAndNames = (RArgsValuesAndNames) frame.getObject(slot);
-        } catch (FrameSlotTypeException | ClassCastException e) {
-            throw RInternalError.shouldNotReachHere("'...' should always be represented by RArgsValuesAndNames");
+        RArgsValuesAndNames varArgs = ReadVariableNode.lookupVarArgs(frame);
+        if (varArgs == null) {
+            RError.error(RError.NO_NODE, RError.Message.NO_DOT_DOT_DOT);
         }
-        return varArgsAndNames;
+        return varArgs;
     }
 
     /**

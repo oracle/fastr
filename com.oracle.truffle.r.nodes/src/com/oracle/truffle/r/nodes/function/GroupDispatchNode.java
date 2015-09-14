@@ -10,24 +10,37 @@
  */
 package com.oracle.truffle.r.nodes.function;
 
-import java.util.*;
+import java.util.Arrays;
 
-import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.source.*;
-import com.oracle.truffle.api.utilities.*;
-import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.*;
+import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.UnexpectedResultException;
+import com.oracle.truffle.api.source.SourceSection;
+import com.oracle.truffle.api.utilities.ConditionProfile;
+import com.oracle.truffle.r.nodes.RASTUtils;
+import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
+import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode.ReadKind;
 import com.oracle.truffle.r.nodes.function.S3FunctionLookupNode.NoGenericMethodException;
 import com.oracle.truffle.r.nodes.function.S3FunctionLookupNode.Result;
-import com.oracle.truffle.r.nodes.runtime.*;
-import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.nodes.runtime.RASTDeparse;
+import com.oracle.truffle.r.runtime.Arguments;
+import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RArguments.S3Args;
-import com.oracle.truffle.r.runtime.context.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.env.*;
-import com.oracle.truffle.r.runtime.nodes.*;
+import com.oracle.truffle.r.runtime.RDeparse;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RGroupGenerics;
+import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RSerialize;
+import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 public final class GroupDispatchNode extends RNode implements RSyntaxNode {
 
@@ -37,7 +50,7 @@ public final class GroupDispatchNode extends RNode implements RSyntaxNode {
     @Child private ClassHierarchyNode classHierarchyL;
     @Child private ClassHierarchyNode classHierarchyR;
     @Child private CallMatcherNode callMatcher = CallMatcherNode.create(false, true);
-    @Child private FrameSlotNode varArgsSlotNode;
+    @Child private ReadVariableNode lookupVarArgs;
 
     private final String fixedGenericName;
     private final RGroupGenerics fixedGroup;
@@ -113,20 +126,14 @@ public final class GroupDispatchNode extends RNode implements RSyntaxNode {
     public Object execute(VirtualFrame frame) {
         RArgsValuesAndNames varArgs = null;
         if (callArgsNode.containsVarArgsSymbol()) {
-            if (varArgsSlotNode == null) {
+            if (lookupVarArgs == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                varArgsSlotNode = insert(FrameSlotNode.create(ArgumentsSignature.VARARG_NAME));
+                lookupVarArgs = insert(ReadVariableNode.create(ArgumentsSignature.VARARG_NAME, RType.Any, ReadKind.Silent));
             }
             try {
-                FrameSlot slot;
-                if (!varArgsSlotNode.hasValue(frame)) {
-                    CompilerDirectives.transferToInterpreter();
-                    RError.error(this, RError.Message.NO_DOT_DOT_DOT);
-                }
-                slot = varArgsSlotNode.executeFrameSlot(frame);
-                varArgs = (RArgsValuesAndNames) frame.getObject(slot);
-            } catch (FrameSlotTypeException | ClassCastException e) {
-                throw RInternalError.shouldNotReachHere("'...' should always be represented by RArgsValuesAndNames");
+                varArgs = lookupVarArgs.executeRArgsValuesAndNames(frame);
+            } catch (UnexpectedResultException e) {
+                throw RInternalError.shouldNotReachHere(e, "'...' should always be represented by RArgsValuesAndNames");
             }
         }
         RArgsValuesAndNames argAndNames = callArgsNode.evaluateFlatten(frame, varArgs);

@@ -77,6 +77,11 @@ public final class RInternalError extends Error {
         throw new RInternalError("should not reach here: %s", message);
     }
 
+    public static RuntimeException shouldNotReachHere(Throwable cause, String message) {
+        CompilerDirectives.transferToInterpreter();
+        throw new RInternalError(cause, "should not reach here: %s", message);
+    }
+
     static String createVerboseStackTrace() {
         if (FastROptions.PrintErrorStacktracesToFile || FastROptions.PrintErrorStacktraces) {
             return Utils.createStackTrace(true);

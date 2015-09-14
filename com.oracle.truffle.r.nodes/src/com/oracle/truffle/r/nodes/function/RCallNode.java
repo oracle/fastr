@@ -35,6 +35,7 @@ import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.access.variables.*;
+import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode.ReadKind;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.function.MatchedArguments.MatchedArgumentsNode;
 import com.oracle.truffle.r.nodes.function.S3FunctionLookupNode.Result;
@@ -756,8 +757,7 @@ public final class RCallNode extends RNode implements RSyntaxNode {
             UnrolledVariadicArguments argsValuesAndNames = arguments.executeFlatten(frame);
             MatchedArguments matchedArgs = ArgumentMatcher.matchArguments(currentFunction, argsValuesAndNames, RError.ROOTNODE, true);
 
-            Object[] argsObject = RArguments.create(currentFunction, caller, null, RArguments.getDepth(frame) + 1, matchedArgs.doExecuteArray(frame),
-                            matchedArgs.getSignature(), s3Args);
+            Object[] argsObject = RArguments.create(currentFunction, caller, null, RArguments.getDepth(frame) + 1, matchedArgs.doExecuteArray(frame), matchedArgs.getSignature(), s3Args);
             return indirectCall.call(frame, currentFunction.getTarget(), argsObject);
         }
     }
@@ -841,8 +841,7 @@ public final class RCallNode extends RNode implements RSyntaxNode {
             }
             MaterializedFrame callerFrame = needsCallerFrame ? frame.materialize() : null;
 
-            Object[] argsObject = argsNode.execute(currentFunction, caller, callerFrame, RArguments.getDepth(frame) + 1, matchedArgs.executeArray(frame),
-                            matchedArgs.getSignature(), s3Args);
+            Object[] argsObject = argsNode.execute(currentFunction, caller, callerFrame, RArguments.getDepth(frame) + 1, matchedArgs.executeArray(frame), matchedArgs.getSignature(), s3Args);
             return call.call(frame, argsObject);
         }
     }
@@ -858,24 +857,19 @@ public final class RCallNode extends RNode implements RSyntaxNode {
      */
     private abstract static class VarArgsCacheCallNode extends LeafCallNode {
 
-        @Child private FrameSlotNode varArgsSlotNode = FrameSlotNode.create(ArgumentsSignature.VARARG_NAME);
+        @Child private ReadVariableNode lookupVarArgs = ReadVariableNode.create(ArgumentsSignature.VARARG_NAME, RType.Any, ReadKind.Silent);
 
         @Override
         public final Object execute(VirtualFrame frame, RFunction function, S3Args s3Args) {
-            RArgsValuesAndNames varArgsAndNames;
-            try {
-                FrameSlot slot;
-                if (!varArgsSlotNode.hasValue(frame)) {
-                    CompilerDirectives.transferToInterpreter();
-                    RError.error(this, RError.Message.NO_DOT_DOT_DOT);
-                }
-                slot = varArgsSlotNode.executeFrameSlot(frame);
-                varArgsAndNames = (RArgsValuesAndNames) frame.getObject(slot);
-            } catch (FrameSlotTypeException | ClassCastException e) {
-                throw RInternalError.shouldNotReachHere("'...' should always be represented by RArgsValuesAndNames");
+            Object varArgs = lookupVarArgs.execute(frame);
+            if (varArgs == RNull.instance) {
+                varArgs = RArgsValuesAndNames.EMPTY;
             }
-
-            return execute(frame, function, varArgsAndNames.getSignature(), s3Args);
+            if (varArgs == null || !(varArgs instanceof RArgsValuesAndNames)) {
+                CompilerDirectives.transferToInterpreter();
+                RError.error(this, RError.Message.NO_DOT_DOT_DOT);
+            }
+            return execute(frame, function, ((RArgsValuesAndNames) varArgs).getSignature(), s3Args);
         }
 
         protected abstract Object execute(VirtualFrame frame, RFunction function, ArgumentsSignature varArgsSignature, S3Args s3Args);
@@ -973,8 +967,7 @@ public final class RCallNode extends RNode implements RSyntaxNode {
                 call.cloneCallTarget();
             }
             MaterializedFrame callerFrame = needsCallerFrame ? frame.materialize() : null;
-            Object[] argsObject = argsNode.execute(currentFunction, caller, callerFrame, RArguments.getDepth(frame) + 1, matchedArgs.executeArray(frame),
-                            matchedArgs.getSignature(), s3Args);
+            Object[] argsObject = argsNode.execute(currentFunction, caller, callerFrame, RArguments.getDepth(frame) + 1, matchedArgs.executeArray(frame), matchedArgs.getSignature(), s3Args);
             return call.call(frame, argsObject);
         }
     }
@@ -1011,8 +1004,7 @@ public final class RCallNode extends RNode implements RSyntaxNode {
                 needsCallerFrame = true;
             }
             MaterializedFrame callerFrame = needsCallerFrame ? frame.materialize() : null;
-            Object[] argsObject = RArguments.create(currentFunction, caller, callerFrame, RArguments.getDepth(frame) + 1, matchedArgs.doExecuteArray(frame),
-                            matchedArgs.getSignature(), s3Args);
+            Object[] argsObject = RArguments.create(currentFunction, caller, callerFrame, RArguments.getDepth(frame) + 1, matchedArgs.doExecuteArray(frame), matchedArgs.getSignature(), s3Args);
             return call.call(frame, argsObject);
         }
     }

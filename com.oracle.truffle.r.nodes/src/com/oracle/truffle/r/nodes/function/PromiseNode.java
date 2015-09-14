@@ -22,26 +22,42 @@
  */
 package com.oracle.truffle.r.nodes.function;
 
-import static com.oracle.truffle.r.nodes.function.opt.EagerEvalHelper.*;
+import static com.oracle.truffle.r.nodes.function.opt.EagerEvalHelper.getOptimizableConstant;
+import static com.oracle.truffle.r.nodes.function.opt.EagerEvalHelper.isOptimizableVariable;
 
-import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.nodes.*;
-import com.oracle.truffle.api.utilities.*;
-import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.*;
-import com.oracle.truffle.r.nodes.access.variables.*;
+import com.oracle.truffle.api.frame.MaterializedFrame;
+import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.ExplodeLoop;
+import com.oracle.truffle.api.nodes.NodeUtil;
+import com.oracle.truffle.api.nodes.UnexpectedResultException;
+import com.oracle.truffle.api.utilities.BranchProfile;
+import com.oracle.truffle.api.utilities.ConditionProfile;
+import com.oracle.truffle.r.nodes.RASTUtils;
+import com.oracle.truffle.r.nodes.access.ConstantNode;
+import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
+import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode.ReadKind;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseCheckHelperNode;
-import com.oracle.truffle.r.nodes.function.opt.*;
-import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.nodes.function.opt.OptConstantPromiseNode;
+import com.oracle.truffle.r.nodes.function.opt.OptForcedEagerPromiseNode;
+import com.oracle.truffle.r.nodes.function.opt.OptVariablePromiseBaseNode;
+import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.RDeparse;
+import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RSerialize.State;
-import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
+import com.oracle.truffle.r.runtime.data.RMissing;
+import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseType;
 import com.oracle.truffle.r.runtime.data.RPromise.RPromiseFactory;
-import com.oracle.truffle.r.runtime.env.*;
-import com.oracle.truffle.r.runtime.nodes.*;
+import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
  * These {@link RNode} implementations are used as a factory-nodes for {@link RPromise}s.<br/>
@@ -269,8 +285,7 @@ public abstract class PromiseNode extends RNode {
      */
     public static final class VarArgNode extends RNode implements RSyntaxNode {
 
-        @Child private FrameSlotNode varArgsSlotNode;
-        @Child private PromiseHelperNode promiseHelper;
+        @Child private ReadVariableNode lookupVarArgs;
 
         private final int index;
 
@@ -279,15 +294,15 @@ public abstract class PromiseNode extends RNode {
         }
 
         public RArgsValuesAndNames getVarargsAndNames(VirtualFrame frame) {
-            if (varArgsSlotNode == null) {
+            if (lookupVarArgs == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                varArgsSlotNode = insert(FrameSlotNode.create(ArgumentsSignature.VARARG_NAME));
+                lookupVarArgs = insert(ReadVariableNode.create(ArgumentsSignature.VARARG_NAME, RType.Any, ReadKind.Silent));
             }
             RArgsValuesAndNames varArgsAndNames;
             try {
-                varArgsAndNames = (RArgsValuesAndNames) frame.getObject(varArgsSlotNode.executeFrameSlot(frame));
-            } catch (FrameSlotTypeException | ClassCastException e) {
-                throw RInternalError.shouldNotReachHere("'...' should always be represented by RArgsValuesAndNames");
+                varArgsAndNames = lookupVarArgs.executeRArgsValuesAndNames(frame);
+            } catch (UnexpectedResultException e) {
+                throw RInternalError.shouldNotReachHere(e, "'...' should always be represented by RArgsValuesAndNames");
             }
             return varArgsAndNames;
         }
@@ -299,7 +314,7 @@ public abstract class PromiseNode extends RNode {
 
         @Override
         public RSyntaxNode substituteImpl(REnvironment env) {
-            Object obj = ((RArgsValuesAndNames) env.get("...")).getArgument(index);
+            Object obj = ((RArgsValuesAndNames) env.get(ArgumentsSignature.VARARG_NAME)).getArgument(index);
             return obj instanceof RPromise ? (RSyntaxNode) ((RPromise) obj).getRep() : ConstantNode.create(obj);
         }
 

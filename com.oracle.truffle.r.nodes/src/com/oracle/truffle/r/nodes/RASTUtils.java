@@ -319,7 +319,7 @@ public class RASTUtils {
                     if (unwrap instanceof VarArgNode) {
                         VarArgNode varArgNode = (VarArgNode) unwrap;
                         try {
-                            RArgsValuesAndNames v = (RArgsValuesAndNames) promise.getFrame().getObject(promise.getFrame().getFrameDescriptor().findFrameSlot("..."));
+                            RArgsValuesAndNames v = (RArgsValuesAndNames) promise.getFrame().getObject(promise.getFrame().getFrameDescriptor().findFrameSlot(ArgumentsSignature.VARARG_NAME));
                             argval = v.getArguments()[varArgNode.getIndex()];
                         } catch (FrameSlotTypeException e) {
                             throw RInternalError.shouldNotReachHere();

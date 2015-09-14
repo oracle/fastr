@@ -289,6 +289,15 @@ public class TestFunctions extends TestBase {
         assertEval("{ g <- function(x, ...) c(x, ...); g(1) }");
         assertEval("{ g <- function(x, ...) f(x,...); f <-function(x,...) c(x, ...); g(1) }");
 
+        assertEval("bug <- function(a, ...) vapply(a, function(.) identical(a, T, ...), NA); v <- c(1,2,3); bug(v)");
+        assertEval("bug <- function(a, ...) { f <- function(x) identical(a, T, ...); f(x)}; v1 <- c(1,2,3); bug(v1)");
+        assertEval("bug <- function(a, ...) { f <- function(x) identical(a, T, ...); environment(f) <- globalenv(); f(x)}; v1 <- c(1,2,3); bug(v1)");
+        assertEval("f2 <- function(...) { f <- function() cat(...); f() }; f2()");
+        assertEval("f2 <- function(...) { f <- function() cat(...); environment(f) <- globalenv(); f() }; f2()");
+        assertEval("f2 <- function(...) { f <- function() cat(...); f() }; f2(\"a\")");
+        assertEval("f2 <- function(...) { f <- function() cat(...); assign(\"...\", NULL); f() }; f2(\"a\")");
+        assertEval("f2 <- function(...) { f <- function() cat(...); assign(\"...\", \"asdf\"); f() }; f2(\"a\")");
+
         assertEval(Output.ContainsError, "{ g <- function(a,b,x) { a + b * x } ; f <- function(...) { g(x=4, ..., 10) }  ; f(b=1,a=2) }");
         assertEval(Output.ContainsError, "{ f <- function(a, barg, bextra, dummy) { a + barg } ; g <- function(...) { f(a=1, ..., x=2) } ; g(1) }");
         assertEval(Output.ContainsError, "{ f <- function(a, barg, bextra, dummy) { a + barg } ; g <- function(...) { f(a=1, ..., xxx=2) } ; g(1) }");

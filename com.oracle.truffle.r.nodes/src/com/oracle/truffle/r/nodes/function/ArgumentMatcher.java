@@ -246,7 +246,7 @@ public class ArgumentMatcher {
             Frame frame = Utils.getActualCurrentFrame();
             try {
                 // TODO: this error handling code takes many assumptions about the argument types
-                RArgsValuesAndNames varArg = (RArgsValuesAndNames) frame.getObject(frame.getFrameDescriptor().findFrameSlot("..."));
+                RArgsValuesAndNames varArg = (RArgsValuesAndNames) frame.getObject(frame.getFrameDescriptor().findFrameSlot(ArgumentsSignature.VARARG_NAME));
                 RPromise promise = (RPromise) varArg.getArguments()[((VarArgNode) node).getIndex()];
                 return promise.getRep().asRSyntaxNode().getSourceSection().getCode();
             } catch (FrameSlotTypeException | ClassCastException e) {

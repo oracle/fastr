@@ -40,7 +40,7 @@ import com.oracle.truffle.r.runtime.nodes.*;
  */
 public class ReadVariadicComponentNode extends RNode implements RSyntaxNode {
 
-    @Child private ReadVariableNode lookup = ReadVariableNode.create("...", RType.Any, ReadKind.Silent);
+    @Child private ReadVariableNode lookup = ReadVariableNode.create(ArgumentsSignature.VARARG_NAME, RType.Any, ReadKind.Silent);
     @Child private PromiseHelperNode promiseHelper;
 
     private final int index;

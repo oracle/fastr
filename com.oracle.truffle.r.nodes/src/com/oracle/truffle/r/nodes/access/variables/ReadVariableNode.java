@@ -608,12 +608,18 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
                 Object value = current.getValue(frameSlot);
 
                 if (value != null) {
-                    return (RArgsValuesAndNames) value;
+                    if (value == RNull.instance) {
+                        return RArgsValuesAndNames.EMPTY;
+                    } else if (value instanceof RArgsValuesAndNames) {
+                        return (RArgsValuesAndNames) value;
+                    } else {
+                        return null;
+                    }
                 }
             }
             current = RArguments.getEnclosingFrame(current);
         } while (current != null);
-        throw RError.error(RError.NO_NODE, RError.Message.ARGUMENT_MISSING, ArgumentsSignature.VARARG_NAME);
+        return null;
     }
 
     private Object getValue(Frame variableFrame, FrameSlot frameSlot) {
