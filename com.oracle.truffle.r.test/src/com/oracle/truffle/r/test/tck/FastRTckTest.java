@@ -117,4 +117,35 @@ public class FastRTckTest extends TruffleTCK {
     public void testNull() {
         // disabled because we don't provide a Java "null" value in R
     }
+
+    @Override
+    @Test
+    public void testNullInCompoundObject() {
+        // disabled because we don't provide a Java "null" value in R
+    }
+
+    @Override
+    @Test
+    public void testPlusWithIntsOnCompoundObject() throws Exception {
+        // TODO support this test case.
+    }
+
+    @Override
+    @Test
+    public void testMaxOrMinValue() throws Exception {
+        // TODO support this test case.
+    }
+
+    @Override
+    @Test
+    public void testMaxOrMinValue2() throws Exception {
+        // TODO support this test case.
+    }
+
+    @Override
+    @Test
+    public void testFortyTwoWithCompoundObject() throws Exception {
+        // TODO support this test case.
+    }
+
 }
