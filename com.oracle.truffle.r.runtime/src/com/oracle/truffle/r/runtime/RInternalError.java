@@ -36,6 +36,8 @@ public final class RInternalError extends Error {
 
     private static final long serialVersionUID = 80698622974155216L;
 
+    private static boolean initializing = false;
+
     private final String verboseStackTrace;
 
     public RInternalError(String message, Object... args) {
@@ -84,7 +86,20 @@ public final class RInternalError extends Error {
 
     static String createVerboseStackTrace() {
         if (FastROptions.PrintErrorStacktracesToFile || FastROptions.PrintErrorStacktraces) {
-            return Utils.createStackTrace(true);
+            if (!initializing) {
+                initializing = true;
+                try {
+                    return Utils.createStackTrace(true);
+                } catch (Throwable t) {
+                    StringWriter str = new StringWriter();
+                    t.printStackTrace(new PrintWriter(str));
+                    return str.toString();
+                } finally {
+                    initializing = false;
+                }
+            } else {
+                return "<exception during stack introspection>";
+            }
         } else {
             return "";
         }
