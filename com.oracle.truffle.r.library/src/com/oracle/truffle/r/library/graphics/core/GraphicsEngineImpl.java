@@ -24,7 +24,8 @@ import static com.oracle.truffle.r.library.graphics.core.GraphicsEvent.GE_INIT_S
 
 // todo implement 'active' devices array from devices.c
 public final class GraphicsEngineImpl implements GraphicsEngine {
-    private static final int MAX_GRAPHICS_SYSTEMS_AMOUNT = 24;  // GNUR: GraphicsEngine.h
+    // GNUR: GraphicsEngine.h (original value: 24)
+    private static final int MAX_GRAPHICS_SYSTEMS_AMOUNT = 48;
     private static final int MAX_GRAPHICS_DEVICES_AMOUNT = 64;
     private static final int NULL_GRAPHICS_DEVICE_INDEX = 0;
     private static final int LAST_GRAPHICS_DEVICE_INDEX = MAX_GRAPHICS_DEVICES_AMOUNT - 1;
