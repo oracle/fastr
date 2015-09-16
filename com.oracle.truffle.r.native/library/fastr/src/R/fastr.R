@@ -78,6 +78,10 @@ fastr.createpkgsource <- function(pkg, name) {
 	invisible(NULL)
 }
 
+fastr.context.get <- function() {
+	.FastR(.NAME="context.get")
+}
+
 fastr.context.create <- function(args="", kind="SHARE_NOTHING") {
 	kind <- match(kind, c("SHARE_NOTHING", "SHARE_PARENT_RW", "SHARE_PARENT_RO"))
 	if (is.na(kind)) stop("invalid kind argument")

@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.engine;
 
 import java.io.*;
+import java.util.Locale;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.debug.*;
@@ -30,7 +31,15 @@ import com.oracle.truffle.api.instrument.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.engine.repl.debug.*;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinPackages;
+import com.oracle.truffle.r.nodes.instrument.RInstrument;
+import com.oracle.truffle.r.runtime.RAccuracyInfo;
+import com.oracle.truffle.r.runtime.RPerfStats;
+import com.oracle.truffle.r.runtime.RVersionInfo;
+import com.oracle.truffle.r.runtime.TempPathName;
 import com.oracle.truffle.r.runtime.context.*;
+import com.oracle.truffle.r.runtime.ffi.Load_RFFIFactory;
+import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 
 /**
  * Only does the minimum for running under the debugger. It is not completely clear how to correctly
@@ -38,6 +47,27 @@ import com.oracle.truffle.r.runtime.context.*;
  */
 @TruffleLanguage.Registration(name = "R", version = "0.1", mimeType = {"application/x-r", "text/x-r"})
 public final class TruffleRLanguage extends TruffleLanguage<RContext> {
+
+    private static boolean initialized;
+
+    /**
+     * The choice of {@link RFFIFactory} is made statically so that it is bound into an AOT-compiled
+     * VM. The decision is node made directly in {@link RFFIFactory} to avoid some project
+     * dependencies that cause build problems.
+     */
+    private static synchronized void initialize() {
+        if (!initialized) {
+            initialized = true;
+            Load_RFFIFactory.initialize();
+            RInstrument.initialize();
+            RPerfStats.initialize();
+            Locale.setDefault(Locale.ROOT);
+            RAccuracyInfo.initialize();
+            RVersionInfo.initialize();
+            TempPathName.initialize();
+            RContext.initialize(new RRuntimeASTAccessImpl(), RBuiltinPackages.getInstance());
+        }
+    }
 
     private DebugSupportProvider debugSupport;
 
@@ -68,6 +98,7 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
 
     @Override
     protected RContext createContext(Env env) {
+        initialize();
         return RContext.create(env);
     }
 

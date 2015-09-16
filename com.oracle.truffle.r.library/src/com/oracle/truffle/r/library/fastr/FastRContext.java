@@ -49,6 +49,14 @@ public class FastRContext {
         }
     }
 
+    public abstract static class Get extends RExternalBuiltinNode.Arg0 {
+        @Specialization
+        @TruffleBoundary
+        protected Object get() {
+            return RContext.getInstance();
+        }
+    }
+
     public abstract static class Print extends RExternalBuiltinNode.Arg1 {
         @Specialization
         @TruffleBoundary
@@ -131,7 +139,7 @@ public class FastRContext {
             } else {
                 for (int i = 0; i < contexts.getLength(); i++) {
                     ContextInfo info = checkContext(contexts.getDataAt(i), this);
-                    TruffleVM vm = info.newContext();
+                    TruffleVM vm = info.apply(TruffleVM.newVM()).build();
                     try {
                         Source source = Source.fromText(exprs.getDataAt(i), "<eval>").withMimeType("application/x-r");
                         vm.eval(source);

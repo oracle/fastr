@@ -107,6 +107,16 @@ public abstract class RExternalBuiltinNode extends RBaseNode {
         }
     }
 
+    public abstract static class Arg0 extends RExternalBuiltinNode {
+        public abstract Object execute();
+
+        @Override
+        public final Object call(RArgsValuesAndNames args) {
+            checkLength(args, 0);
+            return execute();
+        }
+    }
+
     public abstract static class Arg1 extends RExternalBuiltinNode {
         public abstract Object execute(Object arg);
 

@@ -447,10 +447,6 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
         ((FunctionDefinitionNode) node).setDescription(name);
     }
 
-    public TruffleVM create(ContextInfo info) {
-        return RContextFactory.create(info);
-    }
-
     public Engine createEngine(RContext context) {
         return REngine.create(context);
     }
