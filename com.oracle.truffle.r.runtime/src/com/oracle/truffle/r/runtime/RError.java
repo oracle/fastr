@@ -629,7 +629,8 @@ public final class RError extends RuntimeException {
         NO_FUNCTION_RETURN("no function to return from, jumping to top level"),
         REG_FINALIZER_FIRST("first argument must be environment or external pointer"),
         REG_FINALIZER_SECOND("second argument must be a function"),
-        REG_FINALIZER_THIRD("third argument must be 'TRUE' or 'FALSE'");
+        REG_FINALIZER_THIRD("third argument must be 'TRUE' or 'FALSE'"),
+        LAZY_LOAD_DB_CORRUPT("lazy-load database '%s' is corrupt");
 
         public final String message;
         final boolean hasArgs;

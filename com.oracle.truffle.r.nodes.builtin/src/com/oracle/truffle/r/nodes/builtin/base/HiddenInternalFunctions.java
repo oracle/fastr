@@ -198,36 +198,72 @@ public class HiddenInternalFunctions {
             }
             int offset = key.getDataAt(0);
             int length = key.getDataAt(1);
+            int outlen = getOutlen(dbData, offset); // length of uncompressed data
+            byte[] udata = null;
+            int rc = 0;
+            /*
+             * compression may have value 0, 1, 2 or 3. Value 1 is zip and the data starts at
+             * "offset + 4". Values 2 and 3 have a "type" field at "offset +
+             * 4" and the data starts at "offset + 5". The type field is 'Z' for lzma, '2' for bzip,
+             * '1' for zip and '0' for no compression. The only difference between compression=2 and
+             * compression=3 is that type='Z' is only possible for the latter.
+             */
+            if (compression == 0) {
+                udata = new byte[length];
+                System.arraycopy(dbData, offset, udata, 0, length);
+            } else {
+                udata = new byte[outlen];
+                if (compression == 2 || compression == 3) {
+                    byte type = dbData[4];
+                    byte[] data = new byte[length - 5];
+                    System.arraycopy(dbData, offset + 5, data, 0, data.length);
+                    if (type == '0') {
+                        // uncompressed
+                    } else if (type == '1') {
+                        rc = uncompress(udata, data);
+                    } else {
+                        throw RInternalError.unimplemented("compression type " + String.valueOf(type));
+                    }
+                } else {
+                    // GnuR treats any other value as 1
+                    byte[] data = new byte[length - 4];
+                    System.arraycopy(dbData, offset + 4, data, 0, data.length);
+                    rc = uncompress(udata, data);
+                }
+            }
+            if (rc != 0) {
+                throw RError.error(this, RError.Message.LAZY_LOAD_DB_CORRUPT, dbPathFile.getAbsolutePath());
+            }
+            try {
+                RSerialize.CallHook callHook = new RSerialize.CallHook() {
+                    public Object eval(Object arg) {
+                        Object[] callArgs = RArguments.create(envhook, caller, null, RArguments.getDepth(frame) + 1, new Object[]{arg}, SIGNATURE, null);
+                        return callCache.execute(new SubstituteVirtualFrame(frame), envhook.getTarget(), callArgs);
+                    }
+                };
+                Object result = RSerialize.unserialize(udata, callHook, packageName);
+                return result;
+            } catch (IOException ex) {
+                // unexpected
+                throw RInternalError.shouldNotReachHere(ex);
+            }
+        }
+
+        private static int getOutlen(byte[] dbData, int offset) {
             ByteBuffer dataLengthBuf = ByteBuffer.allocate(4);
             dataLengthBuf.put(dbData, offset, 4);
             dataLengthBuf.position(0);
-            byte[] data = new byte[length - 4];
-            System.arraycopy(dbData, offset + 4, data, 0, data.length);
-            if (compression == 1) {
-                int outlen = dataLengthBuf.getInt();
-                byte[] udata = new byte[outlen];
-                long[] destlen = new long[1];
-                destlen[0] = udata.length;
-                int rc = RFFIFactory.getRFFI().getBaseRFFI().uncompress(udata, destlen, data);
-                if (rc != 0) {
-                    throw RError.error(this, Message.GENERIC, "zlib uncompress error");
-                }
-                try {
-                    RSerialize.CallHook callHook = new RSerialize.CallHook() {
-                        public Object eval(Object arg) {
-                            Object[] callArgs = RArguments.create(envhook, caller, null, RArguments.getDepth(frame) + 1, new Object[]{arg}, SIGNATURE, null);
-                            return callCache.execute(new SubstituteVirtualFrame(frame), envhook.getTarget(), callArgs);
-                        }
-                    };
-                    Object result = RSerialize.unserialize(udata, callHook, packageName);
-                    return result;
-                } catch (IOException ex) {
-                    // unexpected
-                    throw RError.error(this, Message.GENERIC, ex.getMessage());
-                }
-            } else {
-                throw RError.error(this, Message.GENERIC, "unsupported compression");
+            return dataLengthBuf.getInt();
+        }
+
+        private int uncompress(byte[] udata, byte[] data) {
+            long[] destlen = new long[1];
+            destlen[0] = udata.length;
+            int rc = RFFIFactory.getRFFI().getBaseRFFI().uncompress(udata, destlen, data);
+            if (rc != 0) {
+                RError.warning(this, Message.GENERIC, "zlib uncompress error");
             }
+            return rc;
         }
 
         @Specialization
