@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.test.generate;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -105,6 +106,7 @@ public final class FastRSession implements RSession {
 
     private final TestConsoleHandler consoleHandler;
     private final TruffleVM main;
+    private final RContext mainContext;
 
     private EvalThread evalThread;
 
@@ -115,11 +117,13 @@ public final class FastRSession implements RSession {
         return singleton;
     }
 
+    private static final Source GET_CONTEXT = Source.fromText("invisible(fastr.context.get())", "<get_context>").withMimeType(TruffleRLanguage.MIME);
+
     public TruffleVM createTestContext() {
         create();
         RCmdOptions options = RCmdOptions.parseArguments(Client.RSCRIPT, new String[0]);
-        ContextInfo info = ContextInfo.create(options, ContextKind.SHARE_PARENT_RW, RContext.fromTruffleVM(main), consoleHandler, TimeZone.getTimeZone("CET"));
-        return RContextFactory.create(info);
+        ContextInfo info = ContextInfo.create(options, ContextKind.SHARE_PARENT_RW, mainContext, consoleHandler, TimeZone.getTimeZone("CET"));
+        return info.apply(TruffleVM.newVM()).build();
     }
 
     private FastRSession() {
@@ -127,7 +131,12 @@ public final class FastRSession implements RSession {
         try {
             RCmdOptions options = RCmdOptions.parseArguments(Client.RSCRIPT, new String[0]);
             ContextInfo info = ContextInfo.create(options, ContextKind.SHARE_NOTHING, null, consoleHandler);
-            main = RContextFactory.create(info);
+            main = info.apply(TruffleVM.newVM()).build();
+            try {
+                mainContext = (RContext) main.eval(GET_CONTEXT).get();
+            } catch (IOException e) {
+                throw new RuntimeException("error while retrieving test context", e);
+            }
         } finally {
             System.out.print(consoleHandler.buffer.toString());
         }

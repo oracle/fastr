@@ -22,44 +22,90 @@
  */
 package com.oracle.truffle.r.engine;
 
-import java.io.*;
-import java.util.*;
-import java.util.stream.*;
+import java.util.Arrays;
+import java.util.stream.Collectors;
 
-import org.antlr.runtime.*;
+import org.antlr.runtime.ANTLRStringStream;
+import org.antlr.runtime.MismatchedTokenException;
+import org.antlr.runtime.NoViableAltException;
+import org.antlr.runtime.RecognitionException;
+import org.antlr.runtime.Token;
 
-import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.impl.*;
-import com.oracle.truffle.api.instrument.*;
-import com.oracle.truffle.api.interop.*;
-import com.oracle.truffle.api.nodes.*;
+import com.oracle.truffle.api.RootCallTarget;
+import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.TruffleLanguage;
+import com.oracle.truffle.api.dsl.UnsupportedSpecializationException;
+import com.oracle.truffle.api.frame.Frame;
+import com.oracle.truffle.api.frame.FrameDescriptor;
+import com.oracle.truffle.api.frame.MaterializedFrame;
+import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.impl.FindContextNode;
+import com.oracle.truffle.api.instrument.QuitException;
+import com.oracle.truffle.api.interop.ForeignAccess;
+import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.Node.Child;
-import com.oracle.truffle.api.source.*;
-import com.oracle.truffle.r.engine.interop.*;
-import com.oracle.truffle.r.library.graphics.*;
-import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.access.*;
-import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.control.*;
-import com.oracle.truffle.r.nodes.function.*;
-import com.oracle.truffle.r.nodes.instrument.*;
-import com.oracle.truffle.r.nodes.runtime.*;
-import com.oracle.truffle.r.parser.*;
-import com.oracle.truffle.r.parser.ast.*;
-import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.api.nodes.RootNode;
+import com.oracle.truffle.api.source.Source;
+import com.oracle.truffle.api.source.SourceSection;
+import com.oracle.truffle.r.engine.interop.RAbstractVectorAccessFactory;
+import com.oracle.truffle.r.engine.interop.RFunctionAccessFactory;
+import com.oracle.truffle.r.library.graphics.RGraphics;
+import com.oracle.truffle.r.nodes.RASTUtils;
+import com.oracle.truffle.r.nodes.RRootNode;
+import com.oracle.truffle.r.nodes.RTruffleVisitor;
+import com.oracle.truffle.r.nodes.access.ConstantNode;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinPackages;
+import com.oracle.truffle.r.nodes.control.BreakException;
+import com.oracle.truffle.r.nodes.control.NextException;
+import com.oracle.truffle.r.nodes.function.BodyNode;
+import com.oracle.truffle.r.nodes.function.FormalArguments;
+import com.oracle.truffle.r.nodes.function.FunctionBodyNode;
+import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
+import com.oracle.truffle.r.nodes.function.FunctionStatementsNode;
+import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
+import com.oracle.truffle.r.nodes.function.SaveArgumentsNode;
+import com.oracle.truffle.r.nodes.instrument.RInstrument;
+import com.oracle.truffle.r.nodes.runtime.RASTDeparse;
+import com.oracle.truffle.r.parser.ParseUtil;
+import com.oracle.truffle.r.parser.ast.ASTNode;
+import com.oracle.truffle.r.parser.ast.Function;
+import com.oracle.truffle.r.parser.ast.Sequence;
+import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.BrowserQuitException;
+import com.oracle.truffle.r.runtime.FastROptions;
+import com.oracle.truffle.r.runtime.RArguments;
+import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RErrorHandling;
+import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RProfile;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.ReturnException;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.Utils.DebugExitException;
-import com.oracle.truffle.r.runtime.context.*;
-import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.VirtualEvalFrame;
+import com.oracle.truffle.r.runtime.context.Engine;
+import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RExpression;
+import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.data.RLanguage;
+import com.oracle.truffle.r.runtime.data.RMissing;
+import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.Closure;
-import com.oracle.truffle.r.runtime.data.model.*;
-import com.oracle.truffle.r.runtime.env.*;
-import com.oracle.truffle.r.runtime.env.frame.*;
-import com.oracle.truffle.r.runtime.nodes.*;
+import com.oracle.truffle.r.runtime.data.RShareable;
+import com.oracle.truffle.r.runtime.data.RTypedValue;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
+import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
  * The engine for the FastR implementation. Handles parsing and evaluation. There is one instance of
@@ -67,13 +113,6 @@ import com.oracle.truffle.r.runtime.nodes.*;
  */
 final class REngine implements Engine {
 
-    /**
-     * Controls the behavior when an implementation errors occurs. In normal use this is fatal as
-     * the system is in an undefined and likely unusable state. However, there are special
-     * situations, e.g. unit tests, where we want to continue and delegate the termination to a
-     * higher authority.
-     */
-    @CompilationFinal private boolean crashOnFatalError;
     /**
      * The system time when this engine was started.
      */
@@ -102,10 +141,6 @@ final class REngine implements Engine {
      * proper mechanism is understood.
      */
     private boolean suppressWarnings;
-
-    public void disableCrashOnFatalError() {
-        this.crashOnFatalError = false;
-    }
 
     private REngine(RContext context) {
         this.context = context;
@@ -462,7 +497,6 @@ final class REngine implements Engine {
         } catch (DebugExitException | QuitException | BrowserQuitException e) {
             throw e;
         } catch (Throwable e) {
-            reportImplementationError(e);
             if (e instanceof Error) {
                 throw (Error) e;
             } else if (e instanceof RuntimeException) {
@@ -530,19 +564,6 @@ final class REngine implements Engine {
 
     public Class<? extends TruffleLanguage<RContext>> getTruffleLanguage() {
         return TruffleRLanguage.class;
-    }
-
-    @TruffleBoundary
-    private void reportImplementationError(Throwable e) {
-        // R suicide, unless, e.g., we are running units tests.
-        // We also don't call quit as the system is broken.
-        if (crashOnFatalError) {
-            ByteArrayOutputStream out = new ByteArrayOutputStream();
-            e.printStackTrace(new PrintStream(out));
-            // We don't call writeStdErr as that may exercise the (broken) implementation
-            context.getConsoleHandler().printErrorln(out.toString());
-            Utils.exit(2);
-        }
     }
 
     public ForeignAccess getForeignAccess(RTypedValue value) {

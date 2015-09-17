@@ -26,11 +26,22 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
 
+import com.oracle.truffle.api.interop.ForeignAccess;
+import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.vm.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
 
-public final class ContextInfo {
+/**
+ * Represents custom initialization state for an R instance.
+ *
+ * Use {@link #apply(com.oracle.truffle.api.vm.TruffleVM.Builder)} to apply this information to a
+ * newly-built {@link TruffleVM} instance (it will be stored in the "fastrContextInfo" global
+ * symbol).
+ */
+public final class ContextInfo implements TruffleObject {
+    static final String GLOBAL_SYMBOL = "fastrContextInfo";
+
     private static final ConcurrentHashMap<Integer, ContextInfo> contextInfos = new ConcurrentHashMap<>();
     private static final AtomicInteger contextInfoIds = new AtomicInteger();
 
@@ -55,9 +66,8 @@ public final class ContextInfo {
         this.id = id;
     }
 
-    public TruffleVM newContext() {
-        contextInfos.remove(id);
-        return RContext.getRRuntimeASTAccess().create(this);
+    public TruffleVM.Builder apply(TruffleVM.Builder builder) {
+        return builder.globalSymbol(GLOBAL_SYMBOL, this);
     }
 
     /**
@@ -111,5 +121,9 @@ public final class ContextInfo {
 
     public int getId() {
         return id;
+    }
+
+    public ForeignAccess getForeignAccess() {
+        throw new IllegalStateException("cannot access " + ContextInfo.class.getSimpleName() + " via Truffle");
     }
 }

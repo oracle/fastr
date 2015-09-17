@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.context;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -47,23 +48,19 @@ import com.oracle.truffle.r.runtime.rng.*;
  * implementation <b>must</b> go through this class. There can be multiple instances
  * (multiple-tenancy) active within a single process/Java-VM.
  *
- * The context provides two sub-interfaces {@link ConsoleHandler} and {@link Engine}that are
- * (typically) implemented elsewhere, and accessed through {@link #getConsoleHandler()} and
- * {@link #getEngine()}, respectively.
+ * Contexts are created during construction of the {@link TruffleVM} instance. In case a context
+ * needs to be configured, the TruffleVM needs to be created via the {@code RContextFactory} class,
+ * which takes a {@link ContextInfo} object for configuration.
+ *
+ * The context provides a so-called {@link Engine} (accessed via {@link #getEngine()}), which
+ * provides basic parsing and execution functionality .
  *
  * Context-specific state for implementation classes is managed by this class (or the associated
- * engine) and accessed through the {@code getXXXState} methods.
+ * engine) and accessed through the {@code stateXyz} fields.
  *
- * The life-cycle of a {@link RContext} is:
- * <ol>
- * <li>created: {@link #create(Env)}</li>
- * <li>destroyed: {@link #destroy()}</li>
- * </ol>
- *
- * Evaluations are only possible on an active context.
- *
+ * Contexts can be destroyed
  */
-public final class RContext extends ExecutionContext {
+public final class RContext extends ExecutionContext implements TruffleObject {
 
     public static final int CONSOLE_WIDTH = 80;
 
@@ -107,8 +104,9 @@ public final class RContext extends ExecutionContext {
     }
 
     /**
-     * Tagging interface denoting a class that carries the context-specific state for a class that
-     * has context-specific state. The class specific state must implement this interface.
+     * Tagging interface denoting a (usually inner-) class that carries the context-specific state
+     * for a class that has context-specific state. The class specific state must implement this
+     * interface.
      */
     public interface ContextState {
         /**
@@ -141,7 +139,7 @@ public final class RContext extends ExecutionContext {
     }
 
     /**
-     * A thread for performing an evaluation (used by {@code fastr} package.
+     * A thread for performing an evaluation (used by {@code fastr} package).
      */
     public static class EvalThread extends ContextThread {
         private final Source source;
@@ -158,8 +156,12 @@ public final class RContext extends ExecutionContext {
 
         @Override
         public void run() {
-            TruffleVM vm = info.newContext();
-            setContext(truffleVMContexts.get(vm));
+            TruffleVM vm = info.apply(TruffleVM.newVM()).build();
+            try {
+                setContext((RContext) vm.eval(GET_CONTEXT).get());
+            } catch (IOException e1) {
+                throw new RInternalError(e1, "error while initializing eval thread");
+            }
             try {
                 try {
                     context.engine.parseAndEval(source, true);
@@ -177,7 +179,8 @@ public final class RContext extends ExecutionContext {
     private final Engine engine;
 
     /**
-     * Denote whether the result of an expression should be printed in the shell or not.
+     * Denote whether the result of an expression should be printed in the shell or not. This value
+     * will be modified by many operations like builtins, block statements, etc.
      */
     private boolean resultVisible = true;
 
@@ -210,7 +213,6 @@ public final class RContext extends ExecutionContext {
     /**
      * Used by the MethodListDispatch class.
      */
-
     private boolean methodTableDispatchOn = true;
 
     private boolean active;
@@ -230,10 +232,9 @@ public final class RContext extends ExecutionContext {
     /**
      * Initialize VM-wide static values.
      */
-    public static void initialize(RRuntimeASTAccess rASTHelperArg, RBuiltinLookup rBuiltinLookupArg, boolean ignoreVisibilityArg) {
+    public static void initialize(RRuntimeASTAccess rASTHelperArg, RBuiltinLookup rBuiltinLookupArg) {
         runtimeASTAccess = rASTHelperArg;
         builtinLookup = rBuiltinLookupArg;
-        ignoreVisibility = ignoreVisibilityArg;
     }
 
     /**
@@ -289,11 +290,11 @@ public final class RContext extends ExecutionContext {
     }
 
     private RContext(Env env) {
-        if (tempInitializingContextInfo == null) {
+        ContextInfo iniitalInfo = (ContextInfo) env.importSymbol(ContextInfo.GLOBAL_SYMBOL);
+        if (iniitalInfo == null) {
             this.info = ContextInfo.create(RCmdOptions.parseArguments(Client.R, new String[0]), ContextKind.SHARE_NOTHING, null, new DefaultConsoleHandler(env));
         } else {
-            this.info = tempInitializingContextInfo;
-            lastContext = this;
+            this.info = iniitalInfo;
         }
 
         this.env = env;
@@ -439,10 +440,6 @@ public final class RContext extends ExecutionContext {
         return info.getConsoleHandler().isInteractive();
     }
 
-    public static boolean isIgnoringVisibility() {
-        return ignoreVisibility;
-    }
-
     public ConsoleHandler getConsoleHandler() {
         return info.getConsoleHandler();
     }
@@ -483,6 +480,7 @@ public final class RContext extends ExecutionContext {
 
     @Override
     public String toString() {
+        new RuntimeException().printStackTrace();
         return "context: " + info.getId();
     }
 
@@ -511,27 +509,18 @@ public final class RContext extends ExecutionContext {
         return info.getSystemTimeZone();
     }
 
-    /*
-     * TODO: this fields are used to convey initialization information from outside TruffleVM to
-     * RContext. need to be replaced with a mechanism provided by TruffleVM once this is available.
-     */
-    public static ContextInfo tempInitializingContextInfo;
-    private static RContext lastContext;
-    private static final Map<TruffleVM, RContext> truffleVMContexts = new HashMap<>();
+    public ForeignAccess getForeignAccess() {
+        throw new IllegalStateException("cannot access " + RContext.class.getSimpleName() + " via Truffle");
+    }
 
-    // TODO: destroying a TruffleVM should be handled in TruffleVM itself
+    private static final Source GET_CONTEXT = Source.fromText("invisible(fastr.context.get())", "<get_context>").withMimeType("application/x-r");
+
     public static void destroyContext(TruffleVM vm) {
-        truffleVMContexts.get(vm).destroy();
-    }
-
-    public static void associate(TruffleVM vm) {
-        assert lastContext != null;
-        truffleVMContexts.put(vm, lastContext);
-        lastContext = null;
-        tempInitializingContextInfo = null;
-    }
-
-    public static RContext fromTruffleVM(TruffleVM vm) {
-        return truffleVMContexts.get(vm);
+        try {
+            RContext context = (RContext) vm.eval(GET_CONTEXT).get();
+            context.destroy();
+        } catch (IOException e) {
+            throw new RInternalError(e, "error while destroying context");
+        }
     }
 }

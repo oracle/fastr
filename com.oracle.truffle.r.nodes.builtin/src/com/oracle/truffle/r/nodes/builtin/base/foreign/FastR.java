@@ -88,6 +88,8 @@ public abstract class FastR extends RBuiltinNode {
                 return FastRPkgSourceFactory.PostLoadNodeGen.create();
             case "pkgsource.done":
                 return FastRPkgSourceFactory.DoneNodeGen.create();
+            case "context.get":
+                return FastRContextFactory.GetNodeGen.create();
             case "context.create":
                 return FastRContextFactory.CreateNodeGen.create();
             case "context.print":
@@ -112,5 +114,4 @@ public abstract class FastR extends RBuiltinNode {
                 return null;
         }
     }
-
 }

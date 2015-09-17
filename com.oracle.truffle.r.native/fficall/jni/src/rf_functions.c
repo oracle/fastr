@@ -172,6 +172,10 @@ SEXP Rf_duplicate(SEXP x) {
 	return checkRef(thisenv, result);
 }
 
+R_xlen_t Rf_any_duplicated(SEXP x, Rboolean from_last) {
+	unimplemented("Rf_any_duplicated)");
+}
+
 Rboolean Rf_inherits(SEXP x, const char * klass) {
 	unimplemented("Rf_inherits)");
 }
@@ -204,12 +208,24 @@ Rboolean Rf_isSymbol(SEXP x) {
     unimplemented("Rf_isSymbol");
 }
 
+Rboolean Rf_isComplex(SEXP s) {
+	unimplemented("Rf_isComplex");
+}
+
+Rboolean Rf_isEnvironment(SEXP s) {
+	unimplemented("Rf_isEnvironment");
+}
+
 Rboolean Rf_isExpression(SEXP x) {
     unimplemented("Rf_isExpression");
 }
 
 Rboolean Rf_isLanguage(SEXP x) {
     unimplemented("Rf_isLanguage");
+}
+
+Rboolean Rf_isLogical(SEXP s) {
+	unimplemented("Rf_isLogical");
 }
 
 Rboolean Rf_isList(SEXP x) {
@@ -230,6 +246,10 @@ Rboolean Rf_isNumber(SEXP x) {
 
 Rboolean Rf_isNumeric(SEXP x) {
     unimplemented("Rf_isNumeric");
+}
+
+Rboolean Rf_isObject(SEXP s) {
+	unimplemented("Rf_isObject");
 }
 
 Rboolean Rf_isPairList(SEXP x) {
@@ -457,5 +477,25 @@ double Rf_fmax2(double x, double y) {
 
 double Rf_fmin2(double x, double y) {
 	unimplemented("Rf_fmin2");
+}
+
+const char *Rf_translateChar(SEXP x) {
+	unimplemented("Rf_translateChar");
+}
+
+const char *Rf_translateChar0(SEXP x) {
+	unimplemented("Rf_translateChar0");
+}
+
+const char *Rf_translateCharUTF8(SEXP x) {
+	unimplemented("Rf_translateCharUTF8");
+}
+
+const char *Rf_type2char(SEXPTYPE x) {
+	unimplemented("Rf_type2char");
+}
+
+SEXP Rf_type2str(SEXPTYPE x) {
+	unimplemented("Rf_type2str");
 }
 

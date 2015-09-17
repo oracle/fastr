@@ -22,11 +22,17 @@
  */
 package com.oracle.truffle.r.runtime;
 
-import com.oracle.truffle.api.nodes.*;
-import com.oracle.truffle.api.vm.*;
-import com.oracle.truffle.r.runtime.context.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.nodes.RootNode;
+import com.oracle.truffle.r.runtime.context.Engine;
+import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.data.RLanguage;
+import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.RSymbol;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 /**
  * A collection of methods that need access to the AST types, needed by code that resides in the
@@ -151,8 +157,6 @@ public interface RRuntimeASTAccess {
      * Update the {@code name} in a {@code FunctionDefinitionNode}.
      */
     void setFunctionName(RootNode node, String name);
-
-    TruffleVM create(ContextInfo info);
 
     Engine createEngine(RContext context);
 

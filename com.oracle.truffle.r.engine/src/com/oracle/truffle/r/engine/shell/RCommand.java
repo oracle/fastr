@@ -153,7 +153,7 @@ public class RCommand {
      * exiting. So,in either case, we never return.
      */
     public static void readEvalPrint(ContextInfo info) {
-        TruffleVM vm = RContextFactory.create(info);
+        TruffleVM vm = info.apply(TruffleVM.newVM()).build();
         ConsoleHandler consoleHandler = info.getConsoleHandler();
         Source source = Source.fromNamedAppendableText(consoleHandler.getInputDescription());
         try {
