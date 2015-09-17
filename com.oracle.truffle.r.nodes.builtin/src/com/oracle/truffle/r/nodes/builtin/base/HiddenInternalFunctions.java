@@ -173,6 +173,12 @@ public class HiddenInternalFunctions {
             return lazyLoadDBFetchInternal(frame.materialize(), key, datafile, (int) compressed.getDataAt(0), envhook);
         }
 
+        @Specialization
+        protected Object lazyLoadDBFetch(VirtualFrame frame, RIntVector key, RStringVector datafile, RLogicalVector compressed, RFunction envhook) {
+            initCast();
+            return lazyLoadDBFetch(frame, key, datafile, castIntNode.doLogicalVector(compressed), envhook);
+        }
+
         private static final ArgumentsSignature SIGNATURE = ArgumentsSignature.get("n");
 
         @TruffleBoundary
@@ -200,13 +206,13 @@ public class HiddenInternalFunctions {
             int length = key.getDataAt(1);
             int outlen = getOutlen(dbData, offset); // length of uncompressed data
             byte[] udata = null;
-            int rc = 0;
+            boolean rc = true;
             /*
-             * compression may have value 0, 1, 2 or 3. Value 1 is zip and the data starts at
+             * compression may have value 0, 1, 2 or 3. Value 1 is gzip and the data starts at
              * "offset + 4". Values 2 and 3 have a "type" field at "offset +
              * 4" and the data starts at "offset + 5". The type field is 'Z' for lzma, '2' for bzip,
-             * '1' for zip and '0' for no compression. The only difference between compression=2 and
-             * compression=3 is that type='Z' is only possible for the latter.
+             * '1' for zip and '0' for no compression. From GnuR code, the only difference between
+             * compression=2 and compression=3 is that type='Z' is only possible for the latter.
              */
             if (compression == 0) {
                 udata = new byte[length];
@@ -214,24 +220,22 @@ public class HiddenInternalFunctions {
             } else {
                 udata = new byte[outlen];
                 if (compression == 2 || compression == 3) {
-                    byte type = dbData[4];
+                    RCompression.Type type = RCompression.Type.fromTypeChar(dbData[4]);
+                    if (type == null) {
+                        RError.warning(this, RError.Message.GENERIC, "unknown compression type");
+                        return RNull.instance;
+                    }
                     byte[] data = new byte[length - 5];
                     System.arraycopy(dbData, offset + 5, data, 0, data.length);
-                    if (type == '0') {
-                        // uncompressed
-                    } else if (type == '1') {
-                        rc = uncompress(udata, data);
-                    } else {
-                        throw RInternalError.unimplemented("compression type " + String.valueOf(type));
-                    }
+                    rc = RCompression.uncompress(type, udata, data);
                 } else {
                     // GnuR treats any other value as 1
                     byte[] data = new byte[length - 4];
                     System.arraycopy(dbData, offset + 4, data, 0, data.length);
-                    rc = uncompress(udata, data);
+                    rc = RCompression.uncompress(RCompression.Type.GZIP, udata, data);
                 }
             }
-            if (rc != 0) {
+            if (!rc) {
                 throw RError.error(this, RError.Message.LAZY_LOAD_DB_CORRUPT, dbPathFile.getAbsolutePath());
             }
             try {
@@ -256,21 +260,6 @@ public class HiddenInternalFunctions {
             return dataLengthBuf.getInt();
         }
 
-        private int uncompress(byte[] udata, byte[] data) {
-            long[] destlen = new long[1];
-            destlen[0] = udata.length;
-            int rc = RFFIFactory.getRFFI().getBaseRFFI().uncompress(udata, destlen, data);
-            if (rc != 0) {
-                RError.warning(this, Message.GENERIC, "zlib uncompress error");
-            }
-            return rc;
-        }
-
-        @Specialization
-        protected Object lazyLoadDBFetch(VirtualFrame frame, RIntVector key, RStringVector datafile, RLogicalVector compressed, RFunction envhook) {
-            initCast();
-            return lazyLoadDBFetch(frame, key, datafile, castIntNode.doLogicalVector(compressed), envhook);
-        }
     }
 
     @RBuiltin(name = "getRegisteredRoutines", kind = INTERNAL, parameterNames = "info")

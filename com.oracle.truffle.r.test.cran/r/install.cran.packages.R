@@ -74,11 +74,11 @@ create.blacklist.iter <- function(blacklist) {
 cplusplus <- c("Rcpp", "Segmentor3IsBack", "QUIC", "kernlab", "adaptivetau", "geepack", "caTools", "amap", "rgenoud", "stringi", "rjson", "ars",
 		"e1071", "aylmer")
 # parser bugs
-parserbug <- c("lattice")
-# ... lappy bug
-lapplydotbug <- c("ABCoptim", "acm4r", "MASS", "combinat")
+parserbug <- character()
+# unimplemented feature
+unimplemented <- c("ABCoptim")
 # e.g. complex replacement assignments
-trufflevisitor.nyi <- c("colorspace", "R.methodsS3", "ade4")
+trufflevisitor.nyi <- c("colorspace", "R.methodsS3", "ade4", "lattice")
 # problems with native code
 nativeinstall <- c("Rglpk", "overlap", "adimpro")
 # S4 anything using S4 objects
@@ -87,7 +87,7 @@ s4 <- c("matrixStats")
 graphics <- c("Cairo")
 # serialize
 serialize <- c("actuar", "spam")
-initial.blacklist <- c(cplusplus, parserbug, lapplydotbug, trufflevisitor.nyi, nativeinstall, s4, graphics, serialize)
+initial.blacklist <- c(cplusplus, parserbug, unimplemented, trufflevisitor.nyi, nativeinstall, s4, graphics, serialize)
 
 create.blacklist <- function() {
 	create.blacklist.iter(initial.blacklist)
