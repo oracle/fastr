@@ -28,7 +28,7 @@ public interface RShareable {
     // further updates to ref count (for sharing between different threads) - can potentially be
     // made smaller
     // TODO: a better placement for this constant?
-    public static final int SHARED_PERMANENT_VAL = Integer.MAX_VALUE;
+    static final int SHARED_PERMANENT_VAL = Integer.MAX_VALUE;
 
     void markNonTemporary();
 

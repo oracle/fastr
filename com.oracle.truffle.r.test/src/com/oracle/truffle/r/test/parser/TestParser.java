@@ -34,6 +34,11 @@ import com.oracle.truffle.r.test.*;
 public class TestParser extends TestBase {
 
     @Test
+    public void testOpName() {
+        assertEval("{ \"%??%\" <- function(x,y) x + y; 7 %??% 42 }");
+    }
+
+    @Test
     public void testNegativePow() {
         assertEval("10^-2");
         assertEval("10^+2");

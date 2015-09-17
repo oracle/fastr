@@ -32,7 +32,7 @@ import com.oracle.truffle.r.runtime.ops.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
 /**
- * TODO: handle "finite" parameter correctly
+ * TODO: handle "finite" parameter correctly.
  */
 @TypeSystemReference(RTypes.class)
 public abstract class UnaryArithmeticReduceNode extends RBaseNode {

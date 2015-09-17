@@ -26,10 +26,12 @@
 
 jmethodID iS4ObjectMethodID;
 jmethodID isFiniteMethodID;
+jmethodID isNAorNaNMethodID;
 
 void init_misc(JNIEnv *env) {
 	iS4ObjectMethodID = checkGetMethodID(env, CallRFFIHelperClass, "isS4Object", "(Ljava/lang/Object;)I", 1);
 	isFiniteMethodID = checkGetMethodID(env, RRuntimeClass, "isFinite", "(D)Z", 1);
+	isNAorNaNMethodID = checkGetMethodID(env, RRuntimeClass, "isNAorNaN", "(D)Z", 1);
 }
 
 char *dgettext(const char *domainname, const char *msgid) {
@@ -71,7 +73,12 @@ void R_CheckUserInterrupt() {
 
 int R_finite(double x) {
 	JNIEnv *env = getEnv();
-	jboolean r = (*env)->CallStaticBooleanMethod(env, RRuntimeClass, isFiniteMethodID, x);
+	return (*env)->CallStaticBooleanMethod(env, RRuntimeClass, isFiniteMethodID, x);
+}
+
+int R_IsNaN(double x) {
+	JNIEnv *env = getEnv();
+	return (*env)->CallStaticBooleanMethod(env, RRuntimeClass, isNAorNaNMethodID, x);
 }
 
 int IS_S4_OBJECT(SEXP x) {
