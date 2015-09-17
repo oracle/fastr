@@ -163,59 +163,79 @@ public class FastRContext {
         }
     }
 
-    private static void validateChannelArg(RBaseNode baseNode, RAbstractVector arg) {
+    private static int wrongChannelArg(RBaseNode baseNode, Object arg, String argName) {
         if (!(arg instanceof RAbstractIntVector)) {
             throw RError.error(baseNode, RError.Message.INVALID_ARG_TYPE);
-        }
-        if (arg.getLength() != 1) {
-            throw RError.error(baseNode, RError.Message.WRONG_LENGTH_ARG, "key");
+        } else {
+            // guard failed
+            throw RError.error(baseNode, RError.Message.WRONG_LENGTH_ARG, argName);
         }
     }
 
     public abstract static class CreateChannel extends RExternalBuiltinNode.Arg1 {
-        @Specialization
+        @Specialization(guards = "key.getLength() == 1")
         @TruffleBoundary
         protected int createChannel(RAbstractIntVector key) {
-            validateChannelArg(this, key);
             return RChannel.createChannel(key.getDataAt(0));
+        }
+
+        @Fallback
+        protected int error(Object key) {
+            return wrongChannelArg(this, key, "key");
         }
     }
 
     public abstract static class GetChannel extends RExternalBuiltinNode.Arg1 {
-        @Specialization
+        @Specialization(guards = "key.getLength() == 1")
         @TruffleBoundary
         protected int getChannel(RAbstractIntVector key) {
-            validateChannelArg(this, key);
             return RChannel.getChannel(key.getDataAt(0));
+        }
+
+        @Fallback
+        protected int error(Object key) {
+            return wrongChannelArg(this, key, "key");
         }
     }
 
     public abstract static class CloseChannel extends RExternalBuiltinNode.Arg1 {
-        @Specialization
+        @Specialization(guards = "id.getLength() == 1")
         @TruffleBoundary
         protected RNull getChannel(RAbstractIntVector id) {
-            validateChannelArg(this, id);
             RChannel.closeChannel(id.getDataAt(0));
             return RNull.instance;
+        }
+
+        @Fallback
+        protected int error(Object id) {
+            return wrongChannelArg(this, id, "id");
         }
     }
 
     public abstract static class ChannelSend extends RExternalBuiltinNode.Arg2 {
-        @Specialization
+        @Specialization(guards = "id.getLength() == 1")
         @TruffleBoundary
         protected RNull send(RAbstractIntVector id, Object data) {
-            validateChannelArg(this, id);
             RChannel.send(id.getDataAt(0), data);
             return RNull.instance;
+        }
+
+        @Fallback
+        protected int error(Object id, @SuppressWarnings("unused") Object data) {
+            return wrongChannelArg(this, id, "id");
         }
     }
 
     public abstract static class ChannelReceive extends RExternalBuiltinNode.Arg1 {
-        @Specialization
+        @Specialization(guards = "id.getLength() == 1")
         @TruffleBoundary
         protected Object receive(RAbstractIntVector id) {
-            validateChannelArg(this, id);
             return RChannel.receive(id.getDataAt(0));
+        }
+
+        @Fallback
+        protected int error(Object id) {
+            return wrongChannelArg(this, id, "id");
         }
     }
 }

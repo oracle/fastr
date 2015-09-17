@@ -28,6 +28,6 @@ import com.oracle.truffle.r.nodes.builtin.*;
 public abstract class FastRIdentity extends RExternalBuiltinNode.Arg1 {
     @Specialization
     protected int typeof(Object x) {
-        return x.hashCode();
+        return System.identityHashCode(x);
     }
 }

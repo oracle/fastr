@@ -58,6 +58,11 @@ R_len_t  Rf_length(SEXP x) {
 }
 
 
+R_xlen_t  Rf_xlength(SEXP x) {
+    // xlength seems to be used for long vectors (no such thing in FastR at the moment)
+	return LENGTH(x);
+}
+
 int TRUELENGTH(SEXP x){
 	unimplemented("unimplemented");
 }
