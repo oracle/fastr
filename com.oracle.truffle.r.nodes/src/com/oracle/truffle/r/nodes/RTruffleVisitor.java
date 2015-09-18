@@ -522,9 +522,16 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
         } else {
             throw RInternalError.unimplemented();
         }
-        assert fun.getArguments().size() == 1;
+        List<ArgNode> arguments = fun.getArguments();
+        String[] names = new String[arguments.size() + 1];
+        RSyntaxNode[] argNodes = new RSyntaxNode[arguments.size() + 1];
+        for (int i = 0; i < arguments.size(); i++) {
+            names[i] = arguments.get(i).getName();
+            argNodes[i] = visit(arguments.get(i));
+        }
+        argNodes[arguments.size()] = rhs;
         ReadVariableNode function = ReadVariableNode.createForced(null, funName, RType.Function);
-        return RCallNode.createCall(null, function, ArgumentsSignature.empty(2), this.visit(fun.getArguments().get(0)), rhs);
+        return RCallNode.createCall(null, function, ArgumentsSignature.get(names), argNodes);
     }
 
     private RSyntaxNode doReplacementLeftHandSide(ASTNode receiver, boolean needsSyntaxAST, RSyntaxNode rhs, boolean isSuper, SourceSection source,
