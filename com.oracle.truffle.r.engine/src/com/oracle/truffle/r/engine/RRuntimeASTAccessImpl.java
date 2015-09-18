@@ -500,7 +500,14 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
                  * section.
                  */
                 if (builtIn.getSourceSection() != null) {
-                    return RDataFactory.createLanguage(builtIn);
+                    // look for the surrounding RCallNode
+                    Node node = builtIn;
+                    if (builtIn.getBuiltin().getKind() == RBuiltinKind.INTERNAL) {
+                        while (!(node instanceof RCallNode)) {
+                            node = node.getParent();
+                        }
+                    }
+                    return RDataFactory.createLanguage((RNode) node);
                 }
                 // We see some RSyntaxNodes with null SourceSections (which should never happen)
             } else if (call instanceof RSyntaxNode && call.getSourceSection() != null) {
