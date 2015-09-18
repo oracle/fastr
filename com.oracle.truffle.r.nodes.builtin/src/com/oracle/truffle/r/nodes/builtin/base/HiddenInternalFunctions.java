@@ -456,4 +456,16 @@ public class HiddenInternalFunctions {
             }
         }
     }
+
+    /*
+     * Created as primitive function to avoid incrementing reference count for the argument (used in
+     * reference count tests).
+     */
+    @RBuiltin(name = "fastr.identity", kind = PRIMITIVE, parameterNames = {""})
+    public abstract static class Identity extends RBuiltinNode {
+        @Specialization
+        protected int typeof(Object x) {
+            return System.identityHashCode(x);
+        }
+    }
 }
