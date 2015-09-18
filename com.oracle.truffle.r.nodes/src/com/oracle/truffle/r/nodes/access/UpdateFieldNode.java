@@ -69,10 +69,6 @@ public abstract class UpdateFieldNode extends RNode implements RSyntaxNode {
         int index = -1;
         if (hasNamesProfile.profile(names != null)) {
             index = getElementIndexByName(names, field);
-            if (index == -1) {
-                inexactMatch.enter();
-                index = object.getElementIndexByNameInexact(attrProfiles, field);
-            }
         }
         int newLength = object.getLength() + (index == -1 ? 1 : 0);
         if (index == -1) {
@@ -107,10 +103,6 @@ public abstract class UpdateFieldNode extends RNode implements RSyntaxNode {
         int index = -1;
         if (hasNamesProfile.profile(names != null)) {
             index = getElementIndexByName(names, field);
-            if (index == -1) {
-                inexactMatch.enter();
-                index = object.getElementIndexByNameInexact(attrProfiles, field);
-            }
         }
 
         if (index == -1) {
