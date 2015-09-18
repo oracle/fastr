@@ -39,7 +39,8 @@ import com.oracle.truffle.r.runtime.ffi.*;
 import com.oracle.truffle.r.runtime.nodes.*;
 
 /**
- * Private, undocumented, {@code .Internal} and {@code .Primitive} functions transcribed from GnuR.
+ * Private, undocumented, {@code .Internal} and {@code .Primitive} functions transcribed from GnuR,
+ * but also those that need to be defined as builtins in FastR.
  */
 public class HiddenInternalFunctions {
 
@@ -427,5 +428,32 @@ public class HiddenInternalFunctions {
             }
         }
 
+    }
+
+    /*
+     * Created as primitive function to avoid incrementing reference count for the argument.
+     *
+     * returns -1 for non-shareable, 0 for private, 1 for temp, 2 for shared and
+     * SHARED_PERMANENT_VAL for permanent shared
+     */
+    @RBuiltin(name = "fastr.refcountinfo", kind = PRIMITIVE, parameterNames = {""})
+    public abstract static class RefCountInfo extends RBuiltinNode {
+        @Specialization
+        protected int refcount(Object x) {
+            if (x instanceof RShareable) {
+                RShareable s = (RShareable) x;
+                if (s.isTemporary()) {
+                    return 0;
+                } else if (s.isSharedPermanent()) {
+                    return RShareable.SHARED_PERMANENT_VAL;
+                } else if (s.isShared()) {
+                    return 2;
+                } else {
+                    return 1;
+                }
+            } else {
+                return -1;
+            }
+        }
     }
 }
