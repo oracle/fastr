@@ -15,6 +15,7 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import java.io.*;
 import java.nio.*;
+import java.nio.file.Files;
 import java.util.*;
 
 import com.oracle.truffle.api.*;
@@ -189,9 +190,9 @@ public class HiddenInternalFunctions {
             byte[] dbData = dbCache.get(dbPath);
             if (dbData == null) {
                 assert dbPathFile.exists();
-                dbData = new byte[(int) dbPathFile.length()];
-                try (BufferedInputStream bs = new BufferedInputStream(new FileInputStream(dbPathFile))) {
-                    bs.read(dbData);
+                try {
+                    dbData = Files.readAllBytes(dbPathFile.toPath());
+                    assert dbData.length == dbPathFile.length();
                 } catch (IOException ex) {
                     // unexpected
                     throw RError.error(this, Message.GENERIC, ex.getMessage());
