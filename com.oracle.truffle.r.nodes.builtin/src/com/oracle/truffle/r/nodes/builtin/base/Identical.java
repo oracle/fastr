@@ -182,13 +182,9 @@ public abstract class Identical extends RBuiltinNode {
     }
 
     @Specialization
-    protected byte doInternalIdenticalGeneric(@SuppressWarnings("unused") RDataFrame x, @SuppressWarnings("unused") RDataFrame y,
-                    // @formatter:off
-                    @SuppressWarnings("unused") byte numEq, @SuppressWarnings("unused") byte singleNA, @SuppressWarnings("unused") byte attribAsSet,
-                    @SuppressWarnings("unused") byte ignoreBytecode, @SuppressWarnings("unused") byte ignoreEnvironment) {
-                    // @formatter:on
+    protected byte doInternalIdenticalGeneric(RDataFrame x, RDataFrame y, byte numEq, byte singleNA, byte attribAsSet, byte ignoreBytecode, byte ignoreEnvironment) {
         controlVisibility();
-        throw RError.nyi(this, "data frames not supported in 'identical'");
+        return doInternalIdenticalGeneric(x.getVector(), y.getVector(), numEq, singleNA, attribAsSet, ignoreBytecode, ignoreEnvironment);
     }
 
     @Specialization

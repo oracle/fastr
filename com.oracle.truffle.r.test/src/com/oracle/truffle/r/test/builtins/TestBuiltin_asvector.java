@@ -411,7 +411,7 @@ public class TestBuiltin_asvector extends TestBase {
         assertEval("{ as.vector(\"foo\", \"character\") }");
         assertEval("{ as.vector(\"foo\", \"list\") }");
         assertEval("{ as.vector(\"foo\") }");
-        assertEval("{ as.vector(\"foo\", \"bar\") }");
+        assertEval(Output.ContainsError, "{ as.vector(\"foo\", \"bar\") }");
         assertEval(Output.ContainsWarning, "{ as.vector(c(\"foo\", \"bar\"), \"raw\") }");
         assertEval("x<-c(a=1.1, b=2.2); as.vector(x, \"raw\")");
         assertEval("x<-c(a=1L, b=2L); as.vector(x, \"complex\")");
