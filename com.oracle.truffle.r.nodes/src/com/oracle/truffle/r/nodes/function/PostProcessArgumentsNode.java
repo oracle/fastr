@@ -40,10 +40,15 @@ public final class PostProcessArgumentsNode extends RNode {
     @Children protected final ReadVariableNode[] sequence;
     @Child private PostProcessArgumentsNode nextOptPostProccessArgNode;
     @CompilationFinal public int transArgsBitSet;
+    // the first time this node is cloned (via FunctionDefinitionNode) it's from the trufflerizer -
+    // in this case we should not create the node chain chain in the clone operation (below) at the
+    // reference count meta data needs to be associated with this node and not its clone
+    @CompilationFinal private boolean createClone;
     private final ConditionProfile isRefCountUpdateable = ConditionProfile.createBinaryProfile();
 
     private PostProcessArgumentsNode(ReadVariableNode[] sequence) {
         this.sequence = sequence;
+        this.createClone = false;
         this.transArgsBitSet = 0;
     }
 
@@ -86,9 +91,15 @@ public final class PostProcessArgumentsNode extends RNode {
 
     @Override
     public Node deepCopy() {
-        PostProcessArgumentsNode copy = (PostProcessArgumentsNode) super.deepCopy();
-        nextOptPostProccessArgNode = insert(copy);
-        return copy;
+        CompilerAsserts.neverPartOfCompilation();
+        if (createClone) {
+            PostProcessArgumentsNode copy = (PostProcessArgumentsNode) super.deepCopy();
+            nextOptPostProccessArgNode = insert(copy);
+            return copy;
+        } else {
+            this.createClone = true;
+            return this;
+        }
     }
 
     PostProcessArgumentsNode getActualNode() {

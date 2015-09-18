@@ -58,7 +58,14 @@ public final class OptForcedEagerPromiseNode extends PromiseNode implements Eage
      */
     @Override
     public Object execute(VirtualFrame frame) {
-        Object value = expr.execute(frame);
+        Object value;
+        // need to unwrap as re-wrapping happens when the value is retrieved (otherwise ref count
+        // update happens twice)
+        if (wrapIndex != ArgumentStatePush.INVALID_INDEX && expr instanceof WrapArgumentNode) {
+            value = ((WrapArgumentNode) expr).getOperand().execute(frame);
+        } else {
+            value = expr.execute(frame);
+        }
         if (value instanceof RPromise) {
             if (promiseHelper == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();

@@ -256,7 +256,7 @@ def _test_subpackage(name):
     return '.'.join((_test_package(), name))
 
 def _library_unit_tests():
-    return ','.join(map(_test_subpackage, ['library.base', 'library.stats', 'library.utils']))
+    return ','.join(map(_test_subpackage, ['library.base', 'library.stats', 'library.utils', 'library.fastr']))
 
 def _nodes_unit_tests():
     return 'com.oracle.truffle.r.nodes.test'
