@@ -32,6 +32,7 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.env.REnvironment;
 
 /**
  * A temporary substitution to work around bug with {@code list(...)} used in R version.
@@ -71,24 +72,51 @@ public abstract class Structure extends RBuiltinNode {
     }
 
     @Specialization
-    @TruffleBoundary
+    protected Object structure(RFunction obj, RArgsValuesAndNames args) {
+        return doStructure(obj, args);
+    }
+
+    @Specialization
+    protected Object structure(REnvironment obj, RArgsValuesAndNames args) {
+        return doStructure(obj, args);
+    }
+
+    @Specialization
+    protected Object structure(RSymbol obj, RArgsValuesAndNames args) {
+        return doStructure(obj, args);
+    }
+
+    @Specialization
+    protected Object structure(RExternalPtr obj, RArgsValuesAndNames args) {
+        return doStructure(obj, args);
+    }
+
+    @Specialization
     protected Object structure(RAbstractContainer obj, RArgsValuesAndNames args) {
-        Object[] values = args.getArguments();
-        ArgumentsSignature signature = getSuppliedSignature();
-        validateArgNames(signature);
-        RAbstractContainer res = obj;
+        RAttributable res = obj;
         // TODO: should we consider storing attributes with sequences?
         if (res instanceof RSequence) {
             res = ((RSequence) res).createVector();
         }
+        return doStructure(res, args);
+    }
+
+    // Ideally we would only need this as a specialization, but then we fail due to
+    // lack of auto-translation of, e.g. Double to RAbstractContainer.
+    @TruffleBoundary
+    protected Object doStructure(RAttributable obj, RArgsValuesAndNames args) {
+        Object[] values = args.getArguments();
+        ArgumentsSignature signature = getSuppliedSignature();
+        validateArgNames(signature);
+        RAttributable res = obj;
         for (int i = 0; i < values.length; i++) {
             Object value = fixupValue(values[i]);
             String attrName = fixupAttrName(signature.getName(i + 1));
             if (attrName.equals(RRuntime.CLASS_ATTR_KEY)) {
                 if (value == RNull.instance) {
-                    res = (RAbstractContainer) res.setClassAttr(null, true);
+                    res = res.setClassAttr(null, true);
                 } else {
-                    res = (RAbstractContainer) res.setClassAttr((RStringVector) value, true);
+                    res = res.setClassAttr((RStringVector) value, true);
                 }
             } else {
                 if (value == RNull.instance) {

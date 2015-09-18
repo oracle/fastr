@@ -51,7 +51,7 @@ public class MethodsListDispatch {
 
         @TruffleBoundary
         @Specialization
-        protected Object callGetClassFromCache(REnvironment table, Object klass) {
+        protected Object callGetClassFromCache(Object klass, REnvironment table) {
             String klassString = RRuntime.asString(klass);
 
             if (klassString != null) {

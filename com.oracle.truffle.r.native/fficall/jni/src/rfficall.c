@@ -36,6 +36,7 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_CallRFFIWithJNI_initialize(JNIEnv *env
 	init_typecoerce(env);
 	init_attrib(env);
 	init_misc(env);
+	init_rmath(env);
 	init_rng(env);
 	init_optim(env);
 	init_vectoraccess(env);

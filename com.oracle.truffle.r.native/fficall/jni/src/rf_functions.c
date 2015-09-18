@@ -382,6 +382,15 @@ void Rf_unprotect(int x) {
 	// TODO perhaps we can use this
 }
 
+void R_ProtectWithIndex(SEXP x, PROTECT_INDEX *y) {
+
+}
+
+void R_Reprotect(SEXP x, PROTECT_INDEX y) {
+
+}
+
+
 void Rf_unprotect_ptr(SEXP x) {
 	// TODO perhaps we can use this
 }
@@ -465,6 +474,11 @@ void Rf_iPsort(int *x, int n, int k)
 void Rf_rPsort(double *x, int n, int k) {
 	JNIEnv *thisenv = getEnv();
 	unimplemented("Rf_rPsort");
+}
+
+void Rf_cPsort(Rcomplex *x, int n, int k) {
+	JNIEnv *thisenv = getEnv();
+	unimplemented("Rf_cPsort");
 }
 
 SEXP Rf_classgets(SEXP x, SEXP y) {

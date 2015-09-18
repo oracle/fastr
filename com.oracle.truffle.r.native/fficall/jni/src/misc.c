@@ -67,6 +67,14 @@ void R_qsort_int_I(int *iv, int *II, int i, int j) {
 	unimplemented("R_qsort_int_I");
 }
 
+void rsort_with_index(double *a, int *b, int c) {
+	unimplemented("rsort_with_index");
+}
+
+void revsort(double *a, int *b, int c) {
+	unimplemented("revsort");
+}
+
 void R_CheckUserInterrupt() {
 // TODO (we don't even do this in the Java code)
 }

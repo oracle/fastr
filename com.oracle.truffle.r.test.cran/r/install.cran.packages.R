@@ -70,24 +70,31 @@ create.blacklist.iter <- function(blacklist) {
 }
 
 # known to be uninstallable
-# uses ++
+# uses C++
 cplusplus <- c("Rcpp", "Segmentor3IsBack", "QUIC", "kernlab", "adaptivetau", "geepack", "caTools", "amap", "rgenoud", "stringi", "rjson", "ars",
 		"e1071", "aylmer")
+# tcltk
+tcltk <- c("AnnotLists", "tcltk2", "aplpack")
 # parser bugs
-parserbug <- character()
-# unimplemented feature
-unimplemented <- c("ABCoptim")
+parserbug <- c("R2HTML")
+# e.g., unimplemented builtin, assertion error
+core <- c("ade4", "ABCoptim", "R.methodsS3", "lattice", "aidar", "DBI", "SparseM", "quantreg", "doParallel", "ApacheLogProcessor", "aplore3",
+		"vignettes", "archiDART", "corpcor", "acss.data")
 # e.g. complex replacement assignments
-trufflevisitor.nyi <- c("colorspace", "R.methodsS3", "ade4", "lattice")
+trufflevisitor.nyi <- c("colorspace")
 # problems with native code
-nativeinstall <- c("Rglpk", "overlap", "adimpro")
+nativeinstall <- c("Rglpk", "overlap", "adimpro", "deSolve")
 # S4 anything using S4 objects
-s4 <- c("matrixStats")
+s4 <- c("matrixStats", "AcceptanceSampling", "biglm", "analyz", "RCurl", "anfis", "aod", "ascii")
 # graphics
-graphics <- c("Cairo")
+graphics <- c("Cairo", "rgl")
+# incomplete definitions from Rmath.h
+math <- c("mvtnorm")
 # serialize
-serialize <- c("actuar", "spam")
-initial.blacklist <- c(cplusplus, parserbug, unimplemented, trufflevisitor.nyi, nativeinstall, s4, graphics, serialize)
+serialize <- c("actuar", "spam", "codetools", "iterators", "apc", "apsrtable", "assertthat")
+# fortran related
+fortran <- c("appell")
+initial.blacklist <- c(cplusplus, tcltk, parserbug, core, math, trufflevisitor.nyi, nativeinstall, s4, graphics, serialize, fortran)
 
 create.blacklist <- function() {
 	create.blacklist.iter(initial.blacklist)

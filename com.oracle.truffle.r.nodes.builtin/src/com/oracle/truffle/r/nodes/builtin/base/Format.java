@@ -236,11 +236,11 @@ public abstract class Format extends RBuiltinNode {
     }
 
     @Specialization
-    protected RStringVector format(RStringVector value, RLogicalVector trimVec, RIntVector digitsVec, RIntVector nsmallVec, RIntVector widthVec, RIntVector justifyVec, RLogicalVector naEncodeVec,
-                    RAbstractVector sciVec) {
+    protected RStringVector format(RAbstractStringVector value, RLogicalVector trimVec, RIntVector digitsVec, RIntVector nsmallVec, RIntVector widthVec, RIntVector justifyVec,
+                    RLogicalVector naEncodeVec, RAbstractVector sciVec) {
         checkArgs(trimVec, digitsVec, nsmallVec, widthVec, justifyVec, naEncodeVec, sciVec);
         // TODO: implement full semantics
-        return value;
+        return value.materialize();
     }
 
     @Specialization
