@@ -41,8 +41,10 @@ public class TestStateTrans extends TestBase {
             // after returning from read-only functions, vector should be modifiable without
             // creating a copy
             assertEvalFastR("{ x<-rep(1, 100); xi1<-fastr.identity(x); f<-function(x) { x }; f(x); x[1]<-7; xi2<-fastr.identity(x); xi1 == xi2 }", "TRUE");
+            assertEvalFastR("{ x<-rep(1, 100); xi1<-fastr.identity(x); f<-function(x) { y<-x; y }; f(x); x[1]<-7; xi2<-fastr.identity(x); xi1 == xi2 }", "TRUE");
         } else {
             assertEvalFastR("{ x<-rep(1, 100); xi1<-fastr.identity(x); f<-function(x) { x }; f(x); x[1]<-7; xi2<-fastr.identity(x); xi1 != xi2 }", "TRUE");
+            assertEvalFastR("{ x<-rep(1, 100); xi1<-fastr.identity(x); f<-function(x) { y<-x; y }; f(x); x[1]<-7; xi2<-fastr.identity(x); xi1 != xi2 }", "TRUE");
         }
     }
 }
