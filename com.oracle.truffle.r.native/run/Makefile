@@ -73,7 +73,7 @@ $(FASTR_BIN_DIR)/R: Makefile R.sh Rscript.sh Rscript_exec.sh
 	touch $(FASTR_ETC_DIR)/ldpaths
 	sed -e "s|\(R_LIBS_USER=.*-'\)\(.*\)'}|\1$(FASTR_R_HOME)/library'}|" < $(GNUR_HOME)/etc/Renviron > $(FASTR_ETC_DIR)/Renviron
 	# set R_INSTALL_TAR
-	ed $(FASTR_ETC_DIR)/Renviron < edREnviron
+	ed $(FASTR_ETC_DIR)/Renviron < edRenviron
 	cp $(GNUR_HOME)/etc/Makeconf Makeconf.etc
 	ed Makeconf.etc < edMakeconf.etc
 	cp Makeconf.etc $(FASTR_ETC_DIR)/Makeconf
