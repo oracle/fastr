@@ -264,8 +264,11 @@ abstract class WriteIndexedVectorNode extends Node {
             int actionRightMod = positionsApplyToRight ? leftLength : rightLength;
             if (rightBase + positionLength > actionRightMod) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                System.out.println("needs right index check");
-                needsRightIndexCheck = true;
+                WriteIndexedVectorNode writeVector = this;
+                while (writeVector != null) {
+                    writeVector.needsRightIndexCheck = true;
+                    writeVector = writeVector.innerVectorNode;
+                }
             }
         }
     }
@@ -302,6 +305,7 @@ abstract class WriteIndexedVectorNode extends Node {
         return rightIndex;
     }
 
+    @SuppressWarnings("all")
     private int applyInner(//
                     RAbstractVector left, Object leftStore, int leftBase, int leftLength, Object targetDimensions, //
                     Object[] positions, int positionOffset, int positionValue, //
@@ -313,16 +317,20 @@ abstract class WriteIndexedVectorNode extends Node {
             // if position indexes value we just need to switch indices
             int actionLeftIndex;
             int actionRightIndex;
-            int actionRightMod;
             if (positionsApplyToRight) {
+                if (needsRightIndexCheck && rightIndex == leftLength) {
+                    rightIndex = 0;
+                }
                 actionLeftIndex = rightIndex;
                 actionRightIndex = newTargetIndex;
-                actionRightMod = leftLength;
             } else {
+                if (needsRightIndexCheck && rightIndex == rightLength) {
+                    rightIndex = 0;
+                }
                 actionLeftIndex = newTargetIndex;
                 actionRightIndex = rightIndex;
-                actionRightMod = rightLength;
             }
+
             if (isNA) {
                 left.setNA(leftStore, actionLeftIndex);
                 getValueNACheck().seenNA();
@@ -330,11 +338,7 @@ abstract class WriteIndexedVectorNode extends Node {
                 scalarNode.apply(left, leftStore, actionLeftIndex, right, rightStore, actionRightIndex);
             }
 
-            int result = rightIndex + 1;
-            if (needsRightIndexCheck && result == actionRightMod) {
-                return 0;
-            }
-            return result;
+            return rightIndex + 1;
         } else {
             // generate another for-loop for other dimensions
             int nextTargetDimension = innerVectorNode.dimensionValueProfile.profile(((int[]) targetDimensions)[innerVectorNode.dimensionIndex]);
