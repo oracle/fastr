@@ -125,6 +125,7 @@ abstract class PositionCheckSubsetNode extends PositionCheckNode {
                     @Cached("create()") NullProfile hasNamesProfile, //
                     @Cached("create()") CountedLoopConditionProfile lengthProfile) {
         RAbstractIntVector intPosition = RDataFactory.createIntVector(positionLength);
+        intPosition.setComplete(position.isComplete());
         // requires names preservation
         RStringVector names = hasNamesProfile.profile(position.getNames(attrProfiles));
         if (names != null) {
@@ -182,7 +183,6 @@ abstract class PositionCheckSubsetNode extends PositionCheckNode {
                 intPosition.setDataAt(convertedStore, i, intPositionValue);
             }
         }
-
         return doIntegerProfiled(profile, dimensionLength, intPosition, positionLength, hasSeenPositive, hasSeenNegative, hasSeenNA, outOfBoundsCount, zeroCount, maxOutOfBoundsIndex);
 
     }
