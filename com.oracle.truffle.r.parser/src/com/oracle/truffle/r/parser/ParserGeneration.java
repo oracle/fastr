@@ -70,6 +70,7 @@ public class ParserGeneration {
         "added \\  escape sequence",
         "allow -/+/! after ^",
         "adapt to RError API change",
-        "allow multiple semicolons in {}"
+        "allow multiple semicolons in {}",
+        "allow .. as identifier"
     };
 }
