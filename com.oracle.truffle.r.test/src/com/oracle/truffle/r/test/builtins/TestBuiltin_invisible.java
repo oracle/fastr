@@ -81,8 +81,7 @@ public class TestBuiltin_invisible extends TestBase {
 
     @Test
     public void testinvisible13() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(function (...) new('test1', ...), className = structure('test1', package = '.GlobalEnv'), package = '.GlobalEnv', class = structure('classGeneratorFunction', package = 'methods')));invisible(argv[[1]]);");
+        assertEval("argv <- list(structure(function (...) new('test1', ...), className = structure('test1', package = '.GlobalEnv'), package = '.GlobalEnv', class = structure('classGeneratorFunction', package = 'methods')));invisible(argv[[1]]);");
     }
 
     @Test

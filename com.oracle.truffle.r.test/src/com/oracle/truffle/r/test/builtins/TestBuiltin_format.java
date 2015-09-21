@@ -25,8 +25,7 @@ public class TestBuiltin_format extends TestBase {
 
     @Test
     public void testformat2() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list('\\\\ab\\\\c', FALSE, NULL, 0L, NULL, 3L, FALSE, NA); .Internal(format(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]]))");
+        assertEval("argv <- list('\\\\ab\\\\c', FALSE, NULL, 0L, NULL, 3L, FALSE, NA); .Internal(format(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]]))");
     }
 
     @Test

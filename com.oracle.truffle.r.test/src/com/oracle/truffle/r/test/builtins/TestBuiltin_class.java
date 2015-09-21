@@ -19,8 +19,7 @@ public class TestBuiltin_class extends TestBase {
 
     @Test
     public void testclass1() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(function (x) standardGeneric('exp', .Primitive('exp')), generic = structure('exp', package = 'base'), package = 'base', group = list('Math'), valueClass = character(0), signature = 'x', default = .Primitive('exp'), skeleton = quote(.Primitive('exp')(x)), class = structure('standardGeneric', package = 'methods')));class(argv[[1]]);");
+        assertEval("argv <- list(structure(function (x) standardGeneric('exp', .Primitive('exp')), generic = structure('exp', package = 'base'), package = 'base', group = list('Math'), valueClass = character(0), signature = 'x', default = .Primitive('exp'), skeleton = quote(.Primitive('exp')(x)), class = structure('standardGeneric', package = 'methods')));class(argv[[1]]);");
     }
 
     @Test
@@ -75,8 +74,7 @@ public class TestBuiltin_class extends TestBase {
 
     @Test
     public void testclass12() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(function (qr, y) .Call(sparseQR_resid_fitted, qr, y, TRUE), target = structure(c('sparseQR', 'ddenseMatrix'), .Names = c('qr', 'y'), package = c('Matrix', 'Matrix'), class = structure('signature', package = 'methods')), defined = structure(c('sparseQR', 'ddenseMatrix'), .Names = c('qr', 'y'), package = c('Matrix', 'Matrix'), class = structure('signature', package = 'methods')), generic = structure('qr.resid', package = 'base'), class = structure('MethodDefinition', package = 'methods')));class(argv[[1]]);");
+        assertEval("argv <- list(structure(function (qr, y) .Call(sparseQR_resid_fitted, qr, y, TRUE), target = structure(c('sparseQR', 'ddenseMatrix'), .Names = c('qr', 'y'), package = c('Matrix', 'Matrix'), class = structure('signature', package = 'methods')), defined = structure(c('sparseQR', 'ddenseMatrix'), .Names = c('qr', 'y'), package = c('Matrix', 'Matrix'), class = structure('signature', package = 'methods')), generic = structure('qr.resid', package = 'base'), class = structure('MethodDefinition', package = 'methods')));class(argv[[1]]);");
     }
 
     @Test
@@ -131,8 +129,7 @@ public class TestBuiltin_class extends TestBase {
 
     @Test
     public void testclass23() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(function (a, b, ...) standardGeneric('solve'), generic = structure('solve', package = 'base'), package = 'base', group = list(), valueClass = character(0), signature = c('a', 'b'), default = structure(function (a, b, ...) UseMethod('solve'), target = structure('ANY', class = structure('signature', package = 'methods'), .Names = 'a', package = 'methods'), defined = structure('ANY', class = structure('signature', package = 'methods'), .Names = 'a', package = 'methods'), generic = structure('solve', package = 'base'), class = structure('derivedDefaultMethod', package = 'methods')), skeleton = quote((function (a, b, ...) UseMethod('solve'))(a, b, ...)), class = structure('standardGeneric', package = 'methods')));class(argv[[1]]);");
+        assertEval("argv <- list(structure(function (a, b, ...) standardGeneric('solve'), generic = structure('solve', package = 'base'), package = 'base', group = list(), valueClass = character(0), signature = c('a', 'b'), default = structure(function (a, b, ...) UseMethod('solve'), target = structure('ANY', class = structure('signature', package = 'methods'), .Names = 'a', package = 'methods'), defined = structure('ANY', class = structure('signature', package = 'methods'), .Names = 'a', package = 'methods'), generic = structure('solve', package = 'base'), class = structure('derivedDefaultMethod', package = 'methods')), skeleton = quote((function (a, b, ...) UseMethod('solve'))(a, b, ...)), class = structure('standardGeneric', package = 'methods')));class(argv[[1]]);");
     }
 
     @Test
@@ -142,20 +139,17 @@ public class TestBuiltin_class extends TestBase {
 
     @Test
     public void testclass25() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(function (x, type, ...) .Call(dgeMatrix_norm, as(x, 'dgeMatrix'), type), target = structure(c('matrix', 'character'), .Names = c('x', 'type'), package = c('methods', 'methods'), class = structure('signature', package = 'methods')), defined = structure(c('matrix', 'character'), .Names = c('x', 'type'), package = c('methods', 'methods'), class = structure('signature', package = 'methods')), generic = structure('norm', package = 'base'), class = structure('MethodDefinition', package = 'methods')));class(argv[[1]]);");
+        assertEval("argv <- list(structure(function (x, type, ...) .Call(dgeMatrix_norm, as(x, 'dgeMatrix'), type), target = structure(c('matrix', 'character'), .Names = c('x', 'type'), package = c('methods', 'methods'), class = structure('signature', package = 'methods')), defined = structure(c('matrix', 'character'), .Names = c('x', 'type'), package = c('methods', 'methods'), class = structure('signature', package = 'methods')), generic = structure('norm', package = 'base'), class = structure('MethodDefinition', package = 'methods')));class(argv[[1]]);");
     }
 
     @Test
     public void testclass26() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(function (x, mode = 'any') .Internal(as.vector(x, mode)), target = structure('ANY', class = structure('signature', package = 'methods'), .Names = 'x', package = 'methods'), defined = structure('ANY', class = structure('signature', package = 'methods'), .Names = 'x', package = 'methods'), generic = character(0), class = structure('MethodDefinition', package = 'methods')));class(argv[[1]]);");
+        assertEval("argv <- list(structure(function (x, mode = 'any') .Internal(as.vector(x, mode)), target = structure('ANY', class = structure('signature', package = 'methods'), .Names = 'x', package = 'methods'), defined = structure('ANY', class = structure('signature', package = 'methods'), .Names = 'x', package = 'methods'), generic = character(0), class = structure('MethodDefinition', package = 'methods')));class(argv[[1]]);");
     }
 
     @Test
     public void testclass27() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(function (x, uplo) {    if (uplo == x@uplo) x else t(x)}, target = structure(c('nsCMatrix', 'character'), .Names = c('x', 'uplo'), package = c('Matrix', 'methods'), class = structure('signature', package = 'methods')), defined = structure(c('nsCMatrix', 'character'), .Names = c('x', 'uplo'), package = c('Matrix', 'methods'), class = structure('signature', package = 'methods')), generic = structure('forceSymmetric', package = 'Matrix'), class = structure('MethodDefinition', package = 'methods')));class(argv[[1]]);");
+        assertEval("argv <- list(structure(function (x, uplo) {    if (uplo == x@uplo) x else t(x)}, target = structure(c('nsCMatrix', 'character'), .Names = c('x', 'uplo'), package = c('Matrix', 'methods'), class = structure('signature', package = 'methods')), defined = structure(c('nsCMatrix', 'character'), .Names = c('x', 'uplo'), package = c('Matrix', 'methods'), class = structure('signature', package = 'methods')), generic = structure('forceSymmetric', package = 'Matrix'), class = structure('MethodDefinition', package = 'methods')));class(argv[[1]]);");
     }
 
     @Test

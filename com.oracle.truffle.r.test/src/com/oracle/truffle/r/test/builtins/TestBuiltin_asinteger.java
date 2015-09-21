@@ -61,7 +61,7 @@ public class TestBuiltin_asinteger extends TestBase {
 
     @Test
     public void testasinteger10() {
-        assertEval(Ignored.Unknown, "argv <- list(c('1', NA, '0'));as.integer(argv[[1]]);");
+        assertEval("argv <- list(c('1', NA, '0'));as.integer(argv[[1]]);");
     }
 
     @Test
