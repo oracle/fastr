@@ -122,6 +122,10 @@ SEXP Rf_allocMatrix(SEXPTYPE mode, int nrow, int ncol) {
 	return checkRef(thisenv, result);
 }
 
+SEXP Rf_allocList(int x) {
+	unimplemented("Rf_allocList)");
+}
+
 SEXP Rf_cons(SEXP car, SEXP cdr) {
 	JNIEnv *thisenv = getEnv();
 	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_consMethodID, car, cdr);
@@ -174,6 +178,10 @@ SEXP Rf_duplicate(SEXP x) {
 
 R_xlen_t Rf_any_duplicated(SEXP x, Rboolean from_last) {
 	unimplemented("Rf_any_duplicated)");
+}
+
+SEXP Rf_duplicated(SEXP x, Rboolean y) {
+	unimplemented("Rf_duplicated)");
 }
 
 Rboolean Rf_inherits(SEXP x, const char * klass) {
@@ -349,6 +357,10 @@ SEXP Rf_mkChar(const char *x) {
 	return checkRef(thisenv, result);
 }
 
+SEXP Rf_mkCharCE(const char *x, cetype_t y) {
+	unimplemented("Rf_mkCharCE");
+}
+
 SEXP Rf_mkCharLenCE(const char *x, int len, cetype_t enc) {
 	JNIEnv *thisenv = getEnv();
 	char buf[len + 1];
@@ -450,12 +462,6 @@ void Rf_warning(const char *format, ...) {
 	(*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_warningMethodID, string);
 }
 
-void Rprintf(const char *msg, ...) {
-	va_list argptr;
-	va_start(argptr, msg);
-	vprintf(msg, argptr);
-}
-
 // Tools package support, not in public API
 
 SEXP R_NewHashedEnv(SEXP parent, SEXP size) {
@@ -483,14 +489,6 @@ void Rf_cPsort(Rcomplex *x, int n, int k) {
 
 SEXP Rf_classgets(SEXP x, SEXP y) {
 	unimplemented("Rf_classgets");
-}
-
-double Rf_fmax2(double x, double y) {
-	unimplemented("Rf_fmax2");
-}
-
-double Rf_fmin2(double x, double y) {
-	unimplemented("Rf_fmin2");
 }
 
 const char *Rf_translateChar(SEXP x) {

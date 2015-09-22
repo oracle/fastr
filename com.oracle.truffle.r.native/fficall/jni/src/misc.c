@@ -63,6 +63,10 @@ void R_rsort(double *x, int n) {
 	unimplemented("R_rsort");
 }
 
+void R_qsort_I  (double *v, int *II, int i, int j) {
+	unimplemented("R_qsort_I");
+}
+
 void R_qsort_int_I(int *iv, int *II, int i, int j) {
 	unimplemented("R_qsort_int_I");
 }
@@ -79,6 +83,14 @@ void R_CheckUserInterrupt() {
 // TODO (we don't even do this in the Java code)
 }
 
+void R_CheckStack(void) {
+	unimplemented("R_CheckStack");
+}
+
+void R_CheckStack2(size_t x) {
+	unimplemented("R_CheckStack2");
+}
+
 int R_finite(double x) {
 	JNIEnv *env = getEnv();
 	return (*env)->CallStaticBooleanMethod(env, RRuntimeClass, isFiniteMethodID, x);
@@ -87,6 +99,24 @@ int R_finite(double x) {
 int R_IsNaN(double x) {
 	JNIEnv *env = getEnv();
 	return (*env)->CallStaticBooleanMethod(env, RRuntimeClass, isNAorNaNMethodID, x);
+}
+
+void Rprintf(const char *msg, ...) {
+	va_list argptr;
+	va_start(argptr, msg);
+	vprintf(msg, argptr);
+}
+
+void REprintf(const char *x, ...) {
+	unimplemented("REprintf");
+}
+
+R_len_t R_BadLongVector(SEXP x, const char *y, int z) {
+	unimplemented("R_BadLongVector");
+}
+
+int R_IsNA(double x) {
+	unimplemented("R_IsNA");
 }
 
 int IS_S4_OBJECT(SEXP x) {
@@ -100,3 +130,8 @@ void SET_S4_OBJECT(SEXP x) {
 void UNSET_S4_OBJECT(SEXP x) {
 	unimplemented("UNSET_S4_OBJECT");
 }
+
+const char *R_ExpandFileName(const char *x) {
+	unimplemented("R_ExpandFileName");
+}
+

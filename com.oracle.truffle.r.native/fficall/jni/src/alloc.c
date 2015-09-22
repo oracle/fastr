@@ -43,6 +43,12 @@ char *R_alloc(size_t n, int size) {
 	return (char*) p;
 }
 
+char* S_alloc(long n, int size) {
+	char *p = R_alloc(n, size);
+	memset(p, 0, n);
+	return p;
+}
+
 void allocExit() {
 	int i;
 	for (i = 0; i < tMemTableIndex; i++) {
