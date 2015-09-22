@@ -11,13 +11,13 @@ usage <- function() {
 }
 
 # blacklist is a vector of package (names) that are known to be bad, i.e. uninstallable.
-# the result is a vector of new packages that depend/import/suggest/linkto any package on blacklist
+# the result is a vector of new packages that depend/import/linkto any package on blacklist
 create.blacklist.with <- function(blacklist, iter) {
 	this.blacklist <- vector()
 
 	trim <- function (x) gsub("^\\s+|\\s+$", "", x)
 
-	strip.version <- function(x) gsub("\\s+\\(.*\\)$", "", x)
+	strip.version <- function(x) gsub("\\s*\\(.*\\)$", "", x)
 
 	if (very.verbose) {
 		cat("Iteration: ", iter, "\n\n")
@@ -38,6 +38,9 @@ create.blacklist.with <- function(blacklist, iter) {
 					}
 					all.deps <-  append(all.deps, strip.version(trim(unlist(strsplit(deps, fixed=T, ",")))))
 				}
+			}
+			if (very.verbose) {
+				cat("all.deps for: ", pkgName," ", all.deps, "\n")
 			}
 
 			match.result <- match(blacklist, all.deps, nomatch=0)
@@ -93,7 +96,7 @@ math <- c("mvtnorm")
 # serialize
 serialize <- c("actuar", "spam", "codetools", "iterators", "apc", "apsrtable", "assertthat")
 # fortran related
-fortran <- c("appell")
+fortran <- c("appell", "blockmodeling", "clues", "rootSolve", "cts", "bayesQR", "cvplogistic")
 initial.blacklist <- c(cplusplus, tcltk, parserbug, core, math, trufflevisitor.nyi, nativeinstall, s4, graphics, serialize, fortran)
 
 create.blacklist <- function() {
