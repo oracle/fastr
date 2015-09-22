@@ -449,12 +449,12 @@ public class RSerialize {
                 }
 
                 case PACKAGESXP: {
-                    RStringVector s = inStringVec(false);
+                    String s = stream.readString(stream.readInt());
                     /*
                      * TODO GnuR eval's findPackageEnv, but we don't want to eval here. That will
                      * call require, so we can only find packages that are already loaded.
                      */
-                    REnvironment pkgEnv = REnvironment.lookupOnSearchPath(s.getDataAt(0));
+                    REnvironment pkgEnv = REnvironment.lookupOnSearchPath(s);
                     if (pkgEnv == null) {
                         pkgEnv = REnvironment.globalEnv();
                     }
