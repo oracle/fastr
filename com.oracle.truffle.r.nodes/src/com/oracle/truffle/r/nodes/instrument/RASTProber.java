@@ -25,7 +25,7 @@ package com.oracle.truffle.r.nodes.instrument;
 import static com.oracle.truffle.api.instrument.StandardSyntaxTag.*;
 
 import com.oracle.truffle.api.instrument.*;
-import com.oracle.truffle.api.instrument.ProbeNode.WrapperNode;
+import com.oracle.truffle.api.instrument.WrapperNode;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.control.*;
 import com.oracle.truffle.r.nodes.function.*;
@@ -54,7 +54,7 @@ public final class RASTProber implements ASTProber {
         return singleton;
     }
 
-    public void probeAST(Node node) {
+    public void probeAST(Instrumenter instrumenter, Node node) {
         FunctionBodyNode body = (FunctionBodyNode) node;
         FunctionDefinitionNode fdn = (FunctionDefinitionNode) body.getParent();
         if (body.getSourceSection() == null) {
@@ -68,11 +68,10 @@ public final class RASTProber implements ASTProber {
             return;
         }
         RInstrument.registerFunctionDefinition(fdn);
-        FunctionStatementsNode stmts = body.getStatements();
         FunctionUID uid = fdn.getUID();
-        body.probe().tagAs(RSyntaxTag.FUNCTION_BODY, uid);
-        stmts.probe().tagAs(START_METHOD, uid);
-        TaggingNodeVisitor visitor = new TaggingNodeVisitor(uid);
+        instrumenter.probe(body).tagAs(RSyntaxTag.FUNCTION_BODY, uid);
+        instrumenter.probe(body).tagAs(START_METHOD, uid);
+        TaggingNodeVisitor visitor = new TaggingNodeVisitor(uid, instrumenter);
         if (FastROptions.debugMatches("RASTProberTag")) {
             System.out.printf("Tagging function %s%n", uid);
         }
@@ -108,9 +107,11 @@ public final class RASTProber implements ASTProber {
     }
 
     public static class TaggingNodeVisitor extends StatementVisitor {
+        private Instrumenter instrumenter;
 
-        TaggingNodeVisitor(FunctionUID uid) {
+        TaggingNodeVisitor(FunctionUID uid, Instrumenter instrumenter) {
             super(uid);
+            this.instrumenter = instrumenter;
         }
 
         @Override
@@ -126,7 +127,7 @@ public final class RASTProber implements ASTProber {
 
         private void tagNode(RSyntaxNode node, StandardSyntaxTag tag) {
             RInstrument.NodeId nodeId = new RInstrument.NodeId(uid, node);
-            node.asRNode().probe().tagAs(tag, new RInstrument.NodeId(uid, node));
+            instrumenter.probe(node.asRNode()).tagAs(tag, new RInstrument.NodeId(uid, node));
             if (FastROptions.debugMatches("RASTProberTag")) {
                 System.out.printf("Tagged %s as %s: %s%n", node.getClass().getSimpleName(), tag, nodeId.toString());
             }

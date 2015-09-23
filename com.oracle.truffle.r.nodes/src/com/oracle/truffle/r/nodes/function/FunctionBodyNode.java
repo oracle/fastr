@@ -68,7 +68,7 @@ public class FunctionBodyNode extends BodyNode implements RSyntaxNode {
     }
 
     @Override
-    public boolean isInstrumentable() {
+    public boolean isRInstrumentable() {
         return true;
     }
 

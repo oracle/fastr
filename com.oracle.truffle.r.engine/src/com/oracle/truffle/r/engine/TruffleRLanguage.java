@@ -27,19 +27,23 @@ import java.util.Locale;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.debug.*;
+import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.instrument.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.engine.repl.debug.*;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinPackages;
+import com.oracle.truffle.r.nodes.instrument.RASTProber;
 import com.oracle.truffle.r.nodes.instrument.RInstrument;
 import com.oracle.truffle.r.runtime.RAccuracyInfo;
+import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RPerfStats;
 import com.oracle.truffle.r.runtime.RVersionInfo;
 import com.oracle.truffle.r.runtime.TempPathName;
 import com.oracle.truffle.r.runtime.context.*;
 import com.oracle.truffle.r.runtime.ffi.Load_RFFIFactory;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
+import com.oracle.truffle.r.runtime.nodes.RNode;
 
 /**
  * Only does the minimum for running under the debugger. It is not completely clear how to correctly
@@ -59,7 +63,7 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
         if (!initialized) {
             initialized = true;
             Load_RFFIFactory.initialize();
-            RInstrument.initialize();
+            RInstrument.initialize(INSTANCE.instrumenter);
             RPerfStats.initialize();
             Locale.setDefault(Locale.ROOT);
             RAccuracyInfo.initialize();
@@ -70,6 +74,7 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
     }
 
     private DebugSupportProvider debugSupport;
+    private Instrumenter instrumenter;
 
     public static final TruffleRLanguage INSTANCE = new TruffleRLanguage();
 
@@ -98,6 +103,7 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
 
     @Override
     protected RContext createContext(Env env) {
+        instrumenter = env.instrumenter();
         initialize();
         return RContext.create(env);
     }
@@ -127,5 +133,47 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
     // TODO: why isn't the original method public?
     public Node actuallyCreateFindContextNode() {
         return createFindContextNode();
+    }
+
+    @Override
+    protected Visualizer getVisualizer() {
+        throw RInternalError.unimplemented("getVisualizer");
+    }
+
+    @SuppressWarnings("deprecation")
+    @Override
+    protected void enableASTProbing(ASTProber astProber) {
+        throw RInternalError.unimplemented("enableASTProbing");
+    }
+
+    @Override
+    protected boolean isInstrumentable(Node node) {
+        RNode rNode = (RNode) node;
+        return rNode.isRInstrumentable();
+    }
+
+    @Override
+    protected WrapperNode createWrapperNode(Node node) {
+        RNode rNode = (RNode) node;
+        return rNode.createRWrapperNode();
+    }
+
+    @Override
+    protected ASTProber getDefaultASTProber() {
+        if (RInstrument.instrumentingEnabled()) {
+            return RASTProber.getRASTProber();
+        } else {
+            return null;
+        }
+    }
+
+    @Override
+    protected Object evalInContext(Source source, Node node, MaterializedFrame mFrame) throws IOException {
+        throw RInternalError.unimplemented("evalInContext");
+    }
+
+    @Override
+    protected AdvancedInstrumentRootFactory createAdvancedInstrumentRootFactory(String expr, AdvancedInstrumentResultListener resultListener) throws IOException {
+        throw RInternalError.unimplemented("createAdvancedInstrumentRootFactory");
     }
 }

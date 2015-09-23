@@ -173,7 +173,7 @@ public class RInstrument {
             if (tag == RSyntaxTag.FUNCTION_BODY) {
                 putProbe((FunctionUID) tagValue, probe);
                 if (REntryCounters.Function.enabled()) {
-                    probe.attach(new REntryCounters.Function((FunctionUID) tagValue).instrument);
+                    getInstrumenter().attach(probe, new REntryCounters.Function((FunctionUID) tagValue), "R function entry counter");
                 }
             } else if (tag == StandardSyntaxTag.START_METHOD) {
                 putProbe((FunctionUID) tagValue, probe);
@@ -182,7 +182,7 @@ public class RInstrument {
                 }
             } else if (tag == StandardSyntaxTag.STATEMENT) {
                 if (RNodeTimer.Statement.enabled()) {
-                    probe.attach(new RNodeTimer.Statement((NodeId) tagValue).instrument);
+                    getInstrumenter().attach(probe, new RNodeTimer.Statement((NodeId) tagValue), RNodeTimer.Statement.INFO);
                 }
             }
         }
@@ -192,6 +192,8 @@ public class RInstrument {
         }
 
     }
+
+    @CompilationFinal private static Instrumenter instrumenter;
 
     /**
      * Controls whether ASTs are instrumented after parse. The default value controlled by
@@ -235,11 +237,11 @@ public class RInstrument {
      * As a convenience we force {@link #instrumentingEnabled} on if those {@code RPerfStats}
      * features that need it are also enabled.
      */
-    public static void initialize() {
+    public static void initialize(Instrumenter instrumenterArg) {
+        instrumenter = instrumenterArg;
         instrumentingEnabled = FastROptions.Instrument || FastROptions.TraceCalls || FastROptions.Rdebug != null || REntryCounters.Function.enabled() || RNodeTimer.Statement.enabled();
         if (instrumentingEnabled) {
-            Probe.registerASTProber(RASTProber.getRASTProber());
-            Probe.addProbeListener(new RProbeListener());
+            instrumenter.addProbeListener(new RProbeListener());
         }
         if (instrumentingEnabled || FastROptions.LoadPkgSourcesIndex) {
             RPackageSource.initialize();
@@ -248,6 +250,10 @@ public class RInstrument {
         if (rdebugValue != null) {
             debugFunctionNames = rdebugValue.split(",");
         }
+    }
+
+    public static Instrumenter getInstrumenter() {
+        return instrumenter;
     }
 
     public static boolean instrumentingEnabled() {

@@ -36,8 +36,6 @@ import com.oracle.truffle.r.runtime.nodes.*;
  * Basic support for adding as timer to a node. A timer must be identified with some unique value
  * that enables it to be retrieved.
  *
- * The {@link Basic#instrument} field is used to attach the timer to a {@link Probe}.
- *
  * The instrument records the cumulative time spent executing this node during the process execution
  * using {@link System#nanoTime()}.
  *
@@ -46,41 +44,39 @@ import com.oracle.truffle.r.runtime.nodes.*;
 public class RNodeTimer {
     private static HashMap<Object, Basic> timerMap = new HashMap<>();
 
-    public static class Basic {
+    public static class Basic implements SimpleInstrumentListener {
+
+        public static final String INFO = "R node timer";
 
         protected long enterTime;
         protected long cumulativeTime;
-        public final Instrument instrument;
 
         public Basic(RInstrument.NodeId tag) {
-            instrument = Instrument.create(new SimpleInstrumentListener() {
-
-                @Override
-                public void enter(Probe probe) {
-                    enterTime = System.nanoTime();
-                }
-
-                private void returnAny(@SuppressWarnings("unused") Probe probe) {
-                    cumulativeTime += System.nanoTime() - enterTime;
-                }
-
-                @Override
-                public void returnVoid(Probe probe) {
-                    returnAny(probe);
-                }
-
-                @Override
-                public void returnValue(Probe probe, Object result) {
-                    returnAny(probe);
-                }
-
-                @Override
-                public void returnExceptional(Probe probe, Exception exception) {
-                    returnAny(probe);
-                }
-            }, "R node timer");
-
             timerMap.put(tag, this);
+        }
+
+        @Override
+        public void onEnter(Probe probe) {
+            enterTime = System.nanoTime();
+        }
+
+        private void returnAny(@SuppressWarnings("unused") Probe probe) {
+            cumulativeTime += System.nanoTime() - enterTime;
+        }
+
+        @Override
+        public void onReturnVoid(Probe probe) {
+            returnAny(probe);
+        }
+
+        @Override
+        public void onReturnValue(Probe probe, Object result) {
+            returnAny(probe);
+        }
+
+        @Override
+        public void onReturnExceptional(Probe probe, Exception exception) {
+            returnAny(probe);
         }
 
         public long getTime() {

@@ -61,7 +61,7 @@ public class TraceHandling {
             return null;
         }
         TraceFunctionEventReceiver fser = new TraceFunctionEventReceiver();
-        probe.attach(fser.getInstrument());
+        RInstrument.getInstrumenter().attach(probe, fser, "trace");
         return probe;
     }
 
@@ -74,7 +74,7 @@ public class TraceHandling {
         }
 
         @Override
-        public void returnVoid(Probe probe, Node node, VirtualFrame frame) {
+        public void onReturnVoid(Probe probe, Node node, VirtualFrame frame) {
             if (!disabled()) {
                 throw RInternalError.shouldNotReachHere();
             }
@@ -106,18 +106,10 @@ public class TraceHandling {
         private static final int INDENT = 2;
         private static int indent;
 
-        Instrument instrument;
-
         TraceFunctionEventReceiver() {
-            instrument = Instrument.create(this, "trace");
         }
 
-        Instrument getInstrument() {
-            return instrument;
-        }
-
-        @Override
-        public void enter(Probe probe, Node node, VirtualFrame frame) {
+        public void onEnter(Probe probe, Node node, VirtualFrame frame) {
             if (!disabled()) {
                 @SuppressWarnings("unused")
                 FunctionStatementsNode fsn = (FunctionStatementsNode) node;
@@ -131,14 +123,14 @@ public class TraceHandling {
         }
 
         @Override
-        public void returnExceptional(Probe probe, Node node, VirtualFrame frame, Exception exception) {
+        public void onReturnExceptional(Probe probe, Node node, VirtualFrame frame, Exception exception) {
             if (!disabled()) {
                 indent -= INDENT;
             }
         }
 
         @Override
-        public void returnValue(Probe probe, Node node, VirtualFrame frame, Object result) {
+        public void onReturnValue(Probe probe, Node node, VirtualFrame frame, Object result) {
             if (!disabled()) {
                 indent -= INDENT;
             }

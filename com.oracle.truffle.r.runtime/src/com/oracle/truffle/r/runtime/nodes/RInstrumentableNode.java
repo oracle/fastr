@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.nodes;
 
-import com.oracle.truffle.api.instrument.ProbeNode.WrapperNode;
+import com.oracle.truffle.api.instrument.WrapperNode;
 import com.oracle.truffle.api.nodes.*;
 
 /**

@@ -117,7 +117,7 @@ public class CallRFFIWithJNI implements CallRFFI {
         try {
             DLL.load(librffiPath, ForceRTLDGlobal, false);
         } catch (DLLException ex) {
-            throw RError.error(RError.NO_NODE, ex);
+            throw RInternalError.shouldNotReachHere(ex, "rfficall");
         }
         System.load(librffiPath);
         initialize(RVariables.values());

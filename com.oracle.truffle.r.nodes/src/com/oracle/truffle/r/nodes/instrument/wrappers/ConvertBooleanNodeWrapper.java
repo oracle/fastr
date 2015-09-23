@@ -24,15 +24,15 @@
 package com.oracle.truffle.r.nodes.instrument.wrappers;
 
 import com.oracle.truffle.api.instrument.Probe;
-import com.oracle.truffle.api.instrument.ProbeNode;
-import com.oracle.truffle.api.instrument.ProbeNode.WrapperNode;
+import com.oracle.truffle.api.instrument.EventHandlerNode;
+import com.oracle.truffle.api.instrument.WrapperNode;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.runtime.nodes.*;
 
 @NodeInfo(cost = NodeCost.NONE)
 public final class ConvertBooleanNodeWrapper extends com.oracle.truffle.r.nodes.unary.ConvertBooleanNode implements WrapperNode {
     @Child com.oracle.truffle.r.nodes.unary.ConvertBooleanNode child;
-    @Child private ProbeNode probeNode;
+    @Child private EventHandlerNode eventHandlerNode;
 
     public ConvertBooleanNodeWrapper(com.oracle.truffle.r.nodes.unary.ConvertBooleanNode child) {
         assert child != null;
@@ -50,42 +50,42 @@ public final class ConvertBooleanNodeWrapper extends com.oracle.truffle.r.nodes.
 
     public Probe getProbe() {
         try {
-            return probeNode.getProbe();
+            return eventHandlerNode.getProbe();
         } catch (IllegalStateException e) {
             throw new IllegalStateException("A lite-Probed wrapper has no explicit Probe");
         }
     }
 
-    public void insertProbe(ProbeNode newProbeNode) {
-        this.probeNode = newProbeNode;
+    public void insertEventHandlerNode(EventHandlerNode newEventHandlerNode) {
+        this.eventHandlerNode = newEventHandlerNode;
     }
 
     @Override
     public byte executeByte(com.oracle.truffle.api.frame.VirtualFrame frame) {
-        probeNode.enter(child, frame);
+        eventHandlerNode.enter(child, frame);
 
         byte result;
         try {
             result = child.executeByte(frame);
-            probeNode.returnValue(child, frame, result);
+            eventHandlerNode.returnValue(child, frame, result);
             return result;
         } catch (Exception e) {
-            probeNode.returnExceptional(child, frame, e);
+            eventHandlerNode.returnExceptional(child, frame, e);
             throw (e);
         }
     }
 
     @Override
     public byte executeByte(com.oracle.truffle.api.frame.VirtualFrame frame, java.lang.Object operandValue) {
-        probeNode.enter(child, frame);
+        eventHandlerNode.enter(child, frame);
 
         byte result;
         try {
             result = child.executeByte(frame, operandValue);
-            probeNode.returnValue(child, frame, result);
+            eventHandlerNode.returnValue(child, frame, result);
             return result;
         } catch (Exception e) {
-            probeNode.returnExceptional(child, frame, e);
+            eventHandlerNode.returnExceptional(child, frame, e);
             throw (e);
         }
     }

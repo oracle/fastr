@@ -37,7 +37,7 @@ import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.access.variables.*;
 import com.oracle.truffle.r.nodes.control.*;
-import com.oracle.truffle.r.nodes.instrument.*;
+import com.oracle.truffle.r.nodes.instrument.RInstrument;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RArguments.S3Args;
 import com.oracle.truffle.r.runtime.Utils.DebugExitException;
@@ -464,7 +464,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
     @Override
     public void applyInstrumentation() {
         if (RInstrument.instrumentingEnabled() && !instrumentationApplied && body instanceof FunctionBodyNode) {
-            Probe.applyASTProbers(body);
+            applyInstrumentation(body);
             instrumentationApplied = true;
         }
     }

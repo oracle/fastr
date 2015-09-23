@@ -28,7 +28,7 @@ import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.instrument.*;
-import com.oracle.truffle.api.instrument.ProbeNode.WrapperNode;
+import com.oracle.truffle.api.instrument.WrapperNode;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.control.*;
@@ -143,8 +143,9 @@ public class DebugHandling {
             return null;
         }
         FunctionStatementsEventReceiver fser = new FunctionStatementsEventReceiver(fdn, text, condition, once);
-        probe.attach(fser.getInstrument());
-        attachToStatementNodes(fser);
+        Instrumenter instrumenter = RInstrument.getInstrumenter();
+        instrumenter.attach(probe, fser, "debug");
+        attachToStatementNodes(fser, instrumenter);
         return probe;
     }
 
@@ -159,18 +160,18 @@ public class DebugHandling {
         }
     }
 
-    private static void attachToStatementNodes(FunctionStatementsEventReceiver functionStatementsEventReceiver) {
+    private static void attachToStatementNodes(FunctionStatementsEventReceiver functionStatementsEventReceiver, Instrumenter instrumenter) {
         functionStatementsEventReceiver.getFunctionDefinitionNode().getBody().accept(new NodeVisitor() {
             public boolean visit(Node node) {
-                if (node instanceof ProbeNode.WrapperNode) {
-                    ProbeNode.WrapperNode wrapper = (ProbeNode.WrapperNode) node;
+                if (node instanceof WrapperNode) {
+                    WrapperNode wrapper = (WrapperNode) node;
                     Probe probe = wrapper.getProbe();
                     if (probe.isTaggedAs(StandardSyntaxTag.STATEMENT)) {
                         Node child = wrapper.getChild();
                         if (child instanceof AbstractLoopNode) {
-                            probe.attach(functionStatementsEventReceiver.getLoopStatementInstrument(wrapper));
+                            instrumenter.attach(probe, functionStatementsEventReceiver.getLoopStatementReceiver(wrapper), "debug:loop");
                         } else {
-                            probe.attach(functionStatementsEventReceiver.getStatementInstrument());
+                            instrumenter.attach(probe, functionStatementsEventReceiver.getStatementReceiver(), "debug:stmt");
                         }
                     }
                 }
@@ -198,14 +199,14 @@ public class DebugHandling {
         }
 
         @Override
-        public void returnVoid(Probe probe, Node node, VirtualFrame frame) {
+        public void onReturnVoid(Probe probe, Node node, VirtualFrame frame) {
             if (!disabled()) {
                 throw RInternalError.shouldNotReachHere();
             }
         }
 
         @Override
-        public void returnExceptional(Probe probe, Node node, VirtualFrame frame, Exception exception) {
+        public void onReturnExceptional(Probe probe, Node node, VirtualFrame frame, Exception exception) {
         }
 
         boolean disabled() {
@@ -272,7 +273,6 @@ public class DebugHandling {
      */
     private static class FunctionStatementsEventReceiver extends DebugEventReceiver {
 
-        private final List<Instrument> instruments = new ArrayList<>();
         private final StatementEventReceiver statementReceiver;
         ArrayList<LoopStatementEventReceiver> loopStatementReceivers = new ArrayList<>();
 
@@ -282,27 +282,18 @@ public class DebugHandling {
         FunctionStatementsEventReceiver(FunctionDefinitionNode functionDefinitionNode, Object text, Object condition, boolean once) {
             super(functionDefinitionNode, text, condition);
             receiverMap.put(functionDefinitionNode.getUID(), this);
-            instruments.add(Instrument.create(this, "debug"));
             statementReceiver = new StatementEventReceiver(functionDefinitionNode, text, condition);
             this.once = once;
         }
 
-        Instrument getInstrument() {
-            return instruments.get(0);
+        StatementEventReceiver getStatementReceiver() {
+            return statementReceiver;
         }
 
-        Instrument getStatementInstrument() {
-            Instrument instrument = Instrument.create(statementReceiver, "debug");
-            instruments.add(instrument);
-            return instrument;
-        }
-
-        Instrument getLoopStatementInstrument(WrapperNode loopNodeWrapper) {
+        LoopStatementEventReceiver getLoopStatementReceiver(WrapperNode loopNodeWrapper) {
             LoopStatementEventReceiver lser = new LoopStatementEventReceiver(functionDefinitionNode, text, condition, loopNodeWrapper, this);
             loopStatementReceivers.add(lser);
-            Instrument instrument = Instrument.create(lser, "debug");
-            instruments.add(instrument);
-            return instrument;
+            return lser;
         }
 
         @Override
@@ -352,7 +343,7 @@ public class DebugHandling {
         }
 
         @Override
-        public void enter(Probe probe, Node node, VirtualFrame frame) {
+        public void onEnter(Probe probe, Node node, VirtualFrame frame) {
             if (!disabled()) {
                 RContext.getInstance().getConsoleHandler().print("debugging in: ");
                 printCall(frame);
@@ -366,14 +357,14 @@ public class DebugHandling {
         }
 
         @Override
-        public void returnValue(Probe probe, Node node, VirtualFrame frame, Object result) {
+        public void onReturnValue(Probe probe, Node node, VirtualFrame frame, Object result) {
             if (!disabled()) {
                 returnCleanup(frame);
             }
         }
 
         @Override
-        public void returnExceptional(Probe probe, Node node, VirtualFrame frame, Exception exception) {
+        public void onReturnExceptional(Probe probe, Node node, VirtualFrame frame, Exception exception) {
             if (!disabled()) {
                 returnCleanup(frame);
             }
@@ -422,7 +413,7 @@ public class DebugHandling {
         }
 
         @Override
-        public void enter(Probe probe, Node node, VirtualFrame frame) {
+        public void onEnter(Probe probe, Node node, VirtualFrame frame) {
             if (!disabled()) {
                 // in case we did a step into that never called a function
                 StepIntoTagTrap.clearTrap();
@@ -432,7 +423,7 @@ public class DebugHandling {
         }
 
         @Override
-        public void returnValue(Probe probe, Node node, VirtualFrame frame, Object result) {
+        public void onReturnValue(Probe probe, Node node, VirtualFrame frame, Object result) {
         }
 
     }
@@ -454,9 +445,9 @@ public class DebugHandling {
         }
 
         @Override
-        public void enter(Probe probe, Node node, VirtualFrame frame) {
+        public void onEnter(Probe probe, Node node, VirtualFrame frame) {
             if (!disabled()) {
-                super.enter(probe, node, frame);
+                super.onEnter(probe, node, frame);
             }
         }
 
@@ -469,14 +460,14 @@ public class DebugHandling {
         }
 
         @Override
-        public void returnExceptional(Probe probe, Node node, VirtualFrame frame, Exception exception) {
+        public void onReturnExceptional(Probe probe, Node node, VirtualFrame frame, Exception exception) {
             if (!disabled()) {
                 returnCleanup();
             }
         }
 
         @Override
-        public void returnValue(Probe probe, Node node, VirtualFrame frame, Object result) {
+        public void onReturnValue(Probe probe, Node node, VirtualFrame frame, Object result) {
             if (!disabled()) {
                 returnCleanup();
             }
@@ -527,13 +518,13 @@ public class DebugHandling {
         }
 
         static void setTrap() {
-            Probe.setBeforeTagTrap(fastRSyntaxTagTrap);
+            RInstrument.getInstrumenter().setBeforeTagTrap(fastRSyntaxTagTrap);
             set = true;
         }
 
         static void clearTrap() {
             if (set) {
-                Probe.setBeforeTagTrap(null);
+                RInstrument.getInstrumenter().setBeforeTagTrap(null);
                 set = false;
             }
         }

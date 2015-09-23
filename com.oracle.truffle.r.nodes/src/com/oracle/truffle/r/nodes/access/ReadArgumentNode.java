@@ -54,7 +54,7 @@ public class ReadArgumentNode extends RNode {
     }
 
     @Override
-    public ProbeNode.WrapperNode createWrapperNode() {
+    public WrapperNode createRWrapperNode() {
         return new ReadArgumentNodeWrapper(this);
     }
 }

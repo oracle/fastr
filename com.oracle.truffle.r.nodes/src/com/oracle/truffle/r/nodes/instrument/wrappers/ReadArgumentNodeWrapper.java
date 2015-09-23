@@ -23,15 +23,15 @@
 package com.oracle.truffle.r.nodes.instrument.wrappers;
 
 import com.oracle.truffle.api.instrument.Probe;
-import com.oracle.truffle.api.instrument.ProbeNode;
-import com.oracle.truffle.api.instrument.ProbeNode.WrapperNode;
+import com.oracle.truffle.api.instrument.EventHandlerNode;
+import com.oracle.truffle.api.instrument.WrapperNode;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.runtime.nodes.*;
 
 @NodeInfo(cost = NodeCost.NONE)
 public final class ReadArgumentNodeWrapper extends com.oracle.truffle.r.nodes.access.ReadArgumentNode implements WrapperNode {
     @Child com.oracle.truffle.r.nodes.access.ReadArgumentNode child;
-    @Child private ProbeNode probeNode;
+    @Child private EventHandlerNode eventHandlerNode;
 
     public ReadArgumentNodeWrapper(com.oracle.truffle.r.nodes.access.ReadArgumentNode child) {
         assert child != null;
@@ -49,14 +49,14 @@ public final class ReadArgumentNodeWrapper extends com.oracle.truffle.r.nodes.ac
 
     public Probe getProbe() {
         try {
-            return probeNode.getProbe();
+            return eventHandlerNode.getProbe();
         } catch (IllegalStateException e) {
             throw new IllegalStateException("A lite-Probed wrapper has no explicit Probe");
         }
     }
 
-    public void insertProbe(ProbeNode newProbeNode) {
-        this.probeNode = newProbeNode;
+    public void insertEventHandlerNode(EventHandlerNode newEventHandlerNode) {
+        this.eventHandlerNode = newEventHandlerNode;
     }
 
     @Override

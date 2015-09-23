@@ -41,4 +41,9 @@ public class BodyNode extends RNode {
         return statements.execute(frame);
     }
 
+    @Override
+    public boolean isRInstrumentable() {
+        return false;
+    }
+
 }
