@@ -344,6 +344,7 @@ public class BasePackage extends RBuiltinPackage {
         add(Length.class, LengthNodeGen::create);
         add(License.class, LicenseNodeGen::create);
         add(ListBuiltin.class, ListBuiltinNodeGen::create);
+        add(LoadFunctions.Load.class, LoadFunctionsFactory.LoadNodeGen::create);
         add(LoadFunctions.LoadFromConn2.class, LoadFunctionsFactory.LoadFromConn2NodeGen::create);
         add(LocaleFunctions.BindTextDomain.class, LocaleFunctionsFactory.BindTextDomainNodeGen::create);
         add(LocaleFunctions.Enc2Native.class, LocaleFunctionsFactory.Enc2NativeNodeGen::create);

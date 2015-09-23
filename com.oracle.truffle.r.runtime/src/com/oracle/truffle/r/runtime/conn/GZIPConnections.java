@@ -35,7 +35,9 @@ public class GZIPConnections {
     public static final int GZIP_BUFFER_SIZE = (2 << 20);
 
     /**
-     * Base class for all modes of gzfile connections.
+     * Base class for all modes of gzfile connections. N.B. gzfile is defined to be able to read
+     * gzip, bzip, lzma and uncompressed files, which has to be implemented by reading the first few
+     * bytes of the file and detecting the type of the file.
      */
     public static class GZIPRConnection extends BasePathRConnection {
         public GZIPRConnection(String path, String modeString) throws IOException {
@@ -49,10 +51,33 @@ public class GZIPConnections {
             switch (getOpenMode().abstractOpenMode) {
                 case Read:
                 case ReadBinary:
-                    try {
-                        delegate = new GZIPInputRConnection(this);
-                    } catch (ZipException ex) {
-                        delegate = new FileConnections.FileReadTextRConnection(this);
+                    RCompression.Type cType = RCompression.Type.NONE;
+                    try (InputStream is = new FileInputStream(path)) {
+                        byte[] buf = new byte[5];
+                        int count = is.read(buf);
+                        if (count == 5) {
+                            cType = RCompression.Type.decodeBuf(buf);
+                        }
+                    }
+                    switch (cType) {
+                        case NONE:
+                            delegate = new FileConnections.FileReadTextRConnection(this);
+                            break;
+                        case GZIP:
+                            delegate = new GZIPInputRConnection(this);
+                            break;
+                        case LZMA:
+                            /*
+                             * no lzma support in Java. For now we use RCompression to a byte array
+                             * and return a ByteArrayInputStream on that.
+                             */
+                            byte[] lzmaUdata = RCompression.lzmaUncompressFromFile(path);
+                            delegate = new ByteGZipInputRConnection(this, new ByteArrayInputStream(lzmaUdata));
+                            break;
+                        case BZIP2:
+                            // ditto
+                            byte[] bzipUdata = RCompression.bzipUncompressFromFile(path);
+                            delegate = new ByteGZipInputRConnection(this, new ByteArrayInputStream(bzipUdata));
                     }
                     break;
                 case Write:
@@ -75,11 +100,16 @@ public class GZIPConnections {
     }
 
     private static class GZIPInputRConnection extends DelegateReadRConnection implements ReadWriteHelper {
-        private GZIPInputStream inputStream;
+        private InputStream inputStream;
 
         GZIPInputRConnection(GZIPRConnection base) throws IOException {
             super(base);
             inputStream = new GZIPInputStream(new FileInputStream(base.path), GZIP_BUFFER_SIZE);
+        }
+
+        protected GZIPInputRConnection(GZIPRConnection base, InputStream is) {
+            super(base);
+            this.inputStream = is;
         }
 
         @Override
@@ -118,6 +148,12 @@ public class GZIPConnections {
             inputStream.close();
         }
 
+    }
+
+    private static class ByteGZipInputRConnection extends GZIPInputRConnection {
+        ByteGZipInputRConnection(GZIPRConnection base, ByteArrayInputStream is) {
+            super(base, is);
+        }
     }
 
     private static class GZIPOutputRConnection extends DelegateWriteRConnection implements ReadWriteHelper {

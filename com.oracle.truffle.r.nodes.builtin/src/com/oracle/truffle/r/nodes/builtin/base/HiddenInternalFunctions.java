@@ -365,7 +365,7 @@ public class HiddenInternalFunctions {
 
         @TruffleBoundary
         private RIntVector lazyLoadDBinsertValueInternal(MaterializedFrame frame, Object value, RAbstractStringVector file, byte asciiL, int compression, RFunction hook) {
-            if (compression != 1) {
+            if (!(compression == 1 || compression == 3)) {
                 throw RError.error(this, Message.GENERIC, "unsupported compression");
             }
 
@@ -378,16 +378,35 @@ public class HiddenInternalFunctions {
 
             try {
                 byte[] data = RSerialize.serialize(value, RRuntime.fromLogical(asciiL), false, RSerialize.DEFAULT_VERSION, callHook);
-                byte[] cdata = new byte[data.length + 20];
-                long[] cdatalen = new long[1];
-                cdatalen[0] = cdata.length;
-                int rc = RFFIFactory.getRFFI().getBaseRFFI().compress(cdata, cdatalen, data);
-                if (rc != 0) {
-                    throw RError.error(this, Message.GENERIC, "zlib uncompress error");
+                // See comment in LazyLoadDBFetch for format
+                int outLen;
+                int offset;
+                RCompression.Type type;
+                byte[] cdata;
+                if (compression == 1) {
+                    type = RCompression.Type.GZIP;
+                    offset = 4;
+                    outLen = (int) (1.001 * data.length) + 20;
+                    cdata = new byte[outLen];
+                    boolean rc = RCompression.compress(type, data, cdata);
+                    if (!rc) {
+                        throw RError.error(this, Message.GENERIC, "zlib compress error");
+                    }
+                } else if (compression == 3) {
+                    type = RCompression.Type.LZMA;
+                    offset = 5;
+                    outLen = data.length;
+                    cdata = new byte[outLen];
+                    boolean rc = RCompression.compress(type, data, cdata);
+                    if (!rc) {
+                        throw RError.error(this, Message.GENERIC, "lzma compress error");
+                    }
+                } else {
+                    throw RInternalError.shouldNotReachHere();
                 }
                 int[] intData = new int[2];
-                intData[1] = (int) cdatalen[0] + 4; // include outlen
-                intData[0] = appendFile(file.getDataAt(0), cdata, data.length, (int) cdatalen[0]);
+                intData[1] = outLen + offset; // include length + type (compression == 3)
+                intData[0] = appendFile(file.getDataAt(0), cdata, data.length, type);
                 return RDataFactory.createIntVector(intData, RDataFactory.COMPLETE_VECTOR);
             } catch (Throwable ex) {
                 // Exceptions have been observed that were masked and very hard to find
@@ -407,12 +426,11 @@ public class HiddenInternalFunctions {
          * int in the first four bytes of the data. See {@link LazyLoadDBFetch}.
          *
          * @param path path of file
-         * @param data the compressed data
+         * @param cdata the compressed data
          * @param ulen length of uncompressed data
-         * @param len length of compressed data
          * @return offset in file of appended data
          */
-        private int appendFile(String path, byte[] data, int ulen, int len) {
+        private int appendFile(String path, byte[] cdata, int ulen, RCompression.Type type) {
             File file = new File(path);
             try (BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(file, true))) {
                 int result = (int) file.length();
@@ -422,7 +440,10 @@ public class HiddenInternalFunctions {
                 byte[] ulenData = new byte[4];
                 dataLengthBuf.get(ulenData);
                 out.write(ulenData);
-                out.write(data, 0, len);
+                if (type == RCompression.Type.LZMA) {
+                    out.write(RCompression.Type.LZMA.typeByte);
+                }
+                out.write(cdata);
                 return result;
             } catch (IOException ex) {
                 throw RError.error(this, Message.GENERIC, "lazyLoadDBinsertValue file append error");
@@ -433,7 +454,7 @@ public class HiddenInternalFunctions {
 
     /*
      * Created as primitive function to avoid incrementing reference count for the argument.
-     *
+     * 
      * returns -1 for non-shareable, 0 for private, 1 for temp, 2 for shared and
      * SHARED_PERMANENT_VAL for permanent shared
      */
