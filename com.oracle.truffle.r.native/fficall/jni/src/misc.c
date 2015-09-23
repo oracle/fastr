@@ -135,3 +135,34 @@ const char *R_ExpandFileName(const char *x) {
 	unimplemented("R_ExpandFileName");
 }
 
+Rboolean R_ToplevelExec(void (*fun)(void *), void *data) {
+	unimplemented("R_ToplevelExec");
+}
+
+SEXP R_ExecWithCleanup(SEXP (*fun)(void *), void *data,
+		       void (*cleanfun)(void *), void *cleandata) {
+	unimplemented("R_ExecWithCleanup");
+}
+
+#include <R_ext/Connections.h>
+
+SEXP   R_new_custom_connection(const char *description, const char *mode, const char *class_name, Rconnection *ptr) {
+	unimplemented("R_new_custom_connection");
+}
+
+size_t R_ReadConnection(Rconnection con, void *buf, size_t n) {
+	unimplemented("R_ReadConnection");
+}
+
+size_t R_WriteConnection(Rconnection con, void *buf, size_t n) {
+	unimplemented("R_WriteConnection");
+}
+
+SEXP R_tryEval(SEXP x, SEXP y, int *z) {
+	unimplemented("R_tryEval");
+}
+
+SEXP R_tryEvalSilent(SEXP x, SEXP y, int *z) {
+	unimplemented("R_tryEvalSilent");
+}
+
