@@ -584,7 +584,7 @@ public final class RError extends RuntimeException {
         NOT_DEBUGGED("argument is not being debugged"),
         ADDING_INVALID_CLASS("adding class \"%s\" to an invalid object"),
         IS_NA_TO_NON_VECTOR("is.na() applied to non-(list or vector) of type '%s'"),
-        NOT_MEANINGFUL_FOR_FACTORS("‘%s’ not meaningful for factors"), // GNUR uses special ‘ and ’
+        NOT_MEANINGFUL_FOR_FACTORS("\u2018%s\u2019 not meaningful for factors"),
         INPUTS_DIFFERENT_LENGTHS("inputs of different lengths"),
         MATRIX_LIKE_REQUIRED("a matrix-like object is required as argument to '%s'"),
         NOT_MEANINGFUL_FOR_ORDERED_FACTORS("'%s' is not meaningful for ordered factors"),
