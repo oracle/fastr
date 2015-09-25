@@ -906,6 +906,10 @@ public abstract class BinaryArithmetic extends Operation {
 
     private static class Max extends BinaryArithmetic {
 
+        private final BranchProfile incomparableProfile = BranchProfile.create();
+        private final BranchProfile zeroProfile = BranchProfile.create();
+        private final ConditionProfile compareProfile = ConditionProfile.createBinaryProfile();
+
         public Max() {
             super(true, true, true);
         }
@@ -924,11 +928,13 @@ public abstract class BinaryArithmetic extends Operation {
         public double op(double left, double right) {
             // explicit checks, since Math.max uses a non-final static field
             if (left != left) {
+                incomparableProfile.enter();
                 return left;
             } else if (left == 0.0d && right == 0.0d && Double.doubleToRawLongBits(left) == Double.doubleToRawLongBits(-0.0d)) {
+                zeroProfile.enter();
                 return right;
             } else {
-                return left >= right ? left : right;
+                return compareProfile.profile(left >= right) ? left : right;
             }
         }
 
@@ -947,6 +953,10 @@ public abstract class BinaryArithmetic extends Operation {
 
     private static class Min extends BinaryArithmetic {
 
+        private final BranchProfile incomparableProfile = BranchProfile.create();
+        private final BranchProfile zeroProfile = BranchProfile.create();
+        private final ConditionProfile compareProfile = ConditionProfile.createBinaryProfile();
+
         public Min() {
             super(true, true, true);
         }
@@ -963,13 +973,15 @@ public abstract class BinaryArithmetic extends Operation {
 
         @Override
         public double op(double left, double right) {
-            // explicit checks, since Math.max uses a non-final static field
+            // explicit checks, since Math.min uses a non-final static field
             if (left != left) {
+                incomparableProfile.enter();
                 return left;
             } else if (left == 0.0d && right == 0.0d && Double.doubleToRawLongBits(right) == Double.doubleToRawLongBits(-0.0d)) {
+                zeroProfile.enter();
                 return right;
             } else {
-                return left <= right ? left : right;
+                return compareProfile.profile(left <= right) ? left : right;
             }
         }
 

@@ -266,7 +266,7 @@ public abstract class Match extends RBuiltinNode {
         return RDataFactory.createIntVector(result, setCompleteState(matchAll, nomatch));
     }
 
-    @Specialization()
+    @Specialization
     protected RIntVector match(RAbstractIntVector x, RAbstractLogicalVector table, Object nomatchObj, @SuppressWarnings("unused") Object incomparables) {
         controlVisibility();
         int nomatch = castInt(nomatchObj);

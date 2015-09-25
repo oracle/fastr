@@ -51,6 +51,7 @@ public class TrigExpFunctions {
         }
 
         protected double op(@SuppressWarnings("unused") double x) {
+            // not abstract because this would confuse the DSL annotation processor
             throw RInternalError.shouldNotReachHere("this method needs to be implemented in subclasses");
         }
 

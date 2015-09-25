@@ -534,7 +534,5 @@ public class BasePackage extends RBuiltinPackage {
         addFastPath(baseFrame, "pmin", FastPathFactory.EVALUATE_ARGS);
         addFastPath(baseFrame, "cbind", FastPathFactory.FORCED_EAGER_ARGS);
         addFastPath(baseFrame, "rbind", FastPathFactory.FORCED_EAGER_ARGS);
-// addFastPath(baseFrame, "cbind.data.frame", FastPathFactory.FORCED_EAGER_ARGS);
-// addFastPath(baseFrame, "rbind.data.frame", FastPathFactory.FORCED_EAGER_ARGS);
     }
 }

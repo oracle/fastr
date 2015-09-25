@@ -142,15 +142,6 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
 
     @Override
     public RSyntaxNode visit(Function func) {
-// FastPathFactory f = EvaluatedArgumentsVisitor.process(func);
-// if (f != null) {
-// System.out.println("////////////////////////////////");
-// if (func.getDebugName() != null) {
-// System.out.println("// " + func.getDebugName());
-// }
-// System.out.println(func.getSource().getCode());
-// System.out.println("names: " + f + "\n");
-// }
         RootCallTarget callTarget = null;
         try {
             callTarget = createFunctionCallTarget(func);
