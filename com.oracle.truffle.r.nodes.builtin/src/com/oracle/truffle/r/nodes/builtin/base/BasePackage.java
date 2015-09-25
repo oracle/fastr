@@ -470,6 +470,7 @@ public class BasePackage extends RBuiltinPackage {
         add(TempFile.class, TempFileNodeGen::create);
         add(ToLower.class, ToLowerNodeGen::create);
         add(ToUpper.class, ToUpperNodeGen::create);
+        add(Traceback.class, TracebackNodeGen::create);
         add(Transpose.class, TransposeNodeGen::create);
         add(TrigExpFunctions.Acos.class, TrigExpFunctionsFactory.AcosNodeGen::create);
         add(TrigExpFunctions.Acosh.class, TrigExpFunctionsFactory.AcoshNodeGen::create);
