@@ -29,6 +29,7 @@ import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.*;
 
 @RBuiltin(name = "tolower", kind = INTERNAL, parameterNames = {"x"})
 public abstract class ToLower extends RBuiltinNode {
@@ -42,7 +43,7 @@ public abstract class ToLower extends RBuiltinNode {
 
     @Specialization
     @TruffleBoundary
-    protected RStringVector toLower(RStringVector vector) {
+    protected RStringVector toLower(RAbstractStringVector vector) {
         controlVisibility();
         String[] stringVector = new String[vector.getLength()];
         for (int i = 0; i < vector.getLength(); i++) {
