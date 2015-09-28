@@ -41,13 +41,15 @@ public abstract class ReplaceVectorNode extends Node {
 
     private final ElementAccessMode mode;
     private final boolean recursive;
+    private final boolean ignoreRecursive;
 
     @Child private BoxPrimitiveNode boxVector = BoxPrimitiveNode.create();
     @Child private BoxPrimitiveNode boxValue = BoxPrimitiveNode.create();
 
-    public ReplaceVectorNode(ElementAccessMode mode, boolean recursive) {
+    public ReplaceVectorNode(ElementAccessMode mode, boolean recursive, boolean ignoreRecursive) {
         this.mode = mode;
         this.recursive = recursive;
+        this.ignoreRecursive = ignoreRecursive;
     }
 
     public final Object apply(Object vector, Object[] positions, Object value) {
@@ -56,12 +58,12 @@ public abstract class ReplaceVectorNode extends Node {
 
     protected abstract Object execute(Object vector, Object[] positions, Object value);
 
-    public static ReplaceVectorNode create(ElementAccessMode mode) {
-        return ReplaceVectorNodeGen.create(mode, false);
+    public static ReplaceVectorNode create(ElementAccessMode mode, boolean ignoreRecursive) {
+        return ReplaceVectorNodeGen.create(mode, false, ignoreRecursive);
     }
 
     static ReplaceVectorNode createRecursive(ElementAccessMode mode) {
-        return ReplaceVectorNodeGen.create(mode, true);
+        return ReplaceVectorNodeGen.create(mode, true, false);
     }
 
     @SuppressWarnings("unchecked")
@@ -86,7 +88,7 @@ public abstract class ReplaceVectorNode extends Node {
     }
 
     private boolean isRecursiveSubscript(Object vector, Object[] positions) {
-        return !recursive && mode.isSubscript() && vector instanceof RAbstractListVector && positions.length == 1;
+        return !recursive && !ignoreRecursive && mode.isSubscript() && vector instanceof RAbstractListVector && positions.length == 1;
     }
 
     @Specialization(limit = "CACHE_LIMIT", guards = {"cached != null", "cached.isSupported(vector, positions, value)"})

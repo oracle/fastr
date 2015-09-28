@@ -29,6 +29,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 abstract class RecursiveReplaceSubscriptNode extends RecursiveSubscriptNode {
 
     @Child private ReplaceVectorNode recursiveSubscriptReplace = ReplaceVectorNode.createRecursive(ElementAccessMode.SUBSCRIPT);
+    @Child private ReplaceVectorNode subscriptReplace = ReplaceVectorNode.create(ElementAccessMode.SUBSCRIPT, true);
     @Child private ExtractVectorNode getPositionExtract = ExtractVectorNode.createRecursive(ElementAccessMode.SUBSCRIPT);
     @Child private ExtractVectorNode recursiveSubscriptExtract = ExtractVectorNode.createRecursive(ElementAccessMode.SUBSCRIPT);
 
@@ -52,7 +53,7 @@ abstract class RecursiveReplaceSubscriptNode extends RecursiveSubscriptNode {
     @Specialization(guards = "positionLength <= 1")
     @SuppressWarnings("unused")
     protected Object doDefault(Object vector, Object[] positions, Object firstPosition, int positionLength, Object value) {
-        return recursiveSubscriptReplace.apply(vector, positions, value);
+        return subscriptReplace.apply(vector, positions, value);
     }
 
     /**
@@ -83,7 +84,6 @@ abstract class RecursiveReplaceSubscriptNode extends RecursiveSubscriptNode {
                     throw indexingFailed(i);
                 }
                 currentVector = recursiveSubscriptExtract.apply(currentVector, new Object[]{parentPosition}, RLogical.TRUE, RLogical.TRUE);
-
                 if (currentVector == RNull.instance) {
                     throw noSuchIndex(i);
                 }
@@ -94,9 +94,12 @@ abstract class RecursiveReplaceSubscriptNode extends RecursiveSubscriptNode {
         }
         Object recursiveValue = value;
         positionStack[positionLength - 1] = getPositionValue(firstPosition, positionLength - 1);
-        for (int i = positionLength - 1; i >= 0; i--) {
+        for (int i = positionLength - 1; i >= 1; i--) {
             recursiveValue = recursiveSubscriptReplace.apply(valueStack[i], new Object[]{positionStack[i]}, recursiveValue);
         }
+        // the last recursive replace need to have recursive set to false
+        recursiveValue = subscriptReplace.apply(valueStack[0], new Object[]{positionStack[0]}, recursiveValue);
+
         return recursiveValue;
     }
 

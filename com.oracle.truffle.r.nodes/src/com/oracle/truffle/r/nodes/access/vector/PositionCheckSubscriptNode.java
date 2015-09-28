@@ -76,15 +76,24 @@ abstract class PositionCheckSubscriptNode extends PositionCheckNode {
     protected RAbstractVector doInteger(PositionProfile profile, int dimSize, RAbstractIntVector position, int positionLength) {
         if (positionLength != 1) {
             error.enter();
+            Message message;
             if (positionLength > 1) {
-                throw RError.error(this, RError.Message.SELECT_MORE_1);
+                /* This is a very specific check. But it just did not fit into other checks. */
+                if (positionLength == 2 && position.getDataAt(0) == 0) {
+                    message = RError.Message.SELECT_LESS_1;
+                } else {
+                    message = RError.Message.SELECT_MORE_1;
+                }
             } else {
-                throw RError.error(this, RError.Message.SELECT_LESS_1);
+                message = RError.Message.SELECT_LESS_1;
             }
+            throw RError.error(this, message);
         }
         assert positionLength == 1;
         positionNACheck.enable(position);
-        return doIntegerImpl(profile, dimSize, position.getDataAt(0), position);
+        RAbstractVector result = doIntegerImpl(profile, dimSize, position.getDataAt(0), position);
+        return result;
+
     }
 
     private RAbstractVector doIntegerImpl(PositionProfile profile, int dimSize, int value, RAbstractVector originalVector) {
@@ -127,11 +136,22 @@ abstract class PositionCheckSubscriptNode extends PositionCheckNode {
                 }
             }
             error.enter();
-            if (value == 0 || dimSize <= 2) {
+            int selected = 0;
+            if (value > 0) {
+                selected = 1;
+            } else if (value < 0) {
+                if (-value <= dimSize) {
+                    selected = dimSize - 1;
+                } else {
+                    selected = dimSize;
+                }
+            }
+            if (selected <= 1) {
                 throw RError.error(this, RError.Message.SELECT_LESS_1);
             } else {
                 throw RError.error(this, RError.Message.SELECT_MORE_1);
             }
+
         }
     }
 
@@ -151,6 +171,9 @@ abstract class PositionCheckSubscriptNode extends PositionCheckNode {
             throw RError.error(this, message);
         } else {
             if (containerType == RType.List && numDimensions == 1) {
+                if (recursive) {
+                    throwBoundsError();
+                }
                 // lists pass on the NA value
             } else {
                 error.enter();

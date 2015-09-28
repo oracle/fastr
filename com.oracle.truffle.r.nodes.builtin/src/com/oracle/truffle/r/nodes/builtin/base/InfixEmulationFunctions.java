@@ -197,7 +197,7 @@ public class InfixEmulationFunctions {
             if (FastROptions.UseNewVectorNodes) {
                 if (extractNode == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    extractNode = insert(ExtractVectorNode.create(isSubset() ? ElementAccessMode.SUBSET : ElementAccessMode.SUBSCRIPT));
+                    extractNode = insert(ExtractVectorNode.create(isSubset() ? ElementAccessMode.SUBSET : ElementAccessMode.SUBSCRIPT, false));
                 }
                 result = extractNode.apply(vector, inds.getArguments(), RLogical.valueOf(exact), dropDim);
             } else {
@@ -354,7 +354,7 @@ public class InfixEmulationFunctions {
             if (FastROptions.UseNewVectorNodes) {
                 if (replaceNode == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    replaceNode = insert(ReplaceVectorNode.create(isSubset ? ElementAccessMode.SUBSET : ElementAccessMode.SUBSCRIPT));
+                    replaceNode = insert(ReplaceVectorNode.create(isSubset ? ElementAccessMode.SUBSET : ElementAccessMode.SUBSCRIPT, false));
                 }
                 Object[] pos;
                 if (argsLengthLargerThanOneProfile.profile(args.getLength() > 1)) {
