@@ -84,7 +84,7 @@ ifeq ($(OSNAME), SunOS)
 iconv: $(ICONV) iconv_config iconv_build
 
 $(ICONV):
-	tar xf $(TOPDIR)/../lib/$(ICONV).tar.gz
+	tar xf $(TOPDIR)/../libdownloads/$(ICONV).tar.gz
 
 iconv_config: $(ICONV)/Makefile
 
