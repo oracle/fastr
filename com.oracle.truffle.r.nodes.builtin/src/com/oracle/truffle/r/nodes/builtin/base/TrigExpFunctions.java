@@ -356,8 +356,7 @@ public class TrigExpFunctions {
             double apply(int i);
         }
 
-        protected RDoubleVector doFun(int length, IntDoubleFunction yFun, IntDoubleFunction xFun, //
-                        @Cached("create()") CountedLoopConditionProfile profile) {
+        protected RDoubleVector doFun(int length, IntDoubleFunction yFun, IntDoubleFunction xFun, CountedLoopConditionProfile profile) {
             controlVisibility();
             double[] resultVector = new double[length];
             profile.profileLength(length);
