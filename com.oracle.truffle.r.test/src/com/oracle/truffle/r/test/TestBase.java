@@ -43,6 +43,7 @@ public class TestBase {
 
     public static enum Output implements TestTrait {
         ContainsError,
+        ContainsAmbiguousError,
         ContainsWarning,
         MayContainError,
         MayContainWarning;
@@ -419,9 +420,10 @@ public class TestBase {
         boolean ignored = TestTrait.contains(traits, Ignored.class) ^ (ProcessFailedTests && !(TestTrait.contains(traits, Ignored.Unstable) || TestTrait.contains(traits, Ignored.SideEffects)));
 
         boolean containsWarning = TestTrait.contains(traits, Output.ContainsWarning);
-        boolean containsError = (!FULL_COMPARE_ERRORS && TestTrait.contains(traits, Output.ContainsError));
+        boolean containsError = (!FULL_COMPARE_ERRORS && (TestTrait.contains(traits, Output.ContainsError) || TestTrait.contains(traits, Output.ContainsAmbiguousError)));
         boolean mayContainWarning = TestTrait.contains(traits, Output.MayContainWarning);
         boolean mayContainError = TestTrait.contains(traits, Output.MayContainError);
+        boolean ambiguousError = TestTrait.contains(traits, Output.ContainsAmbiguousError);
 
         int index = 1;
         boolean allOk = true;
@@ -432,7 +434,7 @@ public class TestBase {
             } else {
                 String result = fastREval(input);
 
-                CheckResult checkResult = checkResult(whiteLists, input, expected, result, containsWarning, mayContainWarning, containsError, mayContainError);
+                CheckResult checkResult = checkResult(whiteLists, input, expected, result, containsWarning, mayContainWarning, containsError, mayContainError, ambiguousError);
 
                 result = checkResult.result;
                 expected = checkResult.expected;
@@ -495,11 +497,11 @@ public class TestBase {
     }
 
     private CheckResult checkResult(WhiteList[] whiteLists, String input, String originalExpected, String originalResult, boolean containsWarning, boolean mayContainWarning, boolean containsError,
-                    boolean mayContainError) {
+                    boolean mayContainError, boolean ambiguousError) {
         boolean ok;
         String result = originalResult;
         String expected = originalExpected;
-        if (expected.equals(result) || searchWhiteLists(whiteLists, input, expected, result, containsWarning, mayContainWarning, containsError, mayContainError)) {
+        if (expected.equals(result) || searchWhiteLists(whiteLists, input, expected, result, containsWarning, mayContainWarning, containsError, mayContainError, ambiguousError)) {
             ok = true;
         } else {
             if (containsWarning || (mayContainWarning && expected.contains(WARNING))) {
@@ -513,7 +515,7 @@ public class TestBase {
             }
             if (ok) {
                 if (containsError || (mayContainError && expected.startsWith(ERROR))) {
-                    ok = result.startsWith(ERROR) && (IGNORE_ERROR_COMPARISON || checkMessageStripped(expected, result));
+                    ok = result.startsWith(ERROR) && (ambiguousError || checkMessageStripped(expected, result));
                 } else {
                     ok = expected.equals(result);
                 }
@@ -523,19 +525,19 @@ public class TestBase {
     }
 
     private boolean searchWhiteLists(WhiteList[] whiteLists, String input, String expected, String result, boolean containsWarning, boolean mayContainWarning, boolean containsError,
-                    boolean mayContainError) {
+                    boolean mayContainError, boolean ambiguousError) {
         if (whiteLists == null) {
             return false;
         }
         for (WhiteList list : whiteLists) {
             WhiteList.Results wlr = list.get(input);
             if (wlr != null) {
-                CheckResult checkedResult = checkResult(null, input, wlr.expected, expected, containsWarning, mayContainWarning, containsError, mayContainError);
+                CheckResult checkedResult = checkResult(null, input, wlr.expected, expected, containsWarning, mayContainWarning, containsError, mayContainError, ambiguousError);
                 if (!checkedResult.ok) {
                     System.out.println("expected output does not match: " + wlr.expected + " vs. " + expected);
                     return false;
                 }
-                CheckResult fastRResult = checkResult(null, input, wlr.fastR, result, containsWarning, mayContainWarning, containsError, mayContainError);
+                CheckResult fastRResult = checkResult(null, input, wlr.fastR, result, containsWarning, mayContainWarning, containsError, mayContainError, ambiguousError);
                 if (fastRResult.ok) {
                     list.markUsed(input);
                     return true;
