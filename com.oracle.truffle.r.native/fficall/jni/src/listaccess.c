@@ -24,67 +24,86 @@
 #include "rffiutils.h"
 
 static jmethodID CADR_MethodID;
+static jmethodID TAG_MethodID;
+static jmethodID PRINTNAME_MethodID;
 static jmethodID CAR_MethodID;
 static jmethodID CDR_MethodID;
 static jmethodID SETCAR_MethodID;
 static jmethodID SETCDR_MethodID;
 
 void init_listaccess(JNIEnv *env) {
-	CADR_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "CADR", "(Ljava/lang/Object;)Ljava/lang/Object;", 1);
-	CAR_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "CAR", "(Ljava/lang/Object;)Ljava/lang/Object;", 1);
-	CDR_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "CDR", "(Ljava/lang/Object;)Ljava/lang/Object;", 1);
-	SETCAR_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "SETCAR", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", 1);
-	SETCDR_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "SETCDR", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", 1);
+    CADR_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "CADR", "(Ljava/lang/Object;)Ljava/lang/Object;", 1);
+    TAG_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "TAG", "(Ljava/lang/Object;)Ljava/lang/Object;", 1);
+    PRINTNAME_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "PRINTNAME", "(Ljava/lang/Object;)Ljava/lang/Object;", 1);
+    CAR_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "CAR", "(Ljava/lang/Object;)Ljava/lang/Object;", 1);
+    CDR_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "CDR", "(Ljava/lang/Object;)Ljava/lang/Object;", 1);
+    SETCAR_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "SETCAR", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", 1);
+    SETCDR_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "SETCDR", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", 1);
 }
 
 SEXP TAG(SEXP e) {
-    unimplemented("TAG");
+    JNIEnv *thisenv = getEnv();
+    SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, TAG_MethodID, e);
+    return checkRef(thisenv, result);
+}
+
+SEXP PRINTNAME(SEXP e) {
+    JNIEnv *thisenv = getEnv();
+    SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, PRINTNAME_MethodID, e);
+    return checkRef(thisenv, result);
 }
 
 SEXP CAR(SEXP e) {
-	JNIEnv *thisenv = getEnv();
+    JNIEnv *thisenv = getEnv();
     SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, CAR_MethodID, e);
     return checkRef(thisenv, result);
 }
 
 SEXP CDR(SEXP e) {
-	JNIEnv *thisenv = getEnv();
+    JNIEnv *thisenv = getEnv();
     SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, CDR_MethodID, e);
     return checkRef(thisenv, result);
 }
 
 SEXP CAAR(SEXP e) {
     unimplemented("CAAR");
+    return NULL;
 }
 
 SEXP CDAR(SEXP e) {
     unimplemented("CDAR");
+    return NULL;
 }
 
 SEXP CADR(SEXP e) {
-	JNIEnv *thisenv = getEnv();
-	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, CADR_MethodID, e);
+    JNIEnv *thisenv = getEnv();
+    SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, CADR_MethodID, e);
     return checkRef(thisenv, result);
 }
 
 SEXP CDDR(SEXP e) {
     unimplemented("CDDR");
+    return NULL;
 }
 
 SEXP CADDR(SEXP e) {
     unimplemented("CADDR");
+    return NULL;
 }
 
 SEXP CADDDR(SEXP e) {
     unimplemented("CADDDR");
+    return NULL;
 }
 
 SEXP CAD4R(SEXP e) {
     unimplemented("CAD4R");
+    return NULL;
 }
 
 int MISSING(SEXP x){
     unimplemented("MISSING");
+    return 0;
 }
 
 void SET_MISSING(SEXP x, int v) {
@@ -96,30 +115,34 @@ void SET_TAG(SEXP x, SEXP y) {
 }
 
 SEXP SETCAR(SEXP x, SEXP y) {
-	JNIEnv *thisenv = getEnv();
-	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, SETCAR_MethodID, x, y);
+    JNIEnv *thisenv = getEnv();
+    SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, SETCAR_MethodID, x, y);
     return checkRef(thisenv, result);
 }
 
 SEXP SETCDR(SEXP x, SEXP y) {
-	JNIEnv *thisenv = getEnv();
-	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, SETCDR_MethodID, x, y);
+    JNIEnv *thisenv = getEnv();
+    SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, SETCDR_MethodID, x, y);
     return checkRef(thisenv, result);
 }
 
 SEXP SETCADR(SEXP x, SEXP y) {
     unimplemented("SETCADR");
+    return NULL;
 }
 
 SEXP SETCADDR(SEXP x, SEXP y) {
     unimplemented("SETCADDR");
+    return NULL;
 }
 
 SEXP SETCADDDR(SEXP x, SEXP y) {
     unimplemented("SETCADDDR");
+    return NULL;
 }
 
 SEXP SETCAD4R(SEXP e, SEXP y) {
     unimplemented("SETCAD4R");
+    return NULL;
 }
 

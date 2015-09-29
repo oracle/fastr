@@ -26,6 +26,7 @@ import java.util.concurrent.Semaphore;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.FastROptions;
+import com.oracle.truffle.r.runtime.REnvVars;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -58,6 +59,8 @@ public class CallRFFIWithJNI implements CallRFFI {
     private static final boolean ForceRTLDGlobal = false;
 
     public enum RVariables {
+        R_Home(REnvVars.rHome()),
+        R_TempDir("/tmp/R_TMP"), // TODO: supply proper temp directory
         R_NilValue(RNull.instance),
         R_UnboundValue(RUnboundValue.instance),
         R_MissingArg(RMissing.instance),
@@ -72,6 +75,7 @@ public class CallRFFIWithJNI implements CallRFFI {
         R_BraceSymbol(RDataFactory.createSymbol("{")),
         R_ClassSymbol(RDataFactory.createSymbol("class")),
         R_DeviceSymbol(RDataFactory.createSymbol(".Device")),
+        R_DevicesSymbol(RDataFactory.createSymbol(".Devices")),
         R_DimNamesSymbol(RDataFactory.createSymbol("dimnames")),
         R_DimSymbol(RDataFactory.createSymbol("dim")),
         R_DollarSymbol(RDataFactory.createSymbol("$")),
@@ -102,7 +106,7 @@ public class CallRFFIWithJNI implements CallRFFI {
         R_NaInt(RRuntime.INT_NA),
         R_BlankString(RDataFactory.createStringVectorFromScalar(""));
 
-        private Object value;
+        private final Object value;
 
         RVariables(Object value) {
             this.value = value;
