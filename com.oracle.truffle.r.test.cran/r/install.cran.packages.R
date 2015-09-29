@@ -81,10 +81,10 @@ tcltk <- c("AnnotLists", "tcltk2", "aplpack")
 # parser bugs
 parserbug <- c("R2HTML")
 # e.g., unimplemented builtin, assertion error
-core <- c("ade4", "ABCoptim", "R.methodsS3", "lattice", "aidar", "DBI", "SparseM", "quantreg", "doParallel", "ApacheLogProcessor", "aplore3",
+core <- c("ade4", "ABCoptim", "lattice", "aidar", "DBI", "SparseM", "quantreg", "doParallel", "ApacheLogProcessor", "aplore3",
 		"vignettes", "archiDART", "corpcor", "acss.data")
 # e.g. complex replacement assignments
-trufflevisitor.nyi <- c("colorspace")
+trufflevisitor.nyi <- c("colorspace", "R.methodsS3")
 # problems with native code
 nativeinstall <- c("Rglpk", "overlap", "adimpro", "deSolve")
 # S4 anything using S4 objects
