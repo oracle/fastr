@@ -657,18 +657,18 @@ public class TestSimpleVectors extends TestBase {
         // this came from testRawIndex
 
         // weird problems with fluctuating error messages in GNU R
-        assertEval(Ignored.Unknown, Output.ContainsError, "{ x<-1:4; x[[0]]<-NULL; x }");
+        assertEval(Output.ContainsError, "{ x<-1:4; x[[0]]<-NULL; x }");
         assertEval(Ignored.Unknown, Output.ContainsError, "{ b<-3:5; dim(b) <- c(1,3) ; b[[c(1)]] <- NULL ; b }");
         assertEval(Ignored.Unknown, Output.ContainsError, "{ b<-3:5; dim(b) <- c(1,3) ; b[[0]] <- NULL ; b }");
-        assertEval(Ignored.Unknown, Output.ContainsError, "{ x <- integer() ; x[[NA]] <- NULL ; x }");
+        assertEval(Output.ContainsError, "{ x <- integer() ; x[[NA]] <- NULL ; x }");
         assertEval(Ignored.Unknown, Output.ContainsError, "{ x <- c(1) ; x[[NA]] <- NULL ; x }");
-        assertEval(Ignored.Unknown, Output.ContainsError, "{ x <- c(1,2) ; x[[NA]] <- NULL ; x }");
-        assertEval(Ignored.Unknown, Output.ContainsError, "{ x <- c(1,2,3) ; x[[NA]] <- NULL ; x }");
+        assertEval(Output.ContainsError, "{ x <- c(1,2) ; x[[NA]] <- NULL ; x }");
+        assertEval(Output.ContainsError, "{ x <- c(1,2,3) ; x[[NA]] <- NULL ; x }");
         assertEval(Ignored.Unknown, Output.ContainsError, "{ x<-c(1,2,3,4); dim(x)<-c(2,2); x[[1]]<-NULL; x }");
 
         // inconsistent error messages in expected output and shell
-        assertEval(Ignored.Unknown, "{ x <- c(1); x[[-4]] <- NULL }");
-        assertEval(Ignored.Unknown, "{ x <- c(1,2,3); x[[-1]] <- NULL }");
+        assertEval(Output.ContainsAmbiguousError, "{ x <- c(1); x[[-4]] <- NULL }");
+        assertEval(Output.ContainsAmbiguousError, "{ x <- c(1,2,3); x[[-1]] <- NULL }");
     }
 
     @Test
@@ -1007,9 +1007,9 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ x<-c(1L,2L,3L); typeof(x[NA]) }");
         assertEval("{ x<-1:3; typeof(x[NA]) }");
 
-        assertEval(Ignored.Unknown, "{ x<-c(1,2,3); x[-0.1] }");
-        assertEval(Ignored.Unknown, "{ x<-c(1L,2L,3L); x[-0.1] }");
-        assertEval(Ignored.Unknown, "{ x<-1:3; x[-0.1] }");
+        assertEval("{ x<-c(1,2,3); x[-0.1] }");
+        assertEval("{ x<-c(1L,2L,3L); x[-0.1] }");
+        assertEval("{ x<-1:3; x[-0.1] }");
     }
 
     @Test
@@ -1164,7 +1164,7 @@ public class TestSimpleVectors extends TestBase {
         assertEval(Output.ContainsError, "{ f <- function(x,i) { x[[i]]} ; f(list(1,2,3,4), 3); f(f,2) }");
         assertEval(Output.ContainsError, "{ f <- function(x,i) { x[i] } ; x <- c(a=1,b=2) ; f(x,\"a\") ; f(function(){3},\"b\") }");
 
-        assertEval(Ignored.Unknown, "{ x<-1:4; x[c(-0.5)] }");
+        assertEval("{ x<-1:4; x[c(-0.5)] }");
     }
 
     @Test
@@ -1815,7 +1815,7 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ x<-1:5 ; x[x[4]<-2] <- (x[4]<-100) ; x }");
         assertEval("{ x<-5:1 ; x[x[2]<-2] }");
 
-        assertEval(Ignored.Unknown, "{ f <- function(a) { a }; x<-1:5 ; x[x[4]<-2] <- ({x[4]<-100; f(x)[4]}) ; x }");
+        assertEval("{ f <- function(a) { a }; x<-1:5 ; x[x[4]<-2] <- ({x[4]<-100; f(x)[4]}) ; x }");
     }
 
     @Test
@@ -2074,38 +2074,39 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ x <- NULL; x[c(1,2)] <- c(5); x; }");
         assertEval("{ x <- NULL; x[c(1,2)] <- c(1,5); x; }");
 
-        assertEval(Ignored.Unknown, "{ x <- NULL; x[[0]] <- c(); x; }");
-        assertEval(Ignored.Unknown, "{ x <- NULL; x[[1]] <- c(); x; }");
-        assertEval(Ignored.Unknown, "{ x <- NULL; x[[c(1,0)]] <- c(); x; }");
-        assertEval(Ignored.Unknown, "{ x <- NULL; x[[c(1,2)]] <- c(); x; }");
-        assertEval(Ignored.Unknown, "{ x <- NULL; x[[c(0,1)]] <- c(); x; }");
-        assertEval(Ignored.Unknown, "{ x <- NULL; x[[c(0,2)]] <- c(); x; }");
-        assertEval(Ignored.Unknown, "{ x <- NULL; x[[0]] <- c(5); x; }");
-        assertEval(Ignored.Unknown, "{ x <- NULL; x[[c(1,0)]] <- c(5); x; }");
-        assertEval(Ignored.Unknown, "{ x <- NULL; x[[c(1,2)]] <- c(5); x; }");
-        assertEval(Ignored.Unknown, "{ x <- NULL; x[[c(0,1)]] <- c(5); x; }");
-        assertEval(Ignored.Unknown, "{ x <- NULL; x[[c(0,2)]] <- c(5); x; }");
-        assertEval(Ignored.Unknown, "{ x <- NULL; x[[0]] <- c(1,5); x; }");
+        assertEval("{ x <- NULL; x[[0]] <- c(); x; }");
+        assertEval("{ x <- NULL; x[[1]] <- c(); x; }");
+        assertEval("{ x <- NULL; x[[c(1,0)]] <- c(); x; }");
+        assertEval("{ x <- NULL; x[[c(1,2)]] <- c(); x; }");
+        assertEval("{ x <- NULL; x[[c(0,1)]] <- c(); x; }");
+        assertEval("{ x <- NULL; x[[c(0,2)]] <- c(); x; }");
+        assertEval("{ x <- NULL; x[[0]] <- c(5); x; }");
+        assertEval(Output.ContainsError, "{ x <- NULL; x[[c(1,0)]] <- c(5); x; }");
+        assertEval(Output.ContainsError, "{ x <- NULL; x[[c(1,2)]] <- c(5); x; }");
+        assertEval(Output.ContainsError, "{ x <- NULL; x[[c(0,1)]] <- c(5); x; }");
+        assertEval(Output.ContainsError, "{ x <- NULL; x[[c(0,2)]] <- c(5); x; }");
+        assertEval(Output.ContainsError, "{ x <- NULL; x[[0]] <- c(1,5); x; }");
+        assertEval(Output.ContainsError, "{ x <- NULL; x[[c(0,1)]] <- c(1,5); x; }");
+        assertEval(Output.ContainsError, "{ x <- NULL; x[[c(0,2)]] <- c(1,5); x; }");
+        assertEval("{ x <- NULL; x[0] <- c(); x; }");
+        assertEval("{ x <- NULL; x[1] <- c(); x; }");
+        assertEval("{ x <- NULL; x[c(1,0)] <- c(); x; }");
+        assertEval("{ x <- NULL; x[c(1,2)] <- c(); x; }");
+        assertEval("{ x <- NULL; x[c(0,1)] <- c(); x; }");
+        assertEval("{ x <- NULL; x[c(0,2)] <- c(); x; }");
+        assertEval("{ x <- NULL; x[0] <- c(5); x; }");
+        assertEval("{ x <- NULL; x[c(1,0)] <- c(5); x; }");
+        assertEval("{ x <- NULL; x[c(0,1)] <- c(5); x; }");
+        assertEval("{ x <- NULL; x[c(0,2)] <- c(5); x; }");
+        assertEval("{ x <- NULL; x[0] <- c(1,5); x; }");
+        assertEval(Output.ContainsWarning, "{ x <- NULL; x[1] <- c(1,5); x; }");
+        assertEval(Output.ContainsWarning, "{ x <- NULL; x[c(1,0)] <- c(1,5); x; }");
+        assertEval(Output.ContainsWarning, "{ x <- NULL; x[c(0,1)] <- c(1,5); x; }");
+        assertEval(Output.ContainsWarning, "{ x <- NULL; x[c(0,2)] <- c(1,5); x; }");
+        assertEval(Output.ContainsAmbiguousError, "{ x <- NULL; x[[c(1,0)]] <- c(1,5); x; }");
+        assertEval(Output.ContainsAmbiguousError, "{ x <- NULL; x[[c(1,2)]] <- c(1,5); x; }");
+
         assertEval(Ignored.Unknown, "{ x <- NULL; x[[1]] <- c(1,5); x; }");
-        assertEval(Ignored.Unknown, "{ x <- NULL; x[[c(1,0)]] <- c(1,5); x; }");
-        assertEval(Ignored.Unknown, "{ x <- NULL; x[[c(1,2)]] <- c(1,5); x; }");
-        assertEval(Ignored.Unknown, "{ x <- NULL; x[[c(0,1)]] <- c(1,5); x; }");
-        assertEval(Ignored.Unknown, "{ x <- NULL; x[[c(0,2)]] <- c(1,5); x; }");
-        assertEval(Ignored.Unknown, "{ x <- NULL; x[0] <- c(); x; }");
-        assertEval(Ignored.Unknown, "{ x <- NULL; x[1] <- c(); x; }");
-        assertEval(Ignored.Unknown, "{ x <- NULL; x[c(1,0)] <- c(); x; }");
-        assertEval(Ignored.Unknown, "{ x <- NULL; x[c(1,2)] <- c(); x; }");
-        assertEval(Ignored.Unknown, "{ x <- NULL; x[c(0,1)] <- c(); x; }");
-        assertEval(Ignored.Unknown, "{ x <- NULL; x[c(0,2)] <- c(); x; }");
-        assertEval(Ignored.Unknown, "{ x <- NULL; x[0] <- c(5); x; }");
-        assertEval(Ignored.Unknown, "{ x <- NULL; x[c(1,0)] <- c(5); x; }");
-        assertEval(Ignored.Unknown, "{ x <- NULL; x[c(0,1)] <- c(5); x; }");
-        assertEval(Ignored.Unknown, "{ x <- NULL; x[c(0,2)] <- c(5); x; }");
-        assertEval(Ignored.Unknown, "{ x <- NULL; x[0] <- c(1,5); x; }");
-        assertEval(Ignored.Unknown, "{ x <- NULL; x[1] <- c(1,5); x; }");
-        assertEval(Ignored.Unknown, "{ x <- NULL; x[c(1,0)] <- c(1,5); x; }");
-        assertEval(Ignored.Unknown, "{ x <- NULL; x[c(0,1)] <- c(1,5); x; }");
-        assertEval(Ignored.Unknown, "{ x <- NULL; x[c(0,2)] <- c(1,5); x; }");
     }
 
     @Test
