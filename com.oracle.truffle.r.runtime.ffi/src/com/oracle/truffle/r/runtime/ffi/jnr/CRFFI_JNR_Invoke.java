@@ -39,7 +39,7 @@ public class CRFFI_JNR_Invoke implements CRFFI {
      * array (call by reference for scalars). As we already loaded the library and looked up the
      * symbol address we don't need to use JNR for that.
      */
-    public void invoke(DLL.SymbolInfo symbolInfo, Object[] args) {
+    public void invoke(long address, Object[] args) {
         ParameterType[] parameterTypes = new ParameterType[args.length];
         for (int i = 0; i < args.length; i++) {
             Object arg = args[i];
@@ -54,7 +54,7 @@ public class CRFFI_JNR_Invoke implements CRFFI {
         Signature sig = Signature.getSignature(ResultType.primitive(NativeType.VOID, void.class), parameterTypes);
 
         // We already have up the symbol address
-        MethodHandle mh = Native.getMethodHandle(sig, new CodeAddress(symbolInfo.address));
+        MethodHandle mh = Native.getMethodHandle(sig, new CodeAddress(address));
         try {
             mh.invokeWithArguments(args);
         } catch (Throwable ex) {
