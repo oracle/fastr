@@ -98,6 +98,6 @@ public class DefaultConsoleHandler implements ConsoleHandler {
     }
 
     public String getInputDescription() {
-        return "<TruffleVM env input>";
+        return "<PolyglotEngine env input>";
     }
 }

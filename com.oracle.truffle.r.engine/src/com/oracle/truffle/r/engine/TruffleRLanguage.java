@@ -107,7 +107,7 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
         /*
          * When running under the debugger the loadrun command eventually arrives here with a
          * FileSource. Since FastR has a custom mechanism for executing a (Root)CallTarget that
-         * TruffleVM does not know about, we have to use a delegation mechanism via a wrapper
+         * PolyglotEngine does not know about, we have to use a delegation mechanism via a wrapper
          * CallTarget class, using a special REngine entry point.
          */
         return RContext.getEngine().parseToCallTarget(source, true);

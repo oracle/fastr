@@ -34,7 +34,7 @@ import com.oracle.truffle.r.test.generate.*;
 
 public class TestBase {
 
-    private static TruffleVM testVM;
+    private static PolyglotEngine testVM;
 
     @BeforeClass
     public static void setupClass() {

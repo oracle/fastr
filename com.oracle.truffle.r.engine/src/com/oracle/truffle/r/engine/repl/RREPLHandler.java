@@ -176,7 +176,7 @@ public abstract class RREPLHandler extends REPLHandler {
                 if (!file.canRead()) {
                     return finishReplyFailed(reply, "can't find file \"" + fileName + "\"");
                 }
-                final TruffleVM vm = serverContext.vm();
+                final PolyglotEngine vm = serverContext.engine();
                 Source source = Source.fromURL(file.toURI().toURL(), "<REPL_file>").withMimeType(TruffleRLanguage.MIME);
                 vm.eval(source);
                 final String path = file.getCanonicalPath();

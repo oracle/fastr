@@ -28,7 +28,7 @@ import com.oracle.truffle.api.debug.*;
 import com.oracle.truffle.api.instrument.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.vm.*;
-import com.oracle.truffle.api.vm.TruffleVM.Language;
+import com.oracle.truffle.api.vm.PolyglotEngine.Language;
 import com.oracle.truffle.r.engine.*;
 import com.oracle.truffle.r.engine.shell.*;
 import com.oracle.truffle.r.runtime.*;
@@ -58,7 +58,7 @@ public final class RREPLServer extends REPLServer {
     }
 
     private final Language language;
-    private TruffleVM vm;
+    private PolyglotEngine vm;
     private Debugger db;
     private final String statusPrefix;
     private final Map<String, REPLHandler> handlerMap = new HashMap<>();
@@ -114,7 +114,7 @@ public final class RREPLServer extends REPLServer {
         /*
          * We call a special RCommand entry point that does most of the normal initialization but
          * returns the initial RContext which has not yet been activated, which means that the
-         * TruffleVM has not yet been built, but the TruffleVM.Builder has been created.
+         * PolyglotEngine has not yet been built, but the PolyglotEngine.Builder has been created.
          */
 
         String[] debugArgs = new String[args.length + 1];
@@ -122,7 +122,7 @@ public final class RREPLServer extends REPLServer {
         System.arraycopy(args, 0, debugArgs, 1, args.length);
         RCmdOptions options = RCmdOptions.parseArguments(RCmdOptions.Client.R, args);
         ContextInfo info = RCommand.createContextInfoFromCommandLine(options);
-        this.vm = info.apply(TruffleVM.newVM()).onEvent(onHalted).onEvent(onExec).build();
+        this.vm = info.apply(PolyglotEngine.buildNew()).onEvent(onHalted).onEvent(onExec).build();
         this.language = vm.getLanguages().get(TruffleRLanguage.MIME);
         assert language != null;
 
@@ -192,7 +192,7 @@ public final class RREPLServer extends REPLServer {
         }
 
         @Override
-        public TruffleVM vm() {
+        public PolyglotEngine engine() {
             return vm;
         }
 

@@ -22,19 +22,19 @@
  */
 package com.oracle.truffle.r.test.tck;
 
-import com.oracle.truffle.r.engine.TruffleRLanguage;
-import com.oracle.truffle.tck.TruffleTCK;
-import com.oracle.truffle.api.source.Source;
-import com.oracle.truffle.api.vm.TruffleVM;
-
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
+
+import com.oracle.truffle.api.source.Source;
+import com.oracle.truffle.api.vm.PolyglotEngine;
+import com.oracle.truffle.r.engine.TruffleRLanguage;
+import com.oracle.truffle.tck.TruffleTCK;
 
 public class FastRTckTest extends TruffleTCK {
     @Test
     public void testVerifyPresence() {
-        TruffleVM vm = TruffleVM.newVM().build();
+        PolyglotEngine vm = PolyglotEngine.buildNew().build();
         assertTrue("Our language is present", vm.getLanguages().containsKey("text/x-r"));
     }
 
@@ -70,8 +70,8 @@ public class FastRTckTest extends TruffleTCK {
     // @formatter:on
 
     @Override
-    protected TruffleVM prepareVM() throws Exception {
-        TruffleVM vm = TruffleVM.newVM().build();
+    protected PolyglotEngine prepareVM() throws Exception {
+        PolyglotEngine vm = PolyglotEngine.buildNew().build();
         vm.eval(INITIALIZATION);
         return vm;
     }
