@@ -22,27 +22,61 @@
  */
 package com.oracle.truffle.r.nodes.test;
 
-import static com.oracle.truffle.r.nodes.test.TestUtilities.*;
-import static com.oracle.truffle.r.runtime.data.RDataFactory.*;
-import static com.oracle.truffle.r.runtime.ops.BinaryArithmetic.*;
-import static org.hamcrest.CoreMatchers.*;
-import static org.hamcrest.MatcherAssert.*;
-import static org.junit.Assume.*;
+import static com.oracle.truffle.r.nodes.test.TestUtilities.createHandle;
+import static com.oracle.truffle.r.runtime.data.RDataFactory.createDoubleSequence;
+import static com.oracle.truffle.r.runtime.data.RDataFactory.createDoubleVectorFromScalar;
+import static com.oracle.truffle.r.runtime.data.RDataFactory.createEmptyComplexVector;
+import static com.oracle.truffle.r.runtime.data.RDataFactory.createEmptyDoubleVector;
+import static com.oracle.truffle.r.runtime.data.RDataFactory.createEmptyIntVector;
+import static com.oracle.truffle.r.runtime.data.RDataFactory.createEmptyLogicalVector;
+import static com.oracle.truffle.r.runtime.data.RDataFactory.createIntSequence;
+import static com.oracle.truffle.r.runtime.data.RDataFactory.createIntVectorFromScalar;
+import static com.oracle.truffle.r.runtime.ops.BinaryArithmetic.ADD;
+import static com.oracle.truffle.r.runtime.ops.BinaryArithmetic.DIV;
+import static com.oracle.truffle.r.runtime.ops.BinaryArithmetic.INTEGER_DIV;
+import static com.oracle.truffle.r.runtime.ops.BinaryArithmetic.MAX;
+import static com.oracle.truffle.r.runtime.ops.BinaryArithmetic.MIN;
+import static com.oracle.truffle.r.runtime.ops.BinaryArithmetic.MOD;
+import static com.oracle.truffle.r.runtime.ops.BinaryArithmetic.MULTIPLY;
+import static com.oracle.truffle.r.runtime.ops.BinaryArithmetic.SUBTRACT;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.instanceOf;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assume.assumeFalse;
+import static org.junit.Assume.assumeThat;
+import static org.junit.Assume.assumeTrue;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
-import org.junit.*;
-import org.junit.experimental.theories.*;
-import org.junit.internal.*;
-import org.junit.runner.*;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.experimental.theories.DataPoints;
+import org.junit.experimental.theories.Theories;
+import org.junit.experimental.theories.Theory;
+import org.junit.internal.AssumptionViolatedException;
+import org.junit.runner.RunWith;
 
-import com.oracle.truffle.r.nodes.binary.*;
+import com.oracle.truffle.r.nodes.binary.BinaryArithmeticNode;
 import com.oracle.truffle.r.nodes.test.TestUtilities.NodeHandle;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.FastROptions;
+import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.RAttributes;
 import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
-import com.oracle.truffle.r.runtime.data.model.*;
-import com.oracle.truffle.r.runtime.ops.*;
+import com.oracle.truffle.r.runtime.data.RComplex;
+import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RScalarVector;
+import com.oracle.truffle.r.runtime.data.RSequence;
+import com.oracle.truffle.r.runtime.data.RShareable;
+import com.oracle.truffle.r.runtime.data.RVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
+import com.oracle.truffle.r.runtime.ops.BinaryArithmeticFactory;
 
 /**
  * This test verifies white box assumptions for the arithmetic node. Please note that this node

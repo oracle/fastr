@@ -66,7 +66,7 @@ final class PositionCharacterLookupNode extends Node {
                     result = searchNode.apply(dimName, position, notFoundStartIndex);
                 } else {
                     emptyProfile.enter();
-                    throw noDimNames();
+                    throw RError.error(this, Message.SUBSCRIPT_BOUNDS);
                 }
             } else {
                 emptyProfile.enter();

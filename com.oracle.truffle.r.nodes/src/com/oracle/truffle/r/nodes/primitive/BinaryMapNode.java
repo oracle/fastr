@@ -125,7 +125,7 @@ public final class BinaryMapNode extends RBaseNode {
         int[] leftDimensions = left.getDimensions();
         int[] rightDimensions = right.getDimensions();
         int leftLength = leftDimensions.length;
-        int rightLength = leftDimensions.length;
+        int rightLength = rightDimensions.length;
         if (leftLength != rightLength) {
             return true;
         }

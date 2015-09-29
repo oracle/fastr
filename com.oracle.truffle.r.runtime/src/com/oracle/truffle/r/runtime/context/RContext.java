@@ -23,34 +23,52 @@
 package com.oracle.truffle.r.runtime.context;
 
 import java.io.IOException;
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.TimeZone;
+import java.util.concurrent.ConcurrentHashMap;
 
-import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.ExecutionContext;
+import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.TruffleLanguage.Env;
-import com.oracle.truffle.api.interop.*;
-import com.oracle.truffle.api.nodes.*;
-import com.oracle.truffle.api.source.*;
-import com.oracle.truffle.api.vm.*;
-import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.api.interop.ForeignAccess;
+import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.nodes.InvalidAssumptionException;
+import com.oracle.truffle.api.source.Source;
+import com.oracle.truffle.api.vm.PolyglotEngine;
+import com.oracle.truffle.r.runtime.RBuiltinKind;
+import com.oracle.truffle.r.runtime.RBuiltinLookup;
+import com.oracle.truffle.r.runtime.RCmdOptions;
 import com.oracle.truffle.r.runtime.RCmdOptions.Client;
-import com.oracle.truffle.r.runtime.conn.*;
+import com.oracle.truffle.r.runtime.REnvVars;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RErrorHandling;
+import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.ROptions;
+import com.oracle.truffle.r.runtime.RProfile;
+import com.oracle.truffle.r.runtime.RRuntimeASTAccess;
+import com.oracle.truffle.r.runtime.RSerialize;
+import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.conn.ConnectionSupport;
+import com.oracle.truffle.r.runtime.conn.StdConnections;
 import com.oracle.truffle.r.runtime.context.Engine.ParseException;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.env.*;
-import com.oracle.truffle.r.runtime.ffi.*;
-import com.oracle.truffle.r.runtime.rng.*;
+import com.oracle.truffle.r.runtime.data.RBuiltinDescriptor;
+import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.ffi.RFFIContextStateFactory;
+import com.oracle.truffle.r.runtime.rng.RRNG;
 
 /**
  * Encapsulates the runtime state ("context") of an R session. All access to that state from the
  * implementation <b>must</b> go through this class. There can be multiple instances
  * (multiple-tenancy) active within a single process/Java-VM.
  *
- * Contexts are created during construction of the {@link TruffleVM} instance. In case a context
- * needs to be configured, the TruffleVM needs to be created via the {@code RContextFactory} class,
- * which takes a {@link ContextInfo} object for configuration.
+ * Contexts are created during construction of the {@link PolyglotEngine} instance. In case a
+ * context needs to be configured, the PolyglotEngine needs to be created via the
+ * {@code RContextFactory} class, which takes a {@link ContextInfo} object for configuration.
  *
  * The context provides a so-called {@link Engine} (accessed via {@link #getEngine()}), which
  * provides basic parsing and execution functionality .
@@ -156,7 +174,7 @@ public final class RContext extends ExecutionContext implements TruffleObject {
 
         @Override
         public void run() {
-            TruffleVM vm = info.apply(TruffleVM.newVM()).build();
+            PolyglotEngine vm = info.apply(PolyglotEngine.buildNew()).build();
             try {
                 setContext((RContext) vm.eval(GET_CONTEXT).get());
             } catch (IOException e1) {
@@ -515,7 +533,7 @@ public final class RContext extends ExecutionContext implements TruffleObject {
 
     private static final Source GET_CONTEXT = Source.fromText("invisible(fastr.context.get())", "<get_context>").withMimeType("application/x-r");
 
-    public static void destroyContext(TruffleVM vm) {
+    public static void destroyContext(PolyglotEngine vm) {
         try {
             RContext context = (RContext) vm.eval(GET_CONTEXT).get();
             context.destroy();

@@ -131,18 +131,11 @@ public class InfixEmulationFunctions {
     @NodeChild(value = "op")
     protected abstract static class PromiseEvaluator extends RNode {
 
-        protected abstract Object execute(VirtualFrame frame, Object op);
-
-        @Child private PromiseHelperNode promiseHelper;
-        @Child private PromiseEvaluator evalRecursive;
-
-        protected Object evalRecursive(VirtualFrame frame, Object op) {
-            if (evalRecursive == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                evalRecursive = insert(PromiseEvaluatorNodeGen.create(null));
-            }
-            return evalRecursive.execute(frame, op);
+        protected PromiseEvaluator create() {
+            return PromiseEvaluatorNodeGen.create(null);
         }
+
+        protected abstract Object execute(VirtualFrame frame, Object op);
 
         @Specialization(guards = {"!isRPromise(op)", "!isRArgsValuesAndNames(op)"})
         protected Object eval(Object op) {
@@ -150,30 +143,24 @@ public class InfixEmulationFunctions {
         }
 
         @Specialization
-        protected Object eval(VirtualFrame frame, RPromise p) {
-            if (promiseHelper == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                promiseHelper = insert(new PromiseHelperNode());
-            }
+        protected Object eval(VirtualFrame frame, RPromise p, //
+                        @Cached("new()") PromiseHelperNode promiseHelper) {
             return promiseHelper.evaluate(frame, p);
         }
 
-        @Specialization(guards = "!argsEmpty(args)")
-        protected RArgsValuesAndNames eval(VirtualFrame frame, RArgsValuesAndNames args) {
+        @Specialization(guards = "!args.isEmpty()")
+        protected RArgsValuesAndNames eval(VirtualFrame frame, RArgsValuesAndNames args, //
+                        @Cached("create()") PromiseEvaluator evalRecursive) {
             Object[] values = args.getArguments();
             for (int i = 0; i < values.length; i++) {
-                values[i] = evalRecursive(frame, values[i]);
+                values[i] = evalRecursive.execute(frame, values[i]);
             }
             return args;
         }
 
-        @Specialization(guards = "argsEmpty(args)")
+        @Specialization(guards = "args.isEmpty()")
         protected RArgsValuesAndNames evalEmpty(RArgsValuesAndNames args) {
             return args;
-        }
-
-        protected boolean argsEmpty(RArgsValuesAndNames args) {
-            return args.isEmpty();
         }
     }
 
@@ -197,7 +184,7 @@ public class InfixEmulationFunctions {
             if (FastROptions.UseNewVectorNodes) {
                 if (extractNode == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    extractNode = insert(ExtractVectorNode.create(isSubset() ? ElementAccessMode.SUBSET : ElementAccessMode.SUBSCRIPT));
+                    extractNode = insert(ExtractVectorNode.create(isSubset() ? ElementAccessMode.SUBSET : ElementAccessMode.SUBSCRIPT, false));
                 }
                 result = extractNode.apply(vector, inds.getArguments(), RLogical.valueOf(exact), dropDim);
             } else {
@@ -354,7 +341,7 @@ public class InfixEmulationFunctions {
             if (FastROptions.UseNewVectorNodes) {
                 if (replaceNode == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    replaceNode = insert(ReplaceVectorNode.create(isSubset ? ElementAccessMode.SUBSET : ElementAccessMode.SUBSCRIPT));
+                    replaceNode = insert(ReplaceVectorNode.create(isSubset ? ElementAccessMode.SUBSET : ElementAccessMode.SUBSCRIPT, false));
                 }
                 Object[] pos;
                 if (argsLengthLargerThanOneProfile.profile(args.getLength() > 1)) {

@@ -105,7 +105,7 @@ public final class FastRSession implements RSession {
     private static FastRSession singleton;
 
     private final TestConsoleHandler consoleHandler;
-    private final TruffleVM main;
+    private final PolyglotEngine main;
     private final RContext mainContext;
 
     private EvalThread evalThread;
@@ -119,11 +119,11 @@ public final class FastRSession implements RSession {
 
     private static final Source GET_CONTEXT = Source.fromText("invisible(fastr.context.get())", "<get_context>").withMimeType(TruffleRLanguage.MIME);
 
-    public TruffleVM createTestContext() {
+    public PolyglotEngine createTestContext() {
         create();
         RCmdOptions options = RCmdOptions.parseArguments(Client.RSCRIPT, new String[0]);
         ContextInfo info = ContextInfo.create(options, ContextKind.SHARE_PARENT_RW, mainContext, consoleHandler, TimeZone.getTimeZone("CET"));
-        return info.apply(TruffleVM.newVM()).build();
+        return info.apply(PolyglotEngine.buildNew()).build();
     }
 
     private FastRSession() {
@@ -131,7 +131,7 @@ public final class FastRSession implements RSession {
         try {
             RCmdOptions options = RCmdOptions.parseArguments(Client.RSCRIPT, new String[0]);
             ContextInfo info = ContextInfo.create(options, ContextKind.SHARE_NOTHING, null, consoleHandler);
-            main = info.apply(TruffleVM.newVM()).build();
+            main = info.apply(PolyglotEngine.buildNew()).build();
             try {
                 mainContext = (RContext) main.eval(GET_CONTEXT).get();
             } catch (IOException e) {
@@ -198,7 +198,7 @@ public final class FastRSession implements RSession {
                     break;
                 }
                 try {
-                    TruffleVM vm = createTestContext();
+                    PolyglotEngine vm = createTestContext();
                     try {
                         Source source = Source.fromText(expression, "<eval>").withMimeType(TruffleRLanguage.MIME);
                         vm.eval(source);

@@ -470,6 +470,7 @@ public class BasePackage extends RBuiltinPackage {
         add(TempFile.class, TempFileNodeGen::create);
         add(ToLower.class, ToLowerNodeGen::create);
         add(ToUpper.class, ToUpperNodeGen::create);
+        add(Traceback.class, TracebackNodeGen::create);
         add(Transpose.class, TransposeNodeGen::create);
         add(TrigExpFunctions.Acos.class, TrigExpFunctionsFactory.AcosNodeGen::create);
         add(TrigExpFunctions.Acosh.class, TrigExpFunctionsFactory.AcoshNodeGen::create);
@@ -534,7 +535,5 @@ public class BasePackage extends RBuiltinPackage {
         addFastPath(baseFrame, "pmin", FastPathFactory.EVALUATE_ARGS);
         addFastPath(baseFrame, "cbind", FastPathFactory.FORCED_EAGER_ARGS);
         addFastPath(baseFrame, "rbind", FastPathFactory.FORCED_EAGER_ARGS);
-// addFastPath(baseFrame, "cbind.data.frame", FastPathFactory.FORCED_EAGER_ARGS);
-// addFastPath(baseFrame, "rbind.data.frame", FastPathFactory.FORCED_EAGER_ARGS);
     }
 }

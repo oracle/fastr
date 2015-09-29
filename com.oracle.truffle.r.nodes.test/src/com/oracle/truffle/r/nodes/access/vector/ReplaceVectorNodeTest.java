@@ -278,7 +278,7 @@ public class ReplaceVectorNodeTest extends TestBase {
     }
 
     private static NodeHandle<ReplaceVectorNode> create(ElementAccessMode mode) {
-        return createHandle(ReplaceVectorNode.create(mode), //
+        return createHandle(ReplaceVectorNode.create(mode, false), //
                         (node, args) -> node.apply(args[0], (Object[]) args[1], args[2]));
     }
 

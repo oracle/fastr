@@ -51,6 +51,7 @@ public class TrigExpFunctions {
         }
 
         protected double op(@SuppressWarnings("unused") double x) {
+            // not abstract because this would confuse the DSL annotation processor
             throw RInternalError.shouldNotReachHere("this method needs to be implemented in subclasses");
         }
 
@@ -356,8 +357,7 @@ public class TrigExpFunctions {
             double apply(int i);
         }
 
-        protected RDoubleVector doFun(int length, IntDoubleFunction yFun, IntDoubleFunction xFun, //
-                        @Cached("create()") CountedLoopConditionProfile profile) {
+        protected RDoubleVector doFun(int length, IntDoubleFunction yFun, IntDoubleFunction xFun, CountedLoopConditionProfile profile) {
             controlVisibility();
             double[] resultVector = new double[length];
             profile.profileLength(length);

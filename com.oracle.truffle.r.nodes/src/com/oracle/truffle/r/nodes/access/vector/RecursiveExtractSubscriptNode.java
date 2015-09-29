@@ -29,8 +29,9 @@ import com.oracle.truffle.r.runtime.data.model.*;
 
 abstract class RecursiveExtractSubscriptNode extends RecursiveSubscriptNode {
 
+    @Child private ExtractVectorNode getPositionExtract = ExtractVectorNode.create(ElementAccessMode.SUBSCRIPT, true);
     @Child private ExtractVectorNode recursiveSubscriptExtract = ExtractVectorNode.createRecursive(ElementAccessMode.SUBSCRIPT);
-    @Child private ExtractVectorNode getPositionExtract = ExtractVectorNode.create(ElementAccessMode.SUBSCRIPT);
+    @Child private ExtractVectorNode subscriptExtract = ExtractVectorNode.create(ElementAccessMode.SUBSCRIPT, true);
 
     public RecursiveExtractSubscriptNode(RAbstractListVector vector, Object position) {
         super(vector, position);
@@ -52,7 +53,7 @@ abstract class RecursiveExtractSubscriptNode extends RecursiveSubscriptNode {
     @SuppressWarnings("unused")
     protected Object doDefault(Object vector, Object[] positions, Object firstPosition, int positionLength, Object exact, Object dropDimensions) {
         try {
-            return recursiveSubscriptExtract.apply(vector, positions, exact, dropDimensions);
+            return subscriptExtract.apply(vector, positions, exact, dropDimensions);
         } catch (RecursiveIndexNotFoundError e) {
             errorBranch.enter();
             throw RError.error(this, RError.Message.SUBSCRIPT_BOUNDS);
@@ -65,30 +66,31 @@ abstract class RecursiveExtractSubscriptNode extends RecursiveSubscriptNode {
                     @Cached("createPositionCast()") PositionCastNode positionCast) {
         Object firstPosition = positionCast.execute(originalFirstPosition);
         Object currentVector = vector;
-        for (int i = 1; i <= positionLength; i++) {
+        for (int i = 1; i < positionLength; i++) {
             Object selection = getPositionExtract.apply(firstPosition, new Object[]{RInteger.valueOf(i)}, RLogical.TRUE, RLogical.TRUE);
             try {
-                if (i < positionLength && !(currentVector instanceof RAbstractListVector)) {
-                    if (currentVector == RNull.instance) {
-                        throw noSuchIndex(i - 1);
-                    } else {
-                        throw indexingFailed(i - 1);
-                    }
-                } else if (i <= positionLength && currentVector == RNull.instance) {
-                    throw noSuchIndex(i - 1);
+                if (!(currentVector instanceof RAbstractListVector)) {
+                    errorBranch.enter();
+                    throw indexingFailed(i);
                 }
                 currentVector = recursiveSubscriptExtract.apply(currentVector, new Object[]{selection}, exact, dropDimensions);
 
-            } catch (RecursiveIndexNotFoundError e) {
-                errorBranch.enter();
-                if (i > 1) {
-                    throw noSuchIndex(i - 1);
-                } else {
+                if (currentVector == RNull.instance) {
+                    errorBranch.enter();
                     throw RError.error(this, RError.Message.SUBSCRIPT_BOUNDS);
                 }
+            } catch (RecursiveIndexNotFoundError e) {
+                errorBranch.enter();
+                throw noSuchIndex(i);
             }
         }
-        return currentVector;
+        Object selection = getPositionExtract.apply(firstPosition, new Object[]{RInteger.valueOf(positionLength)}, RLogical.TRUE, RLogical.TRUE);
+        try {
+            return subscriptExtract.apply(currentVector, new Object[]{selection}, exact, dropDimensions);
+        } catch (RecursiveIndexNotFoundError e) {
+            errorBranch.enter();
+            throw RError.error(this, RError.Message.SUBSCRIPT_BOUNDS);
+        }
     }
 
     protected PositionCastNode createPositionCast() {

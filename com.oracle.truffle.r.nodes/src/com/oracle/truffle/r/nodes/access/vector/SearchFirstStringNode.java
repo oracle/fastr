@@ -86,9 +86,11 @@ final class SearchFirstStringNode extends Node {
             if (!isCacheValid(targetProfiled, targetLength, elementsProfiled, elementsLength, cachedIndices)) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 cachedIndices = null; // set to generic
+                // fallthrough to generic
+            } else {
+                assert sameVector(searchCached(target, targetLength, elements, elementsLength), cachedIndices);
+                return RDataFactory.createIntVector(cachedIndices, true);
             }
-            assert sameVector(searchCached(target, targetLength, elements, elementsLength), cachedIndices);
-            return RDataFactory.createIntVector(cachedIndices, true);
         }
 
         return searchGeneric(targetProfiled, targetLength, elementsProfiled, elementsLength, notFoundStartIndex, false);
@@ -100,7 +102,10 @@ final class SearchFirstStringNode extends Node {
 
     protected int[] searchCached(RAbstractStringVector target, int targetLength, RAbstractStringVector elements, int elementsLength) {
         if (exactMatch) {
-            return (int[]) searchGeneric(target, targetLength, elements, elementsLength, -1, true).getInternalStore();
+            RAbstractIntVector genericResult = searchGeneric(target, targetLength, elements, elementsLength, -1, true);
+            if (genericResult != null) {
+                return (int[]) genericResult.getInternalStore();
+            }
         }
         return null;
     }
@@ -117,10 +122,7 @@ final class SearchFirstStringNode extends Node {
             int cachedIndex = cached[i];
             String cachedElement = elements.getDataAt(i);
 
-            if (elementsNACheck.check(cachedElement) || cachedElement.length() == 0) {
-                seenInvalid.enter();
-                return false;
-            }
+            assert !elementsNACheck.check(cachedElement) && cachedElement.length() > 0;
 
             int cachedTranslatedIndex = cachedIndex - 1;
             for (int j = 0; j < cachedTranslatedIndex; j++) {

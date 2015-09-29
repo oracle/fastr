@@ -22,25 +22,49 @@
  */
 package com.oracle.truffle.r.engine.shell;
 
-import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.*;
+import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.EXPR;
+import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.FILE;
+import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.INTERACTIVE;
+import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.NO_ENVIRON;
+import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.NO_INIT_FILE;
+import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.NO_RESTORE;
+import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.NO_SAVE;
+import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.QUIET;
+import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.SAVE;
+import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.SILENT;
+import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.SLAVE;
+import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.VANILLA;
 
-import java.io.*;
-import java.nio.file.*;
-import java.util.*;
+import java.io.Console;
+import java.io.EOFException;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.file.Files;
+import java.util.List;
 
-import jline.console.*;
+import jline.console.ConsoleReader;
+import jline.console.UserInterruptException;
 
-import com.oracle.truffle.api.source.*;
-import com.oracle.truffle.api.vm.*;
-import com.oracle.truffle.r.engine.*;
-import com.oracle.truffle.r.nodes.builtin.base.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.context.*;
+import com.oracle.truffle.api.source.Source;
+import com.oracle.truffle.api.vm.PolyglotEngine;
+import com.oracle.truffle.r.engine.TruffleRLanguage;
+import com.oracle.truffle.r.nodes.builtin.base.Quit;
+import com.oracle.truffle.r.runtime.BrowserQuitException;
+import com.oracle.truffle.r.runtime.RCmdOptions;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.context.ConsoleHandler;
+import com.oracle.truffle.r.runtime.context.ContextInfo;
 import com.oracle.truffle.r.runtime.context.Engine.IncompleteSourceException;
 import com.oracle.truffle.r.runtime.context.Engine.ParseException;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 
 /**
  * Emulates the (Gnu)R command as precisely as possible.
@@ -153,7 +177,7 @@ public class RCommand {
      * exiting. So,in either case, we never return.
      */
     public static void readEvalPrint(ContextInfo info) {
-        TruffleVM vm = info.apply(TruffleVM.newVM()).build();
+        PolyglotEngine vm = info.apply(PolyglotEngine.buildNew()).build();
         ConsoleHandler consoleHandler = info.getConsoleHandler();
         Source source = Source.fromNamedAppendableText(consoleHandler.getInputDescription());
         try {
@@ -225,7 +249,7 @@ public class RCommand {
         }
     }
 
-    private static boolean doEcho(TruffleVM vm) {
+    private static boolean doEcho(PolyglotEngine vm) {
         Object echo;
         try {
             echo = vm.eval(GET_ECHO).get();

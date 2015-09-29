@@ -387,7 +387,7 @@ public class TestSimpleArrays extends TestBase {
         assertEval(Output.ContainsError, "{ a <- 1:9 ; a[1, 1, 1] <- 10L }");
 
         assertEval(Output.ContainsError, "{ m <- matrix(1:6, nrow=2) ; m[[1, 1]] <- integer() }");
-        assertEval(Output.ContainsError, "{ m <- matrix(1:6, nrow=2) ; m[[1:2, 1]] <- integer() }");
+        assertEval(Output.ContainsAmbiguousError, "{ m <- matrix(1:6, nrow=2) ; m[[1:2, 1]] <- integer() }");
         assertEval(Output.ContainsError, "{ m <- matrix(1:6, nrow=2) ; m[1, 2] <- integer() }");
         assertEval(Output.ContainsError, "{ m <- matrix(1:6, nrow=2) ; m[1, 2] <- 1:3 }");
 
@@ -400,7 +400,7 @@ public class TestSimpleArrays extends TestBase {
         assertEval("{ m <- matrix(1:6, nrow=2) ; f <- function(i,j) { m[i,j] <- 10 ; m } ; m <- f(1,c(-1,-10)) ; m <- f(-1,2) ; m }");
         assertEval("{ m <- matrix(1:6, nrow=2) ; f <- function(i,j) { m[i,j] <- 10 ; m } ; m <- f(2,1:3) ; m <- f(1,-2) ; m }");
 
-        assertEval(Output.ContainsError, "{ x<-1:8; dim(x)<-c(2,2,2); y<-c(101:104); dim(y)<-c(2,2); z<-(x[1:2,c(1,2,NA),1]<-y); x }");
+        assertEval(Output.ContainsAmbiguousError, "{ x<-1:8; dim(x)<-c(2,2,2); y<-c(101:104); dim(y)<-c(2,2); z<-(x[1:2,c(1,2,NA),1]<-y); x }");
 
         assertEval("{ m <- matrix(1:6, nrow=3) ; m[2] <- list(100) ; m }");
 

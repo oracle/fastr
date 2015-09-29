@@ -40,6 +40,7 @@ import com.oracle.truffle.r.runtime.conn.*;
 import com.oracle.truffle.r.runtime.context.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 public final class Utils {
 
@@ -313,6 +314,37 @@ public final class Utils {
     @TruffleBoundary
     public static String createStackTrace() {
         return createStackTrace(true);
+    }
+
+    /**
+     * Generate a stack trace as a string.
+     */
+    @TruffleBoundary
+    public static String[] createTraceback() {
+        ArrayList<String> strings = new ArrayList<>();
+        FrameInstance current = Truffle.getRuntime().getCurrentFrame();
+        if (current != null) {
+            strings.add(traceback(current.getFrame(FrameAccess.READ_ONLY, true)));
+            Truffle.getRuntime().iterateFrames(frameInstance -> {
+                strings.add(traceback(frameInstance.getFrame(FrameAccess.READ_ONLY, true)));
+                return null;
+            });
+        }
+        return strings.toArray(new String[strings.size()]);
+    }
+
+    private static String traceback(Frame frame) {
+        Frame unwrapped = RArguments.unwrap(frame);
+        if (RArguments.isRFrame(frame)) {
+            RCaller call = RArguments.getCall(unwrapped);
+            if (call != null) {
+                RRuntimeASTAccess rASTAccess = RContext.getRRuntimeASTAccess();
+                RLanguage caller = rASTAccess.getSyntaxCaller(call);
+                RSyntaxNode sn = (RSyntaxNode) caller.getRep();
+                return sn.getSourceSection().getCode() + " (" + sn.getSourceSection().getShortDescription() + ")";
+            }
+        }
+        return "<unknown>";
     }
 
     /**
