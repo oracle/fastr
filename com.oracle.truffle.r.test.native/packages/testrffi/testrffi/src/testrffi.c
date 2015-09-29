@@ -66,3 +66,39 @@ SEXP invoke_TYPEOF(SEXP x) {
 SEXP invoke_error() {
 	error("invoke_error in testrffi");
 }
+
+SEXP dot_external_access_args(SEXP args) {
+    args = CDR(args);
+    int index = 0;
+    for (; args != R_NilValue; args = CDR(args)) {
+	index++;
+	SEXP tag = TAG(args);
+	const char *name = isNull(tag) ? "" : CHAR(PRINTNAME(tag));
+	SEXP value = CAR(args);
+	if (length(value) == 0) {
+	    Rprintf("%d: '%s' length 0\n", index, name);
+	    continue;
+	}
+	switch (TYPEOF(value)) {
+	case LGLSXP:
+	case INTSXP:
+	    Rprintf("%d: '%s' %d\n", index, name, INTEGER(value)[0]);
+	    break;
+	case REALSXP:
+	    Rprintf("%d: '%s' %f\n", index, name, REAL(value)[0]);
+	    break;
+	case CPLXSXP: {
+	    Rcomplex complexValue = COMPLEX(value)[0];
+	    Rprintf("%d: '%s' %f+%fi\n", index, name, complexValue.r,
+		    complexValue.i);
+	    break;
+	}
+	case STRSXP:
+	    Rprintf("%d: '%s' %s\n", index, name, CHAR(STRING_ELT(value, 0)));
+	    break;
+	default:
+	    Rprintf("%d: %s other\n", index, name);
+	}
+    }
+    return R_NilValue;
+}

@@ -22,17 +22,23 @@
  */
 package com.oracle.truffle.r.test.rpackages;
 
-import java.io.*;
-import java.nio.charset.*;
-import java.nio.file.*;
-import java.nio.file.attribute.*;
-import java.util.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.FileSystems;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.util.Map;
 
-import org.junit.*;
-
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.context.*;
-import com.oracle.truffle.r.test.*;
+import com.oracle.truffle.r.runtime.FastROptions;
+import com.oracle.truffle.r.runtime.REnvVars;
+import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.test.TestBase;
 
 /**
  * Tests related to the loading, etc. of R packages.
@@ -45,7 +51,7 @@ public class TestRPackages extends TestBase {
      * in the test string. So the install is destructive, but ok as there is never a clash.
      *
      */
-    private static final class PackagePaths {
+    protected static final class PackagePaths {
         /**
          * The path containing the package distributions as tar files. These are built in the
          * {@code com.oracle.truffle.r.test.native} project in the {@code packages} directory.
@@ -54,7 +60,7 @@ public class TestRPackages extends TestBase {
         /**
          * The path to where the package will be installed (R_LIBS_USER).
          */
-        private final Path rpackagesLibs;
+        protected final Path rpackagesLibs;
 
         private PackagePaths() {
             Path rpackages = Paths.get(REnvVars.rHome(), "com.oracle.truffle.r.test", "rpackages");
@@ -91,7 +97,7 @@ public class TestRPackages extends TestBase {
             rpackagesDists = Paths.get(REnvVars.rHome(), "com.oracle.truffle.r.test.native", "packages");
         }
 
-        private boolean installPackage(String packageName) {
+        protected boolean installPackage(String packageName) {
             Path packagePath = rpackagesDists.resolve(packageName).resolve("lib").resolve(packageName + ".tar");
             String[] cmds = new String[4];
             if (generatingExpected()) {
@@ -141,7 +147,7 @@ public class TestRPackages extends TestBase {
             }
         }
 
-        private boolean uninstallPackage(String packageName) {
+        protected boolean uninstallPackage(String packageName) {
             Path packageDir = rpackagesLibs.resolve(packageName);
             try {
                 deleteDir(packageDir);
@@ -154,38 +160,6 @@ public class TestRPackages extends TestBase {
 
     }
 
-    private static final PackagePaths packagePaths = new PackagePaths();
-
-    private static final String[] TEST_PACKAGES = new String[]{"vanilla", "testrffi"};
-
-    @BeforeClass
-    public static void setupInstallTestPackages() {
-        for (String p : TEST_PACKAGES) {
-            if (!packagePaths.installPackage(p)) {
-                throw new AssertionError();
-            }
-        }
-    }
-
-    @AfterClass
-    public static void tearDownUninstallTestPackages() {
-        for (String p : TEST_PACKAGES) {
-            if (!packagePaths.uninstallPackage(p)) {
-                throw new AssertionError();
-            }
-        }
-    }
-
-    @Test
-    public void testLoadVanilla() {
-        assertEval(TestBase.template("{ library(\"vanilla\", lib.loc = \"%0\"); r <- vanilla(); detach(\"package:vanilla\"); r }", new String[]{packagePaths.rpackagesLibs.toString()}));
-    }
-
-    @Test
-    public void testLoadTestRFFI() {
-        assertEval(TestBase.template(
-                        "{ library(\"testrffi\", lib.loc = \"%0\"); r1 <- rffi.addInt(2L, 3L); r2 <- rffi.addDouble(2, 3); v <- rffi.populateIntVector(5); detach(\"package:testrffi\"); list(r1, r2, v) }",
-                        new String[]{packagePaths.rpackagesLibs.toString()}));
-    }
+    protected static final PackagePaths packagePaths = new PackagePaths();
 
 }
