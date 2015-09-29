@@ -237,6 +237,7 @@ public class BasePackage extends RBuiltinPackage {
         add(Floor.class, FloorNodeGen::create);
         add(DotC.class, DotCNodeGen::create);
         add(ForeignFunctions.DotCall.class, ForeignFunctionsFactory.DotCallNodeGen::create);
+        add(ForeignFunctions.DotCallGraphics.class, ForeignFunctionsFactory.DotCallGraphicsNodeGen::create);
         add(ForeignFunctions.DotExternal.class, ForeignFunctionsFactory.DotExternalNodeGen::create);
         add(ForeignFunctions.DotExternal2.class, ForeignFunctionsFactory.DotExternal2NodeGen::create);
         add(ForeignFunctions.DotExternalGraphics.class, ForeignFunctionsFactory.DotExternalGraphicsNodeGen::create);

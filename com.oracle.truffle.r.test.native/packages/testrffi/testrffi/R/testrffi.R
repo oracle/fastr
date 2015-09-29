@@ -25,3 +25,7 @@ rffi.TYPEOF <- function(x) {
 rffi.error <- function() {
 	.Call("invoke_error", PACKAGE = "testrffi")
 }
+
+rffi.dotExternalAccessArgs <- function(...) {
+	.External("dot_external_access_args", ..., PACKAGE = "testrffi")
+}

@@ -27,27 +27,18 @@ package com.oracle.truffle.r.runtime.ffi;
  */
 public interface CallRFFI {
     /**
-     * Invoke the native method identified by {@code symbolInfo} passing it the arguments in
+     * Invoke the native function identified by {@code symbolInfo} passing it the arguments in
      * {@code args}. The values in {@code args} can be any of the types used to represent {@code R}
      * values in the implementation.
      *
-     * @param symbolInfo identifies the symbol and the defining library
+     * @param address the address of the native function
+     * @param name the name of the native function
      * @param args arguments
      */
-    Object invokeCall(DLL.SymbolInfo symbolInfo, Object[] args);
+    Object invokeCall(long address, String name, Object[] args);
 
     /**
-     * Variant that does not return a result (primarily for library "init" methods.
+     * Variant that does not return a result (primarily for library "init" methods).
      */
-    void invokeVoidCall(DLL.SymbolInfo symbolInfo, Object[] args);
-
-    /**
-     * Variant of {@link #invokeCall} for {@code .External}, where args are wrapped up as a single
-     * argument to the native call.
-     *
-     * @param symbolInfo
-     * @param args
-     */
-    Object invokeExternal(DLL.SymbolInfo symbolInfo, Object[] args);
-
+    void invokeVoidCall(long address, String name, Object[] args);
 }

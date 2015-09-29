@@ -187,7 +187,6 @@ public class DLL {
                 klass[0] = rnt.nst.name() + "Routine";
             }
             return RDataFactory.createList(data, n > 3 ? NAMES_4_VEC : NAMES_3_VEC);
-
         }
     }
 
@@ -263,7 +262,7 @@ public class DLL {
             try {
                 initCritical.acquire();
                 try {
-                    RFFIFactory.getRFFI().getCallRFFI().invokeVoidCall(symbolInfo, new Object[]{dllInfo});
+                    RFFIFactory.getRFFI().getCallRFFI().invokeVoidCall(symbolInfo.address, symbolInfo.symbol, new Object[]{dllInfo});
                 } catch (Throwable ex) {
                     throw new DLLException(RError.Message.DLL_RINIT_ERROR);
                 }
@@ -369,7 +368,7 @@ public class DLL {
      * symbols that have been registered from packages, i.e. that can be used in {@code .Call} etc.
      * functions.
      */
-    public static SymbolInfo findRegisteredSymbolinInDLL(String symbol, String libName) {
+    public static SymbolInfo findRegisteredSymbolinInDLL(String symbol, String libName, String type) {
         try {
             listCritical.acquire();
             for (DLLInfo dllInfo : list) {
@@ -378,13 +377,15 @@ public class DLL {
                         continue;
                     }
                     for (NativeSymbolType nst : NativeSymbolType.values()) {
-                        DotSymbol[] dotSymbols = dllInfo.getNativeSymbols(nst);
-                        if (dotSymbols == null) {
-                            continue;
-                        }
-                        for (DotSymbol dotSymbol : dotSymbols) {
-                            if (dotSymbol.name.equals(symbol)) {
-                                return new SymbolInfo(dllInfo, symbol, dotSymbol.fun);
+                        if (type.isEmpty() || type.equals(nst.toString())) {
+                            DotSymbol[] dotSymbols = dllInfo.getNativeSymbols(nst);
+                            if (dotSymbols == null) {
+                                continue;
+                            }
+                            for (DotSymbol dotSymbol : dotSymbols) {
+                                if (dotSymbol.name.equals(symbol)) {
+                                    return new SymbolInfo(dllInfo, symbol, dotSymbol.fun);
+                                }
                             }
                         }
                     }

@@ -39,7 +39,7 @@ void init_vectoraccess(JNIEnv *env) {
 	SET_VECTOR_ELT_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "SET_VECTOR_ELT", "(Ljava/lang/Object;ILjava/lang/Object;)V", 1);
 	RAW_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "RAW", "(Ljava/lang/Object;)[B", 1);
 	REAL_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "REAL", "(Ljava/lang/Object;)[D", 1);
-	LOGICAL_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "LOGICAL", "(Ljava/lang/Object;)[B", 1);
+	LOGICAL_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "LOGICAL", "(Ljava/lang/Object;)[I", 1);
 	INTEGER_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "INTEGER", "(Ljava/lang/Object;)[I", 1);
 	STRING_ELT_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "STRING_ELT", "(Ljava/lang/Object;I)Ljava/lang/String;", 1);
 	VECTOR_ELT_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "VECTOR_ELT", "(Ljava/lang/Object;I)Ljava/lang/Object;", 1);
@@ -48,68 +48,74 @@ void init_vectoraccess(JNIEnv *env) {
 
 
 int LENGTH(SEXP x) {
-	TRACE(TARG1, x);
-	JNIEnv *thisenv = getEnv();
-	return (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, LENGTH_MethodID, x);
+    TRACE(TARG1, x);
+    JNIEnv *thisenv = getEnv();
+    return (*thisenv)->CallStaticIntMethod(thisenv, CallRFFIHelperClass, LENGTH_MethodID, x);
 }
 
 R_len_t  Rf_length(SEXP x) {
-	return LENGTH(x);
+    return LENGTH(x);
 }
 
 
 R_xlen_t  Rf_xlength(SEXP x) {
     // xlength seems to be used for long vectors (no such thing in FastR at the moment)
-	return LENGTH(x);
+    return LENGTH(x);
 }
 
 int TRUELENGTH(SEXP x){
-	unimplemented("unimplemented");
+    unimplemented("unimplemented");
+    return 0;
 }
 
 
 void SETLENGTH(SEXP x, int v){
-	unimplemented("SETLENGTH");
+    unimplemented("SETLENGTH");
 }
 
 
 void SET_TRUELENGTH(SEXP x, int v){
-	unimplemented("SET_TRUELENGTH");
+    unimplemented("SET_TRUELENGTH");
 }
 
 
 R_xlen_t XLENGTH(SEXP x){
-	unimplemented("XLENGTH");
+    // xlength seems to be used for long vectors (no such thing in FastR at the moment)
+    return LENGTH(x);
 }
 
 
 R_xlen_t XTRUELENGTH(SEXP x){
 	unimplemented("XTRUELENGTH");
+	return 0;
 }
 
 
 int IS_LONG_VEC(SEXP x){
 	unimplemented("IS_LONG_VEC");
+	return 0;
 }
 
 
 int LEVELS(SEXP x){
 	unimplemented("LEVELS");
+	return 0;
 }
 
 
 int SETLEVELS(SEXP x, int v){
 	unimplemented("SETLEVELS");
+	return 0;
 }
 
 int *LOGICAL(SEXP x){
 	TRACE(TARG1, x);
 	JNIEnv *thisenv = getEnv();
-	jbyte *data = (jint *) findCopiedObject(thisenv, x);
+	jint *data = (jint *) findCopiedObject(thisenv, x);
 	if (data == NULL) {
 	    jintArray intArray = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, LOGICAL_MethodID, x);
 	    int len = (*thisenv)->GetArrayLength(thisenv, intArray);
-	    data = (*thisenv)->GetByteArrayElements(thisenv, intArray, NULL);
+	    data = (*thisenv)->GetIntArrayElements(thisenv, intArray, NULL);
 	    addCopiedObject(thisenv, x, LGLSXP, intArray, data);
 	}
 	return data;
@@ -143,20 +149,21 @@ Rbyte *RAW(SEXP x){
 
 
 double *REAL(SEXP x){
-	JNIEnv *thisenv = getEnv();
-	jdouble *data = (jdouble *) findCopiedObject(thisenv, x);
-	if (data == NULL) {
-	    jdoubleArray doubleArray = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, REAL_MethodID, x);
-	    int len = (*thisenv)->GetArrayLength(thisenv, doubleArray);
-	    data = (*thisenv)->GetDoubleArrayElements(thisenv, doubleArray, NULL);
-        addCopiedObject(thisenv, x, REALSXP, doubleArray, data);
+    JNIEnv *thisenv = getEnv();
+    jdouble *data = (jdouble *) findCopiedObject(thisenv, x);
+    if (data == NULL) {
+	jdoubleArray doubleArray = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, REAL_MethodID, x);
+	int len = (*thisenv)->GetArrayLength(thisenv, doubleArray);
+	data = (*thisenv)->GetDoubleArrayElements(thisenv, doubleArray, NULL);
+	addCopiedObject(thisenv, x, REALSXP, doubleArray, data);
     }
-	return data;
+    return data;
 }
 
 
 Rcomplex *COMPLEX(SEXP x){
 	unimplemented("COMPLEX");
+	return NULL;
 }
 
 
@@ -189,9 +196,12 @@ SEXP SET_VECTOR_ELT(SEXP x, R_xlen_t i, SEXP v){
 
 SEXP *STRING_PTR(SEXP x){
 	unimplemented("STRING_PTR");
+	return NULL;
 }
 
 
 SEXP *VECTOR_PTR(SEXP x){
 	unimplemented("VECTOR_PTR");
+	return NULL;
 }
+

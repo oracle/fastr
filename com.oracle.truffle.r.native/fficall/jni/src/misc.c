@@ -101,12 +101,6 @@ int R_IsNaN(double x) {
 	return (*env)->CallStaticBooleanMethod(env, RRuntimeClass, isNAorNaNMethodID, x);
 }
 
-void Rprintf(const char *msg, ...) {
-	va_list argptr;
-	va_start(argptr, msg);
-	vprintf(msg, argptr);
-}
-
 void REprintf(const char *x, ...) {
 	unimplemented("REprintf");
 }

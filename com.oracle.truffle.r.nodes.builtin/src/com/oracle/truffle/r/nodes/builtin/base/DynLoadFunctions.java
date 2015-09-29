@@ -106,12 +106,11 @@ public class DynLoadFunctions {
 
     @RBuiltin(name = "is.loaded", kind = INTERNAL, parameterNames = {"symbol", "package", "type"})
     public abstract static class IsLoaded extends RBuiltinNode {
-        @SuppressWarnings("unused")
         @Specialization
         @TruffleBoundary
         protected byte isLoaded(String symbol, String packageName, String type) {
             controlVisibility();
-            boolean found = DLL.findRegisteredSymbolinInDLL(symbol, packageName) != null;
+            boolean found = DLL.findRegisteredSymbolinInDLL(symbol, packageName, type) != null;
             return RRuntime.asLogical(found);
         }
     }

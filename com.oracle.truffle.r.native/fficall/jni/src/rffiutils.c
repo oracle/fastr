@@ -229,7 +229,10 @@ void setEnv(JNIEnv *env) {
 
 void *unimplemented(char *msg) {
 	JNIEnv *thisenv = getEnv();
-	(*thisenv)->FatalError(thisenv, msg);
+	char buf[1024];
+	strcpy(buf, "unimplemented ");
+	strcat(buf, msg);
+	(*thisenv)->FatalError(thisenv, buf);
 	// to keep compiler happy
 	return NULL;
 }

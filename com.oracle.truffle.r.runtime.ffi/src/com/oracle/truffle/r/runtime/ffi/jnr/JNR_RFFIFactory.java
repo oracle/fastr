@@ -41,6 +41,7 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.ffi.*;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
+import com.oracle.truffle.r.runtime.ffi.DLL.SymbolInfo;
 
 /**
  * JNR/JNI-based factory.
@@ -527,7 +528,8 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI, Stat
         // The C code is not thread safe.
         try {
             parseRdCritical.acquire();
-            return getCallRFFI().invokeCall(ToolsProvider.toolsProvider().getParseRd(), new Object[]{con, srcfile, verbose, fragment, basename, warningCalls});
+            SymbolInfo parseRd = ToolsProvider.toolsProvider().getParseRd();
+            return getCallRFFI().invokeCall(parseRd.address, parseRd.symbol, new Object[]{con, srcfile, verbose, fragment, basename, warningCalls});
         } catch (Throwable ex) {
             throw RInternalError.shouldNotReachHere();
         } finally {
@@ -572,11 +574,13 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI, Stat
     }
 
     public Object initGrid(REnvironment gridEvalEnv) {
-        return getCallRFFI().invokeCall(GridProvider.gridProvider().getInitGrid(), new Object[]{gridEvalEnv});
+        SymbolInfo initGrid = GridProvider.gridProvider().getInitGrid();
+        return getCallRFFI().invokeCall(initGrid.address, initGrid.symbol, new Object[]{gridEvalEnv});
     }
 
     public Object killGrid() {
-        return getCallRFFI().invokeCall(GridProvider.gridProvider().getKillGrid(), new Object[0]);
+        SymbolInfo killGrid = GridProvider.gridProvider().getKillGrid();
+        return getCallRFFI().invokeCall(killGrid.address, killGrid.symbol, new Object[0]);
     }
 
     /*
