@@ -25,13 +25,9 @@
 #include <string.h>
 
 jmethodID iS4ObjectMethodID;
-jmethodID isFiniteMethodID;
-jmethodID isNAorNaNMethodID;
 
 void init_misc(JNIEnv *env) {
 	iS4ObjectMethodID = checkGetMethodID(env, CallRFFIHelperClass, "isS4Object", "(Ljava/lang/Object;)I", 1);
-	isFiniteMethodID = checkGetMethodID(env, RRuntimeClass, "isFinite", "(D)Z", 1);
-	isNAorNaNMethodID = checkGetMethodID(env, RRuntimeClass, "isNAorNaN", "(D)Z", 1);
 }
 
 char *dgettext(const char *domainname, const char *msgid) {
@@ -76,22 +72,8 @@ void R_CheckStack2(size_t x) {
 	unimplemented("R_CheckStack2");
 }
 
-int R_finite(double x) {
-	JNIEnv *env = getEnv();
-	return (*env)->CallStaticBooleanMethod(env, RRuntimeClass, isFiniteMethodID, x);
-}
-
-int R_IsNaN(double x) {
-	JNIEnv *env = getEnv();
-	return (*env)->CallStaticBooleanMethod(env, RRuntimeClass, isNAorNaNMethodID, x);
-}
-
 R_len_t R_BadLongVector(SEXP x, const char *y, int z) {
 	unimplemented("R_BadLongVector");
-}
-
-int R_IsNA(double x) {
-	unimplemented("R_IsNA");
 }
 
 int IS_S4_OBJECT(SEXP x) {

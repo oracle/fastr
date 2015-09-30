@@ -116,11 +116,6 @@ double R_pow(double x, double y) {
     return 0;
 }
 
-double R_pow_di(double x, int y) {
-    unimplemented("R_pow_di");
-    return 0;
-}
-
 double Rf_dchisq(double x, double y, int z) {
     unimplemented("Rf_dchisq");
     return 0;
