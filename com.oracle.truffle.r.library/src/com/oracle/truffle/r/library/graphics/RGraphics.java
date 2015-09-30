@@ -15,9 +15,14 @@
 package com.oracle.truffle.r.library.graphics;
 
 import com.oracle.truffle.r.library.graphics.core.*;
+import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.context.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
+import com.oracle.truffle.r.runtime.ffi.CallRFFI;
+import com.oracle.truffle.r.runtime.ffi.DLL;
+import com.oracle.truffle.r.runtime.ffi.DLL.SymbolInfo;
+import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 
 /**
  * A placeholder to keep {@code REngine} limited to calling the {@link #initialize} method. It sets
@@ -36,11 +41,16 @@ public class RGraphics {
     private static final String DOT_DEVICES = ".Devices";
 
     public static void initialize() {
-        REnvironment baseEnv = REnvironment.baseEnv();
-        baseEnv.safePut(DOT_DEVICE, NULL_DEVICE);
-        RPairList devices = RDataFactory.createPairList(NULL_DEVICE);
-        baseEnv.safePut(DOT_DEVICES, devices);
-        registerBaseGraphicsSystem();
+        if (FastROptions.UseInternalGraphics) {
+            REnvironment baseEnv = REnvironment.baseEnv();
+            baseEnv.safePut(DOT_DEVICE, NULL_DEVICE);
+            RPairList devices = RDataFactory.createPairList(NULL_DEVICE);
+            baseEnv.safePut(DOT_DEVICES, devices);
+            registerBaseGraphicsSystem();
+        } else {
+            SymbolInfo symbolInfo = DLL.findSymbolInfo("InitGraphics", null);
+            RFFIFactory.getRFFI().getCRFFI().invoke(symbolInfo.address, new Object[0]);
+        }
     }
 
     private static void registerBaseGraphicsSystem() {

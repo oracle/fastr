@@ -67,8 +67,6 @@ void *findCopiedObject(JNIEnv *env, SEXP x);
 void addCopiedObject(JNIEnv *env, SEXP x, SEXPTYPE type, void *jArray, void *data);
 
 void init_rmath(JNIEnv *env);
-void init_graphicsengine(JNIEnv *env);
-void init_graphicsdevices(JNIEnv *env);
 void init_variables(JNIEnv *env, jobjectArray initialValues);
 void init_register(JNIEnv *env);
 void init_rf_functions(JNIEnv *env);
