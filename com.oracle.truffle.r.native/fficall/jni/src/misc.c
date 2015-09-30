@@ -35,7 +35,8 @@ void init_misc(JNIEnv *env) {
 }
 
 char *dgettext(const char *domainname, const char *msgid) {
-	unimplemented("dgettext");
+	printf("dgettext: '%s'\n", msgid);
+	return (char*) msgid;
 }
 
 const char *R_CHAR(SEXP string) {
@@ -83,10 +84,6 @@ int R_finite(double x) {
 int R_IsNaN(double x) {
 	JNIEnv *env = getEnv();
 	return (*env)->CallStaticBooleanMethod(env, RRuntimeClass, isNAorNaNMethodID, x);
-}
-
-void REprintf(const char *x, ...) {
-	unimplemented("REprintf");
 }
 
 R_len_t R_BadLongVector(SEXP x, const char *y, int z) {
