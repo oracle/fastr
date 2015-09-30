@@ -103,11 +103,15 @@ SEXP Rf_ScalarLogical(int value) {
     return checkRef(thisenv, result);
 }
 
-SEXP Rf_allocVector(SEXPTYPE t, R_xlen_t len) {
-	TRACE(TARG2d, t, len);
-	JNIEnv *thisenv = getEnv();
-	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_allocateVectorMethodID, t, len);
-	return checkRef(thisenv, result);
+SEXP Rf_allocVector3(SEXPTYPE t, R_xlen_t len, R_allocator_t* allocator) {
+    if (allocator != NULL) {
+	unimplemented("RF_allocVector with custom allocator");
+	return NULL;
+    }
+    TRACE(TARG2d, t, len);
+    JNIEnv *thisenv = getEnv();
+    SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_allocateVectorMethodID, t, len);
+    return checkRef(thisenv, result);
 }
 
 SEXP Rf_allocArray(SEXPTYPE t, SEXP dims) {
@@ -188,26 +192,7 @@ SEXP Rf_duplicated(SEXP x, Rboolean y) {
 
 Rboolean Rf_inherits(SEXP x, const char * klass) {
 	unimplemented("Rf_inherits)");
-}
-
-Rboolean Rf_isFunction(SEXP x) {
-	unimplemented("Rf_isFunction)");
-}
-
-Rboolean Rf_isArray(SEXP x) {
-    unimplemented("Rf_isArray");
-}
-
-Rboolean Rf_isFactor(SEXP x) {
-    unimplemented("Rf_isFactor");
-}
-
-Rboolean Rf_isFrame(SEXP x) {
-    unimplemented("Rf_isFrame");
-}
-
-Rboolean Rf_isInteger(SEXP x) {
-    unimplemented("Rf_isInteger");
+	return FALSE;
 }
 
 Rboolean Rf_isReal(SEXP x) {
@@ -228,78 +213,17 @@ Rboolean Rf_isEnvironment(SEXP s) {
 
 Rboolean Rf_isExpression(SEXP x) {
     unimplemented("Rf_isExpression");
-}
-
-Rboolean Rf_isLanguage(SEXP x) {
-    unimplemented("Rf_isLanguage");
+	return FALSE;
 }
 
 Rboolean Rf_isLogical(SEXP s) {
 	unimplemented("Rf_isLogical");
-}
-
-Rboolean Rf_isList(SEXP x) {
-    unimplemented("Rf_isList");
-}
-
-Rboolean Rf_isMatrix(SEXP x) {
-    unimplemented("Rf_isMatrix");
-}
-
-Rboolean Rf_isNewList(SEXP x) {
-    unimplemented("Rf_isNewList");
-}
-
-Rboolean Rf_isNumber(SEXP x) {
-    unimplemented("Rf_isNumber");
-}
-
-Rboolean Rf_isNumeric(SEXP x) {
-    unimplemented("Rf_isNumeric");
+	return FALSE;
 }
 
 Rboolean Rf_isObject(SEXP s) {
 	unimplemented("Rf_isObject");
-}
-
-Rboolean Rf_isPairList(SEXP x) {
-    unimplemented("Rf_isPairList");
-}
-
-Rboolean Rf_isPrimitive(SEXP x) {
-    unimplemented("Rf_isPrimitive");
-}
-
-Rboolean Rf_isTs(SEXP x) {
-    unimplemented("Rf_isTs");
-}
-
-Rboolean Rf_isUserBinop(SEXP x) {
-    unimplemented("Rf_isUserBinop");
-}
-
-Rboolean Rf_isValidString(SEXP x) {
-    unimplemented("Rf_isValidString");
-}
-
-Rboolean Rf_isValidStringF(SEXP x) {
-    unimplemented("Rf_isValidStringF");
-}
-
-Rboolean Rf_isVector(SEXP x) {
-    unimplemented("Rf_isVector");
-}
-
-Rboolean Rf_isVectorAtomic(SEXP x) {
-    unimplemented("Rf_isVectorAtomic");
-}
-
-Rboolean Rf_isVectorList(SEXP x) {
-    unimplemented("Rf_isVectorList");
-}
-
-Rboolean Rf_isVectorizable(SEXP x) {
-    unimplemented("Rf_isVectorizable");
+	return FALSE;
 }
 
 SEXP Rf_install(const char *name) {
@@ -317,35 +241,6 @@ Rboolean Rf_isNull(SEXP s) {
 Rboolean Rf_isString(SEXP s) {
 	JNIEnv *thisenv = getEnv();
 	return (*thisenv)->CallStaticIntMethod(thisenv, CallRFFIHelperClass, Rf_isStringMethodID, s);
-
-}
-
-SEXP Rf_lang1(SEXP a) {
-    unimplemented("Rf_lang1");
-}
-
-SEXP Rf_lang2(SEXP a, SEXP b) {
-    unimplemented("Rf_lang2");
-}
-
-SEXP Rf_lang3(SEXP a, SEXP b, SEXP c) {
-    unimplemented("Rf_lang3");
-}
-
-SEXP Rf_lang4(SEXP a, SEXP b, SEXP c, SEXP d) {
-    unimplemented("Rf_lang2");
-}
-
-SEXP Rf_lang5(SEXP a, SEXP b, SEXP c, SEXP d, SEXP e) {
-    unimplemented("Rf_lang5");
-}
-
-SEXP Rf_lang6(SEXP a, SEXP b, SEXP c, SEXP d, SEXP e, SEXP f) {
-    unimplemented("Rf_lang6");
-}
-
-SEXP Rf_lcons(SEXP x, SEXP y) {
-	unimplemented("Rf_lcons");
 }
 
 cetype_t Rf_getCharCE(SEXP x) {

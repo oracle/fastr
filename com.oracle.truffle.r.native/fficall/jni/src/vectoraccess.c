@@ -46,21 +46,10 @@ void init_vectoraccess(JNIEnv *env) {
 	LENGTH_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "LENGTH", "(Ljava/lang/Object;)I", 1);
 }
 
-
 int LENGTH(SEXP x) {
     TRACE(TARG1, x);
     JNIEnv *thisenv = getEnv();
     return (*thisenv)->CallStaticIntMethod(thisenv, CallRFFIHelperClass, LENGTH_MethodID, x);
-}
-
-R_len_t  Rf_length(SEXP x) {
-    return LENGTH(x);
-}
-
-
-R_xlen_t  Rf_xlength(SEXP x) {
-    // xlength seems to be used for long vectors (no such thing in FastR at the moment)
-    return LENGTH(x);
 }
 
 int TRUELENGTH(SEXP x){
