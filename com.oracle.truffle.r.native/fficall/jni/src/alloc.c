@@ -76,15 +76,24 @@ void *R_chk_realloc(void *p, size_t size) {
 }
 
 void R_chk_free(void *p) {
-	unimplemented("R_chk_free");
+    if(p) {
+	free(p);
+    }
 }
 
+int VMAX_MAGIC = 1234;
+
 void* vmaxget(void) {
-    unimplemented("vmaxget");
+//    unimplemented("vmaxget");
+    // ignored
+    return &VMAX_MAGIC;
 }
 
 void vmaxset(const void * x) {
-    unimplemented("vmaxget");
+//    unimplemented("vmaxget");
+    if (x != &VMAX_MAGIC) {
+	unimplemented("vmaxset with different value");
+    }
 }
 
 void R_gc(void) {
@@ -95,3 +104,4 @@ int R_gc_running() {
     unimplemented("R_gc_running");
     return 0;
 }
+

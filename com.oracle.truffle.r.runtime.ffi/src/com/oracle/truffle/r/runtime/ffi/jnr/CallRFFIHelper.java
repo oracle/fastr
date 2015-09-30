@@ -472,6 +472,15 @@ public class CallRFFIHelper {
         }
     }
 
+    static void DUPLICATE_ATTRIB(Object to, Object from) {
+        if (from instanceof RAttributable) {
+            guaranteeInstanceOf(to, RAttributable.class);
+            RAttributes attributes = ((RAttributable) from).getAttributes();
+            ((RAttributable) to).initAttributes(attributes == null ? null : attributes.copy());
+        }
+        // TODO: copy OBJECT? and S4 attributes
+    }
+
     // Checkstyle: resume method name check
 
     static Object validate(Object x) {

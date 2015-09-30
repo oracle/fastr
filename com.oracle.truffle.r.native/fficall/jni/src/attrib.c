@@ -25,16 +25,18 @@
 static jclass SEXPTYPEClass;
 static jmethodID gnuRCodeForObjectMethodID;
 static jmethodID NAMED_MethodID;
+static jmethodID DUPLICATE_ATTRIB_MethodID;
 
 void init_attrib(JNIEnv *env) {
 	SEXPTYPEClass = checkFindClass(env, "com/oracle/truffle/r/runtime/gnur/SEXPTYPE");
 	gnuRCodeForObjectMethodID = checkGetMethodID(env, SEXPTYPEClass, "gnuRCodeForObject", "(Ljava/lang/Object;)I", 1);
 	NAMED_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "NAMED", "(Ljava/lang/Object;)I", 1);
+	DUPLICATE_ATTRIB_MethodID = checkGetMethodID(env, CallRFFIHelperClass, "DUPLICATE_ATTRIB", "(Ljava/lang/Object;Ljava/lang/Object;)V", 1);
 }
 
 int TYPEOF(SEXP x) {
-	JNIEnv *thisenv = getEnv();
-	return (*thisenv)->CallStaticIntMethod(thisenv, SEXPTYPEClass, gnuRCodeForObjectMethodID, x);
+    JNIEnv *thisenv = getEnv();
+    return (*thisenv)->CallStaticIntMethod(thisenv, SEXPTYPEClass, gnuRCodeForObjectMethodID, x);
 }
 
 SEXP ATTRIB(SEXP x){
@@ -79,6 +81,7 @@ void SET_ATTRIB(SEXP x, SEXP v){
 }
 
 void DUPLICATE_ATTRIB(SEXP to, SEXP from){
-    unimplemented("DUPLICATE_ATTRIB");
+    JNIEnv *thisenv = getEnv();
+    (*thisenv)->CallStaticVoidMethod(thisenv, CallRFFIHelperClass, DUPLICATE_ATTRIB_MethodID, to, from);
 }
 
