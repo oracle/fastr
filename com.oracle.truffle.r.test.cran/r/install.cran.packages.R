@@ -3,10 +3,13 @@
 # By default all packages are candidates for installation, but this
 # can be limited by a regexp pattern
 
+# By default, we use the CRAN mirror specified by --cran-mirror which defaults to http://cran.cnr.berkeley.edu/
+# However, a local copy of the CRAN repo can be used either by setting the LOCAL_CRAN_REPO env variable or setting --contrib-url
+
 args <- commandArgs(TRUE)
 
 usage <- function() {
-	cat("usage: Rscript [--contriburl url] [--verbose | -v] [-V] [--dryrun] [ --no-install | -n] [--save-blacklist] [-read-blacklist] [--blacklist-file file] [package-pattern\n")
+	cat("usage: Rscript [--contriburl url] [--cran-mirror url] [--verbose | -v] [-V] [--dryrun] [ --no-install | -n] [--save-blacklist] [-read-blacklist] [--blacklist-file file] [package-pattern]\n")
 	quit(status=1)
 }
 
@@ -108,6 +111,21 @@ abort <- function(msg) {
 	quit("no", 1)
 }
 
+set.cran.mirror <- function() {
+	cran.mirror <<- Sys.getenv("CRAN_MIRROR", unset = "http://cran.cnr.berkeley.edu/")
+	r <- getOption("repos")
+	r["CRAN"] <- cran.mirror
+	options(repos = r)
+	if (is.na(contriburl)) {
+		# not set on command line
+		contriburl <<- Sys.getenv("LOCAL_CRAN_REPO", unset=NA)
+		if (is.na(contriburl)) {
+			# set back to repo-based default
+			contriburl <<- contrib.url(r, "source")
+		}
+	}
+}
+
 # find the available packages from contriburl and match those against pkg.pattern
 # sets global variables avail.pkgs and toinstall.pkgs
 get.pkgs <- function() {
@@ -189,7 +207,17 @@ parse.args <- function() {
 			} else {
 				usage()
 			}
+		} else if (a == "--cran-mirror") {
+			if (length(args) >= 2L) {
+				cran.mirror <<- args[2L]
+				args <<- args[-1L]
+			} else {
+				usage()
+			}
 		} else {
+			if (grepl("^-.*", a)) {
+				usage()
+			}
 			pkg.pattern <<- a
 			break
 		}
@@ -198,11 +226,18 @@ parse.args <- function() {
 	}
 }
 
-# global variables used by the installation
-contriburl <- Sys.getenv("LOCAL_CRAN_REPO", unset=NA)
-if (is.na(contriburl)) {
-	contriburl <- paste("file://", getwd(), "/cran/LOCAL_REPO/src/contrib", sep="")
+cat.args <- function() {
+	if (verbose) {
+		cat("install: ", install, "\n")
+		cat("dry.run: ", dry.run, "\n")
+		cat("save.blacklist: ", save.blacklist, "\n")
+		cat("read.blacklist: ", read.blacklist, "\n")
+		cat("pkg.pattern: ", pkg.pattern, "\n")
+		cat("contriburl: ", contriburl, "\n")
+	}
 }
+
+contriburl <- NA
 blacklist.file <- Sys.getenv("PACKAGE_BLACKLIST", unset=NA)
 
 pkg.pattern <- "^.*"
@@ -217,6 +252,8 @@ read.blacklist <- F
 
 if (!interactive()) {
 	parse.args()
+	set.cran.mirror()
+	cat.args()
 	do.install()
 }
 
