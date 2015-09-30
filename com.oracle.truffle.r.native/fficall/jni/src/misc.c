@@ -64,14 +64,6 @@ void R_CheckUserInterrupt() {
 // TODO (we don't even do this in the Java code)
 }
 
-void R_CheckStack(void) {
-	unimplemented("R_CheckStack");
-}
-
-void R_CheckStack2(size_t x) {
-	unimplemented("R_CheckStack2");
-}
-
 R_len_t R_BadLongVector(SEXP x, const char *y, int z) {
 	unimplemented("R_BadLongVector");
 }
@@ -86,10 +78,6 @@ void SET_S4_OBJECT(SEXP x) {
 }
 void UNSET_S4_OBJECT(SEXP x) {
 	unimplemented("UNSET_S4_OBJECT");
-}
-
-const char *R_ExpandFileName(const char *x) {
-	unimplemented("R_ExpandFileName");
 }
 
 Rboolean R_ToplevelExec(void (*fun)(void *), void *data) {
@@ -123,3 +111,23 @@ SEXP R_tryEvalSilent(SEXP x, SEXP y, int *z) {
 	unimplemented("R_tryEvalSilent");
 }
 
+size_t Riconv (void *cd, const char **inbuf, size_t *inbytesleft,
+	       char **outbuf, size_t *outbytesleft) {
+	unimplemented("Riconv");
+	return 0;
+}
+
+int Riconv_close (void *cd) {
+	unimplemented("Riconv_close");
+	return 0;
+}
+
+void * Riconv_open (const char* tocode, const char* fromcode) {
+	unimplemented("Riconv_open");
+	return NULL;
+}
+
+const char *reEnc(const char *x, cetype_t ce_in, cetype_t ce_out, int subst) {
+    // TODO: proper implementation of reEnc
+    return x;
+}

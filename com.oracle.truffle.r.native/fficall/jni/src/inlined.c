@@ -25,9 +25,9 @@
 
 #define INLINE_FUN
 
+// The contents of this file were copied from Rinlinedfuns.h:
+
 /*
- * The contents of this file were copied from Rinlinedfuns.h:
- *
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
  *  Copyright (C) 1999-2012  The R Core Team.

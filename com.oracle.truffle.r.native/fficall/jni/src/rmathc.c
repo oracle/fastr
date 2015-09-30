@@ -67,23 +67,19 @@ double Rf_pnorm5(double x, double y, double z, int w, int v) {
 }
 
 int Rf_imax2(int x, int y) {
-    unimplemented("Rf_imax2");
-    return 0;
+    return x > y ? x : y;
 }
 
 int Rf_imin2(int x, int y) {
-    unimplemented("Rf_imin2");
-    return 0;
+    return x > y ? y : x;
 }
 
 double Rf_fmax2(double x, double y) {
-    unimplemented("Rf_fmax2");
-    return 0;
+    return x > y ? x : y;
 }
 
 double Rf_fmin2(double x, double y) {
-    unimplemented("Rf_fmin2");
-    return 0;
+    return x > y ? y : x;
 }
 
 double Rf_sign(double x) {
