@@ -213,33 +213,27 @@ Rboolean Rf_inherits(SEXP x, const char * klass) {
 }
 
 Rboolean Rf_isReal(SEXP x) {
-    unimplemented("Rf_isReal");
-	return FALSE;
+    return TYPEOF(x) == REALSXP;
 }
 
 Rboolean Rf_isSymbol(SEXP x) {
-    unimplemented("Rf_isSymbol");
-	return FALSE;
+    return TYPEOF(x) == SYMSXP;
 }
 
-Rboolean Rf_isComplex(SEXP s) {
-	unimplemented("Rf_isComplex");
-	return FALSE;
+Rboolean Rf_isComplex(SEXP x) {
+    return TYPEOF(x) == CPLXSXP;
 }
 
-Rboolean Rf_isEnvironment(SEXP s) {
-	unimplemented("Rf_isEnvironment");
-	return FALSE;
+Rboolean Rf_isEnvironment(SEXP x) {
+    return TYPEOF(x) == ENVSXP;
 }
 
 Rboolean Rf_isExpression(SEXP x) {
-    unimplemented("Rf_isExpression");
-	return FALSE;
+    return TYPEOF(x) == EXPRSXP;
 }
 
-Rboolean Rf_isLogical(SEXP s) {
-	unimplemented("Rf_isLogical");
-	return FALSE;
+Rboolean Rf_isLogical(SEXP x) {
+    return TYPEOF(x) == LGLSXP;
 }
 
 Rboolean Rf_isObject(SEXP s) {
