@@ -151,7 +151,8 @@ int GEstring_to_pch(SEXP pch) {
 }
 
 unsigned int GE_LTYpar(SEXP x, int y) {
-    return unimplemented("GE_LTYpar");
+    unimplemented("GE_LTYpar");
+    return 0;
 }
 
 SEXP GE_LTYget(unsigned int x) {
@@ -392,17 +393,4 @@ double fromDeviceHeight(double value, GEUnit to, pGEDevDesc dd) {
 double toDeviceHeight(double value, GEUnit from, pGEDevDesc dd) {
     unimplemented("toDeviceHeight");
     return 0.0;
-}
-
-rcolor Rf_RGBpar(SEXP x, int y) {
-	return (rcolor) unimplemented("RGBpar");
-}
-
-rcolor Rf_RGBpar3(SEXP x, int y, rcolor z) {
-    return (rcolor) unimplemented("RGBpar3");
-}
-
-
-const char *Rf_col2name(rcolor col) {
-    return (const char *) unimplemented("col2name");
 }

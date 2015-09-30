@@ -130,7 +130,11 @@ public final class Utils {
         if (RContext.getInstance().getOptions().getString(RCmdOption.DEBUGGER) != null) {
             throw new DebugExitException();
         } else {
-            RContext.getInstance().destroy();
+            try {
+                RContext.getInstance().destroy();
+            } catch (Throwable t) {
+                // ignore
+            }
             System.exit(status);
             return null;
         }

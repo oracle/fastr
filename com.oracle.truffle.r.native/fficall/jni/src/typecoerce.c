@@ -45,6 +45,7 @@ SEXP Rf_asChar(SEXP x){
 
 SEXP Rf_coerceVector(SEXP x, SEXPTYPE t){
 	unimplemented("Rf_coerceVector");
+	return NULL;
 }
 
 SEXP Rf_PairToVectorList(SEXP x){

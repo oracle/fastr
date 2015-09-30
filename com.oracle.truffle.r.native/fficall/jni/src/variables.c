@@ -90,11 +90,19 @@ int	 R_NaInt;	/* NA_INTEGER:= INT_MIN currently */
 // from Defn.h
 const char* R_Home;
 const char* R_TempDir;
-Rboolean R_Visible; // ignored
-Rboolean R_interrupts_suspended; // ignored
-int R_interrupts_pending; // ignored
-Rboolean mbcslocale; // ignored
-Rboolean useaqua; // ignored
+
+// various ignored flags and variables:
+Rboolean R_Visible;
+Rboolean R_Interactive;
+Rboolean R_interrupts_suspended;
+int R_interrupts_pending;
+Rboolean mbcslocale;
+Rboolean useaqua;
+char OutDec = '.';
+Rboolean utf8locale = FALSE;
+Rboolean mbcslocale = FALSE;
+Rboolean latin1locale = FALSE;
+int R_dec_min_exponent = -308;
 
 jmethodID getGlobalEnvMethodID;
 jmethodID getBaseEnvMethodID;

@@ -24,6 +24,9 @@
 #define RFFIUTILS_H
 
 #include <jni.h>
+#include <stdlib.h>
+#include <string.h>
+#include <limits.h>
 #include <Rinternals.h>
 #include <setjmp.h>
 

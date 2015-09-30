@@ -133,7 +133,7 @@ Rbyte *RAW(SEXP x){
 	    data = (*thisenv)->GetByteArrayElements(thisenv, byteArray, NULL);
         addCopiedObject(thisenv, x, RAWSXP, byteArray, data);
     }
-	return data;
+	return (Rbyte*) data;
 }
 
 

@@ -58,14 +58,20 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
     private static synchronized void initialize() {
         if (!initialized) {
             initialized = true;
-            Load_RFFIFactory.initialize();
-            RInstrument.initialize();
-            RPerfStats.initialize();
-            Locale.setDefault(Locale.ROOT);
-            RAccuracyInfo.initialize();
-            RVersionInfo.initialize();
-            TempPathName.initialize();
-            RContext.initialize(new RRuntimeASTAccessImpl(), RBuiltinPackages.getInstance());
+            try {
+                Load_RFFIFactory.initialize();
+                RInstrument.initialize();
+                RPerfStats.initialize();
+                Locale.setDefault(Locale.ROOT);
+                RAccuracyInfo.initialize();
+                RVersionInfo.initialize();
+                TempPathName.initialize();
+                RContext.initialize(new RRuntimeASTAccessImpl(), RBuiltinPackages.getInstance());
+            } catch (Throwable t) {
+                System.out.println("error during engine initialization:");
+                t.printStackTrace();
+                System.exit(-1);
+            }
         }
     }
 

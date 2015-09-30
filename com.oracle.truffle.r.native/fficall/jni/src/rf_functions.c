@@ -130,6 +130,7 @@ SEXP Rf_allocMatrix(SEXPTYPE mode, int nrow, int ncol) {
 
 SEXP Rf_allocList(int x) {
 	unimplemented("Rf_allocList)");
+	return NULL;
 }
 
 SEXP Rf_cons(SEXP car, SEXP cdr) {
@@ -145,11 +146,13 @@ void Rf_defineVar(SEXP symbol, SEXP value, SEXP rho) {
 
 SEXP Rf_eval(SEXP expr, SEXP env) {
 	unimplemented("Rf_eval)");
+	return NULL;
 }
 
 SEXP Rf_findFun(SEXP symbol, SEXP rho) {
 	JNIEnv *thisenv = getEnv();
 	unimplemented("Rf_eval)");
+	return NULL;
 }
 
 SEXP Rf_findVar(SEXP symbol, SEXP rho) {
@@ -184,10 +187,12 @@ SEXP Rf_duplicate(SEXP x) {
 
 R_xlen_t Rf_any_duplicated(SEXP x, Rboolean from_last) {
 	unimplemented("Rf_any_duplicated)");
+	return 0;
 }
 
 SEXP Rf_duplicated(SEXP x, Rboolean y) {
 	unimplemented("Rf_duplicated)");
+	return NULL;
 }
 
 Rboolean Rf_inherits(SEXP x, const char * klass) {
@@ -197,18 +202,22 @@ Rboolean Rf_inherits(SEXP x, const char * klass) {
 
 Rboolean Rf_isReal(SEXP x) {
     unimplemented("Rf_isReal");
+	return FALSE;
 }
 
 Rboolean Rf_isSymbol(SEXP x) {
     unimplemented("Rf_isSymbol");
+	return FALSE;
 }
 
 Rboolean Rf_isComplex(SEXP s) {
 	unimplemented("Rf_isComplex");
+	return FALSE;
 }
 
 Rboolean Rf_isEnvironment(SEXP s) {
 	unimplemented("Rf_isEnvironment");
+	return FALSE;
 }
 
 Rboolean Rf_isExpression(SEXP x) {
@@ -245,6 +254,7 @@ Rboolean Rf_isString(SEXP s) {
 
 cetype_t Rf_getCharCE(SEXP x) {
 	unimplemented("Rf_getCharCE");
+	return CE_NATIVE;
 }
 
 SEXP Rf_mkChar(const char *x) {
@@ -256,6 +266,7 @@ SEXP Rf_mkChar(const char *x) {
 
 SEXP Rf_mkCharCE(const char *x, cetype_t y) {
 	unimplemented("Rf_mkCharCE");
+	return NULL;
 }
 
 SEXP Rf_mkCharLenCE(const char *x, int len, cetype_t enc) {
@@ -276,10 +287,12 @@ SEXP Rf_mkString(const char *s) {
 
 int Rf_ncols(SEXP x) {
 	unimplemented("Rf_ncols");
+	return 0;
 }
 
 int Rf_nrows(SEXP x) {
 	unimplemented("Rf_nrows");
+	return 0;
 }
 
 
@@ -379,43 +392,33 @@ SEXP R_NewHashedEnv(SEXP parent, SEXP size) {
 	return checkRef(thisenv, result);
 }
 
-void Rf_iPsort(int *x, int n, int k)
-{
-	JNIEnv *thisenv = getEnv();
-	unimplemented("Rf_iPsort");
-}
-
-void Rf_rPsort(double *x, int n, int k) {
-	JNIEnv *thisenv = getEnv();
-	unimplemented("Rf_rPsort");
-}
-
-void Rf_cPsort(Rcomplex *x, int n, int k) {
-	JNIEnv *thisenv = getEnv();
-	unimplemented("Rf_cPsort");
-}
-
 SEXP Rf_classgets(SEXP x, SEXP y) {
 	unimplemented("Rf_classgets");
+	return NULL;
 }
 
 const char *Rf_translateChar(SEXP x) {
 	unimplemented("Rf_translateChar");
+	return NULL;
 }
 
 const char *Rf_translateChar0(SEXP x) {
 	unimplemented("Rf_translateChar0");
+	return NULL;
 }
 
 const char *Rf_translateCharUTF8(SEXP x) {
 	unimplemented("Rf_translateCharUTF8");
+	return NULL;
 }
 
 const char *Rf_type2char(SEXPTYPE x) {
 	unimplemented("Rf_type2char");
+	return NULL;
 }
 
 SEXP Rf_type2str(SEXPTYPE x) {
 	unimplemented("Rf_type2str");
+	return NULL;
 }
 

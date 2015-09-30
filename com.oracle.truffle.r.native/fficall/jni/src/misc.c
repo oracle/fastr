@@ -55,28 +55,12 @@ const char *R_CHAR(SEXP string) {
 	return copyChars;
 }
 
-void R_isort(int *x, int n) {
-	unimplemented("R_isort");
-}
-
-void R_rsort(double *x, int n) {
-	unimplemented("R_rsort");
-}
-
 void R_qsort_I  (double *v, int *II, int i, int j) {
 	unimplemented("R_qsort_I");
 }
 
 void R_qsort_int_I(int *iv, int *II, int i, int j) {
 	unimplemented("R_qsort_int_I");
-}
-
-void rsort_with_index(double *a, int *b, int c) {
-	unimplemented("rsort_with_index");
-}
-
-void revsort(double *a, int *b, int c) {
-	unimplemented("revsort");
 }
 
 void R_CheckUserInterrupt() {

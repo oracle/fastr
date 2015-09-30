@@ -63,12 +63,6 @@ public final class RError extends RuntimeException {
             this.msg = msg;
             this.args = args;
         }
-
-        @SuppressWarnings("sync-override")
-        @Override
-        public Throwable fillInStackTrace() {
-            return null;
-        }
     }
 
     /**
