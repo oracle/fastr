@@ -55,10 +55,12 @@ SEXP Rf_PairToVectorList(SEXP x){
 
 SEXP Rf_VectorToPairList(SEXP x){
 	unimplemented("Rf_coerceVector");
+	return NULL;
 }
 
 SEXP Rf_asCharacterFactor(SEXP x){
 	unimplemented("Rf_VectorToPairList");
+	return NULL;
 }
 
 int Rf_asLogical(SEXP x){
@@ -81,4 +83,5 @@ double Rf_asReal(SEXP x) {
 
 Rcomplex Rf_asComplex(SEXP x){
 	unimplemented("Rf_asLogical");
+	Rcomplex c; return c;
 }

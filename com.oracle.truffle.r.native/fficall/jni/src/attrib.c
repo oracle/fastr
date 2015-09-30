@@ -39,23 +39,27 @@ int TYPEOF(SEXP x) {
 
 SEXP ATTRIB(SEXP x){
     unimplemented("ATTRIB");
+    return NULL;
 }
 
 int OBJECT(SEXP x){
     unimplemented("OBJECT");
+    return 0;
 }
 
 int MARK(SEXP x){
     unimplemented("MARK");
+    return 0;
 }
 
 int NAMED(SEXP x){
-	JNIEnv *thisenv = getEnv();
+    JNIEnv *thisenv = getEnv();
     return (*thisenv)->CallStaticIntMethod(thisenv, CallRFFIHelperClass, NAMED_MethodID, x);
 }
 
 int REFCNT(SEXP x){
     unimplemented("REFCNT");
+    return 0;
 }
 
 void SET_OBJECT(SEXP x, int v){
