@@ -105,7 +105,10 @@ public class CallRFFIWithJNI implements CallRFFI {
         R_NegInf(Double.NEGATIVE_INFINITY),
         R_NaReal(RRuntime.DOUBLE_NA),
         R_NaInt(RRuntime.INT_NA),
-        R_BlankString(RDataFactory.createStringVectorFromScalar(""));
+        R_BlankString(RDataFactory.createStringVectorFromScalar("")),
+        R_TrueValue(RRuntime.LOGICAL_TRUE),
+        R_FalseValue(RRuntime.LOGICAL_FALSE),
+        R_LogicalNAValue(RRuntime.LOGICAL_NA);
 
         private final Object value;
 

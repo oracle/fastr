@@ -70,22 +70,27 @@ SEXP R_SeedsSymbol;     /* ".Random.seed" */
 SEXP R_SourceSymbol;     /* "source" */
 SEXP R_TspSymbol;     /* "tsp" */
 
-SEXP  R_dot_defined;      /* ".defined" */
-SEXP  R_dot_Method;       /* ".Method" */
-SEXP  R_dot_target;       /* ".target" */
-SEXP	R_NaString;	    /* NA_STRING as a CHARSXP */
-SEXP	R_BlankString;	    /* "" as a CHARSXP */
+SEXP R_dot_defined;      /* ".defined" */
+SEXP R_dot_Method;       /* ".Method" */
+SEXP R_dot_target;       /* ".target" */
+SEXP R_NaString;	    /* NA_STRING as a CHARSXP */
+SEXP R_BlankString;	    /* "" as a CHARSXP */
 
 // Symbols not part of public API but used in FastR tools implementation
 SEXP R_SrcrefSymbol;
 SEXP R_SrcfileSymbol;
+
+// logical constants
+SEXP R_TrueValue;
+SEXP R_FalseValue;
+SEXP R_LogicalNAValue;
 
 // Arith.h
 double R_NaN;		/* IEEE NaN */
 double R_PosInf;	/* IEEE Inf */
 double R_NegInf;	/* IEEE -Inf */
 double R_NaReal;	/* NA_REAL: IEEE */
-int	 R_NaInt;	/* NA_INTEGER:= INT_MIN currently */
+int R_NaInt;	/* NA_INTEGER:= INT_MIN currently */
 
 // from Defn.h
 const char* R_Home;
@@ -252,6 +257,12 @@ void init_variables(JNIEnv *env, jobjectArray initialValues) {
 					R_NaString = ref;
 				} else if (strcmp(nameChars, "R_BlankString") == 0) {
 					R_BlankString = ref;
+				} else if (strcmp(nameChars, "R_TrueValue") == 0) {
+				    R_TrueValue = ref;
+				} else if (strcmp(nameChars, "R_FalseValue") == 0) {
+				    R_FalseValue = ref;
+				} else if (strcmp(nameChars, "R_LogicalNAValue") == 0) {
+				    R_LogicalNAValue = ref;
 				} else {
 					char msg[128];
 					strcpy(msg, "non-null R variable not assigned: ");
