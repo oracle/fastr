@@ -37,7 +37,6 @@ import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.access.variables.*;
 import com.oracle.truffle.r.nodes.control.*;
-import com.oracle.truffle.r.nodes.instrument.RInstrument;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RArguments.S3Args;
 import com.oracle.truffle.r.runtime.Utils.DebugExitException;
@@ -65,6 +64,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
      */
     private String description;
     private final FunctionUID uuid;
+    private boolean instrumented = false;
 
     @Child private FrameSlotNode onExitSlot;
     @Child private InlineCacheNode onExitExpressionCache;
@@ -195,8 +195,8 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         return uuid;
     }
 
-    public FunctionBodyNode getBody() {
-        return (FunctionBodyNode) RASTUtils.unwrap(body);
+    public BodyNode getBody() {
+        return (BodyNode) RASTUtils.unwrap(body);
     }
 
     public FunctionBodyNode getUninitializedBody() {
@@ -459,14 +459,12 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         this.description = name;
     }
 
-    private boolean instrumentationApplied = false;
+    public boolean getInstrumented() {
+        return instrumented;
+    }
 
-    @Override
-    public void applyInstrumentation() {
-        if (RInstrument.instrumentingEnabled() && !instrumentationApplied && body instanceof FunctionBodyNode) {
-            applyInstrumentation(body);
-            instrumentationApplied = true;
-        }
+    public void setInstrumented() {
+        instrumented = true;
     }
 
     /**

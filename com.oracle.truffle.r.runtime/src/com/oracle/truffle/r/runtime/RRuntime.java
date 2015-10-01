@@ -54,6 +54,9 @@ public class RRuntime {
         "'Share and Enjoy.'";
     //@formatter:on
 
+    public static final String R_APP_MIME = "application/x-r";
+    public static final String R_TEXT_MIME = "text/x-r";
+
     public static final String STRING_NA = new String("NA");
     public static final String STRING_NaN = new String("NaN");
     public static final String STRING_TRUE = new String("TRUE");

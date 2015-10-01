@@ -65,7 +65,7 @@ public final class ReadArgumentNodeWrapper extends com.oracle.truffle.r.nodes.ac
     }
 
     @Override
-    public boolean isInstrumentable() {
+    public boolean isRInstrumentable() {
         return false;
     }
 

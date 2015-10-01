@@ -101,7 +101,7 @@ public final class ConvertBooleanNodeWrapper extends com.oracle.truffle.r.nodes.
     }
 
     @Override
-    public boolean isInstrumentable() {
+    public boolean isRInstrumentable() {
         return false;
     }
 

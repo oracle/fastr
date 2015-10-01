@@ -448,16 +448,23 @@ final class REngine implements Engine {
      */
     private static RootCallTarget doMakeCallTarget(RNode body, String description) {
         BodyNode fbn;
+        SourceSection sourceSection = null;
         if (RBaseNode.isRSyntaxNode(body)) {
             RSyntaxNode synBody = (RSyntaxNode) body;
             RASTDeparse.ensureSourceSection(synBody);
             fbn = new FunctionBodyNode(SaveArgumentsNode.NO_ARGS, new FunctionStatementsNode(synBody.getSourceSection(), synBody));
+            // SourceSection might be "unavailable", which has no code
+            sourceSection = synBody.getSourceSection();
+            if (sourceSection.getSource() != null) {
+                String funPlusBody = "function() " + sourceSection.getCode();
+                sourceSection = Source.fromText(funPlusBody, description).createSection("", 0, funPlusBody.length());
+            }
         } else {
             fbn = new BodyNode(body);
         }
         FrameDescriptor descriptor = new FrameDescriptor();
         FrameSlotChangeMonitor.initializeFunctionFrameDescriptor(descriptor);
-        FunctionDefinitionNode rootNode = new FunctionDefinitionNode(null, descriptor, fbn, FormalArguments.NO_ARGS, description, true, true, null);
+        FunctionDefinitionNode rootNode = new FunctionDefinitionNode(sourceSection, descriptor, fbn, FormalArguments.NO_ARGS, description, true, true, null);
         RootCallTarget callTarget = Truffle.getRuntime().createCallTarget(rootNode);
         return callTarget;
     }

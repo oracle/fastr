@@ -164,9 +164,16 @@ public final class RContext extends ExecutionContext implements TruffleObject {
             }
             try {
                 try {
-                    context.engine.parseAndEval(source, true);
+                    vm.eval(source);
                 } catch (ParseException e) {
-                    throw e.throwAsRError();
+                    e.report(context.getConsoleHandler());
+                } catch (IOException e) {
+                    if (e.getCause() instanceof RError) {
+                        RInternalError.reportError(e.getCause());
+                    } else {
+                        context.getConsoleHandler().println("unexpected internal error (" + e.getClass().getSimpleName() + "); " + e.getMessage());
+                        RInternalError.reportError(e);
+                    }
                 }
             } finally {
                 context.destroy();

@@ -43,8 +43,8 @@ import com.oracle.truffle.r.runtime.nodes.*;
  * The implementation of the R debug functions.
  *
  * When a function is enabled for debugging a set of {@link DebugEventReceiver}s are created and
- * associated with {@link Instrument}s and attached to key nodes in the AST body associated with the
- * {@link FunctionDefinitionNode} corresponding to the {@link RFunction} instance.
+ * associated with {@link ProbeInstrument}s and attached to key nodes in the AST body associated
+ * with the {@link FunctionDefinitionNode} corresponding to the {@link RFunction} instance.
  *
  * Two different receiver classes are defined:
  * <ul>
@@ -185,6 +185,7 @@ public class DebugHandling {
         protected final Object text;
         protected final Object condition;
         protected final FunctionDefinitionNode functionDefinitionNode;
+        protected TagInstrument stepIntoInstrument;
         @CompilationFinal private boolean disabled;
         CyclicAssumption disabledUnchangedAssumption = new CyclicAssumption("debug event disabled state unchanged");
 
@@ -235,13 +236,13 @@ public class DebugHandling {
                     break;
                 case STEP:
                     if (this instanceof StatementEventReceiver) {
-                        StepIntoTagTrap.setTrap();
+                        stepIntoInstrument = RInstrument.getInstrumenter().attach(RSyntaxTag.FUNCTION_BODY, new StepIntoInstrumentListener(this), "step");
                     }
                     break;
                 case CONTINUE:
                     // Have to disable
                     doContinue();
-                    StepIntoTagTrap.clearTrap();
+                    clearTrap();
                     break;
                 case FINISH:
                     // If in loop, continue to loop end, else act like CONTINUE
@@ -253,13 +254,20 @@ public class DebugHandling {
                     } else {
                         doContinue();
                     }
-                    StepIntoTagTrap.clearTrap();
+                    clearTrap();
             }
         }
 
         private void doContinue() {
             FunctionStatementsEventReceiver fser = receiverMap.get(functionDefinitionNode.getUID());
             fser.setContinuing();
+        }
+
+        protected void clearTrap() {
+            if (stepIntoInstrument != null) {
+                stepIntoInstrument.dispose();
+                stepIntoInstrument = null;
+            }
         }
 
     }
@@ -416,7 +424,7 @@ public class DebugHandling {
         public void onEnter(Probe probe, Node node, VirtualFrame frame) {
             if (!disabled()) {
                 // in case we did a step into that never called a function
-                StepIntoTagTrap.clearTrap();
+                clearTrap();
                 printNode(node, false);
                 browserInteract(node, frame);
             }
@@ -494,38 +502,23 @@ public class DebugHandling {
     }
 
     /**
-     * Global trap for step into.
+     * Listener for (transient) step into.
      */
-    private static class StepIntoTagTrap extends SyntaxTagTrap {
+    private static class StepIntoInstrumentListener implements StandardBeforeInstrumentListener {
+        private DebugEventReceiver debugEventReceiver;
 
-        private static final StepIntoTagTrap fastRSyntaxTagTrap = new StepIntoTagTrap(RSyntaxTag.FUNCTION_BODY);
-
-        private static boolean set;
-
-        public StepIntoTagTrap(SyntaxTag tag) {
-            super(tag);
+        StepIntoInstrumentListener(DebugEventReceiver debugEventReceiver) {
+            this.debugEventReceiver = debugEventReceiver;
         }
 
         @Override
-        public void tagTrappedAt(Node node, MaterializedFrame frame) {
+        public void onEnter(Probe probe, Node node, VirtualFrame frame) {
             if (!globalDisable) {
                 FunctionBodyNode functionBodyNode = (FunctionBodyNode) node;
                 FunctionDefinitionNode fdn = (FunctionDefinitionNode) functionBodyNode.getRootNode();
                 ensureSingleStep(fdn);
-                clearTrap();
+                debugEventReceiver.clearTrap();
                 // next stop will be the START_METHOD node
-            }
-        }
-
-        static void setTrap() {
-            RInstrument.getInstrumenter().setBeforeTagTrap(fastRSyntaxTagTrap);
-            set = true;
-        }
-
-        static void clearTrap() {
-            if (set) {
-                RInstrument.getInstrumenter().setBeforeTagTrap(null);
-                set = false;
             }
         }
 

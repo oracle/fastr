@@ -103,7 +103,7 @@ public final class WriteCurrentVariableNodeWrapper extends com.oracle.truffle.r.
     }
 
     @Override
-    public boolean isInstrumentable() {
+    public boolean isRInstrumentable() {
         return false;
     }
 

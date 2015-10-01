@@ -31,13 +31,13 @@ import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.instrument.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
-import com.oracle.truffle.r.engine.repl.debug.*;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinPackages;
 import com.oracle.truffle.r.nodes.instrument.RASTProber;
 import com.oracle.truffle.r.nodes.instrument.RInstrument;
 import com.oracle.truffle.r.runtime.RAccuracyInfo;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RPerfStats;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RVersionInfo;
 import com.oracle.truffle.r.runtime.TempPathName;
 import com.oracle.truffle.r.runtime.context.*;
@@ -49,7 +49,7 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
  * Only does the minimum for running under the debugger. It is not completely clear how to correctly
  * integrate the R startup in {@code RCommand} with this API.
  */
-@TruffleLanguage.Registration(name = "R", version = "0.1", mimeType = {"application/x-r", "text/x-r"})
+@TruffleLanguage.Registration(name = "R", version = "0.1", mimeType = {RRuntime.R_APP_MIME, RRuntime.R_TEXT_MIME})
 public final class TruffleRLanguage extends TruffleLanguage<RContext> {
 
     private static boolean initialized;
@@ -73,12 +73,11 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
         }
     }
 
-    private DebugSupportProvider debugSupport;
     private Instrumenter instrumenter;
 
     public static final TruffleRLanguage INSTANCE = new TruffleRLanguage();
 
-    public static final String MIME = "application/x-r";
+    public static final String MIME = RRuntime.R_APP_MIME;
 
     private TruffleRLanguage() {
     }
@@ -89,21 +88,16 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
     }
 
     @Override
-    protected ToolSupportProvider getToolSupport() {
-        return getDebugSupport();
-    }
-
-    @Override
-    protected DebugSupportProvider getDebugSupport() {
-        if (debugSupport == null) {
-            debugSupport = new RDebugSupportProvider();
-        }
-        return debugSupport;
-    }
-
-    @Override
     protected RContext createContext(Env env) {
-        instrumenter = env.instrumenter();
+        if (instrumenter == null) {
+            instrumenter = env.instrumenter();
+            // RInstrument has not been initialized yet
+            RInstrument.initialize(instrumenter);
+            ASTProber prober = RInstrument.instrumentingEnabled() ? RASTProber.getRASTProber() : null;
+            if (prober != null) {
+                instrumenter.registerASTProber(prober);
+            }
+        }
         initialize();
         return RContext.create(env);
     }
@@ -140,12 +134,6 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
         throw RInternalError.unimplemented("getVisualizer");
     }
 
-    @SuppressWarnings("deprecation")
-    @Override
-    protected void enableASTProbing(ASTProber astProber) {
-        throw RInternalError.unimplemented("enableASTProbing");
-    }
-
     @Override
     protected boolean isInstrumentable(Node node) {
         RNode rNode = (RNode) node;
@@ -156,15 +144,6 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
     protected WrapperNode createWrapperNode(Node node) {
         RNode rNode = (RNode) node;
         return rNode.createRWrapperNode();
-    }
-
-    @Override
-    protected ASTProber getDefaultASTProber() {
-        if (RInstrument.instrumentingEnabled()) {
-            return RASTProber.getRASTProber();
-        } else {
-            return null;
-        }
     }
 
     @Override

@@ -75,7 +75,7 @@ public final class RNodeWrapper extends com.oracle.truffle.r.runtime.nodes.RNode
     }
 
     @Override
-    public boolean isInstrumentable() {
+    public boolean isRInstrumentable() {
         return false;
     }
 

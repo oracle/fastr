@@ -25,7 +25,6 @@ package com.oracle.truffle.r.nodes.instrument;
 import static com.oracle.truffle.api.instrument.StandardSyntaxTag.*;
 
 import com.oracle.truffle.api.instrument.*;
-import com.oracle.truffle.api.instrument.WrapperNode;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.control.*;
 import com.oracle.truffle.r.nodes.function.*;
@@ -54,28 +53,34 @@ public final class RASTProber implements ASTProber {
         return singleton;
     }
 
-    public void probeAST(Instrumenter instrumenter, Node node) {
-        FunctionBodyNode body = (FunctionBodyNode) node;
-        FunctionDefinitionNode fdn = (FunctionDefinitionNode) body.getParent();
-        if (body.getSourceSection() == null) {
-            // Can't instrument AST (bodies) without a SourceSection
-            if (FastROptions.debugMatches("RASTProberNoSource")) {
-                RDeparse.State state = RDeparse.State.createPrintableState();
-                fdn.deparseImpl(state);
-                System.out.printf("No source sections for %s, can't instrument%n", fdn);
-                System.out.println(state.toString());
+    public void probeAST(Instrumenter instrumenter, RootNode rootNode) {
+        if (rootNode instanceof FunctionDefinitionNode) {
+            FunctionDefinitionNode fdn = (FunctionDefinitionNode) rootNode;
+            BodyNode body = fdn.getBody();
+            if (body instanceof FunctionBodyNode && !fdn.getInstrumented()) {
+                if (body.getSourceSection() == null || body.getSourceSection() == RSyntaxNode.SOURCE_UNAVAILABLE) {
+                    // Can't instrument AST (bodies) without a SourceSection
+                    if (FastROptions.debugMatches("RASTProberNoSource")) {
+                        RDeparse.State state = RDeparse.State.createPrintableState();
+                        fdn.deparseImpl(state);
+                        System.out.printf("No source sections for %s, can't instrument%n", fdn);
+                        System.out.println(state.toString());
+                    }
+                    fdn.setInstrumented();
+                    return;
+                }
+                RInstrument.registerFunctionDefinition(fdn);
+                FunctionUID uid = fdn.getUID();
+                instrumenter.probe(body).tagAs(RSyntaxTag.FUNCTION_BODY, uid);
+                instrumenter.probe(body).tagAs(START_METHOD, uid);
+                TaggingNodeVisitor visitor = new TaggingNodeVisitor(uid, instrumenter);
+                if (FastROptions.debugMatches("RASTProberTag")) {
+                    System.out.printf("Tagging function %s%n", uid);
+                }
+                RSyntaxNode.accept(body, 0, visitor);
+                fdn.setInstrumented();
             }
-            return;
         }
-        RInstrument.registerFunctionDefinition(fdn);
-        FunctionUID uid = fdn.getUID();
-        instrumenter.probe(body).tagAs(RSyntaxTag.FUNCTION_BODY, uid);
-        instrumenter.probe(body).tagAs(START_METHOD, uid);
-        TaggingNodeVisitor visitor = new TaggingNodeVisitor(uid, instrumenter);
-        if (FastROptions.debugMatches("RASTProberTag")) {
-            System.out.printf("Tagging function %s%n", uid);
-        }
-        RSyntaxNode.accept(body, 0, visitor);
     }
 
     public abstract static class StatementVisitor implements RSyntaxNodeVisitor {

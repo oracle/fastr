@@ -86,6 +86,11 @@ public interface RSyntaxNode extends RSyntaxNodeSPI {
         return true;
     }
 
+    /**
+     * A canonical "unavailable" {@link SourceSection}.
+     */
+    SourceSection SOURCE_UNAVAILABLE = SourceSection.createUnavailable("R", "unavailable");
+
     /*
      * Convenience methods that also handle the fact that an {@code FunctionDefinitionNode} is not
      * an {@code RNode}.

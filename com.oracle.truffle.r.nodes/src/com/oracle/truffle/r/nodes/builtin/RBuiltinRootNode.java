@@ -28,14 +28,16 @@ import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.RDeparse.State;
+import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.*;
 
-public final class RBuiltinRootNode extends RRootNode {
+public final class RBuiltinRootNode extends RRootNode implements RSyntaxNode {
 
     @Child private RBuiltinNode builtin;
 
     public RBuiltinRootNode(RBuiltinNode builtin, FormalArguments formalArguments, FrameDescriptor frameDescriptor) {
-        super(null, formalArguments, frameDescriptor);
+        super(createSourceSection(builtin, formalArguments), formalArguments, frameDescriptor);
         this.builtin = builtin;
     }
 
@@ -77,5 +79,30 @@ public final class RBuiltinRootNode extends RRootNode {
     @Override
     public String toString() {
         return "RBuiltin(" + builtin + ")";
+    }
+
+    public void deparseImpl(State state) {
+        state.startNodeDeparse(this);
+        state.append(deparseImplHelper(this.getBuiltin(), this.getFormalArguments()));
+        state.endNodeDeparse(this);
+    }
+
+    private static String deparseImplHelper(RBuiltinNode builtin, @SuppressWarnings("unused") FormalArguments formalArguments) {
+        // TODO we ignore formals for now, as they are typically null
+        return "function() .Primitive(\"" + builtin.getBuiltin().getName() + "\")";
+    }
+
+    private static SourceSection createSourceSection(RBuiltinNode builtin, FormalArguments formalArguments) {
+        String s = deparseImplHelper(builtin, formalArguments);
+        Source callSource = Source.fromText(s, builtin.getBuiltin().getName());
+        return callSource.createSection("", 0, s.length());
+    }
+
+    public RSyntaxNode substituteImpl(REnvironment env) {
+        throw RInternalError.shouldNotReachHere();
+    }
+
+    public void serializeImpl(com.oracle.truffle.r.runtime.RSerialize.State state) {
+        throw RInternalError.shouldNotReachHere();
     }
 }

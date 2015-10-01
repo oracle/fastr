@@ -161,7 +161,7 @@ public class RInstrument {
     private static class RProbeListener implements ProbeListener {
 
         @Override
-        public void startASTProbing(Source source) {
+        public void startASTProbing(RootNode rootNode) {
         }
 
         @Override
@@ -188,7 +188,7 @@ public class RInstrument {
         }
 
         @Override
-        public void endASTProbing(Source source) {
+        public void endASTProbing(RootNode rootNode) {
         }
 
     }
