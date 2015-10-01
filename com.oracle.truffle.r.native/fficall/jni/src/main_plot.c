@@ -21,65 +21,11 @@
  * questions.
  */
 
-// For now, failing implementations of the functions from GnuR src/main/engine.c
-
 #include "rffiutils.h"
-#include <GraphicsEngine.h>
-
-void init_graphicsdevices(JNIEnv *env) {
-}
-
-int ndevNumber(pDevDesc x) {
-    return (int) unimplemented("ndevNumber");
-}
+#include "Defn.h"
 
 
-int NumDevices(void) {
-	return  (int)unimplemented("NumDevices");
-}
+#define attribute_hidden
 
-
-void R_CheckDeviceAvailable(void) {
-	unimplemented("R_CheckDeviceAvailable");
-}
-
-Rboolean R_CheckDeviceAvailableBool(void) {
-    unimplemented("R_CheckDeviceAvailable");
-    return FALSE;
-}
-
-
-int curDevice(void) {
-	return (int) unimplemented("curDevice");
-}
-
-
-int nextDevice(int x) {
-	return (int) unimplemented("curDevice");
-}
-
-
-int prevDevice(int x) {
-	return (int) unimplemented("prevDevice");
-}
-
-
-int selectDevice(int x) {
-	return (int) unimplemented("selectDevice");
-}
-
-
-void killDevice(int x) {
-    unimplemented("killDevice");
-}
-
-
-int NoDevices(void) {
-	return (int) unimplemented("killDevice");
-}
-
-
-void NewFrameConfirm(pDevDesc x) {
-    unimplemented("NoDevices");
-}
-
+#include "../../../gnur/R-3.1.3/src/main/contour-common.h"
+#include "../../../gnur/R-3.1.3/src/main/plot.c"

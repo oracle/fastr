@@ -28,17 +28,17 @@ import com.oracle.truffle.api.TruffleLanguage.Env;
 
 public class DefaultConsoleHandler implements ConsoleHandler {
 
-    private final Env env;
     private final BufferedReader in;
+    private final OutputStreamWriter out;
 
     public DefaultConsoleHandler(Env env) {
-        this.env = env;
-        in = new BufferedReader(env.stdIn());
+        in = new BufferedReader(new InputStreamReader(env.in()));
+        out = new OutputStreamWriter(env.out());
     }
 
     public void println(String s) {
         try {
-            env.stdOut().append(s).append('\n');
+            out.append(s).append('\n');
         } catch (IOException e) {
             // TODO: handle this error
         }
@@ -46,7 +46,7 @@ public class DefaultConsoleHandler implements ConsoleHandler {
 
     public void print(String s) {
         try {
-            env.stdOut().append(s).append('\n');
+            out.append(s).append('\n');
         } catch (IOException e) {
             // TODO: handle this error
         }
@@ -54,7 +54,7 @@ public class DefaultConsoleHandler implements ConsoleHandler {
 
     public void printErrorln(String s) {
         try {
-            env.stdOut().append(s).append('\n');
+            out.append(s).append('\n');
         } catch (IOException e) {
             // TODO: handle this error
         }
@@ -62,7 +62,7 @@ public class DefaultConsoleHandler implements ConsoleHandler {
 
     public void printError(String s) {
         try {
-            env.stdOut().append(s).append('\n');
+            out.append(s).append('\n');
         } catch (IOException e) {
             // TODO: handle this error
         }
@@ -98,6 +98,6 @@ public class DefaultConsoleHandler implements ConsoleHandler {
     }
 
     public String getInputDescription() {
-        return "<TruffleVM env input>";
+        return "<PolyglotEngine env input>";
     }
 }

@@ -35,8 +35,8 @@ import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
 /**
  * Represents custom initialization state for an R instance.
  *
- * Use {@link #apply(com.oracle.truffle.api.vm.TruffleVM.Builder)} to apply this information to a
- * newly-built {@link TruffleVM} instance (it will be stored in the "fastrContextInfo" global
+ * Use {@link #apply(com.oracle.truffle.api.vm.PolyglotEngine.Builder)} to apply this information to
+ * a newly-built {@link PolyglotEngine} instance (it will be stored in the "fastrContextInfo" global
  * symbol).
  */
 public final class ContextInfo implements TruffleObject {
@@ -66,7 +66,7 @@ public final class ContextInfo implements TruffleObject {
         this.id = id;
     }
 
-    public TruffleVM.Builder apply(TruffleVM.Builder builder) {
+    public PolyglotEngine.Builder apply(PolyglotEngine.Builder builder) {
         return builder.globalSymbol(GLOBAL_SYMBOL, this);
     }
 

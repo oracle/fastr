@@ -11,8 +11,13 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base.foreign;
 
+import java.util.Arrays;
+
+import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.utilities.*;
+import com.oracle.truffle.r.nodes.access.AccessFieldNode;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -40,28 +45,48 @@ public abstract class DotC extends RBuiltinNode {
     private static final int VECTOR_LOGICAL = 12;
     @SuppressWarnings("unused") private static final int VECTOR_STRING = 12;
 
-    private final BranchProfile errorProfile = BranchProfile.create();
-
     @Override
     public Object[] getDefaultParameterValues() {
         return new Object[]{RMissing.instance, RArgsValuesAndNames.EMPTY, RRuntime.LOGICAL_FALSE, RRuntime.LOGICAL_FALSE, RMissing.instance, RMissing.instance};
     }
 
-    private int[] checkNAs(int argIndex, int[] data) {
+    @SuppressWarnings("unused")
+    @Specialization
+    protected RList c(RList symbol, RArgsValuesAndNames args, byte naok, byte dup, RMissing rPackage, RMissing encoding) {
+        controlVisibility();
+        long address = ((RExternalPtr) symbol.getDataAt(AccessFieldNode.getElementIndexByName(symbol.getNames(), "address"))).getAddr();
+        String name = RRuntime.asString(symbol.getDataAt(AccessFieldNode.getElementIndexByName(symbol.getNames(), "name")));
+        return dispatch(this, address, name, naok, dup, args.getArguments());
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization
+    protected RList c(String f, RArgsValuesAndNames args, byte naok, byte dup, RMissing rPackage, RMissing encoding, //
+                    @Cached("create()") BranchProfile errorProfile) {
+        controlVisibility();
+        SymbolInfo symbolInfo = DLL.findSymbolInfo(f, null);
+        if (symbolInfo == null) {
+            errorProfile.enter();
+            throw RError.error(this, RError.Message.C_SYMBOL_NOT_IN_TABLE, f);
+        }
+        return dispatch(this, symbolInfo.address, symbolInfo.symbol, naok, dup, args.getArguments());
+    }
+
+    private static int[] checkNAs(RBuiltinNode node, int argIndex, int[] data) {
+        CompilerAsserts.neverPartOfCompilation();
         for (int i = 0; i < data.length; i++) {
             if (RRuntime.isNA(data[i])) {
-                errorProfile.enter();
-                throw RError.error(this, RError.Message.NA_IN_FOREIGN_FUNCTION_CALL, argIndex);
+                throw RError.error(node, RError.Message.NA_IN_FOREIGN_FUNCTION_CALL, argIndex);
             }
         }
         return data;
     }
 
-    private double[] checkNAs(int argIndex, double[] data) {
+    private static double[] checkNAs(RBuiltinNode node, int argIndex, double[] data) {
+        CompilerAsserts.neverPartOfCompilation();
         for (int i = 0; i < data.length; i++) {
             if (!RRuntime.isFinite(data[i])) {
-                errorProfile.enter();
-                throw RError.error(this, RError.Message.NA_NAN_INF_IN_FOREIGN_FUNCTION_CALL, argIndex);
+                throw RError.error(node, RError.Message.NA_NAN_INF_IN_FOREIGN_FUNCTION_CALL, argIndex);
             }
         }
         return data;
@@ -79,22 +104,11 @@ public abstract class DotC extends RBuiltinNode {
         return RDataFactory.createStringVector(listArgNames, RDataFactory.COMPLETE_VECTOR);
     }
 
-    @Specialization
-    protected RList c(RList f, RArgsValuesAndNames args, byte naok, byte dup, RMissing rPackage, RMissing encoding) {
-        return c(RRuntime.asString(f.getDataAt(0)), args, naok, dup, rPackage, encoding);
-    }
-
-    @SuppressWarnings("unused")
-    @Specialization
-    protected RList c(String f, RArgsValuesAndNames args, byte naok, byte dup, RMissing rPackage, RMissing encoding) {
-        controlVisibility();
-        Object[] argValues = args.getArguments();
-        SymbolInfo symbolInfo = DLL.findSymbolInfo(f, null);
-        if (symbolInfo == null) {
-            errorProfile.enter();
-            throw RError.error(this, RError.Message.C_SYMBOL_NOT_IN_TABLE, f);
-        }
+    @TruffleBoundary
+    public static RList dispatch(RBuiltinNode node, long address, String name, byte naok, byte dup, Object[] argValues) {
+        @SuppressWarnings("unused")
         boolean dupArgs = RRuntime.fromLogical(dup);
+        @SuppressWarnings("unused")
         boolean checkNA = RRuntime.fromLogical(naok);
         // Analyze the args, making copies (ignoring dup for now)
         int[] argTypes = new int[argValues.length];
@@ -103,10 +117,10 @@ public abstract class DotC extends RBuiltinNode {
             Object arg = argValues[i];
             if (arg instanceof RAbstractDoubleVector) {
                 argTypes[i] = VECTOR_DOUBLE;
-                nativeArgs[i] = checkNAs(i + 1, ((RAbstractDoubleVector) arg).materialize().getDataCopy());
+                nativeArgs[i] = checkNAs(node, i + 1, ((RAbstractDoubleVector) arg).materialize().getDataCopy());
             } else if (arg instanceof RAbstractIntVector) {
                 argTypes[i] = VECTOR_INT;
-                nativeArgs[i] = checkNAs(i + 1, ((RAbstractIntVector) arg).materialize().getDataCopy());
+                nativeArgs[i] = checkNAs(node, i + 1, ((RAbstractIntVector) arg).materialize().getDataCopy());
             } else if (arg instanceof RAbstractLogicalVector) {
                 argTypes[i] = VECTOR_LOGICAL;
                 // passed as int[]
@@ -116,24 +130,26 @@ public abstract class DotC extends RBuiltinNode {
                     // An NA is an error but the error handling happens in checkNAs
                     dataAsInt[j] = RRuntime.isNA(data[j]) ? RRuntime.INT_NA : data[j];
                 }
-                nativeArgs[i] = checkNAs(i + 1, dataAsInt);
+                nativeArgs[i] = checkNAs(node, i + 1, dataAsInt);
             } else if (arg instanceof Double) {
                 argTypes[i] = SCALAR_DOUBLE;
-                nativeArgs[i] = checkNAs(i + 1, new double[]{(double) arg});
+                nativeArgs[i] = checkNAs(node, i + 1, new double[]{(double) arg});
             } else if (arg instanceof Integer) {
                 argTypes[i] = SCALAR_INT;
-                nativeArgs[i] = checkNAs(i + 1, new int[]{(int) arg});
+                nativeArgs[i] = checkNAs(node, i + 1, new int[]{(int) arg});
             } else if (arg instanceof Byte) {
                 argTypes[i] = SCALAR_LOGICAL;
-                nativeArgs[i] = checkNAs(i + 1, new int[]{RRuntime.isNA((byte) arg) ? RRuntime.INT_NA : (byte) arg});
+                nativeArgs[i] = checkNAs(node, i + 1, new int[]{RRuntime.isNA((byte) arg) ? RRuntime.INT_NA : (byte) arg});
             } else {
-                errorProfile.enter();
-                throw RError.error(this, RError.Message.UNIMPLEMENTED_ARG_TYPE, i + 1);
+                throw RError.error(node, RError.Message.UNIMPLEMENTED_ARG_TYPE, i + 1);
             }
         }
-        RFFIFactory.getRFFI().getCRFFI().invoke(symbolInfo, nativeArgs);
+        if (FastROptions.TraceNativeCalls) {
+            trace(name, nativeArgs);
+        }
+        RFFIFactory.getRFFI().getCRFFI().invoke(address, nativeArgs);
         // we have to assume that the native method updated everything
-        RStringVector listNames = validateArgNames(argValues.length, getSuppliedSignature());
+        RStringVector listNames = validateArgNames(argValues.length, node.getSuppliedSignature());
         Object[] results = new Object[argValues.length];
         for (int i = 0; i < argValues.length; i++) {
             switch (argTypes[i]) {
@@ -162,5 +178,10 @@ public abstract class DotC extends RBuiltinNode {
             }
         }
         return RDataFactory.createList(results, listNames);
+    }
+
+    @TruffleBoundary
+    private static void trace(String name, Object[] nativeArgs) {
+        System.out.println("calling " + name + ": " + Arrays.toString(nativeArgs));
     }
 }

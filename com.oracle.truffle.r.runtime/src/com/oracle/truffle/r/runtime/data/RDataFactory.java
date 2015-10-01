@@ -164,8 +164,7 @@ public final class RDataFactory {
     }
 
     public static RStringVector createStringVector(String value) {
-        assert RRuntime.isComplete(value);
-        return createStringVector(new String[]{value}, true, null, null);
+        return createStringVector(new String[]{value}, RRuntime.isComplete(value), null, null);
     }
 
     public static RStringVector createStringVector(int length) {

@@ -142,15 +142,6 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
 
     @Override
     public RSyntaxNode visit(Function func) {
-// FastPathFactory f = EvaluatedArgumentsVisitor.process(func);
-// if (f != null) {
-// System.out.println("////////////////////////////////");
-// if (func.getDebugName() != null) {
-// System.out.println("// " + func.getDebugName());
-// }
-// System.out.println(func.getSource().getCode());
-// System.out.println("names: " + f + "\n");
-// }
         RootCallTarget callTarget = null;
         try {
             callTarget = createFunctionCallTarget(func);
@@ -314,13 +305,19 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
         return RCallNode.createCallNotSyntax(ReadVariableNode.createForced(null, isSubset ? "[<-" : "[[<-", RType.Function), ArgumentsSignature.get(names), nodes);
     }
 
-    private static String createTempName() {
+    private int tempNamesCount;
+
+    private void resetTempNames() {
+        tempNamesCount = 0;
+    }
+
+    private String createTempName() {
         //@formatter:off
         // store a - need to use temporary, otherwise there is a failure in case multiple calls to
         // the replacement form are chained:
         // x<-c(1); y<-c(1); dim(x)<-1; dim(y)<-1; attr(x, "dimnames")<-(attr(y, "dimnames")<-list("b"))
         //@formatter:on
-        return new Object().toString();
+        return "*tmp" + tempNamesCount++ + "*";
     }
 
     private static ReplacementNode constructReplacementSuffix(RSyntaxNode rhs, RSyntaxNode v, boolean copyRhs, RNode assignFromTemp, String tmpSymbol, String rhsSymbol, SourceSection source) {
@@ -329,6 +326,7 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
 
     @Override
     public RSyntaxNode visit(UpdateVector u) {
+        resetTempNames();
         AccessVector a = u.getVector();
         int argLength = a.getIndexes().size() - 1;
         // If recursive no need to set syntaxAST as already handled at top-level
@@ -380,6 +378,7 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
     //@formatter:on
     @Override
     public RSyntaxNode visit(Replacement replacement) {
+        resetTempNames();
         // preparations
         ASTNode rhsAst = replacement.getExpr();
         RSyntaxNode rhs = rhsAst.accept(this);
@@ -591,6 +590,7 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
 
     @Override
     public RSyntaxNode visit(UpdateField u) {
+        resetTempNames();
         FieldAccess a = u.getVector();
         RSyntaxNode rhs = u.getRHS().accept(this);
         return doReplacementLeftHandSide(a.getLhs(), true, rhs, u.isSuper(), u.getSource(), (receiver, rhsAccess) -> {

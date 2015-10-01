@@ -29,6 +29,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.interop.*;
 import com.oracle.truffle.api.source.*;
+import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
@@ -103,7 +104,9 @@ public interface Engine {
     RExpression parse(Source source) throws ParseException;
 
     /**
-     * A (perhaps temporary) interface to support {@link TruffleLanguage}.
+     * This is the external interface from {@link PolyglotEngine#eval(Source)}. It is required to
+     * return a {@link CallTarget} which may be cached for future use, and the
+     * {@link PolyglotEngine} is responsible for actually invoking the call target.
      */
     CallTarget parseToCallTarget(Source source, boolean printResult) throws ParseException;
 

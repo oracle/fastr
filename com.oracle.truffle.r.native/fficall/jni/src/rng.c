@@ -35,12 +35,15 @@ void PutRNGstate() {
 
 double unif_rand() {
 	unimplemented("unif_rand");
+	return 0;
 }
 
 double norm_rand() {
 	unimplemented("norm_rand");
+	return 0;
 }
 
 double exp_rand() {
 	unimplemented("exp_rand");
+	return 0;
 }

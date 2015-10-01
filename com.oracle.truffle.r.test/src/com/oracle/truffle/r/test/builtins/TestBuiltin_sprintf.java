@@ -139,5 +139,10 @@ public class TestBuiltin_sprintf extends TestBase {
         assertEval("{ sprintf(\"%d %d\", as.integer(c(7,42)), as.integer(c(1,2))) }");
         assertEval("{ sprintf(\"%d %d\", as.integer(c(7,42)), as.integer(1)) }");
         assertEval("{ sprintf(\"%d %d\", as.integer(c(7,42)), integer()) }");
+        assertEval("{ sprintf(\"foo\") }");
+        assertEval("{ sprintf(c(\"foo\", \"bar\")) }");
+        assertEval("{ sprintf(c(\"foo %f\", \"bar %f\"), 7) }");
+        assertEval("{ sprintf(c(\"foo %f %d\", \"bar %f %d\"), 7, 42L) }");
+        assertEval("{ sprintf(c(\"foo %f %d\", \"bar %f %d\"), c(7,1), c(42L, 2L)) }");
     }
 }

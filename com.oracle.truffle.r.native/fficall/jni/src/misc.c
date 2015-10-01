@@ -25,17 +25,14 @@
 #include <string.h>
 
 jmethodID iS4ObjectMethodID;
-jmethodID isFiniteMethodID;
-jmethodID isNAorNaNMethodID;
 
 void init_misc(JNIEnv *env) {
 	iS4ObjectMethodID = checkGetMethodID(env, CallRFFIHelperClass, "isS4Object", "(Ljava/lang/Object;)I", 1);
-	isFiniteMethodID = checkGetMethodID(env, RRuntimeClass, "isFinite", "(D)Z", 1);
-	isNAorNaNMethodID = checkGetMethodID(env, RRuntimeClass, "isNAorNaN", "(D)Z", 1);
 }
 
 char *dgettext(const char *domainname, const char *msgid) {
-	unimplemented("dgettext");
+	printf("dgettext: '%s'\n", msgid);
+	return (char*) msgid;
 }
 
 const char *R_CHAR(SEXP string) {
@@ -55,38 +52,20 @@ const char *R_CHAR(SEXP string) {
 	return copyChars;
 }
 
-void R_isort(int *x, int n) {
-	unimplemented("R_isort");
-}
-
-void R_rsort(double *x, int n) {
-	unimplemented("R_rsort");
+void R_qsort_I  (double *v, int *II, int i, int j) {
+	unimplemented("R_qsort_I");
 }
 
 void R_qsort_int_I(int *iv, int *II, int i, int j) {
 	unimplemented("R_qsort_int_I");
 }
 
-void rsort_with_index(double *a, int *b, int c) {
-	unimplemented("rsort_with_index");
-}
-
-void revsort(double *a, int *b, int c) {
-	unimplemented("revsort");
-}
-
 void R_CheckUserInterrupt() {
 // TODO (we don't even do this in the Java code)
 }
 
-int R_finite(double x) {
-	JNIEnv *env = getEnv();
-	return (*env)->CallStaticBooleanMethod(env, RRuntimeClass, isFiniteMethodID, x);
-}
-
-int R_IsNaN(double x) {
-	JNIEnv *env = getEnv();
-	return (*env)->CallStaticBooleanMethod(env, RRuntimeClass, isNAorNaNMethodID, x);
+R_len_t R_BadLongVector(SEXP x, const char *y, int z) {
+	unimplemented("R_BadLongVector");
 }
 
 int IS_S4_OBJECT(SEXP x) {
@@ -99,4 +78,56 @@ void SET_S4_OBJECT(SEXP x) {
 }
 void UNSET_S4_OBJECT(SEXP x) {
 	unimplemented("UNSET_S4_OBJECT");
+}
+
+Rboolean R_ToplevelExec(void (*fun)(void *), void *data) {
+	unimplemented("R_ToplevelExec");
+}
+
+SEXP R_ExecWithCleanup(SEXP (*fun)(void *), void *data,
+		       void (*cleanfun)(void *), void *cleandata) {
+	unimplemented("R_ExecWithCleanup");
+}
+
+#include <R_ext/Connections.h>
+
+SEXP   R_new_custom_connection(const char *description, const char *mode, const char *class_name, Rconnection *ptr) {
+	unimplemented("R_new_custom_connection");
+}
+
+size_t R_ReadConnection(Rconnection con, void *buf, size_t n) {
+	unimplemented("R_ReadConnection");
+}
+
+size_t R_WriteConnection(Rconnection con, void *buf, size_t n) {
+	unimplemented("R_WriteConnection");
+}
+
+SEXP R_tryEval(SEXP x, SEXP y, int *z) {
+	unimplemented("R_tryEval");
+}
+
+SEXP R_tryEvalSilent(SEXP x, SEXP y, int *z) {
+	unimplemented("R_tryEvalSilent");
+}
+
+size_t Riconv (void *cd, const char **inbuf, size_t *inbytesleft,
+	       char **outbuf, size_t *outbytesleft) {
+	unimplemented("Riconv");
+	return 0;
+}
+
+int Riconv_close (void *cd) {
+	unimplemented("Riconv_close");
+	return 0;
+}
+
+void * Riconv_open (const char* tocode, const char* fromcode) {
+	unimplemented("Riconv_open");
+	return NULL;
+}
+
+const char *reEnc(const char *x, cetype_t ce_in, cetype_t ce_out, int subst) {
+    // TODO: proper implementation of reEnc
+    return x;
 }

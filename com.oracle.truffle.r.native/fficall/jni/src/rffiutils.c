@@ -99,7 +99,7 @@ void callExit(JNIEnv *env) {
 	for (i = 0; i < copiedVectorsIndex; i++) {
 		CopiedVector cv = copiedVectors[i];
 		switch (cv.type) {
-		    case INTSXP: {
+		    case INTSXP: case LGLSXP: {
 			    jintArray intArray = (jintArray) cv.jArray;
 			    (*env)->ReleaseIntArrayElements(env, intArray, (jint *)cv.data, 0);
 			    break;
@@ -112,7 +112,7 @@ void callExit(JNIEnv *env) {
 
 		    }
 
-		    case LGLSXP: case RAWSXP: {
+		    case RAWSXP: {
 			    jbyteArray byteArray = (jbyteArray) cv.jArray;
 			    (*env)->ReleaseByteArrayElements(env, byteArray, (jbyte *)cv.data, 0);
 			    break;
@@ -229,7 +229,10 @@ void setEnv(JNIEnv *env) {
 
 void *unimplemented(char *msg) {
 	JNIEnv *thisenv = getEnv();
-	(*thisenv)->FatalError(thisenv, msg);
+	char buf[1024];
+	strcpy(buf, "unimplemented ");
+	strcat(buf, msg);
+	(*thisenv)->FatalError(thisenv, buf);
 	// to keep compiler happy
 	return NULL;
 }

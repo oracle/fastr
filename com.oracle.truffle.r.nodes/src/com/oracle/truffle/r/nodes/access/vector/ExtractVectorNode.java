@@ -37,14 +37,16 @@ public abstract class ExtractVectorNode extends Node {
 
     protected final ElementAccessMode mode;
     private final boolean recursive;
+    private final boolean ignoreRecursive;
 
     @Child private BoxPrimitiveNode boxVector = BoxPrimitiveNode.create();
     @Child private BoxPrimitiveNode boxExact = BoxPrimitiveNode.create();
     @Child private BoxPrimitiveNode boxDropdimensions = BoxPrimitiveNode.create();
 
-    ExtractVectorNode(ElementAccessMode mode, boolean recursive) {
+    ExtractVectorNode(ElementAccessMode mode, boolean recursive, boolean ignoreRecursive) {
         this.mode = mode;
         this.recursive = recursive;
+        this.ignoreRecursive = ignoreRecursive;
     }
 
     public ElementAccessMode getMode() {
@@ -55,12 +57,12 @@ public abstract class ExtractVectorNode extends Node {
         return execute(boxVector.execute(vector), positions, boxExact.execute(exact), boxDropdimensions.execute(dropDimensions));
     }
 
-    public static ExtractVectorNode create(ElementAccessMode accessMode) {
-        return ExtractVectorNodeGen.create(accessMode, false);
+    public static ExtractVectorNode create(ElementAccessMode accessMode, boolean ignoreRecursive) {
+        return ExtractVectorNodeGen.create(accessMode, false, ignoreRecursive);
     }
 
     static ExtractVectorNode createRecursive(ElementAccessMode accessMode) {
-        return ExtractVectorNodeGen.create(accessMode, true);
+        return ExtractVectorNodeGen.create(accessMode, true, false);
     }
 
     protected abstract Object execute(Object vector, Object[] positions, Object exact, Object dropDimensions);
@@ -79,7 +81,7 @@ public abstract class ExtractVectorNode extends Node {
     }
 
     protected boolean isRecursiveSubscript(Object vector, Object[] positions) {
-        return !recursive && mode.isSubscript() && vector instanceof RAbstractListVector && positions.length == 1;
+        return !recursive && !ignoreRecursive && mode.isSubscript() && vector instanceof RAbstractListVector && positions.length == 1;
     }
 
     @Specialization(limit = "CACHE_LIMIT", guards = {"cached != null", "cached.isSupported(vector, positions, exact, dropDimensions)"})

@@ -26,7 +26,6 @@ import java.io.*;
 import java.util.Locale;
 
 import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.debug.*;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.instrument.*;
 import com.oracle.truffle.api.nodes.*;
@@ -35,7 +34,6 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinPackages;
 import com.oracle.truffle.r.nodes.instrument.RASTProber;
 import com.oracle.truffle.r.nodes.instrument.RInstrument;
 import com.oracle.truffle.r.runtime.RAccuracyInfo;
-import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RPerfStats;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RVersionInfo;
@@ -62,14 +60,20 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
     private static synchronized void initialize() {
         if (!initialized) {
             initialized = true;
-            Load_RFFIFactory.initialize();
-            RInstrument.initialize(INSTANCE.instrumenter);
-            RPerfStats.initialize();
-            Locale.setDefault(Locale.ROOT);
-            RAccuracyInfo.initialize();
-            RVersionInfo.initialize();
-            TempPathName.initialize();
-            RContext.initialize(new RRuntimeASTAccessImpl(), RBuiltinPackages.getInstance());
+            try {
+                Load_RFFIFactory.initialize();
+                RInstrument.initialize(INSTANCE.instrumenter);
+                RPerfStats.initialize();
+                Locale.setDefault(Locale.ROOT);
+                RAccuracyInfo.initialize();
+                RVersionInfo.initialize();
+                TempPathName.initialize();
+                RContext.initialize(new RRuntimeASTAccessImpl(), RBuiltinPackages.getInstance());
+            } catch (Throwable t) {
+                System.out.println("error during engine initialization:");
+                t.printStackTrace();
+                System.exit(-1);
+            }
         }
     }
 
@@ -104,12 +108,6 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
 
     @Override
     protected CallTarget parse(Source source, Node context, String... argumentNames) throws IOException {
-        /*
-         * When running under the debugger the loadrun command eventually arrives here with a
-         * FileSource. Since FastR has a custom mechanism for executing a (Root)CallTarget that
-         * TruffleVM does not know about, we have to use a delegation mechanism via a wrapper
-         * CallTarget class, using a special REngine entry point.
-         */
         return RContext.getEngine().parseToCallTarget(source, true);
     }
 
@@ -131,7 +129,7 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
 
     @Override
     protected Visualizer getVisualizer() {
-        throw RInternalError.unimplemented("getVisualizer");
+        return new TruffleRLanguageDebug.RVisualizer();
     }
 
     @Override
@@ -147,12 +145,12 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
     }
 
     @Override
-    protected Object evalInContext(Source source, Node node, MaterializedFrame mFrame) throws IOException {
-        throw RInternalError.unimplemented("evalInContext");
+    protected Object evalInContext(Source source, Node node, MaterializedFrame frame) throws IOException {
+        return RContext.getEngine().parseAndEval(source, frame, false);
     }
 
     @Override
     protected AdvancedInstrumentRootFactory createAdvancedInstrumentRootFactory(String expr, AdvancedInstrumentResultListener resultListener) throws IOException {
-        throw RInternalError.unimplemented("createAdvancedInstrumentRootFactory");
+        return TruffleRLanguageDebug.createAdvancedInstrumentRootFactory(expr, resultListener);
     }
 }

@@ -139,7 +139,7 @@ public class FastRContext {
             } else {
                 for (int i = 0; i < contexts.getLength(); i++) {
                     ContextInfo info = checkContext(contexts.getDataAt(i), this);
-                    TruffleVM vm = info.apply(TruffleVM.newVM()).build();
+                    PolyglotEngine vm = info.apply(PolyglotEngine.buildNew()).build();
                     try {
                         Source source = Source.fromText(exprs.getDataAt(i), "<eval>").withMimeType(RRuntime.R_APP_MIME);
                         vm.eval(source);

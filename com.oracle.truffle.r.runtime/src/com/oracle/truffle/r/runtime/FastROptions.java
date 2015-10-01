@@ -66,6 +66,7 @@ public class FastROptions {
     public static String Debug = parseStringOption("Debug", null, "Debug=name1,name2,...; Turn on debugging output for 'name1', 'name2', etc.");
     public static final boolean Instrument = parseBooleanOption("Instrument", false, "Enable Instrumentation");
     public static final boolean TraceCalls = parseBooleanOption("TraceCalls", false, "Trace all R function calls (implies +Instrument)");
+    public static final boolean TraceNativeCalls = parseBooleanOption("TraceNativeCalls", false, "Trace all native function calls (performed via .Call, .External, etc.)");
     public static final String PerfStats = parseStringOption("PerfStats", null, "PerfStats=p1,p2,...; Collect performance stats identified by p1, etc.");
     public static final String PerfStatsFile = parseStringOption("PerfStatsFile", null, "PerfStatsFile=file; Send performance stats to 'file', default stdout");
     public static final String Rdebug = parseStringOption("Rdebug", null, "Rdebug=f1,f2.,,,; list of R function to call debug on (implies +Instrument)");
@@ -77,7 +78,8 @@ public class FastROptions {
     public static final boolean InvisibleArgs = parseBooleanOption("InvisibleArgs", true, "Argument writes do not trigger state transitions");
     public static final boolean NewStateTransition = parseBooleanOption("NewStateTransition", false, "Experimental state transition implementation");
     public static final boolean RefCountIncrementOnly = parseBooleanOption("RefCountIncrementOnly", false, "Disable reference count decrements for eperimental state transition implementation");
-    public static final boolean UseNewVectorNodes = parseBooleanOption("UseNewVectorNodes", false, "temporary option");
+    public static final boolean UseNewVectorNodes = parseBooleanOption("UseNewVectorNodes", true, "temporary option");
+    public static final boolean UseInternalGraphics = parseBooleanOption("UseInternalGraphics", true, "Whether the internal (Java) graphics subsystem should be used");
 
     // Promises optimizations
     public static final boolean EagerEval = parseBooleanOption("EagerEval", false, "If enabled, overrides all other EagerEval switches (see EagerEvalHelper)");

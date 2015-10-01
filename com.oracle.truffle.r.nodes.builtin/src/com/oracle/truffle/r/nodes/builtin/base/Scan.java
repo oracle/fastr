@@ -248,6 +248,17 @@ public abstract class Scan extends RBuiltinNode {
         return flushVec.getLength() == 0 ? RRuntime.LOGICAL_NA : flushVec.getDataAt(0);
     }
 
+    private static int getFirstQuoteInd(String str, char sepChar) {
+        int quoteInd = str.indexOf(sepChar);
+        if (quoteInd >= 0) {
+            if (quoteInd == 0 || str.charAt(quoteInd - 1) == ' ' || str.charAt(quoteInd - 1) == '\t') {
+                // it's a quote character if it starts the string or is preceded by a blank space
+                return quoteInd;
+            }
+        }
+        return -1;
+    }
+
     private static String[] getQuotedItems(LocalData data, String s) {
         LinkedList<String> items = new LinkedList<>();
 
@@ -271,10 +282,10 @@ public abstract class Scan extends RBuiltinNode {
                 sepInd = str.indexOf(data.sepchar.charAt(0));
             }
 
-            int quoteInd = str.indexOf(data.quoteset.charAt(0));
+            int quoteInd = getFirstQuoteInd(str, data.quoteset.charAt(0));
             char quoteChar = data.quoteset.charAt(0);
             for (int i = 1; i < data.quoteset.length(); i++) {
-                int ind = str.indexOf(data.quoteset.charAt(i));
+                int ind = getFirstQuoteInd(str, data.quoteset.charAt(i));
                 if (ind >= 0 && (quoteInd == -1 || (quoteInd >= 0 && ind < quoteInd))) {
                     // update quoteInd if either the new index is smaller or the previous one (for
                     // another separator) was not found

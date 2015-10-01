@@ -31,8 +31,8 @@ public interface CRFFI {
      * {@code args}. The values in {@code args} should be native types,e.g., {@code double[]} not
      * {@code RDoubleVector}.
      *
-     * @param symbolInfo identifies the symbol and the defining library
+     * @param address the target address of the native method
      * @param args native arguments
      */
-    void invoke(DLL.SymbolInfo symbolInfo, Object[] args);
+    void invoke(long address, Object[] args);
 }

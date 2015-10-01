@@ -3,21 +3,24 @@
 # By default all packages are candidates for installation, but this
 # can be limited by a regexp pattern
 
+# By default, we use the CRAN mirror specified by --cran-mirror which defaults to http://cran.cnr.berkeley.edu/
+# However, a local copy of the CRAN repo can be used either by setting the LOCAL_CRAN_REPO env variable or setting --contrib-url
+
 args <- commandArgs(TRUE)
 
 usage <- function() {
-	cat("usage: Rscript [--contriburl url] [--verbose | -v] [-V] [--dryrun] [ --no-install | -n] [--save-blacklist] [-read-blacklist] [--blacklist-file file] [package-pattern\n")
+	cat("usage: Rscript [--contriburl url] [--cran-mirror url] [--verbose | -v] [-V] [--dryrun] [ --no-install | -n] [--save-blacklist] [-read-blacklist] [--blacklist-file file] [package-pattern]\n")
 	quit(status=1)
 }
 
 # blacklist is a vector of package (names) that are known to be bad, i.e. uninstallable.
-# the result is a vector of new packages that depend/import/suggest/linkto any package on blacklist
+# the result is a vector of new packages that depend/import/linkto any package on blacklist
 create.blacklist.with <- function(blacklist, iter) {
 	this.blacklist <- vector()
 
 	trim <- function (x) gsub("^\\s+|\\s+$", "", x)
 
-	strip.version <- function(x) gsub("\\s+\\(.*\\)$", "", x)
+	strip.version <- function(x) gsub("\\s*\\(.*\\)$", "", x)
 
 	if (very.verbose) {
 		cat("Iteration: ", iter, "\n\n")
@@ -38,6 +41,9 @@ create.blacklist.with <- function(blacklist, iter) {
 					}
 					all.deps <-  append(all.deps, strip.version(trim(unlist(strsplit(deps, fixed=T, ",")))))
 				}
+			}
+			if (very.verbose) {
+				cat("all.deps for: ", pkgName," ", all.deps, "\n")
 			}
 
 			match.result <- match(blacklist, all.deps, nomatch=0)
@@ -72,28 +78,28 @@ create.blacklist.iter <- function(blacklist) {
 # known to be uninstallable
 # uses C++
 cplusplus <- c("Rcpp", "Segmentor3IsBack", "QUIC", "kernlab", "adaptivetau", "geepack", "caTools", "amap", "rgenoud", "stringi", "rjson", "ars",
-		"e1071", "aylmer")
+		"e1071", "aylmer", "cpm")
 # tcltk
 tcltk <- c("AnnotLists", "tcltk2", "aplpack")
 # parser bugs
 parserbug <- c("R2HTML")
 # e.g., unimplemented builtin, assertion error
-core <- c("ade4", "ABCoptim", "R.methodsS3", "lattice", "aidar", "DBI", "SparseM", "quantreg", "doParallel", "ApacheLogProcessor", "aplore3",
+core <- c("ade4", "ABCoptim", "lattice", "aidar", "DBI", "SparseM", "quantreg", "doParallel", "ApacheLogProcessor", "aplore3",
 		"vignettes", "archiDART", "corpcor", "acss.data")
 # e.g. complex replacement assignments
-trufflevisitor.nyi <- c("colorspace")
+trufflevisitor.nyi <- c("colorspace", "R.methodsS3")
 # problems with native code
 nativeinstall <- c("Rglpk", "overlap", "adimpro", "deSolve")
 # S4 anything using S4 objects
-s4 <- c("matrixStats", "AcceptanceSampling", "biglm", "analyz", "RCurl", "anfis", "aod", "ascii")
+s4 <- c("matrixStats", "AcceptanceSampling", "biglm", "analyz", "RCurl", "anfis", "aod", "ascii", "childsds")
 # graphics
 graphics <- c("Cairo", "rgl")
 # incomplete definitions from Rmath.h
 math <- c("mvtnorm")
 # serialize
-serialize <- c("actuar", "spam", "codetools", "iterators", "apc", "apsrtable", "assertthat")
+serialize <- c("actuar", "spam", "codetools", "iterators", "apc", "apsrtable", "assertthat", "citbcmst", "cubfits")
 # fortran related
-fortran <- c("appell")
+fortran <- c("appell", "blockmodeling", "clues", "rootSolve", "cts", "bayesQR", "cvplogistic")
 initial.blacklist <- c(cplusplus, tcltk, parserbug, core, math, trufflevisitor.nyi, nativeinstall, s4, graphics, serialize, fortran)
 
 create.blacklist <- function() {
@@ -103,6 +109,21 @@ create.blacklist <- function() {
 abort <- function(msg) {
 	print(msg)
 	quit("no", 1)
+}
+
+set.cran.mirror <- function() {
+	cran.mirror <<- Sys.getenv("CRAN_MIRROR", unset = "http://cran.cnr.berkeley.edu/")
+	r <- getOption("repos")
+	r["CRAN"] <- cran.mirror
+	options(repos = r)
+	if (is.na(contriburl)) {
+		# not set on command line
+		contriburl <<- Sys.getenv("LOCAL_CRAN_REPO", unset=NA)
+		if (is.na(contriburl)) {
+			# set back to repo-based default
+			contriburl <<- contrib.url(r, "source")
+		}
+	}
 }
 
 # find the available packages from contriburl and match those against pkg.pattern
@@ -186,7 +207,17 @@ parse.args <- function() {
 			} else {
 				usage()
 			}
+		} else if (a == "--cran-mirror") {
+			if (length(args) >= 2L) {
+				cran.mirror <<- args[2L]
+				args <<- args[-1L]
+			} else {
+				usage()
+			}
 		} else {
+			if (grepl("^-.*", a)) {
+				usage()
+			}
 			pkg.pattern <<- a
 			break
 		}
@@ -195,11 +226,18 @@ parse.args <- function() {
 	}
 }
 
-# global variables used by the installation
-contriburl <- Sys.getenv("LOCAL_CRAN_REPO", unset=NA)
-if (is.na(contriburl)) {
-	contriburl <- paste("file://", getwd(), "/cran/LOCAL_REPO/src/contrib", sep="")
+cat.args <- function() {
+	if (verbose) {
+		cat("install: ", install, "\n")
+		cat("dry.run: ", dry.run, "\n")
+		cat("save.blacklist: ", save.blacklist, "\n")
+		cat("read.blacklist: ", read.blacklist, "\n")
+		cat("pkg.pattern: ", pkg.pattern, "\n")
+		cat("contriburl: ", contriburl, "\n")
+	}
 }
+
+contriburl <- NA
 blacklist.file <- Sys.getenv("PACKAGE_BLACKLIST", unset=NA)
 
 pkg.pattern <- "^.*"
@@ -214,6 +252,8 @@ read.blacklist <- F
 
 if (!interactive()) {
 	parse.args()
+	set.cran.mirror()
+	cat.args()
 	do.install()
 }
 

@@ -25,7 +25,10 @@ package com.oracle.truffle.r.runtime.data;
 import com.oracle.truffle.r.runtime.nodes.*;
 
 /**
- * This implies that all arguments can be evaluated eagerly.
+ * This interface can be used to provide a fast path, implemented in Java, for an R function. This
+ * may be useful for cases in which there is a significantly simpler implementation for a known
+ * configuration of arguments. Returning {@code null} from the fast path node will revert the call
+ * site so that it calls the normal R code again.
  */
 @FunctionalInterface
 public interface FastPathFactory {

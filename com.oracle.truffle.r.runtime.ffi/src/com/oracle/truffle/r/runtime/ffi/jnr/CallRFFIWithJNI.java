@@ -22,15 +22,26 @@
  */
 package com.oracle.truffle.r.runtime.ffi.jnr;
 
-import java.util.concurrent.*;
+import java.util.concurrent.Semaphore;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.env.*;
-import com.oracle.truffle.r.runtime.ffi.*;
+import com.oracle.truffle.r.runtime.FastROptions;
+import com.oracle.truffle.r.runtime.REnvVars;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RMissing;
+import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RPairList;
+import com.oracle.truffle.r.runtime.data.RTypedValue;
+import com.oracle.truffle.r.runtime.data.RUnboundValue;
+import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.ffi.CallRFFI;
+import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLException;
-import com.oracle.truffle.r.runtime.ffi.DLL.SymbolInfo;
+import com.oracle.truffle.r.runtime.ffi.LibPaths;
 
 /**
  * The only variety in the signatures for {@code .Call} is the number of arguments. GnuR supports a
@@ -49,6 +60,8 @@ public class CallRFFIWithJNI implements CallRFFI {
     private static final boolean ForceRTLDGlobal = false;
 
     public enum RVariables {
+        R_Home(REnvVars.rHome()),
+        R_TempDir("/tmp/R_TMP"), // TODO: supply proper temp directory
         R_NilValue(RNull.instance),
         R_UnboundValue(RUnboundValue.instance),
         R_MissingArg(RMissing.instance),
@@ -63,6 +76,7 @@ public class CallRFFIWithJNI implements CallRFFI {
         R_BraceSymbol(RDataFactory.createSymbol("{")),
         R_ClassSymbol(RDataFactory.createSymbol("class")),
         R_DeviceSymbol(RDataFactory.createSymbol(".Device")),
+        R_DevicesSymbol(RDataFactory.createSymbol(".Devices")),
         R_DimNamesSymbol(RDataFactory.createSymbol("dimnames")),
         R_DimSymbol(RDataFactory.createSymbol("dim")),
         R_DollarSymbol(RDataFactory.createSymbol("$")),
@@ -91,9 +105,12 @@ public class CallRFFIWithJNI implements CallRFFI {
         R_NegInf(Double.NEGATIVE_INFINITY),
         R_NaReal(RRuntime.DOUBLE_NA),
         R_NaInt(RRuntime.INT_NA),
-        R_BlankString(RDataFactory.createStringVectorFromScalar(""));
+        R_BlankString(RDataFactory.createStringVectorFromScalar("")),
+        R_TrueValue(RRuntime.LOGICAL_TRUE),
+        R_FalseValue(RRuntime.LOGICAL_FALSE),
+        R_LogicalNAValue(RRuntime.LOGICAL_NA);
 
-        private Object value;
+        private final Object value;
 
         RVariables(Object value) {
             this.value = value;
@@ -117,7 +134,11 @@ public class CallRFFIWithJNI implements CallRFFI {
         try {
             DLL.load(librffiPath, ForceRTLDGlobal, false);
         } catch (DLLException ex) {
-            throw RInternalError.shouldNotReachHere(ex, "rfficall");
+            if (RContext.getRRuntimeASTAccess() != null) {
+                throw RError.error(RError.NO_NODE, ex);
+            } else {
+                throw new RInternalError(ex, "error while loading " + librffiPath);
+            }
         }
         System.load(librffiPath);
         initialize(RVariables.values());
@@ -125,8 +146,12 @@ public class CallRFFIWithJNI implements CallRFFI {
 
     private static final Semaphore inCritical = new Semaphore(1, false);
 
-    public Object invokeCall(SymbolInfo symbolInfo, Object[] args) {
-        long address = symbolInfo.address;
+    public Object invokeCall(long address, String name, Object[] args) {
+        if (FastROptions.TraceNativeCalls) {
+            System.out.print("calling " + name + ": ");
+            printArgs(args);
+            System.out.println();
+        }
         try {
             inCritical.acquire();
             switch (args.length) {
@@ -152,8 +177,19 @@ public class CallRFFIWithJNI implements CallRFFI {
         }
     }
 
-    public Object invokeExternal(SymbolInfo symbolInfo, Object[] args) {
-        throw RInternalError.unimplemented(".External");
+    private void printArgs(Object[] args) {
+        for (Object arg : args) {
+            System.out.print(" ");
+            System.out.print(arg == null ? "" : arg.getClass().getSimpleName());
+            if (arg instanceof RPairList) {
+                System.out.print("[");
+                printArgs(((RPairList) arg).toRList().getDataCopy());
+                System.out.print("]");
+            }
+            if (!(arg instanceof RTypedValue)) {
+                System.out.print("(" + arg + ")");
+            }
+        }
     }
 
     private static native void initialize(RVariables[] variables);
@@ -180,8 +216,12 @@ public class CallRFFIWithJNI implements CallRFFI {
 
     private static native Object call9(long address, Object arg1, Object arg2, Object arg3, Object arg4, Object arg5, Object arg6, Object arg7, Object arg8, Object arg9);
 
-    public void invokeVoidCall(SymbolInfo symbolInfo, Object[] args) {
-        long address = symbolInfo.address;
+    public void invokeVoidCall(long address, String name, Object[] args) {
+        if (FastROptions.TraceNativeCalls) {
+            System.out.print("void-calling " + name + ": ");
+            printArgs(args);
+            System.out.println();
+        }
         try {
             inCritical.acquire();
             switch (args.length) {

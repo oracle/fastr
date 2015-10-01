@@ -40,6 +40,43 @@ import com.oracle.truffle.r.runtime.ops.na.*;
 public class CallRFFIHelper {
     @SuppressWarnings("unused") private static final NACheck elementNACheck = NACheck.create();
 
+    private static RuntimeException unimplemented() {
+        return unimplemented("");
+    }
+
+    private static RuntimeException unimplemented(String message) {
+        System.out.println(message);
+        try {
+            throw RInternalError.unimplemented(message);
+        } catch (Error e) {
+            e.printStackTrace();
+            try {
+                Thread.sleep(100000);
+            } catch (InterruptedException e2) {
+                e2.printStackTrace();
+            }
+            throw e;
+        }
+    }
+
+    private static void guarantee(boolean condition) {
+        guarantee(condition, "");
+    }
+
+    private static void guarantee(boolean condition, String message) {
+        if (!condition) {
+            unimplemented(message);
+        }
+    }
+
+    private static void guaranteeInstanceOf(Object x, Class<?> clazz) {
+        if (x == null) {
+            guarantee(false, "unexpected type: null instead of " + clazz.getSimpleName());
+        } else if (!clazz.isInstance(x)) {
+            guarantee(false, "unexpected type: " + x + " is " + x.getClass().getSimpleName() + " instead of " + clazz.getSimpleName());
+        }
+    }
+
     // Checkstyle: stop method name check
 
     static RIntVector Rf_ScalarInteger(int value) {
@@ -61,40 +98,40 @@ public class CallRFFIHelper {
     static int Rf_asInteger(Object x) {
         if (x instanceof Integer) {
             return ((Integer) x).intValue();
-        } else if (x instanceof RIntVector) {
-            return ((RIntVector) x).getDataAt(0);
+        } else if (x instanceof Double) {
+            return RRuntime.double2int((Double) x);
         } else {
-            throw RInternalError.unimplemented();
+            guaranteeInstanceOf(x, RIntVector.class);
+            return ((RIntVector) x).getDataAt(0);
         }
     }
 
     static double Rf_asReal(Object x) {
         if (x instanceof Double) {
             return ((Double) x).doubleValue();
-        } else if (x instanceof RDoubleVector) {
-            return ((RDoubleVector) x).getDataAt(0);
+        } else if (x instanceof Byte) {
+            return RRuntime.logical2double((Byte) x);
         } else {
-            throw RInternalError.unimplemented();
+            guaranteeInstanceOf(x, RDoubleVector.class);
+            return ((RDoubleVector) x).getDataAt(0);
         }
     }
 
     static int Rf_asLogical(Object x) {
         if (x instanceof Byte) {
             return ((Byte) x).intValue();
-        } else if (x instanceof RLogicalVector) {
-            return ((RLogicalVector) x).getDataAt(0);
         } else {
-            throw RInternalError.unimplemented();
+            guaranteeInstanceOf(x, RLogicalVector.class);
+            return ((RLogicalVector) x).getDataAt(0);
         }
     }
 
     static String Rf_asChar(Object x) {
         if (x instanceof String) {
             return (String) x;
-        } else if (x instanceof RStringVector) {
-            return ((RStringVector) x).getDataAt(0);
         } else {
-            throw RInternalError.unimplemented();
+            guaranteeInstanceOf(x, RStringVector.class);
+            return ((RStringVector) x).getDataAt(0);
         }
     }
 
@@ -178,6 +215,37 @@ public class CallRFFIHelper {
         }
     }
 
+    private static RStringVector getClassHr(Object v) {
+        if (v instanceof RAttributable) {
+            return ((RAttributable) v).getClassHierarchy();
+        } else if (v instanceof Byte) {
+            return RLogicalVector.implicitClassHeader;
+        } else if (v instanceof String) {
+            return RStringVector.implicitClassHeader;
+        } else if (v instanceof Integer) {
+            return RIntVector.implicitClassHeader;
+        } else if (v instanceof Double) {
+            return RDoubleVector.implicitClassHeader;
+        } else if (v instanceof RComplex) {
+            return RComplexVector.implicitClassHeader;
+        } else if (v instanceof RRaw) {
+            return RRawVector.implicitClassHeader;
+        } else {
+            guaranteeInstanceOf(v, RNull.class);
+            return RNull.implicitClassHeader;
+        }
+    }
+
+    static int Rf_inherits(Object x, String clazz) {
+        RStringVector hierarchy = getClassHr(x);
+        for (int i = 0; i < hierarchy.getLength(); i++) {
+            if (hierarchy.getDataAt(i).equals(clazz)) {
+                return 1;
+            }
+        }
+        return 0;
+    }
+
     static int Rf_isString(Object x) {
         return RRuntime.asString(x) == null ? 0 : 1;
     }
@@ -223,10 +291,12 @@ public class CallRFFIHelper {
                 return RDataFactory.createStringVector(new String[n], RDataFactory.COMPLETE_VECTOR);
             case CPLXSXP:
                 return RDataFactory.createComplexVector(new double[2 * n], RDataFactory.COMPLETE_VECTOR);
+            case RAWSXP:
+                return RDataFactory.createRawVector(new byte[n]);
             case VECSXP:
                 return RDataFactory.createList(n);
             default:
-                throw RInternalError.unimplemented();
+                throw unimplemented("unexpected SEXPTYPE " + type);
         }
 
     }
@@ -265,17 +335,19 @@ public class CallRFFIHelper {
             case CPLXSXP:
                 return RDataFactory.createComplexVector(new double[2 * (nrow * ncol)], RDataFactory.COMPLETE_VECTOR, dims);
             default:
-                throw RInternalError.unimplemented();
+                throw unimplemented();
         }
     }
 
     static int LENGTH(Object x) {
         if (x instanceof RAbstractContainer) {
             return ((RAbstractContainer) x).getLength();
+        } else if (x == RNull.instance) {
+            return 0;
         } else if (x instanceof Integer || x instanceof Double || x instanceof Byte || x instanceof String) {
             return 1;
         } else {
-            throw RInternalError.unimplemented();
+            throw unimplemented("unexpected value: " + x);
         }
     }
 
@@ -294,17 +366,30 @@ public class CallRFFIHelper {
     static byte[] RAW(Object x) {
         if (x instanceof RRawVector) {
             return ((RRawVector) x).getDataWithoutCopying();
+        } else if (x instanceof RRaw) {
+            return new byte[]{((RRaw) x).getValue()};
         } else {
-            throw RInternalError.unimplemented();
+            throw unimplemented();
         }
-
     }
 
-    static byte[] LOGICAL(Object x) {
+    private static int toWideLogical(byte v) {
+        return RRuntime.isNA(v) ? Integer.MIN_VALUE : v;
+    }
+
+    static int[] LOGICAL(Object x) {
         if (x instanceof RLogicalVector) {
-            return ((RLogicalVector) x).getDataWithoutCopying();
+            // TODO: this should not actually copy...
+            RLogicalVector vector = (RLogicalVector) x;
+            int[] array = new int[vector.getLength()];
+            for (int i = 0; i < vector.getLength(); i++) {
+                array[i] = toWideLogical(vector.getDataAt(i));
+            }
+            return array;
+        } else if (x instanceof Byte) {
+            return new int[]{toWideLogical((Byte) x)};
         } else {
-            throw RInternalError.unimplemented();
+            throw unimplemented();
         }
 
     }
@@ -312,16 +397,31 @@ public class CallRFFIHelper {
     static int[] INTEGER(Object x) {
         if (x instanceof RIntVector) {
             return ((RIntVector) x).getDataWithoutCopying();
+        } else if (x instanceof RIntSequence) {
+            return ((RIntSequence) x).materialize().getDataWithoutCopying();
+        } else if (x instanceof Integer) {
+            return new int[]{(Integer) x};
+        } else if (x instanceof RLogicalVector) {
+            RLogicalVector vec = (RLogicalVector) x;
+            int[] result = new int[vec.getLength()];
+            for (int i = 0; i < result.length; i++) {
+                result[i] = vec.getDataAt(i);
+            }
+            return result;
         } else {
-            throw RInternalError.unimplemented();
+            guaranteeInstanceOf(x, Byte.class);
+            return new int[]{(Byte) x};
         }
     }
 
     static double[] REAL(Object x) {
         if (x instanceof RDoubleVector) {
             return ((RDoubleVector) x).getDataWithoutCopying();
+        } else if (x instanceof RDoubleSequence) {
+            return ((RDoubleSequence) x).materialize().getDataWithoutCopying();
         } else {
-            throw RInternalError.unimplemented();
+            guaranteeInstanceOf(x, Double.class);
+            return new double[]{(Double) x};
         }
     }
 
@@ -332,7 +432,7 @@ public class CallRFFIHelper {
         } else if (x instanceof RStringVector) {
             return ((RStringVector) x).getDataAt(i);
         } else {
-            throw RInternalError.unimplemented();
+            throw unimplemented();
         }
     }
 
@@ -340,7 +440,7 @@ public class CallRFFIHelper {
         if (x instanceof RList) {
             return ((RList) x).getDataAt(i);
         } else {
-            throw RInternalError.unimplemented();
+            throw unimplemented();
         }
     }
 
@@ -348,54 +448,98 @@ public class CallRFFIHelper {
         if (x instanceof RShareable) {
             return ((RShareable) x).isShared() ? 1 : 0;
         } else {
-            throw RInternalError.unimplemented();
+            throw unimplemented();
         }
     }
 
     static Object Rf_duplicate(Object x) {
-        if (x instanceof RAbstractVector) {
-            return ((RAbstractVector) x).copy();
-        } else {
-            throw RInternalError.unimplemented();
-        }
+        guaranteeInstanceOf(x, RAbstractVector.class);
+        return ((RAbstractVector) x).copy();
+    }
+
+    static Object PRINTNAME(Object x) {
+        guaranteeInstanceOf(x, RSymbol.class);
+        return ((RSymbol) x).getName();
+    }
+
+    static Object TAG(Object e) {
+        guaranteeInstanceOf(e, RPairList.class);
+        return ((RPairList) e).getTag();
     }
 
     static Object CAR(Object e) {
-        if (e instanceof RPairList) {
-            return ((RPairList) e).car();
-        } else {
-            throw RInternalError.unimplemented();
-        }
+        guaranteeInstanceOf(e, RPairList.class);
+        Object car = ((RPairList) e).car();
+        return car;
     }
 
     static Object CDR(Object e) {
-        if (e instanceof RPairList) {
-            return ((RPairList) e).cdr();
-        } else {
-            throw RInternalError.unimplemented();
-        }
+        guaranteeInstanceOf(e, RPairList.class);
+        Object cdr = ((RPairList) e).cdr();
+        return cdr;
     }
 
     static Object CADR(@SuppressWarnings("unused") Object x) {
-        throw RInternalError.unimplemented();
+        throw unimplemented();
     }
 
     static Object SETCAR(Object x, Object y) {
-        if (x instanceof RPairList) {
-            ((RPairList) x).setCar(y);
-            return x; // TODO check or y?
-        } else {
-            throw RInternalError.unimplemented();
-        }
+        guaranteeInstanceOf(x, RPairList.class);
+        ((RPairList) x).setCar(y);
+        return x; // TODO check or y?
     }
 
     static Object SETCDR(Object x, Object y) {
-        if (x instanceof RPairList) {
-            ((RPairList) x).setCdr(y);
-            return x; // TODO check or y?
+        guaranteeInstanceOf(x, RPairList.class);
+        ((RPairList) x).setCdr(y);
+        return x; // TODO check or y?
+    }
+
+    static Object R_FindNamespace(Object name) {
+        Object result = RContext.getInstance().stateREnvironment.getNamespaceRegistry().get(RRuntime.asString(name));
+        return result;
+    }
+
+    static Object Rf_eval(Object expr, Object env) {
+        guarantee(env instanceof REnvironment);
+        Object result;
+        if (expr instanceof RPromise) {
+            result = RContext.getRRuntimeASTAccess().forcePromise(expr);
+        } else if (expr instanceof RExpression) {
+            result = RContext.getEngine().eval((RExpression) expr, (REnvironment) env, 0);
+        } else if (expr instanceof RLanguage) {
+            result = RContext.getEngine().eval((RLanguage) expr, (REnvironment) env, 0);
         } else {
-            throw RInternalError.unimplemented();
+            // just return value
+            result = expr;
         }
+        return result;
+    }
+
+    static Object Rf_GetOption1(Object tag) {
+        guarantee(tag instanceof RSymbol);
+        Object result = RContext.getInstance().stateROptions.getValue(((RSymbol) tag).getName());
+        return result;
+    }
+
+    static void Rf_gsetVar(Object symbol, Object value, Object rho) {
+        guarantee(symbol instanceof RSymbol);
+        REnvironment baseEnv = RContext.getInstance().stateREnvironment.getBaseEnv();
+        guarantee(rho == baseEnv);
+        try {
+            baseEnv.put(((RSymbol) symbol).getName(), value);
+        } catch (PutException e) {
+            e.printStackTrace();
+        }
+    }
+
+    static void DUPLICATE_ATTRIB(Object to, Object from) {
+        if (from instanceof RAttributable) {
+            guaranteeInstanceOf(to, RAttributable.class);
+            RAttributes attributes = ((RAttributable) from).getAttributes();
+            ((RAttributable) to).initAttributes(attributes == null ? null : attributes.copy());
+        }
+        // TODO: copy OBJECT? and S4 attributes
     }
 
     // Checkstyle: resume method name check
@@ -426,5 +570,9 @@ public class CallRFFIHelper {
 
     static int isS4Object(Object x) {
         return x instanceof RS4Object ? 1 : 0;
+    }
+
+    static void printf(String message) {
+        RContext.getInstance().getConsoleHandler().print(message);
     }
 }

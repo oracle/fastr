@@ -63,12 +63,6 @@ public final class RError extends RuntimeException {
             this.msg = msg;
             this.args = args;
         }
-
-        @SuppressWarnings("sync-override")
-        @Override
-        public Throwable fillInStackTrace() {
-            return null;
-        }
     }
 
     /**
@@ -584,7 +578,7 @@ public final class RError extends RuntimeException {
         NOT_DEBUGGED("argument is not being debugged"),
         ADDING_INVALID_CLASS("adding class \"%s\" to an invalid object"),
         IS_NA_TO_NON_VECTOR("is.na() applied to non-(list or vector) of type '%s'"),
-        NOT_MEANINGFUL_FOR_FACTORS("‘%s’ not meaningful for factors"), // GNUR uses special ‘ and ’
+        NOT_MEANINGFUL_FOR_FACTORS("\u2018%s\u2019 not meaningful for factors"),
         INPUTS_DIFFERENT_LENGTHS("inputs of different lengths"),
         MATRIX_LIKE_REQUIRED("a matrix-like object is required as argument to '%s'"),
         NOT_MEANINGFUL_FOR_ORDERED_FACTORS("'%s' is not meaningful for ordered factors"),
@@ -617,6 +611,7 @@ public final class RError extends RuntimeException {
         FILE_CANNOT_REMOVE("  cannot remove file '%s'"),
         FILE_CANNOT_RENAME("  cannot rename file '%s' to '%s'"),
         FILE_COPY_RECURSIVE_IGNORED("'recursive' will be ignored as 'to' is not a single existing directory"),
+        FILE_OPEN_ERROR("unable to open file"),
         DIR_CANNOT_CREATE("cannot create dir '%s'"),
         IMPOSSIBLE_SUBSTITUTE("substitute result cannot be represented"),
         PACKAGE_AVAILABLE("'%s' may not be available when loading"),
@@ -630,7 +625,10 @@ public final class RError extends RuntimeException {
         REG_FINALIZER_FIRST("first argument must be environment or external pointer"),
         REG_FINALIZER_SECOND("second argument must be a function"),
         REG_FINALIZER_THIRD("third argument must be 'TRUE' or 'FALSE'"),
-        LAZY_LOAD_DB_CORRUPT("lazy-load database '%s' is corrupt");
+        LAZY_LOAD_DB_CORRUPT("lazy-load database '%s' is corrupt"),
+        MAGIC_EMPTY("restore file may be empty -- no data loaded"),
+        MAGIC_TOONEW("restore file may be from a newer version of R -- no data loaded"),
+        MAGIC_CORRUPT("bad restore file magic number (file may be corrupted) -- no data loaded");
 
         public final String message;
         final boolean hasArgs;

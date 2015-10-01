@@ -86,12 +86,12 @@ import com.oracle.truffle.r.runtime.nodes.*;
  *  U = {@link UninitializedCallNode}: Forms the uninitialized end of the function PIC
  *  D = {@link DispatchedCallNode}: Function fixed, no varargs
  *  G = {@link GenericCallNode}: Function arbitrary
- * 
+ *
  *  UV = {@link UninitializedCallNode} with varargs,
  *  UVC = {@link UninitializedVarArgsCacheCallNode} with varargs, for varargs cache
  *  DV = {@link DispatchedVarArgsCallNode}: Function fixed, with cached varargs
  *  DGV = {@link DispatchedGenericVarArgsCallNode}: Function fixed, with arbitrary varargs (generic case)
- * 
+ *
  * (RB = {@link RBuiltinNode}: individual functions that are builtins are represented by this node
  * which is not aware of caching). Due to {@link CachedCallNode} (see below) this is transparent to
  * the cache and just behaves like a D/DGV)
@@ -104,11 +104,11 @@ import com.oracle.truffle.r.runtime.nodes.*;
  * non varargs, max depth:
  * |
  * D-D-D-U
- * 
+ *
  * no varargs, generic (if max depth is exceeded):
  * |
  * D-D-D-D-G
- * 
+ *
  * varargs:
  * |
  * DV-DV-UV         <- function call target identity level cache
@@ -116,7 +116,7 @@ import com.oracle.truffle.r.runtime.nodes.*;
  *    DV
  *    |
  *    UVC           <- varargs signature level cache
- * 
+ *
  * varargs, max varargs depth exceeded:
  * |
  * DV-DV-UV
@@ -128,7 +128,7 @@ import com.oracle.truffle.r.runtime.nodes.*;
  *    DV
  *    |
  *    DGV
- * 
+ *
  * varargs, max function depth exceeded:
  * |
  * DV-DV-DV-DV-GV
@@ -165,6 +165,8 @@ public final class RCallNode extends RNode implements RSyntaxNode {
 
     private static final int FUNCTION_INLINE_CACHE_SIZE = 4;
     private static final int VARARGS_INLINE_CACHE_SIZE = 4;
+
+    private static final Object[] defaultTempIdentifiers = new Object[]{new Object(), new Object(), new Object(), new Object()};
 
     @Child private RNode functionNode;
     @Child private PromiseHelperNode promiseHelper;
@@ -203,8 +205,6 @@ public final class RCallNode extends RNode implements RSyntaxNode {
     private final SyntaxArguments arguments;
     private final ArgumentsSignature signature;
 
-    private final Object tempIdentifier = new Object();
-
     private final ValueProfile builtinProfile = ValueProfile.createIdentityProfile();
     private final ConditionProfile implicitTypeProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile resultIsBuiltinProfile = ConditionProfile.createBinaryProfile();
@@ -212,6 +212,8 @@ public final class RCallNode extends RNode implements RSyntaxNode {
     private final BranchProfile normalDispatchProfile = BranchProfile.create();
     private final BranchProfile errorProfile = BranchProfile.create();
     private final ConditionProfile isRFunctionProfile = ConditionProfile.createBinaryProfile();
+
+    private int tempIdentifier;
 
     @Child private Node foreignCall;
     @CompilationFinal private int foreignCallArgCount;
@@ -267,13 +269,28 @@ public final class RCallNode extends RNode implements RSyntaxNode {
             if (builtin.getDispatch() == RDispatch.INTERNAL_GENERIC) {
                 if (internalDispatchCall == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    dispatchTempSlot = insert(FrameSlotNode.createInitialized(frame.getFrameDescriptor(), tempIdentifier, true));
-                    internalDispatchCall = insert(new UninitializedCallNode(this, tempIdentifier));
+                    dispatchTempSlot = insert(FrameSlotNode.createInitialized(frame.getFrameDescriptor(), defaultTempIdentifiers[0], true));
+                    internalDispatchCall = insert(new UninitializedCallNode(this, defaultTempIdentifiers[0]));
                     dispatchArgument = insert(NodeUtil.cloneNode(arguments.v[0].asRNode()));
                     dispatchLookup = insert(S3FunctionLookupNode.create(true, false));
                     classHierarchyNode = insert(ClassHierarchyNodeGen.create(false));
                 }
                 FrameSlot slot = dispatchTempSlot.executeFrameSlot(frame);
+                try {
+                    if (frame.isObject(slot) && frame.getObject(slot) != null) {
+                        CompilerDirectives.transferToInterpreterAndInvalidate();
+                        // keep the complete loop in the slow path
+                        do {
+                            tempIdentifier++;
+                            Object identifier = tempIdentifier < defaultTempIdentifiers.length ? defaultTempIdentifiers[tempIdentifier] : new Object();
+                            dispatchTempSlot.replace(FrameSlotNode.createInitialized(frame.getFrameDescriptor(), identifier, true));
+                            internalDispatchCall.replace(new UninitializedCallNode(this, identifier));
+                            slot = dispatchTempSlot.executeFrameSlot(frame);
+                        } while (frame.isObject(slot) && frame.getObject(slot) != null);
+                    }
+                } catch (FrameSlotTypeException e) {
+                    throw RInternalError.shouldNotReachHere();
+                }
                 try {
                     Object dispatch = dispatchArgument.execute(frame);
                     frame.setObject(slot, dispatch);
@@ -816,8 +833,6 @@ public final class RCallNode extends RNode implements RSyntaxNode {
             this.fastPath = function.getFastPath() == null ? null : function.getFastPath().create();
             if (fastPath == null) {
                 this.call = Truffle.getRuntime().createDirectCallNode(function.getTarget());
-            } else {
-// System.out.println("created fast path " + fastPath);
             }
         }
 
@@ -830,7 +845,6 @@ public final class RCallNode extends RNode implements RSyntaxNode {
                 }
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 fastPath = null;
-// System.out.println("falling back to method execution");
                 call = insert(Truffle.getRuntime().createDirectCallNode(callTarget));
             }
 

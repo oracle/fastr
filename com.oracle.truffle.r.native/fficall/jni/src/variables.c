@@ -51,6 +51,7 @@ SEXP R_BracketSymbol;    /* "[" */
 SEXP R_BraceSymbol;      /* "{" */
 SEXP R_ClassSymbol;     /* "class" */
 SEXP R_DeviceSymbol;     /* ".Device" */
+SEXP R_DevicesSymbol;     /* ".Devices" */
 SEXP R_DimNamesSymbol;   /* "dimnames" */
 SEXP R_DimSymbol;     /* "dim" */
 SEXP R_DollarSymbol;     /* "$" */
@@ -69,22 +70,44 @@ SEXP R_SeedsSymbol;     /* ".Random.seed" */
 SEXP R_SourceSymbol;     /* "source" */
 SEXP R_TspSymbol;     /* "tsp" */
 
-SEXP  R_dot_defined;      /* ".defined" */
-SEXP  R_dot_Method;       /* ".Method" */
-SEXP  R_dot_target;       /* ".target" */
-SEXP	R_NaString;	    /* NA_STRING as a CHARSXP */
-SEXP	R_BlankString;	    /* "" as a CHARSXP */
+SEXP R_dot_defined;      /* ".defined" */
+SEXP R_dot_Method;       /* ".Method" */
+SEXP R_dot_target;       /* ".target" */
+SEXP R_NaString;	    /* NA_STRING as a CHARSXP */
+SEXP R_BlankString;	    /* "" as a CHARSXP */
 
 // Symbols not part of public API but used in FastR tools implementation
 SEXP R_SrcrefSymbol;
 SEXP R_SrcfileSymbol;
+
+// logical constants
+SEXP R_TrueValue;
+SEXP R_FalseValue;
+SEXP R_LogicalNAValue;
 
 // Arith.h
 double R_NaN;		/* IEEE NaN */
 double R_PosInf;	/* IEEE Inf */
 double R_NegInf;	/* IEEE -Inf */
 double R_NaReal;	/* NA_REAL: IEEE */
-int	 R_NaInt;	/* NA_INTEGER:= INT_MIN currently */
+int R_NaInt;	/* NA_INTEGER:= INT_MIN currently */
+
+// from Defn.h
+const char* R_Home;
+const char* R_TempDir;
+
+// various ignored flags and variables:
+Rboolean R_Visible;
+Rboolean R_Interactive;
+Rboolean R_interrupts_suspended;
+int R_interrupts_pending;
+Rboolean mbcslocale;
+Rboolean useaqua;
+char OutDec = '.';
+Rboolean utf8locale = FALSE;
+Rboolean mbcslocale = FALSE;
+Rboolean latin1locale = FALSE;
+int R_dec_min_exponent = -308;
 
 jmethodID getGlobalEnvMethodID;
 jmethodID getBaseEnvMethodID;
@@ -95,28 +118,27 @@ jmethodID isInteractiveMethodID;
 // R_GlobalEnv et al are not a variables in FASTR as they are RContext specific
 SEXP FASTR_GlobalEnv() {
 	JNIEnv *env = getEnv();
-	(*env)->CallStaticObjectMethod(env, CallRFFIHelperClass, getGlobalEnvMethodID);
+	return (*env)->CallStaticObjectMethod(env, CallRFFIHelperClass, getGlobalEnvMethodID);
 }
 
 SEXP FASTR_BaseEnv() {
 	JNIEnv *env = getEnv();
-	(*env)->CallStaticObjectMethod(env, CallRFFIHelperClass, getBaseEnvMethodID);
+	return (*env)->CallStaticObjectMethod(env, CallRFFIHelperClass, getBaseEnvMethodID);
 }
 
 SEXP FASTR_BaseNamespace() {
 	JNIEnv *env = getEnv();
-	(*env)->CallStaticObjectMethod(env, CallRFFIHelperClass, getBaseNamespaceMethodID);
+	return (*env)->CallStaticObjectMethod(env, CallRFFIHelperClass, getBaseNamespaceMethodID);
 }
 
 SEXP FASTR_NamespaceRegistry() {
 	JNIEnv *env = getEnv();
-	(*env)->CallStaticObjectMethod(env, CallRFFIHelperClass, getNamespaceRegistryMethodID);
+	return (*env)->CallStaticObjectMethod(env, CallRFFIHelperClass, getNamespaceRegistryMethodID);
 }
 
 Rboolean FASTR_IsInteractive() {
 	JNIEnv *env = getEnv();
-	int r = (*env)->CallStaticObjectMethod(env, CallRFFIHelperClass, isInteractiveMethodID);
-	return r;
+	return (*env)->CallStaticIntMethod(env, CallRFFIHelperClass, isInteractiveMethodID);
 }
 
 
@@ -140,13 +162,18 @@ void init_variables(JNIEnv *env, jobjectArray initialValues) {
 
 	int length = (*env)->GetArrayLength(env, initialValues);
 	int index;
+	int globalRefIndex = 0;
 	for (index = 0; index < length; index++) {
 		jobject variable = (*env)->GetObjectArrayElement(env, initialValues, index);
 		jstring nameString = (*env)->CallObjectMethod(env, variable, nameMethodID);
 		const char *nameChars = (*env)->GetStringUTFChars(env, nameString, NULL);
 		jobject value = (*env)->CallObjectMethod(env, variable, getValueMethodID);
 		if (value != NULL) {
-			if (strcmp(nameChars, "R_NaN") == 0) {
+			if (strcmp(nameChars, "R_Home") == 0) {
+				R_Home = (*env)->GetStringUTFChars(env, value, NULL);
+			} else if (strcmp(nameChars, "R_TempDir") == 0) {
+				R_TempDir = (*env)->GetStringUTFChars(env, value, NULL);
+			} else if (strcmp(nameChars, "R_NaN") == 0) {
 				R_NaN = (*env)->CallDoubleMethod(env, value, doubleValueMethodID);
 			} else if (strcmp(nameChars, "R_PosInf") == 0) {
 				R_PosInf = (*env)->CallDoubleMethod(env, value, doubleValueMethodID);
@@ -155,9 +182,9 @@ void init_variables(JNIEnv *env, jobjectArray initialValues) {
 			} else if (strcmp(nameChars, "R_NaReal") == 0) {
 				R_NaReal = (*env)->CallDoubleMethod(env, value, doubleValueMethodID);
 			} else if (strcmp(nameChars, "R_NaInt") == 0) {
-				R_NaInt = (*env)->CallIntMethod(env, value, doubleValueMethodID);
+				R_NaInt = (*env)->CallIntMethod(env, value, intValueMethodID);
 			} else {
-				SEXP ref = mkNamedGlobalRef(env, index, value);
+				SEXP ref = mkNamedGlobalRef(env, globalRefIndex++, value);
 				if (strcmp(nameChars, "R_EmptyEnv") == 0) {
 					R_EmptyEnv = ref;
 				} else if (strcmp(nameChars, "R_NilValue") == 0) {
@@ -176,6 +203,8 @@ void init_variables(JNIEnv *env, jobjectArray initialValues) {
 					R_ClassSymbol = ref;
 				} else if (strcmp(nameChars, "R_DeviceSymbol") == 0) {
 					R_DeviceSymbol = ref;
+				} else if (strcmp(nameChars, "R_DevicesSymbol") == 0) {
+					R_DevicesSymbol = ref;
 				} else if (strcmp(nameChars, "R_DimNamesSymbol") == 0) {
 					R_DimNamesSymbol = ref;
 				} else if (strcmp(nameChars, "R_DimSymbol") == 0) {
@@ -228,6 +257,12 @@ void init_variables(JNIEnv *env, jobjectArray initialValues) {
 					R_NaString = ref;
 				} else if (strcmp(nameChars, "R_BlankString") == 0) {
 					R_BlankString = ref;
+				} else if (strcmp(nameChars, "R_TrueValue") == 0) {
+				    R_TrueValue = ref;
+				} else if (strcmp(nameChars, "R_FalseValue") == 0) {
+				    R_FalseValue = ref;
+				} else if (strcmp(nameChars, "R_LogicalNAValue") == 0) {
+				    R_LogicalNAValue = ref;
 				} else {
 					char msg[128];
 					strcpy(msg, "non-null R variable not assigned: ");

@@ -328,7 +328,7 @@ def rbcheck(args):
     os.close(_)
     with open(testfile, 'w') as f:
         for c in classes:
-            f.write(c[0] + ',' + c[1] + '\n')
+            f.write(c[0] + ',' + c[1][0] + '\n')
     analyzeArgs = []
     if args.check_internal:
         analyzeArgs.append(args.check_internal)
@@ -349,7 +349,7 @@ def rbcheck(args):
         analyzeArgs.append('--packageBase')
         analyzeArgs.append(args.packageBase)
     analyzeArgs.append(testfile)
-    cp = mx.classpath([pcp.name for pcp in mx.projects_opt_limit_to_suites()])
+    cp = mx.classpath('com.oracle.truffle.r.test')
     mx.run_java(['-cp', cp, 'com.oracle.truffle.r.test.tools.AnalyzeRBuiltin'] + analyzeArgs)
 
 def rcmplib(args):
@@ -386,7 +386,7 @@ def runRREPL(args, nonZeroIsFatal=True, extraVmArgs=None):
 def installcran(args):
     cran = 'com.oracle.truffle.r.test.cran'
     script = join(mx.project(cran).dir, 'r', 'install.cran.packages.R')
-    return runR([script] + args, rscript_command_class())
+    return rscript([script] + args)
 
 def load_optional_suite(name):
     hg_base = mx.get_env('MX_HG_BASE')

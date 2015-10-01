@@ -40,7 +40,7 @@ C_OBJECTS := $(subst $(SRC),$(OBJ),$(C_SOURCES:.c=.o))
 C_LIB := $(TOPDIR)/../lib/$(C_LIBNAME)
 
 JNI_INCLUDES = -I $(JAVA_HOME)/include -I $(JAVA_HOME)/include/$(JDK_OS_DIR)
-FFI_INCLUDES = -I$(TOPDIR)/include/jni/include -I$(TOPDIR)/include/jni/include/R_ext
+FFI_INCLUDES = -I$(TOPDIR)/include/jni/include -I$(TOPDIR)/gnur/R-3.1.3/src/include -I$(TOPDIR)/include/jni/include/R_ext
 
 INCLUDES := $(JNI_INCLUDES) $(FFI_INCLUDES)
 

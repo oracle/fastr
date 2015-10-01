@@ -216,7 +216,7 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
              * Interestingly we always need to provide not NOT_MULTIPLE_REPLACEMENT error messages
              * for multi-dimensional deletes.
              */
-            if ((this.numberOfDimensions > 1 && isDeleteElements()) || replacementLength % valueLength != 0) {
+            if ((this.numberOfDimensions > 1 && isNullValue()) || replacementLength % valueLength != 0) {
                 if (this.numberOfDimensions > 1) {
                     errorBranch.enter();
                     throw RError.error(this, RError.Message.NOT_MULTIPLE_REPLACEMENT);
@@ -249,7 +249,11 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
             if (mode.isSubset()) {
                 message = RError.Message.SUBASSIGN_TYPE_FIX;
             } else {
-                message = RError.Message.SUBSCRIPT_TYPES;
+                if (vectorType == RType.List) {
+                    message = RError.Message.SUBSCRIPT_TYPES;
+                } else {
+                    message = RError.Message.SUBASSIGN_TYPE_FIX;
+                }
             }
             throw RError.error(this, message, valueType.getName(), vectorType.getName(), false);
         }
@@ -271,7 +275,7 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
     }
 
     private boolean isDeleteElements() {
-        return castType == RType.List && valueClass == RNull.class;
+        return castType == RType.List && isNullValue();
     }
 
     private boolean isList() {
@@ -322,7 +326,9 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
         if (mode.isSubscript()) {
             if (!isList()) {
                 errorBranch.enter();
-                if (valueLength == 0) {
+                if (isNullValue()) {
+                    throw RError.error(this, RError.Message.MORE_SUPPLIED_REPLACE);
+                } else if (valueLength == 0) {
                     throw RError.error(this, RError.Message.REPLACEMENT_0);
                 } else {
                     throw RError.error(this, RError.Message.MORE_SUPPLIED_REPLACE);
@@ -330,14 +336,20 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
             }
         } else {
             assert mode.isSubset();
-            if (valueLength == 0) {
-                errorBranch.enter();
-                throw RError.error(this, RError.Message.REPLACEMENT_0);
-            } else if (positionsCheckNode.getContainsNA(positionProfiles)) {
-                errorBranch.enter();
-                throw RError.error(this, RError.Message.NA_SUBSCRIPTED);
+            if (!isNullValue() || this.numberOfDimensions == 1) {
+                if (valueLength == 0) {
+                    errorBranch.enter();
+                    throw RError.error(this, RError.Message.REPLACEMENT_0);
+                } else if (positionsCheckNode.getContainsNA(positionProfiles)) {
+                    errorBranch.enter();
+                    throw RError.error(this, RError.Message.NA_SUBSCRIPTED);
+                }
             }
         }
+    }
+
+    private boolean isNullValue() {
+        return valueClass == RNull.class;
     }
 
     private void updateVectorWithPositionNames(RAbstractVector vector, Object[] positions) {

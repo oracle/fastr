@@ -237,6 +237,7 @@ public class BasePackage extends RBuiltinPackage {
         add(Floor.class, FloorNodeGen::create);
         add(DotC.class, DotCNodeGen::create);
         add(ForeignFunctions.DotCall.class, ForeignFunctionsFactory.DotCallNodeGen::create);
+        add(ForeignFunctions.DotCallGraphics.class, ForeignFunctionsFactory.DotCallGraphicsNodeGen::create);
         add(ForeignFunctions.DotExternal.class, ForeignFunctionsFactory.DotExternalNodeGen::create);
         add(ForeignFunctions.DotExternal2.class, ForeignFunctionsFactory.DotExternal2NodeGen::create);
         add(ForeignFunctions.DotExternalGraphics.class, ForeignFunctionsFactory.DotExternalGraphicsNodeGen::create);
@@ -344,6 +345,7 @@ public class BasePackage extends RBuiltinPackage {
         add(Length.class, LengthNodeGen::create);
         add(License.class, LicenseNodeGen::create);
         add(ListBuiltin.class, ListBuiltinNodeGen::create);
+        add(LoadFunctions.Load.class, LoadFunctionsFactory.LoadNodeGen::create);
         add(LoadFunctions.LoadFromConn2.class, LoadFunctionsFactory.LoadFromConn2NodeGen::create);
         add(LocaleFunctions.BindTextDomain.class, LocaleFunctionsFactory.BindTextDomainNodeGen::create);
         add(LocaleFunctions.Enc2Native.class, LocaleFunctionsFactory.Enc2NativeNodeGen::create);
@@ -469,6 +471,7 @@ public class BasePackage extends RBuiltinPackage {
         add(TempFile.class, TempFileNodeGen::create);
         add(ToLower.class, ToLowerNodeGen::create);
         add(ToUpper.class, ToUpperNodeGen::create);
+        add(Traceback.class, TracebackNodeGen::create);
         add(Transpose.class, TransposeNodeGen::create);
         add(TrigExpFunctions.Acos.class, TrigExpFunctionsFactory.AcosNodeGen::create);
         add(TrigExpFunctions.Acosh.class, TrigExpFunctionsFactory.AcoshNodeGen::create);
@@ -533,7 +536,5 @@ public class BasePackage extends RBuiltinPackage {
         addFastPath(baseFrame, "pmin", FastPathFactory.EVALUATE_ARGS);
         addFastPath(baseFrame, "cbind", FastPathFactory.FORCED_EAGER_ARGS);
         addFastPath(baseFrame, "rbind", FastPathFactory.FORCED_EAGER_ARGS);
-// addFastPath(baseFrame, "cbind.data.frame", FastPathFactory.FORCED_EAGER_ARGS);
-// addFastPath(baseFrame, "rbind.data.frame", FastPathFactory.FORCED_EAGER_ARGS);
     }
 }
