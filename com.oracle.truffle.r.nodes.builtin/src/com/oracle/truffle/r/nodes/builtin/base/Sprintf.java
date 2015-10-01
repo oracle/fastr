@@ -35,6 +35,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.nodes.*;
+import com.sun.tools.corba.se.idl.ValueEntry;
 
 @RBuiltin(name = "sprintf", kind = INTERNAL, parameterNames = {"fmt", "..."})
 public abstract class Sprintf extends RBuiltinNode {
@@ -201,9 +202,11 @@ public abstract class Sprintf extends RBuiltinNode {
         Object[] values = args.getArguments();
         int maxLength = maxLengthAndConvertToScalar(values);
         if (maxLength == 0) {
-            return RDataFactory.createEmptyStringVector();
-        } else if (maxLength == 1) {
-            return RDataFactory.createStringVector(format(fmt, values));
+            if (values.length > 0) {
+                return RDataFactory.createEmptyStringVector();
+            } else {
+                return RDataFactory.createStringVector(fmt);
+            }
         } else {
             String[] r = new String[maxLength];
             for (int k = 0; k < r.length; k++) {
@@ -225,15 +228,45 @@ public abstract class Sprintf extends RBuiltinNode {
         return sprintfRecursive.executeObject(frame, fmt, args.getArgument(0));
     }
 
-    @Specialization(guards = {"!oneElement(args)", "fmtLengthOne(fmt)"})
+    @Specialization(guards = {"!oneElement(args)"})
     @TruffleBoundary
     protected RStringVector sprintf(RAbstractStringVector fmt, RArgsValuesAndNames args) {
-        return sprintf(fmt.getDataAt(0), args);
+        if (fmt.getLength() == 0) {
+            return RDataFactory.createEmptyStringVector();
+        } else {
+            String[] data = new String[fmt.getLength()];
+            for (int i = 0; i < data.length; i++) {
+                RStringVector formatted = sprintf(fmt.getDataAt(i), args);
+                assert formatted.getLength() > 0;
+                data[i] = formatted.getDataAt(args.getLength() == 0 ? 0 : i % Math.min(args.getLength(), formatted.getLength()));
+            }
+            return RDataFactory.createStringVector(data, RDataFactory.COMPLETE_VECTOR);
+        }
     }
 
     @Specialization(guards = {"oneElement(args)", "fmtLengthOne(fmt)"})
     protected Object sprintfOneElement(VirtualFrame frame, RAbstractStringVector fmt, RArgsValuesAndNames args) {
         return sprintfOneElement(frame, fmt.getDataAt(0), args);
+    }
+
+    @Specialization(guards = {"oneElement(args)", "!fmtLengthOne(fmt)"})
+    protected Object sprintf(VirtualFrame frame, RAbstractStringVector fmt, RArgsValuesAndNames args) {
+        if (fmt.getLength() == 0) {
+            return RDataFactory.createEmptyStringVector();
+        } else {
+            String[] data = new String[fmt.getLength()];
+            for (int i = 0; i < data.length; i++) {
+                Object formattedObj = sprintfOneElement(frame, fmt.getDataAt(i), args);
+                if (formattedObj instanceof String) {
+                    data[i] = (String) formattedObj;
+                } else {
+                    RStringVector formatted = (RStringVector) formattedObj;
+                    assert formatted.getLength() > 0;
+                    data[i] = formatted.getDataAt(i % formatted.getLength());
+                }
+            }
+            return RDataFactory.createStringVector(data, RDataFactory.COMPLETE_VECTOR);
+        }
     }
 
     private static String format(String fmt, Object... args) {
