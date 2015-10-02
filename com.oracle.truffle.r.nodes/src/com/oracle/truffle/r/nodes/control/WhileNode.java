@@ -45,7 +45,7 @@ public final class WhileNode extends AbstractLoopNode implements RSyntaxNode, Vi
     private final boolean isRepeat;
 
     private WhileNode(RSyntaxNode condition, RSyntaxNode body, boolean isRepeat) {
-        this.loop = Truffle.getRuntime().createLoopNode(new WhileRepeatingNode(ConvertBooleanNode.create(condition), body.asRNode()));
+        this.loop = Truffle.getRuntime().createLoopNode(new WhileRepeatingNode(this, ConvertBooleanNode.create(condition), body.asRNode()));
         this.isRepeat = isRepeat;
     }
 
@@ -122,7 +122,11 @@ public final class WhileNode extends AbstractLoopNode implements RSyntaxNode, Vi
         private final BranchProfile breakBlock = BranchProfile.create();
         private final BranchProfile nextBlock = BranchProfile.create();
 
-        public WhileRepeatingNode(ConvertBooleanNode condition, RNode body) {
+        // used as RSyntaxNode
+        private final WhileNode whileNode;
+
+        public WhileRepeatingNode(WhileNode whileNode, ConvertBooleanNode condition, RNode body) {
+            this.whileNode = whileNode;
             this.condition = condition;
             this.body = body;
             // pre-initialize the profile so that loop exits to not deoptimize
@@ -156,11 +160,7 @@ public final class WhileNode extends AbstractLoopNode implements RSyntaxNode, Vi
 
         @Override
         protected RSyntaxNode getRSyntaxNode() {
-            Node current = this;
-            while (!(current instanceof WhileNode)) {
-                current = current.getParent();
-            }
-            return (WhileNode) current;
+            return whileNode;
         }
 
         @Override
