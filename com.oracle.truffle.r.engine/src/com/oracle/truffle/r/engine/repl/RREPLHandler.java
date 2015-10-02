@@ -74,9 +74,9 @@ public abstract class RREPLHandler extends REPLHandler {
                 Object returnValue;
                 // This doesn't work because no way to communicate mFrame
                 if (mFrame == null) { // Top Level
-                    returnValue = serverContext.vm().eval(source).get();
+                    returnValue = serverContext.engine().eval(source).get();
                 } else {
-                    returnValue = serverContext.vm().eval(source).get();
+                    returnValue = serverContext.engine().eval(source).get();
                 }
                 return finishReplySucceeded(message, visualizer.displayValue(returnValue, 0));
             } catch (QuitException ex) {
