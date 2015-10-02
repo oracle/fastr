@@ -22,17 +22,19 @@
  */
 package com.oracle.truffle.r.runtime.rng.user;
 
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.ffi.*;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
-import com.oracle.truffle.r.runtime.rng.*;
-import com.oracle.truffle.r.runtime.rng.RRNG.GeneratorPrivate;
+import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
+import com.oracle.truffle.r.runtime.ffi.UserRngRFFI;
+import com.oracle.truffle.r.runtime.rng.RNGInitAdapter;
+import com.oracle.truffle.r.runtime.rng.RRNG.Kind;
 import com.oracle.truffle.r.runtime.rng.RRNG.RNGException;
 
 /**
  * Interface to a user-supplied RNG.
  */
-public class UserRNG extends RNGInitAdapter implements GeneratorPrivate {
+public final class UserRNG extends RNGInitAdapter {
 
     private static final String USER_UNIF_RAND = "user_unif_rand";
     private static final String USER_UNIF_INIT = "user_unif_init";
@@ -90,4 +92,7 @@ public class UserRNG extends RNGInitAdapter implements GeneratorPrivate {
         return userRngRFFI.rand();
     }
 
+    public Kind getKind() {
+        return Kind.USER_UNIF;
+    }
 }

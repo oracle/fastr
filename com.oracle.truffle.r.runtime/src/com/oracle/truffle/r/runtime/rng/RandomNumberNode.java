@@ -22,31 +22,30 @@
  */
 package com.oracle.truffle.r.runtime.rng;
 
-import com.oracle.truffle.api.utilities.*;
-import com.oracle.truffle.r.runtime.nodes.*;
-import com.oracle.truffle.r.runtime.rng.RRNG.GeneratorPrivate;
+import com.oracle.truffle.api.utilities.ValueProfile;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
+import com.oracle.truffle.r.runtime.rng.RRNG.RandomNumberGenerator;
 
 public final class RandomNumberNode extends RBaseNode {
 
     private final ValueProfile generatorProfile = ValueProfile.createIdentityProfile();
     private final ValueProfile generatorClassProfile = ValueProfile.createClassProfile();
 
-    public static final class RandomNumberGenerator {
+    public static final class RNGState {
+        private final RandomNumberGenerator generator;
 
-        private final GeneratorPrivate generator;
-
-        private RandomNumberGenerator(GeneratorPrivate generator) {
+        private RNGState(RandomNumberGenerator generator) {
             this.generator = generator;
         }
     }
 
-    public RandomNumberGenerator initialize() {
-        GeneratorPrivate generator = generatorClassProfile.profile(generatorProfile.profile(RRNG.currentGenerator()));
-        return new RandomNumberGenerator(generator);
+    public RNGState initialize() {
+        RandomNumberGenerator generator = generatorClassProfile.profile(generatorProfile.profile(RRNG.currentGenerator()));
+        return new RNGState(generator);
     }
 
-    public double unifRand(RandomNumberGenerator generator) {
+    public double unifRand(RNGState state) {
         // use class profile here to allow for proper inlining
-        return generatorClassProfile.profile(generator.generator).genrandDouble();
+        return generatorClassProfile.profile(state.generator).genrandDouble();
     }
 }

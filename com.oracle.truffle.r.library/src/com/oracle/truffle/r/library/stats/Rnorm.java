@@ -11,12 +11,12 @@
  */
 package com.oracle.truffle.r.library.stats;
 
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.nodes.*;
-import com.oracle.truffle.r.runtime.rng.*;
-import com.oracle.truffle.r.runtime.rng.RandomNumberNode.RandomNumberGenerator;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.rng.RandomNumberNode;
+import com.oracle.truffle.r.runtime.rng.RandomNumberNode.RNGState;
 
 /**
  * TODO GnuR checks/updates {@code .Random.seed} across this call. TODO Honor min/max.
@@ -28,7 +28,7 @@ public abstract class Rnorm extends RExternalBuiltinNode.Arg3 {
     private static final double BIG = 134217728;
 
     // from GNUR: snorm.c, rnorm.c
-    private double normRand(RandomNumberGenerator gen) {
+    private double normRand(RNGState gen) {
         double u1;
 
         /* unif_rand() alone is not of high enough precision */
@@ -43,7 +43,7 @@ public abstract class Rnorm extends RExternalBuiltinNode.Arg3 {
         int nInt = castInt(castVector(n));
         RNode.reportWork(this, nInt);
 
-        RandomNumberGenerator gen = random.initialize();
+        RNGState gen = random.initialize();
 
         double[] result = new double[nInt];
         for (int i = 0; i < nInt; i++) {

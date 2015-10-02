@@ -5,15 +5,15 @@
  *
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2014, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
 package com.oracle.truffle.r.runtime.rng;
 
-import com.oracle.truffle.r.runtime.rng.RRNG.GeneratorPrivate;
+import com.oracle.truffle.r.runtime.rng.RRNG.RandomNumberGenerator;
 
-public abstract class RNGInitAdapter implements GeneratorPrivate {
+public abstract class RNGInitAdapter implements RandomNumberGenerator {
 
     /**
      * This function is derived from GNU R, RNG.c (RNG_Init).
@@ -27,5 +27,4 @@ public abstract class RNGInitAdapter implements GeneratorPrivate {
 
         fixupSeeds(true);
     }
-
 }

@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 1997-2002, Makoto Matsumoto and Takuji Nishimura
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -65,11 +65,9 @@ package com.oracle.truffle.r.runtime.rng.mt;
 
 import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.r.runtime.rng.*;
+import com.oracle.truffle.r.runtime.rng.RRNG.Kind;
 
-public final class MersenneTwister extends RNGInitAdapter implements RRNG.GeneratorPrivate {
-
-    public MersenneTwister() {
-    }
+public final class MersenneTwister extends RNGInitAdapter {
 
     /* Period parameters */
     private static final int N = 624;
@@ -302,4 +300,7 @@ public final class MersenneTwister extends RNGInitAdapter implements RRNG.Genera
         mt[0] = 0x80000000; /* MSB is 1; assuring non-zero initial array */
     }
 
+    public Kind getKind() {
+        return Kind.MERSENNE_TWISTER;
+    }
 }

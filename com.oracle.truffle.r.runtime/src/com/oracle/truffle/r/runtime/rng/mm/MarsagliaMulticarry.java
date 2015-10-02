@@ -5,19 +5,20 @@
  *
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2014, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
 package com.oracle.truffle.r.runtime.rng.mm;
 
-import com.oracle.truffle.r.runtime.rng.*;
-import com.oracle.truffle.r.runtime.rng.RRNG.GeneratorPrivate;
+import com.oracle.truffle.r.runtime.rng.RNGInitAdapter;
+import com.oracle.truffle.r.runtime.rng.RRNG;
+import com.oracle.truffle.r.runtime.rng.RRNG.Kind;
 
 /**
  * "Marsaglia-Multicarry" RNG. Transcribed from GnuR RNG.c.
  */
-public class MarsagliaMulticarry extends RNGInitAdapter implements GeneratorPrivate {
+public final class MarsagliaMulticarry extends RNGInitAdapter {
 
     private final int[] state = new int[2];
 
@@ -46,4 +47,7 @@ public class MarsagliaMulticarry extends RNGInitAdapter implements GeneratorPriv
         return RRNG.fixup(d); /* in [0,1) */
     }
 
+    public Kind getKind() {
+        return Kind.MARSAGLIA_MULTICARRY;
+    }
 }

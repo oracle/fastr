@@ -11,18 +11,23 @@
  */
 package com.oracle.truffle.r.runtime.rng;
 
+import java.util.function.Supplier;
+
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.RErrorException;
-import com.oracle.truffle.r.runtime.context.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.env.*;
-import com.oracle.truffle.r.runtime.ffi.*;
-import com.oracle.truffle.r.runtime.rng.mm.*;
-import com.oracle.truffle.r.runtime.rng.mt.*;
-import com.oracle.truffle.r.runtime.rng.user.*;
+import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
+import com.oracle.truffle.r.runtime.rng.mm.MarsagliaMulticarry;
+import com.oracle.truffle.r.runtime.rng.mt.MersenneTwister;
+import com.oracle.truffle.r.runtime.rng.user.UserRNG;
 
 /**
  * Facade class to the R random number generators, (see src/main/RNG.c in GnuR). The individual
@@ -42,50 +47,37 @@ public class RRNG {
      * {@link RRNG#doSetSeed}.
      */
     public enum Kind {
-        WICHMANN_HILL(false),
-        MARSAGLIA_MULTICARRY(true) {
-            @Override
-            Kind setGenerator() {
-                generator = new MarsagliaMulticarry();
-                return this;
-            }
-        },
-        SUPER_DUPER(false),
-        MERSENNE_TWISTER(true) {
-            @Override
-            Kind setGenerator() {
-                generator = new MersenneTwister();
-                return this;
-            }
-        },
-        KNUTH_TAOCP(false),
-        USER_UNIF(true) {
-            @Override
-            Kind setGenerator() {
-                generator = new UserRNG();
-                return this;
-            }
-        },
-        KNUTH_TAOCP2(false),
-        LECUYER_CMRG(false);
+        WICHMANN_HILL(),
+        MARSAGLIA_MULTICARRY(MarsagliaMulticarry::new),
+        SUPER_DUPER(),
+        MERSENNE_TWISTER(MersenneTwister::new),
+        KNUTH_TAOCP(),
+        USER_UNIF(UserRNG::new),
+        KNUTH_TAOCP2(),
+        LECUYER_CMRG();
 
         @CompilationFinal static final Kind[] VALUES = values();
 
-        private final boolean available;
-        GeneratorPrivate generator;
+        private final Supplier<RandomNumberGenerator> createFunction;
 
-        /**
-         * Lazy setting of the actual generator.
-         */
-        Kind setGenerator() {
-            assert false;
-            return this;
+        Kind() {
+            // this RNG kind is not available
+            this.createFunction = null;
         }
 
-        Kind(boolean available) {
-            this.available = available;
+        Kind(Supplier<RandomNumberGenerator> create) {
+            this.createFunction = create;
         }
 
+        public RandomNumberGenerator create() {
+            RandomNumberGenerator rng = createFunction.get();
+            assert rng.getKind() == this;
+            return rng;
+        }
+
+        public boolean isAvailable() {
+            return createFunction != null;
+        }
     }
 
     public enum NormKind {
@@ -113,7 +105,7 @@ public class RRNG {
     /**
      * The (logically private) interface that a random number generator must implement.
      */
-    public interface GeneratorPrivate {
+    public interface RandomNumberGenerator {
         void init(int seed) throws RNGException;
 
         void fixupSeeds(boolean initial);
@@ -121,6 +113,8 @@ public class RRNG {
         int[] getSeeds();
 
         double genrandDouble();
+
+        Kind getKind();
     }
 
     /**
@@ -148,16 +142,16 @@ public class RRNG {
     }
 
     public static final class ContextStateImpl implements RContext.ContextState {
-        private Kind currentKind;
+        private RandomNumberGenerator rng;
         private NormKind currentNormKind;
 
-        private ContextStateImpl(Kind currentKind, NormKind currentNormKind) {
-            this.currentKind = currentKind;
+        private ContextStateImpl(RandomNumberGenerator rng, NormKind currentNormKind) {
+            this.rng = rng;
             this.currentNormKind = currentNormKind;
         }
 
-        void updateCurrentKind(Kind kind) {
-            currentKind = kind;
+        void updateCurrentGenerator(RandomNumberGenerator newRng) {
+            this.rng = newRng;
         }
 
         void updateCurrentNormKind(NormKind normKind) {
@@ -166,12 +160,13 @@ public class RRNG {
 
         public static ContextStateImpl newContext(@SuppressWarnings("unused") RContext context) {
             int seed = timeToSeed();
+            RandomNumberGenerator rng = DEFAULT_KIND.create();
             try {
-                initGenerator(DEFAULT_KIND.setGenerator(), seed);
+                initGenerator(rng, seed);
             } catch (RNGException ex) {
                 Utils.fail("failed to initialize default random number generator");
             }
-            return new ContextStateImpl(DEFAULT_KIND, DEFAULT_NORM_KIND);
+            return new ContextStateImpl(rng, DEFAULT_NORM_KIND);
         }
     }
 
@@ -180,7 +175,7 @@ public class RRNG {
     }
 
     public static int currentKindAsInt() {
-        return getContextState().currentKind.ordinal();
+        return getContextState().rng.getKind().ordinal();
     }
 
     public static int currentNormKindAsInt() {
@@ -188,11 +183,11 @@ public class RRNG {
     }
 
     private static Kind currentKind() {
-        return getContextState().currentKind;
+        return getContextState().rng.getKind();
     }
 
-    static GeneratorPrivate currentGenerator() {
-        return getContextState().currentKind.generator;
+    static RandomNumberGenerator currentGenerator() {
+        return getContextState().rng;
     }
 
     private static NormKind currentNormKind() {
@@ -234,8 +229,9 @@ public class RRNG {
     @TruffleBoundary
     private static void changeKindsAndInitGenerator(int newSeed, int kindAsInt, int normKindAsInt) throws RNGException {
         Kind kind = changeKinds(kindAsInt, normKindAsInt);
-        initGenerator(kind, newSeed);
-        getContextState().updateCurrentKind(kind);
+        RandomNumberGenerator rng = kind.create();
+        initGenerator(rng, newSeed);
+        getContextState().updateCurrentGenerator(rng);
     }
 
     private static Kind changeKinds(int kindAsInt, int normKindAsInt) throws RNGException {
@@ -247,7 +243,7 @@ public class RRNG {
                 kind = DEFAULT_KIND;
             } else {
                 kind = intToKind(kindAsInt);
-                if (!kind.available) {
+                if (!kind.isAvailable()) {
                     throw RNGException.raise(RError.Message.RNG_BAD_KIND, true, kind);
                 }
             }
@@ -288,16 +284,13 @@ public class RRNG {
         return NormKind.VALUES[normKindAsInt];
     }
 
-    private static void initGenerator(Kind kind, int aSeed) throws RNGException {
+    private static void initGenerator(RandomNumberGenerator generator, int aSeed) throws RNGException {
         // Initial scrambling, common to all, from RNG_Init in src/main/RNG.c
         int seed = aSeed;
         for (int i = 0; i < 50; i++) {
             seed = (69069 * seed + 1);
         }
-        if (kind.generator == null) {
-            kind.setGenerator();
-        }
-        kind.generator.init(seed);
+        generator.init(seed);
     }
 
     @SuppressWarnings("unused")
@@ -307,7 +300,7 @@ public class RRNG {
     }
 
     private static void updateDotRandomSeed() {
-        int[] seeds = currentKind().generator.getSeeds();
+        int[] seeds = currentGenerator().getSeeds();
         if (seeds == null) {
             seeds = NO_SEEDS;
         }
