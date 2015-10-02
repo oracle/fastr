@@ -136,8 +136,12 @@ public abstract class Format extends RBuiltinNode {
         String[] data = new String[value.getLength()];
         int width = 0;
         int widthChanges = 0;
+        boolean complete = RDataFactory.COMPLETE_VECTOR;
         for (int i = 0; i < data.length; i++) {
             data[i] = PrettyPrinterNode.prettyPrint(value.getDataAt(i));
+            if (RRuntime.isNA(data[i])) {
+                complete = RDataFactory.INCOMPLETE_VECTOR;
+            }
             if (width < data[i].length()) {
                 width = data[i].length();
                 widthChanges++;
@@ -146,8 +150,7 @@ public abstract class Format extends RBuiltinNode {
         if (widthChanges > 1) {
             addSpaces(data, width);
         }
-        // vector is complete because strings are created by string builder
-        return RDataFactory.createStringVector(data, RDataFactory.COMPLETE_VECTOR);
+        return RDataFactory.createStringVector(data, complete);
     }
 
     @Specialization
@@ -195,8 +198,12 @@ public abstract class Format extends RBuiltinNode {
         String[] data = new String[value.getLength()];
         int width = 0;
         int widthChanges = 0;
+        boolean complete = RDataFactory.COMPLETE_VECTOR;
         for (int i = 0; i < data.length; i++) {
             data[i] = PrettyPrinterNode.prettyPrint(value.getDataAt(i));
+            if (RRuntime.isNA(data[i])) {
+                complete = RDataFactory.INCOMPLETE_VECTOR;
+            }
         }
         PrettyPrinterNode.padTrailingDecimalPointAndZeroesIfRequired(data);
         for (int i = 0; i < data.length; i++) {
@@ -209,7 +216,7 @@ public abstract class Format extends RBuiltinNode {
             addSpaces(data, width);
         }
         // vector is complete because strings are created by string builder
-        return RDataFactory.createStringVector(data, RDataFactory.COMPLETE_VECTOR);
+        return RDataFactory.createStringVector(data, complete);
     }
 
     @Specialization
