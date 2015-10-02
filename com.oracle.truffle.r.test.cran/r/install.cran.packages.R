@@ -18,7 +18,8 @@
 args <- commandArgs(TRUE)
 
 usage <- function() {
-	cat("usage: Rscript [--contriburl url] [--cran-mirror url] [--lib] [--verbose | -v] [-V] [--dryrun] [ --no-install | -n] [--create-blacklist] [--blacklist-file file] [package-pattern]\n")
+	cat(paste("usage: Rscript [--contriburl url] [--cran-mirror url] [--lib] [--verbose | -v] [-V] [--dryrun]",
+                      "[ --no-install | -n] [--create-blacklist] [--blacklist-file file] [--ignore-blacklist] [package-pattern]\n"))
 	quit(status=1)
 }
 
@@ -168,7 +169,11 @@ do.install <- function() {
 		blacklist <- create.blacklist()
 		writeLines(sort(blacklist), con=blacklist.file)
 	} else {
-		blacklist <- readLines(con=file(blacklist.file))
+		if (ignore.blacklist) {
+			blacklist <- character()
+		} else {
+		    blacklist <- readLines(con=file(blacklist.file))
+		}
 	}
 
 	if (install) {
@@ -212,6 +217,8 @@ parse.args <- function() {
 			dry.run <<- T
 		} else if (a == "--create-blacklist") {
 			create.blacklist.file <<- T
+		} else if (a == "--ignore-blacklist") {
+			ignore.blacklist <<- T
 		} else if (a == "--blacklist-file") {
 			if (length(args) >= 2L) {
 				blacklist.file <<- args[2L]
@@ -258,7 +265,7 @@ cat.args <- function() {
 
 check.libs <- function() {
 	if (is.na(lib.install)) {
-		lib.install <- Sys.getenv("R_LIBS_USER", unset=NA)
+		lib.install <<- Sys.getenv("R_LIBS_USER", unset=NA)
 	}
 	if (is.na(lib.install)) {
 		abort("--lib path or R_LIBS_USER must be set")
@@ -290,6 +297,7 @@ dry.run <- F
 avail.pkgs <- NULL
 toinstall.pkgs <- NULL
 create.blacklist.file <- F
+ignore.backlist <- F
 
 if (!interactive()) {
     run()
