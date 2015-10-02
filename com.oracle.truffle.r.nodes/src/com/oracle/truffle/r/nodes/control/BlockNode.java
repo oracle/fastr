@@ -25,7 +25,9 @@ package com.oracle.truffle.r.nodes.control;
 import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.source.*;
+import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.nodes.*;
 
@@ -130,6 +132,37 @@ public class BlockNode extends SequenceNode implements RSyntaxNode, VisibilityCo
             sequenceSubs[i] = sequence[i].substitute(env).asRNode();
         }
         return new BlockNode(null, sequenceSubs);
+    }
+
+    public int getRlengthImpl() {
+        /*
+         * We can't get this completely compatible with GnuR without knowing if the source had a "{"
+         * or not. However, semantically what really matters is that if the length is > 1, there
+         * *must* have been a "{", so we fabricate it.
+         */
+        int len = getSequence().length;
+        return len == 1 ? 1 : len + 1;
+    }
+
+    @Override
+    public Object getRelementImpl(int index) {
+        /* See related comments in getRlengthImpl. */
+        RNode[] seq = getSequence();
+        if (seq.length > 1) {
+            switch (index) {
+                case 0:
+                    return RDataFactory.createSymbol("{");
+                default:
+                    return RASTUtils.createLanguageElement(seq[index - 1]);
+            }
+        } else {
+            return RASTUtils.createLanguageElement(seq[0]);
+        }
+    }
+
+    @Override
+    public boolean getRequalsImpl(RSyntaxNode other) {
+        throw RInternalError.unimplemented();
     }
 
 }

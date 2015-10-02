@@ -26,6 +26,7 @@ import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.utilities.*;
+import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -140,4 +141,31 @@ public final class IfNode extends RNode implements RSyntaxNode, VisibilityContro
     public RSyntaxNode substituteImpl(REnvironment env) {
         return create(null, condition.substitute(env), thenPart.substitute(env), elsePart.substitute(env));
     }
+
+    @Override
+    public int getRlengthImpl() {
+        return 3 + (elsePart != null ? 1 : 0);
+    }
+
+    @Override
+    public Object getRelementImpl(int index) {
+        switch (index) {
+            case 0:
+                return RDataFactory.createSymbol("if");
+            case 1:
+                return RASTUtils.createLanguageElement(condition.getOperand());
+            case 2:
+                return RASTUtils.createLanguageElement(thenPart);
+            case 3:
+                return RASTUtils.createLanguageElement(elsePart);
+            default:
+                throw RInternalError.shouldNotReachHere();
+        }
+    }
+
+    @Override
+    public boolean getRequalsImpl(RSyntaxNode other) {
+        throw RInternalError.unimplemented();
+    }
+
 }

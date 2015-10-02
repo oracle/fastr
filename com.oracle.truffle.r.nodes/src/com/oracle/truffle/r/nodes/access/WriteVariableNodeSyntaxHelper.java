@@ -22,7 +22,9 @@
  */
 package com.oracle.truffle.r.nodes.access;
 
+import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.gnur.*;
 import com.oracle.truffle.r.runtime.nodes.*;
 
@@ -51,4 +53,17 @@ abstract class WriteVariableNodeSyntaxHelper extends WriteVariableNode {
         }
     }
 
+    protected Object getRelementHelper(String op, int index) {
+        switch (index) {
+            case 0:
+                return RDataFactory.createSymbol(op);
+            case 1:
+                return RDataFactory.createSymbol(getName().toString());
+            case 2:
+                return RASTUtils.createLanguageElement(getRhs());
+            default:
+                throw RInternalError.shouldNotReachHere();
+        }
+
+    }
 }

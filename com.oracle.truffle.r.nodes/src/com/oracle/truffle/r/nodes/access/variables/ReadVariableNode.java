@@ -174,6 +174,20 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
         state.setCarAsSymbol(identifier.toString());
     }
 
+    public int getRlengthImpl() {
+        return 1;
+    }
+
+    @Override
+    public Object getRelementImpl(int index) {
+        return RDataFactory.createSymbol(identifier.toString());
+    }
+
+    @Override
+    public boolean getRequalsImpl(RSyntaxNode other) {
+        throw RInternalError.unimplemented();
+    }
+
     @Override
     public boolean isSyntax() {
         return identifier instanceof String && !AnonymousFrameVariable.isAnonymous(identifierAsString);

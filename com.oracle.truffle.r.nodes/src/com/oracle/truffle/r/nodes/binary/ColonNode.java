@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.binary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.utilities.*;
+import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.binary.ColonNodeGen.ColonCastNodeGen;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RDeparse.State;
@@ -143,6 +144,29 @@ public abstract class ColonNode extends RNode implements RSyntaxNode, Visibility
         return create(null, getLeft().substitute(env).asRNode(), getRight().substitute(env).asRNode());
     }
 
+    public int getRlengthImpl() {
+        return 3;
+    }
+
+    @Override
+    public Object getRelementImpl(int index) {
+        switch (index) {
+            case 0:
+                return RDataFactory.createSymbol(":");
+            case 1:
+                return RASTUtils.createLanguageElement(getLeft());
+            case 2:
+                return RASTUtils.createLanguageElement(getRight());
+            default:
+                throw RInternalError.shouldNotReachHere();
+        }
+    }
+
+    @Override
+    public boolean getRequalsImpl(RSyntaxNode other) {
+        throw RInternalError.unimplemented();
+    }
+
     protected static double asDouble(int intValue) {
         return intValue;
     }
@@ -229,6 +253,20 @@ public abstract class ColonNode extends RNode implements RSyntaxNode, Visibility
         @Override
         public RSyntaxNode substituteImpl(REnvironment env) {
             return getOperand().substitute(env);
+        }
+
+        public int getRlengthImpl() {
+            return getOperand().getRLength();
+        }
+
+        @Override
+        public Object getRelementImpl(int index) {
+            return getOperand().getRelement(index);
+        }
+
+        @Override
+        public boolean getRequalsImpl(RSyntaxNode other) {
+            return getOperand().getRequals(other);
         }
     }
 }

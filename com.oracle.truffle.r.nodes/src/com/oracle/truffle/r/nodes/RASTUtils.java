@@ -380,6 +380,19 @@ public class RASTUtils {
             throw RInternalError.unimplemented();
         }
 
+        public int getRlengthImpl() {
+            throw RInternalError.unimplemented();
+        }
+
+        @Override
+        public Object getRelementImpl(int index) {
+            throw RInternalError.unimplemented();
+        }
+
+        @Override
+        public boolean getRequalsImpl(RSyntaxNode other) {
+            throw RInternalError.unimplemented();
+        }
     }
 
     /**

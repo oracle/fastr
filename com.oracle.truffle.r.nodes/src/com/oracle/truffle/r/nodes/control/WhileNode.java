@@ -113,6 +113,33 @@ public final class WhileNode extends AbstractLoopNode implements RSyntaxNode, Vi
         return create(getCondition().substitute(env), getBody().substitute(env), isRepeat);
     }
 
+    public int getRlengthImpl() {
+        return isRepeat ? 2 : 3;
+    }
+
+    @Override
+    public Object getRelementImpl(int indexArg) {
+        int index = indexArg;
+        if (isRepeat && index == 1) {
+            index = 2;
+        }
+        switch (index) {
+            case 0:
+                return RDataFactory.createSymbol(isRepeat ? "repeat" : "while");
+            case 1:
+                return RASTUtils.createLanguageElement(getCondition());
+            case 2:
+                return RASTUtils.createLanguageElement(getBody());
+            default:
+                throw RInternalError.shouldNotReachHere();
+        }
+    }
+
+    @Override
+    public boolean getRequalsImpl(RSyntaxNode other) {
+        throw RInternalError.unimplemented();
+    }
+
     private static final class WhileRepeatingNode extends RBaseNode implements RepeatingNode {
 
         @Child private ConvertBooleanNode condition;

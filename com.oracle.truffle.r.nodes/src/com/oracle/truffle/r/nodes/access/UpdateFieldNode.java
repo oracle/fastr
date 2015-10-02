@@ -186,4 +186,18 @@ public abstract class UpdateFieldNode extends RNode implements RSyntaxNode {
         throw RInternalError.unimplemented("serializeImpl");
     }
 
+    public int getRlengthImpl() {
+        throw RInternalError.unimplemented();
+    }
+
+    @Override
+    public Object getRelementImpl(int index) {
+        throw RInternalError.unimplemented();
+    }
+
+    @Override
+    public boolean getRequalsImpl(RSyntaxNode other) {
+        throw RInternalError.unimplemented();
+    }
+
 }

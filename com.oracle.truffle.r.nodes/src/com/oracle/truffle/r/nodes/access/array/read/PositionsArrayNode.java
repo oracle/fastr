@@ -160,4 +160,18 @@ public class PositionsArrayNode extends RNode implements RSyntaxNode {
     public void serializeImpl(RSerialize.State state) {
         positionsAdapter.serialize(state);
     }
+
+    public int getRlengthImpl() {
+        throw RInternalError.unimplemented();
+    }
+
+    @Override
+    public Object getRelementImpl(int index) {
+        throw RInternalError.unimplemented();
+    }
+
+    @Override
+    public boolean getRequalsImpl(RSyntaxNode other) {
+        throw RInternalError.unimplemented();
+    }
 }

@@ -28,6 +28,7 @@ import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.nodes.*;
 
@@ -94,4 +95,19 @@ public final class ReplacementNode extends RNode implements RSyntaxNode {
     public RSyntaxNode substituteImpl(REnvironment env) {
         return syntaxAST.substituteImpl(env);
     }
+
+    public int getRlengthImpl() {
+        return 3;
+    }
+
+    @Override
+    public Object getRelementImpl(int index) {
+        return RNull.instance;
+    }
+
+    @Override
+    public boolean getRequalsImpl(RSyntaxNode other) {
+        throw RInternalError.unimplemented();
+    }
+
 }

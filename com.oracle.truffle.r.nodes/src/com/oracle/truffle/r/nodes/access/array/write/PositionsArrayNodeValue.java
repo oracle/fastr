@@ -107,4 +107,18 @@ public class PositionsArrayNodeValue extends RNode implements RSyntaxNode {
     public RSyntaxNode substituteImpl(REnvironment env) {
         throw RInternalError.unimplemented();
     }
+
+    public int getRlengthImpl() {
+        throw RInternalError.unimplemented();
+    }
+
+    @Override
+    public Object getRelementImpl(int index) {
+        throw RInternalError.unimplemented();
+    }
+
+    @Override
+    public boolean getRequalsImpl(RSyntaxNode other) {
+        throw RInternalError.unimplemented();
+    }
 }

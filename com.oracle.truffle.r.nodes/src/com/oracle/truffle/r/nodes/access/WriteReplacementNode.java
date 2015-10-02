@@ -86,4 +86,18 @@ public class WriteReplacementNode extends RNode implements RSyntaxNode {
         throw RInternalError.unimplemented();
     }
 
+    public int getRlengthImpl() {
+        return 3;
+    }
+
+    @Override
+    public Object getRelementImpl(int index) {
+        throw RInternalError.unimplemented();
+    }
+
+    @Override
+    public boolean getRequalsImpl(RSyntaxNode other) {
+        throw RInternalError.unimplemented();
+    }
+
 }

@@ -105,4 +105,18 @@ public final class RBuiltinRootNode extends RRootNode implements RSyntaxNode {
     public void serializeImpl(com.oracle.truffle.r.runtime.RSerialize.State state) {
         throw RInternalError.shouldNotReachHere();
     }
+
+    public int getRlengthImpl() {
+        throw RInternalError.unimplemented();
+    }
+
+    @Override
+    public Object getRelementImpl(int index) {
+        throw RInternalError.unimplemented();
+    }
+
+    @Override
+    public boolean getRequalsImpl(RSyntaxNode other) {
+        throw RInternalError.unimplemented();
+    }
 }

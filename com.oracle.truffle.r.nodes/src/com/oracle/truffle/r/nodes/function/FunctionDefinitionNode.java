@@ -403,6 +403,20 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         state.setCdr(state.closePairList());
     }
 
+    public int getRlengthImpl() {
+        throw RInternalError.unimplemented();
+    }
+
+    @Override
+    public Object getRelementImpl(int index) {
+        throw RInternalError.unimplemented();
+    }
+
+    @Override
+    public boolean getRequalsImpl(RSyntaxNode other) {
+        throw RInternalError.unimplemented();
+    }
+
     /**
      * Also called by {@link FunctionExpressionNode}.
      */

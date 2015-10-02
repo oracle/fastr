@@ -333,6 +333,20 @@ public abstract class PromiseNode extends RNode {
         public void serializeImpl(State state) {
             throw RInternalError.unimplemented();
         }
+
+        public int getRlengthImpl() {
+            throw RInternalError.unimplemented();
+        }
+
+        @Override
+        public Object getRelementImpl(@SuppressWarnings("hiding") int index) {
+            throw RInternalError.unimplemented();
+        }
+
+        @Override
+        public boolean getRequalsImpl(RSyntaxNode other) {
+            throw RInternalError.unimplemented();
+        }
     }
 
     @TruffleBoundary

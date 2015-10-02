@@ -126,6 +126,21 @@ public abstract class RBaseNode extends Node {
         syntaxNode.serializeImpl(state);
     }
 
+    public int getRLength() {
+        RSyntaxNode syntaxNode = getRSyntaxNode();
+        return syntaxNode.getRlengthImpl();
+    }
+
+    public Object getRelement(int index) {
+        RSyntaxNode syntaxNode = getRSyntaxNode();
+        return syntaxNode.getRelementImpl(index);
+    }
+
+    public boolean getRequals(RSyntaxNode other) {
+        RSyntaxNode syntaxNode = getRSyntaxNode();
+        return syntaxNode.getRequalsImpl(other);
+    }
+
     @Override
     public SourceSection getSourceSection() {
         if (this instanceof WrapperNode) {

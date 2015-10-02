@@ -150,4 +150,18 @@ public final class FunctionExpressionNode extends RNode implements RSyntaxNode {
         FunctionDefinitionNode fdn = (FunctionDefinitionNode) thisFdn.substituteImpl(env);
         return new FunctionExpressionNode(null, Truffle.getRuntime().createCallTarget(fdn), fastPath);
     }
+
+    public int getRlengthImpl() {
+        throw RInternalError.unimplemented();
+    }
+
+    @Override
+    public Object getRelementImpl(int index) {
+        throw RInternalError.unimplemented();
+    }
+
+    @Override
+    public boolean getRequalsImpl(RSyntaxNode other) {
+        throw RInternalError.unimplemented();
+    }
 }

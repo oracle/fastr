@@ -100,6 +100,20 @@ public class WriteCurrentVariableNode extends WriteVariableNodeSyntaxHelper impl
         return create(null, name, rhsSub);
     }
 
+    public int getRlengthImpl() {
+        return 3;
+    }
+
+    @Override
+    public Object getRelementImpl(int index) {
+        return getRelementHelper("<-", index);
+    }
+
+    @Override
+    public boolean getRequalsImpl(RSyntaxNode other) {
+        throw RInternalError.unimplemented();
+    }
+
     @Override
     public WrapperNode createRWrapperNode() {
         return new WriteCurrentVariableNodeWrapper(this);

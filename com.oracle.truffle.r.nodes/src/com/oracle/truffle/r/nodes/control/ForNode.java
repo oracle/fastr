@@ -121,6 +121,31 @@ public final class ForNode extends AbstractLoopNode implements VisibilityControl
         return create((WriteVariableNode) getCvar().substitute(env), getRange().substitute(env), getBody().substitute(env));
     }
 
+    public int getRlengthImpl() {
+        return 4;
+    }
+
+    @Override
+    public Object getRelementImpl(int index) {
+        switch (index) {
+            case 0:
+                return RDataFactory.createSymbol("for");
+            case 1:
+                return RASTUtils.createLanguageElement(getCvar());
+            case 2:
+                return RASTUtils.createLanguageElement(getRange());
+            case 3:
+                return RASTUtils.createLanguageElement(getBody());
+            default:
+                throw RInternalError.shouldNotReachHere();
+        }
+    }
+
+    @Override
+    public boolean getRequalsImpl(RSyntaxNode other) {
+        throw RInternalError.unimplemented();
+    }
+
     private ForRepeatingNode getForRepeatingNode() {
         return (ForRepeatingNode) loopNode.getRepeatingNode();
     }

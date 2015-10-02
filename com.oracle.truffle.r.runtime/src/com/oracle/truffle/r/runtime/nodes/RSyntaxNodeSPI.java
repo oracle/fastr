@@ -59,24 +59,18 @@ public interface RSyntaxNodeSPI {
     /**
      * Return the "length" of this node in the R sense.
      */
-    default int getRlengthImpl() {
-        throw RInternalError.unimplemented("getRlengthImpl");
-    }
+    int getRlengthImpl();
 
     /**
      * Return a value (usually an {@link RLanguage} instance) for the element of this node at
      * {@code index}.
      */
-    default Object getRelementImpl(@SuppressWarnings("unused") int index) {
-        throw RInternalError.unimplemented("getRelementImpl");
-    }
+    Object getRelementImpl(int index);
 
     /**
      * Return {@code true} iff this node "equals" {@code other} in the R sense. (Used for
      * {@code identical} builtin).
      */
-    default boolean getRequalsImpl(@SuppressWarnings("unused") RSyntaxNode other) {
-        throw RInternalError.unimplemented("getRequalsImpl");
-    }
+    boolean getRequalsImpl(RSyntaxNode other);
 
 }

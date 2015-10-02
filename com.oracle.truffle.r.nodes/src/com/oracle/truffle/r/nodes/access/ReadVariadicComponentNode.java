@@ -102,4 +102,18 @@ public class ReadVariadicComponentNode extends RNode implements RSyntaxNode {
     public void serializeImpl(com.oracle.truffle.r.runtime.RSerialize.State state) {
         state.setCarAsSymbol(getPrintForm());
     }
+
+    public int getRlengthImpl() {
+        throw RInternalError.unimplemented();
+    }
+
+    @Override
+    public Object getRelementImpl(@SuppressWarnings("hiding") int index) {
+        throw RInternalError.unimplemented();
+    }
+
+    @Override
+    public boolean getRequalsImpl(RSyntaxNode other) {
+        throw RInternalError.unimplemented();
+    }
 }

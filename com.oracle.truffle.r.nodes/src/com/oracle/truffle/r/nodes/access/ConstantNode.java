@@ -76,6 +76,20 @@ public abstract class ConstantNode extends RNode implements RSyntaxNode, Visibil
         state.setCar(getValue());
     }
 
+    public int getRlengthImpl() {
+        return 1;
+    }
+
+    @Override
+    public Object getRelementImpl(int index) {
+        return getValue();
+    }
+
+    @Override
+    public boolean getRequalsImpl(RSyntaxNode other) {
+        throw RInternalError.unimplemented();
+    }
+
     public static Object getConstant(RNode node) {
         if (node instanceof ConstantNode) {
             return ((ConstantNode) node).getValue();

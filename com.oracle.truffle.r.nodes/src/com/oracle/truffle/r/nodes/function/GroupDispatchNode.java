@@ -19,6 +19,7 @@ import com.oracle.truffle.api.nodes.UnexpectedResultException;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.api.utilities.ConditionProfile;
 import com.oracle.truffle.r.nodes.RASTUtils;
+import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode.ReadKind;
 import com.oracle.truffle.r.nodes.function.S3FunctionLookupNode.NoGenericMethodException;
@@ -38,6 +39,7 @@ import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
@@ -120,6 +122,34 @@ public final class GroupDispatchNode extends RNode implements RSyntaxNode {
         // TODO substitute aDispatchNode
         Arguments<RSyntaxNode> substituteArguments = RCallNode.substituteArguments(env, callArgsNode.getSyntaxArguments(), callArgsNode.signature);
         return RASTUtils.createCall(this, false, substituteArguments.getSignature(), substituteArguments.getArguments());
+    }
+
+    public int getRlengthImpl() {
+        return 1 + getArguments().getLength();
+    }
+
+    @Override
+    public Object getRelementImpl(int index) {
+        if (index == 0) {
+            if (RASTUtils.isNamedFunctionNode(this)) {
+                return RASTUtils.findFunctionName(this);
+            } else {
+                RNode functionNode = RASTUtils.getFunctionNode(this);
+                if (functionNode instanceof ConstantNode && ((ConstantNode) functionNode).getValue() instanceof RSymbol) {
+                    return ((ConstantNode) functionNode).getValue();
+                } else {
+                    return RDataFactory.createLanguage(functionNode);
+                }
+            }
+        } else {
+            Arguments<RSyntaxNode> args = RASTUtils.findCallArguments(this);
+            return RASTUtils.createLanguageElement(args, index - 1);
+        }
+    }
+
+    @Override
+    public boolean getRequalsImpl(RSyntaxNode other) {
+        throw RInternalError.unimplemented();
     }
 
     @Override

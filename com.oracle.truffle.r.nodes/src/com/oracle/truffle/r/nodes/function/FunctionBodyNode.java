@@ -24,7 +24,9 @@ package com.oracle.truffle.r.nodes.function;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.source.*;
+import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.*;
 
@@ -91,6 +93,35 @@ public class FunctionBodyNode extends BodyNode implements RSyntaxNode {
     public void serializeImpl(RSerialize.State state) {
         // Don't serialize the argument saving nodes
         statements.serialize(state);
+    }
+
+    public int getRlengthImpl() {
+        boolean hasBrace = getFunctionDefinitionNode().hasBraces();
+        FunctionStatementsNode fsNode = getStatements();
+        int result = hasBrace ? 1 : 0;
+        for (RNode s : fsNode.getSequence()) {
+            if (s.unwrap() instanceof RSyntaxNode) {
+                result++;
+            }
+        }
+        return result;
+    }
+
+    @Override
+    public Object getRelementImpl(int index) {
+        boolean hasBrace = getFunctionDefinitionNode().hasBraces();
+        FunctionStatementsNode fsNode = getStatements();
+        int sIndex = hasBrace ? index - 1 : index;
+        if (hasBrace && index == 0) {
+            return RDataFactory.createSymbol("{");
+        } else {
+            return RASTUtils.createLanguageElement(fsNode.getSequence()[sIndex].unwrap());
+        }
+    }
+
+    @Override
+    public boolean getRequalsImpl(RSyntaxNode other) {
+        throw RInternalError.unimplemented();
     }
 
 }

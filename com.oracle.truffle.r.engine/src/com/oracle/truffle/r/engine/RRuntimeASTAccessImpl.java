@@ -80,161 +80,16 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
     @TruffleBoundary
     @Override
     public int getLength(RLanguage rl) {
-        RNode root = (RNode) rl.getRep();
-        // NodeUtil.printTree(System.out, root);
-        return computeLength(RASTUtils.unwrap(root));
-    }
-
-    @TruffleBoundary
-    private static int computeLength(Node node) {
-        int result = 1;
-        if (node instanceof RCallNode || node instanceof GroupDispatchNode) {
-            // 1 + number of args
-            Arguments<RSyntaxNode> args = RASTUtils.findCallArguments(node);
-            result += args.getArguments().length;
-        } else if (node instanceof IfNode) {
-            // 3 or 4 with else part
-            result = 3 + (((IfNode) node).getElsePart() != null ? 1 : 0);
-        } else if (node instanceof FunctionBodyNode) {
-            FunctionBodyNode fbn = (FunctionBodyNode) node;
-            boolean hasBrace = fbn.getFunctionDefinitionNode().hasBraces();
-            FunctionStatementsNode fsNode = fbn.getStatements();
-            result = hasBrace ? 1 : 0;
-            for (RNode s : fsNode.getSequence()) {
-                if (s.unwrap() instanceof RSyntaxNode) {
-                    result++;
-                }
-            }
-        } else if (node instanceof ForNode) {
-            return 4;
-        } else if (node instanceof WhileNode) {
-            return ((WhileNode) node).isRepeat() ? 2 : 3;
-        } else if (node instanceof WriteVariableNode) {
-            return 3;
-        } else if (node instanceof ReplacementNode) {
-            return 3;
-        } else if (node instanceof BlockNode) {
-            /*
-             * We can't get this completely compatible with GnuR without knowing if the source had a
-             * "{" or not. However, semantically what really matters is that if the length is > 1,
-             * there *must* have been a "{", so we fabricate it.
-             */
-            int len = ((BlockNode) node).getSequence().length;
-            return len == 1 ? 1 : len + 1;
-        } else {
-            // TODO fill out
-            assert false : node;
-        }
-        return result;
+        RBaseNode node = RASTUtils.unwrap(rl.getRep());
+        return node.getRLength();
     }
 
     @TruffleBoundary
     @Override
-    public Object getDataAtAsObject(RLanguage rl, final int indexArg) {
-        // index has already been range checked based on computeLength
-        Node node = RASTUtils.unwrap(rl.getRep());
-        int index = indexArg;
-        if (node instanceof RCallNode || node instanceof GroupDispatchNode) {
-            if (index == 0) {
-                if (RASTUtils.isNamedFunctionNode(node)) {
-                    return RASTUtils.findFunctionName(node);
-                } else {
-                    RNode functionNode = RASTUtils.getFunctionNode(node);
-                    if (functionNode instanceof ConstantNode && ((ConstantNode) functionNode).getValue() instanceof RSymbol) {
-                        return ((ConstantNode) functionNode).getValue();
-                    } else {
-                        return RDataFactory.createLanguage(functionNode);
-                    }
-                }
-            } else {
-                Arguments<RSyntaxNode> args = RASTUtils.findCallArguments(node);
-                return RASTUtils.createLanguageElement(args, index - 1);
-            }
-        } else if (node instanceof IfNode) {
-            IfNode ifNode = (IfNode) node;
-            switch (index) {
-                case 0:
-                    return RDataFactory.createSymbol("if");
-                case 1:
-                    return RASTUtils.createLanguageElement(ifNode.getCondition().getOperand());
-                case 2:
-                    return RASTUtils.createLanguageElement(ifNode.getThenPart());
-                case 3:
-                    return RASTUtils.createLanguageElement(ifNode.getElsePart());
-                default:
-                    assert false;
-            }
-        } else if (node instanceof FunctionBodyNode) {
-            FunctionBodyNode fbn = (FunctionBodyNode) node;
-            boolean hasBrace = fbn.getFunctionDefinitionNode().hasBraces();
-            FunctionStatementsNode fsNode = fbn.getStatements();
-            int sIndex = hasBrace ? index - 1 : index;
-            if (hasBrace && index == 0) {
-                return RDataFactory.createSymbol("{");
-            } else {
-                return RASTUtils.createLanguageElement(fsNode.getSequence()[sIndex].unwrap());
-            }
-        } else if (node instanceof ForNode) {
-            ForNode forNode = (ForNode) node;
-            switch (index) {
-                case 0:
-                    return RDataFactory.createSymbol("for");
-                case 1:
-                    return RASTUtils.createLanguageElement(forNode.getCvar());
-                case 2:
-                    return RASTUtils.createLanguageElement(forNode.getRange());
-                case 3:
-                    return RASTUtils.createLanguageElement(forNode.getBody());
-                default:
-                    assert false;
-            }
-        } else if (node instanceof WhileNode) {
-            WhileNode whileNode = (WhileNode) node;
-            if (whileNode.isRepeat() && index == 1) {
-                index = 2;
-            }
-            switch (index) {
-                case 0:
-                    return RDataFactory.createSymbol(whileNode.isRepeat() ? "repeat" : "while");
-                case 1:
-                    return RASTUtils.createLanguageElement(whileNode.getCondition());
-                case 2:
-                    return RASTUtils.createLanguageElement(whileNode.getBody());
-                default:
-                    assert false;
-            }
-        } else if (node instanceof WriteVariableNode) {
-            WriteVariableNode wvn = (WriteVariableNode) node;
-            switch (index) {
-                case 0:
-                    return RDataFactory.createSymbol("<-");
-                case 1:
-                    return RDataFactory.createSymbol(wvn.getName().toString());
-                case 2:
-                    return RASTUtils.createLanguageElement(wvn.getRhs());
-                default:
-                    assert false;
-            }
-        } else if (node instanceof BlockNode) {
-            /* See related comments in getLength. */
-            RNode[] seq = ((BlockNode) node).getSequence();
-            if (seq.length > 1) {
-                switch (index) {
-                    case 0:
-                        return RDataFactory.createSymbol("{");
-                    default:
-                        return RASTUtils.createLanguageElement(seq[index - 1]);
-                }
-            } else {
-                return RASTUtils.createLanguageElement(seq[0]);
-            }
-        } else if (node instanceof ReplacementNode) {
-            return RNull.instance;
-        } else {
-            // TODO fill out
-            assert false : node;
-        }
-        return null;
+    public Object getDataAtAsObject(RLanguage rl, final int index) {
+        // index has already been range checked based on getLength
+        RBaseNode node = RASTUtils.unwrap(rl.getRep());
+        return node.getRelement(index);
     }
 
     public Object fromList(RAbstractVector list) {

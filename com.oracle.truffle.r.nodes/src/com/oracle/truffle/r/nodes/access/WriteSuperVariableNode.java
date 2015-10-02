@@ -86,13 +86,27 @@ public class WriteSuperVariableNode extends WriteVariableNodeSyntaxHelper implem
         serializeHelper(state, "<<-");
     }
 
+    public RSyntaxNode substituteImpl(REnvironment env) {
+        throw RInternalError.unimplemented();
+    }
+
+    public int getRlengthImpl() {
+        return 3;
+    }
+
+    @Override
+    public Object getRelementImpl(int index) {
+        return getRelementHelper("<<-", index);
+    }
+
+    @Override
+    public boolean getRequalsImpl(RSyntaxNode other) {
+        throw RInternalError.unimplemented();
+    }
+
     @Override
     public WrapperNode createRWrapperNode() {
         return new WriteSuperVariableNodeWrapper(this);
-    }
-
-    public RSyntaxNode substituteImpl(REnvironment env) {
-        throw RInternalError.unimplemented();
     }
 
 }
