@@ -27,7 +27,6 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
-import com.oracle.truffle.r.nodes.access.array.read.*;
 import com.oracle.truffle.r.nodes.access.variables.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.control.*;
@@ -111,18 +110,6 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
         } else if (node instanceof WhileNode) {
             return ((WhileNode) node).isRepeat() ? 2 : 3;
         } else if (node instanceof WriteVariableNode) {
-            return 3;
-        } else if (node instanceof AccessArrayNode) {
-            AccessArrayNode accessArrayNode = (AccessArrayNode) node;
-            int baseResult = 3;
-            if (accessArrayNode.exactInSource) {
-                baseResult++;
-            }
-            if (accessArrayNode.dropInSource) {
-                baseResult++;
-            }
-            return baseResult;
-        } else if (node instanceof AccessFieldNode) {
             return 3;
         } else if (node instanceof ReplacementNode) {
             return 3;
