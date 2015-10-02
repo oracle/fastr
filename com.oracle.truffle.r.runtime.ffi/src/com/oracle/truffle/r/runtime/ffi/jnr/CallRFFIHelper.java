@@ -215,6 +215,37 @@ public class CallRFFIHelper {
         }
     }
 
+    private static RStringVector getClassHr(Object v) {
+        if (v instanceof RAttributable) {
+            return ((RAttributable) v).getClassHierarchy();
+        } else if (v instanceof Byte) {
+            return RLogicalVector.implicitClassHeader;
+        } else if (v instanceof String) {
+            return RStringVector.implicitClassHeader;
+        } else if (v instanceof Integer) {
+            return RIntVector.implicitClassHeader;
+        } else if (v instanceof Double) {
+            return RDoubleVector.implicitClassHeader;
+        } else if (v instanceof RComplex) {
+            return RComplexVector.implicitClassHeader;
+        } else if (v instanceof RRaw) {
+            return RRawVector.implicitClassHeader;
+        } else {
+            guaranteeInstanceOf(v, RNull.class);
+            return RNull.implicitClassHeader;
+        }
+    }
+
+    static int Rf_inherits(Object x, String clazz) {
+        RStringVector hierarchy = getClassHr(x);
+        for (int i = 0; i < hierarchy.getLength(); i++) {
+            if (hierarchy.getDataAt(i).equals(clazz)) {
+                return 1;
+            }
+        }
+        return 0;
+    }
+
     static int Rf_isString(Object x) {
         return RRuntime.asString(x) == null ? 0 : 1;
     }
@@ -433,23 +464,18 @@ public class CallRFFIHelper {
 
     static Object TAG(Object e) {
         guaranteeInstanceOf(e, RPairList.class);
-// System.out.println("TAG: " + e);
         return ((RPairList) e).getTag();
     }
 
     static Object CAR(Object e) {
         guaranteeInstanceOf(e, RPairList.class);
-// System.out.print("CAR: " + e);
         Object car = ((RPairList) e).car();
-// System.out.println(" = " + car);
         return car;
     }
 
     static Object CDR(Object e) {
         guaranteeInstanceOf(e, RPairList.class);
-// System.out.print("CDR: " + e);
         Object cdr = ((RPairList) e).cdr();
-// System.out.println(" = " + cdr);
         return cdr;
     }
 
@@ -464,12 +490,56 @@ public class CallRFFIHelper {
     }
 
     static Object SETCDR(Object x, Object y) {
-        if (x instanceof RPairList) {
-            ((RPairList) x).setCdr(y);
-            return x; // TODO check or y?
+        guaranteeInstanceOf(x, RPairList.class);
+        ((RPairList) x).setCdr(y);
+        return x; // TODO check or y?
+    }
+
+    static Object R_FindNamespace(Object name) {
+        Object result = RContext.getInstance().stateREnvironment.getNamespaceRegistry().get(RRuntime.asString(name));
+        return result;
+    }
+
+    static Object Rf_eval(Object expr, Object env) {
+        guarantee(env instanceof REnvironment);
+        Object result;
+        if (expr instanceof RPromise) {
+            result = RContext.getRRuntimeASTAccess().forcePromise(expr);
+        } else if (expr instanceof RExpression) {
+            result = RContext.getEngine().eval((RExpression) expr, (REnvironment) env, 0);
+        } else if (expr instanceof RLanguage) {
+            result = RContext.getEngine().eval((RLanguage) expr, (REnvironment) env, 0);
         } else {
-            throw RInternalError.unimplemented();
+            // just return value
+            result = expr;
         }
+        return result;
+    }
+
+    static Object Rf_GetOption1(Object tag) {
+        guarantee(tag instanceof RSymbol);
+        Object result = RContext.getInstance().stateROptions.getValue(((RSymbol) tag).getName());
+        return result;
+    }
+
+    static void Rf_gsetVar(Object symbol, Object value, Object rho) {
+        guarantee(symbol instanceof RSymbol);
+        REnvironment baseEnv = RContext.getInstance().stateREnvironment.getBaseEnv();
+        guarantee(rho == baseEnv);
+        try {
+            baseEnv.put(((RSymbol) symbol).getName(), value);
+        } catch (PutException e) {
+            e.printStackTrace();
+        }
+    }
+
+    static void DUPLICATE_ATTRIB(Object to, Object from) {
+        if (from instanceof RAttributable) {
+            guaranteeInstanceOf(to, RAttributable.class);
+            RAttributes attributes = ((RAttributable) from).getAttributes();
+            ((RAttributable) to).initAttributes(attributes == null ? null : attributes.copy());
+        }
+        // TODO: copy OBJECT? and S4 attributes
     }
 
     // Checkstyle: resume method name check

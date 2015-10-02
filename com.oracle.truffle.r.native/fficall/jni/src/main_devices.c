@@ -20,30 +20,13 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+
 #include "rffiutils.h"
+#include "Defn.h"
 
-void init_rng(JNIEnv *env) {
-}
+extern SEXP    R_DevicesSymbol;  /* ".Devices" */
+extern Rboolean R_Interactive;
+#define attribute_hidden
+#define R_MaxDevices 64
 
-void GetRNGstate() {
-	unimplemented("GetRNGstate");
-}
-
-void PutRNGstate() {
-	unimplemented("PutRNGstate");
-}
-
-double unif_rand() {
-	unimplemented("unif_rand");
-	return 0;
-}
-
-double norm_rand() {
-	unimplemented("norm_rand");
-	return 0;
-}
-
-double exp_rand() {
-	unimplemented("exp_rand");
-	return 0;
-}
+#include "../../../gnur/R-3.1.3/src/main/devices.c"

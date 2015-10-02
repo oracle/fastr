@@ -20,30 +20,21 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+
 #include "rffiutils.h"
 
-void init_rng(JNIEnv *env) {
+void R_CheckStack(void) {
+    // TODO: check for stack overflow
+    // ignored
 }
 
-void GetRNGstate() {
-	unimplemented("GetRNGstate");
+void R_CheckStack2(size_t extra) {
+    // TODO: check for stack overflow
+    // ignored
 }
 
-void PutRNGstate() {
-	unimplemented("PutRNGstate");
-}
-
-double unif_rand() {
-	unimplemented("unif_rand");
-	return 0;
-}
-
-double norm_rand() {
-	unimplemented("norm_rand");
-	return 0;
-}
-
-double exp_rand() {
-	unimplemented("exp_rand");
-	return 0;
+void Rf_onintr()
+{
+    // TODO: implement interrupt handling, signal errors
+    // ignored
 }

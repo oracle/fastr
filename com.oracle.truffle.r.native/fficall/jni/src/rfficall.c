@@ -41,8 +41,6 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_CallRFFIWithJNI_initialize(JNIEnv *env
 	init_optim(env);
 	init_vectoraccess(env);
 	init_listaccess(env);
-	init_graphicsengine(env);
-	init_graphicsdevices(env);
 }
 
 static jmp_buf error_jmpbuf;
@@ -79,7 +77,7 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_CallRFFIWithJNI_call1(JNIEnv *env, jcl
 	callEnter(env, &error_jmpbuf);
 	if (!setjmp(error_jmpbuf)) {
 		call1func call1 = (call1func) address;
-		result = (*call1)(arg1);
+		result = (*call1)(checkRef(env, arg1));
 	}
 	callExit(env);
 	return result;
@@ -91,7 +89,7 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_CallRFFIWithJNI_call2(JNIEnv *env, jcl
 	callEnter(env, &error_jmpbuf);
 	if (!setjmp(error_jmpbuf)) {
 		call2func call2 = (call2func) address;
-		result = (*call2)(arg1, arg2);
+		result = (*call2)(checkRef(env, arg1), checkRef(env, arg2));
 	}
 	callExit(env);
 	return result;
@@ -104,7 +102,7 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_CallRFFIWithJNI_call3(JNIEnv *env, jcl
 	callEnter(env, &error_jmpbuf);
 	if (!setjmp(error_jmpbuf)) {
 		call3func call3 = (call3func) address;
-		result = (*call3)(arg1, arg2, arg3);
+		result = (*call3)(checkRef(env, arg1), checkRef(env, checkRef(env, arg2)), checkRef(env, arg3));
 	}
 	callExit(env);
 	return result;
@@ -117,7 +115,7 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_CallRFFIWithJNI_call4(JNIEnv *env, jcl
 	callEnter(env, &error_jmpbuf);
 	if (!setjmp(error_jmpbuf)) {
 		call4func call4 = (call4func) address;
-		result = (*call4)(arg1, arg2, arg3, arg4);
+		result = (*call4)(checkRef(env, arg1), checkRef(env, arg2), checkRef(env, arg3), checkRef(env, arg4));
 	}
 	callExit(env);
 	return result;
@@ -130,7 +128,7 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_CallRFFIWithJNI_call5(JNIEnv *env, jcl
 	callEnter(env, &error_jmpbuf);
 	if (!setjmp(error_jmpbuf)) {
 		call5func call5 = (call5func) address;
-		result = (*call5)(arg1, arg2, arg3, arg4, arg5);
+		result = (*call5)(checkRef(env, arg1), checkRef(env, arg2), checkRef(env, arg3), checkRef(env, arg4), checkRef(env, arg5));
 	}
 	callExit(env);
 	return result;
@@ -143,7 +141,7 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_CallRFFIWithJNI_call6(JNIEnv *env, jcl
 	callEnter(env, &error_jmpbuf);
 	if (!setjmp(error_jmpbuf)) {
 		call6func call6 = (call6func) address;
-		result = (*call6)(arg1, arg2, arg3, arg4, arg5, arg6);
+		result = (*call6)(checkRef(env, arg1), checkRef(env, arg2), checkRef(env, arg3), checkRef(env, arg4), checkRef(env, arg5), checkRef(env, arg6));
 	}
 	callExit(env);
 	return result;
@@ -156,7 +154,7 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_CallRFFIWithJNI_call7(JNIEnv *env, jcl
 	callEnter(env, &error_jmpbuf);
 	if (!setjmp(error_jmpbuf)) {
 		call7func call7 = (call7func) address;
-		result = (*call7)(arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+		result = (*call7)(checkRef(env, arg1), checkRef(env, arg2), checkRef(env, arg3), checkRef(env, arg4), checkRef(env, arg5), checkRef(env, arg6), checkRef(env, arg7));
 	}
 	callExit(env);
 	return result;
@@ -169,7 +167,7 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_CallRFFIWithJNI_call8(JNIEnv *env, jcl
 	callEnter(env, &error_jmpbuf);
 	if (!setjmp(error_jmpbuf)) {
 		call8func call8 = (call8func) address;
-		result = (*call8)(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
+		result = (*call8)(checkRef(env, arg1), checkRef(env, arg2), checkRef(env, arg3), checkRef(env, arg4), checkRef(env, arg5), checkRef(env, arg6), checkRef(env, arg7), checkRef(env, arg8));
 	}
 	callExit(env);
 	return result;
@@ -182,7 +180,7 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_CallRFFIWithJNI_call9(JNIEnv *env, jcl
 	callEnter(env, &error_jmpbuf);
 	if (!setjmp(error_jmpbuf)) {
 		call9func call9 = (call9func) address;
-		result = (*call9)(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9);
+		result = (*call9)(checkRef(env, arg1), checkRef(env, arg2), checkRef(env, arg3), checkRef(env, arg4), checkRef(env, arg5), checkRef(env, arg6), checkRef(env, arg7), checkRef(env, arg8), checkRef(env, arg9));
 	}
 	callExit(env);
 	return result;
@@ -208,7 +206,7 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_CallRFFIWithJNI_call(JNIEnv *env, jcla
 		jobject arg10 = (*env)->GetObjectArrayElement(env, args, 9);
 		if (!setjmp(error_jmpbuf)) {
 			call10func call10 = (call10func) address;
-			result = (*call10)(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10);
+			result = (*call10)(checkRef(env, arg1), checkRef(env, arg2), checkRef(env, arg3), checkRef(env, arg4), checkRef(env, arg5), checkRef(env, arg6), checkRef(env, arg7), checkRef(env, arg8), checkRef(env, arg9), arg10);
 		}
 		callExit(env);
 		return result;

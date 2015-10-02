@@ -20,30 +20,13 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+
 #include "rffiutils.h"
+#include <stdlib.h>
 
-void init_rng(JNIEnv *env) {
-}
+#include <R_ext/Rdynload.h>
 
-void GetRNGstate() {
-	unimplemented("GetRNGstate");
-}
-
-void PutRNGstate() {
-	unimplemented("PutRNGstate");
-}
-
-double unif_rand() {
-	unimplemented("unif_rand");
-	return 0;
-}
-
-double norm_rand() {
-	unimplemented("norm_rand");
-	return 0;
-}
-
-double exp_rand() {
-	unimplemented("exp_rand");
-	return 0;
+DL_FUNC R_FindSymbol(char const *name, char const *pkg,
+		     R_RegisteredNativeSymbol *symbol) {
+    unimplemented("R_FindSymbol");
 }

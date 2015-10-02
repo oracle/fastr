@@ -20,30 +20,12 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+
 #include "rffiutils.h"
+#include "Defn.h"
 
-void init_rng(JNIEnv *env) {
-}
+#define attribute_hidden
+#include "../../../gnur/R-3.1.3/src/main/contour-common.h"
+unsigned int max_contour_segments = 25000;
 
-void GetRNGstate() {
-	unimplemented("GetRNGstate");
-}
-
-void PutRNGstate() {
-	unimplemented("PutRNGstate");
-}
-
-double unif_rand() {
-	unimplemented("unif_rand");
-	return 0;
-}
-
-double norm_rand() {
-	unimplemented("norm_rand");
-	return 0;
-}
-
-double exp_rand() {
-	unimplemented("exp_rand");
-	return 0;
-}
+#include "../../../gnur/R-3.1.3/src/main/plotmath.c"

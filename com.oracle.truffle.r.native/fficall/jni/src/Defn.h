@@ -20,30 +20,27 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-#include "rffiutils.h"
 
-void init_rng(JNIEnv *env) {
-}
+#define DEFN_H_
 
-void GetRNGstate() {
-	unimplemented("GetRNGstate");
-}
+#include <jni.h>
+#include <stdlib.h>
+#include <Rinternals.h>
 
-void PutRNGstate() {
-	unimplemented("PutRNGstate");
-}
+// various definitions required to compile GNU-R code:
+#define F77_SYMBOL(x)	x
+#define F77_QSYMBOL(x) #x
 
-double unif_rand() {
-	unimplemented("unif_rand");
-	return 0;
-}
+#define Rexp10(x) pow(10.0, x)
 
-double norm_rand() {
-	unimplemented("norm_rand");
-	return 0;
-}
+// no NLS:
+#ifndef _
+#define _(String) (String)
+#endif
+#define N_(String) String
+#define ngettext(String, StringP, N) (N > 1 ? StringP: String)
 
-double exp_rand() {
-	unimplemented("exp_rand");
-	return 0;
-}
+void sortVector(SEXP, Rboolean);
+int Scollate(SEXP a, SEXP b);
+void Rf_checkArityCall(SEXP, SEXP, SEXP);
+

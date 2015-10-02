@@ -30,6 +30,7 @@ import com.oracle.truffle.r.runtime.REnvVars;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -104,7 +105,10 @@ public class CallRFFIWithJNI implements CallRFFI {
         R_NegInf(Double.NEGATIVE_INFINITY),
         R_NaReal(RRuntime.DOUBLE_NA),
         R_NaInt(RRuntime.INT_NA),
-        R_BlankString(RDataFactory.createStringVectorFromScalar(""));
+        R_BlankString(RDataFactory.createStringVectorFromScalar("")),
+        R_TrueValue(RRuntime.LOGICAL_TRUE),
+        R_FalseValue(RRuntime.LOGICAL_FALSE),
+        R_LogicalNAValue(RRuntime.LOGICAL_NA);
 
         private final Object value;
 
@@ -130,7 +134,11 @@ public class CallRFFIWithJNI implements CallRFFI {
         try {
             DLL.load(librffiPath, ForceRTLDGlobal, false);
         } catch (DLLException ex) {
-            throw RError.error(RError.NO_NODE, ex);
+            if (RContext.getRRuntimeASTAccess() != null) {
+                throw RError.error(RError.NO_NODE, ex);
+            } else {
+                throw new RInternalError(ex, "error while loading " + librffiPath);
+            }
         }
         System.load(librffiPath);
         initialize(RVariables.values());

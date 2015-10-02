@@ -58,6 +58,8 @@ public class DynLoadFunctions {
                 return dllInfo.toRList();
             } catch (DLLException ex) {
                 // This is not a recoverable error
+                System.out.println("exception while loading " + lib + ":");
+                ex.printStackTrace();
                 throw RInternalError.shouldNotReachHere(ex);
             }
         }
