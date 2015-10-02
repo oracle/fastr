@@ -3,13 +3,22 @@
 # By default all packages are candidates for installation, but this
 # can be limited by a regexp pattern
 
-# By default, we use the CRAN mirror specified by --cran-mirror which defaults to http://cran.cnr.berkeley.edu/
+# By default, we use the CRAN mirror specified by --cran-mirror or env var CRAN_MIRROR.
+# If unset, defaults to "http://cran.cnr.berkeley.edu/"
 # However, a local copy of the CRAN repo can be used either by setting the LOCAL_CRAN_REPO env variable or setting --contrib-url
+
+# Packages are installed into the directory specified by the --lib arg (or R_LIBS_USER env var)
+
+# Blacklisted packages nor their dependents will not be installed. By default the list of blacklisted
+# packages will be read from the file in the --blacklist-file arg or the PACKAGE_BLACKLIST env var.
+# If unset, defaults to "package.blacklist", and will be created if necessary.
+
+# The env var R_LIBS_USER must be set to the directory where the install should take place.
 
 args <- commandArgs(TRUE)
 
 usage <- function() {
-	cat("usage: Rscript [--contriburl url] [--cran-mirror url] [--verbose | -v] [-V] [--dryrun] [ --no-install | -n] [--save-blacklist] [-read-blacklist] [--blacklist-file file] [package-pattern]\n")
+	cat("usage: Rscript [--contriburl url] [--cran-mirror url] [--lib] [--verbose | -v] [-V] [--dryrun] [ --no-install | -n] [--create-blacklist] [--blacklist-file file] [package-pattern]\n")
 	quit(status=1)
 }
 
@@ -112,7 +121,10 @@ abort <- function(msg) {
 }
 
 set.cran.mirror <- function() {
-	cran.mirror <<- Sys.getenv("CRAN_MIRROR", unset = "http://cran.cnr.berkeley.edu/")
+	if (is.na(cran.mirror)) {
+		# not set on command line
+	    cran.mirror <<- Sys.getenv("CRAN_MIRROR", unset = "http://cran.cnr.berkeley.edu/")
+    }
 	r <- getOption("repos")
 	r["CRAN"] <- cran.mirror
 	options(repos = r)
@@ -122,6 +134,19 @@ set.cran.mirror <- function() {
 		if (is.na(contriburl)) {
 			# set back to repo-based default
 			contriburl <<- contrib.url(r, "source")
+		}
+	}
+}
+
+set.package.blacklist <- function() {
+	if (is.na(blacklist.file)) {
+	    # not set on command line
+		blacklist.file <<- Sys.getenv("PACKAGE_BLACKLIST", unset="package.blacklist")
+	}
+	if (!create.blacklist.file) {
+		if (!file.exists(blacklist.file)) {
+			cat(paste("blacklist file", blacklist.file, "does not exist, creating\n"))
+			create.blacklist.file <<- T
 		}
 	}
 }
@@ -139,22 +164,11 @@ get.pkgs <- function() {
 do.install <- function() {
 	get.pkgs()
 
-	if (read.blacklist) {
-		if (is.na(blacklist.file) || !file.exists(blacklist.file)) {
-			abort("blacklist file not set or does not exist")
-		} else {
-			blacklist <- readLines(con=file(blacklist.file))
-		}
-	} else {
+	if (create.blacklist.file) {
 		blacklist <- create.blacklist()
-	}
-
-	if (save.blacklist) {
-		if (is.na(blacklist.file)) {
-			abort("blacklist file not set")
-		} else {
-			writeLines(sort(blacklist), con=blacklist.file)
-		}
+		writeLines(sort(blacklist), con=blacklist.file)
+	} else {
+		blacklist <- readLines(con=file(blacklist.file))
 	}
 
 	if (install) {
@@ -167,7 +181,7 @@ do.install <- function() {
 					cat("would install: ", pkgname, "\n")
 				} else {
 					cat("installing: ", pkgname, "\n")
-					install.packages(pkgname, contriburl=contriburl, type="source", INSTALL_opts="--install-tests")
+					install.packages(pkgname, contriburl=contriburl, type="source", lib=lib.install, INSTALL_opts="--install-tests")
 				}
 			}
 		}
@@ -196,10 +210,8 @@ parse.args <- function() {
 			install <<- F
 		} else if (a == "--dryrun") {
 			dry.run <<- T
-		} else if (a == "--save-blacklist") {
-			save.blacklist <<- T
-		} else if (a == "--read-blacklist") {
-			read.blacklist <<- T
+		} else if (a == "--create-blacklist") {
+			create.blacklist.file <<- T
 		} else if (a == "--blacklist-file") {
 			if (length(args) >= 2L) {
 				blacklist.file <<- args[2L]
@@ -210,6 +222,13 @@ parse.args <- function() {
 		} else if (a == "--cran-mirror") {
 			if (length(args) >= 2L) {
 				cran.mirror <<- args[2L]
+				args <<- args[-1L]
+			} else {
+				usage()
+			}
+		} else if (a == "--lib") {
+			if (length(args) >= 2L) {
+				lib.install <<- args[2L]
 				args <<- args[-1L]
 			} else {
 				usage()
@@ -237,8 +256,31 @@ cat.args <- function() {
 	}
 }
 
+check.libs <- function() {
+	if (is.na(lib.install)) {
+		lib.install <- Sys.getenv("R_LIBS_USER", unset=NA)
+	}
+	if (is.na(lib.install)) {
+		abort("--lib path or R_LIBS_USER must be set")
+	}
+	if (!file.exists(lib.install) || is.na(file.info(lib.install)$isdir)) {
+		abort(paste(lib.install, "does not exist or is not a directory"))
+	}
+}
+
+run <- function() {
+    parse.args()
+	check.libs()
+	set.cran.mirror()
+	set.package.blacklist()
+    cat.args()
+    do.install()
+}
+
+cran.mirror <- NA
 contriburl <- NA
-blacklist.file <- Sys.getenv("PACKAGE_BLACKLIST", unset=NA)
+blacklist.file <- NA
+lib.install <- NA
 
 pkg.pattern <- "^.*"
 verbose <- F
@@ -247,15 +289,9 @@ install <- T
 dry.run <- F
 avail.pkgs <- NULL
 toinstall.pkgs <- NULL
-save.blacklist <- F
-read.blacklist <- F
+create.blacklist.file <- F
 
 if (!interactive()) {
-	parse.args()
-	set.cran.mirror()
-	cat.args()
-	do.install()
+    run()
 }
-
-#tryCatch(url(contriburl, open="r"), error=abort)
 
