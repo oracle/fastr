@@ -50,6 +50,7 @@ import com.oracle.truffle.api.nodes.Node.Child;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
+import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.r.engine.interop.RAbstractVectorAccessFactory;
 import com.oracle.truffle.r.engine.interop.RFunctionAccessFactory;
 import com.oracle.truffle.r.library.graphics.RGraphics;
@@ -311,21 +312,31 @@ final class REngine implements Engine {
     @Override
     public CallTarget parseToCallTarget(Source source, boolean printResult) throws ParseException {
         ASTNode ast = parseImpl(source);
-        return new TVMCallTarget(ast, printResult);
+        return new PolyglotEngineCallTarget(ast, printResult);
     }
 
-    private static class TVMCallTarget implements RootCallTarget {
+    /**
+     * A custom {@link RootCallTarget} that supports {@link #parseToCallTarget}. The
+     * {@link PolyglotEngine} will invoke the {@link #call} method.
+     */
+    private static class PolyglotEngineCallTarget implements RootCallTarget {
 
         private final ASTNode ast;
         private final boolean printResult;
 
         @SuppressWarnings("unchecked") @Child private FindContextNode<RContext> findContext = (FindContextNode<RContext>) TruffleRLanguage.INSTANCE.actuallyCreateFindContextNode();
 
-        TVMCallTarget(ASTNode ast, boolean printResult) {
+        PolyglotEngineCallTarget(ASTNode ast, boolean printResult) {
             this.ast = ast;
             this.printResult = printResult;
         }
 
+        /**
+         * The normal {@link #transform} and {@link #doMakeCallTarget} happen first, then we
+         * actually run the call using the standard FastR machinery, saving and restoring the
+         * {@link RContext}, since we have no control over what that might be when the call is
+         * initiated.
+         */
         @Override
         public Object call(Object... arguments) {
             RSyntaxNode node = transform(ast);
@@ -448,16 +459,23 @@ final class REngine implements Engine {
      */
     private static RootCallTarget doMakeCallTarget(RNode body, String description) {
         BodyNode fbn;
+        SourceSection sourceSection = null;
         if (RBaseNode.isRSyntaxNode(body)) {
             RSyntaxNode synBody = (RSyntaxNode) body;
             RASTDeparse.ensureSourceSection(synBody);
             fbn = new FunctionBodyNode(SaveArgumentsNode.NO_ARGS, new FunctionStatementsNode(synBody.getSourceSection(), synBody));
+            // SourceSection might be "unavailable", which has no code
+            sourceSection = synBody.getSourceSection();
+            if (sourceSection.getSource() != null) {
+                String funPlusBody = "function() " + sourceSection.getCode();
+                sourceSection = Source.fromText(funPlusBody, description).createSection("", 0, funPlusBody.length());
+            }
         } else {
             fbn = new BodyNode(body);
         }
         FrameDescriptor descriptor = new FrameDescriptor();
         FrameSlotChangeMonitor.initializeFunctionFrameDescriptor(descriptor);
-        FunctionDefinitionNode rootNode = new FunctionDefinitionNode(null, descriptor, fbn, FormalArguments.NO_ARGS, description, true, true, null);
+        FunctionDefinitionNode rootNode = new FunctionDefinitionNode(sourceSection, descriptor, fbn, FormalArguments.NO_ARGS, description, true, true, null);
         RootCallTarget callTarget = Truffle.getRuntime().createCallTarget(rootNode);
         return callTarget;
     }

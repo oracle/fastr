@@ -32,48 +32,43 @@ import com.oracle.truffle.r.runtime.*;
  * Basic support for adding entry/exit counters to nodes. A counter must be identified with some
  * unique value that enables it to be retrieved.
  *
- * The {@link Basic#instrument} field is used to attach the counter to a {@link Probe}.
- *
  */
 public class REntryCounters {
 
     private static HashMap<Object, Basic> counterMap = new HashMap<>();
+    public static final String INFO = "R node entry counter";
 
-    public static class Basic {
+    public static class Basic implements SimpleInstrumentListener {
 
         protected int enterCount;
         protected int exitCount;
-        public final Instrument instrument;
 
         public Basic(Object tag) {
-            instrument = Instrument.create(new SimpleInstrumentListener() {
-
-                @Override
-                public void enter(Probe probe) {
-                    enterCount++;
-                }
-
-                private void returnAny(@SuppressWarnings("unused") Probe probe) {
-                    exitCount++;
-                }
-
-                @Override
-                public void returnVoid(Probe probe) {
-                    returnAny(probe);
-                }
-
-                @Override
-                public void returnValue(Probe probe, Object result) {
-                    returnAny(probe);
-                }
-
-                @Override
-                public void returnExceptional(Probe probe, Exception exception) {
-                    returnAny(probe);
-                }
-            }, "R node entry counter");
-
             counterMap.put(tag, this);
+        }
+
+        @Override
+        public void onEnter(Probe probe) {
+            enterCount++;
+        }
+
+        private void returnAny(@SuppressWarnings("unused") Probe probe) {
+            exitCount++;
+        }
+
+        @Override
+        public void onReturnVoid(Probe probe) {
+            returnAny(probe);
+        }
+
+        @Override
+        public void onReturnValue(Probe probe, Object result) {
+            returnAny(probe);
+        }
+
+        @Override
+        public void onReturnExceptional(Probe probe, Exception exception) {
+            returnAny(probe);
         }
 
         public int getEnterCount() {
@@ -89,6 +84,7 @@ public class REntryCounters {
      * A counter that is specialized for function entry, tagged with the {@link FunctionUID}.
      */
     public static class Function extends Basic {
+        public static final String INFO = "R function entry counter";
 
         static {
             RPerfStats.register(new PerfHandler());

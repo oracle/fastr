@@ -176,15 +176,22 @@ public final class RContext extends ExecutionContext implements TruffleObject {
         public void run() {
             PolyglotEngine vm = info.apply(PolyglotEngine.buildNew()).build();
             try {
-                setContext((RContext) vm.eval(GET_CONTEXT).get());
+                setContext(vm.eval(GET_CONTEXT).as(RContext.class));
             } catch (IOException e1) {
                 throw new RInternalError(e1, "error while initializing eval thread");
             }
             try {
                 try {
-                    context.engine.parseAndEval(source, true);
+                    vm.eval(source);
                 } catch (ParseException e) {
-                    throw e.throwAsRError();
+                    e.report(context.getConsoleHandler());
+                } catch (IOException e) {
+                    if (e.getCause() instanceof RError) {
+                        RInternalError.reportError(e.getCause());
+                    } else {
+                        context.getConsoleHandler().println("unexpected internal error (" + e.getClass().getSimpleName() + "); " + e.getMessage());
+                        RInternalError.reportError(e);
+                    }
                 }
             } finally {
                 context.destroy();
@@ -535,7 +542,7 @@ public final class RContext extends ExecutionContext implements TruffleObject {
 
     public static void destroyContext(PolyglotEngine vm) {
         try {
-            RContext context = (RContext) vm.eval(GET_CONTEXT).get();
+            RContext context = vm.eval(GET_CONTEXT).as(RContext.class);
             context.destroy();
         } catch (IOException e) {
             throw new RInternalError(e, "error while destroying context");

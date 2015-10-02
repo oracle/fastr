@@ -133,7 +133,7 @@ public final class FastRSession implements RSession {
             ContextInfo info = ContextInfo.create(options, ContextKind.SHARE_NOTHING, null, consoleHandler);
             main = info.apply(PolyglotEngine.buildNew()).build();
             try {
-                mainContext = (RContext) main.eval(GET_CONTEXT).get();
+                mainContext = main.eval(GET_CONTEXT).as(RContext.class);
             } catch (IOException e) {
                 throw new RuntimeException("error while retrieving test context", e);
             }

@@ -35,7 +35,6 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.nodes.*;
-import com.sun.tools.corba.se.idl.ValueEntry;
 
 @RBuiltin(name = "sprintf", kind = INTERNAL, parameterNames = {"fmt", "..."})
 public abstract class Sprintf extends RBuiltinNode {

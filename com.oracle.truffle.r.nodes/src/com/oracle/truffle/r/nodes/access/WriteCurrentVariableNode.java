@@ -101,7 +101,7 @@ public class WriteCurrentVariableNode extends WriteVariableNodeSyntaxHelper impl
     }
 
     @Override
-    public ProbeNode.WrapperNode createWrapperNode() {
+    public WrapperNode createRWrapperNode() {
         return new WriteCurrentVariableNodeWrapper(this);
     }
 

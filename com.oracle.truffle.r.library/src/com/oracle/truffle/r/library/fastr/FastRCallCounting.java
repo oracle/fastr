@@ -48,7 +48,7 @@ public class FastRCallCounting {
                         throw RError.error(this, RError.Message.GENERIC, "failed to apply counter, instrumention disabled?");
                     } else {
                         REntryCounters.Function counter = new REntryCounters.Function(uuid);
-                        probe.attach(counter.instrument);
+                        RInstrument.getInstrumenter().attach(probe, counter, REntryCounters.Function.INFO);
                     }
                 }
             }

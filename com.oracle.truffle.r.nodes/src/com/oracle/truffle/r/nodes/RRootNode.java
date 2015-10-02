@@ -33,6 +33,7 @@ import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.context.*;
 import com.oracle.truffle.r.runtime.env.frame.*;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
  * The base class for R code that can be executed, namely {@link FunctionDefinitionNode} and
@@ -49,8 +50,16 @@ public abstract class RRootNode extends RootNode implements HasSignature {
     private final FormalArguments formalArguments;
 
     protected RRootNode(SourceSection src, FormalArguments formalArguments, FrameDescriptor frameDescriptor) {
-        super(RContext.getEngine().getTruffleLanguage(), src, frameDescriptor);
+        super(RContext.getEngine().getTruffleLanguage(), checkSourceSection(src), frameDescriptor);
         this.formalArguments = formalArguments;
+    }
+
+    private static SourceSection checkSourceSection(SourceSection src) {
+        if (src == null) {
+            return RSyntaxNode.SOURCE_UNAVAILABLE;
+        } else {
+            return src;
+        }
     }
 
     protected void verifyEnclosingAssumptions(VirtualFrame vf) {

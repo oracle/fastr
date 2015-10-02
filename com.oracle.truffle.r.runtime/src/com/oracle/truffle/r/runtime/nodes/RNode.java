@@ -26,7 +26,7 @@ import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.instrument.ProbeNode.*;
+import com.oracle.truffle.api.instrument.WrapperNode;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.conn.*;
@@ -199,13 +199,11 @@ public abstract class RNode extends RBaseNode implements RInstrumentableNode {
         return a.getLength() == b.getLength();
     }
 
-    @Override
-    public WrapperNode createWrapperNode() {
+    public WrapperNode createRWrapperNode() {
         return new RNodeWrapper(this);
     }
 
-    @Override
-    public boolean isInstrumentable() {
+    public boolean isRInstrumentable() {
         return true;
     }
 

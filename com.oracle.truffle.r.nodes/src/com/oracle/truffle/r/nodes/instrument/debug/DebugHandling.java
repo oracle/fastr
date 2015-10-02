@@ -28,7 +28,7 @@ import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.instrument.*;
-import com.oracle.truffle.api.instrument.ProbeNode.WrapperNode;
+import com.oracle.truffle.api.instrument.WrapperNode;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.control.*;
@@ -43,8 +43,8 @@ import com.oracle.truffle.r.runtime.nodes.*;
  * The implementation of the R debug functions.
  *
  * When a function is enabled for debugging a set of {@link DebugEventReceiver}s are created and
- * associated with {@link Instrument}s and attached to key nodes in the AST body associated with the
- * {@link FunctionDefinitionNode} corresponding to the {@link RFunction} instance.
+ * associated with {@link ProbeInstrument}s and attached to key nodes in the AST body associated
+ * with the {@link FunctionDefinitionNode} corresponding to the {@link RFunction} instance.
  *
  * Two different receiver classes are defined:
  * <ul>
@@ -143,8 +143,9 @@ public class DebugHandling {
             return null;
         }
         FunctionStatementsEventReceiver fser = new FunctionStatementsEventReceiver(fdn, text, condition, once);
-        probe.attach(fser.getInstrument());
-        attachToStatementNodes(fser);
+        Instrumenter instrumenter = RInstrument.getInstrumenter();
+        instrumenter.attach(probe, fser, "debug");
+        attachToStatementNodes(fser, instrumenter);
         return probe;
     }
 
@@ -159,18 +160,18 @@ public class DebugHandling {
         }
     }
 
-    private static void attachToStatementNodes(FunctionStatementsEventReceiver functionStatementsEventReceiver) {
+    private static void attachToStatementNodes(FunctionStatementsEventReceiver functionStatementsEventReceiver, Instrumenter instrumenter) {
         functionStatementsEventReceiver.getFunctionDefinitionNode().getBody().accept(new NodeVisitor() {
             public boolean visit(Node node) {
-                if (node instanceof ProbeNode.WrapperNode) {
-                    ProbeNode.WrapperNode wrapper = (ProbeNode.WrapperNode) node;
+                if (node instanceof WrapperNode) {
+                    WrapperNode wrapper = (WrapperNode) node;
                     Probe probe = wrapper.getProbe();
                     if (probe.isTaggedAs(StandardSyntaxTag.STATEMENT)) {
                         Node child = wrapper.getChild();
                         if (child instanceof AbstractLoopNode) {
-                            probe.attach(functionStatementsEventReceiver.getLoopStatementInstrument(wrapper));
+                            instrumenter.attach(probe, functionStatementsEventReceiver.getLoopStatementReceiver(wrapper), "debug:loop");
                         } else {
-                            probe.attach(functionStatementsEventReceiver.getStatementInstrument());
+                            instrumenter.attach(probe, functionStatementsEventReceiver.getStatementReceiver(), "debug:stmt");
                         }
                     }
                 }
@@ -184,6 +185,7 @@ public class DebugHandling {
         protected final Object text;
         protected final Object condition;
         protected final FunctionDefinitionNode functionDefinitionNode;
+        protected TagInstrument stepIntoInstrument;
         @CompilationFinal private boolean disabled;
         CyclicAssumption disabledUnchangedAssumption = new CyclicAssumption("debug event disabled state unchanged");
 
@@ -198,14 +200,14 @@ public class DebugHandling {
         }
 
         @Override
-        public void returnVoid(Probe probe, Node node, VirtualFrame frame) {
+        public void onReturnVoid(Probe probe, Node node, VirtualFrame frame) {
             if (!disabled()) {
                 throw RInternalError.shouldNotReachHere();
             }
         }
 
         @Override
-        public void returnExceptional(Probe probe, Node node, VirtualFrame frame, Exception exception) {
+        public void onReturnExceptional(Probe probe, Node node, VirtualFrame frame, Exception exception) {
         }
 
         boolean disabled() {
@@ -234,13 +236,13 @@ public class DebugHandling {
                     break;
                 case STEP:
                     if (this instanceof StatementEventReceiver) {
-                        StepIntoTagTrap.setTrap();
+                        stepIntoInstrument = RInstrument.getInstrumenter().attach(RSyntaxTag.FUNCTION_BODY, new StepIntoInstrumentListener(this), "step");
                     }
                     break;
                 case CONTINUE:
                     // Have to disable
                     doContinue();
-                    StepIntoTagTrap.clearTrap();
+                    clearTrap();
                     break;
                 case FINISH:
                     // If in loop, continue to loop end, else act like CONTINUE
@@ -252,13 +254,20 @@ public class DebugHandling {
                     } else {
                         doContinue();
                     }
-                    StepIntoTagTrap.clearTrap();
+                    clearTrap();
             }
         }
 
         private void doContinue() {
             FunctionStatementsEventReceiver fser = receiverMap.get(functionDefinitionNode.getUID());
             fser.setContinuing();
+        }
+
+        protected void clearTrap() {
+            if (stepIntoInstrument != null) {
+                stepIntoInstrument.dispose();
+                stepIntoInstrument = null;
+            }
         }
 
     }
@@ -272,7 +281,6 @@ public class DebugHandling {
      */
     private static class FunctionStatementsEventReceiver extends DebugEventReceiver {
 
-        private final List<Instrument> instruments = new ArrayList<>();
         private final StatementEventReceiver statementReceiver;
         ArrayList<LoopStatementEventReceiver> loopStatementReceivers = new ArrayList<>();
 
@@ -282,27 +290,18 @@ public class DebugHandling {
         FunctionStatementsEventReceiver(FunctionDefinitionNode functionDefinitionNode, Object text, Object condition, boolean once) {
             super(functionDefinitionNode, text, condition);
             receiverMap.put(functionDefinitionNode.getUID(), this);
-            instruments.add(Instrument.create(this, "debug"));
             statementReceiver = new StatementEventReceiver(functionDefinitionNode, text, condition);
             this.once = once;
         }
 
-        Instrument getInstrument() {
-            return instruments.get(0);
+        StatementEventReceiver getStatementReceiver() {
+            return statementReceiver;
         }
 
-        Instrument getStatementInstrument() {
-            Instrument instrument = Instrument.create(statementReceiver, "debug");
-            instruments.add(instrument);
-            return instrument;
-        }
-
-        Instrument getLoopStatementInstrument(WrapperNode loopNodeWrapper) {
+        LoopStatementEventReceiver getLoopStatementReceiver(WrapperNode loopNodeWrapper) {
             LoopStatementEventReceiver lser = new LoopStatementEventReceiver(functionDefinitionNode, text, condition, loopNodeWrapper, this);
             loopStatementReceivers.add(lser);
-            Instrument instrument = Instrument.create(lser, "debug");
-            instruments.add(instrument);
-            return instrument;
+            return lser;
         }
 
         @Override
@@ -352,7 +351,7 @@ public class DebugHandling {
         }
 
         @Override
-        public void enter(Probe probe, Node node, VirtualFrame frame) {
+        public void onEnter(Probe probe, Node node, VirtualFrame frame) {
             if (!disabled()) {
                 RContext.getInstance().getConsoleHandler().print("debugging in: ");
                 printCall(frame);
@@ -366,14 +365,14 @@ public class DebugHandling {
         }
 
         @Override
-        public void returnValue(Probe probe, Node node, VirtualFrame frame, Object result) {
+        public void onReturnValue(Probe probe, Node node, VirtualFrame frame, Object result) {
             if (!disabled()) {
                 returnCleanup(frame);
             }
         }
 
         @Override
-        public void returnExceptional(Probe probe, Node node, VirtualFrame frame, Exception exception) {
+        public void onReturnExceptional(Probe probe, Node node, VirtualFrame frame, Exception exception) {
             if (!disabled()) {
                 returnCleanup(frame);
             }
@@ -422,17 +421,17 @@ public class DebugHandling {
         }
 
         @Override
-        public void enter(Probe probe, Node node, VirtualFrame frame) {
+        public void onEnter(Probe probe, Node node, VirtualFrame frame) {
             if (!disabled()) {
                 // in case we did a step into that never called a function
-                StepIntoTagTrap.clearTrap();
+                clearTrap();
                 printNode(node, false);
                 browserInteract(node, frame);
             }
         }
 
         @Override
-        public void returnValue(Probe probe, Node node, VirtualFrame frame, Object result) {
+        public void onReturnValue(Probe probe, Node node, VirtualFrame frame, Object result) {
         }
 
     }
@@ -454,9 +453,9 @@ public class DebugHandling {
         }
 
         @Override
-        public void enter(Probe probe, Node node, VirtualFrame frame) {
+        public void onEnter(Probe probe, Node node, VirtualFrame frame) {
             if (!disabled()) {
-                super.enter(probe, node, frame);
+                super.onEnter(probe, node, frame);
             }
         }
 
@@ -469,14 +468,14 @@ public class DebugHandling {
         }
 
         @Override
-        public void returnExceptional(Probe probe, Node node, VirtualFrame frame, Exception exception) {
+        public void onReturnExceptional(Probe probe, Node node, VirtualFrame frame, Exception exception) {
             if (!disabled()) {
                 returnCleanup();
             }
         }
 
         @Override
-        public void returnValue(Probe probe, Node node, VirtualFrame frame, Object result) {
+        public void onReturnValue(Probe probe, Node node, VirtualFrame frame, Object result) {
             if (!disabled()) {
                 returnCleanup();
             }
@@ -503,38 +502,23 @@ public class DebugHandling {
     }
 
     /**
-     * Global trap for step into.
+     * Listener for (transient) step into.
      */
-    private static class StepIntoTagTrap extends SyntaxTagTrap {
+    private static class StepIntoInstrumentListener implements StandardBeforeInstrumentListener {
+        private DebugEventReceiver debugEventReceiver;
 
-        private static final StepIntoTagTrap fastRSyntaxTagTrap = new StepIntoTagTrap(RSyntaxTag.FUNCTION_BODY);
-
-        private static boolean set;
-
-        public StepIntoTagTrap(SyntaxTag tag) {
-            super(tag);
+        StepIntoInstrumentListener(DebugEventReceiver debugEventReceiver) {
+            this.debugEventReceiver = debugEventReceiver;
         }
 
         @Override
-        public void tagTrappedAt(Node node, MaterializedFrame frame) {
+        public void onEnter(Probe probe, Node node, VirtualFrame frame) {
             if (!globalDisable) {
                 FunctionBodyNode functionBodyNode = (FunctionBodyNode) node;
                 FunctionDefinitionNode fdn = (FunctionDefinitionNode) functionBodyNode.getRootNode();
                 ensureSingleStep(fdn);
-                clearTrap();
+                debugEventReceiver.clearTrap();
                 // next stop will be the START_METHOD node
-            }
-        }
-
-        static void setTrap() {
-            Probe.setBeforeTagTrap(fastRSyntaxTagTrap);
-            set = true;
-        }
-
-        static void clearTrap() {
-            if (set) {
-                Probe.setBeforeTagTrap(null);
-                set = false;
             }
         }
 

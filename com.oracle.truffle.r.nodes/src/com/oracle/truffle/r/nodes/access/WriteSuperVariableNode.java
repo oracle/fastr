@@ -87,7 +87,7 @@ public class WriteSuperVariableNode extends WriteVariableNodeSyntaxHelper implem
     }
 
     @Override
-    public ProbeNode.WrapperNode createWrapperNode() {
+    public WrapperNode createRWrapperNode() {
         return new WriteSuperVariableNodeWrapper(this);
     }
 

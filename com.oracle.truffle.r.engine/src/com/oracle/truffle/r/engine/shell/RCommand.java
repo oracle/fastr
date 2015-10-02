@@ -46,7 +46,9 @@ import java.util.List;
 
 import jline.console.ConsoleReader;
 import jline.console.UserInterruptException;
+import com.oracle.truffle.r.runtime.data.RLogicalVector;
 
+import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.r.engine.TruffleRLanguage;
@@ -64,7 +66,6 @@ import com.oracle.truffle.r.runtime.context.Engine.ParseException;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 
 /**
  * Emulates the (Gnu)R command as precisely as possible.
@@ -250,18 +251,20 @@ public class RCommand {
     }
 
     private static boolean doEcho(PolyglotEngine vm) {
-        Object echo;
+        PolyglotEngine.Value echoValue;
         try {
-            echo = vm.eval(GET_ECHO).get();
+            echoValue = vm.eval(GET_ECHO);
+            Object echo = echoValue.get();
+            if (echo instanceof TruffleObject) {
+                RLogicalVector echoVec = echoValue.as(RLogicalVector.class);
+                return RRuntime.fromLogical(echoVec.getDataAt(0));
+            } else if (echo instanceof Byte) {
+                return RRuntime.fromLogical((Byte) echo);
+            } else {
+                throw RInternalError.shouldNotReachHere();
+            }
         } catch (IOException e) {
             throw RInternalError.shouldNotReachHere(e);
-        }
-        if (echo instanceof Byte) {
-            return RRuntime.fromLogical((Byte) echo);
-        } else if (echo instanceof RAbstractLogicalVector) {
-            return RRuntime.fromLogical(((RAbstractLogicalVector) echo).getDataAt(0));
-        } else {
-            throw RInternalError.shouldNotReachHere();
         }
     }
 

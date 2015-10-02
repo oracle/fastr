@@ -24,9 +24,9 @@ package com.oracle.truffle.r.nodes;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.instrument.ProbeNode.WrapperNode;
+import com.oracle.truffle.api.instrument.WrapperNode;
 import com.oracle.truffle.api.nodes.*;
-import com.oracle.truffle.api.source.*;
+import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.access.variables.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -191,23 +191,27 @@ public class RASTUtils {
         if (fn instanceof ConstantNode) {
             fn = ((ConstantNode) fn).getValue();
         }
+        if (sourceUnavailable) {
+            System.console();
+        }
+        SourceSection sourceSection = sourceUnavailable ? RSyntaxNode.SOURCE_UNAVAILABLE : null;
         if (fn instanceof String) {
-            return RCallNode.createCall(sourceUnavailable ? SourceSection.createUnavailable("unavailable", "unavailable") : null, RASTUtils.createReadVariableNode(((String) fn)), signature, arguments);
+            return RCallNode.createCall(sourceSection, RASTUtils.createReadVariableNode(((String) fn)), signature, arguments);
         } else if (fn instanceof ReadVariableNode) {
-            return RCallNode.createCall(sourceUnavailable ? SourceSection.createUnavailable("unavailable", "unavailable") : null, (ReadVariableNode) fn, signature, arguments);
+            return RCallNode.createCall(sourceSection, (ReadVariableNode) fn, signature, arguments);
         } else if (fn instanceof GroupDispatchNode) {
             GroupDispatchNode gdcn = (GroupDispatchNode) fn;
             return GroupDispatchNode.create(gdcn.getGenericName(), gdcn.getCallSrc(), signature, arguments);
         } else if (fn instanceof RFunction) {
             RFunction rfn = (RFunction) fn;
-            return RCallNode.createCall(sourceUnavailable ? SourceSection.createUnavailable("unavailable", "unavailable") : null, ConstantNode.create(rfn), signature, arguments);
+            return RCallNode.createCall(sourceSection, ConstantNode.create(rfn), signature, arguments);
         } else if (fn instanceof RCallNode) {
-            return RCallNode.createCall(sourceUnavailable ? SourceSection.createUnavailable("unavailable", "unavailable") : null, (RCallNode) fn, signature, arguments);
+            return RCallNode.createCall(sourceSection, (RCallNode) fn, signature, arguments);
         } else {
             // this of course would not make much sense if trying to evaluate this call, yet it's
             // syntactically possible, for example as a result of:
             // f<-function(x,y) sys.call(); x<-f(7, 42); x[c(2,3)]
-            return RCallNode.createCall(sourceUnavailable ? SourceSection.createUnavailable("unavailable", "unavailable") : null, ConstantNode.create(fn), signature, arguments);
+            return RCallNode.createCall(sourceSection, ConstantNode.create(fn), signature, arguments);
         }
     }
 

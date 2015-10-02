@@ -20,11 +20,10 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.engine.repl.debug;
+package com.oracle.truffle.r.engine;
 
 import java.io.*;
 
-import com.oracle.truffle.api.debug.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.instrument.*;
 import com.oracle.truffle.api.instrument.impl.*;
@@ -38,26 +37,16 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.nodes.*;
 
 /**
- * Manager for FastR AST execution under RREPL debugging control.
+ * Support for FastR evaluation under Truffle debugging control.
  */
-public final class RDebugSupportProvider implements DebugSupportProvider {
+public final class TruffleRLanguageDebug {
 
-    @Override
-    public Object evalInContext(Source source, Node node, MaterializedFrame frame) {
+    static AdvancedInstrumentRootFactory createAdvancedInstrumentRootFactory(String expr, @SuppressWarnings("unused") AdvancedInstrumentResultListener resultListener) throws IOException {
         try {
-            return RContext.getEngine().parseAndEval(source, frame, false);
-        } catch (ParseException e) {
-            throw new RInternalError(e, "error while parsing debug statement from %s", source.getName());
-        }
-    }
-
-    @Override
-    public AdvancedInstrumentRootFactory createAdvancedInstrumentRootFactory(String exprText, AdvancedInstrumentResultListener resultListener) throws DebugSupportException {
-        try {
-            RNode astNode = parseExpr(exprText);
+            RNode astNode = parseExpr(expr);
             return new RToolEvalNodeFactory(astNode);
         } catch (ParseException ex) {
-            throw new DebugSupportException("Unable to parse tool-supplied expression");
+            throw new IOException(ex);
         }
 
     }
@@ -66,7 +55,7 @@ public final class RDebugSupportProvider implements DebugSupportProvider {
         return (RNode) ((RLanguage) RContext.getEngine().parse(Source.fromText(exprText, "<tool eval>")).getDataAt(0)).getRep();
     }
 
-    private static final class RToolEvalNodeFactory implements AdvancedInstrumentRootFactory {
+    static final class RToolEvalNodeFactory implements AdvancedInstrumentRootFactory {
         private final RNode exprNode;
 
         private RToolEvalNodeFactory(RNode exprNode) {
@@ -79,7 +68,7 @@ public final class RDebugSupportProvider implements DebugSupportProvider {
 
     }
 
-    private static final class RAdvancedInstrumentRoot extends AdvancedInstrumentRoot {
+    static final class RAdvancedInstrumentRoot extends AdvancedInstrumentRoot {
         @Child RNode exprNode;
 
         private RAdvancedInstrumentRoot(RNode exprNodeArg) {
@@ -102,14 +91,10 @@ public final class RDebugSupportProvider implements DebugSupportProvider {
 
     }
 
-    public Visualizer getVisualizer() {
-        return new RVisualizer();
-    }
-
     /**
-     * Helper for the repl debugger.
+     * Helper for the debugger.
      */
-    private final class RVisualizer extends DefaultVisualizer {
+    static final class RVisualizer extends DefaultVisualizer {
         private TextConnections.InternalStringWriteConnection stringConn;
 
         private void checkCreated() {
@@ -148,11 +133,6 @@ public final class RDebugSupportProvider implements DebugSupportProvider {
         public String displayIdentifier(FrameSlot slot) {
             return slot.getIdentifier().toString();
         }
-
-    }
-
-    public void enableASTProbing(ASTProber astProber) {
-        // TODO Auto-generated method stub
 
     }
 

@@ -25,7 +25,7 @@ package com.oracle.truffle.r.nodes.unary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.instrument.wrappers.*;
-import com.oracle.truffle.api.instrument.ProbeNode.WrapperNode;
+import com.oracle.truffle.api.instrument.WrapperNode;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -172,7 +172,7 @@ public abstract class ConvertBooleanNode extends RNode {
     }
 
     @Override
-    public WrapperNode createWrapperNode() {
+    public WrapperNode createRWrapperNode() {
         return new ConvertBooleanNodeWrapper(this);
     }
 }

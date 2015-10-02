@@ -86,7 +86,7 @@ public class FastRContext {
             RContext.EvalThread[] threads = new RContext.EvalThread[contexts.getLength()];
             for (int i = 0; i < threads.length; i++) {
                 ContextInfo info = checkContext(contexts.getDataAt(i), this);
-                threads[i] = new RContext.EvalThread(info, Source.fromText(exprs.getDataAt(i % threads.length), "<context_eval>"));
+                threads[i] = new RContext.EvalThread(info, Source.fromText(exprs.getDataAt(i % threads.length), "<context_eval>").withMimeType(RRuntime.R_APP_MIME));
             }
             for (int i = 0; i < threads.length; i++) {
                 threads[i].start();
@@ -124,7 +124,7 @@ public class FastRContext {
                 RContext.EvalThread[] threads = new RContext.EvalThread[contexts.getLength()];
                 for (int i = 0; i < threads.length; i++) {
                     ContextInfo info = checkContext(contexts.getDataAt(i), this);
-                    threads[i] = new RContext.EvalThread(info, Source.fromText(exprs.getDataAt(i % threads.length), "<context_eval>"));
+                    threads[i] = new RContext.EvalThread(info, Source.fromText(exprs.getDataAt(i % threads.length), "<context_eval>").withMimeType(RRuntime.R_APP_MIME));
                 }
                 for (int i = 0; i < threads.length; i++) {
                     threads[i].start();
@@ -141,7 +141,7 @@ public class FastRContext {
                     ContextInfo info = checkContext(contexts.getDataAt(i), this);
                     PolyglotEngine vm = info.apply(PolyglotEngine.buildNew()).build();
                     try {
-                        Source source = Source.fromText(exprs.getDataAt(i), "<eval>").withMimeType("application/x-r");
+                        Source source = Source.fromText(exprs.getDataAt(i), "<eval>").withMimeType(RRuntime.R_APP_MIME);
                         vm.eval(source);
                     } catch (IOException e) {
                         throw RInternalError.shouldNotReachHere(e);

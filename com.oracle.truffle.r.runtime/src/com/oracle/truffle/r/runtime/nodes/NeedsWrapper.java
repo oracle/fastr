@@ -27,15 +27,15 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import com.oracle.truffle.api.instrument.ProbeNode.WrapperNode;
+import com.oracle.truffle.api.instrument.WrapperNode;
 import com.oracle.truffle.api.nodes.Node.Child;
 
 /**
  * Denotes that a class requires a custom {@link WrapperNode} because a {@link Child} node typed as
  * this class (rather than plain {@link RNode}) exists in some other node class. Without the custom
  * wrapper, the assignment of the child will fail the runtime type check when the node is inserted.
- * Can also be used on a method of the class to indicate that the method needs special treatment
- * inthe wrapper.
+ * Can also be used on a method of the class to indicate that the method needs special treatment in
+ * the wrapper.
  *
  */
 @Retention(RetentionPolicy.CLASS)

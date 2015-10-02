@@ -19,7 +19,6 @@ import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.context.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
-import com.oracle.truffle.r.runtime.ffi.CallRFFI;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolInfo;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
