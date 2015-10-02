@@ -72,7 +72,12 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
     public CachedReplaceVectorNode(ElementAccessMode mode, RTypedValue vector, Object[] positions, RTypedValue value, boolean updatePositionNames, boolean recursive) {
         super(mode, vector, positions, recursive);
 
-        this.updatePositionNames = updatePositionNames;
+        if (numberOfDimensions == 1 && positions[0] instanceof String || positions[0] instanceof RAbstractStringVector) {
+            this.updatePositionNames = updatePositionNames;
+        } else {
+            this.updatePositionNames = false;
+        }
+
         this.vectorClass = vector.getClass();
         this.valueClass = value.getClass();
         this.valueType = value.getRType();
@@ -85,6 +90,7 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
         if (castType != null && !castType.isNull()) {
             this.writeVectorNode = WriteIndexedVectorNode.create(castType, convertedPositions.length, false, true, mode.isSubscript() && !isDeleteElements());
         }
+
     }
 
     public boolean isSupported(Object target, Object[] positions, Object values) {
@@ -236,10 +242,10 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
             assert deleteElementsNode != null;
             vector = deleteElementsNode.deleteElements(vector, vectorLength);
         } else if (this.numberOfDimensions == 1 && updatePositionNames) {
+
             // depth must be == 0 to avoid recursive position name updates
             updateVectorWithPositionNames(vector, positions);
         }
-
         return vector;
     }
 
@@ -352,8 +358,11 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
         return valueClass == RNull.class;
     }
 
+    private final ValueProfile positionCastProfile = ValueProfile.createClassProfile();
+
     private void updateVectorWithPositionNames(RAbstractVector vector, Object[] positions) {
-        Object position = positionsCheckNode.getPositionCheckAt(0).profilePosition(positions[0]);
+        Object position = positionCastProfile.profile(positions[0]);
+        CompilerAsserts.partialEvaluationConstant(position.getClass());
         RStringVector positionNames;
         if (position instanceof RMissing) {
             positionNames = null;

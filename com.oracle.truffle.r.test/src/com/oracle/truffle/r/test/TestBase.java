@@ -313,8 +313,6 @@ public class TestBase {
     protected static final String ERROR = "Error";
     protected static final String WARNING = "Warning message";
 
-    private static final boolean IGNORE_ERROR_COMPARISON = false;
-
     /**
      * If this is set to {@code true}, {@link Output#ContainsError} will compare the full output
      * instead of truncating leading "Error" strings and such. This means it will behave like

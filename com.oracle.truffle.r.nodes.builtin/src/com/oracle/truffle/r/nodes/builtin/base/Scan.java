@@ -87,7 +87,6 @@ public abstract class Scan extends RBuiltinNode {
     }
 
     @Specialization
-    @SuppressWarnings("try")
     protected Object doScan(RConnection file, RAbstractVector what, RAbstractIntVector nmaxVec, RAbstractVector sepVec, RAbstractVector decVec, RAbstractVector quotesVec, RAbstractIntVector nskipVec,
                     RAbstractIntVector nlinesVec, RAbstractVector naStringsVec, RAbstractLogicalVector flushVec, RAbstractLogicalVector fillVec, RAbstractVector stripVec,
                     RAbstractLogicalVector dataQuietVec, RAbstractLogicalVector blSkipVec, RAbstractLogicalVector multiLineVec, RAbstractVector commentCharVec, RAbstractLogicalVector escapesVec,
@@ -226,7 +225,7 @@ public abstract class Scan extends RBuiltinNode {
 
         try (RConnection openConn = data.con.forceOpen("r")) {
             if (nskip > 0) {
-                data.con.readLines(nskip);
+                openConn.readLines(nskip);
             }
             if (what instanceof RList) {
                 return scanFrame((RList) what, nmax, nlines, flush == RRuntime.LOGICAL_TRUE, fill == RRuntime.LOGICAL_TRUE, strip == RRuntime.LOGICAL_TRUE, blSkip == RRuntime.LOGICAL_TRUE,
