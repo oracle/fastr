@@ -2295,6 +2295,7 @@ public class TestSimpleVectors extends TestBase {
     public void testUpdateOther() {
         assertEval("{ x<-c(1,2); f<-function() { x<-c(100, 200); x[1]<-4; print(x) } ; f(); x }");
         assertEval("{ x<-c(1,2); f<-function() { x<-c(100, 200); x[1]<<-4; print(x) } ; f(); x }");
-    }
+        assertEval("{ a <- c(TRUE, FALSE); b <- c(a=3, b=4); a[b] <- c(TRUE, FALSE); a }");
 
+    }
 }
