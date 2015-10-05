@@ -30,6 +30,7 @@ import com.oracle.truffle.r.nodes.binary.ColonNodeGen.ColonCastNodeGen;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.gnur.*;
 import com.oracle.truffle.r.runtime.nodes.*;
@@ -228,6 +229,24 @@ public abstract class ColonNode extends RNode implements RSyntaxNode, Visibility
         @Specialization
         protected int doBoolean(byte operand) {
             return RRuntime.logical2int(operand);
+        }
+
+        @Specialization
+        protected int doString(RAbstractStringVector vector) {
+            if (lengthGreaterOne.profile(vector.getLength() > 1)) {
+                RError.warning(this, RError.Message.ONLY_FIRST_USED, vector.getLength());
+            }
+            String val = vector.getDataAt(0);
+            if (RRuntime.isNA(val)) {
+                throw RError.error(this, RError.Message.NA_OR_NAN);
+            }
+            // TODO it might be a double or complex string
+            int result = RRuntime.string2intNoCheck(val);
+            if (RRuntime.isNA(result)) {
+                RError.warning(this, RError.Message.NA_INTRODUCED_COERCION);
+                throw RError.error(this, RError.Message.NA_OR_NAN);
+            }
+            return result;
         }
 
         protected static boolean isIntValue(double d) {
