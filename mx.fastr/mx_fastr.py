@@ -28,6 +28,7 @@ import mx_gate
 import mx_graal
 import mx_jvmci
 import os
+import shutil
 
 _fastr_suite = mx.suite('fastr')
 
@@ -153,13 +154,19 @@ def gate(args):
     mx_gate.gate(args + ['-x', '-t', 'FindBugs,Checkheaders,Checkstyle,Distribution Overlap Check'])
 
 def _test_harness_body(args, vmArgs):
-    '''the callback from mx.bench'''
-    print "placeholder for mx test"
+    '''the callback from mx.test'''
+    lib = "lib.install.cran"
+    # make sure its empty
+    shutil.rmtree(lib)
+    os.mkdir(lib)
+    installcran(['--testcount', '20'])
 
 def test(args):
+    '''used for package installation/testing'''
+    parser = ArgumentParser(prog='r test')
     vm = _get_graal_vm()
     with mx_jvmci.VM(vm):
-        mx.test(args, harness=_test_harness_body)
+        mx.test(args, harness=_test_harness_body, parser=parser)
 
 def _test_srcdir():
     tp = 'com.oracle.truffle.r.test'

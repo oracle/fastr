@@ -19,7 +19,9 @@ args <- commandArgs(TRUE)
 
 usage <- function() {
 	cat(paste("usage: Rscript [--contriburl url] [--cran-mirror url] [--lib] [--verbose | -v] [-V] [--dryrun]",
-                      "[ --no-install | -n] [--create-blacklist] [--blacklist-file file] [--ignore-blacklist] [package-pattern]\n"))
+                      "[--no-install | -n] [--create-blacklist] [--blacklist-file file] [--ignore-blacklist]",
+					  "[--testcount count]",
+					  "[package-pattern]\n"))
 	quit(status=1)
 }
 
@@ -172,12 +174,11 @@ do.install <- function() {
 		if (ignore.blacklist) {
 			blacklist <- character()
 		} else {
-		    blacklist <- readLines(con=file(blacklist.file))
+			blacklist <- readLines(con=file(blacklist.file))
 		}
 	}
 
-	if (install) {
-		pkgnames <- rownames(toinstall.pkgs)
+	install.pkgs <- function(pkgnames) {
 		for (pkgname in pkgnames) {
 			if (pkgname %in% blacklist) {
 				cat("not installing: ", pkgname, " - blacklisted\n")
@@ -189,6 +190,25 @@ do.install <- function() {
 					install.packages(pkgname, contriburl=contriburl, type="source", lib=lib.install, INSTALL_opts="--install-tests")
 				}
 			}
+		}
+
+	}
+
+	if (install) {
+		if (is.na(testcount)) {
+			# install all non-blacklisted packages in toinstall.pkgs
+			install.pkgs(rownames(toinstall.pkgs))
+		} else {
+			# install testcount packages taken at random from toinstall.pkgs
+			matched.toinstall.pkgs <- apply(toinstall.pkgs, 1, function(x) !(x["Package"] %in% blacklist))
+			test.avail.pkgs <<-toinstall.pkgs[matched.toinstall.pkgs, , drop=F]
+			test.avail.pkgnames <- rownames(test.avail.pkgs)
+			rands <- sample(1:length(test.avail.pkgnames))
+			test.pkgnames <- character(testcount)
+			for (i in (1:testcount)) {
+				test.pkgnames[[i]] <- test.avail.pkgnames[[rands[[i]]]]
+			}
+			install.pkgs(test.pkgnames)
 		}
 	}
 }
@@ -240,6 +260,16 @@ parse.args <- function() {
 			} else {
 				usage()
 			}
+		} else if (a == "--testcount") {
+			if (length(args) >= 2L) {
+				testcount <<- as.integer(args[2L])
+				if (is.na(testcount)) {
+					usage()
+				}
+				args <<- args[-1L]
+			} else {
+				usage()
+			}
 		} else {
 			if (grepl("^-.*", a)) {
 				usage()
@@ -254,12 +284,17 @@ parse.args <- function() {
 
 cat.args <- function() {
 	if (verbose) {
-		cat("install: ", install, "\n")
-		cat("dry.run: ", dry.run, "\n")
-		cat("save.blacklist: ", save.blacklist, "\n")
-		cat("read.blacklist: ", read.blacklist, "\n")
-		cat("pkg.pattern: ", pkg.pattern, "\n")
-		cat("contriburl: ", contriburl, "\n")
+		cat("cran.mirror:", cran.mirror, "\n")
+		cat("contriburl:", contriburl, "\n")
+		cat("blacklist.file:", blacklist.file, "\n")
+		cat("lib.install:", lib.install, "\n")
+		cat("install:", install, "\n")
+		cat("dry.run:", dry.run, "\n")
+		cat("create.blacklist:", create.blacklist, "\n")
+		cat("ignore.blacklist:", ignore.blacklist, "\n")
+		cat("pkg.pattern:", pkg.pattern, "\n")
+		cat("contriburl:", contriburl, "\n")
+		cat("testcount:", testcount, "\n")
 	}
 }
 
@@ -297,7 +332,8 @@ dry.run <- F
 avail.pkgs <- NULL
 toinstall.pkgs <- NULL
 create.blacklist.file <- F
-ignore.backlist <- F
+ignore.blacklist <- F
+testcount <- NA
 
 if (!interactive()) {
     run()
