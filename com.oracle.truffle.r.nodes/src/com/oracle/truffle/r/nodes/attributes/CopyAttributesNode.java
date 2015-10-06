@@ -203,9 +203,11 @@ public abstract class CopyAttributesNode extends RBaseNode {
         }
 
         int[] newDimensions = left.getDimensions();
-        if (newDimensions == null) {
+        if (newDimensions == null || (newDimensions.length == 2 && newDimensions[0] == 1 && newDimensions[1] == 1)) {
+            // 1-element matrix should be treated as 1-element vector
             newDimensions = right.getDimensions();
-            if (newDimensions == null) {
+            if (newDimensions == null || (newDimensions.length == 2 && newDimensions[0] == 1 && newDimensions[1] == 1)) {
+                // 1-element matrix should be treated as 1-element vector
                 noDimensions.enter();
                 if (rightNotResult) {
                     RStringVector vecNames = right.getNames(attrRightProfiles);
