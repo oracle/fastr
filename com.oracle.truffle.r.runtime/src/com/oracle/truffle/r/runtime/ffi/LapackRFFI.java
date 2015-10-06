@@ -67,4 +67,19 @@ public interface LapackRFFI extends RFFI {
      * See <a href="http://www.netlib.org/lapack/explore-html/dd/dad/dpstrf_8f.html">spec</a>.
      */
     int dpstrf(char uplo, int n, double[] a, int lda, int[] piv, int[] rank, double tol, double[] work);
+
+    /**
+     * See <a href="http://www.netlib.org/lapack/explore-html/d8/d72/dgesv_8f.html">spec</a>.
+     */
+    int dgesv(int n, int nrhs, double[] a, int lda, int[] ipiv, double[] b, int ldb);
+
+    /**
+     * See <a href="http://www.netlib.org/lapack/explore-html/dc/d09/dlange_8f.html">spec</a>.
+     */
+    double dlange(char norm, int m, int n, double[] a, int lda, double[] work);
+
+    /**
+     * See <a href="http://www.netlib.org/lapack/explore-html/db/de4/dgecon_8f.html">spec</a>.
+     */
+    int dgecon(char norm, int n, double[] a, int lda, double anorm, double[] rcond, double[] work, int[] iwork);
 }

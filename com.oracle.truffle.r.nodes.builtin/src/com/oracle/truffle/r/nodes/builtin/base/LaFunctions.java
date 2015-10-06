@@ -17,6 +17,8 @@ import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.unary.CastDoubleNode;
+import com.oracle.truffle.r.nodes.unary.CastDoubleNodeGen;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -267,7 +269,7 @@ public class LaFunctions {
             int n = aDims[0];
             if (n != aDims[1]) {
                 errorProfile.enter();
-                throw RError.error(this, RError.Message.MUST_BE_SQUARE, "a");
+                throw RError.error(this, RError.Message.MUST_BE_SQUARE_MATRIX, "a");
             }
             int[] ipiv = new int[n];
             double modulus = 0;
@@ -330,7 +332,7 @@ public class LaFunctions {
             int m = aDims[1];
             if (n != m) {
                 errorProfile.enter();
-                throw RError.error(this, RError.Message.MUST_BE_SQUARE, "a");
+                throw RError.error(this, RError.Message.MUST_BE_SQUARE_MATRIX, "a");
             }
             if (m <= 0) {
                 errorProfile.enter();
@@ -375,6 +377,114 @@ public class LaFunctions {
                 }
             }
             return a;
+        }
+    }
+
+    @RBuiltin(name = "La_solve", kind = INTERNAL, parameterNames = {"a", "bin", "tolin"})
+    public abstract static class LaSolve extends RBuiltinNode {
+        protected final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+        @Child private CastDoubleNode castDouble = CastDoubleNodeGen.create(false, false, false);
+
+        @Override
+        protected void createCasts(CastBuilder casts) {
+            casts.toDouble(1, false, true, false);
+            casts.toDouble(2, false, false, false);
+        }
+
+        @Specialization
+        protected RDoubleVector laSolve(RAbstractVector a, RDoubleVector bin, RAbstractDoubleVector tolin) {
+            double tol = tolin.getLength() == 0 ? RRuntime.DOUBLE_NA : tolin.getDataAt(0);
+            if (!(a.isMatrix() && (a instanceof RAbstractDoubleVector || a instanceof RAbstractIntVector || a instanceof RAbstractLogicalVector))) {
+                throw RError.error(this, RError.Message.MUST_BE_NUMERIC_MATRIX, "a");
+            }
+            int[] aDims = a.getDimensions();
+            int n = aDims[0];
+            if (n == 0) {
+                throw RError.error(this, RError.Message.GENERIC, "'a' is 0-diml");
+            }
+            int n2 = aDims[1];
+            if (n2 != n) {
+                throw RError.error(this, RError.Message.MUST_BE_SQUARE, "a", n, n2);
+            }
+            RList aDn = a.getDimNames(attrProfiles);
+            int p;
+            double[] bData;
+            RDoubleVector b;
+            if (bin.isMatrix()) {
+                int[] bDims = bin.getDimensions();
+                p = bDims[1];
+                if (p == 0) {
+                    throw RError.error(this, RError.Message.GENERIC, "no right-hand side in 'b'");
+                }
+                int p2 = bDims[0];
+                if (p2 != n) {
+                    throw RError.error(this, RError.Message.MUST_BE_SQUARE_COMPATIBLE, "b", p2, p, "a", n, n);
+                }
+                bData = new double[n * p];
+                b = RDataFactory.createDoubleVector(bData, RDataFactory.COMPLETE_VECTOR);
+                b.setDimensions(new int[]{n, p});
+                RList binDn = bin.getDimNames();
+                // This is somewhat odd, but Matrix relies on dropping NULL dimnames
+                if (aDn != null || binDn != null) {
+                    // rownames(ans) = colnames(A), colnames(ans) = colnames(Bin)
+                    Object[] bDnData = new Object[2];
+                    if (aDn != null) {
+                        bDnData[0] = aDn.getDataAt(1);
+                    }
+                    if (binDn != null) {
+                        bDnData[1] = binDn.getDataAt(1);
+                    }
+                    if (bDnData[0] != null || bDnData[1] != null) {
+                        b.setDimNames(RDataFactory.createList(bDnData));
+                    }
+                }
+            } else {
+                p = 1;
+                if (bin.getLength() != n) {
+                    throw RError.error(this, RError.Message.MUST_BE_SQUARE_COMPATIBLE, "b", bin.getLength(), p, "a", n, n);
+                }
+                bData = new double[n];
+                b = RDataFactory.createDoubleVector(bData, RDataFactory.COMPLETE_VECTOR);
+                if (aDn != null) {
+                    b.setNames(RDataFactory.createStringVector((String) aDn.getDataAt(1)));
+                }
+            }
+
+            System.arraycopy(bin.getInternalStore(), 0, bData, 0, n * p);
+
+            int[] ipiv = new int[1];
+            // work on a copy of A
+            double[] avals = new double[n * n];
+            if (a instanceof RAbstractDoubleVector) {
+                System.arraycopy(a.getInternalStore(), 0, avals, 0, n * n);
+            } else {
+                RDoubleVector aDouble = (RDoubleVector) castDouble.execute(a);
+                assert aDouble != a;
+                avals = aDouble.getInternalStore();
+            }
+            int info = RFFIFactory.getRFFI().getLapackRFFI().dgesv(n, p, avals, n, ipiv, bData, n);
+            if (info < 0) {
+                RError.error(this, RError.Message.LAPACK_INVALID_VALUE, -info, "dgesv");
+            }
+            if (info > 0) {
+                RError.error(this, RError.Message.LAPACK_EXACTLY_SINGULAR, "dgesv", info, info);
+            }
+            if (tol > 0) {
+                double anorm = RFFIFactory.getRFFI().getLapackRFFI().dlange('1', n, n, avals, n, null);
+                double[] work = new double[4 * n];
+                double[] rcond = new double[1];
+                RFFIFactory.getRFFI().getLapackRFFI().dgecon('1', n, avals, n, anorm, rcond, work, ipiv);
+                if (rcond[0] < tol) {
+                    RError.error(this, RError.Message.SYSTEM_COMP_SINGULAR, rcond[0]);
+                }
+            }
+            return b;
+        }
+
+        @SuppressWarnings("unused")
+        @Fallback
+        protected RDoubleVector laSolve(Object a, Object bin, Object tol) {
+            throw RError.error(this, RError.Message.INCORRECT_ARG);
         }
     }
 }

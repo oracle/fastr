@@ -313,6 +313,13 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI, Stat
         void dpotrf_(@In byte[] uplo, @In int[] n, double[] a, @In int[] lda, @Out int[] info);
 
         void dpstrf_(@In byte[] uplo, @In int[] n, double[] a, @In int[] lda, @Out int[] piv, @Out int[] rank, @In double[] tol, @Out double[] work, @Out int[] info);
+
+        void dgesv_(@In int[] n, @In int[] nrhs, double[] a, @In int[] lda, @Out int[] ipiv, double[] b, @In int[] ldb, @Out int[] info);
+
+        double dlange_(@In byte[] norm, @In int[] m, @In int[] n, @In double[] a, @In int[] lda, @Out double[] work);
+
+        void dgecon_(@In byte[] norm, @In int[] n, @In double[] a, @In int[] lda, @In double[] anorm, @Out double[] rcond, @Out double[] work, @Out int[] iwork, @Out int[] info);
+
     }
 
     private static class LapackProvider {
@@ -395,6 +402,25 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI, Stat
         return info[0];
     }
 
+    @TruffleBoundary
+    public int dgesv(int n, int nrhs, double[] a, int lda, int[] ipiv, double[] b, int ldb) {
+        int[] info = new int[1];
+        lapack().dgesv_(wrapInt(n), wrapInt(nrhs), a, wrapInt(lda), ipiv, b, wrapInt(ldb), info);
+        return info[0];
+    }
+
+    @TruffleBoundary
+    public double dlange(char norm, int m, int n, double[] a, int lda, double[] work) {
+        return lapack().dlange_(wrapChar(norm), wrapInt(m), wrapInt(n), a, wrapInt(lda), work);
+    }
+
+    @TruffleBoundary
+    public int dgecon(char norm, int n, double[] a, int lda, double anorm, double[] rcond, double[] work, int[] iwork) {
+        int[] info = new int[1];
+        lapack().dgecon_(wrapChar(norm), wrapInt(n), a, wrapInt(lda), wrapDouble(anorm), rcond, work, iwork, info);
+        return info[0];
+    }
+
     /*
      * Linpack (libappl) functions
      */
@@ -451,7 +477,7 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI, Stat
     public interface Stats {
         /*
          * TODO add @In/@Out to any arrays that are known to be either @In or @Out (default is
-         * 
+         *
          * @Inout)
          */
 
