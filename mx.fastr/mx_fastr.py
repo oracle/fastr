@@ -159,7 +159,7 @@ def _test_harness_body(args, vmArgs):
     # make sure its empty
     shutil.rmtree(lib)
     os.mkdir(lib)
-    installcran(['--testcount', '20'])
+    installcran(['--testcount', '100'])
 
 def test(args):
     '''used for package installation/testing'''
