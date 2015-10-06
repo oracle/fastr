@@ -631,10 +631,10 @@ public abstract class RVector extends RAttributeStorage implements RShareable, R
     }
 
     @Override
-    public RVector copyResizedWithDimensions(int[] newDimensions) {
+    public RVector copyResizedWithDimensions(int[] newDimensions, boolean fillNA) {
         // TODO support for higher dimensions
         assert newDimensions.length == 2;
-        RVector result = copyResized(newDimensions[0] * newDimensions[1], false);
+        RVector result = copyResized(newDimensions[0] * newDimensions[1], fillNA);
         result.setDimensions(newDimensions);
         return result;
     }

@@ -181,10 +181,10 @@ public abstract class RSequence implements RAbstractVector {
     }
 
     @Override
-    public final RVector copyResizedWithDimensions(int[] newDimensions) {
+    public final RVector copyResizedWithDimensions(int[] newDimensions, boolean fillNA) {
         // TODO support for higher dimensions
         assert newDimensions.length == 2;
-        RVector result = copyResized(newDimensions[0] * newDimensions[1], false);
+        RVector result = copyResized(newDimensions[0] * newDimensions[1], fillNA);
         result.setDimensions(newDimensions);
         return result;
     }

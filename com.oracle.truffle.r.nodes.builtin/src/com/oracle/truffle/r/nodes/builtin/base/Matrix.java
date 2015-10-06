@@ -43,6 +43,7 @@ public abstract class Matrix extends RBuiltinNode {
     private final BinaryConditionProfile nrowGivenNcolMissing = (BinaryConditionProfile) ConditionProfile.createBinaryProfile();
     private final BinaryConditionProfile bothNrowNcolMissing = (BinaryConditionProfile) ConditionProfile.createBinaryProfile();
     private final BinaryConditionProfile empty = (BinaryConditionProfile) ConditionProfile.createBinaryProfile();
+    private final BinaryConditionProfile isList = (BinaryConditionProfile) ConditionProfile.createBinaryProfile();
 
     private RAbstractVector updateDimNames(RAbstractVector vector, Object o) {
         if (updateDimNames == null) {
@@ -65,12 +66,18 @@ public abstract class Matrix extends RBuiltinNode {
         controlVisibility();
         int[] dim = computeDimByCol(data.getLength(), nrow, ncol, missingNr, missingNc);
         if (empty.profile(data.getLength() == 0)) {
-            RVector res = data.createEmptySameType(0, RDataFactory.COMPLETE_VECTOR);
-            res.setDimensions(dim);
-            return res;
+            if (isList.profile(data instanceof RList)) {
+                // matrix of NULL-s
+                return data.copyResizedWithDimensions(dim, true);
+            } else {
+                RVector res = data.createEmptySameType(0, RDataFactory.COMPLETE_VECTOR);
+                res.setDimensions(dim);
+                return res;
+            }
         } else {
-            return data.copyResizedWithDimensions(dim);
+            return data.copyResizedWithDimensions(dim, false);
         }
+
     }
 
     @Specialization(guards = "!isTrue(byrow)")
@@ -79,10 +86,16 @@ public abstract class Matrix extends RBuiltinNode {
         int[] dim = computeDimByCol(data.getLength(), nrow, ncol, missingNr, missingNc);
         RAbstractVector res;
         if (empty.profile(data.getLength() == 0)) {
-            res = data.createEmptySameType(0, RDataFactory.COMPLETE_VECTOR);
-            res.setDimensions(dim);
+            if (isList.profile(data instanceof RList)) {
+                // matrix of NULL-s
+                res = data.copyResizedWithDimensions(dim, true);
+                res = updateDimNames(res, dimnames);
+            } else {
+                res = data.createEmptySameType(0, RDataFactory.COMPLETE_VECTOR);
+                res.setDimensions(dim);
+            }
         } else {
-            res = data.copyResizedWithDimensions(dim);
+            res = data.copyResizedWithDimensions(dim, false);
             res = updateDimNames(res, dimnames);
         }
         controlVisibility();
@@ -100,10 +113,15 @@ public abstract class Matrix extends RBuiltinNode {
         }
         RAbstractVector res;
         if (empty.profile(data.getLength() == 0)) {
-            res = data.createEmptySameType(0, RDataFactory.COMPLETE_VECTOR);
-            res.setDimensions(dim);
+            if (isList.profile(data instanceof RList)) {
+                // matrix of NULL-s
+                res = data.copyResizedWithDimensions(dim, true);
+            } else {
+                res = data.createEmptySameType(0, RDataFactory.COMPLETE_VECTOR);
+                res.setDimensions(dim);
+            }
         } else {
-            res = data.copyResizedWithDimensions(dim);
+            res = data.copyResizedWithDimensions(dim, false);
         }
         return (RAbstractVector) transpose.execute(res);
     }
@@ -118,11 +136,16 @@ public abstract class Matrix extends RBuiltinNode {
         }
         RAbstractVector res;
         if (empty.profile(data.getLength() == 0)) {
-            res = data.createEmptySameType(0, RDataFactory.COMPLETE_VECTOR);
-            res.setDimensions(dim);
+            if (isList.profile(data instanceof RList)) {
+                // matrix of NULL-s
+                res = (RVector) transpose.execute(data.copyResizedWithDimensions(dim, true));
+                res = updateDimNames(res, dimnames);
+            } else {
+                res = data.createEmptySameType(0, RDataFactory.COMPLETE_VECTOR);
+                res.setDimensions(dim);
+            }
         } else {
-
-            res = (RVector) transpose.execute(data.copyResizedWithDimensions(dim));
+            res = (RVector) transpose.execute(data.copyResizedWithDimensions(dim, false));
             res = updateDimNames(res, dimnames);
         }
         controlVisibility();

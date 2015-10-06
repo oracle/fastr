@@ -40,7 +40,7 @@ public interface RAbstractVector extends RAbstractContainer, TruffleObject {
 
     RAbstractVector copyWithNewDimensions(int[] newDimensions);
 
-    RVector copyResizedWithDimensions(int[] newDimensions);
+    RVector copyResizedWithDimensions(int[] newDimensions, boolean fillNA);
 
     RAbstractVector copyDropAttributes();
 

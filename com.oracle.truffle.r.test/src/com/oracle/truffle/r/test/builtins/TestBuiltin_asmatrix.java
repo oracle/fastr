@@ -56,5 +56,8 @@ public class TestBuiltin_asmatrix extends TestBase {
         assertEval("{ x<-matrix(integer(), nrow=2) }");
         assertEval("{ x<-matrix(integer(), ncol=2, nrow=3) }");
         assertEval("{ x<-matrix(integer()) }");
+
+        assertEval("{ x<-matrix(list(), nrow=2, ncol=2); x }");
+        assertEval("{ x<-matrix(list(), nrow=2, ncol=2, dimnames=list(c(\"a\", \"b\"), c(\"c\", \"d\"))); x }");
     }
 }

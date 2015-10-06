@@ -126,8 +126,8 @@ public abstract class RScalarVector extends RScalar implements RAbstractVector {
         return materialize().copyWithNewDimensions(newDimensions);
     }
 
-    public RVector copyResizedWithDimensions(int[] newDimensions) {
-        return materialize().copyResizedWithDimensions(newDimensions);
+    public RVector copyResizedWithDimensions(int[] newDimensions, boolean fillNA) {
+        return materialize().copyResizedWithDimensions(newDimensions, fillNA);
     }
 
     public RAbstractVector copyDropAttributes() {
