@@ -157,9 +157,9 @@ def _test_harness_body(args, vmArgs):
     '''the callback from mx.test'''
     lib = "lib.install.cran"
     # make sure its empty
-    shutil.rmtree(lib)
+    shutil.rmtree(lib, ignore_errors=True)
     os.mkdir(lib)
-    installcran(['--testcount', '100'])
+    installcran(['--testcount', '100', '--lib', lib])
 
 def test(args):
     '''used for package installation/testing'''
