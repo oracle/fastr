@@ -141,7 +141,7 @@ public abstract class CastDoubleNode extends CastBaseNode {
     }
 
     @Specialization
-    protected RDoubleVector doLogicalVectorDims(RLogicalVector operand) {
+    protected RDoubleVector doLogicalVectorDims(RAbstractLogicalVector operand) {
         return createResultVector(operand, index -> naCheck.convertLogicalToDouble(operand.getDataAt(index)));
     }
 
