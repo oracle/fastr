@@ -159,15 +159,21 @@ def _test_harness_body(args, vmArgs):
     # make sure its empty
     shutil.rmtree(lib, ignore_errors=True)
     os.mkdir(lib)
+    install_tmp = "install.tmp"
+    shutil.rmtree(install_tmp, ignore_errors=True)
+    os.mkdir(install_tmp)
+    os.environ["TMPDIR"] = install_tmp
     stack_args = ['--J', '@-DR:-PrintErrorStacktracesToFile -DR:+PrintErrorStacktraces']
-    installcran(stack_args + ['--cran-mirror', 'http://diy-3-16/cran/src/contrib', '--testcount', '100', '--lib', lib])
+    rc = installcran(stack_args + ['--cran-mirror', 'http://diy-3-16/cran/', '--testcount', '100', '--lib', lib])
+    shutil.rmtree(install_tmp, ignore_errors=True)
+    return rc
 
 def test(args):
     '''used for package installation/testing'''
     parser = ArgumentParser(prog='r test')
     vm = _get_graal_vm()
     with mx_jvmci.VM(vm):
-        mx.test(args, harness=_test_harness_body, parser=parser)
+        return mx.test(args, harness=_test_harness_body, parser=parser)
 
 def _test_srcdir():
     tp = 'com.oracle.truffle.r.test'

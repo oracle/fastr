@@ -151,22 +151,28 @@ abort <- function(msg) {
 	quit("no", 1)
 }
 
-set.cran.mirror <- function() {
+set.contriburl <- function() {
+	# if contriburl is set explicitly that's all we need
+	if (!is.na(contriburl)) {
+		return
+	}
+
+	# check for env var setting
+	contriburl <<- Sys.getenv("LOCAL_CRAN_REPO", unset=NA)
+	if (!is.na(contriburl)) {
+		return
+	}
+
+	# set from the cran-mirror value
 	if (is.na(cran.mirror)) {
 		# not set on command line
-	    cran.mirror <<- Sys.getenv("CRAN_MIRROR", unset = "http://cran.cnr.berkeley.edu/")
-    }
+		cran.mirror <<- Sys.getenv("CRAN_MIRROR", unset = "http://cran.cnr.berkeley.edu/")
+	}
 	r <- getOption("repos")
 	r["CRAN"] <- cran.mirror
 	options(repos = r)
-	if (is.na(contriburl)) {
-		# not set on command line
-		contriburl <<- Sys.getenv("LOCAL_CRAN_REPO", unset=NA)
-		if (is.na(contriburl)) {
-			# set back to repo-based default
-			contriburl <<- contrib.url(r, "source")
-		}
-	}
+	contriburl <<- contrib.url(r, "source")
+
 }
 
 set.package.blacklist <- function() {
@@ -376,7 +382,7 @@ check.libs <- function() {
 run <- function() {
     parse.args()
 	check.libs()
-	set.cran.mirror()
+	set.contriburl()
 	set.package.blacklist()
     cat.args()
     do.install()
