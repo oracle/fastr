@@ -205,6 +205,11 @@ public class RCommand {
                         String continuePrompt = getContinuePrompt();
                         Source subSource = Source.subSource(source, startLength).withMimeType(TruffleRLanguage.MIME);
                         while (true) {
+                            /*
+                             * N.B. As of Truffle rev 371045b1312d412bafa29882e6c3f7bfe6c0f8f1, only
+                             * exceptions that are <: Exception are converted to IOException, Error
+                             * subclasses pass through.
+                             */
                             try {
                                 vm.eval(subSource);
                                 continue REPL;
