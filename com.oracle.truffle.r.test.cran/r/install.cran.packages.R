@@ -215,12 +215,12 @@ do.install <- function() {
 		}
 		for (pkgname in pkgnames) {
 			if (pkgname %in% blacklist) {
-				cat("not installing: ", pkgname, " - blacklisted\n")
+				cat("not installing:", pkgname, " - blacklisted\n")
 			} else {
 				if (dry.run) {
-					cat("would install: ", pkgname, "\n")
+					cat("would install:", pkgname, "\n")
 				} else {
-					cat("installing: ", pkgname, "\n")
+					cat("installing:", pkgname, "\n")
 					install.package(pkgname)
 				}
 			}

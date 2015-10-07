@@ -160,7 +160,7 @@ def _test_harness_body(args, vmArgs):
     shutil.rmtree(lib, ignore_errors=True)
     os.mkdir(lib)
     stack_args = ['--J', '@-DR:-PrintErrorStacktracesToFile -DR:+PrintErrorStacktraces']
-    installcran(stack_args + ['--testcount', '100', '--lib', lib])
+    installcran(stack_args + ['--cran-mirror', 'http://diy-3-16/cran/src/contrib', '--testcount', '100', '--lib', lib])
 
 def test(args):
     '''used for package installation/testing'''
