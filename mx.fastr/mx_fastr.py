@@ -159,7 +159,8 @@ def _test_harness_body(args, vmArgs):
     # make sure its empty
     shutil.rmtree(lib, ignore_errors=True)
     os.mkdir(lib)
-    installcran(['--testcount', '100', '--lib', lib])
+    stack_args = ['--J', '@-DR:-PrintErrorStacktracesToFile -DR:+PrintErrorStacktraces']
+    installcran(stack_args + ['--testcount', '100', '--lib', lib])
 
 def test(args):
     '''used for package installation/testing'''
@@ -428,7 +429,7 @@ _commands = {
     'rcmplib' : [rcmplib, ['options']],
     'test' : [test, ['options']],
     'rrepl' : [runRREPL, '[options]'],
-    'installcran' : [installcran, '[options]']
+    'installcran' : [installcran, '[options]'],
     }
 
 mx.update_commands(_fastr_suite, _commands)

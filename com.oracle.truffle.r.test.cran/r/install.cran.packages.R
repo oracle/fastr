@@ -1,3 +1,26 @@
+#
+# Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+#
+# This code is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License version 2 only, as
+# published by the Free Software Foundation.
+#
+# This code is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+# version 2 for more details (a copy is included in the LICENSE file that
+# accompanied this code).
+#
+# You should have received a copy of the GNU General Public License version
+# 2 along with this work; if not, write to the Free Software Foundation,
+# Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+#
+# Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+# or visit www.oracle.com if you need additional information or have any
+# questions.
+#
+
 # A script to install CRAN packages, with a blacklist mechanism starting from a known
 # set of packages that we cannot handle, e.g. Rcpp (due to C++)
 # By default all packages are candidates for installation, but this
@@ -15,12 +38,17 @@
 
 # The env var R_LIBS_USER must be set to the directory where the install should take place.
 
+# A single package install can be handled in three ways, based on the install-mode argument (default system):
+#   system: use a subprocess via the system2 command
+#   internal: direct call to tools::install.packages
+#   context: run in separate FastR context
+
 args <- commandArgs(TRUE)
 
 usage <- function() {
 	cat(paste("usage: Rscript [--contriburl url] [--cran-mirror url] [--lib] [--verbose | -v] [-V] [--dryrun]",
                       "[--no-install | -n] [--create-blacklist] [--blacklist-file file] [--ignore-blacklist]",
-					  "[--testcount count]",
+					  "[--testcount count]", "[--install-mode mode]",
 					  "[package-pattern]\n"))
 	quit(status=1)
 }
@@ -179,6 +207,12 @@ do.install <- function() {
 	}
 
 	install.pkgs <- function(pkgnames) {
+		if (verbose&& !dry.run) {
+			cat("packages to install (+dependents):\n")
+			for (pkgname in pkgnames) {
+				cat(pkgname, "\n")
+			}
+		}
 		for (pkgname in pkgnames) {
 			if (pkgname %in% blacklist) {
 				cat("not installing: ", pkgname, " - blacklisted\n")
@@ -187,7 +221,7 @@ do.install <- function() {
 					cat("would install: ", pkgname, "\n")
 				} else {
 					cat("installing: ", pkgname, "\n")
-					install.packages(pkgname, contriburl=contriburl, type="source", lib=lib.install, INSTALL_opts="--install-tests")
+					install.package(pkgname)
 				}
 			}
 		}
@@ -211,6 +245,24 @@ do.install <- function() {
 			install.pkgs(test.pkgnames)
 		}
 	}
+}
+
+install.package <- function(pkgname) {
+	if (install.mode == "system") {
+		system.install(pkgname)
+	} else if (install.mode == "internal") {
+		install.packages(pkgname, contriburl=contriburl, type="source", lib=lib.install, INSTALL_opts="--install-tests")
+	} else if (install.mode == "context") {
+		stop("context install-mode not implemented\n")
+	}
+}
+
+system.install <- function(pkgname) {
+	script <- file.path(R.home(), "com.oracle.truffle.r.test.cran/r/install.package.R")
+	rscript = file.path(R.home(), "bin/Rscript")
+	args <- c(script, pkgname, contriburl, lib.install)
+	rc <- system2(rscript, args)
+	rc
 }
 
 # parse the command line arguments when run as a script
@@ -270,6 +322,16 @@ parse.args <- function() {
 			} else {
 				usage()
 			}
+		} else if (a == "--install-mode") {
+			if (length(args) >= 2L) {
+				install.mode <<- args[2L]
+				if (!(install.mode %in% c("system", "internal", "context"))) {
+					usage()
+				}
+				args <<- args[-1L]
+			} else {
+				usage()
+			}
 		} else {
 			if (grepl("^-.*", a)) {
 				usage()
@@ -295,6 +357,7 @@ cat.args <- function() {
 		cat("pkg.pattern:", pkg.pattern, "\n")
 		cat("contriburl:", contriburl, "\n")
 		cat("testcount:", testcount, "\n")
+		cat("install.mode:", install.mode, "\n")
 	}
 }
 
@@ -334,6 +397,7 @@ toinstall.pkgs <- NULL
 create.blacklist.file <- F
 ignore.blacklist <- F
 testcount <- NA
+install.mode <- "system"
 
 if (!interactive()) {
     run()

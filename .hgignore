@@ -1,4 +1,5 @@
 ^mx.fastr/env
+^mx.fastr/savedDeps
 ^mx.fastr/checkstyle-timestamps
 ^mx.fastr/eclipseinit.timestamp
 ^mx.fastr/netbeansinit.timestamp

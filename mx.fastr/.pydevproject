@@ -8,7 +8,7 @@
 <path>/mx.fastr</path>
 </pydev_pathproperty>
 <pydev_pathproperty name="org.python.pydev.PROJECT_SOURCE_PATH">
-<path>/mxtool</path>
+<path>/mx</path>
 </pydev_pathproperty>
 
 </pydev_project>
