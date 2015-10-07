@@ -1540,7 +1540,7 @@ public class RSerialize {
                     }
 
                     default:
-                        throw RInternalError.unimplemented();
+                        throw RInternalError.unimplemented(type.name());
                 }
 
                 if (attributes != null) {
