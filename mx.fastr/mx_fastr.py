@@ -21,7 +21,7 @@
 # questions.
 #
 import tempfile, platform, subprocess, shlex
-from os.path import join, sep
+from os.path import join, sep, dirname
 from argparse import ArgumentParser
 import mx
 import mx_gate
@@ -164,7 +164,11 @@ def _test_harness_body(args, vmArgs):
     os.mkdir(install_tmp)
     os.environ["TMPDIR"] = install_tmp
     stack_args = ['--J', '@-DR:-PrintErrorStacktracesToFile -DR:+PrintErrorStacktraces']
-    rc = installcran(stack_args + ['--cran-mirror', 'http://diy-3-16/cran/', '--testcount', '100', '--lib', lib])
+    cran_args = []
+    local_cran = mx.get_env('MX_HG_BASE')
+    if local_cran:
+        cran_args = ['--cran-mirror', join(dirname(local_cran), 'cran')]
+    rc = installcran(stack_args + cran_args + ['--testcount', '100', '--lib', lib])
     shutil.rmtree(install_tmp, ignore_errors=True)
     return rc
 
