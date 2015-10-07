@@ -23,6 +23,8 @@
 package com.oracle.truffle.r.runtime;
 
 import java.io.*;
+import java.nio.file.FileSystems;
+import java.nio.file.Path;
 import java.util.*;
 
 import com.oracle.truffle.api.CompilerDirectives.*;
@@ -45,20 +47,22 @@ public class TempPathName {
         if (tempDirPath == null) {
             //
             final String[] envVars = new String[]{"TMPDIR", "TMP", "TEMP"};
-            String startingTempDirPath = null;
+            String startingTempDir = null;
             for (String envVar : envVars) {
                 String value = System.getenv(envVar);
                 if (value != null && isWriteableDirectory(value)) {
-                    startingTempDirPath = value;
+                    startingTempDir = value;
                 }
             }
-            if (startingTempDirPath == null) {
-                startingTempDirPath = "/tmp/"; // TODO Windows
+            if (startingTempDir == null) {
+                startingTempDir = "/tmp";
             }
-            if (!startingTempDirPath.endsWith(File.separator)) {
-                startingTempDirPath += startingTempDirPath;
+            Path startingTempDirPath = FileSystems.getDefault().getPath(startingTempDir, "Rtmp");
+            // ensure absolute, to avoid problems with R code does a setwd
+            if (!startingTempDirPath.isAbsolute()) {
+                startingTempDirPath = startingTempDirPath.toAbsolutePath();
             }
-            String t = RFFIFactory.getRFFI().getBaseRFFI().mkdtemp(startingTempDirPath + "Rtmp" + "XXXXXX");
+            String t = RFFIFactory.getRFFI().getBaseRFFI().mkdtemp(startingTempDirPath.toString() + "XXXXXX");
             if (t != null) {
                 tempDirPath = t;
             } else {
