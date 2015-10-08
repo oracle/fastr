@@ -196,8 +196,16 @@ public class RCompression {
         } catch (InterruptedException | IOException ex) {
             // fall through
         }
-        return null;
+        throw RInternalError.shouldNotReachHere(join(command));
+    }
 
+    private static String join(String[] args) {
+        StringBuilder sb = new StringBuilder();
+        for (String s : args) {
+            sb.append(s);
+            sb.append(' ');
+        }
+        return sb.toString();
     }
 
     private abstract static class ProcessOutputThread extends Thread {
