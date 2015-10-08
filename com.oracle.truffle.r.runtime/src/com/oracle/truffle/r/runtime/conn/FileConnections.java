@@ -303,10 +303,7 @@ public class FileConnections {
 
     private static class FileReadWriteConnection extends DelegateReadWriteRConnection implements ReadWriteHelper {
         /*
-         * This does not fit in well as it does not support streams so most of the helpers are
-         * useless. Life would be a little better if we converted everything to channels, as it does
-         * support those. This is a minimal implementation to support one specific use in package
-         * installation (write only).
+         * This is a minimal implementation to support one specific use in package installation.
          * 
          * N.B. R mandates separate "position" offsets for reading and writing (pain). This code is
          * pessimistic and assumes interleaved reads and writes, so does a lot of probably redundant
@@ -316,6 +313,18 @@ public class FileConnections {
         private long readOffset;
         private long writeOffset;
         private SeekRWMode lastMode = SeekRWMode.READ;
+        private final RAFInputStream inputStream;
+
+        /**
+         * Allows an {@link RandomAccessFile} to appear to be an {@link InputStream}.
+         *
+         */
+        private class RAFInputStream extends InputStream {
+            @Override
+            public int read() throws IOException {
+                return FileReadWriteConnection.this.getc();
+            }
+        }
 
         FileReadWriteConnection(FileRConnection base) throws IOException {
             super(base);
@@ -330,13 +339,16 @@ public class FileConnections {
                     throw RInternalError.shouldNotReachHere();
             }
             raf = new RandomAccessFile(base.path, rafMode);
+            inputStream = new RAFInputStream();
         }
 
         @Override
         public int getc() throws IOException {
             raf.seek(readOffset);
             int value = raf.read();
-            readOffset++;
+            if (value != -1) {
+                readOffset++;
+            }
             return value;
         }
 
@@ -371,12 +383,13 @@ public class FileConnections {
 
         @Override
         public String[] readLinesInternal(int n) throws IOException {
-            throw RInternalError.unimplemented();
+            raf.seek(readOffset);
+            return readLinesHelper(inputStream, n);
         }
 
         @Override
         public InputStream getInputStream() throws IOException {
-            throw RInternalError.unimplemented();
+            return inputStream;
         }
 
         @Override
