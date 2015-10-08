@@ -213,7 +213,7 @@ do.install <- function() {
 	}
 
 	install.pkgs <- function(pkgnames) {
-		if (verbose&& !dry.run) {
+		if (verbose && !dry.run) {
 			cat("packages to install (+dependents):\n")
 			for (pkgname in pkgnames) {
 				cat(pkgname, "\n")
@@ -235,6 +235,7 @@ do.install <- function() {
 	}
 
 	if (install) {
+		cat("BEGIN package installation")
 		if (is.na(testcount)) {
 			# install all non-blacklisted packages in toinstall.pkgs
 			install.pkgs(rownames(toinstall.pkgs))
@@ -250,6 +251,7 @@ do.install <- function() {
 			}
 			install.pkgs(test.pkgnames)
 		}
+		cat("END package installation")
 	}
 }
 
