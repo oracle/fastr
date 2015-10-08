@@ -127,7 +127,7 @@ public class RCompression {
             Process p = pb.start();
             OutputStream os = p.getOutputStream();
             InputStream is = p.getInputStream();
-            ProcessOutputThread readThread = new ProcessOutputThreadFixed(is, cdata);
+            ProcessOutputManager.OutputThread readThread = new ProcessOutputManager.OutputThreadFixed("xz", is, cdata);
             readThread.start();
             os.write(udata);
             os.close();
@@ -151,7 +151,7 @@ public class RCompression {
             Process p = pb.start();
             OutputStream os = p.getOutputStream();
             InputStream is = p.getInputStream();
-            ProcessOutputThread readThread = new ProcessOutputThreadFixed(is, udata);
+            ProcessOutputManager.OutputThread readThread = new ProcessOutputManager.OutputThreadFixed("xz", is, udata);
             readThread.start();
             os.write(data);
             os.close();
@@ -186,7 +186,7 @@ public class RCompression {
         try {
             Process p = pb.start();
             InputStream is = p.getInputStream();
-            ProcessOutputThreadVariable readThread = new ProcessOutputThreadVariable(is);
+            ProcessOutputManager.OutputThreadVariable readThread = new ProcessOutputManager.OutputThreadVariable(command[0], is);
             readThread.start();
             rc = p.waitFor();
             if (rc == 0) {
@@ -206,75 +206,6 @@ public class RCompression {
             sb.append(' ');
         }
         return sb.toString();
-    }
-
-    private abstract static class ProcessOutputThread extends Thread {
-        protected final InputStream is;
-        protected int totalRead;
-
-        ProcessOutputThread(InputStream is) {
-            super("XZProcessOutputThread");
-            this.is = is;
-        }
-
-    }
-
-    /**
-     * Reads until the expected length or EOF (which is an error).
-     */
-    private static final class ProcessOutputThreadFixed extends ProcessOutputThread {
-        protected byte[] data;
-
-        private ProcessOutputThreadFixed(InputStream is, byte[] data) {
-            super(is);
-            this.data = data;
-        }
-
-        @Override
-        public void run() {
-            int n;
-            try {
-                while (totalRead < data.length && (n = is.read(data, totalRead, data.length - totalRead)) != -1) {
-                    totalRead += n;
-                }
-            } catch (IOException ex) {
-                return;
-            }
-        }
-    }
-
-    /**
-     * Reads a variable sized amount of data into a growing array.
-     *
-     */
-    private static final class ProcessOutputThreadVariable extends ProcessOutputThread {
-        private byte[] data;
-
-        private ProcessOutputThreadVariable(InputStream is) {
-            super(is);
-            this.data = new byte[8192];
-        }
-
-        @Override
-        public void run() {
-            int n;
-            try {
-                while ((n = is.read(data, totalRead, data.length - totalRead)) != -1) {
-                    totalRead += n;
-                    if (totalRead == data.length) {
-                        byte[] udataNew = new byte[data.length * 2];
-                        System.arraycopy(data, 0, udataNew, 0, data.length);
-                        data = udataNew;
-                    }
-                }
-            } catch (IOException ex) {
-                return;
-            }
-        }
-
-        private byte[] getData() {
-            return data;
-        }
     }
 
 }

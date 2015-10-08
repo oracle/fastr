@@ -61,9 +61,15 @@ public abstract class SystemFunction extends RBuiltinNode {
         try {
             Process p = pb.start();
             InputStream os = p.getInputStream();
+            ProcessOutputManager.OutputThreadVariable readThread = null;
+            if (intern) {
+                readThread = new ProcessOutputManager.OutputThreadVariable("system", os);
+                readThread.start();
+            }
             rc = p.waitFor();
             if (intern) {
-                String output = readAvailable(os);
+                // capture output in character vector
+                String output = new String(readThread.getData(), 0, readThread.getTotalRead());
                 RStringVector vec;
                 if (output.length() == 0) {
                     vec = RDataFactory.createEmptyStringVector();
@@ -83,13 +89,6 @@ public abstract class SystemFunction extends RBuiltinNode {
         }
         RContext.getInstance().setVisible(false);
         return result;
-    }
-
-    protected String readAvailable(InputStream output) throws IOException {
-        int n = output.available();
-        byte[] data = new byte[n];
-        output.read(data);
-        return new String(data);
     }
 
     private static void updateEnvironment(ProcessBuilder pb) {
