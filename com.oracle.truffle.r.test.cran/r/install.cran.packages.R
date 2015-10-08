@@ -154,13 +154,13 @@ abort <- function(msg) {
 set.contriburl <- function() {
 	# if contriburl is set explicitly that's all we need
 	if (!is.na(contriburl)) {
-		return
+		return(contriburl)
 	}
 
 	# check for env var setting
 	contriburl <<- Sys.getenv("LOCAL_CRAN_REPO", unset=NA)
 	if (!is.na(contriburl)) {
-		return
+		return(contriburl)
 	}
 
 	# set from the cran-mirror value
@@ -172,7 +172,7 @@ set.contriburl <- function() {
 	r["CRAN"] <- cran.mirror
 	options(repos = r)
 	contriburl <<- contrib.url(r, "source")
-
+	contriburl
 }
 
 set.package.blacklist <- function() {
@@ -235,7 +235,7 @@ do.install <- function() {
 	}
 
 	if (install) {
-		cat("BEGIN package installation")
+		cat("BEGIN package installation\n")
 		if (is.na(testcount)) {
 			# install all non-blacklisted packages in toinstall.pkgs
 			install.pkgs(rownames(toinstall.pkgs))
@@ -251,7 +251,7 @@ do.install <- function() {
 			}
 			install.pkgs(test.pkgnames)
 		}
-		cat("END package installation")
+		cat("END package installation\n")
 	}
 }
 
