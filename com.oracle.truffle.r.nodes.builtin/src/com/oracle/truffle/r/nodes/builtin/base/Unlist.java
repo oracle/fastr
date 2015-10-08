@@ -149,12 +149,12 @@ public abstract class Unlist extends RBuiltinNode {
     // TODO: initially unlist was on the slow path - hence initial recursive implementation is on
     // the slow path as well; ultimately we may consider (non-recursive) optimization
     @Specialization(guards = "!isEmpty(list)")
-    protected RAbstractVector unlistList(VirtualFrame frame, RList list, byte recursive, byte useNames) {
+    protected Object unlistList(VirtualFrame frame, RList list, byte recursive, byte useNames) {
         controlVisibility();
         boolean isRecursive = RRuntime.fromLogical(recursive);
         boolean isUseNames = RRuntime.fromLogical(useNames);
 
-        int precedence = -1;
+        int precedence = PrecedenceNode.NO_PRECEDENCE;
         int totalSize = 0;
         for (int i = 0; i < list.getLength(); i++) {
             Object data = list.getDataAt(i);
@@ -165,7 +165,12 @@ public abstract class Unlist extends RBuiltinNode {
                 totalSize += getLength(frame, data);
             }
         }
-        return unlistHelper(list, isRecursive, isUseNames, precedence, totalSize);
+        // If the precedence is still NO_PRECEDENCE the result is RNull.instance
+        if (precedence == PrecedenceNode.NO_PRECEDENCE) {
+            return RNull.instance;
+        } else {
+            return unlistHelper(list, isRecursive, isUseNames, precedence, totalSize);
+        }
     }
 
     @TruffleBoundary
