@@ -125,7 +125,7 @@ tcltk <- c("AnnotLists", "tcltk2", "aplpack")
 parserbug <- c("R2HTML")
 # e.g., unimplemented builtin, assertion error
 core <- c("ade4", "ABCoptim", "lattice", "aidar", "DBI", "SparseM", "quantreg", "doParallel", "ApacheLogProcessor", "aplore3",
-		"vignettes", "archiDART", "corpcor", "acss.data")
+		"vignettes", "archiDART", "corpcor", "acss.data", "lpSolve")
 # e.g. complex replacement assignments
 trufflevisitor.nyi <- c("colorspace", "R.methodsS3")
 # problems with native code
