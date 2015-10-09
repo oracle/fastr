@@ -2293,9 +2293,10 @@ public class TestSimpleVectors extends TestBase {
 
     @Test
     public void testUpdateOther() {
+        assertEval("{ a <- c(TRUE, FALSE); b <- c(a=3, b=4); a[b] <- c(TRUE, FALSE); a }");
+        assertEval("{ f <- function(a, i1, i2) {a[i1, i2]}; a <- rep(c('1'),14); dim(a) <- c(2,7); dimnames(a) <- list(c('a','b'), rep('c',7)); temp <- f(a, ,1); dimnames(a) <- list(NULL, rep('c',7)); f(a,,1) }");
         assertEval("{ x<-c(1,2); f<-function() { x<-c(100, 200); x[1]<-4; print(x) } ; f(); x }");
         assertEval("{ x<-c(1,2); f<-function() { x<-c(100, 200); x[1]<<-4; print(x) } ; f(); x }");
-        assertEval("{ a <- c(TRUE, FALSE); b <- c(a=3, b=4); a[b] <- c(TRUE, FALSE); a }");
 
     }
 }

@@ -238,7 +238,7 @@ final class CachedExtractVectorNode extends CachedVectorNode {
         return RContext.getRRuntimeASTAccess().fromList(extractedVector);
     }
 
-    private Object extract(int dimensionIndex, RTypedValue vector, Object pos, PositionProfile profile) {
+    private Object extract(int dimensionIndex, RAbstractStringVector vector, Object pos, PositionProfile profile) {
         if (extractDimNames == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             extractDimNames = new ExtractDimNamesNode(numberOfDimensions);
@@ -273,7 +273,13 @@ final class CachedExtractVectorNode extends CachedVectorNode {
                 newDimensions[dimIndex] = selectedPositionsCount;
                 if (originalDimNames != null) {
                     Object dataAt = originalDimNames.getDataAt(i);
-                    newDimNames[dimIndex] = extract(i, (RTypedValue) dataAt, positions[i], positionProfile[i]);
+                    Object result;
+                    if (dataAt == RNull.instance) {
+                        result = RNull.instance;
+                    } else {
+                        result = extract(i, (RAbstractStringVector) dataAt, positions[i], positionProfile[i]);
+                    }
+                    newDimNames[dimIndex] = result;
                 }
             }
         }
@@ -362,6 +368,7 @@ final class CachedExtractVectorNode extends CachedVectorNode {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             extractNames[dimension] = insert(new CachedExtractVectorNode(mode, originalNames, positions, (RTypedValue) originalExact, (RTypedValue) originalDropDimensions, recursive));
         }
+
         assert extractNames[dimension].isSupported(originalNames, positions, originalExact, originalDropDimensions);
         Object newNames = extractNames[dimension].apply(originalNames, positions, profiles, originalExact, originalDropDimensions);
         return newNames;
@@ -409,7 +416,7 @@ final class CachedExtractVectorNode extends CachedVectorNode {
             this.extractNodes = new CachedExtractVectorNode[dimensions];
         }
 
-        public Object extract(int dimensionIndex, RTypedValue vector, Object position, PositionProfile profile) {
+        public Object extract(int dimensionIndex, RAbstractStringVector vector, Object position, PositionProfile profile) {
             Object[] positions = new Object[]{position};
             PositionProfile[] profiles = new PositionProfile[]{profile};
             if (extractNodes[dimensionIndex] == null) {
