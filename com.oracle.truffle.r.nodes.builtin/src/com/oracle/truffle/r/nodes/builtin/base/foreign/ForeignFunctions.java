@@ -96,7 +96,33 @@ public class ForeignFunctions {
         return ((RExternalPtr) symbol.getDataAt(AccessFieldNode.getElementIndexByName(symbol.getNames(), "address"))).getAddr();
     }
 
+    /**
+     * Locator for "builtin" package function implementations. The "builtin" packages contain many
+     * functions that are called from R code via the FFI, e.g. {@code .Call}, but implemented
+     * internally in GnuR, and not necessarily following the FFI API. The value passed to
+     * {@code .Call} etc., is a symbol, created when the package is loaded and stored in the
+     * namespace environment of the package, that is a list-valued object. Evidently these
+     * "builtins" are somewhat similar to the {@code .Primitive} and {@code .Internal} builtins and,
+     * similarly, most of these are re-implemented in Java in FastR. The
+     * {@link #lookupBuiltin(RList)} method checks the name in the list object and returns the
+     * {@link RExternalBuiltinNode} that implements the function, or {@code null}. A {@code null}
+     * result implies that the builtin is not implemented in Java, but called directly via the FFI
+     * interface, which is only possible for functions that use the FFI in a way that FastR can
+     * handle.
+     */
     protected abstract static class LookupAdapter extends RBuiltinNode {
+        protected static class UnimplementedExternal extends RExternalBuiltinNode {
+            private final String name;
+
+            public UnimplementedExternal(String name) {
+                this.name = name;
+            }
+
+            @Override
+            public final Object call(RArgsValuesAndNames args) {
+                throw RInternalError.unimplemented("unimplemented external builtin: " + name);
+            }
+        }
 
         protected abstract RExternalBuiltinNode lookupBuiltin(RList f);
 
@@ -206,9 +232,9 @@ public class ForeignFunctions {
 
         @Override
         protected RExternalBuiltinNode lookupBuiltin(RList f) {
-            switch (lookupName(f)) {
-                case "fft":
-                    return new Fft();
+            String name = lookupName(f);
+            switch (name) {
+            // methods
                 case "R_initMethodDispatch":
                     return R_initMethodDispatchNodeGen.create();
                 case "R_methodsPackageMetaName":
@@ -219,8 +245,33 @@ public class ForeignFunctions {
                     return R_M_setPrimitiveMethodsNodeGen.create();
                 case "R_getClassFromCache":
                     return R_getClassFromCacheNodeGen.create();
-                case "crc64":
-                    return Crc64NodeGen.create();
+                case "R_clear_method_selection":
+                case "R_dummy_extern_place":
+                case "R_el_named":
+                case "R_externalptr_prototype_object":
+                case "R_getGeneric":
+                case "R_get_slot":
+                case "R_hasSlot":
+                case "R_identC":
+                case "R_methods_test_MAKE_CLASS":
+                case "R_methods_test_NEW":
+                case "R_missingArg":
+                case "R_nextMethodCall":
+                case "R_quick_method_check":
+                case "R_selectMethod":
+                case "R_set_el_named":
+                case "R_set_slot":
+                case "R_standardGeneric":
+                case "do_substitute_direct":
+                case "Rf_allocS4Object":
+                case "R_get_primname":
+                case "new_object":
+                    return new UnimplementedExternal(name);
+
+                    // stats
+
+                case "fft":
+                    return new Fft();
                 case "cov":
                     return new Covcor(false);
                 case "cor":
@@ -229,22 +280,134 @@ public class ForeignFunctions {
                     return SplineCoefNodeGen.create();
                 case "SplineEval":
                     return SplineEvalNodeGen.create();
+                case "cutree":
+                case "isoreg":
+                case "monoFC_m":
+                case "numeric_deriv":
+                case "nls_iter":
+                case "setup_starma":
+                case "free_starma":
+                case "set_trans":
+                case "arma0fa":
+                case "get_s2":
+                case "get_resid":
+                case "Dotrans":
+                case "arma0_kfore":
+                case "Starma_method":
+                case "Invtrans":
+                case "Gradtrans":
+                case "ARMAtoMA":
+                case "KalmanLike":
+                case "KalmanFore":
+                case "KalmanSmooth":
+                case "ARIMA_undoPars":
+                case "ARIMA_transPars":
+                case "ARIMA_Invtrans":
+                case "ARIMA_Gradtrans":
+                case "ARIMA_Like":
+                case "ARIMA_CSS":
+                case "TSconv":
+                case "getQ0":
+                case "getQ0bis":
+                case "port_ivset":
+                case "port_nlminb":
+                case "port_nlsb":
+                case "logit_link":
+                case "logit_linkinv":
+                case "logit_mu_eta":
+                case "binomial_dev_resids":
+                case "rWishart":
+                case "Cdqrls":
+                case "Cdist":
+                case "updateform":
+                case "mvfft":
+                case "nextn":
+                case "r2dtable":
+                case "cfilter":
+                case "rfilter":
+                case "lowess":
+                case "DoubleCentre":
+                case "BinDist":
+                case "Rsm":
+                case "tukeyline":
+                case "runmed":
+                case "influence":
+                case "pSmirnov2x":
+                case "pKolmogorov2x":
+                case "pKS2":
+                case "ksmooth":
+                case "Approx":
+                case "ApproxTest":
+                case "LogLin":
+                case "pAnsari":
+                case "qAnsari":
+                case "pKendall":
+                case "pRho":
+                case "SWilk":
+                case "bw_den":
+                case "bw_ucv":
+                case "bw_bcv":
+                case "bw_phi4":
+                case "bw_phi6":
+                case "acf":
+                case "pacf1":
+                case "ar2ma":
+                case "Burg":
+                case "intgrt_vec":
+                case "pp_sum":
+                case "Fexact":
+                case "Fisher_sim":
+                case "chisq_sim":
+                case "d2x2xk":
+                    return new UnimplementedExternal(name);
+
+                    // tools
                 case "doTabExpand":
                     return DoTabExpandNodeGen.create();
                 case "codeFilesAppend":
                     return CodeFilesAppendNodeGen.create();
                 case "Rmd5":
                     return Rmd5NodeGen.create();
-                case "flushconsole":
-                    return new Flushconsole();
                 case "dirchmod":
                     return DirChmodNodeGen.create();
+                case "delim_match":
+                case "C_getfmts":
+                case "check_nonASCII":
+                case "check_nonASCII2":
+                case "ps_kill":
+                case "ps_sigs":
+                case "ps_priority":
+                case "startHTTPD":
+                case "stopHTTPD":
+                case "C_deparseRd":
+                    return new UnimplementedExternal(name);
+
+                    // utils
+                case "crc64":
+                    return Crc64NodeGen.create();
+                case "flushconsole":
+                    return new Flushconsole();
+                case "menu":
+                    return MenuNodeGen.create();
+                case "nsl":
+                case "objectSize":
+                case "processevents":
+                case "octsize":
+                case "sockconnect":
+                case "sockread":
+                case "sockclose":
+                case "sockopen":
+                case "socklisten":
+                case "sockwrite":
+                    return new UnimplementedExternal(name);
+
+                    // grDevices
                 case "cairoProps":
                     return CairoPropsNodeGen.create();
                 case "makeQuartzDefault":
                     return new MakeQuartzDefault();
-                case "menu":
-                    return MenuNodeGen.create();
+
+                    // grid
                 case "L_initGrid":
                     return InitGridNodeGen.create();
                 default:
@@ -308,6 +471,7 @@ public class ForeignFunctions {
                 }
             }
             switch (name) {
+            // utils
                 case "countfields":
                     return new CountFields();
                 case "readtablehead":
@@ -320,6 +484,18 @@ public class ForeignFunctions {
                     return QgammaNodeGen.create();
                 case "download":
                     return new Download();
+                case "unzip":
+                case "Rprof":
+                case "Rprofmem":
+                case "addhistory":
+                case "loadhistory":
+                case "savehistory":
+                case "dataentry":
+                case "dataviewer":
+                case "edit":
+                case "fileedit":
+                case "selectlist":
+                    return new UnimplementedExternal(name);
                 default:
                     return null;
             }
@@ -380,7 +556,9 @@ public class ForeignFunctions {
                         return new C_Par();
                 }
             }
-            switch (lookupName(f)) {
+            String name = lookupName(f);
+            switch (name) {
+            // tools
                 case "writetable":
                     return new WriteTable();
                 case "typeconvert":
