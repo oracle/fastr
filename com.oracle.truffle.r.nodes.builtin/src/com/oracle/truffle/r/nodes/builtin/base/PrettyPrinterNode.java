@@ -381,6 +381,91 @@ public abstract class PrettyPrinterNode extends RNode {
         return "";
     }
 
+    private static String getStringFromObj(Object o, String msg) {
+        if (o instanceof String) {
+            return (String) o;
+        } else if (o instanceof RStringVector && ((RStringVector) o).getLength() == 1) {
+            return ((RStringVector) o).getDataAt(0);
+        } else {
+            throw RError.error(RError.NO_NODE, RError.Message.GENERIC, msg);
+        }
+    }
+
+    private static int getMaxStringLength(RList slots, RStringVector names) {
+        int maxLength = 0;
+        for (int i = 0; i < slots.getLength(); i++) {
+            String s = getStringFromObj(slots.getDataAt(i), "Incorrect slot type of an S4 object");
+            maxLength = Math.max(s.length(), maxLength);
+        }
+        for (int i = 0; i < names.getLength(); i++) {
+            String s = names.getDataAt(i);
+            maxLength = Math.max(s.length(), maxLength);
+        }
+        return maxLength;
+    }
+
+    @TruffleBoundary
+    @Specialization
+    protected String prettyPrintS4(RS4Object s4Object, Object listElementName, byte quote, byte right) {
+        // temporary implementation to be able to print something sensible for S4 objects
+        Object slotsObj = s4Object.getAttr(attrProfiles, "slots");
+        if (slotsObj == null || !(slotsObj instanceof RList) || ((RList) slotsObj).getLength() == 0 || ((RList) slotsObj).getNames() == null) {
+            throw RError.error(this, RError.Message.GENERIC, "Incorrect slots attribute of an S4 object");
+        }
+        RList slots = (RList) slotsObj;
+        RStringVector names = slots.getNames();
+        int maxStringLength = getMaxStringLength(slots, names);
+        int maxPrintLength = RContext.getInstance().getConsoleHandler().getWidth();
+        // 6 is for length of "Class:"
+        int numCols = (maxPrintLength - 6) / (maxStringLength + 1);
+        int i = 0;
+        int j = 0;
+        StringBuilder sb = new StringBuilder();
+        Object classNameObj = s4Object.getAttr(attrProfiles, "className");
+
+        if (classNameObj == null || ((RStringVector) classNameObj).getLength() != 1 || ((RStringVector) classNameObj).getAttr(attrProfiles, "package") == null) {
+            throw RError.error(this, RError.Message.GENERIC, "Incorrect class attribute of an S4 object");
+        }
+        RStringVector className = (RStringVector) classNameObj;
+        sb.append("Class: \"");
+        sb.append(className.getDataAt(0));
+        sb.append("\" [in \"");
+        Object packageObj = className.getAttr(attrProfiles, "package");
+        String packageStr = getStringFromObj(packageObj, "Incorrect package definition of an S4 object");
+        sb.append(packageStr);
+        sb.append("\"]\n\n");
+        sb.append("Slots:\n\n");
+        while (true) {
+            sb.append("Name: ");
+            while (true) {
+                String s = names.getDataAt(j++);
+                appendSpaces(sb, maxStringLength - s.length() + 1);
+                sb.append(s);
+                if (j == slots.getLength() || j % numCols == 0) {
+                    sb.append("\n");
+                    break;
+                }
+            }
+            sb.append("Class:");
+            while (true) {
+                String s = getStringFromObj(slots.getDataAt(i++), "Incorrect slot type of an S4 object");
+                appendSpaces(sb, maxStringLength - s.length() + 1);
+                sb.append(s);
+                if (i == slots.getLength() || i % numCols == 0) {
+                    if (i != slots.getLength()) {
+                        sb.append("\n\n");
+                    }
+                    break;
+                }
+            }
+            if (i == slots.getLength()) {
+                assert j == names.getLength();
+                break;
+            }
+        }
+        return sb.toString();
+    }
+
     private String printAttributes(RAbstractVector vector, RAttributes attributes) {
         StringBuilder builder = new StringBuilder();
         for (RAttribute attr : attributes) {
