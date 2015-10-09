@@ -39,6 +39,11 @@ com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/utils/Menu.java,gn
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/utils/WriteTable.java,gnu_r.copyright
 com.oracle.truffle.r.native/builtinlibs/src/xerbla.c,gnu_r.copyright
 com.oracle.truffle.r.native/fficall/jni/src/register.c,gnu_r.copyright
+com.oracle.truffle.r.native/fficall/jni/src/main_engine.c,gnu_r.copyright
+com.oracle.truffle.r.native/fficall/jni/src/main_print.c,gnu_r.copyright
+com.oracle.truffle.r.native/fficall/jni/src/sys.c,gnu_r.copyright
+com.oracle.truffle.r.native/fficall/jni/src/unimplemented.c,gnu_r.copyright
+com.oracle.truffle.r.native/fficall/jni/src/util.c,gnu_r.copyright
 com.oracle.truffle.r.native/fficall/jni/src/alloc.c,gnu_r.copyright
 com.oracle.truffle.r.native/include/jni/src/libintl.h,no.copyright
 com.oracle.truffle.r.native/library/base/src/registration.c,no.copyright

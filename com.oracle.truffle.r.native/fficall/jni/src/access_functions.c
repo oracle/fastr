@@ -146,3 +146,142 @@ SEXP SETCAD4R(SEXP e, SEXP y) {
     return NULL;
 }
 
+SEXP FORMALS(SEXP x) {
+    return unimplemented("FORMALS");
+}
+
+SEXP BODY(SEXP x) {
+	return unimplemented("BODY");
+}
+
+SEXP CLOENV(SEXP x) {
+	return unimplemented("CLOENV");
+}
+
+int RDEBUG(SEXP x) {
+    return (int) unimplemented("RDEBUG");
+}
+
+int RSTEP(SEXP x) {
+	return (int) unimplemented("RSTEP");
+}
+
+int RTRACE(SEXP x) {
+	return (int) unimplemented("RTRACE");
+}
+
+void SET_RDEBUG(SEXP x, int v) {
+    unimplemented("SET_RDEBUG");
+}
+
+void SET_RSTEP(SEXP x, int v) {
+    unimplemented("SET_RSTEP");
+}
+
+void SET_RTRACE(SEXP x, int v) {
+    unimplemented("SET_RTRACE");
+}
+
+void SET_FORMALS(SEXP x, SEXP v) {
+    unimplemented("SET_FORMALS");
+}
+
+void SET_BODY(SEXP x, SEXP v) {
+    unimplemented("SET_BODY");
+}
+
+void SET_CLOENV(SEXP x, SEXP v) {
+    unimplemented("SET_CLOENV");
+}
+
+SEXP SYMVALUE(SEXP x) {
+	return unimplemented("SYMVALUE");
+}
+
+SEXP INTERNAL(SEXP x) {
+	return unimplemented("INTERNAL");
+}
+
+int DDVAL(SEXP x) {
+	return (int) unimplemented("DDVAL");
+}
+
+void SET_DDVAL(SEXP x, int v) {
+    unimplemented("SET_DDVAL");
+}
+
+void SET_SYMVALUE(SEXP x, SEXP v) {
+    unimplemented("SET_SYMVALUE");
+}
+
+void SET_INTERNAL(SEXP x, SEXP v) {
+    unimplemented("SET_INTERNAL");
+}
+
+
+SEXP FRAME(SEXP x) {
+	return unimplemented("FRAME");
+}
+
+SEXP ENCLOS(SEXP x) {
+	return unimplemented("ENCLOS");
+}
+
+SEXP HASHTAB(SEXP x) {
+	return unimplemented("HASHTAB");
+}
+
+int ENVFLAGS(SEXP x) {
+	return (int) unimplemented("ENVFLAGS");
+}
+
+void SET_ENVFLAGS(SEXP x, int v) {
+	unimplemented("SET_ENVFLAGS");
+}
+
+void SET_FRAME(SEXP x, SEXP v) {
+    unimplemented("SET_FRAME");
+}
+
+void SET_ENCLOS(SEXP x, SEXP v) {
+	unimplemented("SET_ENCLOS");
+}
+
+void SET_HASHTAB(SEXP x, SEXP v) {
+	unimplemented("SET_HASHTAB");
+}
+
+
+SEXP PRCODE(SEXP x) {
+	return unimplemented("PRCODE");
+}
+
+SEXP PRENV(SEXP x) {
+	return unimplemented("PRENV");
+}
+
+SEXP PRVALUE(SEXP x) {
+	return unimplemented("PRVALUE");
+}
+
+int PRSEEN(SEXP x) {
+	return (int) unimplemented("PRSEEN");
+}
+
+void SET_PRSEEN(SEXP x, int v) {
+    unimplemented("SET_PRSEEN");
+}
+
+void SET_PRENV(SEXP x, SEXP v) {
+    unimplemented("SET_PRENV");
+}
+
+void SET_PRVALUE(SEXP x, SEXP v) {
+    unimplemented("SET_PRVALUE");
+}
+
+void SET_PRCODE(SEXP x, SEXP v) {
+    unimplemented("SET_PRCODE");
+}
+
+

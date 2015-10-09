@@ -65,7 +65,7 @@ void R_CheckUserInterrupt() {
 }
 
 R_len_t R_BadLongVector(SEXP x, const char *y, int z) {
-	unimplemented("R_BadLongVector");
+	return (R_len_t) unimplemented("R_BadLongVector");
 }
 
 int IS_S4_OBJECT(SEXP x) {
@@ -81,53 +81,59 @@ void UNSET_S4_OBJECT(SEXP x) {
 }
 
 Rboolean R_ToplevelExec(void (*fun)(void *), void *data) {
-	unimplemented("R_ToplevelExec");
+	return (Rboolean) unimplemented("R_ToplevelExec");
 }
 
 SEXP R_ExecWithCleanup(SEXP (*fun)(void *), void *data,
 		       void (*cleanfun)(void *), void *cleandata) {
-	unimplemented("R_ExecWithCleanup");
+	return unimplemented("R_ExecWithCleanup");
 }
 
 #include <R_ext/Connections.h>
 
 SEXP   R_new_custom_connection(const char *description, const char *mode, const char *class_name, Rconnection *ptr) {
-	unimplemented("R_new_custom_connection");
+	return unimplemented("R_new_custom_connection");
 }
 
 size_t R_ReadConnection(Rconnection con, void *buf, size_t n) {
-	unimplemented("R_ReadConnection");
+	return (size_t) unimplemented("R_ReadConnection");
 }
 
 size_t R_WriteConnection(Rconnection con, void *buf, size_t n) {
-	unimplemented("R_WriteConnection");
+	return (size_t) unimplemented("R_WriteConnection");
 }
 
 SEXP R_tryEval(SEXP x, SEXP y, int *z) {
-	unimplemented("R_tryEval");
+	return unimplemented("R_tryEval");
 }
 
 SEXP R_tryEvalSilent(SEXP x, SEXP y, int *z) {
-	unimplemented("R_tryEvalSilent");
+	return unimplemented("R_tryEvalSilent");
 }
 
 size_t Riconv (void *cd, const char **inbuf, size_t *inbytesleft,
 	       char **outbuf, size_t *outbytesleft) {
-	unimplemented("Riconv");
-	return 0;
+	return (size_t) unimplemented("Riconv");
 }
 
 int Riconv_close (void *cd) {
-	unimplemented("Riconv_close");
+	return (int) unimplemented("Riconv_close");
 	return 0;
 }
 
 void * Riconv_open (const char* tocode, const char* fromcode) {
-	unimplemented("Riconv_open");
-	return NULL;
+	return unimplemented("Riconv_open");
 }
 
 const char *reEnc(const char *x, cetype_t ce_in, cetype_t ce_out, int subst) {
     // TODO: proper implementation of reEnc
     return x;
+}
+
+SEXP R_PromiseExpr(SEXP x) {
+	return unimplemented("R_PromiseExpr");
+}
+
+SEXP R_ClosureExpr(SEXP x) {
+	return unimplemented("R_ClosureExpr");
 }
