@@ -186,4 +186,14 @@ public class FastRTckTest extends TruffleTCK {
     public void testPrimitiveReturnTypeShort() throws Exception {
         // no shorts in FastR
     }
+
+    @Override
+    public void testGlobalObjectIsAccessible() throws Exception {
+        // no global object in fastr.
+    }
+
+    @Override
+    public void testNullCanBeCastToAnything() throws Exception {
+        // TODO support
+    }
 }
