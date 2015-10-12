@@ -23,25 +23,19 @@
 package com.oracle.truffle.r.engine;
 
 import java.io.*;
-import java.util.Locale;
+import java.util.*;
 
 import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.frame.MaterializedFrame;
+import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.instrument.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
-import com.oracle.truffle.r.nodes.builtin.RBuiltinPackages;
-import com.oracle.truffle.r.nodes.instrument.RASTProber;
-import com.oracle.truffle.r.nodes.instrument.RInstrument;
-import com.oracle.truffle.r.runtime.RAccuracyInfo;
-import com.oracle.truffle.r.runtime.RPerfStats;
-import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.RVersionInfo;
-import com.oracle.truffle.r.runtime.TempPathName;
+import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.instrument.*;
+import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.context.*;
-import com.oracle.truffle.r.runtime.ffi.Load_RFFIFactory;
-import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
-import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.ffi.*;
+import com.oracle.truffle.r.runtime.nodes.*;
 
 /**
  * Only does the minimum for running under the debugger. It is not completely clear how to correctly
@@ -149,8 +143,4 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
         return RContext.getEngine().parseAndEval(source, frame, false);
     }
 
-    @Override
-    protected AdvancedInstrumentRootFactory createAdvancedInstrumentRootFactory(String expr, AdvancedInstrumentResultListener resultListener) throws IOException {
-        return TruffleRLanguageDebug.createAdvancedInstrumentRootFactory(expr, resultListener);
-    }
 }
