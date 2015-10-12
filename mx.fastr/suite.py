@@ -72,7 +72,7 @@ suite = {
     },
 
     "JLINE" : {
-      "path" : "lib/jline-2.11.jar",
+      "path" : "libdownloads/jline-2.11.jar",
       "urls" : [
         "https://lafo.ssw.uni-linz.ac.at/pub/graal-external-deps/jline-2.11.jar",
         "https://search.maven.org/remotecontent?filepath=jline/jline/2.11/jline-2.11.jar",
