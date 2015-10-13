@@ -131,22 +131,17 @@ public abstract class Slot extends RBuiltinNode {
     // type of "object"?)
     @Specialization
     protected Object getSlot(RAbstractContainer object, Object nameObj) {
-        if (!((nameObj instanceof RAbstractStringVector && ((RAbstractStringVector) nameObj).getLength() == 1) || (nameObj instanceof String))) {
-            // second argument is wrong
-            throw RError.error(this, RError.Message.GENERIC, "invalid type or length for slot name");
-        } else {
-            // first argument is wrong
-            String name = nameObj instanceof String ? (String) nameObj : ((RAbstractStringVector) nameObj).getDataAt(0);
+        // first argument is wrong
+        String name = getName(nameObj);
 
-            RStringVector classAttr = object.getClassAttr(attrProfiles);
-            if (classAttr == null) {
-                RStringVector implicitClassVec = object.getImplicitClass();
-                assert implicitClassVec.getLength() > 0;
-                throw RError.error(this, RError.Message.SLOT_BASIC_CLASS, name, implicitClassVec.getDataAt(0));
-            } else {
-                assert classAttr.getLength() > 0;
-                throw RError.error(this, RError.Message.SLOT_NON_S4, name, classAttr.getDataAt(0));
-            }
+        RStringVector classAttr = object.getClassAttr(attrProfiles);
+        if (classAttr == null) {
+            RStringVector implicitClassVec = object.getImplicitClass();
+            assert implicitClassVec.getLength() > 0;
+            throw RError.error(this, RError.Message.SLOT_BASIC_CLASS, name, implicitClassVec.getDataAt(0));
+        } else {
+            assert classAttr.getLength() > 0;
+            throw RError.error(this, RError.Message.SLOT_NON_S4, name, classAttr.getDataAt(0));
         }
     }
 
