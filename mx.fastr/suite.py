@@ -21,7 +21,7 @@
 # questions.
 #
 suite = {
-  "mxversion" : "5.5.1",
+  "mxversion" : "5.5.8",
   "name" : "fastr",
 
   "imports" : {
@@ -34,7 +34,9 @@ suite = {
         ],
    },
 
-  # distributions that we depend on
+  # libraries that we depend on
+  # N.B. The first four with a "path" attribute must be located
+  # relative to the suite root and not the mx cache
   "libraries" : {
     "GNUR" : {
         "path" : "libdownloads/R-3.1.3.tar.gz",
@@ -48,21 +50,15 @@ suite = {
         "sha1" : "be7d67e50d72ff067b2c0291311bc283add36965"
     },
 
-    "JDK_TOOLS" : {
-      "path" : "${JAVA_HOME}/lib/tools.jar",
-      "sha1" : "NOCHECK",
-    },
-
     "ANTLR" : {
       "path" : "libdownloads/antlr-runtime-3.5.jar",
       "urls" : ["http://central.maven.org/maven2/org/antlr/antlr-runtime/3.5/antlr-runtime-3.5.jar"],
       "sha1" : "0baa82bff19059401e90e1b90020beb9c96305d7",
     },
 
-    "NETLIB" : {
-      "path" : "libdownloads/netlib-java-0.9.3.jar",
-      "urls" : ["http://central.maven.org/maven2/com/googlecode/netlib-java/netlib-java/0.9.3/netlib-java-0.9.3.jar"],
-      "sha1" : "1d41b60e5180f6bcb7db15e7353dde7147cd3928",
+    "JDK_TOOLS" : {
+      "path" : "${JAVA_HOME}/lib/tools.jar",
+      "sha1" : "NOCHECK",
     },
 
     "ANTLR-C" : {
@@ -71,8 +67,13 @@ suite = {
       "sha1" : "ebb4b995fd67a9b291ea5b19379509160f56e154",
     },
 
+
+    "NETLIB" : {
+      "urls" : ["http://central.maven.org/maven2/com/googlecode/netlib-java/netlib-java/0.9.3/netlib-java-0.9.3.jar"],
+      "sha1" : "1d41b60e5180f6bcb7db15e7353dde7147cd3928",
+    },
+
     "JLINE" : {
-      "path" : "libdownloads/jline-2.11.jar",
       "urls" : [
         "https://lafo.ssw.uni-linz.ac.at/pub/graal-external-deps/jline-2.11.jar",
         "https://search.maven.org/remotecontent?filepath=jline/jline/2.11/jline-2.11.jar",
@@ -81,7 +82,6 @@ suite = {
     },
 
     "JNR_POSIX" : {
-      "path" : "libdownloads/jnr-posix-3.0.15.jar",
       "urls" : [
         "https://lafo.ssw.uni-linz.ac.at/pub/graal-external-deps/jnr-posix-3.0.15.jar",
         "https://search.maven.org/remotecontent?filepath=com/github/jnr/jnr-posix/3.0.15/jnr-posix-3.0.15.jar",
@@ -90,7 +90,6 @@ suite = {
     },
 
     "JNR_CONSTANTS" : {
-      "path" : "libdownloads/jnr-constants-0.9.0.jar",
       "urls" : [
         "https://lafo.ssw.uni-linz.ac.at/pub/graal-external-deps/jnr-constants-0.9.0.jar",
         "https://search.maven.org/remotecontent?filepath=com/github/jnr/jnr-constants/0.9.0/jnr-constants-0.9.0.jar",
@@ -99,7 +98,6 @@ suite = {
     },
 
     "JNR_FFI" : {
-      "path" : "libdownloads/jnr-ffi-2.0.4.jar",
       "urls" : [
         "https://lafo.ssw.uni-linz.ac.at/pub/graal-external-deps/jnr-ffi-2.0.4.jar",
         "https://search.maven.org/remotecontent?filepath=com/github/jnr/jnr-ffi/2.0.4/jnr-ffi-2.0.4.jar",
@@ -108,7 +106,6 @@ suite = {
     },
 
     "JFFI" : {
-      "path" : "libdownloads/jffi-1.2.9.jar",
       "urls" : [
         "https://lafo.ssw.uni-linz.ac.at/pub/graal-external-deps/jffi-1.2.9.jar",
         "https://search.maven.org/remotecontent?filepath=com/github/jnr/jffi/1.2.9/jffi-1.2.9.jar",
@@ -117,7 +114,6 @@ suite = {
     },
 
     "JFFI_NATIVE" : {
-      "path" : "libdownloads/jffi-1.2.9-native.jar",
       "urls" : [
         "https://lafo.ssw.uni-linz.ac.at/pub/graal-external-deps/jffi-1.2.9-native.jar",
         "https://search.maven.org/remotecontent?filepath=com/github/jnr/jffi/1.2.9/jffi-1.2.9-native.jar",
@@ -125,23 +121,17 @@ suite = {
       "sha1" : "1b1e82f867bb47237e6db690fbc6bfc999689c63",
     },
 
-    "FASTR_ASM" : {
-      "path" : "libdownloads/asm-5.0.3.jar",
-      "urls" : [
-        "https://lafo.ssw.uni-linz.ac.at/pub/graal-external-deps/asm-5.0.3.jar",
-        "https://search.maven.org/remotecontent?filepath=org/ow2/asm/asm/5.0.3/asm-5.0.3.jar",
-      ],
-      "sha1" : "dcc2193db20e19e1feca8b1240dbbc4e190824fa",
-      "sourcePath" : "libdownloads/asm-5.0.3-sources.jar",
-      "sourceSha1" : "f0f24f6666c1a15c7e202e91610476bd4ce59368",
-      "sourceUrls" : [
-        "https://lafo.ssw.uni-linz.ac.at/pub/graal-external-deps/asm-5.0.3-sources.jar",
-        "https://search.maven.org/remotecontent?filepath=org/ow2/asm/asm/5.0.3/asm-5.0.3-sources.jar",
-      ],
+    "JNR_INVOKE" : {
+      "urls" : ["https://search.maven.org/remotecontent?filepath=com/github/jnr/jnr-invoke/0.1/jnr-invoke-0.1.jar"],
+      "sha1" : "d0f846c3d3cb98dfd5e2bbd3cca236337fb0afa1",
+    },
+
+    "JNR_UDIS86" : {
+      "urls" : ["https://search.maven.org/remotecontent?filepath=com/github/jnr/jnr-udis86/0.1/jnr-udis86-0.1.jar"],
+      "sha1" : "88accfa82203ea74a4a82237061c28ac8b4224af",
     },
 
     "JNR_X86ASM" : {
-      "path" : "libdownloads/jnr-x86asm-1.0.2.jar",
       "urls" : [
         "https://lafo.ssw.uni-linz.ac.at/pub/graal-external-deps/jnr-x86asm-1.0.2.jar",
         "https://search.maven.org/remotecontent?filepath=com/github/jnr/jnr-x86asm/1.0.2/jnr-x86asm-1.0.2.jar",
@@ -149,8 +139,20 @@ suite = {
       "sha1" : "006936bbd6c5b235665d87bd450f5e13b52d4b48",
     },
 
+    "FASTR_ASM" : {
+      "urls" : [
+        "https://lafo.ssw.uni-linz.ac.at/pub/graal-external-deps/asm-5.0.3.jar",
+        "https://search.maven.org/remotecontent?filepath=org/ow2/asm/asm/5.0.3/asm-5.0.3.jar",
+      ],
+      "sha1" : "dcc2193db20e19e1feca8b1240dbbc4e190824fa",
+      "sourceSha1" : "f0f24f6666c1a15c7e202e91610476bd4ce59368",
+      "sourceUrls" : [
+        "https://lafo.ssw.uni-linz.ac.at/pub/graal-external-deps/asm-5.0.3-sources.jar",
+        "https://search.maven.org/remotecontent?filepath=org/ow2/asm/asm/5.0.3/asm-5.0.3-sources.jar",
+      ],
+    },
+
     "FASTR_ASM_ANALYSIS" : {
-      "path" : "libdownloads/asm-analysis-4.0.jar",
       "urls" : [
         "https://lafo.ssw.uni-linz.ac.at/pub/graal-external-deps/asm-analysis-4.0.jar",
         "https://search.maven.org/remotecontent?filepath=org/ow2/asm/asm-analysis/4.0/asm-analysis-4.0.jar",
@@ -159,7 +161,6 @@ suite = {
     },
 
     "FASTR_ASM_COMMONS" : {
-      "path" : "libdownloads/asm-commons-4.0.jar",
       "urls" : [
         "https://lafo.ssw.uni-linz.ac.at/pub/graal-external-deps/asm-commons-4.0.jar",
         "https://search.maven.org/remotecontent?filepath=org/ow2/asm/asm-commons/4.0/asm-commons-4.0.jar",
@@ -168,7 +169,6 @@ suite = {
     },
 
     "FASTR_ASM_TREE" : {
-      "path" : "libdownloads/asm-tree-4.0.jar",
       "urls" : [
         "https://lafo.ssw.uni-linz.ac.at/pub/graal-external-deps/asm-tree-4.0.jar",
         "https://search.maven.org/remotecontent?filepath=org/ow2/asm/asm-tree/4.0/asm-tree-4.0.jar",
@@ -177,24 +177,11 @@ suite = {
     },
 
     "FASTR_ASM_UTIL" : {
-      "path" : "libdownloads/asm-util-4.0.jar",
       "urls" : [
         "https://lafo.ssw.uni-linz.ac.at/pub/graal-external-deps/asm-util-4.0.jar",
         "https://search.maven.org/remotecontent?filepath=org/ow2/asm/asm-util/4.0/asm-util-4.0.jar",
       ],
       "sha1" : "d7a65f54cda284f9706a750c23d64830bb740c39",
-    },
-
-    "JNR_INVOKE" : {
-      "path" : "libdownloads/jnr-invoke-0.1.jar",
-      "urls" : ["http://search.maven.org/remotecontent?filepath=com/github/jnr/jnr-invoke/0.1/jnr-invoke-0.1.jar"],
-      "sha1" : "d0f846c3d3cb98dfd5e2bbd3cca236337fb0afa1",
-    },
-
-    "JNR_UDIS86" : {
-      "path" : "libdownloads/jnr-udis86-0.1.jar",
-      "urls" : ["http://search.maven.org/remotecontent?filepath=com/github/jnr/jnr-udis86/0.1/jnr-udis86-0.1.jar"],
-      "sha1" : "88accfa82203ea74a4a82237061c28ac8b4224af",
     },
 
   },
@@ -377,14 +364,16 @@ suite = {
 
   "distributions" : {
     "TRUFFLE_R_PARSER_PROCESSOR" : {
-      "path" : "truffle-r-parser-processor.jar",
       "subDir" : "truffle",
-      "sourcesPath" : "truffle-r-parser-processor.src.zip",
       "dependencies" : ["com.oracle.truffle.r.parser.processor"],
+      "exclude" : [
+        "JDK_TOOLS",
+        "ANTLR",
+        "ANTLR-C",
+       ],
+
     },
     "FASTR" : {
-      "path" : "fastr.jar",
-      "sourcesPath" : "fastr-sources.jar",
       "dependencies" : ["com.oracle.truffle.r.engine", "com.oracle.truffle.r.runtime.ffi"],
       "mainClass" : "com.oracle.truffle.r.engine.shell.RCommand",
       "exclude" : [

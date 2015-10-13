@@ -49,16 +49,18 @@ public class GenerateRParserProcessor extends AbstractProcessor {
 
                 Filer filer = processingEnv.getFiler();
                 File srcGenDir = getSrcGenDir(filer);
-                File suiteRoot = srcGenDir.getParentFile().getParentFile();
+                // note("srcgendir: " + srcGenDir.getAbsolutePath());
+                File suiteRoot = srcGenDir.getParentFile().getParentFile().getParentFile();
+                // note("suiteRoot: " + suiteRoot.getAbsolutePath());
+
                 // path to ANTLR jar
                 File antlr = join(suiteRoot, "libdownloads", ANTLRC);
                 // Our src directory
-                File parserSrcDir = join(srcGenDir.getParentFile(), "src", pkg.replace('.', File.separatorChar));
+                File parserSrcDir = join(suiteRoot, pkg, "src", pkg.replace('.', File.separatorChar));
+                // note("parserSrcDir: " + parserSrcDir.getAbsolutePath());
                 antlrGenDir = mkTmpDir(null);
                 String[] command = new String[]{"java", "-jar", antlr.getAbsolutePath(), "-o", antlrGenDir.getAbsolutePath(), "R.g"};
-                // for (String e : command) {
-                // processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE, e);
-                // }
+                // noteCommand(command);
 
                 File tempFile = File.createTempFile("rparser", "out");
                 try {
@@ -89,6 +91,17 @@ public class GenerateRParserProcessor extends AbstractProcessor {
             }
         }
         return true;
+    }
+
+    private void note(String msg) {
+        processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE, msg);
+    }
+
+    @SuppressWarnings("unused")
+    private void noteCommand(String[] command) {
+        for (String e : command) {
+            note(e);
+        }
     }
 
     private void handleThrowable(Throwable t, Element e) {

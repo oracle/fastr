@@ -9,6 +9,7 @@
 ^mx.fastr/eclipse-config-libs.zip
 ^mx.fastr/eclipse-config.zip
 ^mx.fastr/netbeans-config.zip
+^mxbuild/
 ^com.oracle.truffle.r.test/rpackages/testrlibs_user
 ^com.oracle.truffle.r.test.native/urand/lib/liburand.so
 ^com.oracle.truffle.r.native/gnur/R-*
