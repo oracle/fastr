@@ -51,6 +51,6 @@ public abstract class Xtfrm extends RBuiltinNode {
             getNode = insert(GetNodeGen.create(new RNode[4], null, null));
         }
         RFunction func = (RFunction) getNode.execute(frame, "xtfrm.default", RArguments.getEnvironment(frame), RType.Function.getName(), RRuntime.LOGICAL_TRUE);
-        return RContext.getEngine().evalFunction(func, x);
+        return RContext.getEngine().evalFunction(func, null, x);
     }
 }

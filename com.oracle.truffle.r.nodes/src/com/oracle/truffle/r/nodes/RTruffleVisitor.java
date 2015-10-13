@@ -505,7 +505,7 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
     public RSyntaxNode visit(FieldAccess access) {
         SourceSection callSource = access.getSource();
         RSyntaxNode lhs = access.getLhs().accept(this);
-        ReadVariableNode function = ReadVariableNode.createForced(callSource, "$", RType.Function);
+        ReadVariableNode function = ReadVariableNode.createForced(callSource, access.isAt() ? "@" : "$", RType.Function);
         return RCallNode.createCall(callSource, function, ArgumentsSignature.empty(2), lhs, ConstantNode.create(callSource, access.getFieldName()));
     }
 

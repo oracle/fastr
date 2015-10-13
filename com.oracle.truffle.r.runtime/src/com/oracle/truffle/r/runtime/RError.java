@@ -632,7 +632,11 @@ public final class RError extends RuntimeException {
         LAZY_LOAD_DB_CORRUPT("lazy-load database '%s' is corrupt"),
         MAGIC_EMPTY("restore file may be empty -- no data loaded"),
         MAGIC_TOONEW("restore file may be from a newer version of R -- no data loaded"),
-        MAGIC_CORRUPT("bad restore file magic number (file may be corrupted) -- no data loaded");
+        MAGIC_CORRUPT("bad restore file magic number (file may be corrupted) -- no data loaded"),
+        SLOT_BASIC_CLASS("trying to get slot \"%s\" from an object of a basic class (\"%s\") with no slots"),
+        SLOT_NON_S4("trying to get slot \"%s\" from an object (class \"%s\") that is not an S4 object "),
+        SLOT_CANNOT_GET("cannot get a slot (\"%s\") from an object of type \"%s\""),
+        SLOT_NONE("no slot of name \"%s\" for this object of class \"%s\"");
 
         public final String message;
         final boolean hasArgs;

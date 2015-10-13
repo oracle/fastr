@@ -13,16 +13,19 @@ package com.oracle.truffle.r.parser.ast;
 import java.util.*;
 
 import com.oracle.truffle.api.source.*;
+import com.oracle.truffle.r.runtime.RRuntime;
 
 public final class FieldAccess extends ASTNode {
 
     private final ASTNode lhs;
     private final String fieldName;
+    private final boolean at;
 
-    private FieldAccess(SourceSection source, ASTNode value, String fieldName) {
+    private FieldAccess(SourceSection source, ASTNode value, String fieldName, boolean at) {
         super(source);
         this.lhs = value;
         this.fieldName = fieldName;
+        this.at = at;
     }
 
     @Override
@@ -35,11 +38,19 @@ public final class FieldAccess extends ASTNode {
         return Arrays.asList(lhs.accept(v));
     }
 
+    public boolean isAt() {
+        return at;
+    }
+
     public static ASTNode create(SourceSection src, FieldOperator op, ASTNode value, String fieldName) {
         switch (op) {
-            case AT: // // FIXME determine the meaning of AT in this case - falling back to put
+            case AT:
+                // these two names have special meaning for slot retrieval
+
+                String newName = fieldName.equals(RRuntime.DOT_DATA) ? RRuntime.DOT_DATA : (fieldName.equals(RRuntime.DOT_S3_CLASS) ? RRuntime.DOT_S3_CLASS : fieldName);
+                return new FieldAccess(src, value, newName, true);
             case FIELD:
-                return new FieldAccess(src, value, fieldName);
+                return new FieldAccess(src, value, fieldName, false);
         }
         throw new Error("No node implemented for: '" + op + "' (" + value + ": " + fieldName + ")");
     }

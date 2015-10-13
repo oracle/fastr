@@ -441,6 +441,7 @@ public class BasePackage extends RBuiltinPackage {
         add(Signif.class, SignifNodeGen::create);
         add(SinkFunctions.Sink.class, SinkFunctionsFactory.SinkNodeGen::create);
         add(SinkFunctions.SinkNumber.class, SinkFunctionsFactory.SinkNumberNodeGen::create);
+        add(Slot.class, SlotNodeGen::create);
         add(SortFunctions.PartialSort.class, SortFunctionsFactory.PartialSortNodeGen::create);
         add(SortFunctions.QSort.class, SortFunctionsFactory.QSortNodeGen::create);
         add(SortFunctions.RadixSort.class, SortFunctionsFactory.RadixSortNodeGen::create);
