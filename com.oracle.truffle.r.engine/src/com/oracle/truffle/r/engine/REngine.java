@@ -46,6 +46,7 @@ import com.oracle.truffle.api.impl.FindContextNode;
 import com.oracle.truffle.api.instrument.QuitException;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.interop.java.JavaInterop;
 import com.oracle.truffle.api.nodes.Node.Child;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.source.Source;
@@ -59,6 +60,7 @@ import com.oracle.truffle.r.nodes.RRootNode;
 import com.oracle.truffle.r.nodes.RTruffleVisitor;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinPackages;
+import com.oracle.truffle.r.nodes.builtin.base.PrettyPrinterNode;
 import com.oracle.truffle.r.nodes.control.BreakException;
 import com.oracle.truffle.r.nodes.control.NextException;
 import com.oracle.truffle.r.nodes.function.BodyNode;
@@ -310,9 +312,8 @@ final class REngine implements Engine {
     }
 
     @Override
-    public CallTarget parseToCallTarget(Source source, boolean printResult) throws ParseException {
-        ASTNode ast = parseImpl(source);
-        return new PolyglotEngineCallTarget(ast, printResult);
+    public CallTarget parseToCallTarget(Source source) throws ParseException {
+        return new PolyglotEngineCallTarget(parseImpl(source));
     }
 
     /**
@@ -322,13 +323,11 @@ final class REngine implements Engine {
     private static class PolyglotEngineCallTarget implements RootCallTarget {
 
         private final ASTNode ast;
-        private final boolean printResult;
 
         @SuppressWarnings("unchecked") @Child private FindContextNode<RContext> findContext = (FindContextNode<RContext>) TruffleRLanguage.INSTANCE.actuallyCreateFindContextNode();
 
-        PolyglotEngineCallTarget(ASTNode ast, boolean printResult) {
+        PolyglotEngineCallTarget(ASTNode ast) {
             this.ast = ast;
-            this.printResult = printResult;
         }
 
         /**
@@ -346,7 +345,7 @@ final class REngine implements Engine {
             RContext context = findContext.executeFindContext();
             RContext.threadLocalContext.set(context);
             try {
-                return ((REngine) context.getThisEngine()).runCall(callTarget, context.stateREnvironment.getGlobalFrame(), printResult, true);
+                return ((REngine) context.getThisEngine()).runCall(callTarget, context.stateREnvironment.getGlobalFrame(), true, true);
             } finally {
                 RContext.threadLocalContext.set(oldContext);
             }
@@ -555,10 +554,10 @@ final class REngine implements Engine {
         } else if (result instanceof CharSequence && !(result instanceof String)) {
             RContext.getInstance().getConsoleHandler().println("\"" + String.valueOf(result) + "\"");
         } else {
-            Object resultValue = result instanceof RPromise ? PromiseHelperNode.evaluateSlowPath(null, (RPromise) result) : result;
+            Object resultValue = evaluatePromise(result);
             if (loadBase) {
                 Object printMethod = REnvironment.globalEnv().findFunction("print");
-                RFunction function = (RFunction) (printMethod instanceof RPromise ? PromiseHelperNode.evaluateSlowPath(null, (RPromise) printMethod) : printMethod);
+                RFunction function = (RFunction) evaluatePromise(printMethod);
                 if (FastROptions.NewStateTransition && resultValue instanceof RShareable && !((RShareable) resultValue).isSharedPermanent()) {
                     ((RShareable) resultValue).incRefCount();
                 }
@@ -571,6 +570,22 @@ final class REngine implements Engine {
                 getPrintInternal().getTarget().call(RArguments.create(printInternal, null, REnvironment.globalEnv().getFrame(), 1, new Object[]{resultValue}, PRINT_INTERNAL_SIGNATURE, null));
             }
         }
+    }
+
+    public String toString(Object result) {
+        // this supports printing of non-R values (via toString for now)
+        if (result instanceof TruffleObject && !(result instanceof RTypedValue)) {
+            return JavaInterop.asJavaObject(String.class, (TruffleObject) result);
+        } else if (result instanceof CharSequence && !(result instanceof String)) {
+            return "\"" + String.valueOf(result) + "\"";
+        } else {
+            Object resultValue = evaluatePromise(result);
+            return PrettyPrinterNode.prettyPrintDefault(resultValue);
+        }
+    }
+
+    private static Object evaluatePromise(Object value) {
+        return value instanceof RPromise ? PromiseHelperNode.evaluateSlowPath(null, (RPromise) value) : value;
     }
 
     // Only relevant when running without base package loaded

@@ -1116,6 +1116,19 @@ public abstract class PrettyPrinterNode extends RNode {
         }
     }
 
+    @SuppressWarnings("deprecation")
+    public static String prettyPrintDefault(Object value) {
+        return (String) Truffle.getRuntime().createCallTarget(new RootNode() {
+
+            @Child PrettyPrinterNode node = PrettyPrinterNodeGen.create(null, null, null, null, false);
+
+            @Override
+            public Object execute(VirtualFrame frame) {
+                return node.executeString(frame, frame.getArguments()[0], null, RRuntime.LOGICAL_FALSE, RRuntime.LOGICAL_FALSE);
+            }
+        }).call(value);
+    }
+
     @NodeChildren({@NodeChild(value = "operand", type = RNode.class), @NodeChild(value = "listElementName", type = RNode.class), @NodeChild(value = "quote", type = RNode.class),
                     @NodeChild(value = "right", type = RNode.class)})
     abstract static class PrettyPrinterSingleListElementNode extends RNode {

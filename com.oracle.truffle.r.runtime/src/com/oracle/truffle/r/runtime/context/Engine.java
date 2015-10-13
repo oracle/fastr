@@ -108,7 +108,7 @@ public interface Engine {
      * return a {@link CallTarget} which may be cached for future use, and the
      * {@link PolyglotEngine} is responsible for actually invoking the call target.
      */
-    CallTarget parseToCallTarget(Source source, boolean printResult) throws ParseException;
+    CallTarget parseToCallTarget(Source source) throws ParseException;
 
     /**
      * Parse and evaluate {@code rscript} in {@code frame}. {@code printResult == true}, the result
@@ -185,6 +185,8 @@ public interface Engine {
      * Essentially this is equivalent to {@link #evalFunction} using the {@code "print"} function.
      */
     void printResult(Object value);
+
+    String toString(Object value);
 
     RFunction parseFunction(String name, Source source, MaterializedFrame enclosingFrame) throws ParseException;
 

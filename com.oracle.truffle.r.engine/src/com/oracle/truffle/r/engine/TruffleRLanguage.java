@@ -102,8 +102,19 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
     }
 
     @Override
+    protected String toString(RContext context, Object value) {
+        // TODO this is a hack to not show non visible results in interactive mode
+        // we need a separate API for that.
+        if (!context.isInteractive() || context.isVisible()) {
+            return RContext.getEngine().toString(value);
+        } else {
+            return null;
+        }
+    }
+
+    @Override
     protected CallTarget parse(Source source, Node context, String... argumentNames) throws IOException {
-        return RContext.getEngine().parseToCallTarget(source, true);
+        return RContext.getEngine().parseToCallTarget(source);
     }
 
     @Override
