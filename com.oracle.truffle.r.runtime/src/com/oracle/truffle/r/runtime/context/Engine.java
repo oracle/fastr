@@ -150,11 +150,12 @@ public interface Engine {
 
     /**
      * Variant of {@link #eval(RLanguage, MaterializedFrame)} where we already have the
-     * {@link RFunction} and the evaluated arguments, but do not have a frame available, and we are
-     * behind a {@link TruffleBoundary}, so call inlining is not an issue. This is primarily used
-     * for R callbacks from {@link RErrorHandling} and {@link RSerialize}.
+     * {@link RFunction} and the evaluated arguments, but may not have a frame available (in which
+     * case current frame is used), and we are behind a {@link TruffleBoundary}, so call inlining is
+     * not an issue. This is primarily used for R callbacks from {@link RErrorHandling} and
+     * {@link RSerialize}.
      */
-    Object evalFunction(RFunction func, Object... args);
+    Object evalFunction(RFunction func, MaterializedFrame frame, Object... args);
 
     /**
      * Evaluates an {@link com.oracle.truffle.r.runtime.data.RPromise.Closure} in {@code frame}.

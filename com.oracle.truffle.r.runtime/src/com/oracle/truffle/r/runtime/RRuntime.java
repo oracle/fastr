@@ -102,6 +102,10 @@ public class RRuntime {
     public static final String FORMULA_CLASS = "formula";
     public static final String DOT_ENVIRONMENT = ".Environment";
 
+    public static final String DOT_DATA = ".Data";
+
+    public static final String DOT_S3_CLASS = ".S3Class";
+
     public static final String CLASS_ORDERED = "ordered";
 
     public static final int LEN_METHOD_NAME = 512;
@@ -126,6 +130,7 @@ public class RRuntime {
 
     public static final String NULL = "NULL";
     public static final String UNBOUND = "UNBOUND";
+    public static final RStringVector NULL_STR_VECTOR = RDataFactory.createEmptyStringVector();
 
     @CompilationFinal private static final String[] numberStringCache = new String[4096];
     private static final int MIN_CACHED_NUMBER = -numberStringCache.length / 2;

@@ -280,7 +280,7 @@ def _nodes_unit_tests():
     return 'com.oracle.truffle.r.nodes.test'
 
 def _gate_unit_tests():
-    return ','.join([_library_unit_tests(), _nodes_unit_tests()] + map(_test_subpackage, ['rffi', 'rpackages', 'builtins', 'functions', 'ser', 'apps', 'tck', 'parser']))
+    return ','.join([_library_unit_tests(), _nodes_unit_tests()] + map(_test_subpackage, ['rffi', 'rpackages', 'builtins', 'functions', 'ser', 'apps', 'tck', 'parser', 'S4']))
 
 def _all_unit_tests():
     return _gate_unit_tests()

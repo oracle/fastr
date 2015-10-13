@@ -398,10 +398,11 @@ final class REngine implements Engine {
         return runCall(callTarget, frame, false, false);
     }
 
-    public Object evalFunction(RFunction func, Object... args) {
+    public Object evalFunction(RFunction func, MaterializedFrame frame, Object... args) {
         ArgumentsSignature argsSig = ((RRootNode) func.getRootNode()).getSignature();
-        MaterializedFrame frame = Utils.getActualCurrentFrame().materialize();
-        Object[] rArgs = RArguments.create(func, frame == null ? null : RArguments.getCall(frame), frame, frame == null ? 1 : RArguments.getDepth(frame) + 1, args, argsSig, null);
+        MaterializedFrame actualFrame = frame == null ? Utils.getActualCurrentFrame().materialize() : frame;
+        Object[] rArgs = RArguments.create(func, actualFrame == null ? null : RArguments.getCall(actualFrame), actualFrame, actualFrame == null ? 1 : RArguments.getDepth(actualFrame) + 1, args,
+                        argsSig, null);
         return func.getTarget().call(rArgs);
     }
 
