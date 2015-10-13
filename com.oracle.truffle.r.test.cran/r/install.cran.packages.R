@@ -24,7 +24,7 @@
 # A script to install CRAN packages, with a blacklist mechanism starting from a known
 # set of packages that we cannot handle, e.g. Rcpp (due to C++)
 # By default all packages are candidates for installation, but this
-# can be limited by a regexp pattern
+# can be limited by a regexp pattern or an explicit list from a file
 
 # By default, we use the CRAN mirror specified by --cran-mirror or env var CRAN_MIRROR.
 # If unset, defaults to "http://cran.cnr.berkeley.edu/"
@@ -49,7 +49,7 @@ usage <- function() {
 	cat(paste("usage: Rscript [--contriburl url] [--cran-mirror url] [--lib] [--verbose | -v] [-V] [--dryrun]",
                       "[--no-install | -n] [--create-blacklist] [--blacklist-file file] [--ignore-blacklist]",
 					  "[--testcount count]", "[--install-mode mode]",
-					  "[package-pattern]\n"))
+					  "[--pkg-filelist file] [package-pattern] \n"))
 	quit(status=1)
 }
 
@@ -192,7 +192,12 @@ set.package.blacklist <- function() {
 # sets global variables avail.pkgs and toinstall.pkgs
 get.pkgs <- function() {
 	avail.pkgs <<- available.packages(contriburl=contriburl, type="source")
-	matched.avail.pkgs <- apply(avail.pkgs, 1, function(x) grepl(pkg.pattern, x["Package"]))
+	if (length(pkg.filelist) == 0) {
+		match.fun <- function(x) grepl(pkg.pattern, x["Package"])
+	} else {
+		match.fun <- function(x) x["Package"] %in% pkg.filelist
+	}
+	matched.avail.pkgs <- apply(avail.pkgs, 1, match.fun)
 	toinstall.pkgs <<-avail.pkgs[matched.avail.pkgs, , drop=F]
 }
 
@@ -340,6 +345,13 @@ parse.args <- function() {
 			} else {
 				usage()
 			}
+		} else if (a == "--pkg-filelist") {
+			if (length(args) >= 2L) {
+				pkg.filelistfile <<- args[2L]
+				args <<- args[-1L]
+			} else {
+				usage()
+			}
 		} else {
 			if (grepl("^-.*", a)) {
 				usage()
@@ -381,9 +393,20 @@ check.libs <- function() {
 	}
 }
 
+check.pkgfilelist <- function() {
+	if (!is.na(pkg.filelistfile)) {
+		if (exists(pkg.filelistfile)) {
+			pkg.filelist <<- readLines(pkg.filelistfile)
+		} else {
+			abort(paste(pkg.filelistfile, "not found"))
+		}
+	}
+}
+
 run <- function() {
     parse.args()
 	check.libs()
+	check.pkgfilelist()
 	set.contriburl()
 	set.package.blacklist()
     cat.args()
@@ -396,6 +419,8 @@ blacklist.file <- NA
 lib.install <- NA
 
 pkg.pattern <- "^.*"
+pkg.filelist <- character()
+pkg.filelistfile <- NA
 verbose <- F
 very.verbose <- F
 install <- T
