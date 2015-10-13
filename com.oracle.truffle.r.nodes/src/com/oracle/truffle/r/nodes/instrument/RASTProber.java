@@ -26,6 +26,7 @@ import static com.oracle.truffle.api.instrument.StandardSyntaxTag.*;
 
 import com.oracle.truffle.api.instrument.*;
 import com.oracle.truffle.api.nodes.*;
+import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.control.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
@@ -75,7 +76,7 @@ public final class RASTProber implements ASTProber {
                 instrumenter.probe(body).tagAs(START_METHOD, uid);
                 TaggingNodeVisitor visitor = new TaggingNodeVisitor(uid, instrumenter);
                 if (FastROptions.debugMatches("RASTProberTag")) {
-                    System.out.printf("Tagging function %s%n", uid);
+                    System.out.printf("Tagging function uid %s%n", uid);
                 }
                 RSyntaxNode.accept(body, 0, visitor);
                 fdn.setInstrumented();
@@ -134,7 +135,8 @@ public final class RASTProber implements ASTProber {
             RInstrument.NodeId nodeId = new RInstrument.NodeId(uid, node);
             instrumenter.probe(node.asRNode()).tagAs(tag, new RInstrument.NodeId(uid, node));
             if (FastROptions.debugMatches("RASTProberTag")) {
-                System.out.printf("Tagged %s as %s: %s%n", node.getClass().getSimpleName(), tag, nodeId.toString());
+                SourceSection ss = node.getSourceSection();
+                System.out.printf("Tagged %s @line %d as %s: %s%n", node.getClass().getSimpleName(), ss.getStartLine(), tag, nodeId.toString());
             }
 
         }

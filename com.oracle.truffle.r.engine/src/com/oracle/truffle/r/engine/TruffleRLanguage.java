@@ -30,6 +30,7 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.instrument.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
+import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.instrument.*;
 import com.oracle.truffle.r.runtime.*;
@@ -141,6 +142,14 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
     @Override
     protected Object evalInContext(Source source, Node node, MaterializedFrame frame) throws IOException {
         return RContext.getEngine().parseAndEval(source, frame, false);
+    }
+
+    /**
+     * Temporary workaround until {@link PolyglotEngine} provides a way to invoke
+     * {@link #evalInContext}.
+     */
+    public Object internalEvalInContext(Source source, Node node, MaterializedFrame frame) throws IOException {
+        return evalInContext(source, node, frame);
     }
 
 }

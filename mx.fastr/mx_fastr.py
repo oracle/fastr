@@ -41,6 +41,9 @@ def r_command_class():
 def rscript_command_class():
     return r_command_project() + ".shell.RscriptCommand"
 
+def rrepl_command_class():
+    return r_command_project() + ".repl.RREPLServer"
+
 def runR(args, className, nonZeroIsFatal=True, extraVmArgs=None, runBench=False, graal_vm='server'):
     setREnvironment(graal_vm)
     vmArgs = ['-cp', mx.classpath(r_command_project())]
@@ -52,15 +55,7 @@ def runR(args, className, nonZeroIsFatal=True, extraVmArgs=None, runBench=False,
         vmArgs += ['-ea', '-esa']
     if extraVmArgs:
         vmArgs += extraVmArgs
-    vmArgs += _add_truffle_jar()
     return mx_graal.run_vm(vmArgs + [className] + args, vm=graal_vm, nonZeroIsFatal=nonZeroIsFatal)
-
-def _add_truffle_jar():
-    # Unconditionally prepend truffle.jar to the boot class path.
-    # This used to be done by the VM itself but was removed to
-    # separate the VM from Truffle.
-    truffle_jar = mx.distribution('truffle:TRUFFLE_API').path
-    return ['-XX:-UseJVMCIClassLoader', '-Xbootclasspath/p:' + truffle_jar]
 
 def setREnvironment(graal_vm):
     osname = platform.system()
@@ -81,12 +76,14 @@ def _get_graal_vm():
     '''
     return "server" if mx_jvmci._vm is None else mx_jvmci._vm
 
-def rcommon(args, command, klass):
+def rcommon(args, command, klass, extraVmArgs=None):
     parser = ArgumentParser(prog='mx ' + command)
     parser.add_argument('--J', dest='extraVmArgsList', action='append', help='extra Java VM arguments', metavar='@<args>')
     ns, rargs = parser.parse_known_args(args)
-    extraVmArgs = []
+
     if ns.extraVmArgsList:
+        if extraVmArgs is None:
+            extraVmArgs = []
         for e in ns.extraVmArgsList:
             extraVmArgs += [x for x in shlex.split(e.lstrip('@'))]
     graal_vm = _get_graal_vm()
@@ -99,6 +96,10 @@ def rshell(args):
 def rscript(args):
     '''run Rscript'''
     return rcommon(args, 'Rscript', rscript_command_class())
+
+def rrepl(args, nonZeroIsFatal=True, extraVmArgs=None):
+    '''run R repl'''
+    return rcommon(args, "rrepl", rrepl_command_class(), extraVmArgs=['-DR:+Instrument'])
 
 def build(args):
     '''FastR build'''
@@ -238,7 +239,6 @@ def _junit_r_harness(args, vmArgs, junitArgs):
 
     graal_vm = _get_graal_vm()
     setREnvironment(graal_vm)
-    vmArgs += _add_truffle_jar()
 
     return mx_graal.run_vm(vmArgs + junitArgs, vm=graal_vm, nonZeroIsFatal=False)
 
@@ -394,13 +394,6 @@ def rcmplib(args):
 def bench(args):
     mx.abort("no benchmarks available")
 
-def _rREPLClass():
-    return "com.oracle.truffle.r.engine.repl.RREPLServer"
-
-def runRREPL(args, nonZeroIsFatal=True, extraVmArgs=None):
-    '''run R repl'''
-    return runR(args, _rREPLClass(), nonZeroIsFatal=nonZeroIsFatal, extraVmArgs=['-DR:+Instrument'])
-
 def installcran(args):
     cran = 'com.oracle.truffle.r.test.cran'
     script = join(mx.project(cran).dir, 'r', 'install.cran.packages.R')
@@ -438,7 +431,7 @@ _commands = {
     'rbcheck' : [rbcheck, ['options']],
     'rcmplib' : [rcmplib, ['options']],
     'test' : [test, ['options']],
-    'rrepl' : [runRREPL, '[options]'],
+    'rrepl' : [rrepl, '[options]'],
     'installcran' : [installcran, '[options]'],
     }
 

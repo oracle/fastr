@@ -60,7 +60,7 @@ public abstract class RREPLHandler extends REPLHandler {
             final Visualizer visualizer = serverContext.getVisualizer();
 
             Source source = Source.fromText(request.get(REPLMessage.CODE), "<REPL>").withMimeType(TruffleRLanguage.MIME);
-            MaterializedFrame mFrame = null;
+            MaterializedFrame frame = null;
             final Integer frameNumber = request.getIntValue(REPLMessage.FRAME_NUMBER);
             if (frameNumber != null) {
                 final List<FrameDebugDescription> stack = serverContext.getStack();
@@ -68,16 +68,10 @@ public abstract class RREPLHandler extends REPLHandler {
                     return finishReplyFailed(message, "invalid frame number");
                 }
                 final FrameDebugDescription frameDescription = stack.get(frameNumber);
-                mFrame = (MaterializedFrame) frameDescription.frameInstance().getFrame(FrameAccess.MATERIALIZE, true);
+                frame = (MaterializedFrame) frameDescription.frameInstance().getFrame(FrameAccess.MATERIALIZE, true);
             }
             try {
-                Object returnValue;
-                // This doesn't work because no way to communicate mFrame
-                if (mFrame == null) { // Top Level
-                    returnValue = serverContext.engine().eval(source).get();
-                } else {
-                    returnValue = serverContext.engine().eval(source).get();
-                }
+                Object returnValue = TruffleRLanguage.INSTANCE.internalEvalInContext(source, null, frame);
                 return finishReplySucceeded(message, visualizer.displayValue(returnValue, 0));
             } catch (QuitException ex) {
                 throw ex;
@@ -177,7 +171,7 @@ public abstract class RREPLHandler extends REPLHandler {
                     return finishReplyFailed(reply, "can't find file \"" + fileName + "\"");
                 }
                 final PolyglotEngine vm = serverContext.engine();
-                Source source = Source.fromURL(file.toURI().toURL(), "<REPL_file>").withMimeType(TruffleRLanguage.MIME);
+                Source source = Source.fromFileName(fileName, true).withMimeType(TruffleRLanguage.MIME);
                 vm.eval(source);
                 final String path = file.getCanonicalPath();
                 message.put(REPLMessage.FILE_PATH, path);

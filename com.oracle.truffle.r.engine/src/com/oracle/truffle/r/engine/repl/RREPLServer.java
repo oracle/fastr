@@ -46,7 +46,7 @@ public final class RREPLServer extends REPLServer {
 
         // Cheating for the prototype: start from R, rather than from the client.
         final RREPLServer server = new RREPLServer(args);
-        final SimpleREPLClient client = new SimpleREPLClient(server.language.getShortName(), server);
+        final SimpleREPLClient client = new SimpleREPLClient(server.language.getName(), server);
 
         // Cheating for the prototype: allow server access to client for recursive debugging
         server.setClient(client);
@@ -126,7 +126,7 @@ public final class RREPLServer extends REPLServer {
         this.language = vm.getLanguages().get(TruffleRLanguage.MIME);
         assert language != null;
 
-        this.statusPrefix = language.getShortName() + " REPL:";
+        this.statusPrefix = language.getName() + " REPL:";
     }
 
     private void setClient(SimpleREPLClient client) {
@@ -142,7 +142,7 @@ public final class RREPLServer extends REPLServer {
 
         final REPLMessage reply = new REPLMessage();
         reply.put(REPLMessage.STATUS, REPLMessage.SUCCEEDED);
-        reply.put(REPLMessage.DISPLAY_MSG, language.getShortName() + " started");
+        reply.put(REPLMessage.DISPLAY_MSG, language.getName() + " started");
         return reply;
     }
 
