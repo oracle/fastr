@@ -73,14 +73,6 @@ suite = {
       "sha1" : "1d41b60e5180f6bcb7db15e7353dde7147cd3928",
     },
 
-    "JLINE" : {
-      "urls" : [
-        "https://lafo.ssw.uni-linz.ac.at/pub/graal-external-deps/jline-2.11.jar",
-        "https://search.maven.org/remotecontent?filepath=jline/jline/2.11/jline-2.11.jar",
-      ],
-      "sha1" : "9504d5e2da5d78237239c5226e8200ec21182040",
-    },
-
     "JNR_POSIX" : {
       "urls" : [
         "https://lafo.ssw.uni-linz.ac.at/pub/graal-external-deps/jnr-posix-3.0.15.jar",
@@ -280,7 +272,7 @@ suite = {
       "sourceDirs" : ["src"],
       "dependencies" : [
         "com.oracle.truffle.r.nodes.builtin",
-        "JLINE",
+        "truffle:JLINE",
         "truffle:TRUFFLE_DEBUG",
       ],
       "annotationProcessors" : [
@@ -393,7 +385,7 @@ suite = {
         "JNR_POSIX",
         "JNR_INVOKE",
         "JNR_UDIS86",
-        "JLINE",
+        "truffle:JLINE",
         "ANTLR-C",
         "ANTLR",
         "GNUR",
