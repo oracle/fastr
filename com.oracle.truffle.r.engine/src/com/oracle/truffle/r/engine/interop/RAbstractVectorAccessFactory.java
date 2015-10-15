@@ -40,7 +40,12 @@ public final class RAbstractVectorAccessFactory implements Factory10 {
     }
 
     public CallTarget accessIsNull() {
-        throw RInternalError.shouldNotReachHere("message: accessIsNull");
+        return Truffle.getRuntime().createCallTarget(new InteropRootNode() {
+            @Override
+            public Object execute(VirtualFrame frame) {
+                return false;
+            }
+        });
     }
 
     public CallTarget accessIsExecutable() {
