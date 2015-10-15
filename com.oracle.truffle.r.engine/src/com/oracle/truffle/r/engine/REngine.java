@@ -574,10 +574,10 @@ final class REngine implements Engine {
 
     public String toString(Object result) {
         // this supports printing of non-R values (via toString for now)
-        if (result instanceof TruffleObject && !(result instanceof RTypedValue)) {
-            return JavaInterop.asJavaObject(String.class, (TruffleObject) result);
+        if (result == null || (result instanceof TruffleObject && !(result instanceof RTypedValue))) {
+            return "foreign()";
         } else if (result instanceof CharSequence && !(result instanceof String)) {
-            return "\"" + String.valueOf(result) + "\"";
+            return "[1] \"" + String.valueOf(result) + "\"";
         } else {
             Object resultValue = evaluatePromise(result);
             return PrettyPrinterNode.prettyPrintDefault(resultValue);
