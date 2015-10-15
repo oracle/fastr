@@ -39,6 +39,7 @@ public class DefaultConsoleHandler implements ConsoleHandler {
     public void println(String s) {
         try {
             out.append(s).append('\n');
+            out.flush();
         } catch (IOException e) {
             // TODO: handle this error
         }
@@ -47,6 +48,7 @@ public class DefaultConsoleHandler implements ConsoleHandler {
     public void print(String s) {
         try {
             out.append(s).append('\n');
+            out.flush();
         } catch (IOException e) {
             // TODO: handle this error
         }
@@ -55,6 +57,7 @@ public class DefaultConsoleHandler implements ConsoleHandler {
     public void printErrorln(String s) {
         try {
             out.append(s).append('\n');
+            out.flush();
         } catch (IOException e) {
             // TODO: handle this error
         }
@@ -63,6 +66,7 @@ public class DefaultConsoleHandler implements ConsoleHandler {
     public void printError(String s) {
         try {
             out.append(s).append('\n');
+            out.flush();
         } catch (IOException e) {
             // TODO: handle this error
         }
