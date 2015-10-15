@@ -364,11 +364,13 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
             // parser error
             return RNull.instance;
         }
-        RCaller caller = RArguments.getCall(frame);
-        if (caller == null) {
-            return RNull.instance;
+        if (RArguments.isRFrame(frame)) {
+            RCaller caller = RArguments.getCall(frame);
+            if (caller != null) {
+                return caller;
+            }
         }
-        return caller;
+        return RNull.instance;
     }
 
     private Object findCallerFromFrame(Frame frame) {

@@ -277,7 +277,11 @@ public final class Utils {
     public static Frame getStackFrame(FrameAccess fa, int depth) {
         return Truffle.getRuntime().iterateFrames(frameInstance -> {
             Frame f = RArguments.unwrap(frameInstance.getFrame(fa, false));
-            return RArguments.getDepth(f) == depth ? f : null;
+            if (RArguments.isRFrame(f)) {
+                return RArguments.getDepth(f) == depth ? f : null;
+            } else {
+                return null;
+            }
         });
     }
 
