@@ -313,20 +313,17 @@ final class REngine implements Engine {
 
     @Override
     public CallTarget parseToCallTarget(Source source) throws ParseException {
-        return new PolyglotEngineCallTarget(parseImpl(source));
+        return Truffle.getRuntime().createCallTarget(new PolyglotEngineRootNode(parseImpl(source)));
     }
 
-    /**
-     * A custom {@link RootCallTarget} that supports {@link #parseToCallTarget}. The
-     * {@link PolyglotEngine} will invoke the {@link #call} method.
-     */
-    private static class PolyglotEngineCallTarget implements RootCallTarget {
+    private static class PolyglotEngineRootNode extends RootNode {
 
         private final ASTNode ast;
 
         @SuppressWarnings("unchecked") @Child private FindContextNode<RContext> findContext = (FindContextNode<RContext>) TruffleRLanguage.INSTANCE.actuallyCreateFindContextNode();
 
-        PolyglotEngineCallTarget(ASTNode ast) {
+        PolyglotEngineRootNode(ASTNode ast) {
+            super(TruffleRLanguage.class, SourceSection.createUnavailable("repl", "<repl wrapper>"), new FrameDescriptor());
             this.ast = ast;
         }
 
@@ -337,7 +334,7 @@ final class REngine implements Engine {
          * initiated.
          */
         @Override
-        public Object call(Object... arguments) {
+        public Object execute(VirtualFrame frame) {
             RSyntaxNode node = transform(ast);
             RootCallTarget callTarget = doMakeCallTarget(node.asRNode(), "<repl wrapper>");
 
@@ -351,9 +348,6 @@ final class REngine implements Engine {
             }
         }
 
-        public RootNode getRootNode() {
-            return null;
-        }
     }
 
     public Object eval(RExpression exprs, REnvironment envir, int depth) {
@@ -549,10 +543,10 @@ final class REngine implements Engine {
     @TruffleBoundary
     public void printResult(Object result) {
         // this supports printing of non-R values (via toString for now)
-        if (result instanceof TruffleObject && !(result instanceof RTypedValue)) {
-            RContext.getInstance().getConsoleHandler().println(String.valueOf(result));
+        if (result == null || result instanceof TruffleObject && !(result instanceof RTypedValue)) {
+            RContext.getInstance().getConsoleHandler().println(toString(result));
         } else if (result instanceof CharSequence && !(result instanceof String)) {
-            RContext.getInstance().getConsoleHandler().println("\"" + String.valueOf(result) + "\"");
+            RContext.getInstance().getConsoleHandler().println(toString(result));
         } else {
             Object resultValue = evaluatePromise(result);
             if (loadBase) {
