@@ -24,7 +24,12 @@ package com.oracle.truffle.r.nodes.control;
 
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.interop.ForeignAccess;
+import com.oracle.truffle.api.interop.Message;
+import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.nodes.profile.*;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
@@ -36,7 +41,7 @@ public abstract class RLengthNode extends RNode {
     @Override
     public abstract int executeInteger(VirtualFrame frame);
 
-    public abstract int executeInteger(Object value);
+    public abstract int executeInteger(VirtualFrame frame, Object value);
 
     public static RLengthNode create() {
         return RLengthNodeGen.create(null);
@@ -98,6 +103,19 @@ public abstract class RLengthNode extends RNode {
          * decide whether to include a name is still necessary
          */
         return lengthProfile.profile(env.ls(true, null, false).getLength());
+    }
+
+    protected static Node createGetSize() {
+        return Message.GET_SIZE.createNode();
+    }
+
+    protected static boolean isForeignObject(TruffleObject object) {
+        return RRuntime.isForeignObject(object);
+    }
+
+    @Specialization(guards = "isForeignObject(object)")
+    protected int getForeignSize(VirtualFrame frame, TruffleObject object, @Cached("createGetSize()") Node foreignNode) {
+        return (int) ForeignAccess.execute(foreignNode, frame, object);
     }
 
 }

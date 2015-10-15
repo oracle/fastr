@@ -296,7 +296,7 @@ public class BinaryBooleanNodeTest extends BinaryVectorTest {
 
     private static NodeHandle<BinaryBooleanNode> create(BooleanOperationFactory factory) {
         return createHandle(BinaryBooleanNode.create(factory), //
-                        (node, args) -> node.execute(args[0], args[1]));
+                        (node, args) -> node.execute(null, args[0], args[1]));
     }
 
 }

@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.control.*;
 import com.oracle.truffle.r.runtime.*;
@@ -36,8 +37,8 @@ public abstract class SeqAlong extends RBuiltinNode {
     @Child private RLengthNode length = RLengthNodeGen.create();
 
     @Specialization
-    protected RIntSequence seq(Object value) {
+    protected RIntSequence seq(VirtualFrame frame, Object value) {
         controlVisibility();
-        return RDataFactory.createIntSequence(1, 1, length.executeInteger(value));
+        return RDataFactory.createIntSequence(1, 1, length.executeInteger(frame, value));
     }
 }

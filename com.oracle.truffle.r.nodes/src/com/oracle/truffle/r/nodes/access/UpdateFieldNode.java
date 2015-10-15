@@ -27,6 +27,11 @@ import java.util.*;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.interop.ForeignAccess;
+import com.oracle.truffle.api.interop.Message;
+import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
@@ -40,7 +45,7 @@ import com.oracle.truffle.r.runtime.nodes.*;
 @NodeChildren({@NodeChild(value = "value", type = RNode.class), @NodeChild(value = "object", type = RNode.class), @NodeChild(value = "field", type = RNode.class)})
 public abstract class UpdateFieldNode extends RNode implements RSyntaxNode {
 
-    public abstract Object executeUpdate(Object o, Object value, String field);
+    public abstract Object executeUpdate(VirtualFrame frame, Object o, Object value, String field);
 
     protected final ConditionProfile hasNamesProfile = ConditionProfile.createBinaryProfile();
     protected final BranchProfile inexactMatch = BranchProfile.create();
@@ -169,6 +174,20 @@ public abstract class UpdateFieldNode extends RNode implements RSyntaxNode {
         } else {
             return updateField(castList.executeList(object), value, field);
         }
+    }
+
+    protected static Node createForeignWrite() {
+        return Message.WRITE.createNode();
+    }
+
+    protected static boolean isForeignObject(TruffleObject object) {
+        return RRuntime.isForeignObject(object);
+    }
+
+    @Specialization(guards = "isForeignObject(object)")
+    protected Object accessField(VirtualFrame frame, TruffleObject object, Object value, String field, //
+                    @Cached("createForeignWrite()") Node foreignWrite) {
+        return ForeignAccess.execute(foreignWrite, frame, object, new Object[]{field, value});
     }
 
     @Override

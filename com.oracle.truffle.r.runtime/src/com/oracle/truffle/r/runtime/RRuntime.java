@@ -844,4 +844,12 @@ public class RRuntime {
         }
     }
 
+    public static boolean isForeignObject(TruffleObject obj) {
+        return !(obj instanceof RTypedValue);
+    }
+
+    public static boolean isForeignObject(Object obj) {
+        return obj instanceof TruffleObject && !(obj instanceof RTypedValue);
+    }
+
 }

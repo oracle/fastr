@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.control.RLengthNode;
@@ -38,7 +39,7 @@ public abstract class AnyNA extends RBuiltinNode {
 
     private final NACheck naCheck = NACheck.create();
 
-    public abstract byte execute(Object value);
+    public abstract byte execute(VirtualFrame frame, Object value);
 
     private byte doScalar(boolean isNA) {
         controlVisibility();
@@ -137,15 +138,15 @@ public abstract class AnyNA extends RBuiltinNode {
     }
 
     @Specialization
-    protected byte isNA(RList list, //
+    protected byte isNA(VirtualFrame frame, RList list, //
                     @Cached("createRecursive()") AnyNA recursive, //
                     @Cached("createClassProfile()") ValueProfile elementProfile, //
                     @Cached("create()") RLengthNode length) {
         controlVisibility();
         for (int i = 0; i < list.getLength(); i++) {
             Object value = elementProfile.profile(list.getDataAt(i));
-            if (length.executeInteger(value) == 1) {
-                byte result = recursive.execute(value);
+            if (length.executeInteger(frame, value) == 1) {
+                byte result = recursive.execute(frame, value);
                 if (result == RRuntime.LOGICAL_TRUE) {
                     return RRuntime.LOGICAL_TRUE;
                 }

@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.access.vector;
 
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -41,19 +42,19 @@ abstract class RecursiveExtractSubscriptNode extends RecursiveSubscriptNode {
         return RecursiveExtractSubscriptNodeGen.create(vector, position);
     }
 
-    public final Object apply(Object vector, Object[] positions, Object exact, Object dropDimensions) {
+    public final Object apply(VirtualFrame frame, Object vector, Object[] positions, Object exact, Object dropDimensions) {
         Object firstPosition = positions[0];
-        int length = positionLengthNode.executeInteger(firstPosition);
-        return execute(vector, positions, firstPosition, length, exact, dropDimensions);
+        int length = positionLengthNode.executeInteger(frame, firstPosition);
+        return execute(frame, vector, positions, firstPosition, length, exact, dropDimensions);
     }
 
-    protected abstract Object execute(Object vector, Object[] positions, Object firstPosition, int positionLength, Object exact, Object dropDimensions);
+    protected abstract Object execute(VirtualFrame frame, Object vector, Object[] positions, Object firstPosition, int positionLength, Object exact, Object dropDimensions);
 
     @Specialization(guards = "positionLength <= 1")
     @SuppressWarnings("unused")
-    protected Object doDefault(Object vector, Object[] positions, Object firstPosition, int positionLength, Object exact, Object dropDimensions) {
+    protected Object doDefault(VirtualFrame frame, Object vector, Object[] positions, Object firstPosition, int positionLength, Object exact, Object dropDimensions) {
         try {
-            return subscriptExtract.apply(vector, positions, exact, dropDimensions);
+            return subscriptExtract.apply(frame, vector, positions, exact, dropDimensions);
         } catch (RecursiveIndexNotFoundError e) {
             errorBranch.enter();
             throw RError.error(this, RError.Message.SUBSCRIPT_BOUNDS);
@@ -62,18 +63,18 @@ abstract class RecursiveExtractSubscriptNode extends RecursiveSubscriptNode {
 
     @Specialization(contains = "doDefault")
     @SuppressWarnings("unused")
-    protected Object doRecursive(Object vector, Object[] positions, Object originalFirstPosition, int positionLength, Object exact, Object dropDimensions, //
+    protected Object doRecursive(VirtualFrame frame, Object vector, Object[] positions, Object originalFirstPosition, int positionLength, Object exact, Object dropDimensions, //
                     @Cached("createPositionCast()") PositionCastNode positionCast) {
         Object firstPosition = positionCast.execute(originalFirstPosition);
         Object currentVector = vector;
         for (int i = 1; i < positionLength; i++) {
-            Object selection = getPositionExtract.apply(firstPosition, new Object[]{RInteger.valueOf(i)}, RLogical.TRUE, RLogical.TRUE);
+            Object selection = getPositionExtract.apply(frame, firstPosition, new Object[]{RInteger.valueOf(i)}, RLogical.TRUE, RLogical.TRUE);
             try {
                 if (!(currentVector instanceof RAbstractListVector)) {
                     errorBranch.enter();
                     throw indexingFailed(i);
                 }
-                currentVector = recursiveSubscriptExtract.apply(currentVector, new Object[]{selection}, exact, dropDimensions);
+                currentVector = recursiveSubscriptExtract.apply(frame, currentVector, new Object[]{selection}, exact, dropDimensions);
 
                 if (currentVector == RNull.instance) {
                     errorBranch.enter();
@@ -84,9 +85,9 @@ abstract class RecursiveExtractSubscriptNode extends RecursiveSubscriptNode {
                 throw noSuchIndex(i);
             }
         }
-        Object selection = getPositionExtract.apply(firstPosition, new Object[]{RInteger.valueOf(positionLength)}, RLogical.TRUE, RLogical.TRUE);
+        Object selection = getPositionExtract.apply(frame, firstPosition, new Object[]{RInteger.valueOf(positionLength)}, RLogical.TRUE, RLogical.TRUE);
         try {
-            return subscriptExtract.apply(currentVector, new Object[]{selection}, exact, dropDimensions);
+            return subscriptExtract.apply(frame, currentVector, new Object[]{selection}, exact, dropDimensions);
         } catch (RecursiveIndexNotFoundError e) {
             errorBranch.enter();
             throw RError.error(this, RError.Message.SUBSCRIPT_BOUNDS);

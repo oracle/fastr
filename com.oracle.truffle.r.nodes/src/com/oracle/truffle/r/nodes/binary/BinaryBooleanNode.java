@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.binary;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.control.*;
 import com.oracle.truffle.r.nodes.primitive.*;
@@ -63,7 +64,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
         return factory == BinaryLogic.AND || factory == BinaryLogic.OR;
     }
 
-    public abstract Object execute(Object left, Object right);
+    public abstract Object execute(VirtualFrame frame, Object left, Object right);
 
     public static BinaryBooleanNode create(BooleanOperationFactory factory) {
         return BinaryBooleanNodeGen.create(factory, new RNode[]{null, null}, null, null);
@@ -112,7 +113,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
     }
 
     @Specialization(guards = {"isRConnection(left) || isRConnection(right)"})
-    protected Object doConnection(Object left, Object right, //
+    protected Object doConnection(VirtualFrame frame, Object left, Object right, //
                     @Cached("createRecursive()") BinaryBooleanNode recursive) {
         Object recursiveLeft = left;
         if (recursiveLeft instanceof RConnection) {
@@ -122,11 +123,11 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
         if (recursiveRight instanceof RConnection) {
             recursiveRight = RInteger.valueOf(((RConnection) recursiveRight).getDescriptor());
         }
-        return recursive.execute(recursiveLeft, recursiveRight);
+        return recursive.execute(frame, recursiveLeft, recursiveRight);
     }
 
     @Specialization(guards = {"isFactor(left) || isFactor(right)", "meaningfulFactorOp(left, right)"})
-    protected Object doFactorMeaningful(Object left, Object right, //
+    protected Object doFactorMeaningful(VirtualFrame frame, Object left, Object right, //
                     @Cached("createRecursive()") BinaryBooleanNode recursive, //
                     @Cached("create()") RAttributeProfiles attrProfiles) {
         Object recursiveLeft = left;
@@ -137,7 +138,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
         if (recursiveRight instanceof RFactor) {
             recursiveRight = RClosures.createFactorToVector((RFactor) recursiveRight, false, attrProfiles);
         }
-        return recursive.execute(recursiveLeft, recursiveRight);
+        return recursive.execute(frame, recursiveLeft, recursiveRight);
     }
 
     protected BinaryBooleanNode createRecursive() {
@@ -145,8 +146,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
     }
 
     @Specialization(guards = {"isFactor(left) || isFactor(right)", "!meaningfulFactorOp(left, right)"})
-    @TruffleBoundary
-    protected Object doFactorNotMeaniningful(Object left, Object right, @Cached("create()") RLengthNode lengthNode) {
+    protected Object doFactorNotMeaniningful(VirtualFrame frame, Object left, Object right, @Cached("create()") RLengthNode lengthNode) {
         Message warning;
         if (left instanceof RFactor) {
             warning = getFactorWarning((RFactor) left);
@@ -154,7 +154,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode {
             warning = getFactorWarning((RFactor) right);
         }
         RError.warning(this, warning, factory.create().opName());
-        return RDataFactory.createNAVector(Math.max(lengthNode.executeInteger(left), lengthNode.executeInteger(right)));
+        return RDataFactory.createNAVector(Math.max(lengthNode.executeInteger(frame, left), lengthNode.executeInteger(frame, right)));
     }
 
     protected boolean meaningfulFactorOp(Object left, Object right) {

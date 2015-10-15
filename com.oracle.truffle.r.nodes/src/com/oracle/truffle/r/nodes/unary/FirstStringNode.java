@@ -37,6 +37,10 @@ public abstract class FirstStringNode extends CastNode {
     private final ConditionProfile lengthOneProfile = ConditionProfile.createBinaryProfile();
     private final BranchProfile errorProfile = BranchProfile.create();
 
+    public final String executeString(Object argument) {
+        return (String) execute(argument);
+    }
+
     @Specialization
     protected String firstScalar(String argument) {
         return argument;
@@ -56,7 +60,7 @@ public abstract class FirstStringNode extends CastNode {
         throw RError.error(this, getEmptyError(), getArgumentName());
     }
 
-    public static CastNode createWithError(RError.Message emptyError, String argumentName) {
+    public static FirstStringNode createWithError(RError.Message emptyError, String argumentName) {
         return FirstStringNodeGen.create(emptyError, argumentName);
     }
 }

@@ -179,14 +179,14 @@ public class InfixEmulationFunctions {
 
         protected abstract boolean isSubset();
 
-        protected Object access(Object vector, byte exact, RArgsValuesAndNames inds, Object dropDim) {
+        protected Object access(VirtualFrame frame, Object vector, byte exact, RArgsValuesAndNames inds, Object dropDim) {
             Object result;
             if (FastROptions.UseNewVectorNodes) {
                 if (extractNode == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
                     extractNode = insert(ExtractVectorNode.create(isSubset() ? ElementAccessMode.SUBSET : ElementAccessMode.SUBSCRIPT, false));
                 }
-                result = extractNode.apply(vector, inds.getArguments(), RLogical.valueOf(exact), dropDim);
+                result = extractNode.apply(frame, vector, inds.getArguments(), RLogical.valueOf(exact), dropDim);
             } else {
                 if (accessNode == null || positions.getLength() != inds.getLength()) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -216,8 +216,8 @@ public class InfixEmulationFunctions {
             return true;
         }
 
-        protected Object getInternal(Object x, RArgsValuesAndNames inds, Object dropVec) {
-            return access(x, RRuntime.LOGICAL_TRUE, inds, dropVec);
+        protected Object getInternal(VirtualFrame frame, Object x, RArgsValuesAndNames inds, Object dropVec) {
+            return access(frame, x, RRuntime.LOGICAL_TRUE, inds, dropVec);
         }
 
         @SuppressWarnings("unused")
@@ -239,19 +239,10 @@ public class InfixEmulationFunctions {
         }
 
         @Specialization(guards = "!noInd(inds)")
-        protected Object get(RAbstractContainer x, RArgsValuesAndNames inds, Object dropVec) {
-            return getInternal(x, inds, dropVec);
+        protected Object get(VirtualFrame frame, Object x, RArgsValuesAndNames inds, Object dropVec) {
+            return getInternal(frame, x, inds, dropVec);
         }
 
-        @Specialization(guards = "!noInd(inds)")
-        protected Object get(REnvironment x, RArgsValuesAndNames inds, Object dropVec) {
-            return getInternal(x, inds, dropVec);
-        }
-
-        @Specialization(guards = "!noInd(inds)")
-        protected Object get(RFunction x, RArgsValuesAndNames inds, Object dropVec) {
-            return getInternal(x, inds, dropVec);
-        }
     }
 
     @RBuiltin(name = ".subset", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", "...", "drop"})
@@ -274,7 +265,7 @@ public class InfixEmulationFunctions {
             return new Object[]{RMissing.instance, RArgsValuesAndNames.EMPTY, RRuntime.LOGICAL_TRUE, RRuntime.LOGICAL_TRUE};
         }
 
-        protected Object getInternal(Object x, RArgsValuesAndNames inds, RAbstractLogicalVector exactVec) {
+        protected Object getInternal(VirtualFrame frame, Object x, RArgsValuesAndNames inds, RAbstractLogicalVector exactVec) {
             /*
              * TODO this should not be handled here. The new vector access nodes handle this, remove
              * this check as soon as its the default and the old implementation is gone.
@@ -285,7 +276,7 @@ public class InfixEmulationFunctions {
             } else {
                 exact = exactVec.getDataAt(0);
             }
-            return access(x, exact, inds, RRuntime.LOGICAL_TRUE);
+            return access(frame, x, exact, inds, RRuntime.LOGICAL_TRUE);
         }
 
         @SuppressWarnings("unused")
@@ -307,19 +298,10 @@ public class InfixEmulationFunctions {
         }
 
         @Specialization(guards = "!noInd(inds)")
-        protected Object get(RAbstractContainer x, RArgsValuesAndNames inds, RAbstractLogicalVector exactVec, @SuppressWarnings("unused") RAbstractLogicalVector dropVec) {
-            return getInternal(x, inds, exactVec);
+        protected Object get(VirtualFrame frame, Object x, RArgsValuesAndNames inds, RAbstractLogicalVector exactVec, @SuppressWarnings("unused") RAbstractLogicalVector dropVec) {
+            return getInternal(frame, x, inds, exactVec);
         }
 
-        @Specialization(guards = "!noInd(inds)")
-        protected Object getNoInd(REnvironment x, RArgsValuesAndNames inds, RAbstractLogicalVector exactVec, @SuppressWarnings("unused") RAbstractLogicalVector dropVec) {
-            return getInternal(x, inds, exactVec);
-        }
-
-        @Specialization(guards = "!noInd(inds)")
-        protected Object getNoInd(RFunction x, RArgsValuesAndNames inds, RAbstractLogicalVector exactVec, @SuppressWarnings("unused") RAbstractLogicalVector dropVec) {
-            return getInternal(x, inds, exactVec);
-        }
     }
 
     @RBuiltin(name = ".subset2", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"x", "...", "exact", "drop"})
@@ -336,7 +318,7 @@ public class InfixEmulationFunctions {
         private final ConditionProfile argsLengthOneProfile = ConditionProfile.createBinaryProfile();
         private final ConditionProfile argsLengthLargerThanOneProfile = ConditionProfile.createBinaryProfile();
 
-        protected Object update(Object vector, RArgsValuesAndNames args, Object value, boolean isSubset) {
+        protected Object update(VirtualFrame frame, Object vector, RArgsValuesAndNames args, Object value, boolean isSubset) {
             Object result;
             if (FastROptions.UseNewVectorNodes) {
                 if (replaceNode == null) {
@@ -349,7 +331,7 @@ public class InfixEmulationFunctions {
                 } else {
                     pos = new Object[]{RMissing.instance};
                 }
-                result = replaceNode.apply(vector, pos, value);
+                result = replaceNode.apply(frame, vector, pos, value);
             } else {
                 int len = argsLengthOneProfile.profile(args.getLength() == 1) ? 1 : args.getLength() - 1;
 
@@ -390,9 +372,9 @@ public class InfixEmulationFunctions {
         private static final boolean IS_SUBSET = true;
 
         @Specialization(guards = "!noInd(args)")
-        protected Object update(Object x, RArgsValuesAndNames args) {
+        protected Object update(VirtualFrame frame, Object x, RArgsValuesAndNames args) {
             Object value = args.getArgument(args.getLength() - 1);
-            return update(x, args, value, IS_SUBSET);
+            return update(frame, x, args, value, IS_SUBSET);
         }
     }
 
@@ -402,9 +384,9 @@ public class InfixEmulationFunctions {
         private static final boolean IS_SUBSET = false;
 
         @Specialization(guards = "!noInd(args)")
-        protected Object update(Object x, RArgsValuesAndNames args) {
+        protected Object update(VirtualFrame frame, Object x, RArgsValuesAndNames args) {
             Object value = args.getArgument(args.getLength() - 1);
-            return update(x, args, value, IS_SUBSET);
+            return update(frame, x, args, value, IS_SUBSET);
         }
     }
 
@@ -442,13 +424,13 @@ public class InfixEmulationFunctions {
         private final BranchProfile errorProfile = BranchProfile.create();
 
         @Specialization
-        protected Object accessField(Object container, Object field) {
+        protected Object accessField(VirtualFrame frame, Object container, Object field) {
             if (field instanceof String) {
                 if (accessNode == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
                     accessNode = insert(AccessFieldNodeGen.create(null, null));
                 }
-                return accessNode.executeAccess(container, (String) field);
+                return accessNode.executeAccess(frame, container, (String) field);
             } else {
                 errorProfile.enter();
                 // TODO: the error message is not quite correct for all types;
@@ -465,13 +447,13 @@ public class InfixEmulationFunctions {
         private final BranchProfile errorProfile = BranchProfile.create();
 
         @Specialization
-        protected Object accessField(Object container, Object field, Object value) {
+        protected Object accessField(VirtualFrame frame, Object container, Object field, Object value) {
             if (field instanceof String) {
                 if (updateNode == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
                     updateNode = insert(UpdateFieldNodeGen.create(null, null, null));
                 }
-                return updateNode.executeUpdate(container, value, (String) field);
+                return updateNode.executeUpdate(frame, container, value, (String) field);
             } else {
                 errorProfile.enter();
                 // TODO: the error message is not quite correct for all types;

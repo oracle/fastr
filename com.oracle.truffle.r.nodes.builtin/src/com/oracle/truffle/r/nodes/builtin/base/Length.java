@@ -36,8 +36,8 @@ public abstract class Length extends RBuiltinNode {
     public abstract int executeInt(VirtualFrame frame, Object vector);
 
     @Specialization
-    protected int getLength(Object vector, @Cached("create()") RLengthNode lengthNode) {
+    protected int getLength(VirtualFrame frame, Object vector, @Cached("create()") RLengthNode lengthNode) {
         controlVisibility();
-        return lengthNode.executeInteger(vector);
+        return lengthNode.executeInteger(frame, vector);
     }
 }

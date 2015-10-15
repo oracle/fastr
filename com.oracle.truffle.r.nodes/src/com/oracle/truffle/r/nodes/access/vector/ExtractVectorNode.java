@@ -25,9 +25,17 @@ package com.oracle.truffle.r.nodes.access.vector;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.interop.ForeignAccess;
+import com.oracle.truffle.api.interop.Message;
+import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.nodes.binary.*;
 import com.oracle.truffle.r.nodes.profile.*;
+import com.oracle.truffle.r.nodes.unary.CastStringNode;
+import com.oracle.truffle.r.nodes.unary.FirstStringNode;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
@@ -53,8 +61,8 @@ public abstract class ExtractVectorNode extends Node {
         return mode;
     }
 
-    public final Object apply(Object vector, Object[] positions, Object exact, Object dropDimensions) {
-        return execute(boxVector.execute(vector), positions, boxExact.execute(exact), boxDropdimensions.execute(dropDimensions));
+    public final Object apply(VirtualFrame frame, Object vector, Object[] positions, Object exact, Object dropDimensions) {
+        return execute(frame, boxVector.execute(vector), positions, boxExact.execute(exact), boxDropdimensions.execute(dropDimensions));
     }
 
     public static ExtractVectorNode create(ElementAccessMode accessMode, boolean ignoreRecursive) {
@@ -65,12 +73,39 @@ public abstract class ExtractVectorNode extends Node {
         return ExtractVectorNodeGen.create(accessMode, true, false);
     }
 
-    protected abstract Object execute(Object vector, Object[] positions, Object exact, Object dropDimensions);
+    protected abstract Object execute(VirtualFrame frame, Object vector, Object[] positions, Object exact, Object dropDimensions);
+
+    protected Node createForeignRead(Object[] positions) {
+        if (positions.length != 1) {
+            throw RError.error(this, RError.Message.GENERIC, "Invalid number positions for foreign access.");
+        }
+        return Message.READ.createNode();
+    }
+
+    protected static boolean isForeignObject(TruffleObject object) {
+        return RRuntime.isForeignObject(object);
+    }
+
+    protected static FirstStringNode createFirstString() {
+        return FirstStringNode.createWithError(RError.Message.GENERIC, "Cannot corce position to character for foreign access.");
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization(guards = {"isForeignObject(object)", "positions.length == cachedLength"})
+    protected Object accessField(VirtualFrame frame, TruffleObject object, Object[] positions, Object exact, Object dropDimensions, //
+                    @Cached("createForeignRead(positions)") Node foreignRead, //
+                    @Cached("positions.length") int cachedLength, //
+                    @Cached("create()") CastStringNode castNode, //
+                    @Cached("createFirstString()") FirstStringNode firstString) {
+
+        String string = firstString.executeString(castNode.execute(positions[0]));
+        return ForeignAccess.execute(foreignRead, frame, object, new Object[]{string});
+    }
 
     @Specialization(guards = {"cached != null", "cached.isSupported(vector, positions)"})
-    protected Object doReplaceRecursive(RAbstractListVector vector, Object[] positions, Object exact, Object dropDimensions,  //
+    protected Object doReplaceRecursive(VirtualFrame frame, RAbstractListVector vector, Object[] positions, Object exact, Object dropDimensions,  //
                     @Cached("createRecursiveCache(vector, positions)") RecursiveExtractSubscriptNode cached) {
-        return cached.apply(vector, positions, exact, dropDimensions);
+        return cached.apply(frame, vector, positions, exact, dropDimensions);
     }
 
     protected RecursiveExtractSubscriptNode createRecursiveCache(Object vector, Object[] positions) {

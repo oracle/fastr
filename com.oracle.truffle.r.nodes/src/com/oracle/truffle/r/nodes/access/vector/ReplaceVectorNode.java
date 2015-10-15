@@ -22,15 +22,25 @@
  */
 package com.oracle.truffle.r.nodes.access.vector;
 
-import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.nodes.*;
-import com.oracle.truffle.r.nodes.binary.*;
-import com.oracle.truffle.r.nodes.profile.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
-import com.oracle.truffle.r.runtime.env.*;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.interop.ForeignAccess;
+import com.oracle.truffle.api.interop.Message;
+import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNode;
+import com.oracle.truffle.r.nodes.profile.TruffleBoundaryNode;
+import com.oracle.truffle.r.nodes.unary.CastStringNode;
+import com.oracle.truffle.r.nodes.unary.FirstStringNode;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.data.RTypedValue;
+import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
+import com.oracle.truffle.r.runtime.env.REnvironment;
 
 /**
  * Syntax node for element writes.
@@ -52,11 +62,11 @@ public abstract class ReplaceVectorNode extends Node {
         this.ignoreRecursive = ignoreRecursive;
     }
 
-    public final Object apply(Object vector, Object[] positions, Object value) {
-        return execute(boxVector.execute(vector), positions, boxValue.execute(value));
+    public final Object apply(VirtualFrame frame, Object vector, Object[] positions, Object value) {
+        return execute(frame, boxVector.execute(vector), positions, boxValue.execute(value));
     }
 
-    protected abstract Object execute(Object vector, Object[] positions, Object value);
+    protected abstract Object execute(VirtualFrame frame, Object vector, Object[] positions, Object value);
 
     public static ReplaceVectorNode create(ElementAccessMode mode, boolean ignoreRecursive) {
         return ReplaceVectorNodeGen.create(mode, false, ignoreRecursive);
@@ -74,10 +84,36 @@ public abstract class ReplaceVectorNode extends Node {
         return null;
     }
 
+    protected Node createForeignWrite(Object[] positions) {
+        if (positions.length != 1) {
+            throw RError.error(this, RError.Message.GENERIC, "Invalid number positions for foreign access.");
+        }
+        return Message.WRITE.createNode();
+    }
+
+    protected static boolean isForeignObject(TruffleObject object) {
+        return RRuntime.isForeignObject(object);
+    }
+
+    protected FirstStringNode createFirstString() {
+        return FirstStringNode.createWithError(RError.Message.GENERIC, "Cannot corce position to character for foreign access.");
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization(guards = {"isForeignObject(object)", "positions.length == cachedLength"})
+    protected Object accessField(VirtualFrame frame, TruffleObject object, Object[] positions, Object value, //
+                    @Cached("createForeignWrite(positions)") Node foreignRead, //
+                    @Cached("positions.length") int cachedLength, //
+                    @Cached("create()") CastStringNode castNode, @Cached("createFirstString()") FirstStringNode firstString) {
+
+        String string = firstString.executeString(castNode.execute(positions[0]));
+        return ForeignAccess.execute(foreignRead, frame, object, new Object[]{string, value});
+    }
+
     @Specialization(limit = "CACHE_LIMIT", guards = {"cached != null", "cached.isSupported(vector, positions)"})
-    protected Object doRecursive(RAbstractListVector vector, Object[] positions, Object value,  //
+    protected Object doRecursive(VirtualFrame frame, RAbstractListVector vector, Object[] positions, Object value,  //
                     @Cached("createRecursiveCache(vector, positions)") RecursiveReplaceSubscriptNode cached) {
-        return cached.apply(vector, positions, value);
+        return cached.apply(frame, vector, positions, value);
     }
 
     protected RecursiveReplaceSubscriptNode createRecursiveCache(Object vector, Object[] positions) {

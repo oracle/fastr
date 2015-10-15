@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.binary;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.control.*;
@@ -55,7 +56,7 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
         casts.boxPrimitive(0).boxPrimitive(1);
     }
 
-    public abstract Object execute(Object left, Object right);
+    public abstract Object execute(VirtualFrame frame, Object left, Object right);
 
     public static BinaryArithmeticNode create(BinaryArithmeticFactory binary, UnaryArithmeticFactory unary) {
         return BinaryArithmeticNodeGen.create(binary, unary, new RNode[]{null, null}, null, null);
@@ -109,8 +110,7 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
     }
 
     @Specialization(guards = "isFactor(left) || isFactor(right)")
-    @TruffleBoundary
-    protected Object doFactor(Object left, Object right, @Cached("create()") RLengthNode lengthNode) {
+    protected Object doFactor(VirtualFrame frame, Object left, Object right, @Cached("create()") RLengthNode lengthNode) {
         Message warning;
         if (left instanceof RFactor) {
             warning = getFactorWarning((RFactor) left);
@@ -118,7 +118,7 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode {
             warning = getFactorWarning((RFactor) right);
         }
         RError.warning(this, warning, binary.create().opName());
-        return RDataFactory.createNAVector(Math.max(lengthNode.executeInteger(left), lengthNode.executeInteger(right)));
+        return RDataFactory.createNAVector(Math.max(lengthNode.executeInteger(frame, left), lengthNode.executeInteger(frame, right)));
     }
 
     private static Message getFactorWarning(RFactor factor) {

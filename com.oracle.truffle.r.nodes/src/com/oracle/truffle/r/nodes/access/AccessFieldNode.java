@@ -23,14 +23,28 @@
 package com.oracle.truffle.r.nodes.access;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.utilities.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.context.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
-import com.oracle.truffle.r.runtime.env.*;
-import com.oracle.truffle.r.runtime.nodes.*;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.NodeChild;
+import com.oracle.truffle.api.dsl.NodeChildren;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.interop.ForeignAccess;
+import com.oracle.truffle.api.interop.Message;
+import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.utilities.BranchProfile;
+import com.oracle.truffle.api.utilities.ConditionProfile;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
+import com.oracle.truffle.r.runtime.data.RLanguage;
+import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.nodes.RNode;
 
 /**
  * Perform a field access. This node represents the {@code $} operator in R.
@@ -38,7 +52,7 @@ import com.oracle.truffle.r.runtime.nodes.*;
 @NodeChildren({@NodeChild(value = "object", type = RNode.class), @NodeChild(value = "field", type = RNode.class)})
 public abstract class AccessFieldNode extends RNode {
 
-    public abstract Object executeAccess(Object o, String field);
+    public abstract Object executeAccess(VirtualFrame frame, Object o, String field);
 
     protected final ConditionProfile hasNamesProfile = ConditionProfile.createBinaryProfile();
     protected final BranchProfile inexactMatch = BranchProfile.create();
@@ -95,4 +109,18 @@ public abstract class AccessFieldNode extends RNode {
             return RNull.instance;
         }
     }
+
+    protected static Node createForeignRead() {
+        return Message.READ.createNode();
+    }
+
+    protected static boolean isForeignObject(TruffleObject object) {
+        return RRuntime.isForeignObject(object);
+    }
+
+    @Specialization(guards = "isForeignObject(object)")
+    protected Object accessField(VirtualFrame frame, TruffleObject object, String field, @Cached("createForeignRead()") Node foreignRead) {
+        return ForeignAccess.execute(foreignRead, frame, object, new Object[]{field});
+    }
+
 }
