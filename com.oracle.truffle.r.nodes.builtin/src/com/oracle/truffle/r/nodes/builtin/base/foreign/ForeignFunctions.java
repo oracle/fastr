@@ -23,6 +23,7 @@ import com.oracle.truffle.r.library.graphics.GraphicsCCalls.C_PlotXY;
 import com.oracle.truffle.r.library.grid.GridFunctionsFactory.InitGridNodeGen;
 import com.oracle.truffle.r.library.methods.MethodsListDispatchFactory.R_M_setPrimitiveMethodsNodeGen;
 import com.oracle.truffle.r.library.methods.MethodsListDispatchFactory.R_getClassFromCacheNodeGen;
+import com.oracle.truffle.r.library.methods.MethodsListDispatchFactory.R_identCNodeGen;
 import com.oracle.truffle.r.library.methods.MethodsListDispatchFactory.R_initMethodDispatchNodeGen;
 import com.oracle.truffle.r.library.methods.MethodsListDispatchFactory.R_methodsPackageMetaNameNodeGen;
 import com.oracle.truffle.r.library.methods.MethodsListDispatchFactory.R_set_method_dispatchNodeGen;
@@ -253,6 +254,7 @@ public class ForeignFunctions {
                 case "R_get_slot":
                 case "R_hasSlot":
                 case "R_identC":
+                    return R_identCNodeGen.create();
                 case "R_methods_test_MAKE_CLASS":
                 case "R_methods_test_NEW":
                 case "R_missingArg":

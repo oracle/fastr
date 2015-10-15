@@ -101,4 +101,23 @@ public class MethodsListDispatch {
             return RNull.instance;
         }
     }
+
+    public abstract static class R_identC extends RExternalBuiltinNode.Arg2 {
+
+        @Specialization
+        protected Object identC(RAbstractStringVector e1, RAbstractStringVector e2) {
+            if (e1.getLength() == 1 && e2.getLength() == 1 && e1.getDataAt(0).equals(e2.getDataAt(0))) {
+                return RRuntime.LOGICAL_TRUE;
+            } else {
+                return RRuntime.LOGICAL_FALSE;
+            }
+        }
+
+        @SuppressWarnings("unused")
+        @Fallback
+        protected Object identC(Object e1, Object e2) {
+            return RRuntime.LOGICAL_FALSE;
+        }
+    }
+
 }
