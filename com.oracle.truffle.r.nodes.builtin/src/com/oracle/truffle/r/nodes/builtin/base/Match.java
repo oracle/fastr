@@ -46,13 +46,17 @@ public abstract class Match extends RBuiltinNode {
     protected abstract Object executeRIntVector(Object x, Object table, Object noMatch, Object incomparables);
 
     @Child private CastStringNode castString;
-    @Child private CastIntegerNode castInt;
 
     @Child private Match matchRecursive;
 
     private final NACheck naCheck = new NACheck();
     private final ConditionProfile bigTableProfile = ConditionProfile.createBinaryProfile();
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.toInteger(2);
+    }
 
     private String castString(Object operand) {
         if (castString == null) {
@@ -62,15 +66,7 @@ public abstract class Match extends RBuiltinNode {
         return (String) castString.execute(operand);
     }
 
-    private int castInt(Object operand) {
-        if (castInt == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            castInt = insert(CastIntegerNodeGen.create(false, false, false));
-        }
-        return (int) castInt.execute(operand);
-    }
-
-    private Object matchRecursive(Object x, Object table, Object noMatch, Object incomparables) {
+    private Object matchRecursive(Object x, Object table, RAbstractIntVector noMatch, Object incomparables) {
         if (matchRecursive == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             matchRecursive = insert(MatchNodeGen.create(new RNode[4], null, null));
@@ -82,39 +78,44 @@ public abstract class Match extends RBuiltinNode {
 
     @Specialization
     @SuppressWarnings("unused")
-    protected RIntVector match(RNull x, RAbstractVector table, Object nomatchObj, Object incomparables) {
+    protected RIntVector match(RNull x, RAbstractVector table, RAbstractIntVector nomatchObj, Object incomparables) {
         return RDataFactory.createIntVector(0);
     }
 
     @Specialization
     @SuppressWarnings("unused")
-    protected RIntVector match(RAbstractVector x, RNull table, Object nomatchObj, Object incomparables) {
-        return RDataFactory.createIntVector(x.getLength());
+    protected RIntVector match(RAbstractVector x, RNull table, RAbstractIntVector nomatchVec, Object incomparables) {
+        int[] data = new int[x.getLength()];
+        int nomatch = nomatchVec.getLength() == 0 ? RRuntime.INT_NA : nomatchVec.getDataAt(0);
+        Arrays.fill(data, nomatch);
+        naCheck.enable(nomatch);
+        naCheck.check(nomatch);
+        return RDataFactory.createIntVector(data, naCheck.neverSeenNA());
     }
 
     @Specialization
-    protected Object match(RFactor x, RFactor table, Object nomatchObj, Object incomparables) {
+    protected Object match(RFactor x, RFactor table, RAbstractIntVector nomatchObj, Object incomparables) {
         naCheck.enable(x.getVector());
         naCheck.enable(table.getVector());
         return matchRecursive(RClosures.createFactorToVector(x, true, attrProfiles), RClosures.createFactorToVector(table, true, attrProfiles), nomatchObj, incomparables);
     }
 
     @Specialization
-    protected Object match(RFactor x, RAbstractVector table, Object nomatchObj, Object incomparables) {
+    protected Object match(RFactor x, RAbstractVector table, RAbstractIntVector nomatchObj, Object incomparables) {
         naCheck.enable(x.getVector());
         return matchRecursive(RClosures.createFactorToVector(x, true, attrProfiles), table, nomatchObj, incomparables);
     }
 
     @Specialization
-    protected Object match(RAbstractVector x, RFactor table, Object nomatchObj, Object incomparables) {
+    protected Object match(RAbstractVector x, RFactor table, RAbstractIntVector nomatchObj, Object incomparables) {
         naCheck.enable(table.getVector());
         return matchRecursive(x, RClosures.createFactorToVector(table, true, attrProfiles), nomatchObj, incomparables);
     }
 
     @Specialization
-    protected RIntVector match(RAbstractIntVector x, RAbstractIntVector table, Object nomatchObj, @SuppressWarnings("unused") Object incomparables) {
+    protected RIntVector match(RAbstractIntVector x, RAbstractIntVector table, RAbstractIntVector nomatchVec, @SuppressWarnings("unused") Object incomparables) {
         controlVisibility();
-        int nomatch = castInt(nomatchObj);
+        int nomatch = nomatchVec.getLength() == 0 ? RRuntime.INT_NA : nomatchVec.getDataAt(0);
         int[] result = initResult(x.getLength(), nomatch);
         boolean matchAll = true;
         NonRecursiveHashMapInt hashTable;
@@ -149,9 +150,9 @@ public abstract class Match extends RBuiltinNode {
     }
 
     @Specialization
-    protected RIntVector match(RAbstractDoubleVector x, RAbstractIntVector table, Object nomatchObj, @SuppressWarnings("unused") Object incomparables) {
+    protected RIntVector match(RAbstractDoubleVector x, RAbstractIntVector table, RAbstractIntVector nomatchVec, @SuppressWarnings("unused") Object incomparables) {
         controlVisibility();
-        int nomatch = castInt(nomatchObj);
+        int nomatch = nomatchVec.getLength() == 0 ? RRuntime.INT_NA : nomatchVec.getDataAt(0);
         int[] result = initResult(x.getLength(), nomatch);
         boolean matchAll = true;
         NonRecursiveHashMapDouble hashTable;
@@ -186,9 +187,9 @@ public abstract class Match extends RBuiltinNode {
     }
 
     @Specialization
-    protected RIntVector match(RAbstractIntVector x, RAbstractDoubleVector table, Object nomatchObj, @SuppressWarnings("unused") Object incomparables) {
+    protected RIntVector match(RAbstractIntVector x, RAbstractDoubleVector table, RAbstractIntVector nomatchVec, @SuppressWarnings("unused") Object incomparables) {
         controlVisibility();
-        int nomatch = castInt(nomatchObj);
+        int nomatch = nomatchVec.getLength() == 0 ? RRuntime.INT_NA : nomatchVec.getDataAt(0);
         int[] result = initResult(x.getLength(), nomatch);
         boolean matchAll = true;
         NonRecursiveHashMapInt hashTable;
@@ -230,9 +231,9 @@ public abstract class Match extends RBuiltinNode {
     }
 
     @Specialization
-    protected RIntVector match(RAbstractDoubleVector x, RAbstractDoubleVector table, Object nomatchObj, @SuppressWarnings("unused") Object incomparables) {
+    protected RIntVector match(RAbstractDoubleVector x, RAbstractDoubleVector table, RAbstractIntVector nomatchVec, @SuppressWarnings("unused") Object incomparables) {
         controlVisibility();
-        int nomatch = castInt(nomatchObj);
+        int nomatch = nomatchVec.getLength() == 0 ? RRuntime.INT_NA : nomatchVec.getDataAt(0);
         int[] result = initResult(x.getLength(), nomatch);
         boolean matchAll = true;
         NonRecursiveHashMapDouble hashTable;
@@ -267,9 +268,9 @@ public abstract class Match extends RBuiltinNode {
     }
 
     @Specialization
-    protected RIntVector match(RAbstractIntVector x, RAbstractLogicalVector table, Object nomatchObj, @SuppressWarnings("unused") Object incomparables) {
+    protected RIntVector match(RAbstractIntVector x, RAbstractLogicalVector table, RAbstractIntVector nomatchVec, @SuppressWarnings("unused") Object incomparables) {
         controlVisibility();
-        int nomatch = castInt(nomatchObj);
+        int nomatch = nomatchVec.getLength() == 0 ? RRuntime.INT_NA : nomatchVec.getDataAt(0);
         int[] result = initResult(x.getLength(), nomatch);
         boolean matchAll = true;
         int[] values = {RRuntime.LOGICAL_TRUE, RRuntime.LOGICAL_FALSE, RRuntime.LOGICAL_NA};
@@ -300,7 +301,7 @@ public abstract class Match extends RBuiltinNode {
     }
 
     @Specialization(guards = "x.getLength() == 1")
-    protected int matchSizeOne(RAbstractStringVector x, RAbstractStringVector table, Object nomatchObj, @SuppressWarnings("unused") Object incomparables, //
+    protected int matchSizeOne(RAbstractStringVector x, RAbstractStringVector table, RAbstractIntVector nomatchVec, @SuppressWarnings("unused") Object incomparables, //
                     @Cached("create()") NAProfile naProfile, //
                     @Cached("create()") BranchProfile foundProfile, //
                     @Cached("create()") BranchProfile notFoundProfile) {
@@ -323,13 +324,14 @@ public abstract class Match extends RBuiltinNode {
             }
         }
         notFoundProfile.enter();
-        return castInt(nomatchObj);
+        return nomatchVec.getLength() == 0 ? RRuntime.INT_NA : nomatchVec.getDataAt(0);
+
     }
 
     @Specialization
-    protected RIntVector match(RAbstractStringVector x, RAbstractStringVector table, Object nomatchObj, @SuppressWarnings("unused") Object incomparables) {
+    protected RIntVector match(RAbstractStringVector x, RAbstractStringVector table, RAbstractIntVector nomatchVec, @SuppressWarnings("unused") Object incomparables) {
         controlVisibility();
-        int nomatch = castInt(nomatchObj);
+        int nomatch = nomatchVec.getLength() == 0 ? RRuntime.INT_NA : nomatchVec.getDataAt(0);
         int[] result = initResult(x.getLength(), nomatch);
         boolean matchAll = true;
         NonRecursiveHashMapCharacter hashTable;
@@ -364,27 +366,27 @@ public abstract class Match extends RBuiltinNode {
     }
 
     @Specialization
-    protected RIntVector match(RAbstractLogicalVector x, RAbstractStringVector table, Object nomatchObj, Object incomparables) {
+    protected RIntVector match(RAbstractLogicalVector x, RAbstractStringVector table, RAbstractIntVector nomatchObj, Object incomparables) {
         naCheck.enable(x);
         return match(RClosures.createLogicalToStringVector(x), table, nomatchObj, incomparables);
     }
 
     @Specialization
-    protected RIntVector match(RAbstractIntVector x, RAbstractStringVector table, Object nomatchObj, Object incomparables) {
+    protected RIntVector match(RAbstractIntVector x, RAbstractStringVector table, RAbstractIntVector nomatchObj, Object incomparables) {
         naCheck.enable(x);
         return match(RClosures.createIntToStringVector(x), table, nomatchObj, incomparables);
     }
 
     @Specialization
-    protected RIntVector match(RAbstractDoubleVector x, RAbstractStringVector table, Object nomatchObj, Object incomparables) {
+    protected RIntVector match(RAbstractDoubleVector x, RAbstractStringVector table, RAbstractIntVector nomatchObj, Object incomparables) {
         naCheck.enable(x);
         return match(RClosures.createDoubleToStringVector(x), table, nomatchObj, incomparables);
     }
 
     @Specialization
-    protected RIntVector match(RAbstractLogicalVector x, RAbstractLogicalVector table, Object nomatchObj, @SuppressWarnings("unused") Object incomparables) {
+    protected RIntVector match(RAbstractLogicalVector x, RAbstractLogicalVector table, RAbstractIntVector nomatchVec, @SuppressWarnings("unused") Object incomparables) {
         controlVisibility();
-        int nomatch = castInt(nomatchObj);
+        int nomatch = nomatchVec.getLength() == 0 ? RRuntime.INT_NA : nomatchVec.getDataAt(0);
         int[] result = initResult(x.getLength(), nomatch);
         boolean matchAll = true;
         byte[] values = {RRuntime.LOGICAL_TRUE, RRuntime.LOGICAL_FALSE, RRuntime.LOGICAL_NA};
@@ -414,9 +416,9 @@ public abstract class Match extends RBuiltinNode {
     }
 
     @Specialization(guards = "!isStringVectorTable(table)")
-    protected RIntVector match(RAbstractStringVector x, RAbstractVector table, Object nomatchObj, @SuppressWarnings("unused") Object incomparables) {
+    protected RIntVector match(RAbstractStringVector x, RAbstractVector table, RAbstractIntVector nomatchVec, @SuppressWarnings("unused") Object incomparables) {
         controlVisibility();
-        int nomatch = castInt(nomatchObj);
+        int nomatch = nomatchVec.getLength() == 0 ? RRuntime.INT_NA : nomatchVec.getDataAt(0);
         int[] result = initResult(x.getLength(), nomatch);
         boolean matchAll = true;
         NonRecursiveHashMapCharacter hashTable = new NonRecursiveHashMapCharacter(table.getLength());
@@ -436,9 +438,9 @@ public abstract class Match extends RBuiltinNode {
     }
 
     @Specialization
-    protected RIntVector match(RAbstractComplexVector x, RAbstractComplexVector table, Object nomatchObj, @SuppressWarnings("unused") Object incomparables) {
+    protected RIntVector match(RAbstractComplexVector x, RAbstractComplexVector table, RAbstractIntVector nomatchVec, @SuppressWarnings("unused") Object incomparables) {
         controlVisibility();
-        int nomatch = castInt(nomatchObj);
+        int nomatch = nomatchVec.getLength() == 0 ? RRuntime.INT_NA : nomatchVec.getDataAt(0);
         int[] result = initResult(x.getLength(), nomatch);
         boolean matchAll = true;
         NonRecursiveHashMapComplex hashTable;
@@ -474,13 +476,13 @@ public abstract class Match extends RBuiltinNode {
 
     @Specialization
     @SuppressWarnings("unused")
-    protected RIntVector match(RFunction x, Object table, Object nomatchObj, Object incomparables) {
+    protected RIntVector match(RFunction x, Object table, RAbstractIntVector nomatchObj, Object incomparables) {
         throw RError.error(this, RError.Message.MATCH_VECTOR_ARGS);
     }
 
     @Specialization
     @SuppressWarnings("unused")
-    protected RIntVector match(Object x, RFunction table, Object nomatchObj, Object incomparables) {
+    protected RIntVector match(Object x, RFunction table, RAbstractIntVector nomatchObj, Object incomparables) {
         throw RError.error(this, RError.Message.MATCH_VECTOR_ARGS);
     }
 

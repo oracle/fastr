@@ -201,5 +201,10 @@ public class TestBuiltin_match extends TestBase {
 
         assertEval("{ match(\"a\", factor(c(\"a\", \"b\", \"a\"))) }");
         assertEval("{ match(factor(c(\"a\", \"b\", \"a\")), \"a\") }");
+
+        assertEval("{ match(42, NULL) }");
+        assertEval("{ match(c(7, 42), NULL }");
+        assertEval("{ match(c(7, 42), NULL, integer() }");
+        assertEval("{ match(c(7, 42), NULL, 1L }");
     }
 }
