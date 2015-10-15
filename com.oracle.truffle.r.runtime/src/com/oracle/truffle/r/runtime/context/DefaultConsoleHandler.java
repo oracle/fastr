@@ -41,7 +41,7 @@ public class DefaultConsoleHandler implements ConsoleHandler {
             out.append(s).append('\n');
             out.flush();
         } catch (IOException e) {
-            // TODO: handle this error
+            throw new RuntimeException(e);
         }
     }
 
@@ -50,7 +50,7 @@ public class DefaultConsoleHandler implements ConsoleHandler {
             out.append(s).append('\n');
             out.flush();
         } catch (IOException e) {
-            // TODO: handle this error
+            throw new RuntimeException(e);
         }
     }
 
@@ -59,7 +59,7 @@ public class DefaultConsoleHandler implements ConsoleHandler {
             out.append(s).append('\n');
             out.flush();
         } catch (IOException e) {
-            // TODO: handle this error
+            throw new RuntimeException(e);
         }
     }
 
@@ -68,7 +68,7 @@ public class DefaultConsoleHandler implements ConsoleHandler {
             out.append(s).append('\n');
             out.flush();
         } catch (IOException e) {
-            // TODO: handle this error
+            throw new RuntimeException(e);
         }
     }
 
@@ -76,8 +76,7 @@ public class DefaultConsoleHandler implements ConsoleHandler {
         try {
             return in.readLine();
         } catch (IOException e) {
-            // TODO: handle this error
-            return null;
+            throw new RuntimeException(e);
         }
     }
 
