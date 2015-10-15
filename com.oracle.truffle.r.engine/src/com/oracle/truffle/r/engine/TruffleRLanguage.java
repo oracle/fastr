@@ -103,13 +103,9 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
 
     @Override
     protected String toString(RContext context, Object value) {
-        // TODO this is a hack to not show non visible results in interactive mode
-        // we need a separate API for that.
-        if (!context.isInteractive() || context.isVisible()) {
-            return RContext.getEngine().toString(value);
-        } else {
-            return null;
-        }
+        // TODO This is a hack because R is still printing its own results
+        // every use of PolyglotEngine should return a value instead of printing the result.
+        return null;
     }
 
     @Override
