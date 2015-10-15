@@ -29,47 +29,27 @@ import com.oracle.truffle.api.TruffleLanguage.Env;
 public class DefaultConsoleHandler implements ConsoleHandler {
 
     private final BufferedReader in;
-    private final OutputStreamWriter out;
+    private final PrintStream out;
 
     public DefaultConsoleHandler(Env env) {
         in = new BufferedReader(new InputStreamReader(env.in()));
-        out = new OutputStreamWriter(env.out());
+        out = new PrintStream(env.out());
     }
 
     public void println(String s) {
-        try {
-            out.append(s).append('\n');
-            out.flush();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        out.println(s);
     }
 
     public void print(String s) {
-        try {
-            out.append(s).append('\n');
-            out.flush();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        out.print(s);
     }
 
     public void printErrorln(String s) {
-        try {
-            out.append(s).append('\n');
-            out.flush();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        out.println(s);
     }
 
     public void printError(String s) {
-        try {
-            out.append(s).append('\n');
-            out.flush();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        out.print(s);
     }
 
     public String readLine() {

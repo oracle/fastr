@@ -343,6 +343,16 @@ final class REngine implements Engine {
             RContext.threadLocalContext.set(context);
             try {
                 return ((REngine) context.getThisEngine()).runCall(callTarget, context.stateREnvironment.getGlobalFrame(), true, true);
+            } catch (ReturnException ex) {
+                return ex.getResult();
+            } catch (DebugExitException | QuitException | BrowserQuitException e) {
+                throw e;
+            } catch (RError e) {
+                // TODO normal error reporting is done by the runtime
+                RInternalError.reportError(e);
+                return null;
+            } catch (Throwable t) {
+                return t;
             } finally {
                 RContext.threadLocalContext.set(oldContext);
             }
