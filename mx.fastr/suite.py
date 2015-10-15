@@ -393,6 +393,7 @@ suite = {
       ],
       "distDependencies" : [
         "truffle:TRUFFLE_API",
+        "truffle:TRUFFLE_DEBUG",
 	    "graal:GRAAL_TRUFFLE_HOTSPOT",
       ],
     },
