@@ -75,8 +75,8 @@ suite = {
 
     "JNR_POSIX" : {
       "urls" : [
-        "https://lafo.ssw.uni-linz.ac.at/pub/graal-external-deps/jnr-posix-3.0.15.jar",
-        "https://search.maven.org/remotecontent?filepath=com/github/jnr/jnr-posix/3.0.15/jnr-posix-3.0.15.jar",
+        "https://lafo.ssw.uni-linz.ac.at/pub/graal-external-deps/jnr-posix-3.0.18.jar",
+        "https://search.maven.org/remotecontent?filepath=com/github/jnr/jnr-posix/3.0.18/jnr-posix-3.0.18.jar",
       ],
       "sha1" : "d2ec2ccbf89957a6d9de294636c81f8ac6cfbdf3",
     },
