@@ -13,6 +13,7 @@
 
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
@@ -70,9 +71,12 @@ public abstract class Slot extends RBuiltinNode {
                 // in general, treatment of the name parameter has to be finessed to be
                 // fully compatible with GNU R on direct calls to `@` function
                 if (classHierarchy == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
                     classHierarchy = insert(ClassHierarchyNodeGen.create(true));
                 }
                 return classHierarchy.execute(object);
+            } else if (name == RRuntime.DOT_DATA) {
+                return getDataPart(object);
             } else if (name == RRuntime.NAMES_ATTR_KEY && object instanceof RAbstractVector) {
                 assert false; // RS4Object can never be a vector?
                 return RNull.instance;
@@ -81,6 +85,7 @@ public abstract class Slot extends RBuiltinNode {
             RStringVector classAttr = object.getClassAttr(attrProfiles);
             if (classAttr == null) {
                 if (typeofNode == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
                     typeofNode = insert(TypeofNodeGen.create());
                 }
                 throw RError.error(this, RError.Message.SLOT_CANNOT_GET, name, typeofNode.execute(object).getName());
@@ -109,7 +114,7 @@ public abstract class Slot extends RBuiltinNode {
         return getSlotS4Internal(object, name, value);
     }
 
-    protected RFunction getDataPart(REnvironment methodsNamespace) {
+    protected RFunction getDataPartFunction(REnvironment methodsNamespace) {
         Object f = methodsNamespace.findFunction("getDataPart");
         return (RFunction) RContext.getRRuntimeASTAccess().forcePromise(f);
     }
@@ -118,18 +123,22 @@ public abstract class Slot extends RBuiltinNode {
         return REnvironment.getRegisteredNamespace("methods");
     }
 
-    @SuppressWarnings("unused")
-    @Specialization(guards = {"!isS4(object)", "isDotData(getName(nameObj))"})
-    protected Object getSlotNonS4(RAbstractContainer object, Object nameObj) {
-        // TODO: any way to cache it?
+    private Object getDataPart(Object object) {
+        // TODO: any way to cache it or use a mechanism similar to overrides?
         REnvironment methodsNamespace = REnvironment.getRegisteredNamespace("methods");
-        RFunction dataPart = getDataPart(methodsNamespace);
+        RFunction dataPart = getDataPartFunction(methodsNamespace);
         return RContext.getEngine().evalFunction(dataPart, methodsNamespace.getFrame(), object);
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization(guards = "isDotData(getName(nameObj))")
+    protected Object getSlotNonS4(RAbstractContainer object, Object nameObj) {
+        return getDataPart(object);
     }
 
     // this is really a fallback specialization but @Fallback does not work here (because of the
     // type of "object"?)
-    @Specialization
+    @Specialization(guards = "!isDotData(getName(nameObj))")
     protected Object getSlot(RAbstractContainer object, Object nameObj) {
         // first argument is wrong
         String name = getName(nameObj);
