@@ -509,6 +509,7 @@ public class BasePackage extends RBuiltinPackage {
         add(UpdateLevels.class, UpdateLevelsNodeGen::create);
         add(UpdateNames.class, UpdateNamesNodeGen::create);
         add(UpdateOldClass.class, UpdateOldClassNodeGen::create);
+        add(UpdateSlot.class, UpdateSlotNodeGen::create);
         add(UpdateStorageMode.class, UpdateStorageModeNodeGen::create);
         add(UpdateSubstr.class, UpdateSubstrNodeGen::create);
         add(UpperTri.class, UpperTriNodeGen::create);

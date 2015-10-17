@@ -423,7 +423,7 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
             replacementArg = callArgAst.accept(this);
             RCallNode replacementCall = prepareReplacementCall(fAst, args, tmpSymbol, rhsSymbol, false);
             assignFromTemp = doReplacementLeftHandSide(callArgAst.getLhs(), true, replacementCall, replacement.isSuper(), replacement.getSource(), (receiver, rhsAccess) -> {
-                return createFieldUpdate(null, receiver, rhsAccess, callArgAst.getFieldName());
+                return createFieldUpdate(null, receiver, rhsAccess, callArgAst.getFieldName(), callArgAst.isAt());
             }).asRNode();
         }
         RSyntaxNode result = constructReplacementSuffix(rhs, replacementArg, true, assignFromTemp, tmpSymbol, rhsSymbol, replacement.getSource());
@@ -509,8 +509,8 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
         return RCallNode.createCall(callSource, function, ArgumentsSignature.empty(2), lhs, ConstantNode.create(callSource, access.getFieldName()));
     }
 
-    private static RCallNode createFieldUpdate(SourceSection source, RSyntaxNode receiver, RSyntaxNode rhs, String fieldName) {
-        ReadVariableNode function = ReadVariableNode.createForced(source, "$<-", RType.Function);
+    private static RCallNode createFieldUpdate(SourceSection source, RSyntaxNode receiver, RSyntaxNode rhs, String fieldName, boolean at) {
+        ReadVariableNode function = ReadVariableNode.createForced(source, at ? "@<-" : "$<-", RType.Function);
         return RCallNode.createCall(source, function, ArgumentsSignature.empty(3), receiver, ConstantNode.create(source, fieldName), rhs);
     }
 
@@ -564,7 +564,7 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
                 RCallNode updateOp = updateFunction.apply(accessAST.accept(this), rhs);
                 checkAssignSourceSection(updateOp, source);
                 result = doReplacementLeftHandSide(accessAST.getLhs(), false, updateOp, isSuper, source, (receiver1, rhsAccess1) -> {
-                    return createFieldUpdate(null, receiver1, rhsAccess1, accessAST.getFieldName());
+                    return createFieldUpdate(null, receiver1, rhsAccess1, accessAST.getFieldName(), accessAST.isAt());
                 });
             } else {
                 throw RInternalError.unimplemented();
@@ -594,7 +594,7 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
         FieldAccess a = u.getVector();
         RSyntaxNode rhs = u.getRHS().accept(this);
         return doReplacementLeftHandSide(a.getLhs(), true, rhs, u.isSuper(), u.getSource(), (receiver, rhsAccess) -> {
-            return createFieldUpdate(u.getSource(), receiver, rhsAccess, a.getFieldName());
+            return createFieldUpdate(u.getSource(), receiver, rhsAccess, a.getFieldName(), a.isAt());
         });
     }
 

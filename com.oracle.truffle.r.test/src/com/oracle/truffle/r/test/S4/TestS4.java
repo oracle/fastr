@@ -41,6 +41,10 @@ public class TestS4 extends TestBase {
         assertEval(Output.ContainsError, "{ getClass(\"ClassUnionRepresentation\")@foo }");
         assertEval(Output.ContainsError, "{ c(42)@foo }");
         assertEval(Output.ContainsError, "{ x<-c(42); class(x)<-\"bar\"; x@foo }");
+    }
 
+    @Test
+    public void testSlotUpdate() {
+        assertEval("{ x<-getClass(\"ClassUnionRepresentation\"); x@virtual<-TRUE; x@virtual }");
     }
 }

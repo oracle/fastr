@@ -636,7 +636,8 @@ public final class RError extends RuntimeException {
         SLOT_BASIC_CLASS("trying to get slot \"%s\" from an object of a basic class (\"%s\") with no slots"),
         SLOT_NON_S4("trying to get slot \"%s\" from an object (class \"%s\") that is not an S4 object "),
         SLOT_CANNOT_GET("cannot get a slot (\"%s\") from an object of type \"%s\""),
-        SLOT_NONE("no slot of name \"%s\" for this object of class \"%s\"");
+        SLOT_NONE("no slot of name \"%s\" for this object of class \"%s\""),
+        SLOT_INVALID_TYPE("invalid type '%s' for slot name");
 
         public final String message;
         final boolean hasArgs;
