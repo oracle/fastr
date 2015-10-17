@@ -41,10 +41,13 @@ public class TestS4 extends TestBase {
         assertEval(Output.ContainsError, "{ getClass(\"ClassUnionRepresentation\")@foo }");
         assertEval(Output.ContainsError, "{ c(42)@foo }");
         assertEval(Output.ContainsError, "{ x<-c(42); class(x)<-\"bar\"; x@foo }");
+        assertEval("{ x<-getClass(\"ClassUnionRepresentation\"); slot(x, \"virtual\") }");
+        assertEval(Output.ContainsError, "{ x<-getClass(\"ClassUnionRepresentation\"); slot(x, virtual) }");
     }
 
     @Test
     public void testSlotUpdate() {
         assertEval("{ x<-getClass(\"ClassUnionRepresentation\"); x@virtual<-TRUE; x@virtual }");
+        assertEval("{ x<-getClass(\"ClassUnionRepresentation\"); slot(x, \"virtual\", check=TRUE)<-TRUE; x@virtual }");
     }
 }

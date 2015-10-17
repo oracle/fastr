@@ -27,6 +27,8 @@ import com.oracle.truffle.r.library.methods.MethodsListDispatchFactory.R_identCN
 import com.oracle.truffle.r.library.methods.MethodsListDispatchFactory.R_initMethodDispatchNodeGen;
 import com.oracle.truffle.r.library.methods.MethodsListDispatchFactory.R_methodsPackageMetaNameNodeGen;
 import com.oracle.truffle.r.library.methods.MethodsListDispatchFactory.R_set_method_dispatchNodeGen;
+import com.oracle.truffle.r.library.methods.SlotFactory.R_getSlotNodeGen;
+import com.oracle.truffle.r.library.methods.SlotFactory.R_setSlotNodeGen;
 import com.oracle.truffle.r.library.stats.Covcor;
 import com.oracle.truffle.r.library.stats.GammaFunctionsFactory.QgammaNodeGen;
 import com.oracle.truffle.r.library.stats.RnormNodeGen;
@@ -252,6 +254,7 @@ public class ForeignFunctions {
                 case "R_externalptr_prototype_object":
                 case "R_getGeneric":
                 case "R_get_slot":
+                    return R_getSlotNodeGen.create();
                 case "R_hasSlot":
                 case "R_identC":
                     return R_identCNodeGen.create();
@@ -263,6 +266,7 @@ public class ForeignFunctions {
                 case "R_selectMethod":
                 case "R_set_el_named":
                 case "R_set_slot":
+                    return R_setSlotNodeGen.create();
                 case "R_standardGeneric":
                 case "do_substitute_direct":
                 case "Rf_allocS4Object":
