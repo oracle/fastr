@@ -352,12 +352,11 @@ final class REngine implements Engine {
                 RInternalError.reportError(e);
                 return null;
             } catch (Throwable t) {
-                return t;
+                throw t;
             } finally {
                 RContext.threadLocalContext.set(oldContext);
             }
         }
-
     }
 
     public Object eval(RExpression exprs, REnvironment envir, int depth) {
