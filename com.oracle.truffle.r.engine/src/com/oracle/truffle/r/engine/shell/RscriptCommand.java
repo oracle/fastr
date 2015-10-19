@@ -60,7 +60,7 @@ public class RscriptCommand {
         // Either -e options are set or first non-option arg is a file
         if (options.getStringList(EXPR) == null) {
             if (firstNonOptionArgIndex == resultArgsLength) {
-                System.err.println("filename is missing");
+                RCmdOptions.printHelp(RCmdOptions.Client.RSCRIPT, 0);
                 Utils.exit(2);
             } else {
                 options.setValue(FILE, arguments[firstNonOptionArgIndex]);

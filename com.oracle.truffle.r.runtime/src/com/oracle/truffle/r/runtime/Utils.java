@@ -127,7 +127,7 @@ public final class Utils {
      */
     public static RuntimeException exit(int status) {
         RPerfStats.report();
-        if (RContext.getInstance().getOptions().getString(RCmdOption.DEBUGGER) != null) {
+        if (RContext.getInstance() != null && RContext.getInstance().getOptions() != null && RContext.getInstance().getOptions().getString(RCmdOption.DEBUGGER) != null) {
             throw new DebugExitException();
         } else {
             try {
