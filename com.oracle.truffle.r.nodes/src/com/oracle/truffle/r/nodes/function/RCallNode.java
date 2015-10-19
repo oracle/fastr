@@ -258,7 +258,12 @@ public final class RCallNode extends RNode implements RSyntaxNode {
                 foreignCall = insert(Message.createExecute(argumentsArray.length).createNode());
                 foreignCallArgCount = argumentsArray.length;
             }
-            return ForeignAccess.execute(foreignCall, frame, (TruffleObject) functionObject, argumentsArray);
+            try {
+                return ForeignAccess.execute(foreignCall, frame, (TruffleObject) functionObject, argumentsArray);
+            } catch (Throwable e) {
+                errorProfile.enter();
+                throw RError.error(this, RError.Message.GENERIC, "Foreign function failed: " + e.getMessage() != null ? e.getMessage() : e.toString());
+            }
         } else {
             errorProfile.enter();
             throw RError.error(this, RError.Message.APPLY_NON_FUNCTION);
