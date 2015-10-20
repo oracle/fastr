@@ -26,9 +26,13 @@ import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.interop.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.r.engine.*;
+import com.oracle.truffle.r.nodes.control.RLengthNode;
+import com.oracle.truffle.r.nodes.control.RLengthNodeGen;
 import com.oracle.truffle.r.runtime.data.model.*;
 
 public class VectorSizeNode extends RootNode {
+
+    @Child private RLengthNode lengthNode = RLengthNode.create();
 
     public VectorSizeNode() {
         super(TruffleRLanguage.class, null, null);
@@ -36,7 +40,6 @@ public class VectorSizeNode extends RootNode {
 
     @Override
     public Object execute(VirtualFrame frame) {
-        RAbstractVector arg = (RAbstractVector) ForeignAccess.getReceiver(frame);
-        return arg.getLength();
+        return lengthNode.executeInteger(frame, ForeignAccess.getReceiver(frame));
     }
 }

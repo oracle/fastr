@@ -29,6 +29,8 @@ import com.oracle.truffle.api.interop.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.engine.*;
+import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
+import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode;
 import com.oracle.truffle.r.nodes.builtin.base.InfixEmulationFunctions.AccessArraySubscriptBuiltin;
 import com.oracle.truffle.r.nodes.builtin.base.InfixEmulationFunctionsFactory.AccessArraySubscriptBuiltinNodeGen;
 import com.oracle.truffle.r.runtime.*;
@@ -44,6 +46,8 @@ public class VectorReadNode extends RootNode {
     private final BranchProfile doubleIndex = BranchProfile.create();
     private final BranchProfile longIndex = BranchProfile.create();
 
+    private ExtractVectorNode extract = ExtractVectorNode.create(ElementAccessMode.SUBSCRIPT, true);
+
     public VectorReadNode() {
         super(TruffleRLanguage.class, null, null);
         this.lengthAccess = false;
@@ -52,44 +56,47 @@ public class VectorReadNode extends RootNode {
     @Override
     public Object execute(VirtualFrame frame) {
         Object label = ForeignAccess.getArguments(frame).get(0);
-        if (lengthAccess && !(label instanceof String)) {
-            CompilerDirectives.transferToInterpreter();
-            lengthAccess = false;
-        }
-        if (!lengthAccess && (label instanceof String)) {
-            CompilerDirectives.transferToInterpreter();
-            lengthAccess = true;
-        }
+        Object receiver = ForeignAccess.getReceiver(frame);
+        return extract.apply(frame, receiver, new Object[]{label}, RLogical.TRUE, RLogical.TRUE);
 
-        RAbstractVector arg = (RAbstractVector) ForeignAccess.getReceiver(frame);
-        if (lengthAccess) {
-            if (label.equals("length")) {
-                return arg.getLength();
-            } else {
-                CompilerDirectives.transferToInterpreter();
-                throw RInternalError.shouldNotReachHere("unknown message: " + label);
-            }
-        } else {
-            if (builtin == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                builtin = insert(AccessArraySubscriptBuiltinNodeGen.create(null, null, null));
-            }
-            int index;
-            if (label instanceof Integer) {
-                intIndex.enter();
-                index = (int) label;
-            } else if (label instanceof Long) {
-                longIndex.enter();
-                index = (int) (long) label;
-            } else if (label instanceof Double) {
-                doubleIndex.enter();
-                index = (int) (double) label;
-            } else {
-                CompilerDirectives.transferToInterpreter();
-                throw RInternalError.shouldNotReachHere("invalid index type: " + label);
-            }
-            return builtin.execute(frame, arg, new RArgsValuesAndNames(new Object[]{index + 1}, ArgumentsSignature.empty(1)), RRuntime.LOGICAL_TRUE, RRuntime.LOGICAL_TRUE);
-        }
+// if (lengthAccess && !(label instanceof String)) {
+// CompilerDirectives.transferToInterpreter();
+// lengthAccess = false;
+// }
+// if (!lengthAccess && (label instanceof String)) {
+// CompilerDirectives.transferToInterpreter();
+// lengthAccess = true;
+// }
+//
+// if (lengthAccess) {
+// if (label.equals("length")) {
+// return arg.getLength();
+// } else {
+// CompilerDirectives.transferToInterpreter();
+// throw RInternalError.shouldNotReachHere("unknown message: " + label);
+// }
+// } else {
+// if (builtin == null) {
+// CompilerDirectives.transferToInterpreterAndInvalidate();
+// builtin = insert(AccessArraySubscriptBuiltinNodeGen.create(null, null, null));
+// }
+// int index;
+// if (label instanceof Integer) {
+// intIndex.enter();
+// index = (int) label;
+// } else if (label instanceof Long) {
+// longIndex.enter();
+// index = (int) (long) label;
+// } else if (label instanceof Double) {
+// doubleIndex.enter();
+// index = (int) (double) label;
+// } else {
+// CompilerDirectives.transferToInterpreter();
+// throw RInternalError.shouldNotReachHere("invalid index type: " + label);
+// }
+// return builtin.execute(frame, arg, new RArgsValuesAndNames(new Object[]{index + 1},
+// ArgumentsSignature.empty(1)), RRuntime.LOGICAL_TRUE, RRuntime.LOGICAL_TRUE);
+// }
     }
 
 }
