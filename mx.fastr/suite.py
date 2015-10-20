@@ -303,7 +303,6 @@ suite = {
       "dependencies" : [
         "com.oracle.truffle.r.runtime",
         "jvmci:JVMCI_API",
-        "graal:GRAAL_TRUFFLE_HOTSPOT",
         "FASTR_ASM",
         "FASTR_ASM_ANALYSIS",
         "JNR_POSIX",
@@ -394,7 +393,6 @@ suite = {
       "distDependencies" : [
         "truffle:TRUFFLE_API",
         "truffle:TRUFFLE_DEBUG",
-	    "graal:GRAAL_TRUFFLE_HOTSPOT",
       ],
     },
   },
