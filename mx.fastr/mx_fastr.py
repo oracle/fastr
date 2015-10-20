@@ -399,18 +399,21 @@ def installcran(args):
     script = join(mx.project(cran).dir, 'r', 'install.cran.packages.R')
     return rscript([script] + args)
 
-def load_optional_suite(name):
+def load_optional_suite(name, rev):
     hg_base = mx.get_env('MX_HG_BASE')
     urlinfos = None if hg_base is None else [mx.SuiteImportURLInfo(join(hg_base, name), 'hg', mx.vc_system('hg'))]
-    opt_suite = _fastr_suite.import_suite(name, version=None, urlinfos=urlinfos)
+    opt_suite = _fastr_suite.import_suite(name, version=rev, urlinfos=urlinfos)
     if opt_suite:
         mx.build_suite(opt_suite)
     return opt_suite
 
+_r_apptests_rev = '8df8c46dd73ddbd5d8481241c6b18ea67d3e0993'
+_r_benchmarks_rev = '8015c2260bf971904a9bf7e49eceb974117cd514'
+
 def mx_post_parse_cmd_line(opts):
     # load optional suites, r_apptests first so r_benchmarks can find it
-    load_optional_suite('r_apptests')
-    load_optional_suite('r_benchmarks')
+    load_optional_suite('r_apptests', _r_apptests_rev)
+    load_optional_suite('r_benchmarks', _r_benchmarks_rev)
 
 _commands = {
     # new commands
