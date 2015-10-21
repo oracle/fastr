@@ -138,9 +138,12 @@ graphics <- c("Cairo", "rgl")
 math <- c("mvtnorm")
 # serialize
 serialize <- c("actuar", "spam", "codetools", "iterators", "apc", "apsrtable", "assertthat", "citbcmst", "cubfits")
+#java
+java <- c("rJava")
 # fortran related
 fortran <- c("appell", "blockmodeling", "clues", "rootSolve", "cts", "bayesQR", "cvplogistic")
-initial.blacklist <- c(cplusplus, tcltk, parserbug, core, math, trufflevisitor.nyi, nativeinstall, s4, graphics, serialize, fortran)
+
+initial.blacklist <- c(cplusplus, tcltk, parserbug, core, math, trufflevisitor.nyi, nativeinstall, s4, graphics, serialize, fortran, java)
 
 create.blacklist <- function() {
 	create.blacklist.iter(initial.blacklist)
@@ -395,7 +398,7 @@ check.libs <- function() {
 
 check.pkgfilelist <- function() {
 	if (!is.na(pkg.filelistfile)) {
-		if (exists(pkg.filelistfile)) {
+		if (file.exists(pkg.filelistfile)) {
 			pkg.filelist <<- readLines(pkg.filelistfile)
 		} else {
 			abort(paste(pkg.filelistfile, "not found"))

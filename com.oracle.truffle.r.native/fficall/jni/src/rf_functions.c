@@ -197,13 +197,17 @@ SEXP Rf_duplicate(SEXP x) {
 }
 
 R_xlen_t Rf_any_duplicated(SEXP x, Rboolean from_last) {
-	unimplemented("Rf_any_duplicated)");
+	unimplemented("Rf_any_duplicated");
 	return 0;
 }
 
 SEXP Rf_duplicated(SEXP x, Rboolean y) {
-	unimplemented("Rf_duplicated)");
+	unimplemented("Rf_duplicated");
 	return NULL;
+}
+
+void Rf_copyMostAttrib(SEXP x, SEXP y) {
+	unimplemented("Rf_copyMostAttrib");
 }
 
 Rboolean Rf_inherits(SEXP x, const char * klass) {

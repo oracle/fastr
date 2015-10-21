@@ -44,7 +44,7 @@ FASTR_SHARE_DIR := $(FASTR_R_HOME)/share
 FASTR_INCLUDE_DIR := $(FASTR_R_HOME)/include
 
 R_SCRIPT := $(addprefix $(GNUR_HOME)/bin/,R)
-SUPPORT_SCRIPTS := $(addprefix $(GNUR_HOME)/bin/,BATCH COMPILE INSTALL Rcmd)
+SUPPORT_SCRIPTS := $(addprefix $(GNUR_HOME)/bin/,BATCH COMPILE INSTALL Rcmd config)
 
 # Not all of these work unchanged
 ETC_FILES := $(addprefix $(GNUR_HOME)/etc/,javaconf ldpaths Renviron repositories)
