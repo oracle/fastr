@@ -47,9 +47,12 @@ public abstract class Switch extends RBuiltinNode {
     private final ConditionProfile returnValueProfile = ConditionProfile.createBinaryProfile();
     private final BranchProfile notIntType = BranchProfile.create();
 
-    @Specialization(guards = "isLengthOne(x)")
+    @Specialization
     protected Object doSwitch(VirtualFrame frame, RAbstractStringVector x, RArgsValuesAndNames optionalArgs) {
         controlVisibility();
+        if (x.getLength() != 1) {
+            throw RError.error(this, RError.Message.EXPR_NOT_LENGTH_ONE);
+        }
         return prepareResult(doSwitchString(frame, x, optionalArgs));
     }
 
