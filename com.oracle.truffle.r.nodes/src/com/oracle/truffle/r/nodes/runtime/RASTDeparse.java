@@ -142,14 +142,26 @@ public class RASTDeparse {
 
                 break;
             case DOLLAR:
-                argValues[0].deparseImpl(state);
-                state.append(func.op);
-                String fieldName = ConstantNode.getString(argValues[1]);
-                if (fieldName != null) {
-                    state.append(fieldName);
+                /*
+                 * Experimentally one cannot assume that the call is well formed, i.e arguments may
+                 * be missing.
+                 */
+                if (argValues.length > 0) {
+                    argValues[0].deparseImpl(state);
                 } else {
-                    // FIXME: this needs to be handled in RCallNode, not here
-                    argValues[1].deparseImpl(state);
+                    state.append("NULL");
+                }
+                state.append(func.op);
+                if (argValues.length > 1) {
+                    String fieldName = ConstantNode.getString(argValues[1]);
+                    if (fieldName != null) {
+                        state.append(fieldName);
+                    } else {
+                        // FIXME: this needs to be handled in RCallNode, not here
+                        argValues[1].deparseImpl(state);
+                    }
+                } else {
+                    state.append("NULL");
                 }
                 break;
             default:
