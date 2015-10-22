@@ -91,6 +91,26 @@ public abstract class Identical extends RBuiltinNode {
     }
 
     @Specialization
+    protected byte doInternalIdentical(@SuppressWarnings("unused") RAbstractLogicalVector x, @SuppressWarnings("unused") REnvironment y,
+                    // @formatter:off
+                    @SuppressWarnings("unused") byte numEq, @SuppressWarnings("unused") byte singleNA, @SuppressWarnings("unused") byte attribAsSet,
+                    @SuppressWarnings("unused") byte ignoreBytecode, @SuppressWarnings("unused") byte ignoreEnvironment) {
+                    // @formatter:on
+        controlVisibility();
+        return RRuntime.LOGICAL_FALSE;
+    }
+
+    @Specialization
+    protected byte doInternalIdentical(@SuppressWarnings("unused") REnvironment x, @SuppressWarnings("unused") RAbstractLogicalVector y,
+                    // @formatter:off
+                    @SuppressWarnings("unused") byte numEq, @SuppressWarnings("unused") byte singleNA, @SuppressWarnings("unused") byte attribAsSet,
+                    @SuppressWarnings("unused") byte ignoreBytecode, @SuppressWarnings("unused") byte ignoreEnvironment) {
+                    // @formatter:on
+        controlVisibility();
+        return RRuntime.LOGICAL_FALSE;
+    }
+
+    @Specialization
     protected byte doInternalIdentical(REnvironment x, REnvironment y,
                     // @formatter:off
                     @SuppressWarnings("unused") byte numEq, @SuppressWarnings("unused") byte singleNA, @SuppressWarnings("unused") byte attribAsSet,
