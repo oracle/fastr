@@ -57,15 +57,42 @@ def runR(args, className, nonZeroIsFatal=True, extraVmArgs=None, runBench=False,
         vmArgs += extraVmArgs
     return mx_graal.run_vm(vmArgs + [className] + args, vm=graal_vm, nonZeroIsFatal=nonZeroIsFatal)
 
+def _get_ldpaths(lib_env_name):
+    ldpaths = os.path.join(_fastr_suite.dir, 'etc', 'ldpaths')
+    command = ['bash', '-c', 'source ' + ldpaths + ' && env']
+    # need to set R_HOME as it is referenced in etc/ldpaths
+    os.environ["R_HOME"] = _fastr_suite.dir
+
+    try:
+        proc = subprocess.Popen(command, stdout = subprocess.PIPE)
+        for line in proc.stdout:
+            (key, _, value) = line.partition("=")
+            if key == lib_env_name:
+                return value.rstrip()
+        # error if not found
+        mx.abort('etc/ldpaths does not define ' + lib_env_name)
+    except subprocess.CalledProcessError:
+        mx.abort('error retrieving etc/ldpaths')
+
 def setREnvironment(graal_vm):
+    '''
+    If R is run via mx, then the library path will not be set, whereas if it is
+    run from 'bin/R' it will be, via etc/ldpaths. Except that in the latter case
+    we still need to add /usr/lib to so that JNR can resolve libc for RFFI.
+    '''
     osname = platform.system()
-    lib_base = join(_fastr_suite.dir, 'lib')
-    lib_value = lib_base
     if osname == 'Darwin':
         lib_env = 'DYLD_FALLBACK_LIBRARY_PATH'
-        lib_value = lib_value + os.pathsep + '/usr/lib'
     else:
         lib_env = 'LD_LIBRARY_PATH'
+
+    if os.environ.has_key(lib_env):
+        lib_value = os.environ[lib_env]
+    else:
+        lib_value = _get_ldpaths(lib_env)
+
+    if osname == 'Darwin':
+        lib_value = lib_value + os.pathsep + '/usr/lib'
     os.environ[lib_env] = lib_value
     # For R sub-processes we need to set the DEFAULT_VM environment variable
     os.environ['DEFAULT_VM'] = graal_vm

@@ -44,12 +44,12 @@ FASTR_SHARE_DIR := $(FASTR_R_HOME)/share
 FASTR_INCLUDE_DIR := $(FASTR_R_HOME)/include
 
 R_SCRIPT := $(addprefix $(GNUR_HOME)/bin/,R)
-SUPPORT_SCRIPTS := $(addprefix $(GNUR_HOME)/bin/,BATCH COMPILE INSTALL Rcmd config)
+SUPPORT_SCRIPTS := $(addprefix $(GNUR_HOME)/bin/,BATCH COMPILE INSTALL SHLIB Rcmd config javareconf)
 
 # Not all of these work unchanged
 ETC_FILES := $(addprefix $(GNUR_HOME)/etc/,javaconf ldpaths Renviron repositories)
 
-SHARE_FILES := $(addprefix $(GNUR_HOME)/share/,R make)
+SHARE_FILES := $(addprefix $(GNUR_HOME)/share/,R make java)
 
 all: rundirs rcmds includedir
 
@@ -75,6 +75,9 @@ $(FASTR_BIN_DIR)/R: Makefile R.sh Rscript.sh Rscript_exec.sh
 	# set R_INSTALL_TAR
 	ed $(FASTR_ETC_DIR)/Renviron < edRenviron
 	cp $(GNUR_HOME)/etc/Makeconf Makeconf.etc
+	cp $(GNUR_HOME)/etc/javaconf $(FASTR_ETC_DIR)/javaconf
+	cp $(GNUR_HOME)/etc/repositories $(FASTR_ETC_DIR)/repositories
+	cp $(GNUR_HOME)/etc/ldpaths $(FASTR_ETC_DIR)/ldpaths
 	ed Makeconf.etc < edMakeconf.etc
 	cp Makeconf.etc $(FASTR_ETC_DIR)/Makeconf
 	cp -r $(SHARE_FILES) $(FASTR_SHARE_DIR)
