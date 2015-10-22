@@ -27,13 +27,7 @@
 
 export TOPDIR = $(CURDIR)
 export R_VERSION = 3.1.3
-
-ifndef GNUR_HOME
 export GNUR_HOME = $(TOPDIR)/gnur/R-$(R_VERSION)
-export GNUR_HOME_ORIGIN = local
-else
-export GNUR_HOME_ORIGIN = environment
-endif
 
 all: 
 	$(MAKE) -C gnur

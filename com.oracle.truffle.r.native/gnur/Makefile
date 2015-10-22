@@ -27,20 +27,12 @@ all: makegnur
 	$(MAKE) -f Makefile.platform
 	$(MAKE) -f Makefile.libs
 
-ifeq  ($(GNUR_HOME_ORIGIN), environment)
-makegnur:
-else
 makegnur:
 	$(MAKE) -f Makefile.gnur
-endif
 
 clean: cleangnur
 	$(MAKE) -f Makefile.libs clean
 	$(MAKE) -f Makefile.platform clean
 
-ifeq  ($(GNUR_HOME_ORIGIN), environment)
-cleangnur:
-else
 cleangnur:
 	$(MAKE) -f Makefile.gnur clean
-endif
