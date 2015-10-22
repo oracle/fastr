@@ -47,7 +47,7 @@ public abstract class UpdateSlotNode extends RNode {
     @Specialization(guards = "name == cachedName")
     protected Object updateSlotS4Cached(RS4Object object, String name, Object value, @Cached("name") String cachedName, @Cached("createAttrUpdate(cachedName)") PutAttributeNode attributeUpdate) {
         Object actualValue = getActualValue(value);
-        attributeUpdate.execute(object.getAttributes(), actualValue);
+        attributeUpdate.execute(object.initAttributes(), actualValue);
         return object;
     }
 
@@ -62,7 +62,7 @@ public abstract class UpdateSlotNode extends RNode {
     @Specialization(guards = "name == cachedName")
     protected Object updateSlotCached(RAbstractContainer object, String name, Object value, @Cached("name") String cachedName, @Cached("createAttrUpdate(cachedName)") PutAttributeNode attributeUpdate) {
         Object actualValue = getActualValue(value);
-        attributeUpdate.execute(object.getAttributes(), actualValue);
+        attributeUpdate.execute(object.initAttributes(), actualValue);
         return object;
     }
 
