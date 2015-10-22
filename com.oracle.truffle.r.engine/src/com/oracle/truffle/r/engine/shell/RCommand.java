@@ -250,6 +250,8 @@ public class RCommand {
             } catch (IOException e) {
                 throw RInternalError.shouldNotReachHere(e);
             }
+        } catch (Throwable t) {
+            System.console();
         } finally {
             RContext.destroyContext(vm);
         }

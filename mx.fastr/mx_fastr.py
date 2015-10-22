@@ -64,7 +64,7 @@ def _get_ldpaths(lib_env_name):
     os.environ["R_HOME"] = _fastr_suite.dir
 
     try:
-        proc = subprocess.Popen(command, stdout = subprocess.PIPE)
+        proc = subprocess.Popen(command, stdout=subprocess.PIPE)
         for line in proc.stdout:
             (key, _, value) = line.partition("=")
             if key == lib_env_name:
