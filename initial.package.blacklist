@@ -1,0 +1,203 @@
+Package: Rcpp
+Reason:  C++
+
+Package: Segmentor3IsBack
+Reason: C++
+
+Package:QUIC
+Reason: C++
+
+Package:kernlab
+Reason: C++
+
+Package:adaptivetau
+Reason: C++
+
+Package:geepack
+Reason: C++
+
+Package:caTools
+Reason: C++
+
+Package:amap
+Reason: C++
+
+Package:rgenoud
+Reason: C++
+
+Package:stringi
+Reason: C++
+
+Package:rjson
+Reason: C++
+
+Package:ars,
+Reason: C++
+
+Package:e1071
+Reason: C++
+
+Package:aylmer
+Reason: C++
+
+Package:cpm
+Reason: C++
+
+Package: AnnotLists
+Reason: tcltk
+
+Package: tcltk2
+Reason: tcltk
+
+Package: aplpack
+Reason: tcltk
+
+Package: R2HTML
+Reason: parser
+
+Package: ade4
+Reason: corebug
+
+Package: ABCoptim
+Reason: corebug
+
+Package: lattice
+Reason: corebug
+
+Package: aidar
+Reason: corebug
+
+Package: DBI
+Reason: corebug
+
+Package: SparseM
+Reason: corebug
+
+Package: quantreg
+Reason: corebug
+
+Package: doParallel
+Reason: corebug
+
+Package: ApacheLogProcessor
+Reason: corebug
+
+Package: aplore3
+Reason: corebug
+
+Package: vignettes
+Reason: corebug
+
+Package: archiDART
+Reason: corebug
+
+Package: corpcor
+Reason: corebug
+
+Package: acss.data
+Reason: corebug
+
+Package: lpSolve
+Reason: corebug
+
+Package: colorspace
+Reason: replacement
+
+Package: R.methodsS3
+Reason: replacement
+
+Package: Rglpk
+Reason: Native
+
+Package: overlap
+Reason: native
+
+Package: adimpro
+Reason: native
+
+Package: deSolve
+Reason: native
+
+Package: matrixStats
+Reason: S4
+
+Package: AcceptanceSampling
+Reason: S4
+
+Package: biglm
+Reason: S4
+
+Package: analyz
+Reason: S4
+
+Package: RCurl
+Reason: S4
+
+Package: anfis
+Reason: S4
+
+Package: aod
+Reason: S4
+
+Package: ascii
+Reason: S4
+
+Package: childsds
+Reason: S4
+
+Package: Cairo
+Reason: graphics
+
+Package: rgl
+Reason: graphics
+
+Package: actuar
+Reason: serialize
+
+Package: spam
+Reason: serialize
+
+Package: codetools
+Reason: serialize
+
+Package: iterators
+Reason: serialize
+
+Package: apc
+Reason: serialize
+
+Package: apsrtable
+Reason: serialize
+
+Package: assertthat
+Reason: serialize
+
+Package: citbcmst
+Reason: serialize
+
+Package: cubfits
+Reason: serialize
+
+Package: appell
+Reason: fortran
+
+Package: blockmodeling
+Reason: fortran
+
+Package: clues
+Reason: fortran
+
+Package: rootSolve
+Reason: fortran
+
+Package: cts
+Reason: fortran
+
+Package: bayesQR
+Reason: fortran
+
+Package: cvplogistic
+Reason: fortran
+
+Package: rJava
+Reason: java

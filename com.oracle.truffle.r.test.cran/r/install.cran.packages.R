@@ -34,7 +34,12 @@
 
 # Blacklisted packages nor their dependents will not be installed. By default the list of blacklisted
 # packages will be read from the file in the --blacklist-file arg or the PACKAGE_BLACKLIST env var.
-# If unset, defaults to "package.blacklist", and will be created if necessary.
+# If unset, defaults to "package.blacklist", and will be created if necessary. The initial set of
+# blacklisted packages are read from the file specified by --initial-blacklist-file (defaults to
+# value of env var INITIAL_PACKAGE_BLACKLIST or initial.package.blacklist if unset). This is
+# DCF file with entries of the form:
+# Package: name
+# Reason: reason
 
 # The env var R_LIBS_USER must be set to the directory where the install should take place.
 
@@ -49,7 +54,7 @@ usage <- function() {
 	cat(paste("usage: Rscript [--contriburl url] [--cran-mirror url] [--lib] [--verbose | -v] [-V] [--dryrun]",
                       "[--no-install | -n] [--create-blacklist] [--blacklist-file file] [--ignore-blacklist]",
 					  "[--testcount count]", "[--install-mode mode]",
-					  "[--pkg-filelist file] [package-pattern] \n"))
+					  "[--pkg-filelist file] [--initial-blacklist-file file] [package-pattern] \n"))
 	quit(status=1)
 }
 
@@ -115,38 +120,8 @@ create.blacklist.iter <- function(blacklist) {
 	result
 }
 
-# known to be uninstallable
-# uses C++
-cplusplus <- c("Rcpp", "Segmentor3IsBack", "QUIC", "kernlab", "adaptivetau", "geepack", "caTools", "amap", "rgenoud", "stringi", "rjson", "ars",
-		"e1071", "aylmer", "cpm")
-# tcltk
-tcltk <- c("AnnotLists", "tcltk2", "aplpack")
-# parser bugs
-parserbug <- c("R2HTML")
-# e.g., unimplemented builtin, assertion error
-core <- c("ade4", "ABCoptim", "lattice", "aidar", "DBI", "SparseM", "quantreg", "doParallel", "ApacheLogProcessor", "aplore3",
-		"vignettes", "archiDART", "corpcor", "acss.data", "lpSolve")
-# e.g. complex replacement assignments
-trufflevisitor.nyi <- c("colorspace", "R.methodsS3")
-# problems with native code
-nativeinstall <- c("Rglpk", "overlap", "adimpro", "deSolve")
-# S4 anything using S4 objects
-s4 <- c("matrixStats", "AcceptanceSampling", "biglm", "analyz", "RCurl", "anfis", "aod", "ascii", "childsds")
-# graphics
-graphics <- c("Cairo", "rgl")
-# incomplete definitions from Rmath.h
-math <- c("mvtnorm")
-# serialize
-serialize <- c("actuar", "spam", "codetools", "iterators", "apc", "apsrtable", "assertthat", "citbcmst", "cubfits")
-#java
-java <- c("rJava")
-# fortran related
-fortran <- c("appell", "blockmodeling", "clues", "rootSolve", "cts", "bayesQR", "cvplogistic")
-
-initial.blacklist <- c(cplusplus, tcltk, parserbug, core, math, trufflevisitor.nyi, nativeinstall, s4, graphics, serialize, fortran, java)
-
 create.blacklist <- function() {
-	create.blacklist.iter(initial.blacklist)
+	create.blacklist.iter(rownames(initial.blacklist))
 }
 
 abort <- function(msg) {
@@ -191,6 +166,14 @@ set.package.blacklist <- function() {
 	}
 }
 
+set.initial.package.blacklist <- function() {
+	if (is.na(initial.blacklist.file)) {
+		# not set on command line
+		initial.blacklist.file <<- Sys.getenv("INITIAL_PACKAGE_BLACKLIST", unset="initial.package.blacklist")
+	}
+
+}
+
 # find the available packages from contriburl and match those against pkg.pattern
 # sets global variables avail.pkgs and toinstall.pkgs
 get.pkgs <- function() {
@@ -208,6 +191,7 @@ get.pkgs <- function() {
 # either creates the blacklist or reads it from a file
 do.install <- function() {
 	get.pkgs()
+	get.initial.package.blacklist()
 
 	if (create.blacklist.file) {
 		blacklist <- create.blacklist()
@@ -314,6 +298,13 @@ parse.args <- function() {
 			} else {
 				usage()
 			}
+		} else if (a == "--initial-blacklist-file") {
+			if (length(args) >= 2L) {
+				initial.blacklist.file <<- args[2L]
+				args <<- args[-1L]
+			} else {
+				usage()
+			}
 		} else if (a == "--cran-mirror") {
 			if (length(args) >= 2L) {
 				cran.mirror <<- args[2L]
@@ -371,6 +362,7 @@ cat.args <- function() {
 	if (verbose) {
 		cat("cran.mirror:", cran.mirror, "\n")
 		cat("contriburl:", contriburl, "\n")
+		cat("initial.blacklist.file:", initial.blacklist.file, "\n")
 		cat("blacklist.file:", blacklist.file, "\n")
 		cat("lib.install:", lib.install, "\n")
 		cat("install:", install, "\n")
@@ -406,11 +398,21 @@ check.pkgfilelist <- function() {
 	}
 }
 
+get.initial.package.blacklist <- function() {
+	if (file.exists(initial.blacklist.file)) {
+		initial.blacklist <<- read.dcf(initial.blacklist.file)
+		rownames(initial.blacklist) <- initial.blacklist[, "Package"]
+	} else {
+		abort(paste(initial.blacklist.file, "not found"))
+	}
+}
+
 run <- function() {
     parse.args()
 	check.libs()
 	check.pkgfilelist()
 	set.contriburl()
+	set.initial.package.blacklist()
 	set.package.blacklist()
     cat.args()
     do.install()
@@ -419,6 +421,7 @@ run <- function() {
 cran.mirror <- NA
 contriburl <- NA
 blacklist.file <- NA
+initial.blacklist.file <- NA
 lib.install <- NA
 
 pkg.pattern <- "^.*"
