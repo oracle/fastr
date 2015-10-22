@@ -65,6 +65,7 @@ def _get_ldpaths(lib_env_name):
 
     try:
         proc = subprocess.Popen(command, stdout=subprocess.PIPE)
+        del os.environ['R_HOME']
         for line in proc.stdout:
             (key, _, value) = line.partition("=")
             if key == lib_env_name:
