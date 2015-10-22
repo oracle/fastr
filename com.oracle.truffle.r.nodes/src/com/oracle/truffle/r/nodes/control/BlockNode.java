@@ -79,7 +79,8 @@ public class BlockNode extends SequenceNode implements RSyntaxNode, VisibilityCo
     @Override
     public void deparseImpl(RDeparse.State state) {
         state.startNodeDeparse(this);
-        if (sequence.length > 1) {
+        // empty deparses as {}
+        if (sequence.length != 1) {
             state.writeOpenCurlyNLIncIndent();
         }
         for (int i = 0; i < sequence.length; i++) {
@@ -91,7 +92,7 @@ public class BlockNode extends SequenceNode implements RSyntaxNode, VisibilityCo
                 state.mark(); // in case last
             }
         }
-        if (sequence.length > 1) {
+        if (sequence.length != 1) {
             state.decIndentWriteCloseCurly();
         }
         state.endNodeDeparse(this);
@@ -138,10 +139,15 @@ public class BlockNode extends SequenceNode implements RSyntaxNode, VisibilityCo
         /*
          * We can't get this completely compatible with GnuR without knowing if the source had a "{"
          * or not. However, semantically what really matters is that if the length is > 1, there
-         * *must* have been a "{", so we fabricate it.
+         * *must* have been a "{", so we fabricate it. Furthermore, if length==1, then we must
+         * delegate to the underlying node
          */
         int len = getSequence().length;
-        return len == 1 ? 1 : len + 1;
+        if (len == 1) {
+            return getSequence()[0].asRSyntaxNode().getRlengthImpl();
+        } else {
+            return len + 1;
+        }
     }
 
     @Override
@@ -156,7 +162,7 @@ public class BlockNode extends SequenceNode implements RSyntaxNode, VisibilityCo
                     return RASTUtils.createLanguageElement(seq[index - 1]);
             }
         } else {
-            return RASTUtils.createLanguageElement(seq[0]);
+            return getSequence()[0].asRSyntaxNode().getRelementImpl(index);
         }
     }
 
