@@ -23,7 +23,6 @@
 suite = {
   "mxversion" : "5.5.8",
   "name" : "fastr",
-
   "imports" : {
     "suites" : [
             {
