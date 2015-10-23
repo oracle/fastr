@@ -67,7 +67,7 @@ public final class RFunctionAccessFactory implements Factory10 {
     }
 
     public CallTarget accessInvoke(int argumentsLength) {
-        throw RInternalError.shouldNotReachHere("message: accessInvoke");
+        return Truffle.getRuntime().createCallTarget(new RInteropExecuteNode(argumentsLength));
     }
 
     public CallTarget accessMessage(Message unknown) {
