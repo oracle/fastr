@@ -133,3 +133,8 @@ fastr.channel.send <- function(id, data) {
 fastr.channel.receive <- function(id) {
 	.FastR(.NAME="fastr.channel.receive", id)
 }
+
+fastr.throw <- function(name) {
+	.FastR(.NAME="fastr.throw", name)
+}
+
