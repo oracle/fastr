@@ -519,8 +519,6 @@ final class REngine implements Engine {
                 // there can be an outer loop
                 throw cfe;
             }
-        } catch (UnsupportedSpecializationException use) {
-            throw use;
         } catch (DebugExitException | QuitException | BrowserQuitException e) {
             throw e;
         } catch (Throwable e) {
@@ -529,6 +527,7 @@ final class REngine implements Engine {
             } else if (e instanceof RuntimeException) {
                 throw (RuntimeException) e;
             } else {
+                // TODO can this happen? I don't think so
                 throw new RInternalError(e, "throwable caught while evaluating");
             }
         }

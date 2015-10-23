@@ -243,10 +243,10 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         } catch (RError e) {
             CompilerDirectives.transferToInterpreter();
             throw e;
-        } catch (DebugExitException | QuitException e) {
+        } catch (DebugExitException | QuitException | BrowserQuitException e) {
             /*
-             * These relate to the Truffle debugging support. exitHandlers must be suppressed and
-             * the exceptions must pass through unchanged; they are not errors
+             * These relate to the debugging support. exitHandlers must be suppressed and the
+             * exceptions must pass through unchanged; they are not errors
              */
             CompilerDirectives.transferToInterpreter();
             runOnExitHandlers = false;
@@ -256,6 +256,12 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
             runOnExitHandlers = false;
             throw e instanceof RInternalError ? (RInternalError) e : new RInternalError(e, e.toString());
         } finally {
+            /*
+             * Although a user function may throw an exception from an onExit handler, all
+             * evaluations are wrapped in an anonymous function (see REngine.makeCallTarget) that
+             * has no exit handlers (by fiat), so any exceptions from onExits handlers will be
+             * caught above.
+             */
             if (argPostProcess != null) {
                 resetArgs.enter();
                 argPostProcess.execute(vf);

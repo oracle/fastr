@@ -73,8 +73,6 @@ public abstract class RREPLHandler extends REPLHandler {
             try {
                 Object returnValue = TruffleRLanguage.INSTANCE.internalEvalInContext(source, null, frame);
                 return finishReplySucceeded(message, visualizer.displayValue(returnValue, 0));
-            } catch (QuitException ex) {
-                throw ex;
             } catch (KillException ex) {
                 return finishReplySucceeded(message, "eval (" + sourceName + ") killed");
             } catch (Exception ex) {
@@ -176,8 +174,8 @@ public abstract class RREPLHandler extends REPLHandler {
                 final String path = file.getCanonicalPath();
                 message.put(REPLMessage.FILE_PATH, path);
                 return finishReplySucceeded(message, fileName + "  exited");
-            } catch (QuitException ex) {
-                throw ex;
+            } catch (IOException ex) {
+                throw (QuitException) ex.getCause();
             } catch (KillException ex) {
                 return finishReplySucceeded(message, fileName + " killed");
             } catch (Exception ex) {

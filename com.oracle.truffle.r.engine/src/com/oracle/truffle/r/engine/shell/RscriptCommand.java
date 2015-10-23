@@ -26,7 +26,6 @@ import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.*;
 
 import java.util.*;
 
-import com.oracle.truffle.api.instrument.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.context.*;
 
@@ -97,17 +96,9 @@ public class RscriptCommand {
         RCmdOptions options = RCmdOptions.parseArguments(RCmdOptions.Client.RSCRIPT, args);
         preprocessRScriptOptions(options);
         ContextInfo info = RCommand.createContextInfoFromCommandLine(options);
-        try {
-            RCommand.readEvalPrint(info);
-        } catch (Utils.DebugExitException ex) {
-            /*
-             * This is thrown instead of doing System.exit, when we are running under the in-process
-             * Truffle debugger. We just return to the debugger command loop, possibly to be
-             * re-entered with a new evaluation.
-             */
-        } catch (QuitException ex) {
-            /* This is thrown by the Truffle debugger when the user executes the 'q' command. */
-        }
+        // never returns
+        RCommand.readEvalPrint(info);
+        throw RInternalError.shouldNotReachHere();
     }
 
     private static void printVersionAndExit() {

@@ -46,8 +46,9 @@ import java.util.List;
 
 import jline.console.ConsoleReader;
 import jline.console.UserInterruptException;
-import com.oracle.truffle.r.runtime.data.RLogicalVector;
 
+import com.oracle.truffle.r.runtime.data.RLogicalVector;
+import com.oracle.truffle.api.instrument.QuitException;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.vm.PolyglotEngine;
@@ -55,10 +56,10 @@ import com.oracle.truffle.r.engine.TruffleRLanguage;
 import com.oracle.truffle.r.nodes.builtin.base.Quit;
 import com.oracle.truffle.r.runtime.BrowserQuitException;
 import com.oracle.truffle.r.runtime.RCmdOptions;
-import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.Utils.DebugExitException;
 import com.oracle.truffle.r.runtime.context.ConsoleHandler;
 import com.oracle.truffle.r.runtime.context.ContextInfo;
 import com.oracle.truffle.r.runtime.context.Engine.IncompleteSourceException;
@@ -201,32 +202,18 @@ public class RCommand {
                         continue;
                     }
 
-                    try {
-                        String continuePrompt = getContinuePrompt();
-                        Source subSource = Source.subSource(source, startLength).withMimeType(TruffleRLanguage.MIME);
-                        while (true) {
-                            /*
-                             * N.B. As of Truffle rev 371045b1312d412bafa29882e6c3f7bfe6c0f8f1, only
-                             * exceptions that are <: Exception are converted to IOException, Error
-                             * subclasses pass through.
-                             */
-                            try {
-                                vm.eval(subSource);
-                                continue REPL;
-                            } catch (IncompleteSourceException e) {
-                                // read another line of input
-                            } catch (ParseException e) {
-                                e.report(consoleHandler);
-                                continue REPL;
-                            } catch (IOException e) {
-                                if (e.getCause() instanceof RError) {
-                                    RInternalError.reportError(e.getCause());
-                                } else {
-                                    consoleHandler.println("unexpected internal error (" + e.getClass().getSimpleName() + "); " + e.getMessage());
-                                    RInternalError.reportError(e);
-                                }
-                                continue REPL;
-                            }
+                    String continuePrompt = getContinuePrompt();
+                    Source subSource = Source.subSource(source, startLength).withMimeType(TruffleRLanguage.MIME);
+                    while (true) {
+                        /*
+                         * N.B. As of Truffle rev 371045b1312d412bafa29882e6c3f7bfe6c0f8f1, only
+                         * exceptions that are <: Exception are converted to IOException, Error
+                         * subclasses pass through.
+                         */
+                        try {
+                            vm.eval(subSource);
+                        } catch (IncompleteSourceException e) {
+                            // read another line of input
                             consoleHandler.setPrompt(doEcho ? continuePrompt : null);
                             String additionalInput = consoleHandler.readLine();
                             if (additionalInput == null) {
@@ -234,24 +221,48 @@ public class RCommand {
                             }
                             source.appendCode(additionalInput);
                             subSource = Source.subSource(source, startLength).withMimeType(TruffleRLanguage.MIME);
+                            // The only continuation in the while loop
+                            continue;
+                        } catch (ParseException e) {
+                            e.report(consoleHandler);
+                        } catch (IOException e) {
+                            /*
+                             * We have to extract QuitException and DebugExitException and rethrow
+                             * them explicitly
+                             */
+                            Throwable cause = e.getCause();
+                            if (cause instanceof BrowserQuitException) {
+                                // drop through to continue REPL
+                            } else if (cause instanceof QuitException || cause instanceof DebugExitException) {
+                                throw (RuntimeException) cause;
+                            } else {
+                                // This should never happen owing to earlier invariants
+                                consoleHandler.println("unexpected internal error (" + e.getClass().getSimpleName() + "); " + e.getMessage());
+                                RInternalError.reportError(e);
+                            }
+                        } catch (RInternalError e) {
+                            /*
+                             * Placing this here makes it a non-fatal error. With default error
+                             * logging the report will go to a file, so we print a message on the
+                             * console as well.
+                             */
+                            consoleHandler.println("internal error: " + e.getMessage() + " (see fastr_errors.log)");
+                            RInternalError.reportError(e);
                         }
-                    } catch (BrowserQuitException ex) {
-                        // Q in browser, which continues the repl
+                        continue REPL;
                     }
                 } catch (UserInterruptException e) {
                     // interrupted by ctrl-c
                 }
             }
         } catch (BrowserQuitException e) {
-            // can happen if user profile invokes browser
+            // can happen if user profile invokes browser (unlikely but possible)
         } catch (EOFException ex) {
             try {
                 vm.eval(QUIT_EOF);
-            } catch (IOException e) {
+            } catch (Throwable e) {
                 throw RInternalError.shouldNotReachHere(e);
             }
-        } catch (Throwable t) {
-            System.console();
         } finally {
             RContext.destroyContext(vm);
         }
