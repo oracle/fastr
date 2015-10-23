@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.engine.interop;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.nodes.RootNode;
@@ -30,13 +31,16 @@ import com.oracle.truffle.r.engine.TruffleRLanguage;
 import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
 import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode;
 import com.oracle.truffle.r.nodes.builtin.base.InfixEmulationFunctions.AccessArraySubscriptBuiltin;
+import com.oracle.truffle.r.nodes.control.RLengthNode;
 import com.oracle.truffle.r.runtime.data.RLogical;
+import com.oracle.truffle.r.runtime.data.RNull;
 
-public class VectorReadNode extends RootNode {
+public abstract class VectorReadNode extends RootNode {
 
     @CompilationFinal private boolean lengthAccess;
     @Child private AccessArraySubscriptBuiltin builtin;
     @Child private ExtractVectorNode extract = ExtractVectorNode.create(ElementAccessMode.SUBSCRIPT, true);
+    @Child private RLengthNode lengthNode = RLengthNode.create();
 
     public VectorReadNode() {
         super(TruffleRLanguage.class, null, null);
@@ -44,10 +48,26 @@ public class VectorReadNode extends RootNode {
     }
 
     @Override
-    public Object execute(VirtualFrame frame) {
+    public final Object execute(VirtualFrame frame) {
         Object label = ForeignAccess.getArguments(frame).get(0);
         Object receiver = ForeignAccess.getReceiver(frame);
-        return extract.apply(frame, receiver, new Object[]{label}, RLogical.TRUE, RLogical.TRUE);
+        return execute(frame, receiver, label);
+    }
+
+    protected abstract Object execute(VirtualFrame frame, Object reciever, Object label);
+
+    @Specialization
+    protected Object readIndexed(VirtualFrame frame, Object receiver, int label) {
+        return extract.apply(frame, receiver, new Object[]{label + 1}, RLogical.TRUE, RLogical.TRUE);
+    }
+
+    @Specialization
+    protected Object readProperty(VirtualFrame frame, Object receiver, String label) {
+        if (label.equals("length")) {
+            return lengthNode.executeInteger(frame, receiver);
+        } else {
+            return RNull.instance;
+        }
     }
 
 }
