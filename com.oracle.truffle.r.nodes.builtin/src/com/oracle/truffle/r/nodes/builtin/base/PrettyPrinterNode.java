@@ -1116,9 +1116,8 @@ public abstract class PrettyPrinterNode extends RNode {
         }
     }
 
-    @SuppressWarnings("deprecation")
     public static String prettyPrintDefault(Object value) {
-        return (String) Truffle.getRuntime().createCallTarget(new RootNode() {
+        return (String) Truffle.getRuntime().createCallTarget(new RootNode(TruffleLanguage.class, null, null) {
 
             @Child PrettyPrinterNode node = PrettyPrinterNodeGen.create(null, null, null, null, false);
 
