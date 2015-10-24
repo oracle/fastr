@@ -177,8 +177,8 @@ public class TestUtilities {
         private final NodeAdapter<T> invoke;
         @Child private T node;
 
-        @SuppressWarnings("deprecation")
         public TestRoot(T node, NodeAdapter<T> invoke) {
+            super(TruffleLanguage.class, null, null);
             this.node = node;
             this.invoke = invoke;
         }
