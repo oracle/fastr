@@ -130,50 +130,57 @@ suite = {
       "sha1" : "006936bbd6c5b235665d87bd450f5e13b52d4b48",
     },
 
-    "FASTR_ASM" : {
+    "ASM" : {
+      "path" : "lib/asm-5.0.3.jar",
       "urls" : [
-        "https://lafo.ssw.uni-linz.ac.at/pub/graal-external-deps/asm-5.0.3.jar",
+        "http://lafo.ssw.uni-linz.ac.at/graal-external-deps/asm-5.0.3.jar",
         "https://search.maven.org/remotecontent?filepath=org/ow2/asm/asm/5.0.3/asm-5.0.3.jar",
       ],
       "sha1" : "dcc2193db20e19e1feca8b1240dbbc4e190824fa",
+      "sourcePath" : "lib/asm-5.0.3-sources.jar",
       "sourceSha1" : "f0f24f6666c1a15c7e202e91610476bd4ce59368",
       "sourceUrls" : [
-        "https://lafo.ssw.uni-linz.ac.at/pub/graal-external-deps/asm-5.0.3-sources.jar",
+        "http://lafo.ssw.uni-linz.ac.at/graal-external-deps/asm-5.0.3-sources.jar",
         "https://search.maven.org/remotecontent?filepath=org/ow2/asm/asm/5.0.3/asm-5.0.3-sources.jar",
       ],
     },
 
-    "FASTR_ASM_ANALYSIS" : {
+    "ASM_ANALYSIS" : {
+      "path" : "lib/asm-analysis-4.0.jar",
       "urls" : [
-        "https://lafo.ssw.uni-linz.ac.at/pub/graal-external-deps/asm-analysis-4.0.jar",
+        "http://lafo.ssw.uni-linz.ac.at/graal-external-deps/asm-analysis-4.0.jar",
         "https://search.maven.org/remotecontent?filepath=org/ow2/asm/asm-analysis/4.0/asm-analysis-4.0.jar",
       ],
       "sha1" : "1c45d52b6f6c638db13cf3ac12adeb56b254cdd7",
     },
 
-    "FASTR_ASM_COMMONS" : {
+    "ASM_COMMONS" : {
+      "path" : "lib/asm-commons-4.0.jar",
       "urls" : [
-        "https://lafo.ssw.uni-linz.ac.at/pub/graal-external-deps/asm-commons-4.0.jar",
+        "http://lafo.ssw.uni-linz.ac.at/graal-external-deps/asm-commons-4.0.jar",
         "https://search.maven.org/remotecontent?filepath=org/ow2/asm/asm-commons/4.0/asm-commons-4.0.jar",
       ],
       "sha1" : "a839ec6737d2b5ba7d1878e1a596b8f58aa545d9",
     },
 
-    "FASTR_ASM_TREE" : {
+    "ASM_TREE" : {
+      "path" : "lib/asm-tree-4.0.jar",
       "urls" : [
-        "https://lafo.ssw.uni-linz.ac.at/pub/graal-external-deps/asm-tree-4.0.jar",
+        "http://lafo.ssw.uni-linz.ac.at/graal-external-deps/asm-tree-4.0.jar",
         "https://search.maven.org/remotecontent?filepath=org/ow2/asm/asm-tree/4.0/asm-tree-4.0.jar",
       ],
       "sha1" : "67bd266cd17adcee486b76952ece4cc85fe248b8",
     },
 
-    "FASTR_ASM_UTIL" : {
+    "ASM_UTIL" : {
+      "path" : "lib/asm-util-4.0.jar",
       "urls" : [
-        "https://lafo.ssw.uni-linz.ac.at/pub/graal-external-deps/asm-util-4.0.jar",
+        "http://lafo.ssw.uni-linz.ac.at/graal-external-deps/asm-util-4.0.jar",
         "https://search.maven.org/remotecontent?filepath=org/ow2/asm/asm-util/4.0/asm-util-4.0.jar",
       ],
       "sha1" : "d7a65f54cda284f9706a750c23d64830bb740c39",
     },
+
 
   },
 
@@ -301,11 +308,10 @@ suite = {
       "sourceDirs" : ["src"],
       "dependencies" : [
         "com.oracle.truffle.r.runtime",
-        "jvmci:JVMCI_API",
-        "FASTR_ASM",
-        "FASTR_ASM_ANALYSIS",
+        "ASM",
+        "ASM_ANALYSIS",
         "JNR_POSIX",
-        "FASTR_ASM_UTIL",
+        "ASM_UTIL",
         "JFFI",
         "JNR_FFI",
         "NETLIB",
@@ -313,9 +319,9 @@ suite = {
         "JFFI_NATIVE",
         "JNR_INVOKE",
         "JNR_UDIS86",
-        "FASTR_ASM",
-        "FASTR_ASM_TREE",
-        "FASTR_ASM_COMMONS",
+        "ASM",
+        "ASM_TREE",
+        "ASM_COMMONS",
         "JNR_X86ASM",
       ],
       "checkstyle" : "com.oracle.truffle.r.runtime",
@@ -369,12 +375,12 @@ suite = {
       "exclude" : [
         "JDK_TOOLS",
         "NETLIB",
-        "FASTR_ASM",
-        "FASTR_ASM_UTIL",
-        "FASTR_ASM_TREE",
-        "FASTR_ASM_COMMONS",
-        "FASTR_ASM_ANALYSIS",
-        "FASTR_ASM",
+        "ASM",
+        "ASM_UTIL",
+        "ASM_TREE",
+        "ASM_COMMONS",
+        "ASM_ANALYSIS",
+        "ASM",
         "JNR_X86ASM",
         "JFFI_NATIVE",
         "JFFI",
