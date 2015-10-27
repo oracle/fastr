@@ -32,16 +32,9 @@ import com.oracle.truffle.r.runtime.data.model.*;
 
 public abstract class Crc64 extends RExternalBuiltinNode.Arg1 {
 
+    @TruffleBoundary
     @Specialization
     protected String crc64(RAbstractStringVector input) {
-        return doCrc64(input);
-    }
-
-    /**
-     * Separate to allow Substitution in SVM.
-     */
-    @TruffleBoundary
-    private static String doCrc64(RAbstractStringVector input) {
         try {
             MessageDigest md = MessageDigest.getInstance("MD5");
             byte[] digest = md.digest(input.getDataAt(0).getBytes());
