@@ -125,6 +125,18 @@ void * Riconv_open (const char* tocode, const char* fromcode) {
 	return unimplemented("Riconv_open");
 }
 
+double R_atof(const char *str) {
+	unimplemented("R_atof");
+	return 0;
+}
+
+double R_strtod(const char *c, char **end) {
+	unimplemented("R_strtod");
+	return 0;
+}
+
+
+
 const char *reEnc(const char *x, cetype_t ce_in, cetype_t ce_out, int subst) {
     // TODO: proper implementation of reEnc
     return x;
@@ -137,3 +149,10 @@ SEXP R_PromiseExpr(SEXP x) {
 SEXP R_ClosureExpr(SEXP x) {
 	return unimplemented("R_ClosureExpr");
 }
+
+#include <R_ext/Parse.h>
+
+SEXP R_ParseVector(SEXP x, int y, ParseStatus *z, SEXP w) {
+	return unimplemented("R_ParseVector");
+}
+

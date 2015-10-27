@@ -163,3 +163,9 @@ double R_pow_di(double x, int n)
     return xn;
 }
 
+double R_pow(double x, double y) {
+	unimplemented("R_pow");
+    return 0;
+}
+
+

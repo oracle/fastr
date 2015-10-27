@@ -31,14 +31,26 @@ double Rf_dnorm(double a, double b, double c, int d) {
     return 0;
 }
 
+double Rf_dnorm4(double a, double b, double c, int d) {
+    return Rf_dnorm(a, b, c, d);
+}
+
 double Rf_pnorm(double a, double b, double c, int d, int e) {
     unimplemented("Rf_pnorm");
     return 0;
 }
 
+double Rf_pnorm5(double a, double b, double c, int d, int e) {
+    return Rf_pnorm(a, b, c, d, e);
+}
+
 double Rf_qnorm(double a, double b, double c, int d, int e) {
     unimplemented("Rf_qnorm");
     return 0;
+}
+
+double Rf_qnorm5(double a, double b, double c, int d, int e) {
+    return Rf_qnorm(a, b, c, d, e);
 }
 
 double Rf_rnorm(double a, double b) {

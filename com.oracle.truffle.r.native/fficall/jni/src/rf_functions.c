@@ -280,6 +280,10 @@ SEXP Rf_mkCharCE(const char *x, cetype_t y) {
 	return NULL;
 }
 
+SEXP Rf_mkCharLen(const char *x, int y) {
+	return unimplemented("Rf_mkCharLen");
+}
+
 SEXP Rf_mkCharLenCE(const char *x, int len, cetype_t enc) {
 	JNIEnv *thisenv = getEnv();
 	char buf[len + 1];
@@ -465,6 +469,18 @@ SEXP R_FindNamespace(SEXP info) {
 	return checkRef(thisenv, result);
 }
 
+SEXP Rf_lengthgets(SEXP x, R_len_t y) {
+	return unimplemented("Rf_lengthgets");
+}
+
+SEXP Rf_xlengthgets(SEXP x, R_xlen_t y) {
+	return unimplemented("Rf_xlengthgets");
+
+}
+
+SEXP Rf_namesgets(SEXP x, SEXP y) {
+	return unimplemented("Rf_namesgets");
+}
 
 SEXP GetOption1(SEXP tag)
 {
@@ -527,4 +543,5 @@ void Rf_gsetVar(SEXP symbol, SEXP value, SEXP rho)
 	JNIEnv *thisenv = getEnv();
 	(*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_gsetVarMethodID, symbol, value, rho);
 }
+
 

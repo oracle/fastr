@@ -118,6 +118,9 @@ Reason: native
 Package: deSolve
 Reason: native
 
+Package: wle
+Reason: native
+
 Package: matrixStats
 Reason: S4
 
@@ -178,6 +181,12 @@ Reason: serialize
 Package: cubfits
 Reason: serialize
 
+Package: NLP
+Reason: serialize
+
+Package: proxy
+Reason: serialize
+
 Package: appell
 Reason: fortran
 
@@ -197,6 +206,9 @@ Package: bayesQR
 Reason: fortran
 
 Package: cvplogistic
+Reason: fortran
+
+Package: sparseLDA
 Reason: fortran
 
 Package: rJava

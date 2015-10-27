@@ -51,6 +51,10 @@ char* S_alloc(long n, int size) {
 	return p;
 }
 
+char* S_realloc(char *p, long a, long b, int size) {
+	return unimplemented("S_realloc");
+}
+
 void allocExit() {
     int i;
     for (i = 0; i < tMemTableIndex; i++) {
