@@ -15,8 +15,6 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import java.io.*;
 import java.nio.*;
-import java.nio.file.Files;
-import java.util.*;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -145,7 +143,7 @@ public class HiddenInternalFunctions {
     /**
      * Transcribed from {@code lazyLoaadDBFetch} in src/serialize.c.
      */
-    @RBuiltin(name = "lazyLoadDBfetch", kind = PRIMITIVE, parameterNames = {"key", "dtafile", "compressed", "envhook"})
+    @RBuiltin(name = "lazyLoadDBfetch", kind = PRIMITIVE, parameterNames = {"key", "datafile", "compressed", "envhook"})
     public abstract static class LazyLoadDBFetch extends RBuiltinNode {
 
         @Child private CallInlineCacheNode callCache = CallInlineCacheNodeGen.create();
@@ -159,8 +157,6 @@ public class HiddenInternalFunctions {
                 castIntNode = insert(CastIntegerNodeGen.create(false, false, false));
             }
         }
-
-        private static Map<String, byte[]> dbCache = new HashMap<>();
 
         /**
          * No error checking here as this called by trusted library code.
@@ -186,20 +182,8 @@ public class HiddenInternalFunctions {
         @TruffleBoundary
         public Object lazyLoadDBFetchInternal(MaterializedFrame frame, RIntVector key, RStringVector datafile, int compression, RFunction envhook) {
             String dbPath = datafile.getDataAt(0);
-            File dbPathFile = new File(dbPath);
-            byte[] dbData = dbCache.get(dbPath);
-            if (dbData == null) {
-                assert dbPathFile.exists();
-                try {
-                    dbData = Files.readAllBytes(dbPathFile.toPath());
-                    assert dbData.length == dbPathFile.length();
-                } catch (IOException ex) {
-                    // unexpected
-                    throw RError.error(this, Message.GENERIC, ex.getMessage());
-                }
-                dbCache.put(dbPath, dbData);
-            }
-            String packageName = dbPathFile.getName();
+            String packageName = new File(dbPath).getName();
+            byte[] dbData = RContext.getInstance().stateLazyDBCache.getData(dbPath);
             int dotIndex;
             if ((dotIndex = packageName.lastIndexOf('.')) > 0) {
                 packageName = packageName.substring(0, dotIndex);
@@ -238,7 +222,7 @@ public class HiddenInternalFunctions {
                 }
             }
             if (!rc) {
-                throw RError.error(this, RError.Message.LAZY_LOAD_DB_CORRUPT, dbPathFile.getAbsolutePath());
+                throw RError.error(this, RError.Message.LAZY_LOAD_DB_CORRUPT, dbPath);
             }
             try {
                 RSerialize.CallHook callHook = new RSerialize.CallHook() {
@@ -450,6 +434,15 @@ public class HiddenInternalFunctions {
             }
         }
 
+    }
+
+    @RBuiltin(name = "lazyLoadDBflush", kind = INTERNAL, parameterNames = "path")
+    public abstract static class LazyLoadDBFlush extends RBuiltinNode {
+        @Specialization
+        protected RNull doLazyLoadDBFlush(RAbstractStringVector dbPath) {
+            RContext.getInstance().stateLazyDBCache.remove(dbPath.getDataAt(0));
+            return RNull.instance;
+        }
     }
 
     /*

@@ -485,8 +485,40 @@ public abstract class REnvironment extends RAttributeStorage implements RTypedVa
         return RContext.getInstance().stateREnvironment.getNamespaceRegistry();
     }
 
-    public static void registerNamespace(String name, REnvironment env) {
-        RContext.getInstance().stateREnvironment.getNamespaceRegistry().safePut(name, env);
+    /**
+     * Add name to namespace registry.
+     * 
+     * @param name namespace name
+     * @param env namespace value
+     * @return {@code null} if name is already registered else {@code env}
+     */
+    public static Object registerNamespace(String name, REnvironment env) {
+        REnvironment nsreg = RContext.getInstance().stateREnvironment.getNamespaceRegistry();
+        try {
+            nsreg.put(name, env);
+            return env;
+        } catch (PutException ex) {
+            return null;
+        }
+    }
+
+    /**
+     * Remove name from namespace registry.
+     * 
+     * @param name namespace name
+     * @return {@code null} if name is not registered else namespace value
+     */
+    public static Object unregisterNamespace(String name) {
+        REnvironment nsreg = RContext.getInstance().stateREnvironment.getNamespaceRegistry();
+        Object ns = nsreg.get(name);
+        if (ns != null) {
+            try {
+                nsreg.rm(name);
+            } catch (PutException ex) {
+                throw RInternalError.shouldNotReachHere(ex);
+            }
+        }
+        return ns;
     }
 
     /**

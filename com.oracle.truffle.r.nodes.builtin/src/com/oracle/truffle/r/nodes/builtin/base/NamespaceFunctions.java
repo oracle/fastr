@@ -76,7 +76,9 @@ public class NamespaceFunctions {
         @Specialization
         protected RNull registerNamespace(String name, REnvironment env) {
             controlVisibility();
-            REnvironment.registerNamespace(name, env);
+            if (REnvironment.registerNamespace(name, env) == null) {
+                throw RError.error(this, RError.Message.NS_ALREADY_REG);
+            }
             return RNull.instance;
         }
     }
@@ -84,17 +86,24 @@ public class NamespaceFunctions {
     @RBuiltin(name = "unregisterNamespace", kind = INTERNAL, parameterNames = {"name"})
     public abstract static class UnregisterNamespace extends RBuiltinNode {
         @Specialization
-        protected RNull unregisterNamespace(@SuppressWarnings("unused") RAbstractStringVector name) {
+        protected RNull unregisterNamespace(RAbstractStringVector name) {
             controlVisibility();
-            // TODO implement
+            doUnregisterNamespace(name.getDataAt(0));
             return RNull.instance;
         }
 
         @Specialization
-        protected Object unregisterNamespace(@SuppressWarnings("unused") RSymbol name) {
+        protected Object unregisterNamespace(RSymbol name) {
             controlVisibility();
-            // TODO implement
+            doUnregisterNamespace(name.getName());
             return RNull.instance;
+        }
+
+        private void doUnregisterNamespace(String name) {
+            Object ns = REnvironment.unregisterNamespace(name);
+            if (ns == null) {
+                throw RError.error(this, RError.Message.NS_NOTREG);
+            }
         }
     }
 

@@ -39,6 +39,7 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.InvalidAssumptionException;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.vm.PolyglotEngine;
+import com.oracle.truffle.r.runtime.LazyDBCache;
 import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RBuiltinLookup;
 import com.oracle.truffle.r.runtime.RCmdOptions;
@@ -309,9 +310,11 @@ public final class RContext extends ExecutionContext implements TruffleObject {
     public final RRNG.ContextStateImpl stateRNG;
     public final ContextState stateRFFI;
     public final RSerialize.ContextStateImpl stateRSerialize;
+    public final LazyDBCache.ContextStateImpl stateLazyDBCache;
 
     private ContextState[] contextStates() {
-        return new ContextState[]{stateREnvVars, stateRProfile, stateROptions, stateREnvironment, stateRErrorHandling, stateRConnection, stateStdConnections, stateRNG, stateRFFI, stateRSerialize};
+        return new ContextState[]{stateREnvVars, stateRProfile, stateROptions, stateREnvironment, stateRErrorHandling, stateRConnection, stateStdConnections, stateRNG, stateRFFI, stateRSerialize,
+                        stateLazyDBCache};
     }
 
     private RContext(Env env) {
@@ -359,6 +362,7 @@ public final class RContext extends ExecutionContext implements TruffleObject {
         stateRNG = RRNG.ContextStateImpl.newContext(this);
         stateRFFI = RFFIContextStateFactory.newContext(this);
         stateRSerialize = RSerialize.ContextStateImpl.newContext(this);
+        stateLazyDBCache = LazyDBCache.ContextStateImpl.newContext(this);
         engine.activate(stateREnvironment);
 
         if (info.getKind() == ContextKind.SHARE_PARENT_RW) {
