@@ -368,7 +368,7 @@ cat.args <- function() {
 		cat("lib.install:", lib.install, "\n")
 		cat("install:", install, "\n")
 		cat("dry.run:", dry.run, "\n")
-		cat("create.blacklist:", create.blacklist, "\n")
+		cat("create.blacklist.file:", create.blacklist.file, "\n")
 		cat("ignore.blacklist:", ignore.blacklist, "\n")
 		cat("pkg.pattern:", pkg.pattern, "\n")
 		cat("contriburl:", contriburl, "\n")
