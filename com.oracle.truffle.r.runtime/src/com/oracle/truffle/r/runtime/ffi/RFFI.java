@@ -38,6 +38,7 @@ package com.oracle.truffle.r.runtime.ffi;
  * <li>{@link CallRFFI}: {@code .Call} and {@code .External} call interface.</li>
  * <li>{@link UserRngRFFI}: specific interface to user-supplied random number generator.</li>
  * <li>{@link PCRERFFI}: interface to PCRE library (Perl regexp).</li>
+ * <li>{@link ZipRFFI}: interface to zip compression</li>
  * </ul>
  *
  * These interfaces may be implemented by one or more providers, specified either when the FastR
@@ -63,5 +64,7 @@ public interface RFFI {
     UserRngRFFI getUserRngRFFI();
 
     PCRERFFI getPCRERFFI();
+
+    ZipRFFI getZipRFFI();
 
 }

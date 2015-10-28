@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.runtime.ffi.jnr;
 
+import static com.oracle.truffle.r.runtime.ffi.jnr.WrapUtils.*;
+
 import java.io.*;
 import java.nio.*;
 import java.util.*;
@@ -46,7 +48,7 @@ import com.oracle.truffle.r.runtime.ffi.DLL.SymbolInfo;
 /**
  * JNR/JNI-based factory.
  */
-public class JNR_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI, StatsRFFI, ToolsRFFI, GridRFFI, RApplRFFI, LapackRFFI, UserRngRFFI, PCRERFFI {
+public class JNR_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI, ToolsRFFI, GridRFFI, RApplRFFI, LapackRFFI, UserRngRFFI {
 
     public JNR_RFFIFactory() {
     }
@@ -73,18 +75,6 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI, Stat
     @Override
     public ContextState newContext(RContext context) {
         return new ContextStateImpl();
-    }
-
-    private static byte[] wrapChar(char v) {
-        return new byte[]{(byte) v};
-    }
-
-    private static int[] wrapInt(int v) {
-        return new int[]{v};
-    }
-
-    private static double[] wrapDouble(double v) {
-        return new double[]{v};
     }
 
     // Base
@@ -471,51 +461,7 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI, Stat
 
     @Override
     public StatsRFFI getStatsRFFI() {
-        return this;
-    }
-
-    public interface Stats {
-        /*
-         * TODO add @In/@Out to any arrays that are known to be either @In or @Out (default is
-         *
-         * @Inout)
-         */
-
-        void fft_factor(@In int[] n, int[] pmaxf, int[] pmaxp);
-
-        int fft_work(double[] a, @In int[] nseg, @In int[] n, @In int[] nspn, @In int[] isn, double[] work, int[] iwork);
-    }
-
-    private static class StatsProvider {
-        private static Stats stats;
-
-        @TruffleBoundary
-        private static Stats createAndLoadLib() {
-            // fft is in the stats package .so
-            DLLInfo dllInfo = DLL.findLibraryContainingSymbol("fft");
-            return LibraryLoader.create(Stats.class).load(dllInfo.path);
-        }
-
-        static Stats fft() {
-            if (stats == null) {
-                stats = createAndLoadLib();
-            }
-            return stats;
-        }
-    }
-
-    private static Stats stats() {
-        return StatsProvider.fft();
-    }
-
-    @TruffleBoundary
-    public void fft_factor(int n, int[] pmaxf, int[] pmaxp) {
-        stats().fft_factor(wrapInt(n), pmaxf, pmaxp);
-    }
-
-    @TruffleBoundary
-    public int fft_work(double[] a, int nseg, int n, int nspn, int isn, double[] work, int[] iwork) {
-        return stats().fft_work(a, wrapInt(nseg), wrapInt(n), wrapInt(nspn), wrapInt(isn), work, iwork);
+        return new JNR_Stats();
     }
 
     // Tools
@@ -713,98 +659,16 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI, BaseRFFI, Stat
 
     // zip
 
-    public interface Zip {
-        int compress(@Out byte[] dest, long[] destlen, @In byte[] source, long sourcelen);
-
-        int uncompress(@Out byte[] dest, long[] destlen, @In byte[] source, long sourcelen);
-    }
-
-    private static class ZipProvider {
-        private static Zip zip;
-
-        @TruffleBoundary
-        private static Zip createAndLoadLib() {
-            return LibraryLoader.create(Zip.class).load("z");
-        }
-
-        static Zip zip() {
-            if (zip == null) {
-                zip = createAndLoadLib();
-            }
-            return zip;
-        }
-    }
-
-    private static Zip zip() {
-        return ZipProvider.zip();
-    }
-
-    @TruffleBoundary
-    public int compress(byte[] dest, long[] destlen, byte[] source) {
-        return zip().compress(dest, destlen, source, source.length);
-    }
-
-    @TruffleBoundary
-    public int uncompress(byte[] dest, long[] destlen, byte[] source) {
-        return zip().uncompress(dest, destlen, source, source.length);
+    @Override
+    public ZipRFFI getZipRFFI() {
+        return new JNR_Zip();
     }
 
     // PCRE
 
     @Override
     public PCRERFFI getPCRERFFI() {
-        return this;
-    }
-
-    public interface PCRE {
-        long pcre_maketables();
-
-        long pcre_compile(String pattern, int options, @Out byte[] errorMessage, @Out int[] errOffset, long tables);
-
-        int pcre_exec(long code, long extra, @In byte[] subject, int subjectLength, int startOffset, int options, @Out int[] ovector, int ovecSize);
-    }
-
-    private static class PCREProvider {
-        private static PCRE pcre;
-
-        @TruffleBoundary
-        private static PCRE createAndLoadLib() {
-            return LibraryLoader.create(PCRE.class).load("pcre");
-        }
-
-        static PCRE pcre() {
-            if (pcre == null) {
-                pcre = createAndLoadLib();
-            }
-            return pcre;
-        }
-    }
-
-    private static PCRE pcre() {
-        return PCREProvider.pcre();
-    }
-
-    public long maketables() {
-        return pcre().pcre_maketables();
-    }
-
-    public Result compile(String pattern, int options, long tables) {
-        int[] errOffset = new int[1];
-        byte[] errorMessage = new byte[512];
-        long result = pcre().pcre_compile(pattern, options, errorMessage, errOffset, tables);
-        if (result == 0) {
-            return new Result(result, new String(errorMessage), errOffset[0]);
-        } else {
-            return new Result(result, null, 0);
-        }
-    }
-
-    public Result study(long code, int options) {
-        throw RInternalError.unimplemented("pcre_study");
-    }
-
-    public int exec(long code, long extra, String subject, int offset, int options, int[] ovector) {
-        return pcre().pcre_exec(code, extra, subject.getBytes(), subject.length(), offset, options, ovector, ovector.length);
+        return new JNR_PCRE();
     }
 
 }

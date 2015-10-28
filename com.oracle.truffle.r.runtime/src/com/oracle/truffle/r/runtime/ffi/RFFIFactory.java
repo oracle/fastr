@@ -99,6 +99,10 @@ public abstract class RFFIFactory {
         throw missing("PCRE");
     }
 
+    public ZipRFFI getZipRFFI() {
+        throw missing("Zip");
+    }
+
     private static RuntimeException missing(String ffi) throws RuntimeException {
         throw Utils.fail(ffi + " FFI not implemented");
     }

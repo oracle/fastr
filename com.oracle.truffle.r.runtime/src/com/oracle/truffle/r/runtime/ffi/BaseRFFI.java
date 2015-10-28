@@ -96,22 +96,6 @@ public interface BaseRFFI {
      */
     String dlerror();
 
-    // zip compression/uncompression
-
-    /**
-     * compress {@code source} into {@code dest}.
-     *
-     * @return standard return code (0 ok)
-     */
-    int compress(byte[] dest, long[] destlen, byte[] source);
-
-    /**
-     * uncompress {@code source} into {@code dest}.
-     *
-     * @return standard return code (0 ok)
-     */
-    int uncompress(byte[] dest, long[] destlen, byte[] source);
-
     /**
      * Convert string to long.
      */
