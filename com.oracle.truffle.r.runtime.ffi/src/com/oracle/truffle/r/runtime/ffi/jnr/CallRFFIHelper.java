@@ -22,8 +22,10 @@
  */
 package com.oracle.truffle.r.runtime.ffi.jnr;
 
+import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.context.*;
+import com.oracle.truffle.r.runtime.context.Engine.ParseException;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
@@ -34,7 +36,7 @@ import com.oracle.truffle.r.runtime.ops.na.*;
 /**
  * This class provides methods that match the functionality of the macro/function definitions in
  * thye R header files, e.g. {@code Rinternals.h} that are used by C/C++ code. For ease of
- * identification, we use method names that, as far as possible, match the names in the hreader
+ * identification, we use method names that, as far as possible, match the names in the header
  * files. These methods should never be called from normal FastR code.
  */
 public class CallRFFIHelper {
@@ -514,6 +516,21 @@ public class CallRFFIHelper {
             result = expr;
         }
         return result;
+    }
+
+    static Object Rf_findfun(Object symbolObj, Object envObj) {
+        guarantee(envObj instanceof REnvironment);
+        REnvironment env = (REnvironment) envObj;
+        guarantee(symbolObj instanceof RSymbol);
+        RSymbol symbol = (RSymbol) symbolObj;
+        // Works but not remotely efficient
+        Source source = Source.fromNamedText("get(\"" + symbol.getName() + "\", mode=\"function\")", "<Rf_findfun>");
+        try {
+            Object result = RContext.getEngine().parseAndEval(source, env.getFrame(), false);
+            return result;
+        } catch (ParseException ex) {
+            throw RInternalError.shouldNotReachHere(ex);
+        }
     }
 
     static Object Rf_GetOption1(Object tag) {

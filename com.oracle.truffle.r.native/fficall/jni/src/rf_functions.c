@@ -36,6 +36,7 @@ static jmethodID Rf_allocateMatrixMethodID;
 static jmethodID Rf_duplicateMethodID;
 static jmethodID Rf_consMethodID;
 static jmethodID Rf_evalMethodID;
+static jmethodID Rf_findfunMethodID;
 static jmethodID Rf_defineVarMethodID;
 static jmethodID Rf_findVarMethodID;
 static jmethodID Rf_findVarInFrameMethodID;
@@ -62,6 +63,7 @@ void init_rf_functions(JNIEnv *env) {
 	Rf_ScalarLogicalMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_ScalarLogical", "(I)Lcom/oracle/truffle/r/runtime/data/RLogicalVector;", 1);
 	Rf_consMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_cons", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", 1);
 	Rf_evalMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_eval", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", 1);
+	Rf_findfunMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_findfun", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", 1);
 	Rf_defineVarMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_defineVar", "(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)V", 1);
 	Rf_findVarMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_findVar", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", 1);
 	Rf_findVarInFrameMethodID = checkGetMethodID(env, CallRFFIHelperClass, "Rf_findVarInFrame", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", 1);
@@ -162,8 +164,8 @@ SEXP Rf_eval(SEXP expr, SEXP env) {
 
 SEXP Rf_findFun(SEXP symbol, SEXP rho) {
 	JNIEnv *thisenv = getEnv();
-	unimplemented("Rf_eval)");
-	return NULL;
+	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_findfunMethodID, symbol, rho);
+	return checkRef(thisenv, result);
 }
 
 SEXP Rf_findVar(SEXP symbol, SEXP rho) {
