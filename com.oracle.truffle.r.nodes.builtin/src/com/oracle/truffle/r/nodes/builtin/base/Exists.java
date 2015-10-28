@@ -32,21 +32,21 @@ import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
 
 @RBuiltin(name = "exists", kind = INTERNAL, parameterNames = {"x", "envir", "mode", "inherits"})
-// TODO interpret mode parameter
-// TODO Is it worth optimizing this via ReadVariableNode?
 public abstract class Exists extends RBuiltinNode {
 
     @Specialization
     @TruffleBoundary
-    @SuppressWarnings("unused")
     protected byte existsStringEnv(RAbstractStringVector nameVec, REnvironment env, String mode, byte inherits) {
         String name = nameVec.getDataAt(0);
         controlVisibility();
+        RType rType = RType.fromMode(mode);
         if (inherits == RRuntime.LOGICAL_FALSE) {
-            return RRuntime.asLogical(env.get(name) != null);
+            Object obj = env.get(name);
+            return RRuntime.asLogical(obj != null && RRuntime.checkType(obj, rType));
         }
         for (REnvironment e = env; e != REnvironment.emptyEnv(); e = e.getParent()) {
-            if (e.get(name) != null) {
+            Object obj = e.get(name);
+            if (obj != null && RRuntime.checkType(obj, rType)) {
                 return RRuntime.LOGICAL_TRUE;
             }
         }
