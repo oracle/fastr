@@ -33,6 +33,7 @@ import com.oracle.truffle.r.runtime.ffi.PCRERFFI;
 /**
  * PCRE support using JNR.
  */
+// Checkstyle: stop method name
 public class JNR_PCRE implements PCRERFFI {
     public interface PCRE {
         long pcre_maketables();

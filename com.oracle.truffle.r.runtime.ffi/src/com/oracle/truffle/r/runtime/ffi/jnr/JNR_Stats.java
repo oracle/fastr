@@ -31,10 +31,12 @@ import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.StatsRFFI;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
 
+// Checkstyle: stop method name
 public class JNR_Stats implements StatsRFFI {
     public interface Stats {
         /*
          * TODO add @In/@Out to any arrays that are known to be either @In or @Out (default is
+         * 
          * @Inout)
          */
 

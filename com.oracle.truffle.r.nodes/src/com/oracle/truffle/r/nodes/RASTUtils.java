@@ -191,9 +191,6 @@ public class RASTUtils {
         if (fn instanceof ConstantNode) {
             fn = ((ConstantNode) fn).getValue();
         }
-        if (sourceUnavailable) {
-            System.console();
-        }
         SourceSection sourceSection = sourceUnavailable ? RSyntaxNode.SOURCE_UNAVAILABLE : null;
         if (fn instanceof String) {
             return RCallNode.createCall(sourceSection, RASTUtils.createReadVariableNode(((String) fn)), signature, arguments);
