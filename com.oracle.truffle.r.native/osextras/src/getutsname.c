@@ -38,7 +38,7 @@ static jfieldID checkGetFieldID(JNIEnv *env, jclass klass, const char *name, con
 }
 
 JNIEXPORT void JNICALL
-Java_com_oracle_truffle_r_runtime_ffi_jnr_JNIUtsName_getutsname(JNIEnv *env, jobject obj) {
+Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1UtsName_getutsname(JNIEnv *env, jobject obj) {
 	uname(&name);
 	jstring sysname = (*env)->NewStringUTF(env, name.sysname);
 	jstring release = (*env)->NewStringUTF(env, name.release);

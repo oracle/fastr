@@ -27,7 +27,7 @@ package com.oracle.truffle.r.runtime.ffi;
  * signatures match the Fortran definition with the exception that the "info" value is returned as
  * the result of the call.
  */
-public interface LapackRFFI extends RFFI {
+public interface LapackRFFI {
     /**
      * Return version info, mjor, minor, patch, in {@code version}.
      */
