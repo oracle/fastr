@@ -210,12 +210,12 @@ public class RLanguage extends RLanguageRep implements RAbstractContainer, RAttr
     private int refCount;
 
     public void markNonTemporary() {
-        assert !FastROptions.Option.NewStateTransition.getBooleanValue();
+        assert !FastROptions.NewStateTransition.getBooleanValue();
         temporary = false;
     }
 
     public boolean isTemporary() {
-        if (FastROptions.Option.NewStateTransition.getBooleanValue()) {
+        if (FastROptions.NewStateTransition.getBooleanValue()) {
             return refCount == 0;
         } else {
             return temporary;
@@ -223,7 +223,7 @@ public class RLanguage extends RLanguageRep implements RAbstractContainer, RAttr
     }
 
     public boolean isShared() {
-        if (FastROptions.Option.NewStateTransition.getBooleanValue()) {
+        if (FastROptions.NewStateTransition.getBooleanValue()) {
             return refCount > 1;
         } else {
             return shared;
@@ -231,7 +231,7 @@ public class RLanguage extends RLanguageRep implements RAbstractContainer, RAttr
     }
 
     public RShareable makeShared() {
-        assert !FastROptions.Option.NewStateTransition.getBooleanValue();
+        assert !FastROptions.NewStateTransition.getBooleanValue();
         if (temporary) {
             temporary = false;
         }
@@ -255,7 +255,7 @@ public class RLanguage extends RLanguageRep implements RAbstractContainer, RAttr
 
     @Override
     public void makeSharedPermanent() {
-        if (FastROptions.Option.NewStateTransition.getBooleanValue()) {
+        if (FastROptions.NewStateTransition.getBooleanValue()) {
             refCount = SHARED_PERMANENT_VAL;
         } else {
             // old scheme never reverts states

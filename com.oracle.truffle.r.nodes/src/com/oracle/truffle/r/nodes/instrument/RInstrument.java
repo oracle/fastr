@@ -177,7 +177,7 @@ public class RInstrument {
                 }
             } else if (tag == StandardSyntaxTag.START_METHOD) {
                 putProbe((FunctionUID) tagValue, probe);
-                if (FastROptions.Option.TraceCalls.getBooleanValue()) {
+                if (FastROptions.TraceCalls.getBooleanValue()) {
                     TraceHandling.attachTraceHandler((FunctionUID) tagValue);
                 }
             } else if (tag == StandardSyntaxTag.STATEMENT) {
@@ -239,15 +239,15 @@ public class RInstrument {
      */
     public static void initialize(Instrumenter instrumenterArg) {
         instrumenter = instrumenterArg;
-        instrumentingEnabled = FastROptions.Option.Instrument.getBooleanValue() || FastROptions.Option.TraceCalls.getBooleanValue() || FastROptions.Option.Rdebug.getStringValue() != null ||
+        instrumentingEnabled = FastROptions.Instrument.getBooleanValue() || FastROptions.TraceCalls.getBooleanValue() || FastROptions.Rdebug.getStringValue() != null ||
                         REntryCounters.Function.enabled() || RNodeTimer.Statement.enabled();
         if (instrumentingEnabled) {
             instrumenter.addProbeListener(new RProbeListener());
         }
-        if (instrumentingEnabled || FastROptions.Option.LoadPkgSourcesIndex.getBooleanValue()) {
+        if (instrumentingEnabled || FastROptions.LoadPkgSourcesIndex.getBooleanValue()) {
             RPackageSource.initialize();
         }
-        String rdebugValue = FastROptions.Option.Rdebug.getStringValue();
+        String rdebugValue = FastROptions.Rdebug.getStringValue();
         if (rdebugValue != null) {
             debugFunctionNames = rdebugValue.split(",");
         }

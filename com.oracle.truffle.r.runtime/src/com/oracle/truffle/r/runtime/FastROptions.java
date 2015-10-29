@@ -32,86 +32,80 @@ import java.util.Map.Entry;
  *
  * N.B. The options must be initialized/processed at runtime for an AOT VM.
  */
-public class FastROptions {
+public enum FastROptions {
+    PrintErrorStacktraces("Prints Java and R stack traces for all errors", false),
+    PrintErrorStacktracesToFile("Dumps Java and R stack traces to file for all errors", true),
+    CheckResultCompleteness("Assert completeness of results vectors after evaluating unit tests and R shell commands", true),
+    Debug("Debug=name1,name2,...; Turn on debugging output for 'name1', 'name2', etc.", null, true),
+    Instrument("Enable Instrumentation", false),
+    TraceCalls("Trace all R function calls (implies +Instrument)", false),
+    TraceNativeCalls("Trace all native function calls (performed via .Call, .External, etc.)", false),
+    PerfStats("PerfStats=p1,p2,...; Collect performance stats identified by p1, etc.", null, true),
+    PerfStatsFile("PerfStatsFile=file; Send performance stats to 'file', default stdout", null, true),
+    Rdebug("Rdebug=f1,f2.,,,; list of R function to call debug on (implies +Instrument)", null, true),
+    PerformanceWarnings("Print FastR performance warning", false),
+    LoadBase("Load base package", true),
+    PrintComplexLookups("Print a message for each non-trivial variable lookup", false),
+    IgnoreVisibility("Ignore setting of the visibility flag", false),
+    LoadPkgSourcesIndex("Load R package sources index", true),
+    InvisibleArgs("Argument writes do not trigger state transitions", true),
+    NewStateTransition("Experimental state transition implementation", false),
+    RefCountIncrementOnly("Disable reference count decrements for experimental state transition implementation", false),
+    UseNewVectorNodes("temporary option", true),
+    UseInternalGraphics("Whether the internal (Java) graphics subsystem should be used", true),
 
-    private static final boolean STRING_OPTION = true;
+    // Promises optimizations
+    EagerEval("If enabled, overrides all other EagerEval switches (see EagerEvalHelper)", false),
+    EagerEvalConstants("Unconditionally evaluates constants before creating Promises", true),
+    EagerEvalVariables("Enables optimistic eager evaluation of single variables reads", true),
+    EagerEvalDefault("Enables optimistic eager evaluation of single variables reads (for default parameters)", false),
+    EagerEvalExpressions("Enables optimistic eager evaluation of trivial expressions", false);
 
-    public enum Option {
-        PrintErrorStacktraces("Prints Java and R stack traces for all errors", false),
-        PrintErrorStacktracesToFile("Dumps Java and R stack traces to file for all errors", true),
-        CheckResultCompleteness("Assert completeness of results vectors after evaluating unit tests and R shell commands", true),
-        Debug("Debug=name1,name2,...; Turn on debugging output for 'name1', 'name2', etc.", null, STRING_OPTION),
-        Instrument("Enable Instrumentation", false),
-        TraceCalls("Trace all R function calls (implies +Instrument)", false),
-        TraceNativeCalls("Trace all native function calls (performed via .Call, .External, etc.)", false),
-        PerfStats("PerfStats=p1,p2,...; Collect performance stats identified by p1, etc.", null, STRING_OPTION),
-        PerfStatsFile("PerfStatsFile=file; Send performance stats to 'file', default stdout", null, STRING_OPTION),
-        Rdebug("Rdebug=f1,f2.,,,; list of R function to call debug on (implies +Instrument)", null, STRING_OPTION),
-        PerformanceWarnings("Print FastR performance warning", false),
-        LoadBase("Load base package", true),
-        PrintComplexLookups("Print a message for each non-trivial variable lookup", false),
-        IgnoreVisibility("Ignore setting of the visibility flag", false),
-        LoadPkgSourcesIndex("Load R package sources index", true),
-        InvisibleArgs("Argument writes do not trigger state transitions", true),
-        NewStateTransition("Experimental state transition implementation", false),
-        RefCountIncrementOnly("Disable reference count decrements for experimental state transition implementation", false),
-        UseNewVectorNodes("temporary option", true),
-        UseInternalGraphics("Whether the internal (Java) graphics subsystem should be used", true),
+    private final String help;
+    private final boolean isBoolean;
+    private final Object defaultValue;
+    Object value;
 
-        // Promises optimizations
-        EagerEval("If enabled, overrides all other EagerEval switches (see EagerEvalHelper)", false),
-        EagerEvalConstants("Unconditionally evaluates constants before creating Promises", true),
-        EagerEvalVariables("Enables optimistic eager evaluation of single variables reads", true),
-        EagerEvalDefault("Enables optimistic eager evaluation of single variables reads (for default parameters)", false),
-        EagerEvalExpressions("Enables optimistic eager evaluation of trivial expressions", false);
+    FastROptions(String help, boolean defaultValue) {
+        this(help, defaultValue, false);
+    }
 
-        private final String help;
-        private final boolean isBoolean;
-        private final Object defaultValue;
-        private Object value;
+    FastROptions(String help, Object defaultValue, boolean isString) {
+        this.help = help;
+        this.isBoolean = !isString;
+        this.defaultValue = defaultValue;
+        this.value = defaultValue;
+    }
 
-        Option(String help, boolean defaultValue) {
-            this(help, defaultValue, false);
-        }
+    public boolean getBooleanValue() {
+        assert isBoolean;
+        return (Boolean) value;
+    }
 
-        Option(String help, Object defaultValue, boolean isString) {
-            this.help = help;
-            this.isBoolean = !isString;
-            this.defaultValue = defaultValue;
-            this.value = defaultValue;
-        }
+    public String getStringValue() {
+        assert !isBoolean;
+        return (String) value;
+    }
 
-        public boolean getBooleanValue() {
-            assert isBoolean;
-            return (Boolean) value;
-        }
+    private static FastROptions[] VALUES = values();
 
-        public String getStringValue() {
-            assert !isBoolean;
-            return (String) value;
-        }
-
-        private static Option[] VALUES = values();
-
-        static void setValue(String name, Object value) {
-            for (Option option : VALUES) {
-                if (name.equals(option.name())) {
-                    option.value = value;
-                }
-            }
-        }
-
-        static void printHelp() {
-            for (Option option : VALUES) {
-                System.out.printf("%35s %s (default: %b)\n", "-DR:" + option.name(), option.help, option.defaultValue);
+    static void setValue(String name, Object value) {
+        for (FastROptions option : VALUES) {
+            if (name.equals(option.name())) {
+                option.value = value;
             }
         }
     }
 
+    private static boolean initialized;
+
     public static void initialize() {
+        if (initialized) {
+            return;
+        }
         // Check for help first
         if (System.getProperty("R:") != null || System.getProperty("R:help") != null) {
-            Option.printHelp();
+            FastROptions.printHelp();
             System.exit(0);
         }
         for (Entry<Object, Object> entry : System.getProperties().entrySet()) {
@@ -123,16 +117,25 @@ public class FastROptions {
                         System.out.println("-DR:[+-]" + name + " expected");
                         System.exit(2);
                     }
-                    Option.setValue(name, prop.startsWith("R:+"));
+                    FastROptions.setValue(name, prop.startsWith("R:+"));
                 } else {
                     String name = prop.substring(2);
                     if (entry.getValue() == null) {
                         System.out.println("-DR:" + name + "=value expected");
                         System.exit(2);
                     }
-                    Option.setValue(name, entry.getValue());
+                    FastROptions.setValue(name, entry.getValue());
                 }
             }
+        }
+        initialized = true;
+    }
+
+    static void printHelp() {
+        for (FastROptions option : VALUES) {
+            String prefix = "%35s %s (default: ";
+            String format = prefix + (option.isBoolean ? "%b" : "%s") + ")\n";
+            System.out.printf(format, "-DR:" + option.name(), option.help, option.defaultValue);
         }
     }
 
@@ -141,7 +144,7 @@ public class FastROptions {
      *
      */
     public static boolean debugMatches(String element) {
-        return matchesElement(element, Option.Debug.getStringValue()) != null;
+        return matchesElement(element, FastROptions.Debug.getStringValue()) != null;
     }
 
     /**
@@ -183,7 +186,7 @@ public class FastROptions {
      * use-case.
      */
     public static void debugUpdate(String element) {
-        String s = Option.Debug.getStringValue();
+        String s = FastROptions.Debug.getStringValue();
         if (s == null) {
             // nothing was set
             s = element;
@@ -199,6 +202,6 @@ public class FastROptions {
             }
             s = s + "," + element;
         }
-        Option.Debug.value = s;
+        FastROptions.Debug.value = s;
     }
 }

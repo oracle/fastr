@@ -170,7 +170,7 @@ public class RPerfStats {
     }
 
     private static String getPerfStatsOption(String name) {
-        return FastROptions.matchesElement(name, FastROptions.Option.PerfStats.getStringValue());
+        return FastROptions.matchesElement(name, FastROptions.PerfStats.getStringValue());
     }
 
     public static boolean enabled(String name) {
@@ -188,7 +188,7 @@ public class RPerfStats {
             return;
         }
         reporting = true;
-        String file = FastROptions.Option.PerfStatsFile.getStringValue();
+        String file = FastROptions.PerfStatsFile.getStringValue();
         if (file != null) {
             try {
                 out = new PrintStream(new FileOutputStream(file));

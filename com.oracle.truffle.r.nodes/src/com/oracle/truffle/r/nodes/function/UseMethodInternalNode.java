@@ -33,7 +33,7 @@ public final class UseMethodInternalNode extends RNode implements VisibilityCont
     public UseMethodInternalNode(String generic, ArgumentsSignature signature, boolean wrap) {
         this.generic = generic;
         this.signature = signature;
-        this.wrap = wrap && FastROptions.Option.InvisibleArgs.getBooleanValue();
+        this.wrap = wrap && FastROptions.InvisibleArgs.getBooleanValue();
     }
 
     public Object execute(VirtualFrame frame, RAbstractContainer dispatchOn, Object[] arguments) {

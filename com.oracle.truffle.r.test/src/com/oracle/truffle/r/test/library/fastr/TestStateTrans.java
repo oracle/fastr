@@ -37,7 +37,7 @@ public class TestStateTrans extends TestBase {
         assertEvalFastR("{ x<-c(1,2); f<-function(x) fastr.refcountinfo(x); f(x) }", "2");
         assertEvalFastR("{ f<-function(x) { xi1<-fastr.identity(x); x[1]<-7; xi2<-fastr.identity(x); xi1 == xi2 }; f(c(1,2)) }", "TRUE");
         assertEvalFastR("{ f<-function(y) { x<-y; xi1<-fastr.identity(x); x[1]<-7; xi2<-fastr.identity(x); xi1 == xi2 }; f(c(1,2)) }", "FALSE");
-        if (FastROptions.Option.NewStateTransition.getBooleanValue()) {
+        if (FastROptions.NewStateTransition.getBooleanValue()) {
             // after returning from read-only functions, vector should be modifiable without
             // creating a copy
             assertEvalFastR("{ x<-rep(1, 100); xi1<-fastr.identity(x); f<-function(x) { x }; f(x); x[1]<-7; xi2<-fastr.identity(x); xi1 == xi2 }", "TRUE");

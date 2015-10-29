@@ -40,7 +40,7 @@ public class RGraphics {
     private static final String DOT_DEVICES = ".Devices";
 
     public static void initialize() {
-        if (FastROptions.Option.UseInternalGraphics.getBooleanValue()) {
+        if (FastROptions.UseInternalGraphics.getBooleanValue()) {
             REnvironment baseEnv = REnvironment.baseEnv();
             baseEnv.safePut(DOT_DEVICE, NULL_DEVICE);
             RPairList devices = RDataFactory.createPairList(NULL_DEVICE);

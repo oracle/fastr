@@ -198,7 +198,7 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
             }
 
             saveArguments = new SaveArgumentsNode(init);
-            if (FastROptions.Option.NewStateTransition.getBooleanValue() && !FastROptions.Option.RefCountIncrementOnly.getBooleanValue()) {
+            if (FastROptions.NewStateTransition.getBooleanValue() && !FastROptions.RefCountIncrementOnly.getBooleanValue()) {
                 argPostProcess = PostProcessArgumentsNode.create(argumentsList.size());
             } else {
                 argPostProcess = null;

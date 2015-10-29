@@ -48,7 +48,7 @@ public abstract class ListBuiltin extends RBuiltinNode {
             Object value = args[i];
             if (value instanceof RShareable) {
                 shareable.enter();
-                if (FastROptions.Option.NewStateTransition.getBooleanValue()) {
+                if (FastROptions.NewStateTransition.getBooleanValue()) {
                     if (((RShareable) value).isTemporary()) {
                         temporary.enter();
                         ((RShareable) value).incRefCount();

@@ -113,7 +113,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
             vectorShared.enter();
             resultVector = (RIntVector) vector.copy();
         }
-        if (!FastROptions.Option.NewStateTransition.getBooleanValue()) {
+        if (!FastROptions.NewStateTransition.getBooleanValue()) {
             resultVector.markNonTemporary();
         } else if (resultVector.isTemporary()) {
             resultVector.incRefCount();
@@ -627,7 +627,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         if (vector.isShared()) {
             vectorShared.enter();
             resultVector = (RList) vector.copy();
-            if (!FastROptions.Option.NewStateTransition.getBooleanValue()) {
+            if (!FastROptions.NewStateTransition.getBooleanValue()) {
                 resultVector.markNonTemporary();
             } else if (resultVector.isTemporary()) {
                 resultVector.incRefCount();
@@ -666,7 +666,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
             vectorShared.enter();
             resultVector = (RList) vector.copy();
         }
-        if (!FastROptions.Option.NewStateTransition.getBooleanValue()) {
+        if (!FastROptions.NewStateTransition.getBooleanValue()) {
             resultVector.markNonTemporary();
         } else if (resultVector.isTemporary()) {
             resultVector.incRefCount();
@@ -716,7 +716,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
     // change to avoid erroneous sharing
     private RShareable adjustRhsStateOnAssignment(RAbstractContainer value) {
         RShareable val = value.materializeToShareable();
-        if (FastROptions.Option.NewStateTransition.getBooleanValue()) {
+        if (FastROptions.NewStateTransition.getBooleanValue()) {
             if (isShared.profile(val.isShared())) {
                 val = val.copy();
             } else {
@@ -913,7 +913,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
             vectorShared.enter();
             list = (RList) vector.copy();
         }
-        if (!FastROptions.Option.NewStateTransition.getBooleanValue()) {
+        if (!FastROptions.NewStateTransition.getBooleanValue()) {
             list.markNonTemporary();
         } else if (list.isTemporary()) {
             list.incRefCount();
@@ -1099,7 +1099,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
             vectorShared.enter();
             resultVector = (RIntVector) vector.copy();
         }
-        if (!FastROptions.Option.NewStateTransition.getBooleanValue()) {
+        if (!FastROptions.NewStateTransition.getBooleanValue()) {
             resultVector.markNonTemporary();
         } else if (resultVector.isTemporary()) {
             resultVector.incRefCount();
@@ -1248,7 +1248,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
             vectorShared.enter();
             resultVector = (RDoubleVector) vector.copy();
         }
-        if (!FastROptions.Option.NewStateTransition.getBooleanValue()) {
+        if (!FastROptions.NewStateTransition.getBooleanValue()) {
             resultVector.markNonTemporary();
         } else if (resultVector.isTemporary()) {
             resultVector.incRefCount();
@@ -1283,7 +1283,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
             vectorShared.enter();
             resultVector = (RDoubleVector) vector.copy();
         }
-        if (!FastROptions.Option.NewStateTransition.getBooleanValue()) {
+        if (!FastROptions.NewStateTransition.getBooleanValue()) {
             resultVector.markNonTemporary();
         } else if (resultVector.isTemporary()) {
             resultVector.incRefCount();
@@ -1429,7 +1429,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         if (vector.isShared()) {
             vectorShared.enter();
             resultVector = (RLogicalVector) vector.copy();
-            if (!FastROptions.Option.NewStateTransition.getBooleanValue()) {
+            if (!FastROptions.NewStateTransition.getBooleanValue()) {
                 resultVector.markNonTemporary();
             } else if (resultVector.isTemporary()) {
                 resultVector.incRefCount();
@@ -1465,7 +1465,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
             vectorShared.enter();
             resultVector = (RLogicalVector) vector.copy();
         }
-        if (!FastROptions.Option.NewStateTransition.getBooleanValue()) {
+        if (!FastROptions.NewStateTransition.getBooleanValue()) {
             resultVector.markNonTemporary();
         } else if (resultVector.isTemporary()) {
             resultVector.incRefCount();
@@ -1546,7 +1546,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         if (vector.isShared()) {
             vectorShared.enter();
             resultVector = (RStringVector) vector.copy();
-            if (!FastROptions.Option.NewStateTransition.getBooleanValue()) {
+            if (!FastROptions.NewStateTransition.getBooleanValue()) {
                 resultVector.markNonTemporary();
             } else if (resultVector.isTemporary()) {
                 resultVector.incRefCount();
@@ -1582,7 +1582,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
             vectorShared.enter();
             resultVector = (RStringVector) vector.copy();
         }
-        if (!FastROptions.Option.NewStateTransition.getBooleanValue()) {
+        if (!FastROptions.NewStateTransition.getBooleanValue()) {
             resultVector.markNonTemporary();
         } else if (resultVector.isTemporary()) {
             resultVector.incRefCount();
@@ -1694,7 +1694,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         if (vector.isShared()) {
             vectorShared.enter();
             resultVector = (RComplexVector) vector.copy();
-            if (!FastROptions.Option.NewStateTransition.getBooleanValue()) {
+            if (!FastROptions.NewStateTransition.getBooleanValue()) {
                 resultVector.markNonTemporary();
             } else if (resultVector.isTemporary()) {
                 resultVector.incRefCount();
@@ -1730,7 +1730,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
             vectorShared.enter();
             resultVector = (RComplexVector) vector.copy();
         }
-        if (!FastROptions.Option.NewStateTransition.getBooleanValue()) {
+        if (!FastROptions.NewStateTransition.getBooleanValue()) {
             resultVector.markNonTemporary();
         } else if (resultVector.isTemporary()) {
             resultVector.incRefCount();
@@ -1904,7 +1904,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
         if (vector.isShared()) {
             vectorShared.enter();
             resultVector = (RRawVector) vector.copy();
-            if (!FastROptions.Option.NewStateTransition.getBooleanValue()) {
+            if (!FastROptions.NewStateTransition.getBooleanValue()) {
                 resultVector.markNonTemporary();
             } else if (resultVector.isTemporary()) {
                 resultVector.incRefCount();
@@ -1940,7 +1940,7 @@ public abstract class UpdateArrayHelperNode extends RNode {
             vectorShared.enter();
             resultVector = (RRawVector) vector.copy();
         }
-        if (!FastROptions.Option.NewStateTransition.getBooleanValue()) {
+        if (!FastROptions.NewStateTransition.getBooleanValue()) {
             resultVector.markNonTemporary();
         } else if (resultVector.isTemporary()) {
             resultVector.incRefCount();

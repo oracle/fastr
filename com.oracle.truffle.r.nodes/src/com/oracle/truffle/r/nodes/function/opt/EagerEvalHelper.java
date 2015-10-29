@@ -40,28 +40,28 @@ public class EagerEvalHelper {
      * @return Whether to use optimizations for constants
      */
     public static boolean optConsts() {
-        return FastROptions.Option.EagerEval.getBooleanValue() || FastROptions.Option.EagerEvalConstants.getBooleanValue();
+        return FastROptions.EagerEval.getBooleanValue() || FastROptions.EagerEvalConstants.getBooleanValue();
     }
 
     /**
      * @return Whether to use optimizations for single variables
      */
     public static boolean optVars() {
-        return FastROptions.Option.EagerEval.getBooleanValue() || FastROptions.Option.EagerEvalVariables.getBooleanValue();
+        return FastROptions.EagerEval.getBooleanValue() || FastROptions.EagerEvalVariables.getBooleanValue();
     }
 
     /**
      * @return Whether to use optimizations for single variables
      */
     public static boolean optDefault() {
-        return FastROptions.Option.EagerEval.getBooleanValue() || FastROptions.Option.EagerEvalDefault.getBooleanValue();
+        return FastROptions.EagerEval.getBooleanValue() || FastROptions.EagerEvalDefault.getBooleanValue();
     }
 
     /**
      * @return Whether to use optimizations for arbitrary expressions
      */
     public static boolean optExprs() {
-        return FastROptions.Option.EagerEval.getBooleanValue() || FastROptions.Option.EagerEvalExpressions.getBooleanValue();
+        return FastROptions.EagerEval.getBooleanValue() || FastROptions.EagerEvalExpressions.getBooleanValue();
     }
 
     /**

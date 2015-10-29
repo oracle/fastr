@@ -144,7 +144,7 @@ public abstract class DotC extends RBuiltinNode {
                 throw RError.error(node, RError.Message.UNIMPLEMENTED_ARG_TYPE, i + 1);
             }
         }
-        if (FastROptions.Option.TraceNativeCalls.getBooleanValue()) {
+        if (FastROptions.TraceNativeCalls.getBooleanValue()) {
             trace(name, nativeArgs);
         }
         RFFIFactory.getRFFI().getCRFFI().invoke(address, nativeArgs);
