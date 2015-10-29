@@ -254,6 +254,11 @@ public final class RContext extends ExecutionContext implements TruffleObject {
      */
     @CompilationFinal private static RRuntimeASTAccess runtimeASTAccess;
     @CompilationFinal private static RBuiltinLookup builtinLookup;
+    @CompilationFinal private static boolean initialContextInitialized;
+
+    public static boolean isInitialContextInitialized() {
+        return initialContextInitialized;
+    }
 
     /**
      * Initialize VM-wide static values.
@@ -317,7 +322,7 @@ public final class RContext extends ExecutionContext implements TruffleObject {
                         stateLazyDBCache};
     }
 
-    private RContext(Env env) {
+    private RContext(Env env, boolean isInitial) {
         ContextInfo iniitalInfo = (ContextInfo) env.importSymbol(ContextInfo.GLOBAL_SYMBOL);
         if (iniitalInfo == null) {
             this.info = ContextInfo.create(RCmdOptions.parseArguments(Client.R, new String[0]), ContextKind.SHARE_NOTHING, null, new DefaultConsoleHandler(env));
@@ -374,13 +379,18 @@ public final class RContext extends ExecutionContext implements TruffleObject {
         for (ContextState state : contextStates()) {
             assert state != null;
         }
+        if (isInitial) {
+            initialContextInitialized = true;
+        }
     }
 
     /**
      * Create a context with the given configuration.
+     * 
+     * @param isInitial {@code true} iff this is the initial context
      */
-    public static RContext create(Env env) {
-        return new RContext(env);
+    public static RContext create(Env env, boolean isInitial) {
+        return new RContext(env, isInitial);
     }
 
     /**

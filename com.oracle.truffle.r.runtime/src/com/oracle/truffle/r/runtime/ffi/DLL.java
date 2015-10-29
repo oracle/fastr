@@ -264,7 +264,15 @@ public class DLL {
                 try {
                     RFFIFactory.getRFFI().getCallRFFI().invokeVoidCall(symbolInfo.address, symbolInfo.symbol, new Object[]{dllInfo});
                 } catch (Throwable ex) {
-                    throw new DLLException(RError.Message.DLL_RINIT_ERROR);
+                    /*
+                     * There is no sense in throwing an RError if we fail to load a package during
+                     * initial context initialization, as it is fatal.
+                     */
+                    if (RContext.isInitialContextInitialized()) {
+                        throw new DLLException(RError.Message.DLL_RINIT_ERROR);
+                    } else {
+                        throw Utils.fatalError(RError.Message.DLL_RINIT_ERROR.message + " on default package: " + path);
+                    }
                 }
             } catch (InterruptedException ex) {
                 throw RInternalError.shouldNotReachHere();

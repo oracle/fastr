@@ -45,35 +45,26 @@ import com.oracle.truffle.r.runtime.nodes.*;
 @TruffleLanguage.Registration(name = "R", version = "0.1", mimeType = {RRuntime.R_APP_MIME, RRuntime.R_TEXT_MIME})
 public final class TruffleRLanguage extends TruffleLanguage<RContext> {
 
-    private static boolean initialized;
-
     /**
      * The choice of {@link RFFIFactory} is made statically so that it is bound into an AOT-compiled
      * VM. The decision is node made directly in {@link RFFIFactory} to avoid some project
      * dependencies that cause build problems.
      */
-    private static synchronized void initialize() {
-        if (!initialized) {
-            initialized = true;
-            try {
-                Load_RFFIFactory.initialize();
-                RInstrument.initialize(INSTANCE.instrumenter);
-                RPerfStats.initialize();
-                Locale.setDefault(Locale.ROOT);
-                RAccuracyInfo.initialize();
-                RVersionInfo.initialize();
-                TempPathName.initialize();
-                RContext.initialize(new RRuntimeASTAccessImpl(), RBuiltinPackages.getInstance());
-            } catch (Throwable t) {
-                System.out.println("error during engine initialization:");
-                t.printStackTrace();
-                System.exit(-1);
-            }
+    private static void initialize() {
+        try {
+            Load_RFFIFactory.initialize();
+            RInstrument.initialize(INSTANCE.instrumenter);
+            RPerfStats.initialize();
+            Locale.setDefault(Locale.ROOT);
+            RAccuracyInfo.initialize();
+            RVersionInfo.initialize();
+            TempPathName.initialize();
+            RContext.initialize(new RRuntimeASTAccessImpl(), RBuiltinPackages.getInstance());
+        } catch (Throwable t) {
+            System.out.println("error during engine initialization:");
+            t.printStackTrace();
+            System.exit(-1);
         }
-    }
-
-    public static boolean isInitialized() {
-        return initialized;
     }
 
     private Instrumenter instrumenter;
@@ -92,7 +83,8 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
 
     @Override
     protected RContext createContext(Env env) {
-        if (instrumenter == null) {
+        boolean initialized = instrumenter != null;
+        if (!initialized) {
             instrumenter = env.instrumenter();
             // RInstrument has not been initialized yet
             FastROptions.initialize();
@@ -101,9 +93,10 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
             if (prober != null) {
                 instrumenter.registerASTProber(prober);
             }
+            initialize();
         }
-        initialize();
-        return RContext.create(env);
+        RContext result = RContext.create(env, !initialized);
+        return result;
     }
 
     @Override
