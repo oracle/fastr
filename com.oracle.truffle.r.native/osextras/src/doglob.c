@@ -27,7 +27,7 @@
 static jmethodID addPathID = 0;
 
 JNIEXPORT void JNICALL
-Java_com_oracle_truffle_r_runtime_ffi_jnr_JNIGlob_doglob(JNIEnv *env, jobject obj, jstring pattern) {
+Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1Glob_doglob(JNIEnv *env, jobject obj, jstring pattern) {
 	glob_t globstruct;
 
 	if (addPathID == 0) {
