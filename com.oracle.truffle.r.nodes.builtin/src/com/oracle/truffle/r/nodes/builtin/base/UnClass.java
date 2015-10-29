@@ -35,7 +35,7 @@ public abstract class UnClass extends RBuiltinNode {
             RVector resultVector = arg.materialize();
             if (!resultVector.isTemporary()) {
                 resultVector = resultVector.copy();
-                if (FastROptions.NewStateTransition) {
+                if (FastROptions.Option.NewStateTransition.getBooleanValue()) {
                     assert resultVector.isTemporary();
                     resultVector.incRefCount();
                 } else {
@@ -54,7 +54,7 @@ public abstract class UnClass extends RBuiltinNode {
         RDataFrame resultFrame = arg;
         if (!resultFrame.isTemporary()) {
             resultFrame = resultFrame.copy();
-            if (FastROptions.NewStateTransition) {
+            if (FastROptions.Option.NewStateTransition.getBooleanValue()) {
                 assert resultFrame.isTemporary();
                 resultFrame.incRefCount();
             } else {
@@ -71,7 +71,7 @@ public abstract class UnClass extends RBuiltinNode {
         RFactor resultFactor = arg;
         if (!resultFactor.isTemporary()) {
             resultFactor = resultFactor.copy();
-            if (FastROptions.NewStateTransition) {
+            if (FastROptions.Option.NewStateTransition.getBooleanValue()) {
                 assert resultFactor.isTemporary();
                 resultFactor.incRefCount();
             } else {
@@ -89,7 +89,7 @@ public abstract class UnClass extends RBuiltinNode {
             RLanguage resultLang = arg;
             if (!resultLang.isTemporary()) {
                 resultLang = resultLang.copy();
-                if (FastROptions.NewStateTransition) {
+                if (FastROptions.Option.NewStateTransition.getBooleanValue()) {
                     resultLang.isTemporary();
                     resultLang.incRefCount();
                 } else {

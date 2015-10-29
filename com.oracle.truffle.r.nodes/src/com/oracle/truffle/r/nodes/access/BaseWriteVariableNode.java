@@ -41,9 +41,9 @@ abstract class BaseWriteVariableNode extends WriteVariableNode {
 
     private final ConditionProfile isCurrentProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile isShareableProfile = ConditionProfile.createBinaryProfile();
-    private final ConditionProfile isTemporaryProfile = FastROptions.NewStateTransition ? null : ConditionProfile.createBinaryProfile();
+    private final ConditionProfile isTemporaryProfile = FastROptions.Option.NewStateTransition.getBooleanValue() ? null : ConditionProfile.createBinaryProfile();
     private final ConditionProfile isSharedProfile = ConditionProfile.createBinaryProfile();
-    private final ConditionProfile isRefCountUpdateable = FastROptions.NewStateTransition ? ConditionProfile.createBinaryProfile() : null;
+    private final ConditionProfile isRefCountUpdateable = FastROptions.Option.NewStateTransition.getBooleanValue() ? ConditionProfile.createBinaryProfile() : null;
 
     private final BranchProfile initialSetKindProfile = BranchProfile.create();
 
@@ -82,7 +82,7 @@ abstract class BaseWriteVariableNode extends WriteVariableNode {
                 if (mode == Mode.COPY) {
                     newValue = rShareable.copy();
                 } else {
-                    if (FastROptions.NewStateTransition) {
+                    if (FastROptions.Option.NewStateTransition.getBooleanValue()) {
                         if (isRefCountUpdateable.profile(!rShareable.isSharedPermanent())) {
                             if (isSuper) {
                                 // if non-local assignment, increment conservatively

@@ -27,7 +27,7 @@ import java.util.*;
 
 /**
  * Manage the creation/activation of handlers or performance analysis. Enabled by the
- * {@link FastROptions#PerfStats} option.
+ * {@code FastROptions.Option.PerfStats} option.
  *
  * The handlers are all registered statically from the class wanting to participate. The handlers
  * are enabled selectively at runtime based on the command line option. An enabled handler gets a
@@ -170,7 +170,7 @@ public class RPerfStats {
     }
 
     private static String getPerfStatsOption(String name) {
-        return FastROptions.matchesElement(name, FastROptions.PerfStats);
+        return FastROptions.matchesElement(name, FastROptions.Option.PerfStats.getStringValue());
     }
 
     public static boolean enabled(String name) {
@@ -188,7 +188,7 @@ public class RPerfStats {
             return;
         }
         reporting = true;
-        String file = FastROptions.PerfStatsFile;
+        String file = FastROptions.Option.PerfStatsFile.getStringValue();
         if (file != null) {
             try {
                 out = new PrintStream(new FileOutputStream(file));

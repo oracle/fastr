@@ -72,6 +72,10 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
         }
     }
 
+    public static boolean isInitialized() {
+        return initialized;
+    }
+
     private Instrumenter instrumenter;
 
     public static final TruffleRLanguage INSTANCE = new TruffleRLanguage();
@@ -91,6 +95,7 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
         if (instrumenter == null) {
             instrumenter = env.instrumenter();
             // RInstrument has not been initialized yet
+            FastROptions.initialize();
             RInstrument.initialize(instrumenter);
             ASTProber prober = RInstrument.instrumentingEnabled() ? RASTProber.getRASTProber() : null;
             if (prober != null) {

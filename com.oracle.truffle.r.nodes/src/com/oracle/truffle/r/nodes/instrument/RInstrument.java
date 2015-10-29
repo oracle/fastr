@@ -177,7 +177,7 @@ public class RInstrument {
                 }
             } else if (tag == StandardSyntaxTag.START_METHOD) {
                 putProbe((FunctionUID) tagValue, probe);
-                if (FastROptions.TraceCalls) {
+                if (FastROptions.Option.TraceCalls.getBooleanValue()) {
                     TraceHandling.attachTraceHandler((FunctionUID) tagValue);
                 }
             } else if (tag == StandardSyntaxTag.STATEMENT) {
@@ -197,7 +197,7 @@ public class RInstrument {
 
     /**
      * Controls whether ASTs are instrumented after parse. The default value controlled by
-     * {@link FastROptions#Instrument}.
+     * {@code FastROptions.Option.Instrument}.
      */
     @CompilationFinal private static boolean instrumentingEnabled;
 
@@ -239,14 +239,15 @@ public class RInstrument {
      */
     public static void initialize(Instrumenter instrumenterArg) {
         instrumenter = instrumenterArg;
-        instrumentingEnabled = FastROptions.Instrument || FastROptions.TraceCalls || FastROptions.Rdebug != null || REntryCounters.Function.enabled() || RNodeTimer.Statement.enabled();
+        instrumentingEnabled = FastROptions.Option.Instrument.getBooleanValue() || FastROptions.Option.TraceCalls.getBooleanValue() || FastROptions.Option.Rdebug.getStringValue() != null ||
+                        REntryCounters.Function.enabled() || RNodeTimer.Statement.enabled();
         if (instrumentingEnabled) {
             instrumenter.addProbeListener(new RProbeListener());
         }
-        if (instrumentingEnabled || FastROptions.LoadPkgSourcesIndex) {
+        if (instrumentingEnabled || FastROptions.Option.LoadPkgSourcesIndex.getBooleanValue()) {
             RPackageSource.initialize();
         }
-        String rdebugValue = FastROptions.Rdebug;
+        String rdebugValue = FastROptions.Option.Rdebug.getStringValue();
         if (rdebugValue != null) {
             debugFunctionNames = rdebugValue.split(",");
         }

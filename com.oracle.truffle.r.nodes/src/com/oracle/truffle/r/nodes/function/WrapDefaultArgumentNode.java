@@ -57,7 +57,7 @@ public final class WrapDefaultArgumentNode extends WrapArgumentBaseNode {
         RShareable rShareable = getShareable(result);
         if (rShareable != null) {
             shareable.enter();
-            if (FastROptions.NewStateTransition) {
+            if (FastROptions.Option.NewStateTransition.getBooleanValue()) {
                 if (isShared.profile(rShareable.isShared())) {
                     result = ((RShareable) o).copy();
                 } else {

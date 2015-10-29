@@ -406,7 +406,7 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
                 sharedProfile.enter();
                 shareable = (RShareable) returnVector.copy();
                 returnVector = (RAbstractVector) shareable;
-                if (FastROptions.NewStateTransition) {
+                if (FastROptions.Option.NewStateTransition.getBooleanValue()) {
                     assert shareable.isTemporary();
                     shareable.incRefCount();
                 } else if (shareable.isTemporary()) {
@@ -423,7 +423,7 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
 
     private RAbstractContainer copyValueOnAssignment(RAbstractContainer value) {
         RShareable val = value.materializeToShareable();
-        if (FastROptions.NewStateTransition) {
+        if (FastROptions.Option.NewStateTransition.getBooleanValue()) {
             if (rightIsShared.profile(val.isShared())) {
                 val = val.copy();
             } else {

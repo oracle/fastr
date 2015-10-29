@@ -466,7 +466,7 @@ public class ForeignFunctions {
         @Override
         protected RExternalBuiltinNode lookupBuiltin(RList f) {
             String name = lookupName(f);
-            if (FastROptions.UseInternalGraphics) {
+            if (FastROptions.Option.UseInternalGraphics.getBooleanValue()) {
                 switch (name) {
                     case "PDF":
                         return new DevicesCCalls.C_PDF();
@@ -556,7 +556,7 @@ public class ForeignFunctions {
 
         @Override
         protected RExternalBuiltinNode lookupBuiltin(RList f) {
-            if (FastROptions.UseInternalGraphics) {
+            if (FastROptions.Option.UseInternalGraphics.getBooleanValue()) {
                 switch (lookupName(f)) {
                     case "C_par":
                         return new C_Par();
@@ -624,7 +624,7 @@ public class ForeignFunctions {
 
         @Override
         protected RExternalBuiltinNode lookupBuiltin(RList f) {
-            if (FastROptions.UseInternalGraphics) {
+            if (FastROptions.Option.UseInternalGraphics.getBooleanValue()) {
                 switch (lookupName(f)) {
                     case "C_mtext":
                         return new GraphicsCCalls.C_mtext();

@@ -70,7 +70,7 @@ public abstract class RVector extends RAttributeStorage implements RShareable, R
         this.dimensions = dimensions;
         this.names = names;
         this.rowNames = RNull.instance;
-        if (!FastROptions.NewStateTransition) {
+        if (!FastROptions.Option.NewStateTransition.getBooleanValue()) {
             refCount = TEMPORARY;
         }
         if (names != null) {
@@ -425,13 +425,13 @@ public abstract class RVector extends RAttributeStorage implements RShareable, R
 
     @Override
     public final void markNonTemporary() {
-        assert !FastROptions.NewStateTransition;
+        assert !FastROptions.Option.NewStateTransition.getBooleanValue();
         refCount &= ~TEMPORARY;
     }
 
     @Override
     public final boolean isTemporary() {
-        if (FastROptions.NewStateTransition) {
+        if (FastROptions.Option.NewStateTransition.getBooleanValue()) {
             return refCount == 0;
         } else {
             return (refCount & TEMPORARY) != 0;
@@ -440,7 +440,7 @@ public abstract class RVector extends RAttributeStorage implements RShareable, R
 
     @Override
     public final boolean isShared() {
-        if (FastROptions.NewStateTransition) {
+        if (FastROptions.Option.NewStateTransition.getBooleanValue()) {
             return refCount > 1;
         } else {
             return (refCount & SHARED) != 0;
@@ -449,7 +449,7 @@ public abstract class RVector extends RAttributeStorage implements RShareable, R
 
     @Override
     public final RVector makeShared() {
-        assert !FastROptions.NewStateTransition;
+        assert !FastROptions.Option.NewStateTransition.getBooleanValue();
         refCount = SHARED;
         return this;
     }
@@ -472,7 +472,7 @@ public abstract class RVector extends RAttributeStorage implements RShareable, R
 
     @Override
     public void makeSharedPermanent() {
-        if (FastROptions.NewStateTransition) {
+        if (FastROptions.Option.NewStateTransition.getBooleanValue()) {
             refCount = SHARED_PERMANENT_VAL;
         } else {
             // old scheme never reverts states
@@ -777,7 +777,7 @@ public abstract class RVector extends RAttributeStorage implements RShareable, R
         RStringVector oldNames = res.names;
         res = copyResized(size, true);
         if (this.isShared()) {
-            if (FastROptions.NewStateTransition) {
+            if (FastROptions.Option.NewStateTransition.getBooleanValue()) {
                 assert res.isTemporary();
                 res.incRefCount();
             } else {
@@ -856,7 +856,7 @@ public abstract class RVector extends RAttributeStorage implements RShareable, R
     public final RVector materializeNonShared() {
         if (this.isShared()) {
             RVector res = this.copy();
-            if (FastROptions.NewStateTransition) {
+            if (FastROptions.Option.NewStateTransition.getBooleanValue()) {
                 assert res.isTemporary();
                 res.incRefCount();
             } else {
@@ -868,7 +868,7 @@ public abstract class RVector extends RAttributeStorage implements RShareable, R
             // this is needed for primitive values coerced to vector - they need to be marked as
             // non-temp, otherwise the following code will not work:
             // x<-1; attributes(x) <- list(my = 1); y<-x; attributes(y)<-list(his = 2); x
-            if (FastROptions.NewStateTransition) {
+            if (FastROptions.Option.NewStateTransition.getBooleanValue()) {
                 this.incRefCount();
             } else {
                 this.markNonTemporary();

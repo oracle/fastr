@@ -570,7 +570,7 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
             lastLevel = new MultiAssumptionLevel(lastLevel, assumptions.toArray(new Assumption[assumptions.size()]));
         }
 
-        if (FastROptions.PrintComplexLookups && levels.size() > 1 && complex) {
+        if (FastROptions.Option.PrintComplexLookups.getBooleanValue() && levels.size() > 1 && complex) {
             System.out.println(identifier + " " + lastLevel);
         }
 

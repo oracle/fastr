@@ -66,7 +66,7 @@ public abstract class ArgumentStatePush extends RNode {
         if (isRefCountUpdateable.profile(!shareable.isSharedPermanent())) {
             shareable.incRefCount();
         }
-        if (!FastROptions.RefCountIncrementOnly) {
+        if (!FastROptions.Option.RefCountIncrementOnly.getBooleanValue()) {
             if (mask == 0) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 if (shareable instanceof RAbstractContainer) {
@@ -114,7 +114,7 @@ public abstract class ArgumentStatePush extends RNode {
 
     @Specialization
     public RNull transitionState(VirtualFrame frame, RShareable shareable) {
-        if (FastROptions.NewStateTransition) {
+        if (FastROptions.Option.NewStateTransition.getBooleanValue()) {
             transitionStateExp(frame, shareable);
         } else {
             if (shareable.isShared()) {
@@ -154,7 +154,7 @@ public abstract class ArgumentStatePush extends RNode {
         // this is expected to be used in rare cases where no RNode is easily available
         if (o instanceof RShareable) {
             RShareable shareable = (RShareable) o;
-            if (FastROptions.NewStateTransition) {
+            if (FastROptions.Option.NewStateTransition.getBooleanValue()) {
                 // it's never decremented so no point in incrementing past shared state
                 if (!shareable.isShared()) {
                     shareable.incRefCount();

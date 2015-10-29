@@ -2291,6 +2291,7 @@ public class TestSimpleVectors extends TestBase {
         assertEval(Ignored.Unknown, "{ x<-integer(0); dim(x)<-c(1, 0, 2, 0, 2); x }");
     }
 
+    // Checkstyle: stop
     @Test
     public void testUpdateOther() {
         assertEval("{ a <- c(TRUE, FALSE); b <- c(a=3, b=4); a[b] <- c(TRUE, FALSE); a }");

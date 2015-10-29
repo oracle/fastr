@@ -53,7 +53,7 @@ public interface VisibilityController {
      * guaranteed to always replace and execute, as is common in "unresolved" node implementations.
      */
     default void controlVisibility() {
-        if (!FastROptions.IgnoreVisibility) {
+        if (!FastROptions.Option.IgnoreVisibility.getBooleanValue()) {
             RContext.getInstance().setVisible(getVisibility());
         }
     }
@@ -63,7 +63,7 @@ public interface VisibilityController {
      * the result, e.g. {@code switch}.
      */
     default void forceVisibility(boolean state) {
-        if (!FastROptions.IgnoreVisibility) {
+        if (!FastROptions.Option.IgnoreVisibility.getBooleanValue()) {
             RContext.getInstance().setVisible(state);
         }
     }

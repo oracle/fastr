@@ -141,7 +141,7 @@ public class CallRFFIWithJNI implements CallRFFI {
     private static final Semaphore inCritical = new Semaphore(1, false);
 
     public Object invokeCall(long address, String name, Object[] args) {
-        if (FastROptions.TraceNativeCalls) {
+        if (FastROptions.Option.TraceNativeCalls.getBooleanValue()) {
             System.out.print("calling " + name + ": ");
             printArgs(args);
             System.out.println();
@@ -211,7 +211,7 @@ public class CallRFFIWithJNI implements CallRFFI {
     private static native Object call9(long address, Object arg1, Object arg2, Object arg3, Object arg4, Object arg5, Object arg6, Object arg7, Object arg8, Object arg9);
 
     public void invokeVoidCall(long address, String name, Object[] args) {
-        if (FastROptions.TraceNativeCalls) {
+        if (FastROptions.Option.TraceNativeCalls.getBooleanValue()) {
             System.out.print("void-calling " + name + ": ");
             printArgs(args);
             System.out.println();

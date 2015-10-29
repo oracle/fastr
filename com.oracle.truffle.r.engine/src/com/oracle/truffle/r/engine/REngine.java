@@ -164,7 +164,7 @@ final class REngine implements Engine {
         suppressWarnings = true;
         MaterializedFrame baseFrame = RRuntime.createNonFunctionFrame().materialize();
         REnvironment.baseInitialize(baseFrame, globalFrame);
-        loadBase = FastROptions.LoadBase;
+        loadBase = FastROptions.Option.LoadBase.getBooleanValue();
         RBuiltinPackages.loadBase(baseFrame, loadBase);
         RGraphics.initialize();
         if (loadBase) {
@@ -536,7 +536,7 @@ final class REngine implements Engine {
 
     @TruffleBoundary
     private static boolean checkResult(Object result) {
-        if (FastROptions.CheckResultCompleteness && result instanceof RAbstractVector && ((RAbstractVector) result).isComplete()) {
+        if (FastROptions.Option.CheckResultCompleteness.getBooleanValue() && result instanceof RAbstractVector && ((RAbstractVector) result).isComplete()) {
             assert ((RAbstractVector) result).checkCompleteness() : "vector: " + result + " is not complete, but isComplete flag is true";
         }
         return true;
@@ -557,11 +557,11 @@ final class REngine implements Engine {
             if (loadBase) {
                 Object printMethod = REnvironment.globalEnv().findFunction("print");
                 RFunction function = (RFunction) evaluatePromise(printMethod);
-                if (FastROptions.NewStateTransition && resultValue instanceof RShareable && !((RShareable) resultValue).isSharedPermanent()) {
+                if (FastROptions.Option.NewStateTransition.getBooleanValue() && resultValue instanceof RShareable && !((RShareable) resultValue).isSharedPermanent()) {
                     ((RShareable) resultValue).incRefCount();
                 }
                 function.getTarget().call(RArguments.create(function, null, REnvironment.globalEnv().getFrame(), 1, new Object[]{resultValue, RMissing.instance}, PRINT_SIGNATURE, null));
-                if (FastROptions.NewStateTransition && resultValue instanceof RShareable && !((RShareable) resultValue).isSharedPermanent()) {
+                if (FastROptions.Option.NewStateTransition.getBooleanValue() && resultValue instanceof RShareable && !((RShareable) resultValue).isSharedPermanent()) {
                     ((RShareable) resultValue).decRefCount();
                 }
             } else {

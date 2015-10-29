@@ -85,7 +85,7 @@ public final class RInternalError extends Error {
     }
 
     static String createVerboseStackTrace() {
-        if (FastROptions.PrintErrorStacktracesToFile || FastROptions.PrintErrorStacktraces) {
+        if (FastROptions.Option.PrintErrorStacktracesToFile.getBooleanValue() || FastROptions.Option.PrintErrorStacktraces.getBooleanValue()) {
             if (!initializing) {
                 initializing = true;
                 try {
@@ -106,7 +106,7 @@ public final class RInternalError extends Error {
     }
 
     public static void reportError(Throwable t) {
-        if (FastROptions.PrintErrorStacktracesToFile || FastROptions.PrintErrorStacktraces) {
+        if (FastROptions.Option.PrintErrorStacktracesToFile.getBooleanValue() || FastROptions.Option.PrintErrorStacktraces.getBooleanValue()) {
             ByteArrayOutputStream out = new ByteArrayOutputStream();
             t.printStackTrace(new PrintStream(out));
             String verboseStackTrace;
@@ -117,11 +117,11 @@ public final class RInternalError extends Error {
             } else {
                 verboseStackTrace = "";
             }
-            if (FastROptions.PrintErrorStacktraces) {
+            if (FastROptions.Option.PrintErrorStacktraces.getBooleanValue()) {
                 System.err.println(out.toString());
                 System.err.println(verboseStackTrace);
             }
-            if (FastROptions.PrintErrorStacktracesToFile) {
+            if (FastROptions.Option.PrintErrorStacktracesToFile.getBooleanValue()) {
                 try (BufferedWriter writer = Files.newBufferedWriter(FileSystems.getDefault().getPath(REnvVars.rHome(), "fastr_errors.log"), StandardCharsets.UTF_8, StandardOpenOption.APPEND,
                                 StandardOpenOption.CREATE)) {
                     writer.append(new Date().toString()).append('\n');

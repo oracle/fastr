@@ -40,28 +40,28 @@ public class EagerEvalHelper {
      * @return Whether to use optimizations for constants
      */
     public static boolean optConsts() {
-        return FastROptions.EagerEval || FastROptions.EagerEvalConstants;
+        return FastROptions.Option.EagerEval.getBooleanValue() || FastROptions.Option.EagerEvalConstants.getBooleanValue();
     }
 
     /**
      * @return Whether to use optimizations for single variables
      */
     public static boolean optVars() {
-        return FastROptions.EagerEval || FastROptions.EagerEvalVariables;
+        return FastROptions.Option.EagerEval.getBooleanValue() || FastROptions.Option.EagerEvalVariables.getBooleanValue();
     }
 
     /**
      * @return Whether to use optimizations for single variables
      */
     public static boolean optDefault() {
-        return FastROptions.EagerEval || FastROptions.EagerEvalDefault;
+        return FastROptions.Option.EagerEval.getBooleanValue() || FastROptions.Option.EagerEvalDefault.getBooleanValue();
     }
 
     /**
      * @return Whether to use optimizations for arbitrary expressions
      */
     public static boolean optExprs() {
-        return FastROptions.EagerEval || FastROptions.EagerEvalExpressions;
+        return FastROptions.Option.EagerEval.getBooleanValue() || FastROptions.Option.EagerEvalExpressions.getBooleanValue();
     }
 
     /**
@@ -117,7 +117,6 @@ public class EagerEvalHelper {
     /**
      * @return Whether the given {@link RNode} is a {@link ReadVariableNode}
      *
-     * @see FastROptions#EagerEvalVariables
      */
     public static boolean isVariableArgument(RBaseNode expr) {
         // Do NOT try to optimize anything that might force a Promise, as this might be arbitrary

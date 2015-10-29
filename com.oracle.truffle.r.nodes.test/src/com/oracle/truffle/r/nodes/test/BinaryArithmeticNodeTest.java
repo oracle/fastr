@@ -239,7 +239,7 @@ public class BinaryArithmeticNodeTest extends BinaryVectorTest {
         RAbstractVector a = aOrig.copy();
         RAbstractVector b = bOrig.copy();
         if (a instanceof RShareable) {
-            if (FastROptions.NewStateTransition) {
+            if (FastROptions.Option.NewStateTransition.getBooleanValue()) {
                 assert ((RShareable) a).isTemporary();
                 ((RShareable) a).incRefCount();
             } else {
@@ -247,7 +247,7 @@ public class BinaryArithmeticNodeTest extends BinaryVectorTest {
             }
         }
         if (b instanceof RShareable) {
-            if (FastROptions.NewStateTransition) {
+            if (FastROptions.Option.NewStateTransition.getBooleanValue()) {
                 assert ((RShareable) b).isTemporary();
                 ((RShareable) b).incRefCount();
             } else {
