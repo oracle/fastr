@@ -22,17 +22,45 @@
  */
 package com.oracle.truffle.r.runtime.ffi.jnr;
 
-public class WrapUtils {
-    static byte[] wrapChar(char v) {
-        return new byte[]{(byte) v};
+import com.oracle.truffle.r.runtime.ffi.BaseRFFI.UtsName;
+
+public class JNI_UtsName implements UtsName {
+    String sysname;
+    String release;
+    String version;
+    String machine;
+    String nodename;
+
+    private static JNI_UtsName singleton;
+
+    public static UtsName get() {
+        if (singleton == null) {
+            singleton = new JNI_UtsName();
+        }
+        singleton.getutsname();
+        return singleton;
     }
 
-    static int[] wrapInt(int v) {
-        return new int[]{v};
+    public String sysname() {
+        return sysname;
     }
 
-    static double[] wrapDouble(double v) {
-        return new double[]{v};
+    public String release() {
+        return release;
     }
+
+    public String version() {
+        return version;
+    }
+
+    public String machine() {
+        return machine;
+    }
+
+    public String nodename() {
+        return nodename;
+    }
+
+    private native void getutsname();
 
 }

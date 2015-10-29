@@ -22,9 +22,6 @@
  */
 package com.oracle.truffle.r.runtime.ffi;
 
-import java.io.*;
-
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.context.*;
 import com.oracle.truffle.r.runtime.context.RContext.*;
@@ -105,11 +102,6 @@ public abstract class RFFIFactory {
 
     private static RuntimeException missing(String ffi) throws RuntimeException {
         throw Utils.fail(ffi + " FFI not implemented");
-    }
-
-    @TruffleBoundary
-    protected static IOException ioex(String errMsg) throws IOException {
-        throw new IOException(errMsg);
     }
 
     public abstract ContextState newContext(RContext context);

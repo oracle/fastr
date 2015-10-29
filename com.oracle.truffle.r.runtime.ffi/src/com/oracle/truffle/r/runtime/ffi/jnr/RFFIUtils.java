@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,20 +22,26 @@
  */
 package com.oracle.truffle.r.runtime.ffi.jnr;
 
-import java.util.*;
+import java.io.IOException;
 
-public class JNIGlob {
-    private ArrayList<String> paths = new ArrayList<>();
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
-    public static ArrayList<String> glob(String pattern) {
-        JNIGlob jniGlob = new JNIGlob();
-        jniGlob.doglob(pattern);
-        return jniGlob.paths;
+public class RFFIUtils {
+    static byte[] wrapChar(char v) {
+        return new byte[]{(byte) v};
     }
 
-    private void addPath(String path) {
-        paths.add(path);
+    static int[] wrapInt(int v) {
+        return new int[]{v};
     }
 
-    private native void doglob(String pattern);
+    static double[] wrapDouble(double v) {
+        return new double[]{v};
+    }
+
+    @TruffleBoundary
+    static IOException ioex(String errMsg) throws IOException {
+        throw new IOException(errMsg);
+    }
+
 }

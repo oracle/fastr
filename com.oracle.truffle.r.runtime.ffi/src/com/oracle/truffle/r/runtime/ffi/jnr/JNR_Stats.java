@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.ffi.jnr;
 
-import static com.oracle.truffle.r.runtime.ffi.jnr.WrapUtils.*;
+import static com.oracle.truffle.r.runtime.ffi.jnr.RFFIUtils.*;
 import jnr.ffi.LibraryLoader;
 import jnr.ffi.annotations.In;
 
