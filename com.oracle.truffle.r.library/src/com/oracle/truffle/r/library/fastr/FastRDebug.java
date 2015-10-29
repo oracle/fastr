@@ -32,7 +32,7 @@ public abstract class FastRDebug extends RExternalBuiltinNode.Arg1 {
     @Specialization
     protected RNull debug(RAbstractStringVector vec) {
         for (int i = 0; i < vec.getLength(); i++) {
-            FastROptionsX.debugUpdate(vec.getDataAt(i));
+            FastROptions.debugUpdate(vec.getDataAt(i));
         }
         return RNull.instance;
     }
