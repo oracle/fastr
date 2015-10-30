@@ -132,11 +132,6 @@ final class REngine implements Engine {
     @CompilationFinal private MaterializedFrame globalFrame;
 
     /**
-     * {@code true} iff the base package is loaded.
-     */
-    private static boolean loadBase;
-
-    /**
      * A temporary mechanism for suppressing warnings while evaluating the system profile, until the
      * proper mechanism is understood.
      */
@@ -164,48 +159,44 @@ final class REngine implements Engine {
         suppressWarnings = true;
         MaterializedFrame baseFrame = RRuntime.createNonFunctionFrame().materialize();
         REnvironment.baseInitialize(baseFrame, globalFrame);
-        loadBase = FastROptions.LoadBase.getBooleanValue();
-        RBuiltinPackages.loadBase(baseFrame, loadBase);
+        RBuiltinPackages.loadBase(baseFrame);
         RGraphics.initialize();
-        if (loadBase) {
-            /*
-             * eval the system/site/user profiles. Experimentally GnuR does not report warnings
-             * during system profile evaluation, but does for the site/user profiles.
-             */
-            try {
-                parseAndEval(RProfile.systemProfile(), baseFrame, false);
-            } catch (ParseException e) {
-                throw new RInternalError(e, "error while parsing system profile from %s", RProfile.systemProfile().getName());
-            }
-            checkAndRunStartupFunction(".OptRequireMethods");
-
-            suppressWarnings = false;
-            Source siteProfile = context.stateRProfile.siteProfile();
-            if (siteProfile != null) {
-                try {
-                    parseAndEval(siteProfile, baseFrame, false);
-                } catch (ParseException e) {
-                    throw new RInternalError(e, "error while parsing site profile from %s", siteProfile.getName());
-                }
-            }
-            Source userProfile = context.stateRProfile.userProfile();
-            if (userProfile != null) {
-                try {
-                    parseAndEval(userProfile, globalFrame, false);
-                } catch (ParseException e) {
-                    throw new RInternalError(e, "error while parsing user profile from %s", userProfile.getName());
-                }
-            }
-            if (!context.getOptions().getBoolean(RCmdOption.NO_RESTORE)) {
-                /*
-                 * TODO This is where we would load any saved user data
-                 */
-            }
-            checkAndRunStartupFunction(".First");
-            checkAndRunStartupFunction(".First.sys");
-            RBuiltinPackages.loadDefaultPackageOverrides();
+        /*
+         * eval the system/site/user profiles. Experimentally GnuR does not report warnings during
+         * system profile evaluation, but does for the site/user profiles.
+         */
+        try {
+            parseAndEval(RProfile.systemProfile(), baseFrame, false);
+        } catch (ParseException e) {
+            throw new RInternalError(e, "error while parsing system profile from %s", RProfile.systemProfile().getName());
         }
-        // Record a successful startup with RContext
+        checkAndRunStartupFunction(".OptRequireMethods");
+
+        suppressWarnings = false;
+        Source siteProfile = context.stateRProfile.siteProfile();
+        if (siteProfile != null) {
+            try {
+                parseAndEval(siteProfile, baseFrame, false);
+            } catch (ParseException e) {
+                throw new RInternalError(e, "error while parsing site profile from %s", siteProfile.getName());
+            }
+        }
+        Source userProfile = context.stateRProfile.userProfile();
+        if (userProfile != null) {
+            try {
+                parseAndEval(userProfile, globalFrame, false);
+            } catch (ParseException e) {
+                throw new RInternalError(e, "error while parsing user profile from %s", userProfile.getName());
+            }
+        }
+        if (!context.getOptions().getBoolean(RCmdOption.NO_RESTORE)) {
+            /*
+             * TODO This is where we would load any saved user data
+             */
+        }
+        checkAndRunStartupFunction(".First");
+        checkAndRunStartupFunction(".First.sys");
+        RBuiltinPackages.loadDefaultPackageOverrides();
     }
 
     private void checkAndRunStartupFunction(String name) {
@@ -544,7 +535,6 @@ final class REngine implements Engine {
     }
 
     private static final ArgumentsSignature PRINT_SIGNATURE = ArgumentsSignature.get("x", "...");
-    private static final ArgumentsSignature PRINT_INTERNAL_SIGNATURE = ArgumentsSignature.get("x");
 
     @TruffleBoundary
     public void printResult(Object result) {
@@ -555,19 +545,14 @@ final class REngine implements Engine {
             RContext.getInstance().getConsoleHandler().println(toString(result));
         } else {
             Object resultValue = evaluatePromise(result);
-            if (loadBase) {
-                Object printMethod = REnvironment.globalEnv().findFunction("print");
-                RFunction function = (RFunction) evaluatePromise(printMethod);
-                if (FastROptions.NewStateTransition.getBooleanValue() && resultValue instanceof RShareable && !((RShareable) resultValue).isSharedPermanent()) {
-                    ((RShareable) resultValue).incRefCount();
-                }
-                function.getTarget().call(RArguments.create(function, null, REnvironment.globalEnv().getFrame(), 1, new Object[]{resultValue, RMissing.instance}, PRINT_SIGNATURE, null));
-                if (FastROptions.NewStateTransition.getBooleanValue() && resultValue instanceof RShareable && !((RShareable) resultValue).isSharedPermanent()) {
-                    ((RShareable) resultValue).decRefCount();
-                }
-            } else {
-                // we only have the .Internal print.default method available
-                getPrintInternal().getTarget().call(RArguments.create(printInternal, null, REnvironment.globalEnv().getFrame(), 1, new Object[]{resultValue}, PRINT_INTERNAL_SIGNATURE, null));
+            Object printMethod = REnvironment.globalEnv().findFunction("print");
+            RFunction function = (RFunction) evaluatePromise(printMethod);
+            if (FastROptions.NewStateTransition.getBooleanValue() && resultValue instanceof RShareable && !((RShareable) resultValue).isSharedPermanent()) {
+                ((RShareable) resultValue).incRefCount();
+            }
+            function.getTarget().call(RArguments.create(function, null, REnvironment.globalEnv().getFrame(), 1, new Object[]{resultValue, RMissing.instance}, PRINT_SIGNATURE, null));
+            if (FastROptions.NewStateTransition.getBooleanValue() && resultValue instanceof RShareable && !((RShareable) resultValue).isSharedPermanent()) {
+                ((RShareable) resultValue).decRefCount();
             }
         }
     }
