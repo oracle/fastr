@@ -150,7 +150,7 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI {
     @Override
     public CallRFFI getCallRFFI() {
         if (callRFFI == null) {
-            callRFFI = new CallRFFIWithJNI();
+            callRFFI = new JNI_CallRFFI();
         }
         return callRFFI;
     }

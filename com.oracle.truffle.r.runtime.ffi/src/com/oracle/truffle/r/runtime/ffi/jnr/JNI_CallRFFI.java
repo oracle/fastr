@@ -26,18 +26,12 @@ import java.util.concurrent.Semaphore;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.FastROptions;
-import com.oracle.truffle.r.runtime.REnvVars;
 import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RMissing;
-import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
-import com.oracle.truffle.r.runtime.data.RUnboundValue;
-import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.ffi.CallRFFI;
 import com.oracle.truffle.r.runtime.ffi.DLL;
+import com.oracle.truffle.r.runtime.ffi.RVariables;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLException;
 import com.oracle.truffle.r.runtime.ffi.LibPaths;
 
@@ -49,75 +43,13 @@ import com.oracle.truffle.r.runtime.ffi.LibPaths;
  *
  * The JNI layer is not (currently) MT safe, so all calls are single threaded.
  */
-public class CallRFFIWithJNI implements CallRFFI {
+public class JNI_CallRFFI implements CallRFFI {
 
-    CallRFFIWithJNI() {
+    JNI_CallRFFI() {
         loadLibrary();
     }
 
     private static final boolean ForceRTLDGlobal = false;
-
-    public enum RVariables {
-        R_Home(REnvVars.rHome()),
-        R_TempDir("/tmp/R_TMP"), // TODO: supply proper temp directory
-        R_NilValue(RNull.instance),
-        R_UnboundValue(RUnboundValue.instance),
-        R_MissingArg(RMissing.instance),
-        R_GlobalEnv(null),
-        R_EmptyEnv(REnvironment.emptyEnv()),
-        R_BaseEnv(null),
-        R_BaseNamespace(null),
-        R_NamespaceRegistry(null),
-        R_Srcref(null),
-        R_Bracket2Symbol(RDataFactory.createSymbol("[[")),
-        R_BracketSymbol(RDataFactory.createSymbol("[")),
-        R_BraceSymbol(RDataFactory.createSymbol("{")),
-        R_ClassSymbol(RDataFactory.createSymbol("class")),
-        R_DeviceSymbol(RDataFactory.createSymbol(".Device")),
-        R_DevicesSymbol(RDataFactory.createSymbol(".Devices")),
-        R_DimNamesSymbol(RDataFactory.createSymbol("dimnames")),
-        R_DimSymbol(RDataFactory.createSymbol("dim")),
-        R_DollarSymbol(RDataFactory.createSymbol("$")),
-        R_DotsSymbol(RDataFactory.createSymbol("...")),
-        R_DropSymbol(RDataFactory.createSymbol("drop")),
-        R_LastvalueSymbol(RDataFactory.createSymbol(".Last.value")),
-        R_LevelsSymbol(RDataFactory.createSymbol("levels")),
-        R_ModeSymbol(RDataFactory.createSymbol("mode")),
-        R_NameSymbol(RDataFactory.createSymbol("name")),
-        R_NamesSymbol(RDataFactory.createSymbol("names")),
-        R_NaRmSymbol(RDataFactory.createSymbol("na.rm")),
-        R_PackageSymbol(RDataFactory.createSymbol("package")),
-        R_QuoteSymbol(RDataFactory.createSymbol("quote")),
-        R_RowNamesSymbol(RDataFactory.createSymbol("row.names")),
-        R_SeedsSymbol(RDataFactory.createSymbol(".Random.seed")),
-        R_SourceSymbol(RDataFactory.createSymbol("source")),
-        R_TspSymbol(RDataFactory.createSymbol("tsp")),
-        R_dot_defined(RDataFactory.createSymbol(".defined")),
-        R_dot_Method(RDataFactory.createSymbol(".Method")),
-        R_dot_target(RDataFactory.createSymbol(".target")),
-        R_SrcrefSymbol(RDataFactory.createSymbol("srcref")),
-        R_SrcfileSymbol(RDataFactory.createSymbol("srcfile")),
-        R_NaString(RDataFactory.createStringVectorFromScalar(RRuntime.STRING_NA)),
-        R_NaN(Double.NaN),
-        R_PosInf(Double.POSITIVE_INFINITY),
-        R_NegInf(Double.NEGATIVE_INFINITY),
-        R_NaReal(RRuntime.DOUBLE_NA),
-        R_NaInt(RRuntime.INT_NA),
-        R_BlankString(RDataFactory.createStringVectorFromScalar("")),
-        R_TrueValue(RRuntime.LOGICAL_TRUE),
-        R_FalseValue(RRuntime.LOGICAL_FALSE),
-        R_LogicalNAValue(RRuntime.LOGICAL_NA);
-
-        private final Object value;
-
-        RVariables(Object value) {
-            this.value = value;
-        }
-
-        public Object getValue() {
-            return value;
-        }
-    }
 
     /**
      * Load the {@code librfficall} library. N.B. this library defines some non-JNI global symbols
