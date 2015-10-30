@@ -573,23 +573,6 @@ final class REngine implements Engine {
         return value instanceof RPromise ? PromiseHelperNode.evaluateSlowPath(null, (RPromise) value) : value;
     }
 
-    // Only relevant when running without base package loaded
-    private static final Source INTERNAL_PRINT = Source.fromText(".print.internal <- function(x) { .Internal(print.default(x, NULL, TRUE, NULL, NULL, FALSE, NULL, TRUE))}", "<internal_print>");
-    @CompilationFinal private static RFunction printInternal;
-
-    private RFunction getPrintInternal() {
-        if (printInternal == null) {
-            try {
-                RExpression funDef = parse(INTERNAL_PRINT);
-                printInternal = (RFunction) eval(funDef, REnvironment.baseEnv().getFrame());
-            } catch (Engine.ParseException ex) {
-                Utils.fail("failed to parse print.internal");
-            }
-        }
-        return printInternal;
-
-    }
-
     public Class<? extends TruffleLanguage<RContext>> getTruffleLanguage() {
         return TruffleRLanguage.class;
     }
