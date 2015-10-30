@@ -30,9 +30,9 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RUnboundValue;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
-public enum RVariables {
+public enum RFFIVariables {
     R_Home(REnvVars.rHome()),
-    R_TempDir("/tmp/R_TMP"), // TODO: supply proper temp directory
+    R_TempDir(null), // Set later with setTmpDir
     R_NilValue(RNull.instance),
     R_UnboundValue(RUnboundValue.instance),
     R_MissingArg(RMissing.instance),
@@ -81,13 +81,17 @@ public enum RVariables {
     R_FalseValue(RRuntime.LOGICAL_FALSE),
     R_LogicalNAValue(RRuntime.LOGICAL_NA);
 
-    private final Object value;
+    private Object value;
 
-    RVariables(Object value) {
+    RFFIVariables(Object value) {
         this.value = value;
     }
 
     public Object getValue() {
         return value;
+    }
+
+    public static void setTempDir(String tempDir) {
+        R_TempDir.value = tempDir;
     }
 }

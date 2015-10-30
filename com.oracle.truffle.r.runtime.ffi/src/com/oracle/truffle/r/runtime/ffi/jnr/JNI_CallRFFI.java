@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.runtime.ffi.jnr;
 
+import static com.oracle.truffle.r.runtime.ffi.RFFIUtils.traceCall;
+
 import java.util.concurrent.Semaphore;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -31,7 +33,7 @@ import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.ffi.CallRFFI;
 import com.oracle.truffle.r.runtime.ffi.DLL;
-import com.oracle.truffle.r.runtime.ffi.RVariables;
+import com.oracle.truffle.r.runtime.ffi.RFFIVariables;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLException;
 import com.oracle.truffle.r.runtime.ffi.LibPaths;
 
@@ -67,17 +69,14 @@ public class JNI_CallRFFI implements CallRFFI {
             throw new RInternalError(ex, "error while loading " + librffiPath);
         }
         System.load(librffiPath);
-        initialize(RVariables.values());
+        traceCall("initialize");
+        initialize(RFFIVariables.values());
     }
 
     private static final Semaphore inCritical = new Semaphore(1, false);
 
     public Object invokeCall(long address, String name, Object[] args) {
-        if (FastROptions.TraceNativeCalls.getBooleanValue()) {
-            System.out.print("calling " + name + ": ");
-            printArgs(args);
-            System.out.println();
-        }
+        traceCall(name, args);
         try {
             inCritical.acquire();
             switch (args.length) {
@@ -103,22 +102,9 @@ public class JNI_CallRFFI implements CallRFFI {
         }
     }
 
-    private void printArgs(Object[] args) {
-        for (Object arg : args) {
-            System.out.print(" ");
-            System.out.print(arg == null ? "" : arg.getClass().getSimpleName());
-            if (arg instanceof RPairList) {
-                System.out.print("[");
-                printArgs(((RPairList) arg).toRList().getDataCopy());
-                System.out.print("]");
-            }
-            if (!(arg instanceof RTypedValue)) {
-                System.out.print("(" + arg + ")");
-            }
-        }
-    }
+    private static native void initialize(RFFIVariables[] variables);
 
-    private static native void initialize(RVariables[] variables);
+    private static native void nativeSetTempDir(String tempDir);
 
     private static native Object call(long address, Object[] args);
 
@@ -143,11 +129,7 @@ public class JNI_CallRFFI implements CallRFFI {
     private static native Object call9(long address, Object arg1, Object arg2, Object arg3, Object arg4, Object arg5, Object arg6, Object arg7, Object arg8, Object arg9);
 
     public void invokeVoidCall(long address, String name, Object[] args) {
-        if (FastROptions.TraceNativeCalls.getBooleanValue()) {
-            System.out.print("void-calling " + name + ": ");
-            printArgs(args);
-            System.out.println();
-        }
+        traceCall(name, args);
         try {
             inCritical.acquire();
             switch (args.length) {
@@ -164,5 +146,17 @@ public class JNI_CallRFFI implements CallRFFI {
     }
 
     private static native void callVoid1(long address, Object arg1);
+
+    public void setTempDir(String tempDir) {
+        traceCall("setTempDir", tempDir);
+        try {
+            inCritical.acquire();
+            RFFIVariables.setTempDir(tempDir);
+            nativeSetTempDir(tempDir);
+        } catch (InterruptedException ex) {
+        } finally {
+            inCritical.release();
+        }
+    }
 
 }

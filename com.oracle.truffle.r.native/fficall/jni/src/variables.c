@@ -171,8 +171,6 @@ void init_variables(JNIEnv *env, jobjectArray initialValues) {
 		if (value != NULL) {
 			if (strcmp(nameChars, "R_Home") == 0) {
 				R_Home = (*env)->GetStringUTFChars(env, value, NULL);
-			} else if (strcmp(nameChars, "R_TempDir") == 0) {
-				R_TempDir = (*env)->GetStringUTFChars(env, value, NULL);
 			} else if (strcmp(nameChars, "R_NaN") == 0) {
 				R_NaN = (*env)->CallDoubleMethod(env, value, doubleValueMethodID);
 			} else if (strcmp(nameChars, "R_PosInf") == 0) {
@@ -272,5 +270,9 @@ void init_variables(JNIEnv *env, jobjectArray initialValues) {
 			}
 		}
 	}
+}
+
+void setTempDir(JNIEnv *env, jstring tempDir) {
+	R_TempDir = (*env)->GetStringUTFChars(env, tempDir, NULL);
 }
 

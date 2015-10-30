@@ -80,6 +80,8 @@ void init_vectoraccess(JNIEnv *env);
 void init_listaccess(JNIEnv *env);
 void init_utils(JNIEnv *env);
 
+void setTempDir(JNIEnv *, jstring tempDir);
+
 extern jclass RDataFactoryClass;
 extern jclass CallRFFIHelperClass;
 extern jclass RRuntimeClass;

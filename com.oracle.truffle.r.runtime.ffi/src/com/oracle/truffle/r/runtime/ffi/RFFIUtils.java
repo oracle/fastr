@@ -20,28 +20,54 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.runtime.ffi.jnr;
+package com.oracle.truffle.r.runtime.ffi;
 
 import java.io.IOException;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.r.runtime.FastROptions;
+import com.oracle.truffle.r.runtime.data.RPairList;
+import com.oracle.truffle.r.runtime.data.RTypedValue;
 
 public class RFFIUtils {
-    static byte[] wrapChar(char v) {
+    public static byte[] wrapChar(char v) {
         return new byte[]{(byte) v};
     }
 
-    static int[] wrapInt(int v) {
+    public static int[] wrapInt(int v) {
         return new int[]{v};
     }
 
-    static double[] wrapDouble(double v) {
+    public static double[] wrapDouble(double v) {
         return new double[]{v};
     }
 
     @TruffleBoundary
-    static IOException ioex(String errMsg) throws IOException {
+    public static IOException ioex(String errMsg) throws IOException {
         throw new IOException(errMsg);
+    }
+
+    public static void traceCall(String name, Object... args) {
+        if (FastROptions.TraceNativeCalls.getBooleanValue()) {
+            System.out.print("CallRFFI " + name + ": ");
+            printArgs(args);
+            System.out.println();
+        }
+    }
+
+    private static void printArgs(Object[] args) {
+        for (Object arg : args) {
+            System.out.print(" ");
+            System.out.print(arg == null ? "" : arg.getClass().getSimpleName());
+            if (arg instanceof RPairList) {
+                System.out.print("[");
+                printArgs(((RPairList) arg).toRList().getDataCopy());
+                System.out.print("]");
+            }
+            if (!(arg instanceof RTypedValue)) {
+                System.out.print("(" + arg + ")");
+            }
+        }
     }
 
 }

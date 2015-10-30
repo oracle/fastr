@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.ffi.jnr;
 
-import static com.oracle.truffle.r.runtime.ffi.jnr.RFFIUtils.ioex;
+import static com.oracle.truffle.r.runtime.ffi.RFFIUtils.ioex;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;

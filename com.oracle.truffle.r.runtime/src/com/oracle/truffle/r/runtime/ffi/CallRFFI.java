@@ -41,4 +41,10 @@ public interface CallRFFI {
      * Variant that does not return a result (primarily for library "init" methods).
      */
     void invokeVoidCall(long address, String name, Object[] args);
+
+    /**
+     * This interface is initialized very early, before the {@code tempDir} is established. This
+     * call sets the value.
+     */
+    void setTempDir(String tempDir);
 }

@@ -43,6 +43,11 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1CallRFFI_initialize(JNIEnv *env, 
 	init_listaccess(env);
 }
 
+JNIEXPORT void JNICALL
+Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1CallRFFI_nativeSetTempDir(JNIEnv *env, jclass c, jstring tempDir) {
+	setTempDir(env, tempDir);
+}
+
 static jmp_buf error_jmpbuf;
 
 // Boilerplate methods for the actual calls
