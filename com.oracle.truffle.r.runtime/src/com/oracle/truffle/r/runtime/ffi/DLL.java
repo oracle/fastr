@@ -99,9 +99,10 @@ public class DLL {
         public final String name;
         public final String path;
         public final Object handle;
-        private boolean dynamicLookup;
-        private boolean forceSymbols;
         private DotSymbol[][] nativeSymbols = new DotSymbol[NativeSymbolType.values().length][];
+        // accessed in DLL_PkgInit
+        boolean dynamicLookup;
+        boolean forceSymbols;
 
         DLLInfo(String name, String path, boolean dynamicLookup, Object handle) {
             this.id = ID.getAndIncrement();
@@ -111,12 +112,28 @@ public class DLL {
             this.handle = handle;
         }
 
-        private void setNativeSymbols(int nstOrd, DotSymbol[] symbols) {
+        public void setNativeSymbols(int nstOrd, DotSymbol[] symbols) {
             nativeSymbols[nstOrd] = symbols;
         }
 
         public DotSymbol[] getNativeSymbols(NativeSymbolType nst) {
             return nativeSymbols[nst.ordinal()];
+        }
+
+        public void setDynamicLookup(boolean dynamicLookup) {
+            this.dynamicLookup = dynamicLookup;
+        }
+
+        public boolean getDynamicLookup() {
+            return dynamicLookup;
+        }
+
+        public void setForceSymbols(boolean forceSymbols) {
+            this.forceSymbols = forceSymbols;
+        }
+
+        public boolean getForceSymbols() {
+            return forceSymbols;
         }
 
         /**
@@ -406,54 +423,6 @@ public class DLL {
             listCritical.release();
         }
         return null;
-    }
-
-    /*
-     * Methods called from native code during library loading. These methods are single threaded by
-     * virtue of the Semaphore in loadPackageDLL.
-     */
-
-    /**
-     * Upcall from native to set the routines of type denoted by {@code nstOrd}.
-     */
-    public static void registerRoutines(DLLInfo dllInfo, int nstOrd, int num, long routines) {
-        DotSymbol[] array = new DotSymbol[num];
-        for (int i = 0; i < num; i++) {
-            array[i] = setSymbol(nstOrd, routines, i);
-        }
-        dllInfo.setNativeSymbols(nstOrd, array);
-    }
-
-    /**
-     * Upcall from native to create a {@link DotSymbol} value.
-     */
-    public static DotSymbol setDotSymbolValues(String name, long fun, int numArgs) {
-        return new DotSymbol(name, fun, numArgs);
-    }
-
-    private static native DotSymbol setSymbol(int nstOrd, long routines, int index);
-
-    public static int useDynamicSymbols(DLLInfo dllInfo, int value) {
-        int old = dllInfo.dynamicLookup ? 1 : 0;
-        dllInfo.dynamicLookup = value == 0 ? false : true;
-        return old;
-    }
-
-    public static int forceSymbols(DLLInfo dllInfo, int value) {
-        int old = dllInfo.forceSymbols ? 1 : 0;
-        dllInfo.forceSymbols = value == 0 ? false : true;
-        return old;
-    }
-
-    @SuppressWarnings("unused")
-    public static void registerCCallable(String pkgName, String functionName, long address) {
-        // TBD
-    }
-
-    @SuppressWarnings("unused")
-    public static long getCCallable(String pkgName, String functionName) {
-        // TBD
-        throw RInternalError.unimplemented();
     }
 
 }

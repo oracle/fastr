@@ -100,6 +100,10 @@ public abstract class RFFIFactory {
         throw missing("Zip");
     }
 
+    public PkgInitRFFI getPkgInitRFFI() {
+        throw missing("PkgInit");
+    }
+
     private static RuntimeException missing(String ffi) throws RuntimeException {
         throw Utils.fail(ffi + " FFI not implemented");
     }
