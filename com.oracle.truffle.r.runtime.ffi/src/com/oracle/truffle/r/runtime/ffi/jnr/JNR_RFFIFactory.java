@@ -151,16 +151,8 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI {
     public CallRFFI getCallRFFI() {
         if (callRFFI == null) {
             callRFFI = new JNI_CallRFFI();
-            pkgInitRFFI = new JNI_PkgInit();
         }
         return callRFFI;
-    }
-
-    private PkgInitRFFI pkgInitRFFI;
-
-    @Override
-    public PkgInitRFFI getPkgInitRFFI() {
-        return pkgInitRFFI;
     }
 
     private ZipRFFI zipRFFI;

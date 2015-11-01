@@ -22,20 +22,17 @@
  */
 package com.oracle.truffle.r.runtime.ffi.jnr;
 
+import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
 import com.oracle.truffle.r.runtime.ffi.DLL.DotSymbol;
-import com.oracle.truffle.r.runtime.ffi.DLL_PkgInit;
-import com.oracle.truffle.r.runtime.ffi.PkgInitRFFI;
-import com.oracle.truffle.r.runtime.ffi.generic.Generic_PkgInit;
 
-public class JNI_PkgInit extends Generic_PkgInit implements PkgInitRFFI {
+/**
+ * The JNI-based implementation of the package init code. This is only up-called from JNI.
+ */
+final class JNI_PkgInit {
 
-    JNI_PkgInit() {
-        DLL_PkgInit.initialize(this);
-    }
-
-    @Override
-    public void registerRoutines(DLLInfo dllInfo, int nstOrd, int num, long routines) {
+    private static void registerRoutines(DLLInfo dllInfo, int nstOrd, int num, long routines) {
         DotSymbol[] array = new DotSymbol[num];
         for (int i = 0; i < num; i++) {
             array[i] = setSymbol(nstOrd, routines, i);
@@ -43,13 +40,32 @@ public class JNI_PkgInit extends Generic_PkgInit implements PkgInitRFFI {
         dllInfo.setNativeSymbols(nstOrd, array);
     }
 
+    @SuppressWarnings("unused")
+    private static void registerCCallable(String pkgName, String functionName, long address) {
+        // TBD
+    }
+
+    @SuppressWarnings("unused")
+    private static long getCCallable(String pkgName, String functionName) {
+        // TBD
+        throw RInternalError.unimplemented();
+    }
+
     /**
      * Upcall from native to create a {@link DotSymbol} value.
      */
-    public static DotSymbol setDotSymbolValues(String name, long fun, int numArgs) {
+    private static DotSymbol setDotSymbolValues(String name, long fun, int numArgs) {
         return new DotSymbol(name, fun, numArgs);
     }
 
     private static native DotSymbol setSymbol(int nstOrd, long routines, int index);
+
+    public static int useDynamicSymbols(DLLInfo dllInfo, int value) {
+        return DLL.useDynamicSymbols(dllInfo, value);
+    }
+
+    public static int forceSymbols(DLLInfo dllInfo, int value) {
+        return DLL.forceSymbols(dllInfo, value);
+    }
 
 }

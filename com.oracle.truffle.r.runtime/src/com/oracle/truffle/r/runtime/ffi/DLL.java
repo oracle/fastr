@@ -99,10 +99,9 @@ public class DLL {
         public final String name;
         public final String path;
         public final Object handle;
+        private boolean dynamicLookup;
+        private boolean forceSymbols;
         private DotSymbol[][] nativeSymbols = new DotSymbol[NativeSymbolType.values().length][];
-        // accessed in DLL_PkgInit
-        boolean dynamicLookup;
-        boolean forceSymbols;
 
         DLLInfo(String name, String path, boolean dynamicLookup, Object handle) {
             this.id = ID.getAndIncrement();
@@ -118,22 +117,6 @@ public class DLL {
 
         public DotSymbol[] getNativeSymbols(NativeSymbolType nst) {
             return nativeSymbols[nst.ordinal()];
-        }
-
-        public void setDynamicLookup(boolean dynamicLookup) {
-            this.dynamicLookup = dynamicLookup;
-        }
-
-        public boolean getDynamicLookup() {
-            return dynamicLookup;
-        }
-
-        public void setForceSymbols(boolean forceSymbols) {
-            this.forceSymbols = forceSymbols;
-        }
-
-        public boolean getForceSymbols() {
-            return forceSymbols;
         }
 
         /**
@@ -423,6 +406,23 @@ public class DLL {
             listCritical.release();
         }
         return null;
+    }
+
+    /*
+     * Methods called from native code during library loading. These methods are single threaded by
+     * virtue of the Semaphore in loadPackageDLL.
+     */
+
+    public static int useDynamicSymbols(DLLInfo dllInfo, int value) {
+        int old = dllInfo.dynamicLookup ? 1 : 0;
+        dllInfo.dynamicLookup = value == 0 ? false : true;
+        return old;
+    }
+
+    public static int forceSymbols(DLLInfo dllInfo, int value) {
+        int old = dllInfo.forceSymbols ? 1 : 0;
+        dllInfo.forceSymbols = value == 0 ? false : true;
+        return old;
     }
 
 }

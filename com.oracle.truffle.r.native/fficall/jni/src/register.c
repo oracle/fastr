@@ -14,7 +14,7 @@
 
 // Registering routines from loaded shared libraries
 
-static jclass DLL_PkgInitClass;
+static jclass DLLClass;
 static jclass JNI_PkgInitClass;
 static jclass DotSymbolClass;
 
@@ -25,14 +25,14 @@ static jmethodID forceSymbolsID;
 static jmethodID setDotSymbolValuesID;
 
 void init_register(JNIEnv *env) {
-    DLL_PkgInitClass = checkFindClass(env, "com/oracle/truffle/r/runtime/ffi/DLL_PkgInit");
+    DLLClass = checkFindClass(env, "com/oracle/truffle/r/runtime/ffi/DLL");
     JNI_PkgInitClass = checkFindClass(env, "com/oracle/truffle/r/runtime/ffi/jnr/JNI_PkgInit");
     DotSymbolClass = checkFindClass(env, "com/oracle/truffle/r/runtime/ffi/DLL$DotSymbol");
 
-    registerRoutinesID = checkGetMethodID(env, DLL_PkgInitClass, "registerRoutines", "(Lcom/oracle/truffle/r/runtime/ffi/DLL$DLLInfo;IIJ)V", 1);
-    registerCCallableID = checkGetMethodID(env, DLL_PkgInitClass, "registerCCallable", "(Ljava/lang/String;Ljava/lang/String;J)V", 1);
-    useDynamicSymbolsID = checkGetMethodID(env, DLL_PkgInitClass, "useDynamicSymbols", "(Lcom/oracle/truffle/r/runtime/ffi/DLL$DLLInfo;I)I", 1);
-    forceSymbolsID = checkGetMethodID(env, DLL_PkgInitClass, "forceSymbols", "(Lcom/oracle/truffle/r/runtime/ffi/DLL$DLLInfo;I)I", 1);
+    registerRoutinesID = checkGetMethodID(env, JNI_PkgInitClass, "registerRoutines", "(Lcom/oracle/truffle/r/runtime/ffi/DLL$DLLInfo;IIJ)V", 1);
+    registerCCallableID = checkGetMethodID(env, JNI_PkgInitClass, "registerCCallable", "(Ljava/lang/String;Ljava/lang/String;J)V", 1);
+    useDynamicSymbolsID = checkGetMethodID(env, JNI_PkgInitClass, "useDynamicSymbols", "(Lcom/oracle/truffle/r/runtime/ffi/DLL$DLLInfo;I)I", 1);
+    forceSymbolsID = checkGetMethodID(env, JNI_PkgInitClass, "forceSymbols", "(Lcom/oracle/truffle/r/runtime/ffi/DLL$DLLInfo;I)I", 1);
     setDotSymbolValuesID = checkGetMethodID(env, JNI_PkgInitClass, "setDotSymbolValues", "(Ljava/lang/String;JI)Lcom/oracle/truffle/r/runtime/ffi/DLL$DotSymbol;", 1);
 }
 
@@ -53,19 +53,19 @@ R_registerRoutines(DllInfo *info, const R_CMethodDef * const croutines,
 	int num;
 	if (croutines) {
 		for(num = 0; croutines[num].name != NULL; num++) {;}
-		(*thisenv)->CallStaticVoidMethod(thisenv, DLL_PkgInitClass, registerRoutinesID, info, C_NATIVE_TYPE, num, croutines);
+		(*thisenv)->CallStaticVoidMethod(thisenv, JNI_PkgInitClass, registerRoutinesID, info, C_NATIVE_TYPE, num, croutines);
 	}
 	if (callRoutines) {
 		for(num = 0; callRoutines[num].name != NULL; num++) {;}
-		(*thisenv)->CallStaticVoidMethod(thisenv, DLL_PkgInitClass, registerRoutinesID, info, CALL_NATIVE_TYPE, num, callRoutines);
+		(*thisenv)->CallStaticVoidMethod(thisenv, JNI_PkgInitClass, registerRoutinesID, info, CALL_NATIVE_TYPE, num, callRoutines);
 	}
 	if (fortranRoutines) {
 		for(num = 0; fortranRoutines[num].name != NULL; num++) {;}
-		(*thisenv)->CallStaticVoidMethod(thisenv, DLL_PkgInitClass, registerRoutinesID, info, FORTRAN_NATIVE_TYPE, num, fortranRoutines);
+		(*thisenv)->CallStaticVoidMethod(thisenv, JNI_PkgInitClass, registerRoutinesID, info, FORTRAN_NATIVE_TYPE, num, fortranRoutines);
 	}
 	if (externalRoutines) {
 		for(num = 0; externalRoutines[num].name != NULL; num++) {;}
-		(*thisenv)->CallStaticVoidMethod(thisenv, DLL_PkgInitClass, registerRoutinesID, info, EXTERNAL_NATIVE_TYPE, num, externalRoutines);
+		(*thisenv)->CallStaticVoidMethod(thisenv, JNI_PkgInitClass, registerRoutinesID, info, EXTERNAL_NATIVE_TYPE, num, externalRoutines);
 	}
     return 1;
 }
@@ -75,7 +75,7 @@ void R_RegisterCCallable(const char *package, const char *name, DL_FUNC fptr) {
 //	printf("pkgname %s, name %s\n", package, name);
 	jstring packageString = (*thisenv)->NewStringUTF(thisenv, package);
 	jstring nameString = (*thisenv)->NewStringUTF(thisenv, name);
-	(*thisenv)->CallStaticVoidMethod(thisenv, DLL_PkgInitClass, registerCCallableID, packageString, nameString, fptr);
+	(*thisenv)->CallStaticVoidMethod(thisenv, JNI_PkgInitClass, registerCCallableID, packageString, nameString, fptr);
 }
 
 JNIEXPORT jobject JNICALL
@@ -123,11 +123,11 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1PkgInit_setSymbol(JNIEnv *env, jc
 
 Rboolean R_useDynamicSymbols(DllInfo *dllInfo, Rboolean value) {
 	JNIEnv *thisenv = getEnv();
-	return (*thisenv)->CallStaticIntMethod(thisenv, DLL_PkgInitClass, useDynamicSymbolsID, dllInfo, value);
+	return (*thisenv)->CallStaticIntMethod(thisenv, JNI_PkgInitClass, useDynamicSymbolsID, dllInfo, value);
 }
 
 Rboolean R_forceSymbols(DllInfo *dllInfo, Rboolean value) {
 	JNIEnv *thisenv = getEnv();
-	return (*thisenv)->CallStaticIntMethod(thisenv, DLL_PkgInitClass, forceSymbolsID, dllInfo, value);
+	return (*thisenv)->CallStaticIntMethod(thisenv, JNI_PkgInitClass, forceSymbolsID, dllInfo, value);
 
 }
