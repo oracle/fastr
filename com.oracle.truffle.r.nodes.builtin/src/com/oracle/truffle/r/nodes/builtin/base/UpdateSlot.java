@@ -15,34 +15,44 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.DirectCallNode;
+import com.oracle.truffle.api.utilities.ConditionProfile;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.access.UpdateSlotNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
+import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode.ReadKind;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNodeGen;
 import com.oracle.truffle.r.nodes.function.RCallNode;
 import com.oracle.truffle.r.nodes.function.WrapArgumentNode;
+import com.oracle.truffle.r.nodes.function.signature.RArgumentsNode;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RAttributable;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RS4Object;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
-import com.oracle.truffle.r.runtime.env.REnvironment;
 
 @RBuiltin(name = "@<-", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", "", ""}, nonEvalArgs = 1)
 public abstract class UpdateSlot extends RBuiltinNode {
 
-    @CompilationFinal RFunction checkSlotAssign;
+    @CompilationFinal RFunction checkSlotAssignFunction;
     @Child private ClassHierarchyNode objClassHierarchy;
     @Child private ClassHierarchyNode valClassHierarchy;
     @Child UpdateSlotNode updateSlotNode = com.oracle.truffle.r.nodes.access.UpdateSlotNodeGen.create(null, null, null);
+    @Child ReadVariableNode checkAtAssignmentFind = ReadVariableNode.create("checkAtAssignment", RType.Function, ReadKind.Normal);
+    @Child DirectCallNode checkAtAssignmentCall;
+    @Child private RArgumentsNode argsNode = RArgumentsNode.create();
+    private final ConditionProfile cached = ConditionProfile.createBinaryProfile();
+    private final RCaller caller = RDataFactory.createCaller(this);
 
     protected String getName(Object nameObj) {
         if (nameObj instanceof RPromise) {
@@ -71,11 +81,10 @@ public abstract class UpdateSlot extends RBuiltinNode {
 
     private void checkSlotAssign(VirtualFrame frame, RAttributable object, String name, Object value) {
         // TODO: optimize using a mechanism similar to overrides?
-        if (checkSlotAssign == null) {
+        if (checkSlotAssignFunction == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            REnvironment methodsNamespace = REnvironment.getRegisteredNamespace("methods");
-            Object f = methodsNamespace.findFunction("checkAtAssignment");
-            checkSlotAssign = (RFunction) RContext.getRRuntimeASTAccess().forcePromise(f);
+            checkSlotAssignFunction = (RFunction) checkAtAssignmentFind.execute(frame);
+            checkAtAssignmentCall = Truffle.getRuntime().createDirectCallNode(checkSlotAssignFunction.getTarget());
             assert objClassHierarchy == null && valClassHierarchy == null;
             objClassHierarchy = insert(ClassHierarchyNodeGen.create(true));
             valClassHierarchy = insert(ClassHierarchyNodeGen.create(true));
@@ -83,7 +92,15 @@ public abstract class UpdateSlot extends RBuiltinNode {
         }
         RStringVector objClass = objClassHierarchy.execute(object);
         RStringVector valClass = objClassHierarchy.execute(value);
-        RContext.getEngine().evalFunction(checkSlotAssign, frame.materialize(), objClass, name, valClass);
+        RFunction currentFunction = (RFunction) checkAtAssignmentFind.execute(frame);
+        if (cached.profile(currentFunction == checkSlotAssignFunction)) {
+            Object[] args = argsNode.execute(checkSlotAssignFunction, caller, null, RArguments.getDepth(frame) + 1, new Object[]{objClass, name, valClass},
+                            ArgumentsSignature.get("cl", "name", "valueClass"), null);
+            checkAtAssignmentCall.call(frame, args);
+        } else {
+            // slow path
+            RContext.getEngine().evalFunction(checkSlotAssignFunction, frame.materialize(), objClass, name, valClass);
+        }
     }
 
     @Specialization
