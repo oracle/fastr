@@ -141,7 +141,6 @@ public class RRuntime {
 
     public static final String NULL = "NULL";
     public static final String UNBOUND = "UNBOUND";
-    public static final RStringVector NULL_STR_VECTOR = RDataFactory.createEmptyStringVector();
 
     @CompilationFinal private static final String[] numberStringCache = new String[4096];
     private static final int MIN_CACHED_NUMBER = -numberStringCache.length / 2;

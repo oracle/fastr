@@ -78,11 +78,7 @@ public abstract class AccessSlotNode extends RNode {
                 throw RError.error(this, RError.Message.SLOT_NONE, name, classAttr.getLength() == 0 ? RRuntime.STRING_NA : classAttr.getDataAt(0));
             }
         }
-        if (nullSlot.profile(value == RRuntime.NULL_STR_VECTOR)) {
-            return RNull.instance;
-        } else {
-            return value;
-        }
+        return value;
     }
 
     @Specialization(guards = {"object.isS4()", "name == cachedName"})

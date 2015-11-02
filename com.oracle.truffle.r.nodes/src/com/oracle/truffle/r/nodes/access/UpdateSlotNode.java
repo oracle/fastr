@@ -35,41 +35,29 @@ public abstract class UpdateSlotNode extends RNode {
         return PutAttributeNodeGen.create(name);
     }
 
-    private static Object getActualValue(Object value) {
-        if (value == RNull.instance) {
-            return RRuntime.NULL_STR_VECTOR;
-        } else {
-            return value;
-        }
-    }
-
     @SuppressWarnings("unused")
     @Specialization(guards = "name == cachedName")
     protected Object updateSlotS4Cached(RS4Object object, String name, Object value, @Cached("name") String cachedName, @Cached("createAttrUpdate(cachedName)") PutAttributeNode attributeUpdate) {
-        Object actualValue = getActualValue(value);
-        attributeUpdate.execute(object.initAttributes(), actualValue);
+        attributeUpdate.execute(object.initAttributes(), value);
         return object;
     }
 
     @Specialization(contains = "updateSlotS4Cached")
     protected Object updateSlotS4(RS4Object object, String name, Object value) {
-        Object actualValue = getActualValue(value);
-        object.setAttr(name.intern(), actualValue);
+        object.setAttr(name.intern(), value);
         return object;
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = "name == cachedName")
     protected Object updateSlotCached(RAbstractContainer object, String name, Object value, @Cached("name") String cachedName, @Cached("createAttrUpdate(cachedName)") PutAttributeNode attributeUpdate) {
-        Object actualValue = getActualValue(value);
-        attributeUpdate.execute(object.initAttributes(), actualValue);
+        attributeUpdate.execute(object.initAttributes(), value);
         return object;
     }
 
     @Specialization(contains = "updateSlotCached")
     protected Object updateSlot(RAbstractContainer object, String name, Object value) {
-        Object actualValue = getActualValue(value);
-        object.setAttr(name.intern(), actualValue);
+        object.setAttr(name.intern(), value);
         return object;
     }
 
