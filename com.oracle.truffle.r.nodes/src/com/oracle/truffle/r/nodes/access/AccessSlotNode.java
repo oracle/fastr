@@ -45,27 +45,6 @@ public abstract class AccessSlotNode extends RNode {
         return AttributeAccessNodeGen.create(name);
     }
 
-    protected String getName(Object nameObj) {
-        if (nameObj instanceof RPromise) {
-            Object rep = ((RPromise) nameObj).getRep();
-            if (rep instanceof WrapArgumentNode) {
-                rep = ((WrapArgumentNode) rep).getOperand();
-            }
-            if (rep instanceof ConstantNode) {
-                Object val = ((ConstantNode) rep).getValue();
-                if (val instanceof String) {
-                    return (String) val;
-                }
-                if (val instanceof RSymbol) {
-                    return ((RSymbol) val).getName();
-                }
-            } else if (rep instanceof ReadVariableNode) {
-                return ((ReadVariableNode) rep).getIdentifier();
-            }
-        }
-        throw RError.error(this, RError.Message.GENERIC, "invalid type or length for slot name");
-    }
-
     private Object getSlotS4Internal(RS4Object object, String name, Object value) {
         if (value == null) {
             if (name == RRuntime.DOT_S3_CLASS) {
