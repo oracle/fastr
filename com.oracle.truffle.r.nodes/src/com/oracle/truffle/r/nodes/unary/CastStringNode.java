@@ -28,9 +28,7 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
 @NodeField(name = "emptyVectorConvertedToNull", type = boolean.class)
-public abstract class CastStringNode extends CastBaseNode {
-
-    @Child private ToStringNode toString = ToStringNodeGen.create();
+public abstract class CastStringNode extends CastStringBaseNode {
 
     public abstract Object executeString(int o);
 
@@ -45,40 +43,6 @@ public abstract class CastStringNode extends CastBaseNode {
     @Specialization
     protected RNull doNull(@SuppressWarnings("unused") RNull operand) {
         return RNull.instance;
-    }
-
-    @Specialization
-    protected String doString(String value) {
-        return value;
-    }
-
-    private String toString(Object value) {
-        return toString.executeString(value, false, ToStringNode.DEFAULT_SEPARATOR);
-    }
-
-    @Specialization
-    protected String doInteger(int value) {
-        return toString(value);
-    }
-
-    @Specialization
-    protected String doDouble(double value) {
-        return toString(value);
-    }
-
-    @Specialization
-    protected String doLogical(byte value) {
-        return toString(value);
-    }
-
-    @Specialization
-    protected String doRaw(RComplex value) {
-        return toString(value);
-    }
-
-    @Specialization
-    protected String doRaw(RRaw value) {
-        return toString(value);
     }
 
     @Specialization(guards = "vector.getLength() == 0")
