@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.nodes.unary;
 
-import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.utilities.*;
@@ -31,11 +30,9 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
-public abstract class CastIntegerNode extends CastBaseNode {
+public abstract class CastIntegerNode extends CastIntegerBaseNode {
 
-    private final NACheck naCheck = NACheck.create();
     private final NAProfile naProfile = NAProfile.create();
-    private final BranchProfile warningBranch = BranchProfile.create();
 
     public abstract Object executeInt(int o);
 
@@ -47,40 +44,6 @@ public abstract class CastIntegerNode extends CastBaseNode {
 
     @Child private CastIntegerNode recursiveCastInteger;
 
-    private Object castIntegerRecursive(Object o) {
-        if (recursiveCastInteger == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            recursiveCastInteger = insert(CastIntegerNodeGen.create(isPreserveNames(), isDimensionsPreservation(), isAttrPreservation()));
-        }
-        return recursiveCastInteger.executeInt(o);
-    }
-
-    @Specialization
-    protected RNull doNull(@SuppressWarnings("unused") RNull operand) {
-        return RNull.instance;
-    }
-
-    @Specialization
-    protected RMissing doMissing(RMissing operand) {
-        return operand;
-    }
-
-    @Specialization
-    protected int doInt(int operand) {
-        return operand;
-    }
-
-    @Specialization
-    protected int doDouble(double operand) {
-        naCheck.enable(operand);
-        return naCheck.convertDoubleToInt(operand);
-    }
-
-    @Specialization
-    protected RIntSequence doIntSequence(RIntSequence operand) {
-        return operand;
-    }
-
     @Specialization
     protected RAbstractIntVector doIntVector(RAbstractIntVector operand) {
         return operand;
@@ -90,43 +53,6 @@ public abstract class CastIntegerNode extends CastBaseNode {
     protected RIntSequence doDoubleSequence(RDoubleSequence operand) {
         naCheck.enable(operand);
         return RDataFactory.createIntSequence(naCheck.convertDoubleToInt(operand.getStart()), naCheck.convertDoubleToInt(operand.getStride()), operand.getLength());
-    }
-
-    @Specialization
-    protected int doComplex(RComplex operand) {
-        naCheck.enable(operand);
-        int result = naCheck.convertComplexToInt(operand, false);
-        if (operand.getImaginaryPart() != 0.0) {
-            warningBranch.enter();
-            RError.warning(this, RError.Message.IMAGINARY_PARTS_DISCARDED_IN_COERCION);
-        }
-        return result;
-    }
-
-    @Specialization
-    protected int doCharacter(String operand, //
-                    @Cached("createBinaryProfile()") ConditionProfile emptyStringProfile) {
-        naCheck.enable(operand);
-        if (naCheck.check(operand) || emptyStringProfile.profile(operand.isEmpty())) {
-            return RRuntime.INT_NA;
-        }
-        int result = RRuntime.string2intNoCheck(operand);
-        if (RRuntime.isNA(result)) {
-            warningBranch.enter();
-            RError.warning(this, RError.Message.NA_INTRODUCED_COERCION);
-        }
-        return result;
-    }
-
-    @Specialization
-    protected int doBoolean(byte operand) {
-        naCheck.enable(operand);
-        return naCheck.convertLogicalToInt(operand);
-    }
-
-    @Specialization
-    protected int doRaw(RRaw operand) {
-        return RRuntime.raw2int(operand);
     }
 
     private RIntVector createResultVector(RAbstractVector operand, int[] idata) {
