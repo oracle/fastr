@@ -49,6 +49,7 @@ import com.oracle.truffle.r.library.utils.WriteTable;
 import com.oracle.truffle.r.nodes.access.AccessFieldNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
+import com.oracle.truffle.r.nodes.objects.NewObjectNodeGen;
 import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RBuiltinKind;
@@ -253,9 +254,11 @@ public class ForeignFunctions {
                 case "R_el_named":
                 case "R_externalptr_prototype_object":
                 case "R_getGeneric":
+                    return new UnimplementedExternal(name);
                 case "R_get_slot":
                     return R_getSlotNodeGen.create();
                 case "R_hasSlot":
+                    return new UnimplementedExternal(name);
                 case "R_identC":
                     return R_identCNodeGen.create();
                 case "R_methods_test_MAKE_CLASS":
@@ -265,14 +268,16 @@ public class ForeignFunctions {
                 case "R_quick_method_check":
                 case "R_selectMethod":
                 case "R_set_el_named":
+                    return new UnimplementedExternal(name);
                 case "R_set_slot":
                     return R_setSlotNodeGen.create();
                 case "R_standardGeneric":
                 case "do_substitute_direct":
                 case "Rf_allocS4Object":
                 case "R_get_primname":
-                case "new_object":
                     return new UnimplementedExternal(name);
+                case "new_object":
+                    return NewObjectNodeGen.create();
 
                     // stats
 

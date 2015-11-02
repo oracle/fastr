@@ -130,6 +130,7 @@ com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/S
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/Sample.java,gnu_r_sample.copyright
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/Scan.java,gnu_r_scan.copyright
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/Slot.java,gnu_r_gentleman_ihaka.copyright
+com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/StandardGeneric.java,gnu_r_gentleman_ihaka.copyright
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/Switch.java,purdue.copyright
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/Tabulate.java,purdue.copyright
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/Transpose.java,gnu_r_gentleman_ihaka.copyright
@@ -147,6 +148,10 @@ com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/function/GroupDispatch
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/function/S3FunctionLookupNode.java,purdue.copyright
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/function/UseMethodInternalNode.java,purdue.copyright
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/runtime/RASTDeparse.java,gnu_r.copyright
+com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/runtime/data/RTypedValue.java,gnu_r_gentleman_ihaka.copyright
+com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/objects/AsS4.java,gnu_r_gentleman_ihaka.copyright
+com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/objects/NewObject.java,gnu_r_gentleman_ihaka.copyright
+com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/objects/GetS4DataSlot.java,gnu_r_gentleman_ihaka.copyright
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/unary/InheritsNode.java,purdue.copyright
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/unary/IsFactorNode.java,purdue.copyright
 com.oracle.truffle.r.parser/src/com/oracle/truffle/r/parser/ast/AccessVariable.java,purdue.copyright

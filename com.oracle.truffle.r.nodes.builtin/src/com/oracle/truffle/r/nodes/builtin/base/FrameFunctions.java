@@ -397,6 +397,8 @@ public class FrameFunctions {
     @RBuiltin(name = "sys.function", kind = INTERNAL, parameterNames = {"which"})
     public abstract static class SysFunction extends FrameHelper {
 
+        public abstract Object executeObject(VirtualFrame frame, int which);
+
         @Override
         protected final FrameAccess frameAccess() {
             return FrameAccess.READ_ONLY;

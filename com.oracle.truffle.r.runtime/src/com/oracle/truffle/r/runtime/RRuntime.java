@@ -139,6 +139,12 @@ public class RRuntime {
 
     public static final String S_CLASSNAME = "className";
 
+    public static final String DOT_ALL_MTABLE = ".AllMTable";
+
+    public static final String DOT_SIG_LENGTH = ".SigLength";
+
+    public static final String DOT_SIG_ARGS = ".SigArgs";
+
     public static final String NULL = "NULL";
     public static final String UNBOUND = "UNBOUND";
 

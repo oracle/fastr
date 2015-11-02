@@ -241,6 +241,7 @@ public final class RContext extends ExecutionContext implements TruffleObject {
      * Used by the MethodListDispatch class.
      */
     private boolean methodTableDispatchOn = true;
+    private boolean allowPrimitiveMethods = true;
 
     private boolean nullS4Object = false;
 
@@ -486,6 +487,14 @@ public final class RContext extends ExecutionContext implements TruffleObject {
 
     public void setNullS4Object(boolean on) {
         nullS4Object = on;
+    }
+
+    public boolean allowPrimitiveMethods() {
+        return allowPrimitiveMethods;
+    }
+
+    public void setAllowPrimitiveMethods(boolean on) {
+        allowPrimitiveMethods = on;
     }
 
     public boolean isInteractive() {

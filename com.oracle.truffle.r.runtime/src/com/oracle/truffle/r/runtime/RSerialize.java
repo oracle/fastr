@@ -58,6 +58,8 @@ public class RSerialize {
         static final int HAS_TAG_BIT_MASK = 1 << 10;
         static final int TYPE_MASK = 255;
         static final int LEVELS_SHIFT = 12;
+        static final int CACHED_MASK = 1 << 5;
+        static final int HASHASH_MASK = 1;
 
         private Flags() {
             // prevent construction
@@ -85,9 +87,12 @@ public class RSerialize {
             return (flagsValue & HAS_TAG_BIT_MASK) != 0;
         }
 
-        public static int packFlags(SEXPTYPE type, @SuppressWarnings("unused") int levs, boolean isObj, boolean hasAttr, boolean hasTag) {
-            // TODO levs
+        public static int packFlags(SEXPTYPE type, int gpbits, boolean isObj, boolean hasAttr, boolean hasTag) {
             int val = type.code;
+            int levs = gpbits;
+            levs = gpbits & (~(CACHED_MASK | HASHASH_MASK));
+            val = type.code | (levs << 12);
+
             if (isObj) {
                 val |= IS_OBJECT_BIT_MASK;
             }
@@ -353,6 +358,7 @@ public class RSerialize {
         }
 
         protected Object readItem(int flags) throws IOException {
+            int levs = flags >>> 12;
             Object result = null;
             SEXPTYPE type = SEXPTYPE.mapInt(Flags.ptype(flags));
             switch (type) {
@@ -540,6 +546,7 @@ public class RSerialize {
                         // result = RDataFactory.createPromise(RContext.getRASTHelper().createNodeForValue(cdrItem), (REnvironment) carItem);
                         // @formatter:on
                     }
+                    ((RTypedValue) result).setGPBits(levs);
                     return checkResult(result);
                 }
 
@@ -718,6 +725,7 @@ public class RSerialize {
                 if (Flags.hasAttr(flags)) {
                     Object attr = readItem();
                     result = setAttributes(result, attr);
+                    ((RTypedValue) result).setGPBits(levs);
                 }
             }
 
@@ -1284,6 +1292,15 @@ public class RSerialize {
             return null;
         }
 
+        private static int getGPBits(Object obj) {
+            // TODO: this feels a bit ad hoc
+            if (obj instanceof RTypedValue && !(obj instanceof RExternalPtr || obj instanceof RScalar)) {
+                return ((RTypedValue) obj).getGPBits();
+            } else {
+                return 0;
+            }
+        }
+
         private void writeItem(Object obj) throws IOException {
             SEXPTYPE specialType;
             Object psn;
@@ -1359,7 +1376,8 @@ public class RSerialize {
                     }
                 }
                 boolean hasTag = gnuRType == SEXPTYPE.CLOSXP || (type == SEXPTYPE.LISTSXP && !((RPairList) obj).isNullTag());
-                int flags = Flags.packFlags(gnuRType, 0, false, attributes != null, hasTag);
+                int gpbits = getGPBits(obj);
+                int flags = Flags.packFlags(gnuRType, gpbits, false, attributes != null, hasTag);
                 stream.writeInt(flags);
                 switch (type) {
                     case STRSXP: {
@@ -1589,6 +1607,7 @@ public class RSerialize {
          * treats a {@code String} as an STRSXP.
          */
         private void writeCHARSXP(String s) throws IOException {
+            // TODO: gpbits for encoding flags (second parameter)
             int flags = Flags.packFlags(SEXPTYPE.CHARSXP, 0, false, false, false);
             stream.writeInt(flags);
             if (s == RRuntime.STRING_NA) {
@@ -1612,7 +1631,7 @@ public class RSerialize {
         }
 
         private void writePairListEntry(String name, Object value) throws IOException {
-            stream.writeInt(Flags.packFlags(SEXPTYPE.LISTSXP, 0, false, false, true));
+            stream.writeInt(Flags.packFlags(SEXPTYPE.LISTSXP, getGPBits(value), false, false, true));
             RSymbol sym = state.findSymbol(name);
             int refIndex;
             if ((refIndex = getRefIndex(sym)) != -1) {
@@ -1630,6 +1649,7 @@ public class RSerialize {
         }
 
         private void terminatePairList() throws IOException {
+            // TODO: gpbits for encoding NULL value flags (second parameter)
             stream.writeInt(Flags.packFlags(SEXPTYPE.NILVALUE_SXP, 0, false, false, false));
         }
 

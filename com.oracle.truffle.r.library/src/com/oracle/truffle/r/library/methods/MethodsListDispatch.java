@@ -101,12 +101,23 @@ public class MethodsListDispatch {
         @SuppressWarnings("unused")
         @Specialization
         @TruffleBoundary
-        protected Object setPrimitiveMethods(Object fname, Object op, Object codeVec, RFunction fundef, Object mlist) {
+        protected byte setPrimitiveMethods(Object fname, Object op, Object codeVec, Object fundef, Object mlist) {
             String fnameString = RRuntime.asString(fname);
             String codeVecString = RRuntime.asString(codeVec);
-
-            // TODO implement
-            return RNull.instance;
+            if (codeVecString == null) {
+                throw RError.error(this, RError.Message.GENERIC, "argument 'code' must be a character string");
+            }
+            if (op == RNull.instance) {
+                byte value = RRuntime.asLogical(RContext.getInstance().allowPrimitiveMethods());
+                if (codeVecString.charAt(0) == 'C') {
+                    RContext.getInstance().setAllowPrimitiveMethods(false);
+                } else if (codeVecString.charAt(0) == 'S') {
+                    RContext.getInstance().setAllowPrimitiveMethods(true);
+                }
+                return RRuntime.LOGICAL_FALSE; // value;
+            }
+            return RRuntime.LOGICAL_FALSE;
+            // throw RInternalError.unimplemented();
         }
     }
 
