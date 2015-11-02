@@ -30,7 +30,6 @@ public final class RList extends RListBase implements RGPBits {
 
     private static final RStringVector implicitClassHeader = RDataFactory.createStringVectorFromScalar(RType.List.getName());
 
-    private int gpbits;
     public String elementNamePrefix;
 
     RList(Object[] data, int[] dims, RStringVector names) {
@@ -82,11 +81,4 @@ public final class RList extends RListBase implements RGPBits {
         return getClassHierarchyHelper(implicitClassHeader);
     }
 
-    public int getGPBits() {
-        return gpbits;
-    }
-
-    public void setGPBits(int value) {
-        gpbits = value;
-    }
 }

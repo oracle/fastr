@@ -51,6 +51,9 @@ import com.oracle.truffle.r.runtime.nodes.*;
 public class RLanguage extends RLanguageRep implements RAbstractContainer, RAttributable, RShareable {
 
     private RAttributes attributes;
+
+    private int gpbits;
+
     /**
      * Lazily computed value.
      */
@@ -199,6 +202,7 @@ public class RLanguage extends RLanguageRep implements RAbstractContainer, RAttr
         if (this.attributes != null) {
             l.attributes = attributes.copy();
         }
+        l.gpbits = gpbits;
         return l;
     }
 
@@ -266,6 +270,14 @@ public class RLanguage extends RLanguageRep implements RAbstractContainer, RAttr
     @Override
     public String toString() {
         return String.format("RLanguage(rep=%s)", getRep());
+    }
+
+    public int getGPBits() {
+        return gpbits;
+    }
+
+    public void setGPBits(int value) {
+        gpbits = value;
     }
 
 }

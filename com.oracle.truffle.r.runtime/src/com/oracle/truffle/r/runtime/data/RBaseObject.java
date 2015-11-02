@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,34 +22,16 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
-import com.oracle.truffle.r.runtime.*;
+public class RBaseObject {
 
-/**
- * Interface for R values that are publicly flowing through the interpreter. Be aware that also the
- * primitive values {@link Integer}, {@link Double}, {@link Byte} and {@link String} flow but are
- * not implementing this interface.
- */
-public interface RTypedValue {
+    protected int gpbits;
 
-    // mask values are not (necessarily) compatible with GNU R
-    int S4_MASK = 0x1;
-
-    RType getRType();
-
-    int getGPBits();
-
-    void setGPBits(int value);
-
-    default boolean isS4() {
-        return (getGPBits() & S4_MASK) == S4_MASK;
+    public int getGPBits() {
+        return gpbits;
     }
 
-    default void setS4() {
-        setGPBits(getGPBits() | S4_MASK);
-    }
-
-    default void unsetS4() {
-        setGPBits(getGPBits() & ~S4_MASK);
+    public void setGPBits(int value) {
+        gpbits = value;
     }
 
 }

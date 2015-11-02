@@ -224,4 +224,14 @@ public class RExpression implements RShareable, RAbstractContainer {
         return String.format("RExpression(data=%s)", data);
     }
 
+    @Override
+    public int getGPBits() {
+        return data.getGPBits();
+    }
+
+    @Override
+    public void setGPBits(int value) {
+        data.setGPBits(value);
+    }
+
 }

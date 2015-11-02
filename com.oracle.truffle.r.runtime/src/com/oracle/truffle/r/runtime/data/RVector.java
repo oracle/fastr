@@ -611,6 +611,7 @@ public abstract class RVector extends RAttributeStorage implements RShareable, R
         RVector result = internalCopy();
         setAttributes(result);
         incCopyCount();
+        result.gpbits = gpbits;
         return result;
     }
 

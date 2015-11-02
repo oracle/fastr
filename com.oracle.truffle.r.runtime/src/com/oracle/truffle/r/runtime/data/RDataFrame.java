@@ -245,4 +245,14 @@ public final class RDataFrame implements RShareable, RAbstractContainer {
         return "RDataFrame [vector=" + vector + ", length=" + length + "]";
     }
 
+    @Override
+    public int getGPBits() {
+        return vector.getGPBits();
+    }
+
+    @Override
+    public void setGPBits(int value) {
+        vector.setGPBits(value);
+    }
+
 }

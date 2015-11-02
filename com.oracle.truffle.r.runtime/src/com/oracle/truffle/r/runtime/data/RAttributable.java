@@ -31,7 +31,7 @@ import com.oracle.truffle.r.runtime.env.*;
  * An attribute is a {@code String, Object} pair. The set of attributes associated with an
  * {@link RAttributable} is implemented by the {@link RAttributes} class.
  */
-public interface RAttributable {
+public interface RAttributable extends RTypedValue {
     /**
      * If the attribute set is not initialized, then initialize it.
      *

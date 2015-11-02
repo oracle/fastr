@@ -23,8 +23,19 @@
 package com.oracle.truffle.r.runtime.data;
 
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
+import com.oracle.truffle.r.runtime.RInternalError;
 
 @ValueType
 public abstract class RScalar implements RTypedValue {
+
+    @Override
+    public int getGPBits() {
+        throw RInternalError.shouldNotReachHere();
+    }
+
+    @Override
+    public void setGPBits(int value) {
+        throw RInternalError.shouldNotReachHere();
+    }
 
 }

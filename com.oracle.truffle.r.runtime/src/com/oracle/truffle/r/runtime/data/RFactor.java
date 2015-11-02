@@ -241,4 +241,14 @@ public final class RFactor implements RShareable, RAbstractContainer {
         return levels == null ? 0 : levels.getLength();
     }
 
+    @Override
+    public int getGPBits() {
+        return vector.getGPBits();
+    }
+
+    @Override
+    public void setGPBits(int value) {
+        vector.setGPBits(value);
+    }
+
 }

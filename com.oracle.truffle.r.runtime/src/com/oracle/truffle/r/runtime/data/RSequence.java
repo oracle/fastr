@@ -188,4 +188,15 @@ public abstract class RSequence implements RAbstractVector {
         result.setDimensions(newDimensions);
         return result;
     }
+
+    @Override
+    public int getGPBits() {
+        throw RInternalError.shouldNotReachHere();
+    }
+
+    @Override
+    public void setGPBits(int value) {
+        throw RInternalError.shouldNotReachHere();
+    }
+
 }

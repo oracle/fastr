@@ -28,7 +28,7 @@ import com.oracle.truffle.r.runtime.*;
  * An adaptor class for the several R types that are attributable. Only useful for classes that
  * don't already inherit from another class, otherwise just cut and paste this code.
  */
-public abstract class RAttributeStorage implements RAttributable {
+public abstract class RAttributeStorage extends RBaseObject implements RAttributable {
 
     protected RAttributes attributes;
 

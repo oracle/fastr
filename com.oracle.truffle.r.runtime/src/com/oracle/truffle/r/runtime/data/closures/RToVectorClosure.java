@@ -174,4 +174,14 @@ public abstract class RToVectorClosure implements RAbstractVector {
         throw RInternalError.shouldNotReachHere();
     }
 
+    @Override
+    public int getGPBits() {
+        return vector.getGPBits();
+    }
+
+    @Override
+    public void setGPBits(int value) {
+        vector.setGPBits(value);
+    }
+
 }

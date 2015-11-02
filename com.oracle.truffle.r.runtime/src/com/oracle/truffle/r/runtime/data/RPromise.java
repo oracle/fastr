@@ -474,4 +474,15 @@ public class RPromise extends RLanguageRep implements RTypedValue {
             return expr;
         }
     }
+
+    @Override
+    public int getGPBits() {
+        throw RInternalError.shouldNotReachHere();
+    }
+
+    @Override
+    public void setGPBits(int value) {
+        throw RInternalError.shouldNotReachHere();
+    }
+
 }
