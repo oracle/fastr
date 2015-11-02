@@ -32,6 +32,10 @@ public class RS4Object extends RAttributeStorage {
 
     private static final RStringVector implicitClass = RDataFactory.createStringVectorFromScalar("S4");
 
+    public RS4Object() {
+        setS4();
+    }
+
     @Override
     public final RStringVector getImplicitClass() {
         return implicitClass;

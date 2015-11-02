@@ -17,6 +17,8 @@ import com.oracle.truffle.r.nodes.access.AccessSlotNodeGen;
 import com.oracle.truffle.r.nodes.access.UpdateSlotNode;
 import com.oracle.truffle.r.nodes.access.UpdateSlotNodeGen;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.unary.CastToAttributableNode;
+import com.oracle.truffle.r.nodes.unary.CastToAttributableNodeGen;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
@@ -27,10 +29,11 @@ public class Slot {
     public abstract static class R_getSlot extends RExternalBuiltinNode.Arg2 {
 
         @Child AccessSlotNode accessSlotNode = AccessSlotNodeGen.create(null, null);
+        @Child CastToAttributableNode castAttributable = CastToAttributableNodeGen.create(true, true, true);
 
         @Specialization(guards = "nameVec.getLength() == 1")
         protected Object getSlot(Object object, RAbstractStringVector nameVec) {
-            return accessSlotNode.executeAccess(object, nameVec.getDataAt(0));
+            return accessSlotNode.executeAccess(castAttributable.executeObject(object), nameVec.getDataAt(0));
         }
 
         @SuppressWarnings("unused")

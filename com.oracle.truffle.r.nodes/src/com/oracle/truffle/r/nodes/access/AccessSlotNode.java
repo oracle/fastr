@@ -47,7 +47,7 @@ public abstract class AccessSlotNode extends RNode {
         return AttributeAccessNodeGen.create(name);
     }
 
-    private Object getSlotS4Internal(RS4Object object, String name, Object value) {
+    private Object getSlotS4Internal(RAttributable object, String name, Object value) {
         if (value == null) {
             noSlot.enter();
             if (name == RRuntime.DOT_S3_CLASS) {
@@ -85,14 +85,15 @@ public abstract class AccessSlotNode extends RNode {
         }
     }
 
-    @Specialization(guards = "name == cachedName")
-    protected Object getSlotS4Cached(RS4Object object, @SuppressWarnings("unused") String name, @Cached("name") String cachedName, @Cached("createAttrAccess(cachedName)") AttributeAccess attrAccess) {
+    @Specialization(guards = {"object.isS4()", "name == cachedName"})
+    protected Object getSlotS4Cached(RAttributable object, @SuppressWarnings("unused") String name, @Cached("name") String cachedName,
+                    @Cached("createAttrAccess(cachedName)") AttributeAccess attrAccess) {
         Object value = attrAccess.execute(object.getAttributes());
         return getSlotS4Internal(object, cachedName, value);
     }
 
-    @Specialization(contains = "getSlotS4Cached")
-    protected Object getSlotS4(RS4Object object, String name) {
+    @Specialization(contains = "getSlotS4Cached", guards = "object.isS4()")
+    protected Object getSlotS4(RAttributable object, String name) {
         Object value = object.getAttr(attrProfiles, name.intern());
         return getSlotS4Internal(object, name, value);
     }
@@ -102,11 +103,7 @@ public abstract class AccessSlotNode extends RNode {
         return (RFunction) RContext.getRRuntimeASTAccess().forcePromise(f);
     }
 
-    protected REnvironment getMethodsNamespace() {
-        return REnvironment.getRegisteredNamespace("methods");
-    }
-
-    private Object getDataPart(Object object) {
+    private Object getDataPart(RAttributable object) {
         // TODO: any way to cache it or use a mechanism similar to overrides?
         REnvironment methodsNamespace = REnvironment.getRegisteredNamespace("methods");
         RFunction dataPart = getDataPartFunction(methodsNamespace);
@@ -114,15 +111,15 @@ public abstract class AccessSlotNode extends RNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = "isDotData(name)")
-    protected Object getSlotNonS4(RAbstractContainer object, String name) {
+    @Specialization(guards = {"!object.isS4()", "isDotData(name)"})
+    protected Object getSlotNonS4(RAttributable object, String name) {
         return getDataPart(object);
     }
 
     // this is really a fallback specialization but @Fallback does not work here (because of the
     // type of "object"?)
-    @Specialization(guards = "!isDotData(name)")
-    protected Object getSlot(RAbstractContainer object, String name) {
+    @Specialization(guards = {"!object.isS4()", "!isDotData(name)"})
+    protected Object getSlot(RAttributable object, String name) {
         RStringVector classAttr = object.getClassAttr(attrProfiles);
         if (classAttr == null) {
             RStringVector implicitClassVec = object.getImplicitClass();

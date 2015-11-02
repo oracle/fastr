@@ -43,6 +43,7 @@ public class TestS4 extends TestBase {
         assertEval(Output.ContainsError, "{ x<-c(42); class(x)<-\"bar\"; x@foo }");
         assertEval("{ x<-getClass(\"ClassUnionRepresentation\"); slot(x, \"virtual\") }");
         assertEval(Output.ContainsError, "{ x<-getClass(\"ClassUnionRepresentation\"); slot(x, virtual) }");
+        assertEval("{ x<-function() 42; attr(x, \"foo\")<-7; y<-asS4(x); y@foo }");
     }
 
     @Test
