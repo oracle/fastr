@@ -24,7 +24,6 @@ package com.oracle.truffle.r.nodes.unary;
 
 import java.util.*;
 
-import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.runtime.*;
@@ -32,58 +31,13 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
-public abstract class CastLogicalNode extends CastBaseNode {
+public abstract class CastLogicalNode extends CastLogicalBaseNode {
 
-    private final NACheck naCheck = NACheck.create();
     private final NAProfile naProfile = NAProfile.create();
-
-    @Child private CastLogicalNode recursiveCastLogical;
-
-    private Object castLogicalRecursive(Object o) {
-        if (recursiveCastLogical == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            recursiveCastLogical = insert(CastLogicalNodeGen.create(isPreserveNames(), isDimensionsPreservation(), isAttrPreservation()));
-        }
-        return recursiveCastLogical.execute(o);
-    }
 
     @Specialization
     protected RNull doNull(@SuppressWarnings("unused") RNull operand) {
         return RNull.instance;
-    }
-
-    @Specialization
-    protected byte doLogical(byte operand) {
-        return operand;
-    }
-
-    @Specialization
-    protected byte doDouble(double operand) {
-        naCheck.enable(operand);
-        return naCheck.convertDoubleToLogical(operand);
-    }
-
-    @Specialization
-    protected byte doInt(int operand) {
-        naCheck.enable(operand);
-        return naCheck.convertIntToLogical(operand);
-    }
-
-    @Specialization
-    protected byte doComplex(RComplex operand) {
-        naCheck.enable(operand);
-        return naCheck.convertComplexToLogical(operand);
-    }
-
-    @Specialization
-    protected byte doString(String operand) {
-        naCheck.enable(operand);
-        return naCheck.convertStringToLogical(operand);
-    }
-
-    @Specialization
-    protected byte doRaw(RRaw operand) {
-        return RRuntime.raw2logical(operand);
     }
 
     @FunctionalInterface
