@@ -62,6 +62,10 @@ public abstract class RBuiltinNode extends RNode implements RSyntaxNode, Visibil
             return this;
         }
 
+        public CastBuilder toAttributable(int index, boolean preserveNames, boolean dimensionsPreservation, boolean attrPreservation) {
+            return insert(index, CastToAttributableNodeGen.create(preserveNames, dimensionsPreservation, attrPreservation));
+        }
+
         public CastBuilder toVector(int index) {
             return toVector(index, false);
         }
