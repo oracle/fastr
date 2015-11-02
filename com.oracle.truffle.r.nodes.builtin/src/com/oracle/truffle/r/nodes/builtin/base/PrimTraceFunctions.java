@@ -32,17 +32,35 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RNull;
 
-@RBuiltin(name = ".primTrace", kind = RBuiltinKind.INTERNAL, parameterNames = "what")
-public abstract class PrimTrace extends RInvisibleBuiltinNode {
+public class PrimTraceFunctions {
+    @RBuiltin(name = ".primTrace", kind = RBuiltinKind.PRIMITIVE, parameterNames = "what")
+    public abstract static class PrimTrace extends RInvisibleBuiltinNode {
 
-    @Specialization
-    @TruffleBoundary
-    protected RNull primTrace(RFunction func) {
-        if (!func.isBuiltin()) {
-            if (!TraceHandling.enableTrace(func)) {
-                throw RError.error(this, RError.Message.GENERIC, "failed to attach trace handler (not instrumented?)");
+        @Specialization
+        @TruffleBoundary
+        protected RNull primTrace(RFunction func) {
+            if (!func.isBuiltin()) {
+                if (!TraceHandling.enableTrace(func)) {
+                    throw RError.error(this, RError.Message.GENERIC, "failed to attach trace handler (not instrumented?)");
+                }
             }
+            return RNull.instance;
         }
-        return RNull.instance;
     }
+
+    @RBuiltin(name = ".primUntrace", kind = RBuiltinKind.PRIMITIVE, parameterNames = "what")
+    public abstract static class PrimUnTrace extends RInvisibleBuiltinNode {
+
+        @Specialization
+        @TruffleBoundary
+        protected RNull primTrace(RFunction func) {
+            if (!func.isBuiltin()) {
+                if (!TraceHandling.disableTrace(func)) {
+                    throw RError.error(this, RError.Message.GENERIC, "failed to detach trace handler (not instrumented?)");
+                }
+            }
+            return RNull.instance;
+        }
+    }
+
 }

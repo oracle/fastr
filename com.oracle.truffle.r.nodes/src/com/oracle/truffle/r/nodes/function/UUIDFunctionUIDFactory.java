@@ -24,6 +24,9 @@ package com.oracle.truffle.r.nodes.function;
 
 import java.util.UUID;
 
+import com.oracle.truffle.r.runtime.FunctionUID;
+import com.oracle.truffle.r.runtime.instrument.FunctionUIDFactory;
+
 public class UUIDFunctionUIDFactory extends FunctionUIDFactory {
 
     private static final class UUIDFunctionUID implements FunctionUID {

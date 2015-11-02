@@ -22,8 +22,6 @@
  */
 package com.oracle.truffle.r.nodes.instrument.trace;
 
-import java.util.*;
-
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.instrument.*;
@@ -35,16 +33,14 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.context.*;
 import com.oracle.truffle.r.runtime.data.*;
 
+/**
+ * Handles everything related to the R {@code trace} function.
+ */
 public class TraceHandling {
-
-    /**
-     * Records all functions that have debug receivers installed.
-     */
-    private static final WeakHashMap<FunctionUID, TraceFunctionEventReceiver> receiverMap = new WeakHashMap<>();
 
     public static boolean enableTrace(RFunction func) {
         FunctionDefinitionNode fdn = (FunctionDefinitionNode) func.getRootNode();
-        TraceFunctionEventReceiver fbr = receiverMap.get(fdn.getUID());
+        TraceFunctionEventReceiver fbr = (TraceFunctionEventReceiver) RContext.getInstance().stateTraceHandling.get(fdn.getUID());
         if (fbr == null) {
             Probe probe = attachTraceHandler(fdn.getUID());
             return probe != null;
@@ -55,6 +51,17 @@ public class TraceHandling {
 
     }
 
+    public static boolean disableTrace(RFunction func) {
+        FunctionDefinitionNode fdn = (FunctionDefinitionNode) func.getRootNode();
+        TraceFunctionEventReceiver fbr = (TraceFunctionEventReceiver) RContext.getInstance().stateTraceHandling.get(fdn.getUID());
+        if (fbr == null) {
+            return false;
+        } else {
+            fbr.disable();
+            return true;
+        }
+    }
+
     public static Probe attachTraceHandler(FunctionUID uid) {
         Probe probe = RInstrument.findSingleProbe(uid, StandardSyntaxTag.START_METHOD);
         if (probe == null) {
@@ -62,6 +69,7 @@ public class TraceHandling {
         }
         TraceFunctionEventReceiver fser = new TraceFunctionEventReceiver();
         RInstrument.getInstrumenter().attach(probe, fser, "trace");
+        RContext.getInstance().stateTraceHandling.put(uid, fser);
         return probe;
     }
 
@@ -84,7 +92,6 @@ public class TraceHandling {
             return disabled;
         }
 
-        @SuppressWarnings("unused")
         void disable() {
             setDisabledState(true);
         }

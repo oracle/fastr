@@ -60,6 +60,7 @@ import com.oracle.truffle.r.runtime.data.RBuiltinDescriptor;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.ffi.RFFIContextStateFactory;
+import com.oracle.truffle.r.runtime.instrument.Trace;
 import com.oracle.truffle.r.runtime.rng.RRNG;
 
 /**
@@ -316,10 +317,11 @@ public final class RContext extends ExecutionContext implements TruffleObject {
     public final ContextState stateRFFI;
     public final RSerialize.ContextStateImpl stateRSerialize;
     public final LazyDBCache.ContextStateImpl stateLazyDBCache;
+    public final Trace.ContextStateImpl stateTraceHandling;
 
     private ContextState[] contextStates() {
         return new ContextState[]{stateREnvVars, stateRProfile, stateROptions, stateREnvironment, stateRErrorHandling, stateRConnection, stateStdConnections, stateRNG, stateRFFI, stateRSerialize,
-                        stateLazyDBCache};
+                        stateLazyDBCache, stateTraceHandling};
     }
 
     private RContext(Env env, boolean isInitial) {
@@ -368,6 +370,7 @@ public final class RContext extends ExecutionContext implements TruffleObject {
         stateRFFI = RFFIContextStateFactory.newContext(this);
         stateRSerialize = RSerialize.ContextStateImpl.newContext(this);
         stateLazyDBCache = LazyDBCache.ContextStateImpl.newContext(this);
+        stateTraceHandling = Trace.newContext(this);
         engine.activate(stateREnvironment);
 
         if (info.getKind() == ContextKind.SHARE_PARENT_RW) {
@@ -386,7 +389,7 @@ public final class RContext extends ExecutionContext implements TruffleObject {
 
     /**
      * Create a context with the given configuration.
-     * 
+     *
      * @param isInitial {@code true} iff this is the initial context
      */
     public static RContext create(Env env, boolean isInitial) {

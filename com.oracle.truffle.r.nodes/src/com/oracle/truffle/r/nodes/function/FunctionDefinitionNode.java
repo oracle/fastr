@@ -44,6 +44,7 @@ import com.oracle.truffle.r.runtime.context.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.env.frame.*;
+import com.oracle.truffle.r.runtime.instrument.FunctionUIDFactory;
 import com.oracle.truffle.r.runtime.nodes.*;
 
 public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNode {

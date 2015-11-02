@@ -20,8 +20,9 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.function;
+package com.oracle.truffle.r.runtime.instrument;
 
+import com.oracle.truffle.r.runtime.FunctionUID;
 import com.oracle.truffle.r.runtime.Utils;
 
 public abstract class FunctionUIDFactory {

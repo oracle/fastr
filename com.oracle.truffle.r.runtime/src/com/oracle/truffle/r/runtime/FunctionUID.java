@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,11 +20,11 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.function;
+package com.oracle.truffle.r.runtime;
 
 /**
- * An abstract UID for a {@link FunctionDefinitionNode}, used by instrumentation code. There may be
- * many clones of a {@link FunctionDefinitionNode}, but they all share the same UID.
+ * An abstract UID for a {@code FunctionDefinitionNode}, used by instrumentation code. There may be
+ * many clones of a {@code FunctionDefinitionNode}, but they all share the same UID.
  */
 public interface FunctionUID extends Comparable<FunctionUID> {
 

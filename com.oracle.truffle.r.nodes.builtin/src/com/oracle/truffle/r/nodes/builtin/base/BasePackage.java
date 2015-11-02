@@ -394,7 +394,8 @@ public class BasePackage extends RBuiltinPackage {
         add(Paste.class, PasteNodeGen::create);
         add(Paste0.class, Paste0NodeGen::create);
         add(PathExpand.class, PathExpandNodeGen::create);
-        add(PrimTrace.class, PrimTraceNodeGen::create);
+        add(PrimTraceFunctions.PrimTrace.class, PrimTraceFunctionsFactory.PrimTraceNodeGen::create);
+        add(PrimTraceFunctions.PrimUnTrace.class, PrimTraceFunctionsFactory.PrimUnTraceNodeGen::create);
         add(Primitive.class, PrimitiveNodeGen::create);
         add(PrintFunctions.PrintDefault.class, PrintFunctionsFactory.PrintDefaultNodeGen::create);
         add(PrintFunctions.PrintFunction.class, PrintFunctionsFactory.PrintFunctionNodeGen::create);

@@ -24,6 +24,9 @@ package com.oracle.truffle.r.nodes.function;
 
 import java.util.concurrent.atomic.*;
 
+import com.oracle.truffle.r.runtime.FunctionUID;
+import com.oracle.truffle.r.runtime.instrument.FunctionUIDFactory;
+
 public class ALONGFunctionUIDFactory extends FunctionUIDFactory {
 
     private static final AtomicLong ID = new AtomicLong();
