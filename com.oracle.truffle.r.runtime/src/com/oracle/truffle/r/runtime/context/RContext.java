@@ -242,6 +242,8 @@ public final class RContext extends ExecutionContext implements TruffleObject {
      */
     private boolean methodTableDispatchOn = true;
 
+    private boolean nullS4Object = false;
+
     private boolean active;
 
     /**
@@ -476,6 +478,14 @@ public final class RContext extends ExecutionContext implements TruffleObject {
 
     public void setMethodTableDispatchOn(boolean on) {
         methodTableDispatchOn = on;
+    }
+
+    public boolean isNullS4Object() {
+        return nullS4Object;
+    }
+
+    public void setNullS4Object(boolean on) {
+        nullS4Object = on;
     }
 
     public boolean isInteractive() {

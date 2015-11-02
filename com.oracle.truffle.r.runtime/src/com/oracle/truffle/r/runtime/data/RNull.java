@@ -26,8 +26,6 @@ import com.oracle.truffle.r.runtime.*;
 
 public final class RNull extends RScalar {
 
-    private int gpbits;
-
     public static final RStringVector implicitClassHeader = RDataFactory.createStringVectorFromScalar(RType.Null.getName());
 
     public static final RNull instance = new RNull();
@@ -47,16 +45,6 @@ public final class RNull extends RScalar {
 
     public static Object toRNull(Object value) {
         return value == null ? instance : value;
-    }
-
-    @Override
-    public int getGPBits() {
-        return gpbits;
-    }
-
-    @Override
-    public void setGPBits(int value) {
-        gpbits = value;
     }
 
 }

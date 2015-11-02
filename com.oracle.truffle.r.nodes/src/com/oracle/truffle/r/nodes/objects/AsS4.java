@@ -18,6 +18,7 @@ import com.oracle.truffle.api.utilities.BranchProfile;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -36,6 +37,13 @@ public abstract class AsS4 extends RNode {
     private final BranchProfile error = BranchProfile.create();
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
     @Child GetS4DataSlot getS4DataSlot;
+
+    @SuppressWarnings("unused")
+    @Specialization
+    protected Object asS4(RNull s, boolean flag, int complete) {
+        RContext.getInstance().setNullS4Object(flag);
+        return RNull.instance;
+    }
 
     @Specialization
     protected Object asS4(RAttributable s, boolean flag, int complete) {
