@@ -39,8 +39,16 @@ import com.oracle.truffle.r.runtime.data.model.*;
 public abstract class IsS4 extends RBuiltinNode {
 
     @Specialization
+    protected byte isS4(RTypedValue object) {
+        return RRuntime.asLogical(object.isS4());
+    }
+
+    @Specialization(guards = "!isTypedValue(object)")
     protected byte isS4(Object object) {
-        controlVisibility();
         return RRuntime.LOGICAL_FALSE;
+    }
+
+    protected boolean isTypedValue(Object object) {
+        return object instanceof RTypedValue;
     }
 }

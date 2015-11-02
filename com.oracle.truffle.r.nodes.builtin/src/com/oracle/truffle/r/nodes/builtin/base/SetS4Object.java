@@ -1,0 +1,83 @@
+/*
+ * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ *
+ * This code is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 2 only, as
+ * published by the Free Software Foundation.
+ *
+ * This code is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * version 2 for more details (a copy is included in the LICENSE file that
+ * accompanied this code).
+ *
+ * You should have received a copy of the GNU General Public License version
+ * 2 along with this work; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+ *
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
+ */
+package com.oracle.truffle.r.nodes.builtin.base;
+
+import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
+
+import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.objects.AsS4;
+import com.oracle.truffle.r.nodes.objects.AsS4NodeGen;
+import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.*;
+
+@SuppressWarnings("unused")
+@RBuiltin(name = "setS4Object", kind = INTERNAL, parameterNames = {"object", "flag", "complete"})
+public abstract class SetS4Object extends RBuiltinNode {
+
+    @Child AsS4 asS4 = AsS4NodeGen.create(null, null, null);
+
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.toAttributable(0, true, true, true);
+        casts.toLogical(1);
+        casts.toInteger(2);
+    }
+
+    private boolean checkArgs(RAbstractLogicalVector flagVec, RAbstractIntVector completeVec) {
+        if (flagVec.getLength() == 0 || (flagVec.getLength() == 1 && flagVec.getDataAt(0) == RRuntime.LOGICAL_NA) || flagVec.getLength() > 1) {
+            RError.error(this, RError.Message.INVALID_ARGUMENT, "flag");
+        }
+        if (completeVec.getLength() == 0 || flagVec.getDataAt(0) == RRuntime.LOGICAL_NA) {
+            RError.error(this, RError.Message.INVALID_ARGUMENT, "complete");
+        }
+        return RRuntime.fromLogical(flagVec.getDataAt(0));
+    }
+
+    @Specialization
+    protected RNull asS4(RNull object, RAbstractLogicalVector flagVec, RAbstractIntVector completeVec) {
+        boolean flag = checkArgs(flagVec, completeVec);
+        if (flag) {
+            object.setS4();
+        } else {
+            boolean wasS4 = object.isS4();
+            object.unsetS4();
+            if (wasS4) {
+                throw RError.error(this, RError.Message.GENERIC, "object of class \"NULL\" does not correspond to a valid S3 object");
+            }
+        }
+        return object;
+    }
+
+    @Specialization
+    protected Object asS4(RAttributable object, RAbstractLogicalVector flagVec, RAbstractIntVector completeVec) {
+        boolean flag = checkArgs(flagVec, completeVec);
+        return asS4.executeObject(object, flag, completeVec.getDataAt(0));
+    }
+
+}

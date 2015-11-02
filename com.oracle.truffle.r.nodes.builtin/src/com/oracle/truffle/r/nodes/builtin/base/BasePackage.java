@@ -83,6 +83,7 @@ public class BasePackage extends RBuiltinPackage {
         add(AsFunction.class, AsFunctionNodeGen::create);
         add(AsInteger.class, AsIntegerNodeGen::create);
         add(AsLogical.class, AsLogicalNodeGen::create);
+        add(SetS4Object.class, SetS4ObjectNodeGen::create);
         add(AsRaw.class, AsRawNodeGen::create);
         add(AsVector.class, AsVectorNodeGen::create);
         add(Assign.class, AssignNodeGen::create);
@@ -451,6 +452,7 @@ public class BasePackage extends RBuiltinPackage {
         add(Split.class, SplitNodeGen::create);
         add(Sprintf.class, SprintfNodeGen::create);
         add(Sqrt.class, SqrtNodeGen::create);
+        add(StandardGeneric.class, StandardGenericNodeGen::create);
         add(Stop.class, StopNodeGen::create);
         add(Strtoi.class, StrtoiNodeGen::create);
         add(Structure.class, StructureNodeGen::create);

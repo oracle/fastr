@@ -84,6 +84,10 @@ public class RRuntime {
     @CompilationFinal public static final String[] STRING_ARRAY_SENTINEL = new String[0];
     public static final String DEFAULT = "default";
 
+    public static final String GENERIC_ATTR_KEY = "generic";
+
+    public static final String PCKG_ATTR_KEY = "package";
+
     public static final String NAMES_ATTR_KEY = "names";
     public static final String NAMES_ATTR_EMPTY_VALUE = "";
 
@@ -103,6 +107,7 @@ public class RRuntime {
     public static final String DOT_ENVIRONMENT = ".Environment";
 
     public static final String DOT_DATA = ".Data";
+    public static final String DOT_XDATA = ".xData";
 
     public static final String DOT_S3_CLASS = ".S3Class";
 
@@ -127,6 +132,12 @@ public class RRuntime {
     public static final String RDOT = ".";
 
     public static final String SYSTEM_DATE_FORMAT = "EEE MMM dd HH:mm:ss yyyy";
+
+    public static final String S_VIRTUAL = "virtual";
+
+    public static final String S_PROTOTYPE = "prototype";
+
+    public static final String S_CLASSNAME = "className";
 
     public static final String NULL = "NULL";
     public static final String UNBOUND = "UNBOUND";

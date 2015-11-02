@@ -637,9 +637,13 @@ public final class RError extends RuntimeException {
         SLOT_NON_S4("trying to get slot \"%s\" from an object (class \"%s\") that is not an S4 object "),
         SLOT_CANNOT_GET("cannot get a slot (\"%s\") from an object of type \"%s\""),
         SLOT_NONE("no slot of name \"%s\" for this object of class \"%s\""),
-        SLOT_INVALID_TYPE("invalid type '%s' for slot name"),
         NS_ALREADY_REG("namespace already registered"),
-        NS_NOTREG("namespace not registered");
+        NS_NOTREG("namespace not registered"),
+        SLOT_INVALID_TYPE("invalid type '%s' for slot name"),
+        OBJECT_FROM_VIRTUAL("trying to generate an object from a virtual class (\"%s\")"),
+        CLASS_INVALID_S3("object of class \"%s\" does not correspond to a valid S3 object"),
+        STD_GENERIC_WRONG_CALL("call to standardGeneric(\"%s\") apparently not from the body of that generic function"),
+        EXPECTED_GENERIC("expected a generic function or a primitive for dispatch, got an object of class \"%s\"");
 
         public final String message;
         final boolean hasArgs;

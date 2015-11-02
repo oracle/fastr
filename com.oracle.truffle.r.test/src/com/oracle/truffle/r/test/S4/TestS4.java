@@ -50,4 +50,12 @@ public class TestS4 extends TestBase {
         assertEval("{ x<-getClass(\"ClassUnionRepresentation\"); x@virtual<-TRUE; x@virtual }");
         assertEval("{ x<-getClass(\"ClassUnionRepresentation\"); slot(x, \"virtual\", check=TRUE)<-TRUE; x@virtual }");
     }
+
+    @Test
+    public void testConversions() {
+        assertEval("{ x<-42; isS4(x) }");
+        assertEval("{ x<-42; y<-asS4(x); isS4(y) }");
+        assertEval("{ isS4(NULL) }");
+        assertEval("{ asS4(NULL); isS4(NULL }");
+    }
 }
