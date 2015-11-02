@@ -197,7 +197,8 @@ def _test_harness_body(args, vmArgs):
     local_cran = mx.get_env('MX_HG_BASE')
     if local_cran:
         cran_args = ['--cran-mirror', join(dirname(local_cran), 'cran')]
-    rc = installcran(stack_args + cran_args + ['--testcount', '100', '--lib', lib])
+    ignore_ok_packages = ['--ok-pkg-filelist', join(_cran_test_project(), 'ok.packages')]
+    rc = installcran(stack_args + cran_args + ['--testcount', '100', '--lib', lib] + ignore_ok_packages)
     shutil.rmtree(install_tmp, ignore_errors=True)
     return rc
 
@@ -422,9 +423,12 @@ def rcmplib(args):
 def bench(args):
     mx.abort("no benchmarks available")
 
+def _cran_test_project():
+    return mx.project('com.oracle.truffle.r.test.cran').dir
+
 def installcran(args):
-    cran = 'com.oracle.truffle.r.test.cran'
-    script = join(mx.project(cran).dir, 'r', 'install.cran.packages.R')
+    cran_test = _cran_test_project()
+    script = join(cran_test, 'r', 'install.cran.packages.R')
     return rscript([script] + args)
 
 def load_optional_suite(name, rev):

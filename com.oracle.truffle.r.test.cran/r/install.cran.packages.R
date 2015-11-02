@@ -53,8 +53,11 @@ args <- commandArgs(TRUE)
 usage <- function() {
 	cat(paste("usage: Rscript [--contriburl url] [--cran-mirror url] [--lib] [--verbose | -v] [-V] [--dryrun]",
                       "[--no-install | -n] [--create-blacklist] [--blacklist-file file] [--ignore-blacklist]",
-					  "[--testcount count]", "[--install-mode mode]",
-					  "[--pkg-filelist file] [--initial-blacklist-file file] [package-pattern] \n"))
+					  "[--initial-blacklist-file file]",
+					  "[--testcount count]", "[--ok-pkg-filelist file]",
+					  "[--install-mode mode]",
+					  "[--pkg-filelist file]",
+                      "[package-pattern] \n"))
 	quit(status=1)
 }
 
@@ -234,7 +237,7 @@ do.install <- function() {
 			install.pkgs(rownames(toinstall.pkgs))
 		} else {
 			# install testcount packages taken at random from toinstall.pkgs
-			matched.toinstall.pkgs <- apply(toinstall.pkgs, 1, function(x) !(x["Package"] %in% blacklist))
+			matched.toinstall.pkgs <- apply(toinstall.pkgs, 1, function(x) include.package(x, blacklist))
 			test.avail.pkgs <<-toinstall.pkgs[matched.toinstall.pkgs, , drop=F]
 			test.avail.pkgnames <- rownames(test.avail.pkgs)
 			rands <- sample(1:length(test.avail.pkgnames))
@@ -246,6 +249,10 @@ do.install <- function() {
 		}
 		cat("END package installation\n")
 	}
+}
+
+include.package <- function(x, blacklist) {
+	return (!(x["Package"] %in% blacklist || x["Package"] %in% ok.pkg.filelist))
 }
 
 install.package <- function(pkgname) {
@@ -347,6 +354,13 @@ parse.args <- function() {
 			} else {
 				usage()
 			}
+		} else if (a == "--ok-pkg-filelist") {
+			if (length(args) >= 2L) {
+				ok.pkg.filelistfile <<- args[2L]
+				args <<- args[-1L]
+			} else {
+				usage()
+			}
 		} else {
 			if (grepl("^-.*", a)) {
 				usage()
@@ -397,6 +411,13 @@ check.pkgfilelist <- function() {
 			abort(paste(pkg.filelistfile, "not found"))
 		}
 	}
+	if (!is.na(ok.pkg.filelistfile)) {
+		if (file.exists(ok.pkg.filelistfile)) {
+			ok.pkg.filelist <<- readLines(ok.pkg.filelistfile)
+		} else {
+			abort(paste(pkg.filelistfile, "not found"))
+		}
+	}
 }
 
 get.initial.package.blacklist <- function() {
@@ -428,6 +449,8 @@ lib.install <- NA
 pkg.pattern <- "^.*"
 pkg.filelist <- character()
 pkg.filelistfile <- NA
+ok.pkg.filelist <- character()
+ok.pkg.filelistfile <- NA
 verbose <- F
 very.verbose <- F
 install <- T
