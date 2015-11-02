@@ -14,12 +14,12 @@ package com.oracle.truffle.r.nodes.access;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
+import com.oracle.truffle.api.utilities.BranchProfile;
+import com.oracle.truffle.api.utilities.ConditionProfile;
 import com.oracle.truffle.r.nodes.attributes.AttributeAccess;
 import com.oracle.truffle.r.nodes.attributes.AttributeAccessNodeGen;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNodeGen;
-import com.oracle.truffle.r.nodes.function.WrapArgumentNode;
 import com.oracle.truffle.r.nodes.unary.TypeofNode;
 import com.oracle.truffle.r.nodes.unary.TypeofNodeGen;
 import com.oracle.truffle.r.runtime.*;
@@ -40,6 +40,8 @@ public abstract class AccessSlotNode extends RNode {
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
     @Child private ClassHierarchyNode classHierarchy;
     @Child private TypeofNode typeofNode;
+    private final BranchProfile noSlot = BranchProfile.create();
+    private final ConditionProfile nullSlot = ConditionProfile.createBinaryProfile();
 
     protected AttributeAccess createAttrAccess(String name) {
         return AttributeAccessNodeGen.create(name);
@@ -47,6 +49,7 @@ public abstract class AccessSlotNode extends RNode {
 
     private Object getSlotS4Internal(RS4Object object, String name, Object value) {
         if (value == null) {
+            noSlot.enter();
             if (name == RRuntime.DOT_S3_CLASS) {
                 // TODO: this will not work if `@` function is called directly, as in:
                 // `@`(x, ".S3Class")
@@ -75,7 +78,7 @@ public abstract class AccessSlotNode extends RNode {
                 throw RError.error(this, RError.Message.SLOT_NONE, name, classAttr.getLength() == 0 ? RRuntime.STRING_NA : classAttr.getDataAt(0));
             }
         }
-        if (value == RRuntime.NULL_STR_VECTOR) {
+        if (nullSlot.profile(value == RRuntime.NULL_STR_VECTOR)) {
             return RNull.instance;
         } else {
             return value;
