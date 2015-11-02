@@ -51,21 +51,29 @@ public class MethodsListDispatch {
 
         @TruffleBoundary
         @Specialization
-        protected Object callGetClassFromCache(Object klass, REnvironment table) {
-            String klassString = RRuntime.asString(klass);
+        protected Object callGetClassFromCache(RAbstractStringVector klass, REnvironment table) {
+            String klassString = klass.getLength() == 0 ? RRuntime.STRING_NA : klass.getDataAt(0);
 
-            if (klassString != null) {
-                Object value = table.get(klassString);
-                if (value == null) {
-                    return RNull.instance;
-                } else {
-                    // TODO check PACKAGE equality
-                    return value;
-                }
+            Object value = table.get(klassString);
+            if (value == null) {
+                return RNull.instance;
             } else {
-                throw RError.error(this, RError.Message.INVALID_ARG_TYPE);
+                // TODO check PACKAGE equality
+                return value;
             }
         }
+
+        @Specialization
+        protected RS4Object callGetClassFromCache(RS4Object klass, @SuppressWarnings("unused") REnvironment table) {
+            return klass;
+        }
+
+        @SuppressWarnings("unused")
+        @Fallback
+        protected Object callGetClassFromCache(Object klass, REnvironment table) {
+            throw RError.error(this, RError.Message.GENERIC, "class should be either a character-string name or a class definition");
+        }
+
     }
 
     public abstract static class R_set_method_dispatch extends RExternalBuiltinNode.Arg1 {
