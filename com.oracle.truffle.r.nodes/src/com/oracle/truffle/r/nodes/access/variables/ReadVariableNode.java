@@ -496,7 +496,7 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
             if (frameSlot != null) {
                 Object value = getValue(current, frameSlot);
                 valueAssumption = FrameSlotChangeMonitor.getStableValueAssumption(currentDescriptor, frameSlot, value);
-                if (kind == ReadKind.UnforcedSilentLocal && value == RMissing.instance) {
+                if ((kind == ReadKind.UnforcedSilentLocal || kind == ReadKind.SilentLocal) && value == RMissing.instance) {
                     match = false;
                 } else {
                     match = checkTypeSlowPath(frame, value);
@@ -513,7 +513,7 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
 
             current = next;
             currentDescriptor = nextDescriptor;
-        } while (kind != ReadKind.UnforcedSilentLocal && current != null && !match);
+        } while (kind != ReadKind.UnforcedSilentLocal && kind != ReadKind.SilentLocal && current != null && !match);
 
         FrameLevel lastLevel = null;
 
