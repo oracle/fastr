@@ -619,7 +619,8 @@ public abstract class RVector extends RAttributeStorage implements RShareable, R
         return internalCopy();
     }
 
-    public final RVector deepCopy() {
+    @Override
+    public RVector deepCopy() {
         RVector result = internalDeepCopy();
         setAttributes(result);
         return result;

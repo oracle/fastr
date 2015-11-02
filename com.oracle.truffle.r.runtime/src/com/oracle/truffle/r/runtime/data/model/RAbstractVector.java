@@ -36,6 +36,10 @@ public interface RAbstractVector extends RAbstractContainer, TruffleObject {
      */
     RAbstractVector copy();
 
+    default RAbstractVector deepCopy() {
+        return copy();
+    }
+
     RVector copyResized(int size, boolean fillNA);
 
     RAbstractVector copyWithNewDimensions(int[] newDimensions);

@@ -40,6 +40,10 @@ public interface RShareable {
 
     RShareable copy();
 
+    default RShareable deepCopy() {
+        return copy();
+    }
+
     void incRefCount();
 
     void decRefCount();
