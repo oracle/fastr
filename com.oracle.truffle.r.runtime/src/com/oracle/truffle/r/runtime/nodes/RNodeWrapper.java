@@ -79,8 +79,8 @@ public final class RNodeWrapper extends com.oracle.truffle.r.runtime.nodes.RNode
         return false;
     }
 
-    public void insertEventHandlerNode(EventHandlerNode eventHandlerNode) {
-        this.eventHandlerNode = eventHandlerNode;
+    public void insertEventHandlerNode(EventHandlerNode n) {
+        this.eventHandlerNode = n;
     }
 
 }
