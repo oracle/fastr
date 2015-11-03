@@ -180,7 +180,7 @@ def gate(args):
     '''Run the R gate'''
 
     # exclude findbugs until compliant
-    mx_gate.gate(args + ['-x', '-t', 'FindBugs,Checkheaders,Checkstyle,Distribution Overlap Check'])
+    mx_gate.gate(args + ['-x', '-t', 'FindBugs,Checkheaders,Checkstyle,Distribution Overlap Check,BuildJavaWithEcj'])
 
 def _test_harness_body(args, vmArgs):
     '''the callback from mx.test'''
