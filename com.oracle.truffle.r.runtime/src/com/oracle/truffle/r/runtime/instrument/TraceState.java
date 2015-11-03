@@ -34,7 +34,8 @@ public class TraceState {
         /**
          * Records all functions that have debug receivers installed.
          */
-        private static final WeakHashMap<FunctionUID, StandardInstrumentListener> receiverMap = new WeakHashMap<>();
+        private final WeakHashMap<FunctionUID, StandardInstrumentListener> receiverMap = new WeakHashMap<>();
+        private boolean tracingState;
 
         public void put(FunctionUID functionUID, StandardInstrumentListener listener) {
             receiverMap.put(functionUID, listener);
@@ -42,6 +43,12 @@ public class TraceState {
 
         public StandardInstrumentListener get(FunctionUID functionUID) {
             return receiverMap.get(functionUID);
+        }
+
+        public boolean setTracingState(boolean state) {
+            boolean prev = tracingState;
+            tracingState = state;
+            return prev;
         }
     }
 

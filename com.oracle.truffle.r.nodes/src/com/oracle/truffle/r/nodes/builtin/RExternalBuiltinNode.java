@@ -187,4 +187,15 @@ public abstract class RExternalBuiltinNode extends RBaseNode {
             return execute(args.getArgument(0), args.getArgument(1), args.getArgument(2), args.getArgument(3), args.getArgument(4), args.getArgument(5), args.getArgument(6));
         }
     }
+
+    public abstract static class Arg8 extends RExternalBuiltinNode {
+
+        public abstract Object execute(Object arg1, Object arg2, Object arg3, Object arg4, Object arg5, Object arg6, Object arg7, Object arg8);
+
+        @Override
+        public final Object call(RArgsValuesAndNames args) {
+            checkLength(args, 8);
+            return execute(args.getArgument(0), args.getArgument(1), args.getArgument(2), args.getArgument(3), args.getArgument(4), args.getArgument(5), args.getArgument(6), args.getArgument(7));
+        }
+    }
 }

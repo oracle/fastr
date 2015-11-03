@@ -26,3 +26,5 @@ export(fastr.channel.close)
 export(fastr.channel.send)
 export(fastr.channel.receive)
 export(fastr.throw)
+export(fastr.trace)
+

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,47 +20,41 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.builtin.base;
+package com.oracle.truffle.r.library.fastr;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
+import com.oracle.truffle.r.nodes.RASTUtils;
+import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.nodes.instrument.trace.TraceHandling;
-import com.oracle.truffle.r.runtime.RBuiltin;
-import com.oracle.truffle.r.runtime.RBuiltinKind;
+import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
-public class PrimTraceFunctions {
-    @RBuiltin(name = ".primTrace", kind = RBuiltinKind.PRIMITIVE, parameterNames = "what")
-    public abstract static class PrimTrace extends RInvisibleBuiltinNode {
+public class FastRTrace {
+    public abstract static class Trace extends RExternalBuiltinNode.Arg8 {
 
+        @SuppressWarnings("unused")
         @Specialization
         @TruffleBoundary
-        protected RNull primTrace(RFunction func) {
-            if (!func.isBuiltin()) {
-                if (!TraceHandling.enableTrace(func)) {
-                    throw RError.error(this, RError.Message.GENERIC, "failed to attach trace handler (not instrumented?)");
-                }
+        protected Object trace(RFunction what, Object tracer, Object exit, Object at, byte print, RNull signature, REnvironment where, byte edit) {
+            RSyntaxNode tracerNode;
+            if (tracer instanceof RFunction) {
+                tracerNode = RASTUtils.createCall(tracer, false, ArgumentsSignature.empty(0));
+            } else if (tracer instanceof RLanguage) {
+                tracerNode = ((RLanguage) tracer).getRep().asRSyntaxNode();
+            } else {
+                throw RError.error(this, RError.Message.GENERIC, "tracer is unexpected type");
             }
+            TraceHandling.enableStatementTrace(what, tracerNode);
+            // supposed to return the function name
             return RNull.instance;
         }
-    }
 
-    @RBuiltin(name = ".primUntrace", kind = RBuiltinKind.PRIMITIVE, parameterNames = "what")
-    public abstract static class PrimUnTrace extends RInvisibleBuiltinNode {
-
-        @Specialization
-        @TruffleBoundary
-        protected RNull primTrace(RFunction func) {
-            if (!func.isBuiltin()) {
-                if (!TraceHandling.disableTrace(func)) {
-                    throw RError.error(this, RError.Message.GENERIC, "failed to detach trace handler (not instrumented?)");
-                }
-            }
-            return RNull.instance;
-        }
     }
 
 }

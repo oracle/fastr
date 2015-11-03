@@ -138,3 +138,12 @@ fastr.throw <- function(name) {
 	.FastR(.NAME="fastr.throw", name)
 }
 
+fastr.trace <- function(what, tracer, exit, at, print, signature, where, edit) {
+                              # from = NULL, untrace = FALSE, classMethod = FALSE) {
+	 if (is.character(what)) {
+		 what <- get(what, envir=where, mode="function")
+	 }
+     .FastR(.NAME="fastr.trace", what, tracer, exit, at, print, signature, where, edit)#, from, untrace, classMethod)
+}
+
+
