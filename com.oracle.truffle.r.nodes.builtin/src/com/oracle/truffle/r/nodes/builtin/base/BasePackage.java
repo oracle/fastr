@@ -395,8 +395,6 @@ public class BasePackage extends RBuiltinPackage {
         add(Paste.class, PasteNodeGen::create);
         add(Paste0.class, Paste0NodeGen::create);
         add(PathExpand.class, PathExpandNodeGen::create);
-        add(PrimTraceFunctions.PrimTrace.class, PrimTraceFunctionsFactory.PrimTraceNodeGen::create);
-        add(PrimTraceFunctions.PrimUnTrace.class, PrimTraceFunctionsFactory.PrimUnTraceNodeGen::create);
         add(Primitive.class, PrimitiveNodeGen::create);
         add(PrintFunctions.PrintDefault.class, PrintFunctionsFactory.PrintDefaultNodeGen::create);
         add(PrintFunctions.PrintFunction.class, PrintFunctionsFactory.PrintFunctionNodeGen::create);
@@ -478,6 +476,9 @@ public class BasePackage extends RBuiltinPackage {
         add(ToLower.class, ToLowerNodeGen::create);
         add(ToUpper.class, ToUpperNodeGen::create);
         add(Traceback.class, TracebackNodeGen::create);
+        add(TraceFunctions.PrimTrace.class, TraceFunctionsFactory.PrimTraceNodeGen::create);
+        add(TraceFunctions.PrimUnTrace.class, TraceFunctionsFactory.PrimUnTraceNodeGen::create);
+        add(TraceFunctions.TraceOnOff.class, TraceFunctionsFactory.TraceOnOffNodeGen::create);
         add(Transpose.class, TransposeNodeGen::create);
         add(TrigExpFunctions.Acos.class, TrigExpFunctionsFactory.AcosNodeGen::create);
         add(TrigExpFunctions.Acosh.class, TrigExpFunctionsFactory.AcoshNodeGen::create);

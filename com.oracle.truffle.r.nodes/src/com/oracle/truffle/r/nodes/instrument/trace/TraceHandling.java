@@ -32,6 +32,7 @@ import com.oracle.truffle.r.nodes.instrument.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.context.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
  * Handles everything related to the R {@code trace} function.
@@ -60,6 +61,11 @@ public class TraceHandling {
             fbr.disable();
             return true;
         }
+    }
+
+    @SuppressWarnings("unused")
+    public static boolean enableStatementTrace(RFunction func, RSyntaxNode tracer) {
+        return false;
     }
 
     public static Probe attachTraceHandler(FunctionUID uid) {
@@ -143,6 +149,31 @@ public class TraceHandling {
             }
         }
 
+    }
+
+    @SuppressWarnings("unused")
+    private static class TraceStatementEventReceiver extends TraceEventReceiver {
+
+        public void onEnter(Probe probe, Node node, VirtualFrame vFrame) {
+            if (!disabled()) {
+                //
+            }
+
+        }
+
+        public void onReturnValue(Probe probe, Node node, VirtualFrame vFrame, Object result) {
+            if (!disabled()) {
+                //
+            }
+
+        }
+
+        public void onReturnExceptional(Probe probe, Node node, VirtualFrame vFrame, Exception exception) {
+            if (!disabled()) {
+                //
+            }
+
+        }
     }
 
 }
