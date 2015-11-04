@@ -24,6 +24,8 @@ package com.oracle.truffle.r.runtime;
 
 import java.util.Map.Entry;
 
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+
 /**
  * Options to control the behavior of the FastR system, that relate to the implementation, i.e., are
  * <b>not</b> part of the standard set of R options or command line options. The syntax follows that
@@ -64,7 +66,7 @@ public enum FastROptions {
     private final String help;
     private final boolean isBoolean;
     private final Object defaultValue;
-    Object value;
+    @CompilationFinal Object value;
 
     FastROptions(String help, boolean defaultValue) {
         this(help, defaultValue, false);
