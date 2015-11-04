@@ -366,7 +366,15 @@ public final class RDataFactory {
     }
 
     public static RSymbol createSymbol(String name) {
+        assert name == name.intern();
         return traceDataCreated(new RSymbol(name));
+    }
+
+    /*
+     * A version of {@link createSymbol} method used from native code.
+     */
+    public static RSymbol createSymbolInterned(String name) {
+        return createSymbol(name.intern());
     }
 
     public static RLanguage createLanguage(RNode rep) {

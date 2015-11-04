@@ -30,8 +30,23 @@ public final class Constant extends ASTNode {
     private final String[] values;
     private final ConstantType type;
 
+    /*
+     * Used in case parameter is a single String value that should not be interned (e.g., NA)
+     */
+    private Constant(String value, SourceSection source) {
+        super(source);
+        this.values = new String[]{value};
+        this.type = ConstantType.STRING;
+    }
+
     private Constant(String[] values, ConstantType type, SourceSection source) {
         super(source);
+        if (type == ConstantType.STRING) {
+            assert values != null;
+            for (int i = 0; i < values.length; i++) {
+                values[i] = values[i].intern();
+            }
+        }
         this.values = values;
         this.type = type;
     }
@@ -95,7 +110,8 @@ public final class Constant extends ASTNode {
     }
 
     public static Constant createStringNA(SourceSection src) {
-        return new Constant(new String[]{RRuntime.STRING_NA}, ConstantType.STRING, src);
+        // don't intern NA value, otherwise each "NA" literal becomes an NA value
+        return new Constant(RRuntime.STRING_NA, src);
     }
 
     public void addNegativeSign() {

@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.access;
 
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -56,9 +57,11 @@ abstract class WriteVariableNodeSyntaxHelper extends WriteVariableNode {
     protected Object getRelementHelper(String op, int index) {
         switch (index) {
             case 0:
+                assert op == op.intern();
                 return RDataFactory.createSymbol(op);
             case 1:
-                return RDataFactory.createSymbol(getName().toString());
+                CompilerAsserts.neverPartOfCompilation();
+                return RDataFactory.createSymbol(getName().toString().intern());
             case 2:
                 return RASTUtils.createLanguageElement(getRhs());
             default:

@@ -73,7 +73,7 @@ void init_utils(JNIEnv *env) {
 	RRuntimeClass = checkFindClass(env, "com/oracle/truffle/r/runtime/RRuntime");
 	RInternalErrorClass = checkFindClass(env, "com/oracle/truffle/r/runtime/RInternalError");
 	unimplementedMethodID = checkGetMethodID(env, RInternalErrorClass, "unimplemented", "(Ljava/lang/String;)Ljava/lang/RuntimeException;", 1);
-	createSymbolMethodID = checkGetMethodID(env, RDataFactoryClass, "createSymbol", "(Ljava/lang/String;)Lcom/oracle/truffle/r/runtime/data/RSymbol;", 1);
+	createSymbolMethodID = checkGetMethodID(env, RDataFactoryClass, "createSymbolInterned", "(Ljava/lang/String;)Lcom/oracle/truffle/r/runtime/data/RSymbol;", 1);
     validateMethodID = checkGetMethodID(env, CallRFFIHelperClass, "validate", "(Ljava/lang/Object;)Ljava/lang/Object;", 1);
     for (int i = 0; i < CACHED_GLOBALREFS_TABLE_SIZE; i++) {
     	cachedGlobalRefs[i] = NULL;

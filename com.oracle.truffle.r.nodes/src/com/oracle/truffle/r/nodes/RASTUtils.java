@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes;
 
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.instrument.WrapperNode;
@@ -114,9 +115,11 @@ public class RASTUtils {
     public static RSymbol createRSymbol(Node readVariableNode) {
         if (readVariableNode instanceof ReadVariadicComponentNode) {
             ReadVariadicComponentNode rvcn = (ReadVariadicComponentNode) readVariableNode;
-            return RDataFactory.createSymbol(rvcn.getPrintForm());
+            return RDataFactory.createSymbol(rvcn.getPrintForm().intern());
         } else {
-            return RDataFactory.createSymbol(((ReadVariableNode) readVariableNode).getIdentifier());
+            String id = ((ReadVariableNode) readVariableNode).getIdentifier();
+            assert id == id.intern();
+            return RDataFactory.createSymbol(id);
         }
     }
 
@@ -229,25 +232,27 @@ public class RASTUtils {
      * or {@link GroupDispatchNode}.
      */
     public static Object findFunctionName(Node node) {
+        CompilerAsserts.neverPartOfCompilation(); // for string interning
         RNode child = (RNode) unwrap(getFunctionNode(node));
         if (child instanceof ConstantNode && ConstantNode.isFunction(child)) {
             return ((ConstantNode) child).getValue();
         } else if (child instanceof ReadVariableNode) {
             String name = ((ReadVariableNode) child).getIdentifier();
+            assert name == name.intern();
             return RDataFactory.createSymbol(name);
         } else if (child instanceof GroupDispatchNode) {
             GroupDispatchNode groupDispatchNode = (GroupDispatchNode) child;
             String gname = groupDispatchNode.getGenericName();
-            return RDataFactory.createSymbol(gname);
+            return RDataFactory.createSymbol(gname.intern());
         } else if (child instanceof RBuiltinNode) {
             RBuiltinNode builtinNode = (RBuiltinNode) child;
-            return RDataFactory.createSymbol((builtinNode.getBuiltin().getName()));
+            return RDataFactory.createSymbol((builtinNode.getBuiltin().getName().intern()));
         } else {
             // TODO This should really fail in some way as (clearly) this is not a "name"
             // some more complicated expression, just deparse it
             RDeparse.State state = RDeparse.State.createPrintableState();
             child.deparse(state);
-            return RDataFactory.createSymbol(state.toString());
+            return RDataFactory.createSymbol(state.toString().intern());
         }
     }
 

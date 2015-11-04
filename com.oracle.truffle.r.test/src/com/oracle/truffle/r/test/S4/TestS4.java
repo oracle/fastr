@@ -38,6 +38,8 @@ public class TestS4 extends TestBase {
         assertEval("{ getClass(\"ClassUnionRepresentation\")@virtual }");
         assertEval("{ getClass(\"ClassUnionRepresentation\")@.S3Class }");
         assertEval("{ c(42)@.Data }");
+        assertEval("{ x<-42; `@`(x, \".Data\") }");
+        assertEval("{ x<-42; `@`(x, .Data) }");
         assertEval(Output.ContainsError, "{ getClass(\"ClassUnionRepresentation\")@foo }");
         assertEval(Output.ContainsError, "{ c(42)@foo }");
         assertEval(Output.ContainsError, "{ x<-c(42); class(x)<-\"bar\"; x@foo }");

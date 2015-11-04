@@ -137,7 +137,7 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
 
     private ReadVariableNode(Object identifier, RType mode, ReadKind kind, boolean visibilityChange) {
         this.identifier = identifier;
-        this.identifierAsString = identifier.toString();
+        this.identifierAsString = identifier.toString().intern();
         this.mode = mode;
         this.kind = kind;
         this.visibilityChange = visibilityChange;
@@ -180,7 +180,9 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
 
     @Override
     public Object getRelementImpl(int index) {
-        return RDataFactory.createSymbol(identifier.toString());
+        String id = identifier.toString();
+        assert id == id.intern();
+        return RDataFactory.createSymbol(id);
     }
 
     @Override

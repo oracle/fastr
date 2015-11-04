@@ -41,7 +41,6 @@ public abstract class AccessSlotNode extends RNode {
     @Child private ClassHierarchyNode classHierarchy;
     @Child private TypeofNode typeofNode;
     private final BranchProfile noSlot = BranchProfile.create();
-    private final ConditionProfile nullSlot = ConditionProfile.createBinaryProfile();
 
     protected AttributeAccess createAttrAccess(String name) {
         return AttributeAccessNodeGen.create(name);
@@ -50,11 +49,8 @@ public abstract class AccessSlotNode extends RNode {
     private Object getSlotS4Internal(RAttributable object, String name, Object value) {
         if (value == null) {
             noSlot.enter();
+            assert name == name.intern();
             if (name == RRuntime.DOT_S3_CLASS) {
-                // TODO: this will not work if `@` function is called directly, as in:
-                // `@`(x, ".S3Class")
-                // in general, treatment of the name parameter has to be finessed to be
-                // fully compatible with GNU R on direct calls to `@` function
                 if (classHierarchy == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
                     classHierarchy = insert(ClassHierarchyNodeGen.create(true));
@@ -128,7 +124,7 @@ public abstract class AccessSlotNode extends RNode {
     }
 
     protected boolean isDotData(String name) {
-        // see comment on usinq object equality in getSlotS4()
+        assert name == name.intern();
         return name == RRuntime.DOT_DATA;
     }
 }

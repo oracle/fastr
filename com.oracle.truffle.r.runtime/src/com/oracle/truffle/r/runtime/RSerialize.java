@@ -15,6 +15,7 @@ import java.io.*;
 import java.nio.charset.*;
 import java.util.*;
 
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.source.*;
@@ -670,7 +671,7 @@ public class RSerialize {
 
                 case SYMSXP: {
                     String name = (String) readItem();
-                    result = RDataFactory.createSymbol(name);
+                    result = RDataFactory.createSymbol(name.intern());
                     addReadRef(result);
                     break;
                 }
@@ -1823,7 +1824,8 @@ public class RSerialize {
         RSymbol findSymbol(String name) {
             RSymbol symbol = symbolMap.get(name);
             if (symbol == null) {
-                symbol = RDataFactory.createSymbol(name);
+                CompilerAsserts.neverPartOfCompilation(); // for interning
+                symbol = RDataFactory.createSymbol(name.intern());
                 symbolMap.put(name, symbol);
             }
             return symbol;

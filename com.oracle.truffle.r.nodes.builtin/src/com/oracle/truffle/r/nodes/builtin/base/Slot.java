@@ -58,7 +58,9 @@ public abstract class Slot extends RBuiltinNode {
 
     @Specialization
     protected Object getSlot(RAttributable object, Object nameObj) {
-        return accessSlotNode.executeAccess(object, getName(nameObj));
+        String name = getName(nameObj);
+        assert name == name.intern();
+        return accessSlotNode.executeAccess(object, name);
     }
 
 }
