@@ -180,7 +180,7 @@ def gate(args):
     '''Run the R gate'''
 
     # exclude findbugs until compliant
-    mx_gate.gate(args + ['-x', '-t', 'BuildJavaWithEcj,FindBugs,Checkheaders,Checkstyle,Distribution Overlap Check'])
+    mx_gate.gate(args + ['-x', '-t', 'FindBugs,Checkheaders,Checkstyle,Distribution Overlap Check,BuildJavaWithEcj'])
 
 def _test_harness_body(args, vmArgs):
     '''the callback from mx.test'''
@@ -439,7 +439,7 @@ def load_optional_suite(name, rev):
         mx.build_suite(opt_suite)
     return opt_suite
 
-_r_apptests_rev = 'cc69f8746262ee36704b96273463099f189fb6d4'
+_r_apptests_rev = '9594f2e87ecec87a5bbe4e9f89c6a1810f982c64'
 _r_benchmarks_rev = '8015c2260bf971904a9bf7e49eceb974117cd514'
 
 def mx_post_parse_cmd_line(opts):
