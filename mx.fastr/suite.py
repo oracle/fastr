@@ -21,7 +21,7 @@
 # questions.
 #
 suite = {
-  "mxversion" : "5.5.15",
+  "mxversion" : "5.6.0",
   "name" : "fastr",
   "imports" : {
     "suites" : [
@@ -40,13 +40,15 @@ suite = {
     "GNUR" : {
         "path" : "libdownloads/R-3.1.3.tar.gz",
         "urls" : ["http://cran.rstudio.com/src/base/R-3/R-3.1.3.tar.gz"],
-        "sha1" : "2c9165060b91e45ac73d8cb7507ee9e52816f8b3"
+        "sha1" : "2c9165060b91e45ac73d8cb7507ee9e52816f8b3",
+        "resource" : "true"
     },
 
     "GNU_ICONV" : {
         "path" : "libdownloads/libiconv-1.14.tar.gz",
         "urls" : ["http://ftp.gnu.org/pub/gnu/libiconv/libiconv-1.14.tar.gz"],
-        "sha1" : "be7d67e50d72ff067b2c0291311bc283add36965"
+        "sha1" : "be7d67e50d72ff067b2c0291311bc283add36965",
+        "resource" : "true"
     },
 
     "ANTLR" : {
