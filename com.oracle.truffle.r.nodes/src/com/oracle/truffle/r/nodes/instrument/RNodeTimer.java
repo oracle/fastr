@@ -75,7 +75,7 @@ public class RNodeTimer {
         }
 
         @Override
-        public void onReturnExceptional(Probe probe, Exception exception) {
+        public void onReturnExceptional(Probe probe, Throwable exception) {
             returnAny(probe);
         }
 

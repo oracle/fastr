@@ -206,7 +206,7 @@ public class DebugHandling {
         }
 
         @Override
-        public void onReturnExceptional(Probe probe, Node node, VirtualFrame frame, Exception exception) {
+        public void onReturnExceptional(Probe probe, Node node, VirtualFrame frame, Throwable exception) {
         }
 
         boolean disabled() {
@@ -371,7 +371,7 @@ public class DebugHandling {
         }
 
         @Override
-        public void onReturnExceptional(Probe probe, Node node, VirtualFrame frame, Exception exception) {
+        public void onReturnExceptional(Probe probe, Node node, VirtualFrame frame, Throwable exception) {
             if (!disabled()) {
                 returnCleanup(frame);
             }
@@ -467,7 +467,7 @@ public class DebugHandling {
         }
 
         @Override
-        public void onReturnExceptional(Probe probe, Node node, VirtualFrame frame, Exception exception) {
+        public void onReturnExceptional(Probe probe, Node node, VirtualFrame frame, Throwable exception) {
             if (!disabled()) {
                 returnCleanup();
             }
