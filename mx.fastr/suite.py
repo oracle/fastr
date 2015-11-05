@@ -28,7 +28,7 @@ suite = {
     "suites" : [
             {
                "name" : "graal",
-               "version" : "d6f0245476e26f823d723d21b996eba0a069771b",
+               "version" : "baf68ed1ccbc30fb60ce077f31e921806411c9cd",
                "urls" : [{"url" : "http://lafo.ssw.uni-linz.ac.at/hg/graal-compiler", "kind" : "hg"}]
             },
             {
