@@ -16,6 +16,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
 
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RError.RErrorException;
 import com.oracle.truffle.r.runtime.context.*;
@@ -205,7 +206,8 @@ public class DLL {
     }
 
     public static RExternalPtr createExternalPtr(long value, RStringVector rClass) {
-        RExternalPtr result = RDataFactory.createExternalPtr(value, RDataFactory.createSymbol(rClass.getDataAt(0)));
+        CompilerAsserts.neverPartOfCompilation(); // for interning
+        RExternalPtr result = RDataFactory.createExternalPtr(value, RDataFactory.createSymbol(rClass.getDataAt(0).intern()));
         result.setClassAttr(rClass, false);
         return result;
     }

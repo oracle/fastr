@@ -123,7 +123,9 @@ public abstract class AsVector extends RBuiltinNode {
     @Specialization(guards = "isSymbol(x, mode)")
     protected RSymbol asVectorSymbol(RSymbol x, @SuppressWarnings("unused") String mode) {
         controlVisibility();
-        return RDataFactory.createSymbol(x.getName());
+        String sName = x.getName();
+        assert sName == sName.intern();
+        return RDataFactory.createSymbol(sName);
     }
 
     protected boolean isSymbol(@SuppressWarnings("unused") RSymbol x, String mode) {

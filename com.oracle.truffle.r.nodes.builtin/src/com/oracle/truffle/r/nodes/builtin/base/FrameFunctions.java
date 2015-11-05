@@ -26,6 +26,7 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import java.util.*;
 
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
@@ -243,7 +244,9 @@ public class FrameFunctions {
                             if (n instanceof ConstantNode) {
                                 listValue = ((ConstantNode) n).getValue();
                             } else if (n instanceof ReadVariableNode) {
-                                listValue = RDataFactory.createSymbol(((ReadVariableNode) n).getIdentifier());
+                                String id = ((ReadVariableNode) n).getIdentifier();
+                                assert id == id.intern();
+                                listValue = RDataFactory.createSymbol(id);
                             } else if (n instanceof VarArgNode) {
                                 listValue = createVarArgSymbol((VarArgNode) n);
                             } else {
@@ -251,7 +254,7 @@ public class FrameFunctions {
                             }
                             pl.setCar(listValue);
                             if (varArgSignature.getName(i2) != null) {
-                                pl.setTag(RDataFactory.createSymbol(varArgSignature.getName(i2)));
+                                pl.setTag(RDataFactory.createSymbol(varArgSignature.getName(i2).intern()));
                             }
                             if (prev != null) {
                                 prev.setCdr(pl);
@@ -308,7 +311,9 @@ public class FrameFunctions {
 
         private static RSymbol createVarArgSymbol(VarArgNode varArgNode) {
             int vn = varArgNode.getIndex() + 1;
-            return RDataFactory.createSymbol((vn < 10 ? ".." : ".") + vn);
+            CompilerAsserts.neverPartOfCompilation(); // for string concatenation and interning
+            String varArgSymbol = (vn < 10 ? ".." : ".") + vn;
+            return RDataFactory.createSymbol(varArgSymbol.intern());
         }
 
         @Specialization

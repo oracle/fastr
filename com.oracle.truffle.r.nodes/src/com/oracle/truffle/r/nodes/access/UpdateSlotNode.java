@@ -17,7 +17,6 @@ import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.attributes.PutAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.PutAttributeNodeGen;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
-import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.nodes.*;
@@ -44,7 +43,8 @@ public abstract class UpdateSlotNode extends RNode {
 
     @Specialization(contains = "updateSlotS4Cached")
     protected Object updateSlotS4(RS4Object object, String name, Object value) {
-        object.setAttr(name.intern(), value);
+        assert name == name.intern();
+        object.setAttr(name, value);
         return object;
     }
 
@@ -57,7 +57,8 @@ public abstract class UpdateSlotNode extends RNode {
 
     @Specialization(contains = "updateSlotCached")
     protected Object updateSlot(RAbstractContainer object, String name, Object value) {
-        object.setAttr(name.intern(), value);
+        assert name == name.intern();
+        object.setAttr(name, value);
         return object;
     }
 

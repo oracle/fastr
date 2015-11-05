@@ -45,10 +45,7 @@ public final class FieldAccess extends ASTNode {
     public static ASTNode create(SourceSection src, FieldOperator op, ASTNode value, String fieldName) {
         switch (op) {
             case AT:
-                // these two names have special meaning for slot retrieval
-
-                String newName = fieldName.equals(RRuntime.DOT_DATA) ? RRuntime.DOT_DATA : (fieldName.equals(RRuntime.DOT_S3_CLASS) ? RRuntime.DOT_S3_CLASS : fieldName);
-                return new FieldAccess(src, value, newName, true);
+                return new FieldAccess(src, value, fieldName.intern(), true);
             case FIELD:
                 return new FieldAccess(src, value, fieldName, false);
         }
