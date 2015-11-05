@@ -122,7 +122,7 @@ public final class RREPLServer extends REPLServer {
         System.arraycopy(args, 0, debugArgs, 1, args.length);
         RCmdOptions options = RCmdOptions.parseArguments(RCmdOptions.Client.R, args);
         ContextInfo info = RCommand.createContextInfoFromCommandLine(options);
-        this.vm = info.apply(PolyglotEngine.buildNew()).onEvent(onHalted).onEvent(onExec).build();
+        this.vm = info.apply(PolyglotEngine.newBuilder()).onEvent(onHalted).onEvent(onExec).build();
         this.language = vm.getLanguages().get(TruffleRLanguage.MIME);
         assert language != null;
 

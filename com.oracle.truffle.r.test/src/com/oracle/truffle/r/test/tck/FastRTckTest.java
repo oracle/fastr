@@ -34,7 +34,7 @@ import com.oracle.truffle.tck.TruffleTCK;
 public class FastRTckTest extends TruffleTCK {
     @Test
     public void testVerifyPresence() {
-        PolyglotEngine vm = PolyglotEngine.buildNew().build();
+        PolyglotEngine vm = PolyglotEngine.newBuilder().build();
         assertTrue("Our language is present", vm.getLanguages().containsKey("text/x-r"));
     }
 
@@ -71,7 +71,7 @@ public class FastRTckTest extends TruffleTCK {
 
     @Override
     protected PolyglotEngine prepareVM() throws Exception {
-        PolyglotEngine vm = PolyglotEngine.buildNew().build();
+        PolyglotEngine vm = PolyglotEngine.newBuilder().build();
         vm.eval(INITIALIZATION);
         return vm;
     }
