@@ -311,16 +311,18 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
 
     private static final class DescriptorStableMatch extends DescriptorLevel {
 
-        private final StableValue<Object> valueAssumption;
+        private final Assumption assumption;
+        private final Object value;
 
-        public DescriptorStableMatch(StableValue<Object> valueAssumption) {
-            this.valueAssumption = valueAssumption;
+        public DescriptorStableMatch(Assumption assumption, Object value) {
+            this.assumption = assumption;
+            this.value = value;
         }
 
         @Override
         public Object execute(VirtualFrame frame) throws InvalidAssumptionException {
-            valueAssumption.getAssumption().check();
-            return valueAssumption.getValue();
+            assumption.check();
+            return value;
         }
 
         @Override
@@ -524,7 +526,16 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
         if (match) {
             ReadVariableLevel level = levels.get(levels.size() - 1);
             if (level.valueAssumption != null) {
-                lastLevel = new DescriptorStableMatch(level.valueAssumption);
+                Assumption assumption = level.valueAssumption.getAssumption();
+                Object value = level.valueAssumption.getValue();
+                if (kind != ReadKind.UnforcedSilentLocal && value instanceof RPromise) {
+                    RPromise promise = (RPromise) value;
+                    Object promiseValue = PromiseHelperNode.evaluateSlowPath(frame, promise);
+                    if (promiseValue instanceof RFunction) {
+                        value = promiseValue;
+                    }
+                }
+                lastLevel = new DescriptorStableMatch(assumption, value);
             } else {
                 complex = true;
                 lastLevel = new Match(level.slot);
