@@ -22,15 +22,21 @@
  */
 package com.oracle.truffle.r.nodes.instrument;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.TreeMap;
 
-import com.oracle.truffle.api.instrument.*;
-import com.oracle.truffle.api.source.*;
-import com.oracle.truffle.r.nodes.function.*;
+import com.oracle.truffle.api.instrument.Probe;
+import com.oracle.truffle.api.instrument.SimpleInstrumentListener;
+import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.instrument.RInstrument.FunctionIdentification;
 import com.oracle.truffle.r.nodes.instrument.RInstrument.NodeId;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.nodes.*;
+import com.oracle.truffle.r.runtime.FastROptions;
+import com.oracle.truffle.r.runtime.FunctionUID;
+import com.oracle.truffle.r.runtime.RPerfStats;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
  * Basic support for adding as timer to a node. A timer must be identified with some unique value

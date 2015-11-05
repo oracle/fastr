@@ -22,15 +22,16 @@
  */
 package com.oracle.truffle.r.engine.interop;
 
-import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.interop.*;
+import com.oracle.truffle.api.CallTarget;
+import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.ForeignAccess.Factory10;
-import com.oracle.truffle.api.nodes.*;
-import com.oracle.truffle.r.engine.*;
-import com.oracle.truffle.r.nodes.function.RCallNode;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.api.interop.Message;
+import com.oracle.truffle.api.nodes.RootNode;
+import com.oracle.truffle.r.engine.TruffleRLanguage;
+import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 public final class RAbstractVectorAccessFactory implements Factory10 {
 

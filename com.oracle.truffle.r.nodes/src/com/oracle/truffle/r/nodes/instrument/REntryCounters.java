@@ -22,11 +22,15 @@
  */
 package com.oracle.truffle.r.nodes.instrument;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
-import com.oracle.truffle.api.instrument.*;
-import com.oracle.truffle.r.nodes.function.*;
-import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.api.instrument.Probe;
+import com.oracle.truffle.api.instrument.SimpleInstrumentListener;
+import com.oracle.truffle.r.runtime.FunctionUID;
+import com.oracle.truffle.r.runtime.RPerfStats;
 
 /**
  * Basic support for adding entry/exit counters to nodes. A counter must be identified with some
