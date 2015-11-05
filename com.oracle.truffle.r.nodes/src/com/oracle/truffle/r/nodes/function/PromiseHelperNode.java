@@ -408,7 +408,7 @@ public class PromiseHelperNode extends RBaseNode {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 cachedWrapIndex = wrapIndex;
             }
-            if (wrapIndex != cachedWrapIndex) {
+            if (cachedWrapIndex != GENERIC && wrapIndex != cachedWrapIndex) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 cachedWrapIndex = GENERIC;
             }
