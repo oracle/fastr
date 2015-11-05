@@ -93,8 +93,8 @@ public final class RAttributes implements Iterable<RAttributes.RAttribute> {
     private RAttributes(RAttributes attrs) {
         if (attrs.size != 0) {
             size = attrs.size;
-            names = Arrays.copyOf(attrs.names, size);
-            values = Arrays.copyOf(attrs.values, size);
+            names = attrs.names.clone();
+            values = attrs.values.clone();
         }
     }
 
