@@ -72,41 +72,30 @@ public abstract class Assign extends RInvisibleBuiltinNode {
     /**
      * The general case that requires searching the environment hierarchy.
      */
-    @Specialization(guards = {"inheritsIsTrue(inherits)"})
-    protected Object assignInherit(RAbstractStringVector xVec, Object value, REnvironment envir, @SuppressWarnings("unused") byte inherits) {
+    @Specialization
+    protected Object assignInherit(RAbstractStringVector xVec, Object value, REnvironment envir, byte inherits, //
+                    @Cached("createBinaryProfile()") ConditionProfile inheritsProfile) {
         controlVisibility();
         String x = checkVariable(xVec);
         REnvironment env = envir;
-        while (env != REnvironment.emptyEnv()) {
-            if (env.get(x) != null) {
-                break;
+        if (inheritsProfile.profile(inherits == RRuntime.LOGICAL_TRUE)) {
+            while (env != REnvironment.emptyEnv()) {
+                if (env.get(x) != null) {
+                    break;
+                }
+                env = env.getParent();
             }
-            env = env.getParent();
+            if (env == REnvironment.emptyEnv()) {
+                env = REnvironment.globalEnv();
+            }
+        } else {
+            if (env == REnvironment.emptyEnv()) {
+                errorProfile.enter();
+                throw RError.error(this, RError.Message.CANNOT_ASSIGN_IN_EMPTY_ENV);
+            }
         }
         try {
-            if (env != REnvironment.emptyEnv()) {
-                env.put(x, value);
-            } else {
-                REnvironment.globalEnv().put(x, value);
-            }
-        } catch (PutException ex) {
-            errorProfile.enter();
-            throw RError.error(this, ex);
-        }
-        return value;
-    }
-
-    @Specialization(guards = {"!inheritsIsTrue(inherits)"})
-    @SuppressWarnings("unused")
-    protected Object assignNoInherit(RAbstractStringVector xVec, Object value, REnvironment envir, byte inherits) {
-        String x = checkVariable(xVec);
-        controlVisibility();
-        if (envir == REnvironment.emptyEnv()) {
-            errorProfile.enter();
-            throw RError.error(this, RError.Message.CANNOT_ASSIGN_IN_EMPTY_ENV);
-        }
-        try {
-            envir.put(x, value);
+            env.put(x, value);
         } catch (PutException ex) {
             errorProfile.enter();
             throw RError.error(this, ex);
@@ -126,9 +115,4 @@ public abstract class Assign extends RInvisibleBuiltinNode {
             throw RError.error(this, RError.Message.INVALID_ARGUMENT, "inherits");
         }
     }
-
-    protected static boolean inheritsIsTrue(byte inherits) {
-        return inherits == RRuntime.LOGICAL_TRUE;
-    }
-
 }
