@@ -136,7 +136,7 @@ public class TraceHandling {
         }
 
         @Override
-        public void onReturnExceptional(Probe probe, Node node, VirtualFrame frame, Exception exception) {
+        public void onReturnExceptional(Probe probe, Node node, VirtualFrame frame, Throwable exception) {
             if (!disabled()) {
                 indent -= INDENT;
             }
@@ -168,7 +168,7 @@ public class TraceHandling {
 
         }
 
-        public void onReturnExceptional(Probe probe, Node node, VirtualFrame vFrame, Exception exception) {
+        public void onReturnExceptional(Probe probe, Node node, VirtualFrame vFrame, Throwable exception) {
             if (!disabled()) {
                 //
             }
