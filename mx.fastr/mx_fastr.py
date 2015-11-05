@@ -420,8 +420,13 @@ def rcmplib(args):
     cp = mx.classpath([pcp.name for pcp in mx.projects_opt_limit_to_suites()])
     mx.run_java(['-cp', cp, 'com.oracle.truffle.r.test.tools.cmpr.CompareLibR'] + cmpArgs)
 
+_bm_suite = None
+
 def bench(args):
-    mx.abort("no benchmarks available")
+    if _bm_suite:
+        mx.command_function('r_benchmarks:bench')(args)
+    else:
+        mx.abort("no benchmarks available")
 
 def _cran_test_project():
     return mx.project('com.oracle.truffle.r.test.cran').dir
@@ -445,7 +450,8 @@ _r_benchmarks_rev = '8015c2260bf971904a9bf7e49eceb974117cd514'
 def mx_post_parse_cmd_line(opts):
     # load optional suites, r_apptests first so r_benchmarks can find it
     load_optional_suite('r_apptests', _r_apptests_rev)
-    load_optional_suite('r_benchmarks', _r_benchmarks_rev)
+    global _bm_suite
+    _bm_suite = load_optional_suite('r_benchmarks', _r_benchmarks_rev)
 
 _commands = {
     # new commands
