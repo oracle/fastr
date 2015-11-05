@@ -179,7 +179,7 @@ public class RCommand {
      * exiting. So,in either case, we never return.
      */
     public static void readEvalPrint(ContextInfo info) {
-        PolyglotEngine vm = info.apply(PolyglotEngine.buildNew()).build();
+        PolyglotEngine vm = info.apply(PolyglotEngine.newBuilder()).build();
         ConsoleHandler consoleHandler = info.getConsoleHandler();
         Source source = Source.fromNamedAppendableText(consoleHandler.getInputDescription());
         try {

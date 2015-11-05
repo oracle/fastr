@@ -123,7 +123,7 @@ public final class FastRSession implements RSession {
         create();
         RCmdOptions options = RCmdOptions.parseArguments(Client.RSCRIPT, new String[0]);
         ContextInfo info = ContextInfo.create(options, ContextKind.SHARE_PARENT_RW, mainContext, consoleHandler, TimeZone.getTimeZone("CET"));
-        return info.apply(PolyglotEngine.buildNew()).build();
+        return info.apply(PolyglotEngine.newBuilder()).build();
     }
 
     private FastRSession() {
@@ -131,7 +131,7 @@ public final class FastRSession implements RSession {
         try {
             RCmdOptions options = RCmdOptions.parseArguments(Client.RSCRIPT, new String[0]);
             ContextInfo info = ContextInfo.create(options, ContextKind.SHARE_NOTHING, null, consoleHandler);
-            main = info.apply(PolyglotEngine.buildNew()).build();
+            main = info.apply(PolyglotEngine.newBuilder()).build();
             try {
                 mainContext = main.eval(GET_CONTEXT).as(RContext.class);
             } catch (IOException e) {
