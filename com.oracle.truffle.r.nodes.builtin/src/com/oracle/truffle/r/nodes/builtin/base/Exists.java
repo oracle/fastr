@@ -27,7 +27,9 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
 
@@ -42,10 +44,16 @@ public abstract class Exists extends RBuiltinNode {
         RType rType = RType.fromMode(mode);
         if (inherits == RRuntime.LOGICAL_FALSE) {
             Object obj = env.get(name);
+            if (rType != RType.Any && obj instanceof RPromise) {
+                obj = PromiseHelperNode.evaluateSlowPath(null, (RPromise) obj);
+            }
             return RRuntime.asLogical(obj != null && RRuntime.checkType(obj, rType));
         }
         for (REnvironment e = env; e != REnvironment.emptyEnv(); e = e.getParent()) {
             Object obj = e.get(name);
+            if (rType != RType.Any && obj instanceof RPromise) {
+                obj = PromiseHelperNode.evaluateSlowPath(null, (RPromise) obj);
+            }
             if (obj != null && RRuntime.checkType(obj, rType)) {
                 return RRuntime.LOGICAL_TRUE;
             }
