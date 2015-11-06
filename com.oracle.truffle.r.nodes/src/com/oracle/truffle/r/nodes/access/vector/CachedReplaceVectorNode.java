@@ -314,7 +314,11 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
         RType value = this.valueType;
 
         if (vector == RType.List && mode.isSubscript()) {
-            return vector;
+            if (value.isNull() && numberOfDimensions > 1) {
+                return null;
+            } else {
+                return vector;
+            }
         } else if (vector.isVector() && value.isVector()) {
             if (vector != value) {
                 if (vector == RType.List || value == RType.List) {
