@@ -36,10 +36,8 @@ import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RPromise;
-import com.oracle.truffle.r.runtime.data.RS4Object;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
-import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 
 @RBuiltin(name = "@<-", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", "", ""}, nonEvalArgs = 1)
 public abstract class UpdateSlot extends RBuiltinNode {
@@ -53,6 +51,11 @@ public abstract class UpdateSlot extends RBuiltinNode {
     @Child private RArgumentsNode argsNode = RArgumentsNode.create();
     private final ConditionProfile cached = ConditionProfile.createBinaryProfile();
     private final RCaller caller = RDataFactory.createCaller(this);
+
+    @Override
+    protected void createCasts(CastBuilder casts) {
+        casts.toAttributable(0, true, true, true);
+    }
 
     protected String getName(Object nameObj) {
         if (nameObj instanceof RPromise) {
@@ -104,16 +107,10 @@ public abstract class UpdateSlot extends RBuiltinNode {
     }
 
     @Specialization
-    protected Object updateSlot(VirtualFrame frame, RS4Object object, Object nameObj, Object value) {
+    protected Object updateSlot(VirtualFrame frame, RAttributable object, Object nameObj, Object value) {
         String name = getName(nameObj);
         checkSlotAssign(frame, object, name, value);
         return updateSlotNode.executeUpdate(object, name, value);
     }
 
-    @Specialization
-    protected Object updateSlot(VirtualFrame frame, RAbstractContainer object, Object nameObj, Object value) {
-        String name = getName(nameObj);
-        checkSlotAssign(frame, object, name, value);
-        return updateSlotNode.executeUpdate(object, name, value);
-    }
 }

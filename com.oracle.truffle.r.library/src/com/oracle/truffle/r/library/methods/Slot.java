@@ -47,10 +47,11 @@ public class Slot {
     public abstract static class R_setSlot extends RExternalBuiltinNode.Arg3 {
 
         @Child UpdateSlotNode updateSlotNode = UpdateSlotNodeGen.create(null, null, null);
+        @Child CastToAttributableNode castAttributable = CastToAttributableNodeGen.create(true, true, true);
 
         @Specialization(guards = "nameVec.getLength() == 1")
         protected Object setSlot(Object object, RAbstractStringVector nameVec, Object value) {
-            return updateSlotNode.executeUpdate(object, nameVec.getDataAt(0), value);
+            return updateSlotNode.executeUpdate(castAttributable.executeObject(object), nameVec.getDataAt(0), value);
         }
 
         @SuppressWarnings("unused")

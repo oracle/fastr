@@ -36,27 +36,13 @@ public abstract class UpdateSlotNode extends RNode {
 
     @SuppressWarnings("unused")
     @Specialization(guards = "name == cachedName")
-    protected Object updateSlotS4Cached(RS4Object object, String name, Object value, @Cached("name") String cachedName, @Cached("createAttrUpdate(cachedName)") PutAttributeNode attributeUpdate) {
+    protected Object updateSlotS4Cached(RAttributable object, String name, Object value, @Cached("name") String cachedName, @Cached("createAttrUpdate(cachedName)") PutAttributeNode attributeUpdate) {
         attributeUpdate.execute(object.initAttributes(), value);
         return object;
     }
 
     @Specialization(contains = "updateSlotS4Cached")
-    protected Object updateSlotS4(RS4Object object, String name, Object value) {
-        assert name == name.intern();
-        object.setAttr(name, value);
-        return object;
-    }
-
-    @SuppressWarnings("unused")
-    @Specialization(guards = "name == cachedName")
-    protected Object updateSlotCached(RAbstractContainer object, String name, Object value, @Cached("name") String cachedName, @Cached("createAttrUpdate(cachedName)") PutAttributeNode attributeUpdate) {
-        attributeUpdate.execute(object.initAttributes(), value);
-        return object;
-    }
-
-    @Specialization(contains = "updateSlotCached")
-    protected Object updateSlot(RAbstractContainer object, String name, Object value) {
+    protected Object updateSlotS4(RAttributable object, String name, Object value) {
         assert name == name.intern();
         object.setAttr(name, value);
         return object;
