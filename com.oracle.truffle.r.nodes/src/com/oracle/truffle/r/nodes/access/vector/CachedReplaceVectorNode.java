@@ -107,7 +107,7 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
         Object castVector = vectorClass.cast(originalVector);
         Object castValue = valueClass.cast(originalValues);
 
-        RAbstractContainer value;
+        RTypedValue value;
         if (valueType == RType.Null) {
             if (vectorType == RType.Null) {
                 // we cast Null to Logical, but in the end it will fold and return Null
@@ -121,11 +121,16 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
             if (!isList() && castValue instanceof RFactor) {
                 value = ((RFactor) castValue).getVector();
             } else {
-                value = (RAbstractContainer) castValue;
+                value = (RTypedValue) castValue;
             }
         }
 
-        int appliedValueLength = valueLengthProfile.profile(value.getLength());
+        int appliedValueLength;
+        if (value instanceof RAbstractContainer) {
+            appliedValueLength = valueLengthProfile.profile(((RAbstractContainer) value).getLength());
+        } else {
+            appliedValueLength = 1;
+        }
 
         int valueLength;
         if (this.numberOfDimensions > 1 && isDeleteElements()) {
@@ -195,8 +200,8 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
         }
 
         if (isList()) {
-            if (mode.isSubscript()) {
-                value = copyValueOnAssignment(value);
+            if (mode.isSubscript() && value instanceof RAbstractContainer) {
+                value = copyValueOnAssignment((RAbstractContainer) value);
             }
         } else if (value instanceof RAbstractVector) {
             value = ((RAbstractVector) value).castSafe(castType);
@@ -233,7 +238,10 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
             }
         }
 
-        writeVectorNode.enableValueNACheck(value);
+        if (value instanceof RAbstractContainer) {
+            writeVectorNode.enableValueNACheck((RAbstractContainer) value);
+        }
+
         writeVectorNode.apply(vector, vectorLength, positions, value, appliedValueLength, vectorDimensions);
         vector.setComplete(vector.isComplete() && writeVectorNode.neverSeenNAInValue());
         RNode.reportWork(this, replacementLength);
@@ -305,7 +313,9 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
 
         RType value = this.valueType;
 
-        if (vector.isVector() && value.isVector()) {
+        if (vector == RType.List && mode.isSubscript()) {
+            return vector;
+        } else if (vector.isVector() && value.isVector()) {
             if (vector != value) {
                 if (vector == RType.List || value == RType.List) {
                     return RType.List;

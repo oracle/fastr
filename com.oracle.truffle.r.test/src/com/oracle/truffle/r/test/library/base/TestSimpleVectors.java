@@ -669,6 +669,11 @@ public class TestSimpleVectors extends TestBase {
         // inconsistent error messages in expected output and shell
         assertEval(Output.ContainsAmbiguousError, "{ x <- c(1); x[[-4]] <- NULL }");
         assertEval(Output.ContainsAmbiguousError, "{ x <- c(1,2,3); x[[-1]] <- NULL }");
+
+        assertEval("{ x<-emptyenv(); y<-list(); y[[1]]<-x; y[[1]] }");
+        assertEval("{ f<-function() 42; y<-list(); y[[1]]<-f; y[[1]] }");
+        assertEval("{ x<-as.symbol(\"foo\"); y<-list(); y[[1]]<-x; y[[1]] }");
+        assertEval("{ x<-getClass(\"ClassUnionRepresentation\"); y<-list(); y[[1]]<-x; y[[1]]@virtual }");
     }
 
     @Test
