@@ -36,6 +36,8 @@ import com.oracle.truffle.r.runtime.env.*;
 @RBuiltin(name = "exists", kind = INTERNAL, parameterNames = {"x", "envir", "mode", "inherits"})
 public abstract class Exists extends RBuiltinNode {
 
+    public abstract byte execute(RAbstractStringVector nameVec, REnvironment env, String mode, byte inherits);
+
     @Specialization
     @TruffleBoundary
     protected byte existsStringEnv(RAbstractStringVector nameVec, REnvironment env, String mode, byte inherits) {
