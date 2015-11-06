@@ -105,7 +105,7 @@ public abstract class StandardGeneric extends RBuiltinNode {
         }
 
         String[] classes = collectArgumentsNode.execute(frame, sigArgs);
-        dispatchGeneric.executeObject(frame, methodsEnv, mtable, classes, fdef);
+        dispatchGeneric.executeObject(frame, methodsEnv, mtable, RDataFactory.createStringVector(classes, RDataFactory.COMPLETE_VECTOR), fdef);
         return null;
     }
 
@@ -161,7 +161,7 @@ public abstract class StandardGeneric extends RBuiltinNode {
 
 abstract class DispatchGeneric extends RBaseNode {
 
-    public abstract Object executeObject(VirtualFrame frame, REnvironment methodsEnv, REnvironment mtable, String[] classes, RFunction fdef);
+    public abstract Object executeObject(VirtualFrame frame, REnvironment methodsEnv, REnvironment mtable, RStringVector classes, RFunction fdef);
 
     private final ConditionProfile singleStringProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile cached = ConditionProfile.createBinaryProfile();
@@ -171,9 +171,9 @@ abstract class DispatchGeneric extends RBaseNode {
     @CompilationFinal private RFunction inheritForDispatchFunction;
     @Child private RArgumentsNode argsNode = RArgumentsNode.create();
 
-    protected String createDispatchString(String[] classes) {
-        if (singleStringProfile.profile(classes.length == 1)) {
-            return classes[0];
+    protected String createDispatchString(RStringVector classes) {
+        if (singleStringProfile.profile(classes.getLength() == 1)) {
+            return classes.getDataAt(0);
         } else {
             throw RInternalError.unimplemented();
         }
@@ -185,7 +185,7 @@ abstract class DispatchGeneric extends RBaseNode {
 
     @SuppressWarnings("unused")
     @Specialization(guards = "equalClasses(classes, cachedClasses)")
-    protected Object dispatch(VirtualFrame frame, REnvironment methodsEnv, REnvironment mtable, String[] classes, RFunction fdef, @Cached("classes") String[] cachedClasses,
+    protected Object dispatch(VirtualFrame frame, REnvironment methodsEnv, REnvironment mtable, RStringVector classes, RFunction fdef, @Cached("classes") RStringVector cachedClasses,
                     @Cached("createDispatchString(cachedClasses)") String dispatchString, @Cached("createTableRead(dispatchString)") ReadVariableNode tableRead) {
         RFunction method = (RFunction) tableRead.execute(null, mtable.getFrame());
         if (method == null) {
@@ -209,11 +209,12 @@ abstract class DispatchGeneric extends RBaseNode {
         return null;
     }
 
-    protected boolean equalClasses(String[] classes, String[] cachedClasses) {
-        if (cachedClasses.length == classes.length) {
-            for (int i = 0; i < cachedClasses.length; i++) {
-                // TODO: makes sure equality is good enough here
-                if (cachedClasses[i] != classes[i]) {
+    protected boolean equalClasses(RStringVector classes, RStringVector cachedClasses) {
+        if (cachedClasses.getLength() == classes.getLength()) {
+            for (int i = 0; i < cachedClasses.getLength(); i++) {
+                // TODO: makes sure equality is good enough here, but it's for optimization only
+                // anwyay
+                if (cachedClasses.getDataAt(i) != classes.getDataAt(i)) {
                     return false;
                 }
             }
