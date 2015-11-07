@@ -212,10 +212,14 @@ public class RChannel {
 
     }
 
+    private static boolean serializeObject(Object o) {
+        return o instanceof RFunction || o instanceof REnvironment || o instanceof RConnection || o instanceof RLanguage || o instanceof RPromise;
+    }
+
     private static Object convertPrivate(Object o) throws IOException {
         if (o instanceof RList) {
             return convertPrivateList(o);
-        } else if (!(o instanceof RFunction || o instanceof REnvironment || o instanceof RConnection || o instanceof RLanguage)) {
+        } else if (!serializeObject(o)) {
             // we need to make internal values (permanently) shared to avoid updates to ref count
             // by different threads
             makeShared(o);
@@ -282,7 +286,7 @@ public class RChannel {
             } catch (IOException x) {
                 throw RError.error(RError.NO_NODE, RError.Message.GENERIC, "error creating shareable list");
             }
-        } else if (!(msg instanceof RFunction || msg instanceof REnvironment || msg instanceof RConnection || msg instanceof RLanguage)) {
+        } else if (!serializeObject(msg)) {
             // make sure that what's passed through the channel will be copied on the first
             // update
             makeShared(msg);
