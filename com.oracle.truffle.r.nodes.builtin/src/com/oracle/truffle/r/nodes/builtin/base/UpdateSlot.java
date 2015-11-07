@@ -82,7 +82,7 @@ public abstract class UpdateSlot extends RBuiltinNode {
         throw RError.error(this, RError.Message.SLOT_INVALID_TYPE, nameObj.getClass().toString());
     }
 
-    private void checkSlotAssign(VirtualFrame frame, RAttributable object, String name, Object value) {
+    private void checkSlotAssign(VirtualFrame frame, Object object, String name, Object value) {
         // TODO: optimize using a mechanism similar to overrides?
         if (checkSlotAssignFunction == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -107,7 +107,7 @@ public abstract class UpdateSlot extends RBuiltinNode {
     }
 
     @Specialization
-    protected Object updateSlot(VirtualFrame frame, RAttributable object, Object nameObj, Object value) {
+    protected Object updateSlot(VirtualFrame frame, Object object, Object nameObj, Object value) {
         String name = getName(nameObj);
         checkSlotAssign(frame, object, name, value);
         return updateSlotNode.executeUpdate(object, name, value);

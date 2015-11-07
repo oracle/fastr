@@ -21,7 +21,6 @@ import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.function.WrapArgumentNode;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 
@@ -57,7 +56,7 @@ public abstract class Slot extends RBuiltinNode {
     }
 
     @Specialization
-    protected Object getSlot(RAttributable object, Object nameObj) {
+    protected Object getSlot(Object object, Object nameObj) {
         String name = getName(nameObj);
         assert name == name.intern();
         return accessSlotNode.executeAccess(object, name);

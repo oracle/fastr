@@ -84,6 +84,11 @@ public abstract class AccessSlotNode extends RNode {
         return value;
     }
 
+    @Specialization
+    protected Object getSlotS4(@SuppressWarnings("unused") RNull object, String name) {
+        throw RError.error(this, RError.Message.SLOT_BASIC_CLASS, name, "NULL");
+    }
+
     @Specialization(guards = {"object.isS4()", "name == cachedName"})
     protected Object getSlotS4Cached(RAttributable object, @SuppressWarnings("unused") String name, @Cached("name") String cachedName,
                     @Cached("createAttrAccess(cachedName)") AttributeAccess attrAccess) {

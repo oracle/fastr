@@ -18,7 +18,6 @@ import com.oracle.truffle.r.nodes.attributes.PutAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.PutAttributeNodeGen;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
 import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.nodes.*;
 
 @NodeChildren({@NodeChild(value = "object", type = RNode.class), @NodeChild(value = "name", type = RNode.class), @NodeChild(value = "value", type = RNode.class)})

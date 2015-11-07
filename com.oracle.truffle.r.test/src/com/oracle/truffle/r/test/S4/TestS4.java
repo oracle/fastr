@@ -46,14 +46,22 @@ public class TestS4 extends TestBase {
         assertEval("{ x<-getClass(\"ClassUnionRepresentation\"); slot(x, \"virtual\") }");
         assertEval(Output.ContainsError, "{ x<-getClass(\"ClassUnionRepresentation\"); slot(x, virtual) }");
         assertEval("{ x<-function() 42; attr(x, \"foo\")<-7; y<-asS4(x); y@foo }");
+        assertEval(Output.ContainsError, Ignored.OutputFormatting, "{ x<-NULL; `@`(x, foo) }");
+        assertEval(Output.ContainsError, Ignored.OutputFormatting, "{ x<-NULL; x@foo }");
     }
 
     @Test
     public void testSlotUpdate() {
         assertEval("{ x<-getClass(\"ClassUnionRepresentation\"); x@virtual<-TRUE; x@virtual }");
         assertEval("{ x<-getClass(\"ClassUnionRepresentation\"); slot(x, \"virtual\", check=TRUE)<-TRUE; x@virtual }");
-        assertEval(Output.ContainsError, "{ x<-function() 42; attr(x, \"foo\")<-7; y<-asS4(x); y@foo<-42 }");
         assertEval("{ x<-initialize@valueClass; initialize@valueClass<-\"foo\"; initialize@valueClass<-x }");
+
+        // errors below are generated from R code and it seems like there is some issue with
+        // printing quotes in the error message
+        assertEval(Output.ContainsError, Ignored.OutputFormatting, "{ x<-function() 42; attr(x, \"foo\")<-7; y<-asS4(x); y@foo<-42 }");
+        assertEval(Output.ContainsError, Ignored.OutputFormatting, Ignored.OutputFormatting, "{ x<-NULL; `@<-`(x, foo, \"bar\") }");
+        assertEval(Output.ContainsError, Ignored.OutputFormatting, "{ x<-NULL; x@foo<-\"bar\" }");
+
     }
 
     @Test
