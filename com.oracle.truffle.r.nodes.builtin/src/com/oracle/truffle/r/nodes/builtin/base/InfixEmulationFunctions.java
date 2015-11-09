@@ -29,12 +29,9 @@ import java.util.*;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.access.*;
-import com.oracle.truffle.r.nodes.access.array.read.*;
-import com.oracle.truffle.r.nodes.access.array.write.*;
 import com.oracle.truffle.r.nodes.access.vector.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.builtin.base.InfixEmulationFunctionsFactory.PromiseEvaluatorNodeGen;
@@ -54,77 +51,12 @@ import com.oracle.truffle.r.runtime.nodes.*;
  * One important reason that these must exist as {@link RBuiltin}s is that they occur when deparsing
  * packages and the deparse logic depends on them being found as builtins. See {@link RDeparse}.
  *
- * N.B. These could be implemented by delegating to the equivalent nodes, e.g.
- * {@link AccessArrayNode}.
  */
 public class InfixEmulationFunctions {
 
     public abstract static class ErrorAdapter extends RBuiltinNode {
         protected RError nyi() throws RError {
             throw RError.nyi(this, String.valueOf(getBuiltin()));
-        }
-    }
-
-    private static final class AccessPositions extends PositionsArrayConversionNodeMultiDimAdapter {
-
-        public AccessPositions(boolean isSubset, int length) {
-            super(isSubset, length);
-        }
-
-        @ExplodeLoop
-        public Object execute(Object vector, Object[] pos, byte exact, Object[] newPos) {
-            Object[] newPositions = newPos;
-            int ind = 0;
-            int i = 0;
-            for (; i < getLength(); i++) {
-                if (pos[i] instanceof RMissing) {
-                    // RMissing is really "missing" - empty indices are now represented by REmpty
-                    continue;
-                }
-                newPositions[ind] = executeArg(vector, executeConvert(vector, pos[i], exact, i), i);
-                if (multiDimOperatorConverters != null) {
-                    newPositions[ind] = executeMultiConvert(vector, newPositions[ind], ind);
-                }
-                ind++;
-            }
-            if (ind < i) {
-                newPositions = Arrays.copyOf(newPositions, ind);
-            }
-            if (newPositions.length == 1) {
-                return newPositions[0];
-            } else {
-                return newPositions;
-            }
-        }
-
-        public static AccessPositions create(boolean isSubset, int length) {
-            return new AccessPositions(isSubset, length);
-        }
-    }
-
-    private static class UpdatePositions extends PositionsArrayConversionValueNodeMultiDimAdapter {
-
-        public UpdatePositions(boolean isSubset, int length) {
-            super(isSubset, length);
-        }
-
-        @ExplodeLoop
-        public Object execute(Object vector, Object[] pos, Object[] newPositions, Object value) {
-            for (int i = 0; i < getLength(); i++) {
-                newPositions[i] = executeArg(vector, executeConvert(vector, pos[i], RRuntime.LOGICAL_TRUE, i), i);
-                if (multiDimOperatorConverters != null) {
-                    newPositions[i] = executeMultiConvert(vector, value, newPositions[i], i);
-                }
-            }
-            if (positionCasts.length == 1) {
-                return newPositions[0];
-            } else {
-                return newPositions;
-            }
-        }
-
-        public static UpdatePositions create(boolean isSubset, int length) {
-            return new UpdatePositions(isSubset, length);
         }
     }
 
@@ -166,9 +98,6 @@ public class InfixEmulationFunctions {
 
     public abstract static class AccessArrayBuiltin extends RBuiltinNode {
 
-        // old
-        @Child private AccessArrayNode accessNode;
-        @Child private AccessPositions positions;
         // new
         @Child private ExtractVectorNode extractNode;
 
@@ -180,27 +109,11 @@ public class InfixEmulationFunctions {
         protected abstract boolean isSubset();
 
         protected Object access(VirtualFrame frame, Object vector, byte exact, RArgsValuesAndNames inds, Object dropDim) {
-            Object result;
-            if (FastROptions.UseNewVectorNodes.getBooleanValue()) {
-                if (extractNode == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    extractNode = insert(ExtractVectorNode.create(isSubset() ? ElementAccessMode.SUBSET : ElementAccessMode.SUBSCRIPT, false));
-                }
-                result = extractNode.apply(frame, vector, inds.getArguments(), RLogical.valueOf(exact), dropDim);
-            } else {
-                if (accessNode == null || positions.getLength() != inds.getLength()) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    if (accessNode == null) {
-                        accessNode = insert(AccessArrayNodeGen.create(isSubset(), false, false, null, null, null, null, null));
-                    }
-                    int len = inds.getLength();
-                    positions = insert(AccessPositions.create(isSubset(), len));
-                }
-                Object[] pos = inds.getArguments();
-                result = accessNode.executeAccess(vector, exact, 0, positions.execute(vector, pos, exact, pos), dropDim);
+            if (extractNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                extractNode = insert(ExtractVectorNode.create(isSubset() ? ElementAccessMode.SUBSET : ElementAccessMode.SUBSCRIPT, false));
             }
-            return result;
-
+            return extractNode.apply(frame, vector, inds.getArguments(), RLogical.valueOf(exact), dropDim);
         }
 
         protected boolean noInd(RArgsValuesAndNames inds) {
@@ -310,53 +223,26 @@ public class InfixEmulationFunctions {
 
     public abstract static class UpdateArrayBuiltin extends RBuiltinNode {
 
-        @Child private UpdateArrayHelperNode updateNode;
         @Child private ReplaceVectorNode replaceNode;
-        @Child private UpdatePositions positions;
-        @Child private CoerceVector coerceVector;
 
-        private final ConditionProfile argsLengthOneProfile = ConditionProfile.createBinaryProfile();
         private final ConditionProfile argsLengthLargerThanOneProfile = ConditionProfile.createBinaryProfile();
 
         protected Object update(VirtualFrame frame, Object vector, RArgsValuesAndNames args, Object value, boolean isSubset) {
-            Object result;
-            if (FastROptions.UseNewVectorNodes.getBooleanValue()) {
-                if (replaceNode == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    replaceNode = insert(ReplaceVectorNode.create(isSubset ? ElementAccessMode.SUBSET : ElementAccessMode.SUBSCRIPT, false));
-                }
-                Object[] pos;
-                if (argsLengthLargerThanOneProfile.profile(args.getLength() > 1)) {
-                    pos = Arrays.copyOf(args.getArguments(), args.getLength() - 1);
-                } else {
-                    pos = new Object[]{RMissing.instance};
-                }
-                result = replaceNode.apply(frame, vector, pos, value);
-            } else {
-                int len = argsLengthOneProfile.profile(args.getLength() == 1) ? 1 : args.getLength() - 1;
-
-                if (updateNode == null || positions.getLength() != len) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    if (updateNode == null) {
-                        updateNode = insert(UpdateArrayHelperNodeGen.create(isSubset, 0, null, null, null, null));
-                    }
-                    positions = insert(UpdatePositions.create(isSubset, len));
-                    coerceVector = insert(CoerceVectorNodeGen.create(null, null, null));
-                }
-                Object[] pos;
-                if (argsLengthLargerThanOneProfile.profile(args.getLength() > 1)) {
-                    pos = Arrays.copyOf(args.getArguments(), args.getLength() - 1);
-                } else {
-                    pos = new Object[]{RMissing.instance};
-                }
-                Object newPositions = positions.execute(vector, pos, pos, value);
-                result = updateNode.executeUpdate(vector, value, newPositions, coerceVector.executeEvaluated(value, vector, newPositions));
+            if (replaceNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                replaceNode = insert(ReplaceVectorNode.create(isSubset ? ElementAccessMode.SUBSET : ElementAccessMode.SUBSCRIPT, false));
             }
-            return result;
+            Object[] pos;
+            if (argsLengthLargerThanOneProfile.profile(args.getLength() > 1)) {
+                pos = Arrays.copyOf(args.getArguments(), args.getLength() - 1);
+            } else {
+                pos = new Object[]{RMissing.instance};
+            }
+            return replaceNode.apply(frame, vector, pos, value);
         }
 
-        @SuppressWarnings("unused")
         @Specialization(guards = "noInd(args)")
+        @SuppressWarnings("unused")
         protected Object getNoInd(Object x, RArgsValuesAndNames args) {
             throw RError.error(this, RError.Message.INVALID_ARG_NUMBER, "SubAssignArgs");
         }
