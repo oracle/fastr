@@ -633,7 +633,7 @@ public class TestBase {
         return TestOutputManager.prepareResult(result, keepTrailingWhiteSpace);
     }
 
-    protected static boolean generatingExpected() {
+    public static boolean generatingExpected() {
         return expectedOutputManager.generate;
     }
 

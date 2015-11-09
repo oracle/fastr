@@ -27,6 +27,18 @@
 #include <Rdefines.h>
 #include <Rinternals.h>
 
+void dotCModifiedArguments(int* len, int* idata, double* rdata, int* ldata) {
+    for (int i = 0; i < len[0]; i++) {
+	idata[i] ++;
+    }
+    for (int i = 0; i < len[0]; i++) {
+	rdata[i] *= 0.2;
+    }
+    for (int i = 0; i < len[0]; i++) {
+	ldata[i] = ldata[i] == 0 ? 1 : 0;
+    }
+}
+
 SEXP addInt(SEXP a, SEXP b) {
 	int aInt = INTEGER_VALUE(a);
 	int bInt = INTEGER_VALUE(b);

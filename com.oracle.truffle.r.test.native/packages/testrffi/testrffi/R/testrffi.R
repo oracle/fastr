@@ -1,3 +1,7 @@
+rffi.dotCModifiedArguments <- function(data) {
+	.C("dotCModifiedArguments", length(data), as.integer(data), as.double(data), as.logical(data))
+}
+
 rffi.addInt <- function(a, b) {
 	.Call("addInt", as.integer(a), as.integer(b), PACKAGE = "testrffi")
 }

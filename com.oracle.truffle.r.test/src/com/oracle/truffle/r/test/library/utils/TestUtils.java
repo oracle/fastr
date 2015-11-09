@@ -39,4 +39,8 @@ public class TestUtils extends TestBase {
         assertEval("{x<-matrix(c(1,2,3,4),2,2); head(x,1);}");
     }
 
+    @Test
+    public void testMethods() {
+        assertEval("methods(plot)");
+    }
 }

@@ -24,6 +24,8 @@ package com.oracle.truffle.r.test.generate;
 
 import java.io.*;
 
+import com.oracle.truffle.r.test.TestBase;
+
 /**
  * A non-interactive one-shot invocation of GnuR that is robust, if slow, in the face of
  * multiple-line output.
@@ -62,6 +64,12 @@ public class GnuROneShotRSession implements RSession {
     }
 
     public String eval(String expression) {
+        if (expression.contains("library(") && !TestBase.generatingExpected()) {
+            System.out.println("==============================================");
+            System.out.println("LIBRARY LOADING WHILE CREATING EXPECTED OUTPUT");
+            System.out.println("creating expected output for these tests only works during test output");
+            System.out.println("generation (mx rtestgen), and will otherwise create corrupted output.");
+        }
         try {
             Process p = createGnuR();
             InputStream gnuRoutput = p.getInputStream();

@@ -118,4 +118,13 @@ public class TestStats extends TestBase {
         assertEval(Ignored.Unknown, "{ round( rcauchy(3, scale=4, location=1:3), digits = 5 ) }");
     }
 
+    @Test
+    public void testNaFail() {
+        assertEval("na.fail(c(1,2,3))");
+        assertEval("na.fail(c(1L, 2L))");
+        assertEval(Output.ContainsError, "na.fail(c(1,NA,3))");
+        assertEval(Output.ContainsError, "na.fail(c(NA, 2L))");
+        assertEval(Output.ContainsError, "na.fail(c())");
+        assertEval(Output.ContainsError, "na.fail(NULL)");
+    }
 }
