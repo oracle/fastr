@@ -12,10 +12,42 @@
 
 #include "rffiutils.h"
 #include <stdlib.h>
+#include <R_ext/RS.h>
 
 #define _(Source) (Source)
 
 // selected functions from util.c:
+
+void F77_NAME(rexitc)(char *msg, int *nchar)
+{
+    int nc = *nchar;
+    char buf[256];
+    if(nc > 255) {
+	warning(_("error message truncated to 255 chars"));
+	nc = 255;
+    }
+    strncpy(buf, msg, (size_t) nc);
+    buf[nc] = '\0';
+    error("%s", buf);
+}
+
+void F77_NAME(rwarnc)(char *msg, int *nchar)
+{
+    int nc = *nchar;
+    char buf[256];
+    if(nc > 255) {
+	warning(_("warning message truncated to 255 chars"));
+	nc = 255;
+    }
+    strncpy(buf, msg, (size_t) nc);
+    buf[nc] = '\0';
+    warning("%s", buf);
+}
+
+void F77_NAME(rchkusr)(void)
+{
+    R_CheckUserInterrupt();
+}
 
 size_t
 Rf_utf8towcs(wchar_t *wc, const char *s, size_t n)

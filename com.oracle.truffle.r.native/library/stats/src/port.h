@@ -41,49 +41,49 @@
 
 /* DRMNF(D, FX, IV, LIV, LV, N, V, X) */
 void F77_NAME(drmnf)(double d[], double *fx,
-			    int iv[], int *liv, int *lv, int *n, double v[], double x[]) {  }
+			    int iv[], int *liv, int *lv, int *n, double v[], double x[]);
 
 /* DRMNG(D, FX, G, IV, LIV, LV, N, V, X) */
 void F77_NAME(drmng)(double d[], double *fx, double g[],
-		int iv[], int *liv, int *lv, int *n, double v[], double x[]) {  }
+		int iv[], int *liv, int *lv, int *n, double v[], double x[]);
 
 /* DRMNH(D, FX, G, H, IV, LH, LIV, LV, N, V, X) */
 void F77_NAME(drmnh)(double d[], double *fx, double g[], double h[],
-			    int iv[], int *lh, int *liv, int *lv, int *n, double v[], double x[]) {  }
+			    int iv[], int *lh, int *liv, int *lv, int *n, double v[], double x[]);
 
 /* DRMNFB(B, D, FX, IV, LIV, LV, N, V, X) */
 void F77_NAME(drmnfb)(double b[], double d[], double *fx,
-		int *liv, int *lv, int *n, double v[], double x[]) {  }
+		int *liv, int *lv, int *n, double v[], double x[]);
 
 /* DRMNGB(B, D, FX, G, IV, LIV, LV, N, V, X) */
 void F77_NAME(drmngb)(double b[], double d[], double *fx, double g[],
-		int iv[], int *liv, int *lv, int *n, double v[], double x[]) {  }
+		int iv[], int *liv, int *lv, int *n, double v[], double x[]);
 
 /* DRMNH(B, D, FX, G, H, IV, LH, LIV, LV, N, V, X) */
 void F77_NAME(drmnhb)(double b[], double d[], double *fx, double g[], double h[],
-		int iv[], int *lh, int *liv, int *lv, int *n, double v[], double x[]) {  }
+		int iv[], int *lh, int *liv, int *lv, int *n, double v[], double x[]);
 
 /* DRN2GB(B, D, DR, IV, LIV, LV, N, ND, N1, N2, P, R, RD, V, X) */
 void F77_NAME(drn2gb)(double b[], double d[], double dr[],
 			     int iv[], int *liv, int *lv, int *n, int *nd, int *n1, int *n2, int *p,
-			     double r[], double rd[], double v[], double x[]) {  }
+			     double r[], double rd[], double v[], double x[]);
 
 /* DRN2G(D, DR, IV, LIV, LV, N, ND, N1, N2, P, R, RD, V, X) */
 void F77_NAME(drn2g)(double d[], double dr[],
 		int iv[], int *liv, int *lv, int *n, int *nd, int *n1, int *n2, int *p,
-		double r[], double rd[], double v[], double x[]) {  }
+		double r[], double rd[], double v[], double x[]);
 
 /* DRNSGB(A, ALF, B, C, DA, IN, IV, L, L1, LA, LIV, LV, N, NDA, P, V, Y) */
 void F77_NAME(drnsgb)(double a[], double alf[], double b[], double c [], double da[],
 			     int in[], int iv[], int *l, int *l1, int *la, int *liv,
 			     int *lv, int *n, int *nda, int *p,
-			     double v[], double y[]) {  }
+			     double v[], double y[]);
 
 /* DRNSG(A, ALF, C, DA, IN, IV, L, L1, LA, LIV, LV, N, NDA, P, V, Y) */
 void F77_NAME(drnsg)(double a[], double alf[], double c[], double da[],
 		int in[], int iv[], int *l, int *l1, int *la, int *liv,
 		int *lv, int *n, int *nda, int *p,
-		double v[], double y[]) {  }
+		double v[], double y[]);
 
 SEXP port_ivset(SEXP kind, SEXP iv, SEXP v) { return NULL; }
 

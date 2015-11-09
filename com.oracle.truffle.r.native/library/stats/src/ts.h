@@ -36,14 +36,14 @@ void HoltWinters (double *x, int *xl, double *alpha, double *beta,
 
 void
 F77_SUB(eureka)(int *lr, double *r__, double *g,
-		double *f, double *var, double *a) { }
+		double *f, double *var, double *a);
 
 void
 F77_SUB(stl)(double *y, int *n, int *np, int *ns,
 	     int *nt, int *nl, int *isdeg, int *itdeg, int *ildeg,
 	     int *nsjump, int *ntjump, int *nljump, int *ni,
 	     int *no, double *rw, double *season, double *trend,
-	     double *work) { }
+	     double *work);
 
 typedef struct
 {

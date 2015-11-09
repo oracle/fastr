@@ -48,7 +48,11 @@ OBJ = lib
 
 C_SOURCES := $(wildcard $(SRC)/*.c)
 
-C_OBJECTS := $(subst $(SRC),$(OBJ),$(C_SOURCES:.c=.o))
+C_OBJECTS := $(subst $(SRC)/,$(OBJ)/,$(C_SOURCES:.c=.o))
+
+F_SOURCES := $(wildcard $(SRC)/*.f)
+
+F_OBJECTS := $(subst $(SRC)/,$(OBJ)/,$(F_SOURCES:.f=.o))
 
 H_SOURCES := $(wildcard $(SRC)/*.h)
 
@@ -78,17 +82,22 @@ $(PKGDIR): $(GNUR_HOME)/library/$(PKG)
 
 $(C_OBJECTS): | $(OBJ)
 
+$(F_OBJECTS): | $(OBJ)
+
 $(OBJ):
 	mkdir -p $(OBJ)
 
-$(LIB_PKG): $(C_OBJECTS) $(PKGDIR)
+$(LIB_PKG): $(C_OBJECTS) $(F_OBJECTS) $(PKGDIR)
 	mkdir -p $(LIBDIR)
-	$(DYLIB_LD) $(DYLIB_LDFLAGS) -o $(LIB_PKG) $(C_OBJECTS)
+	$(DYLIB_LD) $(DYLIB_LDFLAGS) -o $(LIB_PKG) $(C_OBJECTS) $(F_OBJECTS)
 	mkdir -p $(FASTR_LIBDIR)/$(PKG)/libs
 	cp $(LIB_PKG) $(FASTR_LIBDIR)/$(PKG)/libs
 
-$(OBJ)/%.o: $(SRC)/%.c  $(H_SOURCES)
+$(OBJ)/%.o: $(SRC)/%.c $(H_SOURCES)
 	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
+
+$(OBJ)/%.o: $(SRC)/%.f
+	gfortran -fPIC -g -O2 -c $< -o $@
 
 clean: $(CLEAN_PKG)
 	rm -rf $(LIBDIR)/*
