@@ -481,8 +481,10 @@ public class CallRFFIHelper {
         return cdr;
     }
 
-    static Object CADR(@SuppressWarnings("unused") Object x) {
-        throw unimplemented();
+    static Object CADR(Object e) {
+        guaranteeInstanceOf(e, RPairList.class);
+        Object cadr = ((RPairList) e).cadr();
+        return cadr;
     }
 
     static Object SETCAR(Object x, Object y) {
