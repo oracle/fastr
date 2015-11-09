@@ -162,19 +162,21 @@ public abstract class DotC extends RBuiltinNode {
                 case SCALAR_LOGICAL:
                     results[i] = RDataFactory.createLogicalVector((byte[]) nativeArgs[i], RDataFactory.COMPLETE_VECTOR);
                     break;
-                case VECTOR_DOUBLE: {
+                case VECTOR_DOUBLE:
                     results[i] = ((RAbstractDoubleVector) argValues[i]).materialize().copyResetData((double[]) nativeArgs[i]);
                     break;
-                }
-                case VECTOR_INT: {
+                case VECTOR_INT:
                     results[i] = ((RAbstractIntVector) argValues[i]).materialize().copyResetData((int[]) nativeArgs[i]);
                     break;
-                }
                 case VECTOR_LOGICAL: {
-                    results[i] = ((RAbstractLogicalVector) argValues[i]).materialize().copyResetData((byte[]) nativeArgs[i]);
+                    int[] intData = (int[]) nativeArgs[i];
+                    byte[] byteData = new byte[intData.length];
+                    for (int j = 0; j < intData.length; j++) {
+                        byteData[j] = RRuntime.isNA(intData[j]) ? RRuntime.LOGICAL_NA : RRuntime.asLogical(intData[j] != 0);
+                    }
+                    results[i] = ((RAbstractLogicalVector) argValues[i]).materialize().copyResetData(byteData);
                     break;
                 }
-
             }
         }
         return RDataFactory.createList(results, listNames);
