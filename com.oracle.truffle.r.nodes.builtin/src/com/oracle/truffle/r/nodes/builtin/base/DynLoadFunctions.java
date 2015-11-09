@@ -73,10 +73,10 @@ public class DynLoadFunctions {
     public abstract static class DynUnload extends RInvisibleBuiltinNode {
         @Specialization
         @TruffleBoundary
-        protected RNull doDynunload(String lib) {
+        protected RNull doDynunload(RAbstractStringVector lib) {
             controlVisibility();
             try {
-                DLL.unload(lib);
+                DLL.unload(lib.getDataAt(0));
             } catch (DLLException ex) {
                 throw RError.error(this, ex);
             }
