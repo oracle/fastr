@@ -173,7 +173,7 @@ public class RRuntime {
     }
 
     public static boolean isNAorNaN(double d) {
-        return isNA(d) || Double.isNaN(d);
+        return Double.isNaN(d);
     }
 
     @TruffleBoundary
