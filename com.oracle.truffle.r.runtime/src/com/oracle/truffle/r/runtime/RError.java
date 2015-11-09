@@ -644,7 +644,9 @@ public final class RError extends RuntimeException {
         OBJECT_FROM_VIRTUAL("trying to generate an object from a virtual class (\"%s\")"),
         CLASS_INVALID_S3("object of class \"%s\" does not correspond to a valid S3 object"),
         STD_GENERIC_WRONG_CALL("call to standardGeneric(\"%s\") apparently not from the body of that generic function"),
-        EXPECTED_GENERIC("expected a generic function or a primitive for dispatch, got an object of class \"%s\"");
+        EXPECTED_GENERIC("expected a generic function or a primitive for dispatch, got an object of class \"%s\""),
+        NOT_ALL_SAME_LENGTH("not all arguments have the same length"),
+        NO_INPUT_NUMBER_OF_CASES("no input has determined the number of cases");
 
         public final String message;
         final boolean hasArgs;

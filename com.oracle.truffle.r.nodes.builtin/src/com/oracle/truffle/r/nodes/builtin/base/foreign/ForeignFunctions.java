@@ -29,6 +29,7 @@ import com.oracle.truffle.r.library.methods.MethodsListDispatchFactory.R_methods
 import com.oracle.truffle.r.library.methods.MethodsListDispatchFactory.R_set_method_dispatchNodeGen;
 import com.oracle.truffle.r.library.methods.SlotFactory.R_getSlotNodeGen;
 import com.oracle.truffle.r.library.methods.SlotFactory.R_setSlotNodeGen;
+import com.oracle.truffle.r.library.stats.CompleteCases;
 import com.oracle.truffle.r.library.stats.Covcor;
 import com.oracle.truffle.r.library.stats.GammaFunctionsFactory.QgammaNodeGen;
 import com.oracle.truffle.r.library.stats.RnormNodeGen;
@@ -482,7 +483,9 @@ public class ForeignFunctions {
                 }
             }
             switch (name) {
-            // utils
+                case "compcases":
+                    return new CompleteCases();
+                    // utils
                 case "countfields":
                     return new CountFields();
                 case "readtablehead":
