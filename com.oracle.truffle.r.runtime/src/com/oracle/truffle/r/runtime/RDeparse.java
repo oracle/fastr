@@ -433,10 +433,8 @@ public class RDeparse {
         return deparse2buff(state, expr).sb.toString();
     }
 
-    @TruffleBoundary
-    public static String deparse1Line(Object expr, boolean abbrev) {
+    private static String stateToString(boolean abbrev, State state) {
         String result;
-        State state = deparse1WithCutoff(expr, MAX_Cutoff, true, 0, -1);
         int len = state.lines.size();
         if (len > 1) {
             StringBuilder sb = new StringBuilder();
@@ -455,6 +453,18 @@ public class RDeparse {
             result = result.substring(0, 14);
         }
         return result;
+    }
+
+    @TruffleBoundary
+    public static String deparse1Line(Object expr, boolean abbrev) {
+        State state = deparse1WithCutoff(expr, MAX_Cutoff, true, 0, -1);
+        return stateToString(abbrev, state);
+    }
+
+    @TruffleBoundary
+    public static String deparse1Line(Object expr, boolean abbrev, int cutoff, int opts) {
+        State state = deparse1WithCutoff(expr, cutoff, true, opts, -1);
+        return stateToString(abbrev, state);
     }
 
     /**

@@ -183,6 +183,7 @@ public class BasePackage extends RBuiltinPackage {
         add(Dim.class, DimNodeGen::create);
         add(DimNames.class, DimNamesNodeGen::create);
         add(DoCall.class, DoCallNodeGen::create);
+        add(DPut.class, DPutNodeGen::create);
         add(Drop.class, DropNodeGen::create);
         add(DuplicatedFunctions.AnyDuplicated.class, DuplicatedFunctionsFactory.AnyDuplicatedNodeGen::create);
         add(DuplicatedFunctions.Duplicated.class, DuplicatedFunctionsFactory.DuplicatedNodeGen::create);
