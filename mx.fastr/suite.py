@@ -348,6 +348,8 @@ suite = {
         "GNU_ICONV",
       ],
       "native" : "true",
+      "output" : "com.oracle.truffle.r.native",
+      "results" : ["platform.mk"],
       "workingSets" : "FastR",
     },
 
@@ -411,6 +413,17 @@ suite = {
         "truffle:TRUFFLE_DEBUG",
       ],
     },
+
+    "FASTR_NATIVE": {
+        "native" : True,
+        "path" : "mxbuild/dists/fastr.native.tar",
+        "dependencies" : ["com.oracle.truffle.r.native"],
+        "exclude" : [
+        "GNUR",
+        "GNU_ICONV",
+        ]
+
+    }
   },
 
 }
