@@ -208,9 +208,15 @@ public final class FastRSession implements RSession {
                 } catch (ParseException e) {
                     e.report(consoleHandler);
                 } catch (Throwable t) {
-                    if (t instanceof RError || t.getCause() instanceof RError) {
+                    if (t instanceof IOException) {
+                        if (t.getCause() instanceof RError || t.getCause() instanceof RInternalError) {
+                            t = t.getCause();
+                        }
+                    }
+                    if (t instanceof RError) {
                         // nothing to do
                     } else {
+                        t.printStackTrace();
                         killedByException = t;
                     }
                 } finally {
