@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -105,8 +106,8 @@ public abstract class Assign extends RInvisibleBuiltinNode {
 
     @SuppressWarnings("unused")
     @Fallback
+    @TruffleBoundary
     protected Object assignFallback(Object xVec, Object value, Object envir, Object inherits) {
-        errorProfile.enter();
         if (RRuntime.asString(xVec) == null) {
             throw RError.error(this, RError.Message.INVALID_FIRST_ARGUMENT);
         } else if (!(envir instanceof REnvironment)) {
