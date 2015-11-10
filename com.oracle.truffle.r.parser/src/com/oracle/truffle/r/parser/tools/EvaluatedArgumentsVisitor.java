@@ -74,8 +74,8 @@ final class Info {
 
 public final class EvaluatedArgumentsVisitor extends BasicVisitor<Info> {
 
-    private static final Set<String> wellKnownFunctions = new HashSet<>(Arrays.asList("any", "return", "print", "length", "rep", "max", "matrix", "is.element", "exp", "all", "pmin", "pmax",
-                    "as.numeric", "as.integer", ".Call", "sum", "order", "rev", "integer", "double"));
+    private static final Set<String> wellKnownFunctions = new HashSet<>(Arrays.asList("any", "dim", "dimnames", "is.null", "list", "names", "return", "print", "length", "rep", "max", "matrix",
+                    "is.array", "is.element", "is.character", "exp", "all", "pmin", "pmax", "as.numeric", "as.integer", ".Call", "sum", "order", "rev", "integer", "double"));
 
     private EvaluatedArgumentsVisitor() {
         // private constructor
@@ -83,7 +83,6 @@ public final class EvaluatedArgumentsVisitor extends BasicVisitor<Info> {
 
     @Override
     public Info visit(ASTNode n) {
-        System.out.println("unknown: " + n.getClass().getSimpleName());
         return Info.ANY;
     }
 
