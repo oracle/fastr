@@ -52,4 +52,4 @@ LibExtern SEXP FASTR_R_NamespaceRegistry();
 a
 #endif
 .
-w include/Rinternals.h
+w Rinternals.h

@@ -9,4 +9,4 @@ LibExtern Rboolean FASTR_Interactive();
 a
 #endif
 .
-w include/Rinterface.h
+w Rinterface.h

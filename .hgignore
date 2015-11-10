@@ -103,7 +103,8 @@ com.oracle.truffle.r.native/library/stats/src/fft.c
 com.oracle.truffle.r.native/platform.mk
 com.oracle.truffle.r.native/gnur/Makeconf.done
 com.oracle.truffle.r.native/run/Makeconf.etc
-com.oracle.truffle.r.native/include/jni/include
+com.oracle.truffle.r.native/include/*.h
+com.oracle.truffle.r.native/include/R_ext/*.h
 com.oracle.truffle.r.native/include/jni/linked
 com.oracle.truffle.r.test.native/packages/*/lib/*
 

@@ -62,7 +62,7 @@ LIBDIR := $(OBJ)
 LIB_PKG := $(OBJ)/$(PKG).so
 
 JNI_INCLUDES = -I $(JAVA_HOME)/include -I $(JAVA_HOME)/include/$(JDK_OS_DIR)
-FFI_INCLUDES = -I$(TOPDIR)/include/jni/include
+FFI_INCLUDES = -I$(TOPDIR)/include -I$(TOPDIR)/include/R_ext
 
 INCLUDES := $(JNI_INCLUDES) $(FFI_INCLUDES)
 

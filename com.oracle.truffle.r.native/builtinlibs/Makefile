@@ -77,7 +77,7 @@ cleanlibr:
 
 endif
 
-FFI_INCLUDES = -I$(TOPDIR)/include/jni/include -I$(TOPDIR)/include/jni/include/R_ext
+FFI_INCLUDES = -I$(TOPDIR)/include -I$(TOPDIR)/include/R_ext
 
 $(OBJ)/%.o: $(SRC)/%.c
 	$(CC) $(CFLAGS) $(FFI_INCLUDES) -c $< -o $@
