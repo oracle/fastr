@@ -13,6 +13,7 @@
 ^com.oracle.truffle.r.test/rpackages/testrlibs_user
 ^com.oracle.truffle.r.test.native/urand/lib/liburand.so
 ^com.oracle.truffle.r.native/gnur/R-*
+^DEPARSE_ERROR
 ^Rpkgsource/*
 ^install.cran.logs/
 ^library/
@@ -105,6 +106,6 @@ com.oracle.truffle.r.native/gnur/Makeconf.done
 com.oracle.truffle.r.native/run/Makeconf.etc
 com.oracle.truffle.r.native/include/*.h
 com.oracle.truffle.r.native/include/R_ext/*.h
-com.oracle.truffle.r.native/include/jni/linked
+com.oracle.truffle.r.native/include/linked
 com.oracle.truffle.r.test.native/packages/*/lib/*
 
