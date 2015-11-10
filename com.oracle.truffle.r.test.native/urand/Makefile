@@ -43,7 +43,7 @@ C_OBJECTS := $(subst $(SRC),$(OBJ),$(C_SOURCES:.c=.o))
 C_LIB := $(OBJ)/$(C_LIBNAME)
 
 
-INCLUDE_DIR := $(NATIVE_PROJECT)/include/jni/include
+INCLUDE_DIR := $(NATIVE_PROJECT)/include
 
 all: $(C_LIB)
 
