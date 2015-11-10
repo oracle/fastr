@@ -444,7 +444,7 @@ def load_optional_suite(name, rev):
         mx.build_suite(opt_suite)
     return opt_suite
 
-_r_apptests_rev = '9594f2e87ecec87a5bbe4e9f89c6a1810f982c64'
+_r_apptests_rev = 'a4c4be26fd6bbe650243298d676e628062e0de77'
 _r_benchmarks_rev = '8015c2260bf971904a9bf7e49eceb974117cd514'
 
 def mx_post_parse_cmd_line(opts):
