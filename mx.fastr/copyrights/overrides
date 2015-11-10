@@ -47,7 +47,7 @@ com.oracle.truffle.r.native/fficall/jni/src/register.c,gnu_r.copyright
 com.oracle.truffle.r.native/fficall/jni/src/sys.c,gnu_r.copyright
 com.oracle.truffle.r.native/fficall/jni/src/unimplemented.c,gnu_r.copyright
 com.oracle.truffle.r.native/fficall/jni/src/util.c,gnu_r.copyright
-com.oracle.truffle.r.native/include/jni/src/libintl.h,no.copyright
+com.oracle.truffle.r.native/include/src/libintl.h,no.copyright
 com.oracle.truffle.r.native/library/base/src/registration.c,no.copyright
 com.oracle.truffle.r.native/library/graphics/src/graphics.h,no.copyright
 com.oracle.truffle.r.native/library/graphics/src/init.c,no.copyright
