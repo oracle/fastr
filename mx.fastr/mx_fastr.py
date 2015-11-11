@@ -25,12 +25,24 @@ from os.path import join, sep, dirname
 from argparse import ArgumentParser
 import mx
 import mx_gate
-import mx_graal
-import mx_jvmci
 import os
 import shutil
 
+'''
+This is the launchpad for all the functions available for building/running/testing/analyzing
+FastR. Ideally this code would be completely VM agnostic, i.e., be able to build/run with a variety
+of VMs without change. That is currently not feasible due to the requirement that building
+must use an pre-existing VM and running (for performance testing) must use a Graal-enabled VM.
+It would require separate build/run steps to finesse this.
+'''
+
 _fastr_suite = mx.suite('fastr')
+_mx_jvmci = mx.suite("jvmci")
+
+def mx_jvmci():
+    if not _mx_jvmci:
+        mx.abort('no jvmci suite available')
+    return _mx_jvmci.extensions
 
 def r_command_project():
     return "com.oracle.truffle.r.engine"
@@ -44,18 +56,37 @@ def rscript_command_class():
 def rrepl_command_class():
     return r_command_project() + ".repl.RREPLServer"
 
-def runR(args, className, nonZeroIsFatal=True, extraVmArgs=None, runBench=False, graal_vm='server'):
-    setREnvironment(graal_vm)
+def runR(args, className, nonZeroIsFatal=True, extraVmArgs=None, jdk=None):
+    '''
+    This is the basic function that runs a FastR process. Args:
+      className: defines the entry class
+      args: a list of command arguments
+      extraVmArgs: additional vm arguments
+      jdk: jdk (an mx.JDKConfig instance) to use
+
+    By default a non-zero return code will cause an mx.abort, unless nonZeroIsFatal=False
+    The assumption is that the VM is already built and available.
+    '''
+    setREnvironment()
+    if not jdk:
+        jdk = get_jdk()
+
     vmArgs = ['-cp', mx.classpath(r_command_project())]
     vmArgs += ["-Drhome.path=" + _fastr_suite.dir]
 
-    vmArgs += ['-G:InliningDepthError=500', '-XX:JVMCINMethodSizeLimit=1000000']
+    vm = mx_jvmci().get_vm()
+    if vm != "original":
+        # graal specific args
+        vmArgs += ['-G:InliningDepthError=500', '-XX:JVMCINMethodSizeLimit=1000000']
 
-    if runBench == False:
+    if extraVmArgs is None or not '-da' in extraVmArgs:
+        # unless explicitly disabled we enable assertion checking
         vmArgs += ['-ea', '-esa']
+
     if extraVmArgs:
         vmArgs += extraVmArgs
-    return mx_graal.run_vm(vmArgs + [className] + args, vm=graal_vm, nonZeroIsFatal=nonZeroIsFatal)
+
+    return mx.run_java(vmArgs + [className] + args, nonZeroIsFatal=nonZeroIsFatal, jdk=jdk)
 
 def _get_ldpaths(lib_env_name):
     ldpaths = os.path.join(_fastr_suite.dir, 'etc', 'ldpaths')
@@ -75,11 +106,11 @@ def _get_ldpaths(lib_env_name):
     except subprocess.CalledProcessError:
         mx.abort('error retrieving etc/ldpaths')
 
-def setREnvironment(graal_vm):
+def setREnvironment():
     '''
     If R is run via mx, then the library path will not be set, whereas if it is
     run from 'bin/R' it will be, via etc/ldpaths. Except that in the latter case
-    we still need to add /usr/lib to so that JNR can resolve libc for RFFI.
+    on Darwin we still need to add /usr/lib to so that JNR can resolve libc for RFFI.
     '''
     osname = platform.system()
     if osname == 'Darwin':
@@ -95,16 +126,21 @@ def setREnvironment(graal_vm):
     if osname == 'Darwin':
         lib_value = lib_value + os.pathsep + '/usr/lib'
     os.environ[lib_env] = lib_value
-    # For R sub-processes we need to set the DEFAULT_VM environment variable
-    os.environ['DEFAULT_VM'] = graal_vm
 
-def _get_graal_vm():
+def get_jdk():
     '''
-    Check for the --vm global mx argument by checking mx.jvmci._vm.
+    Returns the (default) jdk under which to run.
+    N.B. The jvmci jdk actually comes in three variants and the choice
+    is controlled either by the DEFAULT_VM environment variable (recommended) or
+    the --vm global option to mx.
     '''
-    return "server" if mx_jvmci._vm is None else mx_jvmci._vm
+    return mx_jvmci().get_jvmci_jdk()
 
 def rcommon(args, command, klass, extraVmArgs=None):
+    '''
+    Common function for running either R, Rscript (or rrepl).
+    args are a list of strings that came after 'command' on the command line
+    '''
     parser = ArgumentParser(prog='mx ' + command)
     parser.add_argument('--J', dest='extraVmArgsList', action='append', help='extra Java VM arguments', metavar='@<args>')
     ns, rargs = parser.parse_known_args(args)
@@ -114,8 +150,7 @@ def rcommon(args, command, klass, extraVmArgs=None):
             extraVmArgs = []
         for e in ns.extraVmArgsList:
             extraVmArgs += [x for x in shlex.split(e.lstrip('@'))]
-    graal_vm = _get_graal_vm()
-    return runR(rargs, klass, extraVmArgs=extraVmArgs, graal_vm=graal_vm)
+    return runR(rargs, klass, extraVmArgs=extraVmArgs)
 
 def rshell(args):
     '''run R shell'''
@@ -131,15 +166,18 @@ def rrepl(args, nonZeroIsFatal=True, extraVmArgs=None):
 
 def build(args):
     '''FastR build'''
-    graal_vm = _get_graal_vm()
-    # Overridden in case we ever want to do anything non-standard
     # workaround for Hotspot Mac OS X build problem
     osname = platform.system()
     if osname == 'Darwin':
         os.environ['COMPILER_WARNINGS_FATAL'] = 'false'
         os.environ['USE_CLANG'] = 'true'
         os.environ['LFLAGS'] = '-Xlinker -lstdc++'
-    mx_jvmci.build(args, vm=graal_vm) # this calls mx.build
+    # this implicitly calls mx.build and prevents a python error later ('Namespace' object has no attribute 'D')
+    # not very vm agnostic
+    mx_jvmci().build(args)
+
+def pylint(args):
+    mx.pylint(['--primary'])
 
 def _fastr_gate_runner(args, tasks):
     # Until fixed, we call Checkstyle here and limit to primary
@@ -178,7 +216,6 @@ mx_gate.add_gate_runner(_fastr_suite, _fastr_gate_runner)
 
 def gate(args):
     '''Run the R gate'''
-
     # exclude findbugs until compliant
     mx_gate.gate(args + ['-x', '-t', 'FindBugs,Checkheaders,Checkstyle,Distribution Overlap Check,BuildJavaWithEcj'])
 
@@ -205,9 +242,7 @@ def _test_harness_body(args, vmArgs):
 def test(args):
     '''used for package installation/testing'''
     parser = ArgumentParser(prog='r test')
-    vm = _get_graal_vm()
-    with mx_jvmci.VM(vm):
-        return mx.test(args, harness=_test_harness_body, parser=parser)
+    return mx.test(args, harness=_test_harness_body, parser=parser)
 
 def _test_srcdir():
     tp = 'com.oracle.truffle.r.test'
@@ -266,10 +301,9 @@ def _junit_r_harness(args, vmArgs, junitArgs):
 
     vmArgs += ['-G:InliningDepthError=500', '-XX:JVMCINMethodSizeLimit=1000000', '-Xmx4G']
 
-    graal_vm = _get_graal_vm()
-    setREnvironment(graal_vm)
-
-    return mx_graal.run_vm(vmArgs + junitArgs, vm=graal_vm, nonZeroIsFatal=False)
+    setREnvironment()
+    jdk = get_jdk()
+    return mx.run_java(vmArgs + junitArgs, nonZeroIsFatal=False, jdk=jdk)
 
 def junit(args):
     '''run R Junit tests'''
@@ -445,7 +479,7 @@ def load_optional_suite(name, rev):
     return opt_suite
 
 _r_apptests_rev = 'a4c4be26fd6bbe650243298d676e628062e0de77'
-_r_benchmarks_rev = '8015c2260bf971904a9bf7e49eceb974117cd514'
+_r_benchmarks_rev = '72d997353aefb1a31e376d8c7a9bc3dfff8016cf'
 
 def mx_post_parse_cmd_line(opts):
     # load optional suites, r_apptests first so r_benchmarks can find it
@@ -468,6 +502,7 @@ _commands = {
     'junitsimple' : [junit_simple, ['options']],
     'junitdefault' : [junit_default, ['options']],
     'junitgate' : [junit_gate, ['options']],
+    'pylint' : [pylint, ['options']],
     'unittest' : [unittest, ['options']],
     'rbcheck' : [rbcheck, ['options']],
     'rcmplib' : [rcmplib, ['options']],
