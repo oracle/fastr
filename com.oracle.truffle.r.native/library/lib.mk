@@ -89,7 +89,7 @@ $(OBJ):
 
 $(LIB_PKG): $(C_OBJECTS) $(F_OBJECTS) $(PKGDIR)
 	mkdir -p $(LIBDIR)
-	$(DYLIB_LD) $(DYLIB_LDFLAGS) -o $(LIB_PKG) $(C_OBJECTS) $(F_OBJECTS)
+	$(DYLIB_LD) $(DYLIB_LDFLAGS) -o $(LIB_PKG) $(C_OBJECTS) $(F_OBJECTS) $(FLIBS_IN_SO)
 	mkdir -p $(FASTR_LIBDIR)/$(PKG)/libs
 	cp $(LIB_PKG) $(FASTR_LIBDIR)/$(PKG)/libs
 
@@ -97,7 +97,7 @@ $(OBJ)/%.o: $(SRC)/%.c $(H_SOURCES)
 	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
 
 $(OBJ)/%.o: $(SRC)/%.f
-	gfortran -fPIC -g -O2 -c $< -o $@
+	$(F77) $(FFLAGS) $(FPICFLAGS) -c $< -o $@
 
 clean: $(CLEAN_PKG)
 	rm -rf $(LIBDIR)/*
