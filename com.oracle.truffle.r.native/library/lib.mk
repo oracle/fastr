@@ -97,7 +97,7 @@ $(OBJ)/%.o: $(SRC)/%.c $(H_SOURCES)
 	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
 
 $(OBJ)/%.o: $(SRC)/%.f
-	gfortran -fPIC -g -O2 -c $< -o $@
+	$(F77) $(FFLAGS) $(FPICFLAGS) -c $< -o $@
 
 clean: $(CLEAN_PKG)
 	rm -rf $(LIBDIR)/*
