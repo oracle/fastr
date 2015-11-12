@@ -84,7 +84,7 @@ def runR(args, command, nonZeroIsFatal=True, extraVmArgs=None, jdk=None):
     vmArgs = ['-cp', mx.classpath(_r_command_project)]
     vmArgs += ["-Drhome.path=" + _fastr_suite.dir]
     # jvmci specific
-    vmArgs += ['-G:InliningDepthError=500', '-XX:JVMCINMethodSizeLimit=1000000']
+    vmArgs += ['-G:InliningDepthError=500', '-G:EscapeAnalysisIterations=3', '-XX:JVMCINMethodSizeLimit=1000000']
 
     if extraVmArgs is None or not '-da' in extraVmArgs:
         # unless explicitly disabled we enable assertion checking
@@ -329,7 +329,7 @@ def _junit_r_harness(args, vmArgs, junitArgs):
     # suppress Truffle compilation by using a high threshold
     vmArgs += ['-G:TruffleCompilationThreshold=100000']
 
-    vmArgs += ['-G:InliningDepthError=500', '-XX:JVMCINMethodSizeLimit=1000000', '-Xmx4G']
+    vmArgs += ['-G:InliningDepthError=500', '-G:EscapeAnalysisIterations=3', '-XX:JVMCINMethodSizeLimit=1000000', '-Xmx4G']
 
     setREnvironment()
     jdk = get_default_jdk()
