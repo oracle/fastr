@@ -119,7 +119,6 @@ public class PromiseHelperNode extends RBaseNode {
     @Child private PromiseHelperNode nextNode = null;
 
     @Children private final WrapArgumentNode[] wrapNodes = new WrapArgumentNode[ArgumentStatePush.MAX_COUNTED_ARGS];
-    @CompilationFinal private final BranchProfile[] wrapIndexes = new BranchProfile[ArgumentStatePush.MAX_COUNTED_ARGS];
     private final ConditionProfile shouldWrap = ConditionProfile.createBinaryProfile();
 
     private final ValueProfile optTypeProfile = ValueProfile.createIdentityProfile();
@@ -371,9 +370,6 @@ public class PromiseHelperNode extends RBaseNode {
     private final ValueProfile eagerValueProfile = ValueProfile.createClassProfile();
 
     public PromiseHelperNode() {
-        for (int i = 0; i < wrapIndexes.length; i++) {
-            wrapIndexes[i] = BranchProfile.create();
-        }
     }
 
     /**
@@ -402,8 +398,8 @@ public class PromiseHelperNode extends RBaseNode {
     @ExplodeLoop
     private Object getEagerValue(VirtualFrame frame, EagerPromise promise) {
         Object o = promise.getEagerValue();
-        if (shouldWrap.profile(promise.wrapIndex() != ArgumentStatePush.INVALID_INDEX)) {
-            int wrapIndex = promise.wrapIndex();
+        int wrapIndex = promise.wrapIndex();
+        if (shouldWrap.profile(wrapIndex != ArgumentStatePush.INVALID_INDEX)) {
             if (cachedWrapIndex == UNINITIALIZED) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 cachedWrapIndex = wrapIndex;
@@ -414,7 +410,6 @@ public class PromiseHelperNode extends RBaseNode {
             }
             if (cachedWrapIndex != GENERIC) {
                 if (cachedWrapIndex < ArgumentStatePush.MAX_COUNTED_ARGS) {
-                    wrapIndexes[cachedWrapIndex].enter();
                     if (wrapNodes[cachedWrapIndex] == null) {
                         CompilerDirectives.transferToInterpreterAndInvalidate();
                         wrapNodes[cachedWrapIndex] = insert(WrapArgumentNode.create(cachedWrapIndex));
@@ -424,7 +419,6 @@ public class PromiseHelperNode extends RBaseNode {
             } else {
                 for (int i = 0; i < ArgumentStatePush.MAX_COUNTED_ARGS; i++) {
                     if (wrapIndex == i) {
-                        wrapIndexes[i].enter();
                         if (wrapNodes[i] == null) {
                             CompilerDirectives.transferToInterpreterAndInvalidate();
                             wrapNodes[i] = insert(WrapArgumentNode.create(i));

@@ -105,7 +105,10 @@ public abstract class PromiseNode extends RNode {
         // For ARG_DEFAULT, expr == defaultExpr!
         RNode arg = (RNode) factory.getExpr();
         RNode expr = (RNode) RASTUtils.unwrap(arg);
-        int wrapIndex = arg == expr ? ArgumentStatePush.INVALID_INDEX : ((WrapArgumentNode) arg).getIndex();
+        int wrapIndex = ArgumentStatePush.INVALID_INDEX;
+        if (arg instanceof WrapArgumentNode && ((WrapArgumentNode) arg).modeChange()) {
+            wrapIndex = ((WrapArgumentNode) arg).getIndex();
+        }
         if (forcedEager) {
             return new OptForcedEagerPromiseNode(factory, wrapIndex);
         } else {
