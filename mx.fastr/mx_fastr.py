@@ -66,13 +66,15 @@ _command_class_dict = {'r': _r_command_project + ".shell.RCommand",
                        'rscript': _r_command_project + ".shell.RscriptCommand",
                         'rrepl': _r_command_project + "repl.RREPL"}
 
-def runR(args, command, nonZeroIsFatal=True, extraVmArgs=None, jdk=None):
+def do_run_r(args, command, extraVmArgs=None, jdk=None, nonZeroIsFatal=True):
     '''
-    This is the basic function that runs a FastR process. Args:
-      command: e.g. 'R', implicitly defines the entry class (can be None for AOT)
+    This is the basic function that runs a FastR process, where args have already been parsed.
+    Args:
       args: a list of command arguments
+      command: e.g. 'R', implicitly defines the entry class (can be None for AOT)
       extraVmArgs: additional vm arguments
       jdk: jdk (an mx.JDKConfig instance) to use
+      nonZeroIsFatal: whether to terminate the execution run fails
 
     By default a non-zero return code will cause an mx.abort, unless nonZeroIsFatal=False
     The assumption is that the VM is already built and available.
@@ -168,12 +170,12 @@ def get_default_jdk():
     '''
     return mx_jvm().get_jvmci_jdk()
 
-def rcommon(args, command, extraVmArgs=None, runner=runR):
+def run_r(args, command, parser=None, extraVmArgs=None, jdk=None, nonZeroIsFatal=True):
     '''
     Common function for running either R, Rscript (or rrepl).
     args are a list of strings that came after 'command' on the command line
     '''
-    parser = ArgumentParser(prog='mx ' + command)
+    parser = parser if parser is not None else ArgumentParser(prog='mx ' + command)
     parser.add_argument('--J', dest='extraVmArgsList', action='append', help='extra Java VM arguments', metavar='@<args>')
     ns, rargs = parser.parse_known_args(args)
 
@@ -182,19 +184,19 @@ def rcommon(args, command, extraVmArgs=None, runner=runR):
             extraVmArgs = []
         for e in ns.extraVmArgsList:
             extraVmArgs += [x for x in shlex.split(e.lstrip('@'))]
-    return runner(rargs, command, extraVmArgs=extraVmArgs)
+    return do_run_r(rargs, command, extraVmArgs=extraVmArgs, jdk=jdk, nonZeroIsFatal=nonZeroIsFatal)
 
 def rshell(args):
     '''run R shell'''
-    return rcommon(args, 'r')
+    return run_r(args, 'r')
 
 def rscript(args):
     '''run Rscript'''
-    return rcommon(args, 'rscript')
+    return run_r(args, 'rscript')
 
 def rrepl(args, nonZeroIsFatal=True, extraVmArgs=None):
     '''run R repl'''
-    return rcommon(args, "rrepl", extraVmArgs=['-DR:+Instrument'])
+    return run_r(args, "rrepl", extraVmArgs=['-DR:+Instrument'])
 
 def build(args):
     '''FastR build'''
