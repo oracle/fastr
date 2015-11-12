@@ -494,6 +494,13 @@ def bench(args):
     else:
         mx.abort("no benchmarks available")
 
+def rbench(args):
+    if _bm_suite:
+        mx.command_function('r_benchmarks:rbench')(args)
+    else:
+        mx.abort("no benchmarks available")
+
+
 def _cran_test_project():
     return mx.project('com.oracle.truffle.r.test.cran').dir
 
@@ -528,6 +535,7 @@ _commands = {
     'rtestgen' : [testgen, ''],
     # core overrides
     'bench' : [bench, ''],
+    'rbench' : [rbench, ''],
     'build' : [build, ''],
     'gate' : [gate, ''],
     'junit' : [junit, ['options']],
