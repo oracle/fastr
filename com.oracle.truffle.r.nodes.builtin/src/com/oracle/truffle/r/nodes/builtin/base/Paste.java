@@ -22,17 +22,27 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
 
-import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.utilities.*;
-import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.unary.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.nodes.*;
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.utilities.BranchProfile;
+import com.oracle.truffle.api.utilities.ConditionProfile;
+import com.oracle.truffle.api.utilities.ValueProfile;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.unary.CastStringNode;
+import com.oracle.truffle.r.nodes.unary.CastStringNodeGen;
+import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RSequence;
+import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.RVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.nodes.RNode;
 
 @RBuiltin(name = "paste", kind = INTERNAL, parameterNames = {"", "sep", "collapse"})
 public abstract class Paste extends RBuiltinNode {
@@ -47,10 +57,11 @@ public abstract class Paste extends RBuiltinNode {
     @Child private AsCharacter asCharacterNode;
     @Child private CastStringNode castCharacterNode;
 
-    private final ConditionProfile emptyOrNull = ConditionProfile.createBinaryProfile();
+    private final ValueProfile lengthProfile = ValueProfile.createPrimitiveProfile();
     private final ConditionProfile vectorOrSequence = ConditionProfile.createBinaryProfile();
-    private final ConditionProfile noCollapse = ConditionProfile.createBinaryProfile();
     private final ConditionProfile reusedResultProfile = ConditionProfile.createBinaryProfile();
+    private final BranchProfile nonNullElementsProfile = BranchProfile.create();
+    private final BranchProfile onlyNullElementsProfile = BranchProfile.create();
 
     private RStringVector castCharacter(Object o) {
         if (asCharacterNode == null) {
@@ -84,17 +95,50 @@ public abstract class Paste extends RBuiltinNode {
     }
 
     @Specialization
-    protected RStringVector pasteList(RList values, String sep, RNull collapse) {
-        return pasteList(values, sep, (Object) collapse);
-    }
-
-    @Specialization
-    protected RStringVector pasteList(RList values, String sep, Object collapse) {
+    protected RStringVector pasteList(RList values, String sep, @SuppressWarnings("unused") RNull collapse) {
         controlVisibility();
-        if (emptyOrNull.profile(isEmptyOrNull(values))) {
+        int length = lengthProfile.profile(values.getLength());
+        if (hasNonNullElements(values, length)) {
+            String[] result = pasteListElements(values, sep, length);
+            return RDataFactory.createStringVector(result, RDataFactory.COMPLETE_VECTOR);
+        } else {
             return RDataFactory.createEmptyStringVector();
         }
-        int length = values.getLength();
+    }
+
+    @Specialization(guards = "!isRNull(collapse)")
+    protected String pasteList(RList values, String sep, Object collapse, //
+                    @Cached("createBinaryProfile()") ConditionProfile collapseIsVectorProfile) {
+        controlVisibility();
+        int length = lengthProfile.profile(values.getLength());
+        if (hasNonNullElements(values, length)) {
+            String[] result = pasteListElements(values, sep, length);
+            String collapseString;
+            if (collapse instanceof String) {
+                collapseString = (String) collapse;
+            } else if (collapseIsVectorProfile.profile(collapse instanceof RAbstractStringVector)) {
+                collapseString = ((RAbstractStringVector) collapse).getDataAt(0);
+            } else {
+                throw RError.error(this, RError.Message.INVALID_ARGUMENT, "collapse");
+            }
+            return collapseString(result, collapseString);
+        } else {
+            return "";
+        }
+    }
+
+    private boolean hasNonNullElements(RList values, int length) {
+        for (int i = 0; i < length; i++) {
+            if (values.getDataAt(i) != RNull.instance) {
+                nonNullElementsProfile.enter();
+                return true;
+            }
+        }
+        onlyNullElementsProfile.enter();
+        return false;
+    }
+
+    private String[] pasteListElements(RList values, String sep, int length) {
         String[][] converted = new String[length][];
         int maxLength = 1;
         for (int i = 0; i < length; i++) {
@@ -108,13 +152,10 @@ public abstract class Paste extends RBuiltinNode {
             maxLength = Math.max(maxLength, array.length);
             converted[i] = array.length == 0 ? ONE_EMPTY_STRING : array;
         }
-
-        String[] result = prepareResult(sep, length, converted, maxLength);
-        if (noCollapse.profile(collapse != RNull.instance)) {
-            String collapseString = RRuntime.toString(collapse);
-            return buildString(result, collapseString);
+        if (length == 1) {
+            return converted[0];
         } else {
-            return RDataFactory.createStringVector(result, RDataFactory.COMPLETE_VECTOR);
+            return prepareResult(sep, length, converted, maxLength);
         }
     }
 
@@ -142,7 +183,6 @@ public abstract class Paste extends RBuiltinNode {
         return result;
     }
 
-    @TruffleBoundary
     private static String concatStrings(String[][] converted, int index, int length, String sep) {
         // pre compute the string length for the StringBuilder
         int stringLength = -sep.length();
@@ -150,30 +190,38 @@ public abstract class Paste extends RBuiltinNode {
             String element = converted[j][index % converted[j].length];
             stringLength += element.length() + sep.length();
         }
-        StringBuilder builder = new StringBuilder(stringLength);
+        char[] chars = new char[stringLength];
+        int pos = 0;
         for (int j = 0; j < length; j++) {
             if (j != 0) {
-                builder.append(sep);
+                sep.getChars(0, sep.length(), chars, pos);
+                pos += sep.length();
             }
-            builder.append(converted[j][index % converted[j].length]);
+            String element = converted[j][index % converted[j].length];
+            element.getChars(0, element.length(), chars, pos);
+            pos += element.length();
         }
-        assert builder.length() == stringLength;
-        return RRuntime.toString(builder);
+        assert pos == stringLength;
+        return new String(chars);
     }
 
-    public boolean isEmptyOrNull(RList values) {
-        return values.getLength() == 0 || (values.getLength() == 1 && values.getDataAt(0) == RNull.instance);
-    }
-
-    @TruffleBoundary
-    private static RStringVector buildString(String[] value, String collapseString) {
-        StringBuilder sb = new StringBuilder();
+    private static String collapseString(String[] value, String collapseString) {
+        int stringLength = -collapseString.length();
+        for (int i = 0; i < value.length; i++) {
+            stringLength += collapseString.length() + value[i].length();
+        }
+        char[] chars = new char[stringLength];
+        int pos = 0;
         for (int i = 0; i < value.length; i++) {
             if (i > 0) {
-                sb.append(collapseString);
+                collapseString.getChars(0, collapseString.length(), chars, pos);
+                pos += collapseString.length();
             }
-            sb.append(value[i]);
+            String element = value[i];
+            element.getChars(0, element.length(), chars, pos);
+            pos += element.length();
         }
-        return RDataFactory.createStringVector(new String[]{RRuntime.toString(sb)}, RDataFactory.COMPLETE_VECTOR);
+        assert pos == stringLength;
+        return new String(chars);
     }
 }

@@ -29,17 +29,16 @@ import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 @RBuiltin(name = "stop", kind = RBuiltinKind.INTERNAL, parameterNames = {"call.", "message"})
 public abstract class Stop extends RBuiltinNode {
 
     @Specialization
-    protected Object stop(byte call, RStringVector msgVec) {
+    protected Object stop(byte call, RAbstractStringVector msgVec) {
         controlVisibility();
         assert msgVec.getLength() == 1;
         CompilerDirectives.transferToInterpreter();
         throw RError.stop(RRuntime.fromLogical(call), this, RError.Message.GENERIC, msgVec.getDataAt(0));
     }
-
 }
