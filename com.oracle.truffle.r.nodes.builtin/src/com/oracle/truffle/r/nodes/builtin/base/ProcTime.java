@@ -24,8 +24,6 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
-import java.lang.management.*;
-
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -39,7 +37,6 @@ public abstract class ProcTime extends RBuiltinNode {
     private static final String[] NAMES = new String[]{"user.self", "sys.self", "elapsed", "user.child", "sys.child"};
     private static final RStringVector PROC_TIME_CLASS = RDataFactory.createStringVectorFromScalar("proc_time");
 
-    private static ThreadMXBean bean;
     private static RStringVector RNAMES;
 
     @Specialization
@@ -47,16 +44,15 @@ public abstract class ProcTime extends RBuiltinNode {
     protected RDoubleVector procTime() {
         controlVisibility();
         double[] data = new double[5];
-        long nowInNanos = RContext.getEngine().elapsedTimeInNanos();
-        if (bean == null) {
-            bean = ManagementFactory.getThreadMXBean();
-        }
-        long userTimeInNanos = bean.getCurrentThreadUserTime();
-        long sysTimeInNanos = bean.getCurrentThreadCpuTime() - userTimeInNanos;
+        Engine.Timings timings = RContext.getEngine().getTimings();
+        long nowInNanos = timings.elapsedTimeInNanos();
+        long[] userSysTimeInNanos = timings.userSysTimeInNanos();
+        long userTimeInNanos = userSysTimeInNanos[0];
+        long sysTimeInNanos = userSysTimeInNanos[1];
         data[0] = asDoubleSecs(userTimeInNanos);
         data[1] = asDoubleSecs(sysTimeInNanos);
         data[2] = asDoubleSecs(nowInNanos);
-        long[] childTimes = RContext.getEngine().childTimesInNanos();
+        long[] childTimes = timings.childTimesInNanos();
         boolean na = childTimes[0] < 0 || childTimes[1] < 0;
         boolean complete = na ? RDataFactory.INCOMPLETE_VECTOR : RDataFactory.COMPLETE_VECTOR;
         data[3] = na ? RRuntime.DOUBLE_NA : asDoubleSecs(childTimes[0]);

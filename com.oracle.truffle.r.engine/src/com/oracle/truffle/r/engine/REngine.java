@@ -85,6 +85,7 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.ReturnException;
+import com.oracle.truffle.r.runtime.ThreadTimings;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.Utils.DebugExitException;
 import com.oracle.truffle.r.runtime.VirtualEvalFrame;
@@ -111,7 +112,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  * The engine for the FastR implementation. Handles parsing and evaluation. There is one instance of
  * this class per {@link RContext}.
  */
-final class REngine implements Engine {
+final class REngine implements Engine, Engine.Timings {
 
     /**
      * The system time when this engine was started.
@@ -221,12 +222,20 @@ final class REngine implements Engine {
         checkAndRunStartupFunction(name);
     }
 
+    public Timings getTimings() {
+        return this;
+    }
+
     public long elapsedTimeInNanos() {
         return System.nanoTime() - startTime;
     }
 
     public long[] childTimesInNanos() {
         return childTimes;
+    }
+
+    public long[] userSysTimeInNanos() {
+        return ThreadTimings.userSysTimeInNanos();
     }
 
     @Override
@@ -586,4 +595,5 @@ final class REngine implements Engine {
             throw RInternalError.shouldNotReachHere("cannot create ForeignAccess for " + value);
         }
     }
+
 }

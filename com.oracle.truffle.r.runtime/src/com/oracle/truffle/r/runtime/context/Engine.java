@@ -84,18 +84,31 @@ public interface Engine {
      */
     void activate(REnvironment.ContextStateImpl stateREnvironment);
 
-    /**
-     * Elapsed time of runtime.
-     *
-     * @return elapsed time in nanosecs.
-     */
-    long elapsedTimeInNanos();
+    public interface Timings {
+        /**
+         * Elapsed time of runtime.
+         *
+         * @return elapsed time in nanosecs.
+         */
+        long elapsedTimeInNanos();
+
+        /**
+         * Return user and system times for any spawned child processes in nanosecs, < 0 means not
+         * available (Windows).
+         */
+        long[] childTimesInNanos();
+
+        /**
+         * Return user/sys time for this engine.
+         */
+        long[] userSysTimeInNanos();
+
+    }
 
     /**
-     * Return user and system times for any spawned child processes in nanosecs, < 0 means not
-     * available (Windows).
+     * Return the timing information for this engine.
      */
-    long[] childTimesInNanos();
+    Timings getTimings();
 
     /**
      * Parse an R expression and return an {@link RExpression} object representing the Truffle ASTs
