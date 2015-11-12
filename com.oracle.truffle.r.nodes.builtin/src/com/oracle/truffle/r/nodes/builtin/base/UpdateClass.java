@@ -16,6 +16,7 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.r.nodes.attributes.TypeFromModeNode;
 import com.oracle.truffle.r.nodes.binary.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
@@ -72,9 +73,10 @@ public abstract class UpdateClass extends RBuiltinNode {
     }
 
     @Specialization(contains = "setClassCached")
-    protected Object setClass(RAbstractContainer arg, String className) {
+    protected Object setClass(RAbstractContainer arg, String className, //
+                    @Cached("create()") TypeFromModeNode typeFromMode) {
         controlVisibility();
-        RType mode = RType.fromMode(className);
+        RType mode = typeFromMode.execute(className);
         return setClassInternal(arg, className, mode);
     }
 

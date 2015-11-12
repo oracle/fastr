@@ -22,19 +22,25 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.attributes.TypeFromModeNode;
+import com.oracle.truffle.r.nodes.attributes.TypeFromModeNodeGen;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
-import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RPromise;
-import com.oracle.truffle.r.runtime.data.model.*;
-import com.oracle.truffle.r.runtime.env.*;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.env.REnvironment;
 
 @RBuiltin(name = "exists", kind = INTERNAL, parameterNames = {"x", "envir", "mode", "inherits"})
 public abstract class Exists extends RBuiltinNode {
+
+    @Child private TypeFromModeNode typeFromMode = TypeFromModeNodeGen.create();
 
     public abstract byte execute(RAbstractStringVector nameVec, REnvironment env, String mode, byte inherits);
 
@@ -43,20 +49,20 @@ public abstract class Exists extends RBuiltinNode {
     protected byte existsStringEnv(RAbstractStringVector nameVec, REnvironment env, String mode, byte inherits) {
         String name = nameVec.getDataAt(0);
         controlVisibility();
-        RType rType = RType.fromMode(mode);
+        RType modeType = typeFromMode.execute(mode);
         if (inherits == RRuntime.LOGICAL_FALSE) {
             Object obj = env.get(name);
-            if (rType != RType.Any && obj instanceof RPromise) {
+            if (modeType != RType.Any && obj instanceof RPromise) {
                 obj = PromiseHelperNode.evaluateSlowPath(null, (RPromise) obj);
             }
-            return RRuntime.asLogical(obj != null && RRuntime.checkType(obj, rType));
+            return RRuntime.asLogical(obj != null && RRuntime.checkType(obj, modeType));
         }
         for (REnvironment e = env; e != REnvironment.emptyEnv(); e = e.getParent()) {
             Object obj = e.get(name);
-            if (rType != RType.Any && obj instanceof RPromise) {
+            if (modeType != RType.Any && obj instanceof RPromise) {
                 obj = PromiseHelperNode.evaluateSlowPath(null, (RPromise) obj);
             }
-            if (obj != null && RRuntime.checkType(obj, rType)) {
+            if (obj != null && RRuntime.checkType(obj, modeType)) {
                 return RRuntime.LOGICAL_TRUE;
             }
         }

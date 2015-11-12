@@ -11,35 +11,46 @@
 
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.PRIMITIVE;
 
-import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.utilities.*;
-import com.oracle.truffle.r.nodes.binary.*;
-import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.unary.*;
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.utilities.BranchProfile;
+import com.oracle.truffle.r.nodes.attributes.TypeFromModeNode;
+import com.oracle.truffle.r.nodes.attributes.TypeFromModeNodeGen;
+import com.oracle.truffle.r.nodes.binary.CastTypeNode;
+import com.oracle.truffle.r.nodes.binary.CastTypeNodeGen;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.unary.IsFactorNode;
+import com.oracle.truffle.r.nodes.unary.IsFactorNodeGen;
+import com.oracle.truffle.r.nodes.unary.TypeofNode;
 import com.oracle.truffle.r.nodes.unary.TypeofNodeGen;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.RAttributable;
+import com.oracle.truffle.r.runtime.data.RAttributes;
 import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
-import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 
 @RBuiltin(name = "storage.mode<-", kind = PRIMITIVE, parameterNames = {"x", ""})
 // 2nd parameter is "value", but should not be matched against, so ""
 public abstract class UpdateStorageMode extends RBuiltinNode {
 
+    @Child private TypeFromModeNode typeFromMode = TypeFromModeNodeGen.create();
     @Child private TypeofNode typeof;
     @Child private CastTypeNode castTypeNode;
     @Child private IsFactorNode isFactor;
 
-    private final ValueProfile modeProfile = ValueProfile.createIdentityProfile();
     private final BranchProfile errorProfile = BranchProfile.create();
 
     @Specialization
     protected Object update(Object x, String value) {
         controlVisibility();
-        RType mode = RType.fromMode(modeProfile.profile(value));
+        RType mode = typeFromMode.execute(value);
         if (mode == RType.DefunctReal || mode == RType.DefunctSingle) {
             errorProfile.enter();
             throw RError.error(this, RError.Message.USE_DEFUNCT, mode.getName(), mode == RType.DefunctSingle ? "mode<-" : "double");

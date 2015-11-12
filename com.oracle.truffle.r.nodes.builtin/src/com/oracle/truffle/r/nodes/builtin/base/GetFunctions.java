@@ -30,6 +30,8 @@ import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.*;
+import com.oracle.truffle.r.nodes.attributes.TypeFromModeNode;
+import com.oracle.truffle.r.nodes.attributes.TypeFromModeNodeGen;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.nodes.function.signature.*;
@@ -70,6 +72,8 @@ public class GetFunctions {
     @RBuiltin(name = "get", kind = INTERNAL, parameterNames = {"x", "envir", "mode", "inherits"})
     public abstract static class Get extends Adapter {
 
+        @Child private TypeFromModeNode typeFromMode = TypeFromModeNodeGen.create();
+
         public abstract Object execute(VirtualFrame frame, Object name, REnvironment envir, String mode, byte inherits);
 
         public static boolean isInherits(byte inherits) {
@@ -79,17 +83,18 @@ public class GetFunctions {
         @Specialization(guards = "!isInherits(inherits)")
         protected Object getNonInherit(VirtualFrame frame, RAbstractStringVector xv, REnvironment envir, String mode, @SuppressWarnings("unused") byte inherits) {
             controlVisibility();
-            return getAndCheck(frame, xv, envir, mode, true);
+            RType modeType = typeFromMode.execute(mode);
+            return getAndCheck(frame, xv, envir, modeType, true);
         }
 
         @Specialization(guards = "isInherits(inherits)")
         protected Object getInherit(VirtualFrame frame, RAbstractStringVector xv, REnvironment envir, String mode, @SuppressWarnings("unused") byte inherits) {
             controlVisibility();
-            Object r = getAndCheck(frame, xv, envir, mode, false);
+            RType modeType = typeFromMode.execute(mode);
+            Object r = getAndCheck(frame, xv, envir, modeType, false);
             if (r == null) {
                 inheritsProfile.enter();
                 String x = xv.getDataAt(0);
-                RType modeType = RType.fromMode(mode);
                 REnvironment env = envir;
                 while (env != REnvironment.emptyEnv()) {
                     env = env.getParent();
@@ -107,15 +112,14 @@ public class GetFunctions {
             return r;
         }
 
-        protected Object getAndCheck(VirtualFrame frame, RAbstractStringVector xv, REnvironment env, String mode, boolean fail) throws RError {
+        protected Object getAndCheck(VirtualFrame frame, RAbstractStringVector xv, REnvironment env, RType modeType, boolean fail) throws RError {
             String x = xv.getDataAt(0);
-            RType modeType = RType.fromMode(modeProfile.profile(mode));
             Object obj = checkPromise(frame, env.get(x));
             if (obj != null && RRuntime.checkType(obj, modeType)) {
                 return obj;
             } else {
                 if (fail) {
-                    unknownObject(x, modeType, mode);
+                    unknownObject(x, modeType, modeType.getName());
                 }
                 return null;
             }
@@ -128,6 +132,7 @@ public class GetFunctions {
         private final RCaller caller = RDataFactory.createCaller(this);
         private final BranchProfile wrongLengthErrorProfile = BranchProfile.create();
 
+        @Child private TypeFromModeNode typeFromMode = TypeFromModeNodeGen.create();
         @Child private CallInlineCacheNode callCache = CallInlineCacheNodeGen.create();
         @Child private RArgumentsNode argsNode;
 
@@ -192,7 +197,7 @@ public class GetFunctions {
             for (int i = 0; i < state.svLength; i++) {
                 String x = state.checkNA(xv.getDataAt(i));
                 state.names[i] = x;
-                RType modeType = RType.fromMode(mode.getDataAt(state.modeLength == 1 ? 0 : i));
+                RType modeType = typeFromMode.execute(mode.getDataAt(state.modeLength == 1 ? 0 : i));
                 Object r = checkPromise(frame, env.get(x));
                 if (r != null && RRuntime.checkType(r, modeType)) {
                     state.data[i] = r;
@@ -210,7 +215,7 @@ public class GetFunctions {
             for (int i = 0; i < state.svLength; i++) {
                 String x = state.checkNA(xv.getDataAt(i));
                 state.names[i] = x;
-                RType modeType = RType.fromMode(mode.getDataAt(state.modeLength == 1 ? 0 : i));
+                RType modeType = typeFromMode.execute(mode.getDataAt(state.modeLength == 1 ? 0 : i));
                 Object r = envir.get(x);
                 if (r == null || !RRuntime.checkType(r, modeType)) {
                     inheritsProfile.enter();

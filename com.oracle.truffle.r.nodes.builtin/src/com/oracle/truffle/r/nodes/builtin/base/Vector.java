@@ -22,18 +22,25 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.attributes.TypeFromModeNode;
+import com.oracle.truffle.r.nodes.attributes.TypeFromModeNodeGen;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 @RBuiltin(name = "vector", kind = INTERNAL, parameterNames = {"mode", "length"})
 public abstract class Vector extends RBuiltinNode {
 
     private static final String CACHED_MODES_LIMIT = "3";
+
+    @Child private TypeFromModeNode typeFromMode = TypeFromModeNodeGen.create();
 
     @Override
     protected void createCasts(CastBuilder casts) {
@@ -41,7 +48,7 @@ public abstract class Vector extends RBuiltinNode {
     }
 
     protected RType modeToType(String mode) {
-        RType type = RType.fromMode(mode);
+        RType type = typeFromMode.execute(mode);
         if (!type.isVector()) {
             throw RError.error(this, RError.Message.CANNOT_MAKE_VECTOR_OF_MODE, mode);
         }
