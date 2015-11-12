@@ -101,7 +101,7 @@ public abstract class UpdateSlot extends RBuiltinNode {
             checkAtAssignmentCall.call(frame, args);
         } else {
             // slow path
-            RContext.getEngine().evalFunction(checkSlotAssignFunction, frame.materialize(), objClass, name, valClass);
+            RContext.getEngine().evalFunction(currentFunction, frame.materialize(), objClass, name, valClass);
         }
     }
 
