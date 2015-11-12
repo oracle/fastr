@@ -177,6 +177,7 @@ def run_r(args, command, parser=None, extraVmArgs=None, jdk=None, nonZeroIsFatal
     '''
     parser = parser if parser is not None else ArgumentParser(prog='mx ' + command)
     parser.add_argument('--J', dest='extraVmArgsList', action='append', help='extra Java VM arguments', metavar='@<args>')
+    parser.add_argument('--jdk', action='store', help='jdk to use')
     ns, rargs = parser.parse_known_args(args)
 
     if ns.extraVmArgsList:
@@ -184,6 +185,9 @@ def run_r(args, command, parser=None, extraVmArgs=None, jdk=None, nonZeroIsFatal
             extraVmArgs = []
         for e in ns.extraVmArgsList:
             extraVmArgs += [x for x in shlex.split(e.lstrip('@'))]
+
+    if not jdk and ns.jdk:
+        jdk = mx.get_jdk(tag=ns.jdk)
     return do_run_r(rargs, command, extraVmArgs=extraVmArgs, jdk=jdk, nonZeroIsFatal=nonZeroIsFatal)
 
 def rshell(args):
