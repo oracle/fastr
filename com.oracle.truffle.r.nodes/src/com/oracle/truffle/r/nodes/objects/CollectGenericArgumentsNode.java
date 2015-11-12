@@ -41,18 +41,20 @@ import com.oracle.truffle.r.runtime.nodes.*;
  */
 public abstract class CollectGenericArgumentsNode extends RBaseNode {
 
+    // TODO: re-do with a multi-element cache? (list comparison will have some cost, though)
+
     @Children private final ReadVariableNode[] argReads;
     @Children private final ClassHierarchyScalarNode[] classHierarchyNodes;
     @Child private ClassHierarchyScalarNode classHierarchyNodeSlowPath;
 
     private final ConditionProfile valueMissingProfile = ConditionProfile.createBinaryProfile();
 
-    public abstract String[] execute(VirtualFrame frame, RList arguments);
+    public abstract String[] execute(VirtualFrame frame, RList arguments, int argLength);
 
-    protected CollectGenericArgumentsNode(Object[] arguments) {
-        ReadVariableNode[] reads = new ReadVariableNode[arguments.length];
-        ClassHierarchyScalarNode[] hierarchyNodes = new ClassHierarchyScalarNode[arguments.length];
-        for (int i = 0; i < arguments.length; i++) {
+    protected CollectGenericArgumentsNode(Object[] arguments, int argLength) {
+        ReadVariableNode[] reads = new ReadVariableNode[argLength];
+        ClassHierarchyScalarNode[] hierarchyNodes = new ClassHierarchyScalarNode[argLength];
+        for (int i = 0; i < argLength; i++) {
             RSymbol s = (RSymbol) arguments[i];
             reads[i] = ReadVariableNode.create(s.getName(), RType.Any, ReadKind.SilentLocal);
             hierarchyNodes[i] = ClassHierarchyScalarNodeGen.create();
@@ -63,13 +65,16 @@ public abstract class CollectGenericArgumentsNode extends RBaseNode {
 
     @ExplodeLoop
     @Specialization(rewriteOn = SlowPathException.class)
-    protected String[] combineCached(VirtualFrame frame, RList arguments) throws SlowPathException {
-        if (arguments.getLength() != argReads.length) {
+    protected String[] combineCached(VirtualFrame frame, RList arguments, int argLength) throws SlowPathException {
+        if (argLength != argReads.length) {
             throw new SlowPathException();
         }
         String[] result = new String[argReads.length];
         for (int i = 0; i < argReads.length; i++) {
-            if (argReads[i].getIdentifier() != ((RSymbol) (arguments.getDataAt(0))).getName()) {
+            String cachedId = argReads[i].getIdentifier();
+            String id = ((RSymbol) (arguments.getDataAt(0))).getName();
+            assert cachedId == cachedId.intern() && id == id.intern();
+            if (cachedId != id) {
                 throw new SlowPathException();
             }
             Object value = argReads[i].execute(frame);
@@ -79,17 +84,17 @@ public abstract class CollectGenericArgumentsNode extends RBaseNode {
     }
 
     @Specialization
-    protected String[] combine(VirtualFrame frame, RList arguments) {
-        return readFromMaterialized(frame.materialize(), arguments);
+    protected String[] combine(VirtualFrame frame, RList arguments, int argLength) {
+        return readFromMaterialized(frame.materialize(), arguments, argLength);
     }
 
     @TruffleBoundary
-    private String[] readFromMaterialized(MaterializedFrame frame, RList arguments) {
+    private String[] readFromMaterialized(MaterializedFrame frame, RList arguments, int argLength) {
         CompilerAsserts.neverPartOfCompilation();
         classHierarchyNodeSlowPath = insert(ClassHierarchyScalarNodeGen.create());
-        String[] result = new String[arguments.getLength()];
+        String[] result = new String[argLength];
         FrameDescriptor desc = frame.getFrameDescriptor();
-        for (int i = 0; i < arguments.getLength(); i++) {
+        for (int i = 0; i < argLength; i++) {
             RSymbol s = (RSymbol) arguments.getDataAt(i);
             FrameSlot slot = desc.findFrameSlot(s.getName());
             if (slot == null) {

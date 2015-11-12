@@ -145,6 +145,16 @@ public class RRuntime {
 
     public static final String DOT_SIG_ARGS = ".SigArgs";
 
+    public static final String R_TARGET = "target";
+    public static final String R_DOT_TARGET = ".target";
+    public static final String R_DEFINED = "defined";
+    public static final String R_DOT_DEFINED = ".defined";
+    public static final String R_NEXT_METHOD = "nextMethod";
+    public static final String R_DOT_NEXT_METHOD = ".nextMethod";
+    public static final String R_LOAD_METHOD_NAME = "loadMethod";
+    public static final String R_DOT_METHOD = ".Method";
+    public static final String R_SOURCE = "source";
+
     public static final String NULL = "NULL";
     public static final String UNBOUND = "UNBOUND";
 
