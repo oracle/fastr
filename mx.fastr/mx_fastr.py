@@ -95,7 +95,7 @@ def runR(args, command, nonZeroIsFatal=True, extraVmArgs=None, jdk=None):
 
     vmArgs = _sanitize_vmArgs(jdk, vmArgs)
     if command:
-        vmArgs.append(_command_class_dict[command])
+        vmArgs.append(_command_class_dict[command.lower()])
     return mx.run_java(vmArgs + args, nonZeroIsFatal=nonZeroIsFatal, jdk=jdk)
 
 def _sanitize_vmArgs(jdk, vmArgs):
