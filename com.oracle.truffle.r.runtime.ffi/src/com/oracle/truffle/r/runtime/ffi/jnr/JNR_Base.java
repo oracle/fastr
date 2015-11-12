@@ -89,7 +89,6 @@ public class JNR_Base implements BaseRFFI {
         return posix().chdir(dir);
     }
 
-    @TruffleBoundary
     public String getwd() {
         byte[] buf = new byte[4096];
         int rc = libcx().getwd(buf);

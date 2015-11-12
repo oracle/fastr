@@ -24,6 +24,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
@@ -34,6 +35,7 @@ import com.oracle.truffle.r.runtime.ffi.*;
 public abstract class Getwd extends RBuiltinNode {
 
     @Specialization
+    @TruffleBoundary
     protected Object getwd() {
         controlVisibility();
         String result = RFFIFactory.getRFFI().getBaseRFFI().getwd();
