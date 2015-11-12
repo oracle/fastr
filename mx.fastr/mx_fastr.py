@@ -109,7 +109,7 @@ def _sanitize_vmArgs(jdk, vmArgs):
     else:
         vm = None
     xargs = []
-    i = 0;
+    i = 0
     while i < len(vmArgs):
         vmArg = vmArgs[i]
         if vmArg.startswith('-G') or 'JVMCI' in vmArg:
