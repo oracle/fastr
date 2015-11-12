@@ -93,13 +93,13 @@ public interface Engine {
         long elapsedTimeInNanos();
 
         /**
-         * Return user and system times for any spawned child processes in nanosecs, < 0 means not
-         * available (Windows).
+         * Return user and system times for any spawned child processes in nanosecs, {@code < 0}
+         * means not available.
          */
         long[] childTimesInNanos();
 
         /**
-         * Return user/sys time for this engine.
+         * Return user/sys time for this engine, {@code < 0} means not available..
          */
         long[] userSysTimeInNanos();
 
