@@ -33,33 +33,43 @@ This is the launchpad for all the functions available for building/running/testi
 FastR. Ideally this code would be completely VM agnostic, i.e., be able to build/run with a variety
 of VMs without change. That is currently not feasible due to the requirement that building
 must use an pre-existing VM and running (for performance testing) must use a Graal-enabled VM.
-It would require separate build/run steps to finesse this.
+It would require separate build/run steps to finesse this. However, running under a standards
+VM is supported by dynamically checking if the jvmci suite is available
 '''
 
 _fastr_suite = mx.suite('fastr')
-_mx_jvmci = mx.suite("jvmci")
+_mx_jvmci = mx.suite("jvmci", fatalIfMissing=False)
 
-def mx_jvmci():
+class FakeJVMCI:
+    def get_vm(self):
+        # should only happen of jvmci vm selected
+        mx.abort('FakeJVMCI.get_vm called')
+
+    def get_jvmci_jdk(self):
+        return mx.get_jdk()
+
+    def build(self, args):
+        return mx.build(args)
+
+def mx_jvm():
+    '''
+    Check if the jvmci suite is available and if not return a fake one
+    that uses the standard vm
+    '''
     if not _mx_jvmci:
-        mx.abort('no jvmci suite available')
-    return _mx_jvmci.extensions
+        return FakeJVMCI()
+    else:
+        return _mx_jvmci.extensions
 
-def r_command_project():
-    return "com.oracle.truffle.r.engine"
+_r_command_project = 'com.oracle.truffle.r.engine'
+_command_class_dict = {'r': _r_command_project + ".shell.RCommand",
+                       'rscript': _r_command_project + ".shell.RscriptCommand",
+                        'rrepl': _r_command_project + "repl.RREPL"}
 
-def r_command_class():
-    return r_command_project() + ".shell.RCommand"
-
-def rscript_command_class():
-    return r_command_project() + ".shell.RscriptCommand"
-
-def rrepl_command_class():
-    return r_command_project() + ".repl.RREPLServer"
-
-def runR(args, className, nonZeroIsFatal=True, extraVmArgs=None, jdk=None):
+def runR(args, command, nonZeroIsFatal=True, extraVmArgs=None, jdk=None):
     '''
     This is the basic function that runs a FastR process. Args:
-      className: defines the entry class
+      command: e.g. 'R', implicitly defines the entry class (can be None for AOT)
       args: a list of command arguments
       extraVmArgs: additional vm arguments
       jdk: jdk (an mx.JDKConfig instance) to use
@@ -69,15 +79,12 @@ def runR(args, className, nonZeroIsFatal=True, extraVmArgs=None, jdk=None):
     '''
     setREnvironment()
     if not jdk:
-        jdk = get_jdk()
+        jdk = get_default_jdk()
 
-    vmArgs = ['-cp', mx.classpath(r_command_project())]
+    vmArgs = ['-cp', mx.classpath(_r_command_project)]
     vmArgs += ["-Drhome.path=" + _fastr_suite.dir]
-
-    vm = mx_jvmci().get_vm()
-    if vm != "original":
-        # graal specific args
-        vmArgs += ['-G:InliningDepthError=500', '-XX:JVMCINMethodSizeLimit=1000000']
+    # jvmci specific
+    vmArgs += ['-G:InliningDepthError=500', '-XX:JVMCINMethodSizeLimit=1000000']
 
     if extraVmArgs is None or not '-da' in extraVmArgs:
         # unless explicitly disabled we enable assertion checking
@@ -86,7 +93,32 @@ def runR(args, className, nonZeroIsFatal=True, extraVmArgs=None, jdk=None):
     if extraVmArgs:
         vmArgs += extraVmArgs
 
-    return mx.run_java(vmArgs + [className] + args, nonZeroIsFatal=nonZeroIsFatal, jdk=jdk)
+    vmArgs = _sanitize_vmArgs(jdk, vmArgs)
+    if command:
+        vmArgs.append(_command_class_dict[command])
+    return mx.run_java(vmArgs + args, nonZeroIsFatal=nonZeroIsFatal, jdk=jdk)
+
+def _sanitize_vmArgs(jdk, vmArgs):
+    '''
+    jdk/vm dependent analysis of vmArgs to remove those that are not appropriate for the
+    chosen jdk/vm. It is easier to allow clients to set anything they want and filter them
+    out here.
+    '''
+    if jdk.tag == 'jvmci':
+        vm = mx_jvm().get_vm()
+    else:
+        vm = None
+    xargs = []
+    i = 0;
+    while i < len(vmArgs):
+        vmArg = vmArgs[i]
+        if vmArg.startswith('-G') or 'JVMCI' in vmArg:
+            if vm and vm == "original":
+                i = i + 1
+                continue
+        xargs.append(vmArg)
+        i = i + 1
+    return xargs
 
 def _get_ldpaths(lib_env_name):
     ldpaths = os.path.join(_fastr_suite.dir, 'etc', 'ldpaths')
@@ -127,16 +159,16 @@ def setREnvironment():
         lib_value = lib_value + os.pathsep + '/usr/lib'
     os.environ[lib_env] = lib_value
 
-def get_jdk():
+def get_default_jdk():
     '''
     Returns the (default) jdk under which to run.
     N.B. The jvmci jdk actually comes in three variants and the choice
     is controlled either by the DEFAULT_VM environment variable (recommended) or
     the --vm global option to mx.
     '''
-    return mx_jvmci().get_jvmci_jdk()
+    return mx_jvm().get_jvmci_jdk()
 
-def rcommon(args, command, klass, extraVmArgs=None):
+def rcommon(args, command, extraVmArgs=None, runner=runR):
     '''
     Common function for running either R, Rscript (or rrepl).
     args are a list of strings that came after 'command' on the command line
@@ -150,19 +182,19 @@ def rcommon(args, command, klass, extraVmArgs=None):
             extraVmArgs = []
         for e in ns.extraVmArgsList:
             extraVmArgs += [x for x in shlex.split(e.lstrip('@'))]
-    return runR(rargs, klass, extraVmArgs=extraVmArgs)
+    return runner(rargs, command, extraVmArgs=extraVmArgs)
 
 def rshell(args):
     '''run R shell'''
-    return rcommon(args, 'R', r_command_class())
+    return rcommon(args, 'r')
 
 def rscript(args):
     '''run Rscript'''
-    return rcommon(args, 'Rscript', rscript_command_class())
+    return rcommon(args, 'rscript')
 
 def rrepl(args, nonZeroIsFatal=True, extraVmArgs=None):
     '''run R repl'''
-    return rcommon(args, "rrepl", rrepl_command_class(), extraVmArgs=['-DR:+Instrument'])
+    return rcommon(args, "rrepl", extraVmArgs=['-DR:+Instrument'])
 
 def build(args):
     '''FastR build'''
@@ -172,9 +204,7 @@ def build(args):
         os.environ['COMPILER_WARNINGS_FATAL'] = 'false'
         os.environ['USE_CLANG'] = 'true'
         os.environ['LFLAGS'] = '-Xlinker -lstdc++'
-    # this implicitly calls mx.build and prevents a python error later ('Namespace' object has no attribute 'D')
-    # not very vm agnostic
-    mx_jvmci().build(args)
+    mx_jvm().build(args)
 
 def pylint(args):
     mx.pylint(['--primary'])
@@ -302,7 +332,7 @@ def _junit_r_harness(args, vmArgs, junitArgs):
     vmArgs += ['-G:InliningDepthError=500', '-XX:JVMCINMethodSizeLimit=1000000', '-Xmx4G']
 
     setREnvironment()
-    jdk = get_jdk()
+    jdk = get_default_jdk()
     return mx.run_java(vmArgs + junitArgs, nonZeroIsFatal=False, jdk=jdk)
 
 def junit(args):
