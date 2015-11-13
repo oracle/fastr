@@ -215,6 +215,8 @@ do.install <- function() {
 				cat(pkgname, "\n")
 			}
 		}
+		install.count = 1
+		install.total = length(pkgnames)
 		for (pkgname in pkgnames) {
 			if (pkgname %in% blacklist) {
 				cat("not installing:", pkgname, " - blacklisted\n")
@@ -222,10 +224,11 @@ do.install <- function() {
 				if (dry.run) {
 					cat("would install:", pkgname, "\n")
 				} else {
-					cat("installing:", pkgname, "\n")
+					cat("installing:", pkgname, "(", install.count, "of", install.total, ")", "\n")
 					install.package(pkgname)
 				}
 			}
+			install.count = install.count + 1
 		}
 
 	}
