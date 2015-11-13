@@ -64,7 +64,7 @@ def mx_jvm():
 _r_command_project = 'com.oracle.truffle.r.engine'
 _command_class_dict = {'r': _r_command_project + ".shell.RCommand",
                        'rscript': _r_command_project + ".shell.RscriptCommand",
-                        'rrepl': _r_command_project + "repl.RREPL"}
+                        'rrepl': _r_command_project + ".repl.RREPL"}
 
 def do_run_r(args, command, extraVmArgs=None, jdk=None, nonZeroIsFatal=True):
     '''
