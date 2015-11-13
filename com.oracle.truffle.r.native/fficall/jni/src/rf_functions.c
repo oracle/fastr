@@ -133,6 +133,10 @@ SEXP Rf_allocArray(SEXPTYPE t, SEXP dims) {
 	return checkRef(thisenv, result);
 }
 
+SEXP Rf_alloc3DArray(SEXPTYPE t, int x, int y, int z) {
+	return unimplemented("Rf_alloc3DArray");
+}
+
 SEXP Rf_allocMatrix(SEXPTYPE mode, int nrow, int ncol) {
 	TRACE(TARG2d, mode, nrow, ncol);
 	JNIEnv *thisenv = getEnv();
@@ -145,6 +149,10 @@ SEXP Rf_allocList(int x) {
 	return NULL;
 }
 
+SEXP Rf_allocSExp(SEXPTYPE t) {
+	return unimplemented("Rf_allocSExp");
+}
+
 SEXP Rf_cons(SEXP car, SEXP cdr) {
 	JNIEnv *thisenv = getEnv();
 	SEXP result = (*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_consMethodID, car, cdr);
@@ -154,6 +162,18 @@ SEXP Rf_cons(SEXP car, SEXP cdr) {
 void Rf_defineVar(SEXP symbol, SEXP value, SEXP rho) {
 	JNIEnv *thisenv = getEnv();
 	(*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, Rf_defineVarMethodID, symbol, value, rho);
+}
+
+void Rf_setVar(SEXP x, SEXP y, SEXP z) {
+    unimplemented("Rf_setVar");
+}
+
+SEXP Rf_dimgets(SEXP x, SEXP y) {
+	return unimplemented("Rf_dimgets");
+}
+
+SEXP Rf_dimnamesgets(SEXP x, SEXP y) {
+	return unimplemented("Rf_dimnamesgets");
 }
 
 SEXP Rf_eval(SEXP expr, SEXP env) {
@@ -416,6 +436,13 @@ void REprintf(const char *format, ...)
 	JNIEnv *thisenv = getEnv();
 	jstring string = (*thisenv)->NewStringUTF(thisenv, buf);
 	(*thisenv)->CallStaticObjectMethod(thisenv, CallRFFIHelperClass, RprintfMethodID, string);
+}
+
+void Rvprintf(const char *format, va_list args) {
+	unimplemented("Rvprintf");
+}
+void REvprintf(const char *format, va_list args) {
+	unimplemented("REvprintf");
 }
 
 void R_FlushConsole(void) {

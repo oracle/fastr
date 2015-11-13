@@ -129,5 +129,9 @@ Rboolean R_useDynamicSymbols(DllInfo *dllInfo, Rboolean value) {
 Rboolean R_forceSymbols(DllInfo *dllInfo, Rboolean value) {
 	JNIEnv *thisenv = getEnv();
 	return (*thisenv)->CallStaticIntMethod(thisenv, JNI_PkgInitClass, forceSymbolsID, dllInfo, value);
-
 }
+
+DL_FUNC R_GetCCallable(const char *package, const char *name) {
+	unimplemented("R_GetCCallable");
+}
+
