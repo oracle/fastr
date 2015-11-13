@@ -2,8 +2,10 @@ ABCp2
 ACCLMA
 ACD
 ADDT
+ADGofTest
 ALDqr
 ALSCPC
+AMAP.Seq
 AMGET
 AMORE
 APSIMBatch
@@ -74,6 +76,7 @@ CDFt
 CDLasso
 CDNmoney
 CEC
+CFC
 CGP
 CHNOSZ
 CHsharp
@@ -120,6 +123,7 @@ Conake
 CondReg
 ConnMatTools
 ConvCalendar
+Copula.Markov
 Correlplot
 CpGFilter
 CreditMetrics
@@ -159,10 +163,12 @@ EBEN
 EDR
 EL
 EMC
+EMCluster
 EMJumpDiffusion
 EMMIXcontrasts
 EMMIXuskew
 EMT
+EMVC
 ES
 EW
 EbayesThresh
@@ -257,6 +263,7 @@ HMMCont
 HMMpa
 HMR
 HSAUR
+HSAUR2
 HSAUR3
 HSSVD
 HW.pval
@@ -293,6 +300,7 @@ InterVA4
 Interpol
 Interpol.T
 Iso
+IsoCI
 JOP
 JPSurv
 JavaGD
@@ -307,6 +315,7 @@ KRLS
 Kendall
 KernSmooth
 L1pack
+LARF
 LCA
 LCFdata
 LDAvis
@@ -321,9 +330,11 @@ LIStest
 LOGICOIL
 LPCM
 LPS
+LPStimeSeries
 LPTime
 LS2W
 LSD
+LTR
 Lahman
 LeafAngle
 LeafArea
@@ -331,6 +342,7 @@ LearnBayes
 LinCal
 Lmoments
 Lock5Data
+LogConcDEAD
 LogitNet
 LogrankA
 LowRankQP
@@ -339,8 +351,11 @@ MASS
 MASSTIMATE
 MATA
 MAc
+MAd
+MBCluster.Seq
 MBI
 MCMC4Extremes
+MCTM
 MChtest
 MConjoint
 MDM
@@ -417,6 +432,7 @@ Oncotree
 OneTwoSamples
 OpenMPController
 OptimalCutpoints
+OptionPricing
 OrdMonReg
 PBSddesolve
 PCAmixdata
@@ -445,6 +461,7 @@ ParentOffspring
 Peaks
 PearsonDS
 PearsonICA
+Peptides
 PermAlgo
 PharmPow
 PhyActBedRest
@@ -499,6 +516,7 @@ RGCCA
 RGIFT
 RGenetics
 RHT
+RIFS
 RInSp
 RJaCGH
 RMKdiscrete
@@ -507,6 +525,7 @@ RND
 ROCwoGS
 ROSE
 RPMG
+RPMM
 RPPairwiseDesign
 RRF
 RSADBE
@@ -623,6 +642,7 @@ Sequential
 SightabilityModel
 SimilarityMeasures
 SimultAnR
+SkewHyperbolic
 Skillings.Mack
 Sleuth2
 Sleuth3
@@ -713,6 +733,7 @@ aSPU
 abc.data
 abf2
 abind
+accrued
 acepack
 acm4r
 acopula
@@ -797,6 +818,7 @@ binomSamSize
 binomialcftp
 binomlogit
 binr
+bioPN
 biogas
 biogram
 bionetdata
@@ -817,6 +839,7 @@ bootES
 bootLR
 bootRes
 bootStepAIC
+bootruin
 bootspecdens
 bootstrap
 boussinesq
@@ -856,6 +879,7 @@ cec2005benchmark
 cellranger
 censNID
 cents
+cernn
 cfa
 cggd
 cghFLasso
@@ -912,6 +936,7 @@ corrplot
 cosmoFns
 countrycode
 covRobust
+covreg
 coxsei
 cpca
 cpk
@@ -932,6 +957,7 @@ cumplyr
 cuttlefish.model
 cycloids
 cytoDiv
+dafs
 dagR
 dagbag
 darts
@@ -965,6 +991,7 @@ depthTools
 descr
 designGG
 desirability
+desire
 dfcrm
 dfoptim
 dga
@@ -1038,6 +1065,7 @@ elec.strat
 elliplot
 ellipse
 elmNN
+emdist
 emoa
 emov
 emplik2
@@ -1081,6 +1109,7 @@ extraBinomial
 extrafont
 extrafontdb
 eyetracking
+ezglm
 fail
 faisalconjoint
 falcon
@@ -1136,6 +1165,7 @@ frmhet
 frmpd
 frt
 fsia
+fueleconomy
 fun
 functional
 funtimes
@@ -1190,6 +1220,7 @@ globalOptTests
 gmt
 goft
 goftest
+govStatJPN
 gpk
 gpr
 grade
@@ -1212,6 +1243,7 @@ gtools
 gvc
 gvlma
 haarfisz
+hamlet
 hapassoc
 haplo.stats
 hbim
@@ -1270,6 +1302,7 @@ identity
 ieeeround
 ifctools
 ifs
+ig.vancouver.2014.topcolour
 igraphdata
 import
 imputeMDR
@@ -1346,6 +1379,7 @@ linkim
 liso
 lisp
 lisrelToR
+listenv
 lle
 lm.beta
 lmeVarComp
@@ -1370,6 +1404,7 @@ lpSolveAPI
 lpc
 lpint
 lpridge
+lqa
 lrmest
 lsdv
 lshorth
@@ -1442,6 +1477,7 @@ mixreg
 mixsmsn
 mixtNB
 mixtools
+mixtox
 mixture
 mkssd
 mlPhaser
@@ -1468,8 +1504,10 @@ mopsocd
 morgenstemning
 mosaicData
 mpm
+mpmi
 mpt
 mra
+mreg
 msgps
 muStat
 multcompView
@@ -1519,6 +1557,7 @@ nleqslv
 nlmrt
 nls2
 nlsMicrobio
+nlsmsn
 nlstools
 nmcdr
 nnet
@@ -1579,6 +1618,7 @@ oz
 pBrackets
 pGLS
 pRSR
+pacbpred
 pack
 packClassic
 pairedCI
@@ -1601,6 +1641,7 @@ pbivnorm
 pbs
 pcIRT
 pcaBootPlot
+pcg
 pcse
 pdR
 pdc
@@ -1615,9 +1656,11 @@ pesticides
 pgam
 pgmm
 phenability
+phenex
 phonTools
 phtt
 phylin
+phyreg
 pingr
 pipeR
 pkgKitten
@@ -1720,6 +1763,7 @@ randtests
 randtoolbox
 rateratio.test
 raters
+rationalfun
 rattle
 rbenchmark
 rbugs
@@ -1731,6 +1775,7 @@ readBrukerFlexData
 readbitmap
 rebmix
 reccsim
+ref
 refset
 regRSM
 regexr
@@ -1758,6 +1803,7 @@ rgr
 ri
 ridge
 rindex
+ringbuffer
 rivernet
 riverplot
 rivervis
@@ -1774,6 +1820,7 @@ rngSetSeed
 rngWELL
 rngwell19937
 robcor
+robeth
 rowr
 royston
 rpart
@@ -1794,11 +1841,13 @@ rstiefel
 rstudioapi
 rtape
 rtype
+rucm
 ruv
 rvHPDT
 rvTDT
 rvalues
 rvgtest
+s20x
 sBF
 sROC
 sac
@@ -1834,6 +1883,7 @@ sddpack
 sdef
 sealasso
 seas
+seasonal
 seedy
 seem
 segmented
@@ -1906,12 +1956,14 @@ spatialCovariance
 spatialkernel
 spc
 spcov
+spcr
 spe
 spectralGP
 sperich
 spgs
 spi
 spikeslab
+spls
 sporm
 sprex
 sprsmdl
@@ -1937,6 +1989,7 @@ stockPortfolio
 stoichcalc
 stratification
 stratigraph
+straweib
 stringdist
 suRtex
 subgroup
@@ -2001,6 +2054,7 @@ tourr
 toxtestD
 tpe
 transport
+trapezoid
 tree
 treeClust
 treelet
@@ -2015,6 +2069,7 @@ tripack
 truncgof
 truncnorm
 trust
+tsModel
 tsallisqexp
 tsbugs
 tscount
@@ -2036,6 +2091,7 @@ uniqtag
 utility
 uuid
 varSelRF
+varSelectIP
 varbvs
 vardiag
 vbdm
