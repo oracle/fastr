@@ -358,13 +358,13 @@ def junit(args):
     return mx.junit(args, _junit_r_harness, parser=parser)
 
 def junit_simple(args):
-    return junit(['--tests', _library_unit_tests()] + args)
+    return mx.command_function('junit')(['--tests', _library_unit_tests()] + args)
 
 def junit_default(args):
-    return junit(['--tests', _all_unit_tests()] + args)
+    return mx.command_function('junit')(['--tests', _all_unit_tests()] + args)
 
 def junit_gate(args):
-    return junit(['--tests', _gate_unit_tests()] + args)
+    return mx.command_function('junit')(['--tests', _gate_unit_tests()] + args)
 
 def _test_package():
     return 'com.oracle.truffle.r.test'
