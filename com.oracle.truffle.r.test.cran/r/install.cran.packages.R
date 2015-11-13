@@ -173,7 +173,7 @@ set.initial.package.blacklist <- function() {
 	if (is.na(initial.blacklist.file)) {
 		# not set on command line
 		this_package <- "com.oracle.truffle.r.test.cran"
-		initial.blacklist.file <<- Sys.getenv("INITIAL_PACKAGE_BLACKLIST", unset=file.path(this_package, "initial.package.blacklist"))
+		initial.blacklist.file <<- Sys.getenv("INITIAL_PACKAGE_BLACKLIST", unset=file.path(R.home(), this_package, "initial.package.blacklist"))
 	}
 
 }
