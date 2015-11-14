@@ -870,7 +870,16 @@ public class FileFunctions {
                                 status[i] = RRuntime.LOGICAL_FALSE;
                             }
                         } else {
+                            // copy to existing files is skipped unless overWrite
                             if (!Files.exists(toPath) || overWrite) {
+                                /*
+                                 * Be careful if toPath is a directory, if empty Java will replace
+                                 * it with a plain file, otherwise the copy will fail
+                                 */
+                                if (Files.isDirectory(toPath)) {
+                                    Path fromFileNamePath = fromPath.getFileName();
+                                    toPath = toPath.resolve(fromFileNamePath);
+                                }
                                 Files.copy(fromPath, toPath, copyOptions);
                             }
                         }
