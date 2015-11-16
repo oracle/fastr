@@ -30,17 +30,10 @@ Java_com_oracle_truffle_r_runtime_ffi_jnr_JNI_1CallRFFI_initialize(JNIEnv *env, 
 		jobjectArray initialValues) {
 	init_utils(env); // must be first
 	init_variables(env, initialValues);
-	init_register(env);
-	init_rf_functions(env);
-	init_externalptr(env);
-	init_typecoerce(env);
-	init_attrib(env);
-	init_misc(env);
+	init_dynload(env);
+	init_internals(env);
 	init_rmath(env);
-	init_rng(env);
-	init_optim(env);
-	init_vectoraccess(env);
-	init_listaccess(env);
+	init_random(env);
 }
 
 JNIEXPORT void JNICALL

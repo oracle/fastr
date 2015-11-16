@@ -24,7 +24,7 @@ static jmethodID useDynamicSymbolsID;
 static jmethodID forceSymbolsID;
 static jmethodID setDotSymbolValuesID;
 
-void init_register(JNIEnv *env) {
+void init_dynload(JNIEnv *env) {
     DLLClass = checkFindClass(env, "com/oracle/truffle/r/runtime/ffi/DLL");
     JNI_PkgInitClass = checkFindClass(env, "com/oracle/truffle/r/runtime/ffi/jnr/JNI_PkgInit");
     DotSymbolClass = checkFindClass(env, "com/oracle/truffle/r/runtime/ffi/DLL$DotSymbol");
@@ -135,3 +135,7 @@ DL_FUNC R_GetCCallable(const char *package, const char *name) {
 	unimplemented("R_GetCCallable");
 }
 
+DL_FUNC R_FindSymbol(char const *name, char const *pkg,
+		     R_RegisteredNativeSymbol *symbol) {
+    unimplemented("R_FindSymbol");
+}

@@ -21,27 +21,8 @@
  * questions.
  */
 #include "rffiutils.h"
+#include <R_ext/Parse.h>
 
-void init_finalizer(JNIEnv *env) {
-
-}
-
-
-void R_RegisterFinalizer(SEXP s, SEXP fun) {
-
-}
-void R_RegisterCFinalizer(SEXP s, R_CFinalizer_t fun) {
-
-}
-
-void R_RegisterFinalizerEx(SEXP s, SEXP fun, Rboolean onexit) {
-
-}
-
-void R_RegisterCFinalizerEx(SEXP s, R_CFinalizer_t fun, Rboolean onexit) {
-
-}
-
-void R_RunPendingFinalizers(void) {
-
+SEXP R_ParseVector(SEXP x, int y, ParseStatus *z, SEXP w) {
+	return unimplemented("R_ParseVector");
 }

@@ -20,13 +20,32 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-
 #include "rffiutils.h"
-#include <stdlib.h>
+#include <R_ext/Applic.h>
 
-#include <R_ext/Rdynload.h>
+void init_applic(JNIEnv *env) {
 
-DL_FUNC R_FindSymbol(char const *name, char const *pkg,
-		     R_RegisteredNativeSymbol *symbol) {
-    unimplemented("R_FindSymbol");
+}
+
+void Rdqags(integr_fn f, void *ex, double *a, double *b,
+	    double *epsabs, double *epsrel,
+	    double *result, double *abserr, int *neval, int *ier,
+	    int *limit, int *lenw, int *last, int *iwork, double *work) {
+	unimplemented("Rdqags");
+}
+
+
+void Rdqagi(integr_fn f, void *ex, double *bound, int *inf,
+	    double *epsabs, double *epsrel,
+	    double *result, double *abserr, int *neval, int *ier,
+	    int *limit, int *lenw, int *last,
+	    int *iwork, double *work) {
+	unimplemented("Rdqagi");
+}
+
+void vmmin(int n, double *x, double *Fmin,
+	   optimfn fn, optimgr gr, int maxit, int trace,
+	   int *mask, double abstol, double reltol, int nREPORT,
+	   void *ex, int *fncount, int *grcount, int *fail) {
+	unimplemented("vmmin");
 }

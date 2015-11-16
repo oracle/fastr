@@ -68,16 +68,9 @@ void addCopiedObject(JNIEnv *env, SEXP x, SEXPTYPE type, void *jArray, void *dat
 
 void init_rmath(JNIEnv *env);
 void init_variables(JNIEnv *env, jobjectArray initialValues);
-void init_register(JNIEnv *env);
-void init_rf_functions(JNIEnv *env);
-void init_externalptr(JNIEnv *env);
-void init_typecoerce(JNIEnv *env);
-void init_attrib(JNIEnv *env);
-void init_misc(JNIEnv *env);
-void init_rng(JNIEnv *env);
-void init_optim(JNIEnv *env);
-void init_vectoraccess(JNIEnv *env);
-void init_listaccess(JNIEnv *env);
+void init_dynload(JNIEnv *env);
+void init_internals(JNIEnv *env);
+void init_random(JNIEnv *env);
 void init_utils(JNIEnv *env);
 
 void setTempDir(JNIEnv *, jstring tempDir);

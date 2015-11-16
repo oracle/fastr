@@ -22,15 +22,28 @@
  */
 #include "rffiutils.h"
 
-void init_optim(JNIEnv *env) {
+void init_random(JNIEnv *env) {
 }
 
-typedef double optimfn(int n, double *par, void *ex);
-typedef void optimgr(int n, double *par, double *gr, void *ex);
+void GetRNGstate() {
+	unimplemented("GetRNGstate");
+}
 
-void vmmin(int n, double *x, double *Fmin,
-	   optimfn fn, optimgr gr, int maxit, int trace,
-	   int *mask, double abstol, double reltol, int nREPORT,
-	   void *ex, int *fncount, int *grcount, int *fail) {
-	unimplemented("vmmin");
+void PutRNGstate() {
+	unimplemented("PutRNGstate");
+}
+
+double unif_rand() {
+	unimplemented("unif_rand");
+	return 0;
+}
+
+double norm_rand() {
+	unimplemented("norm_rand");
+	return 0;
+}
+
+double exp_rand() {
+	unimplemented("exp_rand");
+	return 0;
 }

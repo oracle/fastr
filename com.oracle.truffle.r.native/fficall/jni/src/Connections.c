@@ -20,30 +20,19 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+
 #include "rffiutils.h"
+#include <R_ext/Connections.h>
 
-void init_rng(JNIEnv *env) {
+SEXP R_new_custom_connection(const char *description, const char *mode, const char *class_name, Rconnection *ptr) {
+	return unimplemented("R_new_custom_connection");
 }
 
-void GetRNGstate() {
-	unimplemented("GetRNGstate");
+size_t R_ReadConnection(Rconnection con, void *buf, size_t n) {
+	return (size_t) unimplemented("R_ReadConnection");
 }
 
-void PutRNGstate() {
-	unimplemented("PutRNGstate");
+size_t R_WriteConnection(Rconnection con, void *buf, size_t n) {
+	return (size_t) unimplemented("R_WriteConnection");
 }
 
-double unif_rand() {
-	unimplemented("unif_rand");
-	return 0;
-}
-
-double norm_rand() {
-	unimplemented("norm_rand");
-	return 0;
-}
-
-double exp_rand() {
-	unimplemented("exp_rand");
-	return 0;
-}

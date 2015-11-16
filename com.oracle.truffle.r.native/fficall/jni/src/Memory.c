@@ -19,7 +19,8 @@ static void **tMemTable;
 // hwm of tMemTable
 static int tMemTableIndex;
 static int tMemTableLength;
-void init_alloc(JNIEnv *env) {
+
+void init_memory(JNIEnv *env) {
     tMemTable = malloc(sizeof(void*) * T_MEM_TABLE_INITIAL_SIZE);
     tMemTableLength = T_MEM_TABLE_INITIAL_SIZE;
     tMemTableIndex = 0;
