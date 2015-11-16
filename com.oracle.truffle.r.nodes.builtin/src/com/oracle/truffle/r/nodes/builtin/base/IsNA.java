@@ -159,12 +159,6 @@ public abstract class IsNA extends RBuiltinNode {
     }
 
     @Specialization
-    protected byte isNA(@SuppressWarnings("unused") RNull value) {
-        controlVisibility();
-        return RRuntime.LOGICAL_FALSE;
-    }
-
-    @Specialization
     protected RLogicalVector isNA(RFactor value) {
         return isNA(value.getVector());
     }
@@ -183,5 +177,26 @@ public abstract class IsNA extends RBuiltinNode {
             resultVector[i] = RRuntime.LOGICAL_FALSE;
         }
         return RDataFactory.createLogicalVector(resultVector, RDataFactory.COMPLETE_VECTOR, vector.getDimensions(), vector.getNames(attrProfiles));
+    }
+
+    @Specialization
+    protected RLogicalVector isNA(RNull value) {
+        controlVisibility();
+        RError.warning(this, RError.Message.IS_NA_TO_NON_VECTOR, value.getRType().getName());
+        return RDataFactory.createEmptyLogicalVector();
+    }
+
+    @Specialization
+    protected byte isNA(RLanguage value) {
+        controlVisibility();
+        RError.warning(this, RError.Message.IS_NA_TO_NON_VECTOR, value.getRType().getName());
+        return RRuntime.LOGICAL_FALSE;
+    }
+
+    @Specialization
+    protected byte isNA(RFunction value) {
+        controlVisibility();
+        RError.warning(this, RError.Message.IS_NA_TO_NON_VECTOR, value.getRType().getName());
+        return RRuntime.LOGICAL_FALSE;
     }
 }
