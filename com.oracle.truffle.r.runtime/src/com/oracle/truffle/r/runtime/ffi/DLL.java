@@ -222,6 +222,14 @@ public class DLL {
 
     private static final Semaphore listCritical = new Semaphore(1, false);
 
+    /*
+     * There is no sense in throwing an RError if we fail to load/init a (default) package during
+     * initial context initialization, as it is essentially fatal for any of the standard packages
+     * and indicates a bug in the RFFI implementation. So we call Utils.fatalError instead. When the
+     * system is stable, we can undo this, so that errors loading (user) packages added to
+     * R_DEFAULT_PACKAGES do throw RErrors.
+     */
+
     public static DLLInfo load(String path, boolean local, boolean now) throws DLLException {
         String absPath = Utils.tildeExpand(path);
         try {
@@ -236,7 +244,11 @@ public class DLL {
             Object handle = RFFIFactory.getRFFI().getBaseRFFI().dlopen(absPath, local, now);
             if (handle == null) {
                 String dlError = RFFIFactory.getRFFI().getBaseRFFI().dlerror();
-                throw new DLLException(RError.Message.DLL_LOAD_ERROR, path, dlError);
+                if (RContext.isInitialContextInitialized()) {
+                    throw new DLLException(RError.Message.DLL_LOAD_ERROR, path, dlError);
+                } else {
+                    throw Utils.fatalError("error loading default package: " + path + "\n" + dlError);
+                }
             }
             String name = file.getName();
             int dx = name.lastIndexOf('.');
@@ -266,10 +278,6 @@ public class DLL {
                 try {
                     RFFIFactory.getRFFI().getCallRFFI().invokeVoidCall(symbolInfo.address, symbolInfo.symbol, new Object[]{dllInfo});
                 } catch (Throwable ex) {
-                    /*
-                     * There is no sense in throwing an RError if we fail to load a package during
-                     * initial context initialization, as it is fatal.
-                     */
                     if (RContext.isInitialContextInitialized()) {
                         throw new DLLException(RError.Message.DLL_RINIT_ERROR);
                     } else {
