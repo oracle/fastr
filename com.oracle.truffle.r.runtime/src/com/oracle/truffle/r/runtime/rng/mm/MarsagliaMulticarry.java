@@ -39,12 +39,20 @@ public final class MarsagliaMulticarry extends RNGInitAdapter {
         return state;
     }
 
-    public double genrandDouble() {
-        state[0] = 36969 * (state[0] & 0177777) + (state[0] >>> 16);
-        state[1] = 18000 * (state[1] & 0177777) + (state[1] >>> 16);
-        int x = (state[0] << 16) ^ (state[1] & 0177777);
-        double d = (x & 0xffffffffL) * RRNG.I2_32M1;
-        return RRNG.fixup(d); /* in [0,1) */
+    public double[] genrandDouble(int count) {
+        int state0 = state[0];
+        int state1 = state[1];
+        double[] result = new double[count];
+        for (int i = 0; i < count; i++) {
+            state0 = 36969 * (state0 & 0177777) + (state0 >>> 16);
+            state1 = 18000 * (state1 & 0177777) + (state1 >>> 16);
+            int x = (state0 << 16) ^ (state1 & 0177777);
+            double d = (x & 0xffffffffL) * RRNG.I2_32M1;
+            result[i] = RRNG.fixup(d); /* in [0,1) */
+        }
+        state[0] = state0;
+        state[1] = state1;
+        return result;
     }
 
     public Kind getKind() {

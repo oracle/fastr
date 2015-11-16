@@ -64,6 +64,7 @@
 package com.oracle.truffle.r.runtime.rng.mt;
 
 import com.oracle.truffle.api.CompilerDirectives.*;
+import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.rng.*;
 import com.oracle.truffle.r.runtime.rng.RRNG.Kind;
 
@@ -92,8 +93,8 @@ public final class MersenneTwister extends RNGInitAdapter {
      * Following GnuR this is set to {@code N+1} to indicate unset if MT_genrand is called, although
      * that condition never appears to happen in practice, as {@code RNG_init}, cf. {@link #init} is
      * always called first. N.B. This value has a relationship with {@code dummy0} in that it is
-     * always loaded from {@code dummy0} in {@link #genrandDouble()} and the updated value is stored
-     * back in {@code dummy0}.
+     * always loaded from {@code dummy0} in {@link #genrandDouble(int)} and the updated value is
+     * stored back in {@code dummy0}.
      */
     private int mti = N + 1;
 
@@ -129,6 +130,7 @@ public final class MersenneTwister extends RNGInitAdapter {
         }
     }
 
+    @SuppressWarnings("unused")
     private void sgenrand(int seedParam) {
         /* transcribed from GNU R, RNG.c (MT_sgenrand) */
         int i;
@@ -148,15 +150,69 @@ public final class MersenneTwister extends RNGInitAdapter {
      * {@link com.oracle.truffle.api.CompilerDirectives.TruffleBoundary} annotation on
      * {@link #generateNewNumbers()}.
      */
-    public double genrandDouble() {
-        return RRNG.fixup((genrandInt32() & 0xffffffffL) * RRNG.I2_32M1);
+    public double[] genrandDouble(int count) {
+        int localDummy0 = dummy0;
+        int localMti = mti;
+        double[] result = new double[count];
+
+        localMti = localDummy0;
+        if (localMti == N + 1) {
+            throw RInternalError.shouldNotReachHere();
+            // It appears that this never happens
+            // sgenrand(4357);
+        }
+
+        int pos = 0;
+        while (pos < count && localMti < N) {
+            int y = mt[localMti++];
+            /* Tempering */
+            y ^= (y >>> 11);
+            y ^= (y << 7) & TEMPERING_MASK_B;
+            y ^= (y << 15) & TEMPERING_MASK_C;
+            y ^= (y >>> 18);
+            result[pos] = RRNG.fixup((y & 0xffffffffL) * RRNG.I2_32M1);
+            pos++;
+        }
+
+        while (pos < count) {
+            /* generate N words at one time */
+            int kk;
+            for (kk = 0; kk < N - M; kk++) {
+                int y2y = (mt[kk] & UPPERMASK) | (mt[kk + 1] & LOWERMASK);
+                mt[kk] = mt[kk + M] ^ (y2y >>> 1) ^ mag01(y2y & 0x1);
+            }
+            for (; kk < N - 1; kk++) {
+                int y2y = (mt[kk] & UPPERMASK) | (mt[kk + 1] & LOWERMASK);
+                mt[kk] = mt[kk + (M - N)] ^ (y2y >>> 1) ^ mag01(y2y & 0x1);
+            }
+            int y2y = (mt[N - 1] & UPPERMASK) | (mt[0] & LOWERMASK);
+            mt[N - 1] = mt[M - 1] ^ (y2y >>> 1) ^ mag01(y2y & 0x1);
+
+            localMti = 0;
+
+            while (pos < count && localMti < N) {
+                int y = mt[localMti++];
+                /* Tempering */
+                y ^= (y >>> 11);
+                y ^= (y << 7) & TEMPERING_MASK_B;
+                y ^= (y << 15) & TEMPERING_MASK_C;
+                y ^= (y >>> 18);
+                result[pos] = RRNG.fixup((y & 0xffffffffL) * RRNG.I2_32M1);
+                pos++;
+            }
+        }
+        localDummy0 = localMti;
+        mti = localMti;
+        dummy0 = localDummy0;
+        return result;
     }
 
-    @CompilationFinal private static final int[] MAG01 = new int[]{0x0, MATRIXA};
+    private static int mag01(int v) {
+        return (v & 1) != 0 ? MATRIXA : 0;
+    }
 
     /* generates a random number on [0,0xffffffff]-interval */
     private int genrandInt32() {
-        int y;
 
         /* mag01[x] = x * MATRIX_A for x=0,1 */// see MT_genrand in GnuR RNG.c
 
@@ -166,7 +222,7 @@ public final class MersenneTwister extends RNGInitAdapter {
             generateNewNumbers();
         }
 
-        y = mt[mti++];
+        int y = mt[mti++];
 
         /* Tempering */
         y ^= (y >>> 11);
@@ -180,24 +236,25 @@ public final class MersenneTwister extends RNGInitAdapter {
 
     @TruffleBoundary
     private void generateNewNumbers() {
-        int y;
+        int y2y;
         int kk;
 
         if (mti == N + 1) {
+            throw RInternalError.shouldNotReachHere();
             // It appears that this never happens
-            sgenrand(4357);
+            // sgenrand(4357);
         }
 
         for (kk = 0; kk < N - M; kk++) {
-            y = (mt[kk] & UPPERMASK) | (mt[kk + 1] & LOWERMASK);
-            mt[kk] = mt[kk + M] ^ (y >>> 1) ^ MAG01[y & 0x1];
+            y2y = (mt[kk] & UPPERMASK) | (mt[kk + 1] & LOWERMASK);
+            mt[kk] = mt[kk + M] ^ (y2y >>> 1) ^ mag01(y2y & 0x1);
         }
         for (; kk < N - 1; kk++) {
-            y = (mt[kk] & UPPERMASK) | (mt[kk + 1] & LOWERMASK);
-            mt[kk] = mt[kk + (M - N)] ^ (y >>> 1) ^ MAG01[y & 0x1];
+            y2y = (mt[kk] & UPPERMASK) | (mt[kk + 1] & LOWERMASK);
+            mt[kk] = mt[kk + (M - N)] ^ (y2y >>> 1) ^ mag01(y2y & 0x1);
         }
-        y = (mt[N - 1] & UPPERMASK) | (mt[0] & LOWERMASK);
-        mt[N - 1] = mt[M - 1] ^ (y >>> 1) ^ MAG01[y & 0x1];
+        y2y = (mt[N - 1] & UPPERMASK) | (mt[0] & LOWERMASK);
+        mt[N - 1] = mt[M - 1] ^ (y2y >>> 1) ^ mag01(y2y & 0x1);
 
         mti = 0;
     }

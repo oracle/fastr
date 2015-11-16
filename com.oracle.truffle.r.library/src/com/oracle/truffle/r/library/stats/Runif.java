@@ -26,7 +26,6 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.rng.RandomNumberNode;
-import com.oracle.truffle.r.runtime.rng.RandomNumberNode.RNGState;
 
 /**
  * TODO GnuR checks/updates {@code .Random.seed} across this call.
@@ -43,10 +42,9 @@ public abstract class Runif extends RExternalBuiltinNode.Arg3 {
         double maxDouble = castDouble(castVector(max)).getDataAt(0);
         double delta = maxDouble - minDouble;
 
-        RNGState gen = random.initialize();
-        double[] result = new double[nInt];
+        double[] result = random.executeDouble(nInt);
         for (int i = 0; i < nInt; i++) {
-            result[i] = minDouble + random.unifRand(gen) * delta;
+            result[i] = minDouble + result[i] * delta;
         }
         return RDataFactory.createDoubleVector(result, RDataFactory.COMPLETE_VECTOR);
     }

@@ -16,7 +16,6 @@ import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.rng.RandomNumberNode;
-import com.oracle.truffle.r.runtime.rng.RandomNumberNode.RNGState;
 
 /**
  * TODO GnuR checks/updates {@code .Random.seed} across this call. TODO Honor min/max.
@@ -27,27 +26,19 @@ public abstract class Rnorm extends RExternalBuiltinNode.Arg3 {
 
     private static final double BIG = 134217728;
 
-    // from GNUR: snorm.c, rnorm.c
-    private double normRand(RNGState gen) {
-        double u1;
-
-        /* unif_rand() alone is not of high enough precision */
-        u1 = random.unifRand(gen);
-        u1 = (int) (BIG * u1) + random.unifRand(gen);
-        return Random2.qnorm5(u1 / BIG, 0.0, 1.0, true, false);
-    }
-
     @Specialization
     protected Object doRnorm(Object n, double mean, double standardd) {
         // TODO full error checks
         int nInt = castInt(castVector(n));
         RNode.reportWork(this, nInt);
 
-        RNGState gen = random.initialize();
+        double[] numbers = random.executeDouble(nInt * 2);
+        double[] result = new double[numbers.length / 2];
 
-        double[] result = new double[nInt];
-        for (int i = 0; i < nInt; i++) {
-            result[i] = mean + standardd * normRand(gen);
+        /* unif_rand() alone is not of high enough precision */
+        for (int i = 0; i < result.length; i++) {
+            double u1 = (int) (BIG * numbers[i * 2]) + numbers[i * 2 + 1];
+            result[i] = Random2.qnorm5(u1 / BIG, 0.0, 1.0, true, false) * standardd + mean;
         }
         return RDataFactory.createDoubleVector(result, RDataFactory.COMPLETE_VECTOR);
     }

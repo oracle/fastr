@@ -112,7 +112,7 @@ public class RRNG {
 
         int[] getSeeds();
 
-        double genrandDouble();
+        double[] genrandDouble(int count);
 
         Kind getKind();
     }
@@ -198,7 +198,7 @@ public class RRNG {
      * Ask the current generator for a random double. (cf. {@code unif_rand} in RNG.c.
      */
     public static double unifRand() {
-        return currentGenerator().genrandDouble();
+        return currentGenerator().genrandDouble(1)[0];
     }
 
     /**
