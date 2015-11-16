@@ -2296,6 +2296,15 @@ public class TestSimpleVectors extends TestBase {
         assertEval(Ignored.Unknown, "{ x<-integer(0); dim(x)<-c(1, 0, 2, 0, 2); x }");
     }
 
+    @Test
+    public void testQuotes() {
+        assertEval("{ e <- quote(x(y=z)); e[[2]] }");
+        assertEval("{ e <- quote(x(y=z)); e[2] }");
+        assertEval(Ignored.Unimplemented, "{ e <- quote(x(y=z)); names(e[2]) }");
+        assertEval("{ e <- quote(x(y=z)); typeof(e[2]) }");
+        assertEval("{ e <- quote(x(y=z)); typeof(e[[2]]) }");
+    }
+
     // Checkstyle: stop
     @Test
     public void testUpdateOther() {

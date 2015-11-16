@@ -96,15 +96,18 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
         int length = list.getLength();
         if (length == 0) {
             return RNull.instance;
-        } else if (length == 1) {
-            return list.getDataAtAsObject(0);
         } else {
             RNode fn = unwrapToRNode(list.getDataAtAsObject(0));
             RSyntaxNode[] arguments = new RSyntaxNode[length - 1];
             for (int i = 1; i < length; i++) {
                 arguments[i - 1] = (RSyntaxNode) unwrapToRNode(list.getDataAtAsObject(i));
             }
-            return RDataFactory.createLanguage(RASTUtils.createCall(fn, false, ArgumentsSignature.empty(arguments.length), arguments).asRNode());
+            RLanguage result = RDataFactory.createLanguage(RASTUtils.createCall(fn, false, ArgumentsSignature.empty(arguments.length), arguments).asRNode());
+            RStringVector names = list.getNames(RAttributeProfiles.create());
+            if (names != null) {
+                result.setNames(names);
+            }
+            return result;
         }
     }
 
