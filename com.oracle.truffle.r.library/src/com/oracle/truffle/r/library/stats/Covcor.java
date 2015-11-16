@@ -11,13 +11,23 @@
  */
 package com.oracle.truffle.r.library.stats;
 
-import com.oracle.truffle.api.utilities.*;
-import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
-import com.oracle.truffle.r.runtime.nodes.*;
-import com.oracle.truffle.r.runtime.ops.na.*;
+import java.util.Arrays;
+
+import com.oracle.truffle.api.utilities.BranchProfile;
+import com.oracle.truffle.api.utilities.ConditionProfile;
+import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
+import com.oracle.truffle.r.nodes.profile.CountedLoopConditionProfile;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
+import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
+import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 /*
  * Logic derived from GNU-R, library/stats/src/cov.c
@@ -58,6 +68,8 @@ public final class Covcor extends RExternalBuiltinNode {
     private final BranchProfile naInRes = BranchProfile.create();
     private final BranchProfile error = BranchProfile.create();
     private final BranchProfile warning = BranchProfile.create();
+
+    private final CountedLoopConditionProfile loopLength = CountedLoopConditionProfile.create();
 
     public RDoubleVector corcov(RDoubleVector x, RDoubleVector y, @SuppressWarnings("unused") int method, boolean iskendall, RBaseNode invokingNode) throws RError {
         boolean ansmat;
@@ -433,11 +445,7 @@ public final class Covcor extends RExternalBuiltinNode {
 
         if (n <= 1) { /* too many missing */
             tooManyMissing.enter();
-            for (int i = 0; i < ncx; i++) {
-                for (int j = 0; j < ncx; j++) {
-                    ans[i + j * ncx] = RRuntime.DOUBLE_NA;
-                }
-            }
+            Arrays.fill(ans, RRuntime.DOUBLE_NA);
             return sd0;
         }
 
@@ -451,6 +459,7 @@ public final class Covcor extends RExternalBuiltinNode {
         }
 
         for (int i = 0; i < ncx; i++) {
+            double[] temp = new double[n];
             if (noNAXProfile.profile(!hasNAx[i])) {
                 if (!iskendall) {
                     xxm = xm[i];
@@ -462,10 +471,14 @@ public final class Covcor extends RExternalBuiltinNode {
                                 r = RRuntime.DOUBLE_NA;
                             } else {
                                 sum = 0.0;
-                                for (int k = 0; k < n; k++) {
-                                    double u = xData[i * n + k];
-                                    double v = xData[j * n + k];
-                                    sum += (u - xxm) * (v - yym);
+                                loopLength.profileLength(n);
+                                double[] u = Arrays.copyOfRange(xData, i * n, i * n + n);
+                                double[] v = Arrays.copyOfRange(xData, j * n, j * n + n);
+                                for (int k = 0; loopLength.inject(k < n); k++) {
+                                    temp[k] = (u[k] - xxm) * (v[k] - yym);
+                                }
+                                for (int k = 0; loopLength.inject(k < n); k++) {
+                                    sum += temp[k];
                                 }
                                 r = checkNAs(sum) ? RRuntime.DOUBLE_NA : sum / n1;
                             }
