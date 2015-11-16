@@ -15,6 +15,7 @@ package com.oracle.truffle.r.runtime.ops;
 import static com.oracle.truffle.r.runtime.RRuntime.*;
 
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.utilities.*;
@@ -500,6 +501,10 @@ public abstract class BinaryArithmetic extends Operation {
         private final ConditionProfile powIntegerProfile = ConditionProfile.createBinaryProfile();
         private final ConditionProfile powIntegerPositiveProfile = ConditionProfile.createBinaryProfile();
 
+        private static final int UNINITIALIZED = Integer.MIN_VALUE;
+        private static final int GENERIC = Integer.MIN_VALUE + 1;
+        @CompilationFinal private int cachedCastExponent = UNINITIALIZED;
+
         public Pow() {
             super(false, false, false);
         }
@@ -525,13 +530,32 @@ public abstract class BinaryArithmetic extends Operation {
 
             // Special case with exponent always integer.
             if (powIntegerProfile.profile(castExponent == b)) {
-                if (powIntegerPositiveProfile.profile(castExponent >= 0)) {
-                    return positivePow(a, castExponent);
-                } else {
-                    if (powIntegerPositiveProfile.profile(a == 0.0)) {
-                        return Double.POSITIVE_INFINITY;
+                if (cachedCastExponent != GENERIC && cachedCastExponent != castExponent) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    if (castExponent == UNINITIALIZED) {
+                        cachedCastExponent = GENERIC;
+                    } else {
+                        cachedCastExponent = cachedCastExponent == UNINITIALIZED ? castExponent : GENERIC;
                     }
-                    return 1 / positivePow(a, -castExponent);
+                }
+                if (cachedCastExponent == GENERIC) {
+                    if (powIntegerPositiveProfile.profile(castExponent >= 0)) {
+                        return positivePow(a, castExponent);
+                    } else {
+                        if (powIntegerPositiveProfile.profile(a == 0.0)) {
+                            return Double.POSITIVE_INFINITY;
+                        }
+                        return 1 / positivePow(a, -castExponent);
+                    }
+                } else {
+                    if (powIntegerPositiveProfile.profile(cachedCastExponent >= 0)) {
+                        return positivePowUnrolled(a, cachedCastExponent);
+                    } else {
+                        if (powIntegerPositiveProfile.profile(a == 0.0)) {
+                            return Double.POSITIVE_INFINITY;
+                        }
+                        return 1 / positivePowUnrolled(a, -cachedCastExponent);
+                    }
                 }
             }
 
@@ -541,6 +565,21 @@ public abstract class BinaryArithmetic extends Operation {
             }
             CompilerDirectives.transferToInterpreterAndInvalidate();
             return replace(new PowFull()).op(a, b);
+        }
+
+        @ExplodeLoop
+        private static double positivePowUnrolled(double operand, int castExponent) {
+            int exponent = castExponent;
+            double result = 1;
+            double base = operand;
+            while (exponent > 0) {
+                if ((exponent & 1) == 1) {
+                    result *= base;
+                }
+                exponent >>= 1;
+                base *= base;
+            }
+            return result;
         }
 
         private static double positivePow(double operand, int castExponent) {
