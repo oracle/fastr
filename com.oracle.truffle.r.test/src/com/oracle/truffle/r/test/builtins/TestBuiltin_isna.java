@@ -13,6 +13,7 @@ package com.oracle.truffle.r.test.builtins;
 import org.junit.*;
 
 import com.oracle.truffle.r.test.*;
+import com.oracle.truffle.r.test.TestBase.Output;
 
 // Checkstyle: stop line length check
 public class TestBuiltin_isna extends TestBase {
@@ -158,7 +159,7 @@ public class TestBuiltin_isna extends TestBase {
 
     @Test
     public void testisna29() {
-        assertEval(Ignored.Unknown, "argv <- list(NULL);is.na(argv[[1]]);");
+        assertEval(Output.ContainsWarning, "argv <- list(NULL);is.na(argv[[1]]);");
     }
 
     @Test
@@ -263,5 +264,7 @@ public class TestBuiltin_isna extends TestBase {
         assertEval("{ is.na(1[10]) }");
         assertEval("{ is.na(c(1[10],2[10],3)) }");
         assertEval("{ is.na(list(1[10],1L[10],list(),integer())) }");
+        assertEval(Output.ContainsWarning, "is.na(quote(x()))");
+        assertEval(Output.ContainsWarning, "is.na(is.na))");
     }
 }
