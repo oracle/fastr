@@ -23,21 +23,12 @@
 suite = {
   "mxversion" : "5.6.1",
   "name" : "fastr",
-  "versionConflictResolution" : "latest",
   "imports" : {
     "suites" : [
             {
                "name" : "graal",
-               "version" : "baf68ed1ccbc30fb60ce077f31e921806411c9cd",
+               "version" : "40024a40f63ca9009327067d2e20284e8f2a61af",
                "urls" : [{"url" : "http://lafo.ssw.uni-linz.ac.at/hg/graal-compiler", "kind" : "hg"}]
-            },
-            {
-               "name" : "truffle",
-               "version" : "d099f8650cfb4c74ee9e8268726a254e282f1092",
-               "urls" : [
-                    {"url" : "http://lafo.ssw.uni-linz.ac.at/hg/truffle", "kind" : "hg"},
-                    {"url" : "https://curio.ssw.jku.at/nexus/content/repositories/snapshots", "kind" : "binary"},
-                ]
             },
         ],
    },
