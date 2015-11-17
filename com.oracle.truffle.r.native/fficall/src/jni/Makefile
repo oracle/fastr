@@ -52,7 +52,10 @@ C_OBJECTS := $(patsubst %.c,$(OBJ)/%.o,$(C_SOURCES))
 JNI_INCLUDES = -I $(JAVA_HOME)/include -I $(JAVA_HOME)/include/$(JDK_OS_DIR)
 FFI_INCLUDES = -I$(TOPDIR)/include -I$(TOPDIR)/gnur/R-3.1.3/src/include -I$(TOPDIR)/include/R_ext
 
-INCLUDES := $(JNI_INCLUDES) $(FFI_INCLUDES)
+# The need for thhis should be reviewed
+GNUR_INCLUDES = -I$(TOPDIR)/gnur/R-3.1.3/src/include -I$(TOPDIR)/gnur/R-3.1.3/src/nmath
+
+INCLUDES := $(JNI_INCLUDES) $(FFI_INCLUDES) $(GNUR_INCLUDES)
 
 all: Makefile $(C_COMMON_SOURCES) $(C_LIB) 
 

@@ -103,7 +103,7 @@ int R_finite(double x)
 }
 
 #undef _
-#include "../../../gnur/R-3.1.3/src/nmath/nmath.h"
+#include <nmath.h>
 
 double fround(double x, double digits) {
 #define MAX_DIGITS DBL_MAX_10_EXP
