@@ -56,7 +56,12 @@ public interface RRuntimeASTAccess {
      */
     RList asList(RLanguage rl);
 
-    Object fromList(RAbstractVector list);
+    /**
+     * If {@code list} is empty return {@link RNull#instance} else create an {@link RLanguage}
+     * object whose rep is a {@code RCallNode}, with the first list element as the function and the
+     * remainder as the arguments.
+     */
+    Object fromList(RList list);
 
     /**
      * Get the "names" attribute for an {@link RLanguage} object, or {@code null} if none.

@@ -235,7 +235,7 @@ final class CachedExtractVectorNode extends CachedVectorNode {
 
     @TruffleBoundary
     private static Object materializeLanguage(RAbstractVector extractedVector) {
-        return RContext.getRRuntimeASTAccess().fromList(extractedVector);
+        return RContext.getRRuntimeASTAccess().fromList((RList) extractedVector);
     }
 
     private Object extract(int dimensionIndex, RAbstractStringVector vector, Object pos, PositionProfile profile) {
@@ -391,9 +391,18 @@ final class CachedExtractVectorNode extends CachedVectorNode {
             RStringVector newNames1 = newNames.materialize();
             assert newNames1.getLength() <= container.getLength();
             assert container.getInternalDimensions() == null;
-            assert container.getAttributes() == null;
-            container.initAttributes(RAttributes.createInitialized(new String[]{RRuntime.NAMES_ATTR_KEY}, new Object[]{newNames1}));
-            container.setInternalNames(newNames1);
+            if (container.getAttributes() == null) {
+                // usual case
+                container.initAttributes(RAttributes.createInitialized(new String[]{RRuntime.NAMES_ATTR_KEY}, new Object[]{newNames1}));
+                container.setInternalNames(newNames1);
+            } else {
+                // from an RLanguage extraction that set a name
+                RAttributes attrs = container.getAttributes();
+                RStringVector oldNames = (RStringVector) attrs.get(RRuntime.NAMES_ATTR_KEY);
+                assert oldNames.getLength() == newNames.getLength();
+                assert oldNames.toString().equals(newNames1.toString());
+                // i.e. nothing actually needs to be done
+            }
         }
 
         @Specialization

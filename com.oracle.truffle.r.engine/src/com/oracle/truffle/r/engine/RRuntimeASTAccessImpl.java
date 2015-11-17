@@ -92,31 +92,41 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
         return node.getRelement(index);
     }
 
-    public Object fromList(RAbstractVector list) {
+    public Object fromList(RList list) {
         int length = list.getLength();
         if (length == 0) {
             return RNull.instance;
         } else {
+            RStringVector formals = list.getNames();
+            boolean nullFormals = formals == null;
             RNode fn = unwrapToRNode(list.getDataAtAsObject(0));
+            if (!nullFormals && fn instanceof ReadVariableNode && formals.getLength() > 0 && formals.getDataAt(0).length() > 0) {
+                fn = new NamedReadVariableNode((ReadVariableNode) fn, formals.getDataAt(0));
+            }
             RSyntaxNode[] arguments = new RSyntaxNode[length - 1];
+            String[] sigNames = new String[arguments.length];
             for (int i = 1; i < length; i++) {
                 arguments[i - 1] = (RSyntaxNode) unwrapToRNode(list.getDataAtAsObject(i));
+                String formal = nullFormals ? null : formals.getDataAt(i);
+                sigNames[i - 1] = formal != null && formal.length() > 0 ? formal : null;
             }
-            RLanguage result = RDataFactory.createLanguage(RASTUtils.createCall(fn, false, ArgumentsSignature.empty(arguments.length), arguments).asRNode());
-            RStringVector names = list.getNames(RAttributeProfiles.create());
-            if (names != null) {
-                result.setNames(names);
-            }
+            RLanguage result = RDataFactory.createLanguage(RASTUtils.createCall(fn, false, ArgumentsSignature.get(sigNames), arguments).asRNode());
             return result;
         }
     }
 
-    private static RNode unwrapToRNode(Object o) {
-        if (o instanceof RLanguage) {
-            return (RNode) RASTUtils.unwrap(((RLanguage) o).getRep());
+    private static RNode unwrapToRNode(Object objArg) {
+        Object obj = objArg;
+        if (obj instanceof RLanguage) {
+            return (RNode) RASTUtils.unwrap(((RLanguage) obj).getRep());
         } else {
-            // o is RSymbol or a primitive value
-            return ConstantNode.create(o);
+            // obj is RSymbol or a primitive value.
+            // A symbol needs to be converted back to a ReadVariableNode
+            if (obj instanceof RSymbol) {
+                return ReadVariableNode.create(((RSymbol) obj).getName(), false);
+            } else {
+                return ConstantNode.create(obj);
+            }
         }
     }
 
@@ -138,25 +148,33 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
     public RStringVector getNames(RLanguage rl) {
         RBaseNode node = rl.getRep();
         if (node instanceof RCallNode || node instanceof GroupDispatchNode) {
-            Arguments<RSyntaxNode> args = RASTUtils.findCallArguments(node);
             /*
-             * If any argument has a name, then all arguments (and the function) are given names,
-             * with unnamed arguments getting "". However, if no arguments have names, the result is
-             * NULL (null)
+             * If the function or any argument has a name, then all arguments (and the function) are
+             * given names, with unnamed arguments getting "". However, if no arguments have names,
+             * the result is NULL (null)
              */
-            ArgumentsSignature sig = args.getSignature();
             boolean hasName = false;
-            for (int i = 0; i < sig.getLength(); i++) {
-                if (sig.getName(i) != null) {
-                    hasName = true;
-                    break;
+            String functionName = "";
+            RNode fnNode = RASTUtils.getFunctionNode(node);
+            if (fnNode instanceof NamedReadVariableNode) {
+                hasName = true;
+                functionName = ((NamedReadVariableNode) fnNode).name;
+            }
+            Arguments<RSyntaxNode> args = RASTUtils.findCallArguments(node);
+            ArgumentsSignature sig = args.getSignature();
+            if (!hasName) {
+                for (int i = 0; i < sig.getLength(); i++) {
+                    if (sig.getName(i) != null) {
+                        hasName = true;
+                        break;
+                    }
                 }
             }
             if (!hasName) {
                 return null;
             }
             String[] data = new String[sig.getLength() + 1];
-            data[0] = ""; // function
+            data[0] = functionName; // function
             for (int i = 0; i < sig.getLength(); i++) {
                 String name = sig.getName(i);
                 data[i + 1] = name == null ? "" : name;

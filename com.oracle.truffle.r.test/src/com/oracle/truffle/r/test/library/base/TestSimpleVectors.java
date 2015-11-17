@@ -677,6 +677,13 @@ public class TestSimpleVectors extends TestBase {
     }
 
     @Test
+    public void testLanguageIndex() {
+        assertEval("{ e <- quote(f(x=a, b)); names(e) }");
+        assertEval("{ e <- quote(f(x=a, y=b)); names(e) }");
+        assertEval("{ e <- quote(f(x=a, y=b)); names(e[-1]) }");
+    }
+
+    @Test
     public void testNAIndex() {
         assertEval("{ x<-c(1,2,3,4); dim(x)<-c(2,2); x[NA] }");
         assertEval(Output.ContainsError, "{ x<-c(1,2,3,4); dim(x)<-c(2,2); x[[NA]] }");

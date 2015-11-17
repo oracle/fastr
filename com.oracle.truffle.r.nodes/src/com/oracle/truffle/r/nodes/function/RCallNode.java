@@ -501,7 +501,16 @@ public final class RCallNode extends RNode implements RSyntaxNode {
             }
         } else {
             Arguments<RSyntaxNode> args = getArguments();
-            return RASTUtils.createLanguageElement(args, index - 1);
+            RSyntaxNode argNode = args.getArguments()[index - 1];
+            /*
+             * If this argument is of form x=y, must pass both back. We use an RArgsValuesAndNames
+             * for convenience, which is interpreted by our caller.
+             */
+            if (argNode instanceof ReadVariableNode && signature.getName(index - 1) != null) {
+                return new RArgsValuesAndNames(new Object[]{RASTUtils.createRSymbol(argNode.asRNode())}, ArgumentsSignature.get(signature.getName(index - 1)));
+            } else {
+                return RASTUtils.createLanguageElement(args, index - 1);
+            }
         }
     }
 
