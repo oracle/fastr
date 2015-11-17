@@ -101,10 +101,11 @@ suite = {
 
     "JNR_FFI" : {
       "urls" : [
-        "https://lafo.ssw.uni-linz.ac.at/pub/graal-external-deps/jnr-ffi-2.0.4.jar",
-        "https://search.maven.org/remotecontent?filepath=com/github/jnr/jnr-ffi/2.0.4/jnr-ffi-2.0.4.jar",
+        "https://search.maven.org/remotecontent?filepath=com/github/jnr/jnr-ffi/2.0.7/jnr-ffi-2.0.7.jar",
       ],
-      "sha1" : "c68937ca8fc7f4a06a782d3198c8555084bcec88",
+      "sourcePath" : "https://search.maven.org/remotecontent?filepath=com/github/jnr/jnr-ffi/2.0.7/jnr-ffi-2.0.7-sources.jar",
+      "sha1" : "f0968c5bb5a283ebda2df3604c2c1129d45196e3",
+      "sourceSha1" : "164d820d7c38c14cd3675bfbf3eb6aeeedc9b0f4",
     },
 
     "JFFI" : {
