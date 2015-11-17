@@ -13,6 +13,8 @@
 ^com.oracle.truffle.r.test/rpackages/testrlibs_user
 ^com.oracle.truffle.r.test.native/urand/lib/liburand.so
 ^com.oracle.truffle.r.native/gnur/R-*
+com.oracle.truffle.r.native/fficall/src/jni/arithmetic.c
+com.oracle.truffle.r.native/fficall/src/jni/util.c
 ^DEPARSE_ERROR
 ^Rpkgsource/*
 ^install.cran.logs/

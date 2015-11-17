@@ -24,7 +24,8 @@
 .PHONY: all clean
 
 all:
-	$(MAKE) -C jni
+	$(MAKE) -C src/jni links
+	$(MAKE) -C src/jni all
 
 clean:
-	$(MAKE) -C jni clean
+	$(MAKE) -C src/jni clean
