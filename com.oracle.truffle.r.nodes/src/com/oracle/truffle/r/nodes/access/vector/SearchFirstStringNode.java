@@ -26,6 +26,7 @@ import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.utilities.*;
+import com.oracle.truffle.r.nodes.access.vector.SearchFirstStringNode.CompareStringNode.StringEqualsNode;
 import com.oracle.truffle.r.nodes.profile.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -45,9 +46,9 @@ final class SearchFirstStringNode extends Node {
     private final ValueProfile targetClassProfile = ValueProfile.createClassProfile();
     private final ValueProfile elementsClassProfile = ValueProfile.createClassProfile();
 
-    @Child private CompareStringNode stringEquals = CompareStringNode.createEquals();
+    @Child private StringEqualsNode stringEquals = CompareStringNode.createEquals();
     @Child private CompareStringNode stringStartsWith;
-    @Child private CompareStringNode equalsDuplicate;
+    @Child private StringEqualsNode equalsDuplicate;
 
     private final NACheck elementsNACheck = NACheck.create();
     private final NACheck targetNACheck = NACheck.create();
@@ -121,20 +122,21 @@ final class SearchFirstStringNode extends Node {
         for (int i = 0; i < cachedLength; i++) {
             int cachedIndex = cached[i];
             String cachedElement = elements.getDataAt(i);
+            int cachedElementHash = cachedElement.hashCode();
 
             assert !elementsNACheck.check(cachedElement) && cachedElement.length() > 0;
 
             int cachedTranslatedIndex = cachedIndex - 1;
             for (int j = 0; j < cachedTranslatedIndex; j++) {
                 String targetString = target.getDataAt(j);
-                if (!targetNACheck.check(targetString) && stringEquals.executeCompare(targetString, cachedElement)) {
+                if (!targetNACheck.check(targetString) && stringEquals.executeCompare(cachedElement, cachedElementHash, targetString)) {
                     seenInvalid.enter();
                     return false;
                 }
             }
             if (cachedTranslatedIndex < targetLength) {
                 String targetString = target.getDataAt(cachedTranslatedIndex);
-                if (!targetNACheck.check(targetString) && !stringEquals.executeCompare(targetString, cachedElement)) {
+                if (!targetNACheck.check(targetString) && !stringEquals.executeCompare(cachedElement, cachedElementHash, targetString)) {
                     seenInvalid.enter();
                     return false;
                 }
@@ -207,10 +209,11 @@ final class SearchFirstStringNode extends Node {
 
     private int findIndex(RAbstractStringVector target, int targetLength, String element) {
         int nonExactIndex = -1;
+        int elementHash = element.hashCode();
         for (int j = 0; j < targetLength; j++) {
             String targetValue = target.getDataAt(j);
             if (!targetNACheck.check(targetValue)) {
-                if (stringEquals.executeCompare(targetValue, element)) {
+                if (stringEquals.executeCompare(element, elementHash, targetValue)) {
                     return j;
                 }
                 if (!exactMatch) {
@@ -233,9 +236,10 @@ final class SearchFirstStringNode extends Node {
             equalsDuplicate = insert(CompareStringNode.createEquals());
         }
 
+        int elementHash = element.hashCode();
         for (int j = 0; j < currentIndex; j++) {
             String otherElement = elements.getDataAt(j);
-            if (!targetNACheck.check(otherElement) && equalsDuplicate.executeCompare(element, otherElement)) {
+            if (!targetNACheck.check(otherElement) && equalsDuplicate.executeCompare(element, elementHash, otherElement)) {
                 everFoundDuplicate.enter();
                 return j;
             }
@@ -245,19 +249,20 @@ final class SearchFirstStringNode extends Node {
 
     abstract static class CompareStringNode extends Node {
 
-        public abstract boolean executeCompare(String target, String element);
+        public abstract boolean executeCompare(String a, String b);
 
-        public static CompareStringNode createEquals() {
+        public static StringEqualsNode createEquals() {
             return new StringEqualsNode();
         }
 
-        public static CompareStringNode createStartsWith() {
+        public static StringStartsWithNode createStartsWith() {
             return new StringStartsWithNode();
         }
 
-        private static class StringEqualsNode extends CompareStringNode {
+        public static class StringEqualsNode extends CompareStringNode {
 
             private final ConditionProfile identityEquals = ConditionProfile.createBinaryProfile();
+            private final ConditionProfile hashEquals = ConditionProfile.createBinaryProfile();
 
             @Override
             public final boolean executeCompare(String a, String b) {
@@ -266,6 +271,22 @@ final class SearchFirstStringNode extends Node {
                 if (identityEquals.profile(a == b)) {
                     return true;
                 } else {
+                    if (hashEquals.profile(a.hashCode() != b.hashCode())) {
+                        return false;
+                    }
+                    return a.equals(b);
+                }
+            }
+
+            public final boolean executeCompare(String a, int aHash, String b) {
+                assert a != RRuntime.STRING_NA;
+                assert b != RRuntime.STRING_NA;
+                if (identityEquals.profile(a == b)) {
+                    return true;
+                } else {
+                    if (hashEquals.profile(aHash != b.hashCode())) {
+                        return false;
+                    }
                     return a.equals(b);
                 }
             }

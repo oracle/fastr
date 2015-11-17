@@ -32,6 +32,7 @@ import org.junit.experimental.theories.*;
 import org.junit.runner.*;
 
 import com.oracle.truffle.r.nodes.access.vector.SearchFirstStringNode.CompareStringNode;
+import com.oracle.truffle.r.nodes.access.vector.SearchFirstStringNode.CompareStringNode.StringEqualsNode;
 import com.oracle.truffle.r.nodes.test.*;
 import com.oracle.truffle.r.nodes.test.TestUtilities.NodeHandle;
 import com.oracle.truffle.r.runtime.*;
@@ -67,6 +68,7 @@ public class StringCompareNodeTest extends TestBase {
         assumeFalse(a == RRuntime.STRING_NA);
         assumeFalse(b == RRuntime.STRING_NA);
         assertThat(executeCompare(true, a, b), is(a.equals(b)));
+        assertThat(executeHashCompare(a, b), is(a.equals(b)));
     }
 
     @Theory
@@ -82,4 +84,9 @@ public class StringCompareNodeTest extends TestBase {
         return (Boolean) handle.call(a, b);
     }
 
+    private static boolean executeHashCompare(String a, String b) {
+        NodeHandle<StringEqualsNode> handle = createHandle(CompareStringNode.createEquals(), //
+                        (node, args) -> node.executeCompare((String) args[0], ((String) args[0]).hashCode(), (String) args[1]));
+        return (Boolean) handle.call(a, b);
+    }
 }
