@@ -105,6 +105,8 @@ int R_finite(double x)
 #undef _
 #include <nmath.h>
 
+# define R_rint rint
+
 double fround(double x, double digits) {
 #define MAX_DIGITS DBL_MAX_10_EXP
     /* = 308 (IEEE); was till R 0.99: (DBL_DIG - 1) */
@@ -140,6 +142,11 @@ double fround(double x, double digits) {
 
 double Rexp10(double x) {
 	return pow(10.0, x);
+}
+
+static R_INLINE double R_POW(double x, double y) /* handle x ^ 2 inline */
+{
+    return y == 2.0 ? x * x : R_pow(x, y);
 }
 
 double R_pow_di(double x, int n)
