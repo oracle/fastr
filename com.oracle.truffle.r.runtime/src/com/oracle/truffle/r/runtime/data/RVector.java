@@ -376,7 +376,7 @@ public abstract class RVector extends RAttributeStorage implements RShareable, R
                         }
                     } else {
                         RStringVector dimVector = (RStringVector) dimObject;
-                        if (dimVector.getLength() == 0) {
+                        if (dimVector == null || dimVector.getLength() == 0) {
                             newDimNames.updateDataAt(i, RNull.instance, null);
                         } else if (dimVector.getLength() != dimensions[i]) {
                             throw RError.error(invokingNode, RError.Message.DIMNAMES_DONT_MATCH_EXTENT, i + 1);
