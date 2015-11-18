@@ -140,7 +140,7 @@ public abstract class FastRDumpTrees extends RExternalBuiltinNode.Arg3 {
             StringBuilder label = new StringBuilder("label = <<TABLE>");
             label.append(ROW_START).append("<B>").append(nodeName(node)).append("</B>").append(ROW_END);
 
-            NodeFieldAccessor[] fields = NodeClass.Lookup.get(node.getClass()).getFields();
+            NodeFieldAccessor[] fields = NodeClass.get(node.getClass()).getFields();
 
             // DATA fields are omitted when not told to be verbose
             if (verbose) {
@@ -237,7 +237,7 @@ public abstract class FastRDumpTrees extends RExternalBuiltinNode.Arg3 {
         }
 
         protected void printNodeChildren(Node node, int nodeId) {
-            NodeFieldAccessor[] fields = NodeClass.Lookup.get(node.getClass()).getFields();
+            NodeFieldAccessor[] fields = NodeClass.get(node.getClass()).getFields();
             int localPortId = 0;
             for (NodeFieldAccessor field : fields) {
                 if (field.getKind() != NodeFieldKind.CHILD && field.getKind() != NodeFieldKind.CHILDREN) {
