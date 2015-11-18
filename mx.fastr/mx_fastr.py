@@ -181,10 +181,10 @@ def run_r(args, command, parser=None, extraVmArgs=None, jdk=None, nonZeroIsFatal
     ns, rargs = parser.parse_known_args(args)
 
     if ns.extraVmArgsList:
+        j_extraVmArgsList = mx.split_j_args(ns.extraVmArgsList)
         if extraVmArgs is None:
             extraVmArgs = []
-        for e in ns.extraVmArgsList:
-            extraVmArgs += [x for x in shlex.split(e.lstrip('@'))]
+        extraVmArgs += j_extraVmArgsList
 
     if not jdk and ns.jdk:
         jdk = mx.get_jdk(tag=ns.jdk)
@@ -522,7 +522,7 @@ def load_optional_suite(name, rev):
     return opt_suite
 
 _r_apptests_rev = '3193941e22ac8fd798ad5ae598865a6a8ba2a147'
-_r_benchmarks_rev = '54ff705d9ede0ebd7ddece1e6d1154b372dad80e'
+_r_benchmarks_rev = '17a5870f87d3b56c769990721073b1f280b41729'
 
 def mx_post_parse_cmd_line(opts):
     # load optional suites, r_apptests first so r_benchmarks can find it
