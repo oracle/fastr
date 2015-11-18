@@ -105,6 +105,11 @@ public abstract class RLengthNode extends RNode {
         return lengthProfile.profile(env.ls(true, null, false).getLength());
     }
 
+    @Specialization
+    protected int getLength(@SuppressWarnings("unused") RFunction func) {
+        return 1;
+    }
+
     protected static Node createGetSize() {
         return Message.GET_SIZE.createNode();
     }

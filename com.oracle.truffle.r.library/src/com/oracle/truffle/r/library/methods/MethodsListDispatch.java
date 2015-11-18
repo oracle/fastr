@@ -38,7 +38,13 @@ public class MethodsListDispatch {
 
         @TruffleBoundary
         @Specialization
-        protected String callMethodsPackageMetaName(String prefixString, String nameString, String pkgString) {
+        protected String callMethodsPackageMetaName(RAbstractStringVector prefixStringVector, RAbstractStringVector nameStringVector, RAbstractStringVector pkgStringVector) {
+            // TODO: proper error messages
+            assert prefixStringVector.getLength() == 1 && nameStringVector.getLength() == 1 && pkgStringVector.getLength() == 1;
+            String prefixString = prefixStringVector.getDataAt(0);
+            String nameString = nameStringVector.getDataAt(0);
+            String pkgString = pkgStringVector.getDataAt(0);
+
             if (pkgString.length() == 0) {
                 return ".__" + prefixString + "__" + nameString;
             } else {
