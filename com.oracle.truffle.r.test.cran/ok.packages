@@ -1,9 +1,11 @@
+A3
 ABCp2
 ACCLMA
 ACD
 ADDT
 ADGofTest
 ALDqr
+ALS
 ALSCPC
 AMAP.Seq
 AMGET
@@ -80,7 +82,9 @@ CFC
 CGP
 CHNOSZ
 CHsharp
+CINID
 CLAG
+CMC
 CMPControl
 CMplot
 CNVassocData
@@ -101,6 +105,7 @@ CateSelection
 CensRegMod
 CfEstimateQuantiles
 ChargeTransport
+CheckDigit
 ChemometricsWithR
 ChemometricsWithRData
 ChoiceModelR
@@ -244,6 +249,7 @@ GenBinomApps
 GenKern
 GenSA
 GenWin
+GeneF
 GeneralizedHyperbolic
 GeneticSubsetter
 GibbsACOV
@@ -322,6 +328,7 @@ LDAvis
 LDPD
 LDRTools
 LDcorSV
+LDtests
 LEAPFrOG
 LGS
 LICurvature
@@ -339,6 +346,7 @@ Lahman
 LeafAngle
 LeafArea
 LearnBayes
+LiblineaR
 LinCal
 Lmoments
 Lock5Data
@@ -363,6 +371,7 @@ MExPosition
 MGL
 MHadaptive
 MILC
+MImix
 MKLE
 MLCM
 MLDS
@@ -375,6 +384,7 @@ MOrder
 MPDiR
 MPV
 MSG
+MVA
 MVR
 MVar.pt
 ManyTests
@@ -405,6 +415,7 @@ NBDdirichlet
 NHANES
 NISTnls
 NISTunits
+NLRoot
 NMFN
 NMOF
 NORMT3
@@ -436,6 +447,7 @@ OptionPricing
 OrdMonReg
 PBSddesolve
 PCAmixdata
+PCDSpline
 PCIT
 PDSCE
 PEMM
@@ -532,6 +544,7 @@ RSADBE
 RSEIS
 RSGHB
 RSVGTipsDevice
+RSclient
 RSvgDevice
 RTConnect
 RTDE
@@ -582,6 +595,7 @@ SAFD
 SAM
 SAPP
 SASPECT
+SAScii
 SASmixed
 SCEPtER
 SCEPtERbinary
@@ -640,6 +654,7 @@ SenSrivastava
 SensitivityCaseControl
 Sequential
 SightabilityModel
+SimCorMultRes
 SimilarityMeasures
 SimultAnR
 SkewHyperbolic
@@ -663,6 +678,7 @@ StandardizeText
 Stat2Data
 StressStrength
 SubCultCon
+Sunder
 SunterSampling
 SuperLearner
 SuppDists
@@ -717,6 +733,7 @@ VecStatGraphs2D
 VennDiagram
 VoxR
 W2CWM2C
+WARN
 WMDB
 WWGbook
 WaveletComp
@@ -792,6 +809,7 @@ base64
 base64enc
 basicspace
 batade
+batch
 batchmeans
 bayesclust
 bbefkr
@@ -815,6 +833,7 @@ bimetallic
 binGroup
 binom
 binomSamSize
+binomTools
 binomialcftp
 binomlogit
 binr
@@ -854,6 +873,7 @@ brew
 brglm
 brnn
 bspmma
+bursts
 bvenn
 bvls
 cOde
@@ -872,6 +892,7 @@ catdata
 catspec
 causalsens
 ccChooser
+ccda
 ccgarch
 cclust
 cdb
@@ -882,6 +903,7 @@ cents
 cernn
 cfa
 cggd
+cgh
 cghFLasso
 checkmate
 checkpoint
@@ -934,6 +956,7 @@ coreTDT
 correlate
 corrplot
 cosmoFns
+costat
 countrycode
 covRobust
 covreg
@@ -965,12 +988,14 @@ dashboard
 dataQualityR
 dataframes2xls
 date
+dawai
 dbEmpLikeGOF
 dbEmpLikeNorm
 dblcens
 dbstats
 ddst
 deal
+deamer
 decode
 decompr
 decon
@@ -1014,6 +1039,7 @@ disclap
 discretization
 discrimARTs
 diskmemoiser
+disp2D
 displayHTS
 dispmod
 disposables
@@ -1043,6 +1069,7 @@ dynRB
 dynamicTreeCut
 dynia
 earth
+easynls
 ebGenotyping
 ebSNP
 ebal
@@ -1082,6 +1109,7 @@ enviPat
 epade
 epi2loc
 epibasix
+episensr
 eqtl
 equate
 equateIRT
@@ -1104,18 +1132,21 @@ experiment
 expert
 exptest
 extWeibQuant
+extfunnel
 extlasso
 extraBinomial
 extrafont
 extrafontdb
 eyetracking
 ezglm
+fANCOVA
 fail
 faisalconjoint
 falcon
 falsy
 fame
 fanplot
+faraway
 farsi
 fastHICA
 fastICA
@@ -1183,6 +1214,7 @@ gambin
 gamlss.dist
 gaoptim
 gap
+gaussDiff
 gaussquad
 gazepath
 gb
@@ -1201,8 +1233,8 @@ gendata
 geneListPie
 genepi
 geomapdata
-geometry
 geoscale
+geozoo
 getopt
 gglasso
 gibbs.met
@@ -1232,6 +1264,7 @@ grofit
 groupRemMap
 grouped
 growthmodels
+grppenalty
 gsalib
 gsmoothr
 gss
@@ -1240,6 +1273,7 @@ gsw
 gtable
 gtcorr
 gtools
+gumbel
 gvc
 gvlma
 haarfisz
@@ -1254,12 +1288,14 @@ heatex
 heatmap.plus
 heatmapFit
 heavy
+heritability
 hexView
 hflights
 hiddenf
 hier.part
 hierDiversity
 hierNet
+hiertest
 highr
 hillmakeR
 hint
@@ -1287,6 +1323,7 @@ hwriter
 hwriterPlus
 hwwntest
 hybridHclust
+hydroApps
 hydrostats
 hypothesestest
 iC10TrainingData
@@ -1299,6 +1336,7 @@ ica
 icapca
 idbg
 identity
+idr
 ieeeround
 ifctools
 ifs
@@ -1336,6 +1374,7 @@ jmetrik
 joint.Cox
 jointPm
 jpeg
+jtrans
 kSamples
 kappaSize
 kedd
@@ -1345,6 +1384,7 @@ kinfit
 klaR
 kmodR
 knnGarden
+knnIndep
 knncat
 kofnGA
 kohonen
@@ -1365,11 +1405,14 @@ latdiag
 lazy
 lazyData
 lazyeval
+lba
 lbfgsb3
 lcda
+lda
 leaderCluster
 lestat
 lgtdl
+lhs
 limitplot
 linLIR
 linbin
@@ -1385,6 +1428,7 @@ lm.beta
 lmeVarComp
 lmec
 lmf
+lmm
 lmodel2
 lmom
 lmomco
@@ -1419,7 +1463,6 @@ mFilter
 maRketSim
 mada
 madsim
-magic
 magrittr
 mail
 makeProject
@@ -1435,6 +1478,7 @@ marqLevAlg
 mathgraph
 matpow
 matrixcalc
+mblm
 mc2d
 mcbiopi
 mcc
@@ -1485,6 +1529,7 @@ mlbench
 mlegp
 mlica2
 mlmmm
+mmap
 mmcm
 mmds
 mmeln
@@ -1515,6 +1560,7 @@ multiband
 multinbmod
 multipol
 multirich
+multisensi
 multispatialCCM
 multitable
 multitaper
@@ -1546,6 +1592,7 @@ ncg
 neariso
 needy
 negenes
+nephro
 netmeta
 networkDynamicData
 neuralnet
@@ -1577,6 +1624,7 @@ nose
 novelist
 noweb
 nparLD
+npcp
 nplplot
 npmlreg
 npmv
@@ -1603,6 +1651,7 @@ onls
 opefimor
 openssl
 operator.tools
+ops
 optAUC
 optR
 optextras
@@ -1615,6 +1664,7 @@ orthopolynom
 osDesign
 outliers
 oz
+p2distance
 pBrackets
 pGLS
 pRSR
@@ -1624,6 +1674,7 @@ packClassic
 pairedCI
 pairheatmap
 pairwise
+paleoTS
 palr
 pan
 parallelMCMCcombine
@@ -1702,6 +1753,7 @@ potts
 powell
 powerAnalysis
 powerGWASinteraction
+powerMediation
 ppcor
 ppls
 pps
@@ -1740,8 +1792,8 @@ qqtest
 qrnn
 qte
 qtl
+qtlDesign
 qtlbook
-quadprog
 qualCI
 qualV
 quantchem
@@ -1760,7 +1812,6 @@ randomForestSRC
 randomizeBE
 randomizr
 randtests
-randtoolbox
 rateratio.test
 raters
 rationalfun
@@ -1787,6 +1838,7 @@ rela
 relaxo
 reliaR
 remMap
+repfdr
 replicationInterval
 repolr
 reports
@@ -1823,7 +1875,6 @@ robcor
 robeth
 rowr
 royston
-rpart
 rpart.plot
 rpartScore
 rplotengine
@@ -1889,7 +1940,9 @@ seem
 segmented
 seismic
 selectiongain
+sendmailR
 sensitivitymv
+sensitivitymw
 separationplot
 seqPERM
 seqRFLP
@@ -1921,7 +1974,6 @@ sitools
 skda
 skewt
 sla
-slam
 smac
 smcUtils
 smco
@@ -1951,6 +2003,7 @@ sparcl
 spark
 sparktex
 sparseSEM
+spartan
 spatial
 spatialCovariance
 spatialkernel
@@ -1967,6 +2020,7 @@ spls
 sporm
 sprex
 sprsmdl
+spt
 ssanv
 ssfit
 ssize.fdr
@@ -2022,6 +2076,7 @@ tableplot
 tabuSearch
 tau
 tbdiag
+tdthap
 teigen
 tempdisagg
 tensor
@@ -2035,6 +2090,7 @@ tframe
 tgcd
 thermocouple
 threejs
+thsls
 tictoc
 tiff
 tightClust
@@ -2087,6 +2143,7 @@ txtplot
 ucminf
 ump
 unbalhaar
+uniftest
 uniqtag
 utility
 uuid
@@ -2117,6 +2174,7 @@ whisker
 widals
 wikibooks
 witness
+wombsoft
 wpp2008
 wpp2010
 wpp2012
