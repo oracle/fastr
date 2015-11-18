@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import java.util.*;
 
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.utilities.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -36,8 +37,13 @@ public abstract class Drop extends RBuiltinNode {
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
     @Specialization
-    protected RAbstractVector doDrop(RAbstractVector x) {
+    protected RAbstractVector doDrop(RAbstractVector x, //
+                    @Cached("createBinaryProfile()") ConditionProfile nullDimensions) {
+        controlVisibility();
         int[] dims = x.getDimensions();
+        if (nullDimensions.profile(dims == null)) {
+            return x;
+        }
         int[] newDims = new int[dims.length];
         int count = 0;
         for (int i = 0; i < dims.length; i++) {
