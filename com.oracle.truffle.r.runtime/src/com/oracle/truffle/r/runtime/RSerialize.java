@@ -1302,7 +1302,15 @@ public class RSerialize {
             }
         }
 
-        private void writeItem(Object obj) throws IOException {
+        private void writeItem(Object initialObj) throws IOException {
+            Object obj;
+            if (initialObj instanceof RPromise) {
+                System.out.println("FastR warning: forcing promise during serialization");
+                obj = RContext.getRRuntimeASTAccess().forcePromise(initialObj);
+            } else {
+                obj = initialObj;
+            }
+
             SEXPTYPE specialType;
             Object psn;
             if ((psn = getPersistentName(obj)) != RNull.instance) {

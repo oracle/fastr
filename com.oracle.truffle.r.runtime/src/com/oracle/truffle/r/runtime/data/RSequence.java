@@ -191,7 +191,7 @@ public abstract class RSequence implements RAbstractVector {
 
     @Override
     public int getGPBits() {
-        throw RInternalError.shouldNotReachHere();
+        return 0;
     }
 
     @Override

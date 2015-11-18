@@ -107,7 +107,7 @@ public class StdConnections {
     /**
      * Subclasses are special in that they do not use delegation as the connection is always open.
      */
-    private abstract static class StdConnection extends BaseRConnection {
+    public abstract static class StdConnection extends BaseRConnection {
         StdConnection(AbstractOpenMode openMode, int index) throws IOException {
             super(openMode, index);
             this.opened = true;
