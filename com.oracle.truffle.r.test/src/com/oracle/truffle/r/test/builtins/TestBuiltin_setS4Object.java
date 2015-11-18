@@ -67,7 +67,7 @@ public class TestBuiltin_setS4Object extends TestBase {
 
     @Test
     public void testsetS4Object9() {
-        assertEval(Ignored.Unknown, "argv <- list(numeric(0), TRUE, 0L); .Internal(setS4Object(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval("argv <- list(numeric(0), TRUE, 0L); .Internal(setS4Object(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test

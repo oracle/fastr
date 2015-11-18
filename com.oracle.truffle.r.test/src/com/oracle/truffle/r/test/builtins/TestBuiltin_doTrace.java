@@ -19,12 +19,11 @@ public class TestBuiltin_doTrace extends TestBase {
 
     @Test
     public void testdoTrace1() {
-        assertEval(Ignored.Unknown, "argv <- list(c(1, 1, 2));.doTrace(argv[[1]]);");
+        assertEval("argv <- list(c(1, 1, 2));.doTrace(argv[[1]]);");
     }
 
     @Test
     public void testdoTrace3() {
-        assertEval(Ignored.Unknown, "argv <- structure(list(expr = expression(quote(x <- c(1, x)))),     .Names = 'expr');do.call('.doTrace', argv)");
+        assertEval("argv <- structure(list(expr = expression(quote(x <- c(1, x)))),     .Names = 'expr');do.call('.doTrace', argv)");
     }
-
 }

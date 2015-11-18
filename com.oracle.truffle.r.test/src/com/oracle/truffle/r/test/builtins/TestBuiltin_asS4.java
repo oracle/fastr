@@ -20,7 +20,6 @@ public class TestBuiltin_asS4 extends TestBase {
 
     @Test
     public void testasS41() {
-        assertEval(Ignored.Unknown, "argv <- structure(list(object = structure(NA, .Dim = c(1L, 1L))),     .Names = 'object');do.call('asS4', argv)");
+        assertEval("argv <- structure(list(object = structure(NA, .Dim = c(1L, 1L))),     .Names = 'object');do.call('asS4', argv)");
     }
-
 }

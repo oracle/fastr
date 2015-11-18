@@ -39,7 +39,7 @@ public class TestBuiltin_min extends TestBase {
 
     @Test
     public void testmin5() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(list(c(1L, 2L, 4L), 1:3, c(2L, 1L)), class = c('package_version', 'numeric_version')), na.rm = FALSE);min(argv[[1]],argv[[2]]);");
+        assertEval("argv <- list(structure(list(c(1L, 2L, 4L), 1:3, c(2L, 1L)), class = c('package_version', 'numeric_version')), na.rm = FALSE);min(argv[[1]],argv[[2]]);");
     }
 
     @Test

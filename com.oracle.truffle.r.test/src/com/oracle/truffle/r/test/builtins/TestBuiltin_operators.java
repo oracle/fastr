@@ -13,6 +13,7 @@ package com.oracle.truffle.r.test.builtins;
 import org.junit.*;
 
 import com.oracle.truffle.r.test.*;
+import com.oracle.truffle.r.test.TestBase.Output;
 
 // Checkstyle: stop line length check
 public class TestBuiltin_operators extends TestBase {
@@ -41,7 +42,7 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators5() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(integer(0), .Label = character(0), class = 'factor'));`*`(argv[[1]]);");
+        assertEval(Output.ContainsWarning, "argv <- list(structure(integer(0), .Label = character(0), class = 'factor'));`*`(argv[[1]]);");
     }
 
     @Test
@@ -202,7 +203,7 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators36() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(integer(0), .Label = character(0), class = 'factor'));`+`(argv[[1]]);");
+        assertEval(Output.ContainsWarning, "argv <- list(structure(integer(0), .Label = character(0), class = 'factor'));`+`(argv[[1]]);");
     }
 
     @Test
@@ -315,7 +316,7 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators58() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(integer(0), .Label = character(0), class = 'factor'), 1L);`-`(argv[[1]],argv[[2]]);");
+        assertEval(Output.ContainsWarning, "argv <- list(structure(integer(0), .Label = character(0), class = 'factor'), 1L);`-`(argv[[1]],argv[[2]]);");
     }
 
     @Test
@@ -345,7 +346,7 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators64() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(integer(0), .Label = character(0), class = 'factor'));`-`(argv[[1]]);");
+        assertEval(Output.ContainsWarning, "argv <- list(structure(integer(0), .Label = character(0), class = 'factor'));`-`(argv[[1]]);");
     }
 
     @Test
@@ -443,7 +444,7 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators84() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(integer(0), .Label = character(0), class = 'factor'));`<`(argv[[1]]);");
+        assertEval(Output.ContainsWarning, "argv <- list(structure(integer(0), .Label = character(0), class = 'factor'));`<`(argv[[1]]);");
     }
 
     @Test
@@ -453,7 +454,7 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators86() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(integer(0), .Label = character(0), class = 'factor'), 1L);`<`(argv[[1]],argv[[2]]);");
+        assertEval(Output.ContainsWarning, "argv <- list(structure(integer(0), .Label = character(0), class = 'factor'), 1L);`<`(argv[[1]],argv[[2]]);");
     }
 
     @Test
@@ -533,7 +534,7 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators102() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(integer(0), .Label = character(0), class = 'factor'), 0L);`<=`(argv[[1]],argv[[2]]);");
+        assertEval(Output.ContainsWarning, "argv <- list(structure(integer(0), .Label = character(0), class = 'factor'), 0L);`<=`(argv[[1]],argv[[2]]);");
     }
 
     @Test
@@ -548,7 +549,7 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators105() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(integer(0), .Label = character(0), class = 'factor'));`<=`(argv[[1]]);");
+        assertEval(Output.ContainsWarning, "argv <- list(structure(integer(0), .Label = character(0), class = 'factor'));`<=`(argv[[1]]);");
     }
 
     @Test
@@ -585,7 +586,7 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators112() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(integer(0), .Label = character(0), class = 'factor'));`!`(argv[[1]]);");
+        assertEval(Output.ContainsWarning, "argv <- list(structure(integer(0), .Label = character(0), class = 'factor'));`!`(argv[[1]]);");
     }
 
     @Test
@@ -748,7 +749,7 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators144() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(integer(0), .Label = character(0), class = 'factor'));`>`(argv[[1]]);");
+        assertEval(Output.ContainsWarning, "argv <- list(structure(integer(0), .Label = character(0), class = 'factor'));`>`(argv[[1]]);");
     }
 
     @Test
@@ -773,7 +774,7 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators149() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(integer(0), .Label = character(0), class = 'factor'));`>=`(argv[[1]]);");
+        assertEval(Output.ContainsWarning, "argv <- list(structure(integer(0), .Label = character(0), class = 'factor'));`>=`(argv[[1]]);");
     }
 
     @Test
@@ -870,7 +871,7 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators168() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(integer(0), .Label = character(0), class = 'factor'));`%%`(argv[[1]]);");
+        assertEval(Output.ContainsWarning, "argv <- list(structure(integer(0), .Label = character(0), class = 'factor'));`%%`(argv[[1]]);");
     }
 
     @Test
@@ -1541,7 +1542,7 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators303() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(integer(0), .Label = character(0), class = 'factor'));`^`(argv[[1]]);");
+        assertEval(Output.ContainsWarning, "argv <- list(structure(integer(0), .Label = character(0), class = 'factor'));`^`(argv[[1]]);");
     }
 
     @Test
@@ -1715,7 +1716,7 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators336() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(integer(0), .Label = character(0), class = 'factor'));`&`(argv[[1]]);");
+        assertEval(Output.ContainsWarning, "argv <- list(structure(integer(0), .Label = character(0), class = 'factor'));`&`(argv[[1]]);");
     }
 
     @Test

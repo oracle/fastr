@@ -2307,7 +2307,7 @@ public class TestSimpleVectors extends TestBase {
     public void testQuotes() {
         assertEval("{ e <- quote(x(y=z)); e[[2]] }");
         assertEval("{ e <- quote(x(y=z)); e[2] }");
-        assertEval(Ignored.Unimplemented, "{ e <- quote(x(y=z)); names(e[2]) }");
+        assertEval("{ e <- quote(x(y=z)); names(e[2]) }");
         assertEval("{ e <- quote(x(y=z)); typeof(e[2]) }");
         assertEval("{ e <- quote(x(y=z)); typeof(e[[2]]) }");
     }

@@ -19,8 +19,7 @@ public class TestBuiltin_islist extends TestBase {
 
     @Test
     public void testislist1() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(function (e1, e2) standardGeneric('/', .Primitive('/')), generic = structure('/', package = 'base'), package = 'base', group = list('Arith'), valueClass = character(0), signature = c('e1', 'e2'), default = .Primitive('/'), skeleton = quote(.Primitive('/')(e1, e2)), class = structure('standardGeneric', package = 'methods')));is.list(argv[[1]]);");
+        assertEval("argv <- list(structure(function (e1, e2) standardGeneric('/', .Primitive('/')), generic = structure('/', package = 'base'), package = 'base', group = list('Arith'), valueClass = character(0), signature = c('e1', 'e2'), default = .Primitive('/'), skeleton = quote(.Primitive('/')(e1, e2)), class = structure('standardGeneric', package = 'methods')));is.list(argv[[1]]);");
     }
 
     @Test

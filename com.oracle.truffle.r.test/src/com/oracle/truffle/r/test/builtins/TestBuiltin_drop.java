@@ -52,7 +52,7 @@ public class TestBuiltin_drop extends TestBase {
 
     @Test
     public void testdrop7() {
-        assertEval(Ignored.Unknown, "argv <- list(c(10.8924449093617, 19.1956646477802, 5.83862354833301, 8.94491073999977, 10.0151293814506)); .Internal(drop(argv[[1]]))");
+        assertEval("argv <- list(c(10.8924449093617, 19.1956646477802, 5.83862354833301, 8.94491073999977, 10.0151293814506)); .Internal(drop(argv[[1]]))");
     }
 
     @Test
@@ -63,7 +63,7 @@ public class TestBuiltin_drop extends TestBase {
 
     @Test
     public void testdrop9() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(FALSE, .Tsp = c(1, 1, 1), class = 'ts')); .Internal(drop(argv[[1]]))");
+        assertEval("argv <- list(structure(FALSE, .Tsp = c(1, 1, 1), class = 'ts')); .Internal(drop(argv[[1]]))");
     }
 
     @Test

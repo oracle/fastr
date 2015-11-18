@@ -45,8 +45,7 @@ public class TestBuiltin_identical extends TestBase {
 
     @Test
     public void testidentical6() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(list(), .Names = character(0), row.names = integer(0), class = 'data.frame'), structure(list(), .Names = character(0), row.names = integer(0), class = 'data.frame'), TRUE, TRUE, TRUE, TRUE, FALSE); .Internal(identical(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+        assertEval("argv <- list(structure(list(), .Names = character(0), row.names = integer(0), class = 'data.frame'), structure(list(), .Names = character(0), row.names = integer(0), class = 'data.frame'), TRUE, TRUE, TRUE, TRUE, FALSE); .Internal(identical(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
@@ -93,8 +92,7 @@ public class TestBuiltin_identical extends TestBase {
 
     @Test
     public void testidentical15() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(list(x = 1L), .Names = 'x', row.names = c(NA, -1L), class = 'data.frame'), structure(list(x = 1L), .Names = 'x', row.names = c(NA, -1L), class = 'data.frame'), TRUE, TRUE, TRUE, TRUE, FALSE); .Internal(identical(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+        assertEval("argv <- list(structure(list(x = 1L), .Names = 'x', row.names = c(NA, -1L), class = 'data.frame'), structure(list(x = 1L), .Names = 'x', row.names = c(NA, -1L), class = 'data.frame'), TRUE, TRUE, TRUE, TRUE, FALSE); .Internal(identical(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
@@ -182,8 +180,7 @@ public class TestBuiltin_identical extends TestBase {
 
     @Test
     public void testidentical32() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(function (x) standardGeneric('cosh', .Primitive('cosh')), generic = structure('cosh', package = 'base'), package = 'base', group = list('Math'), valueClass = character(0), signature = 'x', default = .Primitive('cosh'), skeleton = quote(.Primitive('cosh')(x)), class = structure('standardGeneric', package = 'methods')), FALSE, TRUE, TRUE, TRUE, TRUE, FALSE); .Internal(identical(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+        assertEval("argv <- list(structure(function (x) standardGeneric('cosh', .Primitive('cosh')), generic = structure('cosh', package = 'base'), package = 'base', group = list('Math'), valueClass = character(0), signature = 'x', default = .Primitive('cosh'), skeleton = quote(.Primitive('cosh')(x)), class = structure('standardGeneric', package = 'methods')), FALSE, TRUE, TRUE, TRUE, TRUE, FALSE); .Internal(identical(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test
@@ -198,9 +195,8 @@ public class TestBuiltin_identical extends TestBase {
 
     @Test
     public void testidentical36() {
-        assertEval(Ignored.Unknown,
-                        "argv <- structure(list(x = structure(list(X1.4 = 1:4), .Names = 'X1.4',     row.names = c(NA, -4L), class = 'data.frame'), y = structure(list(X1.4 = 1:4),     .Names = 'X1.4', row.names = c('1', '2', '3', '4'), class = 'data.frame')),     .Names = c('x', 'y'));"
-                                        + "do.call('identical', argv)");
+        assertEval("argv <- structure(list(x = structure(list(X1.4 = 1:4), .Names = 'X1.4',     row.names = c(NA, -4L), class = 'data.frame'), y = structure(list(X1.4 = 1:4),     .Names = 'X1.4', row.names = c('1', '2', '3', '4'), class = 'data.frame')),     .Names = c('x', 'y'));"
+                        + "do.call('identical', argv)");
     }
 
     @Test
@@ -217,8 +213,8 @@ public class TestBuiltin_identical extends TestBase {
         assertEval("{ identical(1:3, c(1L,2L,3L)) }");
         assertEval("{ x <- 1 ; attr(x, \"my\") <- 10; y <- 1 ; attr(y, \"my\") <- 10 ; identical(x,y) }");
         assertEval("{ x <- 1 ; attr(x, \"hello\") <- 2 ; attr(x, \"my\") <- 10;  attr(x, \"hello\") <- NULL ; y <- 1 ; attr(y, \"my\") <- 10 ; identical(x,y) }");
+        assertEval("{ identical(0/0,1[2]) }");
 
-        assertEval(Ignored.Unknown, "{ identical(0/0,1[2]) }");
         assertEval(Ignored.Unknown, "{ identical(list(1, list(2)), list(list(1), 1)) }");
         assertEval(Ignored.Unknown, "{ identical(list(1, list(2)), list(1, list(2))) }");
         assertEval(Ignored.Unknown, "{ x <- 1 ; attr(x, \"my\") <- 10; identical(x, 1) }");

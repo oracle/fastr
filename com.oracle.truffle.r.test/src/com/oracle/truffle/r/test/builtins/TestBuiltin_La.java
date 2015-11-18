@@ -25,8 +25,7 @@ public class TestBuiltin_La extends TestBase {
 
     @Test
     public void testLa2() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(c(-4.47213595499958, 0, -6.70820393249937, 2.23606797749979), .Dim = c(2L, 2L), .Dimnames = list(NULL, c('Intercept', 'X'))), structure(c(1, 0, 0, 1), .Dim = c(2L, 2L)), 2.22044604925031e-16); .Internal(La_solve(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval("argv <- list(structure(c(-4.47213595499958, 0, -6.70820393249937, 2.23606797749979), .Dim = c(2L, 2L), .Dimnames = list(NULL, c('Intercept', 'X'))), structure(c(1, 0, 0, 1), .Dim = c(2L, 2L)), 2.22044604925031e-16); .Internal(La_solve(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test

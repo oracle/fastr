@@ -41,7 +41,7 @@ public class TestBuiltin_sep extends TestBase {
 
     @Test
     public void testsep5() {
-        assertEval(Ignored.Unknown, "argv <- list(structure(integer(0), .Label = character(0), class = 'factor'));`/`(argv[[1]]);");
+        assertEval(Output.ContainsWarning, "argv <- list(structure(integer(0), .Label = character(0), class = 'factor'));`/`(argv[[1]]);");
     }
 
     @Test
