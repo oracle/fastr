@@ -20,25 +20,20 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-
 #include "rffiutils.h"
+#include <Riconv.h>
 
-void R_CheckStack(void) {
-    // TODO: check for stack overflow
-    // ignored
+void * Riconv_open (const char* tocode, const char* fromcode) {
+	return unimplemented("Riconv_open");
 }
 
-void R_CheckStack2(size_t extra) {
-    // TODO: check for stack overflow
-    // ignored
+size_t Riconv (void * cd, const char **inbuf, size_t *inbytesleft,
+	       char  **outbuf, size_t *outbytesleft) {
+    unimplemented("Riconv");
+    return 0;
 }
 
-void R_CheckUserInterrupt(void) {
-    // ignored
-}
-
-void Rf_onintr()
-{
-    // TODO: implement interrupt handling, signal errors
-    // ignored
+int Riconv_close (void * cd) {
+	unimplemented("Riconv_close");
+	return 0;
 }

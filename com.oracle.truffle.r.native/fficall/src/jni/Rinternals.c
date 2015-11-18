@@ -23,8 +23,7 @@
 #include "rffiutils.h"
 #include <string.h>
 
-// Most of the functions with a Rf_ prefix
-// TODO Lots missing yet
+// Most everything in RInternals.h
 
 static jmethodID Rf_ScalarIntegerMethodID;
 static jmethodID Rf_ScalarDoubleMethodID;
@@ -183,6 +182,10 @@ SEXP Rf_ScalarLogical(int value) {
     return checkRef(thisenv, result);
 }
 
+SEXP Rf_allocVector(SEXPTYPE t, R_xlen_t len) {
+	return Rf_allocVector3(t, len, NULL);)
+}
+
 SEXP Rf_allocVector3(SEXPTYPE t, R_xlen_t len, R_allocator_t* allocator) {
     if (allocator != NULL) {
 	unimplemented("RF_allocVector with custom allocator");
@@ -304,6 +307,26 @@ Rboolean Rf_inherits(SEXP x, const char * klass) {
     JNIEnv *thisenv = getEnv();
     jstring klazz = (*thisenv)->NewStringUTF(thisenv, klass);
     return (*thisenv)->CallStaticIntMethod(thisenv, CallRFFIHelperClass, Rf_inheritsMethodID, x, klazz);
+}
+
+Rboolean Rf_isFrame(SEXP)  {
+	return unimplemented("Rf_isFrame");
+}
+
+Rboolean Rf_isFunction(SEXP) {
+	return unimplemented("Rf_isFunction");
+}
+
+Rboolean Rf_isInteger(SEXP) {
+	return unimplemented("Rf_isInteger");
+}
+
+Rboolean Rf_isLanguage(SEXP) {
+	return unimplemented("Rf_isLanguage");
+}
+
+Rboolean Rf_isList(SEXP) {
+	return unimplemented("Rf_isList");
 }
 
 Rboolean Rf_isReal(SEXP x) {
@@ -1046,7 +1069,7 @@ SEXP Rf_PairToVectorList(SEXP x){
 }
 
 SEXP Rf_VectorToPairList(SEXP x){
-	unimplemented("Rf_coerceVector");
+	unimplemented("Rf_VectorToPairList");
 	return NULL;
 }
 

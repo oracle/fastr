@@ -18,6 +18,10 @@
 
 // selected functions from util.c:
 
+void init_util() {
+
+}
+
 void F77_NAME(rexitc)(char *msg, int *nchar)
 {
     int nc = *nchar;
