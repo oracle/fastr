@@ -20,7 +20,7 @@
 # or visit www.oracle.com if you need additional information or have any
 # questions.
 #
-import tempfile, platform, subprocess, shlex
+import tempfile, platform, subprocess
 from os.path import join, sep, dirname
 from argparse import ArgumentParser
 import mx
