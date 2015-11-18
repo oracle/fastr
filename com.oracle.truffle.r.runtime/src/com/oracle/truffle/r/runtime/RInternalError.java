@@ -28,6 +28,7 @@ import java.nio.file.*;
 import java.util.*;
 
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
 /**
  * This class is intended to be used for internal errors that do not correspond to R errors.
@@ -105,6 +106,7 @@ public final class RInternalError extends Error {
         }
     }
 
+    @TruffleBoundary
     public static void reportError(Throwable t) {
         if (FastROptions.PrintErrorStacktracesToFile.getBooleanValue() || FastROptions.PrintErrorStacktraces.getBooleanValue()) {
             ByteArrayOutputStream out = new ByteArrayOutputStream();
