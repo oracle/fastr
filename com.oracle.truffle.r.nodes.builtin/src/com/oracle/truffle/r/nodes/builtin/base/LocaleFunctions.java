@@ -111,8 +111,8 @@ public class LocaleFunctions {
         protected RList l10nInfo() {
             Object[] data = new Object[NAMES.getLength()];
             // TODO check locale properly
-            data[0] = RRuntime.LOGICAL_FALSE;
-            data[1] = RRuntime.LOGICAL_FALSE;
+            data[0] = RRuntime.LOGICAL_TRUE;
+            data[1] = RRuntime.LOGICAL_TRUE;
             data[2] = RRuntime.LOGICAL_FALSE;
             return RDataFactory.createList(data, NAMES);
         }
