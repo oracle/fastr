@@ -86,12 +86,12 @@ import com.oracle.truffle.r.runtime.nodes.*;
  *  U = {@link UninitializedCallNode}: Forms the uninitialized end of the function PIC
  *  D = {@link DispatchedCallNode}: Function fixed, no varargs
  *  G = {@link GenericCallNode}: Function arbitrary
- *
+ * 
  *  UV = {@link UninitializedCallNode} with varargs,
  *  UVC = {@link UninitializedVarArgsCacheCallNode} with varargs, for varargs cache
  *  DV = {@link DispatchedVarArgsCallNode}: Function fixed, with cached varargs
  *  DGV = {@link DispatchedGenericVarArgsCallNode}: Function fixed, with arbitrary varargs (generic case)
- *
+ * 
  * (RB = {@link RBuiltinNode}: individual functions that are builtins are represented by this node
  * which is not aware of caching). Due to {@link CachedCallNode} (see below) this is transparent to
  * the cache and just behaves like a D/DGV)
@@ -104,11 +104,11 @@ import com.oracle.truffle.r.runtime.nodes.*;
  * non varargs, max depth:
  * |
  * D-D-D-U
- *
+ * 
  * no varargs, generic (if max depth is exceeded):
  * |
  * D-D-D-D-G
- *
+ * 
  * varargs:
  * |
  * DV-DV-UV         <- function call target identity level cache
@@ -116,7 +116,7 @@ import com.oracle.truffle.r.runtime.nodes.*;
  *    DV
  *    |
  *    UVC           <- varargs signature level cache
- *
+ * 
  * varargs, max varargs depth exceeded:
  * |
  * DV-DV-UV
@@ -128,7 +128,7 @@ import com.oracle.truffle.r.runtime.nodes.*;
  *    DV
  *    |
  *    DGV
- *
+ * 
  * varargs, max function depth exceeded:
  * |
  * DV-DV-DV-DV-GV
@@ -516,7 +516,26 @@ public final class RCallNode extends RNode implements RSyntaxNode {
 
     @Override
     public boolean getRequalsImpl(RSyntaxNode other) {
-        throw RInternalError.unimplemented();
+        if (!(other instanceof RCallNode)) {
+            return false;
+        }
+        RCallNode otherCN = (RCallNode) other;
+        if (!getFunctionNode().getRequals(otherCN.getFunctionNode().asRSyntaxNode())) {
+            return false;
+        }
+        return getRequalsImplArgs(arguments.v, otherCN.arguments.v);
+    }
+
+    public static boolean getRequalsImplArgs(RSyntaxNode[] arguments, RSyntaxNode[] otherArguments) {
+        if (arguments.length != otherArguments.length) {
+            return false;
+        }
+        for (int i = 0; i < arguments.length; i++) {
+            if (!arguments[i].getRequalsImpl(otherArguments[i])) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private static boolean isColon(RNode node) {

@@ -26,6 +26,7 @@ import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.RASTUtils;
+import com.oracle.truffle.r.nodes.function.FunctionStatementsNode;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.env.*;
@@ -168,7 +169,20 @@ public class BlockNode extends SequenceNode implements RSyntaxNode, VisibilityCo
 
     @Override
     public boolean getRequalsImpl(RSyntaxNode other) {
-        throw RInternalError.unimplemented();
+        FunctionStatementsNode otherFSN = (FunctionStatementsNode) other;
+        if (getRlengthImpl() != otherFSN.getRlengthImpl()) {
+            return false;
+        }
+        RNode[] seq = getSequence();
+        RNode[] otherSeq = otherFSN.getSequence();
+        for (int i = 0; i < sequence.length; i++) {
+            RSyntaxNode e = seq[i].asRSyntaxNode();
+            RSyntaxNode eOther = otherSeq[i].asRSyntaxNode();
+            if (!e.getRequalsImpl(eOther)) {
+                return false;
+            }
+        }
+        return true;
     }
 
 }

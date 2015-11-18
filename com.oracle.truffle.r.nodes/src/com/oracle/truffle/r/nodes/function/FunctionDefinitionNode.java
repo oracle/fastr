@@ -421,7 +421,40 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
 
     @Override
     public boolean getRequalsImpl(RSyntaxNode other) {
-        throw RInternalError.unimplemented();
+        FunctionDefinitionNode otherFdn = (FunctionDefinitionNode) other;
+        if (!compareFormals(otherFdn)) {
+            return false;
+        }
+        RSyntaxNode syntaxBody = body.asRSyntaxNode();
+        return syntaxBody.getRequalsImpl(otherFdn.body.asRSyntaxNode());
+    }
+
+    private boolean compareFormals(FunctionDefinitionNode other) {
+        FormalArguments formals = getFormalArguments();
+        ArgumentsSignature signature = formals.getSignature();
+        int formalsLength = signature.getLength();
+        FormalArguments otherFormals = other.getFormalArguments();
+        ArgumentsSignature otherSignature = otherFormals.getSignature();
+        if (formalsLength != otherSignature.getLength()) {
+            return false;
+        }
+        for (int i = 0; i < formalsLength; i++) {
+            // The signature has the formal names
+            if (!signature.getName(i).equals(otherSignature.getName(i))) {
+                return false;
+            }
+            RNode defaultArg = formals.getDefaultArgument(i);
+            RNode otherDefaultArg = otherFormals.getDefaultArgument(i);
+            if (defaultArg == null && otherDefaultArg != null || defaultArg != null && otherDefaultArg == null) {
+                return false;
+            }
+            if (defaultArg != null) {
+                if (!defaultArg.asRSyntaxNode().getRequalsImpl(otherDefaultArg.asRSyntaxNode())) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     /**

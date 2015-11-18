@@ -149,7 +149,14 @@ public final class GroupDispatchNode extends RNode implements RSyntaxNode {
 
     @Override
     public boolean getRequalsImpl(RSyntaxNode other) {
-        throw RInternalError.unimplemented();
+        if (!(other instanceof GroupDispatchNode)) {
+            return false;
+        }
+        GroupDispatchNode otherGDN = (GroupDispatchNode) other;
+        if (!fixedGenericName.equals(otherGDN.fixedGenericName)) {
+            return false;
+        }
+        return RCallNode.getRequalsImplArgs(callArgsNode.getSyntaxArguments(), otherGDN.callArgsNode.getSyntaxArguments());
     }
 
     @Override

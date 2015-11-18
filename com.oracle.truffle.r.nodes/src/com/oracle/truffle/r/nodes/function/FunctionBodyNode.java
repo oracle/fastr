@@ -76,7 +76,6 @@ public class FunctionBodyNode extends BodyNode implements RSyntaxNode {
 
     @Override
     public RSyntaxNode substituteImpl(REnvironment env) {
-        // TODO what about saveArgs ?
         RNode statementsSub = statements.substitute(env).asRNode();
         return new FunctionBodyNode(saveArgs, statementsSub);
     }
@@ -121,7 +120,7 @@ public class FunctionBodyNode extends BodyNode implements RSyntaxNode {
 
     @Override
     public boolean getRequalsImpl(RSyntaxNode other) {
-        throw RInternalError.unimplemented();
+        return getStatements().getRequalsImpl(((FunctionBodyNode) other).getStatements());
     }
 
 }

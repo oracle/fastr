@@ -87,7 +87,11 @@ public abstract class ConstantNode extends RNode implements RSyntaxNode, Visibil
 
     @Override
     public boolean getRequalsImpl(RSyntaxNode other) {
-        throw RInternalError.unimplemented();
+        if (other.getClass() == getClass()) {
+            return getValue().equals(((ConstantNode) other).getValue());
+        } else {
+            return false;
+        }
     }
 
     public static Object getConstant(RNode node) {

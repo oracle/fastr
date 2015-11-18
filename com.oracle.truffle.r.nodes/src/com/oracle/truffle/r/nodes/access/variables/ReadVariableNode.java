@@ -187,7 +187,11 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
 
     @Override
     public boolean getRequalsImpl(RSyntaxNode other) {
-        throw RInternalError.unimplemented();
+        if (other instanceof ReadVariableNode) {
+            return identifier.toString().equals(((ReadVariableNode) other).identifier);
+        } else {
+            return false;
+        }
     }
 
     @Override

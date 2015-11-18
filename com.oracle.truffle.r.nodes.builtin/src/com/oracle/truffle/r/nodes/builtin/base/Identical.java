@@ -156,17 +156,15 @@ public abstract class Identical extends RBuiltinNode {
                 return RRuntime.asLogical(x.getRBuiltin() == y.getRBuiltin());
             } else {
                 // closures
+                if (!RRuntime.fromLogical(ignoreEnvironment)) {
+                    // comparing frames equivalent to comparing environments
+                    if (x.getEnclosingFrame() != y.getEnclosingFrame()) {
+                        return RRuntime.LOGICAL_FALSE;
+                    }
+                }
                 FunctionDefinitionNode fx = (FunctionDefinitionNode) x.getRootNode();
                 FunctionDefinitionNode fy = (FunctionDefinitionNode) y.getRootNode();
-                if (fx.getFormalArguments().getSignature().equals(fy.getFormalArguments().getSignature())) {
-                    /*
-                     * TODO check defaults and body and enclosing environment (unless
-                     * ignoreEnvironment=T)
-                     */
-                } else {
-                    return RRuntime.LOGICAL_FALSE;
-                }
-                throw RError.nyi(this, "identical(function)");
+                return RRuntime.asLogical(fx.getRequalsImpl(fy));
             }
         }
         return RRuntime.LOGICAL_FALSE;
