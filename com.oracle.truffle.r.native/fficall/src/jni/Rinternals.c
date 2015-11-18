@@ -182,10 +182,6 @@ SEXP Rf_ScalarLogical(int value) {
     return checkRef(thisenv, result);
 }
 
-SEXP Rf_allocVector(SEXPTYPE t, R_xlen_t len) {
-	return Rf_allocVector3(t, len, NULL);)
-}
-
 SEXP Rf_allocVector3(SEXPTYPE t, R_xlen_t len, R_allocator_t* allocator) {
     if (allocator != NULL) {
 	unimplemented("RF_allocVector with custom allocator");
@@ -307,26 +303,6 @@ Rboolean Rf_inherits(SEXP x, const char * klass) {
     JNIEnv *thisenv = getEnv();
     jstring klazz = (*thisenv)->NewStringUTF(thisenv, klass);
     return (*thisenv)->CallStaticIntMethod(thisenv, CallRFFIHelperClass, Rf_inheritsMethodID, x, klazz);
-}
-
-Rboolean Rf_isFrame(SEXP)  {
-	return unimplemented("Rf_isFrame");
-}
-
-Rboolean Rf_isFunction(SEXP) {
-	return unimplemented("Rf_isFunction");
-}
-
-Rboolean Rf_isInteger(SEXP) {
-	return unimplemented("Rf_isInteger");
-}
-
-Rboolean Rf_isLanguage(SEXP) {
-	return unimplemented("Rf_isLanguage");
-}
-
-Rboolean Rf_isList(SEXP) {
-	return unimplemented("Rf_isList");
 }
 
 Rboolean Rf_isReal(SEXP x) {
@@ -782,15 +758,18 @@ SEXP CLOENV(SEXP x) {
 }
 
 int RDEBUG(SEXP x) {
-    return (int) unimplemented("RDEBUG");
+    unimplemented("RDEBUG");
+    return 0;
 }
 
 int RSTEP(SEXP x) {
-	return (int) unimplemented("RSTEP");
+	unimplemented("RSTEP");
+    return 0;
 }
 
 int RTRACE(SEXP x) {
-	return (int) unimplemented("RTRACE");
+	unimplemented("RTRACE");
+    return 0;
 }
 
 void SET_RDEBUG(SEXP x, int v) {
@@ -826,7 +805,8 @@ SEXP INTERNAL(SEXP x) {
 }
 
 int DDVAL(SEXP x) {
-	return (int) unimplemented("DDVAL");
+	unimplemented("DDVAL");
+    return 0;
 }
 
 void SET_DDVAL(SEXP x, int v) {
@@ -855,7 +835,8 @@ SEXP HASHTAB(SEXP x) {
 }
 
 int ENVFLAGS(SEXP x) {
-	return (int) unimplemented("ENVFLAGS");
+	unimplemented("ENVFLAGS");
+    return 0;
 }
 
 void SET_ENVFLAGS(SEXP x, int v) {
@@ -880,7 +861,8 @@ SEXP PRCODE(SEXP x) {
 }
 
 SEXP PRENV(SEXP x) {
-	return unimplemented("PRENV");
+	unimplemented("PRSEEN");
+    return 0;
 }
 
 SEXP PRVALUE(SEXP x) {
@@ -1182,10 +1164,6 @@ void R_qsort_int_I(int *iv, int *II, int i, int j) {
 	unimplemented("R_qsort_int_I");
 }
 
-void R_CheckUserInterrupt() {
-// TODO (we don't even do this in the Java code)
-}
-
 R_len_t R_BadLongVector(SEXP x, const char *y, int z) {
 	return (R_len_t) unimplemented("R_BadLongVector");
 }
@@ -1217,20 +1195,6 @@ SEXP R_tryEval(SEXP x, SEXP y, int *z) {
 
 SEXP R_tryEvalSilent(SEXP x, SEXP y, int *z) {
 	return unimplemented("R_tryEvalSilent");
-}
-
-size_t Riconv (void *cd, const char **inbuf, size_t *inbytesleft,
-	       char **outbuf, size_t *outbytesleft) {
-	return (size_t) unimplemented("Riconv");
-}
-
-int Riconv_close (void *cd) {
-	return (int) unimplemented("Riconv_close");
-	return 0;
-}
-
-void * Riconv_open (const char* tocode, const char* fromcode) {
-	return unimplemented("Riconv_open");
 }
 
 double R_atof(const char *str) {
