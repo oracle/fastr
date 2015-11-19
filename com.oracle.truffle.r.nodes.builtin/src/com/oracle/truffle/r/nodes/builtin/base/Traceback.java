@@ -30,6 +30,8 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.context.ConsoleHandler;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 
@@ -44,8 +46,9 @@ public abstract class Traceback extends RBuiltinNode {
     @Specialization
     public RStringVector traceback(int x) {
         String[] traceback = Utils.createTraceback();
+        ConsoleHandler consoleHandler = RContext.getInstance().getConsoleHandler();
         for (String s : traceback) {
-            System.out.println(":: " + s);
+            consoleHandler.println(":: " + s);
         }
         traceback = Arrays.copyOfRange(traceback, x, traceback.length);
         return RDataFactory.createStringVector(traceback, true);
