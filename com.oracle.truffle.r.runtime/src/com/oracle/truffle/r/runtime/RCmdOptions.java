@@ -303,7 +303,8 @@ public final class RCmdOptions {
                 RCmdOption option = result.option;
                 if (result.matchedShort && i == args.length - 1) {
                     System.out.println("usage:");
-                    printHelp(client, 1);
+                    printHelp(client);
+                    System.exit(1);
                 }
                 // check implemented
                 if (!option.implemented) {
@@ -350,7 +351,7 @@ public final class RCmdOptions {
 
     public void printHelpAndVersion() {
         if (getBoolean(HELP)) {
-            RCmdOptions.printHelp(RCmdOptions.Client.R, 0);
+            printHelpAndExit(RCmdOptions.Client.R);
         } else if (getBoolean(VERSION)) {
             printVersionAndExit();
         } else if (getBoolean(RHOME)) {
@@ -358,27 +359,29 @@ public final class RCmdOptions {
         }
     }
 
-    public static void printHelp(Client client, int exitCode) {
+    public static void printHelp(Client client) {
         System.out.println(client.usage());
         System.out.println("Options:");
         for (RCmdOption option : RCmdOption.values()) {
             System.out.printf("  %-22s  %s%n", option.getHelpName(), option.help);
         }
         System.out.println("\nFILE may contain spaces but not shell metacharacters.\n");
-        if (exitCode >= 0) {
-            System.exit(exitCode);
-        }
+    }
+
+    public static void printHelpAndExit(Client client) {
+        printHelp(client);
+        System.exit(0);
     }
 
     private static void printVersionAndExit() {
         System.out.print("FastR version ");
         System.out.println(RVersionNumber.FULL);
         System.out.println(RRuntime.LICENSE);
-        Utils.exit(0);
+        System.exit(0);
     }
 
     private static void printRHomeAndExit() {
         System.out.println(REnvVars.rHome());
-        throw Utils.exit(0);
+        System.exit(0);
     }
 }

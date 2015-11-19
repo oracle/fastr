@@ -123,14 +123,23 @@ public final class Utils {
     }
 
     /**
-     * All terminations should go through this method.
+     * All terminations that happen within a PolyglotEngine context should go through this method.
      */
     public static RuntimeException exit(int status) {
+        /*
+         * TODO: Ultimately, destroying the context should be triggered from the "outside" of a
+         * PolyglotEngine. This ultimately depends on what the expected semantics of "quit()" in a
+         * polyglot context are.
+         */
         RPerfStats.report();
         if (RContext.getInstance() != null && RContext.getInstance().getOptions() != null && RContext.getInstance().getOptions().getString(RCmdOption.DEBUGGER) != null) {
             throw new DebugExitException();
         } else {
             try {
+                /*
+                 * This is not the proper way to dispose a PolyglotEngine, but it doesn't matter
+                 * since we're going to System.exit anyway.
+                 */
                 RContext.getInstance().destroy();
             } catch (Throwable t) {
                 // ignore

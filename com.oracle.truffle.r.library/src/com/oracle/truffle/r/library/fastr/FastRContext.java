@@ -159,7 +159,7 @@ public class FastRContext {
                     } catch (IOException e) {
                         throw RInternalError.shouldNotReachHere(e);
                     } finally {
-                        RContext.destroyContext(vm);
+                        vm.dispose();
                     }
                 }
             }

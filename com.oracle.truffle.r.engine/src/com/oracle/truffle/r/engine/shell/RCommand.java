@@ -264,7 +264,7 @@ public class RCommand {
                 throw RInternalError.shouldNotReachHere(e);
             }
         } finally {
-            RContext.destroyContext(vm);
+            vm.dispose();
         }
     }
 

@@ -180,6 +180,10 @@ public final class FastRSession implements RSession {
         private final Semaphore entry = new Semaphore(0);
         private final Semaphore exit = new Semaphore(0);
 
+        public EvalThread() {
+            super(null);
+        }
+
         public void push(String exp) {
             this.expression = exp;
             this.entry.release();
@@ -203,7 +207,7 @@ public final class FastRSession implements RSession {
                         Source source = Source.fromText(expression, "<eval>").withMimeType(TruffleRLanguage.MIME);
                         vm.eval(source);
                     } finally {
-                        RContext.destroyContext(vm);
+                        vm.dispose();
                     }
                 } catch (ParseException e) {
                     e.report(consoleHandler);

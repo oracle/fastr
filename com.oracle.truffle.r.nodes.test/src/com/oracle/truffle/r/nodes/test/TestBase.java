@@ -22,15 +22,15 @@
  */
 package com.oracle.truffle.r.nodes.test;
 
-import java.io.*;
+import java.io.IOException;
 
-import org.junit.*;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 
 import com.oracle.truffle.api.source.Source;
-import com.oracle.truffle.api.vm.*;
-import com.oracle.truffle.r.engine.*;
-import com.oracle.truffle.r.runtime.context.*;
-import com.oracle.truffle.r.test.generate.*;
+import com.oracle.truffle.api.vm.PolyglotEngine;
+import com.oracle.truffle.r.engine.TruffleRLanguage;
+import com.oracle.truffle.r.test.generate.FastRSession;
 
 public class TestBase {
 
@@ -47,6 +47,6 @@ public class TestBase {
     @AfterClass
     public static void finishClass() throws IOException {
         testVM.eval(CLEAR_WARNINGS);
-        RContext.destroyContext(testVM);
+        testVM.dispose();
     }
 }

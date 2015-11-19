@@ -143,15 +143,11 @@ public final class RContext extends ExecutionContext implements TruffleObject {
     /**
      * A thread that is explicitly associated with a context for efficient lookup.
      */
-    public static class ContextThread extends Thread {
-        protected RContext context;
+    public static abstract class ContextThread extends Thread {
+        private RContext context;
 
         public ContextThread(RContext context) {
             this.context = context;
-        }
-
-        protected ContextThread() {
-
         }
 
         public void setContext(RContext context) {
@@ -163,6 +159,9 @@ public final class RContext extends ExecutionContext implements TruffleObject {
      * A thread for performing an evaluation (used by {@code fastr} package).
      */
     public static class EvalThread extends ContextThread {
+
+        private static final Source GET_CONTEXT = Source.fromText("invisible(fastr.context.get())", "<get_context>").withMimeType("application/x-r");
+
         private final Source source;
         private final ContextInfo info;
         private Object returnValue;
@@ -197,17 +196,17 @@ public final class RContext extends ExecutionContext implements TruffleObject {
                         returnValue = result;
                     }
                 } catch (ParseException e) {
-                    e.report(context.getConsoleHandler());
+                    e.report(info.getConsoleHandler());
                 } catch (IOException e) {
                     if (e.getCause() instanceof RError) {
                         RInternalError.reportError(e.getCause());
                     } else {
-                        context.getConsoleHandler().println("unexpected internal error (" + e.getClass().getSimpleName() + "); " + e.getMessage());
+                        info.getConsoleHandler().println("unexpected internal error (" + e.getClass().getSimpleName() + "); " + e.getMessage());
                         RInternalError.reportError(e);
                     }
                 }
             } finally {
-                context.destroy();
+                vm.dispose();
                 threads.remove(info.getId());
             }
         }
@@ -589,14 +588,4 @@ public final class RContext extends ExecutionContext implements TruffleObject {
         throw new IllegalStateException("cannot access " + RContext.class.getSimpleName() + " via Truffle");
     }
 
-    private static final Source GET_CONTEXT = Source.fromText("invisible(fastr.context.get())", "<get_context>").withMimeType("application/x-r");
-
-    public static void destroyContext(PolyglotEngine vm) {
-        try {
-            RContext context = vm.eval(GET_CONTEXT).as(RContext.class);
-            context.destroy();
-        } catch (IOException e) {
-            throw new RInternalError(e, "error while destroying context");
-        }
-    }
 }

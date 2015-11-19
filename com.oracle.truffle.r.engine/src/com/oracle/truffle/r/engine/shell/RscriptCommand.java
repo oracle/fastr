@@ -44,8 +44,7 @@ public class RscriptCommand {
         int resultArgsLength = arguments.length;
         int firstNonOptionArgIndex = options.getFirstNonOptionArgIndex();
         if (options.getBoolean(HELP)) {
-            RCmdOptions.printHelp(RCmdOptions.Client.RSCRIPT, 0);
-            Utils.exit(0);
+            RCmdOptions.printHelpAndExit(RCmdOptions.Client.RSCRIPT);
         } else if (options.getBoolean(VERSION)) {
             printVersionAndExit();
         }
@@ -60,7 +59,7 @@ public class RscriptCommand {
         if (options.getStringList(EXPR) == null) {
             if (firstNonOptionArgIndex == resultArgsLength) {
                 // does not return
-                RCmdOptions.printHelp(RCmdOptions.Client.RSCRIPT, 0);
+                RCmdOptions.printHelpAndExit(RCmdOptions.Client.RSCRIPT);
             } else {
                 if (arguments[firstNonOptionArgIndex].startsWith("-")) {
                     System.out.println("file name is missing");
@@ -104,6 +103,6 @@ public class RscriptCommand {
     private static void printVersionAndExit() {
         System.out.print("R scripting front-end version ");
         System.out.println(RVersionNumber.FULL);
-        Utils.exit(0);
+        System.exit(0);
     }
 }

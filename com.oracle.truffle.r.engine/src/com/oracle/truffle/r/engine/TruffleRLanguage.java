@@ -100,6 +100,11 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
     }
 
     @Override
+    protected void disposeContext(RContext context) {
+        context.destroy();
+    }
+
+    @Override
     protected String toString(RContext context, Object value) {
         // TODO This is a hack because R is still printing its own results
         // every use of PolyglotEngine should return a value instead of printing the result.
