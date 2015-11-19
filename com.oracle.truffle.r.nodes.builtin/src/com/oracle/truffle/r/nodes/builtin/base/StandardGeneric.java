@@ -280,7 +280,7 @@ abstract class LoadMethod extends RBaseNode {
             }
         }
         writeRMethod.execute(frame, fdef);
-        if (fname == "loadMethod") {
+        if ("loadMethod".equals(fname)) {
             // the loadMethod function contains the following call:
             // standardGeneric("loadFunction")
             // which we are handling here, so == is fine

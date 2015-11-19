@@ -30,7 +30,7 @@ public final class RandomNumberNode extends RBaseNode {
     private final ValueProfile generatorProfile = ValueProfile.createIdentityProfile();
     private final ValueProfile generatorClassProfile = ValueProfile.createClassProfile();
 
-    public final double[] executeDouble(int count) {
+    public double[] executeDouble(int count) {
         return generatorClassProfile.profile(generatorProfile.profile(RRNG.currentGenerator())).genrandDouble(count);
     }
 }
