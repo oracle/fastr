@@ -69,4 +69,9 @@ public class TestS4 extends TestBase {
         assertEval("{ isS4(NULL) }");
         assertEval("{ asS4(NULL); isS4(NULL }");
     }
+
+    @Test
+    public void testAllocation() {
+        assertEval("{ new(\"numeric\") }");
+    }
 }

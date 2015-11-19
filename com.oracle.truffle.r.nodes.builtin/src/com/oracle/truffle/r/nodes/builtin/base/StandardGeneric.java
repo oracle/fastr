@@ -19,11 +19,15 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.frame.FrameDescriptor;
+import com.oracle.truffle.api.frame.FrameSlot;
+import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.DirectCallNode;
 import com.oracle.truffle.api.utilities.BranchProfile;
 import com.oracle.truffle.api.utilities.ConditionProfile;
+import com.oracle.truffle.r.nodes.RRootNode;
 import com.oracle.truffle.r.nodes.access.WriteLocalFrameVariableNode;
 import com.oracle.truffle.r.nodes.access.WriteVariableNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
@@ -31,6 +35,8 @@ import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode.ReadKind;
 import com.oracle.truffle.r.nodes.attributes.AttributeAccess;
 import com.oracle.truffle.r.nodes.attributes.AttributeAccessNodeGen;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.function.FormalArguments;
+import com.oracle.truffle.r.nodes.function.RMissingHelper;
 import com.oracle.truffle.r.nodes.function.signature.RArgumentsNode;
 import com.oracle.truffle.r.nodes.objects.CollectGenericArgumentsNode;
 import com.oracle.truffle.r.nodes.objects.CollectGenericArgumentsNodeGen;
@@ -43,6 +49,7 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 
@@ -110,8 +117,8 @@ public abstract class StandardGeneric extends RBuiltinNode {
         }
 
         String[] classes = collectArgumentsNode.execute(frame, sigArgs, sigLength);
-        dispatchGeneric.executeObject(frame, methodsEnv, mtable, RDataFactory.createStringVector(classes, RDataFactory.COMPLETE_VECTOR), fdef, fname);
-        return null;
+        Object ret = dispatchGeneric.executeObject(frame, methodsEnv, mtable, RDataFactory.createStringVector(classes, RDataFactory.COMPLETE_VECTOR), fdef, fname);
+        return ret;
     }
 
     @Specialization(guards = "fVec.getLength() > 0")
@@ -176,6 +183,7 @@ abstract class DispatchGeneric extends RBaseNode {
     @CompilationFinal private RFunction inheritForDispatchFunction;
     @Child private RArgumentsNode argsNode = RArgumentsNode.create();
     @Child private LoadMethod loadMethod = LoadMethodNodeGen.create();
+    @Child private ExecuteMethod executeMethod = ExecuteMethodNodeGen.create();
 
     @TruffleBoundary
     private static String createMultiDispatchString(RStringVector classes) {
@@ -224,8 +232,9 @@ abstract class DispatchGeneric extends RBaseNode {
                 method = (RFunction) RContext.getEngine().evalFunction(currentFunction, frame.materialize(), classes, fdef, mtable);
             }
         }
-        method = loadMethod.executeRFunction(frame, methodsEnv, fdef, fname);
-        return null;
+        method = loadMethod.executeRFunction(frame, methodsEnv, method, fname);
+        Object ret = executeMethod.executeMethod(frame, method);
+        return ret;
     }
 
     protected boolean equalClasses(RStringVector classes, RStringVector cachedClasses) {
@@ -250,7 +259,7 @@ abstract class LoadMethod extends RBaseNode {
     @Child private WriteLocalFrameVariableNode writeRTarget = WriteLocalFrameVariableNode.create(RRuntime.R_DOT_TARGET, null, WriteVariableNode.Mode.REGULAR);
     @Child private WriteLocalFrameVariableNode writeRDefined = WriteLocalFrameVariableNode.create(RRuntime.R_DOT_DEFINED, null, WriteVariableNode.Mode.REGULAR);
     @Child private WriteLocalFrameVariableNode writeRNextMethod = WriteLocalFrameVariableNode.create(RRuntime.R_DOT_NEXT_METHOD, null, WriteVariableNode.Mode.REGULAR);
-    @Child private WriteLocalFrameVariableNode writeRMethod = WriteLocalFrameVariableNode.create(RRuntime.R_DOT_METHOD, null, WriteVariableNode.Mode.REGULAR);
+    @Child private WriteLocalFrameVariableNode writeRMethod = WriteLocalFrameVariableNode.create(RRuntime.RDotMethod, null, WriteVariableNode.Mode.REGULAR);
     @Child private ReadVariableNode loadMethodFind;
     @Child private DirectCallNode loadMethodCall;
     @CompilationFinal private RFunction loadMethodFunction;
@@ -313,8 +322,77 @@ abstract class LoadMethod extends RBaseNode {
     }
 }
 
-abstract class CallGeneric extends RBaseNode {
+abstract class ExecuteMethod extends RBaseNode {
 
-    public abstract Object executeObject(RFunction mtable, String[] classes);
+    public abstract Object executeObject(VirtualFrame frame, RFunction fdef);
 
+    @Child private ReadVariableNode readDefined = ReadVariableNode.create(RRuntime.R_DOT_DEFINED, RType.Any, ReadKind.SilentLocal);
+    @Child private ReadVariableNode readMethod = ReadVariableNode.create(RRuntime.RDotMethod, RType.Any, ReadKind.SilentLocal);
+    @Child private ReadVariableNode readTarget = ReadVariableNode.create(RRuntime.R_DOT_TARGET, RType.Any, ReadKind.SilentLocal);
+    @Child private ReadVariableNode readGeneric = ReadVariableNode.create(RRuntime.RDotGeneric, RType.Any, ReadKind.SilentLocal);
+    @Child private ReadVariableNode readMethods = ReadVariableNode.create(RRuntime.R_DOT_METHODS, RType.Any, ReadKind.SilentLocal);
+    @Child private RArgumentsNode argsNode = RArgumentsNode.create();
+
+    @Specialization
+    protected Object executeMethod(VirtualFrame frame, RFunction fdef) {
+
+        Object[] args = argsNode.execute(RArguments.getFunction(frame), RArguments.getCall(frame), null, RArguments.getDepth(frame) + 1, RArguments.getArguments(frame),
+                        RArguments.getSignature(frame), null);
+        MaterializedFrame newFrame = Truffle.getRuntime().createMaterializedFrame(args);
+        FrameDescriptor desc = newFrame.getFrameDescriptor();
+        FrameSlotChangeMonitor.initializeFunctionFrameDescriptor(desc);
+        FormalArguments formals = ((RRootNode) fdef.getRootNode()).getFormalArguments();
+        if (formals != null) {
+            ArgumentsSignature signature = formals.getSignature();
+            MaterializedFrame currentFrame = frame.materialize();
+            FrameDescriptor currentFrameDesc = currentFrame.getFrameDescriptor();
+            for (int i = 0; i < signature.getLength(); i++) {
+                String argName = signature.getName(i);
+                boolean missing = RMissingHelper.isMissingArgument(frame, argName);
+                Object val = slotRead(currentFrame, currentFrameDesc, argName);
+                slotInit(newFrame, desc, argName, val);
+                if (missing && !(val instanceof RArgsValuesAndNames)) {
+                    throw RInternalError.unimplemented();
+                }
+            }
+        }
+
+        slotInit(newFrame, desc, RRuntime.R_DOT_DEFINED, readDefined.execute(frame));
+        slotInit(newFrame, desc, RRuntime.RDotMethod, readDefined.execute(frame));
+        slotInit(newFrame, desc, RRuntime.R_DOT_TARGET, readDefined.execute(frame));
+        slotInit(newFrame, desc, RRuntime.RDotGeneric, readDefined.execute(frame));
+        slotInit(newFrame, desc, RRuntime.R_DOT_METHODS, readDefined.execute(frame));
+
+        Object ret = callMethod(fdef, newFrame);
+        return ret;
+    }
+
+    @TruffleBoundary
+    static Object callMethod(RFunction fdef, MaterializedFrame newFrame) {
+        return RContext.getEngine().evalGeneric(fdef, newFrame);
+    }
+
+    @TruffleBoundary
+    static Object slotRead(MaterializedFrame currentFrame, FrameDescriptor desc, String name) {
+        FrameSlot slot = desc.findFrameSlot(name);
+        return currentFrame.getValue(slot);
+    }
+
+    @TruffleBoundary
+    static void slotInit(MaterializedFrame newFrame, FrameDescriptor desc, String name, Object value) {
+        if (value instanceof Byte) {
+            FrameSlot frameSlot = FrameSlotChangeMonitor.findOrAddFrameSlot(desc, name, FrameSlotKind.Byte);
+            newFrame.setByte(frameSlot, (byte) value);
+        } else if (value instanceof Integer) {
+            FrameSlot frameSlot = FrameSlotChangeMonitor.findOrAddFrameSlot(desc, name, FrameSlotKind.Int);
+            newFrame.setInt(frameSlot, (int) value);
+        } else if (value instanceof Double) {
+            FrameSlot frameSlot = FrameSlotChangeMonitor.findOrAddFrameSlot(desc, name, FrameSlotKind.Double);
+            newFrame.setDouble(frameSlot, (double) value);
+        } else {
+            FrameSlot frameSlot = FrameSlotChangeMonitor.findOrAddFrameSlot(desc, name, FrameSlotKind.Object);
+            newFrame.setObject(frameSlot, value);
+
+        }
+    }
 }
