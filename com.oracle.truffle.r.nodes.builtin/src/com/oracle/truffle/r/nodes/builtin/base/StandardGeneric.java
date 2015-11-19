@@ -86,7 +86,7 @@ public abstract class StandardGeneric extends RBuiltinNode {
             if (getMethodsTableFunction == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 getMethodsTableFunction = (RFunction) getMethodsTableFind.execute(null, methodsEnv.getFrame());
-                getMethodsTableCall = Truffle.getRuntime().createDirectCallNode(getMethodsTableFunction.getTarget());
+                getMethodsTableCall = insert(Truffle.getRuntime().createDirectCallNode(getMethodsTableFunction.getTarget()));
             }
             RFunction currentFunction = (RFunction) getMethodsTableFind.execute(null, methodsEnv.getFrame());
             if (cached.profile(currentFunction == getMethodsTableFunction)) {
@@ -211,7 +211,7 @@ abstract class DispatchGeneric extends RBaseNode {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 inheritForDispatchFind = insert(ReadVariableNode.create(".InheritForDispatch", RType.Function, ReadKind.Normal));
                 inheritForDispatchFunction = (RFunction) inheritForDispatchFind.execute(null, methodsEnv.getFrame());
-                inheritForDispatchCall = Truffle.getRuntime().createDirectCallNode(inheritForDispatchFunction.getTarget());
+                inheritForDispatchCall = insert(Truffle.getRuntime().createDirectCallNode(inheritForDispatchFunction.getTarget()));
 
             }
             RFunction currentFunction = (RFunction) inheritForDispatchFind.execute(null, methodsEnv.getFrame());
@@ -293,7 +293,7 @@ abstract class LoadMethod extends RBaseNode {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 loadMethodFind = insert(ReadVariableNode.create("loadMethod", RType.Function, ReadKind.Normal));
                 loadMethodFunction = (RFunction) loadMethodFind.execute(null, methodsEnv.getFrame());
-                loadMethodCall = Truffle.getRuntime().createDirectCallNode(loadMethodFunction.getTarget());
+                loadMethodCall = insert(Truffle.getRuntime().createDirectCallNode(loadMethodFunction.getTarget()));
 
             }
             RFunction currentFunction = (RFunction) loadMethodFind.execute(null, methodsEnv.getFrame());
