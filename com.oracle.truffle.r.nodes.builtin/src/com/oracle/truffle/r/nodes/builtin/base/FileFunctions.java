@@ -963,7 +963,7 @@ public class FileFunctions {
             return doXyzName(vec, (fileSystem, name) -> {
                 Path path = fileSystem.getPath(Utils.tildeExpand(name));
                 Path parent = path.getParent();
-                return parent != null ? parent.toString() : name;
+                return parent != null ? parent.toString() : ".";
             });
         }
     }
