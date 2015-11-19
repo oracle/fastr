@@ -50,6 +50,7 @@ import com.oracle.truffle.r.runtime.RErrorHandling;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.ROptions;
 import com.oracle.truffle.r.runtime.RProfile;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RRuntimeASTAccess;
 import com.oracle.truffle.r.runtime.RSerialize;
 import com.oracle.truffle.r.runtime.Utils;
@@ -187,7 +188,10 @@ public final class RContext extends ExecutionContext implements TruffleObject {
                 try {
                     PolyglotEngine.Value resultValue = vm.eval(source);
                     Object result = resultValue.get();
-                    if (result instanceof TruffleObject) {
+                    if (result == null) {
+                        // this means an error occurred and there is no result
+                        returnValue = RRuntime.LOGICAL_NA;
+                    } else if (result instanceof TruffleObject) {
                         returnValue = resultValue.as(Object.class);
                     } else {
                         returnValue = result;

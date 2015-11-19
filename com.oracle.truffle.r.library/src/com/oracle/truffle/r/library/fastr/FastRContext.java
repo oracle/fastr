@@ -147,7 +147,10 @@ public class FastRContext {
                         Source source = Source.fromText(exprs.getDataAt(i % exprs.getLength()), "<eval>").withMimeType(RRuntime.R_APP_MIME);
                         PolyglotEngine.Value resultValue = vm.eval(source);
                         Object result = resultValue.get();
-                        if (result instanceof TruffleObject) {
+                        if (result == null) {
+                            // this means an error occurred and there is no result
+                            results[i] = RRuntime.LOGICAL_NA;
+                        } else if (result instanceof TruffleObject) {
                             Object returnValue = resultValue.as(Object.class);
                             results[i] = returnValue;
                         } else {
