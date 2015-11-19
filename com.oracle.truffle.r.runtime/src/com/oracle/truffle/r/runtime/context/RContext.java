@@ -164,6 +164,7 @@ public final class RContext extends ExecutionContext implements TruffleObject {
     public static class EvalThread extends ContextThread {
         private final Source source;
         private final ContextInfo info;
+        private Object returnValue;
 
         public static final Map<Integer, Thread> threads = new ConcurrentHashMap<>();
 
@@ -184,7 +185,13 @@ public final class RContext extends ExecutionContext implements TruffleObject {
             }
             try {
                 try {
-                    vm.eval(source);
+                    PolyglotEngine.Value resultValue = vm.eval(source);
+                    Object result = resultValue.get();
+                    if (result instanceof TruffleObject) {
+                        returnValue = resultValue.as(Object.class);
+                    } else {
+                        returnValue = result;
+                    }
                 } catch (ParseException e) {
                     e.report(context.getConsoleHandler());
                 } catch (IOException e) {
@@ -199,6 +206,10 @@ public final class RContext extends ExecutionContext implements TruffleObject {
                 context.destroy();
                 threads.remove(info.getId());
             }
+        }
+
+        public Object getReturnValue() {
+            return returnValue;
         }
     }
 

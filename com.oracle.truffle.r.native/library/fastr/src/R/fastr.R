@@ -104,8 +104,8 @@ fastr.context.join <- function(contexts) {
 }
 
 fastr.context.eval <- function(contexts, exprs, par=FALSE) {
-	.FastR(.NAME="context.eval", contexts, exprs, par)
-	invisible(NULL)
+	result = .FastR(.NAME="context.eval", contexts, exprs, par)
+	invisible(result)
 }
 
 fastr.context.pareval <- function(contexts, exprs) {

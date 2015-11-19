@@ -26,6 +26,7 @@ import java.io.*;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.vm.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -119,7 +120,8 @@ public class FastRContext {
     public abstract static class Eval extends RExternalBuiltinNode.Arg3 {
         @Specialization
         @TruffleBoundary
-        protected RNull eval(RAbstractIntVector contexts, RAbstractStringVector exprs, byte par) {
+        protected Object eval(RAbstractIntVector contexts, RAbstractStringVector exprs, byte par) {
+            Object[] results = new Object[contexts.getLength()];
             if (RRuntime.fromLogical(par)) {
                 RContext.EvalThread[] threads = new RContext.EvalThread[contexts.getLength()];
                 for (int i = 0; i < threads.length; i++) {
@@ -132,6 +134,7 @@ public class FastRContext {
                 try {
                     for (int i = 0; i < threads.length; i++) {
                         threads[i].join();
+                        results[i] = threads[i].getReturnValue();
                     }
                 } catch (InterruptedException ex) {
                     throw RError.error(this, RError.Message.GENERIC, "error finishing eval thread");
@@ -141,8 +144,15 @@ public class FastRContext {
                     ContextInfo info = checkContext(contexts.getDataAt(i), this);
                     PolyglotEngine vm = info.apply(PolyglotEngine.newBuilder()).build();
                     try {
-                        Source source = Source.fromText(exprs.getDataAt(i), "<eval>").withMimeType(RRuntime.R_APP_MIME);
-                        vm.eval(source);
+                        Source source = Source.fromText(exprs.getDataAt(i % exprs.getLength()), "<eval>").withMimeType(RRuntime.R_APP_MIME);
+                        PolyglotEngine.Value resultValue = vm.eval(source);
+                        Object result = resultValue.get();
+                        if (result instanceof TruffleObject) {
+                            Object returnValue = resultValue.as(Object.class);
+                            results[i] = returnValue;
+                        } else {
+                            results[i] = result;
+                        }
                     } catch (IOException e) {
                         throw RInternalError.shouldNotReachHere(e);
                     } finally {
@@ -150,7 +160,11 @@ public class FastRContext {
                     }
                 }
             }
-            return RNull.instance;
+            if (results.length == 1) {
+                return results[0];
+            } else {
+                return RDataFactory.createList(results);
+            }
         }
     }
 
