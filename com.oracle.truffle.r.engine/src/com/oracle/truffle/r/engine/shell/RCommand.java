@@ -235,19 +235,22 @@ public class RCommand {
                                 // drop through to continue REPL
                             } else if (cause instanceof QuitException || cause instanceof DebugExitException) {
                                 throw (RuntimeException) cause;
+                            } else if (cause instanceof RInternalError) {
+                                /*
+                                 * Placing this here makes it a non-fatal error. With default error
+                                 * logging the report will go to a file, so we print a message on
+                                 * the console as well.
+                                 */
+                                consoleHandler.println("internal error: " + e.getMessage() + " (see fastr_errors.log)");
+                                RInternalError.reportError(e);
                             } else {
-                                // This should never happen owing to earlier invariants
+                                /*
+                                 * This should never happen owing to earlier invariants of
+                                 * converting everything else to an RInternalError
+                                 */
                                 consoleHandler.println("unexpected internal error (" + e.getClass().getSimpleName() + "); " + e.getMessage());
                                 RInternalError.reportError(e);
                             }
-                        } catch (RInternalError e) {
-                            /*
-                             * Placing this here makes it a non-fatal error. With default error
-                             * logging the report will go to a file, so we print a message on the
-                             * console as well.
-                             */
-                            consoleHandler.println("internal error: " + e.getMessage() + " (see fastr_errors.log)");
-                            RInternalError.reportError(e);
                         }
                         continue REPL;
                     }

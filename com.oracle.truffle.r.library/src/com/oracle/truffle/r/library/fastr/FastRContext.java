@@ -26,7 +26,6 @@ import java.io.*;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.api.vm.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -34,6 +33,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RCmdOptions.Client;
 import com.oracle.truffle.r.runtime.conn.*;
 import com.oracle.truffle.r.runtime.context.*;
+import com.oracle.truffle.r.runtime.context.Engine.ParseException;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.nodes.*;
@@ -117,6 +117,12 @@ public class FastRContext {
         }
     }
 
+    /**
+     * The result of eval is a list of lists. The top level list has the same number of entries as
+     * the number of contexts. The sublist contains the result of the evaluation with name "result".
+     * It may also have an attribute "error" if the evaluation threw an exception, in which case the
+     * result will be NA.
+     */
     public abstract static class Eval extends RExternalBuiltinNode.Arg3 {
         @Specialization
         @TruffleBoundary
@@ -134,7 +140,7 @@ public class FastRContext {
                 try {
                     for (int i = 0; i < threads.length; i++) {
                         threads[i].join();
-                        results[i] = threads[i].getReturnValue();
+                        results[i] = threads[i].getEvalResult();
                     }
                 } catch (InterruptedException ex) {
                     throw RError.error(this, RError.Message.GENERIC, "error finishing eval thread");
@@ -146,28 +152,24 @@ public class FastRContext {
                     try {
                         Source source = Source.fromText(exprs.getDataAt(i % exprs.getLength()), "<eval>").withMimeType(RRuntime.R_APP_MIME);
                         PolyglotEngine.Value resultValue = vm.eval(source);
-                        Object result = resultValue.get();
-                        if (result == null) {
-                            // this means an error occurred and there is no result
-                            results[i] = RRuntime.LOGICAL_NA;
-                        } else if (result instanceof TruffleObject) {
-                            Object returnValue = resultValue.as(Object.class);
-                            results[i] = returnValue;
-                        } else {
-                            results[i] = result;
-                        }
+                        results[i] = RContext.EvalThread.createEvalResult(resultValue);
+                    } catch (ParseException e) {
+                        e.report(info.getConsoleHandler());
+                        results[i] = RContext.EvalThread.createErrorResult(e.getMessage());
                     } catch (IOException e) {
-                        throw RInternalError.shouldNotReachHere(e);
+                        // This is an unhandled exception, e.g. RInternalError
+                        Throwable cause = e.getCause();
+                        if (cause instanceof RInternalError) {
+                            info.getConsoleHandler().println("internal error: " + e.getMessage() + " (see fastr_errors.log)");
+                            RInternalError.reportError(e);
+                        }
+                        results[i] = RContext.EvalThread.createErrorResult(e.getCause().getMessage());
                     } finally {
                         vm.dispose();
                     }
                 }
             }
-            if (results.length == 1) {
-                return results[0];
-            } else {
-                return RDataFactory.createList(results);
-            }
+            return RDataFactory.createList(results);
         }
     }
 

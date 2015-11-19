@@ -58,7 +58,9 @@ import com.oracle.truffle.r.runtime.conn.ConnectionSupport;
 import com.oracle.truffle.r.runtime.conn.StdConnections;
 import com.oracle.truffle.r.runtime.context.Engine.ParseException;
 import com.oracle.truffle.r.runtime.data.RBuiltinDescriptor;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.ffi.RFFIContextStateFactory;
 import com.oracle.truffle.r.runtime.instrument.TraceState;
@@ -143,7 +145,7 @@ public final class RContext extends ExecutionContext implements TruffleObject {
     /**
      * A thread that is explicitly associated with a context for efficient lookup.
      */
-    public static abstract class ContextThread extends Thread {
+    public abstract static class ContextThread extends Thread {
         private RContext context;
 
         public ContextThread(RContext context) {
@@ -164,7 +166,7 @@ public final class RContext extends ExecutionContext implements TruffleObject {
 
         private final Source source;
         private final ContextInfo info;
-        private Object returnValue;
+        private RList evalResult;
 
         public static final Map<Integer, Thread> threads = new ConcurrentHashMap<>();
 
@@ -186,24 +188,17 @@ public final class RContext extends ExecutionContext implements TruffleObject {
             try {
                 try {
                     PolyglotEngine.Value resultValue = vm.eval(source);
-                    Object result = resultValue.get();
-                    if (result == null) {
-                        // this means an error occurred and there is no result
-                        returnValue = RRuntime.LOGICAL_NA;
-                    } else if (result instanceof TruffleObject) {
-                        returnValue = resultValue.as(Object.class);
-                    } else {
-                        returnValue = result;
-                    }
+                    evalResult = createEvalResult(resultValue);
                 } catch (ParseException e) {
                     e.report(info.getConsoleHandler());
+                    evalResult = createErrorResult(e.getMessage());
                 } catch (IOException e) {
-                    if (e.getCause() instanceof RError) {
-                        RInternalError.reportError(e.getCause());
-                    } else {
-                        info.getConsoleHandler().println("unexpected internal error (" + e.getClass().getSimpleName() + "); " + e.getMessage());
+                    Throwable cause = e.getCause();
+                    if (cause instanceof RInternalError) {
+                        info.getConsoleHandler().println("internal error: " + e.getMessage() + " (see fastr_errors.log)");
                         RInternalError.reportError(e);
                     }
+                    evalResult = createErrorResult(e.getCause().getMessage());
                 }
             } finally {
                 vm.dispose();
@@ -211,9 +206,41 @@ public final class RContext extends ExecutionContext implements TruffleObject {
             }
         }
 
-        public Object getReturnValue() {
-            return returnValue;
+        /**
+         * The result is an {@link RList} contain the value, plus an "error" attribute if the
+         * evaluation resulted in an error.
+         */
+        public static RList createEvalResult(PolyglotEngine.Value resultValue) throws IOException {
+            Object result = resultValue.get();
+            Object listResult = result;
+            String error = null;
+            if (result == null) {
+                // this means an error occurred and there is no result
+                listResult = RRuntime.LOGICAL_NA;
+                error = "R error";
+            } else if (result instanceof TruffleObject) {
+                listResult = resultValue.as(Object.class);
+            } else {
+                listResult = result;
+            }
+            RList list = RDataFactory.createList(new Object[]{listResult});
+            if (error != null) {
+                list.setAttr("error", error);
+            }
+            return list;
         }
+
+        public static RList createErrorResult(String errorMsg) {
+            RList list = RDataFactory.createList(new Object[]{RRuntime.LOGICAL_NA});
+            list.setAttr("error", errorMsg);
+            return list;
+
+        }
+
+        public RList getEvalResult() {
+            return evalResult;
+        }
+
     }
 
     private final ContextInfo info;
