@@ -522,7 +522,7 @@ def load_optional_suite(name, rev):
     return opt_suite
 
 _r_apptests_rev = '3193941e22ac8fd798ad5ae598865a6a8ba2a147'
-_r_benchmarks_rev = '17a5870f87d3b56c769990721073b1f280b41729'
+_r_benchmarks_rev = 'e3c1aa0a7d8464a6eac04bec1e40a432a36b7635'
 
 def mx_post_parse_cmd_line(opts):
     # load optional suites, r_apptests first so r_benchmarks can find it
