@@ -29,12 +29,14 @@
 OS_NAME := $(shell uname)
 OS_DIR := $(shell echo $(OS_NAME) | tr '[:upper:]' '[:lower:]' )
 
-# need to work from etc/Makeconf as that is the package building version
-
 all: $(TOPDIR)/platform.mk
 
+# need to get BLAS and LAPACK defns from etc/Makeconf
+
 $(TOPDIR)/platform.mk: sedMakeconf $(GNUR_HOME)/Makeconf Makefile
-	sed -f sedMakeconf $(GNUR_HOME)/etc/Makeconf > /dev/null 2>&1
+	sed -f sedMakeconf $(GNUR_HOME)/Makeconf > /dev/null 2>&1
+	sed -f sedEtcMakeconf $(GNUR_HOME)/etc/Makeconf > /dev/null 2>&1
+	cat platform.mk.temp1 platform.mk.temp2 > platform.mk.temp
 	ed platform.mk.temp < edAddFASTR
 	echo OS_NAME = $(OS_NAME) >> platform.mk.temp
 ifeq ($(OS_NAME),SunOS)

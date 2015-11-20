@@ -1,0 +1,2 @@
+/^BLAS_LIBS =.*/ w platform.mk.temp2
+/^LAPACK_LIBS =.*/ w platform.mk.temp2
