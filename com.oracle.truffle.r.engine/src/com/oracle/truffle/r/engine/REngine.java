@@ -488,15 +488,10 @@ final class REngine implements Engine, Engine.Timings {
      * {@code callTarget}. When execution reaches {@link FunctionDefinitionNode#execute},
      * {@code frame} will be accessible via {@code newFrame.getArguments()[0]}, and the execution
      * will continue using {@code frame}.
-     *
-     * TODO This method is perhaps too generic for the different cases it handles, e.g. promise
-     * evaluation, so the exception handling in particular is overly complex. Maybe it should be
-     * refactored into separate methods to reflect the usages more precisely.
      */
     private Object runCall(RootCallTarget callTarget, MaterializedFrame frame, boolean printResult, boolean topLevel) {
         Object result = null;
         try {
-            // FIXME: callTargets should only be called via Direct/IndirectCallNode
             result = callTarget.call(frame);
             assert checkResult(result);
             if (printResult && result != null) {
@@ -528,8 +523,8 @@ final class REngine implements Engine, Engine.Timings {
             } else if (e instanceof RuntimeException) {
                 throw (RuntimeException) e;
             } else {
-                // TODO can this happen? I don't think so
-                throw new RInternalError(e, "throwable caught while evaluating");
+                /* This should never happen given the logic in FunctionDefinitionNode.execute */
+                assert false;
             }
         }
         return result;
