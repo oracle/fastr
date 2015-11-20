@@ -89,7 +89,7 @@ $(OBJ):
 
 $(LIB_PKG): $(C_OBJECTS) $(F_OBJECTS) $(PKGDIR)
 	mkdir -p $(LIBDIR)
-	$(DYLIB_LD) $(DYLIB_LDFLAGS) -o $(LIB_PKG) $(C_OBJECTS) $(F_OBJECTS) $(FLIBS_IN_SO)
+	$(DYLIB_LD) $(DYLIB_LDFLAGS) -o $(LIB_PKG) $(C_OBJECTS) $(F_OBJECTS) $(PKG_LIBS)
 	mkdir -p $(FASTR_LIBDIR)/$(PKG)/libs
 	cp $(LIB_PKG) $(FASTR_LIBDIR)/$(PKG)/libs
 

@@ -37,7 +37,6 @@
 
 .PHONY: bindir all rcmd
 
-FASTR_R_HOME := $(abspath $(TOPDIR)/..)
 FASTR_BIN_DIR := $(FASTR_R_HOME)/bin
 FASTR_ETC_DIR := $(FASTR_R_HOME)/etc
 FASTR_SHARE_DIR := $(FASTR_R_HOME)/share

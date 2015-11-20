@@ -26,6 +26,7 @@
 .PHONY: all clean 
 
 export TOPDIR = $(CURDIR)
+export FASTR_R_HOME=$(abspath $(TOPDIR)/..)
 export R_VERSION = 3.1.3
 export GNUR_HOME = $(TOPDIR)/gnur/R-$(R_VERSION)
 

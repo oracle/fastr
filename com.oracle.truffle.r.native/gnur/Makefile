@@ -34,5 +34,9 @@ clean: cleangnur
 	$(MAKE) -f Makefile.libs clean
 	$(MAKE) -f Makefile.platform clean
 
+ifdef GNUR_NOCLEAN
+cleangnur:
+else
 cleangnur:
 	$(MAKE) -f Makefile.gnur clean
+endif

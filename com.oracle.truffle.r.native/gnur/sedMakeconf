@@ -4,5 +4,7 @@
 /^F77 =.*/ w platform.mk.temp
 /^FFLAGS =.*/ w platform.mk.temp
 /^FPICFLAGS =.*/ w platform.mk.temp
-/^FLIBS_IN_SO =.*/ w platform.mk.temp
+/^FLIBS =.*/ w platform.mk.temp
+/^BLAS_LIBS =.*/ w platform.mk.temp
+/^LAPACK_LIBS =.*/ w platform.mk.temp
 /^SHLIB_.* = .*/ w platform.mk.temp
