@@ -61,7 +61,7 @@ fastr.createpkgsources <- function(pkgs = NULL) {
 	if (missing(pattern)) {
 		names <- ls(envir=ns, all.names=TRUE)
 	} else {
-		names <- ls(pattern=name, envir=ns, all.names=TRUE)
+		names <- ls(pattern=pattern, envir=ns, all.names=TRUE)
 	}
 	for (n in names) {
 		.FastR(.NAME="pkgsource.pre", pkg, n)
