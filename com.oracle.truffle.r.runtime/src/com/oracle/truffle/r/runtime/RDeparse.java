@@ -1052,7 +1052,9 @@ public class RDeparse {
                         switch (arginfo.kind) {
                             case BINARY:
                             case BINARY2: {
-                                switch (pl.getLength()) {
+                                Object cdr = pl.cdr();
+                                int length = (cdr instanceof RPairList) ? ((RPairList) cdr).getLength() : 1;
+                                switch (length) {
                                     case 1:
                                         if (!left) {
                                             return false;
