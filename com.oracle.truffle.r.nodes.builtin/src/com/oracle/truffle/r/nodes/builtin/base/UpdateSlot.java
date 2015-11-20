@@ -86,7 +86,7 @@ public abstract class UpdateSlot extends RBuiltinNode {
         if (checkSlotAssignFunction == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             checkSlotAssignFunction = (RFunction) checkAtAssignmentFind.execute(frame);
-            checkAtAssignmentCall = Truffle.getRuntime().createDirectCallNode(checkSlotAssignFunction.getTarget());
+            checkAtAssignmentCall = insert(Truffle.getRuntime().createDirectCallNode(checkSlotAssignFunction.getTarget()));
             assert objClassHierarchy == null && valClassHierarchy == null;
             objClassHierarchy = insert(ClassHierarchyNodeGen.create(true));
             valClassHierarchy = insert(ClassHierarchyNodeGen.create(true));

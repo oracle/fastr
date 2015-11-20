@@ -16,7 +16,6 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.MaterializedFrame;
@@ -24,8 +23,6 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.DirectCallNode;
 import com.oracle.truffle.api.utilities.BranchProfile;
 import com.oracle.truffle.api.utilities.ConditionProfile;
-import com.oracle.truffle.r.nodes.access.WriteLocalFrameVariableNode;
-import com.oracle.truffle.r.nodes.access.WriteVariableNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode.ReadKind;
 import com.oracle.truffle.r.nodes.attributes.AttributeAccess;
@@ -34,16 +31,16 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.function.signature.RArgumentsNode;
 import com.oracle.truffle.r.nodes.objects.CollectGenericArgumentsNode;
 import com.oracle.truffle.r.nodes.objects.CollectGenericArgumentsNodeGen;
+import com.oracle.truffle.r.nodes.objects.DispatchGeneric;
+import com.oracle.truffle.r.nodes.objects.DispatchGenericNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastIntegerScalarNode;
 import com.oracle.truffle.r.nodes.unary.CastStringScalarNode;
 import com.oracle.truffle.r.nodes.unary.CastStringScalarNodeGen;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.REnvironment;
-import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 
 // transcribed from src/main/objects.c
@@ -86,7 +83,7 @@ public abstract class StandardGeneric extends RBuiltinNode {
             if (getMethodsTableFunction == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 getMethodsTableFunction = (RFunction) getMethodsTableFind.execute(null, methodsEnv.getFrame());
-                getMethodsTableCall = Truffle.getRuntime().createDirectCallNode(getMethodsTableFunction.getTarget());
+                getMethodsTableCall = insert(Truffle.getRuntime().createDirectCallNode(getMethodsTableFunction.getTarget()));
             }
             RFunction currentFunction = (RFunction) getMethodsTableFind.execute(null, methodsEnv.getFrame());
             if (cached.profile(currentFunction == getMethodsTableFunction)) {
@@ -110,8 +107,8 @@ public abstract class StandardGeneric extends RBuiltinNode {
         }
 
         String[] classes = collectArgumentsNode.execute(frame, sigArgs, sigLength);
-        dispatchGeneric.executeObject(frame, methodsEnv, mtable, RDataFactory.createStringVector(classes, RDataFactory.COMPLETE_VECTOR), fdef, fname);
-        return null;
+        Object ret = dispatchGeneric.executeObject(frame, methodsEnv, mtable, RDataFactory.createStringVector(classes, RDataFactory.COMPLETE_VECTOR), fdef, fname);
+        return ret;
     }
 
     @Specialization(guards = "fVec.getLength() > 0")
@@ -161,160 +158,5 @@ public abstract class StandardGeneric extends RBuiltinNode {
             throw RError.error(this, RError.Message.EXPECTED_GENERIC, cl.getLength() == 0 ? RRuntime.STRING_NA : cl.getDataAt(0));
         }
     }
-
-}
-
-abstract class DispatchGeneric extends RBaseNode {
-
-    public abstract Object executeObject(VirtualFrame frame, REnvironment methodsEnv, REnvironment mtable, RStringVector classes, RFunction fdef, String fname);
-
-    private final ConditionProfile singleStringProfile = ConditionProfile.createBinaryProfile();
-    private final ConditionProfile cached = ConditionProfile.createBinaryProfile();
-    private final RCaller caller = RDataFactory.createCaller(this);
-    @Child private ReadVariableNode inheritForDispatchFind;
-    @Child private DirectCallNode inheritForDispatchCall;
-    @CompilationFinal private RFunction inheritForDispatchFunction;
-    @Child private RArgumentsNode argsNode = RArgumentsNode.create();
-    @Child private LoadMethod loadMethod = LoadMethodNodeGen.create();
-
-    @TruffleBoundary
-    private static String createMultiDispatchString(RStringVector classes) {
-        StringBuffer sb = new StringBuffer();
-        for (int i = 0; i < classes.getLength(); i++) {
-            if (i > 0) {
-                sb.append('#');
-            }
-            sb.append(classes.getDataAt(i));
-        }
-        return sb.toString();
-    }
-
-    protected String createDispatchString(RStringVector classes) {
-        if (singleStringProfile.profile(classes.getLength() == 1)) {
-            return classes.getDataAt(0);
-        } else {
-            return createMultiDispatchString(classes);
-        }
-    }
-
-    protected ReadVariableNode createTableRead(String dispatchString) {
-        return ReadVariableNode.create(dispatchString, RType.Any, ReadKind.SilentLocal);
-    }
-
-    @SuppressWarnings("unused")
-    @Specialization(guards = "equalClasses(classes, cachedClasses)")
-    protected Object dispatch(VirtualFrame frame, REnvironment methodsEnv, REnvironment mtable, RStringVector classes, RFunction fdef, String fname, @Cached("classes") RStringVector cachedClasses,
-                    @Cached("createDispatchString(cachedClasses)") String dispatchString, @Cached("createTableRead(dispatchString)") ReadVariableNode tableRead) {
-        RFunction method = (RFunction) tableRead.execute(null, mtable.getFrame());
-        if (method == null) {
-            if (inheritForDispatchFind == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                inheritForDispatchFind = insert(ReadVariableNode.create(".InheritForDispatch", RType.Function, ReadKind.Normal));
-                inheritForDispatchFunction = (RFunction) inheritForDispatchFind.execute(null, methodsEnv.getFrame());
-                inheritForDispatchCall = Truffle.getRuntime().createDirectCallNode(inheritForDispatchFunction.getTarget());
-
-            }
-            RFunction currentFunction = (RFunction) inheritForDispatchFind.execute(null, methodsEnv.getFrame());
-            if (cached.profile(currentFunction == inheritForDispatchFunction)) {
-                Object[] args = argsNode.execute(inheritForDispatchFunction, caller, null, RArguments.getDepth(frame) + 1, new Object[]{classes, fdef, mtable},
-                                ArgumentsSignature.get("classes", "fdef", "mtable"), null);
-                method = (RFunction) inheritForDispatchCall.call(frame, args);
-            } else {
-                // slow path
-                method = (RFunction) RContext.getEngine().evalFunction(currentFunction, frame.materialize(), classes, fdef, mtable);
-            }
-        }
-        method = loadMethod.executeRFunction(frame, methodsEnv, fdef, fname);
-        return null;
-    }
-
-    protected boolean equalClasses(RStringVector classes, RStringVector cachedClasses) {
-        if (cachedClasses.getLength() == classes.getLength()) {
-            for (int i = 0; i < cachedClasses.getLength(); i++) {
-                // TODO: makes sure equality is good enough here, but it's for optimization only
-                // anwyay
-                if (cachedClasses.getDataAt(i) != classes.getDataAt(i)) {
-                    return false;
-                }
-            }
-            return true;
-        }
-        return false;
-    }
-}
-
-abstract class LoadMethod extends RBaseNode {
-
-    public abstract RFunction executeRFunction(VirtualFrame frame, REnvironment methodsEnv, RAttributable fdef, String fname);
-
-    @Child private WriteLocalFrameVariableNode writeRTarget = WriteLocalFrameVariableNode.create(RRuntime.R_DOT_TARGET, null, WriteVariableNode.Mode.REGULAR);
-    @Child private WriteLocalFrameVariableNode writeRDefined = WriteLocalFrameVariableNode.create(RRuntime.R_DOT_DEFINED, null, WriteVariableNode.Mode.REGULAR);
-    @Child private WriteLocalFrameVariableNode writeRNextMethod = WriteLocalFrameVariableNode.create(RRuntime.R_DOT_NEXT_METHOD, null, WriteVariableNode.Mode.REGULAR);
-    @Child private WriteLocalFrameVariableNode writeRMethod = WriteLocalFrameVariableNode.create(RRuntime.R_DOT_METHOD, null, WriteVariableNode.Mode.REGULAR);
-    @Child private ReadVariableNode loadMethodFind;
-    @Child private DirectCallNode loadMethodCall;
-    @CompilationFinal private RFunction loadMethodFunction;
-    @Child private RArgumentsNode argsNode = RArgumentsNode.create();
-    private final ConditionProfile cached = ConditionProfile.createBinaryProfile();
-    private final ConditionProfile moreAttributes = ConditionProfile.createBinaryProfile();
-    private final RCaller caller = RDataFactory.createCaller(this);
-
-    @Specialization
-    protected RFunction loadMethod(VirtualFrame frame, REnvironment methodsEnv, RFunction fdef, String fname) {
-        assert fdef.getAttributes() != null; // should have at least class attribute
-        int found = 1;
-        for (RAttribute attr : fdef.getAttributes()) {
-            String name = attr.getName();
-            assert name == name.intern();
-            if (name == RRuntime.R_TARGET) {
-                writeRTarget.execute(frame, attr.getValue());
-                found++;
-            } else if (name == RRuntime.R_DEFINED) {
-                writeRDefined.execute(frame, attr.getValue());
-                found++;
-            } else if (name == RRuntime.R_NEXT_METHOD) {
-                writeRNextMethod.execute(frame, attr.getValue());
-                found++;
-            } else if (name == RRuntime.R_SOURCE) {
-                found++;
-            }
-        }
-        writeRMethod.execute(frame, fdef);
-        if ("loadMethod".equals(fname)) {
-            // the loadMethod function contains the following call:
-            // standardGeneric("loadFunction")
-            // which we are handling here, so == is fine
-            return fdef;
-        }
-        assert !fname.equals("loadMethod");
-        RFunction ret;
-        if (moreAttributes.profile(found < fdef.getAttributes().size())) {
-            if (loadMethodFind == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                loadMethodFind = insert(ReadVariableNode.create("loadMethod", RType.Function, ReadKind.Normal));
-                loadMethodFunction = (RFunction) loadMethodFind.execute(null, methodsEnv.getFrame());
-                loadMethodCall = Truffle.getRuntime().createDirectCallNode(loadMethodFunction.getTarget());
-
-            }
-            RFunction currentFunction = (RFunction) loadMethodFind.execute(null, methodsEnv.getFrame());
-            if (cached.profile(currentFunction == loadMethodFunction)) {
-                Object[] args = argsNode.execute(loadMethodFunction, caller, null, RArguments.getDepth(frame) + 1, new Object[]{fdef, fname, REnvironment.frameToEnvironment(frame.materialize())},
-                                ArgumentsSignature.get("method", "fname", "envir"), null);
-                ret = (RFunction) loadMethodCall.call(frame, args);
-            } else {
-                // slow path
-                ret = (RFunction) RContext.getEngine().evalFunction(currentFunction, frame.materialize(), fdef, fname, REnvironment.frameToEnvironment(frame.materialize()));
-            }
-
-        } else {
-            ret = fdef;
-        }
-        return ret;
-    }
-}
-
-abstract class CallGeneric extends RBaseNode {
-
-    public abstract Object executeObject(RFunction mtable, String[] classes);
 
 }

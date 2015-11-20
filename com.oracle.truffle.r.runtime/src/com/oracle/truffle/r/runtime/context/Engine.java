@@ -176,6 +176,11 @@ public interface Engine {
     Object evalPromise(RPromise.Closure closure, MaterializedFrame frame);
 
     /**
+     * Evaluates a function during S4 generic dispatch in {@code frame}.
+     */
+    Object evalGeneric(RFunction func, MaterializedFrame frame);
+
+    /**
      * Checks for the existence of {@code .Last/.Last.sys} and if present and bound to a function,
      * invokes the (parameterless) function.
      */

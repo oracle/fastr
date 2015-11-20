@@ -31,6 +31,7 @@ import org.antlr.runtime.NoViableAltException;
 import org.antlr.runtime.RecognitionException;
 import org.antlr.runtime.Token;
 
+import com.kenai.jffi.Util;
 import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -46,6 +47,7 @@ import com.oracle.truffle.api.impl.FindContextNode;
 import com.oracle.truffle.api.instrument.QuitException;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.nodes.NodeUtil;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
@@ -433,6 +435,16 @@ final class REngine implements Engine, Engine.Timings {
 
     public Object evalPromise(Closure closure, MaterializedFrame frame) {
         return runCall(closure.getCallTarget(), frame, false, false);
+    }
+
+    public Object evalGeneric(RFunction func, MaterializedFrame frame) {
+        FrameDescriptor descriptor = frame.getFrameDescriptor();
+        FunctionDefinitionNode fdn = (FunctionDefinitionNode) func.getRootNode();
+        FormalArguments formals = ((RRootNode) func.getRootNode()).getFormalArguments();
+        FunctionDefinitionNode rootNode = new FunctionDefinitionNode(fdn.getSourceSection(), descriptor, NodeUtil.cloneNode(fdn.getBody()), formals, "GENERIC EVAL", true, true, null);
+        RootCallTarget callTarget = Truffle.getRuntime().createCallTarget(rootNode);
+        MaterializedFrame vFrame = VirtualEvalFrame.create(frame, (RFunction) null, RArguments.getCall(frame), RArguments.getDepth(frame));
+        return runCall(callTarget, vFrame, false, false);
     }
 
     /**

@@ -152,7 +152,7 @@ public class RRuntime {
     public static final String R_NEXT_METHOD = "nextMethod";
     public static final String R_DOT_NEXT_METHOD = ".nextMethod";
     public static final String R_LOAD_METHOD_NAME = "loadMethod";
-    public static final String R_DOT_METHOD = ".Method";
+    public static final String R_DOT_METHODS = ".Methods";
     public static final String R_SOURCE = "source";
 
     public static final String NULL = "NULL";
