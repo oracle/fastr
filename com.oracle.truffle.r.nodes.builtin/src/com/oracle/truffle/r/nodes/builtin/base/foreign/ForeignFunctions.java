@@ -85,7 +85,7 @@ public class ForeignFunctions {
         Object list = RNull.instance;
         for (int i = args.getLength() - 1; i >= 0; i--) {
             String name = args.getSignature().getName(i);
-            list = RDataFactory.createPairList(args.getArgument(i), list, name == null ? RNull.instance : RDataFactory.createSymbol(name.intern()));
+            list = RDataFactory.createPairList(args.getArgument(i), list, name == null ? RNull.instance : RDataFactory.createSymbolInterned(name));
         }
         list = RDataFactory.createPairList(symbolName, list);
         return list;

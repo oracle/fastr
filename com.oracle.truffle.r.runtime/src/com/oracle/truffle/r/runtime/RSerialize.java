@@ -671,7 +671,7 @@ public class RSerialize {
 
                 case SYMSXP: {
                     String name = (String) readItem();
-                    result = RDataFactory.createSymbol(name.intern());
+                    result = RDataFactory.createSymbolInterned(name);
                     addReadRef(result);
                     break;
                 }
@@ -1833,7 +1833,7 @@ public class RSerialize {
             RSymbol symbol = symbolMap.get(name);
             if (symbol == null) {
                 CompilerAsserts.neverPartOfCompilation(); // for interning
-                symbol = RDataFactory.createSymbol(name.intern());
+                symbol = RDataFactory.createSymbolInterned(name);
                 symbolMap.put(name, symbol);
             }
             return symbol;

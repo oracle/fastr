@@ -371,7 +371,8 @@ public final class RDataFactory {
     }
 
     /*
-     * A version of {@link createSymbol} method used from native code.
+     * A version of {@link createSymbol} method mostly used from native code and in
+     * serialization/deparsing.
      */
     public static RSymbol createSymbolInterned(String name) {
         return createSymbol(name.intern());

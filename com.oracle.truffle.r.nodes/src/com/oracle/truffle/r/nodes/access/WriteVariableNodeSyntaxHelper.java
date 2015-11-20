@@ -61,7 +61,7 @@ abstract class WriteVariableNodeSyntaxHelper extends WriteVariableNode {
                 return RDataFactory.createSymbol(op);
             case 1:
                 CompilerAsserts.neverPartOfCompilation();
-                return RDataFactory.createSymbol(getName().toString().intern());
+                return RDataFactory.createSymbolInterned(getName().toString());
             case 2:
                 return RASTUtils.createLanguageElement(getRhs());
             default:

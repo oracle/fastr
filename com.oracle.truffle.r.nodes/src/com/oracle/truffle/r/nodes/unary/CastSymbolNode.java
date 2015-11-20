@@ -61,7 +61,7 @@ public abstract class CastSymbolNode extends CastBaseNode {
     @Specialization
     protected RSymbol doString(String value) {
         // TODO: see if this is going to hit us performance-wise
-        return RDataFactory.createSymbol(value.intern());
+        return RDataFactory.createSymbolInterned(value);
     }
 
     @Specialization
@@ -87,8 +87,7 @@ public abstract class CastSymbolNode extends CastBaseNode {
 
     @TruffleBoundary
     private static RSymbol backQuote(String s) {
-        String quotedString = "`" + s + "`";
-        return RDataFactory.createSymbol(quotedString.intern());
+        return RDataFactory.createSymbolInterned("`" + s + "`");
     }
 
     public static CastSymbolNode createNonPreserving() {

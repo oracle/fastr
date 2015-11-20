@@ -207,7 +207,7 @@ public class DLL {
 
     public static RExternalPtr createExternalPtr(long value, RStringVector rClass) {
         CompilerAsserts.neverPartOfCompilation(); // for interning
-        RExternalPtr result = RDataFactory.createExternalPtr(value, RDataFactory.createSymbol(rClass.getDataAt(0).intern()));
+        RExternalPtr result = RDataFactory.createExternalPtr(value, RDataFactory.createSymbolInterned(rClass.getDataAt(0)));
         result.setClassAttr(rClass, false);
         return result;
     }

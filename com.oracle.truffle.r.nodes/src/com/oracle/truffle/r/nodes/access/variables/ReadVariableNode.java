@@ -181,7 +181,6 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
     @Override
     public Object getRelementImpl(int index) {
         String id = identifier.toString();
-        assert id == id.intern();
         return RDataFactory.createSymbol(id);
     }
 

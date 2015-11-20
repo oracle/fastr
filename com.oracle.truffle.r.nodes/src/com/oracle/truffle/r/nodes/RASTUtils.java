@@ -115,7 +115,7 @@ public class RASTUtils {
     public static RSymbol createRSymbol(Node readVariableNode) {
         if (readVariableNode instanceof ReadVariadicComponentNode) {
             ReadVariadicComponentNode rvcn = (ReadVariadicComponentNode) readVariableNode;
-            return RDataFactory.createSymbol(rvcn.getPrintForm().intern());
+            return RDataFactory.createSymbolInterned(rvcn.getPrintForm());
         } else {
             String id = ((ReadVariableNode) readVariableNode).getIdentifier();
             assert id == id.intern();
@@ -245,16 +245,16 @@ public class RASTUtils {
         } else if (child instanceof GroupDispatchNode) {
             GroupDispatchNode groupDispatchNode = (GroupDispatchNode) child;
             String gname = groupDispatchNode.getGenericName();
-            return RDataFactory.createSymbol(gname.intern());
+            return RDataFactory.createSymbolInterned(gname);
         } else if (child instanceof RBuiltinNode) {
             RBuiltinNode builtinNode = (RBuiltinNode) child;
-            return RDataFactory.createSymbol((builtinNode.getBuiltin().getName().intern()));
+            return RDataFactory.createSymbolInterned((builtinNode.getBuiltin().getName()));
         } else {
             // TODO This should really fail in some way as (clearly) this is not a "name"
             // some more complicated expression, just deparse it
             RDeparse.State state = RDeparse.State.createPrintableState();
             child.deparse(state);
-            return RDataFactory.createSymbol(state.toString().intern());
+            return RDataFactory.createSymbolInterned(state.toString());
         }
     }
 

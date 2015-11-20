@@ -254,7 +254,7 @@ public class FrameFunctions {
                             }
                             pl.setCar(listValue);
                             if (varArgSignature.getName(i2) != null) {
-                                pl.setTag(RDataFactory.createSymbol(varArgSignature.getName(i2).intern()));
+                                pl.setTag(RDataFactory.createSymbolInterned(varArgSignature.getName(i2)));
                             }
                             if (prev != null) {
                                 prev.setCdr(pl);
@@ -313,7 +313,7 @@ public class FrameFunctions {
             int vn = varArgNode.getIndex() + 1;
             CompilerAsserts.neverPartOfCompilation(); // for string concatenation and interning
             String varArgSymbol = (vn < 10 ? ".." : ".") + vn;
-            return RDataFactory.createSymbol(varArgSymbol.intern());
+            return RDataFactory.createSymbolInterned(varArgSymbol);
         }
 
         @Specialization
