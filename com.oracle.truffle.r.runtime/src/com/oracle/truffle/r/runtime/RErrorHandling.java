@@ -227,7 +227,12 @@ public class RErrorHandling {
     }
 
     private static Object restartExit(RList restart) {
-        return restart.getDataAt(0);
+        Object dataAt = restart.getDataAt(0);
+        if (dataAt == RNull.instance) {
+            return dataAt;
+        } else {
+            return RString.assumeSingleString(dataAt);
+        }
     }
 
     private static MaterializedFrame restartFrame(RList restart) {

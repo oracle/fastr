@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
-import com.oracle.truffle.api.CompilerDirectives.ValueType;
+import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.closures.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -73,4 +73,19 @@ public final class RString extends RScalarVector implements RAbstractStringVecto
     public boolean isNA() {
         return !RRuntime.isComplete(value);
     }
+
+    /*
+     * Not built for the fast path. Use appropiate nodes instead.
+     */
+    @TruffleBoundary
+    public static String assumeSingleString(Object value) {
+        if (value instanceof String) {
+            return (String) value;
+        } else if (value instanceof RAbstractStringVector) {
+            return ((RAbstractStringVector) value).getDataAt(0);
+        } else {
+            throw new AssertionError();
+        }
+    }
+
 }
