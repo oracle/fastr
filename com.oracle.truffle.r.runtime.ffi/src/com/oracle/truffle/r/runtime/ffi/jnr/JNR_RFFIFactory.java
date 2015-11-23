@@ -46,6 +46,10 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI {
          * called from R code. So we eagerly load the library to define the symbols.
          */
         JNR_RAppl.linpack();
+        /*
+         * Same for Rlapack (used by stats).
+         */
+        getLapackRFFI().ilaver(new int[3]);
     }
 
     /**
