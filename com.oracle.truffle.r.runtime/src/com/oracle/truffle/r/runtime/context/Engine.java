@@ -181,10 +181,10 @@ public interface Engine {
     Object evalGeneric(RFunction func, MaterializedFrame frame);
 
     /**
-     * Checks for the existence of {@code .Last/.Last.sys} and if present and bound to a function,
-     * invokes the (parameterless) function.
+     * Checks for the existence of (startup/shutdown) function {@code name} and, if present, invokes
+     * the function with the given {@code args}.
      */
-    void checkAndRunLast(String name);
+    void checkAndRunStartupShutdownFunction(String name, String... args);
 
     /**
      * Wraps the Truffle AST in {@code body} in an anonymous function and returns a

@@ -87,12 +87,16 @@ public abstract class Quit extends RInvisibleBuiltinNode {
         }
 
         if (doSave) {
-            consoleHandler.println("Image saving is not implemented");
+            /*
+             * we do not have an efficient way to tell if the global environment is "dirty", so we
+             * save always
+             */
+            RContext.getEngine().checkAndRunStartupShutdownFunction("sys.save.image", new String[]{"\".RData\""});
         }
         if (runLast != 0) {
-            RContext.getEngine().checkAndRunLast(".Last");
+            RContext.getEngine().checkAndRunStartupShutdownFunction(".Last");
             // TODO errors should return to prompt if interactive
-            RContext.getEngine().checkAndRunLast(".Last.sys");
+            RContext.getEngine().checkAndRunStartupShutdownFunction(".Last.sys");
         }
         // destroy the context inside exit() method as it still needs to access it
         Utils.exit(status);

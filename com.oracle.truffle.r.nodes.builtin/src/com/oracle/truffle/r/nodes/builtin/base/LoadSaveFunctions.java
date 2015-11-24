@@ -12,11 +12,16 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
+
 import java.io.*;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.builtin.base.SerializeFunctions.Adapter;
+import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.conn.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -27,7 +32,7 @@ import com.oracle.truffle.r.runtime.ops.na.*;
 
 // from src/main/saveload.c
 
-public class LoadFunctions {
+public class LoadSaveFunctions {
 
     @RBuiltin(name = "loadFromConn2", kind = RBuiltinKind.INTERNAL, parameterNames = {"con", "envir", "verbose"})
     public abstract static class LoadFromConn2 extends RInvisibleBuiltinNode {
@@ -42,6 +47,9 @@ public class LoadFunctions {
                 String s = openConn.readChar(5, true);
                 if (s.equals("RDA2\n") || s.equals("RDB2\n") || s.equals("RDX2\n")) {
                     Object o = RSerialize.unserialize(con);
+                    if (o == RNull.instance) {
+                        return RDataFactory.createEmptyStringVector();
+                    }
                     if (!(o instanceof RPairList)) {
                         throw RError.error(this, RError.Message.GENERIC, "loaded data is not in pair list form");
                     }
@@ -148,4 +156,62 @@ public class LoadFunctions {
             }
         }
     }
+
+    @RBuiltin(name = "saveToConn", kind = INTERNAL, parameterNames = {"list", "conn", "ascii", "version", "envir", "eval.promises"})
+    public abstract static class SaveToConn extends Adapter {
+        private static final String ASCII_HEADER = "RDA2\n";
+        private static final String XDR_HEADER = "RDX2\n";
+
+        @Specialization
+        protected Object saveToConn(VirtualFrame frame, RAbstractStringVector list, RConnection conn, byte asciiLogical, @SuppressWarnings("unused") RNull version, REnvironment envir,
+                        byte evalPromisesLogical) {
+            boolean evalPromises = RRuntime.fromLogical(evalPromisesLogical);
+            RPairList prev = null;
+            Object toSave = RNull.instance;
+            for (int i = 0; i < list.getLength(); i++) {
+                String varName = list.getDataAt(i);
+                Object value = envir.get(varName);
+                if (value == null) {
+                    throw RError.error(this, RError.Message.UNKNOWN_OBJECT, varName);
+                }
+                if (value instanceof RPromise && evalPromises) {
+                    value = PromiseHelperNode.evaluateSlowPath(frame, (RPromise) value);
+                }
+                RPairList pl = RDataFactory.createPairList(value);
+                pl.setTag(RDataFactory.createSymbol(varName.intern()));
+                if (prev == null) {
+                    toSave = pl;
+                } else {
+                    prev.setCdr(pl);
+                }
+                prev = pl;
+            }
+            boolean ascii = RRuntime.fromLogical(asciiLogical);
+            doSaveConn(toSave, conn, ascii);
+            return RNull.instance;
+        }
+
+        @TruffleBoundary
+        private void doSaveConn(Object toSave, RConnection conn, boolean ascii) {
+            try (RConnection openConn = conn.forceOpen(ascii ? "wt" : "wb")) {
+                if (!openConn.canWrite()) {
+                    throw RError.error(this, RError.Message.CONNECTION_NOT_OPEN_WRITE);
+                }
+                if (!ascii && openConn.isTextMode()) {
+                    throw RError.error(this, RError.Message.CONN_XDR);
+                }
+                openConn.writeChar(ascii ? ASCII_HEADER : XDR_HEADER, 0, "", false);
+                RSerialize.serialize(openConn, toSave, ascii, false, RSerialize.DEFAULT_VERSION, null);
+            } catch (IOException ex) {
+                throw RError.error(this, RError.Message.GENERIC, ex.getMessage());
+            }
+        }
+
+        @SuppressWarnings("unused")
+        @Fallback
+        protected Object saveToConn(Object list, Object con, Object ascii, Object version, Object envir, Object evaPromises) {
+            throw RError.error(this, RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
+        }
+    }
+
 }

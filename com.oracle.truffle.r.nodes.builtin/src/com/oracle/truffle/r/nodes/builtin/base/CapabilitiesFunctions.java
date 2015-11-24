@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.*;
 
 public class CapabilitiesFunctions {
@@ -39,7 +40,7 @@ public class CapabilitiesFunctions {
             X11(false, null),
             aqua(false, null),
             http_fttp(true, "http/ftp"),
-            sockets(false, null),
+            sockets(true, null),
             libxml(false, null),
             fifo(false, null),
             cledit(false, null),
@@ -74,7 +75,13 @@ public class CapabilitiesFunctions {
             controlVisibility();
             byte[] data = new byte[NAMES.getLength()];
             for (Capability c : Capability.values()) {
-                data[c.ordinal()] = RRuntime.asLogical(c.defValue);
+                boolean value = c.defValue;
+                switch (c) {
+                    case cledit:
+                        value = RContext.getInstance().isInteractive() && !RContext.getInstance().getOptions().getBoolean(RCmdOptions.RCmdOption.NO_READLINE);
+                        break;
+                }
+                data[c.ordinal()] = RRuntime.asLogical(value);
             }
             return RDataFactory.createLogicalVector(data, RDataFactory.COMPLETE_VECTOR, NAMES);
         }

@@ -299,6 +299,7 @@ public final class RError extends RuntimeException {
         CONNECTION_NOT_OPEN_WRITE("connection not open for writing"),
         BINARY_CONNECTION_REQUIRED("binary-mode connection required for ascii=FALSE"),
         CANNOT_WRITE_CONNECTION("cannot write to this connection"),
+        CONN_XDR("cannot save XDR format to a text-mode connection"),
         ONLY_READ_BINARY_CONNECTION("can only read from a binary connection"),
         ONLY_WRITE_BINARY_CONNECTION("can only write to a binary connection"),
         NOT_A_TEXT_CONNECTION("'con' is not a textConnection"),

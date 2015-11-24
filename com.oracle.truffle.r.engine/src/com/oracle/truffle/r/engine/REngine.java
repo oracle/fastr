@@ -31,7 +31,6 @@ import org.antlr.runtime.NoViableAltException;
 import org.antlr.runtime.RecognitionException;
 import org.antlr.runtime.Token;
 
-import com.kenai.jffi.Util;
 import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -69,7 +68,6 @@ import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
 import com.oracle.truffle.r.nodes.function.FunctionStatementsNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.function.SaveArgumentsNode;
-import com.oracle.truffle.r.nodes.instrument.RInstrument;
 import com.oracle.truffle.r.nodes.runtime.RASTDeparse;
 import com.oracle.truffle.r.parser.ParseUtil;
 import com.oracle.truffle.r.parser.ast.ASTNode;
@@ -173,7 +171,7 @@ final class REngine implements Engine, Engine.Timings {
         } catch (ParseException e) {
             throw new RInternalError(e, "error while parsing system profile from %s", RProfile.systemProfile().getName());
         }
-        checkAndRunStartupFunction(".OptRequireMethods");
+        checkAndRunStartupShutdownFunction(".OptRequireMethods");
 
         suppressWarnings = false;
         Source siteProfile = context.stateRProfile.siteProfile();
@@ -192,36 +190,40 @@ final class REngine implements Engine, Engine.Timings {
                 throw new RInternalError(e, "error while parsing user profile from %s", userProfile.getName());
             }
         }
-        if (!context.getOptions().getBoolean(RCmdOption.NO_RESTORE)) {
-            /*
-             * TODO This is where we would load any saved user data
-             */
+        if (!(context.getOptions().getBoolean(RCmdOption.NO_RESTORE) || context.getOptions().getBoolean(RCmdOption.NO_RESTORE_DATA))) {
+            // call sys.load.image(".RData", RCmdOption.QUIET
+            checkAndRunStartupShutdownFunction("sys.load.image", new String[]{"\".RData\"", context.getOptions().getBoolean(RCmdOption.QUIET) ? "TRUE" : "FALSE"});
         }
-        checkAndRunStartupFunction(".First");
-        checkAndRunStartupFunction(".First.sys");
+        checkAndRunStartupShutdownFunction(".First");
+        checkAndRunStartupShutdownFunction(".First.sys");
         RBuiltinPackages.loadDefaultPackageOverrides();
     }
 
-    private void checkAndRunStartupFunction(String name) {
+    public void checkAndRunStartupShutdownFunction(String name, String... args) {
         Object func = REnvironment.globalEnv().findFunction(name);
-        if (func instanceof RFunction) {
-            /*
-             * We could just invoke runCall, but that way causes problems for debugging, so we parse
-             * and eval a "fake" call.
-             */
-            RInstrument.checkDebugRequested(name, (RFunction) func);
-            String call = name + "()";
+        if (func != null) {
+            String call = name;
+            if (args.length == 0) {
+                call += "()";
+            } else {
+                call += "(";
+                if (args.length > 0) {
+                    for (int i = 0; i < args.length; i++) {
+                        call += args[i];
+                        if (i != args.length - 1) {
+                            call += ", ";
+                        }
+                    }
+                }
+                call += ")";
+            }
             // Should this print the result?
             try {
-                parseAndEval(Source.fromText(call, "<startup>"), globalFrame, false);
+                parseAndEval(Source.fromText(call, "<startup/shutdown>"), globalFrame, false);
             } catch (ParseException e) {
                 throw new RInternalError(e, "error while parsing startup function");
             }
         }
-    }
-
-    public void checkAndRunLast(String name) {
-        checkAndRunStartupFunction(name);
     }
 
     public Timings getTimings() {
