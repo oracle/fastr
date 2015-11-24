@@ -167,7 +167,7 @@ public class RCommand {
             if (useReadLine) {
                 consoleHandler = new JLineConsoleHandler(isInteractive, consoleReader);
             } else {
-                consoleHandler = new DefaultConsoleHandler();
+                consoleHandler = new DefaultConsoleHandler(consoleInput, consoleOutput);
             }
         }
         return ContextInfo.create(options, ContextKind.SHARE_NOTHING, null, consoleHandler);

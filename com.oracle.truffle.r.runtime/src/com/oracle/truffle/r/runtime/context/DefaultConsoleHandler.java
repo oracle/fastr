@@ -24,31 +24,15 @@ package com.oracle.truffle.r.runtime.context;
 
 import java.io.*;
 
-import com.oracle.truffle.api.TruffleLanguage.Env;
-
 public class DefaultConsoleHandler implements ConsoleHandler {
 
-    private BufferedReader in;
-    private PrintStream out;
+    private final BufferedReader in;
+    private final PrintStream out;
     private String prompt;
 
-    public DefaultConsoleHandler(Env env) {
-        initStreams(env);
-    }
-
-    private void initStreams(Env env) {
-        in = new BufferedReader(new InputStreamReader(env.in()));
-        out = new PrintStream(env.out());
-    }
-
-    /**
-     * No-arg constructor for delayed assignment of the streams using {@link #setStreams}.
-     */
-    public DefaultConsoleHandler() {
-    }
-
-    public void setStreams(Env env) {
-        initStreams(env);
+    public DefaultConsoleHandler(InputStream in, OutputStream out) {
+        this.in = new BufferedReader(new InputStreamReader(in));
+        this.out = new PrintStream(out);
     }
 
     public void println(String s) {

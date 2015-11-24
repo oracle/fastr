@@ -371,12 +371,9 @@ public final class RContext extends ExecutionContext implements TruffleObject {
     private RContext(Env env, boolean isInitial) {
         ContextInfo initialInfo = (ContextInfo) env.importSymbol(ContextInfo.GLOBAL_SYMBOL);
         if (initialInfo == null) {
-            this.info = ContextInfo.create(RCmdOptions.parseArguments(Client.R, new String[0]), ContextKind.SHARE_NOTHING, null, new DefaultConsoleHandler(env));
+            this.info = ContextInfo.create(RCmdOptions.parseArguments(Client.R, new String[0]), ContextKind.SHARE_NOTHING, null, new DefaultConsoleHandler(env.in(), env.out()));
         } else {
             this.info = initialInfo;
-            if (initialInfo.getConsoleHandler() instanceof DefaultConsoleHandler) {
-                ((DefaultConsoleHandler) initialInfo.getConsoleHandler()).setStreams(env);
-            }
         }
 
         this.env = env;
