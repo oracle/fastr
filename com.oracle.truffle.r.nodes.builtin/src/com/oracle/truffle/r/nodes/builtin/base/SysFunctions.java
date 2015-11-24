@@ -250,7 +250,7 @@ public class SysFunctions {
 
     // TODO implement
     @RBuiltin(name = "Sys.chmod", kind = INTERNAL, parameterNames = {"paths", "octmode", "use_umask"})
-    public abstract static class SysChmod extends RBuiltinNode {
+    public abstract static class SysChmod extends RInvisibleBuiltinNode {
         @Specialization
         @TruffleBoundary
         protected RLogicalVector sysChmod(RAbstractStringVector pathVec, RAbstractIntVector octmode, @SuppressWarnings("unused") byte useUmask) {
