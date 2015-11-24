@@ -196,4 +196,19 @@ public class FastRTckTest extends TruffleTCK {
     public void testNullCanBeCastToAnything() throws Exception {
         // TODO support
     }
+
+    @Override
+    public void multiplyTwoVariables() throws Exception {
+        // TODO support
+    }
+
+    @Override
+    public void testEvaluateSource() throws Exception {
+        // TODO support
+    }
+
+    @Override
+    public String multiplyCode(String firstName, String secondName) {
+        return firstName + '*' + secondName;
+    }
 }
