@@ -24,10 +24,12 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
+import java.io.*;
+
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.conn.*;
 import com.oracle.truffle.r.runtime.data.*;
 
 @RBuiltin(name = "license", aliases = {"licence"}, kind = SUBSTITUTE, parameterNames = {})
@@ -36,7 +38,11 @@ public abstract class License extends RInvisibleBuiltinNode {
     @Specialization
     protected Object license() {
         controlVisibility();
-        RContext.getInstance().getConsoleHandler().println(RRuntime.LICENSE);
+        try {
+            StdConnections.getStdout().writeString(RRuntime.LICENSE, true);
+        } catch (IOException ex) {
+            throw RError.error(this, RError.Message.GENERIC, ex.getMessage());
+        }
         return RNull.instance;
     }
 
