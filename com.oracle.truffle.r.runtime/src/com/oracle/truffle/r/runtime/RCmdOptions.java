@@ -79,7 +79,7 @@ public final class RCmdOptions {
         NO_RESTORE_HISTORY(RCmdOptionType.BOOLEAN, false, "no-restore-history", false, "Don't restore the R history file"),
         NO_RESTORE(RCmdOptionType.BOOLEAN, true, "no-restore", false, "Don't restore anything"),
         VANILLA(RCmdOptionType.BOOLEAN, true, "vanilla", false, "Combine --no-save, --no-restore, --no-site-file,\n--no-init-file and --no-environ"),
-        NO_READLINE(RCmdOptionType.BOOLEAN, false, "no-readline", false, "Don't use readline for command-line editing"),
+        NO_READLINE(RCmdOptionType.BOOLEAN, true, "no-readline", false, "Don't use readline for command-line editing"),
         MAX_PPSIZE(RCmdOptionType.STRING, false, "max-ppsize", null, "Set max size of protect stack to N"),
         QUIET(RCmdOptionType.BOOLEAN, true, "q", "quiet", false, "Don't print startup message"),
         SILENT(RCmdOptionType.BOOLEAN, true, "silent", false, "Same as --quiet"),

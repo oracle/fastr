@@ -28,12 +28,27 @@ import com.oracle.truffle.api.TruffleLanguage.Env;
 
 public class DefaultConsoleHandler implements ConsoleHandler {
 
-    private final BufferedReader in;
-    private final PrintStream out;
+    private BufferedReader in;
+    private PrintStream out;
+    private String prompt;
 
     public DefaultConsoleHandler(Env env) {
+        initStreams(env);
+    }
+
+    private void initStreams(Env env) {
         in = new BufferedReader(new InputStreamReader(env.in()));
         out = new PrintStream(env.out());
+    }
+
+    /**
+     * No-arg constructor for delayed assignment of the streams using {@link #setStreams}.
+     */
+    public DefaultConsoleHandler() {
+    }
+
+    public void setStreams(Env env) {
+        initStreams(env);
     }
 
     public void println(String s) {
@@ -54,6 +69,9 @@ public class DefaultConsoleHandler implements ConsoleHandler {
 
     public String readLine() {
         try {
+            if (prompt != null) {
+                out.print(prompt);
+            }
             return in.readLine();
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -69,11 +87,11 @@ public class DefaultConsoleHandler implements ConsoleHandler {
     }
 
     public String getPrompt() {
-        return "> ";
+        return prompt;
     }
 
     public void setPrompt(String prompt) {
-        // ?
+        this.prompt = prompt;
     }
 
     public int getWidth() {

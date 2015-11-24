@@ -27,6 +27,7 @@ import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.FILE;
 import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.INTERACTIVE;
 import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.NO_ENVIRON;
 import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.NO_INIT_FILE;
+import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.NO_READLINE;
 import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.NO_RESTORE;
 import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.NO_SAVE;
 import static com.oracle.truffle.r.runtime.RCmdOptions.RCmdOption.QUIET;
@@ -62,6 +63,7 @@ import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.Utils.DebugExitException;
 import com.oracle.truffle.r.runtime.context.ConsoleHandler;
 import com.oracle.truffle.r.runtime.context.ContextInfo;
+import com.oracle.truffle.r.runtime.context.DefaultConsoleHandler;
 import com.oracle.truffle.r.runtime.context.Engine.IncompleteSourceException;
 import com.oracle.truffle.r.runtime.context.Engine.ParseException;
 import com.oracle.truffle.r.runtime.context.RContext;
@@ -146,20 +148,27 @@ public class RCommand {
              * redirected from a pipe/file etc.
              */
             Console sysConsole = System.console();
-            ConsoleReader consoleReader;
-            try {
-                consoleReader = new ConsoleReader(consoleInput, consoleOutput);
-                consoleReader.setHandleUserInterrupt(true);
-                consoleReader.setExpandEvents(false);
-            } catch (IOException ex) {
-                throw Utils.fail("unexpected error opening console reader");
+            boolean useReadLine = !options.getBoolean(NO_READLINE);
+            ConsoleReader consoleReader = null;
+            if (useReadLine) {
+                try {
+                    consoleReader = new ConsoleReader(consoleInput, consoleOutput);
+                    consoleReader.setHandleUserInterrupt(true);
+                    consoleReader.setExpandEvents(false);
+                } catch (IOException ex) {
+                    throw Utils.fail("unexpected error opening console reader");
+                }
             }
             boolean isInteractive = options.getBoolean(INTERACTIVE) || sysConsole != null;
             if (!isInteractive && !options.getBoolean(SAVE) && !options.getBoolean(NO_SAVE) && !options.getBoolean(VANILLA)) {
                 throw Utils.fatalError("you must specify '--save', '--no-save' or '--vanilla'");
             }
             // long start = System.currentTimeMillis();
-            consoleHandler = new JLineConsoleHandler(isInteractive, consoleReader);
+            if (useReadLine) {
+                consoleHandler = new JLineConsoleHandler(isInteractive, consoleReader);
+            } else {
+                consoleHandler = new DefaultConsoleHandler();
+            }
         }
         return ContextInfo.create(options, ContextKind.SHARE_NOTHING, null, consoleHandler);
     }
