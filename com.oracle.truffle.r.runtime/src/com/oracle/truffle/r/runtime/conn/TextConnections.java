@@ -180,6 +180,11 @@ public class TextConnections {
 
         @Override
         public void closeAndDestroy() throws IOException {
+            /* Check if we ended up with an incomplete line */
+            if (incompleteLine != null) {
+                appendData(new String[]{incompleteLine});
+                incompleteLine = null;
+            }
             base.closed = true;
             TextRConnection textBase = (TextRConnection) base;
             textBase.env.unlockBinding(idName);
@@ -205,23 +210,27 @@ public class TextConnections {
                 // update the vector data
                 String[] appendedData = new String[appendedLines.size()];
                 appendedLines.toArray(appendedData);
-                String[] existingData = textVec.getDataWithoutCopying();
-                String[] updateData = appendedData;
-                if (existingData.length > 0) {
-                    updateData = new String[existingData.length + appendedData.length];
-                    System.arraycopy(existingData, 0, updateData, 0, existingData.length);
-                    System.arraycopy(appendedData, 0, updateData, existingData.length, appendedData.length);
-                }
-                TextRConnection textBase = (TextRConnection) base;
-                /*
-                 * N.B. This assumes one thread per RContext else another thread could be calling
-                 * lockBinding
-                 */
-                textBase.env.unlockBinding(idName);
-                // TODO: is vector really complete?
-                initTextVec(RDataFactory.createStringVector(updateData, RDataFactory.COMPLETE_VECTOR), textBase);
+                appendData(appendedData);
             }
 
+        }
+
+        void appendData(String[] appendedData) {
+            String[] existingData = textVec.getDataWithoutCopying();
+            String[] updateData = appendedData;
+            if (existingData.length > 0) {
+                updateData = new String[existingData.length + appendedData.length];
+                System.arraycopy(existingData, 0, updateData, 0, existingData.length);
+                System.arraycopy(appendedData, 0, updateData, existingData.length, appendedData.length);
+            }
+            TextRConnection textBase = (TextRConnection) base;
+            /*
+             * N.B. This assumes one thread per RContext else another thread could be calling
+             * lockBinding
+             */
+            textBase.env.unlockBinding(idName);
+            // TODO: is vector really complete?
+            initTextVec(RDataFactory.createStringVector(updateData, RDataFactory.COMPLETE_VECTOR), textBase);
         }
 
         @Override
