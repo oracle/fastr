@@ -43,7 +43,7 @@
 
 # The env var R_LIBS_USER must be set to the directory where the install should take place.
 
-# A single package install can be handled in three ways, based on the install-mode argument (default system):
+# A single package install can be handled in three ways, based on the run-mode argument (default system):
 #   system: use a subprocess via the system2 command
 #   internal: direct call to tools::install.packages
 #   context: run in separate FastR context
@@ -55,8 +55,10 @@ usage <- function() {
                       "[--no-install | -n] [--create-blacklist] [--blacklist-file file] [--ignore-blacklist]",
 					  "[--initial-blacklist-file file]",
 					  "[--testcount count]", "[--ok-pkg-filelist file]",
-					  "[--install-mode mode]",
+					  "[--run-mode mode]",
 					  "[--pkg-filelist file]",
+					  "[--run-tests]",
+					  "[--gnur]",
                       "[package-pattern] \n"))
 	quit(status=1)
 }
@@ -173,7 +175,7 @@ set.initial.package.blacklist <- function() {
 	if (is.na(initial.blacklist.file)) {
 		# not set on command line
 		this_package <- "com.oracle.truffle.r.test.cran"
-		initial.blacklist.file <<- Sys.getenv("INITIAL_PACKAGE_BLACKLIST", unset=file.path(R.home(), this_package, "initial.package.blacklist"))
+		initial.blacklist.file <<- Sys.getenv("INITIAL_PACKAGE_BLACKLIST", unset=file.path(this_package, "initial.package.blacklist"))
 	}
 
 }
@@ -199,12 +201,12 @@ do.install <- function() {
 
 	if (create.blacklist.file) {
 		blacklist <- create.blacklist()
-		writeLines(sort(blacklist), con=blacklist.file)
+		writeLines(sort(blacklist), blacklist.file)
 	} else {
 		if (ignore.blacklist) {
 			blacklist <- character()
 		} else {
-			blacklist <- readLines(con=file(blacklist.file))
+			blacklist <- readLines(blacklist.file)
 		}
 	}
 
@@ -233,24 +235,41 @@ do.install <- function() {
 
 	}
 
+	if (is.na(testcount)) {
+		# install all non-blacklisted packages in toinstall.pkgs
+		test.pkgnames <- rownames(toinstall.pkgs)
+	} else {
+		# install testcount packages taken at random from toinstall.pkgs
+		matched.toinstall.pkgs <- apply(toinstall.pkgs, 1, function(x) include.package(x, blacklist))
+		test.avail.pkgs <<-toinstall.pkgs[matched.toinstall.pkgs, , drop=F]
+		test.avail.pkgnames <- rownames(test.avail.pkgs)
+		rands <- sample(1:length(test.avail.pkgnames))
+		test.pkgnames <- character(testcount)
+		for (i in (1:testcount)) {
+			test.pkgnames[[i]] <- test.avail.pkgnames[[rands[[i]]]]
+		}
+	}
+
 	if (install) {
 		cat("BEGIN package installation\n")
-		if (is.na(testcount)) {
-			# install all non-blacklisted packages in toinstall.pkgs
-			install.pkgs(rownames(toinstall.pkgs))
-		} else {
-			# install testcount packages taken at random from toinstall.pkgs
-			matched.toinstall.pkgs <- apply(toinstall.pkgs, 1, function(x) include.package(x, blacklist))
-			test.avail.pkgs <<-toinstall.pkgs[matched.toinstall.pkgs, , drop=F]
-			test.avail.pkgnames <- rownames(test.avail.pkgs)
-			rands <- sample(1:length(test.avail.pkgnames))
-			test.pkgnames <- character(testcount)
-			for (i in (1:testcount)) {
-				test.pkgnames[[i]] <- test.avail.pkgnames[[rands[[i]]]]
-			}
-			install.pkgs(test.pkgnames)
-		}
+		install.pkgs(test.pkgnames)
 		cat("END package installation\n")
+	}
+
+	if (run.tests) {
+		cat("BEGIN package tests\n")
+		test.count = 1
+		test.total = length(test.pkgnames)
+		for (pkgname in test.pkgnames) {
+			if (dry.run) {
+				cat("would test:", pkgname, "\n")
+			} else {
+				cat("testing:", pkgname, "(", test.count, "of", test.total, ")", "\n")
+				test.package(pkgname)
+			}
+			test.count = test.count + 1
+		}
+		cat("END package tests\n")
 	}
 }
 
@@ -259,12 +278,12 @@ include.package <- function(x, blacklist) {
 }
 
 install.package <- function(pkgname) {
-	if (install.mode == "system") {
+	if (run.mode == "system") {
 		system.install(pkgname)
-	} else if (install.mode == "internal") {
+	} else if (run.mode == "internal") {
 		install.packages(pkgname, contriburl=contriburl, type="source", lib=lib.install, INSTALL_opts="--install-tests")
-	} else if (install.mode == "context") {
-		stop("context install-mode not implemented\n")
+	} else if (run.mode == "context") {
+		stop("context run-mode not implemented\n")
 	}
 }
 
@@ -276,6 +295,49 @@ system.install <- function(pkgname) {
 	rc
 }
 
+test.package <- function(pkgname) {
+	if (run.mode == "system") {
+		system.test(pkgname)
+	} else if (run.mode == "internal") {
+		tools::testInstalledPackage(pkgname, outDir=test.outDir)
+	} else if (run.mode == "context") {
+		stop("context run-mode not implemented\n")
+	}
+}
+
+system.test <- function(pkgname) {
+	script <- file.path(R.home(), "com.oracle.truffle.r.test.cran/r/test.package.R")
+	rscript = file.path(R.home(), "bin/Rscript")
+	args <- c(script, pkgname, test.outDir)
+	rc <- system2(rscript, args)
+	rc
+}
+
+get.argvalue <- function() {
+	if (length(args) >= 2L) {
+		value <- args[2L]
+		args <<- args[-1L]
+		return(value)
+	} else {
+		usage()
+	}
+}
+
+check.gnur <- function() {
+	if (gnur) {
+		if (run.mode != "internal") {
+			if (verbose) {
+				cat("setting run-mode to 'internal' for GnuR\n")
+				cat("setting test dir to 'test_gnur' for GnuR\n")
+				cat("setting lib.install to ", lib.install, "_gnur", " for GnuR\n", sep="")
+			}
+			run.mode <<- "internal"
+			test.outDir <<- "test_gnur"
+            lib.install <<- paste0(lib.install, "_gnur")
+		}
+	}
+}
+
 # parse the command line arguments when run as a script
 parse.args <- function() {
 	while (length(args)) {
@@ -283,12 +345,7 @@ parse.args <- function() {
 		if (a %in% c("-h", "--help")) {
 			usage()
 		} else if (a == "--contriburl") {
-			if (length(args) >= 2L) {
-				contriburl <<- args[2L]
-				args <<- args[-1L]
-			} else {
-				usage()
-			}
+			contriburl <<- get.argvalue()
 		} else if (a == "--verbose" || a == "-v") {
 			verbose <<- T
 		} else if (a == "-V") {
@@ -303,67 +360,31 @@ parse.args <- function() {
 		} else if (a == "--ignore-blacklist") {
 			ignore.blacklist <<- T
 		} else if (a == "--blacklist-file") {
-			if (length(args) >= 2L) {
-				blacklist.file <<- args[2L]
-				args <<- args[-1L]
-			} else {
-				usage()
-			}
+			blacklist.file <<- get.argvalue()
 		} else if (a == "--initial-blacklist-file") {
-			if (length(args) >= 2L) {
-				initial.blacklist.file <<- args[2L]
-				args <<- args[-1L]
-			} else {
-				usage()
-			}
+			initial.blacklist.file <<- get.argvalue()
 		} else if (a == "--cran-mirror") {
-			if (length(args) >= 2L) {
-				cran.mirror <<- args[2L]
-				args <<- args[-1L]
-			} else {
-				usage()
-			}
+			cran.mirror <<- get.argvalue()
 		} else if (a == "--lib") {
-			if (length(args) >= 2L) {
-				lib.install <<- args[2L]
-				args <<- args[-1L]
-			} else {
-				usage()
-			}
+			lib.install <<- get.argvalue()
 		} else if (a == "--testcount") {
-			if (length(args) >= 2L) {
-				testcount <<- as.integer(args[2L])
-				if (is.na(testcount)) {
-					usage()
-				}
-				args <<- args[-1L]
-			} else {
+			testcount <<- as.integer(get.argvalue())
+			if (is.na(testcount)) {
 				usage()
 			}
-		} else if (a == "--install-mode") {
-			if (length(args) >= 2L) {
-				install.mode <<- args[2L]
-				if (!(install.mode %in% c("system", "internal", "context"))) {
-					usage()
-				}
-				args <<- args[-1L]
-			} else {
+		} else if (a == "--run-mode") {
+			run.mode <<- get.argvalue()
+			if (!(run.mode %in% c("system", "internal", "context"))) {
 				usage()
 			}
 		} else if (a == "--pkg-filelist") {
-			if (length(args) >= 2L) {
-				pkg.filelistfile <<- args[2L]
-				args <<- args[-1L]
-			} else {
-				usage()
-			}
+			pkg.filelistfile <<- get.argvalue()
 		} else if (a == "--ok-pkg-filelist") {
-			if (length(args) >= 2L) {
-				ok.pkg.filelistfile <<- args[2L]
-				args <<- args[-1L]
-			} else {
-				usage()
-			}
+			ok.pkg.filelistfile <<- get.argvalue()
+		} else if (a == "--run-tests") {
+			run.tests <<- TRUE
+		} else if (a == "--gnur") {
+			gnur <<- TRUE
 		} else {
 			if (grepl("^-.*", a)) {
 				usage()
@@ -390,7 +411,10 @@ cat.args <- function() {
 		cat("pkg.pattern:", pkg.pattern, "\n")
 		cat("contriburl:", contriburl, "\n")
 		cat("testcount:", testcount, "\n")
-		cat("install.mode:", install.mode, "\n")
+		cat("run.mode:", run.mode, "\n")
+		cat("run.tests:", run.tests, "\n")
+		cat("test.outDir", test.outDir, "\n")
+		cat("gnur:", gnur, "\n")
 	}
 }
 
@@ -439,7 +463,8 @@ run <- function() {
 	set.contriburl()
 	set.initial.package.blacklist()
 	set.package.blacklist()
-    cat.args()
+	check.gnur()
+	cat.args()
     do.install()
 }
 
@@ -448,6 +473,7 @@ contriburl <- NA
 blacklist.file <- NA
 initial.blacklist.file <- NA
 lib.install <- NA
+test.outDir <- "test_fastr"
 
 pkg.pattern <- "^.*"
 pkg.filelist <- character()
@@ -463,7 +489,9 @@ toinstall.pkgs <- NULL
 create.blacklist.file <- F
 ignore.blacklist <- F
 testcount <- NA
-install.mode <- "system"
+run.mode <- "system"
+run.tests <- FALSE
+gnur <- FALSE
 
 if (!interactive()) {
     run()

@@ -111,4 +111,8 @@ com.oracle.truffle.r.native/include/*.h
 com.oracle.truffle.r.native/include/R_ext/*.h
 com.oracle.truffle.r.native/include/linked
 com.oracle.truffle.r.test.native/packages/*/lib/*
+test_gnur
+test_fastr
+lib.install.cran*
+
 
