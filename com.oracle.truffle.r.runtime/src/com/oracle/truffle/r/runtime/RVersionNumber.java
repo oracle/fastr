@@ -35,6 +35,8 @@ public class RVersionNumber {
     public static final String MINOR = "1";
     public static final String PATCH = "3";
 
+    public static final int R_VERSION = (3 << 16) + (1 << 8) + 3;
+
     public static final String MAJOR_MINOR = MAJOR + "." + MINOR;
     public static final String MINOR_PATCH = MINOR + "." + PATCH;
     public static final String FULL = MAJOR + "." + MINOR + "." + PATCH;
