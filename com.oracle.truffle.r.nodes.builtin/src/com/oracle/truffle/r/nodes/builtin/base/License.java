@@ -26,6 +26,7 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import java.io.*;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
@@ -36,6 +37,7 @@ import com.oracle.truffle.r.runtime.data.*;
 public abstract class License extends RInvisibleBuiltinNode {
 
     @Specialization
+    @TruffleBoundary
     protected Object license() {
         controlVisibility();
         try {
