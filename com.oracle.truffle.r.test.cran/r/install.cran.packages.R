@@ -21,8 +21,8 @@
 # questions.
 #
 
-# A script to install CRAN packages, with a blacklist mechanism starting from a known
-# set of packages that we cannot handle, e.g. Rcpp (due to C++)
+# A script to install andoptionally test CRAN packages, with a blacklist mechanism starting
+# from a known set of packages that we cannot handle, e.g. Rcpp (due to C++)
 # By default all packages are candidates for installation, but this
 # can be limited by a regexp pattern or an explicit list from a file
 
@@ -41,7 +41,9 @@
 # Package: name
 # Reason: reason
 
-# The env var R_LIBS_USER must be set to the directory where the install should take place.
+# The env var R_LIBS_USER or the option --lib must be set to the directory where the install should take place.
+# N.B. --lib works for installation. However, when running tests ( --run-tests) with FastR, it does not and
+# R_LIBS_USER must be set instead. This does not happen for GnuR so must be a FastR bug.
 
 # A single package install can be handled in three ways, based on the run-mode argument (default system):
 #   system: use a subprocess via the system2 command
@@ -296,10 +298,19 @@ system.install <- function(pkgname) {
 }
 
 test.package <- function(pkgname) {
+	if (!file.exists(test.outDir)) {
+		if (!dir.create(test.outDir)) {
+			stop(paste("cannot create: ", test.outDir))
+		}
+	} else {
+		if(!file_test("-d", test.outDir)) {
+			stop(paste(test.outDir, "exists and is not a directory"))
+		}
+	}
 	if (run.mode == "system") {
 		system.test(pkgname)
 	} else if (run.mode == "internal") {
-		tools::testInstalledPackage(pkgname, outDir=test.outDir)
+		tools::testInstalledPackage(pkgname, outDir=test.outDir, lib.loc=lib.install)
 	} else if (run.mode == "context") {
 		stop("context run-mode not implemented\n")
 	}
@@ -308,7 +319,7 @@ test.package <- function(pkgname) {
 system.test <- function(pkgname) {
 	script <- file.path(R.home(), "com.oracle.truffle.r.test.cran/r/test.package.R")
 	rscript = file.path(R.home(), "bin/Rscript")
-	args <- c(script, pkgname, test.outDir)
+	args <- c(script, pkgname, test.outDir, lib.install)
 	rc <- system2(rscript, args)
 	rc
 }
@@ -464,6 +475,7 @@ run <- function() {
 	set.initial.package.blacklist()
 	set.package.blacklist()
 	check.gnur()
+	lib.install <<- normalizePath(lib.install)
 	cat.args()
     do.install()
 }

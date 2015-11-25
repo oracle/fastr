@@ -34,6 +34,7 @@ parse.args <- function() {
 	if (length(args)) {
 		pkgname <<- args[[1]]
 		outDir <<- args[[2]]
+		lib.install <<- args[[3]]
 	}
 }
 
@@ -42,7 +43,7 @@ run <- function() {
 	if (!file.exists(outDir)) {
 		dir.create(outDir)
 	}
-	tools:::testInstalledPackage(pkgname, outDir=outDir)
+	tools:::testInstalledPackage(pkgname, outDir=outDir, lib.loc=lib.install)
 }
 
 if (!interactive()) {

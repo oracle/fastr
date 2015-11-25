@@ -21,7 +21,7 @@
 # questions.
 #
 import tempfile, platform, subprocess
-from os.path import join, sep, dirname
+from os.path import join, sep, dirname, abspath
 from argparse import ArgumentParser
 import mx
 import mx_gate
@@ -255,30 +255,31 @@ def gate(args):
     # exclude findbugs until compliant
     mx_gate.gate(args + ['-x', '-t', 'FindBugs,Checkheaders,Checkstyle,Distribution Overlap Check,BuildJavaWithEcj'])
 
-def _test_harness_body(args, vmArgs):
+def _test_harness_body_install_new(args, vmArgs):
     '''the callback from mx.test'''
-    lib = "lib.install.cran"
+    libinstall = abspath("lib.install.cran")
     # make sure its empty
-    shutil.rmtree(lib, ignore_errors=True)
-    os.mkdir(lib)
+    shutil.rmtree(libinstall, ignore_errors=True)
+    os.mkdir(libinstall)
     install_tmp = "install.tmp"
     shutil.rmtree(install_tmp, ignore_errors=True)
     os.mkdir(install_tmp)
     os.environ["TMPDIR"] = install_tmp
+    os.environ['R_LIBS_USER'] = libinstall
     stack_args = ['--J', '@-DR:-PrintErrorStacktracesToFile -DR:+PrintErrorStacktraces']
     cran_args = []
     local_cran = mx.get_env('MX_HG_BASE')
     if local_cran:
         cran_args = ['--cran-mirror', join(dirname(local_cran), 'cran')]
     ignore_ok_packages = ['--ok-pkg-filelist', join(_cran_test_project(), 'ok.packages')]
-    rc = installcran(stack_args + cran_args + ['--testcount', '100', '--lib', lib] + ignore_ok_packages)
+    rc = installcran(stack_args + cran_args + ['--testcount', '100'] + ignore_ok_packages)
     shutil.rmtree(install_tmp, ignore_errors=True)
     return rc
 
 def test(args):
     '''used for package installation/testing'''
     parser = ArgumentParser(prog='r test')
-    return mx.test(args, harness=_test_harness_body, parser=parser)
+    return mx.test(args, harness=_test_harness_body_install_new, parser=parser)
 
 def _test_srcdir():
     tp = 'com.oracle.truffle.r.test'
