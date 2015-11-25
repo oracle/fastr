@@ -24,14 +24,16 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.PRIMITIVE;
 
+import java.io.IOException;
 import java.util.Arrays;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.Utils;
-import com.oracle.truffle.r.runtime.context.ConsoleHandler;
-import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.conn.StdConnections;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 
@@ -44,11 +46,15 @@ public abstract class Traceback extends RBuiltinNode {
     }
 
     @Specialization
+    @TruffleBoundary
     public RStringVector traceback(int x) {
         String[] traceback = Utils.createTraceback();
-        ConsoleHandler consoleHandler = RContext.getInstance().getConsoleHandler();
-        for (String s : traceback) {
-            consoleHandler.println(":: " + s);
+        try {
+            for (String s : traceback) {
+                StdConnections.getStdout().writeString(":: " + s, true);
+            }
+        } catch (IOException ex) {
+            throw RError.error(this, RError.Message.GENERIC, ex.getMessage());
         }
         traceback = Arrays.copyOfRange(traceback, x, traceback.length);
         return RDataFactory.createStringVector(traceback, true);
