@@ -36,6 +36,8 @@ import com.oracle.truffle.r.runtime.env.*;
 
 public interface Engine {
 
+    public static final String EVAL_FUNCTION_NAME = "<eval wrapper>";
+
     public static class ParseException extends IOException {
         private static final long serialVersionUID = 1L;
 

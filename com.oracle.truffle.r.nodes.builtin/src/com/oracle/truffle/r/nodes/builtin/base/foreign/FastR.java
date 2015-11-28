@@ -60,6 +60,8 @@ public abstract class FastR extends RBuiltinNode {
                 return InteropImportNodeGen.create();
             case "Interop.export":
                 return InteropExportNodeGen.create();
+            case "Interop.eval":
+                return InteropEvalNodeGen.create();
             case "createcc":
                 return FastRCallCountingFactory.CreateCallCounterNodeGen.create();
             case "getcc":

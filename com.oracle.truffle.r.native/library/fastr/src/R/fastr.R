@@ -25,6 +25,8 @@ Interop.import <- function(name) invisible(.FastR(.NAME="Interop.import", name))
 
 Interop.export <- function(name, value) invisible(.FastR(.NAME="Interop.export", name, value))
 
+Interop.eval <- function(mimeType, source) invisible(.FastR(.NAME="Interop.eval", mimeType, source))
+
 fastr.createcc <- function(func) invisible(.FastR(.NAME="createcc", func))
 
 fastr.getcc <- function(func) .FastR(.NAME="getcc", func)
