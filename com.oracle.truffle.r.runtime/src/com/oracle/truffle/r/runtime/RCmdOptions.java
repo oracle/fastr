@@ -68,7 +68,6 @@ public final class RCmdOptions {
         HELP(RCmdOptionType.BOOLEAN, true, "h", "help", false, "Print short help message and exit"),
         VERSION(RCmdOptionType.BOOLEAN, true, "version", false, "Print version info and exit"),
         ENCODING(RCmdOptionType.STRING, false, "encoding=ENC", null, "Specify encoding to be used for stdin"),
-        RHOME(RCmdOptionType.BOOLEAN, true, "RHOME", false, "Print path to R home directory and exit"),
         SAVE(RCmdOptionType.BOOLEAN, true, "save", false, "Do save workspace at the end of the session"),
         NO_SAVE(RCmdOptionType.BOOLEAN, true, "no-save", false, "Don't save it"),
         NO_ENVIRON(RCmdOptionType.BOOLEAN, false, "no-environ", false, "Don't read the site and user environment files"),
@@ -129,7 +128,7 @@ public final class RCmdOptions {
                 this.name = null;
                 this.suffix = null;
             } else {
-                int eqx = noPrefix(name) ? -1 : name.indexOf('=');
+                int eqx = name.indexOf('=');
                 this.name = "--" + (eqx > 0 ? name.substring(0, eqx) : name);
                 this.suffix = eqx > 0 ? name.substring(eqx) : null;
             }
@@ -143,10 +142,6 @@ public final class RCmdOptions {
 
         private RCmdOption(RCmdOptionType type, boolean implemented, String name, Object defaultValue, String help) {
             this(type, Client.EITHER, implemented, null, name, defaultValue, help);
-        }
-
-        private static boolean noPrefix(String arg) {
-            return arg.equals("RHOME") || arg.equals("CMD");
         }
 
         private boolean matches(String arg) {
@@ -354,8 +349,6 @@ public final class RCmdOptions {
             printHelpAndExit(RCmdOptions.Client.R);
         } else if (getBoolean(VERSION)) {
             printVersionAndExit();
-        } else if (getBoolean(RHOME)) {
-            printRHomeAndExit();
         }
     }
 
@@ -380,8 +373,4 @@ public final class RCmdOptions {
         System.exit(0);
     }
 
-    private static void printRHomeAndExit() {
-        System.out.println(REnvVars.rHome());
-        System.exit(0);
-    }
 }

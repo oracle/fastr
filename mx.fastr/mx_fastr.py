@@ -20,7 +20,7 @@
 # or visit www.oracle.com if you need additional information or have any
 # questions.
 #
-import tempfile, platform, subprocess
+import tempfile, platform, subprocess, sys
 from os.path import join, sep, dirname, abspath
 from argparse import ArgumentParser
 import mx
@@ -188,6 +188,16 @@ def run_r(args, command, parser=None, extraVmArgs=None, jdk=None, nonZeroIsFatal
 
     if not jdk and ns.jdk:
         jdk = mx.get_jdk(tag=ns.jdk)
+
+    # special cases normally handled in shell script startup
+    if command == 'r' and len(rargs) > 0:
+        if rargs[0] == 'RHOME':
+            print _fastr_suite.dir
+            sys.exit(0)
+        elif rargs[0] == 'CMD':
+            print 'CMD not implemented via mx, use: bin/R CMD ...'
+            sys.exit(1)
+
     return do_run_r(rargs, command, extraVmArgs=extraVmArgs, jdk=jdk, nonZeroIsFatal=nonZeroIsFatal)
 
 def rshell(args):

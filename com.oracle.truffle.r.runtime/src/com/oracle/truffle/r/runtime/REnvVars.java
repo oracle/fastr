@@ -48,7 +48,7 @@ public final class REnvVars implements RContext.ContextState {
         String envRHomePath = envVars.get("R_HOME");
         if (envRHomePath != null) {
             new File(envRHomePath).getAbsolutePath();
-            if (!envRHomePath.equals(rHomePath)) {
+            if (!envRHomePath.equals(rHome)) {
                 Utils.fail("R_HOME set to unexpected value in the environment");
             }
         }
@@ -117,29 +117,25 @@ public final class REnvVars implements RContext.ContextState {
         return val != null ? val : envVars.get(var.toUpperCase());
     }
 
-    private static String rHomePath;
-
     public static String rHome() {
-        // This can be called before initialize, "R RHOME"
-        if (rHomePath == null) {
-            String path = System.getProperty("rhome.path");
-            if (path != null) {
-                rHomePath = path;
-            } else {
-                File file = new File(System.getProperty("user.dir"));
-                do {
-                    File binR = new File(new File(file, "bin"), "R");
-                    if (binR.exists()) {
-                        break;
-                    } else {
-                        file = file.getParentFile();
-                    }
-                } while (file != null);
-                if (file != null) {
-                    rHomePath = file.getAbsolutePath();
+        String rHomePath = null;
+        String path = System.getProperty("rhome.path");
+        if (path != null) {
+            rHomePath = path;
+        } else {
+            File file = new File(System.getProperty("user.dir"));
+            do {
+                File binR = new File(new File(file, "bin"), "R");
+                if (binR.exists()) {
+                    break;
                 } else {
-                    Utils.fail("cannot find a valid R_HOME");
+                    file = file.getParentFile();
                 }
+            } while (file != null);
+            if (file != null) {
+                rHomePath = file.getAbsolutePath();
+            } else {
+                Utils.fail("cannot find a valid R_HOME");
             }
         }
         return rHomePath;
