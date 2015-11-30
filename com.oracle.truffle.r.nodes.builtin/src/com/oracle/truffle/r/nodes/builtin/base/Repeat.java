@@ -24,6 +24,8 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
+import java.util.Arrays;
+
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.utilities.*;
@@ -92,6 +94,14 @@ public abstract class Repeat extends RBuiltinNode {
 
     private RError invalidTimes() {
         throw RError.error(this, RError.Message.INVALID_ARGUMENT, "times");
+    }
+
+    @Specialization(guards = {"x.getLength() == 1", "times.getLength() == 1", "each <= 1", "!hasNames(x)"})
+    public RAbstractVector repNoEachNoNamesSimple(RAbstractDoubleVector x, RAbstractIntVector times, int lengthOut, @SuppressWarnings("unused") int each) {
+        int length = lengthOutOrTimes.profile(!RRuntime.isNA(lengthOut)) ? lengthOut : times.getDataAt(0);
+        double[] data = new double[length];
+        Arrays.fill(data, x.getDataAt(0));
+        return RDataFactory.createDoubleVector(data, !RRuntime.isNA(x.getDataAt(0)));
     }
 
     @Specialization(guards = {"each > 1", "!hasNames(x)"})
