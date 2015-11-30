@@ -22,6 +22,7 @@ import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
+import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.builtin.base.EvalFunctions.Eval;
 import com.oracle.truffle.r.nodes.function.*;
@@ -232,6 +233,15 @@ public class HiddenInternalFunctions {
                     }
                 };
                 Object result = RSerialize.unserialize(udata, callHook, packageName);
+                if (result instanceof RFunction) {
+                    RFunction function = (RFunction) result;
+                    if (function.getName() == null || function.getName().isEmpty()) {
+                        String name = ReadVariableNode.getSlowPathEvaluationName();
+                        if (name != null) {
+                            RContext.getRRuntimeASTAccess().setFunctionName(function.getRootNode(), name);
+                        }
+                    }
+                }
                 return result;
             } catch (IOException ex) {
                 // unexpected

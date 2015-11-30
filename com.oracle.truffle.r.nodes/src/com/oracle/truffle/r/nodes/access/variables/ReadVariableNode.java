@@ -732,6 +732,8 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
         return RRuntime.checkType(obj, mode);
     }
 
+    private static final ThreadLocal<String> slowPathEvaluationName = new ThreadLocal<>();
+
     protected boolean checkTypeSlowPath(VirtualFrame frame, Object objArg) {
         CompilerAsserts.neverPartOfCompilation();
         Object obj = objArg;
@@ -753,12 +755,21 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
                     // we recover from a wrong type later
                     return true;
                 } else {
-                    obj = PromiseHelperNode.evaluateSlowPath(frame, promise);
+                    slowPathEvaluationName.set(identifierAsString);
+                    try {
+                        obj = PromiseHelperNode.evaluateSlowPath(frame, promise);
+                    } finally {
+                        slowPathEvaluationName.set(null);
+                    }
                 }
             } else {
                 obj = promise.getValue();
             }
         }
         return RRuntime.checkType(obj, mode);
+    }
+
+    public static String getSlowPathEvaluationName() {
+        return slowPathEvaluationName.get();
     }
 }
