@@ -55,7 +55,7 @@ public final class FieldAccess extends ASTNode {
     public static ASTNode create(SourceSection src, FieldOperator op, ASTNode value, ASTNode fieldName) {
         Constant fnc = (Constant) fieldName;
         assert fnc.getType() == Constant.ConstantType.STRING;
-        return create(src, op, value, fnc.getValues()[0]);
+        return create(src, op, value, fnc.getValue());
     }
 
     public ASTNode getLhs() {

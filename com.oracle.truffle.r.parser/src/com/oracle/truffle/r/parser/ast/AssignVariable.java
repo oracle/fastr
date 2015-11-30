@@ -54,8 +54,7 @@ public abstract class AssignVariable extends ASTNode {
         } else if (lhs instanceof Constant) {
             Constant c = (Constant) lhs;
             assert c.getType() == Constant.ConstantType.STRING;
-            assert c.getValues().length == 1;
-            String value = c.getValues()[0];
+            String value = c.getValue();
             return writeVariable(src, isSuper, value, rhs);
         }
         throw RInternalError.unimplemented("unexpected lhs type: " + lhs.getClass());

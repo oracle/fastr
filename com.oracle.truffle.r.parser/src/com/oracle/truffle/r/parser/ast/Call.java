@@ -54,8 +54,7 @@ public abstract class Call extends ASTNode {
         } else if (call instanceof Constant) {
             Constant c = (Constant) call;
             assert c.getType() == Constant.ConstantType.STRING;
-            assert c.getValues().length == 1;
-            return create(callSrc, c.getValues()[0], arguments);
+            return create(callSrc, c.getValue(), arguments);
         } else if (call instanceof FunctionCall) {
             return new FunctionCall(callSrc, (FunctionCall) call, arguments);
         } else {

@@ -61,16 +61,13 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
         if (c.getType() == ConstantType.NULL) {
             return ConstantNode.create(src, RNull.instance);
         }
-        if (c.getValues().length != 1) {
-            throw new UnsupportedOperationException();
-        }
         switch (c.getType()) {
             case INT:
-                return ConstantNode.create(src, RRuntime.string2int(c.getValues()[0]));
+                return ConstantNode.create(src, RRuntime.string2int(c.getValue()));
             case DOUBLE:
-                return ConstantNode.create(src, RRuntime.string2double(c.getValues()[0]));
+                return ConstantNode.create(src, RRuntime.string2double(c.getValue()));
             case BOOL:
-                switch (c.getValues()[0]) {
+                switch (c.getValue()) {
                     case "NA":
                         return ConstantNode.create(src, RRuntime.LOGICAL_NA);
                     case "1":
@@ -81,12 +78,12 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
                         throw new AssertionError();
                 }
             case STRING:
-                return ConstantNode.create(src, c.getValues()[0]);
+                return ConstantNode.create(src, c.getValue());
             case COMPLEX:
-                if (c.getValues()[0].equals("NA_complex_")) {
+                if (c.getValue().equals("NA_complex_")) {
                     return ConstantNode.create(src, RDataFactory.createComplex(RRuntime.COMPLEX_NA_REAL_PART, RRuntime.COMPLEX_NA_IMAGINARY_PART));
                 } else {
-                    return ConstantNode.create(src, RDataFactory.createComplex(0, RRuntime.string2double(c.getValues()[0])));
+                    return ConstantNode.create(src, RDataFactory.createComplex(0, RRuntime.string2double(c.getValue())));
                 }
             default:
                 throw new UnsupportedOperationException();
