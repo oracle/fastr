@@ -49,6 +49,7 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
 
     public static enum ReadKind {
         Normal,
+        Unforced,
         // return null (instead of throwing an error) if not found
         Silent,
         // copy semantics
@@ -59,7 +60,7 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
         SilentLocal,
         UnforcedSilentLocal,
         // whether a promise should be forced to check its type or not
-        Forced;
+        ForcedTypeCheck;
     }
 
     public static ReadVariableNode create(String name, RType mode, ReadKind kind) {
@@ -109,7 +110,7 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
      * @return The appropriate implementation of {@link ReadVariableNode}
      */
     public static ReadVariableNode createForced(SourceSection src, String name, RType mode) {
-        ReadVariableNode result = new ReadVariableNode(name, mode, ReadKind.Forced, true);
+        ReadVariableNode result = new ReadVariableNode(name, mode, ReadKind.ForcedTypeCheck, true);
         if (src != null) {
             result.assignSourceSection(src);
         }
@@ -246,7 +247,7 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
         if (needsCopying && copyProfile.profile(result instanceof RAbstractVector)) {
             result = ((RAbstractVector) result).copy();
         }
-        if (kind != ReadKind.UnforcedSilentLocal && isPromiseProfile.profile(result instanceof RPromise)) {
+        if (kind != ReadKind.UnforcedSilentLocal && kind != ReadKind.Unforced && isPromiseProfile.profile(result instanceof RPromise)) {
             if (promiseHelper == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 promiseHelper = insert(new PromiseHelperNode());
@@ -718,7 +719,7 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
                 promiseHelper = insert(new PromiseHelperNode());
             }
             if (!promiseHelper.isEvaluated(promise)) {
-                if (kind != ReadKind.Forced) {
+                if (kind != ReadKind.ForcedTypeCheck) {
                     // since we do not know what type the evaluates to, it may match.
                     // we recover from a wrong type later
                     return true;
@@ -750,7 +751,7 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
             RPromise promise = (RPromise) obj;
 
             if (!promise.isEvaluated()) {
-                if (kind != ReadKind.Forced) {
+                if (kind != ReadKind.ForcedTypeCheck) {
                     // since we do not know what type the evaluates to, it may match.
                     // we recover from a wrong type later
                     return true;

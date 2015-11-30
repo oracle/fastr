@@ -121,7 +121,7 @@ public class EagerEvalHelper {
     public static boolean isVariableArgument(RBaseNode expr) {
         // Do NOT try to optimize anything that might force a Promise, as this might be arbitrary
         // complex (time and space)!
-        return expr instanceof ReadVariableNode && ((ReadVariableNode) expr).getKind() != ReadKind.Forced;
+        return expr instanceof ReadVariableNode && ((ReadVariableNode) expr).getKind() != ReadKind.ForcedTypeCheck;
     }
 
     private static boolean isCheapExpressionArgument(@SuppressWarnings("unused") RNode expr) {

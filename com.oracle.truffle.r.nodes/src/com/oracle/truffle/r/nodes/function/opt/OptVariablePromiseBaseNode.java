@@ -45,7 +45,7 @@ public abstract class OptVariablePromiseBaseNode extends PromiseNode implements 
 
     public OptVariablePromiseBaseNode(RPromiseFactory factory, ReadVariableNode rvn, int wrapIndex) {
         super(factory);
-        assert rvn.getKind() != ReadKind.Forced;  // Should be caught by optimization check
+        assert rvn.getKind() != ReadKind.ForcedTypeCheck;  // Should be caught by optimization check
         this.originalRvn = rvn;
         this.frameSlotNode = FrameSlotNode.create(rvn.getIdentifier(), false);
         this.readNode = ReadVariableNode.create(rvn.getIdentifier(), rvn.getMode(), ReadKind.UnforcedSilentLocal);
