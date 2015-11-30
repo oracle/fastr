@@ -85,7 +85,7 @@ abstract class CachedVectorNode extends RBaseNode {
         if (filteredPositionsLength != -1) {
             Object[] newPositions = new Object[filteredPositionsLength];
             int newPositionIndex = 0;
-            for (int i = 0; i < filteredPositionsLength; i++) {
+            for (int i = 0; i < positions.length; i++) {
                 Object position = positions[i];
                 if (!isRemovePosition(position)) {
                     newPositions[newPositionIndex++] = position;
