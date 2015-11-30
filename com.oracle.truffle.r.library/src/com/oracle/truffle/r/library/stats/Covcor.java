@@ -472,10 +472,10 @@ public final class Covcor extends RExternalBuiltinNode {
                             } else {
                                 sum = 0.0;
                                 loopLength.profileLength(n);
-                                double[] u = Arrays.copyOfRange(xData, i * n, i * n + n);
-                                double[] v = Arrays.copyOfRange(xData, j * n, j * n + n);
                                 for (int k = 0; loopLength.inject(k < n); k++) {
-                                    temp[k] = (u[k] - xxm) * (v[k] - yym);
+                                    double u = xData[i * n + k];
+                                    double v = xData[j * n + k];
+                                    temp[k] = (u - xxm) * (v - yym);
                                 }
                                 for (int k = 0; loopLength.inject(k < n); k++) {
                                     sum += temp[k];
