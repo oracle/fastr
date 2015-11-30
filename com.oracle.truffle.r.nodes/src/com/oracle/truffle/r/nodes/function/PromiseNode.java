@@ -410,6 +410,7 @@ public abstract class PromiseNode extends RNode {
 
         @Child private PromiseCheckHelperNode promiseCheckHelper = new PromiseCheckHelperNode();
         private final ConditionProfile argsValueAndNamesProfile = ConditionProfile.createBinaryProfile();
+        private final ConditionProfile containsVarargProfile = ConditionProfile.createBinaryProfile();
 
         public InlineVarArgsNode(RNode[] nodes, ArgumentsSignature signature) {
             this.varargs = nodes;
@@ -432,13 +433,14 @@ public abstract class PromiseNode extends RNode {
                 return RArgsValuesAndNames.EMPTY;
             }
             Object[] evaluatedArgs = new Object[varargs.length];
-            Object[] flattenedArgs = evaluateArguments(frame, evaluatedArgs);
+            int flattenedArgsSize = evaluateArguments(frame, evaluatedArgs);
 
-            if (flattenedArgs == evaluatedArgs) {
+            if (!containsVarargProfile.profile(flattenedArgsSize != -1)) {
                 // no vararg parameters
                 return new RArgsValuesAndNames(evaluatedArgs, signature);
             } else {
                 // vararg parameters
+                Object[] flattenedArgs = new Object[flattenedArgsSize];
                 int pos = 0;
                 for (int i = 0; i < varargs.length; i++) {
                     Object argValue = evaluatedArgs[i];
@@ -491,7 +493,7 @@ public abstract class PromiseNode extends RNode {
         }
 
         @ExplodeLoop
-        private Object[] evaluateArguments(VirtualFrame frame, Object[] evaluatedArgs) {
+        private int evaluateArguments(VirtualFrame frame, Object[] evaluatedArgs) {
             int size = 0;
             boolean containsVarargs = false;
             for (int i = 0; i < varargs.length; i++) {
@@ -505,10 +507,10 @@ public abstract class PromiseNode extends RNode {
                     evaluatedArgs[i] = promiseCheckHelper.checkEvaluate(frame, argValue);
                 }
             }
-            if (containsVarargs) {
-                return new Object[size];
+            if (containsVarargProfile.profile(containsVarargs)) {
+                return size;
             } else {
-                return evaluatedArgs;
+                return -1;
             }
         }
     }
