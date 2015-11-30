@@ -24,10 +24,13 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.binary.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.profile.CountedLoopConditionProfile;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.closures.*;
@@ -44,6 +47,8 @@ public abstract class MatMult extends RBuiltinNode {
     @Child private BinaryMapArithmeticFunctionNode add = new BinaryMapArithmeticFunctionNode(BinaryArithmetic.ADD.create());
 
     private final BranchProfile errorProfile = BranchProfile.create();
+    private final CountedLoopConditionProfile mainLoopProfile = CountedLoopConditionProfile.create();
+    private final CountedLoopConditionProfile remainingLoopProfile = CountedLoopConditionProfile.create();
 
     private final ConditionProfile notOneRow = ConditionProfile.createBinaryProfile();
     private final ConditionProfile notOneColumn = ConditionProfile.createBinaryProfile();
@@ -87,13 +92,14 @@ public abstract class MatMult extends RBuiltinNode {
     // double-double
 
     private static void multiplyBlock(double[] a, double[] b, int aRows, double[] result, int row, int col, int k, int aRowStride, int aColStride, int bRowStride, int bColStride, int remainingCols,
-                    int remainingRows, int remainingK) {
+                    int remainingRows, int remainingK, CountedLoopConditionProfile loopProfile) {
         for (int innerCol = 0; innerCol < remainingCols; innerCol++) {
             for (int innerRow = 0; innerRow < remainingRows; innerRow++) {
-                double x = 0.0;
                 int bIndex = (col + innerCol) * bColStride + k * bRowStride;
                 int aIndex = k * aColStride + (row + innerRow) * aRowStride;
-                for (int innerK = 0; innerK < remainingK; innerK++) {
+                loopProfile.profileLength(remainingK);
+                double x = 0.0;
+                for (int innerK = 0; loopProfile.inject(innerK < remainingK); innerK++) {
                     x += a[aIndex] * b[bIndex];
                     aIndex += aColStride;
                     bIndex += bRowStride;
@@ -105,11 +111,14 @@ public abstract class MatMult extends RBuiltinNode {
 
     private final ConditionProfile bigProfile = ConditionProfile.createBinaryProfile();
     private final BranchProfile incompleteProfile = BranchProfile.create();
+    @CompilationFinal private boolean seenLargeMatrix;
 
     @Specialization(guards = "matmat(a, b)")
     protected RDoubleVector matmatmult(RAbstractDoubleVector a, RAbstractDoubleVector b) {
         controlVisibility();
-        return doubleMatrixMultiply(a, b, a.getDimensions()[0], a.getDimensions()[1], b.getDimensions()[0], b.getDimensions()[1]);
+        int[] aDimensions = a.getDimensions();
+        int[] bDimensions = b.getDimensions();
+        return doubleMatrixMultiply(a, b, aDimensions[0], aDimensions[1], bDimensions[0], bDimensions[1]);
     }
 
     private RDoubleVector doubleMatrixMultiply(RAbstractDoubleVector a, RAbstractDoubleVector b, int aRows, int aCols, int bRows, int bCols) {
@@ -142,22 +151,31 @@ public abstract class MatMult extends RBuiltinNode {
         double[] dataA = a.materialize().getDataWithoutCopying();
         double[] dataB = b.materialize().getDataWithoutCopying();
         double[] result = new double[aRows * bCols];
-        for (int row = 0; row < aRows; row += BLOCK_SIZE) {
-            for (int col = mirrored ? row : 0; col < bCols; col += BLOCK_SIZE) {
-                for (int k = 0; k < aCols; k += BLOCK_SIZE) {
-                    int remainingCols = Math.min(BLOCK_SIZE, bCols - col);
-                    int remainingRows = Math.min(BLOCK_SIZE, aRows - row);
-                    int remainingK = BLOCK_SIZE;
-                    if (k + BLOCK_SIZE > aCols) {
-                        remainingK = aCols - k;
-                    }
-                    if (bigProfile.profile(remainingCols == BLOCK_SIZE && remainingRows == BLOCK_SIZE && remainingK == BLOCK_SIZE)) {
-                        multiplyBlock(dataA, dataB, aRows, result, row, col, k, aRowStride, aColStride, bRowStride, bColStride, BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
-                    } else {
-                        multiplyBlock(dataA, dataB, aRows, result, row, col, k, aRowStride, aColStride, bRowStride, bColStride, remainingCols, remainingRows, remainingK);
+
+        if (!seenLargeMatrix && (aRows > BLOCK_SIZE || aCols > BLOCK_SIZE || bRows > BLOCK_SIZE || bCols > BLOCK_SIZE)) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            seenLargeMatrix = true;
+        }
+        if (seenLargeMatrix) {
+            for (int row = 0; row < aRows; row += BLOCK_SIZE) {
+                for (int col = mirrored ? row : 0; col < bCols; col += BLOCK_SIZE) {
+                    for (int k = 0; k < aCols; k += BLOCK_SIZE) {
+                        int remainingCols = Math.min(BLOCK_SIZE, bCols - col);
+                        int remainingRows = Math.min(BLOCK_SIZE, aRows - row);
+                        int remainingK = BLOCK_SIZE;
+                        if (k + BLOCK_SIZE > aCols) {
+                            remainingK = aCols - k;
+                        }
+                        if (bigProfile.profile(remainingCols == BLOCK_SIZE && remainingRows == BLOCK_SIZE && remainingK == BLOCK_SIZE)) {
+                            multiplyBlock(dataA, dataB, aRows, result, row, col, k, aRowStride, aColStride, bRowStride, bColStride, BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE, mainLoopProfile);
+                        } else {
+                            multiplyBlock(dataA, dataB, aRows, result, row, col, k, aRowStride, aColStride, bRowStride, bColStride, remainingCols, remainingRows, remainingK, remainingLoopProfile);
+                        }
                     }
                 }
             }
+        } else {
+            multiplyBlock(dataA, dataB, aRows, result, 0, 0, 0, aRowStride, aColStride, bRowStride, bColStride, bCols, aRows, aCols, remainingLoopProfile);
         }
         // NAs are checked in bulk here, because doing so during multiplication is too costly
         boolean complete = true;
