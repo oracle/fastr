@@ -455,12 +455,12 @@ public abstract class RVector extends RAttributeStorage implements RShareable, R
     }
 
     @Override
-    public void incRefCount() {
+    public final void incRefCount() {
         refCount++;
     }
 
     @Override
-    public void decRefCount() {
+    public final void decRefCount() {
         assert refCount > 0;
         refCount--;
     }
