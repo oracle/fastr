@@ -18,7 +18,7 @@ public final class BinaryOperation extends Operation {
 
     private final ASTNode rhs;
 
-    private BinaryOperation(SourceSection source, Operator op, ASTNode left, ASTNode right) {
+    private BinaryOperation(SourceSection source, ArithmeticOperator op, ASTNode left, ASTNode right) {
         super(source, op, left);
         this.rhs = right;
     }
@@ -37,20 +37,20 @@ public final class BinaryOperation extends Operation {
         return Arrays.asList(getLHS().accept(v), getRHS().accept(v));
     }
 
-    public static ASTNode create(SourceSection src, Operator op, ASTNode left, ASTNode right) {
+    public static ASTNode create(SourceSection src, ArithmeticOperator op, ASTNode left, ASTNode right) {
         return new BinaryOperation(src, op, left, right);
     }
 
     public static ASTNode create(SourceSection src, String op, ASTNode left, ASTNode right) {
         switch (op) {
             case "%o%":
-                return new BinaryOperation(src, Operator.OUTER_MULT, left, right);
+                return new BinaryOperation(src, ArithmeticOperator.OUTER_MULT, left, right);
             case "%*%":
-                return new BinaryOperation(src, Operator.MATMULT, left, right);
+                return new BinaryOperation(src, ArithmeticOperator.MATMULT, left, right);
             case "%/%":
-                return new BinaryOperation(src, Operator.INTEGER_DIV, left, right);
+                return new BinaryOperation(src, ArithmeticOperator.INTEGER_DIV, left, right);
             case "%in%":
-                return new BinaryOperation(src, Operator.IN, left, right);
+                return new BinaryOperation(src, ArithmeticOperator.IN, left, right);
             default:
                 // user-defined operator
                 List<ArgNode> args = new ArrayList<>();

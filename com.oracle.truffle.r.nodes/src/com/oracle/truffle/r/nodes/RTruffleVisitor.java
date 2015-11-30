@@ -35,6 +35,7 @@ import com.oracle.truffle.r.nodes.control.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.parser.ast.*;
 import com.oracle.truffle.r.parser.ast.Constant.ConstantType;
+import com.oracle.truffle.r.parser.ast.Operation.ArithmeticOperator;
 import com.oracle.truffle.r.parser.ast.Operation.Operator;
 import com.oracle.truffle.r.parser.ast.Function;
 import com.oracle.truffle.r.parser.tools.*;
@@ -243,7 +244,7 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
     public RSyntaxNode visit(BinaryOperation op) {
         RSyntaxNode left = op.getLHS().accept(this);
         RSyntaxNode right = op.getRHS().accept(this);
-        if (op.getOperator() == Operator.COLON) {
+        if (op.getOperator() == ArithmeticOperator.COLON) {
             return ColonNode.create(op.getSource(), left.asRNode(), right.asRNode());
         } else {
             String functionName = op.getOperator().getName();

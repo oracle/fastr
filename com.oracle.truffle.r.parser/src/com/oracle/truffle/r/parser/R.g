@@ -365,7 +365,7 @@ and_expr returns [ASTNode v]
     ;
 
 not_expr returns [ASTNode v]
-    : {true}? t=NOT n_ l=not_expr { $v = UnaryOperation.create(sourceSection("not_expr", $t, $l.stop), Operator.UNARY_NOT, $l.v); }
+    : {true}? t=NOT n_ l=not_expr { $v = UnaryOperation.create(sourceSection("not_expr", $t, $l.stop), ArithmeticOperator.UNARY_NOT, $l.v); }
     | b=comp_expr         { $v = $b.v; }
     ;
 
@@ -426,7 +426,7 @@ colon_expr returns [ASTNode v] // FIXME
         }
     }
     : l=unary_expression { $v = $l.v; }
-      ( ((COLON)=>op=COLON n_ r=unary_expression { hasColon = true; $v = BinaryOperation.create(sourceSection("colon_expr/binop", $op, $r.stop), Operator.COLON, $colon_expr.v, $r.v); }) )*
+      ( ((COLON)=>op=COLON n_ r=unary_expression { hasColon = true; $v = BinaryOperation.create(sourceSection("colon_expr/binop", $op, $r.stop), ArithmeticOperator.COLON, $colon_expr.v, $r.v); }) )*
     ;
 
 unary_expression returns [ASTNode v]
@@ -439,14 +439,14 @@ unary_expression returns [ASTNode v]
     }
     : p=PLUS n_ { plusOrMinus = true; }
       ( (number) => num=number { $v = num; }
-      | l=unary_expression     { $v = UnaryOperation.create(sourceSection("unary_expression/PLUS", $p, $l.stop), Operator.UNARY_PLUS, $l.v); }
+      | l=unary_expression     { $v = UnaryOperation.create(sourceSection("unary_expression/PLUS", $p, $l.stop), ArithmeticOperator.UNARY_PLUS, $l.v); }
       )
     | m=MINUS n_ { plusOrMinus = true; }
       ( (number) => num=number { ((Constant) num).addNegativeSign(); $v = num; }
-      | l=unary_expression     { $v = UnaryOperation.create(sourceSection("unary_expression/MINUS", $m, $l.stop), Operator.UNARY_MINUS, $l.v); }
+      | l=unary_expression     { $v = UnaryOperation.create(sourceSection("unary_expression/MINUS", $m, $l.stop), ArithmeticOperator.UNARY_MINUS, $l.v); }
       )
     | m=NOT n_ { plusOrMinus = true; }
-      ( l=unary_expression     { $v = UnaryOperation.create(sourceSection("unary_expression/UNARY_NOT", $m, $l.stop), Operator.UNARY_NOT, $l.v); }
+      ( l=unary_expression     { $v = UnaryOperation.create(sourceSection("unary_expression/UNARY_NOT", $m, $l.stop), ArithmeticOperator.UNARY_NOT, $l.v); }
       )
     | b=power_expr             { $v = $b.v; }
     ;
@@ -545,38 +545,38 @@ bool returns [ASTNode v]
     | t=NA    { $v = Constant.createBoolConstant(sourceSection("bool/NA", t), RRuntime.LOGICAL_NA); }
     ;
 
-or_operator returns [Operator v]
-    : OR            { $v = Operator.OR; }
-    | ELEMENTWISEOR { $v = Operator.ELEMENTWISEOR; }
+or_operator returns [ArithmeticOperator v]
+    : OR            { $v = ArithmeticOperator.OR; }
+    | ELEMENTWISEOR { $v = ArithmeticOperator.ELEMENTWISEOR; }
     ;
 
-and_operator returns [Operator v]
-    : AND            { $v = Operator.AND; }
-    | ELEMENTWISEAND { $v = Operator.ELEMENTWISEAND; }
+and_operator returns [ArithmeticOperator v]
+    : AND            { $v = ArithmeticOperator.AND; }
+    | ELEMENTWISEAND { $v = ArithmeticOperator.ELEMENTWISEAND; }
     ;
 
-comp_operator returns [Operator v]
-    : GT { $v = Operator.GT; }
-    | GE { $v = Operator.GE; }
-    | LT { $v = Operator.LT; }
-    | LE { $v = Operator.LE; }
-    | EQ { $v = Operator.EQ; }
-    | NE { $v = Operator.NE; }
+comp_operator returns [ArithmeticOperator v]
+    : GT { $v = ArithmeticOperator.GT; }
+    | GE { $v = ArithmeticOperator.GE; }
+    | LT { $v = ArithmeticOperator.LT; }
+    | LE { $v = ArithmeticOperator.LE; }
+    | EQ { $v = ArithmeticOperator.EQ; }
+    | NE { $v = ArithmeticOperator.NE; }
     ;
 
-add_operator returns [Operator v]
-    : PLUS  { $v = Operator.ADD; }
-    | MINUS { $v = Operator.SUB; }
+add_operator returns [ArithmeticOperator v]
+    : PLUS  { $v = ArithmeticOperator.ADD; }
+    | MINUS { $v = ArithmeticOperator.SUB; }
     ;
 
-mult_operator returns [Operator v]
-    : MULT { $v = Operator.MULT; }
-    | DIV  { $v = Operator.DIV; }
-    | MOD  { $v = Operator.MOD; }
+mult_operator returns [ArithmeticOperator v]
+    : MULT { $v = ArithmeticOperator.MULT; }
+    | DIV  { $v = ArithmeticOperator.DIV; }
+    | MOD  { $v = ArithmeticOperator.MOD; }
     ;
 
-power_operator returns [Operator v]
-    : CARET { $v = Operator.POW; }
+power_operator returns [ArithmeticOperator v]
+    : CARET { $v = ArithmeticOperator.POW; }
     ;
 
 args returns [List<ArgNode> v]

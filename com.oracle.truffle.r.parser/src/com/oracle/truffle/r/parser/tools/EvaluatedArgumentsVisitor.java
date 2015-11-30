@@ -25,6 +25,7 @@ package com.oracle.truffle.r.parser.tools;
 import java.util.*;
 
 import com.oracle.truffle.r.parser.ast.*;
+import com.oracle.truffle.r.parser.ast.Operation.ArithmeticOperator;
 import com.oracle.truffle.r.parser.ast.Operation.Operator;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -143,7 +144,7 @@ public final class EvaluatedArgumentsVisitor extends BasicVisitor<Info> {
         ASTNode right = op.getRHS();
 
         Info info = Info.createNew();
-        if (operator == Operator.OR || operator == Operator.AND) {
+        if (operator == ArithmeticOperator.OR || operator == ArithmeticOperator.AND) {
             info.addBefore(Info.alternative(right.accept(this), Info.EMPTY));
             info.addBefore(left.accept(this));
         } else {

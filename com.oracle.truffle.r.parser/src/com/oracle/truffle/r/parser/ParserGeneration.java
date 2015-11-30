@@ -71,6 +71,7 @@ public class ParserGeneration {
         "allow -/+/! after ^",
         "adapt to RError API change",
         "allow multiple semicolons in {}",
-        "allow .. as identifier"
+        "allow .. as identifier",
+        "rename Operator class"
     };
 }

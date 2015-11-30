@@ -14,11 +14,11 @@ import com.oracle.truffle.api.source.*;
 
 public final class UnaryOperation extends Operation {
 
-    private UnaryOperation(SourceSection source, Operator op, ASTNode operand) {
+    private UnaryOperation(SourceSection source, ArithmeticOperator op, ASTNode operand) {
         super(source, op, operand);
     }
 
-    public static ASTNode create(SourceSection source, Operator op, ASTNode operand) {
+    public static ASTNode create(SourceSection source, ArithmeticOperator op, ASTNode operand) {
         assert op.isUnary();
         return new UnaryOperation(source, op, operand);
     }

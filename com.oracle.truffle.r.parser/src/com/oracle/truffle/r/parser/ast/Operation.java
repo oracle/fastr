@@ -40,7 +40,13 @@ public abstract class Operation extends ASTNode {
     private static final int SIGN_PRECEDENCE = COLON_PRECEDENCE + 1;
     private static final int POW_PRECEDENCE = SIGN_PRECEDENCE + 1;
 
-    public enum Operator {
+    public interface Operator {
+        String getName();
+
+        boolean isUnary();
+    }
+
+    public enum ArithmeticOperator implements Operator {
         ADD("+", ADD_PRECEDENCE, false),
         SUB("-", SUB_PRECEDENCE, false),
         MULT("*", MULT_PRECEDENCE, false),
@@ -76,7 +82,7 @@ public abstract class Operation extends ASTNode {
         private final int precedence;
         private final boolean isUnary;
 
-        private Operator(String name, int precedence, boolean isUnary) {
+        private ArithmeticOperator(String name, int precedence, boolean isUnary) {
             this.name = name;
             this.precedence = precedence;
             this.isUnary = isUnary;
@@ -96,15 +102,15 @@ public abstract class Operation extends ASTNode {
     }
 
     private final ASTNode lhs;
-    private final Operator op;
+    private final ArithmeticOperator op;
 
-    protected Operation(SourceSection source, Operator op, ASTNode left) {
+    protected Operation(SourceSection source, ArithmeticOperator op, ASTNode left) {
         super(source);
         this.op = op;
         this.lhs = left;
     }
 
-    public Operator getOperator() {
+    public ArithmeticOperator getOperator() {
         return op;
     }
 
