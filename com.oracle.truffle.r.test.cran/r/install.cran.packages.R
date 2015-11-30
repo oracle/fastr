@@ -21,10 +21,15 @@
 # questions.
 #
 
-# A script to install andoptionally test CRAN packages, with a blacklist mechanism starting
+# A script to install and optionally test CRAN packages, with a blacklist mechanism starting
 # from a known set of packages that we cannot handle, e.g. Rcpp (due to C++)
 # By default all packages are candidates for installation, but this
-# can be limited by a regexp pattern or an explicit list from a file
+# can be limited in the following ways:
+#
+# 1. by a regexp pattern which must be the last argument on the command line
+# 2. by an explicit list from a file given by the --pkg-filelist option
+# 3. from the set of installed packages found in the lib install directory (option --pkg-list-installed)
+#    (useful primarily for testing a set of pre-installed packages
 
 # By default, we use the CRAN mirror specified by --cran-mirror or env var CRAN_MIRROR.
 # If unset, defaults to "http://cran.cnr.berkeley.edu/"
@@ -50,6 +55,9 @@
 #   internal: direct call to tools::install.packages
 #   context: run in separate FastR context
 
+# test output goes to a directory derived from the '--testdir dir' option (default 'test'). if --gnur is set, '_gnur'
+# is appended, else '_fastr'. Each package's test output is then stored in a subdirectory named after the package.
+
 args <- commandArgs(TRUE)
 
 usage <- function() {
@@ -60,6 +68,9 @@ usage <- function() {
 					  "[--run-mode mode]",
 					  "[--pkg-filelist file]",
 					  "[--run-tests]",
+					  "[--testdir dir]",
+					  "[--pkg-list-installed]",
+					  "[--print-ok-installs]",
 					  "[--gnur]",
                       "[package-pattern] \n"))
 	quit(status=1)
@@ -182,10 +193,38 @@ set.initial.package.blacklist <- function() {
 
 }
 
+get.installed.pkgs <- function() {
+	pkg.filelist <- character();
+	pkg.excludes <- character()
+	pkgdirs <- list.files(lib.install, no..=T)
+	# check for failed installs
+	for (pkgname in pkgdirs) {
+		if (grepl("00LOCK-", pkgname)) {
+			pkg.exclude <- gsub("00LOCK-", "", pkgname)
+			pkg.excludes <- append(pkg.excludes, pkg.exclude)
+			if (verbose) {
+				cat("excluding package with failed install:", pkg.exclude, "\n")
+			}
+		}
+	}
+	for (pkgname in pkgdirs) {
+		if (!grepl("00LOCK-", pkgname) && !pkgname %in% pkg.excludes) {
+			pkg.filelist <- append(pkg.filelist, pkgname)
+		}
+	}
+	pkg.filelist
+}
+
 # find the available packages from contriburl and match those against pkg.pattern
 # sets global variables avail.pkgs and toinstall.pkgs
 get.pkgs <- function() {
 	avail.pkgs <<- available.packages(contriburl=contriburl, type="source")
+	if (pkg.list.installed) {
+		pkg.filelist <- get.installed.pkgs()
+		if (length(pkg.filelist) == 0) {
+			stop("no installed packages")
+		}
+	}
 	if (length(pkg.filelist) == 0) {
 		match.fun <- function(x) grepl(pkg.pattern, x["Package"])
 	} else {
@@ -256,6 +295,12 @@ do.install <- function() {
 		cat("BEGIN package installation\n")
 		install.pkgs(test.pkgnames)
 		cat("END package installation\n")
+		if (print.ok.installs) {
+			pkgnames.i <- get.installed.pkgs()
+			for (pkgname.i in pkgnames.i) {
+				cat(pkgname.i, ",", ",", "\n", sep="")
+			}
+		}
 	}
 
 	if (run.tests) {
@@ -297,20 +342,26 @@ system.install <- function(pkgname) {
 	rc
 }
 
-test.package <- function(pkgname) {
-	if (!file.exists(test.outDir)) {
-		if (!dir.create(test.outDir)) {
-			stop(paste("cannot create: ", test.outDir))
+check.create.dir <- function(name) {
+	if (!file.exists(name)) {
+		if (!dir.create(name)) {
+			stop(paste("cannot create: ", name))
 		}
 	} else {
-		if(!file_test("-d", test.outDir)) {
-			stop(paste(test.outDir, "exists and is not a directory"))
+		if(!file_test("-d", name)) {
+			stop(paste(name, "exists and is not a directory"))
 		}
 	}
+}
+
+test.package <- function(pkgname) {
+	testdir.path <- get.testdir.path()
+	check.create.dir(testdir.path)
+	check.create.dir(file.path(testdir.path, pkgname))
 	if (run.mode == "system") {
 		system.test(pkgname)
 	} else if (run.mode == "internal") {
-		tools::testInstalledPackage(pkgname, outDir=test.outDir, lib.loc=lib.install)
+		tools::testInstalledPackage(pkgname, outDir=file.path(testdir.path, pkgname), lib.loc=lib.install)
 	} else if (run.mode == "context") {
 		stop("context run-mode not implemented\n")
 	}
@@ -319,7 +370,7 @@ test.package <- function(pkgname) {
 system.test <- function(pkgname) {
 	script <- file.path(R.home(), "com.oracle.truffle.r.test.cran/r/test.package.R")
 	rscript = file.path(R.home(), "bin/Rscript")
-	args <- c(script, pkgname, test.outDir, lib.install)
+	args <- c(script, pkgname, file.path(get.testdir.path(), pkgname), lib.install)
 	rc <- system2(rscript, args)
 	rc
 }
@@ -334,16 +385,22 @@ get.argvalue <- function() {
 	}
 }
 
+get.testdir.path <- function() {
+	if (gnur) {
+		return(paste(testdir, "gnur", sep="_"))
+	} else {
+		return(paste(testdir, "fastr", sep="_"))
+	}
+}
+
 check.gnur <- function() {
 	if (gnur) {
 		if (run.mode != "internal") {
 			if (verbose) {
 				cat("setting run-mode to 'internal' for GnuR\n")
-				cat("setting test dir to 'test_gnur' for GnuR\n")
 				cat("setting lib.install to ", lib.install, "_gnur", " for GnuR\n", sep="")
 			}
 			run.mode <<- "internal"
-			test.outDir <<- "test_gnur"
             lib.install <<- paste0(lib.install, "_gnur")
 		}
 	}
@@ -394,6 +451,12 @@ parse.args <- function() {
 			ok.pkg.filelistfile <<- get.argvalue()
 		} else if (a == "--run-tests") {
 			run.tests <<- TRUE
+		} else if (a == "--testdir") {
+			testdir <<- get.argvalue()
+		} else if (a == "--pkg-list-installed") {
+			pkg.list.installed <<- T
+		} else if (a == "--print-ok-installs") {
+			print.ok.installs <<- T
 		} else if (a == "--gnur") {
 			gnur <<- TRUE
 		} else {
@@ -424,7 +487,9 @@ cat.args <- function() {
 		cat("testcount:", testcount, "\n")
 		cat("run.mode:", run.mode, "\n")
 		cat("run.tests:", run.tests, "\n")
-		cat("test.outDir", test.outDir, "\n")
+		cat("pkg.list.installed:", pkg.list.installed, "\n")
+		cat("print.ok.installs:", print.ok.installs, "\n")
+		cat("testdir.path", get.testdir.path(), "\n")
 		cat("gnur:", gnur, "\n")
 	}
 }
@@ -485,13 +550,15 @@ contriburl <- NA
 blacklist.file <- NA
 initial.blacklist.file <- NA
 lib.install <- NA
-test.outDir <- "test_fastr"
+testdir <- "test"
 
 pkg.pattern <- "^.*"
 pkg.filelist <- character()
 pkg.filelistfile <- NA
 ok.pkg.filelist <- character()
 ok.pkg.filelistfile <- NA
+pkg.list.installed <- F
+print.ok.installs <- F
 verbose <- F
 very.verbose <- F
 install <- T
