@@ -39,6 +39,8 @@ public abstract class FirstIntNode extends CastNode {
 
     protected abstract int getDefaultValue();
 
+    public abstract int executeInt(Object value);
+
     private final ConditionProfile lengthOneProfile = ConditionProfile.createBinaryProfile();
     private final BranchProfile errorProfile = BranchProfile.create();
 
@@ -63,11 +65,11 @@ public abstract class FirstIntNode extends CastNode {
         return argument.getDataAt(0);
     }
 
-    public static CastNode createWithWarning(RError.Message sizeWarning, String argumentName, int defaultValue) {
+    public static FirstIntNode createWithWarning(RError.Message sizeWarning, String argumentName, int defaultValue) {
         return FirstIntNodeGen.create(null, sizeWarning, argumentName, defaultValue);
     }
 
-    public static CastNode createWithError(RError.Message emptyError, String argumentName) {
+    public static FirstIntNode createWithError(RError.Message emptyError, String argumentName) {
         return FirstIntNodeGen.create(emptyError, null, argumentName, 0);
     }
 }

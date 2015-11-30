@@ -539,6 +539,7 @@ public class BasePackage extends RBuiltinPackage {
     @Override
     public void loadOverrides(MaterializedFrame baseFrame) {
         super.loadOverrides(baseFrame);
+        addFastPath(baseFrame, "matrix", () -> MatrixFastPathNodeGen.create(null));
         addFastPath(baseFrame, "setdiff", () -> SetDiffFastPathNodeGen.create(null));
         addFastPath(baseFrame, "get", () -> GetFastPathNodeGen.create(null));
         addFastPath(baseFrame, "exists", () -> ExistsFastPathNodeGen.create(null));

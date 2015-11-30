@@ -22,27 +22,52 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base.fastpaths;
 
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.r.runtime.data.model.*;
-import com.oracle.truffle.r.runtime.nodes.*;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.utilities.ConditionProfile;
+import com.oracle.truffle.r.nodes.builtin.base.Matrix;
+import com.oracle.truffle.r.nodes.builtin.base.MatrixNodeGen;
+import com.oracle.truffle.r.nodes.unary.CastIntegerNode;
+import com.oracle.truffle.r.nodes.unary.FirstIntNode;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.data.RMissing;
+import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.nodes.RFastPathNode;
 
 public abstract class MatrixFastPath extends RFastPathNode {
 
-    @Specialization
-    protected Object setdiff(RAbstractStringVector x, RAbstractStringVector y) {
-        System.out.println("setdiff fast path execution string: " + x + " / " + y);
-        return null;
+    protected static FirstIntNode createFirst() {
+        return FirstIntNode.createWithError(RError.Message.NON_NUMERIC_MATRIX_EXTENT, null);
+    }
+
+    protected static Matrix createMatrix() {
+        return MatrixNodeGen.create(null, null, null);
     }
 
     @Specialization
-    protected Object setdiff(RAbstractIntVector x, RAbstractIntVector y) {
-        System.out.println("setdiff fast path execution int: " + x + " / " + y);
-        return null;
+    protected Object matrix(RAbstractVector data, Object nrow, Object ncol, @SuppressWarnings("unused") RMissing byrow, Object dimnames, //
+                    @Cached("create()") CastIntegerNode castRow, //
+                    @Cached("create()") CastIntegerNode castCol, //
+                    @Cached("createFirst()") FirstIntNode firstRow, //
+                    @Cached("createFirst()") FirstIntNode firstCol, //
+                    @Cached("createBinaryProfile()") ConditionProfile rowMissingProfile, //
+                    @Cached("createBinaryProfile()") ConditionProfile colMissingProfile, //
+                    @Cached("createBinaryProfile()") ConditionProfile dimMissingProfile, //
+                    @Cached("createMatrix()") Matrix matrix) {
+        boolean rowMissing = rowMissingProfile.profile(nrow == RMissing.instance);
+        boolean colMissing = colMissingProfile.profile(ncol == RMissing.instance);
+        int row = rowMissing ? 1 : firstRow.executeInt(castRow.execute(nrow));
+        int col = colMissing ? 1 : firstCol.executeInt(castCol.execute(ncol));
+        Object dim = dimMissingProfile.profile(dimnames == RMissing.instance) ? RNull.instance : dimnames;
+        return matrix.execute(data, row, col, RRuntime.LOGICAL_FALSE, dim, RRuntime.asLogical(rowMissing), RRuntime.asLogical(colMissing));
     }
 
     @Fallback
     @SuppressWarnings("unused")
-    protected Object fallback(Object x, Object y) {
+    protected Object fallback(Object data, Object nrow, Object ncol, Object byrow, Object dimnames) {
         return null;
     }
 }

@@ -49,6 +49,18 @@ public abstract class AssignFastPath extends RFastPathNode {
         return assign.execute(frame, x, value, envir, RRuntime.LOGICAL_FALSE);
     }
 
+    @Specialization
+    @SuppressWarnings("unused")
+    protected Object getNonInherit(VirtualFrame frame, RAbstractStringVector x, Object value, REnvironment pos, RMissing envir, byte inherits, Object immediate) {
+        return assign.execute(frame, x, value, pos, inherits);
+    }
+
+    @Specialization
+    @SuppressWarnings("unused")
+    protected Object getNonInherit(VirtualFrame frame, RAbstractStringVector x, Object value, REnvironment pos, RMissing envir, RMissing inherits, Object immediate) {
+        return assign.execute(frame, x, value, pos, RRuntime.LOGICAL_FALSE);
+    }
+
     @Fallback
     @SuppressWarnings("unused")
     protected Object fallback(Object xv, Object value, Object pos, Object envir, Object inherits, Object immediate) {

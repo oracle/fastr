@@ -45,6 +45,8 @@ public abstract class Matrix extends RBuiltinNode {
     private final BinaryConditionProfile empty = (BinaryConditionProfile) ConditionProfile.createBinaryProfile();
     private final BinaryConditionProfile isList = (BinaryConditionProfile) ConditionProfile.createBinaryProfile();
 
+    public abstract RAbstractVector execute(RAbstractVector data, int nrow, int ncol, byte byrow, Object dimnames, byte missingNr, byte missingNc);
+
     private RAbstractVector updateDimNames(RAbstractVector vector, Object o) {
         if (updateDimNames == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
