@@ -73,7 +73,7 @@ abstract class PositionCheckSubsetNode extends PositionCheckNode {
     }
 
     protected static boolean isMultiplesOf(int a, int b) {
-        return b != 0 && a % b == 0;
+        return b != 0 && (a == b || a % b == 0);
     }
 
     @Specialization(contains = "doLogicalMultiplesInBounds")

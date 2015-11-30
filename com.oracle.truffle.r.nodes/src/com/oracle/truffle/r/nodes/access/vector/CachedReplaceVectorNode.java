@@ -59,6 +59,9 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
     private final BranchProfile resizeProfile = BranchProfile.create();
     private final BranchProfile sharedProfile = BranchProfile.create();
 
+    private final ConditionProfile valueLengthOneProfile = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile emptyReplacementProfile = ConditionProfile.createBinaryProfile();
+
     private final RType valueType;
     private final RType castType;
     private final boolean updatePositionNames;
@@ -190,12 +193,12 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
         }
 
         int replacementLength = positionsCheckNode.getSelectedPositionsCount(positionProfiles);
-        if (replacementLength == 0) {
+        if (emptyReplacementProfile.profile(replacementLength == 0)) {
             /* Nothing to modify */
             return vector;
         }
 
-        if (valueLength != 1) {
+        if (valueLengthOneProfile.profile(valueLength != 1)) {
             verifyValueLength(positionProfiles, valueLength);
         }
 
@@ -227,7 +230,7 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
              * Interestingly we always need to provide not NOT_MULTIPLE_REPLACEMENT error messages
              * for multi-dimensional deletes.
              */
-            if ((this.numberOfDimensions > 1 && isNullValue()) || replacementLength % valueLength != 0) {
+            if ((this.numberOfDimensions > 1 && isNullValue()) || (replacementLength != valueLength && replacementLength % valueLength != 0)) {
                 if (this.numberOfDimensions > 1) {
                     errorBranch.enter();
                     throw RError.error(this, RError.Message.NOT_MULTIPLE_REPLACEMENT);
