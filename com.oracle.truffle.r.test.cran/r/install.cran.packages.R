@@ -72,6 +72,7 @@ usage <- function() {
 					  "[--pkg-list-installed]",
 					  "[--print-ok-installs]",
 					  "[--gnur]",
+					  "[--list-versions]",
                       "[package-pattern] \n"))
 	quit(status=1)
 }
@@ -215,6 +216,16 @@ get.installed.pkgs <- function() {
 	pkg.filelist
 }
 
+installed.ok <- function(pkgname) {
+	if (!file.exists(file.path(lib.install, pkgname))) {
+		return(FALSE)
+	}
+	if (file.exists(file.path("00LOCK-", pkgname))) {
+		return(FALSE)
+	}
+	return(TRUE)
+}
+
 # find the available packages from contriburl and match those against pkg.pattern
 # sets global variables avail.pkgs and toinstall.pkgs
 get.pkgs <- function() {
@@ -236,7 +247,7 @@ get.pkgs <- function() {
 
 # performs the installation, or logs what it would install if dry.run = T
 # either creates the blacklist or reads it from a file
-do.install <- function() {
+do.it <- function() {
 	get.pkgs()
 	get.initial.package.blacklist()
 
@@ -276,13 +287,22 @@ do.install <- function() {
 
 	}
 
+	if (list.versions) {
+		for (i in (1:length(rownames(toinstall.pkgs)))) {
+			pkg <- toinstall.pkgs[i, ]
+			if (!(pkg["Package"] %in% blacklist)) {
+				cat(pkg["Package"], pkg["Version"], "\n", sep=",")
+			}
+		}
+	}
+
 	if (is.na(testcount)) {
 		# install all non-blacklisted packages in toinstall.pkgs
 		test.pkgnames <- rownames(toinstall.pkgs)
 	} else {
 		# install testcount packages taken at random from toinstall.pkgs
 		matched.toinstall.pkgs <- apply(toinstall.pkgs, 1, function(x) include.package(x, blacklist))
-		test.avail.pkgs <<-toinstall.pkgs[matched.toinstall.pkgs, , drop=F]
+		test.avail.pkgs <- toinstall.pkgs[matched.toinstall.pkgs, , drop=F]
 		test.avail.pkgnames <- rownames(test.avail.pkgs)
 		rands <- sample(1:length(test.avail.pkgnames))
 		test.pkgnames <- character(testcount)
@@ -298,7 +318,7 @@ do.install <- function() {
 		if (print.ok.installs) {
 			pkgnames.i <- get.installed.pkgs()
 			for (pkgname.i in pkgnames.i) {
-				cat(pkgname.i, ",", ",", "\n", sep="")
+				cat(pkgname.i, "\n")
 			}
 		}
 	}
@@ -308,11 +328,15 @@ do.install <- function() {
 		test.count = 1
 		test.total = length(test.pkgnames)
 		for (pkgname in test.pkgnames) {
-			if (dry.run) {
-				cat("would test:", pkgname, "\n")
+			if (installed.ok(pkgname)) {
+				if (dry.run) {
+					cat("would test:", pkgname, "\n")
+				} else {
+					cat("testing:", pkgname, "(", test.count, "of", test.total, ")", "\n")
+					test.package(pkgname)
+				}
 			} else {
-				cat("testing:", pkgname, "(", test.count, "of", test.total, ")", "\n")
-				test.package(pkgname)
+				cat("install failed, not testing:", pkgname, "\n")
 			}
 			test.count = test.count + 1
 		}
@@ -459,6 +483,8 @@ parse.args <- function() {
 			print.ok.installs <<- T
 		} else if (a == "--gnur") {
 			gnur <<- TRUE
+		} else if (a == "--list-versions") {
+			list.versions <<- TRUE
 		} else {
 			if (grepl("^-.*", a)) {
 				usage()
@@ -542,7 +568,7 @@ run <- function() {
 	check.gnur()
 	lib.install <<- normalizePath(lib.install)
 	cat.args()
-    do.install()
+    do.it()
 }
 
 cran.mirror <- NA
@@ -571,6 +597,7 @@ testcount <- NA
 run.mode <- "system"
 run.tests <- FALSE
 gnur <- FALSE
+list.versions <- FALSE
 
 if (!interactive()) {
     run()

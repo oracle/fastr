@@ -43,6 +43,378 @@ Reason: C++
 Package:cpm
 Reason: C++
 
+Package: cheddar
+Reason: C++
+
+Package: intervals
+Reason: C++
+
+Package: FNN
+Reason: C++
+
+Package: DatABEL
+Reason: C++
+
+Package: glmmGS
+Reason: C++
+
+Package: flsa
+Reason: C++
+
+Package: LiblineaR
+Reason: C++
+
+Package: thgenetics
+Reason: C++
+
+Package: hint
+Reason: C++
+
+Package: bigmemory
+Reason: C++
+
+Package: oce
+Reason: C++
+
+Package: tsc
+Reason: C++
+
+Package: rsdepth
+Reason: C++
+
+Package: Hankel
+Reason: C++
+
+Package: phreeqc
+Reason: C++
+
+Package: yaImpute
+Reason: C++
+
+Package: gmp
+Reason: C++
+
+Package: qtbase
+Reason: C++
+
+Package: GenSA
+Reason: C++
+
+Package: ICSNP
+Reason: C++
+
+Package: RcppParallel
+Reason: C++
+
+Package: mph
+Reason: C++
+
+Package: cghseg
+Reason: C++
+
+Package: polyclip
+Reason: C++
+
+Package: stepR
+Reason: C++
+
+Package: SuppDists
+Reason: C++
+
+Package: hashFunction
+Reason: C++
+
+Package: BiasedUrn
+Reason: C++
+
+Package: treethresh
+Reason: C++
+
+Package: wtcrsk
+Reason: C++
+
+Package: ars
+Reason: C++
+
+Package: EMCC
+Reason: C++
+
+Package: energy
+Reason: C++
+
+Package: compHclust
+Reason: C++
+
+Package: rBeta2009
+Reason: C++
+
+Package: MultiCNVDetect
+Reason: C++
+
+Package: simplexreg
+Reason: C++
+
+Package: qtl
+Reason: C++
+
+Package: dynaTree
+Reason: C++
+
+Package: subselect
+Reason: C++
+
+Package: gof
+Reason: C++
+
+Package: BMN
+Reason: C++
+
+Package: TrialSize
+Reason: C++
+
+Package: BayesXsrc
+Reason: C++
+
+Package: depmixS4
+Reason: C++
+
+Package: depmix
+Reason: C++
+
+Package: pcaPP
+Reason: C++
+
+Package: rlm
+Reason: C++
+
+Package: fastcluster
+Reason: C++
+
+Package: glmlep
+Reason: C++
+
+Package: SpatialNP
+Reason: C++
+
+Package: planor
+Reason: C++
+
+Package: ptinpoly
+Reason: C++
+
+Package: MaXact
+Reason: C++
+
+Package: mixer
+Reason: C++
+
+Package: CIFsmry
+Reason: C++
+
+Package: diffractometry
+Reason: C++
+
+Package: HiDimDA
+Reason: C++
+
+Package: RApiSerialize
+Reason: C++
+
+Package: modeest
+Reason: C++
+
+Package: tgp
+Reason: C++
+
+Package: Bmix
+Reason: C++
+
+Package: SLHD
+Reason: C++
+
+Package: leaderCluster
+Reason: C++
+
+Package: bnpmr
+Reason: C++
+
+Package: RANN
+Reason: C++
+
+Package: som
+Reason: C++
+
+Package: hsmm
+Reason: C++
+
+Package: fishMod
+Reason: C++
+
+Package: dbarts
+Reason: C++
+
+Package: gnmf
+Reason: C++
+
+Package: devEMF
+Reason: C++
+
+Package: dissUtils
+Reason: C++
+
+Package: preseqR
+Reason: C++
+
+Package: monomvn
+Reason: C++
+
+Package: synchronicity
+Reason: C++
+
+Package: RMC
+Reason: C++
+
+Package: SpeciesMix
+Reason: C++
+
+Package: RJSONIO
+Reason: C++
+
+Package: nloptr
+Reason: C++
+
+Package: RANN.L1
+Reason: C++
+
+Package: logconPH
+Reason: C++
+
+Package: Interact
+Reason: C++
+
+Package: VPdtw
+Reason: C++
+
+Package: TraMineR
+Reason: C++
+
+Package: CORElearn
+Reason: C++
+
+Package: mRm
+Reason: C++
+
+Package: flam
+Reason: C++
+
+Package: GenABEL
+Reason: C++
+
+Package: OjaNP
+Reason: C++
+
+Package: infotheo
+Reason: C++
+
+Package: RCPmod
+Reason: C++
+
+Package: ConvCalendar
+Reason: C++
+
+Package: cit
+Reason: C++
+
+Package: highlight
+Reason: C++
+
+Package: BayesBridge
+Reason: C++
+
+Package: CompQuadForm
+Reason: C++
+
+Package: mixcat
+Reason: C++
+
+Package: VariABEL
+Reason: C++
+
+Package: multic
+Reason: C++
+
+Package: DALY
+Reason: C++
+
+Package: WhopGenome
+Reason: C++
+
+Package: RandomFieldsUtils
+Reason: C++
+
+Package: IndependenceTests
+Reason: C++
+
+Package: SGL
+Reason: C++
+
+Package: sanitizers
+Reason: C++
+
+Package: lhs
+Reason: C++
+
+Package: csvread
+Reason: C++
+
+Package: BayesTree
+Reason: C++
+
+Package: osDesign
+Reason: C++
+
+Package: BayClone2
+Reason: C++
+
+Package: IM
+Reason: C++
+
+Package: SKAT
+Reason: C++
+
+Package: ff
+Reason: C++
+
+Package: clustering.sc.dp
+Reason: C++
+
+Package: neariso
+Reason: C++
+
+Package: Ckmeans.1d.dp
+Reason: C++
+
+Package: KFKSDS
+Reason: C++
+
+Package: HHG
+Reason: C++
+
+Package: tpr
+Reason: C++
+
+Package: EBS
+Reason: C++
+
+Package: gCat
+Reason: C++
+
+Package: Matching
+Reason: C++
+
+Package: BayesLogit
+Reason: C++
+
 Package: AnnotLists
 Reason: tcltk
 
@@ -53,6 +425,12 @@ Package: aplpack
 Reason: tcltk
 
 Package: R2HTML
+Reason: parser
+
+Package: labeling
+Reason: parser
+
+Package: quadprog
 Reason: parser
 
 Package: ade4
@@ -98,6 +476,15 @@ Package: acss.data
 Reason: corebug
 
 Package: lpSolve
+Reason: corebug
+
+Package: jsonlite
+Reason: corebug
+
+Package: XML
+Reason: corebug
+
+Package: timeDate
 Reason: corebug
 
 Package: colorspace
