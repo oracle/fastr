@@ -487,7 +487,7 @@ public abstract class REnvironment extends RAttributeStorage implements RTypedVa
 
     /**
      * Add name to namespace registry.
-     * 
+     *
      * @param name namespace name
      * @param env namespace value
      * @return {@code null} if name is already registered else {@code env}
@@ -504,7 +504,7 @@ public abstract class REnvironment extends RAttributeStorage implements RTypedVa
 
     /**
      * Remove name from namespace registry.
-     * 
+     *
      * @param name namespace name
      * @return {@code null} if name is not registered else namespace value
      */
@@ -641,7 +641,7 @@ public abstract class REnvironment extends RAttributeStorage implements RTypedVa
      */
     @TruffleBoundary
     public static REnvironment createFromList(RAttributeProfiles attrProfiles, RList list, REnvironment parent) {
-        REnvironment result = RDataFactory.createNewEnv(parent, null, false, 0);
+        REnvironment result = RDataFactory.createNewEnv(parent, null);
         RStringVector names = list.getNames(attrProfiles);
         for (int i = 0; i < list.getLength(); i++) {
             try {
@@ -980,13 +980,11 @@ public abstract class REnvironment extends RAttributeStorage implements RTypedVa
      *
      */
     public static final class NewEnv extends REnvironment {
-        private final boolean hash;
-        private final int size;
+        private boolean hashed;
+        private int initialSize;
 
-        public NewEnv(REnvironment parent, MaterializedFrame frame, String name, boolean hash, int size) {
+        public NewEnv(REnvironment parent, MaterializedFrame frame, String name) {
             super(parent, UNNAMED, frame);
-            this.hash = hash;
-            this.size = size;
             if (parent != null) {
                 RArguments.setEnclosingFrame(frame, parent.getFrame());
             }
@@ -995,14 +993,21 @@ public abstract class REnvironment extends RAttributeStorage implements RTypedVa
             }
         }
 
-        public boolean hashed() {
-            return hash;
+        public boolean isHashed() {
+            return hashed;
         }
 
-        public int createdSize() {
-            return size;
+        public void setHashed(boolean hashed) {
+            this.hashed = hashed;
         }
 
+        public int getInitialSize() {
+            return initialSize;
+        }
+
+        public void setInitialSize(int initialSize) {
+            this.initialSize = initialSize;
+        }
     }
 
     /**

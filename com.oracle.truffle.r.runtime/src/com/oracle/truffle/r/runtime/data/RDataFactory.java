@@ -437,15 +437,18 @@ public final class RDataFactory {
     }
 
     public static REnvironment createInternalEnv() {
-        return traceDataCreated(new REnvironment.NewEnv(null, RRuntime.createNonFunctionFrame().materialize(), REnvironment.UNNAMED, false, 0));
+        return traceDataCreated(new REnvironment.NewEnv(null, RRuntime.createNonFunctionFrame().materialize(), REnvironment.UNNAMED));
     }
 
-    public static REnvironment createNewEnv(REnvironment parent, String name) {
-        return traceDataCreated(new REnvironment.NewEnv(parent, RRuntime.createNonFunctionFrame().materialize(), name, false, 0));
+    public static REnvironment.NewEnv createNewEnv(REnvironment parent, String name) {
+        return traceDataCreated(new REnvironment.NewEnv(parent, RRuntime.createNonFunctionFrame().materialize(), name));
     }
 
-    public static REnvironment createNewEnv(REnvironment parent, String name, boolean hash, int size) {
-        return traceDataCreated(new REnvironment.NewEnv(parent, RRuntime.createNonFunctionFrame().materialize(), name, hash, size));
+    public static REnvironment createNewEnv(REnvironment parent, String name, boolean hashed, int initialSize) {
+        REnvironment.NewEnv env = new REnvironment.NewEnv(parent, RRuntime.createNonFunctionFrame().materialize(), name);
+        env.setHashed(hashed);
+        env.setInitialSize(initialSize);
+        return traceDataCreated(env);
     }
 
     public static RS4Object createS4Object() {

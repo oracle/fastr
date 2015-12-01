@@ -452,7 +452,7 @@ public class LaFunctions {
 
             System.arraycopy(bin.getInternalStore(), 0, bData, 0, n * p);
 
-            int[] ipiv = new int[1];
+            int[] ipiv = new int[n];
             // work on a copy of A
             double[] avals = new double[n * n];
             if (a instanceof RAbstractDoubleVector) {

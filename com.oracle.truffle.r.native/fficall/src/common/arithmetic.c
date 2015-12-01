@@ -170,9 +170,57 @@ double R_pow_di(double x, int n)
     return xn;
 }
 
-double R_pow(double x, double y) {
-	unimplemented("R_pow");
-    return 0;
+/* Keep these two in step */
+/* FIXME: consider using
+    tmp = (LDOUBLE)x1 - floor(q) * (LDOUBLE)x2;
+ */
+static double myfmod(double x1, double x2)
+{
+    if (x2 == 0.0) return R_NaN;
+    double q = x1 / x2, tmp = x1 - floor(q) * x2;
+    if(R_FINITE(q) && (fabs(q) > 1/ /*R_AccuracyInfo.eps*/2.220446e-16)) // FastR: removed reference to R_AccuracyInfo.eps
+	warning(_("probable complete loss of accuracy in modulus"));
+    q = floor(tmp/x2);
+    return tmp - q * x2;
 }
 
+double R_pow(double x, double y) /* = x ^ y */
+{
+    /* squaring is the most common of the specially handled cases so
+       check for it first. */
+    if(y == 2.0)
+	return x * x;
+    if(x == 1. || y == 0.)
+	return(1.);
+    if(x == 0.) {
+	if(y > 0.) return(0.);
+	else if(y < 0) return(R_PosInf);
+	else return(y); /* NA or NaN, we assert */
+    }
+    if (R_FINITE(x) && R_FINITE(y)) {
+	/* There was a special case for y == 0.5 here, but
+	   gcc 4.3.0 -g -O2 mis-compiled it.  Showed up with
+	   100^0.5 as 3.162278, example(pbirthday) failed. */
+	return pow(x, y);
+    }
+    if (ISNAN(x) || ISNAN(y))
+	return(x + y);
+    if(!R_FINITE(x)) {
+	if(x > 0)		/* Inf ^ y */
+	    return (y < 0.)? 0. : R_PosInf;
+	else {			/* (-Inf) ^ y */
+	    if(R_FINITE(y) && y == floor(y)) /* (-Inf) ^ n */
+		return (y < 0.) ? 0. : (myfmod(y, 2.) ? x  : -x);
+	}
+    }
+    if(!R_FINITE(y)) {
+	if(x >= 0) {
+	    if(y > 0)		/* y == +Inf */
+		return (x >= 1) ? R_PosInf : 0.;
+	    else		/* y == -Inf */
+		return (x < 1) ? R_PosInf : 0.;
+	}
+    }
+    return R_NaN; // all other cases: (-Inf)^{+-Inf, non-int}; (neg)^{+-Inf}
+}
 

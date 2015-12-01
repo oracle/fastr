@@ -190,9 +190,7 @@ public class RSerialize {
         protected Object addReadRef(Object item) {
             assert item != null;
             if (refTableIndex >= refTable.length) {
-                Object[] newRefTable = new Object[2 * refTable.length];
-                System.arraycopy(refTable, 0, newRefTable, 0, refTable.length);
-                refTable = newRefTable;
+                refTable = Arrays.copyOf(refTable, refTable.length * 2);
             }
             refTable[refTableIndex++] = item;
             return item;
@@ -416,15 +414,19 @@ public class RSerialize {
 
                     Object enclos = readItem();
                     REnvironment enclosing = enclos == RNull.instance ? REnvironment.baseEnv() : (REnvironment) enclos;
+                    final REnvironment.NewEnv env = RDataFactory.createNewEnv(enclosing, null);
+                    /*
+                     * We update the env reference as soon as possible, in case the contents of an
+                     * environment contain a reference to the env itself.
+                     */
+                    updateEnvReadRef(envRefTableIndex, env);
                     Object frame = readItem();
                     boolean hashed = frame == RNull.instance;
-                    REnvironment env;
                     Object hashtab = readItem();
                     if (hashed) {
-                        if (hashtab == RNull.instance) {
-                            env = RDataFactory.createNewEnv(enclosing, null);
-                        } else {
-                            env = RDataFactory.createNewEnv(enclosing, null, true, ((RList) hashtab).getLength());
+                        if (hashtab != RNull.instance) {
+                            env.setHashed(true);
+                            env.setInitialSize(((RList) hashtab).getLength());
                             RList hashList = (RList) hashtab;
                             // GnuR sizes its hash tables, empty slots indicated by RNull
                             for (int i = 0; i < hashList.getLength(); i++) {
@@ -437,14 +439,12 @@ public class RSerialize {
                             }
                         }
                     } else {
-                        env = RDataFactory.createNewEnv(enclosing, null);
                         while (frame != RNull.instance) {
                             RPairList pl = (RPairList) frame;
                             env.safePut(((RSymbol) pl.getTag()).getName(), pl.car());
                             frame = pl.cdr();
                         }
                     }
-                    updateEnvReadRef(envRefTableIndex, env);
                     if (locked != 0) {
                         env.lock(false);
                     }
