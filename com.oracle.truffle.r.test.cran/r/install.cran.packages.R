@@ -47,16 +47,17 @@
 # Reason: reason
 
 # The env var R_LIBS_USER or the option --lib must be set to the directory where the install should take place.
-# N.B. --lib works for installation. However, when running tests ( --run-tests) with FastR, it does not and
-# R_LIBS_USER must be set instead. This does not happen for GnuR so must be a FastR bug.
+# N.B. --lib works for installation. However, when running tests ( --run-tests), it does not and
+# R_LIBS_USER must be set instead (as well) since some of the test code has explicit "library(foo)" calls
+# without a "lib.loc" argument.
 
 # A single package install can be handled in three ways, based on the run-mode argument (default system):
 #   system: use a subprocess via the system2 command
 #   internal: direct call to tools::install.packages
 #   context: run in separate FastR context
 
-# test output goes to a directory derived from the '--testdir dir' option (default 'test'). if --gnur is set, '_gnur'
-# is appended, else '_fastr'. Each package's test output is then stored in a subdirectory named after the package.
+# test output goes to a directory derived from the '--testdir dir' option (default 'test'). Each package's test output is
+# stored in a subdirectory named after the package.
 
 args <- commandArgs(TRUE)
 
@@ -71,7 +72,6 @@ usage <- function() {
 					  "[--testdir dir]",
 					  "[--pkg-list-installed]",
 					  "[--print-ok-installs]",
-					  "[--gnur]",
 					  "[--list-versions]",
                       "[package-pattern] \n"))
 	quit(status=1)
@@ -359,8 +359,12 @@ install.package <- function(pkgname) {
 }
 
 system.install <- function(pkgname) {
-	script <- file.path(R.home(), "com.oracle.truffle.r.test.cran/r/install.package.R")
-	rscript = file.path(R.home(), "bin/Rscript")
+	script <- normalizePath("com.oracle.truffle.r.test.cran/r/install.package.R")
+	if (is.fastr()) {
+		rscript = normalizePath("bin/Rscript")
+	} else {
+		rscript = "Rscript"
+	}
 	args <- c(script, pkgname, contriburl, lib.install)
 	rc <- system2(rscript, args)
 	rc
@@ -379,7 +383,7 @@ check.create.dir <- function(name) {
 }
 
 test.package <- function(pkgname) {
-	testdir.path <- get.testdir.path()
+	testdir.path <- testdir
 	check.create.dir(testdir.path)
 	check.create.dir(file.path(testdir.path, pkgname))
 	if (run.mode == "system") {
@@ -391,10 +395,18 @@ test.package <- function(pkgname) {
 	}
 }
 
+is.fastr <- function() {
+	"package:fastr" %in% search()
+}
+
 system.test <- function(pkgname) {
-	script <- file.path(R.home(), "com.oracle.truffle.r.test.cran/r/test.package.R")
-	rscript = file.path(R.home(), "bin/Rscript")
-	args <- c(script, pkgname, file.path(get.testdir.path(), pkgname), lib.install)
+	script <- normalizePath("com.oracle.truffle.r.test.cran/r/test.package.R")
+	if (is.fastr()) {
+		rscript = normalizePath("bin/Rscript")
+	} else {
+		rscript = "Rscript"
+	}
+	args <- c(script, pkgname, file.path(testdir, pkgname), lib.install)
 	rc <- system2(rscript, args)
 	rc
 }
@@ -406,27 +418,6 @@ get.argvalue <- function() {
 		return(value)
 	} else {
 		usage()
-	}
-}
-
-get.testdir.path <- function() {
-	if (gnur) {
-		return(paste(testdir, "gnur", sep="_"))
-	} else {
-		return(paste(testdir, "fastr", sep="_"))
-	}
-}
-
-check.gnur <- function() {
-	if (gnur) {
-		if (run.mode != "internal") {
-			if (verbose) {
-				cat("setting run-mode to 'internal' for GnuR\n")
-				cat("setting lib.install to ", lib.install, "_gnur", " for GnuR\n", sep="")
-			}
-			run.mode <<- "internal"
-            lib.install <<- paste0(lib.install, "_gnur")
-		}
 	}
 }
 
@@ -481,8 +472,6 @@ parse.args <- function() {
 			pkg.list.installed <<- T
 		} else if (a == "--print-ok-installs") {
 			print.ok.installs <<- T
-		} else if (a == "--gnur") {
-			gnur <<- TRUE
 		} else if (a == "--list-versions") {
 			list.versions <<- TRUE
 		} else {
@@ -515,8 +504,7 @@ cat.args <- function() {
 		cat("run.tests:", run.tests, "\n")
 		cat("pkg.list.installed:", pkg.list.installed, "\n")
 		cat("print.ok.installs:", print.ok.installs, "\n")
-		cat("testdir.path", get.testdir.path(), "\n")
-		cat("gnur:", gnur, "\n")
+		cat("testdir.path", testdir, "\n")
 	}
 }
 
@@ -565,7 +553,6 @@ run <- function() {
 	set.contriburl()
 	set.initial.package.blacklist()
 	set.package.blacklist()
-	check.gnur()
 	lib.install <<- normalizePath(lib.install)
 	cat.args()
     do.it()

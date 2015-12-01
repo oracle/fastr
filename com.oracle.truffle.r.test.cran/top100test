@@ -1,40 +1,22 @@
- acepack
- BH
- bitops
- boot
- brew
- chron
- dichromat
- digest
- foreign
- formatR
- Formula
- gdata
- gridExtra
- gtable
- gtools
- highr
- htmltools
- lazyeval
- magrittr
- manipulate
- maps
- markdown
- MASS
- memoise
- mime
- mnormt
- mvtnorm
- nnet
- proto
- R6
- randomForest
- RColorBrewer
- rpart
- rstudioapi
- slam
- survival
- testthat
- whisker
- xtable
- yaml
+BH
+Formula
+MASS
+RColorBrewer
+bitops
+boot
+brew
+chron
+dichromat
+digest
+foreign
+gtable
+htmltools
+manipulate
+maps
+memoise
+mime
+nnet
+proto
+rpart
+rstudioapi
+xtable
