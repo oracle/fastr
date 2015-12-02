@@ -25,6 +25,7 @@ from os.path import join, sep, dirname, abspath
 from argparse import ArgumentParser
 import mx
 import mx_gate
+import mx_fastr_pkgtest
 import os
 import shutil
 
@@ -564,6 +565,7 @@ _commands = {
     'test' : [test, ['options']],
     'rrepl' : [rrepl, '[options]'],
     'installcran' : [installcran, '[options]'],
+    'pkgtestanalyze': [mx_fastr_pkgtest.pkgtestanalyze, '[options]']
     }
 
 mx.update_commands(_fastr_suite, _commands)
