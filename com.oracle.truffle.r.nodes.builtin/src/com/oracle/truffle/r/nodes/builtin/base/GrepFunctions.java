@@ -560,27 +560,37 @@ public class GrepFunctions {
         @TruffleBoundary
         protected Object regexp(RAbstractStringVector patternArg, RAbstractStringVector vector, byte ignoreCaseL, byte perlL, byte fixedL, byte useBytesL) {
             controlVisibility();
-            checkExtraArgs(RRuntime.LOGICAL_FALSE, perlL, fixedL, useBytesL, RRuntime.LOGICAL_FALSE);
+            checkExtraArgs(RRuntime.LOGICAL_FALSE, perlL, RRuntime.LOGICAL_FALSE, useBytesL, RRuntime.LOGICAL_FALSE);
             boolean ignoreCase = RRuntime.fromLogical(ignoreCaseL);
             String pattern = RegExp.checkPreDefinedClasses(patternArg.getDataAt(0));
             int[] result = new int[vector.getLength()];
             for (int i = 0; i < vector.getLength(); i++) {
-                result[i] = findIndex(pattern, vector.getDataAt(i), ignoreCase).get(0);
+                result[i] = findIndex(pattern, vector.getDataAt(i), ignoreCase, fixedL == RRuntime.LOGICAL_TRUE).get(0);
             }
             return RDataFactory.createIntVector(result, RDataFactory.COMPLETE_VECTOR);
         }
 
-        protected static List<Integer> findIndex(String pattern, String text, boolean ignoreCase) {
-            Matcher m = getPatternMatcher(pattern, text, ignoreCase);
+        protected static List<Integer> findIndex(String pattern, String text, boolean ignoreCase, boolean fixed) {
             List<Integer> list = new ArrayList<>();
-            while (m.find()) {
-                // R starts counting at index 1
-                list.add(m.start() + 1);
+            if (!fixed) {
+                int index;
+                if (ignoreCase) {
+                    index = text.toLowerCase().indexOf(pattern.toLowerCase());
+                } else {
+                    index = text.indexOf(pattern);
+                }
+                list.add(index == -1 ? index : index + 1);
+            } else {
+                Matcher m = getPatternMatcher(pattern, text, ignoreCase);
+                while (m.find()) {
+                    // R starts counting at index 1
+                    list.add(m.start() + 1);
+                }
+                if (list.size() > 0) {
+                    return list;
+                }
+                list.add(-1);
             }
-            if (list.size() > 0) {
-                return list;
-            }
-            list.add(-1);
             return list;
         }
 
@@ -603,7 +613,7 @@ public class GrepFunctions {
             String pattern = RegExp.checkPreDefinedClasses(patternArg.getDataAt(0));
             Object[] result = new Object[vector.getLength()];
             for (int i = 0; i < vector.getLength(); i++) {
-                int[] data = toIntArray(findIndex(pattern, vector.getDataAt(i), ignoreCase));
+                int[] data = toIntArray(findIndex(pattern, vector.getDataAt(i), ignoreCase, true));
                 result[i] = RDataFactory.createIntVector(data, RDataFactory.COMPLETE_VECTOR);
             }
             return RDataFactory.createList(result);

@@ -49,94 +49,67 @@ public abstract class Identical extends RBuiltinNode {
     private final ConditionProfile vecLengthProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile naArgsProfile = ConditionProfile.createBinaryProfile();
 
+    @SuppressWarnings("unused")
     @Specialization(guards = "isRNull(x) || isRNull(y)")
-    protected byte doInternalIdentical(Object x, Object y,
-                    // @formatter:off
-                    @SuppressWarnings("unused") byte numEq, @SuppressWarnings("unused") byte singleNA, @SuppressWarnings("unused") byte attribAsSet,
-                    @SuppressWarnings("unused") byte ignoreBytecode, @SuppressWarnings("unused") byte ignoreEnvironment) {
-                    // @formatter:on
+    protected byte doInternalIdentical(Object x, Object y, byte numEq, byte singleNA, byte attribAsSet, byte ignoreBytecode, byte ignoreEnvironment) {
         controlVisibility();
         return x == y ? RRuntime.LOGICAL_TRUE : RRuntime.LOGICAL_FALSE;
     }
 
+    @SuppressWarnings("unused")
     @Specialization
-    protected byte doInternalIdentical(byte x, byte y,
-                    // @formatter:off
-                    @SuppressWarnings("unused") byte numEq, @SuppressWarnings("unused") byte singleNA, @SuppressWarnings("unused") byte attribAsSet,
-                    @SuppressWarnings("unused") byte ignoreBytecode, @SuppressWarnings("unused") byte ignoreEnvironment) {
-                    // @formatter:on
+    protected byte doInternalIdentical(byte x, byte y, byte numEq, byte singleNA, byte attribAsSet, byte ignoreBytecode, byte ignoreEnvironment) {
         controlVisibility();
         return x == y ? RRuntime.LOGICAL_TRUE : RRuntime.LOGICAL_FALSE;
     }
 
+    @SuppressWarnings("unused")
     @Specialization
-    protected byte doInternalIdentical(String x, String y,
-                    // @formatter:off
-                    @SuppressWarnings("unused") byte numEq, @SuppressWarnings("unused") byte singleNA, @SuppressWarnings("unused") byte attribAsSet,
-                    @SuppressWarnings("unused") byte ignoreBytecode, @SuppressWarnings("unused") byte ignoreEnvironment) {
-                    // @formatter:on
+    protected byte doInternalIdentical(String x, String y, byte numEq, byte singleNA, byte attribAsSet, byte ignoreBytecode, byte ignoreEnvironment) {
         controlVisibility();
         return x.equals(y) ? RRuntime.LOGICAL_TRUE : RRuntime.LOGICAL_FALSE;
     }
 
+    @SuppressWarnings("unused")
     @Specialization
-    protected byte doInternalIdentical(double x, double y,
-                    // @formatter:off
-                    byte numEq, @SuppressWarnings("unused") byte singleNA, @SuppressWarnings("unused") byte attribAsSet,
-                    @SuppressWarnings("unused") byte ignoreBytecode, @SuppressWarnings("unused") byte ignoreEnvironment) {
-                    // @formatter:on
+    protected byte doInternalIdentical(double x, double y, byte numEq, byte singleNA, byte attribAsSet, byte ignoreBytecode, byte ignoreEnvironment) {
         controlVisibility();
         boolean truth = numEq == RRuntime.LOGICAL_TRUE ? x == y : Double.doubleToRawLongBits(x) == Double.doubleToRawLongBits(y);
         return truth ? RRuntime.LOGICAL_TRUE : RRuntime.LOGICAL_FALSE;
     }
 
+    @SuppressWarnings("unused")
     @Specialization
-    protected byte doInternalIdentical(@SuppressWarnings("unused") RAbstractLogicalVector x, @SuppressWarnings("unused") REnvironment y,
-                    // @formatter:off
-                    @SuppressWarnings("unused") byte numEq, @SuppressWarnings("unused") byte singleNA, @SuppressWarnings("unused") byte attribAsSet,
-                    @SuppressWarnings("unused") byte ignoreBytecode, @SuppressWarnings("unused") byte ignoreEnvironment) {
-                    // @formatter:on
+    protected byte doInternalIdentical(RAbstractLogicalVector x, REnvironment y, byte numEq, byte singleNA, byte attribAsSet, byte ignoreBytecode, byte ignoreEnvironment) {
         controlVisibility();
         return RRuntime.LOGICAL_FALSE;
     }
 
+    @SuppressWarnings("unused")
     @Specialization
-    protected byte doInternalIdentical(@SuppressWarnings("unused") REnvironment x, @SuppressWarnings("unused") RAbstractLogicalVector y,
-                    // @formatter:off
-                    @SuppressWarnings("unused") byte numEq, @SuppressWarnings("unused") byte singleNA, @SuppressWarnings("unused") byte attribAsSet,
-                    @SuppressWarnings("unused") byte ignoreBytecode, @SuppressWarnings("unused") byte ignoreEnvironment) {
-                    // @formatter:on
+    protected byte doInternalIdentical(REnvironment x, RAbstractLogicalVector y, byte numEq, byte singleNA, byte attribAsSet, byte ignoreBytecode, byte ignoreEnvironment) {
         controlVisibility();
         return RRuntime.LOGICAL_FALSE;
     }
 
+    @SuppressWarnings("unused")
     @Specialization
-    protected byte doInternalIdentical(REnvironment x, REnvironment y,
-                    // @formatter:off
-                    @SuppressWarnings("unused") byte numEq, @SuppressWarnings("unused") byte singleNA, @SuppressWarnings("unused") byte attribAsSet,
-                    @SuppressWarnings("unused") byte ignoreBytecode, @SuppressWarnings("unused") byte ignoreEnvironment) {
-                    // @formatter:on
+    protected byte doInternalIdentical(REnvironment x, REnvironment y, byte numEq, byte singleNA, byte attribAsSet, byte ignoreBytecode, byte ignoreEnvironment) {
         controlVisibility();
         // reference equality for environments
         return x == y ? RRuntime.LOGICAL_TRUE : RRuntime.LOGICAL_FALSE;
     }
 
+    @SuppressWarnings("unused")
     @Specialization
-    protected byte doInternalIdentical(RSymbol x, RSymbol y,
-                    // @formatter:off
-                    @SuppressWarnings("unused") byte numEq, @SuppressWarnings("unused") byte singleNA, @SuppressWarnings("unused") byte attribAsSet,
-                    @SuppressWarnings("unused") byte ignoreBytecode, @SuppressWarnings("unused") byte ignoreEnvironment) {
-                    // @formatter:on
+    protected byte doInternalIdentical(RSymbol x, RSymbol y, byte numEq, byte singleNA, byte attribAsSet, byte ignoreBytecode, byte ignoreEnvironment) {
         controlVisibility();
         return x.getName().equals(y.getName()) ? RRuntime.LOGICAL_TRUE : RRuntime.LOGICAL_FALSE;
     }
 
+    @SuppressWarnings("unused")
     @Specialization
-    protected byte doInternalIdentical(@SuppressWarnings("unused") RLanguage x, @SuppressWarnings("unused") RLanguage y,
-                    // @formatter:off
-                    @SuppressWarnings("unused") byte numEq, @SuppressWarnings("unused") byte singleNA, @SuppressWarnings("unused") byte attribAsSet,
-                    @SuppressWarnings("unused") byte ignoreBytecode, @SuppressWarnings("unused") byte ignoreEnvironment) {
-                    // @formatter:on
+    protected byte doInternalIdentical(RLanguage x, RLanguage y, byte numEq, byte singleNA, byte attribAsSet, byte ignoreBytecode, byte ignoreEnvironment) {
         controlVisibility();
         // TODO How to compare ASTs
         throw RError.nyi(this, "language objects not supported in 'identical'");
@@ -170,12 +143,9 @@ public abstract class Identical extends RBuiltinNode {
         return RRuntime.LOGICAL_FALSE;
     }
 
+    @SuppressWarnings("unused")
     @Specialization(guards = "!vectorsLists(x, y)")
-    protected byte doInternalIdenticalGeneric(RAbstractVector x, RAbstractVector y,
-                    // @formatter:off
-                    @SuppressWarnings("unused") byte numEq, @SuppressWarnings("unused") byte singleNA, @SuppressWarnings("unused") byte attribAsSet,
-                    @SuppressWarnings("unused") byte ignoreBytecode, @SuppressWarnings("unused") byte ignoreEnvironment) {
-                    // @formatter:on
+    protected byte doInternalIdenticalGeneric(RAbstractVector x, RAbstractVector y, byte numEq, byte singleNA, byte attribAsSet, byte ignoreBytecode, byte ignoreEnvironment) {
         controlVisibility();
         if (vecLengthProfile.profile(x.getLength() != y.getLength())) {
             return RRuntime.LOGICAL_FALSE;
@@ -189,12 +159,9 @@ public abstract class Identical extends RBuiltinNode {
         return RRuntime.LOGICAL_TRUE;
     }
 
+    @SuppressWarnings("unused")
     @Specialization
-    protected byte doInternalIdenticalGeneric(@SuppressWarnings("unused") RList x, @SuppressWarnings("unused") RList y,
-                    // @formatter:off
-                    @SuppressWarnings("unused") byte numEq, @SuppressWarnings("unused") byte singleNA, @SuppressWarnings("unused") byte attribAsSet,
-                    @SuppressWarnings("unused") byte ignoreBytecode, @SuppressWarnings("unused") byte ignoreEnvironment) {
-                    // @formatter:on
+    protected byte doInternalIdenticalGeneric(RList x, RList y, byte numEq, byte singleNA, byte attribAsSet, byte ignoreBytecode, byte ignoreEnvironment) {
         controlVisibility();
         throw RError.nyi(this, "lists not supported in 'identical'");
     }
@@ -205,34 +172,36 @@ public abstract class Identical extends RBuiltinNode {
         return doInternalIdenticalGeneric(x.getVector(), y.getVector(), numEq, singleNA, attribAsSet, ignoreBytecode, ignoreEnvironment);
     }
 
+    @SuppressWarnings("unused")
     @Specialization
-    protected byte doInternalIdenticalGeneric(@SuppressWarnings("unused") RFunction x, @SuppressWarnings("unused") RAbstractContainer y,
-                    // @formatter:off
-                    @SuppressWarnings("unused") Object numEq, @SuppressWarnings("unused") Object singleNA, @SuppressWarnings("unused") Object attribAsSet,
-                    @SuppressWarnings("unused") Object ignoreBytecode, @SuppressWarnings("unused") Object ignoreEnvironment) {
-                    // @formatter:on
+    protected byte doInternalIdenticalGeneric(RFunction x, RAbstractContainer y, Object numEq, Object singleNA, Object attribAsSet, Object ignoreBytecode, Object ignoreEnvironment) {
         controlVisibility();
         return RRuntime.LOGICAL_FALSE;
     }
 
+    @SuppressWarnings("unused")
     @Specialization
-    protected byte doInternalIdenticalGeneric(@SuppressWarnings("unused") RLanguage x, @SuppressWarnings("unused") RAbstractContainer y,
-                    // @formatter:off
-                    @SuppressWarnings("unused") Object numEq, @SuppressWarnings("unused") Object singleNA, @SuppressWarnings("unused") Object attribAsSet,
-                    @SuppressWarnings("unused") Object ignoreBytecode, @SuppressWarnings("unused") Object ignoreEnvironment) {
-                    // @formatter:on
+    protected byte doInternalIdenticalGeneric(RLanguage x, RAbstractContainer y, Object numEq, Object singleNA, Object attribAsSet, Object ignoreBytecode, Object ignoreEnvironment) {
         controlVisibility();
         return RRuntime.LOGICAL_FALSE;
     }
 
+    @SuppressWarnings("unused")
     @Specialization
-    protected byte doInternalIdenticalGeneric(@SuppressWarnings("unused") RAbstractContainer x, @SuppressWarnings("unused") RFunction y,
-                    // @formatter:off
-                    @SuppressWarnings("unused") Object numEq, @SuppressWarnings("unused") Object singleNA, @SuppressWarnings("unused") Object attribAsSet,
-                    @SuppressWarnings("unused") Object ignoreBytecode, @SuppressWarnings("unused") Object ignoreEnvironment) {
-                    // @formatter:on
+    protected byte doInternalIdenticalGeneric(RAbstractContainer x, RFunction y, Object numEq, Object singleNA, Object attribAsSet, Object ignoreBytecode, Object ignoreEnvironment) {
         controlVisibility();
         return RRuntime.LOGICAL_FALSE;
+    }
+
+    @SuppressWarnings("unused")
+    @Fallback
+    protected byte doInternalIdenticalWrongTypes(Object x, Object y, byte numEq, byte singleNA, byte attribAsSet, byte ignoreBytecode, byte ignoreEnvironment) {
+        controlVisibility();
+        if (x.getClass() != y.getClass()) {
+            return RRuntime.LOGICAL_FALSE;
+        } else {
+            throw RInternalError.unimplemented();
+        }
     }
 
     protected boolean vectorsLists(RAbstractVector x, RAbstractVector y) {
