@@ -42,6 +42,8 @@ def _gather_test_outputs(testdir, pkgonly):
         for d in dirs:
             if pkgonly is None or d == pkgonly:
                 result[d] = _gather_test_outputs_forpkg(join(dirpath, d))
+        # only interested in top level
+        break
     return result
 
 def _find_start(content):
@@ -51,13 +53,28 @@ def _find_start(content):
         if marker in line:
             return i + 1
 
+def _find_end(content):
+    marker = "Time elapsed:"
+    for i in range(len(content)):
+        line = content[i]
+        if marker in line:
+            return i - 1
+
 def _fuzzy_compare(gnur_content, fastr_content):
     gnur_start = _find_start(gnur_content) + 1 # Gnu has extra empty line
+    gnur_end = _find_end(gnur_content)
     fastr_start = _find_start(fastr_content)
+    fastr_len = len(fastr_content)
     result = 0
     i = gnur_start
-    while i + gnur_start < len(gnur_content):
-        if gnur_content[i + gnur_start] != fastr_content[i + fastr_start]:
+    while i + gnur_start < gnur_end:
+        gnur_line = gnur_content[i + gnur_start]
+        if i + fastr_start >= fastr_len:
+            result = 1
+            break
+
+        fastr_line = fastr_content[i + fastr_start]
+        if gnur_line != fastr_line:
             result = 1
             break
         i = i + 1
@@ -78,6 +95,13 @@ def pkgtestanalyze(args):
     # gnur is definitive
     result = 0 # optimistic
     for pkg, gnur_outputs in gnur.iteritems():
+        if not fastr.has_key(pkg):
+            result = 1
+            if args.pkg is None:
+                break
+            else:
+                continue
+
         fastr_outputs = fastr[pkg]
         if len(fastr_outputs) != len(gnur_outputs):
             result = 1
