@@ -101,7 +101,6 @@ public class WhichFunctions {
         }
 
         @Specialization
-        @TruffleBoundary
         protected int which(RAbstractDoubleVector x) {
             controlVisibility();
             double max = x.getDataAt(0);
@@ -126,7 +125,6 @@ public class WhichFunctions {
         }
 
         @Specialization
-        @TruffleBoundary
         protected int which(RAbstractDoubleVector x) {
             controlVisibility();
             double minimum = x.getDataAt(0);
@@ -139,6 +137,5 @@ public class WhichFunctions {
             }
             return minIndex + 1;
         }
-
     }
 }

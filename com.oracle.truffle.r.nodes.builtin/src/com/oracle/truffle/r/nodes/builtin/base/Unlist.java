@@ -115,7 +115,6 @@ public abstract class Unlist extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization
-    @TruffleBoundary
     protected RNull unlist(RNull vector, byte recursive, byte useNames) {
         controlVisibility();
         return RNull.instance;
@@ -123,7 +122,6 @@ public abstract class Unlist extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization(guards = "!isVectorList(vector)")
-    @TruffleBoundary
     protected RAbstractVector unlistVector(RAbstractVector vector, byte recursive, byte useNames) {
         controlVisibility();
         return vector;

@@ -33,28 +33,24 @@ public abstract class Transpose extends RBuiltinNode {
     public abstract Object execute(Object o);
 
     @Specialization
-    @TruffleBoundary
     protected RNull transpose(RNull value) {
         controlVisibility();
         return value;
     }
 
     @Specialization
-    @TruffleBoundary
     protected int transpose(int value) {
         controlVisibility();
         return value;
     }
 
     @Specialization
-    @TruffleBoundary
     protected double transpose(double value) {
         controlVisibility();
         return value;
     }
 
     @Specialization
-    @TruffleBoundary
     protected byte transpose(byte value) {
         controlVisibility();
         return value;

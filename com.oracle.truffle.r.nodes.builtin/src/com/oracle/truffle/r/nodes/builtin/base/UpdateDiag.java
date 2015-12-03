@@ -22,17 +22,22 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.SUBSTITUTE;
 
-import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.unary.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
-import com.oracle.truffle.r.runtime.ops.na.*;
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
+import com.oracle.truffle.r.nodes.unary.CastDoubleNode;
+import com.oracle.truffle.r.nodes.unary.CastDoubleNodeGen;
+import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
+import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 @RBuiltin(name = "diag<-", kind = SUBSTITUTE, parameterNames = {"x", ""})
 // 2nd parameter is "value", but should not be matched against, so "")
@@ -70,8 +75,7 @@ public abstract class UpdateDiag extends RInvisibleBuiltinNode {
     }
 
     @Specialization(guards = {"isMatrix(vector)", "correctReplacementLength(vector, valueVector)"})
-    @TruffleBoundary
-    protected RAbstractIntVector updateDiag(RIntVector vector, RAbstractIntVector valueVector) {
+    protected RAbstractIntVector updateDiag(RAbstractIntVector vector, RAbstractIntVector valueVector) {
         controlVisibility();
         RIntVector resultVector = (RIntVector) vector.materializeNonShared();
         int nrow = resultVector.getDimensions()[0];
@@ -86,8 +90,7 @@ public abstract class UpdateDiag extends RInvisibleBuiltinNode {
     }
 
     @Specialization(guards = {"isMatrix(vector)", "correctReplacementLength(vector, valueVector)"})
-    @TruffleBoundary
-    protected RAbstractDoubleVector updateDiag(RDoubleVector vector, RAbstractDoubleVector valueVector) {
+    protected RAbstractDoubleVector updateDiag(RAbstractDoubleVector vector, RAbstractDoubleVector valueVector) {
         controlVisibility();
         RDoubleVector resultVector = (RDoubleVector) vector.materializeNonShared();
         int size = Math.min(resultVector.getDimensions()[0], resultVector.getDimensions()[1]);
@@ -102,7 +105,7 @@ public abstract class UpdateDiag extends RInvisibleBuiltinNode {
     }
 
     @Specialization(guards = {"isMatrix(vector)", "correctReplacementLength(vector, valueVector)"})
-    protected RAbstractDoubleVector updateDiag(RIntVector vector, RAbstractDoubleVector valueVector) {
+    protected RAbstractDoubleVector updateDiag(RAbstractIntVector vector, RAbstractDoubleVector valueVector) {
         controlVisibility();
         initCastDoubleNode();
         RDoubleVector resultVector = (RDoubleVector) castDouble.executeDouble(vector);
