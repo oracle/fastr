@@ -65,14 +65,11 @@ public abstract class Unlist extends RBuiltinNode {
         }
 
         @Specialization
-        @SuppressWarnings("unused")
-        @TruffleBoundary
-        protected int getLength(RNull vector) {
+        protected int getLength(@SuppressWarnings("unused") RNull vector) {
             return 0;
         }
 
         @Specialization(guards = "!isVectorList(vector)")
-        @TruffleBoundary
         protected int getLength(RAbstractVector vector) {
             return vector.getLength();
         }
