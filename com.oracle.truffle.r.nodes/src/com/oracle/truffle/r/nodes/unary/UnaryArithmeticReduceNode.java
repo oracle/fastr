@@ -94,7 +94,7 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
     }
 
     @Specialization
-    protected int doInt(int operand, boolean naRm, boolean finite) {
+    protected int doInt(int operand, boolean naRm, @SuppressWarnings("unused") boolean finite) {
         na.enable(operand);
         if (naRmProfile.profile(naRm)) {
             if (na.check(operand)) {
@@ -109,7 +109,7 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
     }
 
     @Specialization
-    protected double doDouble(double operand, boolean naRm, boolean finite) {
+    protected double doDouble(double operand, boolean naRm, @SuppressWarnings("unused") boolean finite) {
         na.enable(operand);
         if (naRmProfile.profile(naRm)) {
             if (na.check(operand)) {
@@ -124,7 +124,7 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
     }
 
     @Specialization
-    protected int doLogical(byte operand, boolean naRm, boolean finite) {
+    protected int doLogical(byte operand, boolean naRm, @SuppressWarnings("unused") boolean finite) {
         na.enable(operand);
         if (naRmProfile.profile(naRm)) {
             if (na.check(operand)) {
@@ -139,7 +139,7 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
     }
 
     @Specialization
-    protected RComplex doComplex(RComplex operand, boolean naRm, boolean finite) {
+    protected RComplex doComplex(RComplex operand, boolean naRm, @SuppressWarnings("unused") boolean finite) {
         if (semantics.supportComplex) {
             na.enable(operand);
             if (naRmProfile.profile(naRm)) {
@@ -159,7 +159,7 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
     }
 
     @Specialization
-    protected String doString(String operand, boolean naRm, boolean finite) {
+    protected String doString(String operand, boolean naRm, @SuppressWarnings("unused") boolean finite) {
         if (semantics.supportString) {
             na.enable(operand);
             if (naRmProfile.profile(naRm)) {
@@ -188,7 +188,8 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
     }
 
     @Specialization
-    protected int doIntVector(RIntVector operand, boolean naRm, boolean finite) {
+    protected int doIntVector(RIntVector operand, boolean naRm, @SuppressWarnings("unused") boolean finite) {
+        RNode.reportWork(this, operand.getLength());
         boolean profiledNaRm = naRmProfile.profile(naRm);
         int result = semantics.getIntStart();
         na.enable(operand);
@@ -214,7 +215,8 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
     }
 
     @Specialization
-    protected double doDoubleVector(RDoubleVector operand, boolean naRm, boolean finite) {
+    protected double doDoubleVector(RDoubleVector operand, boolean naRm, @SuppressWarnings("unused") boolean finite) {
+        RNode.reportWork(this, operand.getLength());
         boolean profiledNaRm = naRmProfile.profile(naRm);
         double result = semantics.getDoubleStart();
         na.enable(operand);
@@ -240,7 +242,8 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
     }
 
     @Specialization
-    protected int doLogicalVector(RLogicalVector operand, boolean naRm, boolean finite) {
+    protected int doLogicalVector(RLogicalVector operand, boolean naRm, @SuppressWarnings("unused") boolean finite) {
+        RNode.reportWork(this, operand.getLength());
         boolean profiledNaRm = naRmProfile.profile(naRm);
         int result = semantics.getIntStart();
         na.enable(operand);
@@ -266,7 +269,8 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
     }
 
     @Specialization
-    protected int doIntSequence(RIntSequence operand, @SuppressWarnings("unused") boolean naRm, boolean finite) {
+    protected int doIntSequence(RIntSequence operand, @SuppressWarnings("unused") boolean naRm, @SuppressWarnings("unused") boolean finite) {
+        RNode.reportWork(this, operand.getLength());
         int result = semantics.getIntStart();
         int current = operand.getStart();
         for (int i = 0; i < operand.getLength(); i++) {
@@ -280,7 +284,8 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
     }
 
     @Specialization
-    protected double doDoubleSequence(RDoubleSequence operand, @SuppressWarnings("unused") boolean naRm, boolean finite) {
+    protected double doDoubleSequence(RDoubleSequence operand, @SuppressWarnings("unused") boolean naRm, @SuppressWarnings("unused") boolean finite) {
+        RNode.reportWork(this, operand.getLength());
         double result = semantics.getDoubleStart();
         double current = operand.getStart();
         for (int i = 0; i < operand.getLength(); i++) {
@@ -294,7 +299,8 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
     }
 
     @Specialization
-    protected RComplex doComplexVector(RComplexVector operand, boolean naRm, boolean finite) {
+    protected RComplex doComplexVector(RComplexVector operand, boolean naRm, @SuppressWarnings("unused") boolean finite) {
+        RNode.reportWork(this, operand.getLength());
         if (semantics.supportComplex) {
             boolean profiledNaRm = naRmProfile.profile(naRm);
             RComplex result = RRuntime.double2complex(semantics.getDoubleStart());
