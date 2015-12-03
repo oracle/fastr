@@ -27,6 +27,7 @@ import static com.oracle.truffle.r.nodes.function.opt.EagerEvalHelper.isOptimiza
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -412,6 +413,9 @@ public abstract class PromiseNode extends RNode {
         private final ConditionProfile argsValueAndNamesProfile = ConditionProfile.createBinaryProfile();
         private final ConditionProfile containsVarargProfile = ConditionProfile.createBinaryProfile();
 
+        @CompilationFinal ArgumentsSignature cachedVarArgSignature;
+        @CompilationFinal ArgumentsSignature cachedResultSignature;
+
         public InlineVarArgsNode(RNode[] nodes, ArgumentsSignature signature) {
             this.varargs = nodes;
             this.signature = signature;
@@ -442,10 +446,13 @@ public abstract class PromiseNode extends RNode {
                 // vararg parameters
                 Object[] flattenedArgs = new Object[flattenedArgsSize];
                 int pos = 0;
+                ArgumentsSignature varArgSignature = null;
                 for (int i = 0; i < varargs.length; i++) {
                     Object argValue = evaluatedArgs[i];
                     if (argsValueAndNamesProfile.profile(argValue instanceof RArgsValuesAndNames)) {
                         RArgsValuesAndNames argsValuesAndNames = (RArgsValuesAndNames) argValue;
+                        assert varArgSignature == null || argsValuesAndNames.getSignature() == varArgSignature;
+                        varArgSignature = argsValuesAndNames.getSignature();
                         Object[] varargValues = argsValuesAndNames.getArguments();
                         copyVarargValues(frame, flattenedArgs, pos, varargValues);
                         pos += varargValues.length;
@@ -456,7 +463,19 @@ public abstract class PromiseNode extends RNode {
                 assert pos == flattenedArgs.length;
 
                 // if there was only one vararg argument, we can reuse the signature
-                ArgumentsSignature finalSignature = evaluatedArgs.length == 1 ? ((RArgsValuesAndNames) evaluatedArgs[0]).getSignature() : createSignature(evaluatedArgs, flattenedArgs.length);
+                ArgumentsSignature finalSignature;
+                if (evaluatedArgs.length == 1) {
+                    finalSignature = ((RArgsValuesAndNames) evaluatedArgs[0]).getSignature();
+                } else {
+                    if (cachedVarArgSignature == ArgumentsSignature.INVALID_SIGNATURE) {
+                        finalSignature = createSignature(evaluatedArgs, flattenedArgs.length);
+                    } else if (varArgSignature == cachedVarArgSignature) {
+                        finalSignature = cachedResultSignature;
+                    } else {
+                        finalSignature = createSignature(evaluatedArgs, flattenedArgs.length);
+                        cachedVarArgSignature = cachedVarArgSignature == null ? finalSignature : ArgumentsSignature.INVALID_SIGNATURE;
+                    }
+                }
                 return new RArgsValuesAndNames(flattenedArgs, finalSignature);
             }
         }

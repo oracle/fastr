@@ -40,6 +40,7 @@ public final class ArgumentsSignature implements Iterable<String> {
 
     @CompilationFinal private static final ArgumentsSignature[] EMPTY_SIGNATURES = new ArgumentsSignature[32];
     public static final ArgumentsSignature VARARG_SIGNATURE = get(VARARG_NAME);
+    public static final ArgumentsSignature INVALID_SIGNATURE = new ArgumentsSignature(new String[]{"<<invalid>>"});
 
     static {
         for (int i = 0; i < EMPTY_SIGNATURES.length; i++) {
