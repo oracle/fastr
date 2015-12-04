@@ -182,6 +182,9 @@ public class HiddenInternalFunctions {
 
         @TruffleBoundary
         public Object lazyLoadDBFetchInternal(MaterializedFrame frame, RIntVector key, RStringVector datafile, int compression, RFunction envhook) {
+            if (CompilerDirectives.inInterpreter()) {
+                getRootNode().reportLoopCount(-5);
+            }
             String dbPath = datafile.getDataAt(0);
             String packageName = new File(dbPath).getName();
             byte[] dbData = RContext.getInstance().stateLazyDBCache.getData(dbPath);
@@ -457,7 +460,7 @@ public class HiddenInternalFunctions {
 
     /*
      * Created as primitive function to avoid incrementing reference count for the argument.
-     *
+     * 
      * returns -1 for non-shareable, 0 for private, 1 for temp, 2 for shared and
      * SHARED_PERMANENT_VAL for permanent shared
      */
