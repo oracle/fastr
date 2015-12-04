@@ -36,8 +36,8 @@ public class MethodsListDispatch {
 
     public abstract static class R_methodsPackageMetaName extends RExternalBuiltinNode.Arg3 {
 
-        @TruffleBoundary
         @Specialization
+        @TruffleBoundary
         protected String callMethodsPackageMetaName(RAbstractStringVector prefixStringVector, RAbstractStringVector nameStringVector, RAbstractStringVector pkgStringVector) {
             // TODO: proper error messages
             assert prefixStringVector.getLength() == 1 && nameStringVector.getLength() == 1 && pkgStringVector.getLength() == 1;
@@ -55,8 +55,8 @@ public class MethodsListDispatch {
 
     public abstract static class R_getClassFromCache extends RExternalBuiltinNode.Arg2 {
 
-        @TruffleBoundary
         @Specialization
+        @TruffleBoundary
         protected Object callGetClassFromCache(RAbstractStringVector klass, REnvironment table) {
             String klassString = klass.getLength() == 0 ? RRuntime.STRING_NA : klass.getDataAt(0);
 
@@ -84,8 +84,8 @@ public class MethodsListDispatch {
 
     public abstract static class R_set_method_dispatch extends RExternalBuiltinNode.Arg1 {
 
-        @TruffleBoundary
         @Specialization
+        @TruffleBoundary
         protected Object callSetMethodDispatch(RAbstractLogicalVector onOffVector) {
             boolean prev = RContext.getInstance().isMethodTableDispatchOn();
             byte onOff = castLogical(onOffVector);
@@ -104,10 +104,9 @@ public class MethodsListDispatch {
 
     public abstract static class R_M_setPrimitiveMethods extends RExternalBuiltinNode.Arg5 {
 
-        @SuppressWarnings("unused")
         @Specialization
         @TruffleBoundary
-        protected byte setPrimitiveMethods(Object fname, Object op, Object codeVec, Object fundef, Object mlist) {
+        protected byte setPrimitiveMethods(Object fname, Object op, Object codeVec, @SuppressWarnings("unused") Object fundef, @SuppressWarnings("unused") Object mlist) {
             String fnameString = RRuntime.asString(fname);
             String codeVecString = RRuntime.asString(codeVec);
             if (codeVecString == null) {

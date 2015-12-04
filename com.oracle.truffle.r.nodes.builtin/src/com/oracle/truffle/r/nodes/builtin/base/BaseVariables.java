@@ -75,5 +75,4 @@ public class BaseVariables {
         values[17] = 8;
         return RDataFactory.createList(values, RDataFactory.createStringVector(MACHINE_NAMES, RDataFactory.COMPLETE_VECTOR));
     }
-
 }

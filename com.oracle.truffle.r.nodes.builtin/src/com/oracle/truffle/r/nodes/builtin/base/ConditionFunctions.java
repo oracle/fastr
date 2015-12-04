@@ -42,22 +42,18 @@ public class ConditionFunctions {
             }
             return promiseHelper;
         }
-
     }
 
     @RBuiltin(name = ".addCondHands", kind = RBuiltinKind.INTERNAL, parameterNames = {"classes", "handlers", "parentenv", "target", "calling"})
     public abstract static class AddCondHands extends Adapter {
         private final ConditionProfile nullArgs = ConditionProfile.createBinaryProfile();
 
-        @SuppressWarnings("unused")
         @Specialization
         protected Object addCondHands(Object classesObj, Object handlersObj, REnvironment parentEnv, Object target, byte calling) {
             forceVisibility(false);
             if (nullArgs.profile(classesObj == RNull.instance || handlersObj == RNull.instance)) {
                 return getHandlerStack();
             }
-            RStringVector classes;
-            RList handlers;
             if (!(classesObj instanceof RStringVector && handlersObj instanceof RList && ((RStringVector) classesObj).getLength() == ((RList) handlersObj).getLength())) {
                 errorProfile.enter();
                 throw RError.error(this, RError.Message.BAD_HANDLER_DATA);
@@ -65,7 +61,6 @@ public class ConditionFunctions {
                 return RErrorHandling.createHandlers((RStringVector) classesObj, (RList) handlersObj, parentEnv, target, calling);
             }
         }
-
     }
 
     @RBuiltin(name = ".resetCondHands", kind = RBuiltinKind.INTERNAL, parameterNames = {"stack"})
@@ -198,5 +193,4 @@ public class ConditionFunctions {
             return RNull.instance;
         }
     }
-
 }

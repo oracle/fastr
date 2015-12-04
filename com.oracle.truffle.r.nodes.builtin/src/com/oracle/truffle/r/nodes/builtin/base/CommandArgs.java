@@ -35,15 +35,10 @@ import com.oracle.truffle.r.runtime.data.*;
 public abstract class CommandArgs extends RBuiltinNode {
 
     @Specialization
+    @TruffleBoundary
     protected RStringVector commandArgs() {
         controlVisibility();
-        return getCommandArgs();
-    }
-
-    @TruffleBoundary
-    private static RStringVector getCommandArgs() {
         String[] s = RContext.getInstance().getOptions().getArguments();
         return RDataFactory.createStringVector(s, RDataFactory.COMPLETE_VECTOR);
     }
-
 }

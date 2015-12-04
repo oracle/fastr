@@ -45,6 +45,7 @@ public class AttachFunctions {
         }
 
         @Specialization
+        @TruffleBoundary
         protected REnvironment doAttach(@SuppressWarnings("unused") RNull what, RAbstractIntVector pos, RAbstractStringVector name) {
             controlVisibility();
             REnvironment env = RDataFactory.createNewEnv(null, name.getDataAt(0));
@@ -53,6 +54,7 @@ public class AttachFunctions {
         }
 
         @Specialization
+        @TruffleBoundary
         protected REnvironment doAttach(REnvironment what, RAbstractIntVector pos, RAbstractStringVector name) {
             controlVisibility();
             REnvironment env = RDataFactory.createNewEnv(null, name.getDataAt(0));
@@ -68,6 +70,7 @@ public class AttachFunctions {
         }
 
         @Specialization
+        @TruffleBoundary
         protected REnvironment doAttach(RList what, RAbstractIntVector pos, RAbstractStringVector name) {
             controlVisibility();
             REnvironment env = RDataFactory.createNewEnv(null, name.getDataAt(0));
@@ -85,8 +88,7 @@ public class AttachFunctions {
             throw RError.error(this, RError.Message.ATTACH_BAD_TYPE);
         }
 
-        @TruffleBoundary
-        protected void doAttachEnv(int pos, REnvironment env) {
+        private static void doAttachEnv(int pos, REnvironment env) {
             // GnuR appears to allow any value of pos except 1.
             // Values < 1 are interpreted as 2
             int ipos = pos;
@@ -106,6 +108,7 @@ public class AttachFunctions {
         }
 
         @Specialization
+        @TruffleBoundary
         protected Object doDetach(RAbstractIntVector pos) {
             controlVisibility();
             try {

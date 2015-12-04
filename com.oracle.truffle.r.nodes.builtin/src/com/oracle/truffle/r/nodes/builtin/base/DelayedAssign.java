@@ -49,5 +49,4 @@ public abstract class DelayedAssign extends RInvisibleBuiltinNode {
             throw RError.error(this, ex);
         }
     }
-
 }

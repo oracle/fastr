@@ -34,8 +34,8 @@ import com.oracle.truffle.r.runtime.data.model.*;
 @RBuiltin(name = "path.expand", kind = INTERNAL, parameterNames = "path")
 public abstract class PathExpand extends RBuiltinNode {
 
-    @TruffleBoundary
     @Specialization
+    @TruffleBoundary
     protected Object doPathExpand(RAbstractStringVector vec) {
         controlVisibility();
         String[] results = new String[vec.getLength()];
@@ -47,9 +47,9 @@ public abstract class PathExpand extends RBuiltinNode {
     }
 
     @Specialization
+    @TruffleBoundary
     protected Object doPathExpandGeneric(@SuppressWarnings("unused") Object path) {
         controlVisibility();
         throw RError.error(this, RError.Message.INVALID_ARGUMENT, "path");
     }
-
 }

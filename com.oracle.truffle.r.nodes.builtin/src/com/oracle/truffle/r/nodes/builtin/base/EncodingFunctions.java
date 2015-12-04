@@ -59,5 +59,4 @@ public class EncodingFunctions {
             throw RError.error(this, RError.Message.CHAR_VEC_ARGUMENT);
         }
     }
-
 }

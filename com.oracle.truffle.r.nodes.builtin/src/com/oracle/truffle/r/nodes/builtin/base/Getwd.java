@@ -41,5 +41,4 @@ public abstract class Getwd extends RBuiltinNode {
         String result = RFFIFactory.getRFFI().getBaseRFFI().getwd();
         return RDataFactory.createStringVector(result);
     }
-
 }

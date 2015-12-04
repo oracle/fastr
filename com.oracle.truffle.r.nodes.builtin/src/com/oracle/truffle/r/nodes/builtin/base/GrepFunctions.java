@@ -258,8 +258,8 @@ public class GrepFunctions {
     @RBuiltin(name = "grep", kind = INTERNAL, parameterNames = {"pattern", "x", "ignore.case", "perl", "value", "fixed", "useBytes", "invert"})
     public abstract static class Grep extends GrepAdapter {
 
-        @TruffleBoundary
         @Specialization
+        @TruffleBoundary
         protected Object grepValueFalse(RAbstractStringVector patternArgVec, RAbstractStringVector vector, byte ignoreCaseLogical, byte valueLogical, byte perlLogical, byte fixedLogical,
                         byte useBytes, byte invertLogical) {
             return doGrep(patternArgVec, vector, ignoreCaseLogical, valueLogical, perlLogical, fixedLogical, useBytes, invertLogical, false);

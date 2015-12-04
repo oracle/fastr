@@ -59,6 +59,7 @@ public abstract class Bincode extends RBuiltinNode {
         /* This relies on breaks being sorted, so wise to check that */
         for (int i = 1; i < nb; i++) {
             if (breaks.getDataAt(i - 1) > breaks.getDataAt(i)) {
+                errorProfile.enter();
                 throw RError.error(this, RError.Message.GENERIC, "'breaks' is not sorted");
             }
         }

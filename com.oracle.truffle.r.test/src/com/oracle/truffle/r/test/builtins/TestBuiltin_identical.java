@@ -97,8 +97,7 @@ public class TestBuiltin_identical extends TestBase {
 
     @Test
     public void testidentical16() {
-        assertEval(Ignored.Unknown,
-                        "argv <- list(structure(c(1L, 1L, 1L), .Label = c('1', '2'), class = 'factor'), structure(list(f = structure(c(1L, 1L, 1L), .Label = c('1', '2'), class = 'factor'), u = structure(12:14, unit = 'kg', class = 'avector')), .Names = c('f', 'u'), row.names = 2:4, class = 'data.frame'), TRUE, TRUE, TRUE, TRUE, FALSE); .Internal(identical(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+        assertEval("argv <- list(structure(c(1L, 1L, 1L), .Label = c('1', '2'), class = 'factor'), structure(list(f = structure(c(1L, 1L, 1L), .Label = c('1', '2'), class = 'factor'), u = structure(12:14, unit = 'kg', class = 'avector')), .Names = c('f', 'u'), row.names = 2:4, class = 'data.frame'), TRUE, TRUE, TRUE, TRUE, FALSE); .Internal(identical(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test

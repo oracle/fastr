@@ -10,17 +10,33 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.PRIMITIVE;
 
-import java.util.*;
+import java.util.Arrays;
 
-import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.unary.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.ops.na.*;
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.utilities.ConditionProfile;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.unary.CastDoubleNode;
+import com.oracle.truffle.r.nodes.unary.CastDoubleNodeGen;
+import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
+import com.oracle.truffle.r.runtime.data.RComplexVector;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
+import com.oracle.truffle.r.runtime.data.RIntSequence;
+import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 @RBuiltin(name = "cummin", kind = PRIMITIVE, parameterNames = {"x"})
 public abstract class CumMin extends RBuiltinNode {
@@ -60,25 +76,19 @@ public abstract class CumMin extends RBuiltinNode {
     }
 
     @Specialization
-    protected RIntVector cummin(RIntSequence v) {
+    protected RAbstractIntVector cumminIntSequence(RIntSequence v, //
+                    @Cached("createBinaryProfile()") ConditionProfile negativeStrideProfile) {
         controlVisibility();
-        int[] cminV = new int[v.getLength()];
-
-        if (v.getStride() > 0) {
+        if (negativeStrideProfile.profile(v.getStride() > 0)) {
             // all numbers are bigger than the first one
-            Arrays.fill(cminV, v.getStart());
-            return RDataFactory.createIntVector(cminV, RDataFactory.COMPLETE_VECTOR, v.getNames(attrProfiles));
+            return RDataFactory.createIntSequence(v.getStart(), 0, v.getLength());
         } else {
-            cminV[0] = v.getStart();
-            for (int i = 1; i < v.getLength(); i++) {
-                cminV[i] = cminV[i - 1] + v.getStride();
-            }
-            return RDataFactory.createIntVector(cminV, RDataFactory.COMPLETE_VECTOR, v.getNames(attrProfiles));
+            return v;
         }
     }
 
     @Specialization
-    protected RDoubleVector cummin(RDoubleVector v) {
+    protected RDoubleVector cummin(RAbstractDoubleVector v) {
         controlVisibility();
         double[] cminV = new double[v.getLength()];
         double min = v.getDataAt(0);
@@ -100,8 +110,8 @@ public abstract class CumMin extends RBuiltinNode {
         return RDataFactory.createDoubleVector(cminV, na.neverSeenNA(), v.getNames(attrProfiles));
     }
 
-    @Specialization
-    protected RIntVector cummin(RIntVector v) {
+    @Specialization(contains = "cumminIntSequence")
+    protected RIntVector cummin(RAbstractIntVector v) {
         controlVisibility();
         int[] cminV = new int[v.getLength()];
         int min = v.getDataAt(0);
@@ -124,7 +134,7 @@ public abstract class CumMin extends RBuiltinNode {
     }
 
     @Specialization
-    protected RIntVector cummin(RLogicalVector v) {
+    protected RIntVector cummin(RAbstractLogicalVector v) {
         controlVisibility();
         int[] cminV = new int[v.getLength()];
         int min = v.getDataAt(0);
@@ -147,7 +157,7 @@ public abstract class CumMin extends RBuiltinNode {
     }
 
     @Specialization
-    protected RDoubleVector cummin(RStringVector v) {
+    protected RDoubleVector cummin(RAbstractStringVector v) {
         controlVisibility();
         if (castDouble == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -157,7 +167,8 @@ public abstract class CumMin extends RBuiltinNode {
     }
 
     @Specialization
-    protected RComplexVector cummin(@SuppressWarnings("unused") RComplexVector v) {
+    @TruffleBoundary
+    protected RComplexVector cummin(@SuppressWarnings("unused") RAbstractComplexVector v) {
         controlVisibility();
         throw RError.error(this, RError.Message.CUMMIN_UNDEFINED_FOR_COMPLEX);
     }

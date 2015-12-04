@@ -15,11 +15,18 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 import java.util.*;
 
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.utilities.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.ops.na.*;
 
 @RBuiltin(name = "cummax", kind = PRIMITIVE, parameterNames = {"x"})
@@ -59,25 +66,19 @@ public abstract class CumMax extends RBuiltinNode {
     }
 
     @Specialization
-    protected RIntVector cummax(RIntSequence v) {
-
+    protected RAbstractIntVector cummaxIntSequence(RIntSequence v, //
+                    @Cached("createBinaryProfile()") ConditionProfile negativeStrideProfile) {
         controlVisibility();
-        int[] cmaxV = new int[v.getLength()];
-
-        if (v.getStride() < 0) { // all numbers are bigger than the first one
-            Arrays.fill(cmaxV, v.getStart());
-            return RDataFactory.createIntVector(cmaxV, RDataFactory.COMPLETE_VECTOR, v.getNames(attrProfiles));
+        if (negativeStrideProfile.profile(v.getStride() < 0)) {
+            // all numbers are smaller than the first one
+            return RDataFactory.createIntSequence(v.getStart(), 0, v.getLength());
         } else {
-            cmaxV[0] = v.getStart();
-            for (int i = 1; i < v.getLength(); i++) {
-                cmaxV[i] = cmaxV[i - 1] + v.getStride();
-            }
-            return RDataFactory.createIntVector(cmaxV, RDataFactory.COMPLETE_VECTOR, v.getNames(attrProfiles));
+            return v;
         }
     }
 
     @Specialization
-    protected RDoubleVector cummax(RDoubleVector v) {
+    protected RDoubleVector cummax(RAbstractDoubleVector v) {
         controlVisibility();
         double[] cmaxV = new double[v.getLength()];
         double max = v.getDataAt(0);
@@ -99,8 +100,8 @@ public abstract class CumMax extends RBuiltinNode {
         return RDataFactory.createDoubleVector(cmaxV, na.neverSeenNA(), v.getNames(attrProfiles));
     }
 
-    @Specialization
-    protected RIntVector cummax(RIntVector v) {
+    @Specialization(contains = "cummaxIntSequence")
+    protected RIntVector cummax(RAbstractIntVector v) {
         controlVisibility();
         int[] cmaxV = new int[v.getLength()];
         int max = v.getDataAt(0);
@@ -123,7 +124,7 @@ public abstract class CumMax extends RBuiltinNode {
     }
 
     @Specialization
-    protected RIntVector cummax(RLogicalVector v) {
+    protected RIntVector cummax(RAbstractLogicalVector v) {
         controlVisibility();
         int[] cmaxV = new int[v.getLength()];
         int max = v.getDataAt(0);
@@ -146,7 +147,7 @@ public abstract class CumMax extends RBuiltinNode {
     }
 
     @Specialization
-    protected RDoubleVector cummax(RStringVector v) {
+    protected RDoubleVector cummax(RAbstractStringVector v) {
         controlVisibility();
         if (castDouble == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -156,9 +157,9 @@ public abstract class CumMax extends RBuiltinNode {
     }
 
     @Specialization
-    protected RComplexVector cummax(@SuppressWarnings("unused") RComplexVector v) {
+    @TruffleBoundary
+    protected RComplexVector cummax(@SuppressWarnings("unused") RAbstractComplexVector v) {
         controlVisibility();
         throw RError.error(this, RError.Message.CUMMAX_UNDEFINED_FOR_COMPLEX);
     }
-
 }

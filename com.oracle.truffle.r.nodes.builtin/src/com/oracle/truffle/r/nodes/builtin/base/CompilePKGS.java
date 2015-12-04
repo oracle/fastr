@@ -31,9 +31,9 @@ import com.oracle.truffle.r.runtime.*;
  */
 @RBuiltin(name = "compilePKGS", kind = RBuiltinKind.INTERNAL, parameterNames = "enable")
 public abstract class CompilePKGS extends RBuiltinNode {
+
     @Specialization
     protected byte compilePKGS(@SuppressWarnings("unused") int enable) {
         return 0;
     }
-
 }

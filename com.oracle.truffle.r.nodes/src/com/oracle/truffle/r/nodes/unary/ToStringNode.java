@@ -131,34 +131,36 @@ public abstract class ToStringNode extends RBaseNode {
     }
 
     @Specialization
-    protected String toString(RIntVector vector, boolean quotes, String separator) {
+    protected String toString(RAbstractIntVector vector, boolean quotes, String separator) {
         return createResultForVector(vector, quotes, separator, "integer(0)", (index, q, s) -> toString(vector.getDataAt(index), q, s));
     }
 
-    @TruffleBoundary
     @Specialization
-    protected String toString(RDoubleVector vector, boolean quotes, String separator) {
+    @TruffleBoundary
+    // boundary because of complex numerical string formatting
+    protected String toString(RAbstractDoubleVector vector, boolean quotes, String separator) {
         return createResultForVector(vector, quotes, separator, "numeric(0)", (index, q, s) -> toString(vector.getDataAt(index), q, s));
     }
 
-    @TruffleBoundary
     @Specialization
-    protected String toString(RStringVector vector, boolean quotes, String separator) {
+    @TruffleBoundary
+    // boundary because of string quoting
+    protected String toString(RAbstractStringVector vector, boolean quotes, String separator) {
         return createResultForVector(vector, quotes, separator, "character(0)", (index, q, s) -> toString(vector.getDataAt(index), q, s));
     }
 
     @Specialization
-    protected String toString(RLogicalVector vector, boolean quotes, String separator) {
+    protected String toString(RAbstractLogicalVector vector, boolean quotes, String separator) {
         return createResultForVector(vector, quotes, separator, "logical(0)", (index, q, s) -> toString(vector.getDataAt(index), q, s));
     }
 
     @Specialization
-    protected String toString(RRawVector vector, boolean quotes, String separator) {
+    protected String toString(RAbstractRawVector vector, boolean quotes, String separator) {
         return createResultForVector(vector, quotes, separator, "raw(0)", (index, q, s) -> toString(vector.getDataAt(index), q, s));
     }
 
     @Specialization
-    protected String toString(RComplexVector vector, boolean quotes, String separator) {
+    protected String toString(RAbstractComplexVector vector, boolean quotes, String separator) {
         return createResultForVector(vector, quotes, separator, "complex(0)", (index, q, s) -> toString(vector.getDataAt(index), q, s));
     }
 
@@ -177,16 +179,6 @@ public abstract class ToStringNode extends RBaseNode {
                 return toStringRecursive(value, q, s);
             }
         });
-    }
-
-    @Specialization
-    protected String toString(RIntSequence vector, boolean quotes, String separator) {
-        return toStringRecursive(vector.createVector(), quotes, separator);
-    }
-
-    @Specialization
-    protected String toString(RDoubleSequence vector, boolean quotes, String separator) {
-        return toStringRecursive(vector.createVector(), quotes, separator);
     }
 
     @SuppressWarnings("unused")

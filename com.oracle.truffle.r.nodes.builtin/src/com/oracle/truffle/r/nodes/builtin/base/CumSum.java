@@ -22,16 +22,28 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.PRIMITIVE;
 
-import java.util.*;
+import java.util.Arrays;
 
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.ops.*;
-import com.oracle.truffle.r.runtime.ops.na.*;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
+import com.oracle.truffle.r.runtime.data.RComplex;
+import com.oracle.truffle.r.runtime.data.RComplexVector;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
+import com.oracle.truffle.r.runtime.data.RIntSequence;
+import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
+import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 @RBuiltin(name = "cumsum", kind = PRIMITIVE, parameterNames = {"x"})
 public abstract class CumSum extends RBuiltinNode {
@@ -87,7 +99,7 @@ public abstract class CumSum extends RBuiltinNode {
     }
 
     @Specialization
-    protected RDoubleVector cumsum(RDoubleVector arg) {
+    protected RDoubleVector cumsum(RAbstractDoubleVector arg) {
         controlVisibility();
         double[] res = new double[arg.getLength()];
         double prev = 0.0;
@@ -107,7 +119,7 @@ public abstract class CumSum extends RBuiltinNode {
     }
 
     @Specialization
-    protected RIntVector cumsum(RIntVector arg) {
+    protected RIntVector cumsum(RAbstractIntVector arg) {
         controlVisibility();
         int[] res = new int[arg.getLength()];
         int prev = 0;
@@ -130,7 +142,7 @@ public abstract class CumSum extends RBuiltinNode {
     }
 
     @Specialization
-    protected RIntVector cumsum(RLogicalVector arg) {
+    protected RIntVector cumsum(RAbstractLogicalVector arg) {
         controlVisibility();
         int[] res = new int[arg.getLength()];
         int prev = 0;
@@ -150,7 +162,7 @@ public abstract class CumSum extends RBuiltinNode {
     }
 
     @Specialization
-    protected RDoubleVector cumsum(RStringVector arg) {
+    protected RDoubleVector cumsum(RAbstractStringVector arg) {
         controlVisibility();
         double[] res = new double[arg.getLength()];
         double prev = 0.0;
@@ -171,7 +183,7 @@ public abstract class CumSum extends RBuiltinNode {
     }
 
     @Specialization
-    protected RComplexVector cumsum(RComplexVector arg) {
+    protected RComplexVector cumsum(RAbstractComplexVector arg) {
         controlVisibility();
         double[] res = new double[arg.getLength() * 2];
         RComplex prev = RDataFactory.createComplex(0.0, 0.0);
@@ -190,5 +202,4 @@ public abstract class CumSum extends RBuiltinNode {
         }
         return RDataFactory.createComplexVector(res, na.neverSeenNA(), arg.getNames(attrProfiles));
     }
-
 }

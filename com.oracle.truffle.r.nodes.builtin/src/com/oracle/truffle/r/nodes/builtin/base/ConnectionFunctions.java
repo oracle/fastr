@@ -213,11 +213,10 @@ public abstract class ConnectionFunctions {
             casts.toInteger(6);
         }
 
-        @SuppressWarnings("unused")
-        @TruffleBoundary
         @Specialization
-        protected Object socketConnection(RAbstractStringVector host, RAbstractIntVector portVec, byte server, byte blocking, RAbstractStringVector open, RAbstractStringVector encoding,
-                        RAbstractIntVector timeoutVec) {
+        @TruffleBoundary
+        protected Object socketConnection(RAbstractStringVector host, RAbstractIntVector portVec, byte server, byte blocking, RAbstractStringVector open,
+                        @SuppressWarnings("unused") RAbstractStringVector encoding, RAbstractIntVector timeoutVec) {
             int port = portVec.getDataAt(0);
             String modeString = open.getDataAt(0);
             int timeout = timeoutVec.getDataAt(0);
@@ -445,8 +444,8 @@ public abstract class ConnectionFunctions {
 
     @RBuiltin(name = "flush", kind = INTERNAL, parameterNames = {"con"})
     public abstract static class Flush extends RInvisibleBuiltinNode {
-        @TruffleBoundary
         @Specialization
+        @TruffleBoundary
         protected RNull flush(RConnection con) {
             controlVisibility();
             try {
@@ -466,9 +465,9 @@ public abstract class ConnectionFunctions {
             casts.toCharacter(0);
         }
 
-        @SuppressWarnings("unused")
         @Specialization
-        protected RNull pushBack(RAbstractStringVector data, RConnection connection, RAbstractLogicalVector newLine, RAbstractIntVector type) {
+        @TruffleBoundary
+        protected RNull pushBack(RAbstractStringVector data, RConnection connection, RAbstractLogicalVector newLine, @SuppressWarnings("unused") RAbstractIntVector type) {
             controlVisibility();
             if (newLine.getLength() == 0) {
                 throw RError.error(this, RError.Message.INVALID_ARGUMENT, "newLine");
@@ -479,6 +478,7 @@ public abstract class ConnectionFunctions {
 
         @SuppressWarnings("unused")
         @Specialization
+        @TruffleBoundary
         protected Object pushBack(RAbstractStringVector data, RConnection connection, RNull newLine, RAbstractIntVector type) {
             controlVisibility();
             throw RError.error(this, RError.Message.INVALID_ARGUMENT, "newLine");
@@ -486,6 +486,7 @@ public abstract class ConnectionFunctions {
 
         @SuppressWarnings("unused")
         @Specialization(guards = "!newLineIsLogical(newLine)")
+        @TruffleBoundary
         protected Object pushBack(RAbstractStringVector data, RConnection connection, RAbstractVector newLine, RAbstractIntVector type) {
             controlVisibility();
             throw RError.error(this, RError.Message.INVALID_ARGUMENT, "newLine");
@@ -493,6 +494,7 @@ public abstract class ConnectionFunctions {
 
         @SuppressWarnings("unused")
         @Fallback
+        @TruffleBoundary
         protected Object pushBack(Object data, Object connection, Object newLine, Object encoding) {
             controlVisibility();
             throw RError.error(this, RError.Message.INVALID_CONNECTION);
@@ -628,10 +630,9 @@ public abstract class ConnectionFunctions {
             casts.toInteger(2);
         }
 
-        @SuppressWarnings("unused")
-        @TruffleBoundary
         @Specialization
-        protected Object readBin(RConnection con, RAbstractStringVector whatVec, RAbstractIntVector nVec, int size, byte signedArg, byte swapArg) {
+        @TruffleBoundary
+        protected Object readBin(RConnection con, RAbstractStringVector whatVec, RAbstractIntVector nVec, @SuppressWarnings("unused") int size, @SuppressWarnings("unused") byte signedArg, byte swapArg) {
             boolean swap = RRuntime.fromLogical(swapArg);
             RVector result = null;
             int n = nVec.getDataAt(0);

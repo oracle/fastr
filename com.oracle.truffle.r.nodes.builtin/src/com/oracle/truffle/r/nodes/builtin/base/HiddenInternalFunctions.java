@@ -457,7 +457,7 @@ public class HiddenInternalFunctions {
 
     /*
      * Created as primitive function to avoid incrementing reference count for the argument.
-     * 
+     *
      * returns -1 for non-shareable, 0 for private, 1 for temp, 2 for shared and
      * SHARED_PERMANENT_VAL for permanent shared
      */
@@ -488,7 +488,6 @@ public class HiddenInternalFunctions {
      */
     @RBuiltin(name = "fastr.identity", kind = PRIMITIVE, parameterNames = {""})
     public abstract static class Identity extends RBuiltinNode {
-        @TruffleBoundary
         @Specialization
         protected int typeof(Object x) {
             return System.identityHashCode(x);

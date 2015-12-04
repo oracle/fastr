@@ -45,8 +45,8 @@ public abstract class Options extends RBuiltinNode {
     private final ConditionProfile argNameNull = ConditionProfile.createBinaryProfile();
     private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
-    @TruffleBoundary
     @Specialization
+    @TruffleBoundary
     protected RList options(@SuppressWarnings("unused") RMissing x) {
         controlVisibility();
         Set<Map.Entry<String, Object>> optionSettings = RContext.getInstance().stateROptions.getValues();
@@ -146,5 +146,4 @@ public abstract class Options extends RBuiltinNode {
     protected boolean isMissing(RArgsValuesAndNames args) {
         return args.isEmpty();    // length() == 1 && args.getValue(0) == RMissing.instance;
     }
-
 }
