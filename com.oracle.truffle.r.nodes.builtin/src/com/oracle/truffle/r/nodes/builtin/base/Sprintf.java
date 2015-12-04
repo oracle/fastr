@@ -44,7 +44,6 @@ public abstract class Sprintf extends RBuiltinNode {
     @Child private Sprintf sprintfRecursive;
 
     @Specialization
-    @TruffleBoundary
     protected String sprintf(String fmt, @SuppressWarnings("unused") RMissing x) {
         controlVisibility();
         return fmt;

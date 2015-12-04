@@ -36,8 +36,6 @@ public abstract class All extends RBuiltinNode {
 
     @Child private CastLogicalNode castLogicalNode;
 
-    public abstract Object execute(Object o);
-
     @Override
     protected void createCasts(CastBuilder casts) {
         casts.toLogical(0);

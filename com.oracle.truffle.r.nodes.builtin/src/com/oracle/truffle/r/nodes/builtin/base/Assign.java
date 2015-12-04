@@ -24,6 +24,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
@@ -90,6 +91,9 @@ public abstract class Assign extends RInvisibleBuiltinNode {
                 env = REnvironment.globalEnv();
             }
         } else {
+            if (CompilerDirectives.inInterpreter()) {
+                getRootNode().reportLoopCount(-1);
+            }
             if (env == REnvironment.emptyEnv()) {
                 errorProfile.enter();
                 throw RError.error(this, RError.Message.CANNOT_ASSIGN_IN_EMPTY_ENV);

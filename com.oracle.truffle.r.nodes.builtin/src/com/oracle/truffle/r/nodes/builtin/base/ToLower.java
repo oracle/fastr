@@ -27,6 +27,7 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.profile.CountedLoopConditionProfile;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -42,20 +43,19 @@ public abstract class ToLower extends RBuiltinNode {
     }
 
     @Specialization
-    @TruffleBoundary
-    protected RStringVector toLower(RAbstractStringVector vector) {
+    protected RStringVector toLower(RAbstractStringVector vector, //
+                    @Cached("create()") CountedLoopConditionProfile loopProfile) {
         controlVisibility();
         String[] stringVector = new String[vector.getLength()];
-        for (int i = 0; i < vector.getLength(); i++) {
+        loopProfile.profileLength(vector.getLength());
+        for (int i = 0; loopProfile.inject(i < vector.getLength()); i++) {
             stringVector[i] = toLower(vector.getDataAt(i));
         }
         return RDataFactory.createStringVector(stringVector, vector.isComplete());
     }
 
-    @SuppressWarnings("unused")
     @Specialization
-    @TruffleBoundary
-    protected RStringVector tolower(RNull empty) {
+    protected RStringVector tolower(@SuppressWarnings("unused") RNull empty) {
         controlVisibility();
         return RDataFactory.createStringVector(0);
     }

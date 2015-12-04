@@ -36,8 +36,8 @@ public class LocaleFunctions {
     @RBuiltin(name = "Sys.getlocale", kind = RBuiltinKind.INTERNAL, parameterNames = {"category"})
     public abstract static class GetLocale extends RBuiltinNode {
 
-        @TruffleBoundary
         @Specialization
+        @TruffleBoundary
         protected Object getLocale(RAbstractIntVector categoryVec) {
             controlVisibility();
             // TODO implement all: for now just return not available (NULL)
@@ -66,25 +66,22 @@ public class LocaleFunctions {
             }
             return RNull.instance;
         }
-
     }
 
     @RBuiltin(name = "Sys.setlocale", kind = RBuiltinKind.INTERNAL, parameterNames = {"category", "locale"})
     public abstract static class SetLocale extends RBuiltinNode {
 
-        @SuppressWarnings("unused")
-        @TruffleBoundary
         @Specialization
-        protected Object setLocale(RAbstractIntVector categoryVec, RAbstractStringVector locale) {
+        @TruffleBoundary
+        protected Object setLocale(@SuppressWarnings("unused") RAbstractIntVector categoryVec, RAbstractStringVector locale) {
             controlVisibility();
             // TODO implement properly!!
             return locale;
         }
 
-        @SuppressWarnings("unused")
-        @TruffleBoundary
         @Specialization
-        protected Object setLocale(RAbstractIntVector categoryVec, RNull locale) {
+        @TruffleBoundary
+        protected Object setLocale(@SuppressWarnings("unused") RAbstractIntVector categoryVec, RNull locale) {
             controlVisibility();
             // TODO implement properly!!
             return locale;
@@ -93,9 +90,8 @@ public class LocaleFunctions {
 
     @RBuiltin(name = "Sys.localeconv", kind = RBuiltinKind.INTERNAL, parameterNames = {})
     public abstract static class LocaleConv extends RBuiltinNode {
-
-        @TruffleBoundary
         @Specialization
+        @TruffleBoundary
         protected Object localeconv() {
             controlVisibility();
             RError.nyi(this, "localeconv");

@@ -36,8 +36,8 @@ import com.oracle.truffle.r.runtime.data.model.*;
 @RBuiltin(name = "readRenviron", kind = INTERNAL, parameterNames = "path")
 public abstract class ReadREnviron extends RInvisibleBuiltinNode {
 
-    @TruffleBoundary
     @Specialization(guards = "lengthOneCVector(vec)")
+    @TruffleBoundary
     protected Object doReadEnviron(RAbstractStringVector vec) {
         controlVisibility();
         String path = Utils.tildeExpand(vec.getDataAt(0));
@@ -61,5 +61,4 @@ public abstract class ReadREnviron extends RInvisibleBuiltinNode {
     public static boolean lengthOneCVector(RAbstractStringVector vec) {
         return vec.getLength() == 1;
     }
-
 }

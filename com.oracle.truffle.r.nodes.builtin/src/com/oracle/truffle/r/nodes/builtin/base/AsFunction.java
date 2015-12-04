@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
@@ -32,12 +33,14 @@ import com.oracle.truffle.r.runtime.env.*;
 public abstract class AsFunction extends RBuiltinNode {
     @SuppressWarnings("unused")
     @Specialization
+    @TruffleBoundary
     protected RFunction asFunction(RList x, REnvironment envir) {
         throw RError.nyi(this, "as.function.default");
     }
 
     @SuppressWarnings("unused")
     @Fallback
+    @TruffleBoundary
     protected RFunction asFunction(Object x, Object envir) {
         throw RError.error(this, RError.Message.TYPE_EXPECTED, RType.List.getName());
     }

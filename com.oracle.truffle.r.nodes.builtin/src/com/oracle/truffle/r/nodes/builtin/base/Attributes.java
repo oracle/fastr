@@ -26,6 +26,7 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import java.util.*;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -40,16 +41,15 @@ public abstract class Attributes extends RBuiltinNode {
 
     private final BranchProfile rownamesBranch = BranchProfile.create();
 
-    @Specialization(guards = "!hasAttributes(container)")
-    protected Object attributesNull(@SuppressWarnings("unused") RAbstractContainer container) {
+    @Specialization
+    protected Object attributesNull(RAbstractContainer container, //
+                    @Cached("createBinaryProfile()") ConditionProfile hasAttributesProfile) {
         controlVisibility();
-        return RNull.instance;
-    }
-
-    @Specialization(guards = "hasAttributes(container)")
-    protected Object attributes(RAbstractContainer container) {
-        controlVisibility();
-        return createResult(container, container instanceof RLanguage);
+        if (hasAttributesProfile.profile(hasAttributes(container))) {
+            return createResult(container, container instanceof RLanguage);
+        } else {
+            return RNull.instance;
+        }
     }
 
     /**
@@ -58,10 +58,11 @@ public abstract class Attributes extends RBuiltinNode {
      * e.g. {@link REnvironment}.
      */
     @Fallback
+    @TruffleBoundary
     protected Object attributes(Object object) {
         controlVisibility();
         if (object instanceof RAttributable) {
-            if (!hasAttributesRA((RAttributable) object)) {
+            if (!hasAttributes((RAttributable) object)) {
                 return RNull.instance;
             } else {
                 return createResult((RAttributable) object, false);
@@ -107,11 +108,7 @@ public abstract class Attributes extends RBuiltinNode {
         return result;
     }
 
-    public static boolean hasAttributes(RAbstractContainer container) {
-        return hasAttributesRA(container);
-    }
-
-    public static boolean hasAttributesRA(RAttributable attributable) {
+    private static boolean hasAttributes(RAttributable attributable) {
         return attributable.getAttributes() != null && attributable.getAttributes().size() > 0;
     }
 }

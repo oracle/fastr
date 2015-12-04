@@ -29,8 +29,8 @@ public class SplineFunctions {
 
     public abstract static class SplineCoef extends RExternalBuiltinNode.Arg3 {
 
-        @TruffleBoundary
         @Specialization
+        @TruffleBoundary
         protected Object splineCoef(Object method, RAbstractDoubleVector x, RAbstractDoubleVector y) {
             int methodInt = castInt(castVector(method));
             return SplineFunctions.splineCoef(methodInt, x.materialize(), y.materialize());
@@ -39,8 +39,8 @@ public class SplineFunctions {
 
     public abstract static class SplineEval extends RExternalBuiltinNode.Arg2 {
 
-        @TruffleBoundary
         @Specialization
+        @TruffleBoundary
         protected Object splineEval(RAbstractDoubleVector xout, RList z) {
             // This is called with the result of SplineCoef, so it is surely an RList
             return SplineFunctions.splineEval(attrProfiles, xout.materialize(), z);
@@ -85,7 +85,7 @@ public class SplineFunctions {
     /*
      * Periodic Spline --------------- The end conditions here match spline (and its derivatives) at
      * x[1] and x[n].
-     * 
+     *
      * Note: There is an explicit check that the user has supplied data with y[1] equal to y[n].
      */
     private static void periodicSpline(int n, double[] x, double[] y, double[] b, double[] c, double[] d) {
@@ -204,7 +204,7 @@ public class SplineFunctions {
     /*
      * Natural Splines --------------- Here the end-conditions are determined by setting the second
      * derivative of the spline at the end-points to equal to zero.
-     * 
+     *
      * There are n-2 unknowns (y[i]'' at x[2], ..., x[n-1]) and n-2 equations to determine them.
      * Either Choleski or Gaussian elimination could be used.
      */

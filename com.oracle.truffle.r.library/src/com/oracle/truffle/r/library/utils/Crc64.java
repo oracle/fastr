@@ -32,8 +32,8 @@ import com.oracle.truffle.r.runtime.data.model.*;
 
 public abstract class Crc64 extends RExternalBuiltinNode.Arg1 {
 
-    @TruffleBoundary
     @Specialization
+    @TruffleBoundary
     protected String crc64(RAbstractStringVector input) {
         try {
             MessageDigest md = MessageDigest.getInstance("MD5");

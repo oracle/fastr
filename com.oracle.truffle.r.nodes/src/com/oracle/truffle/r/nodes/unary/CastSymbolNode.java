@@ -57,8 +57,8 @@ public abstract class CastSymbolNode extends CastBaseNode {
         return backQuote(toString(value));
     }
 
-    @TruffleBoundary
     @Specialization
+    @TruffleBoundary
     protected RSymbol doString(String value) {
         // TODO: see if this is going to hit us performance-wise
         return RDataFactory.createSymbolInterned(value);

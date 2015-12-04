@@ -234,7 +234,6 @@ public abstract class Array extends RBuiltinNode {
             data[i] = vec.getDataAt(i % vec.getLength());
         }
         return RDataFactory.createList(data, dimData);
-
     }
 
     @Specialization

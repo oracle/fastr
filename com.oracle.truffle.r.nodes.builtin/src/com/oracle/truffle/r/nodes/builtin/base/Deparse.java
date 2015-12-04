@@ -31,8 +31,8 @@ public abstract class Deparse extends RBuiltinNode {
         casts.toInteger(4);
     }
 
-    @TruffleBoundary
     @Specialization
+    @TruffleBoundary
     protected RStringVector deparse(Object expr, int widthCutoffArg, RAbstractLogicalVector backtick, int control, int nlines) {
         controlVisibility();
         int widthCutoff = widthCutoffArg;

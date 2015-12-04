@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.attributes.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -40,14 +41,7 @@ public abstract class Abs extends RBuiltinNode {
     @Child private CopyOfRegAttributesNode copyAttributes;
 
     private final NACheck check = NACheck.create();
-    protected final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
-
-    @SuppressWarnings("unused")
-    @Specialization
-    protected RNull abs(RNull x) {
-        controlVisibility();
-        throw RError.error(this, RError.Message.NON_NUMERIC_MATH);
-    }
+    private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
     @Specialization
     protected int abs(int value) {
@@ -80,33 +74,6 @@ public abstract class Abs extends RBuiltinNode {
         return performComplex(value);
     }
 
-    @SuppressWarnings("unused")
-    @Specialization
-    protected Object abs(RRaw vector) {
-        controlVisibility();
-        throw RError.error(this, RError.Message.NON_NUMERIC_MATH);
-    }
-
-    @SuppressWarnings("unused")
-    @Specialization
-    protected Object abs(String vector) {
-        controlVisibility();
-        throw RError.error(this, RError.Message.NON_NUMERIC_MATH);
-    }
-
-    @Specialization
-    protected RIntVector abs(RLogicalVector value) {
-        controlVisibility();
-        check.enable(value);
-        return doAbs(RClosures.createLogicalToIntVector(value));
-    }
-
-    @Specialization
-    protected RIntVector abs(RIntVector vector) {
-        controlVisibility();
-        return doAbs(vector);
-    }
-
     private void copyRegAttributes(RAbstractVector source, RVector target) {
         if (copyAttributes == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -115,7 +82,19 @@ public abstract class Abs extends RBuiltinNode {
         copyAttributes.execute(source, target);
     }
 
-    private RIntVector doAbs(RAbstractIntVector vector) {
+    protected boolean isPositiveSequence(RIntSequence sequence) {
+        return sequence.getStart() >= 0 && (sequence.getStart() + (sequence.getLength() - 1) * (long) sequence.getStride()) <= Integer.MAX_VALUE;
+    }
+
+    @Specialization(guards = "isPositiveSequence(vector)")
+    protected RIntSequence doAbsIntSequence(RIntSequence vector) {
+        controlVisibility();
+        return vector;
+    }
+
+    @Specialization
+    protected RIntVector doAbs(RAbstractIntVector vector) {
+        controlVisibility();
         check.enable(vector);
         int[] intVector = new int[vector.getLength()];
         for (int i = 0; i < vector.getLength(); i++) {
@@ -126,8 +105,18 @@ public abstract class Abs extends RBuiltinNode {
         return res;
     }
 
+    protected boolean isPositiveSequence(RDoubleSequence sequence) {
+        return sequence.getStart() >= 0 && sequence.getStride() >= 0;
+    }
+
+    @Specialization(guards = "isPositiveSequence(vector)")
+    protected RDoubleSequence doAbsDoubleSequence(RDoubleSequence vector) {
+        controlVisibility();
+        return vector;
+    }
+
     @Specialization
-    protected RDoubleVector abs(RDoubleVector vector) {
+    protected RDoubleVector abs(RAbstractDoubleVector vector) {
         controlVisibility();
         check.enable(vector);
         double[] doubleVector = new double[vector.getLength()];
@@ -140,7 +129,7 @@ public abstract class Abs extends RBuiltinNode {
     }
 
     @Specialization
-    protected RDoubleVector abs(RComplexVector vector) {
+    protected RDoubleVector abs(RAbstractComplexVector vector) {
         controlVisibility();
         check.enable(vector);
         double[] doubleVector = new double[vector.getLength()];
@@ -152,16 +141,16 @@ public abstract class Abs extends RBuiltinNode {
         return res;
     }
 
-    @SuppressWarnings("unused")
     @Specialization
-    protected Object abs(RStringVector vector) {
+    protected RIntVector abs(RAbstractLogicalVector value) {
         controlVisibility();
-        throw RError.error(this, RError.Message.NON_NUMERIC_MATH);
+        check.enable(value);
+        return doAbs(RClosures.createLogicalToIntVector(value));
     }
 
-    @SuppressWarnings("unused")
-    @Specialization
-    protected Object abs(RRawVector vector) {
+    @Fallback
+    @TruffleBoundary
+    protected Object abs(@SuppressWarnings("unused") Object vector) {
         controlVisibility();
         throw RError.error(this, RError.Message.NON_NUMERIC_MATH);
     }

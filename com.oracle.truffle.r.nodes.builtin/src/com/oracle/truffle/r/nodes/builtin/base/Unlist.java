@@ -65,14 +65,11 @@ public abstract class Unlist extends RBuiltinNode {
         }
 
         @Specialization
-        @SuppressWarnings("unused")
-        @TruffleBoundary
-        protected int getLength(RNull vector) {
+        protected int getLength(@SuppressWarnings("unused") RNull vector) {
             return 0;
         }
 
         @Specialization(guards = "!isVectorList(vector)")
-        @TruffleBoundary
         protected int getLength(RAbstractVector vector) {
             return vector.getLength();
         }
@@ -118,7 +115,6 @@ public abstract class Unlist extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization
-    @TruffleBoundary
     protected RNull unlist(RNull vector, byte recursive, byte useNames) {
         controlVisibility();
         return RNull.instance;
@@ -126,7 +122,6 @@ public abstract class Unlist extends RBuiltinNode {
 
     @SuppressWarnings("unused")
     @Specialization(guards = "!isVectorList(vector)")
-    @TruffleBoundary
     protected RAbstractVector unlistVector(RAbstractVector vector, byte recursive, byte useNames) {
         controlVisibility();
         return vector;

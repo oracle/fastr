@@ -77,7 +77,7 @@ public abstract class CumProd extends RBuiltinNode {
     }
 
     @Specialization
-    protected RDoubleVector cumprod(RDoubleVector arg) {
+    protected RDoubleVector cumprod(RAbstractDoubleVector arg) {
         controlVisibility();
         double[] array = new double[arg.getLength()];
         na.enable(arg);
@@ -100,7 +100,7 @@ public abstract class CumProd extends RBuiltinNode {
     }
 
     @Specialization
-    protected RIntVector cumprod(RLogicalVector arg) {
+    protected RIntVector cumprod(RAbstractLogicalVector arg) {
         controlVisibility();
         int[] array = new int[arg.getLength()];
         na.enable(arg);
@@ -123,7 +123,7 @@ public abstract class CumProd extends RBuiltinNode {
     }
 
     @Specialization
-    protected RDoubleVector cumprod(RStringVector arg) {
+    protected RDoubleVector cumprod(RAbstractStringVector arg) {
         controlVisibility();
         double[] array = new double[arg.getLength()];
         na.enable(arg);
@@ -143,7 +143,7 @@ public abstract class CumProd extends RBuiltinNode {
     }
 
     @Specialization
-    protected RComplexVector cumprod(RComplexVector arg) {
+    protected RComplexVector cumprod(RAbstractComplexVector arg) {
         controlVisibility();
         double[] array = new double[arg.getLength() * 2];
         na.enable(arg);

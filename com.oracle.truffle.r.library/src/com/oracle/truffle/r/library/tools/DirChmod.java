@@ -32,8 +32,8 @@ public abstract class DirChmod extends RExternalBuiltinNode.Arg2 {
     private static final int FILE_MASK = 0644;
     private static final int DIR_MASK = 0755;
 
-    @TruffleBoundary
     @Specialization
+    @TruffleBoundary
     protected RNull dirChmod(RAbstractStringVector dir, Object gws) {
         if (dir.getLength() != 1) {
             throw RError.error(this, RError.Message.INVALID_ARGUMENT, "dir");

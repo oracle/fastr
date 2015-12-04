@@ -34,7 +34,6 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
 @RBuiltin(name = "as.integer", kind = PRIMITIVE, parameterNames = {"x", "..."})
-@SuppressWarnings("unused")
 public abstract class AsInteger extends RBuiltinNode {
 
     @Child private CastIntegerNode castIntNode;
@@ -46,31 +45,6 @@ public abstract class AsInteger extends RBuiltinNode {
         }
     }
 
-    private int castInt(int o) {
-        initCast();
-        return (int) castIntNode.executeInt(o);
-    }
-
-    private int castInt(double o) {
-        initCast();
-        return (int) castIntNode.executeInt(o);
-    }
-
-    private int castInt(byte o) {
-        initCast();
-        return (int) castIntNode.executeInt(o);
-    }
-
-    private int castInt(Object o) {
-        initCast();
-        return (int) castIntNode.executeInt(o);
-    }
-
-    private RAbstractIntVector castIntVector(Object o) {
-        initCast();
-        return (RAbstractIntVector) castIntNode.executeInt(o);
-    }
-
     @Specialization
     protected int asInteger(int value) {
         controlVisibility();
@@ -80,35 +54,40 @@ public abstract class AsInteger extends RBuiltinNode {
     @Specialization
     protected int asInteger(double value) {
         controlVisibility();
-        return castInt(value);
+        initCast();
+        return (int) castIntNode.executeInt(value);
     }
 
     @Specialization
     protected int asInteger(byte value) {
         controlVisibility();
-        return castInt(value);
+        initCast();
+        return (int) castIntNode.executeInt(value);
     }
 
     @Specialization
     protected int asInteger(RComplex value) {
         controlVisibility();
-        return castInt(value);
+        initCast();
+        return (int) castIntNode.executeInt(value);
     }
 
     @Specialization
     protected int asInteger(RRaw value) {
         controlVisibility();
-        return castInt(value);
+        initCast();
+        return (int) castIntNode.executeInt(value);
     }
 
     @Specialization
     protected int asInteger(String value) {
         controlVisibility();
-        return castInt(value);
+        initCast();
+        return (int) castIntNode.executeInt(value);
     }
 
     @Specialization
-    protected RIntVector asInteger(RNull value) {
+    protected RIntVector asInteger(@SuppressWarnings("unused") RNull value) {
         controlVisibility();
         return RDataFactory.createEmptyIntVector();
     }
@@ -128,7 +107,8 @@ public abstract class AsInteger extends RBuiltinNode {
     @Specialization
     protected RAbstractIntVector asInteger(RAbstractVector vector) {
         controlVisibility();
-        return castIntVector(vector);
+        initCast();
+        return (RAbstractIntVector) castIntNode.executeInt(vector);
     }
 
     @Specialization

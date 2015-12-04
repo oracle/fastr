@@ -15,17 +15,22 @@ import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.binary.*;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.profile.CountedLoopConditionProfile;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.nodes.unary.TypeofNodeGen;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 public class BitwiseFunctions {
 
     public abstract static class BasicBitwise extends RBuiltinNode {
 
         private final BranchProfile errorProfile = BranchProfile.create();
+        private final NACheck naCheckA = NACheck.create();
+        private final NACheck naCheckB = NACheck.create();
+        private final CountedLoopConditionProfile loopProfile = CountedLoopConditionProfile.create();
 
         @Child protected CastTypeNode castTypeA = CastTypeNodeGen.create(null, null);
         @Child protected CastTypeNode castTypeB = CastTypeNodeGen.create(null, null);
@@ -51,16 +56,18 @@ public class BitwiseFunctions {
             checkBasicBit(a, b, op);
             RAbstractIntVector aVec = (RAbstractIntVector) castTypeA.execute(a, RType.Integer);
             RAbstractIntVector bVec = (RAbstractIntVector) castTypeB.execute(b, RType.Integer);
+            naCheckA.enable(aVec);
+            naCheckB.enable(bVec);
             int aLen = aVec.getLength();
             int bLen = bVec.getLength();
             int ansSize = (aLen != 0 && bLen != 0) ? Math.max(aLen, bLen) : 0;
             int[] ans = new int[ansSize];
             boolean completeVector = true;
-
-            for (int i = 0; i < ansSize; i++) {
+            loopProfile.profileLength(ansSize);
+            for (int i = 0; loopProfile.inject(i < ansSize); i++) {
                 int aVal = aVec.getDataAt(i % aLen);
                 int bVal = bVec.getDataAt(i % bLen);
-                if ((aVal == RRuntime.INT_NA || bVal == RRuntime.INT_NA)) {
+                if (naCheckA.check(aVal) || naCheckB.check(bVal)) {
                     ans[i] = RRuntime.INT_NA;
                     completeVector = false;
                 } else {

@@ -122,5 +122,4 @@ public class DebugFunctions {
             return RRuntime.asLogical(DebugHandling.isDebugged(func));
         }
     }
-
 }

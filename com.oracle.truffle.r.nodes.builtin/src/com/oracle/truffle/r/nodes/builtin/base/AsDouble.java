@@ -34,7 +34,6 @@ import com.oracle.truffle.r.runtime.data.model.*;
 
 @RBuiltin(name = "as.double", aliases = {"as.numeric"}, kind = PRIMITIVE, parameterNames = {"x", "..."})
 // TODO define alias in R
-@SuppressWarnings("unused")
 public abstract class AsDouble extends RBuiltinNode {
 
     @Child private CastDoubleNode castDoubleNode;
@@ -46,31 +45,6 @@ public abstract class AsDouble extends RBuiltinNode {
         }
     }
 
-    private double castDouble(int o) {
-        initCast();
-        return (double) castDoubleNode.executeDouble(o);
-    }
-
-    private double castDouble(double o) {
-        initCast();
-        return (double) castDoubleNode.executeDouble(o);
-    }
-
-    private double castDouble(byte o) {
-        initCast();
-        return (double) castDoubleNode.executeDouble(o);
-    }
-
-    private double castDouble(Object o) {
-        initCast();
-        return (double) castDoubleNode.executeDouble(o);
-    }
-
-    private RDoubleVector castDoubleVector(Object o) {
-        initCast();
-        return (RDoubleVector) castDoubleNode.executeDouble(o);
-    }
-
     @Specialization
     protected double asDouble(double value) {
         controlVisibility();
@@ -80,29 +54,33 @@ public abstract class AsDouble extends RBuiltinNode {
     @Specialization
     protected double asDoubleInt(int value) {
         controlVisibility();
-        return castDouble(value);
+        initCast();
+        return (double) castDoubleNode.executeDouble(value);
     }
 
     @Specialization
     protected double asDouble(byte value) {
         controlVisibility();
-        return castDouble(value);
+        initCast();
+        return (double) castDoubleNode.executeDouble(value);
     }
 
     @Specialization
     protected double asDouble(RComplex value) {
         controlVisibility();
-        return castDouble(value);
+        initCast();
+        return (double) castDoubleNode.executeDouble(value);
     }
 
     @Specialization
     protected double asDouble(String value) {
         controlVisibility();
-        return castDouble(value);
+        initCast();
+        return (double) castDoubleNode.executeDouble(value);
     }
 
     @Specialization
-    protected RDoubleVector asDouble(RNull vector) {
+    protected RDoubleVector asDouble(@SuppressWarnings("unused") RNull vector) {
         controlVisibility();
         return RDataFactory.createDoubleVector(0);
     }
@@ -128,7 +106,8 @@ public abstract class AsDouble extends RBuiltinNode {
     @Specialization
     protected RDoubleVector asDouble(RAbstractVector vector) {
         controlVisibility();
-        return castDoubleVector(vector);
+        initCast();
+        return (RDoubleVector) castDoubleNode.executeDouble(vector);
     }
 
     @Specialization

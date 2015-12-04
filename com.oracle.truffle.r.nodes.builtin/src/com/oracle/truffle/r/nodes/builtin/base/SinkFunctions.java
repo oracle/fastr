@@ -35,8 +35,8 @@ import com.oracle.truffle.r.runtime.data.model.*;
 public class SinkFunctions {
     @RBuiltin(name = "sink", kind = RBuiltinKind.INTERNAL, parameterNames = {"file", "closeOnExit", "isMessage", "split"})
     public abstract static class Sink extends RInvisibleBuiltinNode {
-        @TruffleBoundary
         @Specialization
+        @TruffleBoundary
         protected RNull sink(RConnection conn, byte closeOnExit, byte isMessage, @SuppressWarnings("unused") byte split) {
             if (RRuntime.fromLogical(isMessage)) {
                 // TODO
@@ -68,8 +68,8 @@ public class SinkFunctions {
 
     @RBuiltin(name = "sink.number", kind = RBuiltinKind.INTERNAL, parameterNames = {"type"})
     public abstract static class SinkNumber extends RBuiltinNode {
-        @TruffleBoundary
         @Specialization
+        @TruffleBoundary
         protected int sinkNumber(byte isOutput) {
             if (RRuntime.fromLogical(isOutput)) {
                 return StdConnections.stdoutDiversions();

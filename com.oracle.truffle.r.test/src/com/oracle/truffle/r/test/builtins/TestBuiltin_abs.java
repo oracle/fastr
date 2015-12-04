@@ -153,7 +153,7 @@ public class TestBuiltin_abs extends TestBase {
         assertEval(Output.ContainsError, "{ abs(NULL) }");
 
         assertEval(Ignored.Unknown, "{ abs(c(0/0,1i)) }");
-        assertEval(Ignored.Unknown, "{ abs(1:3) }");
-        assertEval(Ignored.Unknown, "{ abs(-1:-3) }");
+        assertEval("{ abs(1:3) }");
+        assertEval("{ abs(-1:-3) }");
     }
 }

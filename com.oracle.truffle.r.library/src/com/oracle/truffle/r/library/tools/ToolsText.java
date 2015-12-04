@@ -25,8 +25,8 @@ public class ToolsText {
 
     public abstract static class DoTabExpand extends RExternalBuiltinNode.Arg2 {
 
-        @TruffleBoundary
         @Specialization
+        @TruffleBoundary
         protected Object doTabExpand(RAbstractStringVector strings, RAbstractIntVector starts) {
             String[] data = new String[strings.getLength()];
             for (int i = 0; i < data.length; i++) {
@@ -61,8 +61,8 @@ public class ToolsText {
 
     public abstract static class CodeFilesAppend extends RExternalBuiltinNode.Arg2 {
 
-        @TruffleBoundary
         @Specialization
+        @TruffleBoundary
         protected Object codeFilesAppend(RAbstractStringVector file1Vector, RAbstractStringVector file2) {
             if (file1Vector.getLength() != 1) {
                 throw RError.error(this, RError.Message.INVALID_ARGUMENT, "file1");

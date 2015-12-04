@@ -74,7 +74,7 @@ public abstract class Args extends RBuiltinNode {
         return RDataFactory.createFunction(newDesc, Truffle.getRuntime().createCallTarget(newNode), null, REnvironment.globalEnv().getFrame(), null, false);
     }
 
-    @Fallback
+    @Specialization(guards = {"!isRFunction(fun)", "!isRAbstractStringVector(fun)"})
     protected Object args(@SuppressWarnings("unused") Object fun) {
         return RNull.instance;
     }

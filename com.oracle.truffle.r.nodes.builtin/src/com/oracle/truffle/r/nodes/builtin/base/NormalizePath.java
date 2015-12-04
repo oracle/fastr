@@ -42,8 +42,8 @@ public abstract class NormalizePath extends RBuiltinNode {
 
     private final ConditionProfile doesNotNeedToWork = ConditionProfile.createBinaryProfile();
 
-    @TruffleBoundary
     @Specialization
+    @TruffleBoundary
     protected RStringVector doNormalizePath(RAbstractStringVector pathVec, @SuppressWarnings("unused") String winslash, byte mustWork) {
         controlVisibility();
         String[] results = new String[pathVec.getLength()];

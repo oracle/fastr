@@ -44,31 +44,6 @@ public abstract class AsComplex extends RBuiltinNode {
         }
     }
 
-    private RComplex castComplex(int o) {
-        initCast();
-        return (RComplex) castComplexNode.executeComplex(o);
-    }
-
-    private RComplex castComplex(double o) {
-        initCast();
-        return (RComplex) castComplexNode.executeComplex(o);
-    }
-
-    private RComplex castComplex(byte o) {
-        initCast();
-        return (RComplex) castComplexNode.executeComplex(o);
-    }
-
-    private RComplex castComplex(Object o) {
-        initCast();
-        return (RComplex) castComplexNode.executeComplex(o);
-    }
-
-    private RComplexVector castComplexVector(Object o) {
-        initCast();
-        return (RComplexVector) castComplexNode.executeComplex(o);
-    }
-
     @Specialization
     protected RComplex doComplex(RComplex value) {
         controlVisibility();
@@ -78,25 +53,29 @@ public abstract class AsComplex extends RBuiltinNode {
     @Specialization
     protected RComplex doInt(int value) {
         controlVisibility();
-        return castComplex(value);
+        initCast();
+        return (RComplex) castComplexNode.executeComplex(value);
     }
 
     @Specialization
     protected RComplex doDouble(double value) {
         controlVisibility();
-        return castComplex(value);
+        initCast();
+        return (RComplex) castComplexNode.executeComplex(value);
     }
 
     @Specialization
     protected RComplex doLogical(byte value) {
         controlVisibility();
-        return castComplex(value);
+        initCast();
+        return (RComplex) castComplexNode.executeComplex(value);
     }
 
     @Specialization
     protected RComplex doString(String value) {
         controlVisibility();
-        return castComplex(value);
+        initCast();
+        return (RComplex) castComplexNode.executeComplex(value);
     }
 
     @Specialization
@@ -114,6 +93,7 @@ public abstract class AsComplex extends RBuiltinNode {
     @Specialization
     protected RComplexVector doIntVector(RAbstractVector vector) {
         controlVisibility();
-        return castComplexVector(vector);
+        initCast();
+        return (RComplexVector) castComplexNode.executeComplex(vector);
     }
 }

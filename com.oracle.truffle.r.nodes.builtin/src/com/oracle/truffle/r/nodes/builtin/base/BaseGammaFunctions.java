@@ -17,6 +17,7 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.library.stats.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -33,6 +34,7 @@ public class BaseGammaFunctions {
     @RBuiltin(name = "gamma", kind = PRIMITIVE, parameterNames = {"x"})
     public abstract static class Gamma extends RBuiltinNode {
         @Specialization
+        @TruffleBoundary
         protected RDoubleVector lgamma(@SuppressWarnings("unused") RAbstractDoubleVector x) {
             throw RError.nyi(this, "gamma");
         }
@@ -41,6 +43,7 @@ public class BaseGammaFunctions {
     @RBuiltin(name = "trigamma", kind = PRIMITIVE, parameterNames = {"x"})
     public abstract static class TriGamma extends RBuiltinNode {
         @Specialization
+        @TruffleBoundary
         protected RDoubleVector trigamma(@SuppressWarnings("unused") RAbstractDoubleVector x) {
             throw RError.nyi(this, "trigamma");
         }
@@ -75,11 +78,13 @@ public class BaseGammaFunctions {
         }
 
         @Specialization
+        @TruffleBoundary
         protected Object lgamma(@SuppressWarnings("unused") RAbstractComplexVector x) {
             return RError.error(this, RError.Message.UNIMPLEMENTED_COMPLEX_FUN);
         }
 
         @Fallback
+        @TruffleBoundary
         protected Object lgamma(@SuppressWarnings("unused") Object x) {
             throw RError.error(this, RError.Message.NON_NUMERIC_MATH);
         }
@@ -138,11 +143,13 @@ public class BaseGammaFunctions {
         }
 
         @Specialization
+        @TruffleBoundary
         protected Object digamma(@SuppressWarnings("unused") RAbstractComplexVector x) {
             return RError.error(this, RError.Message.UNIMPLEMENTED_COMPLEX_FUN);
         }
 
         @Fallback
+        @TruffleBoundary
         protected Object digamma(@SuppressWarnings("unused") Object x) {
             throw RError.error(this, RError.Message.NON_NUMERIC_MATH);
         }

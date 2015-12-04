@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,8 +32,8 @@ import com.oracle.truffle.r.runtime.ffi.*;
 
 @RBuiltin(name = "strtoi", kind = RBuiltinKind.INTERNAL, parameterNames = {"x", "base"})
 public abstract class Strtoi extends RBuiltinNode {
-    @TruffleBoundary
     @Specialization
+    @TruffleBoundary
     protected RIntVector doStrtoi(RAbstractStringVector vec, int baseArg) {
         int base = baseArg;
         int[] data = new int[vec.getLength()];
@@ -71,5 +71,4 @@ public abstract class Strtoi extends RBuiltinNode {
         }
         return RDataFactory.createIntVector(data, complete);
     }
-
 }
