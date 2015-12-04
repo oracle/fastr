@@ -85,7 +85,6 @@ def do_run_r(args, command, extraVmArgs=None, jdk=None, nonZeroIsFatal=True):
         jdk = get_default_jdk()
 
     vmArgs = ['-cp', mx.classpath(_r_command_project)]
-    vmArgs += ["-Drhome.path=" + _fastr_suite.dir]
     # jvmci specific
     vmArgs += ['-G:InliningDepthError=500', '-G:EscapeAnalysisIterations=3', '-XX:JVMCINMethodSizeLimit=1000000']
 
@@ -131,7 +130,6 @@ def _get_ldpaths(lib_env_name):
 
     try:
         proc = subprocess.Popen(command, stdout=subprocess.PIPE)
-        del os.environ['R_HOME']
         for line in proc.stdout:
             (key, _, value) = line.partition("=")
             if key == lib_env_name:
@@ -147,6 +145,7 @@ def setREnvironment():
     run from 'bin/R' it will be, via etc/ldpaths. Except that in the latter case
     on Darwin we still need to add /usr/lib to so that JNR can resolve libc for RFFI.
     '''
+    os.environ['R_HOME'] = _fastr_suite.dir
     osname = platform.system()
     if osname == 'Darwin':
         lib_env = 'DYLD_FALLBACK_LIBRARY_PATH'

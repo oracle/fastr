@@ -56,16 +56,17 @@ $(C_OBJECTS): | $(OBJ)
 $(OBJ):
 	mkdir -p $(OBJ)
 
-# On Darwin we need to create a libR.dylib in which xerbla goes (for now)
-# as the libRlapack library has a dependency on libR (why I am not sure)
+# On Darwin we need to create a libR.dylib as the libRlapack library has a dependency on libR
+# We also use this as the "entry library" and establish dependencies on all the shared libraries
+# that we need
 ifeq ($(OS_NAME), Darwin)
 LIB_R := $(LIBDIR)/libR$(DYLIB_EXT)
 
 libr: $(LIB_R)
 
-$(LIB_R): $(OBJ)/xerbla.o
+$(LIB_R): $(OBJ)/rlib_dummy.o
 	mkdir -p $(LIBDIR)
-	$(DYLIB_LD) $(DYLIB_LDFLAGS) -o $(LIB_R) -current_version $(R_VERSION) -compatibility_version $(R_VERSION) $(OBJ)/xerbla.o
+	$(DYLIB_LD) $(DYLIB_LDFLAGS) -o $(LIB_R) -current_version $(R_VERSION) -compatibility_version $(R_VERSION) $(OBJ)/rlib_dummy.o
 
 cleanlibr:
 	rm -f $(LIB_R)
