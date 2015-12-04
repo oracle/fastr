@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.ffi.jnr;
 
+import com.oracle.truffle.r.runtime.RPlatform;
 import com.oracle.truffle.r.runtime.context.*;
 import com.oracle.truffle.r.runtime.context.RContext.ContextState;
 import com.oracle.truffle.r.runtime.ffi.*;
@@ -44,12 +45,19 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI {
          * Some package C code calls these functions and, therefore, expects the linpack symbols to
          * be available, which will not be the case unless one of the functions has already been
          * called from R code. So we eagerly load the library to define the symbols.
+         * 
+         * There is an additional problem when running without a *_LIBRARY_PATH being set which is
+         * mandated by Mac OSX El Capitan, which is we must tell JNR where to find the libraries.
          */
+        String jnrLibPath = LibPaths.getBuiltinLibPath();
+        if (RPlatform.getOSInfo().osName.equals("Mac OS X")) {
+            // Why this is necessary is a JNR mystery
+            jnrLibPath += ":/usr/lib";
+        }
+        System.setProperty("jnr.ffi.library.path", jnrLibPath);
         JNR_RAppl.linpack();
-        /*
-         * Same for Rlapack (used by stats).
-         */
-        getLapackRFFI().ilaver(new int[3]);
+        JNR_Lapack.lapack();
+
     }
 
     /**

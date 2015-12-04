@@ -30,6 +30,13 @@ import com.oracle.truffle.r.runtime.RPlatform.*;
 public class LibPaths {
 
     /**
+     * Returns the absolute path to the directory containing the builtin libraries.
+     */
+    public static String getBuiltinLibPath() {
+        return FileSystems.getDefault().getPath(REnvVars.rHome(), "lib").toString();
+    }
+
+    /**
      * Returns the absolute path to the builtin library {@code libName} for use with
      * {@link System#load}.
      */

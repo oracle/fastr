@@ -27,12 +27,13 @@ LIB_PKG_PRE = $(OBJ)/fft.o
 GNUR_FFT := $(GNUR_HOME)/src/library/stats/src/fft.c
 CLEAN_PKG := cleanfft
 
-# have to incldue this here for PKG_LIBS
+
+# have to include this here for PKG_LIBS
 ifneq ($(MAKECMDGOALS),clean)
 include $(TOPDIR)/platform.mk
 endif
 
-PKG_LIBS := $(LAPACK_LIBS) $(BLAS_LIBS) $(FLIBS)
+PKG_LIBS := $(LAPACK_LIBS) $(BLAS_LIBS) -lappl -L$(FASTR_LIB_DIR) $(FLIBS)
 
 include ../lib.mk
 

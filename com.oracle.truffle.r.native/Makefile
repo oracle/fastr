@@ -27,6 +27,7 @@
 
 export TOPDIR = $(CURDIR)
 export FASTR_R_HOME=$(abspath $(TOPDIR)/..)
+export FASTR_LIB_DIR=$(FASTR_R_HOME)/lib
 export R_VERSION = 3.1.3
 export GNUR_HOME = $(TOPDIR)/gnur/R-$(R_VERSION)
 

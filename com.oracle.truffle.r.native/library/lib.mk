@@ -25,7 +25,7 @@
 # The common part of the archive (everything except the .so) is created
 # by copying the directory in the GnuR build. Then the FastR .so file is created
 # and overwrites the default. The libraries are stored in the directory denoted
-# FASTR_LIBDIR.
+# FASTR_LIBRARY_DIR.
 
 # A package that requires special processing before the library is built should
 # define LIB_PKG_PRE and for post processing define LIB_PKG_POST in its Makefile.
@@ -66,7 +66,7 @@ FFI_INCLUDES = -I$(TOPDIR)/include -I$(TOPDIR)/include/R_ext
 
 INCLUDES := $(JNI_INCLUDES) $(FFI_INCLUDES)
 
-PKGDIR := $(FASTR_LIBDIR)/$(PKG)
+PKGDIR := $(FASTR_LIBRARY_DIR)/$(PKG)
 
 ifneq ($(C_SOURCES),)
 all: $(LIB_PKG_PRE) libcommon $(LIB_PKG) $(LIB_PKG_POST)
@@ -77,8 +77,8 @@ endif
 libcommon: $(PKGDIR)
 
 $(PKGDIR): $(GNUR_HOME)/library/$(PKG)
-	(cd $(GNUR_HOME)/library; tar cf - $(PKG)) | (cd $(FASTR_LIBDIR); tar xf -)
-	touch $(FASTR_LIBDIR)/$(PKG)
+	(cd $(GNUR_HOME)/library; tar cf - $(PKG)) | (cd $(FASTR_LIBRARY_DIR); tar xf -)
+	touch $(FASTR_LIBRARY_DIR)/$(PKG)
 
 $(C_OBJECTS): | $(OBJ)
 
@@ -90,8 +90,16 @@ $(OBJ):
 $(LIB_PKG): $(C_OBJECTS) $(F_OBJECTS) $(PKGDIR)
 	mkdir -p $(LIBDIR)
 	$(DYLIB_LD) $(DYLIB_LDFLAGS) -o $(LIB_PKG) $(C_OBJECTS) $(F_OBJECTS) $(PKG_LIBS)
-	mkdir -p $(FASTR_LIBDIR)/$(PKG)/libs
-	cp $(LIB_PKG) $(FASTR_LIBDIR)/$(PKG)/libs
+	mkdir -p $(FASTR_LIBRARY_DIR)/$(PKG)/libs
+	cp $(LIB_PKG) $(FASTR_LIBRARY_DIR)/$(PKG)/libs
+# find a way to move into stats makefile (using LIB_PKG_POST)
+ifeq ($(OS_NAME),Darwin)
+ifeq ($(PACKAGE),stats)
+	install_name_tool -change libRblas.dylib $(FASTR_R_HOME)/lib/libRblas.dylib $(FASTR_LIBRARY_DIR)/$(PKG)/libs/$(PKG).so
+	install_name_tool -change libRlapack.dylib $(FASTR_R_HOME)/lib/libRlapack.dylib $(FASTR_LIBRARY_DIR)/$(PKG)/libs/$(PKG).so
+	install_name_tool -change libappl.dylib $(FASTR_R_HOME)/lib/libappl.dylib $(FASTR_LIBRARY_DIR)/$(PKG)/libs/$(PKG).so
+endif
+endif
 
 $(OBJ)/%.o: $(SRC)/%.c $(H_SOURCES)
 	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
@@ -101,5 +109,5 @@ $(OBJ)/%.o: $(SRC)/%.f
 
 clean: $(CLEAN_PKG)
 	rm -rf $(LIBDIR)/*
-	rm -rf $(FASTR_LIBDIR)/$(PKG)
+	rm -rf $(FASTR_LIBRARY_DIR)/$(PKG)
 

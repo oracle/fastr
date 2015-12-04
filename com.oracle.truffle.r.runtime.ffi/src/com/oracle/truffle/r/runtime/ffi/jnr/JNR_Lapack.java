@@ -82,7 +82,7 @@ public class JNR_Lapack implements LapackRFFI {
         }
     }
 
-    private static Lapack lapack() {
+    static Lapack lapack() {
         return LapackProvider.lapack();
     }
 

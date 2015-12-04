@@ -36,7 +36,7 @@ endif
 
 SRC = src
 OBJ = lib
-LIBDIR = $(TOPDIR)/../lib
+LIBDIR = $(abspath $(TOPDIR)/../lib)
 
 C_SOURCES := $(wildcard $(SRC)/*.c)
 
@@ -56,17 +56,19 @@ $(C_OBJECTS): | $(OBJ)
 $(OBJ):
 	mkdir -p $(OBJ)
 
-# On Darwin we need to create a libR.dylib as the libRlapack library has a dependency on libR
-# We also use this as the "entry library" and establish dependencies on all the shared libraries
-# that we need
+# On Darwin we need to create a libR.dylib in which xerbla goes 
+# as the libRlapack library has a dependency on libR and expecte xerbla to
+# be defined there. We could fix this if we cared by not using the GnuR instance of the 
+# libRlapack and rebuilding it from scratch.
+
 ifeq ($(OS_NAME), Darwin)
 LIB_R := $(LIBDIR)/libR$(DYLIB_EXT)
 
 libr: $(LIB_R)
 
-$(LIB_R): $(OBJ)/rlib_dummy.o
+$(LIB_R): $(OBJ)/xerbla.o
 	mkdir -p $(LIBDIR)
-	$(DYLIB_LD) $(DYLIB_LDFLAGS) -o $(LIB_R) -current_version $(R_VERSION) -compatibility_version $(R_VERSION) $(OBJ)/rlib_dummy.o
+	$(DYLIB_LD) $(DYLIB_LDFLAGS) -o $(LIB_R) -current_version $(R_VERSION) -compatibility_version $(R_VERSION) $(OBJ)/xerbla.o
 
 cleanlibr:
 	rm -f $(LIB_R)

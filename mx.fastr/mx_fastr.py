@@ -142,24 +142,21 @@ def _get_ldpaths(lib_env_name):
 def setREnvironment():
     '''
     If R is run via mx, then the library path will not be set, whereas if it is
-    run from 'bin/R' it will be, via etc/ldpaths. Except that in the latter case
-    on Darwin we still need to add /usr/lib to so that JNR can resolve libc for RFFI.
+    run from 'bin/R' it will be, via etc/ldpaths.
+    On Mac OS X El Capitan and beyond, this is moot as the variable is not
+    passed down. It is TBD if we can avoid this on Linux.
     '''
     os.environ['R_HOME'] = _fastr_suite.dir
     osname = platform.system()
-    if osname == 'Darwin':
-        lib_env = 'DYLD_FALLBACK_LIBRARY_PATH'
-    else:
+    if osname != 'Darwin':
         lib_env = 'LD_LIBRARY_PATH'
 
-    if os.environ.has_key(lib_env):
-        lib_value = os.environ[lib_env]
-    else:
-        lib_value = _get_ldpaths(lib_env)
+        if os.environ.has_key(lib_env):
+            lib_value = os.environ[lib_env]
+        else:
+            lib_value = _get_ldpaths(lib_env)
 
-    if osname == 'Darwin':
-        lib_value = lib_value + os.pathsep + '/usr/lib'
-    os.environ[lib_env] = lib_value
+        os.environ[lib_env] = lib_value
 
 def get_default_jdk():
     '''

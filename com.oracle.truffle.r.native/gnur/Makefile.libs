@@ -27,7 +27,7 @@ ifneq ($(MAKECMDGOALS),clean)
 include $(TOPDIR)/platform.mk
 endif
 
-TARGET_DIR := $(TOPDIR)/../lib
+TARGET_DIR := $(abspath $(TOPDIR)/../lib)
 BLAS_TARGET := $(TARGET_DIR)/libRblas$(DYLIB_EXT)
 LAPACK_TARGET := $(TARGET_DIR)/libRlapack$(DYLIB_EXT)
 PCRE_TARGET := $(TARGET_DIR)/libpcre$(DYLIB_EXT)
@@ -42,6 +42,10 @@ $(BLAS_TARGET): $(GNUR_HOME)/lib/libRblas$(DYLIB_EXT)
 
 $(LAPACK_TARGET): $(GNUR_HOME)/lib/libRlapack$(DYLIB_EXT)
 	cp $(GNUR_HOME)/lib/libRlapack$(DYLIB_EXT) $(LAPACK_TARGET)
+ifeq ($(OS_NAME),Darwin)
+	install_name_tool -change libRblas.dylib $(BLAS_TARGET) $(LAPACK_TARGET)
+	install_name_tool -change libR.dylib $(TARGET_DIR)/libR.dylib $(LAPACK_TARGET)
+endif
 
 PCRE_OBJS := $(wildcard $(GNUR_HOME)/src/extra/pcre/pcre_*.o)
 

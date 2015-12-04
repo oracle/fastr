@@ -21,7 +21,7 @@
 # questions.
 #
 
-RPROFILE := $(FASTR_LIBDIR)/base/R/Rprofile
+RPROFILE := $(FASTR_LIBRARY_DIR)/base/R/Rprofile
 RPROFILE_ORIG := $(RPROFILE).orig
 LIB_PKG_POST = $(RPROFILE)
 

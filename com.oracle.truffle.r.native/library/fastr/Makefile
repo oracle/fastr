@@ -32,7 +32,7 @@
 .PHONY: all
 
 PKG_FILES = $(shell find src/ -type f -name '*')
-INSTALL_SENTINEL = $(FASTR_LIBDIR)/fastr/DESCRIPTION
+INSTALL_SENTINEL = $(FASTR_LIBRARY_DIR)/fastr/DESCRIPTION
 
 PKG_TAR = lib/fastr.tar
 
@@ -43,7 +43,7 @@ $(PKG_TAR): $(PKG_FILES)
 	(cd src; tar cf ../$(PKG_TAR) *)
 
 $(INSTALL_SENTINEL): $(PKG_TAR)
-	$(GNUR_HOME)/bin/R CMD INSTALL --library=$(FASTR_LIBDIR) src
+	$(GNUR_HOME)/bin/R CMD INSTALL --library=$(FASTR_LIBRARY_DIR) src
 	
 clean:
 	rm -f $(PKG_TAR)
