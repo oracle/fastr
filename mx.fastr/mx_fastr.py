@@ -146,7 +146,10 @@ def setREnvironment():
     On Mac OS X El Capitan and beyond, this is moot as the variable is not
     passed down. It is TBD if we can avoid this on Linux.
     '''
-    os.environ['R_HOME'] = _fastr_suite.dir
+    # This may have been set by a higher power
+    if not os.environ.has_key('R_HOME'):
+        os.environ['R_HOME'] = _fastr_suite.dir
+
     osname = platform.system()
     if osname != 'Darwin':
         lib_env = 'LD_LIBRARY_PATH'
