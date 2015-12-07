@@ -741,11 +741,21 @@ public abstract class REnvironment extends RAttributeStorage implements RTypedVa
     }
 
     /**
-     * Explicity set the parent of an environment. TODO Change the enclosingFrame of (any)
+     * Explicitly set the parent of an environment. TODO Change the enclosingFrame of (any)
      * associated Truffle frame
      */
     public void setParent(REnvironment env) {
-        parent = env;
+        if (this.parent != env) {
+            // don't do unnecessary assignment (as it's slow)
+            assert !env.getName().equals(Empty.EMPTY_ENV_NAME) || env.getName().intern() == env.getName();
+            if (env.getName() != Empty.EMPTY_ENV_NAME) {
+                // don't do frame assignment for empty environment
+                // TODO: is it correct to leave current frame's (not environment's!) parent intact
+                // when setting empty environment as a parent?
+                RArguments.setEnclosingFrame(this.getFrame(), env.getFrame());
+            }
+            parent = env;
+        }
     }
 
     /**
@@ -1032,8 +1042,10 @@ public abstract class REnvironment extends RAttributeStorage implements RTypedVa
      */
     private static final class Empty extends REnvironment {
 
+        public final static String EMPTY_ENV_NAME = "R_EmptyEnv";
+
         private Empty() {
-            super(null, "R_EmptyEnv", new REnvEmptyFrameAccess());
+            super(null, EMPTY_ENV_NAME, new REnvEmptyFrameAccess());
         }
 
         @Override
