@@ -224,6 +224,18 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
         }
         vector = vector.materialize();
 
+        if (originalVector != vector && vector instanceof RShareable) {
+            RShareable shareable = (RShareable) vector;
+            // we created a new object, and this needs to be non-temporary
+            if (shareable.isTemporary()) {
+                if (FastROptions.NewStateTransition.getBooleanValue()) {
+                    shareable.incRefCount();
+                } else {
+                    shareable.markNonTemporary();
+                }
+            }
+        }
+
         vectorLength = targetLengthProfile.profile(vector.getLength());
 
         if (mode.isSubset()) {

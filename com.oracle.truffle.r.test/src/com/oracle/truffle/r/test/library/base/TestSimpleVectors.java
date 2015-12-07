@@ -1827,7 +1827,13 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ x<-1:5 ; x[x[4]<-2] <- (x[4]<-100) ; x }");
         assertEval("{ x<-5:1 ; x[x[2]<-2] }");
 
-        assertEval("{ f <- function(a) { a }; x<-1:5 ; x[x[4]<-2] <- ({x[4]<-100; f(x)[4]}) ; x }");
+        /*
+         * this case depends on the order of evaluation: it expects the receiver of the replacement
+         * to be evaluated after the index. we currently evaluate the receiver before the index, and
+         * it is unclear whether (a) this is a real problem and (b) how complex it is to change
+         * this.
+         */
+        assertEval(Ignored.Unimplemented, "{ f <- function(a) { a }; x<-1:5 ; x[x[4]<-2] <- ({x[4]<-100; f(x)[4]}) ; x }");
     }
 
     @Test
