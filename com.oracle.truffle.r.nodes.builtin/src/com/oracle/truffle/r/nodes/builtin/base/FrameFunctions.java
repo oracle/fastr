@@ -488,6 +488,13 @@ public class FrameFunctions {
                 throw RError.error(this, RError.Message.INVALID_ARGUMENT, RRuntime.intToString(n));
             }
             int p = RArguments.getDepth(frame) - n - 1;
+            Frame current = frame;
+            while (current != null) {
+                if (RArguments.getDepth(current) == p) {
+                    return REnvironment.frameToEnvironment(current.materialize());
+                }
+                current = RArguments.getCallerFrame(current);
+            }
             Frame callerFrame = Utils.getStackFrame(FrameAccess.MATERIALIZE, p);
             if (nullProfile.profile(callerFrame == null)) {
                 return REnvironment.globalEnv();

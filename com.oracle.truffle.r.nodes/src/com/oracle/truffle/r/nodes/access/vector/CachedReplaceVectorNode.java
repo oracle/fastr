@@ -61,6 +61,7 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
 
     private final ConditionProfile valueLengthOneProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile emptyReplacementProfile = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile completeVectorProfile = ConditionProfile.createBinaryProfile();
 
     private final RType valueType;
     private final RType castType;
@@ -223,6 +224,18 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
         }
         vector = vector.materialize();
 
+        if (originalVector != vector && vector instanceof RShareable) {
+            RShareable shareable = (RShareable) vector;
+            // we created a new object, and this needs to be non-temporary
+            if (shareable.isTemporary()) {
+                if (FastROptions.NewStateTransition.getBooleanValue()) {
+                    shareable.incRefCount();
+                } else {
+                    shareable.markNonTemporary();
+                }
+            }
+        }
+
         vectorLength = targetLengthProfile.profile(vector.getLength());
 
         if (mode.isSubset()) {
@@ -246,7 +259,12 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
         }
 
         writeVectorNode.apply(vector, vectorLength, positions, value, appliedValueLength, vectorDimensions);
-        vector.setComplete(vector.isComplete() && writeVectorNode.neverSeenNAInValue());
+        boolean complete = vector.isComplete();
+        if (completeVectorProfile.profile(complete)) {
+            if (!writeVectorNode.neverSeenNAInValue()) {
+                vector.setComplete(false);
+            }
+        }
         RNode.reportWork(this, replacementLength);
 
         if (isDeleteElements()) {
