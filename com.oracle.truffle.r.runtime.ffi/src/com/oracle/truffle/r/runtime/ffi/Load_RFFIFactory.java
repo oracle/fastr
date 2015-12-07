@@ -39,23 +39,31 @@ public class Load_RFFIFactory {
         return PACKAGE_PREFIX + simpleName + "." + simpleName.toUpperCase() + SUFFIX;
     }
 
-    public static RFFIFactory initialize() {
-        String prop = System.getProperty(FACTORY_CLASS_PROPERTY);
-        if (prop != null) {
-            if (!prop.contains(".")) {
-                // simple name
-                prop = mapSimpleName(prop);
+    /**
+     * Singleton instance of the factory. Typically initialized at runtime but may be initialized
+     * during image build in an AOT VM, in which case {@code runtime} will be {@code false}.
+     */
+    private static RFFIFactory instance;
+
+    public static RFFIFactory initialize(boolean runtime) {
+        if (instance == null) {
+            String prop = System.getProperty(FACTORY_CLASS_PROPERTY);
+            try {
+                if (prop != null) {
+                    if (!prop.contains(".")) {
+                        // simple name
+                        prop = mapSimpleName(prop);
+                    }
+                } else {
+                    prop = DEFAULT_FACTORY_CLASS;
+                }
+                instance = (RFFIFactory) Class.forName(prop).newInstance();
+                RFFIFactory.setRFFIFactory(instance);
+            } catch (Exception ex) {
+                throw Utils.fail("Failed to instantiate class: " + prop + ": " + ex);
             }
-        } else {
-            prop = DEFAULT_FACTORY_CLASS;
         }
-        try {
-            RFFIFactory instance = (RFFIFactory) Class.forName(prop).newInstance();
-            RFFIFactory.setRFFIFactory(instance);
-            instance.initialize();
-            return instance;
-        } catch (Exception ex) {
-            throw Utils.fail("Failed to instantiate class: " + prop + ": " + ex);
-        }
+        instance.initialize(runtime);
+        return instance;
     }
 }
