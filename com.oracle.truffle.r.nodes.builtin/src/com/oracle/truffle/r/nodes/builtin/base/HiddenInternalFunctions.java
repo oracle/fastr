@@ -492,6 +492,7 @@ public class HiddenInternalFunctions {
     @RBuiltin(name = "fastr.identity", kind = PRIMITIVE, parameterNames = {""})
     public abstract static class Identity extends RBuiltinNode {
         @Specialization
+        @TruffleBoundary
         protected int typeof(Object x) {
             return System.identityHashCode(x);
         }
