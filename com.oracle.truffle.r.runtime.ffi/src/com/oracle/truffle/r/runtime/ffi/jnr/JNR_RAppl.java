@@ -56,7 +56,7 @@ public class JNR_RAppl implements RApplRFFI {
         }
     }
 
-    static Linpack linpack() {
+    public static Linpack linpack() {
         return LinpackProvider.linpack();
     }
 
