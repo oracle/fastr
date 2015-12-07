@@ -22,6 +22,7 @@ import com.oracle.truffle.r.library.graphics.GraphicsCCalls.C_Par;
 import com.oracle.truffle.r.library.graphics.GraphicsCCalls.C_PlotXY;
 import com.oracle.truffle.r.library.grid.GridFunctionsFactory.InitGridNodeGen;
 import com.oracle.truffle.r.library.methods.MethodsListDispatchFactory.R_M_setPrimitiveMethodsNodeGen;
+import com.oracle.truffle.r.library.methods.MethodsListDispatchFactory.R_externalPtrPrototypeObjectNodeGen;
 import com.oracle.truffle.r.library.methods.MethodsListDispatchFactory.R_getClassFromCacheNodeGen;
 import com.oracle.truffle.r.library.methods.MethodsListDispatchFactory.R_identCNodeGen;
 import com.oracle.truffle.r.library.methods.MethodsListDispatchFactory.R_initMethodDispatchNodeGen;
@@ -253,7 +254,9 @@ public class ForeignFunctions {
                 case "R_clear_method_selection":
                 case "R_dummy_extern_place":
                 case "R_el_named":
+                    return new UnimplementedExternal(name);
                 case "R_externalptr_prototype_object":
+                    return R_externalPtrPrototypeObjectNodeGen.create();
                 case "R_getGeneric":
                     return new UnimplementedExternal(name);
                 case "R_get_slot":

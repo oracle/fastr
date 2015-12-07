@@ -20,7 +20,7 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
 
-// Transcribed from src/library/methods/methods_list_dispatch.c
+// Transcribed (unless otherwise noted) from src/library/methods/methods_list_dispatch.c
 
 public class MethodsListDispatch {
 
@@ -141,6 +141,19 @@ public class MethodsListDispatch {
         @Fallback
         protected Object identC(Object e1, Object e2) {
             return RRuntime.LOGICAL_FALSE;
+        }
+    }
+
+    // Transcribed from src/library/methods/class_support.c
+    public abstract static class R_externalPtrPrototypeObject extends RExternalBuiltinNode.Arg0 {
+
+        @Specialization
+        protected RExternalPtr extPrototypeObj() {
+            // in GNU R, first argument is a pointer to a dummy C function
+            // whose only purpose is to throw an error indicating that it shouldn't be called
+            // TODO: finesse error handling in case a function stored in this pointer is actually
+            // called
+            return RDataFactory.createExternalPtr(0, RNull.instance, RNull.instance);
         }
     }
 
