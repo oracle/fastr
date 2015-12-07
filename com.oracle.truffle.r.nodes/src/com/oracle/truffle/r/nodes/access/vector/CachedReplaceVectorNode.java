@@ -61,6 +61,7 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
 
     private final ConditionProfile valueLengthOneProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile emptyReplacementProfile = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile completeVectorProfile = ConditionProfile.createBinaryProfile();
 
     private final RType valueType;
     private final RType castType;
@@ -246,7 +247,12 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
         }
 
         writeVectorNode.apply(vector, vectorLength, positions, value, appliedValueLength, vectorDimensions);
-        vector.setComplete(vector.isComplete() && writeVectorNode.neverSeenNAInValue());
+        boolean complete = vector.isComplete();
+        if (completeVectorProfile.profile(complete)) {
+            if (!writeVectorNode.neverSeenNAInValue()) {
+                vector.setComplete(false);
+            }
+        }
         RNode.reportWork(this, replacementLength);
 
         if (isDeleteElements()) {
