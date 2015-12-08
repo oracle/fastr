@@ -647,7 +647,12 @@ public final class RError extends RuntimeException {
         STD_GENERIC_WRONG_CALL("call to standardGeneric(\"%s\") apparently not from the body of that generic function"),
         EXPECTED_GENERIC("expected a generic function or a primitive for dispatch, got an object of class \"%s\""),
         NOT_ALL_SAME_LENGTH("not all arguments have the same length"),
-        NO_INPUT_NUMBER_OF_CASES("no input has determined the number of cases");
+        NO_INPUT_NUMBER_OF_CASES("no input has determined the number of cases"),
+        SINGLE_STRING_TOO_LONG("'%s' must be a single string (got a character vector of length %d)"),
+        NON_EMPTY_STRING("'%s' must be a non-empty string; got an empty string"),
+        SINGLE_STRING_WRONG_TYPE("'%s' must be a single string (got an object of class \"%s\")"),
+        NO_GENERIC_FUN("no generic function definition found for '%s'"),
+        NO_GENERIC_FUN_IN_ENV("no generic function definition found for '%s' in the supplied environment");
 
         public final String message;
         final boolean hasArgs;

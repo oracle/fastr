@@ -13,12 +13,23 @@ package com.oracle.truffle.r.library.methods;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.frame.FrameDescriptor;
+import com.oracle.truffle.api.frame.MaterializedFrame;
+import com.oracle.truffle.r.library.methods.MethodsListDispatchFactory.R_getGenericNodeGen.GetGenericInternalNodeGen;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.function.ClassHierarchyScalarNode;
+import com.oracle.truffle.r.nodes.function.ClassHierarchyScalarNodeGen;
+import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
+import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseCheckHelperNode;
+import com.oracle.truffle.r.nodes.objects.ExecuteMethod;
+import com.oracle.truffle.r.nodes.unary.CastToVectorNode;
+import com.oracle.truffle.r.nodes.unary.CastToVectorNodeGen;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.context.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 // Transcribed (unless otherwise noted) from src/library/methods/methods_list_dispatch.c
 
@@ -141,6 +152,97 @@ public class MethodsListDispatch {
         @Fallback
         protected Object identC(Object e1, Object e2) {
             return RRuntime.LOGICAL_FALSE;
+        }
+    }
+
+    public abstract static class R_getGeneric extends RExternalBuiltinNode.Arg4 {
+
+        @Child private ClassHierarchyScalarNode classHierarchyNode = ClassHierarchyScalarNodeGen.create();
+        @Child private GetGenericInternal getGenericInternal = GetGenericInternalNodeGen.create();
+
+        private static String checkSingleString(Object o, boolean nonEmpty, String what, RBaseNode node, ClassHierarchyScalarNode classHierarchyNode) {
+            if (o instanceof RAbstractStringVector) {
+                RAbstractStringVector vec = (RAbstractStringVector) o;
+                if (vec.getLength() != 1) {
+                    throw RError.error(node, RError.Message.SINGLE_STRING_TOO_LONG, what, vec.getLength());
+                }
+                String s = vec.getDataAt(0);
+                if (nonEmpty && s.length() == 0) {
+                    throw RError.error(node, RError.Message.NON_EMPTY_STRING, what);
+                }
+                return s;
+            } else {
+                throw RError.error(node, RError.Message.SINGLE_STRING_WRONG_TYPE, what, classHierarchyNode.executeString(o));
+            }
+
+        }
+
+        @Specialization
+        protected Object getGeneric(RAbstractVector nameVec, RAbstractVector mustFindVec, REnvironment env, RAbstractVector packageVec) {
+            String name = checkSingleString(nameVec, true, "The argument \"f\" to getGeneric", this, classHierarchyNode);
+            byte mustFind = castLogical(mustFindVec);
+            String pckg = checkSingleString(packageVec, false, "The argument \"package\" to getGeneric", this, classHierarchyNode);
+            Object value = getGenericInternal.executeObject(name, env, pckg);
+            if (value == RNull.instance) {
+                if (mustFind == RRuntime.LOGICAL_TRUE) {
+                    if (env == RContext.getInstance().stateREnvironment.getGlobalEnv()) {
+                        throw RError.error(this, RError.Message.NO_GENERIC_FUN, name);
+                    } else {
+                        throw RError.error(this, RError.Message.NO_GENERIC_FUN_IN_ENV, name);
+                    }
+                }
+            }
+            return value;
+        }
+
+        abstract static class GetGenericInternal extends RBaseNode {
+
+            public abstract Object executeObject(String name, REnvironment rho, String pckg);
+
+            private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+            @Child private CastToVectorNode castToVector = CastToVectorNodeGen.create(false);
+            @Child private ClassHierarchyScalarNode classHierarchyNode = ClassHierarchyScalarNodeGen.create();
+
+            @Specialization
+            protected Object getGeneric(String name, REnvironment env, String pckg) {
+                REnvironment rho = env;
+                RAttributable generic = null;
+                while (rho != null) {
+                    // TODO: make it faster
+                    MaterializedFrame currentFrame = rho.getFrame();
+                    FrameDescriptor currentFrameDesc = currentFrame.getFrameDescriptor();
+                    Object o = ExecuteMethod.slotRead(currentFrame, currentFrameDesc, name);
+                    if (o != null) {
+                        if (o instanceof RPromise) {
+                            o = PromiseHelperNode.evaluateSlowPath(null, (RPromise) o);
+                        }
+                        RAttributable vl = (RAttributable) o;
+                        boolean ok = false;
+                        if (vl instanceof RFunction && vl.getAttr(attrProfiles, RRuntime.GENERIC_ATTR_KEY) != null) {
+                            if (pckg.length() > 0) {
+                                Object gpckgObj = vl.getAttr(attrProfiles, RRuntime.PCKG_ATTR_KEY);
+                                if (gpckgObj != null) {
+                                    String gpckg = checkSingleString(castToVector.execute(gpckgObj), false, "The \"package\" slot in generic function object", this, classHierarchyNode);
+                                    ok = pckg.equals(gpckg);
+                                }
+
+                            } else {
+                                ok = true;
+                            }
+                        }
+                        if (ok) {
+                            generic = vl;
+                            break;
+                        }
+                    }
+                    rho = rho.getParent();
+                }
+
+                // TODO: in GNU R there is additional code here that deals with the case of "name"
+                // being a symbol but at this point this case is not handled (even possible?) in
+                // FastR
+                return generic == null ? RNull.instance : generic;
+            }
         }
     }
 
