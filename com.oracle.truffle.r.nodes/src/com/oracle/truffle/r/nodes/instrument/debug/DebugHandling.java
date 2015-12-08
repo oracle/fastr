@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.instrument.debug;
 
+import java.io.IOException;
 import java.util.*;
 
 import com.oracle.truffle.api.*;
@@ -34,6 +35,7 @@ import com.oracle.truffle.r.nodes.control.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.nodes.instrument.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.conn.StdConnections;
 import com.oracle.truffle.r.runtime.context.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.nodes.*;
@@ -228,6 +230,14 @@ public class DebugHandling {
             }
         }
 
+        protected static void print(String msg, boolean nl) {
+            try {
+                StdConnections.getStdout().writeString(msg, nl);
+            } catch (IOException ex) {
+                throw RError.error(RError.NO_NODE, RError.Message.GENERIC, ex.getMessage());
+            }
+        }
+
         protected void browserInteract(Node node, VirtualFrame frame) {
             Browser.ExitMode exitMode = Browser.interact(frame.materialize());
             switch (exitMode) {
@@ -352,7 +362,7 @@ public class DebugHandling {
         @Override
         public void onEnter(Probe probe, Node node, VirtualFrame frame) {
             if (!disabled()) {
-                RContext.getInstance().getConsoleHandler().print("debugging in: ");
+                print("debugging in: ", false);
                 printCall(frame);
                 FunctionDefinitionNode fdn = (FunctionDefinitionNode) RArguments.getFunction(frame).getRootNode();
                 boolean brace = fdn.hasBraces();
@@ -378,7 +388,7 @@ public class DebugHandling {
         }
 
         private void returnCleanup(VirtualFrame frame) {
-            RContext.getInstance().getConsoleHandler().print("exiting from: ");
+            print("exiting from: ", false);
             printCall(frame);
             if (once) {
                 disable();
@@ -393,7 +403,7 @@ public class DebugHandling {
 
         private static void printCall(VirtualFrame frame) {
             String callString = RContext.getRRuntimeASTAccess().getCallerSource(RArguments.getCall(frame));
-            RContext.getInstance().getConsoleHandler().println(callString);
+            print(callString, true);
         }
 
     }
