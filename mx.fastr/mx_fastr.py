@@ -123,10 +123,8 @@ def _sanitize_vmArgs(jdk, vmArgs):
     return xargs
 
 def _get_ldpaths(lib_env_name):
-    ldpaths = os.path.join(_fastr_suite.dir, 'etc', 'ldpaths')
+    ldpaths = os.path.join(os.environ['R_HOME'], 'etc', 'ldpaths')
     command = ['bash', '-c', 'source ' + ldpaths + ' && env']
-    # need to set R_HOME as it is referenced in etc/ldpaths
-    os.environ["R_HOME"] = _fastr_suite.dir
 
     try:
         proc = subprocess.Popen(command, stdout=subprocess.PIPE)
