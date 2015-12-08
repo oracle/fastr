@@ -83,9 +83,13 @@ public abstract class ExecuteMethod extends RBaseNode {
     }
 
     @TruffleBoundary
-    static Object slotRead(MaterializedFrame currentFrame, FrameDescriptor desc, String name) {
+    public static Object slotRead(MaterializedFrame currentFrame, FrameDescriptor desc, String name) {
         FrameSlot slot = desc.findFrameSlot(name);
-        return currentFrame.getValue(slot);
+        if (slot != null) {
+            return currentFrame.getValue(slot);
+        } else {
+            return null;
+        }
     }
 
     @TruffleBoundary
