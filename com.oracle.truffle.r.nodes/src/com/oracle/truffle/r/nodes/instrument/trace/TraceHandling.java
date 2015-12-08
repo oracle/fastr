@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.instrument.trace;
 
+import java.io.IOException;
+
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.instrument.*;
@@ -30,6 +32,7 @@ import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.nodes.instrument.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.conn.StdConnections;
 import com.oracle.truffle.r.runtime.context.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
@@ -126,11 +129,15 @@ public class TraceHandling {
             if (!disabled()) {
                 @SuppressWarnings("unused")
                 FunctionStatementsNode fsn = (FunctionStatementsNode) node;
-                for (int i = 0; i < indent; i++) {
-                    RContext.getInstance().getConsoleHandler().print(" ");
+                try {
+                    for (int i = 0; i < indent; i++) {
+                        StdConnections.getStdout().writeString(" ", false);
+                    }
+                    String callString = RContext.getRRuntimeASTAccess().getCallerSource(RArguments.getCall(frame));
+                    StdConnections.getStdout().writeString("trace: " + callString, true);
+                } catch (IOException ex) {
+                    throw RError.error(RError.NO_NODE, RError.Message.GENERIC, ex.getMessage());
                 }
-                String callString = RContext.getRRuntimeASTAccess().getCallerSource(RArguments.getCall(frame));
-                RContext.getInstance().getConsoleHandler().printf("trace: %s%n", callString);
                 indent += INDENT;
             }
         }

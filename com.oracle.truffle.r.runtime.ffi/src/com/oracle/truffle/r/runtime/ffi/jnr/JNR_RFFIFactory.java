@@ -38,7 +38,7 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI {
     }
 
     @Override
-    protected void initialize() {
+    protected void initialize(boolean runtime) {
         // This must load early as package libraries reference symbols in it.
         getCallRFFI();
         /*
@@ -57,7 +57,6 @@ public class JNR_RFFIFactory extends RFFIFactory implements RFFI {
         System.setProperty("jnr.ffi.library.path", jnrLibPath);
         JNR_RAppl.linpack();
         JNR_Lapack.lapack();
-
     }
 
     /**

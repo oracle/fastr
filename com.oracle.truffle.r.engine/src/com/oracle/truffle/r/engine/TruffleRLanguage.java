@@ -52,7 +52,7 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
      */
     private static void initialize() {
         try {
-            Load_RFFIFactory.initialize();
+            Load_RFFIFactory.initialize(true);
             RInstrument.initialize(INSTANCE.instrumenter);
             RPerfStats.initialize();
             Locale.setDefault(Locale.ROOT);

@@ -42,6 +42,7 @@ public class TraceFunctions {
         @Specialization
         @TruffleBoundary
         protected RNull primTrace(RFunction func) {
+            controlVisibility();
             if (!func.isBuiltin()) {
                 if (!TraceHandling.enableTrace(func)) {
                     throw RError.error(this, RError.Message.GENERIC, "failed to attach trace handler (not instrumented?)");
@@ -57,6 +58,7 @@ public class TraceFunctions {
         @Specialization
         @TruffleBoundary
         protected RNull primTrace(RFunction func) {
+            controlVisibility();
             if (!func.isBuiltin()) {
                 if (!TraceHandling.disableTrace(func)) {
                     throw RError.error(this, RError.Message.GENERIC, "failed to detach trace handler (not instrumented?)");
