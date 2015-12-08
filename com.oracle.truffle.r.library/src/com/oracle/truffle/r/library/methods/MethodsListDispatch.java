@@ -15,7 +15,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.MaterializedFrame;
-import com.oracle.truffle.r.library.methods.MethodsListDispatchFactory.R_getGenericNodeGen.GetGenericInternalNodeGen;
+import com.oracle.truffle.r.library.methods.MethodsListDispatchFactory.GetGenericInternalNodeGen;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyScalarNode;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyScalarNodeGen;
@@ -155,27 +155,27 @@ public class MethodsListDispatch {
         }
     }
 
+    static String checkSingleString(Object o, boolean nonEmpty, String what, RBaseNode node, ClassHierarchyScalarNode classHierarchyNode) {
+        if (o instanceof RAbstractStringVector) {
+            RAbstractStringVector vec = (RAbstractStringVector) o;
+            if (vec.getLength() != 1) {
+                throw RError.error(node, RError.Message.SINGLE_STRING_TOO_LONG, what, vec.getLength());
+            }
+            String s = vec.getDataAt(0);
+            if (nonEmpty && s.length() == 0) {
+                throw RError.error(node, RError.Message.NON_EMPTY_STRING, what);
+            }
+            return s;
+        } else {
+            throw RError.error(node, RError.Message.SINGLE_STRING_WRONG_TYPE, what, classHierarchyNode.executeString(o));
+        }
+
+    }
+
     public abstract static class R_getGeneric extends RExternalBuiltinNode.Arg4 {
 
         @Child private ClassHierarchyScalarNode classHierarchyNode = ClassHierarchyScalarNodeGen.create();
         @Child private GetGenericInternal getGenericInternal = GetGenericInternalNodeGen.create();
-
-        private static String checkSingleString(Object o, boolean nonEmpty, String what, RBaseNode node, ClassHierarchyScalarNode classHierarchyNode) {
-            if (o instanceof RAbstractStringVector) {
-                RAbstractStringVector vec = (RAbstractStringVector) o;
-                if (vec.getLength() != 1) {
-                    throw RError.error(node, RError.Message.SINGLE_STRING_TOO_LONG, what, vec.getLength());
-                }
-                String s = vec.getDataAt(0);
-                if (nonEmpty && s.length() == 0) {
-                    throw RError.error(node, RError.Message.NON_EMPTY_STRING, what);
-                }
-                return s;
-            } else {
-                throw RError.error(node, RError.Message.SINGLE_STRING_WRONG_TYPE, what, classHierarchyNode.executeString(o));
-            }
-
-        }
 
         @Specialization
         protected Object getGeneric(RAbstractVector nameVec, RAbstractVector mustFindVec, REnvironment env, RAbstractVector packageVec) {
@@ -195,54 +195,55 @@ public class MethodsListDispatch {
             return value;
         }
 
-        abstract static class GetGenericInternal extends RBaseNode {
+    }
 
-            public abstract Object executeObject(String name, REnvironment rho, String pckg);
+    abstract static class GetGenericInternal extends RBaseNode {
 
-            private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
-            @Child private CastToVectorNode castToVector = CastToVectorNodeGen.create(false);
-            @Child private ClassHierarchyScalarNode classHierarchyNode = ClassHierarchyScalarNodeGen.create();
+        public abstract Object executeObject(String name, REnvironment rho, String pckg);
 
-            @Specialization
-            protected Object getGeneric(String name, REnvironment env, String pckg) {
-                REnvironment rho = env;
-                RAttributable generic = null;
-                while (rho != null) {
-                    // TODO: make it faster
-                    MaterializedFrame currentFrame = rho.getFrame();
-                    FrameDescriptor currentFrameDesc = currentFrame.getFrameDescriptor();
-                    Object o = ExecuteMethod.slotRead(currentFrame, currentFrameDesc, name);
-                    if (o != null) {
-                        if (o instanceof RPromise) {
-                            o = PromiseHelperNode.evaluateSlowPath(null, (RPromise) o);
-                        }
-                        RAttributable vl = (RAttributable) o;
-                        boolean ok = false;
-                        if (vl instanceof RFunction && vl.getAttr(attrProfiles, RRuntime.GENERIC_ATTR_KEY) != null) {
-                            if (pckg.length() > 0) {
-                                Object gpckgObj = vl.getAttr(attrProfiles, RRuntime.PCKG_ATTR_KEY);
-                                if (gpckgObj != null) {
-                                    String gpckg = checkSingleString(castToVector.execute(gpckgObj), false, "The \"package\" slot in generic function object", this, classHierarchyNode);
-                                    ok = pckg.equals(gpckg);
-                                }
+        private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+        @Child private CastToVectorNode castToVector = CastToVectorNodeGen.create(false);
+        @Child private ClassHierarchyScalarNode classHierarchyNode = ClassHierarchyScalarNodeGen.create();
 
-                            } else {
-                                ok = true;
+        @Specialization
+        protected Object getGeneric(String name, REnvironment env, String pckg) {
+            REnvironment rho = env;
+            RAttributable generic = null;
+            while (rho != null) {
+                // TODO: make it faster
+                MaterializedFrame currentFrame = rho.getFrame();
+                FrameDescriptor currentFrameDesc = currentFrame.getFrameDescriptor();
+                Object o = ExecuteMethod.slotRead(currentFrame, currentFrameDesc, name);
+                if (o != null) {
+                    if (o instanceof RPromise) {
+                        o = PromiseHelperNode.evaluateSlowPath(null, (RPromise) o);
+                    }
+                    RAttributable vl = (RAttributable) o;
+                    boolean ok = false;
+                    if (vl instanceof RFunction && vl.getAttr(attrProfiles, RRuntime.GENERIC_ATTR_KEY) != null) {
+                        if (pckg.length() > 0) {
+                            Object gpckgObj = vl.getAttr(attrProfiles, RRuntime.PCKG_ATTR_KEY);
+                            if (gpckgObj != null) {
+                                String gpckg = checkSingleString(castToVector.execute(gpckgObj), false, "The \"package\" slot in generic function object", this, classHierarchyNode);
+                                ok = pckg.equals(gpckg);
                             }
-                        }
-                        if (ok) {
-                            generic = vl;
-                            break;
+
+                        } else {
+                            ok = true;
                         }
                     }
-                    rho = rho.getParent();
+                    if (ok) {
+                        generic = vl;
+                        break;
+                    }
                 }
-
-                // TODO: in GNU R there is additional code here that deals with the case of "name"
-                // being a symbol but at this point this case is not handled (even possible?) in
-                // FastR
-                return generic == null ? RNull.instance : generic;
+                rho = rho.getParent();
             }
+
+            // TODO: in GNU R there is additional code here that deals with the case of "name"
+            // being a symbol but at this point this case is not handled (even possible?) in
+            // FastR
+            return generic == null ? RNull.instance : generic;
         }
     }
 
