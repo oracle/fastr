@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.library.fastr;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
@@ -32,6 +33,7 @@ import com.oracle.truffle.r.runtime.nodes.*;
 
 public abstract class FastRSyntaxTree extends RExternalBuiltinNode.Arg3 {
     @Specialization
+    @TruffleBoundary
     protected RNull printTree(RFunction function, byte source, byte visitAll) {
         boolean printSource = RRuntime.fromLogical(source);
         Node root = function.getTarget().getRootNode();
