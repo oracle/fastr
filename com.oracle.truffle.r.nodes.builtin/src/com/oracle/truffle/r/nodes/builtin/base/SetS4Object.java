@@ -51,10 +51,10 @@ public abstract class SetS4Object extends RBuiltinNode {
 
     private boolean checkArgs(RAbstractLogicalVector flagVec, RAbstractIntVector completeVec) {
         if (flagVec.getLength() == 0 || (flagVec.getLength() == 1 && flagVec.getDataAt(0) == RRuntime.LOGICAL_NA) || flagVec.getLength() > 1) {
-            RError.error(this, RError.Message.INVALID_ARGUMENT, "flag");
+            throw RError.error(this, RError.Message.INVALID_ARGUMENT, "flag");
         }
         if (completeVec.getLength() == 0 || flagVec.getDataAt(0) == RRuntime.LOGICAL_NA) {
-            RError.error(this, RError.Message.INVALID_ARGUMENT, "complete");
+            throw RError.error(this, RError.Message.INVALID_ARGUMENT, "complete");
         }
         return RRuntime.fromLogical(flagVec.getDataAt(0));
     }
@@ -74,10 +74,19 @@ public abstract class SetS4Object extends RBuiltinNode {
         return object;
     }
 
-    @Specialization
+    @Specialization(guards = "!isSequence(object)")
     protected Object asS4(RAttributable object, RAbstractLogicalVector flagVec, RAbstractIntVector completeVec) {
         boolean flag = checkArgs(flagVec, completeVec);
         return asS4.executeObject(object, flag, completeVec.getDataAt(0));
+    }
+
+    @Specialization
+    protected Object asS4(RSequence seq, RAbstractLogicalVector flagVec, RAbstractIntVector completeVec) {
+        return asS4(seq.materialize(), flagVec, completeVec);
+    }
+
+    protected boolean isSequence(Object o) {
+        return o instanceof RSequence;
     }
 
 }

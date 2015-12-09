@@ -53,7 +53,10 @@ public abstract class AsS4 extends RNode {
         }
         if (obj instanceof RShareable) {
             shareable.enter();
-            obj = (RAttributable) ((RShareable) obj).copy();
+            RShareable shareableObj = (RShareable) obj;
+            if (shareableObj.isShared()) {
+                obj = (RAttributable) shareableObj.copy();
+            }
         }
         if (flag) {
             obj.setS4();

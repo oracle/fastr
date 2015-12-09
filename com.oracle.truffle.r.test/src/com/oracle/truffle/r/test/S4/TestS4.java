@@ -68,6 +68,7 @@ public class TestS4 extends TestBase {
         assertEval("{ x<-42; y<-asS4(x); isS4(y) }");
         assertEval("{ isS4(NULL) }");
         assertEval("{ asS4(NULL); isS4(NULL }");
+        assertEval("{  asS4(7:42) }");
     }
 
     @Test

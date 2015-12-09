@@ -123,12 +123,15 @@ public class MethodsListDispatch {
             if (codeVecString == null) {
                 throw RError.error(this, RError.Message.GENERIC, "argument 'code' must be a character string");
             }
+            // TODO: implement proper primitive method setting
             if (op == RNull.instance) {
                 byte value = RRuntime.asLogical(RContext.getInstance().allowPrimitiveMethods());
-                if (codeVecString.charAt(0) == 'C') {
-                    RContext.getInstance().setAllowPrimitiveMethods(false);
-                } else if (codeVecString.charAt(0) == 'S') {
-                    RContext.getInstance().setAllowPrimitiveMethods(true);
+                if (codeVecString.length() > 0) {
+                    if (codeVecString.charAt(0) == 'C') {
+                        RContext.getInstance().setAllowPrimitiveMethods(false);
+                    } else if (codeVecString.charAt(0) == 'S') {
+                        RContext.getInstance().setAllowPrimitiveMethods(true);
+                    }
                 }
                 return RRuntime.LOGICAL_FALSE; // value;
             }
