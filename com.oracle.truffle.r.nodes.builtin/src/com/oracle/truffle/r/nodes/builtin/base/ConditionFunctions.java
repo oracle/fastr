@@ -14,6 +14,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.RErrorHandling.*;
 
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -187,6 +188,7 @@ public class ConditionFunctions {
     @RBuiltin(name = "printDeferredWarnings", kind = RBuiltinKind.INTERNAL, parameterNames = {})
     public abstract static class PrintDeferredWarnings extends Adapter {
         @Specialization
+        @TruffleBoundary
         protected RNull printDeferredWarnings() {
             forceVisibility(false);
             RErrorHandling.printDeferredWarnings();

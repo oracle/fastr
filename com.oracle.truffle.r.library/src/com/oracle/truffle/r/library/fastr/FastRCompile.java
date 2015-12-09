@@ -51,7 +51,6 @@ public abstract class FastRCompile extends RExternalBuiltinNode.Arg2 {
             if (System.getProperty("fastr.truffle.compile", "true").equals("true") && Truffle.getRuntime().getName().contains("Graal")) {
                 return new Compiler();
             } else {
-                Utils.warn("fastr.compile not supported in this environment");
                 return null;
             }
         }
@@ -78,6 +77,8 @@ public abstract class FastRCompile extends RExternalBuiltinNode.Arg2 {
             } catch (InvocationTargetException | IllegalAccessException e) {
                 throw RError.error(this, RError.Message.GENERIC, e.toString());
             }
+        } else {
+            throw RError.error(this, RError.Message.GENERIC, "fastr.compile not supported in this environment");
         }
         return RRuntime.LOGICAL_FALSE;
     }

@@ -27,6 +27,7 @@ import java.util.*;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.instrument.*;
 import com.oracle.truffle.api.nodes.*;
@@ -408,6 +409,7 @@ public class DebugHandling {
 
     }
 
+    @TruffleBoundary
     private static void printNode(Node node, boolean curly) {
         ConsoleHandler consoleHandler = RContext.getInstance().getConsoleHandler();
         RDeparse.State state = RDeparse.State.createPrintableState();

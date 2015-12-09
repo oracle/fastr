@@ -242,6 +242,11 @@ public final class RCallNode extends RNode implements RSyntaxNode {
         return execute(frame, executeFunctionNode(frame));
     }
 
+    @TruffleBoundary
+    private static String getMessage(Throwable e) {
+        return e.getMessage() != null ? e.getMessage() : e.toString();
+    }
+
     public Object execute(VirtualFrame frame, Object functionObject) {
         RFunction function;
         if (isRFunctionProfile.profile(functionObject instanceof RFunction)) {
@@ -262,7 +267,7 @@ public final class RCallNode extends RNode implements RSyntaxNode {
                 return ForeignAccess.execute(foreignCall, frame, (TruffleObject) functionObject, argumentsArray);
             } catch (Throwable e) {
                 errorProfile.enter();
-                throw RError.error(this, RError.Message.GENERIC, "Foreign function failed: " + e.getMessage() != null ? e.getMessage() : e.toString());
+                throw RError.error(this, RError.Message.GENERIC, "Foreign function failed: " + getMessage(e));
             }
         } else {
             errorProfile.enter();

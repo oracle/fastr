@@ -471,6 +471,7 @@ final class REngine implements Engine, Engine.Timings {
      * {@link FunctionBodyNode} has a {@link SourceSection}, for instrumentation, although the
      * anonymous {@link FunctionDefinitionNode} itself does not need one.
      */
+    @TruffleBoundary
     private static RootCallTarget doMakeCallTarget(RNode body, String description) {
         BodyNode fbn;
         SourceSection sourceSection = null;

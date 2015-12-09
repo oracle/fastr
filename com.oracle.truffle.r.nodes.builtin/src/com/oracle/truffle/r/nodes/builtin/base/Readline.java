@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
@@ -31,6 +32,7 @@ import com.oracle.truffle.r.runtime.data.model.*;
 @RBuiltin(name = "readline", kind = RBuiltinKind.INTERNAL, parameterNames = "prompt")
 public abstract class Readline extends RBuiltinNode {
     @Specialization
+    @TruffleBoundary
     protected String readline(RAbstractStringVector prompt) {
         if (!RContext.getInstance().isInteractive()) {
             return "";

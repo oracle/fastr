@@ -26,6 +26,7 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import java.io.*;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.r.nodes.builtin.*;
@@ -37,6 +38,7 @@ public class PrintFunctions {
     public abstract static class PrintAdapter extends RInvisibleBuiltinNode {
         @Child protected PrettyPrinterNode prettyPrinter = PrettyPrinterNodeGen.create(null, null, null, null, false);
 
+        @TruffleBoundary
         protected void printHelper(String string) {
             try {
                 StdConnections.getStdout().writeString(string, true);
