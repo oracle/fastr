@@ -169,12 +169,15 @@ public class BlockNode extends SequenceNode implements RSyntaxNode, VisibilityCo
 
     @Override
     public boolean getRequalsImpl(RSyntaxNode other) {
-        FunctionStatementsNode otherFSN = (FunctionStatementsNode) other;
-        if (getRlengthImpl() != otherFSN.getRlengthImpl()) {
+        if (!(other instanceof BlockNode)) {
+            return false;
+        }
+        BlockNode otherBlock = (BlockNode) other;
+        if (getRlengthImpl() != otherBlock.getRlengthImpl()) {
             return false;
         }
         RNode[] seq = getSequence();
-        RNode[] otherSeq = otherFSN.getSequence();
+        RNode[] otherSeq = otherBlock.getSequence();
         for (int i = 0; i < sequence.length; i++) {
             RSyntaxNode e = seq[i].asRSyntaxNode();
             RSyntaxNode eOther = otherSeq[i].asRSyntaxNode();

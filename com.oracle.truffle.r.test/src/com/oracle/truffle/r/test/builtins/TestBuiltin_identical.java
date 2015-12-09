@@ -218,5 +218,9 @@ public class TestBuiltin_identical extends TestBase {
         assertEval(Ignored.Unknown, "{ identical(list(1, list(2)), list(1, list(2))) }");
         assertEval(Ignored.Unknown, "{ x <- 1 ; attr(x, \"my\") <- 10; identical(x, 1) }");
         assertEval(Ignored.Unknown, "{ x <- 1 ; attr(x, \"my\") <- 10; y <- 1 ; attr(y, \"my\") <- 11 ; identical(x,y) }");
+
+        assertEval("{ identical(quote(if(x) 42), quote(if(x) 7)) }");
+        assertEval("{ identical(quote(if(x) 42), quote(if(x) 42)) }");
+        assertEval("{ identical(function() 42, function() 42) }");
     }
 }

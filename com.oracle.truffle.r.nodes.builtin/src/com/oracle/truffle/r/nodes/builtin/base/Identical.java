@@ -32,6 +32,7 @@ import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
  * Internal part of {@code identical}. The default values for args after {@code x} and {@code y} are
@@ -107,40 +108,25 @@ public abstract class Identical extends RBuiltinNode {
         return x.getName().equals(y.getName()) ? RRuntime.LOGICAL_TRUE : RRuntime.LOGICAL_FALSE;
     }
 
-    @SuppressWarnings("unused")
     @Specialization
     protected byte doInternalIdentical(RLanguage x, RLanguage y, byte numEq, byte singleNA, byte attribAsSet, byte ignoreBytecode, byte ignoreEnvironment) {
-        controlVisibility();
-        // TODO How to compare ASTs
-        throw RError.nyi(this, "language objects not supported in 'identical'");
-    }
-
-    @Specialization
-    byte doInternalIdentical(RFunction x, RFunction y, byte numEq, byte singleNA, byte attribAsSet, byte ignoreBytecode, byte ignoreEnvironment) {
         controlVisibility();
         if (naArgsProfile.profile(checkExtraArgsForNA(numEq, singleNA, attribAsSet, ignoreBytecode, ignoreEnvironment))) {
             if (x == y) {
                 return RRuntime.LOGICAL_TRUE;
             }
-            if (x.isBuiltin() && !y.isBuiltin() || y.isBuiltin() && !x.isBuiltin()) {
-                return RRuntime.LOGICAL_FALSE;
-            }
-            if (x.isBuiltin()) {
-                return RRuntime.asLogical(x.getRBuiltin() == y.getRBuiltin());
-            } else {
-                // closures
-                if (!RRuntime.fromLogical(ignoreEnvironment)) {
-                    // comparing frames equivalent to comparing environments
-                    if (x.getEnclosingFrame() != y.getEnclosingFrame()) {
-                        return RRuntime.LOGICAL_FALSE;
-                    }
-                }
-                FunctionDefinitionNode fx = (FunctionDefinitionNode) x.getRootNode();
-                FunctionDefinitionNode fy = (FunctionDefinitionNode) y.getRootNode();
-                return RRuntime.asLogical(fx.getRequalsImpl(fy));
-            }
+            RSyntaxNode xNode = x.getRep().asRSyntaxNode();
+            RSyntaxNode yNode = y.getRep().asRSyntaxNode();
+            return RRuntime.asLogical(xNode.getRequalsImpl(yNode));
         }
         return RRuntime.LOGICAL_FALSE;
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization
+    byte doInternalIdentical(RFunction x, RFunction y, byte numEq, byte singleNA, byte attribAsSet, byte ignoreBytecode, byte ignoreEnvironment) {
+        controlVisibility();
+        return RRuntime.asLogical(x == y);
     }
 
     @SuppressWarnings("unused")

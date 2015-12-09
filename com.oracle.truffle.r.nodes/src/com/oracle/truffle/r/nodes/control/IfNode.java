@@ -165,7 +165,19 @@ public final class IfNode extends RNode implements RSyntaxNode, VisibilityContro
 
     @Override
     public boolean getRequalsImpl(RSyntaxNode other) {
-        throw RInternalError.unimplemented();
+        if (other instanceof IfNode) {
+            IfNode otherNode = (IfNode) other;
+            if (condition.getRSyntaxNode().getRequalsImpl(otherNode.condition.getRSyntaxNode())) {
+                if (thenPart.asRSyntaxNode().getRequalsImpl(otherNode.thenPart.asRSyntaxNode())) {
+                    if (elsePart == null && otherNode.elsePart == null) {
+                        return true;
+                    } else if (elsePart != null && otherNode.elsePart != null) {
+                        return elsePart.asRSyntaxNode().getRequalsImpl(otherNode.elsePart.asRSyntaxNode());
+                    }
+                }
+            }
+        }
+        return false;
     }
 
 }
