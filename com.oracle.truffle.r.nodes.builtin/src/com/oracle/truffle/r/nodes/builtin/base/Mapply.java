@@ -65,7 +65,7 @@ public abstract class Mapply extends RBuiltinNode {
         }
     }
 
-    @Child private MapplyInternalNode mapply = MapplyInternalNodeGen.create(null, null, null);
+    @Child private MapplyInternalNode mapply = MapplyInternalNodeGen.create();
 
     @Specialization
     protected Object mApply(VirtualFrame frame, RFunction fun, RList dots, RList moreArgs) {
@@ -84,8 +84,7 @@ public abstract class Mapply extends RBuiltinNode {
         return mApply(frame, fun, dots, RDataFactory.createList());
     }
 
-    @NodeChildren({@NodeChild(type = RNode.class), @NodeChild(type = RNode.class), @NodeChild(type = RNode.class)})
-    protected abstract static class MapplyInternalNode extends RNode {
+    protected abstract static class MapplyInternalNode extends Node {
 
         private static final String VECTOR_ELEMENT_PREFIX = "MAPPLY_VEC_ELEM_";
         private static final RLogicalVector DROP = RDataFactory.createLogicalVectorFromScalar(true);
@@ -148,12 +147,6 @@ public abstract class Mapply extends RBuiltinNode {
                 result[i] = callNode.execute(frame, function);
             }
             return result;
-        }
-
-        @SuppressWarnings("unused")
-        @Specialization(contains = "cachedMApply")
-        protected Object[] genericMApply(Object vector, RFunction function, RArgsValuesAndNames additionalArguments) {
-            throw RError.nyi(this, "generic mApply");
         }
 
         /**
