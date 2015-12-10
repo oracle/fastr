@@ -22,8 +22,10 @@
 #
 
 import os
+import subprocess
+import mx
 from os.path import join
-from argparse import ArgumentParser
+from argparse import ArgumentParser, REMAINDER
 
 def _gather_test_outputs_forpkg(pkgdirpath):
     '''return a list of paths to .Rout/.fail files in pkgdirpath'''
@@ -35,12 +37,12 @@ def _gather_test_outputs_forpkg(pkgdirpath):
     result.sort()
     return result
 
-def _gather_test_outputs(testdir, pkgonly):
-    '''return a dict mapping package name to list of output file paths'''
+def _gather_test_outputs(testdir, pkgs):
+    '''return a dict mapping package names to list of output file paths'''
     result = dict()
     for dirpath, dirs, _ in os.walk(testdir):
         for d in dirs:
-            if pkgonly is None or d == pkgonly:
+            if len(pkgs) == 0 or d in pkgs:
                 result[d] = _gather_test_outputs_forpkg(join(dirpath, d))
         # only interested in top level
         break
@@ -88,24 +90,42 @@ def pkgtestanalyze(args):
     parser = ArgumentParser(prog='mx pkgtestanalyze')
     parser.add_argument('--dir', action='store', help='dir containing results', default=os.getcwd())
     parser.add_argument('--pkg', action='store', help='pkg to compare, default all')
+    parser.add_argument('--verbose', action='store_true', help='print names of files that differ')
+    parser.add_argument('--diff', action='store_true', help='execute given diff program on differing outputs')
+    parser.add_argument('--difftool', action='store', help='diff tool', default='diff')
+    parser.add_argument('pkgs', nargs=REMAINDER, metavar='pkg1 pkg2 ...')
     args = parser.parse_args(args)
 
-    gnur = _gather_test_outputs(join(args.dir, "test_gnur"), args.pkg)
-    fastr = _gather_test_outputs(join(args.dir, "test"), args.pkg)
+    pkgs = args.pkgs
+    if args.pkg:
+        pkgs = [args.pkg] + pkgs
+
+    verbose = args.verbose;
+    gnur = _gather_test_outputs(join(args.dir, "test_gnur"), pkgs)
+    if args.pkg:
+        if not gnur.has_key(args.pkg):
+            mx.abort('no gnur output to compare')
+
+    fastr = _gather_test_outputs(join(args.dir, "test"), pkgs)
     # gnur is definitive
     result = 0 # optimistic
-    for pkg, gnur_outputs in gnur.iteritems():
+    for pkg in pkgs:
         if not fastr.has_key(pkg):
             result = 1
-            if args.pkg is None:
-                break
-            else:
-                continue
+            continue
+
+        if not gnur.has_key(pkg):
+            print 'no gnur output to compare: ' + pkg
 
         fastr_outputs = fastr[pkg]
+        gnur_outputs = gnur[pkg]
         if len(fastr_outputs) != len(gnur_outputs):
+            if verbose:
+                print 'fastr is missing some output files'
+                # TODO continue but handle missing files in loop?
+                # does it ever happen in practice?
             result = 1
-            break
+            continue
         for i in range(len(gnur_outputs)):
             fastr_output = fastr_outputs[i]
             gnur_output = gnur_outputs[i]
@@ -117,6 +137,12 @@ def pkgtestanalyze(args):
                 fastr_content = f.readlines()
             result = _fuzzy_compare(gnur_content, fastr_content)
             if result != 0:
+                if verbose:
+                    print 'mismatch on file: ' + fastr_output
+                if args.diff:
+                    cmd = [args.difftool, gnur_output, fastr_output]
+                    print ' '.join(cmd)
+                    subprocess.call(cmd)
                 break
     return result
 
