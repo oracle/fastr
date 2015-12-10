@@ -38,7 +38,7 @@ public final class TruffleRLanguageDebug {
     /**
      * Helper for the debugger.
      */
-    static final class RVisualizer extends DefaultVisualizer {
+    public static final class RVisualizer extends DefaultVisualizer {
         private TextConnections.InternalStringWriteConnection stringConn;
 
         private void checkCreated() {
