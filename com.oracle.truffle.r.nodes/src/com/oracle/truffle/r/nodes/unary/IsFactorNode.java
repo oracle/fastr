@@ -36,6 +36,6 @@ public abstract class IsFactorNode extends UnaryNode {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             inheritsNode = insert(InheritsNodeGen.create());
         }
-        return inheritsNode.execute(x, RDataFactory.createStringVector(RType.Factor.getName()));
+        return (byte) inheritsNode.executeObject(x, RDataFactory.createStringVector(RType.Factor.getName()), RRuntime.LOGICAL_FALSE);
     }
 }

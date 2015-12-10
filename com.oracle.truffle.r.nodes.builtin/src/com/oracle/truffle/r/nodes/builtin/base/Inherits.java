@@ -13,9 +13,6 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
-import java.util.*;
-
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.unary.*;
@@ -43,67 +40,38 @@ public abstract class Inherits extends RBuiltinNode {
         return inheritsNode;
     }
 
-    protected static boolean isTrue(byte value) {
-        return RRuntime.fromLogical(value);
-    }
-
     @SuppressWarnings("unused")
     @Specialization
     protected Object doesInherit(RNull x, RAbstractStringVector what, byte which) {
         return RRuntime.LOGICAL_FALSE;
     }
 
-    @Specialization(guards = "!isTrue(which)")
-    protected Object doesInherit(REnvironment x, RAbstractStringVector what, @SuppressWarnings("unused") byte which) {
-        return initInheritsNode().execute(x, what);
+    @Specialization
+    protected Object doesInherit(REnvironment x, RAbstractStringVector what, byte which) {
+        return initInheritsNode().executeObject(x, what, which);
     }
 
-    @Specialization(guards = "isTrue(which)")
-    protected Object doesInheritWT(REnvironment x, RAbstractStringVector what, @SuppressWarnings("unused") byte which) {
-        return doDoesInherit(x.getClassAttr(attrProfiles), what);
+    @Specialization
+    protected Object doesInherit(RFunction x, RAbstractStringVector what, byte which) {
+        return initInheritsNode().executeObject(x, what, which);
     }
 
-    @Specialization(guards = "!isTrue(which)")
-    protected Object doesInherit(RFunction x, RAbstractStringVector what, @SuppressWarnings("unused") byte which) {
-        return initInheritsNode().execute(x, what);
+    @Specialization
+    protected Object doesInherit(RSymbol x, RAbstractStringVector what, byte which) {
+        return initInheritsNode().executeObject(x, what, which);
     }
 
-    @Specialization(guards = "isTrue(which)")
-    protected Object doesInheritWT(RFunction x, RAbstractStringVector what, @SuppressWarnings("unused") byte which) {
-        return doDoesInherit(x.getClassAttr(attrProfiles), what);
+    @Specialization
+    protected Object doesInherit(RConnection x, RAbstractStringVector what, byte which) {
+        return initInheritsNode().executeObject(x, what, which);
     }
 
-    @Specialization(guards = "!isTrue(which)")
-    protected Object doesInherit(RSymbol x, RAbstractStringVector what, @SuppressWarnings("unused") byte which) {
-        return initInheritsNode().execute(x, what);
+    @Specialization
+    protected Object doesInherit(RAbstractContainer x, RAbstractStringVector what, byte which) {
+        return initInheritsNode().executeObject(x, what, which);
     }
 
-    @Specialization(guards = "isTrue(which)")
-    protected Object doesInheritWT(RSymbol x, RAbstractStringVector what, @SuppressWarnings("unused") byte which) {
-        return doDoesInherit(x.getClassAttr(attrProfiles), what);
-    }
-
-    @Specialization(guards = "!isTrue(which)")
-    protected byte doesInherit(RConnection x, RAbstractStringVector what, @SuppressWarnings("unused") byte which) {
-        return initInheritsNode().execute(x, what);
-    }
-
-    @Specialization(guards = "isTrue(which)")
-    protected Object doesInheritWT(RConnection x, RAbstractStringVector what, @SuppressWarnings("unused") byte which) {
-        return doDoesInherit(x.getClassHierarchy(), what);
-    }
-
-    @Specialization(guards = "!isTrue(which)")
-    protected byte doesInherit(RAbstractContainer x, RAbstractStringVector what, @SuppressWarnings("unused") byte which) {
-        return initInheritsNode().execute(x, what);
-    }
-
-    @Specialization(guards = "isTrue(which)")
-    protected Object doesInherit(RAbstractVector x, RAbstractStringVector what, @SuppressWarnings("unused") byte which) {
-        return doDoesInherit(x.getClassHierarchy(), what);
-    }
-
-    @Specialization(guards = "!isTrue(which)")
+    @Specialization
     protected Object doesInherit(RArgsValuesAndNames x, RAbstractStringVector what, byte which) {
         assert x.getLength() == 1;
         if (recursiveInherits == null) {
@@ -112,19 +80,4 @@ public abstract class Inherits extends RBuiltinNode {
         return recursiveInherits.execute(x.getArgument(0), what, which);
     }
 
-    @TruffleBoundary
-    // map operations lead to recursion resulting in compilation failure
-    private static Object doDoesInherit(RStringVector classHr, RAbstractStringVector what) {
-        Map<String, Integer> classToPos = InheritsNode.initClassToPos(classHr);
-        int[] result = new int[what.getLength()];
-        for (int i = 0; i < what.getLength(); i++) {
-            final Integer pos = classToPos.get(what.getDataAt(i));
-            if (pos == null) {
-                result[i] = 0;
-            } else {
-                result[i] = pos + 1;
-            }
-        }
-        return RDataFactory.createIntVector(result, true);
-    }
 }

@@ -11,9 +11,6 @@
 
 package com.oracle.truffle.r.nodes.unary;
 
-import java.util.*;
-
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.function.*;
@@ -28,29 +25,21 @@ import com.oracle.truffle.r.runtime.nodes.*;
 @TypeSystemReference(RTypes.class)
 public abstract class InheritsNode extends RBaseNode {
 
-    private final ConditionProfile sizeOneProfile = ConditionProfile.createBinaryProfile();
     protected final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
 
-    public abstract byte execute(Object x, Object what);
+    public abstract Object executeObject(Object x, Object what, byte which);
 
     protected ClassHierarchyNode createClassHierarchy() {
         return ClassHierarchyNodeGen.create(true);
     }
 
-    @Specialization
-    protected byte doesInherit(Object x, RAbstractStringVector what, @Cached("createClassHierarchy()") ClassHierarchyNode classHierarchy) {
+    @Specialization(guards = "!isTrue(which)")
+    protected byte doesInherit(Object x, RAbstractStringVector what, @SuppressWarnings("unused") byte which, @Cached("createClassHierarchy()") ClassHierarchyNode classHierarchy) {
         RStringVector hierarchy = classHierarchy.execute(x);
-        if (sizeOneProfile.profile(what.getLength() == 1)) {
-            String whatString = what.getDataAt(0);
-            for (int i = 0; i < hierarchy.getLength(); i++) {
-                if (whatString.equals(hierarchy.getDataAt(i))) {
-                    return RRuntime.LOGICAL_TRUE;
-                }
-            }
-        } else {
-            Map<String, Integer> classToPos = initClassToPos(hierarchy);
-            for (int i = 0; i < what.getLength(); i++) {
-                if (classToPos.get(what.getDataAt(i)) != null) {
+        for (int i = 0; i < what.getLength(); i++) {
+            String whatString = what.getDataAt(i);
+            for (int j = 0; j < hierarchy.getLength(); j++) {
+                if (whatString.equals(hierarchy.getDataAt(j))) {
                     return RRuntime.LOGICAL_TRUE;
                 }
             }
@@ -58,15 +47,23 @@ public abstract class InheritsNode extends RBaseNode {
         return RRuntime.LOGICAL_FALSE;
     }
 
-    // map operations lead to recursion resulting in compilation failure
-    @TruffleBoundary
-    public static HashMap<String, Integer> initClassToPos(RStringVector classHr) {
-        // Create a mapping for elements to their respective positions
-        // in the vector for faster lookup.
-        HashMap<String, Integer> classToPos = new HashMap<>(classHr.getLength());
-        for (int i = 0; i < classHr.getLength(); i++) {
-            classToPos.put(classHr.getDataAt(i), i);
+    @Specialization(guards = "isTrue(which)")
+    protected RIntVector doesInheritWhich(Object x, RAbstractStringVector what, @SuppressWarnings("unused") byte which, @Cached("createClassHierarchy()") ClassHierarchyNode classHierarchy) {
+        RStringVector hierarchy = classHierarchy.execute(x);
+        int[] data = new int[what.getLength()];
+        for (int i = 0; i < what.getLength(); i++) {
+            String whatString = what.getDataAt(i);
+            for (int j = 0; j < hierarchy.getLength(); j++) {
+                if (whatString.equals(hierarchy.getDataAt(j))) {
+                    data[i] = j + 1;
+                    break;
+                }
+            }
         }
-        return classToPos;
+        return RDataFactory.createIntVector(data, RDataFactory.COMPLETE_VECTOR);
+    }
+
+    protected static boolean isTrue(byte value) {
+        return RRuntime.fromLogical(value);
     }
 }
