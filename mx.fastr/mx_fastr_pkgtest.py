@@ -100,7 +100,7 @@ def pkgtestanalyze(args):
     if args.pkg:
         pkgs = [args.pkg] + pkgs
 
-    verbose = args.verbose;
+    verbose = args.verbose
     gnur = _gather_test_outputs(join(args.dir, "test_gnur"), pkgs)
     if args.pkg:
         if not gnur.has_key(args.pkg):
