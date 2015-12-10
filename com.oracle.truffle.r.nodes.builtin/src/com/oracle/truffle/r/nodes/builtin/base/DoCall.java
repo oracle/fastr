@@ -114,7 +114,7 @@ public abstract class DoCall extends RBuiltinNode {
         if (func.isBuiltin() && builtin.getDispatch() == RDispatch.INTERNAL_GENERIC) {
             if (dispatchLookup == null) {
                 dispatchLookup = insert(S3FunctionLookupNode.create(true, false));
-                classHierarchyNode = insert(ClassHierarchyNodeGen.create(true));
+                classHierarchyNode = insert(ClassHierarchyNodeGen.create(true, true));
                 hierarchyPromiseHelper = insert(new PromiseCheckHelperNode());
             }
             RStringVector type = classHierarchyNode.execute(hierarchyPromiseHelper.checkEvaluate(frame, argValues[0]));

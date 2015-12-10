@@ -193,7 +193,7 @@ public final class GroupDispatchNode extends RNode implements RSyntaxNode {
 
         if (classHierarchyL == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            classHierarchyL = insert(ClassHierarchyNodeGen.create(false));
+            classHierarchyL = insert(ClassHierarchyNodeGen.create(false, true));
         }
         RStringVector typeL = evaluatedArgs.length == 0 ? null : classHierarchyL.execute(evaluatedArgs[0]);
 
@@ -213,7 +213,7 @@ public final class GroupDispatchNode extends RNode implements RSyntaxNode {
         if (group == RGroupGenerics.Ops && argAndNames.getSignature().getLength() >= 2) {
             if (classHierarchyR == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                classHierarchyR = insert(ClassHierarchyNodeGen.create(false));
+                classHierarchyR = insert(ClassHierarchyNodeGen.create(false, true));
             }
             RStringVector typeR = classHierarchyR.execute(evaluatedArgs[1]);
             if (typeR != null) {

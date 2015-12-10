@@ -29,7 +29,7 @@ public abstract class ClassHierarchyScalarNode extends UnaryNode {
 
     public abstract String executeString(Object o);
 
-    @Child ClassHierarchyNode classHierarchyNode = ClassHierarchyNodeGen.create(true);
+    @Child ClassHierarchyNode classHierarchyNode = ClassHierarchyNodeGen.create(true, true);
 
     @Specialization
     protected String getClassHr(Object arg) {

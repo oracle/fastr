@@ -21,7 +21,7 @@ import com.oracle.truffle.r.runtime.nodes.*;
 
 public final class UseMethodInternalNode extends RNode implements VisibilityController {
 
-    @Child private ClassHierarchyNode classHierarchyNode = ClassHierarchyNodeGen.create(true);
+    @Child private ClassHierarchyNode classHierarchyNode = ClassHierarchyNodeGen.create(true, true);
     @Child private S3FunctionLookupNode lookup = S3FunctionLookupNode.create(false, false);
     @Child private CallMatcherNode callMatcher = CallMatcherNode.create(false, false);
     @Child private PreProcessArgumentsNode argPreProcess;

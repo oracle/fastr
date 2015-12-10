@@ -26,7 +26,6 @@ import com.oracle.truffle.api.CompilerDirectives.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.source.*;
 import com.oracle.truffle.r.nodes.RASTUtils;
-import com.oracle.truffle.r.nodes.function.FunctionStatementsNode;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.env.*;
@@ -106,7 +105,7 @@ public class BlockNode extends SequenceNode implements RSyntaxNode, VisibilityCo
          * it is represented as a LANGSXP with symbol "{" and a NULL cdr, representing the empty
          * sequence. This is an unpleasant special case in FastR that we can only detect by
          * re-examining the original source.
-         * 
+         *
          * A sequence of length 1, i.e. a single statement, is represented as itself, e.g. a SYMSXP
          * for "x" or a LANGSXP for a function call. Otherwise, the representation is a LISTSXP
          * pairlist, where the car is the statement and the cdr is either NILSXP or a LISTSXP for

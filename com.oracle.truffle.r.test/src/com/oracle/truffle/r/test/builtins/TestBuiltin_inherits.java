@@ -207,6 +207,8 @@ public class TestBuiltin_inherits extends TestBase {
         assertEval("{ f <- function() { }; inherits(f, \"abc\") }");
         assertEval("{ f <- function() { }; class(f)<-\"abc\"; inherits(f, \"abc\") }");
 
+        assertEval("{ inherits(getClass(\"ClassUnionRepresentation\"), \"classRepresentation\") }");
+
         // Fails because of exact string matching in error message.
         assertEval(Ignored.Unknown, "{x <- 10;class(x) <- c(\"a\", \"b\");inherits(x, 2, c(TRUE)) ;}");
         assertEval(Ignored.Unknown, "{x <- 10;class(x) <- c(\"a\", \"b\");inherits(x, \"a\", 1) ;}");

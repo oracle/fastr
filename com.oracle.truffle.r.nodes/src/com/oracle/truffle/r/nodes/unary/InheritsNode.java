@@ -12,7 +12,6 @@
 package com.oracle.truffle.r.nodes.unary;
 
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.utilities.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -30,7 +29,7 @@ public abstract class InheritsNode extends RBaseNode {
     public abstract Object executeObject(Object x, Object what, byte which);
 
     protected ClassHierarchyNode createClassHierarchy() {
-        return ClassHierarchyNodeGen.create(true);
+        return ClassHierarchyNodeGen.create(true, true);
     }
 
     @Specialization(guards = "!isTrue(which)")

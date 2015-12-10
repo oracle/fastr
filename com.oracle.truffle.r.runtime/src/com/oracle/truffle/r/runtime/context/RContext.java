@@ -61,6 +61,7 @@ import com.oracle.truffle.r.runtime.data.RBuiltinDescriptor;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.ffi.RFFIContextStateFactory;
 import com.oracle.truffle.r.runtime.instrument.TraceState;
@@ -283,6 +284,7 @@ public final class RContext extends ExecutionContext implements TruffleObject {
      */
     private boolean methodTableDispatchOn = true;
     private boolean allowPrimitiveMethods = true;
+    private HashMap<String, RStringVector> s4ExtendsTable = new HashMap<>();
 
     private boolean nullS4Object = false;
 
@@ -536,6 +538,14 @@ public final class RContext extends ExecutionContext implements TruffleObject {
 
     public void setAllowPrimitiveMethods(boolean on) {
         allowPrimitiveMethods = on;
+    }
+
+    public RStringVector getS4Extends(String key) {
+        return s4ExtendsTable.get(key);
+    }
+
+    public void putS4Extends(String key, RStringVector value) {
+        s4ExtendsTable.put(key, value);
     }
 
     public boolean isInteractive() {

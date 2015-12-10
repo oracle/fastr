@@ -283,7 +283,7 @@ public final class RCallNode extends RNode implements RSyntaxNode {
                     internalDispatchCall = insert(new UninitializedCallNode(this, defaultTempIdentifiers[0]));
                     dispatchArgument = insert(NodeUtil.cloneNode(arguments.v[0].asRNode()));
                     dispatchLookup = insert(S3FunctionLookupNode.create(true, false));
-                    classHierarchyNode = insert(ClassHierarchyNodeGen.create(false));
+                    classHierarchyNode = insert(ClassHierarchyNodeGen.create(false, true));
                 }
                 FrameSlot slot = dispatchTempSlot.executeFrameSlot(frame);
                 try {

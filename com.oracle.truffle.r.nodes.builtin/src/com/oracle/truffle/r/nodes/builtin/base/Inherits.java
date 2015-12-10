@@ -80,4 +80,14 @@ public abstract class Inherits extends RBuiltinNode {
         return recursiveInherits.execute(x.getArgument(0), what, which);
     }
 
+    @Specialization
+    protected Object doesInherit(RS4Object x, RAbstractStringVector what, byte which) {
+        return initInheritsNode().executeObject(x, what, which);
+    }
+
+    @Specialization
+    protected Object doesInherit(RExternalPtr x, RAbstractStringVector what, byte which) {
+        return initInheritsNode().executeObject(x, what, which);
+    }
+
 }

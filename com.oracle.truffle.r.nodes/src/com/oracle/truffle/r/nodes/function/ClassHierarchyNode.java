@@ -23,26 +23,36 @@
 package com.oracle.truffle.r.nodes.function;
 
 import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.utilities.*;
+import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
+import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode.ReadKind;
 import com.oracle.truffle.r.nodes.attributes.*;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 public abstract class ClassHierarchyNode extends UnaryNode {
 
     public static final RStringVector truffleObjectClassHeader = RDataFactory.createStringVectorFromScalar("truffle.object");
 
     @Child private AttributeAccess access;
+    @Child private S4Class s4Class;
 
     private final boolean withImplicitTypes;
+    private final boolean withS4;
     private final ConditionProfile noAttributesProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile nullAttributeProfile = ConditionProfile.createBinaryProfile();
+    private final BranchProfile isS4 = BranchProfile.create();
 
-    protected ClassHierarchyNode(boolean withImplicitTypes) {
+    protected ClassHierarchyNode(boolean withImplicitTypes, boolean withS4) {
         this.withImplicitTypes = withImplicitTypes;
+        this.withS4 = withS4;
     }
 
     @Override
@@ -94,9 +104,19 @@ public abstract class ClassHierarchyNode extends UnaryNode {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 access = insert(AttributeAccessNodeGen.create(RRuntime.CLASS_ATTR_KEY));
             }
-            RStringVector classHierarcy = (RStringVector) access.execute(attributes);
-            if (nullAttributeProfile.profile(classHierarcy != null)) {
-                return classHierarcy;
+            RStringVector classHierarchy = (RStringVector) access.execute(attributes);
+            if (nullAttributeProfile.profile(classHierarchy != null)) {
+                if (withS4 && arg.isS4()) {
+                    isS4.enter();
+                    if (classHierarchy.getLength() > 0) {
+                        if (s4Class == null) {
+                            CompilerDirectives.transferToInterpreterAndInvalidate();
+                            s4Class = insert(S4ClassNodeGen.create());
+                        }
+                        return s4Class.executeRStringVector(classHierarchy.getDataAt(0));
+                    }
+                }
+                return classHierarchy;
             }
         }
         return withImplicitTypes ? profiledArg.getImplicitClass() : null;
@@ -114,5 +134,39 @@ public abstract class ClassHierarchyNode extends UnaryNode {
     @Fallback
     protected RStringVector getClassHr(Object obj) {
         throw RInternalError.shouldNotReachHere("type: " + (obj == null ? "null" : obj.getClass().getSimpleName()));
+    }
+}
+
+abstract class S4Class extends RBaseNode {
+
+    public abstract RStringVector executeRStringVector(String classAttr);
+
+    @Child private ReadVariableNode sExtendsForS3Find = ReadVariableNode.create(".extendsForS3", RType.Function, ReadKind.Normal);
+    @Child private CastToVectorNode castToVector = CastToVectorNode.create();
+
+    @TruffleBoundary
+    protected RStringVector getS4ClassInternal(String classAttr) {
+        // GNU R contains an explicit check here to make sure that methods package is available but
+        // we operate under this assumption already
+        RStringVector s4Extends = RContext.getInstance().getS4Extends(classAttr);
+        if (s4Extends == null) {
+            REnvironment methodsEnv = REnvironment.getRegisteredNamespace("methods");
+            RFunction sExtendsForS3Function = (RFunction) sExtendsForS3Find.execute(null, methodsEnv.getFrame());
+            // the assumption here is that R function can only return either a String or
+            // RStringVector
+            s4Extends = (RStringVector) castToVector.execute(RContext.getEngine().evalFunction(sExtendsForS3Function, methodsEnv.getFrame(), classAttr));
+        }
+        return s4Extends;
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization(guards = "classAttr.equals(cachedClassAttr)")
+    protected RStringVector getS4ClassCached(String classAttr, @Cached("classAttr") String cachedClassAttr, @Cached("getS4ClassInternal(cachedClassAttr)") RStringVector s4Classes) {
+        return s4Classes;
+    }
+
+    @Specialization(contains = "getS4ClassCached")
+    protected RStringVector getS4Class(String classAttr) {
+        return getS4ClassInternal(classAttr);
     }
 }

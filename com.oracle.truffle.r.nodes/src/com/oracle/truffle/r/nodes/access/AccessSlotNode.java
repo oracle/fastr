@@ -60,7 +60,7 @@ public abstract class AccessSlotNode extends RNode {
             if (name == RRuntime.DOT_S3_CLASS) {
                 if (classHierarchy == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    classHierarchy = insert(ClassHierarchyNodeGen.create(true));
+                    classHierarchy = insert(ClassHierarchyNodeGen.create(true, false));
                 }
                 return classHierarchy.execute(object);
             } else if (name == RRuntime.DOT_DATA) {
