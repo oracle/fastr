@@ -156,8 +156,7 @@ public class EnvFunctions {
 
     }
 
-    @RBuiltin(name = "parent.env<-", kind = INTERNAL, parameterNames = {"env", ""})
-    // 2nd parameter is "value", but should not be matched to so it's empty
+    @RBuiltin(name = "parent.env<-", kind = INTERNAL, parameterNames = {"env", "value"})
     public abstract static class SetParentEnv extends Adapter {
 
         @Specialization
@@ -228,8 +227,7 @@ public class EnvFunctions {
         }
     }
 
-    @RBuiltin(name = "environment<-", kind = PRIMITIVE, parameterNames = {"env", ""})
-    // 2nd parameter is "value", but should not be matched to so it's empty
+    @RBuiltin(name = "environment<-", kind = PRIMITIVE, parameterNames = {"env", "value"})
     public abstract static class UpdateEnvironment extends RBuiltinNode {
 
         private static RAttributeProfiles attributeProfile = RAttributeProfiles.create();

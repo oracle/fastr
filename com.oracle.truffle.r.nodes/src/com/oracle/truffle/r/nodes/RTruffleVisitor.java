@@ -408,7 +408,7 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
                 rfArgs.add(args.get(i));
             }
         }
-        rfArgs.add(ArgNode.create(null, null, AccessVariable.create(null, rhsSymbol)));
+        rfArgs.add(ArgNode.create(null, "value", AccessVariable.create(null, rhsSymbol)));
 
         // replacement function call (use visitor for FunctionCall)
         FunctionCall rfCall = new FunctionCall(f.getSource(), f.getName(), rfArgs, simpleReplacement);

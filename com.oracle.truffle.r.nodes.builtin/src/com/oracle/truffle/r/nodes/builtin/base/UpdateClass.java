@@ -26,8 +26,7 @@ import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.env.*;
 
-@RBuiltin(name = "class<-", kind = PRIMITIVE, parameterNames = {"x", ""})
-// 2nd parameter is "value", but should not be matched against, so ""
+@RBuiltin(name = "class<-", kind = PRIMITIVE, parameterNames = {"x", "value"})
 public abstract class UpdateClass extends RBuiltinNode {
 
     protected static final int CACHE_LIMIT = 2;

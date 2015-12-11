@@ -39,8 +39,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
-@RBuiltin(name = "diag<-", kind = SUBSTITUTE, parameterNames = {"x", ""})
-// 2nd parameter is "value", but should not be matched against, so "")
+@RBuiltin(name = "diag<-", kind = SUBSTITUTE, parameterNames = {"x", "value"})
 // TODO Implement in R
 public abstract class UpdateDiag extends RInvisibleBuiltinNode {
 

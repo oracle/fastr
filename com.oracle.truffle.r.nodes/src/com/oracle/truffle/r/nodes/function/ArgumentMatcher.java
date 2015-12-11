@@ -253,7 +253,12 @@ public class ArgumentMatcher {
                 throw RInternalError.shouldNotReachHere();
             }
         } else {
-            String code = node.asRSyntaxNode().getSourceSection().getCode();
+            String code;
+            if (node.asRSyntaxNode().getSourceSection() != null) {
+                code = node.asRSyntaxNode().getSourceSection().getCode();
+            } else {
+                code = "<unknown>"; // RDeparse.deparseForPrint(node.asRSyntaxNode());
+            }
             String name = suppliedSignature.getName(index);
             return name == null ? code : name + " = " + code;
         }
