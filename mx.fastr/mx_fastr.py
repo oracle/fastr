@@ -279,8 +279,13 @@ def _test_harness_body_install_new(args, vmArgs):
     local_cran = mx.get_env('MX_HG_BASE')
     if local_cran:
         cran_args = ['--cran-mirror', join(dirname(local_cran), 'cran')]
-    ignore_ok_packages = ['--ok-pkg-filelist', join(_cran_test_project(), 'ok.packages')]
-    rc = installcran(stack_args + cran_args + ['--testcount', '100'] + ignore_ok_packages)
+    # the following is used to test the installation of packages that are not in the
+    # --ok-pkg-filelist file, i.e. those that have never been successfully installed
+    # extra_args = ['--ok-pkg-filelist', join(_cran_test_project(), 'ok.packages')]
+
+    # the following line is used to test packages that have been successfully installed
+    extra_args = ['--pkg-filelist', join(_cran_test_project(), 'ok.packages'), '--run-tests']
+    rc = installcran(stack_args + cran_args + ['--testcount', '3'] + extra_args)
     shutil.rmtree(install_tmp, ignore_errors=True)
     return rc
 
