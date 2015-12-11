@@ -31,7 +31,7 @@ public final class CountedLoopConditionProfile {
     @CompilationFinal private int sum;
 
     public void profileLength(int length) {
-        if (CompilerDirectives.inInterpreter() && (sum + length > sum)) {
+        if (CompilerDirectives.inInterpreter() && (sum + length >= sum)) {
             sum += length;
             count++;
         }
