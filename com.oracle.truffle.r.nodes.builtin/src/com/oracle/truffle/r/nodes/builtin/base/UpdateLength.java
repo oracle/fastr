@@ -31,8 +31,7 @@ import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.model.*;
 
-@RBuiltin(name = "length<-", kind = PRIMITIVE, parameterNames = {"x", ""}, dispatch = INTERNAL_GENERIC)
-// 2nd parameter is "value", but should not be matched against, so ""
+@RBuiltin(name = "length<-", kind = PRIMITIVE, parameterNames = {"x", "value"}, dispatch = INTERNAL_GENERIC)
 public abstract class UpdateLength extends RInvisibleBuiltinNode {
 
     @Override

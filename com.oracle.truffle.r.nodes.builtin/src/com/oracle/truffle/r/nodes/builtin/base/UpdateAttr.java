@@ -22,25 +22,34 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.PRIMITIVE;
 
-import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.utilities.*;
-import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.unary.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
-import com.oracle.truffle.r.runtime.nodes.*;
+import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.utilities.BranchProfile;
+import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
+import com.oracle.truffle.r.nodes.unary.CastIntegerNode;
+import com.oracle.truffle.r.nodes.unary.CastIntegerNodeGen;
+import com.oracle.truffle.r.nodes.unary.CastListNode;
+import com.oracle.truffle.r.nodes.unary.CastToVectorNode;
+import com.oracle.truffle.r.nodes.unary.CastToVectorNodeGen;
+import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.data.RAttributable;
+import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
+import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.nodes.RNode;
 
-@RBuiltin(name = "attr<-", kind = PRIMITIVE, parameterNames = {"x", "which", ""})
-// 2nd parameter is "value", but should not be matched against, so ""
-@SuppressWarnings("unused")
+@RBuiltin(name = "attr<-", kind = PRIMITIVE, parameterNames = {"x", "which", "value"})
 public abstract class UpdateAttr extends RInvisibleBuiltinNode {
 
     private final BranchProfile errorProfile = BranchProfile.create();
@@ -85,14 +94,6 @@ public abstract class UpdateAttr extends RInvisibleBuiltinNode {
             castVector = insert(CastToVectorNodeGen.create(false));
         }
         return (RAbstractVector) castVector.execute(value);
-    }
-
-    private RList castList(Object value) {
-        if (castList == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            castList = insert(CastListNodeGen.create(true, false, false));
-        }
-        return castList.executeList(value);
     }
 
     private String intern(String name) {
@@ -195,7 +196,7 @@ public abstract class UpdateAttr extends RInvisibleBuiltinNode {
      * All other, non-performance centric, {@link RAttributable} types.
      */
     @Fallback
-    protected Object updateAttr(VirtualFrame frame, Object object, Object name, Object value) {
+    protected Object updateAttr(Object object, Object name, Object value) {
         controlVisibility();
         String sname = RRuntime.asString(name);
         if (sname == null) {

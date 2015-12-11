@@ -36,8 +36,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 
-@RBuiltin(name = "storage.mode<-", kind = PRIMITIVE, parameterNames = {"x", ""})
-// 2nd parameter is "value", but should not be matched against, so ""
+@RBuiltin(name = "storage.mode<-", kind = PRIMITIVE, parameterNames = {"x", "value"})
 public abstract class UpdateStorageMode extends RBuiltinNode {
 
     @Child private TypeFromModeNode typeFromMode = TypeFromModeNodeGen.create();
