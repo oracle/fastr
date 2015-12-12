@@ -285,7 +285,7 @@ def _test_harness_body_install_new(args, vmArgs):
 
     # the following line is used to test packages that have been successfully installed
     extra_args = ['--pkg-filelist', join(_cran_test_project(), 'ok.packages'), '--run-tests']
-    rc = installcran(stack_args + cran_args + ['--testcount', '3'] + extra_args)
+    rc = installcran(stack_args + cran_args + ['--testcount', '100'] + extra_args)
     shutil.rmtree(install_tmp, ignore_errors=True)
     return rc
 
