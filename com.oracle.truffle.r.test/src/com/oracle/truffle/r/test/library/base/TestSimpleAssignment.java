@@ -113,5 +113,6 @@ public class TestSimpleAssignment extends TestBase {
         assertEval("{ x <- 3 ; f <- function() { assign(\"x\", 4) ; g <- function() { assign(\"y\", 3) ; hh <- function() { assign(\"z\", 6) ; h <- function(s=1) { if (s==2) { x <- 5 } ; x } ; h() } ; hh() } ; g()  } ; f() }");
         assertEval(Output.ContainsError, "{ f <- function() { if (FALSE) { x <- 1 } ; g <- function() { x } ; g() } ; f() }");
         assertEval("{ f <- function() { if (FALSE) { c <- 1 } ; g <- function() { c } ; g() } ; typeof(f()) }");
+        assertEval("{ `f<-` <- function(x, y=42, value) { x[1]<-value+y; x }; y<-1:10; f(y)<-7; y }");
     }
 }

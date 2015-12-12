@@ -38,7 +38,7 @@ import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 
-@RBuiltin(name = "@<-", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", "", ""}, nonEvalArgs = 1)
+@RBuiltin(name = "@<-", kind = RBuiltinKind.PRIMITIVE, parameterNames = {"", "", "value"}, nonEvalArgs = 1)
 public abstract class UpdateSlot extends RBuiltinNode {
 
     @CompilationFinal RFunction checkSlotAssignFunction;
