@@ -206,5 +206,6 @@ public class TestBuiltin_match extends TestBase {
         assertEval("{ match(c(7, 42), NULL }");
         assertEval("{ match(c(7, 42), NULL, integer() }");
         assertEval("{ match(c(7, 42), NULL, 1L }");
+        assertEval("{ match(NULL, NULL) }");
     }
 }

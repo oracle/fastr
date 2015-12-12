@@ -78,6 +78,12 @@ public abstract class Match extends RBuiltinNode {
 
     @Specialization
     @SuppressWarnings("unused")
+    protected RIntVector match(RNull x, RNull table, RAbstractIntVector nomatchObj, Object incomparables) {
+        return RDataFactory.createIntVector(0);
+    }
+
+    @Specialization
+    @SuppressWarnings("unused")
     protected RIntVector match(RNull x, RAbstractVector table, RAbstractIntVector nomatchObj, Object incomparables) {
         return RDataFactory.createIntVector(0);
     }
