@@ -23,11 +23,30 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.RootCallTarget;
+import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.frame.FrameDescriptor;
+import com.oracle.truffle.api.source.Source;
+import com.oracle.truffle.api.source.SourceSection;
+import com.oracle.truffle.r.nodes.access.AccessArgumentNode;
+import com.oracle.truffle.r.nodes.access.ConstantNode;
+import com.oracle.truffle.r.nodes.access.WriteVariableNode;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.function.BodyNode;
+import com.oracle.truffle.r.nodes.function.FormalArguments;
+import com.oracle.truffle.r.nodes.function.FunctionBodyNode;
+import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
+import com.oracle.truffle.r.nodes.function.FunctionStatementsNode;
+import com.oracle.truffle.r.nodes.function.SaveArgumentsNode;
+import com.oracle.truffle.r.nodes.runtime.RASTDeparse;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.env.*;
+import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
+import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 @RBuiltin(name = "as.function.default", kind = RBuiltinKind.INTERNAL, parameterNames = {"x", "envir"})
 public abstract class AsFunction extends RBuiltinNode {
@@ -35,7 +54,72 @@ public abstract class AsFunction extends RBuiltinNode {
     @Specialization
     @TruffleBoundary
     protected RFunction asFunction(RList x, REnvironment envir) {
-        throw RError.nyi(this, "as.function.default");
+        if (x.getLength() == 0) {
+            throw RError.error(this, RError.Message.GENERIC, "argument must have length at least 1");
+        }
+        SaveArgumentsNode saveArguments;
+        FormalArguments formals;
+        if (x.getLength() == 1) {
+            // no arguments
+            saveArguments = SaveArgumentsNode.NO_ARGS;
+            formals = FormalArguments.NO_ARGS;
+        } else {
+            assert x.getNames() != null;
+            RStringVector names = x.getNames();
+            String[] argumentNames = new String[x.getLength() - 1];
+            RNode[] defaultValues = new RNode[x.getLength() - 1];
+            AccessArgumentNode[] argAccessNodes = new AccessArgumentNode[x.getLength() - 1];
+            RNode[] init = new RNode[x.getLength() - 1];
+            for (int i = 0; i < x.getLength() - 1; i++) {
+                RNode defaultValue;
+                Object arg = x.getDataAt(i);
+                if (arg == RMissing.instance) {
+                    defaultValue = null;
+                } else if (arg == RNull.instance) {
+                    defaultValue = ConstantNode.create(RNull.instance);
+                } else {
+                    throw RInternalError.unimplemented();
+                }
+                AccessArgumentNode accessArg = AccessArgumentNode.create(i);
+                argAccessNodes[i] = accessArg;
+                String argName = names.getDataAt(i);
+                init[i] = WriteVariableNode.createArgSave(argName, accessArg);
+
+                // Store formal arguments
+                argumentNames[i] = argName;
+                defaultValues[i] = defaultValue;
+            }
+            saveArguments = new SaveArgumentsNode(init);
+            formals = FormalArguments.createForFunction(defaultValues, ArgumentsSignature.get(argumentNames));
+            for (AccessArgumentNode access : argAccessNodes) {
+                access.setFormals(formals);
+            }
+        }
+
+        if (!(x.getDataAt(x.getLength() - 1) instanceof RLanguage)) {
+            throw RInternalError.unimplemented();
+        }
+        RBaseNode body = ((RLanguage) x.getDataAt(x.getLength() - 1)).getRep();
+        if (!RBaseNode.isRSyntaxNode(body)) {
+            throw RInternalError.unimplemented();
+        }
+        RSyntaxNode synBody = (RSyntaxNode) body;
+        RASTDeparse.ensureSourceSection(synBody);
+        BodyNode fbn = new FunctionBodyNode(saveArguments, new FunctionStatementsNode(synBody.getSourceSection(), synBody));
+        // TODO: fix source section creation (does not include arguments at this point)
+        SourceSection sourceSection = synBody.getSourceSection();
+        if (sourceSection.getSource() != null) {
+            String funPlusBody = "function() " + sourceSection.getCode();
+            sourceSection = Source.fromText(funPlusBody, "from AsFunction").createSection("", 0, funPlusBody.length());
+        }
+
+        FrameDescriptor descriptor = new FrameDescriptor();
+        FrameSlotChangeMonitor.initializeFunctionFrameDescriptor(descriptor);
+        FunctionDefinitionNode rootNode = new FunctionDefinitionNode(sourceSection, descriptor, fbn, formals, "from AsFunction", false, null);
+        RootCallTarget callTarget = Truffle.getRuntime().createCallTarget(rootNode);
+        boolean containsDispatch = ((FunctionDefinitionNode) callTarget.getRootNode()).containsDispatch();
+        return RDataFactory.createFunction(RFunction.NO_NAME, callTarget, null, envir.getFrame(), null, containsDispatch);
+
     }
 
     @SuppressWarnings("unused")

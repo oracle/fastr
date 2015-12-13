@@ -370,4 +370,9 @@ public class TestFunctions extends TestBase {
     public void testStateTransitions() {
         assertEval("{ f<-function(x) { l<-length(x); x[1]<-1 }; y<-c(42,7); f(y); y }");
     }
+
+    @Test
+    public void testConversions() {
+        assertEval("{ x<-quote(list(...)); l<-list(); l[[2]]<-x; names(l)<-c(\"...\"); f<-as.function(l); f(7, 42) }");
+    }
 }
