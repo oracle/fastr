@@ -567,7 +567,8 @@ _commands = {
     'test' : [test, ['options']],
     'rrepl' : [rrepl, '[options]'],
     'installcran' : [installcran, '[options]'],
-    'pkgtestanalyze': [mx_fastr_pkgtest.pkgtestanalyze, '[options]']
     }
+
+_commands.update(mx_fastr_pkgtest._commands)
 
 mx.update_commands(_fastr_suite, _commands)
