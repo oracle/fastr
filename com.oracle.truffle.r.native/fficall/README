@@ -5,8 +5,8 @@ fficall contains the implementation of the R FFI, as described in https://cran.r
    jni
 
  'jni' contains the implementation that is based on Java JNI. 'common' contains code that has no JNI dependencies and has been extracted for
- reuse in other implementations. Note however, that common cannot be compiled in isolation, as it depends on the implementation via rffiutils.h.
- During the build symbolic lionk are made to the files in command and they are compiled with the other 'jni' files.
+ reuse in other implementations. Note however, that the common files cannot all be compiled in isolation, as they may depend on the implementation
+ via rffiutils.h. During the build symbolic links are made to the files in common and they are compiled with the other 'jni' files.
 
  The R FFI is rather baroque and defined in large set of header files in the sibling 'include' directory. In GnuR, the implementation
  of the functions is spread over the GnuR C files in 'src/main'. To ease navigation of the FastR implementation, in general, the implementation

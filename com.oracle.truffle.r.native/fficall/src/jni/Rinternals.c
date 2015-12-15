@@ -299,6 +299,10 @@ void Rf_copyMostAttrib(SEXP x, SEXP y) {
 	unimplemented("Rf_copyMostAttrib");
 }
 
+void Rf_copyVector(SEXP x, SEXP y) {
+	unimplemented("Rf_copyVector");
+}
+
 Rboolean Rf_inherits(SEXP x, const char * klass) {
     JNIEnv *thisenv = getEnv();
     jstring klazz = (*thisenv)->NewStringUTF(thisenv, klass);
@@ -514,6 +518,10 @@ void REvprintf(const char *format, va_list args) {
 
 void R_FlushConsole(void) {
 	// ignored
+}
+
+void R_ProcessEvents(void) {
+	unimplemented("R_ProcessEvents");
 }
 
 // Tools package support, not in public API

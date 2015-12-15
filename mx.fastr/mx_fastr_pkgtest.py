@@ -89,7 +89,7 @@ def rpt_compare(args):
     Analyze test package test results by comparing with GnuR output.
     Return 0 if passed, non-zero if failed
     '''
-    parser = ArgumentParser(prog='mx rpt_compare')
+    parser = ArgumentParser(prog='mx rpt-compare')
     parser.add_argument('--fastr-dir', action='store', help='dir containing fastr results', default=os.getcwd())
     parser.add_argument('--pkg', action='store', help='pkg to compare, default all')
     parser.add_argument('--verbose', action='store_true', help='print names of files that differ')
@@ -154,11 +154,14 @@ def check_install(result, text):
     result_data = ""
 
     def find_done(index, pkgname):
+        exception = False
         for i in range(index, nlines):
             line = lines[i]
+            if 'exception' in line:
+                exception = True
             if line.startswith("* DONE"):
                 done_pkgname = line[line.find("(") + 1 : line.rfind(")")]
-                return pkgname == done_pkgname
+                return pkgname == done_pkgname and not exception
         return False
 
     start_index = None
@@ -166,8 +169,9 @@ def check_install(result, text):
         line = lines[i]
         if line.startswith("BEGIN package installation"):
             start_index = i
+            break
 
-    if start_index:
+    if start_index is not None:
         for i in range(start_index, nlines):
             line = lines[i]
             if line.startswith("* installing *source* package"):
@@ -180,6 +184,17 @@ def check_install(result, text):
                     result = 1
 
     return result, result_data
+
+def rpt_check_install_log(args):
+    parser = ArgumentParser(prog='mx rpt-check-install-log')
+    parser.add_argument('--log', action='store', help='file containing install log', required=True)
+    args = parser.parse_args(args)
+
+    with open(args.log) as f:
+        content = f.read()
+        _, result_data = check_install(0, content)
+
+    print result_data
 
 def _extract_pkgname(line):
     sx = line.find("'")
@@ -546,5 +561,6 @@ _commands = {
     'rpt-install-status' : [rpt_install_status, '[options]'],
     'rpt-list-testdirs' : [rpt_list_testdirs, '[options]'],
     'rpt-compare': [rpt_compare, '[options]'],
+    'rpt-check-install-log': [rpt_check_install_log, '[options]'],
     'pkgtestanalyze': [rpt_compare, '[options]'],
 }

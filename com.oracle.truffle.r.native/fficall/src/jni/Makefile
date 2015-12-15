@@ -49,6 +49,9 @@ C_SOURCES = $(C_LOCAL_SOURCES) $(C_COMMON_SOURCES)
 C_OBJECTS := $(patsubst %.c,$(OBJ)/%.o,$(C_SOURCES))
 #$(info C_OBJECTS=$(C_OBJECTS))
 
+F_SOURCES := $(wildcard *.f)
+F_OBJECTS := $(patsubst %.f,$(OBJ)/%.o,$(F_SOURCES))
+
 JNI_INCLUDES = -I $(JAVA_HOME)/include -I $(JAVA_HOME)/include/$(JDK_OS_DIR)
 FFI_INCLUDES = -I$(TOPDIR)/include -I$(TOPDIR)/gnur/R-3.1.3/src/include -I$(TOPDIR)/include/R_ext
 
@@ -62,8 +65,8 @@ all: Makefile $(C_COMMON_SOURCES) $(C_LIB)
 links:
 	$(foreach file,$(C_COMMON_SOURCES),ln -sf $(COMMON)/$(file) $(file);)	
 
-$(C_LIB): $(OBJ) $(C_OBJECTS)
-	$(DYLIB_LD) $(DYLIB_LDFLAGS) -o $(C_LIB) $(C_OBJECTS)
+$(C_LIB): $(OBJ) $(C_OBJECTS) $(F_OBJECTS)
+	$(DYLIB_LD) $(DYLIB_LDFLAGS) -o $(C_LIB) $(C_OBJECTS) $(F_OBJECTS)
 
 $(OBJ):
 	mkdir -p $(OBJ)
@@ -73,6 +76,9 @@ $(OBJ)/%.o: %.c $(TOPDIR)/include/Rinternals.h $(C_HDRS)
 	
 $(OBJ)/%.E: %.c $(TOPDIR)/include/Rinternals.h
 	$(CC) -E $(CFLAGS) $(INCLUDES) -c $< > $@
+
+$(OBJ)/%.o: %.f
+	$(F77) $(FFLAGS) $(FPICFLAGS) -c $< -o $@
 
 clean:
 	rm -rf $(OBJ) $(C_LIB)

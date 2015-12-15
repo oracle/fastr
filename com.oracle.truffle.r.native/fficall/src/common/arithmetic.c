@@ -92,6 +92,11 @@ int R_IsNaN(double x)
     return 0;
 }
 
+int R_isnancpp(double x)
+{
+   return (isnan(x)!=0);
+}
+
 /* Mainly for use in packages */
 int R_finite(double x)
 {
