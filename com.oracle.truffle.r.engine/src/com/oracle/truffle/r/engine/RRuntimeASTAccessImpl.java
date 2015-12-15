@@ -100,8 +100,8 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
             RStringVector formals = list.getNames();
             boolean nullFormals = formals == null;
             RNode fn = unwrapToRNode(list.getDataAtAsObject(0));
-            if (!nullFormals && fn instanceof ReadVariableNode && formals.getLength() > 0 && formals.getDataAt(0).length() > 0) {
-                fn = new NamedReadVariableNode((ReadVariableNode) fn, formals.getDataAt(0));
+            if (!nullFormals && formals.getLength() > 0 && formals.getDataAt(0).length() > 0) {
+                fn = new NamedRNode(fn, formals.getDataAt(0));
             }
             RSyntaxNode[] arguments = new RSyntaxNode[length - 1];
             String[] sigNames = new String[arguments.length];
@@ -156,9 +156,9 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
             boolean hasName = false;
             String functionName = "";
             RNode fnNode = RASTUtils.getFunctionNode(node);
-            if (fnNode instanceof NamedReadVariableNode) {
+            if (fnNode instanceof NamedRNode) {
                 hasName = true;
-                functionName = ((NamedReadVariableNode) fnNode).name;
+                functionName = ((NamedRNode) fnNode).name;
             }
             Arguments<RSyntaxNode> args = RASTUtils.findCallArguments(node);
             ArgumentsSignature sig = args.getSignature();

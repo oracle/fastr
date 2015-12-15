@@ -199,8 +199,8 @@ public class RASTUtils {
             return RCallNode.createCall(sourceSection, RASTUtils.createReadVariableNode(((String) fn)), signature, arguments);
         } else if (fn instanceof ReadVariableNode) {
             return RCallNode.createCall(sourceSection, (ReadVariableNode) fn, signature, arguments);
-        } else if (fn instanceof NamedReadVariableNode) {
-            return RCallNode.createCall(RSyntaxNode.SOURCE_UNAVAILABLE, (NamedReadVariableNode) fn, signature, arguments);
+        } else if (fn instanceof NamedRNode) {
+            return RCallNode.createCall(RSyntaxNode.SOURCE_UNAVAILABLE, (NamedRNode) fn, signature, arguments);
         } else if (fn instanceof GroupDispatchNode) {
             GroupDispatchNode gdcn = (GroupDispatchNode) fn;
             return GroupDispatchNode.create(gdcn.getGenericName(), gdcn.getCallSrc(), signature, arguments);

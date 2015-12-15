@@ -30,11 +30,11 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  * Used when creating an {@code RCallNode} with a function that has a "name". This could subclass
  * {@link ReadVariableNode} but that is currently final.
  */
-public final class NamedReadVariableNode extends RNode {
-    public final ReadVariableNode original;
+public final class NamedRNode extends RNode {
+    public final RNode original;
     public final String name;
 
-    public NamedReadVariableNode(ReadVariableNode original, String name) {
+    public NamedRNode(RNode original, String name) {
         this.original = original;
         this.name = name;
     }
@@ -46,6 +46,6 @@ public final class NamedReadVariableNode extends RNode {
 
     @Override
     public RSyntaxNode getRSyntaxNode() {
-        return original;
+        return original.asRSyntaxNode();
     }
 }
