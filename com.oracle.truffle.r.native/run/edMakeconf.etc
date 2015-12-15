@@ -1,4 +1,5 @@
 /^CFLAGS/s/$/ -DFASTR/
+/^CXXFLAGS/s/$/ -DFASTR/
 /LIBINTL=/
 d
 /LIBR =/
