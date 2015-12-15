@@ -182,7 +182,7 @@ def check_install(result, text):
     return result, result_data
 
 def _extract_pkgname(line):
-    sx = line.find("'");
+    sx = line.find("'")
     ex = line.rfind("'")
     if sx < 0:
         sx = line.find("\xe2") + 2
@@ -281,7 +281,7 @@ def find_matches(results, match_string, print_matches, list_file_matches, match_
         for line in lines:
             if match_string in line:
                 # search backward for package install trace
-                j = i;
+                j = i
                 pkgname = None
                 while j > 0:
                     linej = lines[j]
@@ -325,7 +325,7 @@ def _build_pkgtable(results):
     # sort occurrences by result date
     for _, occurrences in pkgtable.iteritems():
         if len(occurrences) > 1:
-            occurrences.sort(key = lambda pkgstatus: pkgstatus.resultInfo.date, reverse=True)
+            occurrences.sort(key=lambda pkgstatus: pkgstatus.resultInfo.date, reverse=True)
     return pkgtable
 
 def _add_common_args(parser):
@@ -339,6 +339,7 @@ def get_gate_dirs(url, matchfun, adjustfun=None):
     parser = DirHTMLParser(gatedirlist)
     parser.feed(text)
     urlf.close()
+# pylint: disable=W0141
     gatedirlist = filter(matchfun, gatedirlist)
     filelist = []
     for gatedir in gatedirlist:
@@ -349,8 +350,7 @@ def get_gate_dirs(url, matchfun, adjustfun=None):
 
 def get_local_dirs(logdir):
     filelist = []
-    for _, localdirs, _ in os.walk(logdir):
-        break
+    localdirs = os.listdir(logdir)
     for localdir in localdirs:
         filelist.append(localdir)
     return filelist
@@ -509,7 +509,7 @@ def rpt_list_testdirs(args):
     result = []
     local_dirs = get_local_dirs(args.logdir)
     for local_dir in local_dirs:
-        testdir = join(args.logdir, local_dir,'test')
+        testdir = join(args.logdir, local_dir, 'test')
         if not os.path.exists(testdir):
             continue
         pkgdirs = os.listdir(testdir)
@@ -535,7 +535,6 @@ class SymbolClassMatch(MatchClass):
     def findit(self, sym):
         try:
             subprocess.check_output('fgrep ' + sym +' com.oracle.truffle.r.native/fficall/jni/src/*.c', shell=True)
-            pass
         except subprocess.CalledProcessError:
             print sym
 
