@@ -1,4 +1,5 @@
 g/R_HOME/s/R_HOME/FASTR_R_HOME/
 /^CFLAGS/s/$/ -DFASTR/
+/^CXXFLAGS/s/$/ -DFASTR/
 w
 q

@@ -1,3 +1,13 @@
+/USE_RINTERNALS section/
+i
+#ifdef FASTR
+#undef USE_R_INTERNALS
+#else
+.
++1
+a
+#endif
+.
 /typedef struct SEXPREC \*SEXP;/
 i
 #ifdef FASTR
@@ -44,7 +54,7 @@ a
 /R_NamespaceRegistry/
 i
 #ifdef FASTR
-LibExtern SEXP FASTR_R_NamespaceRegistry();
+LibExtern SEXP FASTR_NamespaceRegistry();
 #define R_NamespaceRegistry FASTR_NamespaceRegistry()
 #else
 .
