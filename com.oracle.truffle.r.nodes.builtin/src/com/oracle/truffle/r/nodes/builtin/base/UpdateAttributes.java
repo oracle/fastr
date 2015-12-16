@@ -100,7 +100,7 @@ public abstract class UpdateAttributes extends RInvisibleBuiltinNode {
     @Specialization
     protected RAbstractVector updateAttributes(RAbstractVector abstractVector, @SuppressWarnings("unused") RNull list) {
         controlVisibility();
-        RVector resultVector = abstractVector.materialize();
+        RAbstractVector resultVector = (RAbstractVector) abstractVector.materializeNonShared();
         resultVector.resetAllAttributes(true);
         return resultVector;
     }

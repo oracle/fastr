@@ -151,5 +151,7 @@ public class TestSimpleAttributes extends TestBase {
         assertEval("{ xx<-c(Package=\"digest\", Version=\"0.6.4\"); db<-list(xx); db <- rbind(db); attributes(db) }");
 
         assertEval("{ x<-matrix(1, ncol=1); y<-c(1,2,3,4); x*y }");
+
+        assertEval("{ x<-c(1,2); attr(x, \"foo\")<-\"foo\"; y<-x; attributes(y)<-NULL; x }");
     }
 }
