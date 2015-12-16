@@ -67,11 +67,8 @@ public abstract class DispatchGeneric extends RBaseNode {
         return ReadVariableNode.create(dispatchString, RType.Any, ReadKind.SilentLocal);
     }
 
-    @SuppressWarnings("unused")
-    @Specialization(guards = "equalClasses(classes, cachedClasses)")
-    protected Object dispatch(VirtualFrame frame, REnvironment methodsEnv, REnvironment mtable, RStringVector classes, RFunction fdef, String fname, @Cached("classes") RStringVector cachedClasses,
-                    @Cached("createDispatchString(cachedClasses)") String dispatchString, @Cached("createTableRead(dispatchString)") ReadVariableNode tableRead) {
-        RFunction method = (RFunction) tableRead.execute(null, mtable.getFrame());
+    private Object dispatchInternal(VirtualFrame frame, REnvironment methodsEnv, REnvironment mtable, RStringVector classes, RFunction fdef, String fname, RFunction f) {
+        RFunction method = f;
         if (method == null) {
             if (inheritForDispatchFind == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -93,6 +90,22 @@ public abstract class DispatchGeneric extends RBaseNode {
         method = loadMethod.executeRFunction(frame, methodsEnv, method, fname);
         Object ret = executeMethod.executeMethod(frame, method);
         return ret;
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization(guards = "equalClasses(classes, cachedClasses)")
+    protected Object dispatchCached(VirtualFrame frame, REnvironment methodsEnv, REnvironment mtable, RStringVector classes, RFunction fdef, String fname,
+                    @Cached("classes") RStringVector cachedClasses, @Cached("createDispatchString(cachedClasses)") String dispatchString,
+                    @Cached("createTableRead(dispatchString)") ReadVariableNode tableRead) {
+        RFunction method = (RFunction) tableRead.execute(null, mtable.getFrame());
+        return dispatchInternal(frame, methodsEnv, mtable, classes, fdef, fname, method);
+    }
+
+    @Specialization(contains = "dispatchCached")
+    protected Object dispatch(VirtualFrame frame, REnvironment methodsEnv, REnvironment mtable, RStringVector classes, RFunction fdef, String fname) {
+        String dispatchString = createDispatchString(classes);
+        RFunction method = (RFunction) mtable.get(dispatchString);
+        return dispatchInternal(frame, methodsEnv, mtable, classes, fdef, fname, method);
     }
 
     protected boolean equalClasses(RStringVector classes, RStringVector cachedClasses) {
