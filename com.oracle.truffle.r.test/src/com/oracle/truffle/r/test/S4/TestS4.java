@@ -74,5 +74,13 @@ public class TestS4 extends TestBase {
     @Test
     public void testAllocation() {
         assertEval("{ new(\"numeric\") }");
+        // output slightly different from GNU R even though we use R's "show" method to print it
+        assertEval(Ignored.OutputFormatting, "{ setClass(\"foo\", representation(j=\"numeric\")); new(\"foo\", j=42) }");
+    }
+
+    @Test
+    public void testClassCreation() {
+        // output slightly different from GNU R even though we use R's "show" method to print it
+        assertEval(Ignored.OutputFormatting, "{ setClass(\"foo\", representation(j=\"numeric\")); getClass(\"foo\") }");
     }
 }

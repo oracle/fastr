@@ -27,11 +27,17 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 import java.io.*;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.nodes.DirectCallNode;
+import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
+import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode.ReadKind;
 import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.r.nodes.function.signature.RArgumentsNode;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.conn.*;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.*;
 
 public class PrintFunctions {
@@ -53,7 +59,7 @@ public class PrintFunctions {
     public abstract static class PrintDefault extends PrintAdapter {
 
         @SuppressWarnings("unused")
-        @Specialization
+        @Specialization(guards = "!isS4(o)")
         protected Object printDefault(VirtualFrame frame, Object o, Object digits, byte quote, Object naPrint, Object printGap, byte right, Object max, Object useSource, Object noOpt) {
             String s = (String) prettyPrinter.executeString(frame, o, null, quote, right);
             if (s != null && !s.isEmpty()) {
@@ -62,6 +68,55 @@ public class PrintFunctions {
             controlVisibility();
             return o;
         }
+
+        ReadVariableNode createShowFind() {
+            return ReadVariableNode.create("show", RType.Function, ReadKind.Normal);
+        }
+
+        RFunction createShowFunction(ReadVariableNode showFind) {
+            return (RFunction) showFind.execute((VirtualFrame) Utils.getActualCurrentFrame());
+        }
+
+        DirectCallNode createCallNode(RFunction f) {
+            return Truffle.getRuntime().createDirectCallNode(f.getTarget());
+        }
+
+        @SuppressWarnings("unused")
+        @TruffleBoundary
+        @Specialization(guards = "isS4(o)")
+        protected Object printDefaultS4(RTypedValue o, Object digits, byte quote, Object naPrint, Object printGap, byte right, Object max, Object useSource, Object noOpt,
+                        @Cached("createShowFind()") ReadVariableNode showFind, @Cached("createShowFunction(showFind)") RFunction showFunction/*
+                                                                                                                                              * ,
+                                                                                                                                              * @
+                                                                                                                                              * Cached
+                                                                                                                                              * (
+                                                                                                                                              * "create()"
+                                                                                                                                              * )
+                                                                                                                                              * RArgumentsNode
+                                                                                                                                              * argsNode
+                                                                                                                                              * ,
+                                                                                                                                              * 
+                                                                                                                                              * @
+                                                                                                                                              * Cached
+                                                                                                                                              * (
+                                                                                                                                              * "createCallNode(showFunction)"
+                                                                                                                                              * )
+                                                                                                                                              * DirectCallNode
+                                                                                                                                              * showCallNode
+                                                                                                                                              */) {
+// RCaller caller = RDataFactory.createCaller(this);
+// Object[] args = argsNode.execute(showFunction, caller, null,
+// RArguments.getDepth(Utils.getActualCurrentFrame()) + 1, new Object[]{o},
+// ArgumentsSignature.get("object"), null);
+// showCallNode.call((VirtualFrame) Utils.getActualCurrentFrame(), args);
+            RContext.getEngine().evalFunction(showFunction, null, o);
+            return null;
+        }
+
+        protected boolean isS4(Object o) {
+            return o instanceof RS4Object;
+        }
+
     }
 
     @RBuiltin(name = "print.function", kind = INTERNAL, parameterNames = {"x", "useSource", "..."})
