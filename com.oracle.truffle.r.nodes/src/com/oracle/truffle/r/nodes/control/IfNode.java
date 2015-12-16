@@ -139,7 +139,7 @@ public final class IfNode extends RNode implements RSyntaxNode, VisibilityContro
 
     @Override
     public RSyntaxNode substituteImpl(REnvironment env) {
-        return create(null, condition.substitute(env), thenPart.substitute(env), elsePart.substitute(env));
+        return create(null, condition.substitute(env), thenPart.substitute(env), elsePart == null ? null : elsePart.substitute(env));
     }
 
     @Override
