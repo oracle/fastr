@@ -120,7 +120,11 @@ public class FunctionBodyNode extends BodyNode implements RSyntaxNode {
 
     @Override
     public boolean getRequalsImpl(RSyntaxNode other) {
-        return getStatements().getRequalsImpl(((FunctionBodyNode) other).getStatements());
+        if (other instanceof FunctionBodyNode) {
+            return getStatements().getRequalsImpl(((FunctionBodyNode) other).getStatements());
+        } else {
+            return false;
+        }
     }
 
 }
