@@ -111,6 +111,26 @@ public abstract class StandardGeneric extends RBuiltinNode {
         return ret;
     }
 
+    private Object getFunction(VirtualFrame frame, RAbstractStringVector fVec, String fname, Object fnObj) {
+        if (fnObj != RNull.instance) {
+            RFunction fn = (RFunction) fnObj;
+            Object genObj = null;
+            RAttributes attributes = fn.getAttributes();
+            if (attributes == null) {
+                return null;
+            }
+            genObj = genericAttrAccess.execute(attributes);
+            if (genObj == null) {
+                return null;
+            }
+            String gen = castStringScalar.executeString(genObj);
+            if (gen.equals(fname)) {
+                return stdGeneric(frame, fVec, fn);
+            }
+        }
+        return null;
+    }
+
     @Specialization(guards = "fVec.getLength() > 0")
     protected Object stdGeneric(VirtualFrame frame, RAbstractStringVector fVec, @SuppressWarnings("unused") RMissing fdef) {
         String fname = fVec.getDataAt(0);
@@ -121,26 +141,19 @@ public abstract class StandardGeneric extends RBuiltinNode {
             genericAttrAccess = insert(AttributeAccessNodeGen.create(RRuntime.GENERIC_ATTR_KEY));
             sysFunction = insert(FrameFunctionsFactory.SysFunctionNodeGen.create(new RNode[1], null, null));
         }
+        Object fnObj = RArguments.getFunction(frame);
+        fnObj = getFunction(frame, fVec, fname, fnObj);
+        if (fnObj != null) {
+            return fnObj;
+        }
         // TODO: GNU R counts to (i < n) - does their equivalent of getDepth return a different
         // value
         // TODO; shouldn't we count from n to 0?
         for (int i = 0; i <= n; i++) {
-            Object fnObj = sysFunction.executeObject(frame, i);
-            if (fnObj != RNull.instance) {
-                RFunction fn = (RFunction) fnObj;
-                Object genObj = null;
-                RAttributes attributes = fn.getAttributes();
-                if (attributes == null) {
-                    continue;
-                }
-                genObj = genericAttrAccess.execute(attributes);
-                if (genObj == null) {
-                    continue;
-                }
-                String gen = castStringScalar.executeString(genObj);
-                if (gen.equals(fname)) {
-                    return stdGeneric(frame, fVec, fn);
-                }
+            fnObj = sysFunction.executeObject(frame, i);
+            fnObj = getFunction(frame, fVec, fname, fnObj);
+            if (fnObj != null) {
+                return fnObj;
             }
         }
         controlVisibility();
