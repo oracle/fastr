@@ -22,9 +22,9 @@
  */
 package com.oracle.truffle.r.runtime.ffi.jnr;
 
-import static com.oracle.truffle.r.runtime.ffi.RFFIUtils.*;
 import jnr.ffi.LibraryLoader;
 import jnr.ffi.annotations.In;
+import jnr.ffi.annotations.Out;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.ffi.DLL;
@@ -34,15 +34,9 @@ import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
 // Checkstyle: stop method name
 public class JNR_Stats implements StatsRFFI {
     public interface Stats {
-        /*
-         * TODO add @In/@Out to any arrays that are known to be either @In or @Out (default is
-         * 
-         * @Inout)
-         */
+        void fft_factor(int n, @Out int[] pmaxf, @Out int[] pmaxp);
 
-        void fft_factor(@In int[] n, int[] pmaxf, int[] pmaxp);
-
-        int fft_work(double[] a, @In int[] nseg, @In int[] n, @In int[] nspn, @In int[] isn, double[] work, int[] iwork);
+        int fft_work(double[] a, int nseg, int n, int nspn, int isn, @In double[] work, @In int[] iwork);
     }
 
     private static class StatsProvider {
@@ -69,12 +63,12 @@ public class JNR_Stats implements StatsRFFI {
 
     @TruffleBoundary
     public void fft_factor(int n, int[] pmaxf, int[] pmaxp) {
-        stats().fft_factor(wrapInt(n), pmaxf, pmaxp);
+        stats().fft_factor(n, pmaxf, pmaxp);
     }
 
     @TruffleBoundary
     public int fft_work(double[] a, int nseg, int n, int nspn, int isn, double[] work, int[] iwork) {
-        return stats().fft_work(a, wrapInt(nseg), wrapInt(n), wrapInt(nspn), wrapInt(isn), work, iwork);
+        return stats().fft_work(a, nseg, n, nspn, isn, work, iwork);
     }
 
 }
