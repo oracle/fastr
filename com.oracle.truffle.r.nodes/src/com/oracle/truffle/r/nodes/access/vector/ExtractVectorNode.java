@@ -97,9 +97,19 @@ public abstract class ExtractVectorNode extends Node {
                     @Cached("positions.length") int cachedLength, //
                     @Cached("create()") CastStringNode castNode, //
                     @Cached("createFirstString()") FirstStringNode firstString) {
-
-        String string = firstString.executeString(castNode.execute(positions[0]));
-        return ForeignAccess.execute(foreignRead, frame, object, new Object[]{string});
+        Object position = positions[0];
+        if (position instanceof String || position instanceof Double || position instanceof Integer) {
+            return ForeignAccess.execute(foreignRead, frame, object, new Object[]{position});
+        } else if (position instanceof RAbstractStringVector) {
+            String string = firstString.executeString(castNode.execute(position));
+            return ForeignAccess.execute(foreignRead, frame, object, new Object[]{string});
+        } else if (position instanceof RAbstractDoubleVector) {
+            return ForeignAccess.execute(foreignRead, frame, object, new Object[]{((RAbstractDoubleVector) position).getDataAt(0)});
+        } else if (position instanceof RAbstractIntVector) {
+            return ForeignAccess.execute(foreignRead, frame, object, new Object[]{((RAbstractIntVector) position).getDataAt(0)});
+        } else {
+            throw RError.error(this, RError.Message.GENERIC, "invalid index during foreign access");
+        }
     }
 
     @Specialization(guards = {"cached != null", "cached.isSupported(vector, positions)"})

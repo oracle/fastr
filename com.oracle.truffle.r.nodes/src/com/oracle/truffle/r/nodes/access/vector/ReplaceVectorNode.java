@@ -37,9 +37,14 @@ import com.oracle.truffle.r.nodes.unary.CastStringNode;
 import com.oracle.truffle.r.nodes.unary.FirstStringNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.data.RDouble;
 import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.data.RInteger;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
+import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
 /**
@@ -106,8 +111,25 @@ public abstract class ReplaceVectorNode extends Node {
                     @Cached("positions.length") int cachedLength, //
                     @Cached("create()") CastStringNode castNode, @Cached("createFirstString()") FirstStringNode firstString) {
 
-        String string = firstString.executeString(castNode.execute(positions[0]));
-        return ForeignAccess.execute(foreignRead, frame, object, new Object[]{string, value});
+        Object writtenValue = value;
+        if (writtenValue instanceof RInteger) {
+            writtenValue = ((RInteger) writtenValue).getValue();
+        } else if (writtenValue instanceof RDouble) {
+            writtenValue = ((RDouble) writtenValue).getValue();
+        }
+        Object position = positions[0];
+        if (position instanceof String || position instanceof Double || position instanceof Integer) {
+            return ForeignAccess.execute(foreignRead, frame, object, new Object[]{position, writtenValue});
+        } else if (position instanceof RAbstractStringVector) {
+            String string = firstString.executeString(castNode.execute(position));
+            return ForeignAccess.execute(foreignRead, frame, object, new Object[]{string, writtenValue});
+        } else if (position instanceof RAbstractDoubleVector) {
+            return ForeignAccess.execute(foreignRead, frame, object, new Object[]{((RAbstractDoubleVector) position).getDataAt(0), writtenValue});
+        } else if (position instanceof RAbstractIntVector) {
+            return ForeignAccess.execute(foreignRead, frame, object, new Object[]{((RAbstractIntVector) position).getDataAt(0), writtenValue});
+        } else {
+            throw RError.error(this, RError.Message.GENERIC, "invalid index during foreign access");
+        }
     }
 
     @Specialization(limit = "CACHE_LIMIT", guards = {"cached != null", "cached.isSupported(vector, positions)"})

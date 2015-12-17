@@ -64,7 +64,27 @@ public class FastRTckTest extends TruffleTCK {
         "count <- function() {\n" +
         "  counter <<- counter + 1L\n" +
         "}\n" +
-        "Interop.export('count', count)\n",
+        "Interop.export('count', count)\n" +
+        "complexAdd <- function(a, b) {\n" +
+        " a$imaginary <- a$imaginary + b$imaginary\n" +
+        " a$real <- a$real + b$real\n" +
+        "}\n" +
+        "Interop.export('complexAdd', complexAdd)\n" +
+        "complexSumReal <- function(a) {\n" +
+        " sum <- 0\n" +
+        " for (i in 0:(length(a)-1)) {\n" +
+        "   sum <- sum + a[i]$real\n" +
+        " }\n" +
+        " return(sum)\n" +
+        "}\n" +
+        "Interop.export('complexSumReal', complexSumReal)\n" +
+        "complexCopy <- function(a, b) {\n" +
+        " for (i in 0:(length(b)-1)) {\n" +
+        "   a[i]$real <- b[i]$real\n" +
+        "   a[i]$imaginary <- b[i]$imaginary\n" +
+        " }\n" +
+        "}\n" +
+        "Interop.export('complexCopy', complexCopy)\n",
         "<initialization>"
     ).withMimeType(TruffleRLanguage.MIME);
     // @formatter:on
@@ -109,6 +129,21 @@ public class FastRTckTest extends TruffleTCK {
     @Override
     protected String countInvocations() {
         return "count";
+    }
+
+    @Override
+    protected String complexAdd() {
+        return "complexAdd";
+    }
+
+    @Override
+    protected String complexSumReal() {
+        return "complexSumReal";
+    }
+
+    @Override
+    protected String complexCopy() {
+        return "complexCopy";
     }
 
     @Override
@@ -205,6 +240,26 @@ public class FastRTckTest extends TruffleTCK {
     @Override
     public void testEvaluateSource() throws Exception {
         // TODO support
+    }
+
+    @Override
+    public void testCopyComplexNumbersA() {
+        // TODO determine the semantics of assignments to a[i]$b
+    }
+
+    @Override
+    public void testCopyComplexNumbersB() {
+        // TODO determine the semantics of assignments to a[i]$b
+    }
+
+    @Override
+    public void testCopyStructuredComplexToComplexNumbersA() {
+        // TODO determine the semantics of assignments to a[i]$b
+    }
+
+    @Override
+    public void testAddComplexNumbers() {
+        // TODO determine the semantics of assignments to a[i]$b
     }
 
     @Override
