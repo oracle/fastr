@@ -77,6 +77,8 @@ public abstract class AsFunction extends RBuiltinNode {
                     defaultValue = null;
                 } else if (arg == RNull.instance) {
                     defaultValue = ConstantNode.create(RNull.instance);
+                } else if (arg instanceof RLanguage && ((RLanguage) arg).getRep() instanceof ConstantNode) {
+                    defaultValue = (ConstantNode) ((RLanguage) arg).getRep();
                 } else {
                     throw RInternalError.unimplemented();
                 }
