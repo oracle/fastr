@@ -19,7 +19,7 @@ import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.DirectCallNode;
-import com.oracle.truffle.api.utilities.ConditionProfile;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode.ReadKind;
 import com.oracle.truffle.r.nodes.function.signature.RArgumentsNode;

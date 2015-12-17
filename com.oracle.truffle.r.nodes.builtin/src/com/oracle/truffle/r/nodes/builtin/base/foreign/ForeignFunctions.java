@@ -15,7 +15,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.utilities.BranchProfile;
+import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.library.grDevices.DevicesCCalls;
 import com.oracle.truffle.r.library.graphics.GraphicsCCalls;
 import com.oracle.truffle.r.library.graphics.GraphicsCCalls.C_Par;

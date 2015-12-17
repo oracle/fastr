@@ -23,7 +23,7 @@
 package com.oracle.truffle.r.nodes.primitive;
 
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.utilities.*;
+import com.oracle.truffle.api.profiles.*;
 import com.oracle.truffle.r.nodes.attributes.*;
 import com.oracle.truffle.r.nodes.primitive.BinaryMapNodeFactory.VectorMapBinaryInternalNodeGen;
 import com.oracle.truffle.r.nodes.profile.*;

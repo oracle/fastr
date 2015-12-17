@@ -25,7 +25,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.utilities.BranchProfile;
+import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;

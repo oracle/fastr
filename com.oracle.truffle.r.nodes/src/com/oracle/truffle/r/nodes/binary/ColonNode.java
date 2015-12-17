@@ -24,7 +24,7 @@ package com.oracle.truffle.r.nodes.binary;
 
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.source.*;
-import com.oracle.truffle.api.utilities.*;
+import com.oracle.truffle.api.profiles.*;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.binary.ColonNodeGen.ColonCastNodeGen;
 import com.oracle.truffle.r.runtime.*;

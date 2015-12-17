@@ -15,7 +15,7 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.utilities.BranchProfile;
+import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.attributes.TypeFromModeNode;
 import com.oracle.truffle.r.nodes.attributes.TypeFromModeNodeGen;
 import com.oracle.truffle.r.nodes.binary.CastTypeNode;

@@ -26,7 +26,7 @@ import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.nodes.*;
-import com.oracle.truffle.api.utilities.*;
+import com.oracle.truffle.api.profiles.*;
 import com.oracle.truffle.r.nodes.access.vector.CachedExtractVectorNodeFactory.SetNamesNodeGen;
 import com.oracle.truffle.r.nodes.access.vector.PositionsCheckNode.PositionProfile;
 import com.oracle.truffle.r.nodes.profile.*;

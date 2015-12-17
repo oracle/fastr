@@ -29,7 +29,7 @@ import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.nodes.Node.*;
-import com.oracle.truffle.api.utilities.*;
+import com.oracle.truffle.api.profiles.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.instrument.*;
 import com.oracle.truffle.r.nodes.access.WriteVariableNode.Mode;

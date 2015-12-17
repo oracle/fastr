@@ -25,16 +25,22 @@ package com.oracle.truffle.r.nodes.instrument.trace;
 import java.io.IOException;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.instrument.*;
-import com.oracle.truffle.api.nodes.*;
-import com.oracle.truffle.api.utilities.*;
-import com.oracle.truffle.r.nodes.function.*;
-import com.oracle.truffle.r.nodes.instrument.*;
-import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.instrument.Probe;
+import com.oracle.truffle.api.instrument.StandardInstrumentListener;
+import com.oracle.truffle.api.instrument.StandardSyntaxTag;
+import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.utilities.CyclicAssumption;
+import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
+import com.oracle.truffle.r.nodes.function.FunctionStatementsNode;
+import com.oracle.truffle.r.nodes.instrument.RInstrument;
+import com.oracle.truffle.r.runtime.FunctionUID;
+import com.oracle.truffle.r.runtime.RArguments;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.conn.StdConnections;
-import com.oracle.truffle.r.runtime.context.*;
-import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**

@@ -25,7 +25,7 @@ package com.oracle.truffle.r.nodes.access.vector;
 import java.util.*;
 
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.utilities.*;
+import com.oracle.truffle.api.profiles.*;
 import com.oracle.truffle.r.nodes.access.vector.PositionsCheckNode.PositionProfile;
 import com.oracle.truffle.r.nodes.profile.*;
 import com.oracle.truffle.r.runtime.*;

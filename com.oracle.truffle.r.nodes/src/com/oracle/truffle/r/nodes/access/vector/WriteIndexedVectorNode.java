@@ -22,16 +22,36 @@
  */
 package com.oracle.truffle.r.nodes.access.vector;
 
-import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.nodes.*;
-import com.oracle.truffle.api.utilities.*;
-import com.oracle.truffle.r.nodes.profile.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
-import com.oracle.truffle.r.runtime.ops.na.*;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.nodes.SlowPathException;
+import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.ValueProfile;
+import com.oracle.truffle.r.nodes.profile.CountedLoopConditionProfile;
+import com.oracle.truffle.r.nodes.profile.IntValueProfile;
+import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
+import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.data.RComplex;
+import com.oracle.truffle.r.runtime.data.RIntSequence;
+import com.oracle.truffle.r.runtime.data.RMissing;
+import com.oracle.truffle.r.runtime.data.RTypedValue;
+import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
+import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 /**
  * Primitive indexed N-dimensional vector write node. It can be used for vector replaces and

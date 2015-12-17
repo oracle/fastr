@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
-import com.oracle.truffle.api.utilities.*;
+import com.oracle.truffle.api.profiles.*;
 
 public final class RAttributeProfiles {
     private final ConditionProfile attrNullProfile = ConditionProfile.createBinaryProfile();

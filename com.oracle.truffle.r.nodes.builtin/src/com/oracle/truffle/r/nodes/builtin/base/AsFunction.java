@@ -50,7 +50,6 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 @RBuiltin(name = "as.function.default", kind = RBuiltinKind.INTERNAL, parameterNames = {"x", "envir"})
 public abstract class AsFunction extends RBuiltinNode {
-    @SuppressWarnings("unused")
     @Specialization
     @TruffleBoundary
     protected RFunction asFunction(RList x, REnvironment envir) {

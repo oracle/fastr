@@ -14,7 +14,7 @@ package com.oracle.truffle.r.nodes.objects;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.utilities.BranchProfile;
+import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.attributes.AttributeAccess;
 import com.oracle.truffle.r.nodes.attributes.AttributeAccessNodeGen;
 import com.oracle.truffle.r.nodes.attributes.RemoveAttributeNode;

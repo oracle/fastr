@@ -24,7 +24,7 @@ package com.oracle.truffle.r.nodes.attributes;
 
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.nodes.*;
-import com.oracle.truffle.api.utilities.*;
+import com.oracle.truffle.api.profiles.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.nodes.*;

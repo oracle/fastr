@@ -26,7 +26,7 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.utilities.*;
+import com.oracle.truffle.api.profiles.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
@@ -39,11 +39,11 @@ public abstract class Matrix extends RBuiltinNode {
     @Child private Transpose transpose;
     @Child private UpdateDimNames updateDimNames;
 
-    private final BinaryConditionProfile nrowMissingNcolGiven = (BinaryConditionProfile) ConditionProfile.createBinaryProfile();
-    private final BinaryConditionProfile nrowGivenNcolMissing = (BinaryConditionProfile) ConditionProfile.createBinaryProfile();
-    private final BinaryConditionProfile bothNrowNcolMissing = (BinaryConditionProfile) ConditionProfile.createBinaryProfile();
-    private final BinaryConditionProfile empty = (BinaryConditionProfile) ConditionProfile.createBinaryProfile();
-    private final BinaryConditionProfile isList = (BinaryConditionProfile) ConditionProfile.createBinaryProfile();
+    private final ConditionProfile nrowMissingNcolGiven = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile nrowGivenNcolMissing = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile bothNrowNcolMissing = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile empty = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile isList = ConditionProfile.createBinaryProfile();
 
     public abstract RAbstractVector execute(RAbstractVector data, int nrow, int ncol, byte byrow, Object dimnames, byte missingNr, byte missingNc);
 

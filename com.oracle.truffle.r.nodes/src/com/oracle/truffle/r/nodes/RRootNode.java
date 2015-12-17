@@ -27,7 +27,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.*;
-import com.oracle.truffle.api.utilities.*;
+import com.oracle.truffle.api.profiles.*;
 import com.oracle.truffle.r.nodes.builtin.*;
 import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
@@ -42,7 +42,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 public abstract class RRootNode extends RootNode implements HasSignature {
 
     @CompilationFinal protected boolean checkSingletonFrame = true;
-    private final ValueProfile irregularFrameProfile = ValueProfile.createPrimitiveProfile();
+    private final ConditionProfile irregularFrameProfile = ConditionProfile.createBinaryProfile();
 
     /**
      * The formal arguments this function is supposed to take.

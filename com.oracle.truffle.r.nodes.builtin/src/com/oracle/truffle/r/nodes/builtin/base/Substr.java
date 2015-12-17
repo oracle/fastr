@@ -26,8 +26,8 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.utilities.BranchProfile;
-import com.oracle.truffle.api.utilities.ConditionProfile;
+import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;

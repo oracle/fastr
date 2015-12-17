@@ -28,7 +28,7 @@ import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.utilities.*;
+import com.oracle.truffle.api.profiles.*;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.attributes.TypeFromModeNode;
 import com.oracle.truffle.r.nodes.attributes.TypeFromModeNodeGen;

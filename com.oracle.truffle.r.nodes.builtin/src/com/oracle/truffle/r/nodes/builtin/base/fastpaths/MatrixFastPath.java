@@ -25,7 +25,7 @@ package com.oracle.truffle.r.nodes.builtin.base.fastpaths;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.utilities.ConditionProfile;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.base.Matrix;
 import com.oracle.truffle.r.nodes.builtin.base.MatrixNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNode;

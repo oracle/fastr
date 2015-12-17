@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.rng;
 
-import com.oracle.truffle.api.utilities.ValueProfile;
+import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 public final class RandomNumberNode extends RBaseNode {

@@ -24,7 +24,7 @@ package com.oracle.truffle.r.nodes.primitive;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.utilities.*;
+import com.oracle.truffle.api.profiles.*;
 import com.oracle.truffle.r.nodes.primitive.UnaryMapNodeFactory.MapUnaryVectorInternalNodeGen;
 import com.oracle.truffle.r.nodes.profile.*;
 import com.oracle.truffle.r.runtime.*;

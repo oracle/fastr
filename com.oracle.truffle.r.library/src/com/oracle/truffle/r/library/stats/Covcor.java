@@ -13,8 +13,8 @@ package com.oracle.truffle.r.library.stats;
 
 import java.util.Arrays;
 
-import com.oracle.truffle.api.utilities.BranchProfile;
-import com.oracle.truffle.api.utilities.ConditionProfile;
+import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.nodes.profile.CountedLoopConditionProfile;
 import com.oracle.truffle.r.runtime.RError;

@@ -23,7 +23,7 @@
 package com.oracle.truffle.r.nodes.access.vector;
 
 import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.utilities.*;
+import com.oracle.truffle.api.profiles.*;
 import com.oracle.truffle.r.nodes.access.vector.PositionsCheckNode.PositionProfile;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RError.Message;

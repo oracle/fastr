@@ -12,7 +12,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.utilities.ConditionProfile;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.profile.CountedLoopConditionProfile;
 import com.oracle.truffle.r.runtime.RBuiltin;

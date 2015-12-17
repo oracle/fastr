@@ -17,7 +17,7 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.NodeChildren;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.utilities.BranchProfile;
+import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.attributes.AttributeAccess;
 import com.oracle.truffle.r.nodes.attributes.AttributeAccessNodeGen;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;

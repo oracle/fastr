@@ -27,9 +27,10 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.utilities.BranchProfile;
-import com.oracle.truffle.api.utilities.ConditionProfile;
-import com.oracle.truffle.api.utilities.ValueProfile;
+import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.PrimitiveValueProfile;
+import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNodeGen;
@@ -57,7 +58,7 @@ public abstract class Paste extends RBuiltinNode {
     @Child private AsCharacter asCharacterNode;
     @Child private CastStringNode castCharacterNode;
 
-    private final ValueProfile lengthProfile = ValueProfile.createPrimitiveProfile();
+    private final ValueProfile lengthProfile = PrimitiveValueProfile.createEqualityProfile();
     private final ConditionProfile vectorOrSequence = ConditionProfile.createBinaryProfile();
     private final ConditionProfile reusedResultProfile = ConditionProfile.createBinaryProfile();
     private final BranchProfile nonNullElementsProfile = BranchProfile.create();

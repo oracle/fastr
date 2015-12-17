@@ -117,6 +117,7 @@ public class MethodsListDispatch {
         @Specialization
         @TruffleBoundary
         protected byte setPrimitiveMethods(Object fname, Object op, Object codeVec, @SuppressWarnings("unused") Object fundef, @SuppressWarnings("unused") Object mlist) {
+            @SuppressWarnings("unused")
             String fnameString = RRuntime.asString(fname);
             String codeVecString = RRuntime.asString(codeVec);
             if (codeVecString == null) {
@@ -124,6 +125,7 @@ public class MethodsListDispatch {
             }
             // TODO: implement proper primitive method setting
             if (op == RNull.instance) {
+                @SuppressWarnings("unused")
                 byte value = RRuntime.asLogical(RContext.getInstance().allowPrimitiveMethods());
                 if (codeVecString.length() > 0) {
                     if (codeVecString.charAt(0) == 'C') {
