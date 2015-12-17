@@ -31,6 +31,7 @@ import com.oracle.truffle.r.runtime.env.*;
 import com.oracle.truffle.r.runtime.env.REnvironment.*;
 
 public final class REnvEmptyFrameAccess extends REnvFrameAccess {
+    private static final RStringVector EMPTY = RDataFactory.createEmptyStringVector();
 
     @Override
     public MaterializedFrame getFrame() {
@@ -39,7 +40,7 @@ public final class REnvEmptyFrameAccess extends REnvFrameAccess {
 
     @Override
     public Object get(String key) {
-        throw RInternalError.shouldNotReachHere();
+        return null;
     }
 
     @Override
@@ -49,12 +50,12 @@ public final class REnvEmptyFrameAccess extends REnvFrameAccess {
 
     @Override
     public void rm(String key) throws PutException {
-        throw RInternalError.shouldNotReachHere();
+        throw new PutException(RError.Message.UNKNOWN_OBJECT, key);
     }
 
     @Override
     public RStringVector ls(boolean allNames, Pattern pattern, boolean sorted) {
-        throw RInternalError.shouldNotReachHere();
+        return EMPTY;
     }
 
     @Override

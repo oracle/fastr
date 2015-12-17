@@ -1037,12 +1037,11 @@ public abstract class REnvironment extends RAttributeStorage implements RTypedVa
     }
 
     /**
-     * The empty environment has no runtime state and so can be allocated statically. TODO Attempts
-     * to assign should cause an R error, if not prevented in caller. TODO check.
+     * The empty environment has no runtime state and so can be allocated statically.
      */
     private static final class Empty extends REnvironment {
 
-        public final static String EMPTY_ENV_NAME = "R_EmptyEnv";
+        public static final String EMPTY_ENV_NAME = "R_EmptyEnv";
 
         private Empty() {
             super(null, EMPTY_ENV_NAME, new REnvEmptyFrameAccess());
