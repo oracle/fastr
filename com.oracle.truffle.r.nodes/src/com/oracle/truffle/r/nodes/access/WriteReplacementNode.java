@@ -83,7 +83,7 @@ public class WriteReplacementNode extends RNode implements RSyntaxNode {
     }
 
     public RSyntaxNode substituteImpl(REnvironment env) {
-        throw RInternalError.unimplemented();
+        return new WriteReplacementNode((RCallNode) replacementCall.substituteImpl(env), rhs.substituteImpl(env));
     }
 
     public int getRlengthImpl() {
