@@ -14,7 +14,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.profile.CountedLoopConditionProfile;
+import com.oracle.truffle.api.profiles.LoopConditionProfile;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RError;
@@ -44,8 +44,8 @@ public abstract class RowSums extends RBuiltinNode {
 
     private final ConditionProfile removeNA = ConditionProfile.createBinaryProfile();
     private final ConditionProfile remainderProfile = ConditionProfile.createBinaryProfile();
-    private final CountedLoopConditionProfile outerProfile = CountedLoopConditionProfile.create();
-    private final CountedLoopConditionProfile innerProfile = CountedLoopConditionProfile.create();
+    private final LoopConditionProfile outerProfile = LoopConditionProfile.createCountingProfile();
+    private final LoopConditionProfile innerProfile = LoopConditionProfile.createCountingProfile();
 
     @Override
     protected void createCasts(CastBuilder casts) {
@@ -63,8 +63,8 @@ public abstract class RowSums extends RBuiltinNode {
         double[] result = new double[rowNum];
         final boolean rna = removeNA.profile(naRm == RRuntime.LOGICAL_TRUE);
         na.enable(x);
-        outerProfile.profileLength(rowNum / 4);
-        innerProfile.profileLength(colNum);
+        outerProfile.profileCounted(rowNum / 4);
+        innerProfile.profileCounted(colNum);
         int i = 0;
         // the unrolled loop cannot handle NA values
         if (!na.isEnabled()) {

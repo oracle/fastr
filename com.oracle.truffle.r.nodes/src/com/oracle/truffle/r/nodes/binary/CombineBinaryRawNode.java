@@ -22,12 +22,13 @@
  */
 package com.oracle.truffle.r.nodes.binary;
 
-import java.util.*;
-
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.r.nodes.profile.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.profiles.LoopConditionProfile;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RRaw;
+import com.oracle.truffle.r.runtime.data.RRawVector;
 
 @SuppressWarnings("unused")
 /** Takes only RNull, RRaw or RRawVector as arguments. Use CastRawNode to cast the operands. */
@@ -65,10 +66,10 @@ public abstract class CombineBinaryRawNode extends CombineBinaryNode {
 
     @Specialization
     protected RRawVector combine(RRawVector left, RRaw right, //
-                    @Cached("create()") CountedLoopConditionProfile profile) {
+                    @Cached("createCountingProfile()") LoopConditionProfile profile) {
         int dataLength = left.getLength();
         byte[] result = new byte[dataLength + 1];
-        profile.profileLength(dataLength);
+        profile.profileCounted(dataLength);
         for (int i = 0; profile.inject(i < dataLength); i++) {
             result[i] = left.getDataAt(i).getValue();
         }
@@ -78,10 +79,10 @@ public abstract class CombineBinaryRawNode extends CombineBinaryNode {
 
     @Specialization
     protected RRawVector combine(RRaw left, RRawVector right, //
-                    @Cached("create()") CountedLoopConditionProfile profile) {
+                    @Cached("createCountingProfile()") LoopConditionProfile profile) {
         int dataLength = right.getLength();
         byte[] result = new byte[dataLength + 1];
-        profile.profileLength(dataLength);
+        profile.profileCounted(dataLength);
         for (int i = 0; profile.inject(i < dataLength); i++) {
             result[i + 1] = right.getDataAt(i).getValue();
         }
@@ -91,8 +92,8 @@ public abstract class CombineBinaryRawNode extends CombineBinaryNode {
 
     @Specialization
     protected RRawVector combine(RRawVector left, RRawVector right, //
-                    @Cached("create()") CountedLoopConditionProfile profileLeft, //
-                    @Cached("create()") CountedLoopConditionProfile profileRight) {
+                    @Cached("createCountingProfile()") LoopConditionProfile profileLeft, //
+                    @Cached("createCountingProfile()") LoopConditionProfile profileRight) {
         return (RRawVector) genericCombine(left, right, profileLeft, profileRight);
     }
 

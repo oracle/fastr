@@ -22,11 +22,14 @@
  */
 package com.oracle.truffle.r.nodes.binary;
 
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.r.nodes.profile.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.ops.na.*;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.profiles.LoopConditionProfile;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RLogicalVector;
+import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 @SuppressWarnings("unused")
 public abstract class CombineBinaryLogicalNode extends CombineBinaryNode {
@@ -65,12 +68,12 @@ public abstract class CombineBinaryLogicalNode extends CombineBinaryNode {
 
     @Specialization
     protected RLogicalVector combine(RLogicalVector left, byte right, //
-                    @Cached("create()") CountedLoopConditionProfile profile) {
+                    @Cached("createCountingProfile()") LoopConditionProfile profile) {
         check.enable(left);
         check.enable(right);
         int dataLength = left.getLength();
         byte[] result = new byte[dataLength + 1];
-        profile.profileLength(dataLength);
+        profile.profileCounted(dataLength);
         for (int i = 0; profile.inject(i < dataLength); i++) {
             byte value = left.getDataAt(i);
             check.check(value);
@@ -83,12 +86,12 @@ public abstract class CombineBinaryLogicalNode extends CombineBinaryNode {
 
     @Specialization
     protected RLogicalVector combine(byte left, RLogicalVector right, //
-                    @Cached("create()") CountedLoopConditionProfile profile) {
+                    @Cached("createCountingProfile()") LoopConditionProfile profile) {
         check.enable(right);
         check.enable(left);
         int dataLength = right.getLength();
         byte[] result = new byte[dataLength + 1];
-        profile.profileLength(dataLength);
+        profile.profileCounted(dataLength);
         for (int i = 0; profile.inject(i < dataLength); i++) {
             byte value = right.getDataAt(i);
             check.check(value);
@@ -101,8 +104,8 @@ public abstract class CombineBinaryLogicalNode extends CombineBinaryNode {
 
     @Specialization
     protected RLogicalVector combine(RLogicalVector left, RLogicalVector right, //
-                    @Cached("create()") CountedLoopConditionProfile profileLeft, //
-                    @Cached("create()") CountedLoopConditionProfile profileRight) {
+                    @Cached("createCountingProfile()") LoopConditionProfile profileLeft, //
+                    @Cached("createCountingProfile()") LoopConditionProfile profileRight) {
         return (RLogicalVector) genericCombine(left, right, profileLeft, profileRight);
     }
 }

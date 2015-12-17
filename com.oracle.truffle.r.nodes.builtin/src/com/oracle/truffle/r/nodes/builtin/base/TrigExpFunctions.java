@@ -22,18 +22,31 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.profiles.*;
-import com.oracle.truffle.r.nodes.attributes.*;
-import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.profile.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
-import com.oracle.truffle.r.runtime.ops.*;
-import com.oracle.truffle.r.runtime.ops.na.*;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.api.profiles.LoopConditionProfile;
+import com.oracle.truffle.r.nodes.attributes.UnaryCopyAttributesNode;
+import com.oracle.truffle.r.nodes.attributes.UnaryCopyAttributesNodeGen;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RBuiltinKind;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.data.RComplex;
+import com.oracle.truffle.r.runtime.data.RComplexVector;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
+import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.RMissing;
+import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
+import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 public class TrigExpFunctions {
     public abstract static class AdapterCall1 extends RBuiltinNode {
@@ -85,11 +98,11 @@ public class TrigExpFunctions {
 
         @Specialization
         protected RAbstractVector trigOp(RIntVector vector, //
-                        @Cached("create()") CountedLoopConditionProfile profile) {
+                        @Cached("createCountingProfile()") LoopConditionProfile profile) {
             controlVisibility();
             int length = vector.getLength();
             double[] resultVector = new double[length];
-            profile.profileLength(length);
+            profile.profileCounted(length);
             for (int i = 0; profile.inject(i < length); i++) {
                 resultVector[i] = doFunInt(vector.getDataAt(i));
             }
@@ -98,11 +111,11 @@ public class TrigExpFunctions {
 
         @Specialization
         protected RAbstractVector trigOp(RDoubleVector vector, //
-                        @Cached("create()") CountedLoopConditionProfile profile) {
+                        @Cached("createCountingProfile()") LoopConditionProfile profile) {
             controlVisibility();
             int length = vector.getLength();
             double[] resultVector = new double[length];
-            profile.profileLength(length);
+            profile.profileCounted(length);
             for (int i = 0; profile.inject(i < length); i++) {
                 resultVector[i] = doFunDouble(vector.getDataAt(i));
             }
@@ -141,11 +154,11 @@ public class TrigExpFunctions {
 
         @Specialization
         protected RComplexVector exp(RComplexVector powersVector, //
-                        @Cached("create()") CountedLoopConditionProfile profile) {
+                        @Cached("createCountingProfile()") LoopConditionProfile profile) {
             controlVisibility();
             int length = powersVector.getLength();
             double[] result = new double[length * 2];
-            profile.profileLength(length);
+            profile.profileCounted(length);
             for (int i = 0; profile.inject(i < length); i++) {
                 RComplex rComplexResult = complexOp(powersVector.getDataAt(i));
                 result[2 * i] = rComplexResult.getRealPart();
@@ -357,10 +370,10 @@ public class TrigExpFunctions {
             double apply(int i);
         }
 
-        protected RDoubleVector doFun(int length, IntDoubleFunction yFun, IntDoubleFunction xFun, CountedLoopConditionProfile profile) {
+        protected RDoubleVector doFun(int length, IntDoubleFunction yFun, IntDoubleFunction xFun, LoopConditionProfile profile) {
             controlVisibility();
             double[] resultVector = new double[length];
-            profile.profileLength(length);
+            profile.profileCounted(length);
             for (int i = 0; profile.inject(i < length); i++) {
                 double y = yFun.apply(i);
                 double x = xFun.apply(i);
@@ -381,7 +394,7 @@ public class TrigExpFunctions {
 
         @Specialization
         protected RDoubleVector atan2(double y, RAbstractDoubleVector x, //
-                        @Cached("create()") CountedLoopConditionProfile profile) {
+                        @Cached("createCountingProfile()") LoopConditionProfile profile) {
             yNACheck.enable(y);
             xNACheck.enable(x);
             return doFun(x.getLength(), i -> y, i -> x.getDataAt(i), profile);
@@ -389,7 +402,7 @@ public class TrigExpFunctions {
 
         @Specialization
         protected RDoubleVector atan2(RAbstractDoubleVector y, double x, //
-                        @Cached("create()") CountedLoopConditionProfile profile) {
+                        @Cached("createCountingProfile()") LoopConditionProfile profile) {
             yNACheck.enable(y);
             xNACheck.enable(x);
             return doFun(y.getLength(), i -> y.getDataAt(i), i -> x, profile);
@@ -397,7 +410,7 @@ public class TrigExpFunctions {
 
         @Specialization
         protected RDoubleVector atan2(RAbstractDoubleVector y, RAbstractDoubleVector x, //
-                        @Cached("create()") CountedLoopConditionProfile profile) {
+                        @Cached("createCountingProfile()") LoopConditionProfile profile) {
             int yLength = y.getLength();
             int xLength = x.getLength();
             yNACheck.enable(y);

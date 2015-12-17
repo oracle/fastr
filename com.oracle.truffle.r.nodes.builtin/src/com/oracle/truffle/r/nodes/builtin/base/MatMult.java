@@ -30,7 +30,7 @@ import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.profiles.*;
 import com.oracle.truffle.r.nodes.binary.*;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.profile.CountedLoopConditionProfile;
+import com.oracle.truffle.api.profiles.LoopConditionProfile;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.closures.*;
@@ -47,8 +47,8 @@ public abstract class MatMult extends RBuiltinNode {
     @Child private BinaryMapArithmeticFunctionNode add = new BinaryMapArithmeticFunctionNode(BinaryArithmetic.ADD.create());
 
     private final BranchProfile errorProfile = BranchProfile.create();
-    private final CountedLoopConditionProfile mainLoopProfile = CountedLoopConditionProfile.create();
-    private final CountedLoopConditionProfile remainingLoopProfile = CountedLoopConditionProfile.create();
+    private final LoopConditionProfile mainLoopProfile = LoopConditionProfile.createCountingProfile();
+    private final LoopConditionProfile remainingLoopProfile = LoopConditionProfile.createCountingProfile();
 
     private final ConditionProfile notOneRow = ConditionProfile.createBinaryProfile();
     private final ConditionProfile notOneColumn = ConditionProfile.createBinaryProfile();
@@ -92,12 +92,12 @@ public abstract class MatMult extends RBuiltinNode {
     // double-double
 
     private static void multiplyBlock(double[] a, double[] b, int aRows, double[] result, int row, int col, int k, int aRowStride, int aColStride, int bRowStride, int bColStride, int remainingCols,
-                    int remainingRows, int remainingK, CountedLoopConditionProfile loopProfile) {
+                    int remainingRows, int remainingK, LoopConditionProfile loopProfile) {
         for (int innerCol = 0; innerCol < remainingCols; innerCol++) {
             for (int innerRow = 0; innerRow < remainingRows; innerRow++) {
                 int bIndex = (col + innerCol) * bColStride + k * bRowStride;
                 int aIndex = k * aColStride + (row + innerRow) * aRowStride;
-                loopProfile.profileLength(remainingK);
+                loopProfile.profileCounted(remainingK);
                 double x = 0.0;
                 for (int innerK = 0; loopProfile.inject(innerK < remainingK); innerK++) {
                     x += a[aIndex] * b[bIndex];

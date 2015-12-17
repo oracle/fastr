@@ -22,12 +22,16 @@
  */
 package com.oracle.truffle.r.nodes.binary;
 
-import com.oracle.truffle.api.profiles.*;
-import com.oracle.truffle.r.nodes.profile.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
-import com.oracle.truffle.r.runtime.ops.na.*;
+import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.api.profiles.LoopConditionProfile;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.RVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 public abstract class CombineBinaryNode extends BinaryNode {
 
@@ -37,7 +41,7 @@ public abstract class CombineBinaryNode extends BinaryNode {
 
     public abstract Object executeCombine(Object left, Object right);
 
-    protected RStringVector combineNames(RAbstractVector orgVector, boolean prependEmpty, CountedLoopConditionProfile profile) {
+    protected RStringVector combineNames(RAbstractVector orgVector, boolean prependEmpty, LoopConditionProfile profile) {
         // no profileLength calls in here - the profiles are already initialized
         if (orgVector.getNames(attrProfiles) == null) {
             return null;
@@ -63,7 +67,7 @@ public abstract class CombineBinaryNode extends BinaryNode {
         return RDataFactory.createStringVector(namesData, naCheck.neverSeenNA());
     }
 
-    protected RStringVector combineNames(RAbstractVector left, RAbstractVector right, CountedLoopConditionProfile profileLeft, CountedLoopConditionProfile profileRight) {
+    protected RStringVector combineNames(RAbstractVector left, RAbstractVector right, LoopConditionProfile profileLeft, LoopConditionProfile profileRight) {
         // no profileLength calls in here - the profiles are already initialized
         Object leftNames = left.getNames(attrProfiles);
         Object rightNames = right.getNames(attrProfiles);
@@ -99,16 +103,16 @@ public abstract class CombineBinaryNode extends BinaryNode {
         return RDataFactory.createStringVector(namesData, naCheck.neverSeenNA());
     }
 
-    protected RVector genericCombine(RVector left, RVector right, CountedLoopConditionProfile profileLeft, CountedLoopConditionProfile profileRight) {
+    protected RVector genericCombine(RVector left, RVector right, LoopConditionProfile profileLeft, LoopConditionProfile profileRight) {
         int leftLength = left.getLength();
         int rightLength = right.getLength();
         RVector result = left.createEmptySameType(leftLength + rightLength, left.isComplete() && right.isComplete());
         int i = 0;
-        profileLeft.profileLength(leftLength);
+        profileLeft.profileCounted(leftLength);
         for (; profileLeft.inject(i < leftLength); i++) {
             result.transferElementSameType(i, left, i);
         }
-        profileRight.profileLength(rightLength);
+        profileRight.profileCounted(rightLength);
         for (; profileRight.inject(i < leftLength + rightLength); i++) {
             result.transferElementSameType(i, right, i - leftLength);
         }

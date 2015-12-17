@@ -22,13 +22,13 @@
  */
 package com.oracle.truffle.r.nodes.binary;
 
-import java.util.*;
-
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.r.nodes.profile.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.profiles.LoopConditionProfile;
+import com.oracle.truffle.r.runtime.data.RComplex;
+import com.oracle.truffle.r.runtime.data.RComplexVector;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RNull;
 
 @SuppressWarnings("unused")
 /** Takes only RNull, RComplex or RComplexVector as arguments. Use CastComplexNode to cast the operands. */
@@ -66,10 +66,10 @@ public abstract class CombineBinaryComplexNode extends CombineBinaryNode {
 
     @Specialization
     protected RComplexVector combine(RComplexVector left, RComplex right, //
-                    @Cached("create()") CountedLoopConditionProfile profile) {
+                    @Cached("createCountingProfile()") LoopConditionProfile profile) {
         int dataLength = left.getLength();
         double[] result = new double[(dataLength + 1) << 1];
-        profile.profileLength(dataLength);
+        profile.profileCounted(dataLength);
         for (int i = 0; profile.inject(i < dataLength); i++) {
             RComplex leftValue = left.getDataAt(i);
             int index = i << 1;
@@ -83,12 +83,12 @@ public abstract class CombineBinaryComplexNode extends CombineBinaryNode {
 
     @Specialization
     protected RComplexVector combine(RComplex left, RComplexVector right, //
-                    @Cached("create()") CountedLoopConditionProfile profile) {
+                    @Cached("createCountingProfile()") LoopConditionProfile profile) {
         int dataLength = right.getLength();
         double[] result = new double[(1 + dataLength) << 1];
         result[0] = left.getRealPart();
         result[1] = left.getImaginaryPart();
-        profile.profileLength(dataLength);
+        profile.profileCounted(dataLength);
         for (int i = 0; profile.inject(i < dataLength); i++) {
             int index = (i + 1) << 1;
             RComplex rightValue = right.getDataAt(i);
@@ -100,8 +100,8 @@ public abstract class CombineBinaryComplexNode extends CombineBinaryNode {
 
     @Specialization
     protected RComplexVector combine(RComplexVector left, RComplexVector right, //
-                    @Cached("create()") CountedLoopConditionProfile profileLeft, //
-                    @Cached("create()") CountedLoopConditionProfile profileRight) {
+                    @Cached("createCountingProfile()") LoopConditionProfile profileLeft, //
+                    @Cached("createCountingProfile()") LoopConditionProfile profileRight) {
         return (RComplexVector) genericCombine(left, right, profileLeft, profileRight);
     }
 }

@@ -22,11 +22,14 @@
  */
 package com.oracle.truffle.r.nodes.binary;
 
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.r.nodes.profile.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.profiles.LoopConditionProfile;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 
 @SuppressWarnings("unused")
 /** Takes only RNull, int or RIntVector as arguments. Use CastIntegerNode to cast the operands. */
@@ -54,10 +57,10 @@ public abstract class CombineBinaryIntegerNode extends CombineBinaryNode {
 
     @Specialization
     protected RIntVector performAbstractIntVectorInt(RAbstractIntVector left, int right, //
-                    @Cached("create()") CountedLoopConditionProfile profile) {
+                    @Cached("createCountingProfile()") LoopConditionProfile profile) {
         int dataLength = left.getLength();
         int[] result = new int[dataLength + 1];
-        profile.profileLength(dataLength);
+        profile.profileCounted(dataLength);
         for (int i = 0; profile.inject(i < dataLength); i++) {
             result[i] = left.getDataAt(i);
         }
@@ -67,10 +70,10 @@ public abstract class CombineBinaryIntegerNode extends CombineBinaryNode {
 
     @Specialization
     protected RIntVector performIntAbstractIntVector(int left, RAbstractIntVector right, //
-                    @Cached("create()") CountedLoopConditionProfile profile) {
+                    @Cached("createCountingProfile()") LoopConditionProfile profile) {
         int dataLength = right.getLength();
         int[] result = new int[dataLength + 1];
-        profile.profileLength(dataLength);
+        profile.profileCounted(dataLength);
         for (int i = 0; profile.inject(i < dataLength); i++) {
             result[i + 1] = right.getDataAt(i);
         }
@@ -80,17 +83,17 @@ public abstract class CombineBinaryIntegerNode extends CombineBinaryNode {
 
     @Specialization
     protected RIntVector combine(RAbstractIntVector left, RAbstractIntVector right, //
-                    @Cached("create()") CountedLoopConditionProfile leftProfile, //
-                    @Cached("create()") CountedLoopConditionProfile rightProfile) {
+                    @Cached("createCountingProfile()") LoopConditionProfile leftProfile, //
+                    @Cached("createCountingProfile()") LoopConditionProfile rightProfile) {
         int leftLength = left.getLength();
         int rightLength = right.getLength();
         int[] result = new int[leftLength + rightLength];
         int i = 0;
-        leftProfile.profileLength(leftLength);
+        leftProfile.profileCounted(leftLength);
         for (; leftProfile.inject(i < leftLength); i++) {
             result[i] = left.getDataAt(i);
         }
-        rightProfile.profileLength(rightLength);
+        rightProfile.profileCounted(rightLength);
         for (; rightProfile.inject(i < leftLength + rightLength); i++) {
             result[i] = right.getDataAt(i - leftLength);
         }

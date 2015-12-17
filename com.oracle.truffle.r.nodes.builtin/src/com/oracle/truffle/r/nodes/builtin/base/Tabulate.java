@@ -15,7 +15,7 @@ import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.profile.CountedLoopConditionProfile;
+import com.oracle.truffle.api.profiles.LoopConditionProfile;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RBuiltinKind;
 import com.oracle.truffle.r.runtime.RError;
@@ -29,7 +29,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 public abstract class Tabulate extends RBuiltinNode {
 
     private final BranchProfile errorProfile = BranchProfile.create();
-    private final CountedLoopConditionProfile loopProfile = CountedLoopConditionProfile.create();
+    private final LoopConditionProfile loopProfile = LoopConditionProfile.createCountingProfile();
 
     @Override
     protected void createCasts(CastBuilder casts) {
@@ -44,7 +44,7 @@ public abstract class Tabulate extends RBuiltinNode {
             throw RError.error(this, RError.Message.INVALID_ARGUMENT, "nbin");
         }
         int[] ans = new int[nBins];
-        loopProfile.profileLength(bin.getLength());
+        loopProfile.profileCounted(bin.getLength());
         for (int i = 0; loopProfile.inject(i < bin.getLength()); i++) {
             int currentEl = bin.getDataAt(i);
             if (!RRuntime.isNA(currentEl) && currentEl > 0 && currentEl <= nBins) {

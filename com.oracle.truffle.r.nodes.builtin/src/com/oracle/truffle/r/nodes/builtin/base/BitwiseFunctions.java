@@ -15,7 +15,7 @@ import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.profiles.*;
 import com.oracle.truffle.r.nodes.binary.*;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.profile.CountedLoopConditionProfile;
+import com.oracle.truffle.api.profiles.LoopConditionProfile;
 import com.oracle.truffle.r.nodes.unary.*;
 import com.oracle.truffle.r.nodes.unary.TypeofNodeGen;
 import com.oracle.truffle.r.runtime.*;
@@ -30,7 +30,7 @@ public class BitwiseFunctions {
         private final BranchProfile errorProfile = BranchProfile.create();
         private final NACheck naCheckA = NACheck.create();
         private final NACheck naCheckB = NACheck.create();
-        private final CountedLoopConditionProfile loopProfile = CountedLoopConditionProfile.create();
+        private final LoopConditionProfile loopProfile = LoopConditionProfile.createCountingProfile();
 
         @Child protected CastTypeNode castTypeA = CastTypeNodeGen.create(null, null);
         @Child protected CastTypeNode castTypeB = CastTypeNodeGen.create(null, null);
@@ -63,7 +63,7 @@ public class BitwiseFunctions {
             int ansSize = (aLen != 0 && bLen != 0) ? Math.max(aLen, bLen) : 0;
             int[] ans = new int[ansSize];
             boolean completeVector = true;
-            loopProfile.profileLength(ansSize);
+            loopProfile.profileCounted(ansSize);
             for (int i = 0; loopProfile.inject(i < ansSize); i++) {
                 int aVal = aVec.getDataAt(i % aLen);
                 int bVal = bVec.getDataAt(i % bLen);

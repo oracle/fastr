@@ -31,7 +31,7 @@ import com.oracle.truffle.api.nodes.SlowPathException;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
-import com.oracle.truffle.r.nodes.profile.CountedLoopConditionProfile;
+import com.oracle.truffle.api.profiles.LoopConditionProfile;
 import com.oracle.truffle.r.nodes.profile.IntValueProfile;
 import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -191,11 +191,11 @@ abstract class WriteIndexedVectorNode extends Node {
     protected int doMissing(RAbstractVector left, Object leftStore, int leftBase, int leftLength, Object targetDimensions, int targetDimension, //
                     Object[] positions, RMissing position, int positionOffset, int positionLength, //
                     RAbstractContainer right, Object rightStore, int rightBase, int rightLength, boolean parentNA, //
-                    @Cached("create()") CountedLoopConditionProfile profile) {
+                    @Cached("createCountingProfile()") LoopConditionProfile profile) {
         initRightIndexCheck(rightBase, targetDimension, leftLength, rightLength);
 
         int rightIndex = rightBase;
-        profile.profileLength(targetDimension);
+        profile.profileCounted(targetDimension);
         for (int positionValue = 0; profile.inject(positionValue < targetDimension); positionValue += 1) {
             rightIndex = applyInner(//
                             left, leftStore, leftBase, leftLength, targetDimensions, //
@@ -210,7 +210,7 @@ abstract class WriteIndexedVectorNode extends Node {
                     Object[] positions, RAbstractLogicalVector position, int positionOffset, int positionLength, //
                     RTypedValue right, Object rightStore, int rightBase, int rightLength, boolean parentNA, //
                     @Cached("create()") BranchProfile wasTrue, @Cached("create()") BranchProfile outOfBounds, //
-                    @Cached("create()") CountedLoopConditionProfile profile) {
+                    @Cached("createCountingProfile()") LoopConditionProfile profile) {
         positionNACheck.enable(!skipNA && !position.isComplete());
 
         int length = targetDimension;
@@ -225,7 +225,7 @@ abstract class WriteIndexedVectorNode extends Node {
             initRightIndexCheck(rightBase, length, leftLength, rightLength);
 
             int positionIndex = 0;
-            profile.profileLength(length);
+            profile.profileCounted(length);
             for (int i = 0; profile.inject(i < length); i++) {
                 byte positionValue = position.getDataAt(positionIndex);
                 boolean isNA = positionNACheck.check(positionValue);
@@ -259,7 +259,7 @@ abstract class WriteIndexedVectorNode extends Node {
                     @Cached("create()") IntValueProfile startProfile, //
                     @Cached("create()") IntValueProfile strideProfile, //
                     @Cached("createBinaryProfile()") ConditionProfile conditionProfile, //
-                    @Cached("create()") CountedLoopConditionProfile profile) throws SlowPathException {
+                    @Cached("createCountingProfile()") LoopConditionProfile profile) throws SlowPathException {
         // skip NA check. sequences never contain NA values.
         int rightIndex = rightBase;
         int start = startProfile.profile(position.getStart() - 1);
@@ -273,7 +273,7 @@ abstract class WriteIndexedVectorNode extends Node {
         initRightIndexCheck(rightBase, positionLength, leftLength, rightLength);
 
         boolean ascending = conditionProfile.profile(start < end);
-        profile.profileLength(positionLength);
+        profile.profileCounted(positionLength);
         for (int positionValue = start; profile.inject(ascending ? positionValue < end : positionValue > end); positionValue += stride) {
             rightIndex = applyInner(//
                             left, leftStore, leftBase, leftLength, targetDimensions, //
@@ -306,13 +306,13 @@ abstract class WriteIndexedVectorNode extends Node {
     protected int doIntegerPosition(RAbstractVector left, Object leftStore, int leftBase, int leftLength, Object targetDimensions, @SuppressWarnings("unused") int targetDimension, //
                     Object[] positions, RAbstractIntVector position, int positionOffset, int positionLength, //
                     RTypedValue right, Object rightStore, int rightBase, int rightLength, boolean parentNA, //
-                    @Cached("create()") CountedLoopConditionProfile lengthProfile) {
+                    @Cached("createCountingProfile()") LoopConditionProfile lengthProfile) {
         positionNACheck.enable(position);
         int rightIndex = rightBase;
 
         initRightIndexCheck(rightBase, positionLength, leftLength, rightLength);
 
-        lengthProfile.profileLength(positionLength);
+        lengthProfile.profileCounted(positionLength);
         for (int i = 0; lengthProfile.inject(i < positionLength); i++) {
             int positionValue = position.getDataAt(i);
             boolean isNA = positionNACheck.check(positionValue);

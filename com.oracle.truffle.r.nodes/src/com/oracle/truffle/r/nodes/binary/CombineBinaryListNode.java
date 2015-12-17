@@ -22,37 +22,39 @@
  */
 package com.oracle.truffle.r.nodes.binary;
 
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.r.nodes.profile.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.profiles.LoopConditionProfile;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 public abstract class CombineBinaryListNode extends CombineBinaryNode {
 
     @Specialization
     protected RList combine(RList left, double right, //
-                    @Cached("create()") CountedLoopConditionProfile profile) {
+                    @Cached("createCountingProfile()") LoopConditionProfile profile) {
         return extend(left, right, profile);
     }
 
     @Specialization
     protected RList combine(RList left, RAbstractVector right, //
-                    @Cached("create()") CountedLoopConditionProfile profileLeft, //
-                    @Cached("create()") CountedLoopConditionProfile profileRight) {
+                    @Cached("createCountingProfile()") LoopConditionProfile profileLeft, //
+                    @Cached("createCountingProfile()") LoopConditionProfile profileRight) {
         Object[] data = left.getDataWithoutCopying();
         Object[] result = new Object[data.length + right.getLength()];
-        profileLeft.profileLength(data.length);
+        profileLeft.profileCounted(data.length);
         for (int i = 0; profileLeft.inject(i < data.length); i++) {
             result[i] = data[i];
         }
-        profileRight.profileLength(right.getLength());
+        profileRight.profileCounted(right.getLength());
         for (int i = 0; profileRight.inject(i < right.getLength()); i++) {
             result[i + data.length] = right.getDataAtAsObject(i);
         }
         return RDataFactory.createList(result, combineNames(left, right, profileLeft, profileRight));
     }
 
-    private RList extend(RList list, Object x, CountedLoopConditionProfile profile) {
+    private RList extend(RList list, Object x, LoopConditionProfile profile) {
         final int ll = list.getLength();
         Object[] result = new Object[ll + 1];
         System.arraycopy(list.getDataWithoutCopying(), 0, result, 0, ll);

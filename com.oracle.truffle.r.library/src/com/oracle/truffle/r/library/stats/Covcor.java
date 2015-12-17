@@ -16,7 +16,7 @@ import java.util.Arrays;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
-import com.oracle.truffle.r.nodes.profile.CountedLoopConditionProfile;
+import com.oracle.truffle.api.profiles.LoopConditionProfile;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
@@ -69,7 +69,7 @@ public final class Covcor extends RExternalBuiltinNode {
     private final BranchProfile error = BranchProfile.create();
     private final BranchProfile warning = BranchProfile.create();
 
-    private final CountedLoopConditionProfile loopLength = CountedLoopConditionProfile.create();
+    private final LoopConditionProfile loopLength = LoopConditionProfile.createCountingProfile();
 
     public RDoubleVector corcov(RDoubleVector x, RDoubleVector y, @SuppressWarnings("unused") int method, boolean iskendall, RBaseNode invokingNode) throws RError {
         boolean ansmat;
@@ -471,7 +471,7 @@ public final class Covcor extends RExternalBuiltinNode {
                                 r = RRuntime.DOUBLE_NA;
                             } else {
                                 sum = 0.0;
-                                loopLength.profileLength(n);
+                                loopLength.profileCounted(n);
                                 for (int k = 0; loopLength.inject(k < n); k++) {
                                     double u = xData[i * n + k];
                                     double v = xData[j * n + k];

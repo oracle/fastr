@@ -406,8 +406,8 @@ public final class BinaryMapNode extends RBaseNode {
         @Specialization(contains = "doScalarScalar", guards = {"leftLength == 1"})
         @SuppressWarnings("unused")
         protected void doScalarVector(BinaryMapFunctionNode node, Object store, RAbstractVector left, int leftLength, RAbstractVector right, int rightLength, //
-                        @Cached("create()") CountedLoopConditionProfile profile) {
-            profile.profileLength(rightLength);
+                        @Cached("createCountingProfile()") LoopConditionProfile profile) {
+            profile.profileCounted(rightLength);
             for (int i = 0; profile.inject(i < rightLength); ++i) {
                 indexedAction.perform(node, store, i, left, 0, right, i);
             }
@@ -416,8 +416,8 @@ public final class BinaryMapNode extends RBaseNode {
         @Specialization(contains = "doScalarScalar", guards = {"rightLength == 1"})
         @SuppressWarnings("unused")
         protected void doVectorScalar(BinaryMapFunctionNode node, Object store, RAbstractVector left, int leftLength, RAbstractVector right, int rightLength, //
-                        @Cached("create()") CountedLoopConditionProfile profile) {
-            profile.profileLength(leftLength);
+                        @Cached("createCountingProfile()") LoopConditionProfile profile) {
+            profile.profileCounted(leftLength);
             for (int i = 0; profile.inject(i < leftLength); ++i) {
                 indexedAction.perform(node, store, i, left, i, right, 0);
             }
@@ -426,8 +426,8 @@ public final class BinaryMapNode extends RBaseNode {
         @Specialization(guards = {"leftLength == rightLength"})
         @SuppressWarnings("unused")
         protected void doSameLength(BinaryMapFunctionNode node, Object store, RAbstractVector left, int leftLength, RAbstractVector right, int rightLength, //
-                        @Cached("create()") CountedLoopConditionProfile profile) {
-            profile.profileLength(leftLength);
+                        @Cached("createCountingProfile()") LoopConditionProfile profile) {
+            profile.profileCounted(leftLength);
             for (int i = 0; profile.inject(i < leftLength); ++i) {
                 indexedAction.perform(node, store, i, left, i, right, i);
             }
@@ -439,12 +439,12 @@ public final class BinaryMapNode extends RBaseNode {
 
         @Specialization(contains = {"doVectorScalar", "doScalarVector", "doSameLength"}, guards = {"multiplesMinMax(leftLength, rightLength)"})
         protected void doMultiplesLeft(BinaryMapFunctionNode node, Object store, RAbstractVector left, int leftLength, RAbstractVector right, int rightLength, //
-                        @Cached("create()") CountedLoopConditionProfile leftProfile, //
-                        @Cached("create()") CountedLoopConditionProfile rightProfile) {
+                        @Cached("createCountingProfile()") LoopConditionProfile leftProfile, //
+                        @Cached("createCountingProfile()") LoopConditionProfile rightProfile) {
             int j = 0;
-            rightProfile.profileLength(rightLength / leftLength);
+            rightProfile.profileCounted(rightLength / leftLength);
             while (rightProfile.inject(j < rightLength)) {
-                leftProfile.profileLength(leftLength);
+                leftProfile.profileCounted(leftLength);
                 for (int k = 0; leftProfile.inject(k < leftLength); k++) {
                     indexedAction.perform(node, store, j, left, k, right, j);
                     j++;
@@ -454,12 +454,12 @@ public final class BinaryMapNode extends RBaseNode {
 
         @Specialization(contains = {"doVectorScalar", "doScalarVector", "doSameLength"}, guards = {"multiplesMinMax(rightLength, leftLength)"})
         protected void doMultiplesRight(BinaryMapFunctionNode node, Object store, RAbstractVector left, int leftLength, RAbstractVector right, int rightLength, //
-                        @Cached("create()") CountedLoopConditionProfile leftProfile, //
-                        @Cached("create()") CountedLoopConditionProfile rightProfile) {
+                        @Cached("createCountingProfile()") LoopConditionProfile leftProfile, //
+                        @Cached("createCountingProfile()") LoopConditionProfile rightProfile) {
             int j = 0;
-            leftProfile.profileLength(leftLength / rightLength);
+            leftProfile.profileCounted(leftLength / rightLength);
             while (leftProfile.inject(j < leftLength)) {
-                rightProfile.profileLength(rightLength);
+                rightProfile.profileCounted(rightLength);
                 for (int k = 0; rightProfile.inject(k < rightLength); k++) {
                     indexedAction.perform(node, store, j, left, j, right, k);
                     j++;
@@ -482,11 +482,11 @@ public final class BinaryMapNode extends RBaseNode {
 
         @Specialization(guards = {"!multiples(leftLength, rightLength)"})
         protected void doNoMultiples(BinaryMapFunctionNode node, Object store, RAbstractVector left, int leftLength, RAbstractVector right, int rightLength, //
-                        @Cached("create()") CountedLoopConditionProfile profile) {
+                        @Cached("createCountingProfile()") LoopConditionProfile profile) {
             int j = 0;
             int k = 0;
             int max = Math.max(leftLength, rightLength);
-            profile.profileLength(max);
+            profile.profileCounted(max);
             for (int i = 0; profile.inject(i < max); ++i) {
                 indexedAction.perform(node, store, i, left, j, right, k);
                 j = Utils.incMod(j, leftLength);

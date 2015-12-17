@@ -27,7 +27,7 @@ import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.profile.CountedLoopConditionProfile;
+import com.oracle.truffle.api.profiles.LoopConditionProfile;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.*;
@@ -44,10 +44,10 @@ public abstract class ToLower extends RBuiltinNode {
 
     @Specialization
     protected RStringVector toLower(RAbstractStringVector vector, //
-                    @Cached("create()") CountedLoopConditionProfile loopProfile) {
+                    @Cached("createCountingProfile()") LoopConditionProfile loopProfile) {
         controlVisibility();
         String[] stringVector = new String[vector.getLength()];
-        loopProfile.profileLength(vector.getLength());
+        loopProfile.profileCounted(vector.getLength());
         for (int i = 0; loopProfile.inject(i < vector.getLength()); i++) {
             stringVector[i] = toLower(vector.getDataAt(i));
         }
