@@ -381,6 +381,17 @@ public abstract class PrettyPrinterNode extends RNode {
         return "";
     }
 
+    @TruffleBoundary
+    @Specialization
+    protected String prettyPringS4(RS4Object o, Object listElementName, byte quote, byte right) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("<S4 Type Object>");
+        for (RAttribute attr : o.getAttributes()) {
+            printAttribute(sb, attr);
+        }
+        return sb.toString();
+    }
+
     private static String getStringFromObj(Object o, String msg) {
         if (o instanceof String) {
             return (String) o;

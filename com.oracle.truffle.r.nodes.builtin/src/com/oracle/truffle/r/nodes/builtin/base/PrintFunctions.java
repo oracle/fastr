@@ -58,6 +58,8 @@ public class PrintFunctions {
     @RBuiltin(name = "print.default", kind = INTERNAL, parameterNames = {"x", "digits", "quote", "na.print", "print.gap", "right", "max", "useSource", "noOpt"})
     public abstract static class PrintDefault extends PrintAdapter {
 
+        private final RAttributeProfiles attrProfiles = RAttributeProfiles.create();
+
         @SuppressWarnings("unused")
         @Specialization(guards = "!isS4(o)")
         protected Object printDefault(VirtualFrame frame, Object o, Object digits, byte quote, Object naPrint, Object printGap, byte right, Object max, Object useSource, Object noOpt) {
@@ -85,36 +87,16 @@ public class PrintFunctions {
         @TruffleBoundary
         @Specialization(guards = "isS4(o)")
         protected Object printDefaultS4(RTypedValue o, Object digits, byte quote, Object naPrint, Object printGap, byte right, Object max, Object useSource, Object noOpt,
-                        @Cached("createShowFind()") ReadVariableNode showFind, @Cached("createShowFunction(showFind)") RFunction showFunction/*
-                                                                                                                                              * ,
-                                                                                                                                              * @
-                                                                                                                                              * Cached
-                                                                                                                                              * (
-                                                                                                                                              * "create()"
-                                                                                                                                              * )
-                                                                                                                                              * RArgumentsNode
-                                                                                                                                              * argsNode
-                                                                                                                                              * ,
-                                                                                                                                              * 
-                                                                                                                                              * @
-                                                                                                                                              * Cached
-                                                                                                                                              * (
-                                                                                                                                              * "createCallNode(showFunction)"
-                                                                                                                                              * )
-                                                                                                                                              * DirectCallNode
-                                                                                                                                              * showCallNode
-                                                                                                                                              */) {
-// RCaller caller = RDataFactory.createCaller(this);
-// Object[] args = argsNode.execute(showFunction, caller, null,
-// RArguments.getDepth(Utils.getActualCurrentFrame()) + 1, new Object[]{o},
-// ArgumentsSignature.get("object"), null);
-// showCallNode.call((VirtualFrame) Utils.getActualCurrentFrame(), args);
+                        @Cached("createShowFind()") ReadVariableNode showFind, @Cached("createShowFunction(showFind)") RFunction showFunction) {
             RContext.getEngine().evalFunction(showFunction, null, o);
             return null;
         }
 
         protected boolean isS4(Object o) {
-            return o instanceof RS4Object;
+            // chacking for class attribute is a bit of a hack but GNU R has a hack in place here as
+            // well to avoid recursively calling show via print in showDefault (we just can't use
+            // the same hack at this point - for details see definition of showDefault in show.R)
+            return o instanceof RS4Object && ((RS4Object) o).getClassAttr(attrProfiles) != null;
         }
 
     }

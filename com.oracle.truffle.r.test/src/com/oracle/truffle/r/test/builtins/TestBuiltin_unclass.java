@@ -205,4 +205,9 @@ public class TestBuiltin_unclass extends TestBase {
         assertEval(Ignored.Unknown,
                         "argv <- list(structure(c(2671, 6.026e+77, 3.161e+152, 3.501e+299, 2.409e+227, 1.529e+302), .Names = c('Min.', '1st Qu.', 'Median', 'Mean', '3rd Qu.', 'Max.')));unclass(argv[[1]]);");
     }
+
+    @Test
+    public void testOther() {
+        assertEval("{ setClass(\"foo\", representation(j=\"numeric\")); x<-new(\"foo\", j=42); unclass(x) }");
+    }
 }
