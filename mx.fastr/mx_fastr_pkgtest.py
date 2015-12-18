@@ -30,7 +30,7 @@ from HTMLParser import HTMLParser
 from datetime import datetime
 
 def _gather_test_outputs_forpkg(pkgdirpath):
-    '''return a list of paths to .Rout/.fail files in pkgdirpath'''
+    '''return a sorted list of paths to .Rout/.fail files in pkgdirpath'''
     result = []
     for dirpath, _, files in os.walk(pkgdirpath):
         for f in files:
@@ -39,16 +39,31 @@ def _gather_test_outputs_forpkg(pkgdirpath):
     result.sort()
     return result
 
-def _gather_test_outputs(testdir, pkgs):
-    '''return a dict mapping package names to list of output file paths'''
+def _gather_test_outputs(testdir):
+    '''return a dict mapping package names to sorted list of output file paths'''
     result = dict()
     for dirpath, dirs, _ in os.walk(testdir):
         for d in dirs:
-            if len(pkgs) == 0 or d in pkgs:
-                result[d] = _gather_test_outputs_forpkg(join(dirpath, d))
+            result[d] = _gather_test_outputs_forpkg(join(dirpath, d))
         # only interested in top level
         break
     return result
+
+def _gather_all_test_outputs(testdir):
+    fastr = dict()
+    fastr_date = dict()
+    dirlist = get_local_dirs(testdir)
+    for resultdir in dirlist:
+        resultInfo = ResultInfo(resultdir)
+        result_outputs = _gather_test_outputs(join(testdir, resultdir, "test"))
+        for pkg, outputs in result_outputs.iteritems():
+            if fastr.has_key(pkg):
+                # if this is a more recent result overwrite, else drop
+                if resultInfo.date < fastr_date[pkg]:
+                    continue
+            fastr[pkg] = outputs
+            fastr_date[pkg] = resultInfo.date
+    return fastr
 
 def _find_start(content):
     marker = "Type 'q()' to quit R."
@@ -84,45 +99,80 @@ def _fuzzy_compare(gnur_content, fastr_content):
         i = i + 1
     return result
 
+def rpt_list_testdates(args):
+    parser = ArgumentParser(prog='mx rpt-list-testdates')
+    _add_common_args(parser)
+    parser.add_argument('--pattern', action='store', help='regexp pattern for pkg match', default='.*')
+    parser.add_argument('--printfile', action='store_true', help='print filename containing tests')
+    args = parser.parse_args(args)
+    fastr = dict()
+    dirlist = get_local_dirs(args.logdir)
+    for resultdir in dirlist:
+        resultInfo = ResultInfo(resultdir)
+        result_outputs = _gather_test_outputs(join(args.logdir, resultdir, "test"))
+        for pkg, _ in result_outputs.iteritems():
+            if re.search(args.pattern, pkg) is None:
+                continue
+            if not fastr.has_key(pkg):
+                testdates = []
+                fastr[pkg] = testdates
+            else:
+                testdates = fastr[pkg]
+            testdates.append(resultInfo)
+
+    for pkg, testdates in fastr.iteritems():
+        sortedList = sorted(testdates)
+        print pkg
+        for resultInfo in sortedList:
+            if args.printfile:
+                print '  ' + resultInfo.localdir
+            else:
+                print '  ' + str(resultInfo.date)
+
 def rpt_compare(args):
     '''
-    Analyze test package test results by comparing with GnuR output.
+    Analyze package test results by comparing test output with GnuR output.
+    Uses either a specific directory, i.e. the 'test' subdirectory of the --testdir argument
+    or (default) the latest downloaded results from the --logdir directory
     Return 0 if passed, non-zero if failed
     '''
     parser = ArgumentParser(prog='mx rpt-compare')
-    parser.add_argument('--fastr-dir', action='store', help='dir containing fastr results', default=os.getcwd())
-    parser.add_argument('--pkg', action='store', help='pkg to compare, default all')
-    parser.add_argument('--verbose', action='store_true', help='print names of files that differ')
+    _add_common_args(parser)
+    parser.add_argument('--testdir', action='store', help='specific dir containing fastr results')
+    parser.add_argument('--pkg', action='store', help='pkg to compare')
     parser.add_argument('--diff', action='store_true', help='execute given diff program on differing outputs')
     parser.add_argument('--difftool', action='store', help='diff tool', default='diff')
-    parser.add_argument('pkgs', nargs=REMAINDER, metavar='pkg1 pkg2 ...')
+    parser.add_argument('--pattern', action='store', help='regexp pattern for pkg match', default='.*')
     args = parser.parse_args(args)
 
-    pkgs = args.pkgs
     if args.pkg:
-        pkgs = [args.pkg] + pkgs
+        args.pattern = args.pkg
 
-    verbose = args.verbose
-    gnur = _gather_test_outputs(join(os.getcwd(), "test_gnur"), pkgs)
-    if args.pkg:
-        if not gnur.has_key(args.pkg):
-            mx.abort('no gnur output to compare')
+    gnur = _gather_test_outputs(join(os.getcwd(), "test_gnur"))
 
-    fastr = _gather_test_outputs(join(args.fastr_dir, "test"), pkgs)
+    if args.testdir:
+        fastr = _gather_test_outputs(join(args.testdir, "test"))
+    else:
+        fastr = _gather_all_test_outputs(args.logdir)
+
+    return _rpt_compare_pkgs(args, gnur, fastr)
+
+def _rpt_compare_pkgs(args, gnur, fastr):
     # gnur is definitive
     result = 0 # optimistic
-    for pkg in pkgs:
-        if not fastr.has_key(pkg):
-            result = 1
+    for pkg in fastr.keys():
+        if re.search(args.pattern, pkg) is None:
             continue
-
         if not gnur.has_key(pkg):
             print 'no gnur output to compare: ' + pkg
+            continue
 
+        if args.verbose:
+            print 'comparing ' + pkg
         fastr_outputs = fastr[pkg]
         gnur_outputs = gnur[pkg]
         if len(fastr_outputs) != len(gnur_outputs):
-            if verbose:
+            if args.verbose:
                 print 'fastr is missing some output files'
                 # TODO continue but handle missing files in loop?
                 # does it ever happen in practice?
@@ -139,7 +189,7 @@ def rpt_compare(args):
                 fastr_content = f.readlines()
             result = _fuzzy_compare(gnur_content, fastr_content)
             if result != 0:
-                if verbose:
+                if args.verbose:
                     print 'mismatch on file: ' + fastr_output
                 if args.diff:
                     cmd = [args.difftool, gnur_output, fastr_output]
@@ -218,12 +268,18 @@ class DirHTMLParser(HTMLParser):
                     self.files.append(name)
 
 class ResultInfo:
-    def __init__(self, date, cid):
+    def __init__(self, localdir):
+        self.localdir = localdir
+        date = localdir[7:33]
+        cid = localdir[34:74]
         self.date = datetime.strptime(date, "%Y-%m-%d_%H:%M:%S.%f")
         self.cid = cid
 
     def __str__(self):
         return "date: {0}, id {1}".format(self.date, self.cid)
+
+    def __sortkey__(self):
+        return self.date
 
 class Result:
     def __init__(self, resultInfo, content, rawData=None):
@@ -318,7 +374,7 @@ def _get_results(logdir):
             with open(os.path.join(logdir, localdir, 'testlog')) as f:
                 rawData = f.read()
                 result_data = check_install(0, rawData)[1]
-                results.append(Result(ResultInfo(localdir[7:33], localdir[34:74]), result_data, rawData))
+                results.append(Result(ResultInfo(localdir), result_data, rawData))
     return results
 
 def _build_pkgtable(results):
@@ -367,7 +423,8 @@ def get_local_dirs(logdir):
     filelist = []
     localdirs = os.listdir(logdir)
     for localdir in localdirs:
-        filelist.append(localdir)
+        if localdir.startswith('res'):
+            filelist.append(localdir)
     return filelist
 
 def _is_result_dir(d):
@@ -406,6 +463,9 @@ def rpt_getnew(args):
     parser = ArgumentParser(prog='mx rpt-getnew')
     _add_common_args(parser)
     args = parser.parse_args(args)
+
+    if not os.path.exists(args.logdir):
+        _safe_mkdir(args.logdir)
 
     gatedirs = get_gate_dirs(gate_url, _is_result_dir, _strip_dotslash)
     localdirs = get_local_dirs(args.logdir)
@@ -562,5 +622,6 @@ _commands = {
     'rpt-list-testdirs' : [rpt_list_testdirs, '[options]'],
     'rpt-compare': [rpt_compare, '[options]'],
     'rpt-check-install-log': [rpt_check_install_log, '[options]'],
+    'rpt-list-testdates' : [rpt_list_testdates, '[options]'],
     'pkgtestanalyze': [rpt_compare, '[options]'],
 }
