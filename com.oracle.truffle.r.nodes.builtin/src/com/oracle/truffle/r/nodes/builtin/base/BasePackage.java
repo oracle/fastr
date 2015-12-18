@@ -167,6 +167,7 @@ public class BasePackage extends RBuiltinPackage {
         add(CumMin.class, CumMinNodeGen::create);
         add(CumProd.class, CumProdNodeGen::create);
         add(CumSum.class, CumSumNodeGen::create);
+        add(CacheClass.class, CacheClassNodeGen::create);
         add(Date.class, DateNodeGen::create);
         add(DatePOSIXFunctions.Date2POSIXlt.class, DatePOSIXFunctionsFactory.Date2POSIXltNodeGen::create);
         add(DatePOSIXFunctions.AsPOSIXct.class, DatePOSIXFunctionsFactory.AsPOSIXctNodeGen::create);

@@ -155,6 +155,7 @@ abstract class S4Class extends RBaseNode {
             // the assumption here is that R function can only return either a String or
             // RStringVector
             s4Extends = (RStringVector) castToVector.execute(RContext.getEngine().evalFunction(sExtendsForS3Function, methodsEnv.getFrame(), classAttr));
+            RContext.getInstance().putS4Extends(classAttr, s4Extends);
         }
         return s4Extends;
     }
