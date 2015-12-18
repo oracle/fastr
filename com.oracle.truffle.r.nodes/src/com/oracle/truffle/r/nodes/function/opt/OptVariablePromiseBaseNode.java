@@ -22,33 +22,38 @@
  */
 package com.oracle.truffle.r.nodes.function.opt;
 
-import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.nodes.*;
-import com.oracle.truffle.r.nodes.access.*;
-import com.oracle.truffle.r.nodes.access.variables.*;
-import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode.ReadKind;
-import com.oracle.truffle.r.nodes.function.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.api.Assumption;
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.frame.FrameSlot;
+import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.InvalidAssumptionException;
+import com.oracle.truffle.r.nodes.access.FrameSlotNode;
+import com.oracle.truffle.r.nodes.access.variables.LocalReadVariableNode;
+import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
+import com.oracle.truffle.r.nodes.function.PromiseNode;
+import com.oracle.truffle.r.runtime.RArguments;
+import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.EagerFeedback;
 import com.oracle.truffle.r.runtime.data.RPromise.RPromiseFactory;
-import com.oracle.truffle.r.runtime.env.frame.*;
-import com.oracle.truffle.r.runtime.nodes.*;
+import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
+import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 public abstract class OptVariablePromiseBaseNode extends PromiseNode implements EagerFeedback {
     protected final ReadVariableNode originalRvn;
     @Child private FrameSlotNode frameSlotNode;
     @Child private RNode fallback = null;
-    @Child private ReadVariableNode readNode;
+    @Child private LocalReadVariableNode readNode;
     private final int wrapIndex;
 
     public OptVariablePromiseBaseNode(RPromiseFactory factory, ReadVariableNode rvn, int wrapIndex) {
         super(factory);
-        assert rvn.getKind() != ReadKind.ForcedTypeCheck;  // Should be caught by optimization check
+        // Should be caught by optimization check
+        assert !rvn.isForceForTypeCheck() && rvn.getMode() == RType.Any;
         this.originalRvn = rvn;
         this.frameSlotNode = FrameSlotNode.create(rvn.getIdentifier(), false);
-        this.readNode = ReadVariableNode.create(rvn.getIdentifier(), rvn.getMode(), ReadKind.UnforcedSilentLocal);
+        this.readNode = LocalReadVariableNode.create(rvn.getIdentifier(), false);
         this.wrapIndex = wrapIndex;
     }
 

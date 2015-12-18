@@ -563,7 +563,7 @@ public class CallRFFIHelper {
 
     static REnvironment Rf_createNewEnv(REnvironment parent, String name, boolean hashed, int initialSize) {
         REnvironment env = RDataFactory.createNewEnv(name, hashed, initialSize);
-        env.setParent(parent);
+        RArguments.initializeEnclosingFrame(env.getFrame(), parent.getFrame());
         return env;
     }
 

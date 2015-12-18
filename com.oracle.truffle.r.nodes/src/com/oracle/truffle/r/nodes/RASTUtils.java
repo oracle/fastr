@@ -73,7 +73,7 @@ public class RASTUtils {
      */
     @TruffleBoundary
     public static ReadVariableNode createReadVariableNode(String name) {
-        return ReadVariableNode.createForced(null, name, RType.Any);
+        return ReadVariableNode.create(name);
     }
 
     /**
@@ -131,7 +131,7 @@ public class RASTUtils {
     public static Object checkForRSymbol(Object expr) {
         if (expr instanceof RSymbol) {
             String symbolName = ((RSymbol) expr).getName();
-            return RDataFactory.createLanguage(ReadVariableNode.create(symbolName, false));
+            return RDataFactory.createLanguage(ReadVariableNode.create(symbolName));
         } else {
             return expr;
         }

@@ -14,21 +14,24 @@ package com.oracle.truffle.r.nodes.objects;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
-import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.r.nodes.RRootNode;
-import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
-import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode.ReadKind;
+import com.oracle.truffle.r.nodes.access.variables.LocalReadVariableNode;
 import com.oracle.truffle.r.nodes.function.FormalArguments;
 import com.oracle.truffle.r.nodes.function.RMissingHelper;
 import com.oracle.truffle.r.nodes.function.signature.RArgumentsNode;
-import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.RArguments;
+import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
+import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
@@ -36,11 +39,11 @@ public abstract class ExecuteMethod extends RBaseNode {
 
     public abstract Object executeObject(VirtualFrame frame, RFunction fdef);
 
-    @Child private ReadVariableNode readDefined = ReadVariableNode.create(RRuntime.R_DOT_DEFINED, RType.Any, ReadKind.SilentLocal);
-    @Child private ReadVariableNode readMethod = ReadVariableNode.create(RRuntime.RDotMethod, RType.Any, ReadKind.SilentLocal);
-    @Child private ReadVariableNode readTarget = ReadVariableNode.create(RRuntime.R_DOT_TARGET, RType.Any, ReadKind.SilentLocal);
-    @Child private ReadVariableNode readGeneric = ReadVariableNode.create(RRuntime.RDotGeneric, RType.Any, ReadKind.SilentLocal);
-    @Child private ReadVariableNode readMethods = ReadVariableNode.create(RRuntime.R_DOT_METHODS, RType.Any, ReadKind.SilentLocal);
+    @Child private LocalReadVariableNode readDefined = LocalReadVariableNode.create(RRuntime.R_DOT_DEFINED, true);
+    @Child private LocalReadVariableNode readMethod = LocalReadVariableNode.create(RRuntime.RDotMethod, true);
+    @Child private LocalReadVariableNode readTarget = LocalReadVariableNode.create(RRuntime.R_DOT_TARGET, true);
+    @Child private LocalReadVariableNode readGeneric = LocalReadVariableNode.create(RRuntime.RDotGeneric, true);
+    @Child private LocalReadVariableNode readMethods = LocalReadVariableNode.create(RRuntime.R_DOT_METHODS, true);
     @Child private RArgumentsNode argsNode = RArgumentsNode.create();
 
     @Specialization
@@ -50,7 +53,8 @@ public abstract class ExecuteMethod extends RBaseNode {
                         RArguments.getSignature(frame), null);
         MaterializedFrame newFrame = Truffle.getRuntime().createMaterializedFrame(args);
         FrameDescriptor desc = newFrame.getFrameDescriptor();
-        FrameSlotChangeMonitor.initializeFunctionFrameDescriptor(desc);
+        FrameSlotChangeMonitor.initializeFunctionFrameDescriptor("<executeMethod>", desc);
+        FrameSlotChangeMonitor.initializeEnclosingFrame(newFrame, RArguments.getFunction(frame).getEnclosingFrame());
         FormalArguments formals = ((RRootNode) fdef.getRootNode()).getFormalArguments();
         if (formals != null) {
             ArgumentsSignature signature = formals.getSignature();

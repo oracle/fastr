@@ -22,17 +22,19 @@
  */
 package com.oracle.truffle.r.nodes;
 
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.nodes.*;
-import com.oracle.truffle.api.source.*;
-import com.oracle.truffle.api.profiles.*;
-import com.oracle.truffle.r.nodes.builtin.*;
-import com.oracle.truffle.r.nodes.function.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.context.*;
-import com.oracle.truffle.r.runtime.env.frame.*;
+import com.oracle.truffle.api.frame.FrameDescriptor;
+import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.RootNode;
+import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.source.SourceSection;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.function.FormalArguments;
+import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
+import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.HasSignature;
+import com.oracle.truffle.r.runtime.RArguments;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
@@ -41,7 +43,6 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  */
 public abstract class RRootNode extends RootNode implements HasSignature {
 
-    @CompilationFinal protected boolean checkSingletonFrame = true;
     private final ConditionProfile irregularFrameProfile = ConditionProfile.createBinaryProfile();
 
     /**
@@ -62,12 +63,10 @@ public abstract class RRootNode extends RootNode implements HasSignature {
         }
     }
 
+    public abstract RRootNode duplicateWithNewFrameDescriptor();
+
     protected void verifyEnclosingAssumptions(VirtualFrame vf) {
         RArguments.setIsIrregular(vf, irregularFrameProfile.profile(RArguments.getIsIrregular(vf)));
-
-        if (checkSingletonFrame) {
-            checkSingletonFrame = FrameSlotChangeMonitor.checkSingletonFrame(vf);
-        }
     }
 
     /**

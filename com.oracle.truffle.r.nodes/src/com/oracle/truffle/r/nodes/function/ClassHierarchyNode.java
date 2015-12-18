@@ -22,18 +22,36 @@
  */
 package com.oracle.truffle.r.nodes.function;
 
-import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.api.profiles.*;
+import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
-import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode.ReadKind;
-import com.oracle.truffle.r.nodes.attributes.*;
-import com.oracle.truffle.r.nodes.unary.*;
-import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.nodes.attributes.AttributeAccess;
+import com.oracle.truffle.r.nodes.attributes.AttributeAccessNodeGen;
+import com.oracle.truffle.r.nodes.unary.CastToVectorNode;
+import com.oracle.truffle.r.nodes.unary.UnaryNode;
+import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.RAttributable;
+import com.oracle.truffle.r.runtime.data.RAttributeStorage;
+import com.oracle.truffle.r.runtime.data.RAttributes;
+import com.oracle.truffle.r.runtime.data.RComplex;
+import com.oracle.truffle.r.runtime.data.RComplexVector;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
+import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.RLogicalVector;
+import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
@@ -141,7 +159,7 @@ abstract class S4Class extends RBaseNode {
 
     public abstract RStringVector executeRStringVector(String classAttr);
 
-    @Child private ReadVariableNode sExtendsForS3Find = ReadVariableNode.create(".extendsForS3", RType.Function, ReadKind.Normal);
+    @Child private ReadVariableNode sExtendsForS3Find = ReadVariableNode.createFunctionLookup(null, ".extendsForS3");
     @Child private CastToVectorNode castToVector = CastToVectorNode.create();
 
     @TruffleBoundary

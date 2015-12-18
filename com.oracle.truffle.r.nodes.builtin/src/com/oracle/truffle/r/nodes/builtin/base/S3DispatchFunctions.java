@@ -24,8 +24,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
-import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
-import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode.ReadKind;
+import com.oracle.truffle.r.nodes.access.variables.LocalReadVariableNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.CallMatcherNode;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
@@ -44,7 +43,6 @@ import com.oracle.truffle.r.runtime.RArguments.S3Args;
 import com.oracle.truffle.r.runtime.RBuiltin;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.ReturnException;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
@@ -158,11 +156,11 @@ public abstract class S3DispatchFunctions extends RBuiltinNode {
     @RBuiltin(name = "NextMethod", kind = SUBSTITUTE, parameterNames = {"generic", "object", "..."})
     public abstract static class NextMethod extends S3DispatchFunctions {
 
-        @Child private ReadVariableNode rvnGroup = ReadVariableNode.create(RRuntime.RDotGroup, RType.Character, ReadKind.UnforcedSilentLocal);
-        @Child private ReadVariableNode rvnClass = ReadVariableNode.create(RRuntime.RDotClass, RType.Character, ReadKind.UnforcedSilentLocal);
-        @Child private ReadVariableNode rvnGeneric = ReadVariableNode.create(RRuntime.RDotGeneric, RType.Character, ReadKind.UnforcedSilentLocal);
-        @Child private ReadVariableNode rvnCall = ReadVariableNode.create(RRuntime.RDotGenericCallEnv, RType.Any, ReadKind.UnforcedSilentLocal);
-        @Child private ReadVariableNode rvnDef = ReadVariableNode.create(RRuntime.RDotGenericDefEnv, RType.Any, ReadKind.UnforcedSilentLocal);
+        @Child private LocalReadVariableNode rvnGroup = LocalReadVariableNode.create(RRuntime.RDotGroup, false);
+        @Child private LocalReadVariableNode rvnClass = LocalReadVariableNode.create(RRuntime.RDotClass, false);
+        @Child private LocalReadVariableNode rvnGeneric = LocalReadVariableNode.create(RRuntime.RDotGeneric, false);
+        @Child private LocalReadVariableNode rvnCall = LocalReadVariableNode.create(RRuntime.RDotGenericCallEnv, false);
+        @Child private LocalReadVariableNode rvnDef = LocalReadVariableNode.create(RRuntime.RDotGenericDefEnv, false);
 
         @Child private CombineSignaturesNode combineSignatures;
         @Child private CollectArgumentsNode collectArguments = CollectArgumentsNodeGen.create();

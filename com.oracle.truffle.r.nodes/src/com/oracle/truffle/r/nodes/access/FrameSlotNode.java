@@ -65,7 +65,7 @@ public abstract class FrameSlotNode extends RBaseNode {
         FrameSlotNode newNode;
         FrameSlot frameSlot;
         if (createIfAbsent) {
-            frameSlot = findOrAddFrameSlot(frameDescriptor, identifier);
+            frameSlot = findOrAddFrameSlot(frameDescriptor, identifier, FrameSlotKind.Illegal);
         } else {
             frameSlot = frameDescriptor.findFrameSlot(identifier);
         }

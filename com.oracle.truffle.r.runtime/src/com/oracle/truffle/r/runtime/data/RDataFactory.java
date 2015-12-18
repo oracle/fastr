@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.runtime.data;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
@@ -436,16 +437,18 @@ public final class RDataFactory {
         return traceDataCreated(new RFunction(name, target, builtin, enclosingFrame, fastPath, containsDispatch));
     }
 
+    private static final AtomicInteger environmentCount = new AtomicInteger();
+
     public static REnvironment createInternalEnv() {
-        return traceDataCreated(new REnvironment.NewEnv(RRuntime.createNonFunctionFrame().materialize(), REnvironment.UNNAMED));
+        return traceDataCreated(new REnvironment.NewEnv(RRuntime.createNonFunctionFrame("<internal-env-" + environmentCount.incrementAndGet() + ">"), REnvironment.UNNAMED));
     }
 
     public static REnvironment.NewEnv createNewEnv(String name) {
-        return traceDataCreated(new REnvironment.NewEnv(RRuntime.createNonFunctionFrame().materialize(), name));
+        return traceDataCreated(new REnvironment.NewEnv(RRuntime.createNonFunctionFrame("<new-env-" + environmentCount.incrementAndGet() + ">"), name));
     }
 
     public static REnvironment createNewEnv(String name, boolean hashed, int initialSize) {
-        REnvironment.NewEnv env = new REnvironment.NewEnv(RRuntime.createNonFunctionFrame().materialize(), name);
+        REnvironment.NewEnv env = new REnvironment.NewEnv(RRuntime.createNonFunctionFrame("<new-env-" + environmentCount.incrementAndGet() + ">"), name);
         env.setHashed(hashed);
         env.setInitialSize(initialSize);
         return traceDataCreated(env);

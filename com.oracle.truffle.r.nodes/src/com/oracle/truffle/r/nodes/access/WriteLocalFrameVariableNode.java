@@ -84,7 +84,7 @@ public abstract class WriteLocalFrameVariableNode extends BaseWriteVariableNode 
 
         private void resolveAndSet(VirtualFrame frame, Object value, FrameSlotKind initialKind) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            // it's slow path (unconditional replace) so toStrin() is fine as well
+            // it's slow path (unconditional replace) so toString() is fine as well
             if (getName().toString().isEmpty()) {
                 throw RError.error(this, RError.Message.ZERO_LENGTH_VARIABLE);
             }

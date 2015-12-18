@@ -23,16 +23,22 @@
 package com.oracle.truffle.r.nodes.function.signature;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.nodes.*;
-import com.oracle.truffle.api.profiles.*;
-import com.oracle.truffle.r.nodes.access.*;
-import com.oracle.truffle.r.nodes.access.variables.*;
-import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode.ReadKind;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.nodes.*;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.FrameDescriptor;
+import com.oracle.truffle.api.frame.FrameSlot;
+import com.oracle.truffle.api.frame.MaterializedFrame;
+import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.ExplodeLoop;
+import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.nodes.access.ConstantNode;
+import com.oracle.truffle.r.nodes.access.variables.LocalReadVariableNode;
+import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.RArguments;
+import com.oracle.truffle.r.runtime.data.RMissing;
+import com.oracle.truffle.r.runtime.data.RPromise;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 public abstract class CollectArgumentsNode extends RBaseNode {
 
@@ -42,14 +48,14 @@ public abstract class CollectArgumentsNode extends RBaseNode {
 
     public abstract Object[] execute(VirtualFrame frame, ArgumentsSignature signature);
 
-    protected RNode[] createArgs(ArgumentsSignature signature, VirtualFrame frame) {
-        RNode[] reads = new RNode[signature.getLength()];
+    protected Node[] createArgs(ArgumentsSignature signature, VirtualFrame frame) {
+        Node[] reads = new Node[signature.getLength()];
         for (int i = 0; i < signature.getLength(); i++) {
             Object arg = RArguments.getArgument(frame, i);
             if (arg instanceof RPromise && ((RPromise) arg).isDefault()) {
                 reads[i] = ConstantNode.create(RMissing.instance);
             } else {
-                reads[i] = ReadVariableNode.create(signature.getName(i), RType.Any, ReadKind.UnforcedSilentLocal);
+                reads[i] = LocalReadVariableNode.create(signature.getName(i), false);
             }
         }
         return reads;
@@ -58,10 +64,10 @@ public abstract class CollectArgumentsNode extends RBaseNode {
     @SuppressWarnings("unused")
     @ExplodeLoop
     @Specialization(limit = "CACHE_LIMIT", guards = {"cachedSignature == signature"})
-    protected Object[] combineCached(VirtualFrame frame, ArgumentsSignature signature, @Cached("signature") ArgumentsSignature cachedSignature, @Cached("createArgs(signature, frame)") RNode[] reads) {
+    protected Object[] combineCached(VirtualFrame frame, ArgumentsSignature signature, @Cached("signature") ArgumentsSignature cachedSignature, @Cached("createArgs(signature, frame)") Node[] reads) {
         Object[] result = new Object[reads.length];
         for (int i = 0; i < reads.length; i++) {
-            Object value = reads[i].execute(frame);
+            Object value = reads[i] instanceof ConstantNode ? ((ConstantNode) reads[i]).getValue() : ((LocalReadVariableNode) reads[i]).execute(frame);
             result[i] = valueMissingProfile.profile(value == null) ? RMissing.instance : value;
         }
         return result;

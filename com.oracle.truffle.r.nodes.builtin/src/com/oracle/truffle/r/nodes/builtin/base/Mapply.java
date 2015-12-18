@@ -161,7 +161,7 @@ public abstract class Mapply extends RBuiltinNode {
 
             RSyntaxNode[] readVectorElementNodes = new RSyntaxNode[elementNodeArray.length];
             for (int i = 0; i < readVectorElementNodes.length; i++) {
-                readVectorElementNodes[i] = ReadVariableNode.create(elementNodeArray[i].vectorElementName, false);
+                readVectorElementNodes[i] = ReadVariableNode.create(elementNodeArray[i].vectorElementName);
             }
             ArgumentsSignature argsSig = ArgumentsSignature.empty(readVectorElementNodes.length);
             // Errors can be thrown from the modified call so a SourceSection is required

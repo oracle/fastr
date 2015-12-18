@@ -24,5 +24,6 @@ public class TestBuiltin_environmentassign extends TestBase {
         assertEval(Output.ContainsError, "{ e1 <- new.env(); environment(e1) <- 3 }");
 
         assertEval("{ f <- function() {}; e1 <- new.env(); environment(f) <- e1 }");
+        assertEval("{ f <- function() x; f2 <- f; e <- new.env(); assign('x', 2, envir=e); x <- 1; environment(f) <- e; c(f(), f2())}");
     }
 }

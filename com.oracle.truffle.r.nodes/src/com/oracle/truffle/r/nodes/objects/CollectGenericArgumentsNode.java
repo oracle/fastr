@@ -24,17 +24,20 @@ package com.oracle.truffle.r.nodes.objects;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.nodes.*;
-import com.oracle.truffle.api.profiles.*;
-import com.oracle.truffle.r.nodes.access.variables.*;
-import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode.ReadKind;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.FrameDescriptor;
+import com.oracle.truffle.api.frame.FrameSlot;
+import com.oracle.truffle.api.frame.MaterializedFrame;
+import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.ExplodeLoop;
+import com.oracle.truffle.api.nodes.SlowPathException;
+import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.nodes.access.variables.LocalReadVariableNode;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyScalarNode;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyScalarNodeGen;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.nodes.*;
+import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.data.RSymbol;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 /*
  * Used to collect arguments of the generic function for S4 method dispatch. Modeled after {@link CollectArgumentsNode}.
@@ -43,7 +46,7 @@ public abstract class CollectGenericArgumentsNode extends RBaseNode {
 
     // TODO: re-do with a multi-element cache? (list comparison will have some cost, though)
 
-    @Children private final ReadVariableNode[] argReads;
+    @Children private final LocalReadVariableNode[] argReads;
     @Children private final ClassHierarchyScalarNode[] classHierarchyNodes;
     @Child private ClassHierarchyScalarNode classHierarchyNodeSlowPath;
 
@@ -52,11 +55,11 @@ public abstract class CollectGenericArgumentsNode extends RBaseNode {
     public abstract String[] execute(VirtualFrame frame, RList arguments, int argLength);
 
     protected CollectGenericArgumentsNode(Object[] arguments, int argLength) {
-        ReadVariableNode[] reads = new ReadVariableNode[argLength];
+        LocalReadVariableNode[] reads = new LocalReadVariableNode[argLength];
         ClassHierarchyScalarNode[] hierarchyNodes = new ClassHierarchyScalarNode[argLength];
         for (int i = 0; i < argLength; i++) {
             RSymbol s = (RSymbol) arguments[i];
-            reads[i] = ReadVariableNode.create(s.getName(), RType.Any, ReadKind.SilentLocal);
+            reads[i] = LocalReadVariableNode.create(s.getName(), true);
             hierarchyNodes[i] = ClassHierarchyScalarNodeGen.create();
         }
         argReads = insert(reads);
@@ -71,9 +74,9 @@ public abstract class CollectGenericArgumentsNode extends RBaseNode {
         }
         String[] result = new String[argReads.length];
         for (int i = 0; i < argReads.length; i++) {
-            String cachedId = argReads[i].getIdentifier();
+            Object cachedId = argReads[i].getIdentifier();
             String id = ((RSymbol) (arguments.getDataAt(0))).getName();
-            assert cachedId == cachedId.intern() && id == id.intern();
+            assert cachedId instanceof String && cachedId == ((String) cachedId).intern() && id == id.intern();
             if (cachedId != id) {
                 throw new SlowPathException();
             }

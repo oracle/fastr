@@ -158,7 +158,7 @@ final class REngine implements Engine, Engine.Timings {
 
     private void initializeShared() {
         suppressWarnings = true;
-        MaterializedFrame baseFrame = RRuntime.createNonFunctionFrame().materialize();
+        MaterializedFrame baseFrame = RRuntime.createNonFunctionFrame("base");
         REnvironment.baseInitialize(baseFrame, globalFrame);
         RBuiltinPackages.loadBase(baseFrame);
         RGraphics.initialize();
@@ -489,7 +489,7 @@ final class REngine implements Engine, Engine.Timings {
             fbn = new BodyNode(body);
         }
         FrameDescriptor descriptor = new FrameDescriptor();
-        FrameSlotChangeMonitor.initializeFunctionFrameDescriptor(descriptor);
+        FrameSlotChangeMonitor.initializeFunctionFrameDescriptor("<eval>", descriptor);
         FunctionDefinitionNode rootNode = new FunctionDefinitionNode(sourceSection, descriptor, fbn, FormalArguments.NO_ARGS, description, true, true, null);
         RootCallTarget callTarget = Truffle.getRuntime().createCallTarget(rootNode);
         return callTarget;

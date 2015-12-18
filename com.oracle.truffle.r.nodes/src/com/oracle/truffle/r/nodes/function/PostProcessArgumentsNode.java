@@ -22,14 +22,17 @@
  */
 package com.oracle.truffle.r.nodes.function;
 
-import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.nodes.*;
-import com.oracle.truffle.api.profiles.*;
-import com.oracle.truffle.r.nodes.access.variables.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.nodes.*;
+import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.ExplodeLoop;
+import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.nodes.access.variables.LocalReadVariableNode;
+import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RShareable;
+import com.oracle.truffle.r.runtime.nodes.RNode;
 
 /**
  * Encapsulates the nodes that decrement reference count incremented when the argument node is
@@ -37,7 +40,7 @@ import com.oracle.truffle.r.runtime.nodes.*;
  */
 public final class PostProcessArgumentsNode extends RNode {
 
-    @Children protected final ReadVariableNode[] sequence;
+    @Children protected final LocalReadVariableNode[] sequence;
     @Child private PostProcessArgumentsNode nextOptPostProccessArgNode;
     @CompilationFinal public int transArgsBitSet;
     // the first time this node is cloned (via FunctionDefinitionNode) it's from the trufflerizer -
@@ -46,7 +49,7 @@ public final class PostProcessArgumentsNode extends RNode {
     @CompilationFinal private boolean createClone;
     private final ConditionProfile isRefCountUpdateable = ConditionProfile.createBinaryProfile();
 
-    private PostProcessArgumentsNode(ReadVariableNode[] sequence) {
+    private PostProcessArgumentsNode(LocalReadVariableNode[] sequence) {
         this.sequence = sequence;
         this.createClone = false;
         this.transArgsBitSet = 0;
@@ -54,9 +57,9 @@ public final class PostProcessArgumentsNode extends RNode {
 
     public static PostProcessArgumentsNode create(int length) {
         int maxLength = Math.min(length, ArgumentStatePush.MAX_COUNTED_ARGS);
-        ReadVariableNode[] argReadNodes = new ReadVariableNode[maxLength];
+        LocalReadVariableNode[] argReadNodes = new LocalReadVariableNode[maxLength];
         for (int i = 0; i < maxLength; i++) {
-            argReadNodes[i] = ReadVariableNode.createForRefCount(Integer.valueOf(1 << i));
+            argReadNodes[i] = LocalReadVariableNode.create(Integer.valueOf(1 << i), false);
         }
         return new PostProcessArgumentsNode(argReadNodes);
     }

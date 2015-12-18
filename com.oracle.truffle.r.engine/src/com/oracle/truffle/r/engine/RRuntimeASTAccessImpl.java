@@ -123,7 +123,7 @@ public class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
             // obj is RSymbol or a primitive value.
             // A symbol needs to be converted back to a ReadVariableNode
             if (obj instanceof RSymbol) {
-                return ReadVariableNode.create(((RSymbol) obj).getName(), false);
+                return ReadVariableNode.create(((RSymbol) obj).getName());
             } else {
                 return ConstantNode.create(obj);
             }

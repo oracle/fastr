@@ -22,17 +22,15 @@
  */
 package com.oracle.truffle.r.nodes.access;
 
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.nodes.*;
+import com.oracle.truffle.api.frame.MaterializedFrame;
+import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.r.runtime.RArguments;
 
-public abstract class AccessEnclosingFrameNode extends RNode {
+public final class AccessEnclosingFrameNode extends Node {
 
-    public abstract MaterializedFrame executeMaterializedFrame(VirtualFrame frame);
-
-    @Specialization
-    protected MaterializedFrame doMaterializedFrame(VirtualFrame frame) {
+    @SuppressWarnings("static-method")
+    public MaterializedFrame execute(VirtualFrame frame) {
         return RArguments.getEnclosingFrame(frame);
     }
 }

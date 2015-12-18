@@ -39,7 +39,6 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
-import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode.ReadKind;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseCheckHelperNode;
 import com.oracle.truffle.r.nodes.function.opt.OptConstantPromiseNode;
 import com.oracle.truffle.r.nodes.function.opt.OptForcedEagerPromiseNode;
@@ -299,7 +298,7 @@ public abstract class PromiseNode extends RNode {
         public RArgsValuesAndNames getVarargsAndNames(VirtualFrame frame) {
             if (lookupVarArgs == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                lookupVarArgs = insert(ReadVariableNode.create(ArgumentsSignature.VARARG_NAME, RType.Any, ReadKind.Silent));
+                lookupVarArgs = insert(ReadVariableNode.createSilent(ArgumentsSignature.VARARG_NAME, RType.Any));
             }
             RArgsValuesAndNames varArgsAndNames;
             try {
