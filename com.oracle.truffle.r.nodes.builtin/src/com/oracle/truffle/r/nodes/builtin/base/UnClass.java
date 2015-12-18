@@ -16,6 +16,7 @@ import com.oracle.truffle.api.utilities.BranchProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 import static com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -109,8 +110,11 @@ public abstract class UnClass extends RBuiltinNode {
             objectProfile.enter();
             // TODO: should we make S4 objects shareable?
             RS4Object resultS4 = RDataFactory.createS4Object();
-            resultS4.initAttributes(arg.getAttributes());
-            resultS4.removeAttr(attrProfiles, RRuntime.CLASS_ATTR_KEY);
+            RAttributes newAttributes = resultS4.initAttributes();
+            for (RAttribute attr : arg.getAttributes()) {
+                newAttributes.put(attr.getName(), attr.getValue());
+            }
+            newAttributes.remove(RRuntime.CLASS_ATTR_KEY);
             return resultS4;
         }
         return arg;

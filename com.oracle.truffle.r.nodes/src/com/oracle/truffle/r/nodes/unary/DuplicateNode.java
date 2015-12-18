@@ -24,9 +24,11 @@ package com.oracle.truffle.r.nodes.unary;
 
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.data.RAttributes;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RS4Object;
+import com.oracle.truffle.r.runtime.data.RAttributes.RAttribute;
 import com.oracle.truffle.r.runtime.data.model.*;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
@@ -49,7 +51,10 @@ public abstract class DuplicateNode extends RBaseNode {
     @Specialization
     protected Object duplicate(RS4Object object) {
         RS4Object newObject = RDataFactory.createS4Object();
-        newObject.initAttributes(object.getAttributes());
+        RAttributes newAttributes = newObject.initAttributes();
+        for (RAttribute attr : object.getAttributes()) {
+            newAttributes.put(attr.getName(), attr.getValue());
+        }
         return newObject;
     }
 
