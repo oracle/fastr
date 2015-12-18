@@ -283,7 +283,7 @@ public class BasePackage extends RBuiltinPackage {
         add(HiddenInternalFunctions.RefCountInfo.class, HiddenInternalFunctionsFactory.RefCountInfoNodeGen::create);
         add(HiddenInternalFunctions.Identity.class, HiddenInternalFunctionsFactory.IdentityNodeGen::create);
         add(IConv.class, IConvNodeGen::create);
-        add(Identical.class, IdenticalNodeGen::create);
+        add(Identical.class, Identical::create);
         add(Im.class, ImNodeGen::create);
         add(InfixEmulationFunctions.AccessArraySubscriptBuiltin.class, InfixEmulationFunctionsFactory.AccessArraySubscriptBuiltinNodeGen::create);
         add(InfixEmulationFunctions.AccessArraySubscriptDefaultBuiltin.class, InfixEmulationFunctionsFactory.AccessArraySubscriptBuiltinNodeGen::create);

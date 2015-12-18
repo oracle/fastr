@@ -222,5 +222,13 @@ public class TestBuiltin_identical extends TestBase {
         assertEval("{ identical(quote(if(x) 42), quote(if(x) 7)) }");
         assertEval("{ identical(quote(if(x) 42), quote(if(x) 42)) }");
         assertEval("{ identical(function() 42, function() 42) }");
+
+        assertEval("{ setClass(\"foo\", representation(j=\"numeric\")); x<-new(\"foo\", j=42); y<-new(\"foo\", j=42); identical(x,y) }");
+        assertEval("{ setClass(\"foo\", representation(j=\"numeric\")); x<-new(\"foo\", j=42); y<-new(\"foo\", j=7); identical(x,y) }");
+
+        assertEval("{ x<-list(7); y<-list(7); identical(x,y) }");
+        assertEval("{ x<-list(7); y<-list(42); identical(x,y) }");
+        assertEval("{ x<-list(list(7)); y<-list(list(7)); identical(x,y) }");
+        assertEval("{ x<-list(list(7)); y<-list(list(42)); identical(x,y) }");
     }
 }
