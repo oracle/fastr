@@ -40,6 +40,8 @@ public class TestSimpleAttributes extends TestBase {
 
         assertEval("{ x<-array(1:4, c(2,2), list(c(1,2), c(3,4))); attributes(x) }");
         assertEval("{ x<-1:4; attributes(x)<-list(dim=c(2,2), dimnames=list(c(1,2), c(3,4))); attributes(x) }");
+
+        assertEval("{ attributes(NULL) }");
     }
 
     @Test
