@@ -20,6 +20,7 @@ import com.oracle.truffle.api.*;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.r.nodes.*;
 import com.oracle.truffle.r.nodes.access.*;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
@@ -183,7 +184,11 @@ public class HiddenInternalFunctions {
         @TruffleBoundary
         public Object lazyLoadDBFetchInternal(MaterializedFrame frame, RIntVector key, RStringVector datafile, int compression, RFunction envhook) {
             if (CompilerDirectives.inInterpreter()) {
-                getRootNode().reportLoopCount(-5);
+                // TODO why is rootNode sometimes null
+                RootNode rootNode = getRootNode();
+                if (rootNode != null) {
+                    rootNode.reportLoopCount(-5);
+                }
             }
             String dbPath = datafile.getDataAt(0);
             String packageName = new File(dbPath).getName();
