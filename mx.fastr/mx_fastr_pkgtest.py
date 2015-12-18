@@ -103,7 +103,7 @@ def rpt_list_testdates(args):
     parser = ArgumentParser(prog='mx rpt-list-testdates')
     _add_common_args(parser)
     parser.add_argument('--pattern', action='store', help='regexp pattern for pkg match', default='.*')
-    parser.add_argument('--printfile', action='store_true', help='print filename containing tests')
+    parser.add_argument('--printdir', action='store_true', help='print directory containing tests')
     args = parser.parse_args(args)
     fastr = dict()
     dirlist = get_local_dirs(args.logdir)
@@ -124,7 +124,7 @@ def rpt_list_testdates(args):
         sortedList = sorted(testdates)
         print pkg
         for resultInfo in sortedList:
-            if args.printfile:
+            if args.printdir:
                 print '  ' + resultInfo.localdir
             else:
                 print '  ' + str(resultInfo.date)
