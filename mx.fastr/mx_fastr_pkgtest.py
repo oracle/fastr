@@ -49,21 +49,54 @@ def _gather_test_outputs(testdir):
         break
     return result
 
-def _gather_all_test_outputs(testdir):
+def _gather_all_test_outputs(testdir, all_results=False):
+    '''
+    Builds a dict mapping package names to a sorted list of ResultInfo updated with map from package name
+    to  list of output file paths.
+    if all=False, only the most recent ResultInfo is in the list, otherwise all
+    '''
     fastr = dict()
-    fastr_date = dict()
+    fastr_date = dict() # holds most recent resultInfo.date
     dirlist = get_local_dirs(testdir)
     for resultdir in dirlist:
         resultInfo = ResultInfo(resultdir)
         result_outputs = _gather_test_outputs(join(testdir, resultdir, "test"))
         for pkg, outputs in result_outputs.iteritems():
-            if fastr.has_key(pkg):
+            if not fastr.has_key(pkg):
+                resultInfo_list = []
+                fastr[pkg] = resultInfo_list
+            else:
+                resultInfo_list = fastr[pkg]
+
+            resultInfo.set_test_outputs(pkg, outputs)
+            if all_results:
+                resultInfo_list.append(resultInfo)
+                fastr[pkg] = sorted(resultInfo_list)
+            else:
                 # if this is a more recent result overwrite, else drop
-                if resultInfo.date < fastr_date[pkg]:
-                    continue
-            fastr[pkg] = outputs
-            fastr_date[pkg] = resultInfo.date
+                if len(resultInfo_list) == 0 or resultInfo.date > resultInfo_list[0].date:
+                    resultInfo_list = [resultInfo]
+                    fastr[pkg] = resultInfo_list
+                    fastr_date[pkg] = resultInfo.date
     return fastr
+
+def _get_test_outputs(resultInfo_map, index=0, specific_pkg=None):
+    '''
+    Takes a map created by _gather_all_test_outputs and returns a new map,
+    also keyed by pkg, to the list of test output files
+    '''
+    result = dict()
+    if specific_pkg:
+        result[specific_pkg] = resultInfo_map[specific_pkg][index].test_outputs[specific_pkg]
+    else:
+        for pkg, resultInfo_list in resultInfo_map.iteritems():
+            if specific_pkg and specific_pkg != pkg:
+                continue
+            if index < len(resultInfo_list):
+                result[pkg] = resultInfo_list[index].test_outputs[pkg]
+            else:
+                result[pkg] = []
+    return result
 
 def _find_start(content):
     marker = "Type 'q()' to quit R."
@@ -106,10 +139,10 @@ def rpt_list_testdates(args):
     _add_pattern_arg(parser)
     args = parser.parse_args(args)
     fastr = dict()
-    dirlist = get_local_dirs(args.logdir)
-    for resultdir in dirlist:
-        resultInfo = ResultInfo(resultdir)
-        result_outputs = _gather_test_outputs(join(args.logdir, resultdir, "test"))
+    local_dirs = get_local_dirs(args.logdir)
+    for local_dir in local_dirs:
+        resultInfo = ResultInfo(local_dir)
+        result_outputs = _gather_test_outputs(join(args.logdir, local_dir, "test"))
         for pkg, _ in result_outputs.iteritems():
             if re.search(args.pattern, pkg) is None:
                 continue
@@ -121,11 +154,11 @@ def rpt_list_testdates(args):
             testdates.append(resultInfo)
 
     for pkg, testdates in fastr.iteritems():
-        sortedList = sorted(testdates)
+        sortedList = sorted(testdates, reverse=True)
         print pkg
         for resultInfo in sortedList:
             if args.printdir:
-                print '  ' + resultInfo.localdir
+                print '  ' + join(args.logdir, resultInfo.localdir)
             else:
                 print '  ' + str(resultInfo.date)
 
@@ -154,7 +187,7 @@ def rpt_compare(args):
     if args.testdir:
         fastr = _gather_test_outputs(join(args.testdir, "test"))
     else:
-        fastr = _gather_all_test_outputs(args.logdir)
+        fastr = _get_test_outputs(_gather_all_test_outputs(args.logdir))
 
     rdict = _rpt_compare_pkgs(gnur, fastr, args.verbose, args.pattern, args.diff, args.difftool)
     for _, rc in rdict.iteritems():
@@ -283,12 +316,16 @@ class ResultInfo:
         cid = localdir[34:74]
         self.date = datetime.strptime(date, "%Y-%m-%d_%H:%M:%S.%f")
         self.cid = cid
+        self.test_outputs = dict()
 
     def __str__(self):
         return "date: {0}, id {1}".format(self.date, self.cid)
 
     def __sortkey__(self):
         return self.date
+
+    def set_test_outputs(self, pkg, outputs):
+        self.test_outputs[pkg] = outputs
 
 class Result:
     def __init__(self, resultInfo, content, rawData=None):
@@ -556,7 +593,6 @@ def rpt_install_status(args):
     _add_common_args(parser)
     args = parser.parse_args(args)
 
-    packages = args.pkgs
     pkgtable = _build_pkgtable(_get_results(args.logdir))
 
     if args.detail:
@@ -572,14 +608,15 @@ def rpt_install_status(args):
 
     pkgnames = []
     for pkgname, occurrences in pkgtable.iteritems():
-        if len(packages) == 0 or pkgname in packages:
-            status = occurrences[0].status
-            if args.failed:
-                if status == "FAILED":
-                    pkgnames.append(pkgname)
-            else:
-                if status == "OK":
-                    pkgnames.append(pkgname)
+        if re.search(args.pattern, pkgname) is None:
+            continue
+        status = occurrences[0].status
+        if args.failed:
+            if status == "FAILED":
+                pkgnames.append(pkgname)
+        else:
+            if status == "OK":
+                pkgnames.append(pkgname)
     pkgnames.sort()
     for pkgname in pkgnames:
         print pkgname
@@ -588,13 +625,24 @@ def rpt_test_status(args):
     parser = ArgumentParser(prog='mx rpt-test-status')
     _add_common_args(parser)
     _add_pattern_arg(parser)
+    parser.add_argument('--all', action='store_true', help='shows status for all runs')
     args = parser.parse_args(args)
 
-    fastr = _gather_all_test_outputs(args.logdir)
     gnur = _gather_test_outputs(join(os.getcwd(), "test_gnur"))
-    rdict = _rpt_compare_pkgs(gnur, fastr, args.verbose, args.pattern)
-    for pkg, rc in rdict.iteritems():
-        print pkg + ': ' + ('OK' if rc == 0 else 'FAILED')
+    fastr_resultInfo_map = _gather_all_test_outputs(args.logdir, args.all)
+    for pkg, resultInfo_list in fastr_resultInfo_map.iteritems():
+        if not re.search(args.pattern, pkg):
+            continue
+        testcount = len(resultInfo_list)
+        for index in range(testcount):
+            fastr = _get_test_outputs(fastr_resultInfo_map, index, pkg)
+            rdict = _rpt_compare_pkgs(gnur, fastr, args.verbose, args.pattern)
+            if rdict.has_key(pkg):
+                # missing if test_gnur missing results for this package
+                rc = rdict[pkg]
+                print pkg + ' (' + str(fastr_resultInfo_map[pkg][index].date) + ')' + ': ' + ('OK' if rc == 0 else 'FAILED')
+            if not args.all:
+                break
 
 def rpt_test_summary(args):
     parser = ArgumentParser(prog='mx rpt-test-summary')
@@ -602,7 +650,8 @@ def rpt_test_summary(args):
     _add_pattern_arg(parser)
     args = parser.parse_args(args)
 
-    fastr = _gather_all_test_outputs(args.logdir)
+    fastr_resultInfo_map = _gather_all_test_outputs(args.logdir)
+    fastr = _get_test_outputs(fastr_resultInfo_map)
     gnur = _gather_test_outputs(join(os.getcwd(), "test_gnur"))
     rdict = _rpt_compare_pkgs(gnur, fastr, args.verbose, args.pattern)
     ok = 0
@@ -613,33 +662,6 @@ def rpt_test_summary(args):
         else:
             failed = failed + 1
     print "package tests: " + str(len(rdict)) + ", ok: " + str(ok) + ", failed: " + str(failed)
-
-def rpt_list_testdirs(args):
-    parser = ArgumentParser(prog='mx rpt-list-testdirs')
-    _add_pattern_arg(parser)
-    _add_common_args(parser)
-    args = parser.parse_args(args)
-
-    result = dict()
-    local_dirs = get_local_dirs(args.logdir)
-    for local_dir in local_dirs:
-        testdir = join(args.logdir, local_dir, 'test')
-        if not os.path.exists(testdir):
-            continue
-        pkgdirs = os.listdir(testdir)
-        for pkg in pkgdirs:
-            if re.search(args.pattern, pkg):
-                if not result.has_key(pkg):
-                    testdir_list = []
-                    result[pkg] = testdir_list
-                else:
-                    testdir_list = result[pkg]
-                testdir_list.append(testdir)
-
-    for pkg, testdir_list in result.iteritems():
-        print pkg
-        for testdir in testdir_list:
-            print '  ' + testdir
 
 class SymbolClassMatch(MatchClass):
     def __init__(self, print_matches, list_file_matches, match_string):
@@ -669,7 +691,6 @@ _commands = {
     'rpt-findmatches' : [rpt_findmatches, '[options]'],
     'rpt-install-status' : [rpt_install_status, '[options]'],
     'rpt-test-status' : [rpt_test_status, '[options]'],
-    'rpt-list-testdirs' : [rpt_list_testdirs, '[options]'],
     'rpt-compare': [rpt_compare, '[options]'],
     'rpt-check-install-log': [rpt_check_install_log, '[options]'],
     'rpt-list-testdates' : [rpt_list_testdates, '[options]'],

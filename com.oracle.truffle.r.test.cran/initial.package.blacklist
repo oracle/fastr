@@ -424,6 +424,9 @@ Reason: tcltk
 Package: aplpack
 Reason: tcltk
 
+Package: GroupSeq
+Reason: tclTk
+
 Package: R2HTML
 Reason: parser
 
