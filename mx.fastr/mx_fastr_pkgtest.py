@@ -25,7 +25,7 @@ import os, sys, urllib, re
 import subprocess
 import mx
 from os.path import join
-from argparse import ArgumentParser, REMAINDER
+from argparse import ArgumentParser
 from HTMLParser import HTMLParser
 from datetime import datetime
 
@@ -102,8 +102,8 @@ def _fuzzy_compare(gnur_content, fastr_content):
 def rpt_list_testdates(args):
     parser = ArgumentParser(prog='mx rpt-list-testdates')
     _add_common_args(parser)
-    parser.add_argument('--pattern', action='store', help='regexp pattern for pkg match', default='.*')
     parser.add_argument('--printdir', action='store_true', help='print directory containing tests')
+    _add_pattern_arg(parser)
     args = parser.parse_args(args)
     fastr = dict()
     dirlist = get_local_dirs(args.logdir)
@@ -142,10 +142,11 @@ def rpt_compare(args):
     parser.add_argument('--pkg', action='store', help='pkg to compare')
     parser.add_argument('--diff', action='store_true', help='execute given diff program on differing outputs')
     parser.add_argument('--difftool', action='store', help='diff tool', default='diff')
-    parser.add_argument('--pattern', action='store', help='regexp pattern for pkg match', default='.*')
+    _add_pattern_arg(parser)
     args = parser.parse_args(args)
 
     if args.pkg:
+        # backwards compatibility
         args.pattern = args.pkg
 
     gnur = _gather_test_outputs(join(os.getcwd(), "test_gnur"))
@@ -155,28 +156,36 @@ def rpt_compare(args):
     else:
         fastr = _gather_all_test_outputs(args.logdir)
 
-    return _rpt_compare_pkgs(args, gnur, fastr)
+    rdict = _rpt_compare_pkgs(gnur, fastr, args.verbose, args.pattern, args.diff, args.difftool)
+    for _, rc in rdict.iteritems():
+        if rc == 1:
+            return 1
+    return 0
 
-def _rpt_compare_pkgs(args, gnur, fastr):
+def _rpt_compare_pkgs(gnur, fastr, verbose, pattern, diff=False, difftool=None):
+    '''
+    returns dict keyed by pkg with value 0 for pass, 1 for fail
+    '''
     # gnur is definitive
-    result = 0 # optimistic
+    result = dict()
     for pkg in fastr.keys():
-        if re.search(args.pattern, pkg) is None:
+        if re.search(pattern, pkg) is None:
             continue
         if not gnur.has_key(pkg):
             print 'no gnur output to compare: ' + pkg
             continue
 
-        if args.verbose:
+        result[pkg] = 0 # optimistic
+        if verbose:
             print 'comparing ' + pkg
         fastr_outputs = fastr[pkg]
         gnur_outputs = gnur[pkg]
         if len(fastr_outputs) != len(gnur_outputs):
-            if args.verbose:
+            if verbose:
                 print 'fastr is missing some output files'
                 # TODO continue but handle missing files in loop?
                 # does it ever happen in practice?
-            result = 1
+            result[pkg] = 1
             continue
         for i in range(len(gnur_outputs)):
             fastr_output = fastr_outputs[i]
@@ -187,12 +196,12 @@ def _rpt_compare_pkgs(args, gnur, fastr):
             fastr_content = None
             with open(fastr_output) as f:
                 fastr_content = f.readlines()
-            result = _fuzzy_compare(gnur_content, fastr_content)
-            if result != 0:
-                if args.verbose:
+            result[pkg] = _fuzzy_compare(gnur_content, fastr_content)
+            if result[pkg] != 0:
+                if verbose:
                     print 'mismatch on file: ' + fastr_output
-                if args.diff:
-                    cmd = [args.difftool, gnur_output, fastr_output]
+                if diff:
+                    cmd = [difftool, gnur_output, fastr_output]
                     print ' '.join(cmd)
                     subprocess.call(cmd)
                 break
@@ -403,6 +412,9 @@ def _add_common_args(parser):
     parser.add_argument("--logdir", action='store', help='directory of complete log files', default='install.cran.logs')
     parser.add_argument("--verbose", action='store_true', help='verbose output')
 
+def _add_pattern_arg(parser):
+    parser.add_argument('pattern', help='regexp pattern for pkg match', nargs='?', default='.*')
+
 def get_gate_dirs(url, matchfun, adjustfun=None):
     gatedirlist = []
     urlf = urllib.urlopen(url)
@@ -509,8 +521,8 @@ def _copy_files(url, local, pkg):
             with open(join(local, testfile), 'w') as t:
                 t.write(content)
 
-def rpt_summary(args):
-    parser = ArgumentParser(prog='mx rpt-summary')
+def rpt_install_summary(args):
+    parser = ArgumentParser(prog='mx rpt-install-summary')
     _add_common_args(parser)
     args = parser.parse_args(args)
 
@@ -539,8 +551,8 @@ def rpt_install_status(args):
     parser = ArgumentParser(prog='mx rpt-install-status')
     parser.add_argument('--detail', action='store_true', help='display package status')
     parser.add_argument('--displaymode', action='store', default='latest', help='display mode: all | latest')
-    parser.add_argument('--failed', action='store_true', help='list packages that failed to installed')
-    parser.add_argument('pkgs', nargs=REMAINDER, metavar='pkg1 pkg2 ...')
+    parser.add_argument('--failed', action='store_true', help='list packages that failed to install')
+    _add_pattern_arg(parser)
     _add_common_args(parser)
     args = parser.parse_args(args)
 
@@ -549,13 +561,14 @@ def rpt_install_status(args):
 
     if args.detail:
         for pkgname, occurrences in pkgtable.iteritems():
-            if len(packages) == 0 or pkgname in packages:
-                print pkgname
-                if args.displaymode == 'all':
-                    for occurrence in occurrences:
-                        print occurrence
-                else:
-                    print occurrences[0]
+            if re.search(args.pattern, pkgname) is None:
+                continue
+            print pkgname
+            if args.displaymode == 'all':
+                for occurrence in occurrences:
+                    print occurrence
+            else:
+                print occurrences[0]
 
     pkgnames = []
     for pkgname, occurrences in pkgtable.iteritems():
@@ -571,27 +584,62 @@ def rpt_install_status(args):
     for pkgname in pkgnames:
         print pkgname
 
+def rpt_test_status(args):
+    parser = ArgumentParser(prog='mx rpt-test-status')
+    _add_common_args(parser)
+    _add_pattern_arg(parser)
+    args = parser.parse_args(args)
+
+    fastr = _gather_all_test_outputs(args.logdir)
+    gnur = _gather_test_outputs(join(os.getcwd(), "test_gnur"))
+    rdict = _rpt_compare_pkgs(gnur, fastr, args.verbose, args.pattern)
+    for pkg, rc in rdict.iteritems():
+        print pkg + ': ' + ('OK' if rc == 0 else 'FAILED')
+
+def rpt_test_summary(args):
+    parser = ArgumentParser(prog='mx rpt-test-summary')
+    _add_common_args(parser)
+    _add_pattern_arg(parser)
+    args = parser.parse_args(args)
+
+    fastr = _gather_all_test_outputs(args.logdir)
+    gnur = _gather_test_outputs(join(os.getcwd(), "test_gnur"))
+    rdict = _rpt_compare_pkgs(gnur, fastr, args.verbose, args.pattern)
+    ok = 0
+    failed = 0
+    for _, rc in rdict.iteritems():
+        if rc == 0:
+            ok = ok + 1
+        else:
+            failed = failed + 1
+    print "package tests: " + str(len(rdict)) + ", ok: " + str(ok) + ", failed: " + str(failed)
+
 def rpt_list_testdirs(args):
     parser = ArgumentParser(prog='mx rpt-list-testdirs')
-    parser.add_argument('pkg', nargs=REMAINDER)
+    _add_pattern_arg(parser)
     _add_common_args(parser)
     args = parser.parse_args(args)
 
-    if len(args.pkg) != 1:
-        mx.abort('Exactly one package name is required')
-
-    pkg = args.pkg[0]
-    result = []
+    result = dict()
     local_dirs = get_local_dirs(args.logdir)
     for local_dir in local_dirs:
         testdir = join(args.logdir, local_dir, 'test')
         if not os.path.exists(testdir):
             continue
         pkgdirs = os.listdir(testdir)
-        if pkg in pkgdirs:
-            result.append(testdir)
-    for r in result:
-        print r
+        for pkg in pkgdirs:
+            if re.search(args.pattern, pkg):
+                if not result.has_key(pkg):
+                    testdir_list = []
+                    result[pkg] = testdir_list
+                else:
+                    testdir_list = result[pkg]
+                testdir_list.append(testdir)
+
+    for pkg, testdir_list in result.iteritems():
+        print pkg
+        for testdir in testdir_list:
+            print '  ' + testdir
 
 class SymbolClassMatch(MatchClass):
     def __init__(self, print_matches, list_file_matches, match_string):
@@ -616,9 +664,11 @@ class SymbolClassMatch(MatchClass):
 _commands = {
     'rpt-listnew' : [rpt_listnew, '[options]'],
     'rpt-getnew' : [rpt_getnew, '[options]'],
-    'rpt-summary' : [rpt_summary, '[options]'],
+    'rpt-install-summary' : [rpt_install_summary, '[options]'],
+    'rpt-test-summary' : [rpt_test_summary, '[options]'],
     'rpt-findmatches' : [rpt_findmatches, '[options]'],
     'rpt-install-status' : [rpt_install_status, '[options]'],
+    'rpt-test-status' : [rpt_test_status, '[options]'],
     'rpt-list-testdirs' : [rpt_list_testdirs, '[options]'],
     'rpt-compare': [rpt_compare, '[options]'],
     'rpt-check-install-log': [rpt_check_install_log, '[options]'],
