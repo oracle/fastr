@@ -437,15 +437,15 @@ public final class RDataFactory {
     }
 
     public static REnvironment createInternalEnv() {
-        return traceDataCreated(new REnvironment.NewEnv(null, RRuntime.createNonFunctionFrame().materialize(), REnvironment.UNNAMED));
+        return traceDataCreated(new REnvironment.NewEnv(RRuntime.createNonFunctionFrame().materialize(), REnvironment.UNNAMED));
     }
 
-    public static REnvironment.NewEnv createNewEnv(REnvironment parent, String name) {
-        return traceDataCreated(new REnvironment.NewEnv(parent, RRuntime.createNonFunctionFrame().materialize(), name));
+    public static REnvironment.NewEnv createNewEnv(String name) {
+        return traceDataCreated(new REnvironment.NewEnv(RRuntime.createNonFunctionFrame().materialize(), name));
     }
 
-    public static REnvironment createNewEnv(REnvironment parent, String name, boolean hashed, int initialSize) {
-        REnvironment.NewEnv env = new REnvironment.NewEnv(parent, RRuntime.createNonFunctionFrame().materialize(), name);
+    public static REnvironment createNewEnv(String name, boolean hashed, int initialSize) {
+        REnvironment.NewEnv env = new REnvironment.NewEnv(RRuntime.createNonFunctionFrame().materialize(), name);
         env.setHashed(hashed);
         env.setInitialSize(initialSize);
         return traceDataCreated(env);

@@ -414,7 +414,8 @@ public class RSerialize {
 
                     Object enclos = readItem();
                     REnvironment enclosing = enclos == RNull.instance ? REnvironment.baseEnv() : (REnvironment) enclos;
-                    final REnvironment.NewEnv env = RDataFactory.createNewEnv(enclosing, null);
+                    final REnvironment.NewEnv env = RDataFactory.createNewEnv(null);
+                    env.setParent(enclosing);
                     /*
                      * We update the env reference as soon as possible, in case the contents of an
                      * environment contain a reference to the env itself.

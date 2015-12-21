@@ -300,7 +300,9 @@ public class EnvFunctions {
 
         @TruffleBoundary
         private static REnvironment createEnvironment(REnvironment parent, boolean hash, int size) {
-            return RDataFactory.createNewEnv(parent, null, hash, size);
+            REnvironment env = RDataFactory.createNewEnv(null, hash, size);
+            env.setParent(parent);
+            return env;
         }
     }
 

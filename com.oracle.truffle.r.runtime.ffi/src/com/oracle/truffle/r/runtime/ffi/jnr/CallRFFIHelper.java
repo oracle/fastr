@@ -561,6 +561,12 @@ public class CallRFFIHelper {
         // TODO: copy OBJECT? and S4 attributes
     }
 
+    static REnvironment Rf_createNewEnv(REnvironment parent, String name, boolean hashed, int initialSize) {
+        REnvironment env = RDataFactory.createNewEnv(name, hashed, initialSize);
+        env.setParent(parent);
+        return env;
+    }
+
     // Checkstyle: resume method name check
 
     static Object validate(Object x) {

@@ -263,10 +263,11 @@ public final class RArguments {
         arguments[INDEX_IS_IRREGULAR] = isIrregularFrame;
     }
 
-    public static void setEnclosingFrame(Frame frame, MaterializedFrame encl) {
+    public static void setEnclosingFrame(Frame frame, MaterializedFrame newEnclosingFrame) {
         CompilerAsserts.neverPartOfCompilation();
         Object[] arguments = frame.getArguments();
-        arguments[INDEX_ENCLOSING_FRAME] = encl;
+        MaterializedFrame oldEnclosingFrame = (MaterializedFrame) arguments[INDEX_ENCLOSING_FRAME];
+        arguments[INDEX_ENCLOSING_FRAME] = newEnclosingFrame;
         FrameSlotChangeMonitor.invalidateEnclosingFrame(frame);
     }
 
@@ -275,14 +276,14 @@ public final class RArguments {
      * {@code frame} and set the enclosing frame for {@code newEncl} to the previous enclosing frame
      * for {@code frame}. assert {@code} does not denote a function.
      */
-    public static void attachFrame(Frame frame, MaterializedFrame newEncl) {
+    public static void attachFrame(Frame frame, MaterializedFrame newEnclosingFrame) {
         CompilerAsserts.neverPartOfCompilation();
         Object[] arguments = frame.getArguments();
-        MaterializedFrame encl = (MaterializedFrame) arguments[INDEX_ENCLOSING_FRAME];
-        Object[] newArguments = newEncl.getArguments();
-        newArguments[INDEX_ENCLOSING_FRAME] = encl;
-        arguments[INDEX_ENCLOSING_FRAME] = newEncl;
-        FrameSlotChangeMonitor.invalidateEnclosingFrame(newEncl);
+        MaterializedFrame oldEnclosingFrame = (MaterializedFrame) arguments[INDEX_ENCLOSING_FRAME];
+        Object[] newArguments = newEnclosingFrame.getArguments();
+        newArguments[INDEX_ENCLOSING_FRAME] = oldEnclosingFrame;
+        arguments[INDEX_ENCLOSING_FRAME] = newEnclosingFrame;
+        FrameSlotChangeMonitor.invalidateEnclosingFrame(newEnclosingFrame);
         FrameSlotChangeMonitor.invalidateEnclosingFrame(frame);
     }
 

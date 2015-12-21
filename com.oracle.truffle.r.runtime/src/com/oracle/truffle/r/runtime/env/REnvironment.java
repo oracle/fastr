@@ -197,17 +197,10 @@ public abstract class REnvironment extends RAttributeStorage implements RTypedVa
 
     public static final String UNNAMED = new String("");
     private static final String NAME_ATTR_KEY = "name";
-
     private static final Empty emptyEnv = new Empty();
 
-    /**
-     * The environments returned by the R {@code search} function.
-     */
-    // private static ArrayList<REnvironment> searchPath;
-
-    protected REnvironment parent;
     private final String name;
-    protected final REnvFrameAccess frameAccess;
+    private final REnvFrameAccess frameAccess;
     private boolean locked;
 
     public RType getRType() {
@@ -284,8 +277,8 @@ public abstract class REnvironment extends RAttributeStorage implements RTypedVa
         Base baseEnv = new Base(baseFrame, initialGlobalFrame);
         namespaceRegistry.safePut("base", baseEnv.namespaceEnv);
 
-        Global globalEnv = new Global(baseEnv, initialGlobalFrame);
-        baseEnv.namespaceEnv.parent = globalEnv;
+        Global globalEnv = new Global(initialGlobalFrame);
+        globalEnv.setParent(baseEnv);
         state.setBaseEnv(baseEnv);
         state.setSearchPath(initSearchList(globalEnv));
     }
@@ -310,12 +303,13 @@ public abstract class REnvironment extends RAttributeStorage implements RTypedVa
                  */
                 ContextStateImpl parentState = context.getParent().stateREnvironment;
                 Base parentBaseEnv = parentState.getBaseEnv();
-                NSBaseMaterializedFrame nsBaseFrame = (NSBaseMaterializedFrame) parentBaseEnv.namespaceEnv.frameAccess.getFrame();
+                NSBaseMaterializedFrame nsBaseFrame = (NSBaseMaterializedFrame) parentBaseEnv.namespaceEnv.getFrame();
                 MaterializedFrame prevGlobalFrame = RArguments.getEnclosingFrame(nsBaseFrame);
 
                 Global prevGlobalEnv = (Global) RArguments.getEnvironment(prevGlobalFrame);
                 nsBaseFrame.updateGlobalFrame(globalFrame);
-                Global newGlobalEnv = new Global(prevGlobalEnv.parent, globalFrame);
+                Global newGlobalEnv = new Global(globalFrame);
+                newGlobalEnv.setParent(prevGlobalEnv.getParent());
                 SearchPath searchPath = initSearchList(prevGlobalEnv);
                 searchPath.updateGlobal(newGlobalEnv);
                 parentState.getBaseEnv().safePut(".GlobalEnv", newGlobalEnv);
@@ -331,7 +325,8 @@ public abstract class REnvironment extends RAttributeStorage implements RTypedVa
                 // clone all the environments below global from the parent
                 REnvironment e = parentSearchPath.get(1).cloneEnv(globalFrame);
                 // create the new Global with clone top as parent
-                Global newGlobalEnv = new Global(e, globalFrame);
+                Global newGlobalEnv = new Global(globalFrame);
+                newGlobalEnv.setParent(e);
                 // create new namespaceRegistry and populate it while locating "base"
                 REnvironment newNamespaceRegistry = RDataFactory.createInternalEnv();
                 Base newBaseEnv = null;
@@ -339,7 +334,7 @@ public abstract class REnvironment extends RAttributeStorage implements RTypedVa
                     if (e instanceof Base) {
                         newBaseEnv = (Base) e;
                     }
-                    e = e.parent;
+                    e = e.getParent();
                 }
                 assert newBaseEnv != null;
                 copyNamespaceRegistry(parentState.namespaceRegistry, newNamespaceRegistry);
@@ -369,7 +364,7 @@ public abstract class REnvironment extends RAttributeStorage implements RTypedVa
                 MaterializedFrame parentGlobalFrame = ((ContextStateImpl) state).parentGlobalFrame;
                 Global parentGlobalEnv = (Global) RArguments.getEnvironment(parentGlobalFrame);
                 ContextStateImpl parentState = context.getParent().stateREnvironment;
-                NSBaseMaterializedFrame nsBaseFrame = (NSBaseMaterializedFrame) parentState.baseEnv.namespaceEnv.frameAccess.getFrame();
+                NSBaseMaterializedFrame nsBaseFrame = (NSBaseMaterializedFrame) parentState.baseEnv.namespaceEnv.getFrame();
                 nsBaseFrame.updateGlobalFrame(parentGlobalFrame);
                 parentState.baseEnv.safePut(".GlobalEnv", parentGlobalEnv);
                 break;
@@ -386,7 +381,7 @@ public abstract class REnvironment extends RAttributeStorage implements RTypedVa
         REnvironment env = globalEnv;
         do {
             searchPath.add(env);
-            env = env.parent;
+            env = env.getParent();
         } while (env != emptyEnv);
         return searchPath;
     }
@@ -396,12 +391,13 @@ public abstract class REnvironment extends RAttributeStorage implements RTypedVa
      * which is why we pass {@code globalFrame} as it needs it for it's creation.
      */
     protected REnvironment cloneEnv(MaterializedFrame globalFrame) {
-        REnvironment parentClone = parent;
-        if (parent != emptyEnv) {
-            parentClone = parent.cloneEnv(globalFrame);
+        REnvironment parentClone = getParent();
+        if (parentClone != emptyEnv) {
+            parentClone = parentClone.cloneEnv(globalFrame);
         }
         // N.B. Base overrides this method, so we only get here for package environments
-        REnvironment newEnv = RDataFactory.createNewEnv(parentClone, getName());
+        REnvironment newEnv = RDataFactory.createNewEnv(getName());
+        newEnv.setParent(parentClone);
         if (attributes != null) {
             newEnv.attributes = attributes.copy();
         }
@@ -548,9 +544,6 @@ public abstract class REnvironment extends RAttributeStorage implements RTypedVa
         // Insert in the REnvironment search path, adjusting the parent fields appropriately
         // In the default case (pos == 2), envAbove is the Global env
         REnvironment envAbove = searchPath.get(bpos - 1);
-        REnvironment envBelow = searchPath.get(bpos);
-        env.parent = envBelow;
-        envAbove.parent = env;
         searchPath.add(bpos, env);
         // Now must adjust the Frame world so that unquoted variable lookup works
         MaterializedFrame aboveFrame = envAbove.frameAccess.getFrame();
@@ -584,7 +577,6 @@ public abstract class REnvironment extends RAttributeStorage implements RTypedVa
         int bpos = pos - 1;
         REnvironment envAbove = searchPath.get(bpos - 1);
         REnvironment envToRemove = searchPath.get(bpos);
-        envAbove.parent = envToRemove.parent;
         searchPath.remove(bpos);
         MaterializedFrame aboveFrame = envAbove.frameAccess.getFrame();
         RArguments.detachFrame(aboveFrame);
@@ -600,8 +592,7 @@ public abstract class REnvironment extends RAttributeStorage implements RTypedVa
      * Specifically for {@code ls()}, we don't care about the parent, as the use is transient.
      */
     public static REnvironment createLsCurrent(MaterializedFrame frame) {
-        Function result = new Function(null, frame);
-        return result;
+        return new Function(frame);
     }
 
     /**
@@ -630,7 +621,7 @@ public abstract class REnvironment extends RAttributeStorage implements RTypedVa
         REnvironment env = RArguments.getEnvironment(frame);
         if (env == null) {
             // parent is the env of the enclosing frame
-            env = REnvironment.Function.create(createEnclosingEnvironments(RArguments.getEnclosingFrame(frame)), frame);
+            env = REnvironment.Function.create(frame);
         }
         return env;
     }
@@ -641,7 +632,8 @@ public abstract class REnvironment extends RAttributeStorage implements RTypedVa
      */
     @TruffleBoundary
     public static REnvironment createFromList(RAttributeProfiles attrProfiles, RList list, REnvironment parent) {
-        REnvironment result = RDataFactory.createNewEnv(parent, null);
+        REnvironment result = RDataFactory.createNewEnv(null);
+        result.setParent(parent);
         RStringVector names = list.getNames(attrProfiles);
         for (int i = 0; i < list.getLength(); i++) {
             try {
@@ -720,8 +712,7 @@ public abstract class REnvironment extends RAttributeStorage implements RTypedVa
     /**
      * The basic constructor; just assigns the essential fields.
      */
-    private REnvironment(REnvironment parent, String name, REnvFrameAccess frameAccess) {
-        this.parent = parent;
+    private REnvironment(String name, REnvFrameAccess frameAccess) {
         this.name = name;
         this.frameAccess = frameAccess;
     }
@@ -729,15 +720,16 @@ public abstract class REnvironment extends RAttributeStorage implements RTypedVa
     /**
      * An environment associated with an already materialized frame.
      */
-    private REnvironment(REnvironment parent, String name, MaterializedFrame frame) {
-        this(parent, name, new REnvTruffleFrameAccess(frame));
+    private REnvironment(String name, MaterializedFrame frame) {
+        this(name, new REnvTruffleFrameAccess(frame));
 
         // Associate frame with the environment
         RArguments.setEnvironment(frame, this);
     }
 
     public REnvironment getParent() {
-        return parent;
+        MaterializedFrame enclosingFrame = RArguments.getEnclosingFrame(getFrame());
+        return enclosingFrame == null ? emptyEnv : frameToEnvironment(enclosingFrame);
     }
 
     /**
@@ -745,16 +737,8 @@ public abstract class REnvironment extends RAttributeStorage implements RTypedVa
      * associated Truffle frame
      */
     public void setParent(REnvironment env) {
-        if (this.parent != env) {
-            // don't do unnecessary assignment (as it's slow)
-            assert !env.getName().equals(Empty.EMPTY_ENV_NAME) || env.getName().intern() == env.getName();
-            if (env.getName() != Empty.EMPTY_ENV_NAME) {
-                // don't do frame assignment for empty environment
-                // TODO: is it correct to leave current frame's (not environment's!) parent intact
-                // when setting empty environment as a parent?
-                RArguments.setEnclosingFrame(this.getFrame(), env.getFrame());
-            }
-            parent = env;
+        if (getParent() != env) {
+            RArguments.setEnclosingFrame(getFrame(), env.getFrame());
         }
     }
 
@@ -858,13 +842,14 @@ public abstract class REnvironment extends RAttributeStorage implements RTypedVa
      * @return the value of the function or {@code null} if not found.
      */
     public Object findFunction(String varName) {
+        CompilerAsserts.neverPartOfCompilation();
         REnvironment env = this;
         while (env != emptyEnv) {
             Object value = env.get(varName);
             if (value != null && (value instanceof RFunction || value instanceof RPromise)) {
                 return value;
             }
-            env = env.parent;
+            env = env.getParent();
         }
         return null;
     }
@@ -893,8 +878,8 @@ public abstract class REnvironment extends RAttributeStorage implements RTypedVa
     }
 
     private static final class BaseNamespace extends REnvironment {
-        private BaseNamespace(REnvironment parent, String name, MaterializedFrame frame) {
-            super(parent, name, frame);
+        private BaseNamespace(String name, MaterializedFrame frame) {
+            super(name, frame);
             RArguments.setEnvironment(frame, this);
         }
 
@@ -908,13 +893,13 @@ public abstract class REnvironment extends RAttributeStorage implements RTypedVa
         private final BaseNamespace namespaceEnv;
 
         private Base(MaterializedFrame baseFrame, MaterializedFrame globalFrame) {
-            super(emptyEnv, "base", baseFrame);
+            super("base", baseFrame);
             /*
              * We create the NSBaseMaterializedFrame using globalFrame as the enclosing frame. The
              * namespaceEnv parent field will change to globalEnv after the latter is created
              */
             NSBaseMaterializedFrame frame = new NSBaseMaterializedFrame(baseFrame, globalFrame);
-            this.namespaceEnv = new BaseNamespace(emptyEnv, "base", frame);
+            this.namespaceEnv = new BaseNamespace("base", frame);
         }
 
         @Override
@@ -947,16 +932,14 @@ public abstract class REnvironment extends RAttributeStorage implements RTypedVa
 
         static final String SEARCHNAME = ".GlobalEnv";
 
-        private Global(REnvironment parent, MaterializedFrame frame) {
-            super(parent, "R_GlobalEnv", frame);
-            RArguments.setEnclosingFrame(frame, parent.getFrame());
+        private Global(MaterializedFrame frame) {
+            super("R_GlobalEnv", frame);
         }
 
         @Override
         protected String getSearchName() {
             return SEARCHNAME;
         }
-
     }
 
     /**
@@ -967,15 +950,15 @@ public abstract class REnvironment extends RAttributeStorage implements RTypedVa
      */
     private static final class Function extends REnvironment {
 
-        private Function(REnvironment parent, MaterializedFrame frame) {
+        private Function(MaterializedFrame frame) {
             // function environments are not named
-            super(parent, UNNAMED, frame);
+            super(UNNAMED, frame);
         }
 
-        private static Function create(REnvironment parent, MaterializedFrame frame) {
+        private static Function create(MaterializedFrame frame) {
             Function result = (Function) RArguments.getEnvironment(frame);
             if (result == null) {
-                result = new Function(parent, frame);
+                result = new Function(frame);
             }
             return result;
         }
@@ -993,11 +976,8 @@ public abstract class REnvironment extends RAttributeStorage implements RTypedVa
         private boolean hashed;
         private int initialSize;
 
-        public NewEnv(REnvironment parent, MaterializedFrame frame, String name) {
-            super(parent, UNNAMED, frame);
-            if (parent != null) {
-                RArguments.setEnclosingFrame(frame, parent.getFrame());
-            }
+        public NewEnv(MaterializedFrame frame, String name) {
+            super(UNNAMED, frame);
             if (name != null) {
                 setAttr(NAME_ATTR_KEY, name);
             }
@@ -1044,13 +1024,12 @@ public abstract class REnvironment extends RAttributeStorage implements RTypedVa
         public static final String EMPTY_ENV_NAME = "R_EmptyEnv";
 
         private Empty() {
-            super(null, EMPTY_ENV_NAME, new REnvEmptyFrameAccess());
+            super(EMPTY_ENV_NAME, new REnvEmptyFrameAccess());
         }
 
         @Override
         public void put(String key, Object value) throws PutException {
             throw new PutException(RError.Message.ENV_ASSIGN_EMPTY);
         }
-
     }
 }
