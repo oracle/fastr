@@ -45,7 +45,7 @@ public abstract class SystemFunction extends RBuiltinNode {
         if (shell == null) {
             shell = "/bin/sh";
         }
-        if (System.getProperty("fastr.logchild") != null) {
+        if (RContext.getInstance().stateREnvVars.getMap().get("FASTR_LOGCHILD") != null) {
             System.out.printf("FastR system: %s -c %s%n", shell, command.getDataAt(0));
         }
         ProcessBuilder pb = new ProcessBuilder(shell, "-c", command.getDataAt(0));
