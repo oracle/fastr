@@ -74,15 +74,9 @@ com.oracle.truffle.r.native/library/parallel/src/parallel.h,no.copyright
 com.oracle.truffle.r.native/library/parallel/src/rngstream.c,no.copyright
 com.oracle.truffle.r.native/library/splines/src/splines.c,no.copyright
 com.oracle.truffle.r.native/library/stats/src/init.c,no.copyright
-com.oracle.truffle.r.native/library/stats/src/interv.c,no.copyright
-com.oracle.truffle.r.native/library/stats/src/isoreg.c,no.copyright
-com.oracle.truffle.r.native/library/stats/src/kmeans.c,no.copyright
-com.oracle.truffle.r.native/library/stats/src/loessc.c,no.copyright
 com.oracle.truffle.r.native/library/stats/src/modreg.h,no.copyright
-com.oracle.truffle.r.native/library/stats/src/monoSpl.c,no.copyright
 com.oracle.truffle.r.native/library/stats/src/nls.h,no.copyright
 com.oracle.truffle.r.native/library/stats/src/port.h,no.copyright
-com.oracle.truffle.r.native/library/stats/src/sbart.c,no.copyright
 com.oracle.truffle.r.native/library/stats/src/stats.h,no.copyright
 com.oracle.truffle.r.native/library/stats/src/statsR.h,no.copyright
 com.oracle.truffle.r.native/library/stats/src/ts.h,no.copyright
