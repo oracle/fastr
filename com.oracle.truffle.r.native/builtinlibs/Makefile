@@ -33,6 +33,8 @@ endif
 
 .PHONY: all clean cleanlib cleanobj force libr
 
+all: linked $(LIB_APPL) libr
+
 SRC = src
 OBJ = lib
 LIBDIR = $(abspath $(TOPDIR)/../lib)
@@ -42,20 +44,18 @@ GNUR_LINKED_C_FILES = $(addprefix $(GNUR_HOME)/src/appl/, $(LINKED_C_FILES))
 NON_LOCAL_C_SOURCES = $(addprefix $(SRC)/, $(LINKED_C_FILES))
 C_LOCAL_SOURCES = $(filter-out  $(NON_LOCAL_C_SOURCES),$(wildcard $(SRC)/*.c))
 C_SOURCES := $(NON_LOCAL_C_SOURCES) $(C_LOCAL_SOURCES)
-$(info C_SOURCES=$(C_SOURCES))
 C_OBJECTS := $(subst $(SRC),$(OBJ),$(C_SOURCES:.c=.o))
 F_OBJECTS := $(wildcard $(GNUR_HOME)/src/appl/d*.o)
 
 LIB_APPL := $(LIBDIR)/libappl$(DYLIB_EXT)
 
-all: $(LIB_APPL) libr
-
 $(LIB_APPL): $(C_OBJECTS) $(F_OBJECTS)
 	mkdir -p $(LIBDIR)
 	$(DYLIB_LD) $(DYLIB_LDFLAGS)  -o $(LIB_APPL) $(C_OBJECTS) $(F_OBJECTS) $(LIBS)
 
-$(SRC)/$(LINKED_C_FILES): $(GNUR_LINKED_C_FILES)
+linked: $(GNUR_LINKED_C_FILES)
 	$(foreach file,$(LINKED_C_FILES),ln -sf $(GNUR_HOME)/src/appl/$(file) $(SRC)/$(file);)
+	touch linked
 
 $(C_OBJECTS): | $(OBJ)
 
@@ -97,5 +97,6 @@ cleanlib:
 clean: cleanobj cleanlibr
 
 cleanobj:
+	rm -f linked
 	rm -f $(OBJ)/*.o
 	rm -f $(SRC)/$(LINKED_C_FILES)
