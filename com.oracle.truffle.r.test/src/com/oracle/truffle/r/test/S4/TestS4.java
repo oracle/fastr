@@ -74,7 +74,7 @@ public class TestS4 extends TestBase {
     @Test
     public void testAllocation() {
         assertEval("{ new(\"numeric\") }");
-        assertEval("{ setClass(\"foo\", representation(j=\"numeric\")); new(\"foo\", j=42) }");
+        assertEval(Ignored.Unknown, "{ setClass(\"foo\", representation(j=\"numeric\")); new(\"foo\", j=42) }");
     }
 
     @Test
