@@ -188,7 +188,6 @@ public abstract class Identical extends RBuiltinNode {
         return RRuntime.LOGICAL_TRUE;
     }
 
-    @SuppressWarnings("unused")
     @Specialization
     protected byte doInternalIdenticalGeneric(RList x, RList y, byte numEq, byte singleNA, byte attribAsSet, byte ignoreBytecode, byte ignoreEnvironment) {
         if (!recursive) {
@@ -241,7 +240,6 @@ public abstract class Identical extends RBuiltinNode {
         return RRuntime.LOGICAL_FALSE;
     }
 
-    @SuppressWarnings("unused")
     @Specialization
     protected byte doInternalIdenticalGeneric(RS4Object x, RS4Object y, Object numEq, Object singleNA, Object attribAsSet, Object ignoreBytecode, Object ignoreEnvironment) {
         if (!recursive) {
