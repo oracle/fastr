@@ -20,11 +20,18 @@
 # or visit www.oracle.com if you need additional information or have any
 # questions.
 #
+#
+# Completeness of the stats package is a work in progress
+# Currently we compile a subset of the .c and .f files from the
+# GnuR stats library source - those that do not depend on GnuR internals (always true for .f)
+# A first step in the build is to make symbolic links to those files and also to
+# do some necessary modofications to a copy of fft.c.
 
 .PHONY: cleanfft
 
-LIB_PKG_PRE = $(OBJ)/fft.o
-GNUR_FFT := $(GNUR_HOME)/src/library/stats/src/fft.c
+GNUR_FFT = $(addprefix $(GNUR_HOME)/src/library/stats/src/, fft.c)
+
+LIB_PKG_PRE = $(addprefix $(OBJ)/, $(ED_C_FILES))
 CLEAN_PKG := cleanfft
 
 
@@ -37,16 +44,26 @@ PKG_LIBS := $(LAPACK_LIBS) $(BLAS_LIBS) -lappl -L$(FASTR_LIB_DIR) $(FLIBS)
 
 include ../lib.mk
 
-# The above will set set C_SOURCES to all the .c files in src
-# If we happen to have a pre-generated fft.c, then ok, otherwise
-# we need to add it. Can't always add it as then we get it duplicated
-# in C_OBJECTS, which causes a link failure
+LINKED_F_FILES = bsplvd.f bvalue.f bvalus.f eureka.f hclust.f kmns.f lminfl.f loessf.f ppr.f qsbart.f sgram.f \
+               sinerp.f sslvrg.f stl.f stxwx.f
+GNUR_LINKED_F_FILES = $(addprefix $(GNUR_HOME)/src/library/stats/src/, $(LINKED_F_FILES))
 
-HAVE_FFT_SRC := $(shell [ -f $(SRC)/fft.c ] && echo "exists")
-ifneq ($(HAVE_FFT_SRC), exists)
-C_SOURCES := $(C_SOURCES) $(SRC)/fft.c
-C_OBJECTS := $(C_OBJECTS) $(OBJ)/fft.o
-endif
+LINKED_C_FILES = isoreg.c kmeans.c loessc.c monoSpl.c sbart.c
+GNUR_LINKED_C_FILES = $(addprefix $(GNUR_HOME)/src/library/stats/src/, $(LINKED_C_FILES))
+
+$(SRC)/$(LINKED_C_FILES) $(SRC)/$(LINKED_F_FILES): $(GNUR_LINKED_F_FILES) $(GNUR_LINKED_C_FILES)
+	$(foreach file,$(LINKED_C_FILES),ln -sf $(GNUR_HOME)/src/library/stats/src/$(file) $(SRC)/$(file);)
+	$(foreach file,$(LINKED_F_FILES),ln -sf $(GNUR_HOME)/src/library/stats/src/$(file) $(SRC)/$(file) ;)
+
+# this dance ensures that C_SOURCES is set correctly regardless of whether the linked/modified files 
+# have been created or not (C_SOURCES will have been set in ../lib.mk)
+NON_LOCAL_C_SOURCES = $(addprefix $(SRC)/, $(LINKED_C_FILES))
+C_LOCAL_SOURCES = $(filter-out  $(NON_LOCAL_C_SOURCES),$(wildcard $(SRC)/*.c))
+C_SOURCES := $(NON_LOCAL_C_SOURCES) $(C_LOCAL_SOURCES)
+
+#$(info NON_LOCAL_C_SOURCES=$(NON_LOCAL_C_SOURCES))
+#$(info LOCAL_C_SOURCES=$(C_LOCAL_SOURCES))
+#$(info C_SOURCES=$(C_SOURCES))
 
 $(C_OBJECTS): | $(OBJ)
 
@@ -55,3 +72,5 @@ $(SRC)/fft.c: $(GNUR_FFT) src/ed_fft
 
 cleanfft:
 	rm -f $(SRC)/fft.c
+	rm -f $(NON_LOCAL_C_SOURCES)
+	rm -f $(addprefix $(SRC)/, $(LINKED_F_FILES))
