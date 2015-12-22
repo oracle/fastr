@@ -50,7 +50,7 @@ public class TestBuiltin_attributes extends TestBase {
 
     @Test
     public void testattributes7() {
-        assertEval(Ignored.Unknown, "argv <- list(NULL);attributes(argv[[1]]);");
+        assertEval("argv <- list(NULL);attributes(argv[[1]]);");
     }
 
     @Test
