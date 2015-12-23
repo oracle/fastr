@@ -22,23 +22,56 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.RBuiltinKind.*;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.INTERNAL;
+import static com.oracle.truffle.r.runtime.RBuiltinKind.PRIMITIVE;
 
-import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.*;
-import com.oracle.truffle.api.frame.*;
+import com.oracle.truffle.api.RootCallTarget;
+import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.NodeChild;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
-import com.oracle.truffle.api.profiles.*;
-import com.oracle.truffle.r.nodes.builtin.*;
+import com.oracle.truffle.api.frame.MaterializedFrame;
+import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.nodes.RRootNode;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.RInvisibleBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.EnvFunctionsFactory.CopyNodeGen;
-import com.oracle.truffle.r.nodes.function.*;
+import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
+import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseDeoptimizeFrameNode;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
-import com.oracle.truffle.r.runtime.env.*;
-import com.oracle.truffle.r.runtime.nodes.*;
+import com.oracle.truffle.r.runtime.RArguments;
+import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.VirtualEvalFrame;
+import com.oracle.truffle.r.runtime.data.RAttributable;
+import com.oracle.truffle.r.runtime.data.RAttributeProfiles;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.data.RLanguage;
+import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.data.RMissing;
+import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RPromise;
+import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.RSymbol;
+import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
+import com.oracle.truffle.r.runtime.nodes.RNode;
 
 /**
  * Encapsulates all the builtins related to R environments as nested static classes.
@@ -169,7 +202,6 @@ public class EnvFunctions {
             env.setParent(parent);
             return env;
         }
-
     }
 
     @RBuiltin(name = "is.environment", kind = PRIMITIVE, parameterNames = {"x"})
@@ -235,8 +267,14 @@ public class EnvFunctions {
         @Specialization
         @TruffleBoundary
         protected Object updateEnvironment(RFunction fun, REnvironment env) {
-            fun.setEnclosingFrame(env.getFrame());
-            return fun;
+            MaterializedFrame enclosingFrame = env.getFrame();
+            assert !(enclosingFrame instanceof VirtualEvalFrame);
+
+            RRootNode root = (RRootNode) fun.getTarget().getRootNode();
+            root = root.duplicateWithNewFrameDescriptor();
+            RootCallTarget target = Truffle.getRuntime().createCallTarget(root);
+            FrameSlotChangeMonitor.initializeEnclosingFrame(target.getRootNode().getFrameDescriptor(), enclosingFrame);
+            return RDataFactory.createFunction(fun.getName(), target, null, enclosingFrame, fun.getFastPath(), ((FunctionDefinitionNode) target.getRootNode()).containsDispatch());
         }
 
         @SuppressWarnings("unused")
@@ -293,15 +331,11 @@ public class EnvFunctions {
         }
 
         @Specialization
+        @TruffleBoundary
         protected REnvironment newEnv(byte hash, REnvironment parent, int size) {
             controlVisibility();
-            return createEnvironment(parent, RRuntime.fromLogical(hash), size);
-        }
-
-        @TruffleBoundary
-        private static REnvironment createEnvironment(REnvironment parent, boolean hash, int size) {
-            REnvironment env = RDataFactory.createNewEnv(null, hash, size);
-            env.setParent(parent);
+            REnvironment env = RDataFactory.createNewEnv(null, RRuntime.fromLogical(hash), size);
+            RArguments.initializeEnclosingFrame(env.getFrame(), parent.getFrame());
             return env;
         }
     }

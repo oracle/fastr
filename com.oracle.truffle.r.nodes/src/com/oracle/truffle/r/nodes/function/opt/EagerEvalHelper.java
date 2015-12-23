@@ -22,13 +22,18 @@
  */
 package com.oracle.truffle.r.nodes.function.opt;
 
-import com.oracle.truffle.r.nodes.access.*;
-import com.oracle.truffle.r.nodes.access.variables.*;
-import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode.ReadKind;
-import com.oracle.truffle.r.nodes.function.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.nodes.*;
+import com.oracle.truffle.r.nodes.access.AccessArgumentNode;
+import com.oracle.truffle.r.nodes.access.ConstantNode;
+import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
+import com.oracle.truffle.r.nodes.function.ArgumentStatePush;
+import com.oracle.truffle.r.nodes.function.PromiseNode;
+import com.oracle.truffle.r.nodes.function.RCallNode;
+import com.oracle.truffle.r.runtime.FastROptions;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
+import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
  * Provides small helper function for eager evaluation of arguments for the use in
@@ -121,7 +126,7 @@ public class EagerEvalHelper {
     public static boolean isVariableArgument(RBaseNode expr) {
         // Do NOT try to optimize anything that might force a Promise, as this might be arbitrary
         // complex (time and space)!
-        return expr instanceof ReadVariableNode && ((ReadVariableNode) expr).getKind() != ReadKind.ForcedTypeCheck;
+        return expr instanceof ReadVariableNode && !((ReadVariableNode) expr).isForceForTypeCheck();
     }
 
     private static boolean isCheapExpressionArgument(@SuppressWarnings("unused") RNode expr) {

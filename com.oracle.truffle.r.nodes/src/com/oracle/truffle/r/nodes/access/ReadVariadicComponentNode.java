@@ -22,25 +22,31 @@
  */
 package com.oracle.truffle.r.nodes.access;
 
-import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.source.*;
-import com.oracle.truffle.api.profiles.*;
-import com.oracle.truffle.r.nodes.access.variables.*;
-import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode.ReadKind;
-import com.oracle.truffle.r.nodes.function.*;
-import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.api.source.SourceSection;
+import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
+import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
+import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RDeparse.State;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.env.*;
-import com.oracle.truffle.r.runtime.nodes.*;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.VisibilityController;
+import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
+import com.oracle.truffle.r.runtime.data.RMissing;
+import com.oracle.truffle.r.runtime.data.RPromise;
+import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
  * An {@link RNode} that handles accesses to components of the variadic argument (..1, ..2, etc.).
  */
-public class ReadVariadicComponentNode extends RNode implements RSyntaxNode {
+public class ReadVariadicComponentNode extends RNode implements RSyntaxNode, VisibilityController {
 
-    @Child private ReadVariableNode lookup = ReadVariableNode.create(ArgumentsSignature.VARARG_NAME, RType.Any, ReadKind.Silent);
+    @Child private ReadVariableNode lookup = ReadVariableNode.createSilent(ArgumentsSignature.VARARG_NAME, RType.Any);
     @Child private PromiseHelperNode promiseHelper;
 
     private final int index;
@@ -55,6 +61,8 @@ public class ReadVariadicComponentNode extends RNode implements RSyntaxNode {
 
     @Override
     public Object execute(VirtualFrame frame) {
+        controlVisibility();
+
         Object args = lookup.execute(frame);
         if (args == null) {
             errorBranch.enter();

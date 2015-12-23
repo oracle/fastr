@@ -115,16 +115,24 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
     public FunctionDefinitionNode(SourceSection src, FrameDescriptor frameDesc, BodyNode body, FormalArguments formals, String description, boolean substituteFrame, boolean skipExit,
                     PostProcessArgumentsNode argPostProcess) {
         super(src, formals, frameDesc);
+        assert FrameSlotChangeMonitor.isValidFrameDescriptor(frameDesc);
         this.body = body;
         this.uninitializedBody = body;
         this.description = description;
         this.substituteFrame = substituteFrame;
         this.onExitSlot = skipExit ? null : FrameSlotNode.createInitialized(frameDesc, RFrameSlot.OnExit, false);
         this.uuid = FunctionUIDFactory.get().createUID();
-        this.checkSingletonFrame = !substituteFrame;
         this.needsSplitting = needsAnyBuiltinSplitting();
         this.containsDispatch = containsAnyDispatch(body);
         this.argPostProcess = argPostProcess;
+    }
+
+    @Override
+    public RRootNode duplicateWithNewFrameDescriptor() {
+        FrameDescriptor frameDesc = new FrameDescriptor();
+        FrameSlotChangeMonitor.initializeFunctionFrameDescriptor(description != null && !description.isEmpty() ? description : "<function>", frameDesc);
+        return new FunctionDefinitionNode(getSourceSection(), frameDesc, (BodyNode) body.deepCopy(), getFormalArguments(), description, substituteFrame, argPostProcess == null ? null
+                        : (PostProcessArgumentsNode) argPostProcess.deepCopy());
     }
 
     private static boolean containsAnyDispatch(BodyNode body) {
@@ -332,10 +340,6 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         return description == null ? "<no source>" : description;
     }
 
-    public String parentToString() {
-        return super.toString();
-    }
-
     @Override
     public boolean isCloningAllowed() {
         return !substituteFrame;
@@ -373,7 +377,10 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
 
     @Override
     public RSyntaxNode substituteImpl(REnvironment env) {
-        return new FunctionDefinitionNode(null, new FrameDescriptor(), (BodyNode) body.substitute(env).asRNode(), getFormalArguments(), null, substituteFrame, argPostProcess);
+        FrameDescriptor frameDesc = new FrameDescriptor();
+
+        FrameSlotChangeMonitor.initializeFunctionFrameDescriptor("<substituted function>", frameDesc);
+        return new FunctionDefinitionNode(null, frameDesc, (BodyNode) body.substitute(env).asRNode(), getFormalArguments(), null, substituteFrame, argPostProcess);
     }
 
     /**

@@ -30,6 +30,7 @@ import com.oracle.truffle.r.nodes.function.*;
 import com.oracle.truffle.r.runtime.*;
 import com.oracle.truffle.r.runtime.RDeparse.State;
 import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.nodes.*;
 
 public final class RBuiltinRootNode extends RRootNode implements RSyntaxNode {
@@ -39,6 +40,13 @@ public final class RBuiltinRootNode extends RRootNode implements RSyntaxNode {
     public RBuiltinRootNode(RBuiltinNode builtin, FormalArguments formalArguments, FrameDescriptor frameDescriptor) {
         super(createSourceSection(builtin, formalArguments), formalArguments, frameDescriptor);
         this.builtin = builtin;
+    }
+
+    @Override
+    public RRootNode duplicateWithNewFrameDescriptor() {
+        FrameDescriptor frameDescriptor = new FrameDescriptor();
+        FrameSlotChangeMonitor.initializeFunctionFrameDescriptor(builtin.getBuiltin().getName(), frameDescriptor);
+        return new RBuiltinRootNode((RBuiltinNode) builtin.deepCopy(), getFormalArguments(), frameDescriptor);
     }
 
     @Override

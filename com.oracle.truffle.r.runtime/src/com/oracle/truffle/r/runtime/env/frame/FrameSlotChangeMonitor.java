@@ -22,45 +22,401 @@
  */
 package com.oracle.truffle.r.runtime.env.frame;
 
-import java.util.*;
+import java.lang.ref.WeakReference;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.WeakHashMap;
 
-import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.Assumption;
+import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.profiles.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.frame.Frame;
+import com.oracle.truffle.api.frame.FrameDescriptor;
+import com.oracle.truffle.api.frame.FrameSlot;
+import com.oracle.truffle.api.frame.FrameSlotKind;
+import com.oracle.truffle.api.frame.MaterializedFrame;
+import com.oracle.truffle.api.nodes.InvalidAssumptionException;
+import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.r.runtime.RArguments;
+import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.StableValue;
 
 /**
- * This is meant to monitor updates performed on {@link FrameSlot}. Each {@link FrameSlot} holds an
- * {@link Assumption} in it's "info" field; it is valid as long as no non-local update has ever
- * taken place.<br/>
- * The background to this rather strange assumption is that non-local reads are very hard to keep
- * track of thanks to R powerful language features. To keep the maintenance for the assumption as
- * cheap as possible, it checks only local reads - which is fast - and does a more costly check on
- * "<<-" but invalidates the assumption as soon as "eval" and the like comes into play.<br/>
+ * This class maintains information about the current hierarchy of environments in the system. This
+ * information is described as assumptions that will be invalidated if the layout changes, and thus
+ * make sure that code is properly deoptimized.
  */
 public final class FrameSlotChangeMonitor {
 
-    private static final int MAX_FUNCTION_INVALIDATION_COUNT = 2;
-    private static final int MAX_INVALIDATION_COUNT = 1;
+    /*
+     * The following classes describe the result of a previous lookup that successfully delivered a
+     * result based on the system's knowledge about the hierarchy of environments and the stable
+     * values of certain bindings. Most function lookups can be answered based only on this
+     * information.
+     *
+     * These lookups are stored for caching and invalidation, i.e., to save on repeated lookups and
+     * to invalidate lookups in case the environment hierarchy changes.
+     */
+
+    public abstract static class LookupResult {
+        protected final Assumption assumption;
+
+        private LookupResult(String identifier) {
+            this.assumption = Truffle.getRuntime().createAssumption("lookup \"" + identifier + "\" (" + this.getClass().getSimpleName() + ")");
+        }
+
+        public boolean isValid() {
+            return assumption.isValid();
+        }
+
+        public abstract Object getValue() throws InvalidAssumptionException;
+
+        public void invalidate() {
+            assumption.invalidate();
+        }
+    }
+
+    public static final class StableValueLookupResult extends LookupResult {
+        private final StableValue<Object> value;
+
+        private StableValueLookupResult(String identifier, StableValue<Object> value) {
+            super(identifier);
+            this.value = value;
+        }
+
+        @Override
+        public boolean isValid() {
+            return super.isValid() && value.getAssumption().isValid();
+        }
+
+        @Override
+        public Object getValue() throws InvalidAssumptionException {
+            assumption.check();
+            StableValue<Object> result = value;
+            result.getAssumption().check();
+            return result.getValue();
+        }
+    }
+
+    public static final class MissingLookupResult extends LookupResult {
+
+        private MissingLookupResult(String identifier) {
+            super(identifier);
+        }
+
+        @Override
+        public Object getValue() throws InvalidAssumptionException {
+            assumption.check();
+            return null;
+        }
+    }
+
+    public static final class FrameAndSlotLookupResult extends LookupResult {
+        private final MaterializedFrame frame;
+        private final FrameSlot slot;
+
+        private FrameAndSlotLookupResult(String identifier, MaterializedFrame frame, FrameSlot slot) {
+            super(identifier);
+            this.frame = frame;
+            this.slot = slot;
+        }
+
+        @Override
+        public Object getValue() {
+            // fast path execution should use getFrame / getSlot
+            CompilerAsserts.neverPartOfCompilation("FrameAndSlotLookupResult.getValue() should not be used in fast path execution");
+            return frame.getValue(slot);
+        }
+
+        public MaterializedFrame getFrame() throws InvalidAssumptionException {
+            assumption.check();
+            return frame;
+        }
+
+        public FrameSlot getSlot() throws InvalidAssumptionException {
+            assumption.check();
+            return slot;
+        }
+    }
+
+    /**
+     * Every frame descriptor in the system will be associated with a FrameDescriptorMetaData
+     * object. For function environments, one frame descriptor corresponds to many actual
+     * environments, while for manually created environment, there is always one frame descriptor
+     * for one environment.
+     */
+    private static final class FrameDescriptorMetaData {
+        private final String name; // name for debug purposes
+        private final WeakReference<MaterializedFrame> singletonFrame;
+        private final Set<FrameDescriptor> subDescriptors = Collections.newSetFromMap(new WeakHashMap<>());
+
+        /**
+         * This set contains all lookups that have been performed "across" this frame descriptor. If
+         * a binding with one of these names is modified, then the lookups in this frame descriptor
+         * and all child frame descriptors need to be checked.
+         */
+        private final Set<Object> previousLookups = new HashSet<>();
+        /**
+         * A set of all lookups that started in this frame descriptor.
+         */
+        private final WeakHashMap<Object, LookupResult> lookupResults = new WeakHashMap<>();
+
+        private StableValue<FrameDescriptor> enclosingFrameDescriptor = new StableValue<>(null, "initial (empty) enclosing frame");
+
+        private FrameDescriptorMetaData(String name, MaterializedFrame singletonFrame) {
+            this.name = name;
+            this.singletonFrame = singletonFrame == null ? null : new WeakReference<>(singletonFrame);
+        }
+
+        public void updateEnclosingFrameDescriptor(FrameDescriptor newEnclosingDescriptor) {
+            enclosingFrameDescriptor.getAssumption().invalidate();
+            enclosingFrameDescriptor = new StableValue<>(newEnclosingDescriptor, "enclosing frame");
+        }
+    }
+
+    private static final WeakHashMap<FrameDescriptor, FrameDescriptorMetaData> frameDescriptors = new WeakHashMap<>();
+
+    /**
+     * This function tries to fulfill the lookup for the given name in the given frame based only on
+     * the static knowledge about the frame descriptor hierarchy and stable bindings. Returns
+     * {@code null} in case this was not possible.
+     */
+    public static synchronized LookupResult lookup(Frame frame, Object identifier) {
+        FrameDescriptorMetaData metaData = getMetaData(frame);
+        LookupResult result = metaData.lookupResults.get(identifier);
+        if (result != null && result.isValid()) {
+            return result;
+        }
+        Frame current = frame;
+        while (true) {
+            FrameSlot slot = current.getFrameDescriptor().findFrameSlot(identifier);
+            if (slot != null) {
+                LookupResult lookupResult;
+                StableValue<Object> stableValue = getFrameSlotInfo(slot).stableValue;
+                if (stableValue != null) {
+                    lookupResult = new StableValueLookupResult(identifier.toString(), stableValue);
+                } else {
+                    FrameDescriptorMetaData currentMetaData = getMetaData(current);
+                    if (currentMetaData.singletonFrame == null) {
+                        return null;
+                    } else {
+                        assert currentMetaData.singletonFrame.get() != null;
+                        lookupResult = new FrameAndSlotLookupResult(identifier.toString(), currentMetaData.singletonFrame.get(), slot);
+                    }
+                }
+                addPreviousLookups(frame, current, identifier);
+                metaData.lookupResults.put(identifier, lookupResult);
+                return lookupResult;
+            }
+            Frame next = RArguments.getEnclosingFrame(current);
+            assert isEnclosingFrameDescriptor(current, next) : "the enclosing frame descriptor assumptions do not match the actual enclosing frame descriptor: " + getMetaData(current).name + " -> " +
+                            getMetaData(next).name;
+            if (next == null) {
+                // leave "current" if we hit the empty env
+                break;
+            }
+            current = next;
+        }
+        // not frame slot found: missing value
+        addPreviousLookups(frame, current, identifier);
+        LookupResult lookupResult = new MissingLookupResult(identifier.toString());
+        metaData.lookupResults.put(identifier, lookupResult);
+        return lookupResult;
+    }
+
+    private static void addPreviousLookups(Frame from, Frame to, Object identifier) {
+        Frame mark = from;
+        while (true) {
+            FrameDescriptorMetaData lookupMetaData = getMetaData(mark);
+            lookupMetaData.previousLookups.add(identifier);
+            if (mark == to) {
+                break;
+            }
+            mark = RArguments.getEnclosingFrame(mark);
+        }
+    }
+
+    private static boolean isEnclosingFrameDescriptor(Frame current, Frame next) {
+        assert current != null;
+        FrameDescriptorMetaData metaData = getMetaData(current);
+        FrameDescriptor nextDesc = next == null ? null : handleBaseNamespaceEnv(next);
+        return metaData.enclosingFrameDescriptor.getValue() == nextDesc;
+    }
+
+    private static synchronized void invalidateNames(FrameDescriptorMetaData metaData, Collection<Object> identifiers) {
+        if (metaData.previousLookups.removeAll(identifiers)) {
+            for (Object identifier : identifiers) {
+                LookupResult result = metaData.lookupResults.remove(identifier);
+                if (result != null) {
+                    result.invalidate();
+                }
+            }
+            for (FrameDescriptor descriptor : metaData.subDescriptors) {
+                FrameDescriptorMetaData sub = getMetaData(descriptor);
+                invalidateNames(sub, identifiers);
+            }
+        }
+    }
+
+    /**
+     * Special handling (return a marker frame descriptor) for the namespace:base environment.
+     */
+    private static FrameDescriptor handleBaseNamespaceEnv(Frame frame) {
+        return frame == null ? null : frame instanceof NSBaseMaterializedFrame ? ((NSBaseMaterializedFrame) frame).getMarkerFrameDescriptor() : frame.getFrameDescriptor();
+    }
+
+    private static FrameDescriptorMetaData getMetaData(FrameDescriptor descriptor) {
+        FrameDescriptorMetaData result = frameDescriptors.get(descriptor);
+        assert result != null : "null metadata for " + descriptor;
+        return result;
+    }
+
+    private static FrameDescriptorMetaData getMetaData(Frame frame) {
+        return getMetaData(handleBaseNamespaceEnv(frame));
+    }
+
+    public static synchronized void initializeEnclosingFrame(FrameDescriptor descriptor, Frame newEnclosingFrame) {
+        CompilerAsserts.neverPartOfCompilation();
+        assert descriptor != null : "initializing enclosing of null descriptor";
+        FrameDescriptorMetaData target = getMetaData(descriptor);
+        assert target != null : "frame descriptor wasn't registered properly";
+
+        FrameDescriptor newEnclosingDescriptor = handleBaseNamespaceEnv(newEnclosingFrame);
+
+        // this function can be called multiple times with the same enclosing descriptor
+        assert target.enclosingFrameDescriptor.getAssumption().isValid();
+        if (target.enclosingFrameDescriptor.getValue() != newEnclosingDescriptor) {
+            assert target.enclosingFrameDescriptor.getValue() == null : "existing enclosing descriptor while initializing " + target.name;
+            assert target.lookupResults.isEmpty() : "existing lookup results while initializing " + target.name;
+
+            target.updateEnclosingFrameDescriptor(newEnclosingDescriptor);
+            if (newEnclosingDescriptor != null) {
+                FrameDescriptorMetaData newEnclosing = getMetaData(newEnclosingDescriptor);
+                newEnclosing.subDescriptors.add(descriptor);
+            }
+        }
+    }
+
+    public static synchronized void initializeEnclosingFrame(Frame frame, Frame newEnclosingFrame) {
+        initializeEnclosingFrame(handleBaseNamespaceEnv(frame), newEnclosingFrame);
+    }
+
+    public static synchronized void setEnclosingFrame(FrameDescriptor descriptor, MaterializedFrame newEnclosingFrame, MaterializedFrame oldEnclosingFrame) {
+        CompilerAsserts.neverPartOfCompilation();
+        FrameDescriptorMetaData target = getMetaData(descriptor);
+        assert target != null : "frame descriptor wasn't registered properly for " + descriptor;
+
+        // invalidate existing lookups
+        invalidateAllNames(target);
+
+        FrameDescriptor oldEnclosingDescriptor = target.enclosingFrameDescriptor.getValue();
+        assert (oldEnclosingDescriptor == null) == (oldEnclosingFrame == null) : "mismatch " + oldEnclosingDescriptor + " / " + oldEnclosingFrame;
+
+        if (oldEnclosingDescriptor != null) {
+            assert oldEnclosingDescriptor == oldEnclosingFrame.getFrameDescriptor() : "mismatch " + oldEnclosingDescriptor + " / " + oldEnclosingFrame.getFrameDescriptor();
+            FrameDescriptorMetaData oldEnclosing = getMetaData(oldEnclosingDescriptor);
+            oldEnclosing.subDescriptors.remove(descriptor);
+        }
+        FrameDescriptor newEnclosingDescriptor = handleBaseNamespaceEnv(newEnclosingFrame);
+        target.updateEnclosingFrameDescriptor(newEnclosingDescriptor);
+
+        if (newEnclosingDescriptor != null) {
+            FrameDescriptorMetaData newEnclosing = getMetaData(newEnclosingDescriptor);
+            assert !newEnclosing.name.equals("global") || !target.name.equals("base");
+            newEnclosing.subDescriptors.add(descriptor);
+        }
+    }
+
+    public static synchronized void setEnclosingFrame(Frame frame, MaterializedFrame newEnclosingFrame, MaterializedFrame oldEnclosingFrame) {
+        setEnclosingFrame(handleBaseNamespaceEnv(frame), newEnclosingFrame, oldEnclosingFrame);
+    }
+
+    private static void invalidateAllNames(FrameDescriptorMetaData target) {
+        for (Map.Entry<Object, LookupResult> entry : target.lookupResults.entrySet()) {
+            entry.getValue().invalidate();
+        }
+        target.lookupResults.clear();
+        target.previousLookups.clear();
+        for (FrameDescriptor sub : target.subDescriptors) {
+            invalidateAllNames(getMetaData(sub));
+        }
+    }
+
+    public static synchronized void detach(Frame frame) {
+        CompilerAsserts.neverPartOfCompilation();
+        FrameDescriptorMetaData position = getMetaData(frame);
+        FrameDescriptor oldEnclosingDescriptor = position.enclosingFrameDescriptor.getValue();
+        FrameDescriptorMetaData oldEnclosing = getMetaData(oldEnclosingDescriptor);
+        FrameDescriptor newEnclosingDescriptor = oldEnclosing.enclosingFrameDescriptor.getValue();
+        FrameDescriptorMetaData newEnclosing = getMetaData(newEnclosingDescriptor);
+
+        assert position.enclosingFrameDescriptor.getAssumption().isValid() && oldEnclosing.enclosingFrameDescriptor.getAssumption().isValid();
+
+        invalidateNames(oldEnclosing, oldEnclosingDescriptor.getIdentifiers());
+
+        position.updateEnclosingFrameDescriptor(newEnclosingDescriptor);
+        oldEnclosing.updateEnclosingFrameDescriptor(null);
+        oldEnclosing.subDescriptors.remove(frame.getFrameDescriptor());
+        newEnclosing.subDescriptors.remove(oldEnclosingDescriptor);
+        newEnclosing.subDescriptors.add(frame.getFrameDescriptor());
+    }
+
+    public static synchronized void attach(Frame frame, Frame newEnclosingFrame) {
+        CompilerAsserts.neverPartOfCompilation();
+        FrameDescriptorMetaData position = getMetaData(frame);
+        FrameDescriptorMetaData newEnclosing = getMetaData(newEnclosingFrame);
+        assert position.enclosingFrameDescriptor.getAssumption().isValid();
+        FrameDescriptor oldEnclosingDescriptor = position.enclosingFrameDescriptor.getValue();
+        FrameDescriptorMetaData oldEnclosing = getMetaData(oldEnclosingDescriptor);
+
+        invalidateAllNames(newEnclosing);
+        invalidateNames(position, newEnclosingFrame.getFrameDescriptor().getIdentifiers());
+
+        position.enclosingFrameDescriptor.getAssumption().invalidate();
+        position.enclosingFrameDescriptor = new StableValue<>(newEnclosingFrame.getFrameDescriptor(), "enclosing frame");
+        newEnclosing.enclosingFrameDescriptor.getAssumption().invalidate();
+        newEnclosing.enclosingFrameDescriptor = new StableValue<>(oldEnclosingDescriptor, "enclosing frame");
+        assert frame.getFrameDescriptor() == handleBaseNamespaceEnv(frame);
+        assert !newEnclosing.name.equals("global") || !position.name.equals("base");
+        newEnclosing.subDescriptors.add(frame.getFrameDescriptor());
+        oldEnclosing.subDescriptors.remove(frame.getFrameDescriptor());
+        oldEnclosing.subDescriptors.add(newEnclosingFrame.getFrameDescriptor());
+    }
+
+    private static final int MAX_INVALIDATION_COUNT = 2;
+    private static final int MAX_GLOBAL_ENV_INVALIDATION_COUNT = 1;
 
     @SuppressWarnings("unused")
     private static void out(String format, Object... args) {
-// System.out.println(String.format(format, args));
+        // System.out.println(String.format(format, args));
     }
 
     private static final class FrameSlotInfoImpl {
-        @CompilationFinal private StableValue<Object> stableValue;
+        /**
+         * This is meant to monitor updates performed on {@link FrameSlot}. Each {@link FrameSlot}
+         * holds an {@link Assumption} in it's "info" field; it is valid as long as no non-local
+         * update has ever taken place.<br/>
+         * The background to this rather strange assumption is that non-local reads are very hard to
+         * keep track of thanks to R powerful language features. To keep the maintenance for the
+         * assumption as cheap as possible, it checks only local reads - which is fast - and does a
+         * more costly check on "<<-" but invalidates the assumption as soon as "eval" and the like
+         * comes into play.<br/>
+         */
         private final Assumption nonLocalModifiedAssumption = Truffle.getRuntime().createAssumption();
-        private final Object identifier;
+
+        @CompilationFinal private StableValue<Object> stableValue;
         private int invalidationCount;
 
-        public FrameSlotInfoImpl(boolean isSingletonFrame, Object identifier) {
-            this.identifier = identifier;
+        public FrameSlotInfoImpl(boolean isSingletonFrame, boolean isGlobalEnv, Object identifier) {
             if (isSingletonFrame) {
                 stableValue = new StableValue<>(null, identifier.toString());
-                invalidationCount = 0;
+                invalidationCount = isGlobalEnv ? MAX_GLOBAL_ENV_INVALIDATION_COUNT : MAX_INVALIDATION_COUNT;
             } else {
                 stableValue = null;
             }
@@ -70,25 +426,18 @@ public final class FrameSlotChangeMonitor {
             return stableValue != null;
         }
 
-        public void setValue(Object value) {
+        public void setValue(Object value, FrameSlot slot) {
             if (stableValue != null && stableValue.getValue() != value) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 stableValue.getAssumption().invalidate();
-                int maxInvalidationCount = value instanceof RFunction ? MAX_FUNCTION_INVALIDATION_COUNT : MAX_INVALIDATION_COUNT;
-                if (invalidationCount++ < maxInvalidationCount) {
-                    out("setting singleton value %s = %s", identifier, value.getClass());
-                    stableValue = new StableValue<>(value, identifier.toString());
+                if (invalidationCount > 0) {
+                    invalidationCount--;
+                    out("setting singleton value %s = %s", slot.getIdentifier(), value == null ? "null" : value.getClass());
+                    stableValue = new StableValue<>(value, String.valueOf(slot.getIdentifier()));
                 } else {
-                    out("setting non-singleton value %s", identifier);
+                    out("setting non-singleton value %s", slot.getIdentifier());
                     stableValue = null;
                 }
-            }
-        }
-
-        public void invalidateValue() {
-            if (stableValue != null) {
-                stableValue.getAssumption().invalidate();
-                stableValue = null;
             }
         }
 
@@ -96,10 +445,6 @@ public final class FrameSlotChangeMonitor {
             return stableValue;
         }
     }
-
-    private static final WeakHashMap<FrameDescriptor, StableValue<MaterializedFrame>> descriptorEnclosingFrameAssumptions = new WeakHashMap<>();
-    private static final WeakHashMap<FrameDescriptor, Boolean> descriptorSingletonAssumptions = new WeakHashMap<>();
-    private static final WeakHashMap<FrameDescriptor, StableValue<FrameDescriptor>> descriptorEnclosingDescriptorAssumptions = new WeakHashMap<>();
 
     /**
      * Retrieves the not-changed-locally {@link Assumption} for the given frame slot.
@@ -114,26 +459,23 @@ public final class FrameSlotChangeMonitor {
         Object info = slot.getInfo();
         if (!(info instanceof FrameSlotInfoImpl)) {
             CompilerDirectives.transferToInterpreter();
-            throw RInternalError.shouldNotReachHere("Each FrameSlot should hold a FrameSlotInfo in it's info field!");
+            throw RInternalError.shouldNotReachHere("Each FrameSlot should hold a FrameSlotInfo in its info field!");
         }
         return (FrameSlotInfoImpl) info;
     }
 
-    // method for creating new frame slots
-
-    public static FrameSlot addFrameSlot(FrameDescriptor fd, Object identifier, FrameSlotKind kind) {
-        boolean isSingletonFrame = descriptorSingletonAssumptions.containsKey(fd);
-        return fd.addFrameSlot(identifier, new FrameSlotInfoImpl(isSingletonFrame, identifier), kind);
-    }
-
-    public static FrameSlot findOrAddFrameSlot(FrameDescriptor fd, Object identifier) {
-        FrameSlot frameSlot = fd.findFrameSlot(identifier);
-        return frameSlot != null ? frameSlot : addFrameSlot(fd, identifier, FrameSlotKind.Illegal);
-    }
+    // methods for creating new frame slots
 
     public static FrameSlot findOrAddFrameSlot(FrameDescriptor fd, Object identifier, FrameSlotKind initialKind) {
+        CompilerAsserts.neverPartOfCompilation();
         FrameSlot frameSlot = fd.findFrameSlot(identifier);
-        return frameSlot != null ? frameSlot : addFrameSlot(fd, identifier, initialKind);
+        if (frameSlot != null) {
+            return frameSlot;
+        } else {
+            FrameDescriptorMetaData metaData = getMetaData(fd);
+            invalidateNames(metaData, Arrays.asList(identifier));
+            return fd.addFrameSlot(identifier, new FrameSlotInfoImpl(metaData.singletonFrame != null, "global".equals(metaData.name), identifier), initialKind);
+        }
     }
 
     // methods for changing frame slot contents
@@ -146,8 +488,12 @@ public final class FrameSlotChangeMonitor {
      *            {@link RInternalError} otherwise
      * @param invalidateProfile Used to guard the invalidation code.
      */
-    private static void checkAndInvalidate(Frame curFrame, FrameSlot slot, boolean isNonLocal, BranchProfile invalidateProfile) {
+    private static void checkAndInvalidate(Frame curFrame, FrameSlot slot, boolean isNonLocal, Object newValue, BranchProfile invalidateProfile) {
         assert curFrame.getFrameDescriptor() == slot.getFrameDescriptor();
+        FrameSlotInfoImpl info = getFrameSlotInfo(slot);
+        if (info.needsInvalidation()) {
+            info.setValue(newValue, slot);
+        }
 
         if (getNotChangedNonLocallyAssumption(slot).isValid()) {
             // Check whether current frame is used outside a regular stack
@@ -164,169 +510,57 @@ public final class FrameSlotChangeMonitor {
 
     public static void setByteAndInvalidate(Frame frame, FrameSlot frameSlot, byte newValue, boolean isNonLocal, BranchProfile invalidateProfile) {
         frame.setByte(frameSlot, newValue);
-        FrameSlotInfoImpl info = getFrameSlotInfo(frameSlot);
-        if (info.needsInvalidation()) {
-            info.setValue(newValue);
-        }
-        checkAndInvalidate(frame, frameSlot, isNonLocal, invalidateProfile);
+        checkAndInvalidate(frame, frameSlot, isNonLocal, newValue, invalidateProfile);
     }
 
     public static void setIntAndInvalidate(Frame frame, FrameSlot frameSlot, int newValue, boolean isNonLocal, BranchProfile invalidateProfile) {
         frame.setInt(frameSlot, newValue);
-        FrameSlotInfoImpl info = getFrameSlotInfo(frameSlot);
-        if (info.needsInvalidation()) {
-            info.setValue(newValue);
-        }
-        checkAndInvalidate(frame, frameSlot, isNonLocal, invalidateProfile);
+        checkAndInvalidate(frame, frameSlot, isNonLocal, newValue, invalidateProfile);
     }
 
     public static void setDoubleAndInvalidate(Frame frame, FrameSlot frameSlot, double newValue, boolean isNonLocal, BranchProfile invalidateProfile) {
         frame.setDouble(frameSlot, newValue);
-        FrameSlotInfoImpl info = getFrameSlotInfo(frameSlot);
-        if (info.needsInvalidation()) {
-            info.setValue(newValue);
-        }
-        checkAndInvalidate(frame, frameSlot, isNonLocal, invalidateProfile);
+        checkAndInvalidate(frame, frameSlot, isNonLocal, newValue, invalidateProfile);
     }
 
     public static void setObjectAndInvalidate(Frame frame, FrameSlot frameSlot, Object newValue, boolean isNonLocal, BranchProfile invalidateProfile) {
         frame.setObject(frameSlot, newValue);
-        FrameSlotInfoImpl info = getFrameSlotInfo(frameSlot);
-        if (info.needsInvalidation()) {
-            info.setValue(newValue);
-        }
-        checkAndInvalidate(frame, frameSlot, isNonLocal, invalidateProfile);
-    }
-
-    // update enclosing frames
-
-    public static void invalidateEnclosingFrame(Frame frame) {
-        CompilerAsserts.neverPartOfCompilation();
-        MaterializedFrame enclosingFrame = RArguments.getEnclosingFrame(frame);
-        getOrInitializeEnclosingFrameAssumption(frame, frame.getFrameDescriptor(), null, enclosingFrame);
-        getOrInitializeEnclosingFrameDescriptorAssumption(frame, frame.getFrameDescriptor(), enclosingFrame == null ? null : enclosingFrame.getFrameDescriptor());
+        checkAndInvalidate(frame, frameSlot, isNonLocal, newValue, invalidateProfile);
     }
 
     /**
      * Initializes the internal data structures for a newly created frame descriptor that is
      * intended to be used for a non-function frame (and thus will only ever be used for one frame).
-     *
-     * The namespace:base environment needs to be handled specially, because it shares a frame (and
-     * thus, also a frame descriptor) with the package:base environment.
      */
-    public static synchronized void initializeNonFunctionFrameDescriptor(FrameDescriptor frameDescriptor, boolean isNamespaceBase) {
-        descriptorEnclosingFrameAssumptions.put(frameDescriptor, StableValue.invalidated());
-        descriptorEnclosingDescriptorAssumptions.put(frameDescriptor, StableValue.invalidated());
-        if (!isNamespaceBase) {
-            descriptorSingletonAssumptions.put(frameDescriptor, Boolean.FALSE);
-        }
+    public static synchronized void initializeNonFunctionFrameDescriptor(String name, MaterializedFrame frame) {
+        frameDescriptors.put(handleBaseNamespaceEnv(frame), new FrameDescriptorMetaData(name, frame));
     }
 
-    public static synchronized void initializeFunctionFrameDescriptor(FrameDescriptor frameDescriptor) {
-        descriptorEnclosingFrameAssumptions.put(frameDescriptor, StableValue.invalidated());
-        descriptorEnclosingDescriptorAssumptions.put(frameDescriptor, StableValue.invalidated());
-    }
-
-    public static synchronized StableValue<MaterializedFrame> getEnclosingFrameAssumption(FrameDescriptor descriptor) {
-        return descriptorEnclosingFrameAssumptions.get(descriptor);
+    public static synchronized void initializeFunctionFrameDescriptor(String name, FrameDescriptor frameDescriptor) {
+        frameDescriptors.put(frameDescriptor, new FrameDescriptorMetaData(name, null));
     }
 
     public static synchronized StableValue<FrameDescriptor> getEnclosingFrameDescriptorAssumption(FrameDescriptor descriptor) {
-        return descriptorEnclosingDescriptorAssumptions.get(descriptor);
-    }
-
-    /**
-     * Special handling (return a marker frame) for the namespace:base environment.
-     */
-    private static FrameDescriptor handleBaseNamespaceEnv(Frame frame, FrameDescriptor originalFrameDescriptor) {
-        return frame instanceof NSBaseMaterializedFrame ? ((NSBaseMaterializedFrame) frame).getMarkerFrameDescriptor() : originalFrameDescriptor;
-    }
-
-    public static synchronized StableValue<FrameDescriptor> getOrInitializeEnclosingFrameDescriptorAssumption(Frame frame, FrameDescriptor originalFrameDescriptor, FrameDescriptor newValue) {
-        CompilerAsserts.neverPartOfCompilation();
-        FrameDescriptor frameDescriptor = handleBaseNamespaceEnv(frame, originalFrameDescriptor);
-        StableValue<FrameDescriptor> currentValue = descriptorEnclosingDescriptorAssumptions.get(frameDescriptor);
-        if (currentValue.getAssumption().isValid()) {
-            if (currentValue.getValue() == newValue) {
-                return currentValue;
-            } else {
-                currentValue.getAssumption().invalidate();
-            }
-        }
-        currentValue = new StableValue<>(newValue, "enclosing frame descriptor");
-        descriptorEnclosingDescriptorAssumptions.put(frameDescriptor, currentValue);
-        return currentValue;
-    }
-
-    public static synchronized StableValue<MaterializedFrame> getOrInitializeEnclosingFrameAssumption(Frame frame, FrameDescriptor originalFrameDescriptor, StableValue<MaterializedFrame> value,
-                    MaterializedFrame newValue) {
-        CompilerAsserts.neverPartOfCompilation();
-        FrameDescriptor frameDescriptor = handleBaseNamespaceEnv(frame, originalFrameDescriptor);
-        if (value != null) {
-            value.getAssumption().invalidate();
-        }
-        StableValue<MaterializedFrame> currentValue = descriptorEnclosingFrameAssumptions.get(frameDescriptor);
-        if (currentValue == null) {
-            return null;
-        }
-        if (currentValue.getAssumption().isValid()) {
-            if (currentValue.getValue() == newValue) {
-                return currentValue;
-            } else {
-                currentValue.getAssumption().invalidate();
-            }
-        }
-        if (currentValue == StableValue.<MaterializedFrame> invalidated()) {
-            currentValue = new StableValue<>(newValue, "enclosing frame");
-            descriptorEnclosingFrameAssumptions.put(frameDescriptor, currentValue);
-            return currentValue;
-        } else {
-            descriptorEnclosingFrameAssumptions.remove(frameDescriptor);
-            return null;
-        }
-    }
-
-    public static boolean checkSingletonFrame(VirtualFrame vf) {
-        CompilerDirectives.transferToInterpreterAndInvalidate();
-        return checkSingletonFrameInternal(vf);
-    }
-
-    private static synchronized boolean checkSingletonFrameInternal(VirtualFrame vf) {
-        Boolean value = descriptorSingletonAssumptions.get(vf.getFrameDescriptor());
-        if (value == null) {
-            return false;
-        } else if (value == Boolean.FALSE) {
-            out("marking frame descriptor %s as singleton", vf.getFrameDescriptor());
-            descriptorSingletonAssumptions.put(vf.getFrameDescriptor(), Boolean.TRUE);
-            return true;
-        } else {
-            out("marking frame descriptor %s as non-singleton", vf.getFrameDescriptor());
-            for (FrameSlot slot : vf.getFrameDescriptor().getSlots()) {
-                if (getFrameSlotInfo(slot).needsInvalidation()) {
-                    getFrameSlotInfo(slot).invalidateValue();
-                    out("  invalidating singleton slot %s", slot.getIdentifier());
-                }
-            }
-            descriptorSingletonAssumptions.remove(vf.getFrameDescriptor());
-            return false;
-        }
+        return frameDescriptors.get(descriptor).enclosingFrameDescriptor;
     }
 
     public static synchronized StableValue<Object> getStableValueAssumption(FrameDescriptor descriptor, FrameSlot frameSlot, Object value) {
         CompilerAsserts.neverPartOfCompilation();
         StableValue<Object> stableValue = getFrameSlotInfo(frameSlot).getStableValue();
         if (stableValue != null) {
-            assert descriptorSingletonAssumptions.containsKey(descriptor) : "single frame slot within non-singleton descriptor";
+            assert getMetaData(descriptor).singletonFrame != null : "single frame slot within non-singleton descriptor";
             assert stableValue.getValue() == value || (stableValue.getValue() != null && (stableValue.getValue().equals(value) || !stableValue.getAssumption().isValid())) : stableValue.getValue() +
                             " vs. " + value;
         }
         return stableValue;
     }
 
-    public static void updateValue(FrameSlot slot, Object value) {
-        FrameSlotInfoImpl info = getFrameSlotInfo(slot);
-        if (info.needsInvalidation()) {
-            info.setValue(value);
-        }
+    public static synchronized MaterializedFrame getSingletonFrame(FrameDescriptor descriptor) {
+        WeakReference<MaterializedFrame> singleton = getMetaData(descriptor).singletonFrame;
+        return singleton == null ? null : singleton.get();
+    }
+
+    public static boolean isValidFrameDescriptor(FrameDescriptor frameDesc) {
+        return getMetaData(frameDesc) != null;
     }
 }

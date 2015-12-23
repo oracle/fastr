@@ -22,20 +22,27 @@
  */
 package com.oracle.truffle.r.nodes.function;
 
-import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.nodes.*;
-import com.oracle.truffle.api.source.*;
+import com.oracle.truffle.api.RootCallTarget;
+import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.frame.MaterializedFrame;
+import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseDeoptimizeFrameNode;
-import com.oracle.truffle.r.nodes.function.opt.*;
-import com.oracle.truffle.r.nodes.instrument.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.env.*;
-import com.oracle.truffle.r.runtime.env.frame.*;
-import com.oracle.truffle.r.runtime.gnur.*;
-import com.oracle.truffle.r.runtime.nodes.*;
+import com.oracle.truffle.r.nodes.function.opt.EagerEvalHelper;
+import com.oracle.truffle.r.nodes.instrument.RInstrument;
+import com.oracle.truffle.r.runtime.RDeparse;
+import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RSerialize;
+import com.oracle.truffle.r.runtime.data.FastPathFactory;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
+import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
+import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 public final class FunctionExpressionNode extends RNode implements RSyntaxNode {
 
@@ -47,53 +54,18 @@ public final class FunctionExpressionNode extends RNode implements RSyntaxNode {
     private final PromiseDeoptimizeFrameNode deoptFrameNode;
     private final FastPathFactory fastPath;
 
-    @CompilationFinal private StableValue<MaterializedFrame> enclosingFrameAssumption;
-    @CompilationFinal private StableValue<FrameDescriptor> enclosingFrameDescriptorAssumption;
+    @CompilationFinal private boolean initialized = false;
 
     private FunctionExpressionNode(SourceSection src, RootCallTarget callTarget, FastPathFactory fastPath) {
         this.fastPath = fastPath;
         assignSourceSection(src);
         this.callTarget = callTarget;
         this.deoptFrameNode = EagerEvalHelper.optExprs() || EagerEvalHelper.optVars() || EagerEvalHelper.optDefault() ? new PromiseDeoptimizeFrameNode() : null;
-
-        this.enclosingFrameAssumption = FrameSlotChangeMonitor.getEnclosingFrameAssumption(callTarget.getRootNode().getFrameDescriptor());
-        this.enclosingFrameDescriptorAssumption = FrameSlotChangeMonitor.getEnclosingFrameDescriptorAssumption(callTarget.getRootNode().getFrameDescriptor());
     }
 
     @Override
     public RFunction execute(VirtualFrame frame) {
         return executeFunction(frame);
-    }
-
-    protected void verifyEnclosingAssumptions(VirtualFrame enclosingFrame, FrameDescriptor descriptor) {
-        if (enclosingFrameAssumption != null) {
-            try {
-                enclosingFrameAssumption.getAssumption().check();
-            } catch (InvalidAssumptionException e) {
-                enclosingFrameAssumption = FrameSlotChangeMonitor.getEnclosingFrameAssumption(descriptor);
-            }
-            if (enclosingFrameAssumption != null) {
-                if (enclosingFrameAssumption.getValue() != enclosingFrame) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    enclosingFrameAssumption = FrameSlotChangeMonitor.getOrInitializeEnclosingFrameAssumption(null, descriptor, enclosingFrameAssumption, enclosingFrame.materialize());
-                }
-            }
-        }
-        if (enclosingFrameDescriptorAssumption != null) {
-            try {
-                enclosingFrameDescriptorAssumption.getAssumption().check();
-            } catch (InvalidAssumptionException e) {
-                enclosingFrameDescriptorAssumption = FrameSlotChangeMonitor.getEnclosingFrameDescriptorAssumption(descriptor);
-            }
-            if (enclosingFrameDescriptorAssumption != null) {
-                FrameDescriptor enclosingFrameDescriptor = enclosingFrame.getFrameDescriptor();
-                if (enclosingFrameDescriptorAssumption.getValue() != enclosingFrameDescriptor) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    enclosingFrameDescriptorAssumption.getAssumption().invalidate();
-                    enclosingFrameDescriptorAssumption = FrameSlotChangeMonitor.getOrInitializeEnclosingFrameDescriptorAssumption(null, descriptor, enclosingFrameDescriptor);
-                }
-            }
-        }
     }
 
     @Override
@@ -103,7 +75,11 @@ public final class FunctionExpressionNode extends RNode implements RSyntaxNode {
             // Deoptimize every promise which is now in this frame, as it might leave it's stack
             deoptFrameNode.deoptimizeFrame(matFrame);
         }
-        verifyEnclosingAssumptions(frame, callTarget.getRootNode().getFrameDescriptor());
+        if (!initialized) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            FrameSlotChangeMonitor.initializeEnclosingFrame(callTarget.getRootNode().getFrameDescriptor(), frame);
+            initialized = true;
+        }
         boolean containsDispatch = ((FunctionDefinitionNode) callTarget.getRootNode()).containsDispatch();
         RFunction func = RDataFactory.createFunction(RFunction.NO_NAME, callTarget, null, matFrame, fastPath, containsDispatch);
         if (RInstrument.instrumentingEnabled()) {

@@ -22,23 +22,55 @@
  */
 package com.oracle.truffle.r.nodes.access.variables;
 
-import java.util.*;
+import java.util.ArrayList;
 
-import com.oracle.truffle.api.*;
+import com.oracle.truffle.api.Assumption;
+import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.nodes.*;
-import com.oracle.truffle.api.source.*;
-import com.oracle.truffle.api.profiles.*;
-import com.oracle.truffle.r.nodes.*;
-import com.oracle.truffle.r.nodes.function.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
-import com.oracle.truffle.r.runtime.env.*;
-import com.oracle.truffle.r.runtime.env.frame.*;
-import com.oracle.truffle.r.runtime.nodes.*;
+import com.oracle.truffle.api.frame.Frame;
+import com.oracle.truffle.api.frame.FrameDescriptor;
+import com.oracle.truffle.api.frame.FrameSlot;
+import com.oracle.truffle.api.frame.FrameSlotKind;
+import com.oracle.truffle.api.frame.FrameSlotTypeException;
+import com.oracle.truffle.api.frame.MaterializedFrame;
+import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.ExplodeLoop;
+import com.oracle.truffle.api.nodes.InvalidAssumptionException;
+import com.oracle.truffle.api.nodes.NodeUtil;
+import com.oracle.truffle.api.nodes.SlowPathException;
+import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.ValueProfile;
+import com.oracle.truffle.api.source.SourceSection;
+import com.oracle.truffle.r.nodes.RASTUtils;
+import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
+import com.oracle.truffle.r.runtime.AnonymousFrameVariable;
+import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.FastROptions;
+import com.oracle.truffle.r.runtime.RArguments;
+import com.oracle.truffle.r.runtime.RDeparse;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RSerialize;
+import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.StableValue;
+import com.oracle.truffle.r.runtime.VisibilityController;
+import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.data.RMissing;
+import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RPromise;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
+import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor.FrameAndSlotLookupResult;
+import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor.LookupResult;
+import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
  * This node is used to read a variable from the local or enclosing environments. It specializes to
@@ -47,73 +79,49 @@ import com.oracle.truffle.r.runtime.nodes.*;
  */
 public final class ReadVariableNode extends RNode implements RSyntaxNode, VisibilityController {
 
-    public static enum ReadKind {
+    private static final int MAX_INVALIDATION_COUNT = 2;
+
+    private enum ReadKind {
         Normal,
-        Unforced,
         // return null (instead of throwing an error) if not found
         Silent,
         // copy semantics
         Copying,
         // start the lookup in the enclosing frame
         Super,
-        // lookup only within the current frame
-        SilentLocal,
-        UnforcedSilentLocal,
-        // whether a promise should be forced to check its type or not
+        // whether a promise should be forced to check its type or not during lookup
         ForcedTypeCheck;
     }
 
-    public static ReadVariableNode create(String name, RType mode, ReadKind kind) {
-        return new ReadVariableNode(name, mode, kind, true);
-    }
-
-    public static ReadVariableNode create(String name, boolean shouldCopyValue) {
-        return new ReadVariableNode(name, RType.Any, shouldCopyValue ? ReadKind.Copying : ReadKind.Normal, true);
+    public static ReadVariableNode create(String name) {
+        return new ReadVariableNode(name, RType.Any, ReadKind.Normal);
     }
 
     public static ReadVariableNode create(SourceSection src, String name, boolean shouldCopyValue) {
-        ReadVariableNode rvn = new ReadVariableNode(name, RType.Any, shouldCopyValue ? ReadKind.Copying : ReadKind.Normal, true);
+        ReadVariableNode rvn = new ReadVariableNode(name, RType.Any, shouldCopyValue ? ReadKind.Copying : ReadKind.Normal);
         rvn.assignSourceSection(src);
         return rvn;
     }
 
-    public static ReadVariableNode createForRefCount(Object name) {
-        return new ReadVariableNode(name, RType.Any, ReadKind.UnforcedSilentLocal, false);
+    public static ReadVariableNode createSilent(String name, RType mode) {
+        return new ReadVariableNode(name, mode, ReadKind.Silent);
     }
 
-    public static ReadVariableNode createAnonymous(String name) {
-        return new ReadVariableNode(name, RType.Any, ReadKind.Normal, true);
+    public static ReadVariableNode createSuperLookup(SourceSection src, String name) {
+        ReadVariableNode rvn = new ReadVariableNode(name, RType.Any, ReadKind.Super);
+        rvn.assignSourceSection(src);
+        return rvn;
     }
 
-    /**
-     * Creates a function lookup for the given identifier.
-     */
     public static ReadVariableNode createFunctionLookup(SourceSection src, String identifier) {
-        ReadVariableNode result = new ReadVariableNode(identifier, RType.Function, ReadKind.Normal, true);
+        ReadVariableNode result = new ReadVariableNode(identifier, RType.Function, ReadKind.Normal);
         result.assignSourceSection(src);
         return result;
     }
 
-    public static ReadVariableNode createSuperLookup(SourceSection src, String name) {
-        ReadVariableNode rvn = new ReadVariableNode(name, RType.Any, ReadKind.Super, true);
-        rvn.assignSourceSection(src);
-        return rvn;
-    }
-
-    /**
-     * Creates every {@link ReadVariableNode} out there.
-     *
-     * @param src A {@link SourceSection} for the variable
-     * @param name The symbol the {@link ReadVariableNode} is meant to resolve
-     * @param mode The mode of the variable
-     *
-     * @return The appropriate implementation of {@link ReadVariableNode}
-     */
-    public static ReadVariableNode createForced(SourceSection src, String name, RType mode) {
-        ReadVariableNode result = new ReadVariableNode(name, mode, ReadKind.ForcedTypeCheck, true);
-        if (src != null) {
-            result.assignSourceSection(src);
-        }
+    public static ReadVariableNode createForcedFunctionLookup(SourceSection src, String name) {
+        ReadVariableNode result = new ReadVariableNode(name, RType.Function, ReadKind.ForcedTypeCheck);
+        result.assignSourceSection(src);
         return result;
     }
 
@@ -121,30 +129,26 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
     @CompilationFinal private FrameLevel read;
     @CompilationFinal private boolean needsCopying;
 
-    private final ConditionProfile isPromiseProfile;
+    private final ConditionProfile isPromiseProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile copyProfile;
     private final BranchProfile unexpectedMissingProfile = BranchProfile.create();
     private final ValueProfile superEnclosingFrameProfile = ValueProfile.createClassProfile();
-    private final ConditionProfile isNullValueProfile = ConditionProfile.createBinaryProfile();
-    private final ValueProfile valueProfile = ValueProfile.createClassProfile();
 
     private final Object identifier;
     private final String identifierAsString;
     private final RType mode;
     private final ReadKind kind;
-    private final boolean visibilityChange;
+    private int invalidationCount;
 
     @CompilationFinal private final boolean[] seenValueKinds = new boolean[FrameSlotKind.values().length];
 
-    private ReadVariableNode(Object identifier, RType mode, ReadKind kind, boolean visibilityChange) {
+    private ReadVariableNode(Object identifier, RType mode, ReadKind kind) {
         this.identifier = identifier;
         this.identifierAsString = identifier.toString().intern();
         this.mode = mode;
         this.kind = kind;
-        this.visibilityChange = visibilityChange;
 
-        isPromiseProfile = kind == ReadKind.UnforcedSilentLocal && mode == RType.Any ? null : ConditionProfile.createBinaryProfile();
-        copyProfile = kind != ReadKind.Copying ? null : ConditionProfile.createBinaryProfile();
+        this.copyProfile = kind != ReadKind.Copying ? null : ConditionProfile.createBinaryProfile();
     }
 
     public String getIdentifier() {
@@ -153,14 +157,6 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
 
     public RType getMode() {
         return mode;
-    }
-
-    public ReadKind getKind() {
-        return kind;
-    }
-
-    private boolean seenValueKind(FrameSlotKind slotKind) {
-        return seenValueKinds[slotKind.ordinal()];
     }
 
     @Override
@@ -218,7 +214,7 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
     }
 
     private Object executeInternal(VirtualFrame frame, Frame variableFrame) {
-        if (visibilityChange) {
+        if (kind != ReadKind.Silent) {
             controlVisibility();
         }
 
@@ -237,7 +233,7 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
                     result = read.execute(frame, variableFrame);
                 } catch (InvalidAssumptionException | LayoutChangedException | FrameSlotTypeException e2) {
                     if (iterations > 10) {
-                        throw new RInternalError("too many iterations during RVN initialization");
+                        throw new RInternalError("too many iterations during RVN initialization: " + identifier);
                     }
                     continue;
                 }
@@ -247,7 +243,7 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
         if (needsCopying && copyProfile.profile(result instanceof RAbstractVector)) {
             result = ((RAbstractVector) result).copy();
         }
-        if (kind != ReadKind.UnforcedSilentLocal && kind != ReadKind.Unforced && isPromiseProfile.profile(result instanceof RPromise)) {
+        if (isPromiseProfile.profile(result instanceof RPromise)) {
             if (promiseHelper == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 promiseHelper = insert(new PromiseHelperNode());
@@ -289,17 +285,14 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
         private final FrameSlot slot;
         private final ConditionProfile isNullProfile = ConditionProfile.createBinaryProfile();
 
-        public Mismatch(FrameLevel next, FrameSlot slot) {
+        private Mismatch(FrameLevel next, FrameSlot slot) {
             this.next = next;
             this.slot = slot;
         }
 
         @Override
         public Object execute(VirtualFrame frame, Frame variableFrame) throws InvalidAssumptionException, LayoutChangedException, FrameSlotTypeException {
-            Object value = profiledGetValue(variableFrame, slot);
-            if ((kind == ReadKind.UnforcedSilentLocal || kind == ReadKind.SilentLocal) && value == RMissing.instance) {
-                return null;
-            }
+            Object value = profiledGetValue(seenValueKinds, variableFrame, slot);
             if (checkType(frame, value, isNullProfile)) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 throw new LayoutChangedException();
@@ -318,7 +311,7 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
         private final Assumption assumption;
         private final Object value;
 
-        public DescriptorStableMatch(Assumption assumption, Object value) {
+        private DescriptorStableMatch(Assumption assumption, Object value) {
             this.assumption = assumption;
             this.value = value;
         }
@@ -340,16 +333,13 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
         private final FrameSlot slot;
         private final ConditionProfile isNullProfile = ConditionProfile.createBinaryProfile();
 
-        public Match(FrameSlot slot) {
+        private Match(FrameSlot slot) {
             this.slot = slot;
         }
 
         @Override
         public Object execute(VirtualFrame frame, Frame variableFrame) throws LayoutChangedException, FrameSlotTypeException {
-            Object value = profiledGetValue(variableFrame, slot);
-            if ((kind == ReadKind.UnforcedSilentLocal || kind == ReadKind.SilentLocal) && value == RMissing.instance) {
-                return null;
-            }
+            Object value = profiledGetValue(seenValueKinds, variableFrame, slot);
             if (!checkType(frame, value, isNullProfile)) {
                 throw new LayoutChangedException();
             }
@@ -366,7 +356,7 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
 
         @Override
         public Object execute(VirtualFrame frame) {
-            if (kind == ReadKind.Silent || kind == ReadKind.SilentLocal || kind == ReadKind.UnforcedSilentLocal) {
+            if (kind == ReadKind.Silent) {
                 return null;
             } else {
                 throw RError.error(RError.NO_NODE, mode == RType.Function ? RError.Message.UNKNOWN_FUNCTION : RError.Message.UNKNOWN_OBJECT, identifier);
@@ -379,20 +369,19 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
         }
     }
 
-    private static final class NextFrameFromDescriptorLevel extends DescriptorLevel {
+    private static final class SingletonFrameLevel extends DescriptorLevel {
 
         private final FrameLevel next;
-        private final StableValue<MaterializedFrame> enclosingFrameAssumption;
+        private final MaterializedFrame singletonFrame;
 
-        public NextFrameFromDescriptorLevel(FrameLevel next, StableValue<MaterializedFrame> enclosingFrameAssumption) {
+        private SingletonFrameLevel(FrameLevel next, MaterializedFrame singletonFrame) {
             this.next = next;
-            this.enclosingFrameAssumption = enclosingFrameAssumption;
+            this.singletonFrame = singletonFrame;
         }
 
         @Override
         public Object execute(VirtualFrame frame) throws InvalidAssumptionException, LayoutChangedException, FrameSlotTypeException {
-            enclosingFrameAssumption.getAssumption().check();
-            return next.execute(frame, enclosingFrameAssumption.getValue());
+            return next.execute(frame, singletonFrame);
         }
 
         @Override
@@ -407,7 +396,7 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
         private final FrameDescriptor nextDescriptor;
         private final ValueProfile frameProfile = ValueProfile.createClassProfile();
 
-        public NextFrameLevel(FrameLevel next, FrameDescriptor nextDescriptor) {
+        private NextFrameLevel(FrameLevel next, FrameDescriptor nextDescriptor) {
             this.next = next;
             this.nextDescriptor = nextDescriptor;
         }
@@ -442,7 +431,7 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
         private final FrameLevel next;
         @CompilationFinal private final Assumption[] assumptions;
 
-        public MultiAssumptionLevel(FrameLevel next, Assumption[] assumptions) {
+        private MultiAssumptionLevel(FrameLevel next, Assumption... assumptions) {
             this.next = next;
             this.assumptions = assumptions;
         }
@@ -462,135 +451,214 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
         }
     }
 
+    private final class Polymorphic extends FrameLevel {
+
+        private final ConditionProfile isNullProfile = ConditionProfile.createBinaryProfile();
+        @CompilationFinal private FrameSlot frameSlot;
+        @CompilationFinal private Assumption notInFrame;
+
+        private Polymorphic(Frame variableFrame) {
+            frameSlot = variableFrame.getFrameDescriptor().findFrameSlot(identifier);
+            notInFrame = frameSlot == null ? variableFrame.getFrameDescriptor().getNotInFrameAssumption(identifier) : null;
+        }
+
+        @Override
+        public Object execute(VirtualFrame frame, Frame variableFrame) throws LayoutChangedException, FrameSlotTypeException {
+            // check if the slot is missing / wrong type in current frame
+            if (frameSlot == null) {
+                try {
+                    notInFrame.check();
+                } catch (InvalidAssumptionException e) {
+                    frameSlot = variableFrame.getFrameDescriptor().findFrameSlot(identifier);
+                    notInFrame = frameSlot == null ? variableFrame.getFrameDescriptor().getNotInFrameAssumption(identifier) : null;
+                }
+            }
+            if (frameSlot != null) {
+                Object value = variableFrame.getValue(frameSlot);
+                if (checkType(frame, value, isNullProfile)) {
+                    return value;
+                }
+            }
+            // search enclosing frames if necessary
+            MaterializedFrame current = RArguments.getEnclosingFrame(variableFrame);
+            while (current != null) {
+                Object value = getValue(current);
+                if (checkType(frame, value, isNullProfile)) {
+                    return value;
+                }
+                current = RArguments.getEnclosingFrame(current);
+            }
+            if (kind == ReadKind.Silent) {
+                return null;
+            } else {
+                throw RError.error(RError.NO_NODE, mode == RType.Function ? RError.Message.UNKNOWN_FUNCTION : RError.Message.UNKNOWN_OBJECT, identifier);
+            }
+        }
+
+        @TruffleBoundary
+        private Object getValue(MaterializedFrame current) {
+            FrameSlot slot = current.getFrameDescriptor().findFrameSlot(identifier);
+            return slot == null ? null : current.getValue(slot);
+        }
+
+        @Override
+        public String toString() {
+            return "P";
+        }
+    }
+
+    private final class LookupLevel extends DescriptorLevel {
+
+        private final LookupResult lookup;
+
+        private LookupLevel(LookupResult lookup) {
+            this.lookup = lookup;
+        }
+
+        @Override
+        public Object execute(VirtualFrame frame) throws InvalidAssumptionException, LayoutChangedException, FrameSlotTypeException {
+            Object value;
+            if (lookup instanceof FrameAndSlotLookupResult) {
+                FrameAndSlotLookupResult frameAndSlotLookupResult = (FrameAndSlotLookupResult) lookup;
+                value = profiledGetValue(seenValueKinds, frameAndSlotLookupResult.getFrame(), frameAndSlotLookupResult.getSlot());
+            } else {
+                value = lookup.getValue();
+            }
+            if (kind != ReadKind.Silent && value == null) {
+                throw RError.error(RError.NO_NODE, mode == RType.Function ? RError.Message.UNKNOWN_FUNCTION : RError.Message.UNKNOWN_OBJECT, identifier);
+            }
+            return value;
+        }
+    }
+
     private FrameLevel initialize(VirtualFrame frame, Frame variableFrame) {
         if (identifier.toString().isEmpty()) {
             throw RError.error(RError.NO_NODE, RError.Message.ZERO_LENGTH_VARIABLE);
         }
 
-        class ReadVariableLevel {
-            public final FrameDescriptor descriptor;
-            public final FrameSlot slot;
-            public final StableValue<Object> valueAssumption;
+        /*
+         * Check whether we need to go to the polymorphic case, which will not rely on any frame
+         * descriptor assumptions (apart from the first frame).
+         */
+        if (++invalidationCount > MAX_INVALIDATION_COUNT) {
+            RError.performanceWarning("polymorphic (slow path) lookup of symbol \"" + identifier + "\"");
+            return new Polymorphic(variableFrame);
+        }
 
-            public final StableValue<FrameDescriptor> enclosingDescriptorAssumption;
-            public final StableValue<MaterializedFrame> enclosingFrameAssumption;
+        /*
+         * Check whether we can fulfill the lookup by only looking at the current frame, and thus
+         * without additional dependencies on frame descriptor layouts.
+         */
+        FrameSlot localSlot = variableFrame.getFrameDescriptor().findFrameSlot(identifier);
+        // non-local reads can only be handled in a simple way if they are successful
+        if (localSlot != null && checkTypeSlowPath(frame, getValue(seenValueKinds, variableFrame, localSlot))) {
+            return new Match(localSlot);
+        }
 
-            public final MaterializedFrame nextFrame;
-
-            public ReadVariableLevel(FrameDescriptor descriptor, FrameSlot slot, StableValue<Object> valueAssumption, StableValue<FrameDescriptor> enclosingDescriptorAssumption,
-                            StableValue<MaterializedFrame> enclosingFrameAssumption, MaterializedFrame nextFrame) {
-                this.descriptor = descriptor;
-                this.slot = slot;
-                this.valueAssumption = valueAssumption;
-                this.enclosingDescriptorAssumption = enclosingDescriptorAssumption;
-                this.enclosingFrameAssumption = enclosingFrameAssumption;
-                this.nextFrame = nextFrame;
-            }
-
-            public FrameDescriptor nextDescriptor() {
-                return nextFrame == null ? null : nextFrame.getFrameDescriptor();
+        /*
+         * Check whether the frame descriptor information available in FrameSlotChangeMonitor is
+         * enough to handle this lookup. This has the advantage of not depending on a specific
+         * "enclosing frame descriptor" chain, so that attaching/detaching environments does not
+         * necessarily invalidate lookups.
+         */
+        LookupResult lookup = FrameSlotChangeMonitor.lookup(variableFrame, identifier);
+        if (lookup != null) {
+            try {
+                if (lookup.getValue() == null) {
+                    return new LookupLevel(lookup);
+                }
+                if (checkTypeSlowPath(frame, lookup.getValue())) {
+                    return new LookupLevel(lookup);
+                }
+            } catch (InvalidAssumptionException e) {
+                // immediately invalidated...
             }
         }
 
-        ArrayList<ReadVariableLevel> levels = new ArrayList<>();
-
-        Frame current = variableFrame;
-        FrameDescriptor currentDescriptor = current.getFrameDescriptor();
-        boolean match = false;
-        do {
-            // see if the current frame has a value of the given name
-            FrameSlot frameSlot = currentDescriptor.findFrameSlot(identifier);
-            StableValue<Object> valueAssumption = null;
-            if (frameSlot != null) {
-                Object value = getValue(current, frameSlot);
-                valueAssumption = FrameSlotChangeMonitor.getStableValueAssumption(currentDescriptor, frameSlot, value);
-                if ((kind == ReadKind.UnforcedSilentLocal || kind == ReadKind.SilentLocal) && value == RMissing.instance) {
-                    match = false;
-                } else {
-                    match = checkTypeSlowPath(frame, value);
-                }
-            }
-
-            // figure out how to get to the next frame or descriptor
-            MaterializedFrame next = RArguments.getEnclosingFrame(current);
-            FrameDescriptor nextDescriptor = next == null ? null : next.getFrameDescriptor();
-            StableValue<MaterializedFrame> enclosingFrameAssumption = FrameSlotChangeMonitor.getOrInitializeEnclosingFrameAssumption(current, currentDescriptor, null, next);
-            StableValue<FrameDescriptor> enclosingDescriptorAssumption = FrameSlotChangeMonitor.getOrInitializeEnclosingFrameDescriptorAssumption(current, currentDescriptor, nextDescriptor);
-
-            levels.add(new ReadVariableLevel(currentDescriptor, frameSlot, valueAssumption, enclosingDescriptorAssumption, enclosingFrameAssumption, next));
-
-            current = next;
-            currentDescriptor = nextDescriptor;
-        } while (kind != ReadKind.UnforcedSilentLocal && kind != ReadKind.SilentLocal && current != null && !match);
-
-        FrameLevel lastLevel = null;
-
-        boolean complex = false;
-        ListIterator<ReadVariableLevel> iter = levels.listIterator(levels.size());
-        if (match) {
-            ReadVariableLevel level = levels.get(levels.size() - 1);
-            if (level.valueAssumption != null) {
-                Assumption assumption = level.valueAssumption.getAssumption();
-                Object value = level.valueAssumption.getValue();
-                if (kind != ReadKind.UnforcedSilentLocal && value instanceof RPromise) {
-                    RPromise promise = (RPromise) value;
-                    Object promiseValue = PromiseHelperNode.evaluateSlowPath(frame, promise);
-                    if (promiseValue instanceof RFunction) {
-                        value = promiseValue;
-                    }
-                }
-                lastLevel = new DescriptorStableMatch(assumption, value);
-            } else {
-                complex = true;
-                lastLevel = new Match(level.slot);
-            }
-            iter.previous();
-        } else {
-            lastLevel = new Unknown();
-        }
-
+        /*
+         * If everything else fails: build the lookup from scratch, by recursively building
+         * assumptions and checks.
+         */
         ArrayList<Assumption> assumptions = new ArrayList<>();
-        while (iter.hasPrevious()) {
-            ReadVariableLevel level = iter.previous();
-            if (lastLevel instanceof DescriptorLevel) {
-                if (level.enclosingDescriptorAssumption != null) {
-                    assumptions.add(level.enclosingDescriptorAssumption.getAssumption());
-                } else {
-                    complex = true;
-                    lastLevel = new NextFrameLevel(lastLevel, level.nextDescriptor());
-                }
-            } else {
-                if (level.enclosingFrameAssumption != null) {
-                    lastLevel = new NextFrameFromDescriptorLevel(lastLevel, level.enclosingFrameAssumption);
-                } else {
-                    complex = true;
-                    lastLevel = new NextFrameLevel(lastLevel, level.nextDescriptor());
-                }
-            }
-
-            if (level.slot == null) {
-                if (lastLevel instanceof DescriptorLevel) {
-                    assumptions.add(level.descriptor.getNotInFrameAssumption(identifier));
-                } else {
-                    assumptions.add(level.descriptor.getNotInFrameAssumption(identifier));
-                }
-            } else {
-                if (level.valueAssumption != null && lastLevel instanceof DescriptorLevel) {
-                    assumptions.add(level.valueAssumption.getAssumption());
-                } else {
-                    complex = true;
-                    lastLevel = new Mismatch(lastLevel, level.slot);
-                }
-            }
-        }
+        FrameLevel lastLevel = createLevels(frame, variableFrame, assumptions);
         if (!assumptions.isEmpty()) {
             lastLevel = new MultiAssumptionLevel(lastLevel, assumptions.toArray(new Assumption[assumptions.size()]));
         }
 
-        if (FastROptions.PrintComplexLookups.getBooleanValue() && levels.size() > 1 && complex) {
+        if (FastROptions.PrintComplexLookups.getBooleanValue()) {
             System.out.println(identifier + " " + lastLevel);
         }
+        return lastLevel;
+    }
 
+    /**
+     * This function returns a "recipe" to find the value of this lookup, starting at varibleFrame.
+     * It may record assumptions into the given ArrayList of assumptions. The result will be a
+     * linked list of {@link FrameLevel} instances.
+     */
+    private FrameLevel createLevels(VirtualFrame frame, Frame variableFrame, ArrayList<Assumption> assumptions) {
+        if (variableFrame == null) {
+            // this means that we've arrived at the empty env during lookup
+            return new Unknown();
+        }
+        // see if the current frame has a value of the given name
+        FrameDescriptor currentDescriptor = variableFrame.getFrameDescriptor();
+        FrameSlot frameSlot = currentDescriptor.findFrameSlot(identifier);
+        if (frameSlot != null) {
+            Object value = getValue(seenValueKinds, variableFrame, frameSlot);
+            if (checkTypeSlowPath(frame, value)) {
+                StableValue<Object> valueAssumption = FrameSlotChangeMonitor.getStableValueAssumption(currentDescriptor, frameSlot, value);
+                if (valueAssumption != null) {
+                    Assumption assumption = valueAssumption.getAssumption();
+                    assert value == valueAssumption.getValue() || value.equals(valueAssumption.getValue()) : value + " vs. " + valueAssumption.getValue();
+                    if (value instanceof RPromise) {
+                        RPromise promise = (RPromise) value;
+                        Object promiseValue = PromiseHelperNode.evaluateSlowPath(frame, promise);
+                        if (promiseValue instanceof RFunction) {
+                            value = promiseValue;
+                        }
+                    }
+                    return new DescriptorStableMatch(assumption, value);
+                } else {
+                    return new Match(frameSlot);
+                }
+            }
+        }
+
+        // the identifier wasn't found in the current frame: try the next one
+        MaterializedFrame next = RArguments.getEnclosingFrame(variableFrame);
+        FrameLevel lastLevel = createLevels(frame, next, assumptions);
+
+        /*
+         * Here we look at the type of the recursive lookup result, to see if we need only a
+         * specific FrameDescriptor (DescriptorLevel) or the actual frame (FrameLevel).
+         */
+
+        if (!(lastLevel instanceof DescriptorLevel)) {
+            MaterializedFrame singleton = FrameSlotChangeMonitor.getSingletonFrame(next.getFrameDescriptor());
+            if (singleton != null) {
+                // use singleton frames to get from a frame descriptor to an actual frame
+                lastLevel = new SingletonFrameLevel(lastLevel, singleton);
+            }
+        }
+
+        StableValue<FrameDescriptor> enclosingDescriptorAssumption = FrameSlotChangeMonitor.getEnclosingFrameDescriptorAssumption(currentDescriptor);
+        if (lastLevel instanceof DescriptorLevel && enclosingDescriptorAssumption != null) {
+            assumptions.add(enclosingDescriptorAssumption.getAssumption());
+        } else {
+            lastLevel = new NextFrameLevel(lastLevel, next == null ? null : next.getFrameDescriptor());
+        }
+
+        if (frameSlot == null) {
+            assumptions.add(currentDescriptor.getNotInFrameAssumption(identifier));
+        } else {
+            StableValue<Object> valueAssumption = FrameSlotChangeMonitor.getStableValueAssumption(currentDescriptor, frameSlot, getValue(seenValueKinds, variableFrame, frameSlot));
+            if (valueAssumption != null && lastLevel instanceof DescriptorLevel) {
+                assumptions.add(valueAssumption.getAssumption());
+            } else {
+                lastLevel = new Mismatch(lastLevel, frameSlot);
+            }
+        }
         return lastLevel;
     }
 
@@ -653,7 +721,7 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
         return null;
     }
 
-    private Object getValue(Frame variableFrame, FrameSlot frameSlot) {
+    private static Object getValue(boolean[] seenValueKinds, Frame variableFrame, FrameSlot frameSlot) {
         Object value = variableFrame.getValue(frameSlot);
         if (variableFrame.isObject(frameSlot)) {
             seenValueKinds[FrameSlotKind.Object.ordinal()] = true;
@@ -667,18 +735,23 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
         return value;
     }
 
-    private Object profiledGetValue(Frame variableFrame, FrameSlot frameSlot) throws FrameSlotTypeException {
-        if (seenValueKind(FrameSlotKind.Object) && variableFrame.isObject(frameSlot)) {
-            Object result = variableFrame.getObject(frameSlot);
-            return isNullValueProfile.profile(result == null) ? null : valueProfile.profile(result);
-        } else if (seenValueKind(FrameSlotKind.Byte) && variableFrame.isByte(frameSlot)) {
-            return variableFrame.getByte(frameSlot);
-        } else if (seenValueKind(FrameSlotKind.Int) && variableFrame.isInt(frameSlot)) {
-            return variableFrame.getInt(frameSlot);
-        } else if (seenValueKind(FrameSlotKind.Double) && variableFrame.isDouble(frameSlot)) {
-            return variableFrame.getDouble(frameSlot);
-        } else {
-            throw new FrameSlotTypeException();
+    static Object profiledGetValue(boolean[] seenValueKinds, Frame variableFrame, FrameSlot frameSlot) {
+        try {
+            if (seenValueKinds[FrameSlotKind.Object.ordinal()] && variableFrame.isObject(frameSlot)) {
+                return variableFrame.getObject(frameSlot);
+            } else if (seenValueKinds[FrameSlotKind.Byte.ordinal()] && variableFrame.isByte(frameSlot)) {
+                return variableFrame.getByte(frameSlot);
+            } else if (seenValueKinds[FrameSlotKind.Int.ordinal()] && variableFrame.isInt(frameSlot)) {
+                return variableFrame.getInt(frameSlot);
+            } else if (seenValueKinds[FrameSlotKind.Double.ordinal()] && variableFrame.isDouble(frameSlot)) {
+                return variableFrame.getDouble(frameSlot);
+            } else {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                // re-profile to widen the set of expected types
+                return getValue(seenValueKinds, variableFrame, frameSlot);
+            }
+        } catch (FrameSlotTypeException e) {
+            throw new RInternalError(e, "unexpected frame slot type mismatch");
         }
     }
 
@@ -772,5 +845,9 @@ public final class ReadVariableNode extends RNode implements RSyntaxNode, Visibi
 
     public static String getSlowPathEvaluationName() {
         return slowPathEvaluationName.get();
+    }
+
+    public boolean isForceForTypeCheck() {
+        return kind == ReadKind.ForcedTypeCheck;
     }
 }

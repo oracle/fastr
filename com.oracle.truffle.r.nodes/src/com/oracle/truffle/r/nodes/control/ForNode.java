@@ -54,7 +54,7 @@ public final class ForNode extends AbstractLoopNode implements VisibilityControl
 
         this.writeIndexNode = WriteVariableNode.createAnonymous(indexName, null, Mode.REGULAR);
         this.writeRangeNode = WriteVariableNode.createAnonymous(rangeName, range, Mode.REGULAR);
-        this.writeLengthNode = WriteVariableNode.createAnonymous(lengthName, RLengthNodeGen.create(ReadVariableNode.create(rangeName, false)), Mode.REGULAR);
+        this.writeLengthNode = WriteVariableNode.createAnonymous(lengthName, RLengthNodeGen.create(ReadVariableNode.create(rangeName)), Mode.REGULAR);
         this.loopNode = Truffle.getRuntime().createLoopNode(new ForRepeatingNode(this, cvar, body, indexName, lengthName, rangeName));
     }
 
@@ -174,8 +174,8 @@ public final class ForNode extends AbstractLoopNode implements VisibilityControl
             this.writeElementNode = cvar;
             this.body = body;
 
-            this.readIndexNode = ReadVariableNode.createAnonymous(indexName);
-            this.readLengthNode = ReadVariableNode.createAnonymous(lengthName);
+            this.readIndexNode = ReadVariableNode.create(indexName);
+            this.readLengthNode = ReadVariableNode.create(lengthName);
             this.writeIndexNode = WriteVariableNode.createAnonymous(indexName, null, Mode.REGULAR);
             this.loadElement = createIndexedLoad(indexName, rangeName);
             // pre-initialize the profile so that loop exits to not deoptimize
@@ -190,8 +190,8 @@ public final class ForNode extends AbstractLoopNode implements VisibilityControl
                 throw RInternalError.shouldNotReachHere();
             }
             REnvironment env = RDataFactory.createInternalEnv();
-            env.safePut("i", RDataFactory.createLanguage(ReadVariableNode.createAnonymous(indexName)));
-            env.safePut("x", RDataFactory.createLanguage(ReadVariableNode.createAnonymous(rangeName)));
+            env.safePut("i", RDataFactory.createLanguage(ReadVariableNode.create(indexName)));
+            env.safePut("x", RDataFactory.createLanguage(ReadVariableNode.create(rangeName)));
             return indexNode.substitute(env).asRNode();
         }
 

@@ -268,7 +268,15 @@ public final class RArguments {
         Object[] arguments = frame.getArguments();
         MaterializedFrame oldEnclosingFrame = (MaterializedFrame) arguments[INDEX_ENCLOSING_FRAME];
         arguments[INDEX_ENCLOSING_FRAME] = newEnclosingFrame;
-        FrameSlotChangeMonitor.invalidateEnclosingFrame(frame);
+        FrameSlotChangeMonitor.setEnclosingFrame(frame, newEnclosingFrame, oldEnclosingFrame);
+    }
+
+    public static void initializeEnclosingFrame(Frame frame, MaterializedFrame newEnclosingFrame) {
+        CompilerAsserts.neverPartOfCompilation();
+        Object[] arguments = frame.getArguments();
+        assert arguments[INDEX_ENCLOSING_FRAME] == null;
+        arguments[INDEX_ENCLOSING_FRAME] = newEnclosingFrame;
+        FrameSlotChangeMonitor.initializeEnclosingFrame(frame, newEnclosingFrame);
     }
 
     /**
@@ -283,8 +291,7 @@ public final class RArguments {
         Object[] newArguments = newEnclosingFrame.getArguments();
         newArguments[INDEX_ENCLOSING_FRAME] = oldEnclosingFrame;
         arguments[INDEX_ENCLOSING_FRAME] = newEnclosingFrame;
-        FrameSlotChangeMonitor.invalidateEnclosingFrame(newEnclosingFrame);
-        FrameSlotChangeMonitor.invalidateEnclosingFrame(frame);
+        FrameSlotChangeMonitor.attach(frame, newEnclosingFrame);
     }
 
     /**
@@ -297,7 +304,7 @@ public final class RArguments {
         MaterializedFrame encl = (MaterializedFrame) arguments[INDEX_ENCLOSING_FRAME];
         Object[] enclArguments = encl.getArguments();
         arguments[INDEX_ENCLOSING_FRAME] = enclArguments[INDEX_ENCLOSING_FRAME];
-        FrameSlotChangeMonitor.invalidateEnclosingFrame(frame);
+        FrameSlotChangeMonitor.detach(frame);
     }
 
     /**

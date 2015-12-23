@@ -218,7 +218,7 @@ public abstract class RBuiltinNode extends RNode implements RSyntaxNode, Visibil
         // Setup
         FrameDescriptor frameDescriptor = new FrameDescriptor();
         RBuiltinRootNode root = new RBuiltinRootNode(node, formals, frameDescriptor);
-        FrameSlotChangeMonitor.initializeFunctionFrameDescriptor(frameDescriptor);
+        FrameSlotChangeMonitor.initializeFunctionFrameDescriptor(builtin.getName(), frameDescriptor);
         return Truffle.getRuntime().createCallTarget(root);
     }
 

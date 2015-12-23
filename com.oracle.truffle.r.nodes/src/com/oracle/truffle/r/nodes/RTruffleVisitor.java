@@ -91,7 +91,6 @@ import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RGroupGenerics;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.FastPathFactory;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.REmpty;
@@ -110,6 +109,7 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
     public RFunction transformFunction(String name, Function func, MaterializedFrame enclosingFrame) {
         RootCallTarget callTarget = createFunctionCallTarget(func);
         FastPathFactory fastPath = EvaluatedArgumentsVisitor.process(func);
+        FrameSlotChangeMonitor.initializeEnclosingFrame(callTarget.getRootNode().getFrameDescriptor(), enclosingFrame);
         return RDataFactory.createFunction(name, callTarget, null, enclosingFrame, fastPath, ((FunctionDefinitionNode) callTarget.getRootNode()).containsDispatch());
     }
 
@@ -188,7 +188,7 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
                 return GroupDispatchNode.create(callName, callSource, signature, nodes);
             }
             SourceSection varSource = ASTNode.adjustedSource(callSource, callSource.getCharIndex(), callName.length());
-            lhs = ReadVariableNode.createForced(varSource, callName, RType.Function);
+            lhs = ReadVariableNode.createForcedFunctionLookup(varSource, callName);
         } else {
             lhs = call.getLhsNode().accept(this).asRNode();
         }
@@ -273,8 +273,8 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
         }
 
         FrameDescriptor descriptor = new FrameDescriptor();
-        FrameSlotChangeMonitor.initializeFunctionFrameDescriptor(descriptor);
         String description = getFunctionDescription(func);
+        FrameSlotChangeMonitor.initializeFunctionFrameDescriptor(description != null && !description.isEmpty() ? description : "<function>", descriptor);
         FunctionDefinitionNode rootNode = new FunctionDefinitionNode(func.getSource(), descriptor, new FunctionBodyNode(saveArguments, statements), formals, description, false, argPostProcess);
         return Truffle.getRuntime().createCallTarget(rootNode);
     }
@@ -357,7 +357,7 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
         nodes[nodes.length - 1] = rhs;
         names[nodes.length - 1] = "value";
 
-        return RCallNode.createCallNotSyntax(ReadVariableNode.createForced(null, isSubset ? "[<-" : "[[<-", RType.Function), ArgumentsSignature.get(names), nodes);
+        return RCallNode.createCallNotSyntax(ReadVariableNode.createForcedFunctionLookup(null, isSubset ? "[<-" : "[[<-"), ArgumentsSignature.get(names), nodes);
     }
 
     private int tempNamesCount;
@@ -560,12 +560,12 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
     public RSyntaxNode visit(FieldAccess access) {
         SourceSection callSource = access.getSource();
         RSyntaxNode lhs = access.getLhs().accept(this);
-        ReadVariableNode function = ReadVariableNode.createForced(callSource, access.isAt() ? "@" : "$", RType.Function);
+        ReadVariableNode function = ReadVariableNode.createForcedFunctionLookup(callSource, access.isAt() ? "@" : "$");
         return RCallNode.createCall(callSource, function, ArgumentsSignature.empty(2), lhs, ConstantNode.create(callSource, access.getFieldName()));
     }
 
     private static RCallNode createFieldUpdate(SourceSection source, RSyntaxNode receiver, RSyntaxNode rhs, String fieldName, boolean at) {
-        ReadVariableNode function = ReadVariableNode.createForced(source, at ? "@<-" : "$<-", RType.Function);
+        ReadVariableNode function = ReadVariableNode.createForcedFunctionLookup(source, at ? "@<-" : "$<-");
         return RCallNode.createCall(source, function, ArgumentsSignature.empty(3), receiver, ConstantNode.create(source, fieldName), rhs);
     }
 
@@ -584,7 +584,7 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
             argNodes[i] = visit(arguments.get(i));
         }
         argNodes[arguments.size()] = rhs;
-        ReadVariableNode function = ReadVariableNode.createForced(null, funName, RType.Function);
+        ReadVariableNode function = ReadVariableNode.createForcedFunctionLookup(null, funName);
         return RCallNode.createCall(null, function, ArgumentsSignature.get(names), argNodes);
     }
 
@@ -601,8 +601,8 @@ public final class RTruffleVisitor extends BasicVisitor<RSyntaxNode> {
 
                 String tmpSymbol = createTempName();
                 String rhsSymbol = createTempName();
-                ReadVariableNode rhsAccess = ReadVariableNode.createAnonymous(rhsSymbol);
-                ReadVariableNode tmpVarAccess = ReadVariableNode.createAnonymous(tmpSymbol);
+                ReadVariableNode rhsAccess = ReadVariableNode.create(rhsSymbol);
+                ReadVariableNode tmpVarAccess = ReadVariableNode.create(tmpSymbol);
 
                 RSyntaxNode updateOp = updateFunction.apply(tmpVarAccess, rhsAccess);
                 RNode assignFromTemp = WriteVariableNode.createAnonymous(vSymbol, updateOp.asRNode(), WriteVariableNode.Mode.INVISIBLE, isSuper);

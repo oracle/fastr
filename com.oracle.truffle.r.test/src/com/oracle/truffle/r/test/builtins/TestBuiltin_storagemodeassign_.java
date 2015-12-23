@@ -20,7 +20,6 @@ public class TestBuiltin_storagemodeassign_ extends TestBase {
 
     @Test
     public void teststoragemodeassign_1() {
-        assertEval(Ignored.Unknown, "argv <- structure(list(structure(c(0, 1, 2), .Dim = c(3L, 1L)),     value = 'integer'), .Names = c('', 'value'));do.call('storage.mode<-', argv)");
+        assertEval("argv <- structure(list(structure(c(0, 1, 2), .Dim = c(3L, 1L)),     value = 'integer'), .Names = c('', 'value'));do.call('storage.mode<-', argv)");
     }
-
 }

@@ -16,16 +16,21 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
-import com.oracle.truffle.api.dsl.*;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.DirectCallNode;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.nodes.access.variables.LocalReadVariableNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
-import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode.ReadKind;
 import com.oracle.truffle.r.nodes.function.signature.RArgumentsNode;
-import com.oracle.truffle.r.runtime.*;
+import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.RArguments;
+import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.data.*;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
@@ -63,8 +68,8 @@ public abstract class DispatchGeneric extends RBaseNode {
         }
     }
 
-    protected ReadVariableNode createTableRead(String dispatchString) {
-        return ReadVariableNode.create(dispatchString, RType.Any, ReadKind.SilentLocal);
+    protected LocalReadVariableNode createTableRead(String dispatchString) {
+        return LocalReadVariableNode.create(dispatchString, true);
     }
 
     private Object dispatchInternal(VirtualFrame frame, REnvironment methodsEnv, REnvironment mtable, RStringVector classes, RFunction fdef, String fname, RFunction f) {
@@ -72,7 +77,7 @@ public abstract class DispatchGeneric extends RBaseNode {
         if (method == null) {
             if (inheritForDispatchFind == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                inheritForDispatchFind = insert(ReadVariableNode.create(".InheritForDispatch", RType.Function, ReadKind.Normal));
+                inheritForDispatchFind = insert(ReadVariableNode.createFunctionLookup(null, ".InheritForDispatch"));
                 inheritForDispatchFunction = (RFunction) inheritForDispatchFind.execute(null, methodsEnv.getFrame());
                 inheritForDispatchCall = insert(Truffle.getRuntime().createDirectCallNode(inheritForDispatchFunction.getTarget()));
 
@@ -96,7 +101,7 @@ public abstract class DispatchGeneric extends RBaseNode {
     @Specialization(guards = "equalClasses(classes, cachedClasses)")
     protected Object dispatchCached(VirtualFrame frame, REnvironment methodsEnv, REnvironment mtable, RStringVector classes, RFunction fdef, String fname,
                     @Cached("classes") RStringVector cachedClasses, @Cached("createDispatchString(cachedClasses)") String dispatchString,
-                    @Cached("createTableRead(dispatchString)") ReadVariableNode tableRead) {
+                    @Cached("createTableRead(dispatchString)") LocalReadVariableNode tableRead) {
         RFunction method = (RFunction) tableRead.execute(null, mtable.getFrame());
         return dispatchInternal(frame, methodsEnv, mtable, classes, fdef, fname, method);
     }

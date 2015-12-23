@@ -153,7 +153,7 @@ public abstract class REnvironment extends RAttributeStorage implements RTypedVa
         }
 
         public static ContextStateImpl newContext(RContext context) {
-            return createContext(context, RRuntime.createNonFunctionFrame().materialize());
+            return createContext(context, RRuntime.createNonFunctionFrame("global"));
         }
     }
 
@@ -278,7 +278,7 @@ public abstract class REnvironment extends RAttributeStorage implements RTypedVa
         namespaceRegistry.safePut("base", baseEnv.namespaceEnv);
 
         Global globalEnv = new Global(initialGlobalFrame);
-        globalEnv.setParent(baseEnv);
+        RArguments.initializeEnclosingFrame(initialGlobalFrame, baseFrame);
         state.setBaseEnv(baseEnv);
         state.setSearchPath(initSearchList(globalEnv));
     }
@@ -326,7 +326,7 @@ public abstract class REnvironment extends RAttributeStorage implements RTypedVa
                 REnvironment e = parentSearchPath.get(1).cloneEnv(globalFrame);
                 // create the new Global with clone top as parent
                 Global newGlobalEnv = new Global(globalFrame);
-                newGlobalEnv.setParent(e);
+                RArguments.initializeEnclosingFrame(globalFrame, e.getFrame());
                 // create new namespaceRegistry and populate it while locating "base"
                 REnvironment newNamespaceRegistry = RDataFactory.createInternalEnv();
                 Base newBaseEnv = null;
@@ -397,7 +397,7 @@ public abstract class REnvironment extends RAttributeStorage implements RTypedVa
         }
         // N.B. Base overrides this method, so we only get here for package environments
         REnvironment newEnv = RDataFactory.createNewEnv(getName());
-        newEnv.setParent(parentClone);
+        RArguments.initializeEnclosingFrame(newEnv.getFrame(), parentClone.getFrame());
         if (attributes != null) {
             newEnv.attributes = attributes.copy();
         }
@@ -589,13 +589,6 @@ public abstract class REnvironment extends RAttributeStorage implements RTypedVa
     }
 
     /**
-     * Specifically for {@code ls()}, we don't care about the parent, as the use is transient.
-     */
-    public static REnvironment createLsCurrent(MaterializedFrame frame) {
-        return new Function(frame);
-    }
-
-    /**
      * Converts a {@link Frame} to an {@link REnvironment}, which necessarily requires the frame to
      * be materialized.
      */
@@ -633,7 +626,7 @@ public abstract class REnvironment extends RAttributeStorage implements RTypedVa
     @TruffleBoundary
     public static REnvironment createFromList(RAttributeProfiles attrProfiles, RList list, REnvironment parent) {
         REnvironment result = RDataFactory.createNewEnv(null);
-        result.setParent(parent);
+        RArguments.initializeEnclosingFrame(result.getFrame(), parent.getFrame());
         RStringVector names = list.getNames(attrProfiles);
         for (int i = 0; i < list.getLength(); i++) {
             try {
@@ -918,7 +911,7 @@ public abstract class REnvironment extends RAttributeStorage implements RTypedVa
 
         @Override
         protected REnvironment cloneEnv(MaterializedFrame globalFrame) {
-            Base newBase = new Base(RRuntime.createNonFunctionFrame().materialize(), globalFrame);
+            Base newBase = new Base(RRuntime.createNonFunctionFrame("base"), globalFrame);
             this.copyBindings(newBase);
             return newBase;
         }

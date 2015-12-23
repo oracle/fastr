@@ -75,21 +75,16 @@ public final class REnvTruffleFrameAccess extends REnvFrameAccess {
         if (lockedBindings != null && lockedBindings.contains(key)) {
             throw new PutException(RError.Message.ENV_CHANGE_BINDING, key);
         }
-        FrameDescriptor fd = frame.getFrameDescriptor();
-        FrameSlot slot = fd.findFrameSlot(key);
-
         FrameSlotKind valueSlotKind = RRuntime.getSlotKind(value);
+        FrameDescriptor fd = frame.getFrameDescriptor();
+        FrameSlot slot = FrameSlotChangeMonitor.findOrAddFrameSlot(fd, key, valueSlotKind);
 
-        // Handle all other values
-        if (slot == null) {
-            slot = FrameSlotChangeMonitor.addFrameSlot(fd, key, valueSlotKind);
-        } else {
-            if (valueSlotKind != slot.getKind()) {
-                // we must not toggle between slot kinds, so go to Object
-                valueSlotKind = FrameSlotKind.Object;
-                slot.setKind(valueSlotKind);
-            }
+        if (valueSlotKind != slot.getKind()) {
+            // we must not toggle between slot kinds, so go to Object
+            valueSlotKind = FrameSlotKind.Object;
+            slot.setKind(valueSlotKind);
         }
+
         switch (valueSlotKind) {
             case Byte:
                 FrameSlotChangeMonitor.setByteAndInvalidate(frame, slot, (byte) value, false, null);

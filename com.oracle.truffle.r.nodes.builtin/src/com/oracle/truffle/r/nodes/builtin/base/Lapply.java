@@ -107,7 +107,7 @@ public abstract class Lapply extends RBuiltinNode {
                 throw RInternalError.shouldNotReachHere();
             }
             REnvironment env = RDataFactory.createInternalEnv();
-            env.safePut("i", RDataFactory.createLanguage(ReadVariableNode.create(INDEX_NAME, false)));
+            env.safePut("i", RDataFactory.createLanguage(ReadVariableNode.create(INDEX_NAME)));
             return indexNode.substitute(env).asRNode();
         }
 
@@ -128,7 +128,7 @@ public abstract class Lapply extends RBuiltinNode {
                 readVectorElementName = null;
             }
 
-            ReadVariableNode readVector = ReadVariableNode.createAnonymous(VECTOR_ELEMENT);
+            ReadVariableNode readVector = ReadVariableNode.create(VECTOR_ELEMENT);
 
             // The remaining parameters are passed from {@code ...}. The call node will take
             // care of matching.

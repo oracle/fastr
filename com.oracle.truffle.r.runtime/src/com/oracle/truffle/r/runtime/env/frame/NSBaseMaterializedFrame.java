@@ -45,13 +45,12 @@ public final class NSBaseMaterializedFrame implements MaterializedFrame {
         this.packageBaseFrame = packageBaseFrame;
         this.arguments = Arrays.copyOf(packageBaseFrame.getArguments(), packageBaseFrame.getArguments().length);
         this.markerFrameDescriptor = new FrameDescriptor();
-        FrameSlotChangeMonitor.initializeNonFunctionFrameDescriptor(markerFrameDescriptor, true);
-        RArguments.setEnclosingFrame(this, globalFrame);
+        FrameSlotChangeMonitor.initializeNonFunctionFrameDescriptor("namespace:base", this);
+        RArguments.initializeEnclosingFrame(this, globalFrame);
     }
 
     public void updateGlobalFrame(MaterializedFrame globalFrame) {
         RArguments.setEnclosingFrame(this, globalFrame);
-        FrameSlotChangeMonitor.invalidateEnclosingFrame(this);
     }
 
     public FrameDescriptor getMarkerFrameDescriptor() {

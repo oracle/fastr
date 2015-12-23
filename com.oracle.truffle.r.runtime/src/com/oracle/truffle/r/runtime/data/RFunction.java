@@ -22,14 +22,15 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
-import com.oracle.truffle.api.*;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.frame.*;
-import com.oracle.truffle.api.interop.*;
-import com.oracle.truffle.api.nodes.*;
-import com.oracle.truffle.r.runtime.*;
-import com.oracle.truffle.r.runtime.context.*;
-import com.oracle.truffle.r.runtime.env.frame.*;
+import com.oracle.truffle.api.RootCallTarget;
+import com.oracle.truffle.api.frame.MaterializedFrame;
+import com.oracle.truffle.api.interop.ForeignAccess;
+import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.nodes.RootNode;
+import com.oracle.truffle.r.runtime.RBuiltin;
+import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.VirtualEvalFrame;
+import com.oracle.truffle.r.runtime.context.RContext;
 
 /**
  * An instance of {@link RFunction} represents a function defined in R. The properties of a function
@@ -46,6 +47,7 @@ import com.oracle.truffle.r.runtime.env.frame.*;
 public final class RFunction extends RAttributeStorage implements RTypedValue, TruffleObject {
 
     public static final String NO_NAME = new String("");
+
     private String name;
     private final RootCallTarget target;
     private final RBuiltinDescriptor builtin;
@@ -53,7 +55,7 @@ public final class RFunction extends RAttributeStorage implements RTypedValue, T
 
     private FastPathFactory fastPath;
 
-    @CompilationFinal private MaterializedFrame enclosingFrame;
+    private final MaterializedFrame enclosingFrame;
 
     RFunction(String name, RootCallTarget target, RBuiltinDescriptor builtin, MaterializedFrame enclosingFrame, FastPathFactory fastPath, boolean containsDispatch) {
         this.target = target;
@@ -99,17 +101,6 @@ public final class RFunction extends RAttributeStorage implements RTypedValue, T
 
     public MaterializedFrame getEnclosingFrame() {
         return enclosingFrame;
-    }
-
-    /**
-     * Used by the {@code environment<-} builtin.
-     */
-    public void setEnclosingFrame(MaterializedFrame enclosingFrame) {
-        assert !(enclosingFrame instanceof VirtualEvalFrame);
-        this.enclosingFrame = enclosingFrame;
-        FrameDescriptor descriptor = target.getRootNode().getFrameDescriptor();
-        FrameSlotChangeMonitor.getOrInitializeEnclosingFrameAssumption(null, descriptor, null, enclosingFrame);
-        FrameSlotChangeMonitor.getOrInitializeEnclosingFrameDescriptorAssumption(null, descriptor, enclosingFrame.getFrameDescriptor());
     }
 
     private static final RStringVector implicitClass = RDataFactory.createStringVectorFromScalar(RType.Function.getName());
