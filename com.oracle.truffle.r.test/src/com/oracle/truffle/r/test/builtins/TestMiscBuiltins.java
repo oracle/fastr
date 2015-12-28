@@ -236,7 +236,7 @@ public class TestMiscBuiltins extends TestBase {
     @Test
     public void testLocal() {
         assertEval("{ kk <- local({k <- function(x) {x*2}}); kk(8)}");
-        assertEval(Ignored.Unknown, "{ ne <- new.env(); local(a <- 1, ne); ls(ne) }");
+        assertEval("{ ne <- new.env(); local(a <- 1, ne); ls(ne) }");
     }
 
     @Test

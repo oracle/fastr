@@ -238,7 +238,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         } catch (ReturnException ex) {
             returnProfile.enter();
             int depth = ex.getDepth();
-            if (depth != -1 && RArguments.getDepth(vf) != depth) {
+            if ((depth != -1 && RArguments.getDepth(vf) != depth) || (substituteFrame && this.description == RPromise.CLOSURE_WRAPPER_NAME)) {
                 throw ex;
             } else {
                 return ex.getResult();

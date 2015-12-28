@@ -208,6 +208,6 @@ public class TestBuiltin_unclass extends TestBase {
 
     @Test
     public void testOther() {
-        assertEval(Ignored.Unknown, "{ setClass(\"foo\", representation(j=\"numeric\")); x<-new(\"foo\", j=42); unclass(x) }");
+        assertEval("{ setClass(\"foo\", representation(j=\"numeric\")); x<-new(\"foo\", j=42); unclass(x) }");
     }
 }
