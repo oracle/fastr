@@ -33,29 +33,27 @@ endif
 
 .PHONY: all clean cleanlib cleanobj force libr
 
-all: linked $(LIB_APPL) libr
+LIBDIR = $(abspath $(TOPDIR)/../lib)
+LIB_APPL := $(LIBDIR)/libappl$(DYLIB_EXT)
+
+all: $(LIB_APPL) libr
 
 SRC = src
 OBJ = lib
-LIBDIR = $(abspath $(TOPDIR)/../lib)
 
-LINKED_C_FILES = interv.c
-GNUR_LINKED_C_FILES = $(addprefix $(GNUR_HOME)/src/appl/, $(LINKED_C_FILES))
-NON_LOCAL_C_SOURCES = $(addprefix $(SRC)/, $(LINKED_C_FILES))
-C_LOCAL_SOURCES = $(filter-out  $(NON_LOCAL_C_SOURCES),$(wildcard $(SRC)/*.c))
-C_SOURCES := $(NON_LOCAL_C_SOURCES) $(C_LOCAL_SOURCES)
+GNUR_SRC = $(GNUR_HOME)/src/appl
+GNUR_C_FILES = interv.c
+GNUR_C_OBJECTS := $(addprefix $(OBJ)/, $(GNUR_C_FILES:.c=.o))
+
+C_SOURCES := $(wildcard $(SRC)/*.c)
 C_OBJECTS := $(subst $(SRC),$(OBJ),$(C_SOURCES:.c=.o))
+
+# the Fortran sources are not recompiled
 F_OBJECTS := $(wildcard $(GNUR_HOME)/src/appl/d*.o)
 
-LIB_APPL := $(LIBDIR)/libappl$(DYLIB_EXT)
-
-$(LIB_APPL): $(C_OBJECTS) $(F_OBJECTS)
+$(LIB_APPL): $(C_OBJECTS) $(GNUR_C_OBJECTS) $(F_OBJECTS) Makefile
 	mkdir -p $(LIBDIR)
-	$(DYLIB_LD) $(DYLIB_LDFLAGS)  -o $(LIB_APPL) $(C_OBJECTS) $(F_OBJECTS) $(LIBS)
-
-linked: $(GNUR_LINKED_C_FILES)
-	$(foreach file,$(LINKED_C_FILES),ln -sf $(GNUR_HOME)/src/appl/$(file) $(SRC)/$(file);)
-	touch linked
+	$(DYLIB_LD) $(DYLIB_LDFLAGS)  -o $(LIB_APPL) $(C_OBJECTS) $(GNUR_C_OBJECTS) $(F_OBJECTS) $(LIBS)
 
 $(C_OBJECTS): | $(OBJ)
 
@@ -77,7 +75,7 @@ $(LIB_R): $(OBJ)/xerbla.o
 	$(DYLIB_LD) $(DYLIB_LDFLAGS) -o $(LIB_R) -current_version $(R_VERSION) -compatibility_version $(R_VERSION) $(OBJ)/xerbla.o
 
 cleanlibr:
-	rm -f $(LIB_R)
+	rm -f $(LIBDIR)/libR.*
 
 else
 libr: 
@@ -91,12 +89,14 @@ FFI_INCLUDES = -I$(TOPDIR)/include -I$(TOPDIR)/include/R_ext
 $(OBJ)/%.o: $(SRC)/%.c
 	$(CC) $(CFLAGS) $(FFI_INCLUDES) -c $< -o $@
 
+$(OBJ)/%.o: $(GNUR_SRC)/%.c
+	$(CC) $(CFLAGS) $(FFI_INCLUDES) -c $< -o $@
+
 cleanlib:
 	rm -f $(LIBDIR)/libappl.*
 
-clean: cleanobj cleanlibr
+clean: cleanobj cleanlib cleanlibr
 
 cleanobj:
-	rm -f linked
 	rm -f $(OBJ)/*.o
-	rm -f $(SRC)/$(LINKED_C_FILES)
+

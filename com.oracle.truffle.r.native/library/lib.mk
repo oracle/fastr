@@ -31,6 +31,10 @@
 # define LIB_PKG_PRE and for post processing define LIB_PKG_POST in its Makefile.
 # If a package-specfic clean is needed it should define CLEAN_PKG
 
+# A package may include C and Fortran code compiled directly from the GnuR code base,
+# but using FastR headers. This is handled by the package defining the variables 
+# GNUR_C_OBJECTS and GNUR_F_OBJECTS before including this file.
+
 ifneq ($(MAKECMDGOALS),clean)
 include $(TOPDIR)/platform.mk
 endif
@@ -45,6 +49,7 @@ endif
 
 SRC = src
 OBJ = lib
+GNUR_SRC = $(GNUR_HOME)/src/library/$(PKG)/src
 
 C_SOURCES := $(wildcard $(SRC)/*.c)
 
@@ -78,7 +83,7 @@ libcommon: $(PKGDIR)
 
 $(PKGDIR): $(GNUR_HOME)/library/$(PKG)
 	(cd $(GNUR_HOME)/library; tar cf - $(PKG)) | (cd $(FASTR_LIBRARY_DIR); tar xf -)
-	touch $(FASTR_LIBRARY_DIR)/$(PKG)
+	touch $(PKGDIR)
 
 $(C_OBJECTS): | $(OBJ)
 
@@ -87,19 +92,11 @@ $(F_OBJECTS): | $(OBJ)
 $(OBJ):
 	mkdir -p $(OBJ)
 
-$(LIB_PKG): $(C_OBJECTS) $(F_OBJECTS) $(PKGDIR)
+$(LIB_PKG): $(C_OBJECTS) $(F_OBJECTS) $(GNUR_C_OBJECTS) $(GNUR_F_OBJECTS) $(PKGDIR)
 	mkdir -p $(LIBDIR)
-	$(DYLIB_LD) $(DYLIB_LDFLAGS) -o $(LIB_PKG) $(C_OBJECTS) $(F_OBJECTS) $(PKG_LIBS)
+	$(DYLIB_LD) $(DYLIB_LDFLAGS) -o $(LIB_PKG) $(C_OBJECTS) $(F_OBJECTS) $(GNUR_C_OBJECTS) $(GNUR_F_OBJECTS) $(PKG_LIBS)
 	mkdir -p $(FASTR_LIBRARY_DIR)/$(PKG)/libs
 	cp $(LIB_PKG) $(FASTR_LIBRARY_DIR)/$(PKG)/libs
-# find a way to move into stats makefile (using LIB_PKG_POST)
-ifeq ($(OS_NAME),Darwin)
-ifeq ($(PACKAGE),stats)
-	install_name_tool -change libRblas.dylib $(FASTR_R_HOME)/lib/libRblas.dylib $(FASTR_LIBRARY_DIR)/$(PKG)/libs/$(PKG).so
-	install_name_tool -change libRlapack.dylib $(FASTR_R_HOME)/lib/libRlapack.dylib $(FASTR_LIBRARY_DIR)/$(PKG)/libs/$(PKG).so
-	install_name_tool -change libappl.dylib $(FASTR_R_HOME)/lib/libappl.dylib $(FASTR_LIBRARY_DIR)/$(PKG)/libs/$(PKG).so
-endif
-endif
 
 $(OBJ)/%.o: $(SRC)/%.c $(H_SOURCES)
 	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
